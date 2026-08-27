@@ -398,10 +398,17 @@ function push(first) {
   // met it, so it is rewritten rather than deleted, and the word grid below is
   // the writer it foresaw. What it got right stays true: the DERIVED layer
   // still moves per section (audio/desk.js shade() reads sec.lvl / sec.env),
-  // and all four stores are null / [] for a document that says nothing, which
+  // and every store is null for a document that says nothing, which
   // is byte-identical to what this line produced before (desk-gate G1).
-  const dparts = NuDeskDoc.deskPartsOf(DOC, GENRES), dfx = NuDeskDoc.boxFxOf(DOC);
-  for (const b of boxes) { b.parts = dparts; b.fx = dfx; }
+  // `dfx = NuDeskDoc.boxFxOf(DOC)` and `b.fx = dfx` CAME OFF HERE 2026-08-27,
+  // with the record-wide Character chain itself. Paul: *"We can get rid of
+  // Character right? We don't really use it any more do we?"* — the chip is
+  // dealt to the chairs (precompose.js deskThe), an already-saved `sound.fx`
+  // is folded onto them at the door (document.js normalize), and a box carries
+  // no record-wide chain any more. desk-doc.js's tombstone has the whole
+  // reason and the measurement.
+  const dparts = NuDeskDoc.deskPartsOf(DOC, GENRES);
+  for (const b of boxes) b.parts = dparts;
   // …EXCEPT WHERE THE SECTION GRID SAYS OTHERWISE (ideal/one-board.html §III:
   // "A word is a trim on the strip's fader for that section" — the reversal is
   // dated and quoted above). A box whose section carries a trim word for a voice gets its OWN

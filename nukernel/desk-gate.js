@@ -83,8 +83,10 @@ function boxesFor(doc) {
 // and not about this file.
 function pushBoxes(doc) {
   const boxes = boxesFor(doc);
-  const parts = DD.deskPartsOf(doc, GENRES), fx = DD.boxFxOf(doc);
-  for (const b of boxes) { b.parts = parts; b.fx = fx; }
+  const parts = DD.deskPartsOf(doc, GENRES);
+  // `b.fx = DD.boxFxOf(doc)` came off here 2026-08-27 with the record-wide
+  // Character chain itself (desk-doc.js's own tombstone has the whole reason).
+  for (const b of boxes) b.parts = parts;
   return boxes;
 }
 
@@ -119,6 +121,8 @@ console.log("desk-gate — the engineer, the board and the return\n");
 function stripDesk(doc) {
   const d = clone(doc);
   for (const v of d.voices) delete v.desk;
+  // `sound.fx` is deleted too, and deliberately AFTER its retirement: a
+  // stripped fixture must not depend on document.js normalize having run.
   if (d.sound) { delete d.sound.buses; delete d.sound.master; delete d.sound.fx; }
   return d;
 }
@@ -130,7 +134,6 @@ console.log("G1  absent is today — a document with no desk changes nothing");
   ok(DD.deskPartsOf(doc, GENRES) === null, "deskPartsOf is null");
   ok(DD.masterOf(doc) === null, "masterOf is null");
   ok(DD.busesOf(doc) === null, "busesOf is null");
-  ok(eq(DD.boxFxOf(doc), []), "boxFxOf is []");
   ok(DD.deskIsDefault(doc, GENRES) === true, "deskIsDefault");
   // the box push() built BEFORE this round (boxesOf alone, untouched) against
   // the box push() builds AFTER it (the recipe's four lines applied)
@@ -201,7 +204,10 @@ console.log("\nG3  every word in the document is the registry's own");
   doc.sound.buses = { rev: { name: "ambience", ret: "hall", color: "plate" },
                       echo: { name: "throw", time: "d8", fb: "more", tone: "dark" } };
   doc.sound.master = { drive: "warm", glue: "glue", tape: "tape", space: "room" };
-  doc.sound.fx = ["crunch"];
+  // `doc.sound.fx = ["crunch"]` CAME OFF HERE 2026-08-27. The record-wide
+  // Character chain is retired (desk-doc.js's tombstone has the reason); the
+  // chip's one owner is the strip, and this fixture's first voice already
+  // carries one — `desk.fx: ["chorus"]`, three assertions down.
   const pmKeys = F.PARTMIX.map((f) => f.key);
   const bad = [];
   for (const v of doc.voices) for (const k of Object.keys(v.desk || {}))
@@ -1881,30 +1887,52 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // ---- 2b · AND THE OTHER HALF OF THE SENTENCE. "That's bus and board
     // stuff" is an ADDRESS, not only a refusal, so the round is not done when
     // the chip is gone — it is done when the chain has a home that reaches the
-    // engine. `sound.fx` is the record's, ui/engineer.js draws it under the
-    // rack board, and desk-doc's `writeBoxFx` (a writer with no caller since
-    // the day it was written) is what it goes through. Asserted on the units
-    // because a control that writes a key nothing reads is the same failure in
-    // the other direction.
+    // engine. THAT HOME IS THE STRIP NOW (2026-08-27). This block asserted the
+    // record-wide `sound.fx` through `DD.writeBoxFx`/`DD.boxFxOf` and the
+    // record chip landing on every seated voice; Paul retired the control
+    // ("We can get rid of Character right? We don't really use it any more do
+    // we?") and FUTURE.md §5 had ruled the same. So the same three questions
+    // are asked of the door that replaced it — writable, reaching the units,
+    // and silent when nothing asks — plus the one the migration owes: a
+    // document saved with the retired key still sounds like itself.
     {
       const d2 = clone(TERMS);
-      d2.sound = { ...(d2.sound || {}) };
-      DD.writeBoxFx(d2, ["crunch"]);
-      ok(eq(DD.boxFxOf(d2), ["crunch"]),
-         "the RECORD's chain is writable through desk-doc — the door that had " +
-         "no caller has one", JSON.stringify(DD.boxFxOf(d2)));
+      DD.writeDesk(d2.voices[0], "fx", ["crunch"]);
+      ok(eq((d2.voices[0].desk || {}).fx, ["crunch"]),
+         "the CHAIR's chain is writable through desk-doc — one owner, and it " +
+         "is the strip", JSON.stringify((d2.voices[0].desk || {}).fx));
       const bx = pushBoxes(d2)[0];
       const u2 = deskUnits(mkUnits(), ADDR, bx, null, null);
       const ins = (u2.v0.inserts || []).map((i) => i.module);
       ok(ins.includes("insert_higain"),
-         "…and it REACHES THE UNITS: a record chip is an insert on every " +
-         "seated voice (crunch -> insert_higain), which is the whole of " +
+         "…and it REACHES THE UNITS: a chair's chip is an insert on that " +
+         "chair's voice (crunch -> insert_higain), which is the whole of " +
          "\"that's bus and board stuff\" said in the engine's own words",
          JSON.stringify(ins));
       const one = pushBoxes(clone(TERMS))[0];
       ok(!((deskUnits(mkUnits(), ADDR, one, null, null).v0.inserts || []).length),
          "…and the shipped chant, which asks for no chain, still gets not one " +
          "insert — absent is today on this axis too");
+      // THE OLD SAVE, RESOLVED ON READ. A session written before the
+      // retirement carries `sound.fx`; document.js normalize folds it onto
+      // every chair and deletes the key, so the record still sounds like
+      // itself and the retired key has no second life.
+      const d3 = clone(TERMS);
+      d3.sound = { ...(d3.sound || {}), fx: ["crunch"] };
+      NuDoc.normalize(d3);
+      ok(d3.sound.fx === undefined,
+         "…and a document saved with the retired `sound.fx` comes out of " +
+         "normalize without it — one owner, resolved at the door");
+      ok(d3.voices.every((v) => eq((v.desk || {}).fx, ["crunch"])),
+         "…with the chip on EVERY chair, which is exactly who the record-wide " +
+         "chain reached",
+         JSON.stringify(d3.voices.map((v) => (v.desk || {}).fx)));
+      const bx3 = pushBoxes(d3)[0];
+      const ins3 = (deskUnits(mkUnits(), ADDR, bx3, null, null).v0.inserts || [])
+        .map((i) => i.module);
+      ok(eq(ins3, ins),
+         "…and it renders the IDENTICAL insert chain the record-wide key did — " +
+         "the migration is a move, not a remix", JSON.stringify(ins3));
     }
 
     // ---- 3 · THE CYCLE IS REFUSED, IN THE MODEL AND ON THE PAGE.

@@ -1613,21 +1613,22 @@ table.nu-trims{ color: var(--ink); }
 .nu-rack ~ ul.nu-hint{ line-height: 1.35; }
 .nu-rack ~ ul.nu-hint > li{ margin-block: .35em; }
 
-/* THE RECORD-LEVEL BAND — the flow sentence, the character chain, the routing
-   note and the edge list are all true of the whole record rather than of one
-   strip, and they sit under the board because that is where the page already
-   keeps that kind of fact (keep like with like). It is under the board and not
-   inside a cell for a MEASURED reason: a `<select multiple>` of eleven chips is
-   eight rows tall, and inside the `its own gear` cell it took that row from
-   334px to 653px — a table row is as tall as its tallest cell, so bus 3's
-   single menu would sit under ~590px of white. That is the 2026-08-25 finding
-   again ("the main's cell was 489px … bus 1's cell — one menu, 62px — sat under
-   427px of white"), and it is the emptiness Paul asked about.
+/* THE RECORD-LEVEL BAND — DELETED 2026-08-27 with the last thing in it, and
+   the rule is written down rather than left standing over nothing. It read
 
-   A RULE, NOT A BOX: the band is prose plus one control, and a border on four
-   sides would make it look like a third table. */
-.nu-rec{ border-block-start: 1px solid var(--rule);
-  padding-block-start: .75em; margin-block-start: .75em; }
+     .nu-rec{ border-block-start: 1px solid var(--rule);
+       padding-block-start: .75em; margin-block-start: .75em; }
+
+   under the argument that "the flow sentence, the character chain, the routing
+   note and the edge list are all true of the whole record rather than of one
+   strip", plus a MEASURED reason for the band being under the board rather
+   than inside a cell: "a `<select multiple>` of eleven chips is eight rows
+   tall, and inside the `its own gear` cell it took that row from 334px to
+   653px". Three of the four moved out over the following days, and on
+   2026-08-27 the fourth — Character — was retired by Paul ("We can get rid of
+   Character right?") and dealt to the strips, which left a top rule under an
+   empty div. The measurement stands as the reason a tall multiselect never
+   goes back in a table cell; the class has nothing left to paint. */
 
 /* THE SENTENCE BETWEEN THE TWO BOARDS — DELETED 2026-08-27, and the reversal
    is written rather than the rule left standing. It read:

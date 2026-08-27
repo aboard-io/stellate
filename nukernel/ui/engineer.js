@@ -98,7 +98,14 @@ import { playing, playingSec, getPosition, passAt, rmsNow } from "../audio/live.
 // drops the chain anyway.
 import { channelFacts } from "../audio/plan.js";
 import { gid } from "./derive.js";
-import { sheet, selectEl } from "./selects.js";
+// `sheet` CAME OFF THIS IMPORT 2026-08-27, with the one control on this page
+// that took one. It drew the `master.fx` multiselect — the record's Character
+// chips — and Paul retired it ("We can get rid of Character right? We don't
+// really use it any more do we?"); the chain is dealt to each strip's own
+// three insert slots, which are `selectEl` menus. ui/selects.js still exports
+// `sheet` and ui/produce.js still calls it, so the widget lives; what ended is
+// this file's need for it.
+import { selectEl } from "./selects.js";
 
 const el = (tag, text, cls) => { const n = document.createElement(tag);
   if (text != null) n.textContent = text; if (cls) n.className = cls; return n; };
@@ -1082,39 +1089,29 @@ export function mount(parent, ctx) {
     }
     r.append(col("listening", listening()));
     p.append(r);
-    /* the record's own character — the one multiple-selection control
-       (sound.fx, every seated voice; kept from the previous board: it is a
-       RECORD fact, which is board stuff by Paul's own 2026-08-26 division,
-       and the 2026-08-27 sentence adds per-voice slots beside it rather than
-       retiring it) */
-    {
-      const rec = DD().boxFxOf(doc);
-      const wrap = el("div", null, "nu-rec");
-      // TWO HINT PARAGRAPHS CAME OFF THIS BLOCK, 2026-08-27 (the text diet,
-      // FUTURE.md §2). "…and what the whole record is dipped in — every
-      // seated voice at once." narrated what the label "character" plus the
-      // strip's position on the MAIN plate already say; "hold ⌘ (or Ctrl) to
-      // pick a second and a third…" taught the browser's own <select
-      // multiple> gesture (§5: "tap chips delete the ⌘-instruction"). The
-      // CONTROL itself stands — §5 marks the multiselect to die when bus
-      // chain slots absorb `sound.fx`, and that is a document/audio change
-      // the word wave does not own; only its prose died today.
-      sheet(wrap, {
-        key: "master.fx", label: "character",
-        multi: true, max: MAX_FX,
-        maxWhy: "three is the limit on the record's chain — the fourth was refused",
-        options: Object.keys(FX).map((k) => {
-          const on = rec.includes(k);
-          if (!on && rec.length >= MAX_FX)
-            return { value: k, label: FXLABEL[k] || k, disabled: true,
-                     why: "three is the limit on the record's chain" };
-          return { value: k, label: FXLABEL[k] || k };
-        }),
-        value: rec.map(String),
-        set: (list) => { DD().writeBoxFx(doc, list); ctx.changed(); },
-      });
-      p.append(wrap);
-    }
+    /* CHARACTER IS GONE (2026-08-27). Paul, listening on staging: *"We can get
+       rid of Character right? We don't really use it any more do we?"* — and
+       FUTURE.md §5's table had already ruled the same way, in the same breath:
+       "`character` (master multiselect) → the multiselect dies … dealt, not
+       embedded; tap chips delete the ⌘-instruction".
+
+       WHAT STOOD HERE was a `<select multiple>` on `master.fx` — the ONE
+       multiple-selection control on the page, and the only control left that
+       needed a browser gesture (hold ⌘) nothing else here needs. Its own
+       comment said the block would stand "until bus chain slots absorb
+       `sound.fx`", which named its end condition; what actually absorbed it
+       was the PER-VOICE slots Paul asked for the same day ("Add per voice
+       effects, up to three. Each has a wet dry mix and its own settings"),
+       which are drawn on every strip by `fxSlots` above.
+
+       MEASURED BEFORE IT WENT: "we don't really use it" was true of the hand
+       and false of the compiler — 27 of the 199 anchors wrote a `sound.fx`,
+       and audio/desk.js folded it into every seated voice's chain, costing
+       neoclassical 2.23 dB of RMS and ambient 1.96 dB of peak on the rendered
+       artifact. So the chip was not deleted, it was DEALT: precompose.js
+       `deskThe` writes it on each chair, document.js `normalize` folds any
+       saved one the same way, and the same chips now appear in the strips'
+       own three slots — visible per voice, and removable per voice. */
     // "the bar's volume slider is the room, not the record — unchanged,
     // unsaved" DELETED 2026-08-27 (text diet): the transport slider says
     // `room` itself now (index.html, §5) and the listening column beside the

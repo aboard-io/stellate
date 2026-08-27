@@ -77,7 +77,7 @@ export const NuDocument = window.NuDocument;
 // ---- where the sound axis lands on the desk (desk-doc.js) ----
 // The whole module under its own name, for the reason NuDocument takes one: it
 // is a wire, not a table — `channelVoicesOf`, `deskPartsOf`, `masterOf`,
-// `busesOf`, `boxFxOf`, `deskIsDefault` and the four writers. Destructuring ten
+// `busesOf`, `deskIsDefault` and the three writers. Destructuring nine
 // names into the file whose job is to be the ONE reader of window.* is how this
 // file stops being short enough to read.
 export const NuDeskDoc = window.NuDeskDoc;

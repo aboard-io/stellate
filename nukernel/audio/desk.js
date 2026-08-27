@@ -501,6 +501,24 @@ function sectionOf(sec) {
     room: sendOf(sec, "room", 0),
     aux: sendOf(sec, "aux", 0),
     eq: mergeEq(derivedSecEq(sec), sec.eq),
+    // THE SECTION'S OWN CHIP STAYS, AND IT IS NOT CHARACTER (2026-08-27).
+    // Two different facts shared this carrier and only one of them went.
+    //
+    //   · `sound.fx`, the RECORD-wide Character chain, was written onto every
+    //     box by ui/eight.js push() (`b.fx = boxFxOf(DOC)`) and reached every
+    //     seated voice. Paul: *"We can get rid of Character right? We don't
+    //     really use it any more do we?"* — that writer is gone, the chip is
+    //     dealt to each chair's own `desk.fx`, and it arrives below as `p.fxc`
+    //     through the same insertsFor door, in the same chain position, on the
+    //     same voices. desk-doc.js carries the tombstone.
+    //   · `box.fx` is the BAND page's section treatment — band-kit.js SECMIX
+    //     `dub: { echo: "wet", rev: "wet", fx: ["echo"] }`, "dub it out",
+    //     beside `lvl`, `rev` and `echo` on the same box, and compose.js:1364
+    //     era-filters it. That is a hand on one SECTION of one record, it has
+    //     its own owner and its own control, and deleting this line would have
+    //     silently taken the echo off "dub it out". (Measured before the line
+    //     was nearly deleted: `b.fx` has one live writer left, and it is that
+    //     table.)
     fx: (sec.fx || []).filter(k => FX[k]).slice(0, MAX_FX),
     auto: compileAuto(sec, g),
   };
@@ -859,6 +877,10 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     // layer's chips still come through fxChain at their declared defaults,
     // because neither carries slot knobs. Same door (insertsFor) for all
     // three, so a chip and a default insert end up the same shape.
+    // WHAT LEFT THIS LINE ON 2026-08-27 IS NOT A LIST, IT IS A WRITER: `S.fx`
+    // still carries the band page's section treatment and no longer carries
+    // the record's Character chain, because nothing writes that onto a box any
+    // more — see sectionOf above.
     const chips = seated && !u.stereo
       ? insertsFor(SE, u, [...(p ? p.fxc : []),
                            ...fxChain([...S.fx, ...((o && o.fx) || [])])]) : [];

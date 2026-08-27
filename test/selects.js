@@ -139,10 +139,23 @@ const MENUS = {
  * "Don't let me add effects to instruments. That's bus and board stuff." The
  * buses round obeyed the sentence's FIRST half by taking the chip off every
  * instrument, and its second half by giving it an address: the same eleven
- * chips, the same MAX_FX cap, are now `master.fx` on the board
- * (`ui/engineer.js:1119`), because that chain is the RECORD's — audio/desk.js
- * hands it to every seated voice — and not any one instrument's. The chips did
- * not go away; they moved.
+ * chips, the same MAX_FX cap, went to `master.fx` on the board, because that
+ * chain was the RECORD's — audio/desk.js handed it to every seated voice — and
+ * not any one instrument's. The chips did not go away; they moved.
+ *
+ * ...AND ON 2026-08-27 THEY MOVED BACK, TWICE IN ONE DAY AND BOTH TIMES BY
+ * PAUL — which is why this table is still empty and now for a different
+ * reason. First: *"I think we need to do what everyone else does with effects.
+ * Add per voice effects, up to three. Each has a wet dry mix and its own
+ * settings."* — the chip is on the instrument again, WITH slot knobs, and
+ * drawn on the board's strips. Then, of the record-wide control: *"We can get
+ * rid of Character right? We don't really use it any more do we?"* So
+ * `master.fx` is gone too, and the three slots that replaced it are ordinary
+ * `<select>`s — a slot allows ONE chip, so there is no multiple-selection
+ * control anywhere on the shipped page today. The law this table states is
+ * unchanged and still the point: a control that quietly becomes a multiselect
+ * is as much a fail as one that quietly becomes a menu, and `undeclaredMulti`
+ * below is what enforces it against an empty declaration.
  *
  * SO THIS FILE STOPS OWNING THEM, rather than following them. Everything this
  * gate surveys is `#app`-scoped ON PURPOSE (see the note over `survey`, and the
@@ -960,9 +973,11 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
       ? "every control that allows multiple selection is a <select multiple> " +
         JSON.stringify(missingMulti.map((k) => MULTI[k].what))
       : "no multiple-choice control is left inside #app (" + multis.length +
-        " <select multiple> there): the page's one multiselect moved OFF the " +
-        "instruments and onto the board as `master.fx` on 2026-08-26, where " +
-        "desk-gate owns its vocabulary, its cap and its placement");
+        " <select multiple> there): the chips moved OFF the instruments onto " +
+        "the board as `master.fx` (2026-08-26) and then off the board " +
+        "altogether (2026-08-27, Paul: \"We can get rid of Character right?\") " +
+        "into the strips' own three one-chip slots, which are <select>s — so " +
+        "the page draws none, and this asserts it rather than assuming it");
   else if (missingMulti.length)
     notes.push("     (the harness draws no engineer, so " +
       JSON.stringify(missingMulti) + " is index.html only)");
@@ -1029,9 +1044,11 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   const capKey = Object.keys(MULTI)[0] || null;
   const capMax = capKey ? MULTI[capKey].max : 0;
   if (!multis.length) notes.push("     (check 13 — the cap, driven — has no " +
-    "customer inside #app: the one capped multiselect moved onto the board as " +
-    "`master.fx` on 2026-08-26 and its cap is desk-gate's to drive now. See MULTI " +
-    "above. The driver is kept for the next one rather than deleted.)");
+    "customer anywhere: the one capped multiselect went to the board as " +
+    "`master.fx` on 2026-08-26 and was retired from it on 2026-08-27. MAX_FX " +
+    "still caps a chain — three slots per strip — and desk-gate G15 drives THAT " +
+    "cap on the control that now holds it. The driver is kept for the next " +
+    "multiselect rather than deleted.)");
   else {
   await p.evaluate(() => {
     const v = window.__D().voices.find((x) => x.kind === "line");

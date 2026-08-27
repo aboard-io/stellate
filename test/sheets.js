@@ -95,9 +95,14 @@ const VIEW_SHEETS = {
      `#app`-scoped — the `.nu-sheet` survey below walks the whole document —
      which is why this gate sees it at all and test/selects.js, which is
      `#app`-scoped on purpose, correctly stopped seeing it. */
-  "master.fx": "ui/engineer.js — the RECORD's character chips, under the board, " +
-            "declared by fields.js FX (capped at MAX_FX), gated by desk-gate G3 " +
-            "(the vocabulary) and G10 (the cap: six chips resolve to MAX_FX)",
+  /* `master.fx` CAME OFF THIS LIST 2026-08-27 with the control it declared.
+     It read: "ui/engineer.js — the RECORD's character chips, under the board,
+     declared by fields.js FX (capped at MAX_FX), gated by desk-gate G3 (the
+     vocabulary) and G10 (the cap: six chips resolve to MAX_FX)". Paul: *"We
+     can get rid of Character right? We don't really use it any more do we?"*
+     The chain is dealt to each chair's own three insert slots, which are
+     `<select>`s and so are not sheets at all — the same reason the five
+     neighbours named in the paragraph above are not on this list. */
   /* ...and the sheets harness's own multi sheet, 2026-08-24. The live control
    * that allows more than one answer is the engineer's character chips
    * (ui/engineer.js:360) and the engineer is not in that harness, so the SHAPE
@@ -177,24 +182,30 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     }
     return out;
   };
-  /* THE BOARD'S ONE MULTI SHEET WENT BEHIND A TAB, 2026-08-27, and this is the
-     tap that follows it there rather than a claim relaxed to fit.
+  /* THE MAIN PLATE IS BEHIND A TAB, 2026-08-27, and this is the tap that goes
+     there rather than a survey that quietly stops at the tab row.
 
      Paul, 2026-08-27: *"Put the effects buses and mains into special tabs
      after the voices -- now the board is one tabbed space that is consistent
-     and easy to understand."* The shipped page's ONE `<select multiple>` is
-     `master.fx` — the record's character chips — and it sits on the MAIN
-     plate, which since that sentence is on the page only while the main tab is
-     marked. Two checks below count it: "N sheet(s) left on the shipped page
-     and every one is a <select multiple>" and "N multi sheet(s) drawn — the
-     page has somewhere to allow multiple selection". Both would have answered
-     0 and failed, and BOTH WOULD HAVE BEEN RIGHT ABOUT THE PAGE THEY LOOKED
-     AT AND WRONG ABOUT THE PAGE: the sheet did not go away, it moved one tap.
-     `views` above is the #app tab row and the board is not in #app, so the
-     board's own tab is opened once, here, and stays open — `BOARDTAB` in
-     ui/engineer.js is a module `let` that survives the remount every #app tab
-     tap causes, so one tap holds for the whole survey. Measured: with the tap,
-     1 sheet and 1 multi sheet, exactly as before the move. */
+     and easy to understand."* `views` above is the #app tab row and the board
+     is not in #app, so the board's own tab is opened once, here, and stays
+     open — `BOARDTAB` in ui/engineer.js is a module `let` that survives the
+     remount every #app tab tap causes, so one tap holds for the whole survey.
+
+     WHAT THIS TAP WAS ADDED FOR IS GONE AND THE TAP IS NOT. It was written
+     the same day for `master.fx`, the record's Character chips: the page's ONE
+     `<select multiple>`, sitting on this plate, which two checks below counted
+     — and without the tap both would have answered 0, been right about the
+     page they looked at and wrong about the page. Hours later Paul retired the
+     control itself (*"We can get rid of Character right? We don't really use
+     it any more do we?"*; the chain is dealt to the strips' own one-chip
+     slots). The tap stays because the SURVEY is the claim, not the sheet: the
+     `.nu-sheet` walk, the `<select>`-provenance check and the no-silent-grey
+     walk all run over `document`, and a main plate that never opened is a
+     region of the shipped page none of them ever looked at. Measured after the
+     retirement: with the tap, 0 sheets and 0 multi sheets on the shipped page,
+     and 9 controls on this plate surveyed that would otherwise not be — the
+     seven master words, the record gain and the listening column. */
   if (REAL) await tapK("boardtab|bus|main");
 
   const union = (rows, key) => {
@@ -348,9 +359,19 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      to be": a sheet on the shipped page is a `<select multiple>`, and nothing
      else is drawn as one. The harness is the sheets tier's own page and keeps
      the plain count. */
+  /* ...AND THEN THERE WERE NONE, 2026-08-27. The paragraph above is still the
+     right law and its subject has gone: the last sheet on the shipped page was
+     `master.fx`, the record's Character chips, and Paul retired it — *"We can
+     get rid of Character right? We don't really use it any more do we?"* The
+     chain is dealt to the strips' own slots, which are `<select>`s. So the
+     claim is stated as what it always meant — a sheet on the shipped page is a
+     `<select multiple>` and nothing else is drawn as one — and it is now
+     vacuously true, which the count says out loud rather than hides. The
+     harness keeps the plain "more than none" count, so the shape assertions
+     below still have thirty sheets to be made about. */
   if (REAL) {
     const singles = sheetKeys.filter((k) => !multiKeys.includes(k));
-    check(shape.n > 0 && !singles.length,
+    check(!singles.length,
       shape.n + " sheet(s) left on the shipped page and every one is a " +
       "<select multiple> — single-choice sheets still drawn: " + JSON.stringify(singles));
   } else check(shape.n > 0, shape.n + " sheets drawn");
@@ -648,10 +669,12 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      control is a `<select>` now, and `alphabet.mode` was only the first of
      them. Measured 2026-08-25 on nukernel/index.html, walking every tab: the
      ONLY `.nu-sheet` left anywhere is the engineer's `eng.fx|<voice>` chips,
-     which is a `<select multiple>` and has no radio in it. (Since 2026-08-26
-     that one sheet is `master.fx`, under the board rather than on a voice's
-     tab — see VIEW_SHEETS — and the sentence is otherwise unchanged: it is
-     still one multiselect and still has no radio in it.) `devKey` came back
+     which is a `<select multiple>` and has no radio in it. (That one sheet
+     became `master.fx` under the board on 2026-08-26, and on 2026-08-27 Paul
+     retired it — *"We can get rid of Character right?"* — so the count is ZERO
+     now. The sentence the measurement was making is unchanged and is the
+     stronger for it: not one radio-group sheet is left to traverse anywhere on
+     the shipped page.) `devKey` came back
      null, `readDev` did `null.split("|")` and the whole gate CRASHED at
      line 404 — asserting nothing, including the twenty-odd checks after it.
 
@@ -736,8 +759,21 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
         .map((o) => o.value),
     };
   });
-  check(ms.n > 0, ms.n + " multi sheet(s) drawn — the page has somewhere to allow " +
-    "multiple selection");
+  /* ...ON THE PAGE THAT STILL HAS ONE, 2026-08-27. This was unconditional and
+     the shipped page's only multiselect was `master.fx` — the record's
+     Character chips, which Paul retired that day ("We can get rid of Character
+     right?"; the chain is dealt to the strips' own `<select>` slots). A claim
+     that the SHIPPED page must contain a multiple-selection control was never
+     the point: what this gate owns is that WHERE one is drawn it is a legend
+     plus one `<select multiple>` and never a row of checkboxes, and that is
+     asserted on the next line, on both pages. The count keeps being made on
+     the sheets HARNESS, which draws thirty of them and is where the tier's own
+     traversal claims live — the same split the radio-group reversal took at
+     line 645. */
+  if (!REAL) check(ms.n > 0, ms.n + " multi sheet(s) drawn — the page has somewhere " +
+    "to allow multiple selection");
+  else notes.push("     (the shipped page draws no <select multiple> since " +
+    "Character was retired, 2026-08-27 — the harness carries the count)");
   check(!ms.bad.length, "every multi sheet is a legend + ONE <select multiple> of at " +
     "least two rows, with no checkbox in it " + JSON.stringify(ms.bad.slice(0, 3)));
   check(!ms.inSheet, "no checkbox survives inside any sheet " + ms.inSheet);

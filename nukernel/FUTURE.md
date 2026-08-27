@@ -362,8 +362,11 @@ list equals the §5 table; every `disabled` control has a non-empty `.nu-why`.
 **Ships:** the merged console (`one-board.html` re-tokened): strips → buses →
 master; engineer pots fold in, sheets keep read-only mirrors; `lvl` enum
 retires into the fader; Time's level slider → master strip as record gain;
-character stage (a): bus chain slots + stereo-refusal inserts, `sound.fx`
-deleted, genre fx dealt by extraction at compose; section automation —
+~~character stage (a): bus chain slots + stereo-refusal inserts, `sound.fx`
+deleted, genre fx dealt by extraction at compose~~ — **SHIPPED 2026-08-27**,
+and the chips went to the CHAIRS rather than to bus chain slots (see §5's row:
+the bus route is not signal-identical for 33 of the 81 records that carry a
+chip, the strip route is identical for all 81); section automation —
 `voice.desk` per-section shape, `deskAt()`, the grid-and-lanes; master meter.
 **Files:** `ui/engineer.js` (becomes the board), `ui/eight.js` (mounts),
 `audio/desk.js`, `document.js`, `fields.js`, `desk-doc.js`, `desk-gate.js`,
@@ -502,8 +505,8 @@ and every heading change gets its AXES.md join (the Material precedent).
 | `cut` / `alone` | `mute` / `solo` | UX — "cut" collides with EQ cut three rows up |
 | `goes to` | `out`, value drawn as `→ main` | UX — routing as a glyph, deletes the narration |
 | `its own gear` | `bus FX` | UX — three cute words that don't say what the row is |
-| `character` (master multiselect) | bus chain slots on the board; the multiselect dies | engineer + Paul — dealt, not embedded; tap chips delete the ⌘-instruction |
-| `sound.fx` (record-wide chain) | gone | engineer — send-equivalence proven in fields.js:404-446 |
+| ~~`character` (master multiselect)~~ | **SHIPPED 2026-08-27** — the multiselect is gone; the chips are dealt to each chair's three insert slots, not to bus chains | engineer + Paul (*"We can get rid of Character right? We don't really use it any more do we?"*) — dealt, not embedded |
+| ~~`sound.fx` (record-wide chain)~~ | **SHIPPED 2026-08-27** — not written by precompose, not read by desk.js, folded onto the chairs at the door by document.js `normalize` for records already saved with one | engineer — and NOT by the send-equivalence route this row named: fields.js:404-446 proves insert≡send only for a SINGLE sendable chip into the same summing point, and 33 of the 81 records with a chip fail that test (24 `sweep`, which has no `mix`, and 9 two-chip chains, which have an order). The chip went to the STRIP, where the chain position and the summing point are the ones it already had, so the audio is identical. |
 | `→ room` (section strip) | `kit room` (section scope only) | engineer — desk.js:391 scopes it to drums; the surface must say so |
 | `what do you want to say?` | `notes` | UX — six verb chips + a stack; the heading is the noun |
 | `a group — aim it` | `group — pick an out` | UX — "aim" is cute |

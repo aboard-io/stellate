@@ -1169,8 +1169,33 @@
   // song.js and audio/desk.js both spend a branch normalizing away.
 
   // DRIVE — fx_bus `grit`: tanh drive with a level compensation and a mix that
-  // reaches 1 by grit=0.125, so the low settings are genuinely a hair of it.
-  const DRIVES = { hair: 0.12, warm: 0.28, dirt: 0.5, crush: 0.8 };
+  // reaches 1 by grit=0.125.
+  //
+  // THE WHOLE LADDER CAME DOWN ~40% ON 2026-08-27. Paul, listening: *"voices
+  // seem to be mixed really hot and saturated"*, and then, when asked to let it
+  // be measured first: *"Just turn down saturation my ears aren't wrong."*
+  //
+  //   word     was    now    tanh drive (1 + grit*2.6)    wet mix (min 1, grit*8)
+  //   hair     0.12   0.06   1.312x -> 1.156x             0.96 -> 0.48
+  //   warm     0.28   0.16   1.728x -> 1.416x             1.00 -> 1.00
+  //   dirt     0.50   0.32   2.300x -> 1.832x             1.00 -> 1.00
+  //   crush    0.80   0.62   3.080x -> 2.612x             1.00 -> 1.00
+  //
+  // THE SENTENCE ABOVE USED TO END "so the low settings are genuinely a hair of
+  // it" AND IT WAS NOT TRUE, which is why `hair` moves proportionally furthest.
+  // The mix reaching 1 by grit=0.125 does not make the low settings gentle — it
+  // makes them FULLY WET: at 0.12 the record was 96% a tanh at 1.31x, i.e. the
+  // whole signal through the shaper, with only the drive amount left to say
+  // "a hair" with. At 0.06 the blend is 48% and the drive 1.16x, so the word
+  // and the sound agree for the first time.
+  //
+  // THE LADDER STAYS MUSICALLY ORDERED AND crush STILL CRUSHES: 2.61x into a
+  // tanh at full wet is a squared-off wave, 8.34 dB of added drive against the
+  // old 9.77 — a step down, not a retirement, and still 2.3x the drive `hair`
+  // asks for. Nothing else needed re-measuring: audio/desk.js DRIVE_LU is keyed
+  // on the grit VALUE and interpolated, so the stage's own level compensation
+  // follows these numbers down without a second fit.
+  const DRIVES = { hair: 0.06, warm: 0.16, dirt: 0.32, crush: 0.62 };
   const DRIVELABEL = { hair: "a hair", warm: "warm", dirt: "dirt", crush: "crush" };
 
   // GLUE — the bus compressor that is ALREADY THERE. graph.js has run live.js's

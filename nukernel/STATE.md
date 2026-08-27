@@ -1,4 +1,59 @@
-# STATE — where the box actually is, 2026-08-26
+# STATE — where the box actually is, 2026-08-27
+
+## THE SATURATION CAME DOWN, 2026-08-27, AND CHARACTER CAME OFF THE BOARD
+
+Paul, listening on staging: *"voices seem to be mixed really hot and
+saturated"*. Asked to let it be measured first: **"Just turn down saturation my
+ears aren't wrong."** It was measured anyway — not to argue, but so the right
+thing got turned down — and his ears were not wrong.
+
+**WHERE THE SATURATION LIVES, established by rendering with each suspect
+neutralised in turn** (`nukernel/export/_satpress.js`, the float-PCM press, driven
+by `_satdrive.cjs`; six records, 8 bars, the shipped engine in the shipped
+worker):
+
+| stage | owner | value | reaches a modern record? |
+|---|---|---|---|
+| master `drive` → fx_bus `grit` | `fields.js` DRIVES → `desk.js` masterState | .12/.28/.5/.8 | **yes**, 39 of 199 anchors |
+| master `tape` → fx_bus `tsat` | `fields.js` TAPES → masterState | .18/.30/.45/.60 | **yes**, 118 of 199 |
+| fx_bus `tsat` default | state-engine `fxParams` | 0.18 | **yes**, every record |
+| master `glue` → fx_bus `comp` | `desk.js` GLUE_COMP | .2….95 | **yes**, all 199 |
+| fx_bus `clip` (Bram de Jong, 0.95) | `fx_bus.dsp`, unconditional | knee −6.47 dBFS, cap −2.94 | **yes, always — and it is the answer** |
+| lane gains | `to-engine.js` LEVEL_LANES | ×2.2 / ×2.8 | **yes — the biggest lever measured** |
+| `GLUES`' makeup, `CEILINGS`' push | `fields.js` | 1.2–2.2, 1.7/2.6 | **no.** `resolveMaster` has no caller; both render bit-identical when zeroed |
+| per-voice strip `sat`/`satMix` | state-engine STRIP_PROFILES | .15–.34 | **no authority.** `sat: 0` and `sat: 1, satDrive: 12, satMix: 1` both land within 0.14 dB |
+| `instruments.js` STRIPS (14 families) | `nukernel/instruments.js` | — | **never handed to the engine.** `SE.pitchedUnit` writes `strip: stripFor(...)` from the PARENT's three-profile table; a record with a harpsichord, two guitars and a choir carried only `lead`/`pad`/`drum` values |
+
+**THE MECHANISM.** Five of the six records peaked between −3.16 and −4.09 dBFS
+— *inside the soft clip's knee, within 1.2 dB of its asymptote*. The proof it
+is a clip and not a mix: trimming the input barely moves the peak and moves the
+**crest** instead. So "hot" and "saturated" are one fact, and the owner of the
+fact is the gain staging.
+
+**WHAT MOVED.** Two tables, each at its one owner, no global trim:
+`to-engine.js` LEVEL_LANES × 0.75 uniformly (−2.50 dB, clamps included — the
+clamps move or the cut is a rebalance), and `fields.js` DRIVES down ~40%
+(`hair` .12→.06, `warm` .28→.16, `dirt` .5→.32, `crush` .62 and still
+crushing). **Measured before/after, one build, one binary:** crest recovered
+**+1.15 to +1.83 dB** on the five records that were sitting on the clipper, RMS
+down 1.1–2.0 dB; `ambient`, which peaked at −9.4 and was never near the knee,
+took the trim and recovered 0.21 dB — the control the theory predicts.
+Audible-sized, not cosmetic. **`ABSENT IS TODAY` was expressly suspended:
+records render differently on purpose.**
+
+**AND CHARACTER CAME OFF THE BOARD.** *"Get rid of the character from the
+board."* The data path had already been retired that morning; what remained was
+the control. `ui/engineer.js`'s `master.fx` multiselect — the page's ONE
+`<select multiple>` and the only control that needed a ⌘ gesture — is gone,
+with the tombstone in place; `.nu-rec` went with it, and the main plate now
+reads drive / glue / tape / space / width / tilt / ceiling, record gain, meter,
+listening, and nothing empty. Every gate assertion that named it was **rewritten
+in place, not deleted**: `test/sheets.js` (the multiselect count split between
+the shipped page and the harness), `test/selects.js` (two notes), `desk-gate`
+G11 §2b, `test/tape-reach.test.js` (`boxFxOf` had already broken it), and R6,
+whose subject — "levelOf reproduces the four historical scalings" — is exactly
+what Paul asked to change, so it now asserts the SHAPE of the table and the
+UNIFORMITY of the turn-down instead of nine literals.
 
 ## FOUR GATES CAME BACK RED TODAY, AND IN ALL FOUR THE PAGE WAS RIGHT
 
@@ -765,10 +820,23 @@ sight.
   chip is only for what must be IN the path. Do you accept the reversal?"* Paul,
   2026-08-26: *"Don't let me add effects to instruments. That's bus and board
   stuff. But let me have up to four buses and a way to direct them to each
-  other."* The chips are off every instrument and live on the board as
+  other."* The chips came off every instrument and lived on the board as
   `master.fx`; the measurement that made the losing argument — an insert costs a
   MULTIPLE, a bus costs a CONSTANT — is now the reason there is a fourth bus.
-  **Nothing left to decide here.**
+  **AND IT REVERSED ONCE MORE, 2026-08-27, TWICE IN ONE DAY AND BOTH TIMES BY
+  PAUL.** First: *"I think we need to do what everyone else does with effects.
+  Add per voice effects, up to three. Each has a wet dry mix and its own
+  settings."* — the chip went back on the instrument, with slot knobs. Then, of
+  the record-wide control it had been moved to: *"We can get rid of Character
+  right? We don't really use it any more do we?"* Measured before it went: the
+  HAND did not use it (it was the page's only `<select multiple>`), the
+  COMPILER did — 27 of 199 anchors wrote a `sound.fx`, and `audio/desk.js`
+  folded it into the insert chain of every seated voice, costing neoclassical
+  2.23 dB of RMS and ambient 1.96 dB of peak on the rendered artifact. So it
+  was dealt rather than deleted: `precompose.js deskThe` writes the same chips
+  on every chair, `document.js normalize` folds an already-saved `sound.fx` the
+  same way at the door, and the rendered chain is identical. **Nothing left to
+  decide here.**
 
 ### Open, re-measured today
 

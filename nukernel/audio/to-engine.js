@@ -339,11 +339,66 @@ const WAVES = SE.WAVES;
  *            and the sampler's own trim stands (absent-is-today);
  *   model:   `mul` is modelForInstr's ring tax, applied INSIDE the clamp as it
  *            always was.
+ *
+ * ...AND IT HAPPENED, 2026-08-27, THE SAME DAY, AND IT IS A RE-LEVEL AND NOT A
+ * MERGE. Paul, listening: *"voices seem to be mixed really hot and
+ * saturated"*, and when asked to let it be measured first, *"Just turn down
+ * saturation my ears aren't wrong."* He is right and the mechanism is this
+ * table. EVERY ROW IS MULTIPLIED BY 0.75 — a uniform -2.50 dB, clamps and all,
+ * so the four lanes keep every relative balance they were separately fitted
+ * for and only the level into the master moves.
+ *
+ *   lane      scale          lo               hi
+ *   sampled   2.2  -> 1.65   0.15  -> 0.1125  1    -> 0.75
+ *   model     2.8  -> 2.1    0.35  -> 0.2625  0.92 -> 0.69
+ *   synth     2.8  -> 2.1    0.5   -> 0.375   0.92 -> 0.69
+ *
+ * THE CLAMPS MOVE WITH THE SCALE OR THE CUT IS NOT A CUT. Measured first with
+ * `scale` alone: every voice the old `lo` had been holding up simply sat on
+ * the floor and gave back nothing, so the trim was a trim for the loud voices
+ * and nothing for the quiet ones — which is a re-BALANCE, the one thing this
+ * change must not be.
+ *
+ * WHY THE GAIN STAGING IS THE SATURATION, WHICH IS THE WHOLE ARGUMENT FOR
+ * TOUCHING A LEVEL TABLE WHEN THE COMPLAINT WAS TIMBRE. fx_bus ends every
+ * record in the Bram de Jong soft clip at 0.95: LINEAR below 0.475 (-6.47
+ * dBFS), a saturating knee above it, asymptotic to 0.7125 (-2.94 dBFS). It is
+ * unconditional — `ceiling` never reached it (audio/desk.js says so, and the
+ * measurement below confirms it) — so it is on for all 199 anchors. Measured
+ * on the rendered artifact at 8 bars, five of six records peaked between -3.16
+ * and -4.09 dBFS: inside the knee, within 1.2 dB of the asymptote. What proves
+ * it is a clip and not a mix is that TRIMMING THE INPUT BARELY MOVES THE PEAK
+ * AND MOVES THE CREST INSTEAD — at -2.0 dB into this table the peak fell
+ * 0.10-0.24 dB while the crest ROSE 0.67-1.47 dB, and at -3.0 dB the crest rose
+ * 1.97 dB on steely. Roughly a dB of transient was being handed to the clipper
+ * per 2 dB of level, and getting it back is heard as "less saturated" rather
+ * than as "quieter", because that is exactly what it is.
+ *
+ * WHAT WAS RULED OUT FIRST, each by rendering with it neutralised (the press is
+ * nukernel/export/_satpress.js, driven by _satdrive.cjs):
+ *   * the per-voice channel strip's tanh — NO AUTHORITY. It is level-
+ *     preserving (`tanh(x*g)/g`) and the voices run far below its knee: sat 0
+ *     and sat 1/satDrive 12/satMix 1 both render within 0.14 dB of the shipped
+ *     value on every statistic.
+ *   * `GLUES`' makeup and `CEILINGS`' push — DO NOT REACH. fields.js
+ *     resolveMaster has no caller; audio/desk.js masterState reads its own
+ *     GLUE_COMP and never these. Both render bit-identical when zeroed.
+ *   * the tape head (`tsat`, on every record at 0.18) — REAL BUT SMALL:
+ *     removing it entirely returns 0.29-0.87 dB of RMS and 0.02-0.04 dB of the
+ *     2-8k/300-3k harmonic ratio. Left alone; turning down a stage that is not
+ *     the cause is theatre.
+ * The two that ARE turned down are this table and fields.js DRIVES, each at
+ * its own owner, and neither is a global trim.
  */
-const LEVEL_LANES = {
-  sampled: { dflt: null, scale: 2.2, lo: 0.15, hi: 1 },
-  model:   { dflt: 0.28, scale: 2.8, lo: 0.35, hi: 0.92 },
-  synth:   { dflt: 0.28, scale: 2.8, lo: 0.5,  hi: 0.92 },
+// EXPORTED SINCE 2026-08-27, for the reason the table exists at all: the gate
+// that holds it (test/tape-reach R6) used to carry a hand-written copy of the
+// four scalings, which is one table in two places the day either moves — and it
+// moved. It reads THIS now, and asserts the shape and the uniformity of the
+// turn-down instead of the literals.
+export const LEVEL_LANES = {
+  sampled: { dflt: null, scale: 1.65, lo: 0.1125, hi: 0.75 },
+  model:   { dflt: 0.28, scale: 2.1,  lo: 0.2625, hi: 0.69 },
+  synth:   { dflt: 0.28, scale: 2.1,  lo: 0.375,  hi: 0.69 },
 };
 export function levelOf(tone, lane, mul) {
   const L = LEVEL_LANES[lane] || LEVEL_LANES.model;

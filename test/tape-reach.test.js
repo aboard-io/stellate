@@ -36,9 +36,9 @@
 //       -> rendered fx_bus output. Absent = byte-identical to the old literal
 //       1; ret "off" makes the del return silent (difference RMS > 0, echo
 //       energy gone).
-//   R6  levelOf(): the one exported conversion reproduces all four historical
-//       scalings exactly (the byte-identity across the catalog is held by the
-//       stash-compared frozen fixture, test/levelof-frozen.fixture.js).
+//   R6  levelOf(): the four lanes are ONE table applied one way — the clamp
+//       last, `mul` inside it — and the 2026-08-27 turn-down moved every row
+//       by the SAME factor, so it is a level change and not a rebalance.
 "use strict";
 const path = require("path");
 const R = (p) => path.join(__dirname, "..", p);
@@ -112,8 +112,16 @@ function boxOf(doc) {
     GENRES[GK + i] = NuDoc.toGenre(doc, i, GENRES, []);
   });
   const boxes = NuDoc.boxesOf(doc, GK);
-  const parts = DD.deskPartsOf(doc, GENRES), fx = DD.boxFxOf(doc);
-  for (const b of boxes) { b.parts = parts; b.fx = fx; }
+  // `fx = DD.boxFxOf(doc)` and `b.fx = fx` CAME OFF HERE 2026-08-27, with the
+  // record-wide Character chain itself — Paul: *"We can get rid of Character
+  // right? We don't really use it any more do we?"* This mirrors ui/eight.js
+  // push() line for line and had to move with it: `boxFxOf` no longer exists,
+  // so the line threw `DD.boxFxOf is not a function` and took every render
+  // below with it. The chip's one owner is the chair's own `desk.fx` now
+  // (desk-doc.js carries the tombstone), which arrives through `p.fxc` on the
+  // same insertsFor door this file already renders through.
+  const parts = DD.deskPartsOf(doc, GENRES);
+  for (const b of boxes) b.parts = parts;
   return boxes[0];
 }
 const mkUnits = () => ({
@@ -308,27 +316,85 @@ await (async () => {
      rms(d).toExponential(3) + " > " + ra.toExponential(3));
 })();
 
-/* ---------- R6 · levelOf is the four scalings, exactly -------------------- */
-console.log("\nR6 — levelOf() reproduces the four scalings it replaced");
+/* ---------- R6 · the lane table, and that the turn-down was UNIFORM -------
+   THIS CHECK IS A REWRITE, DATED 2026-08-27, AND ITS SUBJECT MOVED RATHER THAN
+   ITS LAW. It read "all four lanes match their historical formulas" and drove
+   the four literals the consolidation had replaced — `gain*2.2` into [0.15, 1],
+   `(gain ?? .28)*2.8` into [0.35, .92] and [0.5, .92], the same times `mul` —
+   because the round that wrote it was proving a CONSOLIDATION moved no sound.
+
+   Then Paul listened: *"voices seem to be mixed really hot and saturated"*,
+   and, when asked to let it be measured first, *"Just turn down saturation my
+   ears aren't wrong."* The gain staging is the saturation on this box (the
+   whole argument is in the levelOf comment in audio/to-engine.js: the mix sits
+   inside fx_bus's soft-clip knee, and 2 dB off the front buys back 0.67-1.47 dB
+   of crest while the peak barely moves), so every row of the table went to
+   0.75 of itself — a uniform -2.50 dB, clamps included.
+
+   A GATE THAT ONLY HELD THE OLD NUMBERS WOULD HAVE NOTHING LEFT TO SAY, so the
+   two claims underneath it are stated instead, and both are stronger than the
+   literals were:
+
+     (a) THE SHAPE. levelOf reads the table and nothing else — `dflt` when the
+         tone is silent, times `scale`, times `mul`, clamped LAST into
+         [lo, hi] — driven per lane at nine gains, against the table itself
+         rather than against a copy of its numbers. A second copy of the
+         numbers here is how the two drift.
+     (b) THE TURN-DOWN WAS A LEVEL MOVE AND NOT A REBALANCE. Every one of the
+         nine numbers is exactly 0.75 of what it was on 2026-08-26, so the four
+         lanes — separately fitted against their own output trims, which is why
+         the rows were never merged — keep every ratio between them. If a later
+         hand nudges one lane on its own, the ratios move and this fails, which
+         is the finding this file exists to make: an insert that changes the
+         BALANCE while claiming to change the LEVEL.
+   Byte-identity across the catalog stays the frozen fixture's job
+   (test/levelof-frozen.fixture.js), and after this change it is a fixture of
+   the NEW table: the hashes deliberately differ from 2026-08-26's, which is
+   what Paul asked for. */
+console.log("\nR6 — the lane table, and the uniform -2.50 dB of 2026-08-27");
 {
   const clampL = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
-  const gains = [null, 0, 0.1, 0.28, 0.35, 0.5, 0.9, 1.3];
+  const T = TE.LEVEL_LANES;
+  const gains = [null, 0, 0.1, 0.28, 0.35, 0.5, 0.9, 1.3, 2];
   const bad = [];
   for (const g of gains) {
     const t = g == null ? {} : { gain: g };
-    const s = TE.levelOf(t, "sampled");
-    const wantS = g == null ? null : clampL(g * 2.2, 0.15, 1);
-    if (s !== wantS) bad.push("sampled g=" + g);
-    const m = TE.levelOf(t, "model");
-    if (m !== clampL((g == null ? 0.28 : g) * 2.8, 0.35, 0.92)) bad.push("model g=" + g);
-    const mm = TE.levelOf(t, "model", 1.35);
-    if (mm !== clampL((g == null ? 0.28 : g) * 2.8 * 1.35, 0.35, 0.92)) bad.push("model*mul g=" + g);
-    const sy = TE.levelOf(t, "synth");
-    if (sy !== clampL((g == null ? 0.28 : g) * 2.8, 0.5, 0.92)) bad.push("synth g=" + g);
+    for (const lane of ["sampled", "model", "synth"]) {
+      const L = T[lane];
+      const raw = g == null ? L.dflt : g;
+      const want = raw == null ? null : clampL(raw * L.scale, L.lo, L.hi);
+      if (TE.levelOf(t, lane) !== want) bad.push(lane + " g=" + g);
+      const wantM = raw == null ? null : clampL(raw * L.scale * 1.35, L.lo, L.hi);
+      if (TE.levelOf(t, lane, 1.35) !== wantM) bad.push(lane + "*mul g=" + g);
+    }
   }
-  ok(!bad.length, "all four lanes match their historical formulas at " +
-     gains.length + " gains each (byte-identity across the catalog is the " +
-     "frozen fixture's job)", bad.join(", "));
+  ok(!bad.length, "every lane is `dflt -> *scale -> *mul -> clamp(lo,hi)` off " +
+     "the table itself, at " + gains.length + " gains — no lane carries " +
+     "arithmetic of its own", bad.join(", "));
+  // the table as it stood on 2026-08-26, the morning of the turn-down
+  const WAS = {
+    sampled: { dflt: null, scale: 2.2, lo: 0.15, hi: 1 },
+    model:   { dflt: 0.28, scale: 2.8, lo: 0.35, hi: 0.92 },
+    synth:   { dflt: 0.28, scale: 2.8, lo: 0.5,  hi: 0.92 },
+  };
+  const F = 0.75, off = [];
+  for (const lane of Object.keys(WAS))
+    for (const k of ["scale", "lo", "hi"]) {
+      const want = WAS[lane][k] * F;
+      if (Math.abs(T[lane][k] - want) > 1e-9)
+        off.push(lane + "." + k + " " + T[lane][k] + " want " + +want.toFixed(6));
+    }
+  ok(!off.length, "…and every one of the nine numbers is EXACTLY 0.75 of what " +
+     "it was on 2026-08-26 (-2.50 dB, clamps included) — Paul, 2026-08-27: " +
+     "\"Just turn down saturation my ears aren't wrong\", and a uniform factor " +
+     "is what makes that a level change instead of a remix", off.join(", "));
+  // …and the four rows still say four different things, which is why the
+  // consolidation kept them apart in the first place.
+  ok(T.sampled.scale !== T.model.scale && T.model.lo !== T.synth.lo,
+     "…and the lanes are still DISTINCT after it — sampled " + T.sampled.scale +
+     " against model/synth " + T.model.scale + ", model floor " + T.model.lo +
+     " against synth " + T.synth.lo + " — a uniform trim must not merge rows " +
+     "that were fitted separately");
 }
 
 console.log("\n" + (fails ? "FAIL" : "ok") + " — " + checks + " checks, " + fails + " failures");

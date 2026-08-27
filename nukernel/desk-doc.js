@@ -16,8 +16,8 @@
 // that "touch" comes to mean 0.12 in one place and 0.15 in the other. desk-gate
 // G3 asserts it by walking the registries rather than a hand-written list.
 //
-// ABSENT IS TODAY. No `voice.desk`, no `sound.buses`, no `sound.master`, no
-// `sound.fx` and every function here answers null / null / null / [] — which is
+// ABSENT IS TODAY. No `voice.desk`, no `sound.buses` and no `sound.master`, and
+// every function here answers null / null / null — which is
 // exactly what ui/eight.js push() produced before this file existed, so
 // `sec.parts` stays null, `deskUnits` takes the untouched branch and the audio
 // is byte-identical. desk-gate G1 is the proof.
@@ -136,18 +136,24 @@
     const b = soundOf(doc).buses;
     return F.busesIsDefault(b) ? null : b;
   };
-  // the record-wide character chip -> every box's own `fx` (audio/desk.js
-  // sectionOf S.fx, which reaches every seated voice)
-  const boxFxOf = (doc) =>
-    (soundOf(doc).fx || []).filter((k) => Object.prototype.hasOwnProperty.call(F.FX, k))
-      .slice(0, F.MAX_FX);
+  /* `boxFxOf` AND `writeBoxFx` ARE GONE (2026-08-27). They read and wrote
+     `sound.fx`, the record-wide Character chain, which audio/desk.js sectionOf
+     handed to every seated voice's insert chain. Paul: *"We can get rid of
+     Character right? We don't really use it any more do we?"* — FUTURE.md §5
+     had already ruled it ("the multiselect dies … dealt, not embedded"), and
+     it is dealt: nukernel/precompose.js `deskThe` writes the anchor's chips
+     into each chair's own `desk.fx`, and document.js `normalize` folds any
+     already-saved `sound.fx` the same way at the door. The reader was
+     `(soundOf(doc).fx || []).filter(k => F.FX[k]).slice(0, F.MAX_FX)`; the
+     writer was `writeBoxFx(doc, list)`, and `deskIsDefault` counted it as a
+     fourth term. One fact, one owner, and the owner is the strip. */
 
   // THE ABSENT-IS-TODAY PREDICATE, one function so the gate and the view ask
   // the same question. True means: this document says nothing the desk can
   // hear, and pushing it must produce the byte-identical boxes it always did.
   const deskIsDefault = (doc, GENRES) =>
     deskPartsOf(doc, GENRES) == null && masterOf(doc) == null &&
-    busesOf(doc) == null && boxFxOf(doc).length === 0;
+    busesOf(doc) == null;
 
   /* ---------- ONE WRITER ---------------------------------------------------
      Every surface that edits a voice's strip goes through here, for the reason
@@ -190,13 +196,6 @@
     S.master = F.masterIsDefault(M) ? undefined : M;
     if (S.master === undefined) delete S.master;
   }
-  function writeBoxFx(doc, list) {
-    const S = (doc.sound = doc.sound || {});
-    const l = (list || []).filter((k) => Object.prototype.hasOwnProperty.call(F.FX, k))
-      .slice(0, F.MAX_FX);
-    if (l.length) S.fx = l; else delete S.fx;
-  }
-
-  return { channelsOf, channelVoicesOf, chairsOf, deskPartsOf, masterOf, busesOf, boxFxOf,
-           deskIsDefault, writeDesk, writeBus, writeMaster, writeBoxFx };
+  return { channelsOf, channelVoicesOf, chairsOf, deskPartsOf, masterOf, busesOf,
+           deskIsDefault, writeDesk, writeBus, writeMaster };
 });
