@@ -177,3 +177,72 @@ necessary and not sufficient. What actually separates the two builds is the
 three things this report leans on: *the same DOM node is still there*, *the
 sideways scroll survives*, and *no long task lands at a boundary*. If this file
 is ever revisited, those are the assertions to keep.
+
+---
+
+## THE BENCH (2026-08-27) — the rows themselves changed, the laws did not
+
+Paul, 2026-08-27: *"The original button structure with sliders was more novel
+and comprehensible"* — then, later the same day: *"Tighten it up. play/hold/
+rest, pitch offset −12 to 12, velocity 0 to 7, tightened to one line, and
+factor in different scales, and accidentals vs locking in scale degrees."*
+The design is `nukernel/ideal/composer.html` (the Bench) and this wave built
+it into `ui/eight.js`.
+
+**What changed.** The motif maker's three radios + two range sliders per step
+became ONE 52px line: `[count] [play/hold/rest as one segmented button]
+[a bipolar pitch bar] [a weight bar]`. The kit's checkboxes became velocity
+cells — one button per step whose fill's width is its level, number at the
+edge, tap cycling rest → ghost → hit → accent → rest, sideways drag writing
+any of the eight (`touch-action: pan-y` — sideways is the value, vertical is
+still the page). Every drag surface takes `setPointerCapture` and declares
+`touch-action` on the control only; the native `<input type=range>` stays
+inside each bar as the keyboard channel.
+
+**The data-model mappings (extraction, one owner each):**
+
+* KIND is the document's own `play[]` — `"n"/"h"/"r"` — unchanged; the
+  segmented button presses the same codes the radios pressed, same `data-k`.
+* PITCH is a VIEW over `deg` (scale degrees, −7..7). The bar displays
+  semitones −12..+12 through `toGenre(DOC, editSec()).scale` (document.js's
+  own resolution) and `K.pitch(deg, scale)` (the kernel's own arithmetic).
+  The ink ticks ARE the lattice; a drag lands only on them. LOCKED MODE ONLY
+  this wave — the accidentals toggle is drawn REFUSED with its reason (needs
+  the chromatic/cents alphabet, Phase 4).
+* VELOCITY: the document stays 0..9 (kernel's clamp; lanes' "ghost is a 2,
+  accent is a 9"); the view is Paul's 0..7. ONE mapping, stated once at
+  `V7/V9` in eight.js: `view = round(doc·7/9)`, `doc = round(view·9/7)` —
+  identity on the round trip, ghost 1↔1, hit 4↔5 (the kernel's mezzo),
+  accent 7↔9. Lanes add one clause: doc 1 (the old binary "on", defers to
+  the hand) reads as view 4 and is never written by this surface; doc 2 (the
+  kit's ghost) ↔ view 1. Old saves load unchanged.
+
+**What did NOT change — the laws this file exists for.** The count cells are
+still the playhead's only registry (`countCell`/`mark()`, untouched); nothing
+inside `[data-live]` is a control; `sync()` is still the one owner of every
+stated fact; `edited()` is still the only commit; the written staff and its
+reserved heights are untouched; playback rebuilds nothing. Re-proved after
+the cut: `test/motif-frozen.js` all green at 390 and 1400 (A3 byte-identical
+across two boundaries, A7 zero long tasks).
+
+**The new gate is `test/bench.test.js`** and it measures the RENDER: a drag
+lands only on lattice values and the badge prints the document's own
+semitone; the tap cycle hits 1/4/7 and never 0; the sixteen rows keep exact
+geometry across kind changes (52px each); a CDP TOUCH drag writes the value
+and scrolls the page zero pixels; the kit cycle writes doc 2/5/9/0 and never
+the deferring 1; five seconds of playback leaves the frozen half
+byte-identical.
+
+**The knob reaches the sound, measured on rendered audio** (AnalyserNode
+before `destination`, first-section window, edits made through the rendered
+bars): all-accent vs all-ghost = RMS 0.165 vs 0.047 (3.5×); the pitch+vel
+edit moved the averaged spectrum 2.2 dB/bin from the shipped record.
+
+**The wisdom rail** ships with what the page already computes: step, count
+word, degree name from the record's own scale, the pitch class held against
+the MODE, the velocity word. **Deferred:** role-under-the-chord — the prog is
+read cyclically per SONG bar, so per-step chord windows are not a fact this
+page computes yet; when `chordsOf`'s windows are surfaced, the rail gains
+that sentence. Also deferred: the development landing markers per row
+(composer.html ann. 6) and the kit's swing-displacement display (no swing
+display existed here; none was invented).

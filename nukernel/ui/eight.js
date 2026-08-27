@@ -4138,6 +4138,235 @@ function design(cell, d) {
   cell.play = order.map((i) => play[((i % n) + n) % n]);
 }
 
+/* ==========================================================================
+   THE BENCH (2026-08-27) — the step rows, rebuilt to nukernel/ideal/composer.html.
+
+   Paul, 2026-08-27: "The original button structure with sliders was more novel
+   and comprehensible." — and, later the same day: "Tighten it up. play/hold/
+   rest, pitch offset −12 to 12, velocity 0 to 7, tightened to one line, and
+   factor in different scales, and accidentals vs locking in scale degrees."
+
+   REVERSAL, WRITTEN DOWN: the three radios and the two 30px range sliders per
+   step (2026-08-25's rotation) are gone. Each step is now ONE 52px line —
+   [count] [play/hold/rest as one segmented button] [a bipolar pitch bar]
+   [a weight bar] — and the kit's checkboxes become velocity-fill cells. What
+   does NOT reverse: the tune still runs DOWN the page, the count cells are
+   still the playhead's registry (countCell / mark(), untouched), sync() is
+   still the one owner of every stated fact, `edited()` is still the only
+   commit, and the frozen-page law holds — nothing here is rebuilt or repainted
+   by the clock (test/motif-frozen.js A1/A3).
+
+   THE TOUCH LAW (composer.html "gestures"): every drag surface takes
+   setPointerCapture on pointerdown, reads its value against its own rect, and
+   declares touch-action on the control and only the control. The native
+   <input type=range> stays inside each bar as the KEYBOARD channel —
+   opacity 0, pointer-events none, focusable — one paint path for both.
+
+   ---- THE VELOCITY MAPPING, THE ONE PLACE IT IS SAID -----------------------
+   Paul's range is 0..7 ("velocity 0 to 7"). The DOCUMENT's range stays 0..9 —
+   kernel.js clamps velocity at 9 (":424, :2697"), substitutes 5 (mezzo) for a
+   missing one, and drums-kit.js's vocabulary is "a ghost is a 2 and an accent
+   is a 9". THE SCHEMA IS NOT TOUCHED: old saves load unchanged, and the view
+   maps at its own edge, both ways, here and nowhere else.
+     view = round(doc * 7/9)   doc = round(view * 9/7)
+   view→doc→view is the identity on all eight view values, and the three tap
+   words land on the document's own words: ghost view 1 ↔ doc 1 (motif) — hit
+   view 4 ↔ doc 5, the kernel's own mezzo — accent view 7 ↔ doc 9.
+   DRUM LANES carry two special document values the linear map may not touch:
+   1 is the old binary "on" that DEFERS to the hand (kernel.js reads it as
+   "kitVel / HAND_VEL / the melody's vel"), and 2 is the kit's own ghost. So a
+   lane READS 1 as view 4 (it sounds like the default hit) and 2 as view 1
+   (the ghost), and WRITES view 1 as doc 2 — a lane is never handed a 1 by
+   this surface, because writing the deferring value would be a bar whose
+   width lies about the loudness. */
+const V7 = (d) => Math.max(0, Math.min(7, Math.round(d * 7 / 9)));
+const V9 = (v) => Math.max(0, Math.min(9, Math.round(v * 9 / 7)));
+const laneV7 = (d) => (d <= 0 ? 0 : d === 1 ? 4 : d === 2 ? 1 : V7(d));
+const laneV9 = (v) => (v <= 0 ? 0 : v === 1 ? 2 : V9(v));
+
+/* THE PITCH BAR IS A VIEW OVER `deg`, AND THE LATTICE IS THE RECORD'S OWN
+   ALPHABET — extracted, never typed. The document stores scale DEGREES
+   (kernel vocabulary, clamped -7..7 by the designing buttons); the bar
+   displays them at their SEMITONE positions, −12..+12 from the marked zero,
+   read through `toGenre(DOC, editSec()).scale` — document.js's own resolution
+   (A.scale, else the mode) — and `K.pitch(deg, scale)`, the kernel's own
+   degree arithmetic. ONE OWNER: the Bench grows no scale select of its own
+   (composer.html's select was a demo); change the Alphabet axis and the ticks
+   redraw on the next draw(). A non-heptatonic alphabet (pentatonic, whole
+   tone) maps some of deg −7..7 past ±12 semitones; those detents are not
+   drawn and a drag cannot land on them, but the KEYBOARD channel (the native
+   input, in deg units) still walks the document's full range, so no saved
+   value is unreachable.
+   LOCKED MODE ONLY THIS WAVE: composer.html's "accidentals allowed" needs the
+   chromatic/cents alphabet extension (Phase 4), so the toggle is drawn
+   REFUSED with its reason (benchRefusal, below) per the no-silent-grey law. */
+function benchEnv() {
+  const SC = (genreFor(editSec()).scale) || MODES[DOC.alphabet.mode] || MODES.aeolian;
+  const L = SC.length;
+  const semi = (d) => K.pitch(d, SC);
+  const pct = (s) => (Math.max(-12, Math.min(12, s)) + 12) / 24 * 100;
+  const dets = [];
+  for (let d = -7; d <= 7; d++) {
+    const s = semi(d);
+    if (s >= -12 && s <= 12) dets.push({ d, s });
+  }
+  // the degree said as a musician says it: 1̂..L̂, with the octave marked
+  const degName = (d) => {
+    const o = Math.floor(d / L), n = ((d % L) + L) % L + 1;
+    return n + "̂" + (o > 0 ? "+8va" : o < 0 ? "₋8va" : "");
+  };
+  return { SC, L, semi, pct, dets, degName };
+}
+
+/* ---- the bipolar pitch bar: fill grows from the marked zero; the ink ticks
+   ARE the lattice and only they land; the badge prints degree + semitones ---- */
+function benchPitch(key, aria, get, set, commitFn, ENV) {
+  const wrap = el("span", null, "nu-pit");
+  const bar = el("i", null, "nu-pb");
+  for (const t of ENV.dets) {
+    const tk = el("i", null, "nu-pbt");
+    tk.style.insetInlineStart = ENV.pct(t.s) + "%";
+    bar.append(tk);
+  }
+  const fill = el("i", null, "nu-pbf");
+  const zero = el("i", null, "nu-pbz");
+  bar.append(fill, zero);
+  const badge = el("b", null, "nu-pbb");
+  const inp = document.createElement("input");
+  inp.type = "range"; inp.min = "-7"; inp.max = "7"; inp.step = "1";
+  inp.className = "nu-pbin"; inp.dataset.k = key;
+  inp.setAttribute("aria-label", aria);
+  wrap.append(bar, badge, inp);
+  function paint() {
+    const v = get();
+    inp.value = String(v);
+    const s = ENV.semi(v), p = ENV.pct(s);
+    if (s > 0) { fill.style.display = ""; fill.style.insetInlineStart = "50%";
+                 fill.style.inlineSize = (p - 50) + "%"; }
+    else if (s < 0) { fill.style.display = ""; fill.style.insetInlineStart = p + "%";
+                      fill.style.inlineSize = (50 - p) + "%"; }
+    else fill.style.display = "none";
+    badge.textContent = "";
+    badge.append(el("span", ENV.degName(v)),
+                 el("small", (s > 0 ? "+" : "") + s));
+    badge.style.insetInlineStart = Math.max(10, Math.min(90, p)) + "%";
+    inp.setAttribute("aria-valuetext",
+      "degree " + ENV.degName(v) + ", " + (s >= 0 ? "+" : "") + s + " semitones");
+  }
+  // the touch law: capture, value against the bar's own rect, land on detents
+  let moved = false, x0 = 0, dirty = false;
+  const landAt = (e) => {
+    const r = bar.getBoundingClientRect();
+    const f = Math.max(0, Math.min(1, (e.clientX - r.left) / (r.width || 1)));
+    const sT = f * 24 - 12;
+    let best = ENV.dets[0], bd = 99;
+    for (const t of ENV.dets) {
+      const d2 = Math.abs(t.s - sT);
+      if (d2 < bd) { bd = d2; best = t; }
+    }
+    if (best && get() !== best.d) { set(best.d); paint(); dirty = true; }
+  };
+  wrap.addEventListener("pointerdown", (e) => {
+    moved = false; x0 = e.clientX; dirty = false;
+    try { wrap.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  wrap.addEventListener("pointermove", (e) => {
+    if (!wrap.hasPointerCapture || !wrap.hasPointerCapture(e.pointerId)) return;
+    if (!moved && Math.abs(e.clientX - x0) < 6) return;
+    moved = true; landAt(e);
+  });
+  wrap.addEventListener("pointerup", (e) => {
+    if (!moved) landAt(e);                       // a tap jumps to that detent
+    if (dirty) commitFn();
+    dirty = false;
+  });
+  inp.addEventListener("input", () => { set(+inp.value); paint(); });
+  inp.addEventListener("change", () => commitFn());
+  return { el: wrap, paint, input: inp };
+}
+
+/* ---- the weight bar: width is the level, 0..7 view units; tap cycles
+   ghost(1) → hit(4) → accent(7) → back where it started, NEVER to 0 —
+   rest is the kind button's job (composer.html, "the velocity question") ---- */
+function benchVel(key, aria, get, set, commitFn) {
+  const wrap = el("span", null, "nu-velA");
+  const bar = el("i", null, "nu-vab");
+  const fill = el("i", null, "nu-vaf");
+  bar.append(fill);
+  const num = el("b", null, "nu-van");
+  const inp = document.createElement("input");
+  inp.type = "range"; inp.min = "0"; inp.max = "7"; inp.step = "1";
+  inp.className = "nu-vain"; inp.dataset.k = key;
+  inp.setAttribute("aria-label", aria);
+  wrap.append(bar, num, inp);
+  function paint() {
+    const v = get();
+    inp.value = String(v);
+    wrap.dataset.v = v;
+    const f = v / 7;
+    fill.style.display = v ? "" : "none";
+    fill.style.inlineSize = "calc(8px + (100% - 8px) * " + f.toFixed(4) + ")";
+    num.textContent = String(v);
+    wrap.classList.toggle("gh", v === 1);
+    wrap.classList.toggle("acc", v >= 7);
+    wrap.classList.toggle("hi", v >= 6);
+    if (v >= 6) { num.style.insetInlineStart = ""; num.style.insetInlineEnd = "8px"; }
+    else { num.style.insetInlineEnd = "";
+           num.style.insetInlineStart =
+             "calc(8px + (100% - 8px) * " + f.toFixed(4) + " + 5px)"; }
+    inp.setAttribute("aria-valuetext", "velocity " + v +
+      (v === 0 ? ", silent" : v === 1 ? ", ghost" : v >= 7 ? ", accent" : ", hit"));
+  }
+  let cycStart = 1;                    // where the 4th tap returns to; never 0
+  const cycNext = (v) => {
+    if (v === 1) return 4;
+    if (v === 4) return 7;
+    if (v === 7) return cycStart > 0 ? cycStart : 1;
+    cycStart = v; return 1;
+  };
+  const write = (v) => { if (get() !== v) { set(v); paint(); dirty = true; } };
+  let moved = false, x0 = 0, dirty = false;
+  wrap.addEventListener("pointerdown", (e) => {
+    moved = false; x0 = e.clientX; dirty = false;
+    try { wrap.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  wrap.addEventListener("pointermove", (e) => {
+    if (!wrap.hasPointerCapture || !wrap.hasPointerCapture(e.pointerId)) return;
+    if (!moved && Math.abs(e.clientX - x0) < 6) return;
+    moved = true;
+    const r = bar.getBoundingClientRect();
+    const v = Math.round((e.clientX - r.left) / (r.width || 1) * 7);
+    write(Math.max(0, Math.min(7, v)));
+  });
+  wrap.addEventListener("pointerup", () => {
+    if (!moved) write(cycNext(get()));           // the tap cycle
+    if (dirty) commitFn();
+    dirty = false;
+  });
+  inp.addEventListener("input", () => { set(+inp.value); paint(); });
+  inp.addEventListener("change", () => commitFn());
+  return { el: wrap, paint, input: inp };
+}
+
+/* THE REFUSED TOGGLE — composer.html draws a lock with two states; only the
+   locked state is buildable today, so the other is refused WITH its reason
+   (the no-silent-grey law; a control that cannot reach the sound is drawn
+   refused, never drawn dead). */
+function benchRefusal(parent, key, scaleWord) {
+  const p = el("p", null, "nu-benchbar");
+  p.append(el("span", "pitch lattice — the record's own alphabet (" +
+    scaleWord + "; set under 2 · the alphabet)", "nu-hint"));
+  const b = document.createElement("button");
+  b.type = "button"; b.disabled = true; b.dataset.k = key;
+  b.dataset.why = "accidentals need the chromatic alphabet — a cents channel " +
+    "beside deg (the Phase 4 extension) — not wired";
+  b.append(el("span", "♯ accidentals"));
+  p.append(b, el("span",
+    "accidentals need the chromatic alphabet — not wired; the bar locks to the scale",
+    "nu-why"));
+  parent.append(p);
+}
+
 /* ---------- THE MAKER, ONE PER CELL, UNDER ITS OWN STAFF ----------------
    One grid per CELL, inside that cell's own block in the Material axis
    (motifs(), above) and directly under the staff it writes, editing the
@@ -4242,31 +4471,83 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
      (`vel(p,i)`, kernel.js:301), which is why a fresh step is not silent. */
   const velOf = (i) => (H.vel ? (H.vel[i] | 0) : 0);
   const velArr = () => (H.vel || (H.vel = H.deg.map(() => 0)));
+  // THE RECORD'S OWN LATTICE, once per build — the alphabet only moves through
+  // the Alphabet axis, and that is a full draw() (see benchEnv, above)
+  const ENV = benchEnv();
+  // the note a hold row is still ringing — the same cyclic walk holdOK makes
+  const soundingAt = (i) => {
+    for (let k = 0; k <= n; k++) {
+      const j = ((i - k) % n + n) % n;
+      if (H.play[j] === "n") return j;
+      if (H.play[j] === "r") return null;
+    }
+    return null;
+  };
   function sync() {
     for (let i = 0; i < steps.length; i++) {
       const s2 = steps[i];
       if (!s2) continue;
+      const k = H.play[i];
       for (const [code] of PLAYS) {
-        const b = s2.play[code];
+        const b = s2.seg[code];
         if (!b) continue;
-        b.checked = H.play[i] === code;
+        b.setAttribute("aria-pressed", String(k === code));
         if (code === "h") b.disabled = !holdOK(i);
       }
-      const live = H.play[i] === "n";
-      s2.deg.disabled = !live;
-      s2.deg.value = String(H.deg[i]);
-      s2.out.textContent = live ? String(H.deg[i]) : "–";
+      // KIND NEVER CHANGES THE ROW'S GEOMETRY (composer.html ann. 4): a rest
+      // or a hold fades its two bars behind one measured line saying why they
+      // sleep — classes and opacity only, one 52px line, sixteen times, so the
+      // thumb's map of the bar holds. test/bench.test.js measures it.
+      s2.row.classList.toggle("is-rest", k === "r");
+      s2.row.classList.toggle("is-hold", k === "h");
       // A VELOCITY IS THE FORCE OF AN ATTACK, so it is live under exactly the
       // condition the degree is: a rest has no attack and a hold is the note
       // before it still sounding. Same `live`, computed once — the reason
       // sync() exists at all is that there is one copy of these rules.
-      s2.vel.disabled = !live;
-      s2.vel.value = String(velOf(i));
-      s2.velOut.textContent = live ? "v" + velOf(i) : "";
+      const live = k === "n";
+      s2.pit.input.disabled = !live;
+      s2.vel.input.disabled = !live;
+      s2.pit.paint();
+      s2.vel.paint();
+      const src = k === "h" ? soundingAt(i) : null;
+      s2.why.textContent = k === "r" ? "rest — nothing sounds"
+        : k === "h" ? "held — " + (src != null
+            ? ENV.degName(H.deg[src]) + " still rings" : "silence holds")
+        : "";
     }
   }
+  /* THE WISDOM RAIL — one line, EXISTING computed facts only: the degree name
+     from the record's own scale, the pitch class held against the record's
+     MODE (the chord alphabet — genres.js MODES, the same table chordGrid
+     reads), and the velocity word. CHORD WINDOWS PER STEP ARE DEFERRED: the
+     prog is read cyclically per SONG bar (kernel `at(g.prog, bar)`), so which
+     chord sounds under step 7 depends on where the loop is standing — a fact
+     this page does not compute, and the rail will not compute by hand
+     (EXTRACTION law). When chordsOf's windows are surfaced here, the rail
+     gains its role-under-the-chord sentence. */
+  const modeSet = new Set((MODES[DOC.alphabet.mode] || MODES.aeolian)
+    .map((x) => ((x % 12) + 12) % 12));
+  const rail = el("p", "tap a row — this rail says what the step is doing", "nu-wisdom");
+  const speak = (i) => {
+    const k = H.play[i], beat = Math.floor((i % 16) / 4) + 1;
+    const at = "step " + (i + 1) + " (beat " + beat +
+      (i % 4 !== 0 ? " · “" + COUNT[i % 16] + "”" : "") + ")";
+    if (k === "r") { rail.textContent = at + " · rest — nothing sounds"; return; }
+    const src = k === "n" ? i : soundingAt(i);
+    if (src == null) { rail.textContent = at + " · silence holds"; return; }
+    const d = H.deg[src], s = ENV.semi(d), pc = ((s % 12) + 12) % 12;
+    const v = V7(velOf(src));
+    rail.textContent = at + (k === "h" ? " · held — " : " · ") +
+      ENV.degName(d) + " (" + (s > 0 ? "+" : "") + s + " st) — " +
+      (modeSet.has(pc) ? "in the mode" : "the scale's own colour, outside the mode") +
+      " · vel " + v + (v >= 7 ? " (accent)" : v === 1 ? " (ghost)" : v === 0 ? " (silent)" : "");
+  };
   // ONE COMMIT FOR EVERY CONTROL IN THIS GRID, and it is not `changed()`.
   const commit = () => { sync(); edited(cellName); };
+  // the lattice pointer + the refused accidentals toggle, ABOVE the rows it
+  // governs — a refusal you meet before the control it explains
+  benchRefusal(parent, seq + cellName + "-acc",
+    String(DOC.alphabet.scale || DOC.alphabet.mode || "aeolian"));
   for (let bar = 0; bar < bars; bar++) {
     if (only != null && bar !== only) continue;
     const t = el("table");
@@ -4295,25 +4576,17 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
        of them cost more than the readouts do; the glyph alone is the whole of
        what the eye needs once, and `.nu-vh` says the word to a screen reader
        (which also hears it in every radio's own aria-label). */
+    /* THE BENCH'S OWN SHAPE (2026-08-27, see the block above hookGrid): the
+       three radio columns and the two slider columns become three cells —
+       kind, pitch, weight — one 52px line per step. The header stays one row
+       of words; `.nu-bench` is the geometry's name in nu.css.
+       (VELOCITY WAS A COLUMN OF SLIDERS here from 2026-08-25's rotation —
+       "Add velocity to motif sliders" — and the column survives as the weight
+       BAR: same question, same cell, a control whose width IS the answer.)
+       `.nu-bench` is added AFTER stepGrid below — stepGrid assigns className. */
     const head = el("tr");
     head.append(el("th", bars > 1 ? "m" + (bar + 1) : ""));
-    for (const [, label] of PLAYS) {
-      const th = el("th");
-      th.title = label.slice(2);
-      th.append(el("span", label.slice(0, 1)), el("span", " " + label.slice(2), "nu-vh"));
-      head.append(th);
-    }
-    /* ---------- VELOCITY IS A COLUMN, WHICH IS WHAT ROTATING BOUGHT ---------
-       Paul, 2026-08-25: *"Add velocity to motif sliders."* It shipped that
-       evening as a second VERTICAL slider squeezed into the degree's own cell,
-       for a reason that was true of the old shape and is not true of this one:
-       "every row of this grid is floored at 36px by nu.css `.nu-grid td`, so a
-       fourth row would have cost 36px per measure". Rotated, the second
-       question is a second COLUMN — one row per step, degree in one column,
-       velocity in the next — which costs the block no height at all and is the
-       shape the recipe named. The two 16px-wide sliders sharing a 34px content
-       box are gone with it. */
-    for (const w of ["deg", "vel"]) {
+    for (const w of ["kind", "pitch", "vel"]) {
       const th = el("th");
       th.append(el("span", w));
       head.append(th);
@@ -4333,59 +4606,74 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
       const th = countCell(COUNT[j]);
       if (mine) mine.cells[i] = th;
       tr.append(th);
-      const ref = steps[i] = { play: {}, deg: null, out: null };
+      const ref = steps[i] = { row: tr, seg: {}, pit: null, vel: null, why: null };
+      /* THE KIND IS ONE SEGMENTED BUTTON (composer.html: "One segmented kind
+         button"). The three radios' keys are kept verbatim on the three
+         segments, so focus survives the change of face (PROGRAM.md §2.2).
+         `aria-pressed` is sync()'s — the loop builds and never states. */
+      const segTd = el("td", null, "nu-kindTd");
+      const sg = el("span", null, "nu-seg");
+      sg.setAttribute("role", "group");
+      sg.setAttribute("aria-label", cellName + " step " + (i + 1) + " kind");
       PLAYS.forEach(([code, label]) => {
-        const td = el("td");
-        const b2 = document.createElement("input");
-        b2.type = "radio"; b2.name = seq + cellName + "play" + i; b2.value = code;
+        const b2 = document.createElement("button");
+        b2.type = "button"; b2.className = "nu-segb";
         b2.dataset.k = seq + cellName + "play" + i + code;
+        b2.append(el("span", label.slice(0, 1)),
+                  el("span", " " + label.slice(2), "nu-vh"));
         b2.setAttribute("aria-label", cellName + " step " + (i + 1) + " " + label.slice(2));
-        ref.play[code] = b2;                    // `checked` / `disabled`: sync()
-        b2.addEventListener("change", () => {
+        ref.seg[code] = b2;               // `aria-pressed` / `disabled`: sync()
+        b2.addEventListener("click", () => {
+          if (b2.disabled || H.play[i] === code) return;
           H.play[i] = code;
           // ...and a rest orphans the holds behind it, so they go with it —
           // leaving them would be a document that says "keep sounding the
           // silence", which the compiler would have to guess about
           if (code === "r")
             for (let k = i + 1; k < n && H.play[k] === "h"; k++) H.play[k] = "r";
-          commit();
+          commit(); speak(i);
         });
-        td.append(b2); tr.append(td);
+        sg.append(b2);
       });
-      // A HOLD HAS NO PITCH OF ITS OWN AND A REST HAS NONE AT ALL (Paul:
-      // "don't let me set degree on held or rest notes"). The slider is
-      // disabled unless the step is a note — say "note" first and it comes
-      // live. It used to convert the step for you, which made every mis-drag
-      // a new note. (`disabled` and the "–" readout are sync()'s now, so that
-      // saying "rest" here refuses the slider beside it WITHOUT rebuilding the
-      // grid the finger is standing on.)
-      //   AND IT IS HORIZONTAL NOW, which is the whole of the answer to "make
-      // motif sliders much less tall" (Paul, 2026-08-25). ROTATING ANSWERED IT
-      // — the control that was 56px of height per row is 30px of height in a
-      // 36px row, and the fifteen degrees are told apart along the row's own
-      // width instead of stacked up it. It is deliberately NOT also shortened:
-      // the request was about a picture that was too tall, and the picture is
-      // not that shape any more.
-      const x = range(seq + cellName + "deg" + i, H.deg[i],
-        (v) => { H.deg[i] = v; }, -7, 7, 1,
-        cellName + " step " + (i + 1) + " degree", "nu-hr-deg", null, null, commit);
-      ref.deg = x.r; ref.out = x.out;
-      // the `v` is part of the READOUT and therefore part of `fmt`, so that
-      // the number your finger is dragging and the number sync() writes are
-      // said in the same words — two spellings of one value is how a readout
-      // starts disagreeing with itself mid-drag
-      const y = range(seq + cellName + "vel" + i, velOf(i),
-        (v) => { velArr()[i] = v; }, 0, 9, 1,
-        cellName + " step " + (i + 1) + " velocity", "nu-hr-vel",
-        (v) => "v" + v, null, commit);
-      y.out.className = "nu-vel-out";
-      ref.vel = y.r; ref.velOut = y.out;
-      const td = el("td"); td.append(x.r, x.out); tr.append(td);
-      const td2 = el("td"); td2.append(y.r, y.out); tr.append(td2);
+      segTd.append(sg); tr.append(segTd);
+      /* THE PITCH IS A BAR, NOT A SLIDER — a view over `deg` (the block above
+         hookGrid says the whole mapping). A hold row draws the note still
+         ringing and a rest row sleeps, both faint and neither writable —
+         "don't let me set degree on held or rest notes" (Paul) survives as the
+         setter's own guard plus sync()'s disable of the keyboard channel. */
+      const pitTd = el("td", null, "nu-pitTd");
+      ref.pit = benchPitch(seq + cellName + "deg" + i,
+        cellName + " step " + (i + 1) + " degree",
+        () => { const src = H.play[i] === "n" ? i : soundingAt(i);
+                return src == null ? 0 : H.deg[src]; },
+        (v) => { if (H.play[i] === "n") H.deg[i] = v; },
+        () => { commit(); speak(i); }, ENV);
+      pitTd.append(ref.pit.el);
+      // ...and the one measured line that says why a faded row sleeps
+      const mw = el("span", null, "nu-mutewhy");
+      ref.why = mw;
+      pitTd.append(mw);
+      tr.append(pitTd);
+      /* THE WEIGHT IS A BAR TOO — 0..7 at the view, 0..9 in the document (the
+         one mapping, stated once at V7/V9). Tap cycles ghost/hit/accent and
+         never lands on 0; drag writes the other levels. */
+      const velTd = el("td", null, "nu-velTd");
+      ref.vel = benchVel(seq + cellName + "vel" + i,
+        cellName + " step " + (i + 1) + " velocity",
+        () => { const src = H.play[i] === "n" ? i
+                  : H.play[i] === "h" ? soundingAt(i) : null;
+                return src == null ? 0 : V7(velOf(src)); },
+        (v) => { if (H.play[i] === "n") velArr()[i] = V9(v); },
+        () => { commit(); speak(i); });
+      velTd.append(ref.vel.el);
+      tr.append(velTd);
+      tr.addEventListener("click", () => speak(i));
       t.append(tr);
     }
     stepGrid(parent, t);          // sixteen ROWS: no pane, and nothing to swipe
+    t.classList.add("nu-bench");  // after stepGrid — it ASSIGNS className
   }
+  parent.append(rail);            // the wisdom rail, under the rows it reads
   // FIRST WEARING. Everything a cell's contents decide is said here and only
   // here — the loop above builds the controls and never states them.
   sync();
@@ -4507,14 +4795,16 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
    browser's own default, no rule anywhere). It marks a ROW now rather than a
    column header, and `mark()` did not have to change a character: the registry
    was always a list of cells and never a claim about direction. */
-// WHAT A STEP WAS WORTH BEFORE YOU UNTICKED IT, per cell, per lane, per step.
-// A kit step is a LEVEL (kernel.js:2320 reads 2..9 as "an operator said ghost
-// or accent" and 1 as the old binary on), and a checkbox that writes `1` turns
-// punk's crash — `9,…,8` — into a flat tap the moment a hand goes near it. So
-// the level is remembered as the grid is drawn and put back when the box is
-// re-ticked: tick-untick-tick is now the identity on any lane in the catalog.
-// A page-level Map and not a document field, because it is undo, not music.
-const kitWas = new Map();
+// (`kitWas` — a Map remembering WHAT A STEP WAS WORTH BEFORE YOU UNTICKED IT —
+//  stood here, and it is a REVERSAL, dated 2026-08-27. A kit step is a LEVEL
+//  (kernel.js:2320 reads 2..9 as "an operator said ghost or accent" and 1 as
+//  the old binary on), and while the cell was a CHECKBOX the only honest
+//  un-tick was 0 and the only honest re-tick was the level it left at — hence
+//  the Map. The cell carries its level ON ITS FACE now (Paul, 2026-08-27:
+//  "velocity 0 to 7" — composer.html's kit, "the fill's width is the level,
+//  the number prints at the cell's edge"), so silencing and restoring are the
+//  tap cycle's own arcs — rest → ghost → hit → accent → rest — and a level is
+//  never overwritten by a boolean. The Map's job no longer exists.)
 // `cellName` IS AN ARGUMENT NOW, and that is the whole of what this function
 // had to give up to become a motif block (Paul, 2026-08-25: "make it part of
 // motifs"). It used to ask the DRUMMER which cell to draw —
@@ -4593,33 +4883,68 @@ function drumGrid(parent, cellName) {
         tr.append(td);
         continue;
       }
-      const td = el("td");
-      const c = document.createElement("input");
-      c.type = "checkbox"; c.checked = !!on2;
+      /* THE CELL IS A VELOCITY, 0..7, WORN ON ITS FACE (2026-08-27, replacing
+         the checkbox — composer.html's kit: "every cell is a chunky button
+         that carries a velocity per step; the fill's width is the level, the
+         number prints at the cell's edge"). The DOCUMENT keeps its 0..9 lane
+         vocabulary untouched; laneV7/laneV9 (the one mapping, stated at V7/V9)
+         translate at this edge, and this surface never writes the deferring
+         `1`. Tap cycles rest → ghost(1) → hit(4) → accent(7) → rest; a
+         sideways drag (pointer-captured) writes any of the eight.
+         `touch-action: pan-y` (nu.css .nu-kc): sideways is the value,
+         vertical is still the page.
+         (The old change-handler's argument survives it: a lane step is a
+         LEVEL in a drum cell and nothing on the page reads it but this cell —
+         no staff is engraved from the kit and no sheet is gated on one — so
+         the only thing to say afterwards is what the cell is now worth, which
+         its face and label carry.) */
+      const td = el("td", null, "nu-kcTd");
+      const c = document.createElement("button");
+      c.type = "button"; c.className = "nu-kc";
       c.dataset.k = "kit" + lane + i;
-      const mk = cellName + "|" + lane + "|" + i;
-      if (on2) kitWas.set(mk, on2);
-      // THE LEVEL IS IN THE LABEL, because a checkbox cannot show a 9 and a
-      // 36px cell has no room for a digit beside one. A screen reader and a
-      // hovering mouse both get the number the record actually carries.
-      const say = laneName(lane) + " step " + (i + 1) + (on2 > 1 ? " · level " + on2 : "");
-      c.setAttribute("aria-label", say);
-      c.title = say;
-      c.addEventListener("change", () => {
-        // …and back it comes at the level it left at (kitWas, above).
-        const v2 = arr[i] = c.checked ? (kitWas.get(mk) || 1) : 0;
-        // THE SAME COMPLAINT, THE SAME ANSWER (see `edited`). The kit grid was
-        // sixteen 36px columns in a pane too — 617px against a 351px phone —
-        // so a tick used to snap it back to step 1 exactly as the motif grid
-        // did. The pane is gone now that the steps run down, and this stays
-        // anyway: a lane step is a LEVEL in a drum cell and nothing on the page
-        // reads it but this checkbox: no staff is engraved from the kit
-        // (motifs() skips drum cells outright) and no sheet is gated on one.
-        // So the only thing to say afterwards is what this box is now worth,
-        // which is what the label and the tooltip carry.
-        const say2 = laneName(lane) + " step " + (i + 1) + (v2 > 1 ? " · level " + v2 : "");
-        c.setAttribute("aria-label", say2); c.title = say2;
-        edited(cellName); });
+      const kf = el("i", null, "nu-kf"), kn2 = el("b", null, "nu-kn2");
+      c.append(kf, kn2);
+      const paintKc = () => {
+        const dv = arr[i] | 0, v = laneV7(dv);
+        c.dataset.v = v;
+        kf.style.display = v ? "" : "none";
+        kn2.style.display = v ? "" : "none";
+        kf.style.inlineSize = "calc(8px + (100% - 20px) * " + (v / 7).toFixed(3) + ")";
+        kf.classList.toggle("gh", v === 1);
+        kf.classList.toggle("acc", v >= 7);
+        kn2.textContent = String(v);
+        const say = laneName(lane) + " step " + (i + 1) +
+          (v ? ", level " + v + (v === 1 ? " ghost" : v >= 7 ? " accent" : "")
+             : ", rest");
+        c.setAttribute("aria-label", say); c.title = say;
+      };
+      // tap cycle: rest -> ghost(1) -> hit(4) -> accent(7) -> rest
+      const cycKit = (v) => (v === 0 ? 1 : v <= 1 ? 4 : v <= 4 ? 7 : 0);
+      c.addEventListener("click", () => {
+        if (c._dragged) { c._dragged = false; return; }   // a drag is not a tap
+        arr[i] = laneV9(cycKit(laneV7(arr[i] | 0)));
+        paintKc(); edited(cellName);
+      });
+      // the touch law: capture on the cell, value against its own rect
+      let kMoved = false, kX0 = 0, kDirty = false;
+      c.addEventListener("pointerdown", (e) => {
+        kMoved = false; kX0 = e.clientX; kDirty = false;
+        try { c.setPointerCapture(e.pointerId); } catch (err) {}
+      });
+      c.addEventListener("pointermove", (e) => {
+        if (!c.hasPointerCapture || !c.hasPointerCapture(e.pointerId)) return;
+        if (!kMoved && Math.abs(e.clientX - kX0) < 6) return;
+        kMoved = true; c._dragged = true;
+        const r = c.getBoundingClientRect();
+        const v = Math.max(0, Math.min(7,
+          Math.round((e.clientX - r.left) / (r.width || 1) * 7)));
+        if (laneV7(arr[i] | 0) !== v) { arr[i] = laneV9(v); paintKc(); kDirty = true; }
+      });
+      c.addEventListener("pointerup", () => {
+        if (kDirty) edited(cellName);
+        kDirty = false;
+      });
+      paintKc();
       td.append(c); tr.append(td);
     }
     t.append(tr);

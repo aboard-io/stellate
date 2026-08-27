@@ -819,8 +819,12 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
    worth. Same cancellation, ordinary axes.) */
 .nu-grid input[type=range]{ min-height: 0; min-block-size: 0;
   block-size: 30px; margin: 0; vertical-align: middle; }
-.nu-hr-deg{ inline-size: 84px; }
-.nu-hr-vel{ inline-size: 52px; }
+/* (`.nu-hr-deg` 84px / `.nu-hr-vel` 52px stood here — the two step-grid
+   slider widths. WRITER-LESS SINCE 2026-08-27: the Bench replaced the step
+   grids' sliders with the pitch and weight bars (see THE BENCH at the foot of
+   this file), so the rules are gone rather than left as the kind of orphan
+   the `.is-now` audit above hunted. The 84/52 arithmetic in the comment above
+   is kept as the record of the rotated shape.) */
 /* THE READOUT SITS BESIDE ITS SLIDER, NOT UNDER IT. It was `display: block`
    under a vertical slider, in a row of its own; in a row-per-step grid a block
    readout would push every row past 36px and undo the whole rotation. `2ch` so
@@ -1996,3 +2000,149 @@ td > select{ max-inline-size: 9em; }
    `.nu-why` under the picture AND the row's own in the table, which is one
    fact (knobs.js `gate.why`) said in both views rather than two facts. */
 .nu-pad .is-off{ opacity: .3; }
+
+/* ===== THE BENCH (2026-08-27) ==========================================
+   The step rows, rebuilt to nukernel/ideal/composer.html. Paul, 2026-08-27:
+   "The original button structure with sliders was more novel and
+   comprehensible" — then, later the same day: "Tighten it up. play/hold/rest,
+   pitch offset −12 to 12, velocity 0 to 7, tightened to one line."
+
+   REVERSAL, WRITTEN WHERE THE OLD NUMBERS LIVED: `.nu-hr-deg` (84px) and
+   `.nu-hr-vel` (52px) sized the two range sliders the Bench retires; their
+   rules are removed at their own site (tombstoned there) — `range()` still
+   serves the chord chart through its inline `wide`, and no step grid wears a
+   slider any more. Each motif step is ONE 52px line — count,
+   one segmented kind button, a bipolar pitch bar, a weight bar — and each kit
+   cell is a button whose fill's width IS its velocity.
+
+   THE GEOMETRY LAW: the 52px row height is FIXED, not a minimum. A rest or a
+   hold fades its bars (opacity, pointer-events) and prints one measured line
+   saying why; nothing appears, nothing vanishes, so a kind change moves no
+   pixel of any other row and playback moves nothing at all
+   (test/bench.test.js measures both).
+
+   THE PAINTS ARE THE PAGE'S OWN, SEMANTIC AS EVER: --hand for a value you
+   set (the fills), --well for the trough, ink for the lattice ticks and the
+   marked zero, --faint only for a ghost's fill (a quiet hit is a quiet
+   paint), --flag only on an accent's edge (about to matter). */
+.nu-bench{ inline-size: 100%; table-layout: fixed; }
+.nu-bench th:first-child{ inline-size: 34px; }
+.nu-bench th:nth-child(2){ inline-size: 118px; }
+.nu-bench th:nth-child(4){ inline-size: 72px; }
+@media (min-width: 620px){ .nu-bench th:nth-child(4){ inline-size: 120px; } }
+/* one 52px line per step — fixed, the thumb's map of the bar holds */
+.nu-bench td{ block-size: 52px; padding: 3px 2px; }
+.nu-bench td.nu-pitTd{ position: relative; }
+/* the kind: one segmented button, three 36px segments */
+.nu-seg{ display: inline-flex; vertical-align: middle;
+  border: 2px solid var(--rule-strong); border-radius: var(--r1);
+  overflow: hidden; background: var(--panel); }
+.nu-segb{ inline-size: 36px; block-size: 40px; border: 0; border-radius: 0;
+  border-inline-start: 2px solid var(--rule-strong);
+  background: var(--panel); color: var(--ink); cursor: pointer;
+  font: 800 15px/1 var(--sans); padding: 0; min-height: 0;
+  display: inline-flex; align-items: center; justify-content: center; }
+.nu-segb:first-child{ border-inline-start: 0; }
+.nu-segb:hover{ background: var(--flag-tint); }
+.nu-segb[aria-pressed="true"]{ background: var(--hand); color: #FFFFFF; }
+.nu-segb:disabled{ color: var(--faint); background: var(--well); cursor: default; }
+/* THE PITCH BAR — bipolar, the fill grows from the marked zero, the ink ticks
+   ARE the lattice (the record's own alphabet; ui/eight.js benchEnv). THE
+   TOUCH LAW: touch-action on the control and only the control; the native
+   input inside is the keyboard channel — invisible, unpressable, focusable. */
+.nu-pit{ position: relative; display: block; block-size: 40px; min-inline-size: 0;
+  touch-action: none; cursor: ew-resize; }
+.nu-pb{ position: absolute; inset: 0; display: block;
+  border: 2px solid var(--rule-strong); border-radius: var(--r1);
+  background: var(--well); overflow: hidden; }
+.nu-pbt{ position: absolute; inset-block-end: 2px; inline-size: 2px;
+  block-size: 7px; margin-inline-start: -1px; background: var(--ink);
+  opacity: .4; display: block; }
+.nu-pbf{ position: absolute; inset-block: 5px; background: var(--hand);
+  display: block; }
+.nu-pbz{ position: absolute; inset-inline-start: 50%; inset-block: 0;
+  inline-size: 3px; margin-inline-start: -1.5px; background: var(--ink);
+  display: block; }
+.nu-pbb{ position: absolute; inset-block-start: 50%;
+  transform: translate(-50%, -50%); z-index: 4; pointer-events: none;
+  font: 800 12px var(--mono); color: var(--ink); background: var(--panel);
+  border: 2px solid var(--rule-strong); border-radius: 3px; padding: 0 4px;
+  white-space: nowrap; }
+.nu-pbb small{ font: 700 9px var(--mono); color: var(--dim);
+  margin-inline-start: 2px; }
+.nu-pbin, .nu-vain{ position: absolute; inset: 0; inline-size: 100%;
+  block-size: 100%; margin: 0; opacity: 0; pointer-events: none;
+  min-height: 0; min-block-size: 0; }
+.nu-pit:focus-within, .nu-velA:focus-within{ outline: 3px solid var(--hand);
+  outline-offset: 2px; border-radius: 2px; }
+/* THE WEIGHT BAR — 0..7; width is the level; tap cycles ghost(1)/hit(4)/
+   accent(7) and never lands on 0 (ui/eight.js benchVel) */
+.nu-velA{ position: relative; display: block; block-size: 40px;
+  min-inline-size: 0; touch-action: none; cursor: ew-resize; }
+.nu-vab{ position: absolute; inset: 0; display: block;
+  border: 2px solid var(--rule-strong); border-radius: var(--r1);
+  background: var(--well); overflow: hidden; }
+.nu-vaf{ position: absolute; inset-inline-start: 0; inset-block: 0;
+  background: var(--hand); border-inline-end: 2px solid var(--rule-strong);
+  display: block; }
+.nu-velA.gh .nu-vaf{ background: var(--faint); }
+.nu-velA.acc .nu-vaf{ box-shadow: inset -6px 0 0 var(--flag); }
+.nu-van{ position: absolute; inset-block-start: 50%; transform: translateY(-50%);
+  font: 700 12px var(--mono); color: var(--ink); pointer-events: none;
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  border-radius: 2px; padding: 0 3px; }
+.nu-velA.hi .nu-van{ color: #FFFFFF; background: transparent; }
+/* a silent row goes FAINT, it never vanishes; the reason prints over the
+   pitch bar in one measured line (ui/eight.js sync) */
+.nu-bench tr.is-rest .nu-pit, .nu-bench tr.is-rest .nu-velA,
+.nu-bench tr.is-hold .nu-pit, .nu-bench tr.is-hold .nu-velA{
+  opacity: .3; pointer-events: none; }
+.nu-mutewhy{ display: none; position: absolute; inset: 0; z-index: 5;
+  align-items: center; justify-content: center; text-align: center;
+  font: 600 11px var(--mono); color: var(--dim); pointer-events: none; }
+.nu-bench tr.is-rest .nu-mutewhy, .nu-bench tr.is-hold .nu-mutewhy{
+  display: flex; }
+/* the lattice pointer + the refused accidentals toggle (the no-silent-grey
+   law: refused, with the reason printed beside it) */
+.nu-benchbar{ display: flex; flex-wrap: wrap; gap: .35em .7em;
+  align-items: center; }
+.nu-benchbar button:disabled{ color: var(--faint); }
+.nu-benchbar .nu-why{ flex: 1 1 14em; }
+/* the wisdom rail — reserved at its own WORST sentence per width, so a
+   sentence changing moves nothing below it.
+   CORRECTED 2026-08-27 (Wave 2 verification): this said `min-block-size:
+   2.6em` — one line — and at 390px the rail's longest sentence ("step 16
+   (beat 4 …) · held — 7̂₋8va (−12 st) — the scale's own colour, outside the
+   mode · vel 7 (accent)") wraps to THREE lines (measured 71.3px against a
+   35.4px reserve), so speaking a row shifted every block under the rail by
+   up to 36px — the same illness `#engine` had (MOTIF.md "STILL NOT COVERED"
+   item 2: "a one-line reserve does not cover it"), fixed the same way, in
+   `lh` at the 620px breakpoint the bench already declares. box-sizing is
+   border-box, so the reserve carries its own padding (.3em×2) and border
+   (2px×2). Measured after: worst 3 lines at 390, 2 at 620–729, 1 wide —
+   the reserve covers each. */
+.nu-wisdom{ min-block-size: calc(3lh + .6em + 4px); display: flex;
+  align-items: center;
+  border: 2px solid var(--rule-strong); border-radius: var(--r1);
+  background: var(--panel); padding: .3em .6em;
+  font-size: .85rem; font-weight: 600; }
+@media (min-width: 620px){
+  .nu-wisdom{ min-block-size: calc(2lh + .6em + 4px); } }
+/* THE KIT CELL — a button whose fill's width is its velocity. `pan-y` is the
+   whole touch story: sideways writes the value, vertical is still the page. */
+.nu-kcTd{ padding: 0; }
+.nu-kc{ position: relative; display: block; inline-size: 100%;
+  block-size: var(--cell); min-height: 0; border: 0; border-radius: 0;
+  background: var(--well); cursor: pointer; padding: 0;
+  touch-action: pan-y; }
+.nu-kc:hover{ background: color-mix(in srgb, var(--flag-tint) 60%, var(--well)); }
+.nu-kf{ position: absolute; inset-inline-start: 3px; inset-block: 6px;
+  border-radius: 3px; background: var(--hand);
+  border: 2px solid var(--rule-strong); pointer-events: none; display: block; }
+.nu-kf.gh{ background: var(--faint); border-color: var(--dim); }
+.nu-kf.acc{ box-shadow: inset -5px 0 0 var(--flag); }
+.nu-kn2{ position: absolute; inset-inline-end: 3px; inset-block-start: 50%;
+  transform: translateY(-50%); font: 700 10px var(--mono); color: var(--ink);
+  pointer-events: none;
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  border-radius: 2px; padding: 0 2px; }

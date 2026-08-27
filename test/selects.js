@@ -974,6 +974,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     return {
       inSheet: q("fieldset.nu-sheet input[type=checkbox]").map((c) => c.dataset.k || "(no key)"),
       grid: q(".nu-grid input[type=checkbox]").length,
+      kcs: q(".nu-grid .nu-kc").length,
       // every remaining checkbox, by its key family, so a new one has to be
       // looked at rather than absorbed
       loose: [...new Set(q("input[type=checkbox]")
@@ -983,11 +984,17 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   });
   check(!boxes.inSheet.length, "no checkbox inside a sheet — a multiple choice is a " +
     "<select multiple> now " + JSON.stringify(boxes.inSheet.slice(0, 5)));
-  // ...and the step grid, likewise, is drawn by ui/eight.js and not by the
-  // harness. Where it exists it must still be checkboxes.
-  if (REAL || boxes.grid)
-    check(boxes.grid > 0, "...and the drum step grid still has its " + boxes.grid +
-      " checkboxes, which are independent steps and not a multiple choice");
+  // REWRITTEN 2026-08-27, per the reversal law. This held "the drum step grid
+  // still has its N checkboxes". The Bench replaced them (Paul, 2026-08-27:
+  // "velocity 0 to 7") with one velocity BUTTON per step — .nu-kc, its fill's
+  // width the level; ui/eight.js drumGrid, driven on the render by
+  // test/bench.test.js B5. THE CLAIM THIS GATE OWNS SURVIVES THE FACE: the
+  // steps stay independent controls — no checkbox is left in any grid, and no
+  // grid was folded into a <select multiple>.
+  if (REAL || boxes.grid || boxes.kcs)
+    check(boxes.grid === 0, "...and the drum step grid's checkboxes are gone — " +
+      "independent velocity cells now (" + boxes.kcs + " .nu-kc on this tab, " +
+      boxes.grid + " checkboxes left)");
   else notes.push("     (the harness draws no step grid — index.html only)");
   // THE SINGLE BOOLEANS, BY NAME. `drums` is the drummer's on/off (eight.js
   // :1943), `diatonic` and `ontime` are the two the producer owns, and

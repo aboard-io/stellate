@@ -704,6 +704,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       }).filter((r) => !r.legend || r.sels !== 1 || r.boxes || r.size < 2 || !r.opts),
       inSheet: q("fieldset.nu-sheet input[type=checkbox]").length,
       grid: q(".nu-grid input[type=checkbox]").length,
+      kcs: q(".nu-grid .nu-kc").length,
       // NO SILENT GREY, in the shape an <option> can carry it: the reason is in
       // the option's own words and stamped as data, exactly as ui/selects.js
       // does it, because a `<small class="nu-why">` cannot ride inside an
@@ -720,9 +721,19 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   check(!ms.bad.length, "every multi sheet is a legend + ONE <select multiple> of at " +
     "least two rows, with no checkbox in it " + JSON.stringify(ms.bad.slice(0, 3)));
   check(!ms.inSheet, "no checkbox survives inside any sheet " + ms.inSheet);
-  if (REAL || ms.grid)
-    check(ms.grid > 0, "...and the drum step grid still has its " + ms.grid +
-      " checkboxes — a grid of independent steps is not a multiple choice");
+  /* REWRITTEN 2026-08-27, per the reversal law. This held "the drum step grid
+     still has its N checkboxes — a grid of independent steps is not a multiple
+     choice". THE FACE REVERSED AND THE CLAIM DID NOT: the Bench replaced the
+     kit's checkboxes with velocity cells (Paul, 2026-08-27: "velocity 0 to 7"
+     — one BUTTON per step whose fill's width is its level; ui/eight.js
+     drumGrid, proven on the render by test/bench.test.js B5). What this gate
+     still owns is the half that was always its own: the steps stay INDEPENDENT
+     CONTROLS — no checkbox is left in any grid, and no grid was folded into a
+     <select multiple> to satisfy the sheet law above. */
+  if (REAL || ms.grid || ms.kcs)
+    check(ms.grid === 0, "...and the drum step grid's checkboxes are gone — " +
+      "its steps are independent velocity cells now (" + ms.kcs +
+      " .nu-kc drawn on this tab, " + ms.grid + " checkboxes left)");
   else notes.push("     (the step grid is ui/eight.js's — index.html only)");
   check(!ms.greyNoWhy.length && !ms.greyNotSaid.length,
     "NO SILENT GREY — every disabled <option> says its reason in its own text " +
