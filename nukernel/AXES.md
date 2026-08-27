@@ -22,13 +22,43 @@ them**.
 | **Sound** | voices, treatment, balance | `instr/tone/kit`, the desk, `MIXER` | genre + engineer |
 | **Performance** | the seeded human layer — timing, velocity, hand, ornament | `perform`, `humanize`/`touch`, `song.take` | song |
 
-**The page calls Material "Motifs" — REWRITTEN 2026-08-27.** This paragraph
+**NINE TABS, 2026-08-27, AND THIS FILE IS WHERE THE NAMES ARE JOINED.** Paul:
+*"Why don't we make tabs at the top level and let go of the idea of scrolling
+everything? The tabs are: Where / Tempo / Key / Motif / Band / Mix / Produce /
+Score / Export."* The page is nine panels, one on screen at a time, and the tab
+row is the only visible name each panel has — the `<h2>`s below it are still in
+the document and are `.nu-vh` (nu.css, THE SECOND BAND IS THE TAB ROW), because
+one owner per fact. So there are now three columns to keep straight and each of
+the paragraphs below is one row of the join:
+
+| tab (Paul) | heading (vocabulary) | axis | host |
+|---|---|---|---|
+| Where | Where & when | — (the atlas) | `#atlas` |
+| Tempo | Time | **Time** | `#pan-tempo` |
+| Key | Harmony | **Alphabet** | `#pan-key` |
+| Motif | Motifs | **Material** | `#pan-motif` |
+| Band | The band | **Form · Cast · Development · Sound · Performance** | `#pan-band` |
+| Mix | The board | (Sound, landed) | `#deck` |
+| Produce | The producer | — (a session fact) | `#produce` |
+| Score | The score | (the eight, engraved) | `#scoredeck` |
+| Export | Export | — (the record, leaving) | `#exportdeck` |
+
+**None of the eight moved.** `doc.time`, `doc.alphabet`, `doc.material` and the
+rest are exactly the keys they were; what Paul named is where a hand goes to
+edit them. Nine tabs and nine top-level document keys is a coincidence and not a
+correspondence — `basis` and `produce` are two of the nine keys and neither is a
+tab, and Where, Mix, Score and Export are four tabs and none is a key.
+
+**The page calls Material "Motif" — REWRITTEN TWICE, 2026-08-27.** This paragraph
 said "Sheet music" (Paul, 2026-08-25: *"rename 'Material' to 'Sheet music'"*),
 and the reason it gave for that heading — "since the score of the whole band
 landed above the motifs, everything under that heading is notation" — is the
 reason it changed again: the score moved whole to the deck at the foot of the
 page, and FUTURE.md §5 split the name with it ("the section is two things;
 the score moves per the brief" — `Motifs` mid-page, `The score` at the foot).
+It says **Motif**, singular, on the tab, because that is the word Paul typed in
+the tab list; the panel's own hidden heading still says `Motifs`, which is what
+the panel holds. Neither is the axis.
 The AXIS keeps the name it has here, exactly as before, because "material" is
 not only a word in this vocabulary — it is the document key
 (`doc.material.cells`), the resolver (`document.js materialAt`), two sheet keys
@@ -36,9 +66,13 @@ not only a word in this vocabulary — it is the document key
 them, and `#ax-material`. One fact, one owner: the vocabulary says Material,
 the page says Motifs, and this paragraph is the join.
 
-**The page calls Alphabet "Harmony" (2026-08-27).** FUTURE.md §5, the UX
-review's row: *"key/mode/changes is harmony to a musician; key `alphabet`
-stays."* The AXIS keeps its name here for the same reason Material does:
+**The page calls Alphabet "Key" on the tab and "Harmony" in the heading
+(2026-08-27, both the same day).** FUTURE.md §5, the UX review's row:
+*"key/mode/changes is harmony to a musician; key `alphabet` stays."* Then
+Paul's tab list, hours later: *"Key"*. Both are his and neither withdraws the
+other — `Harmony` is what the panel IS (key, mode, the changes) and `Key` is
+what you go there for, which is the difference between a heading and a
+signpost. The tab is the visible one. The AXIS keeps its name here for the same reason Material does:
 "alphabet" is the document key (`doc.alphabet.*`), the avail.js rows
 (`alphabet.key/mode/harmony/quality`), `#ax-alphabet`, and kernel.js's own
 doctrine that a phrase's `deg` is alphabet-free. And one of its FIELDS is
@@ -46,22 +80,38 @@ literally named `harmony` — the heading borrows the axis's most musician-legib
 word without moving any key under it. The vocabulary says Alphabet, the page
 says Harmony, and this paragraph is the join.
 
-**The headings stopped counting themselves (2026-08-27).** The page's axis
-headings carried ordinals — `1 · Time` through `9 · The producer` — and
-FUTURE.md §5 dropped them all: *"'4–8' and '9 of eight' prove the scheme
-broke; scroll order carries the sequence."* The SEQUENCE is untouched and is
-this file's (THE SEQUENCE IS AN EVALUATION ORDER, below); only the numbers a
-reader saw are gone. Nothing keyed on them — the anchors were always
+**The headings stopped counting themselves, and then stopped being visible
+(2026-08-27, twice in one day).** The page's axis headings carried ordinals —
+`1 · Time` through `9 · The producer` — and FUTURE.md §5 dropped them all:
+*"'4–8' and '9 of eight' prove the scheme broke; scroll order carries the
+sequence."* Hours later the scroll went too, and with it the reason to print a
+heading at all: the tab row names all nine places at once and is on the screen
+at all times, so a visible `<h2>` under a marked tab was a second copy of a name
+the tab already owned. The heading is `.nu-vh` now — in the DOM, announced,
+printed with the stylesheet off, invisible with it on.
+
+**"Scroll order carries the sequence" is the clause that had to be rewritten.**
+It was true for one day. THE SEQUENCE is untouched and is still this file's
+(THE SEQUENCE IS AN EVALUATION ORDER, below); what carries it on the page is
+the TAB ROW's order, which is Paul's list and not the evaluation order — see
+that section for why the two are allowed to differ and what would break if
+somebody made them agree. Nothing keyed on any of it: the anchors were always
 `#ax-time`, `#ax-alphabet`, `#ax-material`, `#ax-band`, `#ax-produce`.
 
-**The page says the producer last (2026-08-27).** The vocabulary's order is the
-attribute grammar's dependency relation — eight axes readable in one pass, and
-the producer after them because he is "the eight plus what was said" (below).
-The PAGE now ends the same sentence twice over: FUTURE.md's reorder is
-"producer last to say, score last to see", so the producer's section is the
-last thing a hand can edit — under the board, in its own host (`#produce`,
-made by `ui/eight.js redrawApp`), immediately above the score deck, which is
-the last thing an eye sees. The producer moved OUT of `#app` to get there
+**The page says the producer last but one (2026-08-27, rewritten the same
+day).** The vocabulary's order is the attribute grammar's dependency relation —
+eight axes readable in one pass, and the producer after them because he is "the
+eight plus what was said" (below). The PAGE said the same sentence twice over
+for an afternoon: FUTURE.md's reorder was "producer last to say, score last to
+see", so the producer's section was the last thing a hand could edit — under the
+board, immediately above the score deck, which was the last thing an eye saw.
+Paul's tab list keeps that reading and adds one place after it: **Produce ·
+Score · Export**. The producer is still the last thing SAID; the score is still
+what you see after saying it; and Export, which is not a thing said about the
+record at all, is what the record leaves by. `#produce` is shipped in
+`nukernel/index.html` now rather than made by `ui/eight.js redrawApp` — a tab's
+host has to exist before any panel is drawn, because the shell shuts eight of
+them on the first frame. The producer moved OUT of `#app` to get there
 (it sat between the band and the board from W3 to 2026-08-27); nothing about
 his standing changed — still not a ninth axis, still the only translator of
 nouns into vectors — only where he stands. The vocabulary says the producer
@@ -120,6 +170,25 @@ topics. That order is the attribute grammar's own dependency relation, and it
 puts two of them in a different place than the conversation first had them:
 
     Time · Alphabet · Material · Form · Development · Cast · Sound · Performance
+
+**AND THE PAGE'S ORDER IS NOT THIS ORDER, ON PURPOSE (2026-08-27).** Paul's tab
+row is *Where · Tempo · Key · Motif · Band · Mix · Produce · Score · Export*.
+Line them up and the first four agree — Tempo/Time, Key/Alphabet, Motif/Material
+— and then the page folds Form, Development, Cast, Sound and Performance into
+one tab called Band and puts the atlas in front of everything. That is not a
+disagreement about the sequence: **the evaluation order is a claim about what a
+READER of the document needs to have seen already, and the tab order is a claim
+about where a HAND goes.** A person choosing a key does not need to have read
+the form; a compiler reading `g.word(v, s)` does need the sections to exist.
+
+This paragraph exists because the two used to be the same list, and the page was
+what made them look like one fact: the axes ran down one scroll in evaluation
+order, so "the third thing you scroll past" and "the third thing to evaluate"
+were the same sentence. They never were. If a future round wants the tab row to
+match the evaluation order it must move Where (which is not an axis at all) and
+split Band into five (which Paul folded on 2026-08-25: *"Why don't you move
+performance in as a tab too"*), and it will have bought agreement between a
+menu and a compiler by making the menu worse.
 
 **Time comes before Material.** The meter decides how many steps a bar has —
 the kernel reads a phrase's own length AS the bar, and `seatMeter` re-seats

@@ -56,7 +56,7 @@ Paul, 2026-08-24, quoted where the quote settles something.
 | **D5** | **Precompose.** `genreToDocument(gk, seed)` writes a whole record for all 122 anchors. | *"we've lost the ability to set a genre and have the entire song precomposed entirely."* | `node test/precompose.test.js` — 122 anchors × 3 seeds, no silent section |
 | **D6** | **The atlas.** A time slider and a world map; scroll to a year, click a place, get a song. | *"a slider for time and a world map on top that shows where the genres are happening! I scroll to a time, click a place, and now i've got a song."* | `node nukernel/atlas.gate.js && node test/atlas.js` — clicking Kingston at 1969 makes `#title` read `Kingston 1969` |
 | **D7** | **The nudges.** Arching, at all four scales; the section's own shape, its edges, and the phrase tent. | *"we had lots of fun nudges to the music and motifs — like arching."* | `node test/nudges.js` — `env:"arch"` moves the rendered velocities by ≥2, and a chant with no drummer greys all seven drum-writing edges |
-| **D8** | **The shell.** Mobile scroll, bigger controls, sticky headings, grid lines, one stylesheet. | *"think about a way to scroll on mobile and the simplest possible ways we could make all the buttons bigger. it would be nice to have sticky headings as i scroll." … "keep the raw plain HTML but use more controls and a little bit of CSS. use more grid lines in tables, it will help."* | `node test/shell.js` — `scrollWidth === clientWidth` at 320/375/430/820 and zero controls under 44px |
+| **D8** | **The shell.** Mobile scroll, bigger controls, sticky headings, grid lines, one stylesheet. *(The sticky heading became the sticky TAB ROW on 2026-08-27 — "let go of the idea of scrolling everything"; §2.4.1 `.nu-tabs` carries the reversal, and the rest of the row is untouched.)* | *"think about a way to scroll on mobile and the simplest possible ways we could make all the buttons bigger. it would be nice to have sticky headings as i scroll." … "keep the raw plain HTML but use more controls and a little bit of CSS. use more grid lines in tables, it will help."* | `node test/shell.js` — `scrollWidth === clientWidth` at 320/375/430/820 and zero controls under 44px |
 | **D9** | **Ableton export.** One `.als` that opens. | *"you promised to make Ableton export work if I gave you a generic Ableton file; there's one at ~/Ableton.zip"* | `node tools/ableton/export-als.js --genre boombap --out /tmp/n.als && node tools/ableton/als-gate.js /tmp/n.als --genre boombap` |
 
 ---
@@ -71,6 +71,23 @@ so before starting, not by shipping something else.
 One value, nine top-level keys — the eight axes, plus `basis` (the anchor the
 axes are stated against, `songs.js:89`) and `produce` (what somebody with taste
 said about it; a session fact, not a ninth axis — `AXES.md:113`).
+
+**THE PAGE'S SHAPE AND THE DOCUMENT'S SHAPE ARE TWO THINGS, AND ON 2026-08-27
+ONE OF THEM CHANGED.** Paul: *"Why don't we make tabs at the top level and let
+go of the idea of scrolling everything? The tabs are: Where / Tempo / Key /
+Motif / Band / Mix / Produce / Score / Export."* Not one byte of the value below
+moved: the same eight axes, the same `basis`, the same `produce`, the same
+absent-is-today table. What moved is where a hand reaches them — nine panels,
+one on screen at a time, in Paul's order, mapped onto the axes by `AXES.md`'s
+join table (**that** table is the owner of the mapping; do not copy it here).
+
+**Nine tabs and nine top-level keys is a coincidence and is worth denying out
+loud**, because the two lists are one word apart and a future round will
+otherwise try to make them agree. `basis` and `produce` are keys and are not
+tabs; Where, Mix, Score and Export are tabs and are not keys; and Form, Cast,
+Development, Sound and Performance are five keys behind one tab. A document
+format that followed a tab row would be a document format that changed when
+somebody renamed a button.
 
 ```jsonc
 {
@@ -360,8 +377,10 @@ this list gets added HERE, not declared in a second stylesheet.**
 
 | class | owner of the inside | what `nu.css` guarantees |
 |---|---|---|
-| `.nu-bar` | shell | sticky `top:0`, z 30, ≥52px, opaque, safe-area padded. **One per page.** |
-| `.nu-ax` | shell | the containing block for a sticky `> h2` at `top: var(--bar-h)`, z 20 |
+| `.nu-bar` | shell | sticky `top:0`, z 30, ≥52px, opaque, safe-area padded. **One per page**, and it is never inside a tab: play / rewrite / take / room reach the record from all nine panels (2026-08-27). |
+| `.nu-tabs` | shell | **THE SECOND STICKY BAND, since 2026-08-27** (Paul: *"Why don't we make tabs at the top level and let go of the idea of scrolling everything?"*). A `.nu-row` of nine plain buttons at `top: var(--bar-h)`, z 25 — the page's own tab idiom (`aria-pressed`, a `<mark>` on the open one), spelled exactly like `#tabs` and `#boardtabs`. **It wraps and never scrolls sideways.** No reserved height: nothing is pinned under it, so it may be as many lines as the width needs (3 at 320, 2 at 390/430, 1 from 820). |
+| `.nu-pan` | shell | one of the nine panels, in Paul's order in `index.html`. `[data-off]` shuts it — **a class rule, never the `hidden` attribute**, so with the stylesheet off the page is one document again; `inert` (set by `ui/eight.js showTab`) is what keeps a shut panel out of the tab order. Carries the `--sec` ordinal for §2.4.2's wash. |
+| `.nu-ax` | shell | the containing block for its `> h2`. **The heading is `.nu-vh` since 2026-08-27** — in the DOM, announced, printed with the stylesheet off, invisible with it on, because the tab row is the panel's visible name and one owner per fact. It was `position: sticky; top: var(--bar-h); z 20`, the second band, from 08-shell R12 until the tabs landed. |
 | `.nu-pane` | any | horizontal scroll for exactly ONE table, edge shadows, focusable. **Never nest; never put a sticky heading inside one** — its `overflow-y` computes to `auto`. |
 | `.nu-grid` | shell | step-grid table: STEPS RUN DOWN — one row per step, one column per lane (kit) or per question (motif) — 36px cells, centred, sticky first column, a heavier rule every fourth row (`tr.nu-beat`). Rotated 2026-08-25 (Paul: *"Rotate the drum kits and motif editors to be vertical. They'll fit on a phone screen that way"*); it takes no `.nu-pane`, because it no longer overflows. |
 | `.nu-hr-deg` `.nu-hr-vel` | shell | the two horizontal sliders in a motif row — 84px and 52px of inline size, 30px tall inside the 36px cell. They replaced `.nu-vr` / `.nu-vr-deg` / `.nu-vr-vel`, the vertical pair, on 2026-08-25 with the rotation. |
@@ -395,20 +414,25 @@ are drawn as ROWS of the form list, cells of a voice's table and tiles of the
 score ribbon. Colouring **those** is a different feature: they are never blocks
 you scroll past, they are already spoken for by the playhead, and a tint on them
 would land in the very cells `<mark>` and `.nu-here` share, which is the
-conflation 2026-08-24 spent a day undoing. What takes the wash is the seven
-`<section>`s a reader scrolls: `#atlas`, the five `.nu-ax` axes, and `#board`.
+conflation 2026-08-24 spent a day undoing. What takes the wash was "the seven
+`<section>`s a reader scrolls: `#atlas`, the five `.nu-ax` axes, and `#board`";
+**since 2026-08-27 it is the NINE `.nu-pan` PANELS**, which is the same
+sentence about a page that stopped being a scroll — a block you go to instead of
+a block you go past.
 
-**It is arithmetic on an index, not a palette.** A section's `--sec` is its
+**It is arithmetic on an index, not a palette.** A panel's `--sec` is its
 ordinal and the hue is `--sec × 137.5deg` — the golden angle, which is what you
-use when you do not know how many you will need. The ladder is written modulo
-twelve (`#app > .nu-ax:nth-child(12n+k)`), so a page of thirteen sections does
-not run out; the thirteenth reuses the first hue, twelve blocks away. `#atlas`
-(0) and `#board` (6) are hand-numbered, because neither is a child of `#app` and
-no `:nth-child()` can count them into the run — they take the indices they would
-have if the page were one list. That **6** is a number somebody must change if a
-sixth axis ever lands, and it is stated rather than engineered around: twelve
-golden-angle steps already cover the wheel at ~30°, so beyond twelve blocks some
-pair is close whatever the scheme.
+use when you do not know how many you will need. **The twelve-rule
+`:nth-child(12n+k)` ladder is retired** (2026-08-27) and its argument is kept in
+`nu.css` where it stood: it existed because `#app` held an unknown number of
+sections in a row and CSS cannot read a `:nth-child()` match back out as a
+number. The blocks are a fixed, named list now — the nine hosts in
+`index.html` — so the ordinal is written on each one, 0 through 8, in reading
+order. Nine lines, no counting, one palette decision, still "137.5 degrees
+apart". The old warning survives the change and is now the whole rule rather
+than an exception to it: the golden angle only promises that **consecutive**
+indices are far apart, so a panel inserted in the middle renumbers the ones
+after it — one line each, and that is the price of not counting.
 
 **It moves `--paper`, and that is the whole mechanism.** `--paper` has always
 meant *the ground you are standing on* — what the sticky `<h2>` paints itself
@@ -468,20 +492,41 @@ INSIDE the button, so the clock still writes only inside `[data-live]` and still
 writes only text, and `test/motif-frozen.js` A1 ("no control inside a
 `[data-live]`") passes unchanged at 390 and 1400.
 
-**FIVE HEADINGS FOR EIGHT AXES, DELIBERATELY.** `8 · Performance` became a TAB
-of the band block on 2026-08-25 (*"Why don't you move performance in as a tab
-too"*), so the sections in `#app` are `1 · Time`, `2 · Alphabet`,
-`3 · Material`, `4–8 · The band` and `9 · The producer`. `4–7` was the first
-grouping and this is the second; the grouping follows AXES.md's own SCOPE
-column — Performance is song-level, which makes it a peer of `form` and not of
-the voices — rather than the enumeration, and the numbers stay in the heading so
-the enumeration is still readable through it. Nothing was lost; do not "restore"
-eight headings.
+**NINE TABS FOR EIGHT AXES, DELIBERATELY — REWRITTEN 2026-08-27.** This
+paragraph said "FIVE HEADINGS FOR EIGHT AXES" and the argument it made is the
+one that survived: `8 · Performance` became a TAB of the band block on
+2026-08-25 (*"Why don't you move performance in as a tab too"*), and the
+grouping follows AXES.md's own SCOPE column — Performance is song-level, which
+makes it a peer of `form` and not of the voices — rather than the enumeration.
+Nothing was lost; do not "restore" eight headings, and do not "restore" eight
+tabs either.
+
+What changed is the containers and their names. Paul, 2026-08-27: *"Why don't
+we make tabs at the top level and let go of the idea of scrolling everything?
+The tabs are: Where / Tempo / Key / Motif / Band / Mix / Produce / Score /
+Export."* Those nine are the page, in that order, one on screen at a time;
+`AXES.md` carries the join from each of them to the axis or axes underneath.
+The ordinals in the old sentence (`1 · Time`, `4–8 · The band`) went earlier the
+same day with FUTURE.md §5 — *"'4–8' and '9 of eight' prove the scheme broke"* —
+and the headings themselves are `.nu-vh` now, because the tab is the visible
+name.
+
+**And the one-scroll page is over.** It was a founding promise of this surface —
+everything on one page, in one scroll, nothing hidden, two sticky bands so you
+always knew which axis was under your thumb — and it was right until the number
+it produced was seventeen thousand pixels at 390px for one record. What survives
+it, and must keep surviving it: nothing is hidden (all nine names are on screen
+at all times, and a tab is not a disclosure); the page is still one document
+with the stylesheet off (a shut panel is shut by a class rule, never by
+`hidden`); you do not lose your place (scroll position is remembered per tab);
+and the transport is not in a tab.
 
 **Three failure modes carried forward so nobody rediscovers them:** never write
 `overflow-x: hidden` on `body` or `#app` — it kills both stickies silently, and
 the sideways scroll is fixed at the table, never at the body; a sticky `<tr>`
-does nothing, only cells stick; `--bar-h` is a promise the gate pins.
+does nothing, only cells stick; `--bar-h` is a promise the gate pins — made to
+`.nu-ax > h2` until 2026-08-27 and to `.nu-tabs` since, unchanged in every other
+respect.
 
 ### 2.5 NEW FILES — one owner each
 
@@ -799,7 +844,7 @@ installed on this machine; the builds that exist are
 
 | command | what only a browser can prove | wave |
 |---|---|---|
-| `node test/shell.js` | `scrollWidth === clientWidth` at 320/375/430/820 · zero `button`/`select`/`input[type=number]` under 44px · every checkbox and radio ≥24px both axes · every `.nu-pane` has `scrollHeight − clientHeight ≤ 1` · every `<table>` has a `.nu-pane` parent · at scrollY 600/1400/2400 the `.nu-bar` is at 0 and **exactly one** `.nu-ax > h2` sits in `0 < top < 120`, and it is the axis the viewport is inside · `.nu-bar` height equals `--bar-h` · after `pane.scrollLeft = 200` the sticky lane `th` moved ≤2px | 2 |
+| `node test/shell.js` | **on every one of the nine tabs, at 320/375/430/820** (2026-08-27 — a survey taken after load measured the `Where` tab and called it the shell): `scrollWidth === clientWidth` · zero `button`/`select`/`input[type=number]` under 44px · every checkbox and radio ≥24px both axes · every `.nu-pane` has `scrollHeight − clientHeight ≤ 1` · no `<table>` overflows the box it is in · swept down each tab's whole height, the `.nu-bar` sits at 0 and `#toptabs` at exactly `--bar-h`, and **no `.nu-ax > h2` is sticky anywhere** · the tab row wraps and never scrolls sideways · one `<mark>` and one `aria-pressed`, both naming the open tab · the nine names are Paul's words in Paul's order · a tab remembers its own scroll and a tab never opened starts at 0 · `.nu-bar` height equals `--bar-h` · after `pane.scrollLeft = 200` the sticky lane `th` moved ≤2px | 2 |
 | `node test/sheets.js` | `#app select` is empty · `.nu-opt` count per sheet equals `NuAvail.SHEETS[key].values(...).length` · exactly one `input:checked` per non-multi sheet · **NO SILENT GREY**: every `input:disabled` has non-empty `.nu-why` text and every `fieldset[disabled]` a non-empty `> .nu-why` · the three named gates end to end (untick drums → `dev.kit` reads *no drummer*; harmony modal → `alphabet.quality` reads *modal harmony has no changes*; a `pad` voice → `at the fifth` disabled while `out` is not) · ArrowDown moves the value AND `activeElement.dataset.k` · with `document.styleSheets[0].disabled = true` all of it still holds and every `.nu-why` string is in `body.innerText` | 2 |
 | `node test/nudges.js` | with `env:"arch"` on section 2 the box carries the key AND the rendered events show `max(vel) − min(vel) ≥ 2`, and `= 0` with nothing set (kernel numbers measured: 64 flat vel-5 events → `3 4 4 5 5 5 5 4`) · **THE GREY-OUT GATE**: on a document with no drums voice, `outro: fill\|roll\|tomfill\|hatrun\|doubles\|break` and `intro: kit` are `disabled` and nothing else is; add a drums voice and all seven come alive · zero `pageerror` | 3 |
 | `node test/producer.browser.js` | three real taps → `window.__eightProd()` shows the note with a non-empty `said` · the compiled bar the ENGINE is handed changes, measured off the `audio/plan.js` timeline · *"take it off"* restores it byte-identical | 3 |

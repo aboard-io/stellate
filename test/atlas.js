@@ -194,8 +194,46 @@ function g18() {
   /* 390x844 is the phone the whole round is measured on, and G12 is stated in
      CSS px at exactly that width, so the gate opens there. G15 walks 320 / 375 /
      390 / 430 / 760 / 1280 at the end and puts 390 back. */
+
   const p = await b.newPage({ viewport: { width: 390, height: 844 },
                               deviceScaleFactor: 2, hasTouch: true });
+  /* ---- A SWIPE NEEDS A PAGE THAT CAN SCROLL (2026-08-27) ---------------
+     Paul: *"Why don't we make tabs at the top level and let go of the idea of
+     scrolling everything? The tabs are: Where / Tempo / Key / Motif / Band /
+     Mix / Produce / Score / Export."* G13, G16 and G21 each assert that a
+     vertical swipe on the globe SCROLLS THE PAGE by more than 100px, which
+     was a safe thing to ask of a document that was seventeen thousand pixels
+     tall. The atlas is one panel now: measured the day the tabs landed, at
+     390x844 the `Where` tab's whole document is 844px — exactly the viewport,
+     zero to scroll — and all three checks failed with "0 -> 0 px" on a page
+     that was behaving perfectly.
+
+     THE CLAIM IS NOT RETIRED AND MUST NOT BE. It is the one Paul reported
+     twice ("I don't know where that's from", and the swipe that composed a
+     reggae record) and it is about who owns a vertical gesture that starts on
+     the map — the page, never the globe. What it needs is a page with somewhere
+     to go, so the three checks run at 390x460 (a phone in landscape, which is
+     a real reading of this page) where the same panel leaves 269px of scroll,
+     and everything else runs at the 844 the rest of this file measures at. The
+     globe's own size is width-driven — measured 300px tall at every height
+     from 480 to 844 — so nothing else in the gesture changes. */
+  const SHORT_H = 560;
+  const setH = async (h) => { await p.setViewportSize({ width: 390, height: h });
+    await p.waitForTimeout(250); };
+  const shortPage = () => setH(SHORT_H);
+  const tallPage = () => setH(844);
+  /* AND THE SWIPE HAS TO START WITH SOMEWHERE TO GO. `bring()` is
+     `scrollIntoView({ block: "center" })`, which on a one-panel page lands on
+     the BOTTOM of the document — measured at 390x460: the map centred puts
+     scrollY at 256 of a 256px maximum, and an upward swipe then scrolled the
+     page from 256 to 256 and this gate reported a defect that was its own
+     starting position. The swipe paths therefore start at the top instead.
+     560 is the height that makes both halves true at once: the globe is 300px
+     tall and sits 250px down, so at scrollY 0 the whole of it is on screen
+     (bottom 550 of 560) and there are still 171px of document below to scroll
+     into — more than the 100 the three checks ask for. */
+  const bringLow = async () => { await p.evaluate(() => window.scrollTo(0, 0));
+    await p.waitForTimeout(180); };
   const errs = [], foreign = [];
   /* `__nuName()` IS THE SAME READING AS `nameOf()` BELOW, INSIDE THE PAGE, and
      it is installed with addInitScript because this file reloads six times and
@@ -210,6 +248,33 @@ function g18() {
         .map((n) => n.textContent).join("").trim();
     };
   });
+  /* ---- fresh(): A RELOAD ONTO A PAGE WITH NO ADDRESS (2026-08-27) -------
+     Every `p.reload()` in this file meant "start this page over from nothing",
+     and eleven of them said so by reloading. That stopped being true the day
+     the page got an address: ui/eight.js now writes `#at=<place>&y=<year>&s=<
+     seed>&t=<tab>` with `history.replaceState` on every slider move, globe tap
+     and rewrite (Paul, 2026-08-27: "I'd like to be able to link to a
+     place/time/seed" / "Update the url with those"), and a reload keeps the
+     fragment — which is the whole feature. MEASURED: G11's reload landed on
+     the fragment G9 had just left behind at reading 3, so "Enter on the mark
+     writes exactly genreToDocument('reggae', 1)" failed against a page that
+     was correctly restoring a seed of 3.
+
+     THE ASSERTION IS NOT WEAKENED AND THE FEATURE IS NOT WORKED AROUND: the
+     gate now asks for the thing it always meant. The fragment is cleared with
+     the page's own mechanism first, so what reloads is a link-less page — a
+     reader arriving at the bare URL — which is exactly the state each of these
+     eleven checks was written against. (A link that IS followed is the round's
+     own check and lives outside this file: it is a second browser context on
+     the URL the Export tab hands you.) */
+  const fresh = async () => {
+    await p.evaluate(() => {
+      try { history.replaceState(null, "", location.pathname + location.search); }
+      catch (e) { /* nothing to clear */ }
+    }).catch(() => {});
+    await p.reload({ waitUntil: "networkidle" });
+  };
+
   p.on("pageerror", (e) => errs.push("pageerror: " + e.message));
   p.on("console", (m) => { if (m.type() === "error" && !/favicon/.test(m.text()))
     errs.push("console: " + m.text()); });
@@ -408,21 +473,47 @@ function g18() {
   const gotTitle = await p.waitForFunction(
     () => window.__nuName() === "Kingston 1969",
     null, { timeout: 4000 }).then(() => true).catch(() => false);
-  const after = await p.evaluate(() => ({
+  /* WHAT A SWAP HAS TO LEAVE STANDING, READ THE WAY IT IS NOW DRAWN
+     (2026-08-27). This counted `#app .nu-ax > h2` on the spot, which worked
+     while the whole record was one scroll under the map. Paul the same day:
+     *"Why don't we make tabs at the top level and let go of the idea of
+     scrolling everything? The tabs are: Where / Tempo / Key / Motif / Band /
+     Mix / Produce / Score / Export."* The tap that swaps the record is on the
+     WHERE tab, and on the Where tab `#app` is empty — every axis is behind a
+     tab of its own and is built when it is opened. So the four axis tabs are
+     opened after the tap, through the page's own `window.__eightTab`, and
+     their headings collected; the claim ("the eight-axis headings survived the
+     swap") is exactly the claim it was, asked of the page that exists. */
+  const after = await p.evaluate(async () => {
+    const h2 = [];
+    for (const t of ["Tempo", "Key", "Motif", "Band"]) {
+      window.__eightTab(t);
+      await new Promise((r) => setTimeout(r, 250));
+      const pan = document.querySelector(".nu-pan:not([data-off])");
+      const h = pan && pan.querySelector(".nu-ax > h2");
+      if (h) h2.push(h.textContent.trim());
+    }
+    window.__eightTab("Where");
+    await new Promise((r) => setTimeout(r, 250));
+    return {
     title: window.__nuName(),
-    h2: [...document.querySelectorAll("#app .nu-ax > h2")].map((h) => h.textContent.trim()),
+    h2,
     basis: window.__eightDoc().basis,
     voices: window.__eightDoc().voices.length,
-    sections: window.__eightDoc().form.sections.length }));
+    sections: window.__eightDoc().form.sections.length }; });
   check(gotTitle, "G8 · one tap on Kingston at 1969 makes #title read " +
     JSON.stringify(after.title) + " within 4 s");
   // `>= 4`, WAS `>= 5` UNTIL 2026-08-27: the producer's section left #app for
   // its own host between the board and the score deck ("producer last to say,
-  // score last to see" — FUTURE.md; ui/eight.js redrawApp), so #app holds four
-  // sticky h2 now — Time, Alphabet, Sheet music, The band — and a gate that
+  // score last to see" — FUTURE.md; ui/eight.js redrawApp), so four axis
+  // headings are left — Time, Harmony, Motifs, The band — and a gate that
   // still demanded five would be asserting the OLD page order, not the swap.
+  // ("sticky h2" said twice over; they are neither sticky nor visible since
+  // the tabs landed the same day — the tab row is the second band now, nu.css
+  // THE SECOND BAND IS THE TAB ROW — and the heading is still the panel's own
+  // first child, which is all this check ever read.)
   check(after.h2.length >= 4, "G8 · the eight-axis headings survived the swap (" +
-    after.h2.length + " sticky h2: " + after.h2.slice(0, 6).join(" / ") + ")");
+    after.h2.length + " h2, one per axis tab: " + after.h2.slice(0, 6).join(" / ") + ")");
   check(after.voices >= 2 && after.sections >= 2,
     "G8 · and it is a whole record — " + after.voices + " voices, " +
     after.sections + " sections, basis " + after.basis);
@@ -477,7 +568,7 @@ function g18() {
   check(kb.label === "Kingston 1969, reggae",
     "G11 · and it is NAMED: " + JSON.stringify(kb.label));
 
-  await p.reload({ waitUntil: "networkidle" });
+  await fresh();
   await p.waitForTimeout(900);
   await setYear(1969);
   await p.waitForTimeout(250);
@@ -594,7 +685,7 @@ function g18() {
   await setYear(1969);
 
   /* ---- G12 TAP BOXES ON A PHONE --------------------------------------- */
-  await p.reload({ waitUntil: "networkidle" });
+  await fresh();
   await p.waitForTimeout(900);
   await setYear(1969);
   await bring();
@@ -643,7 +734,7 @@ function g18() {
      +/- buttons — "get rid of all ux for navigating except for the 'when'
      slider … and the 3d globe" — so `+`/`-` is the accessible route and it is
      driven here as a real keypress, not as a synthesised gesture. */
-  await p.reload({ waitUntil: "networkidle" });
+  await fresh();
   await p.waitForTimeout(900);
   await bring();
   await p.waitForTimeout(200);
@@ -735,10 +826,8 @@ function g18() {
     " rAF calls in 1.5 s with the section scrolled away");
 
   /* ---- G13 A SWIPE ON THE MAP STILL SCROLLS THE PAGE ------------------ */
-  await p.evaluate(() => window.scrollTo(0, 0));
-  await p.waitForTimeout(200);
-  await bring();
-  await p.waitForTimeout(200);
+  await shortPage();
+  await bringLow();
   const ta = await p.evaluate(() =>
     getComputedStyle(document.getElementById("atlasMap")).touchAction);
   check(/pan-y/.test(ta), "G13 · the globe's touch-action is " + JSON.stringify(ta) +
@@ -783,6 +872,8 @@ function g18() {
     "G13 · a real HORIZONTAL swipe turns the globe " + turned.toFixed(1) +
     " degrees and scrolls the page " + (hAfter.y - hBefore.y) + " px");
 
+  await tallPage();
+
   /* ---- G20 THE PINCH ANCHORS ON YOUR FINGERS -------------------------- */
   /* THIS GATE ASSERTS A POSITION, NOT A SCALE, and that is the whole point of
      it. The globe shipped with a pinch that zoomed correctly and panned about
@@ -796,7 +887,7 @@ function g18() {
      them, and the place has to still be under them. The scale is checked too,
      but only to prove the pinch DID something — a pinch that did nothing would
      hold the position perfectly. */
-  await p.reload({ waitUntil: "networkidle" });
+  await fresh();
   await p.waitForTimeout(900);
   /* THE SLIDER GOES TO 1969 FIRST, and that is a repair the ghost round owes
      this gate rather than a change to what it proves. The pinch needs A PLACE
@@ -915,10 +1006,7 @@ function g18() {
      that will not scroll under a thumb is a worse bug than a globe that will
      not turn. */
   const straight = async (deg, len) => {
-    await p.evaluate(() => window.scrollTo(0, 0));
-    await p.waitForTimeout(120);
-    await bring();
-    await p.waitForTimeout(250);
+    await bringLow();
     const c = await centre();
     const x0 = c.x + 60, y0 = c.y + 60;
     const r = deg * Math.PI / 180;
@@ -943,6 +1031,7 @@ function g18() {
             + Math.abs(after.lat - before.lat),
       scrolled: y1s - y0s };
   };
+  await shortPage();
   const diag = [];
   for (const deg of [30, 45, 60]) diag.push(await straight(deg, 140));
   const badDiag = diag.filter((d) => !(d.turned > 5 && d.scrolled === 0));
@@ -955,6 +1044,7 @@ function g18() {
   check(!badVert.length, "G21 · …AND A NEAR-VERTICAL SWIPE STILL SCROLLS THE PAGE, at "
     + vert.map((v) => v.deg + " deg: " + v.scrolled + " px scrolled / "
     + v.turned.toFixed(3) + " deg turned").join(", "));
+  await tallPage();
 
   /* ---- G19 THE PILE RESOLVES ----------------------------------------- */
   /* At the whole earth the European marks pile up. The rule is nearest year,
@@ -962,7 +1052,7 @@ function g18() {
      the PICTURE agrees — paint order is descending |record year - slider year|,
      so the mark on top is the one the slider is pointing at, and the same tap
      twice writes the same bytes. */
-  await p.reload({ waitUntil: "networkidle" });
+  await fresh();
   await p.waitForTimeout(900);
   await setYear(1969);
   await bring();
@@ -987,7 +1077,7 @@ function g18() {
   await p.waitForTimeout(2000);
   const one = await p.evaluate(() => ({ title: window.__nuName(),
     doc: JSON.stringify(window.__eightDoc()) }));
-  await p.reload({ waitUntil: "networkidle" });
+  await fresh();
   await p.waitForTimeout(900);
   await setYear(1969);
   await bring();
@@ -1009,16 +1099,16 @@ function g18() {
     JSON.stringify(one.title) + ", nearest to 1969 is " + (near69 || {}).want + ")");
 
   /* ---- G16 A SCROLL THAT BEGINS ON A DOT IS NOT A TAP ----------------- */
+  await shortPage();
   /* The bug this pins, measured 2026-08-24 before the fix: slider at 1969, one
      vertical touch swipe beginning on the Kingston dot, and the box composed a
      reggae record — #title "Rome 600" -> "Kingston 1969", the page from y=192 to
      y=3441. The pick fired on pointerdown, which arrives before the browser has
      decided the gesture is a scroll. Only a real touch stream can catch it. */
-  await p.reload({ waitUntil: "networkidle" });
+  await fresh();
   await p.waitForTimeout(900);
   await setYear(1969);
-  await bring();
-  await p.waitForTimeout(250);
+  await bringLow();
   const k2 = await markXY("Kingston");
   const s0 = await p.evaluate(() => ({ y: window.scrollY,
     title: window.__nuName() }));
@@ -1086,7 +1176,7 @@ function g18() {
   }
   await p.setViewportSize({ width: 390, height: 844 });
   await p.waitForTimeout(300);
-  await p.reload({ waitUntil: "networkidle" });
+  await fresh();
   await p.waitForTimeout(900);
   await bring();
   /* AND EVERY PLACE IS WALKED AT ITS OWN RECORD'S YEAR, which is the second
@@ -1142,7 +1232,7 @@ function g18() {
      and all nineteen places were behind the reader,
      reachable only by Shift-Tab. The sentence names the year, the slider sets
      it, the globe shows what it lit. */
-  await p.reload({ waitUntil: "networkidle" });
+  await fresh();
   await p.waitForTimeout(900);
   await setYear(1969);
   await p.waitForTimeout(250);
@@ -1216,7 +1306,7 @@ function g18() {
      THREE YEARS: 600 (Paul's, and the thinnest — one place), 1969 (the one the
      rest of this file is written at), and the last stop (the far end of the
      slider, where a fencepost error would live). */
-  await p.reload({ waitUntil: "networkidle" });
+  await fresh();
   await p.waitForTimeout(900);
   const last = await p.evaluate(() => window.NuAtlas.YEARS[window.NuAtlas.YEARS.length - 1]);
   for (const Y of [600, 1969, last]) {
@@ -1300,7 +1390,7 @@ function g18() {
            -> showing("reggae"),
            from 600. The slider must JUMP BACK to 1969 and Kingston must be
            drawn, ringed and current again. */
-  await p.reload({ waitUntil: "networkidle" });
+  await fresh();
   await p.waitForTimeout(900);
   await setYear(1969);
   await p.waitForTimeout(250);

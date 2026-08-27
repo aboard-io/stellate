@@ -167,18 +167,56 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     const d = window.__D();
     return (d.form.sections[1] || d.form.sections[0] || {}).id;
   });
-  const views = REAL
-    ? await p.evaluate(() =>
-        [...document.querySelectorAll('[data-k^="tab"]')].map((n2) => n2.dataset.k))
-    : [null];
+  /* ---- AND THE PAGE IS NINE TOP-LEVEL TABS NOW (2026-08-27) -------------
+     Paul: *"Why don't we make tabs at the top level and let go of the idea of
+     scrolling everything? The tabs are: Where / Tempo / Key / Motif / Band /
+     Mix / Produce / Score / Export."* This block read the band's voice tabs
+     off `[data-k^="tab"]` and walked those, which is exactly the right walk
+     for a page where every one of those buttons is on the screen at boot. It
+     is not any more: the voice tabs live INSIDE the Band panel, eight panels
+     out of nine are `display: none`, and the page boots on Where. Measured
+     against the tabbed page before this change: `views` came back EMPTY, so
+     `eachView` ran its body zero times and nine survey checks failed with the
+     empty list — the same hole this block was written to close, one level up.
+
+     So the walk is now two deep and the outer level is the page's own tab
+     table, read off `window.__eightTabs()` and opened through
+     `window.__eightTab` — the same call the tab button's listener makes. The
+     inner level is unchanged: on the Band tab, and only there, every voice tab
+     is opened as well, and the form tab still needs its second tap.
+
+     AND IT IS OPENED, NOT JUST FOUND. `document.querySelector` finds a button
+     inside a `display: none` panel perfectly well and `.click()` on it fires
+     nothing, because ui/eight.js marks a shut panel `inert`. A gate that
+     tapped without opening would therefore survey the tab it was already on
+     nine times and report it as nine views. */
+  const TOPS = REAL
+    ? await p.evaluate(() => window.__eightTabs ? window.__eightTabs() : [])
+    : [];
+  const openTop = async (t) => {
+    await p.evaluate((tt) => window.__eightTab(tt), t);
+    await p.waitForTimeout(t === "Score" ? 1200 : 300);
+  };
+  const views = REAL ? [] : [null];
+  if (REAL) for (const t of TOPS) {
+    if (t !== "Band") { views.push({ top: t, k: null }); continue; }
+    await openTop(t);
+    const voices = await p.evaluate(() =>
+      [...document.querySelectorAll('#tabs [data-k^="tab"]')].map((n2) => n2.dataset.k));
+    for (const k of voices) views.push({ top: t, k });
+  }
   const eachView = async (fn) => {
     const out = [];
     for (const v of views) {
       if (v) {
-        await tapK(v);
-        if (v === "tabform") await tapK("sec" + SEC1);
+        await openTop(v.top);
+        if (v.k) {
+          await tapK(v.k);
+          if (v.k === "tabform") await tapK("sec" + SEC1);
+        }
       }
-      out.push({ view: v, r: await p.evaluate(fn) });
+      out.push({ view: v ? (v.top + (v.k ? "/" + v.k : "")) : null,
+                 r: await p.evaluate(fn) });
     }
     return out;
   };
@@ -206,7 +244,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      retirement: with the tap, 0 sheets and 0 multi sheets on the shipped page,
      and 9 controls on this plate surveyed that would otherwise not be — the
      seven master words, the record gain and the listening column. */
-  if (REAL) await tapK("boardtab|bus|main");
+  if (REAL) { await openTop("Mix"); await tapK("boardtab|bus|main"); }
 
   const union = (rows, key) => {
     const seen = new Set(), out = [];
@@ -425,6 +463,11 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     JSON.stringify(s0.sheet));
 
   /* ---- 4 the drummer. Hire one, then switch him off. ---- */
+  // ON THE BAND TAB, WHICH IS WHERE THE BAND IS (2026-08-27). `+ drums` is a
+  // button in `#tabs`, inside the Band panel, and eight panels out of nine are
+  // `display: none` and `inert` — a `.click()` on a button in a shut panel
+  // finds the element and fires nothing.
+  if (REAL) await openTop("Band");
   await p.evaluate(async () => {
     const add = document.querySelector('[data-k="adddrums"]');
     if (add) { add.click(); return; }
@@ -523,6 +566,9 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      `<p class="nu-why">`. Both are held to the same sentence, because the
      sentence is the point: kernel.js:671 throws the progression away under a
      modal harmony and every quality is then a word about nothing. */
+  // ON THE KEY TAB (2026-08-27): "the changes" is the Alphabet axis, which is
+  // Paul's `Key`, and the quality menus are cells of its chord table.
+  if (REAL) await openTop("Key");
   const qual = await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="alphabet.quality"]');
     if (f) { const w = [...f.children].find((c) => c.classList.contains("nu-why"));
@@ -542,6 +588,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   // has no `cast.part` sheet at all. The gate read `undefined` and called the
   // page broken while the page was right. Click the first line voice's tab,
   // the way a thumb would, and the sheets this section is about exist.
+  if (REAL) await openTop("Band");
   await p.evaluate(() => {
     const v = window.__D().voices.find((x) => x.kind === "line");
     const t = v && document.querySelector('[data-k="tab' + v.name + '"]');

@@ -62,6 +62,18 @@ function executable() {
   throw new Error("no installed chromium under " + root);
 }
 
+/* OPEN A TAB THE WAY A THUMB DOES. `window.__eightTab` is ui/eight.js's own
+   export for a gate — "a gate is a HAND, not a clock" — and it is the same
+   call the tab button's click listener makes, so nothing here is a private
+   door into the shell. The Score is given longer because opening it engraves
+   the whole record on a promise the first time it is asked. */
+async function openTabs(pg, names) {
+  for (const n of names) {
+    await pg.evaluate((t) => window.__eightTab && window.__eightTab(t), n);
+    await pg.waitForTimeout(n === "Score" ? 1500 : 400);
+  }
+}
+
 let FAILS = 0;
 const ok = (m) => console.log("  ok   " + m);
 const fail = (m) => { FAILS++; console.log("  FAIL " + m); };
@@ -129,6 +141,17 @@ const readable = (r) => !!r && r.inside && r.text.length > 0;
   page.on("pageerror", (e) => errors.push(String(e).slice(0, 200)));
   page.on("console", (m) => { if (m.type() === "error") errors.push("console: " + m.text().slice(0, 200)); });
   await page.goto(URL_, { waitUntil: "load", timeout: 60000 });
+  /* THE DECK IS TWO TABS NOW (2026-08-27). Paul: *"Why don't we make tabs at
+     the top level … The tabs are: Where / Tempo / Key / Motif / Band / Mix /
+     Produce / Score / Export."* The notation and the roll are `Score`; the
+     export row was promoted out of the deck to `Export`. The page boots on
+     `Where`, and a panel is not built until it is first opened (mount on
+     demand), so BOTH are opened here — Export first, so its four cards exist
+     in the DOM for D5 to read, then Score, which is where every geometric
+     assertion below is made. Measured before this line: the gate hung for 30s
+     on `__eightScore().steps > 0` against a Score panel that had never been
+     built. */
+  await openTabs(page, ["Export", "Score"]);
   await page.waitForFunction(() => window.__deckState && window.__eightScore &&
     window.__eightScore().steps > 0, null, { timeout: 30000 });
   await page.waitForTimeout(1000);
@@ -374,6 +397,7 @@ const readable = (r) => !!r && r.inside && r.text.length > 0;
     viewport: { width: 390, height: 844 } })).newPage();
   p390.on("pageerror", (e) => errors.push("390: " + String(e).slice(0, 160)));
   await p390.goto(URL_, { waitUntil: "load", timeout: 60000 });
+  await openTabs(p390, ["Export", "Score"]);
   await p390.waitForFunction(() => window.__deckState && window.__eightScore &&
     window.__eightScore().steps > 0, null, { timeout: 30000 });
   await p390.waitForTimeout(1200);

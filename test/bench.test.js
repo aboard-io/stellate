@@ -69,6 +69,17 @@ async function touchDrag(page, x0, y0, x1, y1, steps = 8) {
   await cdp.detach();
 }
 
+/* ONE DOOR TO THE BENCH, so the two viewports below cannot drift about how
+   they get there. `__eightTab` is exported by ui/eight.js for exactly this —
+   "a gate is a HAND, not a clock" — and a gate that reached into the page's
+   private state to flip a panel would be testing its own idea of the shell. */
+async function openMotif(pg) {
+  const ok2 = await pg.evaluate(() =>
+    !!(window.__eightTab && window.__eightTab("Motif") === "Motif"));
+  await pg.waitForTimeout(500);
+  return ok2;
+}
+
 (async () => {
   const { chromium } = require("playwright");
   const browser = await chromium.launch({ executablePath: executable(),
@@ -81,6 +92,16 @@ async function touchDrag(page, x0, y0, x1, y1, steps = 8) {
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(URL_, { waitUntil: "load" });
   await page.waitForTimeout(4000);
+  /* THE BENCH IS THE `Motif` TAB (2026-08-27). Paul: *"Why don't we make tabs
+     at the top level and let go of the idea of scrolling everything? The tabs
+     are: Where / Tempo / Key / Motif / Band / Mix / Produce / Score /
+     Export."* The page boots on Where and eight panels out of nine are
+     `display: none` and `inert`, so a gate that loaded and looked found zero
+     rows, zero segments and no wisdom rail — measured, before this line. The
+     tab is opened through the page's own `window.__eightTab`, the same call
+     the tab button's listener makes, and it is the FIRST thing every viewport
+     in this file does. */
+  await openMotif(page);
 
   // ---- the surface exists, in the promised geometry
   const shape = await page.evaluate(() => {
@@ -294,6 +315,7 @@ async function touchDrag(page, x0, y0, x1, y1, steps = 8) {
   wide.on("pageerror", (e) => werrs.push(e.message));
   await wide.goto(URL_, { waitUntil: "load" });
   await wide.waitForTimeout(4000);
+  await openMotif(wide);
   const over1280 = await wide.evaluate(() =>
     document.documentElement.scrollWidth - window.innerWidth);
   is(over1280 <= 0, "B7 · no horizontal overflow at 1280 (" + over1280 + "px)");

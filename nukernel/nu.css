@@ -769,12 +769,19 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    IT WRAPS AND NEVER SCROLLS SIDEWAYS. `.nu-row` is `flex-wrap: wrap` and this
    rule does not touch that — a sideways-scrolling tab strip is A1's failure
    wearing a feature's clothes, and it is also the trap the atlas paid for once
-   (`touch-action: pan-y` left 28 of 62 places unreachable). Nine names in
-   Paul's own words are 470.6px of button at the page's .6em padding, against
-   the 366px a 390px phone leaves: it goes to two lines there and one line from
-   820px up. MEASURED on the rendered page at .3em gap and .45em padding:
-   320 -> 3 lines / 148px, 390 -> 2 lines / 100px, 430 -> 2 / 100, 820 -> 1 /
-   52, 1280 -> 1 / 52, and scrollWidth === clientWidth at every one.
+   (`touch-action: pan-y` left 28 of 62 places unreachable). MEASURED on the
+   rendered page, at .3em gap and .45em padding, AFTER the lighter-chrome
+   retune of the same day (Paul: "make the button text smaller and not bold"):
+   the nine buttons are 65.9 · 60.5 · 40.0 · 49.5 · 50.5 · 38.9 · 70.9 · 53.8 ·
+   60.4 = 490.4px, plus eight .3em gaps = 528.8px of strip, against the 296px a
+   320px phone leaves and the 366px a 390px one does. So:
+   320 -> 2 lines / 103.4px, 375 -> 2 / 103.4, 390 -> 2 / 103.4,
+   430 -> 2 / 103.4, 820 -> 1 / 54.6, 1280 -> 1 / 54.6 — and both
+   `row.scrollWidth === row.clientWidth` and
+   `documentElement.scrollWidth === clientWidth` at every one of the six.
+   (This said "3 lines / 148px at 320" and "2 lines / 100px at 390", which was
+   the strip in the heavy Enamel face for the few hours both landed on; the
+   numbers moved with the button face and the claim did not.)
 
    NO RESERVED HEIGHT, and that is a change of kind rather than an omission.
    `--head-h` was a promise because something (the axis heading) was pinned
@@ -2892,3 +2899,69 @@ table.nu-trims{ color: var(--ink); }
   pointer-events: none;
   background: color-mix(in srgb, var(--panel) 80%, transparent);
   border-radius: 2px; padding: 0 2px; }
+
+/* ==========================================================================
+   THE HORIZONTAL SLIDER IS THE VERTICAL ONE, LAID DOWN — 2026-08-27.
+
+   Paul: *"The horizontal sliders should have the same handles and vibes as
+   the vertical sliders, just be horizontal"* and, on the atlas: *"The 'when'
+   slider isn't a big horizontal slider like it should be."*
+
+   MEASURED BEFORE THIS BLOCK: nu.css carried NO `input[type=range]` rule at
+   all, so `#atlasYear` and `#vol` were the browser's own control on a page
+   where every other value wears a trough and a cap — a different species, and
+   the two loudest examples of it. The custom bars (.nu-pit, .nu-velA, .nu-kc)
+   already took the anatomy; this is the same anatomy for the native ones,
+   which cannot be re-shaped in markup and must be dressed through the two
+   vendor pseudo-elements. One block, both axes, no per-control rules.
+
+   THE CAP IS THE POINT. A fill without a handle is a bar-graph; the handle is
+   what says "you may drag this", which is exactly what was missing. Same
+   panel face, same ink border, same hard offset, same centre line as
+   `.nu-vs-thumb::after`. */
+input[type="range"]{
+  -webkit-appearance: none; appearance: none;
+  inline-size: 100%; block-size: var(--ctl, 48px);
+  background: transparent; margin: 0; touch-action: pan-y; cursor: grab;
+}
+input[type="range"]:active{ cursor: grabbing; }
+input[type="range"]::-webkit-slider-runnable-track{
+  block-size: 10px; border-radius: var(--r1, 6px);
+  background: var(--well); border: var(--bw, 1px) solid var(--ink);
+}
+input[type="range"]::-moz-range-track{
+  block-size: 10px; border-radius: var(--r1, 6px);
+  background: var(--well); border: var(--bw, 1px) solid var(--ink);
+}
+input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance: none; appearance: none;
+  inline-size: 26px; block-size: 26px; margin-block-start: -9px;
+  border-radius: var(--r1, 6px); background: var(--panel);
+  border: var(--bw, 1px) solid var(--ink); box-shadow: var(--shadow);
+  background-image: linear-gradient(var(--ink), var(--ink));
+  background-size: 2px 12px; background-position: center; background-repeat: no-repeat;
+}
+input[type="range"]::-moz-range-thumb{
+  inline-size: 26px; block-size: 26px; border-radius: var(--r1, 6px);
+  background: var(--panel); border: var(--bw, 1px) solid var(--ink);
+  box-shadow: var(--shadow);
+  background-image: linear-gradient(var(--ink), var(--ink));
+  background-size: 2px 12px; background-position: center; background-repeat: no-repeat;
+}
+input[type="range"]:focus-visible::-webkit-slider-thumb{
+  outline: 2px solid var(--hand); outline-offset: 2px; }
+input[type="range"]:focus-visible::-moz-range-thumb{
+  outline: 2px solid var(--hand); outline-offset: 2px; }
+input[type="range"]:disabled{ cursor: default; opacity: .5; }
+
+/* …AND THE WHEN SLIDER IS THE BIG ONE. It is the record's coarsest gesture —
+   eighty-five stops across the whole page — so it gets the full width it
+   always claimed and a taller cap to be found with a thumb on a moving train. */
+#atlasWhen #atlasYear{ block-size: 52px; }
+#atlasWhen #atlasYear::-webkit-slider-runnable-track{ block-size: 14px; }
+#atlasWhen #atlasYear::-moz-range-track{ block-size: 14px; }
+#atlasWhen #atlasYear::-webkit-slider-thumb{
+  inline-size: 34px; block-size: 32px; margin-block-start: -10px;
+  background-size: 2px 16px; }
+#atlasWhen #atlasYear::-moz-range-thumb{
+  inline-size: 34px; block-size: 32px; background-size: 2px 16px; }

@@ -296,10 +296,41 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     };
   });
 
+  /* ---- AND THE PAGE IS NINE TOP-LEVEL TABS (2026-08-27) ----------------
+   * Paul: *"Why don't we make tabs at the top level and let go of the idea of
+   * scrolling everything? The tabs are: Where / Tempo / Key / Motif / Band /
+   * Mix / Produce / Score / Export."* The paragraph above — "THE WHOLE PAGE,
+   * NOT THE FIRST TAB OF IT" — was written about the BAND's tab strip and is
+   * now true twice over, at two depths. Every survey below is unioned across
+   * the outer nine as well as the inner voices, through the page's own
+   * `window.__eightTab` (the call the tab button's own listener makes).
+   *
+   * MEASURED BEFORE THIS CHANGE, against the tabbed page: "no tab strip · 0
+   * selects, 0 sheets", and nine checks red about a page that was fine — the
+   * gate was standing on the Where tab, where the globe is, and reporting the
+   * absence of every menu on the record.
+   *
+   * `openTop` and not a click on the tab button: a click would work, and it
+   * would also make every one of these surveys depend on the tab row's
+   * geometry at whatever viewport the gate happens to run at. What is under
+   * test here is the option lists, not the strip; test/shell.js A6c and A6d
+   * are where the strip itself is measured. */
+  const TOPS = await p.evaluate(() =>
+    window.__eightTabs ? window.__eightTabs() : []);
+  const openTop = async (t) => {
+    if (!TOPS.length) return;
+    await p.evaluate((tt) => window.__eightTab(tt), t);
+    await p.waitForTimeout(t === "Score" ? 1200 : 250);
+  };
+
   /* HIRE A DRUMMER FIRST, OR THE KIT TAB DOES NOT EXIST. The shipped chant is
    * two voices and no drums, so `sound.drumkit` — on the MENUS list as of
    * 2026-08-24 — is not on the page at all until somebody is hired to play it.
-   * test/sheets.js gate 4 does the same thing for the same reason. */
+   * test/sheets.js gate 4 does the same thing for the same reason.
+   * ...ON THE BAND TAB, since 2026-08-27: `+ drums` is a button inside the
+   * Band panel, and a shut panel is `inert` — the click finds the element and
+   * fires nothing. */
+  await openTop("Band");
   await p.evaluate(() => {
     const add = document.querySelector('[data-k="adddrums"]');
     if (add) { add.click(); return; }
@@ -308,9 +339,15 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   await p.waitForTimeout(300);
 
   const tabs = await p.evaluate(() =>
-    [...document.querySelectorAll('[data-k^="tab"]')].map((t) => t.dataset.k));
+    [...document.querySelectorAll('#tabs [data-k^="tab"]')].map((t) => t.dataset.k));
   let sel = [], sheets = [];
   const eat = (s) => { sel = sel.concat(s.sel); sheets = sheets.concat(s.sheets); };
+  // EVERY ONE OF THE NINE, FIRST — the Tempo tab's meter and swing, the Key
+  // tab's mode, harmony and quality cells, the Motif tab's per-cell menus and
+  // the producer's verbs are each on a panel of their own now, and none of
+  // them is reachable from the band's strip.
+  for (const t of TOPS) { await openTop(t); eat(await survey()); }
+  await openTop("Band");
   eat(await survey());
   // ...AND THE FORM TAB IS A LIST, so its own controls are one tap further in.
   // Paul, 2026-08-25: *"when you tap it brings up the questions about the
@@ -324,6 +361,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     return (d.form.sections[1] || d.form.sections[0] || {}).id;
   });
   for (const t of tabs) {
+    await openTop("Band");
     await p.click('[data-k="' + t + '"]'); await p.waitForTimeout(150);
     eat(await survey());
     if (t === "tabform") {
@@ -460,6 +498,12 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   notes.push("     menus off Paul's own list, by the rule rather than by name: " +
     JSON.stringify([...new Set(sel.filter((s) => !MENUS[s.k] && !MULTI[s.k])
       .map((s) => bare(s.key)))]));
+
+  /* THE CHANGES, THE MODE AND THE CIRCLE ARE ALL ON THE `Key` TAB (2026-08-27)
+     and checks 4, 5, 5b, 7 and 9 all read them off the rendered page, so the
+     page is put on that tab once, here, and left there. Nothing between here
+     and check 10 touches the band. */
+  await openTop("Key");
 
   /* ---- 4 THE CHORD QUALITY IS INSIDE THE CHANGES TABLE, ONE PER BAR ---- */
   const bars = await p.evaluate(() => (window.__D().alphabet.prog || []).length);
@@ -879,6 +923,9 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     return s ? s.value : null;
   });
   check(held === after, "...and the redrawn menu shows it " + JSON.stringify(held));
+
+  // …AND THE PRODUCER HAS HIS OWN TAB NOW (2026-08-27, Paul's list: "Produce").
+  await openTop("Produce");
 
   /* ---- 10 THE PRODUCER'S ONE-OPTION SHEET, on the real page only ----
      Measured 2026-08-24: "add" -> "cantor" -> "add cantor — like what?" draws

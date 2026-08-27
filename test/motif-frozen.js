@@ -66,6 +66,28 @@
 //     printed and allowed, and everything after it must be silent.
 // A8  stopping does not rebuild either — C === A, the second draw() that used
 //     to hang off `transport:state`
+// A9  ...AND THE SAME LAW ACROSS THE NINE TABS (2026-08-27). Paul: *"Why don't
+//     we make tabs at the top level and let go of the idea of scrolling
+//     everything? The tabs are: Where / Tempo / Key / Motif / Band / Mix /
+//     Produce / Score / Export."* A3 asks whether the CLOCK writes on the
+//     editing interface; A9 asks whether MOVING BETWEEN TABS while the record
+//     plays does — thirty seconds of playback across three tab switches, back
+//     to the tab you started on, and the frozen half byte-identical.
+//
+//     WHY IT COMES BACK TO THE SAME TAB BEFORE IT LOOKS. `__eightFrozen`
+//     snapshots `#app`, which holds the four axis panels — Tempo, Key, Motif,
+//     Band — and switching between them writes `data-off` and `inert` on two
+//     of them, which is the SHELL'S state and not the record's. Comparing
+//     across a switch would therefore be comparing two different, correct
+//     pages. Compared at the same tab, with all four panels warmed before the
+//     baseline so none of them is rebuilt during the walk, the snapshot covers
+//     ALL FOUR PANELS AT ONCE — so a clock that wrote into the Band panel
+//     while the walk was standing on it fails this check from the Motif tab,
+//     which is the strongest form of the claim available.
+//
+//     AND PLAYBACK IS NOT INTERRUPTED: the step is read before and after and
+//     must have advanced, and the transport must still say `stop`. A tab that
+//     stopped the record would pass a frozen-DOM check by silence.
 //
 // Run:  NODE_PATH=/home/ford/ftrain-2025/node_modules node test/motif-frozen.js
 // A bare chromium.launch() resolves a shell build that is not installed here,
@@ -130,6 +152,35 @@ function firstDiff(a, b) {
     page.on("pageerror", (e) => errors.push(e.message));
     await page.goto(URL, { waitUntil: "load" });
     await page.waitForTimeout(SETTLE);
+    /* ---- WARM EVERY TAB, THEN STAND ON `Motif` (2026-08-27) --------------
+       Paul: *"Why don't we make tabs at the top level and let go of the idea
+       of scrolling everything?"* Two consequences for this file, and neither
+       of them is a change to what it claims.
+
+       ONE: a panel is not built until it is first opened (ui/eight.js
+       `buildTab`, the mount-on-demand law), so the whole of the walk below is
+       warmed here — the frozen half must exist before it can be frozen, and a
+       panel built DURING the walk would be a legitimate rebuild that A3 and A9
+       would read as a violation. `Score` is warmed too: `__eightCaptions` and
+       A4's whole proof are the deck's caption, and the deck is a tab.
+
+       TWO: the gate then stands on `Motif`, because "the editable half" is
+       what this file is about and the motifs are its sharpest case — the
+       staves A2 counts and the bench A3's bytes are made of.
+
+       A SHUT PANEL IS STILL IN `#app` AND IS STILL FROZEN. `__eightFrozen`
+       snapshots the whole of #app, so all four axis panels are inside every
+       string below, whichever one is on the screen. That is deliberate: it is
+       what lets A9 prove the clock wrote nothing into the Band panel while the
+       walk was standing on it. */
+    const tabs = await page.evaluate(() => window.__eightTabs && window.__eightTabs());
+    if (!tabs || !tabs.length) { fail(width + " · the page has no __eightTabs probe"); break; }
+    for (const t of tabs) {
+      await page.evaluate((tt) => window.__eightTab(tt), t);
+      await page.waitForTimeout(t === "Score" ? 1500 : 350);
+    }
+    await page.evaluate(() => window.__eightTab("Motif"));
+    await page.waitForTimeout(800);
 
     // ---- the page has to have the probes, or nothing below means anything
     const probed = await page.evaluate(() => !!(window.__eightFrozen &&
@@ -137,12 +188,20 @@ function firstDiff(a, b) {
     if (!probed) { fail(width + " · the page has no __eightFrozen probe"); break; }
 
     // A1 — the excluded set contains no editing interface at all
+    /* PAGE-WIDE SINCE 2026-08-27, and it was `#app`-scoped for a page where
+       every live block was in #app. Two of them are not any more: the score
+       and the piano roll moved to the deck at the foot on 2026-08-27 and then
+       to the `Score` TAB the same day. A1 is the smuggling check — "nothing
+       inside a [data-live] may be an editing control, or 'put it in a
+       data-live' becomes a way past A3" — and a smuggling check with a
+       boundary is a check with a door in it. */
     const smuggled = await page.evaluate(() => [...document.querySelectorAll(
-      "#app [data-live] input, #app [data-live] select, #app [data-live] textarea," +
-      " #app [data-live] button, #app [data-live] fieldset")]
+      "[data-live] input, [data-live] select, [data-live] textarea," +
+      " [data-live] button, [data-live] fieldset")]
       .map((e) => e.tagName.toLowerCase() + (e.dataset.k ? "[" + e.dataset.k + "]" : "")));
     is(smuggled.length === 0,
-      "A1 " + width + " · no control inside a [data-live] (" + smuggled.join(", ") + ")");
+      "A1 " + width + " · no control inside any [data-live], page-wide (" +
+      smuggled.join(", ") + ")");
 
     // A2 — the live surface exists WHILE STOPPED, and one staff per motif
     const shape = await page.evaluate(() => ({
@@ -153,8 +212,17 @@ function firstDiff(a, b) {
       // "never was a number". So the query is `[data-live]` minus the playhead
       // cells, which are counted separately because there are twenty-odd of
       // them in the form table and they are not blocks.
-      lives: document.querySelectorAll('#app [data-live]:not([data-live="count"])').length,
-      counts: document.querySelectorAll('#app [data-live="count"]').length,
+      /* AND THE LIVE BLOCKS ARE NO LONGER ALL IN #app (2026-08-27). This
+         counted `#app [data-live]` and its own note already said the set
+         moves — "a THIRD data-live value existed for one day … TWO remain".
+         What it did not anticipate is one of the two LEAVING #app: `score`
+         went to the deck at the foot and then to the Score tab, so this
+         reading was 0 on a page whose live surface was fine, and A2 was about
+         to fail for a reason that has nothing to do with what A2 claims.
+         The claim — "nothing the clock writes on may be conditional on
+         `playing`" — was never about an address. */
+      lives: document.querySelectorAll('[data-live]:not([data-live="count"])').length,
+      counts: document.querySelectorAll('[data-live="count"]').length,
       written: document.querySelectorAll("#staff > p > div").length,
       caps: window.__eightCaptions(),
       playing: (document.getElementById("play") || {}).textContent,
@@ -195,7 +263,7 @@ function firstDiff(a, b) {
                               a.getBoundingClientRect().top) : -1; };
       return { caps: window.__eightCaptions(), eng: window.__eightEngraves(),
                si: window.__eightSec(), step: window.__eightStep(),
-               top: rel("#app fieldset"), band: rel("#ax-band"),
+               top: rel("#app fieldset"), band: rel("#app > .nu-pan:not([data-off]) > .nu-ax"),
                scroll: Math.round(document.scrollingElement.scrollTop),
                voices: window.__eightDoc().voices.filter((v) => v.kind === "line").length,
                bpm: window.__eightDoc().time.bpm,
@@ -231,7 +299,7 @@ function firstDiff(a, b) {
                               a.getBoundingClientRect().top) : -1; };
       return { caps: window.__eightCaptions(), eng: window.__eightEngraves(),
                step: window.__eightStep(), longs: window.__longs.slice(),
-               top: rel("#app fieldset"), band: rel("#ax-band"),
+               top: rel("#app fieldset"), band: rel("#app > .nu-pan:not([data-off]) > .nu-ax"),
                scroll: Math.round(document.scrollingElement.scrollTop) };
     });
     const B = await page.evaluate(() => window.__eightFrozen());
@@ -256,8 +324,17 @@ function firstDiff(a, b) {
     // changed height would show up here and nowhere else.
     is(after.top === before.top, "A5 " + width + " · the first fieldset is where it was " +
       "in #app (" + before.top + " → " + after.top + ")");
-    is(after.band === before.band, "A5 " + width + " · the band axis — everything " +
-      "under the staves — is where it was in #app (" + before.band + " → " + after.band + ")");
+    /* WAS `#ax-band`, WHICH IS BEHIND A TAB NOW (2026-08-27). The claim is
+       "everything BELOW the staves is where it was", and what it was measuring
+       is a box whose top moves if any live block above it changes height. The
+       band axis was that box while the page was one scroll; on the Motif tab
+       it is `display: none` and reads 0, which is a number that cannot move
+       and therefore an assertion that asserts nothing. The open panel's own
+       `.nu-ax` is the box that is actually under the staves now — its top is
+       what a composed staff or a caption growing a line would push. */
+    is(after.band === before.band, "A5 " + width + " · the open panel's axis — " +
+      "everything under the staves — is where it was in #app (" +
+      before.band + " → " + after.band + ")");
     is(after.scroll === before.scroll, "A5 " + width + " · the scroll was not moved (" +
       before.scroll + " → " + after.scroll + ")");
 
@@ -286,6 +363,53 @@ function firstDiff(a, b) {
     const C = await page.evaluate(() => window.__eightFrozen());
     is(C === A, "A8 " + width + " · stop did not rebuild the editable half" +
       (C === A ? "" : "\n        " + firstDiff(A, C)));
+
+    /* ---- A9 — THIRTY SECONDS OF PLAYBACK ACROSS THREE TAB SWITCHES ------
+       The record is started again (A8 stopped it) and left running while the
+       walk moves Motif -> Score -> Mix -> Band -> Motif. Three switches is
+       Paul's own number for this round's brief; the fourth move is the way
+       back, without which the comparison would be between two different tabs
+       rather than between two moments.
+
+       WHAT IS PROVED, in the order it matters: the record is still playing
+       (the button still says stop and the step advanced), and `#app` — all
+       four axis panels at once — is byte for byte what it was before the
+       walk. A tab switch that rebuilt a panel, a clock that wrote outside a
+       `[data-live]`, or a switch that stopped the transport each fail exactly
+       one of those and none of them can fail quietly. */
+    await page.click("#play");
+    const running = await page.waitForFunction(
+      () => document.getElementById("play").textContent === "stop",
+      null, { timeout: 15000 }).then(() => true).catch(() => false);
+    if (!running) fail("A9 " + width + " · the record would not start again");
+    else {
+      const D0 = await page.evaluate(() => window.__eightFrozen());
+      const s0 = await page.evaluate(() => window.__eightStep());
+      const t0 = Date.now();
+      const walked = [];
+      for (const t of ["Score", "Mix", "Band", "Motif"]) {
+        await page.evaluate((tt) => window.__eightTab(tt), t);
+        // ~7.5s a leg: four legs is the thirty seconds of playback asked for
+        await page.waitForTimeout(7500);
+        walked.push(t + "@" + (await page.evaluate(() => window.__eightTabMs())).toFixed(1) + "ms");
+      }
+      const secs = ((Date.now() - t0) / 1000).toFixed(1);
+      const D1 = await page.evaluate(() => window.__eightFrozen());
+      const end = await page.evaluate(() => ({
+        step: window.__eightStep(),
+        word: document.getElementById("play").textContent,
+        tab: window.__eightTabNow() }));
+      is(end.word === "stop" && end.step !== s0,
+        "A9 " + width + " · " + secs + "s of playback survived the walk " +
+        walked.join(" -> ") + " (step " + s0 + " -> " + end.step +
+        ", the transport says \"" + end.word + "\")");
+      is(D1 === D0,
+        "A9 " + width + " · and the frozen half is byte-identical back on " +
+        end.tab + " (" + D0.length + " chars)" +
+        (D1 === D0 ? "" : "\n        " + firstDiff(D0, D1)));
+      await page.click("#play");
+      await page.waitForTimeout(500);
+    }
 
     is(errors.length === 0, "  · no page errors (" + errors.slice(0, 3).join(" | ") + ")");
     await page.close();

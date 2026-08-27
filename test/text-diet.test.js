@@ -40,14 +40,38 @@ const os = require("os");
 
 const PAGE = process.env.PAGE || "http://localhost:8777/nukernel/index.html";
 
-/* the ceiling this wave achieved (see header), and the law's own hard line */
+/* the ceiling this wave achieved (see header), and the law's own hard line.
+   THE NUMBER IS NOW A SUM OVER THE NINE TABS (2026-08-27) and it is the same
+   number for the same reason: it counts every word of prose the record can
+   show a reader, whether the page shows them one after another down a scroll
+   or one panel at a time. Re-measured the day the tabs landed and printed by
+   this gate on every run. */
 const ACHIEVED = 933;
 const CEILING = Math.ceil(ACHIEVED * 1.10);   // 1027
 const HARD = 1200;
 
-/* the §5 table's final heading list, in scroll order — T2's one fact */
+/* PAUL'S OWN LIST, 2026-08-27: *"The tabs are: Where / Tempo / Key / Motif /
+   Band / Mix / Produce / Score / Export."* This is T2's one fact now, and it
+   is typed rather than read off the page for the reason every quotation in a
+   gate is typed: the page agreeing with itself is not evidence. */
+const TABS = ["Where", "Tempo", "Key", "Motif", "Band",
+              "Mix", "Produce", "Score", "Export"];
+
+/* …AND THE VOCABULARY'S OWN NAMES, WHICH ARE STILL IN THE DOCUMENT AND ARE NO
+   LONGER ON THE SCREEN. This was T2's whole fact and it read: "the §5 table's
+   final heading list, in SCROLL ORDER — ordinals gone, Alphabet→Harmony,
+   Sheet music→Motifs, one case rule". There is no scroll order any more; there
+   is Paul's tab order, above. The headings themselves did not go — nu.css
+   makes `.nu-ax > h2` visually hidden (THE SECOND BAND IS THE TAB ROW), so
+   they are still the document's structure, still what a screen reader
+   announces, and still what the page reads as with the stylesheet off. What
+   they stopped being is a SECOND visible name for a panel the tab already
+   names — one owner per fact. So the list is asserted where it now lives:
+   one `<h2>` per panel, in tab order, still saying the vocabulary's words.
+   `Export` joins it because Paul made the export row a tab of its own. */
 const HEADINGS = ["Where & when", "Time", "Harmony", "Motifs",
-                  "The band", "The board", "The producer", "The score"];
+                  "The band", "The board", "The producer", "The score",
+                  "Export"];
 
 function executable() {
   const p = path.join(os.homedir(),
@@ -89,7 +113,16 @@ const MEASURE = () => {
   return {
     total: rows.reduce((a, r) => a + r.chars, 0),
     top: rows.sort((a, b) => b.chars - a.chars).slice(0, 8),
-    h2: [...document.querySelectorAll("h2")].map((h) => h.textContent.trim()),
+    /* THE OPEN PANEL'S OWN HEADING, not every h2 on the page. Eight panels out
+       of nine are shut but still in the DOM once they have been built, so a
+       document-wide query would return the headings of every tab the walk has
+       already visited, in build order, and grow by one on every step. */
+    h2: (() => { const pan = document.querySelector(".nu-pan:not([data-off])");
+      const h = pan && pan.querySelector("h2");
+      return h ? h.textContent.trim() : null; })(),
+    tabNames: [...document.querySelectorAll("#toptabs button")]
+      .map((b) => b.textContent.trim()),
+    openTab: window.__eightTabNow ? window.__eightTabNow() : null,
     rateSel: document.querySelectorAll('select[data-sel^="time.rate"]').length,
     /* T3 — every visible disabled control and where its reason lives. A
        reason is data-why on the control itself, or a .nu-why / .nu-mutewhy
@@ -122,9 +155,34 @@ const MEASURE = () => {
     p.on("pageerror", (e) => errs.push(e.message));
     await p.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
     await p.goto(PAGE, { waitUntil: "networkidle" });
-    await p.waitForSelector("#strips .nu-strip", { timeout: 20000 });
-    await p.waitForTimeout(1500);
-    const m = await p.evaluate(MEASURE);
+    await p.waitForTimeout(2000);
+    /* ---- THE DIET IS MEASURED TAB BY TAB AND ADDED UP (2026-08-27) --------
+       Paul: *"Why don't we make tabs at the top level and let go of the idea
+       of scrolling everything?"* This gate's own definition of prose already
+       excluded "anything hidden by CSS (the deck's folded view is not on the
+       page)", and eight of the nine panels are `display: none` at any instant
+       — so ONE reading of the tabbed page would have measured a ninth of the
+       words and called the diet kept. The law is about how much prose the
+       RECORD shows a reader, so the walk opens each tab through the page's own
+       `window.__eightTab` and sums. The `#strips .nu-strip` wait went with it:
+       the board is behind the Mix tab and there is nothing to wait for until
+       that tab is opened. */
+    const m = { total: 0, top: [], h2: [], naked: [], rateSel: 0,
+                tabNames: [], per: {} };
+    for (const t of TABS) {
+      await p.evaluate((tt) => window.__eightTab && window.__eightTab(tt), t);
+      await p.waitForTimeout(t === "Score" ? 1600 : 500);
+      const r = await p.evaluate(MEASURE);
+      m.total += r.total;
+      m.per[t] = r.total;
+      m.top = m.top.concat(r.top).sort((a, b) => b.chars - a.chars).slice(0, 8);
+      m.h2.push(r.h2);
+      m.naked = m.naked.concat(r.naked);
+      m.rateSel += r.rateSel;
+      m.tabNames = r.tabNames;
+    }
+    console.log("     [" + width + "] prose per tab: " +
+      TABS.map((t) => t + " " + m.per[t]).join(" · "));
 
     check(m.total <= CEILING,
       "T1 " + width + " · static prose is " + m.total + " chars ≤ " + CEILING +
@@ -134,9 +192,12 @@ const MEASURE = () => {
     check(m.total < HARD,
       "T1 " + width + " · …and under the plan's own hard line " + HARD +
       " (FUTURE.md Phase 1)");
+    check(JSON.stringify(m.tabNames) === JSON.stringify(TABS),
+      "T2 " + width + " · the nine tabs are Paul's words in Paul's order — " +
+      JSON.stringify(m.tabNames));
     check(JSON.stringify(m.h2) === JSON.stringify(HEADINGS),
-      "T2 " + width + " · the heading list IS the §5 table's final list — " +
-      JSON.stringify(m.h2));
+      "T2 " + width + " · one hidden <h2> per panel, in tab order, still the " +
+      "vocabulary's own names — " + JSON.stringify(m.h2));
     check(m.rateSel === 0,
       "T2 " + width + " · the `reading speed` menu stays deleted — the tempo " +
       "glyphs own time.rate (" + m.rateSel + " rate selects)");

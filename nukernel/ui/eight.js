@@ -5,23 +5,36 @@
 //   Time · Alphabet · Material · Form · Development · Cast · Sound · Performance
 //
 // THE BLOCKS BELOW STAND IN THAT ORDER TOO, and that is the only organising
-// principle this file has: whatever draw() calls Nth is defined Nth. After two
-// integrations it had stopped being true — the chord chart was written after
-// the kit and the staves after both — and a file whose sections do not match
-// its own stated order is a file nobody can find anything in.
+// principle this file has: whatever the page draws Nth is defined Nth. After
+// two integrations it had stopped being true — the chord chart was written
+// after the kit and the staves after both — and a file whose sections do not
+// match its own stated order is a file nobody can find anything in. (It said
+// "whatever draw() calls Nth"; draw() calls ONE panel builder now — see THE
+// NINE TABS — and the order the blocks stand in is the tab table's.)
+//
+// ...AND THE PAGE IS NINE TABS, 2026-08-27. Paul: *"Why don't we make tabs at
+// the top level and let go of the idea of scrolling everything? The tabs are:
+// Where / Tempo / Key / Motif / Band / Mix / Produce / Score / Export."* One
+// panel is on the screen at a time, each is built the first time it is opened
+// and rebuilt only when the record has moved under it, and the whole shell is
+// one section of this file (search THE NINE TABS). nukernel/AXES.md carries
+// the join from Paul's nine words to the eight axes; nu.css carries what the
+// reversal cost the sticky heading.
 //
 // THREE THINGS ON THIS PAGE ARE NOT AXES, and each is drawn where it is named
 // rather than smuggled into the eight: the PRODUCER's block is a session fact,
-// "the eight plus what was said" (AXES.md:113); the ATLAS above #app is a way
-// IN to a record, not a part of one; and the BOARD under it is what the record
-// lands on. NONE of the three is inside #app any more — the producer left it
-// on 2026-08-27 for its own host (#produce) between the board and the score
-// deck, because FUTURE.md's page order is "producer last to say, score last to
-// see": the last thing a hand can say about the record sits immediately above
-// the last thing an eye sees of it. (This sentence said "only the first is
-// inside #app, because only the first edits the document" — editing the
-// document was never the reason a block had to LIVE in #app, only the reason
-// it is re-mounted by redrawApp, which the producer still is.)
+// "the eight plus what was said" (AXES.md:113); the ATLAS is a way IN to a
+// record, not a part of one; and the BOARD is what the record lands on. NONE
+// of the three is inside #app — the producer left it on 2026-08-27 for its own
+// host (#produce), because FUTURE.md's page order is "producer last to say,
+// score last to see": the last thing a hand can say about the record sits
+// immediately above the last thing an eye sees of it. Paul's tab list keeps
+// that reading — Produce · Score · Export — and puts the way OUT of a record
+// after the two. (This sentence said "only the first is inside #app, because
+// only the first edits the document" — editing the document was never the
+// reason a block had to LIVE in #app, only the reason it is re-mounted, which
+// the producer still is. It also said "above #app" and "under it", which were
+// facts about a scroll and are now facts about a tab row.)
 //
 // PLAIN HTML, AND ONE STYLESHEET (Paul, 2026-08-24: "keep the raw plain HTML
 // but use more controls and a little bit of CSS. use more grid lines in tables,
@@ -647,8 +660,18 @@ function keepPanes() {
   // undone: swipe a grid to step 12, swipe it back to step 1, then change
   // something, and the page would put you back at step 12 because that was the
   // last position it thought worth writing down.
-  for (const d of document.querySelectorAll(".nu-pane"))
+  for (const d of document.querySelectorAll(".nu-pane")) {
+    /* A PANE IN A SHUT TAB IS NOT A PANE AT 0 (2026-08-27). `display: none`
+       reports `scrollLeft` 0 and eight of the nine panels are shut at any
+       moment, so without this line every rebuild would write 0 over the
+       remembered position of every pane on the page — and the note above,
+       "ZERO IS A POSITION AND IT IS RECORDED LIKE ANY OTHER", would be
+       recording a position nobody put it in. A shut pane's real position is
+       whatever it had when its tab was last on the screen, and that is what
+       stays in the map until `showTab` puts it back. */
+    if (!d.getClientRects().length) continue;
     if (d.dataset.pane) paneScroll.set(d.dataset.pane, d.scrollLeft);
+  }
 }
 function putPanes() {
   for (const d of document.querySelectorAll(".nu-pane")) {
@@ -859,6 +882,23 @@ const changed = () => { reviseProd(); push(); draw(); };
    page would draw one thing and play another. What is dropped is `draw()`. */
 const edited = (cellName) => {
   reviseProd(); push();
+  /* AND EVERY TAB YOU ARE NOT LOOKING AT IS NOW OLDER THAN THE RECORD
+     (2026-08-27). This is the one line the tabs add to this function and it is
+     the line without which they would introduce this repo's characteristic
+     bug — DECLARED BUT NEVER ARRIVING. `edited` exists precisely BECAUSE it
+     does not call `draw()`: a motif slider must not tear down the block your
+     finger is on. But `draw()` is also where "the record moved, so every panel
+     is stale" was written, so without this the score would engrave, the
+     producer would list and the band would draw the tune this edit replaced,
+     for as long as the page stayed up.
+     The OPEN tab is deliberately not marked: this function's whole job is that
+     the panel under your finger is repaired in place, by `reEngraveWritten`
+     and `scoreChanged` below, and not rebuilt.
+     (The paragraph above — "WHAT THIS DOES NOT REFRESH, SAID OUT LOUD: the
+     producer's block … is one gesture stale" — is answered rather than
+     restated: it is not stale for a gesture any more, it is rebuilt the moment
+     it is next opened.) */
+  for (const t of TABNAMES) if (BUILD[t] && t !== openTab) tabStale.add(t);
   reEngraveWritten(cellName);
   // …AND THE SCORE, WHICH IS A PICTURE OF THE WHOLE RECORD AND HAS JUST GONE
   // STALE. Paul, 2026-08-26: "you probably have to fully render the whole
@@ -908,6 +948,13 @@ const CTX = {
                            try { draw(); } finally { anchorOff = false; }
                            anchorWant = null;
                            if (ATLAS) ATLAS.showing(DOC.basis); },
+  /* THE ATLAS MOVED, SO THE ADDRESS DOES (see THE ADDRESS). It is a hook and
+     not a subscription because the seed and the year live in ui/atlas.js and
+     no event on ui/state.js's bus is fired for either — "box" is one call per
+     user EDIT of the document, and moving the when-slider edits nothing. The
+     write is debounced here, not there: the atlas does not know that an
+     address is expensive to write. */
+  moved: () => markLink(),
   // on() returns nothing today, so this returns undefined rather than an off().
   // Nothing mounted in W2 calls it — the board is painted from the page's own
   // on("pos") handler below — but a W3 module that wants to unsubscribe has to
@@ -1783,9 +1830,41 @@ function scoreCaption(si, ei, k, M, asPlayed) {
    would fail the first time the reserve grew. Inside, it is invisible to the
    gate and still holds the room. */
 function scoreReserveTo(px) {
-  if (!scoreHost || !(px > scoreReserve)) return;
+  if (!scoreHost) return;
+  /* NEVER LOCK A RESERVE MEASURED IN THE DARK, 2026-08-27. Paul: "The score
+     cuts off at about 150px in height, I can see the top of one line and
+     nothing else." The reserve is a HIGH-WATER MARK — it only grows, which was
+     right while the page was one scroll and the score was always laid out. A
+     tab panel mounts HIDDEN, abcjs engraves into a box with no layout, every
+     height comes back tiny, and the first call froze the box at that number
+     forever: the picture was then scaled to fit a reserve measured on nothing.
+     So a hidden host reserves nothing (offsetParent is null under any
+     display:none ancestor), and `fitPaper` runs again the first time the box
+     is really on screen — see `scoreWatch`. */
+  if (!scoreHost.offsetParent && scoreHost.getClientRects().length === 0) return;
+  if (!(px > scoreReserve)) return;
   scoreReserve = px;
   scoreHost.style.height = px + "px";
+}
+/* THE REVEAL. One observer, armed when the box is handed over; it fires when a
+   tab shows the score for the first time, re-runs the fit with a real layout to
+   measure, and disconnects. Nothing here writes while the record plays (fitPaper
+   already refuses a reserve then) and nothing here is a control. */
+let scoreSeen = false, scoreObs = null;
+function scoreWatch(box) {
+  if (!box || scoreSeen || typeof IntersectionObserver !== "function") return;
+  if (scoreObs) scoreObs.disconnect();
+  scoreObs = new IntersectionObserver((es) => {
+    for (const e of es) {
+      if (!e.isIntersecting || !e.boundingClientRect.height) continue;
+      scoreSeen = true;
+      scoreObs.disconnect(); scoreObs = null;
+      scoreReserve = 0;                 // the dark measurement is void
+      try { fitPaper(); } catch (err) {}
+      return;
+    }
+  }, { threshold: 0 });
+  scoreObs.observe(box);
 }
 // WHAT THE PICTURE HAD TO BE SHRUNK BY to fit, so the claim above is a number
 // somebody can check rather than a promise: 1 is the box's own room, 0.83 is a
@@ -2596,7 +2675,7 @@ function scoreChanged() {
      next opened. That is the mount-on-demand law stated from the other end:
      the panel you are not looking at is not drawn, and it is not drawn WRONG
      either. */
-  if (openTab !== "Score") return;
+  if (openTab !== "Score") { tabStale.add("Score"); return; }
   loading(true);
   clearTimeout(scoreSoon);
   scoreSoon = setTimeout(() => { scoreSoon = 0; scoreRender(); }, SCORE_SETTLE);
@@ -2694,6 +2773,7 @@ function scoreBlock(parent) {
   live.append(cap, box, syl);
   parent.append(live);
   scoreCap = cap; scoreHost = box; scoreSyl = syl; scoreRun = run;
+  scoreSeen = false; scoreWatch(box);
   scorePaper = paper; scoreLoad = load;
   scoreGut = gut; scoreGutW = 0;
   scoreMots = null;              // the motif-label layer belongs to the old run
@@ -3178,7 +3258,12 @@ function setDeckView(v) {
   if (v === "roll") { sizeRoll(); drawRoll(stepAbs()); }
 }
 addEventListener("resize", () => {
-  if (deckView === "roll" && rollCv) { sizeRoll(); drawRoll(stepAbs()); }
+  // ...AND ONLY WHILE THE DECK IS ON THE PAGE (2026-08-27). Sizing a canvas
+  // inside a `display: none` panel measures a zero-width box and throws the
+  // roll away; `showTab` re-sizes it on the way back in.
+  if (openTab === "Score" && deckView === "roll" && rollCv) {
+    sizeRoll(); drawRoll(stepAbs());
+  }
 });
 
 /* ---- the export row (decision 4): each button wears its true state ------- */
@@ -3213,6 +3298,9 @@ function exportCard(grid, glyph, cls, title, sub, mk) {
 }
 function exportRow(parent) {
   const grid = el("div", null, "nu-exports");
+  // THE LINK — LIVE, AND FIRST, because it is the one export that always
+  // works and the one Paul asked for three times (see THE ADDRESS).
+  shareCard(grid);
   // WAV — LIVE. The press path exists (engine/faust/press + the stream
   // worker's PCM sink); export/wav.js is that machinery pointed at a file.
   exportCard(grid, "WAV", "nu-cap-meter", "the render",
@@ -8261,6 +8349,12 @@ function showTab(name) {
     else { h.setAttribute("data-off", ""); h.setAttribute("inert", ""); }
   }
   const built = buildTab(name);
+  /* AND ITS PANES GET THEIR SIDEWAYS SCROLL BACK. A `display: none` scroll
+     container comes back at 0 whether it was rebuilt or not, so this is not a
+     rebuild-repair — it is the same promise `keepPanes` makes across an edit,
+     made across a tab. Paul, 2026-08-25: *"When I scroll right to edit motifs
+     and tap something it snaps left even though I'm not done editing."* */
+  putPanes();
   paintTabs();
   anchorWant = null;
   /* PUT THE READER BACK WHERE THEY LEFT THIS TAB. `scrollTo` and not
@@ -8279,7 +8373,18 @@ function showTab(name) {
      out; `place(true)` writes the one transform the walk would have written on
      its next frame. It is a write INSIDE `[data-live="score"]`, caused by your
      tap, which is a gesture and not the clock. */
-  if (name === "Score" && !built) place(true);
+  /* AND THE SCORE IS TOLD IT IS BACK ON THE PAGE. `setDeckView` re-sizes the
+     roll's canvas (a canvas measured while its box was `display: none` is a
+     canvas of nothing) and `place(true)` writes the one transform the walk
+     would have written on its next frame. Only when the panel was NOT rebuilt:
+     `deckBlock` ends on `setDeckView(deckView)` itself. */
+  if (name === "Score" && !built) { setDeckView(deckView); place(true); }
+  /* AND THE ADDRESS SAYS WHICH TAB YOU ARE ON (`#t=mix`), so a link opens on
+     the view the sender was looking at. It goes through the same debounce as
+     the atlas's writes — one writer, one timer — and it is a GESTURE reaching
+     it, never the clock: this function is only ever called from a tab button
+     and from `window.__eightTab`. */
+  markLink();
   tabMs = performance.now() - t0;
 }
 
@@ -8425,6 +8530,156 @@ function exportBlock(parent) {
   exportRow(ax);
   parent.append(ax);
 }
+/* ===== THE ADDRESS: a place, a year, a seed and a tab ====================
+   Paul asked for this three times on 2026-08-27: *"I'd like to be able to link
+   to a place/time/seed"*, *"Update the url with those"*, *"You also need to
+   give me the urls."* Three sentences, three halves of one feature — write it,
+   read it, and hand it over — and all three live in this block so there is one
+   spelling of the fragment and not three.
+
+   IT IS A FRAGMENT AND NOT A QUERY, AND THAT IS DEPLOYMENT, NOT TASTE. This
+   page is served through an nginx `alias` over a pruned tree (docs: the
+   deploy+probe note), so a query string is a string the server has to be
+   willing to see and the service worker has to be willing to key a cache by. A
+   `#` never leaves the browser: no server config, no cache key, no 404, and it
+   works identically off `file://` and off the staging box.
+
+   WHAT IT CARRIES, AND WHY IT IS EXACTLY THIS:
+     at  the PLACE, the word off the globe (`Kingston`, `New York`)
+     y   the YEAR the when-slider is on
+     s   the SEED — the one `#rewrite` rolls and prints, ui/atlas.js's own
+     t   the TAB, lower-cased (`#t=mix` opens on the board)
+   Three of those four are the whole input to the compose path
+   (`recordAt(place, year)` -> gk, then `genreToDocument(gk, seed)`), which is
+   why the SONG is never in here. A link is a recipe, not a recording: it is
+   ~40 characters, it survives a change to a genre's own recipe, and it cannot
+   go stale into a shape `song.js` would have to migrate.
+
+   THE CLOCK NEVER WRITES THE ADDRESS. Nothing in this block subscribes to
+   "pos" or to "transport:state". The three things that move it are the atlas
+   (`ctx.moved`, which fires on the when-slider, on a globe tap and on a
+   rewrite) and `showTab`, and both of those are a hand. A record that scrolled
+   the address bar while it played would be a history entry per beat.
+
+   AND IT IS ALWAYS `replaceState`. `pushState` would make the back button a
+   maze of every knob turn — press back after a minute of moving the slider and
+   you would walk out of the page one year at a time. `replaceState` keeps the
+   address current and keeps the back button meaning "the page before this
+   one", which is what a back button is for. The debounce is the other half of
+   the same care: Safari throttles `replaceState` (and starts throwing on a
+   burst), and a slider drag is thirty calls a second. */
+const LINKMS = 250;
+let linkTimer = 0;
+
+/* THE TAB NAME, BOTH WAYS. `TABS` is the one owner of the nine words (see THE
+   NINE TABS) and this only lower-cases them for the wire and matches back
+   case-insensitively, so a tab renamed there is renamed in the URL with it and
+   there is no second list to drift. */
+const tabToWire = (name) => String(name || "").toLowerCase();
+const tabFromWire = (w) => TABNAMES.find((n) => tabToWire(n) === tabToWire(w)) || null;
+
+/* THE FRAGMENT THIS PAGE IS, as a string. `s` is printed even when it is 1:
+   the reading is a fact about the record and a link that only sometimes
+   carried it would be a link whose meaning depended on how many times the
+   sender had pressed rewrite. */
+function linkFrag() {
+  const st = ATLAS && ATLAS.link ? ATLAS.link() : null;
+  const p = [];
+  if (st && st.at) p.push("at=" + encodeURIComponent(st.at));
+  if (st && st.y != null) p.push("y=" + encodeURIComponent(String(st.y)));
+  if (st && st.s != null) p.push("s=" + encodeURIComponent(String(st.s)));
+  p.push("t=" + encodeURIComponent(tabToWire(openTab)));
+  return "#" + p.join("&");
+}
+/* ...AND THE WHOLE URL, which is what a person pastes into a message. Built
+   off `location` rather than off `document.baseURI` so it carries whatever
+   path the page is actually being served from — the nginx alias mounts this
+   tree at a sub-path, and a URL that assumed the root would 404 for everyone
+   but the developer. */
+function shareUrl() {
+  return location.origin + location.pathname + location.search + linkFrag();
+}
+/* ONE WRITER. `replaceState` can throw — a sandboxed frame, a `file://` page
+   in some builds, a browser that has decided this page has called it too often
+   — and an address bar that failed to update is not a reason to take the music
+   down, so it is swallowed. The visible copy of the URL (the Export tab's
+   field) is refreshed on the same line, so the field and the bar can never
+   disagree. */
+function writeLink() {
+  clearTimeout(linkTimer); linkTimer = 0;
+  const frag = linkFrag();
+  try { history.replaceState(history.state, "", frag); } catch (e) { /* throttled */ }
+  const f = $("sharelink");
+  if (f) f.value = shareUrl();
+}
+function markLink() {
+  clearTimeout(linkTimer);
+  linkTimer = setTimeout(writeLink, LINKMS);
+}
+/* READ IT AT LOAD. `URLSearchParams` over the fragment's body is the whole
+   parser — it decodes, it tolerates a stray `&`, and it is in every browser
+   this page runs in, so no dependency arrives with the feature. An EMPTY
+   fragment returns null and the boot falls through to whatever the box would
+   have opened on by itself; a PRESENT one wins over that, which is the point
+   (a shared link that showed the recipient their own song would be a link that
+   does nothing, silently). */
+function readLink() {
+  let h = "";
+  try { h = String(location.hash || "").replace(/^#/, ""); } catch (e) { return null; }
+  if (!h) return null;
+  let q;
+  try { q = new URLSearchParams(h); } catch (e) { return null; }
+  const at = q.get("at"), y = q.get("y"), s = q.get("s"), t = q.get("t");
+  if (at == null && y == null && s == null && t == null) return null;
+  return { at, y, s, t };
+}
+
+/* ---------- and the door: copy link ------------------------------------
+   IT LIVES IN THE EXPORT TAB, and the one-line argument is that a share link
+   IS an export — it is the fourth thing you can take out of this box, beside
+   the WAV, the MIDI and the (refused) MP3, and it is the only one of the four
+   that costs nothing to make. The .nu-bar was the other candidate and it is
+   full: index.html's own note says the strip holds four controls, may not
+   wrap, and already clips a label below 430px to fit them, with test/shell.js
+   pinning `--bar-h` at 52px. A fifth control there buys discoverability with
+   the one measurement this page has promised twice not to break.
+
+   THE FIELD IS THE FALLBACK, not decoration. `navigator.clipboard` is absent
+   on an insecure origin and rejects when the page is not focused, so the URL
+   is on the page as selectable text before the button is ever pressed: a
+   refusal ends with the whole thing selected and "press Ctrl-C", which is a
+   working path and not an apology. */
+function shareCard(grid) {
+  exportCard(grid, "URL", "nu-cap-hand", "the link",
+    "this place, this year, this reading — and the tab you are on", (card) => {
+    const f = el("input");
+    f.type = "text";
+    f.id = "sharelink";
+    f.readOnly = true;
+    f.dataset.k = "deck.exp.link";
+    f.setAttribute("aria-label", "a link to this record");
+    f.value = shareUrl();
+    f.addEventListener("focus", () => f.select());
+    const b = el("button", "copy link");
+    b.type = "button"; b.dataset.k = "deck.exp.copy";
+    b.addEventListener("click", () => {
+      // the field is refreshed at the moment of the press, never trusted to be
+      // current: the tab or the slider may have moved since it was drawn
+      f.value = shareUrl();
+      const done = () => expSay("copied — " + f.value);
+      const hand = () => { f.focus(); f.select();
+        expSay("this browser will not copy for us — the link is selected, "
+             + "press Ctrl-C (Cmd-C on a Mac)"); };
+      let p = null;
+      try { p = navigator.clipboard && navigator.clipboard.writeText(f.value); }
+      catch (e) { p = null; }
+      if (p && typeof p.then === "function") p.then(done, hand);
+      else hand();
+    });
+    card.append(f, b);
+  });
+}
+
 /* ---------- transport ---------- */
 const playBtn = $("play"), volEl = $("vol"),
       rewriteBtn = $("rewrite"), takeBtn = $("take");
@@ -8814,6 +9069,17 @@ warmup();
    that has to be true when ui/atlas.js mounts the globe below. `showTab` then
    marks the open tab stale-free without building it (nothing is stale yet) and
    `draw()` builds it for the first time. */
+/* THE LINK IS READ FIRST AND SPENT LAST (see THE ADDRESS). Read here because
+   the rest of the boot is what it has to steer; spent below in two separate
+   places, for one measured reason — THE ATLAS MOUNTS ON THE OPEN TAB.
+   `Where` is the panel that must be visible on the first frame, because a
+   globe mounted inside a `display: none` panel measures a zero-width box for
+   its projection (the note on `openTab` above). So a link that names another
+   tab does NOT open on it yet: the page boots on `Where` exactly as it always
+   has, the globe is fitted, the record is landed, and only then does the tab
+   move — one extra panel build, at boot, only for a link that asked for one. */
+const LINK = readLink();
+const LINKTAB = LINK ? tabFromWire(LINK.t) : null;
 tabsRow();
 showTab(openTab);
 draw();
@@ -8822,5 +9088,29 @@ say();
 // wants the record already on the page. TERMS.basis is gregorian, so the map
 // opens on Rome 600 — which is exactly what #title already says.
 ATLAS = mountAtlas($("atlas"), CTX);
-if (ATLAS) ATLAS.showing(DOC.basis);
+/* AND A LINK WINS OVER THE BOX'S OWN RECORD. `open()` returns `true` when it
+   landed one, and THE REASON as a string when it refuses — the fragment names
+   no place, an unreadable year, or a place with nothing on it — and the boot
+   then falls through to the record this box would have opened on anyway and
+   says why. An empty fragment never gets here at all. Nothing else on this
+   page restores a record at boot (the /band page's `nu.band.session` is a
+   different document in a different file), so this `if` is the whole of the
+   precedence rule. */
+if (ATLAS) {
+  const why = LINK && LINK.at ? ATLAS.open(LINK) : false;
+  if (why !== true) {
+    ATLAS.showing(DOC.basis);
+    // …AND THE REASON IS PRINTED AFTER THE FALLBACK, NOT BEFORE IT. `showing()`
+    // ends in `sentence()`, which owns #atlasSay and would overwrite a refusal
+    // written a statement earlier — measured, the line lasted less than a
+    // frame and a thrown-away link looked exactly like an ordinary boot.
+    if (typeof why === "string") ATLAS.note(why);
+  }
+}
 printReading();                         // the bar prints reading 1 from boot
+// ...and NOW the tab the link asked for, with the globe already fitted.
+if (LINKTAB && LINKTAB !== openTab) showTab(LINKTAB);
+// The address is written once at boot whatever happened: a page that opened
+// on its own record still has a URL worth copying, and a link that was
+// refused must not go on claiming a place this box is not showing.
+writeLink();

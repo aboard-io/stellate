@@ -228,6 +228,16 @@ export function mount(parent, ctx) {
   let onScreen = true, dirty = false, raf = 0;
   let dragging = false, glide = null, fly = null;
 
+  /* AND WHEN ANY OF THOSE FIVE MOVE, THE PAGE IS TOLD ONCE — 2026-08-27, Paul:
+     *"I'd like to be able to link to a place/time/seed."* This file does not
+     know what a URL is and is not going to learn: it owns the state, so it
+     owns the announcement that the state moved, and ui/eight.js owns the
+     address bar (one writer, `history.replaceState`, debounced). `ctx.moved`
+     is optional on purpose — the atlas mounts in gates and in the daw with a
+     ctx that has never heard of a fragment, and a missing hook is a page that
+     simply does not have an address to keep. */
+  const moved = () => { try { if (ctx && ctx.moved) ctx.moved(); } catch (e) {} };
+
   /* ---------- the DOM, in reading order --------------------------------
      h2 (shipped by index.html) · the sentence · THE SLIDER · the globe · the
      one button. Built once and never rebuilt: a control destroyed and recreated
@@ -899,6 +909,12 @@ export function mount(parent, ctx) {
         // anchor a different record. (The .nu-bar has both buttons since
         // 2026-08-27: "take" bumps that field, "rewrite" bumps this seed.)
         + (seed > 1 ? " · reading " + seed : "") + ".";
+      /* THE SEED MOVED EVEN WHEN THE YEAR DID NOT. `setYear` announces most of
+         this, through `showing()`; a rewrite of a ROLE genre never reaches it
+         (`showing` returns early — "a role has a job, not a history"), and a
+         rewrite of the same anchor lands on the same year. So the write that
+         actually changed the record says so itself. */
+      moved();
       if (done) done();
     }));
   }
@@ -1299,6 +1315,12 @@ export function mount(parent, ctx) {
     scope();
     sentence();
     redraw();
+    /* AND THE ADDRESS FOLLOWS THE SLIDER. Every path that moves the year ends
+       here — the slider's own `input`, `showing()` after a document swap, and
+       `open()` landing a link — so this is the one line that has to say so.
+       ui/eight.js debounces it; dragging the slider does not hammer the
+       history API (Safari throttles `replaceState` and starts refusing). */
+    moved();
   }
   year.addEventListener("input", () => setYear(+year.value));
 
@@ -1358,5 +1380,88 @@ export function mount(parent, ctx) {
      a second copy of it. */
   const reading = () => seed;
 
-  return { showing, reseed, reading };
+  /* ---------- link() and open(): the address, both ways (2026-08-27) ------
+     Paul, three times: *"I'd like to be able to link to a place/time/seed"* /
+     *"Update the url with those"* / *"You also need to give me the urls."*
+
+     THE STATE THIS FILE ALREADY DECLARED IS THE STATE A LINK CARRIES. Line 216
+     of this file has said "state: two angles, a zoom, a year and a seed" since
+     the globe shipped, and three of those five are the ones a person means by
+     "where and when and which version". The two angles and the zoom are a
+     CAMERA — where you are standing to look at the earth — and they are left
+     out on purpose: `showing()` already puts the camera on the record, so a
+     link that carried them would fight the fly-to it triggers, and it would
+     make two links to the same record that are not the same string.
+
+     AND IT SERIALISES THE INPUTS, NEVER THE SONG. `pick()` above is
+     `genreToDocument(gk, seed)` and nothing else; `gk` is `recordAt(place,
+     year)`. So (place, year, seed) is the whole of what the compose path is
+     given, and a link is those three words — which is also why a link stays
+     good when a genre's recipe is improved: the recipient gets today's reading
+     of that anchor, not a frozen copy of a record from a week ago.
+
+     WHY THE PLACE AND NOT THE GENRE KEY. `at=Kingston` is a word a person can
+     read in a URL and, when the catalog moves under it, `recordAt` resolves it
+     to the nearest year rather than 404ing on a key that was renamed. */
+  const link = () => ({
+    at: here && WHEN[here] ? canon(WHEN[here].place) : null,
+    y: YEARS[yi],
+    s: seed,
+  });
+
+  /* open(want, done): LAND ON A LINK, OR SAY WHY NOT AND LAND ON NOTHING.
+     Returns `true` when the record was written — the caller then skips its own
+     boot record entirely — and THE REASON, as a string, when it refuses. A
+     refusal is never silent and never a throw: a link that points nowhere must
+     not quietly show the recipient their own default song wearing somebody
+     else's URL.
+
+     WHY THE REASON COMES BACK AS WELL AS GOING INTO #atlasSay, which looks
+     like saying it twice and is not. MEASURED: the line was written here, the
+     caller then fell back to its own record through `showing()`, and
+     `showing()` -> `setYear()` -> `sentence()` overwrote it on the next
+     statement — the refusal was on the page for less than a frame and the
+     recipient saw an ordinary "600 · 1 record within ten years · Rome" with no
+     hint that their link had been thrown away. So the string is handed back
+     for the caller to print AFTER its fallback has finished writing, and
+     `note()` below is the door it prints through. The write here stays, for
+     the caller that lands nothing at all.
+
+     `pick` does the rest and does it exactly as a tap does: the seed is set
+     first, the slider is put on the record's own year, and `ctx.setDocument`
+     -> `showing()` moves the camera. There is no second compose path here. */
+  const note = (text) => { say.textContent = String(text); };
+  const refuse = (why) => { note(why); return why; };
+
+  function open(want, done) {
+    const asked = String((want && want.at) || "").trim();
+    const name = canon(asked);
+    if (!asked || !PLACES[name]) {
+      return refuse("this link points at "
+        + (asked ? "“" + asked + "”" : "no place")
+        + ", which is not a place on this globe — so the box opened on its own record.");
+    }
+    const Y = Number(want.y);
+    if (!Number.isFinite(Y)) {
+      return refuse("this link's year (“" + String(want.y) + "”) is not a year"
+        + " — so the box opened on its own record.");
+    }
+    const r = recordAt(name, Y);
+    if (!r) {
+      return refuse(name + " has no record on this globe"
+        + " — so the box opened on its own record.");
+    }
+    /* THE SEED IS THE ONE THE BAR PRINTS, and it is clamped rather than
+       trusted: a fragment is a string a stranger typed, and `genreToDocument`
+       takes it straight to the dice. 1 is the reading every record opens on
+       (ui/eight.js prints it at boot), so 1 is what anything unreadable
+       becomes. */
+    const n = Math.round(Number(want.s));
+    seed = Number.isFinite(n) && n >= 1 ? Math.min(n, 9999) : 1;
+    setYear(indexOf(r.year));
+    pick(r.gk, done);
+    return true;
+  }
+
+  return { showing, reseed, reading, link, open, note };
 }

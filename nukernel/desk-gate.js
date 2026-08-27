@@ -857,6 +857,24 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     errs.push("console: " + m.text()); });
   await page.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
   await page.goto(PAGE, { waitUntil: "networkidle" });
+  /* AND THE BOARD IS THE `Mix` TAB SINCE 2026-08-27. Paul: *"Why don't we make
+     tabs at the top level and let go of the idea of scrolling everything? The
+     tabs are: Where / Tempo / Key / Motif / Band / Mix / Produce / Score /
+     Export."* The board is the sixth of the nine and the page boots on the
+     first, so `#boardpanel` does not exist at all until this call — the wait
+     below would have hung for twenty seconds and then reported an empty board.
+     `window.__eightTab` is ui/eight.js's own door for a gate and is the same
+     call the tab button's listener makes.
+
+     THE BOARD'S OWN TABS ARE NESTED INSIDE THIS ONE AND ARE NOT FLATTENED
+     INTO IT — Paul, the same day: *"Put the effects buses and mains into
+     special tabs after the voices -- now the board is one tabbed space that
+     is consistent and easy to understand."* The nine are the places a record
+     is worked on; which channel strip is open is a fact about the Mix panel.
+     Everything below — `openTab`, `openBus`, the whole G11 walk — is
+     unchanged and still walks the INNER strip. */
+  await page.evaluate(() => window.__eightTab && window.__eightTab("Mix"));
+  await page.waitForTimeout(400);
   // ONE PANEL, 2026-08-27 (this line waited on `#boardtbl` and `#racktbl`
   // while the board was two tables, 2026-08-25→27; then on `#strips` AND
   // `#rack` while the strips were tabbed and the rack stood below them). Paul,
