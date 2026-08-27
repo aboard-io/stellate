@@ -48,6 +48,24 @@
 // the block that builds them (THE STRIPS, ONE PER TAB). Nothing about what a
 // strip IS changed: same rows, same keys, same writes.
 //
+// ...AND THEN THE BUSES AND THE MAIN JOINED THEM, later the same day, which
+// REVERSES "THE RACK IS NOT A TAB" BY NAME. Paul, 2026-08-27: *"Put the
+// effects buses and mains into special tabs after the voices -- now the board
+// is one tabbed space that is consistent and easy to understand."* The
+// paragraph that argued the rack out of the tabs is kept below, dated, with
+// the measurement it stood on and the measurement that beat it (THE TAB ROW).
+// WHAT MOVED, line for line and nothing else: the four `.nu-plate` bodies —
+// genre, delay, reverb, main — are the same nodes with the same controls, the
+// same `data-k` keys, the same refusal sentences and the same `data-live`
+// declarations; what changed is that each is built by a function the tab row
+// calls instead of being appended to a rack that was always on the page. The
+// four `.nu-flow` connectors that stood BETWEEN the plates became each plate's
+// own FOOTER (a plate says where it goes), except the first, whose sentence
+// ("the strips send into every stage below") is now the tab row's own seam
+// label — so no sentence was deleted, each moved to the one place it is still
+// true. The section-automation word grid is a cross-voice table and stays
+// outside the tabs, unmoved.
+//
 // LAWS CARRIED FORWARD, verbatim where they still bind:
 //   * THE TRACK LIST IS THE SAME ANSWER THE AUDIO TIER BUILDS FROM —
 //     desk-doc's channelVoicesOf, gated against voiceRoster by desk-gate G2.
@@ -546,15 +564,23 @@ export function engineer(parent, ctx, voiceName) {
 
 /* ======================= VIEW 2 · THE ONE BOARD =========================== */
 let CURRENT = null;
-// WHICH INSTRUMENT'S STRIP IS OPEN (2026-08-27, Paul: "In the mixing board —
-// Put the instruments inside tabs the mixing board instead of stacking them").
+// WHICH TAB IS OPEN (2026-08-27, Paul: "In the mixing board — Put the
+// instruments inside tabs the mixing board instead of stacking them", and,
+// later the same day, "Put the effects buses and mains into special tabs after
+// the voices -- now the board is one tabbed space").
 // A PAGE FACT, never a document one — the same sentence ui/eight.js makes about
 // its own `tab`: which tab you are looking at is not a fact about the record,
 // so it is a module `let` here and there is no key for it anywhere in the
 // document, in localStorage or in a share link. It survives a redraw because
-// the module does; it is keyed by the voice's NAME because the bank changes and
-// index 2 is a different player after you add a line.
-let BOARDTAB = null;
+// the module does.
+// KEYED BY NAME, AND THE KIND IS PART OF THE NAME. It was a bare voice name
+// until the buses joined the row; a bare string cannot tell a voice called
+// `main` from the main plate, so the fact is a tagged pair — `{ kind: "voice",
+// key: <voice name> }` or `{ kind: "bus", key: <bus key> }`. Still by NAME and
+// never by index, for the reason the motif tabs give in their own file: the
+// bank changes — add a voice, drop a voice, and index 2 is a different player;
+// the bus keys are fields.js BUSROWS' own, which do not renumber either.
+let BOARDTAB = { kind: "voice", key: null };
 
 export function mount(parent, ctx) {
   const host = ctx.section
@@ -572,6 +598,15 @@ export function mount(parent, ctx) {
   // tab tap and paint() must read the CURRENT strip's readout, not the one
   // that was on the page when mount() ran.
   let drives = [];              // { el, key } — the model readout per strip
+  // ...AND THE PLATES' OWN PAINT TARGETS, hoisted here 2026-08-27 (the board
+  // tabs) for exactly the reason `drives` was: the panel is rebuilt on a tab
+  // tap, so paint() must read the readouts of the plate that is on the page
+  // now, not the ones that were there when mount() ran. `let`, reset by
+  // showPanel(), empty while a voice tab is open — paint() walks an empty
+  // list rather than testing which tab is open, which is one branch fewer to
+  // get wrong once a beat.
+  let busSays = [];             // { el, bus } — model in/out lines per plate
+  let masterMeter = null;       // the ONE measured meter, on the main plate
 
   // COMPRESSED 2026-08-27 (the text diet, FUTURE.md §2: "signal flow is drawn
   // as arrows, not narrated"). It read 230 chars narrating the strip order the
@@ -604,7 +639,8 @@ export function mount(parent, ctx) {
      2026-08-27) but it is not free, and a slot with room shows its wet and its
      two face knobs without cramming them into a 250px column.
 
-     THE RACK IS NOT A TAB, and that is a decision with a number behind it. The
+     THE RACK IS NOT A TAB — REVERSED THE SAME DAY, and the argument is kept
+     rather than deleted because every number in it was real. It read: "The
      rack is the SERIES — genre → delay → reverb → main — and every one of the
      four sends on the strip above lands in it; a hand riding a send is looking
      at the return it feeds. Measured on the tabbed page at 390: the reverb
@@ -612,9 +648,26 @@ export function mount(parent, ctx) {
      is a scroll and no taps. Behind a tab they would be one tap apart AND the
      strip would be gone while you looked — you would be setting a send with
      its destination off the page. The rack is also drawn ONCE for the whole
-     record (desk-gate G11 check 3 holds exactly that: "one each for the whole
-     record, not one per channel"), so a tab for it would put a record-level
-     fact behind a per-voice gesture. It stays below the strip, always visible.
+     record … so a tab for it would put a record-level fact behind a per-voice
+     gesture."
+
+     PAUL, 2026-08-27: *"Put the effects buses and mains into special tabs
+     after the voices -- now the board is one tabbed space that is consistent
+     and easy to understand."* The half of the old argument that was about
+     DISTANCE was answering a question nobody asked: 2,033px of scroll is not
+     "visible", and what the strips and the plates actually shared was a
+     column of screen you had to travel either way. The half about a
+     RECORD-LEVEL FACT BEHIND A PER-VOICE GESTURE is answered by making the
+     row say so — the bus tabs are a SEPARATE GROUP after the voices, on their
+     own line, wearing the arrows of the series (THE TAB ROW below has the
+     measurements). MEASURED before the change, the shipped chant at 390: the
+     rack was 2,561px under a 1,007px strip and the document 9,872px; at 1280,
+     2,162px under 876px and 8,449px. After: the panel is one strip or one
+     plate — 534/530/447/926px at 390 for genre / delay / reverb / main (they
+     were 467/463/380/926 stacked in the rack; each carries its own series
+     connector now) — so the tallest thing on the board is a tap away instead
+     of a page away.
+
      The word grid stays whole for the same reason it always was: it is a
      cross-voice table by design — sections down, every voice across — and a
      table with one column is not a table.
@@ -649,9 +702,13 @@ export function mount(parent, ctx) {
      for the reason the motif tabs give in their own file: the bank changes —
      add a voice, drop a voice, and index 2 is a different player. */
   const names = chans.map((c) => c.voice.name);
-  if (!names.includes(BOARDTAB)) BOARDTAB = names[0] || null;
-  const board = el("div", null, "nu-strips");
-  board.id = "strips";
+  // THE ONE PANEL (2026-08-27, the board tabs). It holds whichever tab is
+  // open: a `.nu-strips` with one `.nu-strip` in it, or a `.nu-rack` with one
+  // `.nu-plate`. Both inner hosts keep their ids — `#strips` and `#rack` are
+  // what the gates, the stylesheet and three years of muscle memory call the
+  // two kinds of board furniture, and a rack of one plate is still the rack.
+  const panel = el("div", null, "nu-boardpanel");
+  panel.id = "boardpanel";
   // ONE STRIP, BUILT ON DEMAND. This was a `for (const c of chans)` loop that
   // appended every strip to `#strips`; it is a function now and the tab row
   // below calls it with the one channel that is open. Nothing inside it
@@ -800,68 +857,35 @@ export function mount(parent, ctx) {
     return strip;
   };
 
-  /* ---- the tab row: the seated voices, one apiece ---------------------- */
-  const tabsBar = el("p", null, "nu-row");
-  tabsBar.id = "boardtabs";
-  // A ROW OF BUTTONS WRAPS, IT DOES NOT SCROLL — `.nu-row` is `flex-wrap:
-  // wrap` (nu.css:349) and that is the whole of the wrap-not-scroll law here:
-  // eleven voices at 390 come down as three lines of tabs, none of them off
-  // the right edge, and G13 measures the document width to prove it.
-  tabsBar.setAttribute("role", "group");
-  tabsBar.setAttribute("aria-label", "which instrument's strip is open");
-  const tabBtns = [];
-  const markTabs = () => {
-    for (const t2 of tabBtns) {
-      t2.b.setAttribute("aria-pressed", String(t2.name === BOARDTAB));
-      t2.b.textContent = "";
-      t2.b.append(t2.name === BOARDTAB ? el("mark", t2.name)
-                                       : el("span", t2.name));
-    }
-  };
-  // REBUILDS THE STRIP AND NOTHING ELSE — which is what makes "switching tabs
-  // does not move the page" true BY CONSTRUCTION rather than by correction.
-  // Everything above `#strips` (the heading, the legend, the tab row itself)
-  // is untouched, so no pixel above the thumb changes and scrollY has nothing
-  // to be corrected against — ui/eight.js's `anchorWant` machinery is not
-  // called and does not need to be. It is also why this is NOT `ctx.changed()`
-  // or a board-wide remount: a full redraw would rebuild the rack and the word
-  // grid, and the grid is a `.nu-pane` whose sideways scroll only draw()'s
-  // keepPanes puts back.
-  const showStrip = () => {
-    drives = [];
-    board.textContent = "";
-    const c = chans.find((x) => x.voice.name === BOARDTAB);
-    if (c) board.append(stripOf(c));
-    board.setAttribute("aria-label", (BOARDTAB || "no") + " strip");
-  };
-  for (const name of names) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.dataset.k = "boardtab-" + name;
-    b.addEventListener("click", () => {
-      if (name === BOARDTAB) return;     // a tab already open is not a gesture
-      BOARDTAB = name;
-      markTabs();
-      showStrip();
-      paint();                           // the new strip's model readout, now
-    });
-    tabBtns.push({ b, name });
-    // the literal " " is the band strip's own: with the stylesheet off it is
-    // what keeps two tabs from reading as one word.
-    tabsBar.append(b, document.createTextNode(" "));
-  }
-  markTabs();
-  host.append(tabsBar, board);
-  showStrip();
+  /* ============= THE BUS PLATES · THE SERIES, ONE TAB EACH ==============
+     one line, and it is still one line: genre → delay → reverb → main (Paul,
+     2026-08-27: "Have one bus for genre specific effects, into a delay bus,
+     into reverb, into main"). Each plate carries its REAL knobs and nothing
+     else. The delay and reverb stages are fields.js BUSROWS bus 2 and bus 1 —
+     the engine's own two accumulators — wearing the series' order.
 
-  /* ================= THE BUS RACK · IN SERIES ================= */
-  // one line, top to bottom: genre → delay → reverb → main (Paul, 2026-08-27:
-  // "Have one bus for genre specific effects, into a delay bus, into reverb,
-  // into main"). Arrows make the topology; each plate carries its REAL knobs
-  // and nothing else. The delay and reverb stages are fields.js BUSROWS bus 2
-  // and bus 1 — the engine's own two accumulators — wearing the series' order.
-  const rack = el("div", null, "nu-rack");
-  rack.id = "rack";
+     THE PLATES ARE FUNCTIONS NOW (2026-08-27, Paul: "Put the effects buses
+     and mains into special tabs after the voices"). This block used to be a
+     `const rack = el("div")` that four `{ … rack.append(p); }` blocks pushed
+     plates onto, with `flow()` connectors between them; the four bodies below
+     are those four blocks with `rack.append(p)` turned into `return p` and
+     NOTHING ELSE TOUCHED — same controls, same `data-k` keys, same refusal
+     sentences, same `data-live` declarations, same order of rows down a plate.
+
+     WHERE THE CONNECTORS WENT, because a deleted sentence is a lost fact.
+     There were four `.nu-flow` lines. Three sat BETWEEN plates and said where
+     the plate above them goes — "into the delay bus", "into the reverb bus",
+     "into main — the record" — so each is now the FOOTER of the plate whose
+     output it describes, which is where it was always pointing. The fourth
+     sat at the top of the rack and said "the strips send into every stage
+     below"; with the rack behind tabs there is no "below", so that sentence
+     is the tab row's own seam label (THE TAB ROW). The main plate takes no
+     footer: its header already says `out → the speakers`, and it is the end
+     of the line.
+
+     ONE DEAD CONST WENT WITH THEM: `const feeds = deskBusFeed(sec, MASTER,
+     BUSES)` stood at the top of the rack with zero readers (paint() computes
+     its own `bf` once a beat). Grepped before deleting; nothing named it. */
   const flow = (label) => {
     const f = el("div", null, "nu-flow");
     f.setAttribute("aria-hidden", "true");
@@ -885,10 +909,7 @@ export function mount(parent, ctx) {
   };
   const knobOf = (busKey, key) =>
     BUS_FIELDS.find((b) => b.bus === busKey).knobs.find((k) => k.key === key);
-  const feeds = deskBusFeed(sec, MASTER, BUSES);
-  const busSays = [];           // { el, bus } — model in/out lines per plate
-
-  rack.append(flow("the strips send into every stage below"));
+  const PLATES = {};
 
   // -- the genre bus: the one genuinely new stage — WIRED 2026-08-27 --------
   // (the series-bus engine round). This plate was drawn `is-off` with one
@@ -899,7 +920,7 @@ export function mount(parent, ctx) {
   // it lands on the delay bus — series into everything downstream. The chips
   // are the box FX vocabulary; a genre deals its own at compose time and this
   // rack is where a hand re-deals them.
-  {
+  PLATES.genre = () => {
     const p = el("div", null, "nu-plate");
     p.dataset.bus = "genre";
     p.setAttribute("aria-label", "genre fx bus");
@@ -921,12 +942,12 @@ export function mount(parent, ctx) {
       (v) => { DD().writeBus(doc, "genre", "level", v); ctx.changed(); },
       "default", 1, true)));
     p.append(r);
-    rack.append(p);
-  }
-  rack.append(flow("into the delay bus"));
+    p.append(flow("into the delay bus"));
+    return p;
+  };
 
   // -- the delay bus: fields.js bus 2, its real knobs -----------------------
-  {
+  PLATES.echo = () => {
     const p = el("div", null, "nu-plate");
     p.dataset.bus = "echo";
     p.setAttribute("aria-label", "delay bus");
@@ -962,12 +983,12 @@ export function mount(parent, ctx) {
     r.append(says);
     busSays.push({ el: says, bus: "echo" });
     p.append(r);
-    rack.append(p);
-  }
-  rack.append(flow("into the reverb bus"));
+    p.append(flow("into the reverb bus"));
+    return p;
+  };
 
   // -- the reverb bus: fields.js bus 1 --------------------------------------
-  {
+  PLATES.rev = () => {
     const p = el("div", null, "nu-plate");
     p.dataset.bus = "rev";
     p.setAttribute("aria-label", "reverb bus");
@@ -993,15 +1014,14 @@ export function mount(parent, ctx) {
     p.append(r);
     if (shut) p.append(el("small", "every strip above is sending into a return" +
       " whose gain is zero — open it on this return", "nu-why"));
-    rack.append(p);
-  }
-  rack.append(flow("into main — the record"));
+    p.append(flow("into main — the record"));
+    return p;
+  };
 
   // -- the main -------------------------------------------------------------
   const HOMELESS = { width: 1, tilt: 1, ceiling: 1 };
   const mv = (k) => (doc.sound && doc.sound.master && doc.sound.master[k]) || "";
-  let masterMeter = null;
-  {
+  PLATES.main = () => {
     const p = el("div", null, "nu-plate");
     p.dataset.bus = "main";
     p.setAttribute("aria-label", "main");
@@ -1100,9 +1120,161 @@ export function mount(parent, ctx) {
     // `room` itself now (index.html, §5) and the listening column beside the
     // fader carries the not-saved refusal — this line was a third owner of
     // one sentence.
-    rack.append(p);
-  }
-  host.append(rack);
+    return p;
+  };
+
+  /* ---- THE TAB ROW: the seated voices, then the series -------------------
+     Paul, 2026-08-27: *"Put the effects buses and mains into special tabs
+     after the voices -- now the board is one tabbed space that is consistent
+     and easy to understand."* One row, one panel: the voices first, then the
+     four stages of the series.
+
+     THE SPELLING IS THIS PAGE'S OWN AND UNCHANGED. `<p class="nu-row">` of
+     plain buttons carrying `aria-pressed`, a `<mark>` on the open one — the
+     same three-tab idiom as `#tabs` (ui/eight.js bandBlock) and `#motif-tabs`;
+     the bus tabs are the same button as a voice tab and learn nothing new.
+
+     THE SEAM IS A REAL GROUP AND NOT A LINE OF PAINT, and it is the answer to
+     the half of the old rack argument that was right (a record-level fact
+     must not read as a per-voice gesture): the four bus tabs sit in their own
+     `role="group"` inside the row, labelled "the bus series", and that group
+     is `flex-basis: 100%` so it always begins its own line. MEASURED at 390 on
+     the shipped chant (two voices): the voice tabs are one line of 2×83px, and
+     the bus group is TWO lines — its four buttons plus three arrows measure
+     more than the 366px the row has, so it would have wrapped anyway; the
+     group costs nothing it was not already going to spend, and buys a break
+     that is always in the same place. At 1280 the voices take one line and the
+     series takes one, which is exactly the picture. A row that WRAPS is the
+     whole of the no-sideways-scroll law here (`.nu-row` is `flex-wrap: wrap`,
+     nu.css) and desk-gate G13 measures the document, the row and the panel to
+     prove none of the three grows sideways at either width.
+
+     THE SERIES STAYS LEGIBLE BECAUSE THE ROW DRAWS IT. The bus tabs are
+     separated by literal `→` glyphs — `genre fx → delay → reverb → main` — so
+     the chain is on the page from EVERY tab, including a voice's, which is
+     the thing a hand riding a send needs and is more than the old rack gave
+     (it drew the chain only when you had scrolled to it). The arrows are their
+     own row items and NOT part of a button's label, for two reasons measured
+     rather than assumed: inside the label the `<mark>` on the open tab would
+     swallow the arrow and mark a connector as a name, and with the stylesheet
+     off a separate glyph is still a glyph between two words. The leading
+     label carries the sentence the deleted top-of-rack connector used to say —
+     "the strips feed" — so every strip's four sends still announce where they
+     land. A SECOND, SEPARATE FLOW STRIP ABOVE THE PANEL WAS REJECTED by the
+     same measurement: it would be a fourth drawing of one fact (the row's
+     arrows, the plate's `in ←` header, the plate's own footer connector) and
+     an extra line of prose on every tab, against a text ceiling
+     (test/text-diet.test.js) that a fourth owner would eat for nothing.
+
+     WHAT A PLATE STILL SAYS FOR ITSELF, so the tab row is never the only copy:
+     its header prints `in ← …` (who feeds it) and its footer prints the
+     connector for where it goes — `into the delay bus`, `into the reverb bus`,
+     `into main — the record`. Open the delay tab and the plate says it is fed
+     by the echo sends and that it runs into the reverb; the row says the same
+     shape in one line. Two owners of a picture, one owner of every number. */
+  /* THE BUS TABS ARE READ OFF THE REGISTRY, IN THE ENGINE'S SERIES ORDER.
+     fields.js BUSROWS yields five rows; the three carrying an `engine` tag are
+     stages the renderers actually run (`rev`, `del`, `genre`) and the two
+     GROUPS draw no plate — the reversal is printed under the panel and their
+     saved sends still route. The registry's own order is NOT the series' order
+     (the genre row is appended last there on purpose, so the four shipped
+     positional names stay "bus 1".."bus 4"), so the series is named once, here,
+     in the order audio/desk.js BUS_REACH describes: genre `to: "bus 2"` →
+     echo `to: "main"` (plus its bleed into rev) → rev `to: "main"` → the main.
+     An engine bus the registry grows that this list does not name is APPENDED
+     rather than dropped: a stage with a plate and no tab would be a control
+     you cannot reach, which is the one thing tabs may never do. */
+  const SERIES = ["genre", "echo", "rev"];
+  const engineBuses = BUS_FIELDS.filter((b) => b.engine).map((b) => b.bus);
+  const busKeys = SERIES.filter((k) => engineBuses.includes(k))
+    .concat(engineBuses.filter((k) => !SERIES.includes(k)));
+  // the WORD on a bus tab is the registry's own label, never typed here — a
+  // renamed row is renamed on the tab by existing. `main` is not a BUSROWS row
+  // (it is where the series ends), so it is the one word this file spells.
+  const busLabel = (k) => (BUS_FIELDS.find((b) => b.bus === k) || {}).label || k;
+  const TABS = names.map((n) => ({ kind: "voice", key: n, label: n }))
+    .concat(busKeys.map((k) => ({ kind: "bus", key: k, label: busLabel(k) })))
+    .concat([{ kind: "bus", key: "main", label: "main" }]);
+  const busTabs = TABS.filter((t) => t.kind === "bus");
+  // the open tab survives a redraw; a voice that left the bank does not.
+  if (!TABS.some((t) => t.kind === BOARDTAB.kind && t.key === BOARDTAB.key))
+    BOARDTAB = TABS[0] ? { kind: TABS[0].kind, key: TABS[0].key }
+                       : { kind: "voice", key: null };
+
+  const tabsBar = el("p", null, "nu-row");
+  tabsBar.id = "boardtabs";
+  tabsBar.setAttribute("role", "group");
+  tabsBar.setAttribute("aria-label", "which part of the board is open");
+  const tabBtns = [];
+  const markTabs = () => {
+    for (const t2 of tabBtns) {
+      const on = t2.tab.kind === BOARDTAB.kind && t2.tab.key === BOARDTAB.key;
+      t2.b.setAttribute("aria-pressed", String(on));
+      t2.b.textContent = "";
+      t2.b.append(on ? el("mark", t2.tab.label) : el("span", t2.tab.label));
+    }
+  };
+  // REBUILDS THE PANEL AND NOTHING ELSE — which is what makes "switching tabs
+  // does not move the page" true BY CONSTRUCTION rather than by correction.
+  // Everything above `#boardpanel` (the heading, the legend, the tab row
+  // itself) is untouched, so no pixel above the thumb changes and scrollY has
+  // nothing to be corrected against — ui/eight.js's `anchorWant` machinery is
+  // not called and does not need to be. It is also why this is NOT
+  // `ctx.changed()` or a board-wide remount: a full redraw would rebuild the
+  // word grid, and the grid is a `.nu-pane` whose sideways scroll only
+  // draw()'s keepPanes puts back.
+  const showPanel = () => {
+    drives = []; busSays = []; masterMeter = null;
+    panel.textContent = "";
+    if (BOARDTAB.kind === "bus") {
+      const rack = el("div", null, "nu-rack");
+      rack.id = "rack";
+      const make = PLATES[BOARDTAB.key];
+      if (make) rack.append(make());
+      rack.setAttribute("aria-label", busLabel(BOARDTAB.key) + " plate");
+      panel.append(rack);
+    } else {
+      const strips = el("div", null, "nu-strips");
+      strips.id = "strips";
+      const c = chans.find((x) => x.voice.name === BOARDTAB.key);
+      if (c) strips.append(stripOf(c));
+      strips.setAttribute("aria-label", (BOARDTAB.key || "no") + " strip");
+      panel.append(strips);
+    }
+  };
+  const tabBtn = (t) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    // KEYED `boardtab|<kind>|<name>`, 2026-08-27 (it was `boardtab-<name>`
+    // while only voices had tabs). The page's own scoping convention — the
+    // strips key `b|rev|cantor` the same way — and it is what keeps a voice
+    // called `main` from claiming the main plate's tab.
+    b.dataset.k = "boardtab|" + t.kind + "|" + t.key;
+    b.addEventListener("click", () => {
+      if (t.kind === BOARDTAB.kind && t.key === BOARDTAB.key) return;
+      BOARDTAB = { kind: t.kind, key: t.key };
+      markTabs();
+      showPanel();
+      paint();                           // the new panel's model readouts, now
+    });
+    tabBtns.push({ b, tab: t });
+    return b;
+  };
+  for (const t of TABS.filter((x) => x.kind === "voice"))
+    // the literal " " is the band strip's own: with the stylesheet off it is
+    // what keeps two tabs from reading as one word.
+    tabsBar.append(tabBtn(t), document.createTextNode(" "));
+  const series = el("span", null, "nu-busgroup");
+  series.setAttribute("role", "group");
+  series.setAttribute("aria-label", "the bus series");
+  series.append(el("span", "the strips feed", "nu-seamlab"));
+  busTabs.forEach((t) => {
+    series.append(el("span", "→", "nu-tabarrow"), " ", tabBtn(t), " ");
+  });
+  tabsBar.append(series);
+  markTabs();
+  host.append(tabsBar, panel);
+  showPanel();
 
   /* ================= SECTION AUTOMATION · THE WORD GRID ================= */
   // one-board §III, binding: "The grid is where you set — six words per voice

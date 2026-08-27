@@ -1437,7 +1437,45 @@ td > select{ max-inline-size: 9em; }
   color: var(--dim); }
 .nu-goes b{ color: var(--ink); }
 
-/* ---- the bus rack, in series, top to bottom ---- */
+/* ---- ONE TAB ROW OVER ONE PANEL (2026-08-27, Paul: "Put the effects buses
+   and mains into special tabs after the voices -- now the board is one tabbed
+   space that is consistent and easy to understand") ----
+   `#boardpanel` holds whichever tab is open — a `.nu-strips` with one strip in
+   it, or a `.nu-rack` with one plate. It needs no rule of its own except the
+   one thing a swapping container must promise: that it cannot grow sideways
+   whatever is put in it (desk-gate G13 measures it at 390 and at 1280). Both
+   its children already cap at the same 780px, so the cap here is a belt and
+   the `min-inline-size: 0` is the braces — a grid/flex child's default `auto`
+   minimum is how a wide table pushes a page sideways. */
+.nu-boardpanel{ max-inline-size: 780px; min-inline-size: 0; }
+
+/* ---- THE SEAM: the bus tabs are their own group, on their own line ----
+   The voices and the buses are different kinds of thing (a voice tab is a
+   per-instrument gesture, a bus tab a record-level one), and the row says so
+   by GROUPING rather than by painting a divider: `role="group"` with its own
+   label, `flex-basis: 100%` so it always begins a fresh line. Measured at 390
+   on the shipped chant: the four bus buttons plus their three arrows and the
+   leading label are wider than the 366px the row has, so the group wraps to
+   two lines and would have wrapped there anyway — the break costs nothing and
+   buys a boundary that is always in the same place. At 1280: voices on one
+   line, the whole series on the next. It WRAPS and never scrolls, which is
+   `.nu-row`'s own law inherited (`flex-wrap: wrap`). */
+.nu-busgroup{ flex: 0 0 100%; display: flex; flex-wrap: wrap;
+  align-items: center; gap: .4em; margin-block-start: .15em; }
+/* the connector between two bus tabs — a row item, not part of a label, so
+   the `<mark>` on the open tab cannot swallow it and so it is still a glyph
+   between two words with the stylesheet off. */
+.nu-tabarrow{ font: 700 .9rem var(--mono, monospace); color: var(--dim); }
+/* the sentence the retired top-of-rack connector used to carry, re-homed:
+   every strip's four sends land in the stages to its right. */
+.nu-seamlab{ font: 700 .62rem var(--mono, monospace); letter-spacing: .06em;
+  text-transform: uppercase; color: var(--dim); }
+
+/* ---- the bus rack, in series, top to bottom ----
+   `#rack` holds exactly ONE plate since the board tabs (2026-08-27); the grid
+   is what it always was and lays out one child perfectly well, and the width
+   cap is the one that matters — it is the same 780px `.nu-strips` takes, so
+   the strip and the plates it sends into are one object on the page. */
 .nu-rack{ max-inline-size: 780px; display: grid; margin-block: .8em; }
 .nu-plate{ background: var(--panel); border: var(--bw, 3px) solid var(--ink);
   border-radius: 6px; box-shadow: 4px 4px 0 var(--ink);
@@ -1591,14 +1629,25 @@ table.nu-trims{ color: var(--ink); }
 .nu-rec{ border-block-start: 1px solid var(--rule);
   padding-block-start: .75em; margin-block-start: .75em; }
 
-/* THE SENTENCE BETWEEN THE TWO BOARDS. The split took away the thing that used
-   to say where a send goes — a channel and its return were adjacent columns of
-   one grid and now they are two tables — so the relationship is words, and the
-   words get the arrow's weight rather than a hint's. It is a paragraph and not
-   a border because it has to survive the stylesheet being off. */
-.nu-flow{ margin-block: .9em; padding-inline-start: .7em;
-  border-inline-start: 3px solid var(--rule-strong); font-size: .9rem;
-  line-height: 1.35; max-inline-size: 46em; }
+/* THE SENTENCE BETWEEN THE TWO BOARDS — DELETED 2026-08-27, and the reversal
+   is written rather than the rule left standing. It read:
+
+     .nu-flow{ margin-block: .9em; padding-inline-start: .7em;
+       border-inline-start: 3px solid var(--rule-strong); font-size: .9rem;
+       line-height: 1.35; max-inline-size: 46em; }
+
+   with the argument "The split took away the thing that used to say where a
+   send goes — a channel and its return were adjacent columns of one grid and
+   now they are two tables — so the relationship is words". The two tables
+   retired with the one-board round and NOTHING HAS DRAWN THIS ELEMENT SINCE:
+   grepped across every .js and .html under nukernel/, the only `.nu-flow` node
+   built anywhere is the rack's series connector (ui/engineer.js `flow()`),
+   which has its own rule 140 lines up — grid, centered, a triangle and a
+   label. Two rules for one class is two owners of one fact, and this one won
+   the cascade: MEASURED on the rendered genre plate, every connector was
+   wearing a 3px black rule down its left edge and .7em of left padding it
+   never asked for, which read as a stray vertical bar beside a centered
+   arrow. Found by looking at the plates once they were tabbed. */
 
 /* THE NOTE STACK (D4): the producer's notes read top to bottom, newest last,
    so the table is left-aligned prose with a rule between takes. */

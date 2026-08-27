@@ -851,14 +851,19 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     errs.push("console: " + m.text()); });
   await page.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
   await page.goto(PAGE, { waitUntil: "networkidle" });
-  // BOTH HALVES OF THE ONE BOARD, 2026-08-27 (this line waited on `#boardtbl`
-  // and `#racktbl` while the board was two tables, 2026-08-25→27; the tables
-  // retired with the one-board round — ui/engineer.js has the turn, quoted).
-  // `#strips` holds the tall per-voice strips and `#rack` the bus plates in
-  // series; waiting on only the first would let every rack check below race
-  // a plate that had not been appended yet.
-  await page.waitForSelector("#strips .nu-strip", { timeout: 20000 });
-  await page.waitForSelector("#rack .nu-plate", { timeout: 20000 });
+  // ONE PANEL, 2026-08-27 (this line waited on `#boardtbl` and `#racktbl`
+  // while the board was two tables, 2026-08-25→27; then on `#strips` AND
+  // `#rack` while the strips were tabbed and the rack stood below them). Paul,
+  // 2026-08-27: *"Put the effects buses and mains into special tabs after the
+  // voices -- now the board is one tabbed space that is consistent and easy to
+  // understand."* `#boardpanel` holds whichever tab is open — a `#strips` with
+  // one `.nu-strip`, or a `#rack` with one `.nu-plate` — and the first tab is
+  // a voice, so what is waited on is the panel with a strip in it. WAITING ON
+  // `#rack .nu-plate` HERE WOULD NOW HANG FOREVER, which is the shape of the
+  // race this line was written to prevent, inverted: every plate check below
+  // opens its own tab first (`openBus`) rather than assuming a plate is on the
+  // page.
+  await page.waitForSelector("#boardpanel #strips .nu-strip", { timeout: 20000 });
 
   /* ---- THE STRIPS ARE IN TABS SINCE 2026-08-27, so this gate walks them ----
      Paul, 2026-08-27: *"In the mixing board — Put the instruments inside tabs
@@ -874,18 +879,45 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      tabbed page before this helper landed: 138/138 green with four of the
      five voices never looked at. So the per-strip checks now run ONCE PER TAB
      and their counts are per-strip counts. */
-  const boardTabs = () => page.evaluate(() =>
-    [...document.querySelectorAll("#boardtabs button")]
-      .map((b) => b.dataset.k.replace(/^boardtab-/, "")));
+  // ...AND THE BUSES JOINED THE ROW, 2026-08-27, so a tab now has a KIND.
+  // The key is `boardtab|<kind>|<name>` (it was `boardtab-<name>` while only
+  // voices had tabs — the page's own `|` scoping convention, and what keeps a
+  // voice called `main` from claiming the main plate's tab). `boardTabs()`
+  // answers the VOICE tabs, which is what every per-strip walk below wants;
+  // `busTabs()` answers the series' four.
+  const allTabs = () => page.evaluate(() =>
+    [...document.querySelectorAll("#boardtabs button")].map((b) => {
+      const m = /^boardtab\|([^|]+)\|(.+)$/.exec(b.dataset.k || "");
+      return m ? { kind: m[1], key: m[2] } : { kind: "?", key: b.dataset.k };
+    }));
+  const boardTabs = () => allTabs()
+    .then((t) => t.filter((x) => x.kind === "voice").map((x) => x.key));
+  const busTabs = () => allTabs()
+    .then((t) => t.filter((x) => x.kind === "bus").map((x) => x.key));
   const openTab = async (name) => {
     await page.evaluate((n) => {
-      const b = document.querySelector('[data-k="boardtab-' + n + '"]');
+      const b = document.querySelector('[data-k="boardtab|voice|' + n + '"]');
       if (b) b.click();
     }, name);
     await page.waitForFunction((n) => {
-      const s = document.querySelector("#strips .nu-strip .nu-sname");
+      const s = document.querySelector("#boardpanel #strips .nu-strip .nu-sname");
       return s && s.textContent === n;
     }, name, { timeout: 5000 });
+  };
+  // ...AND THE SAME GESTURE FOR A BUS TAB. A plate is only on the page while
+  // its tab is marked, so every check that reads `#rack` calls this first —
+  // "a gate faithful to a scope that does not contain the thing" is this
+  // block's own named hazard, and a `querySelector('#rack …')` that answers
+  // null because the tab is shut is exactly that shape.
+  const openBus = async (key) => {
+    await page.evaluate((k) => {
+      const b = document.querySelector('[data-k="boardtab|bus|' + k + '"]');
+      if (b) b.click();
+    }, key);
+    await page.waitForFunction((k) => {
+      const p = document.querySelector("#boardpanel #rack .nu-plate");
+      return p && p.dataset.bus === k;
+    }, key, { timeout: 5000 });
   };
   // run `fn` with each voice's strip open in turn, and leave the first open
   const perTab = async (fn) => {
@@ -895,8 +927,20 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     if (names[0]) await openTab(names[0]);
     return out;
   };
-  {
+  // ...and the same, per bus plate, leaving the first VOICE tab open so the
+  // page is back where the next check expects it.
+  const perBus = async (fn) => {
+    const out = [];
+    const keys = await busTabs();
+    for (const k of keys) { await openBus(k); out.push([k, await fn(k)]); }
     const names = await boardTabs();
+    if (names[0]) await openTab(names[0]);
+    return out;
+  };
+  {
+    const tabs = await allTabs();
+    const names = tabs.filter((t) => t.kind === "voice").map((t) => t.key);
+    const buses = tabs.filter((t) => t.kind === "bus").map((t) => t.key);
     // the channel list from the page's OWN model — desk-doc's channelVoicesOf,
     // which is the answer the audio tier builds from (G2)
     const chans = await page.evaluate(() =>
@@ -906,13 +950,48 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        "the board draws ONE TAB PER SEATED VOICE, in desk-doc's channel order " +
        "(the same answer the audio tier builds from, G2's law): " +
        JSON.stringify(names), JSON.stringify({ names, chans }));
+    // ...AND THEN THE SERIES, AFTER THEM (2026-08-27, Paul: "Put the effects
+    // buses and mains into special tabs AFTER the voices"). The order is the
+    // signal's — genre → delay → reverb → main — and the membership is the
+    // REGISTRY's: every fields.js bus carrying an `engine` tag is a stage the
+    // renderers run and must have a tab (a plate you cannot reach is the one
+    // thing a tab may never make), and the two GROUPS have no plate and so no
+    // tab. The check is written against F.BUSES rather than against a typed
+    // list so a sixth engine bus fails here the day it is added rather than
+    // going quietly untabbed.
+    const engineBuses = F.BUSES.filter((b) => b.engine).map((b) => b.bus);
+    const missingBus = engineBuses.filter((b) => !buses.includes(b));
+    const groupTab = buses.filter((b) => F.BUSES.some((x) => x.bus === b && !x.engine));
+    ok(eq(buses, ["genre", "echo", "rev", "main"]) && !missingBus.length &&
+       !groupTab.length && tabs.slice(names.length).every((t) => t.kind === "bus"),
+       "…and the FOUR STAGES OF THE SERIES follow them, in signal order — " +
+       JSON.stringify(buses) + " — one tab per engine bus the registry " +
+       "declares plus the main, and no tab for a group",
+       JSON.stringify({ buses, engineBuses, missingBus, groupTab }));
     const one = await page.evaluate(() => ({
-      strips: document.querySelectorAll("#strips .nu-strip").length,
+      panels: document.querySelectorAll("#boardpanel > *").length,
+      strips: document.querySelectorAll("#boardpanel #strips .nu-strip").length,
+      plates: document.querySelectorAll("#boardpanel #rack .nu-plate").length,
       marked: document.querySelectorAll('#boardtabs button[aria-pressed="true"]').length,
-      shown: (document.querySelector("#strips .nu-sname") || {}).textContent }));
-    ok(one.strips === 1 && one.marked === 1,
-       "…and EXACTLY ONE of them is on the page at a time — the marked tab's (" +
-       one.shown + ")", JSON.stringify(one));
+      shown: (document.querySelector("#boardpanel .nu-sname") || {}).textContent }));
+    ok(one.panels === 1 && one.strips === 1 && one.plates === 0 && one.marked === 1,
+       "…and ONE PANEL HOLDS EXACTLY ONE OF THEM at a time — the marked tab's " +
+       "(" + one.shown + "), with no plate on the page beside it",
+       JSON.stringify(one));
+    const openedPlates = await perBus(() => page.evaluate(() => ({
+      plates: [...document.querySelectorAll("#boardpanel #rack .nu-plate")]
+        .map((p) => p.dataset.bus),
+      strips: document.querySelectorAll("#boardpanel #strips .nu-strip").length,
+      marked: [...document.querySelectorAll('#boardtabs button[aria-pressed="true"]')]
+        .map((b) => b.dataset.k) })));
+    const badPlate = openedPlates.filter(([k, m]) =>
+      m.plates.length !== 1 || m.plates[0] !== k || m.strips !== 0 ||
+      m.marked.length !== 1 || m.marked[0] !== "boardtab|bus|" + k);
+    ok(!badPlate.length,
+       "…and each of the four bus tabs opens ITS OWN plate into the same " +
+       "panel, alone and marked — the strips are gone while a bus is open, " +
+       "which is what \"one tabbed space\" means",
+       JSON.stringify(badPlate));
   }
 
   /* ---- 1 · the count, page-wide ---- */
@@ -1001,13 +1080,22 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      ELSE: the sends, the EQ and the fader are vertical sliders, pan is a
      detent row, and a second kind of menu appearing on a strip still fails
      here by existing. */
-  const sel = await page.evaluate(() => [...document.querySelectorAll("select")]
-    .filter((s) => !s.closest("#app"))
-    .map((s) => ({ k: s.dataset.k || s.id || s.getAttribute("aria-label") || "?",
-                   sel: s.dataset.sel || null,
-                   seat: /^ins\|/.test(s.dataset.k || ""),
-                   strip: !!s.closest(".nu-strip"),
-                   produce: !!s.closest("#produce") })));
+  // GATHERED ACROSS THE WHOLE TAB ROW SINCE 2026-08-27 (the board tabs), and
+  // the reason is this block's own named hazard: the master's and the buses'
+  // menus live on plates that are only on the page while their tab is marked,
+  // so a single sweep with a voice tab open would have found none of them and
+  // called the page clean. The union of one sweep per bus tab plus the sweep
+  // with a voice tab open is the same set the flat page used to hand over.
+  const sweepSelects = () => page.evaluate(() =>
+    [...document.querySelectorAll("select")]
+      .filter((s) => !s.closest("#app"))
+      .map((s) => ({ k: s.dataset.k || s.id || s.getAttribute("aria-label") || "?",
+                     sel: s.dataset.sel || null,
+                     seat: /^ins\|/.test(s.dataset.k || ""),
+                     strip: !!s.closest(".nu-strip"),
+                     produce: !!s.closest("#produce") })));
+  const sel = (await sweepSelects())
+    .concat(...(await perBus(sweepSelects)).map(([, v]) => v));
   // REWRITTEN 2026-08-27 (the tabs): this counted `stripCount * MAX_FX` seats
   // over every strip on the page, and there is one strip on the page now. The
   // CLAIM is per voice and always was, so it is asked per voice — every tab is
@@ -1152,7 +1240,15 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      being per-bus rather than per-part — so each is drawn ONCE, at the master
      end, and never once per channel. Read through whichever widget, so this
      survives the next time the router changes its mind. */
-  const sheets = await page.evaluate(() => {
+  // PER BUS TAB SINCE 2026-08-27 (the board tabs): a plate is on the page only
+  // while its own tab is marked, so this sweep runs once per tab and the
+  // results are merged. The CLAIM is unchanged and is still about WHERE and
+  // HOW MANY — one drive, one glue, one reverb room, one echo time for the
+  // whole record, each drawn ONCE at the master end and never once per
+  // channel. A key drawn on two different plates now shows up as a duplicate
+  // in `drawnRack` below, which it could not have done when the rack was one
+  // flat block.
+  const sheetsPer = await perBus(() => page.evaluate(() => {
     const out = {};
     // THE TWO RETURNS ARE POTS — vertical sliders since 2026-08-27, driven
     // across their whole travel with the word collected at every stop, so a
@@ -1176,7 +1272,8 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       out[s2.dataset.sel] = [...s2.options].map((o) => o.dataset.v);
     }
     return out;
-  });
+  }));
+  const sheets = Object.assign({}, ...sheetsPer.map(([, o]) => o));
   // THE WANT LIST NAMES WHAT THE RACK DRAWS, AND THE RACK IS THE SERIES,
   // 2026-08-27. This walked every F.BUSES row's every knob — four buses, the
   // groups' `name`/`to` included — while the board drew four bus strips. The
@@ -1187,11 +1284,11 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // below rather than present: their facts still load and still route
   // (G14's model half), and a knob may not point at a stage the board does
   // not draw.
-  const drawnRack = await page.evaluate(() =>
+  const drawnRack = [].concat(...(await perBus(() => page.evaluate(() =>
     [...document.querySelectorAll('select[data-sel], fieldset.nu-sheet, ' +
       '#rack input[type=range]')]
       .map((n2) => n2.dataset.sel || n2.dataset.sheet || n2.dataset.k)
-      .filter((k) => /^(master|bus)\|/.test(k || "")));
+      .filter((k) => /^(master|bus)\|/.test(k || ""))))).map(([, v]) => v));
   const want = [];
   for (const f of F.MASTER) want.push(["master|" + f.key, f.table, f.labels]);
   for (const b of F.BUSES) {
@@ -1214,8 +1311,8 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     for (const v of need) if (!got.includes(v)) short.push(key + " has no " + (v || "(blank)"));
   }
   ok(!gone.length, "all " + want.length + " master and engine-bus controls are " +
-     "drawn on their own plate — one each for the whole record, not one per " +
-     "channel", gone.join(", "));
+     "drawn on their own plate, behind their own tab — one each for the whole " +
+     "record, not one per channel", gone.join(", "));
   const wantKeys = new Set(want.map((w) => w[0]));
   const inReg = drawnRack.filter((k) => wantKeys.has(k));
   const extra = drawnRack.filter((k) => !wantKeys.has(k));
@@ -1283,13 +1380,23 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      "0.0 dB on a record whose voices carry no desk", wrongOff.join("; "));
   ok(!fakeMeter.length, "…and every strip's meter well is REFUSED with its " +
      "reason — no green bar without a measurement behind it", fakeMeter.join(", "));
+  // THE MAIN TAB IS OPENED FIRST, 2026-08-27 (the board tabs): the one green
+  // meter lives on the main plate, and a plate is on the page only while its
+  // tab is marked. The claim is unchanged — ONE measured meter on the whole
+  // page — and it is asked with the main open (where the meter must be) and
+  // again with a voice open (where nothing may grow one).
+  await openBus("main");
   const greenMeters = await page.evaluate(() => ({
     main: document.querySelectorAll("#rack .nu-plate[data-bus='main'] .nu-meterbar").length,
     all: document.querySelectorAll(".nu-meterbar").length,
   }));
-  ok(greenMeters.main === 1 && greenMeters.all === 1,
-     "…and exactly ONE measured meter exists, on the main strip, fed from the " +
-     "engine's master tap (rmsNow)", JSON.stringify(greenMeters));
+  await openTab((await boardTabs())[0]);
+  const greenElsewhere = await page.evaluate(() =>
+    document.querySelectorAll(".nu-meterbar").length);
+  ok(greenMeters.main === 1 && greenMeters.all === 1 && greenElsewhere === 0,
+     "…and exactly ONE measured meter exists, on the main plate, fed from the " +
+     "engine's master tap (rmsNow) — and none anywhere else on the page with " +
+     "a voice tab open", JSON.stringify({ ...greenMeters, greenElsewhere }));
 
   /* ---- 5 · the knob writes the document's own word, and unwrites it ---- */
   // THE CANTOR'S TAB IS OPENED FIRST, 2026-08-27: this drives
@@ -1380,20 +1487,85 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // registry's own rows. The two GROUP plates of 2026-08-26 stay asserted
     // ABSENT with the reversal printed — the groups are not in the series.
     // Their facts still load and still route: the model half of G14 holds it.
-    const rackDrawn = await page.evaluate(() => {
-      const plates = [...document.querySelectorAll("#rack .nu-plate")]
-        .map((p) => p.dataset.bus);
-      const live = (k) => { const c = document.querySelector(
-        'input[data-k="' + k + '"]'); return !!(c && !c.disabled); };
-      return { plates, revLive: live("bus|rev|ret"), echoLive: live("bus|echo|ret"),
-               genreLive: live("bus|genre|level"),
-               bleedLive: live("bus|echo|bleed"),
-               groupPlates: plates.filter((b) => b === "room" || b === "aux").length };
-    });
+    // ...AND THE SERIES WENT INTO THE TAB ROW, 2026-08-27 (Paul: "Put the
+    // effects buses and mains into special tabs after the voices -- now the
+    // board is one tabbed space that is consistent and easy to understand").
+    // The four plates are the same four plates — same order, same `data-bus`,
+    // same controls — but one is on the page at a time, so this walks the tab
+    // row instead of a flat `#rack`. The ORDER claim is now the ROW's (the
+    // tabs run genre → delay → reverb → main and each opens its own plate,
+    // G11 check 1 holds it) and the LIVE claim is asked with each plate's own
+    // tab open. The two GROUP plates stay asserted absent — with the tabs,
+    // "no plate" also means "no tab", which is the stronger sentence.
+    const rackDrawn = Object.assign(
+      { plates: [], groupPlates: 0 },
+      ...(await perBus(() => page.evaluate(() => {
+        const p = document.querySelector("#boardpanel #rack .nu-plate");
+        const live = (k) => { const c = document.querySelector(
+          'input[data-k="' + k + '"]'); return !!(c && !c.disabled); };
+        const out = { plates: [p ? p.dataset.bus : "(none)"] };
+        if (live("bus|rev|ret")) out.revLive = true;
+        if (live("bus|echo|ret")) out.echoLive = true;
+        if (live("bus|genre|level")) out.genreLive = true;
+        if (live("bus|echo|bleed")) out.bleedLive = true;
+        return out;
+      }))).map(([, v]) => v));
+    rackDrawn.plates = [].concat(...(await perBus(() => page.evaluate(() =>
+      [...document.querySelectorAll("#boardpanel #rack .nu-plate")]
+        .map((p) => p.dataset.bus)))).map(([, v]) => v));
+    rackDrawn.groupTabs = (await busTabs())
+      .filter((b) => b === "room" || b === "aux").length;
+    rackDrawn.groupPlates = rackDrawn.plates
+      .filter((b) => b === "room" || b === "aux").length;
     const body = await page.evaluate(() => document.body.innerText);
     ok(eq(rackDrawn.plates, ["genre", "echo", "rev", "main"]),
        "the rack is four plates in series order — genre → delay → reverb → " +
-       "main", JSON.stringify(rackDrawn.plates));
+       "main — one per tab, opened in the row's own order",
+       JSON.stringify(rackDrawn.plates));
+    // THE SERIES IS STILL LEGIBLE, which is the thing tabs put at risk and is
+    // why this check exists at all: hiding a chain behind tabs is how a desk
+    // becomes four unrelated boxes. Two owners of the PICTURE, and both are
+    // measured. (1) THE ROW draws the chain from every tab, a voice's
+    // included — the four bus tabs sit in their own `role="group"` separated
+    // by literal `→` glyphs, so `the strips feed → genre fx → delay → reverb
+    // → main` is readable without opening anything. (2) EACH PLATE says it
+    // for itself — its header prints who feeds it (`in ← …`) and its footer
+    // carries the connector that used to stand between the plates (`into the
+    // delay bus`, `into the reverb bus`, `into main — the record`), so a hand
+    // riding one bus can tell what it feeds without reading the row.
+    const seriesRow = await page.evaluate(() => {
+      const g = document.querySelector("#boardtabs .nu-busgroup");
+      if (!g) return null;
+      return { text: g.innerText.replace(/\s+/g, " ").trim(),
+               arrows: g.querySelectorAll(".nu-tabarrow").length,
+               role: g.getAttribute("role"),
+               label: g.getAttribute("aria-label"),
+               openKind: (document.querySelector("#boardpanel > *") || {}).id };
+    });
+    ok(seriesRow && seriesRow.role === "group" && seriesRow.arrows === 4 &&
+       /genre fx → delay → reverb → main/.test(seriesRow.text) &&
+       seriesRow.openKind === "strips",
+       "THE SERIES IS DRAWN IN THE TAB ROW, from every tab including a " +
+       "voice's: " + JSON.stringify(seriesRow && seriesRow.text),
+       JSON.stringify(seriesRow));
+    const saysWhereItGoes = await perBus(() => page.evaluate(() => {
+      const p = document.querySelector("#boardpanel #rack .nu-plate");
+      return { in: (p.querySelector(".nu-busin") || {}).textContent || "",
+               out: [...p.querySelectorAll(".nu-flow")]
+                 .map((f) => f.textContent.trim()) };
+    }));
+    const WANT_OUT = { genre: "into the delay bus", echo: "into the reverb bus",
+                       rev: "into main — the record", main: null };
+    const mute = saysWhereItGoes.filter(([k, v]) =>
+      !/^in ←/.test(v.in) ||
+      (WANT_OUT[k] === null ? v.out.length !== 0
+                            : !v.out.includes(WANT_OUT[k])));
+    ok(!mute.length,
+       "…and every plate says it for itself too — `in ← …` in its header and " +
+       "the series connector in its footer (the three that used to stand " +
+       "BETWEEN the plates, re-homed onto the plate each was describing; the " +
+       "main takes none because it is the end of the line)",
+       JSON.stringify(mute));
     ok(rackDrawn.revLive && rackDrawn.echoLive,
        "bus 1's and bus 2's returns are LIVE pots (the wires G4/R5 prove: " +
        "buses.rev.ret -> rgain, buses.echo.ret -> dgain)",
@@ -1406,11 +1578,18 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        "…and the delay→reverb bleed is LIVE (same round — fx_bus.dsp's " +
        "`d*0.2` literal is the `bleed` slider now): bus|echo|bleed is an " +
        "enabled pot", JSON.stringify(rackDrawn));
-    ok(rackDrawn.groupPlates === 0 &&
+    ok(rackDrawn.groupPlates === 0 && rackDrawn.groupTabs === 0 &&
        body.includes("bus 3 and bus 4") && body.includes("draw no plate"),
-       "the two group plates are gone AND the page says so — the reversal is " +
-       "printed, not silent (their sends and aims still load and still " +
-       "route; G14's model half)", JSON.stringify(rackDrawn.plates));
+       "the two group plates are gone — no plate AND, since the board tabs, " +
+       "no tab — AND the page says so: the reversal is printed, not silent " +
+       "(their sends and aims still load and still route; G14's model half)",
+       JSON.stringify({ plates: rackDrawn.plates, groupTabs: rackDrawn.groupTabs }));
+    // THE MAIN TAB CARRIES THE MASTER'S WORDS, so it is opened before they are
+    // looked for (2026-08-27, the board tabs). The claim is untouched: a
+    // control that round-trips and reaches no sound is DISABLED and its
+    // reason is on the page — and "on the page" is now "on its own tab",
+    // which is where the person who can touch it is standing.
+    await openBus("main");
     const homeless = await page.evaluate(() => {
       const t = document.body.innerText, out = [];
       for (const k of ["width", "tilt", "ceiling"]) {
@@ -1424,8 +1603,13 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        "…and the three master words that round-trip and reach no sound are " +
        "still refused with their reason on the page (PROGRAM.md §4.11)",
        JSON.stringify(homeless));
-    const modelSaid = await page.evaluate(() =>
-      [...document.querySelectorAll("#rack .nu-busmodel")].map((m) => m.textContent));
+    // PER TAB SINCE 2026-08-27: the two model lines sit on the delay and the
+    // reverb plates, one of which is on the page at a time. Gathered by
+    // opening each bus tab in turn, which also proves the readout is REBUILT
+    // per plate rather than left behind by the tab before it.
+    const modelSaid = [].concat(...(await perBus(() => page.evaluate(() =>
+      [...document.querySelectorAll("#boardpanel #rack .nu-busmodel")]
+        .map((m) => m.textContent)))).map(([, v]) => v));
     ok(modelSaid.length === 2 && modelSaid.every((s2) => /model · in [\d.]+/.test(s2)),
        "each engine bus plate prints the MODEL's in/out numbers, labelled as " +
        "the model — a return you cannot hear still shows what is arriving, " +
@@ -1500,6 +1684,10 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // So what is asserted here is the half that can be: the fader writes the
     // record's own word, and G4 above already carries `ret:"hall" -> reverb 0.5
     // -> rgain 1.6` on the resolver the engine uses.
+    // THE REVERB TAB IS OPENED FIRST (2026-08-27, the board tabs): `bus|rev|ret`
+    // is on the page only while the reverb plate is. Said rather than relied
+    // on, exactly as the cantor's tab is said one check up.
+    await openBus("rev");
     const ret = await page.evaluate(async () => {
       const wait = () => new Promise((r) => setTimeout(r, 700));
       const drive = (word) => {
@@ -1549,6 +1737,11 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // was `min=0 max=1` over a 0..100 store (ui/state.js readVol, audio/live.js
     // `vol / 100`), so one touch took the monitor from 80 to 0.5 — 44 dB down —
     // and localStorage kept it. This is the check that it cannot happen again.
+    // THE LISTENING FADER IS ON THE MAIN PLATE, so the main tab is opened
+    // first (2026-08-27, the board tabs). It was `#vol2` on a rack that was
+    // always on the page; it is the same control with the same id on the tab
+    // the main now lives behind.
+    await openBus("main");
     const lis = await page.evaluate(async () => {
       const v2 = document.getElementById("vol2"), v1 = document.getElementById("vol");
       if (!v2 || !v1) return null;
@@ -1571,6 +1764,9 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     ok(lis && +lis.store === 55 && lis.out === "55%",
        "…and a touch on it writes 55 to the store and prints 55%, not 0.55",
        JSON.stringify(lis));
+    // put the board back on its first voice tab, so the checks after this one
+    // start where the page starts (2026-08-27, the board tabs).
+    await openTab((await boardTabs())[0]);
   }
 
   /* ================= G13 · THE SPLIT, MEASURED =========================
@@ -1634,10 +1830,17 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // registry's engine buses wearing the series' order and two (genre, main)
     // are the series' own ends. The groups draw no plate; G12 holds that with
     // the reason printed.
-    const cols = await page.evaluate(() =>
-      [...document.querySelectorAll("#rack .nu-plate")].map((t) => t.dataset.bus));
-    ok(cols.length === 4, "and the rack draws four stages in series: " +
-       JSON.stringify(cols), String(cols.length));
+    // ...AND THEN THE FOUR STAGES BECAME FOUR TABS, 2026-08-27 (Paul: "Put the
+    // effects buses and mains into special tabs after the voices"). The COUNT
+    // is the claim and it is unchanged; where it is counted is not, because a
+    // flat `#rack .nu-plate` sweep would now answer 1 and this check would
+    // fail for a reason that has nothing to do with the four buses. Each tab
+    // is opened and its plate collected.
+    const cols = [].concat(...(await perBus(() => page.evaluate(() =>
+      [...document.querySelectorAll("#boardpanel #rack .nu-plate")]
+        .map((t) => t.dataset.bus)))).map(([, v]) => v));
+    ok(cols.length === 4, "and the board draws four stages in series, one per " +
+       "tab: " + JSON.stringify(cols), String(cols.length));
 
     // ---- 2 · THE PER-VOICE EFFECTS CONTROL IS BACK, AND ONLY WHERE THE
     // BOARD SEATS IT — REVERSED 2026-08-27, the second turn of this exact
@@ -1791,11 +1994,21 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       ok(routeDoc.includes(e.why),
          "…and the fixed edge " + e.from + " -> " + e.to + " at " + e.amount +
          " is printed in the doc rather than drawn as a knob that cannot move");
-    const spaceCtl = await page.evaluate(() =>
-      document.querySelectorAll('[data-sel^="master|space"]').length);
+    // COUNTED ACROSS THE WHOLE TAB ROW, 2026-08-27 (the board tabs). `space`
+    // lives on the MAIN plate, which is on the page only while its tab is
+    // marked, so a single sweep would have answered 0 and failed a claim
+    // about ownership for a reason about geometry. Summed over every tab the
+    // board has, which is the stronger reading of "on the page": one owner,
+    // and not a second copy hiding behind another tab.
+    const spaceCtl = (await perBus(() => page.evaluate(() =>
+      document.querySelectorAll('[data-sel^="master|space"]').length)))
+      .reduce((a, [, n]) => a + n, 0) +
+      (await perTab(() => page.evaluate(() =>
+        document.querySelectorAll('[data-sel^="master|space"]').length)))
+      .reduce((a, [, n]) => a + n, 0);
     ok(spaceCtl === 1,
-       "…with exactly ONE control for it on the page — one owner per fact, and " +
-       "the owner is the master strip's `space`", String(spaceCtl));
+       "…with exactly ONE control for it anywhere in the tab row — one owner " +
+       "per fact, and the owner is the main plate's `space`", String(spaceCtl));
   }
 
   /* ================= G15 · THE SLOTS AND THE GRID, DRIVEN ================
@@ -1858,11 +2071,17 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
         (v0().desk && v0().desk.trim) || null));
       for (let i = 0; i < 4; i++) { cell().click(); await wait(); }
       const trimCleared = (v0().desk && v0().desk.trim) || null;
-      const recordGain = !!document.querySelector(
-        '#rack .nu-plate[data-bus="main"] input[data-k="level"]');
       return { name, secId, seated, wet, face, after, cleared, trimmed,
-               trimCleared, recordGain };
+               trimCleared };
     });
+    // RECORD GAIN MOVED BEHIND THE MAIN TAB, 2026-08-27 (the board tabs) —
+    // this line read the main plate out of a rack that was always on the page,
+    // from inside the strip's own evaluate. Same control, same `data-k`, same
+    // plate; it is asked with the main tab open and the board is put back.
+    await openBus("main");
+    slotTrip.recordGain = await page.evaluate(() => !!document.querySelector(
+      '#boardpanel #rack .nu-plate[data-bus="main"] input[data-k="level"]'));
+    await openTab((await boardTabs())[0]);
     ok(eq(slotTrip.seated, ["crunch"]),
        "seating `crunch` in slot 1 writes voice.desk.fx = [\"crunch\"]",
        JSON.stringify(slotTrip.seated));
@@ -1915,91 +2134,167 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     }
   }
 
-  /* G13 REWRITTEN 2026-08-27 (SECOND TIME THAT DAY), and both reversals are
+  /* G13 REWRITTEN 2026-08-27 (THIRD TIME THAT DAY), and every reversal is
      kept in writing rather than deleted.
 
      FIRST IT MEASURED THE SPLIT (two tables; "99 of 177 cells empty" was the
      finding, "at most one blank survives" was the property). Those tables
      retired with the one-board round, so it was rewritten to measure the tall
      strips: STACKED AT 390, SIDE BY SIDE AT 1280, and THE PAGE IS NEVER WIDE.
-     Every measurement behind both is real and is in this file's git history.
+     Then the strips went into tabs and "one column at 390 and two at 1280"
+     stopped being a claim about anything — worse, it PASSED VACUOUSLY on the
+     tabbed page (1 >= min(2, 1)) — so it was rewritten again as NO SIDEWAYS
+     GROWTH, EVERY CONTROL REACHABLE. Every measurement behind all three is
+     real and is in this file's git history.
 
-     NOW THE STRIPS ARE IN TABS. Paul, 2026-08-27: *"In the mixing board — Put
-     the instruments inside tabs the mixing board instead of stacking them."*
-     There is one strip on the page, so "one column at 390 and two at 1280" is
-     not a claim about anything any more — worse, it PASSED VACUOUSLY on the
-     tabbed page (1 >= min(2, 1)), which is the shape of check this gate's own
-     G11 header calls the bug it exists for.
+     NOW THE BUSES AND THE MAIN ARE TABS TOO. Paul, 2026-08-27: *"Put the
+     effects buses and mains into special tabs after the voices -- now the
+     board is one tabbed space that is consistent and easy to understand."*
+     Two of the previous version's three geometry probes walked furniture that
+     is no longer always on the page — `#strips` is absent while a bus tab is
+     open, and `#rack` is absent while a voice tab is — so a check reading
+     either unconditionally would throw or, worse, quietly measure `null`.
 
-     THE DURABLE CLAIM SURVIVES BOTH REWRITES AND IS WHAT IS ASSERTED HERE:
-     NO SIDEWAYS GROWTH, AND EVERY CONTROL REACHABLE. The first half is the
-     same three measurements it always was (the document, the tab row, the
-     strip host — none of them may scroll sideways at 390 or at 1280). The
-     second half is what the tabs put at risk and is new: the union of the
-     control keys across ALL the tabs must be exactly the set the board would
-     have drawn with every strip stacked — one strip hidden behind a tab is a
-     strip you can reach, one strip DROPPED is a knob that no longer exists.
+     THE DURABLE CLAIM SURVIVES ALL THREE REWRITES AND IS WHAT IS ASSERTED
+     HERE, WIDENED TO THE WHOLE ROW: NO SIDEWAYS GROWTH, EVERY CONTROL
+     REACHABLE, AND EVERY REFUSAL STILL SENTENCED ON ITS OWN TAB.
+       * no sideways growth: the document, the tab row and the ONE PANEL, at
+         390 and at 1280, measured with each kind of tab open — a plate is a
+         different shape from a strip and either could be the one that pushes.
+       * every control reachable: the union of the control keys across ALL the
+         tabs — voices AND buses — must be exactly what the flat board drew.
+         One strip or one plate hidden behind a tab is a thing you can reach;
+         one DROPPED is a knob that no longer exists.
+       * every refusal sentenced: a disabled control carries `data-why` and
+         its words are printed on the tab it lives on. This is the half the
+         tabs put at most risk, because a refusal whose sentence is on another
+         tab is exactly the "silent grey" the board's own header forbids.
 
      THE NUMBERS THAT BOUGHT THE CHANGE, measured on the rendered page, the
-     shipped chant grown to seven voices: `#strips` was 7,193px at 390 (seven
-     strips of ~1,007px) and the document 16,608px; it is 1,007px and 10,529px
-     now. At 1280 the block went 2,092px -> 876px, and the open strip is
-     SHORTER than a stacked one was because its three insert slots sit in a
-     line in the 780px the tab bought. */
+     shipped chant: BEFORE, at 390, a 1,007px strip with a 2,561px rack under
+     it and a 9,872px document; at 1280, 876px + 2,162px and 8,449px. AFTER:
+     the panel is one thing — 1,007px (a strip) or 534/530/447/926px (genre /
+     delay / reverb / main) at 390 — and the document is 7,381px at 390 and
+     6,306px at 1280. 2,491px and 2,143px of scroll gone, and the tallest
+     plate is now one tap from the strip that sends into it instead of a page
+     of console away. */
   console.log("\n" + "G13 the tabbed board's geometry, measured on the page");
   {
     const wide = [];
     const shape = {};
+    const voiceTabs = await boardTabs();
+    const busKeys = await busTabs();
     for (const w of [390, 1280]) {
       await page.setViewportSize({ width: w, height: 900 });
       await page.waitForTimeout(150);
+      // MEASURED WITH EACH KIND OF TAB OPEN, 2026-08-27: the panel holds a
+      // strip or a plate and they are different shapes, so "the panel does
+      // not grow sideways" is asked of every one of them, not of whichever
+      // happened to be open.
+      const per = {};
+      for (const t of [["voice", voiceTabs[0]]].concat(busKeys.map((k) => ["bus", k]))) {
+        if (t[0] === "voice") await openTab(t[1]); else await openBus(t[1]);
+        per[t[0] + "|" + t[1]] = await page.evaluate(() => {
+          const bar = document.getElementById("boardtabs");
+          const panel = document.getElementById("boardpanel");
+          const open = panel.firstElementChild;
+          const body = open && (open.querySelector(".nu-strip") ||
+                                open.querySelector(".nu-plate"));
+          return { doc: document.documentElement.scrollWidth,
+                   win: document.documentElement.clientWidth,
+                   kind: open ? open.id : "(empty)",
+                   panelScroll: panel.scrollWidth, panelClient: panel.clientWidth,
+                   barScroll: bar.scrollWidth, barClient: bar.clientWidth,
+                   h: body ? Math.round(body.getBoundingClientRect().height) : 0,
+                   bw: body ? Math.round(body.getBoundingClientRect().width) : 0 };
+        });
+      }
+      await openTab(voiceTabs[0]);
       const m = await page.evaluate(() => {
         const bar = document.getElementById("boardtabs");
-        const host = document.getElementById("strips");
-        const strip = host.querySelector(".nu-strip");
-        return { doc: document.documentElement.scrollWidth,
-                 win: document.documentElement.clientWidth,
-                 strips: host.querySelectorAll(".nu-strip").length,
-                 tabs: bar.querySelectorAll("button").length,
-                 tabLines: [...new Set([...bar.querySelectorAll("button")]
-                   .map((b) => Math.round(b.getBoundingClientRect().top)))].length,
-                 barScroll: bar.scrollWidth, barClient: bar.clientWidth,
-                 hostScroll: host.scrollWidth, hostClient: host.clientWidth,
-                 stripH: strip ? Math.round(strip.getBoundingClientRect().height) : 0,
-                 stripW: strip ? Math.round(strip.getBoundingClientRect().width) : 0,
-                 rack: Math.round(document.getElementById("rack")
+        const btns = [...bar.querySelectorAll("button")];
+        const series = bar.querySelector(".nu-busgroup");
+        const lineOf = (n) => Math.round(n.getBoundingClientRect().top);
+        return { tabs: btns.length,
+                 tabLines: [...new Set(btns.map(lineOf))].length,
+                 voiceLines: [...new Set(btns.filter((b) => /\|voice\|/.test(b.dataset.k))
+                   .map(lineOf))].length,
+                 seriesLines: [...new Set(btns.filter((b) => /\|bus\|/.test(b.dataset.k))
+                   .map(lineOf))].length,
+                 seriesBreaks: series ? lineOf(series.querySelector("button")) >
+                   Math.max(...btns.filter((b) => /\|voice\|/.test(b.dataset.k))
+                     .map(lineOf)) : false,
+                 panelW: Math.round(document.getElementById("boardpanel")
                    .getBoundingClientRect().width) };
       });
-      shape[w] = m;
-      console.log("  note at " + w + "px: " + m.strips + " strip of " + m.tabs +
-        " tabs on " + m.tabLines + " line(s), strip " + m.stripW + "x" +
-        m.stripH + "px, rack " + m.rack + "px, document " + m.doc + "/" + m.win);
-      if (m.doc > m.win) wide.push("document " + w + ": " + m.doc + " > " + m.win);
-      if (m.barScroll > m.barClient)
-        wide.push("tab row " + w + ": " + m.barScroll + " > " + m.barClient);
-      if (m.hostScroll > m.hostClient)
-        wide.push("strip host " + w + ": " + m.hostScroll + " > " + m.hostClient);
+      shape[w] = { ...m, per };
+      console.log("  note at " + w + "px: " + m.tabs + " tabs on " + m.tabLines +
+        " line(s) (voices " + m.voiceLines + ", series " + m.seriesLines +
+        "), panel " + m.panelW + "px, bodies " +
+        Object.entries(per).map(([k, v]) => k + " " + v.bw + "x" + v.h).join(" · "));
+      for (const [k, v] of Object.entries(per)) {
+        if (v.doc > v.win) wide.push("document " + w + " on " + k + ": " + v.doc + " > " + v.win);
+        if (v.barScroll > v.barClient)
+          wide.push("tab row " + w + " on " + k + ": " + v.barScroll + " > " + v.barClient);
+        if (v.panelScroll > v.panelClient)
+          wide.push("panel " + w + " on " + k + ": " + v.panelScroll + " > " + v.panelClient);
+      }
     }
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(150);
-    ok(shape[390].strips === 1 && shape[1280].strips === 1,
-       "ONE STRIP ON THE PAGE at both widths — the instruments are in tabs " +
-       "(Paul, 2026-08-27), not stacked",
-       JSON.stringify({ 390: shape[390].strips, 1280: shape[1280].strips }));
+    const onePer = [];
+    for (const w of [390, 1280])
+      for (const [k, v] of Object.entries(shape[w].per)) {
+        const wantKind = k.startsWith("voice") ? "strips" : "rack";
+        if (v.kind !== wantKind) onePer.push(w + " " + k + " opened " + v.kind);
+        if (!(v.h > 0)) onePer.push(w + " " + k + " drew nothing");
+      }
+    ok(!onePer.length,
+       "ONE PANEL, ONE THING IN IT, at both widths — a voice tab opens a " +
+       "strip and each bus tab opens its own plate into the same panel " +
+       "(Paul, 2026-08-27: \"now the board is one tabbed space\")",
+       JSON.stringify(onePer));
     ok(!wide.length,
-       "NO SIDEWAYS GROWTH at 390 or at 1280 — not the document, not the tab " +
-       "row (it WRAPS: " + shape[390].tabLines + " line(s) at 390, " +
-       shape[1280].tabLines + " at 1280), not the strip host", wide.join("; "));
-    ok(shape[1280].stripW <= shape[1280].rack + 1 && shape[1280].stripW > 400,
-       "…and the open strip takes the width the rack takes (" +
-       shape[1280].stripW + "px against the rack's " + shape[1280].rack +
-       "px) rather than the whole window — the strip and the buses it sends " +
-       "into are one object", JSON.stringify(shape[1280]));
+       "NO SIDEWAYS GROWTH at 390 or at 1280, on ANY tab — not the document, " +
+       "not the tab row (it WRAPS: " + shape[390].tabLines + " line(s) at " +
+       "390, " + shape[1280].tabLines + " at 1280), not the panel",
+       wide.join("; "));
+    // THE SEAM, MEASURED. The bus tabs are their own `role="group"` with
+    // `flex-basis: 100%`, so the series always begins a fresh line after the
+    // voices — a boundary that is in the same place at every width instead of
+    // wherever the wrap happens to fall. At 390 the group's own four buttons
+    // and three arrows are wider than the row (measured: 395px of content in
+    // 366px), so it would have wrapped there anyway and the break costs
+    // nothing; at 1280 the whole series is one line.
+    ok(shape[390].seriesBreaks && shape[1280].seriesBreaks &&
+       shape[1280].seriesLines === 1,
+       "THE SEAM HOLDS: the bus tabs begin their own line under the voices at " +
+       "both widths (390: voices " + shape[390].voiceLines + " line(s), " +
+       "series " + shape[390].seriesLines + "; 1280: " +
+       shape[1280].voiceLines + " and " + shape[1280].seriesLines + ")",
+       JSON.stringify({ 390: shape[390], 1280: shape[1280] }));
+    const stripW = shape[1280].per["voice|" + voiceTabs[0]].bw;
+    const plateW = shape[1280].per["bus|main"].bw;
+    ok(stripW > 400 && Math.abs(stripW - plateW) <= 1,
+       "…and a strip and a plate take THE SAME width at 1280 (" + stripW +
+       "px against " + plateW + "px) rather than the whole window — the " +
+       "strip and the buses it sends into are one object, which is the whole " +
+       "of \"consistent\"", JSON.stringify({ stripW, plateW }));
 
-    /* EVERY CONTROL REACHABLE — the half the tabs put at risk. */
+    /* EVERY CONTROL REACHABLE — the half the tabs put at risk, now over the
+       whole row and not just the voices. */
     const reach = await perTab(() => page.evaluate(() => {
-      const s = document.querySelector("#strips .nu-strip");
+      const s = document.querySelector("#boardpanel #strips .nu-strip");
       return [...s.querySelectorAll("[data-k]")].map((n) => n.dataset.k);
+    }));
+    const busReach = await perBus(() => page.evaluate(() => {
+      const p = document.querySelector("#boardpanel #rack .nu-plate");
+      // `data-sel` FIRST: ui/selects.js stamps a menu with BOTH — `data-sel`
+      // is the registry key (`master|space`) and `data-k` is the widget's own
+      // handle (`sel|master|space`) — and the registry key is what this walk
+      // is checking reachability of.
+      return [...p.querySelectorAll("[data-k],[data-sel]")]
+        .map((n) => n.dataset.sel || n.dataset.k);
     }));
     const chansOrder = await page.evaluate(() =>
       window.NuDeskDoc.channelVoicesOf(window.__eightDoc(), window.NuGenres.GENRES)
@@ -2012,26 +2307,79 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     const first = reach[0] ? shapeOf(reach[0][0], reach[0][1]) : [];
     const odd = reach.filter(([n, keys]) => !eq(shapeOf(n, keys), first));
     ok(reach.length === chansOrder.length && first.length > 0 && !odd.length,
-       "EVERY CONTROL REACHABLE: all " + reach.length + " tabs open a strip " +
-       "carrying the same " + first.length + " controls, differing only in " +
-       "the voice's own name — nothing was dropped behind a tab",
+       "EVERY CONTROL REACHABLE: all " + reach.length + " voice tabs open a " +
+       "strip carrying the same " + first.length + " controls, differing " +
+       "only in the voice's own name — nothing was dropped behind a tab",
        JSON.stringify(odd.map(([n, keys]) => n + ": " +
          JSON.stringify(shapeOf(n, keys)))));
+    // ...AND EVERY BUS CONTROL THE REGISTRY DECLARES IS ON EXACTLY ONE TAB.
+    // The want-list is fields.js's own (every engine bus's every knob, plus
+    // the master's fields and the record gain), so a knob that fell off a
+    // plate in the move fails here by being unreachable rather than by being
+    // noticed.
+    const busKeysDrawn = {};
+    for (const [k, keys] of busReach) for (const key of keys)
+      (busKeysDrawn[key] = busKeysDrawn[key] || []).push(k);
+    const wantBus = [];
+    for (const b of F.BUSES) { if (!b.engine) continue;
+      for (const kn of b.knobs) wantBus.push("bus|" + b.bus + "|" + kn.key); }
+    for (const f of F.MASTER) wantBus.push("master|" + f.key);
+    wantBus.push("level");                        // the record gain, on the main
+    const unreachable = wantBus.filter((k) => !busKeysDrawn[k]);
+    const twice = Object.entries(busKeysDrawn).filter(([, v]) => v.length > 1);
+    ok(!unreachable.length && !twice.length,
+       "…and all " + wantBus.length + " bus and master controls the registry " +
+       "declares are reachable, each on EXACTLY ONE tab — the plates moved " +
+       "line for line, nothing was left behind and nothing is drawn twice",
+       JSON.stringify({ unreachable, twice }));
     const dupes = (() => { const seen = new Set(), d = [];
-      for (const [, keys] of reach) for (const k of keys) {
+      for (const [, keys] of reach.concat(busReach)) for (const k of keys) {
         if (seen.has(k)) d.push(k); seen.add(k); }
       return d; })();
     ok(!dupes.length,
        "…and no two tabs draw the same `data-k` — the keys stay unique across " +
        "the whole walk, so focus restoration and this gate's own drives can " +
-       "never land on the wrong voice", JSON.stringify(dupes.slice(0, 6)));
+       "never land on the wrong voice or the wrong bus", JSON.stringify(dupes.slice(0, 6)));
+
+    /* EVERY REFUSAL STILL SENTENCED, ON ITS OWN TAB. A refusal whose reason
+       is on another tab is the silent grey the board's header forbids, and
+       the move is exactly the accident that would cause one. Asked of every
+       tab: each disabled control carries `data-why`, and its words are
+       printed in the panel it lives in. */
+    const naked = [];
+    const readRefusals = () => page.evaluate(() => {
+      const panel = document.getElementById("boardpanel");
+      const text = panel.innerText;
+      return [...panel.querySelectorAll("[disabled],[aria-disabled='true']")]
+        .map((c) => ({ k: c.dataset.k || c.dataset.sel ||
+                          c.getAttribute("aria-label") || c.tagName,
+                       why: !!(c.dataset.why || "").trim(),
+                       said: !!(c.dataset.why &&
+                         (text.includes(c.dataset.why) ||
+                          (c.closest(".nu-vs,.nu-sel,.nu-slot,p") || panel)
+                            .querySelector(".nu-why"))) }));
+    });
+    const sentenced = (await perTab(readRefusals))
+      .concat(await perBus(readRefusals));
+    let refusals = 0;
+    for (const [tab, list] of sentenced) for (const c of list) {
+      refusals++;
+      if (!c.why || !c.said) naked.push(tab + ": " + c.k);
+    }
+    ok(refusals > 0 && !naked.length,
+       "EVERY REFUSAL KEEPS ITS SENTENCE ON ITS OWN TAB — all " + refusals +
+       " disabled controls across the " + sentenced.length + " tabs carry " +
+       "`data-why` AND print their reason in the panel beside them (a silent " +
+       "grey is the bug, and a reason on another tab is a silent grey)",
+       JSON.stringify(naked));
 
     /* AND THE PAGE DOES NOT MOVE WHEN YOU CHANGE TABS (the anchor law:
        ui/eight.js's whole `anchorWant` machinery exists because Paul's page
-       used to scroll itself under a still thumb). Nothing above `#strips` is
-       rebuilt on a tab tap, so this should be zero BY CONSTRUCTION — which is
-       exactly the kind of claim that is worth measuring rather than reasoning
-       about. */
+       used to scroll itself under a still thumb). Nothing above `#boardpanel`
+       is rebuilt on a tab tap, so this should be zero BY CONSTRUCTION — which
+       is exactly the kind of claim that is worth measuring rather than
+       reasoning about, and MORE worth it now that a tap can swap a 1,007px
+       strip for a 471px plate and shorten the document under the thumb. */
     for (const w of [390, 1280]) {
       await page.setViewportSize({ width: w, height: w === 390 ? 844 : 900 });
       await page.waitForTimeout(150);
@@ -2051,13 +2399,15 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       });
       const jumped = moved.filter((m) => m.dY !== 0 || m.dRow !== 0);
       ok(!jumped.length,
-         "at " + w + ": tapping each of the " + moved.length + " tabs moves " +
-         "neither scrollY nor the tab row itself — the page does not move " +
-         "under the thumb (dY " + JSON.stringify(moved.map((m) => m.dY)) + ")",
+         "at " + w + ": tapping each of the " + moved.length + " tabs — the " +
+         "voices AND the four stages — moves neither scrollY nor the tab row " +
+         "itself — the page does not move under the thumb (dY " +
+         JSON.stringify(moved.map((m) => m.dY)) + ")",
          JSON.stringify(jumped));
     }
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(150);
+    await openTab(voiceTabs[0]);
   }
 
   ok(!errs.length, "the page raised no console error while the board was driven",

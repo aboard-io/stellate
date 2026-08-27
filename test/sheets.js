@@ -177,6 +177,26 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     }
     return out;
   };
+  /* THE BOARD'S ONE MULTI SHEET WENT BEHIND A TAB, 2026-08-27, and this is the
+     tap that follows it there rather than a claim relaxed to fit.
+
+     Paul, 2026-08-27: *"Put the effects buses and mains into special tabs
+     after the voices -- now the board is one tabbed space that is consistent
+     and easy to understand."* The shipped page's ONE `<select multiple>` is
+     `master.fx` — the record's character chips — and it sits on the MAIN
+     plate, which since that sentence is on the page only while the main tab is
+     marked. Two checks below count it: "N sheet(s) left on the shipped page
+     and every one is a <select multiple>" and "N multi sheet(s) drawn — the
+     page has somewhere to allow multiple selection". Both would have answered
+     0 and failed, and BOTH WOULD HAVE BEEN RIGHT ABOUT THE PAGE THEY LOOKED
+     AT AND WRONG ABOUT THE PAGE: the sheet did not go away, it moved one tap.
+     `views` above is the #app tab row and the board is not in #app, so the
+     board's own tab is opened once, here, and stays open — `BOARDTAB` in
+     ui/engineer.js is a module `let` that survives the remount every #app tab
+     tap causes, so one tap holds for the whole survey. Measured: with the tap,
+     1 sheet and 1 multi sheet, exactly as before the move. */
+  if (REAL) await tapK("boardtab|bus|main");
+
   const union = (rows, key) => {
     const seen = new Set(), out = [];
     for (const { r } of rows) for (const x of r[key])
