@@ -592,6 +592,18 @@
   // = the literal 1, byte-identical: a record that never touched the knob
   // renders the same tape it always did.
   const ERETURNS = { off: 0, dim: 0.58, room: 1, hall: 1.6, huge: 2 };
+  // THE DELAY -> REVERB BLEED, 2026-08-27 (the series-bus round). fx_bus ran
+  // the delay into the reverb at the LITERAL `d*0.2` since the csound port —
+  // the engineer refused the knob for exactly that reason ("the bleed is a
+  // constant in the DSP — not wired"). The literal is a slider now
+  // (fx_bus.dsp `bleed`, 0..1, default 0.2 — proven byte-identical at the
+  // default on two pressed records), reached as state.bleed -> fxParams.
+  // `stock` is pinned at 0.2 exactly because 0.2 IS the literal the bus has
+  // always run at; absent = null = no state field = the same 0.2. rev_bleed
+  // mirrors the slider, so a colored genre's room hears the same knob.
+  const EBLEEDS = { off: 0, trace: 0.08, stock: 0.2, heavy: 0.5, soaked: 1 };
+  const EBLEEDLABEL = { off: "severed", trace: "a trace", stock: "as shipped",
+                        heavy: "heavy", soaked: "soaked" };
   // WHICH ROOM — the parent's own five modules (state-engine REVERB_COLORS,
   // all five shipped in engine/faust/dist), under desk words. nukernel's old
   // `verb` table named three rooms that reached nothing at all.
@@ -985,6 +997,15 @@
     // renamed the day a bus is reordered. Absent = 0 = adds nothing, so every
     // record written before this loads and sounds exactly as it did.
     { key: "aux",  table: SENDS,  labels: SENDLABEL,  default: null },
+    // THE GENRE SEND, 2026-08-27 (the series-bus round: "one bus for genre
+    // specific effects, into a delay bus, into reverb, into main"). The strip
+    // drew this send REFUSED while fx_bus had no genre stage; the stage exists
+    // now — a fifth engine accumulator whose return runs the genre-bus chain
+    // and SUMS INTO THE DELAY BUS (series, never main) — so the word is live.
+    // Same enum family as rev/echo on purpose: a send is a send. Absent = 0 =
+    // adds nothing, so every record written before this sounds exactly as it
+    // did (the engine skips the whole stage when no send and no chain exist).
+    { key: "genre", table: SENDS, labels: SENDLABEL,  default: null },
     { key: "lvl",  table: LEVELS, labels: LEVELLABEL, default: null },
     { key: "pan",  table: PANS,   labels: PANLABEL,   default: null },
     // THE CHIP IS BACK ON THE VOICE, 2026-08-27, BY THE SAME OWNER WHO TOOK IT
@@ -1113,6 +1134,7 @@
       del: pick(SENDS, g.echo, 0),      // the field is `echo`, the bus is `del`
       room: pick(SENDS, g.room, 0),     // bus 3
       aux: pick(SENDS, g.aux, 0),       // bus 4, the one a track never had
+      genre: pick(SENDS, g.genre, 0),   // the genre bus (series-bus round) — 0 adds nothing
       lvl: pick(LEVELS, g.lvl, 1),
       pan: pick(PANS, g.pan, 0),
       mute: !!g.mute,
@@ -1385,6 +1407,20 @@
   // no caller since the WebAudio rack went) comes back under a new name with
   // one: the moment a group can name another group, a cycle is reachable by two
   // clicks and a silent stack overflow is not an answer.
+  // THE GENRE BUS'S OWN TWO VOCABULARIES (series-bus round, 2026-08-27).
+  // `level` is the rack's "level → delay" slider — the gain on the genre
+  // chain's return as it sums into the delay bus. In the RETURN's own linear
+  // units (the engine multiplies the summed buffer by it, stream-renderer /
+  // press, the same arithmetic both); `even` is pinned at 1.0 exactly because
+  // 1 is what the engine applies when the knob was never touched (absent =
+  // null = 1). The chips are the box's own FX vocabulary, one word per slot,
+  // so the chain a genre deals at compose time and the chain a hand edits
+  // here are the same twelve chips — no second effects vocabulary.
+  const GLEVELS = { off: 0, low: 0.5, even: 1, hot: 1.5, blown: 2 };
+  const GLEVELLABEL = { off: "off", low: "pulled back", even: "as sent",
+                        hot: "hot", blown: "blown" };
+  const GXCHIPS = {};
+  for (const k of Object.keys(FX)) GXCHIPS[k] = k;
   const BUSROWS = [
     { bus: "rev",  label: "reverb", engine: "rev",
       feed: "fed by the reverb sends", eq: BUS_EQ_BANDS,
@@ -1407,7 +1443,11 @@
         { key: "ret",  label: "return",  table: ERETURNS, labels: RETURNLABEL, default: null },
         { key: "time", label: "time",    table: DTIMES,  labels: DTLABEL,     default: null },
         { key: "fb",   label: "repeats", table: EFBS,    labels: EFBLABEL,    default: null },
-        { key: "tone", label: "tone",    table: ETONES,  labels: ETONELABEL,  default: null } ] },
+        { key: "tone", label: "tone",    table: ETONES,  labels: ETONELABEL,  default: null },
+        // `bleed` REACHES the DSP (2026-08-27, series-bus round) — see EBLEEDS
+        // above: the delay->reverb feed was the literal `d*0.2` and is a
+        // slider now. Absent = null = the shipped 0.2, byte-identical.
+        { key: "bleed", label: "bleed",  table: EBLEEDS, labels: EBLEEDLABEL, default: null } ] },
     // THE TWO GROUPS. `room` keeps its name and its saved sends — a record
     // written when bus 3 was "the kit's ambience folded into bus 1" loads with
     // its `room` sends intact and finds that the fold now has a knob whose
@@ -1426,6 +1466,27 @@
     { bus: "aux",  label: "group", engine: null,
       feed: "a group — its sends land wherever it is aimed",
       eq: BUS_EQ_BANDS, knobs: [] },
+    // THE GENRE BUS, 2026-08-27 (Paul: "one bus for genre specific effects,
+    // into a delay bus, into reverb, into main"). A FIFTH engine accumulator —
+    // real, not a group: every strip's `genre` send (PARTMIX above) feeds it,
+    // its chain (up to three chips, the box's own FX vocabulary — dealt by
+    // extraction from the genre's fx at compose time, edited here) runs over
+    // the summed feed, and the result times `level` SUMS INTO THE DELAY BUS.
+    // Where it goes is the SERIES and not a choice, so it has an `engine` tag
+    // (no `to` knob is spliced on) — but it is deliberately NOT in BUSTO
+    // below: a group aimed "at the genre bus" would be a route the engine
+    // does not have (groups fold to rev/del), and the four buses keep their
+    // positional names. APPENDED last for the same reason: "bus 1".."bus 4"
+    // are printed on 139 shipped records' boards and must not renumber.
+    // Absent everything = the stage never runs = byte-identical.
+    { bus: "genre", label: "genre fx", engine: "genre",
+      feed: "fed by the strips' genre sends; its return sums into the delay bus",
+      eq: BUS_EQ_BANDS,
+      knobs: [
+        { key: "level", label: "level", table: GLEVELS, labels: GLEVELLABEL, default: null },
+        { key: "fx1", label: "chip 1", table: GXCHIPS, labels: FXLABEL, default: null },
+        { key: "fx2", label: "chip 2", table: GXCHIPS, labels: FXLABEL, default: null },
+        { key: "fx3", label: "chip 3", table: GXCHIPS, labels: FXLABEL, default: null } ] },
   ];
   // WHERE A GROUP MAY BE AIMED — every bus but itself, and the labels are
   // POSITIONAL ("bus 1") because that is what the board's column heads say and
@@ -1433,7 +1494,12 @@
   // record may have renamed. Derived from BUSROWS so a fifth bus would appear
   // here by existing.
   const BUSTO = {};
-  BUSROWS.forEach((r, i) => { BUSTO[r.bus] = "bus " + (i + 1); });
+  // ...every bus but the GENRE bus (series-bus round): the genre stage's
+  // destination is the series (its return sums into the delay bus, in the
+  // engine) and it takes no group feed — aiming a group at it would draw a
+  // route the renderers do not have. It sits last in BUSROWS, so the four
+  // shipped positional names stay "bus 1".."bus 4".
+  BUSROWS.forEach((r, i) => { if (r.bus !== "genre") BUSTO[r.bus] = "bus " + (i + 1); });
   // the name knob is spliced onto every row from ONE place, so a fourth bus
   // would inherit it by existing rather than by being remembered — and so
   // song.js/resolveBuses/busesIsDefault pick it up with no edit at all (they
@@ -1528,6 +1594,9 @@
   // the move, not guessed from the state).
   function busToOk(v, bus, dest) {
     if (bus === dest) return false;
+    // only a bus BUSTO names may be aimed at — the genre bus has an engine
+    // tag but is deliberately not a group target (see BUSTO above)
+    if (!Object.prototype.hasOwnProperty.call(BUSTO, dest)) return false;
     if (BUSBY[dest] && BUSBY[dest].engine) return true;
     const next = { ...(v || {}) };
     next[bus] = { ...(next[bus] || {}), to: dest };
@@ -2098,6 +2167,7 @@
                 SENDS, SENDLABEL, VERBS,
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
                 RETURNS, RETURNLABEL, ERETURNS, REVERBS, REVERBLABEL,
+                EBLEEDS, EBLEEDLABEL, GLEVELS, GLEVELLABEL, GXCHIPS,
                 VOX, VOXPARAM, OCTAVES, ARTICS, CMODES, CLAMPS, CLAMPLABEL,
                 KEYS, KEYLABEL, KEYNAMES, wrapKey, KEYMODES, KEYMODELABEL,
                 FIFTHS, relMinorOf, RELMINNAME, minorish,

@@ -123,34 +123,38 @@ function genreAsk(sec) {
 }
 
 /* ---------- THE FOUR SENDS OF A STRIP (2026-08-27) ------------------------
-   one-board.html: genre → delay → reverb → main, tapped post-insert. Two are
-   live and two are refused, and the split is the ENGINE's, not taste:
+   one-board.html: genre → delay → reverb → main, tapped post-insert. Three are
+   live and one is refused, and the split is the ENGINE's, not taste:
      * delay and reverb ARE today's per-unit u.del / u.rev (fields.js `echo` /
        `rev` — "the sends are real and already post-insert", one-board §IV.3;
        the insert chain runs in the unit's own buffer BEFORE the bus taps, so
        the tap is genuinely post-insert: stream-renderer runChain, then the
        rev/del sums).
-     * the GENRE send is refused: fx_bus.dsp has no genre stage — the bus is
-       the one genuinely new stage in the line and it is ENGINE work (FUTURE.md
-       Phase 2 scopes it). A slider into a bus that does not exist would be a
-       knob that lies.
+     * the GENRE send WAS refused and is LIVE as of 2026-08-27 (the series-bus
+       engine round). The refusal read: "fx_bus.dsp has no genre stage ahead
+       of the delay, so nothing this page writes can put a signal into one…
+       a live slider here today would be a knob that lies." True the day it
+       was written; the engine round built the stage — a fifth accumulator in
+       BOTH renderers (`u.genre` at the same three send sites as u.rev/u.del),
+       its chained return summed into the DELAY bus at the rack's level — so
+       the slider is now a wire, proven on rendered samples by
+       test/series-bus.test.js (spectrum moves; kill the delay return and the
+       genre contribution dies with it — series, not a side door to main).
      * the MAIN send is refused: the dry path to the main IS the fader, and a
        second gain on the same wire is two owners of one fact.
-   The two refusals are drawn (never live-and-dead, never missing) with their
-   sentences, per the standing law. */
-const GENRE_WHY = "the genre bus is engine work — not wired";
-const GENRE_WHY_LONG = GENRE_WHY + ": fx_bus.dsp has no genre stage ahead of " +
-  "the delay, so nothing this page writes can put a signal into one. The bus " +
-  "is the one genuinely new stage in the series and it is the engine edit " +
-  "FUTURE.md Phase 2 buys; a live slider here today would be a knob that lies.";
+   The refusal still standing is drawn (never live-and-dead, never missing)
+   with its sentence, per the standing law. */
 const MAINSEND_WHY = "the dry path to the main is the fader below — one owner " +
   "per fact, so this send is parked rather than drawn as a second gain on the " +
   "same wire";
-const BLEED_WHY = "the bleed is a constant in the DSP — not wired";
-const BLEED_WHY_LONG = BLEED_WHY + ": fx_bus.dsp:221 runs the delay into the " +
-  "reverb at the literal 0.2 (`d*0.2`) on every record ever rendered; making " +
-  "it this slider is a .dsp edit plus a recompile plus the byte-parity gates, " +
-  "which is not this page's to take.";
+// THE BLEED WAS REFUSED and is LIVE as of 2026-08-27 (same round). The refusal
+// read: "the bleed is a constant in the DSP — not wired: fx_bus.dsp:221 runs
+// the delay into the reverb at the literal 0.2 (`d*0.2`)… a .dsp edit plus a
+// recompile plus the byte-parity gates, which is not this page's to take."
+// The engine round took it: `bleed` is an fx_bus slider now (default 0.2 = the
+// literal, byte-identical at the default on two pressed records), rev_bleed
+// mirrors it for colored rooms, and buses.echo.bleed (fields.js EBLEEDS) is
+// the hand — masterState -> state.bleed -> fxParams.
 const METER_WHY = "one master tap — the engine sums every voice into shared " +
   "buses (render-core.js), so there is no per-channel signal to measure; the " +
   "dim number beside the fader is the MODEL's gain, and a green bar here " +
@@ -207,7 +211,7 @@ function optionsFor(table, labels, cur, gate, emptyLabel) {
    shape of the thing, which is why the master's words stay <select>s. */
 const ZERO_STRIP = NuFields.resolvePartMix({});
 const RESOLVES_TO = { rev: "rev", echo: "del", room: "room", aux: "aux",
-                      pan: "pan", lvl: "lvl" };
+                      genre: "genre", pan: "pan", lvl: "lvl" };
 function detentsOf(field, table, labels, emptyLabel, dfltOverride) {
   const dflt = dfltOverride != null ? dfltOverride
     : (ZERO_STRIP[RESOLVES_TO[field]] || 0);
@@ -501,6 +505,8 @@ export function engineer(parent, ctx, voiceName) {
       pct(base.del) + " into " + busName("echo"));
   row("→ " + busName("rev"), d.rev ? (SENDLABEL[d.rev] || d.rev) : null,
       pct(base.rev) + " into " + busName("rev") + " — " + genreAsk(sec));
+  row("→ " + busName("genre"), d.genre ? (SENDLABEL[d.genre] || d.genre) : null,
+      pct(base.genre) + " into " + busName("genre") + " (→ delay)");
   const slots = slotsOf(voice);
   row("inserts", slots.length
         ? slots.map((s) => FXLABEL[s.k] || s.k).join(" → ") : null,
@@ -573,8 +579,15 @@ export function mount(parent, ctx) {
     const srow2 = el("div", null, "nu-srow");
     srow2.append(el("p", "sends · post-insert", "nu-rowlab"));
     const sends = el("div", null, "nu-sends");
-    sends.append(col("genre", vrefused("b|genre|" + voice.name,
-      voice.name + " send to the genre bus", "not wired", GENRE_WHY_LONG)));
+    // UN-REFUSED 2026-08-27 (the series-bus engine round). This column was
+    // drawn refused — "the genre bus is engine work — not wired" — and the
+    // engine work happened: fx_bus grew nothing, the RENDERERS grew a fifth
+    // accumulator (stream-renderer/press `gen`) whose chained return sums into
+    // the DELAY bus, so the send is a real wire: genre → delay → reverb →
+    // main. The word is desk `genre` (fields.js PARTMIX, SENDS family).
+    sends.append(col("genre", vknob("b|genre|" + voice.name, "genre",
+      SENDS, SENDLABEL, d.genre, voice.name + " send to the genre bus",
+      (v) => setDesk(ctx, voice, "genre", v), "default")));
     sends.append(col(busName("echo"), vknob("b|echo|" + voice.name, "echo",
       SENDS, SENDLABEL, d.echo, voice.name + " send to " + busName("echo"),
       (v) => setDesk(ctx, voice, "echo", v), "default")));
@@ -675,7 +688,8 @@ export function mount(parent, ctx) {
 
     const goes = el("p", null, "nu-goes");
     goes.append(document.createTextNode("→ "));
-    goes.append(el("b", busName("echo") + " · " + busName("rev") + " · main"));
+    goes.append(el("b", busName("genre") + " · " + busName("echo") + " · " +
+      busName("rev") + " · main"));
     strip.append(goes);
     board.append(strip);
   }
@@ -717,23 +731,36 @@ export function mount(parent, ctx) {
 
   rack.append(flow("the strips send into every stage below"));
 
-  // -- the genre bus: the one genuinely new stage, and it is not wired ------
+  // -- the genre bus: the one genuinely new stage — WIRED 2026-08-27 --------
+  // (the series-bus engine round). This plate was drawn `is-off` with one
+  // refused slider ("the genre bus is engine work — not wired"); the engine
+  // work happened and it is a registry row now (fields.js BUSES bus `genre`):
+  // the strips' genre sends feed a fifth accumulator in both renderers, the
+  // chain below runs over it, and `level → delay` scales the summed return as
+  // it lands on the delay bus — series into everything downstream. The chips
+  // are the box FX vocabulary; a genre deals its own at compose time and this
+  // rack is where a hand re-deals them.
   {
-    const p = el("div", null, "nu-plate is-off");
+    const p = el("div", null, "nu-plate");
     p.dataset.bus = "genre";
     p.setAttribute("aria-label", "genre fx bus");
     const h = el("div", null, "nu-bushead");
-    h.append(el("b", "genre fx bus", "nu-busname"));
+    h.append(el("b", "genre fx bus · " + busName("genre"), "nu-busname"));
     h.append(el("small", "in ← the strips' genre sends · chain dealt by the" +
-      " genre at compose", "nu-busin"));
+      " genre at compose, edited here", "nu-busin"));
     p.append(h);
+    const g = el("div", null, "nu-gear");
+    labelled(g, "called", busSel("genre", knobOf("genre", "name")));
+    labelled(g, "chip 1", busSel("genre", knobOf("genre", "fx1")));
+    labelled(g, "chip 2", busSel("genre", knobOf("genre", "fx2")));
+    labelled(g, "chip 3", busSel("genre", knobOf("genre", "fx3")));
+    p.append(g);
     const r = el("div", null, "nu-busrow");
-    // `x|…` and not `bus|…`, deliberately: `bus|<bus>|<knob>` keys name
-    // registry rows (fields.js BUSES) and desk-gate walks that pairing; a
-    // refused slider names no row, so it wears a namespace the walk ignores.
-    r.append(col("level → delay", vrefused("x|genre|level",
-      "genre bus level into the delay bus", "not wired", GENRE_WHY_LONG)));
-    r.append(el("small", GENRE_WHY_LONG, "nu-why"));
+    const spec = knobOf("genre", "level");
+    r.append(col("level → delay", vknob("bus|genre|level", "level", spec.table,
+      spec.labels, bv("genre", "level"), "genre bus level into the delay bus",
+      (v) => { DD().writeBus(doc, "genre", "level", v); ctx.changed(); },
+      "default", 1, true)));
     p.append(r);
     rack.append(p);
   }
@@ -760,16 +787,22 @@ export function mount(parent, ctx) {
       spec.labels, bv("echo", "ret"), "delay bus return",
       (v) => { DD().writeBus(doc, "echo", "ret", v); ctx.changed(); },
       "default", 1, true)));
-    // THE BLEED, REFUSED WITH ITS REASON — the series the engine half-does
-    // already (one-board §IV.2): delay pours into reverb at a fixed 0.2.
-    r.append(col("bleed → reverb", vrefused("x|echo|bleed",
-      "delay bus bleed into the reverb bus", "a constant", BLEED_WHY_LONG, true)));
+    // THE BLEED, LIVE 2026-08-27 (series-bus round) — it was refused here as
+    // "a constant" while fx_bus ran the literal `d*0.2`; the literal is the
+    // `bleed` slider now (default 0.2 = as shipped, byte-identical) and
+    // buses.echo.bleed is its one hand: masterState -> state.bleed -> fxParams,
+    // rev_bleed mirrored so a colored room hears the same knob.
+    { const bspec = knobOf("echo", "bleed");
+      r.append(col("bleed → reverb", vknob("bus|echo|bleed", "bleed",
+        bspec.table, bspec.labels, bv("echo", "bleed"),
+        "delay bus bleed into the reverb bus",
+        (v) => { DD().writeBus(doc, "echo", "bleed", v); ctx.changed(); },
+        "default", 0.2, true))); }
     const says = el("small", "", "nu-busmodel nu-hint");
     says.dataset.live = "model";   // the clock writes it, so it says so
     r.append(says);
     busSays.push({ el: says, bus: "echo" });
     p.append(r);
-    p.append(el("small", BLEED_WHY_LONG, "nu-why"));
     rack.append(p);
   }
   rack.append(flow("into the reverb bus"));
@@ -782,7 +815,7 @@ export function mount(parent, ctx) {
     const h = el("div", null, "nu-bushead");
     h.append(el("b", "reverb bus · " + busName("rev"), "nu-busname"));
     h.append(el("small", "in ← the strips' " + busName("rev") +
-      " sends + the delay's fixed bleed", "nu-busin"));
+      " sends + the delay's bleed (the knob above)", "nu-busin"));
     p.append(h);
     const g = el("div", null, "nu-gear");
     labelled(g, "called", busSel("rev", knobOf("rev", "name")));
@@ -997,8 +1030,12 @@ export function mount(parent, ctx) {
     "(fields.js busRoute), and draw no plate here: the 2026-08-27 series — " +
     "genre → delay → reverb → main — is the rack, on Paul's word."));
   host.append(edges);
+  // GENRE_WHY_LONG and BLEED_WHY_LONG came OFF this list on 2026-08-27: the
+  // series-bus engine round wired both (the genre stage and the fx_bus `bleed`
+  // slider), so their sentences were rewritten in place above as history
+  // rather than kept as standing refusals.
   const refusals = el("ul", null, "nu-hint nu-refusals");
-  for (const w of [GENRE_WHY_LONG, MAINSEND_WHY, BLEED_WHY_LONG, METER_WHY,
+  for (const w of [MAINSEND_WHY, METER_WHY,
                    STEREO_WHY, SWEEP_WET_WHY, MASTER_WHY])
     refusals.append(el("li", w));
   host.append(refusals);

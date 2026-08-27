@@ -3855,6 +3855,7 @@
   "inputs": 6,
   "outputs": 2,
   "params": [
+   "/fx_bus/bleed",
    "/fx_bus/bps",
    "/fx_bus/comp",
    "/fx_bus/cpar",
@@ -4362,6 +4363,7 @@
   "inputs": 2,
   "outputs": 1,
   "params": [
+   "/rev_bleed/bleed",
    "/rev_bleed/dcut",
    "/rev_bleed/dfb",
    "/rev_bleed/dgain",

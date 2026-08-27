@@ -254,6 +254,15 @@ async function assemble(state, sched, env, opts) {
   // fx_bus L/R inputs while every mono voice stays centered (dry, duplicated).
   const dry = new Float32Array(TOTAL), rev = new Float32Array(TOTAL),
         del = new Float32Array(TOTAL), pp = new Float32Array(TOTAL);
+  // THE GENRE STAGE (series-bus round, 2026-08-27) — the stream renderer's
+  // twin, whole-song: a fifth mono accumulator, allocated only when the stage
+  // is on (state.genreBus carries a chain, or some unit carries a `genre`
+  // route). null => every send guard below is dead and the sum never runs:
+  // byte-identical to the four-bus assembly.
+  const gb = state.genreBus && typeof state.genreBus === "object" ? state.genreBus : null;
+  const genOn = !!(gb && gb.chain && gb.chain.length) ||
+    Object.values(sched.units).some(u => u && u.genre);
+  const gen = genOn ? new Float32Array(TOTAL) : null;
   // MASTERING: units carrying `pan` (state-engine applyMasterPan) ride the
   // same wide buses stereo voices use — so a panned mix allocates them too.
   const anyStereo = Object.values(sched.units).some(u => u && (u.stereo || u.pan || u.panSpread));
@@ -301,11 +310,11 @@ async function assemble(state, sched, env, opts) {
       // chain processes it whole-song (LFO phase + tails continuous), THEN the
       // dry/rev/del sends apply. Units without inserts keep the original
       // direct-mix path untouched (bit-identical, the absent-law).
-      if (u.inserts && u.inserts.length) {
+      if ((u.inserts && u.inserts.length) || (gen && u.genre)) {
         const ubuf = new Float32Array(TOTAL);
         SP.mixPCM(notes, buffers, SR, { dry: ubuf, rev: ubuf, del: ubuf },
           { dry: 1, rev: 0, del: 0, strip: u.sampler.strip, granularOverSt: u.sampler.granularOverSt, grainSec: u.sampler.grainSec });
-        for (const eff of u.inserts) {
+        for (const eff of (u.inserts || [])) {
           const ip = await mkProc(eff.module);
           const IR = "/" + rootOf(eff.module) + "/";
           for (const [k, pv] of Object.entries(eff.params)) ip.setParamValue(IR + k, pv);
@@ -319,7 +328,8 @@ async function assemble(state, sched, env, opts) {
             for (let i = 0; i < span; i++) ubuf[s + i] = o[i];
           }
         }
-        const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
+        const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0,
+              gg = gen ? (u.genre || 0) : 0;
         // MASTERING pan (unit-level for insert-carrying sampled units — the
         // per-note spread is lost through the mono insert chain, accepted)
         const pgi = (u.pan && wL) ? RC.panLR(u.pan) : null;
@@ -328,9 +338,10 @@ async function assemble(state, sched, env, opts) {
           if (pgi) { const xd = x * dg; wL[i] += xd * pgi.l; wR[i] += xd * pgi.r; }
           else dry[i] += x * dg;
           rev[i] += x * rg; del[i] += x * lg;
+          if (gg) gen[i] += x * gg;
         }
         console.log(`  ${key}: ${notes.length} ev -> sampler:${u.sampler.id} (native PCM, ${u.sampler.zones.length} zones)` +
-          ` [inserts: ${u.inserts.map(i => i.type).join(">")}]`);
+          ` [inserts: ${(u.inserts || []).map(i => i.type).join(">")}]`);
         continue;
       }
       SP.mixPCM(notes, buffers, SR, { dry, rev, del, dryL: wL, dryR: wR },
@@ -344,7 +355,7 @@ async function assemble(state, sched, env, opts) {
     // see its header). press's environment enters via mkProc/rootOf injection.
     const r = await RC.renderUnit(u, events, {
       mkProc, rootOf, SR, BS, TOTAL, spb,
-      buses: { dry, rev, del, pp, wL, wR },
+      buses: { dry, rev, del, pp, wL, wR, gen },
       // SP is here for the per-unit board STRIP (`u.strip`) — render-core runs
       // makeStrip/stripStep itself so press and the stream renderer put the same
       // tone stage on a modelled voice. Without it press would silently render
@@ -363,6 +374,34 @@ async function assemble(state, sched, env, opts) {
   // dry path below so it flows through the master chain; fxParams has already
   // muted the internal rgain to 0. Deterministic (module LFO phases start at 0)
   // so same seed => same bytes; genres with no reverbColor skip this entirely.
+  // ---- THE GENRE STAGE'S RETURN (series-bus round): run the record's genre
+  // chain over the accumulator (whole-song, SPAN-batched like every insert —
+  // faustwasm chunks at BS internally, byte-equal to the per-64 walk), scale
+  // by the rack's `level -> delay`, and SUM INTO THE DELAY BUS **before** the
+  // reverb-color tap and before fx_bus: genre -> delay -> reverb -> main, the
+  // series. The stream renderer's windowed walk is this exact arithmetic on
+  // the same BS grid (its persistent chain carries state across windows), so
+  // live and press stay in parity — test/series-bus.test.js holds it.
+  if (gen) {
+    for (const eff of ((gb && gb.chain) || [])) {
+      if (!eff || !eff.module) continue;
+      const gp = await mkProc(eff.module);
+      const GR = "/" + rootOf(eff.module) + "/";
+      for (const [k, pv] of Object.entries(eff.params || {})) gp.setParamValue(GR + k, pv);
+      if (eff.barSec) gp.setParamValue(GR + "barSec", 4 * spb);
+      for (let s = 0; s < TOTAL; s += SPAN) {
+        const span = Math.min(SPAN, TOTAL - s);
+        const o = gp.render([gen.subarray(s, s + span)], span)[0];
+        for (let i = 0; i < span; i++) gen[s + i] = o[i];
+      }
+    }
+    const glvl = gb && gb.level != null ? Math.max(0, Math.min(2, +gb.level || 0)) : 1;
+    if (glvl) for (let i = 0; i < TOTAL; i++) del[i] += gen[i] * glvl;
+    let ge = 0; for (let i = 0; i < TOTAL; i++) ge += gen[i] * gen[i];
+    console.log(`  genre bus: ${((gb && gb.chain) || []).map(e => e.type || e.module).join(">") || "(no chain)"}` +
+      ` -> level ${glvl} into del; return RMS ${(20 * Math.log10(Math.max(Math.sqrt(ge / TOTAL), 1e-9))).toFixed(1)} dB`);
+  }
+
   const rc = SE.reverbColor(state);
   let wetL = null, wetR = null;
   if (rc) {
@@ -377,7 +416,7 @@ async function assemble(state, sched, env, opts) {
     const bleed = new Float32Array(TOTAL);
     const bp = await mkProc("rev_bleed");
     const bfx = SE.fxParams(state);
-    for (const k of ["dtime", "dfb", "dcut", "dgain", "pptime", "ppfb", "pptone"])
+    for (const k of ["dtime", "dfb", "dcut", "dgain", "bleed", "pptime", "ppfb", "pptone"])
       bp.setParamValue("/rev_bleed/" + k, bfx[k]);
     for (let s = 0; s < TOTAL; s += SPAN) {
       const span = Math.min(SPAN, TOTAL - s);

@@ -247,7 +247,7 @@
     // modelled voice on the next bar the way a send move does. It is compared by
     // identity like every other key, so a fresh-but-equal object costs one
     // Object.assign per bar and stripStateFor's own signature compare absorbs it.
-    const ROUTE_KEYS = ["dry", "rev", "del", "pan", "lvl", "gmul", "extGainPerAmp", "dx7OutCeil", "strip"];
+    const ROUTE_KEYS = ["dry", "rev", "del", "genre", "pan", "lvl", "gmul", "extGainPerAmp", "dx7OutCeil", "strip"];
     function refreshRoute(us, u) {
       let hit = null;
       for (const k of ROUTE_KEYS) if (u[k] !== us.u[k]) (hit = hit || {})[k] = u[k];
@@ -439,23 +439,27 @@
             } else if (u.stereo && buses.wL) {
               const o1 = oo[1] || o;
               const dg = (u.dry != null ? u.dry : 1) * v.curOut, rg = (u.rev || 0) * v.curOut,
-                    lg = (u.del || 0) * v.curOut, pg = v.curPP * v.curOut;
+                    lg = (u.del || 0) * v.curOut, pg = v.curPP * v.curOut,
+                    gg = buses.gen ? (u.genre || 0) * v.curOut : 0;
               for (let i = Math.max(0, -idx0); i < len; i++) {
                 const l = o[i], r = o1[i], mono = (l + r) * 0.5, j = idx0 + i;
                 buses.wL[j] += l * dg; buses.wR[j] += r * dg;
                 buses.rev[j] += mono * rg; buses.del[j] += mono * lg;
                 if (pg) buses.pp[j] += mono * pg;
+                if (gg) buses.gen[j] += mono * gg;
                 if (meter) { const md = mono * dg; meter.e += md * md; }
               }
             } else {
               const dg = (u.dry != null ? u.dry : 1) * v.curOut, rg = (u.rev || 0) * v.curOut,
-                    lg = (u.del || 0) * v.curOut, pg = v.curPP * v.curOut;
+                    lg = (u.del || 0) * v.curOut, pg = v.curPP * v.curOut,
+                    gg = buses.gen ? (u.genre || 0) * v.curOut : 0;
               for (let i = Math.max(0, -idx0); i < len; i++) {
                 const x = o[i], j = idx0 + i;
                 if (pg2) { const xd = x * dg; buses.wL[j] += xd * pg2.l; buses.wR[j] += xd * pg2.r; }
                 else buses.dry[j] += x * dg;
                 buses.rev[j] += x * rg; buses.del[j] += x * lg;
                 if (pg) buses.pp[j] += x * pg;
+                if (gg) buses.gen[j] += x * gg;
                 if (meter) { const xd = x * dg; meter.e += xd * xd; }
               }
             }
@@ -525,7 +529,8 @@
         // rather than the same channel. What is lost is the board EQ's colour
         // on the delay throw; what is gained is that the throw exists at all,
         // identically in both renderers.
-        const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
+        const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0,
+              gg = buses.gen ? (u.genre || 0) : 0;
         if (ppbuf) for (let i = 0; i < LEN; i++) buses.pp[i] += ppbuf[i];
         if (ubufR) {
           // the wide route, verbatim from the direct branch above: [0]->L,
@@ -534,6 +539,7 @@
             const l = ubuf[i], r = ubufR[i], mono = (l + r) * 0.5;
             buses.wL[i] += l * dg; buses.wR[i] += r * dg;
             buses.rev[i] += mono * rg; buses.del[i] += mono * lg;
+            if (gg) buses.gen[i] += mono * gg;
             if (meter) { const md = mono * dg; meter.e += md * md; }
           }
         } else for (let i = 0; i < LEN; i++) {
@@ -541,6 +547,7 @@
           if (pg2) { const xd = x * dg; buses.wL[i] += xd * pg2.l; buses.wR[i] += xd * pg2.r; }
           else buses.dry[i] += x * dg;
           buses.rev[i] += x * rg; buses.del[i] += x * lg;
+          if (gg) buses.gen[i] += x * gg;
           if (meter) { const xd = x * dg; meter.e += xd * xd; }
         }
       }
@@ -581,6 +588,22 @@
     }
 
     // ============================================================ the stream
+
+    // THE GENRE STAGE'S PERSISTENT PROCS (series-bus round, 2026-08-27).
+    // `state.genreBus` = { chain?, level? } — the spec audio/desk.js
+    // masterState resolves off the record's rack (chain chips in the box FX
+    // dialect, finished through insertChain where the caller had SE). Built
+    // once per stream like the reverb color: a rack chain edit lands on the
+    // next stream open, the same granularity reverbColor already has. Absent
+    // => null => the whole stage is skipped in renderChunk (byte-identical).
+    async function genreStageOf(state) {
+      const gb = state && state.genreBus;
+      if (!gb || typeof gb !== "object") return null;
+      const chain = await mkChain(gb.chain || []);
+      const level = gb.level != null ? Math.max(0, Math.min(2, +gb.level || 0)) : 1;
+      return { chain, level };
+    }
+
     let ST = null;   // the open stream's persistent state (one at a time)
     const LIVE_TOTAL = 0x7fffffff;   // ~13.5h sentinel for live-mode interval clamps
 
@@ -659,7 +682,7 @@
             const holdN = Math.max(Math.max(8, Math.floor((n.atk || 0.01) * SR)), Math.floor(n.durSec * SR));
             n._end = n._s0 + holdN + relN + tailN;
           }
-          const su = { notes, role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip, pan: u.pan || 0, granularOverSt: u.sampler.granularOverSt, grainSec: u.sampler.grainSec } };
+          const su = { notes, role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, genre: u.genre || 0, strip: u.sampler.strip, pan: u.pan || 0, granularOverSt: u.sampler.granularOverSt, grainSec: u.sampler.grainSec } };
           // INSERTS-ON-SAMPLED-VOICES: persistent insert procs for the unit's
           // declared chain (renderChunk mixes the unit pre-send into a window
           // buffer, runs the chain, THEN applies sends — the render-core law).
@@ -688,7 +711,7 @@
       let revBleed = null, revColor = null;
       if (rc) {
         revBleed = await mkProc("rev_bleed");
-        for (const k of ["dtime", "dfb", "dcut", "dgain", "pptime", "ppfb", "pptone"])
+        for (const k of ["dtime", "dfb", "dcut", "dgain", "bleed", "pptime", "ppfb", "pptone"])
           revBleed.setParamValue("/rev_bleed/" + k, fxp[k]);
         revColor = await mkProc(rc.module);
         const RR = "/" + rootOf(rc.module) + "/";
@@ -716,8 +739,10 @@
       for (let k = 1; S[S.length - 1] < TOTAL; k++) S.push(Math.min(TOTAL, Math.round(k * barSamp / BS) * BS));
       const nChunks = S.length - 1;
 
+      const genre = await genreStageOf(state);
+
       ST = { state, sched, spb, totalSec, TOTAL, buffers, foundAcc, samplerUnits, units, unitOrder,
-        anyStereo, fx, revBleed, revColor, rc, master, mb, sweeps, S, nChunks, CBEATS,
+        anyStereo, fx, genre, revBleed, revColor, rc, master, mb, sweeps, S, nChunks, CBEATS,
         zero: new Float32Array(BS),
         vapor: 0, vaporTgt: Math.max(0, Math.min(1, +(state && state.vapor) || 0)), vaporSt: null,
         cursor: 0, mcut: 21000, swi: 0, activeSw: [] };
@@ -751,7 +776,7 @@
       let revBleed = null, revColor = null;
       if (rc) {
         revBleed = await mkProc("rev_bleed");
-        for (const k of ["dtime", "dfb", "dcut", "dgain", "pptime", "ppfb", "pptone"])
+        for (const k of ["dtime", "dfb", "dcut", "dgain", "bleed", "pptime", "ppfb", "pptone"])
           revBleed.setParamValue("/rev_bleed/" + k, fxp[k]);
         revColor = await mkProc(rc.module);
         const RR = "/" + rootOf(rc.module) + "/";
@@ -766,11 +791,13 @@
       const unitsSpec = SE.voiceUnits(E, state);
       const anyStereo = Object.values(unitsSpec).some((u) => u && (u.stereo || u.pan || u.panSpread));
 
+      const genre = await genreStageOf(state);
+
       ST = { live: true, state, spb: spb0, TOTAL: LIVE_TOTAL, buffers: io.buffers || {},
         bakeNative: !!io.bakeNative,   // wavOut segs path: bake native found+sampler here (no live graph)
         foundAcc: null, samplerUnits: new Map(), units: new Map(), unitOrder: [],
         unitParams: new Map(), unitDx7: new Map(), unitsSpec, speech: io.speech || null,
-        anyStereo, fx, fxp: { ...fxp }, revBleed, revColor, rc, master, mb,
+        anyStereo, fx, fxp: { ...fxp }, genre, revBleed, revColor, rc, master, mb,
         sweeps: [], S: null, bars: [], liveWriteEnd: 0,
         vapor: 0, vaporTgt: Math.max(0, Math.min(1, +(state && state.vapor) || 0)), vaporSt: null,
         zero: new Float32Array(BS), cursor: 0, mcut: 21000, swi: 0, activeSw: [] };
@@ -889,7 +916,7 @@
           if (!u || !u.sampler) continue;
           let su = ST.samplerUnits.get(key);
           if (!su) {
-            su = { notes: [], role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip, pan: u.pan || 0, granularOverSt: u.sampler.granularOverSt, grainSec: u.sampler.grainSec } };
+            su = { notes: [], role: auditRole(u, key), sends: { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, genre: u.genre || 0, strip: u.sampler.strip, pan: u.pan || 0, granularOverSt: u.sampler.granularOverSt, grainSec: u.sampler.grainSec } };
             // INSERTS-ON-SAMPLED-VOICES (wavOut lane): same persistent chain as open().
             // Built even when EMPTY here, so a pedal ADDED mid-play has a holder to
             // re-patch (syncChain below); the render guard reads .length, not truthiness.
@@ -902,7 +929,7 @@
             // wavOut/mobile route bakes them HERE, where the sends and the chain were
             // frozen at the unit's first bar — a pedal or a send moved mid-play was
             // heard on desktop and not in a pocket.
-            su.sends = { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, strip: u.sampler.strip,
+            su.sends = { dry: u.dry != null ? u.dry : 1, rev: u.rev || 0, del: u.del || 0, genre: u.genre || 0, strip: u.sampler.strip,
                          pan: u.pan || 0, granularOverSt: u.sampler.granularOverSt, grainSec: u.sampler.grainSec };
             await syncChain(su, u.inserts, u);
           }
@@ -971,7 +998,23 @@
             del = new Float32Array(LEN), pp = new Float32Array(LEN);
       const wL = anyStereo ? new Float32Array(LEN) : null;
       const wR = anyStereo ? new Float32Array(LEN) : null;
-      const buses = { dry, rev, del, pp, wL, wR };
+      // THE GENRE STAGE (series-bus round, 2026-08-27): a fifth mono
+      // accumulator, allocated ONLY when the stage is on — a persistent chain
+      // exists (state.genreBus, open/openLive) or some unit carries a `genre`
+      // route this window. When neither does, `gen` is null, every send-loop
+      // guard is dead and the sum below never runs: byte-identical to the
+      // four-bus walk. A chain, once built, runs EVERY window (silent ones
+      // included) so its echo/sweep tails ring on and its state walks the
+      // same BS grid press walks whole-song — the sampler-chain law.
+      const genreOn = !!(ST.genre && ST.genre.chain.length) || (() => {
+        for (const { key, kind } of unitOrder) {
+          const uu = kind === "sampler" ? samplerUnits.get(key).sends : units.get(key).u;
+          if (uu && uu.genre) return true;
+        }
+        return false;
+      })();
+      const gen = genreOn ? new Float32Array(LEN) : null;
+      const buses = { dry, rev, del, pp, wL, wR, gen };
 
       // accumulate in press's exact order: FOUND first, then units in byUnit order.
       // Samplers bake INCREMENTALLY onto this running window bus at their byUnit
@@ -993,7 +1036,8 @@
           if (ST.live) su.notes = su.notes.filter((nt) => nt._end > base);   // prune fully-played notes (unbounded live stream)
           const win = su.notes.filter((nt) => nt._s0 < end && nt._end > base);
           const meter = { e: 0, missing: null };
-          if ((su.chain && su.chain.length) || (su.chainPrev && su.chainPrev.length)) {
+          if ((su.chain && su.chain.length) || (su.chainPrev && su.chainPrev.length)
+              || (gen && su.sends.genre)) {
             // INSERTS-ON-SAMPLED-VOICES: mirror press's sampler-chain walk,
             // windowed. Notes mix PRE-SEND (strip + per-note gain inside) onto a
             // unit-local window buffer; the PERSISTENT chain processes the WHOLE
@@ -1004,7 +1048,8 @@
             if (win.length) SP.mixPCM(win, ST.buffers, SR, { dry: ubuf, rev: ubuf, del: ubuf },
               { dry: 1, rev: 0, del: 0, strip: su.sends.strip, granularOverSt: su.sends.granularOverSt, grainSec: su.sends.grainSec }, { base, len: LEN, total: TOTAL, resume: true }, meter);
             runChain(su, ubuf, LEN, spb);
-            const dg = su.sends.dry != null ? su.sends.dry : 1, rg = su.sends.rev || 0, lg = su.sends.del || 0;
+            const dg = su.sends.dry != null ? su.sends.dry : 1, rg = su.sends.rev || 0, lg = su.sends.del || 0,
+                  gg = gen ? (su.sends.genre || 0) : 0;
             // MASTERING pan (press's insert-path law: unit-level pan post-chain)
             const pgi = (su.sends.pan && wL) ? panLR(su.sends.pan) : null;
             meter.e = 0;
@@ -1013,6 +1058,7 @@
               if (pgi) { const xd = x * dg; wL[i] += xd * pgi.l; wR[i] += xd * pgi.r; }
               else dry[i] += x * dg;
               rev[i] += x * rg; del[i] += x * lg;
+              if (gg) gen[i] += x * gg;
               const xd = x * dg; meter.e += xd * xd;
             }
           } else if (win.length) SP.mixPCM(win, ST.buffers, SR, { dry, rev, del, dryL: wL, dryR: wR }, su.sends, { base, len: LEN, total: TOTAL, resume: true }, meter);
@@ -1027,6 +1073,21 @@
         }
       }
       ST.lastAudit = { voices };
+
+      // ---- THE GENRE STAGE'S RETURN (series-bus round): the accumulator runs
+      // the record's genre chain (persistent procs — state carried across
+      // windows exactly like a unit's pedals), is scaled by the rack's
+      // `level -> delay`, and SUMS INTO THE DELAY ACCUMULATOR **before** the
+      // reverb COLOR tap and before fx_bus — so the genre bus feeds the delay,
+      // the delay feeds the reverb (fx_bus `d*bleed`), and the reverb feeds
+      // the main: genre -> delay -> reverb -> main, the series, with no wire
+      // of its own to the master. Kill the delay return (dgain 0) and the
+      // genre chain's contribution dies with it — the routing gate proves it.
+      if (gen) {
+        if (ST.genre && ST.genre.chain.length) chainBlocks(ST.genre.chain, gen, LEN, spb);
+        const glvl = ST.genre && ST.genre.level != null ? ST.genre.level : 1;
+        if (glvl) for (let i = 0; i < LEN; i++) del[i] += gen[i] * glvl;
+      }
 
       // ---- reverb COLOR: rev_bleed(del,pp) -> bleed; reverb(rev+bleed) -> wet ----
       let wetL = null, wetR = null;

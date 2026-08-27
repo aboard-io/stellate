@@ -111,6 +111,13 @@
   async function renderUnit(u, events, env) {
     const { mkProc, rootOf, SR, BS, TOTAL, spb } = env;
     const { dry, rev, del, pp, wL, wR } = env.buses;
+    // THE GENRE SEND (series-bus round, 2026-08-27): a fifth mono accumulator,
+    // OPTIONAL — callers without a genre stage pass no `gen` and every branch
+    // below is byte-identical (the `gg &&` guards never fire). Taken at the
+    // same three sites as u.rev/u.del, off the same post-pedal/post-EQ signal:
+    // a route, not a per-event throw (contrast `pp`, whose margin note below
+    // says why IT comes off pre-chain).
+    const gen = env.buses.gen || null;
     const alloc = env.alloc || ((n) => new Float32Array(n));
     const speech = env.speech || null;
     const dx7Presets = env.dx7Presets || {};
@@ -273,22 +280,26 @@
             // STEREO voice: [0]->L, [1]->R for the dry width; sends use the mono sum
             const o1 = oo[1] || o;
             const dg = (u.dry != null ? u.dry : 1) * curOut, rg = (u.rev || 0) * curOut,
-                  lg = (u.del || 0) * curOut, pg = curPP * curOut;
+                  lg = (u.del || 0) * curOut, pg = curPP * curOut,
+                  gg = gen ? (u.genre || 0) * curOut : 0;
             for (let i = 0; i < span; i++) {
               const l = o[i], r = o1[i], mono = (l + r) * 0.5;
               wL[s + i] += l * dg; wR[s + i] += r * dg;
               rev[s + i] += mono * rg; del[s + i] += mono * lg;
               if (pg) pp[s + i] += mono * pg;
+              if (gg) gen[s + i] += mono * gg;
             }
           } else {
             const dg = (u.dry != null ? u.dry : 1) * curOut, rg = (u.rev || 0) * curOut,
-                  lg = (u.del || 0) * curOut, pg = curPP * curOut;
+                  lg = (u.del || 0) * curOut, pg = curPP * curOut,
+                  gg = gen ? (u.genre || 0) * curOut : 0;
             for (let i = 0; i < span; i++) {
               const x = o[i];
               if (pg2) { const xd = x * dg; wL[s + i] += xd * pg2.l; wR[s + i] += xd * pg2.r; }
               else dry[s + i] += x * dg;
               rev[s + i] += x * rg; del[s + i] += x * lg;
               if (pg) pp[s + i] += x * pg;
+              if (gg) gen[s + i] += x * gg;
             }
           }
           // ...AND THE @pp SEND, WHICH THE ubuf PATH USED TO DROP (2026-08-25).
@@ -360,17 +371,20 @@
       // different instrument rather than the same channel. What is lost is the
       // board EQ's colour on the delay throw; what is gained is that the throw
       // exists at all, identically in both renderers.
-      const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0;
+      const dg = u.dry != null ? u.dry : 1, rg = u.rev || 0, lg = u.del || 0,
+            gg = gen ? (u.genre || 0) : 0;
       if (ppbuf) for (let i = 0; i < TOTAL; i++) pp[i] += ppbuf[i];
       if (ubufR) for (let i = 0; i < TOTAL; i++) {
         const l = ubuf[i], r = ubufR[i], mono = (l + r) * 0.5;
         wL[i] += l * dg; wR[i] += r * dg;
         rev[i] += mono * rg; del[i] += mono * lg;
+        if (gg) gen[i] += mono * gg;
       } else for (let i = 0; i < TOTAL; i++) {
         const x = ubuf[i];
         if (pg2) { const xd = x * dg; wL[i] += xd * pg2.l; wR[i] += xd * pg2.r; }
         else dry[i] += x * dg;
         rev[i] += x * rg; del[i] += x * lg;
+        if (gg) gen[i] += x * gg;
       }
     }
     return { pool: P, rendered };

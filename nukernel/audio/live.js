@@ -103,6 +103,11 @@ W.__nuMix = () => {
       drum: !!u.drum, role: u.role || null,
       lvl: +(u.lvl != null ? u.lvl : 1).toFixed(4), pan: +(u.pan || 0).toFixed(4),
       rev: +(u.rev || 0).toFixed(4), del: +(u.del || 0).toFixed(4),
+      // ...AND THE GENRE SEND (series-bus round, 2026-08-27): the fourth send
+      // the strips carry now. The renderer reads u.genre at the same three
+      // sites as u.rev/u.del; a window that shows two of a strip's three
+      // sends is showing a strip that does not exist.
+      genre: +(u.genre || 0).toFixed(4),
       // ...AND THE TONE ON A MODELLED VOICE TOO. This read was
       // `(u.sampler && u.sampler.strip) || null`, so it reported `null` for every
       // Faust-modelled chair — which was accurate while desk.js dropped the EQ on
@@ -170,7 +175,12 @@ function getState() {
   // state and it carries plan.js's deliberate `reverb: 0`; the spread lands
   // OVER it, per stream, so the rack's return is what the engine reads and the
   // compiled default stands whenever the document says nothing.
-  return { ...base, bpm, sections: [LIVE_SECTION], vapor: 0, ...(masterState(MASTER, BUSES) || {}) };
+  // `deps.SE` rides along (series-bus round, 2026-08-27) so the genre bus's
+  // chain chips are finished through insertChain — the same clamp door every
+  // section chip takes. Before deps resolve, masterState still answers; the
+  // chain simply arrives in the raw fields dialect, which mkChain builds.
+  return { ...base, bpm, sections: [LIVE_SECTION], vapor: 0,
+           ...(masterState(MASTER, BUSES, deps && deps.SE) || {}) };
 }
 
 /* ---------- the two hooks: notes in, bar lengths in ---------- */

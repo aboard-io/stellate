@@ -424,6 +424,9 @@ export function deskChannelBase(sec, key) {
     pan: (S.pan || 0) + (m.pan || 0),
     rev: Math.min(1, (m.rev || 0) + S.rev + g.rev),
     del: Math.min(1, (m.del || 0) + S.del + g.del),
+    // the genre-bus send (series-bus round) — per-part only: no section lane,
+    // no group folds into it, so the composed base IS the strip's own word
+    genre: Math.min(1, m.genre || 0),
     eq: r.eq, mute: m.mute };
 }
 
@@ -468,7 +471,8 @@ function partsOf(sec) {
     out[k] = { gain: m.mute || (solo && !m.solo) ? 0
                  : m.lvl * Math.pow(10, (m.fader + t.db) / 20),
                // both groups carried, so feedSplit above has all four sends
-               pan: m.pan, rev: m.rev, del: m.del, room: m.room, aux: m.aux, fx: m.fx,
+               pan: m.pan, rev: m.rev, del: m.del, room: m.room, aux: m.aux,
+               genre: m.genre, fx: m.fx,
                // THE SLOTS' FINISHED CHAIN (2026-08-27 — Paul: "Add per voice
                // effects, up to three. Each has a wet dry mix and its own
                // settings"). fields.js fxChainFor resolves the entry's three
@@ -741,6 +745,13 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     const v = { ...u,
       lvl: (u.lvl != null ? u.lvl : 1) * S.lvl * (p ? p.gain : 1),
       rev: Math.min(1, rev), del: Math.min(1, del) };
+    // THE GENRE SEND (series-bus round, 2026-08-27): the strip's fourth send,
+    // per-part only (no section lane, no group folds into it — feedSplit's
+    // groups land on rev/del as ever). WRITTEN ONLY WHEN NON-ZERO, so a
+    // record with no hand on the word produces the byte-identical unit table
+    // it always did (the offer-identity law); every trim below that moves
+    // rev/del moves it too, because a fader is one trim over the whole route.
+    if (p && p.genre) v.genre = Math.min(1, p.genre);
     if (o) {
       if (o.mute) v.lvl = 0;
       else if (o.fader) v.lvl *= Math.pow(10, faderDb(o.fader) / 20);
@@ -763,7 +774,7 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     // Applied after the clamps on purpose: the rails bound what a hand may ask
     // for, and the trim is not a hand, it is the route. Absent (=== every
     // sampled voice, every unit the parent built), byte-identical.
-    if (u.pageTrim && u.pageTrim !== 1) { v.rev *= u.pageTrim; v.del *= u.pageTrim; }
+    if (u.pageTrim && u.pageTrim !== 1) { v.rev *= u.pageTrim; v.del *= u.pageTrim; if (v.genre) v.genre *= u.pageTrim; }
     // ...AND THE MASTER FADER REACHES A MODELLED VOICE, which it never did.
     // ("I need a volume slider on the top very badly" — Paul, 2026-08-23.)
     // The line above composes the master trim into `lvl`, and `lvl` is read by
@@ -796,6 +807,7 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
       v.dry = (v.dry != null ? v.dry : 1) * mf;
       v.rev = (v.rev || 0) * mf;
       v.del = (v.del || 0) * mf;
+      if (v.genre) v.genre *= mf;    // all the sends, never some (series-bus round)
     }
     // ...AND SO DOES THE CHANNEL'S OWN FADER/MUTE/SOLO (2026-08-27, FUTURE.md
     // Phase 0). The block above fixed the MASTER fader for modelled voices and
@@ -824,6 +836,7 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
       v.dry = (v.dry != null ? v.dry : 1) * p.gain;
       v.rev = (v.rev || 0) * p.gain;
       v.del = (v.del || 0) * p.gain;
+      if (v.genre) v.genre *= p.gain;   // all the sends, never some (series-bus round)
     }
     // A CHIP IS AN INSERT HERE. The page's own vocabulary calls it a send and had
     // one shared bus per effect; the parent has no page-wide effect bus and a
@@ -1093,7 +1106,12 @@ const trimFor = (tbl, x, eff) =>
  * carried `rev: 0.78` — gregorian's `tone.verb` (genres.js:682), defaulted in by
  * sectionOf — into a bus whose gain was zero. 78% wet and bone dry.
  */
-export function masterState(MASTER, BUSES) {
+// `SEV` (optional, 2026-08-27 series-bus round) is state-engine, for finishing
+// the genre bus's chain chips through insertChain — the same clamp door every
+// section chip takes (insertsFor). Callers without it still get the chain in
+// the raw fields.js fxChain dialect, which mkChain builds fine; only the
+// rateBars->Hz resolution and param clamps are lost, so pass it where you have it.
+export function masterState(MASTER, BUSES, SEV) {
   const m = MASTER && typeof MASTER === "object" ? MASTER : null;
   const out = {};
   const { DRIVES, TAPES, SPACES } = NuFields;
@@ -1136,6 +1154,30 @@ export function masterState(MASTER, BUSES) {
     // so a rack that names one knob does not blank the other two
     if (Object.keys(d).length)
       out.delay = { beats: 0.75, feedback: 0.25, cutoff: 2600, ...d };
+    // THE BLEED, 2026-08-27 (series-bus round). Bus 2 pours into bus 1 at
+    // fx_bus's `bleed` slider — the literal `d*0.2` until this round — and
+    // `echo.bleed` (fields.js EBLEEDS, `stock` = 0.2 = the literal) is the
+    // hand on it, riding `state.bleed` -> fxParams. Absent = no key = the
+    // fxParams default 0.2, byte-identical.
+    if (B.echo.bleed != null) out.bleed = B.echo.bleed;
+  }
+  // THE GENRE BUS (series-bus round, 2026-08-27): the rack's one genuinely new
+  // stage, resolved off the record like every other bus fact. Its chain is the
+  // box FX vocabulary (fields.js GXCHIPS -> fxChain, the same twelve chips a
+  // voice slot takes), finished through state-engine insertChain when the
+  // caller hands `SEV` (the same insertsFor door every section chip goes
+  // through, so a chip and a bus chip end up the same clamped shape); its
+  // `level` is the gain on the summed return as it lands on the delay bus.
+  // The engine reads `state.genreBus` in BOTH renderers (stream-renderer /
+  // press) — chain over the genre accumulator, times level, SUMMED INTO DEL
+  // before fx_bus: genre -> delay -> reverb -> main, the series. Absent = no
+  // key = the stage never runs = byte-identical.
+  if (B && B.genre) {
+    const chips = [B.genre.fx1, B.genre.fx2, B.genre.fx3].filter(Boolean);
+    const gb = {};
+    if (B.genre.level != null) gb.level = B.genre.level;
+    if (chips.length) gb.chain = insertsFor(SEV, {}, fxChain(chips));
+    if (Object.keys(gb).length) out.genreBus = gb;
   }
   // THE MIX-OFFSET LAYER's master channel: deltas over the resolved value —
   // or, when the song's master says nothing, over the DSP's own defaults
@@ -1370,6 +1412,11 @@ export const BUS_REACH = {
     "and del) and its third is `pp`, which state-engine stamps on modelled " +
     "drum events only and never on a sampled kit. So bus 4's feed is summed " +
     "into whichever bus it is aimed at — bus 1 unless you say otherwise" },
+  // THE GENRE BUS (series-bus round, 2026-08-27): a REAL fifth accumulator in
+  // both renderers, and its destination is the series itself — its chained
+  // return sums into the DELAY bus at the rack's `level`, so `to` is bus 2 by
+  // construction and no aim knob exists to disagree with it.
+  genre: { to: "bus 2", short: null, why: null },
 };
 // THE ONE BUS-TO-BUS SEND THAT REACHES THE ENGINE, and it already has an owner.
 // fx_bus.dsp:221 mixes the main's dry into bus 1 at `0.5*mrev`, and `mrev` is
@@ -1384,10 +1431,18 @@ export const MAIN_TO_BUS1 = {
 };
 // ...AND THE TWO INSIDE THE DSP THAT NOTHING CAN MOVE.
 export const FIXED_EDGES = [
+  // REWRITTEN 2026-08-27 (series-bus round): this entry used to read "bus 2
+  // already feeds bus 1 at a fixed 20% — `d*0.2` in fx_bus.dsp:221 is a
+  // literal in the DSP, not a slider, so it is running on every record and no
+  // word on this page moves it". The literal became the `bleed` slider that
+  // round (default 0.2 — byte-identical at the default), and the word that
+  // moves it is the delay plate's `bleed` knob (buses.echo.bleed -> masterState
+  // -> state.bleed -> fxParams). The edge stays on this list because it is
+  // still an EDGE the routing row must draw; only "no word moves it" died.
   { from: "bus 2", to: "bus 1", amount: 0.2,
-    why: "bus 2 already feeds bus 1 at a fixed 20% — `d*0.2` in fx_bus.dsp:221 " +
-    "is a literal in the DSP, not a slider, so it is running on every record " +
-    "and no word on this page moves it" },
+    why: "bus 2 feeds bus 1 at the delay plate's `bleed` knob — shipped at " +
+    "20% (`d*bleed` in fx_bus.dsp, default 0.2, the old literal), 0 severs " +
+    "the feed, 1 pours the whole delay into the room" },
   { from: "the engine's pp bus", to: "bus 1", amount: 0.12,
     why: "the parent's ping-pong bus feeds bus 1 at a fixed 12% " +
     "(`(ppl+ppr)*0.12`, fx_bus.dsp:221) — also a literal, and nothing on this " +
@@ -1416,6 +1471,7 @@ export function deskBusFeed(sec, MASTERV, BUSESV) {
       const m = resolvePartMix(sec.parts && sec.parts[k]);
       feed.rev += b.rev;                     // the groups are already folded in
       feed.echo += b.del;
+      feed.genre += b.genre || 0;            // the strips' genre sends (series-bus round)
       // A GROUP METERS WHAT IT IS GIVEN, not what leaves it, which is why these
       // two are read off the part and the section rather than off the channel
       // base: the base has ALREADY routed them into rev or del, and reading
@@ -1435,7 +1491,10 @@ export function deskBusFeed(sec, MASTERV, BUSESV) {
   // mirrored reason: fxParams' own default is the 1 it always was.
   const ret = { rev: st.reverb != null ? st.reverb : 0,
                 echo: st.delay && st.delay.gain != null ? st.delay.gain : 1,
-                room: null, aux: null };
+                room: null, aux: null,
+                // the genre bus's return is the rack's `level -> delay`;
+                // ABSENT IS UNITY, the engine's own default (series-bus round)
+                genre: st.genreBus && st.genreBus.level != null ? st.genreBus.level : 1 };
   const out = {};
   for (const b of NuFields.BUSES) {
     const bus = b.bus, r = ret[bus], reach = BUS_REACH[bus];

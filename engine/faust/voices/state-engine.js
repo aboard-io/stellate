@@ -2485,6 +2485,13 @@
       wob: clamp(state.wob || 0, 0, 1),
       tsat: clamp(state.tsat != null ? state.tsat : 0.18, 0, 1),
       mrev: clamp(state.mrev != null ? state.mrev : 0.07, 0, 0.5),
+      // ── THE DELAY -> REVERB BLEED (series-bus round, 2026-08-27). fx_bus
+      // ran the delay into the reverb at the literal `d*0.2` since the csound
+      // port; the slider `bleed` replaced the literal (default 0.2, proven
+      // byte-identical on two pressed records) and this is the one state
+      // field that reaches it. Absent = 0.2 = the literal it always was.
+      // rev_bleed mirrors the same slider so colored genres track the knob.
+      bleed: clamp(state.bleed != null ? state.bleed : 0.2, 0, 1),
       // ── THE MASTER'S OWN BILL (2026-08-21). Four per-stage trims and the
       // compressor's parallel dry path, all of them IDENTITIES by default, so
       // every state that has never heard of them writes exactly the value the

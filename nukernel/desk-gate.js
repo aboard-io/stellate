@@ -1130,7 +1130,11 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   for (const [key, table, labels] of want) {
     const got = sheets[key];
     if (!got) { gone.push(key); continue; }
-    const pot = /^bus\|.+\|ret$/.test(key);
+    // `ret` since 2026-08-27 morning; `bleed` and `level` joined the pots the
+    // same day's series-bus engine round (the delay's bleed knob and the genre
+    // bus's level→delay are vknob sliders like the returns, so their collected
+    // words are LABELS, not keys)
+    const pot = /^bus\|.+\|(ret|bleed|level)$/.test(key);
     const need = pot
       ? ["default"].concat(Object.keys(table).map((v) => (labels && labels[v]) || v))
       : [""].concat(Object.keys(table));
@@ -1287,23 +1291,23 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // one bus for genre specific effects, into a delay bus, into reverb, into
     // main"). Bus 1 and bus 2 keep their live return pots (the same data-k
     // keys as the table era, `bus|rev|ret` / `bus|echo|ret`); the GENRE stage
-    // and the delay→reverb BLEED are drawn REFUSED with their reasons — the
-    // wave's own words, "the genre bus is engine work — not wired" and "the
-    // bleed is a constant in the DSP — not wired" — and the two GROUP plates
-    // of 2026-08-26 are asserted ABSENT with the reversal printed, because
-    // the groups are not in the series and a knob may not point at a stage
-    // the board does not draw. Their facts still load and still route: the
-    // model half of G14 below holds that.
+    // and the delay→reverb BLEED were drawn REFUSED here — "the genre bus is
+    // engine work — not wired", "the bleed is a constant in the DSP — not
+    // wired" — and BOTH REFUSALS DIED ON 2026-08-27 (the series-bus engine
+    // round): the renderers grew the genre accumulator (its chained return
+    // sums into the delay bus) and fx_bus's `d*0.2` literal became the
+    // `bleed` slider, so this gate now asserts the two controls LIVE, on the
+    // registry's own rows. The two GROUP plates of 2026-08-26 stay asserted
+    // ABSENT with the reversal printed — the groups are not in the series.
+    // Their facts still load and still route: the model half of G14 holds it.
     const rackDrawn = await page.evaluate(() => {
       const plates = [...document.querySelectorAll("#rack .nu-plate")]
         .map((p) => p.dataset.bus);
       const live = (k) => { const c = document.querySelector(
         'input[data-k="' + k + '"]'); return !!(c && !c.disabled); };
-      const refused = (k) => { const c = document.querySelector(
-        'input[data-k="' + k + '"]'); return !!(c && c.disabled && c.dataset.why); };
       return { plates, revLive: live("bus|rev|ret"), echoLive: live("bus|echo|ret"),
-               genreRefused: refused("x|genre|level"),
-               bleedRefused: refused("x|echo|bleed"),
+               genreLive: live("bus|genre|level"),
+               bleedLive: live("bus|echo|bleed"),
                groupPlates: plates.filter((b) => b === "room" || b === "aux").length };
     });
     const body = await page.evaluate(() => document.body.innerText);
@@ -1314,14 +1318,14 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        "bus 1's and bus 2's returns are LIVE pots (the wires G4/R5 prove: " +
        "buses.rev.ret -> rgain, buses.echo.ret -> dgain)",
        JSON.stringify(rackDrawn));
-    ok(rackDrawn.genreRefused &&
-       body.includes("the genre bus is engine work — not wired"),
-       "the genre stage is REFUSED with its reason printed — never " +
-       "live-and-dead", JSON.stringify(rackDrawn));
-    ok(rackDrawn.bleedRefused &&
-       body.includes("the bleed is a constant in the DSP — not wired"),
-       "…and the delay→reverb bleed is REFUSED with its reason printed " +
-       "(fx_bus.dsp:221's literal 0.2)", JSON.stringify(rackDrawn));
+    ok(rackDrawn.genreLive,
+       "the genre stage is LIVE (2026-08-27 series-bus round — the refusal " +
+       "\"engine work, not wired\" died with the engine work): bus|genre|level " +
+       "is an enabled pot on the registry's own row", JSON.stringify(rackDrawn));
+    ok(rackDrawn.bleedLive,
+       "…and the delay→reverb bleed is LIVE (same round — fx_bus.dsp's " +
+       "`d*0.2` literal is the `bleed` slider now): bus|echo|bleed is an " +
+       "enabled pot", JSON.stringify(rackDrawn));
     ok(rackDrawn.groupPlates === 0 &&
        body.includes("bus 3 and bus 4") && body.includes("draw no plate"),
        "the two group plates are gone AND the page says so — the reversal is " +
@@ -1523,16 +1527,26 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   console.log("\n" + "G14 four buses, and a way to direct them to each other");
   {
     // ---- 1 · FOUR, AND THE REGISTRY IS WHERE THE NUMBER COMES FROM
-    ok(F.BUSES.length === 4,
-       "the registry declares FOUR buses: " +
+    // FIVE ROWS SINCE 2026-08-27 (series-bus round): the genre bus joined the
+    // registry as a REAL engine accumulator (`engine: "genre"`), appended
+    // last so the four shipped positional names hold — it is deliberately
+    // absent from BUSTO (its destination is the series: level → delay).
+    ok(F.BUSES.length === 5,
+       "the registry declares FIVE buses: " +
        F.BUSES.map((b, i) => "bus " + (i + 1) + " " + b.label +
          " (" + (b.engine || "a group") + ")").join(", "),
        String(F.BUSES.length));
     const engines = F.BUSES.filter((b) => b.engine).map((b) => b.engine);
-    ok(eq(engines, ["rev", "del"]),
-       "…and exactly two of them are the engine's own accumulators (rev, del) " +
-       "— the parent's third is `pp` and nothing on this page can feed it",
+    ok(eq(engines, ["rev", "del", "genre"]),
+       "…and exactly three of them are the engine's own accumulators (rev, " +
+       "del, genre — the genre stage landed 2026-08-27; the parent's `pp` " +
+       "stays unfeedable from this page)",
        JSON.stringify(engines));
+    ok(!Object.prototype.hasOwnProperty.call(F.BUSTO, "genre") &&
+       Object.keys(F.BUSTO).length === 4,
+       "…and BUSTO still aims groups at the FOUR shipped buses only — the " +
+       "genre bus takes no group feed (its route IS the series)",
+       JSON.stringify(F.BUSTO));
     // ...AND THE PAGE DRAWS FOUR STAGES IN SERIES, 2026-08-27 — this counted
     // "four bus strips" as `#racktbl` columns while the registry's four buses
     // each had one; the series reversal (G12 part 2 has the quote) means the

@@ -1,5 +1,6 @@
 // fx_bus — the WHOLE csd-engine.js master section in one stereo module:
-//   instr 98 delay (feedback delay, tone lowpass in loop, 0.2 bleed to reverb)
+//   instr 98 delay (feedback delay, tone lowpass in loop, `bleed` slider —
+//   default 0.2, the old literal — into reverb; series-bus round 2026-08-27)
 //   instr 95 ping-pong (cross-fed L<->R taps, tone darkening, 0.12 to reverb)
 //   instr 99 reverb (reverbsc -> zita_rev1_stereo here)
 //   instr 97 crackle (dust2 -> no.sparse_noise + hiss, way under the music)
@@ -24,6 +25,13 @@ ppfb   = hslider("ppfb", 0.66, 0, 0.85, 0.01);
 pptone = hslider("pptone", 3000, 300, 9000, 1);
 // reverb (instr 99)
 rgain = hslider("rgain", 1, 0, 3.5, 0.01);
+// THE DELAY -> REVERB BLEED HAS A HAND ON IT, 2026-08-27 (the series-bus
+// round: "one bus for genre specific effects, into a delay bus, into reverb,
+// into main"). This was the literal `d*0.2` in rin below since instr 98 was
+// ported — the one series edge nothing could move. Default 0.2 = the literal,
+// so a state that never writes it renders byte-identical; 0 severs the
+// delay->reverb feed entirely (the series-bus gate proves both on samples).
+bleed = hslider("bleed", 0.2, 0, 1, 0.01);
 rtone = hslider("rtone", 2000, 500, 6000, 1) : si.smoo;   // return tone (2000 = legacy fixed value; eco-3 dulls it)
 // crackle (instr 97)
 crackle = hslider("crackle", 0, 0, 1, 0.01);
@@ -218,7 +226,7 @@ with {
   ppr = pingpong(pp) : !, _;      // one ping-pong, one zita instance
   // + mrev: a little of the DRY mix joins the sends, so every voice shares one
   // room even when its own send is 0 (the global bleed — see the mrev slider)
-  rin = (rev + d*0.2 + (ppl + ppr)*0.12 + (dl + dr)*0.5*mrev) * rgain;
+  rin = (rev + d*bleed + (ppl + ppr)*0.12 + (dl + dr)*0.5*mrev) * rgain;
   // dark crossover/return + LONG t60: reverbsc at fb 0.85 has a much longer,
   // darker tail than stock zita — this is what pulls the A/B centroid in line
   rl  = (rin, rin) : re.zita_rev1_stereo(40, 200, 2000, 5.0, 3.5, 48000) : fi.lowpass(1, rtone), ! ;
