@@ -60,9 +60,15 @@
 <h1 id="title"></h1>
 
 <!-- ONE .nu-bar PER PAGE, and it is this one. It is sticky at top:0 and
-     exactly --bar-h tall, because .nu-ax > h2 sits at top: var(--bar-h) and a
-     control in here that WRAPPED would open a gap under every axis heading.
+     exactly --bar-h tall, because THE TAB ROW sits at top: var(--bar-h) and a
+     control in here that WRAPPED would open a gap under the tabs.
      test/shell.js pins the number for that reason.
+     (IT SAID "because .nu-ax > h2 sits at top: var(--bar-h)". The axis
+     headings stopped being sticky on 2026-08-27 — Paul: "Why don't we make
+     tabs at the top level and let go of the idea of scrolling everything?" —
+     and #toptabs took the second band over from them. The PROMISE did not
+     move one pixel and neither did the number: something is still pinned
+     directly under this strip and still assumes it is exactly --bar-h tall.)
      IT HOLDS FOUR CONTROLS SINCE 2026-08-27 AND --bar-h DID NOT MOVE. This
      said "a THIRD control", and the third and fourth arrived the same day
      (#rewrite and #take, below). The bar is `flex-wrap: nowrap`, so the
@@ -70,7 +76,17 @@
      and it takes neither: nu.css pays for the two new words out of the strip's
      own gap and the buttons' padding, and clips one label below 430px, with
      the arithmetic written out there. Measured after: 52.00px at 320, 375,
-     390, 430, 820 and 1280, and scrollWidth === clientWidth at every one. -->
+     390, 430, 820 and 1280, and scrollWidth === clientWidth at every one.
+     AND A READOUT JOINED #rewrite LATER THE SAME DAY (the reading number,
+     below) WITHOUT MOVING EITHER NUMBER: re-measured at 320 and 390 with a
+     two-digit reading and `stop` in the play button, the bar is still 52.00px
+     and still does not scroll sideways — nu.css keeps that table. -->
+<!-- AND IT IS OUTSIDE THE TABS, ON PURPOSE (2026-08-27). play, rewrite, take
+     and room reach the RECORD, and the record is what every one of the nine
+     tabs is a view of — a transport that lived inside a tab would be a
+     transport you could tab away from mid-song. It is the one strip on this
+     page that is never hidden, which is also why the engine sentence below
+     stays with it. -->
 <div class="nu-bar">
   <button id="play" type="button">play</button>
   <!-- TWO GESTURES BESIDE PLAY, AND BOTH OF THEM PLAY (Paul, 2026-08-27: "I'd
@@ -102,7 +118,28 @@
        that "moved up there". Both listeners are in ui/eight.js beside #play's
        and use the same door it uses (`startAt(0)`), so there is one play path
        and not three. -->
-  <button id="rewrite" type="button">rewrite</button>
+  <!-- THE READING IS PRINTED ON THE BUTTON THAT MOVES IT (Paul, 2026-08-27:
+       "I clicked rewrite multiple times and never saw a different seed"). The
+       number was only ever in #atlasSay's sentence — overwritten by the
+       record's own line, and on a phone a scroll away from this button — so
+       the gesture and its counter are now in the same place, and pressing
+       rewrite four times reads rewrite 2, 3, 4, 5.
+
+       A CONTROL MAY CARRY A READOUT WHEN ONLY A GESTURE MOVES IT, which is
+       the tri-state play button's own law: "the word on it is the NEXT tap"
+       and "the clock may move that line and the sentence beside the play
+       button; it may not press a button" (ideal/composer.html annotation 5).
+       The seed is moved by #rewrite and by a tap on the globe and by nothing
+       else — ui/state.js's `commit` is "one call per user edit" — so the
+       transport can never touch this digit. The word is a separate <b> and
+       not part of the label's text, so a screen reader still hears the verb
+       first and the accessible name is "rewrite 5", not a renamed button.
+       THE SPACE BEFORE THE <b> IS LOAD-BEARING and is a real text node, not a
+       margin: measured through CDP, `<button>rewrite<b>5</b></button>` computes
+       its accessible name as "rewrite5" — an inline element joins without one —
+       so a screen reader read the button's name as one word. With the space it
+       is "rewrite 5", and it is the same separator with the stylesheet off. -->
+  <button id="rewrite" type="button">rewrite <b id="reading" class="nu-rd">1</b></button>
   <button id="take" type="button">take</button>
   <!-- "room", NOT "volume", 2026-08-27 — FUTURE.md §5: the master strip
        already teaches "the room, not the record", and this slider is the same
@@ -162,20 +199,100 @@
      Still ABOVE #app and still OUTSIDE it, for the reason #engine is outside
      it: draw() empties #app on every edit, and a globe that was destroyed and
      rebuilt once a keystroke would lose its pose and its year. -->
-<section id="atlas">
+<!-- ===== NINE TABS, AND THE PAGE STOPPED BEING ONE SCROLL =================
+     Paul, 2026-08-27: *"Why don't we make tabs at the top level and let go of
+     the idea of scrolling everything? The tabs are: Where / Tempo / Key /
+     Motif / Band / Mix / Produce / Score / Export."*
+
+     THIS RETIRES A FOUNDING LAW OF THIS SURFACE and the law is rewritten
+     rather than deleted, because it was right for the page it was written
+     about. It said: everything is on one page, in one scroll, nothing hidden
+     anywhere (band.css:1), with two sticky bands — the transport, and the
+     heading of the axis you are inside — so that a reader who scrolls six
+     thousand pixels always knows which of the eight axes is under their
+     thumb. Every word of that was true and it is what the sticky `<h2>`, the
+     `--head-h` reserve, the golden-angle wash per section and the anchor
+     machinery were all built to serve.
+
+     WHAT ENDED IT is the number the law itself produced: seventeen thousand
+     pixels at 390px, on a phone, for one record. "Nothing is hidden" and
+     "you can find anything" stopped being the same sentence somewhere around
+     the tenth screen. So the page is nine panels now, one visible at a time,
+     and the sticky band that says where you are is the TAB ROW rather than a
+     heading — one band that names all nine places instead of one band that
+     names the place you happen to have scrolled into.
+
+     WHAT SURVIVES THE REVERSAL, and each of these is a promise this file kept
+     when it was one scroll:
+       · NOTHING IS HIDDEN. Every control is one tap from every other control,
+         and the tab that holds it is named on screen at all times. A tab is
+         not a disclosure — the whole row is always visible, and no panel is
+         behind a second panel.
+       · THE PAGE IS STILL ONE DOCUMENT. The panels are in Paul's order in the
+         source, and a closed panel is closed by a CLASS RULE
+         (`.nu-pan[data-off]`), not by the `hidden` attribute — so with the
+         stylesheet off this page still reads top to bottom as the same
+         document it always did, all nine panels in order. `inert` is what
+         keeps a closed panel out of the tab order in a browser that has the
+         stylesheet on, which is the half `hidden` would have done.
+       · YOU DO NOT LOSE YOUR PLACE. Each tab remembers its own scroll and gets
+         it back on return (ui/eight.js `tabScroll`) — the anchor law's
+         substance, with a new mechanism.
+       · THE TRANSPORT IS NOT IN A TAB (see the .nu-bar note above).
+
+     THE ROW IS FILLED BY ui/eight.js AND NOT TYPED HERE, because the nine
+     names are one fact and `TABS` in that file is their owner — a second copy
+     in this file is exactly the drift the one-owner law exists to stop. The
+     empty <p> ships here so the sticky band has its place in the document
+     before a line of script runs. -->
+<p id="toptabs" class="nu-row nu-tabs"></p>
+
+<!-- THE NINE PANELS, IN PAUL'S ORDER. Each is a `.nu-pan`; ui/eight.js's
+     `showTab` puts `data-off` + `inert` on the eight that are shut. The ids
+     are the tab table's own second column. -->
+
+<!-- 1 · WHERE — the atlas. It was the front door of the scroll and it is the
+     first tab, which is the same position said in the new idiom. -->
+<section id="atlas" class="nu-pan">
   <!-- "Where & when" since 2026-08-27 (FUTURE.md §5: "keep the name, fix the
-     case") — test/atlas.js G7 reads this heading off the rendered page. -->
+     case") — test/atlas.js G7 reads this heading off the rendered page. It is
+     a `.nu-vh` heading since the tabs landed: the visible name of this panel
+     is the word on its tab, and two spellings of one name on one screen is
+     the second owner every law in this file is against. -->
 <h2 id="atlasHead">Where &amp; when</h2>
 </section>
 
-<div id="app"></div>
+<!-- 2-5 · TEMPO · KEY · MOTIF · BAND — the four axis panels, and the four
+     reasons #app still exists as one box around them: it is what
+     `window.__eightFrozen` snapshots (the frozen half of the interface, the
+     half the clock may not write), what test/shell.js A0 watches for the
+     `overflow-x: hidden` that would kill both sticky bands, and what
+     `holdHeight` props open across a rebuild. Everything that was ONE `.nu-ax`
+     per axis inside it still is; what changed is that each axis now sits in
+     its own panel, and only one of the four is on the page at a time.
+     (Tempo and Key are Paul's names for what this page draws as the Time and
+     Alphabet axes — AXES.md carries the join, exactly as it does for
+     Material/Motif.) -->
+<div id="app">
+  <div id="pan-tempo" class="nu-pan"></div>
+  <div id="pan-key" class="nu-pan"></div>
+  <div id="pan-motif" class="nu-pan"></div>
+  <div id="pan-band" class="nu-pan"></div>
+</div>
 
-<!-- THE BOARD, at the foot of the page and NOT inside #app (Paul, 2026-08-24:
-     "an actual mixing board at the end is a nice idea"). A board is not one of
-     the eight axes and does not belong in the axes' container: it is what the
-     record LANDS ON, and #app holds nothing but the eight and the producer's
-     statement about them. draw() clears and refills this the same way it clears
-     #app.
+<!-- 6 · MIX — THE BOARD, and NOT inside #app (Paul, 2026-08-24: "an actual
+     mixing board at the end is a nice idea"; and 2026-08-27, the tab's own
+     word: "Mix"). A board is not one of the eight axes and does not belong in
+     the axes' container: it is what the record LANDS ON, and #app holds
+     nothing but the four axis panels. draw() clears and refills this the same
+     way it clears the panel it is rebuilding.
+     IT WAS "at the foot of the page" AND IT IS NOT ANY MORE, 2026-08-27: it is
+     the sixth tab, in the place Paul put it in his own list. The board is
+     ALREADY tabbed on its inside — one tab per voice, then buses, then main
+     (#boardtabs, ui/engineer.js) — and those tabs are NESTED rather than
+     flattened into the nine: the nine are the places a record is worked on,
+     and which channel strip you have open is a fact about the Mix panel, not
+     about the page.
      THE REASON THIS COMMENT USED TO GIVE IS GONE, and it is rewritten rather
      than deleted because it was the wrong reason even while it was true: it
      said the div existed "for one structural reason: a console column is 40px
@@ -194,7 +311,24 @@
      "#app select is empty" and is now "every menu in #app came from
      ui/selects.js and no development word is one", which is a rule about WHAT a
      menu may be rather than a count of them.) -->
-<div id="deck"></div>
+<div id="deck" class="nu-pan"></div>
+
+<!-- 7 · PRODUCE, and 8 · SCORE, and 9 · EXPORT — three hosts that ui/eight.js
+     used to MAKE for itself. `redrawApp` built `#produce` and `#scoredeck` in
+     script, and said why: "its host is made here rather than shipped in
+     index.html so the move is one file's". That was the right call for a
+     block that was MOVING between two places in one scroll; it is the wrong
+     call for a block that is a TAB, because a tab's host has to exist before
+     anything is drawn — `showTab` shuts eight panels on the first frame and
+     cannot shut a div that will not exist until the panel it belongs to is
+     first opened. So the hosts are declared, here, in Paul's order, and the
+     script fills them.
+     #exportdeck IS NEW (2026-08-27). The export row was the last block of the
+     score deck; Paul named Export as its own tab, so it has its own host and
+     its own section. -->
+<div id="produce" class="nu-pan"></div>
+<div id="scoredeck" class="nu-pan"></div>
+<div id="exportdeck" class="nu-pan"></div>
 
 <script src="../engine/registry-data.js"></script>
 <script src="../engine/faust/voices/sampler.js"></script>

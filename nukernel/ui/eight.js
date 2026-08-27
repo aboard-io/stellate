@@ -576,8 +576,13 @@ const opensAPicker = (n) => !!n && n.tagName === "SELECT" && !n.multiple;
 // the focus goes to the nearest thing AROUND the control that has no picker
 // behind it: the scroll pane it sits in if it has one (`.nu-pane` is already
 // `tabIndex = 0`, because a region a mouse can scroll must be reachable from a
-// keyboard), otherwise its axis — and an axis's first child is the sticky <h2>
-// that names it, so what is announced is "Motifs" and not silence.
+// keyboard), otherwise its axis — and an axis's first child is the <h2> that
+// names it, so what is announced is "Motifs" and not silence. (It said "the
+// STICKY <h2>". The heading stopped being sticky and became visually hidden on
+// 2026-08-27 when the tab row took the second band over — nu.css, THE SECOND
+// BAND IS THE TAB ROW — and this sentence did not have to change its claim,
+// only that adjective: `.nu-vh` is hidden from the EYE and from nothing else,
+// so the announcement is exactly what it was.)
 // `tabIndex = -1` is set on the axis at the moment of use rather than by
 // axis(): it makes the section programmatically focusable and leaves it out of
 // the tab order, and the next rebuild makes a section without it, so nothing
@@ -2493,6 +2498,16 @@ function stepAbs() {
    change this round is — see `pinSpeed`. What is read from the engraving is
    the drift, once, when the picture lands. */
 function place(force) {
+  /* AND NOT AT ALL WHEN THE SCORE IS NOT ON THE PAGE (2026-08-27). Both views
+     this function moves live in the Score tab, and eight tabs out of nine that
+     panel is `display: none` — a transform written onto a box that is not laid
+     out is a write nobody can see, sixty times a second, for as long as the
+     record plays. The walk itself is left running rather than torn down and
+     restarted: `stepNow` is arithmetic on the three numbers the "pos" feed
+     writes, so there is no state to lose and nothing to resynchronise. Coming
+     back to the tab lands the paper where the ear is because `showTab` calls
+     `place(true)` on the way in. */
+  if (openTab !== "Score") return;
   // THE ONE CLOCK, TWO VIEWS (score-deck.html decision 3): the piano roll is
   // repainted from the same frame walk that moves the paper, off the same
   // `stepAbs()`, so flipping the tab can never lose the place — there is only
@@ -2567,6 +2582,21 @@ const SCORE_SETTLE = 250;
 let scoreSoon = 0;
 function scoreChanged() {
   if (!scoreHost) return;
+  /* AND NOT WHEN THE SCORE IS BEHIND ANOTHER TAB (2026-08-27). An edit made on
+     the Motif tab used to land here and engrave the whole record, because the
+     whole page was one scroll and the score was three screens down it. Now it
+     is the Score tab, `display: none` eight tabs out of nine, and engraving it
+     there is wrong twice over: it is the expensive work the tab shell exists
+     to defer (a whole-record render is the most expensive thing this page
+     does), and it would MEASURE A ZERO-WIDTH BOX — `fitPaper` and
+     `reserveScoreCaption` both read a bounding rect, and a picture fitted to
+     a box that is not laid out is not a picture.
+     NOTHING IS LOST, because `draw()` has already marked the Score tab stale
+     and `buildTab` rebuilds it whole — engraving included — the moment it is
+     next opened. That is the mount-on-demand law stated from the other end:
+     the panel you are not looking at is not drawn, and it is not drawn WRONG
+     either. */
+  if (openTab !== "Score") return;
   loading(true);
   clearTimeout(scoreSoon);
   scoreSoon = setTimeout(() => { scoreSoon = 0; scoreRender(); }, SCORE_SETTLE);
@@ -3299,7 +3329,10 @@ function deckBlock(parent) {
   parent.append(ax);
   rollKey = ""; rollList = null; deckPaint = null;
   scoreBlock(deckNotView);              // the notation view mounts LAST-known
-  exportRow(ax);
+  /* (`exportRow(ax)` stood here and it is a TAB now — Paul's list, 2026-08-27:
+     "… Score / Export". The deck is the two VIEWS of the record, notation and
+     roll, under one heading and one clock; the export row was the one block in
+     it that was neither. See `exportBlock`.) */
   setDeckView(deckView);                // the flip you chose survives a draw()
 }
 
@@ -7879,7 +7912,12 @@ on("pos", (d) => {
   // the board's <meter>s are the AUTOMATION — the gain actually driving each
   // channel at the sounding box — and they move once a beat off this feed. A
   // view never installs its own rAF loop and audio never calls a view.
-  paintBoard();
+  // …AND ONLY WHILE THE BOARD IS ON THE PAGE (2026-08-27). Eight tabs out of
+  // nine it is `display: none`, and a <meter> written once a beat inside a box
+  // nobody is laying out is the same waste `place()` refuses one block up. The
+  // meters catch up on the next tick — 60ms, audio/live.js `tickPos` — which
+  // is sooner than a thumb can reach the first fader.
+  if (openTab === "Mix") paintBoard();
 });
 on("transport:state", () => {
   // PLAY AND STOP REPAINT THE UPPER STAVES AND TOUCH NOTHING ELSE. This was
@@ -7983,7 +8021,6 @@ function draw() {
       h1.append(" ", a);
     }
   }
-  const box = $("app");
   const wasKey = document.activeElement && document.activeElement.dataset
     ? document.activeElement.dataset.k : null;
   const wasPicker = opensAPicker(document.activeElement);
@@ -7992,61 +8029,281 @@ function draw() {
   // rebuilding this page on 2026-08-24 (see the two transport handlers), so
   // the question is fair: a page that is not redrawn under a live finger does
   // not need its focus put back. It is still needed, because draw() has not
-  // gone anywhere — every EDIT rebuilds the whole document, and so does a
-  // voice tab, a section tab, a design button and a record swapped in from the
-  // atlas. What went is the rebuild NOBODY ASKED FOR; a rebuild you caused by
+  // gone anywhere — every EDIT rebuilds the document, and so does a voice tab,
+  // a section tab, a design button and a record swapped in from the atlas.
+  // What went is the rebuild NOBODY ASKED FOR; a rebuild you caused by
   // touching something still has to put your thumb back where it was.
-  //
-  // Two things then move the scroll: the panel under the tabs is a different
-  // height for a different voice, and `.focus()` scrolls its element into
-  // view. So the tab strip is measured against the viewport before the
-  // rebuild and put back exactly where it was after — everything above it is
-  // the same height, so pinning it pins the page. Tapping a voice now changes
-  // the panel under your thumb instead of throwing you up the page.
   //
   // ...WITH ONE CONTROL EXEMPT SINCE 2026-08-25: a `<select>` a POINTER was
   // last on is not re-focused, because focusing a select re-opens its picker
   // on iOS and that is Paul's "when I select something the box just pops up
   // again". `restoreFocus` and `opensAPicker` carry the measurement.
-  anchorId = "tabs";
+  //
+  /* WHAT THE ANCHOR IS PINNED TO, NOW THAT THE PAGE IS NINE TABS
+     (2026-08-27). This read `anchorId = "tabs"` with the argument: "Two things
+     then move the scroll: the panel under the tabs is a different height for a
+     different voice, and `.focus()` scrolls its element into view. So the tab
+     strip is measured against the viewport before the rebuild and put back
+     exactly where it was after — everything above it is the same height, so
+     pinning it pins the page." Every clause of that is still true INSIDE the
+     Band panel, where `#tabs` is, and it is why `#tabs` is still the first
+     choice. What is new is that `#tabs` is only on the page when the Band tab
+     is open; on the other eight there is nothing at that address, and an
+     anchor that resolves to nothing simply declines (`restoreAnchor` returns
+     on `!now`). So the fallback is the PANEL HOST being rebuilt — the element
+     whose top is above everything this rebuild replaces, which is the same
+     guarantee said one level up and the same one `drawMaterial` makes with
+     `#ax-material`. */
+  anchorId = $("tabs") ? "tabs" : (hostIdOf(openTab) || "app");
   const anchor = $(anchorId);
   anchorWant = (anchorOff || !anchor) ? null : anchor.getBoundingClientRect().top;
   anchorAt = Date.now();
-  // …and the page keeps the height it had while it is being rebuilt (holdHeight)
+  /* EVERY PANEL IS NOW OLDER THAN THE RECORD, AND ONLY THE OPEN ONE IS
+     REBUILT. This is the whole of what the tabs cost and the whole of what
+     they buy. draw() means "the document moved"; before the tabs it meant
+     "rebuild all of it", which on the shipped chant is four axis sections, a
+     twelve-strip board, the producer's table and a whole-record engraving. Now
+     it means "mark all nine stale and rebuild the one you are looking at" —
+     the other eight are rebuilt at the moment they are next opened, and not
+     before, which is the mount-on-demand half. A tab you open twice without
+     editing anything in between is not stale and is not rebuilt at all, which
+     is the other half: a switch is `display` and a scroll and nothing else.
+     (`Where` is not in this set. The atlas is mounted ONCE, at boot, by
+     ui/atlas.js, and a document swap moves its ring through `ATLAS.showing`
+     rather than by redrawing it — see the boot block.) */
+  for (const t of TABNAMES) if (BUILD[t]) tabStale.add(t);
+  const box = hostOf(openTab) || $("app");
+  // …and the panel keeps the height it had while it is being rebuilt
+  // (holdHeight — the box that is emptied is the box that must not collapse,
+  // and since 2026-08-27 that box is the open panel rather than #app)
   const release = holdHeight(box);
-  try { redrawApp(box); } finally { release(); }
+  try { buildTab(openTab); } finally { release(); }
   putPanes();
-  // `document` and not `box`: the board is mounted into #deck and, since
-  // 2026-08-27, the producer into #produce — both outside #app — and a thumb
-  // that was on a fader or a verb chip is still a thumb that must come back.
+  // `document` and not `box`: the board is mounted into #deck, the producer
+  // into #produce and the score into #scoredeck — all outside #app — and a
+  // thumb that was on a fader or a verb chip is still a thumb that must come
+  // back.
   restoreFocus(document, wasKey, wasPicker);
   restoreAnchor();
 }
-// THE REBUILD ITSELF, so that `draw()` can wrap it in exactly one try/finally
-// and the reserve above cannot be left behind by an early return.
-function redrawApp(box) {
-  box.textContent = "";
+
+/* ===== THE NINE TABS ====================================================
+   Paul, 2026-08-27: *"Why don't we make tabs at the top level and let go of
+   the idea of scrolling everything? The tabs are: Where / Tempo / Key / Motif
+   / Band / Mix / Produce / Score / Export."*
+
+   THE NAMES ARE HIS AND THIS TABLE IS THEIR ONE OWNER. The word on the button,
+   the word in the hidden `<h2>` of the panel it opens, and the order of both,
+   all come from here — nukernel/index.html ships the nine hosts and NOT the
+   nine names, precisely so there is no second copy to drift.
+
+   WHAT EACH TAB IS, MAPPED ONTO WHAT THE PAGE ALREADY HAD:
+     Where   the atlas (#atlas) — the globe and the when-slider, mounted once
+     Tempo   the Time axis (#ax-time)
+     Key     the Alphabet axis (#ax-alphabet, headed "Harmony" in the
+             vocabulary) — Paul named Tempo and Key separately, so the pair
+             that used to be two sections of one scroll is two tabs
+     Motif   the Material axis (#ax-material) — the Bench and its motifs
+     Band    the band block (#ax-band): Form x Cast x Development x Sound x
+             Performance, with its own voice tabs inside it
+     Mix     the board (#board) — ALREADY tabbed on its inside, one tab per
+             voice then buses then main, and those stay NESTED
+     Produce the producer (#ax-produce)
+     Score   the deck's notation and piano-roll views (#ax-deck)
+     Export  the deck's export row, promoted out of the deck to its own tab
+
+   THE SECOND COLUMN IS THE HOST'S id, in nukernel/index.html. */
+const TABS = [
+  ["Where",   "atlas"],
+  ["Tempo",   "pan-tempo"],
+  ["Key",     "pan-key"],
+  ["Motif",   "pan-motif"],
+  ["Band",    "pan-band"],
+  ["Mix",     "deck"],
+  ["Produce", "produce"],
+  ["Score",   "scoredeck"],
+  ["Export",  "exportdeck"],
+];
+const TABNAMES = TABS.map((t) => t[0]);
+const hostIdOf = (name) => (TABS.find((t) => t[0] === name) || [])[1];
+const hostOf = (name) => { const id = hostIdOf(name); return id ? $(id) : null; };
+/* WHICH TAB IS OPEN, AND WHY IT STARTS ON `Where`. It is first in Paul's list,
+   and it is also where the page has always opened: the atlas was the front
+   door of the scroll. It matters more than a preference, because ui/atlas.js
+   mounts the globe at boot and a globe mounted inside a `display: none` panel
+   would measure a zero-width box for its projection. The one panel that must
+   be visible on the first frame is the one that is. */
+let openTab = "Where";
+/* THE PANELS WHOSE DOM IS OLDER THAN THE DOCUMENT. draw() fills this with all
+   eight buildable tabs and empties exactly one of them. */
+const tabStale = new Set();
+/* AND WHERE YOU WERE ON EACH OF THEM (the anchor law's substance, new
+   mechanism). Paul's own sentence about this page, 2026-08-24: "Stop scrolling
+   when I touch the page in any way!" A tab you come back to gives you back the
+   scroll you left it at; a tab you have never opened starts at the top, which
+   is where its content starts. The window is scrolled EXACTLY ONCE per switch,
+   synchronously, inside the gesture — never on a promise, never on a timer,
+   and never by the clock. */
+const tabScroll = new Map();
+let tabRow = null, tabBtn = new Map();
+/* HOW LONG THE LAST SWITCH TOOK, in milliseconds of main thread, for the gate
+   and for the console. The claim the tabs make is that a switch is cheap —
+   `display`, a scroll, and a rebuild only if the record moved under it — and
+   this is the artifact that says what it actually cost. */
+let tabMs = 0;
+
+/* THE BUILDERS, one per tab, keyed by Paul's word. `Where` is null: the atlas
+   is not rebuilt by draw() and never has been. */
+const BUILD = {
+  Where: null,
+  Tempo: timeAxis,
+  Key: alphaAxis,
+  Motif: (host) => materialAxis(axis(host, "ax-material", "Motifs")),
+  Band: (host) => bandBlock(axis(host, "ax-band", "The band")),
+  Mix: (host) => mountBoard(host, CTX),
+  Produce: (host) => mountProduce(host, CTX),
+  Score: (host) => deckBlock(host),
+  Export: (host) => exportBlock(host),
+};
+
+/* BUILD IT IF THE RECORD HAS MOVED UNDER IT, AND OTHERWISE LEAVE IT ALONE.
+   The registries the clock writes into are per-panel and each has exactly one
+   builder — `chordCell` is the Key panel's, `formCell` the Band panel's,
+   `hookCells` and `stepCell` the Motif panel's — so a panel that is not
+   rebuilt keeps a registry of cells that are still on the page and still get
+   marked. That is why a shut panel keeps its DOM instead of being emptied. */
+function buildTab(name) {
+  const mk = BUILD[name], host = hostOf(name);
+  if (!mk || !host || !tabStale.has(name)) return false;
+  tabStale.delete(name);
+  host.textContent = "";
+  mk(host);
+  return true;
+}
+
+/* THE STRIP ITSELF — the page's own idiom for a row of tabs, spelled exactly
+   as `#tabs` (the band's voices), `#boardtabs` (the board's channels) and the
+   deck's notation/roll pair spell it: a `<p class="nu-row">` of plain buttons,
+   each carrying `aria-pressed`, the open one wearing a `<mark>` and the shut
+   ones a `<span>`. `<mark>` because it is the highlight the browser already
+   has and the one this page uses. The literal " " text nodes stay for the
+   reason `motifTabRow` gives: with the stylesheet off they are what keeps two
+   tabs from reading as one word.
+
+   BUILT ONCE, AT BOOT, AND NEVER BY draw(). It is outside #app, it says
+   nothing about the record, and rebuilding a strip of nine buttons on every
+   keystroke would be nine buttons of garbage per edit for no change. What a
+   switch moves is one `<mark>` and one `aria-pressed` per button — `paintTabs`
+   below — which is also what keeps `__eightFrozen` honest: the row is not in
+   the frozen half at all, so a tab change cannot smuggle a mutation into it. */
+function tabsRow() {
+  const bar = $("toptabs");
+  if (!bar) return;
+  tabRow = bar;
+  bar.textContent = "";
+  tabBtn.clear();
+  for (const [name] of TABS) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.k = "toptab-" + name;
+    b.append(el("span", name));
+    b.addEventListener("click", () => showTab(name));
+    bar.append(b, document.createTextNode(" "));
+    tabBtn.set(name, b);
+  }
+  paintTabs();
+}
+function paintTabs() {
+  for (const [name, b] of tabBtn) {
+    const on = name === openTab;
+    b.setAttribute("aria-pressed", String(on));
+    const want = on ? "MARK" : "SPAN";
+    if ((b.firstChild || {}).tagName === want) continue;
+    b.textContent = "";
+    b.append(el(on ? "mark" : "span", name));
+  }
+}
+
+/* OPEN A TAB. Four things happen and no fifth: the tab you are leaving writes
+   down where you were, the eight shut panels get `data-off` + `inert`, the one
+   you asked for is built if the record has moved under it, and the window goes
+   to the scroll you left this tab at.
+
+   IT MAY NOT INTERRUPT PLAYBACK, AND IT CANNOT. Nothing here touches the
+   transport, the engine or the document: `startAt`/`stop` are not called, no
+   `push()` runs, and the score's own rAF walk keeps its place because the walk
+   is arithmetic on `scoreStep`/`scoreStamp`/`scoreRate` (see `stepNow`) and
+   those three are written by the "pos" feed alone. Coming BACK to the Score
+   tab therefore lands the paper where the ear is, without asking the audio
+   thread anything.
+
+   AND THE CLOCK MAY NOT REACH THIS FUNCTION. It is called from a button's
+   `click` and from `window.__eightTab` (a gate is a hand), and from nowhere
+   else. That is what makes "playback mutates nothing outside [data-live]" and
+   "a tab switch mutates the tab shell" two separate, provable claims instead
+   of one muddled one.
+
+   `anchorWant = null` FOR THE REASON `setDocument` CLEARS IT: a tab change is
+   a NAVIGATION, not a correction. `restoreAnchor`'s whole job is to undo a
+   scroll the page caused by growing under a still thumb, and it declines
+   anything past `ANCHOR_MAX` because "that is not a correction, it is a
+   navigation, and no arithmetic here can tell the difference after the fact".
+   Here we know it is one, so we say so. */
+function showTab(name) {
+  if (!hostIdOf(name)) return;
+  const t0 = performance.now();
+  if (name !== openTab) tabScroll.set(openTab, window.scrollY);
+  openTab = name;
+  for (const [n, id] of TABS) {
+    const h = $(id);
+    if (!h) continue;
+    if (n === name) { h.removeAttribute("data-off"); h.removeAttribute("inert"); }
+    else { h.setAttribute("data-off", ""); h.setAttribute("inert", ""); }
+  }
+  const built = buildTab(name);
+  paintTabs();
+  anchorWant = null;
+  /* PUT THE READER BACK WHERE THEY LEFT THIS TAB. `scrollTo` and not
+     `scrollIntoView`: the second one centres its target and is the harness lie
+     `ANCHOR_MAX`'s note already had to warn about ("Playwright's page.click()
+     calls the CDP scroll-into-view first, which CENTRES the target"). A tab
+     that has never been opened has no entry and starts at 0, which is where
+     the sticky bands are and where its content begins. `behavior: "instant"`
+     because a smooth scroll is a scroll that is still happening after this
+     function returns, and this page has spent two rounds proving that a scroll
+     nobody can point at is the bug. */
+  const y = tabScroll.has(name) ? tabScroll.get(name) : 0;
+  window.scrollTo({ top: y, behavior: "instant" });
+  /* AND THE SCORE IS TOLD IT IS BACK ON THE PAGE. Its box was `display: none`,
+     so the paper's transform is against a geometry that was not being laid
+     out; `place(true)` writes the one transform the walk would have written on
+     its next frame. It is a write INSIDE `[data-live="score"]`, caused by your
+     tap, which is a gesture and not the clock. */
+  if (name === "Score" && !built) place(true);
+  tabMs = performance.now() - t0;
+}
+
+/* ---------- the four axis panels ---------------------------------------
+   These four were one function — `redrawApp`, which emptied #app and drew all
+   of them one after another down a single scroll. It is four functions now,
+   one per tab, and every line inside them is the line that was inside
+   `redrawApp`, comments and all. What is NOT here any more is the paragraph
+   that opened it, and it is worth quoting because it was the page's own
+   description of the shape that just ended:
+
+     "ONE <section class="nu-ax"> PER AXIS, and #app holds nothing but
+      sections. This is not decoration: it is what makes the sticky heading say
+      which axis you are reading."
+
+   The first sentence is still true one level down — #app holds four PANELS and
+   each panel holds nothing but its one section — and the second is retired
+   with the sticky heading itself (nu.css, THE SECOND BAND IS THE TAB ROW). The
+   count that paragraph kept correcting ("FOUR sections for eight axes", after
+   "five", after "4-7") is now the tab table above, where nine names are
+   written once. */
+function timeAxis(box) {
   const D = DOC;
-
-  // ONE <section class="nu-ax"> PER AXIS, and #app holds nothing but sections.
-  // This is not decoration: it is what makes the sticky heading say which axis
-  // you are reading. See axis() for the containing-block rule that forces it.
-  // (WHERE FIVE ROUNDS OF RECIPE MET: 08-shell R12 turned these blocks into
-  //  sections; the sheets slice replaced their <select>s with sheet rows on the
-  //  morning of 2026-08-24; the selects slice put eleven of them back as menus
-  //  that evening, by name, and left the development words alone; W3 added a
-  //  section that is not an axis at all — the producer's; and on 2026-08-25
-  //  Performance became a TAB of the band block rather than a section of its
-  //  own. FOUR sections for eight axes — 4-7 were one grid and always were, and
-  //  8 joined them because its scope is the song, not the player. This said
-  //  "five sections" while the producer lived here; on 2026-08-27 the page
-  //  reordered — "producer last to say, score last to see" (FUTURE.md) — and
-  //  the producer's section moved out of #app to its own host between the
-  //  board and the score deck. The count is corrected rather than the sentence
-  //  deleted, for the second time: see `performanceTab` for why the
-  //  enumeration and the headings are allowed to disagree.)
-
-  /* 1 TIME — THE ORDINALS CAME OFF EVERY HEADING, 2026-08-27 (FUTURE.md §5:
+  /* TIME — THE ORDINALS CAME OFF EVERY HEADING, 2026-08-27 (FUTURE.md §5:
      "4–8" and "9 of eight" proved the numbering scheme broke; scroll order
      carries the sequence). The AXES order is unchanged — the headings just
      stopped counting themselves. */
@@ -8059,9 +8316,19 @@ function redrawApp(box) {
   // (`sound.level`), same write, same clamp; ui/engineer.js draws it on the
   // main plate. This pointer is what stays behind, so a hand that knew where
   // it lived is told where it went rather than left to conclude it is gone.
+  /* AND SINCE 2026-08-27 IT OPENS THE TAB IT NAMES. `href="#board"` was a
+     scroll on a page that was one scroll; the board is behind the Mix tab now,
+     and a link that jumps to a fragment inside a `display: none` panel is a
+     dead control — the one thing this page does not allow. So the click opens
+     Mix, which is what the sentence promises, and the `href` STAYS: with no
+     JavaScript, or with the stylesheet off (where every panel is visible and
+     the page is one document again), the fragment is still the right answer.
+     `preventDefault` only on the path that handled it. */
   { const pt = el("p", null, "nu-hint");
     const a = document.createElement("a");
     a.href = "#board"; a.textContent = "record gain — on the board's main strip";
+    a.dataset.k = "goto.board";
+    a.addEventListener("click", (e) => { e.preventDefault(); showTab("Mix"); });
     pt.append(a);
     axTime.append(pt); }
   number("bpm", "tempo", D.time.bpm, (v) => D.time.bpm = v, axTime, 40, 220);
@@ -8090,8 +8357,10 @@ function redrawApp(box) {
   // data tier's three-way mapping, and the buttons read the same cases.
   // test/selects.js MENUS dropped the row in the same commit.
   selectRow(axTime, null, [shSpec("time.meter", {}), shSpec("time.swing", {})]);
-
-  /* 2 ALPHABET — AND THE HEADING SAYS "HARMONY", 2026-08-27 (FUTURE.md §5:
+}
+function alphaAxis(box) {
+  const D = DOC;
+  /* ALPHABET — AND THE HEADING SAYS "HARMONY", 2026-08-27 (FUTURE.md §5:
      "key/mode/changes is harmony to a musician; key `alphabet` stays"). The
      AXIS is still Alphabet everywhere the vocabulary speaks — `doc.alphabet.*`,
      `#ax-alphabet`, avail.js's `alphabet.*` rows — exactly the Material→"Sheet
@@ -8137,72 +8406,25 @@ function redrawApp(box) {
     (v) => D.alphabet.diatonic = v, axAlpha);
   heading(axAlpha, "the changes");
   chordGrid(axAlpha);
-
-  /* 3 MATERIAL */
-  /* 3 MATERIAL — AND THE HEADING SAYS "SHEET MUSIC" (Paul, 2026-08-25:
-     *"rename 'Material' to 'Sheet music'"*).
-
-     THE HEADING MOVED AND THE AXIS DID NOT, and that is a decision rather than
-     a shortcut. AXES.md's eight are the VOCABULARY — the names we talk about a
-     record with — and "Material" is the word in every one of them that is also
-     a KEY: `doc.material.cells`, `materialAt`, `avail.js`'s `material.cell` and
-     `cast.material`, `gates.json`'s rules keyed by those two, `#ax-material`,
-     and the fixtures that capture all of it. Renaming the model would be a data
-     migration across six files this slice does not own, for a word nobody
-     types. Renaming the HEADING costs one string and answers the whole of what
-     was asked. IT SAYS "MOTIFS" NOW — REWRITTEN 2026-08-27: the heading read
-     "3 · Sheet music" while the score sat at the top of this axis, and the
-     score has moved whole to the deck at the foot (FUTURE.md §5: "the section
-     is two things; the score moves per the brief" — `Motifs` mid-page, `The
-     score` at the foot). What is left under this heading is the motifs and
-     their editors, so the heading says so. AXES.md carries the join beside
-     the Material row so the vocabulary and the page cannot drift.
-
-     THE ID STAYS `ax-material` for the same reason the model does: it is the
-     anchor `drawMaterial()` pins the page on and the handle three gates use. */
-  materialAxis(axis(box, "ax-material", "Motifs"));
-
-  /* 4-8 FORM x CAST x DEVELOPMENT x SOUND x PERFORMANCE */
-  // IT SAID `4–8 · The band` UNTIL 2026-08-27 (and `4–7` before Performance
-  // moved in as a tab — "Why don't you move performance in as a tab too").
-  // The range was the numbering scheme admitting failure (FUTURE.md §5), so
-  // the ordinals went from every heading at once; which axes live under this
-  // one is still `performanceTab`'s argument, unchanged.
-  bandBlock(axis(box, "ax-band", "The band"));
-
-  /* THE BOARD ("an actual mixing board at the end is a nice idea"). Not one of
-     the eight axes and not in their container: it is what the record lands on,
-     so it gets its own host at the foot of the page. */
-  const deck = $("deck");
-  if (deck) { deck.textContent = ""; mountBoard(deck, CTX); }
-
-  /* 9 THE PRODUCER — NOT A NINTH AXIS. The eight determine the SCORE; this is
-     a session fact, "the eight plus what was said" (AXES.md:113). It draws
-     LAST OF WHAT A HAND CAN SAY — under the board, immediately above the score
-     deck — because FUTURE.md's page order is "producer last to say, score last
-     to see": a statement ABOUT everything above it, made after the record has
-     landed, right before you see the record leave. It stood inside #app after
-     the band until 2026-08-27; being inside #app was never what let it edit
-     the document (`DOC.produce`) — redrawApp re-mounts it either way, exactly
-     as it does the board — so the move is one host and zero seams. Its host is
-     made here rather than shipped in index.html so the move is one file's,
-     the same argument the score deck's host carries below. */
-  let prod = $("produce");
-  if (!prod && deck) { prod = el("div"); prod.id = "produce"; deck.after(prod); }
-  if (prod) { prod.textContent = ""; mountProduce(prod, CTX); }
-
-  /* THE SCORE DECK, at the very foot — under the producer, because the
-     producer is the last thing SAID and the deck is the last thing SEEN: the
-     band playing its own sheet music, the piano roll, and the export row
-     (nukernel/ideal/score-deck.html, moved here 2026-08-27 from the top of
-     the Material axis — see materialAxis for the tombstone; it read "under
-     the board" until the producer landed between them the same day). Its host
-     is made here rather than shipped in index.html so the move is one file's. */
-  let foot = $("scoredeck");
-  if (!foot && prod) { foot = el("div"); foot.id = "scoredeck"; prod.after(foot); }
-  if (foot) deckBlock(foot);
 }
 
+/* ---------- the export tab ---------------------------------------------
+   THE EXPORT ROW LEFT THE DECK, 2026-08-27 (Paul's tab list: "… Score /
+   Export"). It was `exportRow(ax)`, the last block of `deckBlock`, under the
+   notation and the roll; Paul named it as its own place, so it has its own
+   host, its own `.nu-ax` and its own hidden heading. Nothing about the four
+   cards moved — `exportRow` is called here exactly as it was called there, and
+   the WAV, MIDI, MP3 and ALS cards say what they always said, refusals
+   included. What changed is that pressing "download .wav" no longer means
+   scrolling past a whole engraved record to reach it. */
+function exportBlock(parent) {
+  parent.textContent = "";
+  const ax = el("section", null, "nu-ax");
+  ax.id = "ax-export";
+  ax.append(el("h2", "Export"));
+  exportRow(ax);
+  parent.append(ax);
+}
 /* ---------- transport ---------- */
 const playBtn = $("play"), volEl = $("vol"),
       rewriteBtn = $("rewrite"), takeBtn = $("take");
@@ -8212,7 +8434,18 @@ playBtn.addEventListener("click", () => {
 });
 on("transport:state", () => say());
 volEl.value = String(vol);
-volEl.addEventListener("input", () => { setVol(+volEl.value); commit("transport"); });
+/* THE ROOM SLIDER PUBLISHES ITS OWN FILL (2026-08-27, with Paul's "the
+   horizontal sliders should have the same handles and vibes as the vertical
+   sliders"). nu.css paints every slider on the page itself — well, hand fill,
+   cap — and for a NATIVE range it can reach the well and the cap through the
+   shadow parts but NOT the fill: WebKit and Blink have no progress
+   pseudo-element, and CSS cannot read a form control's value. So the one
+   place that already knows the number says it out loud as `--p`, and the
+   stylesheet does the rest. Two lines, no new state: `vol` is still the only
+   owner of the level and this only mirrors it. */
+const volFill = () => volEl.style.setProperty("--p", volEl.value + "%");
+volFill();
+volEl.addEventListener("input", () => { volFill(); setVol(+volEl.value); commit("transport"); });
 
 /* ---------- THE TWO GESTURES BESIDE PLAY (2026-08-27) -------------------
    Paul: *"I'd like a button next to play that seeds a completely different
@@ -8248,11 +8481,46 @@ volEl.addEventListener("input", () => { setVol(+volEl.value); commit("transport"
 
    THE BUTTONS ARE CONTROLS AND THE CLOCK MAY NOT TOUCH THEM. They are in the
    .nu-bar, which is outside #app entirely, so no `[data-live]` subtree can
-   contain them and `__eightFrozen` never sees them; and unlike #play, no
-   handler on this page rewrites their text — the word "take" is the gesture's
-   name, never a readout of the value (the value's readout is the slider's
-   <output>, which is the fact's owner). */
+   contain them and `__eightFrozen` never sees them.
+
+   THIS PARAGRAPH USED TO END: "and unlike #play, no handler on this page
+   rewrites their text — the word 'take' is the gesture's name, never a
+   readout of the value (the value's readout is the slider's <output>, which
+   is the fact's owner)." REVERSED for #rewrite on 2026-08-27, and only for
+   #rewrite. Paul, on staging: *"I clicked rewrite multiple times and never
+   saw a different seed."* He could not: the seed's only readout was inside
+   #atlasSay's sentence, which every compose overwrites, a scroll below the
+   button on a phone.
+
+   THE LAW THAT ALLOWS IT IS THE TRI-STATE PLAY BUTTON'S, and it is a law
+   about WHO WRITES, not about whether a control may carry text: "the word on
+   it is the NEXT tap", while "the clock may move that line and the sentence
+   beside the play button; it may not press a button" (ideal/composer.html,
+   annotation 5). #play's word is rewritten by `say()` off `playing` — which
+   the CLOCK can flip at the end of a song — and it is legal because the word
+   still names the next GESTURE. The seed is stricter than that: it moves on
+   #rewrite and on a tap on the globe and on nothing else in the box, and this
+   digit is repainted from `on("box")`, which ui/state.js declares as "one
+   call per user edit". No transport event reaches it.
+
+   ONE OWNER, STILL. `ui/atlas.js` holds the seed and `ATLAS.reading()` is a
+   reader for it; `#reading` is repainted from that counter and never from a
+   number this file kept. The take's value is the other half of the same law
+   and did NOT change: it lives in `DOC.performance.take` and its readout is
+   the Performance slider's own <output>. */
 const startNow = () => { startAt(0); say(true); };
+
+/* THE READING, PRINTED ON #rewrite. `on("box")` covers every path that can
+   move the seed — this button (through `reseed`) and a tap on a mark the
+   globe is already showing (ui/atlas.js `choose`) — because both end in
+   `CTX.setDocument`, which is `push(true)` and `commit("box")`. Painted at
+   boot too, where the answer is 1: absent has to be today, and a button that
+   said nothing until you pressed it would be the readout Paul was missing. */
+const readingEl = $("reading");
+const printReading = () => {
+  if (readingEl && ATLAS) readingEl.textContent = String(ATLAS.reading());
+};
+on("box", printReading);
 
 takeBtn.addEventListener("click", () => {
   /* THE NEXT TAKE, AND WHY 0 GOES TO 2. The slider's own domain is 0..99 and
@@ -8275,7 +8543,10 @@ rewriteBtn.addEventListener("click", () => {
      rewritable either way. `reseed` returns false and says why in #atlasSay
      when it cannot; a refusal writes no record, so nothing plays. */
   if (!ATLAS) return;
-  ATLAS.reseed(DOC.basis, startNow);
+  // the digit moves with the gesture, not two frames later when the record
+  // lands: a press that has been taken is a press you can see was taken. A
+  // refusal never gets here — `reseed` returns false without bumping.
+  if (ATLAS.reseed(DOC.basis, startNow)) printReading();
 });
 
 /* ---------- boot ---------- */
@@ -8330,6 +8601,18 @@ window.__eightFrozen = () => {
   try { return app.cloneNode(true).outerHTML; }
   finally { live.forEach((n, i) => n.append(parked[i])); }
 };
+/* ---------- THE TAB SHELL, FOR A GATE (2026-08-27) ----------------------
+   A gate is a HAND, not a clock: `__eightTab` is the same call the button's
+   own listener makes, so a gate that opens a tab has done exactly what a
+   person does and nothing a person cannot. It is exported for the reason
+   `__eightFrozen` is — a gate that reached into the page's private state to
+   flip a panel would be testing its own idea of the shell rather than the
+   shell. */
+window.__eightTabs = () => TABNAMES.slice();
+window.__eightTabNow = () => openTab;
+window.__eightTab = (name) => { showTab(name); return openTab; };
+// …AND WHAT THE LAST SWITCH COST, in milliseconds of main thread.
+window.__eightTabMs = () => tabMs;
 window.__eightEngraves = () => engraves;      // abcjs renders, ever
 // ...AND THE SCORE'S OWN, which is a different claim on a different surface
 // (see `scoreEngraves`): how many times the whole record has been engraved.
@@ -8424,7 +8707,15 @@ window.__deckState = () => ({
   cells: Object.keys(DOC.material.cells),
   rollNotes: (rollList || []).length,
   rollRange: [rollLo, rollHi],
-  exports: [...document.querySelectorAll("#scoredeck .nu-exp")].map((c) => {
+  /* THE EXPORT CARDS ARE A TAB OF THEIR OWN SINCE 2026-08-27 (Paul's list:
+     "… Score / Export"), so this reads `#exportdeck` and not `#scoredeck`.
+     They are still reported HERE, in one call with the rest of the deck,
+     because they are still one feature — the deck is what a record leaves by.
+     The states and the reasons are DOM facts and need no layout, so a gate may
+     read them with the Score tab up; what it may not do is read them before
+     the Export tab has ever been opened, because until then there is nothing
+     to read (mount on demand — ui/eight.js `buildTab`). */
+  exports: [...document.querySelectorAll("#exportdeck .nu-exp")].map((c) => {
     const b = c.querySelector("button");
     return { k: b ? b.dataset.k : null, label: b ? b.textContent : "",
              disabled: !!(b && b.disabled),
@@ -8516,6 +8807,15 @@ registerSW(); warmShell();
 normalize();
 push(true);
 warmup();
+/* THE STRIP BEFORE THE PANELS, AND `showTab` BEFORE `draw()`. Order matters
+   exactly once, here: `showTab` is what puts `data-off` on the eight panels
+   that are shut, and until it has run every one of them is open — nine panels
+   of nothing, which is harmless, and the ATLAS visible, which is the one thing
+   that has to be true when ui/atlas.js mounts the globe below. `showTab` then
+   marks the open tab stale-free without building it (nothing is stale yet) and
+   `draw()` builds it for the first time. */
+tabsRow();
+showTab(openTab);
 draw();
 say();
 // AFTER draw(), not before: the atlas's boot calls showing(DOC.basis), which
@@ -8523,3 +8823,4 @@ say();
 // opens on Rome 600 — which is exactly what #title already says.
 ATLAS = mountAtlas($("atlas"), CTX);
 if (ATLAS) ATLAS.showing(DOC.basis);
+printReading();                         // the bar prints reading 1 from boot
