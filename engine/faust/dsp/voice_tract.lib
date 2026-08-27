@@ -43,6 +43,40 @@
 //   falls over ~30 ms, which is an h before the note, and it is most of what
 //   makes the ear hear a person rather than a filtered saw.
 //
+//   ...AND IT USED TO BE A BREATH AFTER THE VOWEL TOO, WHICH NOBODY ASKED FOR.
+//   Paul, 2026-08-27, listening on staging: *"All the songs in Asia and so
+//   forth have really heavy breathing in 1971. Like Iranian pop. Just two
+//   heavy breaths dominating every measure."* Read literally, and it was
+//   literal. The term was `0.55*(1 - smooth(gate))` and `si.smooth` is a
+//   SYMMETRIC one-pole: it rises over 30 ms when the gate opens — the h this
+//   paragraph claims — and it FALLS over 30 ms when the gate shuts, which
+//   walks `fric` straight back up to `breath + 0.55` while the note is still
+//   sounding through `voxEnv`'s release. voxAgc normalizes the tract's steady
+//   state, so the aspiration that replaced the tone came out at the tone's own
+//   loudness: a full-level exhale, as long as the genre's `rel`.
+//     WHY THAT REGION AND NOT EVERYWHERE. Every anchor in the Asia/MENA block
+//   seats `solo_vox` in chair one, they are BALLADS (`rel` 1.0-1.4 s: iranpop
+//   1.1, kabulpop 1.2, nhacvang 1.3, arabesk 1.3, enka 1.4) and they are
+//   legato (`maxHold` 3-4), so each bar holds one phrase with one clean start
+//   and one clean end — an h in and a half-second exhale out. Two a measure,
+//   which is the number Paul said. MEASURED on the rendered singer's stem,
+//   8-16 kHz, swells standing 6 dB over the stem's own median in that band,
+//   merged at 0.4 s: iranpop 1.92/bar, nhacvang 2.17, mandopop 2.17, dangdut
+//   2.08, filmi 2.42, peaks +12 to +35 dB over the median. The fast records in
+//   the same block (aljil rel 0.4, shaabi 0.5, khmerrock 0.5) hide it under
+//   the next note, which is why it reads as a REGION and is really a release.
+//     THE GATE'S DIAL IS NOT THE CAUSE AND WAS MEASURED FIRST. `breath` is the
+//   genre's own `air` (genres.js MOUTHS -> to-engine voiceForInstr), and
+//   sweeping it across its whole declared range on the rendered record moved
+//   the stem's 8-16 kHz MEDIAN from -72.3 to -57.2 dB and left the swells
+//   where they were: 2.12/bar at breath 0, 1.87/bar at 0.144, 1.75/bar at
+//   0.6. `air` is the floor; this term is the breathing. Turning `air` down
+//   would have made the record quieter and still breathing.
+//     SO THE TERM IS ONE-SIDED NOW, `*gate`. While the gate is open it is
+//   multiplication by 1.0 — bit-exact, so every sustained sample of every
+//   voice in the catalogue is what it was — and while it is shut the
+//   aspiration is gone and the release tail is the tone falling away.
+//
 //   THE VIBRATO THAT GROWS. A singer does not arrive vibrating; the wobble
 //   comes in after the note is established and widens while it is held.
 //   voxVib delays it by a breath and ramps it, and it modulates the SOURCE
@@ -82,7 +116,10 @@ voxTract(voice, vowel, breath, fnom, src, gate) =
   pm.SFFormantModel(voice, vowel, fric, fnom, 0.7, src, pm.formantFilterbankBP, 0)
   : voxAgc(0.10, 0.030)
 with {
-  fric = min(1.0, breath + 0.55*(1.0 - (gate : si.smooth(ba.tau2pole(0.03)))));
+  // `*gate` is the whole of the 2026-08-27 fix (header, THE BREATH BEFORE THE
+  // VOWEL): the h rides the gate OPENING and nothing rides it shutting. x*1.0
+  // is exact in IEEE-754, so a sounding note is sample-for-sample what it was.
+  fric = min(1.0, breath + 0.55*gate*(1.0 - (gate : si.smooth(ba.tau2pole(0.03)))));
 };
 
 // the breath in and the breath out

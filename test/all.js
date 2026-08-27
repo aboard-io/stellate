@@ -204,6 +204,16 @@ const GATES = [
   { name: "tape-reach", wave: 2, kind: "node",
     argv: ["test/tape-reach.test.js"],
     need: ["test/tape-reach.test.js"], covers: ["test/tape-reach.test.js"] },
+  /* THE BREATH AFTER THE VOWEL (2026-08-27). Paul, on staging: "All the songs
+     in Asia and so forth have really heavy breathing in 1971 ... just two heavy
+     breaths dominating every measure." voice_tract.lib's aspirate rode the gate
+     SHUTTING as well as opening, so every note-off turned its release into a
+     full-level exhale. The gate is the module invariant — a note's release must
+     not be brighter above 4 kHz than the note — measured on the shipped WASM at
+     the params sixteen singing anchors actually send. ~7 s, node + faustwasm. */
+  { name: "breath",     wave: 2, kind: "node",
+    argv: ["test/breath.test.js"],
+    need: ["test/breath.test.js"], covers: ["test/breath.test.js"] },
   /* THE OPTION TABLE, THROUGH THE CACHE. test/gates-cache.js runs
      `nukernel/gates-extract.js --check` unless every file the derivation reads
      is byte-identical to the tree that last passed it — content-keyed, never
