@@ -787,6 +787,34 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
       v.rev = (v.rev || 0) * mf;
       v.del = (v.del || 0) * mf;
     }
+    // ...AND SO DOES THE CHANNEL'S OWN FADER/MUTE/SOLO (2026-08-27, FUTURE.md
+    // Phase 0). The block above fixed the MASTER fader for modelled voices and
+    // left the PART strip broken by the same mechanism: `p.gain` — the strip's
+    // fader x level x mute/solo x the derived seat balance, partsOf above — is
+    // composed into `v.lvl`, and `lvl` is read by sampled voices and drums AND
+    // BY NOTHING ELSE (the whole argument three paragraphs up). Measured on the
+    // rendered path before this block existed (test/tape-reach.test.js): a
+    // -12.0 dB fader on a modelled chair moved its rendered RMS 0.00 dB while
+    // the sampled chair beside it moved the full -12.04 dB. Same law, same
+    // route: ONE trim over dry/rev/del together — all three, never one,
+    // because clamping the wet while the dry moved would change the balance a
+    // fader must not. `v.lvl` still carries p.gain for the table's other
+    // readers; nothing modelled reads lvl, so nothing is applied twice.
+    //
+    // ANNOUNCED, NOT SLIPPED IN: p.gain is not only the hand's fader — it
+    // carries derivedPartTone's seat dB (SEAT_DB, shade), so modelled chairs
+    // whose derived balance was computed and thrown away now sit where the
+    // desk always SAID they sat (the board's cap has drawn p.gain since the
+    // day it existed — resolvedPart is the one truth for both). Measured
+    // 2026-08-27 over all 199 catalog anchors (precompose genreToDocument):
+    // 13,188 non-drum part rows, derived p.gain non-unity on 10,288 of them,
+    // spanning -6.60..+2.61 dB. The unit TABLE's lvl column is untouched;
+    // what changed is that the route stopped ignoring the strip.
+    if (p && p.gain !== 1 && !u.sampler && !isDrum) {
+      v.dry = (v.dry != null ? v.dry : 1) * p.gain;
+      v.rev = (v.rev || 0) * p.gain;
+      v.del = (v.del || 0) * p.gain;
+    }
     // A CHIP IS AN INSERT HERE. The page's own vocabulary calls it a send and had
     // one shared bus per effect; the parent has no page-wide effect bus and a
     // per-voice INSERT chain instead (state-engine insertChain -> sampler.js
@@ -1077,6 +1105,13 @@ export function masterState(MASTER, BUSES) {
     // a bar, in beats — see the METERS/stepsIn import note at the top
     const beats = stepsIn({ meter: METERS[METER] }) / 4;
     const d = {};
+    // THE DELAY'S RETURN, 2026-08-27 (FUTURE.md Phase 0). Bus 1's `ret` has
+    // reached `state.reverb` -> rgain since the rack was built; bus 2's return
+    // was fx_bus's `dgain`, which fxParams emitted as the literal 1 — the one
+    // rack fact no knob could move. `echo.ret` is dgain's own units
+    // (fields.js ERETURNS, 0..2, room = 1 = today) and rides `state.delay.gain`
+    // -> fxParams `dgain`. Absent = no `gain` key = fxParams' 1, byte-identical.
+    if (B.echo.ret  != null) d.gain = B.echo.ret;
     if (B.echo.time != null) d.beats = B.echo.time * beats;
     if (B.echo.fb   != null) d.feedback = B.echo.fb;
     if (B.echo.tone != null) d.cutoff = B.echo.tone;
@@ -1291,10 +1326,18 @@ const round3 = (x) => Math.round(x * 1000) / 1000;
 // table for a bus that has one — `to: null` here means "ask busRoute".
 export const BUS_REACH = {
   rev: { to: "main", short: null, why: null },
-  echo: { to: "main", short: "fixed at unity by the engine",
-    why: "bus 2's return is fixed at unity in the engine — " +
-    "state-engine.js fxParams emits `dgain: 1` and reads no state, so nothing " +
-    "this page can write moves it" },
+  // BUS 2's RETURN IS MOVABLE NOW, 2026-08-27 (FUTURE.md Phase 0), and this
+  // entry used to be the refusal: `short: "fixed at unity by the engine",
+  // why: "bus 2's return is fixed at unity in the engine — state-engine.js
+  // fxParams emits \`dgain: 1\` and reads no state, so nothing this page can
+  // write moves it"`. Every word was true, and the fix was the one line the
+  // recipe `bus-2-return-needs-one-line-in-the-parent.md` had already scoped:
+  // fxParams reads `state.delay.gain` now (absent = the literal 1 it always
+  // emitted), fields.js BUSROWS gives echo a `ret` knob in dgain's own units
+  // (ERETURNS, 0..2, room = 1 = today), and masterState maps it on. Measured
+  // rendered (test/tape-reach.test.js): dgain 1 vs 0 on a fed del bus moves
+  // the fx_bus output; absent renders byte-identical.
+  echo: { to: "main", short: null, why: null },
   // THE GROUPS' SENTENCE IS THE SAME SENTENCE TWICE because it is the same
   // fact twice: neither has an engine bus, and the parent's spare one cannot be
   // fed from here. The old bus-3 wording is kept inside it — it was the finding
@@ -1366,11 +1409,16 @@ export function deskBusFeed(sec, MASTERV, BUSESV) {
     }
   }
   // THE RETURN EACH BUS IS WORTH RIGHT NOW. bus 1's is the record's own word;
-  // bus 2's is the engine's literal; bus 3 has none because it is not a return.
+  // bus 2's is the record's own word too since 2026-08-27 (it read "the
+  // engine's literal" here, and `echo: 1` was hard-coded — true while fxParams
+  // emitted `dgain: 1` and read no state; the rack reaches it now, see
+  // BUS_REACH.echo above); bus 3 has none because it is not a return.
   // ABSENT IS SHUT on bus 1 and that is not this file's opinion — audio/plan.js
   // hands toEngine `reverb: 0` on purpose, so a record that never opened the
-  // rack sends into a bus whose gain is zero.
-  const ret = { rev: st.reverb != null ? st.reverb : 0, echo: 1,
+  // rack sends into a bus whose gain is zero. ABSENT IS UNITY on bus 2 for the
+  // mirrored reason: fxParams' own default is the 1 it always was.
+  const ret = { rev: st.reverb != null ? st.reverb : 0,
+                echo: st.delay && st.delay.gain != null ? st.delay.gain : 1,
                 room: null, aux: null };
   const out = {};
   for (const b of NuFields.BUSES) {

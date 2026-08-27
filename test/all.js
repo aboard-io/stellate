@@ -195,6 +195,15 @@ const GATES = [
   { name: "pp-send",    wave: 2, kind: "node",
     argv: ["test/pp-send.test.js"],
     need: ["test/pp-send.test.js"], covers: ["test/pp-send.test.js"] },
+  /* THE THREE REACH FIXES OF PHASE 0, RENDERED (2026-08-27). The per-channel
+     fader/mute/solo on a MODELLED voice measured as RMS through the shipped
+     renderUnitWindow/mixPCM (it moved 0.00 dB before the fix); the echo bus
+     `ret` knob through the REAL fx_bus WASM (absent byte-identical to the old
+     literal dgain 1); levelOf() against its four historical scalings. ~2 s,
+     node + faustwasm offline. */
+  { name: "tape-reach", wave: 2, kind: "node",
+    argv: ["test/tape-reach.test.js"],
+    need: ["test/tape-reach.test.js"], covers: ["test/tape-reach.test.js"] },
   /* THE OPTION TABLE, THROUGH THE CACHE. test/gates-cache.js runs
      `nukernel/gates-extract.js --check` unless every file the derivation reads
      is byte-identical to the tree that last passed it — content-keyed, never

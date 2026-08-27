@@ -451,9 +451,80 @@ function gestureUnlock() {
 // created while the gesture's transient activation is still live. Fired by
 // ui/main.js after boot; costless on repeat (loadEngine memoises).
 export function warmup() {
-  const kick = () => { loadEngine().then((FL) => setFont(FONT, deps.K)).catch(() => {}); };
+  const kick = () => { loadEngine().then((FL) => setFont(FONT, deps.K)).then(armPrerender).catch(() => {}); };
   try { (typeof requestIdleCallback === "function" ? requestIdleCallback(kick, { timeout: 4000 }) : setTimeout(kick, 1500)); }
   catch (e) { setTimeout(kick, 1500); }
+}
+
+/* ---------- THE IDLE PRE-RENDER (PHASE 0 — THE TAPE, 2026-08-27) ---------- */
+// Measured on the deployed page before this change: press play → engine RMS > 0
+// at 7,075 ms, and nearly all of it was work a gesture never needed to own —
+// compile, worker boot, sample decode, and an 8 s prefill render. So the whole
+// open now happens ONCE at page idle with the parent's reader frozen
+// (exploreLive opts.hold); the play gesture only adopts the held handle and
+// calls release(), which is ctx.resume() plus one Atomics store.
+//
+// The laws it keeps:
+//   · [data-live] / no UI writes at idle — the held engine's status line is
+//     swallowed until the handle is adopted by a real gesture (`statusOn`).
+//   · battery sanity — ONE pre-render, at page idle only; the pump's own
+//     backpressure stops the render at the prefill depth, and nothing re-arms
+//     on a timer. An edit INVALIDATES the hold (below) and does not re-arm:
+//     the next play simply takes the ordinary gesture path.
+//   · one owner per fact — staleness is defined by exactly the events the
+//     playing engine itself treats as "the document changed" (the changed-law
+//     block at the foot of this file) plus "song"; there is no second
+//     signature or shadow copy of the document here.
+//   · the media-element law — a phone's output element must be born inside a
+//     user gesture (the parent's canMediaEl), so the hold is desktop-only;
+//     mobile keeps the gesture path and spends no battery rendering at idle.
+let pre = null;      // { handle, barBase, statusOn } — held engine: ring full, reader frozen
+let preGen = 0;      // bumped by every invalidation/adoption; an in-flight open checks it
+function discardPre() {
+  preGen++;
+  if (!pre) return;
+  const h = pre.handle; pre = null;
+  try { h.stop(); } catch (e) {}
+}
+function armPrerender() {
+  const kick = () => { prerender().catch(() => {}); };
+  try { (typeof requestIdleCallback === "function" ? requestIdleCallback(kick, { timeout: 6000 }) : setTimeout(kick, 2500)); }
+  catch (e) { setTimeout(kick, 2500); }
+}
+async function prerender() {
+  if (pre || playing || st.state === "starting") return;
+  // the parent's own mobile/Safari sniff (live.js canMediaEl): those routes need
+  // an in-gesture media element, so they never pre-render
+  const ua = (typeof navigator !== "undefined" && navigator.userAgent) || "";
+  const mobileish = /Android|iPhone|iPad|iPod|Mobile|Silk|Kindle/i.test(ua) ||
+    (typeof navigator !== "undefined" && navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || "")) ||
+    (/^((?!chrome|crios|chromium|android|fxios|edg).)*safari/i.test(ua) &&
+      /Apple/.test((typeof navigator !== "undefined" && navigator.vendor) || ""));
+  if (mobileish) return;
+  const gen = preGen;
+  try {
+    const FL = await loadEngine();
+    await setFont(FONT, deps.K);
+    if (gen !== preGen || playing || st.state === "starting") return;
+    compile();
+    if (!barCount()) return;
+    const at = firstBarOfBox(0);
+    barBase = at < 0 ? 0 : at;
+    FL.deepRunway = true;
+    const statusOn = { on: false };   // flipped by adoption; until then the engine is mute to the page
+    const h = await FL.exploreLive(getState,
+      (m) => { if (statusOn.on) emit("status", { text: m }); }, {
+      prefillSec: 8, hold: true,
+      events, barBeats, onBar,
+      warmSrcs: () => warmSources(),
+      onLoad: (r) => { loadRatio = r; },
+      masterVol: vol / 100,
+      mediaMeta,
+    });
+    // an edit or a play raced the open: this hold is stale the moment it exists
+    if (gen !== preGen || playing || st.state === "starting") { try { h.stop(); } catch (e) {} return; }
+    pre = { handle: h, barBase, statusOn };
+  } catch (e) { /* a failed idle warm is silence, not an error — the gesture keeps its own bounded open */ }
 }
 
 export async function startAt(boxIndex) {
@@ -469,6 +540,41 @@ export async function startAt(boxIndex) {
   st.state = "starting"; st.capped = null; st.lastError = null;
   st.startedAt = Date.now();
   emit("status", { text: "starting the engine…" });
+
+  // ── ADOPT THE IDLE PRE-RENDER, if one is fresh and starts where this press
+  // does. The document has not changed since it was held (any edit calls
+  // discardPre below), so compile/setFont are already done and the ring already
+  // holds the prefill: the gesture's entire cost is release(). A hold for a
+  // DIFFERENT start bar is honestly wrong audio and is discarded instead.
+  if (pre) {
+    compile();   // idempotent on an unchanged document; keeps barCount/firstBarOfBox honest
+    const at0 = firstBarOfBox(boxIndex);
+    const wantBase = at0 < 0 ? 0 : at0;
+    if (pre.handle && wantBase === pre.barBase) {
+      const h = pre.handle, statusOn = pre.statusOn;
+      pre = null; preGen++;
+      barBase = wantBase;
+      handle = h;
+      st.tries = 1;
+      st.route = h.outputRoute || "ring";
+      playing = true; playingSec = -1; lastBar = -1;
+      emit("transport:state", { playing });
+      startPosFeed();
+      clearTimeout(deadlineTimer);
+      deadlineTimer = setTimeout(() => {
+        if (st.state !== "starting") return;
+        settle(null, "the engine made no sound within " + Math.round(DEADLINE_MS / 1000) + "s",
+               { gotSec: 0 });
+        emit("status", { text: "the engine did not start in time — " + st.capped.why, sticky: true });
+      }, DEADLINE_MS);
+      statusOn.on = true;              // the engine is live now — it may talk to the page
+      try { h.setMasterVol(vol / 100); } catch (e) {}   // the fader may have moved while held
+      h.release();
+      return;
+    }
+    discardPre();                      // wrong start bar: the hold is honest silence, not a jump
+  }
+  preGen++;                            // a fresh gesture open owns the engine; kill any in-flight hold
   const FL = await loadEngine();
   // the chosen soundfont has to be REGISTERED AND ACTIVE on the kernel before the
   // first compile resolves an instrument through it — a font that is merely
@@ -735,11 +841,16 @@ export function announceChange(label, si, info) {
 // next walk step, because `events` reads the compiled result rather than a copy
 // of it. There is nothing to rebuild, re-arm or re-fetch — which is the whole
 // difference between one engine and two.
-const changed = () => { if (playing) compile(); };
+// …and while STOPPED, the same events are the one definition of "the document
+// changed", so they are exactly where the idle pre-render is invalidated: a
+// held ring baked from the old score must never play under the new one
+// (PHASE 0 — THE TAPE; no re-arm here, on purpose — the next play just takes
+// the ordinary gesture path).
+const changed = () => { if (playing) compile(); else discardPre(); };
 on("phrase", changed);
 on("box", changed);
 on("groove", changed);            // the groove is baked into the events
 on("swing", changed);             // ...and so is the swing
 on("pool", changed);              // the band changed: register homes and zones with it
 on("mix", changed);               // a board offset moved: next bar carries it
-on("song", () => { if (playing) stop(); });
+on("song", () => { if (playing) stop(); else discardPre(); });

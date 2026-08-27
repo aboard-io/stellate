@@ -2433,7 +2433,14 @@
       // clamp: the drenched genres saturate rgain at 2 (reverb > 0.625), so a
       // pre-clamp scale would never reach them — the budget scales the actual
       // RETURN.
-      rgain: colored ? 0 : clamp((state.reverb != null ? state.reverb : 0.7) * 3.2, 0, 2) * reverbScale(state), dgain: 1,
+      rgain: colored ? 0 : clamp((state.reverb != null ? state.reverb : 0.7) * 3.2, 0, 2) * reverbScale(state),
+      // THE DELAY'S RETURN HAS A HAND ON IT NOW, 2026-08-27. This field was the
+      // literal 1 since the day fxParams was written — fx_bus.dsp declares
+      // `dgain` as a 0..2 slider and no state field ever reached it, so bus 2
+      // was "live in, fixed out" (nukernel/fields.js, the bus audit). It reads
+      // `state.delay.gain` the way dtime/dfb/dcut read their siblings above;
+      // absent = 1 = the literal it always was, byte-identical.
+      dgain: clamp(dl.gain != null ? dl.gain : 1, 0, 2),
       // SHIMMER LEAN — an on-device note that the mix wants more shimmer reverb.
       // The internal zita tail is lowpassed at rtone; opening it
       // from the legacy-dark 2 kHz to 2.6 kHz lets more HF air through the tail,

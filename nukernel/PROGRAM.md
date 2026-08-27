@@ -742,9 +742,12 @@ measured and could not finish this round.
     just had nobody's hand on it. Homeless beside it: master
     `width`/`tilt`/`ceiling` (`desk.js:769`), which round-trip and draw
     `disabled` with the reason printed, because saying so is cheaper than
-    pretending — and **bus 2's return**, which is a compiled slider the parent
-    nails to a literal (recipe:
-    `bus-2-return-needs-one-line-in-the-parent.md`).
+    pretending — and **bus 2's return**, which WAS a compiled slider the parent
+    nailed to a literal (recipe:
+    `bus-2-return-needs-one-line-in-the-parent.md`) until 2026-08-27, when
+    Phase 0 took the line: fxParams reads `state.delay.gain`, `buses.echo.ret`
+    is the knob (`fields.js` ERETURNS), absent = the old literal 1,
+    byte-identical (`test/tape-reach.test.js` R5, rendered through fx_bus).
 12. **A per-section desk is not expressible.** Right for the document's Sound
     axis today; wrong the first time somebody wants a chorus louder than a verse.
 13. **`cast.part` collapses to line/pad.** `eight.js:39` offers seven parts and

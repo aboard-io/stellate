@@ -316,6 +316,41 @@ const WAVES = SE.WAVES;
 // the genre's colour across instead of being thrown away: `q` is a biquad Q
 // (0.7 flat, ~12 screaming) against the parent's 0..0.95 resonance, and `gain`
 // is a WebAudio node gain against the parent's 0..1 voice level.
+/* ---- ONE OWNER FOR "HOW LOUD IS tone.gain", 2026-08-27 (FUTURE.md Phase 0).
+ * The engineer counted twelve multiplicative owners of one voice's loudness,
+ * and FOUR of them were this file scaling the same knob four different ways:
+ * the sampled lane read `gain * 2.2` into [0.15, 1] (toneRecipe below), the
+ * modelled voice and mouth lanes read `(gain ?? 0.28) * 2.8` into [0.35, 0.92],
+ * the struck/electric lane read the same times its per-instrument ring tax
+ * `P.mul`, and the GM synth lane read it into [0.5, 0.92]. Four spellings,
+ * four places to drift, no name.
+ *
+ * NOW there is one function and the four scalings are ONE VISIBLE TABLE. The
+ * numbers are NOT merged: each row was fitted against its own lane's output
+ * trim (the sampled path's own gain staging vs. pitchedUnit's level clamp),
+ * and collapsing them to one row would re-level the whole catalog — the frozen
+ * fixture (test/levelof-frozen.fixture.js) holds every genre's engine state
+ * byte-identical across this consolidation (measured 2026-08-27: 199 catalog
+ * anchors, 43,502 fixture bytes, sha256 equal before and after — and the
+ * fixture is proven SENSITIVE: nudging any lane's scale or clamp moves the
+ * hash), which is the gate that proves the change is structural and not tonal. Merging the rows is future work behind a
+ * measured re-fit, and when it happens it happens HERE, in one place.
+ *   sampled: no default on purpose — an absent tone.gain writes no `level` key
+ *            and the sampler's own trim stands (absent-is-today);
+ *   model:   `mul` is modelForInstr's ring tax, applied INSIDE the clamp as it
+ *            always was.
+ */
+const LEVEL_LANES = {
+  sampled: { dflt: null, scale: 2.2, lo: 0.15, hi: 1 },
+  model:   { dflt: 0.28, scale: 2.8, lo: 0.35, hi: 0.92 },
+  synth:   { dflt: 0.28, scale: 2.8, lo: 0.5,  hi: 0.92 },
+};
+export function levelOf(tone, lane, mul) {
+  const L = LEVEL_LANES[lane] || LEVEL_LANES.model;
+  const g = tone && tone.gain != null ? tone.gain : L.dflt;
+  if (g == null) return null;
+  return clamp(g * L.scale * (mul == null ? 1 : mul), L.lo, L.hi);
+}
 function toneRecipe(tone) {
   if (!tone) return {};
   const out = {};
@@ -323,7 +358,7 @@ function toneRecipe(tone) {
   if (tone.q != null) out.res = clamp((tone.q - 0.7) / 12, 0, 0.9);
   if (tone.atk != null) out.attack = clamp(tone.atk, 0.001, 5);
   if (tone.rel != null) out.release = clamp(tone.rel, 0.01, 3);
-  if (tone.gain != null) out.level = clamp(tone.gain * 2.2, 0.15, 1);
+  { const lv = levelOf(tone, "sampled"); if (lv != null) out.level = lv; }
   if (tone.verb != null) out.send = clamp(tone.verb * 1.4, 0, 1.2);
   return out;
 }
@@ -612,7 +647,7 @@ export function voiceForInstr(id, tone) {
   const V = VOICE_TYPE[set.voice] || VOICE_TYPE[P.voice] || VOICE_TYPE.tenor;
   const walk = [...set.vowels].map(ch => VOWELS.indexOf(ch)).filter(i => i >= 0);
   return { dsp: P.dsp, root: P.dsp,
-    level: clamp((t.gain != null ? t.gain : 0.28) * 2.8, 0.35, 0.92),
+    level: levelOf(t, "model"),
     set,
     live: { dyn: LIVE_DYN[P.dsp], amp: LIVE_AMP, voice: V.n, lo: V.lo, hi: V.hi,
       vowels: walk.length ? walk : [0], vowelEvery: set.vowelEvery,
@@ -739,7 +774,7 @@ export function mouthForInstr(id, tone, padish) {
     set.seed = ((h >>> 0) % 4096);
   }
   return { dsp: P.dsp, root: P.dsp,
-    level: clamp((t.gain != null ? t.gain : 0.28) * 2.8, 0.35, 0.92),
+    level: levelOf(t, "model"),
     set,
     // the numeric half, for the reader that writes onto params. No `voice`: the
     // tube has no voice types, and its compass is the parent's TRACT_COMPASS —
@@ -813,7 +848,7 @@ export function modelForInstr(id, tone) {
   // magnet) — the recipe's own ring stands where nobody said
   if (t.ring != null) set.ring = clamp(t.ring, 0.05, 12);
   return { dsp: P.dsp, root: P.dsp,
-    level: clamp((t.gain != null ? t.gain : 0.28) * 2.8 * (P.mul || 1), 0.35, 0.92),
+    level: levelOf(t, "model", P.mul || 1),
     set, live: liveModel(P.dsp),
     // the recipe's own pedalboard — a non-empty inserts array on the unit
     // overrides the parent's defaultInserts entirely (its own law), which is
@@ -880,7 +915,7 @@ export function synthForInstr(id, tone, padish) {
   // 0.75-0.9 voice level, and this puts a typical 0.28 in the same band rather
   // than at the sampled path's own trim
   return { dsp, root: dsp,
-    level: clamp((t.gain != null ? t.gain : 0.28) * 2.8, 0.5, 0.92),
+    level: levelOf(t, "synth"),
     set: P.set(T) };
 }
 

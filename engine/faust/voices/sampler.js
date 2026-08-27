@@ -924,10 +924,25 @@
   // parallel with the JS strip (native path — approximate parity is the contract)
   // but the same band moves: HPF/LPF/EQ biquads -> saturation waveshaper ->
   // DynamicsCompressor -> chorus (modulated delay) -> phaser (allpass cascade).
-  // Inserted per note between env and the dry/rev/del sends. Returns
-  // {input, output, oscs, nodes} for teardown. Only builds when f.strip is passed;
-  // the direct-graph live path (live.js) must forward `strip: u.sampler.strip` in
-  // the note spec for this to engage — press + the wavOut stream get it via mixPCM.
+  //
+  // F4 — THE PER-NOTE STRIP HOIST (2026-08-27, FUTURE.md Phase 0). This header
+  // used to say "Inserted per note between env and the dry/rev/del sends", and
+  // that sentence was the measured crackle: PROGRAM.md §4 item 2 counted, on
+  // the LIGHTEST record the page ships, "164 sampled notes built 164
+  // compressors, 164 shapers, 164 oscillators, 498 filters and 2,475 gains in
+  // twelve minutes — six points of keep-up against a 0.92 budget". The strip is
+  // now built ONE PER VOICE (SamplerLive holds it for the life of the player;
+  // notes share it, exactly the buildInsertNodes per-unit contract below), which
+  // is also what a channel strip IS on a desk — the channel's, not the note's.
+  // `dur == null` is the per-voice mode: LFOs start at `when` and run for the
+  // chain's life (caller stops them at teardown, like buildInsertNodes); a
+  // finite `dur` keeps the old per-note schedule for any caller that wants one.
+  // Returns {input, output, oscs, nodes} for teardown. Only builds when f.strip
+  // is passed; the direct-graph live path (live.js) must forward
+  // `strip: u.sampler.strip` in the note spec for this to engage — press + the
+  // wavOut stream get it via mixPCM, whose PER-NOTE Float32 state is untouched
+  // (window parity — see the CRITICAL note above makeStrip; the pressed bytes
+  // must not move, and the A/B on 2026-08-27 measured that they did not).
   function satCurve(G, mix) {
     const N = 1024, c = new Float32Array(N);
     for (let i = 0; i < N; i++) { const x = (i / (N - 1)) * 2 - 1, s = Math.tanh(x * G) / G; c[i] = x + mix * (s - x); }
@@ -961,7 +976,7 @@
         const dl = ctx.createDelay(0.06); dl.delayTime.value = (c.baseMs || 12) / 1000;
         const lfo = ctx.createOscillator(); lfo.frequency.value = c.rate || 0.6;
         const lg = ctx.createGain(); lg.gain.value = (c.depthMs || 5) / 1000;
-        lfo.connect(lg); lg.connect(dl.delayTime); lfo.start(when); lfo.stop(when + dur + 0.1); oscs.push(lfo);
+        lfo.connect(lg); lg.connect(dl.delayTime); lfo.start(when); if (dur != null) lfo.stop(when + dur + 0.1); oscs.push(lfo);
         const wg = ctx.createGain(); wg.gain.value = mix;
         node.connect(dl); dl.connect(wg); wg.connect(sum); nodes.push(dl, lg, wg);
       } });
@@ -971,7 +986,7 @@
       parallel({ mix: clampS(p.mix != null ? p.mix : 0.2, 0, 1), wet: (sum, mix) => {
         let apn = node; const lfo = ctx.createOscillator(); lfo.frequency.value = p.rate || 0.3;
         const lg = ctx.createGain(); lg.gain.value = ((p.hi || 1500) - (p.lo || 300)) / 2;
-        lfo.start(when); lfo.stop(when + dur + 0.1); oscs.push(lfo);
+        lfo.start(when); if (dur != null) lfo.stop(when + dur + 0.1); oscs.push(lfo);
         for (let k = 0; k < ns; k++) { const ap = ctx.createBiquadFilter(); ap.type = "allpass"; ap.frequency.value = center; ap.Q.value = 0.7; lg.connect(ap.frequency); apn.connect(ap); apn = ap; nodes.push(ap); }
         lfo.connect(lg); nodes.push(lg);
         const wg = ctx.createGain(); wg.gain.value = mix; apn.connect(wg); wg.connect(sum); nodes.push(wg);
@@ -987,7 +1002,7 @@
         const dg = ctx.createGain(); dg.gain.value = 0.0012 * dep; lfo.connect(dg); dg.connect(dl.delayTime);
         const am = ctx.createGain(); am.gain.value = 1;
         const ag = ctx.createGain(); ag.gain.value = 0.5 * dep; lfo.connect(ag); ag.connect(am.gain);
-        lfo.start(when); lfo.stop(when + dur + 0.1); oscs.push(lfo);
+        lfo.start(when); if (dur != null) lfo.stop(when + dur + 0.1); oscs.push(lfo);
         const wg = ctx.createGain(); wg.gain.value = mix;
         node.connect(dl); dl.connect(am); am.connect(wg); wg.connect(sum); nodes.push(dl, dg, am, ag, wg);
       } });
@@ -1010,7 +1025,7 @@
         const dl = ctx.createDelay(0.02); dl.delayTime.value = 0.0006;
         const lfo = ctx.createOscillator(); lfo.frequency.value = f.rate || 0.3;
         const lg = ctx.createGain(); lg.gain.value = 0.005 * (f.depth != null ? f.depth : 0.7); lfo.connect(lg); lg.connect(dl.delayTime);
-        lfo.start(when); lfo.stop(when + dur + 0.1); oscs.push(lfo);
+        lfo.start(when); if (dur != null) lfo.stop(when + dur + 0.1); oscs.push(lfo);
         const fb = ctx.createGain(); fb.gain.value = clampS(f.feedback != null ? f.feedback : 0.4, -0.95, 0.95);
         node.connect(dl); dl.connect(fb); fb.connect(dl);
         const wg = ctx.createGain(); wg.gain.value = mix; dl.connect(wg); wg.connect(sum); nodes.push(dl, lg, fb, wg);
@@ -1264,6 +1279,55 @@
   // dests: {dry, rev, del} nodes (a mixer layer's taps, like FoundLive).
   function SamplerLive(ctx, dests) {
     const live = { active: new Set() };
+    // F4 — ONE STRIP PER VOICE (2026-08-27, FUTURE.md Phase 0). The channel
+    // strip is the PLAYER's now, not the note's: one buildStripNodes chain per
+    // SamplerLive (live.js makes one player per unit), keyed by the strip spec's
+    // JSON, with the unit-level dry/rev/del sends tapping the chain OUTPUT —
+    // the same shape samplerOf gives an insert chain in live.js, and the same
+    // sends-POST-chain law. Notes connect their per-note envelope into
+    // `ch.input` and share everything downstream. What this changes on purpose,
+    // said out loud (PROGRAM.md §4 item 2 deferred F4 "behind ears" for exactly
+    // this): the compressor now hears the unit's notes TOGETHER (channel
+    // compression, which is what a desk strip does), the saturator shapes the
+    // sum, and the chorus/phaser LFOs free-run per voice instead of restarting
+    // at phase 0 on every note — which moves the live twin TOWARD mixPCM, whose
+    // LFOs ride global song time. The delay strip's echoes now ring across note
+    // boundaries in the standing chain, so the per-note ring-out timer
+    // ("DELAY-STRIP RING-OUT", ENGINE-AUDIT Tier 2) is retired here: the tail
+    // law survives as the chain simply staying up. A strip-spec change (the
+    // desk moves a band) retires the old chain on an 8 s drain — bar-granular,
+    // one rebuild per desk move instead of one per note.
+    live._strip = null;              // { sig, ch, sends: [dryG, revG, delG] }
+    live._stripRetired = new Set();  // draining chains (spec changed mid-note)
+    const stripTeardown = (ent) => {
+      if (!ent) return;
+      for (const o of ent.ch.oscs) { try { o.stop(); } catch (e) {} }
+      for (const n of ent.ch.nodes) { try { n.disconnect(); } catch (e) {} }
+      for (const g of ent.sends) { try { g.disconnect(); } catch (e) {} }
+    };
+    live.teardownStrips = function () {
+      stripTeardown(live._strip); live._strip = null;
+      for (const e of live._stripRetired) stripTeardown(e);
+      live._stripRetired.clear();
+    };
+    const stripFor = (spec, want) => {
+      const sig = JSON.stringify(spec);
+      let ent = live._strip;
+      if (ent && ent.sig !== sig) {
+        const old = ent; live._strip = ent = null;
+        live._stripRetired.add(old);
+        setTimeout(() => { if (live._stripRetired.delete(old)) stripTeardown(old); }, 8000);
+      }
+      if (!ent) {
+        const ch = buildStripNodes(ctx, spec, ctx.currentTime, null);   // per-voice: LFOs run for the chain's life
+        // sends are born at the note's own numbers — a fresh chain must not
+        // ramp its first note in from 0
+        const mk = (to, v) => { const g = ctx.createGain(); g.gain.value = v; ch.output.connect(g); g.connect(to); return g; };
+        ent = live._strip = { sig, ch,
+          sends: [mk(dests.dry, want[0]), mk(dests.rev, want[1]), mk(dests.del, want[2])] };
+      }
+      return ent;
+    };
     // buffer: AudioBuffer (raw-decoded); f: {rate, when, durSec, amp(gain),
     // atk, rel, rsend, dsend, loop, loopStartSec, loopEndSec,
     // offsetSec (decoder lead-in — see zoneLeadIn; absent/0 = start at the head),
@@ -1318,26 +1382,49 @@
       g.setValueAtTime(gain, when + hold);
       g.linearRampToValueAtTime(0, when + hold + rel);
       srcOut.connect(env);
-      // per-note channel strip (band-appropriate filter/EQ/comp + saturation +
-      // chorus/phaser air). Sends tap POST-strip, like the JS path.
-      // DELAY-STRIP RING-OUT (ENGINE-AUDIT Tier 2, the live twin of
-      // mixPCM's ringOut): tearing a delay-bearing strip's feedback loop down at
-      // note end + 50 ms truncates the echoes. Keep the chain (and its LFOs)
-      // alive for the same tail the baked path renders, then tear down.
-      const tailSec = f.strip ? stripTailN(f.strip, ctx.sampleRate || 44100) / (ctx.sampleRate || 44100) : 0;
-      let post = env, striph = null;
-      if (f.strip) { striph = buildStripNodes(ctx, f.strip, when, hold + rel + tailSec); env.connect(striph.input); post = striph.output; for (const o of striph.oscs) live.active.add(o); }
-      const dry = ctx.createGain(); dry.gain.value = f.dry != null ? f.dry : 1; post.connect(dry); dry.connect(dests.dry);
-      const rev = ctx.createGain(); rev.gain.value = f.rsend || 0; post.connect(rev); rev.connect(dests.rev);
-      const del = ctx.createGain(); del.gain.value = f.dsend || 0; post.connect(del); del.connect(dests.del);
+      // THE SHARED CHANNEL STRIP (F4 hoist, 2026-08-27 — was: "per-note channel
+      // strip … Sends tap POST-strip", one buildStripNodes per note, the
+      // measured 164-compressor crackle of PROGRAM.md §4 item 2). The note now
+      // joins the PLAYER's one strip (stripFor above); the dry/rev/del sends
+      // are the strip's own unit-level gains, refreshed here from the note's
+      // numbers — live.js hands every note of a unit the unit's u.dry/u.rev/
+      // u.del, so this is the samplerOf send-refresh pattern, not a per-note
+      // fact. The old DELAY-STRIP RING-OUT timer (ENGINE-AUDIT Tier 2: "tearing
+      // a delay-bearing strip's feedback loop down at note end + 50 ms
+      // truncates the echoes") is retired BY the hoist, not deleted from it:
+      // the standing chain holds its echoes across note ends, which is the
+      // whole of what the timer existed to fake.
+      let noteSends = null;   // per-note dry/rev/del gains — stripless notes only
+      if (f.strip) {
+        const want = [f.dry != null ? f.dry : 1, f.rsend || 0, f.dsend || 0];
+        const ent = stripFor(f.strip, want);
+        for (let i = 0; i < 3; i++) {
+          const g = ent.sends[i];
+          if (g.gain.value !== want[i]) {
+            try { g.gain.setTargetAtTime(want[i], ctx.currentTime, 0.02); }
+            catch (e) { g.gain.value = want[i]; }
+          }
+        }
+        env.connect(ent.ch.input);
+      } else {
+        const dry = ctx.createGain(); dry.gain.value = f.dry != null ? f.dry : 1; env.connect(dry); dry.connect(dests.dry);
+        const rev = ctx.createGain(); rev.gain.value = f.rsend || 0; env.connect(rev); rev.connect(dests.rev);
+        const del = ctx.createGain(); del.gain.value = f.dsend || 0; env.connect(del); del.connect(dests.del);
+        noteSends = [dry, rev, del];
+      }
       // offsetSec skips the decoder's lead-in so the attack starts on the real
       // first sample — the loop points above are shifted by the same amount, so
       // head and loop stay in phase. 0 => start(when, 0) === start(when).
       src.start(when, f.offsetSec || 0);
       src.stop(when + hold + rel + 0.05);
       live.active.add(src);
-      const teardown = () => { try { dry.disconnect(); rev.disconnect(); del.disconnect(); if (headBiq) headBiq.disconnect(); if (striph) { for (const o of striph.oscs) { try { o.stop(); } catch (e) {} live.active.delete(o); } for (const nd of striph.nodes) try { nd.disconnect(); } catch (e) {} } } catch (e) {} };
-      src.onended = () => { live.active.delete(src); if (tailSec > 0) setTimeout(teardown, (tailSec + 0.05) * 1000); else teardown(); };
+      // Per-note teardown frees only what is the NOTE's: its envelope (and the
+      // send gains a stripless note built). A strip note's env must disconnect
+      // from the shared chain's input or the chain would pin every finished
+      // src/env pair for its own lifetime — the leak the hoist must not trade
+      // the crackle for. The chain itself (and its ringing delay) stays up.
+      const teardown = () => { try { if (noteSends) for (const g of noteSends) g.disconnect(); env.disconnect(); if (headBiq) headBiq.disconnect(); } catch (e) {} };
+      src.onended = () => { live.active.delete(src); teardown(); };
     };
     live.stopAll = function () {
       for (const s of [...live.active]) { try { s.stop(); } catch (e) {} }
@@ -1356,7 +1443,9 @@
     // hold ONE state per UNIT for the life of the stream and step it after the
     // insert chain, which is how a modelled voice reaches the board's EQ.
     // NOT the shape PROGRAM.md §4 item 2 warns about: that was buildStripNodes
-    // allocating a WebAudio compressor per NOTE (164 notes -> 164 compressors).
+    // allocating a WebAudio compressor per NOTE (164 notes -> 164 compressors)
+    // — closed 2026-08-27 by the F4 hoist: SamplerLive stripFor now holds ONE
+    // node chain per voice for the player's life, notes share it.
     // This is one Float32-stepping state per unit, allocated once at open.
     makeStrip, stripStep, BOARD_EQ,
     // ENGINE-AUDIT Tier 2: the ONE selection-velocity formula (press +

@@ -366,13 +366,32 @@
   // WHOLE-BAR. Frame math mirrors feedBar's rounding on the same doubles, so the
   // conductor's fed-frames ledger equals what the worker writes, piece by piece.
   const MAX_FEED_SEC = 6;
-  function splitFeedWindows(r) {
-    const n = Math.ceil(r.musicalSec / MAX_FEED_SEC);
-    if (!(n > 1)) return [r];
-    const step = (r.hi - r.lo) / n, out = [];
-    for (let i = 0; i < n; i++) {
-      const first = i === 0, last = i === n - 1;
-      const lo = first ? r.lo : r.lo + i * step, hi = last ? r.hi : r.lo + (i + 1) * step;
+  // THE 1-BAR FIRST CHUNK (PHASE 0 — THE TAPE, 2026-08-27). The first window fed
+  // to a FRESH stream is cut to ~1 s: measured on the deployed page, the first
+  // chord-bar was 4.14 s and took 3,787 ms to render, and the prefill could not
+  // begin counting until ALL of it landed — so the ear paid for the whole bar
+  // before the ring held a single frame. A short first window puts audio in the
+  // ring after ~1 s of render and the prefill/prime ledgers start moving with it.
+  // The seam is lawful by the same argument as the oversized-bar split above
+  // (persistent procs carry note sustain across window boundaries); the rest of
+  // the bar then splits by MAX_FEED_SEC exactly as before.
+  const FIRST_FEED_SEC = 1.0;
+  function splitFeedWindows(r, firstSec) {
+    // cut points, in beats: an optional short first window, then equal windows
+    // of at most MAX_FEED_SEC over the remainder (the original split, unchanged
+    // when firstSec is 0/absent — same n, same equal steps, same frame math).
+    const cuts = [r.lo];
+    let pos = r.lo;
+    if (firstSec > 0 && r.musicalSec > firstSec * 1.5) { pos = r.lo + firstSec / r.spb; cuts.push(pos); }
+    const remSec = (r.hi - pos) * r.spb;
+    const n = Math.max(1, Math.ceil(remSec / MAX_FEED_SEC));
+    for (let i = 1; i < n; i++) cuts.push(pos + i * (r.hi - pos) / n);
+    cuts.push(r.hi);
+    if (cuts.length === 2) return [r];
+    const out = [];
+    for (let i = 0; i + 1 < cuts.length; i++) {
+      const first = i === 0, last = i + 2 === cuts.length;
+      const lo = cuts[i], hi = cuts[i + 1];
       // half-open ownership; first/last pieces also absorb any out-of-window strays
       const events = (r.events || []).filter((e) => (first || e.beat >= lo) && (last || e.beat < hi));
       out.push(Object.assign({}, r, { lo, hi, events,
@@ -903,7 +922,15 @@
     // a delay so in-flight note tails drain through it (no click).
     const samplerPlayers = new Map();   // key -> { sig, player, chain|null }
     function teardownSamplerChain(ent) {
-      if (!ent || !ent.chain) return;
+      if (!ent) return;
+      // F4 (2026-08-27): the player now owns ONE long-lived channel strip per
+      // voice (sampler.js SamplerLive stripFor — the per-note buildStripNodes
+      // that measured 164 compressors on the lightest record is gone), so a
+      // retired player's strip chain is torn down here, on the same drain the
+      // insert chain already gets — both call sites of this function are
+      // places the player itself is being dropped.
+      if (ent.player && ent.player.teardownStrips) { try { ent.player.teardownStrips(); } catch (e) {} }
+      if (!ent.chain) return;
       for (const o of ent.chain.ch.oscs) { try { o.stop(); } catch (e) {} }
       for (const n of ent.chain.ch.nodes) { try { n.disconnect(); } catch (e) {} }
       for (const g of ent.chain.sends) { try { g.disconnect(); } catch (e) {} }
@@ -1106,7 +1133,10 @@
         t1: base + (sw.beat + sw.durB - r.lo) * r.spb, from: sw.from, to: sw.to }));
       // oversized-bar split (the priming hang): the WORKER gets bounded sub-windows;
       // everything below (playQueue bar, native scheduling, onBar) stays whole-bar.
-      const pieces = splitFeedWindows(r);
+      // A fresh stream's FIRST bar additionally gets the ~1 s first window
+      // (FIRST_FEED_SEC above) so the ring holds audio after one second of
+      // render, not after one whole chord-bar.
+      const pieces = splitFeedWindows(r, stream.fedFrames === 0 ? FIRST_FEED_SEC : 0);
       const wLen = pieces.length === 1 ? r.barLenFrames
         : pieces.reduce((a, p) => a + p.barLenFrames, 0);   // exactly what the worker will write
       const localStart = stream.fedFrames;
@@ -1381,6 +1411,20 @@
       if (!prefillAsk) return 0;
       return Math.min(prefillAsk, WORKER_RUNWAY) * SR;
     }
+    // ── THE HOLD (PHASE 0 — IDLE PRE-RENDER, 2026-08-27). opts.hold keeps the
+    // reader frozen (C_STATE stays 0) even after the prefill is satisfied: the
+    // pump and producer fill the ring to the prefill depth at page idle, then
+    // everything waits for handle.release() — which is what a play GESTURE calls,
+    // so the gesture spends nothing but ctx.resume() and the reader release.
+    // This is not a rolling tape: the pump's own backpressure (targetFrames())
+    // stops the render once the ring is full, and a stopped hold burns only the
+    // worker's idle polls. A caller that never says hold gets startRun exactly
+    // as before.
+    let held = !!(opts && opts.hold), holdReady = false;
+    function maybeStart() {
+      if (held) { holdReady = true; status("ready (held)"); return; }
+      startRun();
+    }
     function armRun() {
       if (abort || running || !cur) return;
       // ONE chain, ever: this re-enters from its own timer, and a second entry
@@ -1388,7 +1432,7 @@
       // that releases the reader a second time.
       if (prefillTimer) { clearTimeout(prefillTimer); prefillTimer = 0; }
       const want = prefillFrames();
-      if (!want) return startRun();
+      if (!want) return maybeStart();
       if (!prefillT0) { prefillT0 = now(); prefillWant = want / SR; }
       // the pump's own feed ceiling is the other wall: the worker cannot render
       // audio the conductor never handed it (feedRunwayFrames() < targetFrames()
@@ -1400,7 +1444,7 @@
         prefillCapped = have < cap;
         prefillGot = have / SR; prefillMs = waited;
         prefillTimer = 0;
-        return startRun();
+        return maybeStart();
       }
       const whole = Math.floor(have / SR);
       if (whole !== prefillSaid) {   // a thirteen-second silence with no words is a bug report
@@ -2398,6 +2442,20 @@
       // long that took, and whether PREFILL_MAX_MS ended the wait instead of the ring.
       __prefill: () => ({ askSec: prefillAsk, wantSec: +prefillWant.toFixed(2),
         gotSec: +prefillGot.toFixed(2), ms: Math.round(prefillMs), capped: prefillCapped }),
+      // ── THE HOLD's other half (PHASE 0 — IDLE PRE-RENDER, 2026-08-27): the play
+      // GESTURE calls this. If the prefill already parked (holdReady), the reader is
+      // released in this very call stack; if the ring is still filling, dropping
+      // `held` lets the armRun chain start the run the moment it is full. ctx.resume
+      // runs here because a context born at idle sits "suspended" until a gesture.
+      release() {
+        if (!held) return false;
+        held = false;
+        try { const p = ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+        if (mediaEl) { try { const p = mediaEl.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+        if (holdReady && !running && !abort && cur) startRun();
+        return true;
+      },
+      __held: () => ({ held, holdReady }),
       readCursor: () => read53(),
       rms() { return analyserRms(); },
       balance() {

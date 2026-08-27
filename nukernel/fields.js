@@ -470,6 +470,19 @@
   const RETURNS = { off: 0, dim: 0.18, room: 0.32, hall: 0.5, huge: 0.625 };
   const RETURNLABEL = { off: "shut", dim: "a little", room: "a room",
                         hall: "a hall", huge: "as wet as it goes" };
+  // ...AND THE DELAY BUS GETS THE SAME KNOB, 2026-08-27 (FUTURE.md Phase 0).
+  // Bus 2's return was the one number on the rack a hand could not reach:
+  // fx_bus.dsp declares `dgain` 0..2 and state-engine fxParams emitted it as
+  // the LITERAL 1 — live in, fixed out (the audit above says so). These values
+  // are in DGAIN'S OWN UNITS, not RETURNS': `rev.ret` is a state.reverb the
+  // engine multiplies by 3.2, `echo.ret` lands on dgain verbatim (audio/desk.js
+  // masterState -> state.delay.gain -> fxParams). The words are RETURNLABEL's,
+  // the numbers are the same rgain-equivalent rungs (0 / .58 / 1 / 1.6 / 2 —
+  // rev's table times 3.2 lands on .58/1.02/1.6/2; `room` is pinned at 1.0
+  // exactly because 1 IS the literal the bus has always run at). Absent = null
+  // = the literal 1, byte-identical: a record that never touched the knob
+  // renders the same tape it always did.
+  const ERETURNS = { off: 0, dim: 0.58, room: 1, hall: 1.6, huge: 2 };
   // WHICH ROOM — the parent's own five modules (state-engine REVERB_COLORS,
   // all five shipped in engine/faust/dist), under desk words. nukernel's old
   // `verb` table named three rooms that reached nothing at all.
@@ -1186,8 +1199,11 @@
   //   rev -> BUS 1. `u.rev` feeds it; `rgain = clamp(state.reverb*3.2, 0, 2)`
   //          returns it, and `buses.rev.ret` is that state field. Live, both ways.
   //   del -> BUS 2. `u.del` feeds it, and its three internal knobs (dtime/dfb/
-  //          dcut) are state fields too — but its RETURN is `dgain`, which
-  //          state-engine.js fxParams emits as the literal 1. Live in, fixed out.
+  //          dcut) are state fields too — and since 2026-08-27 its RETURN is
+  //          too: `dgain` was emitted by state-engine.js fxParams as the
+  //          literal 1 ("live in, fixed out", as this line used to end), and
+  //          now reads `state.delay.gain`, which `buses.echo.ret` (ERETURNS
+  //          above) is. Live, both ways, same as bus 1.
   //   pp  -> not a bus this page can have. It is fed by a PER-EVENT `e.pp`
   //          stamped on drum events only (state-engine.js:2808) and NOT on
   //          sampled drums at all ("the sampler mix has no pp bus", same file),
@@ -1237,6 +1253,9 @@
     { bus: "echo", label: "delay",  engine: "del",
       feed: "fed by the echo sends", eq: BUS_EQ_BANDS,
       knobs: [
+        // `ret` REACHES dgain (2026-08-27) — see ERETURNS above. Same shape as
+        // rev's row: same words, absolute return, null = as the engine ships.
+        { key: "ret",  label: "return",  table: ERETURNS, labels: RETURNLABEL, default: null },
         { key: "time", label: "time",    table: DTIMES,  labels: DTLABEL,     default: null },
         { key: "fb",   label: "repeats", table: EFBS,    labels: EFBLABEL,    default: null },
         { key: "tone", label: "tone",    table: ETONES,  labels: ETONELABEL,  default: null } ] },
@@ -1926,7 +1945,7 @@
                 FX, FXLABEL, fxChain, FXSEND, fxMix, fxSendable,
                 SENDS, SENDLABEL, VERBS,
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
-                RETURNS, RETURNLABEL, REVERBS, REVERBLABEL,
+                RETURNS, RETURNLABEL, ERETURNS, REVERBS, REVERBLABEL,
                 VOX, VOXPARAM, OCTAVES, ARTICS, CMODES, CLAMPS, CLAMPLABEL,
                 KEYS, KEYLABEL, KEYNAMES, wrapKey, KEYMODES, KEYMODELABEL,
                 FIFTHS, relMinorOf, RELMINNAME, minorish,

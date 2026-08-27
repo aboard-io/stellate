@@ -364,10 +364,26 @@ console.log("\nG6  the shipped chant carries rev 0.78 into a NON-ZERO return");
   const doc = clone(TERMS);
   const box = pushBoxes(doc)[0];
   const units = deskUnits(mkUnits(), ADDR, box, null, null);
+  // TIMES THE CHANNEL'S OWN STRIP GAIN ON A MODELLED VOICE, 2026-08-27. This
+  // asserted `revs.every(r => near(r, 0.78))` — every unit's rev field the
+  // verb verbatim — and went red the day the per-channel fader reached the
+  // modelled route (FUTURE.md Phase 0; deskUnits' own comment has the
+  // measurement). A SAMPLED unit's send ratio stays 0.78 because its strip
+  // gain rides `lvl` into the note SOURCE (sampler.js note gain), trimming
+  // dry and sends together; a MODELLED unit has no such source knob, so the
+  // same trim lands on the route — rev 0.78 x p.gain. Same balance, different
+  // carrier, and the fixture's v1 (the cantor, line2) carries a derived seat
+  // gain of 0.8913. Asserting the bare 0.78 on it now would assert the very
+  // bug the round fixed.
+  const P0 = { line: resolvedPart(box, "line").gain,
+               line2: resolvedPart(box, "line2").gain };
+  const wantRev = (k) => k === "v1" ? 0.78 * P0.line2 : 0.78;
   const revs = Object.entries(units).filter(([k]) => k !== "kick")
-    .map(([, u]) => u.rev);
-  ok(revs.every((r) => near(r, 0.78)),
-     "every unit asks for rev 0.78 — gregorian's own tone.verb",
+    .map(([k, u]) => [k, u.rev]);
+  ok(revs.every(([k, r]) => near(r, wantRev(k), 1e-4)),
+     "every unit asks for rev 0.78 — gregorian's own tone.verb — times the " +
+     "channel strip's own gain where the strip rides the route (the modelled " +
+     "cantor: 0.78 x " + P0.line2 + ")",
      JSON.stringify(revs));
   const st = masterState(DD.masterOf(doc), DD.busesOf(doc));
   const passed = ok(st && st.reverb > 0,
@@ -1070,12 +1086,14 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   ok(!gone.length, "all " + want.length + " master and bus controls are drawn on " +
      "their own strip — one each for the whole record, not one per channel",
      gone.join(", "));
-  // ...AND WHAT IS ON THE STRIP THAT IS NOT A REGISTRY ROW. There is exactly one
-  // — bus 2's return — and it is legitimate for a reason G12 owns: fx_bus really
-  // carries `dgain` and state-engine really hardcodes it, so the board draws
-  // the fader at the engine's own unity and refuses it rather than pretending
-  // the bus has no output. It must be DISABLED to be here; a live control on
-  // this list would be a knob writing somewhere the registry does not know.
+  // ...AND WHAT IS ON THE STRIP THAT IS NOT A REGISTRY ROW. This read "There
+  // is exactly one — bus 2's return — ... fx_bus really carries `dgain` and
+  // state-engine really hardcodes it, so the board draws the fader at the
+  // engine's own unity and refuses it". Since 2026-08-27 `bus|echo|ret` IS a
+  // registry row (fields.js BUSROWS, ERETURNS -> state.delay.gain -> dgain),
+  // so the expected extra list is EMPTY: any control here that names no
+  // registry row is a knob writing somewhere the registry does not know, and a
+  // LIVE one doubly so.
   const wantKeys = new Set(want.map((w) => w[0]));
   const inReg = drawnRack.filter((k) => wantKeys.has(k));
   const extra = drawnRack.filter((k) => !wantKeys.has(k));
@@ -1087,9 +1105,9 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     const n2 = document.querySelector('[data-k="' + k.replace(/"/g, '\\"') + '"]');
     return n2 && !n2.disabled;
   }), extra);
-  ok(!liveExtra.length,
-     "…and the only control on a strip that names no registry row is bus 2's " +
-     "return, drawn refused: " + JSON.stringify(extra),
+  ok(!extra.length,
+     "…and no control on a strip names a row the registry does not know " +
+     "(bus 2's return joined the registry 2026-08-27): " + JSON.stringify(extra),
      JSON.stringify(liveExtra));
   ok(!short.length, "…and every option each one offers is its fields.js table's own",
      short.join("; "));
@@ -1193,10 +1211,17 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // ---- 1 · the model's answer, so the page has something to be wrong about
     const box = pushBoxes(clone(TERMS))[0];
     const feed = deskBusFeed(box, null, null);
-    ok(feed.rev.movable === true && feed.echo.movable === false &&
+    // TWO MOVABLE RETURNS SINCE 2026-08-27, not one. This line asserted
+    // `feed.echo.movable === false` ("one of the FOUR buses reaches the main
+    // with a fader this page can move, and it is bus 1") for as long as
+    // state-engine fxParams emitted `dgain: 1` and read no state. fxParams
+    // reads `state.delay.gain` now and BUSROWS gives echo a `ret` knob, so
+    // bus 2's return is the record's own word too (FUTURE.md Phase 0).
+    ok(feed.rev.movable === true && feed.echo.movable === true &&
        feed.room.movable === false && feed.aux.movable === false,
-       "one of the FOUR buses reaches the main with a fader this page can " +
-       "move, and it is bus 1 — `buses.rev.ret` -> state.reverb -> fx_bus rgain",
+       "two of the FOUR buses reach the main with a fader this page can " +
+       "move — bus 1 (`buses.rev.ret` -> state.reverb -> fx_bus rgain) and " +
+       "bus 2 (`buses.echo.ret` -> state.delay.gain -> fx_bus dgain)",
        JSON.stringify(Object.fromEntries(Object.entries(feed)
          .map(([k, v]) => [k, v.movable]))));
     ok(feed.rev.feed > 0,
@@ -1249,12 +1274,14 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       if (st.goes.indexOf(wantGoes) !== 0)
         wrongDraw.push(bus + ": goes-to says " + st.goes + ", route says " + wantGoes);
     }
+    // ("bus 2 refused at the engine's unity" until 2026-08-27; the refusal is
+    // gone because the wire exists — see BUS_REACH.echo)
     ok(!wrongDraw.length, "every bus strip is drawn the way BUS_REACH says it " +
-       "is wired — bus 1 a live return, bus 2 refused at the engine's unity, " +
-       "the two GROUPS no fader at all, and each says where it goes",
+       "is wired — bus 1 and bus 2 live returns, the two GROUPS no fader at " +
+       "all, and each says where it goes",
        wrongDraw.join("; "));
-    ok(!wrongSaid.length, "NOTHING REACHES NOTHING IN SILENCE — the three " +
-       "buses that cannot be moved print audio/desk.js's own sentence, verbatim",
+    ok(!wrongSaid.length, "NOTHING REACHES NOTHING IN SILENCE — the buses " +
+       "that cannot be moved print audio/desk.js's own sentence, verbatim",
        wrongSaid.join("; "));
     const homeless = await page.evaluate(() => {
       const t = document.body.innerText, out = [];

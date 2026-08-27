@@ -1085,10 +1085,17 @@
     // (state-engine STRIP_PROFILES + aggressiveStrip + samplerFamily); the
     // three above are untouched, so anything already sitting right still does.
     //
-    // KEPT LEAN ON PURPOSE: sampler.js builds the strip PER NOTE, so a chorus
-    // or a phaser is real nodes on every note. Only `pad` carries both (pads
-    // play few, long notes). An organ leslie was written and dropped for the
-    // same reason — the fugue is four organ voices in sixteenths.
+    // KEPT LEAN ON PURPOSE — half the reason retired 2026-08-27, kept in
+    // writing: this said "sampler.js builds the strip PER NOTE, so a chorus or
+    // a phaser is real nodes on every note", and that was true and was the F4
+    // crackle (PROGRAM.md §4 item 2: 164 notes -> 164 compressors). SamplerLive
+    // now builds ONE strip per voice and notes share it, so on the live graph a
+    // chorus costs one chain per chair, not one per note. The lean profiles
+    // STAY lean: the PCM press/stream lane (mixPCM) still runs the strip
+    // per-note-stateful per sample (window parity law), so every stage here is
+    // still paid per note per sample on the tape — and a strip is a register
+    // carve, not a pedalboard. Only `pad` carries both mods (pads play few,
+    // long notes). The dropped organ leslie could return behind a measurement.
     keys: { hpf: 40, eq: { f: 2600, gain: 1.5, q: 0.7 }, sat: 0.18, satMix: 0.3,
             comp: { thresh: 0.28, ratio: 2.6, atk: 0.005, rel: 0.16, makeup: 1.03 },
             trim: 0.95 },

@@ -1270,36 +1270,26 @@ export const paintBoard = () => { if (CURRENT) CURRENT.paint(); };
 // an opinion about a wire.
 function busFader(td, col, f, doc, ctx, meters) {
   if (!f.movable) {
-    // BUS 2 IS A FADER THE PAGE CANNOT REACH, so it is drawn AT ITS REAL VALUE
-    // and refused — fx_bus carries `dgain` and the renderers push it, but
-    // fxParams emits the literal 1. THE COST OF FIXING IT IS ONE LINE IN THE
-    // PARENT, and it is already scoped and costed in the recipe
-    // `bus-2-return-needs-one-line-in-the-parent.md`: the slider is compiled
-    // into fx_bus.wasm (dist/fx_bus-meta.json — dgain, init 1, range 0..2),
-    // both renderers already push every fxParams key onto `/fx_bus/<k>`, so
-    // NO RECOMPILE — `dgain: 1` becomes a read of `state.delay.gain` and the
-    // three edits on this side are named there. Re-confirmed 2026-08-26 while
-    // adding the fourth bus, and STILL NOT TAKEN: it is an edit to the parent
-    // and a re-run of its parity gates, which is not this page's to spend.
+    // BUS 2 WAS A FADER THE PAGE COULD NOT REACH, and this branch drew it "AT
+    // ITS REAL VALUE and refused" — a disabled range pinned at 1 with the
+    // sentence "fx_bus carries `dgain` and the renderers push it, but fxParams
+    // emits the literal 1. THE COST OF FIXING IT IS ONE LINE IN THE PARENT
+    // (recipe `bus-2-return-needs-one-line-in-the-parent.md`) ... STILL NOT
+    // TAKEN: it is an edit to the parent and a re-run of its parity gates,
+    // which is not this page's to spend." The line was taken 2026-08-27
+    // (FUTURE.md Phase 0): fxParams reads `state.delay.gain`, BUSROWS gives
+    // echo a `ret` knob (fields.js ERETURNS), so deskBusFeed answers
+    // `movable: true` for bus 2 and it falls through to the real knob below —
+    // the refused slider is gone because the refusal is gone.
     //
     // A GROUP IS NOT A FADER AT ALL, so nothing is drawn for it and the
     // sentence stands alone: inventing a slider for a thing that is not a
     // return would be the lie this whole file is about. (It said "BUS 3"; there
     // are two groups now and the same sentence covers both, which is why
     // deskBusFeed answers `group` rather than this file testing a bus name.)
-    if (col.key === "echo") {
-      const r = document.createElement("input");
-      r.type = "range"; r.min = "0"; r.max = "2"; r.step = "0.01"; r.value = "1";
-      r.dataset.k = "bus|" + col.key + "|ret";
-      r.setAttribute("aria-label", "bus " + col.n + " return");
-      td.append(r);
-      td.append(el("output", "unity"));
-      td.append(refuse(r, f.why, f.short));
-    } else {
-      const w = el("small", f.short || f.why); w.className = "nu-why";
-      w.title = f.why;
-      td.append(w);
-    }
+    const w = el("small", f.short || f.why); w.className = "nu-why";
+    w.title = f.why;
+    td.append(w);
   } else {
     const spec = BUS_FIELDS.find((b) => b.bus === col.key).knobs
       .find((k) => k.key === "ret");
