@@ -11,11 +11,17 @@
 // its own stated order is a file nobody can find anything in.
 //
 // THREE THINGS ON THIS PAGE ARE NOT AXES, and each is drawn where it is named
-// rather than smuggled into the eight: the PRODUCER's block at the foot of #app
-// is a session fact, "the eight plus what was said" (AXES.md:113); the ATLAS
-// above #app is a way IN to a record, not a part of one; and the BOARD under it
-// is what the record lands on. Only the first is inside #app, because only the
-// first edits the document.
+// rather than smuggled into the eight: the PRODUCER's block is a session fact,
+// "the eight plus what was said" (AXES.md:113); the ATLAS above #app is a way
+// IN to a record, not a part of one; and the BOARD under it is what the record
+// lands on. NONE of the three is inside #app any more — the producer left it
+// on 2026-08-27 for its own host (#produce) between the board and the score
+// deck, because FUTURE.md's page order is "producer last to say, score last to
+// see": the last thing a hand can say about the record sits immediately above
+// the last thing an eye sees of it. (This sentence said "only the first is
+// inside #app, because only the first edits the document" — editing the
+// document was never the reason a block had to LIVE in #app, only the reason
+// it is re-mounted by redrawApp, which the producer still is.)
 //
 // PLAIN HTML, AND ONE STYLESHEET (Paul, 2026-08-24: "keep the raw plain HTML
 // but use more controls and a little bit of CSS. use more grid lines in tables,
@@ -187,6 +193,14 @@ import { produced as producedDoc, revise as reviseProd,
 // nothing itself — it picks a genre key, calls precompose.js and hands the
 // whole record to CTX.setDocument.
 import { mount as mountAtlas } from "./atlas.js";
+// THE SCORE DECK's export seams (2026-08-27, nukernel/ideal/score-deck.html):
+// the SMF writer reads the SAME toScore() fold the engraving is drawn from —
+// one owner per note — and the deck's piano roll borrows its notehead→GM fold
+// (`headGM` over SCOREHEAD) so a drum block lands on the same key in the file
+// and on the roll. `songDurSec` is the score's own length in seconds, which is
+// what the WAV press is measured against.
+import { writeSmf, parseSmf, headGM } from "../export/smf.js";
+import { songDurSec } from "../audio/plan.js";
 
 // THE ONE GLOBAL LEFT IN THIS FILE, and it is deliberate rather than an
 // oversight: `design()` calls `K[name](...)` with a name out of the DESIGNS
@@ -2188,6 +2202,9 @@ function fitPaper() {
   scoreShown = "";
   gutterFrom();
   pinSpeed();
+  // …and the motif brackets, which are geometry over this same paper and so
+  // are re-hung exactly when the paper is (see `bracketsFrom`, the deck).
+  bracketsFrom();
   place(true);
 }
 
@@ -2376,6 +2393,11 @@ function stepAbs() {
    change this round is — see `pinSpeed`. What is read from the engraving is
    the drift, once, when the picture lands. */
 function place(force) {
+  // THE ONE CLOCK, TWO VIEWS (score-deck.html decision 3): the piano roll is
+  // repainted from the same frame walk that moves the paper, off the same
+  // `stepAbs()`, so flipping the tab can never lose the place — there is only
+  // one place. `drawRoll` no-ops unless the roll view is up.
+  if (deckView === "roll") drawRoll(stepAbs());
   if (!scoreRun || !scoreHost || !scoreMap) return;
   const x = paperAt(stepAbs()) - scoreHeadPx;
   // A WRITE PER FRAME, AND THE GUARD IS ONLY AGAINST WRITING THE SAME NUMBER.
@@ -2471,7 +2493,7 @@ function scoreChanged() {
    class, N counting the `V:` lines in the order ui/abc.js toScore declares
    them — which is the order of `parts`, which is the order of `DOC.voices`. */
 function lightScore(abs) {
-  for (const x of scoreLit) x.removeAttribute("fill");
+  for (const x of scoreLit) x.style.fill = "";
   scoreLit = [];
   if (abs < 0 || !scorePaper || !scoreVoices.length || !scoreSteps) return;
   // THE STEP ON THE PAPER, not in the section: the same join `stepAbs` makes,
@@ -2488,8 +2510,11 @@ function lightScore(abs) {
     const n = v.byStep[s];
     if (n < 0) return;
     const els = scoreEls[vi] || [], gs = v.byNote[n] || [];
+    // the CLOCK's own paint, off the one token owner (nu.css --clock). A style
+    // property and not the old `setAttribute("fill", "#c00")`, because an
+    // attribute cannot resolve var() and a second red would be a fifth paint.
     for (const g of gs) if (els[g]) {
-      els[g].setAttribute("fill", "#c00");
+      els[g].style.fill = "var(--clock)";
       scoreLit.push(els[g]);
     }
   });
@@ -2513,7 +2538,9 @@ function lightScore(abs) {
    over any other picture on the page does, which is scroll the page. The
    score's own motion is the clock's and nobody else's. */
 function scoreBlock(parent) {
-  heading(parent, "the score");
+  // (the `heading(parent, "the score")` that opened this block moved to the
+  //  deck's own <h2> on 2026-08-27 with the block itself — one heading over
+  //  the two views, not one per view)
   const live = el("div");
   live.dataset.live = "score";
   live.className = "nu-score";
@@ -2534,6 +2561,7 @@ function scoreBlock(parent) {
   scoreCap = cap; scoreHost = box; scoreSyl = syl; scoreRun = run;
   scorePaper = paper; scoreLoad = load;
   scoreGut = gut; scoreGutW = 0;
+  scoreMots = null;              // the bracket layer belongs to the old run
   scoreLit = []; scoreEls = null; scoreSec = -1; scoreX = null;
   const key = DOC.voices.length + "@" + Math.round(window.innerWidth);
   if (key !== scoreReserveKey) { scoreReserveKey = key; scoreReserve = 0; }
@@ -2642,6 +2670,374 @@ function syllLine(si, k) {
   }
   if (!parts.length) return "";
   return "singing, bars " + (k + 1) + "-" + (k + SCORE_BARS) + " - " + parts.join("; ");
+}
+
+/* ================= THE SCORE DECK (2026-08-27) ============================
+   nukernel/ideal/score-deck.html, made real at the foot of the page. The
+   engraved score above this comment — the steady scroll, the red sounding
+   ink, the reserved captions, all of it fought for across 2026-08-25/26 —
+   did not change; it MOVED, from the top of the Material axis to a deck under
+   the board, and gained three things the sketch decided:
+
+     1  MOTIF BRACKETS ON THE STAFF, extracted and never typed: each bracket's
+        text is the material cell the lead line reads in that section
+        (`cellAt`, the same resolution `materialAt` gives the compiler), and
+        its span is `scoreSecAt` → `paperX` — the same fold that bars the
+        timeline. A gate can equal every bracket to a `material.cells` key.
+     2  A VERTICAL PIANO ROLL: pitch across (low left, high right), time
+        pouring DOWN through a clock-red now-band a third from the top —
+        "time runs downward in every grid; the engraved score is the ONE
+        lawful horizontal scroller" (FUTURE.md, the two laws of 2026-08-27).
+        It is a canvas repainted from the same frame walk as the paper
+        (`place`), over the same `buildScore()` notes, inside its own
+        `[data-live="roll"]` — a CLOCK surface holding no controls.
+     3  THE EXPORT ROW, honest states wired where cheap: WAV pressed through
+        the parent's own stream worker (export/wav.js), MIDI written by
+        export/smf.js over this page's own score notes (toms distinct — the
+        export-layer fix FUTURE.md asked for), MP3 and Ableton refused with
+        their measured reasons.
+
+   ONE CLOCK, TWO VIEWS. Notation and the roll read the same `stepAbs()`;
+   the tab flip touches `hidden` and nothing else, so it cannot lose the
+   place — there is only one place. The tabs and the export buttons live
+   OUTSIDE the two `[data-live]` blocks (the A1 law, kept at the new
+   address). */
+
+let deckView = "not";           // "not" | "roll" — page state, survives draw()
+let deckNotView = null, deckRollView = null;
+let deckTabNot = null, deckTabRoll = null;
+let rollHost = null, rollCv = null, rollCtx = null;
+let rollW = 0, rollH = 0;
+let rollKey = "", rollList = null, rollLo = 48, rollHi = 72;
+let scoreMots = null;           // the bracket layer, inside the run
+let deckSay = null;             // the export row's status line (gesture-written)
+const ROLL_PXSTEP = 13;         // steady: pixels per pattern step, time DOWN
+const HEAD_GM = headGM(SCOREHEAD);   // notehead → GM key (export/smf.js fold)
+
+// the paints, read off the ONE owner of the tokens (nu.css :root) — a canvas
+// needs literals, and typing hexes here would be a second palette.
+let deckPaint = null;
+function paints() {
+  if (deckPaint) return deckPaint;
+  const cs = getComputedStyle(document.documentElement);
+  const v = (k, fb) => (cs.getPropertyValue(k) || "").trim() || fb;
+  deckPaint = { hand: v("--hand", "#1E45E0"), clock: v("--clock", "#E5330E"),
+                meter: v("--meter", "#0B9B4E"), flag: v("--flag", "#FFC61A"),
+                ink: v("--ink", "#191611"), paper: v("--paper", "#FFFFFF") };
+  return deckPaint;
+}
+// WHICH PAINT A VOICE WEARS, on the roll and in the legend: the kit in ink,
+// the bass in the meter's green, and the line voices alternating hand / flag —
+// the same four paints the whole page speaks, no fifth.
+function voicePaint(vi) {
+  const P = paints(), v = DOC.voices[vi] || {};
+  if (v.kind === "drums") return P.ink;
+  if (v.kind === "bass") return P.meter;
+  let li = 0;
+  for (let i = 0; i < vi; i++) {
+    const k = (DOC.voices[i] || {}).kind;
+    if (k !== "drums" && k !== "bass") li++;
+  }
+  return li % 2 ? P.flag : P.hand;
+}
+
+/* ---- THE MOTIF BRACKETS, extracted (decision 2) -------------------------
+   One span per section over the staff, carrying the NAME of the material
+   cell the lead line voice reads there — `cellAt(lead, si)` is the page's
+   one resolution of that fact (document.js materialAt under it), so the
+   label can never drift from the tune: rename the cell and the bracket is
+   the rename. Placed off `scoreSecAt`/`paperX` — the same numbers that bar
+   the moving paper — and hung in the run so it scrolls WITH the music.
+   Rebuilt exactly when the paper is (fitPaper), inside [data-live="score"],
+   holding no control. */
+function bracketsFrom() {
+  if (!scoreRun) return;
+  if (!scoreMots || scoreMots.parentNode !== scoreRun) {
+    scoreMots = el("div", null, "nu-mots");
+    scoreRun.append(scoreMots);
+  } else scoreMots.textContent = "";
+  const lead = LINES()[0];
+  if (!lead || !scoreMap || !scoreSecAt.length) return;
+  const NS = DOC.form.sections.length;
+  for (let si = 0; si < NS; si++) {
+    const name = cellAt(lead, si);        // EXTRACTION: a material.cells key
+    if (!name) continue;
+    const x0 = paperX(scoreSecAt[si]);
+    const x1 = paperX(si + 1 < NS ? scoreSecAt[si + 1] : scoreSteps);
+    if (!(x1 > x0 + 16)) continue;        // a sliver has no room for a word
+    const b = el("span", null, "nu-mot");
+    b.style.left = (x0 + 3) + "px";
+    b.style.width = Math.max(12, x1 - x0 - 10) + "px";
+    b.append(el("b", name));
+    scoreMots.append(b);
+  }
+}
+
+/* ---- THE PIANO ROLL (decision 3): pitch across, time down ---------------- */
+// the roll's notes are the SCORE's notes — the same `toScore` fold the staff
+// is engraved from (`scoreVoices`), keyed on the same ABC string, so the two
+// views cannot disagree about a single onset. A drum notehead takes its GM
+// key through the same fold the .mid file takes (HEAD_GM).
+function rollFold() {
+  if (rollKey === scoreAbc && rollList) return rollList;
+  const out = [];
+  let lo = 127, hi = 0;
+  scoreVoices.forEach((v, vi) => {
+    const perc = (DOC.voices[vi] || {}).kind === "drums";
+    for (const nt of v.notes) {
+      const list = Array.isArray(nt.midi) ? nt.midi : [nt.midi];
+      for (const m of list) {
+        const pitch = typeof m === "number" ? m : (perc ? HEAD_GM[m] : null);
+        if (pitch == null) continue;
+        out.push({ at: nt.at, len: Math.max(1, nt.len), pitch, vi });
+        if (pitch < lo) lo = pitch;
+        if (pitch > hi) hi = pitch;
+      }
+    }
+  });
+  if (lo > hi) { lo = 48; hi = 72; }
+  rollLo = lo; rollHi = hi; rollKey = scoreAbc; rollList = out;
+  return out;
+}
+function sizeRoll() {
+  if (!rollCv || !rollHost) return;
+  const dpr = window.devicePixelRatio || 1;
+  rollW = rollHost.clientWidth || 320;
+  rollH = rollHost.clientHeight || 420;
+  rollCv.width = Math.round(rollW * dpr);
+  rollCv.height = Math.round(rollH * dpr);
+  rollCtx = rollCv.getContext("2d");
+  rollCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function drawRoll(abs) {
+  if (!rollCtx || !rollHost || deckView !== "roll") return;
+  if (!scoreSteps || !scoreVoices.length) return;
+  const notes = rollFold(), P = paints(), ctx = rollCtx;
+  const w = rollW, h = rollH;
+  const NOWY = Math.round(h / 3);                 // fixed, a third from the top
+  const L = 40, Rm = 8;
+  const cols = rollHi - rollLo + 1;
+  const colw = (w - L - Rm) / cols;
+  const yAt = (step) => NOWY + (step - abs) * ROLL_PXSTEP;
+  ctx.clearRect(0, 0, w, h);
+  // pitch stripes, low LEFT → high RIGHT
+  for (let r = 0; r < cols; r += 2) {
+    ctx.fillStyle = "rgba(25,22,17,.05)";
+    ctx.fillRect(L + r * colw, 0, colw, h);
+  }
+  // bar rules — TIME IS VERTICAL, so a barline is horizontal; a section
+  // boundary is a bold rule wearing the section's own name in a flag cap
+  ctx.font = "700 10px ui-monospace, Menlo, monospace";
+  const bars = Math.ceil(scoreSteps / SCORE_SPB);
+  for (let b = 0; b <= bars; b++) {
+    const st = b * SCORE_SPB, y = yAt(st);
+    if (y < -40 || y > h + 40) continue;
+    const si = scoreSecAt.indexOf(st);
+    const secStart = si >= 0 && b < bars;
+    ctx.strokeStyle = secStart ? P.ink : "rgba(25,22,17,.25)";
+    ctx.lineWidth = secStart ? 3 : 1;
+    ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(w - Rm, y); ctx.stroke();
+    if (b < bars) {
+      ctx.fillStyle = "rgba(25,22,17,.6)"; ctx.textAlign = "right";
+      ctx.fillText(String(b + 1), w - Rm - 2, y + 12); ctx.textAlign = "left";
+    }
+    if (secStart && si < DOC.form.sections.length) {
+      const nm = secName(si);
+      ctx.font = "800 12px system-ui, sans-serif";
+      const wcap = Math.min(w - L - 20, Math.ceil(ctx.measureText(nm).width) + 12);
+      ctx.fillStyle = P.flag; ctx.fillRect(L + 2, y + 4, wcap, 20);
+      ctx.strokeStyle = P.ink; ctx.lineWidth = 2;
+      ctx.strokeRect(L + 2, y + 4, wcap, 20);
+      ctx.fillStyle = P.ink; ctx.fillText(nm, L + 8, y + 19);
+      ctx.font = "700 10px ui-monospace, Menlo, monospace";
+    }
+  }
+  // the notes: onset at its time-y, duration DOWNWARD; a note the record has
+  // already played fades; a note that is SOUNDING wears the clock — the only
+  // "now" on this surface besides the band itself (decision 1, kept here too)
+  for (const n of notes) {
+    const y0 = yAt(n.at), hh = Math.max(4, n.len * ROLL_PXSTEP - 2);
+    if (y0 + hh < -8 || y0 > h + 8) continue;
+    const lit = playing && abs >= n.at && abs < n.at + n.len;
+    const past = n.at + n.len < abs;
+    const x = L + (n.pitch - rollLo) * colw + 1, ww = Math.max(3, colw - 2);
+    ctx.globalAlpha = past ? 0.4 : 1;
+    ctx.fillStyle = lit ? P.clock : voicePaint(n.vi);
+    ctx.fillRect(x, y0, ww, hh);
+    ctx.strokeStyle = P.ink; ctx.lineWidth = lit ? 2 : 1;
+    ctx.strokeRect(x + .5, y0 + .5, ww - 1, hh - 1);
+    ctx.globalAlpha = 1;
+  }
+  // the now-band the content pours through
+  ctx.fillStyle = "rgba(229,51,14,.14)"; ctx.fillRect(0, NOWY - 12, w, 24);
+  ctx.fillStyle = P.clock; ctx.fillRect(0, NOWY - 2, w, 4);
+  // the axes, said once each
+  ctx.fillStyle = "rgba(25,22,17,.6)";
+  ctx.fillText("low ◀", L, 12);
+  ctx.textAlign = "right"; ctx.fillText("▶ high", w - Rm, 12);
+  ctx.textAlign = "left"; ctx.fillText("time ▼", 4, h - 8);
+}
+
+/* ---- the toggle: one clock, never loses the place ------------------------ */
+function setDeckView(v) {
+  deckView = v;
+  if (deckNotView) deckNotView.hidden = v !== "not";
+  if (deckRollView) deckRollView.hidden = v !== "roll";
+  if (deckTabNot) deckTabNot.setAttribute("aria-pressed", v === "not" ? "true" : "false");
+  if (deckTabRoll) deckTabRoll.setAttribute("aria-pressed", v === "roll" ? "true" : "false");
+  if (v === "roll") { sizeRoll(); drawRoll(stepAbs()); }
+}
+addEventListener("resize", () => {
+  if (deckView === "roll" && rollCv) { sizeRoll(); drawRoll(stepAbs()); }
+});
+
+/* ---- the export row (decision 4): each button wears its true state ------- */
+const deckFile = () => String(DOC.basis || "record").replace(/[^\w.-]+/g, "-");
+function handOff(name, bytes, type) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([bytes], { type }));
+  a.download = name;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+}
+// the whole record as an SMF, over the page's OWN score fold — the very
+// buildScore() the staff and the roll draw, so the file, the ink and the roll
+// are one note list (a probe below hands a gate the same value).
+function deckSmf() {
+  const built = buildScore();
+  if (!built) return null;
+  const bytes = writeSmf({ bpm: DOC.time.bpm, beatsPerBar: beatsPerBar(),
+    stepsPerBar: SCORE_SPB, voices: built.voices }, { drumMap: HEAD_GM });
+  return { bytes, voices: built.voices, steps: built.steps };
+}
+function expSay(t) { if (deckSay) deckSay.textContent = t || ""; }
+function exportCard(grid, glyph, cls, title, sub, mk) {
+  const card = el("div", null, "nu-exp");
+  const head = el("p", null, "nu-exp-head");
+  head.append(el("b", glyph, "nu-glyph " + cls), el("span", title));
+  const subEl = el("p", sub, "nu-hint");
+  card.append(head, subEl);
+  mk(card);
+  grid.append(card);
+  return card;
+}
+function exportRow(parent) {
+  const grid = el("div", null, "nu-exports");
+  // WAV — LIVE. The press path exists (engine/faust/press + the stream
+  // worker's PCM sink); export/wav.js is that machinery pointed at a file.
+  exportCard(grid, "WAV", "nu-cap-meter", "the render",
+    "44.1 kHz · 16-bit · the exact artifact the speakers get", (card) => {
+    const b = el("button", "download .wav");
+    b.type = "button"; b.dataset.k = "deck.exp.wav";
+    b.addEventListener("click", () => {
+      b.disabled = true; expSay("pressing…");
+      import("../export/wav.js")
+        .then((m) => m.pressWav(expSay))
+        .then((r) => { handOff(deckFile() + ".wav", r.bytes, "audio/wav");
+                       expSay("pressed — " + r.durSec.toFixed(1) + "s"); })
+        .catch((e) => expSay("the press failed — " + ((e && e.message) || e)))
+        .finally(() => { b.disabled = false; });
+    });
+    card.append(b);
+  });
+  // MIDI — LIVE. export/smf.js over the score's own notes; the toms come out
+  // distinct (t/m/l → GM 50/47/45), which is the export-layer fix FUTURE.md
+  // asked for — the engine's own folded mapping is untouched.
+  exportCard(grid, "MID", "nu-cap-flag", "MIDI",
+    "type 1 · one track per voice · the staff's own notes", (card) => {
+    const b = el("button", "download .mid");
+    b.type = "button"; b.dataset.k = "deck.exp.mid";
+    b.addEventListener("click", () => {
+      const r = deckSmf();
+      if (!r) { expSay("the record would not fold to a score — nothing to write"); return; }
+      handOff(deckFile() + ".mid", r.bytes, "audio/midi");
+      expSay("written — " + r.voices.length + " tracks");
+    });
+    card.append(b);
+  });
+  // MP3 — REFUSED, with the measured reason. lamejs IS in the tree
+  // (engine/faust/vendor/lamejs.min.js) and it already drives the phone's
+  // rolling stream (engine/faust/codec/mp3-worker.js) — what does not exist
+  // is a one-press encode of THIS render, and a button that pretended would
+  // be the dead control this page forbids.
+  exportCard(grid, "MP3", "nu-cap-flag", "MP3",
+    "320 kbps · for the phone", (card) => {
+    const b = el("button", "download .mp3");
+    b.type = "button"; b.dataset.k = "deck.exp.mp3"; b.disabled = true;
+    card.append(b, el("span", "the encoder is vendored — lamejs already " +
+      "streams the phone's rolling MP3 — but no one-press encode of this " +
+      "render is wired; the WAV is the record today", "nu-why"));
+  });
+  // ABLETON — REFUSED in-page: tools/ableton/export-als.js is a node CLI
+  // (zlib, fs — its own header says "zero deps (zlib + string XML are built
+  // in)"), so the button prints where the export actually lives.
+  exportCard(grid, "ALS", "nu-cap-hand", "Ableton",
+    "live set · donor-spliced .als", (card) => {
+    const b = el("button", "download .als");
+    b.type = "button"; b.dataset.k = "deck.exp.als"; b.disabled = true;
+    card.append(b, el("span", "exports from the command line today — " +
+      "node tools/ableton/export-als.js --genre <key> --out <file.als>; " +
+      "the in-page splice is engine work", "nu-why"));
+  });
+  parent.append(grid);
+  deckSay = el("p", "", "nu-hint");
+  deckSay.setAttribute("role", "status");
+  parent.append(deckSay);
+}
+
+/* ---- the deck itself, mounted at the page's foot (after the board) ------- */
+function deckBlock(parent) {
+  parent.textContent = "";
+  const ax = el("section", null, "nu-ax");
+  ax.id = "ax-deck";
+  ax.append(el("h2", "the score"));
+  // the tabs — CONTROLS, so outside both [data-live] blocks (A1's law)
+  const row = el("div", null, "nu-row nu-decktabs");
+  deckTabNot = el("button", "notation");
+  deckTabNot.type = "button"; deckTabNot.dataset.k = "deck.view.not";
+  deckTabNot.addEventListener("click", () => setDeckView("not"));
+  deckTabRoll = el("button", "piano roll");
+  deckTabRoll.type = "button"; deckTabRoll.dataset.k = "deck.view.roll";
+  deckTabRoll.addEventListener("click", () => setDeckView("roll"));
+  row.append(deckTabNot, deckTabRoll);
+  // the legend: who wears which paint on the roll — the voices' own names,
+  // extracted from the record, beside the one clock-red word
+  const leg = el("span", null, "nu-decklegend");
+  DOC.voices.forEach((v, vi) => {
+    const chip = el("i");
+    chip.style.background = voicePaint(vi);
+    const s = el("span", null, "nu-legv");
+    s.append(chip, document.createTextNode(v.name));
+    leg.append(s);
+  });
+  const lit = el("span", null, "nu-legv");
+  const litChip = el("i");
+  litChip.style.background = paints().clock;
+  lit.append(litChip, document.createTextNode("sounding"));
+  leg.append(lit);
+  row.append(leg);
+  ax.append(row);
+  // NOTATION — the moved score block, verbatim (its own [data-live="score"])
+  deckNotView = el("div");
+  ax.append(deckNotView);
+  // THE ROLL — a clock surface: one [data-live] block, one canvas, no control
+  deckRollView = el("div");
+  const live = el("div");
+  live.dataset.live = "roll";
+  live.className = "nu-roll";
+  rollHost = el("div", null, "nu-rollwin");
+  rollCv = document.createElement("canvas");
+  rollCv.setAttribute("aria-label", "piano roll: pitch across, low left to " +
+    "high right; time pours down through the fixed red now-band");
+  rollHost.append(rollCv);
+  live.append(rollHost);
+  deckRollView.append(live);
+  ax.append(deckRollView);
+  parent.append(ax);
+  rollKey = ""; rollList = null; deckPaint = null;
+  scoreBlock(deckNotView);              // the notation view mounts LAST-known
+  exportRow(ax);
+  setDeckView(deckView);                // the flip you chose survives a draw()
 }
 
 /* ---------- THE MOTIF AS SHEET MUSIC, ONCE -----------------------------
@@ -2934,19 +3330,18 @@ function materialAxis(ax) {
   // guard note describes, arriving from the other direction; it is cleared
   // where every other registry is cleared, once, before anything draws.
   stepCell = [];
-  // THE SCORE COMES FIRST, because Paul said where it goes: "add a section
-  // ABOVE motifs which is the current playing music". It is in MATERIAL rather
-  // than in an axis of its own because what it draws is this axis's own stock
-  // of tunes, played by the band — and because "above the motifs" is a
-  // position on the page, not a new place in the eight.
-  //
-  // OUTSIDE `#staff`, and that is load-bearing: test/motif-frozen.js A2 counts
-  // `#staff svg` against the measures this axis says it drew. The score is a
-  // different kind of staff and belongs to neither side of that sum, so it
-  // draws in its own element and the gate's arithmetic stays true. (The sum was
-  // composed + written; it is one written staff per measure now, and the gate
-  // needs the one-line edit named in this round's recipe.)
-  scoreBlock(ax);
+  // THE SCORE IS NOT HERE ANY MORE — REWRITTEN 2026-08-27. It stood first in
+  // this axis from 2026-08-25 ("add a section ABOVE motifs which is the
+  // current playing music"), and it has MOVED, whole, to the SCORE DECK at
+  // the foot of the page (`deckBlock`, mounted after the board; the design is
+  // nukernel/ideal/score-deck.html and FUTURE.md Phase 3 names the move).
+  // Nothing about the picture changed in transit — same `scoreBlock`, same
+  // steady scroll, same red sounding ink, same captions — only its address:
+  // the band plays its own sheet music at the bottom, beside the piano roll
+  // and the export row, and this axis is left holding exactly what its
+  // heading says: the tunes and their editors. What Paul asked for in the
+  // 2026-08-25 sentence — the whole band, visible, moving — is answered
+  // better one screen down, where it no longer pushes the editors around.
   heading(ax, "the motifs");
   // THE SECTION STRIP IS NOT HERE ANY MORE, AND THAT IS THE ROUND OF
   // 2026-08-25. It stood exactly here and its own note argued the position
@@ -3417,7 +3812,9 @@ function auditionOf(name) {
 // WHAT THE PAGE SAYS WHEN THE RECORD IS RUNNING. One string, two readers (the
 // sentence and the reserve that gives it room), so a longer refusal cannot
 // quietly outgrow the space measured for it.
-const PLAYSAY = "the record is playing — the score above is what you hear";
+// ("the score above" until 2026-08-27, when the score moved to the deck at
+//  the page's foot — the sentence points where the picture now is)
+const PLAYSAY = "the record is playing — the score at the foot of the page is what you hear";
 // …and WHO would read this motif, without sounding a note. The reserve needs
 // the sentence before there is anything to say.
 const auditionWho = (name) => { const A = auditionOf(name); return A ? A.who : ""; };
@@ -7335,8 +7732,9 @@ function draw() {
   const release = holdHeight(box);
   try { redrawApp(box); } finally { release(); }
   putPanes();
-  // `document` and not `box`: the board is mounted into #deck, outside #app,
-  // and a thumb that was on a fader is still a thumb that must come back.
+  // `document` and not `box`: the board is mounted into #deck and, since
+  // 2026-08-27, the producer into #produce — both outside #app — and a thumb
+  // that was on a fader or a verb chip is still a thumb that must come back.
   restoreFocus(document, wasKey, wasPicker);
   restoreAnchor();
 }
@@ -7353,14 +7751,16 @@ function redrawApp(box) {
   //  sections; the sheets slice replaced their <select>s with sheet rows on the
   //  morning of 2026-08-24; the selects slice put eleven of them back as menus
   //  that evening, by name, and left the development words alone; W3 added a
-  //  section that is not an axis at all — the producer's, which is here rather
-  //  than beside the board because it edits the document; and on 2026-08-25
+  //  section that is not an axis at all — the producer's; and on 2026-08-25
   //  Performance became a TAB of the band block rather than a section of its
-  //  own. FIVE sections for eight axes — 4-7 were one grid and always were, and
+  //  own. FOUR sections for eight axes — 4-7 were one grid and always were, and
   //  8 joined them because its scope is the song, not the player. This said
-  //  "six sections" and the count is corrected rather than the sentence
-  //  deleted: see `performanceTab` for why the enumeration and the headings
-  //  are allowed to disagree.)
+  //  "five sections" while the producer lived here; on 2026-08-27 the page
+  //  reordered — "producer last to say, score last to see" (FUTURE.md) — and
+  //  the producer's section moved out of #app to its own host between the
+  //  board and the score deck. The count is corrected rather than the sentence
+  //  deleted, for the second time: see `performanceTab` for why the
+  //  enumeration and the headings are allowed to disagree.)
 
   /* 1 TIME */
   const axTime = axis(box, "ax-time", "1 · Time");
@@ -7467,17 +7867,37 @@ function redrawApp(box) {
   // from one-heading-per-axis it makes, is on `performanceTab`.
   bandBlock(axis(box, "ax-band", "4–8 · The band"));
 
-  /* 9 THE PRODUCER — NOT A NINTH AXIS. The eight determine the SCORE; this is a
-     session fact, "the eight plus what was said" (AXES.md:113). It draws last
-     because it is a statement ABOUT the eight above it, and it is inside #app
-     because it edits the document (`DOC.produce`) where the board does not. */
-  mountProduce(box, CTX);
-
   /* THE BOARD ("an actual mixing board at the end is a nice idea"). Not one of
      the eight axes and not in their container: it is what the record lands on,
      so it gets its own host at the foot of the page. */
   const deck = $("deck");
   if (deck) { deck.textContent = ""; mountBoard(deck, CTX); }
+
+  /* 9 THE PRODUCER — NOT A NINTH AXIS. The eight determine the SCORE; this is
+     a session fact, "the eight plus what was said" (AXES.md:113). It draws
+     LAST OF WHAT A HAND CAN SAY — under the board, immediately above the score
+     deck — because FUTURE.md's page order is "producer last to say, score last
+     to see": a statement ABOUT everything above it, made after the record has
+     landed, right before you see the record leave. It stood inside #app after
+     the band until 2026-08-27; being inside #app was never what let it edit
+     the document (`DOC.produce`) — redrawApp re-mounts it either way, exactly
+     as it does the board — so the move is one host and zero seams. Its host is
+     made here rather than shipped in index.html so the move is one file's,
+     the same argument the score deck's host carries below. */
+  let prod = $("produce");
+  if (!prod && deck) { prod = el("div"); prod.id = "produce"; deck.after(prod); }
+  if (prod) { prod.textContent = ""; mountProduce(prod, CTX); }
+
+  /* THE SCORE DECK, at the very foot — under the producer, because the
+     producer is the last thing SAID and the deck is the last thing SEEN: the
+     band playing its own sheet music, the piano roll, and the export row
+     (nukernel/ideal/score-deck.html, moved here 2026-08-27 from the top of
+     the Material axis — see materialAxis for the tombstone; it read "under
+     the board" until the producer landed between them the same day). Its host
+     is made here rather than shipped in index.html so the move is one file's. */
+  let foot = $("scoredeck");
+  if (!foot && prod) { foot = el("div"); foot.id = "scoredeck"; prod.after(foot); }
+  if (foot) deckBlock(foot);
 }
 
 /* ---------- transport ---------- */
@@ -7583,6 +8003,58 @@ window.__eightScore = () => ({
 // function walked over the whole record; this is the same answer step by step,
 // so a gate can say WHERE it happens as well as how big it is.
 window.__eightScoreAt = (step) => paperX(+step || 0);
+/* THE DECK'S OWN PROBES (test/deck.test.js). Everything a gate needs to hold
+   the deck to its laws, read off the page rather than recomputed in the gate:
+   which view is up, every bracket's text beside the material cell keys it must
+   be a member of, the export buttons' states with their reasons, and the two
+   export artifacts THEMSELVES — the .mid parsed back by our own reader beside
+   the score fold it must equal, and the .wav pressed twice for byte-equality
+   (TEST THE ARTIFACT: the gate reads bytes, not wiring). */
+window.__deckState = () => ({
+  view: deckView,
+  step: +stepAbs().toFixed(3),
+  brackets: scoreMots
+    ? [...scoreMots.querySelectorAll(".nu-mot > b")].map((b) => b.textContent) : [],
+  cells: Object.keys(DOC.material.cells),
+  rollNotes: (rollList || []).length,
+  rollRange: [rollLo, rollHi],
+  exports: [...document.querySelectorAll("#scoredeck .nu-exp")].map((c) => {
+    const b = c.querySelector("button");
+    return { k: b ? b.dataset.k : null, label: b ? b.textContent : "",
+             disabled: !!(b && b.disabled),
+             why: (c.querySelector(".nu-why") || { textContent: "" }).textContent };
+  }),
+});
+window.__deckView = (v) => setDeckView(v);
+window.__deckSmf = () => {
+  const r = deckSmf();
+  if (!r) return null;
+  return { bytes: Array.from(r.bytes), parsed: parseSmf(r.bytes),
+           drumMap: HEAD_GM, steps: r.steps,
+           score: r.voices.map((v) => ({ name: v.name, clef: v.clef,
+             notes: v.notes.map((n) => ({ at: n.at, len: n.len,
+               midi: Array.isArray(n.midi) ? n.midi : [n.midi] })) })) };
+};
+window.__deckPressWav = async () => {
+  const m = await import("../export/wav.js");
+  const r = await m.pressWav();
+  const dv = new DataView(r.bytes);
+  const tag = (o) => String.fromCharCode(dv.getUint8(o), dv.getUint8(o + 1),
+                                         dv.getUint8(o + 2), dv.getUint8(o + 3));
+  // the bytes DECODE: a canonical PCM wav is its own decoder — the header
+  // fields and every Int16 sample are read back here, not assumed
+  const head = { riff: tag(0), wave: tag(8), fmt: dv.getUint16(20, true),
+                 ch: dv.getUint16(22, true), sr: dv.getUint32(24, true),
+                 bits: dv.getUint16(34, true), dataLen: dv.getUint32(40, true) };
+  let sum = 0;
+  const n = head.dataLen >> 1;
+  for (let i = 0; i < n; i++) { const s = dv.getInt16(44 + i * 2, true) / 32768; sum += s * s; }
+  const sha = [...new Uint8Array(await crypto.subtle.digest("SHA-256", r.bytes))]
+    .map((b) => b.toString(16).padStart(2, "0")).join("");
+  return { sha, size: r.bytes.byteLength, frames: r.frames,
+           durSec: +r.durSec.toFixed(3), songSec: +r.songSec.toFixed(3),
+           rms: +Math.sqrt(sum / Math.max(1, n)).toFixed(5), head };
+};
 window.__eightSec = () => atSec;              // the SOUNDING section
 window.__eightViewSec = () => editSec();      // the section being WRITTEN
 // ...and the live half, so a gate can prove a boundary happened twice over:

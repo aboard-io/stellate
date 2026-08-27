@@ -414,7 +414,12 @@ function g18() {
     sections: window.__eightDoc().form.sections.length }));
   check(gotTitle, "G8 · one tap on Kingston at 1969 makes #title read " +
     JSON.stringify(after.title) + " within 4 s");
-  check(after.h2.length >= 5, "G8 · the eight-axis headings survived the swap (" +
+  // `>= 4`, WAS `>= 5` UNTIL 2026-08-27: the producer's section left #app for
+  // its own host between the board and the score deck ("producer last to say,
+  // score last to see" — FUTURE.md; ui/eight.js redrawApp), so #app holds four
+  // sticky h2 now — Time, Alphabet, Sheet music, The band — and a gate that
+  // still demanded five would be asserting the OLD page order, not the swap.
+  check(after.h2.length >= 4, "G8 · the eight-axis headings survived the swap (" +
     after.h2.length + " sticky h2: " + after.h2.slice(0, 6).join(" / ") + ")");
   check(after.voices >= 2 && after.sections >= 2,
     "G8 · and it is a whole record — " + after.voices + " voices, " +

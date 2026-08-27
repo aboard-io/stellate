@@ -13,8 +13,16 @@
 //       390 against 375, because two seventeen-column grids were 382px wide.
 //   A2  no <button>, <select> or input[type=number] under 44px tall.
 //       Measured before: 23 buttons at 21px, 11 selects at 19px.
-//   A3  every checkbox and radio has a 24px tap target on both axes (WCAG 2.2
-//       AA Target Size Minimum). Measured before: 98 of them at 13x13.
+//       (EXCEPT A STEP. nu.css's control vocabulary, kind 7: a step in a
+//       sixteen-step grid gets WCAG 2.2's 24px dense-grid floor, "and not
+//       `--tap`". On 2026-08-27 the kit step changed WIDGET — the checkbox
+//       became a velocity button, `.nu-kc` — and fell out of A3's dense-grid
+//       lane into this blanket rule, though its density did not change: it is
+//       still one of sixteen at `--cell`. So `.nu-kc` is measured with the
+//       steps in A3, at the step floor, on both axes — not skipped.)
+//   A3  every checkbox and radio — and, since 2026-08-27, every `.nu-kc` step
+//       button — has a 24px tap target on both axes (WCAG 2.2 AA Target Size
+//       Minimum). Measured before: 98 of them at 13x13.
 //   A4  every .nu-pane has scrollHeight - clientHeight <= 1. `overflow-x: auto`
 //       silently computes `overflow-y` to `auto` as well, so a pane is a
 //       TWO-axis scroller and a table one pixel too tall hides a row.
@@ -116,12 +124,17 @@ const SURVEY = () => {
     barH: document.querySelector(".nu-bar")
       ? +rect(document.querySelector(".nu-bar")).height.toFixed(2) : null,
     barVar: getComputedStyle(de).getPropertyValue("--bar-h").trim(),
-    // A2
+    // A2 — every button/select/number, EXCEPT the kit's step buttons: a
+    // `.nu-kc` is kind 7 in nu.css's vocabulary (one of sixteen, dense-grid
+    // floor), so it is measured with the steps below, not against --tap.
     shortControls: [...document.querySelectorAll("button, select, input[type=number]")]
+      .filter((e) => !e.classList.contains("nu-kc"))
       .map((e) => ({ n: name(e), h: +rect(e).height.toFixed(1) }))
       .filter((x) => x.h < 44),
-    // A3
-    smallBoxes: [...document.querySelectorAll("input[type=checkbox], input[type=radio]")]
+    // A3 — the dense-grid steps: checkboxes, radios, and (2026-08-27, the
+    // widget change) the kit's `.nu-kc` velocity buttons, 24px both axes.
+    smallBoxes: [...document.querySelectorAll(
+        "input[type=checkbox], input[type=radio], button.nu-kc")]
       .map((e) => { const t = target(e); return { n: name(e), w: +t.w.toFixed(1), h: +t.h.toFixed(1) }; })
       .filter((x) => x.w < 24 || x.h < 24),
     // A4
@@ -266,7 +279,7 @@ const LANE = async () => {
       + (s.shortControls.length ? " — " + s.shortControls.length + " short, e.g. "
          + s.shortControls.slice(0, 4).map((x) => x.n + "@" + x.h).join(", ") : ""));
     is(s.smallBoxes.length === 0,
-      "A3 " + width + " · every checkbox/radio target >= 24px"
+      "A3 " + width + " · every checkbox/radio/step-button target >= 24px"
       + (s.smallBoxes.length ? " — " + s.smallBoxes.length + " small, e.g. "
          + s.smallBoxes.slice(0, 4).map((x) => x.n + "@" + x.w + "x" + x.h).join(", ") : ""));
     is(s.clippedPanes.length === 0,

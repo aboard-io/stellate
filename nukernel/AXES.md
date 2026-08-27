@@ -33,6 +33,20 @@ first: since the score of the whole band landed above the motifs, everything
 under that heading is notation. One fact, one owner: the vocabulary says
 Material, the page says Sheet music, and this paragraph is the join.
 
+**The page says the producer last (2026-08-27).** The vocabulary's order is the
+attribute grammar's dependency relation — eight axes readable in one pass, and
+the producer after them because he is "the eight plus what was said" (below).
+The PAGE now ends the same sentence twice over: FUTURE.md's reorder is
+"producer last to say, score last to see", so the producer's section is the
+last thing a hand can edit — under the board, in its own host (`#produce`,
+made by `ui/eight.js redrawApp`), immediately above the score deck, which is
+the last thing an eye sees. The producer moved OUT of `#app` to get there
+(it sat between the band and the board from W3 to 2026-08-27); nothing about
+his standing changed — still not a ninth axis, still the only translator of
+nouns into vectors — only where he stands. The vocabulary says the producer
+comes after the eight, the page says he comes after everything but the score,
+and this paragraph is the join.
+
 ## GENRE IS A CORRELATION, NOT AN AXIS
 
 122 genres, 51 distinct fields between them: `scale mode harmony prog roots`

@@ -631,12 +631,15 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 #app > .nu-ax:nth-child(12n+10){ --sec: 10; }
 #app > .nu-ax:nth-child(12n+11){ --sec: 11; }
 #app > .nu-ax:nth-child(12n+12){ --sec: 12; }
-/* THE TWO BLOCKS THAT ARE NOT AXES, AND THE ONLY NUMBERS IN THIS FILE THAT ARE
-   HAND-KEPT. `#atlas` and `#board` are `<section>`s a reader scrolls past like
-   any other, but neither is a child of `#app` — the atlas is the front door and
-   the board is what the record lands on — so no `:nth-child()` can count them
-   into the axes' run. They are given the indices they WOULD have if the page
-   were one list: the atlas is before the axes and the board is after them.
+/* THE BLOCKS THAT ARE NOT AXES, AND THE ONLY NUMBERS IN THIS FILE THAT ARE
+   HAND-KEPT. `#atlas`, `#board` and — since 2026-08-27 — the producer's
+   `#produce` are `<section>`s a reader scrolls past like any other, but none
+   is a child of `#app` — the atlas is the front door, the board is what the
+   record lands on, and the producer moved out when the page reordered
+   ("producer last to say, score last to see", FUTURE.md) — so no
+   `:nth-child()` can count them into the axes' run. They are given the
+   indices they WOULD have if the page were one list: the atlas before the
+   axes, the board and the producer after them.
 
    WHY NOT 13 AND 14, WHICH IS WHERE THEY STARTED. Because the golden angle only
    promises that CONSECUTIVE indices are far apart, and 14 is not consecutive
@@ -645,15 +648,19 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    red. Numbered in reading order instead, every neighbour on the page is a full
    137.5deg from the one before it and the closest pair anywhere is 32.5.
 
-   AND THE 6 IS A NUMBER SOMEBODY MUST CHANGE. There are five axis sections
-   today (ui/eight.js `redrawApp`), so the board is the sixth block. A sixth
-   axis would collide with it, and the fix is this one digit. That is stated
-   rather than engineered around because it cannot be engineered around: twelve
-   golden-angle steps already cover the wheel at about 30deg, so beyond twelve
-   blocks SOME pair is close no matter what the scheme is. Seven blocks is the
-   case the page has and this is the best arrangement of it. */
+   AND THE 5 AND THE 6 ARE NUMBERS SOMEBODY MUST CHANGE. There are four axis
+   sections in #app today (ui/eight.js `redrawApp`), so the board is the fifth
+   block and the producer the sixth. (The board WAS the sixth while the
+   producer still lived in #app as the fifth; the 2026-08-27 reorder renumbered
+   both in the same reading-order scheme.) A fifth axis would collide, and the
+   fix is these digits. That is stated rather than engineered around because it
+   cannot be engineered around: twelve golden-angle steps already cover the
+   wheel at about 30deg, so beyond twelve blocks SOME pair is close no matter
+   what the scheme is. Seven blocks is the case the page has and this is the
+   best arrangement of it. */
 #atlas{ --sec: 0; }
-#deck > .nu-ax{ --sec: 6; }
+#deck > .nu-ax{ --sec: 5; }
+#produce > .nu-ax{ --sec: 6; }
 
 /* ===== TABLES ==========================================================
    "use more grid lines in tables, it will help" (Paul, 2026-08-24). Every
@@ -1636,6 +1643,15 @@ table.nu-trims{ color: var(--ink); }
    score caption is `.nu-hint`, whose dim would otherwise beat the inherited
    red. A live subtree holds no control by law, so the selector cannot leak. */
 [data-live] .nu-hint{ color: var(--clock); }
+/* …BUT THE ENGRAVING IS NOT A SENTENCE (2026-08-27, the deck wave, measured
+   on the rendered page): abcjs draws in currentColor, so the rule above was
+   painting the WHOLE score — every staff line, every notehead — clock red,
+   which drowned the one red that means something. score-deck.html decision 1
+   is binding: the ink is ink, and the sounding note's clock red is the ONLY
+   "now" on the surface. The ribbon (music + pinned gutter) takes the ink
+   back; the caption and the syllable line above and below it stay the
+   clock's. */
+.nu-score .nu-ribbon{ color: var(--ink); }
 
 /* THE ENGRAVING. abcjs draws an <svg> at whatever width it was handed; on a
    phone that is wider than the page, and an overflowing staff would put the
@@ -1762,13 +1778,15 @@ table.nu-trims{ color: var(--ink); }
 .nu-score .nu-gutter{ position: absolute; inset-block-start: 0;
   inset-inline-start: 0; overflow: hidden; background: var(--paper);
   pointer-events: none; }
-#app .nu-score .nu-gutter > svg{ display: block; max-inline-size: none; }
+#app .nu-score .nu-gutter > svg,
+#scoredeck .nu-score .nu-gutter > svg{ display: block; max-inline-size: none; }
 /* AND THE PICTURE MAY BE WIDER THAN THE COLUMN, which is the one place on this
    page where that is true and has to out-shout `#app svg` (an id, so it wins
    on specificity unless this one carries the id too). It is a whole record
    engraved as one line — tens of thousands of pixels of it — and it is the box
    that clips, not the picture. */
-#app .nu-score .nu-paper > svg{ display: block; max-inline-size: none; }
+#app .nu-score .nu-paper > svg,
+#scoredeck .nu-score .nu-paper > svg{ display: block; max-inline-size: none; }
 /* THE LOADER: A WORD, NOT A BOX. It says the page is working and it is the one
    thing on this surface that is neither music nor a sentence about music, so
    it is set in the page's own quiet ink over the page's own paper, centred in
@@ -1790,6 +1808,63 @@ table.nu-trims{ color: var(--ink); }
    seconds earlier. The DOM was right and the page was wrong; this is the line
    that makes them agree. */
 .nu-score .nu-load[hidden]{ display: none; }
+/* ===== THE SCORE DECK (2026-08-27, nukernel/ideal/score-deck.html) ========
+   The engraved score MOVED to the foot of the page — every .nu-score rule
+   above still applies to it verbatim at the new address (#scoredeck) — and
+   these rules are only what the deck ADDS: the motif-bracket layer riding the
+   moving paper, the vertical piano roll's fixed window, and the export cards.
+   The tabs need nothing: they are plain buttons, and the page's own
+   `button[aria-pressed="true"]` hand-cap is the whole of "which view is up". */
+#scoredeck > .nu-ax{ --sec: 3; }   /* the score deck wears Sheet music's wash */
+#scoredeck .nu-decktabs{ align-items: center; margin-block: .4em .6em; }
+#scoredeck .nu-decklegend{ display: inline-flex; flex-wrap: wrap; gap: .8em;
+  margin-inline-start: auto; font-size: .8rem; opacity: .85; }
+#scoredeck .nu-legv{ display: inline-flex; align-items: center; gap: .3em; }
+#scoredeck .nu-legv > i{ inline-size: 11px; block-size: 11px; border-radius: 3px;
+  border: 2px solid var(--ink); display: inline-block; }
+/* THE MOTIF BRACKETS: a layer INSIDE the moving run, so the labels travel
+   with the bars they name. Text is EXTRACTED (a material.cells key) and the
+   layer holds no control — it lives inside [data-live="score"]. The bracket
+   is drawn with borders (a top rule and two ticks), the cap in hand paint. */
+#scoredeck .nu-mots{ position: absolute; inset-block-start: 0;
+  inset-inline-start: 0; block-size: 16px; pointer-events: none; }
+#scoredeck .nu-mot{ position: absolute; inset-block-start: 2px; block-size: 9px;
+  border-block-start: 3px solid var(--hand);
+  border-inline-start: 3px solid var(--hand);
+  border-inline-end: 3px solid var(--hand); }
+#scoredeck .nu-mot > b{ position: absolute; inset-block-start: -3px;
+  inset-inline-start: -3px; transform: translateY(-14%);
+  font: 700 10px/1.5 monospace; letter-spacing: .04em;
+  background: var(--hand); color: #FFFFFF; padding: 0 5px; border-radius: 3px; }
+/* THE PIANO ROLL: time runs DOWN through a fixed window; the canvas repaints
+   on the clock inside [data-live="roll"], so the box is sealed exactly the way
+   the score's is — fixed height, contain, no scroll container, no control. */
+#scoredeck .nu-roll{ margin-block: .2em 1em; padding-block-end: .6em;
+  border-block-end: 2px solid var(--rule-strong); }
+#scoredeck .nu-rollwin{ position: relative; block-size: min(420px, 60vh);
+  background: var(--panel); border: 2px solid var(--rule-strong);
+  overflow: hidden; contain: layout paint; }
+#scoredeck .nu-rollwin > canvas{ display: block; inline-size: 100%;
+  block-size: 100%; }
+/* THE EXPORT ROW: four cards, each button wearing its true state — a live
+   button, or `disabled` beside its .nu-why (the no-dead-controls law). */
+#scoredeck .nu-exports{ display: grid; gap: .8em;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  margin-block: .8em; }
+#scoredeck .nu-exp{ border: 2px solid var(--rule-strong); border-radius: 6px;
+  background: var(--panel); padding: .6em .7em; display: flex;
+  flex-direction: column; gap: .35em; }
+#scoredeck .nu-exp-head{ display: flex; align-items: center; gap: .55em;
+  font-weight: 700; }
+#scoredeck .nu-glyph{ display: inline-flex; align-items: center;
+  justify-content: center; inline-size: 44px; block-size: 32px;
+  border: 2px solid var(--ink); border-radius: 5px;
+  font: 800 11px/1 monospace; flex: none; }
+#scoredeck .nu-cap-hand{ background: var(--hand); color: #FFFFFF; }
+#scoredeck .nu-cap-meter{ background: var(--meter); color: #FFFFFF; }
+#scoredeck .nu-cap-flag{ background: var(--flag); color: var(--ink); }
+#scoredeck .nu-exp > button{ margin-block-start: auto; }
+
 /* THE PLAYHEAD LINE IS GONE (Paul, 2026-08-26: "Get rid of the playhead"), and
    with it `.nu-score .nu-head` — a 2px `color-mix` rule with a
    `forced-colors` fallback that drew a vertical line at 28% of the box. It was

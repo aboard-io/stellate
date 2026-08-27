@@ -951,7 +951,8 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     .map((s) => ({ k: s.dataset.k || s.id || s.getAttribute("aria-label") || "?",
                    sel: s.dataset.sel || null,
                    seat: /^ins\|/.test(s.dataset.k || ""),
-                   strip: !!s.closest(".nu-strip") })));
+                   strip: !!s.closest(".nu-strip"),
+                   produce: !!s.closest("#produce") })));
   const strayOnStrip = sel.filter((s) => s.strip && !s.seat);
   const seats = sel.filter((s) => s.seat);
   const stripCount = await page.evaluate(() =>
@@ -968,11 +969,21 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // every OTHER select outside #app is the rack's or the main's, drawn by
   // ui/selects.js (`master|`/`bus|` from selectEl, `master.fx` from sheet()) —
   // the atlas's navigation menus are still deleted outright (test/atlas.js).
+  // …AND, SINCE 2026-08-27, THE PRODUCER'S. The page reordered — "producer
+  // last to say, score last to see" (FUTURE.md) — and the producer's section
+  // left #app for its own host, #produce, between the board and the score
+  // deck. Its taps (`prod.verb` and kin) were lawful selects the day before
+  // the move and did not change by moving; what changed is that this probe's
+  // "outside #app" now sees them. So a `prod.*` select is allowed EXACTLY
+  // when it sits inside #produce — a producer menu loose anywhere else on the
+  // page, or a stranger's menu inside #produce, still fails by existing.
   const notRack = sel.filter((s) => !s.seat &&
-    !/^(master[|.]|bus\|)/.test(s.sel || ""));
+    !/^(master[|.]|bus\|)/.test(s.sel || "") &&
+    !(s.produce && /^prod\./.test(s.sel || "")));
   ok(notRack.length === 0,
-     "…and every other <select> outside #app is one of the rack's own, drawn " +
-     "by ui/selects.js",
+     "…and every other <select> outside #app is one of the rack's own or the " +
+     "producer's own inside #produce (the 2026-08-27 reorder), drawn by " +
+     "ui/selects.js",
      JSON.stringify(notRack.map((s) => s.k)));
 
   /* ---- 2 · every word the board used to offer is still reachable ----
