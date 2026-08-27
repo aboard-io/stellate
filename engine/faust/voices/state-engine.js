@@ -2465,8 +2465,8 @@
       highcut: (state.tone && state.tone.highcut) ? clamp(state.tone.highcut, 1000, 20500) : 20500,
       // MASTER AIR SHELF. On good headphones the high end reads as VERY loud
       // across the whole catalogue, so the final mix carries an EQ that brings
-      // it down: a constant gentle high-shelf CUT above
-      // ~8 kHz in fx_bus, applied unconditionally right after the genre tone
+      // it down: a constant high-shelf CUT with its midpoint at
+      // 4.5 kHz in fx_bus, applied unconditionally right after the genre tone
       // tilt (lowcut/highcut) — a SHELF, not a lowpass, so the air dims
       // instead of vanishing. Uniform across the catalog (a constant, so
       // relative genre identity is untouched) and shared by press + live +
@@ -2513,7 +2513,11 @@
       cpar: clamp(state.cpar || 0, 0, 1),
     };
   }
-  const MASTER_AIR_SHELF_DB = -3;   // dB above the fx_bus AIR_FC (8 kHz) — the headphone ask
+  // -3 -> -7 and the corner 7 kHz -> 4.5 kHz on 2026-08-27 (Paul: "very high
+  // tones get shrieky"). See the AIR_FC note in engine/faust/dsp/fx_bus.dsp,
+  // which owns the corner and carries the measurement; this owns the depth, and
+  // the two are read together.
+  const MASTER_AIR_SHELF_DB = -7;   // dB above the fx_bus AIR_FC (4.5 kHz) — the headphone ask
 
   // ---- MULTIBAND MASTER COMP (fx wings stage 4) — an OPT-IN external node ----
   // Returns {module:"master_mb", mbdrive} or null. NOT baked into fx_bus: the

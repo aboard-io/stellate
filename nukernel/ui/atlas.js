@@ -1349,5 +1349,14 @@ export function mount(parent, ctx) {
 
   refit();
   setYear(indexOf(WHEN[TERMS.basis] ? WHEN[TERMS.basis].year : YEARS[0]));
-  return { showing, reseed };
+  /* ---------- reading(): the seed, for the bar to print (2026-08-27) ------
+     Paul: *"I clicked rewrite multiple times and never saw a different seed."*
+     He could not: the number was in #atlasSay's sentence, which the record's
+     own line overwrites, and on a phone it is a scroll away from the button
+     that moves it. So the bar prints it beside the gesture — and ONE OWNER
+     stands: this counter is still the fact, and this is a reader for it, not
+     a second copy of it. */
+  const reading = () => seed;
+
+  return { showing, reseed, reading };
 }

@@ -659,7 +659,26 @@ export function voiceForInstr(id, tone) {
     // the module's own breath-before-the-vowel (voice_tract.lib `fric` rides
     // the gate for ~30 ms) is untouched, which is the h the chair's "a breath
     // first" is actually asking for.
-    breath: dial(M.air, choir ? 0.22 : 0.07, 0.6),
+    // ...AND THE SOLO SINGER'S AIR IS CLAMPED AT THE PUBLISHED CEILING, 0.12
+    // (2026-08-27, Paul: "very high tones get shrieky"). knobs-extract.js:197
+    // publishes `voice_lead/breath` 0.12 as a MEASURED ceiling — "past here it
+    // is a whisper rather than a voice — the air stands over the tone above 4
+    // kHz" — and twelve MOUTHS rows walked straight past it, because a mouth
+    // writes 0..1 and this line multiplied by the module's 0.6 range: falsetto
+    // 0.42 -> 0.252, dreamchoir 0.4 -> 0.24, skiffler 0.34 -> 0.204, up to
+    // twice the ceiling. That was flagged when the ceiling was derived and left
+    // for Paul's ear; his ear has now spoken, and the fricative band is the
+    // shriek. The mouths keep their numbers (they still ORDER the singers —
+    // plainchant is airier than bulgar at 0.30 against 0.10) and the ceiling
+    // decides where the order stops.
+    //   THE CHOIR IS DELIBERATELY NOT CLAMPED. Its own rule-derived ceiling is
+    // 0.012, BELOW the 0.08 breath its shipped default already holds, and
+    // knobs-extract says in as many words that a slider whose top is under the
+    // number the record is holding is a different problem and the module is
+    // what wants looking at. Clamping it here would be re-mixing every choir
+    // record on a number nobody has agreed.
+    breath: choir ? dial(M.air, 0.22, 0.6)
+                  : Math.min(dial(M.air, 0.07, 0.6), 0.12),
     // THE VOICE MOVES. A formant bank holds one spectrum for the length of a
     // note, which is the one thing this model does worse than a recording.
     // `sway` is a slow LFO on the glottal fold and `vowelSway` the same LFO on

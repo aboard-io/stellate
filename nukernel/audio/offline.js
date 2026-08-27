@@ -74,8 +74,98 @@ const shellDone = new Set();                            // the shell, asked for 
 
 export function registerSW() {
   if (!("serviceWorker" in navigator)) return;
-  try { navigator.serviceWorker.register(new URL("sw.js", SITE).href).catch(() => {}); }
-  catch (e) { /* file:// or a browser that will not have it */ }
+  try {
+    navigator.serviceWorker.addEventListener("message", (e) => {
+      const d = e.data;
+      if (d && d.type === "sw:activated" && d.replaced) newVersion(d.version);
+    });
+    navigator.serviceWorker.register(new URL("sw.js", SITE).href)
+      .then((reg) => { if (reg) watchForNew(reg); }).catch(() => {});
+  } catch (e) { /* file:// or a browser that will not have it */ }
+}
+
+/* ---------- WHEN THE DEPLOY ARRIVES, THE PAGE SAYS SO -------------------
+   Paul, 2026-08-27: *"I clicked rewrite multiple times and never saw a
+   different seed."* Measured: on a fresh browser context the deployed page
+   worked, and his did not — his browser was painting yesterday's scripts out
+   of the app cache, because stale-while-revalidate refreshes the copy for the
+   NEXT load (sw.js, top). The worker now says when it has replaced a version;
+   this decides what to do about it, and the rule is Paul's own: A RELOAD
+   MID-SONG IS WORSE THAN THE BUG.
+
+   FREE, OR ASK. A reload is FREE while nothing has played and the page is
+   seconds old — nobody has typed a word, no sound is running, and this is
+   exactly the case that produced the report: open the box, the worker
+   updates a moment later, and without this the first thing you touch is old
+   code. After that it is not free — a record on the desk is somebody's work
+   and the transport may be running — so the page prints one line with a
+   button and waits to be told.
+
+   ONCE PER VERSION, AND THE MARK IS WRITTEN BEFORE THE RELOAD. sessionStorage
+   is per-tab and survives a reload, which is exactly the memory a
+   reload-loop guard needs: a worker that activates again in the reloaded page
+   finds its own mark and prints the line instead of reloading a second time.
+   With storage refused (a locked-down browser) the guard cannot be written,
+   so the reload is not taken at all and the line is printed — a box that
+   asks twice is a nuisance, a box that reloads forever is broken. */
+const BOOTED = Date.now();
+const FREE_MS = 20000;             // "seconds old", said in a number
+let everPlayed = false, toldNew = "";
+try { on("transport:state", (d) => { if (d && d.playing) everPlayed = true; }); } catch (e) {}
+
+function newVersion(version) {
+  const v = String(version || "new");
+  if (toldNew === v) return;                       // one worker, one word
+  toldNew = v;
+  const key = "nu.sw.reloaded." + v;
+  let marked = null;
+  try { marked = sessionStorage.getItem(key); } catch (e) { marked = "no-storage"; }
+  const free = !everPlayed && Date.now() - BOOTED < FREE_MS && marked === null;
+  if (free) {
+    try { sessionStorage.setItem(key, "1"); } catch (e) { return sayNew(v); }
+    location.reload();
+    return;
+  }
+  sayNew(v);
+}
+
+// THE LINE, AND IT IS OUTSIDE #app. ui/eight.js draw() empties #app on every
+// edit, so a notice mounted inside it would be destroyed by the next
+// keystroke — the same reason #engine sits under the bar and not in it. The
+// button is the only thing on the page that reloads: the page never decides
+// for a hand once a hand is working.
+function sayNew(v) {
+  let p;
+  try { p = document.getElementById("swnew"); } catch (e) { return; }
+  if (p) return;
+  try {
+    p = document.createElement("p");
+    p.id = "swnew";
+    p.className = "nu-new";
+    p.textContent = "a new version of the box is ready (" + v + ") — ";
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = "reload";
+    b.addEventListener("click", () => { location.reload(); });
+    p.appendChild(b);
+    const bar = document.querySelector(".nu-bar");
+    if (bar && bar.parentNode) bar.insertAdjacentElement("afterend", p);
+    else document.body.insertBefore(p, document.body.firstChild);
+  } catch (e) { /* a page with no body yet: the next load is fresh anyway */ }
+}
+
+// AND A TAB THAT WAS LEFT OPEN ASKS, rather than waiting to be told. A
+// registration only re-checks its script on a navigation, so a box open since
+// this morning would sit on the old code all day with nothing to trigger the
+// activation that speaks. Coming back to the tab is the honest moment to ask,
+// and it costs one conditional request against a no-cache script.
+function watchForNew(reg) {
+  const ask = () => { try { reg.update(); } catch (e) {} };
+  try {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") ask();
+    });
+  } catch (e) {}
 }
 
 // EVERY SAMPLE THE CAST CAN ASK FOR, fetched once. Bounded on purpose: a

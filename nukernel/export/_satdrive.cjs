@@ -178,6 +178,7 @@ const SRCPATCH = {
       r.error ? "ERROR " + r.error
         : ["peak " + r.peakDb, "rms " + r.rmsDb, "crest " + r.crest,
            "over99 " + r.over99, "over1 " + r.over1,
+           "8-16k " + r.hf8_16Db, "4-8k " + r.hf4_8Db,
            "2-8k " + r.hf2_8Db, "300-3k " + r.mid300_3kDb,
            "harm " + r.harmRatioDb, "smp " + r.sampled, "sat[" + r.sats + "]",
            r.secs + "s"].join("  "));

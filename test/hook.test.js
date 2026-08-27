@@ -13,12 +13,14 @@
 // three new words and rendered the same sixteen steps would be the same
 // complaint with better paperwork.
 //
-// FIVE THINGS, in order:
+// SIX THINGS, in order:
 //   1  ten rewrites of iranpop are ten hooks
 //   2  the whole catalog moves, not one genre
 //   3  nothing became a coin toss (same seed -> byte-identical record)
 //   4  an anchor that states what its music is keeps it at every reading
 //   5  a record already written down does not move at all
+//   6  EVERY SLOT MOVES, not only the hook (Paul, 2026-08-27: "the 'topline'
+//      is the same as always for tehran 1974")
 "use strict";
 const assert = require("assert");
 const path = require("path");
@@ -57,6 +59,38 @@ const hookLine = (c) => {
   return out.join(" ");
 };
 const onsetsIn = (c) => c.play.filter((x) => x === "n").length;
+
+/* THE LEGAL FIGURES FOR ONE (ANCHOR, SLOT) — precompose §6b's rule, written
+   again here rather than imported, because a gate that asked the code what it
+   was allowed to do would agree with any bug the code had. Two sections read
+   it: §4 (nothing left its space) and §6 (the space is wide enough to hear).
+     · an anchor's stated `cell` is its DENSITY BAND — "the 303 is a
+       sixteenth-note machine" is a claim about density, not a serial number
+     · a KIND's stated `cell` is its band PLUS THE BANDS EITHER SIDE (2026-08-27
+       — a pad that plays three long notes is still a pad), narrowed to the
+       anchor's band where the anchor states one and the two overlap
+     · a POOL OF ONE IS A PIN, and that is the only exemption any gate here
+       grants: it is computed, never a list of names typed out. */
+const CELLS = Object.keys(Id.CELLS);
+const BANDS = ["held", "short", "moving", "running"];
+const onsets = (c) => Id.CELLS[c].g.filter((v) => v === 1).length;
+const bandOf = (c) => { const n = onsets(c);
+  return n <= 2 ? "held" : n <= 3 ? "short" : n <= 5 ? "moving" : "running"; };
+const bandOfCell = (c) => { const n = onsetsIn(c);      // off the DOCUMENT's own row
+  return n <= 2 ? "held" : n <= 3 ? "short" : n <= 5 ? "moving" : "running"; };
+const nearBands = (c) => { const i = BANDS.indexOf(bandOf(c));
+  return BANDS.slice(Math.max(0, i - 1), i + 2); };
+function cellPool(g, k) {
+  const own = P.IDIOM_ANCHOR[g] || {}, kind = P.KINDS[k] || {};
+  if (kind.cell != null) {
+    const n = CELLS.filter((c) => nearBands(kind.cell).includes(bandOf(c)));
+    if (own.cell == null) return n;
+    const inside = n.filter((c) => bandOf(c) === bandOf(own.cell));
+    // the kind's word as written is always drawable — reading 1 plays it
+    return inside.length ? [kind.cell].concat(inside.filter((c) => c !== kind.cell)) : n;
+  }
+  return own.cell == null ? CELLS : CELLS.filter((c) => bandOf(c) === bandOf(own.cell));
+}
 
 console.log("hook — " + ANCHORS.length + " anchors, seeds " + SEEDS.join(",") + "\n");
 
@@ -163,11 +197,7 @@ ok("determinism: same seed, byte-identical document, 20 anchors x 8 seeds", () =
 ok("idiom respect: every stated axis holds in every slot at every reading", () => {
   assert.strictEqual(P.CELL_BAR_CEILING, 1, "this gate reads one-bar cells");
   const cb = 1, steps = 16;
-  const CELLS = Object.keys(Id.CELLS), CONT = Object.keys(Id.CONTOURS),
-        LAND = Object.keys(Id.LANDINGS);
-  const onsets = (c) => Id.CELLS[c].g.filter((v) => v === 1).length;
-  const band = (c) => { const n = onsets(c);
-    return n <= 2 ? "held" : n <= 3 ? "short" : n <= 5 ? "moving" : "running"; };
+  const CONT = Object.keys(Id.CONTOURS), LAND = Object.keys(Id.LANDINGS);
   const rows = Object.keys(P.IDIOM_ANCHOR).filter((g) => ANCHORS.includes(g));
   // EVERY SLOT, not only the hook: a KIND's own word pins every axis it
   // states, so `riff`, `pad` and `climb` are the tightest cases in the box
@@ -178,10 +208,14 @@ ok("idiom respect: every stated axis holds in every slot at every reading", () =
     if (spaceCache.has(ck)) return spaceCache.get(ck);
     const own = P.IDIOM_ANCHOR[g], G = GENRES[g], row = P.idiomOf(g).row;
     const kind = P.KINDS[k] || {};
-    const pool = (f, all) => kind[f] != null ? [kind[f]]
+    // THE FIGURE is `cellPool` above — a kind's word bands as wide as the
+    // bands either side of it since 2026-08-27, an anchor's word as wide as
+    // its own. What still PINS a slot is its GESTURE: a `contour` stated by
+    // the kind is one value, always, which is what keeps a pad a pad.
+    const pool = (f, all) => f === "cell" ? cellPool(g, k)
+      : kind[f] != null ? [kind[f]]
       : own[f] == null ? all
       : f === "contour" ? [own[f]]
-      : f === "cell" ? all.filter((c) => band(c) === band(own[f]))
       : all;                                          // `land` is open
     const legal = new Set();
     for (const c of pool("cell", CELLS))
@@ -203,14 +237,14 @@ ok("idiom respect: every stated axis holds in every slot at every reading", () =
         const legal = spaceFor(g, k);
         assert(legal.has(J(c)), g + " seed " + s + " slot " + k + " composed a cell " +
                "outside what its IDIOM_ANCHOR row allows (" + J(own) + ")");
-        // ...and the DENSITY claim, said in the document's own units
-        const kindCell = (P.KINDS[k] || {}).cell;
-        const want = kindCell != null ? band(kindCell) : own.cell != null ? band(own.cell) : null;
-        if (want) {
-          const n = onsetsIn(c);
-          const got = n <= 2 ? "held" : n <= 3 ? "short" : n <= 5 ? "moving" : "running";
-          if (got !== want) bandBust.push(g + "/" + s + "/" + k + " " + got + " != " + want);
-        }
+        // ...and the DENSITY claim, said in the document's own units. It is a
+        // SET of bands now and not one word: a kind's figure may sit in the
+        // band either side of its own, and the anchor's band is the fence
+        // around that when the anchor has one.
+        const want = new Set(cellPool(g, k).map(bandOf));
+        const got = bandOfCell(c);
+        if (!want.has(got)) bandBust.push(g + "/" + s + "/" + k + " " + got +
+          " not in " + [...want].join("|"));
         checked++;
       }
     }
@@ -264,6 +298,87 @@ ok("old records: songs.js TERMS renders byte-identical before and after 796 read
   const saved = J(P.genreToDocument("iranpop", 7));
   const reloaded = JSON.parse(saved);
   assert.strictEqual(J(reloaded), saved, "a saved document did not survive a round trip");
+});
+
+/* ======================================================================
+   6 · EVERY SLOT MOVES, NOT ONLY THE HOOK
+   ======================================================================
+   Paul, on staging, the day §1 shipped: *"I clicked rewrite multiple times and
+   never saw a different seed, and the 'topline' is the same as always for
+   tehran 1974."* Measured, and he was right twice: over four presses the
+   topline's RHYTHM never moved and exactly one degree changed. §1 asks the
+   question of slot 0 only, and the answer for the other eight slots was no —
+   six of the nine KINDS state a `cell`, `cell` is the only idiom word that
+   reaches the play row at a one-bar cell, and a stated word was a pin.
+
+   THE FLOOR IS THREE DISTINCT RHYTHMS IN EIGHT READINGS, per generated slot,
+   and it is a floor and not a count: what an ear is owed is that a second
+   press is a second tune, and three different figures in eight presses is the
+   smallest number that cannot be one figure with an accident in it.
+
+   UNLESS ITS ANCHOR PINS IT — and a pin here is a POOL OF ONE, computed the
+   same way §4 computes the legal space, never a name typed into a list. A
+   drone's pad is `long` at every reading because "a drone is a drone", and
+   this gate must say that in the same units the code does. */
+ok("iranpop: every generated slot shows >= 3 distinct rhythms in 8 readings", () => {
+  // the per-slot table, off the ARTIFACT: the document's own `play` rows
+  const table = (g) => {
+    const seen = new Map(), n = new Map();
+    for (const s of SEEDS) {
+      const cells = P.genreToDocument(g, s).material.cells;
+      for (const k of Object.keys(cells)) {
+        const c = cells[k];
+        if (c.kind !== "line") continue;
+        if (!seen.has(k)) seen.set(k, new Set());
+        seen.get(k).add(rhythmOf(c));
+        n.set(k, (n.get(k) || 0) + 1);
+      }
+    }
+    return { seen, n };
+  };
+
+  const { seen, n } = table("iranpop");
+  console.log("\n  iranpop, 8 readings — distinct RHYTHMS per slot\n");
+  console.log("    slot        readings  pool  distinct   the rhythms");
+  const short = [];
+  for (const k of Object.keys(P.KINDS)) {
+    if (!seen.has(k)) continue;
+    const ps = cellPool("iranpop", k).length, d = seen.get(k).size;
+    console.log("    " + k.padEnd(11) + String(n.get(k)).padStart(6) +
+                String(ps).padStart(6) + String(d).padStart(8) + "     " +
+                [...seen.get(k)].map((r) => r.replace(/r/g, ".")).join("  "));
+    if (ps > 1 && d < 3) short.push(k + " " + d);
+  }
+  console.log("");
+  assert.deepStrictEqual(short, [], "slots stuck on one or two rhythms: " + short.join(", "));
+  // ...and the slot Paul named, by name, so this cannot pass on the others
+  assert(seen.has("topline"), "iranpop stopped dealing a topline — this gate is about that slot");
+  assert(seen.get("topline").size >= 3,
+    "the topline moved to only " + seen.get("topline").size + " rhythms in eight readings");
+
+  /* AND THE WHOLE CATALOG, as a fraction. A pool of three drawn eight times
+     misses one of its three about four times in a hundred, so this is a
+     fraction and not a floor — an honest number, measured at 0.975 the day it
+     was written (1610 slots over 199 anchors; 22 pinned by an anchor row, 114
+     dealt in fewer than six of the eight readings and therefore too thin to
+     judge). */
+  let pairs = 0, bad = 0, pinned = 0, thin = 0;
+  const byKind = new Map();
+  for (const g of ANCHORS) {
+    const t = table(g);
+    for (const k of t.seen.keys()) {
+      if (cellPool(g, k).length < 2) { pinned++; continue; }
+      if (t.n.get(k) < 6) { thin++; continue; }
+      pairs++;
+      if (t.seen.get(k).size < 3) { bad++; byKind.set(k, (byKind.get(k) || 0) + 1); }
+    }
+  }
+  const frac = 1 - bad / pairs;
+  console.log("    " + ANCHORS.length + " anchors: " + pairs + " judgeable slots, " +
+              bad + " under three rhythms — " + frac.toFixed(3));
+  console.log("      pinned by an anchor " + pinned + ", dealt too rarely to judge " + thin);
+  console.log("      short by kind: " + (JSON.stringify(Object.fromEntries(byKind)) || "{}") + "\n");
+  assert(frac >= 0.95, "only " + frac.toFixed(3) + " of slots reach three rhythms in eight readings");
 });
 
 console.log("\n" + (fail ? "FAIL " + fail + " / " : "") + pass + " passed");

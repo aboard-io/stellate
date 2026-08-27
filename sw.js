@@ -40,7 +40,7 @@
 // nukernel/audio/offline.js's hold work at all: what the PAGE warms is what the
 // WORKER's own fetch finds, and no request has to be routed or proxied.
 
-const VERSION = "v159";                       // bump every deploy that must reach users
+const VERSION = "v160";                       // bump every deploy that must reach users
 const APP_PREFIX = "stellate-app-";
 const APP_CACHE = APP_PREFIX + VERSION;
 const MEDIA_CACHE = "stellate-media-v1";     // NOT tied to VERSION — see above
@@ -60,18 +60,62 @@ const isMedia = (p) => {
   return IMMUTABLE.test(q) && !MUTABLE.test(q);
 };
 
+// THE DEPLOY HAS TO REACH THE EAR (2026-08-27). Paul, on staging: *"I clicked
+// rewrite multiple times and never saw a different seed."* Measured on a fresh
+// browser context the deployed page did exactly what he asked for; his browser
+// was running yesterday's code. That is this file's doing and it is worth
+// stating plainly: `skipWaiting` + `clients.claim` below make the new WORKER
+// take over at once, but stale-while-revalidate had already handed the OPEN
+// PAGE its scripts out of the old cache — so a deploy landed one reload late
+// and a person who reloads, sees no change and reloads again is fighting a
+// cache, not a bug. (The version bump does the rest by itself: a bumped
+// APP_CACHE is a NEW, EMPTY cache, so nothing after the swap is served stale.)
+//
+// SO ACTIVATION SPEAKS. The worker tells every open page that a version was
+// REPLACED — replaced, not merely installed, because a first install has no
+// stale page to warn — and nukernel/audio/offline.js decides what to do with
+// that: it reloads itself when a reload is free (nothing has played and the
+// page is seconds old, which is exactly Paul's case) and otherwise prints a
+// line with a button, because a reload mid-song is worse than the bug.
+//
+// THE CACHING STRATEGY IS UNTOUCHED. Media stays cache-first-forever, app
+// stays stale-while-revalidate, the offline hold still boots from these caches
+// with the wire cut (test/commute.test.js, test/hold.test.js). The only new
+// bytes on the wire are one postMessage per activation.
 self.addEventListener("install", (e) => { self.skipWaiting(); });
 self.addEventListener("activate", (e) => {
   e.waitUntil((async () => {
     await self.clients.claim();
+    let replaced = false;          // did this worker sweep an OLDER app cache?
     for (const k of await caches.keys()) {
       if (k === APP_CACHE || k === MEDIA_CACHE) continue;
       const legacy = LEGACY.test(k);
       if (!legacy && !k.startsWith(APP_PREFIX)) continue;   // not one of ours: leave it alone
       if (legacy) await salvage(k);
       await caches.delete(k);
+      replaced = true;
     }
+    await tell({ type: "sw:activated", version: VERSION, replaced });
   })());
+});
+
+// EVERY WINDOW, CONTROLLED OR NOT. A page that loaded before this worker
+// existed is exactly the page that needs telling, and `includeUncontrolled`
+// is the difference between reaching it and reaching nobody on a first bump.
+async function tell(msg) {
+  try {
+    const cs = await self.clients.matchAll({ includeUncontrolled: true, type: "window" });
+    for (const c of cs) c.postMessage(msg);
+  } catch (err) { /* a client that went away between the list and the post */ }
+}
+
+// AND A PAGE MAY ASK, rather than only be told: a tab that was backgrounded
+// through the activation still wants a straight answer to "which version am
+// I on", and a gate wants one it can read without waiting for an event.
+self.addEventListener("message", (e) => {
+  const d = e.data;
+  if (!d || d.type !== "sw:which") return;
+  try { e.source.postMessage({ type: "sw:version", version: VERSION }); } catch (err) {}
 });
 
 // One-time migration: the pre-split cache held media and app code together, so

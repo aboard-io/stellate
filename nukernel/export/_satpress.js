@@ -123,7 +123,8 @@ export function stats(L, R) {
   const b = bands(L, R);
   return { peakDb: +db(peak).toFixed(2), rmsDb: +db(rms).toFixed(2),
            crest: +(db(peak) - db(rms)).toFixed(2), over99: over, over1,
-           hf8_16Db: b.hf8_16Db, hf2_8Db: b.hf2_8Db, mid300_3kDb: b.mid300_3kDb,
+           hf8_16Db: b.hf8_16Db, hf4_8Db: b.hf4_8Db,
+           hf2_8Db: b.hf2_8Db, mid300_3kDb: b.mid300_3kDb,
            harmRatioDb: b.harmRatioDb,
            frames: n, secs: +(n / 44100).toFixed(2) };
 }
@@ -133,8 +134,11 @@ function bands(L, R) {
   const win = new Float64Array(N);
   for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1));
   const bin = (hz) => Math.max(1, Math.round(hz * N / 44100));
-  const SPEC = [["hf8_16Db", 8000, 16000], ["hf2_8Db", 2000, 8000],
-                ["mid300_3kDb", 300, 3000]];
+  // hf4_8Db added 2026-08-27 (Paul: "very high tones get shrieky") — the
+  // shriek band proper. hf2_8 is too wide to show a shelf at 5 kHz moving,
+  // because half of it sits under the corner.
+  const SPEC = [["hf8_16Db", 8000, 16000], ["hf4_8Db", 4000, 8000],
+                ["hf2_8Db", 2000, 8000], ["mid300_3kDb", 300, 3000]];
   const acc = SPEC.map(() => []);
   for (let o = 0; o + N <= n; o += hop) {
     for (let i = 0; i < N; i++) { re[i] = (L[o + i] + R[o + i]) * 0.5 * win[i]; im[i] = 0; }

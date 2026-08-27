@@ -52,8 +52,20 @@ highcut = hslider("highcut", 20500, 1000, 20500, 1);
 // state-engine fxParams (MASTER_AIR_SHELF_DB, -3 dB) on every path (press,
 // live ring, wavOut stream). Default mirrors that constant so a host that
 // never sets params hears the same master.
-shelf   = hslider("shelf", -3, -12, 0, 0.1);
-AIR_FC  = 7000;   // shelf corner: midpoint of the cut — puts the >=8 kHz band at ~-3 dB
+//   DEEPENED AND DROPPED 2026-08-27 (Paul: "very high tones get shrieky").
+// The same ear and the same complaint a month later, so the 2026-07-25 answer
+// was simply too gentle: -3 dB starting at 7 kHz leaves the shriek band (4-8
+// kHz, where a bright lead's upper partials and a cymbal's body sit) almost
+// untouched — at 5 kHz the old shelf was down 0.9 dB. Corner 7000 -> 4500 and
+// depth -3 -> -7: the midpoint now lands at 4.5 kHz (-3.5 dB there) and the cut
+// is fully -7 dB by ~9 kHz. MEASURED on the rendered artifact (8 bars, seed 1,
+// hyperpop / bleeptechno / iranpop through nukernel/export/_satpress.js): the
+// 8-16 kHz band falls 4.31/4.35/4.44 dB and 4-8 kHz falls 2.37/2.39/3.09 dB
+// against the old shelf, with the peak moving 0.00/+0.13/+0.17 dB. An
+// intermediate -6/5000 was rendered first and bought only 3.3 dB up top, which
+// is why the numbers are these and not those. Still a SHELF — the air dims, it does not stop.
+shelf   = hslider("shelf", -7, -12, 0, 0.1);
+AIR_FC  = 4500;   // shelf corner: midpoint of the cut — -3.5 dB at 4.5 kHz, -7 dB above ~9 kHz
 // THE TAPE (Paul 2026-07-25: "just a bit of saturated tape wobble plus reverb
 // in the final mix"). Three always-on master colours — the machine the whole
 // catalogue is played back on. Defaults mirror the state-engine constants so a

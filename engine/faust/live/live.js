@@ -740,8 +740,9 @@
     // lowpass is state.tone.highcut, and across 274 genres x seeds 1/5/7 it is ABSENT on
     // 681 of 822 draws (82.8%) — identical at every revision back through d09417e, so
     // nothing recent removed it. 83% of the catalogue has simply never had a ceiling, and
-    // the only global tone control in the chain is MASTER_AIR_SHELF_DB, a -3 dB SHELF at
-    // 7 kHz, which by construction dims the air rather than stopping anything.
+    // the only global tone control in the chain is MASTER_AIR_SHELF_DB, a -7 dB SHELF at
+    // 4.5 kHz (-3 dB then, at 7 kHz, until Paul's 2026-08-27 "very high tones get shrieky"),
+    // which by construction dims the air rather than stopping anything.
     //
     // So this is the missing thing rather than a restored one: one lowpass across the
     // FINAL master — after the limiter, after the found submix, so it catches the field

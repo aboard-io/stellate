@@ -771,6 +771,89 @@
   // reason the draws above run over KIND_OF and not over the record's slots.
   const KEYSHIFT = [-2, -1, 0, 1, 2];
 
+  /* ---------- A KIND'S FIGURE IS A DENSITY TOO (2026-08-27) --------------
+     Paul, on staging, one day after the block above shipped: *"I clicked
+     rewrite multiple times and never saw a different seed, and the 'topline'
+     is the same as always for tehran 1974."* He is right, and the sentence
+     above — "a KIND'S word pins EVERY axis, always" — is the reason. Measured,
+     iranpop over eight readings, DISTINCT RHYTHMS per slot:
+
+       hook 7   answer 6   verseline 4   |   riff 1  counter 1  pad 1
+                                             topline 1  sparse 1  climb 1
+
+     The three that move are exactly the three kinds that state no `cell`
+     (KINDS.hook = {}, and answer and verseline state only a gesture and a
+     landing). The other six state one, `cell` is the only axis that reaches
+     the play row, so their rhythm was decided once in KINDS and no reading
+     could touch it. A topline that changes one degree in four presses is what
+     an ear calls the same topline, and it is the same complaint hook.test.js
+     was written for, one slot to the left.
+
+     SO A KIND'S `cell` IS BANDED, THE WAY AN ANCHOR'S IS — AND WIDER. The
+     argument for banding an anchor's word is that the row claims a DENSITY and
+     not a serial number, and a kind's word makes the smaller claim of the two:
+     `topline: "pickup"` is not "a topline is a pickup figure", it is a DEFAULT
+     for a part whose identity is stated on the axis beside it. WHAT MAKES A
+     PART A PART HERE IS ITS CONTOUR — a pad HOLDS, a counter DROPS, an answer
+     RISES, a topline ARCHES — and every one of those stays pinned, so the
+     slots stay different parts under every reading. The figure underneath the
+     gesture may move to a NEIGHBOURING density: a pad that puts three long
+     notes in the bar instead of two is still a pad; one running eighths is
+     not, and the neighbourhood is exactly what forbids it.
+
+     AN ANCHOR THAT STATES A CELL KEEPS ITS PIN. Where the anchor speaks too,
+     the neighbourhood is NARROWED to the anchor's own band — drone's pad comes
+     back `long` at every reading, because "a drone is a drone" is a claim
+     about this music and the kind's word is a default. Where the two do not
+     overlap at all (a `counter`'s running figure inside drone's held band) the
+     anchor is not talking about this slot: widening a counter to a drone's
+     density would delete the part, so the kind's neighbourhood stands and the
+     anchor's claim reaches the slots it can actually speak for.
+
+     THE DRAWS DO NOT MOVE. Same stream, same one draw per (kind, axis), same
+     order: a wider pool changes WHICH word a draw names, never how many draws
+     a reading spends, so reading 1 is still byte-identical and every seed is
+     still a pure function of (gk, seed).
+
+     MEASURED AFTER, the same eight readings of iranpop, distinct rhythms:
+
+       hook 7   answer 6   riff 4   counter 6   pad 3
+       topline 5   sparse 4   climb 5   verseline 4
+
+     and over the whole catalog, 1610 (anchor, slot) pairs dealt in at least
+     six of the eight readings: 97.5% show three rhythms or more, 22 are
+     pinned by an anchor row and say so. test/hook.test.js §6 is that table,
+     asserted — the floor for iranpop, the fraction for the catalog. */
+  const BANDS = ["held", "short", "moving", "running"];
+  const NEARBAND = {};
+  BANDS.forEach((b, i) => {
+    NEARBAND[b] = BANDS.slice(Math.max(0, i - 1), i + 2)
+      .reduce((a, x) => a.concat(CELLBAND[x] || []), []);
+  });
+
+  // WHAT THIS KIND, IN THIS GENRE, MAY SAY ON THIS AXIS — the three cases in
+  // one place, so they are read side by side instead of inferred from a chain.
+  // A POOL OF ONE IS A PIN and the caller needs no other test for one.
+  function poolFor(f, law, kind, own) {
+    if (kind[f] != null)                            // the PART stated it
+      return f === "cell" ? nearPool(kind[f], own[f]) : [kind[f]];
+    if (own[f] == null || law === "open") return Object.keys(FIELDTABLE[f]);
+    return law === "band" ? CELLBAND[bandOf(own[f])] : [own[f]];   // "pin"
+  }
+  // the kind's own band and the bands either side of it, narrowed to the
+  // anchor's band where the anchor states one and the two overlap.
+  // THE WORD AS WRITTEN IS ALWAYS IN THE HAT, first: reading 1 plays the
+  // kind's own figure (punk's climb walks up, whatever punk says about its own
+  // density), and a pool that could not draw that word again would be a box
+  // that can never come back to the record it opened on — the same argument
+  // KEYSHIFT makes when it keeps zero.
+  function nearPool(kindCell, ownCell) {
+    const near = NEARBAND[bandOf(kindCell)];
+    if (ownCell == null) return near;
+    const inside = near.filter((c) => bandOf(c) === bandOf(ownCell));
+    return inside.length ? [kindCell].concat(inside.filter((c) => c !== kindCell)) : near;
+  }
+
   function reading(gk, seed, kinds) {
     // reading 1 = the idiom as written: no draw, no shift, byte-identical
     if (seed <= 1) return null;
@@ -788,21 +871,17 @@
       const per = {};
       for (const [f, law] of Object.entries(VARIES)) {
         const u = r();                              // ALWAYS, pinned or not
-        // what this reading is allowed to say on this axis
-        const pool = own[f] == null || law === "open" ? Object.keys(FIELDTABLE[f])
-                   : law === "band" ? CELLBAND[bandOf(own[f])]
-                   : [own[f]];                      // "pin"
+        const pool = poolFor(f, law, kind, own);    // what it may say here
         const pick = pool[Math.floor(u * pool.length) % pool.length];
-        // a KIND'S word is never overwritten, and a pool of one is a pin:
-        // writing it back would be the same value with a draw's name on it
-        if (kind[f] == null && pool.length > 1) per[f] = pick;
+        // a pool of one is a pin: writing it back would be the same value
+        // with a draw's name on it
+        if (pool.length > 1) per[f] = pick;
       }
       if (Object.keys(per).length && kinds.has(k)) cells[k] = per;
     }
     const key = KEYSHIFT[Math.floor(r() * KEYSHIFT.length) % KEYSHIFT.length];
     return { cells: Object.keys(cells).length ? cells : null, key };
   }
-
   /* ======================================================================
      7 · THE ENGINEER'S PASS — the Sound axis, and the pocket
      ======================================================================
