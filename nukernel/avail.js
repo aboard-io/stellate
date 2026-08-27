@@ -534,7 +534,11 @@
       values: () => opts(Object.keys(MODES), MODELABEL),
       get: (doc) => doc.alphabet.mode,
       set: (doc, s, v) => { doc.alphabet.mode = v; } },
-    "alphabet.harmony": { label: "the changes", scope: "song",
+    // "harmony", 2026-08-27 — FUTURE.md §5: "the changes" headed TWO controls
+    // (this select and the chord table); the table alone keeps the name, and
+    // the style select takes the axis's own word. The KEY stays
+    // `alphabet.harmony` — vocabulary keys never move.
+    "alphabet.harmony": { label: "harmony", scope: "song",
       values: () => HARMONIES().map((h) => ({ value: h, label: harmonyLabel(h) })),
       get: (doc) => doc.alphabet.harmony,
       set: (doc, s, v) => { doc.alphabet.harmony = v; } },

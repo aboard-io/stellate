@@ -820,12 +820,21 @@ export function mount(parent, ctx) {
       .sort((a, b) => b[1].n - a[1].n || (a[0] < b[0] ? -1 : 1));
     const six = rows.slice(0, 6).map((r) => r[0]);
     const more = rows.length - six.length;
-    const nP = at.places.size, nE = at.exact.size, nN = at.near.size;
-    say.textContent = Y + " — " + eraOf(Y) + " — " + nP + " place"
-      + (nP === 1 ? "" : "s") + " on the globe: " + nE + " record"
-      + (nE === 1 ? "" : "s") + " made this year, "
-      + (nN === 0 ? "none" : nN) + " more within ten years. "
-      + six.join(", ") + (more > 0 ? ", … and " + more + " more" : "") + ".";
+    /* COMPRESSED 2026-08-27 per FUTURE.md §5's own example — it read
+       "600 — the six-hundreds — 1 place on the globe: 1 record made this
+       year, none more within ten years. Rome." and the row's target is
+       "600 · 1 record within ten years · Rome" ("keep the data, drop the
+       tour guide"). The data survives whole: the record count is exact+near
+       (made this year + within ten), and the PLACE COUNT is still in the
+       sentence as the list itself — six names plus "+N more" sums to
+       at.places.size, which is what G22 (test/atlas.js) now parses to hold
+       "the earth and the sentence are the same fact". The era word left with
+       the dashes; eraOf stays exported by atlas.js for whoever needs an
+       era's name. */
+    const nR = at.exact.size + at.near.size;
+    say.textContent = Y + " · " + nR + " record" + (nR === 1 ? "" : "s")
+      + " within ten years · " + six.join(", ")
+      + (more > 0 ? ", +" + more + " more" : "");
   }
 
   /* ---------- the tap that composes ------------------------------------ */

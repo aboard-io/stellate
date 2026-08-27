@@ -66,8 +66,11 @@
     // a new alphabet, it is the default one finally wearing its name.
     aeolian:  DIATONIC,
   };
+  // "harmonic minor", 2026-08-27 (FUTURE.md §5, the musicologist's row): its
+  // sibling already read "melodic minor", and bare "harmonic" is a different
+  // word in music. The KEY stays `harmonic` — labels are not storage.
   const MODELABEL = { dorian: "dorian", phrygian: "phrygian",
-                      harmonic: "harmonic", mixo: "mixolydian",
+                      harmonic: "harmonic minor", mixo: "mixolydian",
                       ionian: "major", lydian: "lydian", melodic: "melodic minor",
                       aeolian: "natural minor" };
 

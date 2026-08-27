@@ -570,7 +570,7 @@ const opensAPicker = (n) => !!n && n.tagName === "SELECT" && !n.multiple;
 // behind it: the scroll pane it sits in if it has one (`.nu-pane` is already
 // `tabIndex = 0`, because a region a mouse can scroll must be reachable from a
 // keyboard), otherwise its axis — and an axis's first child is the sticky <h2>
-// that names it, so what is announced is "3 · Sheet music" and not silence.
+// that names it, so what is announced is "Motifs" and not silence.
 // `tabIndex = -1` is set on the axis at the moment of use rather than by
 // axis(): it makes the section programmatically focusable and leaves it out of
 // the tab order, and the next rebuild makes a section without it, so nothing
@@ -2990,7 +2990,10 @@ function deckBlock(parent) {
   parent.textContent = "";
   const ax = el("section", null, "nu-ax");
   ax.id = "ax-deck";
-  ax.append(el("h2", "the score"));
+  // "The score", initial cap, 2026-08-27 — the §5 table's own spelling for
+  // the foot ("`Motifs` mid-page + `The score` at the foot"), and the one
+  // case rule every heading now follows.
+  ax.append(el("h2", "The score"));
   // the tabs — CONTROLS, so outside both [data-live] blocks (A1's law)
   const row = el("div", null, "nu-row nu-decktabs");
   deckTabNot = el("button", "notation");
@@ -3342,7 +3345,12 @@ function materialAxis(ax) {
   // heading says: the tunes and their editors. What Paul asked for in the
   // 2026-08-25 sentence — the whole band, visible, moving — is answered
   // better one screen down, where it no longer pushes the editors around.
-  heading(ax, "the motifs");
+  //
+  // ...AND THE "the motifs" <h3> WENT WITH IT, 2026-08-27: while the axis
+  // heading read "Sheet music" and held the score too, the h3 said which half
+  // of the section you had reached. The heading says "Motifs" itself now
+  // (FUTURE.md §5), so a sub-heading repeating it was the second owner of one
+  // word — deleted, not moved.
   // THE SECTION STRIP IS NOT HERE ANY MORE, AND THAT IS THE ROUND OF
   // 2026-08-25. It stood exactly here and its own note argued the position
   // well — "which composed staves a motif shows is decided by the section you
@@ -3409,7 +3417,7 @@ function drawMaterial() {
   // does (holdHeight): emptying it is what a scroll anchor reacts to.
   const release = holdHeight(ax);
   ax.textContent = "";
-  ax.append(h2 || el("h2", "3 · Sheet music"));
+  ax.append(h2 || el("h2", "Motifs"));
   // THE STAVES STILL ARRIVE ON A PROMISE, so the axis is still shorter than it
   // is about to be, and the page must not jump when they land. This pinned
   // `#secs` — the strip you had just touched, which sat above everything being
@@ -4779,8 +4787,8 @@ function benchVel(key, aria, get, set, commitFn) {
    refused, never drawn dead). */
 function benchRefusal(parent, key, scaleWord) {
   const p = el("p", null, "nu-benchbar");
-  p.append(el("span", "pitch lattice — the record's own alphabet (" +
-    scaleWord + "; set under 2 · the alphabet)", "nu-hint"));
+  p.append(el("span", "pitch lattice — " + scaleWord + ", set under Harmony",
+    "nu-hint"));
   const b = document.createElement("button");
   b.type = "button"; b.disabled = true; b.dataset.k = key;
   b.dataset.why = "accidentals need the chromatic alphabet — a cents channel " +
@@ -4952,7 +4960,7 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
      gains its role-under-the-chord sentence. */
   const modeSet = new Set((MODES[DOC.alphabet.mode] || MODES.aeolian)
     .map((x) => ((x % 12) + 12) % 12));
-  const rail = el("p", "tap a row — this rail says what the step is doing", "nu-wisdom");
+  const rail = el("p", "tap a row — the step is read here", "nu-wisdom");
   const speak = (i) => {
     const k = H.play[i], beat = Math.floor((i % 16) / 4) + 1;
     const at = "step " + (i + 1) + " (beat " + beat +
@@ -5535,7 +5543,7 @@ function normalize() {
    button rather than the button inside the live element:
 
        <th><button data-k="secc2"><span data-live="count"><span>2</span></span>
-             <span class="nu-vh"> — you are writing this</span></button></th>
+             <span class="nu-vh"> · yours</span></button></th>
 
    The clock still writes only inside [data-live] and still writes only text.
    The button, its listener and its `aria-pressed` sit OUTSIDE that span and
@@ -5562,7 +5570,12 @@ function secNumber(sid, label, here, on) {
   live.dataset.live = "count";        // the playhead's, and nothing else's
   live.append(el("span", label));
   b.append(live);
-  if (here) b.append(el("span", " — you are writing this", "nu-vh"));
+  // " · yours", 2026-08-27 — FUTURE.md §5 compressed "1 — you are writing
+  // this" to "the fact, not a sentence on a button". The table's own spelling
+  // is "take 1 · yours"; the word "take" is not printed here because this
+  // button numbers a SECTION, not a take (`performance.take` has its own
+  // slider and readout), and a heading may not claim a fact it does not hold.
+  if (here) b.append(el("span", " · yours", "nu-vh"));
   b.addEventListener("click", on);
   th.append(b);
   return { th, live };
@@ -7167,9 +7180,11 @@ function performanceTab(parent) {
   const tl = el("label");
   tl.append(el("span", "take", "nu-w"), tk.r, document.createTextNode(" "), tk.out);
   FIELD(parent, tl);
-  P(parent, el("span", "a take is a seed: the same number is the same " +
-    "performance forever, and a different one moves the hand, the chance hits " +
-    "and the ornaments without moving one note anybody chose.", "nu-why"));
+  // compressed 2026-08-27 (the text diet, FUTURE.md §2): the caption keeps
+  // the two facts — deterministic seed, no chosen note moves — and loses the
+  // enumeration the readout's own words already carry.
+  P(parent, el("span", "a take is a seed — the hand moves, no chosen note does",
+    "nu-why"));
   number("humanize", "humanize", D.performance.humanize,
     (v) => D.performance.humanize = v, parent, 0, 1, 0.05);
   check("ontime", "dead on the grid", D.performance.ontime,
@@ -7762,8 +7777,11 @@ function redrawApp(box) {
   //  deleted, for the second time: see `performanceTab` for why the
   //  enumeration and the headings are allowed to disagree.)
 
-  /* 1 TIME */
-  const axTime = axis(box, "ax-time", "1 · Time");
+  /* 1 TIME — THE ORDINALS CAME OFF EVERY HEADING, 2026-08-27 (FUTURE.md §5:
+     "4–8" and "9 of eight" proved the numbering scheme broke; scroll order
+     carries the sequence). The AXES order is unchanged — the headings just
+     stopped counting themselves. */
+  const axTime = axis(box, "ax-time", "Time");
   D.sound = D.sound || { level: 1 };
   // RECORD GAIN MOVED TO THE BOARD, 2026-08-27. The `level` slider stood here
   // since the axis existed and it was a SOUND fact filed under Time — the
@@ -7788,16 +7806,28 @@ function redrawApp(box) {
   // where the extractor reads the same three cases the page draws. It moved out
   // of this file when the menu became a sheet and it did not move back when the
   // sheet became a menu again — which is the point of one spec for two widgets.
-  // METER, READING SPEED, SWING — SETTLED PARAMETERS, AND THE THREE PAUL NAMED
-  // FIRST (2026-08-24, evening: "We can return some things to select menus:
-  // meter / reading speed / swing"). Each is one value for the whole record,
-  // decided once. A lit sheet is for comparing many musical options at a time;
-  // there is nothing to compare in "is this in three or in four".
-  selectRow(axTime, null, [shSpec("time.meter", {}), shSpec("time.rate", {}),
-                           shSpec("time.swing", {})]);
+  // METER AND SWING — SETTLED PARAMETERS (2026-08-24, evening: "We can return
+  // some things to select menus: meter / reading speed / swing"). Each is one
+  // value for the whole record, decided once. A lit sheet is for comparing
+  // many musical options at a time; there is nothing to compare in "is this
+  // in three or in four".
+  //
+  // THE "reading speed" MENU IS DELETED, 2026-08-27 (FUTURE.md §5: "the
+  // 1×/half/double buttons own the fact — one fact, one control"). Verified
+  // on the rendered page before the cut: tempoRow above draws half time /
+  // double time / as written / the default speed, each writing `time.rate`
+  // through the same absent-is-default spelling — the menu was a second
+  // writable owner of one fact. avail.js SHEETS["time.rate"] stays: it is the
+  // data tier's three-way mapping, and the buttons read the same cases.
+  // test/selects.js MENUS dropped the row in the same commit.
+  selectRow(axTime, null, [shSpec("time.meter", {}), shSpec("time.swing", {})]);
 
-  /* 2 ALPHABET */
-  const axAlpha = axis(box, "ax-alphabet", "2 · Alphabet");
+  /* 2 ALPHABET — AND THE HEADING SAYS "HARMONY", 2026-08-27 (FUTURE.md §5:
+     "key/mode/changes is harmony to a musician; key `alphabet` stays"). The
+     AXIS is still Alphabet everywhere the vocabulary speaks — `doc.alphabet.*`,
+     `#ax-alphabet`, avail.js's `alphabet.*` rows — exactly the Material→"Sheet
+     music" precedent; AXES.md carries the join. */
+  const axAlpha = axis(box, "ax-alphabet", "Harmony");
   // THE CHANGES ARE AN AXIS AND THE PAGE HAS NEVER OFFERED THEM. `harmony` has
   // been in the document since the first version (songs.js: "modal is the
   // anchor's own harmony and it means one mode, no changes") and there was no
@@ -7828,7 +7858,7 @@ function redrawApp(box) {
   // decision (2026-08-25) and not a sentence of Paul's, so it is written down
   // with its argument rather than as a quotation: tapping Am gives you A minor,
   // and you can still push it to A dorian with the menu next to it without the
-  // circle having to grow. The mode list is dorian, phrygian, harmonic,
+  // circle having to grow. The mode list is dorian, phrygian, harmonic minor,
   // mixolydian, major, lydian, melodic minor and natural minor — longer than
   // major-and-minor, and seven rings would be a worse object than the one
   // musicians actually keep in their heads.
@@ -7851,21 +7881,25 @@ function redrawApp(box) {
      and the fixtures that capture all of it. Renaming the model would be a data
      migration across six files this slice does not own, for a word nobody
      types. Renaming the HEADING costs one string and answers the whole of what
-     was asked: what a reader sees over the score and the motifs is "3 · Sheet
-     music", which is what the axis has actually contained since the score
-     landed above the motifs this morning. AXES.md carries the note beside the
-     Material row so the vocabulary and the page cannot drift.
+     was asked. IT SAYS "MOTIFS" NOW — REWRITTEN 2026-08-27: the heading read
+     "3 · Sheet music" while the score sat at the top of this axis, and the
+     score has moved whole to the deck at the foot (FUTURE.md §5: "the section
+     is two things; the score moves per the brief" — `Motifs` mid-page, `The
+     score` at the foot). What is left under this heading is the motifs and
+     their editors, so the heading says so. AXES.md carries the join beside
+     the Material row so the vocabulary and the page cannot drift.
 
      THE ID STAYS `ax-material` for the same reason the model does: it is the
      anchor `drawMaterial()` pins the page on and the handle three gates use. */
-  materialAxis(axis(box, "ax-material", "3 · Sheet music"));
+  materialAxis(axis(box, "ax-material", "Motifs"));
 
   /* 4-8 FORM x CAST x DEVELOPMENT x SOUND x PERFORMANCE */
-  // `4–8` and not `4–7` since 2026-08-25: Performance moved in as a tab of this
-  // block ("Why don't you move performance in as a tab too"), so the heading
-  // has to say which axes are under it. The full argument, and the departure
-  // from one-heading-per-axis it makes, is on `performanceTab`.
-  bandBlock(axis(box, "ax-band", "4–8 · The band"));
+  // IT SAID `4–8 · The band` UNTIL 2026-08-27 (and `4–7` before Performance
+  // moved in as a tab — "Why don't you move performance in as a tab too").
+  // The range was the numbering scheme admitting failure (FUTURE.md §5), so
+  // the ordinals went from every heading at once; which axes live under this
+  // one is still `performanceTab`'s argument, unchanged.
+  bandBlock(axis(box, "ax-band", "The band"));
 
   /* THE BOARD ("an actual mixing board at the end is a nice idea"). Not one of
      the eight axes and not in their container: it is what the record lands on,

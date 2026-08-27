@@ -65,7 +65,15 @@ const REAL = /nukernel\/index\.html/.test(PAGE);
  *   plays, material, instrument -- dropdowns/selects" */
 const MENUS = {
   "time.meter":       "meter",
-  "time.rate":        "reading speed",
+  /* ...AND `time.rate` LEFT THE LIST, 2026-08-27 (FUTURE.md §5: "`reading
+   * speed` select deleted — the 1×/half/double buttons own the fact — one
+   * fact, one control"). Paul named it on the evening list, and then the
+   * tempo row's own glyph buttons (half time / double time / as written /
+   * default, ui/eight.js TEMPOS) grew to cover every case the menu offered —
+   * two writable owners of `time.rate` on one page. The menu died, the
+   * buttons stayed (test/knobs.js 8e drives them), and avail.js
+   * SHEETS["time.rate"] keeps the three-way mapping in the data tier;
+   * test/text-diet.test.js pins the Time axis at exactly two selects. */
   "time.swing":       "swing",
   /* ...AND `alphabet.key` IS NOT ON THIS LIST ANY MORE. It was, from the evening
    * of 2026-08-24 until the morning of 2026-08-25, and the line that carried it
@@ -82,7 +90,9 @@ const MENUS = {
    * rather than fewer, and check 3 still refuses to let it quietly become a menu
    * again. The MODE stays here, beside it, exactly as it was. */
   "alphabet.mode":    "mode",
-  "alphabet.harmony": "the changes",
+  // labelled "harmony" since 2026-08-27 (FUTURE.md §5: "two controls, one
+  // heading" — the table alone keeps "the changes"); the KEY never moved.
+  "alphabet.harmony": "harmony",
   "alphabet.quality": "chord quality, inside the changes table",
   "form.role":        "the band > form",
   "cast.part":        "voices > plays",

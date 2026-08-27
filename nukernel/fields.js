@@ -1535,7 +1535,12 @@
     // — `d*0.2`, `(ppl+ppr)*0.12` — are LITERALS in the DSP). Drawing a `to`
     // on them would be the knob-that-lies this file exists to prevent. A group
     // has no engine bus, so `to` is the only thing it is.
-    ...(r.engine ? [] : [{ key: "to", label: "goes to", table: BUSTO,
+    // "out", 2026-08-27 (FUTURE.md §5: "routing as a glyph, deletes the
+    // narration" — a surface drawing this row prints the value as an arrow,
+    // `→ main`). No surface draws it today — the groups left the board with
+    // the 2026-08-27 series — but the label table is the one owner of the
+    // word, so it is renamed where it lives.
+    ...(r.engine ? [] : [{ key: "to", label: "out", table: BUSTO,
                            labels: BUSTO, default: null }]),
     ...r.knobs,
   ] }));

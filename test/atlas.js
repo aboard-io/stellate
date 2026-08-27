@@ -342,7 +342,9 @@ function g18() {
   check(shape.grat > 0, "G7 · the graticule is drawn (" + shape.grat + " lines)");
   check(shape.arc === 180,
     "G7 · boot opens on the WHOLE EARTH, not zoomed to Rome (arc " + shape.arc + " degrees)");
-  check(shape.section === "SECTION" && shape.head === "where and when",
+  // "Where & when" since 2026-08-27 — FUTURE.md §5: "keep the name, fix the
+  // case". Same heading, same survival claim.
+  check(shape.section === "SECTION" && shape.head === "Where & when",
     "G7 · Paul: \"Don't make 'Details' collapsible.\" — #atlas is a <" +
     shape.section.toLowerCase() + "> and its heading survived mount() (" +
     JSON.stringify(shape.head) + ")");
@@ -1212,7 +1214,21 @@ function g18() {
       const marks = [...document.querySelectorAll("#atlasMarks .place")];
       const on = marks.filter((m) => m.getAttribute("data-when") === "1");
       const say = document.getElementById("atlasSay").textContent || "";
-      const m = say.match(/— (\d+) places? on the globe/);
+      /* THE SENTENCE COMPRESSED 2026-08-27 (FUTURE.md §5: "600 · 1 record
+         within ten years · Rome" — keep the data, drop the tour guide), and
+         the parse moved with it. It read `/— (\d+) places? on the globe/`;
+         the place COUNT left the words and became the list itself, so the
+         number to hold against the earth is now the list: the named places
+         plus the "+N more" tail sum to atYear's place count, and that sum is
+         what `said` carries. The claim is unchanged — the earth and the
+         sentence are the same fact, read off the artifact. */
+      const m = say.match(/^\d+ · \d+ records? within ten years · (.+)$/);
+      let said = -1;
+      if (m) {
+        const parts = m[1].split(", ");
+        const plus = /^\+(\d+) more$/.exec(parts[parts.length - 1] || "");
+        said = plus ? (parts.length - 1) + (+plus[1]) : parts.length;
+      }
       return {
         drawn: on.length,
         tabbable: marks.filter((m2) => m2.getAttribute("tabindex") === "0").length,
@@ -1235,7 +1251,7 @@ function g18() {
           && m2.getBoundingClientRect().width > 0).length,
         ghosts: marks.filter((m2) => /nothing near/
           .test(m2.getAttribute("aria-label") || "")).length,
-        said: m ? +m[1] : -1, say,
+        said, say,
       };
     });
     check(g.drawn === g.said,

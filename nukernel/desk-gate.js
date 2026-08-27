@@ -1682,18 +1682,35 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        JSON.stringify({ at1, at3 }));
 
     // ---- 5 · THE ONE BUS-TO-BUS SEND THAT DOES REACH THE ENGINE IS NAMED,
-    // AND IT IS NOT DRAWN TWICE. fx_bus.dsp:221 mixes the main's dry into bus 1
-    // at `0.5*mrev`, and `mrev` is the master's `space` chip. The page has to
-    // say so — an edge nobody knows about is the same as no edge — and it must
-    // NOT grow a second control for it.
+    // AND IT IS NOT DRAWN TWICE. REWRITTEN 2026-08-27 (the text diet,
+    // FUTURE.md §2): the board printed MAIN_TO_BUS1 and every FIXED_EDGES
+    // sentence to end users — fx_bus.dsp line numbers included — and that
+    // essay moved to nukernel/docs/BOARD-ROUTING.md with a one-line pointer
+    // left on the board. "An edge nobody knows about is the same as no edge"
+    // still binds, so the claim is now held in two halves: the RENDERED page
+    // must carry the pointer (a real link to the doc), and the DOC must carry
+    // each edge's own words verbatim — audio/desk.js stays the one owner and
+    // this diff is what keeps the quotes from drifting.
     const said = await page.evaluate(() => document.body.innerText);
-    ok(said.includes(MAIN_TO_BUS1.why),
-       "the page prints the one live bus-to-bus send in the engine's own " +
+    const routePtr = await page.evaluate(() => {
+      const a = [...document.querySelectorAll("#board a")]
+        .find((x) => /BOARD-ROUTING\.md$/.test(x.getAttribute("href") || ""));
+      return a ? { href: a.getAttribute("href"), text: a.textContent } : null;
+    });
+    ok(!!routePtr && /docs\/BOARD-ROUTING\.md/.test(routePtr.text),
+       "the board carries the one-line pointer to docs/BOARD-ROUTING.md " +
+       "(the essay moved, the address is printed)", JSON.stringify(routePtr));
+    // the doc wraps its quotes as markdown blockquotes, so the comparison is
+    // whitespace-flattened — the WORDS must match, not the line breaks.
+    const routeDoc = require("fs").readFileSync(R("docs/BOARD-ROUTING.md"), "utf8")
+      .replace(/^> /gm, "").replace(/\s+/g, " ");
+    ok(routeDoc.includes(MAIN_TO_BUS1.why),
+       "the doc prints the one live bus-to-bus send in the engine's own " +
        "words, and points at the control that owns it (`space`)");
     for (const e of FIXED_EDGES)
-      ok(said.includes(e.why),
+      ok(routeDoc.includes(e.why),
          "…and the fixed edge " + e.from + " -> " + e.to + " at " + e.amount +
-         " is printed rather than drawn as a knob that cannot move");
+         " is printed in the doc rather than drawn as a knob that cannot move");
     const spaceCtl = await page.evaluate(() =>
       document.querySelectorAll('[data-sel^="master|space"]').length);
     ok(spaceCtl === 1,

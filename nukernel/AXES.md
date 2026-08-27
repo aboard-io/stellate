@@ -22,16 +22,37 @@ them**.
 | **Sound** | voices, treatment, balance | `instr/tone/kit`, the desk, `MIXER` | genre + engineer |
 | **Performance** | the seeded human layer — timing, velocity, hand, ornament | `perform`, `humanize`/`touch`, `song.take` | song |
 
-**The page calls Material "Sheet music."** Paul, 2026-08-25: *"rename
-'Material' to 'Sheet music'."* The AXIS keeps the name it has here, because
-"material" is not only a word in this vocabulary — it is the document key
+**The page calls Material "Motifs" — REWRITTEN 2026-08-27.** This paragraph
+said "Sheet music" (Paul, 2026-08-25: *"rename 'Material' to 'Sheet music'"*),
+and the reason it gave for that heading — "since the score of the whole band
+landed above the motifs, everything under that heading is notation" — is the
+reason it changed again: the score moved whole to the deck at the foot of the
+page, and FUTURE.md §5 split the name with it ("the section is two things;
+the score moves per the brief" — `Motifs` mid-page, `The score` at the foot).
+The AXIS keeps the name it has here, exactly as before, because "material" is
+not only a word in this vocabulary — it is the document key
 (`doc.material.cells`), the resolver (`document.js materialAt`), two sheet keys
 (`material.cell`, `cast.material`), the rules in `gates.json` that are keyed by
-them, and `#ax-material`. What changed is the HEADING a reader sees over the
-axis on `ui/eight.js`, and it changed because the axis's contents changed
-first: since the score of the whole band landed above the motifs, everything
-under that heading is notation. One fact, one owner: the vocabulary says
-Material, the page says Sheet music, and this paragraph is the join.
+them, and `#ax-material`. One fact, one owner: the vocabulary says Material,
+the page says Motifs, and this paragraph is the join.
+
+**The page calls Alphabet "Harmony" (2026-08-27).** FUTURE.md §5, the UX
+review's row: *"key/mode/changes is harmony to a musician; key `alphabet`
+stays."* The AXIS keeps its name here for the same reason Material does:
+"alphabet" is the document key (`doc.alphabet.*`), the avail.js rows
+(`alphabet.key/mode/harmony/quality`), `#ax-alphabet`, and kernel.js's own
+doctrine that a phrase's `deg` is alphabet-free. And one of its FIELDS is
+literally named `harmony` — the heading borrows the axis's most musician-legible
+word without moving any key under it. The vocabulary says Alphabet, the page
+says Harmony, and this paragraph is the join.
+
+**The headings stopped counting themselves (2026-08-27).** The page's axis
+headings carried ordinals — `1 · Time` through `9 · The producer` — and
+FUTURE.md §5 dropped them all: *"'4–8' and '9 of eight' prove the scheme
+broke; scroll order carries the sequence."* The SEQUENCE is untouched and is
+this file's (THE SEQUENCE IS AN EVALUATION ORDER, below); only the numbers a
+reader saw are gone. Nothing keyed on them — the anchors were always
+`#ax-time`, `#ax-alphabet`, `#ax-material`, `#ax-band`, `#ax-produce`.
 
 **The page says the producer last (2026-08-27).** The vocabulary's order is the
 attribute grammar's dependency relation — eight axes readable in one pass, and

@@ -416,8 +416,11 @@ function slotEl(ctx, voice, slots, i, stereoWhy) {
   row.append(sel);
   box.append(row);
   if (whyEl) { box.append(whyEl); box.classList.add("is-off"); return box; }
+  // "no effect seated" DELETED 2026-08-27 (text diet): the seat's own select
+  // already prints "—", and a caption repeating a control's value is a second
+  // owner of it. `.is-empty` on the box keeps the visual quiet.
   const s = slots[i];
-  if (!s) { box.append(el("small", "no effect seated", "nu-hint")); return box; }
+  if (!s) return box;
   const body = el("div", null, "nu-slotbody");
   const n = i + 1;
   // THE WET IS THE CHIP'S OWN MIX PARAM, SURFACED — or refused where the
@@ -511,8 +514,10 @@ export function engineer(parent, ctx, voiceName) {
   row("inserts", slots.length
         ? slots.map((s) => FXLABEL[s.k] || s.k).join(" → ") : null,
       slots.length ? "wet and settings on the board" : "");
-  row("cut / alone", (d.mute ? "cut" : "") + (d.mute && d.solo ? " · " : "") +
-      (d.solo ? "alone" : "") || null, "");
+  // "mute / solo", 2026-08-27 — FUTURE.md §5: "cut" collided with EQ cut
+  // three rows up, and mute/solo are the two words every console wears.
+  row("mute / solo", (d.mute ? "mute" : "") + (d.mute && d.solo ? " · " : "") +
+      (d.solo ? "solo" : "") || null, "");
   const tp = el("div");
   tp.className = "nu-pane";
   tp.tabIndex = 0;
@@ -522,10 +527,12 @@ export function engineer(parent, ctx, voiceName) {
   tp.dataset.pane = "mirror|" + voiceName;
   tp.append(t);
   parent.append(tp);
+  // compressed 2026-08-27 (the text diet): the one-owner argument lives in
+  // this file's header; the page needs the pointer, not the essay.
   const go = el("p", null, "nu-hint");
   const a = document.createElement("a");
   a.href = "#board"; a.textContent = "set it on the board";
-  go.append(document.createTextNode("read-only — one writable owner per fact, and it is the board. "), a);
+  go.append(document.createTextNode("read-only — "), a);
   parent.append(go);
 }
 
@@ -546,10 +553,12 @@ export function mount(parent, ctx) {
     ? playingSec : 0) || {}; } catch (e) { return {}; } })();
   const drives = [];            // { el, key } — the model readout per strip
 
-  const note = el("p", "down a strip reads in signal order: instrument → three"
-    + " inserts (each with its own wet) → sends, tapped after the inserts → EQ"
-    + " → pan → the fader. Dim is derived, bright is set; the green bar on the"
-    + " main strip is measured.", "nu-hint");
+  // COMPRESSED 2026-08-27 (the text diet, FUTURE.md §2: "signal flow is drawn
+  // as arrows, not narrated"). It read 230 chars narrating the strip order the
+  // strip's own row labels and footer arrows already draw; what stays is the
+  // three-word legend no control carries.
+  const note = el("p", "dim is derived · bright is set · green is measured",
+    "nu-hint");
   host.append(note);
 
   /* ================= THE STRIPS ================= */
@@ -662,7 +671,10 @@ export function mount(parent, ctx) {
     fw.append(col("meter", vrefused(null, voice.name + " meter",
       "no tap", METER_WHY, true)));
     const duo = el("div", null, "nu-duo");
-    for (const [k2, label] of [["mute", "cut"], ["solo", "alone"]]) {
+    // mute/solo WEAR THEIR OWN NAMES since 2026-08-27 (FUTURE.md §5: "cut"
+    // collided with EQ cut three rows up; the desk keys were always mute/solo,
+    // so the buttons stop translating them).
+    for (const [k2, label] of [["mute", "mute"], ["solo", "solo"]]) {
       const b = el("button", label, "nu-tgl");
       b.type = "button";
       b.dataset.k = "b|" + k2 + "|" + voice.name;
@@ -746,8 +758,8 @@ export function mount(parent, ctx) {
     p.setAttribute("aria-label", "genre fx bus");
     const h = el("div", null, "nu-bushead");
     h.append(el("b", "genre fx bus · " + busName("genre"), "nu-busname"));
-    h.append(el("small", "in ← the strips' genre sends · chain dealt by the" +
-      " genre at compose, edited here", "nu-busin"));
+    h.append(el("small", "in ← genre sends · dealt by the genre, edited here",
+      "nu-busin"));
     p.append(h);
     const g = el("div", null, "nu-gear");
     labelled(g, "called", busSel("genre", knobOf("genre", "name")));
@@ -773,7 +785,7 @@ export function mount(parent, ctx) {
     p.setAttribute("aria-label", "delay bus");
     const h = el("div", null, "nu-bushead");
     h.append(el("b", "delay bus · " + busName("echo"), "nu-busname"));
-    h.append(el("small", "in ← the strips' " + busName("echo") + " sends", "nu-busin"));
+    h.append(el("small", "in ← " + busName("echo") + " sends", "nu-busin"));
     p.append(h);
     const g = el("div", null, "nu-gear");
     labelled(g, "called", busSel("echo", knobOf("echo", "name")));
@@ -814,8 +826,8 @@ export function mount(parent, ctx) {
     p.setAttribute("aria-label", "reverb bus");
     const h = el("div", null, "nu-bushead");
     h.append(el("b", "reverb bus · " + busName("rev"), "nu-busname"));
-    h.append(el("small", "in ← the strips' " + busName("rev") +
-      " sends + the delay's bleed (the knob above)", "nu-busin"));
+    h.append(el("small", "in ← " + busName("rev") +
+      " sends + the delay's bleed", "nu-busin"));
     p.append(h);
     const g = el("div", null, "nu-gear");
     labelled(g, "called", busSel("rev", knobOf("rev", "name")));
@@ -848,8 +860,8 @@ export function mount(parent, ctx) {
     p.setAttribute("aria-label", "main");
     const h = el("div", null, "nu-bushead");
     h.append(el("b", "main · the record", "nu-busname"));
-    h.append(el("small", "in ← the strips' dry + the reverb bus out · out → " +
-      "the speakers", "nu-busin"));
+    h.append(el("small", "in ← dry + reverb out · out → the speakers",
+      "nu-busin"));
     p.append(h);
     const g = el("div", null, "nu-gear");
     for (const f of MASTER_FIELDS) {
@@ -911,8 +923,15 @@ export function mount(parent, ctx) {
     {
       const rec = DD().boxFxOf(doc);
       const wrap = el("div", null, "nu-rec");
-      wrap.append(el("p", "…and what the whole record is dipped in — every " +
-        "seated voice at once.", "nu-hint"));
+      // TWO HINT PARAGRAPHS CAME OFF THIS BLOCK, 2026-08-27 (the text diet,
+      // FUTURE.md §2). "…and what the whole record is dipped in — every
+      // seated voice at once." narrated what the label "character" plus the
+      // strip's position on the MAIN plate already say; "hold ⌘ (or Ctrl) to
+      // pick a second and a third…" taught the browser's own <select
+      // multiple> gesture (§5: "tap chips delete the ⌘-instruction"). The
+      // CONTROL itself stands — §5 marks the multiselect to die when bus
+      // chain slots absorb `sound.fx`, and that is a document/audio change
+      // the word wave does not own; only its prose died today.
       sheet(wrap, {
         key: "master.fx", label: "character",
         multi: true, max: MAX_FX,
@@ -927,13 +946,13 @@ export function mount(parent, ctx) {
         value: rec.map(String),
         set: (list) => { DD().writeBoxFx(doc, list); ctx.changed(); },
       });
-      wrap.append(el("p", "hold ⌘ (or Ctrl) to pick a second and a third — a" +
-        " plain tap replaces the whole selection, which is what a <select" +
-        " multiple> does.", "nu-hint"));
       p.append(wrap);
     }
-    p.append(el("p", "the bar's volume slider is the room, not the record —" +
-      " unchanged, unsaved", "nu-goes"));
+    // "the bar's volume slider is the room, not the record — unchanged,
+    // unsaved" DELETED 2026-08-27 (text diet): the transport slider says
+    // `room` itself now (index.html, §5) and the listening column beside the
+    // fader carries the not-saved refusal — this line was a third owner of
+    // one sentence.
     rack.append(p);
   }
   host.append(rack);
@@ -953,8 +972,9 @@ export function mount(parent, ctx) {
   const WSHOW = (w) => (w === "" ? "—" : (NuFields.TRIMLABEL[w] || w));
   {
     const wrap = el("div", null, "nu-autopanel");
-    wrap.append(el("p", "section automation · a word is a trim on the strip's" +
-      " fader for that section · sections run down · tap a cell to cycle",
+    // compressed 2026-08-27 (text diet): the grid draws sections running down
+    // and a tap teaches itself; what the label must say is what a word IS.
+    wrap.append(el("p", "section automation · a trim on the fader, per section",
       "nu-rowlab"));
     const pane = el("div", null, "nu-pane");
     pane.tabIndex = 0;
@@ -1004,9 +1024,11 @@ export function mount(parent, ctx) {
     t.append(tbody);
     pane.append(t);
     wrap.append(pane);
-    wrap.append(el("p", "vocabulary: out · hush · back · — (as mixed) · fwd ·" +
-      " lift — fields.js TRIMS, in dB on the fader; `out` is the cut. Absent" +
-      " is as mixed, which is today, byte for byte.", "nu-hint"));
+    // compressed 2026-08-27 (text diet): the legend keeps the six words in
+    // TRIMS' own order and the absent-is-today fact; the file citation and
+    // the dB mechanics were source-talk on a page (the six voice rules).
+    wrap.append(el("p", "out · hush · back · — · fwd · lift — absent is as mixed",
+      "nu-hint"));
     host.append(wrap);
   }
 
@@ -1019,16 +1041,20 @@ export function mount(parent, ctx) {
   // (fields.js busRoute, audio/desk.js feedSplit — an old save is untouched);
   // there is simply no knob for them here, because a knob must point at a
   // stage the board draws.
-  const edges = el("ul", null, "nu-hint");
-  edges.append(el("li", MAIN_TO_BUS1.from + " → " + MAIN_TO_BUS1.to +
-    ": set it with the main strip's `" + MAIN_TO_BUS1.knob + "` above — " +
-    MAIN_TO_BUS1.why));
-  for (const e of FIXED_EDGES)
-    edges.append(el("li", e.from + " → " + e.to + ": " + e.why));
-  edges.append(el("li", "bus 3 and bus 4 (the groups of 2026-08-26) keep " +
-    "their saved sends and aims in the record and in the engine " +
-    "(fields.js busRoute), and draw no plate here: the 2026-08-27 series — " +
-    "genre → delay → reverb → main — is the rack, on Paul's word."));
+  // THE ROUTING ESSAY MOVED TO docs/BOARD-ROUTING.md, 2026-08-27 (the text
+  // diet, FUTURE.md §2: "The board's 1,629-char routing essay moves to
+  // `docs/`; signal flow is drawn as arrows, not narrated"). The <ul> that
+  // stood here printed MAIN_TO_BUS1 and every FIXED_EDGES sentence to end
+  // users, fx_bus.dsp line numbers included. The sentences still have ONE
+  // owner — audio/desk.js — and the doc quotes them; desk-gate G14 now
+  // asserts the page carries this pointer AND the doc carries every edge's
+  // own words, so the edges can neither vanish nor drift. What stays on the
+  // page is drawn: each edge is an arrow the rack already makes.
+  const edges = el("p", null, "nu-hint");
+  { const a2 = document.createElement("a");
+    a2.href = "docs/BOARD-ROUTING.md";
+    a2.textContent = "the fixed wires — docs/BOARD-ROUTING.md";
+    edges.append(a2); }
   host.append(edges);
   // GENRE_WHY_LONG and BLEED_WHY_LONG came OFF this list on 2026-08-27: the
   // series-bus engine round wired both (the genre stage and the fx_bus `bleed`
@@ -1038,6 +1064,12 @@ export function mount(parent, ctx) {
   for (const w of [MAINSEND_WHY, METER_WHY,
                    STEREO_WHY, SWEEP_WET_WHY, MASTER_WHY])
     refusals.append(el("li", w));
+  // THE GROUPS' REVERSAL STAYS PRINTED (desk-gate G12 holds it: "the reversal
+  // is printed, not silent"), compressed 2026-08-27 with the essay's move —
+  // it is a refusal-with-reason, so it lives on the refusal list now.
+  refusals.append(el("li", "bus 3 and bus 4 draw no plate — the series is " +
+    "the rack; their saved sends and aims still load and still route " +
+    "(fields.js busRoute)"));
   host.append(refusals);
 
   /* ---- the paint, once a beat off the page's own on("pos") -------------- */
@@ -1096,7 +1128,10 @@ function listening() {
   r.addEventListener("input", () => { say(); setVol(+r.value); commit("transport"); });
   const { track } = vchassis(r, () => (+r.value) / 100);
   wrap.append(track, o);
-  const w = el("small", "the room, not the record — not saved with the song", "nu-hint");
+  // "room only — not saved", 2026-08-27 — FUTURE.md §5's own compression
+  // ("refusal kept, halved"). `nu-why` because it IS a refusal-with-reason:
+  // this value refuses to be part of the record.
+  const w = el("small", "room only — not saved", "nu-why");
   wrap.append(w);
   return wrap;
 }

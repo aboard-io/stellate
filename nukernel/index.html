@@ -65,7 +65,10 @@
      heading. test/shell.js pins the number for that reason. -->
 <div class="nu-bar">
   <button id="play" type="button">play</button>
-  <label for="vol">volume <input type="range" id="vol" min="0" max="100" step="1" value="100"></label>
+  <!-- "room", NOT "volume", 2026-08-27 — FUTURE.md §5: the master strip
+       already teaches "the room, not the record", and this slider is the same
+       store (ui/state.js VOLSTORE) wearing the same fact. -->
+  <label for="vol">room <input type="range" id="vol" min="0" max="100" step="1" value="100"></label>
 </div>
 <!-- WHICH ENGINE THE EAR GOT, AND WHETHER IT STARVED. It lives OUTSIDE #app on
      purpose: draw() empties #app on every edit, and a readout that is destroyed
@@ -113,7 +116,9 @@
      it: draw() empties #app on every edit, and a globe that was destroyed and
      rebuilt once a keystroke would lose its pose and its year. -->
 <section id="atlas">
-  <h2 id="atlasHead">where and when</h2>
+  <!-- "Where & when" since 2026-08-27 (FUTURE.md §5: "keep the name, fix the
+     case") — test/atlas.js G7 reads this heading off the rendered page. -->
+<h2 id="atlasHead">Where &amp; when</h2>
 </section>
 
 <div id="app"></div>

@@ -614,13 +614,19 @@ const PASK = { make: "make what?", more: "more of what?", less: "less of what?",
 /** PROGRAM.md §2.2. Draws the producer into `parent`; returns a handle. */
 export function mount(parent, ctx) {
   const doc = ctx.doc();
-  const sec = ctx.section(parent, "ax-produce", "9 · The producer");
-  sec.append(el("p",
-    "Not one of the eight — this is somebody with taste saying a few things " +
-    "about the record the eight describe. Say up to " + Prod.MAXNOTES +
-    " of them: every note is a step in genre space, it remembers how far you " +
-    "pushed it, they stack in the order you said them, and anything you take " +
-    "off you can put back."));
+  // "The producer" — the ordinal came off with every heading's, 2026-08-27
+  // (FUTURE.md §5: "9 of eight" was the numbering admitting failure).
+  const sec = ctx.section(parent, "ax-produce", "The producer");
+  // THE 285-CHAR PREAMBLE IS DELETED, 2026-08-27 (FUTURE.md §2, the text
+  // diet: "the producer's 285-char philosophy paragraph is deleted (the note
+  // stack demonstrates what it explained)"). It read: "Not one of the eight —
+  // this is somebody with taste saying a few things about the record the
+  // eight describe. Say up to 10 of them: every note is a step in genre
+  // space, it remembers how far you pushed it, they stack in the order you
+  // said them, and anything you take off you can put back." Every claim in it
+  // is still true and still DEMONSTRATED — the stack shows the order, the
+  // undo shows the put-back, the readouts show the distance — and AXES.md
+  // still says in prose why he is not a ninth axis.
   const R = produced(doc);
   // A LANDING clears the sentence being built, recompiles and redraws — the one
   // owner for recompile, exactly as `changed()` is for every sheet on the page.
@@ -752,7 +758,9 @@ function stackStrip(parent, doc, ctx) {
    less, thinner, drier, gone — because subtraction is the half of production
    that has no knob on a desk. */
 function tapVerb(parent, doc, ctx) {
-  sheet(parent, { key: "prod.verb", label: "what do you want to say?",
+  // "notes", 2026-08-27 — FUTURE.md §5: "six verb chips + a stack; the
+  // heading is the noun". It read "what do you want to say?".
+  sheet(parent, { key: "prod.verb", label: "notes",
     value: "", ungated: true,
     options: verbs(doc).map((v) => ({ value: v.id, label: v.w,
       disabled: !v.on, why: v.on ? null : v.why })),
