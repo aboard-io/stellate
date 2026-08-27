@@ -90,7 +90,14 @@ bottom is always better than left to right. Obviously a musical score is
 different"* — so: **time runs downward** in every grid, roll and lane; the
 engraved score is the ONE lawful horizontal scroller on the product. These
 outrank any layout in the sketches; the Bench and the piano roll rotate
-accordingly (their paragraphs below are amended in place).
+accordingly (their paragraphs below are amended in place). A third law joined
+them the same day, earned by a bug: *"when I touch them I scroll the whole
+window and can't interact"* — **every drag surface captures its pointer**
+(`setPointerCapture` on pointerdown, value from the pointer against the
+control's own rect, `touch-action` declared on the control and only the
+control; the native input survives underneath as the keyboard channel). A
+slider that loses its gesture to the page is a knob that cannot reach the
+hand.
 
 **The text diet is a law with a number.** Paul: *"get rid of all extra
 text."* Three kinds of words may exist outside `[data-live]`: control labels,
@@ -198,20 +205,29 @@ with knowledge of what we are doing? What UX can simplify and be modern and
 simple?"* The shipped surface is measured in `composer.html`'s "Today" panel:
 a bar is sixteen table rows read top-to-bottom (beat 4 below a phone's fold),
 zero harmonic facts in view, the composed staff a second copy compared by
-eye-travel, five controls per step. The Bench replaces it inside Motifs: time runs DOWNWARD (amended
-2026-08-27 — "top to bottom is always better than left to right"; degree
-columns run across the top, steps run down, note pills are vertical with
-height = duration); the degree rows ARE the Alphabet (snapping
-is the editor, not a validator); **chord windows are painted, not narrated** —
-`chordsOf()` already returns start/len/deg/quality per window, so chord-tone
-rows tint inside each window and the leading-tone row lights under V. That is
-"with knowledge of what we are doing," done as a table read, no model. The
-composed version is a ghost overlay over the same lane — extracted from the
-section word's operator, never a second copy; velocity is depth on the pill and
-accent is a ring (kernel.js keeps them distinct, so does the eye); one gesture
-grammar serves lane and kit (tap, drag → for length, drag ↑↓ for pitch or
-depth, long-press for the sheet), so the tie and dot radios retire into pill
-length — one owner. The kit is the same bench, not a second app: tap cycles
+eye-travel, five controls per step. The Bench replaces it inside Motifs — AMENDED TWICE ON 2026-08-27. First
+the geometry: time runs downward ("top to bottom is always better than left
+to right"). Then the structure, hours later, when Paul saw the rotated pill
+lane: *"the original button structure with sliders was more novel and
+comprehensible. Drums should have velocity per step though."* So the pill
+lane retires after one day and the row-per-step idiom returns as the
+proposal — each step a row stating its kind (note/rest/tie as one segmented
+button), its degree (a stepper whose detents ARE the Alphabet), and its
+weight; silent rows go faint with a measured line instead of vanishing, so
+the bar's geometry never moves under a thumb. The kit gains what it always
+deserved: velocity 0–9 per cell, width = level, number printed. Two
+per-step velocity strategies were built live for Paul to thumb-test — the
+bar (drag-or-tap-cycle; recommended, because its tap path alone is the
+whole musical vocabulary and width = number = one owner per fact) and the
+ladder (every value a tap target, but honest 44px rungs make one step three
+screens tall) — Q6 below. What survives all three versions of this
+paragraph: snapping to the Alphabet so a wrong
+note is unenterable; **the harmony painted, not narrated** — `chordsOf()`
+gives the windows, and each row's role tick (chord tone / leading tone /
+color) answers when the degree moves. That is "with knowledge of what we are
+doing," done as a table read, no model. The development overlay survives as
+an extracted marker on the rows where the operator lands notes — never a
+second copy; one gesture grammar serves motif and kit. The kit is the same bench, not a second app: tap cycles
 rest → ghost → hit → accent ("a ghost is a 2 and an accent is a 9",
 drums-kit.js), swing is displayed displacement, and the fill is a **place** —
 bar 4 of the phrase strip, hatched — not a mode. The playhead lives in its own
@@ -440,6 +456,13 @@ them. We recommend a declared amendment: a song-level metre SCHEDULE keyed by
 section (the fact stays owned by the song), and the law's text gains the
 exception in place. Without your yes, the Chinese-opera cluster ships without
 banshi and says so in `cannot`.
+
+**Q6 — Per-step velocity: the bar or the ladder?** Both live in
+`composer.html`'s strategies section, on a motif row and a kit row, touch-
+tested. We recommend **the bar** (width = level = printed number; tap cycles
+ghost/hit/accent so it works with zero drags; sixteen of them read as a
+dynamics curve). The ladder is fully discrete — every value a visible tap —
+but honest 44px rungs make a step over 100px tall. Thumb them and say A or B.
 
 **Q5 — Does the producer survive as a section, or move onto the board?** We
 recommend: stays its own section, last, six chips + the stack, and its

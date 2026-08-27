@@ -88,7 +88,10 @@ p { margin: 0; } h1, h2, h3 { margin: 0; text-wrap: balance; }
 .vslider .vs-body { display: flex; align-items: stretch; gap: var(--s2); }
 .vslider .vs-track { position: relative; width: 20px; height: var(--vsh, 200px);
   background: var(--well); border: var(--bw) solid var(--ink); border-radius: var(--r1);
-  margin: 0 14px; }
+  margin: 0 14px;
+  touch-action: none; cursor: grab; /* the track owns the gesture; the page keeps scroll elsewhere */ }
+.vslider .vs-track::before { content: ""; position: absolute; top: -14px; bottom: -14px;
+  left: -14px; right: -14px; /* the touch halo: full travel height, 48px wide */ }
 .vslider .vs-fill { position: absolute; left: 0; right: 0; bottom: 0;
   height: calc(14px + (100% - 28px) * var(--v, 0.5)); background: var(--hand); display: block; }
 .vslider .vs-thumb { position: absolute; left: 50%; bottom: calc((100% - 28px) * var(--v, 0.5));
@@ -99,7 +102,8 @@ p { margin: 0; } h1, h2, h3 { margin: 0; text-wrap: balance; }
   height: 3px; margin-top: -1.5px; background: var(--ink); }
 .vslider .vs-input { position: absolute; top: -14px; bottom: -14px; left: 50%;
   transform: translateX(-50%); width: 48px; height: calc(100% + 28px); margin: 0; opacity: 0;
-  cursor: grab; writing-mode: vertical-lr; direction: rtl; }
+  writing-mode: vertical-lr; direction: rtl;
+  pointer-events: none; /* accessibility channel only: keyboard + focus; the track takes the pointer */ }
 .vslider .vs-track:focus-within { outline: var(--bw-hard) solid var(--hand); outline-offset: 4px; }
 .vslider .vs-meter { position: relative; width: 14px; height: var(--vsh, 200px);
   background: var(--well); border: var(--bw) solid var(--ink); border-radius: var(--r1); overflow: hidden; }
@@ -620,6 +624,30 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
   }
   roomFader.addEventListener('input',paintRoom);
   paintRoom();
+
+  // touch/mouse: the track captures the pointer; the page never scrolls from a slider
+  var roomTrack=roomWrap.querySelector('.vs-track');
+  function roomFromPointer(e){
+    var r=roomTrack.getBoundingClientRect();
+    var min=+roomFader.min, max=+roomFader.max, step=+roomFader.step||1;
+    var usable=r.height-28;
+    var frac=usable>0?(r.bottom-14-e.clientY)/usable:0;
+    frac=Math.max(0,Math.min(1,frac));
+    var val=min+frac*(max-min);
+    val=Math.max(min,Math.min(max,Math.round(val/step)*step));
+    var dec=(String(step).split('.')[1]||'').length;
+    roomFader.value=val.toFixed(dec);
+    roomFader.dispatchEvent(new Event('input',{bubbles:true}));
+  }
+  roomTrack.addEventListener('pointerdown',function(e){
+    e.preventDefault();
+    roomTrack.setPointerCapture(e.pointerId);
+    roomFader.focus({preventScroll:true});
+    roomFromPointer(e);
+  });
+  roomTrack.addEventListener('pointermove',function(e){
+    if(roomTrack.hasPointerCapture(e.pointerId)) roomFromPointer(e);
+  });
 
   // the meter is the engine, measured — it moves on its own (unless motion is refused)
   if(!reduced){

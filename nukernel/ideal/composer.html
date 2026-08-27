@@ -2,9 +2,11 @@
 <style>
 /* ==========================================================================
    THE BENCH — the ideal composing surface for motifs and kits.
-   Repainted 2026-08-27 in ENAMEL (Lampblack retired) and ROTATED:
-   time now runs DOWNWARD. One HTML file, no external requests.
-   Tokens consumed verbatim from design-system.html.
+   REBUILT 2026-08-27 after Paul's verdict: the pill lane retires, the
+   row-per-step button structure returns as the proposal, done in ENAMEL.
+   Drums gain velocity per step. Two velocity strategies shown live.
+   Every drag surface: touch-action + setPointerCapture (the touch fix).
+   One HTML file, no external requests. Tokens verbatim from design-system.html.
    ========================================================================== */
 :root {
   /* ---- chassis (ground + two surfaces) ---- */
@@ -24,9 +26,6 @@
   --ctl: 48px;
   /* ---- space ---- */
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 40px; --s7: 64px;
-  /* ---- bench geometry: steps are ROWS now ---- */
-  --rowh: 48px;   /* one step of the pitch lane */
-  --krowh: 44px;  /* one step of the kit */
 }
 * { box-sizing: border-box; }
 html { background: var(--ground); }
@@ -46,6 +45,7 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .mast h1 { font-size: clamp(44px, 9vw, 76px); font-weight: 900; letter-spacing: -.02em;
   line-height: .95; margin-top: var(--s2); text-transform: uppercase; }
 .mast p.dek { color: var(--dim); font-weight: 600; margin-top: var(--s3); max-width: 56ch; }
+.mast p.dek b { color: var(--ink); }
 .crumb { display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s4);
   font: 700 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--dim); }
 .crumb b { color: #FFFFFF; background: var(--hand); padding: 4px 8px; border-radius: 3px;
@@ -68,7 +68,7 @@ sup.n { color: var(--hand); font-family: var(--mono); font-size: 10px; font-weig
 .plate { background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
   box-shadow: var(--shadow-big); padding: var(--s3); }
 
-/* ---- annotations: numbered ink squares ---- */
+/* ---- annotations ---- */
 .notes { margin-top: var(--s5); display: grid; gap: var(--s3); }
 @media (min-width: 800px) { .notes { grid-template-columns: 1fr 1fr; gap: var(--s3) var(--s5); } }
 .ann { display: grid; grid-template-columns: 32px 1fr; gap: var(--s3); align-items: start;
@@ -85,7 +85,7 @@ sup.n { color: var(--hand); font-family: var(--mono); font-size: 10px; font-weig
 .callout p .q { font-weight: 800; }
 .callout p.small { color: var(--dim); }
 
-/* ---- buttons / play / chips / tabs (Enamel, verbatim skins) ---- */
+/* ---- buttons / play / chips / tabs (Enamel skins, verbatim) ---- */
 .btn { font: 800 15px/1 var(--sans); color: var(--ink); letter-spacing: .01em;
   background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
   min-height: var(--ctl); padding: 0 var(--s4); cursor: pointer; box-shadow: var(--shadow);
@@ -134,94 +134,88 @@ sup.n { color: var(--hand); font-family: var(--mono); font-size: 10px; font-weig
 .devrow .lab { margin-right: var(--s1); }
 
 /* ==========================================================================
-   TODAY — the greyed cell-row recreation
+   THE MOTIF EDITOR — step ROWS falling down the page
    ========================================================================== */
-.today { filter: saturate(.25); opacity: .8; align-self: start; }
-.today table { border-collapse: collapse; font: 600 10px var(--mono); color: var(--dim); }
-.today th, .today td { border: 2px solid var(--faint); padding: 3px 4px; text-align: center; }
-.today th { font-weight: 700; }
-.radio { display: inline-block; width: 12px; height: 12px; border-radius: 50%;
-  border: 2px solid var(--faint); vertical-align: middle; }
-.radio.on { border-color: var(--dim);
-  background: radial-gradient(circle at 50% 50%, var(--dim) 0 3px, transparent 4px); }
-.slid { display: inline-block; width: 36px; height: 4px; background: var(--well);
-  border: 1px solid var(--faint); border-radius: 2px; position: relative; vertical-align: middle; }
-.slid i { position: absolute; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--dim); }
-.slid.off i { background: var(--faint); }
-.pain { display: grid; grid-template-columns: 44px 1fr; gap: var(--s3); align-items: start;
-  font-size: 13.5px; font-weight: 600; color: var(--dim); line-height: 1.5; }
-.pain b { font: 900 14px var(--mono); color: #FFFFFF; background: var(--clock);
-  border: 2px solid var(--ink); border-radius: var(--r1); padding: 4px 0; text-align: center; }
-.pain b.good { background: var(--meter); }
-.todayGrid { display: grid; gap: var(--s5); margin-top: var(--s4); }
-@media (min-width: 760px) { .todayGrid { grid-template-columns: auto 1fr; } }
-.painlist { display: grid; gap: var(--s3); align-content: start; }
-
-/* ==========================================================================
-   THE LANE — degrees ACROSS, steps DOWN, playhead descends
-   ========================================================================== */
-.laneWrap { position: relative; margin-top: var(--s4); }
-.lane { display: grid; grid-template-columns: 34px repeat(8, minmax(28px, 1fr)) 28px;
-  grid-template-rows: 44px repeat(16, var(--rowh)); background: var(--panel); }
-.dh { border-bottom: var(--bw) solid var(--ink); border-right: 2px solid var(--ink);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 1px; background: var(--panel); }
-.dh b { font: 800 15px var(--sans); }
-.dh .role { font: 700 9px var(--mono); letter-spacing: .05em; color: var(--dim); }
-.dh.is-chord .role { color: var(--meter); }
-.dh.is-lead .role { color: var(--ink); background: var(--flag); border-radius: 2px; padding: 0 3px; }
-.corner { border-bottom: var(--bw) solid var(--ink); background: var(--ground); }
-.corner.r { border-right: 0; }
-.sn { border-right: var(--bw) solid var(--ink); border-bottom: 2px solid var(--well);
-  background: var(--ground); display: flex; align-items: center; justify-content: center;
-  font: 700 11px var(--mono); color: var(--dim); }
-.sn.beat { font-size: 14px; font-weight: 800; color: var(--ink); }
-.sn.b4 { border-bottom-color: var(--ink); }
-.lc { border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
-  background: var(--well); }
-.lc.tone { background: var(--meter-tint); }
-.lc.lead { background: var(--flag-tint); }
-.lc.b4 { border-bottom-width: 3px; }
-.crail { grid-column: 10; border-left: var(--bw) solid var(--ink); border-bottom: var(--bw) solid var(--ink);
-  background: var(--ground); display: flex; align-items: center; justify-content: center;
-  writing-mode: vertical-rl; font: 700 11px var(--mono); letter-spacing: .08em; color: var(--ink); }
-.crail b { font-size: 16px; font-weight: 800; }
-.crail small { color: var(--dim); font-size: 10px; margin-block-start: 6px; }
-.crail.v5 { background: var(--flag-tint); }
-/* the note layer: covers the 8 degree columns, below the header row */
-.pillLayer { position: absolute; left: 34px; right: 28px; top: 44px; bottom: 0; pointer-events: none; }
-.pill { position: absolute; width: calc(12.5% - 10px); margin-left: 5px;
-  border: 2px solid var(--ink); border-radius: var(--r1); cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; padding-top: 3px; gap: 0;
-  font: 700 13px var(--mono); pointer-events: auto; z-index: 3; box-shadow: 3px 3px 0 var(--ink); }
-.pill b { font-weight: 800; }
-.pill .v { font-size: 10px; opacity: .85; }
-.pill .orn { font-size: 10px; }
-.pill.acc { box-shadow: 3px 3px 0 var(--ink), 0 0 0 3px var(--flag); }
-.pill.acc::after { content: "▾"; color: var(--flag); font-size: 12px; line-height: 1;
-  margin-top: auto; padding-bottom: 2px; text-shadow: 0 1px 0 var(--ink); }
-.pill.sel { outline: var(--bw-hard) solid var(--hand); outline-offset: 2px; }
-.ghost { position: absolute; width: calc(12.5% - 10px); margin-left: 5px; z-index: 4;
-  border: 3px dashed var(--meter); border-radius: var(--r1);
-  background: color-mix(in srgb, var(--meter-tint) 65%, transparent); pointer-events: none; }
-.playline { position: absolute; left: 0; right: 0; height: var(--bw-hard);
+.steps { position: relative; }
+.srow { display: grid; grid-template-columns: 40px auto minmax(0, 1fr); gap: var(--s2);
+  align-items: center; padding: 6px 2px; min-height: 62px;
+  border-top: 2px solid var(--well); }
+.srow.beat { border-top: var(--bw) solid var(--ink); }
+.srow:first-child { border-top: 0; }
+.steps { border-bottom: var(--bw) solid var(--ink); }
+.slab { display: grid; justify-items: center; align-content: center; gap: 3px;
+  font: 700 13px var(--mono); color: var(--dim); }
+.srow.beat .slab b { font-size: 19px; font-weight: 800; color: var(--ink); }
+.slab b { font-weight: 700; }
+.gtick { display: none; width: 12px; height: 12px; border: 2px dashed var(--meter);
+  border-radius: 3px; background: var(--meter-tint); }
+.srow.ghosted .gtick { display: block; }
+/* NOTE / REST / TIE segmented group */
+.seg { display: inline-flex; border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  overflow: hidden; background: var(--panel); }
+.segb { width: 46px; height: 48px; border: 0; border-left: 2px solid var(--ink);
+  background: var(--panel); color: var(--ink); font: 800 17px var(--sans); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.segb:first-child { border-left: 0; }
+.segb:hover { background: var(--flag-tint); }
+.segb[aria-pressed="true"] { background: var(--hand); color: #FFFFFF; }
+.segb[disabled] { color: var(--faint); background: var(--well); cursor: default; }
+/* right side of a row: degree + velocity, wraps at phone width */
+.rowr { position: relative; display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+.srow.is-rest .degc, .srow.is-rest .velA,
+.srow.is-tie  .degc, .srow.is-tie  .velA { opacity: .3; pointer-events: none; }
+.mutewhy { display: none; position: absolute; inset: 0; align-items: center; justify-content: center;
+  font: 600 11.5px var(--mono); color: var(--dim); text-align: center; pointer-events: none; z-index: 2; }
+.mutewhy span { background: color-mix(in srgb, var(--panel) 85%, transparent);
+  border-radius: 3px; padding: 2px 8px; }
+.srow.is-rest .mutewhy, .srow.is-tie .mutewhy { display: flex; }
+/* the DEGREE stepper — snapped to the Alphabet, wrong notes unenterable */
+.degc { display: inline-flex; align-items: stretch; height: 48px;
+  border: var(--bw) solid var(--ink); border-radius: var(--r1); overflow: hidden;
+  background: var(--panel); }
+.degb { width: 44px; border: 0; background: var(--panel); color: var(--ink);
+  font: 800 20px var(--sans); cursor: pointer; padding: 0; }
+.degb:hover { background: var(--flag-tint); }
+.degb[disabled] { color: var(--faint); background: var(--well); cursor: default; }
+.degv { width: 54px; display: grid; justify-items: center; align-content: center; gap: 2px;
+  border-left: 2px solid var(--ink); border-right: 2px solid var(--ink);
+  font: 800 16px var(--sans); background: var(--panel); }
+.tick { width: 11px; height: 11px; border: 2px solid var(--ink); border-radius: 2px;
+  background: var(--panel); }
+.tick.tone { background: var(--meter); }
+.tick.lead { background: var(--flag); }
+/* STRATEGY A — the velocity bar (drag sideways, tap cycles) */
+.velA { position: relative; flex: 1; min-width: 132px; height: 44px;
+  touch-action: none; cursor: ew-resize; }
+.va-bar { position: absolute; inset: 0; border: var(--bw) solid var(--ink);
+  border-radius: var(--r1); background: var(--well); overflow: hidden; }
+.va-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--hand);
+  border-right: 2px solid var(--ink); }
+.velA[data-v="0"] .va-fill { display: none; }
+.velA.gh .va-fill { background: var(--faint); }
+.velA.acc .va-fill { box-shadow: inset -8px 0 0 var(--flag); }
+.va-num { position: absolute; top: 50%; transform: translateY(-50%);
+  font: 700 13px var(--mono); color: var(--ink); pointer-events: none;
+  background: color-mix(in srgb, var(--panel) 80%, transparent); border-radius: 2px; padding: 0 3px; }
+.velA.acc .va-num, .velA.hi .va-num { color: #FFFFFF; background: transparent; }
+.va-in { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0;
+  opacity: 0; pointer-events: none; }
+.velA:focus-within { outline: var(--bw-hard) solid var(--hand); outline-offset: 3px; border-radius: 2px; }
+/* the playhead — [data-live], the clock's only pen on this surface */
+.playline { position: absolute; left: -6px; right: -6px; height: var(--bw-hard);
   background: var(--clock); z-index: 6; pointer-events: none; }
-.playline::after { content: "[data-live] · row 7"; position: absolute; right: 4px; bottom: 6px;
+.playline::after { content: "[data-live] · step 7"; position: absolute; right: 4px; bottom: 6px;
   font: 700 10px var(--mono); color: var(--clock); background: var(--panel);
   border: 2px solid var(--clock); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
+/* the knowledge rail */
 .wisdom { margin-top: var(--s4); padding: var(--s3) var(--s4); background: var(--panel);
   border: var(--bw) solid var(--ink); border-radius: var(--r1); box-shadow: var(--shadow);
   font-size: 14.5px; font-weight: 600; min-height: 56px; display: flex; align-items: center; }
 .wisdom .data { color: var(--hand); }
 .wisdom .accw { color: var(--ink); background: var(--flag); border-radius: 3px; padding: 0 4px; font-weight: 800; }
-/* the contour, standing up: pitch across, time down */
-.contour { display: flex; gap: var(--s4); align-items: flex-start; margin-top: var(--s4); }
-.contour svg { display: block; background: var(--well); border: var(--bw) solid var(--ink);
-  border-radius: var(--r1); }
-.contour .why { margin: 0; }
 
 /* ==========================================================================
-   THE KIT — drums ACROSS, steps DOWN, swing = rows that sit late
+   THE KIT — 16 rows falling, five drum columns, velocity per step
    ========================================================================== */
 .phrase { display: flex; gap: var(--s2); margin-top: var(--s4); flex-wrap: wrap; }
 .phrase .btn { flex: 1 1 120px; font-family: var(--mono); font-size: 13px; justify-content: center; }
@@ -235,26 +229,35 @@ sup.n { color: var(--hand); font-family: var(--mono); font-size: 10px; font-weig
 .phrase .btn[aria-pressed="true"] .eq { color: var(--hand-tint); }
 .kitRow { display: flex; gap: var(--s5); flex-wrap: wrap; align-items: flex-start; margin-top: var(--s4); }
 .kitWrapOuter { position: relative; flex: 1 1 300px; min-width: 0; }
-.kit { display: grid; grid-template-columns: 34px repeat(5, minmax(40px, 1fr));
-  grid-template-rows: 44px repeat(16, var(--krowh)); background: var(--panel); }
+.kit { display: grid; grid-template-columns: 34px repeat(5, minmax(44px, 1fr));
+  background: var(--panel); border: var(--bw) solid var(--ink); }
 .kh { border-bottom: var(--bw) solid var(--ink); border-right: 2px solid var(--ink);
-  display: flex; align-items: center; justify-content: center;
+  min-height: 44px; display: flex; align-items: center; justify-content: center;
   font: 700 11px var(--mono); letter-spacing: .05em; text-transform: uppercase; background: var(--panel); }
+.kh:last-child { border-right: 0; }
+.corner { border-bottom: var(--bw) solid var(--ink); border-right: var(--bw) solid var(--ink);
+  background: var(--ground); }
 .kn { border-right: var(--bw) solid var(--ink); border-bottom: 2px solid var(--well);
   background: var(--ground); display: flex; align-items: center; justify-content: center;
   font: 700 11px var(--mono); color: var(--dim); }
-.kn.beat { font-size: 14px; font-weight: 800; color: var(--ink); }
+.kn.beat { font-size: 15px; font-weight: 800; color: var(--ink); }
 .kn.b4 { border-bottom-color: var(--ink); }
 .kn.swung { color: var(--ink); background: var(--flag-tint); }
-.kc { position: relative; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
-  background: var(--well); cursor: pointer; padding: 0; }
+.kc { position: relative; border: 0; border-right: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink); border-radius: 0;
+  background: var(--well); cursor: pointer; min-height: 48px; padding: 0;
+  touch-action: pan-y; }
+.kc:nth-child(6n) { border-right: 0; }
 .kc.b4 { border-bottom-width: 3px; }
 .kc.hatch { background: repeating-linear-gradient(-45deg, var(--well) 0 8px, var(--flag-tint) 8px 16px); }
-.kc .hit { position: absolute; left: 4px; top: 7px; bottom: 7px; border-radius: 3px;
-  background: var(--hand); border: 2px solid var(--ink); }
-.kc .hit.ghosty { background: var(--faint); border-color: var(--dim); }
-.kc .hit.accent { box-shadow: inset 5px 0 0 var(--flag); }
-.kc .hit.stroke { background: var(--flag); }
+.kfill { position: absolute; left: 4px; top: 8px; bottom: 8px; border-radius: 3px;
+  background: var(--hand); border: 2px solid var(--ink); pointer-events: none; }
+.kfill.ghosty { background: var(--faint); border-color: var(--dim); }
+.kfill.accent { box-shadow: inset -6px 0 0 var(--flag); }
+.kfill.stroke { background: var(--flag); }
+.knum { position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  font: 700 11px var(--mono); color: var(--ink); pointer-events: none;
+  background: color-mix(in srgb, var(--panel) 80%, transparent); border-radius: 2px; padding: 0 2px; }
 @media (prefers-reduced-motion: no-preference) {
   .kit .swingable { transition: transform .12s ease; }
 }
@@ -266,34 +269,69 @@ sup.n { color: var(--hand); font-family: var(--mono); font-size: 10px; font-weig
   border-radius: 3px; margin-right: 5px; vertical-align: -2px; }
 .kitSide { display: grid; gap: var(--s4); flex: 0 1 220px; justify-items: start; }
 
-/* ---- the swing slider (vertical; every knob is dead) ---- */
+/* ---- the swing slider — vertical, pointer-captured (the touch fix) ---- */
 .vslider { display: grid; gap: var(--s2); justify-items: center; width: min-content; }
 .vslider .vs-lab { font: 700 11px/1.2 var(--mono); letter-spacing: .1em;
   text-transform: uppercase; color: var(--ink); text-align: center; }
 .vslider .vs-body { display: flex; align-items: stretch; gap: var(--s2); }
-.vslider .vs-track { position: relative; width: 20px; height: var(--vsh, 200px);
-  background: var(--well); border: var(--bw) solid var(--ink); border-radius: var(--r1);
-  margin: 0 14px; }
+.vslider .vs-track { position: relative; width: 48px; height: var(--vsh, 200px);
+  margin: 0; touch-action: none; cursor: grab; }
+.vslider .vs-rail { position: absolute; left: 50%; top: 0; bottom: 0; width: 20px;
+  transform: translateX(-50%); background: var(--well);
+  border: var(--bw) solid var(--ink); border-radius: var(--r1); pointer-events: none; }
 .vslider .vs-fill { position: absolute; left: 0; right: 0; bottom: 0;
   height: calc(14px + (100% - 28px) * var(--v, 0.5)); background: var(--hand); display: block; }
 .vslider .vs-thumb { position: absolute; left: 50%; bottom: calc((100% - 28px) * var(--v, 0.5));
   transform: translateX(-50%); width: 48px; height: 28px; display: block;
   background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
-  box-shadow: 3px 3px 0 var(--ink); }
+  box-shadow: 3px 3px 0 var(--ink); pointer-events: none; }
 .vslider .vs-thumb::after { content: ""; position: absolute; left: 8px; right: 8px; top: 50%;
   height: 3px; margin-top: -1.5px; background: var(--ink); }
-.vslider .vs-input { position: absolute; top: -14px; bottom: -14px; left: 50%;
-  transform: translateX(-50%); width: 48px; height: calc(100% + 28px); margin: 0;
-  opacity: 0; cursor: grab; writing-mode: vertical-lr; direction: rtl; }
+.vslider .vs-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0;
+  opacity: 0; pointer-events: none; }
 .vslider .vs-track:focus-within { outline: var(--bw-hard) solid var(--hand); outline-offset: 4px; }
 .vslider .vs-val { font: 600 13px var(--mono); font-variant-numeric: tabular-nums;
   color: var(--ink); text-align: center; }
-.vs-notch { position: absolute; left: -8px; right: -8px; height: 4px; background: var(--flag);
+.vs-notch { position: absolute; left: 6px; right: 6px; height: 4px; background: var(--flag);
   border: 1px solid var(--ink); bottom: calc(14px + (100% - 28px) * var(--nv, 0.16));
   pointer-events: none; }
 
 /* ==========================================================================
-   GESTURES — cards, not a sideways table
+   THE VELOCITY STRATEGIES — two candidates, both live
+   ========================================================================== */
+.strats { display: grid; gap: var(--s5); margin-top: var(--s4); }
+@media (min-width: 860px) { .strats { grid-template-columns: 1fr 1fr; align-items: start; } }
+.strat h3 { font: 800 16px var(--sans); text-transform: uppercase; letter-spacing: .05em;
+  display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+.strat .rec { font: 800 10px var(--mono); letter-spacing: .08em; color: var(--ink);
+  background: var(--flag); border: 2px solid var(--ink); border-radius: 3px; padding: 3px 7px; }
+.strat .cap { font-size: 13.5px; font-weight: 600; color: var(--dim); line-height: 1.55;
+  margin-top: var(--s3); }
+.strat .cap b { color: var(--ink); font-weight: 800; }
+.demoLab { font: 700 10px var(--mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--hand); margin: var(--s4) 0 var(--s2); }
+.demoRow { display: flex; gap: var(--s2); align-items: center; flex-wrap: wrap;
+  border: var(--bw) solid var(--ink); border-radius: var(--r1); padding: var(--s2); background: var(--panel); }
+.demoRow .slab { min-width: 36px; }
+.demoKit { display: grid; grid-template-columns: 34px repeat(5, minmax(44px, 1fr));
+  border: var(--bw) solid var(--ink); border-radius: var(--r1); overflow: hidden; background: var(--panel); }
+.demoKit .kc { min-height: 52px; }
+.demoKit .kc.tall { min-height: 128px; touch-action: auto; cursor: default; }
+/* STRATEGY B — the ladder */
+.ladder { display: grid; gap: 2px; width: 48px; touch-action: none; cursor: ns-resize;
+  align-content: center; justify-self: center; padding: 4px 0; }
+.rung { width: 48px; height: 9px; border: 2px solid var(--ink); border-radius: 2px;
+  background: var(--panel); padding: 0; cursor: pointer; display: block; }
+.rung.on { background: var(--hand); }
+.ladder.gh .rung.on { background: var(--faint); }
+.rung.on.topacc { background: var(--flag); }
+.ladVal { font: 700 12px var(--mono); color: var(--ink); text-align: center; }
+.demoKit .ladWrap { display: grid; gap: 2px; justify-items: center; padding: 6px 0;
+  border-right: 2px solid var(--ink); background: var(--well); }
+.demoKit .ladWrap:last-child { border-right: 0; }
+
+/* ==========================================================================
+   GESTURES + LAWS
    ========================================================================== */
 .gests { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: var(--s4); margin-top: var(--s4); }
@@ -305,10 +343,6 @@ sup.n { color: var(--hand); font-family: var(--mono); font-size: 10px; font-weig
 .gest p b { color: var(--ink); font-weight: 800; }
 .gest .who { font: 700 10px var(--mono); letter-spacing: .08em; text-transform: uppercase;
   color: var(--hand); }
-
-/* ==========================================================================
-   LAWS
-   ========================================================================== */
 .laws { display: grid; gap: var(--s4); margin-top: var(--s4); }
 @media (min-width: 800px) { .laws { grid-template-columns: 1fr 1fr 1fr; } }
 .law { background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
@@ -325,50 +359,23 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
 <header class="mast">
   <p class="lab">nukernel · ideal state 2026-08 · the Material axis · painted in Enamel</p>
   <h1>The Bench</h1>
-  <p class="dek">One surface where a motif and a kit are composed <b>with knowledge</b>:
-  the harmony you will land in is painted under your hand, wrong notes are unenterable,
-  the development that will chew the cell is one tap away as an overlay, and the groove
-  is drawn — not implied. Time runs <b>down</b>. Every fact shown is one the kernel
-  already computes.</p>
+  <p class="dek"><b>The lane was clever; the rows were comprehensible. The rows win.</b>
+  Every step is a row you can read and press — note, rest, tie, degree, weight — falling
+  down the page in the order it will sound, chunky enough for a thumb. And the drums get
+  what they always deserved: <b>a velocity per step</b>, two candidate ways below.</p>
   <div class="crumb">
     <span>transport</span><span>where &amp; when</span><span>Time</span><span>Harmony</span><b>motifs — this surface</b><span>Form</span><span>band</span><span>board</span><span>producer</span><span>score</span>
   </div>
 </header>
 
-<!-- ================= TODAY ================= -->
-<section id="today">
-  <h2>today, for the record</h2>
-  <p class="note">The shipped cell-row, shrunk and greyed — the same psalm motif as below.
-  Its direction was never the problem: the tracker read top-to-bottom, and top-to-bottom
-  stays. What goes is the cell-per-value text grid around it.</p>
-
-  <div class="todayGrid">
-    <div class="plate today"><table>
-      <tr><th></th><th>♪</th><th>—</th><th>·</th><th>deg</th><th>vel</th></tr>
-      <tr><td>1</td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="radio"></span></td><td><span class="slid"><i style="left:10px"></i></span> 0</td><td><span class="slid"><i style="left:16px"></i></span> v5</td></tr>
-      <tr><td>e</td><td><span class="radio"></span></td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="slid off"><i style="left:10px"></i></span> –</td><td><span class="slid off"><i style="left:16px"></i></span> –</td></tr>
-      <tr><td>&amp;</td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="radio"></span></td><td><span class="slid"><i style="left:13px"></i></span> 1</td><td><span class="slid"><i style="left:16px"></i></span> v5</td></tr>
-      <tr><td>a</td><td><span class="radio"></span></td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="slid off"><i style="left:13px"></i></span> –</td><td><span class="slid off"><i style="left:16px"></i></span> –</td></tr>
-      <tr><td>2</td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="radio"></span></td><td><span class="slid"><i style="left:17px"></i></span> 2</td><td><span class="slid"><i style="left:20px"></i></span> v6</td></tr>
-      <tr><td>e</td><td><span class="radio"></span></td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="slid off"><i style="left:17px"></i></span> –</td><td><span class="slid off"><i style="left:16px"></i></span> –</td></tr>
-      <tr><td colspan="6" style="color:var(--faint)">… ten more rows before beat 4 …</td></tr>
-    </table></div>
-    <div class="painlist">
-      <div class="pain"><b class="good">↓</b><p><b>the direction was right.</b> Steps already read downward here — the 2026-08-27 law keeps it. Everything else on this table retires.</p></div>
-      <div class="pain"><b>80</b><p>controls per bar: sixteen step-rows times five widgets (three radios, two sliders) where one gesture on one pill says the same thing.</p></div>
-      <div class="pain"><b>0</b><p>harmonic facts in view: the grid does not know (or show) that degree 2 is the third of i, or that the section it plays in moves to V halfway.</p></div>
-      <div class="pain"><b>2×</b><p>the composed staff sits elsewhere as a second copy — comparison by eye-travel, not by overlay.</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- ================= THE LANE ================= -->
-<section id="lane">
-  <h2>proposed · the pitch lane</h2>
-  <p class="note">Degrees run <b>across the top</b> — the Alphabet is the keyboard, low on
-  the left. Steps run <b>down</b> the left edge. A column exists only if the mode can say
-  it, so a wrong note is unenterable<sup class="n">1</sup>. The playhead is a red line
-  falling through the bar.</p>
+<!-- ================= THE MOTIF EDITOR ================= -->
+<section id="motif">
+  <h2>proposed · the motif editor</h2>
+  <p class="note">Sixteen step rows fall down the page. Each row states its kind —
+  <b>note, rest, or tie</b> — then its degree, snapped to the Alphabet so a wrong note is
+  unenterable<sup class="n">1</sup>, then its weight. The colored tick beside the degree
+  is its role under the chord that will be sounding<sup class="n">2</sup>; the red line
+  is the clock, falling.</p>
 
   <div class="bar">
     <div class="tabs" role="tablist" id="motifTabs">
@@ -389,63 +396,49 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
     <button class="chip" type="button" aria-pressed="false" data-dev="rotate">bridge · rotate 4</button>
     <span style="display:grid;gap:2px;justify-items:start">
       <button class="chip" type="button" disabled>outro · excerpt 0–8</button>
-      <span class="nu-why">an excerpt crops, it moves nothing — no ghost to draw</span>
+      <span class="nu-why">an excerpt crops, it moves nothing — no marker to draw</span>
     </span>
   </div>
-  <p class="why" id="devWhy" style="margin-top:var(--s2)">the overlay is EXTRACTED — the same
-  <span class="data">reverse()</span> the score will run, applied to this cell, drawn as a
-  green dashed ghost over the written notes<sup class="n">2</sup></p>
+  <p class="why" id="devWhy" style="margin-top:var(--s2)">pick a development and a small green
+  marker appears on the rows where its notes will land — EXTRACTED from the score's own
+  operator, never redrawn by hand<sup class="n">6</sup></p>
 
-  <div class="kitRow">
-    <div class="kitWrapOuter" style="flex:1 1 300px">
-      <div class="laneWrap" id="laneWrap">
-        <div class="lane" id="laneGrid"></div>
-        <div class="pillLayer" id="pillLayer"></div>
-      </div>
-    </div>
-    <div class="kitSide">
-      <div class="contour">
-        <svg id="contourSvg" width="56" height="150" viewBox="0 0 56 150" aria-label="contour, read downward"></svg>
-        <p class="why" style="max-width:22ch"><b>contour, read down</b> — arch; computed
-        from the deg vector, not drawn by hand. Pitch is the x of this thread, exactly as
-        it is the x of the lane.</p>
-      </div>
-      <p class="why" style="max-width:26ch">The green rows are the chord under your hand;
-      the yellow column is the leading tone waiting under V<sup class="n">3</sup>. The
-      chord rail on the right names each band.</p>
-    </div>
+  <div class="plate" style="margin-top:var(--s4)">
+    <div class="steps" id="motifSteps"></div>
   </div>
 
-  <div class="wisdom" id="wisdom">tap a note — this rail says what it is doing, musically, right now</div>
+  <div class="wisdom" id="wisdom">tap a row — this rail says what it is doing, musically, right now</div>
 
   <div class="callout">
-    <h3>⟳ why the lane stands upright</h3>
-    <p><span class="q">“Top to bottom is always better than left to right”</span> — Paul,
-    2026-08-27. Time runs downward on every grid, roll and lane; only the engraved score
-    keeps its horizontal law.</p>
-    <p class="small">This half-returns to the tracker orientation we reversed on
-    2026-08-15. What does NOT return is the cell-per-value tracker text grid — the lane
-    keeps direct manipulation: one pill per note, painted harmony, gestures instead of
-    widget stacks.</p>
+    <h3>⟳ why the rows came back</h3>
+    <p><span class="q">“The original button structure with sliders was more novel and
+    comprehensible.”</span> — Paul, 2026-08-27. The pill lane retires. The shipped
+    row-per-step idiom returns as the proposal — same bones, Enamel body: 48px controls,
+    painted harmony, one knowledge rail, and time still runs down.</p>
+    <p class="small">What does not return: the 12px radios, the 36px sliders, the
+    five-widget clutter per row. One segmented kind button, one snapped stepper, one
+    velocity control — and the controls of a silent row go faint instead of vanishing,
+    so nothing ever reflows under a finger.</p>
   </div>
 
   <div class="notes">
-    <div class="ann"><b class="n">1</b><p><em>Columns are the Alphabet.</em> Seven degree columns (and the leading tone below) come from <span class="data">g.scale/mode</span>, low on the left like a keyboard; a chromatic passing tone is not a hidden column, it is a different Alphabet. Snapping is the editor, not a validator.</p></div>
-    <div class="ann"><b class="n">2</b><p><em>Overlay, not a second copy.</em> The composed version is dashed meter-green ghosts over the same lane — engine truth, byte-equal to what the score plays. The eye compares positions, not two staves. Captions carry the tense: “as played in chorus — you are writing psalm.”</p></div>
-    <div class="ann"><b class="n">3</b><p><em>Chord windows are painted, not narrated.</em> <span class="data">chordsOf()</span> already returns start/len/deg/quality per window; each window is a horizontal band of rows, tinting its chord-tone columns green and the leading-tone column flag-yellow under V. The header’s role marks change as the band changes.</p></div>
-    <div class="ann"><b class="n">4</b><p><em>Velocity is ink depth on the pill</em> — deeper cobalt plus the printed v-number — never a second slider column. Accent is the yellow flag ring (a categorical event, not a level; <span class="data">kernel.js</span> keeps them distinct and so does the eye). Duration is the pill’s height: a long note is a tall pill.</p></div>
-    <div class="ann"><b class="n">5</b><p><em>The playhead lives in its own <span class="data">[data-live]</span> layer</em> above the cells — a 4px clock-red line descending. The clock may move that line and the caption beside the play button — nothing else. Edits mutate pills in place; the lane is never rebuilt under a finger (MOTIF.md’s 114px jump becomes structurally impossible).</p></div>
-    <div class="ann"><b class="n">6</b><p><em>The tri-state button keeps yesterday’s law:</em> the word on it is the NEXT tap (▶ play → ↻ loop → ■ stop); the <span class="data">[data-live]</span> sentence beside it is the only text the sound’s own callback may write.</p></div>
+    <div class="ann"><b class="n">1</b><p><em>The stepper IS the Alphabet.</em> − and + walk <span class="data">g.scale/mode</span> degrees only — 7̂₋ below the tonic up to 7̂ — so snapping is the editor, not a validator. A chromatic passing tone is a different Alphabet, not a hidden value between the detents.</p></div>
+    <div class="ann"><b class="n">2</b><p><em>Roles are painted, not narrated.</em> <span class="data">chordsOf()</span> gives the windows — i over steps 1–8, V over 9–16 — and each row's tick is its degree's role under the window it sounds in: <b style="color:var(--meter)">green</b> chord tone, <b style="background:var(--flag);border-radius:2px;padding:0 3px">yellow</b> leading tone, hollow color tone. Move the degree and the tick answers.</p></div>
+    <div class="ann"><b class="n">3</b><p><em>Silent rows stay put.</em> A rest or tie row keeps its degree and weight controls, faint, with one measured line saying why they sleep — the row's geometry never changes when its kind does, so the thumb's map of the bar holds.</p></div>
+    <div class="ann"><b class="n">4</b><p><em>One knowledge rail.</em> Tap any row and the wisdom line below the bar speaks: step, degree, role under the current chord, weight. One place, one sentence — not sixteen tooltips.</p></div>
+    <div class="ann"><b class="n">5</b><p><em>The playhead lives in its own <span class="data">[data-live]</span> layer</em> — a 4px clock-red line descending over the rows. The clock may move that line and the sentence beside the play button; it may not press a button, move a bar, or scroll the page. The tri-state button keeps its law: the word on it is the NEXT tap (▶ play → ↻ loop → ■ stop).</p></div>
+    <div class="ann"><b class="n">6</b><p><em>The overlay survives as a marker.</em> The pill layer's ghost pills are gone; what remains is a small dashed meter-green tick under the step label of every row where the chosen development lands a note — the same <span class="data">reverse()</span> the score runs, applied to this cell, byte-equal to what will play.</p></div>
   </div>
 </section>
 
 <!-- ================= THE KIT ================= -->
 <section id="kit">
   <h2>proposed · the kit</h2>
-  <p class="note">Drums are <b>columns</b> — kick, snare, hat, open, perc across — and
-  steps fall <b>down</b>. Velocity is the width of each hit, the groove is rows that
-  physically sit late, and the fill is the bottom of the phrase, hatched where it
-  lands<sup class="n">7</sup>.</p>
+  <p class="note">Same structure, five columns: 16 step rows fall, kick snare hat open
+  perc run across, and every cell is a chunky button that carries <b>a velocity per
+  step</b><sup class="n">7</sup> — the fill's width is the level, the number prints at
+  the cell's edge. Swing is rows that physically sit late<sup class="n">8</sup>; the fill
+  is the hatched bottom of bar 4<sup class="n">9</sup>.</p>
 
   <div class="phrase" id="phraseStrip">
     <button class="btn" type="button" aria-pressed="true" data-bar="1">bar 1</button>
@@ -463,25 +456,25 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
       <div class="vslider" style="--v:.24" id="swingSlider">
         <span class="vs-lab">swing</span>
         <div class="vs-body" style="--vsh:180px">
-          <div class="vs-track">
-            <i class="vs-fill"></i>
-            <span class="vs-notch" style="--nv:.16" title="the record's own value"></span>
+          <div class="vs-track" id="swingTrack">
+            <i class="vs-rail"><i class="vs-fill"></i>
+              <span class="vs-notch" style="--nv:.16" title="the record's own value"></span></i>
             <b class="vs-thumb"></b>
             <input class="vs-input" type="range" min="50" max="75" step="1" value="56"
-              orient="vertical" aria-label="swing" id="swing">
+              aria-label="swing" id="swing">
           </div>
         </div>
         <output class="vs-val" id="swingVal">56% · +39 ms</output>
       </div>
-      <p class="why" style="max-width:24ch">The yellow notch is the record’s own value; the
-      readout converts to milliseconds at the record’s 92 bpm — offset shown, never written
-      back<sup class="n">8</sup>. Slide it and watch the “&amp;” rows lean down.</p>
+      <p class="why" style="max-width:24ch">The yellow notch is the record's own value; the
+      readout converts to milliseconds at the record's 92 bpm — offset shown, never written
+      back. Slide it (or tap a height) and watch the “&amp;” rows lean down.</p>
       <div class="legend">
-        <span><i style="background:var(--hand)"></i>hit — wider is louder</span>
-        <span><i style="background:var(--hand);box-shadow:inset 4px 0 0 var(--flag)"></i>accent (9)</span>
-        <span><i style="background:var(--faint)"></i>ghost (2)</span>
+        <span><i style="background:var(--hand)"></i>hit — wider is louder, the number is the level</span>
+        <span><i style="background:var(--hand);box-shadow:inset -4px 0 0 var(--flag)"></i>accent (8–9)</span>
+        <span><i style="background:var(--faint)"></i>ghost (1–2)</span>
         <span><i style="background:var(--flag)"></i>fill stroke</span>
-        <span><i style="background:repeating-linear-gradient(-45deg,var(--well) 0 3px,var(--flag-tint) 3px 6px)"></i>the fill’s ground</span>
+        <span><i style="background:repeating-linear-gradient(-45deg,var(--well) 0 3px,var(--flag-tint) 3px 6px)"></i>the fill's ground</span>
         <span><i style="background:var(--ground);border-style:dashed;border-color:var(--faint)"></i>straight time, when a row sits late</span>
       </div>
     </div>
@@ -495,41 +488,88 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
     <button class="chip" type="button" aria-pressed="false">accent the downbeats</button>
   </div>
   <p class="why" style="margin-top:var(--s2)">the KITOPS words — each one a deterministic
-  table op over the grid; tapping one shows its result as the same green ghost layer the
-  lane uses</p>
+  table op over the grid, including its velocities</p>
 
   <div class="notes">
-    <div class="ann"><b class="n">7</b><p><em>Depth, not a second grid.</em> Tap cycles rest → ghost → hit → accent; press-and-drag sideways writes any level 0–9 as width. The grid reads exactly like the engine does — “a ghost is a 2 and an accent is a 9” (<span class="data">drums-kit.js</span>).</p></div>
-    <div class="ann"><b class="n">8</b><p><em>Swing is displacement, displayed.</em> The “&amp;” rows (label, cells, hits — the whole row) physically sit late; the grey dashed stub marks straight time where they left it. The rows move by <span class="data">transform</span> only — the DOM is never rebuilt.</p></div>
-    <div class="ann"><b class="n">9</b><p><em>The fill is a place, not a mode.</em> The phrase strip shows all four bars; bar 4 is hatched because a fill is a SHAPE over the phrase — the bottom quarter — and “fourth measure fill” lands there and nowhere else. Open bar 4 and the fill’s ground is hatched from its entry down, its strokes flag-yellow; bars 2–3 say “= 1” instead of repeating themselves.</p></div>
-    <div class="ann"><b class="n">10</b><p><em>Same bench, two kinds.</em> Lane and kit share the toolbar, the tri-state play, the ghost-overlay idiom, the 44–48px step rows and the header row of names — a drum pattern is not a second app.</p></div>
+    <div class="ann"><b class="n">7</b><p><em>Velocity per step — Paul's ask, granted.</em> Every drum cell carries 0–9. Tap cycles rest → ghost(2) → hit(5) → accent(9) — the levels <span class="data">drums-kit.js</span> already names — and a sideways drag (pointer-captured) writes any of the ten. The cell scrolls the page vertically and writes velocity horizontally: <span class="data">touch-action: pan-y</span>.</p></div>
+    <div class="ann"><b class="n">8</b><p><em>Swing is displacement, displayed.</em> The “&amp;” rows — label and all five cells — physically sit late by <span class="data">transform</span>; the grey dashed stub marks straight time where they left it. The DOM is never rebuilt, only translated.</p></div>
+    <div class="ann"><b class="n">9</b><p><em>The fill is a place, not a mode.</em> Bar 4 in the phrase strip is hatched because a fill is a SHAPE over the phrase — the bottom quarter. Open it and the ground is hatched from the fill's entry down, its strokes flag-yellow; bars 2–3 say “= 1” instead of repeating themselves.</p></div>
+    <div class="ann"><b class="n">10</b><p><em>Same bench, two kinds.</em> Motif and kit share the row-per-step spine, the toolbar, the tri-state play, the 44–48px targets, the faint-not-hidden law. A drum pattern is not a second app.</p></div>
   </div>
+</section>
+
+<!-- ================= THE VELOCITY STRATEGIES ================= -->
+<section id="velocity">
+  <h2>the velocity strategies</h2>
+  <p class="note">Two candidate shapes for the per-step level, <b>both live on this page</b>
+  — try them with a thumb. Each is shown on a motif row and on a kit row. One is marked;
+  the argument is under each.</p>
+
+  <div class="strats">
+    <div class="plate strat" id="stratA">
+      <h3>A · the velocity bar <span class="rec">RECOMMENDED</span></h3>
+      <p class="cap"><b>The bar's width IS the value</b> and the number prints at its end —
+      sixteen of them read as a bar-graph of loudness falling down the page, the same
+      idiom the kit's cells already draw. Tap cycles ghost(2) → hit(5) → accent(9), so the
+      <b>no-drag path alone covers the three levels that matter</b>; the sideways drag
+      (pointer-captured, <span class="data">touch-action: none</span> on the bar only — the
+      fix that made today's sliders touchable) writes the other seven. If a drag ever fails
+      on a phone again, this control degrades to exactly the shipped grammar. One gesture,
+      zero extra chrome, one owner per fact.</p>
+      <p class="demoLab">on a motif row — drag sideways, or tap to cycle</p>
+      <div class="demoRow" id="demoA-motif"></div>
+      <p class="demoLab">on a kit row — same gesture inside each cell</p>
+      <div class="demoKit" id="demoA-kit"></div>
+    </div>
+
+    <div class="plate strat" id="stratB">
+      <h3>B · the ladder</h3>
+      <p class="cap"><b>Every value a visible tap target, no drag at all</b> — nine rungs,
+      tap one and the rungs below it fill; tap the top filled rung again for silence. The
+      honest answer to a month when drags didn't work. The cost is geometry: nine legal
+      44px rungs make one step over 100px tall and the bar two and a half phone screens;
+      shown here at 9px rungs — real but thin — with slide-over allowed as a mercy. It is
+      fully discrete and fully tappable, and slightly wider per row.</p>
+      <p class="demoLab">on a motif row — tap a rung</p>
+      <div class="demoRow" id="demoB-motif"></div>
+      <p class="demoLab">on a kit row — a ladder per cell</p>
+      <div class="demoKit" id="demoB-kit"></div>
+    </div>
+  </div>
+
+  <p class="why" style="margin-top:var(--s4)"><b>The call:</b> A. The bar is one owner per
+  fact (width = level = printed number), it survives a phone that refuses to drag because
+  its tap path is the whole musical vocabulary, and down the page it reads as data — a
+  dynamics curve you can see at arm's length. B's promise of “every value visible” breaks
+  against the 44px law: honest rungs make the bar three screens tall; thin rungs betray
+  the one law this rebuild exists to keep.</p>
 </section>
 
 <!-- ================= GESTURES ================= -->
 <section id="gestures">
   <h2>one gesture grammar</h2>
   <p class="note">Thumb at 390px and mouse at 1280px perform the same sentence; nothing
-  needs a hover to exist. The grammar rotated with the geometry: duration is a downward
-  drag now, pitch and loudness are sideways.</p>
+  needs a hover to exist, nothing needs a drag to be usable. Every drag surface takes
+  pointer capture and declares its <span class="data">touch-action</span>, so the page
+  scrolls from everywhere else and never from inside a control.</p>
   <div class="gests">
-    <div class="gest"><h3><b>tap</b> empty</h3>
-      <p><span class="who">lane</span><br>place a note at that step + degree (snapped — the column IS the pitch)</p>
-      <p><span class="who">kit</span><br>cycle rest → ghost → hit → accent</p></div>
-    <div class="gest"><h3><b>tap</b> note</h3>
-      <p><span class="who">lane</span><br>select — the wisdom rail speaks; second tap deletes</p>
+    <div class="gest"><h3><b>tap</b> kind</h3>
+      <p><span class="who">motif</span><br>♪ / — / ⌒ set the row to note, rest, or tie; silent rows go faint, they never vanish</p>
+      <p><span class="who">kit</span><br>a cell cycles rest → ghost(2) → hit(5) → accent(9)</p></div>
+    <div class="gest"><h3><b>tap</b> − / +</h3>
+      <p><span class="who">motif</span><br>step the degree through the Alphabet — the detents ARE the scale; the role tick answers under the current chord</p>
       <p><span class="who">kit</span><br>—</p></div>
-    <div class="gest"><h3><b>drag ↓</b></h3>
-      <p><span class="who">lane</span><br>stretch duration — the pill grows taller (tie/dot becomes length; no tie radio)</p>
-      <p><span class="who">kit</span><br>paint hits down the column at the current depth</p></div>
     <div class="gest"><h3><b>drag ⇄</b></h3>
-      <p><span class="who">lane</span><br>on a pill: move degree, snapping column to column</p>
-      <p><span class="who">kit</span><br>on a hit: write velocity 0–9 as width</p></div>
-    <div class="gest"><h3><b>long-press</b></h3>
-      <p><span class="who">lane</span><br>the note sheet: accent · slide · ornament (grace/flam/roll) — a bottom sheet, 48px rows</p>
-      <p><span class="who">kit</span><br>the column sheet: choose drum, per-column vel contour</p></div>
+      <p><span class="who">motif</span><br>on the velocity bar: write 0–9 as width (captured; <b>touch-action: none</b> on the bar only)</p>
+      <p><span class="who">kit</span><br>on a cell: write 0–9 as width (<b>pan-y</b> — sideways is the value, vertical is still the page)</p></div>
+    <div class="gest"><h3><b>drag ↕</b></h3>
+      <p><span class="who">swing</span><br>the vertical slider: captured on its track, tap-to-jump at any height, keyboard arrows through the hidden native input</p>
+      <p><span class="who">ladder</span><br>slide over the rungs, if B wins</p></div>
+    <div class="gest"><h3><b>tap</b> a row</h3>
+      <p><span class="who">motif</span><br>the wisdom rail speaks: step, degree, role under the chord, weight</p>
+      <p><span class="who">kit</span><br>the cell's own label says drum, step, level</p></div>
     <div class="gest"><h3><b>two-finger / wheel</b></h3>
-      <p><span class="who">both</span><br>the page scrolls — down, only ever down. Nothing on this surface scrolls sideways; only the engraved score keeps a horizontal law <b>(the 114px jump, retired)</b></p></div>
+      <p><span class="who">both</span><br>the page scrolls — down, only ever down. No surface here scrolls sideways; only the engraved score keeps a horizontal law</p></div>
   </div>
 </section>
 
@@ -537,12 +577,12 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
 <section id="laws">
   <h2>the laws it keeps</h2>
   <div class="laws">
-    <div class="law"><b>Determinism</b>Every displayed fact is a table read: chord bands from <span class="data">chordsOf</span>, roles from pc-set membership, overlays from the OPS words, ms from bpm. No model, no guess.</div>
-    <div class="law"><b>[data-live]</b>The clock owns the falling red line and one sentence. It may not move a pill, a cell, a scroll position, or the button’s word.</div>
-    <div class="law"><b>Extraction, never by hand</b>The composed overlay is the score’s own operator applied to the cell — if the overlay and the record ever disagree, the gate fails, not the eye.</div>
-    <div class="law"><b>Down is time</b>Steps fall; the needle falls; the fill is the bottom of the phrase. No surface here scrolls sideways — vertical space is cheap, width is not.</div>
-    <div class="law"><b>One owner per fact</b>Velocity lives in pill ink / hit width and nowhere else; duration lives in pill height; the tie and dot radios retire.</div>
-    <div class="law"><b>Chunk, zero hairlines</b>Step rows are 48px tall with full-width tap areas; every rule is 2px ink or more, 3px at beats and edges; chips, buttons and thumbs meet <span class="data">--ctl</span>. Plain HTML: divs, CSS grid, one hand-drawn SVG — the gate can read every fact from the DOM.</div>
+    <div class="law"><b>Determinism</b>Every displayed fact is a table read: chord windows from <span class="data">chordsOf</span>, roles from pc-set membership, markers from the OPS words, ms from bpm. No model, no guess.</div>
+    <div class="law"><b>[data-live]</b>The clock owns the falling red line and one sentence. It may not press a button, rewrite a row, or move the scroll.</div>
+    <div class="law"><b>Extraction, never by hand</b>The development marker is the score's own operator applied to this cell — if marker and record ever disagree, the gate fails, not the eye.</div>
+    <div class="law"><b>Down is time</b>Steps are rows; rows fall; the needle falls; the fill is the bottom of the phrase. Vertical space is cheap, width is not.</div>
+    <div class="law"><b>One owner per fact</b>Velocity is the bar's width and its printed number, nowhere else. Duration is which rows say tie. Kind is one segmented button, not three radios.</div>
+    <div class="law"><b>The touch law</b>Every drag surface: <span class="data">setPointerCapture</span> on pointerdown, value from the pointer against the control's own rect, <span class="data">touch-action</span> declared on the control and only the control. The native input stays as the keyboard's channel — <span class="data">pointer-events: none</span>, one paint path for both.</div>
   </div>
 </section>
 
@@ -550,31 +590,162 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
 <footer style="max-width:920px;margin-left:auto;margin-right:auto;padding-left:16px;padding-right:16px">
   Design artifact only — nothing here is wired to the engine. The Bench replaces the
   cell-row and step grid inside the Sheet-music axis of ui/eight.js; the staff engraving
-  stays, above, as the composed view’s printed form — the one surface allowed to run
+  stays, above, as the composed view's printed form — the one surface allowed to run
   left to right.
 </footer>
 
 <script>
 (function () {
 "use strict";
-var reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/* ============ shared geometry: steps are ROWS ============ */
-var ROWH = 48, KROWH = 44, HEAD = 44, N = 16;
+/* ==========================================================================
+   shared: the touch-safe drag helpers (THE FIX)
+   pointerdown -> setPointerCapture; value from pointer vs the control's rect;
+   pointerup without movement = a tap. click-after-drag is suppressed by flag.
+   ========================================================================== */
+function dragX(el, onValue, onTap) {
+  var moved = false, x0 = 0;
+  el.addEventListener("pointerdown", function (e) {
+    moved = false; x0 = e.clientX;
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  el.addEventListener("pointermove", function (e) {
+    if (!el.hasPointerCapture || !el.hasPointerCapture(e.pointerId)) return;
+    if (!moved && Math.abs(e.clientX - x0) < 6) return;
+    moved = true; el._dragged = true;
+    var r = el.getBoundingClientRect();
+    var v = Math.round((e.clientX - r.left) / r.width * 9);
+    onValue(Math.max(0, Math.min(9, v)));
+  });
+  el.addEventListener("pointerup", function () {
+    if (!moved && onTap) onTap();
+  });
+}
+function dragY(el, min, max, onValue) {
+  var setFrom = function (e) {
+    var r = el.getBoundingClientRect();
+    var f = 1 - (e.clientY - r.top) / r.height;      /* top = max, bottom = min */
+    f = Math.max(0, Math.min(1, f));
+    onValue(Math.round(min + f * (max - min)));
+  };
+  el.addEventListener("pointerdown", function (e) {
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    setFrom(e);                                       /* tap-to-jump */
+    e.preventDefault();
+  });
+  el.addEventListener("pointermove", function (e) {
+    if (!el.hasPointerCapture || !el.hasPointerCapture(e.pointerId)) return;
+    setFrom(e);
+  });
+}
+function cycMotif(v) { return v >= 8 ? 2 : v >= 4 ? 9 : 5; }   /* 2 -> 5 -> 9 -> 2 */
+function cycKit(v)   { return v === 0 ? 2 : v <= 2 ? 5 : v <= 5 ? 9 : 0; }
+
+/* ==========================================================================
+   STRATEGY A widget — the velocity bar (also used by the motif editor)
+   the native input is the keyboard channel; pointer logic writes THROUGH it
+   ========================================================================== */
+function makeVelA(aria, get, set) {
+  var wrap = document.createElement("div");
+  wrap.className = "velA";
+  wrap.innerHTML = "<div class='va-bar'><i class='va-fill'></i></div>" +
+    "<b class='va-num'></b>" +
+    "<input class='va-in' type='range' min='0' max='9' step='1'>";
+  var fill = wrap.querySelector(".va-fill"),
+      num  = wrap.querySelector(".va-num"),
+      inp  = wrap.querySelector(".va-in");
+  inp.setAttribute("aria-label", aria);
+  function paint() {
+    var v = get();
+    wrap.dataset.v = v;
+    var f = v / 9;
+    fill.style.width = "calc(6px + (100% - 6px) * " + f.toFixed(4) + ")";
+    num.textContent = v;
+    wrap.classList.toggle("gh", v > 0 && v <= 2);
+    wrap.classList.toggle("acc", v >= 8);
+    wrap.classList.toggle("hi", v >= 7);
+    if (v >= 7) { num.style.left = ""; num.style.right = "8px"; }
+    else { num.style.right = ""; num.style.left = "calc(6px + (100% - 6px) * " + f.toFixed(4) + " + 6px)"; }
+    inp.setAttribute("aria-valuetext", "velocity " + v +
+      (v === 0 ? ", silent" : v <= 2 ? ", ghost" : v >= 8 ? ", accent" : ", hit"));
+  }
+  inp.addEventListener("input", function () { set(+inp.value); paint(); });
+  function write(v) {
+    if (+inp.value === v && get() === v) return;
+    inp.value = v;
+    inp.dispatchEvent(new Event("input", { bubbles: true }));   /* one paint path */
+  }
+  dragX(wrap, write, function () { write(cycMotif(get())); });
+  inp.value = get(); paint();
+  return { el: wrap, paint: paint, input: inp };
+}
+
+/* ==========================================================================
+   STRATEGY B widget — the ladder (9 rungs; tap fills down to the rung)
+   ========================================================================== */
+function makeLadder(aria, get, set) {
+  var wrap = document.createElement("div");
+  wrap.className = "ladder";
+  wrap.setAttribute("role", "group");
+  wrap.setAttribute("aria-label", aria);
+  var rungs = [];
+  for (var lv = 9; lv >= 1; lv--) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "rung"; b.dataset.lv = lv;
+    b.setAttribute("aria-label", aria + ": set velocity " + lv);
+    rungs.push(b); wrap.appendChild(b);
+  }
+  function paint() {
+    var v = get();
+    wrap.dataset.v = v;
+    wrap.classList.toggle("gh", v > 0 && v <= 2);
+    rungs.forEach(function (b) {
+      var lv = +b.dataset.lv;
+      b.classList.toggle("on", lv <= v);
+      b.classList.toggle("topacc", lv === 9 && v === 9);
+      b.setAttribute("aria-pressed", lv <= v ? "true" : "false");
+    });
+  }
+  wrap.addEventListener("click", function (e) {
+    var b = e.target.closest(".rung"); if (!b) return;
+    if (wrap._dragged) { wrap._dragged = false; return; }
+    var lv = +b.dataset.lv;
+    set(lv === get() ? 0 : lv);                       /* tap the top again = silence */
+    paint();
+  });
+  /* slide-over mercy: vertical pointer-captured write */
+  (function () {
+    var moved = false, y0 = 0;
+    wrap.addEventListener("pointerdown", function (e) { moved = false; y0 = e.clientY;
+      try { wrap.setPointerCapture(e.pointerId); } catch (err) {} });
+    wrap.addEventListener("pointermove", function (e) {
+      if (!wrap.hasPointerCapture || !wrap.hasPointerCapture(e.pointerId)) return;
+      if (!moved && Math.abs(e.clientY - y0) < 6) return;
+      moved = true; wrap._dragged = true;
+      var r = wrap.getBoundingClientRect();
+      var v = Math.round((1 - (e.clientY - r.top) / r.height) * 9);
+      set(Math.max(0, Math.min(9, v))); paint();
+    });
+  })();
+  paint();
+  return { el: wrap, paint: paint };
+}
+
+/* ==========================================================================
+   the motif: 16 step rows, one value each
+   ========================================================================== */
+var N = 16;
 var SUB = ["1","e","&","a","2","e","&","a","3","e","&","a","4","e","&","a"];
-
-/* ============ the motif (psalm) ============ */
-// degree COLUMNS left->right: -1..6 (low on the left, like a keyboard)
-var COLS = [-1, 0, 1, 2, 3, 4, 5, 6];
-var NOTES = [
-  { s: 0,  len: 2, deg: 0, vel: 5 },
-  { s: 2,  len: 2, deg: 1, vel: 5 },
-  { s: 4,  len: 6, deg: 2, vel: 6, acc: true },
-  { s: 10, len: 1, deg: 2, vel: 5, orn: "gr" },
-  { s: 11, len: 1, deg: 1, vel: 5, sld: true },
-  { s: 12, len: 4, deg: 0, vel: 5 }
+var COLS = [-1, 0, 1, 2, 3, 4, 5, 6];      /* the Alphabet: 7̂ below tonic .. 7̂ */
+var STEPS = [
+  { k: "note", deg: 0, vel: 5 }, { k: "tie" },
+  { k: "note", deg: 1, vel: 5 }, { k: "tie" },
+  { k: "note", deg: 2, vel: 9 }, { k: "tie" }, { k: "tie" }, { k: "tie" },
+  { k: "rest" }, { k: "rest" },
+  { k: "note", deg: 2, vel: 5 }, { k: "note", deg: 1, vel: 2 },
+  { k: "note", deg: 0, vel: 5 }, { k: "tie" }, { k: "tie" },
+  { k: "rest" }
 ];
-// chord windows: i for steps 0-7, V for 8-15  (from chordsOf: start/len/deg/q)
 var WINDOWS = [
   { start: 0, len: 8, label: "i", q: "triad", tones: [0, 2, 4] },
   { start: 8, len: 8, label: "V", q: "triad", tones: [4, 6, 1], lead: 6 }
@@ -586,157 +757,191 @@ function roleOf(deg, w) {
   if (w.tones.indexOf(d) >= 0) return "chord tone";
   return "color";
 }
-function degName(deg) {
-  return deg === -1 ? "7̂₋" : ((deg % 7) + 1) + "̂";
+function degName(deg) { return deg === -1 ? "7̂₋" : ((deg % 7) + 1) + "̂"; }
+function soundingAt(s) {           /* the note a tie row is still ringing */
+  for (var i = s; i >= 0; i--) if (STEPS[i].k === "note") return STEPS[i];
+  return null;
 }
 
-/* ============ build the lane: degrees across, steps down ============ */
-var lane = document.getElementById("laneGrid");
-var lf = document.createDocumentFragment();
-// header row: corner, 8 degree headers with role marks, chord-rail corner
-var corner = document.createElement("div");
-corner.className = "corner";
-lf.appendChild(corner);
-COLS.forEach(function (deg) {
-  var h = document.createElement("div");
-  var rI = roleOf(deg, WINDOWS[0]), rV = roleOf(deg, WINDOWS[1]);
-  h.className = "dh" + (rI === "chord tone" || rV === "chord tone" ? " is-chord" : "") +
-    (rV === "leading tone" ? " is-lead" : "");
-  h.innerHTML = "<b>" + degName(deg) + "</b><span class='role'>" +
-    (rI === "chord tone" ? "●" : "○") +
-    (rV === "chord tone" ? "●" : rV === "leading tone" ? "▲" : "○") + "</span>";
-  h.title = "i: " + rI + " · V: " + rV;
-  lf.appendChild(h);
-});
-var cornerR = document.createElement("div");
-cornerR.className = "corner r";
-lf.appendChild(cornerR);
-// 16 step rows: label + 8 cells (chord rail placed after, spanning rows)
-for (var s = 0; s < N; s++) {
-  var sn = document.createElement("div");
-  sn.className = "sn" + (s % 4 === 0 ? " beat" : "") + (s % 4 === 3 ? " b4" : "");
-  sn.textContent = SUB[s];
-  lf.appendChild(sn);
-  for (var c = 0; c < COLS.length; c++) {
-    var cell = document.createElement("div");
-    var w = winAt(s), role = roleOf(COLS[c], w);
-    cell.className = "lc" + (s % 4 === 3 ? " b4" : "") +
-      (role === "chord tone" ? " tone" : role === "leading tone" ? " lead" : "");
-    lf.appendChild(cell);
+var stepsEl = document.getElementById("motifSteps");
+var wisdom = document.getElementById("wisdom");
+var rowRefs = [];                  /* {row, segbs, degv, tick, minus, plus, velA} */
+
+function buildRows() {
+  var frag = document.createDocumentFragment();
+  for (var s = 0; s < N; s++) (function (s) {
+    var row = document.createElement("div");
+    row.className = "srow" + (s % 4 === 0 ? " beat" : "");
+    row.dataset.s = s;
+
+    var slab = document.createElement("div");
+    slab.className = "slab";
+    slab.innerHTML = "<b>" + SUB[s] + "</b><i class='gtick'></i>";
+    row.appendChild(slab);
+
+    var seg = document.createElement("div");
+    seg.className = "seg"; seg.setAttribute("role", "group");
+    seg.setAttribute("aria-label", "step " + (s + 1) + " kind");
+    var segbs = {};
+    [["note", "♪"], ["rest", "—"], ["tie", "⌒"]].forEach(function (kd) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "segb"; b.dataset.k = kd[0];
+      b.textContent = kd[1];
+      b.setAttribute("aria-label", "step " + (s + 1) + ": " + kd[0]);
+      if (kd[0] === "tie" && s === 0) { b.disabled = true; b.title = "nothing above to tie to"; }
+      b.addEventListener("click", function () {
+        if (b.disabled) return;
+        var st = STEPS[s];
+        if (st.k !== kd[0]) {
+          if (kd[0] === "note" && st.deg === undefined) { st.deg = 0; st.vel = 5; }
+          st.k = kd[0];
+          refreshRow(s); refreshTails(s); paintGhost(currentDev);
+        }
+      });
+      segbs[kd[0]] = b; seg.appendChild(b);
+    });
+    row.appendChild(seg);
+
+    var rowr = document.createElement("div");
+    rowr.className = "rowr";
+
+    var degc = document.createElement("div");
+    degc.className = "degc";
+    var minus = document.createElement("button");
+    minus.type = "button"; minus.className = "degb"; minus.textContent = "−";
+    minus.setAttribute("aria-label", "step " + (s + 1) + ": degree down the Alphabet");
+    var degv = document.createElement("span");
+    degv.className = "degv";
+    degv.innerHTML = "<b></b><i class='tick'></i>";
+    var plus = document.createElement("button");
+    plus.type = "button"; plus.className = "degb"; plus.textContent = "+";
+    plus.setAttribute("aria-label", "step " + (s + 1) + ": degree up the Alphabet");
+    function stepDeg(d) {
+      var st = STEPS[s]; if (st.k !== "note") return;
+      var ix = COLS.indexOf(st.deg) + d;
+      if (ix < 0 || ix >= COLS.length) return;
+      st.deg = COLS[ix];
+      refreshRow(s); refreshTails(s); speak(s); paintGhost(currentDev);
+    }
+    minus.addEventListener("click", function () { stepDeg(-1); });
+    plus.addEventListener("click", function () { stepDeg(1); });
+    degc.appendChild(minus); degc.appendChild(degv); degc.appendChild(plus);
+    rowr.appendChild(degc);
+
+    var velA = makeVelA("step " + (s + 1) + " velocity",
+      function () { var st = STEPS[s]; return st.k === "note" ? st.vel :
+        (st.k === "tie" && soundingAt(s) ? soundingAt(s).vel : 0); },
+      function (v) { if (STEPS[s].k === "note") STEPS[s].vel = v; });
+    rowr.appendChild(velA.el);
+
+    var mw = document.createElement("p");
+    mw.className = "mutewhy"; mw.innerHTML = "<span></span>";
+    rowr.appendChild(mw);
+
+    row.appendChild(rowr);
+    row.addEventListener("click", function () { speak(s); });
+    frag.appendChild(row);
+    rowRefs.push({ row: row, segbs: segbs, degv: degv, minus: minus, plus: plus,
+      velA: velA, mutewhy: mw.firstChild });
+  })(s);
+  stepsEl.appendChild(frag);
+
+  var ph = document.createElement("div");
+  ph.className = "playline"; ph.id = "playline";
+  stepsEl.appendChild(ph);
+  placePlayline();
+}
+function refreshRow(s) {
+  var st = STEPS[s], r = rowRefs[s];
+  r.row.classList.toggle("is-rest", st.k === "rest");
+  r.row.classList.toggle("is-tie", st.k === "tie");
+  Object.keys(r.segbs).forEach(function (k) {
+    r.segbs[k].setAttribute("aria-pressed", st.k === k ? "true" : "false");
+  });
+  var src = st.k === "note" ? st : (st.k === "tie" ? soundingAt(s) : null);
+  var b = r.degv.querySelector("b"), t = r.degv.querySelector("i");
+  if (src) {
+    b.textContent = degName(src.deg);
+    var role = roleOf(src.deg, winAt(s));
+    t.className = "tick" + (role === "chord tone" ? " tone" : role === "leading tone" ? " lead" : "");
+    t.style.display = "";
+    t.title = role + " under " + winAt(s).label;
+  } else { b.textContent = "–"; t.style.display = "none"; }
+  if (st.k === "note") {
+    r.minus.disabled = COLS.indexOf(st.deg) === 0;
+    r.plus.disabled = COLS.indexOf(st.deg) === COLS.length - 1;
+  }
+  r.velA.input.value = src ? src.vel : 0;
+  r.velA.paint();
+  r.mutewhy.textContent = st.k === "rest" ? "rest — nothing sounds"
+    : st.k === "tie" ? "tied — " + (src ? degName(src.deg) + " still rings" : "silence holds")
+    : "";
+}
+function refreshTails(s) {         /* tie rows after s inherit a new degree/weight */
+  for (var i = s + 1; i < N && STEPS[i].k === "tie"; i++) refreshRow(i);
+  refreshRow(s);
+}
+function speak(s) {
+  var st = STEPS[s], w = winAt(s), beat = Math.floor(s / 4) + 1;
+  var at = "step <b class='data'>" + (s + 1) + "</b> (beat " + beat +
+    (s % 4 !== 0 ? " · “" + SUB[s] + "”" : "") + ")";
+  if (st.k === "rest") {
+    wisdom.innerHTML = at + " · <b>rest</b> — under <b class='data'>" + w.label + "</b> nothing sounds";
+  } else {
+    var src = st.k === "note" ? st : soundingAt(s);
+    if (!src) { wisdom.innerHTML = at + " · silence"; return; }
+    var role = roleOf(src.deg, w);
+    wisdom.innerHTML = at + (st.k === "tie" ? " · <b>tied</b> —" : " ·") +
+      " degree <b class='data'>" + degName(src.deg) + "</b> under <b class='data'>" + w.label +
+      "</b> — <b>" + role + "</b> · vel " + src.vel +
+      (src.vel >= 8 ? " <span class='accw'>accent</span>" : src.vel <= 2 ? " (ghost)" : "");
   }
 }
-// the chord rail: one band per window, spanning its rows
-WINDOWS.forEach(function (w, i) {
-  var r = document.createElement("div");
-  r.className = "crail" + (i === 1 ? " v5" : "");
-  r.style.gridRow = (2 + w.start) + " / " + (2 + w.start + w.len);
-  r.innerHTML = "<b>" + w.label + "</b><small>" + w.q + " · steps " +
-    (w.start + 1) + "–" + (w.start + w.len) + "</small>";
-  lf.appendChild(r);
-});
-lane.appendChild(lf);
-
-/* ============ pills: vertical — height is duration, ink is velocity ============ */
-var layer = document.getElementById("pillLayer");
-var wisdom = document.getElementById("wisdom");
-var selPill = null;
-function colIx(deg) { return COLS.indexOf(deg); }
-NOTES.forEach(function (n) {
-  var p = document.createElement("button");
-  p.type = "button";
-  p.className = "pill" + (n.acc ? " acc" : "");
-  p.style.left = (colIx(n.deg) * 12.5) + "%";
-  p.style.top = (n.s * ROWH + 4) + "px";
-  p.style.height = (n.len * ROWH - 10) + "px";
-  var mix = Math.round(35 + n.vel / 9 * 65);
-  p.style.background = "color-mix(in srgb, var(--hand) " + mix + "%, var(--hand-tint))";
-  p.style.color = n.vel >= 4 ? "#FFFFFF" : "var(--ink)";
-  p.innerHTML = "<b>" + n.deg + "</b>" +
-    (n.len > 1 ? "<span class='v'>v" + n.vel + "</span>" : "") +
-    (n.sld ? "<span class='orn'>↗</span>" : "") +
-    (n.orn ? "<span class='orn'>✽" + n.orn + "</span>" : "");
-  p.setAttribute("aria-label", "degree " + n.deg + ", step " + (n.s + 1) +
-    ", length " + n.len + ", velocity " + n.vel + (n.acc ? ", accent" : ""));
-  p.addEventListener("click", function () {
-    if (selPill) selPill.classList.remove("sel");
-    selPill = p; p.classList.add("sel");
-    var w = winAt(n.s), role = roleOf(n.deg, w);
-    var beat = Math.floor(n.s / 4) + 1, sub = SUB[n.s];
-    wisdom.innerHTML = "<span>step <b class='data'>" + (n.s + 1) + "</b> (beat " + beat +
-      (["1","2","3","4"].indexOf(sub) < 0 ? " · “" + sub + "”" : "") +
-      ") · degree <b class='data'>" + n.deg + "</b> under <b class='data'>" + w.label +
-      "</b> — <b>" + role + "</b>" +
-      (role === "chord tone" ? " (" + (w.tones.indexOf(((n.deg % 7) + 7) % 7) === 0 ? "root" : "member") + " of " + w.label + ")" : "") +
-      " · vel " + n.vel + (n.acc ? " · <span class='accw'>accent</span>" : "") +
-      " · chorus’ <span class='data'>reverse</span> drops it to step <b class='data'>" +
-      (N - (n.s + n.len) + 1) + "</b></span>";
-  });
-  layer.appendChild(p);
-});
-
-/* the playhead: a horizontal clock line, descending (static demo at row 7) */
-var ph = document.createElement("div");
-ph.className = "playline";
-ph.style.top = (6 * ROWH - 2) + "px";
-layer.appendChild(ph);
-
-/* ============ development ghost overlay (extracted, meter-green) ============ */
-function xform(kind) {
-  if (kind === "written") return null;
-  return NOTES.map(function (n) {
-    if (kind === "reverse") return { s: N - (n.s + n.len), len: n.len, deg: n.deg };
-    if (kind === "rotate")  return { s: (n.s + 4) % N,     len: n.len, deg: n.deg };
-    return n;
-  });
+function placePlayline() {
+  var ph = document.getElementById("playline");
+  if (ph && rowRefs[6]) ph.style.top = rowRefs[6].row.offsetTop + "px";  /* static demo: step 7 */
 }
-var ghosts = [];
+buildRows();
+for (var i = 0; i < N; i++) refreshRow(i);
+addEventListener("resize", placePlayline);
+
+/* ---- development markers: EXTRACTED from the score's own operator ---- */
+function motifNotes() {
+  var out = [];
+  for (var s = 0; s < N; s++) {
+    if (STEPS[s].k !== "note") continue;
+    var len = 1; while (s + len < N && STEPS[s + len].k === "tie") len++;
+    out.push({ s: s, len: len });
+  }
+  return out;
+}
+var currentDev = "written";
 function paintGhost(kind) {
-  ghosts.forEach(function (g) { g.remove(); }); ghosts = [];
-  var list = xform(kind);
-  if (!list) return;
-  list.forEach(function (n) {
-    var mk = function (s0, len) {
-      var d = document.createElement("div");
-      d.className = "ghost";
-      d.style.left = (colIx(n.deg) * 12.5) + "%";
-      d.style.top = (s0 * ROWH + 4) + "px";
-      d.style.height = (len * ROWH - 10) + "px";
-      layer.appendChild(d); ghosts.push(d);
-    };
-    mk(n.s, Math.min(n.len, N - n.s));
-    var over = n.s + n.len - N;             // a cyclic phrase may wrap past the bar
-    if (over > 0) mk(0, over);
+  currentDev = kind;
+  rowRefs.forEach(function (r) { r.row.classList.remove("ghosted"); });
+  if (kind === "written") return;
+  motifNotes().forEach(function (n) {
+    var s2 = kind === "reverse" ? N - (n.s + n.len) : (n.s + 4) % N;
+    rowRefs[((s2 % N) + N) % N].row.classList.add("ghosted");
   });
 }
 var devChips = document.querySelectorAll("[data-dev]");
 var devWhy = document.getElementById("devWhy");
 var WHY = {
-  written: "the overlay is EXTRACTED — the same <span class='data'>reverse()</span> the score will run, applied to this cell, drawn as a green dashed ghost over the written notes",
-  reverse: "chorus applies <span class='data'>reverse()</span> — edge-values travel with their notes; the ghost is that result, byte-equal to what the score plays",
-  rotate: "bridge applies <span class='data'>rotate(4)</span> — the cell enters a beat late; the necklace wraps, so the tail re-enters at the bar’s head"
+  written: "pick a development and a small green marker appears on the rows where its notes will land — EXTRACTED from the score's own operator, never redrawn by hand",
+  reverse: "chorus applies <span class='data'>reverse()</span> — the green ticks mark where each note lands; byte-equal to what the score plays",
+  rotate: "bridge applies <span class='data'>rotate(4)</span> — the cell enters a beat late; the necklace wraps, so the tail re-enters at the bar's head"
 };
 devChips.forEach(function (ch) {
   ch.addEventListener("click", function () {
     devChips.forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
     ch.setAttribute("aria-pressed", "true");
     paintGhost(ch.dataset.dev);
-    devWhy.innerHTML = WHY[ch.dataset.dev] + " <sup class='n'>2</sup>";
+    devWhy.innerHTML = WHY[ch.dataset.dev] + " <sup class='n'>6</sup>";
   });
 });
 
-/* ============ the contour, standing up: pitch across, time down ============ */
-(function () {
-  var svg = document.getElementById("contourSvg");
-  var pts = NOTES.map(function (n) {
-    var x = 8 + (n.deg + 1) / 4 * 40;
-    var y = 6 + (n.s + n.len / 2) / N * 138;
-    return x.toFixed(1) + "," + y.toFixed(1);
-  });
-  svg.innerHTML = "<polyline points='" + pts.join(" ") +
-    "' fill='none' stroke='#191611' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/>";
-})();
-
-/* ============ tri-state play: word = NEXT tap ============ */
+/* ---- tri-state play: the word is the NEXT tap ---- */
 var WORD = { off: ["▶", "play"], once: ["↻", "loop"], loop: ["■", "stop"] };
 var NEXT = { off: "once", once: "loop", loop: "off" };
 var SAY = {
@@ -749,12 +954,12 @@ var SAY = {
   b.addEventListener("click", function () {
     var at = NEXT[b.dataset.at];
     b.dataset.at = at;
-    b.innerHTML = "<span class='g'>" + WORD[at][0] + "</span>" + WORD[at][1]; // the NEXT verb
-    live.innerHTML = SAY[at];                    // the [data-live] sibling says what IS
+    b.innerHTML = "<span class='g'>" + WORD[at][0] + "</span>" + WORD[at][1];
+    live.innerHTML = SAY[at];
   });
 })();
 
-/* ============ motif tabs ============ */
+/* ---- motif tabs ---- */
 (function () {
   var tabs = document.getElementById("motifTabs");
   tabs.addEventListener("click", function (e) {
@@ -764,7 +969,9 @@ var SAY = {
   });
 })();
 
-/* ============ the kit: drums across, steps down ============ */
+/* ==========================================================================
+   the kit: 16 rows falling, five drums across, velocity per step
+   ========================================================================== */
 var DRUMS = [
   { id: "k", name: "kick",  hits: { 0: 8, 6: 4, 8: 7, 10: 5 } },
   { id: "s", name: "snare", hits: { 4: 9, 7: 2, 10: 2, 12: 9 } },
@@ -781,25 +988,40 @@ var FILLBAR = [
 ];
 var kitGrid = document.getElementById("kitGrid");
 var stubLayer = document.getElementById("stubLayer");
-var kitRows = [];   // per-step [label, cell, cell...] for the swing transform
-function paintHit(cell, v, isStroke) {
-  cell.innerHTML = "";
-  cell.dataset.v = v;
-  cell.setAttribute("aria-label", cell.dataset.drum + " step " + (+cell.dataset.step + 1) +
-    (v ? ", velocity " + v : ", rest"));
-  if (!v) return;
-  var h = document.createElement("i");
-  h.className = "hit" + (v <= 2 ? " ghosty" : v >= 8 ? " accent" : "") + (isStroke ? " stroke" : "");
-  h.style.width = "calc(8px + (100% - 12px) * " + (v / 9).toFixed(3) + ")";
-  h.title = "vel " + v + (v <= 2 ? " · ghost" : v >= 8 ? " · accent" : "");
-  cell.appendChild(h);
+var kitRows = [];
+
+function makeKitCell(drum, step, v0, isStroke) {
+  var cell = document.createElement("button");
+  cell.type = "button"; cell.className = "kc";
+  cell.dataset.step = step; cell.dataset.drum = drum;
+  var v = v0;
+  function paint() {
+    cell.dataset.v = v;
+    cell.innerHTML = "";
+    cell.setAttribute("aria-label", drum + " step " + (step + 1) +
+      (v ? ", velocity " + v + (v <= 2 ? " ghost" : v >= 8 ? " accent" : "") : ", rest"));
+    if (!v) return;
+    var f = document.createElement("i");
+    f.className = "kfill" + (v <= 2 ? " ghosty" : v >= 8 ? " accent" : "") + (isStroke ? " stroke" : "");
+    f.style.width = "calc(6px + (100% - 16px) * " + (v / 9).toFixed(3) + ")";
+    cell.appendChild(f);
+    var n = document.createElement("b");
+    n.className = "knum"; n.textContent = v;
+    cell.appendChild(n);
+  }
+  cell.addEventListener("click", function () {
+    if (cell._dragged) { cell._dragged = false; return; }
+    v = cycKit(v); paint();
+  });
+  dragX(cell, function (nv) { v = nv; paint(); }, null);
+  paint();
+  return cell;
 }
 function buildKit(data, isFill) {
   kitGrid.innerHTML = ""; kitRows = [];
   var f = document.createDocumentFragment();
   var c0 = document.createElement("div");
-  c0.className = "corner";
-  f.appendChild(c0);
+  c0.className = "corner"; f.appendChild(c0);
   data.forEach(function (d) {
     var h = document.createElement("div");
     h.className = "kh"; h.textContent = d.name;
@@ -814,46 +1036,41 @@ function buildKit(data, isFill) {
     kn.textContent = SUB[s];
     f.appendChild(kn); row.push(kn);
     data.forEach(function (d) {
-      var cell = document.createElement("button");
-      cell.type = "button";
       var inFill = isFill && s >= 8;
-      cell.className = "kc" + (s % 4 === 3 ? " b4" : "") + (inFill ? " hatch" : "") +
+      var stroke = isFill && d.fillFrom !== undefined && s >= d.fillFrom && (d.hits[s] || 0) > 0;
+      var cell = makeKitCell(d.name, s, d.hits[s] || 0, stroke);
+      cell.className += (s % 4 === 3 ? " b4" : "") + (inFill ? " hatch" : "") +
         (swung ? " swingable" : "");
-      cell.dataset.step = s; cell.dataset.drum = d.name;
-      var v = d.hits[s] || 0;
-      paintHit(cell, v, isFill && d.fillFrom !== undefined && s >= d.fillFrom && v > 0);
-      cell.addEventListener("click", function () {
-        // tap cycles rest -> ghost -> hit -> accent -> rest (drag ⇄ writes 0-9 in product)
-        var cur = +this.dataset.v;
-        var nx = cur === 0 ? 2 : cur === 2 ? 5 : cur === 5 ? 9 : 0;
-        paintHit(this, nx, false);
-      });
       f.appendChild(cell); row.push(cell);
     });
     kitRows.push(row);
   }
   kitGrid.appendChild(f);
+  placeStubs();
   applySwing();
 }
 
 /* ---- swing: the "&" rows sit late; grey stubs mark straight time ---- */
-(function () {
-  for (var s = 0; s < N; s++) {
-    if (s % 4 !== 2) continue;
+function placeStubs() {
+  stubLayer.innerHTML = "";
+  kitRows.forEach(function (row, s) {
+    if (s % 4 !== 2) return;
     var st = document.createElement("div");
     st.className = "stub";
-    st.style.top = (HEAD + s * KROWH) + "px";
+    st.style.top = row[0].offsetTop + "px";   /* offsetTop ignores the swing transform */
     stubLayer.appendChild(st);
-  }
-})();
+  });
+}
+addEventListener("resize", function () { placeStubs(); });
 var swingIn = document.getElementById("swing");
 var swingVal = document.getElementById("swingVal");
 var swingWrap = document.getElementById("swingSlider");
+var swingTrack = document.getElementById("swingTrack");
 function applySwing() {
   var sw = +swingIn.value;
-  var frac = (sw / 100 * 2 - 1);                    // 0 at 50%, 1/3 at 66.7%
-  var px = frac * 2 * KROWH;                        // half-beat = 2 step rows
-  var ms = Math.round(frac * (60000 / 92 / 2));     // at the record's 92 bpm
+  var frac = (sw / 100 * 2 - 1);
+  var px = frac * 2 * 50;
+  var ms = Math.round(frac * (60000 / 92 / 2));
   kitRows.forEach(function (row, s) {
     if (s % 4 !== 2) return;
     row.forEach(function (el) { el.style.transform = "translateY(" + px.toFixed(1) + "px)"; });
@@ -862,6 +1079,13 @@ function applySwing() {
   swingVal.textContent = sw + "% · +" + ms + " ms";
 }
 swingIn.addEventListener("input", applySwing);
+/* THE FIX on the vertical slider: capture on the track, write through the input */
+dragY(swingTrack, 50, 75, function (v) {
+  if (+swingIn.value !== v) {
+    swingIn.value = v;
+    swingIn.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+});
 
 /* ---- phrase strip / fill ---- */
 var strip = document.getElementById("phraseStrip");
@@ -881,6 +1105,75 @@ buildKit(DRUMS, false);
       rows.forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
       c.setAttribute("aria-pressed", "true");
     });
+  });
+})();
+
+/* ==========================================================================
+   the strategy demos — both live, both touch-safe
+   ========================================================================== */
+(function () {
+  /* A on a motif row */
+  var aV = 6;
+  var am = document.getElementById("demoA-motif");
+  am.innerHTML = "<div class='slab'><b>2</b></div>" +
+    "<div class='degc'><button class='degb' disabled>−</button>" +
+    "<span class='degv'><b>3̂</b><i class='tick tone'></i></span>" +
+    "<button class='degb' disabled>+</button></div>";
+  var aw = makeVelA("strategy A demo, motif velocity",
+    function () { return aV; }, function (v) { aV = v; });
+  am.appendChild(aw.el);
+  /* A on a kit row */
+  var ak = document.getElementById("demoA-kit");
+  ["", "kick", "snare", "hat", "open", "perc"].forEach(function (n, i) {
+    var h = document.createElement("div");
+    h.className = i === 0 ? "corner" : "kh"; h.textContent = n;
+    ak.appendChild(h);
+  });
+  var kn = document.createElement("div");
+  kn.className = "kn beat"; kn.textContent = "2";
+  ak.appendChild(kn);
+  [9, 2, 7, 0, 3].forEach(function (v, i) {
+    ak.appendChild(makeKitCell(["kick", "snare", "hat", "open", "perc"][i], 4, v, false));
+  });
+
+  /* B on a motif row */
+  var bV = 6;
+  var bm = document.getElementById("demoB-motif");
+  bm.innerHTML = "<div class='slab'><b>2</b></div>" +
+    "<div class='degc'><button class='degb' disabled>−</button>" +
+    "<span class='degv'><b>3̂</b><i class='tick tone'></i></span>" +
+    "<button class='degb' disabled>+</button></div>";
+  var bWrapM = document.createElement("div");
+  bWrapM.style.cssText = "display:grid;gap:2px;justify-items:center;margin-left:auto";
+  var blm = makeLadder("strategy B demo, motif velocity",
+    function () { return bV; },
+    function (v) { bV = v; bval.textContent = "v" + v; });
+  var bval = document.createElement("span");
+  bval.className = "ladVal"; bval.textContent = "v" + bV;
+  bWrapM.appendChild(blm.el); bWrapM.appendChild(bval);
+  bm.appendChild(bWrapM);
+  /* B on a kit row */
+  var bk = document.getElementById("demoB-kit");
+  ["", "kick", "snare", "hat", "open", "perc"].forEach(function (n, i) {
+    var h = document.createElement("div");
+    h.className = i === 0 ? "corner" : "kh"; h.textContent = n;
+    bk.appendChild(h);
+  });
+  var kn2 = document.createElement("div");
+  kn2.className = "kn beat"; kn2.textContent = "2";
+  bk.appendChild(kn2);
+  [9, 2, 7, 0, 3].forEach(function (v0, i) {
+    var st = { v: v0 };
+    var wrap = document.createElement("div");
+    wrap.className = "ladWrap";
+    var val = document.createElement("span");
+    val.className = "ladVal";
+    var lad = makeLadder("strategy B demo, " + ["kick", "snare", "hat", "open", "perc"][i],
+      function () { return st.v; },
+      function (v) { st.v = v; val.textContent = "v" + v; });
+    val.textContent = "v" + st.v;
+    wrap.appendChild(lad.el); wrap.appendChild(val);
+    bk.appendChild(wrap);
   });
 })();
 })();

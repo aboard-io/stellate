@@ -221,8 +221,9 @@ section > p.note { color: var(--dim); font-weight: 600; margin-top: var(--s4); m
 
 /* ==========================================================================
    THE VERTICAL SLIDER — replaces every knob.
-   Painted track/fill/thumb; an invisible native range overlaid carries
-   keyboard, focus, touch. --v is the position, 0..1. Fill below the thumb
+   Painted track/fill/thumb. The track captures the pointer (touch/mouse,
+   touch-action: none) so the page never scrolls from a slider; an invisible
+   native range carries keyboard and focus. --v is the position, 0..1. Fill below the thumb
    is hand-blue: it is a value you set. The optional meter strip beside is
    engine-green: it is measured, never trusted.
    ========================================================================== */
@@ -234,7 +235,10 @@ section > p.note { color: var(--dim); font-weight: 600; margin-top: var(--s4); m
   position: relative; width: 20px; height: var(--vsh, 200px);
   background: var(--well); border: var(--bw) solid var(--ink); border-radius: var(--r1);
   margin: 0 14px; /* room for the 48px thumb overhang */
+  touch-action: none; cursor: grab; /* the track owns the gesture; the page keeps scroll elsewhere */
 }
+.vslider .vs-track::before { content: ""; position: absolute; top: -14px; bottom: -14px;
+  left: -14px; right: -14px; /* the touch halo: full travel height, 48px wide */ }
 .vslider .vs-fill {
   position: absolute; left: 0; right: 0; bottom: 0;
   height: calc(14px + (100% - 28px) * var(--v, 0.5));
@@ -251,8 +255,9 @@ section > p.note { color: var(--dim); font-weight: 600; margin-top: var(--s4); m
   height: 3px; margin-top: -1.5px; background: var(--ink); }
 .vslider .vs-input {
   position: absolute; top: -14px; bottom: -14px; left: 50%; transform: translateX(-50%);
-  width: 48px; height: calc(100% + 28px); margin: 0; opacity: 0; cursor: grab;
+  width: 48px; height: calc(100% + 28px); margin: 0; opacity: 0;
   writing-mode: vertical-lr; direction: rtl;
+  pointer-events: none; /* accessibility channel only: keyboard + focus; the track takes the pointer */
 }
 .vslider .vs-track:focus-within { outline: var(--bw-hard) solid var(--hand); outline-offset: 4px; }
 .vslider .vs-meter { position: relative; width: 14px; height: var(--vsh, 200px);
@@ -265,7 +270,7 @@ section > p.note { color: var(--dim); font-weight: 600; margin-top: var(--s4); m
 .vslider.off .vs-fill { background: var(--faint); }
 .vslider.off .vs-thumb { box-shadow: none; border-color: var(--faint); }
 .vslider.off .vs-thumb::after { background: var(--faint); }
-.vslider.off .vs-track { border-color: var(--faint); }
+.vslider.off .vs-track { border-color: var(--faint); touch-action: auto; cursor: default; }
 .vslider.off .vs-lab, .vslider.off .vs-val { color: var(--faint); }
 .vslider.off .vs-input { cursor: default; }
 /* a stacked, labeled column of sliders — one voice's strip, read top to bottom */
@@ -651,7 +656,8 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
           tall; they may not be wide.</p>
           <p class="why">Keyboard: the invisible native range carries focus; arrow up is
           more, arrow down is less. The focus ring is a 4px cobalt outline around the
-          track.</p>
+          track. Touch: the track captures the pointer; the page never scrolls from a
+          slider. Tap anywhere on the track and the value jumps to that height.</p>
         </div>
       </div>
     </div>
@@ -832,6 +838,29 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
     }
     input.addEventListener("input", paint);
     paint();
+    /* touch/mouse: the track captures the pointer; the page never scrolls from a slider */
+    var track = w.querySelector(".vs-track");
+    function fromPointer(e) {
+      var r = track.getBoundingClientRect();
+      var min = +input.min, max = +input.max, step = +input.step || 1;
+      var usable = r.height - 28;
+      var frac = usable > 0 ? (r.bottom - 14 - e.clientY) / usable : 0;
+      frac = Math.max(0, Math.min(1, frac));
+      var val = min + frac * (max - min);
+      val = Math.max(min, Math.min(max, Math.round(val / step) * step));
+      var dec = (String(step).split(".")[1] || "").length;
+      input.value = val.toFixed(dec);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    track.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      track.setPointerCapture(e.pointerId);
+      input.focus({ preventScroll: true });
+      fromPointer(e);
+    });
+    track.addEventListener("pointermove", function (e) {
+      if (track.hasPointerCapture(e.pointerId)) fromPointer(e);
+    });
   });
   /* the hero master prints dB itself */
   var heroFader = document.getElementById("heroFader");
