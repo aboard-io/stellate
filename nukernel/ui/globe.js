@@ -43,11 +43,17 @@ const D2R = Math.PI / 180, R2D = 180 / Math.PI;
        R = (shorterSide / 2) / sin(arc / 2)
 
    180° is the whole visible hemisphere with the limb inscribed in the box; 0.5°
-   is about 55 km across a 390 px phone — Kingston Harbour with the Palisadoes
-   spit legible off the ±2° 1:10m patch tier. Both ends are HARD CLAMPS: you
-   cannot zoom out past one earth, and you cannot zoom in past the edge of the
-   data. `arc` is also what picks the coastline tier, which is the other reason
-   it and not R is the variable. */
+   is about 55 km across a 390 px phone. THE ±2° 1:10m PATCH TIER THAT USED TO
+   MAKE Kingston Harbour and the Palisadoes spit legible there was REMOVED
+   2026-08-27 (Paul: "Remove the high res map and keep the globe one chunky
+   resolution too") — at 0.5° the one 0.1° table draws segments tens of CSS px
+   long, and that chunky low-poly coastline is the DESIGN at city zoom now, the
+   enamel read, not a defect. Both ends stay HARD CLAMPS: you cannot zoom out
+   past one earth, and 0.5° stays the floor — the floor was never really "the
+   edge of the data", it is the last zoom at which a 55 km box still holds the
+   whole harbour a record names. `arc` is also what picks which SHAPE of the one
+   table is drawn (filled rings wide, culled runs tight), which is the other
+   reason it and not R is the variable. */
 export const ARC_MAX = 180;
 export const ARC_MIN = 0.5;
 
@@ -58,24 +64,25 @@ export const ARC_MIN = 0.5;
    loop: only the camera's two angles need sin and cos. 8,219 world points x 4
    trig calls a frame was the thing to avoid.
 
-   AND THE CAPS ARE COMPUTED HERE, NOT BAKED. One pass over ~16,000 points at
+   AND THE CAPS ARE COMPUTED HERE, NOT BAKED. One pass over ~16,500 points at
    module init costs a fraction of a millisecond, and a derived table in a
    committed file is a table that can drift from its source. (The bake script
    emits geography; this is the only place it becomes geometry.)
 
    Float32Array, not Float64: seven significant digits against R at most 47,040
    viewBox units is 0.005 units of error, and the coordinates are emitted as
-   INTEGERS anyway. It halves the resident typed arrays from ~600 KB to ~300 KB.
+   INTEGERS anyway. It halves the resident typed arrays (~400 KB -> ~200 KB).
 
    AND THE COST IS STATED RATHER THAN HIDDEN: `runs` and `rings` below hold the
    same 8,200 coordinates twice, once cut for culling and once joined for
-   filling — about 200 KB of Float32 — on top of the ~380 KB of parsed JS arrays
-   atlas-land.js itself keeps alive. That is the price of having both a tier that
-   culls and a tier that fills, and it is paid once at load in a data tier that
-   already carries 364 KB of genres.js and 457 KB of vocabulary.json. It could be
-   avoided by drawing the joined ring as a walk over its runs, and it is not,
-   because one array shape for both loops is what keeps the frame in one
-   function that a person can read. */
+   filling — about 200 KB of Float32 — on top of the ~110 KB of parsed JS arrays
+   atlas-land.js itself keeps alive (it was ~380 KB when the coarse and patch
+   tiers still shipped; see the tiers() note below for their removal). That is
+   the price of having both a shape that culls and a shape that fills, and it is
+   paid once at load in a data tier that already carries 364 KB of genres.js and
+   457 KB of vocabulary.json. It could be avoided by drawing the joined ring as
+   a walk over its runs, and it is not, because one array shape for both loops
+   is what keeps the frame in one function that a person can read. */
 function prep(rows) {
   const out = [];
   for (const r of rows) {
@@ -123,11 +130,15 @@ function joinRings(runs, span) {
   return out;
 }
 
+/* ONE RESOLUTION, TWO SHAPES OF THE SAME TABLE. `runs` and `rings` are the
+   SAME 0.1° coordinates, once cut for culling and once joined for filling —
+   and they are ALL the coastline there is. The 0.8° `coarse` motion tier and
+   the 1:10m `patch` city tier were REMOVED 2026-08-27 (Paul: "Remove the high
+   res map and keep the globe one chunky resolution too") — the reversal is
+   written out in full at tiers() below and in atlas-land.js's header. */
 const TIER = {
-  coarse: prep(LAND.COARSE || []),
-  runs:   prep(LAND.RUNS || []),
-  rings:  prep(joinRings(LAND.RUNS || [], LAND.RSPAN || [])),
-  patch:  prep(LAND.PATCH || []),
+  runs:  prep(LAND.RUNS || []),
+  rings: prep(joinRings(LAND.RUNS || [], LAND.RSPAN || [])),
 };
 
 const NS = "http://www.w3.org/2000/svg";
@@ -296,36 +307,50 @@ export function makeGlobe(svg) {
     return gratCache.set;
   }
 
-  /* ---------- WHICH COASTLINE. ONE TABLE, NO HEURISTICS. ---------------
-     | moving && arc > 60 | COARSE  — 1,180 points, 12 KB, filled. Nothing finer
-     |                    |          survives a moving limb.
-     | arc > 6            | RINGS   — the whole 0.1° world, rebuilt from
-     |                    |          RUNS + RSPAN at load, and FILLED
-     | arc <= 6           | RUNS + PATCH — cap-culled, stroke only, 1:10m city
-     |                    |          boxes on top
-     The full-detail frame therefore happens ONCE, on settle, never in a loop.
+  /* ---------- WHICH SHAPE OF THE ONE COASTLINE. NO HEURISTICS. ----------
+     | arc > 6  | RINGS — the whole 0.1° world, rebuilt from RUNS + RSPAN at
+     |          |         load, and FILLED (the 10% wash says land from sea)
+     | arc <= 6 | RUNS  — cap-culled open runs, stroke only: inside one region
+     |          |         a coast reads as a line, and the per-96-point cap
+     |          |         test is what keeps a city frame cheap
+     Moving or settled, the SAME table draws — one resolution, always.
 
-     THE CROSSOVER IS 6°, AND IT MOVED FROM 30° BECAUSE OF A PICTURE. The round's
-     plan put it at 30 and drew open runs below that, which is faster: the cap
-     test can only reject anything once a ring is cut into 96-point runs, and
-     that is what takes a 0.5°-arc frame from 3,840 points walked down to 432.
-     But AN OPEN RUN HAS NO INSIDE. From 30° to 6° the earth was outline only,
-     and the screenshot over the Great Lakes at 11° of arc was a tangle of lines
-     with no way to tell a lake from a peninsula. The 10% wash is the only thing
-     that says land from sea at a glance, and it is the reason this design is SVG
-     and not WebGL at all — filled land is free here and needs triangulation
-     there. So the fill runs down to 6°, where you are inside one region, a coast
-     reads as a line, and the culling starts paying for itself. Measured cost at
-     390x844 of moving the crossover: a settled frame at 11° of arc walks 8,265
-     points instead of 1,451, and the drag loop's p50 went 25.5 ms -> 29.9 ms on
-     a box carrying two other workflows. It is paid once, when the finger comes
-     off, because a MOVING frame above 60° is still the 1,180-point coarse tier
-     and a moving frame below it is what the 8px lock and the 25° glide budget
-     keep short. */
+     ONE RESOLUTION, REVERSED 2026-08-27. Paul: "Remove the high res map and
+     keep the globe one chunky resolution too." This function used to be a
+     three-way switch: a 0.8° COARSE tier while moving above 60° of arc
+     ("nothing finer survives a moving limb", 4.5–6.3 ms p50 moving frame), and
+     a 1:10m ±2° PATCH tier under 6° on top of the runs. Both are gone, and the
+     replacement was MEASURED rather than trusted: at 390x844 in the real page
+     (test/atlas.js's own chromium), a scripted 3-second drag at 180° of arc
+     drawing the FULL 0.1° rings — the exact frame the coarse tier existed to
+     avoid — came in at p50 1.8 ms / p95 4.8 ms per draw (data-ms below), and a
+     3-second drag at 0.5° over Kingston on culled runs at p50 0.6 ms. Both are
+     far under the ~8 ms moving-frame budget, so the 0.1° table is the ONE
+     table and the coarse tier bought nothing this box can feel. (Its old
+     4.5–6.3 ms p50 was measured beside two other workflows; the machine, not
+     the fine table, was the cost.) A decimated ~0.3° middle table was the
+     other candidate and was never generated, because the measurement said the
+     full table already fits. What the patch tier bought — the
+     Palisadoes spit legible at 0.5° — is exactly what Paul is asking to lose:
+     a chunky low-poly coastline at city zoom is the POINT now, the enamel
+     design's hard-edged read, not a defect to bake away.
+
+     THE CROSSOVER IS STILL 6°, AND ITS REASON SURVIVES THE TIERS. It moved
+     from 30° because of a picture: AN OPEN RUN HAS NO INSIDE, and from 30° to
+     6° the Great Lakes were a tangle of lines with no way to tell a lake from
+     a peninsula. The 10% wash is the only thing that says land from sea at a
+     glance — it is the reason this design is SVG and not WebGL at all. Below
+     6° you are inside one region, a coast is a line, and the cap test (which
+     can only reject once rings are cut into 96-point runs — the 3,840 -> 432
+     measurement in the bake script) starts paying for itself.
+
+     `moving` is still received and deliberately unused: the caller's contract
+     (ui/atlas.js paint(moving)) predates the reversal, and the parameter is
+     the seam a motion tier would come back through if a slower box ever
+     measures over budget. */
   function tiers(moving) {
-    if (moving && arc > 60) return { fill: TIER.coarse, line: null };
     if (arc > 6) return { fill: TIER.rings, line: null };
-    return { fill: null, line: [TIER.runs, TIER.patch] };
+    return { fill: null, line: [TIER.runs] };
   }
 
   /* ---------- the frame ------------------------------------------------ */
@@ -484,6 +509,13 @@ export function makeGlobe(svg) {
     for (let i = gn; i < gratN.length; i++) gratN[i].setAttribute("d", "");
 
     lastStats = { rings, pts, ms: ((performance && performance.now) ? performance.now() : 0) - t0 };
+    /* THE FRAME'S COST, SAID OUT LOUD ON THE ELEMENT, for the same reason as
+       data-arc above: stats() lives in this closure and no gate can reach it,
+       and the one-resolution reversal (tiers() above) needed a moving-frame
+       number FROM THE RENDERED PAGE, not from a harness that flatters it. One
+       cached-string setAttribute per draw, and only while the loop runs, so
+       the idle guarantee (G17: zero writes while still) is untouched. */
+    svg.setAttribute("data-ms", lastStats.ms.toFixed(2));
     return lastStats;
   }
 

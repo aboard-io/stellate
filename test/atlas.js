@@ -118,24 +118,33 @@ const note = (what) => notes.push("     " + what);
    ======================================================================
    "The conversion is done by EXTRACTION, never by hand" is the standing law and
    atlas-land.js's own header says "do not hand-edit". The file's SHAPE changed
-   this round — one array of rings became { COARSE, RUNS, RSPAN, PATCH } — so
-   the law needs restating against the new shape, and it has two halves:
+   twice: 2026-08-24 one array of rings became { COARSE, RUNS, RSPAN, PATCH },
+   and 2026-08-27 that was REVERSED to { RUNS, RSPAN } alone — Paul: "Remove
+   the high res map and keep the globe one chunky resolution too" — so the 1:10m
+   PATCH tier and the 0.8° COARSE motion tier are deleted, and the one table is
+   the 0.1° runs at every zoom (the removal's measurement lives in ui/globe.js
+   tiers()). The law restated against the current shape has two halves:
 
    1. THE RINGS REBUILD. RUNS holds each ring cut into overlapping runs of at
       most 96 points; consecutive runs share one point; RSPAN says how many runs
       each ring has. ui/globe.js concatenates them at load. If that inverse is
       not exact the globe draws different continents from the ones that were
       baked, and nothing else would notice.
-   2. THE WHOLE FILE RE-BAKES. `bake-land.js --check` re-runs the derivation and
-      diffs the committed text, header and source SHAs included. It needs the
-      two Natural Earth GeoJSONs, and THE OFFLINE LAW APPLIES TO THE GATE TOO:
-      if they are not on disk this reports rather than failing, because a gate
-      that requires the network is a gate that fails on a train. */
+   2. THE WHOLE FILE RE-DERIVES. This used to run `bake-land.js --check`, which
+      needs the two Natural Earth GeoJSONs on disk and was skipped without them
+      (the offline law applies to the gate too). RE-POINTED 2026-08-27: the
+      committed file is now bake-land's RUNS passed through
+      scratch/atlas/rechunk-land.js, and THAT script is idempotent — run on its
+      own output it re-emits its own output byte-identically — so `rechunk-land
+      --check` proves the same "extracted, never hand-edited" fact with no
+      sources and no network, on a train. (bake-land.js stays read-only as the
+      provenance of the numbers; a re-bake from Natural Earth is now the chain
+      bake-land.js -> rechunk-land.js, stated in both headers.) */
 function g18() {
   let L = null;
   try { L = require(path.join(ROOT, "nukernel/atlas-land.js")).LAND; } catch (e) {}
   if (!L) { check(false, "G18 · nukernel/atlas-land.js does not load"); return; }
-  const empty = !(L.RUNS || []).length && !(L.COARSE || []).length;
+  const empty = !(L.RUNS || []).length;
   if (empty) { note("G18 · LAND is empty, which is legal (the offline law): nothing to derive"); return; }
 
   const SPLIT = 96;
@@ -162,22 +171,18 @@ function g18() {
   const bad = rings.filter((r) => r.length < 8 || r.length % 2).length;
   check(bad === 0, "G18 · every rebuilt ring is a well-formed [lon,lat,…] (" + bad + " bad)");
 
-  const s50 = arg("--src", "/tmp/ne_50m_land.geojson");
-  const s10 = arg("--src10", "/tmp/ne_10m_land.geojson");
-  if (!fs.existsSync(s50) || !fs.existsSync(s10)) {
-    note("G18 · the full re-bake needs " + s50 + " and " + s10 + " — not on disk, so the"
-      + " derivation was checked structurally only. Run `node scratch/atlas/bake-land.js"
-      + " --check` with the sources to close it.");
-    return;
-  }
+  /* the byte-identity half — re-pointed 2026-08-27 from `bake-land.js --check`
+     (which needed the Natural Earth GeoJSONs and was skipped when they were
+     absent) to `rechunk-land.js --check`, which needs nothing: the extraction
+     is idempotent over its own output, so it always runs. */
   try {
     const out = execFileSync(process.execPath,
-      [path.join(ROOT, "scratch/atlas/bake-land.js"), "--check", "--src", s50, "--src10", s10],
-      { encoding: "utf8", timeout: 240000 });
-    check(true, "G18 · a fresh bake is byte-identical to the committed file — "
+      [path.join(ROOT, "scratch/atlas/rechunk-land.js"), "--check"],
+      { encoding: "utf8", timeout: 60000 });
+    check(true, "G18 · a fresh rechunk is byte-identical to the committed file — "
       + out.trim().split("—").pop().trim());
   } catch (e) {
-    check(false, "G18 · atlas-land.js DIFFERS from a fresh bake (re-bake, never hand-edit): "
+    check(false, "G18 · atlas-land.js DIFFERS from a fresh rechunk (re-derive, never hand-edit): "
       + String(e.stderr || e.message).trim().slice(0, 200));
   }
 }

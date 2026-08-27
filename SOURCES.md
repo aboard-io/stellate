@@ -649,46 +649,51 @@ GeoJSON mirror (`geojson/ne_50m_land.geojson`).
 `ne_10m_land`** — **public domain (CC0)**, same terms and same
 [nvkelso/natural-earth-vector](https://github.com/nvkelso/natural-earth-vector)
 mirror (`geojson/ne_10m_land.geojson`). ADDED 2026-08-24, when the map became a
-globe you can zoom (Paul: *"make the map 3d and zoomable like google earth but
-keep it black and white"*). Only the ±2° boxes around the 65 places in
-`nukernel/atlas.js` are kept from it — 308 open runs, 7,615 points, 109 KB — for
-a measured reason: 1:50m holds 60,669 points in the whole world, so below about
-0.01° of tolerance a bake from it stops improving and starts re-encoding its own
-source, and at 0.5° of arc (about 55 km across a 390px phone) that is a Thames
-estuary drawn as four straight lines. City-tight coastline needs 1:10m, and you
-only need it where a record is.
+globe you can zoom, as ±2° `PATCH` boxes around the places; **REMOVED
+2026-08-27** — Paul: *"Remove the high res map and keep the globe one chunky
+resolution too."* Nothing from 1:10m ships any more. The 2026-08-24 argument
+for it is kept because it was true and is now beside the point: at 0.5° of arc
+the 0.1° table draws a Thames estuary as a few straight lines, and that chunky
+low-poly read is the design, not the defect the patches existed to fix. The
+entry stays in this registry as the provenance of the tier that shipped for
+three days (`scratch/atlas/bake-land.js` still derives it, read-only history).
 
 Committed as NUMBERS, not as fetched assets, which is why they are in this
-section rather than in the recipe tiers above: `scratch/atlas/bake-land.js` runs
-ONCE, at a moment a human is watching, and its output `nukernel/atlas-land.js` is
-source. Nothing at runtime fetches either file — the offline law is that the page
-plays and draws with the wire cut. Re-bake with
-`node scratch/atlas/bake-land.js --src <ne_50m_land.geojson> --src10 <ne_10m_land.geojson>`,
-or `--check` to prove the committed file still matches a fresh bake (that is
-test/atlas.js G18). A download is cached in `/tmp` and **its SHA-256 prefix is
-written into the output header**, so a cache that has gone stale against the
-mirror shows up as drift rather than as a quietly different coastline.
+section rather than in the recipe tiers above: the chain
+`scratch/atlas/bake-land.js` (Natural Earth → 0.1° runs) then
+`scratch/atlas/rechunk-land.js` (one resolution, by extraction) runs at a moment
+a human is watching, and its output `nukernel/atlas-land.js` is source. Nothing
+at runtime fetches either file — the offline law is that the page plays and
+draws with the wire cut. `node scratch/atlas/rechunk-land.js --check` proves the
+committed file still matches a fresh extraction (that is test/atlas.js G18, and
+it needs no downloads). A bake download is cached in `/tmp` and **its SHA-256
+prefix is written into the output header**, so a cache that has gone stale
+against the mirror shows up as drift rather than as a quietly different
+coastline.
 
-Derivation, recorded so the numbers are reproducible. Four tiers, 229 KB of
-committed source, 85 KB gzipped. (Written at 62 places and corrected at 65 on
-the same day, when the 2020s anchors added Cairo, Chandigarh and Guadalajara:
-`PATCH` is per-place, so the catalog growing grows the tier. Verified against
-`node scratch/atlas/bake-land.js --check`, which is where every figure below
-comes from — nothing here is typed by hand.)
+Derivation, recorded so the numbers are reproducible. ONE tier since 2026-08-27
+(it was four — `COARSE`, `RUNS`+`RSPAN`, `PATCH`, 229 KB committed — for the
+three days between the globe landing and Paul's *"one chunky resolution"*; the
+removed rows are kept struck through as the record of what shipped). 107.8 KB
+of committed source. Verified against `node scratch/atlas/rechunk-land.js
+--stats`, which is where every live figure below comes from — nothing here is
+typed by hand.
 
 | tier | source | rule | out |
 |---|---|---|---|
-| `COARSE` | 1:50m | DP 0.8°, 1dp, rings under 3 deg² dropped | 50 rings, 1,180 pts, 12.4 KB |
-| `RUNS` + `RSPAN` | 1:50m | DP 0.1°, 2dp, same drop, cut into open runs of ≤96 points | 118 runs, 8,281 pts, 103.6 KB (56 rings rebuilt at load) |
-| `PATCH` | 1:10m | ±2° around each of the 65 places, DP 0.01°, 3dp, open runs | 308 runs, 7,615 pts, 109.2 KB |
+| `RUNS` + `RSPAN` | 1:50m | DP 0.1°, 2dp, rings under 3 deg² dropped, cut into open runs of ≤96 points | 118 runs, 8,281 pts, 103.6 KB (56 rings rebuilt at load) |
+| ~~`COARSE`~~ | ~~1:50m~~ | ~~DP 0.8°, 1dp — drawn while moving~~ | ~~removed 2026-08-27: the full table's moving frame measures p50 1.8 ms~~ |
+| ~~`PATCH`~~ | ~~1:10m~~ | ~~±2° around each place, DP 0.01°, 3dp~~ | ~~removed 2026-08-27: chunky at city zoom is the design~~ |
 
-THE TOLERANCE IS SET BY THE TIGHTEST VIEW, NOT THE WIDEST, and the tightest view
-moved twice. The first bake used 1:110m at 1.0° and rendered Britain as a
-five-sided blob with no Wales and no Cornwall, because 1:110m's whole Great
-Britain ring is 44 points. The second used 1:50m at 0.1°, set by
-`VIEWS["Britain"]`, eleven degrees of longitude. There are no VIEWS now — the
-globe turns and zooms continuously to 0.5° of arc — which is what the 1:10m
-patches are for.
+THE TOLERANCE IS SET BY THE TIGHTEST VIEW *THAT IS MEANT TO LOOK SMOOTH* — the
+qualifier is the 2026-08-27 reversal, the sentence before it stands. The first
+bake used 1:110m at 1.0° and rendered Britain as a five-sided blob with no
+Wales and no Cornwall, because 1:110m's whole Great Britain ring is 44 points.
+The second used 1:50m at 0.1°, set by `VIEWS["Britain"]`, eleven degrees of
+longitude — a view that is still owed a smooth coast, so 0.1° stays. Below
+that, the globe zooms continuously to 0.5° of arc and the 0.1° facets go tens
+of CSS px long, and that is now the intended picture (see
+`nukernel/atlas-land.js`'s header for the full argument).
 
 ANTARCTICA IS BACK, and the reversal is recorded rather than deleted: the first
 two bakes dropped it because "it is entirely below the world view's southern

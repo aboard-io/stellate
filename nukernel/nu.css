@@ -1,5 +1,17 @@
 /* nukernel/nu.css — THE ONE STYLESHEET.
  *
+ * REPAINTED IN ENAMEL, 2026-08-27 (Paul: "bolder... more primary colors and
+ * chunkier. It looks like a funeral program"; the design is
+ * nukernel/ideal/design-system.html and its name is Enamel). The repaint is a
+ * PAINT wave and only a paint wave: every class name, every reserved height,
+ * every sticky mechanism, every pane and every measurement below survives —
+ * what changed is the tokens at the root and the faces of the seven kinds.
+ * Where a visual decision is reversed, its comment is rewritten in place with
+ * the date, per this file's own law. The four paints are SEMANTIC, never
+ * decorative: hand #1E45E0 (you set it), clock #E5330E (it is happening now),
+ * meter #0B9B4E (the engine measured it), flag #FFC61A (armed/hover). A thing
+ * is coloured for one of those four reasons or it is ink on the chassis.
+ *
  * ONE STYLESHEET, AND ONLY ONE (Paul, 2026-08-24: "keep the raw plain HTML but
  * use more controls and a little bit of CSS. use more grid lines in tables, it
  * will help"). This supersedes 2026-08-23's "no CSS or styling", which was the
@@ -158,17 +170,61 @@
    trap: it leaves the layout box at 13px, so neighbours overlap the visual
    and the hit area stays 13px. */
 :root{
-  color-scheme: light dark;
-  --paper: Canvas;
-  --ink: CanvasText;
-  /* THE RULES TRACK THE GROUND. Mixing against the system colours is the whole
-     of dark mode in this file — measured light rgb(255,255,255) paper with
-     srgb 0.62 rules, dark rgb(18,18,18) paper with srgb 0.42 rules — and it is
-     why there is not one theme media query below. Native controls (142 of them
-     on the default record) get their dark rendering free from `color-scheme`. */
-  --rule:        color-mix(in srgb, CanvasText 38%, Canvas);
-  --rule-strong: color-mix(in srgb, CanvasText 70%, Canvas);
-  --zebra:       color-mix(in srgb, CanvasText 7%, Canvas);
+  /* DARK MODE IS RETIRED WITH LAMPBLACK (2026-08-27). This block read
+     `color-scheme: light dark; --paper: Canvas; --ink: CanvasText` and the
+     comment under it was proud of the mechanism: "Mixing against the system
+     colours is the whole of dark mode in this file — measured light
+     rgb(255,255,255) paper with srgb 0.62 rules, dark rgb(18,18,18) paper with
+     srgb 0.42 rules — and it is why there is not one theme media query below."
+     The mechanism was real and it is written down here so nobody rebuilds it
+     wrong; what it could never produce is a COMMITTED look, and Enamel is one:
+     "bolder... more primary colors and chunkier. It looks like a funeral
+     program" (Paul, 2026-08-27). Bright flat paint on a steel chassis is a
+     single palette by definition — a hand-blue that inverts to something else
+     at night is not a semantic paint any more. `color-scheme: light` is kept
+     (not deleted) so the 142 native controls render their LIGHT chrome even
+     for a dark-preference visitor, instead of dark widgets on a #F0EDE4 page. */
+  color-scheme: light;
+  /* ---- the chassis (ideal/design-system.html "paint") ---- */
+  --ground: #F0EDE4;   /* the chassis — the room everything bolts to */
+  --panel:  #FFFFFF;   /* a plate screwed onto the chassis: tables, the bar */
+  --well:   #E3E0D6;   /* a cut into a plate: step-grid troughs */
+  /* `--paper` KEEPS ITS NAME AND ITS MEANING — the ground you are standing on,
+     re-declared by the section wash exactly as before — it just stops being
+     `Canvas` and becomes the chassis. Every rule below that painted itself
+     with `--paper` (the sticky heading, the pane covers, the sticky columns,
+     the circle labels, the score gutter) follows for free, which is the same
+     argument the wash made on 2026-08-26. */
+  --paper: var(--ground);
+  --ink:   #191611;    /* jet — every border, every word said */
+  --dim:   #6B6353;    /* the second voice: values, counts, units */
+  --faint: #A79E8E;    /* refused, and only refused */
+  /* ---- the four paints: semantic, never decorative, never mixed ---- */
+  --hand:  #1E45E0;    /* THE HAND — selection, focus, a value you set */
+  --clock: #E5330E;    /* THE CLOCK — playhead, sounding, [data-live] */
+  --meter: #0B9B4E;    /* THE METER — measured signal, engine truth */
+  --flag:  #FFC61A;    /* THE FLAG — armed, hover, about to matter */
+  --hand-tint:  #D9E1FF;
+  --clock-tint: #FFD9CE;
+  --meter-tint: #CFEFDC;
+  --flag-tint:  #FFEFC2;
+  /* ---- type: one heavy sans said, one mono counted; no serif ---- */
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  /* ---- chunk ---- */
+  --shadow: 4px 4px 0 var(--ink);  /* hard offset, zero blur; pressed = into it */
+  --r1: 6px;                       /* controls ease to 6px; plates stay square */
+  /* THE RULES ARE TWO WEIGHTS OF REAL COLOUR NOW, NOT TWO MIXES OF Canvas.
+     `--rule` was 38% of CanvasText — the quiet line — and everything that
+     leaned on its quietness (the pad's furniture, `.nu-tf-was`, cell rules in
+     a 96-row table) still needs a second voice, so `--rule` is `--dim` rather
+     than full ink: Enamel's "rules and borders are ink, full strength" is paid
+     where a border frames a CONTROL (the 2-3px borders below), and the
+     hairlines inside a dense table keep the second voice so the grid does not
+     shout down its own contents. `--rule-strong` IS the ink, full strength. */
+  --rule:        var(--dim);
+  --rule-strong: var(--ink);
+  --zebra:       color-mix(in srgb, var(--ink) 6%, var(--panel));
   --tap: 44px;    /* an isolated control */
   --box: 26px;    /* a checkbox or a radio */
   --cell: 36px;   /* one step of a sixteen-step grid — see .nu-grid */
@@ -182,8 +238,22 @@
 *,*::before,*::after{ box-sizing: border-box; }
 html{ -webkit-text-size-adjust: 100%; }
 body{ margin: 0; background: var(--paper); color: var(--ink);
+  /* THE TYPE IS ENAMEL'S NOW (2026-08-27): one heavy system sans for
+     everything said, weights with real weight — 900 display / 800 blocks /
+     700 labels / 500 body — and no serif anywhere ("It looks like a funeral
+     program"). Until today the page rode the browser's default face, which on
+     most machines IS a serif. 1.45 and not the specimen page's 1.5: measured,
+     1.5 grew the form table's header row enough to spend the geometry budget
+     this repaint is allowed (8px) on leading alone. */
+  font: 500 16px/1.45 var(--sans);
   padding-inline: var(--gl) var(--gr);
   padding-block-end: max(24px, env(safe-area-inset-bottom)); }
+/* the display weights; the record's name is the h1 and gets the 900 */
+h1{ font-weight: 900; letter-spacing: -.01em; line-height: 1.05; }
+h2, h3{ font-weight: 800; }
+strong, b{ font-weight: 800; }
+/* everything counted is mono — the machine voice (design-system.html "type") */
+output, .nu-vel-out{ font-family: var(--mono); font-variant-numeric: tabular-nums; }
 /* index.html:5 carries `viewport-fit=cover` and band.css was never linked, so
    until today nothing paid the safe area: on a notched phone in landscape the
    left edge of the drum grid sat under the rounded corner. Do NOT remove
@@ -196,16 +266,67 @@ button,input,select,textarea,output,meter{ font: inherit; color: inherit; }
 button,select,input[type=number],input[type=text],input[type=range]{
   min-height: var(--tap); }
 button,select{ padding-inline: .6em; }
-/* A BUTTON LOOKS LIKE A BUTTON, EVERYWHERE — AND `font: inherit` HAD A COST
-   NOBODY COUNTED. The rule above it makes every control wear the page's face,
-   which is right; what came with it is the surrounding element's WEIGHT, and a
-   `<th>` is bold. Measured on the rendered page: 8 of the 23 tab buttons came
-   out at font-weight 700 and 15 at 400, the split being nothing but which ones
-   happen to sit in a table header (`secNumber`'s section number, `countCell`).
-   Two looks for one kind, decided by the furniture. The weight is stated here
-   rather than in ui/eight.js because the look is this file's, and the same line
-   covers the menu in the form list's name column. */
-th button, th select{ font-weight: 400; }
+/* A BUTTON LOOKS LIKE A BUTTON, EVERYWHERE — AND THE ENAMEL FACE IS WHAT
+   SETTLES IT FOR GOOD (2026-08-27). What stood here was `th button, th select{
+   font-weight: 400 }`, repairing the accident the audit of 2026-08-26 found:
+   `font: inherit` handed 8 of the 23 tab buttons a <th>'s bold and the other
+   15 stayed 400 — two looks decided by the furniture. That repair is RETIRED,
+   not because it was wrong but because the cause is gone: the face below
+   states the button's own weight (800, Enamel's block weight), so no button
+   can inherit a weight from anything again. The measurement stays so nobody
+   re-litigates it.
+
+   THE FACE ITSELF is design-system.html's `.btn`: white plate, jet border,
+   hard shadow, and pressing a control moves it INTO its shadow — the whole of
+   Enamel's physicality in three declarations. The shadow is paint outside the
+   layout box, so not one button's geometry moves. */
+button{ font-weight: 800; color: var(--ink); background: var(--panel);
+  border: 3px solid var(--ink); border-radius: var(--r1);
+  box-shadow: var(--shadow); cursor: pointer; }
+button:hover{ background: var(--flag-tint); }   /* the flag warns: about to matter */
+button:active{ transform: translate(4px, 4px); box-shadow: none; }
+/* refused: faint, never hidden — and it does not press, because there is
+   nothing under it to press into */
+button:disabled{ color: var(--faint); background: var(--well);
+  border-color: var(--faint); box-shadow: none; cursor: default; transform: none; }
+/* A BUTTON SEATED IN A TABLE CELL IS ALREADY FRAMED BY THE GRID, so it keeps
+   the plate and the border and gives up the shadow: measured, 44px shadows on
+   the form list's section numbers painted over the rule of the row below and
+   the table read as smeared. The press still travels — it just has no shadow
+   to fall into, so it is the border that says "down" via the darker plate. */
+th button, td button{ box-shadow: none; }
+th button:active, td button:active{ transform: none; background: var(--flag); }
+/* THE CURRENT TAB IS A HAND-BLUE CAP — hand paint, because you chose it
+   (design-system.html "tab row"). `aria-pressed` was already on every tab
+   (the design system's kind 2: "what says 'you are here' is the mark and the
+   ARIA state"), so the paint keys off the state that was already true and
+   ui/eight.js does not move. The <mark> inside goes transparent here so the
+   cap is one colour: on a cobalt cap the mark has nothing left to say that
+   the cap is not already saying. */
+button[aria-pressed="true"]{ background: var(--hand); color: #FFFFFF; }
+button[aria-pressed="true"]:hover{ background: #152F9E; }
+button[aria-pressed="true"] mark{ background: transparent; color: inherit; }
+/* THE MENU IS A PLATE TOO — the same jet border and 6px ease as a button, one
+   weight down (700, the label weight): a settled choice is quieter than a
+   verb. The browser's own arrow survives because `appearance` is left alone —
+   the design page's `.sel::after` arrow needs a wrapper element and the DOM
+   is frozen this wave. No shadow on a select anywhere: 39 of them sit in the
+   board's tables and panes, and a shadow per menu made the desk read as
+   forty loose parts (measured on the rendered board, 2026-08-27). */
+select{ font-weight: 700; background: var(--panel);
+  border: 3px solid var(--ink); border-radius: var(--r1); cursor: pointer; }
+select:hover{ background: var(--flag-tint); }
+select:disabled{ color: var(--faint); background: var(--well);
+  border-color: var(--faint); cursor: default; }
+select option, select optgroup{ background: var(--panel); color: var(--ink); }
+/* text/number entry: a cut, not a plate — you write into it */
+input[type=number], input[type=text]{ background: var(--panel);
+  border: 3px solid var(--ink); border-radius: var(--r1); }
+/* THE NATIVE WIDGETS TAKE THE HAND. `accent-color` is one line and it is the
+   whole of "a value you set is cobalt" for every checkbox, radio and range on
+   the page — 142 native controls painted semantically with no second widget. */
+input[type=checkbox], input[type=radio], input[type=range]{
+  accent-color: var(--hand); }
 
 /* A ROW OF BUTTONS, SPACED ONCE. The audit found three spellings of the same
    strip: a literal " " text node between the buttons (`#tabs`, `#motif-tabs`,
@@ -248,7 +369,10 @@ input[type=checkbox],input[type=radio]{
    making; the names it made it with were the ones that went.) */
 label{ display: inline-block; min-block-size: var(--tap); line-height: var(--tap); }
 #app p{ margin-block: .35em; }
-:focus-visible{ outline: 3px solid Highlight; outline-offset: 1px; }
+:focus-visible{ outline: 3px solid var(--hand); outline-offset: 1px; }
+/* (2026-08-27: `Highlight` -> the hand. Focus is the hand's own paint in
+   Enamel — the ring says "your hand is here" — and the UA Highlight blue was
+   the one control colour on the page nobody chose.) */
 
 /* ===== A LINK, THE ONLY THING ON THIS PAGE THAT LEAVES IT =================
    Paul, 2026-08-26: "add actual Wikipedia links for each genre we have at the
@@ -276,6 +400,7 @@ label{ display: inline-block; min-block-size: var(--tap); line-height: var(--tap
    not text a stylesheet-off page can print. The attribute is left on the
    element for a gate to read and for the day somebody wants to tell an act from
    an album without reading the word. */
+a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 .nu-wiki{ font-size: 1rem; font-weight: 400; white-space: nowrap; }
 .nu-kind{ opacity: .7; white-space: nowrap; }
 
@@ -284,8 +409,12 @@ label{ display: inline-block; min-block-size: var(--tap); line-height: var(--tap
    that would be 26%, so the axis heading drops out below 480px of height. */
 .nu-bar{ position: sticky; top: 0; z-index: 30;
   display: flex; align-items: center; gap: .6em; flex-wrap: nowrap;
-  min-block-size: var(--bar-h); background: var(--paper);
-  border-block-end: 2px solid var(--rule-strong);
+  /* a panel plate with a full-ink rule, not the ground with a grey one
+     (2026-08-27): the transport is the one strip that is always screwed to
+     the top of the chassis, so it is a PLATE. Still inside --bar-h — the
+     border is in the border-box and the content is 44px, so A7 holds. */
+  min-block-size: var(--bar-h); background: var(--panel);
+  border-block-end: 3px solid var(--ink);
   /* full-bleed: cancel the body gutter and re-pay it as padding, so the page
      does not scroll visibly through a 12px strip beside a pinned bar */
   margin-inline: calc(-1 * var(--gl)) calc(-1 * var(--gr));
@@ -325,7 +454,14 @@ label{ display: inline-block; min-block-size: var(--tap); line-height: var(--tap
    reserving a blank box costs the same pixels to show you nothing", ui/eight.js
    liveBlock. `min-block-size`, not `block-size`: a third line must be readable
    rather than clipped. */
-#engine{ min-block-size: 2lh; }
+#engine{ min-block-size: 2lh;
+  /* the engine line is ENGINE TRUTH, so it wears the meter's green and the
+     machine voice (2026-08-27) — "a slider with no green beside it is a
+     slider that reaches no sound", and this is the sentence that proves the
+     sound. `2lh` still reserves two lines OF ITS OWN TYPE, so the anti-jump
+     argument above is unchanged. */
+  font-family: var(--mono); font-weight: 600; font-size: .85rem;
+  color: var(--meter); }
 
 /* A STICKY HEADING NEEDS SOMETHING TO BE STICKY INSIDE OF. `position: sticky`
    releases at the bottom of its CONTAINING BLOCK, so with every <h2> a direct
@@ -335,10 +471,30 @@ label{ display: inline-block; min-block-size: var(--tap); line-height: var(--tap
 .nu-ax > h2{ position: sticky; top: var(--bar-h); z-index: 20;
   margin: 0 calc(-1 * var(--gr)) 0 calc(-1 * var(--gl));
   padding-inline: var(--gl) var(--gr);
-  min-block-size: var(--head-h); line-height: var(--head-h); font-size: 1.15rem;
+  min-block-size: var(--head-h); line-height: var(--head-h); font-size: 1rem;
   /* A TRANSPARENT STICKY HEADING IS UNREADABLE — the page runs under it. Any
-     future accent colour must paint here too. */
-  background: var(--paper); border-block-end: 1px solid var(--rule-strong); }
+     future accent colour must paint here too. (2026-08-27: it is painted —
+     the band is a solid INK bar now, white caps at Enamel's block weight, the
+     way design-system.html sets every section heading. An ink band cannot be
+     run under by anything, which retires the worry above by construction. The
+     RESERVED HEIGHT DID NOT MOVE: --head-h min-block-size, --head-h
+     line-height, 1px border — 39px total, the number the two-headings-at-the-
+     handoff measurement below leans on — because the anchor law says a
+     heading may change its paint and never its box. 1rem caps at .08em
+     tracking measures narrower than the old 1.15rem lowercase, so no heading
+     wraps that did not.) */
+  background: var(--ink); color: #FFFFFF; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .08em;
+  border-block-end: 1px solid var(--ink); }
+/* the atlas's own heading wears the same ink band (2026-08-27) — it is the
+   one section heading that is not a `.nu-ax > h2`, and two looks for one kind
+   of thing is the exact accident the design-system audit exists to prevent.
+   Paint only: it was never sticky and does not become sticky for a repaint. */
+#atlas > h2{ margin: 0 calc(-1 * var(--gr)) 0 calc(-1 * var(--gl));
+  padding-inline: var(--gl) var(--gr);
+  min-block-size: var(--head-h); line-height: var(--head-h); font-size: 1rem;
+  background: var(--ink); color: #FFFFFF; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .08em; }
 .nu-ax > h3, .nu-ax h3{ font-size: 1rem; margin: .8em 0 .2em; }
 @media (max-height: 480px){ .nu-ax > h2{ position: static; } }
 /* TWO HEADINGS AT THE HANDOFF, MEASURED AND LEFT (STATE.md item 21). Swept one
@@ -428,14 +584,32 @@ label{ display: inline-block; min-block-size: var(--tap); line-height: var(--tap
    side reads as a box drawn around the section rather than as ground under it.
    Net zero on where any content sits: measured, every `.nu-ax`'s content box is
    at the same x it was, and `documentElement.scrollWidth === innerWidth` at 390
-   and 1280. */
+   and 1280.
+
+   ENAMEL KEEPS THE WASH AND MOVES ITS GROUND (2026-08-27). Everything above
+   stands: arithmetic on an index, nobody types a colour, 4% is the whole
+   specification, `<mark>` is orders of magnitude louder. Two things changed
+   with the repaint. (1) The mix lands on `--ground` — the chassis — instead
+   of `Canvas`, because Canvas is retired with dark mode (the root block says
+   why). (2) The question the repaint had to answer in prose: is a
+   golden-angle hue DECORATIVE paint, which Enamel forbids? No — the four
+   paints state facts about a CONTROL (hand set it, clock is on it) and the
+   wash states a fact about WHERE YOU ARE, on the ground and never on a
+   control, at 4% where the four paints are full strength. The other
+   candidate, a painted left rule per section, was tried on the rendered page
+   and refused: a 3px coloured rule reads as a control state (it is exactly
+   what `tr.nu-here` draws), which is the conflation this comment already
+   forbids. The wash is the one mechanism that cannot be mistaken for any of
+   the four paints, so it stays. `--rule`/`--rule-strong`/`--zebra` are
+   literal colours now, so "every line keeps exactly the weight it had" is
+   true by construction rather than by mixing discipline. */
 :root{ --wash: 4%; }
 @media (prefers-contrast: more){ :root{ --wash: 0%; } }
 @media (forced-colors: active){ :root{ --wash: 0%; } }
 .nu-ax, #atlas{
   --sec: 0;
   --paper: color-mix(in oklab,
-                     hsl(calc(var(--sec) * 137.5deg) 70% 50%) var(--wash), Canvas);
+                     hsl(calc(var(--sec) * 137.5deg) 70% 50%) var(--wash), var(--ground));
   background: var(--paper);
   margin-inline: calc(-1 * var(--gl)) calc(-1 * var(--gr));
   padding-inline: var(--gl) var(--gr); }
@@ -486,9 +660,26 @@ label{ display: inline-block; min-block-size: var(--tap); line-height: var(--tap
    cell is ruled; the header row is ruled twice as heavily; alternate body
    rows are tinted — except in a step grid, where a tint would fight the
    playhead and the sticky lane column. */
-table{ border-collapse: collapse; }
-caption{ text-align: left; font-size: .85rem; opacity: .75; padding-block: .2em; }
+/* A TABLE IS A PLATE (2026-08-27): white panel, jet frame, screwed onto the
+   washed chassis — which is ALSO what keeps the abcjs engravings and every
+   dense grid at full contrast whatever the section wash under them is doing.
+   `--paper` is re-declared to the panel INSIDE the table (and inside the pane
+   that scrolls one, below) so every rule that paints itself "paper" — the
+   sticky lane column, the board's sticky row labels — lands on the plate it
+   is actually sitting on instead of on the ground the plate is screwed to.
+   Same mechanism the section wash uses, one level further in. */
+table{ border-collapse: collapse; --paper: var(--panel);
+  background: var(--panel); border: 2px solid var(--ink); }
+.nu-pane{ --paper: var(--panel); }
+caption{ text-align: left; font-size: .85rem; color: var(--dim); opacity: 1;
+  font-weight: 600; padding-block: .2em; }
 th,td{ border: 1px solid var(--rule); padding: 2px 4px; text-align: left;
+       /* 1.3, NOT THE BODY'S 1.45 (2026-08-27): the repaint's geometry budget
+          is 8px on the measured surfaces and the form table spent 9 of it on
+          leading plus the new 2px frame — measured 80px -> 89px at both
+          widths. Cells are data, not prose; 1.3 buys the height back
+          (measured 84px) and the prose keeps its air. */
+       line-height: 1.3;
        vertical-align: middle; }
 /* The tables here are built with createElement and appended row-first, so
    there is no implicit <tbody> — `table > tr` is a real selector on this page
@@ -511,7 +702,12 @@ table > tr:nth-child(even) > td, tbody > tr:nth-child(even) > td{
    does not. `tr.nu-beat` in the grids below is the same answer to the same
    question, which is why this is a rule of the same weight. */
 tr.nu-here > th:first-child, tr.nu-here > td:first-child{
-  border-inline-start: 3px solid var(--rule-strong); }
+  /* the rule is HAND-BLUE now (2026-08-27): "which row am I writing" is a
+     fact about where your hand is, which is exactly what the hand paint is
+     for — and it keeps the playhead's clock-red mark in the same cell
+     unmistakable for it, which is the distinction the whole comment above
+     exists to protect. Same 3px, same edge, new paint. */
+  border-inline-start: 3px solid var(--hand); }
 
 /* A WIDE TABLE SCROLLS INSIDE ITSELF OR IT SCROLLS THE WHOLE DOCUMENT, and
    there is no third option. Measured 2026-08-24: two seventeen-column grids at
@@ -656,7 +852,22 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
    both — the class covers the browsers without `:has()`.) */
 .is-now,
 .nu-circ .nu-opt.is-on, .nu-circ .nu-opt:has(:checked){
-  background: var(--ink); color: var(--paper); }
+  /* THE INVERSION IS A HAND-BLUE CAP NOW, NOT AN INK ONE (2026-08-27). It read
+     `background: var(--ink); color: var(--paper)` — the loudest thing a
+     monochrome page could say. Enamel gives "chosen" its own paint: cobalt is
+     the hand, and the chosen key on the ring is the clearest case of "if
+     cobalt is on it, you put it there" on the whole page. Same two
+     declarations, same single owner, new paint. */
+  background: var(--hand); color: #FFFFFF; }
+/* <mark> IS THE CLOCK'S OWN HIGHLIGHT (2026-08-27). It was the browser's
+   default — Mark/MarkText, a yellow the UA chose — and yellow is the FLAG's
+   word now, which the sounding step is not: it is not about to matter, it is
+   happening. The playhead's mark takes the clock's tint with the clock's ink,
+   so "sounding" reads red-hot everywhere the clock writes (the form list's
+   section number, the step grids' count column). The one <mark> that is not
+   the clock — the chosen tab's — is unpainted by the cap rule above, where
+   the reason is argued. */
+mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
 /* GREYED, NOT HIDDEN (Paul, 2026-08-24: "when an option makes another one
    unaccessible gray it out"). `:disabled` is the DOM already saying it, so a
    slice sets `input.disabled = true` and the grey follows for free. Hiding
@@ -664,7 +875,16 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
    for. */
 .is-off, .nu-opt:has(:disabled){ opacity: .45; }
 .is-quiet{ opacity: .7; font-style: italic; }
-.nu-hint{ font-size: .85rem; opacity: .75; }
+.nu-hint{ font-size: 12px; color: var(--dim); }
+/* 12px, NOT .85rem, AND THE PIXEL IS LOAD-BEARING (2026-08-27). The audition
+   say-line reserves its own minHeight by measuring "the record is playing —
+   the score above is what you hear", and that sentence in the new sans is
+   371px at 13.6px, 371 -> 371/357/343 at 13/12.5/12 against a 366px column at
+   390 — so at the old size every say-line reserved TWO lines and #staff grew
+   19px past the repaint's 8px geometry budget. 12.5 fits with 9px to spare
+   and 12 with 23, and a reserve that flips lines on a font-metrics sneeze is
+   the wrong side of that trade, so 12. (Under the old serif the same string
+   was ~326px, which is why .85rem never wrapped before today.) */
 
 /* THE SHEETS (D2). A grid, not a wrapping row: sheets.js measures its own
    longest word and asks for a column count on `data-cols`, and a grid is the
@@ -673,7 +893,12 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
    because four columns of anything on a 320px phone is four columns of one
    letter. */
 .nu-sheet{ display: grid; grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr));
-  gap: 4px; border: 1px solid var(--rule); padding: 6px; margin-block: .5em;
+  /* a sheet is a PLATE now (2026-08-27): white panel, 2px jet frame, on the
+     washed chassis — the options inside are panel-on-panel, framed by their
+     own 2px ink */
+  gap: 4px; border: 2px solid var(--ink); background: var(--panel);
+  --paper: var(--panel);
+  padding: 6px; margin-block: .5em;
   min-inline-size: 0; }
 .nu-sheet[data-cols="2"]{ --cols: 2; }
 .nu-sheet[data-cols="3"]{ --cols: 3; }
@@ -698,16 +923,26 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
    and `is-on`/`is-off` from sheets.js cover the browsers without `:has()`. */
 .nu-opt{ display: flex; align-items: center; gap: .35em; flex-wrap: wrap;
   min-block-size: var(--tap); line-height: normal;
-  border: 1px solid var(--rule); padding: 4px .5em;
+  /* 2px INK AND NOT 1px GREY (2026-08-27, Enamel): an option is a control and
+     a control's frame is ink. The padding pays the pixel back — 2+3 = 1+4 —
+     so not one option's box moved; that is the same trade the old is-on rule
+     made in the other direction, and it means is-on below no longer needs to
+     touch the width at all. */
+  background: var(--panel); border: 2px solid var(--ink); border-radius: var(--r1);
+  padding: 3px calc(.5em - 1px);
   overflow-wrap: anywhere; }
 .nu-opt > input[type=radio], .nu-opt > input[type=checkbox]{
   position: absolute; width: 1px; height: 1px; margin: -1px;
   overflow: hidden; clip-path: inset(50%); }
 .nu-opt .nu-w{ font-weight: 600; }
 .nu-opt .nu-why{ flex: 1 0 100%; font-weight: 400; }
-.nu-opt.is-on, .nu-opt:has(:checked){ border-color: var(--ink); border-width: 2px;
-  padding: 3px calc(.5em - 1px); }
-.nu-opt:has(:focus-visible){ outline: 3px solid Highlight; outline-offset: 1px; }
+.nu-opt.is-on, .nu-opt:has(:checked){
+  /* CHOSEN IS THE HAND (2026-08-27). This rule used to thicken the border to
+     2px ink and repay the padding; the base chip is 2px ink now, so "chosen"
+     stops being a weight and becomes the paint it always meant: cobalt frame,
+     cobalt wash. Same box to the pixel. */
+  border-color: var(--hand); background: var(--hand-tint); }
+.nu-opt:has(:focus-visible){ outline: 3px solid var(--hand); outline-offset: 1px; }
 
 /* ===== THE CIRCLE OF FIFTHS ============================================
    (Paul, 2026-08-24: "Maybe put the circle of fifths back in there for key
@@ -754,7 +989,12 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
    is, so the box that frames it is capped rather than stretched — a 336px
    circle centred inside a 1280px rule reads as a mistake. `min()` and not a
    media query: at 390px the cap is the column and nothing changes. */
-.nu-circ{ border: 1px solid var(--rule); padding: 6px; margin-block: .5em;
+.nu-circ{ border: 2px solid var(--ink); background: var(--panel);
+  /* the diagram is a plate like the sheets (2026-08-27), and `--paper` is
+     re-declared so the twenty-four labels that punch through the ring strokes
+     punch through in the plate's own white */
+  --paper: var(--panel);
+  padding: 6px; margin-block: .5em;
   min-inline-size: 0; max-inline-size: min(100%, 26em); }
 .nu-circ > legend{ padding-inline: .3em; font-weight: 600; }
 .nu-circ > .nu-why{ margin-block: .15em .4em; }
@@ -1101,7 +1341,7 @@ td > select{ max-inline-size: 9em; }
      zebra row under the wash is 0.89 and a plain one is 0.96 — both a step
      darker than the cell beside them, which is the whole ask. */
   background-image: linear-gradient(
-    color-mix(in srgb, CanvasText var(--wash), transparent) 0 100%); }
+    color-mix(in srgb, var(--ink) var(--wash), transparent) 0 100%); }
 
 /* THE ROUTING LIST IS A LEGEND, NOT A PARAGRAPH. ui/engineer.js prints one
    `<li>` per EDGE on the desk — the main's dry into bus 1, each group's route,
@@ -1250,7 +1490,15 @@ td > select{ max-inline-size: 9em; }
      them. A system-ui stack keeps all three rows in one hand. */
   font-family: system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif; }
 .nu-tf-row{ gap: .3em; }
-.nu-tf-row button{ min-inline-size: var(--tap); }
+.nu-tf-row button{ min-inline-size: var(--tap);
+  /* 2px AND NOT THE FACE'S 3px (2026-08-27): the Enamel button border is 3px,
+     which is +2px per button, and the arithmetic above is exact — seven
+     buttons at 332px of ink in a 366px column had 34px for six gaps. Fourteen
+     more pixels of border wraps the row to two lines, an 88px strip under
+     every motif editor. So the transform row pays Enamel's chunk with one
+     fewer pixel per edge and stays one line; the shadow and the press are the
+     face's own. */
+  border-width: 2px; }
 /* WHERE THE TUNE WAS, AND WHERE THIS BUTTON PUTS IT — the one idea worth
    keeping out of the drawing. A face may be a PAIR (`∧∨`, `■□ → □■`, `♪↑`),
    and the first half is the quiet ink and the second the full one, so the pair
@@ -1265,11 +1513,46 @@ td > select{ max-inline-size: 9em; }
 .nu-tf-was{ color: var(--rule); margin-inline-end: .1em; }
 .nu-tf-is{ color: currentColor; }
 
+/* THE CLOCK'S OWN SENTENCES (2026-08-27). The [data-live] law already says
+   the clock writes text only inside elements carrying the attribute; Enamel
+   adds: those words are CLOCK RED in the machine voice, everywhere, so a
+   reader can tell at a glance which text on the page will move without them.
+   No size is set — a live span inside the form list's count cell stays the
+   cell's size, the score caption stays a caption — only the paint changes.
+   NOT THE MONO, AND THAT IS A MEASUREMENT (2026-08-27): the design page sets
+   its live specimens in the machine voice, but the audition say-line reserves
+   its own minHeight in JavaScript by measuring a sample sentence, and in mono
+   that sample wraps at 390 — the reserve went 16px -> 33px and the staff
+   block grew 19px, which is the geometry this wave is forbidden to spend.
+   The red is what carries the meaning; the face stays the page's — and the
+   WEIGHT stays the page's too, for the same 390px measurement: at 600 the
+   reserve sentence was one letter over the wrap. Red alone is the signal. */
+[data-live]{ color: var(--clock); }
+/* ...and a hint INSIDE a live element is still the clock's sentence — the
+   score caption is `.nu-hint`, whose dim would otherwise beat the inherited
+   red. A live subtree holds no control by law, so the selector cannot leak. */
+[data-live] .nu-hint{ color: var(--clock); }
+
 /* THE ENGRAVING. abcjs draws an <svg> at whatever width it was handed; on a
    phone that is wider than the page, and an overflowing staff would put the
    sideways scroll straight back on the body — the one thing this file exists
    to prevent. */
 #staff svg, #app svg{ max-inline-size: 100%; }
+/* ...AND IT SITS ON A PANEL (2026-08-27). abcjs engraves in black ink and
+   nothing tells it about a section wash, so the staff and the score box are
+   white plates: full contrast for the engraving whatever the ground under
+   them is doing. `--paper` is re-declared the way the tables do it, so the
+   score's pinned gutter — which must be OPAQUE in exactly the box's colour or
+   the music slides through the voice names — follows without a second rule.
+   Backgrounds only: their heights are reserved in JavaScript (scoreReserveTo)
+   and a border here would be a geometry change this wave is not allowed. */
+#staff, .nu-score{ background: var(--panel); --paper: var(--panel);
+  /* ...at the OLD leading (2026-08-27): the say-lines between staves have
+     JavaScript-reserved minHeights measured under the browser's default
+     line-height, and Enamel's 1.45 body leading grew the staff block 33px at
+     390 — the clock moving the page, exactly what the reserves exist to
+     forbid. 1.2 is the default leading said out loud. */
+  line-height: 1.2; }
 
 /* THE SCORE (2026-08-25, Paul: "add a section ABOVE motifs which is the current
    playing music, two measures at a time, but ALL", and the same evening:
@@ -1548,7 +1831,7 @@ td > select{ max-inline-size: 9em; }
       writes it in CSS px through the renderer's units-per-pixel (HALO_PX). */
 #atlasMap .lab{ pointer-events: none; }
 #atlasMap .lab[data-far="1"]{ opacity: 0; }
-#atlasMap text.name{ paint-order: stroke; stroke: Canvas;
+#atlasMap text.name{ paint-order: stroke; stroke: var(--paper);
   stroke-linejoin: round; stroke-linecap: round; }
 /* `#atlasActs button { min-block-size: var(--tap); margin-inline-end: .4rem }`
    STOOD HERE AND BOTH HALVES ARE GONE (2026-08-26). The tap floor was already
@@ -1683,7 +1966,7 @@ td > select{ max-inline-size: 9em; }
 .nu-pad-eff{ fill: currentColor; }
 .nu-pad-hand{ fill: none; stroke: currentColor; stroke-width: 3; }
 .nu-pad-knot{ fill: currentColor; }
-.nu-pad-shape{ fill: color-mix(in srgb, CanvasText 6%, transparent);
+.nu-pad-shape{ fill: color-mix(in srgb, var(--ink) 6%, transparent);
   stroke: currentColor; stroke-width: 1; pointer-events: none; }
 /* A WORD ON THE RING IS THE DOCUMENT'S OWN KEY (ui/eight.js says why), at the
    one size on this page that is smaller than a `.nu-why` — a diagram's label

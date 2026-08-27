@@ -193,21 +193,28 @@ head("G4  coordinate bounds");
   ok("every place is inside the world view", off.length === 0,
      off.join(" | ") || nPlaces + " rows in " + JSON.stringify(world));
   /* THE COASTLINE'S OWN BOUNDS, checked here because it is the same question.
-     LAND is baked by scratch/atlas/bake-land.js and EMPTY IS A LEGAL VALUE — a
-     map with no coastline is a worse map, not a broken one — so this reports
-     rather than requiring, and only fails on a number that is not a coordinate.
+     LAND is derived by scratch/atlas/bake-land.js -> rechunk-land.js and EMPTY
+     IS A LEGAL VALUE — a map with no coastline is a worse map, not a broken
+     one — so this reports rather than requiring, and only fails on a number
+     that is not a coordinate.
 
-     THE SHAPE CHANGED ON 2026-08-24, from one array of rings to four named
-     tables { COARSE, RUNS, RSPAN, PATCH }, because a globe needs a motion tier,
-     a cullable tier and a city tier and the old file was one of them. The
-     southernmost point is printed because it is the proof Antarctica came back
-     when VIEWS stopped being a control. */
+     THE SHAPE CHANGED TWICE, AND BOTH TIMES ARE KEPT. 2026-08-24: one array of
+     rings became four named tables { COARSE, RUNS, RSPAN, PATCH }, on the
+     argument that a globe needs a motion tier, a cullable tier and a city
+     tier. 2026-08-27 REVERSED that to { RUNS, RSPAN } alone — Paul: "Remove
+     the high res map and keep the globe one chunky resolution too" — the 1:10m
+     patches deleted as design (chunky at city zoom is the point) and the
+     coarse motion tier deleted on a measurement (the full 0.1° moving frame is
+     p50 1.8 ms; ui/globe.js tiers() carries it). So the loop below walks the
+     one table that remains, and the southernmost point is still printed
+     because it is the proof Antarctica came back when VIEWS stopped being a
+     control. */
   {
-    let land = { LAND: { COARSE: [], RUNS: [], RSPAN: [], PATCH: [] } };
+    let land = { LAND: { RUNS: [], RSPAN: [] } };
     try { land = require("./atlas-land.js"); } catch (e) { /* not baked yet */ }
     const L = land.LAND || {};
     let pts = 0, bad = 0, south = 90, rows = 0;
-    for (const t of ["COARSE", "RUNS", "PATCH"]) {
+    for (const t of ["RUNS"]) {
       for (const ring of (L[t] || [])) {
         rows++;
         if (ring.length % 2) bad++;
