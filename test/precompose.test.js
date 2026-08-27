@@ -274,10 +274,15 @@ function sectionEvents(doc, i) {
       if (B.echo) { hist(hEchoTime, B.echo.time); hist(hEchoFb, B.echo.fb);
                     hist(hEchoTone, B.echo.tone); }
     }
-    hist(hBoxFx, (doc.sound.fx || []).join("+") || null);
-    for (const k of doc.sound.fx || [])
-      if (!Object.prototype.hasOwnProperty.call(NF.FX, k)) sound("sound.fx " + k + " is not an FX key");
-    if ((doc.sound.fx || []).length > NF.MAX_FX) sound("sound.fx is longer than MAX_FX");
+    // THE CHARACTER CHIP MOVED OFF THE RECORD AND ONTO THE CHAIRS, 2026-08-27
+    // (Paul: "We can get rid of Character right?"). This counted
+    // `doc.sound.fx` and checked its keys; the record-wide field is retired,
+    // so the same census is taken where the chip lives now — the FIRST voice's
+    // `desk.fx`, because precompose deals one chain to the whole cast and
+    // counting it once per record is what the histogram means.
+    if (doc.sound.fx) sound("sound.fx is retired and this record still carries one");
+    hist(hBoxFx, ((doc.voices[0] && doc.voices[0].desk &&
+                   doc.voices[0].desk.fx) || []).join("+") || null);
 
     let deskHere = 0;
     for (const v of doc.voices) {
@@ -288,6 +293,23 @@ function sectionEvents(doc, i) {
         hist(hDeskKey, k);
         const f = NF.PARTMIXBY[k];
         if (!f) { sound(v.name + ".desk." + k + " is not a PARTMIX key"); continue; }
+        // A `list` FIELD IS CHECKED MEMBER BY MEMBER (2026-08-27). `fx` is the
+        // one PARTMIX row whose value is an array (fields.js: `{key:"fx",
+        // type:"list", table:FX, max:MAX_FX}`), and until the character chips
+        // were dealt to the chairs no precomposed record wrote one — so this
+        // walk stringified the whole array and asked the FX table for it,
+        // which every chain would have failed. Same question, per member,
+        // plus the row's own cap.
+        if (f.type === "list") {
+          if (!Array.isArray(val)) { sound(v.name + ".desk." + k + " is not a list"); continue; }
+          for (const one of val)
+            if (!Object.prototype.hasOwnProperty.call(f.table, String(one)))
+              sound(v.name + ".desk." + k + " member " + JSON.stringify(one) +
+                    " is not one of its words");
+          if (f.max != null && val.length > f.max)
+            sound(v.name + ".desk." + k + " is longer than the row's max");
+          continue;
+        }
         if (f.table && !Object.prototype.hasOwnProperty.call(f.table, String(val)))
           sound(v.name + ".desk." + k + " = " + JSON.stringify(val) + " is not one of its words");
       }
@@ -435,9 +457,70 @@ function sectionEvents(doc, i) {
   let moved = 0;
   for (const gk of ANCHORS)
     if (JSON.stringify(docs.get(gk + "/1")) !== JSON.stringify(docs.get(gk + "/2"))) moved++;
+  /* G6c WAS GREEN WHILE THE BUG WAS SHIPPING, and the reason is written here
+     because it is the whole lesson of the round. Paul, 2026-08-27: *"No matter
+     how many times I hit REWRITE the hook is the same on Iranian pop."* He was
+     right, and this check said 199 of 199 records moved — because `form`,
+     `voices` and `sound` move with the seed and MATERIAL did not, on any
+     anchor. "A different record" was true of the document and false of the
+     tune. G6e below asks the question this one only looked like it was
+     asking. */
   ok("G6c a different seed is a different record for ≥90% of anchors", () =>
     assert.ok(moved / ANCHORS.length >= 0.9,
       moved + " of " + ANCHORS.length + " moved between seed 1 and seed 2"));
+  /* G6e A DIFFERENT READING IS A DIFFERENT TUNE — the claim the rewrite button
+     makes, asserted on the CELLS and not on the document. Measured before the
+     fix over 199 anchors x 8 seeds: 1,910 cell instances and NOT ONE changed
+     content; the hook was byte-identical across five readings on 193 of the
+     199. `cellOf` never took the seed (precompose §6b has the mechanism), so
+     the number here was 6 of 199 and this gate did not exist. */
+  {
+    const hookMoved = [], anyMoved = [];
+    for (const gk of ANCHORS) {
+      const cells = SEEDS.map((s2) => (docs.get(gk + "/" + s2).material || {}).cells || {});
+      const names = new Set();
+      for (const c of cells) for (const k of Object.keys(c)) names.add(k);
+      let any = false, hook = false;
+      for (const k of names) {
+        // PRESENT-AT-ONE-SEED IS NOT VARIATION. A kind the record deals in one
+        // reading and not another makes `undefined !== {...}` true and says
+        // nothing about the tune, which is exactly how the old measurement
+        // flattered itself. Only cells that EXIST in two readings are compared.
+        const seen = cells.map((c) => c[k]).filter(Boolean).map((v) => JSON.stringify(v));
+        if (new Set(seen).size > 1) { any = true; if (k === "hook") hook = true; }
+      }
+      if (any) anyMoved.push(gk);
+      if (hook) hookMoved.push(gk);
+    }
+    ok("G6e a different reading is a different TUNE — the hook's own notes " +
+       "move for ≥90% of anchors across " + SEEDS.length + " readings", () =>
+      assert.ok(hookMoved.length / ANCHORS.length >= 0.9,
+        hookMoved.length + " of " + ANCHORS.length + " moved a hook; frozen: " +
+        ANCHORS.filter((g) => !hookMoved.includes(g)).slice(0, 8).join(" ")));
+    ok("G6f …and every anchor moves SOME cell, so no genre in the catalog has " +
+       "one tune and one only", () =>
+      assert.strictEqual(ANCHORS.length - anyMoved.length, 0,
+        ANCHORS.filter((g) => !anyMoved.includes(g)).slice(0, 8).join(" ")));
+  }
+  /* G6g READING 1 IS TODAY. The atlas opens every anchor at seed 1, so the
+     record a hand LANDS on may not move when the reading machinery lands —
+     only pressing rewrite may. Asserted against the frozen fixture rather than
+     against a rerun of the same code, which would only prove the code equals
+     itself: `cellOf` with no reading is what reading 1 composes. */
+  ok("G6g reading 1 composes the cells `cellOf` composes with no reading at " +
+     "all — absent is today, on every anchor", () => {
+    const bad = [];
+    for (const gk of ANCHORS) {
+      const { row } = P.idiomOf(gk), G = GENRES[gk];
+      const cells = (docs.get(gk + "/1").material || {}).cells || {};
+      for (const k of Object.keys(cells)) {
+        if (cells[k].kind !== "line") continue;          // `beat` is the kit
+        const made = P.cellOf(row, k, 1, G, 16);          // no sixth argument
+        if (JSON.stringify(made.cell) !== JSON.stringify(cells[k])) bad.push(gk + "." + k);
+      }
+    }
+    assert.strictEqual(bad.length, 0, bad.slice(0, 8).join(", "));
+  });
   ok("G6d an unknown anchor throws BY NAME", () => {
     assert.throws(() => P.genreToDocument("no-such-genre", 1),
       /precompose: no anchor "no-such-genre"/);
@@ -500,7 +583,9 @@ function sectionEvents(doc, i) {
       assert.strictEqual(DD.deskPartsOf(d, GENRES), null, gk + " deskPartsOf");
       assert.strictEqual(DD.busesOf(d), null, gk + " busesOf");
       assert.strictEqual(DD.masterOf(d), null, gk + " masterOf");
-      assert.deepStrictEqual(DD.boxFxOf(d), [], gk + " boxFxOf");
+      // `assert.deepStrictEqual(DD.boxFxOf(d), [])` came off here 2026-08-27
+      // with the reader itself — the record-wide chain is retired and
+      // `deskIsDefault` no longer counts it (desk-doc.js has the tombstone).
       assert.strictEqual(DD.deskIsDefault(d, GENRES), true, gk + " deskIsDefault");
     }
   });
@@ -734,8 +819,8 @@ function sectionEvents(doc, i) {
     doc.form.sections.forEach((s2, i) => {
       GENRES[GKP + i] = Doc.toGenre(doc, i, GENRES, []); });
     const boxes = Doc.boxesOf(doc, GKP);
-    const parts = DD.deskPartsOf(doc, GENRES), fx = DD.boxFxOf(doc);
-    for (const b of boxes) { b.parts = parts; b.fx = fx; }
+    const parts = DD.deskPartsOf(doc, GENRES);
+    for (const b of boxes) b.parts = parts;
     return boxes;
   }
 
@@ -1202,7 +1287,7 @@ function sectionEvents(doc, i) {
   console.log("  echo bus       " + nEchoBus + " of " + nRecords +
               " records · time " + table(hEchoTime) + " · repeats " +
               table(hEchoFb) + " · tone " + table(hEchoTone));
-  console.log("  box chip       " + table(hBoxFx));
+  console.log("  chair chips    " + table(hBoxFx));
   console.log("  the board      " + nDeskVoices + " of " + nVoices +
               " voices carry a desk, over " + (nRecords - noDesk.length) +
               " of " + nRecords + " records · " + table(hDeskKey));

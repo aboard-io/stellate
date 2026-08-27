@@ -343,6 +343,38 @@
   // the document. Mutates in place and returns it, the way the page's did.
   function normalize(doc) {
     const ids = doc.form.sections.map((s2) => s2.id);
+    /* ---- THE RETIRED RECORD-WIDE CHIP, RESOLVED ON READ (2026-08-27) -------
+       Paul: *"We can get rid of Character right? We don't really use it any
+       more do we?"* — and FUTURE.md §5 had ruled the same way already:
+       `sound.fx` gone, the chip "dealt, not embedded". `nukernel/
+       precompose.js deskThe` writes it on the CHAIR now and this key is not
+       written anywhere any more; what is left is every record ALREADY SAVED
+       with one — a session in localStorage, a keep, a share link — and a
+       retired key that still reached the sound with no control on the page
+       would be exactly the hidden fact this box legislates against.
+
+       SO IT IS FOLDED HERE, AT THE DOOR, ONCE. The chips go onto every voice's
+       own `desk.fx`, APPENDED after whatever that voice already carries,
+       because that is the order audio/desk.js built the chain in
+       (`[...p.fxc, ...fxChain([...S.fx, ...o.fx])]` — the part's slots first,
+       the record's chip after), and then the key is deleted, so the fold
+       cannot happen twice and `deskIsDefault` answers about one owner.
+       Capped at fields.js MAX_FX, the same cap both ends already keep.
+
+       ABSENT IS TODAY: a document with no `sound.fx` — which is every record
+       this build writes and every record songs.js ships — takes no branch and
+       comes out byte-identical. */
+    const legacy = doc.sound && Array.isArray(doc.sound.fx) ? doc.sound.fx : null;
+    if (legacy) {
+      const keep = legacy.filter((k) =>
+        Object.prototype.hasOwnProperty.call(NF.FX, k));
+      for (const v of doc.voices) {
+        const had = (v.desk && Array.isArray(v.desk.fx)) ? v.desk.fx : [];
+        const next = [...had, ...keep].slice(0, NF.MAX_FX);
+        if (next.length) { v.desk = v.desk || {}; v.desk.fx = next; }
+      }
+      delete doc.sound.fx;
+    }
     for (const v of doc.voices) {
       const dflt = v.kind === "line" ? "as written" : "";
       v.development = v.development || {};
