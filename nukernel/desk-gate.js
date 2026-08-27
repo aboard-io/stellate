@@ -177,12 +177,17 @@ console.log("\nG2  the address is audio/desk.js's, not a second walk");
 console.log("\nG3  every word in the document is the registry's own");
 {
   const doc = clone(TERMS);
-  // `fx: ["chorus"]` came off this fixture on 2026-08-26 with the field it
-  // exercised (Paul: "Don't let me add effects to instruments"). `aux` took its
-  // place, because a fixture that does not name the fourth send is not asking
-  // this check's question about it.
+  // `fx: ["chorus"]` came off this fixture on 2026-08-26 (Paul: "Don't let me
+  // add effects to instruments") and CAME BACK ON 2026-08-27 with its slot
+  // knobs, by the same owner: *"I think we need to do what everyone else does
+  // with effects. Add per voice effects, up to three. Each has a wet dry mix
+  // and its own settings."* `fxw1` is slot 1's wet (the chip's own mix param
+  // surfaced) and `fxa1` its first face param — both plain PARTMIX enums, so
+  // this fixture asks the round-trip question about the whole 2026-08-27
+  // vocabulary at once. `aux` stays from the 2026-08-26 round.
   doc.voices[0].desk = { fader: -2.5, lvl: "back", pan: "hl", rev: "wet",
                          echo: "touch", room: "none", aux: "some",
+                         fx: ["chorus"], fxw1: "half", fxa1: "low",
                          eq: { lo: 0, mid: -1.5, hi: 2 },
                          mute: false, solo: false };
   // THE FIXTURE'S BUS NAMES CAME OFF THE NEW VOCABULARY, 2026-08-26. They were
@@ -223,19 +228,25 @@ console.log("\nG3  every word in the document is the registry's own");
      "song.js accepts the document's own spelling",
      JSON.stringify((v || {}).errors || "no result"));
   const saved = (v.song && v.song.song ? v.song.song[0] : (v.song || [])[0]) || {};
-  // THE ASSERTION IS REVERSED, NOT DELETED. It read "a per-voice chip survives
-  // the round trip" and checked `saved.parts.line.fx`. There is no per-voice
-  // chip any more and the loader must not resurrect one, so the same line now
-  // proves the opposite; and the fourth send takes over the job of proving that
-  // a NEW word in PARTMIX does survive, which is what the old check was really
-  // for. Both halves of the pair are here on purpose: a check that only says
-  // "no fx" would pass on a loader that dropped everything.
-  ok(saved.parts && saved.parts.line && saved.parts.line.fx === undefined,
-     "NO per-voice chip survives the round trip — `fx` is not a PARTMIX key " +
-     "and song.js drops it the way it drops any word it does not know",
+  // THE ASSERTION IS REVERSED A SECOND TIME, 2026-08-27, and both turns are
+  // dated because both were Paul's. 2026-08-24 it read "a per-voice chip
+  // survives the round trip"; 2026-08-26 ("Don't let me add effects to
+  // instruments") it proved the opposite — `fx` was not a PARTMIX key and the
+  // loader dropped it. 2026-08-27 ("Add per voice effects, up to three. Each
+  // has a wet dry mix and its own settings") the field is back with its slot
+  // knobs, so the original claim returns WIDENED: the chip survives, and so
+  // do the wet and the face word, through the same registry walk.
+  ok(saved.parts && saved.parts.line && eq(saved.parts.line.fx, ["chorus"]),
+     "the per-voice chip survives the round trip again (Paul, 2026-08-27) — " +
+     "`fx` is a PARTMIX list once more and song.js's one array branch takes it",
+     JSON.stringify(saved.parts));
+  ok(saved.parts && saved.parts.line && saved.parts.line.fxw1 === "half" &&
+     saved.parts.line.fxa1 === "low",
+     "…and the slot's wet and face words survive it — nine plain enum rows, " +
+     "no new loader machinery",
      JSON.stringify(saved.parts));
   ok(saved.parts && saved.parts.line && saved.parts.line.aux === "some",
-     "…and the FOURTH send does survive it, which is what proves the loader " +
+     "…and the FOURTH send still survives it, which is what proves the loader " +
      "is walking the registry rather than a remembered list",
      JSON.stringify(saved.parts));
 }
@@ -438,17 +449,37 @@ console.log("\nG8  a strip's numbers arrive on the parent's units");
      String(units.v0.lvl));
   ok(near(units.v0.pan, -0.35), "pan `hl` is -0.35", String(units.v0.pan));
   ok(near(units.v0.del, 0.3), "echo `some` is del 0.3", String(units.v0.del));
-  // REVERSED, 2026-08-26, and kept as a check rather than removed. It read "a
-  // chip is an insert named insert_chorus" and it was the proof that a
-  // per-voice chip reached the engine. It is now the proof that it CANNOT: the
-  // fixture writes `desk.fx` no more, PARTMIX declares it no more, and if a
-  // future round wires a chip back onto a track without asking Paul, this line
-  // is what says so. The SECTION's own chip is a different fact and G8's
-  // neighbours still exercise it.
+  // REVERSED, 2026-08-26, AND REVERSED BACK, 2026-08-27 — the check has now
+  // pointed both ways and each turn was Paul's own word. 2026-08-26 it proved
+  // a chip COULD NOT reach the units ("Don't let me add effects to
+  // instruments"); 2026-08-27 ("Add per voice effects, up to three") the wire
+  // is back, so the pair below asks both halves of the honest question: a
+  // record that says nothing still gets not one insert (absent is today), and
+  // a record that seats a chip gets it WITH ITS WET AND FACE KNOBS applied —
+  // the wet is the chip's own mix param (fields.js FXWETS -> params.mix) and
+  // the face word lands in the module's own units (FXFACE), both finished
+  // through the parent's own insertChain by insertsFor.
   ok(!(units.v0.inserts && units.v0.inserts.length),
-     "NO per-voice chip reaches the units — effects are bus and board stuff " +
-     "(Paul, 2026-08-26) and there is no field left to carry one",
+     "a record with no `fx` still hands the units not one insert — absent is " +
+     "today on the slots too",
      JSON.stringify(units.v0.inserts));
+  {
+    const d3 = clone(TERMS);
+    d3.voices[0].desk = { fx: ["crunch"], fxw1: "half", fxa1: "most" };
+    const u3 = deskUnits(mkUnits(), ADDR, pushBoxes(d3)[0], null, null);
+    const ins = (u3.v0.inserts || [])[0];
+    ok(ins && ins.module === "insert_higain" &&
+       near(ins.params.mix, 0.5) && near(ins.params.drive, 1),
+       "a seated chip reaches the units as its module with the SLOT'S OWN " +
+       "knobs on it — crunch -> insert_higain, wet `half` -> mix 0.5, drive " +
+       "face `most` -> 1 (Paul, 2026-08-27: \"a wet dry mix and its own " +
+       "settings\")",
+       JSON.stringify(ins));
+    ok(F.PARTMIX.some((f) => f.key === "fx") &&
+       ["fxw1", "fxa1", "fxb1"].every((k) => F.PARTMIXBY[k]),
+       "…and PARTMIX declares the field and its slot knobs, so song.js's " +
+       "registry walk owns the validation with no second list");
+  }
   ok(units.v0.sampler && units.v0.sampler.strip &&
      near(units.v0.sampler.strip.hi, 4),
      "the SAMPLED voice's strip carries the merged EQ",
@@ -820,13 +851,14 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     errs.push("console: " + m.text()); });
   await page.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
   await page.goto(PAGE, { waitUntil: "networkidle" });
-  // BOTH BOARDS, 2026-08-25. Paul: "Do you want to put the bus and main into
-  // their own board so it's not all empty" — so `#boardtbl` is the CHANNELS and
-  // `#racktbl` is the returns and the main. Waiting on only the first would let
-  // every rack check below race a table that had not been appended yet, and a
-  // racing check reports "gone" for a control that is merely late.
-  await page.waitForSelector("#boardtbl", { timeout: 20000 });
-  await page.waitForSelector("#racktbl", { timeout: 20000 });
+  // BOTH HALVES OF THE ONE BOARD, 2026-08-27 (this line waited on `#boardtbl`
+  // and `#racktbl` while the board was two tables, 2026-08-25→27; the tables
+  // retired with the one-board round — ui/engineer.js has the turn, quoted).
+  // `#strips` holds the tall per-voice strips and `#rack` the bus plates in
+  // series; waiting on only the first would let every rack check below race
+  // a plate that had not been appended yet.
+  await page.waitForSelector("#strips .nu-strip", { timeout: 20000 });
+  await page.waitForSelector("#rack .nu-plate", { timeout: 20000 });
 
   /* ---- 1 · the count, page-wide ---- */
   /* THIS GATE IS ABOUT THE BOARD AND THE ATLAS, AND IT SAYS SO NOW. It read
@@ -903,35 +935,44 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      territory and a `<select>` by that rule. So the probe reads the COLUMN KIND
      the board stamps on every cell (`data-col`: ch / bus / main) and the claim
      becomes exactly the sentence Paul typed: no menu in a channel column. */
+  /* ...AND THEN THE INSERT SEATS ARRIVED, 2026-08-27, WHICH REVERSES THE
+     FIRST CLAIM BY NAME AND KEEPS ITS LAW. "NOT ONE DROPDOWN ON THE CHANNEL
+     STRIP" held from the day the twenty-three per-instrument menus became
+     knobs until Paul asked the one per-instrument menu a console genuinely
+     has back: *"Add per voice effects, up to three"* — an insert SEAT is a
+     single choice from a set of names (which pedal sits here), which is
+     exactly the evening-of-2026-08-24 rule for a <select>. So a strip now
+     carries EXACTLY MAX_FX seat menus, keyed `ins|<voice>|<n>`, and NOTHING
+     ELSE: the sends, the EQ and the fader are vertical sliders, pan is a
+     detent row, and a second kind of menu appearing on a strip still fails
+     here by existing. */
   const sel = await page.evaluate(() => [...document.querySelectorAll("select")]
     .filter((s) => !s.closest("#app"))
     .map((s) => ({ k: s.dataset.k || s.id || s.getAttribute("aria-label") || "?",
                    sel: s.dataset.sel || null,
-                   strip: !!s.closest('#boardtbl [data-col="ch"]') })));
-  const onStrip = sel.filter((s) => s.strip);
-  // `master.fx` JOINED THE REGEX ON 2026-08-26 and it is a different SHAPE, not
-  // a loophole. Every other control on this board is a single choice and comes
-  // from `selectEl`, which keys `master|<knob>` / `bus|<bus>|<knob>` with a
-  // pipe. The record's character chain is the one MULTIPLE choice on the page
-  // (Paul, 2026-08-24: "Wherever we allow multiple selections use a standard
-  // multiselect form element please"), so it comes from `sheet()` instead, and
-  // the sheets' own key convention is a DOT (`prod.verb`, and `eng.fx` before
-  // this round moved the chip off the instruments and onto the main strip).
-  // The claim the check makes is unchanged — every menu outside `#app` belongs
-  // to the rack or to the main — and what widened is which spellings the rack
-  // and the main are allowed to use.
-  const notRack = sel.filter((s) => !/^(master[|.]|bus\|)/.test(s.sel || ""));
-  ok(onStrip.length === 0,
-     "NOT ONE DROPDOWN ON THE CHANNEL STRIP — the twenty-three per-instrument " +
-     "menus of 2026-08-24 are still knobs (Paul: \"the options for each " +
-     "instrument in a song section are now just one thing in a dropdown. " +
-     "That's not effective\"). The bus and main columns beside them are a " +
-     "different sentence and are check 3.",
-     JSON.stringify(onStrip.map((s) => s.k)));
+                   seat: /^ins\|/.test(s.dataset.k || ""),
+                   strip: !!s.closest(".nu-strip") })));
+  const strayOnStrip = sel.filter((s) => s.strip && !s.seat);
+  const seats = sel.filter((s) => s.seat);
+  const stripCount = await page.evaluate(() =>
+    document.querySelectorAll("#strips .nu-strip").length);
+  ok(strayOnStrip.length === 0,
+     "the ONLY menu on a strip is an insert seat — sends, EQ and the fader " +
+     "are vertical sliders and pan is a detent row (the 2026-08-24 finding, " +
+     "kept under the 2026-08-27 reversal)",
+     JSON.stringify(strayOnStrip.map((s) => s.k)));
+  ok(seats.length === stripCount * F.MAX_FX,
+     stripCount + " strips × " + F.MAX_FX + " insert seats = " + seats.length +
+     " (`ins|<voice>|<n>`, Paul 2026-08-27: \"Add per voice effects, up to " +
+     "three\")", JSON.stringify(seats.map((s) => s.k)));
+  // every OTHER select outside #app is the rack's or the main's, drawn by
+  // ui/selects.js (`master|`/`bus|` from selectEl, `master.fx` from sheet()) —
+  // the atlas's navigation menus are still deleted outright (test/atlas.js).
+  const notRack = sel.filter((s) => !s.seat &&
+    !/^(master[|.]|bus\|)/.test(s.sel || ""));
   ok(notRack.length === 0,
      "…and every other <select> outside #app is one of the rack's own, drawn " +
-     "by ui/selects.js — the atlas's three navigation menus are still deleted " +
-     "outright and the accessible path is the globe's marks (test/atlas.js G11)",
+     "by ui/selects.js",
      JSON.stringify(notRack.map((s) => s.k)));
 
   /* ---- 2 · every word the board used to offer is still reachable ----
@@ -939,20 +980,25 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      word it prints at every stop is collected, because a range with the wrong
      max silently hides its last detent and would pass any check that only
      counted controls. */
-  // `lvl` JOINED THE ROW ON 2026-08-25 (Paul: "level, place, delay, and room are
-  // obvious sliders" — level was a menu on the voice's tab and was not on the
-  // board at all). LEVELS is a scale like the other four, so it is swept like
-  // the other four and the arithmetic below reads its number out of the same
-  // resolvePartMix({}) default.
-  const TBL = { lvl: { table: F.LEVELS, labels: F.LEVELLABEL },
-                pan: { table: F.PANS, labels: F.PANLABEL },
-                rev: { table: F.SENDS, labels: F.SENDLABEL },
-                echo: { table: F.SENDS, labels: F.SENDLABEL },
-                room: { table: F.SENDS, labels: F.SENDLABEL } };
-  const swept = await page.evaluate((TB) => {
+  // THE ROW OF KNOBS CHANGED WITH THE SERIES, 2026-08-27, and the sweep sweeps
+  // what a strip now carries. It read "5 knobs (level + place + the three
+  // sends, one pot each)"; the one-board round (Paul: "Have one bus for genre
+  // specific effects, into a delay bus, into reverb, into main. Each
+  // instrument can send post effects mix to all of the four buses") redrew a
+  // strip's send row as GENRE · DELAY · REVERB · MAIN, of which two are live
+  // (`echo`/`rev`, today's u.del/u.rev) and two are refused with reasons —
+  // check G12 holds the refusals. `lvl` left the SURFACE (one gain lane per
+  // strip, FUTURE.md — the fader; the word still loads and still resolves),
+  // `room`/`aux` left with the group plates (the reversal is written at the
+  // rack), and `place` became a detent-button row named `pan` (§5 rename
+  // table). So the sweep is the two live sends, driven stop by stop exactly
+  // as before, and the pan row is checked as buttons.
+  const TBL = { rev: { table: F.SENDS, labels: F.SENDLABEL },
+                echo: { table: F.SENDS, labels: F.SENDLABEL } };
+  const swept = await page.evaluate(() => {
     const out = {};
-    for (const el of document.querySelectorAll('#boardtbl td[data-col="ch"] input[type=range]')) {
-      const m = /^b\|(lvl|pan|rev|echo|room)\|(.+)$/.exec(el.dataset.k || "");
+    for (const el of document.querySelectorAll('#strips .nu-strip input[type=range]')) {
+      const m = /^b\|(rev|echo)\|(.+)$/.exec(el.dataset.k || "");
       if (!m) continue;
       const keep = el.value, words = [];
       for (let i = +el.min; i <= +el.max; i++) {
@@ -965,45 +1011,49 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       out[m[1] + "|" + m[2]] = words;
     }
     return out;
-  }, TBL);
+  });
   const chansOnPage = await page.evaluate(() =>
-    [...document.querySelectorAll("#boardtbl thead th.nu-ch")].map((t) => t.dataset.ch));
-  ok(Object.keys(swept).length === chansOnPage.length * 5,
-     chansOnPage.length + " channels × 5 knobs = " + Object.keys(swept).length +
-     " (level + place + the three sends, one pot each)", JSON.stringify(chansOnPage));
+    [...document.querySelectorAll("#strips .nu-strip")].map((t) => t.dataset.ch));
+  ok(Object.keys(swept).length === chansOnPage.length * 2,
+     chansOnPage.length + " strips × 2 live sends = " + Object.keys(swept).length +
+     " (delay + reverb; genre and main are refused, G12)",
+     JSON.stringify(chansOnPage));
   const missing = [], crooked = [];
   for (const [k, words] of Object.entries(swept)) {
     const field = k.split("|")[0], T = TBL[field];
     const want = Object.keys(T.table).map((x) => T.labels[x] || x);
     for (const w of want) if (!words.includes(w)) missing.push(k + " has no " + w);
-    // THE WORD IS `default`, 2026-08-26. This line read
-    // `if (!words.includes("as it stands"))` from the day the pots replaced the
-    // menus, and it is the reason the rename had to come through here: the gate
-    // DRIVES these controls by their printed word (`drive("default")` below
-    // sweeps a pot until aria-valuetext matches), so a board relabelled without
-    // this file would go green on a word nothing on the page says any more.
-    // Paul, 2026-08-26: *"'as it stands' and 'nothing set' are too much. get rid
-    // of them -- just use 'default' for 'nothing set'"* — one word for absence
-    // everywhere, and one word for this gate to look for.
+    // one word for absence everywhere (Paul, 2026-08-26), and one word for
+    // this gate to look for — the gate drives controls by their printed word.
     if (!words.includes("default")) missing.push(k + " has no empty detent");
-    // A SLIDER OVER WORDS IS ONLY HONEST IF THE WORDS ARE A SCALE. Map each
-    // stop back to fields.js's own number (the blank resolves the way
-    // resolvePartMix({}) resolves it) and insist the run never goes backwards.
     const back = {};
     for (const x of Object.keys(T.table)) back[T.labels[x] || x] = T.table[x];
-    // ...and `lvl`'s own blank, which is 1 and not 0 — resolvePartMix({}) says
-    // so, and it is why the empty detent lands BETWEEN `back` and `forward`
-    // rather than at the left end like a send's.
     back["default"] = F.resolvePartMix({})[field === "echo" ? "del" : field];
     const ns = words.map((w) => back[w]);
     for (let i = 1; i < ns.length; i++)
       if (!(ns[i] >= ns[i - 1])) crooked.push(k + ": " + words.join(" ") +
         " -> " + ns.join(" "));
   }
-  ok(!missing.length, "every word the dropdowns offered is still on a knob",
+  ok(!missing.length, "every word a send offers is on the slider",
      missing.join("; "));
-  ok(!crooked.length, "…and every knob runs in fields.js's own numeric order, " +
-     "with the blank detent AT its own number", crooked.join("; "));
+  ok(!crooked.length, "…and every slider runs in fields.js's own numeric " +
+     "order, with the blank detent AT its own number", crooked.join("; "));
+  // THE PAN ROW: five detents, every PANS word a button, tapping the pressed
+  // one clears the key (absent is the only spelling of a default — with
+  // buttons there is no other way to spell it).
+  const pans = await page.evaluate(() =>
+    [...document.querySelectorAll("#strips .nu-strip")].map((s) => ({
+      ch: s.dataset.ch,
+      n: s.querySelectorAll(".nu-panbtn").length,
+      labels: [...s.querySelectorAll(".nu-panbtn")]
+        .map((b) => b.getAttribute("aria-label")),
+    })));
+  const wantPan = Object.keys(F.PANS).map((k) => F.PANLABEL[k] || k);
+  const badPan = pans.filter((p) => p.n !== wantPan.length ||
+    !wantPan.every((w) => p.labels.some((l) => l && l.endsWith(w))));
+  ok(!badPan.length,
+     "every strip's pan is " + wantPan.length + " detent buttons wearing " +
+     "PANLABEL's own words", JSON.stringify(badPan));
 
   /* ---- 3 · the master's fifteen are drawn ONCE, at the master end ----
      WAS: "the master's fifteen are SHEETS, once, not per channel", reading
@@ -1020,19 +1070,10 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      survives the next time the router changes its mind. */
   const sheets = await page.evaluate(() => {
     const out = {};
-    for (const f of document.querySelectorAll("fieldset.nu-sheet")) {
-      if (!/^(master|bus)\|/.test(f.dataset.sheet)) continue;
-      out[f.dataset.sheet] = [...f.querySelectorAll(".nu-opt")].map((o) => o.dataset.v);
-    }
-    // ...AND `bus|rev|ret`, WHICH IS A POT NOW AND IS THE POINT OF THE ROUND.
-    // Paul: *"I should be able to use the board to send signal to the buses and
-    // then from the buses to the master mix too."* Bus 1's return IS that send
-    // — `buses.rev.ret` -> state.reverb -> fx_bus rgain — and RETURNS is a
-    // scale (0 .. 0.625), so it took the fader on bus 1's strip like every
-    // other fader on the board. It is READ THE SAME WAY as the menus: drive it
-    // across its whole travel and collect the word at every stop, so a range
-    // with the wrong max fails here exactly as a short menu would.
-    for (const r of document.querySelectorAll('.nu-board input[type=range]')) {
+    // THE TWO RETURNS ARE POTS — vertical sliders since 2026-08-27, driven
+    // across their whole travel with the word collected at every stop, so a
+    // range with the wrong max fails here exactly as a short menu would.
+    for (const r of document.querySelectorAll('#rack input[type=range]')) {
       const k = r.dataset.k || "";
       if (!/^bus\|/.test(k) || r.disabled) continue;
       const keep = r.value, words = [];
@@ -1044,56 +1085,49 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       r.value = keep; r.dispatchEvent(new Event("input", { bubbles: true }));
       out[k] = words;
     }
-    // ...AND THE SAME ROWS AS MENUS. An <option>'s `data-v` is the word the
-    // sheet's `.nu-opt` carried under the same name (ui/selects.js writes it
-    // for exactly this reason), so the two shapes read back identically and
-    // the option-by-option check below is unchanged.
+    // ...AND THE SETTLED SINGLE CHOICES AS MENUS, exactly as before the
+    // geometry changed: an <option>'s `data-v` is ui/selects.js's own word.
     for (const s2 of document.querySelectorAll("select[data-sel]")) {
       if (!/^(master|bus)\|/.test(s2.dataset.sel)) continue;
       out[s2.dataset.sel] = [...s2.options].map((o) => o.dataset.v);
     }
     return out;
   });
-  // ONCE EACH, NOT ONE PER CHANNEL — said as a count as well as by key, because
-  // "one drive for the whole record" is a claim about how MANY were drawn and a
-  // map keyed by name cannot fail on a duplicate.
-  // ONCE EACH is a DUPLICATE check and it stays one — a control drawn twice is
-  // two owners of one fact, whether or not either copy is refused, so a
-  // disabled `master|width` still counts here.
+  // THE WANT LIST NAMES WHAT THE RACK DRAWS, AND THE RACK IS THE SERIES,
+  // 2026-08-27. This walked every F.BUSES row's every knob — four buses, the
+  // groups' `name`/`to` included — while the board drew four bus strips. The
+  // one-board round retired the group PLATES on Paul's word ("Have one bus
+  // for genre specific effects, into a delay bus, into reverb, into main" —
+  // the groups are not in the line), so the rack draws bus 1 and bus 2's
+  // knobs and the master's seven, and the groups' knobs are asserted ABSENT
+  // below rather than present: their facts still load and still route
+  // (G14's model half), and a knob may not point at a stage the board does
+  // not draw.
   const drawnRack = await page.evaluate(() =>
     [...document.querySelectorAll('select[data-sel], fieldset.nu-sheet, ' +
-      '.nu-board input[type=range]')]
+      '#rack input[type=range]')]
       .map((n2) => n2.dataset.sel || n2.dataset.sheet || n2.dataset.k)
       .filter((k) => /^(master|bus)\|/.test(k || "")));
   const want = [];
   for (const f of F.MASTER) want.push(["master|" + f.key, f.table, f.labels]);
-  for (const b of F.BUSES) for (const k of b.knobs)
-    want.push(["bus|" + b.bus + "|" + k.key, k.table, k.labels]);
+  for (const b of F.BUSES) {
+    if (!b.engine) continue;               // a group draws no plate — see above
+    for (const k of b.knobs)
+      want.push(["bus|" + b.bus + "|" + k.key, k.table, k.labels]);
+  }
   const gone = [], short = [];
   for (const [key, table, labels] of want) {
     const got = sheets[key];
     if (!got) { gone.push(key); continue; }
-    // A MENU READS BACK ITS OPTION VALUES; A POT READS BACK ITS WORDS. Same
-    // question either way — "is every entry of the fields.js table reachable?"
-    // — asked of whichever widget the router chose, which is what keeps this
-    // check alive across the next time it changes its mind.
     const pot = /^bus\|.+\|ret$/.test(key);
     const need = pot
       ? ["default"].concat(Object.keys(table).map((v) => (labels && labels[v]) || v))
       : [""].concat(Object.keys(table));
     for (const v of need) if (!got.includes(v)) short.push(key + " has no " + (v || "(blank)"));
   }
-  ok(!gone.length, "all " + want.length + " master and bus controls are drawn on " +
-     "their own strip — one each for the whole record, not one per channel",
-     gone.join(", "));
-  // ...AND WHAT IS ON THE STRIP THAT IS NOT A REGISTRY ROW. This read "There
-  // is exactly one — bus 2's return — ... fx_bus really carries `dgain` and
-  // state-engine really hardcodes it, so the board draws the fader at the
-  // engine's own unity and refuses it". Since 2026-08-27 `bus|echo|ret` IS a
-  // registry row (fields.js BUSROWS, ERETURNS -> state.delay.gain -> dgain),
-  // so the expected extra list is EMPTY: any control here that names no
-  // registry row is a knob writing somewhere the registry does not know, and a
-  // LIVE one doubly so.
+  ok(!gone.length, "all " + want.length + " master and engine-bus controls are " +
+     "drawn on their own plate — one each for the whole record, not one per " +
+     "channel", gone.join(", "));
   const wantKeys = new Set(want.map((w) => w[0]));
   const inReg = drawnRack.filter((k) => wantKeys.has(k));
   const extra = drawnRack.filter((k) => !wantKeys.has(k));
@@ -1101,14 +1135,11 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   ok(inReg.length === want.length && !dupes.length,
      "…and drawn ONCE each: " + inReg.length + " controls for " + want.length +
      " rows, no duplicates", JSON.stringify(dupes.length ? dupes : drawnRack));
-  const liveExtra = await page.evaluate((ks) => ks.filter((k) => {
-    const n2 = document.querySelector('[data-k="' + k.replace(/"/g, '\\"') + '"]');
-    return n2 && !n2.disabled;
-  }), extra);
   ok(!extra.length,
-     "…and no control on a strip names a row the registry does not know " +
-     "(bus 2's return joined the registry 2026-08-27): " + JSON.stringify(extra),
-     JSON.stringify(liveExtra));
+     "…and no control on a plate names a row the rack does not draw — the " +
+     "groups' `name`/`to` knobs left with their plates (the refused sliders " +
+     "wear the `x|` namespace precisely so this walk cannot mistake them for " +
+     "registry rows): " + JSON.stringify(extra));
   ok(!short.length, "…and every option each one offers is its fields.js table's own",
      short.join("; "));
   const perChannelSheet = Object.keys(sheets).filter((k) =>
@@ -1117,50 +1148,60 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      perChannelSheet.join(", "));
 
   /* ---- 4 · the numbers it draws are still the desk's ----
-     The fill is deskChannelBase().gain, computed HERE off the same shipped
-     record and compared with what the browser wrote into the meter's own title.
-     A board that drew its own arithmetic would pass every check above. */
+     REWRITTEN 2026-08-27 WITH THE METERS' HONESTY, and the turn is the wave's
+     own law: NEVER FAKE A MEASUREMENT. The old board drew a <meter> per
+     channel filled from deskChannelBase().gain — the MODEL — and this check
+     compared the fill to the model. Under Enamel, green means MEASURED
+     (engine truth), and the engine has ONE tap: every voice sums into shared
+     buses (render-core.js), so there is no per-channel signal to measure.
+     The strips therefore draw the model's number as a dim LABELLED readout
+     ("model −X.X dB", .nu-drive) beside a REFUSED meter well, and the one
+     green meter on the board is the MAIN strip's, fed from audio/live.js
+     rmsNow — the master tap the crackle monitor already reads. The CLAIM
+     this check makes is unchanged: the number on the strip is the desk's,
+     computed here off the same shipped record, never the board's own
+     arithmetic. */
   const box = pushBoxes(clone(TERMS))[0];
   const drawn = await page.evaluate(() => {
     const out = {};
-    for (const tr of document.querySelectorAll('#boardtbl tr[data-row="fader"]')) {
-      // CHANNEL CELLS ONLY, and the filter is kept even though `#boardtbl` is
-      // channels alone since the split. The comment here read: "The fader row
-      // runs across the buses and the main now (2026-08-25) and those carry a
-      // return and the listening level, not a channel gain — reading them
-      // positionally against `th.nu-ch` would have indexed off the end of the
-      // header list." That was true of the one-table board and is the bug this
-      // filter was written for; the returns moved to `#racktbl` on the same
-      // day. `[data-col="ch"]` still says what is being read rather than
-      // relying on which table happens to hold what today.
-      const tds = [...tr.querySelectorAll('td[data-col="ch"]')];
-      const th = [...document.querySelectorAll("#boardtbl thead th.nu-ch")];
-      tds.forEach((td, i) => {
-        const m = td.querySelector("meter"), o = td.querySelector("output");
-        out[th[i].dataset.ch] = { fill: m && m.value,
-          title: m && m.title, off: o && o.textContent };
-      });
+    for (const s of document.querySelectorAll("#strips .nu-strip")) {
+      const drive = s.querySelector(".nu-drive");
+      const fadeIn = s.querySelector('input[data-k^="b|fader|"]');
+      const fadeOut = fadeIn && fadeIn.closest(".nu-vs").querySelector("output");
+      const well = s.querySelector(".nu-vs.is-off input[aria-label$='meter (refused)']");
+      out[s.dataset.ch] = { drive: drive && drive.textContent,
+        off: fadeOut && fadeOut.textContent,
+        meterRefused: !!(well && well.disabled && well.dataset.why) };
     }
     return out;
   });
-  const F_LO = -36, F_HI = 12;                       // engineer.js gainToF, quoted
-  const gainToF = (g) => Math.max(0, Math.min(1,
-    (20 * Math.log10(Math.max(1e-4, g)) - F_LO) / (F_HI - F_LO)));
-  const wrongFill = [], wrongOff = [];
+  const wrongDrive = [], wrongOff = [], fakeMeter = [];
   for (const key of Object.keys(drawn)) {
     const g = deskChannelBase(box, key).gain;
-    if (!near(drawn[key].fill, gainToF(g), 1e-3))
-      wrongFill.push(key + ": drew " + drawn[key].fill + ", desk says " + gainToF(g));
-    // ...and the OTHER half of "show both without lying": the number beside the
-    // bar is YOUR offset (0.0 dB on a record with no desk), never the automation
+    const wantDb = (g2 => (g2 > 0 ? "+" : "") + g2.toFixed(1))(
+      +(20 * Math.log10(Math.max(1e-4, g))).toFixed(1));
+    if (drawn[key].drive !== "model " + wantDb + " dB")
+      wrongDrive.push(key + ": drew \"" + drawn[key].drive + "\", desk says " + wantDb);
     if (drawn[key].off !== "0.0") wrongOff.push(key + ": " + drawn[key].off);
+    if (!drawn[key].meterRefused) fakeMeter.push(key);
   }
   ok(Object.keys(drawn).length === chansOnPage.length,
-     "every channel still draws a meter and an offset", JSON.stringify(Object.keys(drawn)));
-  ok(!wrongFill.length, "every meter is deskChannelBase().gain through gainToF — " +
-     "the automation, not the board's own arithmetic", wrongFill.join("; "));
-  ok(!wrongOff.length, "…and the number beside it is the stored offset, 0.0 dB " +
-     "on a record whose voices carry no desk", wrongOff.join("; "));
+     "every strip draws the model readout and the offset",
+     JSON.stringify(Object.keys(drawn)));
+  ok(!wrongDrive.length, "every strip's dim readout is deskChannelBase().gain " +
+     "in dB, labelled `model` — the desk's number, not the board's arithmetic",
+     wrongDrive.join("; "));
+  ok(!wrongOff.length, "…and the number beside the fader is the stored offset, " +
+     "0.0 dB on a record whose voices carry no desk", wrongOff.join("; "));
+  ok(!fakeMeter.length, "…and every strip's meter well is REFUSED with its " +
+     "reason — no green bar without a measurement behind it", fakeMeter.join(", "));
+  const greenMeters = await page.evaluate(() => ({
+    main: document.querySelectorAll("#rack .nu-plate[data-bus='main'] .nu-meterbar").length,
+    all: document.querySelectorAll(".nu-meterbar").length,
+  }));
+  ok(greenMeters.main === 1 && greenMeters.all === 1,
+     "…and exactly ONE measured meter exists, on the main strip, fed from the " +
+     "engine's master tap (rmsNow)", JSON.stringify(greenMeters));
 
   /* ---- 5 · the knob writes the document's own word, and unwrites it ---- */
   const trip = await page.evaluate(async () => {
@@ -1229,60 +1270,52 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        feed.rev.feed + " summed across the channels (gregorian's tone.verb)",
        JSON.stringify(feed.rev));
 
-    // ---- 2 · the page draws exactly that, and says why where it cannot
-    const strips = await page.evaluate(() => {
-      const out = {};
-      // `#racktbl` AND NOT `#boardtbl`, 2026-08-25: the returns and the main are
-      // their own board now (Paul, "put the bus and main into their own board
-      // so it's not all empty"), and the channel board has a `goes to` row and
-      // a fader row of its OWN — so a query that named the wrong table would
-      // have indexed a bus's column number into a row of channels and read a
-      // channel's fader as a bus's return.
-      for (const th of document.querySelectorAll('#racktbl thead th[data-col="bus"]')) {
-        const i = [...th.parentNode.children].indexOf(th);
-        const tr = document.querySelector('#racktbl tr[data-row="fader"]');
-        const td = tr.children[i];
-        const c = td.querySelector("input[type=range]");
-        out[th.dataset.bus] = {
-          control: !!c, off: !!(c && c.disabled),
-          why: [...td.querySelectorAll(".nu-why")].map((w) => w.textContent).join(" "),
-          meter: !!td.querySelector("meter"),
-          goes: (() => { const g = [...document.querySelectorAll("#racktbl tbody tr")]
-            .find((r) => r.firstChild.textContent === "goes to");
-            return g ? g.children[i].textContent : null; })(),
-        };
-      }
-      return out;
+    // ---- 2 · the page draws exactly that, and says why where it cannot.
+    // REWRITTEN 2026-08-27: the rack is the SERIES now — genre → delay →
+    // reverb → main, four `.nu-plate`s in `#rack`, in that order (Paul: "Have
+    // one bus for genre specific effects, into a delay bus, into reverb, into
+    // main"). Bus 1 and bus 2 keep their live return pots (the same data-k
+    // keys as the table era, `bus|rev|ret` / `bus|echo|ret`); the GENRE stage
+    // and the delay→reverb BLEED are drawn REFUSED with their reasons — the
+    // wave's own words, "the genre bus is engine work — not wired" and "the
+    // bleed is a constant in the DSP — not wired" — and the two GROUP plates
+    // of 2026-08-26 are asserted ABSENT with the reversal printed, because
+    // the groups are not in the series and a knob may not point at a stage
+    // the board does not draw. Their facts still load and still route: the
+    // model half of G14 below holds that.
+    const rackDrawn = await page.evaluate(() => {
+      const plates = [...document.querySelectorAll("#rack .nu-plate")]
+        .map((p) => p.dataset.bus);
+      const live = (k) => { const c = document.querySelector(
+        'input[data-k="' + k + '"]'); return !!(c && !c.disabled); };
+      const refused = (k) => { const c = document.querySelector(
+        'input[data-k="' + k + '"]'); return !!(c && c.disabled && c.dataset.why); };
+      return { plates, revLive: live("bus|rev|ret"), echoLive: live("bus|echo|ret"),
+               genreRefused: refused("x|genre|level"),
+               bleedRefused: refused("x|echo|bleed"),
+               groupPlates: plates.filter((b) => b === "room" || b === "aux").length };
     });
-    const wrongDraw = [], wrongSaid = [];
     const body = await page.evaluate(() => document.body.innerText);
-    for (const bus of Object.keys(BUS_REACH)) {
-      const st = strips[bus], want = BUS_REACH[bus];
-      if (!st) { wrongDraw.push(bus + ": no strip"); continue; }
-      if (want.why == null && !(st.control && !st.off))
-        wrongDraw.push(bus + ": reaches the main but has no live fader");
-      if (want.why != null && st.control && !st.off)
-        wrongDraw.push(bus + ": drawn LIVE and it reaches nothing");
-      if (want.why != null && !body.includes(want.why))
-        wrongSaid.push(bus + ": the reason is not printed on the page");
-      // A GROUP'S `goes to` IS THE ROUTE'S ANSWER, not BUS_REACH's — the table
-      // carries `to: null` for a group precisely so there is one owner of that
-      // fact (audio/desk.js, the note on BUS_REACH). So the cell is checked
-      // against `deskBusFeed`'s own chain, which is the model the page drew
-      // from, and a drift between them is what this line is for.
-      const wantGoes = want.to || feed[bus].chain.join(" → ");
-      if (st.goes.indexOf(wantGoes) !== 0)
-        wrongDraw.push(bus + ": goes-to says " + st.goes + ", route says " + wantGoes);
-    }
-    // ("bus 2 refused at the engine's unity" until 2026-08-27; the refusal is
-    // gone because the wire exists — see BUS_REACH.echo)
-    ok(!wrongDraw.length, "every bus strip is drawn the way BUS_REACH says it " +
-       "is wired — bus 1 and bus 2 live returns, the two GROUPS no fader at " +
-       "all, and each says where it goes",
-       wrongDraw.join("; "));
-    ok(!wrongSaid.length, "NOTHING REACHES NOTHING IN SILENCE — the buses " +
-       "that cannot be moved print audio/desk.js's own sentence, verbatim",
-       wrongSaid.join("; "));
+    ok(eq(rackDrawn.plates, ["genre", "echo", "rev", "main"]),
+       "the rack is four plates in series order — genre → delay → reverb → " +
+       "main", JSON.stringify(rackDrawn.plates));
+    ok(rackDrawn.revLive && rackDrawn.echoLive,
+       "bus 1's and bus 2's returns are LIVE pots (the wires G4/R5 prove: " +
+       "buses.rev.ret -> rgain, buses.echo.ret -> dgain)",
+       JSON.stringify(rackDrawn));
+    ok(rackDrawn.genreRefused &&
+       body.includes("the genre bus is engine work — not wired"),
+       "the genre stage is REFUSED with its reason printed — never " +
+       "live-and-dead", JSON.stringify(rackDrawn));
+    ok(rackDrawn.bleedRefused &&
+       body.includes("the bleed is a constant in the DSP — not wired"),
+       "…and the delay→reverb bleed is REFUSED with its reason printed " +
+       "(fx_bus.dsp:221's literal 0.2)", JSON.stringify(rackDrawn));
+    ok(rackDrawn.groupPlates === 0 &&
+       body.includes("bus 3 and bus 4") && body.includes("draw no plate"),
+       "the two group plates are gone AND the page says so — the reversal is " +
+       "printed, not silent (their sends and aims still load and still " +
+       "route; G14's model half)", JSON.stringify(rackDrawn.plates));
     const homeless = await page.evaluate(() => {
       const t = document.body.innerText, out = [];
       for (const k of ["width", "tilt", "ceiling"]) {
@@ -1296,9 +1329,12 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        "…and the three master words that round-trip and reach no sound are " +
        "still refused with their reason on the page (PROGRAM.md §4.11)",
        JSON.stringify(homeless));
-    ok(Object.values(strips).every((s2) => s2.meter),
-       "every bus strip has a meter, so a return you cannot move still shows " +
-       "what is arriving", JSON.stringify(strips));
+    const modelSaid = await page.evaluate(() =>
+      [...document.querySelectorAll("#rack .nu-busmodel")].map((m) => m.textContent));
+    ok(modelSaid.length === 2 && modelSaid.every((s2) => /model · in [\d.]+/.test(s2)),
+       "each engine bus plate prints the MODEL's in/out numbers, labelled as " +
+       "the model — a return you cannot hear still shows what is arriving, " +
+       "and nothing green fakes a measurement", JSON.stringify(modelSaid));
 
     // ---- 3 · A SEND ACTUALLY MOVES WHAT THE ENGINE IS HANDED.
     // Not the document, and not the model: `__nuMix()` reports the unit table
@@ -1316,8 +1352,10 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
         }
         return false;
       };
-      const name = document.querySelector('#boardtbl thead th.nu-ch span').textContent;
-      const key = document.querySelector('#boardtbl thead th.nu-ch').dataset.ch;
+      // the first STRIP's name and chair key (the strips replaced the table's
+      // header row, 2026-08-27 — same facts, new home)
+      const name = document.querySelector('#strips .nu-strip .nu-sname').textContent;
+      const key = document.querySelector('#strips .nu-strip').dataset.ch;
       // settle first so `before` is a compiled bar and not `null`
       drive("b|echo|" + name, "dry"); await wait();
       const rd = () => { const m = window.__nuMix(); if (!m) return null;
@@ -1424,7 +1462,12 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       v2.value = "55"; v2.dispatchEvent(new Event("input", { bubbles: true }));
       await new Promise((r) => setTimeout(r, 300));
       return { shape, store: localStorage.getItem("nukernel.vol.v1"),
-               out: (v2.parentNode.querySelector("output") || {}).textContent };
+               // `.closest(".nu-vs")` since 2026-08-27: the fader stood up
+               // (vertical chassis — the input rides inside the track, the
+               // output is the wrap's), so the readout is no longer a sibling
+               // of the input's parent. Same control, same store, same claim.
+               out: ((v2.closest(".nu-vs") || v2.parentNode)
+                 .querySelector("output") || {}).textContent };
     });
     ok(lis && lis.shape.min === lis.shape.barMin && lis.shape.max === lis.shape.barMax,
        "the listening fader runs on the same 0..100 the transport bar's volume " +
@@ -1479,39 +1522,52 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        "…and exactly two of them are the engine's own accumulators (rev, del) " +
        "— the parent's third is `pp` and nothing on this page can feed it",
        JSON.stringify(engines));
+    // ...AND THE PAGE DRAWS FOUR STAGES IN SERIES, 2026-08-27 — this counted
+    // "four bus strips" as `#racktbl` columns while the registry's four buses
+    // each had one; the series reversal (G12 part 2 has the quote) means the
+    // page's four are now genre → delay → reverb → main, of which two are the
+    // registry's engine buses wearing the series' order and two (genre, main)
+    // are the series' own ends. The groups draw no plate; G12 holds that with
+    // the reason printed.
     const cols = await page.evaluate(() =>
-      [...document.querySelectorAll('#racktbl thead th[data-col="bus"]')]
-        .map((t) => t.textContent));
-    ok(cols.length === 4, "and the board draws four bus strips: " +
+      [...document.querySelectorAll("#rack .nu-plate")].map((t) => t.dataset.bus));
+    ok(cols.length === 4, "and the rack draws four stages in series: " +
        JSON.stringify(cols), String(cols.length));
 
-    // ---- 2 · NOT ONE PER-VOICE EFFECTS CONTROL, ANYWHERE ON THE PAGE.
-    // Walked over every control the page has rather than over a list of
-    // selectors this gate remembers, because the failure mode is a NEW widget
-    // in a future round, not the one that was just deleted. The test is the
-    // registry's own effect names: if a control offers `chorus` or `crunch`
-    // against a VOICE, it is a per-voice insert whatever it is called.
+    // ---- 2 · THE PER-VOICE EFFECTS CONTROL IS BACK, AND ONLY WHERE THE
+    // BOARD SEATS IT — REVERSED 2026-08-27, the second turn of this exact
+    // check. It read "NO PER-VOICE EFFECTS CONTROL IS DRAWN ANYWHERE" on
+    // Paul's 2026-08-26 "Don't let me add effects to instruments"; his
+    // 2026-08-27 sentence reverses it by name — *"I think we need to do what
+    // everyone else does with effects. Add per voice effects, up to three"*
+    // — so the claim flips WITHOUT losing its teeth: a control offering the
+    // registry's effect names against a voice must be an INSERT SEAT on the
+    // board (`ins|<voice>|<n>`), and any OTHER control offering them against
+    // a voice (an `eng|`/`b|` keyed one — the voice-tab chip, the old board
+    // multiselect) is still a failure by existing. The walk is unchanged:
+    // every control on the page, tested by the registry's own words.
     const chips = await page.evaluate((fxKeys) => {
-      const bad = [];
+      const bad = [], seats2 = [];
       for (const c of document.querySelectorAll("select, input, button")) {
         const k = c.dataset.k || c.dataset.sel || c.name || c.id || "";
-        // the SECTION's own chip is a different fact and is untouched — it is a
-        // record-wide character (`sound.fx`), which is board stuff by Paul's own
-        // division. It is addressed without a voice name; a per-voice control
-        // carries one.
         const words = [...(c.options || [])].map((o) => o.value);
         const offersFx = words.some((w) => fxKeys.includes(w));
         if (!offersFx) continue;
+        if (/^ins\|/.test(k)) { seats2.push(k); continue; }
         if (/^(eng|b)[.|]/.test(k)) bad.push(k);
       }
-      return { bad, multi: document.querySelectorAll("select[multiple]").length };
+      return { bad, seats: seats2,
+               multi: document.querySelectorAll("select[multiple]").length };
     }, Object.keys(F.FX));
-    ok(!chips.bad.length,
-       "NO PER-VOICE EFFECTS CONTROL IS DRAWN ANYWHERE — not on the voice's " +
-       "own tab and not on the channel board (Paul: \"Don't let me add effects " +
-       "to instruments\")", JSON.stringify(chips.bad));
-    ok(!F.PARTMIX.some((f) => f.key === "fx"),
-       "…and there is no field left for one to write: PARTMIX declares no `fx`",
+    ok(!chips.bad.length && chips.seats.length > 0,
+       "every control offering the FX vocabulary against a voice is an insert " +
+       "SEAT on the board (" + chips.seats.length + " of them, `ins|…`) — no " +
+       "second per-voice effects widget anywhere (Paul, 2026-08-27)",
+       JSON.stringify(chips.bad));
+    ok(F.PARTMIX.some((f) => f.key === "fx"),
+       "…and the field is DECLARED again, so the seat writes a word the " +
+       "loader knows: PARTMIX carries `fx` (reversed 2026-08-27; it was " +
+       "asserted absent while 2026-08-26 stood)",
        F.PARTMIX.map((f) => f.key).join(","));
 
     // ---- 2b · AND THE OTHER HALF OF THE SENTENCE. "That's bus and board
@@ -1563,63 +1619,42 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // ---- 4 · THE PROOF. A GROUP'S SEND, AIMED TWO WAYS, LANDS ON TWO
     // DIFFERENT NUMBERS IN THE ENGINE'S OWN REPORT.
     //
-    // This is the whole round in one check. Everything above is a drawing and
-    // an arithmetic; `__nuMix()` is the table the parent was handed for the bar
-    // that is sounding, so a difference here is a difference in the tape.
-    // Driven like a person: the send is a range with words on its stops and the
-    // aim is a `<select>`, so each is moved the way its own element is moved,
-    // and the page is given a bar to recompile between moves.
-    const routed = await page.evaluate(async () => {
-      const wait = () => new Promise((r) => setTimeout(r, 700));
-      const drive = (k, word) => {
-        const el = document.querySelector('input[data-k="' + k + '"]');
-        if (!el) return false;
-        for (let i = +el.min; i <= +el.max; i++) {
-          el.value = String(i);
-          el.dispatchEvent(new Event("input", { bubbles: true }));
-          if (el.getAttribute("aria-valuetext") === word) {
-            el.dispatchEvent(new Event("change", { bubbles: true })); return true; }
-        }
-        return false;
-      };
-      const aim = (v) => {
-        const s = document.querySelector('[data-sel="bus|room|to"]');
-        if (!s) return false;
-        s.value = v;
-        s.dispatchEvent(new Event("change", { bubbles: true }));
-        return s.value === v;
-      };
-      const sums = () => {
-        const m = window.__nuMix(); if (!m) return null;
-        let rev = 0, del = 0;
-        for (const u of Object.values(m.units)) { rev += u.rev; del += u.del; }
-        return { rev: +rev.toFixed(4), del: +del.toFixed(4) };
-      };
-      const name = document.querySelector('#boardtbl thead th.nu-ch span').textContent;
-      // a real send into bus 3, so there is something to route
-      const sent = drive("b|room|" + name, "drown"); await wait();
-      const at1 = sums();
-      const aimed = aim("echo"); await wait();
-      const at2 = sums();
-      const backAim = aim(""); await wait();
-      const at3 = sums();
-      drive("b|room|" + name, "default"); await wait();
-      return { name, sent, aimed, backAim, at1, at2, at3 };
-    });
-    ok(routed.sent && routed.aimed,
-       "a bus-3 send and a bus-3 aim are both reachable on the rendered page",
-       JSON.stringify(routed));
-    ok(routed.at1 && routed.at2 &&
-       routed.at2.del > routed.at1.del && routed.at2.rev < routed.at1.rev,
+    // REWRITTEN 2026-08-27, and the reversal is the geometry's, not the
+    // wire's. This check used to DRIVE the page: a `b|room|<voice>` send pot
+    // and the `bus|room|to` aim menu, read back through `__nuMix()`. The
+    // one-board round retired both CONTROLS with the group plates (Paul:
+    // "Have one bus for genre specific effects, into a delay bus, into
+    // reverb, into main" — the groups are not in the series; G12 part 2
+    // asserts the plates gone and the reversal printed). THE WIRE IS NOT
+    // RETIRED and must stay proven, so the proof moves to the exact layer
+    // the page fed: deskUnits IS the table audio/plan.js hands the parent
+    // (barPlan calls it with these arguments), and the route reads the SAME
+    // live BUSES binding the page's setBuses writes. Same send, aimed two
+    // ways, two different numbers in the engine's own table — a loaded old
+    // save that carries a room send and an aim still lands where it says.
+    const sums4 = (d4) => {
+      const u = deskUnits(mkUnits(), ADDR, pushBoxes(d4)[0], null, null);
+      let rev = 0, del = 0;
+      for (const x of Object.values(u)) { rev += x.rev || 0; del += x.del || 0; }
+      return { rev: +rev.toFixed(4), del: +del.toFixed(4) };
+    };
+    const d4 = clone(TERMS);
+    d4.voices[0].desk = { room: "drown" };
+    const at1 = sums4(d4);
+    STATE.setBuses({ room: { to: "echo" } });
+    const at2 = sums4(d4);
+    STATE.setBuses(null);
+    const at3 = sums4(d4);
+    ok(at2.del > at1.del && at2.rev < at1.rev,
        "AIMING BUS 3 AT BUS 2 MOVES WHAT THE ENGINE IS HANDED — the same " +
-       "send leaves `rev` and arrives on `del` in __nuMix().units[]: " +
-       JSON.stringify(routed.at1) + " -> " + JSON.stringify(routed.at2),
-       JSON.stringify(routed));
-    ok(routed.at3 && eq(routed.at3, routed.at1),
+       "send leaves `rev` and arrives on `del` in the unit table plan.js " +
+       "hands the parent: " + JSON.stringify(at1) + " -> " + JSON.stringify(at2),
+       JSON.stringify({ at1, at2 }));
+    ok(eq(at3, at1),
        "…and clearing the aim puts the numbers back exactly — absent is the " +
        "fold this desk has always done, which is the absent-is-today law " +
        "applied to a ROUTE rather than to a level",
-       JSON.stringify({ at1: routed.at1, at3: routed.at3 }));
+       JSON.stringify({ at1, at3 }));
 
     // ---- 5 · THE ONE BUS-TO-BUS SEND THAT DOES REACH THE ENGINE IS NAMED,
     // AND IT IS NOT DRAWN TWICE. fx_bus.dsp:221 mixes the main's dry into bus 1
@@ -1641,76 +1676,153 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        "the owner is the master strip's `space`", String(spaceCtl));
   }
 
-  console.log("\n" + "G13 the split Paul asked for, counted on the page");
+  /* ================= G15 · THE SLOTS AND THE GRID, DRIVEN ================
+     NEW 2026-08-27 with the surfaces it drives. Two writers this wave added,
+     each proven on the RENDERED page and read back off the document AND the
+     model: an insert SEAT plus its WET (Paul: "Add per voice effects, up to
+     three. Each has a wet dry mix and its own settings"), and a SECTION GRID
+     cell (one-board §III: "A word is a trim on the strip's fader for that
+     section"). The audio side of both wires is held elsewhere — the insert
+     modules' rendered spectra and the trim's rendered dB are the wave's
+     probe report; the fader wire the trim rides is test/tape-reach R1. */
+  console.log("\n" + "G15 the insert slots and the section grid, driven");
   {
-    const boards = await page.evaluate(() => {
-      const out = {};
-      for (const id of ["boardtbl", "racktbl"]) {
-        const t = document.getElementById(id);
-        if (!t) { out[id] = null; continue; }
-        const kinds = [...t.querySelectorAll("thead th[data-col]")]
-          .map((h) => h.dataset.col);
-        const blank = [];
-        let body = 0;
-        for (const tr of t.querySelectorAll("tbody tr")) {
-          const row = tr.firstChild.textContent;
-          for (const td of tr.querySelectorAll("td")) {
-            body++;
-            if (!td.firstChild) blank.push(row + " / " + td.dataset.col);
-          }
+    const slotTrip = await page.evaluate(async () => {
+      const wait = () => new Promise((r) => setTimeout(r, 500));
+      const doc2 = () => window.__eightDoc();
+      const v0 = () => doc2().voices.find((v) => v.kind === "line");
+      const name = v0().name;
+      const drive = (k, word) => {
+        const el2 = document.querySelector('input[data-k="' + k + '"]');
+        if (!el2) return false;
+        for (let i = +el2.min; i <= +el2.max; i++) {
+          el2.value = String(i);
+          el2.dispatchEvent(new Event("input", { bubbles: true }));
+          if (el2.getAttribute("aria-valuetext") === word) {
+            el2.dispatchEvent(new Event("change", { bubbles: true })); return true; }
         }
-        const all = t.querySelectorAll("th,td");
-        out[id] = { kinds: [...new Set(kinds)], cols: kinds.length,
-                    rows: t.querySelectorAll("tbody tr").length,
-                    body, blank, cells: all.length,
-                    empty: [...all].filter((c) => !c.firstChild).length };
-      }
-      return out;
+        return false;
+      };
+      const seat = (v) => {
+        const s = document.querySelector('select[data-k="ins|' + name + '|1"]');
+        if (!s) return false;
+        s.value = v; s.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+      };
+      seat("crunch"); await wait();
+      const seated = JSON.parse(JSON.stringify((v0().desk || {}).fx || null));
+      const wet = drive("b|fxw1|" + name, "half"); await wait();
+      const face = drive("b|fxa1|" + name, "most"); await wait();
+      const after = JSON.parse(JSON.stringify(v0().desk || null));
+      seat(""); await wait();
+      const cleared = JSON.parse(JSON.stringify(v0().desk || null));
+      // the grid: cycle one cell to `hush` and back to absent
+      const secId = doc2().form.sections[1].id;
+      const cell = () => document.querySelector(
+        'button[data-k="t|' + name + '|' + secId + '"]');
+      cell().click(); await wait();          // -> out
+      cell().click(); await wait();          // -> hush
+      const trimmed = JSON.parse(JSON.stringify(
+        (v0().desk && v0().desk.trim) || null));
+      for (let i = 0; i < 4; i++) { cell().click(); await wait(); }
+      const trimCleared = (v0().desk && v0().desk.trim) || null;
+      const recordGain = !!document.querySelector(
+        '#rack .nu-plate[data-bus="main"] input[data-k="level"]');
+      return { name, secId, seated, wet, face, after, cleared, trimmed,
+               trimCleared, recordGain };
     });
-    const A = boards.boardtbl, B = boards.racktbl;
-    ok(A && B, "there are TWO boards on the page — the channels (#boardtbl) and " +
-       "the returns and the main (#racktbl)", JSON.stringify(boards));
-    if (A && B) {
-      ok(A.kinds.length === 1 && A.kinds[0] === "ch",
-         "the first board is channels and nothing else: " + A.cols + " strips, " +
-         A.rows + " rows, " + A.cells + " cells", JSON.stringify(A.kinds));
-      ok(B.kinds.join(",") === "bus,main",
-         "the second is the three returns and the main, in that order: " +
-         B.cols + " strips, " + B.rows + " rows, " + B.cells + " cells",
-         JSON.stringify(B.kinds));
-      ok(!A.blank.length,
-         "NOT ONE BLANK CELL ON THE CHANNEL BOARD (" + A.body + " body cells, " +
-         A.empty + " of " + A.cells + " empty in all — it was 99 of 177 before " +
-         "the split)", JSON.stringify(A.blank));
-      // `called`, not `name`: the row's header comes off the fields.js registry
-      // (BUSES' spliced `name` knob, `label: "called"` since 2026-08-26 — Paul:
-      // *"'name' is a very confusing row because the 'name' seems to be reverb
-      // types."*), so this regex tracks the registry's word and not a typed one.
-      ok(B.blank.length <= 1 && (!B.blank.length || /^called \/ main$/.test(B.blank[0])),
-         "…and exactly one on the rack board, which is the main's NAME — the " +
-         "main is not a bus and no name knob is invented to square the grid (" +
-         B.body + " body cells, " + B.blank.length + " blank)",
-         JSON.stringify(B.blank));
+    ok(eq(slotTrip.seated, ["crunch"]),
+       "seating `crunch` in slot 1 writes voice.desk.fx = [\"crunch\"]",
+       JSON.stringify(slotTrip.seated));
+    ok(slotTrip.wet && slotTrip.face && slotTrip.after &&
+       slotTrip.after.fxw1 === "half" && slotTrip.after.fxa1 === "most",
+       "…its wet and face sliders write the slot's own words (fxw1 `half`, " +
+       "fxa1 `most`) — the document speaks the registry's vocabulary",
+       JSON.stringify(slotTrip.after));
+    ok(slotTrip.cleared === null ||
+       (!slotTrip.cleared.fx && !slotTrip.cleared.fxw1 && !slotTrip.cleared.fxa1),
+       "…and unseating the chip deletes the list AND the slot's knobs — " +
+       "absent is the only spelling of a default, knobs included",
+       JSON.stringify(slotTrip.cleared));
+    ok(slotTrip.trimmed && slotTrip.trimmed[slotTrip.secId] === "hush",
+       "tapping a grid cell twice writes voice.desk.trim[" + slotTrip.secId +
+       "] = \"hush\" (the cycle: — → out → hush → …)",
+       JSON.stringify(slotTrip.trimmed));
+    ok(slotTrip.trimCleared === null,
+       "…and cycling on round to `—` deletes the map — a cleared grid is a " +
+       "byte-identical record", JSON.stringify(slotTrip.trimCleared));
+    ok(slotTrip.recordGain,
+       "record gain (`sound.level`, Time's stray slider) is on the MAIN " +
+       "plate — FUTURE.md §5's rename, landed, with the pointer left in Time");
+    // ...AND THE TRIM REACHES THE ENGINE'S TABLE, at the layer plan.js hands
+    // it: the box under the trimmed section carries the trimmed gain and the
+    // others are untouched (the per-box overlay in ui/eight.js push()).
+    {
+      const dT = clone(TERMS);
+      const chair = DD.channelsOf(dT, GENRES)[0];
+      dT.voices[0].desk = { trim: { [dT.form.sections[1].id]: "hush" } };
+      const boxes = boxesFor(dT);
+      const parts = DD.deskPartsOf(dT, GENRES);
+      boxes.forEach((b, i2) => {
+        b.parts = parts; b.fx = [];
+        const t = dT.voices[0].desk.trim[dT.form.sections[i2].id];
+        if (t != null && Object.prototype.hasOwnProperty.call(F.TRIMS, String(t))) {
+          b.parts = { ...(parts || {}) };
+          b.parts[chair] = F.trimApply(b.parts[chair], t);
+        }
+      });
+      const g0 = deskChannelBase(boxes[0], chair).gain;
+      const g1 = deskChannelBase(boxes[1], chair).gain;
+      const wantDb = F.TRIMS.hush;
+      const gotDb = 20 * Math.log10(g1 / g0);
+      ok(near(gotDb, wantDb, 0.05),
+         "the trimmed box's channel gain moves by TRIMS.hush = " + wantDb +
+         " dB exactly (" + gotDb.toFixed(2) + " dB) and the untrimmed box is " +
+         "untouched — the word grid is score-level data on the fader's own " +
+         "proven wire", JSON.stringify({ g0, g1 }));
     }
-    // ...AND NEITHER BOARD PUSHES THE DOCUMENT SIDEWAYS. The panes scroll; the
-    // page must not. Checked at the phone and at the desk, because a 124px
-    // column that fits one may not fit the other.
+  }
+
+  /* G13 REWRITTEN 2026-08-27 — it measured THE SPLIT (two tables, blank-cell
+     counts: "99 of 177 empty" was the finding, "at most one blank survives"
+     was the property) and the tables it counted are gone with the one-board
+     round. The PROPERTY the split defended — no dead area, nothing drawn to
+     square a grid — survives as geometry: a strip is a tall column that
+     carries only its own controls, so there are no cells to be blank. What
+     this block holds now is the two laws the new geometry answers to (Paul,
+     2026-08-27): STRIPS SIDE BY SIDE AT 1280 AND STACKED AT 390, and THE
+     PAGE IS NEVER WIDE. */
+  console.log("\n" + "G13 the one board's geometry, measured on the page");
+  {
     const wide = [];
+    let cols = {};
     for (const w of [390, 1280]) {
       await page.setViewportSize({ width: w, height: 900 });
-      const m = await page.evaluate(() => ({
-        doc: document.documentElement.scrollWidth,
-        win: document.documentElement.clientWidth,
-        a: Math.round(document.getElementById("boardtbl").getBoundingClientRect().width),
-        b: Math.round(document.getElementById("racktbl").getBoundingClientRect().width),
-      }));
-      console.log("  note at " + w + "px: channels " + m.a + "px, rack " + m.b +
-        "px, document " + m.doc + "/" + m.win);
+      const m = await page.evaluate(() => {
+        const strips = [...document.querySelectorAll("#strips .nu-strip")];
+        const xs = [...new Set(strips.map((s) =>
+          Math.round(s.getBoundingClientRect().left)))];
+        return { doc: document.documentElement.scrollWidth,
+                 win: document.documentElement.clientWidth,
+                 strips: strips.length, columns: xs.length,
+                 rack: Math.round(document.getElementById("rack")
+                   .getBoundingClientRect().width) };
+      });
+      cols[w] = m;
+      console.log("  note at " + w + "px: " + m.strips + " strips in " +
+        m.columns + " column(s), rack " + m.rack + "px, document " +
+        m.doc + "/" + m.win);
       if (m.doc > m.win) wide.push(w + ": " + m.doc + " > " + m.win);
     }
     await page.setViewportSize({ width: 390, height: 844 });
-    ok(!wide.length, "the document does not scroll sideways at 390 or at 1280 — " +
-       "the boards are inside their panes", wide.join("; "));
+    ok(cols[390].columns === 1,
+       "at 390 the strips STACK — one column (" + cols[390].strips +
+       " strips)", JSON.stringify(cols[390]));
+    ok(cols[1280].columns >= Math.min(2, cols[1280].strips),
+       "at 1280 the strips sit SIDE BY SIDE — " + cols[1280].columns +
+       " columns", JSON.stringify(cols[1280]));
+    ok(!wide.length, "and the document does not scroll sideways at 390 or at " +
+       "1280 — the page grows tall, never wide", wide.join("; "));
   }
 
   ok(!errs.length, "the page raised no console error while the board was driven",

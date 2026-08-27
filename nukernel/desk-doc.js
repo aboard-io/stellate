@@ -91,9 +91,14 @@
   /* ---------- THE STORES THE PAGE ALREADY HAD ----------------------------- */
   // sec.parts — the map audio/desk.js partsOf reads. Entries are copied by
   // REFERENCE onto every box, deliberately: the Sound axis is one statement for
-  // the whole record (a per-SECTION desk is not expressible today, and that is
-  // the right answer for this axis until somebody wants a chorus louder than a
-  // verse). An entry with nothing in it is dropped, and a map with no entries
+  // the whole record. (This parenthesis said "a per-SECTION desk is not
+  // expressible today … until somebody wants a chorus louder than a verse" —
+  // 2026-08-27 met the until: Paul's "some voices raise and some fall" put a
+  // word grid on the board, and `voice.desk.trim[<secId>]` — fields.js TRIMS —
+  // overlays a per-box COPY at push time, ui/eight.js. This walk stays
+  // record-wide and carries no trim: the overlay's writer is push(), so the
+  // shared-reference law here still holds for a record with no trims.)
+  // An entry with nothing in it is dropped, and a map with no entries
   // becomes null — absent is the only spelling of a default
   // (main:nukernel/ui/mixtbl.js:351 writeField, the same law).
   function deskPartsOf(doc, GENRES) {

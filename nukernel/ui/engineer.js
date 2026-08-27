@@ -1,135 +1,83 @@
-// nukernel/ui/engineer.js — THE ENGINEER, and THE BOARD.
+// nukernel/ui/engineer.js — THE ONE BOARD.
 //
-// (2026-08-24, Paul: "we've lost the engineer entirely. we've lost buses and
-// sending things to them and delay and reverb." … "an actual mixing board at
-// the end is a nice idea.")
+// REBUILT 2026-08-27 against nukernel/ideal/one-board.html (iterated with Paul,
+// binding). Paul, 2026-08-27: *"I think we need to do what everyone else does
+// with effects. Add per voice effects, up to three. Each has a wet dry mix and
+// its own settings. Have one bus for genre specific effects, into a delay bus,
+// into reverb, into main. Each instrument can send post effects mix to all of
+// the four buses."* And the three laws of the same day: *"Vertical space is
+// cheap. Don't use knobs. Have simple vertical sliders stacked and labeled"*;
+// time runs down; *"when I touch them I scroll the whole window and can't
+// interact"* — every drag surface captures its pointer.
 //
-// THE MODEL WAS NEVER LOST — only the view was. audio/desk.js is 975 lines that
-// answer what every control on a board is worth in the parent engine, fields.js
-// is the vocabulary for saying it, and ui/state.js has held the stores since the
-// one-engine round. Nothing in this file computes a mix number; it draws the
-// ones desk.js already resolves and writes the document's own words back
-// through nukernel/desk-doc.js. If a number here disagrees with the tape, this
-// file is reading the wrong function, never doing its own arithmetic.
+// WHAT THIS REPLACES, and the reversal written down rather than deleted: the
+// TWO-TABLE board of 2026-08-25 (#boardtbl the channels, #racktbl the returns
+// and the main — one column per strip, one row per control, split because one
+// grid over three kinds of strip was 55.9% hole). Every measurement that built
+// it was real and is kept in the git history of this file; what changed is the
+// GEOMETRY, on Paul's word: strips are TALL now — down a strip reads in signal
+// order (instrument → three inserts → four sends → EQ → pan → the fader) and
+// the buses are a RACK IN SERIES below them, genre → delay → reverb → main,
+// drawn top to bottom because time and signal both run down. The two GROUP
+// buses (bus 3 `room`, bus 4 `aux`, 2026-08-26's "let me have up to four buses
+// and a way to direct them to each other") LEAVE THE SURFACE in the same turn:
+// the 2026-08-27 sentence names the four buses in a line and the groups are
+// not in it. Their vocabulary stays (fields.js BUSROWS, busRoute — an old save
+// with a `room` send or an aim loads and sounds exactly as it did), the wire
+// stays proven (desk-gate G14 model checks), and nothing here draws a control
+// for them — a fact can rest in the record without a knob, but a knob may
+// never point at nothing.
 //
-// TWO SURFACES, AND THEY ARE DIFFERENT THINGS (keep like with like):
+// THE MODEL WAS NEVER LOST — audio/desk.js answers what every control is worth
+// in the parent engine; fields.js is the vocabulary for saying it. Nothing in
+// this file computes a mix number: it draws the ones desk.js resolves and
+// writes the document's own words back through nukernel/desk-doc.js. If a
+// number here disagrees with the tape, this file is reading the wrong
+// function, never doing its own arithmetic.
 //
-//   THE ENGINEER is per-voice SOUND and belongs inside the voice's own sheet in
-//   the band grid — a cantor's send is one more fact about the cantor, next to
-//   its register and its instrument, not a room next door.
+// ONE WRITABLE OWNER PER FACT (FUTURE.md, the one-board decision): the board
+// is now the ONLY place a hand touches gain/send/eq/insert facts. The
+// engineer's rows inside a voice's sheet (VIEW 1 below) became READ-ONLY
+// MIRRORS the same day — they print the value and point here.
 //
-//   THE BOARD is a real console at the foot of the page, and since 2026-08-25 it
-//   is TWO tables rather than one: the CHANNELS, then the RETURNS AND THE MAIN.
-//   One column per strip and one row per control on each. Across a row compares
-//   one control over the strips that HAVE it; down a column reads one strip's
-//   path in signal order (input → EQ → fader → sends · bus → master), which is
-//   the British in-line order main:nukernel/ui/mixtbl.js:34 cites. Grid lines
-//   are what make both readings possible, which is why Paul asked for them.
-//
-//   THE TWO TABLES ARE ONE MEASUREMENT. Paul, 2026-08-25: "Do you want to put
-//   the bus and main into their own board so it's not all empty". Measured on
-//   the rendered page: one table, 7 columns, 177 cells, 99 of them EMPTY —
-//   55.9%, and 68.1% of the body cells — because a channel's rows and a
-//   return's rows and the master's are almost disjoint sets. VIEW 2 below
-//   carries the whole argument and the second law it needed ("a row is a
-//   comparison"), and the numbers after, counted the same way on the same page:
-//   24 body cells and NONE empty on the channel board, 16 and one on the rack —
-//   39 and 25 cells in all, 1 and 2 empty, and both of those are the corner of
-//   a <thead>. desk-gate G13 holds it.
-//
-//   THE MASTER HAS BEEN AT THE RIGHT, THEN UNDERNEATH, THEN AT THE RIGHT AGAIN,
-//   AND IS NOW THE LAST STRIP OF THE SECOND BOARD — every sentence is kept
-//   because the measurement in the middle one is still true and is still what
-//   decides the shape. It read: "That sentence said 'master at the right' until
-//   2026-08-24 and it was a rowSpan cell at the end of every row. It moved
-//   because the master's fifteen menus became fifteen SHEETS and a rowSpan
-//   distributes its own height back over the rows it spans: measured on the
-//   shipped chant at 390px, fifteen sheets in that cell took the channel rows
-//   from 93–244px to 307–801px and the table from 1665px to 5352px, with 92px
-//   of column to read a sheet in."
-//
-//   EVERY WORD OF THAT IS ABOUT A ROWSPAN FULL OF LIT SHEETS, and there is no
-//   rowSpan and there are no sheets. The rack's controls became `<select>`s on
-//   2026-08-25 — a single choice is a menu, Paul twice — a menu is ONE control
-//   tall. What the split changed is only WHICH TABLE the master sits in: it is
-//   still the strip at the right, which is where Paul asked for it ("master and
-//   the buses should also be arranged like the mixing board no?") and where a
-//   console keeps it, and the height problem stays solved because its seven
-//   menus are a stack inside ONE cell of ONE row rather than a spanned column.
-//
-// NO POPUPS. The cell-row-plus-popover tracker was REVERSED in favour of a
-// board, and this does not reintroduce it: no openFader, no popover, no fold —
-// every control is on the page at rest. AND NO MENUS EITHER, 2026-08-24. This
-// paragraph used to end "`<select>` is the only popup allowed here, because it
-// is a control and not a surface"; the measurement that reversed it is 23 —
-// `document.querySelectorAll("select")` found twenty-three on this page and
-// every one of them was on this board, four per channel, which is the exact
-// thing Paul objected to ("the options for each instrument in a song section
-// are now just one thing in a dropdown. That's not effective."). A CHANNEL GETS
-// A KNOB and THE MASTER END GETS SHEETS; `knob()` below carries the test for
-// which is which.
-//
-// FOUR LAWS CARRIED FORWARD FROM main:nukernel/ui/mixtbl.js, which shipped a
-// board on this data and is the prior art:
-//   * THE TRACK LIST IS THE SAME ANSWER THE AUDIO TIER BUILDS FROM (:281
-//     rowsOf) — desk-doc's channelVoicesOf here, gated against voiceRoster by
-//     desk-gate G2. A board cannot show a strip the desk will not build.
-//   * ABSENT IS THE ONLY SPELLING OF A DEFAULT (:351 writeField) — null / "" /
-//     false / 0 / [] deletes the key, and desk-doc.writeDesk is the one writer.
-//   * THE FILL IS THE AUTOMATION, THE NUMBER IS YOUR OFFSET (:395 gainToF,
-//     :415 liveGain) — copied below as the one place gain becomes fill.
+// LAWS CARRIED FORWARD, verbatim where they still bind:
+//   * THE TRACK LIST IS THE SAME ANSWER THE AUDIO TIER BUILDS FROM —
+//     desk-doc's channelVoicesOf, gated against voiceRoster by desk-gate G2.
+//   * ABSENT IS THE ONLY SPELLING OF A DEFAULT — null/""/false/0/[] deletes
+//     the key, and desk-doc.writeDesk is the one writer.
 //   * DIM IS DERIVED, BRIGHT IS SET.
-// What does NOT carry: the grammar. That board was bars you drag and popovers
-// you tap. This page is native controls in a table with grid lines.
+//   * A SILENT GREY IS THE BUG — a refusal is disabled AND carries its
+//     sentence, `data-why` for the gate, printed on the page for the person.
+//   * NEVER FAKE A MEASUREMENT (2026-08-27, this wave): the engine has ONE
+//     master tap (audio/live.js rmsNow — every voice sums into shared buses),
+//     so the MAIN strip's meter is green and measured, and a per-strip meter
+//     well is REFUSED with that reason. The model's own number (liveGain) is
+//     printed beside each fader, dim, labelled as the model.
 import { NuFields, NuDeskDoc, GENRES, SENDS, SENDLABEL, LEVELS, LEVELLABEL,
          PANS, PANLABEL, FX, MAX_FX, EQ_BANDS, faderDb,
          MASTER_FIELDS, BUS_FIELDS } from "./deps.js";
-// `FX`, `MAX_FX` and `FXLABEL` NEARLY came off this list on 2026-08-26 with the
-// per-voice chip they drew, and this paragraph said so. They stayed because the
-// SECOND half of Paul's sentence needed them: "That's bus and board stuff" is
-// not only a refusal, it is an address, and the board is in this file. The chip
-// is off the instruments and onto the MAIN STRIP. FXLABEL is still read off
-// NuFields rather than added to deps.js's destructure — "deps is the SOLE
-// reader of window.* and it already re-exports NuFields, so one more name there
-// would be a second door to the same table". NuDeskDoc is in the destructure
-// because it is a different global.
 const FXLABEL = NuFields.FXLABEL;
 import { SONG, MASTER, BUSES, vol, setVol, commit } from "./state.js";
 import { deskChannelBase, deskLevelAt, derivedPartTone,
          masterState, deskBusFeed, MAIN_TO_BUS1, FIXED_EDGES } from "../audio/desk.js";
-import { playing, playingSec, getPosition, passAt } from "../audio/live.js";
+import { playing, playingSec, getPosition, passAt, rmsNow } from "../audio/live.js";
+// WHAT THE ENGINE WILL DO WITH A CHANNEL — audio/plan.js channelFacts, and no
+// table of this file's own, so the board's refusals and the renderer's are the
+// same refusal. `stereo` is the one fact the insert slots ask for: the
+// parent's insert path is MONO and audio/desk.js widthKept drops a wide
+// unit's whole chain — under the 2026-08-27 architecture that silence is a
+// REFUSAL ON THE SLOT, never a silent strip (FUTURE.md). FAIL OPEN before
+// compile() has run: `{}` greys nothing, because a control that vanishes
+// before boot is worse than one that is briefly optimistic, and widthKept
+// drops the chain anyway.
+import { channelFacts } from "../audio/plan.js";
 import { gid } from "./derive.js";
-// ...THROUGH THE ONE-OPTION ROUTER, the same as ui/produce.js: same names,
-// same signatures, and a spec offering one option draws as a <select> (Paul,
-// 2026-08-24, evening: "in general where there is ONE option a dropdown is
-// preferred"). Only `sheet` is left of the pair: `sheetRow` was the engineer's
-// door for the five `eng.*` menus and those became pots on 2026-08-25 ("level,
-// place, delay, and room are obvious sliders"), so the one caller left is the
-// character chain, which is `multi` and routes to `<select multiple>`. It said
-// "the character chips" and meant a per-VOICE control; the chain is the
-// RECORD's now and sits under the board (VIEW 2), because Paul settled where a
-// treatment lives on 2026-08-26.
-// ...and `selectEl`, the bare control, because a bus strip is a COLUMN and a
-// column has no room for `selectField`'s `<p class=nu-sel><label>` wrapper.
-// Same widget, same `data-sel`, same refusal-with-a-reason; the visible copy of
-// the reason is placed by this file, which is the chord-quality precedent
-// (ui/selects.js:238: "the VISIBLE copy is still the caller's to place").
 import { sheet, selectEl } from "./selects.js";
 
-const el = (tag, text) => { const n = document.createElement(tag);
-  if (text != null) n.textContent = text; return n; };
+const el = (tag, text, cls) => { const n = document.createElement(tag);
+  if (text != null) n.textContent = text; if (cls) n.className = cls; return n; };
 const DD = () => NuDeskDoc;
-// A SILENT GREY IS THE BUG THIS ROUND EXISTS TO PREVENT ("when an option makes
-// another one unaccessible gray it out" — and a grey with no reason is worse
-// than none). So a refusal is one function: it disables the control AND puts
-// the sentence next to it, in the same parent, where a gate that walks
-// `input:disabled` can find it.
-// `short` (2026-08-25) is the words that go IN the cell when the full sentence
-// would not fit one — the board's bus columns are 124px and a ten-line reason
-// there set the whole fader row 200px tall. The control still carries the WHOLE
-// sentence in `title` and in `data-why`, where a gate and a screen reader both
-// read it, and the caller prints the whole sentence once under the table. Same
-// split ui/selects.js:238 makes for a menu inside a <td>.
+
 function refuse(node, why, short) {
   node.disabled = true;
   node.setAttribute("aria-disabled", "true");
@@ -140,11 +88,7 @@ function refuse(node, why, short) {
 }
 
 /* ---------- the level arithmetic, borrowed verbatim ----------------------- */
-// main:mixtbl.js:395 — "The bar maps −36..+12 dB of GAIN to 0..1 of fill:
-// LEVELS spans −8..+2.6 dB, the offset ±24/12, the pump's duck −10 — all inside
-// the track with the nulls readable. gainToF is the ONE place gain becomes
-// fill." Copied rather than re-derived, because two answers to "how full is the
-// bar" is exactly the drift the original comment is about.
+// main:mixtbl.js:395 — gainToF is the ONE place gain becomes fill/percent.
 const F_LO = -36, F_HI = 12;
 const gainToF = (g) => {
   const db = 20 * Math.log10(Math.max(1e-4, g));
@@ -152,16 +96,11 @@ const gainToF = (g) => {
 };
 const fmtDb = (v) => (v > 0 ? "+" : "") + v.toFixed(1);
 
-// WHICH BOX THE NUMBERS ARE READ AGAINST. The sounding one while the transport
-// runs, the first otherwise — a stopped desk shows the record's opening seating,
-// which is what the parked strips of a real console show.
+// WHICH BOX THE NUMBERS ARE READ AGAINST: the sounding one while the transport
+// runs, the first otherwise.
 const atBox = () => SONG[playing && playingSec >= 0 ? playingSec : 0] || SONG[0] || null;
-// THE LIVE GAIN (main:mixtbl.js:415). It used to read an AudioParam off a
-// channel the page built — the second engine, and the reason the number on the
-// board and the number on the tape could differ. There are no channel nodes now,
-// so the fill reads the MODEL: the resolved static gain times whatever the box's
-// level automation is worth at the playhead. Same arithmetic audio/desk.js hands
-// the engine per note, so the meter sits where the ear is.
+// THE LIVE GAIN — the MODEL: resolved static gain × the box's level automation
+// at the playhead. Same arithmetic audio/desk.js hands the engine per note.
 function liveGain(sec, key) {
   if (!sec) return 1;
   const g = deskChannelBase(sec, key).gain;
@@ -171,61 +110,57 @@ function liveGain(sec, key) {
   return g * deskLevelAt(sec, f);
 }
 
-/* ---------- what the engine will actually do with a channel --------------- */
-// GONE WITH THE CHIP, 2026-08-26, and the note is kept because the RULE in it
-// outlives the function: "audio/plan.js channelFacts, and no table of this
-// file's own — so the board's refusals and the renderer's are the same refusal.
-// FAIL OPEN before compile() has run: `{}` greys nothing, because a control
-// that vanishes before boot is worse than one that is briefly optimistic, and
-// widthKept drops the chip anyway." `stereo` was the ONLY fact this view ever
-// asked for, and it asked because a wide voice cannot take a mono insert. There
-// are no inserts on this surface now, so there is nothing left to refuse and
-// the import of audio/plan.js goes with it.
-
 /* ---------- the words a bus is called ------------------------------------- */
-// One reader for the send rows and one for the master strip's nameplate, so
-// renaming bus 1 renames it everywhere at once (main:mixtbl.js:261). The send
-// row's <th> prints the bus's CURRENT name and not a hardcoded "reverb".
 const busName = (bus) => NuFields.busNameOf(BUSES, bus);
-// THE WARNING THE PAGE OWES YOU. Every genre in the catalog defaults its
-// section send to `tone.verb`, so a channel can be 78% wet into a bus whose gain
-// is zero — which is exactly what the shipped chant did for as long as this page
-// existed (audio/plan.js hands toEngine `reverb: 0`; only sound.buses.rev.ret
-// opens it). Not a refusal and not an auto-write: it is the fact that kept the
-// finding invisible.
 function returnShut() {
   const st = masterState(MASTER, BUSES);
   return !st || !(st.reverb > 0);
 }
-
-// WHAT THE SECTION IS ALREADY SENDING, in words. audio/desk.js sectionOf:
-// "ABSENT MEANS 'AS THE GENRE ASKS' — every genre already declares how wet it
-// wants to be (tone.verb), and that number used to be thrown away." A part's
-// send adds to it, so the empty detent has to say what it is adding to or the
-// number on the strip is a lie by omission.
 function genreAsk(sec) {
   const g = (sec && GENRES[gid(sec)]) || {};
   const v = g.tone && g.tone.verb != null ? g.tone.verb : 0.15;
   return "the genre asks " + v;
 }
 
-/* ---------- WHICH PARTMIX FIELD IS WHICH BUS ------------------------------
-   THE PAIRING LIVES ONCE. fields.js says it in prose — "the four sends ARE the
-   four buses: `rev`, `echo`, `room`, `aux` keep their saved names and are what
-   BUS_FIELDS names bus 1 through bus 4" — and this is that sentence as data, so
-   the engineer's rows, the board's rows and the gate walk one list. It is
-   DERIVED from BUS_FIELDS rather than typed beside it: the buses are in board
-   order there, and a row that a bus does not have is a row that cannot be
-   drawn. The one irregularity is `echo`, and it is the oldest name on the desk
-   (fields.js resolvePartMix: "the field is `echo`, the bus is `del`").
-   `n` is the printed bus number and it is the INDEX, so a fifth bus is `bus 5`
-   by existing and never by being remembered. */
-const SEND_FIELD = { rev: "rev", echo: "echo", room: "room", aux: "aux" };
-const SEND_ROWS = BUS_FIELDS
-  .map((b, i) => ({ bus: b.bus, field: SEND_FIELD[b.bus], n: i + 1 }))
-  .filter((r) => r.field);
-if (SEND_ROWS.length !== BUS_FIELDS.length)
-  console.error("engineer: a bus in BUS_FIELDS has no send field in SEND_FIELD");
+/* ---------- THE FOUR SENDS OF A STRIP (2026-08-27) ------------------------
+   one-board.html: genre → delay → reverb → main, tapped post-insert. Two are
+   live and two are refused, and the split is the ENGINE's, not taste:
+     * delay and reverb ARE today's per-unit u.del / u.rev (fields.js `echo` /
+       `rev` — "the sends are real and already post-insert", one-board §IV.3;
+       the insert chain runs in the unit's own buffer BEFORE the bus taps, so
+       the tap is genuinely post-insert: stream-renderer runChain, then the
+       rev/del sums).
+     * the GENRE send is refused: fx_bus.dsp has no genre stage — the bus is
+       the one genuinely new stage in the line and it is ENGINE work (FUTURE.md
+       Phase 2 scopes it). A slider into a bus that does not exist would be a
+       knob that lies.
+     * the MAIN send is refused: the dry path to the main IS the fader, and a
+       second gain on the same wire is two owners of one fact.
+   The two refusals are drawn (never live-and-dead, never missing) with their
+   sentences, per the standing law. */
+const GENRE_WHY = "the genre bus is engine work — not wired";
+const GENRE_WHY_LONG = GENRE_WHY + ": fx_bus.dsp has no genre stage ahead of " +
+  "the delay, so nothing this page writes can put a signal into one. The bus " +
+  "is the one genuinely new stage in the series and it is the engine edit " +
+  "FUTURE.md Phase 2 buys; a live slider here today would be a knob that lies.";
+const MAINSEND_WHY = "the dry path to the main is the fader below — one owner " +
+  "per fact, so this send is parked rather than drawn as a second gain on the " +
+  "same wire";
+const BLEED_WHY = "the bleed is a constant in the DSP — not wired";
+const BLEED_WHY_LONG = BLEED_WHY + ": fx_bus.dsp:221 runs the delay into the " +
+  "reverb at the literal 0.2 (`d*0.2`) on every record ever rendered; making " +
+  "it this slider is a .dsp edit plus a recompile plus the byte-parity gates, " +
+  "which is not this page's to take.";
+const METER_WHY = "one master tap — the engine sums every voice into shared " +
+  "buses (render-core.js), so there is no per-channel signal to measure; the " +
+  "dim number beside the fader is the MODEL's gain, and a green bar here " +
+  "would be a fake measurement";
+const STEREO_WHY = "this voice is stereo — the parent's insert path is mono " +
+  "and a chain would fold its width to one channel (audio/desk.js widthKept), " +
+  "so the seats are refused rather than silently stripped";
+const SWEEP_WET_WHY = "filter sweep is serial — the module declares no mix " +
+  "param (a swept resonant lowpass is a replacement, not a blend), so there " +
+  "is no wet to move";
 
 /* ---------- reading and writing one strip --------------------------------- */
 const deskOf = (voice) => (voice && voice.desk) || {};
@@ -234,26 +169,9 @@ function setDesk(ctx, voice, key, v) {
   ctx.changed();
 }
 
-// THE STANDING ANSWER IS ALWAYS OFFERED (main:nukernel/band-kit.js:3956 — "you
-// can always see the word you are on"). An option that IS the current value is
-// never disabled, whatever the gate says, and it says why: without this a loaded
-// document is un-editable at exactly the moment it matters.
-// THE EMPTY DETENT IS AN OPTION, and it carries the answer the default gives —
-// "WHAT THE DEFAULT RESOLVES TO, said in the key's own vocabulary and dimmed"
-// (main:mixtbl.js defaultOf). Two things need it. A sheet must have exactly one
-// checked input, and a strip that has never been touched has no value to check;
-// and a person needs somewhere to click to UNDO a choice, because absent is the
-// only spelling of a default and there is no other way to spell it.
-//
-// AND THE WORD FOR IT IS `default`, EVERYWHERE, 2026-08-26. This board grew two
-// words for one idea — "as it stands" on the strips and "nothing set" on the
-// master — each with a paragraph arguing why it was the truer of the two in its
-// own corner. Paul read the page and collapsed them: *"'as it stands' and
-// 'nothing set' are too much. get rid of them -- just use 'default' for
-// 'nothing set'"*. He is right about the cost. Two words for absence means a
-// reader has to decide, at every control, whether the difference is meant —
-// and the difference never was: both spell the same thing, a key that is not in
-// the document. One word, and the optgroup it sits under says it too.
+// THE STANDING ANSWER IS ALWAYS OFFERED; THE EMPTY DETENT IS AN OPTION and the
+// word for it is `default`, everywhere (Paul, 2026-08-26: "just use 'default'
+// for 'nothing set'").
 function optionsFor(table, labels, cur, gate, emptyLabel) {
   const head = [{ value: "", label: emptyLabel, group: "default" }];
   return head.concat(Object.keys(table).map((k) => {
@@ -268,14 +186,281 @@ function optionsFor(table, labels, cur, gate, emptyLabel) {
   }));
 }
 
-/* ========================= VIEW 1 · THE ENGINEER ==========================
-   Appended by bandBlock directly after the voice's cast/material/instrument
-   table, in the same row(label, kid) grammar, so it reads as more of the
-   voice's own facts.
+/* ================== THE VERTICAL SLIDER =====================================
+   Replaces every knob and every horizontal range on the board (Paul,
+   2026-08-27: "Don't use knobs. Have simple vertical sliders stacked and
+   labeled"). Two native facts, one gesture law:
+     * the <input type=range> is the KEYBOARD AND SCREEN-READER CHANNEL — it
+       keeps `data-k` (so desk-gate drives it and focus survives a redraw),
+       `aria-label`, `aria-valuetext`, and arrow keys move it natively. It sits
+       over the track at opacity 0 with `pointer-events: none`.
+     * the TRACK owns the pointer: `setPointerCapture` on pointerdown, value
+       computed against the track's own rect, `touch-action: none` ON THE
+       CONTROL AND ONLY THE CONTROL (nu.css .nu-vs-track) — the page keeps its
+       scroll everywhere else. `change` fires on pointerup, exactly as a
+       native range does, so every existing write path is untouched.
+   THE DETENTED KIND is knob()'s own arithmetic stood upright: the words of a
+   fields.js SCALE in value order with the blank detent spliced AT ITS OWN
+   NUMBER's place (a send's blank sits beside `dry` at 0; `place`'s sits at
+   centre), aria-valuetext kept in step with the printed word by one function.
+   Numeric tables only — a slider over an unordered set is a lie about the
+   shape of the thing, which is why the master's words stay <select>s. */
+const ZERO_STRIP = NuFields.resolvePartMix({});
+const RESOLVES_TO = { rev: "rev", echo: "del", room: "room", aux: "aux",
+                      pan: "pan", lvl: "lvl" };
+function detentsOf(field, table, labels, emptyLabel, dfltOverride) {
+  const dflt = dfltOverride != null ? dfltOverride
+    : (ZERO_STRIP[RESOLVES_TO[field]] || 0);
+  const d = Object.keys(table)
+    .filter((x) => Number.isFinite(table[x]))
+    .sort((a, b) => table[a] - table[b])
+    .map((x) => ({ v: x, w: (labels && labels[x]) || x, n: table[x] }));
+  if (d.length !== Object.keys(table).length)
+    console.error("engineer: detentsOf(" + field + ") got a table that is not a scale");
+  let i = 0;
+  while (i < d.length && d[i].n < dflt) i++;
+  d.splice(i, 0, { v: "", w: emptyLabel == null ? "default" : emptyLabel, n: dflt });
+  return d;
+}
 
-   THE THIRD COLUMN IS THE WHOLE OF "SHOW BOTH WITHOUT LYING": the control holds
-   YOUR value, the column holds what it is riding on (desk.js derivedPartTone,
-   deskChannelBase), and when yours is absent the two agree. */
+// the shared vertical chassis: track + fill + thumb + the hidden input.
+// `paint` maps input.value -> fill fraction; callers wire input/change.
+function vchassis(input, frac) {
+  const track = el("span", null, "nu-vs-track");
+  const fill = el("i", null, "nu-vs-fill");
+  const thumb = el("b", null, "nu-vs-thumb");
+  track.append(fill, thumb, input);
+  const paint = () => {
+    const f = Math.max(0, Math.min(1, frac()));
+    track.style.setProperty("--v", f.toFixed(4));
+  };
+  input.addEventListener("input", paint);
+  const fromPointer = (e) => {
+    const r = track.getBoundingClientRect();
+    const min = +input.min, max = +input.max, step = +input.step || 1;
+    const pad = 12;                       // the thumb's half-height
+    const usable = r.height - pad * 2;
+    let f = usable > 0 ? (r.bottom - pad - e.clientY) / usable : 0;
+    f = Math.max(0, Math.min(1, f));
+    let val = min + f * (max - min);
+    val = Math.max(min, Math.min(max, Math.round(val / step) * step));
+    const dec = (String(step).split(".")[1] || "").length;
+    input.value = val.toFixed(dec);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+  track.addEventListener("pointerdown", (e) => {
+    if (input.disabled) return;
+    e.preventDefault();
+    try { track.setPointerCapture(e.pointerId); } catch (err) {}
+    input.focus({ preventScroll: true });
+    fromPointer(e);
+  });
+  track.addEventListener("pointermove", (e) => {
+    if (track.hasPointerCapture && track.hasPointerCapture(e.pointerId)) fromPointer(e);
+  });
+  track.addEventListener("pointerup", (e) => {
+    if (track.hasPointerCapture && track.hasPointerCapture(e.pointerId)) {
+      try { track.releasePointerCapture(e.pointerId); } catch (err) {}
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  });
+  paint();
+  return { track, paint };
+}
+
+// ONE DETENTED VERTICAL SLIDER over a fields.js scale. Writes the WORD (or
+// null for the blank detent — absent is the only spelling of a default).
+function vknob(k, field, table, labels, cur, aria, set, emptyLabel, dflt, tall) {
+  const d = detentsOf(field, table, labels, emptyLabel, dflt);
+  const input = document.createElement("input");
+  input.type = "range"; input.min = "0"; input.max = String(d.length - 1);
+  input.step = "1"; input.className = "nu-vs-in";
+  let at = d.findIndex((x) => x.v === (cur == null ? "" : String(cur)));
+  if (at < 0) at = d.findIndex((x) => x.v === "");
+  input.value = String(at);
+  input.dataset.k = k;
+  input.setAttribute("aria-label", aria);
+  const out = el("output", d[at].w, "nu-vs-val");
+  const say = (n) => { out.textContent = d[n].w;
+                       input.setAttribute("aria-valuetext", d[n].w); };
+  say(at);
+  input.addEventListener("input", () => say(+input.value));
+  input.addEventListener("change", () => set(d[+input.value].v || null));
+  const { track } = vchassis(input, () =>
+    (+input.value) / Math.max(1, d.length - 1));
+  const wrap = el("span", null, "nu-vs" + (tall ? " nu-vs-tall" : ""));
+  wrap.append(track, out);
+  return wrap;
+}
+
+// ONE NUMERIC VERTICAL SLIDER (the fader, the EQ bands, the record gain).
+function vnum(k, opts) {
+  const input = document.createElement("input");
+  input.type = "range";
+  input.min = String(opts.min); input.max = String(opts.max);
+  input.step = String(opts.step); input.className = "nu-vs-in";
+  input.value = String(opts.value);
+  input.dataset.k = k;
+  input.setAttribute("aria-label", opts.aria);
+  const fmt = opts.fmt || ((v) => String(v));
+  const out = el("output", fmt(+input.value), "nu-vs-val");
+  input.addEventListener("input", () => { out.textContent = fmt(+input.value); });
+  if (opts.onInput) input.addEventListener("input", () => opts.onInput(+input.value));
+  input.addEventListener("change", () => opts.set(+input.value));
+  const { track } = vchassis(input, () =>
+    (+input.value - opts.min) / (opts.max - opts.min));
+  const wrap = el("span", null, "nu-vs" + (opts.tall ? " nu-vs-tall" : ""));
+  wrap.append(track, out);
+  return wrap;
+}
+
+// A REFUSED SLIDER: drawn, disabled, its sentence on it and beside it — never
+// live-and-dead, never missing (the wave's own words: "refused with their
+// reasons ... never live-and-dead").
+function vrefused(k, aria, short, why, tall) {
+  const input = document.createElement("input");
+  input.type = "range"; input.min = "0"; input.max = "1"; input.value = "0";
+  input.className = "nu-vs-in";
+  if (k) input.dataset.k = k;
+  input.setAttribute("aria-label", aria + " (refused)");
+  const w = refuse(input, why, short);
+  const { track } = vchassis(input, () => 0);
+  track.classList.add("is-off");
+  const wrap = el("span", null, "nu-vs is-off" + (tall ? " nu-vs-tall" : ""));
+  wrap.append(track, w);
+  return wrap;
+}
+
+// a labelled column: the label over the control (the sketch's .vslider shape)
+function col(label, control, cls) {
+  const w = el("span", null, "nu-vcol" + (cls ? " " + cls : ""));
+  w.append(el("span", label, "nu-vs-lab"), control);
+  return w;
+}
+
+/* ================== THE INSERT SLOTS (2026-08-27) ==========================
+   "Add per voice effects, up to three. Each has a wet dry mix and its own
+   settings." The seats write `voice.desk.fx` (the list, MAX_FX, the exact
+   shape song.js's loader has always validated); the wet is the chip's OWN mix
+   param surfaced (fields.js FXWETS -> params.mix, clamped by the parent's own
+   insertChain), and the one-or-two settings are the module's own face params
+   (FXFACE, ranges read off engine/faust/dist insert_*-meta.json). A chip
+   changed in a seat RESETS that seat's knobs — a fraction of another module's
+   range is not a value, it is a coincidence. */
+function slotsOf(voice) {
+  const d = deskOf(voice);
+  const keys = (d.fx || []).filter((k) => FX[k]).slice(0, MAX_FX);
+  return keys.map((k, i) => ({ k,
+    w: d["fxw" + (i + 1)] || null,
+    a: d["fxa" + (i + 1)] || null,
+    b: d["fxb" + (i + 1)] || null }));
+}
+function writeSlots(ctx, voice, slots) {
+  const D = DD();
+  D.writeDesk(voice, "fx", slots.length ? slots.map((s) => s.k) : null);
+  for (let n = 1; n <= MAX_FX; n++) {
+    const s = slots[n - 1] || {};
+    D.writeDesk(voice, "fxw" + n, s.w || null);
+    D.writeDesk(voice, "fxa" + n, s.a || null);
+    D.writeDesk(voice, "fxb" + n, s.b || null);
+  }
+  ctx.changed();
+}
+// one seat's <select>: default "—" + the FX vocabulary. Keyed `ins|voice|n`.
+function seatSelect(ctx, voice, slots, i, why) {
+  const sel = document.createElement("select");
+  sel.dataset.k = "ins|" + voice.name + "|" + (i + 1);
+  sel.setAttribute("aria-label", voice.name + " insert " + (i + 1));
+  const cur = slots[i] ? slots[i].k : null;
+  const og0 = document.createElement("optgroup"); og0.label = "default";
+  const o0 = document.createElement("option");
+  o0.value = ""; o0.textContent = "—"; o0.selected = !cur;
+  og0.append(o0); sel.append(og0);
+  const og1 = document.createElement("optgroup"); og1.label = "as you say";
+  const taken = slots.map((s, j) => (j === i ? null : s.k));
+  for (const k of Object.keys(FX)) {
+    const o = document.createElement("option");
+    o.value = k; o.textContent = FXLABEL[k] || k;
+    if (k === cur) o.selected = true;
+    // A CHIP SEATS ONCE PER STRIP: the list is a chain and the same pedal
+    // twice in it is the same pedal once, louder about it.
+    if (taken.includes(k)) { o.disabled = true;
+      o.dataset.why = "already seated in another slot"; }
+    og1.append(o);
+  }
+  sel.append(og1);
+  sel.className = cur ? "said" : "seated";
+  let whyEl = null;
+  if (why) whyEl = refuse(sel, why, "refused");
+  sel.addEventListener("change", () => {
+    const word = sel.value || null;
+    const next = slots.slice();
+    if (!word) { if (i < next.length) next.splice(i, 1); }
+    else if (i < next.length) next[i] = { k: word, w: null, a: null, b: null };
+    else next.push({ k: word, w: null, a: null, b: null });
+    writeSlots(ctx, voice, next);
+  });
+  return { sel, whyEl };
+}
+// one whole slot: seat + wet + the chip's own one-or-two settings
+function slotEl(ctx, voice, slots, i, stereoWhy) {
+  const box = el("div", null, "nu-slot" + (slots[i] ? "" : " is-empty"));
+  box.dataset.slot = String(i + 1);
+  const row = el("div", null, "nu-slotrow");
+  row.append(el("b", String(i + 1), "nu-slotn"));
+  const { sel, whyEl } = seatSelect(ctx, voice, slots, i, stereoWhy);
+  row.append(sel);
+  box.append(row);
+  if (whyEl) { box.append(whyEl); box.classList.add("is-off"); return box; }
+  const s = slots[i];
+  if (!s) { box.append(el("small", "no effect seated", "nu-hint")); return box; }
+  const body = el("div", null, "nu-slotbody");
+  const n = i + 1;
+  // THE WET IS THE CHIP'S OWN MIX PARAM, SURFACED — or refused where the
+  // module has none (fields.js fxHasMix: only `sweep`, whose sentence is on
+  // the control and under the rack).
+  if (NuFields.fxHasMix(s.k)) {
+    const dfltMix = NuFields.fxMix(s.k);
+    body.append(col("wet", vknob("b|fxw" + n + "|" + voice.name, null,
+      NuFields.FXWETS, NuFields.FXWETLABEL, s.w,
+      voice.name + " insert " + n + " wet",
+      (v) => setDesk(ctx, voice, "fxw" + n, v), "default", dfltMix)));
+  } else {
+    body.append(col("wet", vrefused(null, voice.name + " insert " + n + " wet",
+      "serial", SWEEP_WET_WHY)));
+  }
+  // ...AND ITS OWN SETTINGS: the module's declared face params, in the
+  // module's own units (fields.js FXFACE, off the dist manifests), as
+  // fractions of their own span so one detent table serves every chip.
+  const face = NuFields.FXFACE[s.k] || [];
+  const dfltFrac = (spec) => {
+    const dv = FX[s.k].params[spec.key];
+    if (dv == null) return 0;
+    return Math.max(0, Math.min(1, (dv - spec.min) / (spec.max - spec.min)));
+  };
+  if (face[0]) body.append(col(face[0].label,
+    vknob("b|fxa" + n + "|" + voice.name, null, NuFields.FXPOTS,
+      NuFields.FXPOTLABEL, s.a, voice.name + " " + s.k + " " + face[0].label,
+      (v) => setDesk(ctx, voice, "fxa" + n, v), "default", dfltFrac(face[0]))));
+  if (face[1]) body.append(col(face[1].label,
+    vknob("b|fxb" + n + "|" + voice.name, null, NuFields.FXPOTS,
+      NuFields.FXPOTLABEL, s.b, voice.name + " " + s.k + " " + face[1].label,
+      (v) => setDesk(ctx, voice, "fxb" + n, v), "default", dfltFrac(face[1]))));
+  box.append(body);
+  return box;
+}
+
+/* ========================= VIEW 1 · THE ENGINEER ==========================
+   READ-ONLY MIRROR SINCE 2026-08-27, and the reversal is the one-owner law
+   landing where FUTURE.md said it would: "the engineer's per-voice pots
+   (sheets keep a read-only mirror that links to the board)". Until today this
+   view was a second full set of writers — the same eq/fader/place/send facts
+   as the board, two data-k namespaces (`eng|…` and `b|…`), two controls per
+   fact. The board is the one place a hand touches the sound now; this table
+   PRINTS the voice's strip — bright where the record says a word, dim where
+   the answer is derived — and points at the board to change it. The third
+   column (what the value is riding on) survives, because it was always the
+   best thing about this view. */
 export function engineer(parent, ctx, voiceName) {
   const doc = ctx.doc();
   const chans = DD().channelVoicesOf(doc, GENRES);
@@ -283,427 +468,63 @@ export function engineer(parent, ctx, voiceName) {
   if (!me) return;                       // a voice with no channel has no strip
   const key = me.key, voice = me.voice, d = deskOf(voice);
   const sec = atBox();
-    const drv = sec ? derivedPartTone(sec, key) : { db: 0, eq: null };
-  const soloElsewhere = chans.some((c) => c.voice !== voice && deskOf(c.voice).solo);
+  const drv = sec ? derivedPartTone(sec, key) : { db: 0, eq: null };
+  const base = sec ? deskChannelBase(sec, key) : { rev: 0, del: 0, pan: 0, gain: 1 };
+  const pct = (x) => Math.round((x || 0) * 100) + "%";
 
   if (ctx.heading) ctx.heading(parent, "the engineer");
   else parent.append(el("h3", "the engineer"));
 
   const t = el("table");
-  t.className = "nu-eng";
-  t.setAttribute("cellpadding", "0"); t.setAttribute("cellspacing", "0");
-  // A NON-SOLOED CHANNEL IS DIMMED, NEVER DISABLED (desk.js partsOf:373): a
-  // solo somewhere else is not a refusal — the value is still yours to set, it
-  // just cannot sound until the solo comes off.
-  if (soloElsewhere || d.mute) {
-    t.classList.add("is-off");
-    t.setAttribute("aria-disabled", "true");
-  }
-  const row = (label, kid, drvText) => {
+  t.className = "nu-eng nu-mirror";
+  const row = (label, yours, riding) => {
     const tr = el("tr");
     tr.append(el("th", label));
-    const td = el("td"); td.append(kid); tr.append(td);
-    const td2 = el("td", drvText == null ? "" : drvText);
+    const td = el("td", yours == null || yours === "" ? "default" : yours);
+    if (yours == null || yours === "") td.className = "is-dflt";
+    tr.append(td);
+    const td2 = el("td", riding == null ? "" : riding);
     td2.className = "nu-hint"; tr.append(td2);
     t.append(tr);
-    return tr;
   };
-
-  // THE STRIP EQ, absolute rather than automated — tone is set and left, so
-  // there is no offset dance.
-  //
-  // THESE THREE ROWS USED TO DRAW DEAD ON A MODELLED VOICE, and the refusal they
-  // printed was true when it was written: "a modelled voice has no sampler strip
-  // for an EQ to land on", because audio/desk.js wrote the merged EQ only
-  // `if (u.sampler)` and a Faust module has no sampler key. It is no longer true.
-  // The strip is a stage the RENDERER owns now (engine/faust/live/
-  // stream-renderer.js renderUnitWindow reads `u.strip`), so a modelled channel's
-  // knob turns the same filter a sampled channel's does, and there is nothing
-  // left to refuse. The refusal is gone rather than reworded: a control that
-  // works needs no apology, and the third column below — "riding X dB", the
-  // derived shading — used to print beside a slider that had just been disabled,
-  // which was the one place a reader would have gone to check.
-  for (const b of EQ_BANDS) {
-    const cur = (d.eq && d.eq[b.key]) || 0;
-    const wrap = el("span");
-    const r = document.createElement("input");
-    r.type = "range"; r.min = "-12"; r.max = "12"; r.step = "0.5";
-    r.value = String(cur);
-    r.dataset.k = "eng|eq" + b.key + "|" + voiceName;
-    r.setAttribute("aria-label", voiceName + " " + b.label);
-    const out = el("output", fmtDb(cur));
-    r.addEventListener("input", () => { out.textContent = fmtDb(+r.value); });
-    r.addEventListener("change", () => {
-      const next = { ...(d.eq || {}) };
-      next[b.key] = +r.value;
-      setDesk(ctx, voice, "eq", next);
-    });
-    wrap.append(r, document.createTextNode(" "), out);
-    row(b.label, wrap,
+  for (const b of EQ_BANDS)
+    row(b.label, d.eq && d.eq[b.key] ? fmtDb(d.eq[b.key]) + " dB" : null,
         drv.eq && drv.eq[b.key] ? "riding " + fmtDb(drv.eq[b.key]) : "flat");
-  }
-  /* ---- THE FIVE THAT WERE MENUS UNTIL 2026-08-25 ----------------------------
-     Paul: *"level, place, delay, and room are obvious sliders."* They were, and
-     they were `<select>`s — `sheetRow` routes a single choice through
-     ui/selects.js, so these five drew as five dropdowns down the voice's tab
-     while the SAME five facts were pots on the board four screens below. Two
-     widgets for one quantity is the drift this file's header forbids.
-
-     WHY A SLIDER IS THE RIGHT ANSWER HERE AND NOT EVERYWHERE. fields.js says
-     which: LEVELS (0.4 … 1.35), PANS (−0.7 … 0.7) and SENDS (0 … 0.9) are each
-     ONE NUMBER with words on its stops, so the words are a SCALE and a pot
-     shows its shape. The enumerated things on this page — what a bus is called,
-     which reverb module it is, which compressor `glue` means — are SETS whose
-     entries are names or whole objects, and they stay menus. `knob()` below
-     carries that test in code and shouts if it is handed a table that is not a
-     scale.
-
-     THE ROWS GO IN THE TABLE, NOT BESIDE IT, because the table already has the
-     third column that makes a send readable: the control holds YOUR value and
-     the column holds WHAT IT IS RIDING ON. A dropdown next to nothing could not
-     say "the genre asks 0.78"; a row can, and it is the same sentence the
-     board puts on a `title` because a 92px column has no room for it. ---- */
-  const base = sec ? deskChannelBase(sec, key) : { rev: 0, del: 0, pan: 0 };
-  const pct = (x) => Math.round((x || 0) * 100) + "%";
-  // "seated at", not "riding … seated": the fader row two above already prints
-  // `riding X dB seated` for the DERIVED shading, and on a record with no desk
-  // both numbers are 0.0 — two rows saying the same five words about two
-  // different facts is how a reader learns to stop reading the column.
-  row("level", knob("eng|lvl|" + voiceName, "lvl", LEVELS, LEVELLABEL, d.lvl,
-        voiceName + " level", (v) => setDesk(ctx, voice, "lvl", v), "default"),
+  row("fader", d.fader ? fmtDb(faderDb(d.fader)) + " dB" : null,
+      "riding " + fmtDb(drv.db) + " dB seated");
+  row("level", d.lvl ? (LEVELLABEL[d.lvl] || d.lvl) : null,
       "the record seats it at " +
       fmtDb(20 * Math.log10(Math.max(1e-4, base.gain || 1))) + " dB");
-
-  // THE FADER IS AN OFFSET, in dB, riding ON TOP of the seated gain — never
-  // replacing it. Numeric because a long-throw fader is not a detented list.
-  {
-    const wrap = el("span");
-    const r = document.createElement("input");
-    r.type = "range"; r.min = "-24"; r.max = "12"; r.step = "0.5";
-    r.value = String(faderDb(d.fader));
-    r.dataset.k = "eng|fader|" + voiceName;
-    r.setAttribute("aria-label", voiceName + " fader");
-    const out = el("output", fmtDb(faderDb(d.fader)) + " dB");
-    r.addEventListener("input", () => { out.textContent = fmtDb(+r.value) + " dB"; });
-    r.addEventListener("change", () => setDesk(ctx, voice, "fader", +r.value));
-    wrap.append(r, document.createTextNode(" "), out);
-    row("fader", wrap, "riding " + fmtDb(drv.db) + " dB seated");
-  }
-  row("place", knob("eng|pan|" + voiceName, "pan", PANS, PANLABEL, d.pan,
-        voiceName + " place", (v) => setDesk(ctx, voice, "pan", v), "default"),
+  row("pan", d.pan ? (PANLABEL[d.pan] || d.pan) : null,
       "the record sits at " + (base.pan || 0).toFixed(2));
-
-  /* ---- THE FOUR SENDS, WALKED OFF THE REGISTRY ------------------------------
-     It was THREE hand-written blocks and a fourth bus arrived (Paul,
-     2026-08-26: "let me have up to four buses and a way to direct them to each
-     other"), so the fourth would have had to be typed. SEND_ROWS below is the
-     one place the field↔bus pairing lives; a fifth bus draws a row here by
-     existing, which is the law fields.js already states for the `name` knob.
-
-     WHAT THE THIRD COLUMN SAYS DEPENDS ON WHAT KIND OF BUS IT IS, and that is
-     the whole of what this round adds to this view: a bus with an engine bus of
-     its own prints how much of this channel is arriving in it, and a GROUP
-     prints where its signal finally goes — `bus 3 → bus 2`, off `deskBusFeed`'s
-     own `chain`, never this file's arithmetic. The paragraph that stood here
-     said "Bus 3 is `room` and it IS the reverb bus (desk.js:590 folds a part's
-     room into its rev)", which was true while the destination was a constant. */
-  // THE BUS-3 REFUSAL IS GONE, AND ITS SENTENCE WAS TRUE WHEN IT WAS WRITTEN.
-  // It read: "bus 3 is the kit's ambience and this record has no kit", and it
-  // greyed the room send on every non-drum channel of a kitless record. That
-  // described the SECTION's `room` lane — audio/desk.js still scopes `sec.room`
-  // to the drums and says why — and a PART's room send was never the kit's: it
-  // folded into `rev` whatever the record had in it. Now that bus 3 is a group
-  // with an aim, a part send into it lands where the group is aimed, kit or no
-  // kit, so there is nothing left to refuse. A control that works needs no
-  // apology (the same sentence the modelled-voice EQ earned two rounds ago).
-  const busFeeds = deskBusFeed(sec, MASTER, BUSES);
-  for (const r of SEND_ROWS) {
-    const shutHere = r.field === "rev" && returnShut();
-    const w = knob("eng|" + r.field + "|" + voiceName, r.field, SENDS, SENDLABEL,
-      d[r.field], voiceName + " " + busName(r.bus) + " send",
-      (v) => setDesk(ctx, voice, r.field, v),
-      r.field === "rev" ? genreAsk(sec) : "dry");
-    const f = busFeeds[r.bus];
-    // A GROUP HAS NO ARRIVING NUMBER OF ITS OWN — deskChannelBase has already
-    // routed it into rev or del, so printing "N% into bus 3" would be counting
-    // this channel's signal twice. It prints the ROUTE instead, which is the
-    // thing a reader of a group actually needs.
-    const said = f.group
-      ? f.chain.join(" → ") + (f.cycle ? " — the aim you set closes a loop" : "")
-      : pct(r.field === "rev" ? base.rev : base.del) + " into " + busName(r.bus);
-    row("→ " + busName(r.bus) + (shutHere ? " (shut)" : ""),
-      w, said + (shutHere
-        ? " — but the return is shut; open it on bus 1's fader" : ""));
-  }
-  for (const [k, label] of [["mute", "cut"], ["solo", "alone"]]) {
-    const c = document.createElement("input");
-    c.type = "checkbox"; c.checked = !!d[k];
-    c.dataset.k = "eng|" + k + "|" + voiceName;
-    c.setAttribute("aria-label", voiceName + " " + label);
-    c.addEventListener("change", () => setDesk(ctx, voice, k, c.checked));
-    row(label, c, k === "solo" && soloElsewhere ? "another channel is alone" : "");
-  }
-  // EVERY TABLE ON THIS PAGE IS IN A PANE (08-shell recipe note 4, applied by
-  // the integrator because the shell slice cannot reach this file and the
-  // engineer slice had shipped). This one appended straight to the parent and
-  // was the last orphan: a table that is wider than a phone scrolls inside
-  // itself or it scrolls the document, and there is no third option. It is
-  // written out longhand rather than calling eight.js's `pane()` — a view does
-  // not import another view — and it is the same three lines.
+  row("→ " + busName("echo"), d.echo ? (SENDLABEL[d.echo] || d.echo) : null,
+      pct(base.del) + " into " + busName("echo"));
+  row("→ " + busName("rev"), d.rev ? (SENDLABEL[d.rev] || d.rev) : null,
+      pct(base.rev) + " into " + busName("rev") + " — " + genreAsk(sec));
+  const slots = slotsOf(voice);
+  row("inserts", slots.length
+        ? slots.map((s) => FXLABEL[s.k] || s.k).join(" → ") : null,
+      slots.length ? "wet and settings on the board" : "");
+  row("cut / alone", (d.mute ? "cut" : "") + (d.mute && d.solo ? " · " : "") +
+      (d.solo ? "alone" : "") || null, "");
   const tp = el("div");
   tp.className = "nu-pane";
   tp.tabIndex = 0;
-  // ...and the fourth line, for the same reason the other three are here:
-  // ui/eight.js keepPanes/putPanes puts a pane's sideways scroll back after a
-  // rebuild, and it finds a pane again by the first control inside it
-  // (2026-08-25). The board is re-mounted by every draw(), so without this the
-  // channel strip snapped back to channel 1 on every gesture anywhere.
-  const t0 = t.querySelector("[data-k]");
-  if (t0) tp.dataset.pane = t0.dataset.k;
+  // WHICH PANE THIS IS ACROSS A REBUILD (ui/eight.js keepPanes/putPanes,
+  // 2026-08-25) — keyed by the voice, since a mirror carries no [data-k]
+  // control of its own to key on.
+  tp.dataset.pane = "mirror|" + voiceName;
   tp.append(t);
   parent.append(tp);
-
-  const q = (k) => "eng." + k + "|" + voiceName;
-
-  // THE CHARACTER CHIP CAME OFF THE TRACK AGAIN, 2026-08-26, AND THIS TIME BY
-  // THE PERSON WHO ASKED THE QUESTION. nukernel/STATE.md item 6 put the
-  // reversal to Paul in so many words ("Do you accept the reversal?") and he
-  // answered the other way: *"Don't let me add effects to instruments. That's
-  // bus and board stuff. But let me have up to four buses and a way to direct
-  // them to each other."*
-  //
-  // WHAT STOOD HERE, kept because it is the argument and the argument is still
-  // the reason bus 4 exists: "THE CHARACTER CHIP, back on the track after
-  // 2026-08-17 took it off. It is an INSERT and the parent's insert path is
-  // MONO, so a wide unit's chain is dropped outright (desk.js widthKept:
-  // 'stereo voices are folded to channel 0 through the mono insert chain').
-  // Saying so is cheaper than pretending." — plus a `<select multiple>` of
-  // eleven chips, a `max` of MAX_FX said twice, and a hint that a plain tap
-  // replaces the whole selection.
-  //
-  // ALL OF IT IS GONE RATHER THAN DISABLED, because a disabled control is a
-  // promise deferred and this is a decision made: there is no per-voice fx
-  // control on this page. fields.js took `fx` off PARTMIX in the same round, so
-  // there is no field left to write; `channelFacts`/`stereo` is no longer read
-  // in this view at all, and `wideWhy` went with it. What replaces the chip is
-  // the fourth bus and the group routing on board two — an insert costs a
-  // MULTIPLE and a bus costs a CONSTANT (fields.js has the engine's own
-  // measurement), so more buses is the cheaper answer as well as the asked-for
-  // one.
-  //
-  // THE SECTION'S OWN CHIP IS UNTOUCHED, and it is a different thing: `sound.fx`
-  // is a record-wide character that reaches every seated voice (audio/desk.js
-  // sectionOf S.fx), which is board stuff by Paul's own division. Only the
-  // per-INSTRUMENT one is refused.
-
-  // THE SUMMARY LINE IS GONE, and it is deleted rather than reworded because it
-  // had become a SECOND OWNER of three facts. It printed "riding X dB · N% into
-  // reverb · M% into delay" — which is now the third column of the level row
-  // and of the two send rows, beside the control each number belongs to.
-  // Keeping both would be the drift this file's header names: two answers to
-  // one question, and no way to tell which one moved.
+  const go = el("p", null, "nu-hint");
+  const a = document.createElement("a");
+  a.href = "#board"; a.textContent = "set it on the board";
+  go.append(document.createTextNode("read-only — one writable owner per fact, and it is the board. "), a);
+  parent.append(go);
 }
 
-/* ======================= VIEW 2 · THE TWO BOARDS ==========================
-   TWO <table>s SINCE 2026-08-25, AND A MEASUREMENT IS WHY. Paul: *"Do you want
-   to put the bus and main into their own board so it's not all empty"*.
-   Measured on the rendered page before this change: `#boardtbl` was one table
-   of 7 columns and 177 cells, 99 of them EMPTY — 55.9%; of the body cells
-   alone, 98 of 144, 68.1%. The cause is exactly what he says. A channel's rows
-   (lo/mid/hi, level, place, three sends, cut, alone), a return's (name, room,
-   time, repeats, tone) and the main's (drive … ceiling) are almost DISJOINT
-   SETS, so one grid drawn over all three kinds is mostly hole.
-
-   THE PARAGRAPH THIS REPLACES IS REWRITTEN AND NOT DELETED, because it is the
-   argument that was tried and half of it is still the law. It read: "THE COST
-   IS BLANK CELLS AND THEY ARE THE POINT. A bus has no `place` pot and the main
-   has no `→ delay` send, so those cells are empty — which is exactly what a
-   real console's master strip looks like beside a channel strip, and it is the
-   honest alternative to inventing a control to fill a hole. The rows are
-   grouped so the blanks read as blocks rather than gaps: the CHANNEL rows
-   first, then THE RETURNS AND THE MAIN, then the two rows every strip answers."
-   THE SECOND SENTENCE STANDS AND NOTHING BELOW INVENTS A CONTROL TO FILL A
-   HOLE. What was wrong is the first: a console does not draw its returns on the
-   channel grid at all — the returns and the master are a separate section of
-   the desk, silkscreened apart — and the two `nu-sect` bands were dressing a
-   hole rather than closing it. They are gone with the blanks they dressed.
-
-   ...AND SPLITTING THE TABLE IN TWO, ON ITS OWN, ONLY MOVES THE HOLE, which is
-   the second thing the measuring said. Drawn one-row-per-control the rack comes
-   out 4 columns × 14 rows = 56 body cells with 34 empty, 61% — WORSE than the
-   board it came out of. That 34 is COUNTED OFF THE REGISTRY and not off a page
-   that was ever drawn (BUS_FIELDS gives bus 1 one gear knob, bus 2 three and
-   bus 3 none; MASTER_FIELDS gives the main seven — so eleven single-owner rows,
-   four of them a bus's and seven the main's, each leaving 3 of its 4 cells
-   blank: 11 × 3 = 33, plus the main's blank in `name` = 34 of 56), and it is
-   quoted here as arithmetic rather than as a measurement because that is what
-   it is.
-
-   So one more law, and it is a law about grids rather than about desks:
-
-       A ROW IS A COMPARISON. Reading across a row compares ONE control over
-       the whole desk; a row only ONE column can answer compares nothing — it
-       is a label wearing a row's clothes — so it belongs INSIDE that strip.
-
-   `name` is answered by all three buses and stays a row. The fader and
-   where-it-goes are answered by every strip on both boards and stay rows. The
-   single-owner controls stack in their own strip's `its own gear` cell, each
-   with its own label, which is what a delay's front panel and a mastering
-   chain look like in a rack anyway.
-
-   SIGNAL ORDER IS STILL THE READING ORDER, it just crosses a paragraph now.
-   Down a column: input → EQ → fader → sends (board one) → bus → master (board
-   two), the British in-line order main:nukernel/ui/mixtbl.js:34 cites. The
-   channels are first, the sentence BETWEEN the boards says where their sends
-   land, and every channel's `goes to` cell names the same destinations the
-   second board's columns are.
-
-   NO POPUPS. The cell-row-plus-popover tracker was REVERSED in favour of a
-   board, and this does not reintroduce it: no openFader, no popover, no fold —
-   every control is on the page at rest. AND NO MENUS ON A CHANNEL, 2026-08-24.
-   This paragraph used to say "no menus either"; the measurement that reversed
-   HALF of it is 23 — `document.querySelectorAll("select")` found twenty-three
-   on this page and every one of them was on this board, four per channel, which
-   is the exact thing Paul objected to ("the options for each instrument in a
-   song section are now just one thing in a dropdown. That's not effective.").
-   The half that stands is the CHANNEL: a channel strip has no menu, its place
-   and its sends and its level are pots. The half that reversed is the RACK:
-   what a bus is called and which room it is are single choices about the whole
-   record, and a single choice is a `<select>` (Paul, evening: "There are still
-   many boxes that should be selects"). `knob()` below carries the test for
-   which is which, and it is a fields.js question and not a taste one — which is
-   also why the split above changed no widget: every pot is still a pot and
-   every menu is still a menu, they only moved table.
-
-   THE AUTOMATED FADER, IN PLAIN HTML, WITHOUT LYING. Two native elements, two
-   quantities, neither pretending to be the other:
-     * <input type=range> is YOUR OFFSET (voice.desk.fader, ±24/12 dB) and never
-       moves by itself.
-     * <meter> is THE AUTOMATION — the gain actually driving the channel at the
-       sounding box, deskChannelBase().gain × deskLevelAt(), mapped through
-       gainToF. It moves per beat under a `pump` and steps at every boundary as
-       shade() re-seats the band.
-   <meter> draws its own bar, so this needs no CSS and no rAF loop. paint() runs
-   from the page's existing on("pos") handler, once a beat. AUDIO NEVER CALLS A
-   VIEW.
-
-   ...AND A BUS FADER IS THE SAME TWO ELEMENTS ASKING THE SAME TWO QUESTIONS.
-   The range is the RETURN — what this bus is worth into the main — and the
-   meter is what is arriving times that return, both out of audio/desk.js
-   `deskBusFeed`, which is also where the sentence lives for the two buses whose
-   return this page cannot move. This file does not decide which of them are
-   wired; it prints what the model says. Splitting the table did not move that
-   decision and must not lose the refusals it produces: bus 2 draws at the
-   engine's own unity and disabled, bus 3 gets no fader at all, and both print
-   audio/desk.js's own sentence — short in the cell, whole under the table, and
-   whole again in `data-why`/`title`. */
+/* ======================= VIEW 2 · THE ONE BOARD =========================== */
 let CURRENT = null;
-
-/* ---------- one board, built the same way twice --------------------------- */
-// THE SPLIT IS WHICH STRIPS AND WHICH ROWS, AND NOTHING ELSE. Both tables are
-// `.nu-board`, both ride a `.nu-pane`, both stamp `data-col` on every cell and
-// `nu-edge` where a kind changes — so one CSS rule dresses both and a gate that
-// reads one reads the other. A second `boardOf`-shaped block of code would have
-// been two answers to "what does a strip look like".
-function boardOf(id, capText, cols, headOf, dim) {
-  const pane = el("div"); pane.className = "nu-pane";
-  const t = el("table"); t.id = id; t.className = "nu-board";
-  t.setAttribute("cellpadding", "0"); t.setAttribute("cellspacing", "0");
-  t.append(el("caption", capText));
-  // WHERE ONE KIND OF STRIP ENDS AND THE NEXT BEGINS, marked in the DOM rather
-  // than guessed at in CSS: `:first-of-type` cannot see `data-col`, and the
-  // number of channels is whatever the record has. One rule (`nu-edge`) draws
-  // the heavy line a console silkscreens between its returns and its master.
-  for (let i = 0; i < cols.length; i++)
-    cols[i].edge = i > 0 && cols[i].kind !== cols[i - 1].kind;
-  const thead = el("thead"), hr = el("tr");
-  const corner = el("th"); corner.setAttribute("scope", "col"); hr.append(corner);
-  for (const col of cols) {
-    const th = headOf(col);
-    th.setAttribute("scope", "col");
-    th.dataset.col = col.kind;
-    // AFTER `headOf`, never before it: each branch there assigns `th.className`
-    // outright, which wipes a class added first. Caught on the rendered page —
-    // the group rule was drawn on every `td` and on no `th`.
-    if (col.edge) th.classList.add("nu-edge");
-    hr.append(th);
-  }
-  thead.append(hr); t.append(thead);
-  const tbody = el("tbody"); t.append(tbody);
-  pane.append(t);
-
-  const rowOf = (label) => {
-    const tr = el("tr");
-    const th = el("th", label); th.setAttribute("scope", "row");
-    tr.append(th); tbody.append(tr);
-    return tr;
-  };
-  const cellFor = (tr, col) => {
-    const td = el("td");
-    td.dataset.col = col.kind;
-    // WHICH BUS THIS CELL IS UNDER, on the cell and not only on the header.
-    // A GROUP (bus 3, bus 4 — `engine: null` in fields.js BUSROWS) has no
-    // engine accumulator at all: its sends are summed into whichever bus it is
-    // aimed at. That is a genuinely different kind of strip and the grid draws
-    // it identically, so nu.css washes the two group columns — and a rule that
-    // reached them by `:nth-child()` would break the moment a fifth bus lands.
-    // One line here, no look: the look is nu.css's (the bus-css recipe asked
-    // for exactly this line rather than reach for the positional selector).
-    if (col.kind === "bus") td.dataset.bus = col.key;
-    if (col.edge) td.classList.add("nu-edge");
-    if (dim && dim(col)) { td.classList.add("is-off");
-                           td.setAttribute("aria-disabled", "true"); }
-    tr.append(td); return td;
-  };
-  // ONE ROW, EVERY COLUMN OF THIS BOARD. `fill` is called for every strip and
-  // simply returns without appending where the control has no meaning there —
-  // which keeps the grid rectangular, and a rectangular grid is what makes
-  // reading across a row a comparison rather than a guess. After the split
-  // there is exactly ONE cell on either board where `fill` returns empty (the
-  // main has no name), which is the whole point of the round.
-  const strip = (label, fill) => {
-    const tr = rowOf(label);
-    for (const col of cols) fill(col, cellFor(tr, col));
-    return tr;
-  };
-  // WHICH PANE THIS IS ACROSS A REBUILD (ui/eight.js keepPanes/putPanes,
-  // 2026-08-25), keyed by the first control inside it exactly as eight.js's own
-  // `pane()` keys one. Two boards means two panes and two keys, and they must
-  // be different or the returns board would be scrolled to the channels'
-  // position. Measured on the rendered page: `b|eqlo|<voice>` and
-  // `sel|bus|rev|name` — the second is a <select>, and ui/selects.js gives one
-  // a `data-k` of its own so focus survives a redraw, which is why the first
-  // control of the rack board answers this query at all.
-  const key = () => { const b0 = t.querySelector("[data-k]");
-                      if (b0) pane.dataset.pane = b0.dataset.k; };
-  return { pane, t, tbody, rowOf, cellFor, strip, key };
-}
-
-// ONE LABELLED CONTROL INSIDE A STRIP'S OWN CELL — ui/selects.js `selectField`'s
-// shape (`<p class="nu-sel"><label><span class="nu-w">…`) built here rather
-// than called, for the one difference a board column needs. `selectField`
-// prints the WHOLE refusal under the control, and a 124px column cannot hold
-// ten lines of it without setting the row 200px tall (measured 2026-08-25). So
-// the cell carries the SHORT marker and the whole sentence is printed once
-// under the table — the same split ui/selects.js:238 makes for a menu in a
-// <td> ("the VISIBLE copy is still the caller's to place") — while the control
-// itself still carries the whole of it in `data-why` and `title`, where the
-// gate and the screen reader both read it.
-function labelled(td, label, control, shortWhy) {
-  const p = el("p"); p.className = "nu-sel";
-  const lab = el("label");
-  const w = el("span", label + " "); w.className = "nu-w";
-  lab.append(w, control);
-  p.append(lab);
-  if (shortWhy) {
-    p.classList.add("is-off");
-    const s = el("small", shortWhy); s.className = "nu-why";
-    s.title = control.dataset.why || shortWhy;
-    p.append(s);
-  }
-  td.append(p);
-  return p;
-}
 
 export function mount(parent, ctx) {
   const host = ctx.section
@@ -713,543 +534,500 @@ export function mount(parent, ctx) {
   const doc = ctx.doc();
   const chans = DD().channelVoicesOf(doc, GENRES);
   const sec = atBox();
-  // no channelFacts anywhere in this file any more, and the second half of this
-  // note is what changed on 2026-08-26. It said: "the board grid's ONLY
-  // per-channel refusal was the modelled-voice EQ, and that control works now.
-  // `stereo` is still read on the engineer's sheet (wideWhy, above), where the
-  // chips live — the one place widthKept still takes something away." The
-  // chips are off the instruments, so `stereo` is read nowhere on this page and
-  // the import went with it. widthKept still takes a wide voice's chain away —
-  // it just never has one to take.
   const anySolo = chans.some((c) => deskOf(c.voice).solo);
   const shut = returnShut();
-  // WHAT EACH BUS IS CARRYING AND WHERE IT REACHES — the model's answer, never
-  // this file's arithmetic (audio/desk.js deskBusFeed, and the same law as the
-  // channel meters two paragraphs up).
-  const feeds = deskBusFeed(sec, MASTER, BUSES);
-  const meters = [], outs = [];
-  const dim = (col) => col.kind === "ch" && anySolo && !deskOf(col.c.voice).solo;
+  const facts = (() => { try { return channelFacts(playing && playingSec >= 0
+    ? playingSec : 0) || {}; } catch (e) { return {}; } })();
+  const drives = [];            // { el, key } — the model readout per strip
 
-  /* ================= BOARD ONE · THE CHANNELS =================
-     One column per voice that has a channel, one row per control, and after the
-     split every one of those rows is answered by every one of those columns. */
-  const CH = chans.map((c) => ({ kind: "ch", key: c.key, c }));
-  const A = boardOf("boardtbl",
-    "the channels · the slider is your offset, the bar is what the record is"
-    + " already doing", CH, (col) => {
-      const th = el("th");
-      th.className = "nu-ch";
-      if (dim(col)) { th.classList.add("is-off");
-                      th.setAttribute("aria-disabled", "true"); }
-      th.dataset.ch = col.key;
-      th.append(el("span", col.c.voice.name));
-      // THE BOARD PRINTS THE VOICE'S OWN NAME, not its chair key, and this is
-      // deliberate rather than cosmetic: ui/eight.js hands the kernel `realize`
-      // and never `part`, so a voice the document calls a `counter` is ADDRESSED
-      // `line2` (desk-doc.js says why fixing the name would move the music). The
-      // address is printed under the name so the two are never confused.
-      th.append(el("small", (col.c.voice.instrument || col.c.voice.kind || "") +
-        " · " + col.key));
-      return th;
-    }, dim);
-  const chOnly = (fn) => (col, td) => { if (col.kind === "ch") fn(col.c, td); };
+  const note = el("p", "down a strip reads in signal order: instrument → three"
+    + " inserts (each with its own wet) → sends, tapped after the inserts → EQ"
+    + " → pan → the fader. Dim is derived, bright is set; the green bar on the"
+    + " main strip is measured.", "nu-hint");
+  host.append(note);
 
-  for (const b of EQ_BANDS) {
-    A.strip(b.label, chOnly((c, td) => {
-      const d = deskOf(c.voice);
-      const r = document.createElement("input");
-      r.type = "range"; r.min = "-12"; r.max = "12"; r.step = "0.5";
-      r.value = String((d.eq && d.eq[b.key]) || 0);
-      r.dataset.k = "b|eq" + b.key + "|" + c.voice.name;
-      r.setAttribute("aria-label", c.voice.name + " " + b.label);
-      r.addEventListener("change", () => {
-        const next = { ...(deskOf(c.voice).eq || {}) };
-        next[b.key] = +r.value;
-        setDesk(ctx, c.voice, "eq", next);
-      });
-      td.append(r);
-      // no refusal here any more: the board EQ reaches a MODELLED voice the same
-      // way it reaches a sampled one (audio/desk.js, the eqAll write — one merged
-      // fact, carried at `sampler.strip` or at `strip` depending only on which of
-      // the parent's two renderers plays the voice). This cell printed
-      // "a modelled voice has no sampler strip for an EQ to land on" until
-      // 2026-08-24, and it was right until the strip became a renderer stage.
-    }));
-  }
-  // THE LEVEL ENUM, ON THE BOARD, 2026-08-25. It was on the engineer's tab only
-  // and it is the first of the four Paul named ("level, place, delay, and room
-  // are obvious sliders"). LEVELS is a scale — hush 0.4 through forward 1.35 —
-  // so it takes the same pot as `place` and the sends, and having it here is
-  // what makes the tab and the board the same surface rather than two.
-  A.strip("level", chOnly((c, td) => {
-    td.append(knob("b|lvl|" + c.voice.name, "lvl", LEVELS, LEVELLABEL,
-      deskOf(c.voice).lvl, c.voice.name + " level",
-      (v) => setDesk(ctx, c.voice, "lvl", v), "default"));
-  }));
-  A.strip("place", chOnly((c, td) => {
-    td.append(knob("b|pan|" + c.voice.name, "pan", PANS, PANLABEL,
-      deskOf(c.voice).pan, c.voice.name + " place",
-      // "default" and not "centre": PANLABEL already spells 0 `centre`, so
-      // labelling the blank detent the same word put TWO detents reading
-      // "centre" side by side (measured: the sweep came out left, left-ish,
-      // centre, centre, right-ish, right). One word for absence everywhere on
-      // this board, and its POSITION is what says the record is dead centre.
-      // The word was "as it stands" until 2026-08-26, when Paul collapsed this
-      // board's two spellings of absence into one — *"'as it stands' and
-      // 'nothing set' are too much. get rid of them -- just use 'default' for
-      // 'nothing set'"* — and the argument above is untouched by that: it was
-      // never about WHICH word, only that the word must not be `centre`.
-      (v) => setDesk(ctx, c.voice, "pan", v), "default"));
-  }));
-  // FOUR SEND ROWS, OFF SEND_ROWS — the same list the voice's own tab walks, so
-  // the two surfaces cannot come to draw a different number of sends. It was a
-  // literal `[["rev","rev"],["echo","echo"],["room","room"]]` and the fourth
-  // bus is what made a literal a liability.
-  //
-  // THE KITLESS REFUSAL CAME OFF WITH ITS TWIN in the voice's tab; the argument
-  // is written out there ("bus 3 is the kit's ambience and this record has no
-  // kit" described the SECTION lane, never a part's send). A group takes a send
-  // from any channel and lands it where it is aimed.
-  for (const r of SEND_ROWS) {
-    const isRev = r.field === "rev";
-    const tr = A.strip("→ " + busName(r.bus) + (isRev && shut ? " (shut)" : ""),
-      chOnly((c, td) => {
-        // THE EMPTY DETENT'S WORD IS SHORT ON THE BOARD AND LONG IN THE VOICE'S
-        // OWN TAB, on purpose: a 92px column cannot carry "the genre asks 0.78"
-        // without wrapping it to four lines, so the sentence goes on the
-        // control's `title` and the engineer's own row (which has the width)
-        // still prints it whole.
-        const w = knob("b|" + r.field + "|" + c.voice.name, r.field, SENDS,
-          SENDLABEL, deskOf(c.voice)[r.field],
-          c.voice.name + " " + busName(r.bus) + " send",
-          (v) => setDesk(ctx, c.voice, r.field, v), "default");
-        const sel = w.querySelector("input");
-        if (isRev) sel.title = genreAsk(sec) +
-          "; a part send adds to it, so absent adds nothing";
-        // A GROUP'S SEND SAYS WHERE IT ENDS UP, on the control, because the
-        // column has no room to print it and the answer changes with a knob two
-        // tables down. Off deskBusFeed's `chain`, never typed here.
-        else if (feeds[r.bus].group)
-          sel.title = "bus " + r.n + " is a group — this send arrives at " +
-            feeds[r.bus].chain.join(" → ");
-        td.append(w);
-      }));
-    if (isRev && shut)
-      tr.firstChild.title = "every channel below is sending into a return whose"
-        + " gain is zero — open it on bus 1's fader";
-  }
-  for (const [k, label] of [["mute", "cut"], ["solo", "alone"]]) {
-    A.strip(label, chOnly((c, td) => {
-      const b = document.createElement("input");
-      b.type = "checkbox"; b.checked = !!deskOf(c.voice)[k];
-      b.dataset.k = "b|" + k + "|" + c.voice.name;
-      b.setAttribute("aria-label", c.voice.name + " " + label);
-      b.addEventListener("change", () => setDesk(ctx, c.voice, k, b.checked));
-      td.append(b);
-    }));
-  }
-  {
-    const tr = A.rowOf("fader"); tr.dataset.row = "fader";
-    for (const col of CH) {
-      const td = A.cellFor(tr, col);
-      const c = col.c, d = deskOf(c.voice);
-      const r = document.createElement("input");
-      r.type = "range"; r.min = "-24"; r.max = "12"; r.step = "0.5";
-      r.value = String(faderDb(d.fader));
-      r.dataset.k = "b|fader|" + c.voice.name;
-      r.setAttribute("aria-label", c.voice.name + " fader");
-      const m = document.createElement("meter");
-      m.min = 0; m.max = 1;
-      m.title = "what is driving the channel";
-      const o = el("output", fmtDb(faderDb(d.fader)));
-      r.addEventListener("input", () => { o.textContent = fmtDb(+r.value); });
-      r.addEventListener("change", () => setDesk(ctx, c.voice, "fader", +r.value));
-      td.append(r, m, o);
-      meters.push({ m, key: c.key });
-      outs.push({ o, voice: c.voice });
+  /* ================= THE STRIPS ================= */
+  const board = el("div", null, "nu-strips");
+  board.id = "strips";
+  for (const c of chans) {
+    const voice = c.voice, key = c.key, d = deskOf(voice);
+    const off = anySolo && !d.solo;
+    const strip = el("article", null, "nu-strip" + (off || d.mute ? " is-off" : ""));
+    strip.dataset.ch = key;
+    strip.setAttribute("aria-label", voice.name + " strip");
+    const head = el("header");
+    head.append(el("b", voice.name, "nu-sname"));
+    head.append(el("small", (voice.instrument || voice.kind || "") + " · " + key));
+    strip.append(head);
+
+    // ---- inserts: up to three, in order --------------------------------
+    const srow1 = el("div", null, "nu-srow");
+    srow1.append(el("p", "inserts · up to three · in order", "nu-rowlab"));
+    const stereoWhy = facts[key] && facts[key].stereo ? STEREO_WHY : null;
+    const slots = slotsOf(voice);
+    for (let i = 0; i < MAX_FX; i++)
+      srow1.append(slotEl(ctx, voice, slots, i, stereoWhy));
+    strip.append(srow1);
+
+    // ---- sends: four, post-insert --------------------------------------
+    const srow2 = el("div", null, "nu-srow");
+    srow2.append(el("p", "sends · post-insert", "nu-rowlab"));
+    const sends = el("div", null, "nu-sends");
+    sends.append(col("genre", vrefused("b|genre|" + voice.name,
+      voice.name + " send to the genre bus", "not wired", GENRE_WHY_LONG)));
+    sends.append(col(busName("echo"), vknob("b|echo|" + voice.name, "echo",
+      SENDS, SENDLABEL, d.echo, voice.name + " send to " + busName("echo"),
+      (v) => setDesk(ctx, voice, "echo", v), "default")));
+    const revK = vknob("b|rev|" + voice.name, "rev",
+      SENDS, SENDLABEL, d.rev, voice.name + " send to " + busName("rev"),
+      (v) => setDesk(ctx, voice, "rev", v), "default");
+    { const inp = revK.querySelector("input");
+      inp.title = genreAsk(sec) + "; a part send adds to it, so absent adds nothing"; }
+    sends.append(col(busName("rev") + (shut ? " (shut)" : ""), revK));
+    sends.append(col("main", vrefused("b|main|" + voice.name,
+      voice.name + " send to the main", "the fader's", MAINSEND_WHY)));
+    srow2.append(sends);
+    strip.append(srow2);
+
+    // ---- eq -------------------------------------------------------------
+    const srow3 = el("div", null, "nu-srow");
+    srow3.append(el("p", "eq", "nu-rowlab"));
+    const eqrow = el("div", null, "nu-sends");
+    for (const b of EQ_BANDS) {
+      eqrow.append(col(b.label.replace(/^eq\s*/, ""), vnum("b|eq" + b.key + "|" + voice.name, {
+        min: -12, max: 12, step: 0.5, value: (d.eq && d.eq[b.key]) || 0,
+        aria: voice.name + " " + b.label, fmt: (v) => fmtDb(v),
+        set: (v) => {
+          const next = { ...(deskOf(voice).eq || {}) };
+          next[b.key] = v;
+          setDesk(ctx, voice, "eq", next);
+        } })));
     }
+    srow3.append(eqrow);
+    strip.append(srow3);
+
+    // ---- pan: a left/right fact, five detents --------------------------
+    // BUTTONS AND NOT A SLIDER, per the sketch's own panrow: five stops is a
+    // detent row a thumb can hit, and `place` was the collision the rename
+    // table killed ("pan — the one universal word"). Tapping the stop the
+    // record is on CLEARS it — absent is the only spelling of a default, and
+    // there is no other way to spell it with buttons.
+    const srow4 = el("div", null, "nu-srow");
+    srow4.append(el("p", "pan", "nu-rowlab"));
+    const panrow = el("div", null, "nu-panrow");
+    panrow.setAttribute("role", "group");
+    panrow.setAttribute("aria-label", voice.name + " pan");
+    const marks = { l: "L", hl: "l", c: "C", hr: "r", r: "R" };
+    const cur = d.pan || null;
+    const word = el("p", cur ? (PANLABEL[cur] || cur) : "default",
+      "nu-panword" + (cur ? "" : " is-dflt"));
+    for (const p of Object.keys(PANS)) {
+      const b = el("button", marks[p], "nu-panbtn");
+      b.type = "button";
+      b.dataset.k = "b|pan|" + voice.name + "|" + p;
+      b.setAttribute("aria-label", voice.name + " pan " + (PANLABEL[p] || p));
+      const on = cur ? cur === p : p === "c";
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.addEventListener("click", () =>
+        setDesk(ctx, voice, "pan", cur === p ? null : p));
+      panrow.append(b);
+    }
+    srow4.append(panrow, word);
+    strip.append(srow4);
+
+    // ---- the fader ------------------------------------------------------
+    const srow5 = el("div", null, "nu-srow");
+    srow5.append(el("p", "fader", "nu-rowlab"));
+    const fw = el("div", null, "nu-fadwrap");
+    const fout = { o: null };
+    const fader = vnum("b|fader|" + voice.name, {
+      min: -24, max: 12, step: 0.5, value: faderDb(d.fader),
+      aria: voice.name + " fader", tall: true, fmt: (v) => fmtDb(v),
+      set: (v) => setDesk(ctx, voice, "fader", v) });
+    fw.append(col("level", fader));
+    // THE METER WELL, REFUSED — never fake a measurement (the header's law).
+    fw.append(col("meter", vrefused(null, voice.name + " meter",
+      "no tap", METER_WHY, true)));
+    const duo = el("div", null, "nu-duo");
+    for (const [k2, label] of [["mute", "cut"], ["solo", "alone"]]) {
+      const b = el("button", label, "nu-tgl");
+      b.type = "button";
+      b.dataset.k = "b|" + k2 + "|" + voice.name;
+      b.setAttribute("aria-label", voice.name + " " + label);
+      b.setAttribute("aria-pressed", d[k2] ? "true" : "false");
+      b.addEventListener("click", () => setDesk(ctx, voice, k2, !deskOf(voice)[k2]));
+      duo.append(b);
+    }
+    // the MODEL's number, dim and labelled as the model — what desk.js says
+    // is driving the channel right now, repainted per beat by paintBoard.
+    // `data-live` because the clock writes it: a surface the transport feed
+    // repaints declares itself (the trim grid's own law, below), and the
+    // wave-3 artifact drive watches the WHOLE page with a MutationObserver —
+    // an undeclared clock write is the finding it exists for.
+    const drive = el("small", "", "nu-drive nu-hint");
+    drive.dataset.live = "model";
+    drive.title = "the model: deskChannelBase().gain × the box's level automation";
+    duo.append(drive);
+    drives.push({ el: drive, key });
+    fw.append(duo);
+    srow5.append(fw);
+    strip.append(srow5);
+
+    const goes = el("p", null, "nu-goes");
+    goes.append(document.createTextNode("→ "));
+    goes.append(el("b", busName("echo") + " · " + busName("rev") + " · main"));
+    strip.append(goes);
+    board.append(strip);
   }
-  // WHERE EACH STRIP GOES, PRINTED — and on this board it is also the arrow to
-  // the next one: the words a channel leaves by are the names of the columns of
-  // board two.
-  A.strip("goes to", (col, td) => {
-    if (col.kind === "ch") td.append(el("small", "main + its sends"));
-  });
-  A.key();
-  host.append(A.pane);
+  host.append(board);
 
-  // THE WIRE BETWEEN THE TWO BOARDS, IN WORDS, because the split took away the
-  // thing that used to say it — a channel and its return were adjacent columns
-  // and now they are two tables. This is the only sentence on the page whose
-  // job is the RELATIONSHIP, so it names the three sends and the destination in
-  // the order the boards are read, and the bus names come off the one reader
-  // (`busName`) so renaming bus 1 renames it here too.
-  const flow = el("p", "↓ every channel above leaves on the main, and its sends"
-    + " leave on " + SEND_ROWS.map((r) => busName(r.bus)).join(", ")
-    + " — which are the bus columns below. What comes back off them, and the"
-    + " main it comes back into, is the second board.");
-  flow.className = "nu-flow";
-  host.append(flow);
-
-  /* ================= BOARD TWO · THE RETURNS AND THE MAIN =================
-     `bus N` is the index in BUS_FIELDS and not a hand-typed number, so a fourth
-     bus would be `bus 4` by existing. */
-  const RK = [
-    ...BUS_FIELDS.map((b, i) => ({ kind: "bus", key: b.bus, b, n: i + 1 })),
-    { kind: "main", key: "main" },
-  ];
-  const B = boardOf("racktbl",
-    "the returns and the main · what comes back off the sends, then the last"
-    + " thing the record touches", RK, (col) => {
-      const th = el("th");
-      if (col.kind === "bus") {
-        th.className = "nu-bus";
-        th.dataset.bus = col.key;
-        th.append(el("span", "bus " + col.n));
-        // the bus's CURRENT name, off the one reader, so renaming bus 1 renames
-        // its column head, the channel board's send row and the engineer's
-        // sheet at once
-        th.append(el("small", busName(col.key)));
-      } else {
-        th.className = "nu-main";
-        th.dataset.main = "1";
-        th.append(el("span", "main"));
-        th.append(el("small", "the record"));
-      }
-      return th;
-    }, dim);
-
-  const busRow = (col) => BUS_FIELDS.find((b) => b.bus === col.key);
+  /* ================= THE BUS RACK · IN SERIES ================= */
+  // one line, top to bottom: genre → delay → reverb → main (Paul, 2026-08-27:
+  // "Have one bus for genre specific effects, into a delay bus, into reverb,
+  // into main"). Arrows make the topology; each plate carries its REAL knobs
+  // and nothing else. The delay and reverb stages are fields.js BUSROWS bus 2
+  // and bus 1 — the engine's own two accumulators — wearing the series' order.
+  const rack = el("div", null, "nu-rack");
+  rack.id = "rack";
+  const flow = (label) => {
+    const f = el("div", null, "nu-flow");
+    f.setAttribute("aria-hidden", "true");
+    f.append(el("i", null, "nu-tri"), el("span", label, "nu-flowlab"));
+    return f;
+  };
   const bv = (bus, k) => (doc.sound && doc.sound.buses && doc.sound.buses[bus]
     && doc.sound.buses[bus][k]) || "";
-  const busSel = (col, spec) => selectEl({
-    key: "bus|" + col.key + "|" + spec.key, label: spec.label,
-    options: optionsFor(spec.table, spec.labels, bv(col.key, spec.key), null,
-                        "default"),
-    value: bv(col.key, spec.key),
-    set: (v) => { DD().writeBus(doc, col.key, spec.key, v); ctx.changed(); },
+  const busSel = (busKey, spec) => selectEl({
+    key: "bus|" + busKey + "|" + spec.key, label: spec.label,
+    options: optionsFor(spec.table, spec.labels, bv(busKey, spec.key), null, "default"),
+    value: bv(busKey, spec.key),
+    set: (v) => { DD().writeBus(doc, busKey, spec.key, v); ctx.changed(); },
   });
+  const labelled = (g, label, control) => {
+    const p = el("p", null, "nu-sel");
+    const lab = el("label");
+    lab.append(el("span", label + " ", "nu-w"), control);
+    p.append(lab); g.append(p);
+    return p;
+  };
+  const knobOf = (busKey, key) =>
+    BUS_FIELDS.find((b) => b.bus === busKey).knobs.find((k) => k.key === key);
+  const feeds = deskBusFeed(sec, MASTER, BUSES);
+  const busSays = [];           // { el, bus } — model in/out lines per plate
 
-  // ROW ONE, AND IT IS A ROW BECAUSE THREE COLUMNS ANSWER IT: what each return
-  // is called. The main's cell is the one blank left on either board and it
-  // stays blank — the main is not a bus and has no name knob, and inventing one
-  // to square the grid is the thing this file refuses.
-  //
-  // THE ROW IS HEADED `called`, NOT `name`, 2026-08-26, and the header comes off
-  // the registry (`knobs.find(k => k.key === "name").label`) rather than being
-  // typed here, so fields.js owns the word and this file prints it. Paul:
-  // *"'name' is a very confusing row because the 'name' seems to be reverb
-  // types."* It did: bus 1's menu here shared four words with the `reverb type`
-  // knob one row down (plate/hall/chamber/spring), so "name" read as "which
-  // reverb". fields.js changed the words and the question in the same round —
-  // the whole argument is written beside BUSNAMES there.
-  B.strip(BUS_FIELDS[0].knobs.find((k) => k.key === "name").label, (col, td) => {
-    if (col.kind !== "bus") return;
-    td.append(busSel(col, busRow(col).knobs.find((k) => k.key === "name")));
-  });
+  rack.append(flow("the strips send into every stage below"));
 
-  // ROW TWO: EACH STRIP'S OWN FRONT PANEL. Every control here was its own row
-  // until 2026-08-25 and only one column could ever answer it — `color` is bus
-  // 1's, `time`/`repeats`/`tone` are bus 2's, all seven master words are the
-  // main's — so by the law at the top of this view they are labels and not
-  // comparisons, and they belong in the strip. Drawn in the registry's own
-  // order, which for the master is the order of the chain
-  // (drive → glue → tape → space → width → tilt → ceiling), so reading down
-  // this cell is reading the signal through it.
-  //
-  // `ret` is not here because `ret` IS the fader two rows down, and drawing it
-  // twice would be two owners of one fact. `name` is not here because it is the
-  // row above.
+  // -- the genre bus: the one genuinely new stage, and it is not wired ------
+  {
+    const p = el("div", null, "nu-plate is-off");
+    p.dataset.bus = "genre";
+    p.setAttribute("aria-label", "genre fx bus");
+    const h = el("div", null, "nu-bushead");
+    h.append(el("b", "genre fx bus", "nu-busname"));
+    h.append(el("small", "in ← the strips' genre sends · chain dealt by the" +
+      " genre at compose", "nu-busin"));
+    p.append(h);
+    const r = el("div", null, "nu-busrow");
+    // `x|…` and not `bus|…`, deliberately: `bus|<bus>|<knob>` keys name
+    // registry rows (fields.js BUSES) and desk-gate walks that pairing; a
+    // refused slider names no row, so it wears a namespace the walk ignores.
+    r.append(col("level → delay", vrefused("x|genre|level",
+      "genre bus level into the delay bus", "not wired", GENRE_WHY_LONG)));
+    r.append(el("small", GENRE_WHY_LONG, "nu-why"));
+    p.append(r);
+    rack.append(p);
+  }
+  rack.append(flow("into the delay bus"));
+
+  // -- the delay bus: fields.js bus 2, its real knobs -----------------------
+  {
+    const p = el("div", null, "nu-plate");
+    p.dataset.bus = "echo";
+    p.setAttribute("aria-label", "delay bus");
+    const h = el("div", null, "nu-bushead");
+    h.append(el("b", "delay bus · " + busName("echo"), "nu-busname"));
+    h.append(el("small", "in ← the strips' " + busName("echo") + " sends", "nu-busin"));
+    p.append(h);
+    const g = el("div", null, "nu-gear");
+    labelled(g, "called", busSel("echo", knobOf("echo", "name")));
+    labelled(g, "time", busSel("echo", knobOf("echo", "time")));
+    labelled(g, "repeats", busSel("echo", knobOf("echo", "fb")));
+    labelled(g, "tone", busSel("echo", knobOf("echo", "tone")));
+    p.append(g);
+    const r = el("div", null, "nu-busrow");
+    const spec = knobOf("echo", "ret");
+    r.append(col("return → main", vknob("bus|echo|ret", "ret", spec.table,
+      spec.labels, bv("echo", "ret"), "delay bus return",
+      (v) => { DD().writeBus(doc, "echo", "ret", v); ctx.changed(); },
+      "default", 1, true)));
+    // THE BLEED, REFUSED WITH ITS REASON — the series the engine half-does
+    // already (one-board §IV.2): delay pours into reverb at a fixed 0.2.
+    r.append(col("bleed → reverb", vrefused("x|echo|bleed",
+      "delay bus bleed into the reverb bus", "a constant", BLEED_WHY_LONG, true)));
+    const says = el("small", "", "nu-busmodel nu-hint");
+    says.dataset.live = "model";   // the clock writes it, so it says so
+    r.append(says);
+    busSays.push({ el: says, bus: "echo" });
+    p.append(r);
+    p.append(el("small", BLEED_WHY_LONG, "nu-why"));
+    rack.append(p);
+  }
+  rack.append(flow("into the reverb bus"));
+
+  // -- the reverb bus: fields.js bus 1 --------------------------------------
+  {
+    const p = el("div", null, "nu-plate");
+    p.dataset.bus = "rev";
+    p.setAttribute("aria-label", "reverb bus");
+    const h = el("div", null, "nu-bushead");
+    h.append(el("b", "reverb bus · " + busName("rev"), "nu-busname"));
+    h.append(el("small", "in ← the strips' " + busName("rev") +
+      " sends + the delay's fixed bleed", "nu-busin"));
+    p.append(h);
+    const g = el("div", null, "nu-gear");
+    labelled(g, "called", busSel("rev", knobOf("rev", "name")));
+    labelled(g, "reverb type", busSel("rev", knobOf("rev", "color")));
+    p.append(g);
+    const r = el("div", null, "nu-busrow");
+    const spec = knobOf("rev", "ret");
+    r.append(col("return → main", vknob("bus|rev|ret", "ret", spec.table,
+      spec.labels, bv("rev", "ret"), "reverb bus return",
+      (v) => { DD().writeBus(doc, "rev", "ret", v); ctx.changed(); },
+      "default", 0, true)));
+    const says = el("small", "", "nu-busmodel nu-hint");
+    says.dataset.live = "model";   // the clock writes it, so it says so
+    r.append(says);
+    busSays.push({ el: says, bus: "rev" });
+    p.append(r);
+    if (shut) p.append(el("small", "every strip above is sending into a return" +
+      " whose gain is zero — open it on this return", "nu-why"));
+    rack.append(p);
+  }
+  rack.append(flow("into main — the record"));
+
+  // -- the main -------------------------------------------------------------
   const HOMELESS = { width: 1, tilt: 1, ceiling: 1 };
   const mv = (k) => (doc.sound && doc.sound.master && doc.sound.master[k]) || "";
-  B.strip("its own gear", (col, td) => {
-    if (col.kind === "bus") {
-      const gear = busRow(col).knobs
-        .filter((k) => k.key !== "ret" && k.key !== "name");
-      // BUS 3 HAD NO GEAR AND NOW BOTH GROUPS HAVE EXACTLY ONE, and it is the
-      // knob that was there all along with nobody's hand on it. This cell
-      // printed: "BUS 3 HAS NO GEAR AND SAYS SO RATHER THAN SITTING BLANK.
-      // fields.js: '`room` therefore keeps its name and no knob of its own: it
-      // IS the reverb bus (audio/desk.js:590 folds a part's `room` into its
-      // `rev`)'. An empty cell here would read as 'not drawn yet'; the sentence
-      // is the fact." The fact was right and the conclusion was one step short:
-      // the FOLD is the knob (audio/desk.js feedSplit has the argument), so a
-      // group's gear is its destination and nothing else.
-      const g = el("div"); g.className = "nu-gear"; td.append(g);
-      for (const spec of gear) {
-        if (spec.key !== "to") { labelled(g, spec.label, busSel(col, spec)); continue; }
-        // WHERE A GROUP IS AIMED. The options are greyed BY THE MOVE, not by the
-        // state: `busToOk` asks what would happen if this destination were
-        // written, so aiming bus 3 at bus 4 while bus 4 points back at bus 3 is
-        // refused with the loop named, and every aim that does not close a loop
-        // is offered. Refusing the loop rather than clamping the walk is the
-        // choice fields.js busRoute writes down — a clamped cycle would put a
-        // route on the page the tape does not have.
-        const cur = bv(col.key, "to");
-        const sel = selectEl({
-          key: "bus|" + col.key + "|to", label: "goes to",
-          options: optionsFor(spec.table, spec.labels, cur,
-            (k) => NuFields.busToOk(doc.sound && doc.sound.buses, col.key, k)
-              ? null
-              : (k === col.key
-                  ? "a bus cannot send to itself"
-                  : "aiming bus " + col.n + " here would close a loop — " +
-                    NuFields.BUSTO[k] + " already comes back to bus " + col.n),
-            // THE EMPTY DETENT SAYS WHAT THE DEFAULT RESOLVES TO, in the key's
-            // own vocabulary — main:mixtbl.js defaultOf, the law `knob()` in
-            // this file already quotes. It is the BUS NAME and nothing else:
-            // "bus 1, as it has always folded" was the first wording and it
-            // clipped at 124px (measured on the rendered page — the option read
-            // "bus 1, as it l"), which made the one control that explains the
-            // routing the one control you could not read.
-            //
-            // SO THE MENU READS `bus 1` TWICE, AND THAT IS THE ACCEPTED SHAPE
-            // ON THIS BOARD. `optionsFor` puts them in different optgroups —
-            // "default: bus 1" over "as you say: bus 1" — which is exactly
-            // what `place` has done since the board existed (PANLABEL spells 0
-            // `centre` and the empty detent resolves to 0 as well), and what
-            // bus 1's own fader has (`off`/"shut" beside the blank). The pair
-            // is legible because the GROUP names which is which, and the two
-            // genuinely save differently: absent is "never aimed" and `rev` is
-            // "aimed at bus 1", and busRoute resolves both to the same wire.
-            NuFields.BUSTO[NuFields.BUSDEFAULT]),
-          value: cur,
-          set: (v) => { DD().writeBus(doc, col.key, "to", v); ctx.changed(); },
-        });
-        labelled(g, spec.label, sel);
-        // NO SECOND READOUT UNDER THE CONTROL. A `.nu-why` printing the whole
-        // chain went here and it was a duplicate: the `goes to` row four rows
-        // down already prints it, and that row is where a chain BELONGS by this
-        // view's own law — a row is a comparison, and "where does this strip
-        // go" is answered by every strip. The control shows what you SET; the
-        // row shows where it ends up. On a one-hop route those are the same
-        // words, which is what made the duplication easy to miss.
-      }
-      return;
-    }
-    // WIDTH, TILT AND CEILING'S PUSH REACH NOTHING (audio/desk.js:769 names all
-    // three and says why: the parent gets its width from placement, its tone
-    // stage is a pair of cuts rather than a tilt, and master_limit's threshold
-    // is fixed in the DSP). They round-trip and they draw; they are drawn
-    // DISABLED with a marker beside them, the whole sentence on the control and
-    // once under the table, because saying so is cheaper than pretending and a
-    // `title` is a thing no phone will ever show.
-    // THE CHAIN FLOWS, IT DOES NOT JUST STACK, AND THE REASON IS A NUMBER.
-    // Measured 2026-08-25 with the seven in one column: the `its own gear` row
-    // came out 548px tall because the main's cell was 489px, and bus 1's cell —
-    // one menu, 62px — sat under 427px of white. A table row is as tall as its
-    // tallest cell, so the fix is the tall cell rather than the row: `.nu-gear`
-    // is a grid that takes as many columns as the strip is wide, which is two
-    // for the main and one for a 124px bus. Row-major, so drive → glue → tape →
-    // space → width → tilt → ceiling is still the reading order.
-    const g = el("div"); g.className = "nu-gear"; td.append(g);
+  let masterMeter = null;
+  {
+    const p = el("div", null, "nu-plate");
+    p.dataset.bus = "main";
+    p.setAttribute("aria-label", "main");
+    const h = el("div", null, "nu-bushead");
+    h.append(el("b", "main · the record", "nu-busname"));
+    h.append(el("small", "in ← the strips' dry + the reverb bus out · out → " +
+      "the speakers", "nu-busin"));
+    p.append(h);
+    const g = el("div", null, "nu-gear");
     for (const f of MASTER_FIELDS) {
       const why = HOMELESS[f.key] ? MASTER_WHY : null;
-      labelled(g, f.label, selectEl({
+      const s = selectEl({
         key: "master|" + f.key, label: f.label,
-        // "default", the same word every other empty detent on this page now
-        // carries. This paragraph used to argue the opposite — *"'nothing set'
-        // and not 'as it stands': what absence means here is not a number, it is
-        // the engine's own answer, and "nothing set" is the one phrase true of
-        // all seven without naming a value that seven different tables spell
-        // differently"* — and the OBSERVATION still holds (fields.js
-        // resolveMaster: five of the seven resolve to null and build nothing at
-        // all; glue and ceiling resolve to their shipped default). What changed
-        // is the conclusion. Paul, 2026-08-26: *"'as it stands' and 'nothing
-        // set' are too much. get rid of them -- just use 'default' for 'nothing
-        // set'"*. "default" is true of all seven in exactly the way "nothing
-        // set" was — it names the answer you get by not answering — and it costs
-        // the reader nothing to learn, because it is the word on every other
-        // control on the page.
         options: optionsFor(f.table, f.labels, mv(f.key), null, "default"),
         value: mv(f.key),
         ...(why ? { why } : {}),
         set: (v) => { DD().writeMaster(doc, f.key, v); ctx.changed(); },
-      }), why ? "reaches no sound" : null);
+      });
+      const pl = labelled(g, f.label, s);
+      if (why) { pl.classList.add("is-off");
+        const w = el("small", "reaches no sound", "nu-why");
+        w.title = why; pl.append(w); }
     }
-  });
-
-  {
-    const tr = B.rowOf("fader"); tr.dataset.row = "fader";
-    for (const col of RK) {
-      const td = B.cellFor(tr, col);
-      if (col.kind === "bus") busFader(td, col, feeds[col.key], doc, ctx, meters);
-      else td.append(listening());
+    p.append(g);
+    const r = el("div", null, "nu-busrow");
+    // RECORD GAIN — Time's `sound.level` slider, moved onto the master strip
+    // (FUTURE.md §5 rename table: "`level` (in Time) → `record gain`, on the
+    // master strip — a Sound fact filed under Time; clearest 'spread
+    // everywhere' exhibit"). Same key, same write, same clamp: document.js
+    // toGenre multiplies the basis genre's tone.gain by it, capped at 1
+    // because the engine caps a tone's gain there. ui/eight.js leaves a dim
+    // pointer where it used to stand.
+    {
+      const tone = (GENRES[doc.basis] || {}).tone || { gain: 0.28 };
+      const max = +(1 / tone.gain).toFixed(2);
+      r.append(col("record gain", vnum("level", {
+        min: 0.5, max, step: 0.25,
+        value: doc.sound && doc.sound.level != null ? doc.sound.level : 1,
+        aria: "record gain", tall: true, fmt: (v) => "×" + v,
+        set: (v) => { doc.sound = doc.sound || {}; doc.sound.level = v;
+                      ctx.changed(); } })));
     }
+    // THE ONE MEASURED METER ON THE BOARD — the master tap the engine already
+    // carries (audio/live.js rmsNow, the crackle monitor's own signal), green
+    // because green is MEASURED and nothing else on this page may wear it.
+    {
+      const wellWrap = el("span", null, "nu-vs nu-vs-tall");
+      const well = el("span", null, "nu-meterwell");
+      well.dataset.live = "meter";
+      const bar = el("i", null, "nu-meterbar");
+      well.append(bar);
+      well.title = "measured: the engine's master RMS (audio/live.js rmsNow)";
+      const wellOut = el("output", "", "nu-vs-val");
+      wellOut.dataset.live = "meter";   // the clock writes it, so it says so
+      wellWrap.append(well, wellOut);
+      masterMeter = { bar, out: wellOut };
+      r.append(col("meter", wellWrap, "nu-metercol"));
+    }
+    r.append(col("listening", listening()));
+    p.append(r);
+    /* the record's own character — the one multiple-selection control
+       (sound.fx, every seated voice; kept from the previous board: it is a
+       RECORD fact, which is board stuff by Paul's own 2026-08-26 division,
+       and the 2026-08-27 sentence adds per-voice slots beside it rather than
+       retiring it) */
+    {
+      const rec = DD().boxFxOf(doc);
+      const wrap = el("div", null, "nu-rec");
+      wrap.append(el("p", "…and what the whole record is dipped in — every " +
+        "seated voice at once.", "nu-hint"));
+      sheet(wrap, {
+        key: "master.fx", label: "character",
+        multi: true, max: MAX_FX,
+        maxWhy: "three is the limit on the record's chain — the fourth was refused",
+        options: Object.keys(FX).map((k) => {
+          const on = rec.includes(k);
+          if (!on && rec.length >= MAX_FX)
+            return { value: k, label: FXLABEL[k] || k, disabled: true,
+                     why: "three is the limit on the record's chain" };
+          return { value: k, label: FXLABEL[k] || k };
+        }),
+        value: rec.map(String),
+        set: (list) => { DD().writeBoxFx(doc, list); ctx.changed(); },
+      });
+      wrap.append(el("p", "hold ⌘ (or Ctrl) to pick a second and a third — a" +
+        " plain tap replaces the whole selection, which is what a <select" +
+        " multiple> does.", "nu-hint"));
+      p.append(wrap);
+    }
+    p.append(el("p", "the bar's volume slider is the room, not the record —" +
+      " unchanged, unsaved", "nu-goes"));
+    rack.append(p);
   }
-  // WHERE EACH STRIP GOES, PRINTED. This row and the channel board's twin are
-  // the whole of "establish what routing actually exists": a channel's dry path
-  // and its three sends, each bus's destination, and the main's. It is data
-  // from audio/desk.js (`deskBusFeed`'s `to`) for the buses, so the page and
-  // the model cannot disagree about a wire.
-  B.strip("goes to", (col, td) => {
-    if (col.kind === "bus") {
-      const f = feeds[col.key];
-      // A GROUP PRINTS THE WHOLE WALK AND A RETURN PRINTS ITS DESTINATION, and
-      // both come off deskBusFeed rather than out of this file. `chain` is the
-      // route AFTER the refusals, so a group whose aim closes a loop prints the
-      // fallback it actually takes and says that it fell back — never the aim
-      // that was asked for, because that one is not on the tape.
-      td.append(el("small", f.group ? f.chain.join(" → ") : f.to));
-      if (f.group && f.cycle) {
-        const w = el("small", "the aim you set closes a loop — this is the"
-          + " fallback"); w.className = "nu-why"; td.append(w);
-      }
-      return;
-    }
-    td.append(el("small", "the speakers"));
-  });
-  B.key();
-  host.append(B.pane);
+  host.append(rack);
 
-  /* ---- THE RECORD'S OWN CHARACTER, AND IT IS NOT A STRIP CONTROL ---------
-     (Paul, 2026-08-26: "Don't let me add effects to instruments. That's bus and
-     board stuff.")
-
-     THAT SENTENCE HAS TWO HALVES AND THE SECOND IS AN ADDRESS. The chip came
-     off the instruments; it needed somewhere to be. `sound.fx` is the
-     record-wide chain — audio/desk.js sectionOf reads `S.fx` and gives it to
-     every SEATED voice, ui/eight.js:379 already copies `boxFxOf(DOC)` onto
-     every box, and desk-doc.js has carried `writeBoxFx` since the day it was
-     written WITH NO CALLER. The wire was there and the surface was missing,
-     which is the exact shape desk-doc.js's own header describes.
-
-     AND IT IS NOT IN THE MAIN'S CELL, WHICH IS WHERE IT WAS FIRST PUT AND
-     MEASURED. A `<select multiple>` of eleven chips is 8 rows tall, and inside
-     the `its own gear` cell it took that row from 340px to 653px — a table row
-     is as tall as its tallest cell, so bus 3's one menu sat under 590px of
-     white. That is the 2026-08-25 measurement exactly ("the main's cell was
-     489px … bus 1's cell — one menu, 62px — sat under 427px of white"), which
-     is the emptiness Paul asked about and the reason the boards were split at
-     all. Reintroducing it to square a grid would be the thing this file
-     refuses.
-
-     SO IT SITS UNDER THE BOARD, WITH THE OTHER RECORD-LEVEL SENTENCES — the
-     flow paragraph, the routing note, the edge list — because that is what it
-     IS. A strip control is one strip's fact; this one reaches every seated
-     voice at once, and the band under the board is where the page already
-     keeps what is true of the whole record. Keep like with like.
-
-     IT IS THE PAGE'S ONE MULTIPLE-SELECTION CONTROL (Paul, 2026-08-24:
-     "Wherever we allow multiple selections use a standard multiselect form
-     element please"). `sheet()` with `multi: true` routes to ui/sheets.js's
-     `<select multiple>`; the cap is MAX_FX and it is said TWICE, for the reason
-     the per-voice chip's note gave — a ctrl-click can hand a <select multiple>
-     a fourth selection an unticked checkbox never could, and quietly keeping
-     the first three would be a lie about what the record now says.
-     test/selects.js and test/sheets.js both name the OLD key `eng.fx`; one line
-     each, recipe `multiselect-moved-to-the-main-strip.md`. */
+  /* ================= SECTION AUTOMATION · THE WORD GRID ================= */
+  // one-board §III, binding: "The grid is where you set — six words per voice
+  // per section, saved with the song. Sections run DOWN; the row in clock red
+  // is sounding. A word is a trim on the strip's fader for that section."
+  // Stored at voice.desk.trim[<secId>] (fields.js TRIMS), applied per box at
+  // push time (ui/eight.js) through the exact wire the fader already proved
+  // on rendered audio (test/tape-reach R1). Tap a cell to cycle its word.
+  // THE SIX WORDS ARE fields.js DATA, NEVER TYPED HERE: the cycle is "" (as
+  // mixed, the absent spelling) plus the TRIMS keys in the table's own order —
+  // a word added or renamed there is on the grid by existing, and a list typed
+  // here would be a second owner of the vocabulary.
+  const CYCLE = ["", ...Object.keys(NuFields.TRIMS)];
+  const WSHOW = (w) => (w === "" ? "—" : (NuFields.TRIMLABEL[w] || w));
   {
-    const rec = DD().boxFxOf(doc);
-    const wrap = el("div"); wrap.className = "nu-rec";
-    const h = el("p", "…and what the whole record is dipped in. This chain is"
-      + " the RECORD's — audio/desk.js gives it to every seated voice — which is"
-      + " why it is here and not on an instrument.");
-    h.className = "nu-hint";
-    wrap.append(h);
-    sheet(wrap, {
-      key: "master.fx", label: "character",
-      multi: true, max: MAX_FX,
-      maxWhy: "three is the limit on the record's chain — the fourth was refused",
-      options: Object.keys(FX).map((k) => {
-        const on = rec.includes(k);
-        if (!on && rec.length >= MAX_FX)
-          return { value: k, label: FXLABEL[k] || k, disabled: true,
-                   why: "three is the limit on the record's chain" };
-        return { value: k, label: FXLABEL[k] || k };
-      }),
-      value: rec.map(String),
-      set: (list) => { DD().writeBoxFx(doc, list); ctx.changed(); },
+    const wrap = el("div", null, "nu-autopanel");
+    wrap.append(el("p", "section automation · a word is a trim on the strip's" +
+      " fader for that section · sections run down · tap a cell to cycle",
+      "nu-rowlab"));
+    const pane = el("div", null, "nu-pane");
+    pane.tabIndex = 0;
+    // the keepPanes key (ui/eight.js, 2026-08-25): the grid is one pane and
+    // its sideways scroll must survive the redraw every cell tap causes.
+    pane.dataset.pane = "trimgrid";
+    const t = el("table");
+    t.id = "trimgrid";
+    t.className = "nu-trims";
+    // the playhead's row mark (`tr.now`, paint() below) walks this table once
+    // a beat, so the table declares itself to the clock the way the meters do
+    // (dataset.live = "meter" above) — the board sits outside #app, where the
+    // transport feed is free to write, but a surface the clock writes on
+    // declares itself rather than relying on where it happens to be mounted.
+    t.dataset.live = "trimrow";
+    const thead = el("thead"), hr = el("tr");
+    hr.append(el("th", "section"));
+    for (const c of chans) hr.append(el("th", c.voice.name));
+    thead.append(hr); t.append(thead);
+    const tbody = el("tbody");
+    doc.form.sections.forEach((s2, si) => {
+      const tr = el("tr");
+      tr.dataset.sec = String(si);
+      const th = el("th", s2.id);
+      th.append(el("small", " " + s2.bars + " bars"));
+      tr.append(th);
+      for (const c of chans) {
+        const td = el("td");
+        const cur = (deskOf(c.voice).trim || {})[s2.id] || "";
+        const b = el("button", WSHOW(cur), "nu-trimbtn w-" + (cur || "mid"));
+        b.type = "button";
+        b.dataset.k = "t|" + c.voice.name + "|" + s2.id;
+        b.setAttribute("aria-label", c.voice.name + " in " + s2.id + ": " +
+          (cur === "" ? "as mixed" : cur));
+        b.addEventListener("click", () => {
+          const now = (deskOf(c.voice).trim || {})[s2.id] || "";
+          const next = CYCLE[(CYCLE.indexOf(now) + 1) % CYCLE.length];
+          const map = { ...(deskOf(c.voice).trim || {}) };
+          if (next === "") delete map[s2.id]; else map[s2.id] = next;
+          setDesk(ctx, c.voice, "trim", Object.keys(map).length ? map : null);
+        });
+        td.append(b);
+        tr.append(td);
+      }
+      tbody.append(tr);
     });
-    // THE SAME SENTENCE THE PER-VOICE CHIP CARRIED, AND FOR THE SAME MEASURED
-    // REASON (the `leslie` recipe, 2026-08-25): a plain tap on an option
-    // REPLACES the whole selection, so on a desktop pointer a second chip is
-    // unreachable without ctrl/cmd and nothing on the page said so.
-    const how = el("p", "hold ⌘ (or Ctrl) to pick a second and a third — a plain"
-      + " tap replaces the whole selection, which is what a <select multiple>"
-      + " does.");
-    how.className = "nu-hint";
-    wrap.append(how);
+    t.append(tbody);
+    pane.append(t);
+    wrap.append(pane);
+    wrap.append(el("p", "vocabulary: out · hush · back · — (as mixed) · fwd ·" +
+      " lift — fields.js TRIMS, in dB on the fader; `out` is the cut. Absent" +
+      " is as mixed, which is today, byte for byte.", "nu-hint"));
     host.append(wrap);
   }
 
-  // THE ONE SENTENCE THE ROUTING OWES THE READER, once, under the second board.
-  // A bus does not send to another bus and there is no knob for it — fields.js
-  // took the two cross-sends off on 2026-08-24 because the WebAudio rack they
-  // were written against is gone and the parent's bus graph takes no edge.
-  // Saying so is what stops the next round from adding one that draws and does
-  // nothing.
-  const note = el("p", "a channel sends to all four buses. Bus 1 and bus 2 are"
-    + " the engine's own; bus 3 and bus 4 are groups, and where a group lands is"
-    + " the knob in its strip. Bus 1 returns to the main.");
-  note.className = "nu-hint";
-  host.append(note);
-
-  /* ---- EVERY EDGE ON THIS DESK, IN ONE LIST, WHETHER OR NOT IT HAS A KNOB.
-     This replaces a single sentence that read: "No bus sends to another bus —
-     the parent's bus graph takes no edge (fields.js, 2026-08-24), so there is
-     no knob for it rather than a knob that does nothing." It was the honest
-     answer to the question as it was then asked, and it turned out to be wrong
-     on the facts: fx_bus.dsp:221 has FOUR bus-to-bus terms in it and one of
-     them has been under this page's hand the whole time (audio/desk.js
-     MAIN_TO_BUS1 — it is the master's `space`).
-
-     THE LIST IS DATA FROM audio/desk.js, not sentences typed here, for the
-     reason BUS_REACH's own note gives: a board that types its own excuse can
-     drift from the engine that owes it. A knob that exists is named with the
-     control that owns it; an edge with no knob says why in the engine's words.
-     Nothing here draws a second control for a fact that already has one. */
-  const edges = el("ul"); edges.className = "nu-hint";
+  /* ---- the routing and refusal sentences, once, under the rack ---------- */
+  // A GROUP HAS NO PLATE ANY MORE, and the sentence saying so is the reversal
+  // written down: bus 3 and bus 4 (2026-08-26's groups) left the surface on
+  // 2026-08-27 when Paul named the series — "one bus for genre specific
+  // effects, into a delay bus, into reverb, into main" — and the groups are
+  // not in the line. Their sends and aims still LOAD and still SOUND
+  // (fields.js busRoute, audio/desk.js feedSplit — an old save is untouched);
+  // there is simply no knob for them here, because a knob must point at a
+  // stage the board draws.
+  const edges = el("ul", null, "nu-hint");
   edges.append(el("li", MAIN_TO_BUS1.from + " → " + MAIN_TO_BUS1.to +
     ": set it with the main strip's `" + MAIN_TO_BUS1.knob + "` above — " +
     MAIN_TO_BUS1.why));
-  for (const b of BUS_FIELDS) {
-    const f = feeds[b.bus];
-    if (!f.group) continue;
-    edges.append(el("li", f.chain.join(" → ") + ": " +
-      (f.cycle ? "the aim set on this group closes a loop, so it falls back to"
-        + " bus 1 — the route you asked for is not on the tape and is refused"
-        + " rather than clamped" : "set it in bus " +
-        (BUS_FIELDS.indexOf(b) + 1) + "'s strip above")));
-  }
   for (const e of FIXED_EDGES)
     edges.append(el("li", e.from + " → " + e.to + ": " + e.why));
+  edges.append(el("li", "bus 3 and bus 4 (the groups of 2026-08-26) keep " +
+    "their saved sends and aims in the record and in the engine " +
+    "(fields.js busRoute), and draw no plate here: the 2026-08-27 series — " +
+    "genre → delay → reverb → main — is the rack, on Paul's word."));
   host.append(edges);
-  // ...AND EVERY REFUSAL'S WHOLE SENTENCE, ONCE, HERE. The cells above carry a
-  // short marker because a 124px column cannot hold ten lines without setting
-  // the fader row 200px tall (measured), and a marker on its own would be the
-  // silent grey this file exists to prevent. So the long form is printed in one
-  // place a reader can get to without a hover — the same answer ui/selects.js
-  // reached for a menu in a <td> — and it stays in `data-why` and `title` on
-  // each control for the gate and the screen reader.
-  const refusals = el("ul"); refusals.className = "nu-hint";
-  const says = [];
-  for (const b of BUS_FIELDS) if (feeds[b.bus].why) says.push(feeds[b.bus].why);
-  if (MASTER_FIELDS.some((f) => HOMELESS[f.key]))
-    says.push(MASTER_FIELDS.filter((f) => HOMELESS[f.key]).map((f) => f.label)
-      .join(", ") + ": " + MASTER_WHY);
-  for (const w of says) refusals.append(el("li", w));
-  if (says.length) host.append(refusals);
+  const refusals = el("ul", null, "nu-hint nu-refusals");
+  for (const w of [GENRE_WHY_LONG, MAINSEND_WHY, BLEED_WHY_LONG, METER_WHY,
+                   STEREO_WHY, SWEEP_WET_WHY, MASTER_WHY])
+    refusals.append(el("li", w));
+  host.append(refusals);
 
+  /* ---- the paint, once a beat off the page's own on("pos") -------------- */
   const paint = () => {
     const s = atBox();
-    // ONE deskBusFeed PER PAINT, not one per bus meter: paint() runs from the
-    // page's on("pos") handler once a beat and the walk sums every channel's
-    // sends, so three calls a beat is three times the work for one answer.
-    const bf = deskBusFeed(s, MASTER, BUSES);
-    for (const x of meters) {
-      if (x.bus) {                          // a bus meter: what leaves it
-        const f = bf[x.bus];
-        x.m.value = gainToF(f.out);
-        x.m.title = "leaving this bus toward " + f.to + ": " +
-          Math.round(f.feed * 100) + "% in";
-        continue;
-      }
+    for (const x of drives) {
       const g = liveGain(s, x.key);
-      x.m.value = gainToF(g);
-      x.m.title = "driving this channel: " + fmtDb(20 * Math.log10(Math.max(1e-4, g)));
+      x.el.textContent = "model " + fmtDb(20 * Math.log10(Math.max(1e-4, g))) + " dB";
     }
-    for (const x of outs) x.o.textContent = fmtDb(faderDb(deskOf(x.voice).fader));
+    const bf = deskBusFeed(s, MASTER, BUSES);
+    for (const x of busSays) {
+      const f = bf[x.bus];
+      x.el.textContent = "model · in " + f.feed.toFixed(2) +
+        (f.ret != null ? " · return " + f.ret : "") + " · out " + f.out.toFixed(2);
+    }
+    if (masterMeter) {
+      const r = rmsNow();
+      const f = Math.max(0, Math.min(1, gainToF(r * 4)));
+      masterMeter.bar.style.height = Math.round(f * 100) + "%";
+      masterMeter.out.textContent = playing ? (r > 0 ? "live" : "…") : "stopped";
+    }
+    const grid = host.querySelector("#trimgrid");
+    if (grid) {
+      const now = playing && playingSec >= 0 ? playingSec : -1;
+      for (const tr of grid.querySelectorAll("tbody tr"))
+        tr.classList.toggle("now", +tr.dataset.sec === now);
+    }
   };
   paint();
   const handle = { paint };
@@ -1257,200 +1035,32 @@ export function mount(parent, ctx) {
   return handle;
 }
 
-// the free function the page's on("pos") handler calls. It paints whatever
-// board is mounted right now, so eight.js keeps no handle and a board that has
-// been rebuilt under it cannot be repainted by mistake.
+// the free function the page's on("pos") handler calls.
 export const paintBoard = () => { if (CURRENT) CURRENT.paint(); };
 
-/* ---------- a bus's fader, which is its send to the main ------------------ */
-// THE ANSWER TO "from the buses to the master mix too", one bus at a time, and
-// the model decides — audio/desk.js `deskBusFeed` says whether a bus's return
-// can be moved and, when it cannot, hands over the sentence saying why. This
-// file never decides that; if it did, the board and the engine would each have
-// an opinion about a wire.
-function busFader(td, col, f, doc, ctx, meters) {
-  if (!f.movable) {
-    // BUS 2 WAS A FADER THE PAGE COULD NOT REACH, and this branch drew it "AT
-    // ITS REAL VALUE and refused" — a disabled range pinned at 1 with the
-    // sentence "fx_bus carries `dgain` and the renderers push it, but fxParams
-    // emits the literal 1. THE COST OF FIXING IT IS ONE LINE IN THE PARENT
-    // (recipe `bus-2-return-needs-one-line-in-the-parent.md`) ... STILL NOT
-    // TAKEN: it is an edit to the parent and a re-run of its parity gates,
-    // which is not this page's to spend." The line was taken 2026-08-27
-    // (FUTURE.md Phase 0): fxParams reads `state.delay.gain`, BUSROWS gives
-    // echo a `ret` knob (fields.js ERETURNS), so deskBusFeed answers
-    // `movable: true` for bus 2 and it falls through to the real knob below —
-    // the refused slider is gone because the refusal is gone.
-    //
-    // A GROUP IS NOT A FADER AT ALL, so nothing is drawn for it and the
-    // sentence stands alone: inventing a slider for a thing that is not a
-    // return would be the lie this whole file is about. (It said "BUS 3"; there
-    // are two groups now and the same sentence covers both, which is why
-    // deskBusFeed answers `group` rather than this file testing a bus name.)
-    const w = el("small", f.short || f.why); w.className = "nu-why";
-    w.title = f.why;
-    td.append(w);
-  } else {
-    const spec = BUS_FIELDS.find((b) => b.bus === col.key).knobs
-      .find((k) => k.key === "ret");
-    const cur = (doc.sound && doc.sound.buses && doc.sound.buses[col.key]
-      && doc.sound.buses[col.key].ret) || "";
-    // A SCALE, SO A POT — the same test `knob()` carries. RETURNS runs
-    // 0 (off) .. 0.625 (huge), where `huge` is the saturation point of
-    // rgain = clamp(reverb*3.2, 0, 2) and there is nothing above it
-    // (fields.js). The blank detent is 0 because audio/plan.js hands toEngine
-    // `reverb: 0`, so a record that never opened the rack is genuinely shut.
-    // "default", NOT "shut", and it is the `place`/"centre" trap one bus down:
-    // RETURNLABEL already spells `off` as "shut", so labelling the blank detent
-    // the same word put TWO stops reading "shut" side by side (measured on the
-    // rendered page: shut · shut · a little · a room · a hall · as wet as it
-    // goes). One word for absence everywhere on this board, and its POSITION —
-    // first, beside `off`, because both are 0 — is what says the record has not
-    // opened the return. The word here read "as it stands" until 2026-08-26,
-    // when Paul collapsed this page's two spellings of absence into one: *"'as
-    // it stands' and 'nothing set' are too much. get rid of them -- just use
-    // 'default' for 'nothing set'"*. Which word it is was never the argument;
-    // that it is not `shut` is.
-    td.append(knob("bus|" + col.key + "|ret", "ret", spec.table, spec.labels,
-      cur, "bus " + col.n + " return",
-      (v) => { DD().writeBus(doc, col.key, "ret", v); ctx.changed(); },
-      "default"));
-  }
-  const m = document.createElement("meter");
-  m.min = 0; m.max = 1;
-  m.title = "leaving this bus toward " + f.to;
-  td.append(m);
-  meters.push({ m, bus: col.key });
-}
-
-/* ---------- the listening level, on the strip it belongs to --------------- */
-// PAUL, 2026-08-25: "the 'listening' slider doesn't make much sense."
-//
-// IT DID NOT, AND HERE IS EXACTLY WHAT IT WAS DOING. It was a second view of
-// the transport bar's `volume` fader — the comment above it said so, and cited
-// main:mixtbl.js:104's "two views over ONE store, never two levels" — but the
-// two views were on DIFFERENT SCALES. `#vol` in index.html:68 is
-// `min=0 max=100 step=1`; this one was written `min=0 max=1 step=0.01`, and
-// the store is the 0..100 one (ui/state.js readVol clamps to 0..100 and
-// audio/live.js:573 sends `vol / 100` to the engine). Measured on the rendered
-// page: the store boots at 80, this slider drew `value="80"` against `max="1"`
-// so the browser clamped it and it sat hard right looking like "full"; one
-// touch anywhere on it wrote 0.5, which is `masterVol` 0.005 — 44 dB below
-// where the record had been — and localStorage took it, so the page came back
-// near-silent on the next boot and the only way out was the OTHER fader.
-//
-// SO IT IS FIXED RATHER THAN REMOVED, because the control itself is right and
-// it now has somewhere to be: it is the MAIN STRIP'S FADER. A console's master
-// strip carries the monitor level, that is what this is, and the row it sits in
-// is the row every other strip answers with its own fader. Same store, same
-// scale as the bar's, and the sentence under it says which of the two things on
-// this page it is — because the main strip's OTHER controls (drive, glue, tape,
-// space) are the record and this one is the room.
+/* ---------- the listening level, on the main strip ------------------------ */
+// Unchanged in meaning since the 2026-08-25 fix (its history is in git): the
+// MAIN strip carries the monitor level — same 0..100 store and scale as the
+// transport bar's `#vol` (ui/state.js readVol; audio/live.js sends vol/100),
+// two views over ONE store. The sentence under it says which of the two
+// things on this strip it is: the record's controls are the record; this one
+// is the room.
 function listening() {
-  const wrap = el("span");
+  const wrap = el("span", null, "nu-vs nu-vs-tall");
   const r = document.createElement("input");
   r.type = "range"; r.min = "0"; r.max = "100"; r.step = "1";
   r.value = String(vol); r.id = "vol2"; r.dataset.k = "m|listening";
+  r.className = "nu-vs-in";
   r.setAttribute("aria-label", "listening level");
-  const o = el("output", Math.round(vol) + "%");
+  const o = el("output", Math.round(vol) + "%", "nu-vs-val");
   const say = () => { o.textContent = Math.round(+r.value) + "%";
                       r.setAttribute("aria-valuetext", o.textContent); };
   say();
   r.addEventListener("input", () => { say(); setVol(+r.value); commit("transport"); });
-  const w = el("small", "the room, not the record — not saved with the song");
-  w.className = "nu-hint";
-  wrap.append(r, o, w);
-  return wrap;
-}
-
-/* ---------- one detented knob ----------------------------------------- */
-// REVERSED, 2026-08-24, and the old comment is rewritten rather than deleted
-// because it is the record of why the menu was there. It read: "A <select> and
-// not a sheet: on the BOARD a control has to fit a table cell with fifteen
-// others beside it, and a sheet is a surface. The sheets are on the engineer's
-// own page, where there is room to read the shape of the possible."
-//
-// HALF OF THAT STANDS AND HALF OF IT WAS THE BUG. A sheet still does not fit a
-// 92px column (nu.css:265) and the per-voice sheets still live in the voice's
-// own tab. What was wrong is the conclusion that the only other answer is a
-// menu. THE TEST IS WHETHER THE TABLE IS A SCALE OR A SET, and fields.js
-// already answers it — every entry a finite number, or not:
-//   SCALES, so pots: SENDS 0..0.9 · LEVELS 0.4..1.35 · PANS −0.7..0.7 ·
-//     RETURNS 0..0.625. All four are ONE quantity with words on its stops, and
-//     all four are on a strip.
-//   SETS, so menus: BUSNAMES (twelve names in no order) · REVERBS (five
-//     different wasm modules) · GLUES / TAPES / SPACES / CEILINGS, whose
-//     entries are OBJECTS of three to five parameters each — there is no single
-//     number for a slider to run along, and inventing an order would be a
-//     picture that lies.
-// (Paul, 2026-08-25: "level, place, delay, and room are obvious sliders" — and
-// the standing rule the same message carries: "A slider is for a CONTINUOUS or
-// ORDERED quantity; do not turn a genuine either/or into a slider because it
-// fits the board better.")
-//
-// `<input type=range step=1>` over the words IN VALUE ORDER, with the word
-// itself printed under it. Numeric tables ONLY: a slider over an unordered set
-// would be a lie about the shape of the thing, so a non-numeric entry is
-// dropped and said out loud rather than drawn at some arbitrary index.
-const ZERO_STRIP = NuFields.resolvePartMix({});
-// WHICH FIELD RESOLVES TO WHICH NUMBER — fields.js:838's own mapping, quoted
-// rather than re-derived ("the field is `echo`, the bus is `del`"). `ret` is
-// not a part field and is deliberately absent: a bus's return defaults to 0
-// because audio/plan.js hands toEngine `reverb: 0`, which is the same 0 the
-// lookup below falls through to.
-// `aux` joined it with bus 4 (2026-08-26). resolvePartMix answers `aux` under
-// its own name, like `room`, because only `echo`/`del` is a rename — and 0 is
-// where its blank detent belongs for the reason the note below gives, so the
-// lookup would have fallen through to the right answer anyway. It is written
-// down because "it happens to be right" is how the next rename goes wrong.
-const RESOLVES_TO = { rev: "rev", echo: "del", room: "room", aux: "aux",
-                      pan: "pan", lvl: "lvl" };
-function knob(k, field, table, labels, cur, aria, set, emptyLabel) {
-  // WHERE THE EMPTY DETENT SITS, read off fields.js rather than typed. A strip
-  // with nothing set resolves to resolvePartMix({}) — 0 for all three sends
-  // ("A PART's default is 0 — the part send is what this chair asks for ON TOP
-  // of the section, so absent must mean 'adds nothing'", fields.js:757) and 0
-  // for pan, which is dead centre. So the blank belongs AT ITS OWN NUMBER'S
-  // PLACE in the run and not at one end: on a send it lands first, beside
-  // `dry`, which is also 0; on `place` it lands in the middle, beside `centre`,
-  // which is also 0. Put it at the left of `place` instead and the slider would
-  // read hard left for a record that is dead centre.
-  const dflt = ZERO_STRIP[RESOLVES_TO[field]] || 0;
-  const d = Object.keys(table)
-    .filter((x) => Number.isFinite(table[x]))
-    .sort((a, b) => table[a] - table[b])
-    .map((x) => ({ v: x, w: (labels && labels[x]) || x, n: table[x] }));
-  if (d.length !== Object.keys(table).length)
-    console.error("engineer: knob(" + field + ") got a table that is not a scale");
-  let i = 0;
-  while (i < d.length && d[i].n < dflt) i++;
-  d.splice(i, 0, { v: "", w: emptyLabel == null ? "default" : emptyLabel,
-                   n: dflt });
-
-  const wrap = el("span");
-  const r = document.createElement("input");
-  r.type = "range"; r.min = "0"; r.max = String(d.length - 1); r.step = "1";
-  // A WORD THE TABLE NO LONGER NAMES READS AS ABSENT rather than as position 0,
-  // which would silently move a loaded record to hard left. Same law as
-  // fields.js resolvePartMix: "words no table names resolve to the default".
-  let at = d.findIndex((x) => x.v === (cur == null ? "" : String(cur)));
-  if (at < 0) at = d.findIndex((x) => x.v === "");
-  r.value = String(at);
-  r.dataset.k = k;
-  r.setAttribute("aria-label", aria);
-  const out = el("output", d[at].w);
-  // A RANGE READS OUT ITS INDEX — "3 of 5" — to a screen reader, which is the
-  // one thing the <select> was better at. `aria-valuetext` is the fix, and it
-  // is kept in step with the printed word by one function, so the eye and the
-  // ear can never be told different things.
-  const say = (n) => { out.textContent = d[n].w;
-                       r.setAttribute("aria-valuetext", d[n].w); };
-  say(at);
-  r.addEventListener("input", () => say(+r.value));
-  // null, not "" — absent is the only spelling of a default and writeDesk
-  // deletes on null (desk-doc.js:154).
-  r.addEventListener("change", () => set(d[+r.value].v || null));
-  wrap.append(r, out);
+  const { track } = vchassis(r, () => (+r.value) / 100);
+  wrap.append(track, o);
+  const w = el("small", "the room, not the record — not saved with the song", "nu-hint");
+  wrap.append(w);
   return wrap;
 }
 

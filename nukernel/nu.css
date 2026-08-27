@@ -1186,7 +1186,10 @@ td > select{ max-inline-size: 9em; }
    words the option says (ui/selects.js `optionText`) rather than in a
    `.nu-why`, because an <option> may contain nothing but text. */
 
-/* THE BOARD (D3) is TWO <table>s, each in its own pane — the channels, then the
+/* THE BOARD (D3) WAS TWO <table>s UNTIL 2026-08-27 — the tombstone under this
+   paragraph has the turn; the paragraph itself is kept as the record of the
+   era it describes, in its own words. It read: the board is two tables, each
+   in its own pane — the channels, then the
    returns and the main — one column per strip and one row per control, so
    "a horizontally scrolling row of channel strips" is the pane's scroll and a
    fixed column width, not a flex row. Both tables are `.nu-board` and every
@@ -1211,93 +1214,190 @@ td > select{ max-inline-size: 9em; }
    now LOAD-BEARING for the channel strip rather than incidental — the board
    measured 557px -> 260px at a 390px viewport when the menus left, because the
    selects were what forced the columns past the declared 92px. */
-.nu-board th, .nu-board td{ text-align: center; vertical-align: top; }
-.nu-board tbody th, .nu-board thead th:first-child{
-  position: sticky; left: 0; z-index: 5; background: var(--paper);
-  text-align: left; border-inline-end: 2px solid var(--rule-strong); }
-.nu-ch{ inline-size: 92px; min-inline-size: 92px; }
-.nu-ch span{ display: block; }
-.nu-ch small{ display: block; font-size: .72rem; opacity: .7; font-weight: 400; }
-.nu-board input[type=range]{ inline-size: 100%; min-inline-size: 0; }
-.nu-board output{ display: block; font-size: .8rem; }
-.nu-board meter{ display: block; inline-size: 100%; block-size: 8px; }
-.nu-eng th{ inline-size: 7em; }
-.nu-eng input[type=range]{ inline-size: 9em; min-inline-size: 0; }
+/* THE TWO TABLES RETIRED 2026-08-27 — the one-board round (ideal/
+   one-board.html, binding; Paul: "Vertical space is cheap. Don't use knobs.
+   Have simple vertical sliders stacked and labeled"). The board is TALL
+   STRIPS now, side by side at 1280 and stacked at 390, and the rules for the
+   old `.nu-board` grid (92px channel columns, 124px bus columns, the
+   nu-edge silkscreen, the sticky row-label column) went with the tables they
+   dressed. Every measurement in the paragraphs above stays true OF THE THING
+   IT MEASURED; the thing is gone. `.nu-eng` survives as the read-only mirror
+   inside a voice's sheet. */
+.nu-eng th{ inline-size: 7em; text-align: left; }
+.nu-mirror td{ padding-inline: .4em; }
+.nu-mirror td.is-dflt{ color: var(--dim); }
 
-/* ...AND THE REST OF THE DESK, WHICH IS A SECOND TABLE AFTER ALL (2026-08-25).
-   This block was headed "...AND THE REST OF THE DESK IN THE SAME TABLE" and
-   said the board "grew four more columns (bus 1, bus 2, bus 3, main) rather
-   than a second table under it". That was the answer to Paul's "master and the
-   buses should also be arranged like the mixing board no?" and it is REVERSED
-   by his next sentence — "Do you want to put the bus and main into their own
-   board so it's not all empty" — and by the count under it: 99 of the one
-   table's 177 cells were empty. The buses and the main are still ARRANGED like
-   a mixing board, which is what he asked for; they are just a board of their
-   own. These rules did not change with it, which is the useful part: a bus
-   column is a bus column in whichever table it sits in.
+/* ===== THE ONE BOARD (2026-08-27) ======================================
+   Down a strip reads in signal order; the page grows tall, never wide. */
+.nu-strips{ display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: .8em; align-items: start; margin-block: .8em; }
+.nu-strip{ background: var(--panel); border: var(--bw, 3px) solid var(--ink);
+  border-radius: 6px; box-shadow: 4px 4px 0 var(--ink);
+  padding: .5em; display: grid; gap: .6em; align-content: start; min-width: 0; }
+.nu-strip.is-off{ opacity: .55; }
+.nu-sname{ display: block; font-size: 1.15rem; font-weight: 900;
+  text-transform: uppercase; line-height: 1; }
+.nu-strip header small{ display: block; color: var(--dim); font-size: .72rem; }
+.nu-srow{ border-block-start: var(--bw, 3px) solid var(--ink); padding-block-start: .5em;
+  display: grid; gap: .4em; }
+.nu-rowlab{ font: 700 .68rem/1 var(--mono, monospace); letter-spacing: .1em;
+  text-transform: uppercase; margin: 0; }
 
-   A BUS COLUMN IS WIDER THAN A CHANNEL COLUMN BECAUSE IT HOLDS A MENU. A
-   channel strip is pots and checkboxes and fits the declared 92px; a bus and
-   the main carry the settled single choices (what the bus is called, which
-   reverb module it is, which compressor `glue` means), and a <select> squeezed
-   to 92px shows about four characters of its word. 124px is the measured floor
-   for the longest of them; the pane scrolls sideways for the rest, which is
-   what the pane has always been for.
+/* ---- one insert slot ---- */
+.nu-slot{ background: var(--well); border: 2px solid var(--ink); border-radius: 3px;
+  padding: .35em; display: grid; gap: .35em; }
+.nu-slot.is-empty{ border-style: dashed; background: transparent; }
+.nu-slot.is-off{ opacity: .6; }
+.nu-slotrow{ display: flex; gap: .35em; align-items: center; }
+.nu-slotn{ font: 900 .75rem var(--mono, monospace); color: #fff; background: var(--ink);
+  inline-size: 22px; block-size: 22px; border-radius: 3px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center; }
+.nu-slot.is-empty .nu-slotn{ background: var(--faint); }
+.nu-slotrow select{ flex: 1 1 auto; min-inline-size: 0; max-inline-size: 100%; }
+.nu-slotbody{ display: flex; gap: .3em; justify-content: space-between;
+  align-items: end; flex-wrap: wrap; }
 
-   THE SELECT FILLS ITS COLUMN AND NEVER WIDENS IT. `td > select{ max-inline-size:
-   9em }` above is the page-wide cap and it is a MAXIMUM, not a width — an
-   intrinsically wide menu inside a table cell still pushes the column out and
-   takes the whole board with it. Here the width is the column's, both ways. */
-.nu-bus{ inline-size: 124px; min-inline-size: 124px; }
-/* THE MAIN IS THE WIDE STRIP, AND A MEASUREMENT MADE IT ONE. It was 124px like
-   a bus until 2026-08-25. With the master's seven menus stacked in one cell
-   (the `its own gear` row — ui/engineer.js VIEW 2, "a row only ONE column can
-   answer is a label, not a comparison") that cell was 489px tall, the row was
-   548px because a row is as tall as its tallest cell, and bus 1's single menu
-   sat under 427px of white — the emptiness Paul asked about, moved rather than
-   removed. At 250px the same seven flow two-up and the cell is 248px. The pane
-   scrolls for the extra width, which is what the pane has always been for. */
-.nu-main{ inline-size: 250px; min-inline-size: 250px; }
-/* ONE STRIP'S OWN CONTROLS, FLOWING TO THE WIDTH OF THE STRIP. `auto-fill` and
-   not a fixed two, because the number of columns is the strip's business and
-   `.nu-bus` at 124px must stay one-up: 108px is the narrowest a labelled menu
-   reads at (measured against `glue`'s "wow & flutter"). `align-content: start`
-   is what keeps a short cell's controls at the top of a tall row instead of
-   floating in the middle of it. */
+/* ---- the vertical slider: replaces every knob (the touch law) ----
+   The TRACK owns the gesture: touch-action is declared on the control and
+   only the control, the pointer is captured on pointerdown, and the hidden
+   native input underneath is the keyboard/screen-reader channel. */
+.nu-vcol{ display: grid; gap: .25em; justify-items: center; min-width: 0; }
+.nu-vs{ display: inline-grid; gap: .25em; justify-items: center; }
+.nu-vs-lab{ font: 700 .62rem/1.2 var(--mono, monospace); letter-spacing: .08em;
+  text-transform: uppercase; text-align: center; }
+.nu-vs-track{ position: relative; inline-size: 20px; block-size: 96px;
+  background: var(--well); border: 2px solid var(--ink); border-radius: 4px;
+  margin-inline: 12px; touch-action: none; cursor: grab; display: block; }
+.nu-vs-tall .nu-vs-track{ block-size: 180px; }
+.nu-vs-track::before{ content: ""; position: absolute;
+  inset: -10px -14px; /* the touch halo: 48px wide, full travel tall */ }
+.nu-vs-fill{ position: absolute; left: 0; right: 0; bottom: 0;
+  block-size: calc(10px + (100% - 20px) * var(--v, 0)); background: var(--hand); }
+.nu-vs-thumb{ position: absolute; left: 50%; bottom: calc((100% - 22px) * var(--v, 0));
+  transform: translateX(-50%); inline-size: 38px; block-size: 22px;
+  background: var(--panel); border: 2px solid var(--ink); border-radius: 4px;
+  box-shadow: 2px 2px 0 var(--ink); }
+.nu-vs-thumb::after{ content: ""; position: absolute; left: 7px; right: 7px;
+  top: 50%; block-size: 2px; margin-top: -1px; background: var(--ink); }
+.nu-vs-in{ position: absolute; top: -10px; bottom: -10px; left: 50%;
+  transform: translateX(-50%); inline-size: 44px; block-size: calc(100% + 20px);
+  margin: 0; opacity: 0; pointer-events: none;
+  writing-mode: vertical-lr; direction: rtl; }
+.nu-vs-track:focus-within{ outline: 3px solid var(--hand); outline-offset: 3px; }
+.nu-vs-val{ font: 600 .7rem var(--mono, monospace); font-variant-numeric: tabular-nums;
+  text-align: center; max-inline-size: 5.5em; }
+.nu-vs.is-off .nu-vs-fill{ background: var(--faint); }
+.nu-vs.is-off .nu-vs-track{ border-color: var(--faint); touch-action: auto;
+  cursor: default; }
+.nu-vs.is-off .nu-vs-thumb{ box-shadow: none; border-color: var(--faint); }
+.nu-vs .nu-why{ max-inline-size: 9em; }
+
+.nu-sends{ display: flex; gap: .2em; justify-content: space-between;
+  flex-wrap: wrap; }
+
+/* ---- pan detents ---- */
+.nu-panrow{ display: flex; gap: .25em; }
+.nu-panbtn{ flex: 1 1 0; min-block-size: 44px; font: 800 .8rem var(--mono, monospace);
+  background: var(--panel); border: 2px solid var(--ink); border-radius: 3px;
+  cursor: pointer; padding: 0; }
+.nu-panbtn:hover{ background: var(--flag-tint); }
+.nu-panbtn[aria-pressed="true"]{ background: var(--hand); color: #fff; }
+.nu-panword{ margin: 0; font: 600 .72rem var(--mono, monospace); }
+.nu-panword.is-dflt{ color: var(--dim); }
+
+/* ---- the fader row ---- */
+.nu-fadwrap{ display: flex; gap: .6em; align-items: flex-end;
+  justify-content: space-between; flex-wrap: wrap; }
+.nu-duo{ display: grid; gap: .35em; align-content: end; }
+.nu-tgl{ min-block-size: 44px; min-inline-size: 72px; font-weight: 800;
+  background: var(--panel); border: 2px solid var(--ink); border-radius: 4px;
+  cursor: pointer; }
+.nu-tgl[aria-pressed="true"]{ background: var(--hand); color: #fff; }
+.nu-drive{ display: block; }
+.nu-goes{ margin: 0; border-block-start: var(--bw, 3px) solid var(--ink);
+  padding-block-start: .35em; font: 600 .7rem var(--mono, monospace);
+  color: var(--dim); }
+.nu-goes b{ color: var(--ink); }
+
+/* ---- the bus rack, in series, top to bottom ---- */
+.nu-rack{ max-inline-size: 780px; display: grid; margin-block: .8em; }
+.nu-plate{ background: var(--panel); border: var(--bw, 3px) solid var(--ink);
+  border-radius: 6px; box-shadow: 4px 4px 0 var(--ink);
+  padding: .7em; display: grid; gap: .6em; }
+.nu-plate.is-off{ opacity: .7; }
+.nu-bushead{ display: flex; flex-wrap: wrap; gap: .4em .7em; align-items: center; }
+.nu-busname{ font: 800 .85rem/1 var(--sans, sans-serif); letter-spacing: .08em;
+  text-transform: uppercase; color: #fff; background: var(--ink);
+  padding: .45em .7em; border-radius: 6px; }
+.nu-busin{ color: var(--dim); font: 600 .72rem var(--mono, monospace); }
+.nu-busrow{ display: flex; flex-wrap: wrap; gap: .8em; align-items: end; }
+.nu-busmodel{ align-self: center; }
+.nu-flow{ display: grid; justify-items: center; gap: .2em; padding-block: .6em; }
+.nu-tri{ inline-size: 0; block-size: 0; border-left: 18px solid transparent;
+  border-right: 18px solid transparent; border-top: 22px solid var(--ink); }
+.nu-flowlab{ font: 700 .68rem var(--mono, monospace); letter-spacing: .08em;
+  text-transform: uppercase; }
+
+/* ---- the one measured meter (green = the engine, measured) ---- */
+.nu-meterwell{ position: relative; display: block; inline-size: 16px;
+  block-size: 180px; background: var(--well); border: 2px solid var(--ink);
+  border-radius: 4px; overflow: hidden; }
+.nu-meterbar{ position: absolute; left: 0; right: 0; bottom: 0; display: block;
+  background: var(--meter); block-size: 0; }
+
+/* ---- section automation: the word grid; time runs down ---- */
+.nu-trims{ border-collapse: separate; border-spacing: 3px; inline-size: 100%; }
+/* the grid declares itself to the clock (data-live="trimrow", engineer.js) but
+   the [data-live] PAINT convention (line ~1629, clock-red TEXT for live
+   readouts) must not bleed over a whole table of set words: here the clock's
+   red is the row mark (`tr.now`, below), and everything said stays ink. */
+table.nu-trims{ color: var(--ink); }
+.nu-trims thead th{ font: 700 .62rem/1.3 var(--mono, monospace);
+  letter-spacing: .06em; text-transform: uppercase; color: var(--dim);
+  text-align: center; }
+.nu-trims tbody th{ font: 700 .62rem/1.3 var(--mono, monospace);
+  letter-spacing: .06em; text-transform: uppercase; text-align: left;
+  padding-inline: .3em; }
+.nu-trims tbody th small{ display: block; color: var(--dim); font-weight: 600; }
+.nu-trims td{ padding: 0; }
+.nu-trimbtn{ inline-size: 100%; min-block-size: 44px; min-inline-size: 56px;
+  border: 2px solid var(--ink); border-radius: 3px;
+  font: 700 .72rem var(--mono, monospace); cursor: pointer; padding: 0; }
+.nu-trims tr.now td .nu-trimbtn{ border-color: var(--clock); border-width: 3px; }
+.nu-trims tr.now th{ background: var(--clock-tint); border-radius: 3px; }
+.w-out{ background: var(--ink); color: #fff; }
+.w-hush{ background: var(--hand); color: #fff; }
+.w-back{ background: var(--hand-tint); }
+.w-mid{ background: var(--panel); color: var(--dim); }
+.w-fwd{ background: var(--flag-tint); }
+.w-lift{ background: var(--flag); font-weight: 800; }
+/* A SET CELL KEEPS ITS WORD'S PAINT UNDER THE POINTER. The global
+   `button:hover` (line 286, flag-tint, specificity 0-1-1) outranks the word
+   classes (0-1-0) — measured 2026-08-27 on a screenshot: hovering `out`
+   put its white text on pale yellow. The flag may warn on the UNSET cell
+   (w-mid keeps the global hover); a cell that already says a word answers
+   the pointer in its own color, one shade harder where the palette has one. */
+.nu-trimbtn.w-out:hover{ background: var(--ink); }
+.nu-trimbtn.w-hush:hover{ background: #152F9E; }
+.nu-trimbtn.w-back:hover{ background: var(--hand-tint); }
+.nu-trimbtn.w-fwd:hover{ background: var(--flag-tint); }
+.nu-trimbtn.w-lift:hover{ background: var(--flag); }
+.nu-refusals{ line-height: 1.35; }
+
+/* THE SECOND TABLE'S RULES RETIRED WITH THE FIRST'S, 2026-08-27 (the
+   one-board round). The 124px bus column, the 250px main, the `.nu-board td`
+   select/label/small dressing and the nu-edge silkscreen all dressed cells of
+   tables that no longer exist; the rack is `.nu-plate`s in series now (rules
+   above). What survives is `.nu-gear` — one strip's own controls flowing to
+   the width of the strip — because the plates stack their settled menus in
+   exactly the shape the old `its own gear` cell did, and 108px is still the
+   narrowest a labelled menu reads at (measured against "wow & flutter"). */
 .nu-gear{ display: grid; align-content: start;
   grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 0 .5em; }
-.nu-bus span, .nu-main span{ display: block; }
-.nu-bus small, .nu-main small{ display: block; font-size: .72rem; opacity: .7;
-  font-weight: 400; }
-/* ...AND IT IS A DESCENDANT SELECTOR AND NOT A CHILD ONE SINCE THE SPLIT. It
-   read `.nu-board td > select`, which was true while every menu on the board
-   was a bare `selectEl` dropped straight into a cell. The rack board's `its own
-   gear` cell stacks each menu in a `<p class="nu-sel"><label>` so it can carry
-   its own word — bus 2's cell is `time`, `repeats`, `tone` and the main's is
-   the seven of the chain, and unlabelled they would be a column of anonymous
-   dropdowns — which put the select two levels down and out of this rule. The
-   page-wide `td > select{ max-inline-size: 9em }` then applied instead and the
-   menus stopped filling their column. */
-.nu-board td select{ inline-size: 100%; max-inline-size: 100%; }
-/* THE LABEL SITS OVER ITS MENU IN A STRIP, WHICH IS `.nu-sel`'S OWN IDIOM
-   ALREADY (`.nu-w{ flex: 1 0 100% }`) — nothing here re-states it. What a
-   124px column does need is less air between controls than a page-width form:
-   the master's seven in one cell at the form's `.5em` margins measured 90px
-   taller than the delay's three beside it for no reading gained. */
-.nu-board td .nu-sel{ margin-block: .25em .45em; }
-.nu-board td .nu-sel > label{ gap: .2em; min-block-size: 0; }
-.nu-board td .nu-sel > label > .nu-w{ font-size: .78rem; font-weight: 600; }
-.nu-board td > small{ display: block; font-size: .78rem; line-height: 1.25;
-  opacity: .8; }
-/* THE LINE A CONSOLE SILKSCREENS between one kind of strip and the next. It
-   used to fall twice — after the channels, and again before the master — and
-   since the split the channels are their own table, so the only kind change
-   left is inside the rack, before the main. The rule is unchanged and stays
-   general: `nu-edge` is stamped wherever `col.kind` changes, so a fourth kind
-   of strip is silkscreened by existing. Marked in the DOM (ui/engineer.js
-   `boardOf`) because :first-of-type cannot see `data-col` and the number of
-   strips is the record's. */
-.nu-board .nu-edge{ border-inline-start: 2px solid var(--rule-strong); }
+.nu-plate .nu-sel{ margin-block: .25em .45em; }
+.nu-plate .nu-sel > label{ gap: .2em; min-block-size: 0; }
+.nu-plate .nu-sel > label > .nu-w{ font-size: .78rem; font-weight: 600; }
+.nu-plate select{ inline-size: 100%; max-inline-size: 100%; }
 /* THE ROW-GROUP HEADING IS GONE, AND ITS RULE IS DELETED RATHER THAN LEFT DEAD.
    It read: "A ROW-GROUP HEADING INSIDE THE TABLE. A bus has no `place` pot and
    the main has no `→ delay` send, so those cells are blank — which is what a
@@ -1354,8 +1454,8 @@ td > select{ max-inline-size: 9em; }
    browser's own 40px indent and it is the LEADING that wants closing up. It is
    a real `<ul>` and not a definition list of `<span>`s for the reason
    everything here is a real element: it has to read with the stylesheet off. */
-.nu-board + ul.nu-hint, .nu-flow ~ ul.nu-hint{ line-height: 1.35; }
-.nu-board + ul.nu-hint > li, .nu-flow ~ ul.nu-hint > li{ margin-block: .35em; }
+.nu-rack ~ ul.nu-hint{ line-height: 1.35; }
+.nu-rack ~ ul.nu-hint > li{ margin-block: .35em; }
 
 /* THE RECORD-LEVEL BAND — the flow sentence, the character chain, the routing
    note and the edge list are all true of the whole record rather than of one

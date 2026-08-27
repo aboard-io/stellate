@@ -469,6 +469,16 @@ function partsOf(sec) {
                  : m.lvl * Math.pow(10, (m.fader + t.db) / 20),
                // both groups carried, so feedSplit above has all four sends
                pan: m.pan, rev: m.rev, del: m.del, room: m.room, aux: m.aux, fx: m.fx,
+               // THE SLOTS' FINISHED CHAIN (2026-08-27 — Paul: "Add per voice
+               // effects, up to three. Each has a wet dry mix and its own
+               // settings"). fields.js fxChainFor resolves the entry's three
+               // seats plus their wet (`fxw<n>` -> the chip's own mix param)
+               // and face knobs (`fxa/fxb<n>`) into the parent's {type,
+               // module, params} recipe dialect; deskUnits hands it through
+               // insertsFor -> state-engine insertChain, which clamps every
+               // knob to the slider the module declares. `fx` above stays the
+               // raw key list for the readers that only ask WHICH chips.
+               fxc: NuFields.fxChainFor(ent),
                eq: mergeEq(t.eq, ent && ent.eq) };
   }
   return out;
@@ -831,8 +841,14 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     // ...and the board's own chips ("make guitar distorted"): the offset
     // layer may carry an fx list per chan, finished through the same
     // insertsFor door as every section chip
+    // THE PART'S CHIPS ARRIVE FINISHED (p.fxc — partsOf above, 2026-08-27),
+    // wet and face knobs already on them; the SECTION's and the offset
+    // layer's chips still come through fxChain at their declared defaults,
+    // because neither carries slot knobs. Same door (insertsFor) for all
+    // three, so a chip and a default insert end up the same shape.
     const chips = seated && !u.stereo
-      ? insertsFor(SE, u, fxChain([...(p ? p.fx : []), ...S.fx, ...((o && o.fx) || [])])) : [];
+      ? insertsFor(SE, u, [...(p ? p.fxc : []),
+                           ...fxChain([...S.fx, ...((o && o.fx) || [])])]) : [];
     if (chips.length) v.inserts = [...(u.inserts || []), ...chips];
     // the parent's placement pass already carved this voice's stereo seat; the
     // box's pan chip and a part's place RIDE ON it rather than replacing it

@@ -135,6 +135,44 @@ const ok = (name, fn) => { try { fn(); pass++; console.log("  ok   " + name); }
     assert.strictEqual(d.voices[1].material, Object.keys(d.material.cells)[0]);
   });
 
+  /* G7c-e — THE SECTION GRID'S TRIM MAP (2026-08-27, the one-board round —
+     Paul: "some voices raise and some fall"). `voice.desk.trim[<secId>]` is a
+     fields.js TRIMS word, and normalize prunes it the paranoid way song.js
+     prunes an enum: a dead section id goes (development's own law, keyed by id
+     so reordering cannot shift a trim under a voice), an unknown WORD goes
+     ("an unknown level means the file is from a build this one cannot
+     honestly play"), and the emptied shells delete themselves so absent keeps
+     one spelling. G7 above already holds the other half: the shipped record
+     carries no desk, and normalize is a byte-identical no-op on it. */
+  const NF = require(R + "/nukernel/fields.js");
+  ok("G7c normalize keeps a valid trim, prunes a dead id and an unknown word", () => {
+    const d = J(TERMS);
+    const ids = d.form.sections.map((s) => s.id);
+    d.voices[0].desk = { trim: { [ids[1]]: "hush", gone: "lift", [ids[2]]: "shout" } };
+    Doc.normalize(d);
+    assert.deepStrictEqual(d.voices[0].desk.trim, { [ids[1]]: "hush" });
+  });
+  ok("G7d an emptied trim deletes itself, an emptied desk deletes itself, and garbage is dropped whole", () => {
+    const d = J(TERMS);
+    d.voices[0].desk = { trim: { gone: "lift" } };
+    Doc.normalize(d);
+    assert.ok(!("desk" in d.voices[0]), "emptied desk survives");
+    const d2 = J(TERMS);
+    d2.voices[0].desk = { fader: -3, trim: "garbage" };
+    Doc.normalize(d2);
+    assert.deepStrictEqual(d2.voices[0].desk, { fader: -3 });
+  });
+  ok("G7e every TRIMS word survives normalize on a live section id — the grid and the loader share one vocabulary", () => {
+    const d = J(TERMS);
+    const id = d.form.sections[0].id;
+    assert.ok(Object.keys(NF.TRIMS).length >= 5, "TRIMS lost its words");
+    for (const w of Object.keys(NF.TRIMS)) {
+      d.voices[0].desk = { trim: { [id]: w } };
+      Doc.normalize(d);
+      assert.deepStrictEqual(d.voices[0].desk.trim, { [id]: w });
+    }
+  });
+
   /* G8 — scoreOf. Nothing froze this (nothing computed it before), so it is
      asserted for the properties that make it a score: every section sounds,
      the events are in time order, and the record is as long as the form says. */

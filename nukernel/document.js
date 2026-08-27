@@ -352,6 +352,29 @@
       if (v.material && typeof v.material === "string" &&
           !doc.material.cells[v.material])
         v.material = cellNames(doc)[0];
+      // THE GRID'S WORDS FOLLOW development's OWN LAW (2026-08-27, the
+      // one-board round — Paul: "some voices raise and some fall"): keyed by
+      // section id so reordering sections cannot shift a trim under a voice,
+      // pruned when the id dies, and the VALUE must be a fields.js TRIMS key —
+      // the paranoid half song.js applies to every enum ("an unknown level
+      // means the file is from a build this one cannot honestly play"), so a
+      // word from a build with a different vocabulary is dropped rather than
+      // carried as a lie the desk would silently ignore. Absent is today: a
+      // voice with no trims writes nothing, an emptied map deletes itself, and
+      // an emptied desk deletes itself — one spelling of the default, the
+      // desk-doc.js writeDesk law.
+      if (v.desk && v.desk.trim != null) {
+        const t = v.desk.trim;
+        if (typeof t !== "object" || Array.isArray(t)) delete v.desk.trim;
+        else {
+          for (const id of Object.keys(t))
+            if (!ids.includes(id) ||
+                !Object.prototype.hasOwnProperty.call(NF.TRIMS, String(t[id])))
+              delete t[id];
+          if (!Object.keys(t).length) delete v.desk.trim;
+        }
+        if (v.desk && !Object.keys(v.desk).length) delete v.desk;
+      }
     }
     return doc;
   }

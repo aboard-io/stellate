@@ -446,6 +446,91 @@
   // the one predicate the mixer asks: may this whole chain be spent as sends?
   const fxSendable = keys => (keys || []).length === 1 && !!FXSEND[keys[0]];
 
+  /* ---------- THE INSERT SLOTS' OWN KNOBS (2026-08-27) ---------- */
+  // "I think we need to do what everyone else does with effects. Add per voice
+  // effects, up to three. Each has a wet dry mix and its own settings." — Paul,
+  // 2026-08-27. The chip came back onto the voice (PARTMIX `fx` below, the
+  // reversal is written there); these tables are the "wet dry mix and its own
+  // settings" half of the sentence, said as detents because every value on
+  // this machine is a word or a detent from this file.
+  //
+  // THE WET IS THE CHIP'S OWN `mix` PARAM, SURFACED — engine/faust/dist
+  // insert_*-meta.json declares `mix` on ten of the eleven modules and
+  // state-engine insertChain clamps it 0..1, so a wet word is a value the DSP
+  // genuinely reads. The one module with NO mix is insert_filtersweep (a swept
+  // resonant lowpass is a REPLACEMENT, not a blend — buildInsertNodes chains
+  // it serially and the module declares no such slider), so a wet on `sweep`
+  // is REFUSED on the board rather than drawn dead; fxHasMix is that test.
+  // ABSENT = the chip's own declared mix (the FX table above), which is what
+  // an old save that names only the chip has always sounded like.
+  const FXWETS = { dry: 0, low: 0.25, half: 0.5, deep: 0.75, full: 1 };
+  const FXWETLABEL = { dry: "dry", low: "a little", half: "half",
+                       deep: "mostly", full: "all wet" };
+  const fxHasMix = k => !!(FX[k] && FX[k].params && FX[k].params.mix != null);
+  // A SLOT'S OWN ONE-OR-TWO SETTINGS: each chip surfaces the face params its
+  // module actually declares, in the MODULE'S OWN UNITS, with the range read
+  // off engine/faust/dist/insert_<type>-meta.json (checked 2026-08-27 — rate
+  // in Hz 0.01..8, wah base in Hz 80..1200, ringmod freq in Hz, timeBars a
+  // fraction of a bar, everything else 0..1). The detent table is ONE shared
+  // fraction scale (FXPOTS) so song.js's registry walk validates every slot
+  // knob against one table; the fraction lands on the param's own span here.
+  // ABSENT = the chip's declared default (FX above) — the absent-is-today law.
+  const FXPOTS = { least: 0, low: 0.25, mid: 0.5, high: 0.75, most: 1 };
+  const FXPOTLABEL = { least: "least", low: "low", mid: "mid",
+                       high: "high", most: "most" };
+  const FXFACE = {
+    chorus:  [{ key: "rate", label: "rate",  min: 0.1,    max: 6 },
+              { key: "depth", label: "depth", min: 0,     max: 1 }],
+    phaser:  [{ key: "rate", label: "rate",  min: 0.1,    max: 6 },
+              { key: "depth", label: "depth", min: 0,     max: 1 }],
+    flanger: [{ key: "rate", label: "rate",  min: 0.05,   max: 4 },
+              { key: "depth", label: "depth", min: 0,     max: 1 }],
+    tremolo: [{ key: "rate", label: "rate",  min: 0.5,    max: 12 },
+              { key: "depth", label: "depth", min: 0,     max: 1 }],
+    leslie:  [{ key: "speed", label: "speed", min: 0,     max: 1 },
+              { key: "depth", label: "depth", min: 0,     max: 1 }],
+    wah:     [{ key: "sens", label: "sense", min: 0,      max: 1 },
+              { key: "base", label: "base",  min: 80,     max: 1200 }],
+    ringmod: [{ key: "freq", label: "freq",  min: 40,     max: 2000 }],
+    sweep:   [{ key: "res",  label: "reso",  min: 0,      max: 0.95 },
+              { key: "rateBars", label: "bars", min: 1,   max: 16 }],
+    fenv:    [{ key: "sens", label: "sense", min: 0,      max: 1 },
+              { key: "res",  label: "reso",  min: 0,      max: 0.95 }],
+    echo:    [{ key: "timeBars", label: "time", min: 0.0625, max: 0.5 },
+              { key: "feedback", label: "feed", min: 0,   max: 0.9 }],
+    crunch:  [{ key: "drive", label: "drive", min: 0,     max: 1 },
+              { key: "presence", label: "presence", min: 0, max: 1 }],
+  };
+  // ONE PART ENTRY -> THE FINISHED {type, module, params} CHAIN, slots' wet and
+  // face knobs applied. The sibling of `fxChain` above (which serves the
+  // SECTION chip and knows no slots) rather than a replacement, because the
+  // two callers genuinely carry different facts. The output is the parent's
+  // own recipe dialect and still rides through state-engine insertChain
+  // (audio/desk.js insertsFor), which clamps every knob to the slider the
+  // module declares — so a face value here can never ask the DSP for a number
+  // it does not read.
+  const fxChainFor = e => {
+    const g = e && typeof e === "object" ? e : {};
+    const keys = (g.fx || []).filter(k => Object.prototype.hasOwnProperty.call(FX, k))
+      .slice(0, MAX_FX);
+    return keys.map((k, i) => {
+      const type = FX[k].type || k;
+      const params = { ...FX[k].params };
+      const n = i + 1;
+      const w = g["fxw" + n];
+      if (w != null && Object.prototype.hasOwnProperty.call(FXWETS, String(w)) &&
+          params.mix != null)
+        params.mix = FXWETS[w];
+      const face = FXFACE[k] || [];
+      for (const [sk, spec] of [["fxa" + n, face[0]], ["fxb" + n, face[1]]]) {
+        const v = g[sk];
+        if (spec && v != null && Object.prototype.hasOwnProperty.call(FXPOTS, String(v)))
+          params[spec.key] = +(spec.min + FXPOTS[v] * (spec.max - spec.min)).toFixed(4);
+      }
+      return { type, module: "insert_" + type, params };
+    });
+  };
+
   // SENDS ARE DISCRETE, like everything else here. A chip is a decision; a
   // slider is a fiddle, and the whole surface is chips on purpose.
   const SENDS = { none: 0, touch: 0.12, some: 0.3, wet: 0.55, drown: 0.9 };
@@ -458,6 +543,30 @@
   const LEVELLABEL = { hush: "hush", back: "back", norm: "normal", fwd: "forward" };
   const PANS = { l: -0.7, hl: -0.35, c: 0, hr: 0.35, r: 0.7 };
   const PANLABEL = { l: "left", hl: "left-ish", c: "centre", hr: "right-ish", r: "right" };
+
+  /* ---------- SECTION AUTOMATION: the word grid (2026-08-27) ---------- */
+  // ideal/one-board.html §III, binding: "A word is a trim on the strip's fader
+  // for that section — deterministic, diffable, thumb-sized." Six words per
+  // voice per section — out · hush · back · — (as mixed) · fwd · lift — and
+  // the value of a word is a dB TRIM RIDING THE STRIP'S OWN FADER for that
+  // section only (`out` is the cut). Stored at `voice.desk.trim[<secId>]`;
+  // absent is "as mixed", which is today, byte for byte. The overlay is
+  // applied per box at push time (ui/eight.js) through `trimApply` below, so
+  // the grid reaches the sound on the exact wire the fader already proved
+  // (test/tape-reach.test.js R1: one trim over dry/rev/del together).
+  const TRIMS = { out: null, hush: -6, back: -2.5, fwd: 2.5, lift: 5 };
+  const TRIMLABEL = { out: "out", hush: "hush", back: "back",
+                      fwd: "fwd", lift: "lift" };
+  // one entry + one word -> the entry the box actually plays. `out` is a mute
+  // (the cut the desk already has); every other word adds its dB to the stored
+  // fader through faderDb, the ONE clamp every fader on this machine takes.
+  const trimApply = (e, word) => {
+    if (!Object.prototype.hasOwnProperty.call(TRIMS, String(word))) return e;
+    const base = e && typeof e === "object" ? e : {};
+    if (TRIMS[word] == null) return { ...base, mute: true };
+    return { ...base,
+      fader: faderDb((Number.isFinite(base.fader) ? base.fader : 0) + TRIMS[word]) };
+  };
 
   // THE REVERB RETURN, absolute rather than a multiplier: it IS `state.reverb`,
   // and the parent reads `rgain = clamp(reverb * 3.2, 0, 2) * reverbScale`
@@ -878,6 +987,44 @@
     { key: "aux",  table: SENDS,  labels: SENDLABEL,  default: null },
     { key: "lvl",  table: LEVELS, labels: LEVELLABEL, default: null },
     { key: "pan",  table: PANS,   labels: PANLABEL,   default: null },
+    // THE CHIP IS BACK ON THE VOICE, 2026-08-27, BY THE SAME OWNER WHO TOOK IT
+    // OFF, and this is the third turn of the same key — the whole history is
+    // in the tombstone below, kept because a sentence that has been true,
+    // false, true and false again is the record of a real argument. Paul,
+    // 2026-08-27: *"I think we need to do what everyone else does with
+    // effects. Add per voice effects, up to three. Each has a wet dry mix and
+    // its own settings. Have one bus for genre specific effects, into a delay
+    // bus, into reverb, into main."* That reverses his 2026-08-26 "Don't let
+    // me add effects to instruments" in so many words (FUTURE.md §2 calls it
+    // the largest reversal in the file), and the declaration returns in the
+    // exact shape it had before — `type: "list"`, the FX table, MAX_FX — so a
+    // save from the two days it previously shipped loads with its chain
+    // intact, and song.js:604's only array branch validates it unchanged.
+    // The desk still drops the whole chain on a STEREO voice (audio/desk.js
+    // widthKept — the renderer's insert path is mono), and since this round
+    // the BOARD REFUSES the slot there with that sentence instead of letting
+    // it strip in silence (FUTURE.md: "that silence becomes a
+    // refusal-with-reason on the slot, never a silent strip").
+    { key: "fx",   type: "list", table: FX, max: MAX_FX },
+    // ...AND EACH SLOT'S WET AND ITS OWN ONE-OR-TWO SETTINGS ("Each has a wet
+    // dry mix and its own settings"), keyed BY SLOT NUMBER because the slots
+    // are ordered (the chain has an order — chorus on a crunched guitar is not
+    // a clean chorus beside one) and a knob belongs to the seat, not to the
+    // chip's name. `fxw<n>` is the chip's own `mix` param (FXWETS above);
+    // `fxa<n>`/`fxb<n>` are the module's first and second face params as a
+    // fraction of their own declared span (FXPOTS/FXFACE above). All nine are
+    // plain enum rows, so cleanEntry, writeDesk and song.js's registry walk
+    // carry them with no new machinery, and absent is the chip's declared
+    // default — the byte-identical old sound.
+    { key: "fxw1", table: FXWETS, labels: FXWETLABEL, default: null },
+    { key: "fxw2", table: FXWETS, labels: FXWETLABEL, default: null },
+    { key: "fxw3", table: FXWETS, labels: FXWETLABEL, default: null },
+    { key: "fxa1", table: FXPOTS, labels: FXPOTLABEL, default: null },
+    { key: "fxa2", table: FXPOTS, labels: FXPOTLABEL, default: null },
+    { key: "fxa3", table: FXPOTS, labels: FXPOTLABEL, default: null },
+    { key: "fxb1", table: FXPOTS, labels: FXPOTLABEL, default: null },
+    { key: "fxb2", table: FXPOTS, labels: FXPOTLABEL, default: null },
+    { key: "fxb3", table: FXPOTS, labels: FXPOTLABEL, default: null },
     // AND IT CAME OFF AGAIN, 2026-08-26, BY THE OWNER OF THE QUESTION. This
     // entry stood here for two days and STATE.md item 6 asked Paul to accept
     // the reversal in so many words. He answered the other way: *"Don't let me
@@ -911,7 +1058,9 @@
     // days this shipped is not an error — it is a key song.js's loader (which
     // validates a part entry against this very list) no longer recognises, and
     // it is dropped on load the way any other unknown key is.
-    // (no `{ key: "fx", ... }` entry: see above)
+    // (the `{ key: "fx", ... }` entry is back ABOVE this tombstone as of
+    // 2026-08-27 — the turn is dated and quoted there; this paragraph stays as
+    // the record of the 2026-08-26 answer it reversed)
     { key: "mute", type: "flag",  default: false },
     { key: "solo", type: "flag",  default: false },
     // THE FADER OFFSET, in dB, and it is an OFFSET rather than a level: the
@@ -1943,6 +2092,9 @@
                 RATES, RATELABEL, SWINGS, SWINGLABEL, GROOVELABEL, METERLABEL,
                 KITLABEL, KITNAME, VERBLABEL, DRUMKITS, DRUMLANES, BASSOPS,
                 FX, FXLABEL, fxChain, FXSEND, fxMix, fxSendable,
+                FXWETS, FXWETLABEL, FXPOTS, FXPOTLABEL, FXFACE,
+                fxHasMix, fxChainFor,
+                TRIMS, TRIMLABEL, trimApply,
                 SENDS, SENDLABEL, VERBS,
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
                 RETURNS, RETURNLABEL, ERETURNS, REVERBS, REVERBLABEL,

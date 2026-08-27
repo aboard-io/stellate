@@ -375,15 +375,43 @@ function push(first) {
       putPhrase(v * NS + i, phrase(materialAt(c, secs[i].id))); });
   const boxes = NuDocument.boxesOf(DOC, GK);
   // THE SOUND AXIS, ONTO THE BOXES AND THE TWO SONG-LEVEL STORES. `parts` and
-  // `fx` are the SAME objects on every box on purpose: the Sound axis is one
-  // statement for the record, so a per-SECTION desk is not expressible and that
-  // is the right answer for this axis until somebody wants a chorus louder than
-  // a verse. What still moves per section is the DERIVED layer (audio/desk.js
-  // shade() reads sec.lvl / sec.env), and the board shows it moving under a
-  // fixed offset. All four are null / [] for a document that says nothing, which
+  // `fx` start as the SAME objects on every box: the stored strip is one
+  // statement for the record. REWRITTEN 2026-08-27 (the one-board round). This
+  // comment said "a per-SECTION desk is not expressible and that is the right
+  // answer for this axis until somebody wants a chorus louder than a verse" —
+  // and somebody did: Paul, quoted in FUTURE.md's one-board decision, "some
+  // voices raise and some fall." The sentence named its own end condition and
+  // met it, so it is rewritten rather than deleted, and the word grid below is
+  // the writer it foresaw. What it got right stays true: the DERIVED layer
+  // still moves per section (audio/desk.js shade() reads sec.lvl / sec.env),
+  // and all four stores are null / [] for a document that says nothing, which
   // is byte-identical to what this line produced before (desk-gate G1).
   const dparts = NuDeskDoc.deskPartsOf(DOC, GENRES), dfx = NuDeskDoc.boxFxOf(DOC);
   for (const b of boxes) { b.parts = dparts; b.fx = dfx; }
+  // …EXCEPT WHERE THE SECTION GRID SAYS OTHERWISE (ideal/one-board.html §III:
+  // "A word is a trim on the strip's fader for that section" — the reversal is
+  // dated and quoted above). A box whose section carries a trim word for a voice gets its OWN
+  // parts map, the entry overlaid through fields.js trimApply — a dB trim on
+  // the stored fader through faderDb (the one clamp), or the cut for `out` —
+  // so the grid reaches the sound on the exact wire the fader already proved
+  // on rendered audio (test/tape-reach R1). A record with no trims takes the
+  // branch above untouched: same shared reference, byte-identical boxes.
+  {
+    const chansV = NuDeskDoc.channelVoicesOf(DOC, GENRES);
+    boxes.forEach((b, i) => {
+      let P = null;
+      for (const c of chansV) {
+        const t = c.voice.desk && c.voice.desk.trim &&
+          c.voice.desk.trim[secs[i].id];
+        if (t == null ||
+            !Object.prototype.hasOwnProperty.call(NuFields.TRIMS, String(t)))
+          continue;
+        if (!P) P = { ...(dparts || {}) };
+        P[c.key] = NuFields.trimApply(P[c.key], t);
+      }
+      if (P) b.parts = P;
+    });
+  }
   setMaster(NuDeskDoc.masterOf(DOC));
   setBuses(NuDeskDoc.busesOf(DOC));
   // THE PRODUCER'S HAND ON THE DESK. Offsets ADD (audio/desk.js:593), so a note
@@ -7337,8 +7365,18 @@ function redrawApp(box) {
   /* 1 TIME */
   const axTime = axis(box, "ax-time", "1 · Time");
   D.sound = D.sound || { level: 1 };
-  number("level", "level", D.sound.level, (v) => D.sound.level = v, axTime, 0.5,
-    +(1 / (((GENRES[D.basis] || {}).tone || { gain: 0.28 }).gain)).toFixed(2), 0.25);
+  // RECORD GAIN MOVED TO THE BOARD, 2026-08-27. The `level` slider stood here
+  // since the axis existed and it was a SOUND fact filed under Time — the
+  // rename table's "clearest 'spread everywhere' exhibit" (FUTURE.md §5:
+  // "`level` (in Time) → `record gain`, on the master strip"). Same key
+  // (`sound.level`), same write, same clamp; ui/engineer.js draws it on the
+  // main plate. This pointer is what stays behind, so a hand that knew where
+  // it lived is told where it went rather than left to conclude it is gone.
+  { const pt = el("p", null, "nu-hint");
+    const a = document.createElement("a");
+    a.href = "#board"; a.textContent = "record gain — on the board's main strip";
+    pt.append(a);
+    axTime.append(pt); }
   number("bpm", "tempo", D.time.bpm, (v) => D.time.bpm = v, axTime, 40, 220);
   // THE TEMPO ICONS, directly under the tempo slider and above the reading-speed
   // menu — between the two facts they move, which is where a row that moves
