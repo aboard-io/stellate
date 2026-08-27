@@ -186,6 +186,19 @@ const GATES = [
   { name: "precompose", wave: 2, kind: "node",
     argv: ["test/precompose.test.js"],
     need: ["test/precompose.test.js"], covers: ["test/precompose.test.js"] },
+  /* DOES PRESSING REWRITE CHANGE THE TUNE? (2026-08-27). Paul, on staging:
+     "No matter how many times I hit REWRITE the hook is the same on Iranian
+     pop." Measured, it was the whole catalog: 0 of 191 anchors changed their
+     hook's rhythm or its degrees at any seed, because the seed died in the
+     arranger and `cellOf` never took one. This gate is the ear's question in
+     numbers and it reads the DOCUMENT's own `play` and `deg` rows — ten
+     rewrites of iranpop, the catalog fractions, the determinism law on the
+     serialized record, the IDIOM_ANCHOR pins, and a saved record that must
+     not move. Next to `precompose` because they share the file. ~4 s, pure
+     node. */
+  { name: "hook",       wave: 2, kind: "node",
+    argv: ["test/hook.test.js"],
+    need: ["test/hook.test.js"], covers: ["test/hook.test.js"] },
   /* THE SEND A CHANNEL STRIP USED TO SWALLOW. Next to `desk` on purpose: G8b
      renders a strip's audio through the same shipped renderUnitWindow and
      stayed green for the whole life of the pp defect, because its fixture feeds

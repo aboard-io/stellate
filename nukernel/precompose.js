@@ -461,8 +461,13 @@
   // ALPHABET-FREE (kernel.js:8) — the same cell is legal under every mode and
   // needs no per-genre repitching, which is the property that let one
   // eight-step cell become a whole chant.
-  function cellOf(row, kind, cb, G, steps) {
-    const m = { ...Id.blank(), ...row, ...KINDS[kind],
+  // `rd` (2026-08-27) is THIS READING's words for this kind — §6b's draw, or
+  // null on reading 1, which is the day before it existed. It lands LAST so a
+  // reading may only move an axis §6b already decided it may move: the anchor's
+  // own row and the kind's are merged in ahead of it and §6b never puts one of
+  // theirs in the map.
+  function cellOf(row, kind, cb, G, steps, rd) {
+    const m = { ...Id.blank(), ...row, ...KINDS[kind], ...(rd || {}),
                 len: cb === 4 ? "four" : cb === 2 ? "two" : "one", answer: true };
     const ph = Id.toPhrase(m, null);              // ideas-kit.js:425, pure, cached
     const n = cb * steps, cap = capOf(G);
@@ -611,6 +616,192 @@
      word it writes is a function of the ANCHOR alone, so seeds 1, 2 and 3 of
      one genre are three arrangements of one record and not three records. */
   const idiomStream = (gk, seed) => rng(ihash(gk + "/idiom/" + seed));
+
+  /* ======================================================================
+     6b · A READING VARIES THE TUNE — the stream above, spent (2026-08-27)
+     ======================================================================
+     Paul, listening on staging: *"No matter how many times I hit REWRITE the
+     hook is the same on Iranian pop."*
+
+     HE IS RIGHT, AND IT IS NOT AN IRANIAN POP BUG. Measured before a line of
+     this was written, over all 199 anchors x 8 seeds — 1,910 cell instances:
+     NOT ONE CELL EVER CHANGED CONTENT WITH THE SEED. `cellOf(row, kind, cb, G,
+     steps)` never took one: `row` is `idiomOf(gk)`, which reads the anchor and
+     nothing else; `cb` is pinned to 1 by CELL_BAR_CEILING; `steps` is 16 on
+     every anchor in the catalog; and `Id.toPhrase(m, null)` is pure and
+     memoised. What LOOKED like variation — `riff` moving on 118 anchors,
+     `climb` on 59 — was a cell being PRESENT at one seed and ABSENT at
+     another, because compose() deals different slots; `pad`, `topline` and
+     `beat` never moved at all, and the HOOK was byte-identical across five
+     seeds on 193 of the 199. The rewrite button could not change a tune on any
+     genre in the box. Iranian pop is only where it was noticed.
+
+     THE COMMENT DIRECTLY ABOVE THIS ONE IS THE TOMBSTONE, and it is rewritten
+     rather than deleted because it named its own end condition: "Its OWN
+     stream is declared here and — in today's design — UNCONSUMED, because
+     every field above is a table lookup and there is no genuine choice left to
+     make. Declaring it now means the first idiom variation somebody adds later
+     does not shift a bar line." This is that variation, arriving at that door.
+     The stream is spent HERE and nowhere else, so nothing compose() draws
+     moves, and a reading changes the tune without shifting a bar line.
+
+     WHAT A READING MAY MOVE, AND WHAT IT MAY NOT. A second reading of a genre
+     must still be that genre, so the axes divide by WHO STATED THEM:
+
+       · an axis stated by `KINDS[kind]` is the PART's job — a pad holds, a
+         riff zigs, a climb walks up to the fifth — PINNED, always, or the
+         slots stop being different parts.
+       · an axis stated by `IDIOM_ANCHOR[gk]` is that anchor saying what ITS
+         music is ("a drone is a drone", "punk's hook is three notes and a
+         shout"). 54 of the 199 anchors carry such a row, and what that row
+         binds differs by axis — the table below is where that is decided and
+         argued, per word, because the three words are not the same size of
+         claim.
+       · everything else came from the FAMILY row, which is a default and not
+         a claim, and a reading may draw it again from the whole table.
+
+     THE FIRST CUT OF THIS BLOCK MOVED CONTOUR AND LANDING ONLY, and it was
+     measured insufficient before it was ever pressed: over 191 anchors x 8
+     seeds, 0 of 191 changed the hook's RHYTHM, because the play row is a
+     function of the CELL and the articulation cap and of nothing else. Paul's
+     Iranian pop hook landed three notes at steps 7, 8 and 12 in all ten
+     readings, starting on the tonic in nine of them, in one key. An ear calls
+     that the same hook, and it is right. So `cell` opens too — inside a band,
+     which is the paragraph below — and the KEY opens, which is the paragraph
+     after that.
+
+     READING 1 IS TODAY, BYTE FOR BYTE. The atlas opens every anchor at seed 1
+     (ui/atlas.js `let seed = 1`), so the record a hand lands on is the record
+     it has always been; only pressing REWRITE moves. Measured after: seed 1
+     over all 199 anchors is byte-identical to seed 1 before this block
+     existed, document by serialized document. */
+  /* ---------- what a reading may say, per axis --------------------------- */
+  // AND ONLY THE THREE AXES THAT REACH THE CELL. Measured, not chosen: at
+  // CELL_BAR_CEILING = 1 a cell is ONE BAR, and of the idiom's six words only
+  // three can move a note of it.
+  //   · `len` — cellOf OVERWRITES it (`len: cb === 4 ? "four" : …`), so a
+  //     reading that drew it would be drawing into a value that is thrown
+  //     away one line later.
+  //   · `sent` — ideas-kit SENTENCES carry rows for 2, 4 and 8 bars and none
+  //     for 1 (:173), so at one bar every sentence plan is `plain` and the
+  //     word says nothing.
+  //   · `reg` — phraseNow answers it in `ph.oct`, and cellOf reads `ph.deg`,
+  //     `ph.vel`, `ph.gate` and `ph.hold` and NOT `ph.oct`: the octave does
+  //     not cross into the document cell at all.
+  // A reading that moved those three would print three different words on a
+  // record that sounded identical, which is the lie this file exists to not
+  // tell. They open the day a cell is longer than a bar, and the ceiling is
+  // the one constant that says so.
+  //
+  // WHO PINS WHAT, per axis — and the anchor and the KIND are not the same
+  // size of claim:
+  //   · a KIND'S word pins EVERY axis, always, or the slots stop being
+  //     different parts.
+  //   · "pin" — the anchor's word is the whole claim and a reading keeps it.
+  //     THE GESTURE (`contour`) is what a row means when it says "a drone is
+  //     a drone" or "punk's hook is three notes and a shout".
+  //   · "open" — the anchor's word is a preference, not a claim. THE LANDING
+  //     is the note the line comes to rest on, and a bop head that resolves
+  //     to the root instead of leaning on the seventh is still a bop head.
+  //   · "band" — the anchor's word claims something BROADER than itself and
+  //     a reading may say anything inside that claim. THE FIGURE (`cell`) is
+  //     the one axis where this is true, and the argument is the 51 anchor
+  //     rows themselves: read back one at a time they claim a DENSITY, never
+  //     a serial number — "the 303 is a sixteenth-note machine", "dub is one
+  //     long idea with holes in it", "a punk hook is three notes and a
+  //     shout", "a mambo is a short figure said again, hard", "a choro is a
+  //     composed tune that runs". `even`, `riff` and `gallop` all satisfy the
+  //     machine; `three` and `call` all satisfy the shout. What no reading of
+  //     acid may do is go quiet, and that is exactly what the band forbids.
+  //     A BAND OF ONE IS A PIN, and `long` is alone in its band on purpose:
+  //     drone, ambient, dub, arabesk and enka say the same thing about
+  //     themselves — one long note with holes in it — and there is no second
+  //     way to say it. Those five keep one hook rhythm at every reading and
+  //     move on contour, landing and key; the other 194 move the figure too.
+  const VARIES = { cell: "band", contour: "pin", land: "open" };
+
+  // THE BAND IS DERIVED FROM THE CELL'S OWN GRID, never typed here: how many
+  // notes the figure puts in a bar. A retuned CELLS row reclassifies itself
+  // and a renamed one still dies in assertTables() above.
+  //   held    long                    (2 onsets — space)
+  //   short   three · pickup · call   (3 — a short figure)
+  //   moving  push · walkup · hang    (4-5 — a figure that goes)
+  //   running gallop · riff · even    (6+ — a machine)
+  const onsetsOf = (name) => Id.CELLS[name].g.filter((v) => v === 1).length;
+  const bandOf = (name) => { const n = onsetsOf(name);
+    return n <= 2 ? "held" : n <= 3 ? "short" : n <= 5 ? "moving" : "running"; };
+  const CELLBAND = {};
+  for (const name of Object.keys(Id.CELLS))
+    (CELLBAND[bandOf(name)] = CELLBAND[bandOf(name)] || []).push(name);
+
+  // ...AND THE SAME LOAD-TIME LAW THE TABLES ABOVE KEEP. A VARIES key that
+  // names no idiom field, or a law word with a typo in it, must die HERE and
+  // BY NAME: `pin` misspelled falls through to the pin branch, which is the
+  // silent-default failure this file's whole assertTables() exists to make
+  // impossible — a reading that had quietly stopped moving an axis would look
+  // exactly like the bug it was written to fix.
+  const LAWS = { pin: 1, open: 1, band: 1 };
+  for (const [f, law] of Object.entries(VARIES)) {
+    if (!FIELDTABLE[f]) throw new Error(`precompose: VARIES names no such field "${f}"`);
+    if (!LAWS[law]) throw new Error(`precompose: VARIES.${f} = "${law}" is not pin|open|band`);
+    if (law === "band" && f !== "cell")
+      throw new Error(`precompose: VARIES.${f} asks for a band and only \`cell\` has one`);
+  }
+
+  // THE READING'S KEY (2026-08-27). The second frozen axis, and the argument
+  // for moving it is compose.js:1988's own: "genres.js declares no tonic —
+  // every anchor is written in scale DEGREES, so there is nothing to read off
+  // it — and until now that meant every composed record landed on the same
+  // unlabelled pitch class." The key is DERIVED, `ihash(gk + "/key") % 12 - 6`,
+  // which makes it a fact about the genre's NAME and nothing else. A pitch
+  // class is not a genre fact — no anchor in the catalog states one — so
+  // there is no claim here for a reading to break, and same key + same rhythm
+  // + same contour is most of why "the same" was the honest word for iranpop.
+  //
+  // SMALL, THOUGH, AND THAT PART IS A REAL FACT. A genre's tessitura is where
+  // its music sits and singers have ranges: a reading may take it up or down
+  // a step or two, the way a band does when the singer asks, and may not move
+  // it to the other side of the octave — at ±6 the box would be transposing
+  // for the sake of sounding different, which nobody in the room asked for.
+  // Zero stays in the hat: a second reading is allowed to come back in the
+  // same key, and it does about one time in five.
+  //
+  // It is spent on the SAME stream, LAST, after every cell draw — so adding
+  // or retiring it cannot renumber a single cell's draw, which is the whole
+  // reason the draws above run over KIND_OF and not over the record's slots.
+  const KEYSHIFT = [-2, -1, 0, 1, 2];
+
+  function reading(gk, seed, kinds) {
+    // reading 1 = the idiom as written: no draw, no shift, byte-identical
+    if (seed <= 1) return null;
+    const r = idiomStream(gk, seed);
+    const own = IDIOM_ANCHOR[gk] || {};
+    const cells = {};
+    // ONE DRAW PER (KIND, AXIS), IN KIND_OF ORDER, whether or not the axis is
+    // pinned and whether or not the record deals that slot — so a record that
+    // gains a slot at a later seed does not renumber the draws of the slots
+    // beside it, and a pinned axis costs the same draw an open one does. A
+    // spent-and-discarded draw is the discipline compose.js keeps for its own
+    // per-voice streams.
+    for (const k of KIND_OF) {
+      const kind = KINDS[k] || {};
+      const per = {};
+      for (const [f, law] of Object.entries(VARIES)) {
+        const u = r();                              // ALWAYS, pinned or not
+        // what this reading is allowed to say on this axis
+        const pool = own[f] == null || law === "open" ? Object.keys(FIELDTABLE[f])
+                   : law === "band" ? CELLBAND[bandOf(own[f])]
+                   : [own[f]];                      // "pin"
+        const pick = pool[Math.floor(u * pool.length) % pool.length];
+        // a KIND'S word is never overwritten, and a pool of one is a pin:
+        // writing it back would be the same value with a draw's name on it
+        if (kind[f] == null && pool.length > 1) per[f] = pick;
+      }
+      if (Object.keys(per).length && kinds.has(k)) cells[k] = per;
+    }
+    const key = KEYSHIFT[Math.floor(r() * KEYSHIFT.length) % KEYSHIFT.length];
+    return { cells: Object.keys(cells).length ? cells : null, key };
+  }
 
   /* ======================================================================
      7 · THE ENGINEER'S PASS — the Sound axis, and the pocket
@@ -905,15 +1096,23 @@
 
   /* WHAT THIS FILE DELIBERATELY DOES NOT WRITE, and why, so the next reader
      does not take the silence for an oversight:
-       `fx` on a chair   — a chip on a TRACK is Paul's open question 3
-                           (STATE.md: "This reverses your 2026-08-17
-                           directive… Do you accept the reversal?"). It is
-                           undecided, and a precomposer that put one on 122
-                           records would have answered it for him. The
-                           genre-wide chip goes on the BOX instead (`sound.fx`),
-                           which is the one PARTMIX's note says was never taken
-                           off: "a genre-wide treatment, not a per-track insert,
-                           and Paul never asked for it to go".
+       `fx` on a chair   — REVERSED 2026-08-27, BY PAUL, IN TWO SENTENCES.
+                           This read: "a chip on a TRACK is Paul's open
+                           question 3 (STATE.md: 'This reverses your
+                           2026-08-17 directive… Do you accept the
+                           reversal?'). It is undecided, and a precomposer
+                           that put one on 122 records would have answered it
+                           for him. The genre-wide chip goes on the BOX
+                           instead (`sound.fx`)". He answered it: *"I think we
+                           need to do what everyone else does with effects.
+                           Add per voice effects, up to three. Each has a wet
+                           dry mix and its own settings."* (fields.js FXWETS
+                           is that sentence's other half), and then, of the
+                           record-wide control the chip used to live on:
+                           *"We can get rid of Character right? We don't
+                           really use it any more do we?"* So the chip is
+                           written on the CHAIR now — `deskThe` below — and
+                           `sound.fx` is not written at all.
        `fader`           — an offset in dB is the hand on the board. The
                            composed level is `lvl`; leaving the fader at zero
                            is what makes a user's move visible as a move.
@@ -928,7 +1127,7 @@
   // which chair of its own role this is, counted in document order — the same
   // count fields.js chairKeys makes when it addresses them (line, line2, line3).
   // `echo` is true for the one chair the record's echo is spent on.
-  function deskFor(voice, nth, echo) {
+  function deskFor(voice, nth, echo, fx) {
     const part = (voice.cast && voice.cast.part) || "line";
     const e = {};
     if (CHAIRLVL[part]) e.lvl = CHAIRLVL[part];
@@ -937,6 +1136,8 @@
     if (voice.kind === "drums" &&
         MACHINEKIT.indexOf(voice.instrument) < 0) e.room = "touch";
     if (echo) e.echo = ECHOSEND;
+    // THE CHARACTER CHIPS, ON THE STRIP (2026-08-27) — see deskThe below.
+    if (fx && fx.length) e.fx = fx.slice();
     return Object.keys(e).length ? e : null;
   }
 
@@ -950,11 +1151,44 @@
     // chair by name: 92 of 122 anchors declare no `part` scheme at all and
     // would then have had nowhere to put it.
     const lead = hasEcho(G) ? voices.findIndex((v) => v.kind === "line") : -1;
+    /* THE CHARACTER CHIP, DEALT (2026-08-27). Paul: *"We can get rid of
+       Character right? We don't really use it any more do we?"* — and
+       FUTURE.md §5 had already ruled the same way, in the same words the
+       engineer used: "dealt, not embedded".
+
+       WHAT "WE DON'T REALLY USE IT" MEASURED TO. The HAND does not: it is the
+       one `<select multiple>` on the page and nothing else on the board is
+       one. THE COMPILER DOES — 27 of the 199 anchors write a `sound.fx`
+       (chorus x27, sweep x24, crunch x15, tremolo x6, crunch+sweep x6,
+       crunch+chorus x3 over 597 records), and audio/desk.js folded it into the
+       insert chain of EVERY seated voice. So it was never unused, it was
+       invisible: measured on the rendered artifact at 8 bars, neoclassical's
+       chorus cost the record 2.23 dB of RMS, ambient's sweep 1.96 dB of PEAK
+       and 0.74 dB of crest, techno's 0.26 dB — a stage a hand could not see
+       per voice and could not turn down per voice.
+
+       DEALING IT IS AUDIO-IDENTICAL AND NOT A REBALANCE, which is the whole
+       reason it can be done in one round. desk.js built the chain as
+       `[...p.fxc, ...fxChain([...S.fx, ...o.fx])]` — the part's own slots
+       FIRST, the record's chip after — and no anchor in the catalog wrote a
+       `desk.fx`, so `p.fxc` was empty on every record that had a chip. Moving
+       the same keys, in the same order, into the slots that come first
+       produces the same list through the same insertsFor door. And the set of
+       voices is the same set: `seated` is `!!addr[key] || isDrum`, and
+       audio/plan.js castOf only writes `addr` from the box's own roster, so a
+       seated voice always resolves to a part — which is why the chip may be
+       carried by the chair instead of by the box without losing a voice.
+
+       ON EVERY CHAIR, INCLUDING THE BASS AND THE DRUMS, because that is
+       exactly who `S.fx` reached. A record-wide chip is a record-wide chip;
+       what changes is that a hand can now see it on nine strips and pull it
+       off one of them. */
+    const fx = soundFxOf(G);
     const seen = {};
     voices.forEach((v, i) => {
       const part = (v.cast && v.cast.part) || v.kind;
       const nth = (seen[part] = (seen[part] || 0) + 1) - 1;
-      const e = deskFor(v, nth, i === lead);
+      const e = deskFor(v, nth, i === lead, fx);
       if (e) v.desk = e;
     });
     return voices;
@@ -981,7 +1215,6 @@
     const s = seed == null ? 1 : seed;
     const G = GENRES[gk];
     const R = compose(gk, s);                     // ONCE. Everything else reads R.
-    idiomStream(gk, s);                            // declared, reserved, unconsumed
     const { row } = idiomOf(gk);
     const scale = scaleName(gk, G);                // throws by name if unnameable
 
@@ -1058,8 +1291,13 @@
     if (!usedKinds.size) usedKinds.add("hook");   // a record is never cell-less
     const cells = {};
     const phraseOf = {};
+    // THIS READING'S OWN WORDS (§6b). Drawn once, here, from the stream §6
+    // reserved — after `usedKinds` because a draw belongs to a slot the record
+    // actually deals, and before the loop because the loop must ask and not
+    // decide. `null` on reading 1: the loop then calls cellOf exactly as it did.
+    const rd = reading(gk, s, usedKinds);
     for (const k of KIND_OF) if (usedKinds.has(k)) {
-      const made = cellOf(row, k, cb, G, steps);
+      const made = cellOf(row, k, cb, G, steps, rd && rd.cells && rd.cells[k]);
       cells[k] = made.cell; phraseOf[k] = made.ph;
     }
     // THE KIT TRAVELS BY VALUE, EVERY KEY. The catalog uses eighteen lane
@@ -1272,7 +1510,6 @@
     // not on a plan: `deskThe` counts the second guitar as the second guitar,
     // which it cannot do until the layers and the rhythm section are seated.
     deskThe(voices, G);
-    const fx = soundFxOf(G);
 
     /* ---- the record ----------------------------------------------------- */
     return {
@@ -1297,7 +1534,15 @@
         ...(grooveOf(G) ? { groove: grooveOf(G) } : {}),
       },
       alphabet: {
-        key: R.song[0].key,                        // compose.js:1849 S.tonic
+        // compose.js:1849 S.tonic, MOVED BY THE READING (§6b). The document
+        // carries ONE key — precompose drops compose()'s per-section
+        // modulations, which is why this is the single place a reading's
+        // transposition has to land, and why it lands here rather than inside
+        // compose(): the shift is a fact about this READING of the record and
+        // compose() is where facts about the GENRE live. wrapKey is fields.js's
+        // own fold back onto the -6..5 table, so ±2 off any tonic is still a
+        // key the document can name.
+        key: NF.wrapKey(R.song[0].key + (rd ? rd.key : 0)),
         mode: modeName(gk, G),
         // THE SUBJECT'S OWN ALPHABET, at last. ui/eight.js:98 writes
         // `scale: mode` unconditionally, so no document could be pentatonic or
@@ -1323,9 +1568,14 @@
         // file "writes none of them — one owner per fact", and it was wrong by
         // 122 records (STATE.md item 17). A BUSES value, verbatim.
         buses: busesOf(G),
-        // the record-wide character chip: the anchor's own `fx`, minus the
-        // echo, which is a BUS on this desk and not an insert
-        ...(fx.length ? { fx } : {}),
+        // NO `fx` HERE ANY MORE (2026-08-27). This line read
+        // `...(fx.length ? { fx } : {})` under the comment "the record-wide
+        // character chip: the anchor's own `fx`, minus the echo, which is a
+        // BUS on this desk and not an insert". The chip is the same chip and
+        // the echo is still a bus; what moved is WHO CARRIES IT — `deskThe`
+        // above writes it on every chair's own strip, where it can be seen and
+        // turned down one voice at a time. Paul, 2026-08-27: "We can get rid
+        // of Character right?"
       },
       performance: { take: 0, humanize: G.humanize || 0, ontime: true },
     };
