@@ -61,14 +61,61 @@
 
 <!-- ONE .nu-bar PER PAGE, and it is this one. It is sticky at top:0 and
      exactly --bar-h tall, because .nu-ax > h2 sits at top: var(--bar-h) and a
-     third control in here that WRAPPED would open a gap under every axis
-     heading. test/shell.js pins the number for that reason. -->
+     control in here that WRAPPED would open a gap under every axis heading.
+     test/shell.js pins the number for that reason.
+     IT HOLDS FOUR CONTROLS SINCE 2026-08-27 AND --bar-h DID NOT MOVE. This
+     said "a THIRD control", and the third and fourth arrived the same day
+     (#rewrite and #take, below). The bar is `flex-wrap: nowrap`, so the
+     failure it would have taken is not a wrap but a sideways scroll (A1) —
+     and it takes neither: nu.css pays for the two new words out of the strip's
+     own gap and the buttons' padding, and clips one label below 430px, with
+     the arithmetic written out there. Measured after: 52.00px at 320, 375,
+     390, 430, 820 and 1280, and scrollWidth === clientWidth at every one. -->
 <div class="nu-bar">
   <button id="play" type="button">play</button>
+  <!-- TWO GESTURES BESIDE PLAY, AND BOTH OF THEM PLAY (Paul, 2026-08-27: "I'd
+       like a button next to play that seeds a completely different version of
+       the song. The another take button should just be called take and should
+       move up there. Both those buttons should start playing right away.")
+
+       THEY ARE TWO DIFFERENT VERBS AND THE PAGE HAD BEEN SPELLING THEM WITH
+       ONE LABEL. `#take` bumps `performance.take`, the kernel's own per-take
+       dice (document.js `takeOf`): which chance hits land, the hand's seeded
+       micro-timing, the velocity humanisation, the ornament rolls — "it
+       reaches the engine and not the model, a take cannot move a DECISION".
+       Same record, new performance. `#rewrite` bumps the atlas's SEED and
+       writes the record again from the same anchor (precompose.js
+       `genreToDocument(gk, seed)`) — a completely different version, which is
+       what the atlas's old "another take" button always did under a name that
+       belonged to the other verb.
+
+       "rewrite" AND NOT "another" / "re-seed" / "new version": this page's own
+       verb for composing from a genre is WRITE — ui/atlas.js says "writing the
+       record…" while it works and "then this writes it again" when it is
+       refused — so the button that does it again is the one that rewrites.
+       "another" would have left two buttons reading as the halves of the old
+       phrase ("another" | "take") and named nothing; "re-seed" names the
+       mechanism rather than the result. It is also the widest word the strip
+       can hold: see nu.css's .nu-bar arithmetic.
+
+       THE ORDER IS PAUL'S — play, the new button "next to play", then the one
+       that "moved up there". Both listeners are in ui/eight.js beside #play's
+       and use the same door it uses (`startAt(0)`), so there is one play path
+       and not three. -->
+  <button id="rewrite" type="button">rewrite</button>
+  <button id="take" type="button">take</button>
   <!-- "room", NOT "volume", 2026-08-27 — FUTURE.md §5: the master strip
        already teaches "the room, not the record", and this slider is the same
-       store (ui/state.js VOLSTORE) wearing the same fact. -->
-  <label for="vol">room <input type="range" id="vol" min="0" max="100" step="1" value="100"></label>
+       store (ui/state.js VOLSTORE) wearing the same fact.
+       THE WORD IS NOW A `.nu-vh` SPAN AND IT IS STILL THE WORD. With four
+       controls in a strip that may not wrap, 320px cannot show all four names
+       and keep the slider at its 4em floor (the arithmetic is in nu.css). So
+       the word is clipped on a phone and printed from 430px up — one rule,
+       measured, in nu.css — and it is in the DOM at every width: a screen
+       reader names this slider "room", and with the stylesheet off the strip
+       reads "play rewrite take room". Same move `.nu-tf` already makes for the
+       transform buttons: "the word is still in the DOM". -->
+  <label for="vol"><span class="nu-vh">room </span><input type="range" id="vol" min="0" max="100" step="1" value="100"></label>
 </div>
 <!-- WHICH ENGINE THE EAR GOT, AND WHETHER IT STARVED. It lives OUTSIDE #app on
      purpose: draw() empties #app on every edit, and a readout that is destroyed

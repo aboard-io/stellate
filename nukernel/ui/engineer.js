@@ -40,6 +40,14 @@
 // engineer's rows inside a voice's sheet (VIEW 1 below) became READ-ONLY
 // MIRRORS the same day — they print the value and point here.
 //
+// AND THE INSTRUMENTS WENT INTO TABS the same evening, which is the last
+// change to the geometry and not to anything else. Paul, 2026-08-27: *"In the
+// mixing board — Put the instruments inside tabs the mixing board instead of
+// stacking them."* `#strips` holds ONE strip — the marked tab's — the rack and
+// the word grid stay whole below it, and the argument with its numbers is on
+// the block that builds them (THE STRIPS, ONE PER TAB). Nothing about what a
+// strip IS changed: same rows, same keys, same writes.
+//
 // LAWS CARRIED FORWARD, verbatim where they still bind:
 //   * THE TRACK LIST IS THE SAME ANSWER THE AUDIO TIER BUILDS FROM —
 //     desk-doc's channelVoicesOf, gated against voiceRoster by desk-gate G2.
@@ -538,6 +546,15 @@ export function engineer(parent, ctx, voiceName) {
 
 /* ======================= VIEW 2 · THE ONE BOARD =========================== */
 let CURRENT = null;
+// WHICH INSTRUMENT'S STRIP IS OPEN (2026-08-27, Paul: "In the mixing board —
+// Put the instruments inside tabs the mixing board instead of stacking them").
+// A PAGE FACT, never a document one — the same sentence ui/eight.js makes about
+// its own `tab`: which tab you are looking at is not a fact about the record,
+// so it is a module `let` here and there is no key for it anywhere in the
+// document, in localStorage or in a share link. It survives a redraw because
+// the module does; it is keyed by the voice's NAME because the bank changes and
+// index 2 is a different player after you add a line.
+let BOARDTAB = null;
 
 export function mount(parent, ctx) {
   const host = ctx.section
@@ -551,7 +568,10 @@ export function mount(parent, ctx) {
   const shut = returnShut();
   const facts = (() => { try { return channelFacts(playing && playingSec >= 0
     ? playingSec : 0) || {}; } catch (e) { return {}; } })();
-  const drives = [];            // { el, key } — the model readout per strip
+  // `let`, not `const`, since 2026-08-27 (the tabs): the strip is rebuilt on a
+  // tab tap and paint() must read the CURRENT strip's readout, not the one
+  // that was on the page when mount() ran.
+  let drives = [];              // { el, key } — the model readout per strip
 
   // COMPRESSED 2026-08-27 (the text diet, FUTURE.md §2: "signal flow is drawn
   // as arrows, not narrated"). It read 230 chars narrating the strip order the
@@ -561,10 +581,82 @@ export function mount(parent, ctx) {
     "nu-hint");
   host.append(note);
 
-  /* ================= THE STRIPS ================= */
+  /* ================= THE STRIPS, ONE PER TAB (2026-08-27) =================
+     Paul, 2026-08-27: *"In the mixing board — Put the instruments inside tabs
+     the mixing board instead of stacking them."*
+
+     WHAT WAS STACKED, MEASURED on the rendered page before the change
+     (localhost:8777, the shipped chant grown to seven voices — two lines, a
+     bass, a kit, three more lines): every strip is ~1,007px tall, so `#strips`
+     was 7,193px at 390 and the document 16,608px. Eight and a half screens of
+     console stood between the top of the board and the rack every one of those
+     strips sends into. At 1280 the auto-fit grid put them in four columns and
+     the block was still 2,092px. The stack was not a layout, it was a queue.
+     AFTER, same seven voices, same page: `#strips` is 1,007px at 390 and
+     876px at 1280 (one strip — and at 1280 it is SHORTER than a stacked one
+     was, because its three insert slots sit in a line), and the document is
+     10,529px. 6,079px of queue gone.
+
+     ONE TAB PER SEATED VOICE, ONE STRIP ON THE PAGE. The strip that is showing
+     gets the whole width the rack gets (780px, see nu.css) and its three
+     insert slots sit SIDE BY SIDE there instead of stacking — which is the
+     point of the change and not a bonus: vertical space is cheap (Paul,
+     2026-08-27) but it is not free, and a slot with room shows its wet and its
+     two face knobs without cramming them into a 250px column.
+
+     THE RACK IS NOT A TAB, and that is a decision with a number behind it. The
+     rack is the SERIES — genre → delay → reverb → main — and every one of the
+     four sends on the strip above lands in it; a hand riding a send is looking
+     at the return it feeds. Measured on the tabbed page at 390: the reverb
+     send slider and the reverb plate's own return pot are 2,033px apart, which
+     is a scroll and no taps. Behind a tab they would be one tap apart AND the
+     strip would be gone while you looked — you would be setting a send with
+     its destination off the page. The rack is also drawn ONCE for the whole
+     record (desk-gate G11 check 3 holds exactly that: "one each for the whole
+     record, not one per channel"), so a tab for it would put a record-level
+     fact behind a per-voice gesture. It stays below the strip, always visible.
+     The word grid stays whole for the same reason it always was: it is a
+     cross-voice table by design — sections down, every voice across — and a
+     table with one column is not a table.
+
+     THE SKIN IS THIS PAGE'S OWN AND NOT THE SKETCH'S. The band's voice tabs
+     (ui/eight.js bandBlock, `#tabs`) and the motif tabs (`#motif-tabs`) are
+     both `<p class="nu-row">` of plain buttons carrying `aria-pressed` with a
+     `<mark>` around the open one, and this strip is the third of them, spelled
+     identically — a person who has learned "the tabs are a row of buttons and
+     the marked one is open" has learned all three. The `.tab[aria-selected]`
+     skin in the nukernel/ideal sketches was never shipped: grep for a
+     `class="tab"` across every .js under nukernel/ answers 0, and nu.css
+     defines no `.tab` rule (0 rules matching it in any of the four
+     stylesheets). A fourth
+     spelling of a row of buttons is precisely what nu.css's 2026-08-26 audit
+     deleted three of. `aria-pressed` and `aria-selected` are also not both
+     sayable on one button — `aria-selected` needs `role="tab"` inside a
+     `role="tablist"` with a `role="tabpanel"` to point at, and this page has
+     no such construct anywhere.
+
+     THE GLYPHS STAY IN eight.js. The band's tabs draw `glyphOf(name)` off
+     `KINDGLYPH`, which is a private table in ui/eight.js with a comment on it
+     about the last time it was copied ("the glyphs used to be keyed by NAME…
+     that fix left a second table behind it"). Copying three characters here
+     would be that drift again, so a board tab wears the voice's NAME, which is
+     the same word `.nu-sname` prints at the top of the strip it opens.
+
+     WHICH TAB IS OPEN IS A PAGE FACT AND KEYED BY NAME. `BOARDTAB` is a module
+     `let` — it survives every redraw of the board (mount() runs on every edit)
+     and it is never written to the document, because which strip you are
+     looking at is not a fact about the record. Keyed by NAME and not by index
+     for the reason the motif tabs give in their own file: the bank changes —
+     add a voice, drop a voice, and index 2 is a different player. */
+  const names = chans.map((c) => c.voice.name);
+  if (!names.includes(BOARDTAB)) BOARDTAB = names[0] || null;
   const board = el("div", null, "nu-strips");
   board.id = "strips";
-  for (const c of chans) {
+  // ONE STRIP, BUILT ON DEMAND. This was a `for (const c of chans)` loop that
+  // appended every strip to `#strips`; it is a function now and the tab row
+  // below calls it with the one channel that is open. Nothing inside it
+  // changed — the body is the 2026-08-27 one-board strip, line for line.
+  const stripOf = (c) => {
     const voice = c.voice, key = c.key, d = deskOf(voice);
     const off = anySolo && !d.solo;
     const strip = el("article", null, "nu-strip" + (off || d.mute ? " is-off" : ""));
@@ -576,7 +668,9 @@ export function mount(parent, ctx) {
     strip.append(head);
 
     // ---- inserts: up to three, in order --------------------------------
-    const srow1 = el("div", null, "nu-srow");
+    // `nu-srow-ins`: the three slots sit SIDE BY SIDE in the width the tab
+    // bought, and stack again under ~460px (nu.css).
+    const srow1 = el("div", null, "nu-srow nu-srow-ins");
     srow1.append(el("p", "inserts · up to three · in order", "nu-rowlab"));
     const stereoWhy = facts[key] && facts[key].stereo ? STEREO_WHY : null;
     const slots = slotsOf(voice);
@@ -703,9 +797,62 @@ export function mount(parent, ctx) {
     goes.append(el("b", busName("genre") + " · " + busName("echo") + " · " +
       busName("rev") + " · main"));
     strip.append(goes);
-    board.append(strip);
+    return strip;
+  };
+
+  /* ---- the tab row: the seated voices, one apiece ---------------------- */
+  const tabsBar = el("p", null, "nu-row");
+  tabsBar.id = "boardtabs";
+  // A ROW OF BUTTONS WRAPS, IT DOES NOT SCROLL — `.nu-row` is `flex-wrap:
+  // wrap` (nu.css:349) and that is the whole of the wrap-not-scroll law here:
+  // eleven voices at 390 come down as three lines of tabs, none of them off
+  // the right edge, and G13 measures the document width to prove it.
+  tabsBar.setAttribute("role", "group");
+  tabsBar.setAttribute("aria-label", "which instrument's strip is open");
+  const tabBtns = [];
+  const markTabs = () => {
+    for (const t2 of tabBtns) {
+      t2.b.setAttribute("aria-pressed", String(t2.name === BOARDTAB));
+      t2.b.textContent = "";
+      t2.b.append(t2.name === BOARDTAB ? el("mark", t2.name)
+                                       : el("span", t2.name));
+    }
+  };
+  // REBUILDS THE STRIP AND NOTHING ELSE — which is what makes "switching tabs
+  // does not move the page" true BY CONSTRUCTION rather than by correction.
+  // Everything above `#strips` (the heading, the legend, the tab row itself)
+  // is untouched, so no pixel above the thumb changes and scrollY has nothing
+  // to be corrected against — ui/eight.js's `anchorWant` machinery is not
+  // called and does not need to be. It is also why this is NOT `ctx.changed()`
+  // or a board-wide remount: a full redraw would rebuild the rack and the word
+  // grid, and the grid is a `.nu-pane` whose sideways scroll only draw()'s
+  // keepPanes puts back.
+  const showStrip = () => {
+    drives = [];
+    board.textContent = "";
+    const c = chans.find((x) => x.voice.name === BOARDTAB);
+    if (c) board.append(stripOf(c));
+    board.setAttribute("aria-label", (BOARDTAB || "no") + " strip");
+  };
+  for (const name of names) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.k = "boardtab-" + name;
+    b.addEventListener("click", () => {
+      if (name === BOARDTAB) return;     // a tab already open is not a gesture
+      BOARDTAB = name;
+      markTabs();
+      showStrip();
+      paint();                           // the new strip's model readout, now
+    });
+    tabBtns.push({ b, name });
+    // the literal " " is the band strip's own: with the stylesheet off it is
+    // what keeps two tabs from reading as one word.
+    tabsBar.append(b, document.createTextNode(" "));
   }
-  host.append(board);
+  markTabs();
+  host.append(tabsBar, board);
+  showStrip();
 
   /* ================= THE BUS RACK · IN SERIES ================= */
   // one line, top to bottom: genre → delay → reverb → main (Paul, 2026-08-27:

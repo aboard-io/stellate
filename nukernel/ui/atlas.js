@@ -216,7 +216,15 @@ export function mount(parent, ctx) {
   /* ---------- state: two angles, a zoom, a year and a seed -------------- */
   let yi = 0;                 // an index into YEARS, never a year
   let here = null;            // the gk the page is playing, or null
-  let seed = 1;               // the atlas's own; "another take" bumps it
+  let seed = 1;               // the atlas's own; the bar's "rewrite" bumps it
+  /* ONE OWNER FOR "WHICH READING OF THIS ANCHOR IS ON THE PAGE", and it is
+     this `seed` — still here on 2026-08-27, when the BUTTON left. The
+     control moved to the .nu-bar (Paul: "I'd like a button next to play that
+     seeds a completely different version of the song"); the counter did not,
+     because #atlasSay is the readout that prints it ("· reading 2") and a
+     second store in ui/eight.js would be a second answer to the same
+     question. `reseed()` at the foot of this file is the door the bar
+     presses. */
   let onScreen = true, dirty = false, raf = 0;
   let dragging = false, glide = null, fly = null;
 
@@ -228,7 +236,11 @@ export function mount(parent, ctx) {
      the other way round — a leftover from the plan that put the slider under the
      globe, reversed for the measurement written out at `when` below. The order
      here is the order the DOM is built in, verified: h2, #atlasSay, #atlasWhen,
-     #atlasWrap, #atlasActs.) */
+     #atlasWrap.)
+     AND THERE IS NO BUTTON AT THE END OF IT ANY MORE (2026-08-27). The list
+     used to close with #atlasActs, the <p class="nu-row"> that held "another
+     take"; the gesture is the .nu-bar's "rewrite" now and the row went with
+     it rather than being left as an empty paragraph. */
   const say = el("p", { id: "atlasSay", className: "nu-hint" });
   say.setAttribute("aria-live", "polite");
 
@@ -305,7 +317,13 @@ export function mount(parent, ctx) {
      that year lit — which is also the order Paul described the thing in ("a
      slider for time and a world map on top"). The ergonomic point survives
      anyway: this section sits in a long scrolling document, so where the slider
-     falls under your thumb is decided by the scroll and not by this line. */
+     falls under your thumb is decided by the scroll and not by this line.
+     (The measurement above names "another take", which left this section on
+     2026-08-27 for the .nu-bar. The measurement is kept as the history of the
+     decision; the decision itself does not depend on that button existing —
+     with the slider under the globe the PLACES are still behind the reader,
+     which is what the argument is about, and test/atlas.js's own reading-order
+     check is what holds it.) */
   const when = el("div", { id: "atlasWhen" });
   /* THE LABEL AND THE READOUT SIT ABOVE THE TRACK, not beside it, so the INPUT
      ITSELF goes across the whole screen — "the 'when' slider which should go
@@ -331,22 +349,27 @@ export function mount(parent, ctx) {
   yLab.append(yOut);
   when.append(yLab, year, ticks);
 
-  /* "ANOTHER TAKE" STAYS AND "BACK TO ROME 600" GOES, and the line between them
-     is Paul's own sentence. "Back to Rome 600" moved the slider and the camera
-     — that is NAVIGATING, and navigating is what he asked to be left with two
-     controls for. "Another take" re-rolls the record you already have; it is the
-     record's own control and it acts on nothing but the seed. */
-  const again = el("button", { type: "button", id: "atlasAgain",
-                               textContent: "another take" });
-  again.dataset.k = "atlas|again";
-  // `.nu-row` IS THE PAGE'S ONE NAME FOR A STRIP OF BUTTONS (nu.css,
-  // 2026-08-26). It replaces `#atlasActs button { margin-inline-end: .4rem }`,
-  // which was this section's private spelling of a spacing three other strips
-  // spelled two other ways.
-  const acts = el("p", { id: "atlasActs", className: "nu-row" });
-  acts.append(again);
+  /* #atlasAgain AND #atlasActs, AND WHY NEITHER IS HERE — 2026-08-27.
+     This section shipped one button, "another take", under a `.nu-row`
+     paragraph, and the paragraph that stood here defended it: "'Back to Rome
+     600' moved the slider and the camera — that is NAVIGATING, and navigating
+     is what he asked to be left with two controls for. 'Another take' re-rolls
+     the record you already have; it is the record's own control and it acts on
+     nothing but the seed."
 
-  parent.append(say, when, wrap, acts);
+     EVERY WORD OF THAT IS STILL TRUE AND IT IS NOW AN ARGUMENT FOR THE BAR.
+     Paul, 2026-08-27: *"I'd like a button next to play that seeds a completely
+     different version of the song. The another take button should just be
+     called take and should move up there. Both those buttons should start
+     playing right away."* A control that acts on the RECORD and not on the map
+     belongs with the transport, not under the globe — and the two verbs the
+     page had been spelling with one label came apart in the same sentence:
+     what this button did is a RE-COMPOSE (a new seed, a whole new record from
+     the same anchor), and `performance.take` is the take. So the button is
+     `#rewrite` in the .nu-bar, the take is `#take` beside it, and what stays
+     here is the seed and `reseed()` — the counter and its door. */
+
+  parent.append(say, when, wrap);
 
   /* ---------- the marks, BUILT ONCE, NEVER REBUILT ----------------------
      ONE MARK PER PLACE THAT HAS A RECORD — 62 of the 65 PLACES rows on the tree
@@ -838,7 +861,15 @@ export function mount(parent, ctx) {
   }
 
   /* ---------- the tap that composes ------------------------------------ */
-  function pick(gk) {
+  /* `done` IS THE BAR'S PLAY GESTURE, AND IT IS A CALLBACK BECAUSE THIS IS NOT
+     SYNCHRONOUS. The record is written on the SECOND frame (see the sentence
+     below), so a caller that composed and then called startAt() on its own line
+     would start the engine on the document it was trying to replace — and
+     ctx.setDocument's own stop() would then kill it. Handed here, it runs after
+     the swap and after the sentence, on the record that is actually on the
+     page. A refusal never calls it: nothing was written, so nothing plays, and
+     #atlasSay carries the one measured line. */
+  function pick(gk, done) {
     const w = WHEN[gk];
     const where = w ? w.place + " " + w.year : gk;
     /* WHAT IT SAYS WHILE IT WORKS. genreToDocument is fast table work, but
@@ -863,11 +894,34 @@ export function mount(parent, ctx) {
       say.textContent = where + " · " + gk + " — " + doc.form.sections.length
         + " sections, " + doc.voices.length + " voices, take "
         + doc.performance.take
-        // `take` is a field of the document and "another take" does not move
-        // it — it moves the SEED, which is what makes a second reading of the
-        // same anchor a different record.
+        // `take` is a field of the document and a REWRITE does not move it —
+        // it moves the SEED, which is what makes a second reading of the same
+        // anchor a different record. (The .nu-bar has both buttons since
+        // 2026-08-27: "take" bumps that field, "rewrite" bumps this seed.)
         + (seed > 1 ? " · reading " + seed : "") + ".";
+      if (done) done();
     }));
+  }
+
+  /* ---------- reseed(gk, done): the bar's "rewrite", from here ----------
+     A DIFFERENT RECORD, SAME ANCHOR. genreToDocument is deterministic in
+     (gk, seed), so the only way to a second version is a second seed — which
+     is the sentence the deleted #atlasAgain listener carried, kept verbatim
+     because the code under it did not change, only its caller.
+     `gk` DEFAULTS TO THE RING and the bar hands it `DOC.basis`: a role genre
+     has no place on the map (genres.js: "a role has a job, not a history"), so
+     `here` is null for one and the bar would be refused for a record it can
+     perfectly well rewrite. Returns false when there is nothing to rewrite,
+     and says why. */
+  function reseed(gk, done) {
+    const target = gk || here;
+    if (!target) {
+      say.textContent = "pick a place first, then this writes it again.";
+      return false;
+    }
+    seed++;
+    pick(target, done);
+    return true;
   }
 
   /* ONE TAP, ONE RECORD — consequence C, at the point of use. The place plus the
@@ -1247,12 +1301,6 @@ export function mount(parent, ctx) {
     redraw();
   }
   year.addEventListener("input", () => setYear(+year.value));
-  again.addEventListener("click", () => {
-    // A DIFFERENT RECORD, SAME PLACE AND YEAR. genreToDocument is deterministic
-    // in (gk, seed), so the only way to a second take is a second seed.
-    if (here) { seed++; pick(here); }
-    else say.textContent = "pick a place first, then this writes it again.";
-  });
 
   /* ---------- showing(gk): the handle §2.2 names ------------------------ */
   function showing(gk) {
@@ -1301,5 +1349,5 @@ export function mount(parent, ctx) {
 
   refit();
   setYear(indexOf(WHEN[TERMS.basis] ? WHEN[TERMS.basis].year : YEARS[0]));
-  return { showing };
+  return { showing, reseed };
 }

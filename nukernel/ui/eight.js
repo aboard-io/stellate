@@ -1570,6 +1570,16 @@ const SCORE_CHUNK = 4;
    because a loader that flashes for 60ms is a flicker rather than an
    explanation; one that will cost more says so first. */
 const SCORE_LOADER_MS = 100;
+/* HOW TALL A MOTIF LABEL IS, in box pixels, and it is the one number the CSS
+   and this file have to agree about (`#scoredeck .nu-mot` — a 2px rule with a
+   9px/1.4 cap hanging under it). It is here because the ROOM for it is
+   reserved in JavaScript, at creation, like every other height on this surface
+   (`scoreReserveTo`): the labels hang UNDER each staff, and under the LAST
+   staff the engraving's own bottom margin may not be deep enough to hold one.
+   Measured 2026-08-27 at 390px on the shipped chant: the gap between two
+   staves is 47.3px and the room under the last is 45.7, so nothing is added
+   there — the number only earns its keep on a record engraved tighter. */
+const SCORE_MOT_H = 15;
 /* AND THE PREDICTION IS MEASURED, NOT GUESSED. A render costs about the same
    per BAR OF ONE VOICE wherever it lands, which is the only shape the
    measurements support: 134ms for 36x2 = 1.86 a cell, 404 for 36x8 = 1.40,
@@ -1602,6 +1612,13 @@ let scoreW = 0, scoreX0 = 0, scoreSX = 0, scoreH = 0;
 let scoreS = 1;                   // what the picture had to be shrunk by to fit
 let scorePW = 0;                  // the printed width, margin cropped off
 let scoreSecAt = [];              // section -> the absolute step it starts on
+// WHERE EACH STAFF SITS IN THE PICTURE, in the SVG's own user units: the top
+// and bottom lines of staff i, which is voice i (one staff per voice, in
+// `DOC.voices` order — the same order `lightScore` counts `abcjs-vN` in). Read
+// off abcjs's own tune object in `paperGeom` and NEVER off the page: a
+// `getBBox` here would cost the layout this whole surface exists to avoid. It
+// is what hangs a motif label under the right part.
+let scoreStaffY = [];
 let scoreSteps = 0;               // how many steps the whole record is
 let scoreSecX = [];               // section -> where its paper starts, px
 let scoreSecV = [];               // section -> ITS OWN STEADY SPEED, px per step
@@ -1918,8 +1935,16 @@ function paperGeom(tune) {
   const x0 = Math.max(0, map[0][1] - 6);
   // …and where the STAFF starts, which is the same margin with the voice
   // names taken off it. The gutter needs both: see `gutterFrom`.
+  /* …AND WHERE EACH STAFF SITS, which is the fact a motif label under a PART
+     is hung off. `topLine` / `bottomLine` are abcjs's own numbers for the
+     outer two lines of staff i, in the same user units as `w` and the map, and
+     they are exact: measured against the rendered `path.abcjs-staff` bounding
+     boxes at 390px on 2026-08-27, 41.94/72.94 against 41.6/73.3 — the same two
+     lines, read without asking the page for a layout. */
   return { w: g.w, x0, sx: Math.max(0, (g.startx || 0) - 2),
-           y0: (staffs[0] || {}).absoluteY || 0, map };
+           y0: (staffs[0] || {}).absoluteY || 0, map,
+           ys: staffs.map((s) => ({ top: +s.topLine || 0,
+                                    bottom: +s.bottomLine || 0 })) };
 }
 // WHERE AN INSTANT IS ON THE PAPER, in the box's own pixels: linear between
 // the instants abcjs laid out, which is exact at every one of them, and out to
@@ -2154,6 +2179,7 @@ function engraveScore(built) {
     scoreH = svg ? Math.ceil(+svg.getAttribute("height") || 0) : 0;
     scoreW = g.w; scoreX0 = g.x0; scoreSX = g.sx || 0;
     scoreMap = g.map;
+    scoreStaffY = g.ys || [];
     scoreVoices = indexVoices(built.voices);
     // THE CURTAINS, HUNG WHILE THE PICTURE IS OFF THE PAGE. `scoreS` is not
     // decided until `fitPaper` and the chunk spans are measured in box pixels,
@@ -2183,7 +2209,20 @@ function fitPaper() {
   // is the whole thing this page refuses to do. Stopped — at boot, and after
   // any rebuild your own gesture caused — the block may take the room its
   // picture needs; playing, the picture fits the room it has.
-  if (!playing) scoreReserveTo(scoreH);
+  /* …AND THE ROOM THE MOTIF LABELS NEED IS TAKEN WITH IT, AT CREATION. The
+     labels hang under each staff (`motifLabels`), and between two staves the
+     engraving's own leading is room enough — but under the LAST staff there is
+     only whatever bottom margin abcjs left, and a label drawn past the box's
+     edge is a label the reader never sees. So the box asks for the picture's
+     height plus exactly what the last staff is short of, once, before anything
+     is drawn: nothing appears later and nothing moves under a thumb, which is
+     the same law `scoreReserveTo` was written for. It is measured off the
+     picture and is usually zero (the chant leaves 45.7px under its last staff
+     and a label is 15). */
+  const lastY = scoreStaffY.length
+    ? scoreStaffY[scoreStaffY.length - 1].bottom : scoreH;
+  const motRoom = Math.max(0, SCORE_MOT_H - Math.max(0, scoreH - lastY));
+  if (!playing) scoreReserveTo(scoreH + motRoom);
   scoreS = scoreReserve && scoreH > scoreReserve ? scoreReserve / scoreH : 1;
   scoreSvg.setAttribute("width", (scoreW + 8) * scoreS);
   scoreSvg.setAttribute("height", scoreH * scoreS);
@@ -2202,9 +2241,9 @@ function fitPaper() {
   scoreShown = "";
   gutterFrom();
   pinSpeed();
-  // …and the motif brackets, which are geometry over this same paper and so
-  // are re-hung exactly when the paper is (see `bracketsFrom`, the deck).
-  bracketsFrom();
+  // …and the motif labels, which are geometry over this same paper and so
+  // are re-hung exactly when the paper is (see `motifLabels`, the deck).
+  motifLabels();
   place(true);
 }
 
@@ -2220,6 +2259,21 @@ function fitPaper() {
    this is cheap — the STAVES do not chunk, so a chunk is only its noteheads,
    stems, beams and barlines.
 
+   …AND THE MARGIN IS LEFT WITH THEM, WHICH IS A BUG FIX AND NOT A TIDY-UP
+   (2026-08-27, measured on the rendered page). The sentence above was written
+   from a reading of the class list and the class list disagrees: abcjs stamps
+   the clef and the meter `abcjs-staff-extra abcjs-clef abcjs-l0 **abcjs-m0**`
+   — they carry the FIRST MEASURE's number, because that is the measure they
+   are drawn in front of. So they were swept into chunk 0 like any notehead,
+   and `gutterFrom` — which drops every chunk out of its clone to keep the copy
+   at sixteen elements instead of nine thousand — dropped them with it. THE
+   PINNED GUTTER HAS NEVER SHOWN A CLEF, A KEY OR A METER at any width: at
+   390px on the shipped chant it was 52px of blank staff, which is exactly
+   Paul's "I don't know which instrument or key I'm looking at" (2026-08-27).
+   A `staff-extra` is margin and not music — `paperGeom` already skips these
+   same elements when it builds the time map, for the same reason — so the test
+   is the one that file already makes, said here too.
+
    IT IS DONE OFF THE PAGE. Nine thousand `append` calls on a live SVG is nine
    thousand invalidations of a picture that is already the biggest thing on the
    page; detached it is one. The node comes back the moment it is grouped, and
@@ -2230,7 +2284,9 @@ function chunkPaper(svg) {
   if (!wrap) return;
   const groups = new Map();
   for (const c of [...wrap.children]) {
-    const m = /(?:^| )abcjs-m(\d+)(?: |$)/.exec(c.getAttribute("class") || "");
+    const cls = c.getAttribute("class") || "";
+    if (/(?:^| )abcjs-staff-extra(?: |$)/.test(cls)) continue;   // margin, not music
+    const m = /(?:^| )abcjs-m(\d+)(?: |$)/.exec(cls);
     if (!m) continue;
     const k = Math.floor(+m[1] / SCORE_CHUNK);
     let g = groups.get(k);
@@ -2306,29 +2362,66 @@ function indexVoices(voices) {
 function gutterFrom() {
   if (!scoreGut || !scoreSvg || !scoreX0) return;
   if (scoreGut.dataset.k === scoreReserveKey && scoreGut.firstChild) return;
-  /* THE NAMES ARE THE FIRST THING OFF A NARROW SCREEN, and it is measured
-     rather than preferred: the reggae record's margin is 171px of a 390px box
-     — 44% of the paper, so a bar and a half of music becomes a bar — and 86px
-     of it is the words `stab`, `vocal`, `simple` and `kit`. Past a third of
-     the box the clone is cut at the STAFF's own start instead (abcjs's
-     `startx`, which is exactly where the names stop), so what stays pinned is
-     the clef, the key and the meter — the three things a reader cannot infer —
-     and the names go with the music, where the beginning of the record states
-     them. A wide screen keeps both. */
-  const full = scoreX0 * scoreS;
-  const from = full > scoreBoxW / 3 ? scoreSX * scoreS : 0;
+  /* WHAT A NARROW SCREEN KEEPS, REVERSED 2026-08-27 — Paul: *"The score cuts
+     off in the wrong place on mobile so I don't know which instrument or key
+     I'm looking at… I wonder what could work here maybe we put the key above
+     the score."*
+
+     THIS BLOCK USED TO SAY: *"the reggae record's margin is 171px of a 390px
+     box — 44% of the paper — and 86px of it is the words `stab`, `vocal`,
+     `simple` and `kit`. Past a third of the box the clone is cut at the
+     STAFF's own start instead (abcjs's `startx`, which is exactly where the
+     names stop), so what stays pinned is the clef, the key and the meter —
+     the three things a reader cannot infer — and the names go with the music."*
+     The measurement behind the third is kept; both halves of the conclusion
+     were wrong, and each was wrong for its own reason:
+
+     1  IT PINNED NOTHING. The clef and the meter carry `abcjs-m0` and were
+        being dropped out of the clone with the chunks (see `chunkPaper`,
+        2026-08-27) — so the 52px it cost at 390px on the chant held five
+        blank staff lines. That is the bug half, and it is fixed there.
+     2  AND THE CHOICE WAS THE WRONG WAY ROUND. A key can be said in WORDS
+        above the picture and now is (`keyLine`, Paul's own suggestion); which
+        staff is the bass CANNOT — it is a fact about a row of the picture,
+        and the only place to say it is beside that row. So when the whole
+        margin will not fit, it is now the NAMES that stay pinned and the
+        clef/key/meter that go with the music.
+
+     THE CUT IS AT ONE OF THE ENGRAVING'S OWN LANDMARKS, never at a number
+     typed here: `scoreX0` is where the music starts (names + clef + key +
+     meter) and `scoreSX` is abcjs's `startx`, where the staff lines — and so
+     the clef — begin, which is exactly where the names stop. Measured at 390px
+     on the shipped chant: whole margin 135.7px (37% of a 366px box, over the
+     third), names 83.7px (23%). So the phone trades 83.7px for two part names
+     it can read the whole way through the record, against 52px that said
+     nothing — 31.7px of paper, about half a bar at this record's spacing.
+     A wide screen is unchanged and now genuinely keeps both: at 1280 the whole
+     136px margin fits inside the third, and after the chunk fix the clef and
+     the meter are in it. */
+  const full = scoreX0 * scoreS;              // names + clef + key + meter
+  const names = scoreSX * scoreS;             // …and the half of it that is names
+  const room = scoreBoxW / 3;
+  // the widest landmark that fits, and never more than the third: a record
+  // whose NAMES alone overrun a phone gets them clipped at the third rather
+  // than given the paper, and a name is left-aligned, so what survives the
+  // clip is the beginning of the word — enough to tell two parts apart.
+  const keep = full <= room ? full : Math.min(names, room);
   const c = scoreSvg.cloneNode(true);
   // THE COPY KEEPS THE MARGIN AND THROWS THE MUSIC AWAY. What is pinned here
-  // is the clef, the key, the meter and the names — every one of them a
-  // `staff-extra` element that carries no measure and therefore lives in no
-  // chunk (see `chunkPaper`) — so the chunks can all be dropped out of the
-  // clone. It is the difference between a second copy of nine thousand
-  // elements sitting behind the music and a copy of sixteen.
+  // is the names, and — when the margin fits — the clef, the key and the
+  // meter with them: every one of them a `staff-extra` element, which is
+  // exactly what `chunkPaper` now leaves out of the chunks, so the chunks can
+  // all be dropped out of the clone. It is the difference between a second
+  // copy of nine thousand elements sitting behind the music and a copy of
+  // sixteen. The clone is never SHIFTED any more — it starts at the left edge
+  // of the picture and the box's own width is what cuts it — because both
+  // landmarks are measured from that edge and a margin-left of anything but
+  // zero would put the names off the screen, which is what it did.
   for (const g of c.querySelectorAll("g[data-c]")) g.remove();
-  c.style.marginLeft = (-from) + "px";
+  c.style.marginLeft = "0px";
   scoreGut.replaceChildren(c);
   scoreGut.dataset.k = scoreReserveKey;
-  scoreGutW = Math.max(0, Math.round(full - from));
+  scoreGutW = Math.max(0, Math.round(keep));
   scoreGut.style.width = scoreGutW + "px";
 }
 
@@ -2541,6 +2634,11 @@ function scoreBlock(parent) {
   // (the `heading(parent, "the score")` that opened this block moved to the
   //  deck's own <h2> on 2026-08-27 with the block itself — one heading over
   //  the two views, not one per view)
+  // THE KEY, ABOVE THE SCORE, AND OUTSIDE THE LIVE BLOCK. It is a fact about
+  // the RECORD and not about the instant, so the clock never touches it and it
+  // may not sit where the clock writes (`keyLine`, and the A1 law).
+  const kl = el("p", keyLine(), "nu-hint nu-keyline");
+  parent.append(kl);
   const live = el("div");
   live.dataset.live = "score";
   live.className = "nu-score";
@@ -2561,7 +2659,7 @@ function scoreBlock(parent) {
   scoreCap = cap; scoreHost = box; scoreSyl = syl; scoreRun = run;
   scorePaper = paper; scoreLoad = load;
   scoreGut = gut; scoreGutW = 0;
-  scoreMots = null;              // the bracket layer belongs to the old run
+  scoreMots = null;              // the motif-label layer belongs to the old run
   scoreLit = []; scoreEls = null; scoreSec = -1; scoreX = null;
   const key = DOC.voices.length + "@" + Math.round(window.innerWidth);
   if (key !== scoreReserveKey) { scoreReserveKey = key; scoreReserve = 0; }
@@ -2578,6 +2676,44 @@ function scoreBlock(parent) {
   // record and no engraving at all.
   scoreRender();
   repaintScore();
+}
+
+/* THE KEY, ABOVE THE SCORE (2026-08-27) — Paul: *"The score cuts off in the
+   wrong place on mobile so I don't know which instrument or key I'm looking
+   at… I wonder what could work here maybe we put the key above the score."*
+
+   HIS OWN SUGGESTION, AND IT PAYS FOR THE OTHER HALF OF THE FIX. A key
+   signature is three glyphs in a margin that a phone cannot afford to pin;
+   said in WORDS it is thirty characters over the picture, costs one line of
+   height that is taken at creation, and it frees the pinned gutter to carry
+   the one thing words above the picture cannot — which staff is which
+   (`gutterFrom`, reversed the same morning).
+
+   EVERY WORD IN IT IS THE RECORD'S OWN, TAKEN WHERE THE MENUS TAKE THEIRS.
+   `optionsFor` is the one resolution of "what can this axis say and what is it
+   saying" (avail.js), so the key is the word the circle of fifths wears, the
+   mode is the word in the menu beside it, and the meter is the word on the
+   Time axis — spelled `A♯/B♭` and `natural minor` because those are the
+   labels, not because anything here types them. Change the key and this line
+   is the change; it cannot drift, because there is nothing here to drift.
+
+   IT NAMES THE RECORD AND NOT THE PAPER, and where those two differ it is on
+   purpose and it is `SCORE_SPB`'s difference, not this line's: the score is
+   engraved in sixteen steps to the measure whatever the record counts in (see
+   SCORE_SPB — "a genre in a twelve-step meter draws its score the way it draws
+   its motifs, which is the disagreement to fix in one place if ever"). The
+   reader asked which key they are looking at; the answer is the record's. */
+function keyLine() {
+  const A = NuAvail;
+  const said = (k) => {
+    const r = A.optionsFor(DOC, null, k, NuGates, ENV);
+    const o = r.options.find((x) => String(x.value) === String(r.value));
+    return { label: A.SHEETS[k].label, word: o ? o.label : String(r.value) };
+  };
+  const key = said("alphabet.key"), mode = said("alphabet.mode");
+  const met = said("time.meter");
+  return key.label + ": " + key.word + " " + mode.word +
+         " · " + met.label + ": " + met.word;
 }
 
 /* AND THE CAPTION GETS THE SAME TREATMENT THE COMPOSED ONES GET, for the same
@@ -2679,11 +2815,14 @@ function syllLine(si, k) {
    did not change; it MOVED, from the top of the Material axis to a deck under
    the board, and gained three things the sketch decided:
 
-     1  MOTIF BRACKETS ON THE STAFF, extracted and never typed: each bracket's
-        text is the material cell the lead line reads in that section
-        (`cellAt`, the same resolution `materialAt` gives the compiler), and
-        its span is `scoreSecAt` → `paperX` — the same fold that bars the
-        timeline. A gate can equal every bracket to a `material.cells` key.
+     1  MOTIF NAMES UNDER EACH PART, extracted and never typed: each label's
+        text is the material cell THAT VOICE reads in that section (`cellAt`,
+        the same resolution `materialAt` gives the compiler), and its span is
+        `scoreSecAt` → `paperX` — the same fold that bars the timeline. A gate
+        can equal every label to a `material.cells` key for its own voice.
+        (It was ONE bracket over the system carrying the LEAD's cell until
+        2026-08-27 — Paul: "The names of the motifs should appear in the score
+        below the parts when they are used as notes." See `motifLabels`.)
      2  A VERTICAL PIANO ROLL: pitch across (low left, high right), time
         pouring DOWN through a clock-red now-band a third from the top —
         "time runs downward in every grid; the engraved score is the ONE
@@ -2709,7 +2848,7 @@ let deckTabNot = null, deckTabRoll = null;
 let rollHost = null, rollCv = null, rollCtx = null;
 let rollW = 0, rollH = 0;
 let rollKey = "", rollList = null, rollLo = 48, rollHi = 72;
-let scoreMots = null;           // the bracket layer, inside the run
+let scoreMots = null;           // the motif-label layer, inside the run
 let deckSay = null;             // the export row's status line (gesture-written)
 const ROLL_PXSTEP = 13;         // steady: pixels per pattern step, time DOWN
 const HEAD_GM = headGM(SCOREHEAD);   // notehead → GM key (export/smf.js fold)
@@ -2741,36 +2880,150 @@ function voicePaint(vi) {
   return li % 2 ? P.flag : P.hand;
 }
 
-/* ---- THE MOTIF BRACKETS, extracted (decision 2) -------------------------
-   One span per section over the staff, carrying the NAME of the material
-   cell the lead line voice reads there — `cellAt(lead, si)` is the page's
-   one resolution of that fact (document.js materialAt under it), so the
-   label can never drift from the tune: rename the cell and the bracket is
-   the rename. Placed off `scoreSecAt`/`paperX` — the same numbers that bar
-   the moving paper — and hung in the run so it scrolls WITH the music.
-   Rebuilt exactly when the paper is (fitPaper), inside [data-live="score"],
-   holding no control. */
-function bracketsFrom() {
+/* ---- THE MOTIF NAMES, UNDER EACH PART, extracted -------------------------
+   Paul, 2026-08-27: *"The names of the motifs should appear in the score
+   below the parts when they are used as notes."*
+
+   THIS REPLACES THE BRACKET ABOVE THE STAFF RATHER THAN JOINING IT, and the
+   reason is the one-owner law and not tidiness. The old header said:
+
+     *"THE MOTIF BRACKETS (decision 2). One span per section OVER the staff,
+     carrying the NAME of the material cell the LEAD LINE reads there —
+     `cellAt(lead, si)`."*
+
+   That bracket is a special case of what is drawn here: the lead line is one
+   of the parts, and if the bracket stayed, the lead's cell would be printed
+   twice on one picture — once over the system and once under its own staff —
+   which is two owners for one fact and the first thing to go stale. So the
+   layer is the same layer (`.nu-mots` inside the moving run), the extraction
+   is the same extraction, and what changed is that it is asked ONCE PER PART
+   instead of once for the record.
+
+   WHAT IT SAYS, AND WHOSE FACT IT IS. For each voice and each section:
+   `cellAt(voice, si)` — the page's one resolution of "which cell does this
+   voice read here" (document.js `materialAt` under it, the same answer the
+   compiler gets and the same answer the band's form table prints in its
+   `reads` column). Zero typed strings: rename a cell and every label is the
+   rename.
+
+   …EXCEPT THE BASS, WHICH READS SOMEBODY ELSE'S. `K.bass` is handed the FIRST
+   LINE's compiled phrase in both compilers (document.js scoreOf:355,
+   ui/derive.js:433 — "the bass reads accents, which only one line can own"),
+   so a bass voice's own `material` reaches no note. Printing it under the bass
+   staff would be the box's characteristic lie: a name declared and never
+   arriving. The bass staff gets the LEAD's cell, which is the same sentence
+   `bassReadsWhy` already says in words on the bass's own tab.
+
+   "WHEN THEY ARE USED AS NOTES" IS THE OTHER HALF OF THE ASK, and it is
+   measured off the engraving rather than assumed: a part with no note in a
+   section — out, not yet entered, or resting through it — gets no label
+   there, because a motif name over eight bars of rests names music nobody can
+   hear. `scoreVoices[vi].byStep` is the index the red noteheads are read
+   through, so the label and the ink agree by construction.
+
+   THE GEOMETRY IS RESERVED, NOT DISCOVERED — AND IT IS THE GAP AND NOT THE
+   LINE. The label hangs in the space between its own staff's bottom line and
+   the next staff's top line (`scoreStaffY`, off abcjs's own tune object),
+   two fifths of the way down it. Flush under the bottom LINE was drawn first
+   and measured first, on the rendered chant at 390px: the cantor's noteheads
+   sit a third below the staff and the rule went straight through them. Two
+   fifths puts the label clear of this part's low notes and clear of the next
+   part's high ones, and nearer the staff it names than the staff it does not,
+   which is what says whose it is. The last staff's gap is the picture's own
+   bottom margin, and `fitPaper` takes at creation whatever that margin is
+   short of.
+
+   HUNG IN THE RUN so it scrolls WITH the bars it names, rebuilt exactly when
+   the paper is (`fitPaper`), inside [data-live="score"] and holding no
+   control — the A1 law, unchanged from the bracket it replaces. */
+function motifLabels() {
   if (!scoreRun) return;
   if (!scoreMots || scoreMots.parentNode !== scoreRun) {
     scoreMots = el("div", null, "nu-mots");
     scoreRun.append(scoreMots);
   } else scoreMots.textContent = "";
-  const lead = LINES()[0];
-  if (!lead || !scoreMap || !scoreSecAt.length) return;
+  if (!scoreMap || !scoreSecAt.length || !scoreStaffY.length) return;
   const NS = DOC.form.sections.length;
+  const lead = LINES()[0];
   for (let si = 0; si < NS; si++) {
-    const name = cellAt(lead, si);        // EXTRACTION: a material.cells key
-    if (!name) continue;
-    const x0 = paperX(scoreSecAt[si]);
-    const x1 = paperX(si + 1 < NS ? scoreSecAt[si + 1] : scoreSteps);
+    const s0 = scoreSecAt[si];
+    const s1 = si + 1 < NS ? scoreSecAt[si + 1] : scoreSteps;
+    const x0 = paperX(s0), x1 = paperX(s1);
     if (!(x1 > x0 + 16)) continue;        // a sliver has no room for a word
-    const b = el("span", null, "nu-mot");
-    b.style.left = (x0 + 3) + "px";
-    b.style.width = Math.max(12, x1 - x0 - 10) + "px";
-    b.append(el("b", name));
-    scoreMots.append(b);
+    DOC.voices.forEach((v, vi) => {
+      const y = scoreStaffY[vi];
+      if (!y) return;                     // a voice with no staff of its own
+      if (!soundsIn(vi, s0, s1)) return;  // …and one with nothing to name here
+      // THE ONE RESOLUTION, and the bass's exception to it, said once.
+      const src = v.kind === "bass" ? lead : v;
+      const name = src ? cellAt(src, si) : null;   // a material.cells key
+      if (!name) return;
+      // the gap under this part, and where in it the label sits
+      const under = (vi + 1 < scoreStaffY.length
+        ? scoreStaffY[vi + 1].top : scoreH) - y.bottom;
+      const b = el("span", null, "nu-mot");
+      const w = Math.max(12, x1 - x0 - 10);
+      b.style.left = (x0 + 3) + "px";
+      b.style.top = (y.bottom * scoreS +
+        Math.max(2, (under * scoreS - SCORE_MOT_H) * 0.4)) + "px";
+      b.style.width = w + "px";
+      b.dataset.v = v.name;               // whose staff this label hangs under
+      b.dataset.si = si;                  // …and which section it starts on
+      /* AND THE NAME IS SAID AGAIN EVERY SCREENFUL, which is the same lesson
+         the pinned gutter is (`gutterFrom`): a word written once at the head
+         of a section has scrolled away four bars later, and a reader arriving
+         at bar 8 was looking at a blue rule with nothing on it — measured on
+         the rendered page at 390px, 2026-08-27.
+
+         THE SPACING IS THE ONE THAT ACTUALLY GUARANTEES IT, and the obvious
+         one does not. Caps every `room` pixels from the start leaves the TAIL
+         of a section nameless: at 1280 the chant's section is 780px inside a
+         1120px window, so one cap at its head is enough to satisfy "a cap
+         within a window" and still be off the left edge with 480px of rule
+         showing (measured, and it is what the first cut of this drew). So the
+         rule is DIVIDED: `n` equal steps no longer than four fifths of the
+         room, caps at every division INCLUDING THE LAST — from anywhere in
+         the section the next cap is at most one step away and the step is
+         smaller than the window, so a cap is always on the screen. The final
+         one hangs from the section's end instead of its start (`nu-end`, a
+         translate rather than a measurement, because the width of a word is a
+         thing only the browser knows). All of it is arithmetic done once per
+         fit: the labels ride the paper, and nothing here writes on the
+         clock. */
+      const room = Math.max(80, scoreBoxW - scoreGutW);
+      const n = Math.max(1, Math.ceil(w / (room * 0.8)));
+      // …AND NOT TWICE AT A SEAM WHERE NOTHING CHANGES. A section that hands
+      // the same motif on to the next one would print its end cap a
+      // notehead's width from the next section's start cap — "psalm psalm",
+      // measured at 1280 — and the second word is the first word. The end cap
+      // is dropped there, and nothing is lost: the next section's own cap is
+      // standing at the seam saying the same thing.
+      const on = si + 1 < NS && soundsIn(vi, s1,
+        si + 2 < NS ? scoreSecAt[si + 2] : scoreSteps)
+        ? cellAt(src, si + 1) : null;
+      for (let k = 0; k <= n; k++) {
+        if (k === n && on === name) break;
+        const cap = el("b", name);
+        if (k === n) { cap.className = "nu-end"; cap.style.left = w + "px"; }
+        else cap.style.left = (k * (w / n) - 2) + "px";
+        b.append(cap);
+      }
+      scoreMots.append(b);
+    });
   }
+}
+/* WHETHER A PART HAS A NOTE IN A STRETCH OF THE RECORD, asked off the SCORE
+   and not off the document: `byStep` is the step-indexed note map the sounding
+   red is read through (`indexVoices`), so "this part plays here" means the
+   same thing to the label and to the ink. Linear over the section, which is
+   the record's steps once per part per fit — a fold of small integers, and it
+   runs where every other measurement on this surface runs, in the render. */
+function soundsIn(vi, s0, s1) {
+  const v = scoreVoices[vi];
+  if (!v) return false;
+  const end = Math.min(v.byStep.length, s1);
+  for (let s = Math.max(0, s0); s < end; s++) if (v.byStep[s] >= 0) return true;
+  return false;
 }
 
 /* ---- THE PIANO ROLL (decision 3): pitch across, time down ---------------- */
@@ -7162,7 +7415,8 @@ function performanceTab(parent) {
      same performance to the byte. The only re-roll on the page was the atlas's
      "another take", which does not move this field at all — it re-writes the
      whole record from the genre, which is a different record and not a
-     different take.
+     different take. (That button is `#rewrite` in the .nu-bar now, under the
+     name of the verb it was always performing.)
 
      `toGenre` spends it now (`takeOf`, document.js), on the kernel's own dice
      and on the pipe operators' seeds. WHAT MOVES: which chance hits land, the
@@ -7170,6 +7424,14 @@ function performanceTab(parent) {
      ornament rolls, and where a canon falls. WHAT DOES NOT: any decision —
      nothing the composer chose is downstream of a take, which is what makes
      "the same song, played again" true rather than hoped for.
+
+     THIS SLIDER IS STILL THE VALUE'S ONLY STORE, and since 2026-08-27 it is
+     not the only way to move it: the .nu-bar's `#take` button is a GESTURE
+     that bumps this same field and plays (Paul: "The another take button
+     should just be called take and should move up there"). It writes
+     `DOC.performance.take` and calls `changed()`, so this slider is redrawn
+     from the document and the two cannot disagree — one owner, two hands on
+     it.
 
      THE READOUT SAYS WHICH TAKE, and 0 and 1 are both take one because absent
      has to be today: every record written before 2026-08-26 says 0. */
@@ -7935,7 +8197,8 @@ function redrawApp(box) {
 }
 
 /* ---------- transport ---------- */
-const playBtn = $("play"), volEl = $("vol");
+const playBtn = $("play"), volEl = $("vol"),
+      rewriteBtn = $("rewrite"), takeBtn = $("take");
 const say = (onNow) => { playBtn.textContent = (onNow || playing) ? "stop" : "play"; };
 playBtn.addEventListener("click", () => {
   if (playing) { stop(); say(false); } else { startAt(0); say(true); }
@@ -7943,6 +8206,70 @@ playBtn.addEventListener("click", () => {
 on("transport:state", () => say());
 volEl.value = String(vol);
 volEl.addEventListener("input", () => { setVol(+volEl.value); commit("transport"); });
+
+/* ---------- THE TWO GESTURES BESIDE PLAY (2026-08-27) -------------------
+   Paul: *"I'd like a button next to play that seeds a completely different
+   version of the song. The another take button should just be called take and
+   should move up there. Both those buttons should start playing right away."*
+
+   TWO VERBS, AND THE PAGE HAD ONE LABEL FOR THEM. `#take` moves
+   `performance.take`, which document.js `takeOf` spends on the kernel's own
+   per-take dice — which chance hits land, the hand's micro-timing, the
+   velocity humanisation, the ornament rolls. "It reaches the engine and not
+   the model … a take cannot move a DECISION": the same record, played again.
+   `#rewrite` bumps the atlas's seed and writes the record again from the same
+   anchor — a different record, which is what the atlas's "another take" button
+   always did under the other verb's name.
+
+   ONE OWNER PER FACT, TWICE OVER, AND NEITHER BUTTON IS A STORE. The take's
+   value lives in `DOC.performance.take` and is drawn by the Performance tab's
+   slider (`performanceTab`); this button is a GESTURE that bumps that field
+   and lets `changed()` redraw the slider off the document, so the two can
+   never disagree. The seed lives in ui/atlas.js and is printed by #atlasSay
+   ("· reading 2"); this button calls `ATLAS.reseed`, which is that counter's
+   own door.
+
+   AND BOTH USE #play's DOOR. `startAt(0)` is the one play path on this page —
+   the same call the button above makes, so the tape wave's adoption, the
+   gesture unlock and the pending-start queue are all reached the way they
+   already were. A REWRITE INVALIDATES THE HELD PRE-RENDER and does not need a
+   line here to do it: `CTX.setDocument` calls `stop()` and `push(true)`, and
+   push ends in `commit("box")`, which is one of the events audio/live.js's
+   changed-law block listens to — stopped, that is `discardPre()`. A take is
+   the same story: `changed()` -> `push()` -> `commit("box")`. Verified on the
+   rendered page rather than assumed (the round's two proofs).
+
+   THE BUTTONS ARE CONTROLS AND THE CLOCK MAY NOT TOUCH THEM. They are in the
+   .nu-bar, which is outside #app entirely, so no `[data-live]` subtree can
+   contain them and `__eightFrozen` never sees them; and unlike #play, no
+   handler on this page rewrites their text — the word "take" is the gesture's
+   name, never a readout of the value (the value's readout is the slider's
+   <output>, which is the fact's owner). */
+const startNow = () => { startAt(0); say(true); };
+
+takeBtn.addEventListener("click", () => {
+  /* THE NEXT TAKE, AND WHY 0 GOES TO 2. The slider's own domain is 0..99 and
+     its readout says "take 1 — the reading it has always had" for BOTH 0 and
+     1, because absent has to be today (document.js: every record written
+     before 2026-08-26 says 0). So stepping 0 -> 1 would be a button that
+     changed the document and not the sound, which is the characteristic bug
+     this box has been measured for. 0 goes to 2, and 99 wraps to 1 rather
+     than sticking at the top of a slider nobody can see from here. */
+  const t = DOC.performance.take | 0;
+  DOC.performance.take = t < 1 ? 2 : (t >= 99 ? 1 : t + 1);
+  changed();          // reviseProd + push + draw: the slider redraws from DOC
+  startNow();
+});
+
+rewriteBtn.addEventListener("click", () => {
+  /* THE ATLAS OWNS THE SEED, so this asks it — and it asks for `DOC.basis`
+     rather than for the map's ring, because a role genre has no place on the
+     map (genres.js: "a role has a job, not a history") and the record is
+     rewritable either way. `reseed` returns false and says why in #atlasSay
+     when it cannot; a refusal writes no record, so nothing plays. */
+  if (!ATLAS) return;
+  ATLAS.reseed(DOC.basis, startNow);
+});
 
 /* ---------- boot ---------- */
 window.__eightDoc = () => DOC;          // the raw document, for a console
@@ -8049,6 +8376,44 @@ window.__deckState = () => ({
   step: +stepAbs().toFixed(3),
   brackets: scoreMots
     ? [...scoreMots.querySelectorAll(".nu-mot > b")].map((b) => b.textContent) : [],
+  /* …AND WHOSE EACH ONE IS (2026-08-27). A label under a part is only true if
+     it names the cell THAT PART reads, so the gate needs the pair and not just
+     the word: the voice the label hangs under, the section it starts on, and
+     what it says. `top` comes back with it because "under the part" is a claim
+     about geometry that a gate should be able to check against the staff. */
+  labels: scoreMots ? [...scoreMots.querySelectorAll(".nu-mot")].map((m) => ({
+    voice: m.dataset.v, si: +m.dataset.si,
+    text: (m.querySelector("b") || {}).textContent,
+    left: Math.round(parseFloat(m.style.left) || 0),
+    top: Math.round(parseFloat(m.style.top) || 0) })) : [],
+  // where each staff is, in the same box pixels the labels are placed in, so
+  // "under the part" is a claim a gate can measure rather than take on trust
+  staves: scoreStaffY.map((y) => ({ top: +(y.top * scoreS).toFixed(1),
+                                    bottom: +(y.bottom * scoreS).toFixed(1) })),
+  // what each voice reads per section, resolved by the page's own `cellAt`
+  // (and the bass's exception to it) — the answer the labels must equal
+  reads: DOC.voices.map((v) => ({ voice: v.name, kind: v.kind,
+    cells: DOC.form.sections.map((s2, si) => {
+      const src = v.kind === "bass" ? LINES()[0] : v;
+      return src ? cellAt(src, si) : null; }) })),
+  cellsFor: DOC.voices.map((v) => NuAvail.cellsFor(DOC, v.kind)),
+  // THE KEY LINE and THE PINNED GUTTER, the two halves of "I don't know which
+  // instrument or key I'm looking at" — read off the page as text and pixels.
+  keyline: (() => { const p2 = document.querySelector("#scoredeck .nu-keyline");
+    return p2 ? p2.textContent : null; })(),
+  gutter: (() => {
+    const g = document.querySelector("#scoredeck .nu-gutter");
+    if (!g) return null;
+    const gb = g.getBoundingClientRect();
+    return { w: Math.round(gb.width),
+      names: [...g.querySelectorAll("text.abcjs-voice-name")].map((t) => {
+        const r = t.getBoundingClientRect();
+        return { text: t.textContent, left: Math.round(r.left),
+                 right: Math.round(r.right), top: Math.round(r.top),
+                 bottom: Math.round(r.bottom) }; }),
+      clefs: g.querySelectorAll(".abcjs-clef").length,
+      meters: g.querySelectorAll(".abcjs-time-signature").length };
+  })(),
   cells: Object.keys(DOC.material.cells),
   rollNotes: (rollList || []).length,
   rollRange: [rollLo, rollHi],

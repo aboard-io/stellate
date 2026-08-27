@@ -38,8 +38,10 @@
  *   2. A sticky `<tr>` does nothing. Rows cannot be sticky; cells can. Every
  *      sticky rule below is on a `th` or a `td`.
  *   3. `--bar-h` is a PROMISE: `.nu-ax > h2 { top: var(--bar-h) }` assumes the
- *      bar is exactly that tall, and a third control in `.nu-bar` that wraps
- *      opens a gap under the heading. test/shell.js pins the number.
+ *      bar is exactly that tall, and a control in `.nu-bar` that wraps opens a
+ *      gap under the heading. test/shell.js pins the number. (It said "a THIRD
+ *      control"; the bar holds four since 2026-08-27 and the promise is
+ *      unchanged — the arithmetic that keeps it is written at `.nu-bar`.)
  *
  * TWO MODERN FEATURES, both load-bearing only for niceties. `color-mix()` and
  * `:has()` ship in Safari 16.4+ / Chrome 105+ / Firefox 121+. If `:has()` fails
@@ -109,7 +111,7 @@
    is FOR — which is the part that was missing.
 
      1  AN ACTION            `<button type="button">`, the browser's own chrome.
-                             It does something now: play, another take, + line,
+                             It does something now: play, rewrite, take, + line,
                              fork, take it off, forget all of it. 44px floor.
      2  A TAB                the SAME `<button>`, plus `aria-pressed`, plus the
                              current one wearing `<mark>`. A tab is not a
@@ -407,8 +409,39 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 /* ===== THE TWO STICKY BANDS ============================================
    Two, never three: 52 + 38 = 90px of a 667px screen, 13.5%. In landscape
    that would be 26%, so the axis heading drops out below 480px of height. */
+/* THE ARITHMETIC OF A FOUR-CONTROL STRIP (2026-08-27, and every number here
+   was read off the rendered page at 320x844 in the gate's own chromium).
+   Paul asked for two more buttons beside play — "a button next to play that
+   seeds a completely different version of the song" and "another take …
+   should just be called take and should move up there" — and this bar may not
+   wrap and may not grow: `.nu-ax > h2 { top: var(--bar-h) }` is a promise
+   about 52px and test/shell.js A7 pins it. 320px is the tightest gate width
+   and it leaves 296px of content.
+
+   WHAT THE CONTROLS COST, at the old .6em gap and the page's .6em button
+   padding: `stop` 64.8 (the play button's widest word — it is the one to
+   count, not `play`), `take` 64.7, `rewrite` 90.6, three gaps 28.8 — 248.9 —
+   and the room slider's floor is its own 4em (64px) plus its word (45.3) plus
+   the label's own gap (6.4), 115.7. Total 364.6 in a 296px strip: 68.6px
+   over, which `flex-wrap: nowrap` would have spent as a sideways scroll (A1)
+   rather than as a wrap.
+
+   WHERE THE 68.6px COMES FROM, in three measured moves and no fourth:
+     · the strip's gap .6em -> .4em            —  9.6px  (three gaps: 28.8 -> 19.2)
+     · a bar button's padding .6em -> .4em     — 19.2px  (three buttons)
+     · the room WORD clipped below 430px       — 51.7px  (the word and its gap)
+   80.5px recovered against 68.6 needed. MEASURED AFTER, at 320x844 on the
+   rendered page: play 56.5, rewrite 84.2, take 58.3, three gaps 19.2, and the
+   range takes the 73.9 that are left — 9.9px above its own floor, and 8.0
+   with `stop` in the play button instead of `play`. The word comes back at
+   430, where the range is 136.1; the strip is 52.00px tall and
+   scrollWidth === clientWidth at 320, 375, 390, 430, 820 and 1280.
+   NOTHING ELSE ON THE PAGE MOVES: both overrides are scoped to `.nu-bar`, and
+   the page's own button face — the 3px border, the shadow, the press — is
+   untouched. Only the inline padding of three buttons is tighter, which is the
+   same trade `.nu-tf-row` already writes out for the transform rows. */
 .nu-bar{ position: sticky; top: 0; z-index: 30;
-  display: flex; align-items: center; gap: .6em; flex-wrap: nowrap;
+  display: flex; align-items: center; gap: .4em; flex-wrap: nowrap;
   /* a panel plate with a full-ink rule, not the ground with a grey one
      (2026-08-27): the transport is the one strip that is always screwed to
      the top of the chassis, so it is a PLATE. Still inside --bar-h — the
@@ -421,9 +454,21 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
   padding-inline: var(--gl) var(--gr);
   padding-block-start: env(safe-area-inset-top); }
 .nu-bar > *{ flex: 0 0 auto; }
+.nu-bar > button{ padding-inline: .4em; }   /* see the arithmetic above */
 .nu-bar label{ display: flex; align-items: center; gap: .4em;
   min-block-size: 0; line-height: normal; flex: 1 1 auto; }
 .nu-bar input[type=range]{ inline-size: 100%; min-inline-size: 4em; }
+/* THE ROOM SLIDER'S WORD, PRINTED WHERE THERE IS ROOM TO PRINT IT. index.html
+   ships it as `.nu-vh` — in the DOM at every width, read by a screen reader,
+   printed with the stylesheet off — and this CANCELS that clip from 430px up.
+   It is not a second definition of a look: `.nu-vh` above is still the only
+   place the hidden look is stated, and these six declarations are the six it
+   states, undone. 430 is the gate's own next width up from 390 and not a
+   guess: at 430 the strip needs 51.7px for the word and has 134px of slack in
+   the range, so the label never decides between its name and its floor. */
+@media (min-width: 430px){
+  .nu-bar label > .nu-vh{ position: static; width: auto; height: auto;
+    margin: 0; overflow: visible; clip-path: none; } }
 
 /* THE ENGINE READOUT KEEPS ITS ROOM WHETHER IT HAS ANYTHING TO SAY OR NOT.
    MOTIF.md, "STILL NOT COVERED" item 2, wrote the recipe (`#engine {
@@ -1224,8 +1269,10 @@ td > select{ max-inline-size: 9em; }
 /* THE TWO TABLES RETIRED 2026-08-27 — the one-board round (ideal/
    one-board.html, binding; Paul: "Vertical space is cheap. Don't use knobs.
    Have simple vertical sliders stacked and labeled"). The board is TALL
-   STRIPS now, side by side at 1280 and stacked at 390, and the rules for the
-   old `.nu-board` grid (92px channel columns, 124px bus columns, the
+   STRIPS now — side by side at 1280 and stacked at 390 for the sixteen hours
+   between that round and the tabs of the same evening, ONE STRIP AT A TIME in
+   a tab row since (see the block below, which carries Paul's sentence and the
+   numbers) — and the rules for the old `.nu-board` grid (92px channel columns, 124px bus columns, the
    nu-edge silkscreen, the sticky row-label column) went with the tables they
    dressed. Every measurement in the paragraphs above stays true OF THE THING
    IT MEASURED; the thing is gone. `.nu-eng` survives as the read-only mirror
@@ -1236,7 +1283,26 @@ td > select{ max-inline-size: 9em; }
 
 /* ===== THE ONE BOARD (2026-08-27) ======================================
    Down a strip reads in signal order; the page grows tall, never wide. */
-.nu-strips{ display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+/* ---- ONE STRIP AT A TIME, IN TABS (2026-08-27, Paul: "In the mixing board —
+   Put the instruments inside tabs the mixing board instead of stacking them").
+   REVERSAL WRITTEN DOWN, NOT DELETED. This was
+     `grid-template-columns: repeat(auto-fit, minmax(250px, 1fr))`
+   and the strips were "side by side at 1280 and stacked at 390" — every word
+   of that was true of the thing it dressed, and the thing is gone. Measured
+   on the rendered page the day it changed, the shipped chant grown to seven
+   voices: seven strips of ~1,007px each made `#strips` 7,193px at 390 and
+   2,092px in four columns at 1280; the document was 16,608px tall. The auto-fit
+   grid was not doing badly — there was simply no width at which eight and a
+   half screens of console is a mixing board.
+
+   `#strips` holds exactly ONE strip now, so there is nothing to lay out
+   ACROSS and the only rule it needs is a WIDTH CAP. 780px is the rack's own
+   `max-inline-size` two blocks down, chosen so the strip and the buses it
+   sends into are the same object on the page rather than two column widths;
+   a single strip stretched to a 1280px window would put its fader a screen
+   away from its sends. Below 780 the cap is inert and the strip is the
+   column, which is what a phone wants anyway. */
+.nu-strips{ display: grid; max-inline-size: 780px;
   gap: .8em; align-items: start; margin-block: .8em; }
 .nu-strip{ background: var(--panel); border: var(--bw, 3px) solid var(--ink);
   border-radius: 6px; box-shadow: 4px 4px 0 var(--ink);
@@ -1247,12 +1313,48 @@ td > select{ max-inline-size: 9em; }
 .nu-strip header small{ display: block; color: var(--dim); font-size: .72rem; }
 .nu-srow{ border-block-start: var(--bw, 3px) solid var(--ink); padding-block-start: .5em;
   display: grid; gap: .4em; }
+/* ---- THE THREE INSERT SLOTS GET THE WIDTH THE TAB BOUGHT (2026-08-27) ----
+   This is the point of the tabs and not a decoration of them: a slot carries
+   a seat menu, a wet and up to two of the module's own face knobs, and in a
+   250px stacked column those four sat one under another with the chip's name
+   truncating. With one strip on the page the row has 780px, so `auto-fit` at
+   a 218px floor puts all three slots side by side there. MEASURED, stepping
+   the viewport from 360 to 1000 in tens: one column to 480, two from 490,
+   three from 720 — so a phone gets them stacked, which is what a phone wants,
+   and the 780px strip gets all three in a line. The row is a grid and not a
+   flex wrap so the three slots are the SAME WIDTH and (by grid's own default
+   stretch) the SAME HEIGHT as each other however many have a chip in: a seat
+   that grew when you filled it would move the seat beside it. */
+.nu-srow-ins{ grid-template-columns: repeat(auto-fit, minmax(218px, 1fr)); }
+.nu-srow-ins > .nu-rowlab{ grid-column: 1 / -1; }
 .nu-rowlab{ font: 700 .68rem/1 var(--mono, monospace); letter-spacing: .1em;
   text-transform: uppercase; margin: 0; }
 
 /* ---- one insert slot ---- */
+/* WHAT A SLOT RESERVES, AND THE ONE RESERVATION THAT IS REFUSED, with the
+   number. Measured on the rendered page at 390 and at 1280, every chip in the
+   FX vocabulary driven through slot 1: an empty slot is 59px (a seat row and
+   nothing else), a filled one is 194px with any of the ten chips that carry a
+   mix and 197px with `sweep`, whose wet is refused and whose refusal sentence
+   is one line taller.
+
+   RESERVED, AT NO COST: the three slots are cells of one grid row and the row
+   STRETCHES them (the browser's default `align-items`, said out loud here
+   because `align-items: start` on .nu-srow-ins would silently take it away).
+   So wherever the slots sit side by side — 720px and up, measured, where the
+   row is three columns; 490px and up for two — filling one never changes the
+   size of the ones beside it. Nothing moves sideways, ever.
+
+   REFUSED, WITH THE NUMBER: a blanket `min-block-size: 197px` so that an
+   EMPTY slot reserves a filled one's box. It was written, measured and taken
+   out — at 390 the slots stack one per row, so reserving the body on all
+   three made the strip 1,421px where it is 1,007px, 414px of dashed nothing
+   on a phone for two seats a hand has not used. What is left moving is the
+   194 - 59 = 135px a slot grows when you seat a chip in it, and that movement
+   is the gesture's own answer arriving BELOW the menu that caused it — the
+   seat row itself, and everything above it, holds still. */
 .nu-slot{ background: var(--well); border: 2px solid var(--ink); border-radius: 3px;
-  padding: .35em; display: grid; gap: .35em; }
+  padding: .35em; display: grid; gap: .35em; align-content: start; }
 .nu-slot.is-empty{ border-style: dashed; background: transparent; }
 .nu-slot.is-off{ opacity: .6; }
 .nu-slotrow{ display: flex; gap: .35em; align-items: center; }
@@ -1299,8 +1401,15 @@ td > select{ max-inline-size: 9em; }
 .nu-vs.is-off .nu-vs-thumb{ box-shadow: none; border-color: var(--faint); }
 .nu-vs .nu-why{ max-inline-size: 9em; }
 
+/* A BANK, NOT FOUR LOOSE CONTROLS (2026-08-27, with the tabs). `.nu-sends`
+   dresses the send row and the EQ row, and `space-between` inside a 250px
+   stacked column read as a bank. In the 780px the tab bought it read as four
+   isolated sliders 240px apart — measured, the genre send and the main send
+   ended up 700px from each other on one row of one strip. The cap puts them
+   back at a hand's width; above it the row simply stops growing, which is the
+   same thing the rack does with its own 780. */
 .nu-sends{ display: flex; gap: .2em; justify-content: space-between;
-  flex-wrap: wrap; }
+  flex-wrap: wrap; max-inline-size: 30em; }
 
 /* ---- pan detents ---- */
 .nu-panrow{ display: flex; gap: .25em; }
@@ -1313,8 +1422,10 @@ td > select{ max-inline-size: 9em; }
 .nu-panword.is-dflt{ color: var(--dim); }
 
 /* ---- the fader row ---- */
+/* …and the same cap on the fader block, for the same reason: the level, the
+   refused meter well and the mute/solo pair are ONE object on a console. */
 .nu-fadwrap{ display: flex; gap: .6em; align-items: flex-end;
-  justify-content: space-between; flex-wrap: wrap; }
+  justify-content: space-between; flex-wrap: wrap; max-inline-size: 30em; }
 .nu-duo{ display: grid; gap: .35em; align-content: end; }
 .nu-tgl{ min-block-size: 44px; min-inline-size: 72px; font-weight: 800;
   background: var(--panel); border: 2px solid var(--ink); border-radius: 4px;
@@ -1822,20 +1933,46 @@ table.nu-trims{ color: var(--ink); }
 #scoredeck .nu-legv{ display: inline-flex; align-items: center; gap: .3em; }
 #scoredeck .nu-legv > i{ inline-size: 11px; block-size: 11px; border-radius: 3px;
   border: 2px solid var(--ink); display: inline-block; }
-/* THE MOTIF BRACKETS: a layer INSIDE the moving run, so the labels travel
-   with the bars they name. Text is EXTRACTED (a material.cells key) and the
-   layer holds no control — it lives inside [data-live="score"]. The bracket
-   is drawn with borders (a top rule and two ticks), the cap in hand paint. */
+/* THE MOTIF NAMES, UNDER EACH PART (2026-08-27, Paul: "The names of the
+   motifs should appear in the score below the parts when they are used as
+   notes"). A layer INSIDE the moving run, so a label travels with the bars it
+   names. Text is EXTRACTED (a material.cells key, ui/eight.js `motifLabels`)
+   and the layer holds no control — it lives inside [data-live="score"].
+
+   WHAT CHANGED FROM THE BRACKET IT REPLACES: the layer is the full height of
+   the run instead of a 16px strip across the top, because a label is now
+   placed at its own PART's staff (ui/eight.js sets `top` per label off
+   abcjs's own staff geometry) rather than over the system; and the mark is
+   lighter — a 2px rule with the cap hanging under it, 15px in all, which is
+   what fits between two staves and what SCORE_MOT_H reserves under the last
+   one. ONE PAINT for every part, deliberately: the label hangs 2px under its
+   own staff and some 34px above the next one, so position already says whose
+   it is, and the voice paints do not all take white text (--flag is a yellow;
+   the roll's legend chips can wear it because they carry ink borders). */
 #scoredeck .nu-mots{ position: absolute; inset-block-start: 0;
-  inset-inline-start: 0; block-size: 16px; pointer-events: none; }
-#scoredeck .nu-mot{ position: absolute; inset-block-start: 2px; block-size: 9px;
-  border-block-start: 3px solid var(--hand);
-  border-inline-start: 3px solid var(--hand);
-  border-inline-end: 3px solid var(--hand); }
-#scoredeck .nu-mot > b{ position: absolute; inset-block-start: -3px;
-  inset-inline-start: -3px; transform: translateY(-14%);
-  font: 700 10px/1.5 monospace; letter-spacing: .04em;
-  background: var(--hand); color: #FFFFFF; padding: 0 5px; border-radius: 3px; }
+  inset-inline-start: 0; pointer-events: none; }
+#scoredeck .nu-mot{ position: absolute; block-size: 12px;
+  border-block-start: 2px solid var(--hand);
+  border-inline-start: 2px solid var(--hand);
+  border-inline-end: 2px solid var(--hand); }
+/* the cap's `left` is written per cap by ui/eight.js (the name is repeated
+   every screenful along the rule), so nothing here may state one */
+#scoredeck .nu-mot > b{ position: absolute; inset-block-start: 1px;
+  white-space: nowrap;
+  font: 700 9px/1.4 monospace; letter-spacing: .04em;
+  background: var(--hand); color: #FFFFFF; padding: 0 4px; border-radius: 3px; }
+/* …and the last cap on a rule hangs from the section's END rather than its
+   start, so it cannot collide with the next section's first cap. A translate
+   and not a measurement: how wide a word is set is the browser's fact. */
+#scoredeck .nu-mot > b.nu-end{ transform: translateX(-100%); }
+/* THE KEY, ABOVE THE SCORE (Paul, 2026-08-27: "maybe we put the key above the
+   score"). One quiet line stating the RECORD — key, mode and meter in the
+   Alphabet and Time axes' own words (ui/eight.js `keyLine`). It is NOT inside
+   [data-live], so it does not take the clock's red the way the caption under
+   it does: it is the same sentence for the whole record, and it takes its one
+   line of height at creation like everything else on this surface. */
+#scoredeck .nu-keyline{ margin-block: .2em .1em; font-weight: 700;
+  color: var(--ink); }
 /* THE PIANO ROLL: time runs DOWN through a fixed window; the canvas repaints
    on the clock inside [data-live="roll"], so the box is sealed exactly the way
    the score's is — fixed height, contain, no scroll container, no control. */
@@ -2019,7 +2156,11 @@ table.nu-trims{ color: var(--ink); }
    margin was this section's private spelling of a spacing three other button
    strips spelled two other ways, and it is `.nu-row` now (ui/atlas.js carries
    the class). Measured after: `another take` is the same computed button as
-   `play`, which it never was before. */
+   `play`, which it never was before.
+   (AND THE BUTTON ITSELF LEFT ON 2026-08-27 — it is `#rewrite` in the .nu-bar,
+   beside the `play` it was measured against. `#atlasActs` is gone with it, so
+   this tombstone now buries two things; the measurement is kept because the
+   lesson is about a second opinion on a pixel, not about that button.) */
 
 /* ---------- THE VOICE'S OWN KNOBS (VOICE.md) -----------------------------
    Almost nothing, on purpose. The block is the same <table> in the same

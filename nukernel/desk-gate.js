@@ -860,6 +860,61 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   await page.waitForSelector("#strips .nu-strip", { timeout: 20000 });
   await page.waitForSelector("#rack .nu-plate", { timeout: 20000 });
 
+  /* ---- THE STRIPS ARE IN TABS SINCE 2026-08-27, so this gate walks them ----
+     Paul, 2026-08-27: *"In the mixing board — Put the instruments inside tabs
+     the mixing board instead of stacking them."* `#strips` holds exactly ONE
+     strip now, the one the marked tab names.
+
+     THE HAZARD THIS HELPER EXISTS FOR IS THIS FILE'S OWN, WRITTEN AT THE TOP
+     OF G11: "A GATE THAT SKIPS WHEN IT IS INCONVENIENT IS THE BUG THIS BLOCK
+     EXISTS FOR … a check faithful to a scope that does not contain the thing."
+     Every per-strip check below reads `#strips .nu-strip` and counts against
+     `chansOnPage`, and with one strip on the page all of them would go on
+     passing while only the FIRST voice was ever examined. Measured on the
+     tabbed page before this helper landed: 138/138 green with four of the
+     five voices never looked at. So the per-strip checks now run ONCE PER TAB
+     and their counts are per-strip counts. */
+  const boardTabs = () => page.evaluate(() =>
+    [...document.querySelectorAll("#boardtabs button")]
+      .map((b) => b.dataset.k.replace(/^boardtab-/, "")));
+  const openTab = async (name) => {
+    await page.evaluate((n) => {
+      const b = document.querySelector('[data-k="boardtab-' + n + '"]');
+      if (b) b.click();
+    }, name);
+    await page.waitForFunction((n) => {
+      const s = document.querySelector("#strips .nu-strip .nu-sname");
+      return s && s.textContent === n;
+    }, name, { timeout: 5000 });
+  };
+  // run `fn` with each voice's strip open in turn, and leave the first open
+  const perTab = async (fn) => {
+    const out = [];
+    const names = await boardTabs();
+    for (const n of names) { await openTab(n); out.push([n, await fn(n)]); }
+    if (names[0]) await openTab(names[0]);
+    return out;
+  };
+  {
+    const names = await boardTabs();
+    // the channel list from the page's OWN model — desk-doc's channelVoicesOf,
+    // which is the answer the audio tier builds from (G2)
+    const chans = await page.evaluate(() =>
+      window.NuDeskDoc.channelVoicesOf(window.__eightDoc(), window.NuGenres.GENRES)
+        .map((c) => c.voice.name));
+    ok(names.length > 0 && eq(names, chans),
+       "the board draws ONE TAB PER SEATED VOICE, in desk-doc's channel order " +
+       "(the same answer the audio tier builds from, G2's law): " +
+       JSON.stringify(names), JSON.stringify({ names, chans }));
+    const one = await page.evaluate(() => ({
+      strips: document.querySelectorAll("#strips .nu-strip").length,
+      marked: document.querySelectorAll('#boardtabs button[aria-pressed="true"]').length,
+      shown: (document.querySelector("#strips .nu-sname") || {}).textContent }));
+    ok(one.strips === 1 && one.marked === 1,
+       "…and EXACTLY ONE of them is on the page at a time — the marked tab's (" +
+       one.shown + ")", JSON.stringify(one));
+  }
+
   /* ---- 1 · the count, page-wide ---- */
   /* THIS GATE IS ABOUT THE BOARD AND THE ATLAS, AND IT SAYS SO NOW. It read
      `document.querySelectorAll("select")` — the WHOLE page — and asserted the
@@ -953,19 +1008,32 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
                    seat: /^ins\|/.test(s.dataset.k || ""),
                    strip: !!s.closest(".nu-strip"),
                    produce: !!s.closest("#produce") })));
-  const strayOnStrip = sel.filter((s) => s.strip && !s.seat);
-  const seats = sel.filter((s) => s.seat);
-  const stripCount = await page.evaluate(() =>
-    document.querySelectorAll("#strips .nu-strip").length);
+  // REWRITTEN 2026-08-27 (the tabs): this counted `stripCount * MAX_FX` seats
+  // over every strip on the page, and there is one strip on the page now. The
+  // CLAIM is per voice and always was, so it is asked per voice — every tab is
+  // opened and its strip is examined. A stray menu on ANY voice's strip fails,
+  // not just on the one that happens to be open at mount.
+  const perStripMenus = await perTab(() => page.evaluate(() => {
+    const strip = document.querySelector("#strips .nu-strip");
+    const all = [...strip.querySelectorAll("select")];
+    return { seats: all.filter((x) => /^ins\|/.test(x.dataset.k || ""))
+               .map((x) => x.dataset.k),
+             stray: all.filter((x) => !/^ins\|/.test(x.dataset.k || ""))
+               .map((x) => x.dataset.k || x.getAttribute("aria-label") || "?") };
+  }));
+  const strayOnStrip = perStripMenus.filter(([, m]) => m.stray.length);
   ok(strayOnStrip.length === 0,
      "the ONLY menu on a strip is an insert seat — sends, EQ and the fader " +
      "are vertical sliders and pan is a detent row (the 2026-08-24 finding, " +
-     "kept under the 2026-08-27 reversal)",
-     JSON.stringify(strayOnStrip.map((s) => s.k)));
-  ok(seats.length === stripCount * F.MAX_FX,
-     stripCount + " strips × " + F.MAX_FX + " insert seats = " + seats.length +
-     " (`ins|<voice>|<n>`, Paul 2026-08-27: \"Add per voice effects, up to " +
-     "three\")", JSON.stringify(seats.map((s) => s.k)));
+     "kept under the 2026-08-27 reversal), on ALL " + perStripMenus.length +
+     " voices' strips", JSON.stringify(strayOnStrip));
+  const shortSeats = perStripMenus.filter(([n, m]) => m.seats.length !== F.MAX_FX ||
+    !m.seats.every((k, i) => k === "ins|" + n + "|" + (i + 1)));
+  ok(!shortSeats.length,
+     "every one of the " + perStripMenus.length + " tabbed strips carries " +
+     "EXACTLY " + F.MAX_FX + " insert seats, keyed `ins|<voice>|<n>` (Paul " +
+     "2026-08-27: \"Add per voice effects, up to three\")",
+     JSON.stringify(shortSeats));
   // every OTHER select outside #app is the rack's or the main's, drawn by
   // ui/selects.js (`master|`/`bus|` from selectEl, `master.fx` from sheet()) —
   // the atlas's navigation menus are still deleted outright (test/atlas.js).
@@ -1006,7 +1074,10 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // as before, and the pan row is checked as buttons.
   const TBL = { rev: { table: F.SENDS, labels: F.SENDLABEL },
                 echo: { table: F.SENDS, labels: F.SENDLABEL } };
-  const swept = await page.evaluate(() => {
+  // PER TAB SINCE 2026-08-27 — the sweep visits every voice's strip by opening
+  // its tab, so a slider with the wrong max on the fourth voice is still the
+  // failure it was when all four strips stood on the page at once.
+  const sweptPer = await perTab(() => page.evaluate(() => {
     const out = {};
     for (const el of document.querySelectorAll('#strips .nu-strip input[type=range]')) {
       const m = /^b\|(rev|echo)\|(.+)$/.exec(el.dataset.k || "");
@@ -1022,9 +1093,11 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       out[m[1] + "|" + m[2]] = words;
     }
     return out;
-  });
-  const chansOnPage = await page.evaluate(() =>
-    [...document.querySelectorAll("#strips .nu-strip")].map((t) => t.dataset.ch));
+  }));
+  const swept = Object.assign({}, ...sweptPer.map(([, o]) => o));
+  const chansOnPage = await perTab(() => page.evaluate(() =>
+    document.querySelector("#strips .nu-strip").dataset.ch))
+    .then((rows) => rows.map(([, ch]) => ch));
   ok(Object.keys(swept).length === chansOnPage.length * 2,
      chansOnPage.length + " strips × 2 live sends = " + Object.keys(swept).length +
      " (delay + reverb; genre and main are refused, G12)",
@@ -1052,13 +1125,13 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // THE PAN ROW: five detents, every PANS word a button, tapping the pressed
   // one clears the key (absent is the only spelling of a default — with
   // buttons there is no other way to spell it).
-  const pans = await page.evaluate(() =>
-    [...document.querySelectorAll("#strips .nu-strip")].map((s) => ({
-      ch: s.dataset.ch,
-      n: s.querySelectorAll(".nu-panbtn").length,
-      labels: [...s.querySelectorAll(".nu-panbtn")]
-        .map((b) => b.getAttribute("aria-label")),
-    })));
+  const pans = (await perTab(() => page.evaluate(() => {
+    const s = document.querySelector("#strips .nu-strip");
+    return { ch: s.dataset.ch,
+             n: s.querySelectorAll(".nu-panbtn").length,
+             labels: [...s.querySelectorAll(".nu-panbtn")]
+               .map((b) => b.getAttribute("aria-label")) };
+  }))).map(([, x]) => x);
   const wantPan = Object.keys(F.PANS).map((k) => F.PANLABEL[k] || k);
   const badPan = pans.filter((p) => p.n !== wantPan.length ||
     !wantPan.every((w) => p.labels.some((l) => l && l.endsWith(w))));
@@ -1177,7 +1250,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      computed here off the same shipped record, never the board's own
      arithmetic. */
   const box = pushBoxes(clone(TERMS))[0];
-  const drawn = await page.evaluate(() => {
+  const drawn = Object.assign({}, ...(await perTab(() => page.evaluate(() => {
     const out = {};
     for (const s of document.querySelectorAll("#strips .nu-strip")) {
       const drive = s.querySelector(".nu-drive");
@@ -1189,7 +1262,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
         meterRefused: !!(well && well.disabled && well.dataset.why) };
     }
     return out;
-  });
+  }))).map(([, o]) => o));
   const wrongDrive = [], wrongOff = [], fakeMeter = [];
   for (const key of Object.keys(drawn)) {
     const g = deskChannelBase(box, key).gain;
@@ -1219,6 +1292,13 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      "engine's master tap (rmsNow)", JSON.stringify(greenMeters));
 
   /* ---- 5 · the knob writes the document's own word, and unwrites it ---- */
+  // THE CANTOR'S TAB IS OPENED FIRST, 2026-08-27: this drives
+  // `input[data-k="b|rev|cantor"]`, and with the strips in tabs that control
+  // is on the page only while the cantor's tab is the marked one. It happens
+  // to be the first tab on the shipped chant — which is exactly the accident
+  // that would let this check go on passing after the default changed, so it
+  // is said rather than relied on.
+  await openTab("cantor");
   const trip = await page.evaluate(async () => {
     const drive = (word) => {
       const el = document.querySelector('input[data-k="b|rev|cantor"]');
@@ -1729,6 +1809,16 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      probe report; the fader wire the trim rides is test/tape-reach R1. */
   console.log("\n" + "G15 the insert slots and the section grid, driven");
   {
+    // …AND ITS TAB IS OPENED FIRST (2026-08-27, the tabs): this drives
+    // `ins|<name>|1` and `b|fxw1|<name>` on the first LINE voice, and a
+    // strip's controls are on the page only while its tab is marked. The
+    // trim-grid half below is untouched by the tabs on purpose — the word grid
+    // is a cross-voice table and every voice has a column on it always.
+    {
+      const first = await page.evaluate(() =>
+        (window.__eightDoc().voices.find((v) => v.kind === "line") || {}).name);
+      if (first) await openTab(first);
+    }
     const slotTrip = await page.evaluate(async () => {
       const wait = () => new Promise((r) => setTimeout(r, 500));
       const doc2 = () => window.__eightDoc();
@@ -1825,46 +1915,149 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     }
   }
 
-  /* G13 REWRITTEN 2026-08-27 — it measured THE SPLIT (two tables, blank-cell
-     counts: "99 of 177 empty" was the finding, "at most one blank survives"
-     was the property) and the tables it counted are gone with the one-board
-     round. The PROPERTY the split defended — no dead area, nothing drawn to
-     square a grid — survives as geometry: a strip is a tall column that
-     carries only its own controls, so there are no cells to be blank. What
-     this block holds now is the two laws the new geometry answers to (Paul,
-     2026-08-27): STRIPS SIDE BY SIDE AT 1280 AND STACKED AT 390, and THE
-     PAGE IS NEVER WIDE. */
-  console.log("\n" + "G13 the one board's geometry, measured on the page");
+  /* G13 REWRITTEN 2026-08-27 (SECOND TIME THAT DAY), and both reversals are
+     kept in writing rather than deleted.
+
+     FIRST IT MEASURED THE SPLIT (two tables; "99 of 177 cells empty" was the
+     finding, "at most one blank survives" was the property). Those tables
+     retired with the one-board round, so it was rewritten to measure the tall
+     strips: STACKED AT 390, SIDE BY SIDE AT 1280, and THE PAGE IS NEVER WIDE.
+     Every measurement behind both is real and is in this file's git history.
+
+     NOW THE STRIPS ARE IN TABS. Paul, 2026-08-27: *"In the mixing board — Put
+     the instruments inside tabs the mixing board instead of stacking them."*
+     There is one strip on the page, so "one column at 390 and two at 1280" is
+     not a claim about anything any more — worse, it PASSED VACUOUSLY on the
+     tabbed page (1 >= min(2, 1)), which is the shape of check this gate's own
+     G11 header calls the bug it exists for.
+
+     THE DURABLE CLAIM SURVIVES BOTH REWRITES AND IS WHAT IS ASSERTED HERE:
+     NO SIDEWAYS GROWTH, AND EVERY CONTROL REACHABLE. The first half is the
+     same three measurements it always was (the document, the tab row, the
+     strip host — none of them may scroll sideways at 390 or at 1280). The
+     second half is what the tabs put at risk and is new: the union of the
+     control keys across ALL the tabs must be exactly the set the board would
+     have drawn with every strip stacked — one strip hidden behind a tab is a
+     strip you can reach, one strip DROPPED is a knob that no longer exists.
+
+     THE NUMBERS THAT BOUGHT THE CHANGE, measured on the rendered page, the
+     shipped chant grown to seven voices: `#strips` was 7,193px at 390 (seven
+     strips of ~1,007px) and the document 16,608px; it is 1,007px and 10,529px
+     now. At 1280 the block went 2,092px -> 876px, and the open strip is
+     SHORTER than a stacked one was because its three insert slots sit in a
+     line in the 780px the tab bought. */
+  console.log("\n" + "G13 the tabbed board's geometry, measured on the page");
   {
     const wide = [];
-    let cols = {};
+    const shape = {};
     for (const w of [390, 1280]) {
       await page.setViewportSize({ width: w, height: 900 });
+      await page.waitForTimeout(150);
       const m = await page.evaluate(() => {
-        const strips = [...document.querySelectorAll("#strips .nu-strip")];
-        const xs = [...new Set(strips.map((s) =>
-          Math.round(s.getBoundingClientRect().left)))];
+        const bar = document.getElementById("boardtabs");
+        const host = document.getElementById("strips");
+        const strip = host.querySelector(".nu-strip");
         return { doc: document.documentElement.scrollWidth,
                  win: document.documentElement.clientWidth,
-                 strips: strips.length, columns: xs.length,
+                 strips: host.querySelectorAll(".nu-strip").length,
+                 tabs: bar.querySelectorAll("button").length,
+                 tabLines: [...new Set([...bar.querySelectorAll("button")]
+                   .map((b) => Math.round(b.getBoundingClientRect().top)))].length,
+                 barScroll: bar.scrollWidth, barClient: bar.clientWidth,
+                 hostScroll: host.scrollWidth, hostClient: host.clientWidth,
+                 stripH: strip ? Math.round(strip.getBoundingClientRect().height) : 0,
+                 stripW: strip ? Math.round(strip.getBoundingClientRect().width) : 0,
                  rack: Math.round(document.getElementById("rack")
                    .getBoundingClientRect().width) };
       });
-      cols[w] = m;
-      console.log("  note at " + w + "px: " + m.strips + " strips in " +
-        m.columns + " column(s), rack " + m.rack + "px, document " +
-        m.doc + "/" + m.win);
-      if (m.doc > m.win) wide.push(w + ": " + m.doc + " > " + m.win);
+      shape[w] = m;
+      console.log("  note at " + w + "px: " + m.strips + " strip of " + m.tabs +
+        " tabs on " + m.tabLines + " line(s), strip " + m.stripW + "x" +
+        m.stripH + "px, rack " + m.rack + "px, document " + m.doc + "/" + m.win);
+      if (m.doc > m.win) wide.push("document " + w + ": " + m.doc + " > " + m.win);
+      if (m.barScroll > m.barClient)
+        wide.push("tab row " + w + ": " + m.barScroll + " > " + m.barClient);
+      if (m.hostScroll > m.hostClient)
+        wide.push("strip host " + w + ": " + m.hostScroll + " > " + m.hostClient);
     }
     await page.setViewportSize({ width: 390, height: 844 });
-    ok(cols[390].columns === 1,
-       "at 390 the strips STACK — one column (" + cols[390].strips +
-       " strips)", JSON.stringify(cols[390]));
-    ok(cols[1280].columns >= Math.min(2, cols[1280].strips),
-       "at 1280 the strips sit SIDE BY SIDE — " + cols[1280].columns +
-       " columns", JSON.stringify(cols[1280]));
-    ok(!wide.length, "and the document does not scroll sideways at 390 or at " +
-       "1280 — the page grows tall, never wide", wide.join("; "));
+    await page.waitForTimeout(150);
+    ok(shape[390].strips === 1 && shape[1280].strips === 1,
+       "ONE STRIP ON THE PAGE at both widths — the instruments are in tabs " +
+       "(Paul, 2026-08-27), not stacked",
+       JSON.stringify({ 390: shape[390].strips, 1280: shape[1280].strips }));
+    ok(!wide.length,
+       "NO SIDEWAYS GROWTH at 390 or at 1280 — not the document, not the tab " +
+       "row (it WRAPS: " + shape[390].tabLines + " line(s) at 390, " +
+       shape[1280].tabLines + " at 1280), not the strip host", wide.join("; "));
+    ok(shape[1280].stripW <= shape[1280].rack + 1 && shape[1280].stripW > 400,
+       "…and the open strip takes the width the rack takes (" +
+       shape[1280].stripW + "px against the rack's " + shape[1280].rack +
+       "px) rather than the whole window — the strip and the buses it sends " +
+       "into are one object", JSON.stringify(shape[1280]));
+
+    /* EVERY CONTROL REACHABLE — the half the tabs put at risk. */
+    const reach = await perTab(() => page.evaluate(() => {
+      const s = document.querySelector("#strips .nu-strip");
+      return [...s.querySelectorAll("[data-k]")].map((n) => n.dataset.k);
+    }));
+    const chansOrder = await page.evaluate(() =>
+      window.NuDeskDoc.channelVoicesOf(window.__eightDoc(), window.NuGenres.GENRES)
+        .map((c) => c.voice.name));
+    // every voice's strip must offer the SAME control vocabulary, differing
+    // only in the voice's own name — that is what "every control reachable"
+    // means when the strips are drawn one at a time.
+    const shapeOf = (name, keys) => keys.map((k) =>
+      k.split("|").filter((x) => x !== name).join("|")).sort();
+    const first = reach[0] ? shapeOf(reach[0][0], reach[0][1]) : [];
+    const odd = reach.filter(([n, keys]) => !eq(shapeOf(n, keys), first));
+    ok(reach.length === chansOrder.length && first.length > 0 && !odd.length,
+       "EVERY CONTROL REACHABLE: all " + reach.length + " tabs open a strip " +
+       "carrying the same " + first.length + " controls, differing only in " +
+       "the voice's own name — nothing was dropped behind a tab",
+       JSON.stringify(odd.map(([n, keys]) => n + ": " +
+         JSON.stringify(shapeOf(n, keys)))));
+    const dupes = (() => { const seen = new Set(), d = [];
+      for (const [, keys] of reach) for (const k of keys) {
+        if (seen.has(k)) d.push(k); seen.add(k); }
+      return d; })();
+    ok(!dupes.length,
+       "…and no two tabs draw the same `data-k` — the keys stay unique across " +
+       "the whole walk, so focus restoration and this gate's own drives can " +
+       "never land on the wrong voice", JSON.stringify(dupes.slice(0, 6)));
+
+    /* AND THE PAGE DOES NOT MOVE WHEN YOU CHANGE TABS (the anchor law:
+       ui/eight.js's whole `anchorWant` machinery exists because Paul's page
+       used to scroll itself under a still thumb). Nothing above `#strips` is
+       rebuilt on a tab tap, so this should be zero BY CONSTRUCTION — which is
+       exactly the kind of claim that is worth measuring rather than reasoning
+       about. */
+    for (const w of [390, 1280]) {
+      await page.setViewportSize({ width: w, height: w === 390 ? 844 : 900 });
+      await page.waitForTimeout(150);
+      const moved = await page.evaluate(async () => {
+        const bar = document.getElementById("boardtabs");
+        scrollTo(0, Math.max(0, bar.getBoundingClientRect().top + scrollY - 120));
+        await new Promise((r) => setTimeout(r, 200));
+        const out = [];
+        for (const b of [...bar.querySelectorAll("button")]) {
+          const y = scrollY, top = Math.round(bar.getBoundingClientRect().top);
+          b.click();
+          await new Promise((r) => setTimeout(r, 220));
+          out.push({ tab: b.dataset.k, dY: scrollY - y,
+                     dRow: Math.round(bar.getBoundingClientRect().top) - top });
+        }
+        return out;
+      });
+      const jumped = moved.filter((m) => m.dY !== 0 || m.dRow !== 0);
+      ok(!jumped.length,
+         "at " + w + ": tapping each of the " + moved.length + " tabs moves " +
+         "neither scrollY nor the tab row itself — the page does not move " +
+         "under the thumb (dY " + JSON.stringify(moved.map((m) => m.dY)) + ")",
+         JSON.stringify(jumped));
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(150);
   }
 
   ok(!errs.length, "the page raised no console error while the board was driven",

@@ -6,9 +6,21 @@
 // piano roll and an export row. Every assertion here reads the RENDERED page
 // or the exported BYTES (TEST THE ARTIFACT), never the wiring:
 //
-// D1  every motif bracket's text is a member of the record's own
+// D1  every motif label's text is a member of the record's own
 //     material.cells keys — extracted, zero typed strings — and there is at
-//     least one bracket on the staff.
+//     least one label on the staff. AND (2026-08-27, Paul: "The names of the
+//     motifs should appear in the score below the parts when they are used as
+//     notes") each label is checked against ITS OWN PART: its text equals the
+//     cell that voice reads in that section, it is a cell that KIND of voice
+//     may read, and it is drawn in the gap under that voice's staff and above
+//     the next one — the geometry read off the page, not off the wiring.
+// D7  the identity stays in view while the paper scrolls (Paul, 2026-08-27:
+//     "The score cuts off in the wrong place on mobile so I don't know which
+//     instrument or key I'm looking at… maybe we put the key above the
+//     score"): the key line above the engraving carries the record's key,
+//     mode and meter; the pinned gutter carries every part name; and at BAR 8
+//     — the paper scrolled a box and a half away — both are still non-empty
+//     and still inside the viewport, at 390 and at 1280.
 // D2  one clock, two views: flipping notation → piano roll → notation while
 //     the record plays never loses the place (the step keeps advancing and
 //     never resets), and the deck's DOM mutates ONLY inside [data-live]
@@ -55,6 +67,36 @@ const ok = (m) => console.log("  ok   " + m);
 const fail = (m) => { FAILS++; console.log("  FAIL " + m); };
 const is = (cond, m) => (cond ? ok(m) : fail(m));
 
+/* D7's reading, taken off the RENDERED page: the key line above the engraving
+   and every voice name in the pinned gutter, each as viewport pixels and as
+   text. "Readable" is asserted as both — a rect inside the window and a
+   non-empty string — because either one alone passes for a label that is
+   there and blank, or one that says a word off the left edge of the phone
+   (which is exactly what the gutter did until 2026-08-27). */
+async function identity(pg) {
+  await pg.locator("#scoredeck .nu-ribbon").scrollIntoViewIfNeeded();
+  await pg.waitForTimeout(200);
+  return pg.evaluate(() => {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const rect = (e) => {
+      const b = e.getBoundingClientRect();
+      return { text: (e.textContent || "").trim(),
+               left: Math.round(b.left), right: Math.round(b.right),
+               top: Math.round(b.top), bottom: Math.round(b.bottom),
+               inside: b.left >= -1 && b.right <= vw + 1 &&
+                       b.top >= -1 && b.bottom <= vh + 1 && b.width > 1 };
+    };
+    const kl = document.querySelector("#scoredeck .nu-keyline");
+    const names = [...document.querySelectorAll(
+      "#scoredeck .nu-gutter text.abcjs-voice-name")];
+    const S = window.__eightScore();
+    return { key: kl ? rect(kl) : null, names: names.map(rect),
+             step: S.step, x: S.x, lit: S.lit, boxW: S.boxW, gut: S.gut,
+             over: document.scrollingElement.scrollWidth - window.innerWidth };
+  });
+}
+const readable = (r) => !!r && r.inside && r.text.length > 0;
+
 (async () => {
   // ---- D4a (node): the tom fix lives in the export layer, proved on bytes --
   const smf = await import(pathToFileURL(path.join(__dirname, "..",
@@ -91,14 +133,62 @@ const is = (cond, m) => (cond ? ok(m) : fail(m));
     window.__eightScore().steps > 0, null, { timeout: 30000 });
   await page.waitForTimeout(1000);
 
-  // ---- D1 — the brackets are extraction, not typing ------------------------
+  // ---- D1 — the labels are extraction, not typing, AND they are per part ---
   const d1 = await page.evaluate(() => window.__deckState());
-  is(d1.brackets.length > 0, "D1 · the staff carries motif brackets (" +
+  is(d1.brackets.length > 0, "D1 · the staff carries motif labels (" +
     d1.brackets.length + ")");
   const alien = d1.brackets.filter((t) => !d1.cells.includes(t));
-  is(alien.length === 0, "D1 · every bracket text IS a material.cells key (" +
+  is(alien.length === 0, "D1 · every label text IS a material.cells key (" +
     d1.brackets.join(", ") + " ⊆ " + d1.cells.join(", ") + ")" +
     (alien.length ? " — alien: " + alien.join(", ") : ""));
+  // …and every one of them names the cell ITS OWN PART reads there. `reads`
+  // is the page's own `cellAt` per voice per section (with the bass's
+  // exception folded in, because a bass reads the first line's motif); a label
+  // that does not equal it is a name declared and never arriving.
+  const vnames = d1.reads.map((r) => r.voice);
+  const wrong = d1.labels.filter((L) => {
+    const r = d1.reads[vnames.indexOf(L.voice)];
+    return !r || r.cells[L.si] !== L.text;
+  });
+  is(d1.labels.length > 0 && wrong.length === 0,
+    "D1 · every label equals the cell THAT PART reads in THAT section (" +
+    d1.labels.length + " labels over " + vnames.length + " parts)" +
+    (wrong.length ? " — wrong: " + wrong.map((L) => L.voice + "@" + L.si +
+      "=" + L.text).join(", ") : ""));
+  // …and it is a cell that KIND of voice may read at all (avail.js cellsFor:
+  // a grid is not a line, and a line cell under the kit would be a lie about
+  // what the drummer can be handed)
+  const badKind = d1.labels.filter((L) =>
+    !(d1.cellsFor[vnames.indexOf(L.voice)] || []).includes(L.text));
+  is(badKind.length === 0, "D1 · every label is a cell its voice's KIND can " +
+    "read (avail.js cellsFor)" + (badKind.length ? " — " +
+      badKind.map((L) => L.voice + "=" + L.text).join(", ") : ""));
+  // …and it is drawn BELOW that part: in the gap between its own staff's
+  // bottom line and the next staff's top line, which is what "below the
+  // parts" means as geometry
+  const misplaced = d1.labels.filter((L) => {
+    const vi = vnames.indexOf(L.voice), st = d1.staves[vi];
+    if (!st) return true;
+    const below = vi + 1 < d1.staves.length ? d1.staves[vi + 1].top : Infinity;
+    return !(L.top >= st.bottom && L.top + 12 <= below);
+  });
+  is(misplaced.length === 0, "D1 · every label hangs in the gap UNDER its own " +
+    "staff (" + d1.labels.map((L) => L.voice + "@" + L.top).slice(0, 4).join(", ") +
+    "…)" + (misplaced.length ? " — misplaced: " + misplaced.length : ""));
+
+  // ---- D7 — the identity is in view (the key line + the pinned names) ------
+  is(!!d1.keyline && d1.keyline.length > 4,
+    "D7 · a key line stands above the engraving: \"" + d1.keyline + "\"");
+  is(!!d1.gutter && d1.gutter.names.length === vnames.length &&
+     d1.gutter.names.every((n) => n.text && n.text.trim()),
+    "D7 · the pinned gutter carries every part name (" +
+    (d1.gutter ? d1.gutter.names.map((n) => n.text).join(", ") : "none") +
+    " for " + vnames.length + " parts)");
+  is(!!d1.gutter && d1.gutter.clefs >= vnames.length &&
+     d1.gutter.meters >= vnames.length,
+    "D7 1280 · …and at this width the clef and the meter are pinned with them " +
+    "(" + (d1.gutter ? d1.gutter.clefs + " clefs / " + d1.gutter.meters +
+    " meters" : "none") + ") — they were dropped with the chunks until today");
 
   // ---- D5 — the export row wears true states -------------------------------
   const exps = d1.exports;
@@ -180,6 +270,42 @@ const is = (cond, m) => (cond ? ok(m) : fail(m));
     await page.waitForTimeout(300);
     await page.screenshot({ path: path.join(SHOTS, "deck-notation-playing-1280.png"),
       clip: await page.locator("#scoredeck").boundingBox() });
+
+    /* ---- D7 at BAR 8 — the paper has run away and the identity has not ----
+       The engraved score is the ONE lawful horizontal scroller on this page
+       and it is scrolled by the CLOCK, so "scroll the paper to bar 8" is said
+       the only way this surface can say it: let the record play there. Bar 8
+       is step 128 (sixteen steps to the measure, SCORE_SPB), by which point
+       the picture has moved better than a box and a half — everything the
+       first system stated has left the screen, which is precisely the moment
+       Paul could not tell what he was looking at. */
+    const gotTo8 = await page.waitForFunction(
+      () => window.__eightScore().step >= 128, null, { timeout: 120000 })
+      .then(() => true).catch(() => false);
+    is(gotTo8, "D7 1280 · the record reached bar 8 (the paper scrolled away)");
+    const at8 = await identity(page);
+    /* WHAT "THE PAPER HAS RUN AWAY" MEANS, AND IT IS NOT A BOX WIDTH. The
+       engraving is spaced by the MUSIC, not by the window, so a wide screen
+       holds more bars and scrolls fewer pixels to reach bar 8 (measured
+       2026-08-27: 552px at 390, 179px at 1280). What has to be true for the
+       ask is the same at both: the record's OWN opening statement — the names
+       and clef abcjs drew once, at the head of the one system — has gone past
+       the left edge, so everything still legible there is legible because it
+       was PINNED. That is `x > gut`. */
+    is(at8.x > at8.gut, "D7 1280 · …and the engraving's own margin has left " +
+      "the box: " + Math.round(at8.x) + "px of scroll past a " + at8.gut +
+      "px gutter (box " + at8.boxW + "px)");
+    is(readable(at8.key), "D7 1280 · the key line is still readable at bar 8: " +
+      "\"" + (at8.key ? at8.key.text : "") + "\"");
+    is(at8.names.length > 0 && at8.names.every(readable),
+      "D7 1280 · every part name is still readable at bar 8 (" +
+      at8.names.map((n) => n.text + " @" + n.left + "-" + n.right).join(", ") + ")");
+    is(at8.lit > 0, "D7 1280 · …and the clock is still inking sounding notes " +
+      "red while it does (" + at8.lit + " lit)");
+    is(at8.over <= 1, "D7 1280 · no page-level horizontal scroll at bar 8 (" +
+      at8.over + "px) — only the paper's own rail");
+    await page.locator("#scoredeck .nu-ribbon").screenshot({
+      path: path.join(SHOTS, "score-bar8-1280.png") });
   }
   await page.click("#play");   // stop — the presses below get the whole CPU
   await page.waitForTimeout(800);
@@ -248,14 +374,54 @@ const is = (cond, m) => (cond ? ok(m) : fail(m));
     viewport: { width: 390, height: 844 } })).newPage();
   p390.on("pageerror", (e) => errors.push("390: " + String(e).slice(0, 160)));
   await p390.goto(URL_, { waitUntil: "load", timeout: 60000 });
-  await p390.waitForFunction(() => window.__deckState, null, { timeout: 30000 });
+  await p390.waitForFunction(() => window.__deckState && window.__eightScore &&
+    window.__eightScore().steps > 0, null, { timeout: 30000 });
   await p390.waitForTimeout(1200);
   const m = await p390.evaluate(() => ({
     over: document.scrollingElement.scrollWidth - window.innerWidth,
     brackets: window.__deckState().brackets.length,
   }));
   is(m.over <= 1, "D6 390 · no horizontal overflow (" + m.over + "px)");
-  is(m.brackets > 0, "D6 390 · the brackets survive the phone (" + m.brackets + ")");
+  is(m.brackets > 0, "D6 390 · the motif labels survive the phone (" + m.brackets + ")");
+
+  /* ---- D7 at 390 — the phone, which is where the ask came from -----------
+     Stopped first (the identity has to be right before the paper moves), then
+     at bar 8. THE TRADE IS PRINTED rather than asserted at a number: what the
+     pinned gutter costs the paper is a fact about this record at this width,
+     and a gate that froze it would fail on the next record. What is ASSERTED
+     is the thing Paul asked for — that the instrument and the key are still
+     on the screen when the music is nine bars away from where it started. */
+  const s390 = await p390.evaluate(() => window.__deckState());
+  const i390 = await identity(p390);
+  is(readable(i390.key), "D7 390 · the key line stands above the score: \"" +
+    (i390.key ? i390.key.text : "") + "\"");
+  is(i390.names.length === s390.reads.length && i390.names.every(readable),
+    "D7 390 · every part name is pinned and legible (" +
+    i390.names.map((n) => n.text).join(", ") + ")");
+  console.log("     390 · the gutter takes " + (s390.gutter ? s390.gutter.w : 0) +
+    "px of a " + i390.boxW + "px box for the part names");
+  await p390.locator("#scoredeck .nu-ribbon").screenshot({
+    path: path.join(SHOTS, "score-390.png") });
+  await p390.click("#play");
+  const got390 = await p390.waitForFunction(
+    () => window.__eightScore().step >= 128, null, { timeout: 120000 })
+    .then(() => true).catch(() => false);
+  is(got390, "D7 390 · the record reached bar 8 on the phone");
+  const a390 = await identity(p390);
+  is(a390.x > a390.gut, "D7 390 · the paper ran " + Math.round(a390.x) +
+    "px, past a " + a390.gut + "px gutter in a " + a390.boxW + "px box");
+  is(readable(a390.key) && a390.names.length && a390.names.every(readable),
+    "D7 390 · key line AND every part name still readable at bar 8 (" +
+    (a390.key ? a390.key.text : "") + " | " +
+    a390.names.map((n) => n.text + " @" + n.left + "-" + n.right).join(", ") + ")");
+  is(a390.lit > 0, "D7 390 · the clock is still inking sounding notes red (" +
+    a390.lit + " lit)");
+  is(a390.over <= 1, "D7 390 · no page-level horizontal scroll at bar 8 (" +
+    a390.over + "px)");
+  await p390.locator("#scoredeck .nu-ribbon").screenshot({
+    path: path.join(SHOTS, "score-bar8-390.png") });
+  await p390.click("#play");
+  await p390.waitForTimeout(400);
   await p390.locator("#scoredeck").screenshot({
     path: path.join(SHOTS, "deck-notation-390.png") });
   await p390.evaluate(() => window.__deckView("roll"));

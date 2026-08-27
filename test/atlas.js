@@ -24,7 +24,7 @@
  *       land drawn from LAND.RUNS, and BOOT ON THE WHOLE EARTH
  *   G8  #atlasYear := indexOf(1969), tap Kingston's rendered centre, #title
  *       becomes "Kingston 1969" within 3 s with the eight-axis headings intact
- *   G9  the same tap twice is byte-identical; "another take" differs
+ *   G9  the same tap twice is byte-identical; the bar's "rewrite" differs
  *   G11 THE GLOBE IS THE KEYBOARD PATH — the headline of this round
  *   G12 tap boxes >= 28 CSS px at the whole earth, >= 44 at 20 degrees or closer
  *   G13 a vertical swipe scrolls the PAGE and does not turn the globe; a
@@ -446,10 +446,16 @@ function g18() {
     return a === b;
   });
   check(dTwice, "G9 · and the same (gk, seed) twice is byte-identical");
-  await p.evaluate(() => document.getElementById("atlasAgain").click());
+  /* #rewrite AND NOT #atlasAgain, 2026-08-27. The button moved to the .nu-bar
+     and split into the two verbs it had been spelling with one label (Paul:
+     "a button next to play that seeds a completely different version of the
+     song … The another take button should just be called take"). The gesture
+     under test is unchanged — it is still the atlas's own seed, bumped through
+     `ATLAS.reseed` — so this reads the control a hand now presses. */
+  await p.evaluate(() => document.getElementById("rewrite").click());
   await p.waitForTimeout(1400);
   const d3 = await p.evaluate(() => JSON.stringify(window.__eightDoc()));
-  check(d3 !== d2, "G9 · \"another take\" writes a DIFFERENT record (" + d3.length + " chars)");
+  check(d3 !== d2, "G9 · \"rewrite\" writes a DIFFERENT record (" + d3.length + " chars)");
   const sayAgain = await p.evaluate(() =>
     (document.getElementById("atlasSay") || {}).textContent);
   check(/reading 2/.test(sayAgain), "G9 · …and says so: " + JSON.stringify(sayAgain.slice(-40)));
@@ -1132,7 +1138,8 @@ function g18() {
   /* ---- G11 (last) THE ORDER A READER MEETS IT IN ---------------------- */
   /* DOM ORDER IS READING ORDER IS TAB ORDER, and this is the assertion that
      caught the plan putting the slider UNDER the globe: Tab from the slider
-     landed on "another take" and all nineteen places were behind the reader,
+     landed on "another take" (a button that has since moved to the .nu-bar)
+     and all nineteen places were behind the reader,
      reachable only by Shift-Tab. The sentence names the year, the slider sets
      it, the globe shows what it lit. */
   await p.reload({ waitUntil: "networkidle" });
@@ -1141,9 +1148,14 @@ function g18() {
   await p.waitForTimeout(250);
   const order = await p.evaluate(() =>
     [...document.getElementById("atlas").children].map((n) => n.tagName + "#" + n.id));
+  /* FOUR, NOT FIVE, SINCE 2026-08-27: `P#atlasActs` held "another take" and
+     both are gone — the gesture is `#rewrite` in the .nu-bar now. The claim
+     this check makes did not change: the sentence names the year, the slider
+     sets it, the globe shows what it lit, and the places are behind the
+     slider in the tab order rather than in front of it. */
   check(JSON.stringify(order) === JSON.stringify(
-      ["H2#atlasHead", "P#atlasSay", "DIV#atlasWhen", "DIV#atlasWrap", "P#atlasActs"]),
-    "G11 · reading order is heading, sentence, when-slider, globe, one button — " +
+      ["H2#atlasHead", "P#atlasSay", "DIV#atlasWhen", "DIV#atlasWrap"]),
+    "G11 · reading order is heading, sentence, when-slider, globe — " +
     JSON.stringify(order));
   await p.evaluate(() => document.getElementById("atlasYear").focus());
   const walk = [];
@@ -1284,7 +1296,8 @@ function g18() {
            the record on every swap, so the only way to lose the ring is to go
            and look at a different year, and at a different year the globe is
            answering the question the slider is asking.
-       3 · "another take" — pick(here) -> setDocument -> showing("reggae"),
+       3 · "rewrite" (the .nu-bar's, 2026-08-27) — reseed -> pick -> setDocument
+           -> showing("reggae"),
            from 600. The slider must JUMP BACK to 1969 and Kingston must be
            drawn, ringed and current again. */
   await p.reload({ waitUntil: "networkidle" });
@@ -1326,7 +1339,7 @@ function g18() {
     "G22 · …and at 600 it leaves with its year, ring and all (" + away.drawn +
     " mark on the earth) while the page goes on playing " + JSON.stringify(away.title) +
     " — one rule, no exception for the favourite");
-  await p.evaluate(() => document.getElementById("atlasAgain").click());
+  await p.evaluate(() => document.getElementById("rewrite").click());
   await p.waitForTimeout(900);
   /* AND THE SECTION IS BROUGHT BACK ON SCREEN BEFORE THE MARKS ARE READ. This
      check went green, then red, then green on the same code, and the reason is

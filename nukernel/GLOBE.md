@@ -49,7 +49,7 @@ draws and still zooms.
 | **turn** | drag it. Start the drag sideways — the first 8 px of a touch decide whether the gesture belongs to the globe or to the page, and downward-first means the page scrolls. Once it is the globe's, it moves in both directions. |
 | **zoom** | pinch, or scroll the wheel, or a trackpad pinch, or `+` and `−` on the keyboard. |
 | **pick a record** | tap a place. The place plus the year on the slider is one record. |
-| **hear it differently** | tap the same place again — the seed moves and the sentence says "reading 2" — or press **another take**. |
+| **hear it differently** | tap the same place again — the seed moves and the sentence says "reading 2" — or press **rewrite** in the transport bar. (It was **another take** under the globe until 2026-08-27, when Paul moved it beside play and named the two verbs apart: **rewrite** is a different record, **take** is the same record played again.) |
 | **keyboard** | Tab reaches the globe, then every place the slider's year has lit. Enter on a place writes the record. `+`/`−` zoom, and zoom toward the place you are on. Arrows turn and tilt. |
 
 **The range, measured on the rendered picture, not on a variable:** the whole
