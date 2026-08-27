@@ -64,19 +64,33 @@ too many owners and too many words, and the engine owes us five seconds.
 
 ## 2 · THE DECISIONS THIS PLAN PROPOSES
 
-**Lampblack is the design system, and the other three sketches lose their
-palettes to it.** Paul, 2026-08-26: *"look like cool new audio software and be
-consistent."* Five mockups shipped five dark palettes; five palettes is the
-same accident as the four button looks §2.4 already measured and killed. The
-design-system sketch (`design-system.html`) is the one that argues its colors
-instead of picking them — soot neutrals, and exactly three semantic lights:
-**amber is the hand** (selection), **lamp is the clock** (playhead,
-`[data-live]`), **signal is the meter** (measured engine output). Serif for
-the document's sentences, mono for the machine's values. The board, deck and
-libretto sketches keep every structural decision and get re-tokened. This
-reverses the shipped Canvas/light worksheet; it commits to **one deliberate
-theme** rather than a dark/light pair, because two themes is two of everything
-and the review found we cannot afford two of anything. (Contested below, Q1.)
+**One design system, bold primaries, chunky — Lampblack lasted a day and the
+page was right to kill it.** REWRITTEN 2026-08-27. This paragraph originally
+crowned Lampblack (soot neutrals, cream serif, thin rules, three muted
+lights); Paul saw it and said *"I'd like the design to be bolder and use more
+primary colors and chunkier. It looks like a funeral program."* He is right —
+restraint read as mourning. What SURVIVES the reversal is the argument, which
+was never about the hexes: ONE system, all sketches lose their palettes to it
+(five palettes was the same accident as the four button looks §2.4 killed);
+exactly three semantic lights — **the hand** (selection, set values), **the
+clock** (playhead, `[data-live]`), **the meter** (measured engine output) —
+now cast as loud flat primaries instead of embers; mono for the machine's
+values. What dies with Lampblack: the serif (no serif anywhere), the thin
+rules (borders are 3–4 px), the hush. The redesigned `design-system.html` is
+the one owner of the tokens; board, bench, deck, songbook and libretto pages
+consume them verbatim. Still one deliberate theme, not a dark/light pair —
+two themes is two of everything (Q1 stands).
+
+**Two new laws from the same sentence, 2026-08-27.** *"Vertical space is
+cheap. Don't use knobs. Have simple vertical sliders stacked and labeled"* —
+so: **no rotary knobs anywhere**; every continuous control is a vertical
+slider, stacked and labeled, and a page may be tall but never wide. And
+*"Rotate the piano roll interfaces back … I hate horizontal scrolling. Top to
+bottom is always better than left to right. Obviously a musical score is
+different"* — so: **time runs downward** in every grid, roll and lane; the
+engraved score is the ONE lawful horizontal scroller on the product. These
+outrank any layout in the sketches; the Bench and the piano roll rotate
+accordingly (their paragraphs below are amended in place).
 
 **The text diet is a law with a number.** Paul: *"get rid of all extra
 text."* Three kinds of words may exist outside `[data-live]`: control labels,
@@ -107,38 +121,47 @@ the literal 1). `tone.gain` collapses to one exported `levelOf()`, behind a
 frozen fixture proving the consolidation moved nothing. This reverses the
 2026-08-24 D3 board being *a* surface among several; it becomes *the* surface.
 
-**Character lives on the board, dealt, never embedded — Paul's own hunch
-confirmed by measurement.** Paul: character *"maybe not embedded."* Today
-`sound.fx` stamps a private mono insert chain on EVERY voice, silently
-stripped on stereo voices (`desk.js:620` widthKept), and `fields.js:404-446`
-already **proves** 12 of the 14 genre chips are sample-identical as sends.
-Decision, in two stages: (a) now — record-wide `sound.fx` dies; character
-chips become per-bus chain slots on the board (the sketch's "character ·
-chain"), and the two genuinely serial chains (sweep, crunch→chorus order)
-become channel inserts drawn refused-with-reason on stereo voices instead of
-silently stripped; genre character arrives by extraction at compose time as
-send amounts + bus chain presets, visible and overridable. (b) later, the one
-engine edit this plan buys: a pooled **character return** — one insert-chain
-instance fed by sends, summed into `fx_bus`'s dry input — one chorus for the
-page instead of nine. An insert costs a multiple; a bus costs a constant.
+**Effects go the way everyone else does them — per-voice inserts return,
+and the buses run in series.** REWRITTEN 2026-08-27, and this is the largest
+reversal in the file, made on Paul's own word: *"I think we need to do what
+everyone else does with effects. Add per voice effects, up to three. Each has
+a wet dry mix and its own settings. Have one bus for genre specific effects,
+into a delay bus, into reverb, into main. Each instrument can send post
+effects mix to all of the four buses."* That reverses his 2026-08-24 "Don't
+let me add effects to instruments" and with it this paragraph's previous
+decision (character dealt to bus chains, the record-wide embed dying, inserts
+only as refused-with-reason exceptions). The architecture now:
 
-Three bounds on stage (a), measured this morning by the settle round rather
-than assumed. The **send-side chain is JS-only** — the applier already exists
-(`stream-renderer.js:281 chainBlocks`) and the seam is one line at
-`stream-renderer.js:1029-1031`, where `rev`/`del` are finished mono buffers
-nothing has read yet (its press twin at `press.js:~358`); the compiled insert
-modules are all 1-in/1-out mono per `dist/manifest.json`, proven by running a
-three-chip chain over a bus-shaped buffer into the shipped `fx_bus` wasm. But
-**only buses 1 and 2 can hold one** — a group has no signal path of its own,
-so chain slots on bus 3 or 4 draw refused-with-reason until a group is
-reified (stage b), never live. And the chain is a **send** insert (chorus
-INTO the plate), not a return insert (the plate THROUGH a chorus) — the
-return side is inside the DSP and stays stage (b). One idle asset the settle
-round surfaced: `fx_bus`'s third accumulator (ping-pong,
-`pptime/ppfb/pptone`) runs on silence in every nukernel record — feeding it a
-`u.pp` beside `u.rev`/`u.del` would make bus 3 a REAL third return for the
-cost of three send-site lines, which may be the better answer to "four
-buses" than reifying a group. Decided at Phase 2 build time, against the ear.
+* **Per-voice inserts, up to three,** each with a wet/dry mix and its own
+  settings (vertical sliders, per the no-knobs law). The engine is READY for
+  this half: the per-voice insert modules exist and ship
+  (`engine/faust/dist/insert_*`, mono, most carrying a `mix` param), and
+  MAX_FX = 3 is already the cap in `fields.js:53`. What changes is surface
+  and ownership, not engine.
+* **Buses in SERIES: genre-FX bus → delay bus → reverb bus → main.** The
+  genre bus is where a genre's own character arrives by extraction — visible,
+  editable, no longer stamped invisibly onto voices. The engine HALF-does
+  this already: `fx_bus.dsp` bleeds delay into reverb at a fixed 0.2 constant
+  — the serial chain generalizes that literal into a parameter and adds one
+  new stage (the genre bus) ahead of it. That is the engine edit this
+  decision buys, in place of the pooled character return the previous text
+  proposed.
+* **Four post-insert sends per instrument** (genre · delay · reverb · main).
+  Today's per-unit `u.rev`/`u.del` grow two siblings; the settle round's
+  facts still hold and still help — the send buffers are finished mono
+  arrays with an applier (`chainBlocks`) already sitting at the seam
+  (`stream-renderer.js:1029-1031`), and the idle ping-pong accumulator is a
+  free third engine bus if the delay stage wants a stereo tail.
+
+What survives from the reversed text, because it was measurement and not
+taste: the stereo-voice trap (`desk.js:620` widthKept silently deletes insert
+chains on stereo voices — under the new architecture that silence becomes a
+refusal-with-reason on the third-party slot, never a silent strip); the
+send-equivalence proof (`fields.js:404-446`) which now argues the DEFAULTS —
+a genre chip lands on the genre bus unless the record explicitly asks for an
+insert; and the cost law (an insert costs a multiple, a bus costs a constant)
+which is why the genre bus, not the inserts, is where extraction puts a
+genre's character by default.
 
 **Per-section automation is a table, not a curve — the document shape is
 materialAt's, the surface is the grid-and-lanes.** Paul: *"some voices raise
@@ -175,8 +198,10 @@ with knowledge of what we are doing? What UX can simplify and be modern and
 simple?"* The shipped surface is measured in `composer.html`'s "Today" panel:
 a bar is sixteen table rows read top-to-bottom (beat 4 below a phone's fold),
 zero harmonic facts in view, the composed staff a second copy compared by
-eye-travel, five controls per step. The Bench replaces it inside Motifs: time
-runs left-to-right at 48 px a step; the degree rows ARE the Alphabet (snapping
+eye-travel, five controls per step. The Bench replaces it inside Motifs: time runs DOWNWARD (amended
+2026-08-27 — "top to bottom is always better than left to right"; degree
+columns run across the top, steps run down, note pills are vertical with
+height = duration); the degree rows ARE the Alphabet (snapping
 is the editor, not a validator); **chord windows are painted, not narrated** —
 `chordsOf()` already returns start/len/deg/quality per window, so chord-tone
 rows tint inside each window and the leading-tone row lights under V. That is
@@ -193,8 +218,10 @@ bar 4 of the phrase strip, hatched — not a mode. The playhead lives in its own
 `[data-live]` layer and may move nothing else, so MOTIF.md's 114 px jump
 becomes structurally impossible. The staff engraving stays above as the
 printed form. This amends the 2026-08-15 cell-row decision a second time — not
-back to a tracker, but to a lane; what survives is the popup (now the
-long-press sheet) and the law that sound never rebuilds the DOM under a finger.
+back to a tracker, but to a lane; the 2026-08-27 rotation brings back the
+tracker's ORIENTATION (time down the page) without its cell-per-value text
+grid. What survives every version is the popup (now the long-press sheet) and
+the law that sound never rebuilds the DOM under a finger.
 
 **Four exports, one module, four encoders — each button wears its true
 state.** All four read the SCORE (attribute-grammar law), so this is one

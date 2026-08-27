@@ -1,713 +1,887 @@
 <title>The Bench</title>
 <style>
-/* =========================================================================
+/* ==========================================================================
    THE BENCH — the ideal composing surface for motifs and kits.
-   Design artifact, 2026-08-26. Dark-first, committed. No external requests.
-   Tokens per the ideal-state spec (design-system round).
-   ========================================================================= */
+   Repainted 2026-08-27 in ENAMEL (Lampblack retired) and ROTATED:
+   time now runs DOWNWARD. One HTML file, no external requests.
+   Tokens consumed verbatim from design-system.html.
+   ========================================================================== */
 :root {
-  --bg-0:#0C0E11; --bg-1:#14171C; --bg-2:#1C2027; --bg-3:#242933;
-  --ink:#E7EAEE; --ink-2:#9AA3AF; --ink-3:#5C6572;
-  --rule:#262C35; --rule-2:#39414D;
-  --led:#FFB454; --go:#4ADE80; --hot:#FF5D5D; --cue:#6CB6FF;
-  --tap:44px; --cell:36px;
-  --mono: ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  /* ---- chassis (ground + two surfaces) ---- */
+  --ground: #F0EDE4; --panel: #FFFFFF; --well: #E3E0D6;
+  /* ---- ink ---- */
+  --ink: #191611; --dim: #6B6353; --faint: #A79E8E; --line: #191611;
+  /* ---- the four paints (semantic, never decorative, never mixed) ---- */
+  --hand: #1E45E0; --clock: #E5330E; --meter: #0B9B4E; --flag: #FFC61A;
+  --hand-down: #152F9E; --clock-down: #AE2408;
+  --hand-tint: #D9E1FF; --clock-tint: #FFD9CE; --meter-tint: #CFEFDC; --flag-tint: #FFEFC2;
+  /* ---- type ---- */
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  /* ---- chunk ---- */
+  --bw: 3px; --bw-hard: 4px; --r0: 0px; --r1: 6px;
+  --shadow: 4px 4px 0 var(--ink); --shadow-big: 6px 6px 0 var(--ink);
+  --ctl: 48px;
+  /* ---- space ---- */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 40px; --s7: 64px;
+  /* ---- bench geometry: steps are ROWS now ---- */
+  --rowh: 48px;   /* one step of the pitch lane */
+  --krowh: 44px;  /* one step of the kit */
 }
-* { box-sizing:border-box; }
-html { background:var(--bg-0); }
-body { margin:0; background:var(--bg-0); color:var(--ink);
-  font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  -webkit-font-smoothing:antialiased; }
-main { max-width:1080px; margin:0 auto; padding:0 16px 64px; }
-h1 { font-size:28px; font-weight:700; margin:0; }
-h2 { font-size:22px; font-weight:600; margin:0; }
-h3 { font-size:18px; font-weight:600; margin:0; }
-p  { margin:0; }
-.num, .mono { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+* { box-sizing: border-box; }
+html { background: var(--ground); }
+body { margin: 0; background: var(--ground); color: var(--ink);
+  font: 500 16px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+main { max-width: 920px; margin: 0 auto; padding: 0 var(--s4) var(--s7); }
+p { margin: 0; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+:focus-visible { outline: var(--bw-hard) solid var(--hand); outline-offset: 3px; border-radius: 2px; }
 
-/* ---- page chrome ------------------------------------------------------- */
-header.hero { padding:48px 16px 24px; max-width:1080px; margin:0 auto; }
-.kicker { font-size:13px; font-weight:600; letter-spacing:.06em;
-  text-transform:uppercase; color:var(--led); margin-bottom:8px; }
-.hero p.lede { color:var(--ink-2); max-width:62ch; margin-top:12px; }
-.ribbon { display:flex; gap:4px; flex-wrap:wrap; margin-top:16px;
-  font-family:var(--mono); font-size:12px; color:var(--ink-3); }
-.ribbon b { color:var(--led); font-weight:600; }
-.ribbon span::after { content:"›"; margin-left:4px; color:var(--ink-3); }
-.ribbon span:last-child::after { content:""; }
+.lab { font: 700 11px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.data { font-family: var(--mono); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-section.panel { --sec:0;
-  background:color-mix(in oklab, hsl(calc(var(--sec)*137.5deg) 60% 55%) 6%, var(--bg-1));
-  border:1px solid var(--rule); border-radius:10px;
-  padding:24px 16px; margin-top:24px; }
-@media (min-width:800px){ section.panel { padding:32px; } }
-section.panel > h2 { margin-bottom:4px; }
-.sub { font-size:13px; font-weight:600; letter-spacing:.06em;
-  text-transform:uppercase; color:var(--ink-2); }
-.why { font-size:12px; color:var(--ink-2); }
-.why::before { content:"— "; }
+/* ---- masthead ---- */
+.mast { padding: var(--s6) 0 var(--s5); }
+.mast .lab { color: var(--hand); }
+.mast h1 { font-size: clamp(44px, 9vw, 76px); font-weight: 900; letter-spacing: -.02em;
+  line-height: .95; margin-top: var(--s2); text-transform: uppercase; }
+.mast p.dek { color: var(--dim); font-weight: 600; margin-top: var(--s3); max-width: 56ch; }
+.crumb { display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s4);
+  font: 700 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--dim); }
+.crumb b { color: #FFFFFF; background: var(--hand); padding: 4px 8px; border-radius: 3px;
+  border: 2px solid var(--ink); font-weight: 700; }
+.crumb span { padding: 4px 0; }
+.crumb span::after { content: " ›"; color: var(--faint); }
+.crumb span:last-child::after { content: ""; }
 
-/* ---- annotations (margin notes) ---------------------------------------- */
-.notes { margin-top:24px; display:grid; gap:8px; }
-@media (min-width:800px){ .notes { grid-template-columns:1fr 1fr; gap:12px 24px; } }
-.note { display:flex; gap:12px; font-size:12px; color:var(--ink-2); line-height:1.55; }
-.note b.n { flex:none; width:20px; height:20px; border-radius:50%;
-  border:1px solid var(--led); color:var(--led); font-size:11px; font-weight:600;
-  display:grid; place-items:center; font-family:var(--mono); }
-.note em { color:var(--ink); font-style:normal; font-weight:600; }
-sup.n { color:var(--led); font-family:var(--mono); font-size:10px; font-weight:600; }
+/* ---- sections ---- */
+section { padding-top: var(--s6); }
+section > h2 { display: inline-block; font: 800 14px/1 var(--sans); letter-spacing: .14em;
+  text-transform: uppercase; color: #FFFFFF; background: var(--ink);
+  padding: 10px 14px; border-radius: var(--r1); }
+section > p.note { color: var(--dim); font-weight: 600; margin-top: var(--s4); max-width: 62ch; }
+.why { color: var(--dim); font-weight: 600; font-size: 14px; max-width: 60ch; }
+.why b { color: var(--ink); font-weight: 800; }
+sup.n { color: var(--hand); font-family: var(--mono); font-size: 10px; font-weight: 700; }
 
-/* ---- controls, one skin each ------------------------------------------- */
-button, .chip { min-height:var(--tap); min-width:var(--tap);
-  background:var(--bg-2); color:var(--ink); border:1px solid var(--rule-2);
-  border-radius:6px; font:16px/1.2 system-ui,sans-serif; padding:8px 12px;
-  cursor:pointer; }
-button:hover, .chip:hover { background:var(--bg-3); }
-.chip.is-on { color:var(--led); border-color:var(--led); background:var(--bg-3); }
-.chip.quiet { border-style:dashed; }
-.chip[disabled] { color:var(--ink-3); cursor:default; }
-.chip[disabled]:hover { background:var(--bg-2); }
-.tabrow { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-.tab { background:none; border:none; border-radius:0; padding:8px 4px;
-  color:var(--ink-2); border-bottom:2px solid transparent; }
-.tab:hover { background:none; color:var(--ink); }
-.tab.is-on { color:var(--led); border-bottom-color:var(--led); }
-.live { color:var(--cue); font-size:12px; font-family:var(--mono); }
-.livebox { outline:1px dashed color-mix(in oklab, var(--cue) 35%, transparent);
-  outline-offset:3px; border-radius:2px; }
+/* ---- plates ---- */
+.plate { background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  box-shadow: var(--shadow-big); padding: var(--s3); }
 
-/* fader: native range, notch drawn by wrapper */
-.fader { position:relative; display:flex; align-items:center; gap:12px; }
-input[type=range] { -webkit-appearance:none; appearance:none; flex:1;
-  height:var(--tap); background:none; margin:0; }
-input[type=range]::-webkit-slider-runnable-track { height:4px;
-  background:var(--rule-2); border-radius:2px; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:24px;
-  height:24px; border-radius:50%; background:var(--ink); margin-top:-10px;
-  border:none; }
-input[type=range]::-moz-range-track { height:4px; background:var(--rule-2);
-  border-radius:2px; }
-input[type=range]::-moz-range-thumb { width:24px; height:24px; border-radius:50%;
-  background:var(--ink); border:none; }
-.fader .notch { position:absolute; top:50%; width:2px; height:12px;
-  margin-top:-6px; background:var(--led); pointer-events:none; }
-.fader .val { font-family:var(--mono); font-size:13px; color:var(--ink-2);
-  min-width:9ch; text-align:right; }
+/* ---- annotations: numbered ink squares ---- */
+.notes { margin-top: var(--s5); display: grid; gap: var(--s3); }
+@media (min-width: 800px) { .notes { grid-template-columns: 1fr 1fr; gap: var(--s3) var(--s5); } }
+.ann { display: grid; grid-template-columns: 32px 1fr; gap: var(--s3); align-items: start;
+  font-size: 13.5px; font-weight: 600; color: var(--dim); line-height: 1.55; }
+.ann b.n { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  font: 900 15px var(--sans); color: #FFFFFF; background: var(--ink); border-radius: var(--r1); }
+.ann em { color: var(--ink); font-style: normal; font-weight: 800; }
 
-/* ---- scrollers --------------------------------------------------------- */
-.scroller { overflow-x:auto; border:1px solid var(--rule); border-radius:10px;
-  background:var(--bg-0); }
-.scroller::-webkit-scrollbar { height:8px; }
-.scroller::-webkit-scrollbar-thumb { background:var(--rule-2); border-radius:4px; }
+/* ---- the law callout ---- */
+.callout { border: var(--bw) solid var(--ink); border-radius: var(--r1); background: var(--flag-tint);
+  box-shadow: var(--shadow); padding: var(--s4); margin-top: var(--s5); max-width: 68ch; }
+.callout h3 { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.callout p { font-size: 14px; font-weight: 600; color: var(--ink); margin-top: var(--s2); }
+.callout p .q { font-weight: 800; }
+.callout p.small { color: var(--dim); }
 
-/* ---- TODAY: the greyed cell-row recreation ------------------------------ */
-.today { filter:saturate(.3); opacity:.75; }
-.today table { border-collapse:collapse; font-size:11px; font-family:var(--mono);
-  color:var(--ink-3); min-width:420px; }
-.today th, .today td { border:1px solid var(--rule); padding:3px 6px; text-align:center; }
-.today th { color:var(--ink-3); font-weight:400; }
-.radio { display:inline-block; width:14px; height:14px; border-radius:50%;
-  border:1.5px solid var(--ink-3); vertical-align:middle; }
-.radio.on { border-color:var(--cue); background:radial-gradient(circle at 50% 50%, var(--cue) 0 4px, transparent 5px); }
-.slid { display:inline-block; width:64px; height:4px; background:var(--rule-2);
-  border-radius:2px; position:relative; vertical-align:middle; }
-.slid i { position:absolute; top:-4px; width:12px; height:12px; border-radius:50%;
-  background:var(--cue); }
-.slid.off i { background:var(--rule-2); }
-.pain { display:flex; gap:12px; font-size:13px; color:var(--ink-2); line-height:1.55; }
-.pain b { color:var(--hot); font-weight:600; flex:none; font-family:var(--mono); font-size:12px; }
+/* ---- buttons / play / chips / tabs (Enamel, verbatim skins) ---- */
+.btn { font: 800 15px/1 var(--sans); color: var(--ink); letter-spacing: .01em;
+  background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  min-height: var(--ctl); padding: 0 var(--s4); cursor: pointer; box-shadow: var(--shadow);
+  display: inline-flex; align-items: center; gap: var(--s2); }
+.btn:hover { background: var(--flag-tint); }
+.btn:active { transform: translate(4px, 4px); box-shadow: none; }
+.btn[disabled] { color: var(--faint); background: var(--well); border-color: var(--faint);
+  box-shadow: none; cursor: default; transform: none; }
+.play { min-width: 118px; font-family: var(--mono); font-weight: 700; font-size: 14px; }
+.play .g { display: inline-block; width: 1.2em; }
+.play[data-at="off"]  { background: var(--panel); color: var(--ink); }
+.play[data-at="once"] { background: var(--hand); color: #FFFFFF; }
+.play[data-at="loop"] { background: var(--clock); color: #FFFFFF; }
+.play[data-at="once"]:hover { background: var(--hand-down); }
+.play[data-at="loop"]:hover { background: var(--clock-down); }
+.chip { font: 700 13px var(--mono); color: var(--ink); background: var(--panel);
+  border: var(--bw) solid var(--ink); border-radius: 999px; min-height: 40px;
+  padding: 0 var(--s4); cursor: pointer; display: inline-flex; align-items: center; }
+.chip:hover { background: var(--flag-tint); }
+.chip[aria-pressed="true"] { background: var(--hand); color: #FFFFFF; }
+.chip[disabled] { color: var(--faint); border-color: var(--faint); background: var(--well); cursor: default; }
+.tabs { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.tab { font: 800 14px var(--sans); color: var(--ink); background: var(--panel);
+  border: var(--bw) solid var(--ink); border-radius: var(--r1); min-height: 44px;
+  padding: 0 var(--s4); cursor: pointer; display: inline-flex; align-items: center; gap: var(--s2); }
+.tab:hover { background: var(--flag-tint); }
+.tab[aria-selected="true"] { background: var(--hand); color: #FFFFFF; box-shadow: var(--shadow); }
+.tab.add { color: var(--dim); border-style: dashed; border-width: 2px; background: transparent;
+  font-family: var(--mono); font-weight: 700; font-size: 12px; }
+.tab.add:hover { color: var(--ink); background: var(--flag-tint); }
+.nu-why { font: 600 12.5px var(--sans); color: var(--faint); max-width: 42ch; }
+.nu-why::before { content: "— "; }
+[data-live] { font: 600 13px var(--mono); color: var(--dim); }
+[data-live] .now { color: var(--clock); font-weight: 700; }
+.livedot { display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+  background: var(--clock); border: 2px solid var(--ink); margin-right: var(--s2); vertical-align: -1px; }
+@media (prefers-reduced-motion: no-preference) {
+  .livedot.beat { animation: beat 1.2s ease-in-out infinite; }
+  @keyframes beat { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+}
 
-/* ---- THE LANE ----------------------------------------------------------- */
-.bench { margin-top:16px; }
-.benchbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:16px 0 8px; }
-.benchbar .grow { flex:1; }
-#laneWrap { position:relative; }
-.lane { position:relative; display:grid; }
-.lane .rowlab { position:sticky; left:0; z-index:5; background:var(--bg-0);
-  border-right:1px solid var(--rule-2); display:flex; align-items:center;
-  justify-content:flex-end; gap:6px; padding:0 8px; font-family:var(--mono);
-  font-size:12px; color:var(--ink-2); height:var(--cell); }
-.rowlab .role { font-size:10px; color:var(--ink-3); }
-.rowlab.is-chord .role { color:var(--go); }
-.rowlab.is-lead  .role { color:var(--led); }
-.lane .cellrow { display:flex; height:var(--cell); }
-.lane .c { flex:none; border-right:1px solid var(--rule);
-  border-bottom:1px solid var(--rule); background:var(--bg-1); }
-.lane .c.beat { border-right-color:var(--rule-2); }
-.lane .c.tone { background:color-mix(in oklab, var(--go) 6%, var(--bg-1)); }
-.lane .c.lead { background:color-mix(in oklab, var(--led) 8%, var(--bg-1)); }
-.lane .c.w1   { background:color-mix(in oklab, var(--cue) 3%, var(--bg-1)); }
-.lane .c.w1.tone { background:color-mix(in oklab, var(--go) 7%, color-mix(in oklab, var(--cue) 3%, var(--bg-1))); }
-.pill { position:absolute; height:26px; border-radius:6px; background:var(--go);
-  color:#08240F; font-family:var(--mono); font-size:11px; font-weight:600;
-  display:flex; align-items:center; padding:0 6px; gap:4px; cursor:pointer;
-  border:1px solid transparent; z-index:3; }
-.pill .v { margin-left:auto; opacity:.75; }
-.pill.acc { border-color:var(--led); box-shadow:0 0 0 1px var(--led); }
-.pill.acc::after { content:"›"; color:var(--led); font-weight:700; }
-.pill.sel { outline:2px solid var(--cue); outline-offset:1px; }
-.pill .orn { color:#08240F; opacity:.8; font-size:10px; }
-.ghost { position:absolute; height:26px; border-radius:6px; z-index:4;
-  border:1.5px dashed var(--cue); background:color-mix(in oklab, var(--cue) 12%, transparent);
-  pointer-events:none; }
-.playhead { position:absolute; top:0; bottom:0; width:2px; background:var(--cue);
-  z-index:6; pointer-events:none; }
-.playhead::before { content:"[data-live]"; position:absolute; top:4px; left:5px; white-space:nowrap;
-  font-family:var(--mono); font-size:10px; color:var(--cue); }
-.harmrow { display:flex; margin-top:0; }
-.harm { flex:none; border-right:1px solid var(--rule-2); border-top:1px solid var(--rule-2);
-  padding:8px; background:var(--bg-1); }
-.harm b { font-size:18px; font-weight:600; }
-.harm .q { font-size:11px; color:var(--ink-2); font-family:var(--mono); margin-left:6px; }
-.contour { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
-.contour svg { display:block; }
-.wisdom { margin-top:12px; padding:12px 16px; background:var(--bg-2);
-  border:1px solid var(--rule-2); border-radius:6px; font-size:13px;
-  color:var(--ink); min-height:44px; display:flex; align-items:center; }
-.wisdom .mono { color:var(--cue); }
-.devrow { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; align-items:center; }
+/* ---- toolbar rows ---- */
+.bar { display: flex; gap: var(--s3); flex-wrap: wrap; align-items: center; margin-top: var(--s4); }
+.bar .grow { flex: 1; }
+.devrow { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; margin-top: var(--s4); }
+.devrow .lab { margin-right: var(--s1); }
 
-/* ---- THE KIT ------------------------------------------------------------ */
-.phrase { display:flex; gap:8px; margin:16px 0; }
-.phrase button { flex:1; font-family:var(--mono); font-size:13px; }
-.phrase button.is-on { color:var(--led); border-color:var(--led); background:var(--bg-3); }
-.phrase button.fill { border-style:dashed;
-  background:repeating-linear-gradient(-45deg, var(--bg-2) 0 8px,
-     color-mix(in oklab, var(--led) 8%, var(--bg-2)) 8px 16px); }
-.ruler { position:relative; height:24px; margin:4px 0 2px; }
-.tick { position:absolute; top:6px; width:2px; height:12px; background:var(--ink-2); }
-.tick.straight { background:var(--rule-2); height:8px; top:10px; }
-.tick.swung { background:var(--led); transition:transform .1s; }
-.kit { display:grid; }
-.klab { position:sticky; left:0; z-index:5; background:var(--bg-0);
-  border-right:1px solid var(--rule-2); height:var(--cell); display:flex;
-  align-items:center; justify-content:flex-end; padding:0 8px;
-  font-family:var(--mono); font-size:12px; color:var(--ink-2); }
-.krow { display:flex; height:var(--cell); }
-.kc { flex:none; border-right:1px solid var(--rule); border-bottom:1px solid var(--rule);
-  background:var(--bg-1); position:relative; cursor:pointer; transition:transform .1s; }
-.kc.beat { border-right-color:var(--rule-2); }
-.kc .hit { position:absolute; left:4px; right:4px; bottom:3px; border-radius:3px 3px 2px 2px;
-  background:var(--go); }
-.kc .hit.ghosty { background:var(--ink-3); }
-.kc .hit.accent { background:var(--go); box-shadow:inset 0 3px 0 var(--led); }
-.kc.fillcell .hit { background:var(--led); }
-.kitfoot { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-top:12px; }
-.legend { display:flex; gap:16px; font-size:12px; color:var(--ink-2); flex-wrap:wrap; }
-.legend i { display:inline-block; width:10px; height:10px; border-radius:2px;
-  margin-right:4px; vertical-align:-1px; }
+/* ==========================================================================
+   TODAY — the greyed cell-row recreation
+   ========================================================================== */
+.today { filter: saturate(.25); opacity: .8; align-self: start; }
+.today table { border-collapse: collapse; font: 600 10px var(--mono); color: var(--dim); }
+.today th, .today td { border: 2px solid var(--faint); padding: 3px 4px; text-align: center; }
+.today th { font-weight: 700; }
+.radio { display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+  border: 2px solid var(--faint); vertical-align: middle; }
+.radio.on { border-color: var(--dim);
+  background: radial-gradient(circle at 50% 50%, var(--dim) 0 3px, transparent 4px); }
+.slid { display: inline-block; width: 36px; height: 4px; background: var(--well);
+  border: 1px solid var(--faint); border-radius: 2px; position: relative; vertical-align: middle; }
+.slid i { position: absolute; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--dim); }
+.slid.off i { background: var(--faint); }
+.pain { display: grid; grid-template-columns: 44px 1fr; gap: var(--s3); align-items: start;
+  font-size: 13.5px; font-weight: 600; color: var(--dim); line-height: 1.5; }
+.pain b { font: 900 14px var(--mono); color: #FFFFFF; background: var(--clock);
+  border: 2px solid var(--ink); border-radius: var(--r1); padding: 4px 0; text-align: center; }
+.pain b.good { background: var(--meter); }
+.todayGrid { display: grid; gap: var(--s5); margin-top: var(--s4); }
+@media (min-width: 760px) { .todayGrid { grid-template-columns: auto 1fr; } }
+.painlist { display: grid; gap: var(--s3); align-content: start; }
 
-/* ---- gesture table ------------------------------------------------------ */
-table.gest { border-collapse:collapse; width:100%; min-width:560px; font-size:13px; }
-.gest th { font-size:13px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
-  color:var(--ink-2); text-align:left; padding:8px 12px; border-bottom:1px solid var(--rule-2); }
-.gest td { padding:8px 12px; border-bottom:1px solid var(--rule); vertical-align:top; }
-.gest td:first-child { font-family:var(--mono); color:var(--led); white-space:nowrap; }
-.gest td em { color:var(--ink-2); font-style:normal; font-size:12px; }
+/* ==========================================================================
+   THE LANE — degrees ACROSS, steps DOWN, playhead descends
+   ========================================================================== */
+.laneWrap { position: relative; margin-top: var(--s4); }
+.lane { display: grid; grid-template-columns: 34px repeat(8, minmax(28px, 1fr)) 28px;
+  grid-template-rows: 44px repeat(16, var(--rowh)); background: var(--panel); }
+.dh { border-bottom: var(--bw) solid var(--ink); border-right: 2px solid var(--ink);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px; background: var(--panel); }
+.dh b { font: 800 15px var(--sans); }
+.dh .role { font: 700 9px var(--mono); letter-spacing: .05em; color: var(--dim); }
+.dh.is-chord .role { color: var(--meter); }
+.dh.is-lead .role { color: var(--ink); background: var(--flag); border-radius: 2px; padding: 0 3px; }
+.corner { border-bottom: var(--bw) solid var(--ink); background: var(--ground); }
+.corner.r { border-right: 0; }
+.sn { border-right: var(--bw) solid var(--ink); border-bottom: 2px solid var(--well);
+  background: var(--ground); display: flex; align-items: center; justify-content: center;
+  font: 700 11px var(--mono); color: var(--dim); }
+.sn.beat { font-size: 14px; font-weight: 800; color: var(--ink); }
+.sn.b4 { border-bottom-color: var(--ink); }
+.lc { border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
+  background: var(--well); }
+.lc.tone { background: var(--meter-tint); }
+.lc.lead { background: var(--flag-tint); }
+.lc.b4 { border-bottom-width: 3px; }
+.crail { grid-column: 10; border-left: var(--bw) solid var(--ink); border-bottom: var(--bw) solid var(--ink);
+  background: var(--ground); display: flex; align-items: center; justify-content: center;
+  writing-mode: vertical-rl; font: 700 11px var(--mono); letter-spacing: .08em; color: var(--ink); }
+.crail b { font-size: 16px; font-weight: 800; }
+.crail small { color: var(--dim); font-size: 10px; margin-block-start: 6px; }
+.crail.v5 { background: var(--flag-tint); }
+/* the note layer: covers the 8 degree columns, below the header row */
+.pillLayer { position: absolute; left: 34px; right: 28px; top: 44px; bottom: 0; pointer-events: none; }
+.pill { position: absolute; width: calc(12.5% - 10px); margin-left: 5px;
+  border: 2px solid var(--ink); border-radius: var(--r1); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; padding-top: 3px; gap: 0;
+  font: 700 13px var(--mono); pointer-events: auto; z-index: 3; box-shadow: 3px 3px 0 var(--ink); }
+.pill b { font-weight: 800; }
+.pill .v { font-size: 10px; opacity: .85; }
+.pill .orn { font-size: 10px; }
+.pill.acc { box-shadow: 3px 3px 0 var(--ink), 0 0 0 3px var(--flag); }
+.pill.acc::after { content: "▾"; color: var(--flag); font-size: 12px; line-height: 1;
+  margin-top: auto; padding-bottom: 2px; text-shadow: 0 1px 0 var(--ink); }
+.pill.sel { outline: var(--bw-hard) solid var(--hand); outline-offset: 2px; }
+.ghost { position: absolute; width: calc(12.5% - 10px); margin-left: 5px; z-index: 4;
+  border: 3px dashed var(--meter); border-radius: var(--r1);
+  background: color-mix(in srgb, var(--meter-tint) 65%, transparent); pointer-events: none; }
+.playline { position: absolute; left: 0; right: 0; height: var(--bw-hard);
+  background: var(--clock); z-index: 6; pointer-events: none; }
+.playline::after { content: "[data-live] · row 7"; position: absolute; right: 4px; bottom: 6px;
+  font: 700 10px var(--mono); color: var(--clock); background: var(--panel);
+  border: 2px solid var(--clock); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
+.wisdom { margin-top: var(--s4); padding: var(--s3) var(--s4); background: var(--panel);
+  border: var(--bw) solid var(--ink); border-radius: var(--r1); box-shadow: var(--shadow);
+  font-size: 14.5px; font-weight: 600; min-height: 56px; display: flex; align-items: center; }
+.wisdom .data { color: var(--hand); }
+.wisdom .accw { color: var(--ink); background: var(--flag); border-radius: 3px; padding: 0 4px; font-weight: 800; }
+/* the contour, standing up: pitch across, time down */
+.contour { display: flex; gap: var(--s4); align-items: flex-start; margin-top: var(--s4); }
+.contour svg { display: block; background: var(--well); border: var(--bw) solid var(--ink);
+  border-radius: var(--r1); }
+.contour .why { margin: 0; }
 
-/* ---- laws --------------------------------------------------------------- */
-.laws { display:grid; gap:8px; }
-@media (min-width:800px){ .laws { grid-template-columns:1fr 1fr 1fr; } }
-.law { background:var(--bg-2); border:1px solid var(--rule); border-radius:6px;
-  padding:12px; font-size:12px; color:var(--ink-2); line-height:1.5; }
-.law b { display:block; color:var(--ink); font-size:13px; margin-bottom:2px; }
-footer { max-width:1080px; margin:0 auto; padding:24px 16px 48px;
-  font-size:12px; color:var(--ink-3); }
+/* ==========================================================================
+   THE KIT — drums ACROSS, steps DOWN, swing = rows that sit late
+   ========================================================================== */
+.phrase { display: flex; gap: var(--s2); margin-top: var(--s4); flex-wrap: wrap; }
+.phrase .btn { flex: 1 1 120px; font-family: var(--mono); font-size: 13px; justify-content: center; }
+.phrase .btn[aria-pressed="true"] { background: var(--hand); color: #FFFFFF; }
+.phrase .btn.fill { border-style: dashed;
+  background: repeating-linear-gradient(-45deg, var(--panel) 0 8px, var(--flag-tint) 8px 16px); }
+.phrase .btn.fill[aria-pressed="true"] {
+  background: repeating-linear-gradient(-45deg, var(--hand) 0 8px, var(--hand-down) 8px 16px);
+  color: #FFFFFF; }
+.phrase .btn .eq { color: var(--faint); }
+.phrase .btn[aria-pressed="true"] .eq { color: var(--hand-tint); }
+.kitRow { display: flex; gap: var(--s5); flex-wrap: wrap; align-items: flex-start; margin-top: var(--s4); }
+.kitWrapOuter { position: relative; flex: 1 1 300px; min-width: 0; }
+.kit { display: grid; grid-template-columns: 34px repeat(5, minmax(40px, 1fr));
+  grid-template-rows: 44px repeat(16, var(--krowh)); background: var(--panel); }
+.kh { border-bottom: var(--bw) solid var(--ink); border-right: 2px solid var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  font: 700 11px var(--mono); letter-spacing: .05em; text-transform: uppercase; background: var(--panel); }
+.kn { border-right: var(--bw) solid var(--ink); border-bottom: 2px solid var(--well);
+  background: var(--ground); display: flex; align-items: center; justify-content: center;
+  font: 700 11px var(--mono); color: var(--dim); }
+.kn.beat { font-size: 14px; font-weight: 800; color: var(--ink); }
+.kn.b4 { border-bottom-color: var(--ink); }
+.kn.swung { color: var(--ink); background: var(--flag-tint); }
+.kc { position: relative; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
+  background: var(--well); cursor: pointer; padding: 0; }
+.kc.b4 { border-bottom-width: 3px; }
+.kc.hatch { background: repeating-linear-gradient(-45deg, var(--well) 0 8px, var(--flag-tint) 8px 16px); }
+.kc .hit { position: absolute; left: 4px; top: 7px; bottom: 7px; border-radius: 3px;
+  background: var(--hand); border: 2px solid var(--ink); }
+.kc .hit.ghosty { background: var(--faint); border-color: var(--dim); }
+.kc .hit.accent { box-shadow: inset 5px 0 0 var(--flag); }
+.kc .hit.stroke { background: var(--flag); }
+@media (prefers-reduced-motion: no-preference) {
+  .kit .swingable { transition: transform .12s ease; }
+}
+.stub { position: absolute; left: 0; width: 30px; border-top: 2px dashed var(--faint);
+  pointer-events: none; z-index: 2; }
+.legend { display: flex; gap: var(--s3) var(--s4); font-size: 12.5px; font-weight: 600;
+  color: var(--dim); flex-wrap: wrap; margin-top: var(--s3); }
+.legend i { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--ink);
+  border-radius: 3px; margin-right: 5px; vertical-align: -2px; }
+.kitSide { display: grid; gap: var(--s4); flex: 0 1 220px; justify-items: start; }
+
+/* ---- the swing slider (vertical; every knob is dead) ---- */
+.vslider { display: grid; gap: var(--s2); justify-items: center; width: min-content; }
+.vslider .vs-lab { font: 700 11px/1.2 var(--mono); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink); text-align: center; }
+.vslider .vs-body { display: flex; align-items: stretch; gap: var(--s2); }
+.vslider .vs-track { position: relative; width: 20px; height: var(--vsh, 200px);
+  background: var(--well); border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  margin: 0 14px; }
+.vslider .vs-fill { position: absolute; left: 0; right: 0; bottom: 0;
+  height: calc(14px + (100% - 28px) * var(--v, 0.5)); background: var(--hand); display: block; }
+.vslider .vs-thumb { position: absolute; left: 50%; bottom: calc((100% - 28px) * var(--v, 0.5));
+  transform: translateX(-50%); width: 48px; height: 28px; display: block;
+  background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  box-shadow: 3px 3px 0 var(--ink); }
+.vslider .vs-thumb::after { content: ""; position: absolute; left: 8px; right: 8px; top: 50%;
+  height: 3px; margin-top: -1.5px; background: var(--ink); }
+.vslider .vs-input { position: absolute; top: -14px; bottom: -14px; left: 50%;
+  transform: translateX(-50%); width: 48px; height: calc(100% + 28px); margin: 0;
+  opacity: 0; cursor: grab; writing-mode: vertical-lr; direction: rtl; }
+.vslider .vs-track:focus-within { outline: var(--bw-hard) solid var(--hand); outline-offset: 4px; }
+.vslider .vs-val { font: 600 13px var(--mono); font-variant-numeric: tabular-nums;
+  color: var(--ink); text-align: center; }
+.vs-notch { position: absolute; left: -8px; right: -8px; height: 4px; background: var(--flag);
+  border: 1px solid var(--ink); bottom: calc(14px + (100% - 28px) * var(--nv, 0.16));
+  pointer-events: none; }
+
+/* ==========================================================================
+   GESTURES — cards, not a sideways table
+   ========================================================================== */
+.gests { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--s4); margin-top: var(--s4); }
+.gest { background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  box-shadow: var(--shadow); padding: var(--s4); display: grid; gap: var(--s2); align-content: start; }
+.gest h3 { font: 800 14px var(--mono); letter-spacing: .02em; }
+.gest h3 b { color: #FFFFFF; background: var(--ink); border-radius: 3px; padding: 2px 7px; }
+.gest p { font-size: 13px; font-weight: 600; color: var(--dim); }
+.gest p b { color: var(--ink); font-weight: 800; }
+.gest .who { font: 700 10px var(--mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--hand); }
+
+/* ==========================================================================
+   LAWS
+   ========================================================================== */
+.laws { display: grid; gap: var(--s4); margin-top: var(--s4); }
+@media (min-width: 800px) { .laws { grid-template-columns: 1fr 1fr 1fr; } }
+.law { background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  box-shadow: var(--shadow); padding: var(--s4); font-size: 13px; font-weight: 600;
+  color: var(--dim); line-height: 1.5; }
+.law b { display: block; color: var(--ink); font-size: 14px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .05em; margin-bottom: var(--s1); }
+footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
+  padding-top: var(--s4); color: var(--dim); font-weight: 600; font-size: 13px; }
 </style>
-
-<header class="hero">
-  <p class="kicker">nukernel · ideal state 2026-08 · the Material axis</p>
-  <h1>The Bench</h1>
-  <p class="lede">One surface where a motif and a kit are composed <em>with knowledge</em>:
-  the harmony you will land in is painted under your hand, wrong notes are
-  unenterable, the development that will chew the cell is one tap away as an
-  overlay, and the groove is drawn — not implied. Every fact shown is one the
-  kernel already computes.</p>
-  <div class="ribbon">
-    <span>transport</span><span>where &amp; when</span><span>Time</span><span>Harmony</span><b><span>Motifs — this surface</span></b><span>Form</span><span>band</span><span>board</span><span>producer</span><span>score</span>
-  </div>
-</header>
 
 <main>
 
-<!-- ================= TODAY ================= -->
-<section class="panel" style="--sec:0">
-  <h2>Today, for the record</h2>
-  <p class="why">the shipped cell-row, shrunk and greyed — same psalm motif as below</p>
+<header class="mast">
+  <p class="lab">nukernel · ideal state 2026-08 · the Material axis · painted in Enamel</p>
+  <h1>The Bench</h1>
+  <p class="dek">One surface where a motif and a kit are composed <b>with knowledge</b>:
+  the harmony you will land in is painted under your hand, wrong notes are unenterable,
+  the development that will chew the cell is one tap away as an overlay, and the groove
+  is drawn — not implied. Time runs <b>down</b>. Every fact shown is one the kernel
+  already computes.</p>
+  <div class="crumb">
+    <span>transport</span><span>where &amp; when</span><span>Time</span><span>Harmony</span><b>motifs — this surface</b><span>Form</span><span>band</span><span>board</span><span>producer</span><span>score</span>
+  </div>
+</header>
 
-  <div style="display:grid; gap:24px; margin-top:16px" id="todayGrid">
-    <div class="scroller today"><table>
+<!-- ================= TODAY ================= -->
+<section id="today">
+  <h2>today, for the record</h2>
+  <p class="note">The shipped cell-row, shrunk and greyed — the same psalm motif as below.
+  Its direction was never the problem: the tracker read top-to-bottom, and top-to-bottom
+  stays. What goes is the cell-per-value text grid around it.</p>
+
+  <div class="todayGrid">
+    <div class="plate today"><table>
       <tr><th></th><th>♪</th><th>—</th><th>·</th><th>deg</th><th>vel</th></tr>
-      <tr><td>1</td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="radio"></span></td><td><span class="slid"><i style="left:18px"></i></span> 0</td><td><span class="slid"><i style="left:30px"></i></span> v5</td></tr>
-      <tr><td>e</td><td><span class="radio"></span></td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="slid off"><i style="left:18px"></i></span> –</td><td><span class="slid off"><i style="left:30px"></i></span> –</td></tr>
-      <tr><td>&amp;</td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="radio"></span></td><td><span class="slid"><i style="left:24px"></i></span> 1</td><td><span class="slid"><i style="left:30px"></i></span> v5</td></tr>
-      <tr><td>a</td><td><span class="radio"></span></td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="slid off"><i style="left:24px"></i></span> –</td><td><span class="slid off"><i style="left:30px"></i></span> –</td></tr>
-      <tr><td>2</td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="radio"></span></td><td><span class="slid"><i style="left:30px"></i></span> 2</td><td><span class="slid"><i style="left:36px"></i></span> v6</td></tr>
-      <tr><td>e</td><td><span class="radio"></span></td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="slid off"><i style="left:30px"></i></span> –</td><td><span class="slid off"><i style="left:30px"></i></span> –</td></tr>
-      <tr><td colspan="6" style="color:var(--ink-3)">… ten more rows to scroll before beat 4 …</td></tr>
+      <tr><td>1</td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="radio"></span></td><td><span class="slid"><i style="left:10px"></i></span> 0</td><td><span class="slid"><i style="left:16px"></i></span> v5</td></tr>
+      <tr><td>e</td><td><span class="radio"></span></td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="slid off"><i style="left:10px"></i></span> –</td><td><span class="slid off"><i style="left:16px"></i></span> –</td></tr>
+      <tr><td>&amp;</td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="radio"></span></td><td><span class="slid"><i style="left:13px"></i></span> 1</td><td><span class="slid"><i style="left:16px"></i></span> v5</td></tr>
+      <tr><td>a</td><td><span class="radio"></span></td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="slid off"><i style="left:13px"></i></span> –</td><td><span class="slid off"><i style="left:16px"></i></span> –</td></tr>
+      <tr><td>2</td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="radio"></span></td><td><span class="slid"><i style="left:17px"></i></span> 2</td><td><span class="slid"><i style="left:20px"></i></span> v6</td></tr>
+      <tr><td>e</td><td><span class="radio"></span></td><td><span class="radio on"></span></td><td><span class="radio"></span></td><td><span class="slid off"><i style="left:17px"></i></span> –</td><td><span class="slid off"><i style="left:16px"></i></span> –</td></tr>
+      <tr><td colspan="6" style="color:var(--faint)">… ten more rows before beat 4 …</td></tr>
     </table></div>
-    <div style="display:grid; gap:12px; align-content:start">
-      <div class="pain"><b>16×</b><p>a bar is sixteen table rows read top-to-bottom — time runs the wrong way, and beat 4 is below the fold on a phone.</p></div>
+    <div class="painlist">
+      <div class="pain"><b class="good">↓</b><p><b>the direction was right.</b> Steps already read downward here — the 2026-08-27 law keeps it. Everything else on this table retires.</p></div>
+      <div class="pain"><b>80</b><p>controls per bar: sixteen step-rows times five widgets (three radios, two sliders) where one gesture on one pill says the same thing.</p></div>
       <div class="pain"><b>0</b><p>harmonic facts in view: the grid does not know (or show) that degree 2 is the third of i, or that the section it plays in moves to V halfway.</p></div>
-      <div class="pain"><b>2×</b><p>the composed staff sits above as a second copy — comparison by eye-travel, not by overlay.</p></div>
-      <div class="pain"><b>5</b><p>controls per step (three radios, two sliders) where one gesture could say the same thing.</p></div>
+      <div class="pain"><b>2×</b><p>the composed staff sits elsewhere as a second copy — comparison by eye-travel, not by overlay.</p></div>
     </div>
   </div>
 </section>
 
 <!-- ================= THE LANE ================= -->
-<section class="panel" style="--sec:1">
-  <h2>Proposed · the pitch lane</h2>
-  <p class="why">degree-based, snapped to the Alphabet — a row exists only if the mode can say it, so a wrong note is unenterable<sup class="n">1</sup></p>
+<section id="lane">
+  <h2>proposed · the pitch lane</h2>
+  <p class="note">Degrees run <b>across the top</b> — the Alphabet is the keyboard, low on
+  the left. Steps run <b>down</b> the left edge. A column exists only if the mode can say
+  it, so a wrong note is unenterable<sup class="n">1</sup>. The playhead is a red line
+  falling through the bar.</p>
 
-  <div class="benchbar">
-    <div class="tabrow" role="tablist">
-      <button class="tab is-on">psalm</button>
-      <button class="tab">bed</button>
-      <button class="tab">neume</button>
-      <button class="tab" title="new motif">+</button>
+  <div class="bar">
+    <div class="tabs" role="tablist" id="motifTabs">
+      <button class="tab" role="tab" aria-selected="true" type="button">psalm</button>
+      <button class="tab" role="tab" aria-selected="false" type="button">bed</button>
+      <button class="tab" role="tab" aria-selected="false" type="button">neume</button>
+      <button class="tab add" role="tab" aria-selected="false" type="button">+ motif</button>
     </div>
     <div class="grow"></div>
-    <button id="triPlay" class="mono" style="min-width:96px">▶ play</button>
-    <span class="live livebox" id="triLive">&nbsp;silent&nbsp;</span>
+    <button class="btn play" data-at="off" id="triPlay" type="button"><span class="g">▶</span>play</button>
+    <p data-live="played" id="triLive"><span class="livedot"></span>silent</p>
   </div>
 
   <div class="devrow">
-    <span class="sub" style="margin-right:4px">hear it as</span>
-    <button class="chip is-on mono" data-dev="written">as written</button>
-    <button class="chip mono" data-dev="reverse">chorus · reverse</button>
-    <button class="chip mono" data-dev="rotate">bridge · rotate 4</button>
-    <button class="chip quiet mono" disabled>outro · excerpt 0–8</button>
+    <span class="lab">hear it as</span>
+    <button class="chip" type="button" aria-pressed="true" data-dev="written">as written</button>
+    <button class="chip" type="button" aria-pressed="false" data-dev="reverse">chorus · reverse</button>
+    <button class="chip" type="button" aria-pressed="false" data-dev="rotate">bridge · rotate 4</button>
+    <span style="display:grid;gap:2px;justify-items:start">
+      <button class="chip" type="button" disabled>outro · excerpt 0–8</button>
+      <span class="nu-why">an excerpt crops, it moves nothing — no ghost to draw</span>
+    </span>
   </div>
-  <p class="why" id="devWhy" style="margin:4px 0 16px">the overlay is EXTRACTED — the same
-  <span class="mono">reverse()</span> the score will run, applied to this cell, drawn in cue-blue over the written notes<sup class="n">2</sup></p>
+  <p class="why" id="devWhy" style="margin-top:var(--s2)">the overlay is EXTRACTED — the same
+  <span class="data">reverse()</span> the score will run, applied to this cell, drawn as a
+  green dashed ghost over the written notes<sup class="n">2</sup></p>
 
-  <div class="contour">
-    <span class="sub">contour</span>
-    <svg id="contourSvg" width="160" height="24" viewBox="0 0 160 24" aria-label="contour"></svg>
-    <span class="why" style="margin:0">arch — computed from the deg vector, not drawn by hand</span>
+  <div class="kitRow">
+    <div class="kitWrapOuter" style="flex:1 1 300px">
+      <div class="laneWrap" id="laneWrap">
+        <div class="lane" id="laneGrid"></div>
+        <div class="pillLayer" id="pillLayer"></div>
+      </div>
+    </div>
+    <div class="kitSide">
+      <div class="contour">
+        <svg id="contourSvg" width="56" height="150" viewBox="0 0 56 150" aria-label="contour, read downward"></svg>
+        <p class="why" style="max-width:22ch"><b>contour, read down</b> — arch; computed
+        from the deg vector, not drawn by hand. Pitch is the x of this thread, exactly as
+        it is the x of the lane.</p>
+      </div>
+      <p class="why" style="max-width:26ch">The green rows are the chord under your hand;
+      the yellow column is the leading tone waiting under V<sup class="n">3</sup>. The
+      chord rail on the right names each band.</p>
+    </div>
   </div>
-
-  <div class="scroller" id="laneScroll"><div id="laneWrap"></div></div>
 
   <div class="wisdom" id="wisdom">tap a note — this rail says what it is doing, musically, right now</div>
 
+  <div class="callout">
+    <h3>⟳ why the lane stands upright</h3>
+    <p><span class="q">“Top to bottom is always better than left to right”</span> — Paul,
+    2026-08-27. Time runs downward on every grid, roll and lane; only the engraved score
+    keeps its horizontal law.</p>
+    <p class="small">This half-returns to the tracker orientation we reversed on
+    2026-08-15. What does NOT return is the cell-per-value tracker text grid — the lane
+    keeps direct manipulation: one pill per note, painted harmony, gestures instead of
+    widget stacks.</p>
+  </div>
+
   <div class="notes">
-    <div class="note"><b class="n">1</b><p><em>Rows are the Alphabet.</em> Seven degree rows (and the octave fold) come from <span class="mono">g.scale/mode</span>; a chromatic passing tone is not a hidden row, it is a different Alphabet. Snapping is the editor, not a validator.</p></div>
-    <div class="note"><b class="n">2</b><p><em>Overlay, not a second copy.</em> The composed version is ghost pills over the same lane — the eye compares positions, not two staves. Captions carry the tense: “as played in chorus — you are writing psalm.”</p></div>
-    <div class="note"><b class="n">3</b><p><em>Chord windows are painted, not narrated.</em> <span class="mono">chordsOf()</span> already returns start/len/deg/quality per window; the lane tints chord-tone rows green inside each window, and the leading-tone row amber under V. The row labels’ role dots change as the window changes.</p></div>
-    <div class="note"><b class="n">4</b><p><em>Velocity is depth on the pill</em> — ink intensity plus the printed v-number — never a second slider column. Accent is the amber ring (a categorical event, not a level; <span class="mono">kernel.js</span> keeps them distinct and so does the eye).</p></div>
-    <div class="note"><b class="n">5</b><p><em>The playhead lives in its own <span class="mono">[data-live]</span> layer</em> above the cells. The clock may move that 2px line and the caption beside the play button — nothing else. Edits mutate pills in place; the lane is never rebuilt under a finger (MOTIF.md’s 114px jump becomes structurally impossible).</p></div>
-    <div class="note"><b class="n">6</b><p><em>The tri-state button keeps yesterday’s law:</em> the word on it is the NEXT tap (▶ play → ↻ loop → ■ stop); the cue-blue sentence beside it is the only thing the sound’s own callback may write.</p></div>
+    <div class="ann"><b class="n">1</b><p><em>Columns are the Alphabet.</em> Seven degree columns (and the leading tone below) come from <span class="data">g.scale/mode</span>, low on the left like a keyboard; a chromatic passing tone is not a hidden column, it is a different Alphabet. Snapping is the editor, not a validator.</p></div>
+    <div class="ann"><b class="n">2</b><p><em>Overlay, not a second copy.</em> The composed version is dashed meter-green ghosts over the same lane — engine truth, byte-equal to what the score plays. The eye compares positions, not two staves. Captions carry the tense: “as played in chorus — you are writing psalm.”</p></div>
+    <div class="ann"><b class="n">3</b><p><em>Chord windows are painted, not narrated.</em> <span class="data">chordsOf()</span> already returns start/len/deg/quality per window; each window is a horizontal band of rows, tinting its chord-tone columns green and the leading-tone column flag-yellow under V. The header’s role marks change as the band changes.</p></div>
+    <div class="ann"><b class="n">4</b><p><em>Velocity is ink depth on the pill</em> — deeper cobalt plus the printed v-number — never a second slider column. Accent is the yellow flag ring (a categorical event, not a level; <span class="data">kernel.js</span> keeps them distinct and so does the eye). Duration is the pill’s height: a long note is a tall pill.</p></div>
+    <div class="ann"><b class="n">5</b><p><em>The playhead lives in its own <span class="data">[data-live]</span> layer</em> above the cells — a 4px clock-red line descending. The clock may move that line and the caption beside the play button — nothing else. Edits mutate pills in place; the lane is never rebuilt under a finger (MOTIF.md’s 114px jump becomes structurally impossible).</p></div>
+    <div class="ann"><b class="n">6</b><p><em>The tri-state button keeps yesterday’s law:</em> the word on it is the NEXT tap (▶ play → ↻ loop → ■ stop); the <span class="data">[data-live]</span> sentence beside it is the only text the sound’s own callback may write.</p></div>
   </div>
 </section>
 
 <!-- ================= THE KIT ================= -->
-<section class="panel" style="--sec:2">
-  <h2>Proposed · the kit</h2>
-  <p class="why">one grid — velocity is the fill-depth of each hit, the groove is drawn on the ruler, the fill is a bar you can see<sup class="n">7</sup></p>
+<section id="kit">
+  <h2>proposed · the kit</h2>
+  <p class="note">Drums are <b>columns</b> — kick, snare, hat, open, perc across — and
+  steps fall <b>down</b>. Velocity is the width of each hit, the groove is rows that
+  physically sit late, and the fill is the bottom of the phrase, hatched where it
+  lands<sup class="n">7</sup>.</p>
 
   <div class="phrase" id="phraseStrip">
-    <button class="is-on" data-bar="1">bar 1</button>
-    <button data-bar="2">bar 2 <span style="color:var(--ink-3)">= 1</span></button>
-    <button data-bar="3">bar 3 <span style="color:var(--ink-3)">= 1</span></button>
-    <button class="fill" data-bar="4">bar 4 · FILL</button>
+    <button class="btn" type="button" aria-pressed="true" data-bar="1">bar 1</button>
+    <button class="btn" type="button" aria-pressed="false" data-bar="2">bar 2 <span class="eq">= 1</span></button>
+    <button class="btn" type="button" aria-pressed="false" data-bar="3">bar 3 <span class="eq">= 1</span></button>
+    <button class="btn fill" type="button" aria-pressed="false" data-bar="4">bar 4 · FILL</button>
   </div>
 
-  <div class="fader" style="max-width:520px">
-    <span class="sub" style="min-width:52px">swing</span>
-    <input type="range" id="swing" min="50" max="75" value="56" step="1" aria-label="swing">
-    <span class="notch" style="left:calc(52px + 12px + (54 - 50) / 25 * (100% - 52px - 12px - 9ch - 24px))" title="the record's own value"></span>
-    <span class="val" id="swingVal">56% · +39 ms</span>
-  </div>
-  <p class="why" style="margin-top:2px">the amber notch is the record’s value; the readout converts to milliseconds at the record’s bpm — offset shown, never written back<sup class="n">8</sup></p>
-
-  <div class="scroller" style="margin-top:12px"><div style="min-width:840px">
-    <div class="ruler" id="ruler"></div>
-    <div id="kitWrap"></div>
-  </div></div>
-
-  <div class="kitfoot">
-    <div class="legend">
-      <span><i style="background:var(--go)"></i>hit — taller is louder</span>
-      <span><i style="background:var(--go); box-shadow:inset 0 3px 0 var(--led)"></i>accent (9)</span>
-      <span><i style="background:var(--ink-3); height:5px"></i>ghost (2)</span>
-      <span><i style="background:var(--led)"></i>fill stroke</span>
-      <span><i style="background:var(--led); width:2px; border-radius:0"></i>swung tick — displaced, straight origin greyed</span>
+  <div class="kitRow">
+    <div class="kitWrapOuter">
+      <div class="kit" id="kitGrid"></div>
+      <div id="stubLayer"></div>
+    </div>
+    <div class="kitSide">
+      <div class="vslider" style="--v:.24" id="swingSlider">
+        <span class="vs-lab">swing</span>
+        <div class="vs-body" style="--vsh:180px">
+          <div class="vs-track">
+            <i class="vs-fill"></i>
+            <span class="vs-notch" style="--nv:.16" title="the record's own value"></span>
+            <b class="vs-thumb"></b>
+            <input class="vs-input" type="range" min="50" max="75" step="1" value="56"
+              orient="vertical" aria-label="swing" id="swing">
+          </div>
+        </div>
+        <output class="vs-val" id="swingVal">56% · +39 ms</output>
+      </div>
+      <p class="why" style="max-width:24ch">The yellow notch is the record’s own value; the
+      readout converts to milliseconds at the record’s 92 bpm — offset shown, never written
+      back<sup class="n">8</sup>. Slide it and watch the “&amp;” rows lean down.</p>
+      <div class="legend">
+        <span><i style="background:var(--hand)"></i>hit — wider is louder</span>
+        <span><i style="background:var(--hand);box-shadow:inset 4px 0 0 var(--flag)"></i>accent (9)</span>
+        <span><i style="background:var(--faint)"></i>ghost (2)</span>
+        <span><i style="background:var(--flag)"></i>fill stroke</span>
+        <span><i style="background:repeating-linear-gradient(-45deg,var(--well) 0 3px,var(--flag-tint) 3px 6px)"></i>the fill’s ground</span>
+        <span><i style="background:var(--ground);border-style:dashed;border-color:var(--faint)"></i>straight time, when a row sits late</span>
+      </div>
     </div>
   </div>
 
-  <div class="devrow" style="margin-top:16px">
-    <span class="sub" style="margin-right:4px">the hands</span>
-    <button class="chip is-on mono">backbeat</button>
-    <button class="chip mono">ghost notes</button>
-    <button class="chip mono">hands shuffled</button>
-    <button class="chip mono">accent the downbeats</button>
+  <div class="devrow">
+    <span class="lab">the hands</span>
+    <button class="chip" type="button" aria-pressed="true">backbeat</button>
+    <button class="chip" type="button" aria-pressed="false">ghost notes</button>
+    <button class="chip" type="button" aria-pressed="false">hands shuffled</button>
+    <button class="chip" type="button" aria-pressed="false">accent the downbeats</button>
   </div>
-  <p class="why" style="margin-top:4px">the KITOPS words — each one a deterministic table op over the grid; tapping one shows its result as the same cue-blue ghost layer the lane uses</p>
+  <p class="why" style="margin-top:var(--s2)">the KITOPS words — each one a deterministic
+  table op over the grid; tapping one shows its result as the same green ghost layer the
+  lane uses</p>
 
   <div class="notes">
-    <div class="note"><b class="n">7</b><p><em>Depth, not a second grid.</em> Tap cycles rest → ghost → hit → accent; press-and-drag vertically writes any level 0–9. The grid reads exactly like the engine does — “a ghost is a 2 and an accent is a 9” (<span class="mono">drums-kit.js</span>).</p></div>
-    <div class="note"><b class="n">8</b><p><em>Swing is displacement, displayed.</em> The amber ticks (and the columns under them) physically sit late; the grey stub marks straight time. Slide the fader and watch the “&amp;” columns lean. The bar’s cells move by <span class="mono">transform</span> only — the DOM is never rebuilt.</p></div>
-    <div class="note"><b class="n">9</b><p><em>The fill is a place, not a mode.</em> The phrase strip shows all four bars; bar 4 is hatched because a fill is a SHAPE over the phrase (“fourth measure fill” lands there and nowhere else). Open it and the fill strokes render amber; bars 2–3 say “= 1” instead of repeating themselves.</p></div>
-    <div class="note"><b class="n">10</b><p><em>Same bench, two kinds.</em> Lane and kit share the toolbar, the tri-state play, the ghost-overlay idiom, the 48px step and the sticky label column — a drum pattern is not a second app.</p></div>
+    <div class="ann"><b class="n">7</b><p><em>Depth, not a second grid.</em> Tap cycles rest → ghost → hit → accent; press-and-drag sideways writes any level 0–9 as width. The grid reads exactly like the engine does — “a ghost is a 2 and an accent is a 9” (<span class="data">drums-kit.js</span>).</p></div>
+    <div class="ann"><b class="n">8</b><p><em>Swing is displacement, displayed.</em> The “&amp;” rows (label, cells, hits — the whole row) physically sit late; the grey dashed stub marks straight time where they left it. The rows move by <span class="data">transform</span> only — the DOM is never rebuilt.</p></div>
+    <div class="ann"><b class="n">9</b><p><em>The fill is a place, not a mode.</em> The phrase strip shows all four bars; bar 4 is hatched because a fill is a SHAPE over the phrase — the bottom quarter — and “fourth measure fill” lands there and nowhere else. Open bar 4 and the fill’s ground is hatched from its entry down, its strokes flag-yellow; bars 2–3 say “= 1” instead of repeating themselves.</p></div>
+    <div class="ann"><b class="n">10</b><p><em>Same bench, two kinds.</em> Lane and kit share the toolbar, the tri-state play, the ghost-overlay idiom, the 44–48px step rows and the header row of names — a drum pattern is not a second app.</p></div>
   </div>
 </section>
 
 <!-- ================= GESTURES ================= -->
-<section class="panel" style="--sec:3">
-  <h2>One gesture grammar</h2>
-  <p class="why">thumb at 390px and mouse at 1280px perform the same sentence; nothing needs a hover to exist</p>
-  <div class="scroller" style="margin-top:16px; background:var(--bg-1)"><table class="gest">
-    <tr><th>gesture</th><th>pitch lane</th><th>kit</th></tr>
-    <tr><td>tap empty</td><td>place a note at that step + degree (snapped — the row IS the pitch)</td><td>cycle rest → ghost → hit → accent</td></tr>
-    <tr><td>tap note</td><td>select — the wisdom rail speaks; second tap deletes</td><td>—</td></tr>
-    <tr><td>drag →</td><td>stretch duration (tie/dot becomes length; no tie radio)</td><td>paint hits across steps at the current depth</td></tr>
-    <tr><td>drag ↑↓</td><td>on a pill: move degree, snapping row to row</td><td>on a hit: write velocity 0–9 as depth</td></tr>
-    <tr><td>long-press</td><td>the note sheet: accent · slide · ornament (grace/flam/roll) — a bottom sheet, 44px rows</td><td>the lane sheet: choose drum, per-lane vel contour</td></tr>
-    <tr><td>two-finger / wheel</td><td colspan="2">scroll the bar inside its own container — the page never moves <em>(the 114px jump, retired)</em></td></tr>
-  </table></div>
+<section id="gestures">
+  <h2>one gesture grammar</h2>
+  <p class="note">Thumb at 390px and mouse at 1280px perform the same sentence; nothing
+  needs a hover to exist. The grammar rotated with the geometry: duration is a downward
+  drag now, pitch and loudness are sideways.</p>
+  <div class="gests">
+    <div class="gest"><h3><b>tap</b> empty</h3>
+      <p><span class="who">lane</span><br>place a note at that step + degree (snapped — the column IS the pitch)</p>
+      <p><span class="who">kit</span><br>cycle rest → ghost → hit → accent</p></div>
+    <div class="gest"><h3><b>tap</b> note</h3>
+      <p><span class="who">lane</span><br>select — the wisdom rail speaks; second tap deletes</p>
+      <p><span class="who">kit</span><br>—</p></div>
+    <div class="gest"><h3><b>drag ↓</b></h3>
+      <p><span class="who">lane</span><br>stretch duration — the pill grows taller (tie/dot becomes length; no tie radio)</p>
+      <p><span class="who">kit</span><br>paint hits down the column at the current depth</p></div>
+    <div class="gest"><h3><b>drag ⇄</b></h3>
+      <p><span class="who">lane</span><br>on a pill: move degree, snapping column to column</p>
+      <p><span class="who">kit</span><br>on a hit: write velocity 0–9 as width</p></div>
+    <div class="gest"><h3><b>long-press</b></h3>
+      <p><span class="who">lane</span><br>the note sheet: accent · slide · ornament (grace/flam/roll) — a bottom sheet, 48px rows</p>
+      <p><span class="who">kit</span><br>the column sheet: choose drum, per-column vel contour</p></div>
+    <div class="gest"><h3><b>two-finger / wheel</b></h3>
+      <p><span class="who">both</span><br>the page scrolls — down, only ever down. Nothing on this surface scrolls sideways; only the engraved score keeps a horizontal law <b>(the 114px jump, retired)</b></p></div>
+  </div>
 </section>
 
 <!-- ================= LAWS ================= -->
-<section class="panel" style="--sec:4">
-  <h2>The laws it keeps</h2>
-  <div class="laws" style="margin-top:16px">
-    <div class="law"><b>Determinism</b>Every displayed fact is a table read: chord windows from <span class="mono">chordsOf</span>, roles from pc-set membership, overlays from the OPS words, ms from bpm. No model, no guess.</div>
-    <div class="law"><b>[data-live]</b>The clock owns the playhead line and one caption. It may not move a pill, a cell, a scroll position, or the button’s word.</div>
+<section id="laws">
+  <h2>the laws it keeps</h2>
+  <div class="laws">
+    <div class="law"><b>Determinism</b>Every displayed fact is a table read: chord bands from <span class="data">chordsOf</span>, roles from pc-set membership, overlays from the OPS words, ms from bpm. No model, no guess.</div>
+    <div class="law"><b>[data-live]</b>The clock owns the falling red line and one sentence. It may not move a pill, a cell, a scroll position, or the button’s word.</div>
     <div class="law"><b>Extraction, never by hand</b>The composed overlay is the score’s own operator applied to the cell — if the overlay and the record ever disagree, the gate fails, not the eye.</div>
-    <div class="law"><b>One owner per fact</b>Velocity lives in the pill/hit depth and nowhere else; duration lives in pill length; the tie and dot radios retire.</div>
-    <div class="law"><b>44px, zero exceptions</b>Steps are 48px wide; every pill, cell, chip and the range thumb meet <span class="mono">--tap</span>. Degree rows are 36px with full-height hit areas.</div>
-    <div class="law"><b>Plain HTML first</b>Divs and one hand-drawn SVG sparkline. No canvas framework; the grid is CSS grid; the gate can read every fact from the DOM.</div>
+    <div class="law"><b>Down is time</b>Steps fall; the needle falls; the fill is the bottom of the phrase. No surface here scrolls sideways — vertical space is cheap, width is not.</div>
+    <div class="law"><b>One owner per fact</b>Velocity lives in pill ink / hit width and nowhere else; duration lives in pill height; the tie and dot radios retire.</div>
+    <div class="law"><b>Chunk, zero hairlines</b>Step rows are 48px tall with full-width tap areas; every rule is 2px ink or more, 3px at beats and edges; chips, buttons and thumbs meet <span class="data">--ctl</span>. Plain HTML: divs, CSS grid, one hand-drawn SVG — the gate can read every fact from the DOM.</div>
   </div>
 </section>
 
 </main>
-<footer>Design artifact only — nothing here is wired to the engine. The Bench replaces the cell-row and step grid inside the Sheet-music axis of ui/eight.js; the staff engraving stays, above, as the composed view’s printed form.</footer>
+<footer style="max-width:920px;margin-left:auto;margin-right:auto;padding-left:16px;padding-right:16px">
+  Design artifact only — nothing here is wired to the engine. The Bench replaces the
+  cell-row and step grid inside the Sheet-music axis of ui/eight.js; the staff engraving
+  stays, above, as the composed view’s printed form — the one surface allowed to run
+  left to right.
+</footer>
 
 <script>
-(function(){
+(function () {
 "use strict";
-/* ============ shared geometry ============ */
-var STEP = 48, CELL = 36, LABW = 88, N = 16;
-var BEATS = ["1","","","","2","","","","3","","","","4","","",""];
-var SUB   = ["1","e","&","a","2","e","&","a","3","e","&","a","4","e","&","a"];
+var reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ============ shared geometry: steps are ROWS ============ */
+var ROWH = 48, KROWH = 44, HEAD = 44, N = 16;
+var SUB = ["1","e","&","a","2","e","&","a","3","e","&","a","4","e","&","a"];
 
 /* ============ the motif (psalm) ============ */
-// deg rows top->bottom: 6..-1 (8 rows). Mode: aeolian-flavoured demo.
-var ROWS = [6,5,4,3,2,1,0,-1];
+// degree COLUMNS left->right: -1..6 (low on the left, like a keyboard)
+var COLS = [-1, 0, 1, 2, 3, 4, 5, 6];
 var NOTES = [
-  { s:0,  len:2, deg:0, vel:5 },
-  { s:2,  len:2, deg:1, vel:5 },
-  { s:4,  len:6, deg:2, vel:6, acc:true },
-  { s:10, len:1, deg:2, vel:5, orn:"gr" },
-  { s:11, len:1, deg:1, vel:5, sld:true },
-  { s:12, len:4, deg:0, vel:5 }
+  { s: 0,  len: 2, deg: 0, vel: 5 },
+  { s: 2,  len: 2, deg: 1, vel: 5 },
+  { s: 4,  len: 6, deg: 2, vel: 6, acc: true },
+  { s: 10, len: 1, deg: 2, vel: 5, orn: "gr" },
+  { s: 11, len: 1, deg: 1, vel: 5, sld: true },
+  { s: 12, len: 4, deg: 0, vel: 5 }
 ];
 // chord windows: i for steps 0-7, V for 8-15  (from chordsOf: start/len/deg/q)
 var WINDOWS = [
-  { start:0, len:8, label:"i",  q:"triad", tones:[0,2,4], cls:"" },
-  { start:8, len:8, label:"V",  q:"triad", tones:[4,6,1], cls:"w1", lead:6 }
+  { start: 0, len: 8, label: "i", q: "triad", tones: [0, 2, 4] },
+  { start: 8, len: 8, label: "V", q: "triad", tones: [4, 6, 1], lead: 6 }
 ];
-function winAt(s){ return s < 8 ? WINDOWS[0] : WINDOWS[1]; }
-function roleOf(deg, w){
+function winAt(s) { return s < 8 ? WINDOWS[0] : WINDOWS[1]; }
+function roleOf(deg, w) {
   var d = ((deg % 7) + 7) % 7;
   if (w.lead === d) return "leading tone";
   if (w.tones.indexOf(d) >= 0) return "chord tone";
   return "color";
 }
-
-/* ============ build the lane ============ */
-var wrap = document.getElementById("laneWrap");
-wrap.className = "lane";
-wrap.style.width = (LABW + N*STEP) + "px";
-var frag = document.createDocumentFragment();
-
-// header row of subdivisions
-var head = document.createElement("div");
-head.style.cssText = "display:flex;height:22px;font:10px/22px var(--mono);color:var(--ink-3)";
-var hl = document.createElement("div");
-hl.style.cssText = "flex:none;width:"+LABW+"px;position:sticky;left:0;background:var(--bg-0);z-index:5";
-head.appendChild(hl);
-for (var i=0;i<N;i++){
-  var hc = document.createElement("div");
-  hc.style.cssText = "flex:none;width:"+STEP+"px;text-align:left;padding-left:4px;"+
-    (BEATS[i] ? "color:var(--ink-2);font-weight:600;" : "");
-  hc.textContent = SUB[i];
-  head.appendChild(hc);
+function degName(deg) {
+  return deg === -1 ? "7̂₋" : ((deg % 7) + 1) + "̂";
 }
-frag.appendChild(head);
 
-// degree rows
-ROWS.forEach(function(deg){
-  var row = document.createElement("div");
-  row.style.cssText = "display:flex";
-  var lab = document.createElement("div");
-  lab.className = "rowlab";
-  lab.style.width = LABW+"px"; lab.style.flex = "none";
-  // role under the SECOND window shown on the label's dot; both painted per-cell
-  var roleV = roleOf(deg, WINDOWS[1]);
-  var roleI = roleOf(deg, WINDOWS[0]);
-  lab.innerHTML = '<span class="role">'+
-     (roleI==="chord tone" ? "●" : "○") + (roleV==="chord tone" ? "●" : roleV==="leading tone" ? "▲" : "○") +
-     '</span><b>'+ (deg===0 ? "1̂" : deg===7||deg===-7 ? "1̂" : (deg>=0? (deg+1)+"̂" : "7̂₋")) + "</b>";
-  if (roleI==="chord tone"||roleV==="chord tone") lab.className += " is-chord";
-  if (roleV==="leading tone") lab.className += " is-lead";
-  lab.title = "i: "+roleI+" · V: "+roleV;
-  row.appendChild(lab);
-  var cells = document.createElement("div");
-  cells.className = "cellrow";
-  for (var s=0;s<N;s++){
-    var c = document.createElement("div");
-    var w = winAt(s), role = roleOf(deg, w);
-    c.className = "c" + (s%4===3 ? " beat":"") + (w.cls ? " "+w.cls : "") +
-      (role==="chord tone" ? " tone" : role==="leading tone" ? " lead" : "");
-    c.style.width = STEP+"px";
-    cells.appendChild(c);
+/* ============ build the lane: degrees across, steps down ============ */
+var lane = document.getElementById("laneGrid");
+var lf = document.createDocumentFragment();
+// header row: corner, 8 degree headers with role marks, chord-rail corner
+var corner = document.createElement("div");
+corner.className = "corner";
+lf.appendChild(corner);
+COLS.forEach(function (deg) {
+  var h = document.createElement("div");
+  var rI = roleOf(deg, WINDOWS[0]), rV = roleOf(deg, WINDOWS[1]);
+  h.className = "dh" + (rI === "chord tone" || rV === "chord tone" ? " is-chord" : "") +
+    (rV === "leading tone" ? " is-lead" : "");
+  h.innerHTML = "<b>" + degName(deg) + "</b><span class='role'>" +
+    (rI === "chord tone" ? "●" : "○") +
+    (rV === "chord tone" ? "●" : rV === "leading tone" ? "▲" : "○") + "</span>";
+  h.title = "i: " + rI + " · V: " + rV;
+  lf.appendChild(h);
+});
+var cornerR = document.createElement("div");
+cornerR.className = "corner r";
+lf.appendChild(cornerR);
+// 16 step rows: label + 8 cells (chord rail placed after, spanning rows)
+for (var s = 0; s < N; s++) {
+  var sn = document.createElement("div");
+  sn.className = "sn" + (s % 4 === 0 ? " beat" : "") + (s % 4 === 3 ? " b4" : "");
+  sn.textContent = SUB[s];
+  lf.appendChild(sn);
+  for (var c = 0; c < COLS.length; c++) {
+    var cell = document.createElement("div");
+    var w = winAt(s), role = roleOf(COLS[c], w);
+    cell.className = "lc" + (s % 4 === 3 ? " b4" : "") +
+      (role === "chord tone" ? " tone" : role === "leading tone" ? " lead" : "");
+    lf.appendChild(cell);
   }
-  row.appendChild(cells);
-  frag.appendChild(row);
+}
+// the chord rail: one band per window, spanning its rows
+WINDOWS.forEach(function (w, i) {
+  var r = document.createElement("div");
+  r.className = "crail" + (i === 1 ? " v5" : "");
+  r.style.gridRow = (2 + w.start) + " / " + (2 + w.start + w.len);
+  r.innerHTML = "<b>" + w.label + "</b><small>" + w.q + " · steps " +
+    (w.start + 1) + "–" + (w.start + w.len) + "</small>";
+  lf.appendChild(r);
 });
+lane.appendChild(lf);
 
-// harmony strip
-var harm = document.createElement("div");
-harm.className = "harmrow";
-var hpad = document.createElement("div");
-hpad.style.cssText = "flex:none;width:"+LABW+"px;position:sticky;left:0;background:var(--bg-0);z-index:5;border-top:1px solid var(--rule-2)";
-hpad.innerHTML = '<div class="sub" style="padding:10px 8px 0;text-align:right;font-size:10px">chords</div>';
-harm.appendChild(hpad);
-WINDOWS.forEach(function(w){
-  var d = document.createElement("div");
-  d.className = "harm"; d.style.width = (w.len*STEP)+"px";
-  d.innerHTML = "<b>"+w.label+"</b><span class='q'>"+w.q+" · "+w.len+" steps</span>";
-  harm.appendChild(d);
-});
-frag.appendChild(harm);
-wrap.appendChild(frag);
-
-// note layer (absolute, over the rows; header offset = 22px)
-var layer = document.createElement("div");
-layer.style.cssText = "position:absolute;left:"+LABW+"px;top:22px;width:"+(N*STEP)+"px;height:"+(ROWS.length*CELL)+"px;pointer-events:none";
-wrap.appendChild(layer);
-function rowIx(deg){ return ROWS.indexOf(deg); }
+/* ============ pills: vertical — height is duration, ink is velocity ============ */
+var layer = document.getElementById("pillLayer");
 var wisdom = document.getElementById("wisdom");
 var selPill = null;
-NOTES.forEach(function(n, ix){
-  var p = document.createElement("div");
-  p.className = "pill" + (n.acc ? " acc":"");
-  p.style.left = (n.s*STEP+2)+"px";
-  p.style.top  = (rowIx(n.deg)*CELL+5)+"px";
-  p.style.width = (n.len*STEP-6)+"px";
-  p.style.opacity = (0.5 + n.vel/9*0.5).toFixed(2);
-  p.style.pointerEvents = "auto";
-  p.innerHTML = (n.sld ? "<span class='orn'>↗</span>" : "") +
-    "<b>"+n.deg+"</b>" + (n.orn ? "<span class='orn'>✽"+n.orn+"</span>" : "") +
-    (n.len>1 ? "<span class='v'>v"+n.vel+"</span>" : "");
-  p.addEventListener("click", function(){
+function colIx(deg) { return COLS.indexOf(deg); }
+NOTES.forEach(function (n) {
+  var p = document.createElement("button");
+  p.type = "button";
+  p.className = "pill" + (n.acc ? " acc" : "");
+  p.style.left = (colIx(n.deg) * 12.5) + "%";
+  p.style.top = (n.s * ROWH + 4) + "px";
+  p.style.height = (n.len * ROWH - 10) + "px";
+  var mix = Math.round(35 + n.vel / 9 * 65);
+  p.style.background = "color-mix(in srgb, var(--hand) " + mix + "%, var(--hand-tint))";
+  p.style.color = n.vel >= 4 ? "#FFFFFF" : "var(--ink)";
+  p.innerHTML = "<b>" + n.deg + "</b>" +
+    (n.len > 1 ? "<span class='v'>v" + n.vel + "</span>" : "") +
+    (n.sld ? "<span class='orn'>↗</span>" : "") +
+    (n.orn ? "<span class='orn'>✽" + n.orn + "</span>" : "");
+  p.setAttribute("aria-label", "degree " + n.deg + ", step " + (n.s + 1) +
+    ", length " + n.len + ", velocity " + n.vel + (n.acc ? ", accent" : ""));
+  p.addEventListener("click", function () {
     if (selPill) selPill.classList.remove("sel");
     selPill = p; p.classList.add("sel");
     var w = winAt(n.s), role = roleOf(n.deg, w);
-    var beat = Math.floor(n.s/4)+1, sub = SUB[n.s];
-    wisdom.innerHTML = "<span>step <b class='mono'>"+(n.s+1)+"</b> (beat "+beat+
-      (sub!=="1"&&sub!=="2"&&sub!=="3"&&sub!=="4" ? " · “"+sub+"”" : "")+
-      ") · degree <b class='mono'>"+n.deg+"</b> under <b class='mono'>"+w.label+"</b> — <b>"+role+"</b>"+
-      (role==="chord tone" ? " ("+(w.tones.indexOf(((n.deg%7)+7)%7)===0?"root":"member")+" of "+w.label+")" : "")+
-      " · vel "+n.vel + (n.acc ? " · <span style='color:var(--led)'>accent</span>" : "")+
-      " · chorus’ <span class='mono'>reverse</span> lands it at step <b class='mono'>"+(N-(n.s+n.len)+1)+"</b></span>";
+    var beat = Math.floor(n.s / 4) + 1, sub = SUB[n.s];
+    wisdom.innerHTML = "<span>step <b class='data'>" + (n.s + 1) + "</b> (beat " + beat +
+      (["1","2","3","4"].indexOf(sub) < 0 ? " · “" + sub + "”" : "") +
+      ") · degree <b class='data'>" + n.deg + "</b> under <b class='data'>" + w.label +
+      "</b> — <b>" + role + "</b>" +
+      (role === "chord tone" ? " (" + (w.tones.indexOf(((n.deg % 7) + 7) % 7) === 0 ? "root" : "member") + " of " + w.label + ")" : "") +
+      " · vel " + n.vel + (n.acc ? " · <span class='accw'>accent</span>" : "") +
+      " · chorus’ <span class='data'>reverse</span> drops it to step <b class='data'>" +
+      (N - (n.s + n.len) + 1) + "</b></span>";
   });
   layer.appendChild(p);
 });
 
-// playhead (static demo position)
+/* the playhead: a horizontal clock line, descending (static demo at row 7) */
 var ph = document.createElement("div");
-ph.className = "playhead";
-ph.style.left = (6*STEP)+"px";
+ph.className = "playline";
+ph.style.top = (6 * ROWH - 2) + "px";
 layer.appendChild(ph);
 
-/* ============ development ghost overlay ============ */
-function xform(kind){
-  if (kind==="written") return null;
-  return NOTES.map(function(n){
-    if (kind==="reverse") return { s: N-(n.s+n.len), len:n.len, deg:n.deg };
-    if (kind==="rotate")  return { s: (n.s+4)%N,     len:n.len, deg:n.deg };
+/* ============ development ghost overlay (extracted, meter-green) ============ */
+function xform(kind) {
+  if (kind === "written") return null;
+  return NOTES.map(function (n) {
+    if (kind === "reverse") return { s: N - (n.s + n.len), len: n.len, deg: n.deg };
+    if (kind === "rotate")  return { s: (n.s + 4) % N,     len: n.len, deg: n.deg };
     return n;
   });
 }
 var ghosts = [];
-function paintGhost(kind){
-  ghosts.forEach(function(g){ g.remove(); }); ghosts = [];
-  var g = xform(kind);
-  if (!g) return;
-  g.forEach(function(n){
-    var d = document.createElement("div");
-    d.className = "ghost";
-    d.style.left = (n.s*STEP+2)+"px";
-    d.style.top  = (rowIx(n.deg)*CELL+5)+"px";
-    d.style.width = (Math.min(n.len, N-n.s)*STEP-6)+"px";
-    layer.appendChild(d); ghosts.push(d);
-    // wrap: a cyclic phrase may cross the bar line
-    var over = n.s+n.len-N;
-    if (over>0){
-      var d2 = document.createElement("div");
-      d2.className = "ghost";
-      d2.style.left = "2px";
-      d2.style.top = (rowIx(n.deg)*CELL+5)+"px";
-      d2.style.width = (over*STEP-6)+"px";
-      layer.appendChild(d2); ghosts.push(d2);
-    }
+function paintGhost(kind) {
+  ghosts.forEach(function (g) { g.remove(); }); ghosts = [];
+  var list = xform(kind);
+  if (!list) return;
+  list.forEach(function (n) {
+    var mk = function (s0, len) {
+      var d = document.createElement("div");
+      d.className = "ghost";
+      d.style.left = (colIx(n.deg) * 12.5) + "%";
+      d.style.top = (s0 * ROWH + 4) + "px";
+      d.style.height = (len * ROWH - 10) + "px";
+      layer.appendChild(d); ghosts.push(d);
+    };
+    mk(n.s, Math.min(n.len, N - n.s));
+    var over = n.s + n.len - N;             // a cyclic phrase may wrap past the bar
+    if (over > 0) mk(0, over);
   });
 }
 var devChips = document.querySelectorAll("[data-dev]");
 var devWhy = document.getElementById("devWhy");
 var WHY = {
-  written: "the overlay is EXTRACTED — the same <span class='mono'>reverse()</span> the score will run, applied to this cell, drawn in cue-blue over the written notes",
-  reverse: "chorus applies <span class='mono'>reverse()</span> — edge-values travel with their notes; the ghost is that result, byte-equal to what the score plays",
-  rotate:  "bridge applies <span class='mono'>rotate(4)</span> — the cell enters a beat late; the necklace wraps, so the tail re-enters at the bar’s head"
+  written: "the overlay is EXTRACTED — the same <span class='data'>reverse()</span> the score will run, applied to this cell, drawn as a green dashed ghost over the written notes",
+  reverse: "chorus applies <span class='data'>reverse()</span> — edge-values travel with their notes; the ghost is that result, byte-equal to what the score plays",
+  rotate: "bridge applies <span class='data'>rotate(4)</span> — the cell enters a beat late; the necklace wraps, so the tail re-enters at the bar’s head"
 };
-devChips.forEach(function(ch){
-  ch.addEventListener("click", function(){
-    if (ch.disabled) return;
-    devChips.forEach(function(c){ c.classList.remove("is-on"); });
-    ch.classList.add("is-on");
+devChips.forEach(function (ch) {
+  ch.addEventListener("click", function () {
+    devChips.forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+    ch.setAttribute("aria-pressed", "true");
     paintGhost(ch.dataset.dev);
     devWhy.innerHTML = WHY[ch.dataset.dev] + " <sup class='n'>2</sup>";
   });
 });
 
-/* ============ contour sparkline ============ */
-(function(){
+/* ============ the contour, standing up: pitch across, time down ============ */
+(function () {
   var svg = document.getElementById("contourSvg");
-  var pts = NOTES.map(function(n){
-    var x = 4 + (n.s + n.len/2) / N * 152;
-    var y = 20 - (n.deg + 1) / 4 * 16;
-    return x.toFixed(1)+","+y.toFixed(1);
+  var pts = NOTES.map(function (n) {
+    var x = 8 + (n.deg + 1) / 4 * 40;
+    var y = 6 + (n.s + n.len / 2) / N * 138;
+    return x.toFixed(1) + "," + y.toFixed(1);
   });
-  svg.innerHTML = "<polyline points='"+pts.join(" ")+"' fill='none' stroke='#9AA3AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/>";
+  svg.innerHTML = "<polyline points='" + pts.join(" ") +
+    "' fill='none' stroke='#191611' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/>";
 })();
 
-/* ============ tri-state play (word = next tap) ============ */
-(function(){
+/* ============ tri-state play: word = NEXT tap ============ */
+var WORD = { off: ["▶", "play"], once: ["↻", "loop"], loop: ["■", "stop"] };
+var NEXT = { off: "once", once: "loop", loop: "off" };
+var SAY = {
+  off: "<span class='livedot'></span>silent",
+  once: "<span class='livedot beat'></span><span class='now'>playing once…</span>",
+  loop: "<span class='livedot beat'></span><span class='now'>looping</span> · bar 1"
+};
+(function () {
   var b = document.getElementById("triPlay"), live = document.getElementById("triLive");
-  var WORD = { off:"▶ play", once:"↻ loop", loop:"■ stop" };
-  var NEXT = { off:"once", once:"loop", loop:"off" };
-  var SAY  = { off:"&nbsp;silent&nbsp;", once:"playing once…", loop:"looping · bar 1" };
-  var at = "off";
-  b.addEventListener("click", function(){
-    at = NEXT[at];
-    b.textContent = WORD[at];         // the button says what pressing it will DO
-    live.innerHTML = SAY[at];         // the [data-live] sibling says what IS
+  b.addEventListener("click", function () {
+    var at = NEXT[b.dataset.at];
+    b.dataset.at = at;
+    b.innerHTML = "<span class='g'>" + WORD[at][0] + "</span>" + WORD[at][1]; // the NEXT verb
+    live.innerHTML = SAY[at];                    // the [data-live] sibling says what IS
   });
 })();
 
-/* ============ the kit ============ */
-var LANES = [
-  { id:"h", name:"hats",  hits:{0:7,2:4,4:7,6:4,8:7,10:4,12:7,14:4} },
-  { id:"o", name:"open",  hits:{14:5} },
-  { id:"s", name:"snare", hits:{4:9,7:2,10:2,12:9} },
-  { id:"k", name:"kick",  hits:{0:8,6:4,8:7,10:5} },
-  { id:"p", name:"perc",  hits:{2:3,10:3} }
-];
-var FILL = [
-  { id:"h", name:"hats",  hits:{0:7,2:4,4:7,6:4} },
-  { id:"o", name:"open",  hits:{15:7} },
-  { id:"s", name:"snare", hits:{4:9,8:4,10:5,11:5,12:6,13:7,14:8,15:9}, fillFrom:8 },
-  { id:"k", name:"kick",  hits:{0:8,8:6}, fillFrom:8 },
-  { id:"p", name:"perc",  hits:{} }
-];
-var kitWrap = document.getElementById("kitWrap");
-var kitCols = [];   // per-step column wrappers for swing transform
-function buildKit(data, isFill){
-  kitWrap.innerHTML = ""; kitCols = [];
-  // column-major: one flex row of 16 columns, each column has the label spacer + 5 cells
-  var row = document.createElement("div");
-  row.style.cssText = "display:flex";
-  var labcol = document.createElement("div");
-  labcol.style.cssText = "flex:none;width:"+LABW+"px;position:sticky;left:0;background:var(--bg-0);z-index:5";
-  data.forEach(function(l){
-    var kl = document.createElement("div");
-    kl.className = "klab"; kl.textContent = l.name;
-    labcol.appendChild(kl);
+/* ============ motif tabs ============ */
+(function () {
+  var tabs = document.getElementById("motifTabs");
+  tabs.addEventListener("click", function (e) {
+    var t = e.target.closest(".tab"); if (!t || t.classList.contains("add")) return;
+    tabs.querySelectorAll(".tab").forEach(function (x) { x.setAttribute("aria-selected", "false"); });
+    t.setAttribute("aria-selected", "true");
   });
-  row.appendChild(labcol);
-  for (var s=0;s<N;s++){
-    var col = document.createElement("div");
-    col.style.cssText = "flex:none;width:"+STEP+"px";
-    col.dataset.step = s;
-    data.forEach(function(l){
-      var c = document.createElement("div");
-      c.className = "kc" + (s%4===3 ? " beat":"") +
-        (isFill && l.fillFrom!==undefined && s>=l.fillFrom && l.hits[s] ? " fillcell":"");
-      c.style.cssText += ";width:"+STEP+"px;height:"+CELL+"px";
-      var v = l.hits[s] || 0;
-      c.dataset.v = v;
-      paintHit(c, v);
-      c.addEventListener("click", function(){
-        // tap cycles rest -> ghost -> hit -> accent -> rest  (drag ↑↓ writes 0-9 in product)
+})();
+
+/* ============ the kit: drums across, steps down ============ */
+var DRUMS = [
+  { id: "k", name: "kick",  hits: { 0: 8, 6: 4, 8: 7, 10: 5 } },
+  { id: "s", name: "snare", hits: { 4: 9, 7: 2, 10: 2, 12: 9 } },
+  { id: "h", name: "hat",   hits: { 0: 7, 2: 4, 4: 7, 6: 4, 8: 7, 10: 4, 12: 7, 14: 4 } },
+  { id: "o", name: "open",  hits: { 14: 5 } },
+  { id: "p", name: "perc",  hits: { 2: 3, 10: 3 } }
+];
+var FILLBAR = [
+  { id: "k", name: "kick",  hits: { 0: 8, 8: 6 }, fillFrom: 8 },
+  { id: "s", name: "snare", hits: { 4: 9, 8: 4, 10: 5, 11: 5, 12: 6, 13: 7, 14: 8, 15: 9 }, fillFrom: 8 },
+  { id: "h", name: "hat",   hits: { 0: 7, 2: 4, 4: 7, 6: 4 } },
+  { id: "o", name: "open",  hits: { 15: 7 } },
+  { id: "p", name: "perc",  hits: {} }
+];
+var kitGrid = document.getElementById("kitGrid");
+var stubLayer = document.getElementById("stubLayer");
+var kitRows = [];   // per-step [label, cell, cell...] for the swing transform
+function paintHit(cell, v, isStroke) {
+  cell.innerHTML = "";
+  cell.dataset.v = v;
+  cell.setAttribute("aria-label", cell.dataset.drum + " step " + (+cell.dataset.step + 1) +
+    (v ? ", velocity " + v : ", rest"));
+  if (!v) return;
+  var h = document.createElement("i");
+  h.className = "hit" + (v <= 2 ? " ghosty" : v >= 8 ? " accent" : "") + (isStroke ? " stroke" : "");
+  h.style.width = "calc(8px + (100% - 12px) * " + (v / 9).toFixed(3) + ")";
+  h.title = "vel " + v + (v <= 2 ? " · ghost" : v >= 8 ? " · accent" : "");
+  cell.appendChild(h);
+}
+function buildKit(data, isFill) {
+  kitGrid.innerHTML = ""; kitRows = [];
+  var f = document.createDocumentFragment();
+  var c0 = document.createElement("div");
+  c0.className = "corner";
+  f.appendChild(c0);
+  data.forEach(function (d) {
+    var h = document.createElement("div");
+    h.className = "kh"; h.textContent = d.name;
+    f.appendChild(h);
+  });
+  for (var s = 0; s < N; s++) {
+    var row = [];
+    var swung = (s % 4 === 2);
+    var kn = document.createElement("div");
+    kn.className = "kn" + (s % 4 === 0 ? " beat" : "") + (s % 4 === 3 ? " b4" : "") +
+      (swung ? " swung swingable" : "");
+    kn.textContent = SUB[s];
+    f.appendChild(kn); row.push(kn);
+    data.forEach(function (d) {
+      var cell = document.createElement("button");
+      cell.type = "button";
+      var inFill = isFill && s >= 8;
+      cell.className = "kc" + (s % 4 === 3 ? " b4" : "") + (inFill ? " hatch" : "") +
+        (swung ? " swingable" : "");
+      cell.dataset.step = s; cell.dataset.drum = d.name;
+      var v = d.hits[s] || 0;
+      paintHit(cell, v, isFill && d.fillFrom !== undefined && s >= d.fillFrom && v > 0);
+      cell.addEventListener("click", function () {
+        // tap cycles rest -> ghost -> hit -> accent -> rest (drag ⇄ writes 0-9 in product)
         var cur = +this.dataset.v;
-        var nx = cur===0 ? 2 : cur===2 ? 5 : cur===5 ? 9 : 0;
-        this.dataset.v = nx; paintHit(this, nx);
+        var nx = cur === 0 ? 2 : cur === 2 ? 5 : cur === 5 ? 9 : 0;
+        paintHit(this, nx, false);
       });
-      col.appendChild(c);
+      f.appendChild(cell); row.push(cell);
     });
-    row.appendChild(col);
-    kitCols.push(col);
+    kitRows.push(row);
   }
-  kitWrap.appendChild(row);
+  kitGrid.appendChild(f);
   applySwing();
 }
-function paintHit(c, v){
-  c.innerHTML = "";
-  if (!v) return;
-  var h = document.createElement("div");
-  h.className = "hit" + (v<=2 ? " ghosty" : v>=8 ? " accent" : "");
-  h.style.height = Math.max(4, v/9*(CELL-8)) + "px";
-  h.title = "vel "+v+(v<=2?" · ghost":v>=8?" · accent":"");
-  c.appendChild(h);
-}
 
-/* ---- groove ruler + swing ---- */
-var ruler = document.getElementById("ruler");
-ruler.style.width = (LABW + N*STEP)+"px";
-var swungTicks = [];
-(function(){
-  for (var s=0;s<N;s++){
-    var x = LABW + s*STEP + 2;
-    var swung = (s%4===2);            // the "&" of each beat, 8th-note swing
-    if (swung){
-      var st = document.createElement("div");
-      st.className = "tick straight"; st.style.left = x+"px";
-      ruler.appendChild(st);
-    }
-    var t = document.createElement("div");
-    t.className = "tick" + (swung ? " swung":"");
-    t.style.left = x+"px";
-    ruler.appendChild(t);
-    if (swung) swungTicks.push(t);
+/* ---- swing: the "&" rows sit late; grey stubs mark straight time ---- */
+(function () {
+  for (var s = 0; s < N; s++) {
+    if (s % 4 !== 2) continue;
+    var st = document.createElement("div");
+    st.className = "stub";
+    st.style.top = (HEAD + s * KROWH) + "px";
+    stubLayer.appendChild(st);
   }
 })();
-var swingIn = document.getElementById("swing"), swingVal = document.getElementById("swingVal");
-function applySwing(){
+var swingIn = document.getElementById("swing");
+var swingVal = document.getElementById("swingVal");
+var swingWrap = document.getElementById("swingSlider");
+function applySwing() {
   var sw = +swingIn.value;
-  var frac = (sw/100*2 - 1);                 // 0 at 50%, 1/3 at 66.7%
-  var px = frac * 2 * STEP;                  // half-beat = 2 steps
-  var ms = Math.round(frac * (60000/92/2));  // at the record's 92 bpm
-  swungTicks.forEach(function(t){ t.style.transform = "translateX("+px.toFixed(1)+"px)"; });
-  kitCols.forEach(function(col){
-    if (+col.dataset.step % 4 === 2) col.style.transform = "translateX("+px.toFixed(1)+"px)";
+  var frac = (sw / 100 * 2 - 1);                    // 0 at 50%, 1/3 at 66.7%
+  var px = frac * 2 * KROWH;                        // half-beat = 2 step rows
+  var ms = Math.round(frac * (60000 / 92 / 2));     // at the record's 92 bpm
+  kitRows.forEach(function (row, s) {
+    if (s % 4 !== 2) return;
+    row.forEach(function (el) { el.style.transform = "translateY(" + px.toFixed(1) + "px)"; });
   });
+  swingWrap.style.setProperty("--v", ((sw - 50) / 25).toFixed(4));
   swingVal.textContent = sw + "% · +" + ms + " ms";
 }
 swingIn.addEventListener("input", applySwing);
 
 /* ---- phrase strip / fill ---- */
 var strip = document.getElementById("phraseStrip");
-strip.querySelectorAll("button").forEach(function(b){
-  b.addEventListener("click", function(){
-    strip.querySelectorAll("button").forEach(function(x){ x.classList.remove("is-on"); });
-    b.classList.add("is-on");
-    buildKit(b.dataset.bar==="4" ? FILL : LANES, b.dataset.bar==="4");
-  });
+strip.addEventListener("click", function (e) {
+  var b = e.target.closest("[data-bar]"); if (!b) return;
+  strip.querySelectorAll("[data-bar]").forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+  b.setAttribute("aria-pressed", "true");
+  buildKit(b.dataset.bar === "4" ? FILLBAR : DRUMS, b.dataset.bar === "4");
 });
-buildKit(LANES, false);
+buildKit(DRUMS, false);
+
+/* ---- KITOPS chips (the hands): single choice, demo only ---- */
+(function () {
+  var rows = document.querySelectorAll("#kit .devrow .chip");
+  rows.forEach(function (c) {
+    c.addEventListener("click", function () {
+      rows.forEach(function (x) { x.setAttribute("aria-pressed", "false"); });
+      c.setAttribute("aria-pressed", "true");
+    });
+  });
+})();
 })();
 </script>

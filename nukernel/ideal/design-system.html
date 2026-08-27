@@ -1,30 +1,43 @@
-<title>Lampblack</title>
+<title>Enamel</title>
 <style>
 /* ==========================================================================
-   LAMPBLACK — the nukernel design language.
-   One deliberate theme: soot, cream ink, three lights. Every color is painted
-   explicitly; nothing inherits from the host. No external requests.
+   ENAMEL — the nukernel design language.
+   Bright flat paint on a steel chassis. Jet borders, hard shadows, four
+   loud semantic colors. No serif, no knobs, no horizontal scroll.
+   Every color painted explicitly; no external requests.
    ========================================================================== */
 :root {
-  /* ---- ink (soot-warm; no pure grey anywhere) ---- */
-  --ground:  #131110;   /* the room */
-  --panel:   #1c1917;   /* a surface */
-  --raised:  #262119;   /* a control at rest */
-  --well:    #0d0c0b;   /* a cut into the panel (grids, meters) */
-  --line:    #37312a;   /* rules, borders */
-  --line-lo: #262119;   /* hairlines inside tables */
-  --ink:     #ece5d8;   /* everything said */
-  --dim:     #a89e8d;   /* the second voice: values, counts, units */
-  --faint:   #6b6355;   /* refused, and only refused */
-  /* ---- the three lights (never mixed) ---- */
-  --amber:   #f2a33c;   /* THE HAND — selection, focus, the chosen word */
-  --lamp:    #ff6b52;   /* THE CLOCK — playhead, sounding, [data-live] */
-  --signal:  #8fbf6e;   /* THE METER — what the engine is actually doing */
-  --amber-dim: #8a6428;
-  --lamp-dim:  #7e3a2e;
+  /* ---- chassis (ground + two surfaces) ---- */
+  --ground: #F0EDE4;   /* the chassis — the room everything bolts to */
+  --panel:  #FFFFFF;   /* surface 1 — a plate screwed onto the chassis */
+  --well:   #E3E0D6;   /* surface 2 — a cut into a plate: grids, troughs, meters */
+  /* ---- ink ---- */
+  --ink:    #191611;   /* jet — every border, every word said */
+  --dim:    #6B6353;   /* the second voice: values, counts, units */
+  --faint:  #A79E8E;   /* refused, and only refused */
+  --line:   #191611;   /* rules and borders are ink, full strength, never grey */
+  /* ---- the four paints (semantic, never decorative, never mixed) ---- */
+  --hand:  #1E45E0;    /* THE HAND — selection, focus, a value you set */
+  --clock: #E5330E;    /* THE CLOCK — playhead, sounding, [data-live] */
+  --meter: #0B9B4E;    /* THE METER — measured signal, engine truth */
+  --flag:  #FFC61A;    /* THE FLAG — armed, pending, the row under the needle */
+  --hand-down:  #152F9E; /* pressed hand */
+  --clock-down: #AE2408; /* pressed clock */
+  --hand-tint:  #D9E1FF; /* wash behind a chosen region */
+  --clock-tint: #FFD9CE;
+  --meter-tint: #CFEFDC;
+  --flag-tint:  #FFEFC2;
   /* ---- type ---- */
-  --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  /* ---- chunk ---- */
+  --bw: 3px;             /* standard border */
+  --bw-hard: 4px;        /* the playhead ring, the focused thing */
+  --r0: 0px;             /* plates and grids: square */
+  --r1: 6px;             /* controls: barely eased */
+  --shadow: 4px 4px 0 var(--ink);      /* hard offset, zero blur */
+  --shadow-big: 6px 6px 0 var(--ink);
+  --ctl: 48px;           /* minimum control size, touch-first */
   /* ---- space (the only distances allowed) ---- */
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 40px; --s7: 64px;
 }
@@ -32,369 +45,462 @@
 html { background: var(--ground); }
 body {
   margin: 0; background: var(--ground); color: var(--ink);
-  font: 16px/1.55 var(--serif);
+  font: 500 16px/1.5 var(--sans);
   -webkit-font-smoothing: antialiased;
 }
-main { max-width: 960px; margin: 0 auto; padding: 0 var(--s4) var(--s7); }
+main { max-width: 920px; margin: 0 auto; padding: 0 var(--s4) var(--s7); }
 p { margin: 0; }
-h1, h2, h3 { margin: 0; font-weight: normal; text-wrap: balance; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+a { color: var(--hand); font-weight: 700; }
 
-a { color: var(--amber); }
-
-/* focus is the hand */
-:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; border-radius: 2px; }
+/* focus is the hand: a thick ring, offset so it survives on any fill */
+:focus-visible { outline: var(--bw-hard) solid var(--hand); outline-offset: 3px; border-radius: 2px; }
 
 /* ---- machine voice: labels and data ---- */
 .lab {
-  font: 11px/1.4 var(--mono); letter-spacing: .09em; text-transform: uppercase;
+  font: 700 11px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase;
   color: var(--dim);
 }
-.data { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.data { font-family: var(--mono); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---- state color classes (text) ---- */
+.lit-hand  { color: var(--hand); }
+.lit-clock { color: var(--clock); }
+.lit-meter { color: var(--meter); }
+/* ---- state color classes (fills — a painted cap with ink or white on it) ---- */
+.cap-hand  { background: var(--hand);  color: #FFFFFF; border-color: var(--ink); }
+.cap-clock { background: var(--clock); color: #FFFFFF; border-color: var(--ink); }
+.cap-meter { background: var(--meter); color: #FFFFFF; border-color: var(--ink); }
+.cap-flag  { background: var(--flag);  color: var(--ink); border-color: var(--ink); }
 
 /* ==========================================================================
-   masthead + the hero: the ideal transport strip, rendered in the system
+   masthead + hero: the transport strip in the new paint
    ========================================================================== */
-.mast { padding: var(--s6) 0 var(--s5); border-bottom: 1px solid var(--line); }
-.mast .lab { color: var(--amber); }
-.mast h1 { font-size: clamp(34px, 6vw, 52px); letter-spacing: .01em; margin-top: var(--s2); }
-.mast p.dek { color: var(--dim); margin-top: var(--s3); max-width: 58ch; }
+.mast { padding: var(--s6) 0 var(--s5); }
+.mast .lab { color: var(--hand); }
+.mast h1 {
+  font-size: clamp(44px, 9vw, 76px); font-weight: 900; letter-spacing: -.02em;
+  line-height: .95; margin-top: var(--s2); text-transform: uppercase;
+}
+.mast p.dek { color: var(--dim); font-weight: 600; margin-top: var(--s3); max-width: 56ch; }
 
 .transport {
-  margin-top: var(--s5); background: var(--panel); border: 1px solid var(--line);
-  border-radius: 6px; padding: var(--s3) var(--s4);
-  display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap;
+  margin-top: var(--s5); background: var(--panel);
+  border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  box-shadow: var(--shadow-big);
+  padding: var(--s4); display: flex; align-items: flex-start; gap: var(--s5); flex-wrap: wrap;
 }
-.transport .title { font-size: 20px; }
-.transport .title small { color: var(--dim); font-size: 14px; margin-left: var(--s2); }
-.transport .fadercell { flex: 1 1 220px; min-width: 180px; }
+.transport .head { flex: 1 1 220px; display: grid; gap: var(--s3); align-content: start; }
+.transport .title { font-size: 26px; font-weight: 800; line-height: 1.1; }
+.transport .title small { display: block; color: var(--dim); font-size: 14px; font-weight: 700; }
 
 /* ==========================================================================
    sections
    ========================================================================== */
 section { padding-top: var(--s6); }
 section > h2 {
-  font: 13px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase;
-  color: var(--amber); border-bottom: 1px solid var(--line); padding-bottom: var(--s2);
+  display: inline-block; font: 800 14px/1 var(--sans); letter-spacing: .14em;
+  text-transform: uppercase; color: #FFFFFF; background: var(--ink);
+  padding: 10px 14px; border-radius: var(--r1);
 }
-section > p.note { color: var(--dim); margin-top: var(--s3); max-width: 62ch; }
-.why { color: var(--dim); font-style: italic; font-size: 14px; max-width: 56ch; }
-.why b { color: var(--ink); font-style: normal; font-weight: normal; }
+section > p.note { color: var(--dim); font-weight: 600; margin-top: var(--s4); max-width: 62ch; }
+.why { color: var(--dim); font-weight: 600; font-size: 14px; max-width: 56ch; }
+.why b { color: var(--ink); font-weight: 800; }
 
 /* ==========================================================================
-   ink — swatches
+   paint — swatches
    ========================================================================== */
-.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: var(--s3); margin-top: var(--s4); }
-.sw { background: var(--panel); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
-.sw .chip { height: 56px; }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--s4); margin-top: var(--s4); }
+.sw { background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  overflow: hidden; box-shadow: var(--shadow); }
+.sw .chipb { height: 64px; border-bottom: var(--bw) solid var(--ink); }
 .sw .meta { padding: var(--s2) var(--s3) var(--s3); }
 .sw .meta .data { font-size: 12px; color: var(--dim); }
-.sw .meta .role { font-size: 13px; margin-top: 2px; }
-.lights { margin-top: var(--s4); display: grid; gap: var(--s2); }
-.lights p { font-size: 14px; color: var(--dim); }
-.lights .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%;
-  margin-right: var(--s2); vertical-align: baseline; }
+.sw .meta .role { font-size: 14px; font-weight: 800; margin-top: 2px; }
+.lights { margin-top: var(--s5); display: grid; gap: var(--s3); }
+.lights p { font-size: 15px; color: var(--dim); font-weight: 600; max-width: 68ch; }
+.lights .dot { display: inline-block; width: 14px; height: 14px; border-radius: 3px;
+  border: 2px solid var(--ink); margin-right: var(--s2); vertical-align: -2px; }
+.lights b { color: var(--ink); font-weight: 800; }
 
 /* ==========================================================================
    type — specimens
    ========================================================================== */
-.spec { border: 1px solid var(--line); border-radius: 6px; background: var(--panel);
-  margin-top: var(--s4); }
-.spec > div { padding: var(--s4); border-bottom: 1px solid var(--line-lo);
-  display: grid; grid-template-columns: 150px 1fr; gap: var(--s4); align-items: baseline; }
+.spec { border: var(--bw) solid var(--ink); border-radius: var(--r1); background: var(--panel);
+  margin-top: var(--s4); box-shadow: var(--shadow); overflow: hidden; }
+.spec > div { padding: var(--s4); border-bottom: 2px solid var(--well);
+  display: grid; grid-template-columns: 170px 1fr; gap: var(--s4); align-items: baseline; }
 .spec > div:last-child { border-bottom: 0; }
-.spec .lab { padding-top: 2px; }
 @media (max-width: 560px) { .spec > div { grid-template-columns: 1fr; gap: var(--s1); } }
-
-.t-record { font-size: 32px; line-height: 1.15; }
-.t-record small { font-size: 16px; color: var(--dim); margin-left: var(--s2); }
-.t-axis { font: 13px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink); }
-.t-axis .n { color: var(--amber); }
-.t-sub { font-size: 19px; }
-.t-body { font-size: 16px; max-width: 62ch; }
-.t-labspec { font: 11px/1.4 var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--dim); }
-.t-dataspec { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+.t-record { font-size: 34px; font-weight: 900; line-height: 1.05; letter-spacing: -.01em; }
+.t-record small { font-size: 15px; font-weight: 700; color: var(--dim); margin-left: var(--s2); }
+.t-axis { font: 800 14px/1.3 var(--sans); letter-spacing: .12em; text-transform: uppercase; }
+.t-axis .n { color: var(--hand); }
+.t-sub { font-size: 20px; font-weight: 800; }
+.t-body { font-size: 16px; font-weight: 500; max-width: 62ch; }
+.t-labspec { font: 700 11px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.t-dataspec { font-family: var(--mono); font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
 
 /* ==========================================================================
-   space
+   chunk — the physical rules
    ========================================================================== */
-.spacebar { display: flex; align-items: flex-end; gap: var(--s4); margin-top: var(--s4);
-  overflow-x: auto; padding-bottom: var(--s2); }
+.chunkrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--s4); margin-top: var(--s4); }
+.chunkcard { background: var(--panel); border: var(--bw) solid var(--ink);
+  border-radius: var(--r1); box-shadow: var(--shadow); padding: var(--s4);
+  display: grid; gap: var(--s3); align-content: start; }
+.chunkcard h3 { font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.chunkcard p { font-size: 13.5px; font-weight: 600; color: var(--dim); }
+.chunkcard .demo { display: flex; align-items: flex-end; gap: var(--s3); flex-wrap: wrap; }
+.spacebar { display: flex; align-items: flex-end; gap: var(--s3); flex-wrap: wrap; }
 .spacebar figure { margin: 0; text-align: center; }
-.spacebar .blk { background: var(--amber-dim); border-top: 2px solid var(--amber);
-  width: 48px; margin: 0 auto; }
-.spacebar figcaption { font: 11px var(--mono); color: var(--dim); margin-top: var(--s2); }
-
-.axisband { margin-top: var(--s4); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-.axisband .band { background: var(--raised); border-bottom: 1px solid var(--line);
-  padding: var(--s2) var(--s4); }
-.axisband .flow { padding: var(--s4); color: var(--dim); font-size: 14px; }
+.spacebar .blk { background: var(--hand); border: 2px solid var(--ink); width: 32px; margin: 0 auto; }
+.spacebar figcaption { font: 700 10px var(--mono); color: var(--dim); margin-top: var(--s1); }
 
 /* ==========================================================================
    the gallery
    ========================================================================== */
-.gal { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-  gap: var(--s4); margin-top: var(--s4); }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
-  padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3); }
+.gal { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--s5); margin-top: var(--s5); }
+.card { background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  box-shadow: var(--shadow-big); padding: var(--s4);
+  display: flex; flex-direction: column; gap: var(--s4); }
 .card.wide { grid-column: 1 / -1; }
-.card h3 { font-size: 18px; }
+.card h3 { font-size: 19px; font-weight: 800; }
 .card .why { font-size: 13.5px; }
-.staterow { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
-.statecol { display: grid; gap: var(--s3); }
-.st { display: grid; gap: var(--s1); }
+.staterow { display: flex; align-items: flex-start; gap: var(--s4); flex-wrap: wrap; }
+.statecol { display: grid; gap: var(--s4); }
+.st { display: grid; gap: var(--s2); justify-items: start; }
 .st .lab { font-size: 10px; }
 
 /* ---- button ---- */
 .btn {
-  font: 15px var(--serif); color: var(--ink);
-  background: var(--raised); border: 1px solid var(--line); border-radius: 4px;
-  padding: 6px 14px; cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255,244,220,.05), 0 1px 2px rgba(0,0,0,.5);
+  font: 800 15px/1 var(--sans); color: var(--ink); letter-spacing: .01em;
+  background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  min-height: var(--ctl); padding: 0 var(--s4); cursor: pointer;
+  box-shadow: var(--shadow);
+  display: inline-flex; align-items: center; gap: var(--s2);
 }
-.btn:hover { border-color: #4a443a; background: #2b251d; }
-.btn:active { background: var(--well); box-shadow: inset 0 2px 4px rgba(0,0,0,.6); }
-.btn[disabled] { color: var(--faint); background: var(--panel); border-color: var(--line-lo);
-  box-shadow: none; cursor: default; }
-.btn.primary { border-color: var(--amber-dim); color: var(--amber); }
-.btn.primary:hover { border-color: var(--amber); }
+.btn:hover { background: var(--flag-tint); }
+.btn:active { transform: translate(4px, 4px); box-shadow: none; }
+.btn.primary { background: var(--hand); color: #FFFFFF; }
+.btn.primary:hover { background: var(--hand-down); }
+.btn[disabled] { color: var(--faint); background: var(--well); border-color: var(--faint);
+  box-shadow: none; cursor: default; transform: none; }
 
-/* ---- tri-state play ---- */
-.play { min-width: 96px; text-align: left; font-family: var(--mono); font-size: 13px; }
+/* ---- tri-state play (word shows the NEXT tap) ---- */
+.play { min-width: 118px; font-family: var(--mono); font-weight: 700; font-size: 14px; }
 .play .g { display: inline-block; width: 1.2em; }
-.play[data-at="off"]  { color: var(--ink); }
-.play[data-at="once"] { color: var(--amber); border-color: var(--amber-dim); }
-.play[data-at="loop"] { color: var(--lamp);  border-color: var(--lamp-dim);
-  background: #241713; }
+.play[data-at="off"]  { background: var(--panel); color: var(--ink); }
+.play[data-at="once"] { background: var(--hand); color: #FFFFFF; }
+.play[data-at="loop"] { background: var(--clock); color: #FFFFFF; }
+.play[data-at="once"]:hover { background: var(--hand-down); }
+.play[data-at="loop"]:hover { background: var(--clock-down); }
 
-/* ---- select ---- */
+/* ---- select with the default detent ---- */
 .sel { position: relative; display: inline-block; }
 .sel select {
   appearance: none; -webkit-appearance: none; -moz-appearance: none;
-  font: 15px var(--serif); color: var(--ink);
-  background: var(--raised); border: 1px solid var(--line); border-radius: 4px;
-  padding: 6px 30px 6px 12px; cursor: pointer; max-width: 100%;
+  font: 700 15px var(--sans); color: var(--ink);
+  background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  min-height: var(--ctl); padding: 0 40px 0 14px; cursor: pointer; max-width: 100%;
+  box-shadow: var(--shadow);
 }
-.sel::after { content: ""; position: absolute; right: 11px; top: 50%;
-  width: 7px; height: 7px; border-right: 1.5px solid var(--dim);
-  border-bottom: 1.5px solid var(--dim);
-  transform: translateY(-70%) rotate(45deg); pointer-events: none; }
-.sel select:hover { border-color: #4a443a; }
-.sel select.seated { color: var(--dim); }          /* the default detent, at rest */
-.sel select.said { color: var(--amber); border-color: var(--amber-dim); } /* a chosen word */
-.sel select:disabled { color: var(--faint); background: var(--panel);
-  border-color: var(--line-lo); cursor: default; }
+.sel::after { content: ""; position: absolute; right: 14px; top: 50%;
+  width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent;
+  border-top: 9px solid var(--ink); transform: translateY(-50%); pointer-events: none; }
+.sel select:hover { background: var(--flag-tint); }
+.sel select.seated { color: var(--dim); }               /* the default detent, at rest */
+.sel select.said { color: var(--hand); }                /* a chosen word */
+.sel select:disabled { color: var(--faint); background: var(--well);
+  border-color: var(--faint); box-shadow: none; cursor: default; }
 .sel select option, .sel select optgroup { background: var(--panel); color: var(--ink); }
-.stands { font: 13px var(--mono); color: var(--dim); }
-.stands b { color: var(--ink); font-weight: normal; }
+.stands { font: 600 13px var(--mono); color: var(--dim); }
+.stands b { color: var(--ink); font-weight: 700; }
 
-/* ---- fader + meter ---- */
-.fader { display: grid; gap: var(--s1); }
-.fader input[type="range"] {
-  -webkit-appearance: none; appearance: none; width: 100%; height: 28px;
-  background: transparent; margin: 0; cursor: pointer;
+/* ==========================================================================
+   THE VERTICAL SLIDER — replaces every knob.
+   Painted track/fill/thumb; an invisible native range overlaid carries
+   keyboard, focus, touch. --v is the position, 0..1. Fill below the thumb
+   is hand-blue: it is a value you set. The optional meter strip beside is
+   engine-green: it is measured, never trusted.
+   ========================================================================== */
+.vslider { display: grid; gap: var(--s2); justify-items: center; width: min-content; }
+.vslider .vs-lab { font: 700 11px/1.2 var(--mono); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink); text-align: center; }
+.vslider .vs-body { display: flex; align-items: stretch; gap: var(--s2); }
+.vslider .vs-track {
+  position: relative; width: 20px; height: var(--vsh, 200px);
+  background: var(--well); border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  margin: 0 14px; /* room for the 48px thumb overhang */
 }
-.fader input[type="range"]::-webkit-slider-runnable-track {
-  height: 4px; border-radius: 2px;
-  background: linear-gradient(90deg, var(--line) 0 49.5%, var(--dim) 49.5% 50.5%, var(--line) 50.5% 100%);
+.vslider .vs-fill {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: calc(14px + (100% - 28px) * var(--v, 0.5));
+  background: var(--hand); display: block;
 }
-.fader input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 15px; height: 26px; margin-top: -11px;
-  border-radius: 3px; border: 1px solid #4a443a;
-  background: linear-gradient(180deg, #332c23, #1c1917) padding-box,
-              linear-gradient(90deg, transparent 0 44%, var(--ink) 44% 56%, transparent 56%) border-box;
-  background: linear-gradient(90deg, #332c23 0 42%, var(--ink) 42% 58%, #332c23 58% 100%);
-  box-shadow: 0 2px 5px rgba(0,0,0,.6);
+.vslider .vs-thumb {
+  position: absolute; left: 50%; bottom: calc((100% - 28px) * var(--v, 0.5));
+  transform: translateX(-50%);
+  width: 48px; height: 28px; display: block;
+  background: var(--panel); border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  box-shadow: 3px 3px 0 var(--ink);
 }
-.fader input[type="range"]::-moz-range-track {
-  height: 4px; border-radius: 2px;
-  background: linear-gradient(90deg, var(--line) 0 49.5%, var(--dim) 49.5% 50.5%, var(--line) 50.5% 100%);
+.vslider .vs-thumb::after { content: ""; position: absolute; left: 8px; right: 8px; top: 50%;
+  height: 3px; margin-top: -1.5px; background: var(--ink); }
+.vslider .vs-input {
+  position: absolute; top: -14px; bottom: -14px; left: 50%; transform: translateX(-50%);
+  width: 48px; height: calc(100% + 28px); margin: 0; opacity: 0; cursor: grab;
+  writing-mode: vertical-lr; direction: rtl;
 }
-.fader input[type="range"]::-moz-range-thumb {
-  width: 15px; height: 26px; border-radius: 3px; border: 1px solid #4a443a;
-  background: linear-gradient(90deg, #332c23 0 42%, var(--ink) 42% 58%, #332c23 58% 100%);
-  box-shadow: 0 2px 5px rgba(0,0,0,.6);
-}
-.fader input[type="range"]:disabled { cursor: default; opacity: .45; }
-.meter { height: 5px; border-radius: 2.5px; background: var(--well);
-  border: 1px solid var(--line-lo); overflow: hidden; }
-.meter i { display: block; height: 100%; background: var(--signal); width: 60%;
-  border-radius: 2.5px; transition: width .12s linear; }
-.fader .row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); }
-.fader output { font: 12px var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); }
-.fader .word { font: 12px var(--mono); color: var(--dim); }
+.vslider .vs-track:focus-within { outline: var(--bw-hard) solid var(--hand); outline-offset: 4px; }
+.vslider .vs-meter { position: relative; width: 14px; height: var(--vsh, 200px);
+  background: var(--well); border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  overflow: hidden; }
+.vslider .vs-meter i { position: absolute; left: 0; right: 0; bottom: 0;
+  background: var(--meter); display: block; }
+.vslider .vs-val { font: 600 13px var(--mono); font-variant-numeric: tabular-nums;
+  color: var(--ink); text-align: center; }
+.vslider.off .vs-fill { background: var(--faint); }
+.vslider.off .vs-thumb { box-shadow: none; border-color: var(--faint); }
+.vslider.off .vs-thumb::after { background: var(--faint); }
+.vslider.off .vs-track { border-color: var(--faint); }
+.vslider.off .vs-lab, .vslider.off .vs-val { color: var(--faint); }
+.vslider.off .vs-input { cursor: default; }
+/* a stacked, labeled column of sliders — one voice's strip, read top to bottom */
+.vstack { display: grid; gap: var(--s5); justify-items: start; margin-top: var(--s2); }
+.vstack .vslider { justify-items: start; }
+.vstack .vslider .vs-lab, .vstack .vslider .vs-val { text-align: left; }
 
-/* ---- chip ---- */
+/* ---- chip: a noun ---- */
 .chip {
-  font: 13px var(--mono); color: var(--dim);
-  background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
-  padding: 4px 12px; cursor: pointer;
+  font: 700 13px var(--mono); color: var(--ink);
+  background: var(--panel); border: var(--bw) solid var(--ink); border-radius: 999px;
+  min-height: 40px; padding: 0 var(--s4); cursor: pointer;
+  display: inline-flex; align-items: center;
 }
-.chip:hover { color: var(--ink); border-color: #4a443a; }
-.chip[aria-pressed="true"] { color: var(--amber); border-color: var(--amber-dim);
-  background: #221b11; }
-.chip[disabled] { color: var(--faint); border-color: var(--line-lo); cursor: default; }
+.chip:hover { background: var(--flag-tint); }
+.chip[aria-pressed="true"] { background: var(--hand); color: #FFFFFF; }
+.chip[disabled] { color: var(--faint); border-color: var(--faint); background: var(--well); cursor: default; }
 
-/* ---- tab row ---- */
-.tabwrap { overflow-x: auto; }
-.tabs { display: flex; gap: var(--s2); border-bottom: 1px solid var(--line);
-  padding-bottom: 0; min-width: max-content; }
+/* ---- tab row: wraps, never scrolls ---- */
+.tabs { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .tab {
-  font: 14px var(--serif); color: var(--dim); background: none; border: none;
-  border-bottom: 2px solid transparent; padding: 6px 12px 8px; cursor: pointer;
-  white-space: nowrap;
+  font: 800 14px var(--sans); color: var(--ink); background: var(--panel);
+  border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  min-height: 44px; padding: 0 var(--s4); cursor: pointer;
+  display: inline-flex; align-items: center; gap: var(--s2);
 }
-.tab:hover { color: var(--ink); }
-.tab[aria-selected="true"] { color: var(--amber); border-bottom-color: var(--amber); }
-.tab.add { color: var(--faint); font-family: var(--mono); font-size: 12px; }
-.tab.add:hover { color: var(--dim); }
+.tab:hover { background: var(--flag-tint); }
+.tab[aria-selected="true"] { background: var(--hand); color: #FFFFFF; box-shadow: var(--shadow); }
+.tab.add { color: var(--dim); border-style: dashed; border-width: 2px; background: transparent;
+  font-family: var(--mono); font-weight: 700; font-size: 12px; }
+.tab.add:hover { color: var(--ink); background: var(--flag-tint); }
 
 /* ---- refusal ---- */
-.refusal { display: grid; gap: var(--s1); }
-.refusal .nu-why { font-size: 13px; font-style: italic; color: var(--faint); max-width: 42ch; }
+.refusal { display: grid; gap: var(--s2); justify-items: start; }
+.refusal .nu-why { font: 600 13px var(--sans); color: var(--faint); max-width: 42ch; }
 .refusal .nu-why::before { content: "— "; }
 
 /* ---- [data-live] ---- */
-[data-live] { font: 13px var(--mono); color: var(--dim); }
-[data-live] .now { color: var(--lamp); }
-.livedot { display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-  background: var(--lamp); margin-right: var(--s2); vertical-align: baseline; }
+[data-live] { font: 600 13px var(--mono); color: var(--dim); }
+[data-live] .now { color: var(--clock); font-weight: 700; }
+.livedot { display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+  background: var(--clock); border: 2px solid var(--ink); margin-right: var(--s2);
+  vertical-align: -1px; }
 @media (prefers-reduced-motion: no-preference) {
   .livedot.beat { animation: beat 1.2s ease-in-out infinite; }
-  @keyframes beat { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  @keyframes beat { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 }
+
+/* ---- the vertical step grid: time flows DOWN ---- */
+.stepgrid { display: grid; grid-template-columns: 44px repeat(4, minmax(44px, 56px));
+  gap: var(--s1); align-items: stretch; }
+.stepgrid .h { font: 700 10px var(--mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--dim); display: flex; align-items: flex-end; justify-content: center;
+  padding-bottom: var(--s1); }
+.stepgrid .n { font: 700 12px var(--mono); color: var(--dim);
+  display: flex; align-items: center; justify-content: center; }
+.stepgrid .n.beat { color: var(--ink); }
+.stepgrid .cell { min-height: 34px; background: var(--well);
+  border: 2px solid var(--ink); border-radius: 3px; cursor: pointer; padding: 0; }
+.stepgrid .cell.on { background: var(--hand); }
+.stepgrid .cell:hover { border-width: 3px; }
+.stepgrid .rowwrap { display: contents; }
+.stepgrid .rowwrap.now .cell { border-color: var(--clock); border-width: 3px; }
+.stepgrid .rowwrap.now .n { color: var(--clock); background: var(--clock-tint);
+  border-radius: 3px; }
+.gridside { display: flex; gap: var(--s5); flex-wrap: wrap; align-items: flex-start; }
+.gridside .rail { display: grid; gap: var(--s3); flex: 1 1 200px; min-width: 200px; }
 
 /* ==========================================================================
    voice
    ========================================================================== */
 .rules { margin: var(--s4) 0 0; padding: 0; list-style: none; counter-reset: r;
   display: grid; gap: var(--s3); max-width: 68ch; }
-.rules li { counter-increment: r; display: grid; grid-template-columns: 34px 1fr;
-  gap: var(--s3); align-items: baseline; }
-.rules li::before { content: counter(r); font: 13px var(--mono); color: var(--amber);
-  text-align: right; }
-.rules li b { font-weight: normal; }
-.rules li .eg { display: block; font: 12.5px var(--mono); color: var(--dim); margin-top: 3px; }
+.rules li { counter-increment: r; display: grid; grid-template-columns: 40px 1fr;
+  gap: var(--s3); align-items: start; }
+.rules li::before { content: counter(r); font: 900 16px var(--sans); color: #FFFFFF;
+  background: var(--ink); border-radius: var(--r1); width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center; }
+.rules li b { font-weight: 800; }
+.rules li p { font-weight: 600; color: var(--dim); }
+.rules li p b { color: var(--ink); }
+.rules li .eg { display: block; font: 600 12.5px var(--mono); color: var(--dim); margin-top: 3px; }
 .rules li .eg s { color: var(--faint); }
 
-footer { margin-top: var(--s7); border-top: 1px solid var(--line);
-  padding-top: var(--s4); color: var(--dim); font-size: 13px; }
+footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
+  padding-top: var(--s4); color: var(--dim); font-weight: 600; font-size: 13px; }
 </style>
 
 <main>
 
 <header class="mast">
   <p class="lab">the nukernel design language</p>
-  <h1>Lampblack</h1>
-  <p class="dek">The flat document, printed in soot. Same one-scroll page, same headings,
-  same law that nothing hides — now on a dark desk with cream ink and exactly three lights:
-  amber for the hand, lamp-red for the clock, green for the meter.</p>
+  <h1>Enamel</h1>
+  <p class="dek">Bright flat paint on a steel chassis. Four loud colors, each with one job.
+  Jet borders you could grab, shadows with no blur, type with real weight. Time runs
+  downward everywhere but the engraved score. No knobs — every continuous control is a
+  vertical slider. Lampblack is retired.</p>
 
   <div class="transport" aria-label="specimen: the transport strip">
-    <p class="title">Rome 600 <small>Gregorian chant</small></p>
-    <button class="btn play" data-at="off" id="heroPlay" type="button"><span class="g">&#9654;</span>play</button>
-    <div class="fadercell fader">
-      <input type="range" min="-24" max="24" step="0.1" value="0" aria-label="volume" id="heroFader">
-      <div class="meter"><i id="heroMeter" style="width:58%"></i></div>
-      <div class="row"><output id="heroDb">0.0 dB</output>
-        <span data-live="played"><span class="livedot beat"></span><span class="now">bar 3 of 8</span> &middot; head</span></div>
+    <div class="head">
+      <p class="title">Chicago 1987 <small>acid house</small></p>
+      <button class="btn play" data-at="off" id="heroPlay" type="button"><span class="g">&#9654;</span>play</button>
+      <p data-live="played" id="heroLive"><span class="livedot beat"></span><span class="now">row 5 of 16</span> &middot; bar 2</p>
+      <p class="why">The whole strip: the record's name, the tri-state door, the master
+      slider with its meter, and the one sentence the clock may write.</p>
+    </div>
+    <div class="vslider" style="--v:.5">
+      <span class="vs-lab">master</span>
+      <div class="vs-body" style="--vsh:220px">
+        <div class="vs-track"><i class="vs-fill"></i><b class="vs-thumb"></b>
+          <input class="vs-input" type="range" min="-24" max="24" step="0.1" value="0"
+            orient="vertical" aria-label="master level" id="heroFader"></div>
+        <div class="vs-meter" aria-hidden="true"><i id="heroMeter" style="height:58%"></i></div>
+      </div>
+      <output class="vs-val" id="heroDb">0.0 dB</output>
     </div>
   </div>
-  <p class="why" style="margin-top:12px">The whole strip in one line: the record's name, the
-  tri-state door, the master fader over its meter, and the one sentence the clock may write.</p>
 </header>
 
-<!-- ================================================================ ink -->
-<section id="ink">
-  <h2>ink</h2>
-  <p class="note">No pure grey anywhere — every neutral leans warm, the soot of a scribble
-  strip. The three lights are semantic, never decorative, and never mixed: a thing is lit
-  because the hand chose it, the clock is on it, or the engine measured it.</p>
+<!-- ================================================================ paint -->
+<section id="paint">
+  <h2>paint</h2>
+  <p class="note">A bright chassis, white plates, jet ink — and four paints. A paint is
+  semantic, never decorative, and paints never mix: a thing is colored because the hand set
+  it, the clock is on it, the engine measured it, or it is armed and waiting.</p>
 
   <div class="swatches">
-    <div class="sw"><div class="chip" style="background:#131110"></div>
-      <div class="meta"><p class="data">#131110 &middot; ground</p><p class="role">the room</p></div></div>
-    <div class="sw"><div class="chip" style="background:#1c1917"></div>
-      <div class="meta"><p class="data">#1c1917 &middot; panel</p><p class="role">a surface</p></div></div>
-    <div class="sw"><div class="chip" style="background:#262119"></div>
-      <div class="meta"><p class="data">#262119 &middot; raised</p><p class="role">a control at rest</p></div></div>
-    <div class="sw"><div class="chip" style="background:#0d0c0b"></div>
-      <div class="meta"><p class="data">#0d0c0b &middot; well</p><p class="role">a cut: grids, meters</p></div></div>
-    <div class="sw"><div class="chip" style="background:#37312a"></div>
-      <div class="meta"><p class="data">#37312a &middot; line</p><p class="role">rules, borders</p></div></div>
-    <div class="sw"><div class="chip" style="background:#ece5d8"></div>
-      <div class="meta"><p class="data">#ece5d8 &middot; ink</p><p class="role">everything said</p></div></div>
-    <div class="sw"><div class="chip" style="background:#a89e8d"></div>
-      <div class="meta"><p class="data">#a89e8d &middot; dim</p><p class="role">values, counts, units</p></div></div>
-    <div class="sw"><div class="chip" style="background:#6b6355"></div>
-      <div class="meta"><p class="data">#6b6355 &middot; faint</p><p class="role">refused, and only refused</p></div></div>
-    <div class="sw"><div class="chip" style="background:#f2a33c"></div>
-      <div class="meta"><p class="data">#f2a33c &middot; amber</p><p class="role">the hand</p></div></div>
-    <div class="sw"><div class="chip" style="background:#ff6b52"></div>
-      <div class="meta"><p class="data">#ff6b52 &middot; lamp</p><p class="role">the clock</p></div></div>
-    <div class="sw"><div class="chip" style="background:#8fbf6e"></div>
-      <div class="meta"><p class="data">#8fbf6e &middot; signal</p><p class="role">the meter</p></div></div>
+    <div class="sw"><div class="chipb" style="background:#F0EDE4"></div>
+      <div class="meta"><p class="data">#F0EDE4 &middot; ground</p><p class="role">the chassis</p></div></div>
+    <div class="sw"><div class="chipb" style="background:#FFFFFF"></div>
+      <div class="meta"><p class="data">#FFFFFF &middot; panel</p><p class="role">a plate</p></div></div>
+    <div class="sw"><div class="chipb" style="background:#E3E0D6"></div>
+      <div class="meta"><p class="data">#E3E0D6 &middot; well</p><p class="role">a cut: grids, troughs</p></div></div>
+    <div class="sw"><div class="chipb" style="background:#191611"></div>
+      <div class="meta"><p class="data">#191611 &middot; ink</p><p class="role">borders + everything said</p></div></div>
+    <div class="sw"><div class="chipb" style="background:#6B6353"></div>
+      <div class="meta"><p class="data">#6B6353 &middot; dim</p><p class="role">values, counts, units</p></div></div>
+    <div class="sw"><div class="chipb" style="background:#A79E8E"></div>
+      <div class="meta"><p class="data">#A79E8E &middot; faint</p><p class="role">refused, and only refused</p></div></div>
+    <div class="sw"><div class="chipb" style="background:#1E45E0"></div>
+      <div class="meta"><p class="data">#1E45E0 &middot; hand</p><p class="role">the hand</p></div></div>
+    <div class="sw"><div class="chipb" style="background:#E5330E"></div>
+      <div class="meta"><p class="data">#E5330E &middot; clock</p><p class="role">the clock</p></div></div>
+    <div class="sw"><div class="chipb" style="background:#0B9B4E"></div>
+      <div class="meta"><p class="data">#0B9B4E &middot; meter</p><p class="role">the meter</p></div></div>
+    <div class="sw"><div class="chipb" style="background:#FFC61A"></div>
+      <div class="meta"><p class="data">#FFC61A &middot; flag</p><p class="role">the flag</p></div></div>
   </div>
 
   <div class="lights">
-    <p><span class="dot" style="background:#f2a33c"></span><b style="color:#ece5d8">Amber is the hand.</b>
-      Selection, focus, the chosen word in a menu, the active tab. If amber is on it, you put it there.</p>
-    <p><span class="dot" style="background:#ff6b52"></span><b style="color:#ece5d8">Lamp is the clock.</b>
-      The playhead, the sounding note on the staff, the <span class="data">[data-live]</span> sentence.
-      If lamp is on it, it is happening right now, and it will move without you.</p>
-    <p><span class="dot" style="background:#8fbf6e"></span><b style="color:#ece5d8">Signal is the meter.</b>
-      What the engine is actually doing — measured, never trusted. A knob with no green under it
-      is a knob that reaches no sound.</p>
+    <p><span class="dot" style="background:#1E45E0"></span><b>Cobalt is the hand.</b>
+      Selection, focus, the chosen word, the filled part of a slider, a lit step in the grid.
+      If cobalt is on it, you put it there.</p>
+    <p><span class="dot" style="background:#E5330E"></span><b>Red is the clock.</b>
+      The playhead row, the sounding note, the <span class="data">[data-live]</span> sentence.
+      If red is on it, it is happening right now and it will move without you.</p>
+    <p><span class="dot" style="background:#0B9B4E"></span><b>Green is the meter.</b>
+      What the engine is actually doing — measured, never trusted. A slider with no green
+      beside it is a slider that reaches no sound.</p>
+    <p><span class="dot" style="background:#FFC61A"></span><b>Yellow is the flag.</b>
+      Armed, pending, hovered — a thing about to matter. The flag never states; it warns.</p>
   </div>
 </section>
 
 <!-- ================================================================ type -->
 <section id="type">
   <h2>type</h2>
-  <p class="note">Two voices, because the page is two things. The serif is the document —
-  what the record says, in sentences. The mono is the machine — labels, values, bars,
-  hertz. A reader always knows which one is talking.</p>
+  <p class="note">One heavy sans for everything said, one mono for everything counted.
+  Headings at 900, blocks at 800, labels at 700, body at 500&ndash;600. No serif anywhere —
+  this is an instrument, not a program handed out at the door.</p>
 
   <div class="spec">
-    <div><p class="lab">record &middot; 32/1.15 serif</p>
-      <p class="t-record">Rome 600 <small>Gregorian chant</small></p></div>
-    <div><p class="lab">axis &middot; 13 mono caps</p>
+    <div><p class="lab">record &middot; 34/1.05 sans 900</p>
+      <p class="t-record">Chicago 1987 <small>acid house</small></p></div>
+    <div><p class="lab">axis &middot; 14 sans 800 caps</p>
       <p class="t-axis"><span class="n">3 &middot;</span> Sheet music</p></div>
-    <div><p class="lab">block &middot; 19 serif</p>
+    <div><p class="lab">block &middot; 20 sans 800</p>
       <p class="t-sub">the motifs</p></div>
-    <div><p class="lab">body &middot; 16/1.55 serif</p>
+    <div><p class="lab">body &middot; 16/1.5 sans 500</p>
       <p class="t-body">The line stays in the key. A role is a name, not a transform:
       setting a box to chorus does not reach in and change the drums.</p></div>
-    <div><p class="lab">label &middot; 11 mono caps</p>
+    <div><p class="lab">label &middot; 11 mono 700 caps</p>
       <p class="t-labspec">reverb type &middot; goes to &middot; its own gear</p></div>
-    <div><p class="lab">data &middot; 13 mono tab-nums</p>
-      <p class="t-dataspec">92 bpm &middot; 8 bars &middot; &minus;3.2 dB &middot; 123&ndash;494 Hz</p></div>
+    <div><p class="lab">data &middot; 13 mono 600 tab-nums</p>
+      <p class="t-dataspec">122 bpm &middot; 16 rows &middot; &minus;3.2 dB &middot; 82&ndash;330 Hz</p></div>
   </div>
 </section>
 
-<!-- ================================================================ space -->
-<section id="space">
-  <h2>space</h2>
-  <p class="note">Seven distances, and no others. Controls inside a block sit on the small
-  steps; blocks breathe on the big ones. Siblings space with <span class="data">gap</span>,
-  never margins.</p>
+<!-- ================================================================ chunk -->
+<section id="chunk">
+  <h2>chunk</h2>
+  <p class="note">The physical rules. Borders are 3px ink, 4px when the clock or the focus
+  ring grabs something. Shadows are hard offsets — 4px&nbsp;4px, zero blur — and pressing a
+  control moves it into its own shadow. Plates are square; controls ease to 6px. Nothing
+  interactive is smaller than 48px. Vertical space is cheap; width is not.</p>
 
-  <div class="spacebar">
-    <figure><div class="blk" style="height:4px"></div><figcaption>s1&nbsp;&middot;&nbsp;4</figcaption></figure>
-    <figure><div class="blk" style="height:8px"></div><figcaption>s2&nbsp;&middot;&nbsp;8</figcaption></figure>
-    <figure><div class="blk" style="height:12px"></div><figcaption>s3&nbsp;&middot;&nbsp;12</figcaption></figure>
-    <figure><div class="blk" style="height:16px"></div><figcaption>s4&nbsp;&middot;&nbsp;16</figcaption></figure>
-    <figure><div class="blk" style="height:24px"></div><figcaption>s5&nbsp;&middot;&nbsp;24</figcaption></figure>
-    <figure><div class="blk" style="height:40px"></div><figcaption>s6&nbsp;&middot;&nbsp;40</figcaption></figure>
-    <figure><div class="blk" style="height:64px"></div><figcaption>s7&nbsp;&middot;&nbsp;64</figcaption></figure>
-  </div>
-
-  <div class="axisband">
-    <div class="band"><p class="t-axis"><span class="n">4&ndash;8 &middot;</span> The band</p></div>
-    <div class="flow">The one long scroll survives. Axis headings stay sticky bands — the
-    heading on screen is the axis you are inside — now a raised strip on the panel instead
-    of a pastel wash. Wide things (the board, a tab row, the score) scroll sideways inside
-    their own rail; the page itself never does.</div>
+  <div class="chunkrow">
+    <div class="chunkcard">
+      <h3>border</h3>
+      <div class="demo">
+        <div style="width:64px;height:44px;background:var(--panel);border:3px solid var(--ink);border-radius:6px"></div>
+        <div style="width:64px;height:44px;background:var(--panel);border:4px solid var(--clock);border-radius:6px"></div>
+      </div>
+      <p>3px ink everywhere. 4px, in clock red, only where the playhead is.</p>
+    </div>
+    <div class="chunkcard">
+      <h3>shadow</h3>
+      <div class="demo">
+        <div style="width:64px;height:44px;background:var(--panel);border:3px solid var(--ink);border-radius:6px;box-shadow:4px 4px 0 var(--ink)"></div>
+        <div style="width:64px;height:44px;background:var(--flag);border:3px solid var(--ink);border-radius:6px;transform:translate(4px,4px)"></div>
+      </div>
+      <p>Hard offset, no blur. Pressed = translated into the shadow. Nothing floats softly.</p>
+    </div>
+    <div class="chunkcard">
+      <h3>radius</h3>
+      <div class="demo">
+        <div style="width:64px;height:44px;background:var(--well);border:3px solid var(--ink)"></div>
+        <div style="width:64px;height:44px;background:var(--panel);border:3px solid var(--ink);border-radius:6px"></div>
+        <div style="width:80px;height:40px;background:var(--panel);border:3px solid var(--ink);border-radius:999px"></div>
+      </div>
+      <p>0 for plates and grid cells, 6px for controls, a full pill only for chips (nouns).</p>
+    </div>
+    <div class="chunkcard">
+      <h3>space &middot; the seven distances</h3>
+      <div class="spacebar">
+        <figure><div class="blk" style="height:4px"></div><figcaption>s1&middot;4</figcaption></figure>
+        <figure><div class="blk" style="height:8px"></div><figcaption>s2&middot;8</figcaption></figure>
+        <figure><div class="blk" style="height:12px"></div><figcaption>s3&middot;12</figcaption></figure>
+        <figure><div class="blk" style="height:16px"></div><figcaption>s4&middot;16</figcaption></figure>
+        <figure><div class="blk" style="height:24px"></div><figcaption>s5&middot;24</figcaption></figure>
+        <figure><div class="blk" style="height:40px"></div><figcaption>s6&middot;40</figcaption></figure>
+        <figure><div class="blk" style="height:64px"></div><figcaption>s7&middot;64</figcaption></figure>
+      </div>
+      <p>Siblings space with <span class="data">gap</span>, never margins. 48px minimum touch on every control.</p>
+    </div>
   </div>
 </section>
 
@@ -414,9 +520,9 @@ footer { margin-top: var(--s7); border-top: 1px solid var(--line);
         <div class="st"><p class="lab">primary</p><button class="btn primary" type="button">+ drums</button></div>
         <div class="st"><p class="lab">refused</p><button class="btn" type="button" disabled>+ bass</button></div>
       </div>
-      <p class="why">One face for every verb. Hover lifts the border, press cuts into the
-      well. <b>Primary is amber-edged and rare</b> — at most one per block. A refused button
-      is never alone; its reason sits under it (see refusal).</p>
+      <p class="why">One face for every verb: white plate, jet border, hard shadow. Press
+      drops it into its shadow. <b>Primary is a cobalt cap and rare</b> — at most one per
+      block. A refused button is never alone; its reason sits under it (see refusal).</p>
     </div>
 
     <!-- tri-state play -->
@@ -436,8 +542,8 @@ footer { margin-top: var(--s7); border-top: 1px solid var(--line);
         <p class="stands" id="galPlaySay" data-live="played"></p>
       </div>
       <p class="why">The word on the button is the <b>next</b> verb: play &rarr; loop &rarr;
-      stop &rarr; play. Its state is the color — amber while a single pass sounds, lamp while
-      it loops — so the eye reads the state and the finger reads the offer.</p>
+      stop &rarr; play. The color is the current state — cobalt while a single pass sounds
+      (you asked for it), clock red while it loops (it will not stop without you).</p>
     </div>
 
     <!-- select with default detent -->
@@ -462,32 +568,92 @@ footer { margin-top: var(--s7); border-top: 1px solid var(--line);
           </select></span></div>
       </div>
       <p class="why">One word for absence, everywhere: <b>default</b>, seated in its own
-      optgroup at the top. Seated is dim; a said word is amber. The derived value prints
+      optgroup at the top. Seated is dim; a said word is cobalt. The derived value prints
       once, in the row's third column — the menu never repeats it.</p>
     </div>
 
-    <!-- fader with meter -->
-    <div class="card">
-      <h3>fader + meter</h3>
-      <div class="statecol">
-        <div class="st"><p class="lab">your offset over the automation &middot; drag it</p>
-          <div class="fader">
-            <input type="range" min="-24" max="24" step="0.1" value="0" id="galFader" aria-label="cantor fader">
-            <div class="meter"><i id="galMeter" style="width:62%"></i></div>
-            <div class="row"><output id="galDb">0.0 dB</output><span class="word" id="galWord">riding &minus;3.2 dB seated</span></div>
-          </div></div>
-        <div class="st"><p class="lab">refused &middot; bus 2 return</p>
-          <div class="fader refusal">
-            <input type="range" min="-24" max="24" value="0" disabled aria-label="bus 2 return">
-            <div class="meter"><i style="width:0%"></i></div>
-            <div class="row"><output style="color:var(--faint)">unity</output></div>
-            <p class="nu-why">the engine's own unity</p>
-          </div></div>
+    <!-- THE VERTICAL SLIDER -->
+    <div class="card wide">
+      <h3>the vertical slider &middot; there are no knobs</h3>
+      <div class="gridside">
+        <div class="st"><p class="lab">anatomy &middot; drag it</p>
+          <div class="vslider" style="--v:.43">
+            <span class="vs-lab">cutoff</span>
+            <div class="vs-body" style="--vsh:220px">
+              <div class="vs-track"><i class="vs-fill"></i><b class="vs-thumb"></b>
+                <input class="vs-input" type="range" min="0" max="100" step="1" value="43"
+                  orient="vertical" aria-label="filter cutoff" data-fmt="pct"></div>
+              <div class="vs-meter" aria-hidden="true"><i class="anim-meter" style="height:38%"></i></div>
+            </div>
+            <output class="vs-val">43%</output>
+          </div>
+        </div>
+        <div class="st"><p class="lab">the strip &middot; one voice, read top to bottom &middot; tb303</p>
+          <div class="vstack">
+            <div class="vslider" style="--v:.63">
+              <span class="vs-lab">level</span>
+              <div class="vs-body" style="--vsh:160px">
+                <div class="vs-track"><i class="vs-fill"></i><b class="vs-thumb"></b>
+                  <input class="vs-input" type="range" min="-24" max="24" step="0.1" value="6.2"
+                    orient="vertical" aria-label="tb303 level" data-fmt="db"></div>
+                <div class="vs-meter" aria-hidden="true"><i class="anim-meter" style="height:52%"></i></div>
+              </div>
+              <output class="vs-val">+6.2 dB</output>
+            </div>
+            <div class="vslider" style="--v:.30">
+              <span class="vs-lab">send &middot; genre</span>
+              <div class="vs-body" style="--vsh:120px">
+                <div class="vs-track"><i class="vs-fill"></i><b class="vs-thumb"></b>
+                  <input class="vs-input" type="range" min="0" max="100" step="1" value="30"
+                    orient="vertical" aria-label="send to genre bus" data-fmt="pct"></div>
+              </div>
+              <output class="vs-val">30%</output>
+            </div>
+            <div class="vslider" style="--v:.55">
+              <span class="vs-lab">send &middot; delay</span>
+              <div class="vs-body" style="--vsh:120px">
+                <div class="vs-track"><i class="vs-fill"></i><b class="vs-thumb"></b>
+                  <input class="vs-input" type="range" min="0" max="100" step="1" value="55"
+                    orient="vertical" aria-label="send to delay bus" data-fmt="pct"></div>
+              </div>
+              <output class="vs-val">55%</output>
+            </div>
+            <div class="vslider" style="--v:.20">
+              <span class="vs-lab">send &middot; reverb</span>
+              <div class="vs-body" style="--vsh:120px">
+                <div class="vs-track"><i class="vs-fill"></i><b class="vs-thumb"></b>
+                  <input class="vs-input" type="range" min="0" max="100" step="1" value="20"
+                    orient="vertical" aria-label="send to reverb bus" data-fmt="pct"></div>
+              </div>
+              <output class="vs-val">20%</output>
+            </div>
+            <div class="vslider off">
+              <span class="vs-lab">wet &middot; slot 3</span>
+              <div class="vs-body" style="--vsh:120px">
+                <div class="vs-track" style="--v:0"><i class="vs-fill"></i><b class="vs-thumb" style="bottom:0"></b>
+                  <input class="vs-input" type="range" min="0" max="100" value="0" disabled
+                    orient="vertical" aria-label="insert slot 3 wet"></div>
+              </div>
+              <output class="vs-val">empty</output>
+              <p class="nu-why" style="font:600 12px var(--sans);color:var(--faint)">&mdash; no effect seated in slot 3</p>
+            </div>
+          </div>
+        </div>
+        <div class="rail">
+          <p class="why"><b>This one control replaces every knob.</b> Label above, value
+          below, thick track, a thumb you could grab with a thumb. The cobalt fill is
+          <b>your setting</b>; the green strip beside it is <b>the engine, measured</b> —
+          two facts, two columns, never merged. A moving meter beside a still slider is the
+          page proving the sound is real.</p>
+          <p class="why">Sliders stack in a labeled column — a voice's strip reads top to
+          bottom: level first, then its three sends (genre, delay, reverb; the main send is
+          the level itself), then any insert wet. Vertical space is cheap. Pages may be
+          tall; they may not be wide.</p>
+          <p class="why">Keyboard: the invisible native range carries focus; arrow up is
+          more, arrow down is less. The focus ring is a 4px cobalt outline around the
+          track.</p>
+        </div>
       </div>
-      <p class="why">Two facts, two elements, never merged: the range is <b>your offset</b>
-      and nothing else writes it; the green bar is <b>the automation</b> — the gain actually
-      driving the channel, measured at the engine. A moving meter under a still fader is the
-      page proving the sound is real.</p>
     </div>
 
     <!-- chip -->
@@ -495,36 +661,35 @@ footer { margin-top: var(--s7); border-top: 1px solid var(--line);
       <h3>chip</h3>
       <div class="staterow">
         <div class="st"><p class="lab">rest</p><button class="chip" type="button" aria-pressed="false">Leipzig 1725</button></div>
-        <div class="st"><p class="lab">chosen</p><button class="chip" type="button" aria-pressed="true">Rome 600</button></div>
-        <div class="st"><p class="lab">refused</p><button class="chip" type="button" disabled>Chicago 1987</button></div>
+        <div class="st"><p class="lab">chosen</p><button class="chip" type="button" aria-pressed="true">Chicago 1987</button></div>
+        <div class="st"><p class="lab">refused</p><button class="chip" type="button" disabled>Rome 600</button></div>
       </div>
       <div class="staterow" id="chipRow">
-        <span class="lab">live &middot; pick a basis</span>
-        <button class="chip" type="button" aria-pressed="true">Rome 600</button>
+        <span class="lab" style="align-self:center">live &middot; pick a basis</span>
+        <button class="chip" type="button" aria-pressed="true">Chicago 1987</button>
         <button class="chip" type="button" aria-pressed="false">London 1570</button>
         <button class="chip" type="button" aria-pressed="false">Vienna 1725</button>
         <button class="chip" type="button" aria-pressed="false">New York 1964</button>
       </div>
       <p class="why">A chip is a <b>noun</b> — a place and a year, a genre, a kept melody.
-      Nouns don't blend, so chips are single-choice where they name a basis. Mono type: a
-      chip is data, not a sentence.</p>
+      Nouns don't blend, so chips are single-choice where they name a basis. The pill is the
+      one rounded shape in the system, reserved for nouns. Chosen = cobalt cap.</p>
     </div>
 
     <!-- tab row -->
     <div class="card">
       <h3>tab row</h3>
-      <div class="tabwrap"><div class="tabs" role="tablist" id="galTabs">
+      <div class="tabs" role="tablist" id="galTabs">
         <button class="tab" role="tab" aria-selected="true" type="button">&#9638; form</button>
         <button class="tab" role="tab" aria-selected="false" type="button">&#9672; performance</button>
-        <button class="tab" role="tab" aria-selected="false" type="button">&#9834; cantor</button>
-        <button class="tab" role="tab" aria-selected="false" type="button">&#9834; schola</button>
+        <button class="tab" role="tab" aria-selected="false" type="button">&#9834; tb303</button>
+        <button class="tab" role="tab" aria-selected="false" type="button">&#9834; drums</button>
         <button class="tab add" role="tab" aria-selected="false" type="button">+ line</button>
-        <button class="tab add" role="tab" aria-selected="false" type="button">+ bass</button>
-        <button class="tab add" role="tab" aria-selected="false" type="button">+ drums</button>
-      </div></div>
-      <p class="why">The band's strip: seated voices in serif, empty chairs as quiet mono
-      <b>+ adds</b> at the end of the row. The active tab is amber underlined — hand light,
-      because you chose it. The row scrolls in its own rail; switching tabs never moves
+        <button class="tab add" role="tab" aria-selected="false" type="button">+ pad</button>
+      </div>
+      <p class="why">The band's strip: seated voices as solid blocks, empty chairs as dashed
+      <b>+ adds</b> at the end. The active tab is a cobalt cap — hand paint, because you
+      chose it. The row <b>wraps</b>; it never scrolls sideways. Switching tabs never moves
       the page (the anchor law stands).</p>
     </div>
 
@@ -538,17 +703,17 @@ footer { margin-top: var(--s7); border-top: 1px solid var(--line);
         </div>
         <div class="st refusal">
           <button class="btn" type="button" disabled>+ effect</button>
-          <p class="nu-why">three is the limit on the record's chain</p>
+          <p class="nu-why">three inserts is the limit on a voice</p>
         </div>
         <div class="st refusal">
           <span class="sel"><select disabled aria-label="width"><option>default</option></select></span>
           <p class="nu-why">reaches no sound</p>
         </div>
       </div>
-      <p class="why">An unreachable control greys <b>with its reason printed</b> — one line,
-      faint, measured, riding the control as <span class="data">data-why</span> for gates
-      and screen readers alike. Greyed is not hidden: the control keeps its place and its
-      label. No tooltips, ever — a finger cannot hover.</p>
+      <p class="why">An unreachable control goes faint <b>with its reason printed</b> — one
+      line, measured, riding the control as <span class="data">data-why</span> for gates and
+      screen readers alike. Faint is not hidden: the control keeps its place, its label, and
+      its shape. No tooltips, ever — a finger cannot hover.</p>
     </div>
 
     <!-- data-live -->
@@ -556,16 +721,40 @@ footer { margin-top: var(--s7); border-top: 1px solid var(--line);
       <h3>[data-live] sentence</h3>
       <div class="statecol">
         <div class="st"><p class="lab">the playhead</p>
-          <p data-live="played"><span class="livedot beat"></span><span class="now">bar 3 of 8</span> &middot; head &middot; as it will play</p></div>
+          <p data-live="played"><span class="livedot beat"></span><span class="now">row 5 of 16</span> &middot; bar 2 &middot; as it will play</p></div>
         <div class="st"><p class="lab">an audition</p>
-          <p data-live="played"><span class="livedot"></span><span class="now">looping hook</span> &mdash; cantor</p></div>
+          <p data-live="played"><span class="livedot"></span><span class="now">looping hook</span> &mdash; tb303</p></div>
         <div class="st"><p class="lab">the standing refusal</p>
-          <p data-live="played">the record is playing &mdash; the score above is what you hear</p></div>
+          <p data-live="played">the record is playing &mdash; the grid below is what you hear</p></div>
       </div>
       <p class="why">The clock may write text <b>only</b> inside an element carrying
-      <span class="data">data-live</span>, and a live element never holds a control. Lamp
-      color marks the words that move. Everything else on the page is frozen while the
-      record plays — this sentence is the one thing that breathes.</p>
+      <span class="data">data-live</span>, and a live element never holds a control. Clock
+      red marks the words that move. Everything else on the page is frozen while the record
+      plays — this sentence is the one thing that breathes.</p>
+    </div>
+
+    <!-- vertical step grid -->
+    <div class="card wide">
+      <h3>step grid &middot; time flows down</h3>
+      <div class="gridside">
+        <div class="st">
+          <p class="lab">16 rows &middot; tap a cell &middot; the needle reads downward</p>
+          <div class="stepgrid" id="stepGrid" role="grid" aria-label="step grid, time top to bottom"></div>
+        </div>
+        <div class="rail">
+          <div class="st"><p class="lab">run it</p>
+            <button class="btn play" data-at="off" id="gridPlay" type="button"><span class="g">&#9654;</span>play</button></div>
+          <p class="stands" id="gridSay" data-live="played"></p>
+          <p class="why"><b>Top to bottom is always better than left to right.</b> Rows are
+          steps; columns are voices; the row under the needle wears the 4px clock ring and a
+          clock-tint number. A set cell is a cobalt cap — hand paint, because you tapped it.
+          The grid grows downward as the pattern grows; it never grows sideways past its
+          voices.</p>
+          <p class="why">Only the engraved score may run left to right — notation is the
+          one surface with a horizontal law of its own. Everything else in the app that
+          shows time (rolls, lanes, automation) reads like this grid: down.</p>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -590,15 +779,14 @@ footer { margin-top: var(--s7); border-top: 1px solid var(--line);
     <li><p><b>No tooltips.</b> A tooltip is information hidden from a finger. Anything worth
       saying is on the page; anything not worth the space is deleted.</p></li>
     <li><p><b>A sentence must carry state no control shows.</b> Otherwise it goes.
-      <span class="eg">looping hook &mdash; cantor &nbsp;&middot;&nbsp; riding &minus;3.2 dB seated</span></p></li>
+      <span class="eg">looping hook &mdash; tb303 &nbsp;&middot;&nbsp; riding &minus;3.2 dB seated</span></p></li>
   </ol>
 </section>
 
 <footer>
-  <p>Lampblack &middot; sketched 2026-08-26 against the shipped flat document
-  (test.stellate.app/nukernel). The document laws survive whole: one scroll, nothing hidden,
-  every control derived from fields.js, every light measured. This page is the paint, not
-  the furniture.</p>
+  <p>Enamel &middot; painted 2026-08-27, replacing Lampblack. The document laws survive
+  whole: one scroll, nothing hidden, every control derived from fields.js, every light
+  measured. New laws: time runs down, sliders stand up, and no page is wide.</p>
 </footer>
 
 </main>
@@ -608,45 +796,65 @@ footer { margin-top: var(--s7); border-top: 1px solid var(--line);
   "use strict";
   var reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  /* tri-state play: word = next verb, color = current state */
-  var WORD = { off: "▶ play", once: "↻ loop", loop: "■ stop" };
+  /* ---- tri-state play: word = next verb, color = current state ---- */
+  var WORD = { off: ["▶", "play"], once: ["↻", "loop"], loop: ["■", "stop"] };
   var NEXT = { off: "once", once: "loop", loop: "off" };
-  function wire(btn, say) {
+  function wirePlay(btn, onchange) {
     btn.addEventListener("click", function () {
       var at = NEXT[btn.dataset.at];
       btn.dataset.at = at;
-      var w = WORD[at].split(" ");
+      var w = WORD[at];
       btn.innerHTML = '<span class="g">' + w[0] + "</span>" + w[1];
-      if (say) say.textContent =
-        at === "loop" ? "looping hook — cantor"
-        : at === "once" ? "sounding — cantor" : "";
+      if (onchange) onchange(at);
     });
   }
-  wire(document.getElementById("heroPlay"), null);
-  wire(document.getElementById("galPlay"), document.getElementById("galPlaySay"));
-
-  /* faders: the range is your offset; the output prints it */
-  function db(v) { var n = (+v).toFixed(1); return (v > 0 ? "+" : "") + n + " dB"; }
-  [["heroFader", "heroDb"], ["galFader", "galDb"]].forEach(function (p) {
-    var r = document.getElementById(p[0]), o = document.getElementById(p[1]);
-    r.addEventListener("input", function () { o.textContent = db(r.value); });
+  wirePlay(document.getElementById("heroPlay"), null);
+  wirePlay(document.getElementById("galPlay"), function (at) {
+    document.getElementById("galPlaySay").textContent =
+      at === "loop" ? "looping hook — tb303" : at === "once" ? "sounding — tb303" : "";
   });
 
-  /* the meter is the automation: a slow ride, independent of the fader */
+  /* ---- vertical sliders: paint --v from the native range; print the value ---- */
+  function fmt(input) {
+    var v = +input.value;
+    if (input.dataset.fmt === "db") return (v > 0 ? "+" : "") + v.toFixed(1) + " dB";
+    if (input.dataset.fmt === "pct") return Math.round(v) + "%";
+    return String(v);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".vslider"), function (w) {
+    var input = w.querySelector(".vs-input");
+    var out = w.querySelector(".vs-val");
+    if (!input || input.disabled) return;
+    function paint() {
+      var min = +input.min, max = +input.max;
+      w.style.setProperty("--v", ((+input.value - min) / (max - min)).toFixed(4));
+      if (out && input.dataset.fmt) out.textContent = fmt(input);
+    }
+    input.addEventListener("input", paint);
+    paint();
+  });
+  /* the hero master prints dB itself */
+  var heroFader = document.getElementById("heroFader");
+  heroFader.addEventListener("input", function () {
+    var v = +heroFader.value;
+    document.getElementById("heroDb").textContent = (v > 0 ? "+" : "") + v.toFixed(1) + " dB";
+  });
+
+  /* ---- meters are the engine: a slow ride, independent of any slider ---- */
   if (!reduced) {
     var t = 0;
+    var strips = document.querySelectorAll(".anim-meter");
     setInterval(function () {
       t += 0.35;
-      var a = 55 + Math.sin(t) * 14 + Math.sin(t * 2.7) * 6;
-      var b = 60 + Math.sin(t * 0.8 + 2) * 16 + Math.sin(t * 3.1) * 5;
-      document.getElementById("heroMeter").style.width = a.toFixed(0) + "%";
-      document.getElementById("galMeter").style.width = b.toFixed(0) + "%";
-      var w = document.getElementById("galWord");
-      w.textContent = "riding " + ((b - 76) / 5).toFixed(1).replace("-", "−") + " dB seated";
+      var h = document.getElementById("heroMeter");
+      h.style.height = (55 + Math.sin(t) * 14 + Math.sin(t * 2.7) * 6).toFixed(0) + "%";
+      Array.prototype.forEach.call(strips, function (m, i) {
+        m.style.height = (48 + Math.sin(t * 0.9 + i * 1.7) * 16 + Math.sin(t * 3.1 + i) * 5).toFixed(0) + "%";
+      });
     }, 240);
   }
 
-  /* chips: one basis at a time */
+  /* ---- chips: one basis at a time ---- */
   var row = document.getElementById("chipRow");
   row.addEventListener("click", function (e) {
     var c = e.target.closest(".chip"); if (!c || c.disabled) return;
@@ -654,12 +862,71 @@ footer { margin-top: var(--s7); border-top: 1px solid var(--line);
     c.setAttribute("aria-pressed", "true");
   });
 
-  /* tabs */
+  /* ---- tabs ---- */
   var tabs = document.getElementById("galTabs");
   tabs.addEventListener("click", function (e) {
-    var t = e.target.closest(".tab"); if (!t || t.classList.contains("add")) return;
+    var t2 = e.target.closest(".tab"); if (!t2 || t2.classList.contains("add")) return;
     tabs.querySelectorAll(".tab").forEach(function (x) { x.setAttribute("aria-selected", "false"); });
-    t.setAttribute("aria-selected", "true");
+    t2.setAttribute("aria-selected", "true");
+  });
+
+  /* ---- the vertical step grid: rows are steps, the needle reads down ---- */
+  var VOICES = ["kick", "snare", "hat", "bass"];
+  var PATTERN = [
+    [1,0,1,0], [0,0,1,0], [0,0,1,1], [0,0,1,0],
+    [1,1,1,0], [0,0,1,0], [0,0,1,1], [0,0,0,0],
+    [1,0,1,1], [0,0,1,0], [0,0,1,0], [0,1,1,0],
+    [1,1,1,0], [0,0,1,1], [0,1,1,0], [0,0,1,1]
+  ];
+  var grid = document.getElementById("stepGrid");
+  var html = ['<span class="h" aria-hidden="true">row</span>'];
+  VOICES.forEach(function (v) { html.push('<span class="h">' + v + "</span>"); });
+  PATTERN.forEach(function (r, i) {
+    html.push('<span class="rowwrap' + (i === 4 ? " now" : "") + '" role="row">');
+    html.push('<span class="n' + (i % 4 === 0 ? " beat" : "") + '">' + (i + 1) + "</span>");
+    r.forEach(function (on, j) {
+      html.push('<button type="button" class="cell' + (on ? " on" : "") +
+        '" role="gridcell" aria-pressed="' + (on ? "true" : "false") +
+        '" aria-label="' + VOICES[j] + " row " + (i + 1) + '"></button>');
+    });
+    html.push("</span>");
+  });
+  grid.innerHTML = html.join("");
+  grid.addEventListener("click", function (e) {
+    var c = e.target.closest(".cell"); if (!c) return;
+    var on = c.classList.toggle("on");
+    c.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+
+  /* the needle: advances only while the grid's own door is open */
+  var gridRow = 4, gridTimer = null;
+  var gridSay = document.getElementById("gridSay");
+  function needle(to) {
+    var rows = grid.querySelectorAll(".rowwrap");
+    rows[gridRow].classList.remove("now");
+    gridRow = to;
+    rows[gridRow].classList.add("now");
+  }
+  wirePlay(document.getElementById("gridPlay"), function (at) {
+    if (gridTimer) { clearInterval(gridTimer); gridTimer = null; }
+    if (at === "off") { gridSay.textContent = ""; needle(4); return; }
+    gridSay.innerHTML = '<span class="now">row ' + (gridRow + 1) + " of 16</span> · " +
+      (at === "loop" ? "looping" : "one pass");
+    gridTimer = setInterval(function () {
+      var nxt = gridRow + 1;
+      if (nxt >= PATTERN.length) {
+        if (document.getElementById("gridPlay").dataset.at === "loop") nxt = 0;
+        else {
+          clearInterval(gridTimer); gridTimer = null;
+          var b = document.getElementById("gridPlay");
+          b.dataset.at = "off"; b.innerHTML = '<span class="g">▶</span>play';
+          gridSay.textContent = ""; needle(4); return;
+        }
+      }
+      needle(nxt);
+      gridSay.innerHTML = '<span class="now">row ' + (gridRow + 1) + " of 16</span> · " +
+        (document.getElementById("gridPlay").dataset.at === "loop" ? "looping" : "one pass");
+    }, reduced ? 480 : 240);
   });
 })();
 </script>
