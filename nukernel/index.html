@@ -146,25 +146,71 @@
   <!-- "room", NOT "volume", 2026-08-27 — FUTURE.md §5: the master strip
        already teaches "the room, not the record", and this slider is the same
        store (ui/state.js VOLSTORE) wearing the same fact.
-       THE WORD IS NOW A `.nu-vh` SPAN AND IT IS STILL THE WORD. With four
-       controls in a strip that may not wrap, 320px cannot show all four names
-       and keep the slider at its 4em floor (the arithmetic is in nu.css). So
-       the word is clipped on a phone and printed from 430px up — one rule,
-       measured, in nu.css — and it is in the DOM at every width: a screen
-       reader names this slider "room", and with the stylesheet off the strip
-       reads "play rewrite take room". Same move `.nu-tf` already makes for the
-       transform buttons: "the word is still in the DOM". -->
-  <label for="vol"><span class="nu-vh">room </span><input type="range" id="vol" min="0" max="100" step="1" value="100"></label>
+
+       ===== AND THE WORD CAME OFF THE PAGE, 2026-08-28 ====================
+       Paul: *"Get rid of the word room before the volume control."* The label
+       is DELETED, not hidden further, and the two paragraphs it replaces are
+       rewritten here rather than dropped, because between them they are the
+       whole reason this line looks the way it does now.
+
+       WHAT STOOD HERE: "THE WORD IS NOW A `.nu-vh` SPAN AND IT IS STILL THE
+       WORD. With four controls in a strip that may not wrap, 320px cannot show
+       all four names and keep the slider at its 4em floor (the arithmetic is
+       in nu.css). So the word is clipped on a phone and printed from 430px up
+       — one rule, measured, in nu.css — and it is in the DOM at every width."
+       That was a compromise between a name and a floor, and it had already
+       decided in the slider's favour at every phone width; Paul has now
+       decided it at every width, which retires the breakpoint as well as the
+       span. nu.css's `@media (min-width: 430px)` un-clip goes with it: a rule
+       that un-hides an element nobody ships is a rule about nothing.
+
+       THE ACCESSIBLE NAME DOES NOT GO ANYWHERE, and this is the half of the
+       old paragraph that survives intact. A range with no name is a control a
+       screen reader announces as "slider, 100" — which of the four things on
+       this page that have a level? — so the word moves onto the input as
+       `aria-label`. There is no `<label>` element left to hold it: a <label>
+       with no text is a label that labels nothing, and pointing `for="vol"` at
+       an empty box would have been the second owner of a name that the
+       attribute already states once.
+
+       WHAT IS LOST, SAID OUT LOUD: with the stylesheet off this strip now
+       reads "▶ ⚄ rewrite 1 ↻" and the fourth control is a bare slider. That is
+       a real cost and it is Paul's to spend — the sentence "room only — not
+       saved" still stands on the board's master strip (ui/engineer.js), which
+       is now the ONE place on the page where the fact that this is the room
+       and not the record is written in words. -->
+  <input type="range" id="vol" min="0" max="100" step="1" value="100" aria-label="room">
 </div>
-<!-- WHICH ENGINE THE EAR GOT, AND WHETHER IT STARVED. It lives OUTSIDE #app on
-     purpose: draw() empties #app on every edit, and a readout that is destroyed
-     and rebuilt once a keystroke is a readout with no memory. The sentence is
+<!-- ===== THE ENGINE READOUT MOVED INTO THE LOGGER, 2026-08-28 ============
+     Paul: *"Get rid of the media (mediaEl) held plays offline etc section on
+     the top; move that info to the logger."*
+
+     WHAT STOOD HERE was `<p id="engine">`, and its own note said: "WHICH ENGINE
+     THE EAR GOT, AND WHETHER IT STARVED. It lives OUTSIDE #app on purpose:
+     draw() empties #app on every edit, and a readout that is destroyed and
+     rebuilt once a keystroke is a readout with no memory. The sentence is
      written by audio/live.js engineLine(), not here — the wording is a claim
      about the engine and it has one owner. Blank until the engine answers.
      UNDER the bar and not IN it (integrator, 08-shell R2 x 01-crackle §1): the
      bar is a promise about a height, and this sentence grows to two lines on a
-     host that sends no COOP/COEP. -->
-<p id="engine"></p>
+     host that sends no COOP/COEP."
+
+     EVERY CLAUSE OF THAT IS STILL OBEYED and one of them is obeyed better. The
+     sentence still has exactly one owner — `engineLine()` in audio/live.js,
+     untouched, and ui/eight.js still does nothing but ask it and carry the
+     answer. It is still outside #app, because the gutter is. What ENDED it here
+     was the last clause: the paragraph is a variable-height block of machine
+     prose pinned under the transport, so nu.css had to reserve `2lh` of blank
+     for it at every width forever — 36px of a phone spent, permanently, on a
+     line that says nothing until you press play and repeats itself for the rest
+     of the record. In a log it costs nothing when there is nothing to say, it
+     keeps its predecessors instead of overwriting them (a dropout at 0:20 is
+     still readable at 4:00, which the paragraph could never manage), and it
+     stands beside the edits it is a consequence of.
+
+     ITS DESTINATION IS ui/eight.js `logEngine`, which is the same throttled
+     reader `paintEngine` was — one call a second, and a line only when the
+     sentence actually changes. -->
 
 <!-- A GLOBE YOU TURN AND A SLIDER FOR WHEN (Paul, 2026-08-24: "a slider for
      time and a world map on top that shows where the genres are happening! I
@@ -274,10 +320,37 @@
      navigates, exactly as the row did. DOM order is reading order is tab
      order.
 
-     IT IS A CONTROL SURFACE, so it is outside `#app` (draw() empties panels;
-     see #engine's note above) and outside every `[data-live]` subtree — the
-     clock may not write a single character in here, and `window.__eightFrozen`
-     never sees it.
+     IT IS A CONTROL SURFACE, so it is outside `#app` (draw() empties panels)
+     and `window.__eightFrozen` never sees it.
+
+     ===== ...AND IT GREW A FOOT THE CLOCK MAY WRITE IN, 2026-08-28 =========
+     This sentence used to end "and outside every `[data-live]` subtree — the
+     clock may not write a single character in here". It is REWRITTEN rather
+     than deleted because it is still true of everything it was written about,
+     and what is true of the rest is exactly what makes the exception safe.
+
+     Paul: *"Add a logger on the bottom right. … Make the logger also have a
+     countdown for when I change things, showing how many beats before they
+     take effect."* A countdown is the clock speaking — nothing else can say
+     how many beats are left — so it has to be written from the transport feed,
+     and it has to be down here, because this is where the logger is.
+
+     THE LAW THAT ALLOWS IT IS THE LAW ITSELF, unchanged (ui/eight.js, WHAT THE
+     CLOCK MAY WRITE): *"the transport feed may only write inside an element
+     carrying `data-live`, OR OUTSIDE #app ENTIRELY."* The gutter is outside
+     #app — that is the clause `#engine` lived under for its whole life, four
+     lines under the transport, and the readout that was there is IN here now.
+     So the foot is legal twice over and it declares itself anyway: ui/eight.js
+     builds `.nu-traycut`, then a `[data-live="pending"]` box that holds the
+     countdown AND NO CONTROL, then the logger's button. The badge and the
+     open/close button are controls and sit OUTSIDE that box, which is the same
+     division the score deck makes between its live paper and its two view
+     buttons.
+     THE LEVELS ARE UNTOUCHED. `.nu-trayhead` and `.nu-traylist` — `↑` and the
+     set of siblings you are among — are still written by a hand and only by a
+     hand: `paintTray` is called from a click, from `showTab`, from `draw` and
+     from `window.__eightTray`, and from nowhere else. Nothing about the stripe
+     repaints on a beat.
 
      THE NINE NAMES ARE STILL NOT TYPED HERE. `TABS` in ui/eight.js is their
      one owner and `trayRow`/`paintTray` fill this; the empty <nav> ships so
@@ -488,5 +561,36 @@
      and `role="tooltip"` with nothing focusable in it, because it is an
      explanation and not a control. -->
 <div id="nu-say" role="tooltip" class="nu-say" hidden></div>
+
+<!-- THE LOGGER'S OWN PAGE (Paul, 2026-08-28: "Add a logger on the bottom
+     right. Log actions."). The BUTTON and the BADGE are in the gutter's foot,
+     built by ui/eight.js beside the marks they belong with; this is the sheet
+     that opens when you press it, and it ships here for the three reasons
+     `#nu-say` ships here, one line above:
+       · it is OUTSIDE #app, so draw() cannot destroy the log you are reading
+         in the middle of reading it, and `window.__eightFrozen` never sees it;
+       · it is `position: fixed` (nu.css), so opening it is POSITIONING and
+         never insertion — the page under it does not move by a pixel, which is
+         the whole difference between a panel and a layout bug on this page;
+       · it is LAST in <body>, so with the stylesheet off it reads as what it
+         is: an appendix at the end of the document, after the nine panels,
+         rather than a block wedged between the transport and the record.
+
+     `hidden` WHILE SHUT, which is not decoration: the text diet counts words a
+     reader can see, and a log is the one surface here that grows without
+     anybody writing prose. Shut, it is not on the page and is not counted;
+     open, it is counted honestly.
+
+     `role="log"` AND NOT `role="dialog"`. It traps no focus and takes nothing
+     over — the record goes on playing behind it, the transport is still one
+     press away, and Escape closes it exactly as it closes the explainer. What
+     it is, is a running list of things that already happened, and that is the
+     one role in ARIA that means precisely that.
+     `aria-live="off"`: role="log" would otherwise announce every engine
+     sentence to a screen reader for the whole length of the record, which is
+     the machine talking over the music. It is READ when it is opened, and it
+     is opened by a hand. -->
+<div id="nu-log" class="nu-log" role="log" aria-live="off"
+     aria-label="log" hidden></div>
 </body>
 </html>

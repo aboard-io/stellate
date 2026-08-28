@@ -12,7 +12,7 @@
 // channel build), which also made the loader untestable in node.
 import { NuSong, GENRES, blank, emptyBox, DEFAULT, masterIsDefault,
          busesIsDefault, GROOVELABEL, SWINGLABEL, METERLABEL, INSTRCHOICES,
-         POOLCHAIRS } from "./deps.js";
+         POOLCHAIRS, BASSCHOICES, poolTakes, PARTNAMES } from "./deps.js";
 
 export const DEFAULT_BPM = 126, NBOXES = 4;
 
@@ -112,6 +112,16 @@ export let METER = null;
 // recompiles on "pool" (the register home is decided per instrument), the
 // bounce re-cuts the carrier, and song.js migrates the retired per-layer
 // `instr` overrides up to it.
+//
+// IT IS A FACT THE PAGE CAN NOW SAY AND UNDO (2026-08-28). It could not, and
+// the cost was measured twice in one day: a chair whose menu was silently
+// outranked (ui/derive.js, THE DROPDOWN WAS NOT BROKEN) and a bass with no
+// control at all (audio/plan.js seats a bass event at `POOL.bass` or nothing).
+// `poolBand` / `poolSay` below are the readout, `hirePoolChair` /
+// `firePoolChair` / `clearPool` are the writers, and `adoptSong` announces a
+// band that arrives with a document. What is NOT here is a second store: this
+// is still one map on the song, cleared by every entrance, and the surface is
+// four pure functions over it.
 export let POOL = null;
 
 // …AND THE SONG'S OWN GENRES (2026-08-16, "a genre you invented is a genre the
@@ -211,11 +221,53 @@ export function setMeter(v) {
 export function setPoolChair(chair, id) {
   if (!POOLCHAIRS.includes(chair)) return;
   const p = { ...(POOL || {}) };
-  if (id != null && Object.prototype.hasOwnProperty.call(INSTRCHOICES, String(id)))
-    p[chair] = id;
+  // ONE LAW FOR WHAT A CHAIR MAY BE HANDED, and it is fields.js `poolTakes`
+  // rather than a second reading of INSTRCHOICES here — because the bass
+  // chair's list is NARROWER than the pool's (fields.js BASSCHOICES) and a
+  // live edit and a loaded file must not disagree about it. `glockenspiel` in
+  // the bass chair was accepted by this line until 2026-08-28.
+  if (poolTakes(chair, id)) p[chair] = id;
   else delete p[chair];
   POOL = Object.keys(p).length ? p : null;
 }
+
+/* ---------- THE BAND, SAID OUT LOUD -------------------------------------
+   (Paul, 2026-08-28: "Fix the pool thing too.")
+
+   THE POOL WAS A SONG FACT WITH NO READOUT AND NO CONTROL. It outranked
+   what a chair played, it survived nothing and announced nothing, and its
+   one writer — ui/band.js — is a module no page has loaded since band.html
+   became index.html (measured 2026-08-28: the shipped page fetches
+   ui/state.js and ui/derive.js and never ui/band.js). So a pool could only
+   ever ARRIVE — carried by a document off the desktop, or lifted out of a
+   pre-pool save by song.js's `instr` migration — and once it had arrived
+   there was nothing on the page that said so and nothing that could undo it.
+   That is the refusal law owed to a VALUE: a control that lost has to say it
+   lost, and a band that was hired has to be firable.
+
+   These four are the whole surface. `poolBand()` is the data — which chairs
+   are overridden and by what — `poolSay()` is that data as one sentence,
+   and `hirePoolChair` / `firePoolChair` / `clearPool` are the writers a tap
+   calls. The writers COMMIT (setPoolChair above stays a pure normalizer):
+   one tap is one edit, the transport recompiles on "pool", and a surface
+   that has to remember to commit afterwards is a surface that will forget. */
+export const poolBand = () => POOLCHAIRS
+  .filter(c => POOL && POOL[c])
+  .map(c => ({ chair: c, chairLabel: PARTNAMES[c] || c, id: POOL[c],
+               label: INSTRCHOICES[POOL[c]] || POOL[c] }));
+// the sentence, or null when the record's chairs are all playing their own —
+// null and not "" so a caller can mount it with one `if`
+export const poolSay = () => {
+  const b = poolBand();
+  return b.length ? "the band hired for this record: " +
+    b.map(c => c.chairLabel + " \u2014 " + c.label).join(", ") : null;
+};
+// ...and what the bass chair may be handed, which is the one chair whose
+// instrument the document cannot carry (fields.js BASSCHOICES says why)
+export const bassChoices = () => ({ ...BASSCHOICES });
+export function hirePoolChair(chair, id) { setPoolChair(chair, id); commit("pool"); }
+export function firePoolChair(chair) { setPoolChair(chair, null); commit("pool"); }
+export function clearPool() { POOL = null; commit("pool"); }
 
 export const curSection = () => SONG[Math.min(viewSec, SONG.length - 1)];
 
@@ -427,7 +479,22 @@ export function adoptSong(raw, reason) {
   GROOVE = s.groove;                   // ...and the song's groove, same law
   SWING = s.swing;                     // ...and its swing, the same move made twice
   METER = s.meter;                     // ...and how it counts, the third of the three
-  POOL = s.pool;                       // ...and the band, hired for the record
+  /* ...AND THE BAND, WHICH IS HIRED FOR THE RECORD AND NOT FOR THE BOX
+     (2026-08-28). `s.pool` is null for every document that does not carry one
+     — validateSong normalises absent to null, exactly as it does for the
+     master bus — so this line is also the CLEAR, and it is the same seam and
+     the same argument as `MIXER` eight lines up: picking a place and a year
+     composes a NEW RECORD, and a band hired for the last one has no claim on
+     it. A plain boot already starts with none, and a page where the atlas
+     kept the band while the desk was zeroed would be a page with two laws.
+     The counter-case — a hand that deliberately hires a player and then goes
+     looking for a genre to hear them in — is answered by making the band
+     SAYABLE (`poolSay` above) rather than by making it sticky: a silent
+     inheritance is not that hand's intent, it is only what it looks like.
+     Measured on the shipped page 2026-08-28, with `{lead: overdrive_guitar,
+     bass: slap_bass}` in force: Enter on the Faisalabad mark and a full load
+     of `#at=Faisalabad&y=1988` both land with `POOL === null`. */
+  POOL = s.pool;
   viewSec = 0; loopOnly = null; pendingStart = null;
   if (s.bpm != null) bpm = s.bpm;
   // s.vol is deliberately NOT adopted — volume is the device's (VOLSTORE above)
@@ -440,6 +507,28 @@ export function adoptSong(raw, reason) {
       (res.notes.length > 1 ? "s" : "") + " named a genre this song does not " +
       "carry — " + res.notes.map(n => n.got + " → " + n.chose).join(", "),
       sticky: true });
+  /* ...AND A BAND THAT ARRIVED WITH THE DOCUMENT IS ANNOUNCED, because the
+     one thing the pool must never do again is steer a chair quietly. A
+     document off the desktop can carry a `pool`, and song.js's `instr`
+     migration LIFTS one out of a pre-pool save, so "the page cannot write
+     one" is not the same as "one cannot arrive". Sticky, like the genre note
+     above and for the same reason: it is a fact about the record you are now
+     holding, not a flash. `poolSay()` is null on every record that hires
+     nobody, which is every record this page composes.
+
+     AND THE HONEST PART: THE "status" BUS HAS NO SUBSCRIBER ON THIS PAGE
+     TODAY. Measured 2026-08-28 — `readout.js` (named in the bus vocabulary
+     above) is not loaded by index.html, and grep finds no `on("status")`
+     anywhere in ui/. So this emit currently lands where the genre note four
+     lines up lands, which is nowhere, and that is a gap in the VIEW and not a
+     reason to publish the fact from somewhere else: the store publishes, the
+     view draws, and the day one line subscribes BOTH notes appear. It is
+     written down here rather than left to be rediscovered, and
+     test/pool.browser.js prints whether the sentence has reached the rendered
+     page rather than asserting that it has. */
+  if (poolSay())
+    emit("status", { text: poolSay() + " \u2014 they outrank what those chairs " +
+      "would otherwise play; clear them to hear the record's own", sticky: true });
   emit("song", { reason: reason || "load" });
   save();
   return true;

@@ -150,19 +150,48 @@ export const GLYPH = {
   /* THE TRANSPORT. `play` and `stop` are ONE button in two states and the word
      on it is still "the NEXT tap" (ideal/composer.html annotation 5) — the
      mark moves with the word, so ■ means "stop it" exactly as the word did.
-     `take` is a die because a take IS the dice: the transport's own sentence
-     for it is "a take is a seed — the hand moves, no chosen note does".
-     `rewrite` is the repeat mark, and it is the one glyph on the page with a
-     number BESIDE rather than INSIDE it — `#reading` is a separate <b> and
-     stays exactly where it was. */
+
+     ===== THE TWO MARKS WERE ON THE WRONG BUTTONS, 2026-08-28 ==============
+     Paul: *"At the very top, switch the seed and dice icons — wrong icons for
+     what they do."* They are swapped here, in the one table, and the argument
+     this paragraph used to make is kept beside its correction because the
+     argument was RIGHT and it was pointed at the wrong control.
+
+     WHAT IT SAID: "`take` is a die because a take IS the dice: the transport's
+     own sentence for it is 'a take is a seed — the hand moves, no chosen note
+     does'. `rewrite` is the repeat mark." Every clause of that is true of the
+     WORD "dice" and false of the button it was painted on:
+
+       · REWRITE IS THE THROW. It bumps the atlas's seed and composes the
+         record again from the same anchor — `genreToDocument(gk, seed)` — so
+         every decision in the document is rolled fresh: other motifs, other
+         changes, another band. That is a throw of the dice, and it is the one
+         gesture on this page where a number you cannot predict decides what
+         the record IS. ⚄.
+       · TAKE IS THE RETAKE. It bumps `DOC.performance.take`, which "reaches
+         the engine and not the model — a take cannot move a DECISION": the
+         same record, the same notes, the same band, played round again by a
+         hand that lands differently. That is a second pass at a fixed thing,
+         which is what ↻ has meant since it was a repeat mark on a stave. ↻.
+
+     Said the shortest way: the dice change WHAT is played, the cycle plays the
+     SAME thing again — and the page had it exactly backwards, so a reader
+     learning the strip from its pictures learned the two verbs the wrong way
+     round. The words, the sentences and the two `aria-label`s did not move an
+     inch; only the pictures did, which is the whole point of the marks and
+     their words being one row in one table.
+
+     `rewrite` is still the one glyph on the page with a number BESIDE rather
+     than INSIDE it — `#reading` is a separate <b> and stays exactly where it
+     was, and ui/eight.js still hand-paints that button around it. */
   act: {
     play:    { g: "▶", w: "play",
                s: "play the record from the top" },
     stop:    { g: "■", w: "stop",
                s: "stop the record" },
-    rewrite: { g: "↻", w: "rewrite",
+    rewrite: { g: "⚄", w: "rewrite",
                s: "write the record again from the same place, on a new seed" },
-    take:    { g: "⚄", w: "take",
+    take:    { g: "↻", w: "take",
                s: "the same record, played again — a new roll of the hand's dice" },
   },
 
@@ -192,6 +221,87 @@ export const GLYPH = {
      Sans Symbols 2) so the two never read as two different arrows. */
   nav: {
     up: { g: "\u2191", w: "up" },
+  },
+
+  /* THE FOOT OF THE GUTTER — THE LOGGER (2026-08-28). Paul: *"Add a logger on
+     the bottom right. Log actions. … Badge the logger with the number of lines
+     it holds."*
+
+     `¶` AND NOT A FOURTH BOX OF RULES. The page already spends three marks on
+     stacked lines and every one of them means something else: ☰ is the band
+     (three rules, one per player), ▤ is ruled paper (the staff), ▥ is the roll.
+     A fourth box of rules in the same 47px column would be the drift this file
+     exists to stop — four pictures nobody could tell apart, all of them "lines".
+     The pilcrow is the only mark in common type that means LINES OF WRITING
+     rather than lines of music or lines of players: it is the typographer's
+     "a new entry begins here", which is exactly what one log line is.
+     IT IS ALSO THE SAFEST MARK IN THE TABLE. `¶` is U+00B6 — Latin-1, in every
+     face that can draw this page's own text, so it is the one glyph here that
+     cannot be tofu even before the `system-ui, Segoe UI Symbol, Noto Sans
+     Symbols 2` stack gets a turn.
+
+     THE COUNT IS THE `num` COLUMN, which is the gutter's own idiom and not a
+     new one ("the mark says the KIND, the digit says WHICH" — a voice tab is
+     ♪ over 2). Here the digit says HOW MANY, drawn by the same `.nu-n` span in
+     the same place, tinted by nu.css so it reads as a badge rather than as an
+     index. Nothing new is spelled. */
+  log: { g: "¶", w: "log",
+         s: "what the box has done — every change you made, newest first, and "
+          + "what the engine says about the sound" },
+
+  /* THE SECTIONS, THE VOICES AND THE TEMPO, AS LEVELS OF THE GUTTER
+     (2026-08-28). Paul, in one batch: *"Make the sections into nav items with
+     the ability to add them and remove them and recharacterize and move them
+     up and down"*, *"Make a new voice section for all voices"*, *"When I'm in
+     tempo, move the tempo nav to the right nav."*
+
+     NOT ONE NEW PICTURE WAS INVENTED FOR THE OPERATIONS. Every mark below is
+     either a glyph this table already ships or a PAIR of them, concatenated
+     the way `motifOpsTrayItems` already concatenates a transform's two-glyph
+     face: the SUBJECT first, then what is being done to it. So `▦↑`
+     is "this section, upward" and `▦×` is "this section, gone" —
+     read left to right, in the same order the words are said. The alternative
+     was three more arrows in a table that already spends four marks on arrows
+     (↑ up, ⇩ export, ⇅ mix, ↓ slower), which is the drift
+     this file exists to stop.
+
+     × IS U+00D7, THE MULTIPLICATION SIGN — Latin-1, like ¶ above, so
+     it is one of the two marks here that cannot be tofu in any face that can
+     draw this page's own text. It is NOT the letter x and it is not ✕:
+     a remove button is the one control in the gutter that must never be
+     mistaken for a letter of somebody's section name.
+
+     THE THREE FACETS OF A VOICE are Paul's own three sentences about what a
+     voice IS ("Instrument voice with settings from the mixer / What it plays,
+     register, material / Per-section settings"), so they are three marks and
+     not four:
+       ◍  the driver seen end-on — what this voice IS and what is on it,
+             which since today includes the strip that used to be in the mixer
+       ♫  two notes: what it PLAYS — its part, its register, its default
+       ▦  the sections again, because "per-section" is the form seen from
+             inside one player, and the same fact wears the same mark. */
+  sec: {
+    list: { g: "\u25a6", w: "sections",
+            s: "every section of the record, by name — tap one for its own questions" },
+    one:  { g: "\u25a6", w: "section" },
+    add:  { g: "+\u25a6", w: "+ section",
+            s: "another section, added after the one you are in" },
+    up:   { g: "\u25a6\u2191", w: "move up",
+            s: "this section trades places with the one before it" },
+    down: { g: "\u25a6\u2193", w: "move down",
+            s: "this section trades places with the one after it" },
+    drop: { g: "\u25a6\u00d7", w: "remove",
+            s: "this section leaves the record, and every word keyed to it goes with it" },
+  },
+
+  /* WHAT A VOICE IS, IN THREE FACETS (see the paragraph above). */
+  facet: {
+    inst:  { g: "\u25cd", w: "instrument",
+             s: "what this voice is, what is on it, and where it sits — the whole strip" },
+    plays: { g: "\u266b", w: "what it plays",
+             s: "its part, its register, when it comes in, and the motif it reads by default" },
+    sec:   { g: "\u25a6", w: "per-section",
+             s: "what this voice reads and does, section by section" },
   },
 
   /* THE DECK'S TWO VIEWS, DELIBERATELY A PAIR: one box of rules laid the way
@@ -229,8 +339,31 @@ export const sayVoice = (name, kind, n, of) =>
    leaving, because "up" on its own is the one label that cannot say what it
    does. It is a function and not a table row for the reason `sayVoice` is:
    only the caller knows which level is open. */
-export const sayUp = (parent) =>
-  "up \u2014 out of " + parent + ", back to the nine tabs";
+/* ...AND WHERE IT GOES IS AN ARGUMENT NOW (2026-08-28). The gutter grew a
+   third depth — root, the motif bank, this motif's operations — the day Paul
+   asked for it: *"When I'm in a motif, the motif operations should be the
+   right nav elements on the view. The up arrow to take me home should take me
+   back to the motif picker."* So "back to the nine tabs" stopped being true of
+   every `↑` and became the DEFAULT of one that is not told otherwise. The verb
+   is still "up", one verb at every depth; what varies is the clause, and the
+   clause is the whole reason this is a function. */
+export const sayUp = (parent, back) =>
+  "up \u2014 out of " + parent + ", back to " + (back || "the nine tabs");
+
+/* ...AND WHAT THE LOGGER'S MARK SAYS, WHICH IS HOW MUCH IS IN IT (2026-08-28).
+   Paul: *"Badge the logger with the number of lines it holds."* The badge is
+   the digit; this is the same number said in words, because a badge is a
+   picture and `aria-label` may not be one. It is a function and not a table
+   row for the reason `sayUp` is: only the caller knows the count.
+
+   AND THE RESTING STATE IS SAID, NOT DRAWN AS A ZERO. A gutter mark wearing a
+   `0` is a control announcing that it has nothing — furniture that costs a
+   glance every time your eye goes down the stripe. So the badge is ABSENT at
+   nought (ui/eight.js passes `num: null`) and the NAME carries the fact for
+   anyone who asks: "log — nothing yet". */
+export const sayLog = (n) =>
+  n ? "log \u2014 " + n + " line" + (n === 1 ? "" : "s")
+    : "log \u2014 nothing yet";
 
 /* ===== THE BUTTON ========================================================
    ONE SPELLING, FIVE ROWS. Every strip of tabs on this page is already "a
@@ -279,16 +412,51 @@ export function icon(opts) {
    always short-circuited when the wrapper is already the right tag and that
    test is kept here, so a tab switch still writes two attributes and nothing
    else on eight of the nine buttons. */
+/* ...AND A MARK THAT CANNOT BE PRESSED SAYS WHY, ON ITSELF (2026-08-28).
+   The gutter grew a level of ACTIONS the day the tempo operations moved into
+   it, and an action is the one kind of mark that can be impossible: there is
+   no bpm below 40, no section above the first, no way to remove the only
+   section a record has. The page's standing law is that a refusal carries a
+   MEASURED reason and that the reason is never silent — ui/selects.js throws
+   on a grey option with no `why`, and `tempoRow` (whose buttons these now are)
+   spelled it exactly this way before the row moved:
+
+     · `disabled` + `aria-disabled`, so the browser refuses the press;
+     · `data-why`, so a gate reads the reason back off the RENDERED artifact
+       rather than off a spec (test the artifact, this box's own law);
+     · the reason JOINED TO THE ACCESSIBLE NAME, because a screen reader that
+       announces "half the tempo, dimmed" and nothing else is the silent grey
+       in another medium.
+
+   It is EXTRACTED here rather than copied into ui/eight.js: this file is the
+   one owner of what a gutter button is, and `tempoRow`'s four lines were the
+   fifth spelling that owning it prevents. A mark with no `why` is untouched —
+   `removeAttribute` on both, so a level repainted in place (`paintTray`'s
+   short-circuit) cannot leave a stale refusal on a button that is live again
+   because the tempo moved. */
 export function paintIcon(b, opts) {
   const word = opts.word == null ? "" : String(opts.word);
   const want = opts.on ? "MARK" : "SPAN";
-  b.setAttribute("aria-label", word);
+  const why = opts.why == null ? "" : String(opts.why).trim();
+  b.setAttribute("aria-label", why ? word + ", " + why : word);
+  if (why) { b.disabled = true; b.setAttribute("aria-disabled", "true");
+             b.dataset.why = why; }
+  else { b.disabled = false; b.removeAttribute("aria-disabled");
+         delete b.dataset.why; }
   if (opts.say) b.dataset.say = opts.say; else delete b.dataset.say;
   if (opts.on != null) b.setAttribute("aria-pressed", String(!!opts.on));
   const had = b.firstElementChild;
-  if (had && had.tagName === want && b.dataset.face === opts.glyph + "|" +
-      (opts.num == null ? "" : opts.num) + "|" + word) return b;
-  b.dataset.face = opts.glyph + "|" + (opts.num == null ? "" : opts.num) + "|" + word;
+  // ...AND THE SIGNATURE CARRIES THE REFUSAL (2026-08-28). It was glyph|num|
+  // word, which was exact while every mark was pressable; a refused mark and a
+  // live one are the same three strings, so a level repainted in place after
+  // the tempo moved off a bound would have kept the old ink. (The two
+  // attributes above are written on every call either way — this guards only
+  // the DOM rebuild — but the signature must still move, or `.nu-ic` would
+  // never repaint for a state change that is genuinely visible.)
+  const sig = opts.glyph + "|" + (opts.num == null ? "" : opts.num) + "|" +
+              word + "|" + (why ? "no" : "");
+  if (had && had.tagName === want && b.dataset.face === sig) return b;
+  b.dataset.face = sig;
   b.textContent = "";
   const box = el(opts.on ? "mark" : "span", null, "nu-ic");
   const g = el("span", opts.glyph, "nu-g");
@@ -343,21 +511,39 @@ function place(el2) {
   const w = n.offsetWidth, h = n.offsetHeight;
   const vw = document.documentElement.clientWidth;
   const vh = document.documentElement.clientHeight;
-  /* CLAMPED TO THE CONTENT COLUMN, NOT TO THE VIEWPORT (2026-08-28). The right
-     edge of this page is a fixed gutter now (`#nu-tray`, nu.css THE TAB ROW
-     BECAME A GUTTER) and Paul's rule for it is *"Dont let anything go under
-     it."* A popover explaining a mark IN the gutter would otherwise sit on top
-     of the gutter and cover the marks either side of the one it is about. So
-     the box stops at the gutter's inner rule and opens to the LEFT of it,
-     which is also the only side there is room on. Read off the element rather
-     than off the token, because a page with no tray (or a stylesheet that has
-     been turned off) must still clamp to the viewport, which is what this did
-     before and still does when there is nothing there. */
+  /* CLAMPED TO THE CONTENT COLUMN, NOT TO THE VIEWPORT (2026-08-28). One edge
+     of this page is a fixed gutter (`#nu-tray`, nu.css THE TAB ROW BECAME A
+     GUTTER) and Paul's rule for it is *"Dont let anything go under it."* A
+     popover explaining a mark IN the gutter would otherwise sit on top of the
+     gutter and cover the marks either side of the one it is about. So the box
+     stops at the gutter's inner rule and opens away from it, which is also the
+     only side there is room on.
+
+     ...AND IT NO LONGER KNOWS WHICH EDGE THAT IS, 2026-08-28. This read
+     `const right = tr.left` and clamped to it — one number, hard-coded to a
+     gutter on the RIGHT. Paul moved it the same afternoon: *"Move the right
+     nav to the left so it doesn't interfere with the scroll on the right."*
+     With the stripe at x=0 that arithmetic clamped every popover to
+     `0 - w - 6`, a negative left, and `Math.max(6, …)` then pinned all of them
+     to x=6 — under the gutter, which is the exact failure the clamp was
+     written to prevent. So the rectangle is MEASURED and the side is read off
+     it: whichever edge the stripe is against, the popover's range stops at its
+     inner rule. Nothing here has to be edited if it moves again, which is why
+     nu.css's own list of what follows the gutter names this function as the
+     one entry that needs no pass.
+     Read off the element rather than off the token, for the reason it always
+     was: a page with no tray — or a stylesheet that has been turned off — must
+     still clamp to the viewport, which is what this does when it finds
+     nothing there. */
   const tray = document.getElementById("nu-tray");
   const tr = tray ? tray.getBoundingClientRect() : null;
-  const right = (tr && tr.width && tr.left < vw) ? tr.left : vw;
+  let lo = 6, hi = vw - 6;
+  if (tr && tr.width && tr.left < vw && tr.right > 0) {
+    if (tr.left <= 1) lo = Math.max(lo, tr.right + 6);        // against the start
+    else if (tr.right >= vw - 1) hi = Math.min(hi, tr.left - 6);  // against the end
+  }
   let x = Math.round(r.left + r.width / 2 - w / 2);
-  x = Math.max(6, Math.min(x, right - w - 6));
+  x = Math.max(lo, Math.min(x, hi - w));
   /* UNDER THE CONTROL IF THERE IS ROOM, OVER IT IF THERE IS NOT — and under
      first, because on a phone the thing being held is under a thumb and the
      thumb is below it. */

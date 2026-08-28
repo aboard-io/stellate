@@ -123,6 +123,35 @@ function executable() {
 
 let FAILS = 0;
 const ok = (m) => console.log("  ok   " + m);
+/* WHAT THE PLAY BUTTON SAYS, AND IT IS ITS NAME AND NOT ITS TEXT (rewritten
+   2026-08-28). Five places in this file read
+   `document.getElementById("play").textContent` and compared it to "play" or
+   "stop". That was exact for as long as the button WAS its word — and it
+   stopped being one on 2026-08-28, when Paul asked for marks: *"Please make
+   all the tabs and top buttons into sensible icons to save space."* The button
+   is `<button><span class="nu-ic"><span class="nu-g">■</span><span
+   class="nu-vh">stop</span></span></button>` now, so its `textContent` is
+   "■stop" and every one of those five comparisons was false forever: A2 said
+   the transport was already running on a page that had not been touched, and
+   A9 said the record would not start again while it was audibly playing.
+
+   THE LAW THAT SETTLES WHAT TO READ INSTEAD is the button's own (ui/glyph.js):
+   "every button that carries a mark also carries its full word in `aria-label`
+   and in a `.nu-vh` span", and the word on this one is still "the NEXT tap".
+   The ACCESSIBLE NAME is what a person is told the button says, so it is what
+   a gate asking "what does the button say" must read — and it is the string
+   this file was always comparing against, unchanged: "play" or "stop".
+   `aria-label` first, the `.nu-vh` word second, `textContent` last, because
+   the last is what a page with no marks at all would still answer. */
+const PLAYWORD = () => {
+  const b = document.getElementById("play");
+  if (!b) return "";
+  const a = (b.getAttribute("aria-label") || "").trim();
+  if (a) return a;
+  const v = b.querySelector(".nu-vh");
+  return ((v ? v.textContent : b.textContent) || "").trim();
+};
+
 const fail = (m) => { FAILS++; console.log("  FAIL " + m); };
 const is = (cond, m) => (cond ? ok(m) : fail(m));
 
@@ -245,7 +274,8 @@ function firstDiff(a, b) {
       counts: document.querySelectorAll('[data-live="count"]').length,
       written: document.querySelectorAll("#staff > p > div").length,
       caps: window.__eightCaptions(),
-      playing: (document.getElementById("play") || {}).textContent,
+      // the button's NAME, not its text — see PLAYWORD above
+      playing: (() => { const b = document.getElementById("play"); if (!b) return ""; const a = (b.getAttribute("aria-label") || "").trim(); if (a) return a; const v = b.querySelector(".nu-vh"); return ((v ? v.textContent : b.textContent) || "").trim(); })(),
     }));
     console.log("     " + shape.svgs + " staves · " + shape.lives + " live blocks · " +
       shape.counts + " count cells · " + shape.written + " written measures");
@@ -295,7 +325,7 @@ function firstDiff(a, b) {
     // arithmetic predicts at 16.5 s, because the engine runs a runway. A fixed
     // sleep would be a coin toss.
     await page.click("#play");
-    await page.waitForFunction(() => document.getElementById("play").textContent === "stop",
+    await page.waitForFunction(() => (() => { const b = document.getElementById("play"); if (!b) return ""; const a = (b.getAttribute("aria-label") || "").trim(); if (a) return a; const v = b.querySelector(".nu-vh"); return ((v ? v.textContent : b.textContent) || "").trim(); })() === "stop",
       null, { timeout: 15000 }).catch(() => {});
     const budget = ((before.bars[0] || 4) + (before.bars[1] || 4)) * 4 * 60 /
       Math.max(30, before.bpm) * 1000 + 25000;
@@ -377,7 +407,7 @@ function firstDiff(a, b) {
 
     // A8 — stopping does not rebuild either
     await page.click("#play");
-    await page.waitForFunction(() => document.getElementById("play").textContent === "play",
+    await page.waitForFunction(() => (() => { const b = document.getElementById("play"); if (!b) return ""; const a = (b.getAttribute("aria-label") || "").trim(); if (a) return a; const v = b.querySelector(".nu-vh"); return ((v ? v.textContent : b.textContent) || "").trim(); })() === "play",
       null, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(600);
     const C = await page.evaluate(() => window.__eightFrozen());
@@ -399,7 +429,7 @@ function firstDiff(a, b) {
        one of those and none of them can fail quietly. */
     await page.click("#play");
     const running = await page.waitForFunction(
-      () => document.getElementById("play").textContent === "stop",
+      () => (() => { const b = document.getElementById("play"); if (!b) return ""; const a = (b.getAttribute("aria-label") || "").trim(); if (a) return a; const v = b.querySelector(".nu-vh"); return ((v ? v.textContent : b.textContent) || "").trim(); })() === "stop",
       null, { timeout: 15000 }).then(() => true).catch(() => false);
     if (!running) fail("A9 " + width + " · the record would not start again");
     else {
@@ -417,7 +447,7 @@ function firstDiff(a, b) {
       const D1 = await page.evaluate(() => window.__eightFrozen());
       const end = await page.evaluate(() => ({
         step: window.__eightStep(),
-        word: document.getElementById("play").textContent,
+        word: (() => { const b = document.getElementById("play"); if (!b) return ""; const a = (b.getAttribute("aria-label") || "").trim(); if (a) return a; const v = b.querySelector(".nu-vh"); return ((v ? v.textContent : b.textContent) || "").trim(); })(),
         tab: window.__eightTabNow() }));
       is(end.word === "stop" && end.step !== s0,
         "A9 " + width + " · " + secs + "s of playback survived the walk " +

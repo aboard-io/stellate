@@ -271,6 +271,18 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
         n: s.querySelectorAll("option:not([data-placeholder])").length,
         inCell: !!s.closest("td"), disabled: s.disabled,
         why: s.dataset.why || "",
+        /* ...AND WHETHER THE REASON IS ON THE SCREEN *HERE*, 2026-08-28. The
+           check below used to read `document.body.innerText` ONCE, at the end
+           of the walk, against every reason collected across every view — which
+           was exact while the refusals happened to live on the last panel
+           surveyed, and is unprovable now that a refusal can sit on a facet of
+           one voice three levels into the gutter. The reason a select prints is
+           its own wrapper's `<small class="nu-why">` (ui/selects.js
+           `selectField`), so the honest question is "is it visible in the view
+           that draws the control", and that is a question only this evaluate
+           can answer — the view is gone by the time the assertions run. */
+        saidWhy: !s.dataset.why ||
+          document.body.innerText.includes(s.dataset.why),
         opts: q("#app select[data-sel]").length ? [...s.querySelectorAll("option")]
           .map((o) => ({ t: o.textContent, v: o.value, off: o.disabled,
                          why: o.dataset.why || "" })) : [],
@@ -367,10 +379,26 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     const d = window.__D();
     return (d.form.sections[1] || d.form.sections[0] || {}).id;
   });
+  /* ...AND A VOICE IS THREE FACETS SINCE 2026-08-28, so the walk goes one
+     level further in. Paul: *"A voice has: Instrument voice with settings from
+     the mixer / What it plays, register, material / Per-section settings."*
+     The band panel draws exactly the facet you are standing on (ui/eight.js
+     `voiceFacet`), so a walk that stopped at the voice's own mark saw its
+     instrument and none of its plays or its per-section table — and this gate
+     went red on `voices > plays`, `voices > material` and `voices > material,
+     per section`, which had not gone anywhere: the survey had. The facet keys
+     are read off the stripe rather than typed, for the same reason the tab
+     keys are — `#nu-tray [data-k^="facet-"]` is whatever the level offers. */
   for (const t of tabs) {
     await openTop("Band");
     await p.click('[data-k="' + t + '"]'); await p.waitForTimeout(150);
     eat(await survey());
+    const facets = await p.evaluate(() =>
+      [...document.querySelectorAll('#nu-tray [data-k^="facet-"]')].map((n2) => n2.dataset.k));
+    for (const f of facets) {
+      await p.click('[data-k="' + f + '"]'); await p.waitForTimeout(200);
+      eat(await survey());
+    }
     if (t === "tabform") {
       const opened = await p.evaluate((id) => {
         const n2 = document.querySelector('[data-k="sec' + id + '"]');
@@ -541,10 +569,27 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   const offNoWhy = sel.filter((s) => s.disabled && !s.why).map((s) => s.key);
   check(!offNoWhy.length, "NO SILENT GREY — every disabled <select> carries data-why " +
     JSON.stringify(offNoWhy));
-  const said = await p.evaluate((whys) => {
-    const t = document.body.innerText;
-    return whys.filter((w) => !t.includes(w));
-  }, [...new Set(sel.filter((s) => s.disabled && s.why).map((s) => s.why))]);
+  /* REWRITTEN 2026-08-28 — same claim, asked where it can be true. It read:
+     `const said = await p.evaluate((whys) => { const t =
+     document.body.innerText; return whys.filter((w) => !t.includes(w)); },
+     [...new Set(sel.filter((s) => s.disabled && s.why).map((s) => s.why))]);`
+     — one reading of `body.innerText`, taken after the walk had left every
+     panel it collected from. A reason on a panel that is `display: none` is not
+     in `innerText` and never was; the check only passed because every refused
+     select in the catalogue happened to be on the view the walk ended on. The
+     survey now records the answer AT EACH VIEW (`saidWhy`), which is the same
+     assertion made where the control actually is. */
+  /* ...AND "AT LEAST ONE VIEW", NOT "EVERY VIEW", which is the second half of
+     the same 2026-08-28 rewrite and is what the survey's shape forces. The
+     query is `#app select[data-sel]` and the eight shut panels are
+     `display: none` + `inert` but still in the DOM — so ONE refused control on
+     the Band panel is collected nine times, once per view, and its reason is in
+     `innerText` on exactly the one view that draws it. The claim is "the reason
+     is on the page where the control is", so a reason is a failure only when no
+     occurrence of it was ever printed. */
+  const sawWhy = new Set(sel.filter((s) => s.saidWhy && s.why).map((s) => s.why));
+  const said = [...new Set(sel.filter((s) => s.disabled && s.why &&
+    !sawWhy.has(s.why)).map((s) => s.why))];
   check(!said.length, "...and every one of those reasons is printed on the page " +
     JSON.stringify(said));
 
@@ -1079,7 +1124,15 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   // :1943), `diatonic` and `ontime` are the two the producer owns, and
   // `eng|mute|*` / `eng|solo|*` / `b|mute|*` / `b|solo|*` are the engineer's and
   // the board's. Every one of them is ONE fact that is true or false.
-  const BOOLEANS = /^(drums|diatonic|ontime|(eng|b)\|(mute|solo)\|\*|\(no key\))$/;
+  // ...AND `v|mute|*` / `v|solo|*` SINCE 2026-08-28. Paul: *"simply move the
+  // sound controls out of the mixer and into this section."* The desk's own
+  // pair is drawn on the VOICE now (ui/eight.js `voiceSound`) as well as on the
+  // board, in its own `v|…` namespace so the two cannot share a `data-k`; they
+  // are the same one-fact-true-or-false the `b|…` pair always was. The `b|…`
+  // half stays in this pattern until ui/engineer.js's per-voice strip is
+  // deleted — that file is fenced this round and the deletion is named in the
+  // round's report.
+  const BOOLEANS = /^(drums|diatonic|ontime|(eng|b|v)\|(mute|solo)\|\*|\(no key\))$/;
   const oddBox = boxes.loose.filter((k) => !BOOLEANS.test(k));
   check(!oddBox.length, "every checkbox left on the page is a single boolean " +
     JSON.stringify(oddBox.length ? oddBox : boxes.loose));

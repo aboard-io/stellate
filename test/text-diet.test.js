@@ -10,9 +10,10 @@
  *   T1  static prose stays under the ceiling this wave achieved plus 10%,
  *       and under the plan's own < 1200. Measured on 2026-08-27, the day the
  *       diet landed: 933 chars at 1280 and at 390 (from 3,688 in the UX
- *       review that wrote the law). The +10% is room for value captions that
- *       grow with the record (the atlas sentence, the deck caption), not for
- *       new paragraphs.
+ *       review that wrote the law). Re-measured 2026-08-28, after the board's
+ *       foot came off: 708 at both widths. The +10% is room for value captions
+ *       that grow with the record (the atlas sentence, the deck caption), not
+ *       for new paragraphs.
  *   T2  the heading list IS the §5 rename table's final list, in order —
  *       ordinals gone, Alphabet→Harmony, Sheet music→Motifs, one case rule.
  *   T3  every disabled control still carries a non-empty reason — the diet
@@ -28,8 +29,12 @@
  *   · labels: h1–h4, button, select/option/optgroup, label, output, legend,
  *     th, summary, a (a link is a control), and the page's own label classes
  *     .nu-rowlab / .nu-vs-lab / .nu-flowlab / .nu-vh;
- *   · refusals: .nu-why, .nu-refusals, .nu-mutewhy (the bench's "held — 1̂
- *     still rings" line is the WHY of that row's disabled bars).
+ *   · refusals: .nu-why, .nu-refusals. (.nu-mutewhy was a third and is gone,
+ *     2026-08-28 — Paul: *"Let's get rid of the label strings on the pitch
+ *     sliders. held and rest and the stuff that appears on top."* The bench's
+ *     "held — 1̂ still rings" line is not printed any more; the refusal it
+ *     carried is `data-why` on the two disabled bars themselves, which is what
+ *     T3 asks for first and has always accepted.)
  * Everything left — nu-hint captions, bus in/out lines, the atlas sentence,
  * export subtitles — is the prose the diet governs, and it counts whole.
  */
@@ -46,8 +51,18 @@ const PAGE = process.env.PAGE || "http://localhost:8777/nukernel/index.html";
    show a reader, whether the page shows them one after another down a scroll
    or one panel at a time. Re-measured the day the tabs landed and printed by
    this gate on every run. */
-const ACHIEVED = 933;
-const CEILING = Math.ceil(ACHIEVED * 1.10);   // 1027
+/* LOWERED TO 708 ON 2026-08-28. Paul, looking at the board: *"the text below
+   Section Automation is vast and should all be removed."* It was: 991 rendered
+   characters under the word grid — a six-word legend, the routing pointer, and
+   an 829-char list of five refusal sentences at the board's foot. 39 survive
+   (the pointer, a link, which desk-gate G14 requires and which the diet counts
+   as a control, not prose). The four live refusals in that list were a SECOND
+   printing — each is on its own knob as `title`, `data-why` and a short
+   `.nu-why` word — so T3 below is what actually holds them, and it still says
+   "none naked". The ceiling drops with the achievement because a ceiling left
+   at the old number is permission to write the paragraphs back. */
+const ACHIEVED = 708;
+const CEILING = Math.ceil(ACHIEVED * 1.10);   // 779
 const HARD = 1200;
 
 /* PAUL'S OWN LIST, 2026-08-27: *"The tabs are: Where / Tempo / Key / Motif /
@@ -90,7 +105,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
 const MEASURE = () => {
   const SKIP = "script,style,svg,noscript,[data-live],h1,h2,h3,h4,button," +
     "select,option,optgroup,label,output,legend,th,summary,a," +
-    "[aria-hidden=true],.nu-why,.nu-refusals,.nu-mutewhy," +
+    "[aria-hidden=true],.nu-why,.nu-refusals," +
     ".nu-rowlab,.nu-vs-lab,.nu-flowlab,.nu-vh";
   const hidden = (el) => {
     for (let e = el; e && e !== document.body; e = e.parentElement) {
@@ -148,21 +163,30 @@ const MEASURE = () => {
     openTab: window.__eightTabNow ? window.__eightTabNow() : null,
     rateSel: document.querySelectorAll('select[data-sel^="time.rate"]').length,
     /* T3 — every visible disabled control and where its reason lives. A
-       reason is data-why on the control itself, or a .nu-why / .nu-mutewhy
-       with text in the control's own row/slot/card (the mp3 button's sentence
-       sits beside it; a bench bar's sits on its row). */
+       reason is data-why on the control itself, or a .nu-why with text in the
+       control's own row/slot/card (the mp3 button's sentence sits beside it).
+       `.nu-mutewhy` was the second class here and went with the bench's
+       printed sentence on 2026-08-28; the bench's refused controls — the two
+       bars of a rest or a held row, and a hold segment with nothing to hold —
+       take the FIRST path now and carry `data-why` themselves (ui/eight.js
+       `sync`), which is the same idiom `tempoRow` and ui/selects.js use. */
     naked: [...document.querySelectorAll(
       "button[disabled],input[disabled],select[disabled]")]
       .filter((c) => !hidden(c))
       .filter((c) => {
         if ((c.dataset.why || "").trim()) return false;
-        /* the reason may sit one host out: a bench row's disabled weight bar
-           is explained by the row's own .nu-mutewhy (in the pitch cell), so
-           the row is searched as well as the cell. */
-        const hosts = [c.closest("td,.nu-slot,.nu-exp,.nu-vs,.nu-benchbar,p"),
+        /* the reason may sit one host out: a refused control whose sentence
+           is printed once under its row (ui/selects.js's rule for a column of
+           refusals) is explained by that row, so the row is searched as well
+           as the cell. (`.nu-benchbar` was in this list and is deleted —
+           2026-08-28, with the accidentals toggle it held: Paul, *"accidentals
+           need the chromatic alphabet - not wired; the bar locks to the scale
+           -- get rid of that"*. A dead control may not stay drawn, so it is
+           gone rather than refused.) */
+        const hosts = [c.closest("td,.nu-slot,.nu-exp,.nu-vs,p"),
                        c.closest("tr"), c.closest(".nu-plate")];
         return !hosts.some((h) => {
-          const why = h && h.querySelector(".nu-why,.nu-mutewhy");
+          const why = h && h.querySelector(".nu-why");
           return why && why.textContent.trim();
         });
       })

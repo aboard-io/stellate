@@ -466,7 +466,8 @@ function slotEl(ctx, voice, slots, i, stereoWhy) {
   const n = i + 1;
   // THE WET IS THE CHIP'S OWN MIX PARAM, SURFACED — or refused where the
   // module has none (fields.js fxHasMix: only `sweep`, whose sentence is on
-  // the control and under the rack).
+  // the control itself — `title`, `data-why` and the short word beside it —
+  // since the page-foot digest was deleted 2026-08-28).
   if (NuFields.fxHasMix(s.k)) {
     const dfltMix = NuFields.fxMix(s.k);
     body.append(col("wet", vknob("b|fxw" + n + "|" + voice.name, null,
@@ -1454,6 +1455,22 @@ export function mount(parent, ctx) {
     // THE CYCLE STILL RIDES THE STORED WORD, not the drawn one: a tap on a dim
     // cell starts at the top of TRIMS exactly as it did before, so absent-is-
     // today survives the redraw as well as the render.
+    /* THE NEAREST RUNG. The dealt values are continuous (shade's own +-0.5..2.5)
+       and TRIMS' rungs are -6 / -2.5 / 0 / +2.5 / +5, so a dealt trim is named
+       by the rung it is closest to — the same vocabulary a hand has, never a
+       sixth word invented for the box. Ties go to the quieter rung: a record
+       that is unsure should not claim to be louder than it is. */
+    const nearestTrim = (db) => {
+      const T = NuFields.TRIMS;
+      let best = "", bd = Infinity;
+      for (const w of Object.keys(T)) {
+        const v = T[w] == null ? -Infinity : T[w];   // `out` is a mute, not a number
+        if (v === -Infinity) continue;
+        const dd = Math.abs(v - db);
+        if (dd < bd || (dd === bd && v < (T[best] == null ? Infinity : T[best]))) { bd = dd; best = w; }
+      }
+      return Math.abs(db) < 0.75 ? "" : best;        // inside a rung's width of zero is "as mixed"
+    };
     const DRV = (si, key) => {
       try { return derivedTrim(SONG[si] || null, key); }
       catch (e) { return { db: 0, eq: null }; }
@@ -1492,8 +1509,22 @@ export function mount(parent, ctx) {
         // only where the hand is silent, because a set word replaces the
         // derived one on the fader (fields.js trimApply) as well as on the page
         const d = cur === "" ? DRV(si, c.key) : null;
+        /* WORDS ON BOTH SIDES OF THE CELL, 2026-08-28. Paul: *"The settings
+           you put into automation are floats. Mine are words. Make them all
+           words please."* He is right and the mismatch was mine: a hand's
+           trim printed `lift`, and the record's own dealt trim printed
+           `+2.5` in the very same column — one grid answering one question
+           in two vocabularies. The dealt dB is now said in the SAME words the
+           hand writes, by naming the nearest TRIMS rung, so a column reads as
+           one list of words whether the box wrote it or you did.
+           WHY THE WORD AND NOT THE NUMBER, given that yesterday's argument
+           for the number was that rounding -2.0 to `back` prints a value that
+           is not the value in play: because the cell is not the owner of that
+           value — `derivedTrim` is, and the exact dB is one long-press away in
+           the explainer below. A grid is for reading a shape down a column,
+           and a column of words has a shape a column of decimals does not. */
         const shown = cur !== "" ? WSHOW(cur)
-          : (d && d.db) ? (d.db > 0 ? "+" : "\u2212") + Math.abs(d.db).toFixed(1)
+          : (d && d.db) ? WSHOW(nearestTrim(d.db))
           : WSHOW("");
         const b = el("button", shown, "nu-trimbtn w-" + (cur || "mid") +
           (cur === "" && d && d.db ? " is-derived" : ""));
@@ -1502,8 +1533,23 @@ export function mount(parent, ctx) {
         b.setAttribute("aria-label", c.voice.name + " in " + s2.id + ": " +
           (cur !== "" ? cur
             : (d && d.db) ? "as mixed, and the record deals " +
+                nearestTrim(d.db) + ", " +
                 (d.db > 0 ? "+" : "\u2212") + Math.abs(d.db).toFixed(1) + " dB here"
             : "as mixed"));
+        // THE EXPLAINER ON THE CELL IS NOW BOTH HALVES (2026-08-28, with the
+        // legend's deletion): a SET word says what it is worth in dB — the one
+        // fact the deleted paragraph carried that a reader genuinely needs to
+        // work the grid, and TRIMS is still its only owner.
+        if (cur !== "") {
+          const dbv = NuFields.TRIMS[cur];
+          b.title = WSHOW(cur) + " \u2014 " + (dbv == null ? "silent here"
+            : (dbv > 0 ? "+" : "\u2212") + Math.abs(dbv).toFixed(1) +
+              " dB on this voice's fader for this section") +
+            " \u2014 tap to cycle; the last tap is \u201cas mixed\u201d";
+        } else if (!(d && d.db)) {
+          b.title = "as mixed \u2014 no word set here, so the fader stands " +
+            "\u2014 tap to set one";
+        }
         if (cur === "" && d && d.db)
           b.title = "derived: the section's own " +
             [(SONG[si] || {}).lvl, (SONG[si] || {}).env].filter(Boolean).join(" + ") +
@@ -1525,16 +1571,19 @@ export function mount(parent, ctx) {
     t.append(tbody);
     pane.append(t);
     wrap.append(pane);
-    // compressed 2026-08-27 (text diet): the legend keeps the six words in
-    // TRIMS' own order and the absent-is-today fact; the file citation and
-    // the dB mechanics were source-talk on a page (the six voice rules).
-    wrap.append(el("p", "out · hush · back · — · fwd · lift — absent is as mixed, " +
-      "and a dim number is what the record already deals that voice there",
-      "nu-hint"));
+    // THE LEGEND IS DELETED, 2026-08-28. Paul: *"the text below Section
+    // Automation is vast and should all be removed."* It printed the six words
+    // in TRIMS' order plus the two facts a reader needs to work the grid —
+    // "absent is as mixed, and a dim number is what the record already deals
+    // that voice there" — and both facts survive ON THE CONTROL, where the
+    // page already teaches: a cell's `title` (the long-press explainer) and
+    // its `aria-label` say what its own word is worth in dB, what "as mixed"
+    // means, and where a dim number came from. The list of six was a second
+    // owner of TRIMS anyway; the cycle already spells them one tap at a time.
     host.append(wrap);
   }
 
-  /* ---- the routing and refusal sentences, once, under the rack ---------- */
+  /* ---- the routing pointer, once, under the rack ------------------------ */
   // A GROUP HAS NO PLATE ANY MORE, and the sentence saying so is the reversal
   // written down: bus 3 and bus 4 (2026-08-26's groups) left the surface on
   // 2026-08-27 when Paul named the series — "one bus for genre specific
@@ -1558,24 +1607,35 @@ export function mount(parent, ctx) {
     a2.textContent = "the fixed wires — docs/BOARD-ROUTING.md";
     edges.append(a2); }
   host.append(edges);
-  // GENRE_WHY_LONG and BLEED_WHY_LONG came OFF this list on 2026-08-27: the
-  // series-bus engine round wired both (the genre stage and the fx_bus `bleed`
-  // slider), so their sentences were rewritten in place above as history
-  // rather than kept as standing refusals.
-  const refusals = el("ul", null, "nu-hint nu-refusals");
-  // MASTER_WHY came OFF this list on 2026-08-28, the same way GENRE_WHY_LONG and
-  // BLEED_WHY_LONG came off it on 08-27: width, tilt and ceiling are wired, so
-  // their standing refusal is history and is written where the wiring is.
-  for (const w of [MAINSEND_WHY, METER_WHY,
-                   STEREO_WHY, SWEEP_WET_WHY])
-    refusals.append(el("li", w));
-  // THE GROUPS' REVERSAL STAYS PRINTED (desk-gate G12 holds it: "the reversal
-  // is printed, not silent"), compressed 2026-08-27 with the essay's move —
-  // it is a refusal-with-reason, so it lives on the refusal list now.
-  refusals.append(el("li", "bus 3 and bus 4 draw no plate — the series is " +
-    "the rack; their saved sends and aims still load and still route " +
-    "(fields.js busRoute)"));
-  host.append(refusals);
+  /* THE REFUSAL LIST UNDER THE RACK IS DELETED, 2026-08-28. Paul: *"the text
+     below Section Automation is vast and should all be removed."* It was 829
+     rendered characters — five sentences, the longest block on the board —
+     and four of the five were a SECOND PRINTING. MAINSEND_WHY, METER_WHY,
+     STEREO_WHY and SWEEP_WET_WHY are each already on their own control, put
+     there by `refuse()` above as `title`, as `data-why`, and as the short
+     `.nu-why` word beside the knob ("the fader's", "no tap", "serial"). The
+     law that refusals-with-reasons are load-bearing is about the reason being
+     REACHABLE FROM THE CONTROL, which it is; a page-foot digest of sentences
+     the controls already carry is prose, and prose is what comes off.
+     (Its predecessors came off the same way and for the same kind of reason:
+     GENRE_WHY_LONG and BLEED_WHY_LONG on 2026-08-27 when the series-bus round
+     wired both, MASTER_WHY on 2026-08-28 when width/tilt/ceiling went live.
+     Those died because the refusal ended; these four are still refusals — the
+     sentences are alive, on the knobs, and only the digest is gone.)
+
+     THE FIFTH HAD NO CONTROL, so its argument is written here rather than
+     drawn. It read: "bus 3 and bus 4 draw no plate — the series is the rack;
+     their saved sends and aims still load and still route (fields.js
+     busRoute)". Bus 3 and bus 4 were 2026-08-26's groups; they left the
+     surface on 2026-08-27 when Paul named the series — *"one bus for genre
+     specific effects, into a delay bus, into reverb, into main"* — and the
+     groups are not in the line. A sentence about two controls that do not
+     exist is explanation, not refusal: there is nothing on the page it is
+     attached to and nothing a reader can do with it. What must not be lost is
+     the COMPATIBILITY fact, and it is not lost — fields.js busRoute and
+     audio/desk.js feedSplit still load and still route an old save's group
+     sends and aims, and desk-gate G14's model half measures exactly that on
+     every run. G12's rendered-sentence half is retired with the sentence. */
 
   /* ---- the paint, once a beat off the page's own on("pos") -------------- */
   const paint = () => {

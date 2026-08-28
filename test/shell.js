@@ -76,10 +76,15 @@
 //       wrapped would be the second stripe Paul's "one vertical stripe max"
 //       forbids, so the check now counts DISTINCT BUTTON LEFTS as well: one
 //       column, `scrollWidth === clientWidth`, at every width.)
-//   A6c the marked mark is the open thing: exactly one `<mark>` in the stripe,
-//       and its button is the only one with `aria-pressed="true"`. At the root
-//       level that is `__eightTabNow()`; at a sub-level it is that level's own
-//       open item, which is what `__eightTray().on` reports.
+//   A6c the marked mark is the open thing, AT A LEVEL OF SIBLINGS: exactly one
+//       `<mark>` in the stripe, and its button is the only one with
+//       `aria-pressed="true"`. At the root level that is `__eightTabNow()`; at
+//       a sub-level it is that level's own open item, which is what
+//       `__eightTray().on` reports. AT A LEVEL OF ACTIONS — the open motif's
+//       fourteen transforms, which the page declares with `acts` since
+//       2026-08-28 — nothing is marked, because none of fourteen writes is
+//       "open", and the HEAD is what says where you are: "up — out of psalm,
+//       back to the motifs".
 //   A6d NINE TABS, IN PAUL'S WORDS, IN PAUL'S ORDER — read off the rendered
 //       buttons of the ROOT level and compared to the literal list he wrote.
 //   A6i NOTHING GOES UNDER THE GUTTER, and it is a layout law rather than a
@@ -89,10 +94,13 @@
 //       into past a clipper (an <svg> viewport, an `overflow: auto` pane):
 //       their contents run past on purpose and are not painted there, so what
 //       is asserted is that the CLIPPER is inside the gutter.
-//   A6j EVERY LEVEL IS REACHABLE AND `↑` RETURNS. Walk root -> band -> root,
-//       root -> motif -> root, root -> score -> root through the stripe's own
-//       buttons, and assert there is no `↑` at the root — it is ABSENT rather
+//   A6j EVERY LEVEL IS REACHABLE AND `↑` CLIMBS ONE AT A TIME. Walk root ->
+//       band -> root, root -> motifops -> motif -> root, root -> score ->
+//       root through the stripe's own buttons, pressing `↑` until there is no
+//       `↑` left, and assert there is none at the root — it is ABSENT rather
 //       than refused, and ui/eight.js `THE STRIPE` carries the argument.
+//       (Three deep since 2026-08-28: the Motif tab lands you in the open
+//       motif's transforms and the bank is one `↑` above them.)
 //   A6e A TAB REMEMBERS ITS SCROLL. Scroll a tall tab, leave it, come back:
 //       the window is where you left it, and a tab never opened starts at 0.
 //   A7  the .nu-bar is exactly --bar-h tall. `.nu-tabs { top: var(--bar-h) }`
@@ -338,6 +346,18 @@ const BANDS = async () => {
       const b = T.on && document.querySelector('[data-k="' + T.on + '"]');
       return b ? (b.getAttribute("aria-label") || "").trim() : null; })(),
     level: window.__eightTray().level,
+    /* ...AND WHETHER THIS LEVEL HAS A "HERE" TO MARK AT ALL (2026-08-28). The
+       stripe's third depth is the open motif's fourteen transforms, and they
+       are ACTIONS rather than siblings: none of them is open, pressing one
+       writes the record, and marking one would be a lie about state. The page
+       DECLARES that (`trayNow`'s `acts`, read back through `__eightTray`) and
+       A6c below asks the declaration rather than guessing from an absence —
+       the same discipline motif-frozen's A1 uses on `[data-live]`. What says
+       where you are at such a level is the HEAD, so the head's own accessible
+       name is read here and asserted to name the thing you are inside. */
+    acts: window.__eightTray().acts,
+    headSays: (() => { const u = document.querySelector('[data-k="trayup"]');
+      return u ? (u.dataset.say || "").trim() : null; })(),
     rowH: +row.getBoundingClientRect().height.toFixed(1),
     rowLines: 1,
   };
@@ -468,29 +488,109 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
        level above the top" is a definition, not a fact that can change). A
        dead 44px target at the head of a 56px column is what this asserts is
        not there. */
+    /* THE WALK IS A CHAIN AND NOT A ROUND TRIP SINCE 2026-08-28, because the
+       gutter is three deep now. Paul: *"When I'm in a motif, the motif
+       operations should be the right nav elements on the view. The up arrow to
+       take me home should take me back to the motif picker."* So `Motif` lands
+       you INSIDE the open motif — its fourteen transforms — and `↑` from there
+       is the BANK, with a second `↑` for the nine. One press per level, the
+       button the thumb presses, until there is no `↑` left; the chain of
+       levels that walk produces is the assertion. (It read `["Motif",
+       "motif"]` and one `.click()` on `↑` expecting the root, which is the
+       shape of a two-deep stripe and would now fail for being right about
+       yesterday.) A drum pattern has no transforms, so a record whose open
+       cell is a beat lands on the bank instead — both are accepted below, and
+       which one you get is `trayNow`'s arithmetic, not a branch here. */
     const levels = [];
     const now = () => page.evaluate(() => window.__eightTray());
     await page.evaluate(() => window.__eightUp());
     levels.push(["root", await now(), await page.$('[data-k="trayup"]')]);
-    for (const [word, want] of [["Band", "band"], ["Motif", "motif"],
-                                ["Score", "score"]]) {
+    /* ...AND `Tempo` JOINED THE TABLE, 2026-08-28. Paul: *"When I'm in tempo,
+       move the tempo nav to the right nav."* The eight tempo operations are a
+       level of the stripe now (ui/eight.js `tempoTrayItems`) and `Tempo` lands
+       on them, so it is a fourth tab with something inside it and the arrival
+       table has to say so or this gate would go on proving a claim about a
+       page that no longer exists. */
+    for (const [word, want] of [["Band", ["band"]],
+                                ["Tempo", ["tempo"]],
+                                ["Motif", ["motifops", "motif"]],
+                                ["Score", ["score"]]]) {
       await page.click('[data-k="toptab-' + word + '"]');
       await page.waitForTimeout(TAB_SETTLE(word));
       const into = await now();
-      await page.click('[data-k="trayup"]');
-      await page.waitForTimeout(120);
-      const back = await now();
-      levels.push([word, into, want, back]);
+      const chain = [into.level];
+      for (let i = 0; i < 4; i++) {
+        const up = await page.$('[data-k="trayup"]');
+        if (!up) break;
+        await up.click();
+        await page.waitForTimeout(150);
+        chain.push((await now()).level);
+      }
+      levels.push([word, into, want.concat(["root"]), chain]);
     }
     const rootUp = levels[0][2];
     is(!rootUp, "A6j " + width + " · no ↑ at the root level — it is absent, "
       + "not a dead button");
     const badLevel = levels.slice(1).filter(
-      (L) => L[1].level !== L[2] || L[3].level !== "root" || !L[1].items.length);
+      (L) => L[3].join(">") !== L[2].join(">") || !L[1].items.length);
     is(badLevel.length === 0,
-      "A6j " + width + " · every level is reachable and ↑ returns — "
-      + levels.slice(1).map((L) => L[0] + "→" + L[1].level + "(" +
-          L[1].items.length + ")→" + L[3].level).join(", "));
+      "A6j " + width + " · every level is reachable and ↑ climbs one at a "
+      + "time to the root — "
+      + levels.slice(1).map((L) => L[0] + ": " + L[3].join(" ↑ ") + " (" +
+          L[1].items.length + " marks)").join(", "));
+
+    /* A6k — THE LEVELS YOU REACH BY TAPPING A MARK, NOT BY OPENING A TAB
+       (2026-08-28). The walk above proves that every tab's ARRIVAL level is
+       reachable and climbs home; it says nothing about the levels that are one
+       tap FURTHER in, and since tonight there are four of those. Paul, in one
+       batch: *"Make the sections into nav items with the ability to add them
+       and remove them and recharacterize and move them up and down"* and
+       *"Make a new voice section for all voices."* So the band's `sections`
+       mark opens the sections, a section's mark opens that section's three
+       operations, and a voice's mark opens that voice's three facets — four
+       depths under one tab, and `↑` must climb them one at a time.
+
+       IT DRIVES THE MARKS, exactly as the walk above drives the tab buttons: a
+       gate that descended with `__eightTray` would be proving that the probe
+       agrees with itself. The section mark's key is read off the level rather
+       than typed, because a section's id is the RECORD's (`c1`, `s0`, whatever
+       precompose dealt it) and a gate that typed one would be asserting about
+       one shipped record instead of about the stripe. */
+    const deep = [];
+    for (const [start, marks, want] of [
+      ["Band", ["tabform", 0], ["section", "sections", "band", "root"]],
+      ["Band", ["voice"], ["voice", "band", "root"]],
+    ]) {
+      await page.evaluate((t) => window.__eightTab(t), start);
+      await page.waitForTimeout(TAB_SETTLE(start));
+      let ok2 = true;
+      for (const m of marks) {
+        const L = await now();
+        // a NUMBER is an index into the level that is showing; "voice" is the
+        // first mark that is neither of the two song-level pair nor an add
+        const k = typeof m === "number" ? L.items[m]
+          : m === "voice" ? L.items.find((x) => x.startsWith("tab") &&
+              x !== "tabform" && x !== "tabperformance")
+          : m;
+        if (!k) { ok2 = false; break; }
+        await page.click('[data-k="' + k + '"]');
+        await page.waitForTimeout(250);
+      }
+      if (!ok2) { deep.push([start, marks.join(">"), ["(no such mark)"]]); continue; }
+      const chain = [(await now()).level];
+      for (let i = 0; i < 5; i++) {
+        const up = await page.$('[data-k="trayup"]');
+        if (!up) break;
+        await up.click();
+        await page.waitForTimeout(200);
+        chain.push((await now()).level);
+      }
+      deep.push([start, marks.join(">"), chain, want]);
+    }
+    const badDeep = deep.filter((D) => !D[3] || D[2].join(">") !== D[3].join(">"));
+    is(badDeep.length === 0,
+      "A6k " + width + " · a mark descends and ↑ climbs back one level at a "
+      + "time — " + deep.map((D) => D[1] + ": " + D[2].join(" ↑ ")).join(", "));
 
     // THE KIT GRID IS THE WIDEST THING THIS PAGE DRAWS and the default record
     // has no drummer, so a gate that does not add one never measures it.
@@ -583,7 +683,22 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
       is(b.rowScroll[0] === b.rowScroll[1] && b.rowCols === 1,
         "A6b " + at + " · the stripe is ONE column and never scrolls sideways ("
         + b.rowScroll[0] + " vs " + b.rowScroll[1] + ", " + b.rowCols + " column)");
-      is(b.marks.length === 1 && b.marks[0] === b.now &&
+      /* A6c, IN ITS TWO CASES SINCE 2026-08-28. The claim is unchanged where
+         it always applied — a level of SIBLINGS marks the open one, exactly
+         once, in both the picture and the ARIA — and it is stated for the one
+         level that has no siblings: the open motif's transforms, which the
+         page declares as `acts`. There, nothing may be marked (fourteen
+         `aria-pressed="false"` buttons would announce a state that does not
+         exist) and the HEAD carries "you are here" by naming the motif. Paul:
+         *"When I'm in a motif, the motif operations should be the right nav
+         elements on the view."* */
+      if (b.acts)
+        is(b.marks.length === 0 && b.pressed.length === 0 &&
+           /^up — out of \S/.test(b.headSays || ""),
+          "A6c " + at + " · a level of ACTIONS marks nothing and the head says "
+          + "where you are: " + JSON.stringify(b.headSays) + " (marks "
+          + JSON.stringify(b.marks) + ", pressed " + JSON.stringify(b.pressed) + ")");
+      else is(b.marks.length === 1 && b.marks[0] === b.now &&
          b.pressed.length === 1 && b.pressed[0] === b.now,
         "A6c " + at + " · one <mark>, one aria-pressed, and both say \"" + b.now
         + "\" (marks " + JSON.stringify(b.marks) + ", pressed "
@@ -591,11 +706,25 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
       /* A6i — NOTHING GOES UNDER THE GUTTER. Paul, 2026-08-28: *"Dont let
          anything go under it."* The gutter's width is taken OUT of the page
          (nu.css, `body { padding-inline }`), so this is a claim about flow and
-         not about z-index: every laid-out block ends at or before the rule. */
+         not about z-index: no laid-out block overlaps the stripe's band.
+
+         AND IT NO LONGER KNOWS WHICH EDGE THE STRIPE IS ON (rewritten
+         2026-08-28, hours after it was written). Paul: *"Move the right nav to
+         the left so it doesn't interfere with the scroll on the right."* This
+         read `const gl = tray.left` and failed anything whose `right` passed
+         it — one number, and it only ever meant "the gutter is on the right".
+         With the stripe at x=0 that number is 0 and EVERY block on the page is
+         past it: fifty failures at five widths, all of them saying the page
+         was under a gutter it is beside. The claim was never about a side; it
+         is that nothing OVERLAPS the stripe's band, so that is what is asked,
+         off the stripe's measured rectangle, and it holds on either edge with
+         nothing here to edit if it moves again. (ui/glyph.js `place()` and
+         nu.css `.nu-log` are the page's own two versions of the same lesson —
+         see the list at nu.css `.nu-tray`.) */
       const G = await page.evaluate(() => {
         const tray = document.getElementById("nu-tray");
-        const gl = tray.getBoundingClientRect().left;
-        const bad = []; let maxRight = 0;
+        const t = tray.getBoundingClientRect();
+        const bad = [];
         const clips = (cs, c) => c.tagName.toLowerCase() === "svg" ||
           ["hidden", "auto", "scroll", "clip"].includes(cs.overflowX);
         const walk = (n) => { for (const c of n.children) {
@@ -604,19 +733,18 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
           if (cs.display === "none" || cs.visibility === "hidden") continue;
           const r = c.getBoundingClientRect();
           if (!r.width && !r.height) continue;
-          if (r.right > maxRight) maxRight = r.right;
-          if (r.right > gl + 0.5)
+          if (r.right > t.left + 0.5 && r.left < t.right - 0.5)
             bad.push((c.id || String(c.className) || c.tagName)
-                     + "@" + r.right.toFixed(1));
+                     + "@" + r.left.toFixed(1) + "-" + r.right.toFixed(1));
           if (!clips(cs, c)) walk(c); } };
         walk(document.body);
-        return { gl, maxRight: +maxRight.toFixed(2), over: bad.slice(0, 5),
-                 overN: bad.length,
-                 w: +tray.getBoundingClientRect().width.toFixed(2) };
+        return { gl: +t.left.toFixed(2), gr: +t.right.toFixed(2),
+                 over: bad.slice(0, 5), overN: bad.length,
+                 w: +t.width.toFixed(2) };
       });
       is(G.overN === 0,
-        "A6i " + at + " · nothing under the " + G.w + "px gutter — its left "
-        + "edge is " + G.gl + " and the furthest block ends at " + G.maxRight
+        "A6i " + at + " · nothing under the " + G.w + "px gutter — its band is "
+        + G.gl + "-" + G.gr + " and no block overlaps it"
         + (G.overN ? " — " + G.overN + " over: " + G.over.join(", ") : ""));
     }
 

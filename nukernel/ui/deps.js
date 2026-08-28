@@ -52,7 +52,7 @@ export const { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
                EQ_BANDS, BUS_EQ_BANDS, EQ_RANGE, eqDb, resolveEq, eqIsFlat,
                resolveMaster, masterIsDefault, resolveBuses, busesIsDefault,
                AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPELABEL, autoShape,
-               INSTRCHOICES, POOLCHAIRS,
+               INSTRCHOICES, POOLCHAIRS, BASSCHOICES, poolTakes,
                ROLES } = window.NuFields;
 // THE ONE RENAME IN THIS FILE. fields.js calls the master-bus registry MASTER;
 // ui/state.js calls the song's master-bus VALUES the same thing. One says what

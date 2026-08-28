@@ -2112,6 +2112,44 @@
   const POOLCHAIRS = ["lead", "line", "riff", "counter", "pad", "stab",
                      "drone", "bass"];
 
+  // ...AND THE BASS CHAIR'S OWN VOCABULARY, which is NOT the other seven's
+  // (2026-08-28, "I've lost all ability to select or customize the bass").
+  //
+  // WHY THIS LIST EXISTS AT ALL. The bass is the only POOLCHAIR the box has
+  // no other way to cast: every pitched chair carries its instrument on the
+  // document now (`voices[].instrument`, avail.js `sound.instrument`, through
+  // document.js's `chairs` seam), and the bass voice carries a STYLE and a
+  // development word and no instrument at all — so `POOL.bass` is the one
+  // wire that reaches audio/plan.js's bass seat. Measured 2026-08-28 on
+  // Kingston 1969 through audio/plan.js `seats()`: with no pool the bass seat
+  // is `acoustic_bass`; with `POOL.bass = fretless_bass` it is
+  // `fretless_bass`. The wire works; nothing could reach it.
+  //
+  // AND A WORD THAT CASTS A GLOCKENSPIEL INTO THE BASS CHAIR IS A WORD THAT
+  // LIES. INSTRCHOICES is 90 ids wide because it is the union of what every
+  // chair may hold; handed to the bass it offers `music_box` and `celesta`,
+  // and `setPoolChair("bass", "glockenspiel")` was accepted. The eleven below
+  // are the bass rack's own instruments (bass-kit.js INSTRUMENTS, whose gate
+  // already holds each word to a real recording with a RANGES compass), in
+  // the rack's own order, so the two lists cannot drift.
+  const BASSCHOICES = {};
+  for (const id of ["finger_bass", "picked_bass", "bass_lead", "acoustic_bass",
+                    "cello", "fretless_bass", "slap_bass", "pop_bass",
+                    "synth_bass_1", "synth_bass_2", "contrabass"])
+    if (INSTRCHOICES[id]) BASSCHOICES[id] = INSTRCHOICES[id];
+
+  // WHAT A CHAIR MAY BE HANDED, as one predicate with one owner. ui/state.js
+  // `setPoolChair` (the live edit) and song.js `validateSong` (the saved
+  // document) both asked this question and asked it differently — the live
+  // one against INSTRCHOICES, the saved one against INSTRCHOICES — which is
+  // the same answer twice until the bass gets a narrower list, and then it is
+  // two laws. It is one call now, so a pool a hand can write and a pool a file
+  // can carry are the same pool.
+  const poolTakes = (chair, id) =>
+    POOLCHAIRS.indexOf(chair) >= 0 && id != null &&
+    Object.prototype.hasOwnProperty.call(
+      chair === "bass" ? BASSCHOICES : INSTRCHOICES, String(id));
+
   // (there is no `sing` field here any more, and no resolveSing beside the
  // other resolvers: the singer was pulled out whole on 2026-08-17 — see the
   // tombstone in kernel-daw.html. A `sing` left on an older save is not in
@@ -2480,7 +2518,7 @@
                 BUSES, BUSBY, resolveBuses, busesIsDefault,
                 BUSNAMES, busNameOf, BUSTO, BUSDEFAULT, busRoute, busToOk,
                 AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPES, AUTOSHAPELABEL, autoShape,
-                INSTRCHOICES, POOLCHAIRS,
+                INSTRCHOICES, POOLCHAIRS, BASSCHOICES, poolTakes,
                 NUDGEGATE, nudgesFor, nudgeGate, nudgeValue, nudgeWord,
                 ROLES, FIELDS, FIELD };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

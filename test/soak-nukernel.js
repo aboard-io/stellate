@@ -213,7 +213,22 @@ const f = (v, n, w) => (v == null ? "-" : (+v).toFixed(n)).padStart(w);
         return {
           eng: E,
           line: window.__nuEngineLine ? window.__nuEngineLine() : null,
-          dom: (document.getElementById("engine") || {}).textContent || null,
+          // WHAT THE PAGE ACTUALLY PRINTED, and it is not `#engine` any more
+          // (2026-08-28). Paul: *"Get rid of the media (mediaEl) held plays
+          // offline etc section on the top; move that info to the logger."*
+          // The sentence has the same one owner it always had — audio/live.js
+          // `engineLine()`, which is what `line` above reads — and this line's
+          // whole job is the OTHER half of that pair: proof that the sentence
+          // reached a surface a person can see, which is what caught the
+          // readout being written to an element nobody had shipped. So it
+          // reads the log's newest engine line off the page's own hand rather
+          // than a paragraph's textContent. It is printed, never asserted on
+          // (see the console.log at the foot of this file), exactly as before.
+          dom: (() => { try {
+            const L = (window.__nuLog ? window.__nuLog() : [])
+              .filter((x) => x.kind === "engine")[0];
+            return L ? L.what : null;
+          } catch (e) { return null; } })(),
           cmRms: h && h.clickMon ? S(() => h.clickMon().rms, null) : null,
           // THE TWO LEDGERS, SIDE BY SIDE (engine __runway(); "the phantom
           // runway", docs/ENGINE-AUDIT-2026-07). `fed` is frames POSTED to the
@@ -297,7 +312,7 @@ const f = (v, n, w) => (v == null ? "-" : (+v).toFixed(n)).padStart(w);
   console.log("");
   console.log(`  readout: ${JSON.stringify(line)}`);
   console.log(`  first note: ${firstNoteMs == null ? "never seen" : (firstNoteMs / 1000).toFixed(2) + "s"} after the click   prefill: ${JSON.stringify(prefill)}`);
-  if (last.dom != null) console.log(`  #engine: ${JSON.stringify(last.dom)}`);
+  if (last.dom != null) console.log(`  newest engine line in the log: ${JSON.stringify(last.dom)}`);
   console.log(`  deepRunway seen by the engine: ${last.deep}`);
   console.log(`  load average after ${la()} on ${os.cpus().length} cores (the ${LOAD} busy children this gate spawned are already dead by here)`);
   // ── THE SAWTOOTH IS THE CHUNK, NOT A STARVATION ──────────────────────────

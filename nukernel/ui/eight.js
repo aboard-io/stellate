@@ -164,7 +164,20 @@ import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing,
 // applies no envelope by design). Drawing never calls it.
 import { sectionRender } from "./derive.js";
 import { startAt, stop, playing, warmup, getPosition, passAt,
-         engineLine } from "../audio/live.js";
+         engineLine,
+         // WHERE AN EDIT ACTUALLY LANDS (2026-08-28). Paul: *"Make the logger
+         // also have a countdown for when I change things, showing how many
+         // beats before they take effect."* audio/live.js has computed that
+         // number since the pending feed was written — the serial rule, the
+         // section-scoped landing, the onBar clamp, the ticker that refuses to
+         // count UP — and NOTHING HAS EVER CALLED IT. `grep announceChange`
+         // over the whole box answered one line, its own export. It is the
+         // house bug this page keeps a memory of ("declared but never
+         // arriving"): a whole feed costed, wired to `emit`, reaching no
+         // reader. `push()` is its caller now, which is where its own comment
+         // always said the caller would be — "the UI calls this right after
+         // push()".
+         announceChange } from "../audio/live.js";
 import { registerSW, warmShell, warmCache } from "../audio/offline.js";
 // ...AND THE SAME COMPILER ASSEMBLING A WHOLE SYSTEM. `toScore` is the score
 // block's half of ui/abc.js: several parts under one head, barred together.
@@ -195,7 +208,13 @@ import { selectRow, selectEl, sheetRow, keyCircle } from "./selects.js";
 // page). Two surfaces because they are two things: `engineer` is per-voice
 // sound, `mount` is the console. `paintBoard` repaints the automation meters
 // from the position feed — a view is never handed the audio's clock.
-import { engineer, mount as mountBoard, paintBoard } from "./engineer.js";
+/* `engineer` LEFT THIS IMPORT LIST, 2026-08-28. It drew the read-only mirror
+   table inside the band sheet and Paul asked for the table to go ("get rid of
+   the engineer table"); the tombstone at its old call site in `bandBlock`
+   carries the whole argument and what was lost with it. The export is still
+   THERE — ui/engineer.js is fenced this round — and is now uncalled from
+   anywhere; its deletion is the first item of the round's report. */
+import { mount as mountBoard, paintBoard } from "./engineer.js";
 // THE PRODUCER (D4) — "somebody with taste saying a few things about the record
 // the eight describe". It is not a ninth axis and it is not a second compiler:
 // `produced()` is `genreFor` with the note stack applied, so push() below has
@@ -213,7 +232,14 @@ import { mount as mountAtlas } from "./atlas.js";
 // and on the roll. `songDurSec` is the score's own length in seconds, which is
 // what the WAV press is measured against.
 import { writeSmf, parseSmf, headGM } from "../export/smf.js";
-import { songDurSec } from "../audio/plan.js";
+/* ...AND WHAT THE ENGINE DID WITH A CHANNEL (`channelFacts`, 2026-08-28) —
+   the engine's own answer about the seated voice, which is how `voiceSound`
+   knows a voice is STEREO and refuses its insert slots with the reason rather
+   than letting audio/desk.js `widthKept` strip the chain in silence. It is the
+   same function ui/engineer.js reads for the same refusal; a second guess at
+   "is this stereo" from the document would be the drift, since the answer is
+   the parent's and not the record's. */
+import { songDurSec, channelFacts } from "../audio/plan.js";
 // THE MARKS ON THE TABS, AND THE ONE EXPLAINER (2026-08-28). Paul: "Please
 // make all the tabs and top buttons into sensible icons to save space. Voice 2
 // for example could be more symbol plus the number 2. Provide a simple long
@@ -223,7 +249,7 @@ import { songDurSec } from "../audio/plan.js";
 // by refusing the glyphs and drawing its tabs as words. Paul asked for marks
 // on every strip on the page, in four files, so the table is EXTRACTED to
 // ui/glyph.js and imported here; nothing about the three characters changed.
-import { GLYPH, kindGlyph, sayVoice, sayUp, icon, paintIcon,
+import { GLYPH, kindGlyph, sayVoice, sayUp, sayLog, icon, paintIcon,
          wireSay } from "./glyph.js";
 
 // THE ONE GLOBAL LEFT IN THIS FILE, and it is deliberate rather than an
@@ -477,6 +503,21 @@ function push(first) {
   // solo_vox that nothing else on the page ever asks for. One or two zones per
   // motif, because a sixteen-step tune spans one or two of a sampler's zones.
   warmCache(auditionWarm());
+  /* ...AND THE LOG IS TOLD WHAT YOU JUST DID, AND THE ENGINE IS TOLD AN EDIT
+     IS IN FLIGHT (2026-08-28). LAST in this function on purpose: `logEdit`
+     calls audio/live.js `announceChange`, whose whole arithmetic is "the walk
+     runs a runway ahead of the ear, so a change committed NOW first sounds at
+     `lastAsked + 1`" — and the recompile that decides that is `commit("box")`
+     eight lines up, which reaches the changed-law block synchronously. Asking
+     before the recompile would be asking about the old score.
+
+     `first` IS THE ONE PATH THAT DOES NOT LOG HERE, and it is not an
+     exception, it is a different sentence: `push(true)` is the boot and
+     `CTX.setDocument` — a whole record ARRIVING, not a field moving — and a
+     record has its own line, written by `logRecord` where the record lands,
+     with the record's own name in it. A boot writes nothing at all, because
+     nobody did anything. */
+  if (!first) logEdit();
 }
 // which files every motif in the bank would pull to be heard. Pure, and it
 // asks `auditionOf` rather than re-deciding — one answer to "who reads this".
@@ -958,7 +999,15 @@ const CTX = {
                            staffBox.clear();        // …and so are its staves
                            try { draw(); } finally { anchorOff = false; }
                            anchorWant = null;
-                           if (ATLAS) ATLAS.showing(DOC.basis); },
+                           if (ATLAS) ATLAS.showing(DOC.basis);
+                           /* AND THE LOG SAYS WHICH RECORD ARRIVED (2026-08-28).
+                              AFTER draw(), because the record's name is read off
+                              `#title` — the heading draw() writes — which is
+                              this page's one owner of what a record is called,
+                              and reading it here rather than re-deriving it is
+                              the same discipline the action lines use: the log
+                              says what the RENDERED page says. */
+                           logRecord(); },
   /* THE ATLAS MOVED, SO THE ADDRESS DOES (see THE ADDRESS). It is a hook and
      not a subscription because the seed and the year live in ui/atlas.js and
      no event on ui/state.js's bus is fired for either — "box" is one call per
@@ -5014,9 +5063,16 @@ const laneV9 = (v) => (v <= 0 ? 0 : v === 1 ? 2 : V9(v));
    drawn and a drag cannot land on them, but the KEYBOARD channel (the native
    input, in deg units) still walks the document's full range, so no saved
    value is unreachable.
-   LOCKED MODE ONLY THIS WAVE: composer.html's "accidentals allowed" needs the
-   chromatic/cents alphabet extension (Phase 4), so the toggle is drawn
-   REFUSED with its reason (benchRefusal, below) per the no-silent-grey law. */
+   THE BAR IS THE SCALE'S, AND THERE IS NO TOGGLE (rewritten 2026-08-28). This
+   said "LOCKED MODE ONLY THIS WAVE: composer.html's 'accidentals allowed'
+   needs the chromatic/cents alphabet extension (Phase 4), so the toggle is
+   drawn REFUSED with its reason (benchRefusal, below) per the no-silent-grey
+   law." Paul: *"accidentals need the chromatic alphabet - not wired; the bar
+   locks to the scale -- get rid of that."* So the toggle is deleted — see the
+   tombstone where `benchRefusal` stood — and what is left is not a locked
+   mode, it is the only mode there is: the ticks a drag can land on are the
+   record's own alphabet, and a chromatic bar is a document change nobody has
+   asked for yet. The Phase 4 note lives in MOTIF.md, where plans live. */
 function benchEnv() {
   const SC = (genreFor(editSec()).scale) || MODES[DOC.alphabet.mode] || MODES.aeolian;
   const L = SC.length;
@@ -5036,7 +5092,21 @@ function benchEnv() {
 }
 
 /* ---- the bipolar pitch bar: fill grows from the marked zero; the ink ticks
-   ARE the lattice and only they land; the badge prints degree + semitones ---- */
+   ARE the lattice and only they land; the cap stands on the tick it landed on.
+
+   THE CAP CARRIES NO TEXT SINCE 2026-08-28. Paul: *"Let's get rid of the label
+   strings on the pitch sliders."* It printed `3̂` and a `<small>` `+4` — the
+   degree said as a musician says it and its semitones — parked at the value.
+   WHERE THAT INFORMATION IS: the cap is parked AT the semitone, on a bar whose
+   ink ticks are the record's own lattice and whose centre line is the marked
+   zero, so the position IS the reading and it is the only reading a drag can
+   produce. The <b> element STAYS, empty: it is the cap — the thing your thumb
+   is on — and nu.css gives it the plate, the 38px height and the `--sl-grab`
+   width. Deleting the element would have deleted the handle.
+   AND THE WORDS ARE NOT GONE FROM THE PAGE, only from the glass: `aria-label`
+   names the step and `aria-valuetext` still says "degree 3̂, +4 semitones" on
+   every paint, which is what a screen reader reads and what test/bench.test.js
+   B1 now measures the render against. ---- */
 function benchPitch(key, aria, get, set, commitFn, ENV) {
   const wrap = el("span", null, "nu-pit");
   const bar = el("i", null, "nu-pb");
@@ -5063,9 +5133,8 @@ function benchPitch(key, aria, get, set, commitFn, ENV) {
     else if (s < 0) { fill.style.display = ""; fill.style.insetInlineStart = p + "%";
                       fill.style.inlineSize = (50 - p) + "%"; }
     else fill.style.display = "none";
-    badge.textContent = "";
-    badge.append(el("span", ENV.degName(v)),
-                 el("small", (s > 0 ? "+" : "") + s));
+    // the cap is empty and stays empty — see the block above; its POSITION is
+    // the value, and `aria-valuetext` below is the same value in words
     badge.style.insetInlineStart = Math.max(10, Math.min(90, p)) + "%";
     inp.setAttribute("aria-valuetext",
       "degree " + ENV.degName(v) + ", " + (s >= 0 ? "+" : "") + s + " semitones");
@@ -5165,24 +5234,34 @@ function benchVel(key, aria, get, set, commitFn) {
   return { el: wrap, paint, input: inp };
 }
 
-/* THE REFUSED TOGGLE — composer.html draws a lock with two states; only the
-   locked state is buildable today, so the other is refused WITH its reason
-   (the no-silent-grey law; a control that cannot reach the sound is drawn
-   refused, never drawn dead). */
-function benchRefusal(parent, key, scaleWord) {
-  const p = el("p", null, "nu-benchbar");
-  p.append(el("span", "pitch lattice — " + scaleWord + ", set under Harmony",
-    "nu-hint"));
-  const b = document.createElement("button");
-  b.type = "button"; b.disabled = true; b.dataset.k = key;
-  b.dataset.why = "accidentals need the chromatic alphabet — a cents channel " +
-    "beside deg (the Phase 4 extension) — not wired";
-  b.append(el("span", "♯ accidentals"));
-  p.append(b, el("span",
-    "accidentals need the chromatic alphabet — not wired; the bar locks to the scale",
-    "nu-why"));
-  parent.append(p);
-}
+/* (`benchRefusal` STOOD HERE — a `.nu-benchbar` line above every motif's rows
+   carrying "pitch lattice — aeolian, set under Harmony" and a permanently
+   disabled `♯ accidentals` button with its reason printed beside it. DELETED
+   2026-08-28. Paul: *"accidentals need the chromatic alphabet - not wired; the
+   bar locks to the scale -- get rid of that."*
+
+   WHICH OF THE TWO PERMITTED ANSWERS THIS IS, said plainly: THE CONTROL IS
+   REMOVED, not made to work. Making it work needs a cents channel beside `deg`
+   — a change to the document schema, the compiler and the kernel (the Phase 4
+   alphabet extension) — which is another round's file and cannot be faked from
+   here. A dead control may not stay drawn, so it is gone.
+
+   AND THE NO-SILENT-GREY LAW IS NOT WEAKENED BY IT. That law says a control
+   which cannot reach the sound is drawn REFUSED WITH ITS REASON; it never said
+   a control must exist for every idea somebody has had. A toggle that has
+   never had a second state is not a refused control — it is a note about the
+   future wearing a 44px tap target, printed once per motif, sixteen rows above
+   the bars. The plan is recorded where plans are recorded (MOTIF.md, STATE.md)
+   and not in the furniture. Refusals that name a REAL state of the record —
+   the hold segment on a step with nothing to hold, the two bars on a rest —
+   are untouched and still carry their sentence; see `sync()` below, where they
+   now carry it as `data-why` on the control itself.
+
+   THE LATTICE POINTER WENT WITH IT for the same reason: the ink ticks on every
+   pitch bar ARE that lattice, drawn at the scale's own semitones (benchEnv),
+   and the Harmony axis is where the scale is set and says so where it is set.
+   A sentence naming the scale over a row of bars that already draw it is the
+   page saying a thing twice, once in words. */
 
 /* ---------- THE MAKER, ONE PER CELL, UNDER ITS OWN STAFF ----------------
    One grid per CELL, inside that cell's own block in the Material axis
@@ -5326,45 +5405,79 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
       s2.vel.input.disabled = !live;
       s2.pit.paint();
       s2.vel.paint();
+      /* WHY A FADED ROW IS FADED — ON THE CONTROLS NOW, NOT PRINTED OVER THEM
+         (rewritten 2026-08-28). This wrote a sentence into a `.nu-mutewhy`
+         span lying across the pitch cell: "rest — nothing sounds", "held — 3̂
+         still rings". Paul: *"Let's get rid of the label strings on the pitch
+         sliders. held and rest and the stuff that appears on top."* The span
+         is gone and so is the sentence's printing.
+
+         WHAT WAS DELETED AND WHERE ITS INFORMATION IS: "rest" and "held" are
+         the two OTHER segments of the kind button on the same row, one of
+         which is pressed and blue while the sentence was being printed — the
+         page was reading its own control aloud, sixteen times, in a column
+         that has no room for it. THE INFORMATION IS VISIBLE IN THE CONTROL.
+
+         AND THE REFUSAL LAW STILL HOLDS, which is the half that is not
+         narration: the two bars on a rest row and the hold segment on a step
+         with nothing to hold are genuinely REFUSED controls, so each keeps its
+         reason ON ITSELF as `data-why` — this page's own refusal idiom
+         (tempoRow, ui/selects.js), the thing a gate reads back off the
+         rendered artifact (test/text-diet.js T3), and `title` for a hover.
+         Deleted when the row is writable again, so no control ever carries a
+         reason that has stopped being true. */
       const src = k === "h" ? soundingAt(i) : null;
-      s2.why.textContent = k === "r" ? "rest — nothing sounds"
-        : k === "h" ? "held — " + (src != null
-            ? ENV.degName(H.deg[src]) + " still rings" : "silence holds")
-        : "";
+      const why = k === "r"
+        ? "a rest has no attack — say note on this step to write on it"
+        : k === "h"
+          ? "held — " + (src != null ? ENV.degName(H.deg[src]) + " is still "
+              + "ringing" : "a silence is holding") + "; the note it continues "
+            + "is where its pitch and weight are set"
+          : "";
+      for (const c2 of [s2.pit.input, s2.vel.input]) {
+        if (why) { c2.dataset.why = why; c2.title = why; }
+        else { delete c2.dataset.why; c2.removeAttribute("title"); }
+      }
+      const hb = s2.seg.h;
+      if (hb) {
+        if (hb.disabled) {
+          hb.dataset.why = "nothing to hold — the step this one would " +
+            "continue is a rest, and a silence cannot be held";
+          hb.title = hb.dataset.why;
+        } else { delete hb.dataset.why; hb.removeAttribute("title"); }
+      }
     }
   }
-  /* THE WISDOM RAIL — one line, EXISTING computed facts only: the degree name
-     from the record's own scale, the pitch class held against the record's
-     MODE (the chord alphabet — genres.js MODES, the same table chordGrid
-     reads), and the velocity word. CHORD WINDOWS PER STEP ARE DEFERRED: the
-     prog is read cyclically per SONG bar (kernel `at(g.prog, bar)`), so which
-     chord sounds under step 7 depends on where the loop is standing — a fact
-     this page does not compute, and the rail will not compute by hand
-     (EXTRACTION law). When chordsOf's windows are surfaced here, the rail
-     gains its role-under-the-chord sentence. */
-  const modeSet = new Set((MODES[DOC.alphabet.mode] || MODES.aeolian)
-    .map((x) => ((x % 12) + 12) % 12));
-  const rail = el("p", "tap a row — the step is read here", "nu-wisdom");
-  const speak = (i) => {
-    const k = H.play[i], beat = Math.floor((i % 16) / 4) + 1;
-    const at = "step " + (i + 1) + " (beat " + beat +
-      (i % 4 !== 0 ? " · “" + COUNT[i % 16] + "”" : "") + ")";
-    if (k === "r") { rail.textContent = at + " · rest — nothing sounds"; return; }
-    const src = k === "n" ? i : soundingAt(i);
-    if (src == null) { rail.textContent = at + " · silence holds"; return; }
-    const d = H.deg[src], s = ENV.semi(d), pc = ((s % 12) + 12) % 12;
-    const v = V7(velOf(src));
-    rail.textContent = at + (k === "h" ? " · held — " : " · ") +
-      ENV.degName(d) + " (" + (s > 0 ? "+" : "") + s + " st) — " +
-      (modeSet.has(pc) ? "in the mode" : "the scale's own colour, outside the mode") +
-      " · vel " + v + (v >= 7 ? " (accent)" : v === 1 ? " (ghost)" : v === 0 ? " (silent)" : "");
-  };
+  /* (THE WISDOM RAIL STOOD HERE and it is DELETED, 2026-08-28, with its whole
+     plumbing: the `.nu-wisdom` <p> that read "tap a row — the step is read
+     here" until you tapped one, the `speak(i)` that wrote a sentence into it
+     from four callers, the `modeSet` it held the pitch class against, and the
+     `tr.addEventListener("click", …)` on every one of the sixteen rows.
+
+     Paul, 2026-08-28: *"The box that says tap a row - the step is read here
+     should just go."*
+
+     WHAT IT SAID AND WHERE THAT INFORMATION IS. Every fact in the sentence was
+     already on the row it was about, in the control that owns it: the step and
+     the beat are the count cell at the head of the row (big and centred since
+     today, and the row goes dark when that step sounds); rest/held are the
+     pressed segment of the kind button; the degree and its semitones are where
+     the pitch bar's cap is standing on the lattice; the weight word is the
+     width of the weight bar. The one fact that was NOT a reading of a control
+     — "in the mode" / "the scale's own colour, outside the mode" — is a fact
+     about the ALPHABET and is not needed here: the bar's ink ticks are the
+     record's own lattice, so a degree that is off it cannot be reached by a
+     drag at all, and the Harmony axis is where the alphabet is chosen.
+
+     ITS RESERVE GOES WITH IT AND THAT IS THE MEASURED WIN: nu.css reserved the
+     rail at its own worst sentence per width — `calc(3lh + .6em + 2*--bw)`,
+     69.3px at 390 and 49.6px at 1280, per motif — so that a sentence changing
+     moved nothing under it. A box that is not drawn reserves nothing.) */
   // ONE COMMIT FOR EVERY CONTROL IN THIS GRID, and it is not `changed()`.
   const commit = () => { sync(); edited(cellName); };
-  // the lattice pointer + the refused accidentals toggle, ABOVE the rows it
-  // governs — a refusal you meet before the control it explains
-  benchRefusal(parent, seq + cellName + "-acc",
-    String(DOC.alphabet.scale || DOC.alphabet.mode || "aeolian"));
+  // (THE `benchRefusal` LINE STOOD HERE, above the rows it governed. Deleted
+  //  2026-08-28 with the control itself — see its tombstone above. Nothing
+  //  prints above the rows now: the grid begins at step 1.)
   for (let bar = 0; bar < bars; bar++) {
     if (only != null && bar !== only) continue;
     const t = el("table");
@@ -5382,33 +5495,39 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
        366px column at 390 and inside a 296px one at 320, and the pane is gone
        rather than fixed.
 
-       THE HEADER ROW IS THE QUESTIONS AND THE FIRST COLUMN IS THE COUNT, which
-       inverts what this grid used to be. The count cells are still
-       `countCell()` and still the playhead's registry — a playhead that marks a
-       ROW instead of a column, with no change to `mark()` at all, because the
-       registry was always a list of cells and never a claim about direction.
-
-       THE GLYPH IS THE COLUMN HEAD AND THE WORD RIDES BESIDE IT. `♪ note` in a
-       header cell is 40px of column for a control that only needs 36, and three
-       of them cost more than the readouts do; the glyph alone is the whole of
-       what the eye needs once, and `.nu-vh` says the word to a screen reader
-       (which also hears it in every radio's own aria-label). */
+       THE FIRST COLUMN IS THE COUNT, which inverts what this grid used to be.
+       The count cells are still `countCell()` and still the playhead's
+       registry — a playhead that marks a ROW instead of a column, with no
+       change to `mark()` at all, because the registry was always a list of
+       cells and never a claim about direction. */
     /* THE BENCH'S OWN SHAPE (2026-08-27, see the block above hookGrid): the
        three radio columns and the two slider columns become three cells —
-       kind, pitch, weight — one 52px line per step. The header stays one row
-       of words; `.nu-bench` is the geometry's name in nu.css.
+       kind, pitch, weight — one 52px line per step. `.nu-bench` is the
+       geometry's name in nu.css.
        (VELOCITY WAS A COLUMN OF SLIDERS here from 2026-08-25's rotation —
        "Add velocity to motif sliders" — and the column survives as the weight
        BAR: same question, same cell, a control whose width IS the answer.)
-       `.nu-bench` is added AFTER stepGrid below — stepGrid assigns className. */
-    const head = el("tr");
-    head.append(el("th", bars > 1 ? "m" + (bar + 1) : ""));
-    for (const w of ["kind", "pitch", "vel"]) {
-      const th = el("th");
-      th.append(el("span", w));
-      head.append(th);
-    }
-    t.append(head);
+       `.nu-bench` is added AFTER stepGrid below — stepGrid assigns className.
+
+       (THE HEADER ROW STOOD HERE and is DELETED, 2026-08-28: `<th>` `m2`,
+       then `kind`, `pitch`, `vel`, one row of words over every motif on the
+       page. Paul: *"Let's get rid of the label strings on the pitch sliders.
+       held and rest and the stuff that appears on top."* WHERE ITS
+       INFORMATION IS: `kind` is three segments carrying ♪ — · and an
+       `aria-label` per segment; `pitch` is a bipolar bar with the scale's own
+       ticks drawn in it and a cap standing on one of them; `vel` is a bar
+       whose width is the number printed in its cap. Three words naming three
+       controls that name themselves — narration, not labels, and the labels
+       they were standing in for are all still in the DOM as `aria-label` and
+       `.nu-vh`, so the stylesheet-off reading is unchanged.
+        `m2` — the measure number on a multi-bar cell — went with it and its
+       information is in the rows: a cell of two measures draws two tables,
+       stacked in order, and the count restarting at `1` IS the bar line.
+        THE COLUMN WIDTHS DID NOT GO WITH IT. `table-layout: fixed` takes its
+       widths from the FIRST ROW whatever its cells are, so nu.css states them
+       on the body row's own cells now — `.nu-bench th:first-child` (the count,
+       unchanged, it was always the row's own <th>), `td.nu-kindTd` and
+       `td.nu-velTd` — and the measured geometry is identical.) */
     for (let j = 0; j < 16; j++) {
       const i = bar * 16 + j;
       const tr = el("tr");
@@ -5423,7 +5542,7 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
       const th = countCell(COUNT[j]);
       if (mine) mine.cells[i] = th;
       tr.append(th);
-      const ref = steps[i] = { row: tr, seg: {}, pit: null, vel: null, why: null };
+      const ref = steps[i] = { row: tr, seg: {}, pit: null, vel: null };
       /* THE KIND IS ONE SEGMENTED BUTTON (composer.html: "One segmented kind
          button"). The three radios' keys are kept verbatim on the three
          segments, so focus survives the change of face (PROGRAM.md §2.2).
@@ -5448,7 +5567,7 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
           // silence", which the compiler would have to guess about
           if (code === "r")
             for (let k = i + 1; k < n && H.play[k] === "h"; k++) H.play[k] = "r";
-          commit(); speak(i);
+          commit();
         });
         sg.append(b2);
       });
@@ -5464,12 +5583,12 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
         () => { const src = H.play[i] === "n" ? i : soundingAt(i);
                 return src == null ? 0 : H.deg[src]; },
         (v) => { if (H.play[i] === "n") H.deg[i] = v; },
-        () => { commit(); speak(i); }, ENV);
+        () => commit(), ENV);
       pitTd.append(ref.pit.el);
-      // ...and the one measured line that says why a faded row sleeps
-      const mw = el("span", null, "nu-mutewhy");
-      ref.why = mw;
-      pitTd.append(mw);
+      // (`.nu-mutewhy` — the one measured line lying across this cell that
+      //  said why a faded row sleeps — was appended here. Deleted 2026-08-28;
+      //  sync() above carries the whole argument and the refusal that survives
+      //  it.)
       tr.append(pitTd);
       /* THE WEIGHT IS A BAR TOO — 0..7 at the view, 0..9 in the document (the
          one mapping, stated once at V7/V9). Tap cycles ghost/hit/accent and
@@ -5481,53 +5600,64 @@ function hookGrid(parent, cellName, hostCells, voice, barOnly, withButtons) {
                   : H.play[i] === "h" ? soundingAt(i) : null;
                 return src == null ? 0 : V7(velOf(src)); },
         (v) => { if (H.play[i] === "n") velArr()[i] = V9(v); },
-        () => { commit(); speak(i); });
+        () => commit());
       velTd.append(ref.vel.el);
       tr.append(velTd);
-      tr.addEventListener("click", () => speak(i));
+      // (`tr.addEventListener("click", () => speak(i))` stood here — sixteen
+      //  listeners whose only job was to write the wisdom rail's sentence.
+      //  Deleted 2026-08-28 with the rail; a tap on a row now does exactly
+      //  what the control under the thumb does and nothing else.)
       t.append(tr);
     }
     stepGrid(parent, t);          // sixteen ROWS: no pane, and nothing to swipe
     t.classList.add("nu-bench");  // after stepGrid — it ASSIGNS className
   }
-  parent.append(rail);            // the wisdom rail, under the rows it reads
   // FIRST WEARING. Everything a cell's contents decide is said here and only
   // here — the loop above builds the controls and never states them.
   sync();
   if (withButtons === false) return;
-  // the designing buttons, and the measure count
-  // THE SYMBOL AND THE WORD, BOTH, IN THAT ORDER. `face()` is aria-hidden
-  // decoration; the `.nu-vh` span is the button's accessible name, its
-  // stylesheet-off label and the word a screen reader reads. `data-k` is
-  // unchanged — focus is restored across a redraw by that key (PROGRAM.md
-  // §2.2) and the row's keys must not move because its faces did.
-  const p2 = el("p", null, "nu-row nu-tf-row");
-  for (const d of DESIGNS) {
-    const b2 = document.createElement("button");
-    b2.type = "button"; b2.dataset.k = seq + cellName + "-" + d.w;
-    b2.title = d.w;                    // hover only; NOT the accessible name
-    b2.append(face(d), el("span", d.w, "nu-vh"));
-    b2.addEventListener("click", () => { design(H, d); push(); draw(); });
-    p2.append(b2, document.createTextNode(" "));
-  }
-  parent.append(p2);
-  // ...AND THE SAME ROW FOR TIME (Paul, 2026-08-25: "just as there are icons
-  // for pitches create icons for tempo operations and add them and make them
-  // work"). A SECOND <p> and not seven more buttons in the first one: the two
-  // rows answer two different questions — one moves the notes and one moves the
-  // beats — and fourteen pictures in one wrapped paragraph is a wall. Same
-  // class, same `.nu-vh` word, same `data-k` discipline; what differs is which
-  // half of the cell the click rewrites (`designTime` against `design`).
-  const p2b = el("p", null, "nu-row nu-tf-row");
-  for (const d of TIMES) {
-    const b3 = document.createElement("button");
-    b3.type = "button"; b3.dataset.k = seq + cellName + "-" + d.w;
-    b3.title = d.w;                    // hover only; NOT the accessible name
-    b3.append(face(d), el("span", d.w, "nu-vh"));
-    b3.addEventListener("click", () => { designTime(H, d); push(); draw(); });
-    p2b.append(b3, document.createTextNode(" "));
-  }
-  parent.append(p2b);
+  /* ===== THE TWO TRANSFORM ROWS LEFT THIS BLOCK, 2026-08-28 ===============
+     Paul: *"When I'm in a motif, the motif operations should be the right nav
+     elements on the view. The up arrow to take me home should take me back to
+     the motif picker."*
+
+     WHAT STOOD HERE: two `<p class="nu-row nu-tf-row">` under the sixteen
+     rows — seven pitch operations (backwards, shift left, shift right, upside
+     down, up a step, down a step, wider) and seven rhythm ones (off the beat,
+     rhythm earlier, rhythm later, twice as busy, half as busy, each note in
+     two, drop every fourth) — fourteen 46px marks in two wrapped bands under
+     the tune they rewrite. They are the `motifops` LEVEL of `#nu-tray` now
+     (`motifOpsTrayItems`, see THE STRIPE), which is the third depth of the
+     gutter: root → the bank → this motif's operations.
+
+     EVERY ARGUMENT THE ROWS MADE MOVED WITH THEM, unaltered, because every one
+     of them is still the reason: the FACE is one or two glyphs and not a
+     drawing ("ten marks in two weights of one ink inside a 40px box is a
+     smudge at 40px"); the WORD is still in the DOM as the button's
+     `aria-label` and its `.nu-vh` span, so the level still reads as its
+     fourteen words in order with the stylesheet off; `op`/`mk` is still the
+     only thing that decides what a button does; and the two SETS stay two
+     sets — one moves the notes, one moves the beats — separated in the stripe
+     by the order they are listed in rather than by a paragraph break, because
+     a vertical column has no wrap to break.
+
+     `data-k` MOVED ON PURPOSE AND IS SAID OUT LOUD. It was `g7psalm-backwards`
+     — a per-draw sequence number, a cell name and the word — because two
+     makers for one cell had to not collide inside one page. A gutter level
+     draws ONE set for whichever motif is open, so the key is `motifop-
+     backwards` / `motiftime-off the beat`: stable across a redraw, which is
+     what `restoreFocus` needs (PROGRAM.md §2.2) and what lets `paintTray`
+     repaint the level in place instead of rebuilding fourteen buttons every
+     time you transform a tune. No gate presses the old keys (measured: grep).
+
+     WHAT DID NOT GO WITH THEM, AND WHY: `+ measure` / `− measure` below. They
+     are not operations ON the tune — they change how LONG the cell is, and
+     they come with a reading ("2 measures") that is the answer to the press
+     and has to be beside it. A transform rewrites sixteen steps you are
+     looking at; a measure button changes how many steps there are, which is
+     the same kind of act as `+ motif` in the bank, and that one is in the
+     stripe because it grows the SET the stripe is showing. This grows the
+     thing the PANEL is showing, so it stays in the panel with it. */
   const p3 = el("p");
   const grow = document.createElement("button");
   grow.type = "button"; grow.dataset.k = seq + cellName + "-addbar";
@@ -6072,8 +6202,12 @@ function formTable(parent, voice, editable, picks) {
       // would be showing you a list you had just left. (It read "the composed
       // staves in Material"; those are gone, and `editSec()` still reaches that
       // axis through `motifs()`'s `lead`.)
-      const n = secNumber(s2.id, String(i + 1), i === cur, () => {
-        setViewSec(i); formSec = s2.id; draw(); });
+      // ...AND IT IS `openSection` SINCE 2026-08-28, which is the same three
+      // writes with the gutter's level added to them — the number in the table
+      // and the mark in the stripe are two spellings of one intention, so they
+      // are one function and a hand that used either lands in the same place.
+      const n = secNumber(s2.id, String(i + 1), i === cur,
+                          () => openSection(s2.id));
       formCell[i] = n.live;
       tr.append(n.th);
       if (i === cur) tr.className = "nu-here";
@@ -6149,6 +6283,147 @@ function bassReadsWhy(parent, voice) {
       "take its accents from.", "nu-why"));
 }
 
+/* ---------- THE FORM AS A THING A HAND CAN CHANGE ------------------------
+   Paul, 2026-08-28: *"Make the sections into nav items with the ability to add
+   them and remove them and recharacterize and move them up and down."*
+
+   THE FORM HAS NEVER BEEN EDITABLE ON THIS PAGE. `precompose` deals a record
+   its sections and every control since has been about what happens INSIDE
+   them — their role, their bars, their eight nudges, what each voice reads and
+   does. There was no way to add a chorus, and no way to drop a section you did
+   not want, short of editing JSON. These four functions are that, and every
+   one of them is written against the two laws the rest of the document tier
+   already keeps.
+
+   LAW ONE: AN ID IS AN ADDRESS AND ADDRESSES DO NOT MOVE. Four maps in this
+   record are keyed by `section.id` — every voice's `development`, every
+   voice's `material` (the per-section half of `materialAt`'s two-shape value),
+   every voice's `desk.trim` (the automation grid), and the page's own
+   `formSec`. So REORDERING moves the objects and never the ids, and ADDING
+   mints an id that has never been used in this document rather than `"s" +
+   length`: `sid(3)` after a remove would collide with the `s3` that a voice's
+   development still remembers, and the new section would silently inherit a
+   dead one's words. The mint walks the existing `s<n>` ids and takes the
+   next number above all of them, so it is unique by arithmetic and still
+   reads like the ids `precompose` writes.
+
+   LAW TWO: A DEAD ID IS PRUNED, AND `document.js normalize` IS WHERE. It
+   already prunes `development` (fills every live id, deletes every dead one)
+   and `desk.trim` (deletes any key that is not a live id, then deletes an
+   emptied map and an emptied desk) — so `removeSection` calls it rather than
+   repeating it, which is the one-owner law applied to a cleanup.
+   THE ONE MAP normalize DOES NOT PRUNE IS `voice.material`, and that is
+   MEASURED rather than assumed: its loop over voices touches `development`,
+   `material` only when it is a STRING naming a dead cell, and `desk.trim`. A
+   removed section therefore leaves an orphan key in every voice that named a
+   motif for it — harmless to the SOUND (`materialAt` only ever looks up live
+   ids) and a lie in the save, which is the kind of lie that becomes a bug the
+   day somebody reuses an id. It is pruned HERE, at the one gesture that can
+   create one, and the gap is reported to the round that owns document.js
+   rather than patched from a file that does not.
+
+   `push()` IS THE CALLER'S, not these functions'. They are pure edits to
+   `DOC`; the four call sites in the gutter each `push(); draw();` the way
+   `addVoice` and `addCell`'s do. */
+const secMint = () => {
+  let n = 0;
+  for (const s2 of DOC.form.sections) {
+    const m = /^s(\d+)$/.exec(String(s2.id));
+    if (m) n = Math.max(n, +m[1] + 1);
+  }
+  // ...and a document whose ids are not `s<n>` at all still gets a free one,
+  // because the loop below is a collision check and not a guess.
+  let id = "s" + n;
+  while (DOC.form.sections.some((s2) => s2.id === id)) id = "s" + (++n);
+  return id;
+};
+/* ADDING ONE PUTS IT AFTER THE SECTION YOU ARE IN, which is what "add a
+   chorus" means when you are standing in the verse before it — and at the END
+   when you are standing nowhere, which is what the list itself is. It COPIES
+   THE NEIGHBOUR'S LENGTH and takes the neighbour's role, because the useful
+   default for "another one of these" is another one of these; a hand that
+   wanted something else has the role menu and the bars slider one tap away, in
+   the questions the new section opens on.
+   AND IT OPENS IT. Same sentence `addVoice` makes about the tab it lands you
+   on and `addCell` makes about the motif: you asked for a section, and here
+   are its questions. */
+function addSection() {
+  const secs = DOC.form.sections;
+  const i = secs.findIndex((s2) => s2.id === formSec);
+  const at = i < 0 ? secs.length - 1 : i;
+  const near = secs[at] || {};
+  const s2 = { id: secMint(), role: near.role || "verse",
+               bars: near.bars || 4 };
+  secs.splice(at + 1, 0, s2);
+  // EVERY VOICE GETS A WORD FOR IT — `normalize` fills `development` for every
+  // live id with the kind's own default, which is the invariant `voiceWord`
+  // and both compilers read against. Called here rather than left to `draw()`
+  // so the record is legal the instant the splice lands.
+  normalize();
+  formSec = s2.id;
+  setViewSec(secs.indexOf(s2));
+  return s2.id;
+}
+/* MOVING ONE IS A SWAP AND NOT A SPLICE-AND-INSERT, because a swap is what the
+   two buttons say ("this section trades places with the one before it") and
+   because it is the only rearrangement that cannot renumber anything a hand
+   was not looking at. Out of bounds is a NO-OP rather than a clamp: the marks
+   that could ask for one are refused with their reason, and a silent clamp
+   would make the refused button and the live one do the same thing. */
+function moveSection(i, d) {
+  const secs = DOC.form.sections, j = i + d;
+  if (i < 0 || j < 0 || i >= secs.length || j >= secs.length) return false;
+  const t = secs[i]; secs[i] = secs[j]; secs[j] = t;
+  setViewSec(j);
+  return true;
+}
+/* REMOVING ONE TAKES ITS WORDS WITH IT. The three maps and the two page
+   states, in the order they have to happen: the material map first (this
+   function is its only pruner — see LAW TWO), then the splice, then
+   `normalize`, which is what prunes `development` and the automation grid off
+   the ids that are now dead. `formSec` lands on the NEIGHBOUR rather than on
+   nothing, because the gutter you are standing in is a list of sections and
+   the honest answer to "I removed this one" is the one that took its place. */
+function dropSection(id) {
+  const secs = DOC.form.sections;
+  if (secs.length < 2) return false;
+  const i = secs.findIndex((s2) => s2.id === id);
+  if (i < 0) return false;
+  for (const v of DOC.voices) {
+    const m = v.material;
+    if (m && typeof m === "object" && !Array.isArray(m)) {
+      delete m[id];
+      // an emptied map that says nothing but its own default is still a map,
+      // and `materialAt` reads `m[""]` off it — so only a map with NOTHING in
+      // it collapses, which is `writeDesk`'s law said about this key.
+      if (!Object.keys(m).length) delete v.material;
+    }
+  }
+  secs.splice(i, 1);
+  normalize();
+  const next = secs[Math.min(i, secs.length - 1)];
+  formSec = next ? next.id : null;
+  setViewSec(Math.min(i, secs.length - 1));
+  return true;
+}
+/* ...AND THE ONE GESTURE THAT OPENS A SECTION, wherever it is made from — the
+   gutter's own mark, and the numbered button in the form table, which have
+   been two spellings of one intention since the table got numbers. Three
+   things move together because one tap caused all three: which section the
+   panel is asking about, which section the STAVES are written in (`setViewSec`
+   — Paul, 2026-08-25, choosing between the two: "The first is good"), and
+   which level of the gutter you are standing on. */
+function openSection(id) {
+  const i = DOC.form.sections.findIndex((s2) => s2.id === id);
+  if (i < 0) return;
+  setViewSec(i);
+  formSec = id;
+  tab = "form";
+  trayLevel = "section";
+  draw();
+  markLink();
+}
+
 /* ---------- ONE SECTION'S OWN QUESTIONS --------------------------------
    Paul, 2026-08-25: *"when you tap it brings up the questions about the
    section"*.
@@ -6216,12 +6491,25 @@ function sectionDetail(parent, s2) {
     ", " + s2.bars + " bars");
   h.dataset.k = "sec" + s2.id;
   h.tabIndex = -1;
-  // THE WAY BACK IS THE TAB YOU CAME FROM, and it is said out loud because it
-  // is the one gesture on this page that no visible control performs. A "back"
-  // button here would be a second owner of where you are, which is what
-  // deleting `#secs` was about.
-  parent.append(el("p", "tap " + FORMGLYPH + " form above for the list of " +
-    "sections", "nu-hint"));
+  /* THE WAY BACK IS `↑`, AND IT IS THE GUTTER'S (2026-08-28). The sentence
+     this replaces was right about the principle and wrong about the gesture:
+     "THE WAY BACK IS THE TAB YOU CAME FROM, and it is said out loud because it
+     is the one gesture on this page that no visible control performs. A 'back'
+     button here would be a second owner of where you are." A visible control
+     performs it now — the stripe's own `↑` — so the sentence is kept as the
+     reason there is still no button in this panel, and the words change. This sentence
+     read "tap ▦ form above for the list of sections", which was true while the
+     form was one mark in a horizontal strip and the list was a panel state.
+     The list is a LEVEL now — the marks beside this heading are this section's
+     own three operations, and `↑` out of them is the sections, which is what
+     the up button already says when you hold it ("up — out of verse 2, back to
+     the sections"). A second sentence naming a second way back would be a
+     second owner of where you are, which is what deleting `#secs` was about in
+     the first place. So the hint names the LEVEL you are on rather than a
+     gesture the gutter already carries. */
+  parent.append(el("p", "the marks beside this heading move this section, " +
+    "remove it, or add another; its name is the role menu below, and " +
+    "↑ goes back to the sections", "nu-hint"));
   // THE NAME AGAIN, AND NOT A SECOND OWNER: the list and the detail are two
   // states of one element and never on the page together, so the same
   // `form.role` spec draws once either way and `data-k` stays unique.
@@ -6383,42 +6671,37 @@ const TEMPOS = [
    as part of the accessible name, and the visible copies are collected into ONE
    sentence under the row rather than eight sentences down it — ui/selects.js's
    own rule for a column of refusals, applied to a row of them. */
-function tempoRow(parent) {
-  const now = () => ({ bpm: DOC.time.bpm, rate: DOC.time.rate == null ? null : DOC.time.rate });
-  const p = el("p", null, "nu-row nu-tf-row");
-  const refused = [];
-  for (const d of TEMPOS) {
-    const t = now(), next = d.mk(t);
-    const b = document.createElement("button");
-    b.type = "button"; b.dataset.k = "tempo-" + d.w;
-    b.title = d.w;                       // hover only; NOT the accessible name
-    b.append(face(d), el("span", d.w, "nu-vh"));
-    if (!next) {
-      const why = d.why(t);
-      b.disabled = true; b.setAttribute("aria-disabled", "true");
-      b.dataset.why = why;
-      b.setAttribute("aria-label", d.w + ", " + why);
-      refused.push(d.w + " — " + why);
-    } else {
-      b.addEventListener("click", () => {
-        const v = d.mk(now());
-        if (!v) return;
-        DOC.time.bpm = v.bpm;
-        // ABSENT IS THE ANCHOR'S OWN and it is spelled by DELETING the key, the
-        // same way avail.js SHEETS["time.rate"] spells it (`doc.time.rate = v
-        // === "" ? null : …`). A `rate: null` and a missing `rate` compile
-        // identically — document.js spreads `...(T.rate ? { rate: T.rate } : {})`
-        // — and null is the spelling this page already uses.
-        DOC.time.rate = v.rate;
-        changed();
-      });
-    }
-    p.append(b, document.createTextNode(" "));
-  }
-  parent.append(p);
-  if (refused.length)
-    P(parent, el("span", refused.join(" · "), "nu-why"));
-}
+/* (`tempoRow(parent)` STOOD HERE — 2026-08-28, and it is the eight tempo
+   operations as a `<p class="nu-row nu-tf-row">` under the bpm slider. Paul,
+   the same day: *"When I'm in tempo, move the tempo nav to the right nav."*
+   They are the `tempo` LEVEL of `#nu-tray` now — `tempoTrayItems`, which is
+   this function's body turned inside out: the same `TEMPOS` table, the same
+   `d.mk(now())` read twice (once to decide the refusal, once inside the
+   listener, because the closure outlives the bpm it was built at), and the
+   same three writes on a press.
+
+   ITS ONE ARGUMENT MOVED WITH IT AND IS WORTH REPEATING, because it is the law
+   this page keeps everywhere and the row was one of the three places that
+   spelled it: "a button that cannot be pressed says WHY: the reason rides on
+   the control as `data-why` (which is how a gate reads it back off the
+   rendered artifact) and is spoken as part of the accessible name". The gutter
+   could not say that at all until today — `icon()` had no refused state — so
+   the spelling was EXTRACTED into ui/glyph.js `paintIcon`, the one owner of
+   what a gutter button is, rather than copied into the tray. What is LOST is
+   the collected sentence under the row (`refused.join(" · ")`, ui/selects.js's
+   own rule for a column of refusals): a 56px stripe has no room for a
+   paragraph, so the reason is on the mark — in `data-why`, in the accessible
+   name, and in the explainer a long press opens — and nowhere else. That is a
+   real narrowing and it is the price of the ask.
+
+   `face(d)` went with it too. The stripe spells every mark ONE way (ui/glyph.js
+   `icon`), so a two-glyph face is concatenated (`(d.g0 || "") + d.g`) exactly
+   as `motifOpsTrayItems` concatenates a transform's — which loses the two
+   weights of ink `face()` gave the pair and keeps the picture. Same loss, same
+   reason, already argued at `motifOpsTrayItems`.
+
+   `face()` ITSELF IS NOT DEAD: the motif grid still draws it. `TEMPOS` above
+   is unchanged and is still the one owner of what a tempo operation is.) */
 
 /* ========================================================================
    THE VOICE'S OWN KNOBS — ONE SYSTEM AT TWO SCALES (VOICE.md)
@@ -7598,6 +7881,234 @@ function performanceTab(parent) {
     (v) => D.performance.ontime = v, parent);
 }
 
+/* ========================================================================
+   THE VOICE'S STRIP, IN THE VOICE — WHAT USED TO BE IN THE MIXER
+   ========================================================================
+   Paul, 2026-08-28: *"Make a new voice section for all voices. This is where
+   every voice is defined -- register, instrument, variables. get rid of the
+   engineer table and simply move the sound controls out of the mixer and into
+   this section."* And, in the same list: *"A voice has: Instrument voice with
+   settings from the mixer (move them from the mixer)."*
+
+   ===== TWO LIVE COPIES EXIST TODAY, AND THIS IS THE LOUD PART ============
+   ui/engineer.js IS FENCED THIS ROUND — another slice of this week owns that
+   file — so the board's per-voice strip is STILL DRAWN and is still writable.
+   Until the follow-up lands, `desk.pan` (say) has two controls on this page:
+   the one below and `b|pan|<voice>` on the board's strip. They are not two
+   OWNERS of the fact — both go through `NuDeskDoc.writeDesk`, which is and
+   remains the one writer — but they are two places a hand can reach it, which
+   is exactly the condition this codebase legislates against, and it is stated
+   here rather than discovered later. THE DELETION LIST IS IN THE ROUND'S
+   REPORT and it is the whole per-voice half of `stripOf`: the three insert
+   slots (`slotEl` / `seatSelect` / `b|fxw*` / `b|fxa*` / `b|fxb*`), the sends
+   row (`b|genre|`, `b|echo|`, `b|rev|`, `b|main|`), the eq row (`b|eq*|`), the
+   pan row (`b|pan|*`), the fader (`b|fader|`) and the mute/solo pair
+   (`b|mute|`, `b|solo|`). What stays on the board is what is NOT a voice's:
+   the four bus plates, the main strip, the word grid and the meter.
+
+   THE KEYS DO NOT COLLIDE, and that is not luck. `data-k` is how focus is put
+   back across a redraw (PROGRAM.md §2.2) and ui/selects.js CONSOLE-ERRORS on a
+   duplicate select key in so many words ("two controls would share one
+   data-k"), so this surface takes its own namespace — `v|…` for the two
+   toggles and `desk.<field>|<voice>` for every menu — while the board keeps
+   `b|…` and `ins|…`. The day the board's half goes, these keys stay put.
+
+   WHY IT IS BUILT FROM `NuFields.PARTMIX`'S OWN TABLES AND NOT FROM
+   ui/engineer.js. Every control below reads the same registry row the board
+   reads — SENDS/SENDLABEL, PANS/PANLABEL, EQ_BANDS, FXWETS, FXPOTS, FXFACE —
+   and writes through the same `writeDesk`. It is a second SPELLING of a
+   control, which is a cost; it is not a second definition of a fact, which
+   would be the bug. (The board's own widgets — `vknob`, `vnum`, `slotEl` —
+   are module-private to a fenced file and could not be imported even if the
+   fence were open.)
+
+   THE SPELLING IS THIS PAGE'S, NOT THE BOARD'S, and that is the one deliberate
+   departure. A send, a pan and a wet are SETTLED PARAMETERS — one value,
+   decided once — which is the exact case Paul's own law names for a menu
+   ("in general where there is ONE option a dropdown is preferred", 2026-08-24
+   evening). The board draws them as vertical sliders because a console is a
+   wall of faders and reads as one; a voice's page is a column of questions and
+   reads as one. What is a NUMBER ON A LINE stays a slider — the four eq bands
+   and the fader — which is the same law's other half (2026-08-23: "use range
+   sliders for numeric inputs").
+
+   EVERY REFUSAL IS MEASURED, none is decorative:
+     · the MAIN send is refused because there is no such fact: the dry path to
+       the main IS the fader, and a second control for it would be the second
+       owner this whole block is about;
+     · the three INSERT SLOTS are refused whole on a STEREO voice, because
+       audio/desk.js `widthKept` drops the chain there — the renderer's insert
+       path is mono — and a chip that is silently stripped is this box's
+       characteristic bug (a control declared, drawn, costed, reaching no
+       sound). `channelFacts` is the engine's own answer about the seated
+       channel, read the same way the board reads it;
+     · a slot's WET is refused when the chip declares no `mix` param
+       (`NuFields.fxHasMix`) — a swept resonant lowpass is a replacement, not a
+       blend, so there is no wet to move;
+     · a slot's two FACE knobs are drawn only when `FXFACE` says the module has
+       them, and are absent rather than refused when it does not: a chip with
+       one face param has one knob, and an empty second is not a refusal, it is
+       a control that was never declared. */
+const deskOfV = (voice) => (voice && voice.desk) || {};
+/* ONE MENU OVER ONE PARTMIX ROW. The empty detent is the word `default`
+   everywhere on this page (Paul, 2026-08-26: *"just use 'default' for 'nothing
+   set'"*), it is FIRST, and it is what `writeDesk` spells as deleting the key
+   — so "absent is today" has exactly one spelling from the option to the save. */
+function deskMenu(voice, field, table, labels, label, why) {
+  const cur = deskOfV(voice)[field];
+  return { key: "desk." + field + "|" + voice.name, label,
+    options: [{ value: "", label: "default", group: "default" },
+      ...Object.keys(table).map((k) => ({ value: k,
+        label: (labels && labels[k]) || k, group: "as you say" }))],
+    value: cur == null ? "" : String(cur),
+    ...(why ? { why } : {}),
+    set: (v) => { NuDeskDoc.writeDesk(voice, field, v || null); changed(); } };
+}
+/* ...AND A WHOLE MENU REFUSED, WITH ITS REASON ON IT. `selectEl` throws on a
+   greyed option with no `why` and greys the control itself off `spec.why`, so
+   a refusal here is one key and the widget does the rest — the reason rides in
+   `data-why` where a gate reads it back off the rendered page, and it is
+   spoken as part of the accessible name. */
+const deskRefused = (voice, field, label, why) => ({
+  key: "desk." + field + "|" + voice.name, label, why,
+  options: [{ value: "", label: "default", disabled: true, why }],
+  value: "", set: () => {} });
+
+function voiceSound(parent, voice) {
+  heading(parent, "the strip");
+  const d = deskOfV(voice);
+  const F = NuFields;
+  /* WHICH CHANNEL THE ENGINE SEATED THIS VOICE IN — `NuDeskDoc.channelVoicesOf`
+     is the desk's own roster walk and the same one the board makes, so "is
+     this voice stereo" is answered by the engine and not guessed from a name.
+     A voice with no channel (an unhired kit) simply has no facts, and the
+     stereo refusal below does not fire. */
+  let stereo = false;
+  try {
+    const me = NuDeskDoc.channelVoicesOf(DOC, GENRES)
+      .find((c) => c.voice.name === voice.name);
+    const facts = me ? (channelFacts(0) || {})[me.key] : null;
+    stereo = !!(facts && facts.stereo);
+  } catch (e) { stereo = false; }
+
+  // ---- the inserts: up to three, in order ------------------------------
+  const keys = (d.fx || []).filter((k) => F.FX[k]).slice(0, F.MAX_FX);
+  const insWhy = stereo
+    ? "this voice is stereo — the parent's insert path is mono, so the chain " +
+      "is dropped rather than silently stripped"
+    : null;
+  const insSpecs = [];
+  for (let i = 0; i < F.MAX_FX; i++) {
+    const n = i + 1, here = keys[i] || "";
+    /* THE SEAT ITSELF. Writing a seat REWRITES THE WHOLE LIST, because
+       `desk.fx` is an ORDERED array and a chain with a hole in it is not a
+       chain — clearing slot 2 of three moves slot 3 up into it, exactly as
+       ui/engineer.js `writeSlots` does, and the knobs travel with the seat
+       they belong to. A chip changed in a seat RESETS that seat's knobs: a
+       fraction of another module's range is not a value, it is a coincidence. */
+    insSpecs.push({ key: "desk.fx" + n + "|" + voice.name,
+      label: "insert " + n,
+      options: [{ value: "", label: "default", group: "default",
+                  ...(insWhy ? { disabled: true, why: insWhy } : {}) },
+        ...Object.keys(F.FX).map((k) => ({ value: k, label: F.FXLABEL[k] || k,
+          group: "as you say",
+          ...(insWhy ? { disabled: true, why: insWhy } : {}) }))],
+      value: here, ...(insWhy ? { why: insWhy } : {}),
+      set: (v) => {
+        const slots = keys.map((k, j) => ({ k, w: d["fxw" + (j + 1)] || null,
+          a: d["fxa" + (j + 1)] || null, b: d["fxb" + (j + 1)] || null }));
+        if (v) slots[i] = { k: v, w: null, a: null, b: null };
+        else slots.splice(i, 1);
+        const live = slots.filter(Boolean).slice(0, F.MAX_FX);
+        NuDeskDoc.writeDesk(voice, "fx", live.length ? live.map((x) => x.k) : null);
+        for (let m = 1; m <= F.MAX_FX; m++) {
+          const x = live[m - 1] || {};
+          NuDeskDoc.writeDesk(voice, "fxw" + m, x.w || null);
+          NuDeskDoc.writeDesk(voice, "fxa" + m, x.a || null);
+          NuDeskDoc.writeDesk(voice, "fxb" + m, x.b || null);
+        }
+        changed();
+      } });
+    if (!here) continue;
+    insSpecs.push(F.fxHasMix(here)
+      ? deskMenu(voice, "fxw" + n, F.FXWETS, F.FXWETLABEL, "wet " + n)
+      : deskRefused(voice, "fxw" + n, "wet " + n,
+          (F.FXLABEL[here] || here) + " declares no mix param — it is a " +
+          "replacement, not a blend, so there is no wet to move"));
+    const face = F.FXFACE[here] || [];
+    if (face[0]) insSpecs.push(deskMenu(voice, "fxa" + n, F.FXPOTS, F.FXPOTLABEL,
+      face[0].label + " " + n));
+    if (face[1]) insSpecs.push(deskMenu(voice, "fxb" + n, F.FXPOTS, F.FXPOTLABEL,
+      face[1].label + " " + n));
+  }
+  selectRow(parent, null, insSpecs);
+
+  // ---- the sends, post-insert ------------------------------------------
+  // THE BUS NAMES ARE THE RECORD'S OWN (`busNameOf`), which is why they are
+  // read and not typed: a record may rename a bus, and a label typed here
+  // would go on saying "reverb" about a plate somebody called "the hall".
+  const bn = (b) => F.busNameOf(F.BUSES, b);
+  selectRow(parent, null, [
+    deskMenu(voice, "genre", F.SENDS, F.SENDLABEL, "→ " + bn("genre")),
+    deskMenu(voice, "echo",  F.SENDS, F.SENDLABEL, "→ " + bn("echo")),
+    deskMenu(voice, "rev",   F.SENDS, F.SENDLABEL, "→ " + bn("rev")),
+    deskMenu(voice, "room",  F.SENDS, F.SENDLABEL, "→ " + bn("room")),
+    deskMenu(voice, "aux",   F.SENDS, F.SENDLABEL, "→ " + bn("aux")),
+    deskRefused(voice, "main", "→ main",
+      "the dry path to the main is the fader below — one owner, and a send " +
+      "beside it would be a second"),
+  ]);
+
+  /* THREE OF THOSE SENDS AND THE `level` BELOW ARE NOT A MOVE, THEY ARE THE
+     FIRST CONTROL THOSE FACTS HAVE EVER HAD, and it is said out loud because
+     "move the sound controls out of the mixer" is a promise about a SET and
+     this is bigger than that set. The board's strip draws three sends — genre,
+     echo, reverb — and refuses the main. `room`, `aux` and `lvl` are declared
+     in fields.js PARTMIX, are validated by song.js's registry walk, and every
+     one of them reaches the sound; MEASURED in audio/desk.js rather than
+     assumed:
+       · `m.room` and `m.aux` are summed into buses 3 and 4 (desk.js:1690-1691,
+         `feed.room += (m.room || 0) + …`, `feed.aux += (m.aux || 0) + S.aux`);
+       · `m.lvl` is the part's own gain (desk.js:450, `resolvedPart` —
+         `m.lvl * 10^((m.fader + t.db)/20)`), which is the level the FADER
+         above rides on top of.
+     So they were three facts a hand could only reach by editing JSON — the
+     exact inverse of this box's characteristic bug, a fact that ARRIVES and
+     was never declared on the page. They are declared now. (`main` is the one
+     that stays refused, and its reason is that there is no such fact.) */
+  // ---- where it sits, and how loud -------------------------------------
+  selectRow(parent, null, [deskMenu(voice, "pan", F.PANS, F.PANLABEL, "pan"),
+                           deskMenu(voice, "lvl", F.LEVELS, F.LEVELLABEL, "level")]);
+  /* THE FADER IS AN OFFSET AND THE LABEL SAYS SO. It rides ON TOP of the
+     record's own level automation (fields.js PARTMIX: "a user touch must not
+     fight the automation"), which is why it is ±dB and not a level, and why
+     0 is `writeDesk`'s spelling of absent — `!v` deletes the key, so dragging
+     back to the middle is the same as never having touched it. */
+  number("v|fader|" + voice.name, "fader (dB over the record's own level)",
+    F.faderDb(d.fader), (v) => { NuDeskDoc.writeDesk(voice, "fader", v); },
+    parent, -24, 12, 0.5);
+  /* THE EQ IS ABSOLUTE, not an offset — tone is set and left, so there is no
+     offset dance and no per-frame follower (fields.js PARTMIX). Flat
+     normalizes to absent and absent builds zero filter nodes. Each band writes
+     the WHOLE map, because `eq` is one field with a band->dB object in it and
+     `writeDesk` takes fields, not sub-fields. */
+  for (const b of F.EQ_BANDS)
+    number("v|eq" + b.key + "|" + voice.name, b.label,
+      (d.eq && d.eq[b.key]) || 0,
+      (v) => { const next = { ...(deskOfV(voice).eq || {}) }; next[b.key] = v;
+               NuDeskDoc.writeDesk(voice, "eq", next); },
+      parent, -12, 12, 0.5);
+  // ...AND THE DESK'S OWN PAIR. Not enums and not choices between values:
+  // solo is the one control here that reaches OTHER voices (audio/desk.js
+  // partsOf — any solo in the box mutes every part that is not soloed), which
+  // is why the sentence says so rather than the word "solo" standing alone.
+  check("v|mute|" + voice.name, "mute this voice", !!d.mute,
+    (v) => { NuDeskDoc.writeDesk(voice, "mute", v); }, parent);
+  check("v|solo|" + voice.name,
+    "solo this voice — every voice that is not soloed goes quiet", !!d.solo,
+    (v) => { NuDeskDoc.writeDesk(voice, "solo", v); }, parent);
+}
+
 function bandBlock(parent) {
   normalize();
   settleVoiceTab();
@@ -7645,6 +8156,28 @@ function bandBlock(parent) {
      against and Paul's order is simply better. Said out loud because a page
      that does two things needs to say which two. */
   const settingsFirst = kind === "line";
+  /* ===== A VOICE IS ASKED ONE QUESTION AT A TIME, 2026-08-28 =============
+     Paul: *"A voice has: Instrument voice with settings from the mixer (move
+     them from the mixer) / What it plays, register, material … / Per-section
+     settings."* Three sentences, three FACETS, and `voiceFacet` is which of
+     them the panel draws — the marks are the `voice` level of `#nu-tray` (see
+     THE STRIPE), and this is the half of that gesture that is a panel.
+
+     WHY IT IS A FILTER AND NOT THREE PANELS. Every control below is where it
+     was, in the order it was in, and the two `if`s decide which RUN — so the
+     reading order, the `data-k`s, the pane keys and every argument in this
+     function's comments are untouched. What is gone is the scroll: the shipped
+     chant's cantor measured one column of a cast table, three menus, a throat
+     block, a console strip and a five-row picks table, which is the pile
+     `sectionDetail` broke the form out of in August, made again one axis over.
+
+     `onForm` AND `onPerf` DO NOT TAKE A FACET, because they are not voices:
+     the form's own level is the sections and performance has no siblings at
+     all. `SONGTABS` is still what keeps a voice CALLED "form" out of that
+     branch, and `settleVoiceTab` is still what decides `tab`. */
+  const fInst  = !voice || voiceFacet === "inst";
+  const fPlays = !voice || voiceFacet === "plays";
+  const fSec   = !voice || voiceFacet === "sec";
   const panel = el("div");
   const t = el("table");
   const row = (label, kid, kid2) => {
@@ -7654,14 +8187,14 @@ function bandBlock(parent) {
     if (kid2) td.append(document.createTextNode(" "), kid2);
     tr.append(td); t.append(tr);
   };
-  if (kind === "line") {
+  if (kind === "line" && fPlays) {
     const rg = range("reg" + voice.name, voice.cast.reg, (v) => voice.cast.reg = v,
       -2, 2, 1, voice.name + " register");
     row("register", rg.r, rg.out);
     const en = range("entry" + voice.name, voice.cast.entry,
       (v) => voice.cast.entry = Math.max(0, v), 0, 8, 1, voice.name + " enters at bar");
     row("enters at bar", en.r, en.out);
-  } else if (kind === "drums") {
+  } else if (kind === "drums" && fPlays) {
     const c = document.createElement("input");
     c.type = "checkbox"; c.checked = !!voice.cast.on; c.dataset.k = "drums";
     c.setAttribute("aria-label", "drums");
@@ -7683,15 +8216,41 @@ function bandBlock(parent) {
   // words below — the per-section thing this voice DOES — stay sheets, which
   // is the morning's instruction and is about a different kind of question
   // (see the header of ui/selects.js, where both sentences are side by side).
-  if (!onForm && kind === "line")
+  /* THE THREE MENUS SPLIT ALONG PAUL'S OWN SENTENCE (2026-08-28). `cast.part`
+     and `cast.material` are WHAT IT PLAYS; `sound.instrument` is WHAT IT IS.
+     They were one row because they were three settled parameters in a column
+     that had no other grouping; the facets are that grouping, and the row is
+     two rows on two facets.
+
+     ===== THE VOICE-LEVEL MATERIAL CONTROL STAYS, AND IT IS RELABELLED ======
+     Paul: *"i should be able to have a voice play more than one kind of
+     material right? We do that in per-section -- so maybe we get rid of
+     material and let per-section handle it."* PER-SECTION IS ALREADY THE
+     OWNER and has been since 2026-08-24 — `formTable`'s `reads` column is
+     `material.cell`, scoped `voice.section`, one menu per row. What this
+     control is is the OTHER half of that value, and the document's own shape
+     says so: `voice.material` is either a string or a MAP whose `""` key is
+     the answer for every section that does not override
+     (`document.js materialAt`: `m[secId] != null ? m[secId] : m[""]`). Delete
+     the control and `m[""]` becomes unreachable — a fact that decides what a
+     voice plays in every section whose menu says "—", with nothing on the page
+     that can change it. That is the hidden fact this box legislates against,
+     so the control stays and stops pretending to be a second answer: it is
+     labelled `default`, which is the exact word `cast.bassStyle` already wears
+     for the same relationship ("the cast says `default: walking` and each
+     section then says `default` or a departure from it"). One question, asked
+     once, with the per-section menus reading against it. */
+  if (!onForm && kind === "line" && fPlays)
     selectRow(panel, null, [shSpec("cast.part", { voice: voice.name }),
-                            shSpec("cast.material", { voice: voice.name }),
-                            shSpec("sound.instrument", { voice: voice.name })]);
+                            shSpec("cast.material", { voice: voice.name },
+                                   "default material")]);
+  if (!onForm && kind === "line" && fInst)
+    selectRow(panel, null, [shSpec("sound.instrument", { voice: voice.name })]);
   // ...and these two are NOT on the evening list and stay sheets. The drum kit
   // in particular: Paul's question about it in the same message was "can i pick
   // more than one options for the drum kit?", and more-than-one is a row of
   // checkboxes (`multi`), which a <select multiple> is not.
-  if (!onForm && kind === "bass")
+  if (!onForm && kind === "bass" && fPlays)
     sheetRow(panel, null, [shSpec("cast.bassStyle", { voice: voice.name })]);
   // THE MACHINE AND THE BEAT IT READS BY DEFAULT (Paul, 2026-08-25: "show me
   // the options for machine, voice, engineer, levels"). `sound.drumkit` IS the
@@ -7700,21 +8259,61 @@ function bandBlock(parent) {
   // is the same fact a line's `cast.material` carries and was never offered to a
   // drummer until now. A menu and not a sheet, for the reason the evening of
   // 2026-08-24 gave: it is a settled parameter, one value decided once.
-  if (!onForm && kind === "drums") {
+  // THE MACHINE IS WHAT THE KIT *IS* (`sound.drumkit`, its own label is
+  // "machine") and the beat it reads by default is what it PLAYS, so the pair
+  // that used to be two lines is one line on each of two facets.
+  if (!onForm && kind === "drums" && fInst)
     sheetRow(panel, null, [shSpec("sound.drumkit", { voice: voice.name })]);
-    selectRow(panel, null, [shSpec("cast.material", { voice: voice.name })]);
-  }
+  if (!onForm && kind === "drums" && fPlays)
+    selectRow(panel, null, [shSpec("cast.material", { voice: voice.name },
+                                   "default material")]);
   // THE THROAT'S OWN KNOBS, between the instrument menu and the engineer, and
   // the order is the signal path: what the voice IS, then what is on it, then
   // where it sits (VOICE.md §1). Drawn for EVERY voice that names an
   // instrument, because it is one table and the vocal ones are not a special
   // case — a sampled instrument gets the same heading and the sentence that
   // says why there is nothing under it.
-  if (!onForm && voice && voice.kind !== "drums") knobsBlock(panel, voice);
-  // THE ENGINEER, directly after the voice's cast/material/instrument sheets and
-  // in the same column of the page — a cantor's send is one more fact about the
-  // cantor, next to its register and its throat, not a room next door.
-  if (!onForm && voice) engineer(panel, CTX, voice.name);
+  if (!onForm && voice && voice.kind !== "drums" && fInst) knobsBlock(panel, voice);
+  // THE STRIP, WHICH IS THE OTHER HALF OF "WHAT IS ON THIS VOICE" — the
+  // inserts, the sends, the tone, where it sits and how loud. Drawn for EVERY
+  // voice including the kit (a drummer has a channel like anybody else) and in
+  // signal order after the throat: what the voice IS, then what is on it, then
+  // where it sits (VOICE.md §1) — which is the order the deleted mirror was
+  // placed by, kept.
+  if (!onForm && voice && fInst) voiceSound(panel, voice);
+  /* (`engineer(panel, CTX, voice.name)` STOOD HERE — 2026-08-28. Paul: *"get
+     rid of the engineer table and simply move the sound controls out of the
+     mixer and into this section."*
+
+     WHAT IT WAS, and its own file's word for it: a `.nu-eng.nu-mirror` table,
+     "read-only — set it on the board", printing eleven rows of what the
+     record's desk says about this voice, bright where the document names a
+     word and dim where the answer is derived, with a link to the board. It
+     stopped being two writers on 2026-08-27 (the one-board round) and became
+     a MIRROR, which is what it was until tonight.
+
+     ITS OWN ARGUMENT WAS GOOD AND IS ANSWERED RATHER THAN OVERRULED: "a
+     cantor's send is one more fact about the cantor, next to its register and
+     its throat, not a room next door." Exactly — and a MIRROR of that fact is
+     not the fact. `voiceSound` above is the controls themselves, in the place
+     the mirror was pointing at, so the sentence is true now in a way a
+     read-only table could never make it. A mirror beside the real thing would
+     be a third copy of the same eleven rows on one page.
+
+     THE THIRD COLUMN IS THE ONE REAL LOSS and it is named so it can come back:
+     "what the value is riding on" — `derivedPartTone` and `deskChannelBase`
+     read at the playing box, printing "riding -2.5 dB seated" beside the eq
+     band and "the record seats it at -6.0 dB" beside the level. That is the
+     best thing the mirror ever did and it is a READING, not a control, so it
+     belongs beside these menus as the `nu-hint` half of each row rather than
+     as a table of its own. It is in the round's report as the follow-up, with
+     the two functions it needs named.
+
+     `engineer` IS NOW AN UNCALLED EXPORT of a fenced file — grep answers 0 for
+     `engineer(` outside its own definition. Its deletion is the report's first
+     item, together with the per-voice half of the board's `stripOf`. It is NOT
+     deleted from here, because ui/engineer.js belongs to another slice of this
+     week and a fence is a fence.) */
   if (voice && settingsFirst) parent.append(panel);
 
   /* ---------- THE FORM IS ONE ELEMENT WITH TWO STATES -------------------
@@ -7768,9 +8367,9 @@ function bandBlock(parent) {
   // "what does the cantor read in verse 3?" was a sentence the row could not
   // say and could not answer. The panel's position still keys off kind, two
   // lines up and two lines down; the table is now interactive for everyone.
-  else formTable(parent, voice, onForm, !!voice);
+  else if (fSec) formTable(parent, voice, onForm, !!voice);
   // ...and what the bass reads, which is a sentence and not a control
-  if (!onForm && kind === "bass") bassReadsWhy(parent, voice);
+  if (!onForm && kind === "bass" && fSec) bassReadsWhy(parent, voice);
   if (voice && !settingsFirst) parent.append(panel);
   // WHAT THIS VOICE DOES, SECTION BY SECTION. One sheet per section rather than
   // one menu per row: the vocabulary is twenty-one words for a line and
@@ -7913,25 +8512,16 @@ function lightStep(abs) {
 let stepTimers = [];
 const clearStepTimers = () => { for (const t of stepTimers) clearTimeout(t);
   stepTimers = []; };
-// THE ENGINE READOUT, ONCE A SECOND. "pos" fires several times a beat and the
-// sentence changes at most every few seconds, so it is throttled here rather
-// than made cheaper: engineLine() reads six Atomics off the shared control
-// block and there is no reason to do that forty times a second. This is the
-// only view code in the file that talks to the engine's health, and it draws
-// OUTSIDE #app (index.html), which is why draw() cannot take it away.
-let engineAt = 0;
-const paintEngine = () => {
-  const p = $("engine");
-  if (!p) return;
-  const now = Date.now();
-  if (now - engineAt < 1000) return;
-  engineAt = now;
-  const s = engineLine();
-  if (p.textContent !== s) p.textContent = s;
-};
+// (THE ENGINE READOUT STOOD HERE — `paintEngine`, writing `<p id="engine">`
+//  four lines under the transport. It is `logEngine` now, at THE ENGINE'S OWN
+//  SENTENCE, WHICH IS NOW A LOG LINE, and its throttle, its one-owner rule and
+//  its "only when it actually changed" test moved with it unaltered. Paul,
+//  2026-08-28: *"Get rid of the media (mediaEl) held plays offline etc section
+//  on the top; move that info to the logger."* This is the same call, from the
+//  same feed, at the same rate; only the destination changed.)
 on("pos", (d) => {
   clearStepTimers();
-  paintEngine();
+  logEngine();
   // A SECTION BOUNDARY REPAINTS THE COMPOSED STAVES AND NOTHING ELSE (Paul,
   // 2026-08-24: "Don't change motifs visually or change the editing interface.
   // It's too confusing when it changes."). This was `draw()` — the whole page
@@ -8025,9 +8615,15 @@ on("transport:state", () => {
   // an editing loop that survived the press would come back the moment you
   // stopped, which is a surprise rather than a state.
   auditionOff();
-  // …and the readout, because "pos" stops ticking the moment the transport
-  // does: without this the page would still be claiming a runway after stop().
-  engineAt = 0; paintEngine();
+  // (…AND THE READOUT WAS ASKED FOR HERE. It said: "'pos' stops ticking the
+  //  moment the transport does: without this the page would still be claiming
+  //  a runway after stop()." Still exactly true, and it is the LOGGER's own
+  //  `transport:state` handler that makes the call now — because the log is an
+  //  ordered list and the order is the meaning: "play" has to be written
+  //  BEFORE the engine's answer to it, so the answer reads as a consequence
+  //  rather than as the thing that happened first. This handler runs earlier
+  //  in the file than that one, so the two lines would have come out in the
+  //  wrong order if the ask stayed here.)
   if (playing) {
     // THE CLOCK MAY NOT REACH window.scrollBy. `restoreAnchor` re-applies a
     // remembered scroll for a second and a half after every engrave that
@@ -8297,6 +8893,426 @@ function buildTab(name) {
   return true;
 }
 
+/* ===== THE LOGGER: WHAT THE BOX HAS DONE ================================
+   Paul, 2026-08-28: *"Add a logger on the bottom right. Log actions. Get rid
+   of the media (mediaEl) held plays offline etc section on the top; move that
+   info to the logger. Badge the logger with the number of lines it holds. Make
+   the logger also have a countdown for when I change things, showing how many
+   beats before they take effect."*
+
+   "ON THE BOTTOM RIGHT" IS "AT THE FOOT OF THE GUTTER", AND THE GUTTER MOVED
+   THE SAME AFTERNOON. Paul, hours later: *"Move the right nav to the left so
+   it doesn't interfere with the scroll on the right."* The logger was asked
+   for at the bottom right because that is where the stripe was; what he was
+   naming is the foot of the navigation, so it went left with it and nothing
+   about it had to change — it is `.nu-trayfoot`, the last block of `#nu-tray`,
+   wherever `#nu-tray` is. nu.css keeps the list of what does have to follow
+   the stripe, at `.nu-tray`.
+
+   IT IS ONE SURFACE ANSWERING TWO QUESTIONS THAT WERE ALWAYS THE SAME QUESTION:
+   what did I just do, and what did the box do about it. Before tonight the
+   first had no answer anywhere on the page and the second had a paragraph
+   under the transport that overwrote itself once a second — so a dropout at
+   0:20 was unreadable at 0:21, and there was no way at all to see that the
+   thing you changed two minutes ago was the thing that changed the sound. A
+   log is the shape both of those want: newest first, nothing overwritten,
+   nothing reserved when there is nothing to say.
+
+   ===== HOW A LINE KNOWS WHAT TO CALL ITSELF ==============================
+   AND THIS IS THE ONE DECISION IN HERE WORTH ARGUING WITH. A log line has to
+   name what changed "in the page's own vocabulary". The obvious way to get
+   that is to pass a word in at each call site — and `push()` has twenty-two of
+   them, `changed()` is reached from every sheet, every select, every slider
+   and every view module through `ctx.changed()`, and none of them takes a
+   label today. Twenty-two strings typed into twenty-two call sites would be
+   twenty-two SECOND OWNERS of names that are already written down: the sheet's
+   <legend>, the select's `aria-label`, the slider's `<output>`. The first time
+   somebody renamed a control the log would start lying, quietly, in a corner
+   of the screen nobody diffs.
+
+   SO THE LINE IS READ OFF THE CONTROL, NOT OFF THE CALL SITE. `describeHand`
+   asks the element the gesture landed on what its name is and what it now
+   says, using the page's own accessibility machinery — the label that points
+   at it, the fieldset's legend, the selected option's text, the readout beside
+   the range. That is the same string a screen reader is given, which is the
+   strongest guarantee available that it is the word actually on the page: a
+   renamed control is renamed in the log by being renamed, and a control with
+   no name is a bug the log makes visible instead of papering over. It is also
+   the one reading that survives this file's own habit — `draw()` rebuilds the
+   page on every edit, so anything remembered ABOUT a control is stale by the
+   time the log is written; the control is read BEFORE the rebuild, inside the
+   gesture, and only the two strings are kept.
+   (TEST THE ARTIFACT, which is this box's own standing law: the log says what
+   the RENDERED control says. Nothing here consults a spec, a registry or a
+   table of what the control was supposed to be called.)
+
+   WHAT IS NOT LOGGED, AND WHY — three decisions, all of them arguable:
+     · OPENING A TAB IS NOT AN ACTION. A tab is where you are LOOKING, and this
+       file already says so about its neighbours: "`trayLevel` is a fact about
+       the STRIPE … it never reaches the record", and `tabScroll` is where your
+       thumb left a panel. The same test applies. What settles it is what a log
+       is FOR: nine tabs and four levels are a dozen marks a thumb walks
+       through on the way to one edit, and a log that recorded them would put
+       the six things you actually did nine screens apart. Where you are is
+       already said permanently, by the marked mark, six inches above this one.
+     · THE ROOM SLIDER IS NOT AN ACTION. It does not reach the record — "room
+       only — not saved" is the sentence the board's master strip carries about
+       exactly this control — and it is the one thing in the transport a hand
+       moves CONTINUOUSLY, so it would write a line a frame while everything
+       that matters scrolled off the top.
+     · A REFUSAL IS NOT AN ACTION EITHER, and it is already answered better
+       than a log could: a refused option keeps its reason ON the page, beside
+       the control, in `data-why` — the law this box has paid for most often.
+       Nothing was changed, so there is nothing to record.
+   What IS logged besides your edits: PLAY and STOP, which are not edits and
+   are here anyway, because the engine's own sentences are answers to a
+   question — "what is the sound doing" — that nobody can see was asked. A
+   runway and a dropout under a bare "play" line read as consequences; the same
+   two lines with no play above them read as weather.
+
+   THE RESTING STATE IS QUIET AND THE BUTTON IS NOT. Paul: *"If nothing is
+   pending and nothing has happened, the logger should be quiet rather than an
+   empty box with a zero."* So: no badge at nought (`num: null`), no countdown
+   when nothing is pending (the box is emptied and nu.css folds it away), and
+   the panel, opened on an empty log, says one sentence instead of drawing an
+   empty list. The BUTTON is there from boot regardless, at a size that never
+   changes — that is geometry reserved at creation, and the alternative is a
+   44px target materialising at the foot of the stripe under a thumb that was
+   reaching for the mark above it. A control that appears is worse furniture
+   than a control that is quiet. */
+const LOG_MAX = 200;             // the tail a phone can hold without a scroll
+                                 // through six thousand lines of engine prose
+const logs = [];                 // newest first — the order IS the meaning
+let logOpen = false;
+let logBtn = null, logPanel = null, logList = null, logCountEl = null;
+let logZero = 0;                 // the timer that clears a landed countdown
+const LOG_REST = "nothing yet — this fills with what you change and what the "
+               + "engine says about the sound.";
+
+const two = (n) => (n < 10 ? "0" : "") + n;
+const stampNow = () => { const d = new Date();
+  return two(d.getHours()) + ":" + two(d.getMinutes()) + ":" + two(d.getSeconds()); };
+
+/* ONE LINE, AND A REPEAT IS A COUNT AND NOT A SCREEN OF LINES. Nudging one
+   slider six times is one gesture said six ways; six identical rows would bury
+   the five other things you did. Consecutive lines with the same KIND and the
+   same NAME collapse into the top row, which keeps the NEWEST value and wears
+   a `×6` — so nothing is lost about what the control ended up saying, only
+   about the path it took to get there, which is what a slider's own readout was
+   showing you the whole time. Non-consecutive repeats do not collapse: coming
+   back to a control after doing something else is a different act. */
+function logPut(kind, what, value) {
+  const top = logs[0];
+  const same = !!(top && top.kind === kind && top.what === what);
+  if (same) { top.value = value; top.at = stampNow(); top.n = (top.n || 1) + 1; }
+  else {
+    logs.unshift({ kind, what, value, at: stampNow(), n: 1 });
+    if (logs.length > LOG_MAX) logs.length = LOG_MAX;
+  }
+  paintBadge();
+  addRow(same);
+}
+
+/* THE ROW. A real <time> and a real <ol> (nu.css turns the numbering off, not
+   the order): with the stylesheet off this is a numbered list of stamped
+   sentences, which is exactly what it is with the stylesheet on. */
+function logRow(L) {
+  const li = el("li");
+  li.dataset.kind = L.kind;
+  li.append(el("time", L.at));
+  const sp = el("span");
+  sp.append(document.createTextNode(L.what));
+  if (L.value != null && L.value !== "") {
+    sp.append(document.createTextNode(" — "));
+    sp.append(el("b", L.value));
+  }
+  if (L.n > 1) sp.append(document.createTextNode(" ×" + L.n));
+  li.append(sp);
+  return li;
+}
+
+/* TWO PAINTERS, AND THEY ARE SPLIT BECAUSE THEY ANSWER TO DIFFERENT EVENTS.
+   The BADGE is repainted on every line and on every open/shut — it is the only
+   part of the logger that is on the screen when the logger is shut. The LIST
+   is repainted only while it is open, and then INCREMENTALLY: one row
+   prepended, or the top row swapped when a line coalesced. A full rebuild
+   would reset `scrollTop`, and a log that scrolls itself back to the top once
+   a second while you are reading the middle of it is a log you cannot read.
+   (THEY WERE ONE FUNCTION FOR AN HOUR AND THE SEAM IS WHY. `setLog` wants "the
+   badge, and the whole list from scratch"; `logPut` wants "the badge, and ONE
+   row". One function taking a flag did the second thing on the first call and
+   prepended a duplicate of the newest line over a freshly-built list —
+   measured on the rendered page at 390: three lines in, the panel drew the
+   engine sentence twice and dropped the tempo edit off the end.) */
+function paintBadge() {
+  if (!logBtn) return;
+  paintIcon(logBtn, { glyph: GLYPH.log.g, num: logs.length || null,
+                      word: sayLog(logs.length), say: GLYPH.log.s, on: logOpen });
+}
+function addRow(coalesced) {
+  if (!logPanel || !logOpen) return;
+  if (!logList) { buildLog(); return; }      // the list was the resting sentence
+  if (coalesced && logList.firstElementChild)
+    logList.replaceChild(logRow(logs[0]), logList.firstElementChild);
+  else {
+    logList.prepend(logRow(logs[0]));
+    while (logList.children.length > logs.length) logList.lastElementChild.remove();
+  }
+}
+
+function buildLog() {
+  if (!logPanel) return;
+  logPanel.textContent = "";
+  logList = null;
+  if (!logs.length) { logPanel.append(el("p", LOG_REST)); return; }
+  logList = el("ol");
+  for (const L of logs) logList.append(logRow(L));
+  logPanel.append(logList);
+}
+
+/* OPEN AND SHUT, AND THE BUTTON SAYS WHICH WITH `aria-pressed`. That is the
+   gutter's own idiom for "this is the one that is open" — four levels of marks
+   already say it that way — and `aria-expanded` beside it would be a fifth
+   spelling of one state on one button in the same 47px column, which is the
+   drift ui/glyph.js exists to stop. `aria-controls` names the sheet, so the
+   two are joined for anyone who asks which. */
+function setLog(open) {
+  logOpen = !!open;
+  if (logPanel) {
+    logPanel.hidden = !logOpen;
+    if (logOpen) buildLog(); else { logPanel.textContent = ""; logList = null; }
+  }
+  paintBadge();
+}
+
+/* THE COUNTDOWN — THE CLOCK SPEAKING, AND THE ONE PLACE IT SPEAKS IN HERE.
+   `logCountEl` carries `data-live="pending"` and holds NO CONTROL; the badge
+   and the button are outside it. The number is the SOONEST landing when more
+   than one edit is in flight, because that is the one a hand is waiting on.
+   THE ARITHMETIC IS NOT HERE AND MUST NOT COME HERE. audio/live.js owns where
+   an edit lands — the serial rule (the walk runs a runway ahead of the ear, so
+   a change first sounds at `lastAsked + 1`), the section-scoped advance to the
+   box's next pass, the onBar clamp that ends a countdown the crossfade path
+   brought in early, and the ticker's refusal to ever count UP by one. This
+   reads `beatsLeft` off the feed and draws it. */
+const pend = new Map();          // label -> beats left
+function paintCount(landed) {
+  if (!logCountEl) return;
+  if (logZero) { clearTimeout(logZero); logZero = 0; }
+  let least = null;
+  for (const n of pend.values()) if (least == null || n < least) least = n;
+  if (least != null) {
+    logCountEl.replaceChildren(el("b", String(least)),
+                               el("small", least === 1 ? "beat" : "beats"));
+    return;
+  }
+  /* AND ZERO IS SHOWN BEFORE IT IS CLEARED. A countdown that vanished at 1
+     would never be seen to arrive, and arriving is the whole thing it is
+     reporting — "it is in the sound NOW" is the answer Paul asked the question
+     to get. 700ms is about a beat and a half at this page's tempos: long
+     enough to read, short enough that it is gone before the next bar line. */
+  if (landed) {
+    logCountEl.replaceChildren(el("b", "0"), el("small", "now"));
+    logZero = setTimeout(() => { logZero = 0;
+      if (logCountEl && !pend.size) logCountEl.replaceChildren(); }, 700);
+  } else logCountEl.replaceChildren();
+}
+on("pending", (d) => {
+  if (!d || !d.label) return;
+  if (d.beatsLeft > 0) pend.set(d.label, d.beatsLeft);
+  else pend.delete(d.label);
+  paintCount(d.beatsLeft === 0);
+});
+
+/* ===== READING THE HAND =================================================
+   WHICH CONTROL THE GESTURE LANDED ON. `pointerdown` in the capture phase, so
+   it is recorded before any handler on the page runs and before `draw()` can
+   destroy the element — and `keydown` beside it, because a menu changed with
+   the arrow keys is a gesture too and never fires a pointer event.
+   `document.activeElement` is the fallback and not the primary: a <label>
+   wrapping a radio moves focus to the input (good), but a button pressed with
+   a mouse is not focused on every engine (Safari), and the one thing this must
+   never do is name the wrong control. The pointer record wins while it is
+   fresh — two seconds, which is longer than any gesture and shorter than any
+   pause between two of them. */
+const HANDSEL = "button, select, input, textarea, [role=button]";
+const handOf = (n) => (n && n.closest) ? n.closest(HANDSEL) : null;
+let handEl = null, handMs = -1e9;
+const noteHand = (t) => { const h = handOf(t);
+  if (h) { handEl = h; handMs = performance.now(); } };
+addEventListener("pointerdown", (e) => noteHand(e.target), true);
+addEventListener("keydown", (e) => noteHand(e.target), true);
+const theHand = () => ((performance.now() - handMs < 2000 && handEl)
+  ? handEl : handOf(document.activeElement));
+
+const CLEAN = (s) => String(s == null ? "" : s).replace(/\s+/g, " ").trim();
+const CLIP = (s) => (s.length > 64 ? s.slice(0, 63) + "…" : s);
+
+/* THE WORDS BESIDE A CONTROL, MINUS THE CONTROL. `el.labels` is the browser's
+   own answer to "what labels this" (a `for=` or a wrapping <label>), and the
+   control's own subtree is subtracted because a wrapping label contains the
+   input and `textContent` would otherwise swallow its value. */
+function labelWords(c) {
+  let L = (c.labels && c.labels.length) ? c.labels[0] : null;
+  if (!L && c.closest) L = c.closest("label");
+  if (!L) return "";
+  return CLEAN([...L.childNodes]
+    .map((n) => (n === c || (n.contains && n.contains(c))) ? "" : (n.textContent || ""))
+    .join(" "));
+}
+
+/* WHAT CHANGED, AND WHAT IT NOW SAYS. Four shapes, because this page draws
+   four and each one keeps its name in a different place — and every one of
+   those places is the accessible name, never a private field:
+     a radio / checkbox   the QUESTION is the <fieldset>'s <legend>, the ANSWER
+                          is the word beside the input (ui/sheets.js's shape)
+     a <select>           `aria-label` is the question (ui/selects.js writes it
+                          and folds any refusal into it), the answer is the
+                          selected option's own text
+     a range              `aria-label` is the question, and the answer is the
+                          <output> beside it — the readout `range()` builds so
+                          "a range with no readout is unusable", already
+                          formatted by that slider's own `fmt`
+     anything else        a button: its accessible name is the whole line, and
+                          there is no value ("rewrite 6" is both halves at once) */
+function describeHand(h) {
+  if (!h) return null;
+  const tag = h.tagName, type = String(h.type || "").toLowerCase();
+  let what = "", value = null;
+  if (type === "radio" || type === "checkbox") {
+    const fs = h.closest("fieldset"), lg = fs && fs.querySelector("legend");
+    what = CLEAN(lg ? lg.textContent : "") || CLEAN(h.getAttribute("aria-label"));
+    value = labelWords(h) || CLEAN(h.value);
+    if (type === "checkbox" && !h.checked) value = (value ? value + " — " : "") + "off";
+    if (!what) { what = value; value = null; }
+  } else if (tag === "SELECT") {
+    what = CLEAN(h.getAttribute("aria-label")) || labelWords(h) || CLEAN(h.dataset.sel);
+    const o = h.selectedOptions && h.selectedOptions[0];
+    value = CLEAN(o ? o.textContent : h.value);
+  } else if (type === "range") {
+    what = CLEAN(h.getAttribute("aria-label")) || labelWords(h) || CLEAN(h.dataset.k);
+    const out = h.parentElement && h.parentElement.querySelector("output");
+    value = CLEAN(out ? out.textContent : h.value);
+  } else {
+    what = CLEAN(h.getAttribute("aria-label")) || CLEAN(h.textContent)
+        || CLEAN(h.dataset.k);
+  }
+  what = CLIP(CLEAN(what));
+  value = value ? CLIP(CLEAN(value)) : null;
+  return what ? { what, value } : null;
+}
+
+/* THE ONE CALL `push()` MAKES, and it does two things with one reading of the
+   hand: it writes the line, and it tells audio/live.js that an edit is in
+   flight so the countdown has something to count. The LABEL it announces with
+   is the control's own name, which is what makes two nudges of one slider ONE
+   pending change (the map is keyed by label) and two different edits two.
+   `announceChange` is a no-op while stopped, by its own first line, so there
+   is no `playing` test here — the log line lands either way, which is right:
+   an edit made with the transport off is still an edit you made. */
+function logEdit() {
+  const H = describeHand(theHand());
+  /* AN EDIT THAT CANNOT NAME ITSELF IS STILL AN EDIT. A `push()` reached from
+     somewhere with no live control under the hand — a view module's own
+     button that was destroyed by the rebuild before we looked, a keyboard path
+     nobody has met yet — gets one honest line rather than silence, because
+     "something changed and I do not know what" is a fact worth having in a log
+     and a missing line is a log that lies by omission. */
+  const what = H ? H.what : "an edit";
+  logPut("act", what, H ? H.value : null);
+  announceChange(what, null, { who: what });
+}
+
+/* A WHOLE RECORD ARRIVING IS ONE LINE, NOT A HUNDRED. `CTX.setDocument` is
+   the atlas landing a record — a globe tap, a rewrite, a link opened — and
+   every field in the document changed at once, so naming the fields would be
+   the log printing the record. What a reader wants is WHICH record, under the
+   name the page calls it by, and WHOSE gesture fetched it: the hand is read
+   the same way an edit's is, so a press on `rewrite` writes "rewrite 6" and a
+   tap on the globe writes the mark's own name, with the record beside it.
+   NOTHING AT BOOT. `booted` is false until the boot block has finished, and a
+   page that opened on its own record has not been done anything to. */
+let booted = false;
+function logRecord() {
+  if (!booted) return;
+  const H = describeHand(theHand());
+  const t = $("title");
+  logPut("act", H ? H.what : "record", CLIP(CLEAN(t ? t.textContent : "")) || null);
+  announceChange(H ? H.what : "record", null, {});
+}
+
+/* ===== THE ENGINE'S OWN SENTENCE, WHICH IS NOW A LOG LINE ===============
+   This was `paintEngine`, four lines under the transport, and its argument is
+   unchanged word for word: *"'pos' fires several times a beat and the sentence
+   changes at most every few seconds, so it is throttled here rather than made
+   cheaper: engineLine() reads six Atomics off the shared control block and
+   there is no reason to do that forty times a second."* Same second, same one
+   owner of the wording (audio/live.js `engineLine`), same "only when it
+   actually changed" test — the destination is the only thing that moved.
+   WHAT THE MOVE BUYS: the sentences no longer overwrite each other. A dropout
+   at 0:20 was gone from the page at 0:21 and is now still readable at 4:00,
+   with the edit that preceded it one line above. */
+/* ...AND THE ONE RULE THIS FILE ADDS, WHICH IS ABOUT NEWS AND NOT ABOUT WORDS.
+   `paintEngine` wrote the sentence into a paragraph that OVERWROTE ITSELF, so
+   it could afford to redraw whenever anything moved. A log cannot: measured on
+   the rendered page at 390 with the record playing, the sentence changed EVERY
+   SECOND — "stream · runway 8.2s", "6.6s", "7.6s", "9.2s" — and one minute of
+   listening buried every edit under sixty lines of the same claim.
+
+   THE RUNWAY IS A GAUGE, NOT AN EVENT, and the box already knows this in its
+   own words: test/soak-nukernel.js, on this exact number — *"it sawtooths
+   between about 2.7 s and 8.1 s … it sawtooths, it is HEALTHY"*, because the
+   producer publishes one chord bar at a time and the ring is eaten
+   continuously in between. A healthy sawtooth is not sixty pieces of news.
+
+   SO THE COMPARISON — AND ONLY THE COMPARISON — IGNORES IT. `NEWS` takes the
+   runway's own reading out before asking "is this a different sentence", and
+   what gets PRINTED is engineLine()'s string exactly as it was returned, with
+   the real reading in it at the moment the line was written. audio/live.js is
+   still the one owner of every word; this decides when a sentence is worth a
+   row, which is a question a paragraph never had to answer.
+   THE REGEX MATCHES A NUMBER AND NOTHING ELSE, so its failure mode is safe: a
+   sentence live.js rewords in any way at all still logs — possibly more often
+   than it needs to, never wrongly, and never silently. Everything else in the
+   sentence stays inside the comparison and therefore still makes a line: the
+   route (stream / media / capped / no engine), the hold's clause arriving, and
+   a dropout, which is the one number in there that IS news. */
+const NEWS = (s) => s.replace(/runway [0-9.]+s/g, "runway");
+let engineAt = 0, engineSaid = "";
+const logEngine = () => {
+  const now = Date.now();
+  if (now - engineAt < 1000) return;
+  engineAt = now;
+  let s = "";
+  try { s = engineLine(); } catch (e) { s = ""; }
+  if (!s || NEWS(s) === engineSaid) return;
+  engineSaid = NEWS(s);
+  logPut("engine", s, null);
+};
+
+/* AND THE PLAY / STOP LINE, which is the question the engine's sentences are
+   answers to. `transport:state` is the transport's own event and the clock may
+   flip it (the end of a record stops the transport with nobody touching
+   anything) — a log is the one surface here where that is not a violation but
+   the point: it records what happened, whoever did it. */
+on("transport:state", (d) => {
+  logPut("act", d && d.playing ? "play" : "stop", null);
+  if (!d || !d.playing) { pend.clear(); paintCount(false); }
+  /* …AND THE ENGINE IS ASKED IMMEDIATELY, not on the next "pos". Pressing play
+     is exactly when a reader wants to know which engine they got. */
+  engineAt = 0; logEngine();
+});
+
+/* THE GATE'S HAND. Same door the button uses, and the same reading the badge
+   is drawn from — a gate that reached into `logs` and formatted its own line
+   would be testing its own idea of the log rather than the log. */
+window.__nuLog = () => logs.map((L) => ({ kind: L.kind, what: L.what,
+                                          value: L.value, n: L.n, at: L.at }));
+window.__nuLogOpen = (want) => { setLog(want == null ? !logOpen : !!want);
+                                 return logOpen; };
+window.__nuPending = () => ({ beats: (logCountEl && logCountEl.textContent) || "",
+                              of: [...pend.entries()].map(([k, v]) => [k, v]) });
+
 /* ===== THE STRIPE: ONE LEVEL AT A TIME, DOWN THE RIGHT EDGE ==============
    Paul, 2026-08-28: *"Come up with a strategy for running the nav icons for a
    given modality down the right of the interface but translucent. Put them in
@@ -8320,11 +9336,32 @@ function buildTab(name) {
    stripe max" possible: never nine plus seven, only one set, and `↑` for the
    set it is inside.
 
-   THE FOUR LEVELS, and the reason there are exactly four:
-     root    the nine (`TABS`) — Paul's own list, the one owner
-     band    form · performance · every voice · + line/bass/drums
-     motif   the bank, one mark per cell · + motif / + drum pattern
-     score   notation · piano roll
+   THE FIVE LEVELS, AT THREE DEPTHS (the third landed 2026-08-28):
+     root      the nine (`TABS`) — Paul's own list, the one owner
+     band      form · performance · every voice · + line/bass/drums
+     motif     the bank, one mark per cell · + motif / + drum pattern
+     motifops  the open motif's fourteen transforms — seven that move the
+               notes, seven that move the beats — and `↑` from here is the
+               BANK, not the root (Paul: *"When I'm in a motif, the motif
+               operations should be the right nav elements on the view. The up
+               arrow to take me home should take me back to the motif picker."*)
+     score     notation · piano roll
+   ONLY ONE SET IS EVER ON THE SCREEN, at three depths exactly as at two: the
+   third depth is a level like the others, not a disclosure and not a second
+   stripe. THE ARITHMETIC, measured on the rendered page the day it landed,
+   because fourteen is the longest level this page has ever had and "one
+   stripe" is a promise about a number:
+
+     390 x 844   gutter 56 x 844 = head 55 + LIST 727 + foot 55
+     1280 x 900  gutter 56 x 900 = head 55 + LIST 783 + foot 55
+     the level   14 marks x 44px + 13 gaps x .3em (4.8px) = 678.4px
+
+   So it FITS, with 48.6px to spare on the phone and 104.6px on the laptop, and
+   `.nu-traylist.scrollHeight === clientHeight` at both widths — measured, not
+   assumed: 727/727 and 783/783. The list is still the only `overflow-y: auto`
+   in the stripe, so a longer level than this one scrolls inside the column
+   rather than becoming a second column, which is what keeps "one vertical
+   stripe max" true for a bank of motifs of any size as well.
    `Mix` has a fifth set of its own (`#boardtabs` — a strip per voice, then the
    buses, then main) and it is NOT here, because ui/engineer.js belongs to
    another round this week. It is the next level to absorb and its row is still
@@ -8365,7 +9402,98 @@ function buildTab(name) {
    is outside `#app` and outside every `[data-live]` subtree, so
    `window.__eightFrozen` never sees it and "playback mutates nothing outside
    [data-live]" is untouched by a stripe that redraws when you tap it. */
-const TRAYSUB = { Band: "band", Motif: "motif", Score: "score" };
+/* ---- THE THREE TABLES THE STRIPE IS STEERED BY, AND A THIRD DEPTH --------
+   REWRITTEN 2026-08-28. Paul: *"When I'm in a motif, the motif operations
+   should be the right nav elements on the view. The up arrow to take me home
+   should take me back to the motif picker."*
+
+   THAT SENTENCE IS A CORRECTION OF WHERE `Motif` LANDS YOU, and it is worth
+   saying why, because the obvious reading builds the wrong thing. It read
+   `Motif: "motif"` — tapping the tab put the BANK in the stripe and `↑` went
+   home. Paul says `↑` should go to the picker; `↑` can only go to the picker
+   if the picker is not where you already are. So arriving at the Motif tab
+   lands you INSIDE the open motif, which is also what the tab honestly is:
+   the panel draws exactly one cell's editor and there is no state "on the
+   Motif tab, in no motif". Three depths, and the arrival is the deepest:
+
+     root  ─ the nine tabs
+       └ motif     ─ THE PICKER: every cell in the bank, + motif, + drum pattern
+           └ motifops ─ THIS MOTIF'S OPERATIONS: the fourteen transforms
+
+   `TRAYSUB` is where a TAB lands you, `TRAYUP` is where `↑` goes from a level,
+   and `TRAYTAB` is which tab a level belongs to — one fact each, and the guard
+   in `trayNow` is written against `TRAYTAB` rather than against `TRAYSUB` for
+   exactly that reason: two levels now share one tab, so "does this level
+   belong to the open tab" is no longer the same question as "is this the level
+   that tab lands on".
+
+   A DRUM CELL HAS NO OPERATIONS and that is handled by ARITHMETIC rather than
+   by a special case in the caller: `motifOpsTrayItems` returns an empty list
+   for a drum cell (design/designTime rewrite `deg`, which a kit does not have)
+   and `trayNow` falls back to the picker when a level has nothing in it. So
+   the Motif tab lands on the ops of a tune and on the bank of a beat, and
+   nothing anywhere else has to know which kind is open. */
+/* ===== FOUR MORE LEVELS, 2026-08-28 =====================================
+   Paul, in one batch: *"Make a new voice section for all voices. This is where
+   every voice is defined -- register, instrument, variables."*, *"Make the
+   sections into nav items with the ability to add them and remove them and
+   recharacterize and move them up and down. Then i tap on one of them and it
+   brings up all the questions per section."*, *"When I'm in tempo, move the
+   tempo nav to the right nav."*
+
+   ALL THREE ARE THE SAME SENTENCE ABOUT THE GUTTER and none of them is a new
+   kind of thing. The stripe already knew how to be a PICKER whose marks descend
+   into a level of their own (`motif` -> `motifops`); it already knew how to be
+   a level of ACTIONS with no marked sibling (`motifops`); and `showTab` already
+   knew that arriving on a tab IS descending into it. What arrives here is those
+   three shapes applied to the three surfaces Paul named, so the whole of it is:
+
+     root  - the nine tabs
+       |- tempo    - THE TEMPO OPERATIONS. Eight actions, no sibling marked;
+       |             `Tempo` lands here, exactly as `Motif` lands in a motif.
+       |- band     - the record's song-level pair and its players: sections,
+       |    |        performance, one mark per voice, and the three ways to
+       |    |        hire. UNCHANGED except that two of its marks now DESCEND.
+       |    |- sections - EVERY SECTION BY NAME, plus `+ section`. This is the
+       |    |    |        `form` mark's own level: tapping form used to draw a
+       |    |    |        list of names in the panel, and the list is the level
+       |    |    |        now. The panel still draws the table (bars, and the
+       |    |    |        picks) because a name is not the only fact a section
+       |    |    |        has - but WHICH SECTIONS THERE ARE is navigation.
+       |    |    \- section  - ONE SECTION'S OPERATIONS: move up, move down,
+       |    |                 remove. Its questions are on the page; these are
+       |    |                 the three things you can do TO it, which are the
+       |    |                 only facts about a section that are not a question
+       |    |                 the detail already asks. `recharacterize` is NOT
+       |    |                 here: changing a section's role is the `form.role`
+       |    |                 <select> at the top of its own questions, and a
+       |    |                 second owner of that word in the gutter is the one
+       |    |                 thing this page legislates against.
+       |    \- voice     - ONE VOICE'S FACETS: instrument, what it plays,
+       |                   per-section. Paul's own three sentences about what a
+       |                   voice has, as three marks, with the panel drawing
+       |                   exactly the one you are standing on.
+       |- motif ---- motifops   (2026-08-28, earlier the same day)
+       \- score
+
+   FIVE DEPTHS EXIST AND ONLY ONE LEVEL IS EVER DRAWN, which is the whole of
+   "one vertical stripe max with an 'up' icon to get to the parent level": the
+   promise was never about the depth of the tree, it was about how many columns
+   of marks are on the screen, and that number is still one.
+
+   A LEVEL THAT NAMES A THING NAMES IT WITH THE RECORD'S OWN WORD. The sections
+   are `verse 2`, `chorus 3` - fields.js `ROLES` read through `secName`, which
+   is the same string the form table prints - and never `s0`, which is an id and
+   is nobody's name for anything (Paul: *"The sections are named so name
+   them."*). */
+const TRAYSUB = { Band: "band", Motif: "motifops", Score: "score",
+                  Tempo: "tempo" };
+const TRAYUP  = { band: "root", motif: "root", score: "root", motifops: "motif",
+                  tempo: "root", sections: "band", section: "sections",
+                  voice: "band" };
+const TRAYTAB = { band: "Band", motif: "Motif", motifops: "Motif", score: "Score",
+                  tempo: "Tempo", sections: "Band", section: "Band",
+                  voice: "Band" };
 let trayLevel = "root";
 let trayHead = null, trayList = null, traySig = "", trayHeadSig = "";
 let trayBtn = new Map();
@@ -8417,14 +9545,35 @@ function bandTrayItems() {
   const out = tabs.map((name) => {
     const v = SONGTABS.includes(name) ? null : VOICE(name);
     const vi = v ? DOC.voices.indexOf(v) + 1 : null;
-    return { key: "tab" + name, glyph: glyphOf(name), num: vi, word: name,
-             say: v ? sayVoice(name, v.kind, vi, vTotal)
-                    : (GLYPH.song[name] || {}).s,
+    /* THE `form` MARK IS CALLED `sections` NOW, AND ITS KEY IS NOT (2026-08-28,
+       Paul: *"Make the sections into nav items … The sections are named so name
+       them."*). The WORD is what a reader is asked to understand and "sections"
+       is what is behind it; the `data-k` is `tabform` because `data-k` is an
+       ADDRESS — three gates reach this mark by it and `restoreFocus` puts a
+       thumb back on it across a redraw (PROGRAM.md §2.2). The page state is
+       still `tab === "form"` and SONGTABS is still what keeps a voice CALLED
+       "form" from being read as it. A name changed; nothing moved. */
+    const song = name === "form"
+      ? { w: GLYPH.sec.list.w, s: GLYPH.sec.list.s }
+      : { w: name, s: (GLYPH.song[name] || {}).s };
+    return { key: "tab" + name, glyph: glyphOf(name), num: vi,
+             word: v ? name : song.w,
+             say: v ? sayVoice(name, v.kind, vi, vTotal) : song.s,
              on: name === tab,
              /* AND IT SAYS SO IN THE ADDRESS (2026-08-28). `markLink` is
                 the same debounced writer `showTab` uses and this is a hand
                 reaching it, never the clock — a voice tab is a tap. */
-             act: () => { tab = name; formSec = null; draw(); markLink(); } };
+             /* ...AND TWO OF THE THREE KINDS DESCEND (2026-08-28), which is the
+                stripe's own "opening a thing is going into it" applied to the
+                two marks that HAVE something inside them. `sections` opens the
+                list of sections; a VOICE opens its three facets. `performance`
+                does not, because it is one panel of song-level questions with
+                no siblings to name — the same reason six of the nine tabs
+                leave the stripe at the root. */
+             act: () => { tab = name; formSec = null;
+                          trayLevel = v ? "voice"
+                                    : name === "form" ? "sections" : "band";
+                          draw(); markLink(); } };
   });
   const offer = [["line", "+ line"]];
   if (!BASSV()) offer.push(["bass", "+ bass"]);
@@ -8436,6 +9585,174 @@ function bandTrayItems() {
                act: () => { addVoice(kind); push(); draw(); } });
   }
   return out;
+}
+
+/* ---------- THE SECTIONS LEVEL, AND ONE SECTION'S OPERATIONS -------------
+   Paul, 2026-08-28: *"Make the sections into nav items with the ability to add
+   them and remove them and recharacterize and move them up and down. Then i
+   tap on one of them and it brings up all the questions per section."* And,
+   in the same breath: *"The sections are named so name them."*
+
+   THE NAME IS `secName`'s, WHICH IS THE FORM TABLE'S OWN — `role + ordinal`,
+   read through fields.js `ROLES`, so a mark says `verse 2` and never `s1`. An
+   id is an address (the automation grid, the material maps and every voice's
+   development are keyed by it) and it is nobody's name for anything. THE MARK
+   IS ▦ + THE DIGIT, which is the gutter's one idiom said again: the picture
+   says the KIND, the digit says WHICH, and the word says who.
+
+   TAPPING ONE OPENS ITS QUESTIONS AND DESCENDS, both, because they are one
+   gesture: `formSec` is which section's questions the panel draws (it has been
+   since 2026-08-25) and `section` is the level whose marks are the three
+   things you can do TO that section. Neither is new machinery — this is
+   `motif` -> `motifops`, spelled with the form's own state.
+
+   `+ section` IS ON THE LIST AND NOT IN THE DETAIL, and it does NOT descend,
+   for the reason `+ motif` gives one level down: growing a list is a LIST
+   operation and the answer to it is the list with one more thing in it. A
+   stripe that dropped into the new section's operations would take the button
+   out from under a thumb that is adding three. */
+function sectionTrayItems() {
+  const secs = DOC.form.sections;
+  const out = secs.map((s2, i) => ({
+    key: "secnav" + s2.id, glyph: GLYPH.sec.one.g, num: i + 1,
+    word: secName(i),
+    say: secName(i) + " — " + s2.bars + " bar" + (s2.bars === 1 ? "" : "s") +
+         ", " + (i + 1) + " of " + secs.length + " in the record",
+    /* WHAT IS MARKED HERE IS WHICH SECTION YOU ARE WRITING, and that is
+       `editSec()` — the same fact the form table lights with `.nu-here` and
+       the same one the Material axis engraves its staves in. It is NOT
+       `formSec`, which is null the moment you come up out of a section's
+       questions: a level whose marks are siblings must have exactly one of
+       them marked (test/shell.js A6c), and "the section the record is
+       currently open at" is true at every moment while "the section whose
+       questions are on the screen" is not. Tapping a mark makes both true at
+       once — `openSection` writes `setViewSec` and `formSec` together. */
+    on: i === editSec(),
+    act: () => { openSection(s2.id); } }));
+  out.push({ key: "addsec", glyph: GLYPH.sec.add.g, word: GLYPH.sec.add.w,
+             say: GLYPH.sec.add.s,
+             act: () => { addSection(); push(); draw(); } });
+  return out;
+}
+
+/* ONE SECTION'S OPERATIONS. Three actions, no sibling marked — the same
+   declaration `motifops` makes, for the same reason: none of these is "open",
+   pressing one is a WRITE, and three `aria-pressed="false"` buttons would tell
+   a screen reader there is a state to be in. What says where you are is the
+   head, which names the section: "up — out of verse 2, back to the sections".
+
+   RECHARACTERIZE IS NOT ONE OF THEM, and that is the one-owner law rather than
+   an omission. Paul asked for four verbs; three of them move or delete the
+   section and have no control anywhere else on the page, and the fourth —
+   changing its role — is the `form.role` <select> that has stood at the top of
+   `sectionDetail` since 2026-08-25 and is the FIRST thing under the heading
+   this level's marks sit beside. A mark here would be a second writable owner
+   of one word, which is the failure this codebase has a standing law against.
+   Said out loud so the next reader does not "restore" a verb nobody lost.
+
+   EVERY REFUSAL CARRIES A MEASURED REASON (ui/glyph.js `paintIcon`, which grew
+   the spelling today so this level and `tempo` share it): the first section
+   cannot move up, the last cannot move down, and the only section cannot be
+   removed — because `DOC.form.sections` with nothing in it is a record with no
+   bars, which `scoreOf` would compile to silence and `barsOf` would answer 1
+   for. The numbers in the sentences are read off the record at paint time.
+
+   IT READS `formSec` AT CLICK TIME, exactly as `motifOpsTrayItems` reads
+   `motifTab`: `paintTray` repaints a level in place when its keys have not
+   moved — which is these three, always — so the listener bound on the first
+   build is the one that runs after `move up` has changed which section you are
+   standing on. */
+function secOpsTrayItems() {
+  const secs = DOC.form.sections;
+  const i = secs.findIndex((s2) => s2.id === formSec);
+  if (i < 0) return [];
+  const n = secs.length, here = secName(i);
+  const at = () => DOC.form.sections.findIndex((s2) => s2.id === formSec);
+  return [
+    { key: "secup", glyph: GLYPH.sec.up.g, word: GLYPH.sec.up.w,
+      say: GLYPH.sec.up.s,
+      why: i > 0 ? null : here + " is already the first section",
+      act: () => { moveSection(at(), -1); push(); draw(); } },
+    { key: "secdown", glyph: GLYPH.sec.down.g, word: GLYPH.sec.down.w,
+      say: GLYPH.sec.down.s,
+      why: i < n - 1 ? null : here + " is already the last section",
+      act: () => { moveSection(at(), 1); push(); draw(); } },
+    { key: "secdrop", glyph: GLYPH.sec.drop.g, word: GLYPH.sec.drop.w,
+      say: GLYPH.sec.drop.s,
+      why: n > 1 ? null
+        : "this is the record's only section — a record with none has no bars",
+      act: () => { dropSection(formSec); push(); draw(); } },
+  ];
+}
+
+/* ---------- ONE VOICE'S FACETS -------------------------------------------
+   Paul, 2026-08-28: *"A voice has: Instrument voice with settings from the
+   mixer (move them from the mixer) / What it plays, register, material — i
+   should be able to have a voice play more than one kind of material right? We
+   do that in per-section — so maybe we get rid of material and let per-section
+   handle it. / Per-section settings."*
+
+   THREE SENTENCES, THREE MARKS, and the panel draws exactly the one you are
+   standing on. This is the answer to the thing the band tab had become: a
+   single column holding a voice's cast sliders, its three menus, its throat
+   knobs, its whole console strip and a thirteen-row per-section table, which
+   measured as one scroll nobody could hold in their head. Nothing was deleted
+   to make it fit — it is the same controls, asked one question at a time,
+   which is the same move `sectionDetail` made for the form in August.
+
+   `voiceFacet` IS A PAGE FACT AND NEVER A DOCUMENT ONE — the same sentence
+   `tab`, `formSec` and `trayLevel` each carry. It SURVIVES A CHANGE OF VOICE
+   on purpose: comparing two players' instruments means moving between them
+   with the same question open, and a facet that reset to the top on every tap
+   would make that three taps instead of one. */
+const FACETS = ["inst", "plays", "sec"];
+let voiceFacet = "inst";
+function voiceTrayItems() {
+  const v = SONGTABS.includes(tab) ? null : VOICE(tab);
+  if (!v) return [];
+  return FACETS.map((f) => {
+    const g = GLYPH.facet[f];
+    return { key: "facet-" + f, glyph: g.g, word: g.w,
+             say: v.name + " — " + g.s, on: voiceFacet === f,
+             act: () => { voiceFacet = f; draw(); } };
+  });
+}
+
+/* ---------- THE TEMPO LEVEL ----------------------------------------------
+   Paul, 2026-08-28: *"When I'm in tempo, move the tempo nav to the right
+   nav."* `TEMPOS` is unchanged and so is every one of its eight operations;
+   what moved is where they are drawn. The row they were in — `tempoRow`, a
+   `<p class="nu-row nu-tf-row">` under the bpm slider — is tombstoned at its
+   own site, with the argument for the two FAMILIES of face (the clock's ♪ and
+   the bar's arrows) kept where the table is.
+
+   A LEVEL OF ACTIONS, `acts: true`, exactly like `motifops`: none of the eight
+   is "open". The four that cannot be done at the current tempo carry their
+   measured reason on the button (`d.why(t)` — "half of 84 is 42, and 40 is as
+   slow as this box counts"), through the refusal spelling ui/glyph.js grew
+   today so that this level and `section` say it the same way.
+
+   IT READS THE TEMPO TWICE, and both readings are deliberate. `d.mk(now())` at
+   PAINT time decides whether the mark is refused; `d.mk(now())` again inside
+   the listener is what actually runs, because `paintTray` repaints in place
+   and the closure outlives the bpm it was built at. */
+function tempoTrayItems() {
+  const now = () => ({ bpm: DOC.time.bpm,
+                       rate: DOC.time.rate == null ? null : DOC.time.rate });
+  return TEMPOS.map((d) => {
+    const t = now(), next = d.mk(t);
+    return { key: "tempo-" + d.w, glyph: (d.g0 || "") + d.g, word: d.w,
+             say: d.w + " — " + (next
+               ? "the record counts " + next.bpm + " a minute" +
+                 (next.rate === t.rate ? ""
+                   : ", read at " + (next.rate == null ? "the anchor's own speed"
+                                                       : next.rate + "×"))
+               : d.why(t)),
+             why: next ? null : d.why(t),
+             act: () => { const v = d.mk(now()); if (!v) return;
+                          DOC.time.bpm = v.bpm; DOC.time.rate = v.rate;
+                          changed(); } };
+  });
 }
 
 /* THE MOTIF LEVEL — `motifTabRow`'s strip, moved whole, with its arguments:
@@ -8476,10 +9793,17 @@ function motifTrayItems() {
              say: name + " — " + (drum ? "a drum pattern" : "a motif") +
                   ", " + (i + 1) + " of " + names.length + " in the bank",
              on: name === motifTab,
+             /* AND TAPPING A MOTIF GOES INTO IT (2026-08-28), which is the
+                stripe's own "descend by arriving" applied one level down:
+                opening a tab IS going into it, and opening a motif is going
+                into that motif. `↑` comes back here. Tapping the marked one
+                descends too — it is the way back DOWN after `↑`, and it is
+                the gesture `showTab` already gives the root level. */
              act: () => {
                const was = motifTab;
                motifTab = name;
                if (was !== name && (motifLoop || motifOnce)) auditionOff();
+               trayLevel = "motifops";
                drawMaterial();
                markLink();
              } };
@@ -8489,8 +9813,67 @@ function motifTrayItems() {
                glyph: "+" + kindGlyph(kind === "drum" ? "drums" : "line"),
                word: label,
                say: label + " — a new cell in the bank, opened as you make it",
+               /* ...AND ADDING ONE DOES NOT DESCEND. Growing the bank is a
+                  BANK operation and the answer to it is the bank with one more
+                  thing in it — a stripe that dropped into the new cell's
+                  transforms would take the `+ motif` button out from under a
+                  thumb that is adding two. The cell is opened in the panel, as
+                  it always was; tapping its mark goes in. */
                act: () => { motifTab = addCell(kind); push(); draw(); } });
   }
+  return out;
+}
+
+/* THE MOTIF-OPERATIONS LEVEL — the two `.nu-tf-row` bands that used to sit
+   under the sixteen rows (ui/eight.js hookGrid, where the tombstone carries
+   the move and the reason for every argument that came with it).
+
+   FOURTEEN MARKS, IN TWO SETS, IN ORDER: the seven that rewrite the NOTES
+   (`DESIGNS`, `design`) and the seven that rewrite the RHYTHM (`TIMES`,
+   `designTime`). The two sets were two paragraphs because "fourteen pictures
+   in one wrapped paragraph is a wall"; in a column there is no wrapping to do,
+   so what separates them is the order and the sentence each mark says when you
+   hold it. THE FACE IS THE ROW'S OWN GLYPH, taken off the same table — where a
+   face is a PAIR (`∧∨`, `▫▪`) the two glyphs are concatenated, which loses the
+   two weights of ink `face()` gave them and keeps the mark. That is a real
+   loss and it is the price of one spelling for every button in the gutter
+   (ui/glyph.js `icon`): a second face-builder in here would be the fifth
+   spelling that file exists to prevent.
+
+   NOTHING IS MARKED AT THIS LEVEL, and that is a statement rather than an
+   omission: these are ACTIONS, not siblings. `aria-pressed` is left off (no
+   `on` key) rather than set false on all fourteen, because a row of fourteen
+   `aria-pressed="false"` buttons tells a screen reader there is a state to be
+   in. What says where you are here is the head: "up — out of psalm, back to
+   the motifs".
+
+   IT READS `motifTab` AT CLICK TIME AND NOT AT BUILD TIME. `paintTray` repaints
+   a level in place when its keys have not moved — which is every one of these
+   fourteen, every time — so the listener bound on the first build is the one
+   that runs after you have moved to another motif. The cell is looked up when
+   the press happens, which is also the only moment at which "which motif is
+   open" is a question with an answer. */
+function motifOpsTrayItems() {
+  const name = motifTab;
+  const H = name ? DOC.material.cells[name] : null;
+  if (!H || H.kind === "drum") return [];        // a kit has no degrees to move
+  const out = [];
+  const face2 = (d) => (d.g0 || "") + d.g;
+  const live = () => { const C = DOC.material.cells[motifTab];
+                       return C && C.kind !== "drum" ? C : null; };
+  for (const d of DESIGNS)
+    out.push({ key: "motifop-" + d.w, glyph: face2(d), word: d.w,
+               say: d.w + " — rewrites " + name + " itself: " + (d.moves
+                 ? "the steps change places and their kinds travel with them"
+                 : "the degrees move and the rhythm stays where it is"),
+               act: () => { const C = live(); if (!C) return;
+                            design(C, d); push(); draw(); } });
+  for (const d of TIMES)
+    out.push({ key: "motiftime-" + d.w, glyph: face2(d), word: d.w,
+               say: d.w + " — rewrites " + name + "'s rhythm: which steps " +
+                    "sound and when, with the degrees left where they are",
+               act: () => { const C = live(); if (!C) return;
+                            designTime(C, d); push(); draw(); } });
   return out;
 }
 
@@ -8517,15 +9900,81 @@ const scoreTrayItems = () => [
    still checked, because the two states have two writers and one of them is a
    fragment. */
 function trayNow() {
-  const want = TRAYSUB[openTab];
-  if (trayLevel !== "root" && trayLevel !== want) trayLevel = "root";
-  if (trayLevel === "band")  return { level: "band",  parent: "Band",
+  if (trayLevel !== "root" && TRAYTAB[trayLevel] !== openTab) trayLevel = "root";
+  /* THE TEMPO'S EIGHT, AND THE SECOND LEVEL OF ACTIONS ON THIS PAGE
+     (2026-08-28). `acts: true` for the reason `motifops` gives below, in full:
+     these are WRITES and none of them is a state to be in, so nothing is
+     marked and it is the page SAYING so rather than a gate inferring it from
+     an absence. */
+  if (trayLevel === "tempo") return { level: "tempo", parent: "Tempo", up: "root",
+                                      acts: true, items: tempoTrayItems() };
+  /* THE THREE BAND LEVELS, DEEPEST FIRST, AND EACH ONE MAY HAND ITSELF BACK.
+     Same arithmetic as `motifops` and the same reason: a level with nothing in
+     it is not a level, and this is the one place that decision is made for the
+     buttons, `showTab`, the address and the probe at once.
+       · `voice`    is empty when `tab` is a song-level name, which is exactly
+                    what `↑` out of a voice and then a tap on `sections` leaves
+                    behind — so it stands at the band list instead.
+       · `section`  is empty when `formSec` names no live section, which is what
+                    `remove` leaves behind and what a record swapped in from the
+                    atlas leaves behind. It stands at the section list, which is
+                    the only honest place to be after the thing you were inside
+                    stopped existing.
+       · `sections` is never empty (a record always has at least one section and
+                    the level carries `+ section` regardless), so it has no
+                    fallback and needs none. */
+  if (trayLevel === "voice") {
+    const fs = voiceTrayItems();
+    if (fs.length) return { level: "voice", parent: tab, up: "band",
+                            back: "the band", items: fs };
+    trayLevel = "band";
+  }
+  if (trayLevel === "section") {
+    const ops = secOpsTrayItems();
+    if (ops.length) {
+      const i = DOC.form.sections.findIndex((s2) => s2.id === formSec);
+      return { level: "section", parent: secName(i), up: "sections",
+               back: "the sections", acts: true, items: ops };
+    }
+    trayLevel = "sections";
+  }
+  if (trayLevel === "sections")
+    return { level: "sections", parent: "the sections", up: "band",
+             back: "the band", items: sectionTrayItems() };
+  if (trayLevel === "band")  return { level: "band",  parent: "Band", up: "root",
                                       items: bandTrayItems() };
-  if (trayLevel === "motif") return { level: "motif", parent: "Motif",
+  /* THE DEEPEST LEVEL IS TRIED FIRST AND MAY HAND ITSELF BACK. A drum cell has
+     no transforms, so `motifOpsTrayItems` answers with an empty list and the
+     stripe stands at the picker instead — a level with nothing in it is not a
+     level, and this is the one place that decision can be made once for the
+     buttons, `showTab`, the address and the probe at the same time.
+     THE `↑` OF THIS LEVEL IS THE PICKER, NOT THE ROOT (`TRAYUP`), which is the
+     whole of Paul's sentence; and its PARENT WORD is the motif's own name,
+     because "out of psalm" is what you are doing and "out of Motif" is not. */
+  if (trayLevel === "motifops") {
+    const ops = motifOpsTrayItems();
+    /* AND IT DECLARES THAT IT IS A LEVEL OF ACTIONS (2026-08-28). Every other
+       level is a set of SIBLINGS, one of which is open and wears the mark —
+       "what says you are here is the marked mark", which test/shell.js A6c
+       asserts as exactly one `<mark>` and one `aria-pressed` in the stripe.
+       Fourteen transforms have no such state: none of them is "open", pressing
+       one is a WRITE, and fourteen `aria-pressed="false"` buttons would tell a
+       screen reader there is a state to be in. What says where you are here is
+       the head, which names the motif: "up — out of psalm, back to the
+       motifs". `acts: true` is the page SAYING that, so the gate can ask
+       rather than infer it from an absence — the same discipline as
+       `data-live`: a surface declares what it is and the gate reads the
+       declaration instead of inventing a permission. */
+    if (ops.length) return { level: "motifops", parent: motifTab || "this motif",
+                             up: "motif", back: "the motifs", acts: true,
+                             items: ops };
+    trayLevel = "motif";
+  }
+  if (trayLevel === "motif") return { level: "motif", parent: "Motif", up: "root",
                                       items: motifTrayItems() };
-  if (trayLevel === "score") return { level: "score", parent: "Score",
+  if (trayLevel === "score") return { level: "score", parent: "Score", up: "root",
                                       items: scoreTrayItems() };
-  return { level: "root", parent: null, items: rootTrayItems() };
+  return { level: "root", parent: null, up: null, items: rootTrayItems() };
 }
 
 /* BUILT ONCE, AT BOOT. The <nav> ships empty in nukernel/index.html; this puts
@@ -8538,9 +9987,43 @@ function trayRow() {
   trayHead = el("div", null, "nu-trayhead");
   trayList = el("div", null, "nu-traylist");
   nav.append(trayHead, trayList);
+  /* ...AND THE FOOT, WHICH IS THE LOGGER (2026-08-28). It is BUILT HERE and
+     not shipped in index.html for the reason the head is built here: the
+     gutter's contents are this file's, the empty <nav> is the document's. It
+     is pinned to the bottom by BEING LAST — `.nu-traylist` is the only
+     `flex: 1 1 auto` in the column, so it eats the slack and everything after
+     it sits on the floor, with no `position` and no `margin: auto` anywhere
+     (nu.css carries that argument).
+
+     THREE THINGS, IN THIS ORDER, AND THE ORDER IS THE ARGUMENT:
+       · a real <hr>, the same `.nu-traycut` the head uses, saying "what is
+         below this line is a different kind of thing from the marks above it".
+         A rule and not a border, so it says that with the stylesheet off too;
+       · the COUNTDOWN, carrying `data-live="pending"` and holding no control —
+         the clock's one square inch of the gutter, declared in the DOM where a
+         gate can read the declaration rather than promised in a comment;
+       · the BUTTON, which is a hand's and sits outside the live box.
+     THE BUTTON NEVER MOVES. The countdown appears above it and the list above
+     that gives up the pixels, so a thumb reaching for the log finds it in the
+     same place whether or not an edit is in flight — which is the whole of
+     "geometry reserved at creation" for a control that shares a column with
+     something that comes and goes. */
+  const foot = el("div", null, "nu-trayfoot");
+  foot.append(el("hr", null, "nu-traycut"));
+  logCountEl = el("div", null, "nu-count");
+  logCountEl.dataset.live = "pending";
+  foot.append(logCountEl);
+  logBtn = icon({ k: "logger", glyph: GLYPH.log.g, word: sayLog(logs.length),
+                  say: GLYPH.log.s, on: false });
+  logBtn.setAttribute("aria-controls", "nu-log");
+  logBtn.addEventListener("click", () => setLog(!logOpen));
+  foot.append(logBtn);
+  nav.append(foot);
+  logPanel = $("nu-log");
   traySig = ""; trayHeadSig = "";
   trayBtn.clear();
   paintTray();
+  paintBadge();
 }
 
 /* AND REPAINTED — IN PLACE WHEN THE SHAPE HOLDS, REBUILT WHEN IT MOVES. This
@@ -8558,14 +10041,20 @@ function trayRow() {
 function paintTray() {
   if (!trayList) return;
   const L = trayNow();
-  const headSig = L.parent || "";
+  /* THE HEAD'S SIGNATURE IS WHAT IT SAYS PLUS WHERE IT GOES (2026-08-28). It
+     was `L.parent` alone, which was exact while every `↑` went to the root;
+     with three depths the DESTINATION is a second fact the button carries, in
+     its listener and in its sentence, and a head that did not repaint when the
+     destination changed would be a `↑` that says one thing and does another. */
+  const headSig = (L.parent || "") + "|" + (L.up || "");
   if (headSig !== trayHeadSig) {
     trayHeadSig = headSig;
     trayHead.textContent = "";
     if (L.parent) {
+      const up = L.up || "root";
       const u = icon({ k: "trayup", glyph: GLYPH.nav.up.g,
-                       word: GLYPH.nav.up.w, say: sayUp(L.parent) });
-      u.addEventListener("click", () => { trayLevel = "root"; paintTray(); });
+                       word: GLYPH.nav.up.w, say: sayUp(L.parent, L.back) });
+      u.addEventListener("click", () => { trayLevel = up; paintTray(); });
       /* A REAL <hr>, not a border on the button. The rule says "what is above
          this line is a different kind of thing from what is below it", and
          that is a statement the document makes whether or not this stylesheet
@@ -8580,8 +10069,13 @@ function paintTray() {
     trayList.textContent = "";
     trayBtn.clear();
     for (const it of L.items) {
+      /* `why` SINCE 2026-08-28 — a refused mark, spelled by ui/glyph.js (the
+         one owner of what a gutter button is). The listener is bound on a
+         refused button too and that is not an oversight: `disabled` is what
+         refuses the press, the level repaints in place, and a mark that is
+         live again after the tempo moved must already carry its handler. */
       const b = icon({ k: it.key, glyph: it.glyph, num: it.num, word: it.word,
-                       say: it.say, on: it.on });
+                       say: it.say, on: it.on, why: it.why });
       b.addEventListener("click", it.act);
       /* THE LITERAL " " STAYS, and it is the same text node `motifTabRow` kept
          for the same reason: with the stylesheet off it is what keeps two
@@ -8595,7 +10089,7 @@ function paintTray() {
     for (const it of L.items) {
       const b = trayBtn.get(it.key);
       if (b) paintIcon(b, { glyph: it.glyph, num: it.num, word: it.word,
-                            say: it.say, on: it.on });
+                            say: it.say, on: it.on, why: it.why });
     }
   }
 }
@@ -8643,7 +10137,16 @@ function showTab(name) {
      sub-level and the stripe stays at the root with them marked — which is
      also the reset that makes `trayNow`'s guard unreachable through a button.
      THIS LINE IS WHY THERE IS NO SEPARATE "descend" GESTURE: a stripe you had
-     to open would be a disclosure, and no panel on this page is behind one. */
+     to open would be a disclosure, and no panel on this page is behind one.
+
+     AND `Motif` LANDS TWO DEEP (2026-08-28), which is the one asymmetry in
+     this line and is the tab being honest about itself: its panel draws
+     exactly one cell's editor, so arriving at the tab IS arriving in a motif,
+     and the level that names your siblings there is that motif's operations
+     with the bank one `↑` above it. `TRAYSUB.Motif` is `motifops` and the
+     table carries the argument; if the open cell is a drum pattern — which has
+     no transforms — `trayNow` stands at the bank instead, by arithmetic and
+     not by a branch here. */
   trayLevel = TRAYSUB[name] || "root";
   const built = buildTab(name);
   /* AND ITS PANES GET THEIR SIDEWAYS SCROLL BACK. A `display: none` scroll
@@ -8734,10 +10237,16 @@ function timeAxis(box) {
     pt.append(a);
     axTime.append(pt); }
   number("bpm", "tempo", D.time.bpm, (v) => D.time.bpm = v, axTime, 40, 220);
-  // THE TEMPO ICONS, directly under the tempo slider and above the reading-speed
-  // menu — between the two facts they move, which is where a row that moves
-  // both belongs.
-  tempoRow(axTime);
+  /* (`tempoRow(axTime)` STOOD HERE — "THE TEMPO ICONS, directly under the
+     tempo slider and above the reading-speed menu — between the two facts they
+     move, which is where a row that moves both belongs." Paul, 2026-08-28:
+     *"When I'm in tempo, move the tempo nav to the right nav."* They are the
+     `tempo` level of `#nu-tray` now, which is where the stripe puts every set
+     of siblings the open tab has; the tombstone at `tempoRow`'s own site
+     carries the whole argument and what was lost with it. The two facts they
+     move — the bpm slider above and `time.rate`, which has no control of its
+     own — are still on this panel, so the marks are still beside what they
+     change: 56px to the left of it instead of directly under it.) */
   // THE THREE-WAY RATE MAPPING LIVES IN THE DATA TIER, AND STAYED THERE THROUGH
   // BOTH REVERSALS. "as written" is rate 1 and has no key in fields.js RATES, so
   // somebody has to carry it; that somebody is avail.js SHEETS["time.rate"],
@@ -9301,10 +10810,26 @@ window.__eightTabMs = () => tabMs;
    `__eightUp()` is the `↑` button pressed. Neither is a second owner: both
    call the functions the buttons call. */
 window.__eightTray = () => { const L = trayNow();
-  return { level: L.level, parent: L.parent,
+  // `up` since 2026-08-28: with three depths, WHERE `↑` GOES is a fact a probe
+  // has to be able to read, and it is the same `TRAYUP` entry the button holds.
+  return { level: L.level, parent: L.parent, up: L.up || null,
+           acts: !!L.acts,
            items: L.items.map((i) => i.key),
            on: (L.items.find((i) => i.on) || {}).key || null }; };
-window.__eightUp = () => { trayLevel = "root"; paintTray(); return trayLevel; };
+/* `__eightUp()` IS THE `↑` BUTTON PRESSED UNTIL THERE IS NO `↑` LEFT (rewritten
+   2026-08-28, when the gutter grew a third depth). It assigned `"root"` in one
+   line, which was the same thing while every level's parent WAS the root. Two
+   gates ask for this — test/shell.js A6j ("no ↑ at the root") and
+   test/text-diet.js T2 (the nine tabs, read off the root level) — and both of
+   them mean "put the stripe back at the top", which is now a walk and not an
+   assignment. It is still a HAND and still not a second owner: every step is
+   `TRAYUP`, the table the button's own listener reads. */
+window.__eightUp = () => {
+  for (let i = 0; i < 8 && trayLevel !== "root"; i++)
+    trayLevel = TRAYUP[trayLevel] || "root";
+  paintTray();
+  return trayLevel;
+};
 window.__eightEngraves = () => engraves;      // abcjs renders, ever
 // ...AND THE SCORE'S OWN, which is a different claim on a different surface
 // (see `scoreEngraves`): how many times the whole record has been engraved.
@@ -9557,3 +11082,34 @@ if (LINKSUB) applySub(LINKSUB);
 // on its own record still has a URL worth copying, and a link that was
 // refused must not go on claiming a place this box is not showing.
 writeLink();
+
+/* ===== THE LOG STARTS EMPTY, AND IT STARTS HERE (2026-08-28) ============
+   Everything above this line is the box arriving, not a person doing
+   something, so none of it is logged: `push(true)`, `showTab`, `draw()`, the
+   atlas mounting and a link being spent are all the page becoming itself.
+   `booted` is the switch, and it is thrown after the LAST of them — a link
+   that opened on another record went through `CTX.setDocument` two statements
+   ago and must not read as a rewrite somebody pressed.
+
+   AND ONE ENGINE READING, ONCE, FOUR SECONDS IN. The engine's sentence is
+   otherwise only asked for on the transport's own events — the "pos" feed and
+   `transport:state` — so a box that is warmed and HELD but never played would
+   never say "held — plays offline", which is exactly the sentence a hand wants
+   before a tunnel and exactly the one Paul asked to be moved in here. The warm
+   is a promise `warmup()` started at boot and `holdLine()` is derived from
+   what it filed, so there is no event to subscribe to; four seconds is after
+   the shell and the first cache walk on the machines this has been measured
+   on, and if the warm is slower than that the next edit or the next play asks
+   again. ONE timer, one shot, no polling: `logEngine` writes nothing when the
+   sentence is empty or unchanged. */
+booted = true;
+setTimeout(logEngine, 4000);
+/* ESCAPE SHUTS THE LOG, and only Escape and its own button do. The explainer
+   (ui/glyph.js) also closes on the next press anywhere, and that is right for
+   a popover that is covering the control it explains; it is wrong here. The
+   log is a sheet you read WHILE you keep working — you look at what the last
+   edit was called and then you go and make the next one — and a panel that
+   vanished on the first press would be a panel you could never use for that.
+   It covers no control: it stops at the gutter's inner rule and the gutter is
+   where every mark on this page lives. */
+addEventListener("keydown", (e) => { if (e.key === "Escape" && logOpen) setLog(false); });

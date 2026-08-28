@@ -213,7 +213,28 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
        match, and neither does a root level's `toptab-…`. */
     const voices = await p.evaluate(() =>
       [...document.querySelectorAll('#nu-tray [data-k^="tab"]')].map((n2) => n2.dataset.k));
-    for (const k of voices) views.push({ top: t, k });
+    /* ...AND A VOICE IS THREE FACETS SINCE 2026-08-28. Paul: *"A voice has:
+       Instrument voice with settings from the mixer / What it plays, register,
+       material / Per-section settings."* The band panel draws exactly the facet
+       you are standing on (ui/eight.js `voiceFacet`), so a survey that stopped
+       at the voice's own mark saw its instrument and neither of the other two
+       — and every `dev.*` claim in this file went red for want of a tap, not
+       for want of a control. The facet keys are read off the stripe rather than
+       typed, exactly as the voice keys above are; a voice with none (the form
+       and performance marks) yields the single view it always did. */
+    for (const k of voices) {
+      views.push({ top: t, k });
+      // BACK TO THE BAND LEVEL BEFORE EACH ONE. A mark DESCENDS since
+      // 2026-08-28 — `tabform` opens the sections, a voice opens its facets —
+      // so a loop that tapped the next key without coming up first would be
+      // asking for a button that is one level above where it is standing, and
+      // `tapK` would answer false for every voice after the first.
+      await openTop(t);
+      await tapK(k);
+      const facets = await p.evaluate(() =>
+        [...document.querySelectorAll('#nu-tray [data-k^="facet-"]')].map((n2) => n2.dataset.k));
+      for (const f of facets) views.push({ top: t, k, f });
+    }
   }
   const eachView = async (fn) => {
     const out = [];
@@ -222,6 +243,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
         await openTop(v.top);
         if (v.k) {
           await tapK(v.k);
+          if (v.f) await tapK(v.f);
           if (v.k === "tabform") await tapK("sec" + SEC1);
         }
       }
@@ -488,6 +510,19 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (window.__addDrums) window.__addDrums(true);
   });
   await p.waitForTimeout(200);
+  /* ...AND ONE MORE TAP FOR THE FACET, 2026-08-28. Paul: *"A voice has:
+     Instrument voice with settings from the mixer / What it plays, register,
+     material / Per-section settings."* Opening a voice lands on its INSTRUMENT
+     facet; `dev.kit` is a per-SECTION word and `[data-k="drums"]` (the
+     drummer's on/off) is under WHAT IT PLAYS, so each of the three reads below
+     names the facet it needs instead of assuming one panel holds all of them.
+     `facet` is a no-op wherever the mark is absent, so the harness page — which
+     has no gutter at all — is untouched. */
+  const facet = async (f) => {
+    await p.evaluate((k) => { const n2 = document.querySelector('[data-k="' + k + '"]');
+      if (n2) n2.click(); }, f);
+    await p.waitForTimeout(250);
+  };
   /* THE KIT'S DEVELOPMENT WORDS MOVED WIDGET, THE LAW DID NOT — the same
      rewrite gate 5 below already carries for `alphabet.quality`, and the same
      sentence: Paul, *"There are still many boxes that should be selects"*.
@@ -501,6 +536,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (t) t.click();
   });
   await p.waitForTimeout(250);
+  await facet("facet-sec");
   const kitLive = await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="dev.kit"]');
     if (f) return { as: "sheet", live: !f.disabled };
@@ -509,6 +545,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   });
   check(kitLive.live, "with a drummer, the kit's development words are live " +
     "(as a " + kitLive.as + ")");
+  await facet("facet-plays");             // the drummer's on/off lives here
   await p.evaluate(() => {
     const c = document.querySelector('[data-k="drums"]');
     if (c) { c.checked = false; c.dispatchEvent(new Event("change", { bubbles: true })); return; }
@@ -516,6 +553,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (d) { d.cast.on = false; (window.__draw || (() => {}))(); }
   });
   await p.waitForTimeout(200);
+  await facet("facet-sec");               // ...and the words it greys do not
   // ...AND IT IS READ BACK THROUGH WHICHEVER WIDGET IT IS, for the reason
   // above. A disabled <select> keeps its <option>s in the list exactly as a
   // disabled fieldset keeps its `.nu-opt` rows: greyed, not hidden, which is
@@ -550,6 +588,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (t) t.click();
   });
   await p.waitForTimeout(250);
+  await facet("facet-inst");              // the machine is what the kit IS
   const dk = await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="sound.drumkit"]');
     const s2 = document.querySelector('select[data-sel^="sound.drumkit"]');
@@ -609,6 +648,11 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (t) t.click();
   });
   await p.waitForTimeout(200);
+  // ...AND ON ITS PER-SECTION FACET, 2026-08-28, for the same reason gate 4
+  // above names one: `dev.line` is a per-SECTION word and a voice draws one
+  // facet at a time now. `cast.part` — the word this gate SAYS — is on the
+  // `plays` facet, so the three reads below each stand where their control is.
+  await facet("facet-sec");
   // ...AND READ THE WORDS BEFORE ANYTHING IS SAID, so "8 greyed" is evidence
   // about the pad rather than about the record it happened to be measured on.
   const padWas = (await p.evaluate(() => {
@@ -628,6 +672,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   // the voice is a pad. Reaching for the sheet alone made this gate read
   // `undefined` and call the page broken while the page was right, which is the
   // same mistake its own comment above records having made once already.
+  await facet("facet-plays");             // `cast.part` is what it PLAYS
   await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="cast.part"]');
     const i = f && f.querySelector('.nu-opt[data-v="pad"] input');
@@ -636,6 +681,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (s) { s.value = "pad"; s.dispatchEvent(new Event("change", { bubbles: true })); }
   });
   await p.waitForTimeout(200);
+  await facet("facet-sec");               // ...and the words it greys are per-section
   /* READ THE LAW OFF THE PAGE, NOT ONE WORD OFF A TABLE THAT IS DERIVED.
      WAS: `a pad's \`at the fifth\` is disabled and \`out\` is not`. That was
      true when it was written and it is stale for a reason worth keeping: the
@@ -686,6 +732,10 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     return true;
   });
   // ...and the same redraw, through whichever widget it is (see gate 6).
+  // ...AND A FACET TAP IS ITSELF A REDRAW, 2026-08-28: `cast.part` is on the
+  // `plays` facet and gate 6 above leaves the page on `sec`, so the trip out
+  // and back is both the way to reach the control and the redraw this needs.
+  await facet("facet-plays");
   await p.evaluate(() => {
     const i = document.querySelector('.nu-sheet[data-sheet^="cast.part"] .nu-opt[data-v="pad"] input');
     if (i) { i.dispatchEvent(new Event("change", { bubbles: true })); return; }
@@ -694,6 +744,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (window.__draw) window.__draw();
   });
   await p.waitForTimeout(200);
+  await facet("facet-sec");
   // ...THROUGH WHICHEVER WIDGET, for the reason gate 5 gives. WAS: the sheet
   // branch alone, which found nothing on the shipped page and read `null` —
   // "the standing answer is gone" — while the answer was sitting selected in a

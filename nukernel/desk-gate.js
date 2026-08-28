@@ -1541,7 +1541,6 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       .filter((b) => b === "room" || b === "aux").length;
     rackDrawn.groupPlates = rackDrawn.plates
       .filter((b) => b === "room" || b === "aux").length;
-    const body = await page.evaluate(() => document.body.innerText);
     ok(eq(rackDrawn.plates, ["genre", "echo", "rev", "main"]),
        "the rack is four plates in series order — genre → delay → reverb → " +
        "main — one per tab, opened in the row's own order",
@@ -1621,11 +1620,21 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        "…and the delay→reverb bleed is LIVE (same round — fx_bus.dsp's " +
        "`d*0.2` literal is the `bleed` slider now): bus|echo|bleed is an " +
        "enabled pot", JSON.stringify(rackDrawn));
-    ok(rackDrawn.groupPlates === 0 && rackDrawn.groupTabs === 0 &&
-       body.includes("bus 3 and bus 4") && body.includes("draw no plate"),
+    // THE "PRINTED, NOT SILENT" HALF IS RETIRED, 2026-08-28. This also asked
+    // that `body.includes("bus 3 and bus 4") && body.includes("draw no plate")`
+    // — the groups' reversal drawn as a sentence on the board's foot. Paul:
+    // *"the text below Section Automation is vast and should all be removed."*
+    // A refusal-with-reason is load-bearing when a reader can reach it FROM
+    // THE CONTROL it refuses; bus 3 and bus 4 have no control, so that
+    // sentence was explanation about an absence and it came off the page (the
+    // argument is written where the list used to be built, ui/engineer.js).
+    // What the gate must still hold is the fact a save depends on, and that
+    // fact was never the sentence: no plate, no tab, and the old routes still
+    // load and still route — G14's model half measures the routing itself.
+    ok(rackDrawn.groupPlates === 0 && rackDrawn.groupTabs === 0,
        "the two group plates are gone — no plate AND, since the board tabs, " +
-       "no tab — AND the page says so: the reversal is printed, not silent " +
-       "(their sends and aims still load and still route; G14's model half)",
+       "no tab (their sends and aims still load and still route; G14's model " +
+       "half measures that, and the retired sentence did not)",
        JSON.stringify({ plates: rackDrawn.plates, groupTabs: rackDrawn.groupTabs }));
     // THE MAIN TAB CARRIES THE MASTER'S WORDS, so it is opened before they are
     // looked for (2026-08-27, the board tabs).

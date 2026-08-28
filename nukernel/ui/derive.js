@@ -8,7 +8,7 @@
 import { GENRES, MODES, SCALES, RATES, SWINGS, KITOPS, OPS,
          render, drums, bass, word, envelope, edges, groove,
          blank, VOX, PROGS, PERIODS, BREATHS, PIPESETS, withCadence,
-         instrOf, partOf, PARTNAMES,
+         instrOf, partOf, PARTNAMES, BASS_INSTR, INSTRCHOICES,
          chordsOf, MODE, harmonizeStage,
          tempoWarp, seatNote, prng, TOMS,
          METERS, metOf, stepsIn, pulseIn } from "./deps.js";
@@ -111,10 +111,35 @@ export const poolInstrOf = (sec, owner, v, pool) => {
   // said which instrument each VOICE holds, so that answer outranks the
   // role pool. No catalog genre sets `chairs`; every one of them takes the
   // pool law below, byte for byte.
+  //
+  // ...AND A CHAIR THAT HAS SPOKEN HAS SPOKEN, WHICHEVER WAY IT ANSWERED
+  // (2026-08-28. Paul: *"When I select an instrument it changes to something
+  // other than expected. I select voice and it becomes guitar. I think
+  // something is broken with the dropdown."*)
+  //
+  // The seam carries THREE answers — a sampled `instr`, a NATIVE model
+  // (`synth`, a Faust voice), and `{}`, "the record's own signature" — and
+  // only the first of them was read here. So a chair that named a model fell
+  // through this branch as if it had said nothing, and the ROLE pool answered
+  // for it. MEASURED on Paul's own record (Faisalabad 1988, qawwali, a session
+  // carrying `pool.lead = overdrive_guitar`): the menu picked `voice_lead`,
+  // the document stored `voice_lead`, the compiled chair held
+  // `{synth:{dsp:"voice_lead"}}` — and the seat the engine played was
+  // `overdrive_guitar`, unit module `stk_guitar`. The dropdown was not broken;
+  // it was being OUTRANKED, silently, by a band hired on another page.
+  //
+  // A pool is cast by ROLE for the chairs that never said anything. An entry
+  // in the seam IS the chair saying something, so the pool is not consulted for
+  // that voice at all: `instr` is the answer, and `synth` / `{}` are the answer
+  // "not from the pool" — null here, which sends `instrIdOf` and the scheduler
+  // on to the chair's own model exactly as they go when there is no pool. A
+  // hand's explicit choice outranks a default; that is the whole point of
+  // choosing. (Catalog genres declare no `chairs` and are byte-identical.)
   const g = GENRES[owner];
   if (g && Array.isArray(g.chairs) && g.chairs.length) {
     const c = g.chairs[v % g.chairs.length];
     if (c && c.instr) return c.instr;
+    if (c) return null;
   }
   if (!pool) return null;
   const ent = stackOf(sec).find(x => x.g === owner) || null;
@@ -154,6 +179,62 @@ export const hostInstrOf = (sec, owner, v) => {
 };
 export const instrIdOf = (sec, owner, v, pool) =>
   poolInstrOf(sec, owner, v, pool) || hostInstrOf(sec, owner, v) || instrOf(owner, v);
+
+/* ---------- WHEN THE POOL WINS, THE CONTROL THAT LOST HAS TO SAY SO -------
+   (2026-08-28, the second half of the dropdown round above.)
+
+   `poolInstrOf` no longer outranks a chair that named an instrument — that is
+   the fix a paragraph up, and it is the reason a document's select is now
+   obeyed. What it does NOT do is make the loss visible in the case where the
+   pool still legitimately answers: a chair that said nothing, on a genre with
+   no `chairs` seam. There the select shows the voice's own choice and the
+   engine plays the band's, and nothing on the page joins the two.
+
+   This is the join, as DATA and not as drawing: null when the chair is playing
+   its own, and `{chair, playing, own}` when the pool is answering for it —
+   which is exactly the sentence a select needs to print under itself ("the
+   band hired for this record is playing X in the Y chair"). Pure over its
+   arguments like everything else in this file; the pool arrives as an argument
+   (ui/state.js POOL) the way it does for `poolInstrOf`.
+
+   A CALLER CAN ALWAYS ASK. It is deliberately not folded into `instrIdOf` —
+   that function answers "what plays", and a scheduler must not carry a
+   sentence about a menu. */
+export const poolOverrideOf = (sec, owner, v, pool) => {
+  const playing = poolInstrOf(sec, owner, v, pool);
+  if (!playing) return null;
+  let own = null;
+  try { own = hostInstrOf(sec, owner, v) || instrOf(owner, v); } catch (e) { own = null; }
+  if (own === playing) return null;         // agreeing is not overriding
+  const ent = stackOf(sec).find(x => x.g === owner) || null;
+  return { chair: chairOf(sec, ent, v), playing, own,
+           playingLabel: INSTRCHOICES[playing] || playing,
+           ownLabel: own ? (INSTRCHOICES[own] || own) : null };
+};
+
+/* ...AND THE BASS, WHICH IS THE ONE CHAIR THAT NEVER CAME THROUGH HERE.
+   (Paul, 2026-08-28: "I've lost all ability to select or customize the bass.")
+
+   A bass event is not a roster voice — audio/plan.js seats it in its own
+   branch, and that branch reads `(POOL && POOL.bass) || BASS_INSTR` directly,
+   which is why the `chairs` law two functions up cannot reach it: a document
+   that names every other chair's instrument names nothing for this one, and
+   the pool is the ONLY thing that can move it. Measured 2026-08-28 on Kingston
+   1969 through `seats()`: `acoustic_bass` with no pool, `fretless_bass` with
+   `POOL.bass = fretless_bass`.
+
+   So the bass gets the same two answers every other chair has: WHAT IT PLAYS,
+   in one place rather than spelled into the scheduler, and WHETHER THAT IS AN
+   OVERRIDE. `bassInstrOf` is byte-identical to the expression it replaces, so
+   the seat key does not move. */
+export const bassInstrOf = pool => (pool && pool.bass) || BASS_INSTR;
+export const bassOverrideOf = pool => {
+  const playing = bassInstrOf(pool);
+  return playing === BASS_INSTR ? null
+    : { chair: "bass", playing, own: BASS_INSTR,
+        playingLabel: INSTRCHOICES[playing] || playing,
+        ownLabel: INSTRCHOICES[BASS_INSTR] || BASS_INSTR };
+};
 export const stackOf = sec => sec.stack || [];
 export const focusOf = sec => Math.min(sec.focus || 0, stackOf(sec).length - 1);
 export const focused = sec => stackOf(sec)[focusOf(sec)];

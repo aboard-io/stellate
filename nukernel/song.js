@@ -30,8 +30,8 @@
     ? require("./kernel.js") : root.NuKernel;
   const { FIELDS, OPS, FX, MAX_FX, NSLOTS, MAX_LEN, MAX_NUDGE, VOX,
           AUTOPARAMS, PERIODS, PARTMIX, okPartKey, MASTER, BUSES, faderDb,
-          eqDb, GROOVELABEL, SWINGLABEL, METERLABEL, INSTRCHOICES, POOLCHAIRS,
-          PARTNAMES } = NF;
+          eqDb, GROOVELABEL, SWINGLABEL, METERLABEL, POOLCHAIRS,
+          poolTakes, PARTNAMES } = NF;
   const { GENRES } = NG;
 
   // The CURRENT schema version. v:2 = v:1 with the box field `del` renamed to
@@ -852,10 +852,17 @@
     // POOLCHAIRS seat, null (or an empty map) meaning every chair plays the
     // genre's own `instr`. The ops/fx FILTER rule at both levels: a key that
     // is not a chair is dropped (only the eight seats are read at all), and an
-    // id INSTRCHOICES no longer names is dropped too — the instrument
-    // vocabulary moves with the genre table, and a song should lose an
-    // obsolete pick rather than lose itself. Normalized to null when nothing
-    // survives, so "no pool" keeps one spelling.
+    // id the CHAIR cannot take is dropped too — the instrument vocabulary
+    // moves with the genre table, and a song should lose an obsolete pick
+    // rather than lose itself. Normalized to null when nothing survives, so
+    // "no pool" keeps one spelling.
+    //
+    // "THE ID THE CHAIR CANNOT TAKE" IS fields.js `poolTakes` NOW, not a
+    // second reading of INSTRCHOICES here (2026-08-28). It was the same
+    // answer as ui/state.js `setPoolChair`'s while every chair took the same
+    // 90 ids; the bass chair takes eleven (fields.js BASSCHOICES), and a save
+    // path and a live-edit path that each spell that rule for themselves are
+    // two rules waiting to disagree about the same document.
     if (s.pool != null) {
       if (typeof s.pool !== "object" || Array.isArray(s.pool)) {
         err("pool", s.pool, "a map of chair -> instrument id");
@@ -865,8 +872,7 @@
         for (const c of POOLCHAIRS) {
           const v = s.pool[c];
           if (v == null) continue;
-          if (Object.prototype.hasOwnProperty.call(INSTRCHOICES, String(v)))
-            clean[c] = v;
+          if (poolTakes(c, v)) clean[c] = v;
         }
         s.pool = Object.keys(clean).length ? clean : null;
       }

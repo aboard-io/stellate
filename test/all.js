@@ -186,6 +186,20 @@ const GATES = [
   { name: "precompose", wave: 2, kind: "node",
     argv: ["test/precompose.test.js"],
     need: ["test/precompose.test.js"], covers: ["test/precompose.test.js"] },
+  /* THE BAND HIRED FOR THE RECORD (2026-08-28, "Fix the pool thing too"). Two
+     gates and not one, because the pool's two failures are two KINDS of
+     failure: what a chair may be handed and what a save carries are
+     arithmetic, and whether a band follows you to the next record — and
+     whether the bass reaches the engine at all — are facts about the running
+     page that no node assertion can reach. The browser half also carries the
+     harness lie that faked this bug report once (a same-document `goto` to a
+     `#at=` fragment reloads nothing), written down in its header. */
+  { name: "pool",       wave: 2, kind: "node",
+    argv: ["test/pool.test.js"],
+    need: ["test/pool.test.js"], covers: ["test/pool.test.js"] },
+  { name: "pool-ui",    wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/pool.browser.js"], need: ["test/pool.browser.js"],
+    covers: ["test/pool.browser.js"] },
   /* DOES PRESSING REWRITE CHANGE THE TUNE? (2026-08-27). Paul, on staging:
      "No matter how many times I hit REWRITE the hook is the same on Iranian
      pop." Measured, it was the whole catalog: 0 of 191 anchors changed their

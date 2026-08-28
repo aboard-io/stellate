@@ -319,7 +319,13 @@
      gutter is what is against that corner now — so it grows by the inset and
      pays it back as its own padding, and the 56px of column the marks stand
      in does not move. */
-  --tray-w: calc(56px + env(safe-area-inset-right, 0px));
+  /* THE GUTTER MOVED TO THE LEFT, 2026-08-28. Paul: *"Move the right nav to
+     the left so it doesn't interfere with the scroll on the right."* Right was
+     wrong for two reasons a measurement would not have caught: the scrollbar
+     and the fling live on that edge on a desktop, and the swipe-back gesture
+     owns it on a phone — a fixed stripe there is a thumb trap. The safe-area
+     inset it reserves follows it, so a notch on the left is still cleared. */
+  --tray-w: calc(56px + env(safe-area-inset-left, 0px));
 }
 *,*::before,*::after{ box-sizing: border-box; }
 html{ -webkit-text-size-adjust: 100%; }
@@ -360,7 +366,7 @@ body{ margin: 0; background: var(--paper); color: var(--ink);
      viewport, and the pane's table inside an `overflow: auto` box — their
      boxes run past their clipper on purpose and are not painted there. What
      has to be inside the gutter is the CLIPPER, and it is. */
-  padding-inline: var(--gl) calc(var(--gr) + var(--tray-w));
+  padding-inline: calc(var(--gl) + var(--tray-w)) var(--gr);
   padding-block-end: max(24px, env(safe-area-inset-bottom)); }
 /* the display weights; the record's name is the h1 and gets the 900 */
 h1{ font-weight: 900; letter-spacing: -.01em; line-height: 1.05; }
@@ -695,58 +701,59 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    wider as the digits change under a still thumb. */
 .nu-bar > button > .nu-rd{ font-weight: 400; font-size: .8em;
   font-variant-numeric: tabular-nums; }
-.nu-bar label{ display: flex; align-items: center; gap: .4em;
-  min-block-size: 0; line-height: normal; flex: 1 1 auto; }
-.nu-bar input[type=range]{ inline-size: 100%; min-inline-size: 4em; }
-/* THE ROOM SLIDER'S WORD, PRINTED WHERE THERE IS ROOM TO PRINT IT. index.html
-   ships it as `.nu-vh` — in the DOM at every width, read by a screen reader,
-   printed with the stylesheet off — and this CANCELS that clip from 430px up.
-   It is not a second definition of a look: `.nu-vh` above is still the only
-   place the hidden look is stated, and these six declarations are the six it
-   states, undone. 430 is the gate's own next width up from 390 and not a
-   guess: at 430 the strip needs 51.7px for the word and has 134px of slack in
-   the range, so the label never decides between its name and its floor. */
-@media (min-width: 430px){
-  .nu-bar label > .nu-vh{ position: static; width: auto; height: auto;
-    margin: 0; overflow: visible; clip-path: none; } }
+/* THE ROOM SLIDER IS A BARE RANGE NOW (2026-08-28). Paul: *"Get rid of the
+   word room before the volume control."* index.html carries the argument and
+   the cost; this is the arithmetic it frees.
 
-/* THE ENGINE READOUT KEEPS ITS ROOM WHETHER IT HAS ANYTHING TO SAY OR NOT.
-   MOTIF.md, "STILL NOT COVERED" item 2, wrote the recipe (`#engine {
-   min-block-size: 1lh }`) and it was never applied; this applies it and
-   DOUBLES it, because the same report measured the case one line does not
-   cover.
+   TWO RULES CAME OFF HERE AND ONE WENT ON. What stood here was
+   `.nu-bar label{ display: flex; … flex: 1 1 auto }` — the flex box that let a
+   <label> grow while its <input> filled it — and a `@media (min-width: 430px)`
+   block that un-clipped the `.nu-vh` word from 430 up. Its note said why 430:
+   "at 430 the strip needs 51.7px for the word and has 134px of slack in the
+   range, so the label never decides between its name and its floor." There is
+   no word and no label, so there is nothing to decide and no breakpoint to
+   decide it at: the range is a direct child of `.nu-bar` and takes the give
+   itself, at every width.
 
-   MEASURED at 390x844 and 1280x844 on 2026-08-25, by writing each sentence
-   into the element and reading its box back:
+   AND THE STRIP GOT WIDER, WHICH IS THE ONE THING THIS BUYS. The arithmetic
+   above counted the room WORD at 51.7px (the word and its gap) and clipped it
+   below 430 to pay for the two new buttons. That 51.7 is now unspent at every
+   width and goes where it went at 320: into the range, which was the control
+   squeezed to its 4em floor. Measured after — see the table under `.nu-rd`. */
+.nu-bar > input[type=range]{ flex: 1 1 auto; min-inline-size: 4em; }
+
+/* ===== THE ENGINE READOUT IS A LOG LINE NOW (2026-08-28) ================
+   Paul: *"Get rid of the media (mediaEl) held plays offline etc section on the
+   top; move that info to the logger."* `<p id="engine">` is gone from
+   index.html and this rule went with it. It is written out here rather than
+   deleted because what it bought — and what it cost — is the whole argument
+   for the logger being a log and not a line.
+
+   IT READ: `#engine { min-block-size: 2lh; font-family: var(--mono);
+   font-weight: 600; font-size: .85rem; color: var(--meter); }`, and its note
+   carried this measurement, made at 390x844 and 1280x844 on 2026-08-25 by
+   writing each sentence into the element and reading its box back:
 
      empty (before you press play)                          0px
      "stream · runway 3.1s"                                18px   both widths
      "stream · runway 3.1s · 1 dropout, worst 168 ms,
       last at 0 min"                                       36px @390, 18px @1280
 
-   So pressing play dropped the whole editable page 34px, and a dropout — which
-   STATE.md item 16 says happens in the first half minute of every playthrough —
+   — "so pressing play dropped the whole editable page 34px, and a dropout …
    dropped it another 18px with nobody touching anything. That is the clock
-   moving the editing interface, which is the one thing this page may not do.
+   moving the editing interface, which is the one thing this page may not do."
+   The fix was to reserve two lines at every width and never a breakpoint,
+   because the sentence is audio/live.js's and any width pinned here would rot.
 
-   TWO LINES AT EVERY WIDTH, AND NO BREAKPOINT. A media query here would be a
-   claim about WHERE that sentence wraps, and the sentence is not this file's:
-   audio/live.js `engineLine()` owns the wording (index.html says so), so any
-   width I pinned would rot the next time somebody adds a word to it. Two lines
-   costs 18px of reserved blank on a desktop that will only ever use one, and
-   that is the same trade the composed staff already makes on this page — "a
-   staff that appears on play pushes every editor below it down by 89px … and
-   reserving a blank box costs the same pixels to show you nothing", ui/eight.js
-   liveBlock. `min-block-size`, not `block-size`: a third line must be readable
-   rather than clipped. */
-#engine{ min-block-size: 2lh;
-  /* the engine line is ENGINE TRUTH, so it wears the meter's green and the
-     machine voice (2026-08-27) — "a slider with no green beside it is a
-     slider that reaches no sound", and this is the sentence that proves the
-     sound. `2lh` still reserves two lines OF ITS OWN TYPE, so the anti-jump
-     argument above is unchanged. */
-  font-family: var(--mono); font-weight: 600; font-size: .85rem;
-  color: var(--meter); }
+   ALL OF THAT REASONING SURVIVES AND THE 36px DOES NOT. A gutter foot reserves
+   its geometry once, at creation, and holds one button whose SIZE never
+   changes whatever the engine says; the sentences go into a panel that is
+   `position: fixed` and therefore cannot move a row of the page whether it is
+   open or shut. The 36px of permanently blank reserved band at the top of a
+   390px phone is simply not spent any more. The `--meter` green and the mono
+   face moved with the words — see `.nu-log li[data-kind="engine"]`, which is
+   the same three declarations on the same sentences, so ENGINE TRUTH still
+   looks like engine truth wherever it is printed. */
 
 /* THE NEW-VERSION LINE (2026-08-27). Built by nukernel/audio/offline.js when
    the worker reports it replaced a version and a reload is not free — never at
@@ -873,15 +880,31 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    first that scrolls) — and it scrolls, in one column.
    THE STRIPE NEVER SCROLLS SIDEWAYS EITHER: `scrollWidth === clientWidth`
    (47/47) on every level at both widths. */
-.nu-tray{ position: fixed; inset-block: 0; inset-inline-end: 0; z-index: 40;
+/* WHICH SIDE THE STRIPE IS ON IS STATED HERE AND FOLLOWED IN THREE PLACES
+   (2026-08-28, the afternoon it moved: *"Move the right nav to the left so it
+   doesn't interfere with the scroll on the right."*). The declaration below is
+   the fact; this is the list of what reads it, so the next hand that flips the
+   gutter can flip everything with it in one pass:
+     1. `body { padding-inline }` at the top of this file — the gutter comes
+        OUT of the content column, which is what makes "nothing goes under it"
+        a fact about flow rather than a z-index that only looks right;
+     2. `.nu-log` below — the logger's sheet opens on the gutter's INNER side
+        and must start at `--tray-w` on whichever side that is;
+     3. ui/glyph.js `place()` — the explainer's clamp, and it is the one that
+        needs NO edit: it reads the gutter's rectangle off the rendered page
+        and keeps the popover out of it on whichever edge it finds it. That is
+        the shape the other two would take if either could be written without
+        naming a side, and it is the one to copy if this moves again. */
+.nu-tray{ position: fixed; inset-block: 0; inset-inline-start: 0; z-index: 40;
   inline-size: var(--tray-w);
   display: flex; flex-direction: column; align-items: stretch;
   /* the marks stand in 56px whatever the notch does — see --tray-w */
-  padding: max(4px, env(safe-area-inset-top)) 
-           calc(4px + env(safe-area-inset-right, 0px))
-           max(4px, env(safe-area-inset-bottom)) 4px;
+  padding: max(4px, env(safe-area-inset-top)) 4px
+           max(4px, env(safe-area-inset-bottom))
+           calc(4px + env(safe-area-inset-left, 0px));
   background: var(--panel);
-  border-inline-start: var(--bw) solid var(--ink); }
+  /* the rule is on the side facing the page, which is now the END side */
+  border-inline-end: var(--bw) solid var(--ink); }
 /* THE HEAD: `↑`, AND A RULE UNDER IT. Hierarchy reads upward, and going up is
    a different KIND of action from picking a sibling — so it is not in the
    list, it is above the list, with a line between. It never scrolls away:
@@ -948,6 +971,144 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 .nu-tray .nu-ic{ display: flex; flex-direction: column; justify-content: center;
   gap: 0; inline-size: 100%; }
 .nu-tray .nu-n{ font-size: .7rem; }
+
+/* ===== THE FOOT OF THE GUTTER: THE LOGGER (2026-08-28) ==================
+   Paul: *"Add a logger on the bottom right. Log actions. … Badge the logger
+   with the number of lines it holds. Make the logger also have a countdown for
+   when I change things, showing how many beats before they take effect."*
+
+   IT IS PINNED TO THE BOTTOM WITHOUT A SINGLE POSITIONING DECLARATION, and
+   that is the point of the tray having been built as a flex column in the
+   first place: `.nu-traylist` is the only `flex: 1 1 auto` in the stripe, so
+   it eats every spare pixel and anything after it is at the floor. No
+   `margin-top: auto`, no `position: absolute`, no second stacking context —
+   the head is at the top because it is first, the foot is at the bottom
+   because it is last, and a level long enough to scroll pushes neither.
+
+   THE GUTTER IS STILL ONE STRIPE. The foot is inside `#nu-tray`, wears the
+   same `--panel` plate and the same 47px of column, and is divided from the
+   marks by the same real `<hr class="nu-traycut">` the head uses — the rule
+   that says "what is on this side of the line is a different kind of thing".
+   Nothing here is fixed, floated or offset; with nu.css off it is the last
+   block of the <nav>, in reading order, exactly as the head is the first.
+
+   THE GEOMETRY IS RESERVED AT CREATION. ui/eight.js builds the foot at boot
+   whether or not there is anything to log — the button is always there, at a
+   size that never changes — because a control that materialises when the first
+   line lands would move the marks above it under a thumb that is reaching for
+   one. What varies is the BADGE (absent at nought) and the COUNTDOWN (absent
+   unless something is pending), and neither of them changes the button's box:
+   the badge is inside it and the countdown is above the rule. */
+.nu-trayfoot{ flex: 0 0 auto; display: flex; flex-direction: column;
+  align-items: stretch; }
+/* THE COUNTDOWN, AND IT IS THE CLOCK SPEAKING. `[data-live="pending"]` in the
+   DOM (ui/eight.js), holding no control — the badge and the button are below
+   the rule and belong to a hand. It reads as a MEASUREMENT and not as a label,
+   so it takes the meter green and the machine face every value on this page
+   already wears: "a slider with no green beside it is a slider that reaches no
+   sound", and this is the green that says the edit you just made is on its way
+   to one.
+   TWO LINES IN 47px: the number at the size of a button's word, the unit under
+   it at the size of a tray digit. Measured at 390: "16" is 17.8px wide and
+   "beats" is 30.2px, both inside the 47px column with no wrap and no clip. */
+.nu-count{ display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 0; padding-block: .15em;
+  font-family: var(--mono); color: var(--meter); line-height: 1.05; }
+.nu-count b{ font-weight: var(--num-fw); font-size: .95rem;
+  font-variant-numeric: tabular-nums; }
+.nu-count small{ font-size: .6rem; font-weight: 600; }
+/* NOTHING PENDING IS NOTHING DRAWN, and it is `:empty` rather than an
+   attribute the clock would have to remember to set and unset. ui/eight.js
+   writes the two children on a pending beat and `replaceChildren()` on the
+   landing; the box folds to zero by having nothing in it, so there is exactly
+   one state to keep honest instead of two. It also means the element — and its
+   `data-live="pending"` declaration — is in the DOM from boot at every moment,
+   which is what a gate reads to know the clock has a licence for this square
+   inch and for no other in the gutter. */
+.nu-count:empty{ display: none; }
+/* THE BADGE IS THE TRAY'S OWN DIGIT, TINTED. `.nu-n` is already how a mark in
+   this column carries a number (♪ over 2) and the logger's count is drawn by
+   the same span in the same place — so nothing new is spelled and `paintIcon`
+   keeps its short-circuit. What the tint adds is the one thing a COUNT means
+   that an INDEX does not: there is something in here. It is `--hand` ink on
+   the flag tint, which is the page's own "look at this" pair, and it goes to
+   white-on-cobalt with the rest of the mark when the panel is open.
+   Contrast measured: --hand #1E45E0 on --flag-tint #FFEFC2 is 8.03:1. */
+.nu-trayfoot .nu-n{ align-self: center; min-inline-size: 1.6em;
+  padding-inline: .25em; border-radius: 999px;
+  background: var(--flag-tint); color: var(--hand);
+  font-weight: var(--num-fw); font-variant-numeric: tabular-nums; }
+.nu-trayfoot button[aria-pressed="true"] .nu-n{ background: #FFFFFF; }
+
+/* ===== THE LOG ITSELF ===================================================
+   `position: fixed` IS THE LOAD-BEARING DECLARATION, and it is `.nu-say`'s
+   argument word for word: the sheet is POSITIONED, never inserted into flow,
+   so opening it cannot move a row under a thumb. index.html carries the rest
+   of why it ships at the end of <body>.
+
+   IT STARTS AT THE GUTTER'S INNER RULE. Paul: *"Dont let anything go under
+   it."* `inset-inline-start: var(--tray-w)` is that sentence as arithmetic —
+   the sheet's near edge IS the gutter's inner edge, so nothing it draws is
+   ever on top of the marks it was opened from, and it grows away from the
+   stripe, which is the only direction there is room in. Upward from the floor,
+   because that is where its button is.
+
+   WHICH SIDE THE GUTTER IS ON IS `.nu-tray`'S FACT AND THIS RULE FOLLOWS IT
+   (rewritten 2026-08-28, the same afternoon it was first written the other way
+   round). Paul: *"Move the right nav to the left so it doesn't interfere with
+   the scroll on the right."* The gutter went from `inset-inline-end: 0` to
+   `inset-inline-start: 0` and this sheet went with it, from `-end` to `-start`
+   — one declaration each. The list of everything that has to move with the
+   stripe is kept at `.nu-tray` itself, where the fact lives; this is one of
+   the three entries on it, and ui/glyph.js `place()` is the third, which is
+   the one that does NOT have to be edited because it MEASURES the gutter
+   rather than being told where it is.
+
+   AND IT IS A COLUMN OF ITS OWN, WITH ITS OWN SCROLL. A log grows; a fixed box
+   that grew with it would eventually be taller than the screen and there would
+   be no way to reach the top of it. So it is capped at 60% of the viewport and
+   scrolls INSIDE itself (`overscroll-behavior: contain` is right here and
+   wrong on `.nu-traylist`, for the reason written there: this box ALWAYS has
+   something to scroll once it is worth opening, so containing it steals no
+   swipe from the document). */
+.nu-log{ position: fixed; z-index: 55;
+  inset-inline-start: var(--tray-w); inset-block-end: 4px;
+  inline-size: min(46ch, calc(100vw - var(--tray-w) - 12px));
+  max-block-size: min(60vh, 520px); overflow-y: auto; overscroll-behavior: contain;
+  margin: 0; padding: .4em .55em;
+  background: var(--panel); color: var(--ink);
+  border: var(--bw) solid var(--ink); border-radius: var(--r1, 6px);
+  box-shadow: var(--shadow);
+  font-size: .82rem; line-height: 1.35; }
+.nu-log[hidden]{ display: none; }
+/* ONE LINE PER THING THAT HAPPENED, NEWEST FIRST. A real <ol> — the order is
+   the meaning, and with the stylesheet off it has to stay the meaning — with
+   its numbering off, because the numbers a reader wants are the beats and the
+   values, not "1, 2, 3". */
+.nu-log ol{ list-style: none; margin: 0; padding: 0; }
+.nu-log li{ display: flex; gap: .5em; align-items: baseline;
+  padding-block: .18em; border-block-start: var(--bw) solid var(--rule); }
+.nu-log li:first-child{ border-block-start: 0; }
+/* THE STAMP. Tabular, dim, and fixed-width so the sentences line up down the
+   left edge of the column rather than stepping in and out with the clock. */
+.nu-log time{ flex: 0 0 auto; font-family: var(--mono); font-size: .72rem;
+  font-variant-numeric: tabular-nums; color: var(--dim); }
+.nu-log li > span{ flex: 1 1 auto; min-inline-size: 0;
+  overflow-wrap: break-word; }
+/* ENGINE TRUTH STILL LOOKS LIKE ENGINE TRUTH. These are the three declarations
+   `#engine` wore under the transport (the mono face, 600, `--meter`), on the
+   same sentences, from the same one owner — audio/live.js `engineLine()`. The
+   readout moved; what it looks like did not. */
+.nu-log li[data-kind="engine"] > span{ font-family: var(--mono);
+  font-weight: 600; color: var(--meter); font-size: .78rem; }
+/* AND THE VALUE INSIDE AN ACTION LINE takes the machine voice the rest of the
+   page gives to every number a control prints (`--num-fw`), so "swing" and
+   "58%" read as the two different kinds of word they are. */
+.nu-log b{ font-weight: var(--num-fw); }
+/* THE RESTING SENTENCE. Not a refusal and not styled as one — nothing has been
+   refused, there is simply nothing yet — so it is the page's ordinary quiet
+   second voice and it carries no `.nu-why` furniture. */
+.nu-log p{ margin: 0; color: var(--dim); }
 /* A SHUT PANEL, AND IT IS SHUT BY A RULE AND NOT BY AN ATTRIBUTE. `hidden`
    would have been one character and it would have cost this file the one
    promise the reversal above is allowed to keep: with the stylesheet off the
@@ -2943,11 +3104,28 @@ table.nu-trims{ color: var(--ink); }
    set (the fills), --well for the trough, ink for the lattice ticks and the
    marked zero, --faint only for a ghost's fill (a quiet hit is a quiet
    paint), --flag only on an accent's edge (about to matter). */
+/* THE COLUMN WIDTHS ARE STATED ON THE BODY ROW'S OWN CELLS (rewritten
+   2026-08-28). They read `th:nth-child(2)` and `th:nth-child(4)` — the header
+   row of words, `m2 | kind | pitch | vel`, which is deleted (Paul: *"Let's get
+   rid of the label strings on the pitch sliders. held and rest and the stuff
+   that appears on top."*). `table-layout: fixed` takes its widths from the
+   FIRST ROW whatever its cells are, and every step row is `<th>` count,
+   `<td class="nu-kindTd">`, `<td class="nu-pitTd">`, `<td class="nu-velTd">` —
+   so the same three numbers are stated by NAME instead of by position, which
+   is the more durable spelling anyway: a column that moves takes its width
+   with it. The count column stays `th:first-child` because that is what it was
+   in the body rows all along. MEASURED ON THE RENDERED PAGE, by putting the
+   deleted header row back into the live table and taking it out again: the
+   columns are 34 / 118 / 85 / 72 at 390 and 34 / 118 / 927 / 120 at 1280 —
+   three stated, the pitch column taking whatever is left, which is what
+   `table-layout: fixed` does with an unstated column and is what it did
+   before. The table is 834px tall without the header and 857px with it, so
+   the row of words cost 23px of every motif on the page. */
 .nu-bench{ inline-size: 100%; table-layout: fixed; }
 .nu-bench th:first-child{ inline-size: 34px; }
-.nu-bench th:nth-child(2){ inline-size: 118px; }
-.nu-bench th:nth-child(4){ inline-size: 72px; }
-@media (min-width: 620px){ .nu-bench th:nth-child(4){ inline-size: 120px; } }
+.nu-bench td.nu-kindTd{ inline-size: 118px; }
+.nu-bench td.nu-velTd{ inline-size: 72px; }
+@media (min-width: 620px){ .nu-bench td.nu-velTd{ inline-size: 120px; } }
 /* one 52px line per step — fixed, the thumb's map of the bar holds */
 .nu-bench td{ block-size: 52px; padding: 3px 2px; }
 .nu-bench td.nu-pitTd{ position: relative; }
@@ -3015,8 +3193,12 @@ table.nu-trims{ color: var(--ink); }
   display: inline-flex; align-items: center; justify-content: center;
   padding-inline: 4px; white-space: nowrap;
   font: var(--num-fw) .75rem var(--mono); color: var(--ink); }
-.nu-pbb small{ font: var(--num-fw) .5625rem var(--mono); color: var(--dim);
-  margin-inline-start: 2px; }
+/* (`.nu-pbb small` STOOD HERE — the semitone offset typed small and dim beside
+   the degree name inside the cap. Deleted 2026-08-28 with the cap's text:
+   Paul, *"Let's get rid of the label strings on the pitch sliders."* The cap
+   itself keeps every declaration above, because the cap is the HANDLE — an
+   empty plate parked at the value is still the thing your thumb is on, and
+   `aria-valuetext` still says the degree and the semitones to a reader.) */
 .nu-pbin, .nu-vain{ position: absolute; inset: 0; inline-size: 100%;
   block-size: 100%; margin: 0; opacity: 0; pointer-events: none;
   min-height: 0; min-block-size: 0; }
@@ -3076,52 +3258,112 @@ table.nu-trims{ color: var(--ink); }
    2px`, `padding: 0 3px`) goes with it — the cap IS the plate, and two plates
    under one number was the smear this wave is removing. */
 .nu-velA.hi .nu-van{ color: var(--ink); }
-/* a silent row goes FAINT, it never vanishes; the reason prints over the
-   pitch bar in one measured line (ui/eight.js sync) */
+/* a silent row goes FAINT and it never vanishes — the fade IS the sentence
+   now. (`.nu-mutewhy` stood under this rule: a `position: absolute; inset: 0`
+   span lying across the pitch cell and printing "rest — nothing sounds" /
+   "held — 3̂ still rings" over the two sleeping bars. DELETED 2026-08-28. Paul:
+   *"Let's get rid of the label strings on the pitch sliders. held and rest and
+   the stuff that appears on top."* — and "the stuff that appears on top" is
+   this rule's own `z-index: 5` said in English. WHERE ITS INFORMATION IS: the
+   row's kind is the pressed segment of the kind button, three cells to its
+   left, and the fade below says the bars are not writable. The REFUSAL did not
+   go with the sentence: ui/eight.js `sync` puts it on each refused control as
+   `data-why` + `title`, which is this page's refusal idiom and what
+   test/text-diet.js T3 reads.) */
 .nu-bench tr.is-rest .nu-pit, .nu-bench tr.is-rest .nu-velA,
 .nu-bench tr.is-hold .nu-pit, .nu-bench tr.is-hold .nu-velA{
   opacity: .3; pointer-events: none; }
-.nu-mutewhy{ display: none; position: absolute; inset: 0; z-index: 5;
-  align-items: center; justify-content: center; text-align: center;
-  font: 600 11px var(--mono); color: var(--dim); pointer-events: none; }
-.nu-bench tr.is-rest .nu-mutewhy, .nu-bench tr.is-hold .nu-mutewhy{
-  display: flex; }
-/* the lattice pointer + the refused accidentals toggle (the no-silent-grey
-   law: refused, with the reason printed beside it) */
-.nu-benchbar{ display: flex; flex-wrap: wrap; gap: .35em .7em;
-  align-items: center; }
-.nu-benchbar button:disabled{ color: var(--faint); }
-.nu-benchbar .nu-why{ flex: 1 1 14em; }
-/* the wisdom rail — reserved at its own WORST sentence per width, so a
-   sentence changing moves nothing below it.
-   CORRECTED 2026-08-27 (Wave 2 verification): this said `min-block-size:
-   2.6em` — one line — and at 390px the rail's longest sentence ("step 16
-   (beat 4 …) · held — 7̂₋8va (−12 st) — the scale's own colour, outside the
-   mode · vel 7 (accent)") wraps to THREE lines (measured 71.3px against a
-   35.4px reserve), so speaking a row shifted every block under the rail by
-   up to 36px — the same illness `#engine` had (MOTIF.md "STILL NOT COVERED"
-   item 2: "a one-line reserve does not cover it"), fixed the same way, in
-   `lh` at the 620px breakpoint the bench already declares. box-sizing is
-   border-box, so the reserve carries its own padding (.3em×2) and border
-   (`--bw`×2). Measured after: worst 3 lines at 390, 2 at 620–729, 1 wide —
-   the reserve covers each.
+/* (`.nu-benchbar` stood here — the flex line that held the lattice pointer and
+   the refused `♯ accidentals` toggle above every motif's rows. DELETED
+   2026-08-28 with the control: Paul, *"accidentals need the chromatic alphabet
+   - not wired; the bar locks to the scale -- get rid of that"*. ui/eight.js's
+   tombstone at `benchRefusal` carries the argument, including which of the two
+   permitted answers it is — the control is REMOVED, not made to work.) */
+/* (`.nu-wisdom` STOOD HERE — the rail under every motif's rows, reserved at
+   its own WORST sentence per width (`calc(3lh + .6em + 2*--bw)`, re-measured
+   twice: 69.3px at 390, 49.6px at 1280) so that speaking a row moved nothing
+   below it. DELETED 2026-08-28. Paul: *"The box that says tap a row - the step
+   is read here should just go."* ui/eight.js carries the tombstone that says
+   where each fact in its sentence already was; what this rule contributed —
+   the reserve — is the measurement that goes with the deletion: every motif
+   block on the page is 69.3px shorter at 390 and 49.6px shorter at 1280, and
+   there is one block per open cell.)
 
-   THE BORDER IN THE RESERVE IS THE TOKEN NOW (2026-08-27, with the scale
-   retune). It read `+ 4px` — two 2px borders, the number typed out — and the
-   day the frame became 1px that reserve would have been 2px too tall
-   FOREVER, quietly, with nothing to catch it. `2 * var(--bw)` is the same
-   arithmetic that cannot go stale. Re-measured on the rendered page after the
-   retune: the rail is 69.3px at 390 (was 71.3) and 49.6px at 1280 (was 51.6)
-   — exactly the 2px the two borders lost, with the same three and two lines
-   of text inside it. The RESERVE did not move; the BOX around it got thinner,
-   which is what a thinner border is. */
-.nu-wisdom{ min-block-size: calc(3lh + .6em + 2 * var(--bw)); display: flex;
-  align-items: center;
-  border: var(--bw) solid var(--rule-strong); border-radius: var(--r1);
-  background: var(--panel); padding: .3em .6em;
-  font-size: .85rem; font-weight: 600; }
-@media (min-width: 620px){
-  .nu-wisdom{ min-block-size: calc(2lh + .6em + 2 * var(--bw)); } }
+   ===== THE STEP LABEL IS THE ROW'S IDENTITY, AND THE ROW GOES DARK AS IT
+   SOUNDS (2026-08-28) ======================================================
+   Paul: *"The step labels should be big and centered and the entire box should
+   go dark as they play."*
+
+   THE LABEL. The count column was `.nu-grid`'s: 0.8rem, left-aligned, 4px of
+   padding — a caption beside the row. It is the row's NAME now, so it is the
+   machine face at 1.25rem, centred in its 34px column, and it is the only text
+   left on a bench row (the header words, the pitch badge, the mute sentence
+   and the rail all went today). Nothing about the GEOMETRY moves: the column
+   is still 34px and the row is still the promised 52px — a 20px face in a 52px
+   line has 16px of room either side, measured.
+
+   THE DARK, AND WHY IT IS DRAWN BY `:has()` RATHER THAN BY A CLASS. The clock
+   may write inside `[data-live]` and nowhere else (test/motif-frozen.js A3
+   compares `#app` byte for byte across playback with every `[data-live]`
+   emptied), and `window.__eightFrozen` empties a live element's CHILDREN while
+   keeping the element AND ALL ITS ATTRIBUTES. A `class` toggled on the `<tr>`
+   — or on the `<th>`, which is the live element itself — is therefore part of
+   the frozen picture and would fail A3 on the first beat. The `<mark>` INSIDE
+   the count cell is not: it is a child of `[data-live="count"]`, it is what
+   `mark()` has always written, and it is emptied out of the snapshot. So the
+   row reads its own playhead: `tr:has(> th mark)` is exactly "the step in this
+   row is sounding", written once, with no second writer and no new clock path
+   at all. THE PLAYHEAD'S JAVASCRIPT DID NOT CHANGE A CHARACTER for this.
+
+   WHAT A BROWSER WITHOUT `:has()` GETS, said plainly rather than left to be
+   discovered: the row does not darken, and the count cell still wears the
+   browser's own `<mark>` highlight, which is what this page had yesterday. The
+   class-based fallback this file uses elsewhere (`.is-on` beside
+   `:has(:checked)`) is NOT available here — a class is exactly the thing the
+   frozen law forbids the clock to write — so the fallback is the honest one:
+   less paint, never a wrong picture. Chrome 105+, Safari 16.4+, Firefox 121+
+   have it (this file's own note at the top).
+
+   AND THE SELECTOR NAMES THE LIVE DECLARATION, `th[data-live="count"]`, for
+   two reasons and the second one is arithmetic. It reads better — the paint
+   depends on the cell the page DECLARED the clock may write in, which is the
+   same fact `mark()` refuses to write without — and it carries the specificity
+   the rule needs. MEASURED, because it was wrong for an hour: `.nu-grid > tr:
+   nth-child(even) > td { background: none }` is (0,2,2) and
+   `.nu-bench tr:has(> th mark) > td` is (0,1,4), so the zebra-suppressing rule
+   won on EVERY EVEN ROW and the playhead darkened only the odd ones — a bug
+   that passes any check that happens to land on step 1. `:has()` takes the
+   specificity of its most specific argument, so naming the attribute makes it
+   (0,2,4) and the row goes dark whichever step it is.
+
+   THE PAINT IS THE PAGE'S OWN INK, at full strength, because a playhead that
+   is a tint is the thing this file already refused twice ("a tint in a step
+   grid fights the playhead"). The controls keep their identity ON the dark:
+   the two caps are the panel plate and stand out as the handles they are, and
+   the kind segments give up their white ground for a 12% wash so the row reads
+   as one dark band rather than as three white boxes on a dark ribbon. Measured
+   for contrast: --paper on --ink is 18.02:1 (this file's own number, the other
+   way round), and the pressed segment stays --hand + white, 7.10:1. */
+.nu-bench th:first-child{ text-align: center; padding-inline: 2px; }
+.nu-bench th span, .nu-bench th mark{ font: var(--num-fw) 1.25rem/1 var(--mono); }
+.nu-bench tr:has(> th[data-live="count"] mark) > th,
+.nu-bench tr:has(> th[data-live="count"] mark) > td,
+.nu-bench tr:has(> th[data-live="count"] mark) > th:first-child{
+  background: var(--ink); color: var(--paper); }
+/* the browser's own highlight has served its purpose the moment the whole row
+   carries it — the label is ink on paint either way, so it gives up its plate */
+.nu-bench tr:has(> th[data-live="count"] mark) th mark{ background: transparent; color: var(--paper); }
+.nu-bench tr:has(> th[data-live="count"] mark) .nu-seg{ background: transparent;
+  border-color: color-mix(in srgb, var(--paper) 45%, transparent); }
+.nu-bench tr:has(> th[data-live="count"] mark) .nu-segb{
+  background: color-mix(in srgb, var(--paper) 12%, transparent);
+  color: var(--paper);
+  border-inline-start-color: color-mix(in srgb, var(--paper) 45%, transparent); }
+.nu-bench tr:has(> th[data-live="count"] mark) .nu-segb[aria-pressed="true"]{
+  background: var(--hand); color: #FFFFFF; }
+.nu-bench tr:has(> th[data-live="count"] mark) .nu-segb:disabled{
+  color: color-mix(in srgb, var(--paper) 40%, transparent);
+  background: transparent; }
 /* THE KIT CELL — a button whose fill's width is its velocity. `pan-y` is the
    whole touch story: sideways writes the value, vertical is still the page. */
 .nu-kcTd{ padding: 0; }

@@ -11,8 +11,19 @@
 //
 // B1  a pitch-bar drag lands ONLY on lattice values — deg stays an integer in
 //     the kernel's own -7..7, its semitone (K.pitch against the record's own
-//     scale, the ONE owner) is inside −12..+12, and the badge the eye reads
-//     prints exactly that semitone.
+//     scale, the ONE owner) is inside −12..+12, and the value the page SAYS is
+//     exactly that semitone.
+//     REWRITTEN 2026-08-28: this read "the badge the eye reads prints exactly
+//     that semitone" and measured `.nu-pbb small`. Paul: *"Let's get rid of
+//     the label strings on the pitch sliders."* The cap carries no text now —
+//     its POSITION is the reading — so what the page says about its own value
+//     is `aria-valuetext` on the bar's keyboard channel, which is the string a
+//     screen reader is given and the one the record must still agree with.
+//     The claim is unchanged and is still measured off the RENDERED page: the
+//     picture and the document may not disagree about the semitone.
+//     THE ROW SELECTOR LOST ITS `.slice(1)` in the same edit — there is no
+//     header row to skip any more (`m2 | kind | pitch | vel` was deleted with
+//     the label strings), so every `.nu-bench tr` is a step.
 // B2  a weight-bar tap cycles ghost(1) → hit(4) → accent(7) → … and NEVER
 //     lands on 0 — rest is the kind button's job; and the document holds
 //     round(view * 9/7), the one stated mapping (V7/V9, ui/eight.js).
@@ -29,6 +40,13 @@
 //     while the record runs (the light form of motif-frozen A3, re-proved
 //     over the new controls).
 // B7  no page errors; no horizontal overflow at 390 or 1280.
+// B8  THE ROW IS WORDLESS AND THE SOUNDING ROW IS DARK (2026-08-28). Paul:
+//     *"Let's get rid of the label strings on the pitch sliders. held and rest
+//     and the stuff that appears on top."* and *"The step labels should be big
+//     and centered and the entire box should go dark as they play."* The only
+//     rendered text on a step row is its count, the count is drawn at least
+//     16px, and while the record plays exactly one row is painted dark — read
+//     off `getComputedStyle`, not off a class this gate hopes is there.
 //
 // Run:  NODE_PATH=/home/ford/ftrain-2025/node_modules node test/bench.test.js
 
@@ -105,23 +123,64 @@ async function openMotif(pg) {
 
   // ---- the surface exists, in the promised geometry
   const shape = await page.evaluate(() => {
-    const rows = [...document.querySelectorAll(".nu-bench tr")].slice(1);
+    const rows = [...document.querySelectorAll(".nu-bench tr")];
     return { rows: rows.length,
       segs: document.querySelectorAll(".nu-segb").length,
       pits: document.querySelectorAll(".nu-pit").length,
       vels: document.querySelectorAll(".nu-velA").length,
-      refusal: (() => { const b = document.querySelector(".nu-benchbar button");
-        return b ? { off: b.disabled, why: b.dataset.why || "" } : null; })(),
-      rail: document.querySelectorAll(".nu-wisdom").length };
+      /* THE TWO THINGS THIS USED TO COUNT ARE GONE, 2026-08-28, and what is
+         counted instead is that they are gone — a deletion Paul asked for
+         twice is a claim like any other and it holds or it does not.
+           · `refusal` read `.nu-benchbar button` and asserted the accidentals
+             toggle was drawn REFUSED with its reason. Paul: *"accidentals need
+             the chromatic alphabet - not wired; the bar locks to the scale --
+             get rid of that."* The control is REMOVED (a dead control may not
+             stay drawn), so `.nu-benchbar` must not exist.
+           · `rail` counted one `.nu-wisdom`. Paul: *"The box that says tap a
+             row - the step is read here should just go."*
+         The refusal LAW is unweakened and is measured where it belongs, on the
+         controls that are genuinely refused: test/text-diet.js T3 asks every
+         disabled control on the page for its reason, and the bench's two
+         sleeping bars and its unholdable segments carry `data-why` now. */
+      benchbar: document.querySelectorAll(".nu-benchbar").length,
+      rail: document.querySelectorAll(".nu-wisdom, .nu-mutewhy").length,
+      /* B8's first half, taken here because it is a fact about the built row.
+         WHAT SURVIVES ON A STEP ROW is Paul's own list — "the kind buttons,
+         the bars, and the step label" — so what is measured is the row's text
+         with THE CONTROLS TAKEN OUT: the three kind segments (buttons, whose
+         faces are ♪ — · and whose words are `.nu-vh`), the two bars
+         (`.nu-pit`, `.nu-velA`, whose caps carry the weight's digit), and the
+         visually-hidden words that are every control's accessible name. What
+         is left is the row's own prose, and there must be none of it but the
+         count: no header word, no pitch badge, no mute sentence. */
+      rowText: (() => {
+        const r = document.querySelector(".nu-bench tr");
+        if (!r) return null;
+        const c = r.cloneNode(true);
+        c.querySelectorAll(".nu-vh,button,.nu-pit,.nu-velA")
+          .forEach((v) => v.remove());
+        return c.textContent.replace(/\s+/g, " ").trim(); })(),
+      rowRaw: (() => { const r = document.querySelector(".nu-bench tr");
+        return r ? r.textContent.replace(/\s+/g, " ").trim() : ""; })(),
+      countPx: (() => {
+        const t = document.querySelector(".nu-bench th span, .nu-bench th mark");
+        return t ? Math.round(parseFloat(getComputedStyle(t).fontSize)) : 0; })() };
   });
   is(shape.rows >= 16 && shape.segs === shape.rows * 3 &&
      shape.pits === shape.rows && shape.vels === shape.rows,
     "the Bench is on the page: " + shape.rows + " one-line rows, " +
     shape.segs + " kind segments, one pitch + one weight bar each");
-  is(!!shape.refusal && shape.refusal.off && /chromatic/.test(shape.refusal.why),
-    "the accidentals toggle is drawn REFUSED with its reason (" +
-    JSON.stringify(shape.refusal && shape.refusal.why.slice(0, 48)) + "…)");
-  is(shape.rail === 1, "one wisdom rail");
+  is(shape.benchbar === 0 && shape.rail === 0,
+    "the accidentals bar, the wisdom rail and the mute sentences are OFF the " +
+    "page (" + shape.benchbar + " .nu-benchbar, " + shape.rail +
+    " .nu-wisdom/.nu-mutewhy)");
+  is(shape.rowText !== null && /^[1ea&]$/.test(shape.rowText),
+    "B8 · take the kind buttons and the two bars off a step row and the only " +
+    "text left is its count: " + JSON.stringify(shape.rowText) +
+    " (the whole row reads " + JSON.stringify(shape.rowRaw) + ", which is the " +
+    "count, the three segment faces and the weight's own digit)");
+  is(shape.countPx >= 16,
+    "B8 · the step label is big — " + shape.countPx + "px (was 0.8rem/13px)");
 
   // which row is a play row — and MEASURE EACH TARGET IN THE VIEWPORT, fresh,
   // just before the pointer goes to it (a rect measured off-screen is a click
@@ -136,7 +195,7 @@ async function openMotif(pg) {
     return { name, i };
   });
   const boxOf = (sel, i) => page.evaluate(([sel, i]) => {
-    const list = [...document.querySelectorAll(".nu-bench tr")].slice(1);
+    const list = [...document.querySelectorAll(".nu-bench tr")];
     const e = i == null ? document.querySelector(sel) : list[i].querySelector(sel);
     e.scrollIntoView({ block: "center" });
     const b = e.getBoundingClientRect();
@@ -163,9 +222,16 @@ async function openMotif(pg) {
       const sc = (A.scale && (NG.SCALES[A.scale] || NG.MODES[A.scale])) || mode;
       const semi = window.NuKernel.pitch(deg, sc);
       const inScale = sc.indexOf(((semi % 12) + 12) % 12) >= 0;
-      const rows = [...document.querySelectorAll(".nu-bench tr")].slice(1);
-      const badge = rows[i].querySelector(".nu-pbb small");
-      return { deg, semi, inScale, badge: badge ? badge.textContent : "" };
+      const rows = [...document.querySelectorAll(".nu-bench tr")];
+      // WHAT THE PAGE SAYS ITS BAR IS WORTH. The cap is empty since 2026-08-28
+      // (see B1 in the header); `aria-valuetext` is written by the same
+      // `paint()` that parks the cap, off the same `ENV.semi(v)`.
+      const inp = rows[i].querySelector(".nu-pbin");
+      const said = inp ? inp.getAttribute("aria-valuetext") || "" : "";
+      const cap = rows[i].querySelector(".nu-pbb");
+      return { deg, semi, inScale, said,
+               capText: cap ? cap.textContent.trim() : "?",
+               capAt: cap ? cap.style.insetInlineStart : "" };
     }, [spot.name, spot.i]));
   }
   is(landed.every((l) => Number.isInteger(l.deg) && l.deg >= -7 && l.deg <= 7),
@@ -174,8 +240,13 @@ async function openMotif(pg) {
   is(landed.every((l) => l.semi >= -12 && l.semi <= 12 && l.inScale),
     "B1 · every landing's semitone is on the record's own lattice (" +
     landed.map((l) => l.semi).join(" ") + ")");
-  is(landed.every((l) => l.badge === (l.semi > 0 ? "+" : "") + l.semi),
-    "B1 · the RENDERED badge prints the document's own semitone every time");
+  is(landed.every((l) => l.said.endsWith(", " + (l.semi >= 0 ? "+" : "") +
+                         l.semi + " semitones")),
+    "B1 · the RENDERED bar SAYS the document's own semitone every time (" +
+    JSON.stringify(landed[0].said) + ")");
+  is(landed.every((l) => l.capText === "" && /%$/.test(l.capAt)),
+    "B1 · and it says it with no text on the cap — the cap is parked AT the " +
+    "value (" + landed.map((l) => l.capAt).join(" ") + ")");
   is(new Set(landed.map((l) => l.deg)).size >= 4,
     "B1 · the drags actually moved across the bar (" +
     new Set(landed.map((l) => l.deg)).size + " distinct degrees)");
@@ -188,7 +259,7 @@ async function openMotif(pg) {
     await page.waitForTimeout(100);
     seen.push(await page.evaluate(([name, i]) => {
       const doc = window.__eightDoc();
-      const rows = [...document.querySelectorAll(".nu-bench tr")].slice(1);
+      const rows = [...document.querySelectorAll(".nu-bench tr")];
       return { view: +rows[i].querySelector(".nu-velA").dataset.v,
                doc: doc.material.cells[name].vel[i] };
     }, [spot.name, spot.i]));
@@ -205,7 +276,7 @@ async function openMotif(pg) {
   const rects = () => page.evaluate(() => {
     const t = document.querySelector(".nu-bench");
     const t0 = t.getBoundingClientRect();
-    const rows = [...t.querySelectorAll("tr")].slice(1);
+    const rows = [...t.querySelectorAll("tr")];
     return rows.map((r) => { const b = r.getBoundingClientRect();
       return Math.round(b.y - t0.y) + "x" + Math.round(b.height) +
              "x" + Math.round(b.width); }).join(",");
@@ -213,7 +284,7 @@ async function openMotif(pg) {
   const before = await rects();
   // say REST on the play row, then say NOTE again — through the rendered buttons
   const segSel = (code) => page.evaluate(([i, c]) => {
-    const rows = [...document.querySelectorAll(".nu-bench tr")].slice(1);
+    const rows = [...document.querySelectorAll(".nu-bench tr")];
     const b = [...rows[i].querySelectorAll(".nu-segb")]
       .find((x) => x.dataset.k.endsWith(c));
     b.click();
@@ -245,7 +316,19 @@ async function openMotif(pg) {
   is(scr0[0] === scr1[0] && scr0[1] === scr1[1],
     "B4 · and the page did not scroll under it (" + scr0 + " → " + scr1 + ")");
 
-  // B5 — the kit: a fresh drum cell, the tap cycle in the LANES' own words
+  /* B5 — the kit: a fresh drum cell, the tap cycle in the LANES' own words.
+     `+ drum pattern` IS ONE LEVEL UP SINCE 2026-08-28. Paul: *"When I'm in a
+     motif, the motif operations should be the right nav elements on the view.
+     The up arrow to take me home should take me back to the motif picker."* —
+     so the Motif tab lands you in the open motif's OPERATIONS and the bank,
+     with its two add buttons, is what `↑` goes to. This presses the `↑` the
+     gutter is showing rather than calling `__eightUp()`, which climbs all the
+     way to the root: one press, the same one a thumb makes. */
+  await page.evaluate(() => {
+    const u = document.querySelector('[data-k="trayup"]');
+    if (u) u.click();
+  });
+  await page.waitForTimeout(300);
   await page.evaluate(() => {
     const b = document.querySelector('[data-k="adddrumcell"]');
     if (b) b.click();
@@ -290,6 +373,21 @@ async function openMotif(pg) {
     is(scr2 === scr3, "B5 · and the page held still (" + scr2 + " → " + scr3 + ")");
   }
 
+  /* BACK TO THE TUNE BEFORE ANYTHING IS MEASURED ON A BENCH ROW (2026-08-28).
+     B5 opens a fresh drum pattern, and a kit draws `drumGrid` — there is no
+     `.nu-bench` on the page at all while a beat is open, so B8's reading below
+     would have been zero rows and a green light. The motif is re-opened
+     through its own mark in the gutter (`motiftab-<name>`, the `motif` level
+     of `#nu-tray`), which is the button a hand would press. */
+  await page.evaluate((n) => { const b =
+    document.querySelector('[data-k="motiftab-' + n + '"]'); if (b) b.click(); },
+    spot.name);
+  await page.waitForTimeout(700);
+  const backOn = await page.evaluate(() =>
+    document.querySelectorAll(".nu-bench tr").length);
+  is(backOn >= 16, "B8 · the tune is open again after the drum cell (" +
+    backOn + " bench rows)");
+
   // B6 — playback mutates only [data-live] over the new controls
   const A = await page.evaluate(() => window.__eightFrozen());
   await page.click("#play");
@@ -298,6 +396,37 @@ async function openMotif(pg) {
     document.getElementById("play").getAttribute("aria-label") === "stop", null,
     { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(5000);
+  /* AND THE PLAYHEAD IS WAITED FOR, NOT ASSUMED (2026-08-28). `__eightStep()`
+     is -1 until the first "pos" arrives, and the engine measured 6-9 seconds
+     from the press to the first step on this machine — so a fixed five-second
+     window read an unmarked page about a third of the time and B8 below would
+     have been a coin toss. Twenty seconds, then measure whatever is there. */
+  await page.waitForFunction(() => window.__eightStep() >= 0, null,
+    { timeout: 20000 }).catch(() => {});
+  /* B8's second half — THE SOUNDING ROW IS DARK, WHILE IT IS SOUNDING. Read
+     off `getComputedStyle` and not off a class, because the paint is drawn by
+     `tr:has(> th mark)` and there IS no class: the clock may only write inside
+     `[data-live]`, and a class on the row would be part of the frozen picture
+     B6 is comparing on the line below. So this asks the browser what colour
+     the row actually is. A transparent background reads as rgba(…, 0) and is
+     NOT dark — the alpha is checked, or every unlit row would pass. */
+  const lit = await page.evaluate(() => {
+    const dark = (c) => {
+      const m = (c.match(/[\d.]+/g) || []).map(Number);
+      if (m.length > 3 && m[3] === 0) return false;           // transparent
+      return (m[0] * 0.299 + m[1] * 0.587 + m[2] * 0.114) / 255 < 0.35;
+    };
+    const rows = [...document.querySelectorAll(".nu-bench tr")].map((r) => ({
+      marked: !!r.querySelector("th mark"),
+      bg: getComputedStyle(r.querySelector("td")).backgroundColor }));
+    return { n: rows.length, marked: rows.filter((r) => r.marked).length,
+             litDark: rows.filter((r) => r.marked && dark(r.bg)).length,
+             unlitDark: rows.filter((r) => !r.marked && dark(r.bg)).length,
+             sample: (rows.find((r) => r.marked) || {}).bg || "" };
+  });
+  is(lit.marked === 1 && lit.litDark === 1 && lit.unlitDark === 0,
+    "B8 · while the record plays exactly one of " + lit.n + " rows is marked " +
+    "and that row is painted dark (" + lit.sample + "), and no other row is");
   const B = await page.evaluate(() => window.__eightFrozen());
   is(A === B, "B6 · five seconds of playback and the editable half is " +
     "byte-identical (" + A.length + " chars)");

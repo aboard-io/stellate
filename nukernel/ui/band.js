@@ -115,6 +115,22 @@ function push(first) {
   // this is the SONG's record of the same fact, which is what a saved
   // document round-trips and what song.js validates.
   setMeter(model.song.meter || null);
+  /* THE ONLY WRITERS OF THE SONG'S INSTRUMENT POOL IN THE TREE ARE HERE —
+     AND THIS FILE IS NOT MOUNTED (2026-08-28, "Fix the pool thing too").
+     band.html became index.html on 4a4d730 and index.html's one module is
+     ui/eight.js; measured off the network log of the shipped page, it fetches
+     ui/state.js and ui/derive.js and never this file. So on the page a thumb
+     opens, `POOL` has no writer at all: it can only ARRIVE, on a document
+     that carries one or out of song.js's `instr` migration, and until this
+     round it then steered chairs with nothing on the page saying so.
+
+     WHAT CHANGED, and where a live page hires a player now: ui/state.js
+     `hirePoolChair` / `firePoolChair` / `clearPool` are the writers a surface
+     calls (they commit "pool" themselves), `poolBand()` / `poolSay()` are the
+     readout, and `setPoolChair` below stays what it always was — the pure
+     normalizer both of them go through. This page's two calls are left exactly
+     as they are: they are correct, they are this page's own idiom, and the
+     page is a tombstone, not a customer. */
   setPoolChair("bass", model.bass.instr);
   // the pool casts by ROLE, and two chairs can want the same role — a jazz
   // date comps on the keys AND the guitar, both `stab`, and a role key can

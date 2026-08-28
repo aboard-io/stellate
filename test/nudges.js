@@ -148,7 +148,25 @@ const spread = (ev) => {
      missing; the count was taken in the wrong room. */
   const S2 = (await p.evaluate(() =>
     window.__eightDoc().form.sections.map((s) => s.id)))[1];
+  /* ...AND THE BAND TAB IS OPENED FIRST, 2026-08-28. `tabform` was a button in
+     a horizontal strip inside the Band panel until the gutter took it (Paul,
+     the same day: *"There should be one vertical stripe max with an 'up' icon
+     to get to the parent level."*) — and a LEVEL of the gutter only exists
+     while its own tab is open, which is `trayNow`'s guard and not an accident.
+     The page boots on `Where`, so from that change until this one `tap
+     ("tabform")` found nothing, `tap("sec…")` found nothing, and this gate
+     bailed at "0 nudge sheets found" before it asserted anything — MEASURED on
+     the shipped page tonight: at boot `[data-k="tabform"]` is absent and the
+     stripe reports level "root". Nothing about the recipe moved; the door did.
+     `__eightTab` is the page's own door and is what a thumb does — the same
+     one-line repair test/sheets.js, test/selects.js and test/knobs.js each
+     already took for their own `+ drums`. */
+  const openBand = async () => {
+    await p.evaluate(() => window.__eightTab("Band"));
+    await p.waitForTimeout(300);
+  };
   const openSection = async (id) => {
+    await openBand();
     await tap("tabform");
     return tap("sec" + id);
   };
@@ -295,7 +313,16 @@ const spread = (ev) => {
   // re-times the phrase and keeps every note, so the proof is that the onset
   // times move.
   const ev0 = await events(1);
+  /* ...AND A VOICE IS THREE FACETS SINCE 2026-08-28 (Paul: *"A voice has:
+     Instrument … / What it plays … / Per-section settings."*). `tabcantor`
+     opens the cantor and lands on its INSTRUMENT facet; `dev.line` is a
+     per-SECTION word and is drawn on the third one, so the tap that used to be
+     the whole journey is now two. Both keys are the page's own — `facet-sec`
+     is ui/glyph.js `GLYPH.facet.sec` in the gutter — and `say` still returns
+     false if the control is not there, so this cannot paper over a real loss. */
+  await openBand();
   await tap("tabcantor");
+  await tap("facet-sec");
   const moved = await say("dev.line|cantor|" + S2, "the rhythm, moved");
   const ev1 = await events(1);
   check(moved, "the development sheet offers `the rhythm, moved` (songs.js, new)");
@@ -348,6 +375,10 @@ const spread = (ev) => {
   // else (measured 2026-08-25: the performance tab carries exactly 3 of the
   // eleven nudge keys). Without this tap `say` finds no control and returns
   // false, which would read as "the box lost the phrase tent".
+  // ...AND THE BAND TAB FIRST, 2026-08-28: gate 3 above left the stripe INSIDE
+  // the cantor (the `voice` level, three facets), where `tabperformance` is one
+  // `↑` away and therefore not on the page. Same door, same one line.
+  await openBand();
   await tap("tabperformance");
   const flatOk = await say("performance.phrase", "flat");
   const sTentOff = spread(await events(1));
@@ -381,6 +412,7 @@ const spread = (ev) => {
     JSON.stringify(K64.eighths));
 
   /* ---- 7 HIRE A DRUMMER AND ALL SEVEN COME ALIVE ---------------------- */
+  await openBand();                       // ...and so is the button that hires one
   const hired = await tap("adddrums");
   check(hired, "the page offers a drummer (+ drums)");
   await openSection(S2);

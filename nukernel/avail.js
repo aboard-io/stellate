@@ -640,6 +640,27 @@
       set: (doc, s, v) => { V(doc, s).cast.style = v || null; } },
 
     /* ---- 7 SOUND (one voice) ---- */
+    /* THERE IS NO `sound.bassinstrument` ROW HERE, AND THAT IS THE BASS'S
+       WHOLE PROBLEM — written down so the next round does not rediscover it.
+       (Paul, 2026-08-28: *"I've lost all ability to select or customize the
+       bass."*)
+
+       Every sheet in this table reads and writes the DOCUMENT. A line voice
+       carries `instrument` and so does a drummer, and document.js hands both
+       to the compiler — a line through the `chairs` seam, a kit through
+       `drumkit`. The BASS VOICE CARRIES NO `instrument` AT ALL: precompose.js
+       builds it as `{ name, kind: "bass", cast: { style }, development }`, and
+       audio/plan.js seats a bass event at `(POOL && POOL.bass) || BASS_INSTR`
+       — the song's INSTRUMENT POOL, which is not in the document and so is
+       not addressable from this file.
+
+       So a row added here would be the box's characteristic bug: a control
+       that is declared, drawn, costed and reaches no sound. The bass's
+       instrument is hired through ui/state.js `hirePoolChair("bass", id)`
+       against fields.js BASSCHOICES today (measured 2026-08-28: one pick moves
+       audio/plan.js `seats()` from `acoustic_bass` to `slap_bass`), and the
+       row belongs here the day the bass voice carries its own `instrument` and
+       document.js carries it across — three lines, named in the round notes. */
     "sound.instrument": { label: "instrument", scope: "voice", chair: "line",
       values: (doc, s, env) => instrOptions(doc, env),
       get: (doc, s) => V(doc, s).instrument,
