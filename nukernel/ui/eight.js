@@ -1831,40 +1831,70 @@ function scoreCaption(si, ei, k, M, asPlayed) {
    gate and still holds the room. */
 function scoreReserveTo(px) {
   if (!scoreHost) return;
-  /* NEVER LOCK A RESERVE MEASURED IN THE DARK, 2026-08-27. Paul: "The score
-     cuts off at about 150px in height, I can see the top of one line and
-     nothing else." The reserve is a HIGH-WATER MARK — it only grows, which was
-     right while the page was one scroll and the score was always laid out. A
-     tab panel mounts HIDDEN, abcjs engraves into a box with no layout, every
-     height comes back tiny, and the first call froze the box at that number
-     forever: the picture was then scaled to fit a reserve measured on nothing.
-     So a hidden host reserves nothing (offsetParent is null under any
-     display:none ancestor), and `fitPaper` runs again the first time the box
-     is really on screen — see `scoreWatch`. */
+  /* THE RESERVE IS A HIGH-WATER MARK ONLY WHILE THE RECORD PLAYS — REWRITTEN
+     TWICE, 2026-08-27 and 2026-08-28.
+
+     It grows-only so the box cannot shrink under a thumb mid-bar; that law was
+     written when the page was one scroll and the score was always laid out.
+     Behind a TAB it produced two bugs on consecutive days, both Paul's:
+
+       "The score cuts off at about 150px in height, I can see the top of one
+       line and nothing else."   — a panel mounts HIDDEN, abcjs engraves into a
+       box with no layout, every height comes back tiny, and the first call
+       froze the box there forever.
+
+       "Sometimes score is full but usually when I click the tab it's cut off
+       vertically."   — the RACE the first repair left behind. Reveal fired
+       once, and if it landed before the engraving had settled it locked a
+       half-measured number that grows-only could never correct. Sometimes the
+       layout won; usually it did not.
+
+     So: a hidden host reserves nothing, and WHILE THE RECORD IS STOPPED the
+     reserve is simply the measurement — it may shrink as well as grow, because
+     correcting a wrong box between takes moves nothing anyone is watching. The
+     grows-only law still holds under the clock, which is the only place it was
+     ever protecting anything. */
   if (!scoreHost.offsetParent && scoreHost.getClientRects().length === 0) return;
-  if (!(px > scoreReserve)) return;
+  if (playing ? !(px > scoreReserve) : px === scoreReserve) return;
   scoreReserve = px;
   scoreHost.style.height = px + "px";
 }
-/* THE REVEAL. One observer, armed when the box is handed over; it fires when a
-   tab shows the score for the first time, re-runs the fit with a real layout to
-   measure, and disconnects. Nothing here writes while the record plays (fitPaper
-   already refuses a reserve then) and nothing here is a control. */
-let scoreSeen = false, scoreObs = null;
+/* THE WATCH: two observers and no one-shot. Intersection catches the tab being
+   opened; resize catches the engraving settling AFTER it was opened, which is
+   the race above — abcjs lays out asynchronously and the first frame of a
+   revealed panel is regularly not the last word on how tall the picture is.
+   Neither disconnects: a record change, a rewrite and a width change all
+   re-engrave, and each deserves the same correction. Both refuse while the
+   clock runs (fitPaper's own guard), both are cheap (a fit, not an engrave),
+   and neither is a control. */
+let scoreObs = null, scoreRO = null, scoreFitQ = 0;
+function scoreRefit() {
+  if (playing) return;
+  if (scoreFitQ) return;
+  scoreFitQ = requestAnimationFrame(() => {
+    scoreFitQ = 0;
+    if (!scoreHost || playing) return;
+    if (!scoreHost.offsetParent && scoreHost.getClientRects().length === 0) return;
+    try { fitPaper(); } catch (err) {}
+  });
+}
 function scoreWatch(box) {
-  if (!box || scoreSeen || typeof IntersectionObserver !== "function") return;
-  if (scoreObs) scoreObs.disconnect();
-  scoreObs = new IntersectionObserver((es) => {
-    for (const e of es) {
-      if (!e.isIntersecting || !e.boundingClientRect.height) continue;
-      scoreSeen = true;
-      scoreObs.disconnect(); scoreObs = null;
-      scoreReserve = 0;                 // the dark measurement is void
-      try { fitPaper(); } catch (err) {}
-      return;
-    }
-  }, { threshold: 0 });
-  scoreObs.observe(box);
+  if (!box) return;
+  if (scoreObs) { scoreObs.disconnect(); scoreObs = null; }
+  if (scoreRO) { scoreRO.disconnect(); scoreRO = null; }
+  if (typeof IntersectionObserver === "function") {
+    scoreObs = new IntersectionObserver((es) => {
+      for (const e of es) if (e.isIntersecting && e.boundingClientRect.height) {
+        scoreRefit(); return;
+      }
+    }, { threshold: 0 });
+    scoreObs.observe(box);
+  }
+  if (typeof ResizeObserver === "function") {
+    scoreRO = new ResizeObserver(() => scoreRefit());
+    scoreRO.observe(box);
+    if (scoreSvg && scoreSvg.parentNode) scoreRO.observe(scoreSvg.parentNode);
+  }
 }
 // WHAT THE PICTURE HAD TO BE SHRUNK BY to fit, so the claim above is a number
 // somebody can check rather than a promise: 1 is the box's own room, 0.83 is a
@@ -2773,7 +2803,7 @@ function scoreBlock(parent) {
   live.append(cap, box, syl);
   parent.append(live);
   scoreCap = cap; scoreHost = box; scoreSyl = syl; scoreRun = run;
-  scoreSeen = false; scoreWatch(box);
+  scoreWatch(box);
   scorePaper = paper; scoreLoad = load;
   scoreGut = gut; scoreGutW = 0;
   scoreMots = null;              // the motif-label layer belongs to the old run
