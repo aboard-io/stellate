@@ -1374,14 +1374,23 @@ export function mount(parent, ctx) {
     // WHAT IS DEALT, and the measurement that decided the shape. audio/desk.js
     // `shade` moves every voice per section off the section's `lvl`/`env`,
     // differentially by seat, and it reaches the sound (all twelve words move
-    // the engine handoff). But the composer deals neither: measured 2026-08-28
-    // over all 199 catalogue anchors — 2,075 sections — `lvl` and `env` are set
-    // on ZERO. So this grid was not lying by omission; the record really is
-    // saying nothing, and a dash is the truth. What changes today is that the
-    // dash is now a MEASURED zero rather than an unasked question: the moment a
-    // section names a word — by hand on the section sheet, or by any composer
-    // that learns to — every voice's own dealt dB appears here, dim, with no
-    // further edit and with not one record's sound changed.
+    // the engine handoff). This paragraph used to end there and say the grid
+    // would stay empty: "the composer deals neither — measured 2026-08-28 over
+    // all 199 catalogue anchors, 2,075 sections, `lvl` and `env` are set on
+    // ZERO … the moment a section names a word, by hand or by any composer
+    // that learns to, every voice's own dealt dB appears here." The
+    // measurement was true when it was taken and is kept because it is the
+    // reason this surface exists; the composer learned the same afternoon.
+    // Paul, on being told it had been surfaced and not dealt: *"Yes I thought
+    // you did that."*
+    //
+    // SO THE GRID ARRIVES FULL, and from the record rather than from here:
+    // compose.js deals `env` from its arc (dynOf / spreadDynamics) and `lvl`
+    // from THE LEVEL DEAL (compose.js:212 — a role table tempered by the
+    // genre's family and plan), and precompose.js § 8 now carries both onto
+    // `form.sections[]`, which is the wire that was cut. Nothing on this page
+    // changed to fill it: the dim numbers below are `derivedTrim` reading the
+    // words the record now says.
     //
     // PER VOICE, AND IN dB. `derivedTrim` carries both arguments (a cell is a
     // voice × section cell, so the dim half must answer the same question the

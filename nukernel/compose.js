@@ -208,6 +208,144 @@
       }
     }
   }
+
+  // ---- WHERE THE SECTION SITS: THE LEVEL DEAL (2026-08-28) -----------------
+  // Paul: *"Shouldn't automation already have values preset per generated
+  // song"* — and, on being told it had been surfaced and not dealt, *"Yes I
+  // thought you did that."*
+  //
+  // WHAT WAS MEASURED, and it is half of a working machine. audio/desk.js
+  // `shade(sec, base)` reads `sec.lvl` and `sec.env` and moves the voices of a
+  // section DIFFERENTIALLY BY ROLE — on a house box `hush` gives the lead
+  // −1.0 dB, the second lead −2.0, the pad −1.0, the drums −2.0 and the bass
+  // nothing — and audio/desk.js `sectionOf` multiplies the WHOLE section by
+  // `LEVELS[sec.lvl]`. Both reach the sound. The composer dealt `env` on
+  // nearly every section (the arc, above) and `lvl` on six branches of
+  // build() and nowhere else, so a verse, a bridge and every chorus but the
+  // last sat at exactly the same height: the record's dynamics were a fade in,
+  // a peak and a fade out. Worse, precompose.js — the path a GENERATED record
+  // actually takes — carried neither word onto the document, so all 199
+  // anchors arrived dead flat whatever build() had dealt. This table is the
+  // driver; § 8 of precompose.js is the wire.
+  //
+  // ONE TABLE, IN dB, BECAUSE THAT IS THE UNIT THE ANSWER IS IN. The rows are
+  // where a role sits against the record's own level, at full depth, and they
+  // are argued rather than felt: an intro sits back and enters, a verse IS the
+  // record's own level (0 by definition — everything else is measured from
+  // it), a prechorus/build holds back so the arrival has somewhere to arrive
+  // from, a chorus/drop/solo is the arrival, a bridge goes somewhere else
+  // (down, so the last chorus can be up), a breakdown is the floor dropping
+  // out and an outro dims away. The extremes are the ladder's own ends
+  // (LEVELS: hush 0.4 = −8 dB, fwd 1.35 = +2.6 dB), so a row cannot ask for a
+  // level the vocabulary has no word for.
+  //
+  // THE SIX BRANCHES THIS REPLACES, named so the move is checkable: build()
+  // used to write `b.lvl` on prechorus, build, chorus (peak only), breakdown,
+  // drop and solo. Those lines are gone — one owner. The intro's line stays
+  // where it is because the record's HEAD is introSections' own (two of its
+  // openings, `cold` and `quote`, deliberately clear every word build() held
+  // back for an arrival, and a pass that re-dealt them would delete the one
+  // gesture those openings are); the pass below tempers that head's level by
+  // the same depth as everything else and writes nothing where it was cleared.
+  //
+  // THREE ROLES ARE ABSENT ON PURPOSE. fields.js ROLES also carries `break`,
+  // `head` and `tag`; the composer deals none of them (they are a hand's
+  // words on a box), and a row nothing can reach is a row nobody can check.
+  const SITS = { intro: -3, verse: 0, prechorus: -2, build: -2, chorus: 2.6,
+                 drop: 2.6, breakdown: -8, bridge: -3, solo: 2.6, outro: -3 };
+  // ...AND THE GENRE TEMPERS IT, from the facts the anchor already states.
+  // "A drone, an ambient or a minimalism record must not get pop dynamics; a
+  // soul or a rock record wants more" — and the way to say that once, rather
+  // than by exempting anchors one at a time, is a depth per FAMILY. It is the
+  // fraction of the table above a record of that family actually travels:
+  //   soul / band     1.00  the two families whose whole idiom is the lift —
+  //                         a gospel record and a rock record both stop the
+  //                         band dead before the last chorus.
+  //   club            0.90  the floor's dynamics are its FORM (the breakdown
+  //                         drops out, the drop is the arrival); what it does
+  //                         not do is duck for a verse.
+  //   studio  0.85 / roots 0.80   arranged records, dynamics as production.
+  //   kernel          0.70  the box's own default genre, between the two.
+  //   groove          0.65  a one-drop, an afrobeat, a salsa: the groove holds
+  //                         its level and the arrangement changes AROUND it —
+  //                         a reggae verse that drops 3 dB stops being reggae.
+  //   vox             0.50  a choir swells, it does not jump a rung.
+  //   parts           0.40  one part on its own has nothing to be the chorus
+  //                         OF (the same argument that makes them arc plans).
+  //   drift           0.25  vaporwave, shoegaze, postrock, minimalism: the
+  //                         haze IS the record.
+  // Two facts narrow it further, and both are already on the anchor:
+  //   · plan `arc` — one shape end to end — takes three quarters of whatever
+  //     its family travels. A record with no chorus has no chorus to lift to.
+  //   · STEADY (the two anchors that ARE one held idea, drone and ambient)
+  //     is depth ZERO and the multiplication makes it total: every row lands
+  //     on norm and the record is dead flat, which is what those two records
+  //     are. It is the same exemption arcOf already takes, said once more in
+  //     the one place that could have undone it.
+  // Measured against the ask: minimalism is drift × arc = 0.19, so its
+  // breakdown asks for −1.5 dB and lands on `norm` — flat by the RULE, not by
+  // being named. Rock is 1.00 and its chorus is `fwd` over a `norm` verse.
+  const DEPTH = { soul: 1, band: 1, club: 0.9, studio: 0.85, roots: 0.8,
+                  kernel: 0.7, groove: 0.65, vox: 0.5, parts: 0.4, drift: 0.25 };
+  // HOW HARD THE BAND PLAYS IT TONIGHT — the reading, on this file's own law.
+  // REWRITE must be able to vary the dynamics WITHIN the genre's range, so the
+  // depth carries a per-record multiplier drawn from its own genre-salted
+  // stream (compose owns every stream of the arrangement; precompose.js §6b's
+  // `reading` owns the TUNE and must not be spent on a fader). One draw per
+  // record, always spent, before any section is looked at — the stream-
+  // position law every pass in this file keeps. A record at depth 0 stays at
+  // depth 0 however hard it is played, which is the property that makes the
+  // STEADY exemption safe under a rewrite.
+  const TAKES = [0.8, 0.9, 1, 1, 1.1, 1.25];
+  // THE LADDER, IN dB, BUILT FROM fields.js RATHER THAN RETYPED — LEVELS is
+  // the vocabulary and its numbers are the gains the desk multiplies; a second
+  // copy here is a second answer the day somebody retunes `back`.
+  const LEVEL_DB = Object.keys(NF.LEVELS)
+    .map(w => ({ w, db: 20 * Math.log10(NF.LEVELS[w]) }));
+  // ...and the word for a dB is the NEAREST rung, with `norm` written as
+  // ABSENT. The four words are a coarse ladder (−8 / −3.1 / 0 / +2.6) and
+  // rounding is the honest way onto it; absent-for-norm because that is what
+  // "the record's own level" already means everywhere else in this file — a
+  // section that sits where the record sits says nothing, and the desk reads
+  // the same gain of 1 either way.
+  const levelWord = (db) => {
+    let best = null, d = Infinity;
+    for (const row of LEVEL_DB) {
+      const gap = Math.abs(db - row.db);
+      if (gap < d) { d = gap; best = row.w; }
+    }
+    return best === "norm" ? null : best;
+  };
+  const depthOf = (G, gk) => (STEADY[gk] ? 0
+    : (DEPTH[G.family] == null ? DEPTH.kernel : DEPTH[G.family])
+      * (G.plan === "arc" ? 0.75 : 1));
+  // THE PASS. Like the other four it runs over the FINISHED record, because
+  // `sectionWord` is only true once the intro pass has written its cues and
+  // the alias branches have run — and because a level is a fact about the
+  // record's shape, which build() cannot see one box at a time.
+  function dealLevels(song, G, gk, rD) {
+    const depth = depthOf(G, gk) * pick(rD, TAKES);   // one draw, always spent
+    // THE HEAD KEEPS ITS OWN DEAL AND TAKES ONLY THE DEPTH. `isHead` is the
+    // run easeEdges reasons about — the beds and the section that introduces
+    // the tune — and introSections owns it: two of its openings (`cold`,
+    // `quote`) and every bed-covered one deliberately CLEAR the words build()
+    // held back for an arrival, and that clearing is the gesture. So a head
+    // that arrives is tempered like everything else (a drone's fade-up keeps
+    // the fade and loses the pop record's 3 dB), and a head that has decided
+    // not to arrive is left exactly as it decided.
+    let i = 0;
+    for (; i < song.length && isHead(song[i]); i++) {
+      const b = song[i];
+      if (!BEDS[b.role] && b.lvl) b.lvl = levelWord(SITS.intro * depth);
+    }
+    for (; i < song.length; i++) {
+      const b = song[i];
+      if (BEDS[b.role]) continue;                     // a bed is a layer, not a section
+      const db = SITS[sectionWord(b)];
+      if (db == null) continue;
+      b.lvl = levelWord(db * depth);
+    }
+  }
   // ---- WHERE THE PLAN AND TEMPO TABLES WENT --------------------------------
   // Two 110-row genre-keyed tables lived here — PLAN_OF (dance|song|arc) and
   // BPM (70..160) — and both moved ONTO THE ANCHORS on 2026-08-20: every
@@ -1126,7 +1264,7 @@
       // which is what a lift into a bigger chorus actually is. It is also what
       // keeps the two prechoruses of a song from carrying the identical
       // dynamic, which the ladder pass below cannot do for a fade.
-      b.lvl = "back"; b.env = again ? "lift" : "in"; b.mot = "rise";
+      b.env = again ? "lift" : "in"; b.mot = "rise";
       if (kit) { b.kit = chance(r, 0.5) ? "busy" : kitOf(S, G); b.outro = fillOf(S, G, kit, LIFT); }
       voice(0.6, [S.answer]);
       // only where there is a progression for the dominant to be a door INTO
@@ -1139,7 +1277,7 @@
       // the dance floor's prechorus: same gesture, different clothes —
       // a thinned phrase under a riser, everything held back for the drop
       b.stack[0].slots = chance(r, 0.5) ? [S.sparse] : [S.climb];
-      b.lvl = "back"; b.env = again ? "lift" : "in"; b.mot = "rise"; b.echo = "touch";
+      b.env = again ? "lift" : "in"; b.mot = "rise"; b.echo = "touch";
       if (kit) { b.kit = chance(r, 0.5) ? "busy" : "nokick"; b.outro = fillOf(S, G, kit, LIFT); }
       b.len = halfLen(G);
     } else if (role === "chorus") {
@@ -1187,9 +1325,12 @@
         const cast = soloCast(G, gk);
         if (cast.length) layer(pick(S.out, cast), [S.climb]);
       }
-      // the arc decides the size: only the PEAK chorus goes forward, so the
-      // last one is bigger than the first by construction, not by accident
-      b.lvl = peak ? "fwd" : null; b.rev = "some";
+      // (the size is THE LEVEL DEAL's, above — this branch used to write
+      // `lvl: peak ? "fwd" : null` and so left every other chorus at the
+      // verse's own height. The last one is still the biggest, and now by two
+      // facts rather than one: the table seats every chorus forward and the
+      // dynamics ladder gives the peak the bigger `env`.)
+      b.rev = "some";
       if (kit) { b.kit = chance(r, 0.6) ? kitOf(S, G) : null; b.bassop = pick(r, ["octaves", "eighths"]); }
       b.outro = fillOf(S, G, kit);
       // a lift on bar 3 of every four — the bar schedule as a PRESET NAME now
@@ -1248,7 +1389,7 @@
     } else if (role === "breakdown") {
       b.stack[0].slots = [S.sparse];
       b.len = halfLen(G);
-      b.lvl = "hush"; b.rev = "drown"; b.echo = "some";
+      b.rev = "drown"; b.echo = "some";
       if (kit) b.kit = pick(r, ["nokick", "nodrums", "snareonly", "soft", "stickside", "h.half"]);
       addFx(b, pick(r, ["sweep", "echo", "phaser"]));
       b.mot = "rise"; b.env = "in";
@@ -1263,7 +1404,6 @@
     } else if (role === "drop") {
       // the machine drop is the line at full intensity, the climb on top
       b.stack[0].slots = S.seq != null ? [S.seq, S.climb] : [S.riff, S.climb];
-      b.lvl = "fwd";
       // the drop is the one place a NAMED pattern earns its keep: four on the
       // floor, or the break the whole floor knows, or the family's own move
       if (kit) { b.kit = pick(r, ["four", "four", "amen", kitOf(S, G), null]);
@@ -1302,7 +1442,7 @@
       b.stack[0].slots = chance(r, 0.5) ? [S.climb] : [S.climb, S.riff];
       b.ops = [pick(r, ["rep3", "rep4", "wide"])];
       b.vox = { cut: "bright", res: "hot", emod: "mid", dec: "short" };
-      b.lvl = "fwd"; b.echo = "touch";
+      b.echo = "touch";
       // THE PEDAL THE SOLOIST STEPS ON — the third and last sectional effect.
       // A solo is a different player with a different signal path, which is
       // exactly the departure a per-box chain is for.
@@ -2108,6 +2248,15 @@
     placeStops(song, G, S.stop);
     easeEdges(song);
     if (!STEADY[gk]) spreadDynamics(song);
+    // ...AND THE LEVEL DEAL, LAST OF THE FIVE. After the ladder because both
+    // write the record's dynamics and the ladder reasons about `env` alone: a
+    // pass that seated the sections first would still have to run again after
+    // it. Its own genre-salted stream, like every other ballot here — a
+    // record-level decision drawn where no section can have moved the
+    // position. STEADY is NOT branched on here (arcOf and the ladder above
+    // both are): `depthOf` answers 0 for those anchors, so the flat record is
+    // the table's own answer rather than a second exemption to keep in step.
+    dealLevels(song, G, gk, rng(ihash(gk + "/level/" + (seed == null ? 1 : seed))));
     // NO SECTION RESTATES ITS NEIGHBOUR. Two drops in a row (the dance plan
     // has them on purpose) must be two different bars of music, not one bar
     // twice with two labels — so a repeated role is FORCED apart with an
@@ -2144,6 +2293,11 @@
                 // indirectly, and then it fails for the wrong reason
                 SECTION_BARS, SQUARE, BENDS, fullLen, halfLen,
                 STOPS, STOP_KIT, STOP_NOKIT, STEADY, DYNLADDER, spreadDynamics, sectionWord,
+                // THE LEVEL DEAL and its two tables, exported on that same law
+                // — the gate reads the policy rather than inferring it from
+                // 199 records, and `depthOf` is the one line that has to agree
+                // with the ask ("a drone must not get pop dynamics").
+                SITS, DEPTH, TAKES, levelWord, depthOf, dealLevels,
                 // the seam pass and its two lists, exported for the same reason
                 // the stop tables are: a policy the suite cannot read is a
                 // policy the suite can only measure indirectly

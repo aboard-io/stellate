@@ -1475,6 +1475,23 @@
       // the within-section sentence — compose decides it (the sixteen-bar
       // law, :1920) and the kernel reads g.period per bar (kernel.js:1202)
       ...(b.period ? { period: b.period } : {}),
+      // ...AND THE RECORD'S DYNAMICS, WHICH WERE BEING THROWN AWAY HERE
+      // (2026-08-28). Paul: "Shouldn't automation already have values preset
+      // per generated song." Measured over all 199 anchors and 2,075 sections:
+      // `lvl` and `env` were set on ZERO of them, so every precomposed record
+      // was dynamically flat — and the composer was not silent. compose.js
+      // deals `env` on nearly every section (its arc, dynOf/spreadDynamics)
+      // and `lvl` from THE LEVEL DEAL (compose.js:212, this round), and this
+      // map dropped both on the floor. Everything downstream was already
+      // waiting: PROGRAM.md §2.1 lists both on `form.sections[]`,
+      // document.js `boxesOf` copies both onto the box, audio/desk.js
+      // `sectionOf` multiplies the section by `LEVELS[lvl]` and `shade`
+      // redistributes it across the voices by seat. The projection is an
+      // EXTRACTION, like every other line of this file: no word is invented
+      // here, and a genre that deals nothing (drone, ambient — depth 0) still
+      // writes nothing.
+      ...(b.lvl ? { lvl: b.lvl } : {}),
+      ...(b.env ? { env: b.env } : {}),
     }));
     const minBars = Math.min(...sections.map((x) => x.bars));
 

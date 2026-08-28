@@ -348,17 +348,25 @@ function shade(sec, base) {
  * it reaches the sound: all four LEVELS words and all eight ENVLABEL words move
  * the engine handoff, and they move it DIFFERENTLY PER VOICE (`hush` on a house
  * box: lead −1.0, the second lead −2.0, pad −1.0, drums −2.0, bass 0). But the
- * composer deals neither word: over all 199 catalogue anchors, 2,075 sections,
- * `lvl` and `env` are set on ZERO of them (and so are `mot`, `intro` and
- * `outro`). A generated section carries a `role`, a bar count and sometimes a
+ * composer dealt neither word: over all 199 catalogue anchors, 2,075 sections,
+ * `lvl` and `env` were set on ZERO of them (and so are `mot`, `intro` and
+ * `outro`). A generated section carried a `role`, a bar count and sometimes a
  * `period`, and nothing about level at all. So the grid was not lying by
- * omission — it was telling the truth, and the emptiness is the record's.
+ * omission — it was telling the truth, and the emptiness was the record's.
  *
- * WHICH IS WHY THIS FUNCTION ONLY SURFACES. Deriving a level arc from the
- * section's `role` would fill every grid on the page and CHANGE THE SOUND OF
- * EVERY RECORD, which is the one thing the ask ruled out ("not one record
- * changes sound"). So the board draws what the record deals: zero today, and a
- * voice's own dealt dB the moment a section names a word, with no further edit.
+ * AND THE RECORD FILLED IT THE SAME DAY. This block used to end: "WHICH IS WHY
+ * THIS FUNCTION ONLY SURFACES — deriving a level arc from the section's `role`
+ * would fill every grid on the page and CHANGE THE SOUND OF EVERY RECORD, which
+ * is the one thing the ask ruled out." Paul ruled it back in (*"Shouldn't
+ * automation already have values preset per generated song" … "Yes I thought
+ * you did that"*), so the arc is dealt where an arc belongs — by the ARRANGER,
+ * not by the board: compose.js THE LEVEL DEAL writes `lvl` per section from a
+ * role table tempered by the genre's own family and plan, its arc writes `env`,
+ * and precompose.js § 8 carries both onto the document. NOTHING IN THIS FILE
+ * MOVED. `shade` is the engine it always was and this function still only
+ * surfaces what the section says; what changed is that the section now says
+ * something. The one sentence of the old law that survives intact: the board
+ * draws what the record deals, and a hand's word still replaces it.
  *
  * RESOLVED PER VOICE, NOT PER SECTION, and that was the open question. A cell in
  * that grid is a VOICE × SECTION cell and the word a hand writes in it is a trim
