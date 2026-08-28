@@ -1283,6 +1283,130 @@
     .slice(0, NF.MAX_FX);
 
   /* ======================================================================
+     7b · THE REGISTER FLOOR — nothing but the bass lives down there
+     ======================================================================
+     PAUL, 2026-08-28: "Lots of registers are -3 and -2 for things like house
+     and acid house what gives … They're unbearable is it endemic". It was:
+     measured over 199 anchors x seed 1, 62 non-bass chairs on 52 of the 175
+     anchors that HAVE a bass were centred at or below the bass's own centre,
+     and 12 of them were centred an octave UNDER it.
+
+     WHY IT HAPPENS, and it is three things stacking rather than one:
+       (a) THE RAMP IS WRITTEN LOW. 75 of 199 anchors declare a `reg` whose
+           value at voice 0 is negative — `v => v - 1` is the single commonest
+           line in genres.js — so the FIRST chair, the one the record is named
+           after, is the deepest one. Nothing is wrong with a ramp; the bug is
+           that a ramp has no bottom.
+       (b) A SECOND NEGATIVE LANDS ON TOP OF IT. The register word added below
+           (KINDS.riff / KINDS.seq say "low", and three IDIOM_ANCHOR rows —
+           acid, techno, dancehall — say it again) is another -12, and on 27
+           chairs it fell on a ramp that was already under zero. On a `riff`
+           part that is a THIRD -12, because kernel.js PARTS.riff carries its
+           own ctr: -12, and cumbia / dancehall / ragtime / shaabi / soukous
+           each ended with a riff centred at MIDI 24.
+       (c) NOTHING CAUGHT IT. The clamp below floors at -4, which is MIDI 12 —
+           four octaves under middle C, below the kernel's own bass floor of
+           24, below the bottom of a piano. A clamp that only bites two
+           octaves under the bass is not a clamp.
+
+     THE RULE, and it is read off the note data rather than off taste. The
+     bass centres at 36 (kernel.js:2531 `+ 36`, moved only by `bassReg`, which
+     0 of 199 anchors set) and its notes are floored at MIDI 24. keys-kit.js
+     already names the consequence — "a keys part that fights the bass for the
+     bottom is the commonest mix problem there is" — so:
+
+         A CHAIR THAT IS NOT THE BASS CENTRES AT LEAST AN OCTAVE ABOVE THE
+         BASS'S OWN CENTRE.
+
+     Two exceptions, both stated as data:
+       · NO BASS, NO FLOOR. On the 24 anchors that declare `nobass` the lowest
+         chair IS the bass — hymn's fourth voice is the church organ holding
+         the bass line and its own comment measures it at MIDI 7-38 on purpose.
+       · SUBTERRANEAN ANCHORS may share the bass's octave but still not go
+         under it. The list is below and every entry quotes the anchor's own
+         comment saying the low voice is a bass.
+
+     AND IT IS A LIFT, NOT A CLAMP. Clamping per voice would flatten the
+     anchor's SPREAD — deathmetal's -3/-2 pair would land on one register and
+     stop being an octave doubling. So the deficit is measured once over the
+     whole cast and the same number is added to every chair: the record moves
+     up, the shape it was written with survives. */
+
+  // The anchors whose own text says the low voice is the bass. A record here
+  // may sit IN the bass's octave; it may still not sit under it.
+  const SUBTERRANEAN = {
+    // "the 303 line is simultaneously melody, bass and the entire harmony"
+    acid: 1,
+    // "the bleep line up high, the sub bass an octave-and-a-half under it,
+    //  the SAME machine at two registers"
+    bleeptechno: 1,
+    // "over a tied reese-register line and a pedal sub that refuses to move"
+    dnb: 1,
+    // "tuned into the floor (reg -3 and -2)" — the number IS the genre
+    sludge: 1,
+    // "a pedal bass that never leaves the tonic" under held tones, rate 0.25
+    drone: 1,
+  };
+
+  // kernel.js:1387 is `ctr = 60 + 12 * g.reg(v) + (pol.ctr || 0)`, and `pol`
+  // is consulted ONLY when the genre declares a `part` scheme — which is what
+  // document.js toGenre carries through by spreading the anchor (desk-doc.js:45
+  // says the same thing from the other end: the document hands the kernel
+  // `realize`, never `part`). The index is the LINE index and the lookup wraps,
+  // exactly as partOf does, so a layer seated past the end of a short `part`
+  // array is measured where the kernel will actually play it.
+  const partCtrOf = (G, v) => {
+    if (!G.part) return 0;
+    const p = typeof G.part === "function" ? G.part(v) : G.part[v % G.part.length];
+    return (K.PARTS[p] || {}).ctr || 0;
+  };
+  const centreOf = (G, v, reg) => 60 + 12 * reg + partCtrOf(G, v);
+
+  /** A CHAIR IS NOT TOLD TWICE TO GET DOWN. `KINDS.riff` and `KINDS.seq` say
+   *  "low" (-1 octave) and kernel.js PARTS.riff / PARTS.drone say `ctr: -12`
+   *  — the same sentence about the same chair, written in two files, and on a
+   *  ramp already under zero it made a third. Measured: the five riffs that
+   *  ended at MIDI 24 (cumbia, dancehall, ragtime, shaabi, soukous) are all
+   *  this. Where the KERNEL is going to drop the chair, the word does not say
+   *  it again; on the 104 anchors that declare no `part` scheme the word is
+   *  the only statement there is and it stands untouched. */
+  const sayOnce = (G, v, w) => (w < 0 && partCtrOf(G, v) < 0 ? 0 : w);
+
+  // AND THERE IS A LID ON IT. Lifting a cast that is already four octaves
+  // wide would put a sung `lead` (PARTS.lead is another +12) at MIDI 96 — a
+  // piccolo, and above the top of every throat vocal-kit names. C6 is the top
+  // of a soprano's compass and the top of what anything in this catalog plays
+  // as a melody, so the record comes up only as far as its highest chair can
+  // go; whatever floor is still unmet after that is taken from the low chair
+  // alone, which is a collapse of ONE voice rather than of the whole record.
+  const CEILING = 84;
+
+  const floorCtrOf = (G, gk) =>
+    36 + 12 * (+G.bassReg || 0) + (SUBTERRANEAN[gk] ? 0 : 12);
+  /** The lowest register this chair may be written at, in the kernel's units. */
+  const floorRegOf = (G, gk, v) => (G.nobass ? -4
+    : Math.ceil((floorCtrOf(G, gk) - 60 - partCtrOf(G, v)) / 12));
+
+  /** How far the whole cast comes up so that no chair sits under the bass —
+   *  one number for the record, capped by the headroom over its top chair.
+   *  0 for the 24 `nobass` anchors, where the low chair IS the bass. */
+  function regLift(G, gk, raw) {
+    if (G.nobass) return 0;
+    const floor = floorCtrOf(G, gk);
+    let need = 0, head = Infinity;
+    for (let v = 0; v < raw.length; v++) {
+      const c = centreOf(G, v, raw[v]);
+      need = Math.max(need, Math.ceil((floor - c) / 12));
+      head = Math.min(head, Math.floor((CEILING - c) / 12));
+    }
+    return Math.max(0, Math.min(need, head));
+  }
+  /** The register one chair is written at: the record's lift, then the floor,
+   *  then the clamp this file has always ended on. */
+  const regAt = (G, gk, v, raw, lift) =>
+    Math.max(-4, Math.min(3, Math.max(raw + lift, floorRegOf(G, gk, v))));
+
+  /* ======================================================================
      8 · genreToDocument — the whole record
      ====================================================================== */
   function genreToDocument(gk, seed) {
@@ -1472,8 +1596,25 @@
     const signed = (part, id) => !!sigSynth && !MOUTHY(id) &&
       !(sigSynth.lineOnly && PAD_PART[part]);
 
+    /* ---- 7b · WHERE THE CAST SITS, decided once for the whole record ----
+       The raw register of every LINE chair in seating order — the base cast
+       first, then the layers, which is the order they are pushed below and
+       therefore the index kernel.js reads them at. `regLift` turns that list
+       into one number; § 7b has the rule and the reason. */
+    const baseKinds = [];
+    for (let v = 0; v < nBase; v++) baseKinds.push(R.song.map((b, i) => baseKind[i](v)));
+    const rawReg = baseKinds.map((kinds, v) => G.reg(v) +
+      sayOnce(G, v, (REG[(KINDS[dflt(kinds)] || {}).reg || row.reg] || REG.mid).v));
+    // THE LIFT IS THE BAND'S, NOT THE GUEST'S. It is measured over and applied
+    // to the BASE cast only: a layer's register is its own anchor's fact (the
+    // +1 is derive.js:466's `reg: v => L.reg(v) + 1`), and dragging a guest up
+    // an octave because the host band was written low moves music nobody wrote
+    // low. A layer still answers to the floor, one chair at a time, below.
+    const lift = regLift(G, gk, rawReg);
+    for (const lk of layerKeys) rawReg.push((GENRES[lk].reg(0) | 0) + 1);
+
     for (let v = 0; v < nBase; v++) {
-      const kinds = R.song.map((b, i) => baseKind[i](v));
+      const kinds = baseKinds[v];
       const home = dflt(kinds);
       const material = { "": home };
       const development = {};
@@ -1494,8 +1635,10 @@
                 // octave higher than it was asked for") — so the octave lands
                 // HERE, on the chair, which is the one place the kernel reads
                 // it (kernel.js:1387 ctr = 60 + 12 * g.reg(v)).
-                reg: Math.max(-4, Math.min(3,
-                  G.reg(v) + (REG[(KINDS[home] || {}).reg || row.reg] || REG.mid).v)),
+                // ...AND IT IS FLOORED SO IT DOES NOT LAND UNDER THE BASS
+                // (§ 7b). The lift is the record's, not this chair's, so the
+                // spread the anchor wrote survives being moved.
+                reg: regAt(G, gk, v, rawReg[v], lift),
                 // ENTRY IS BARS INTO EVERY SECTION HERE, not into the record
                 // (ui/derive.js renders each box independently), so an
                 // unclamped entry of 3 SILENCES a voice in a two-bar intro.
@@ -1505,7 +1648,7 @@
       });
     }
 
-    for (const lk of layerKeys) {
+    layerKeys.forEach((lk, li) => {
       const L = GENRES[lk];
       const kinds = R.song.map((b) => {
         const e = b.stack.slice(1).find((x) => x.g === lk);
@@ -1557,12 +1700,12 @@
       voices.push({
         name: nameFor(lk), kind: "line",
         cast: { part,
-                reg: Math.max(-4, Math.min(3, (L.reg(0) | 0) + 1)),
+                reg: regAt(G, gk, nBase + li, rawReg[nBase + li], 0),
                 entry: 0 },
         material, development,
         instrument,
       });
-    }
+    });
 
     // THE BASS. Present unless the anchor says nobass (18 of 122). Its word
     // per section is compose()'s own `bassop`, which is ALREADY a BASSOPS key

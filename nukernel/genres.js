@@ -2315,7 +2315,11 @@
       wants: ["garage rock", "girl groups"],
       instr: ["distortion_guitar", "crunch_guitar"],
       drumkit: "power",
-      entry: () => 0, reg: v => -1 - v, realize: () => "line",
+      // THE RAMP USED TO READ `v => -1 - v`, which DESCENDS: it put voice 1
+      // an octave UNDER voice 0, and this anchor's own `words` say voice 1 is
+      // "the guitar, gliding over it". The ramp contradicted the sentence
+      // beside it. Ascending, the EP stabs at 48 and the guitar glides at 60.
+      entry: () => 0, reg: v => v - 1, realize: () => "line",
       roots: [0, 3, 4, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "staccato",
