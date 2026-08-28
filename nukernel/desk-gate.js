@@ -2338,13 +2338,27 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        "series " + shape[390].seriesLines + "; 1280: " +
        shape[1280].voiceLines + " and " + shape[1280].seriesLines + ")",
        JSON.stringify({ 390: shape[390], 1280: shape[1280] }));
+    /* THE SENTENCE, REWRITTEN 2026-08-28 — NOT THE PROPERTY. It read
+       "…and a strip and a plate take THE SAME width at 1280 (Npx against
+       Npx) RATHER THAN THE WHOLE WINDOW", and the last clause named a cap
+       that is gone: nu.css capped `.nu-strips` and `.nu-rack` at 780px so a
+       single strip would not stretch across a desktop, and Paul, 2026-08-28:
+       *"Make elements like tables and grids 100% wide."* Both are 100% now,
+       so at 1280 a strip and a plate are 1256px — the whole of the column,
+       which is exactly what the retired clause said they must not be. The
+       clause was NEVER the point of this check and its own words say so: the
+       point is that the strip and the buses it sends into are ONE OBJECT, and
+       one object means ONE WIDTH, whatever that width is. So the equality
+       stands unchanged and the sentence now says what the equality means.
+       (`stripW > 400` stays: it is the check that neither body collapsed and
+       made the equality vacuous — two zeroes are also equal.) */
     const stripW = shape[1280].per["voice|" + voiceTabs[0]].bw;
     const plateW = shape[1280].per["bus|main"].bw;
     ok(stripW > 400 && Math.abs(stripW - plateW) <= 1,
        "…and a strip and a plate take THE SAME width at 1280 (" + stripW +
-       "px against " + plateW + "px) rather than the whole window — the " +
-       "strip and the buses it sends into are one object, which is the whole " +
-       "of \"consistent\"", JSON.stringify({ stripW, plateW }));
+       "px against " + plateW + "px) — whatever the column is, they are both " +
+       "it; the strip and the buses it sends into are one object, which is " +
+       "the whole of \"consistent\"", JSON.stringify({ stripW, plateW }));
 
     /* EVERY CONTROL REACHABLE — the half the tabs put at risk, now over the
        whole row and not just the voices. */
