@@ -304,6 +304,22 @@
      full-bleed and a second copy of the number would drift */
   --gl: max(12px, env(safe-area-inset-left));
   --gr: max(12px, env(safe-area-inset-right));
+  /* ===== THE FIXED GUTTER (2026-08-28) ================================
+     Paul: *"Make it a fixed gutter"* and *"Dont let anything go under it."*
+     56px, and the number is arithmetic rather than taste: a tap target is
+     `--tap` (44px), the stripe pays `--bw` of rule down its inner edge and
+     4px of padding on each side, so 1 + 4 + 44 + 4 = 53 is the floor and 56
+     gives the mark 47px of column — three pixels over the floor rather than
+     under it. It is the ONE number the whole layout law is made of: the
+     content column is narrowed by exactly this much (see `body`), which is
+     what makes "nothing goes under it" a fact about flow instead of a
+     z-index that only looks right.
+     THE SAFE AREA IS INSIDE THE STRIPE, not beside it. On a notched phone in
+     landscape `env(safe-area-inset-right)` is the rounded corner, and the
+     gutter is what is against that corner now — so it grows by the inset and
+     pays it back as its own padding, and the 56px of column the marks stand
+     in does not move. */
+  --tray-w: calc(56px + env(safe-area-inset-right, 0px));
 }
 *,*::before,*::after{ box-sizing: border-box; }
 html{ -webkit-text-size-adjust: 100%; }
@@ -316,7 +332,35 @@ body{ margin: 0; background: var(--paper); color: var(--ink);
      1.5 grew the form table's header row enough to spend the geometry budget
      this repaint is allowed (8px) on leading alone. */
   font: 500 16px/1.45 var(--sans);
-  padding-inline: var(--gl) var(--gr);
+  /* THE GUTTER COMES OUT OF THE PAGE, AND THIS DECLARATION IS THE WHOLE LAW
+     (2026-08-28). Paul: *"Dont let anything go under it."* Everything on this
+     page is a child of <body>, so narrowing <body>'s own column by the
+     gutter's width re-flows EVERY child inside it — there is no floating
+     stripe over a full-width page and no z-index deciding what wins.
+     AND THE FULL-BLEED BLOCKS LAND EXACTLY ON ITS EDGE, for free. Six rules
+     in this file cancel the page gutter with `margin-inline-end:
+     calc(-1 * var(--gr))` and re-pay it as padding (`.nu-bar`, `.nu-ax`,
+     `#atlas`, `#atlasWhen`, and the two below them). Their right edge is
+     therefore `100vw - --gr - --tray-w + --gr` = `100vw - --tray-w`, which IS
+     the gutter's left edge — they bleed up to the rule and stop at it. Not
+     one of those six rules had to move, which is the test of whether the law
+     was written in the right place.
+     MEASURED on the rendered page, 2026-08-28, on all nine tabs at both
+     widths, with zero console errors:
+       390x844   gutter 56.00px, its left edge at x=334. The content column is
+                 310px (it was 366): 390 - `--gl` 12 - `--gr` 12 - 56. An
+                 ordinary block's right edge is 322, a full-bleed block's is
+                 334 — the rule itself, to the pixel, never past it.
+       1280x800  gutter 56.00px, left edge at x=1224. Column 1200 (was 1256);
+                 ordinary right edge 1212, full-bleed 1224.
+     `documentElement.scrollWidth === clientWidth` at both (390/390, 1280/1280)
+     and the greatest right edge of any laid-out block on any of the nine tabs
+     is exactly the gutter's left edge. The one apparent exception is not one:
+     the globe's land path and abcjs's engraving are geometry inside an SVG
+     viewport, and the pane's table inside an `overflow: auto` box — their
+     boxes run past their clipper on purpose and are not painted there. What
+     has to be inside the gutter is the CLIPPER, and it is. */
+  padding-inline: var(--gl) calc(var(--gr) + var(--tray-w));
   padding-block-end: max(24px, env(safe-area-inset-bottom)); }
 /* the display weights; the record's name is the h1 and gets the 900 */
 h1{ font-weight: 900; letter-spacing: -.01em; line-height: 1.05; }
@@ -759,43 +803,151 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 .nu-ax > h2, #atlas > h2{ position: absolute; width: 1px; height: 1px;
   margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .nu-ax > h3, .nu-ax h3{ font-size: 1rem; margin: .8em 0 .2em; }
-/* THE TAB ROW — sticky band two, and the page's own idiom for a strip of
-   tabs (`.nu-row` of plain buttons carrying `aria-pressed`, a `<mark>` on the
-   open one). It is the THIRD such strip on this page after the band's `#tabs`
-   and the board's `#boardtabs`, and the fourth counting the deck's
-   notation/roll pair, and it is spelled exactly like them so that a person who
-   has learned one has learned all four.
+/* ===== THE TAB ROW BECAME A GUTTER (2026-08-28) =========================
+   Paul: *"Come up with a strategy for running the nav icons for a given
+   modality down the right of the interface but translucent. Put them in a
+   translucent tray. They're sort of like scrabble letters now. There should be
+   one vertical stripe max with an 'up' icon to get to the parent level."*
 
-   IT WRAPS AND NEVER SCROLLS SIDEWAYS. `.nu-row` is `flex-wrap: wrap` and this
-   rule does not touch that — a sideways-scrolling tab strip is A1's failure
-   wearing a feature's clothes, and it is also the trap the atlas paid for once
-   (`touch-action: pan-y` left 28 of 62 places unreachable). MEASURED on the
-   rendered page, at .3em gap and .45em padding, AFTER the lighter-chrome
-   retune of the same day (Paul: "make the button text smaller and not bold"):
-   the nine buttons are 65.9 · 60.5 · 40.0 · 49.5 · 50.5 · 38.9 · 70.9 · 53.8 ·
-   60.4 = 490.4px, plus eight .3em gaps = 528.8px of strip, against the 296px a
-   320px phone leaves and the 366px a 390px one does. So:
-   320 -> 2 lines / 103.4px, 375 -> 2 / 103.4, 390 -> 2 / 103.4,
-   430 -> 2 / 103.4, 820 -> 1 / 54.6, 1280 -> 1 / 54.6 — and both
-   `row.scrollWidth === row.clientWidth` and
-   `documentElement.scrollWidth === clientWidth` at every one of the six.
-   (This said "3 lines / 148px at 320" and "2 lines / 100px at 390", which was
-   the strip in the heavy Enamel face for the few hours both landed on; the
-   numbers moved with the button face and the claim did not.)
+   AND NOT TRANSLUCENT, AND THAT REVERSAL LASTED AN HOUR. The same afternoon:
+   *"You know what don't make it translucent. Make it a fixed gutter"* and
+   *"Dont let anything go under it."* Both sentences are written here so the
+   next hand does not re-propose the blur: Enamel's flat-paint law — flat
+   colour, hard shadow, nothing behind anything — is NOT reversed. There is no
+   `backdrop-filter` in this file, no `@supports` fallback for one, and no
+   alpha on the plate. The tray is `--panel`, the same plate `.nu-bar` is, with
+   one `--bw` ink rule down its inner edge.
 
-   NO RESERVED HEIGHT, and that is a change of kind rather than an omission.
-   `--head-h` was a promise because something (the axis heading) was pinned
-   UNDER the thing whose height it named. Nothing is pinned under this row —
-   it is the last sticky element on the page — so it is free to be as many
-   lines as the width needs. `--bar-h` is still a promise, and now it is this
-   row's `top` that depends on it. */
-.nu-tabs{ position: sticky; top: var(--bar-h); z-index: 25;
-  margin: 0 calc(-1 * var(--gr)) 0 calc(-1 * var(--gl));
-  padding: .3em var(--gr) .3em var(--gl);
-  gap: .3em;
+   WHAT WAS DELETED TO PAY FOR IT, and it is a deletion rather than an
+   addition on purpose (the strategy's own rule: it REPLACES the rows it
+   absorbs, it does not join them). What stood here was:
+
+     `.nu-tabs{ position: sticky; top: var(--bar-h); z-index: 25;
+        margin: 0 calc(-1 * var(--gr)) 0 calc(-1 * var(--gl));
+        padding: .3em var(--gr) .3em var(--gl); gap: .3em;
+        background: var(--panel);
+        border-block-end: var(--bw) solid var(--ink); }
+      .nu-tabs > button{ padding-inline: .45em; }`
+
+   — the second sticky band, `#toptabs`, nine buttons wide. Its own note said
+   the thing that ended it: "THE NINE CANNOT BE ONE LINE AT 390 AND NO
+   ARRANGEMENT COULD MAKE THEM: nine 44px targets are 396px against the 366 a
+   390px phone leaves, before a single gap." So it was 2 lines / 103.39px at
+   320, 375, 390 and 430, and 1 line / 54.62px at 820 and 1280, on every tab,
+   forever. A stripe gives all of that height back and takes 56px of WIDTH once
+   (`--tray-w`, whose arithmetic is at the top of this file).
+
+   THREE MORE STRIPS WENT WITH IT, for the same reason and by the same rule:
+   `#tabs` (the band's voices), `#motif-tabs` (the bank) and the deck's
+   notation/roll pair were 44.00px of horizontal band each, and each is a
+   LEVEL of the same hierarchy — so the tray draws whichever one you are
+   inside and nothing draws two. That is what makes "one vertical stripe max"
+   possible: never nine plus seven, only one set. `#boardtabs` is the one that
+   did NOT move, because ui/engineer.js is another round's file this week; it
+   is still a horizontal row inside the Mix panel and it is the next level to
+   absorb.
+
+   `--bar-h` IS STILL A PROMISE AND ITS CREDITOR HAS CHANGED AGAIN. Nothing is
+   pinned under `.nu-bar` any more — the tray is `position: fixed` and starts
+   at the top of the viewport, not under the transport — so what the number
+   buys now is that the transport is exactly one band tall and the gutter's
+   marks begin level with the page rather than half-way down it. test/shell.js
+   A7 still pins it.
+
+   IT IS ONE COLUMN AND IT SCROLLS INSIDE ITSELF. A level with more marks than
+   the stripe is tall is still ONE stripe: `.nu-traylist` takes the overflow,
+   and there is no arrangement in this file that can produce a second column
+   (the tray is `flex-direction: column` with no wrap, and the measurement
+   below counts distinct button `left`s to prove it).
+   THE ARITHMETIC, MEASURED at 390x844: a mark is 47.00 x 44.00 and the pitch
+   is 48.80px (44 + a .3em gap). At the ROOT there is no head, so the list is
+   836.00px and SEVENTEEN marks fit. At a sub-level the head (`↑` + its rule)
+   is 54.59px, the list is 781.41px and SIXTEEN fit. At 1280x800 the same
+   numbers give 792.00 -> sixteen and 737.41 -> fifteen.
+   AND WHAT THE LEVELS ACTUALLY HOLD, on the shipped chant: root 9, band 7
+   (form · performance · cantor · schola · + line · + bass · + drums), motif 5
+   (psalm · bed · neume · + motif · + drum pattern), score 2. Nothing overflows
+   at either width, on any level, and `scrollHeight === clientHeight` on the
+   list in all eight cases. The first level that CAN overflow is a band of
+   thirteen voices at 390 (2 + 13 + 1 = 16 marks against 16, so fourteen is the
+   first that scrolls) — and it scrolls, in one column.
+   THE STRIPE NEVER SCROLLS SIDEWAYS EITHER: `scrollWidth === clientWidth`
+   (47/47) on every level at both widths. */
+.nu-tray{ position: fixed; inset-block: 0; inset-inline-end: 0; z-index: 40;
+  inline-size: var(--tray-w);
+  display: flex; flex-direction: column; align-items: stretch;
+  /* the marks stand in 56px whatever the notch does — see --tray-w */
+  padding: max(4px, env(safe-area-inset-top)) 
+           calc(4px + env(safe-area-inset-right, 0px))
+           max(4px, env(safe-area-inset-bottom)) 4px;
   background: var(--panel);
-  border-block-end: var(--bw) solid var(--ink); }
-.nu-tabs > button{ padding-inline: .45em; }
+  border-inline-start: var(--bw) solid var(--ink); }
+/* THE HEAD: `↑`, AND A RULE UNDER IT. Hierarchy reads upward, and going up is
+   a different KIND of action from picking a sibling — so it is not in the
+   list, it is above the list, with a line between. It never scrolls away:
+   `flex: 0 0 auto` while `.nu-traylist` takes all the give.
+   AT THE ROOT THERE IS NO HEAD AT ALL, and that is a decision with a reason.
+   The other reading was a DISABLED `↑` carrying `data-why` ("you are at the
+   top"), which is this page's own refusal idiom — and it is refused here
+   because that idiom is for an option the RECORD has made unreachable, a fact
+   that could change under you and therefore has to keep its sentence on the
+   screen. "There is no level above the top" is not a fact about the record; it
+   is the definition of the top, it can never change, and a permanently dead
+   44px target at the head of a 56px column is the most expensive furniture on
+   the page. What says where you are is the marked tab, which is on screen the
+   whole time. ui/eight.js `trayRow` carries the same paragraph. */
+.nu-trayhead{ flex: 0 0 auto; display: flex; flex-direction: column;
+  align-items: stretch; }
+.nu-traycut{ flex: 0 0 auto;
+  margin: .3em 0; border: 0; border-block-start: var(--bw) solid var(--ink); }
+/* THE LIST, AND IT IS THE ONLY THING IN HERE THAT SCROLLS. `overflow-y: auto`
+   so a long level stays one stripe rather than a second column.
+   AND IT DOES NOT SAY `overscroll-behavior: contain`, WHICH IT DID FOR TEN
+   MINUTES. The argument for it was "reaching its end must not start scrolling
+   the document under it" and it is refused, because `contain` applies to a
+   scroll CONTAINER whether or not it has anything to scroll: on every level
+   this record actually has, `scrollHeight === clientHeight`, and the
+   declaration would have made the right 56px of a phone a place where a
+   thumb-swipe does nothing at all. That is the exact failure this page has
+   already paid for twice — Paul, on the drum grid: *"when I touch them I
+   scroll the whole window and can't interact"*, and the atlas's
+   `touch-action: pan-y`, which left 28 of 62 places unreachable. Chaining to
+   the page at the end of a rarely-overflowing list is a smaller cost than a
+   dead swipe zone down the edge of the screen, so the swipe chains. Measured:
+   a 300px touch drag on the gutter scrolls the document. */
+.nu-traylist{ flex: 1 1 auto; min-block-size: 0;
+  display: flex; flex-direction: column; align-items: stretch; gap: .3em;
+  overflow-y: auto; overflow-x: hidden; }
+/* LOSE THE SCRABBLE TILE (Paul: *"They're sort of like scrabble letters
+   now"*). Inside the stripe a mark gives up the three declarations that make
+   a plate a plate — the jet border, the hard shadow, the white ground — and
+   becomes ink on the gutter's own quiet panel. The press still travels
+   (`button:active` translates), it just has no shadow to fall into, which is
+   exactly the trade `th button, td button` already makes for a button seated
+   in a table: the furniture around it is the frame.
+   THE 44px FLOOR IS UNTOUCHED. `button { min-height: var(--tap) }` still
+   applies and `align-items: stretch` gives every mark the full 47px of column,
+   so a target that lost its border did not lose a pixel of its size. */
+.nu-tray button{ background: transparent; border-color: transparent;
+  box-shadow: none; padding-inline: 0; }
+.nu-tray button:hover{ background: var(--flag-tint); }
+/* ...AND ONLY THE CURRENT ONE IS MARKED, in the hand's own paint. This is the
+   page's existing `button[aria-pressed="true"]` cap (design-system.html "tab
+   row": what says 'you are here' is the mark and the ARIA state) with the
+   border and the shadow taken off it — one flat cobalt mark in a column of
+   ink, which is the whole of the "you are here" this stripe has to say.
+   Measured: #FFFFFF on --hand #1E45E0 is 7.10:1, and an unmarked mark is
+   --ink #191611 on --panel #FFFFFF at 18.02:1. */
+.nu-tray button[aria-pressed="true"]{ background: var(--hand); color: #FFFFFF;
+  border-color: var(--hand); box-shadow: none; }
+.nu-tray button[aria-pressed="true"]:hover{ background: #152F9E; }
+/* THE MARK STACKS ITS GLYPH OVER ITS NUMBER rather than beside it: 47px of
+   column is not enough for `♪ 2` side by side at a 1.2rem face and the digit
+   would be the part that clipped. `.nu-ic` is `inline-flex` row everywhere
+   else on the page and this is the one place it turns. */
+.nu-tray .nu-ic{ display: flex; flex-direction: column; justify-content: center;
+  gap: 0; inline-size: 100%; }
+.nu-tray .nu-n{ font-size: .7rem; }
 /* A SHUT PANEL, AND IT IS SHUT BY A RULE AND NOT BY AN ATTRIBUTE. `hidden`
    would have been one character and it would have cost this file the one
    promise the reversal above is allowed to keep: with the stylesheet off the
@@ -3060,10 +3212,17 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
    space. Voice 2 for example could be more symbol plus the number 2. Provide a
    simple long tap or hover tooltip to explain what they are."*
 
-   SIX ROWS, ONE FACE. `.nu-bar` (play/rewrite/take), `#toptabs` (the nine),
-   `#tabs` (the band's voices), `#motif-tabs`, `#boardtabs` and `.nu-decktabs`
-   all draw the same button now — ui/glyph.js `icon()` — and every rule about
-   them is here rather than six times over. This is the same trade `.nu-tf`
+   SIX ROWS, ONE FACE — AND FOUR OF THE SIX ARE NOW ONE STRIPE (2026-08-28).
+   This said: "`.nu-bar` (play/rewrite/take), `#toptabs` (the nine), `#tabs`
+   (the band's voices), `#motif-tabs`, `#boardtabs` and `.nu-decktabs`". Four
+   of those rows — the nine, the band's voices, the bank and the deck's two
+   views — are the LEVELS of one hierarchy, and they were all drawn flat at
+   once. They are `#nu-tray` now, one level at a time, down the right edge (see
+   THE TAB ROW BECAME A GUTTER). `.nu-bar` is unmoved, because the transport is
+   not a level of anything, and `#boardtabs` is unmoved because ui/engineer.js
+   belongs to another round this week. The FACE did not change with the
+   geometry: they all still draw the same button — ui/glyph.js `icon()` — and
+   every rule about it is here rather than six times over. This is the same trade `.nu-tf`
    made on 2026-08-27 and it is stated the same way: the glyph is a picture,
    the word is still in the DOM as `.nu-vh`, and with this stylesheet turned
    off every strip reads as its words in order.
@@ -3076,28 +3235,39 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
                      sits at `top: var(--bar-h)`) and it did not move; the 28px
                      went to the room slider, which had been at its 4em floor.
        #toptabs      490.4 → 437.9 of ink · 2 lines → 2 lines (103.39px)
+                     → GONE, 2026-08-28: 0px of band, 56px of gutter
        #tabs          558.7 → 322.0 · 2 lines → ONE (94.39px → 44.00px)
+                     → GONE the same day, into the tray's `band` level
        #motif-tabs    378.1 → 229.2 · 2 lines → ONE (94.39px → 44.00px)
+                     → GONE the same day, into the tray's `motif` level
        #boardtabs     385.5 → 267.8 · 3 lines → TWO (147.17px → 96.78px)
        .nu-decktabs   160.9 →  88.0 · one line either way (68.94px → 44.00px:
                      the roll's legend used to be pushed onto a second line by
                      the two words and now sits beside them)
+                     → the two BUTTONS went into the tray's `score` level on
+                     2026-08-28 and the row stayed, because the legend was
+                     always the other half of it and a legend is not a level
      AT 1280px every row is what it was — one line each, `#boardtabs` two —
      and each is narrower. `documentElement.scrollWidth === clientWidth` and
      `row.scrollWidth === row.clientWidth` at both widths, on all nine tabs.
 
    THE NINE CANNOT BE ONE LINE AT 390 AND NO ARRANGEMENT COULD MAKE THEM: nine
    44px targets are 396px against the 366 a 390px phone leaves, before a single
-   gap. That row's saving is spent on a UNIFORM TARGET instead — every tab was
-   between 38.9 and 70.9px wide and every tab is 44 now — and on the open tab's
-   word, which the row could not afford before.
+   gap. That measurement is what ended the row rather than what excused it —
+   it is quoted in the gutter's own note above as the argument for turning the
+   nine on their side, where nine 44px targets are 396px against 844 and fit
+   twice over. (It went on: "that row's saving is spent on a UNIFORM TARGET
+   instead — every tab was between 38.9 and 70.9px wide and every tab is 44 now
+   — and on the open tab's word, which the row could not afford before." The
+   uniform target survived the move; the open tab's WORD did not, because 47px
+   of column cannot hold "performance" and the stripe's answer to "what is
+   this picture" is the hold-and-hover explainer that shipped the same day.)
 
    THE 44px FLOOR IS A WIDTH RULE HERE FOR THE REASON `.nu-tf-row` GIVES: "an
    <svg> brought its own 40px of width; a glyph brings 10-30px, so `←` in a
    2px-padded button is a 20px target — under half the floor." A shorter label
    is not permission for a smaller button. */
-#toptabs > button, #tabs > button, #motif-tabs > button,
-#boardtabs button, .nu-decktabs > button, .nu-bar > button{
+#nu-tray button, #boardtabs button, .nu-decktabs > button, .nu-bar > button{
   min-inline-size: var(--tap); }
 /* THE FACE. Same size and same stack as `.nu-tf` and for the same two reasons
    written there — 1.2rem was measured against the 44px floor, and a system-ui
@@ -3115,17 +3285,21 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
    a strip of ten voices may not shuffle sideways at voice 10. */
 .nu-n{ font-size: .78rem; font-weight: 700; line-height: 1;
   font-variant-numeric: tabular-nums; }
-/* THE OPEN TAB OF THE NINE KEEPS ITS WORD, at every width, and it is the only
-   row that does so unconditionally. Measured above: the nine are two lines at
-   390 whatever they wear, so the word is FREE there — and one labelled tab in
-   a row of pictures is the thing that tells a first-time reader what the
-   pictures are.
-   IT IS `.nu-vh`'s OWN UNDOING, not a second definition of a look — the same
-   four declarations `.nu-bar label > .nu-vh` reverses for "room", for the same
-   reason and in the same words. */
-#toptabs > button[aria-pressed="true"] .nu-vh{
-  position: static; width: auto; height: auto; margin: 0 0 0 .25em;
-  overflow: visible; clip-path: none; }
+/* THE OPEN TAB OF THE NINE KEPT ITS WORD, AND IN THE STRIPE IT CANNOT
+   (2026-08-28). What stood here was `#toptabs > button[aria-pressed="true"]
+   .nu-vh { position: static; … }` and its argument was: "the nine are two
+   lines at 390 whatever they wear, so the word is FREE there — and one
+   labelled tab in a row of pictures is the thing that tells a first-time
+   reader what the pictures are." The width was free in a row and is not in a
+   47px column: "performance" is 123.7px of type and there is nowhere for it to
+   go but out through the rule.
+   NOTHING WAS DELETED, ONLY UNREVEALED. Every mark still carries its full word
+   as `aria-label` AND as a `.nu-vh` span, so a screen reader still hears
+   "Where" and the page still reads as its nine names in order with this
+   stylesheet off — which is the promise the reveal was never the load-bearing
+   half of. What tells a first-time reader what a picture is, is the hold and
+   the hover (ui/glyph.js, the same day), and that reaches a thumb as well as a
+   mouse, which a printed word in a row nobody scrolls to never did. */
 /* …AND THE FOUR NESTED ROWS TAKE THEIR WORD BACK WHEN THERE IS ROOM FOR IT.
    Above 700px the strips are nowhere near their width and hiding a name there
    buys nothing: the band's open tab says `♪2 schola`, the board's says
@@ -3152,10 +3326,11 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
    strip that changes height as you move along it is the failure, not a wide
    one. */
 @media (min-width: 700px) {
-  #tabs > button[aria-pressed="true"] .nu-vh,
-  #motif-tabs > button[aria-pressed="true"] .nu-vh,
-  #boardtabs button[aria-pressed="true"] .nu-vh,
-  .nu-decktabs > button[aria-pressed="true"] .nu-vh{
+  /* (`#tabs`, `#motif-tabs` and `.nu-decktabs` stood in this list until
+     2026-08-28 and are in the gutter now, where there is no width to give
+     back at any viewport — see the note above. `#boardtabs` is the one of the
+     four still drawn as a row, so it is the one selector left.) */
+  #boardtabs button[aria-pressed="true"] .nu-vh{
     position: static; width: auto; height: auto; margin: 0 0 0 .25em;
     overflow: visible; clip-path: none; }
 }
@@ -3180,7 +3355,11 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
    the press that would close it reaches whatever is underneath and the popover
    can never swallow a tap on the row it is explaining. */
 .nu-say{ position: fixed; z-index: 60; pointer-events: none;
-  max-inline-size: min(30ch, calc(100vw - 12px));
+  /* …and it may not be wider than the column it is clamped into: the gutter
+     is 56px of the viewport since 2026-08-28 and a 30ch box that could not fit
+     beside it would be clamped to a negative left. ui/glyph.js `place` does
+     the clamping; this is the same arithmetic said to the box. */
+  max-inline-size: min(30ch, calc(100vw - var(--tray-w) - 12px));
   padding: .45em .6em;
   background: var(--panel); color: var(--ink);
   border: var(--bw) solid var(--ink); border-radius: var(--r1, 6px);

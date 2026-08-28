@@ -179,6 +179,21 @@ export const GLYPH = {
     main:  { g: "◎", s: "main — where the series ends and the record leaves" },
   },
 
+  /* THE ONE MOVE THAT IS NOT A SIBLING (2026-08-28). Paul: *"There should be
+     one vertical stripe max with an 'up' icon to get to the parent level."*
+     The tray draws ONE level at a time, so every other mark in it is a
+     CHOICE AMONG SIBLINGS and this one is a change of level — a different
+     kind of action, which is why nu.css puts a rule between it and them.
+     ↑ and not ← : the levels of this page are a hierarchy and hierarchy reads
+     upward; ← is the word for "the page before this one", which is the back
+     button's, and a control that looked like the back button and was not one
+     is the confusion this glyph is chosen to avoid. It is the same arrow
+     `.nu-tf` already sets in the same hand (system-ui, Segoe UI Symbol, Noto
+     Sans Symbols 2) so the two never read as two different arrows. */
+  nav: {
+    up: { g: "\u2191", w: "up" },
+  },
+
   /* THE DECK'S TWO VIEWS, DELIBERATELY A PAIR: one box of rules laid the way
      each view lays its time. ▤ is ruled paper — the staff, which runs across.
      ▥ is the roll — blocks standing up the pitch axis. Turn one and you have
@@ -207,6 +222,15 @@ const KINDWORD = { line: "a line", bass: "the bass", drums: "the kit" };
 export const sayVoice = (name, kind, n, of) =>
   name + " — voice " + n + " of " + of +
   (KINDWORD[kind] ? ", " + KINDWORD[kind] : "");
+
+/* ...AND WHAT `\u2191` SAYS, WHICH IS WHERE IT TAKES YOU FROM. The word on the
+   button is always "up" — one verb, so a person who has learned the stripe
+   once has learned it everywhere — and the CLAUSE names the level you are
+   leaving, because "up" on its own is the one label that cannot say what it
+   does. It is a function and not a table row for the reason `sayVoice` is:
+   only the caller knows which level is open. */
+export const sayUp = (parent) =>
+  "up \u2014 out of " + parent + ", back to the nine tabs";
 
 /* ===== THE BUTTON ========================================================
    ONE SPELLING, FIVE ROWS. Every strip of tabs on this page is already "a
@@ -319,8 +343,21 @@ function place(el2) {
   const w = n.offsetWidth, h = n.offsetHeight;
   const vw = document.documentElement.clientWidth;
   const vh = document.documentElement.clientHeight;
+  /* CLAMPED TO THE CONTENT COLUMN, NOT TO THE VIEWPORT (2026-08-28). The right
+     edge of this page is a fixed gutter now (`#nu-tray`, nu.css THE TAB ROW
+     BECAME A GUTTER) and Paul's rule for it is *"Dont let anything go under
+     it."* A popover explaining a mark IN the gutter would otherwise sit on top
+     of the gutter and cover the marks either side of the one it is about. So
+     the box stops at the gutter's inner rule and opens to the LEFT of it,
+     which is also the only side there is room on. Read off the element rather
+     than off the token, because a page with no tray (or a stylesheet that has
+     been turned off) must still clamp to the viewport, which is what this did
+     before and still does when there is nothing there. */
+  const tray = document.getElementById("nu-tray");
+  const tr = tray ? tray.getBoundingClientRect() : null;
+  const right = (tr && tr.width && tr.left < vw) ? tr.left : vw;
   let x = Math.round(r.left + r.width / 2 - w / 2);
-  x = Math.max(6, Math.min(x, vw - w - 6));
+  x = Math.max(6, Math.min(x, right - w - 6));
   /* UNDER THE CONTROL IF THERE IS ROOM, OVER IT IF THERE IS NOT — and under
      first, because on a phone the thing being held is under a thumb and the
      thumb is below it. */

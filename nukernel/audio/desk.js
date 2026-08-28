@@ -1098,21 +1098,35 @@ export function deskLevelAt(sec, f) {
 // ABSENT IS THE ENGINE'S DEFAULT, never nukernel's: a song that says nothing
 // about mastering gets exactly the mix engine/faust/ makes for everybody else.
 //
-// WHAT HAS NO HOME, and is named rather than approximated:
-//   * `width` — a mid/side trim. fields.js already says this is "the one
-//     control here with no parent to borrow from": the parent gets its width
-//     from placement (MASTER_PAN) and from the tape's own decorrelation.
-//   * `tilt` — a SHELF PAIR about 1 kHz. The parent's tone stage is a lowcut
-//     and a highcut, which stop the ends rather than rocking them; writing a
-//     tilt into a pair of cuts would be a different gesture wearing its name.
-//   * `ceiling`'s `push` — a gain INTO the limiter. master_limit's threshold is
-//     fixed in the DSP, so "louder" has nowhere to go that is not a lie about
-//     where the loudness came from.
-// All three still round-trip in the song and still draw on the board; they
-// simply do not reach the sound, which is better than reaching it wrongly.
+// NOTHING HERE IS HOMELESS ANY MORE — REVERSED 2026-08-28. Paul, listening to
+// the Iranian pop record: *"Everything is hot and needs more filtering …
+// Turning that stuff down doesn't do enough in the final mix. There doesn't
+// seem to be a way to even turn the final mix off."* The paragraph that stood
+// here listed three master words that drew, saved and reached no sound, and
+// ended "which is better than reaching it wrongly". That was true of the
+// approximations it refused and FALSE of the whole board, because one of the
+// three — `ceiling` — was the only word that claimed authority over the soft
+// clip fx_bus applied to every record unconditionally. A word that says "open"
+// over a clipper you cannot open is not a refusal, it is the deception the
+// honest-master round was written to stop. So all three are built:
+//   * `width` -> fx_bus `mswidth`, a mid/side SIDE gain. Four multiplies; the
+//     parent's placement width is untouched and this trims the image it makes.
+//   * `tilt`  -> fx_bus `mtilt`, ONE first-order split about 1 kHz (lows
+//     -t dB, highs +t) rather than the shelf PAIR this note held out for: a
+//     pair is two biquads per channel and the sidechain-keying round already
+//     costed two biquads in fx_bus at 0.285 points of realtime. Same gesture,
+//     a quarter of the bill, and it is the direct answer to "more filtering".
+//   * `ceiling` -> fx_bus `mpush` (the gain INTO the clip) and `clipl` (the
+//     clip's limit, 0 = the stage is not in the signal). `thr` is STILL
+//     unreachable and stays named as such: the live brickwall is
+//     dsp/master_limit.dsp and its threshold is fixed in that DSP.
+// Every one of them is an exact identity at its default, so a record that says
+// nothing about width, tilt or ceiling renders byte-for-byte as before.
 // the tables are the REGISTRY's — read through NuFields rather than copied, for
 // the reason every table on this page is read rather than copied
-const GLUE_COMP = { soft: 0.2, glue: 0.35, tight: 0.55, pump: 0.75, squash: 0.95 };
+// `none` = 0 (2026-08-28) — fx_bus comp 0 is cratio 1, makeup 1, cpar 0, and a
+// compression_gain_mono at ratio 1 is exactly 1, so glue() reduces to (x*1)*1.
+const GLUE_COMP = { none: 0, soft: 0.2, glue: 0.35, tight: 0.55, pump: 0.75, squash: 0.95 };
 
 /* ---------------- THE HONEST MASTER (2026-08-21) -------------------------
  * Paul: "when you turn on glue and other effects for a song in combination it
@@ -1271,7 +1285,7 @@ export function songEchoSec() {
 export function masterState(MASTER, BUSES, SEV) {
   const m = MASTER && typeof MASTER === "object" ? MASTER : null;
   const out = {};
-  const { DRIVES, TAPES, SPACES } = NuFields;
+  const { DRIVES, TAPES, SPACES, WIDTHS, TILTS, CEILINGS } = NuFields;
   if (m) {
     const d = DRIVES[m.drive];
     if (d != null) out.grit = d;                     // fx_bus `grit`, same 0..1 scale
@@ -1281,6 +1295,19 @@ export function masterState(MASTER, BUSES, SEV) {
     if (t) { out.wob = t.wob; out.tsat = t.sat; }    // fx_bus `wob` + `tsat`, verbatim
     const s = SPACES[m.space];
     if (s) out.mrev = s.mix;                         // fx_bus `mrev`, the global dry bleed
+    // THE THREE THAT REACHED NO SOUND, WIRED 2026-08-28 (see the block above,
+    // which is rewritten). width -> fx_bus `mswidth` (a mid/side SIDE gain,
+    // four multiplies, select2'd past at 1); tilt -> `mtilt` (one first-order
+    // split about 1 kHz — Paul: *"Everything is hot and needs more
+    // filtering"*); ceiling -> `mpush` + `clipl`, which is the round's
+    // headline: the Bram de Jong soft clip was UNCONDITIONAL in fx_bus and
+    // `ceiling` was the word that claimed to control it.
+    const w = WIDTHS[m.width];
+    if (w != null) out.mswidth = w;
+    const ti = TILTS[m.tilt];
+    if (ti != null) out.mtilt = ti;
+    const c = CEILINGS[m.ceiling];
+    if (c) { out.clipl = c.clip; out.mpush = c.push; }
   }
   // THE RACK. Every knob fields.js BUSROWS still declares lands here, and the
   // test for whether a knob may exist at all is whether it can: `room` carries
@@ -1407,7 +1434,11 @@ function honest(st) {
   // the global dry bleed it always was. One owner for state.reverb, and it is
   // the rack — otherwise choosing "a hall" on bus 1 and "cavern" on the master
   // would be two spellings of one number, and the second one written would win.
-  if (st.mrev != null && st.reverb == null) st.reverb = Math.round(mrev * 1.05 * 1000) / 1000;
+  // …and `space: none` does not open it either (2026-08-28): a zero bleed used
+  // to derive `reverb: 0`, which is rgain 0, which would have silenced every
+  // PER-VOICE send as well — far more than the one stage the word owns. A
+  // bleed of nothing writes nothing and the rack's own return stands.
+  if (mrev > 0 && st.mrev != null && st.reverb == null) st.reverb = Math.round(mrev * 1.05 * 1000) / 1000;
   // THE STACK TERM. Each stage's trim is measured ALONE and lands within
   // 0.06 LUFS alone — but two stages in series leave about 0.09 dB on the
   // table and three leave three times that (measured: drive+glue +0.14,
@@ -1424,10 +1455,18 @@ function honest(st) {
   const shareDb = n ? stackDb / n : 0;
   const share = Math.pow(10, -shareDb / 20);
   // and now the bill for each of them
+  // A STAGE THAT IS OFF DOES NOT SEND A BILL, 2026-08-28. These trims exist to
+  // stop a CHARACTER control from also being a volume control — they are
+  // matched-loudness compensation for a stage that is running. `none` does not
+  // run, so it is not compensated: bypass is bypass, and a record with the tape
+  // switched out is allowed to be as quiet as the tape was making it loud.
+  // (Without the `tsat > 0` guard, tape `none` would have read as -0.18 of
+  // saturation against the shipped head and BOOSTED the master to match it,
+  // which is a stage's ghost still setting the level.)
   if (grit > 0) st.gtrim = round3(trimFor(DRIVE_LU, grit, PRECLIP_EFF) * share);
   if (comp > 0) st.ctrim = round3(trimFor(GLUE_LU, comp, PRECLIP_EFF) * share);
-  if (tsat !== 0.18) st.ttrim = round3(trimFor(TAPE_LU, tsat, TAPE_EFF) * share);
-  if (st.mrev != null && mrev !== 0.07) st.dtrim = round3(trimFor(SPACE_LU, mrev, DRY_EFF));
+  if (tsat > 0 && tsat !== 0.18) st.ttrim = round3(trimFor(TAPE_LU, tsat, TAPE_EFF) * share);
+  if (mrev > 0 && st.mrev != null && mrev !== 0.07) st.dtrim = round3(trimFor(SPACE_LU, mrev, DRY_EFF));
   return st;
 }
 const round3 = (x) => Math.round(x * 1000) / 1000;

@@ -201,8 +201,18 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   if (REAL) for (const t of TOPS) {
     if (t !== "Band") { views.push({ top: t, k: null }); continue; }
     await openTop(t);
+    /* THE BAND'S VOICE KEYS, OFF THE STRIPE (2026-08-28). This read
+       `#tabs [data-k^="tab"]` — the horizontal strip inside the Band panel.
+       The strip is the `band` LEVEL of `#nu-tray` now (Paul: *"one vertical
+       stripe max with an 'up' icon to get to the parent level"*) and
+       `openTop("Band")` has already dropped the stripe onto it, because
+       arriving on a tab IS descending into it. The keys did not move — the
+       gate asks for the same `tabform` / `tabcantor` / `tabschola` it always
+       did — so nothing below this line changed. `#nu-tray` and not
+       `.nu-traylist`: the ↑ button's key is `trayup`, which `^="tab"` does not
+       match, and neither does a root level's `toptab-…`. */
     const voices = await p.evaluate(() =>
-      [...document.querySelectorAll('#tabs [data-k^="tab"]')].map((n2) => n2.dataset.k));
+      [...document.querySelectorAll('#nu-tray [data-k^="tab"]')].map((n2) => n2.dataset.k));
     for (const k of voices) views.push({ top: t, k });
   }
   const eachView = async (fn) => {
@@ -463,10 +473,14 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     JSON.stringify(s0.sheet));
 
   /* ---- 4 the drummer. Hire one, then switch him off. ---- */
-  // ON THE BAND TAB, WHICH IS WHERE THE BAND IS (2026-08-27). `+ drums` is a
+  // ON THE BAND TAB, WHICH IS WHERE THE BAND IS (2026-08-27). `+ drums` was a
   // button in `#tabs`, inside the Band panel, and eight panels out of nine are
   // `display: none` and `inert` — a `.click()` on a button in a shut panel
   // finds the element and fires nothing.
+  // IT IS IN THE STRIPE NOW (2026-08-28) and the tab still has to be opened,
+  // for a reason that only looks like the same one: `#nu-tray` is never inert,
+  // but the stripe shows the `band` LEVEL only while the Band tab is open, so
+  // `[data-k="adddrums"]` is not on the page until you are there.
   if (REAL) await openTop("Band");
   await p.evaluate(async () => {
     const add = document.querySelector('[data-k="adddrums"]');

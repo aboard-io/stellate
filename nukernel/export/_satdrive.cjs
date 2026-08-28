@@ -35,6 +35,15 @@ const JSONOUT = arg("json", null);
    can reach (the sampled channel strip's tanh, the fx_bus tape default, the
    lane gains). Both leave the tree untouched. */
 const DROP = (arg("drop", "") || "").split(",").filter(Boolean);
+/* `--master none` REWRITES the record's seven master words to the board's
+   one-touch bypass (2026-08-28). This is the other half of the same bisect:
+   `--drop` spells "the record said nothing", which is the ENGINE'S DEFAULT and
+   not silence, and until this round there was no way to render a record with
+   its master stages actually removed — which is exactly what Paul could not
+   hear ("there doesn't seem to be a way to even turn the final mix off").
+   It writes the same value the board's button writes (NuFields.MASTER_NONE),
+   so the harness and the hand cannot disagree about what "off" spells. */
+const SETMASTER = arg("master", null);
 const PATCH = (arg("patch", "") || "").split(",").filter(Boolean);
 const SRCPATCH = {
   // every sampled voice's channel strip tanh -> silence the saturator only
@@ -149,12 +158,23 @@ const SRCPATCH = {
 
   const out = [];
   for (const gk of RECORDS) {
-    const r = await page.evaluate(async ([gk, seed, bars, drop]) => {
+    const r = await page.evaluate(async ([gk, seed, bars, drop, setm]) => {
       const doc = window.NuPrecompose.genreToDocument(gk, seed);
       for (const d of drop) {
         if (d === "fx") for (const v of doc.voices) if (v.desk) delete v.desk.fx;
         else if (doc.sound && doc.sound.master) delete doc.sound.master[d];
       }
+      if (setm && setm.indexOf("none") === 0) {
+        // "none" = all seven; "none=ceiling,tape" = just those, so a run can
+        // ask WHICH stage was the hot mic instead of only that one of them was
+        const only = setm.split("=")[1];
+        const N = window.NuFields.MASTER_NONE;
+        doc.sound = doc.sound || {};
+        doc.sound.master = only
+          ? { ...(doc.sound.master || {}),
+              ...Object.fromEntries(only.split(",").map((k) => [k, N[k]])) }
+          : { ...N };
+      } else if (setm === "absent" && doc.sound) delete doc.sound.master;
       window.__satPut(doc);
       // WAIT ON THE PLAN, NOT THE CLOCK. A fixed 400 ms lost the race often
       // enough to fake a failure ("nothing to press" = barCount() 0, i.e. the
@@ -182,7 +202,7 @@ const SRCPATCH = {
         const st = (u.sampler && u.sampler.strip) || u.strip; 
         return st && st.sat != null ? st.sat + "/" + st.satMix : null; }).filter(Boolean))].join(" ");
       return s;
-    }, [gk, SEED, BARS, DROP]).catch((e) => ({ error: String(e && e.message || e) }));
+    }, [gk, SEED, BARS, DROP, SETMASTER]).catch((e) => ({ error: String(e && e.message || e) }));
     r.record = gk;
     out.push(r);
     console.log(gk.padEnd(14),

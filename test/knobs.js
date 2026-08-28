@@ -230,14 +230,41 @@ const J = (x) => JSON.parse(JSON.stringify(x));
       await p.waitForTimeout(2200);
       const tag = " @" + W;
 
-      const tab = async (name) => { await p.evaluate((n) => {
-        const t = [...document.querySelectorAll("#tabs button")]
-          .find((x) => x.textContent.trim().endsWith(n)); if (t) t.click(); }, name);
+      /* THE VOICE TABS ARE THE STRIPE'S `band` LEVEL SINCE 2026-08-28 (Paul:
+         *"There should be one vertical stripe max with an 'up' icon to get to
+         the parent level"*). This read `#tabs button` and matched on
+         `textContent`; it reads `#nu-tray [data-k^="tab"]` and matches on the
+         `aria-label`, which is the voice's name and the one string ui/glyph.js
+         owns.
+         AND IT OPENS THE BAND TAB FIRST, which it never did. `#tabs` only
+         existed while the Band panel was open (2026-08-27, the nine tabs), so
+         from that day until this one every `tab(...)` and every `seat(...)`
+         click in this gate found nothing and fired nothing — the gate was
+         driving the record through `__eightDoc()` alone and its clicks were
+         silent. `__eightTab` is the page's own door and is what a thumb does. */
+      /* ...AND A DOOR TO ANY OF THE NINE, for the two checks below that are
+         not about the band at all. Fixing the crash above turned this gate
+         back on and ten checks came up red the first time it ran end to end:
+         every one of them was looking for a control on a panel it had never
+         opened — `[data-k^="tempo-"]` is the Tempo tab and `.nu-syll` is the
+         Score deck, and eight panels out of nine are `display: none` and
+         `inert`. Those are not new failures, they are the failures the crash
+         was standing in front of since 2026-08-27; they are repaired here by
+         opening the tab, which is the same one-line repair test/sheets.js and
+         test/selects.js already took for `+ drums`. */
+      const top = async (n) => { await p.evaluate((x) => window.__eightTab(x), n);
+        await p.waitForTimeout(500); };
+      const band = async () => { await top("Band"); };
+      const tab = async (name) => { await band(); await p.evaluate((n) => {
+        const t = [...document.querySelectorAll('#nu-tray [data-k^="tab"]')]
+          .find((x) => (x.getAttribute("aria-label") || "").trim() === n);
+        if (t) t.click(); }, name);
         await p.waitForTimeout(450); };
       const seat = async (dsp) => { await p.evaluate((d) => { const doc = window.__eightDoc();
           const v = doc.voices.find((x) => x.kind === "line");
           v.instrument = d; delete v.set; }, dsp);
-        await p.evaluate(() => document.querySelector("#tabs button").click());
+        await band();
+        await p.evaluate(() => document.querySelector('#nu-tray [data-k^="tab"]').click());
         await p.waitForTimeout(250); await tab("cantor"); };
 
       /* ---- 4 NO CONTROL DRAWS FOR A VOICE THAT CANNOT USE IT ---------- */
@@ -328,9 +355,15 @@ const J = (x) => JSON.parse(JSON.stringify(x));
       const vow3 = await p.evaluate(() => {
         const v = window.__eightDoc().voices.find((x) => x.kind === "line");
         return { word: v.set && v.set.vowels,
-                 sels: [...document.querySelectorAll('select[data-sel^="vow"]')].map((s) => s.value),
-                 line: (document.querySelector(".nu-syll") || {}).textContent };
+                 sels: [...document.querySelectorAll('select[data-sel^="vow"]')].map((s) => s.value) };
       });
+      /* 6f IS A CHECK ABOUT THE SCORE, so it looks at the score. `.nu-syll` is
+         drawn by the deck (`#scoredeck`), which is the Score tab; read on the
+         Band tab it was `undefined` every time. */
+      await top("Score");
+      vow3.line = await p.evaluate(() =>
+        (document.querySelector(".nu-syll") || {}).textContent);
+      await band();
       check(vow === true && vow2 >= 3 && vow3.word && vow3.word.length === 3 && vow3.word[1] === "o",
         "6e the vowel row round-trips: " + JSON.stringify(vow3.word) + " / " +
         JSON.stringify(vow3.sels) + " " + JSON.stringify(vow) + tag);
@@ -505,6 +538,8 @@ const J = (x) => JSON.parse(JSON.stringify(x));
           JSON.stringify(missing.map((x) => x.k)) + tag);
       }
       /* ---- 8 THE TEMPO ICONS ARE ABOUT TEMPO ------------------------- */
+      // ...AND THEY ARE ON THE TEMPO TAB, which this never opened (see `top`).
+      await top("Tempo");
       const t0 = await p.evaluate(() => ({ bpm: window.__eightDoc().time.bpm,
         rate: window.__eightDoc().time.rate,
         n: document.querySelectorAll('[data-k^="tempo-"]').length,
@@ -530,6 +565,7 @@ const J = (x) => JSON.parse(JSON.stringify(x));
       // so the key this presses moved with the label.
       const own = await press("the default speed");
       check(own.rate == null, "8e …and there is a way back to the default" + tag);
+      await band();   // and back to where the rest of this gate lives
 
       /* ---- 10 A TAKE CHANGES THE RENDERED SCORE ---------------------- */
       await tab("performance");

@@ -223,7 +223,8 @@ import { songDurSec } from "../audio/plan.js";
 // by refusing the glyphs and drawing its tabs as words. Paul asked for marks
 // on every strip on the page, in four files, so the table is EXTRACTED to
 // ui/glyph.js and imported here; nothing about the three characters changed.
-import { GLYPH, kindGlyph, sayVoice, icon, paintIcon, wireSay } from "./glyph.js";
+import { GLYPH, kindGlyph, sayVoice, sayUp, icon, paintIcon,
+         wireSay } from "./glyph.js";
 
 // THE ONE GLOBAL LEFT IN THIS FILE, and it is deliberate rather than an
 // oversight: `design()` calls `K[name](...)` with a name out of the DESIGNS
@@ -3001,7 +3002,9 @@ function syllLine(si, k) {
 
 let deckView = "not";           // "not" | "roll" — page state, survives draw()
 let deckNotView = null, deckRollView = null;
-let deckTabNot = null, deckTabRoll = null;
+/* (`let deckTabNot = null, deckTabRoll = null` stood here — the two buttons
+   `setDeckView` repainted by hand. They are `scoreTrayItems` now: see
+   THE STRIPE.) */
 let rollHost = null, rollCv = null, rollCtx = null;
 let rollW = 0, rollH = 0;
 let rollKey = "", rollList = null, rollLo = 48, rollHi = 72;
@@ -3293,14 +3296,14 @@ function setDeckView(v) {
   deckView = v;
   if (deckNotView) deckNotView.hidden = v !== "not";
   if (deckRollView) deckRollView.hidden = v !== "roll";
-  /* THE MARK MOVES WITH THE STATE, and it is `paintIcon` that moves it — the
-     <mark>/<span> swap the other four strips already make, so the deck's pair
-     is not a fifth spelling of "which one is open". (This set `aria-pressed`
+  /* THE MARK MOVES WITH THE STATE, and it is `paintTray` that moves it now.
+     This held references to the two buttons and repainted them by hand; the
+     pair is a LEVEL of the stripe since 2026-08-28, so the state is written
+     here and read by `scoreTrayItems` — which is one owner rather than two
+     copies of "which one is open". (Before the glyphs it set `aria-pressed`
      alone, which was the whole of the old skin when the button was a word.) */
-  if (deckTabNot) paintIcon(deckTabNot, { glyph: GLYPH.view.not.g,
-    word: GLYPH.view.not.w, say: GLYPH.view.not.s, on: v === "not" });
-  if (deckTabRoll) paintIcon(deckTabRoll, { glyph: GLYPH.view.roll.g,
-    word: GLYPH.view.roll.w, say: GLYPH.view.roll.s, on: v === "roll" });
+  paintTray();
+  markLink();
   if (v === "roll") { sizeRoll(); drawRoll(stepAbs()); }
 }
 addEventListener("resize", () => {
@@ -3418,21 +3421,19 @@ function deckBlock(parent) {
   // the foot ("`Motifs` mid-page + `The score` at the foot"), and the one
   // case rule every heading now follows.
   ax.append(el("h2", "The score"));
-  // the tabs — CONTROLS, so outside both [data-live] blocks (A1's law)
-  /* TWO MARKS THAT ARE ONE BOX TURNED (Paul, 2026-08-28). ▤ is ruled paper —
-     the staff, which runs across; ▥ is the roll — blocks standing up the pitch
-     axis. Turn one and you have the other, which is exactly what these two
-     buttons do to the same record. `GLYPH.view` in ui/glyph.js owns them and
-     the words "notation" and "piano roll" go on as `aria-label` and `.nu-vh`,
-     so `setDeckView` is still the only thing that decides which is marked. */
+  /* THE TWO VIEW BUTTONS LEFT THIS ROW, 2026-08-28, AND THE LEGEND STAYED.
+     They were `deck.view.not` and `deck.view.roll` — "TWO MARKS THAT ARE ONE
+     BOX TURNED: ▤ is ruled paper, the staff, which runs across; ▥ is the roll,
+     blocks standing up the pitch axis. Turn one and you have the other, which
+     is exactly what these two buttons do to the same record." They are the
+     `score` LEVEL of `#nu-tray` (`scoreTrayItems`), because they are a set of
+     siblings and a set of siblings is what the stripe draws.
+     THE LEGEND IS NOT A LEVEL, so it did not move: it is who wears which paint
+     on the roll, a caption on the picture below it, and it is the half of this
+     row that was always the other kind of thing. `.nu-decktabs` keeps its
+     class and its rule (`#scoredeck .nu-decktabs`, nu.css) because the row is
+     still the row; it is one item shorter. */
   const row = el("div", null, "nu-row nu-decktabs");
-  deckTabNot = icon({ k: "deck.view.not", glyph: GLYPH.view.not.g,
-    word: GLYPH.view.not.w, say: GLYPH.view.not.s, on: deckView === "not" });
-  deckTabNot.addEventListener("click", () => setDeckView("not"));
-  deckTabRoll = icon({ k: "deck.view.roll", glyph: GLYPH.view.roll.g,
-    word: GLYPH.view.roll.w, say: GLYPH.view.roll.s, on: deckView === "roll" });
-  deckTabRoll.addEventListener("click", () => setDeckView("roll"));
-  row.append(deckTabNot, deckTabRoll);
   // the legend: who wears which paint on the roll — the voices' own names,
   // extracted from the record, beside the one clock-red word
   const leg = el("span", null, "nu-decklegend");
@@ -3799,7 +3800,12 @@ function materialAxis(ax) {
   // motifs into a table with tabs, each motif a tab, like 'the band' section").
   // The strip is drawn BEFORE `#staff` because it is navigation and #staff is
   // notation; see motifTabRow.
-  motifTabRow(ax);
+  /* (`motifTabRow(ax)` stood here — see the tombstone above. The bank is a
+     level of the stripe now and the axis opens on the motif itself. What the
+     strip also did on its way past was settle WHICH motif is open, and that
+     is `settleMotifTab` now: one function, called here first, so the axis
+     never waits on the navigation to know what it is drawing.) */
+  settleMotifTab();
   const sys = el("div"); sys.id = "staff";
   ax.append(sys);
   // THE SECTION YOU ARE WRITING, not the one that is sounding. `motifs(sys,
@@ -3865,6 +3871,12 @@ function drawMaterial() {
   anchorAt = Date.now();
   try { materialAxis(ax); } finally { release(); }
   putPanes();
+  /* …AND THE BANK'S OWN LEVEL OF THE STRIPE, which is the strip this axis used
+     to draw for itself (see the tombstone over `motifTabRow`). `paintTray`
+     rebuilds only if the set of cells moved; opening another motif writes two
+     attributes, which is what keeps `restoreFocus` — scoped to `#ax-material`
+     and therefore blind to the stripe — from having a button to lose. */
+  paintTray();
   restoreFocus(ax, wasKey, wasPicker);
   restoreAnchor();
 }
@@ -4124,6 +4136,19 @@ let motifTab = null;
 // about hookGrid: it refuses a drum cell, and `motifs()` sends one to
 // `drumGrid` instead. One list, two editors.
 const motifNames = () => cellNames();
+/* WHICH MOTIF IS OPEN, SETTLED IN ONE PLACE (2026-08-28). `motifTabRow` used
+   to do this on its way to drawing the strip — "if (!names.includes(motifTab))
+   motifTab = names[0] || null" — and TWO things needed the answer the moment
+   the strip left this axis for the stripe: `materialAxis`, which draws the
+   motif, and `motifTrayItems`, which draws the marks. Measured before this
+   line existed: opening the Motif tab drew `<h2>Motifs</h2><div id="staff">`
+   and nothing else, because the axis is built before the stripe is painted and
+   `motifTab` was still null when `motifs()` asked. Two copies of one rule is
+   what caused it and one function is the fix; the axis is the first caller, so
+   the stripe can never be the thing that decides what the page draws. */
+const settleMotifTab = () => { const n = motifNames();
+  if (!n.includes(motifTab)) motifTab = n[0] || null;
+  return n; };
 // ...AND WHICH CELLS A VOICE OF THIS KIND MAY READ, which is the honest half of
 // the same idea. A drum cell is LANES and a line cell is DEGREES: `toPhrase`
 // hands back a blank for a drum cell ("a grid is not a line", document.js:230)
@@ -4408,125 +4433,28 @@ function loopButton(parent, name) {
   if (b.disabled) P(parent, el("span", b.dataset.why, "nu-why"));
 }
 
-/* THE STRIP, BUILT LIKE THE BAND'S so the two surfaces are the same object and
-   a person who has learned one has learned the other: a <p> of buttons, one per
-   motif, `aria-pressed` saying which, and the chosen one wearing the same
-   <mark> the playhead wears — the highlight the browser already has, which
-   survives a stylesheet being turned off and a high-contrast mode being turned
-   on. (bandBlock, below, is the original; nothing is factored out of the two
-   because they differ in what a tab IS — a voice tab may also be `form` or
-   `performance`, and a motif tab is only ever a cell name.)
-
-   `drawMaterial()` AND NOT `draw()`: which motif is open changes exactly one
-   axis, and drawMaterial is the narrow rebuild that already keeps the pane
-   scrolls, the focus key and the scroll anchor (see drawMaterial). The band's
-   strip calls draw() because a voice tab changes the mixer and the sheets too.
-
-   WHAT SAYS "read by nobody" IS STILL THE BLOCK'S OWN LABEL and not the tab.
-   A tab is a name you tap; the sentence about who reads it is a fact about the
-   motif and belongs over the motif, where it was. */
-function motifTabRow(parent) {
-  const names = motifNames();
-  if (!names.includes(motifTab)) motifTab = names[0] || null;
-  if (!names.length) return;
-  const bar = el("p");
-  // AN ID FOR WHO IT IS, `.nu-row` FOR WHAT IT IS. This read "an id and no
-  // class, exactly like the band's `#tabs`: a strip of buttons in a <p> needs
-  // no rule at all — `button{min-height:var(--tap)}` already sizes and targets
-  // them, and they wrap on their own." Every clause of that is still true and
-  // it was still the third different way this page spaced a row of buttons:
-  // here a literal " " text node, in `#atlasActs` a `margin-inline-end` on the
-  // button, in the producer nothing (nu.css 2026-08-26's audit). `.nu-row` is
-  // the one name for a strip; the text nodes stay, because with the stylesheet
-  // off they are what keeps two tabs from reading as one word.
-  bar.id = "motif-tabs";
-  bar.className = "nu-row";
-  /* A MARK AND A NUMBER HERE TOO (Paul, 2026-08-28). A motif is one of two
-     KINDS — a tune or a beat — and `H.kind === "drum"` is the record's own
-     word for which, so the strip borrows the voices' marks: ♪ for a motif, ◉
-     for a drum pattern, off the one table in ui/glyph.js. The digit is the
-     cell's place in the bank. The NAME is the accessible name, the `.nu-vh`
-     word and what a hold prints, because a motif's name is the composer's and
-     no picture can carry it — `psalm` and `neume` are the sort of word this
-     box exists to let somebody choose. (The block under the strip prints it
-     too — "psalm — read by cantor" — so nothing about which motif is open
-     depends on the tab alone.) */
-  names.forEach((name, i) => {
-    const H = DOC.material.cells[name] || {};
-    const drum = H.kind === "drum";
-    const b = icon({
-      k: "motiftab-" + name,
-      glyph: kindGlyph(drum ? "drums" : "line"),
-      num: i + 1,
-      word: name,
-      say: name + " — " + (drum ? "a drum pattern" : "a motif") +
-           ", " + (i + 1) + " of " + names.length + " in the bank",
-      on: name === motifTab,
-    });
-    // THE TAP SOUNDS IT (Paul: "If I tap the motif play the motif in an
-    // associated voice"), and it sounds AFTER the redraw, so the sentence the
-    // audition writes lands in the block that is now on the page. A tab that
-    // is already open re-sounds — a tap is a tap. A loop belongs to one motif,
-    // so moving to another ends it (see the block over `auditionOf`).
-    b.addEventListener("click", () => {
-      /* A TAB IS FOR LOOKING. It used to sound the motif as well, which read
-         as a drum pad while you were writing and as a trap while you were
-         browsing — and a tap on the tab already open RESTARTED the sound with
-         no way to stop it. Hearing is the play button's job now (the block
-         over `loopButton`), so moving tabs only ends what the last one was
-         doing. */
-      const was = motifTab;
-      motifTab = name;
-      if (was !== name && (motifLoop || motifOnce)) auditionOff();
-      drawMaterial();
-    });
-    bar.append(b, document.createTextNode(" "));
-  });
-  /* ---------- AND TWO WAYS TO GROW THE BANK ------------------------------
-     Paul, 2026-08-25: *"motifs: give me a way to add a motif and a way to add a
-     drum pattern."*
-
-     THIS IS A TOMBSTONE ANSWERED. `hookGrid`'s own note has said since
-     2026-08-24: *"WHAT WENT WITH IT, NAMED SO IT CAN BE PUT BACK ON PURPOSE:
-     the `+ cell` button. Adding a cell that no voice reads yet has no home on
-     the page now — the only way to grow the material is `give <voice> its own
-     copy` on a shared cell."* It has a home now, and it is this strip: a motif
-     is a name you tap, so the place to make a new one is beside the names.
-
-     IN THE STRIP AND NOT UNDER IT, exactly like the band's `+ line` / `+ bass`
-     / `+ drums`, which live in `#tabs` beside the voice tabs. The two surfaces
-     are deliberately the same object (see the note over this function), and a
-     person who has learned "the add buttons are at the end of the strip" has
-     learned both.
-
-     THE NEW CELL IS A TABLE, NOT A GENERATION. `NEWMOTIF` and `DRUMGRID` are
-     literals — determinism, tables not generation — so two people who tap this
-     button get the same tune and the same beat, forever. A cell of sixteen
-     rests would have been the other candidate and it is refused: every degree
-     slider under it is disabled until you say "note" on its step, so the first
-     thing a new motif would do is refuse to be edited.
-
-     ...AND IT OPENS THE TAB IT MADE, which is the half that makes it a
-     gesture rather than an announcement: `motifTab = n` before the redraw, so
-     the block you are looking at afterwards is the one you just created. */
-  /* AND THE TWO ADD BUTTONS WEAR THE BAND'S OWN COMPOSITION, a plus and the
-     kind — the two surfaces are deliberately the same object (see the note
-     over this function) and a person who has learned one strip has learned
-     both. "+ drum pattern" was 128px on its own, a third of the row, and it is
-     the single widest saving on this page. The words are the accessible names
-     and the `.nu-vh` text, unchanged; `data-k` is unchanged. */
-  for (const [label, kind] of [["+ motif", "line"], ["+ drum pattern", "drum"]]) {
-    const b = icon({
-      k: kind === "drum" ? "adddrumcell" : "addcell",
-      glyph: "+" + kindGlyph(kind === "drum" ? "drums" : "line"),
-      word: label,
-      say: label + " — a new cell in the bank, opened as you make it",
-    });
-    b.addEventListener("click", () => { motifTab = addCell(kind); push(); draw(); });
-    bar.append(b, document.createTextNode(" "));
-  }
-  parent.append(bar);
-}
+/* ===== THE BANK'S STRIP LEFT THIS AXIS, 2026-08-28 ======================
+   Paul: *"There should be one vertical stripe max with an 'up' icon to get to
+   the parent level."* What stood here was `motifTabRow(parent)` and its
+   `#motif-tabs` row — a `<p class="nu-row">` holding one mark per cell in the
+   bank plus `+ motif` and `+ drum pattern`, 44.00px of horizontal band above
+   the motif you were actually editing. It is the `motif` LEVEL of `#nu-tray`
+   now (`motifTrayItems`, see THE STRIPE), which carries every argument this
+   block made — the two kinds of mark, the digit as the cell's place in the
+   bank, the name as the accessible name because "a motif's name is the
+   composer's and no picture can carry it", "a tab is for looking" and the
+   narrow `drawMaterial()` rebuild — quoted verbatim, because every one of them
+   is still the reason.
+   ITS TWO ADD BUTTONS WENT WITH IT, and the note that put them there is the
+   note that justifies the move: "IN THE STRIP AND NOT UNDER IT, exactly like
+   the band's `+ line` / `+ bass` / `+ drums`… the two surfaces are
+   deliberately the same object and a person who has learned one strip has
+   learned both." They are one object more literally than that could have
+   meant it — two levels of one stripe, built by two functions that read the
+   same way. `data-k` is unchanged on both (`addcell`, `adddrumcell`).
+   WHAT SAYS "read by nobody" IS STILL THE BLOCK'S OWN LABEL and not the tab,
+   which was true when the strip was here and is why nothing had to be added
+   to the axis to pay for its going. */
 /* A NEW MOTIF, AS A TABLE. Four quarter notes on the tonic and twelve rests —
    the plainest thing that is still a tune you can hear, edit and transform, and
    the same shape a metronome has. `DRUMGRID` (three lanes, four on the floor)
@@ -5904,6 +5832,13 @@ let tab = "line";
 // every voice, because that is the context a word is chosen against, just
 // not a control any more.
 const voiceTabs = () => [...SONGTABS, ...DOC.voices.map((v) => v.name)];
+/* ...AND WHICH VOICE IS OPEN, SETTLED IN ONE PLACE (2026-08-28), for the
+   reason `settleMotifTab` carries: `bandBlock` and the stripe's `band` level
+   both need the answer and neither may be the only one that has it. This
+   was two identical lines at the top of two functions. */
+const settleVoiceTab = () => { const t = voiceTabs();
+  if (!t.includes(tab)) tab = t[0];
+  return t; };
 // WHICH SECTION'S QUESTIONS ARE OPEN, or null for the list of them. Paul,
 // 2026-08-25: "Then make each section number tappable and when you tap it
 // brings up the questions about the section … When you click form the list
@@ -7665,77 +7600,23 @@ function performanceTab(parent) {
 
 function bandBlock(parent) {
   normalize();
-  const tabs = voiceTabs();
-  if (!tabs.includes(tab)) tab = tabs[0];
-  // the icons along the top. A button apiece, and the one you are on is
-  // marked — the same <mark> the playhead uses, for the same reason: it is
-  // the highlight the browser already has.
-  const bar = el("p");
-  bar.id = "tabs";
-  bar.className = "nu-row";   // one name for a strip of buttons — nu.css
-  /* A MARK AND A NUMBER, AND THE NUMBER IS THE ONLY TEXT (Paul, 2026-08-28:
-     "Voice 2 for example could be more symbol plus the number 2"). The mark
-     says the KIND — ♪ a line, ▼ the bass, ◉ the kit, and ▦ / ◈ for the two
-     tabs nobody plays — and the digit says WHICH. It is the voice's place in
-     `DOC.voices`, the RECORD's own roster, and the board's tabs number the
-     same players off the same list, so "voice 2" means one player wherever you
-     are looking (ui/glyph.js `sayVoice` carries that argument).
-     THE WORD DID NOT GO ANYWHERE: it is the button's `aria-label` and its
-     `.nu-vh` text, so a screen reader hears "schola" and never "eighth note",
-     and with the stylesheet off this strip still reads as its names in order.
-     Above 700px the OPEN tab prints its word again (nu.css) — there is room
-     for it there and the panel under a voice tab is named by nothing else.
-     Holding a tab (or hovering it with a mouse) names it out loud — the one
-     explainer, ui/glyph.js. */
-  const vTotal = DOC.voices.length;
-  for (const name of tabs) {
-    const v = SONGTABS.includes(name) ? null : VOICE(name);
-    const vi = v ? DOC.voices.indexOf(v) + 1 : null;
-    const b = icon({
-      k: "tab" + name,
-      glyph: glyphOf(name),
-      num: vi,
-      word: name,
-      say: v ? sayVoice(name, v.kind, vi, vTotal)
-             : (GLYPH.song[name] || {}).s,
-      on: name === tab,
-    });
-    // ...AND TAPPING `form` IS THE WAY BACK (Paul, 2026-08-25: "When you
-    // click form the list comes back up"). It is not a special case bolted on
-    // to one tab: `formSec` is which section's questions are open, and leaving
-    // the form — or arriving on it — closes them, which is the same line for
-    // every tab in the strip. There is no separate "back" control, because a
-    // second control for "where am I" is the second owner this round deleted
-    // `#secs` to be rid of.
-    b.addEventListener("click", () => { tab = name; formSec = null; draw(); });
-    bar.append(b, document.createTextNode(" "));
-  }
-  /* …AND THE THREE WAYS TO GROW THE BAND WEAR THE SAME MARKS. "+ line" was
-     the widest thing in this strip after "◈ performance" and the three of them
-     together were 206.6px of the 366 a phone leaves — the second line, more or
-     less exactly. They are a PLUS and the KIND's own glyph now, which is the
-     one composition in the row that has to be read as two things: what you are
-     about to do, and what you are about to do it to. The full words are still
-     the accessible names and still the `.nu-vh` text, so nothing was deleted —
-     `+ line`, `+ bass`, `+ drums` is what this strip reads as with the
-     stylesheet off, exactly as before. `data-k` is UNCHANGED: test/shell.js
-     hires a drummer through `[data-k="adddrums"]` and focus is put back across
-     a redraw by that key (PROGRAM.md §2.2), so the keys may not move because
-     the faces did. */
-  const offer = [["line", "+ line"]];
-  if (!BASSV()) offer.push(["bass", "+ bass"]);
-  if (!DRUMV()) offer.push(["drums", "+ drums"]);
-  for (const [kind, label] of offer) {
-    const add = icon({
-      k: kind === "line" ? "addvoice" : "add" + kind,
-      glyph: "+" + kindGlyph(kind),
-      word: label,
-      say: label + " — hire another player and give them their own tab",
-    });
-    add.addEventListener("click", () => { addVoice(kind); push(); draw(); });
-    bar.append(add, document.createTextNode(" "));
-  }
-  parent.append(bar);
+  settleVoiceTab();
+  /* ===== THE VOICE STRIP LEFT THIS PANEL, 2026-08-28 ====================
+     Paul: *"There should be one vertical stripe max with an 'up' icon to get
+     to the parent level."* What stood here was `#tabs` — a `<p class="nu-row">`
+     holding form, performance, one mark per voice and the three add buttons,
+     44.00px of horizontal band above every voice's own controls. It is the
+     `band` LEVEL of `#nu-tray` now (see THE STRIPE, which carries every one of
+     the comments that were in this block, verbatim, because every one of them
+     is still the reason).
+     NOTHING ELSE IN THIS FUNCTION MOVED. `tab` is still the page state that
+     says which voice is open, `formSec` is still closed by arriving anywhere,
+     `SONGTABS` is still what keeps a voice named "form" from being read as the
+     form tab, and the `data-k` on every one of those buttons is byte-identical
+     — test/shell.js hires a drummer through `[data-k="adddrums"]` and focus is
+     put back across a redraw by that key. What the panel got back is the
+     44.00px and the two lines of reading order: this block now opens on the
+     voice's own facts instead of on a list of the other voices. */
   // A NAME ON THE SONG-LEVEL LIST IS NEVER A VOICE, whatever a voice is
   // called. See SONGTABS.
   const onForm = tab === "form", onPerf = tab === "performance";
@@ -8258,7 +8139,16 @@ function draw() {
      whose top is above everything this rebuild replaces, which is the same
      guarantee said one level up and the same one `drawMaterial` makes with
      `#ax-material`. */
-  anchorId = $("tabs") ? "tabs" : (hostIdOf(openTab) || "app");
+  /* AND `#tabs` IS NOT AN ADDRESS ANY MORE, 2026-08-28. This read
+     `anchorId = $("tabs") ? "tabs" : (hostIdOf(openTab) || "app")` and the
+     first branch was the band's voice strip — "everything above it is the same
+     height, so pinning it pins the page". The strip is a level of the stripe
+     now (see the tombstone in `bandBlock`), the stripe is `position: fixed`
+     and therefore not in flow at all, and there is nothing at that address on
+     any tab. So the fallback IS the rule: the panel host being rebuilt, whose
+     top is above everything this rebuild replaces — the same guarantee said
+     one level up, and the same one `drawMaterial` makes with `#ax-material`. */
+  anchorId = hostIdOf(openTab) || "app";
   const anchor = $(anchorId);
   anchorWant = (anchorOff || !anchor) ? null : anchor.getBoundingClientRect().top;
   anchorAt = Date.now();
@@ -8287,6 +8177,14 @@ function draw() {
   // into #produce and the score into #scoredeck — all outside #app — and a
   // thumb that was on a fader or a verb chip is still a thumb that must come
   // back.
+  /* AND THE STRIPE IS REPAINTED FROM THE RECORD (2026-08-28). Hiring a voice
+     or making a motif changes which marks exist, and the roster it reads is
+     the one this rebuild just settled — so it is painted AFTER the panel and
+     before the focus goes back, which is what lets `restoreFocus` find the
+     `+ drums` button it is about to put your thumb on. It is `paintTray` and
+     not `trayRow`: the shape is compared, and a level whose keys did not move
+     has two attributes written on it and nothing else. */
+  paintTray();
   restoreFocus(document, wasKey, wasPicker);
   restoreAnchor();
 }
@@ -8360,7 +8258,10 @@ const tabStale = new Set();
    synchronously, inside the gesture — never on a promise, never on a timer,
    and never by the clock. */
 const tabScroll = new Map();
-let tabRow = null, tabBtn = new Map();
+/* (`let tabRow = null, tabBtn = new Map()` stood here — the <p> the nine were
+   drawn into and the map that let `paintTabs` move one <mark> without
+   rebuilding it. The nine are a level of `#nu-tray` since 2026-08-28 and the
+   map is `trayBtn`, which does the same job for four levels; see THE STRIPE.) */
 /* HOW LONG THE LAST SWITCH TOOK, in milliseconds of main thread, for the gate
    and for the console. The claim the tabs make is that a switch is cheap —
    `display`, a scroll, and a rebuild only if the record moved under it — and
@@ -8396,62 +8297,306 @@ function buildTab(name) {
   return true;
 }
 
-/* THE STRIP ITSELF — the page's own idiom for a row of tabs, spelled exactly
-   as `#tabs` (the band's voices), `#boardtabs` (the board's channels) and the
-   deck's notation/roll pair spell it: a `<p class="nu-row">` of plain buttons,
-   each carrying `aria-pressed`, the open one wearing a `<mark>` and the shut
-   ones a `<span>`. `<mark>` because it is the highlight the browser already
-   has and the one this page uses. The literal " " text nodes stay for the
-   reason `motifTabRow` gives: with the stylesheet off they are what keeps two
-   tabs from reading as one word.
+/* ===== THE STRIPE: ONE LEVEL AT A TIME, DOWN THE RIGHT EDGE ==============
+   Paul, 2026-08-28: *"Come up with a strategy for running the nav icons for a
+   given modality down the right of the interface but translucent. Put them in
+   a translucent tray. They're sort of like scrabble letters now. There should
+   be one vertical stripe max with an 'up' icon to get to the parent level."*
+   And, the same hour: *"You know what don't make it translucent. Make it a
+   fixed gutter"* and *"Dont let anything go under it."*
 
-   BUILT ONCE, AT BOOT, AND NEVER BY draw(). It is outside #app, it says
-   nothing about the record, and rebuilding a strip of nine buttons on every
-   keystroke would be nine buttons of garbage per edit for no change. What a
-   switch moves is one `<mark>` and one `aria-pressed` per button — `paintTabs`
-   below — which is also what keeps `__eightFrozen` honest: the row is not in
-   the frozen half at all, so a tab change cannot smuggle a mutation into it. */
-function tabsRow() {
-  const bar = $("toptabs");
-  if (!bar) return;
-  tabRow = bar;
-  bar.textContent = "";
-  tabBtn.clear();
-  /* NINE MARKS, AND THE OPEN ONE KEEPS ITS WORD (Paul, 2026-08-28: "Please
-     make all the tabs and top buttons into sensible icons to save space").
-     `GLYPH.tab` in ui/glyph.js is keyed by the same nine words `TABS` owns and
-     carries the argument for each mark; a tab renamed there and not here draws
-     nothing rather than the wrong thing, which is the failure you can see.
+   WHAT THIS REPLACES, AND IT IS FOUR FUNCTIONS AND NOT ONE. What stood here
+   was `tabsRow()` and `paintTabs()` — the nine top tabs, drawn as a wrapping
+   horizontal band (`#toptabs`). Three more strips were drawn the same way one
+   level down: `#tabs` in `bandBlock` (form, performance, the voices and the
+   three add buttons), `#motif-tabs` in `motifTabRow` (the bank and its two add
+   buttons), and the deck's notation/roll pair in `deckBlock`. All four are
+   here now, as LEVELS, and only one of them is ever on the screen.
 
-     THE ROW IS STILL TWO LINES AT 390 AND NO ARRANGEMENT COULD MAKE IT ONE:
-     nine 44px targets are 396px against the 366 a 390px phone leaves, before a
-     single gap. So this row does not spend its saving on a line — it spends it
-     on a UNIFORM TARGET (every tab was between 38.9 and 70.9px and every tab
-     is 44 now) and on the open tab's word, which the row could not afford
-     before and can now. One labelled tab in a row of pictures is what tells a
-     first-time reader what the pictures are; nu.css's `.nu-vh`-undoing rule is
-     unconditional for `#toptabs` and only above 700px for the four nested
-     rows, where the word is what costs a second line. */
-  for (const [name] of TABS) {
-    const t = GLYPH.tab[name] || {};
-    const b = icon({
-      k: "toptab-" + name,
-      glyph: t.g || "•",
-      word: name,
-      say: t.s,
-      on: name === openTab,
-    });
-    b.addEventListener("click", () => showTab(name));
-    bar.append(b, document.createTextNode(" "));
-    tabBtn.set(name, b);
+   THE HIERARCHY WAS ALREADY THERE AND WAS BEING DRAWN FLAT. Nine tabs, and
+   inside three of them another set — so a reader on the Band tab was looking
+   at nine marks plus seven, two bands of them, and no line anywhere saying
+   which set was inside which. Drawing ONE level is what makes "one vertical
+   stripe max" possible: never nine plus seven, only one set, and `↑` for the
+   set it is inside.
+
+   THE FOUR LEVELS, and the reason there are exactly four:
+     root    the nine (`TABS`) — Paul's own list, the one owner
+     band    form · performance · every voice · + line/bass/drums
+     motif   the bank, one mark per cell · + motif / + drum pattern
+     score   notation · piano roll
+   `Mix` has a fifth set of its own (`#boardtabs` — a strip per voice, then the
+   buses, then main) and it is NOT here, because ui/engineer.js belongs to
+   another round this week. It is the next level to absorb and its row is still
+   a horizontal band inside the Mix panel; nothing else about the shape below
+   has to change to take it.
+
+   A LEVEL IS NOT A MODE. `trayLevel` is a fact about the STRIPE, exactly as
+   `tabScroll` is a fact about where your thumb left a tab — it never reaches
+   the record, it is never written by the clock, and `push()` is not called
+   from anywhere in this block. What IS in the address is which voice / which
+   motif / which view a panel has open, because that is a fact about what you
+   are looking at (see THE ADDRESS).
+
+   DESCEND BY ARRIVING, RETURN BY `↑`. Tapping `Band` in the root stripe opens
+   the Band panel AND drops the stripe to the band level, because opening a tab
+   IS going into it; `↑` puts the nine back with `Band` still marked and the
+   panel still open. Tapping the marked tab again goes back down. There is no
+   fifth gesture and no disclosure anywhere: at every moment the stripe is
+   showing exactly one set of siblings, all of them visible at once, which is
+   what "nothing is hidden" has meant on this page since it was one scroll.
+
+   THERE IS NO `↑` AT THE ROOT, and the alternative was considered and refused.
+   A DISABLED `↑` carrying `data-why` is this page's own refusal idiom and it
+   is the wrong one here: that idiom exists for an option THE RECORD has made
+   unreachable — untick the drummer and sixty-eight kit words grey with "no
+   drummer" written on them — a fact that can change under you and therefore
+   has to keep its sentence on the screen. "There is no level above the top" is
+   not a fact about the record. It cannot change, no reader can act on it, and
+   a permanently dead 44px target at the head of a 56px column is the most
+   expensive piece of furniture on this page. What says where you are is the
+   marked mark, which is on screen the whole time. (A refusal that keeps its
+   sentence is still the law everywhere a REASON exists; this is the one place
+   there is no reason, only a definition.)
+
+   THE CLOCK MAY NOT REACH ANY OF THIS. Every function below is called from a
+   button's `click`, from `showTab`, from `draw`/`drawMaterial`, or from
+   `window.__eightTray` (a gate is a hand) — and from nowhere else. The <nav>
+   is outside `#app` and outside every `[data-live]` subtree, so
+   `window.__eightFrozen` never sees it and "playback mutates nothing outside
+   [data-live]" is untouched by a stripe that redraws when you tap it. */
+const TRAYSUB = { Band: "band", Motif: "motif", Score: "score" };
+let trayLevel = "root";
+let trayHead = null, trayList = null, traySig = "", trayHeadSig = "";
+let trayBtn = new Map();
+
+/* THE ROOT LEVEL — Paul's nine, and `TABS` is still their one owner. This is
+   `tabsRow`'s loop, unchanged except that it now hands back a description
+   instead of appending a button. */
+const rootTrayItems = () => TABS.map(([name]) => {
+  const t = GLYPH.tab[name] || {};
+  return { key: "toptab-" + name, glyph: t.g || "•", word: name, say: t.s,
+           on: name === openTab, act: () => showTab(name) };
+});
+
+/* THE BAND LEVEL — `bandBlock`'s `#tabs` strip, moved whole. Its own comments
+   moved with it, because every one of them is still the reason:
+
+   "A MARK AND A NUMBER, AND THE NUMBER IS THE ONLY TEXT (Paul, 2026-08-28:
+   'Voice 2 for example could be more symbol plus the number 2'). The mark says
+   the KIND — ♪ a line, ▼ the bass, ◉ the kit, and ▦ / ◈ for the two tabs
+   nobody plays — and the digit says WHICH. It is the voice's place in
+   `DOC.voices`, the RECORD's own roster, and the board's tabs number the same
+   players off the same list, so 'voice 2' means one player wherever you are
+   looking (ui/glyph.js `sayVoice` carries that argument). THE WORD DID NOT GO
+   ANYWHERE: it is the button's `aria-label` and its `.nu-vh` text, so a screen
+   reader hears 'schola' and never 'eighth note', and with the stylesheet off
+   this strip still reads as its names in order."
+
+   "...AND TAPPING `form` IS THE WAY BACK (Paul, 2026-08-25: 'When you click
+   form the list comes back up'). It is not a special case bolted on to one
+   tab: `formSec` is which section's questions are open, and leaving the form —
+   or arriving on it — closes them, which is the same line for every tab in the
+   strip."
+
+   "…AND THE THREE WAYS TO GROW THE BAND WEAR THE SAME MARKS. They are a PLUS
+   and the KIND's own glyph, which is the one composition in the row that has
+   to be read as two things: what you are about to do, and what you are about
+   to do it to. `data-k` is UNCHANGED: test/shell.js hires a drummer through
+   `[data-k='adddrums']` and focus is put back across a redraw by that key
+   (PROGRAM.md §2.2), so the keys may not move because the geometry did."
+
+   `normalize()` FIRST, for the reason `bandBlock` called it first: the stripe
+   can be painted before the Band panel has ever been built (a link that opens
+   on `t=band/bass` paints the level before `draw()` runs), and `voiceTabs()`
+   reads a roster this fills in. */
+function bandTrayItems() {
+  normalize();
+  const tabs = settleVoiceTab();
+  const vTotal = DOC.voices.length;
+  const out = tabs.map((name) => {
+    const v = SONGTABS.includes(name) ? null : VOICE(name);
+    const vi = v ? DOC.voices.indexOf(v) + 1 : null;
+    return { key: "tab" + name, glyph: glyphOf(name), num: vi, word: name,
+             say: v ? sayVoice(name, v.kind, vi, vTotal)
+                    : (GLYPH.song[name] || {}).s,
+             on: name === tab,
+             /* AND IT SAYS SO IN THE ADDRESS (2026-08-28). `markLink` is
+                the same debounced writer `showTab` uses and this is a hand
+                reaching it, never the clock — a voice tab is a tap. */
+             act: () => { tab = name; formSec = null; draw(); markLink(); } };
+  });
+  const offer = [["line", "+ line"]];
+  if (!BASSV()) offer.push(["bass", "+ bass"]);
+  if (!DRUMV()) offer.push(["drums", "+ drums"]);
+  for (const [kind, label] of offer) {
+    out.push({ key: kind === "line" ? "addvoice" : "add" + kind,
+               glyph: "+" + kindGlyph(kind), word: label,
+               say: label + " — hire another player and give them their own tab",
+               act: () => { addVoice(kind); push(); draw(); } });
   }
-  paintTabs();
+  return out;
 }
-function paintTabs() {
-  for (const [name, b] of tabBtn) {
-    const t = GLYPH.tab[name] || {};
-    paintIcon(b, { glyph: t.g || "•", word: name, say: t.s,
-                   on: name === openTab });
+
+/* THE MOTIF LEVEL — `motifTabRow`'s strip, moved whole, with its arguments:
+
+   "A motif is one of two KINDS — a tune or a beat — and `H.kind === 'drum'` is
+   the record's own word for which, so the strip borrows the voices' marks: ♪
+   for a motif, ◉ for a drum pattern, off the one table in ui/glyph.js. The
+   digit is the cell's place in the bank. The NAME is the accessible name, the
+   `.nu-vh` word and what a hold prints, because a motif's name is the
+   composer's and no picture can carry it — `psalm` and `neume` are the sort of
+   word this box exists to let somebody choose. (The block under the strip
+   prints it too — 'psalm — read by cantor' — so nothing about which motif is
+   open depends on the tab alone.)"
+
+   "A TAB IS FOR LOOKING. It used to sound the motif as well, which read as a
+   drum pad while you were writing and as a trap while you were browsing.
+   Hearing is the play button's job now, so moving tabs only ends what the last
+   one was doing."
+
+   "`drawMaterial()` AND NOT `draw()`: which motif is open changes exactly one
+   axis, and drawMaterial is the narrow rebuild that already keeps the pane
+   scrolls, the focus key and the scroll anchor."
+
+   "AND TWO WAYS TO GROW THE BANK (Paul, 2026-08-25: 'motifs: give me a way to
+   add a motif and a way to add a drum pattern')… IN THE STRIP AND NOT UNDER
+   IT, exactly like the band's `+ line` / `+ bass` / `+ drums`. The two
+   surfaces are deliberately the same object and a person who has learned one
+   has learned both." They are one object more literally than that note could
+   have meant it: both are levels of this stripe now, built by two functions
+   that read the same way. */
+function motifTrayItems() {
+  const names = settleMotifTab();
+  const out = names.map((name, i) => {
+    const H = DOC.material.cells[name] || {};
+    const drum = H.kind === "drum";
+    return { key: "motiftab-" + name,
+             glyph: kindGlyph(drum ? "drums" : "line"), num: i + 1, word: name,
+             say: name + " — " + (drum ? "a drum pattern" : "a motif") +
+                  ", " + (i + 1) + " of " + names.length + " in the bank",
+             on: name === motifTab,
+             act: () => {
+               const was = motifTab;
+               motifTab = name;
+               if (was !== name && (motifLoop || motifOnce)) auditionOff();
+               drawMaterial();
+               markLink();
+             } };
+  });
+  for (const [label, kind] of [["+ motif", "line"], ["+ drum pattern", "drum"]]) {
+    out.push({ key: kind === "drum" ? "adddrumcell" : "addcell",
+               glyph: "+" + kindGlyph(kind === "drum" ? "drums" : "line"),
+               word: label,
+               say: label + " — a new cell in the bank, opened as you make it",
+               act: () => { motifTab = addCell(kind); push(); draw(); } });
+  }
+  return out;
+}
+
+/* THE SCORE LEVEL — the deck's own pair, and its argument, moved whole: "▤ is
+   ruled paper — the staff, which runs across; ▥ is the roll — blocks standing
+   up the pitch axis. Turn one and you have the other, which is exactly what
+   these two buttons do to the same record." `setDeckView` is still the only
+   thing that decides which is marked; what changed is that it repaints the
+   stripe instead of two buttons it was holding references to. */
+const scoreTrayItems = () => [
+  { key: "deck.view.not", glyph: GLYPH.view.not.g, word: GLYPH.view.not.w,
+    say: GLYPH.view.not.s, on: deckView === "not",
+    act: () => setDeckView("not") },
+  { key: "deck.view.roll", glyph: GLYPH.view.roll.g, word: GLYPH.view.roll.w,
+    say: GLYPH.view.roll.s, on: deckView === "roll",
+    act: () => setDeckView("roll") },
+];
+
+/* WHICH LEVEL IS SHOWING, AND THE GUARD THAT KEEPS IT HONEST. A sub-level only
+   exists while its own tab is open — a `band` stripe over a Mix panel would be
+   a set of siblings none of which is on the screen — so a mismatch falls back
+   to the root rather than drawing a level nobody can be inside. It cannot
+   happen through the buttons (`showTab` sets the level every time) and it is
+   still checked, because the two states have two writers and one of them is a
+   fragment. */
+function trayNow() {
+  const want = TRAYSUB[openTab];
+  if (trayLevel !== "root" && trayLevel !== want) trayLevel = "root";
+  if (trayLevel === "band")  return { level: "band",  parent: "Band",
+                                      items: bandTrayItems() };
+  if (trayLevel === "motif") return { level: "motif", parent: "Motif",
+                                      items: motifTrayItems() };
+  if (trayLevel === "score") return { level: "score", parent: "Score",
+                                      items: scoreTrayItems() };
+  return { level: "root", parent: null, items: rootTrayItems() };
+}
+
+/* BUILT ONCE, AT BOOT. The <nav> ships empty in nukernel/index.html; this puts
+   its two boxes in it — the head, which holds `↑` and never scrolls, and the
+   list, which is the only thing in the stripe that does. */
+function trayRow() {
+  const nav = $("nu-tray");
+  if (!nav) return;
+  nav.textContent = "";
+  trayHead = el("div", null, "nu-trayhead");
+  trayList = el("div", null, "nu-traylist");
+  nav.append(trayHead, trayList);
+  traySig = ""; trayHeadSig = "";
+  trayBtn.clear();
+  paintTray();
+}
+
+/* AND REPAINTED — IN PLACE WHEN THE SHAPE HOLDS, REBUILT WHEN IT MOVES. This
+   is `paintTabs`'s promise kept at four levels instead of one. `paintTabs`
+   existed because "rebuilding a strip of nine buttons on every keystroke would
+   be nine buttons of garbage per edit for no change"; the same is true of a
+   voice strip on every tab switch, and it matters more here, because
+   `drawMaterial`'s `restoreFocus` is scoped to `#ax-material` and could not
+   put your thumb back on a stripe button it had just destroyed.
+   THE SIGNATURE IS THE LEVEL PLUS ITS KEYS, which is exactly the set of facts
+   that decide what buttons exist. Marking a different voice does not change
+   it (two attributes move, per `paintIcon`'s own short-circuit); hiring one
+   does, and then `draw()`'s document-wide `restoreFocus` is what carries the
+   focus over, by `data-k`, which is why the keys did not move. */
+function paintTray() {
+  if (!trayList) return;
+  const L = trayNow();
+  const headSig = L.parent || "";
+  if (headSig !== trayHeadSig) {
+    trayHeadSig = headSig;
+    trayHead.textContent = "";
+    if (L.parent) {
+      const u = icon({ k: "trayup", glyph: GLYPH.nav.up.g,
+                       word: GLYPH.nav.up.w, say: sayUp(L.parent) });
+      u.addEventListener("click", () => { trayLevel = "root"; paintTray(); });
+      /* A REAL <hr>, not a border on the button. The rule says "what is above
+         this line is a different kind of thing from what is below it", and
+         that is a statement the document makes whether or not this stylesheet
+         loads — with nu.css off the stripe reads `up`, a horizontal rule, then
+         the level. A border would have said it only to an eye. */
+      trayHead.append(u, el("hr", null, "nu-traycut"));
+    }
+  }
+  const sig = L.level + "|" + L.items.map((i) => i.key).join(",");
+  if (sig !== traySig) {
+    traySig = sig;
+    trayList.textContent = "";
+    trayBtn.clear();
+    for (const it of L.items) {
+      const b = icon({ k: it.key, glyph: it.glyph, num: it.num, word: it.word,
+                       say: it.say, on: it.on });
+      b.addEventListener("click", it.act);
+      /* THE LITERAL " " STAYS, and it is the same text node `motifTabRow` kept
+         for the same reason: with the stylesheet off it is what keeps two
+         marks from reading as one word. It generates no box in a flex column
+         (white-space-only runs between flex items do not), so it costs the
+         layout nothing. */
+      trayList.append(b, document.createTextNode(" "));
+      trayBtn.set(it.key, b);
+    }
+  } else {
+    for (const it of L.items) {
+      const b = trayBtn.get(it.key);
+      if (b) paintIcon(b, { glyph: it.glyph, num: it.num, word: it.word,
+                            say: it.say, on: it.on });
+    }
   }
 }
 
@@ -8491,6 +8636,15 @@ function showTab(name) {
     if (n === name) { h.removeAttribute("data-off"); h.removeAttribute("inert"); }
     else { h.setAttribute("data-off", ""); h.setAttribute("inert", ""); }
   }
+  /* AND THE STRIPE GOES DOWN A LEVEL WITH YOU, when there is one to go down
+     to (2026-08-28). Opening a tab IS going into it, so `Band`, `Motif` and
+     `Score` land you among their own siblings and `↑` puts the nine back with
+     the tab still marked and the panel still open. The other six have no
+     sub-level and the stripe stays at the root with them marked — which is
+     also the reset that makes `trayNow`'s guard unreachable through a button.
+     THIS LINE IS WHY THERE IS NO SEPARATE "descend" GESTURE: a stripe you had
+     to open would be a disclosure, and no panel on this page is behind one. */
+  trayLevel = TRAYSUB[name] || "root";
   const built = buildTab(name);
   /* AND ITS PANES GET THEIR SIDEWAYS SCROLL BACK. A `display: none` scroll
      container comes back at 0 whether it was rebuilt or not, so this is not a
@@ -8498,7 +8652,7 @@ function showTab(name) {
      made across a tab. Paul, 2026-08-25: *"When I scroll right to edit motifs
      and tap something it snaps left even though I'm not done editing."* */
   putPanes();
-  paintTabs();
+  paintTray();
   anchorWant = null;
   /* PUT THE READER BACK WHERE THEY LEFT THIS TAB. `scrollTo` and not
      `scrollIntoView`: the second one centres its target and is the harness lie
@@ -8691,7 +8845,9 @@ function exportBlock(parent) {
      at  the PLACE, the word off the globe (`Kingston`, `New York`)
      y   the YEAR the when-slider is on
      s   the SEED — the one `#rewrite` rolls and prints, ui/atlas.js's own
-     t   the TAB, lower-cased (`#t=mix` opens on the board)
+     t   the TAB, lower-cased (`#t=mix` opens on the board) — and, since
+         2026-08-28, the item its own level has open, after a slash:
+         `#t=band/bass`, `#t=motif/psalm`, `#t=score/roll`.
    Three of those four are the whole input to the compose path
    (`recordAt(place, year)` -> gk, then `genreToDocument(gk, seed)`), which is
    why the SONG is never in here. A link is a recipe, not a recording: it is
@@ -8721,6 +8877,65 @@ let linkTimer = 0;
 const tabToWire = (name) => String(name || "").toLowerCase();
 const tabFromWire = (w) => TABNAMES.find((n) => tabToWire(n) === tabToWire(w)) || null;
 
+/* ===== AND WHICH ITEM OF ITS OWN LEVEL (2026-08-28) =====================
+   Paul asked for a linkable sub-level with the stripe: *"one vertical stripe
+   max with an 'up' icon to get to the parent level."* Three of the nine tabs
+   have a level inside them and `t=` carries which item of it is open.
+
+   IT IS A NAME AND NOT AN INDEX, which is a deviation from the shape the round
+   was handed (`t=band/2`) and it is argued rather than assumed. This page's
+   own law is PROGRAM.md §2.2 — "keyed by the section's ID, never by its
+   index", the rule that keeps an open detail attached to the same section when
+   the form is reordered underneath it — and a voice's place in the roster is
+   exactly the number that moves when you hire a bass. A link that said
+   `band/2` would open on whoever is second TODAY; `band/bass` opens on the
+   bass. It is also what a person reads before they send it: `#t=motif/psalm`
+   says what you are about to show somebody and `#t=motif/2` says nothing.
+   (The one thing an index would have bought is a shorter fragment. The whole
+   address is ~40 characters and this adds five.)
+
+   WHY THE STRIPE'S OWN LEVEL IS *NOT* IN HERE, which is the other half of the
+   decision. `trayLevel` is a fact about the stripe — the same kind of fact as
+   `tabScroll`, where your thumb left a tab — and nobody wants to send a friend
+   "I had the stripe folded up". What a sender means by a link is WHAT THEY ARE
+   LOOKING AT, and that is which voice, which motif, which view. Arriving on
+   one of those puts the stripe on that level, because arriving is descending
+   (`showTab`), so the link does the visible thing without carrying the
+   invisible state.
+
+   A NAME WITH A SLASH IN IT IS THE ONE THING THIS CANNOT SAY, and it costs
+   nothing: the value is split at its FIRST slash and the tab names are Paul's
+   nine words, so `encodeURIComponent` on the item survives one decode by
+   `URLSearchParams` and `motif/a%2Fb` comes back as the item `a/b`, whole. */
+const subNow = () => openTab === "Band" ? tab
+  : openTab === "Motif" ? motifTab
+  : openTab === "Score" ? deckView : null;
+/* ...AND SPENDING ONE. Matched case-insensitively against the level's own
+   list, so a fragment somebody re-typed still lands; an item this record does
+   not have is simply not applied, and the tab it named is still opened —
+   a link that half-lands beats a link that refuses, and the stripe then shows
+   the level with its own first item marked. */
+function applySub(want) {
+  const w = String(want || "").toLowerCase();
+  const pick = (list) => list.find((n) => String(n).toLowerCase() === w) || null;
+  if (openTab === "Band") {
+    const n = pick(voiceTabs());
+    if (n && n !== tab) { tab = n; formSec = null; draw(); }
+    return !!n;
+  }
+  if (openTab === "Motif") {
+    const n = pick(motifNames());
+    if (n && n !== motifTab) { motifTab = n; drawMaterial(); }
+    return !!n;
+  }
+  if (openTab === "Score") {
+    const n = pick(["not", "roll"]);
+    if (n && n !== deckView) setDeckView(n);
+    return !!n;
+  }
+  return false;
+}
+
 /* THE FRAGMENT THIS PAGE IS, as a string. `s` is printed even when it is 1:
    the reading is a fact about the record and a link that only sometimes
    carried it would be a link whose meaning depended on how many times the
@@ -8731,7 +8946,9 @@ function linkFrag() {
   if (st && st.at) p.push("at=" + encodeURIComponent(st.at));
   if (st && st.y != null) p.push("y=" + encodeURIComponent(String(st.y)));
   if (st && st.s != null) p.push("s=" + encodeURIComponent(String(st.s)));
-  p.push("t=" + encodeURIComponent(tabToWire(openTab)));
+  const sub = subNow();
+  p.push("t=" + encodeURIComponent(tabToWire(openTab)) +
+         (sub ? "/" + encodeURIComponent(sub) : ""));
   return "#" + p.join("&");
 }
 /* ...AND THE WHOLE URL, which is what a person pastes into a message. Built
@@ -8774,7 +8991,13 @@ function readLink() {
   try { q = new URLSearchParams(h); } catch (e) { return null; }
   const at = q.get("at"), y = q.get("y"), s = q.get("s"), t = q.get("t");
   if (at == null && y == null && s == null && t == null) return null;
-  return { at, y, s, t };
+  /* THE FIRST SLASH AND ONLY THE FIRST. See the note over `subNow`: the tab is
+     one of Paul's nine words and holds no slash, so everything after the first
+     one is the item, whole, however many slashes are in its name. */
+  const cut = t == null ? -1 : String(t).indexOf("/");
+  return { at, y, s,
+           t: cut < 0 ? t : String(t).slice(0, cut),
+           sub: cut < 0 ? null : String(t).slice(cut + 1) };
 }
 
 /* ---------- and the door: copy link ------------------------------------
@@ -9072,6 +9295,16 @@ window.__eightTabNow = () => openTab;
 window.__eightTab = (name) => { showTab(name); return openTab; };
 // …AND WHAT THE LAST SWITCH COST, in milliseconds of main thread.
 window.__eightTabMs = () => tabMs;
+/* THE STRIPE, FOR A PROBE THAT CANNOT TAP (2026-08-28) — the same door
+   `__eightTab` is, at the level below it. `__eightTray()` reads what is on
+   screen: the level, the parent it would go up to, and the item keys in order.
+   `__eightUp()` is the `↑` button pressed. Neither is a second owner: both
+   call the functions the buttons call. */
+window.__eightTray = () => { const L = trayNow();
+  return { level: L.level, parent: L.parent,
+           items: L.items.map((i) => i.key),
+           on: (L.items.find((i) => i.on) || {}).key || null }; };
+window.__eightUp = () => { trayLevel = "root"; paintTray(); return trayLevel; };
 window.__eightEngraves = () => engraves;      // abcjs renders, ever
 // ...AND THE SCORE'S OWN, which is a different claim on a different surface
 // (see `scoreEngraves`): how many times the whole record has been engraved.
@@ -9284,7 +9517,8 @@ warmup();
    move — one extra panel build, at boot, only for a link that asked for one. */
 const LINK = readLink();
 const LINKTAB = LINK ? tabFromWire(LINK.t) : null;
-tabsRow();
+const LINKSUB = LINK ? LINK.sub : null;
+trayRow();
 showTab(openTab);
 draw();
 say();
@@ -9314,6 +9548,11 @@ if (ATLAS) {
 printReading();                         // the bar prints reading 1 from boot
 // ...and NOW the tab the link asked for, with the globe already fitted.
 if (LINKTAB && LINKTAB !== openTab) showTab(LINKTAB);
+/* ...AND THE ITEM OF ITS OWN LEVEL, AFTER THE TAB AND NEVER BEFORE IT: a voice
+   is a fact about the Band panel and the panel has to be the open one for
+   `applySub` to know which list to look in. `showTab` has already dropped the
+   stripe to that level, so the link lands you among the siblings it named. */
+if (LINKSUB) applySub(LINKSUB);
 // The address is written once at boot whatever happened: a page that opened
 // on its own record still has a URL worth copying, and a link that was
 // refused must not go on claiming a place this box is not showing.

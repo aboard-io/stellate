@@ -50,31 +50,49 @@
 //       editing". So A5 asserts the thing the pane was ever FOR.)
 //   A5c no `.nu-pane` wraps a rotated step grid (`table.nu-grid`) — the exact
 //       unnecessary scroll container named above, kept out by name.
-//   A6  THE TWO STICKY BANDS, AND THE SECOND ONE IS THE TAB ROW (rewritten
-//       2026-08-27). It read: "at scrollY 600/1400/2400 the .nu-bar sits at 0
-//       and EXACTLY ONE .nu-ax > h2 sits in 0 < top < 120 — and it is the
-//       heading of the axis the viewport is actually inside. Two bands, never
-//       three." Paul, the same day: *"Why don't we make tabs at the top level
-//       and let go of the idea of scrolling everything? The tabs are: Where /
-//       Tempo / Key / Motif / Band / Mix / Produce / Score / Export."* There is
-//       no scroll long enough to hold three axis headings any more and no axis
-//       heading on the screen at all — the second band is `#toptabs`, which
-//       names all nine places at once instead of naming the one you have
-//       scrolled into. nu.css carries the reversal in full (THE SECOND BAND IS
-//       THE TAB ROW). The CLAIM is the same claim and it is now true at every
-//       pixel rather than at three sampled ones: at every scroll position this
+//   A6  ONE STICKY BAND, AND THE NAVIGATION IS A FIXED GUTTER (rewritten
+//       2026-08-28). This check has been rewritten twice and both rewrites
+//       were forced by Paul moving the navigation, so both are kept.
+//       IT FIRST READ: "at scrollY 600/1400/2400 the .nu-bar sits at 0 and
+//       EXACTLY ONE .nu-ax > h2 sits in 0 < top < 120 — and it is the heading
+//       of the axis the viewport is actually inside. Two bands, never three."
+//       IT THEN READ (2026-08-27, the tabs): "at every scroll position this
 //       page can reach, on every tab, `.nu-bar` sits at 0 and `#toptabs` sits
-//       at exactly `--bar-h` — and no `.nu-ax > h2` is `position: sticky`
-//       anywhere, which is the half that proves the old band really went
+//       at exactly `--bar-h`."
+//       Paul, 2026-08-28: *"Come up with a strategy for running the nav icons
+//       for a given modality down the right of the interface … There should be
+//       one vertical stripe max with an 'up' icon to get to the parent
+//       level"*, and then *"Make it a fixed gutter"* / *"Dont let anything go
+//       under it."* There is no second band left to pin: `#toptabs` is
+//       `#nu-tray`, `position: fixed` down the right edge, and it does not
+//       move with the scroll because it is not in the scroll.
+//       SO THE CLAIM IS THE ONE THAT IS STILL TRUE AT EVERY PIXEL: over the
+//       whole height of every tab, `.nu-bar` sits at 0 once it has pinned, the
+//       stripe sits at viewport top 0 and never moves, and no `.nu-ax > h2` is
+//       `position: sticky` anywhere — the half that proves the old bands went
 //       rather than being drawn twice.
-//   A6b the tab row NEVER SCROLLS SIDEWAYS and every one of the nine names is
-//       inside it. A strip of tabs that scrolls horizontally is A1's failure
-//       wearing a feature's clothes, and `.nu-row` wraps.
-//   A6c the marked tab is the open tab: exactly one `<mark>` in the row, its
-//       text is `__eightTabNow()`, and its button is the only one with
-//       `aria-pressed="true"`.
+//   A6b THE STRIPE IS ONE COLUMN AND IT NEVER SCROLLS SIDEWAYS. (It read "the
+//       tab row NEVER SCROLLS SIDEWAYS … `.nu-row` wraps." A column that
+//       wrapped would be the second stripe Paul's "one vertical stripe max"
+//       forbids, so the check now counts DISTINCT BUTTON LEFTS as well: one
+//       column, `scrollWidth === clientWidth`, at every width.)
+//   A6c the marked mark is the open thing: exactly one `<mark>` in the stripe,
+//       and its button is the only one with `aria-pressed="true"`. At the root
+//       level that is `__eightTabNow()`; at a sub-level it is that level's own
+//       open item, which is what `__eightTray().on` reports.
 //   A6d NINE TABS, IN PAUL'S WORDS, IN PAUL'S ORDER — read off the rendered
-//       buttons and compared to the literal list he wrote.
+//       buttons of the ROOT level and compared to the literal list he wrote.
+//   A6i NOTHING GOES UNDER THE GUTTER, and it is a layout law rather than a
+//       z-index (Paul: *"Dont let anything go under it"*). On every tab, the
+//       right edge of every laid-out block is <= the gutter's left edge, and
+//       the document's own scrollWidth is unchanged. Boxes are not descended
+//       into past a clipper (an <svg> viewport, an `overflow: auto` pane):
+//       their contents run past on purpose and are not painted there, so what
+//       is asserted is that the CLIPPER is inside the gutter.
+//   A6j EVERY LEVEL IS REACHABLE AND `↑` RETURNS. Walk root -> band -> root,
+//       root -> motif -> root, root -> score -> root through the stripe's own
+//       buttons, and assert there is no `↑` at the root — it is ABSENT rather
+//       than refused, and ui/eight.js `THE STRIPE` carries the argument.
 //   A6e A TAB REMEMBERS ITS SCROLL. Scroll a tall tab, leave it, come back:
 //       the window is where you left it, and a tab never opened starts at 0.
 //   A7  the .nu-bar is exactly --bar-h tall. `.nu-tabs { top: var(--bar-h) }`
@@ -241,7 +259,7 @@ const BANDS = async () => {
   const raf = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   const barH = parseFloat(getComputedStyle(document.documentElement)
     .getPropertyValue("--bar-h")) || 52;
-  const row = document.getElementById("toptabs");
+  const row = document.getElementById("nu-tray");
   const bar = document.querySelector(".nu-bar");
   const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
   /* WHERE THE BANDS PIN, AND IT IS NOT ZERO. `#title` is above the transport
@@ -263,7 +281,12 @@ const BANDS = async () => {
      room) and pins at y = 228.7 - 52 = 176.7. A single pin point would have
      asked the row to be pinned sixty-five pixels before it can be. */
   const pinBar = Math.ceil(bar.getBoundingClientRect().top);
-  const pinRow = Math.ceil(row.getBoundingClientRect().top - barH);
+  /* THE STRIPE HAS NO PIN POINT, 2026-08-28: it is `position: fixed`, so it is
+     at viewport top 0 from the first frame and stays there. `pinRow` was the
+     scroll at which `#toptabs` reached the underside of the transport; the
+     number that replaces it is 0, and the claim it feeds is that the stripe's
+     top is 0 at EVERY stop rather than past one. */
+  const pinRow = 0;
   const out = [];
   for (let k = 0; k <= 10; k++) {
     window.scrollTo(0, Math.round(max * k / 10));
@@ -272,7 +295,7 @@ const BANDS = async () => {
       barPinned: window.scrollY >= pinBar, rowPinned: window.scrollY >= pinRow,
       barTop: +bar.getBoundingClientRect().top.toFixed(1),
       rowTop: +row.getBoundingClientRect().top.toFixed(1),
-      want: barH });
+      want: 0 });
   }
   window.scrollTo(0, 0);
   await raf();
@@ -282,8 +305,14 @@ const BANDS = async () => {
     stickyHeads: [...document.querySelectorAll(".nu-ax > h2, #atlas > h2")]
       .filter((h) => getComputedStyle(h).position === "sticky")
       .map((h) => h.textContent.trim()),
-    // …and that the row itself never scrolls sideways (A6b)
-    rowScroll: [row.scrollWidth, row.clientWidth],
+    // …and that the stripe itself never scrolls sideways, and is ONE column
+    // (A6b). The list is the scroller; the <nav> is the frame.
+    rowScroll: (() => { const l = document.querySelector(".nu-traylist");
+      return [l.scrollWidth, l.clientWidth]; })(),
+    rowCols: (() => { const lefts = new Set();
+      for (const b of row.querySelectorAll("button"))
+        lefts.add(Math.round(b.getBoundingClientRect().left));
+      return lefts.size; })(),
     /* READ OFF `aria-label` AND NOT OFF THE TEXT, 2026-08-28. The nine tabs
        are glyphs now (Paul: "Please make all the tabs and top buttons into
        sensible icons to save space"), so `textContent` is "⊕Where" — the
@@ -300,12 +329,17 @@ const BANDS = async () => {
       .map((m) => (m.closest("button").getAttribute("aria-label") || "").trim()),
     pressed: [...row.querySelectorAll('button[aria-pressed="true"]')]
       .map((b) => (b.getAttribute("aria-label") || "").trim()),
-    now: window.__eightTabNow(),
+    /* WHAT THE MARKED MARK SHOULD SAY. At the root it is the open tab; at a
+       sub-level the stripe is showing that level's own siblings and the marked
+       one is the item that level has open, which `__eightTray` reports off the
+       same call the buttons make. `↑` is never marked. */
+    now: (() => { const T = window.__eightTray();
+      if (T.level === "root") return window.__eightTabNow();
+      const b = T.on && document.querySelector('[data-k="' + T.on + '"]');
+      return b ? (b.getAttribute("aria-label") || "").trim() : null; })(),
+    level: window.__eightTray().level,
     rowH: +row.getBoundingClientRect().height.toFixed(1),
-    rowLines: (() => { const tops = new Set();
-      for (const b of row.querySelectorAll("button"))
-        tops.add(Math.round(b.getBoundingClientRect().top));
-      return tops.size; })(),
+    rowLines: 1,
   };
 };
 
@@ -389,14 +423,21 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
        A6g / A6h AND NOT A6e / A6f: both of those labels were already spoken
        for further down this file (the scroll-memory walk and the pane sweep),
        and two checks answering to one name is a report nobody can read. */
+    /* OFF THE STRIPE'S ROOT LEVEL, 2026-08-28. This read `#toptabs button`,
+       which was the whole row because the row was the whole hierarchy, drawn
+       flat. The stripe draws ONE level, so the gate says which level it wants
+       — `__eightUp()` is the `↑` button pressed, the same call the button
+       makes — and then reads the nine off the list. It skips `↑` by construction
+       (there is none at the root) and skips nothing else. */
+    await page.evaluate(() => window.__eightUp());
     const rowNames = await page.evaluate(() =>
-      [...document.querySelectorAll("#toptabs button")]
+      [...document.querySelectorAll(".nu-traylist button")]
         .map((b) => (b.getAttribute("aria-label") || "").trim()));
     is(JSON.stringify(rowNames) === JSON.stringify(PAULS_TABS),
       "A6d " + width + " · nine tabs, Paul's words, Paul's order — "
       + JSON.stringify(rowNames));
     const rowWords = await page.evaluate(() =>
-      [...document.querySelectorAll("#toptabs button")]
+      [...document.querySelectorAll(".nu-traylist button")]
         .map((b) => { const v = b.querySelector(".nu-vh, mark .nu-vh");
                       return v ? v.textContent.trim() : null; }));
     is(JSON.stringify(rowWords) === JSON.stringify(PAULS_TABS),
@@ -413,6 +454,43 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
     is(nakedGlyphs.length === 0,
       "A6h " + width + " · no naked glyph — every mark has a word and a name "
       + JSON.stringify(nakedGlyphs));
+
+    /* A6j — EVERY LEVEL IS REACHABLE, AND `↑` RETURNS (2026-08-28). Paul:
+       *"There should be one vertical stripe max with an 'up' icon to get to
+       the parent level."* Three of the nine tabs have a level inside them, and
+       the whole claim of the stripe is that you can get into one and back out
+       of it with the marks that are on the screen — so this drives the actual
+       buttons rather than the probe: `.click()` on the tab's mark, `.click()`
+       on `↑`, and the level is read after each.
+       AND THERE IS NO `↑` AT THE ROOT. It is ABSENT rather than disabled, and
+       that is a decision with a reason (ui/eight.js THE STRIPE: the refusal
+       idiom is for an option the RECORD made unreachable, and "there is no
+       level above the top" is a definition, not a fact that can change). A
+       dead 44px target at the head of a 56px column is what this asserts is
+       not there. */
+    const levels = [];
+    const now = () => page.evaluate(() => window.__eightTray());
+    await page.evaluate(() => window.__eightUp());
+    levels.push(["root", await now(), await page.$('[data-k="trayup"]')]);
+    for (const [word, want] of [["Band", "band"], ["Motif", "motif"],
+                                ["Score", "score"]]) {
+      await page.click('[data-k="toptab-' + word + '"]');
+      await page.waitForTimeout(TAB_SETTLE(word));
+      const into = await now();
+      await page.click('[data-k="trayup"]');
+      await page.waitForTimeout(120);
+      const back = await now();
+      levels.push([word, into, want, back]);
+    }
+    const rootUp = levels[0][2];
+    is(!rootUp, "A6j " + width + " · no ↑ at the root level — it is absent, "
+      + "not a dead button");
+    const badLevel = levels.slice(1).filter(
+      (L) => L[1].level !== L[2] || L[3].level !== "root" || !L[1].items.length);
+    is(badLevel.length === 0,
+      "A6j " + width + " · every level is reachable and ↑ returns — "
+      + levels.slice(1).map((L) => L[0] + "→" + L[1].level + "(" +
+          L[1].items.length + ")→" + L[3].level).join(", "));
 
     // THE KIT GRID IS THE WIDEST THING THIS PAGE DRAWS and the default record
     // has no drummer, so a gate that does not add one never measures it.
@@ -478,34 +556,68 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
           "A8 " + at + " · " + lane.what + "'s sticky first column moved "
           + lane.moved + "px over a " + lane.scrolled + "px scroll");
 
-      // A6 / A6b / A6c — the two bands, swept down this tab's whole height
+      /* A6 / A6b / A6c — the ONE band and the fixed stripe, swept down this
+         tab's whole height. `pinRow` is 0 since 2026-08-28 (the stripe is
+         `position: fixed` and is at the top of the viewport from the first
+         frame), so every stop is a stop the stripe is asked about and the
+         "too short to pin" skip only ever fires for the transport. */
       const b = await page.evaluate(BANDS);
       const pinB = b.stops.filter((t) => t.barPinned);
       const pinR = b.stops.filter((t) => t.rowPinned);
       const badBar = pinB.filter((t) => Math.abs(t.barTop) > 0.5);
       const badRow = pinR.filter((t) => Math.abs(t.rowTop - t.want) > 0.5);
       const end = b.stops[b.stops.length - 1].y;
-      if (!pinR.length)
-        skip("A6 " + at + " · this tab is too short to pin the tab row — the "
+      if (!pinB.length)
+        skip("A6 " + at + " · this tab is too short to pin the transport — the "
           + "whole panel is on the screen (page ends at y=" + end
-          + ", the bar pins at " + b.pinBar + ", the row at " + b.pinRow + ")");
+          + ", the bar pins at " + b.pinBar + ")");
       else is(badBar.length === 0 && badRow.length === 0,
-        "A6 " + at + " · over " + pinR.length + " pinned stops to y=" + end
-        + ": .nu-bar at 0 and #toptabs at " + b.stops[0].want
-        + " (" + b.rowLines + " line(s), " + b.rowH + "px)"
+        "A6 " + at + " · over " + pinB.length + " pinned stops to y=" + end
+        + ": .nu-bar at 0 and the stripe fixed at 0 ("
+        + b.rowH + "px tall, level \"" + b.level + "\")"
         + (badBar.length ? " — bar off at " + JSON.stringify(badBar.slice(0, 3)) : "")
-        + (badRow.length ? " — row off at " + JSON.stringify(badRow.slice(0, 3)) : ""));
+        + (badRow.length ? " — stripe off at " + JSON.stringify(badRow.slice(0, 3)) : ""));
       is(b.stickyHeads.length === 0,
-        "A6 " + at + " · no axis heading is sticky any more — the second band "
-        + "is the tab row" + (b.stickyHeads.length ? " — " + b.stickyHeads.join(", ") : ""));
-      is(b.rowScroll[0] === b.rowScroll[1],
-        "A6b " + at + " · the tab row wraps and never scrolls sideways ("
-        + b.rowScroll[0] + " vs " + b.rowScroll[1] + ")");
+        "A6 " + at + " · no axis heading is sticky any more — the navigation "
+        + "is a fixed gutter" + (b.stickyHeads.length ? " — " + b.stickyHeads.join(", ") : ""));
+      is(b.rowScroll[0] === b.rowScroll[1] && b.rowCols === 1,
+        "A6b " + at + " · the stripe is ONE column and never scrolls sideways ("
+        + b.rowScroll[0] + " vs " + b.rowScroll[1] + ", " + b.rowCols + " column)");
       is(b.marks.length === 1 && b.marks[0] === b.now &&
          b.pressed.length === 1 && b.pressed[0] === b.now,
         "A6c " + at + " · one <mark>, one aria-pressed, and both say \"" + b.now
         + "\" (marks " + JSON.stringify(b.marks) + ", pressed "
         + JSON.stringify(b.pressed) + ")");
+      /* A6i — NOTHING GOES UNDER THE GUTTER. Paul, 2026-08-28: *"Dont let
+         anything go under it."* The gutter's width is taken OUT of the page
+         (nu.css, `body { padding-inline }`), so this is a claim about flow and
+         not about z-index: every laid-out block ends at or before the rule. */
+      const G = await page.evaluate(() => {
+        const tray = document.getElementById("nu-tray");
+        const gl = tray.getBoundingClientRect().left;
+        const bad = []; let maxRight = 0;
+        const clips = (cs, c) => c.tagName.toLowerCase() === "svg" ||
+          ["hidden", "auto", "scroll", "clip"].includes(cs.overflowX);
+        const walk = (n) => { for (const c of n.children) {
+          if (c === tray || c.id === "nu-say") continue;
+          const cs = getComputedStyle(c);
+          if (cs.display === "none" || cs.visibility === "hidden") continue;
+          const r = c.getBoundingClientRect();
+          if (!r.width && !r.height) continue;
+          if (r.right > maxRight) maxRight = r.right;
+          if (r.right > gl + 0.5)
+            bad.push((c.id || String(c.className) || c.tagName)
+                     + "@" + r.right.toFixed(1));
+          if (!clips(cs, c)) walk(c); } };
+        walk(document.body);
+        return { gl, maxRight: +maxRight.toFixed(2), over: bad.slice(0, 5),
+                 overN: bad.length,
+                 w: +tray.getBoundingClientRect().width.toFixed(2) };
+      });
+      is(G.overN === 0,
+        "A6i " + at + " · nothing under the " + G.w + "px gutter — its left "
+        + "edge is " + G.gl + " and the furthest block ends at " + G.maxRight
+        + (G.overN ? " — " + G.overN + " over: " + G.over.join(", ") : ""));
     }
 
     /* A6e — A TAB REMEMBERS ITS SCROLL, and it is measured on the two tallest

@@ -327,9 +327,12 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
    * two voices and no drums, so `sound.drumkit` — on the MENUS list as of
    * 2026-08-24 — is not on the page at all until somebody is hired to play it.
    * test/sheets.js gate 4 does the same thing for the same reason.
-   * ...ON THE BAND TAB, since 2026-08-27: `+ drums` is a button inside the
+   * ...ON THE BAND TAB, since 2026-08-27: `+ drums` was a button inside the
    * Band panel, and a shut panel is `inert` — the click finds the element and
-   * fires nothing. */
+   * fires nothing. Since 2026-08-28 it is a mark in the stripe's `band` level,
+   * and the tab still has to be open for a different reason: the stripe draws
+   * one level, and that level only exists while the Band panel is the open
+   * one. */
   await openTop("Band");
   await p.evaluate(() => {
     const add = document.querySelector('[data-k="adddrums"]');
@@ -338,8 +341,12 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   });
   await p.waitForTimeout(300);
 
+  /* OFF THE STRIPE SINCE 2026-08-28 — see the same rewrite in test/sheets.js.
+     `#tabs` was the band's horizontal strip; it is the `band` level of
+     `#nu-tray`, `openTop("Band")` above has already descended into it, and
+     every `data-k` is byte-identical. */
   const tabs = await p.evaluate(() =>
-    [...document.querySelectorAll('#tabs [data-k^="tab"]')].map((t) => t.dataset.k));
+    [...document.querySelectorAll('#nu-tray [data-k^="tab"]')].map((t) => t.dataset.k));
   let sel = [], sheets = [];
   const eat = (s) => { sel = sel.concat(s.sel); sheets = sheets.concat(s.sheets); };
   // EVERY ONE OF THE NINE, FIRST — the Tempo tab's meter and swing, the Key

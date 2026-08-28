@@ -60,15 +60,17 @@
 <h1 id="title"></h1>
 
 <!-- ONE .nu-bar PER PAGE, and it is this one. It is sticky at top:0 and
-     exactly --bar-h tall, because THE TAB ROW sits at top: var(--bar-h) and a
-     control in here that WRAPPED would open a gap under the tabs.
-     test/shell.js pins the number for that reason.
-     (IT SAID "because .nu-ax > h2 sits at top: var(--bar-h)". The axis
-     headings stopped being sticky on 2026-08-27 — Paul: "Why don't we make
-     tabs at the top level and let go of the idea of scrolling everything?" —
-     and #toptabs took the second band over from them. The PROMISE did not
-     move one pixel and neither did the number: something is still pinned
-     directly under this strip and still assumes it is exactly --bar-h tall.)
+     exactly --bar-h tall, and test/shell.js pins the number.
+     (IT SAID "because .nu-ax > h2 sits at top: var(--bar-h)", and then
+     "because THE TAB ROW sits at top: var(--bar-h)". Both creditors are gone —
+     the axis headings stopped being sticky on 2026-08-27 and the tab row
+     became a fixed gutter down the right edge on 2026-08-28 — and the number
+     did not move, because what it buys now is the last thing it was ever
+     really about: this is ONE band of transport, one line, never two, and a
+     fifth control in here that wrapped would push the whole page down by a
+     row nobody asked for. The bar is `flex-wrap: nowrap`, so what it would
+     actually take is a sideways scroll rather than a wrap, and it takes
+     neither.)
      IT HOLDS FOUR CONTROLS SINCE 2026-08-27 AND --bar-h DID NOT MOVE. This
      said "a THIRD control", and the third and fourth arrived the same day
      (#rewrite and #take, below). The bar is `flex-wrap: nowrap`, so the
@@ -249,7 +251,50 @@
      in this file is exactly the drift the one-owner law exists to stop. The
      empty <p> ships here so the sticky band has its place in the document
      before a line of script runs. -->
-<p id="toptabs" class="nu-row nu-tabs"></p>
+<!-- ===== AND THE ROW BECAME A GUTTER, 2026-08-28 =======================
+     Paul: *"Come up with a strategy for running the nav icons for a given
+     modality down the right of the interface but translucent. Put them in a
+     translucent tray. They're sort of like scrabble letters now. There should
+     be one vertical stripe max with an 'up' icon to get to the parent level."*
+     And, the same hour, twice: *"You know what don't make it translucent. Make
+     it a fixed gutter"* and *"Dont let anything go under it."*
+
+     THE TRANSLUCENCY WAS ASKED FOR AND WITHDRAWN INSIDE THE HOUR, and that is
+     written down here so the next hand does not re-propose it. Enamel's
+     flat-paint law — flat colour, hard shadow, no blur anywhere — is NOT
+     reversed. The tray is OPAQUE, painted in the same `--panel` plate the
+     transport is, with one full-ink rule down its inner edge.
+
+     `<nav>` AND NOT `<p>`, AND IT STANDS EXACTLY WHERE `#toptabs` STOOD. The
+     element it replaces was `<p id="toptabs" class="nu-row nu-tabs">`, the
+     second sticky band, and its position in the source is the whole reason
+     this one is here rather than at the foot of <body> with `#nu-say`: with
+     the stylesheet off `position: fixed` is gone and this is an ordinary block
+     in flow, so the page's navigation has to READ before the panels it
+     navigates, exactly as the row did. DOM order is reading order is tab
+     order.
+
+     IT IS A CONTROL SURFACE, so it is outside `#app` (draw() empties panels;
+     see #engine's note above) and outside every `[data-live]` subtree — the
+     clock may not write a single character in here, and `window.__eightFrozen`
+     never sees it.
+
+     THE NINE NAMES ARE STILL NOT TYPED HERE. `TABS` in ui/eight.js is their
+     one owner and `trayRow`/`paintTray` fill this; the empty <nav> ships so
+     the gutter has its place in the document before a line of script runs.
+
+     WHAT THE ROW COST AND WHAT THE GUTTER COSTS. Nine 44px targets are 396px
+     against the 366 a 390px phone leaves, so `#toptabs` was two lines —
+     103.39px of vertical band — at every phone width and no arrangement could
+     have made it one. Turned on their side the same nine are 396px against
+     844 and fit twice over. The gutter takes 56px of WIDTH instead, once, for
+     every level: measured, the content column at 390 is 310px rather than 366
+     and 103.39px of height comes back; at 1280 it is 1200 rather than 1256 and
+     54.62px comes back. The three nested strips it also absorbs (`#tabs`,
+     `#motif-tabs`, the deck's notation/roll pair) were another 44.00px of band
+     each, on the tab you happened to be on.
+     -->
+<nav id="nu-tray" class="nu-tray" aria-label="where you are"></nav>
 
 <!-- THE NINE PANELS, IN PAUL'S ORDER. Each is a `.nu-pan`; ui/eight.js's
      `showTab` puts `data-off` + `inert` on the eight that are shut. The ids

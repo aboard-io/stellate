@@ -129,8 +129,16 @@ const MEASURE = () => {
        words read off `aria-label` and fail a reader, so the gate asks for the
        `.nu-vh` word as well. Between them, "no control is naked" is measured
        rather than assumed. */
-    tabNames: [...document.querySelectorAll("#toptabs button")]
-      .map((b) => (b.getAttribute("aria-label") || "").trim()),
+    /* OFF THE STRIPE'S ROOT LEVEL SINCE 2026-08-28. This read `#toptabs
+       button` — the nine drawn as a horizontal band. Paul: *"There should be
+       one vertical stripe max with an 'up' icon to get to the parent level"*,
+       so the nine are the ROOT level of `#nu-tray` and the level is put back
+       to root before they are read (`__eightUp` is the ↑ button pressed, the
+       same call the button makes). T2's claim is unchanged and unweakened:
+       "the page names its sections, in Paul's words, in Paul's order". */
+    tabNames: (() => { if (window.__eightUp) window.__eightUp();
+      return [...document.querySelectorAll(".nu-traylist button")]
+        .map((b) => (b.getAttribute("aria-label") || "").trim()); })(),
     nakedTabs: [...document.querySelectorAll("button .nu-g")]
       .map((g) => g.closest("button"))
       .filter((b) => !(b.getAttribute("aria-label") || "").trim() ||

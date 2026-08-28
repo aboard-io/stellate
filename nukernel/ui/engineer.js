@@ -1052,7 +1052,15 @@ export function mount(parent, ctx) {
   };
 
   // -- the main -------------------------------------------------------------
-  const HOMELESS = { width: 1, tilt: 1, ceiling: 1 };
+  /* HOMELESS IS GONE, 2026-08-28. `const HOMELESS = { width: 1, tilt: 1,
+     ceiling: 1 }` stood here and disabled those three cells with the sentence
+     "this one round-trips and draws but reaches no sound". All three reach the
+     sound now (audio/desk.js masterState -> fx_bus mswidth / mtilt / mpush +
+     clipl), and the last of them was the round's whole point: Paul, listening
+     to the Iranian pop record, *"There doesn't seem to be a way to even turn
+     the final mix off — the minimum amount of things is soft, not none"* —
+     `ceiling` was the word that claimed the clipper and the clipper was
+     unconditional. A refusal you have fixed must stop being printed. */
   const mv = (k) => (doc.sound && doc.sound.master && doc.sound.master[k]) || "";
   PLATES.main = () => {
     const p = el("div", null, "nu-plate");
@@ -1065,20 +1073,65 @@ export function mount(parent, ctx) {
     p.append(h);
     const g = el("div", null, "nu-gear");
     for (const f of MASTER_FIELDS) {
-      const why = HOMELESS[f.key] ? MASTER_WHY : null;
       const s = selectEl({
         key: "master|" + f.key, label: f.label,
         options: optionsFor(f.table, f.labels, mv(f.key), null, "default"),
         value: mv(f.key),
-        ...(why ? { why } : {}),
         set: (v) => { DD().writeMaster(doc, f.key, v); ctx.changed(); },
       });
-      const pl = labelled(g, f.label, s);
-      if (why) { pl.classList.add("is-off");
-        const w = el("small", "reaches no sound", "nu-why");
-        w.title = why; pl.append(w); }
+      labelled(g, f.label, s);
     }
     p.append(g);
+    /* THE ONE-TOUCH BYPASS (2026-08-28). Paul: *"Turning that stuff down
+       doesn't do enough in the final mix. There doesn't seem to be a way to
+       even turn the final mix off."* This is that way, and it is A VIEW OVER
+       THE SEVEN WORDS ABOVE — it writes `none` into each of them through the
+       same DD().writeMaster every <select> uses, and the selects redraw
+       showing seven `none`s because that is what the record now says. There is
+       no eighth stored fact: a `sound.master.bypass` flag would be a second
+       owner of seven values that already own themselves, and the first hand to
+       move `drive` afterwards would leave the record saying two things at once.
+       The button's own label is read back off the same seven values
+       (NuFields.masterIsNone), so it can never disagree with them.
+
+       WHAT IT DOES NOT TURN OFF, said here rather than discovered: the master
+       AIR shelf (-7 dB above 4.5 kHz), the 10 Hz highpass and the 20.5 kHz
+       lowpass. Those are catalogue-wide corrections in the engine's own
+       fxParams, not master WORDS — Paul asked for the shelf twice — so they
+       are outside the seven and outside this button. */
+    {
+      const F = window.NuFields;
+      // PLAIN <button>, no class: nu.css's design system gives "an action"
+      // the browser's own chrome and "a tab" the same button plus
+      // aria-pressed. This is the second — it has two states and says which.
+      const off = el("button", "");
+      off.type = "button";
+      off.dataset.k = "master|bypass";
+      const draw = () => {
+        const isNone = F.masterIsNone(doc.sound && doc.sound.master);
+        off.textContent = isNone ? "master: OFF — every stage bypassed"
+                                 : "turn the master off — every word to none";
+        off.setAttribute("aria-pressed", isNone ? "true" : "false");
+        off.title = isNone
+          ? "all seven words say none: no drive, no glue, no tape head, no " +
+            "global room, no width trim, no tilt, no clip stage. The air " +
+            "shelf and the band limits stay — they are the engine's, not the " +
+            "record's."
+          : "writes none into drive, glue, tape, space, width, tilt and " +
+            "ceiling at once — the record with nothing done to it";
+      };
+      off.addEventListener("click", () => {
+        const isNone = F.masterIsNone(doc.sound && doc.sound.master);
+        // pressed again = put the seven back to ABSENT, which is the engine's
+        // own default and NOT `none` (see fields.js: the two are different
+        // facts and 139 saved records depend on the difference)
+        for (const f of MASTER_FIELDS)
+          DD().writeMaster(doc, f.key, isNone ? null : F.MASTER_NONE[f.key]);
+        ctx.changed();
+      });
+      draw();
+      p.append(off);
+    }
     const r = el("div", null, "nu-busrow");
     // RECORD GAIN — Time's `sound.level` slider, moved onto the master strip
     // (FUTURE.md §5 rename table: "`level` (in Time) → `record gain`, on the
@@ -1510,8 +1563,11 @@ export function mount(parent, ctx) {
   // slider), so their sentences were rewritten in place above as history
   // rather than kept as standing refusals.
   const refusals = el("ul", null, "nu-hint nu-refusals");
+  // MASTER_WHY came OFF this list on 2026-08-28, the same way GENRE_WHY_LONG and
+  // BLEED_WHY_LONG came off it on 08-27: width, tilt and ceiling are wired, so
+  // their standing refusal is history and is written where the wiring is.
   for (const w of [MAINSEND_WHY, METER_WHY,
-                   STEREO_WHY, SWEEP_WET_WHY, MASTER_WHY])
+                   STEREO_WHY, SWEEP_WET_WHY])
     refusals.append(el("li", w));
   // THE GROUPS' REVERSAL STAYS PRINTED (desk-gate G12 holds it: "the reversal
   // is printed, not silent"), compressed 2026-08-27 with the essay's move —
@@ -1585,7 +1641,10 @@ function listening() {
   return wrap;
 }
 
-// THE THREE THAT REACH NO SOUND, in one sentence, so the master strip's cells
-// and any gate reading them back quote the same words.
-const MASTER_WHY = "this one round-trips and draws but reaches no sound" +
-  " — audio/desk.js:769 names all three and says why";
+/* MASTER_WHY IS RETIRED (2026-08-28). It said "this one round-trips and draws
+   but reaches no sound — audio/desk.js:769 names all three and says why", and
+   the three were width, tilt and ceiling. audio/desk.js no longer names them:
+   width is fx_bus `mswidth`, tilt is `mtilt`, ceiling is `mpush` + `clipl`,
+   and the last of those is the soft clip that had been unconditional on every
+   record since the csound port. The sentence is deleted rather than softened
+   because a refusal that has been kept is not a refusal. */

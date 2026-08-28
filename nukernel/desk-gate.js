@@ -1628,24 +1628,40 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        "(their sends and aims still load and still route; G14's model half)",
        JSON.stringify({ plates: rackDrawn.plates, groupTabs: rackDrawn.groupTabs }));
     // THE MAIN TAB CARRIES THE MASTER'S WORDS, so it is opened before they are
-    // looked for (2026-08-27, the board tabs). The claim is untouched: a
-    // control that round-trips and reaches no sound is DISABLED and its
-    // reason is on the page — and "on the page" is now "on its own tab",
-    // which is where the person who can touch it is standing.
+    // looked for (2026-08-27, the board tabs).
+    //
+    // THE CLAIM IS REVERSED, 2026-08-28. It used to be that width, tilt and
+    // ceiling "round-trip and reach no sound", so the gate held them DISABLED
+    // with their reason printed. All three are wired now — audio/desk.js
+    // masterState -> fx_bus mswidth / mtilt / mpush + clipl — and the last of
+    // them was the round's headline: Paul, listening to the Iranian pop
+    // record, *"There doesn't seem to be a way to even turn the final mix off
+    // — the minimum amount of things is soft, not none."* `ceiling` was the
+    // word that claimed the soft clip, and the soft clip was unconditional in
+    // fx_bus master(). So the gate now asserts the opposite of what it used
+    // to: every master word is LIVE, every vocabulary opens with `none`, and
+    // the strip carries the one-touch bypass that writes all seven at once.
     await openBus("main");
-    const homeless = await page.evaluate(() => {
-      const t = document.body.innerText, out = [];
-      for (const k of ["width", "tilt", "ceiling"]) {
+    const master = await page.evaluate(() => {
+      const out = [];
+      for (const k of ["drive", "glue", "tape", "space", "width", "tilt", "ceiling"]) {
         const s2 = document.querySelector('[data-sel="master|' + k + '"]');
-        out.push({ k, off: !!(s2 && s2.disabled), why: s2 && s2.dataset.why,
-                   said: !!(s2 && s2.dataset.why && t.includes(s2.dataset.why)) });
+        out.push({ k, live: !!(s2 && !s2.disabled), why: (s2 && s2.dataset.why) || null,
+                   none: !!(s2 && [...s2.options].some((o) => o.value === "none")) });
       }
-      return out;
+      const b = document.querySelector('[data-k="master|bypass"]');
+      return { words: out, bypass: !!b, pressed: b && b.getAttribute("aria-pressed") };
     });
-    ok(homeless.every((h) => h.off && h.why && h.said),
-       "…and the three master words that round-trip and reach no sound are " +
-       "still refused with their reason on the page (PROGRAM.md §4.11)",
-       JSON.stringify(homeless));
+    ok(master.words.every((h) => h.live && !h.why && h.none),
+       "every master word is LIVE and every vocabulary opens with `none` — " +
+       "the three that used to be refused (width / tilt / ceiling) reach " +
+       "fx_bus now, and no cell prints a refusal it no longer owes",
+       JSON.stringify(master.words));
+    ok(master.bypass && master.pressed === "false",
+       "…and the main strip carries the one-touch master bypass, a VIEW over " +
+       "those seven words (it writes `none` into each) rather than an eighth " +
+       "stored fact — unpressed on a record that has not been bypassed",
+       JSON.stringify({ bypass: master.bypass, pressed: master.pressed }));
     // PER TAB SINCE 2026-08-27: the two model lines sit on the delay and the
     // reverb plates, one of which is on the page at a time. Gathered by
     // opening each bus tab in turn, which also proves the readout is REBUILT

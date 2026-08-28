@@ -1263,8 +1263,44 @@
   // asks for. Nothing else needed re-measuring: audio/desk.js DRIVE_LU is keyed
   // on the grit VALUE and interpolated, so the stage's own level compensation
   // follows these numbers down without a second fit.
-  const DRIVES = { hair: 0.06, warm: 0.16, dirt: 0.32, crush: 0.62 };
-  const DRIVELABEL = { hair: "a hair", warm: "warm", dirt: "dirt", crush: "crush" };
+
+  /* ================== THE MASTER HAS AN OFF, 2026-08-28 =====================
+     Paul, listening to the Iranian pop record: *"Iranian pop is symptomatic of
+     the problem in the mix. The vocals should be native. Everything is hot and
+     needs more filtering. Everything sounds like it was recorded on very hot
+     mic or amp. Turning that stuff down doesn't do enough in the final mix.
+     There doesn't seem to be a way to even turn the final mix off — the
+     minimum amount of things is soft, not none."*
+
+     THE LAST SENTENCE IS THE BUG AND EVERY TABLE BELOW WAS GUILTY OF IT. The
+     quietest word in each vocabulary was a SMALL NUMBER, never zero: DRIVES
+     began at `hair` 0.06, TAPES' gentlest head still saturated at sat 0.18,
+     SPACES' smallest room still bled 0.07 of the dry into the reverb, and
+     CEILINGS' `open` — the word whose own comment promised "no clip stage" —
+     could not remove a clipper that engine/faust/dsp/fx_bus.dsp applied
+     UNCONDITIONALLY. A hand turning those down was walking a ladder whose
+     bottom rung was still a rung, which is exactly why "turning that stuff
+     down doesn't do enough": the stages never left.
+
+     SO EVERY MASTER VOCABULARY NOW OPENS WITH `none`, and `none` is a genuine
+     bypass rather than a small number — grit 0, comp 0, sat 0, mix 0, side x1,
+     tilt 0 dB, clip off. Each one is arithmetically exact at the DSP (fx_bus
+     select2s the stage OUT rather than scaling it to nothing; see that file's
+     bypass block), so choosing it removes the stage from the signal instead of
+     turning it down.
+
+     ABSENT IS STILL TODAY, and that is a decision rather than an oversight.
+     139 saved records spell "I said nothing about mastering" by having no
+     `sound.master` key at all, and ABSENT-IS-TODAY is the law that lets them
+     re-render as themselves; if absent silently became `none` every one of
+     them would change on load. `none` is a word you CHOOSE. The two are
+     different facts and they keep different spellings: absent = the engine's
+     own fxParams defaults, `none` = nothing at all. ==================== */
+  // `none` FIRST, and it is grit 0 — fx_bus gritmix is `x + (gritfx(x)-x)*
+  // min(1, grit*8)`, so at 0 the shaper's whole contribution is multiplied away
+  // and the sample that comes out is the sample that went in, bit for bit.
+  const DRIVES = { none: 0, hair: 0.06, warm: 0.16, dirt: 0.32, crush: 0.62 };
+  const DRIVELABEL = { none: "none", hair: "a hair", warm: "warm", dirt: "dirt", crush: "crush" };
 
   // GLUE — the bus compressor that is ALREADY THERE. graph.js has run live.js's
   // glue comp → makeup since the day the sampled voices turned out to play at
@@ -1281,7 +1317,14 @@
   // their relative loudness; the default now leaves the limiter with ~0
   // reduction at default settings (beatles peak −3.5 dBFS after), so the
   // brickwall is a net again instead of the sound.
+  // `none` FIRST (2026-08-28): the compressor OUT, not a gentle one. It resolves
+  // to audio/desk.js GLUE_COMP 0, which is fx_bus `comp` 0 — cratio
+  // 1/max(0.45, 1-0) = 1, makeup 1, cpar 0 — and a compression_gain_mono at
+  // ratio 1 returns exactly 1, so `glue(x,y)` reduces to `(x*1)*1`. Exact.
+  // The numbers here are the identity spelling of the same thing for
+  // resolveMaster's shape-preserving readers.
   const GLUES = {
+    none:   { thr: 0,   knee: 0,  ratio: 1,   atk: 0.030, rel: 0.25, makeup: 1 },
     soft:   { thr: -18, knee: 30, ratio: 1.6, atk: 0.030, rel: 0.35, makeup: 1.2 },
     glue:   { thr: -22, knee: 28, ratio: 2.2, atk: 0.015, rel: 0.25, makeup: 1.4 },
     tight:  { thr: -26, knee: 18, ratio: 3.2, atk: 0.006, rel: 0.18, makeup: 1.7 },
@@ -1289,7 +1332,7 @@
     squash: { thr: -34, knee: 4,  ratio: 12,  atk: 0.001, rel: 0.06, makeup: 2.2 },
   };
   const GLUEDFLT = GLUES.glue;             // == what graph.js builds with no master
-  const GLUELABEL = { soft: "soft", glue: "glue", tight: "tight",
+  const GLUELABEL = { none: "none", soft: "soft", glue: "glue", tight: "tight",
                       pump: "pump", squash: "squash" };
 
   // TAPE — fx_bus's `wob` + `tsat` as ONE machine, because they are one machine:
@@ -1307,11 +1350,21 @@
   // the carrier and the live graph is inside the perceptual-twin class the
   // bounce already lives in, and the loop fold crosses the LFO the same way it
   // crosses a reverb tail.)
-  const TAPES = { warm: { wob: 0,    sat: 0.18 },
+  // `none` FIRST, AND IT IS THE ROUND'S SECOND BUG (2026-08-28). fx_bus's
+  // tapesat carried the comment "exact bypass at tsat=0 (the (…-x)*tsat term
+  // dies)" over an expression with NO such term: `x + (tanh(x*k)/k - x)` at
+  // tsat=0 is k=1, i.e. plain `tanh(x)` — a full-strength soft clip on every
+  // record ever rendered, un-turn-off-able, sitting one stage above the other
+  // one. THAT is "everything sounds like it was recorded on very hot mic or
+  // amp", and it is why the shipped `warm` head at sat 0.18 was never the
+  // gentlest thing available: 0 was gentler and 0 did not work. fx_bus now
+  // select2s the stage out at tsat=0, so this word is silence-of-the-stage.
+  const TAPES = { none: { wob: 0,    sat: 0    },
+                  warm: { wob: 0,    sat: 0.18 },
                   tape: { wob: 0.35, sat: 0.30 },
                   worn: { wob: 0.7,  sat: 0.45 },
                   wow:  { wob: 1,    sat: 0.60 } };
-  const TAPELABEL = { warm: "warm head", tape: "tape", worn: "worn", wow: "wow & flutter" };
+  const TAPELABEL = { none: "none", warm: "warm head", tape: "tape", worn: "worn", wow: "wow & flutter" };
 
   // SPACE — fx_bus `mrev`, "a little of the DRY mix into the reverb so the WHOLE
   // mix shares one room (the per-voice sends are untouched — this is the global
@@ -1322,19 +1375,31 @@
   // NOT a convolver, for graph.js buildRoomBus's stated reason: the audio gate
   // holds the page to two convolution reverbs and they are the most expensive
   // node here. `size` scales the comb times; `mix` is the bleed off the dry sum.
-  const SPACES = { touch:  { mix: 0.07, size: 0.55 },
+  // `none` FIRST (2026-08-28): mix 0. fx_bus's reverb input is
+  // `(rev + d*bleed + (ppl+ppr)*0.12 + (dl+dr)*0.5*mrev) * rgain`, so mrev 0
+  // removes the dry mix's term from the sum exactly — the per-voice sends are
+  // untouched, which is the whole point of the word. audio/desk.js honest()
+  // no longer derives a return level or a dry trim from a zero bleed.
+  const SPACES = { none:   { mix: 0,    size: 0    },
+                   touch:  { mix: 0.07, size: 0.55 },
                    room:   { mix: 0.13, size: 0.8 },
                    hall:   { mix: 0.20, size: 1.2 },
                    cavern: { mix: 0.30, size: 1.8 } };
-  const SPACELABEL = { touch: "a touch", room: "room", hall: "hall", cavern: "cavern" };
+  const SPACELABEL = { none: "none", touch: "a touch", room: "room", hall: "hall", cavern: "cavern" };
 
   // WIDTH — the one control here with no parent to borrow from, because the
   // parent gets its width from placement (MASTER_PAN) and from the tape's own
   // decorrelation. A mid/side trim is the master-bus answer to the same
   // question, and it is gains and a splitter: side ×0 is mono, ×2.2 is as wide
   // as a two-voice box can be pushed before the centre hollows out.
-  const WIDTHS = { mono: 0, narrow: 0.5, wide: 1.5, huge: 2.2 };
-  const WIDTHLABEL = { mono: "mono", narrow: "narrow", wide: "wide", huge: "huge" };
+  // …AND IT REACHES THE SOUND NOW, 2026-08-28. This table drew on the board and
+  // round-tripped through a save and stopped there — audio/desk.js listed it
+  // under "what has no home". It has one: fx_bus gained a mid/side trim
+  // (`mswidth`), which is four multiplies, and `none` = side x1 = the record's
+  // own image, select2'd past so the identity is exact rather than
+  // arithmetically-nearly.
+  const WIDTHS = { none: 1, mono: 0, narrow: 0.5, wide: 1.5, huge: 2.2 };
+  const WIDTHLABEL = { none: "none", mono: "mono", narrow: "narrow", wide: "wide", huge: "huge" };
 
   // TILT — fx_bus's tone stage as one knob. A SHELF PAIR, not a filter pair:
   // the parent's own note on MASTER_AIR_SHELF_DB is that a shelf "dims the air
@@ -1342,8 +1407,16 @@
   // lowpass) is already unconditional in graph.js. Value is the tilt in dB —
   // the low shelf takes −t and the high shelf +t, so one number rocks the
   // spectrum about its middle.
-  const TILTS = { dark: -4, warm: -2, clear: 2, bright: 4 };
-  const TILTLABEL = { dark: "dark", warm: "warm", clear: "clear", bright: "bright" };
+  // …AND IT REACHES THE SOUND NOW, 2026-08-28, because Paul asked for the thing
+  // it does: *"Everything is hot and needs more filtering."* A tone control
+  // that draws and does nothing is the box's characteristic bug, and this was
+  // the one word on the board that answers his sentence directly. fx_bus gained
+  // `mtilt`: ONE first-order split about 1 kHz — the low half x10^(-t/20), the
+  // high half x10^(+t/20) — rather than the shelf PAIR described below, because
+  // one filter per channel is a quarter of the cost and rocks the same
+  // spectrum about the same middle. `none` = 0 dB = the stage select2'd out.
+  const TILTS = { none: 0, dark: -4, warm: -2, clear: 2, bright: 4 };
+  const TILTLABEL = { none: "none", dark: "dark", warm: "warm", clear: "clear", bright: "bright" };
 
   // CEILING — how hard the end of the chain works. `open` is graph.js's
   // brickwall exactly as it stands (−1.5 dB, no clip stage). The other three add
@@ -1351,12 +1424,42 @@
   // ended on, which is a knee rather than a wall — and `push` is a gain INTO the
   // limiter, which is the honest way to say "louder" without pretending the
   // makeup (glue's, above) is doing it.
-  const CEILINGS = { open:   { thr: -1.5, push: 1,   clip: 0 },
+  //
+  // THE CLIP COLUMN WAS A LIE AND IT IS THE HEADLINE OF 2026-08-28. Every value
+  // in it — including `open`'s 0, which the paragraph above reads out loud as
+  // "no clip stage" — was read by NOBODY. audio/desk.js masterState never
+  // looked at `ceiling` at all, and fx_bus applied the Bram de Jong soft clip
+  // at 0.95 unconditionally in master(). So the box shipped a word that said
+  // "off" over a stage that could not be switched off, on every record in the
+  // catalogue, which is precisely Paul's *"there doesn't seem to be a way to
+  // even turn the final mix off"*. Measured the same day: all four probe
+  // records peaked between -3.3 and -4.0 dBFS, i.e. above the clipper's knee
+  // at 0.475 (-6.5 dB) and pressed against its hard cap at 0.7125 (-2.93 dB).
+  // Every one of them was inside the clipper. That is the "very hot mic".
+  //
+  // THE COLUMN REACHES NOW: `clip` is fx_bus's `clipl` (the soft clip's limit,
+  // 0 = the stage is not built) and `push` is its `mpush` (the gain INTO it —
+  // the honest way to spell "louder", and a multiply by exactly 1 elsewhere).
+  //
+  // AND `open` IS REWRITTEN RATHER THAN HONOURED, which is the one place this
+  // round declines to take a table at its word. Reading `open`'s 0 as "off"
+  // would have silently changed every record the composer ever dealt it — the
+  // MASTER_LEAN ballots in compose.js hand `open` to kernel / vox / groove /
+  // drift / roots / parts — into a sound none of them was auditioned in. What
+  // `open` has ACTUALLY rendered for its whole life is the clipper, so `open`
+  // now SAYS the clipper, at 1.0 instead of 0.95: the gentlest setting the
+  // stage has, a knee starting at 0.5 and a cap at 0.75 rather than 0.7125,
+  // which is the direction Paul asked for without moving a record into a stage
+  // it never had. `thr` stays in the table and stays unreachable: the live
+  // brickwall is dsp/master_limit.dsp and its threshold is fixed in the DSP.
+  // `none` is the word for off, and `none` is new.
+  const CEILINGS = { none:   { thr: 0,    push: 1,   clip: 0 },
+                     open:   { thr: -1.5, push: 1,   clip: 1.0 },
                      safe:   { thr: -2.5, push: 1,   clip: 0.95 },
                      loud:   { thr: -3,   push: 1.7, clip: 0.95 },
                      louder: { thr: -3,   push: 2.6, clip: 0.95 } };
-  const CEILDFLT = CEILINGS.open;          // == what graph.js builds with no master
-  const CEILINGLABEL = { open: "open", safe: "safe", loud: "loud", louder: "louder" };
+  const CEILDFLT = CEILINGS.safe;          // == the clipper as fx_bus has always applied it
+  const CEILINGLABEL = { none: "none", open: "open", safe: "safe", loud: "loud", louder: "louder" };
 
   /* ---------- THE SHARED BUSES: the rack's own knobs ---------- */
   // The three send returns graph.js builds for every song — reverb, echo, drum
@@ -1799,6 +1902,26 @@
   const masterIsDefault = m => !m || typeof m !== "object" ||
     MASTER.every(f => m[f.key] == null ||
       !Object.prototype.hasOwnProperty.call(f.table, String(m[f.key])));
+
+  /* ---------- THE ONE-TOUCH BYPASS, AS A VIEW (2026-08-28) ----------------
+     Paul: *"There doesn't seem to be a way to even turn the final mix off."*
+     There is one control for that on the board's main strip, and it is NOT an
+     eighth stored fact — a `sound.master.bypass` boolean would be a second
+     owner of seven values that already own themselves, and the first hand to
+     touch `drive` afterwards would leave the record saying two things at once.
+     It is a VIEW: pressing it writes `none` into all seven words, and the
+     board redraws showing seven `none`s, because that IS what happened. The
+     inverse question ("is the master off right now?") is asked of the same
+     seven values rather than of a flag.
+
+     Derived rather than typed, so a table that grows an off-word cannot drift
+     from the button: each field contributes its own bypass spelling, which is
+     `none` where a table has one and the table's first key otherwise. */
+  const MASTER_NONE = Object.freeze(Object.fromEntries(MASTER.map((f) =>
+    [f.key, Object.prototype.hasOwnProperty.call(f.table, "none")
+              ? "none" : Object.keys(f.table)[0]])));
+  const masterIsNone = (m) => !!m && typeof m === "object" &&
+    MASTER.every((f) => m[f.key] === MASTER_NONE[f.key]);
 
   /* ---------- automation ---------- */
   // A box's `auto` list is the REAL automation surface: [{param, points:
@@ -2337,7 +2460,7 @@
                 DRIVES, DRIVELABEL, GLUES, GLUELABEL, TAPES, TAPELABEL,
                 SPACES, SPACELABEL, WIDTHS, WIDTHLABEL, TILTS, TILTLABEL,
                 CEILINGS, CEILINGLABEL, MASTER, MASTERBY,
-                resolveMaster, masterIsDefault,
+                resolveMaster, masterIsDefault, MASTER_NONE, masterIsNone,
                 BUSES, BUSBY, resolveBuses, busesIsDefault,
                 BUSNAMES, busNameOf, BUSTO, BUSDEFAULT, busRoute, busToOk,
                 AUTOPARAMS, AUTOPARAMLABEL, AUTOSHAPES, AUTOSHAPELABEL, autoShape,
