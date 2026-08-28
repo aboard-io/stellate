@@ -663,6 +663,19 @@ export function toScore(parts, opts = {}) {
   head.push("K:" + sigInfo.k);
 
   const body = [], voices = [];
+  /* HOW BUSY THE BUSIEST BAR IS, which is the one fact about the music the
+     PAPER needs and cannot get any other way (2026-08-28, Paul with a
+     screenshot: *"that is what notes look like in the score it will wear you
+     out"*). The page was asking abcjs for `staffwidth: 1` — abcjs's own
+     MINIMUM spacing — and at that width an eighth and a sixteenth are both
+     10.8px apart with a 9.8px notehead: one pixel of air, so a bar of the
+     chant arrives as a black smear under a beam. The width the paper should
+     ask for is a width per BAR, and a bar needs room in proportion to how
+     many things start in it. That count is a property of the MUSIC and so it
+     is counted here rather than guessed there; it is the union over voices
+     of the STEPS an onset falls on, because two parts attacking together are
+     one column on the page and not two. */
+  const onsets = new Map();          // bar -> set of steps something starts on
   parts.forEach((p, i) => {
     const eng = engrave(p.phrase || {}, { ...opts, reg: p.reg | 0, clef: p.clef,
                                           ott: p.ott, barsPerLine: 0 });
@@ -705,8 +718,17 @@ export function toScore(parts, opts = {}) {
                               : div && div.has(i) ? " || " : " | ")).join("")
       : "z" + spb;
     body.push(line + " " + (opts.close || "|]"));
+    for (const nt of eng.notes) {
+      const bar = Math.floor(nt.at / spb);
+      let set = onsets.get(bar);
+      if (!set) onsets.set(bar, (set = new Set()));
+      set.add(nt.at % spb);
+    }
     voices.push({ name: p.name, glyphs: eng.glyphs, notes: eng.notes,
                   ottava: eng.ottava, wide: eng.wide, clef: eng.clef });
   });
-  return { abc: head.join("\n") + "\n" + body.join("\n") + "\n", voices, spb };
+  let dense = 0;
+  for (const set of onsets.values()) if (set.size > dense) dense = set.size;
+  return { abc: head.join("\n") + "\n" + body.join("\n") + "\n",
+           voices, spb, dense };
 }
