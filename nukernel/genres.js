@@ -1513,9 +1513,39 @@
       // grand piano was the first thing you heard and the synth was buried.
       instr: ["polysynth", "bright_yamaha_grand"],
       drumkit: "tr909",            // Chicago's four on the floor is a 909's
-      entry: v => v, reg: v => v - 1,
+      entry: v => v,
+      // THE CHORD SITS ABOVE THE BASS, NOT UNDER IT (2026-08-28, Paul:
+      // "Chicago house is a mess. Hyperlow bass. Melody in piano."). Read
+      // symbolically, `v => v - 1` centred voice 0 — the STAB, the chord that
+      // IS this genre — at MIDI 36, so the poly voiced E1..D2 UNDERNEATH a
+      // bass that lives at A1..F#2. Nothing was hyperlow except the chord; the
+      // bass was simply buried by four notes of juno sitting on top of it. The
+      // stab comes up two octaves to ctr 60 (C3..D4, where a Chicago piano
+      // chord is actually played) and the piano lead stays at ctr 72 above it,
+      // which is the octave of separation the comment above always claimed.
+      // A RAMP WOULD HAVE THROWN THE REST AT THE CEILING — the same arithmetic
+      // techno was fixed with the same day — so this is CAPPED: nothing above
+      // reg 1, and every voice past the second sits centred at 0.
+      reg: v => Math.max(0, 1 - v),
       realize: v => (v === 0 ? "pad" : "line"),
-      part: ["stab", "lead"],
+      // FIVE CHAIRS GET SEATED, NOT TWO, and `partOf` reads this table MODULO
+      // its length — so two entries were dealing stab/lead/stab/lead/stab
+      // across the singer and the two guests a precomposed record adds. That
+      // put the backing choir in chordLock beside the poly, and it stacked
+      // PARTS.lead's +12 on top of a layer's own +1 register and sent the
+      // guest riff to E5..F#6, screaming an octave over the piano. THE ANCHOR
+      // NAMES THE TWO CHAIRS IT OWNS AND GIVES EVERY GUEST ONE NEUTRAL ROLE.
+      // It stays an ARRAY — precompose reads `G.part[v]` to name the two base
+      // chairs, and a function form silently renamed them "pad"/"voice" — but
+      // the tail entries are all `counter` rather than a per-slot casting,
+      // because the guest ORDER is not stable across seeds (seed 3 seats the
+      // riff where seed 1 seats the singer), so a positional table sooner or
+      // later puts a vocalist in `riff` at ctr 48 and a guitar in `lead` at
+      // ctr 84. `counter` is register-NEUTRAL (PARTS.counter has no ctr), so
+      // every guest keeps exactly the octave its own part-genre asked for,
+      // which is what all 92 partless anchors already do — and it leaves the
+      // piano as the top line of the record, which is "melody in piano".
+      part: ["stab", "lead", "counter", "counter", "counter"],
       roots: [1, 4, 0, 5], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 1, q: "7" }, { d: 4, q: "7" }, { d: 0, q: "7" }, { d: 5, q: "7" }],
@@ -1525,7 +1555,12 @@
              o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
       fill: { c: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
       tone: { wave: "sawtooth", cut: 2400, q: 1.6, atk: .004, rel: .5, gain: .28, verb: .18 },
-      words: ["the piano stabs, on the tune's own rhythm", "the lead over the loop"],
+      // ...AND THE WORDS NAME THE RIGHT CHAIR NOW. Voice 0 is the POLY and
+      // voice 1 is the grand, so "the piano stabs" was written over the juno
+      // and the piano was called "the lead" — the box was describing a record
+      // it does not play.
+      words: ["the juno holds the seventh, on the tune's own rhythm",
+              "the piano riff over the loop"],
       word: () => [],
     },
 
