@@ -1124,14 +1124,26 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   // :1943), `diatonic` and `ontime` are the two the producer owns, and
   // `eng|mute|*` / `eng|solo|*` / `b|mute|*` / `b|solo|*` are the engineer's and
   // the board's. Every one of them is ONE fact that is true or false.
-  // ...AND `v|mute|*` / `v|solo|*` SINCE 2026-08-28. Paul: *"simply move the
-  // sound controls out of the mixer and into this section."* The desk's own
-  // pair is drawn on the VOICE now (ui/eight.js `voiceSound`) as well as on the
-  // board, in its own `v|…` namespace so the two cannot share a `data-k`; they
-  // are the same one-fact-true-or-false the `b|…` pair always was. The `b|…`
-  // half stays in this pattern until ui/engineer.js's per-voice strip is
-  // deleted — that file is fenced this round and the deletion is named in the
-  // round's report.
+  /* `v|mute|*` / `v|solo|*` LIVED FOR ONE DAY AND THE ENTRY IS KEPT, DATED.
+     They arrived 2026-08-28 morning — Paul: *"simply move the sound controls
+     out of the mixer and into this section"* — as ui/eight.js `voiceSound`'s
+     own checkbox pair, drawn on the voice BESIDE the board's `b|mute|*` /
+     `b|solo|*` buttons, in a separate namespace precisely so two controls for
+     one fact could not share a `data-k`. Its own note said the duplication was
+     "exactly the condition this codebase legislates against, and it is stated
+     here rather than discovered later".
+
+     THEY WENT THE SAME EVENING, with the whole of `voiceSound`. Paul: *"when i
+     get to the strip it is just a bunch of dropdowns instead of a nice strip …
+     that is a regression … add it in a new nav element called mix that is per
+     voice."* The board's strip was LIFTED into the voice whole
+     (ui/engineer.js `channelStrip`), so mute and solo are the `b|…` BUTTONS
+     they always were, drawn once, now inside the voice. The `v|…` half is
+     deleted and is asserted gone by this very pattern: a `v|mute|*` appearing
+     again would mean the second spelling came back.
+
+     `eng|…` is the older ghost, from the read-only engineer mirror that was
+     deleted the same night; it is kept for the same reason. */
   const BOOLEANS = /^(drums|diatonic|ontime|(eng|b|v)\|(mute|solo)\|\*|\(no key\))$/;
   const oddBox = boxes.loose.filter((k) => !BOOLEANS.test(k));
   check(!oddBox.length, "every checkbox left on the page is a single boolean " +

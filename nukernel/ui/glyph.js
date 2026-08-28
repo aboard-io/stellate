@@ -137,8 +137,15 @@ export const GLYPH = {
                s: "the motifs — the little tunes and beats the record is built from" },
     Band:    { g: "☰", w: "Band",
                s: "the form, the players, and what each one plays in each section" },
+    /* THE CLAUSE MOVED WITH THE VOICES, 2026-08-28. It read "the board — a
+       strip per voice, then the bus series, then main"; the strips are inside
+       the voices now (Paul: "remove the voices from the mixing board and just
+       put them as nav items in the voices themselves"), so what this tab holds
+       is the series and the automation grid. The MARK does not move: it is the
+       voice's `mix` facet's mark too, one scope down. */
     Mix:     { g: "⇅", w: "Mix",
-               s: "the board — a strip per voice, then the bus series, then main" },
+               s: "the bus series — genre fx, delay, reverb, main — and the " +
+                  "section automation grid" },
     Produce: { g: "✦", w: "Produce",
                s: "the producer — a step through genre space, and what it moved" },
     Score:   { g: "𝄞", w: "Score",
@@ -271,12 +278,19 @@ export const GLYPH = {
      a remove button is the one control in the gutter that must never be
      mistaken for a letter of somebody's section name.
 
-     THE THREE FACETS OF A VOICE are Paul's own three sentences about what a
-     voice IS ("Instrument voice with settings from the mixer / What it plays,
-     register, material / Per-section settings"), so they are three marks and
-     not four:
-       ◍  the driver seen end-on — what this voice IS and what is on it,
-             which since today includes the strip that used to be in the mixer
+     THE FACETS OF A VOICE were Paul's own three sentences about what a voice
+     IS ("Instrument voice with settings from the mixer / What it plays,
+     register, material / Per-section settings"), and there are FOUR marks
+     since 2026-08-28, when he split the first sentence in two: *"In the voice
+     -- add another nav item for the mixing and give it a channel design like
+     the mixer … add it in a new nav element called mix that is per voice."*
+       ◍  the driver seen end-on — what this voice IS: its instrument, its
+             machine, its throat
+       ⇅  two faders, one up and one down — what is DONE to it: the channel
+             strip. It is the Mix tab's own mark said one scope down, which is
+             this table's standing idiom (`per-section` wears the form's ▦ for
+             the same reason): the same fact wears the same mark, whether you
+             meet it as a record-level tab or inside one player.
        ♫  two notes: what it PLAYS — its part, its register, its default
        ▦  the sections again, because "per-section" is the form seen from
              inside one player, and the same fact wears the same mark. */
@@ -296,8 +310,15 @@ export const GLYPH = {
 
   /* WHAT A VOICE IS, IN THREE FACETS (see the paragraph above). */
   facet: {
+    /* THE CLAUSE ON `inst` LOST ITS SECOND HALF, 2026-08-28, WITH THE STRIP.
+       It read "what this voice is, what is on it, and where it sits — the
+       whole strip", written the night the strip was a row on this facet. The
+       strip is the `mix` mark below now, so the clause says what is left. */
     inst:  { g: "\u25cd", w: "instrument",
-             s: "what this voice is, what is on it, and where it sits — the whole strip" },
+             s: "what this voice is — its instrument, its machine, and its throat" },
+    mix:   { g: "\u21c5", w: "mix",
+             s: "this voice's channel strip — its inserts, its sends, its tone, " +
+                "where it sits and how loud" },
     plays: { g: "\u266b", w: "what it plays",
              s: "its part, its register, when it comes in, and the motif it reads by default" },
     sec:   { g: "\u25a6", w: "per-section",

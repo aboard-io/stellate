@@ -875,56 +875,97 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      unchanged and still walks the INNER strip. */
   await page.evaluate(() => window.__eightTab && window.__eightTab("Mix"));
   await page.waitForTimeout(400);
-  // ONE PANEL, 2026-08-27 (this line waited on `#boardtbl` and `#racktbl`
-  // while the board was two tables, 2026-08-25→27; then on `#strips` AND
-  // `#rack` while the strips were tabbed and the rack stood below them). Paul,
-  // 2026-08-27: *"Put the effects buses and mains into special tabs after the
-  // voices -- now the board is one tabbed space that is consistent and easy to
-  // understand."* `#boardpanel` holds whichever tab is open — a `#strips` with
-  // one `.nu-strip`, or a `#rack` with one `.nu-plate` — and the first tab is
-  // a voice, so what is waited on is the panel with a strip in it. WAITING ON
-  // `#rack .nu-plate` HERE WOULD NOW HANG FOREVER, which is the shape of the
-  // race this line was written to prevent, inverted: every plate check below
-  // opens its own tab first (`openBus`) rather than assuming a plate is on the
-  // page.
-  await page.waitForSelector("#boardpanel #strips .nu-strip", { timeout: 20000 });
+  /* ONE PANEL, AND WHAT IS IN IT CHANGED AGAIN, 2026-08-28. This line waited
+     on `#boardtbl` and `#racktbl` while the board was two tables
+     (2026-08-25→27); then on `#strips` AND `#rack` while the strips were
+     tabbed and the rack stood below them; then on `#boardpanel #strips
+     .nu-strip`, because the first tab was a voice and "WAITING ON `#rack
+     .nu-plate` HERE WOULD NOW HANG FOREVER".
 
-  /* ---- THE STRIPS ARE IN TABS SINCE 2026-08-27, so this gate walks them ----
-     Paul, 2026-08-27: *"In the mixing board — Put the instruments inside tabs
-     the mixing board instead of stacking them."* `#strips` holds exactly ONE
-     strip now, the one the marked tab names.
+     PAUL, 2026-08-28: *"You were supposed to remove the voices from the mixing
+     board and just put them as nav items in the voices themselves."* So the
+     board's first tab is the GENRE PLATE and `#strips` does not exist on this
+     page at all — the sentence above is exactly inverted, and the wait is
+     inverted with it. A voice's strip is `#voicemix .nu-strip`, on the BAND
+     tab, inside the voice, on its `mix` facet: `openVoice` below is the one
+     gesture that reaches it and every per-voice check calls it. */
+  await page.waitForSelector("#boardpanel #rack .nu-plate", { timeout: 20000 });
+
+  /* ---- THE STRIPS ARE INSIDE THE VOICES SINCE 2026-08-28, so this gate goes
+     to them there ----
+     Paul: *"add another nav item for the mixing and give it a channel design
+     like the mixer … add it in a new nav element called mix that is per
+     voice."* A strip is `#voicemix .nu-strip`, on the Band tab, inside the
+     voice, on its `mix` mark — and `openVoice` above is the three taps that
+     reach it. The strip ITSELF is unchanged: same `.nu-strip` skin, same rows,
+     same `b|…` and `ins|…` keys, because ui/engineer.js's `stripOf` was LIFTED
+     to a module function (`channelStrip`) rather than re-drawn, which is what
+     lets every check below stand word for word.
 
      THE HAZARD THIS HELPER EXISTS FOR IS THIS FILE'S OWN, WRITTEN AT THE TOP
      OF G11: "A GATE THAT SKIPS WHEN IT IS INCONVENIENT IS THE BUG THIS BLOCK
      EXISTS FOR … a check faithful to a scope that does not contain the thing."
-     Every per-strip check below reads `#strips .nu-strip` and counts against
+     Every per-strip check below reads ONE strip and counts against
      `chansOnPage`, and with one strip on the page all of them would go on
      passing while only the FIRST voice was ever examined. Measured on the
      tabbed page before this helper landed: 138/138 green with four of the
-     five voices never looked at. So the per-strip checks now run ONCE PER TAB
-     and their counts are per-strip counts. */
+     five voices never looked at. So the per-strip checks run ONCE PER VOICE —
+     `perTab` walks `channelVoicesOf`'s own list now instead of a row of board
+     tabs, which is the same set and one indirection fewer. */
   // ...AND THE BUSES JOINED THE ROW, 2026-08-27, so a tab now has a KIND.
   // The key is `boardtab|<kind>|<name>` (it was `boardtab-<name>` while only
   // voices had tabs — the page's own `|` scoping convention, and what keeps a
-  // voice called `main` from claiming the main plate's tab). `boardTabs()`
-  // answers the VOICE tabs, which is what every per-strip walk below wants;
-  // `busTabs()` answers the series' four.
+  // voice called `main` from claiming the main plate's tab). THE KIND IS
+  // ALWAYS `bus` SINCE 2026-08-28 and the shape is kept anyway, because the
+  // address is the address: this walk still reads it out of the key rather
+  // than assuming, so a voice tab that came BACK to this row would be seen
+  // rather than silently counted as a bus.
   const allTabs = () => page.evaluate(() =>
     [...document.querySelectorAll("#boardtabs button")].map((b) => {
       const m = /^boardtab\|([^|]+)\|(.+)$/.exec(b.dataset.k || "");
       return m ? { kind: m[1], key: m[2] } : { kind: "?", key: b.dataset.k };
     }));
-  const boardTabs = () => allTabs()
-    .then((t) => t.filter((x) => x.kind === "voice").map((x) => x.key));
   const busTabs = () => allTabs()
     .then((t) => t.filter((x) => x.kind === "bus").map((x) => x.key));
-  const openTab = async (name) => {
-    await page.evaluate((n) => {
-      const b = document.querySelector('[data-k="boardtab|voice|' + n + '"]');
+  /* THE VOICES ARE NOT A TAB ROW ANY MORE, so the list of them is read off the
+     MODEL — desk-doc's `channelVoicesOf`, which is the answer the audio tier
+     builds from (G2's law) and is exactly what `boardTabs()` used to be
+     checked AGAINST one block down. Reading it here is strictly stronger than
+     reading a row: a voice the page failed to draw a strip for now fails
+     `openVoice` below rather than quietly leaving the walk one voice short. */
+  const voiceNames = () => page.evaluate(() =>
+    window.NuDeskDoc.channelVoicesOf(window.__eightDoc(), window.NuGenres.GENRES)
+      .map((c) => c.voice.name));
+  const topTab = async (t) => {
+    await page.evaluate((x) => window.__eightTab(x), t);
+    await page.waitForTimeout(250);
+  };
+  /* ONE GESTURE, THREE TAPS, AND IT IS THE PERSON'S OWN (Paul, 2026-08-28:
+     *"add it in a new nav element called mix that is per voice"*): go to the
+     Band tab, tap the voice in the gutter, tap its `mix` mark. The gutter
+     draws ONE LEVEL at a time — the voices are the `band` level and the facets
+     are the `voice` level — so a walk that is already standing inside one
+     voice has to come `up` before the next voice's mark exists, which is what
+     `trayup` is. Waiting on the STRIP'S OWN NAME (`.nu-sname`) rather than on
+     a timeout is the same law the old `openTab` obeyed: the check is that the
+     strip on the page belongs to the voice that was asked for. */
+  const openVoice = async (name) => {
+    await topTab("Band");
+    await page.evaluate(async (n) => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      let b = document.querySelector('[data-k="tab' + n + '"]');
+      if (!b) {
+        const u = document.querySelector('[data-k="trayup"]');
+        if (u) { u.click(); await wait(250); }
+        b = document.querySelector('[data-k="tab' + n + '"]');
+      }
       if (b) b.click();
+      await wait(250);
+      const f = document.querySelector('[data-k="facet-mix"]');
+      if (f) f.click();
     }, name);
     await page.waitForFunction((n) => {
-      const s = document.querySelector("#boardpanel #strips .nu-strip .nu-sname");
+      const s = document.querySelector("#voicemix .nu-strip .nu-sname");
       return s && s.textContent === n;
     }, name, { timeout: 5000 });
   };
@@ -933,7 +974,14 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // "a gate faithful to a scope that does not contain the thing" is this
   // block's own named hazard, and a `querySelector('#rack …')` that answers
   // null because the tab is shut is exactly that shape.
+  // ...AND `openBus` GOES TO THE Mix TAB FIRST, 2026-08-28. The two kinds of
+  // surface this gate drives are on two different top-level tabs now — a
+  // voice's strip is on `Band`, a bus's plate is on `Mix` — so each opener
+  // says which, rather than relying on where the check before it happened to
+  // leave the page. That reliance is precisely this block's own named hazard
+  // ("a gate faithful to a scope that does not contain the thing").
   const openBus = async (key) => {
+    await topTab("Mix");
     await page.evaluate((k) => {
       const b = document.querySelector('[data-k="boardtab|bus|' + k + '"]');
       if (b) b.click();
@@ -946,19 +994,20 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // run `fn` with each voice's strip open in turn, and leave the first open
   const perTab = async (fn) => {
     const out = [];
-    const names = await boardTabs();
-    for (const n of names) { await openTab(n); out.push([n, await fn(n)]); }
-    if (names[0]) await openTab(names[0]);
+    const names = await voiceNames();
+    for (const n of names) { await openVoice(n); out.push([n, await fn(n)]); }
+    if (names[0]) await openVoice(names[0]);
     return out;
   };
-  // ...and the same, per bus plate, leaving the first VOICE tab open so the
-  // page is back where the next check expects it.
+  // ...and the same, per bus plate, leaving the FIRST BUS tab open so the page
+  // is back where the next check expects it. (It used to leave the first VOICE
+  // tab open; there is no voice tab on this board any more, and leaving the
+  // page on the Band tab would strand every plate check that follows.)
   const perBus = async (fn) => {
     const out = [];
     const keys = await busTabs();
     for (const k of keys) { await openBus(k); out.push([k, await fn(k)]); }
-    const names = await boardTabs();
-    if (names[0]) await openTab(names[0]);
+    if (keys[0]) await openBus(keys[0]);
     return out;
   };
   {
@@ -967,13 +1016,38 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     const buses = tabs.filter((t) => t.kind === "bus").map((t) => t.key);
     // the channel list from the page's OWN model — desk-doc's channelVoicesOf,
     // which is the answer the audio tier builds from (G2)
-    const chans = await page.evaluate(() =>
-      window.NuDeskDoc.channelVoicesOf(window.__eightDoc(), window.NuGenres.GENRES)
-        .map((c) => c.voice.name));
-    ok(names.length > 0 && eq(names, chans),
-       "the board draws ONE TAB PER SEATED VOICE, in desk-doc's channel order " +
-       "(the same answer the audio tier builds from, G2's law): " +
-       JSON.stringify(names), JSON.stringify({ names, chans }));
+    const chans = await voiceNames();
+    /* REVERSED 2026-08-28, AND THE REVERSAL IS THE WHOLE ROUND. This read:
+       `ok(names.length > 0 && eq(names, chans), "the board draws ONE TAB PER
+       SEATED VOICE, in desk-doc's channel order …")`. Paul: *"You were
+       supposed to remove the voices from the mixing board and just put them as
+       nav items in the voices themselves."* So the claim is turned round and
+       pointed at the same fact from the other side: the board draws NO voice
+       tab, and every voice the desk seats has a strip SOMEWHERE — on its own
+       `mix` facet, which `openVoice` reaches and every per-voice check below
+       walks. The ORDER claim retires with the row (a gutter's voice marks are
+       ui/eight.js's own roster order, which test/shell.js owns); the
+       COMPLETENESS claim is stronger than it was, because it is now measured
+       against strips that have to be OPENED rather than against a row of
+       buttons that might open nothing. */
+    ok(!names.length,
+       "THE BOARD DRAWS NO VOICE TAB — the voices left it (Paul, 2026-08-28: " +
+       "\"remove the voices from the mixing board and just put them as nav " +
+       "items in the voices themselves\")", JSON.stringify(names));
+    const strips = await perTab(() => page.evaluate(() => {
+      const s = document.querySelector("#voicemix .nu-strip");
+      return s ? { name: s.querySelector(".nu-sname").textContent,
+                   ch: s.dataset.ch,
+                   onBoard: !!document.querySelector("#boardpanel .nu-strip") }
+               : null;
+    }));
+    const missing = strips.filter(([n, v]) => !v || v.name !== n);
+    ok(chans.length > 0 && !missing.length &&
+       strips.every(([, v]) => v && !v.onBoard),
+       "…and EVERY seated voice has one, inside itself: all " + chans.length +
+       " of " + JSON.stringify(chans) + " draw `#voicemix .nu-strip` on their " +
+       "own `mix` facet, and not one of them is on the board",
+       JSON.stringify(missing));
     // ...AND THEN THE SERIES, AFTER THEM (2026-08-27, Paul: "Put the effects
     // buses and mains into special tabs AFTER the voices"). The order is the
     // signal's — genre → delay → reverb → main — and the membership is the
@@ -992,20 +1066,27 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        JSON.stringify(buses) + " — one tab per engine bus the registry " +
        "declares plus the main, and no tab for a group",
        JSON.stringify({ buses, engineBuses, missingBus, groupTab }));
+    // ...AND THE PANEL STILL HOLDS EXACTLY ONE THING, which is what "one
+    // tabbed space" has meant since 2026-08-27. What changed on 2026-08-28 is
+    // WHICH one: it was a strip at boot (the first tab was a voice) and it is
+    // a PLATE now, with `#strips` absent from the whole document.
+    await openBus("genre");
     const one = await page.evaluate(() => ({
       panels: document.querySelectorAll("#boardpanel > *").length,
-      strips: document.querySelectorAll("#boardpanel #strips .nu-strip").length,
+      strips: document.querySelectorAll("#boardpanel .nu-strip").length,
+      anyStripsId: document.querySelectorAll("#strips").length,
       plates: document.querySelectorAll("#boardpanel #rack .nu-plate").length,
       marked: document.querySelectorAll('#boardtabs button[aria-pressed="true"]').length,
-      shown: (document.querySelector("#boardpanel .nu-sname") || {}).textContent }));
-    ok(one.panels === 1 && one.strips === 1 && one.plates === 0 && one.marked === 1,
-       "…and ONE PANEL HOLDS EXACTLY ONE OF THEM at a time — the marked tab's " +
-       "(" + one.shown + "), with no plate on the page beside it",
-       JSON.stringify(one));
+      shown: (document.querySelector("#boardpanel .nu-busname") || {}).textContent }));
+    ok(one.panels === 1 && one.plates === 1 && one.strips === 0 &&
+       one.anyStripsId === 0 && one.marked === 1,
+       "…and ONE PANEL HOLDS EXACTLY ONE PLATE at a time — the marked tab's " +
+       "(" + one.shown + "), with no strip on the board beside it and no " +
+       "`#strips` node anywhere on the page", JSON.stringify(one));
     const openedPlates = await perBus(() => page.evaluate(() => ({
       plates: [...document.querySelectorAll("#boardpanel #rack .nu-plate")]
         .map((p) => p.dataset.bus),
-      strips: document.querySelectorAll("#boardpanel #strips .nu-strip").length,
+      strips: document.querySelectorAll("#boardpanel .nu-strip").length,
       marked: [...document.querySelectorAll('#boardtabs button[aria-pressed="true"]')]
         .map((b) => b.dataset.k) })));
     const badPlate = openedPlates.filter(([k, m]) =>
@@ -1013,8 +1094,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       m.marked.length !== 1 || m.marked[0] !== "boardtab|bus|" + k);
     ok(!badPlate.length,
        "…and each of the four bus tabs opens ITS OWN plate into the same " +
-       "panel, alone and marked — the strips are gone while a bus is open, " +
-       "which is what \"one tabbed space\" means",
+       "panel, alone and marked — which is what \"one tabbed space\" means",
        JSON.stringify(badPlate));
   }
 
@@ -1107,9 +1187,19 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // GATHERED ACROSS THE WHOLE TAB ROW SINCE 2026-08-27 (the board tabs), and
   // the reason is this block's own named hazard: the master's and the buses'
   // menus live on plates that are only on the page while their tab is marked,
-  // so a single sweep with a voice tab open would have found none of them and
-  // called the page clean. The union of one sweep per bus tab plus the sweep
-  // with a voice tab open is the same set the flat page used to hand over.
+  // so a single sweep with one tab open would have found none of them and
+  // called the page clean. The union of one sweep per bus tab is the same set
+  // the flat page used to hand over.
+  // ...AND THE INSERT SEATS LEFT THIS SWEEP'S SCOPE ON 2026-08-28, WITHOUT
+  // LEAVING THE GATE. The probe is "every <select> OUTSIDE #app", which was
+  // exactly the board, the atlas and the transport bar; the strips are inside
+  // #app now (they are inside the voices), so the three `ins|…` seats per
+  // voice are no longer out here. They did not stop being checked: the
+  // `perStripMenus` walk below reads each strip DIRECTLY and asserts both
+  // halves — exactly MAX_FX seats, and no other kind of menu — which is
+  // stronger than a container filter and is where the claim always lived.
+  // (test/sheets.js check 1 carries the other half of the move: a hand-rolled
+  // seat inside #app is named there, dated, rather than counted as rogue.)
   const sweepSelects = () => page.evaluate(() =>
     [...document.querySelectorAll("select")]
       .filter((s) => !s.closest("#app"))
@@ -1120,13 +1210,14 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
                      produce: !!s.closest("#produce") })));
   const sel = (await sweepSelects())
     .concat(...(await perBus(sweepSelects)).map(([, v]) => v));
-  // REWRITTEN 2026-08-27 (the tabs): this counted `stripCount * MAX_FX` seats
-  // over every strip on the page, and there is one strip on the page now. The
-  // CLAIM is per voice and always was, so it is asked per voice — every tab is
-  // opened and its strip is examined. A stray menu on ANY voice's strip fails,
-  // not just on the one that happens to be open at mount.
+  // REWRITTEN 2026-08-27 (the tabs) AND RE-AIMED 2026-08-28 (the voices): this
+  // counted `stripCount * MAX_FX` seats over every strip on the page, then
+  // per board tab, and now per VOICE. The CLAIM is per voice and always was,
+  // so it is asked per voice — every voice's `mix` facet is opened and its
+  // strip is examined. A stray menu on ANY voice's strip fails, not just on
+  // the one that happens to be open at mount.
   const perStripMenus = await perTab(() => page.evaluate(() => {
-    const strip = document.querySelector("#strips .nu-strip");
+    const strip = document.querySelector("#voicemix .nu-strip");
     const all = [...strip.querySelectorAll("select")];
     return { seats: all.filter((x) => /^ins\|/.test(x.dataset.k || ""))
                .map((x) => x.dataset.k),
@@ -1138,11 +1229,12 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      "the ONLY menu on a strip is an insert seat — sends, EQ and the fader " +
      "are vertical sliders and pan is a detent row (the 2026-08-24 finding, " +
      "kept under the 2026-08-27 reversal), on ALL " + perStripMenus.length +
-     " voices' strips", JSON.stringify(strayOnStrip));
+     " voices' strips — and this is the one place that claim is measured now " +
+     "that a strip is inside #app", JSON.stringify(strayOnStrip));
   const shortSeats = perStripMenus.filter(([n, m]) => m.seats.length !== F.MAX_FX ||
     !m.seats.every((k, i) => k === "ins|" + n + "|" + (i + 1)));
   ok(!shortSeats.length,
-     "every one of the " + perStripMenus.length + " tabbed strips carries " +
+     "every one of the " + perStripMenus.length + " voices' strips carries " +
      "EXACTLY " + F.MAX_FX + " insert seats, keyed `ins|<voice>|<n>` (Paul " +
      "2026-08-27: \"Add per voice effects, up to three\")",
      JSON.stringify(shortSeats));
@@ -1186,12 +1278,14 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // as before, and the pan row is checked as buttons.
   const TBL = { rev: { table: F.SENDS, labels: F.SENDLABEL },
                 echo: { table: F.SENDS, labels: F.SENDLABEL } };
-  // PER TAB SINCE 2026-08-27 — the sweep visits every voice's strip by opening
-  // its tab, so a slider with the wrong max on the fourth voice is still the
-  // failure it was when all four strips stood on the page at once.
+  // PER VOICE SINCE 2026-08-27 — the sweep visits every voice's strip, so a
+  // slider with the wrong max on the fourth voice is still the failure it was
+  // when all four strips stood on the page at once. It walked BOARD tabs until
+  // 2026-08-28 and walks the voices' own `mix` facets now; same set, same
+  // claim, one indirection fewer.
   const sweptPer = await perTab(() => page.evaluate(() => {
     const out = {};
-    for (const el of document.querySelectorAll('#strips .nu-strip input[type=range]')) {
+    for (const el of document.querySelectorAll('#voicemix .nu-strip input[type=range]')) {
       const m = /^b\|(rev|echo)\|(.+)$/.exec(el.dataset.k || "");
       if (!m) continue;
       const keep = el.value, words = [];
@@ -1208,7 +1302,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   }));
   const swept = Object.assign({}, ...sweptPer.map(([, o]) => o));
   const chansOnPage = await perTab(() => page.evaluate(() =>
-    document.querySelector("#strips .nu-strip").dataset.ch))
+    document.querySelector("#voicemix .nu-strip").dataset.ch))
     .then((rows) => rows.map(([, ch]) => ch));
   ok(Object.keys(swept).length === chansOnPage.length * 2,
      chansOnPage.length + " strips × 2 live sends = " + Object.keys(swept).length +
@@ -1238,7 +1332,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // one clears the key (absent is the only spelling of a default — with
   // buttons there is no other way to spell it).
   const pans = (await perTab(() => page.evaluate(() => {
-    const s = document.querySelector("#strips .nu-strip");
+    const s = document.querySelector("#voicemix .nu-strip");
     return { ch: s.dataset.ch,
              n: s.querySelectorAll(".nu-panbtn").length,
              labels: [...s.querySelectorAll(".nu-panbtn")]
@@ -1373,7 +1467,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   const box = pushBoxes(clone(TERMS))[0];
   const drawn = Object.assign({}, ...(await perTab(() => page.evaluate(() => {
     const out = {};
-    for (const s of document.querySelectorAll("#strips .nu-strip")) {
+    for (const s of document.querySelectorAll("#voicemix .nu-strip")) {
       const drive = s.querySelector(".nu-drive");
       const fadeIn = s.querySelector('input[data-k^="b|fader|"]');
       const fadeOut = fadeIn && fadeIn.closest(".nu-vs").querySelector("output");
@@ -1408,28 +1502,50 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // meter lives on the main plate, and a plate is on the page only while its
   // tab is marked. The claim is unchanged — ONE measured meter on the whole
   // page — and it is asked with the main open (where the meter must be) and
-  // again with a voice open (where nothing may grow one).
+  // again with a VOICE'S MIX FACET open (where nothing may grow one). The
+  // second half is a stronger question than it was: the strip is on a
+  // different top-level tab now, so `greenElsewhere` is counted with the whole
+  // Band panel laid out and the board's own panel shut.
   await openBus("main");
   const greenMeters = await page.evaluate(() => ({
     main: document.querySelectorAll("#rack .nu-plate[data-bus='main'] .nu-meterbar").length,
     all: document.querySelectorAll(".nu-meterbar").length,
   }));
-  await openTab((await boardTabs())[0]);
-  const greenElsewhere = await page.evaluate(() =>
-    document.querySelectorAll(".nu-meterbar").length);
-  ok(greenMeters.main === 1 && greenMeters.all === 1 && greenElsewhere === 0,
+  await openVoice((await voiceNames())[0]);
+  /* REWRITTEN 2026-08-28, AND THE SECOND HALF IS ASKED WHERE IT CAN STILL BE
+     TRUE. It read `greenElsewhere === 0` — the count of `.nu-meterbar` on the
+     whole page with a VOICE TAB open — and that was a real question while the
+     board's panel swapped a plate for a strip: opening a voice took the main
+     plate off the page, so any bar left had grown on a strip. The strips are
+     on the Band tab now and ui/eight.js keeps a shut panel's DOM (it is
+     `display: none` + `inert`, never emptied — the tab law), so the main
+     plate's one bar is still counted while a voice is open and the old line
+     reports 1 for a page that is exactly right.
+     SO IT IS ASKED OF THE STRIP ITSELF: no measured meter inside `#voicemix`,
+     which is the claim the old count was reaching for ("never fake a
+     measurement" — the engine has ONE tap and a per-channel bar would be a
+     green bar with nothing behind it). The page-wide count stays as the FIRST
+     half, unchanged: exactly one bar exists, and it is the main plate's. */
+  const greenNow = await page.evaluate(() => ({
+    all: document.querySelectorAll(".nu-meterbar").length,
+    onStrip: document.querySelectorAll("#voicemix .nu-meterbar").length,
+    refusedWells: document.querySelectorAll(
+      "#voicemix .nu-vs.is-off input[aria-label$='meter (refused)']").length }));
+  ok(greenMeters.main === 1 && greenMeters.all === 1 &&
+     greenNow.all === 1 && greenNow.onStrip === 0 && greenNow.refusedWells === 1,
      "…and exactly ONE measured meter exists, on the main plate, fed from the " +
-     "engine's master tap (rmsNow) — and none anywhere else on the page with " +
-     "a voice tab open", JSON.stringify({ ...greenMeters, greenElsewhere }));
+     "engine's master tap (rmsNow) — the voice's strip grows none, and its " +
+     "own meter well is the refusal instead",
+     JSON.stringify({ ...greenMeters, ...greenNow }));
 
   /* ---- 5 · the knob writes the document's own word, and unwrites it ---- */
-  // THE CANTOR'S TAB IS OPENED FIRST, 2026-08-27: this drives
-  // `input[data-k="b|rev|cantor"]`, and with the strips in tabs that control
-  // is on the page only while the cantor's tab is the marked one. It happens
-  // to be the first tab on the shipped chant — which is exactly the accident
-  // that would let this check go on passing after the default changed, so it
-  // is said rather than relied on.
-  await openTab("cantor");
+  // THE CANTOR'S MIX FACET IS OPENED FIRST, 2026-08-27 and re-aimed
+  // 2026-08-28: this drives `input[data-k="b|rev|cantor"]`, and that control
+  // is on the page only while the cantor is the open voice AND `mix` is the
+  // open facet. The cantor happens to be the first voice on the shipped chant
+  // — which is exactly the accident that would let this check go on passing
+  // after the default changed, so it is said rather than relied on.
+  await openVoice("cantor");
   const trip = await page.evaluate(async () => {
     const drive = (word) => {
       const el = document.querySelector('input[data-k="b|rev|cantor"]');
@@ -1580,15 +1696,29 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
                  .map((n) => n.textContent.trim()).join(""),
                role: g.getAttribute("role"),
                label: g.getAttribute("aria-label"),
+               seam: (g.querySelector(".nu-seamlab") || {}).textContent,
                openKind: (document.querySelector("#boardpanel > *") || {}).id };
     });
+    /* `openKind` FLIPPED FROM "strips" TO "rack", 2026-08-28, and the SEAM
+       LABEL joined this check. The old line asserted the chain was readable
+       "from every tab including a voice's" and proved it by measuring the row
+       while a STRIP was open; there is no voice tab to be standing on now, so
+       what it proves instead is that the chain is readable from a bus tab —
+       which is the only kind there is. The seam label is asserted because it
+       is the one sentence the voices' departure made false: it said "the
+       strips feed", naming furniture that is no longer on this board, and it
+       says "the voices feed" now. The FACT is unchanged (every voice's four
+       sends land in this series); only the address a reader is sent to moved,
+       and a gate that did not read the words would have let the old ones
+       stand. */
     ok(seriesRow && seriesRow.role === "group" && seriesRow.arrows === 4 &&
        seriesRow.chain === "genre fx → delay → reverb → main" &&
        seriesRow.stages === "1234" &&
-       seriesRow.openKind === "strips",
+       seriesRow.seam === "the voices feed" &&
+       seriesRow.openKind === "rack",
        "THE SERIES IS DRAWN IN THE TAB ROW, in order and numbered, from every " +
-       "tab including a voice's: " + JSON.stringify(seriesRow &&
-         (seriesRow.chain + "  [" + seriesRow.stages + "]")),
+       "tab, under a label that names who feeds it: " + JSON.stringify(seriesRow &&
+         (seriesRow.seam + " → " + seriesRow.chain + "  [" + seriesRow.stages + "]")),
        JSON.stringify(seriesRow));
     const saysWhereItGoes = await perBus(() => page.evaluate(() => {
       const p = document.querySelector("#boardpanel #rack .nu-plate");
@@ -1686,6 +1816,11 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // ---- 3 · A SEND ACTUALLY MOVES WHAT THE ENGINE IS HANDED.
     // Not the document, and not the model: `__nuMix()` reports the unit table
     // the parent was given for the sounding bar, which is the artifact.
+    // THE VOICE'S OWN STRIP IS OPENED FIRST, 2026-08-28: this drives
+    // `b|echo|<name>`, which is on the page only while that voice's `mix`
+    // facet is. It reads the name and the chair key off the strip it finds,
+    // exactly as it did when the strip was the board's.
+    await openVoice((await voiceNames())[0]);
     const sent = await page.evaluate(async () => {
       const wait = () => new Promise((r) => setTimeout(r, 700));
       const drive = (k, word) => {
@@ -1699,10 +1834,11 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
         }
         return false;
       };
-      // the first STRIP's name and chair key (the strips replaced the table's
-      // header row, 2026-08-27 — same facts, new home)
-      const name = document.querySelector('#strips .nu-strip .nu-sname').textContent;
-      const key = document.querySelector('#strips .nu-strip').dataset.ch;
+      // the open STRIP's name and chair key (the strips replaced the table's
+      // header row on 2026-08-27 and moved into the voices on 2026-08-28 —
+      // same facts, new home, twice)
+      const name = document.querySelector('#voicemix .nu-strip .nu-sname').textContent;
+      const key = document.querySelector('#voicemix .nu-strip').dataset.ch;
       // settle first so `before` is a compiled bar and not `null`
       drive("b|echo|" + name, "dry"); await wait();
       const rd = () => { const m = window.__nuMix(); if (!m) return null;
@@ -1832,9 +1968,11 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     ok(lis && +lis.store === 55 && lis.out === "55%",
        "…and a touch on it writes 55 to the store and prints 55%, not 0.55",
        JSON.stringify(lis));
-    // put the board back on its first voice tab, so the checks after this one
-    // start where the page starts (2026-08-27, the board tabs).
-    await openTab((await boardTabs())[0]);
+    // put the board back on its first BUS tab, so the checks after this one
+    // start where the page starts. (It read "its first voice tab" until
+    // 2026-08-28; there is no voice tab on this board now, and leaving the
+    // page parked on the Band panel would strand the next plate check.)
+    await openBus((await busTabs())[0]);
   }
 
   /* ================= G13 · THE SPLIT, MEASURED =========================
@@ -1911,17 +2049,27 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        "tab: " + JSON.stringify(cols), String(cols.length));
 
     // ---- 2 · THE PER-VOICE EFFECTS CONTROL IS BACK, AND ONLY WHERE THE
-    // BOARD SEATS IT — REVERSED 2026-08-27, the second turn of this exact
+    // STRIP SEATS IT — REVERSED 2026-08-27, the second turn of this exact
     // check. It read "NO PER-VOICE EFFECTS CONTROL IS DRAWN ANYWHERE" on
     // Paul's 2026-08-26 "Don't let me add effects to instruments"; his
     // 2026-08-27 sentence reverses it by name — *"I think we need to do what
     // everyone else does with effects. Add per voice effects, up to three"*
     // — so the claim flips WITHOUT losing its teeth: a control offering the
-    // registry's effect names against a voice must be an INSERT SEAT on the
-    // board (`ins|<voice>|<n>`), and any OTHER control offering them against
-    // a voice (an `eng|`/`b|` keyed one — the voice-tab chip, the old board
+    // registry's effect names against a voice must be an INSERT SEAT
+    // (`ins|<voice>|<n>`), and any OTHER control offering them against a voice
+    // (an `eng|`/`b|` keyed one — the voice-tab chip, the old board
     // multiselect) is still a failure by existing. The walk is unchanged:
     // every control on the page, tested by the registry's own words.
+    //
+    // WHERE THE SEAT IS HAS MOVED TWICE AND THE CHECK DOES NOT CARE, which is
+    // the point of asking it by KEY rather than by container: it was the
+    // board's strip, then ui/eight.js `voiceSound` drew a SECOND set of
+    // `desk.fx<n>|<voice>` menus beside it (2026-08-28, and Paul's "it is just
+    // a bunch of dropdowns" is what ended them), and the seat is now the one
+    // strip, inside the voice. The voice's `mix` facet is opened first so the
+    // seats are on the page to be found — a sweep taken with them shut would
+    // report `seats: []` and turn this red for the wrong reason.
+    await openVoice((await voiceNames())[0]);
     const chips = await page.evaluate((fxKeys) => {
       const bad = [], seats2 = [];
       for (const c of document.querySelectorAll("select, input, button")) {
@@ -1937,8 +2085,9 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     }, Object.keys(F.FX));
     ok(!chips.bad.length && chips.seats.length > 0,
        "every control offering the FX vocabulary against a voice is an insert " +
-       "SEAT on the board (" + chips.seats.length + " of them, `ins|…`) — no " +
-       "second per-voice effects widget anywhere (Paul, 2026-08-27)",
+       "SEAT on that voice's strip (" + chips.seats.length + " of them, " +
+       "`ins|…`) — no second per-voice effects widget anywhere (Paul, " +
+       "2026-08-27; and no `desk.fx…` menu row, 2026-08-28)",
        JSON.stringify(chips.bad));
     ok(F.PARTMIX.some((f) => f.key === "fx"),
        "…and the field is DECLARED again, so the seat writes a word the " +
@@ -2112,15 +2261,20 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      probe report; the fader wire the trim rides is test/tape-reach R1. */
   console.log("\n" + "G15 the insert slots and the section grid, driven");
   {
-    // …AND ITS TAB IS OPENED FIRST (2026-08-27, the tabs): this drives
-    // `ins|<name>|1` and `b|fxw1|<name>` on the first LINE voice, and a
-    // strip's controls are on the page only while its tab is marked. The
-    // trim-grid half below is untouched by the tabs on purpose — the word grid
-    // is a cross-voice table and every voice has a column on it always.
+    /* THE TWO HALVES OF THIS CHECK ARE ON TWO DIFFERENT TABS SINCE 2026-08-28,
+       so they are two `evaluate`s now instead of one. The SLOT half drives
+       `ins|<name>|1`, `b|fxw1|<name>` and `b|fxa1|<name>`, which are on the
+       voice's own `mix` facet (Band tab); the GRID half taps
+       `t|<name>|<secId>`, which is the section-automation table and STAYED ON
+       THE BOARD (Mix tab) for the reason it has always had — it is a
+       cross-voice table, sections down and every voice across, and a table
+       with one column is not a table. Splitting the evaluate is the whole of
+       the change: every drive, every read-back and every assertion below is
+       word for word what it was. */
     {
       const first = await page.evaluate(() =>
         (window.__eightDoc().voices.find((v) => v.kind === "line") || {}).name);
-      if (first) await openTab(first);
+      if (first) await openVoice(first);
     }
     const slotTrip = await page.evaluate(async () => {
       const wait = () => new Promise((r) => setTimeout(r, 500));
@@ -2151,8 +2305,16 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       const after = JSON.parse(JSON.stringify(v0().desk || null));
       seat(""); await wait();
       const cleared = JSON.parse(JSON.stringify(v0().desk || null));
-      // the grid: cycle one cell to `hush` and back to absent
-      const secId = doc2().form.sections[1].id;
+      return { name, secId: doc2().form.sections[1].id,
+               seated, wet, face, after, cleared };
+    });
+    // ...AND THE GRID, ON THE BOARD, where it stayed.
+    await topTab("Mix");
+    Object.assign(slotTrip, await page.evaluate(async () => {
+      const wait = () => new Promise((r) => setTimeout(r, 500));
+      const doc2 = () => window.__eightDoc();
+      const v0 = () => doc2().voices.find((v) => v.kind === "line");
+      const name = v0().name, secId = doc2().form.sections[1].id;
       const cell = () => document.querySelector(
         'button[data-k="t|' + name + '|' + secId + '"]');
       cell().click(); await wait();          // -> out
@@ -2161,9 +2323,8 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
         (v0().desk && v0().desk.trim) || null));
       for (let i = 0; i < 4; i++) { cell().click(); await wait(); }
       const trimCleared = (v0().desk && v0().desk.trim) || null;
-      return { name, secId, seated, wet, face, after, cleared, trimmed,
-               trimCleared };
-    });
+      return { trimmed, trimCleared };
+    }));
     // RECORD GAIN MOVED BEHIND THE MAIN TAB, 2026-08-27 (the board tabs) —
     // this line read the main plate out of a rack that was always on the page,
     // from inside the strip's own evaluate. Same control, same `data-k`, same
@@ -2171,7 +2332,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     await openBus("main");
     slotTrip.recordGain = await page.evaluate(() => !!document.querySelector(
       '#boardpanel #rack .nu-plate[data-bus="main"] input[data-k="level"]'));
-    await openTab((await boardTabs())[0]);
+    await openBus((await busTabs())[0]);
     ok(eq(slotTrip.seated, ["crunch"]),
        "seating `crunch` in slot 1 writes voice.desk.fx = [\"crunch\"]",
        JSON.stringify(slotTrip.seated));
@@ -2272,24 +2433,40 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   {
     const wide = [];
     const shape = {};
-    const voiceTabs = await boardTabs();
+    const voices = await voiceNames();
     const busKeys = await busTabs();
     for (const w of [390, 1280]) {
       await page.setViewportSize({ width: w, height: 900 });
       await page.waitForTimeout(150);
-      // MEASURED WITH EACH KIND OF TAB OPEN, 2026-08-27: the panel holds a
-      // strip or a plate and they are different shapes, so "the panel does
-      // not grow sideways" is asked of every one of them, not of whichever
-      // happened to be open.
+      /* MEASURED ON BOTH SURFACES, 2026-08-27 and re-aimed 2026-08-28: a
+         voice's STRIP and a bus's PLATE are different shapes and either could
+         be the one that pushes the document sideways, so "nothing grows
+         sideways" is asked of every one of them rather than of whichever
+         happened to be open. What changed is where the strip is measured: it
+         is the Band tab's `#voicemix` now and the panel it is measured against
+         is `#app` (the tab panel it lives in), not `#boardpanel`. The bus
+         readings are untouched. */
       const per = {};
-      for (const t of [["voice", voiceTabs[0]]].concat(busKeys.map((k) => ["bus", k]))) {
-        if (t[0] === "voice") await openTab(t[1]); else await openBus(t[1]);
-        per[t[0] + "|" + t[1]] = await page.evaluate(() => {
+      await openVoice(voices[0]);
+      per["voice|" + voices[0]] = await page.evaluate(() => {
+        const host = document.querySelector("#voicemix");
+        const panel = host.closest("[id^='panel-'],.nu-panel,section,div") || host.parentNode;
+        const body = host.querySelector(".nu-strip");
+        return { doc: document.documentElement.scrollWidth,
+                 win: document.documentElement.clientWidth,
+                 kind: host.id,
+                 panelScroll: panel.scrollWidth, panelClient: panel.clientWidth,
+                 barScroll: 0, barClient: 0,
+                 h: body ? Math.round(body.getBoundingClientRect().height) : 0,
+                 bw: body ? Math.round(body.getBoundingClientRect().width) : 0 };
+      });
+      for (const k of busKeys) {
+        await openBus(k);
+        per["bus|" + k] = await page.evaluate(() => {
           const bar = document.getElementById("boardtabs");
           const panel = document.getElementById("boardpanel");
           const open = panel.firstElementChild;
-          const body = open && (open.querySelector(".nu-strip") ||
-                                open.querySelector(".nu-plate"));
+          const body = open && open.querySelector(".nu-plate");
           return { doc: document.documentElement.scrollWidth,
                    win: document.documentElement.clientWidth,
                    kind: open ? open.id : "(empty)",
@@ -2299,7 +2476,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
                    bw: body ? Math.round(body.getBoundingClientRect().width) : 0 };
         });
       }
-      await openTab(voiceTabs[0]);
+      await openBus(busKeys[0]);
       const m = await page.evaluate(() => {
         const bar = document.getElementById("boardtabs");
         const btns = [...bar.querySelectorAll("button")];
@@ -2311,9 +2488,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
                    .map(lineOf))].length,
                  seriesLines: [...new Set(btns.filter((b) => /\|bus\|/.test(b.dataset.k))
                    .map(lineOf))].length,
-                 seriesBreaks: series ? lineOf(series.querySelector("button")) >
-                   Math.max(...btns.filter((b) => /\|voice\|/.test(b.dataset.k))
-                     .map(lineOf)) : false,
+                 seamFirst: series ? lineOf(series) <= lineOf(btns[0]) : false,
                  panelW: Math.round(document.getElementById("boardpanel")
                    .getBoundingClientRect().width) };
       });
@@ -2335,33 +2510,47 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     const onePer = [];
     for (const w of [390, 1280])
       for (const [k, v] of Object.entries(shape[w].per)) {
-        const wantKind = k.startsWith("voice") ? "strips" : "rack";
+        // `voicemix` for a voice's own facet, `rack` for a bus's plate. It
+        // read `strips` for the first of those until 2026-08-28, when the
+        // strips left the board and `#strips` stopped existing.
+        const wantKind = k.startsWith("voice") ? "voicemix" : "rack";
         if (v.kind !== wantKind) onePer.push(w + " " + k + " opened " + v.kind);
         if (!(v.h > 0)) onePer.push(w + " " + k + " drew nothing");
       }
     ok(!onePer.length,
-       "ONE PANEL, ONE THING IN IT, at both widths — a voice tab opens a " +
-       "strip and each bus tab opens its own plate into the same panel " +
-       "(Paul, 2026-08-27: \"now the board is one tabbed space\")",
+       "ONE THING IN VIEW, at both widths — a voice's `mix` mark opens ITS " +
+       "strip and each bus tab opens its own plate into the board's one panel " +
+       "(Paul, 2026-08-27: \"now the board is one tabbed space\"; 2026-08-28: " +
+       "\"a new nav element called mix that is per voice\")",
        JSON.stringify(onePer));
     ok(!wide.length,
-       "NO SIDEWAYS GROWTH at 390 or at 1280, on ANY tab — not the document, " +
-       "not the tab row (it WRAPS: " + shape[390].tabLines + " line(s) at " +
-       "390, " + shape[1280].tabLines + " at 1280), not the panel",
-       wide.join("; "));
-    // THE SEAM, MEASURED. The bus tabs are their own `role="group"` with
-    // `flex-basis: 100%`, so the series always begins a fresh line after the
-    // voices — a boundary that is in the same place at every width instead of
-    // wherever the wrap happens to fall. At 390 the group's own four buttons
-    // and three arrows are wider than the row (measured: 395px of content in
-    // 366px), so it would have wrapped there anyway and the break costs
-    // nothing; at 1280 the whole series is one line.
-    ok(shape[390].seriesBreaks && shape[1280].seriesBreaks &&
-       shape[1280].seriesLines === 1,
-       "THE SEAM HOLDS: the bus tabs begin their own line under the voices at " +
-       "both widths (390: voices " + shape[390].voiceLines + " line(s), " +
-       "series " + shape[390].seriesLines + "; 1280: " +
-       shape[1280].voiceLines + " and " + shape[1280].seriesLines + ")",
+       "NO SIDEWAYS GROWTH at 390 or at 1280, on EITHER surface — not the " +
+       "document, not the board's tab row (it WRAPS: " + shape[390].tabLines +
+       " line(s) at 390, " + shape[1280].tabLines + " at 1280), not the panel " +
+       "a strip or a plate sits in", wide.join("; "));
+    /* THE SEAM, REWRITTEN 2026-08-28 — the property survives the thing it was
+       cutting between. It read: "THE SEAM HOLDS: the bus tabs begin their own
+       line UNDER THE VOICES at both widths", measured through `seriesBreaks`
+       (the group's first button lower than every voice button). There are no
+       voice buttons in this row now, so that comparison is against an empty
+       set and would pass vacuously — `Math.max()` of nothing is -Infinity and
+       everything is greater than it. That is exactly the shape of a check that
+       goes quietly green while measuring nothing, which this file has been
+       caught by before.
+       WHAT IS ASSERTED INSTEAD is what the group is FOR now that it separates
+       nothing: it is the row's own first item (its `.nu-seamlab` label leads
+       the line), it names its four buttons as one thing for a screen reader,
+       and the whole series is ONE LINE at 1280 — which is the smallest a
+       four-stage chain can be drawn in and the number the voices' departure
+       bought (the row was two lines with them in it, three before the tabs
+       became marks). */
+    ok(shape[390].seamFirst && shape[1280].seamFirst &&
+       shape[1280].seriesLines === 1 && !shape[390].voiceLines &&
+       !shape[1280].voiceLines,
+       "THE SEAM HOLDS, AND IT IS THE ROW NOW: no voice button at either " +
+       "width, the bus group leads the row, and the four stages are one line " +
+       "at 1280 (390: series " + shape[390].seriesLines + " line(s); 1280: " +
+       shape[1280].seriesLines + ")",
        JSON.stringify({ 390: shape[390], 1280: shape[1280] }));
     /* THE SENTENCE, REWRITTEN 2026-08-28 — NOT THE PROPERTY. It read
        "…and a strip and a plate take THE SAME width at 1280 (Npx against
@@ -2377,7 +2566,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        stands unchanged and the sentence now says what the equality means.
        (`stripW > 400` stays: it is the check that neither body collapsed and
        made the equality vacuous — two zeroes are also equal.) */
-    const stripW = shape[1280].per["voice|" + voiceTabs[0]].bw;
+    const stripW = shape[1280].per["voice|" + voices[0]].bw;
     const plateW = shape[1280].per["bus|main"].bw;
     ok(stripW > 400 && Math.abs(stripW - plateW) <= 1,
        "…and a strip and a plate take THE SAME width at 1280 (" + stripW +
@@ -2385,10 +2574,10 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        "it; the strip and the buses it sends into are one object, which is " +
        "the whole of \"consistent\"", JSON.stringify({ stripW, plateW }));
 
-    /* EVERY CONTROL REACHABLE — the half the tabs put at risk, now over the
-       whole row and not just the voices. */
+    /* EVERY CONTROL REACHABLE — the half a tabbed surface puts at risk, over
+       both of them: every voice's `mix` facet AND every bus tab. */
     const reach = await perTab(() => page.evaluate(() => {
-      const s = document.querySelector("#boardpanel #strips .nu-strip");
+      const s = document.querySelector("#voicemix .nu-strip");
       return [...s.querySelectorAll("[data-k]")].map((n) => n.dataset.k);
     }));
     const busReach = await perBus(() => page.evaluate(() => {
@@ -2411,9 +2600,10 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     const first = reach[0] ? shapeOf(reach[0][0], reach[0][1]) : [];
     const odd = reach.filter(([n, keys]) => !eq(shapeOf(n, keys), first));
     ok(reach.length === chansOrder.length && first.length > 0 && !odd.length,
-       "EVERY CONTROL REACHABLE: all " + reach.length + " voice tabs open a " +
-       "strip carrying the same " + first.length + " controls, differing " +
-       "only in the voice's own name — nothing was dropped behind a tab",
+       "EVERY CONTROL REACHABLE: all " + reach.length + " voices' `mix` marks " +
+       "open a strip carrying the same " + first.length + " controls, " +
+       "differing only in the voice's own name — nothing was dropped in the " +
+       "move out of the board",
        JSON.stringify(odd.map(([n, keys]) => n + ": " +
          JSON.stringify(shapeOf(n, keys)))));
     // ...AND EVERY BUS CONTROL THE REGISTRY DECLARES IS ON EXACTLY ONE TAB.
@@ -2451,8 +2641,18 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        tab: each disabled control carries `data-why`, and its words are
        printed in the panel it lives in. */
     const naked = [];
-    const readRefusals = () => page.evaluate(() => {
-      const panel = document.getElementById("boardpanel");
+    /* THE SCOPE IS THE SURFACE THE CONTROL IS ON, 2026-08-28 — `#boardpanel`
+       for a plate and `#voicemix` for a strip. It was `#boardpanel` for both
+       while the board drew the strips; reading a strip's refusals out of
+       `#boardpanel` now would find NONE and report a clean page, which is this
+       block's own named hazard ("a check faithful to a scope that does not
+       contain the thing"). The CLAIM is untouched and is the standing law: a
+       disabled control carries `data-why` AND its words are printed beside it,
+       because a silent grey is the bug and a reason on another screen is a
+       silent grey. */
+    const readRefusals = (sel) => () => page.evaluate((q) => {
+      const panel = document.querySelector(q);
+      if (!panel) return [];
       const text = panel.innerText;
       return [...panel.querySelectorAll("[disabled],[aria-disabled='true']")]
         .map((c) => ({ k: c.dataset.k || c.dataset.sel ||
@@ -2462,22 +2662,26 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
                          (text.includes(c.dataset.why) ||
                           (c.closest(".nu-vs,.nu-sel,.nu-slot,p") || panel)
                             .querySelector(".nu-why"))) }));
-    });
-    const sentenced = (await perTab(readRefusals))
-      .concat(await perBus(readRefusals));
+    }, sel);
+    const sentenced = (await perTab(readRefusals("#voicemix")))
+      .concat(await perBus(readRefusals("#boardpanel")));
     let refusals = 0;
     for (const [tab, list] of sentenced) for (const c of list) {
       refusals++;
       if (!c.why || !c.said) naked.push(tab + ": " + c.k);
     }
     ok(refusals > 0 && !naked.length,
-       "EVERY REFUSAL KEEPS ITS SENTENCE ON ITS OWN TAB — all " + refusals +
-       " disabled controls across the " + sentenced.length + " tabs carry " +
-       "`data-why` AND print their reason in the panel beside them (a silent " +
-       "grey is the bug, and a reason on another tab is a silent grey)",
+       "EVERY REFUSAL KEEPS ITS SENTENCE WHERE IT LIVES — all " + refusals +
+       " disabled controls across the " + sentenced.length + " surfaces (a " +
+       "strip per voice, a plate per bus) carry `data-why` AND print their " +
+       "reason beside them (a silent grey is the bug, and a reason on another " +
+       "screen is a silent grey)",
        JSON.stringify(naked));
 
     /* AND THE PAGE DOES NOT MOVE WHEN YOU CHANGE TABS (the anchor law:
+       — asked of the BOARD's row, which is the one tabbed row this file owns;
+       the gutter's own levels are test/shell.js's, unchanged by this round.
+
        ui/eight.js's whole `anchorWant` machinery exists because Paul's page
        used to scroll itself under a still thumb). Nothing above `#boardpanel`
        is rebuilt on a tab tap, so this should be zero BY CONSTRUCTION — which
@@ -2504,14 +2708,14 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       const jumped = moved.filter((m) => m.dY !== 0 || m.dRow !== 0);
       ok(!jumped.length,
          "at " + w + ": tapping each of the " + moved.length + " tabs — the " +
-         "voices AND the four stages — moves neither scrollY nor the tab row " +
+         "four stages of the series — moves neither scrollY nor the tab row " +
          "itself — the page does not move under the thumb (dY " +
          JSON.stringify(moved.map((m) => m.dY)) + ")",
          JSON.stringify(jumped));
     }
     await page.setViewportSize({ width: 390, height: 844 });
     await page.waitForTimeout(150);
-    await openTab(voiceTabs[0]);
+    await openBus(busKeys[0]);
   }
 
   ok(!errs.length, "the page raised no console error while the board was driven",

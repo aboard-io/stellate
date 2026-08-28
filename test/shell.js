@@ -547,8 +547,13 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
        and remove them and recharacterize and move them up and down"* and
        *"Make a new voice section for all voices."* So the band's `sections`
        mark opens the sections, a section's mark opens that section's three
-       operations, and a voice's mark opens that voice's three facets — four
-       depths under one tab, and `↑` must climb them one at a time.
+       operations, and a voice's mark opens that voice's facets — four depths
+       under one tab, and `↑` must climb them one at a time. (It said "three
+       facets" until 2026-08-28 evening, when Paul asked for a fourth: *"add it
+       in a new nav element called mix that is per voice."* The COUNT was never
+       what this walk asserts — it asserts that a mark DESCENDS and that `↑`
+       climbs back one level at a time — so the number is written here as
+       description and nothing below reads it.)
 
        IT DRIVES THE MARKS, exactly as the walk above drives the tab buttons: a
        gate that descended with `__eightTray` would be proving that the probe

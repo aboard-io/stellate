@@ -326,15 +326,49 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      conversion falls into, which neither the old line nor its opposite would
      have caught on its own. */
   const widgets = await eachView(() => ({
+    // the fallback name carries WHERE it was found as well as WHAT it is, so
+    // the seat exemption above can be by key shape AND container together
+    // rather than by key alone (2026-08-28)
     menus: [...document.querySelectorAll("#app select")]
-      .map((s) => s.dataset.sel || "(no data-sel: " + (s.dataset.k || s.outerHTML.slice(0, 40)) + ")"),
+      .map((s) => s.dataset.sel || "(no data-sel: " +
+        (s.dataset.k || s.outerHTML.slice(0, 40)) +
+        (s.closest(".nu-strip") ? " IN A STRIP" : "") + ")"),
     sheetKeys: [...document.querySelectorAll("#app .nu-sheet")].map((f) => f.dataset.sheet),
     multiKeys: [...document.querySelectorAll("#app .nu-sheet[data-multi]")]
       .map((f) => f.dataset.sheet),
   }));
   const menus = union(widgets, "menus");
   const sheetKeys = union(widgets, "sheetKeys");
-  const rogue = menus.filter((k) => /^\(no data-sel/.test(k));
+  /* THE INSERT SEATS ARE NAMED, NOT COUNTED AS ROGUE (2026-08-28), and this
+     is a scope moving rather than a law relaxing. `rogue` asks "is every
+     <select> in #app one ui/selects.js drew" — the guard against a hand-rolled
+     menu being smuggled back in — and until today every hand-rolled one on the
+     page was outside #app, on the board.
+
+     PAUL, 2026-08-28: *"In the voice -- add another nav item for the mixing and
+     give it a channel design like the mixer … add it in a new nav element
+     called mix that is per voice"*, and *"remove the voices from the mixing
+     board."* A voice's channel strip is inside the voice now — inside #app —
+     and it brings ui/engineer.js's own `seatSelect` with it: three per strip,
+     keyed `ins|<voice>|<n>`, one per insert slot.
+
+     WHY IT IS EXEMPT RATHER THAN CONVERTED. The seat is not an unowned
+     <select>: it is a NAMED control with its own gate. desk-gate G11 asserts
+     that a strip carries EXACTLY MAX_FX of them, keyed `ins|<voice>|<n>` and
+     nothing else on it is a menu at all; G14 asserts that every control on the
+     page offering the FX vocabulary against a voice IS one of these seats; G15
+     drives one, reads the document back and drives it off again. That is more
+     coverage than `data-sel` provenance buys. What this line still refuses is
+     what it was written to refuse — an ANONYMOUS hand-rolled menu — so the
+     exemption is by KEY SHAPE and by CONTAINER TOGETHER: an `ins|…` select
+     that is not inside a `.nu-strip` still fails here, and so does any other
+     shape.
+
+     (The board's own half of the walk did not change: the seats used to be
+     found by desk-gate's "every <select> outside #app" sweep and are not out
+     there any more; that file carries the same note at its `sweepSelects`.) */
+  const SEAT = /^\(no data-sel: ins\|[^|]+\|\d+ IN A STRIP\)$/;
+  const rogue = menus.filter((k) => /^\(no data-sel/.test(k) && !SEAT.test(k));
   const devMenu = menus.filter((k) => /^dev\./.test(k));
   const devSheet = sheetKeys.filter((k) => /^dev\./.test(k));
   /* A MULTI SHEET IS A FIELDSET AROUND ITS OWN `<select multiple>` and the two
@@ -345,8 +379,15 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   const multiKeys = union(widgets, "multiKeys");
   const bothWays = menus.filter((k) =>
     sheetKeys.includes(k) && !multiKeys.includes(k));
-  check(!rogue.length, "every <select> in #app came from ui/selects.js " +
+  const seats = menus.filter((k) => SEAT.test(k));
+  check(!rogue.length, "every <select> in #app came from ui/selects.js, or is " +
+    "an insert SEAT on a channel strip (" + seats.length + " of those — " +
+    "ui/engineer.js `seatSelect`, named and driven by desk-gate G11/G14/G15) " +
     JSON.stringify(rogue.slice(0, 3)));
+  check(seats.length > 0, "…and the strip that carries them is on the page at " +
+    "all: the voices' `mix` facet is one of the views this survey walks, so a " +
+    "strip that stopped being drawn fails here rather than passing quietly " +
+    JSON.stringify(seats.slice(0, 3)));
   check(!bothWays.length, "no key is drawn as a sheet AND as a menu " +
     JSON.stringify(bothWays));
   if (REAL)

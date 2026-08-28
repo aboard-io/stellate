@@ -35,18 +35,33 @@
 // number here disagrees with the tape, this file is reading the wrong
 // function, never doing its own arithmetic.
 //
-// ONE WRITABLE OWNER PER FACT (FUTURE.md, the one-board decision): the board
-// is now the ONLY place a hand touches gain/send/eq/insert facts. The
-// engineer's rows inside a voice's sheet (VIEW 1 below) became READ-ONLY
-// MIRRORS the same day — they print the value and point here.
+// ONE WRITABLE OWNER PER FACT (FUTURE.md, the one-board decision), AND THE
+// OWNER MOVED HOUSE ON 2026-08-28 WITHOUT BEING COPIED. It read: "the board is
+// now the ONLY place a hand touches gain/send/eq/insert facts. The engineer's
+// rows inside a voice's sheet (VIEW 1 below) became READ-ONLY MIRRORS the same
+// day — they print the value and point here." Paul: *"You were supposed to
+// remove the voices from the mixing board and just put them as nav items in
+// the voices themselves"*, and, on the menu rows that had been put there
+// instead of the strip: *"when i get to the strip it is just a bunch of
+// dropdowns instead of a nice strip and when I add effects they pop up without
+// design. So that is a regression … add it in a new nav element called mix
+// that is per voice."*
 //
-// AND THE INSTRUMENTS WENT INTO TABS the same evening, which is the last
-// change to the geometry and not to anything else. Paul, 2026-08-27: *"In the
-// mixing board — Put the instruments inside tabs the mixing board instead of
-// stacking them."* `#strips` holds ONE strip — the marked tab's — the rack and
-// the word grid stay whole below it, and the argument with its numbers is on
-// the block that builds them (THE STRIPS, ONE PER TAB). Nothing about what a
-// strip IS changed: same rows, same keys, same writes.
+// SO THE LAW IS INTACT AND THE ADDRESS IS DIFFERENT: a voice's channel strip
+// is drawn ONCE, by `channelStrip` in this file, on that voice's own `mix`
+// facet (`voiceMix`, VIEW 1). The BOARD keeps what is record-level — the
+// genre stage, the delay, the reverb, the main, and the section-automation
+// grid, which is a cross-voice table and never was a strip. The mirror is
+// DELETED rather than re-homed: a read-only copy beside the real control is
+// the second owner this paragraph exists to forbid.
+//
+// AND THE INSTRUMENTS WENT INTO TABS the same evening — Paul, 2026-08-27: *"In
+// the mixing board — Put the instruments inside tabs the mixing board instead
+// of stacking them."* — AND THEN OUT OF THE BOARD ALTOGETHER on 2026-08-28,
+// which is the reversal this file's THE VOICES LEFT THE BOARD block argues
+// with the measurements that bought each step. Nothing about what a strip IS
+// changed at either step: same rows, same keys, same writes. `#strips` is
+// gone from the board and the `.nu-strips` class is worn by the voice.
 //
 // ...AND THEN THE BUSES AND THE MAIN JOINED THEM, later the same day, which
 // REVERSES "THE RACK IS NOT A TAB" BY NAME. Paul, 2026-08-27: *"Put the
@@ -113,7 +128,12 @@ import { selectEl } from "./selects.js";
 // only available fix; Paul asked for marks on every tab row on the page
 // (2026-08-28), so the table was EXTRACTED out of ui/eight.js into ui/glyph.js
 // and this file reads the same three characters rather than copying them.
-import { GLYPH, kindGlyph, sayVoice, icon, paintIcon } from "./glyph.js";
+// `kindGlyph` AND `sayVoice` CAME OFF THIS LINE 2026-08-28, with the voice
+// tabs (Paul: "remove the voices from the mixing board"). ui/glyph.js still
+// exports both and ui/eight.js's gutter still calls them — one owner, still
+// reachable; what ended is this file's need for them. `GLYPH` stays for the
+// four bus marks and `icon`/`paintIcon` for the row that wears them.
+import { GLYPH, icon, paintIcon } from "./glyph.js";
 
 const el = (tag, text, cls) => { const n = document.createElement(tag);
   if (text != null) n.textContent = text; if (cls) n.className = cls; return n; };
@@ -140,6 +160,15 @@ const fmtDb = (v) => (v > 0 ? "+" : "") + v.toFixed(1);
 // WHICH BOX THE NUMBERS ARE READ AGAINST: the sounding one while the transport
 // runs, the first otherwise.
 const atBox = () => SONG[playing && playingSec >= 0 ? playingSec : 0] || SONG[0] || null;
+// WHAT THE ENGINE WILL DO WITH EACH CHANNEL, at the sounding box. Hoisted to
+// module scope 2026-08-28 with the strip (it was a const inside `mount()`), so
+// the one drawing can be built from either caller. FAIL OPEN before compile()
+// has run, for the reason the import comment gives: `{}` greys nothing,
+// because a control that vanishes before boot is worse than one that is
+// briefly optimistic.
+const factsNow = () => { try {
+  return channelFacts(playing && playingSec >= 0 ? playingSec : 0) || {};
+} catch (e) { return {}; } };
 // THE LIVE GAIN — the MODEL: resolved static gain × the box's level automation
 // at the playhead. Same arithmetic audio/desk.js hands the engine per note.
 function liveGain(sec, key) {
@@ -499,84 +528,276 @@ function slotEl(ctx, voice, slots, i, stereoWhy) {
   return box;
 }
 
-/* ========================= VIEW 1 · THE ENGINEER ==========================
-   READ-ONLY MIRROR SINCE 2026-08-27, and the reversal is the one-owner law
-   landing where FUTURE.md said it would: "the engineer's per-voice pots
-   (sheets keep a read-only mirror that links to the board)". Until today this
-   view was a second full set of writers — the same eq/fader/place/send facts
-   as the board, two data-k namespaces (`eng|…` and `b|…`), two controls per
-   fact. The board is the one place a hand touches the sound now; this table
-   PRINTS the voice's strip — bright where the record says a word, dim where
-   the answer is derived — and points at the board to change it. The third
-   column (what the value is riding on) survives, because it was always the
-   best thing about this view. */
-export function engineer(parent, ctx, voiceName) {
+/* ================== ONE CHANNEL STRIP, ONE DRAWING ========================
+   LIFTED OUT OF `mount()` 2026-08-28, and the lift is the whole of the round.
+   Paul, correcting the previous one: *"In the voice -- add another nav item
+   for the mixing and give it a channel design like the mixer; it is confusing
+   now and when i get to the strip it is just a bunch of dropdowns instead of a
+   nice strip and when I add effects they pop up without design. So that is a
+   regression but it is easy to revert to the design and add it in a new nav
+   element called mix that is per voice."* And, in the same breath: *"You were
+   supposed to remove the voices from the mixing board and just put them as nav
+   items in the voicers / in the voices themselves."*
+
+   WHAT WAS WRONG, and it was not the geometry — it was the SECOND DRAWING.
+   ui/eight.js `voiceSound` rebuilt this strip's facts (three insert seats plus
+   their wets and face pots, five sends, pan, level, the fader, four EQ bands,
+   mute and solo) as rows of <select>s and horizontal ranges on the voice's
+   `instrument` facet, while THIS file already drew them as a console: vertical
+   faders in a trough, insert SLOTS with their own wet and face pots, the four
+   sends side by side, five pan detents, mute and solo. Two drawings of one
+   fact, and the ugly one was where Paul was standing.
+
+   SO THERE IS ONE DRAWING NOW AND IT LIVES HERE. This function is the body of
+   what was `const stripOf = (c) => …` inside `mount()`, LINE FOR LINE — same
+   rows in the same order, same `data-k` keys, same refusal sentences, same
+   `data-live` declarations, same writes through the one writer
+   (NuDeskDoc.writeDesk, via `setDesk`). What changed is that it is a module
+   function two callers share instead of a closure one caller had, and the five
+   facts it read off `mount()`'s scope are an `env` argument:
+
+     anySolo · is any voice on this record soloed (this one dims if not it)
+     sec     · which box the derived numbers are read against (`atBox`)
+     shut    · is the reverb return shut (the send's label says so)
+     facts   · audio/plan.js channelFacts — `stereo` refuses the insert seats
+     drives  · the list of model readouts the caller's paint() repaints
+
+   THE VOICE IS THE ONLY CALLER OF THE STRIP NOW. `mount()` below keeps the
+   BUSES — the genre stage, the delay, the reverb, the main and the section
+   automation grid — and draws no voice at all; `voiceMix()` above draws this
+   strip inside the voice it belongs to. One strip, one home. */
+export function channelStrip(ctx, c, env) {
+  const voice = c.voice, key = c.key, d = deskOf(voice);
+  const off = env.anySolo && !d.solo;
+  const strip = el("article", null, "nu-strip" + (off || d.mute ? " is-off" : ""));
+  strip.dataset.ch = key;
+  strip.setAttribute("aria-label", voice.name + " strip");
+  const head = el("header");
+  head.append(el("b", voice.name, "nu-sname"));
+  head.append(el("small", (voice.instrument || voice.kind || "") + " · " + key));
+  strip.append(head);
+
+  // ---- inserts: up to three, in order --------------------------------
+  // `nu-srow-ins`: the three slots sit SIDE BY SIDE in the width the tab
+  // bought, and stack again under ~460px (nu.css).
+  const srow1 = el("div", null, "nu-srow nu-srow-ins");
+  srow1.append(el("p", "inserts · up to three · in order", "nu-rowlab"));
+  const stereoWhy = env.facts[key] && env.facts[key].stereo ? STEREO_WHY : null;
+  const slots = slotsOf(voice);
+  for (let i = 0; i < MAX_FX; i++)
+    srow1.append(slotEl(ctx, voice, slots, i, stereoWhy));
+  strip.append(srow1);
+
+  // ---- sends: four, post-insert --------------------------------------
+  const srow2 = el("div", null, "nu-srow");
+  srow2.append(el("p", "sends · post-insert", "nu-rowlab"));
+  const sends = el("div", null, "nu-sends");
+  // UN-REFUSED 2026-08-27 (the series-bus engine round). This column was
+  // drawn refused — "the genre bus is engine work — not wired" — and the
+  // engine work happened: fx_bus grew nothing, the RENDERERS grew a fifth
+  // accumulator (stream-renderer/press `gen`) whose chained return sums into
+  // the DELAY bus, so the send is a real wire: genre → delay → reverb →
+  // main. The word is desk `genre` (fields.js PARTMIX, SENDS family).
+  sends.append(col("genre", vknob("b|genre|" + voice.name, "genre",
+    SENDS, SENDLABEL, d.genre, voice.name + " send to the genre bus",
+    (v) => setDesk(ctx, voice, "genre", v), "default")));
+  sends.append(col(busName("echo"), vknob("b|echo|" + voice.name, "echo",
+    SENDS, SENDLABEL, d.echo, voice.name + " send to " + busName("echo"),
+    (v) => setDesk(ctx, voice, "echo", v), "default")));
+  const revK = vknob("b|rev|" + voice.name, "rev",
+    SENDS, SENDLABEL, d.rev, voice.name + " send to " + busName("rev"),
+    (v) => setDesk(ctx, voice, "rev", v), "default");
+  { const inp = revK.querySelector("input");
+    inp.title = genreAsk(env.sec) + "; a part send adds to it, so absent adds nothing"; }
+  sends.append(col(busName("rev") + (env.shut ? " (shut)" : ""), revK));
+  sends.append(col("main", vrefused("b|main|" + voice.name,
+    voice.name + " send to the main", "the fader's", MAINSEND_WHY)));
+  srow2.append(sends);
+  strip.append(srow2);
+
+  // ---- eq -------------------------------------------------------------
+  const srow3 = el("div", null, "nu-srow");
+  srow3.append(el("p", "eq", "nu-rowlab"));
+  const eqrow = el("div", null, "nu-sends");
+  for (const b of EQ_BANDS) {
+    eqrow.append(col(b.label.replace(/^eq\s*/, ""), vnum("b|eq" + b.key + "|" + voice.name, {
+      min: -12, max: 12, step: 0.5, value: (d.eq && d.eq[b.key]) || 0,
+      aria: voice.name + " " + b.label, fmt: (v) => fmtDb(v),
+      set: (v) => {
+        const next = { ...(deskOf(voice).eq || {}) };
+        next[b.key] = v;
+        setDesk(ctx, voice, "eq", next);
+      } })));
+  }
+  srow3.append(eqrow);
+  strip.append(srow3);
+
+  // ---- pan: a left/right fact, five detents --------------------------
+  // BUTTONS AND NOT A SLIDER, per the sketch's own panrow: five stops is a
+  // detent row a thumb can hit, and `place` was the collision the rename
+  // table killed ("pan — the one universal word"). Tapping the stop the
+  // record is on CLEARS it — absent is the only spelling of a default, and
+  // there is no other way to spell it with buttons.
+  const srow4 = el("div", null, "nu-srow");
+  srow4.append(el("p", "pan", "nu-rowlab"));
+  const panrow = el("div", null, "nu-panrow");
+  panrow.setAttribute("role", "group");
+  panrow.setAttribute("aria-label", voice.name + " pan");
+  const marks = { l: "L", hl: "l", c: "C", hr: "r", r: "R" };
+  const cur = d.pan || null;
+  const word = el("p", cur ? (PANLABEL[cur] || cur) : "default",
+    "nu-panword" + (cur ? "" : " is-dflt"));
+  for (const p of Object.keys(PANS)) {
+    const b = el("button", marks[p], "nu-panbtn");
+    b.type = "button";
+    b.dataset.k = "b|pan|" + voice.name + "|" + p;
+    b.setAttribute("aria-label", voice.name + " pan " + (PANLABEL[p] || p));
+    const on = cur ? cur === p : p === "c";
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    b.addEventListener("click", () =>
+      setDesk(ctx, voice, "pan", cur === p ? null : p));
+    panrow.append(b);
+  }
+  srow4.append(panrow, word);
+  strip.append(srow4);
+
+  // ---- the fader ------------------------------------------------------
+  const srow5 = el("div", null, "nu-srow");
+  srow5.append(el("p", "fader", "nu-rowlab"));
+  const fw = el("div", null, "nu-fadwrap");
+  const fout = { o: null };
+  const fader = vnum("b|fader|" + voice.name, {
+    min: -24, max: 12, step: 0.5, value: faderDb(d.fader),
+    aria: voice.name + " fader", tall: true, fmt: (v) => fmtDb(v),
+    set: (v) => setDesk(ctx, voice, "fader", v) });
+  fw.append(col("level", fader));
+  // THE METER WELL, REFUSED — never fake a measurement (the header's law).
+  fw.append(col("meter", vrefused(null, voice.name + " meter",
+    "no tap", METER_WHY, true)));
+  const duo = el("div", null, "nu-duo");
+  // mute/solo WEAR THEIR OWN NAMES since 2026-08-27 (FUTURE.md §5: "cut"
+  // collided with EQ cut three rows up; the desk keys were always mute/solo,
+  // so the buttons stop translating them).
+  for (const [k2, label] of [["mute", "mute"], ["solo", "solo"]]) {
+    const b = el("button", label, "nu-tgl");
+    b.type = "button";
+    b.dataset.k = "b|" + k2 + "|" + voice.name;
+    b.setAttribute("aria-label", voice.name + " " + label);
+    b.setAttribute("aria-pressed", d[k2] ? "true" : "false");
+    b.addEventListener("click", () => setDesk(ctx, voice, k2, !deskOf(voice)[k2]));
+    duo.append(b);
+  }
+  // the MODEL's number, dim and labelled as the model — what desk.js says
+  // is driving the channel right now, repainted per beat by paintBoard.
+  // `data-live` because the clock writes it: a surface the transport feed
+  // repaints declares itself (the trim grid's own law, below), and the
+  // wave-3 artifact drive watches the WHOLE page with a MutationObserver —
+  // an undeclared clock write is the finding it exists for.
+  const drive = el("small", "", "nu-drive nu-hint");
+  drive.dataset.live = "model";
+  drive.title = "the model: deskChannelBase().gain × the box's level automation";
+  duo.append(drive);
+  env.drives.push({ el: drive, key });
+  fw.append(duo);
+  srow5.append(fw);
+  strip.append(srow5);
+
+  const goes = el("p", null, "nu-goes");
+  goes.append(document.createTextNode("→ "));
+  goes.append(el("b", busName("genre") + " · " + busName("echo") + " · " +
+    busName("rev") + " · main"));
+  strip.append(goes);
+  return strip;
+}
+
+/* ============ VIEW 1 · THE VOICE'S OWN MIX — THE STRIP, AT HOME ===========
+   Paul, 2026-08-28: *"add another nav item for the mixing and give it a
+   channel design like the mixer … add it in a new nav element called mix that
+   is per voice"*, and *"You were supposed to remove the voices from the mixing
+   board and just put them as nav items in the voices themselves."*
+
+   THIS IS THE VOICE'S `mix` FACET (ui/eight.js FACETS, the gutter's `voice`
+   level). It draws `channelStrip` at full size — the same console the board
+   drew, with its insert SLOTS, its four sends, its EQ, its pan detents and its
+   fader — inside the player it belongs to. It is the ONE drawing of those
+   facts on the page: the board keeps no strip, and `voiceSound`'s menu rows
+   are deleted (their tombstone is at their old site in ui/eight.js).
+
+   ===== WHAT STOOD HERE, AND WHY IT IS GONE ===============================
+   `export function engineer(parent, ctx, voiceName)` — a `.nu-eng.nu-mirror`
+   table of eleven rows, "read-only — set it on the board", bright where the
+   record named a word and dim where the answer was derived, with a third
+   column saying what each value was RIDING ON (`derivedPartTone`,
+   `deskChannelBase` read at the sounding box). It was two writers until
+   2026-08-27 (the one-board round made it a mirror) and it lost its last
+   caller on 2026-08-28, when Paul asked for the controls themselves in the
+   voice: *"get rid of the engineer table and simply move the sound controls
+   out of the mixer and into this section."* ui/eight.js tombstoned the call
+   that night and named the deletion of this function as the follow-up; this
+   is that deletion, and the mirror's own argument is answered rather than
+   overruled — the real strip is here now, so a read-only copy of it beside
+   the real thing would be the third drawing of one fact.
+
+   THE THIRD COLUMN IS STILL THE ONE REAL LOSS and it is still named so it can
+   come back: "riding −2.5 dB seated" beside an EQ band, "the record seats it
+   at −6.0 dB" beside the level. That is a READING and not a control, so it
+   belongs as the `nu-hint` half of the strip's own rows rather than as a
+   table of its own. It is in this round's report, with its two functions.
+
+   A VOICE WITH NO CHANNEL HAS NO STRIP, and it says so rather than drawing an
+   empty console: `channelVoicesOf` is the desk's own roster walk (G2's law)
+   and it drops a kit nobody has hired, so the refusal carries the measured
+   reason exactly as a greyed knob does. */
+export function voiceMix(parent, ctx, voiceName) {
   const doc = ctx.doc();
   const chans = DD().channelVoicesOf(doc, GENRES);
-  const me = chans.find((c) => c.voice.name === voiceName);
-  if (!me) return;                       // a voice with no channel has no strip
-  const key = me.key, voice = me.voice, d = deskOf(voice);
-  const sec = atBox();
-  const drv = sec ? derivedPartTone(sec, key) : { db: 0, eq: null };
-  const base = sec ? deskChannelBase(sec, key) : { rev: 0, del: 0, pan: 0, gain: 1 };
-  const pct = (x) => Math.round((x || 0) * 100) + "%";
-
-  if (ctx.heading) ctx.heading(parent, "the engineer");
-  else parent.append(el("h3", "the engineer"));
-
-  const t = el("table");
-  t.className = "nu-eng nu-mirror";
-  const row = (label, yours, riding) => {
-    const tr = el("tr");
-    tr.append(el("th", label));
-    const td = el("td", yours == null || yours === "" ? "default" : yours);
-    if (yours == null || yours === "") td.className = "is-dflt";
-    tr.append(td);
-    const td2 = el("td", riding == null ? "" : riding);
-    td2.className = "nu-hint"; tr.append(td2);
-    t.append(tr);
-  };
-  for (const b of EQ_BANDS)
-    row(b.label, d.eq && d.eq[b.key] ? fmtDb(d.eq[b.key]) + " dB" : null,
-        drv.eq && drv.eq[b.key] ? "riding " + fmtDb(drv.eq[b.key]) : "flat");
-  row("fader", d.fader ? fmtDb(faderDb(d.fader)) + " dB" : null,
-      "riding " + fmtDb(drv.db) + " dB seated");
-  row("level", d.lvl ? (LEVELLABEL[d.lvl] || d.lvl) : null,
-      "the record seats it at " +
-      fmtDb(20 * Math.log10(Math.max(1e-4, base.gain || 1))) + " dB");
-  row("pan", d.pan ? (PANLABEL[d.pan] || d.pan) : null,
-      "the record sits at " + (base.pan || 0).toFixed(2));
-  row("→ " + busName("echo"), d.echo ? (SENDLABEL[d.echo] || d.echo) : null,
-      pct(base.del) + " into " + busName("echo"));
-  row("→ " + busName("rev"), d.rev ? (SENDLABEL[d.rev] || d.rev) : null,
-      pct(base.rev) + " into " + busName("rev") + " — " + genreAsk(sec));
-  row("→ " + busName("genre"), d.genre ? (SENDLABEL[d.genre] || d.genre) : null,
-      pct(base.genre) + " into " + busName("genre") + " (→ delay)");
-  const slots = slotsOf(voice);
-  row("inserts", slots.length
-        ? slots.map((s) => FXLABEL[s.k] || s.k).join(" → ") : null,
-      slots.length ? "wet and settings on the board" : "");
-  // "mute / solo", 2026-08-27 — FUTURE.md §5: "cut" collided with EQ cut
-  // three rows up, and mute/solo are the two words every console wears.
-  row("mute / solo", (d.mute ? "mute" : "") + (d.mute && d.solo ? " · " : "") +
-      (d.solo ? "solo" : "") || null, "");
-  const tp = el("div");
-  tp.className = "nu-pane";
-  tp.tabIndex = 0;
-  // WHICH PANE THIS IS ACROSS A REBUILD (ui/eight.js keepPanes/putPanes,
-  // 2026-08-25) — keyed by the voice, since a mirror carries no [data-k]
-  // control of its own to key on.
-  tp.dataset.pane = "mirror|" + voiceName;
-  tp.append(t);
-  parent.append(tp);
-  // compressed 2026-08-27 (the text diet): the one-owner argument lives in
-  // this file's header; the page needs the pointer, not the essay.
+  const c = chans.find((x) => x.voice.name === voiceName);
+  if (ctx.heading) ctx.heading(parent, "mix");
+  else parent.append(el("h3", "mix"));
+  if (!c) {
+    const w = el("p", voiceName + " has no channel on this record — the desk " +
+      "seats a kit only once it is hired (desk-doc channelVoicesOf), so there " +
+      "is no strip to draw rather than an empty one", "nu-why");
+    parent.append(w);
+    MIX = null;
+    return;
+  }
+  const env = { anySolo: chans.some((x) => deskOf(x.voice).solo),
+                sec: atBox(), shut: returnShut(), facts: factsNow(),
+                drives: [] };
+  // `.nu-strips` AND NOT `#strips`. The class is the skin (nu.css, the grid
+  // and the 100% width Paul asked every table and grid for on 2026-08-28);
+  // the ID belonged to the board's panel and stays there, because two nodes
+  // wearing one id is the bug a gate cannot see round. Keyed for the gates and
+  // for a person's own muscle memory as `#voicemix`, which is what this is.
+  const host = el("div", null, "nu-strips");
+  host.id = "voicemix";
+  host.setAttribute("aria-label", voiceName + " strip");
+  host.append(channelStrip(ctx, c, env));
+  parent.append(host);
+  // WHERE IT GOES, said on the voice as well as on the board. The strip's own
+  // footer already draws the four destinations (`.nu-goes`); this is the way
+  // to the plates that answer for them, and it is a LINK and not a copy of
+  // their controls — one owner per fact, and the buses' owner is the board.
   const go = el("p", null, "nu-hint");
   const a = document.createElement("a");
-  a.href = "#board"; a.textContent = "set it on the board";
-  go.append(document.createTextNode("read-only — "), a);
+  a.href = "#board"; a.textContent = "the buses this feeds are on the board";
+  go.append(a);
   parent.append(go);
+  // the model readout under the fader is written once a beat by the page's own
+  // `on("pos")` feed — see `paintVoiceMix`, and the [data-live] law on the
+  // `.nu-drive` element itself.
+  MIX = { drives: env.drives, host };
+  sayDrives(env.drives);            // the first reading, before the first beat
 }
+
+/* WHICH VOICE STRIP IS ON THE PAGE, if any. A page fact, never a document one,
+   and it is REPLACED rather than accumulated: ui/eight.js rebuilds the Band
+   panel on every edit, so the handle a stale draw left behind points at
+   detached nodes. `paintVoiceMix` tests `isConnected` rather than trusting
+   this, because a facet change or a tab change can orphan it between beats. */
+let MIX = null;
+
 
 /* ======================= VIEW 2 · THE ONE BOARD =========================== */
 let CURRENT = null;
@@ -596,7 +817,11 @@ let CURRENT = null;
 // never by index, for the reason the motif tabs give in their own file: the
 // bank changes — add a voice, drop a voice, and index 2 is a different player;
 // the bus keys are fields.js BUSROWS' own, which do not renumber either.
-let BOARDTAB = { kind: "voice", key: null };
+// EVERY TAB IN THIS ROW IS A BUS SINCE 2026-08-28 (see THE VOICES LEFT THE
+// BOARD). The tagged pair STAYS — the `data-k` is `boardtab|bus|<key>` and
+// three gates drive the row by it, and a key that changed shape because a kind
+// went away would be an address moved for a reason that is not an address's.
+let BOARDTAB = { kind: "bus", key: null };
 
 export function mount(parent, ctx) {
   const host = ctx.section
@@ -606,21 +831,20 @@ export function mount(parent, ctx) {
   const doc = ctx.doc();
   const chans = DD().channelVoicesOf(doc, GENRES);
   const sec = atBox();
-  const anySolo = chans.some((c) => deskOf(c.voice).solo);
   const shut = returnShut();
-  const facts = (() => { try { return channelFacts(playing && playingSec >= 0
-    ? playingSec : 0) || {}; } catch (e) { return {}; } })();
-  // `let`, not `const`, since 2026-08-27 (the tabs): the strip is rebuilt on a
-  // tab tap and paint() must read the CURRENT strip's readout, not the one
-  // that was on the page when mount() ran.
-  let drives = [];              // { el, key } — the model readout per strip
-  // ...AND THE PLATES' OWN PAINT TARGETS, hoisted here 2026-08-27 (the board
-  // tabs) for exactly the reason `drives` was: the panel is rebuilt on a tab
-  // tap, so paint() must read the readouts of the plate that is on the page
-  // now, not the ones that were there when mount() ran. `let`, reset by
-  // showPanel(), empty while a voice tab is open — paint() walks an empty
-  // list rather than testing which tab is open, which is one branch fewer to
-  // get wrong once a beat.
+  /* `anySolo`, `facts` AND `drives` LEFT THIS SCOPE WITH THE STRIPS,
+     2026-08-28. All three were read by `stripOf` and by nothing else here:
+     `anySolo` dimmed a strip that was not the soloed one, `facts` carried
+     audio/plan.js's `stereo` so the insert seats could refuse, and `drives`
+     collected the per-strip model readouts for paint(). They are the `env`
+     `voiceMix` builds for `channelStrip` now (see ONE CHANNEL STRIP, ONE
+     DRAWING). Grepped before deleting; nothing else in this function named
+     them. `chans` STAYS — the section-automation grid below is a cross-voice
+     table and has a column per channel. */
+  // THE PLATES' OWN PAINT TARGETS. `let` rather than `const` because the panel
+  // is rebuilt on a tab tap, so paint() must read the readouts of the plate
+  // that is on the page NOW, not the ones that were there when mount() ran,
+  // and showPanel() resets them.
   let busSays = [];             // { el, bus } — model in/out lines per plate
   let masterMeter = null;       // the ONE measured meter, on the main plate
 
@@ -632,264 +856,66 @@ export function mount(parent, ctx) {
     "nu-hint");
   host.append(note);
 
-  /* ================= THE STRIPS, ONE PER TAB (2026-08-27) =================
-     Paul, 2026-08-27: *"In the mixing board — Put the instruments inside tabs
-     the mixing board instead of stacking them."*
+  /* ============= THE VOICES LEFT THE BOARD (2026-08-28) =================
+     Paul, correcting the round that put them here: *"You were supposed to
+     remove the voices from the mixing board and just put them as nav items in
+     the voicers"* / *"in the voices themselves."* And, on what he found when
+     he got to one: *"when i get to the strip it is just a bunch of dropdowns
+     instead of a nice strip and when I add effects they pop up without design.
+     So that is a regression … it is easy to revert to the design and add it in
+     a new nav element called mix that is per voice."*
 
-     WHAT WAS STACKED, MEASURED on the rendered page before the change
-     (localhost:8777, the shipped chant grown to seven voices — two lines, a
-     bass, a kit, three more lines): every strip is ~1,007px tall, so `#strips`
-     was 7,193px at 390 and the document 16,608px. Eight and a half screens of
-     console stood between the top of the board and the rack every one of those
-     strips sends into. At 1280 the auto-fit grid put them in four columns and
-     the block was still 2,092px. The stack was not a layout, it was a queue.
-     AFTER, same seven voices, same page: `#strips` is 1,007px at 390 and
-     876px at 1280 (one strip — and at 1280 it is SHORTER than a stacked one
-     was, because its three insert slots sit in a line), and the document is
-     10,529px. 6,079px of queue gone.
+     SO THIS BOARD IS THE BUSES AND NOTHING ELSE: genre fx → delay → reverb →
+     main, plus the section-automation grid, which is a CROSS-VOICE table and
+     was never a strip. A voice's channel strip is drawn by `voiceMix` above,
+     inside that voice, on its own `mix` facet — the SAME `channelStrip`
+     function, so what Paul asked for ("give it a channel design like the
+     mixer") is not a copy of the mixer's design, it IS the mixer's design.
 
-     ONE TAB PER SEATED VOICE, ONE STRIP ON THE PAGE. The strip that is showing
-     gets the whole width the rack gets (780px, see nu.css) and its three
-     insert slots sit SIDE BY SIDE there instead of stacking — which is the
-     point of the change and not a bonus: vertical space is cheap (Paul,
-     2026-08-27) but it is not free, and a slot with room shows its wet and its
-     two face knobs without cramming them into a 250px column.
+     WHAT IS DELETED HERE, line for line: `const stripOf = (c) => …` (lifted
+     whole to module scope, unchanged), the `names` list the voice tabs were
+     built from, and the `#strips` branch of `showPanel`. The voices' `env`
+     locals went with them (see the note where `chans` is read).
 
-     THE RACK IS NOT A TAB — REVERSED THE SAME DAY, and the argument is kept
-     rather than deleted because every number in it was real. It read: "The
-     rack is the SERIES — genre → delay → reverb → main — and every one of the
-     four sends on the strip above lands in it; a hand riding a send is looking
-     at the return it feeds. Measured on the tabbed page at 390: the reverb
-     send slider and the reverb plate's own return pot are 2,033px apart, which
-     is a scroll and no taps. Behind a tab they would be one tap apart AND the
-     strip would be gone while you looked — you would be setting a send with
-     its destination off the page. The rack is also drawn ONCE for the whole
-     record … so a tab for it would put a record-level fact behind a per-voice
-     gesture."
+     WHAT IS KEPT, BECAUSE EVERY NUMBER IN IT WAS REAL. The argument that put
+     the strips in tabs on 2026-08-27 — Paul: *"In the mixing board — Put the
+     instruments inside tabs the mixing board instead of stacking them"* — was
+     measured on the rendered page: seven stacked strips were 7,193px at 390
+     and made a 16,608px document; one strip behind a tab was 1,007px and
+     10,529px, "6,079px of queue gone". Then the buses joined the row (*"Put
+     the effects buses and mains into special tabs after the voices -- now the
+     board is one tabbed space that is consistent and easy to understand"*) and
+     the panel became one strip OR one plate: 534/530/447/926px at 390 for
+     genre / delay / reverb / main. NONE OF THAT IS WITHDRAWN — a tabbed panel
+     is still what this board is, and the four plates are still the four tabs.
+     What the voices leaving changes is the ROW, not the panel: the tabs are
+     the series alone now, so the one queue that is left is four stages long
+     and every one of them is a record-level fact, which is what the original
+     "a record-level fact behind a per-voice gesture" worry was pointing at
+     from the other side.
 
-     PAUL, 2026-08-27: *"Put the effects buses and mains into special tabs
-     after the voices -- now the board is one tabbed space that is consistent
-     and easy to understand."* The half of the old argument that was about
-     DISTANCE was answering a question nobody asked: 2,033px of scroll is not
-     "visible", and what the strips and the plates actually shared was a
-     column of screen you had to travel either way. The half about a
-     RECORD-LEVEL FACT BEHIND A PER-VOICE GESTURE is answered by making the
-     row say so — the bus tabs are a SEPARATE GROUP after the voices, on their
-     own line, wearing the arrows of the series (THE TAB ROW below has the
-     measurements). MEASURED before the change, the shipped chant at 390: the
-     rack was 2,561px under a 1,007px strip and the document 9,872px; at 1280,
-     2,162px under 876px and 8,449px. After: the panel is one strip or one
-     plate — 534/530/447/926px at 390 for genre / delay / reverb / main (they
-     were 467/463/380/926 stacked in the rack; each carries its own series
-     connector now) — so the tallest thing on the board is a tap away instead
-     of a page away.
+     THE SKIN IS UNCHANGED AND IS STILL THIS PAGE'S OWN: `<p class="nu-row">`
+     of plain buttons carrying `aria-pressed`, a `<mark>` on the open one —
+     the same idiom as `#nu-tray`'s levels and the motif tabs. The
+     `.tab[aria-selected]` skin in nukernel/ideal was never shipped (grep for
+     `class="tab"` answers 0, nu.css defines no `.tab` rule), and
+     `aria-pressed` and `aria-selected` are not both sayable on one button.
 
-     The word grid stays whole for the same reason it always was: it is a
-     cross-voice table by design — sections down, every voice across — and a
-     table with one column is not a table.
+     THE GLYPHS ARE ui/glyph.js's, ONE OWNER, and that stays true with the
+     voices gone: the row reads `GLYPH.bus`, the voice's own facets read
+     `GLYPH.facet`, and neither file spells a character the other one owns.
 
-     THE SKIN IS THIS PAGE'S OWN AND NOT THE SKETCH'S. The band's voice tabs
-     (ui/eight.js bandBlock, `#tabs`) and the motif tabs (`#motif-tabs`) are
-     both `<p class="nu-row">` of plain buttons carrying `aria-pressed` with a
-     `<mark>` around the open one, and this strip is the third of them, spelled
-     identically — a person who has learned "the tabs are a row of buttons and
-     the marked one is open" has learned all three. The `.tab[aria-selected]`
-     skin in the nukernel/ideal sketches was never shipped: grep for a
-     `class="tab"` across every .js under nukernel/ answers 0, and nu.css
-     defines no `.tab` rule (0 rules matching it in any of the four
-     stylesheets). A fourth
-     spelling of a row of buttons is precisely what nu.css's 2026-08-26 audit
-     deleted three of. `aria-pressed` and `aria-selected` are also not both
-     sayable on one button — `aria-selected` needs `role="tab"` inside a
-     `role="tablist"` with a `role="tabpanel"` to point at, and this page has
-     no such construct anywhere.
-
-     THE GLYPHS STAYED IN eight.js UNTIL 2026-08-28, AND THE ARGUMENT THAT KEPT
-     THEM THERE IS KEPT HERE BECAUSE IT WAS RIGHT ABOUT THE HAZARD. It read:
-     "The band's tabs draw `glyphOf(name)` off `KINDGLYPH`, which is a private
-     table in ui/eight.js with a comment on it about the last time it was
-     copied ('the glyphs used to be keyed by NAME… that fix left a second table
-     behind it'). Copying three characters here would be that drift again, so a
-     board tab wears the voice's NAME, which is the same word `.nu-sname`
-     prints at the top of the strip it opens."
-
-     WHAT ENDED IT is Paul, 2026-08-28: *"Please make all the tabs and top
-     buttons into sensible icons to save space. Voice 2 for example could be
-     more symbol plus the number 2."* Every tab row on the page, drawn by four
-     different files. A table two files cannot both read is a table that gets
-     copied, so it was EXTRACTED rather than copied: `KINDGLYPH`, `FORMGLYPH`
-     and `PERFGLYPH` are the `kind` and `song` columns of `GLYPH` in
-     ui/glyph.js now, character for character, and both rows import the same
-     three marks. The paragraph's real claim — one owner, never a second copy —
-     is what the move preserves.
-     AND THE NAME IS STILL ON THE TAB. It is the button's `aria-label` and its
-     `.nu-vh` word, so it is what a screen reader hears and what this strip
-     reads as with the stylesheet off; it is still the same word `.nu-sname`
-     prints at the top of the strip it opens, and above 700px it is printed on
-     the open tab again (nu.css). What it stopped being is the visible face on
-     a phone, which is what cost the row its third line.
-
-     WHICH TAB IS OPEN IS A PAGE FACT AND KEYED BY NAME. `BOARDTAB` is a module
-     `let` — it survives every redraw of the board (mount() runs on every edit)
-     and it is never written to the document, because which strip you are
-     looking at is not a fact about the record. Keyed by NAME and not by index
-     for the reason the motif tabs give in their own file: the bank changes —
-     add a voice, drop a voice, and index 2 is a different player. */
-  const names = chans.map((c) => c.voice.name);
+     WHICH TAB IS OPEN IS STILL A PAGE FACT AND STILL KEYED BY NAME. `BOARDTAB`
+     is a module `let` — it survives every redraw (mount() runs on every edit)
+     and is never written to the document, because which plate you are looking
+     at is not a fact about the record. */
   // THE ONE PANEL (2026-08-27, the board tabs). It holds whichever tab is
-  // open: a `.nu-strips` with one `.nu-strip` in it, or a `.nu-rack` with one
-  // `.nu-plate`. Both inner hosts keep their ids — `#strips` and `#rack` are
-  // what the gates, the stylesheet and three years of muscle memory call the
-  // two kinds of board furniture, and a rack of one plate is still the rack.
+  // open, which since 2026-08-28 is always a `.nu-rack` with one `.nu-plate`
+  // in it — the strips left with the voices. `#rack` keeps its id, because it
+  // is what the gates, the stylesheet and three years of muscle memory call
+  // this furniture, and a rack of one plate is still the rack.
   const panel = el("div", null, "nu-boardpanel");
   panel.id = "boardpanel";
-  // ONE STRIP, BUILT ON DEMAND. This was a `for (const c of chans)` loop that
-  // appended every strip to `#strips`; it is a function now and the tab row
-  // below calls it with the one channel that is open. Nothing inside it
-  // changed — the body is the 2026-08-27 one-board strip, line for line.
-  const stripOf = (c) => {
-    const voice = c.voice, key = c.key, d = deskOf(voice);
-    const off = anySolo && !d.solo;
-    const strip = el("article", null, "nu-strip" + (off || d.mute ? " is-off" : ""));
-    strip.dataset.ch = key;
-    strip.setAttribute("aria-label", voice.name + " strip");
-    const head = el("header");
-    head.append(el("b", voice.name, "nu-sname"));
-    head.append(el("small", (voice.instrument || voice.kind || "") + " · " + key));
-    strip.append(head);
-
-    // ---- inserts: up to three, in order --------------------------------
-    // `nu-srow-ins`: the three slots sit SIDE BY SIDE in the width the tab
-    // bought, and stack again under ~460px (nu.css).
-    const srow1 = el("div", null, "nu-srow nu-srow-ins");
-    srow1.append(el("p", "inserts · up to three · in order", "nu-rowlab"));
-    const stereoWhy = facts[key] && facts[key].stereo ? STEREO_WHY : null;
-    const slots = slotsOf(voice);
-    for (let i = 0; i < MAX_FX; i++)
-      srow1.append(slotEl(ctx, voice, slots, i, stereoWhy));
-    strip.append(srow1);
-
-    // ---- sends: four, post-insert --------------------------------------
-    const srow2 = el("div", null, "nu-srow");
-    srow2.append(el("p", "sends · post-insert", "nu-rowlab"));
-    const sends = el("div", null, "nu-sends");
-    // UN-REFUSED 2026-08-27 (the series-bus engine round). This column was
-    // drawn refused — "the genre bus is engine work — not wired" — and the
-    // engine work happened: fx_bus grew nothing, the RENDERERS grew a fifth
-    // accumulator (stream-renderer/press `gen`) whose chained return sums into
-    // the DELAY bus, so the send is a real wire: genre → delay → reverb →
-    // main. The word is desk `genre` (fields.js PARTMIX, SENDS family).
-    sends.append(col("genre", vknob("b|genre|" + voice.name, "genre",
-      SENDS, SENDLABEL, d.genre, voice.name + " send to the genre bus",
-      (v) => setDesk(ctx, voice, "genre", v), "default")));
-    sends.append(col(busName("echo"), vknob("b|echo|" + voice.name, "echo",
-      SENDS, SENDLABEL, d.echo, voice.name + " send to " + busName("echo"),
-      (v) => setDesk(ctx, voice, "echo", v), "default")));
-    const revK = vknob("b|rev|" + voice.name, "rev",
-      SENDS, SENDLABEL, d.rev, voice.name + " send to " + busName("rev"),
-      (v) => setDesk(ctx, voice, "rev", v), "default");
-    { const inp = revK.querySelector("input");
-      inp.title = genreAsk(sec) + "; a part send adds to it, so absent adds nothing"; }
-    sends.append(col(busName("rev") + (shut ? " (shut)" : ""), revK));
-    sends.append(col("main", vrefused("b|main|" + voice.name,
-      voice.name + " send to the main", "the fader's", MAINSEND_WHY)));
-    srow2.append(sends);
-    strip.append(srow2);
-
-    // ---- eq -------------------------------------------------------------
-    const srow3 = el("div", null, "nu-srow");
-    srow3.append(el("p", "eq", "nu-rowlab"));
-    const eqrow = el("div", null, "nu-sends");
-    for (const b of EQ_BANDS) {
-      eqrow.append(col(b.label.replace(/^eq\s*/, ""), vnum("b|eq" + b.key + "|" + voice.name, {
-        min: -12, max: 12, step: 0.5, value: (d.eq && d.eq[b.key]) || 0,
-        aria: voice.name + " " + b.label, fmt: (v) => fmtDb(v),
-        set: (v) => {
-          const next = { ...(deskOf(voice).eq || {}) };
-          next[b.key] = v;
-          setDesk(ctx, voice, "eq", next);
-        } })));
-    }
-    srow3.append(eqrow);
-    strip.append(srow3);
-
-    // ---- pan: a left/right fact, five detents --------------------------
-    // BUTTONS AND NOT A SLIDER, per the sketch's own panrow: five stops is a
-    // detent row a thumb can hit, and `place` was the collision the rename
-    // table killed ("pan — the one universal word"). Tapping the stop the
-    // record is on CLEARS it — absent is the only spelling of a default, and
-    // there is no other way to spell it with buttons.
-    const srow4 = el("div", null, "nu-srow");
-    srow4.append(el("p", "pan", "nu-rowlab"));
-    const panrow = el("div", null, "nu-panrow");
-    panrow.setAttribute("role", "group");
-    panrow.setAttribute("aria-label", voice.name + " pan");
-    const marks = { l: "L", hl: "l", c: "C", hr: "r", r: "R" };
-    const cur = d.pan || null;
-    const word = el("p", cur ? (PANLABEL[cur] || cur) : "default",
-      "nu-panword" + (cur ? "" : " is-dflt"));
-    for (const p of Object.keys(PANS)) {
-      const b = el("button", marks[p], "nu-panbtn");
-      b.type = "button";
-      b.dataset.k = "b|pan|" + voice.name + "|" + p;
-      b.setAttribute("aria-label", voice.name + " pan " + (PANLABEL[p] || p));
-      const on = cur ? cur === p : p === "c";
-      b.setAttribute("aria-pressed", on ? "true" : "false");
-      b.addEventListener("click", () =>
-        setDesk(ctx, voice, "pan", cur === p ? null : p));
-      panrow.append(b);
-    }
-    srow4.append(panrow, word);
-    strip.append(srow4);
-
-    // ---- the fader ------------------------------------------------------
-    const srow5 = el("div", null, "nu-srow");
-    srow5.append(el("p", "fader", "nu-rowlab"));
-    const fw = el("div", null, "nu-fadwrap");
-    const fout = { o: null };
-    const fader = vnum("b|fader|" + voice.name, {
-      min: -24, max: 12, step: 0.5, value: faderDb(d.fader),
-      aria: voice.name + " fader", tall: true, fmt: (v) => fmtDb(v),
-      set: (v) => setDesk(ctx, voice, "fader", v) });
-    fw.append(col("level", fader));
-    // THE METER WELL, REFUSED — never fake a measurement (the header's law).
-    fw.append(col("meter", vrefused(null, voice.name + " meter",
-      "no tap", METER_WHY, true)));
-    const duo = el("div", null, "nu-duo");
-    // mute/solo WEAR THEIR OWN NAMES since 2026-08-27 (FUTURE.md §5: "cut"
-    // collided with EQ cut three rows up; the desk keys were always mute/solo,
-    // so the buttons stop translating them).
-    for (const [k2, label] of [["mute", "mute"], ["solo", "solo"]]) {
-      const b = el("button", label, "nu-tgl");
-      b.type = "button";
-      b.dataset.k = "b|" + k2 + "|" + voice.name;
-      b.setAttribute("aria-label", voice.name + " " + label);
-      b.setAttribute("aria-pressed", d[k2] ? "true" : "false");
-      b.addEventListener("click", () => setDesk(ctx, voice, k2, !deskOf(voice)[k2]));
-      duo.append(b);
-    }
-    // the MODEL's number, dim and labelled as the model — what desk.js says
-    // is driving the channel right now, repainted per beat by paintBoard.
-    // `data-live` because the clock writes it: a surface the transport feed
-    // repaints declares itself (the trim grid's own law, below), and the
-    // wave-3 artifact drive watches the WHOLE page with a MutationObserver —
-    // an undeclared clock write is the finding it exists for.
-    const drive = el("small", "", "nu-drive nu-hint");
-    drive.dataset.live = "model";
-    drive.title = "the model: deskChannelBase().gain × the box's level automation";
-    duo.append(drive);
-    drives.push({ el: drive, key });
-    fw.append(duo);
-    srow5.append(fw);
-    strip.append(srow5);
-
-    const goes = el("p", null, "nu-goes");
-    goes.append(document.createTextNode("→ "));
-    goes.append(el("b", busName("genre") + " · " + busName("echo") + " · " +
-      busName("rev") + " · main"));
-    strip.append(goes);
-    return strip;
-  };
 
   /* ============= THE BUS PLATES · THE SERIES, ONE TAB EACH ==============
      one line, and it is still one line: genre → delay → reverb → main (Paul,
@@ -1046,7 +1072,13 @@ export function mount(parent, ctx) {
     r.append(says);
     busSays.push({ el: says, bus: "rev" });
     p.append(r);
-    if (shut) p.append(el("small", "every strip above is sending into a return" +
+    // REWORDED 2026-08-28, WITH THE VOICES' DEPARTURE. It said "every strip
+    // ABOVE is sending into a return whose gain is zero" — and there is no
+    // strip above it any more, nor anywhere on this board. The measured fact
+    // is untouched (`returnShut`: masterState says the reverb return resolves
+    // to 0 while the voices' `rev` sends are non-zero), so only the address
+    // moved: the sends are on each voice's own `mix` facet now.
+    if (shut) p.append(el("small", "every voice is sending into a return" +
       " whose gain is zero — open it on this return", "nu-why"));
     p.append(flow("into main — the record"));
     return p;
@@ -1200,52 +1232,62 @@ export function mount(parent, ctx) {
     return p;
   };
 
-  /* ---- THE TAB ROW: the seated voices, then the series -------------------
+  /* ---- THE TAB ROW: the series, and only the series ----------------------
      Paul, 2026-08-27: *"Put the effects buses and mains into special tabs
      after the voices -- now the board is one tabbed space that is consistent
-     and easy to understand."* One row, one panel: the voices first, then the
-     four stages of the series.
+     and easy to understand."* One row, one panel — and since 2026-08-28 there
+     is no "after the voices" left in it, because there are no voices in it.
+     Paul, that day: *"You were supposed to remove the voices from the mixing
+     board and just put them as nav items in the voices themselves."* Four
+     tabs, one per stage of the series.
 
      THE SPELLING IS THIS PAGE'S OWN AND UNCHANGED. `<p class="nu-row">` of
      plain buttons carrying `aria-pressed`, a `<mark>` on the open one — the
-     same three-tab idiom as `#tabs` (ui/eight.js bandBlock) and `#motif-tabs`;
-     the bus tabs are the same button as a voice tab and learn nothing new.
+     same idiom as `#nu-tray`'s levels and `#motif-tabs`.
 
-     THE SEAM IS A REAL GROUP AND NOT A LINE OF PAINT, and it is the answer to
-     the half of the old rack argument that was right (a record-level fact
-     must not read as a per-voice gesture): the four bus tabs sit in their own
-     `role="group"` inside the row, labelled "the bus series", and that group
-     is `flex-basis: 100%` so it always begins its own line.
-     RE-MEASURED 2026-08-28, WHEN THE TABS BECAME MARKS, and the numbers moved
-     while the argument did not. It read: "MEASURED at 390 on the shipped chant
-     (two voices): the voice tabs are one line of 2×83px, and the bus group is
-     TWO lines — its four buttons plus three arrows measure more than the 366px
-     the row has, so it would have wrapped anyway; the group costs nothing it
-     was not already going to spend, and buys a break that is always in the
-     same place." The wrap it was paying for is GONE: at 390 the voice tabs are
-     one line of 2×44px and the bus group is now ONE line (4×44 plus its three
-     arrows and its "the strips feed" label fit inside 366), so the whole row
-     is two lines instead of three — 147.17px to 96.78px. The GROUP still earns
-     its keep, and now for the reason that was always the better one: the break
-     between the players and the series is in the same place at every width,
-     whether or not the width forces it. At 1280 the voices take one line and
-     the series takes one, which is still exactly the picture. A row that WRAPS is the
-     whole of the no-sideways-scroll law here (`.nu-row` is `flex-wrap: wrap`,
-     nu.css) and desk-gate G13 measures the document, the row and the panel to
-     prove none of the three grows sideways at either width.
+     THE GROUP OUTLIVES THE SEAM IT WAS CUT FOR, 2026-08-28, and it is kept
+     rather than unwrapped. It was the answer to the half of the old rack
+     argument that was right — a record-level fact must not read as a per-voice
+     gesture — so the four bus tabs sat in their own `role="group"` labelled
+     "the bus series", `flex-basis: 100%`, always beginning their own line
+     UNDER the voices. There are no voices above them now, so the line it
+     breaks is the row's first; what the group still does is the part that was
+     never about the voices: it NAMES the four buttons as one thing ("the bus
+     series") for a screen reader, and it is what the leading `.nu-seamlab`
+     hangs on, which is the sentence the deleted top-of-rack connector used to
+     say. A `role="group"` of four is a group whether or not anything precedes
+     it; deleting it would cost the name and buy one <span>.
+     THE MEASUREMENTS THAT BOUGHT THE GROUP ARE KEPT, and the last of them is
+     what the voices leaving finishes. 2026-08-28, when the tabs became marks:
+     "at 390 the voice tabs are one line of 2×44px and the bus group is now ONE
+     line (4×44 plus its three arrows and its label fit inside 366), so the
+     whole row is two lines instead of three — 147.17px to 96.78px." Take the
+     voice line away and the row is ONE line at both widths, which is the
+     smallest a four-stage series can be drawn in. A row that WRAPS is still
+     the whole of the no-sideways-scroll law here (`.nu-row` is `flex-wrap:
+     wrap`, nu.css) and desk-gate G13 measures the document, the row and the
+     panel to prove none of the three grows sideways at either width.
 
      THE SERIES STAYS LEGIBLE BECAUSE THE ROW DRAWS IT. The bus tabs are
      separated by literal `→` glyphs — `genre fx → delay → reverb → main` — so
-     the chain is on the page from EVERY tab, including a voice's, which is
-     the thing a hand riding a send needs and is more than the old rack gave
-     (it drew the chain only when you had scrolled to it). The arrows are their
-     own row items and NOT part of a button's label, for two reasons measured
-     rather than assumed: inside the label the `<mark>` on the open tab would
-     swallow the arrow and mark a connector as a name, and with the stylesheet
-     off a separate glyph is still a glyph between two words. The leading
-     label carries the sentence the deleted top-of-rack connector used to say —
-     "the strips feed" — so every strip's four sends still announce where they
-     land. A SECOND, SEPARATE FLOW STRIP ABOVE THE PANEL WAS REJECTED by the
+     the chain is on the page from EVERY tab, which is the thing a hand riding
+     a send needs and is more than the old rack gave (it drew the chain only
+     when you had scrolled to it). The arrows are their own row items and NOT
+     part of a button's label, for two reasons measured rather than assumed:
+     inside the label the `<mark>` on the open tab would swallow the arrow and
+     mark a connector as a name, and with the stylesheet off a separate glyph
+     is still a glyph between two words.
+
+     THE LEADING LABEL SAYS "the voices feed", 2026-08-28, and the rewrite is
+     the one sentence on this board that the move made false. It said "the
+     strips feed", which was the top-of-rack connector's own words ("the strips
+     send into every stage below") carried onto the row when the rack became
+     tabs — and a reader standing here now would look for the strips among
+     these four tabs and not find one. The FACT is unchanged and is the reason
+     the sentence has to stay in some form: every voice's four sends land in
+     this series. What changed is where the reader has to go to move one, so
+     the label names the thing that is still on the page. A SECOND, SEPARATE
+     FLOW STRIP ABOVE THE PANEL WAS REJECTED by the
      same measurement: it would be a fourth drawing of one fact (the row's
      arrows, the plate's `in ←` header, the plate's own footer connector) and
      an extra line of prose on every tab, against a text ceiling
@@ -1256,7 +1298,11 @@ export function mount(parent, ctx) {
      connector for where it goes — `into the delay bus`, `into the reverb bus`,
      `into main — the record`. Open the delay tab and the plate says it is fed
      by the echo sends and that it runs into the reverb; the row says the same
-     shape in one line. Two owners of a picture, one owner of every number. */
+     shape in one line. Two owners of a picture, one owner of every number.
+     AND A PLATE'S `in ←` LINE IS WHERE THE VOICES ARE NAMED, which is how the
+     board goes on explaining a series it no longer draws the top of: "in ←
+     genre sends", "in ← the reverb sends + the delay's bleed". Those sends are
+     each voice's own, on each voice's own `mix` facet. */
   /* THE BUS TABS ARE READ OFF THE REGISTRY, IN THE ENGINE'S SERIES ORDER.
      fields.js BUSROWS yields five rows; the three carrying an `engine` tag are
      stages the renderers actually run (`rev`, `del`, `genre`) and the two
@@ -1280,43 +1326,40 @@ export function mount(parent, ctx) {
   /* A MARK AND A NUMBER ON EVERY TAB IN THIS ROW (Paul, 2026-08-28: "Voice 2
      for example could be more symbol plus the number 2").
 
-     A VOICE tab takes the KIND's mark and the voice's place in the RECORD's
-     roster — `doc.voices`, not the channel walk this row is built from. That
-     is deliberate and it is the one number in here that is read off a
-     different list than everything else: `channelVoicesOf` orders lines, then
-     bass, then drums, and DROPS a kit that has not been hired, so a number
-     taken from it would make the same player voice 2 on the board and voice 3
-     in the band. One roster, one number, both screens (ui/glyph.js sayVoice).
-
      A BUS tab takes its own mark and its STAGE — 1 genre fx, 2 delay, 3
      reverb, 4 main — which is the series' own numbering, the one the four
      shipped positional names already use ("bus 1".."bus 4"). The `→` glyphs
-     between them stay: they draw the chain from every tab, including a
-     voice's, which is the thing a hand riding a send needs.
+     between them stay: they draw the chain from every tab.
+
+     THE VOICE HALF OF THIS PARAGRAPH WENT WITH THE VOICE TABS (2026-08-28) and
+     its rule is kept because it is still true one screen over: "a VOICE tab
+     takes the KIND's mark and the voice's place in the RECORD's roster —
+     `doc.voices`, not the channel walk — because `channelVoicesOf` orders
+     lines, then bass, then drums, and DROPS a kit that has not been hired, so
+     a number taken from it would make the same player voice 2 here and voice 3
+     in the band. One roster, one number, both screens." That is exactly what
+     ui/eight.js `bandTrayItems` does with `sayVoice`, and the gutter is the
+     one row that draws a voice now. `kindGlyph` and `sayVoice` came off this
+     file's import list with the row that used them.
 
      THE WORD IS UNTOUCHED AS A FACT. `busLabel` is still the registry's own
      label and this file still spells only `main` — "a renamed row is renamed
-     on the tab by existing" — and the label is now the button's `aria-label`
-     and its `.nu-vh` text instead of its visible face below 700px. */
-  const roster = (doc.voices || []);
-  const TABS = names.map((n) => {
-      const v = roster.find((x) => x.name === n) || {};
-      const i = roster.indexOf(v) + 1;
-      return { kind: "voice", key: n, label: n,
-               glyph: kindGlyph(v.kind), num: i || null,
-               say: sayVoice(n, v.kind, i || "?", roster.length) };
-    })
-    .concat(busKeys.map((k, i) => ({ kind: "bus", key: k, label: busLabel(k),
+     on the tab by existing" — and the label is the button's `aria-label` and
+     its `.nu-vh` text rather than its visible face below 700px. */
+  const TABS = busKeys.map((k, i) => ({ kind: "bus", key: k, label: busLabel(k),
       glyph: (GLYPH.bus[k] || {}).g || "•", num: i + 1,
-      say: (GLYPH.bus[k] || {}).s || busLabel(k) })))
+      say: (GLYPH.bus[k] || {}).s || busLabel(k) }))
     .concat([{ kind: "bus", key: "main", label: "main",
       glyph: GLYPH.bus.main.g, num: busKeys.length + 1,
       say: GLYPH.bus.main.s }]);
-  const busTabs = TABS.filter((t) => t.kind === "bus");
-  // the open tab survives a redraw; a voice that left the bank does not.
+  const busTabs = TABS;
+  // the open tab survives a redraw; a stage the registry stopped declaring
+  // does not. (It read "a voice that left the bank does not" while the voices
+  // were tabs — same line, same law, and now the only thing that can leave the
+  // row is an engine bus.)
   if (!TABS.some((t) => t.kind === BOARDTAB.kind && t.key === BOARDTAB.key))
     BOARDTAB = TABS[0] ? { kind: TABS[0].kind, key: TABS[0].key }
-                       : { kind: "voice", key: null };
+                       : { kind: "bus", key: null };
 
   const tabsBar = el("p", null, "nu-row");
   tabsBar.id = "boardtabs";
@@ -1339,24 +1382,29 @@ export function mount(parent, ctx) {
   // `ctx.changed()` or a board-wide remount: a full redraw would rebuild the
   // word grid, and the grid is a `.nu-pane` whose sideways scroll only
   // draw()'s keepPanes puts back.
+  /* THE `#strips` BRANCH IS DELETED, 2026-08-28. It read:
+       } else {
+         const strips = el("div", null, "nu-strips");
+         strips.id = "strips";
+         const c = chans.find((x) => x.voice.name === BOARDTAB.key);
+         if (c) strips.append(stripOf(c));
+         strips.setAttribute("aria-label", (BOARDTAB.key || "no") + " strip");
+         panel.append(strips);
+       }
+     — and `#strips` does not exist anywhere on this board now. The `.nu-strips`
+     CLASS is alive and unchanged: `voiceMix` above wears it, because the skin
+     is the skin wherever the strip is drawn. The ID stayed here as long as the
+     board owned the furniture and went with it, rather than being claimed by a
+     second node, which is the bug a gate cannot see round. */
   const showPanel = () => {
-    drives = []; busSays = []; masterMeter = null;
+    busSays = []; masterMeter = null;
     panel.textContent = "";
-    if (BOARDTAB.kind === "bus") {
-      const rack = el("div", null, "nu-rack");
-      rack.id = "rack";
-      const make = PLATES[BOARDTAB.key];
-      if (make) rack.append(make());
-      rack.setAttribute("aria-label", busLabel(BOARDTAB.key) + " plate");
-      panel.append(rack);
-    } else {
-      const strips = el("div", null, "nu-strips");
-      strips.id = "strips";
-      const c = chans.find((x) => x.voice.name === BOARDTAB.key);
-      if (c) strips.append(stripOf(c));
-      strips.setAttribute("aria-label", (BOARDTAB.key || "no") + " strip");
-      panel.append(strips);
-    }
+    const rack = el("div", null, "nu-rack");
+    rack.id = "rack";
+    const make = PLATES[BOARDTAB.key];
+    if (make) rack.append(make());
+    rack.setAttribute("aria-label", busLabel(BOARDTAB.key) + " plate");
+    panel.append(rack);
   };
   const tabBtn = (t) => {
     // KEYED `boardtab|<kind>|<name>`, 2026-08-27 (it was `boardtab-<name>`
@@ -1379,14 +1427,16 @@ export function mount(parent, ctx) {
     tabBtns.push({ b, tab: t });
     return b;
   };
-  for (const t of TABS.filter((x) => x.kind === "voice"))
-    // the literal " " is the band strip's own: with the stylesheet off it is
-    // what keeps two tabs from reading as one word.
-    tabsBar.append(tabBtn(t), document.createTextNode(" "));
+  /* (`for (const t of TABS.filter((x) => x.kind === "voice"))
+        tabsBar.append(tabBtn(t), document.createTextNode(" "));`
+     STOOD HERE — 2026-08-28, and it is the whole of "remove the voices from
+     the mixing board". The literal " " between two tabs is still spelled, one
+     block down, inside the series group: with the stylesheet off it is what
+     keeps two marks from reading as one word.) */
   const series = el("span", null, "nu-busgroup");
   series.setAttribute("role", "group");
   series.setAttribute("aria-label", "the bus series");
-  series.append(el("span", "the strips feed", "nu-seamlab"));
+  series.append(el("span", "the voices feed", "nu-seamlab"));
   busTabs.forEach((t) => {
     series.append(el("span", "→", "nu-tabarrow"), " ", tabBtn(t), " ");
   });
@@ -1640,10 +1690,11 @@ export function mount(parent, ctx) {
   /* ---- the paint, once a beat off the page's own on("pos") -------------- */
   const paint = () => {
     const s = atBox();
-    for (const x of drives) {
-      const g = liveGain(s, x.key);
-      x.el.textContent = "model " + fmtDb(20 * Math.log10(Math.max(1e-4, g))) + " dB";
-    }
+    /* `for (const x of drives)` STOOD HERE — the per-strip model readouts,
+       gone with the strips (2026-08-28). The arithmetic did not move: it is
+       `sayDrives` below, called by `paintVoiceMix` for the one strip that is
+       on the page, so a readout is written by the same line whichever surface
+       it is on. */
     const bf = deskBusFeed(s, MASTER, BUSES);
     for (const x of busSays) {
       const f = bf[x.bus];
@@ -1671,6 +1722,36 @@ export function mount(parent, ctx) {
 
 // the free function the page's on("pos") handler calls.
 export const paintBoard = () => { if (CURRENT) CURRENT.paint(); };
+
+/* ---------- the strip's own beat, wherever the strip is -------------------
+   THE ONE ARITHMETIC, WRITTEN ONCE. `liveGain` is the MODEL — desk.js's
+   resolved static gain × the box's level automation at the playhead — and this
+   is the only place it becomes words on a page. It was inside `mount`'s
+   `paint()` while the board drew the strips; it is here now because the strip
+   is drawn by the voice, and a second copy of the format string would be a
+   second owner of what "model −6.0 dB" means.
+
+   THE [data-live] LAW IS THE ELEMENT'S, NOT THIS FUNCTION'S: `.nu-drive`
+   carries `data-live="model"` where it is built (channelStrip), because a
+   surface the transport feed repaints declares itself and the wave-3 artifact
+   drive watches the whole page with a MutationObserver.
+
+   `isConnected` RATHER THAN A FLAG. ui/eight.js rebuilds the Band panel on
+   every edit and a facet tap swaps the panel outright, so the handle from a
+   previous draw points at detached nodes; writing to them would be silent
+   waste once a beat. Asking the node is cheaper than keeping a second fact
+   about it in sync. */
+const sayDrives = (drives) => {
+  const s = atBox();
+  for (const x of drives) {
+    const g = liveGain(s, x.key);
+    x.el.textContent = "model " + fmtDb(20 * Math.log10(Math.max(1e-4, g))) + " dB";
+  }
+};
+export const paintVoiceMix = () => {
+  if (!MIX || !MIX.host.isConnected) return;
+  sayDrives(MIX.drives);
+};
 
 /* ---------- the listening level, on the main strip ------------------------ */
 // Unchanged in meaning since the 2026-08-25 fix (its history is in git): the

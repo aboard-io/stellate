@@ -214,7 +214,8 @@ import { selectRow, selectEl, sheetRow, keyCircle } from "./selects.js";
    carries the whole argument and what was lost with it. The export is still
    THERE — ui/engineer.js is fenced this round — and is now uncalled from
    anywhere; its deletion is the first item of the round's report. */
-import { mount as mountBoard, paintBoard } from "./engineer.js";
+import { mount as mountBoard, paintBoard, voiceMix,
+         paintVoiceMix } from "./engineer.js";
 // THE PRODUCER (D4) — "somebody with taste saying a few things about the record
 // the eight describe". It is not a ninth axis and it is not a second compiler:
 // `produced()` is `genreFor` with the note stack applied, so push() below has
@@ -232,14 +233,16 @@ import { mount as mountAtlas } from "./atlas.js";
 // and on the roll. `songDurSec` is the score's own length in seconds, which is
 // what the WAV press is measured against.
 import { writeSmf, parseSmf, headGM } from "../export/smf.js";
-/* ...AND WHAT THE ENGINE DID WITH A CHANNEL (`channelFacts`, 2026-08-28) —
-   the engine's own answer about the seated voice, which is how `voiceSound`
-   knows a voice is STEREO and refuses its insert slots with the reason rather
-   than letting audio/desk.js `widthKept` strip the chain in silence. It is the
-   same function ui/engineer.js reads for the same refusal; a second guess at
-   "is this stereo" from the document would be the drift, since the answer is
-   the parent's and not the record's. */
-import { songDurSec, channelFacts } from "../audio/plan.js";
+/* `channelFacts` CAME OFF THIS IMPORT 2026-08-28, WITH `voiceSound`. Its note
+   read: "the engine's own answer about the seated voice, which is how
+   `voiceSound` knows a voice is STEREO and refuses its insert slots with the
+   reason … It is the same function ui/engineer.js reads for the same refusal;
+   a second guess at 'is this stereo' from the document would be the drift."
+   Every word of that is still the law and it is now true in ONE file:
+   ui/engineer.js `factsNow` asks audio/plan.js, and the strip it feeds is the
+   only strip on the page. `songDurSec` is unchanged — the score's own length
+   in seconds, which is what the WAV press is measured against. */
+import { songDurSec } from "../audio/plan.js";
 // THE MARKS ON THE TABS, AND THE ONE EXPLAINER (2026-08-28). Paul: "Please
 // make all the tabs and top buttons into sensible icons to save space. Voice 2
 // for example could be more symbol plus the number 2. Provide a simple long
@@ -1699,6 +1702,40 @@ const SCORE_LOADER_MS = 100;
    staves is 47.3px and the room under the last is 45.7, so nothing is added
    there — the number only earns its keep on a record engraved tighter. */
 const SCORE_MOT_H = 15;
+/* HOW MUCH PAPER A BAR IS GIVEN, and it is the number this round turns on
+   (2026-08-28, Paul with a screenshot of the Score tab: *"that is what notes
+   look like in the score it will wear you out"*). The render used to ask for
+   `staffwidth: 1`, on the reasoning that abcjs justifies OUT and never in, so
+   a width smaller than the music needs returns the width the music needs. It
+   does — and that width is abcjs's MINIMUM, which is not a width anybody can
+   read. Measured on the shipped chant at 1280 (2026-08-28, the same engraving
+   asked for six widths): at the minimum an eighth note and a sixteenth are
+   BOTH 10.8px apart and a notehead is 9.8px wide, so consecutive heads have
+   ONE PIXEL of air between them and a bar reads as a black smear with a beam
+   over it. That is the picture in Paul's screenshot: the noteheads are all
+   there (271 of them on the chant) and they are drawn touching.
+
+   SO THE PAPER IS ASKED FOR BY THE BAR, which is how a printed page has
+   always been laid out: every bar gets its share of the width and abcjs
+   distributes it inside the bar by duration, exactly as an engraver does.
+   Clear air between two sixteenth noteheads, measured on the chant against
+   the pixels asked for per bar: 1.0 at the minimum, 2.5 at 140, 4.6 at 160,
+   6.6 at 180, 8.6 at 200, 12.7 at 240. A notehead of air is the printer's
+   own rule of thumb, so 220 — where a sixteenth clears by about a head and
+   an eighth by two — and a phone's 390px box then holds a bar and a half
+   while 1280 holds nearly five.
+
+   …AND A BUSY BAR IS GIVEN MORE, because the share is fixed and the crowd is
+   not. `dense` is ui/abc.js's own count of the busiest bar in the record —
+   the union over voices of the steps something starts on — and a bar of
+   sixteen attacks needs more than a bar of six no matter how the width is
+   divided. `SCORE_ONSET_PX` is the floor per column; below it heads touch
+   again, and the max of the two is what is asked for. The picture only ever
+   gets WIDER than it was, so nothing about the height law, the chunking or
+   the playhead map changes — they are all computed off the engraving that
+   comes back. */
+const SCORE_BAR_PX = 220;
+const SCORE_ONSET_PX = 22;
 /* AND THE PREDICTION IS MEASURED, NOT GUESSED. A render costs about the same
    per BAR OF ONE VOICE wherever it lands, which is the only shape the
    measurements support: 134ms for 36x2 = 1.86 a cell, 404 for 36x8 = 1.40,
@@ -2058,7 +2095,7 @@ function buildScore() {
   catch (err) { return null; }
   if (!sc) return null;
   return { abc: sc.abc, voices: sc.voices, secAt: R.secAt, steps: R.steps,
-           bars: R.bars };
+           bars: R.bars, dense: sc.dense | 0 };
 }
 
 /* THE GEOMETRY, READ OFF abcjs's OWN TUNE OBJECT and never off the page:
@@ -2322,6 +2359,15 @@ function whenIdle(fn) {
   if (!playing || !window.requestIdleCallback) { fn(); return; }
   window.requestIdleCallback(fn, { timeout: 1200 });
 }
+// WHAT TO ASK abcjs FOR, in staff pixels: a share per bar, floored by what the
+// busiest bar's own column count needs (SCORE_BAR_PX / SCORE_ONSET_PX). Pure
+// arithmetic over what `buildScore` already returned, so it costs nothing and
+// the same record always asks for the same paper.
+function scoreWidthFor(built) {
+  const bars = Math.max(1, built.bars | 0);
+  const per = Math.max(SCORE_BAR_PX, (built.dense | 0) * SCORE_ONSET_PX);
+  return Math.round(bars * per);
+}
 // THE RENDER ITSELF, on the promise the vendored abcjs arrives on. The LAST
 // music asked for is the true one: a second edit can land while the library is
 // still being fetched, and the picture must be of the record as it is now.
@@ -2332,14 +2378,14 @@ function engraveScore(built) {
     if (!A || scoreAbc !== want || !scorePaper || !scorePaper.isConnected) return;
     let tune;
     try {
-      // `staffwidth: 1` IS THE NATURAL SPACING, not a mistake. abcjs justifies
-      // a system OUT to the width it is given and never squeezes it in, so a
-      // width smaller than the music needs is the way to ask for the width the
-      // music needs (measured 2026-08-25: four dense bars asked for 200px came
-      // back 907px). A whole record asked for one pixel comes back as wide as
-      // the record is, which is exactly the paper this box scrolls.
+      // THE WIDTH IS ASKED FOR BY THE BAR (see SCORE_BAR_PX). This used to be
+      // `staffwidth: 1` — "the width the music needs" — and the width abcjs
+      // answers that with is its MINIMUM, where noteheads touch. The paper
+      // this box scrolls can be any width at all, so it is asked for the width
+      // the music READS at instead.
       const t0 = performance.now();
-      tune = A.renderAbc(scorePaper, want, { add_classes: true, staffwidth: 1 })[0];
+      tune = A.renderAbc(scorePaper, want,
+        { add_classes: true, staffwidth: scoreWidthFor(built) })[0];
       const ms = +(performance.now() - t0).toFixed(1);
       // WHAT IT COST, kept because it is the number this round turns on, and
       // fed back into the prediction so the loader's threshold is this
@@ -2403,7 +2449,22 @@ function fitPaper() {
   const lastY = scoreStaffY.length
     ? scoreStaffY[scoreStaffY.length - 1].bottom : scoreH;
   const motRoom = Math.max(0, SCORE_MOT_H - Math.max(0, scoreH - lastY));
-  if (!playing) scoreReserveTo(scoreH + motRoom);
+  /* …AND A PICTURE WITH NO ROOM AT ALL TAKES ITS ROOM EVEN UNDER THE CLOCK
+     (2026-08-28, Paul with a screenshot: *"that is what notes look like in the
+     score it will wear you out"* — a row of bare beams, no noteheads and no
+     staff lines). Measured: press the dice while the record is running and the
+     new record has a different number of voices, and `scoreBlock` zeroes the
+     reserve for the new key (`voices@width`) — correctly, because the old
+     record's room is not this one's. The clock is running, so this line
+     refused; nothing ever set the box's height again; the box fell back to its
+     CSS floor of 99px; and a 294px engraving was clipped to its top strip,
+     which is EXACTLY the beams and the tops of the clefs and nothing else.
+     A zero reserve is not a height anybody is looking at — it is the box
+     having taken no room yet — so there is nothing for the refusal to protect
+     and everything to lose by it. `scoreReserveTo` keeps its own guard, which
+     is the one that matters: while the clock runs the reserve still only ever
+     GROWS, so the box cannot shrink under a thumb mid-bar. */
+  if (!playing || !scoreReserve) scoreReserveTo(scoreH + motRoom);
   scoreS = scoreReserve && scoreH > scoreReserve ? scoreReserve / scoreH : 1;
   scoreSvg.setAttribute("width", (scoreW + 8) * scoreS);
   scoreSvg.setAttribute("height", scoreH * scoreS);
@@ -6720,10 +6781,16 @@ const TEMPOS = [
    table here and the sung voice is its deepest case; the only thing a mouth
    has that nothing else has is a vowel per syllable.
 
-   WHERE IT SITS: after the instrument menu, before the engineer. What the
-   voice IS, then what is on it, then where it sits — down the column in
-   signal order, which is the same argument `engineer(panel, CTX, name)` two
-   lines below already made for putting a cantor's send next to the cantor.
+   WHERE IT SITS: after the instrument menu, on the voice's `instrument` facet.
+   What the voice IS, then what is on it, then where it sits — the signal order
+   VOICE.md §1 names, and the throat is the middle of it. The clause that used
+   to end this paragraph pointed at `engineer(panel, CTX, name)` "two lines
+   below" as having already made the argument for putting a cantor's send next
+   to the cantor; that call is deleted (2026-08-28) and the argument WON — the
+   sends are on the voice, on its own `mix` mark one facet over, drawn by
+   ui/engineer.js `channelStrip`. The order is now across two facets instead of
+   down one column, which is Paul's own split: *"add it in a new nav element
+   called mix that is per voice."*
 
    IT IS SOUND AND NOT SHEET MUSIC, VOWELS INCLUDED, and the reason is
    structural rather than taste: a `material.cells` entry is voice-agnostic and
@@ -7881,233 +7948,74 @@ function performanceTab(parent) {
     (v) => D.performance.ontime = v, parent);
 }
 
-/* ========================================================================
-   THE VOICE'S STRIP, IN THE VOICE — WHAT USED TO BE IN THE MIXER
-   ========================================================================
-   Paul, 2026-08-28: *"Make a new voice section for all voices. This is where
-   every voice is defined -- register, instrument, variables. get rid of the
-   engineer table and simply move the sound controls out of the mixer and into
-   this section."* And, in the same list: *"A voice has: Instrument voice with
-   settings from the mixer (move them from the mixer)."*
+/* =====================================================================
+   THE VOICE'S STRIP IS `voiceMix`, AND THIS IS WHERE `voiceSound` STOOD
+   =====================================================================
+   Paul, 2026-08-28, correcting the round that wrote it: *"In the voice -- add
+   another nav item for the mixing and give it a channel design like the mixer;
+   it is confusing now and when i get to the strip it is just a bunch of
+   dropdowns instead of a nice strip and when I add effects they pop up without
+   design. So that is a regression but it is easy to revert to the design and
+   add it in a new nav element called mix that is per voice."*
 
-   ===== TWO LIVE COPIES EXIST TODAY, AND THIS IS THE LOUD PART ============
-   ui/engineer.js IS FENCED THIS ROUND — another slice of this week owns that
-   file — so the board's per-voice strip is STILL DRAWN and is still writable.
-   Until the follow-up lands, `desk.pan` (say) has two controls on this page:
-   the one below and `b|pan|<voice>` on the board's strip. They are not two
-   OWNERS of the fact — both go through `NuDeskDoc.writeDesk`, which is and
-   remains the one writer — but they are two places a hand can reach it, which
-   is exactly the condition this codebase legislates against, and it is stated
-   here rather than discovered later. THE DELETION LIST IS IN THE ROUND'S
-   REPORT and it is the whole per-voice half of `stripOf`: the three insert
-   slots (`slotEl` / `seatSelect` / `b|fxw*` / `b|fxa*` / `b|fxb*`), the sends
-   row (`b|genre|`, `b|echo|`, `b|rev|`, `b|main|`), the eq row (`b|eq*|`), the
-   pan row (`b|pan|*`), the fader (`b|fader|`) and the mute/solo pair
-   (`b|mute|`, `b|solo|`). What stays on the board is what is NOT a voice's:
-   the four bus plates, the main strip, the word grid and the meter.
+   WHAT `voiceSound` WAS. 227 lines that rebuilt a channel strip out of this
+   page's own widgets: three insert seats plus each seat's wet and one or two
+   face pots as `selectRow` menus, five send menus, a pan menu, a level menu, a
+   horizontal `number()` fader, four horizontal `number()` EQ bands, and two
+   `check()` boxes for mute and solo. Every fact was right, every write went
+   through `NuDeskDoc.writeDesk`, and every refusal was measured. It was still
+   the regression Paul names, for the reason its own header admitted in
+   capitals: it was A SECOND SPELLING of a control ui/engineer.js already drew
+   as a console — and a wall of dropdowns is not a console.
 
-   THE KEYS DO NOT COLLIDE, and that is not luck. `data-k` is how focus is put
-   back across a redraw (PROGRAM.md §2.2) and ui/selects.js CONSOLE-ERRORS on a
-   duplicate select key in so many words ("two controls would share one
-   data-k"), so this surface takes its own namespace — `v|…` for the two
-   toggles and `desk.<field>|<voice>` for every menu — while the board keeps
-   `b|…` and `ins|…`. The day the board's half goes, these keys stay put.
+   ITS ONE ARGUMENT IS ANSWERED RATHER THAN OVERRULED. It said: "The board's own
+   widgets — vknob, vnum, slotEl — are module-private to a fenced file and could
+   not be imported even if the fence were open." That was true and it is the
+   thing this round fixed: `stripOf` was LIFTED out of `mount()` to module
+   scope as `channelStrip` and exported, so there is now ONE function that
+   draws a channel strip and both surfaces that ever wanted one call it. The
+   fence moved; the law did not.
 
-   WHY IT IS BUILT FROM `NuFields.PARTMIX`'S OWN TABLES AND NOT FROM
-   ui/engineer.js. Every control below reads the same registry row the board
-   reads — SENDS/SENDLABEL, PANS/PANLABEL, EQ_BANDS, FXWETS, FXPOTS, FXFACE —
-   and writes through the same `writeDesk`. It is a second SPELLING of a
-   control, which is a cost; it is not a second definition of a fact, which
-   would be the bug. (The board's own widgets — `vknob`, `vnum`, `slotEl` —
-   are module-private to a fenced file and could not be imported even if the
-   fence were open.)
+   WHAT IS DRAWN INSTEAD: `voiceMix(panel, CTX, voice.name)`, on the voice's
+   own `mix` facet — the same vertical faders in a trough, the same insert
+   SLOTS wearing the board's slot skin (the seat select, its wet and its face
+   pots, and the stereo refusal sentence where a slot cannot take one), the
+   same five pan detents, the same mute/solo pair, the same `b|…` and `ins|…`
+   keys. "When I add effects they pop up without design" is answered by the
+   slot being the board's slot.
 
-   THE SPELLING IS THIS PAGE'S, NOT THE BOARD'S, and that is the one deliberate
-   departure. A send, a pan and a wet are SETTLED PARAMETERS — one value,
-   decided once — which is the exact case Paul's own law names for a menu
-   ("in general where there is ONE option a dropdown is preferred", 2026-08-24
-   evening). The board draws them as vertical sliders because a console is a
-   wall of faders and reads as one; a voice's page is a column of questions and
-   reads as one. What is a NUMBER ON A LINE stays a slider — the four eq bands
-   and the fader — which is the same law's other half (2026-08-23: "use range
-   sliders for numeric inputs").
+   THE `v|…` AND `desk.<field>|<voice>` NAMESPACES ARE RETIRED WITH IT, and
+   that is the point of item 4 of this round: a control existing in two places
+   is the failure. `v|fader|*`, `v|eq*|*`, `v|mute|*`, `v|solo|*` and every
+   `desk.*|<voice>` menu are gone from the page; the board's `b|…` keys are the
+   only spelling of those facts and they are now inside the voice. test/
+   selects.js's BOOLEANS pattern still names the `v|…` pair, dated, so the
+   deletion is legible there too.
 
-   EVERY REFUSAL IS MEASURED, none is decorative:
-     · the MAIN send is refused because there is no such fact: the dry path to
-       the main IS the fader, and a second control for it would be the second
-       owner this whole block is about;
-     · the three INSERT SLOTS are refused whole on a STEREO voice, because
-       audio/desk.js `widthKept` drops the chain there — the renderer's insert
-       path is mono — and a chip that is silently stripped is this box's
-       characteristic bug (a control declared, drawn, costed, reaching no
-       sound). `channelFacts` is the engine's own answer about the seated
-       channel, read the same way the board reads it;
-     · a slot's WET is refused when the chip declares no `mix` param
-       (`NuFields.fxHasMix`) — a swept resonant lowpass is a replacement, not a
-       blend, so there is no wet to move;
-     · a slot's two FACE knobs are drawn only when `FXFACE` says the module has
-       them, and are absent rather than refused when it does not: a chip with
-       one face param has one knob, and an empty second is not a refusal, it is
-       a control that was never declared. */
-const deskOfV = (voice) => (voice && voice.desk) || {};
-/* ONE MENU OVER ONE PARTMIX ROW. The empty detent is the word `default`
-   everywhere on this page (Paul, 2026-08-26: *"just use 'default' for 'nothing
-   set'"*), it is FIRST, and it is what `writeDesk` spells as deleting the key
-   — so "absent is today" has exactly one spelling from the option to the save. */
-function deskMenu(voice, field, table, labels, label, why) {
-  const cur = deskOfV(voice)[field];
-  return { key: "desk." + field + "|" + voice.name, label,
-    options: [{ value: "", label: "default", group: "default" },
-      ...Object.keys(table).map((k) => ({ value: k,
-        label: (labels && labels[k]) || k, group: "as you say" }))],
-    value: cur == null ? "" : String(cur),
-    ...(why ? { why } : {}),
-    set: (v) => { NuDeskDoc.writeDesk(voice, field, v || null); changed(); } };
-}
-/* ...AND A WHOLE MENU REFUSED, WITH ITS REASON ON IT. `selectEl` throws on a
-   greyed option with no `why` and greys the control itself off `spec.why`, so
-   a refusal here is one key and the widget does the rest — the reason rides in
-   `data-why` where a gate reads it back off the rendered page, and it is
-   spoken as part of the accessible name. */
-const deskRefused = (voice, field, label, why) => ({
-  key: "desk." + field + "|" + voice.name, label, why,
-  options: [{ value: "", label: "default", disabled: true, why }],
-  value: "", set: () => {} });
+   THREE FACTS WENT WITH IT AND DID NOT COME BACK, and each is a deletion this
+   file argues rather than an oversight:
+     · `room` and `aux` SENDS (`desk.room`, `desk.aux`). `voiceSound` gave them
+       their first control and said so out loud. The board's own standing law
+       is the counter-argument and it is older: the two GROUP buses left the
+       surface on 2026-08-27 when Paul named the series — *"one bus for genre
+       specific effects, into a delay bus, into reverb, into main"* — and the
+       groups are not in the line. ui/engineer.js's own words: "a fact can rest
+       in the record without a knob, but a knob may never point at nothing."
+       A send to a bus with no plate anywhere on the page is that knob. THE
+       FACTS ARE NOT LOST: fields.js `busRoute` and audio/desk.js `feedSplit`
+       still load and still route an old save's group sends, and desk-gate
+       G14's model half measures exactly that on every run.
+     · the `lvl` MENU (`desk.lvl`). ONE GAIN LANE PER STRIP is FUTURE.md's own
+       ruling and desk-gate says it in as many words — "`lvl` left the SURFACE
+       (one gain lane per strip — the fader; the word still loads and still
+       resolves)". A record's dealt `lvl` and a hand's fader are two numbers on
+       one wire (audio/desk.js `resolvedPart`: `m.lvl * 10^((m.fader+t.db)/20)`),
+       and the fader is the one a hand is meant to have.
+   All three are in this round's report so that a later hand asking "where did
+   the room send go" finds the answer here rather than re-adding a knob.
 
-function voiceSound(parent, voice) {
-  heading(parent, "the strip");
-  const d = deskOfV(voice);
-  const F = NuFields;
-  /* WHICH CHANNEL THE ENGINE SEATED THIS VOICE IN — `NuDeskDoc.channelVoicesOf`
-     is the desk's own roster walk and the same one the board makes, so "is
-     this voice stereo" is answered by the engine and not guessed from a name.
-     A voice with no channel (an unhired kit) simply has no facts, and the
-     stereo refusal below does not fire. */
-  let stereo = false;
-  try {
-    const me = NuDeskDoc.channelVoicesOf(DOC, GENRES)
-      .find((c) => c.voice.name === voice.name);
-    const facts = me ? (channelFacts(0) || {})[me.key] : null;
-    stereo = !!(facts && facts.stereo);
-  } catch (e) { stereo = false; }
-
-  // ---- the inserts: up to three, in order ------------------------------
-  const keys = (d.fx || []).filter((k) => F.FX[k]).slice(0, F.MAX_FX);
-  const insWhy = stereo
-    ? "this voice is stereo — the parent's insert path is mono, so the chain " +
-      "is dropped rather than silently stripped"
-    : null;
-  const insSpecs = [];
-  for (let i = 0; i < F.MAX_FX; i++) {
-    const n = i + 1, here = keys[i] || "";
-    /* THE SEAT ITSELF. Writing a seat REWRITES THE WHOLE LIST, because
-       `desk.fx` is an ORDERED array and a chain with a hole in it is not a
-       chain — clearing slot 2 of three moves slot 3 up into it, exactly as
-       ui/engineer.js `writeSlots` does, and the knobs travel with the seat
-       they belong to. A chip changed in a seat RESETS that seat's knobs: a
-       fraction of another module's range is not a value, it is a coincidence. */
-    insSpecs.push({ key: "desk.fx" + n + "|" + voice.name,
-      label: "insert " + n,
-      options: [{ value: "", label: "default", group: "default",
-                  ...(insWhy ? { disabled: true, why: insWhy } : {}) },
-        ...Object.keys(F.FX).map((k) => ({ value: k, label: F.FXLABEL[k] || k,
-          group: "as you say",
-          ...(insWhy ? { disabled: true, why: insWhy } : {}) }))],
-      value: here, ...(insWhy ? { why: insWhy } : {}),
-      set: (v) => {
-        const slots = keys.map((k, j) => ({ k, w: d["fxw" + (j + 1)] || null,
-          a: d["fxa" + (j + 1)] || null, b: d["fxb" + (j + 1)] || null }));
-        if (v) slots[i] = { k: v, w: null, a: null, b: null };
-        else slots.splice(i, 1);
-        const live = slots.filter(Boolean).slice(0, F.MAX_FX);
-        NuDeskDoc.writeDesk(voice, "fx", live.length ? live.map((x) => x.k) : null);
-        for (let m = 1; m <= F.MAX_FX; m++) {
-          const x = live[m - 1] || {};
-          NuDeskDoc.writeDesk(voice, "fxw" + m, x.w || null);
-          NuDeskDoc.writeDesk(voice, "fxa" + m, x.a || null);
-          NuDeskDoc.writeDesk(voice, "fxb" + m, x.b || null);
-        }
-        changed();
-      } });
-    if (!here) continue;
-    insSpecs.push(F.fxHasMix(here)
-      ? deskMenu(voice, "fxw" + n, F.FXWETS, F.FXWETLABEL, "wet " + n)
-      : deskRefused(voice, "fxw" + n, "wet " + n,
-          (F.FXLABEL[here] || here) + " declares no mix param — it is a " +
-          "replacement, not a blend, so there is no wet to move"));
-    const face = F.FXFACE[here] || [];
-    if (face[0]) insSpecs.push(deskMenu(voice, "fxa" + n, F.FXPOTS, F.FXPOTLABEL,
-      face[0].label + " " + n));
-    if (face[1]) insSpecs.push(deskMenu(voice, "fxb" + n, F.FXPOTS, F.FXPOTLABEL,
-      face[1].label + " " + n));
-  }
-  selectRow(parent, null, insSpecs);
-
-  // ---- the sends, post-insert ------------------------------------------
-  // THE BUS NAMES ARE THE RECORD'S OWN (`busNameOf`), which is why they are
-  // read and not typed: a record may rename a bus, and a label typed here
-  // would go on saying "reverb" about a plate somebody called "the hall".
-  const bn = (b) => F.busNameOf(F.BUSES, b);
-  selectRow(parent, null, [
-    deskMenu(voice, "genre", F.SENDS, F.SENDLABEL, "→ " + bn("genre")),
-    deskMenu(voice, "echo",  F.SENDS, F.SENDLABEL, "→ " + bn("echo")),
-    deskMenu(voice, "rev",   F.SENDS, F.SENDLABEL, "→ " + bn("rev")),
-    deskMenu(voice, "room",  F.SENDS, F.SENDLABEL, "→ " + bn("room")),
-    deskMenu(voice, "aux",   F.SENDS, F.SENDLABEL, "→ " + bn("aux")),
-    deskRefused(voice, "main", "→ main",
-      "the dry path to the main is the fader below — one owner, and a send " +
-      "beside it would be a second"),
-  ]);
-
-  /* THREE OF THOSE SENDS AND THE `level` BELOW ARE NOT A MOVE, THEY ARE THE
-     FIRST CONTROL THOSE FACTS HAVE EVER HAD, and it is said out loud because
-     "move the sound controls out of the mixer" is a promise about a SET and
-     this is bigger than that set. The board's strip draws three sends — genre,
-     echo, reverb — and refuses the main. `room`, `aux` and `lvl` are declared
-     in fields.js PARTMIX, are validated by song.js's registry walk, and every
-     one of them reaches the sound; MEASURED in audio/desk.js rather than
-     assumed:
-       · `m.room` and `m.aux` are summed into buses 3 and 4 (desk.js:1690-1691,
-         `feed.room += (m.room || 0) + …`, `feed.aux += (m.aux || 0) + S.aux`);
-       · `m.lvl` is the part's own gain (desk.js:450, `resolvedPart` —
-         `m.lvl * 10^((m.fader + t.db)/20)`), which is the level the FADER
-         above rides on top of.
-     So they were three facts a hand could only reach by editing JSON — the
-     exact inverse of this box's characteristic bug, a fact that ARRIVES and
-     was never declared on the page. They are declared now. (`main` is the one
-     that stays refused, and its reason is that there is no such fact.) */
-  // ---- where it sits, and how loud -------------------------------------
-  selectRow(parent, null, [deskMenu(voice, "pan", F.PANS, F.PANLABEL, "pan"),
-                           deskMenu(voice, "lvl", F.LEVELS, F.LEVELLABEL, "level")]);
-  /* THE FADER IS AN OFFSET AND THE LABEL SAYS SO. It rides ON TOP of the
-     record's own level automation (fields.js PARTMIX: "a user touch must not
-     fight the automation"), which is why it is ±dB and not a level, and why
-     0 is `writeDesk`'s spelling of absent — `!v` deletes the key, so dragging
-     back to the middle is the same as never having touched it. */
-  number("v|fader|" + voice.name, "fader (dB over the record's own level)",
-    F.faderDb(d.fader), (v) => { NuDeskDoc.writeDesk(voice, "fader", v); },
-    parent, -24, 12, 0.5);
-  /* THE EQ IS ABSOLUTE, not an offset — tone is set and left, so there is no
-     offset dance and no per-frame follower (fields.js PARTMIX). Flat
-     normalizes to absent and absent builds zero filter nodes. Each band writes
-     the WHOLE map, because `eq` is one field with a band->dB object in it and
-     `writeDesk` takes fields, not sub-fields. */
-  for (const b of F.EQ_BANDS)
-    number("v|eq" + b.key + "|" + voice.name, b.label,
-      (d.eq && d.eq[b.key]) || 0,
-      (v) => { const next = { ...(deskOfV(voice).eq || {}) }; next[b.key] = v;
-               NuDeskDoc.writeDesk(voice, "eq", next); },
-      parent, -12, 12, 0.5);
-  // ...AND THE DESK'S OWN PAIR. Not enums and not choices between values:
-  // solo is the one control here that reaches OTHER voices (audio/desk.js
-  // partsOf — any solo in the box mutes every part that is not soloed), which
-  // is why the sentence says so rather than the word "solo" standing alone.
-  check("v|mute|" + voice.name, "mute this voice", !!d.mute,
-    (v) => { NuDeskDoc.writeDesk(voice, "mute", v); }, parent);
-  check("v|solo|" + voice.name,
-    "solo this voice — every voice that is not soloed goes quiet", !!d.solo,
-    (v) => { NuDeskDoc.writeDesk(voice, "solo", v); }, parent);
-}
+   (`deskOfV`, `deskMenu` and `deskRefused` went with the function — they had
+   no other caller; grep before deleting answered 0.) */
 
 function bandBlock(parent) {
   normalize();
@@ -8176,6 +8084,10 @@ function bandBlock(parent) {
      all. `SONGTABS` is still what keeps a voice CALLED "form" out of that
      branch, and `settleVoiceTab` is still what decides `tab`. */
   const fInst  = !voice || voiceFacet === "inst";
+  // ...AND A FOURTH, 2026-08-28 (Paul: "add it in a new nav element called mix
+  // that is per voice"). `mix` is the voice's channel strip, drawn by
+  // ui/engineer.js's own `channelStrip` — see the call below.
+  const fMix   = !voice || voiceFacet === "mix";
   const fPlays = !voice || voiceFacet === "plays";
   const fSec   = !voice || voiceFacet === "sec";
   const panel = el("div");
@@ -8274,13 +8186,30 @@ function bandBlock(parent) {
   // case — a sampled instrument gets the same heading and the sentence that
   // says why there is nothing under it.
   if (!onForm && voice && voice.kind !== "drums" && fInst) knobsBlock(panel, voice);
-  // THE STRIP, WHICH IS THE OTHER HALF OF "WHAT IS ON THIS VOICE" — the
-  // inserts, the sends, the tone, where it sits and how loud. Drawn for EVERY
-  // voice including the kit (a drummer has a channel like anybody else) and in
-  // signal order after the throat: what the voice IS, then what is on it, then
-  // where it sits (VOICE.md §1) — which is the order the deleted mirror was
-  // placed by, kept.
-  if (!onForm && voice && fInst) voiceSound(panel, voice);
+  /* THE STRIP IS ITS OWN FACET SINCE 2026-08-28 — `mix`, not `inst`. Paul:
+     *"add another nav item for the mixing and give it a channel design like
+     the mixer … add it in a new nav element called mix that is per voice."*
+     It was drawn here, on the instrument facet, as `voiceSound(panel, voice)`;
+     the tombstone for what that function was and why every one of its controls
+     is deleted rather than moved is at its own site above.
+
+     WHAT `voiceMix` DRAWS is ui/engineer.js's `channelStrip` — the board's
+     own console, at full size, for THIS voice: three insert slots wearing the
+     board's slot skin, the four sends, the four EQ bands, the five pan
+     detents, the fader with its refused meter well, mute and solo, and the
+     model readout the transport feed repaints. One function, one drawing,
+     called from the one place a voice's mix belongs.
+
+     WHY IT IS A FACET AND NOT A ROW ON `inst`. The two are different KINDS of
+     question, which is the whole basis of the facets (VOICE.md §1, and the
+     three sentences Paul split them along): `inst` is what this player IS —
+     its instrument, its throat, its machine — and `mix` is what is done to it
+     on the way out. Asked together they were the pile the facets broke up.
+
+     AND IT IS DRAWN FOR EVERY VOICE INCLUDING THE KIT: a drummer has a channel
+     like anybody else. A voice with no channel — an unhired kit — gets the
+     refusal sentence instead of an empty console, printed by `voiceMix`. */
+  if (!onForm && voice && fMix) voiceMix(panel, CTX, voice.name);
   /* (`engineer(panel, CTX, voice.name)` STOOD HERE — 2026-08-28. Paul: *"get
      rid of the engineer table and simply move the sound controls out of the
      mixer and into this section."*
@@ -8290,30 +8219,23 @@ function bandBlock(parent) {
      record's desk says about this voice, bright where the document names a
      word and dim where the answer is derived, with a link to the board. It
      stopped being two writers on 2026-08-27 (the one-board round) and became
-     a MIRROR, which is what it was until tonight.
+     a MIRROR, which is what it was until that night.
 
      ITS OWN ARGUMENT WAS GOOD AND IS ANSWERED RATHER THAN OVERRULED: "a
      cantor's send is one more fact about the cantor, next to its register and
      its throat, not a room next door." Exactly — and a MIRROR of that fact is
-     not the fact. `voiceSound` above is the controls themselves, in the place
-     the mirror was pointing at, so the sentence is true now in a way a
-     read-only table could never make it. A mirror beside the real thing would
-     be a third copy of the same eleven rows on one page.
+     not the fact. The strip above is the controls themselves, in the place the
+     mirror was pointing at.
 
-     THE THIRD COLUMN IS THE ONE REAL LOSS and it is named so it can come back:
-     "what the value is riding on" — `derivedPartTone` and `deskChannelBase`
-     read at the playing box, printing "riding -2.5 dB seated" beside the eq
-     band and "the record seats it at -6.0 dB" beside the level. That is the
-     best thing the mirror ever did and it is a READING, not a control, so it
-     belongs beside these menus as the `nu-hint` half of each row rather than
-     as a table of its own. It is in the round's report as the follow-up, with
-     the two functions it needs named.
-
-     `engineer` IS NOW AN UNCALLED EXPORT of a fenced file — grep answers 0 for
-     `engineer(` outside its own definition. Its deletion is the report's first
-     item, together with the per-voice half of the board's `stripOf`. It is NOT
-     deleted from here, because ui/engineer.js belongs to another slice of this
-     week and a fence is a fence.) */
+     THE FUNCTION ITSELF IS DELETED NOW (2026-08-28, later the same day): the
+     fence that kept ui/engineer.js out of that night's round is open, this
+     round owns the file, and `export function engineer` had zero callers.
+     What replaced it there is `voiceMix`, whose tombstone carries the mirror's
+     history and the one thing genuinely lost with it — the THIRD COLUMN, "what
+     the value is riding on" (`derivedPartTone` / `deskChannelBase` read at the
+     playing box: "riding −2.5 dB seated" beside an EQ band). That is a READING
+     and not a control, so it belongs as the `nu-hint` half of the strip's own
+     rows; it is this round's report as the follow-up.) */
   if (voice && settingsFirst) parent.append(panel);
 
   /* ---------- THE FORM IS ONE ELEMENT WITH TWO STATES -------------------
@@ -8593,6 +8515,12 @@ on("pos", (d) => {
   // meters catch up on the next tick — 60ms, audio/live.js `tickPos` — which
   // is sooner than a thumb can reach the first fader.
   if (openTab === "Mix") paintBoard();
+  // ...AND THE VOICE'S OWN STRIP, 2026-08-28, for exactly the reason the line
+  // above exists: the strip's model readout is written once a beat and it is
+  // on the BAND tab now, not the Mix tab. `paintVoiceMix` is a no-op unless a
+  // `mix` facet is actually on the page (it asks the node, `isConnected`), so
+  // this costs one call and no layout on the other eight tabs.
+  else if (openTab === "Band") paintVoiceMix();
 });
 on("transport:state", () => {
   // PLAY AND STOP REPAINT THE UPPER STAVES AND TOUCH NOTHING ELSE. This was
@@ -9705,7 +9633,14 @@ function secOpsTrayItems() {
    on purpose: comparing two players' instruments means moving between them
    with the same question open, and a facet that reset to the top on every tap
    would make that three taps instead of one. */
-const FACETS = ["inst", "plays", "sec"];
+/* FOUR MARKS SINCE 2026-08-28, AND THE FOURTH IS `mix`. Paul: *"In the voice
+   -- add another nav item for the mixing and give it a channel design like the
+   mixer … add it in a new nav element called mix that is per voice."* It sits
+   SECOND, beside `instrument`, because the two are the signal path in order —
+   what the voice IS, then what is done to it on the way out (VOICE.md §1, the
+   order the strip itself was drawn in when it was a row on `inst`). `plays`
+   and `per-section` are about the notes and keep the places they had. */
+const FACETS = ["inst", "mix", "plays", "sec"];
 let voiceFacet = "inst";
 function voiceTrayItems() {
   const v = SONGTABS.includes(tab) ? null : VOICE(tab);
@@ -10837,6 +10772,11 @@ window.__eightEngraves = () => engraves;      // abcjs renders, ever
 // window into it, so the clock never asks for another one. What costs a render
 // is an EDIT (see `scoreChanged`), and this is what counts them.
 window.__eightScoreEngraves = () => scoreEngraves;
+// …AND THE MUSIC ITSELF, AS THE STRING abcjs WAS HANDED. `__eightDoc` gives
+// the record; this gives the ABC the picture on the page is of, so a broken
+// staff can be diagnosed by READING what was asked for rather than by adding
+// a hook first (2026-08-28: a round lost its diagnosis to exactly that).
+window.__eightAbc = () => scoreAbc;
 // …AND WHAT THEY COST, in milliseconds of main thread, last twenty first-hand.
 // The claim this round makes is that a whole-record render is affordable if
 // you say so out loud (`SCORE_LOADER_MS`); this is the artifact that says what
