@@ -415,10 +415,32 @@ const WAVES = SE.WAVES;
 // four scalings, which is one table in two places the day either moves — and it
 // moved. It reads THIS now, and asserts the shape and the uniformity of the
 // turn-down instead of the literals.
+/* QUIETER BY HALF, 2026-08-28. Paul: *"Kindly mix everything much much
+   quieter all over. It's all just saturated IN THE MIX. Nothing is gentle."*
+
+   THE NUMBER IS NOT TASTE, IT IS A MEASUREMENT. With the master bypassed
+   this morning, every record arrived at the master ALREADY over full scale:
+   iranpop +4.29 dBFS, rock +8.27, steely +6.70, hymn +2.86. So the mix was
+   being made by the clipper - 6 to 12 dB of it - and a soft clipper working
+   that hard is the "recorded on a very hot mic" sound Paul has now reported
+   three times. The earlier cut here (x0.75, -2.5 dB) was measured against a
+   master that was still flattening everything, so it could not be felt.
+
+   -6 dB (x0.5) is chosen to land the worst offender under unity with room to
+   spare: rock's +8.27 becomes +2.3 raw, and everything else lands negative.
+   The clamps travel with the scale, because scaling `scale` alone lets every
+   voice the old floor was holding up sit on the floor and give nothing back -
+   that was measured when this table was first cut.
+
+   THE HEADROOM IS THE POINT, NOT THE LOUDNESS. What comes back is the room
+   between the parts: a record that arrives at -6 lets the master's stages be
+   a choice rather than a rescue, which is what "nothing is gentle" was
+   describing. Absent-is-today is deliberately suspended - Paul asked every
+   record to change. */
 export const LEVEL_LANES = {
-  sampled: { dflt: null, scale: 1.65, lo: 0.1125, hi: 0.75 },
-  model:   { dflt: 0.28, scale: 2.1,  lo: 0.2625, hi: 0.69 },
-  synth:   { dflt: 0.28, scale: 2.1,  lo: 0.375,  hi: 0.69 },
+  sampled: { dflt: null, scale: 0.825, lo: 0.0563, hi: 0.375 },
+  model:   { dflt: 0.28, scale: 1.05,  lo: 0.1313, hi: 0.345 },
+  synth:   { dflt: 0.28, scale: 1.05,  lo: 0.1875, hi: 0.345 },
 };
 export function levelOf(tone, lane, mul) {
   const L = LEVEL_LANES[lane] || LEVEL_LANES.model;
