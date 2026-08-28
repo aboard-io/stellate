@@ -203,7 +203,14 @@ const events = (one, meta) => {
   lastAsked = meta.serial;
   try { if (typeof window !== "undefined") window.__nuAsk = meta.serial; } catch (e) {}
   const p = barPlan(barOfSerial(meta.serial));
-  if (p) return { ev: p.ev, units: p.units };
+  // `fx` (2026-08-28) is the third thing a bar may say, and the seam takes it
+  // the same way it takes the cast: audio/plan.js barFx writes the section's own
+  // echo time in the parent's own units, and the walk merges it over
+  // SE.fxParams for THIS bar only (engine/faust/live/live.js, the foreign-
+  // composer seam). Absent on every record that has never named one, so the key
+  // is simply not there and the parent's own fxParams stands untouched.
+  if (p) return p.fx ? { ev: p.ev, units: p.units, fx: p.fx }
+                     : { ev: p.ev, units: p.units };
   // NEVER NULL. The parent reads a null as "this caller has nothing to say
   // about this bar, compose it yourself" — and it cannot compose a foreign
   // state (no progression), so a bar asked for mid-recompile killed the pump

@@ -160,8 +160,10 @@
   // owns the harmony, the rate and the drums, and everything layered on top
   // inherits them. Each entry in the stack carries ITS OWN phrases. A BOX IS
   // ALSO A MIXER CHANNEL: `fx` is its insert chain, `rev`/`echo` its two
-  // sends, `verb`/`dtime` which reverb and which echo subdivision it is sent
-  // TO, `lvl`/`pan` where it sits, `mot` its filter automation. Those are the
+  // sends, `dtime` which echo subdivision the section borrows the song's delay
+  // at (`verb`, the reverb room beside it, was retired 2026-08-28 — see the
+  // migration below), `lvl`/`pan` where it sits, `mot` its filter automation.
+  // Those are the
   // SECTION-WIDE treatment; `parts` is the desk under it — the same controls
   // per chair (lead/pad/bass/drums…), so an effect can land on one thing.
   //
@@ -234,6 +236,29 @@
       }
       for (const b of r.song) if (b) delete b[key];
     }
+ // THE VERB RETIREMENT (2026-08-28). `verb` — room|hall|plate, the box's
+    // reverb ROOM — was a registry row from the day the box had a desk, and
+    // skeleton() below writes every registry field, so EVERY save this build
+    // has ever written carries the key (usually as the null default; three
+    // shipped presets name a room). It reached no sound: measured 2026-08-28,
+    // all three words onto every box of a house record with `rev: drown` under
+    // them, one bit-identical engine handoff. The row is gone from fields.js
+    // with the whole argument on it, and this is the door the saved key goes
+    // out of — the GROOVE LIFT's own pattern, presence-keyed and idempotent,
+    // because a retired row also stops VALIDATING: without this line an old
+    // save would carry `verb: "hall"` past okEnum forever, a key no reader
+    // reads and no checker checks, which is the hidden fact this file exists
+    // to prevent.
+    //
+    // DELETED, NOT LIFTED — the difference from the three lifts around it. A
+    // lift moves a fact to its new owner; there is no owner to move this one
+    // to. Its live cousin `buses.rev.color` names a WASM REVERB MODULE
+    // (fields.js REVERBS), and `room` — a third of this vocabulary — is not in
+    // that list at all, so folding "hall" across would switch a saved record
+    // onto an external reverb it was never mixed against. A saved record must
+    // not silently change; dropping a key that reached nothing changes nothing.
+    for (const b of Array.isArray(r.song) ? r.song : []) if (b) delete b.verb;
+
  // THE INSTR LIFT . For one
     // release a stack entry could carry `instr` — a per-layer override of what
     // that layer's voices play. The band is the SONG's now: one INSTRUMENT

@@ -338,6 +338,16 @@
         memoUnits = units; memoFx = fxParams;
         if (!memoArmed) { memoArmed = true; Promise.resolve().then(clearMemo); }
       }
+      // ...AND THE MASTER STAGE, ON THE SAME SEAM (2026-08-28). A foreign
+      // composer may answer with `fx` beside `ev`/`units`: per-BAR overrides on
+      // the fx_bus params this walk hands the renderer, which feedBar glides
+      // onto the persistent proc from the bar's first block (changed keys only).
+      // The parent's own state stays the base — `fx` is a delta over it, never
+      // a replacement — so a caller naming one slider does not blank the rest.
+      // nukernel uses it for a section's echo time (nukernel/audio/plan.js
+      // barFx); absent, this line does not run and every existing caller is
+      // byte-identical, which is the same law `opts.events` itself took.
+      if (fed && fed.fx) fxParams = Object.assign({}, fxParams, fed.fx);
       const m = SE.mapEvents(E, one, ev, { lo, hi, units });
       const barLenFrames = Math.max(BS, Math.round((hi - lo) * spb * SR / BS) * BS);
       const r = { one, song: st, units, sig: sigOf(units), spb, lo, hi, events: m.events, fxParams,

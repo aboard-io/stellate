@@ -84,7 +84,7 @@ import { NuFields, NuDeskDoc, GENRES, SENDS, SENDLABEL, LEVELS, LEVELLABEL,
          MASTER_FIELDS, BUS_FIELDS } from "./deps.js";
 const FXLABEL = NuFields.FXLABEL;
 import { SONG, MASTER, BUSES, vol, setVol, commit } from "./state.js";
-import { deskChannelBase, deskLevelAt, derivedPartTone,
+import { deskChannelBase, deskLevelAt, derivedPartTone, derivedTrim,
          masterState, deskBusFeed, MAIN_TO_BUS1, FIXED_EDGES } from "../audio/desk.js";
 import { playing, playingSec, getPosition, passAt, rmsNow } from "../audio/live.js";
 // WHAT THE ENGINE WILL DO WITH A CHANNEL — audio/plan.js channelFacts, and no
@@ -1365,6 +1365,37 @@ export function mount(parent, ctx) {
     // the keepPanes key (ui/eight.js, 2026-08-25): the grid is one pane and
     // its sideways scroll must survive the redraw every cell tap causes.
     pane.dataset.pane = "trimgrid";
+    // THE GRID ARRIVES FILLED (2026-08-28). Paul: *"Shouldn't automation
+    // already have values preset per generated song."* It should, and the half
+    // of that this surface owes is SHOWING what the record deals rather than
+    // only what a thumb has set — the page's own law, "dim is derived, bright
+    // is set", applied to the one table that had never obeyed it.
+    //
+    // WHAT IS DEALT, and the measurement that decided the shape. audio/desk.js
+    // `shade` moves every voice per section off the section's `lvl`/`env`,
+    // differentially by seat, and it reaches the sound (all twelve words move
+    // the engine handoff). But the composer deals neither: measured 2026-08-28
+    // over all 199 catalogue anchors — 2,075 sections — `lvl` and `env` are set
+    // on ZERO. So this grid was not lying by omission; the record really is
+    // saying nothing, and a dash is the truth. What changes today is that the
+    // dash is now a MEASURED zero rather than an unasked question: the moment a
+    // section names a word — by hand on the section sheet, or by any composer
+    // that learns to — every voice's own dealt dB appears here, dim, with no
+    // further edit and with not one record's sound changed.
+    //
+    // PER VOICE, AND IN dB. `derivedTrim` carries both arguments (a cell is a
+    // voice × section cell, so the dim half must answer the same question the
+    // bright half does; and TRIMS' rungs are −6/−2.5/+2.5/+5 where the dealt
+    // values are ±0.5..2.5, so printing the nearest WORD would print a word
+    // whose value is not the value in play).
+    //
+    // THE CYCLE STILL RIDES THE STORED WORD, not the drawn one: a tap on a dim
+    // cell starts at the top of TRIMS exactly as it did before, so absent-is-
+    // today survives the redraw as well as the render.
+    const DRV = (si, key) => {
+      try { return derivedTrim(SONG[si] || null, key); }
+      catch (e) { return { db: 0, eq: null }; }
+    };
     const t = el("table");
     t.id = "trimgrid";
     t.className = "nu-trims";
@@ -1383,16 +1414,40 @@ export function mount(parent, ctx) {
       const tr = el("tr");
       tr.dataset.sec = String(si);
       const th = el("th", s2.id);
-      th.append(el("small", " " + s2.bars + " bars"));
+      // WHERE THE DIM NUMBERS COME FROM, on the row that causes them: the
+      // section's own dealt words. `shade` reads exactly these two, so a reader
+      // who wonders why a column of cells woke up can see the cause in the
+      // header rather than having to know the table. Absent words print
+      // nothing, which is what the record says.
+      const dealt = [(SONG[si] || {}).lvl, (SONG[si] || {}).env]
+        .filter(Boolean).join(" · ");
+      th.append(el("small", " " + s2.bars + " bars" + (dealt ? " · " + dealt : "")));
       tr.append(th);
       for (const c of chans) {
         const td = el("td");
         const cur = (deskOf(c.voice).trim || {})[s2.id] || "";
-        const b = el("button", WSHOW(cur), "nu-trimbtn w-" + (cur || "mid"));
+        // the record's own dealt trim for THIS voice in THIS section — drawn
+        // only where the hand is silent, because a set word replaces the
+        // derived one on the fader (fields.js trimApply) as well as on the page
+        const d = cur === "" ? DRV(si, c.key) : null;
+        const shown = cur !== "" ? WSHOW(cur)
+          : (d && d.db) ? (d.db > 0 ? "+" : "\u2212") + Math.abs(d.db).toFixed(1)
+          : WSHOW("");
+        const b = el("button", shown, "nu-trimbtn w-" + (cur || "mid") +
+          (cur === "" && d && d.db ? " is-derived" : ""));
         b.type = "button";
         b.dataset.k = "t|" + c.voice.name + "|" + s2.id;
         b.setAttribute("aria-label", c.voice.name + " in " + s2.id + ": " +
-          (cur === "" ? "as mixed" : cur));
+          (cur !== "" ? cur
+            : (d && d.db) ? "as mixed, and the record deals " +
+                (d.db > 0 ? "+" : "\u2212") + Math.abs(d.db).toFixed(1) + " dB here"
+            : "as mixed"));
+        if (cur === "" && d && d.db)
+          b.title = "derived: the section's own " +
+            [(SONG[si] || {}).lvl, (SONG[si] || {}).env].filter(Boolean).join(" + ") +
+            " deals this voice " + (d.db > 0 ? "+" : "\u2212") +
+            Math.abs(d.db).toFixed(1) + " dB" +
+            (d.eq ? " and a tone move" : "") + " — tap to set a word over it";
         b.addEventListener("click", () => {
           const now = (deskOf(c.voice).trim || {})[s2.id] || "";
           const next = CYCLE[(CYCLE.indexOf(now) + 1) % CYCLE.length];
@@ -1411,7 +1466,8 @@ export function mount(parent, ctx) {
     // compressed 2026-08-27 (text diet): the legend keeps the six words in
     // TRIMS' own order and the absent-is-today fact; the file citation and
     // the dB mechanics were source-talk on a page (the six voice rules).
-    wrap.append(el("p", "out · hush · back · — · fwd · lift — absent is as mixed",
+    wrap.append(el("p", "out · hush · back · — · fwd · lift — absent is as mixed, " +
+      "and a dim number is what the record already deals that voice there",
       "nu-hint"));
     host.append(wrap);
   }

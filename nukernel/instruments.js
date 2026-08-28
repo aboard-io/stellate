@@ -64,138 +64,122 @@
   // kit's OWN spec answers, this page already asks: audio/to-engine.js LANE
   // carries the hit name per lane (`tom: "tomHi"`, `pedal`), which is the half
   // that had actually drifted, and the half a wrong answer is audible in.
-  const DRUMDIR = "../found/samples/drums/";
-  const DRUMFILE = { k: "kick.wav", s: "snare.wav", h: "hatClosed.wav",
-                     o: "hatOpen.wav", c: "clap.wav", p: "rim.wav",
-                     f: "hatPedal.wav", r: "ride.wav", x: "crash.wav",
-                     t: "tomHi.wav", m: "tomMid.wav", l: "tomLo.wav" };
+  // `DRUMDIR` + `DRUMFILE` STOOD HERE AND ARE RETIRED, 2026-08-28. Twelve
+  // filenames under ../found/samples/drums/, for a page that fetched its own
+  // one-shots and played them on AudioContext buffers. Nothing has fetched them
+  // since the one-engine round: the parent resolves a sampled kit through
+  // K.drumKitSpec (audio/to-engine.js "---- 3. the kit ----"), which loads the
+  // SAME recordings off the SAME directory through the parent's own kit overlay
+  // and keymap. Two spellings of one directory, one of them read. The name a
+  // lane still needs — which hit of the kit it is — lives in audio/to-engine.js
+  // LANE (`tom: "tomHi"`, `pedal`), which is the half that had actually drifted.
 
   // ---- THE DRUM KIT'S OWN MIX ----------------------------------------------
-  // WHERE EACH LANE SITS, AND HOW HARD IT HITS. Twelve lanes arrived and every
-  // one of them was played at the same level, dead centre, into the same dry
-  // channel — so a tom fill was a mono thump beside the snare rather than a
-  // move across the kit, and "our drums sound really dry" was the whole kit
-  // arriving at one point in space with no room around it.
+  // ONE COLUMN SURVIVED, AND IT IS THE ONE THE PARENT COULD RECEIVE.
   //
-  // Four numbers per lane, and they are the four things a drum mix is:
-  //   lvl    the lane's own trim, before the phrase's velocity
-  //   pan    where it sits, AUDIENCE PERSPECTIVE — the parent's own placement
-  //          (state-engine MASTER_PAN: hat +0.18, ride +0.22, rim −0.16,
-  //          tom −0.10), so hats and ride are right of centre and the toms
-  //          sweep left as they get lower. The crash takes the empty side: the
-  //          ride already owns the right, and a real kit has cymbals on both.
-  //   room   how much of it goes to the DRUM ROOM — a short ambience send that
-  //          is NOT the section's reverb (the engine's own room). Kick
-  //          barely, snare and toms plenty, hats a hint: that ratio IS the
-  //          sound of a kit in a room rather than twelve samples in a line.
-  //   punch/ TRANSIENT SHAPING, per hit, as a gain envelope on the sample
-  //   sus    itself: `punch` is the attack multiplier for the first ~12 ms
-  //          (>1 adds stick, <1 softens), `sus` the body level it settles to
-  //          (<1 shortens the tail, which is what makes a room-mic'd kit tight
-  //          instead of washy). A transient designer is exactly these two
-  //          numbers; doing it per note costs nothing and needs no worklet.
-  // The parent's drum strip (subsonic HPF + a whisper of glue saturation, NO
-  // compressor) still sits under all of this on the drum bus — see DRUMBUS.
+  // WHAT THIS TABLE WAS. Twelve lanes, five numbers each — `lvl` the lane's own
+  // trim, `pan` where it sat, `room` how much of it went to a drum ambience
+  // send, `punch`/`sus` a per-hit gain envelope on the sample — written for
+  // audio/voices.js, the WebAudio drum player, and tuned by ear against it.
+  // The one-engine round deleted that player. MEASURED 2026-08-28: perturbing
+  // every number in DRUMMIX (60) and MACHINEMIX (67) — x1.5 + 0.011 on every
+  // leaf — left the engine handoff (plan.js parentState + desk.js masterState +
+  // every barPlan) BIT-IDENTICAL on house, hymn and dub. 127 numbers, zero bits.
   //
-  // THESE ROWS ARE THE SAMPLED KITS' TRUTH, and the machine kits ride them
-  // through the per-machine overrides below (MACHINEMIX, merged by mixFor —
-  // one merge, read by the desk and the player both).
+  // `lvl` IS WIRED (2026-08-28). audio/to-engine.js multiplies it into the
+  // HIT'S OWN `amp` — the courier pattern the family strip took the same day —
+  // and it lands there rather than on the unit table for a reason the LANE table
+  // states: twelve lanes resolve to NINE parent units (h/o/f are all `hat`,
+  // t/m/l are all `tom`), so a per-lane fact on a per-unit row would cost three
+  // of the twelve their own answer. `amp` is per event, which is the granularity
+  // this column was written at. Measured after wiring, on the rendered handoff:
+  // dub's rim −6.02 dB, house's ride −4.15 dB, the hats −1.9 dB, kick and snare
+  // (lvl 1.00) untouched to the bit.
+  //   AND IT HAD NO OWNER TO FIGHT. The parent's own per-voice level is per UNIT
+  //   (state-engine voiceUnits: hat 0.7, ride/crash 0.9) and to-engine's `L.gain`
+  //   has never been set by a single row — so a rim came out as loud as a snare,
+  //   a pedal hat as loud as a closed one, and a CR-78 as loud as a 909. That gap
+  //   is what this column is for.
   //
-  // ...AND THAT LAST SENTENCE IS FALSE, MEASURED 2026-08-28. There is no desk
-  // and no player reading it: DRUMMIX, MACHINEMIX, mixFor, laneKey and DRUMBUS
-  // below are named NOWHERE in nukernel/, engine/ or tools/ outside this file —
-  // ui/deps.js re-exported five of them to nobody until 2026-08-28, and that
-  // barrel line was the whole of the evidence they were wired. Rendered proof,
-  // not grep alone: perturbing every number in DRUMMIX (60) and MACHINEMIX (67)
-  // — ×1.5 + 0.011 on every leaf — leaves the engine handoff (plan.js
-  // parentState + desk.js masterState + every barPlan) BIT-IDENTICAL on house,
-  // hymn and dub.
+  // FOUR COLUMNS ARE RETIRED, and each has a different reason:
+  //   pan    ONE OWNER PER FACT, and it is not this file. state-engine
+  //          MASTER_PAN places every drum unit (hat +0.18, ride +0.22, rim
+  //          −0.16, tom −0.10, clap +0.08, crash +0.12) and the renderer reads
+  //          the UNIT's pan, not the event's — there is no per-hit pan port at
+  //          all. Four of these rows were copies of MASTER_PAN's own numbers;
+  //          the two that differed (the crash on the empty side, the toms
+  //          sweeping left as they get lower) are per-LANE gestures a single
+  //          `tom` channel cannot make. A second copy of a placement the parent
+  //          already owns is the double this file exists to prevent.
+  //   room   ITS BUS IS GONE. These were absolute sends into a short drum
+  //          ambience that the WebAudio rack provided and the one engine does
+  //          not; there is one reverb bus now, and audio/desk.js already folds a
+  //          box's `room` and a part's into it ("a part asking for room and a
+  //          box asking for it are both asking for more of the one reverb").
+  //          The RATIO between the lanes (kick 0.10 against snare 0.55) is the
+  //          real fact and it is genuinely lost — but a send is per UNIT, so
+  //          six of twelve lanes could keep it at best, and re-scaling absolute
+  //          sends tuned against a bus with its own 0.9 trim into a shared
+  //          reverb needs a normalising constant nobody ever tuned. Inventing
+  //          one to justify a table is the thing this round is against.
+  //   punch  NO PORT, AT ANY GRANULARITY. A transient designer is a per-hit gain
+  //   sus    envelope over a sample, and the parent's sampled drum event is
+  //          `{ unit, beat, durB, sets: { freq, gain } }` — no attack, no
+  //          sample-start offset, no envelope. What it does have is the drum
+  //          strip (STRIP_PROFILES.drum: subsonic HPF, a whisper of saturation,
+  //          NO compressor — "the attack IS the instrument"), which is the
+  //          parent's answer to the same question, one stage lower.
   //
-  // WHY: audio/voices.js, the WebAudio drum player these rows were tuned for,
-  // went with the one-engine round. The parent voices every lane now
-  // (to-engine.js MACHINE_KIT, state-engine's own drum strip), and it carries
-  // its own levels, its own pans and its own room sends. Two tuned mixes exist;
-  // exactly one of them is audible, and it is not this one.
-  //
-  // LEFT STANDING, NOT DELETED, because which mix wins is Paul's call — either
-  // the parent adopts these numbers (they are the ones a person tuned by ear)
-  // or they go. What must not happen again is a reader believing the sentence
-  // above. Same tombstone on DYN, at the foot of this file.
+  // The retired numbers are in git, and the sentence that mattered — a kit is
+  // twelve places in a room, not twelve samples in a line — is written here
+  // rather than in a table nothing reads.
   const DRUMMIX = {
-    k: { lvl: 1.00, pan:  0.00, room: 0.10, punch: 1.45, sus: 1.00 },
-    s: { lvl: 1.00, pan: -0.02, room: 0.55, punch: 1.35, sus: 0.94 },
-    p: { lvl: 0.50, pan: -0.16, room: 0.45, punch: 1.30, sus: 0.90 },
-    c: { lvl: 0.95, pan:  0.08, room: 0.60, punch: 1.15, sus: 1.00 },
-    t: { lvl: 0.95, pan:  0.14, room: 0.50, punch: 1.30, sus: 0.92 },
-    m: { lvl: 0.95, pan: -0.08, room: 0.52, punch: 1.28, sus: 0.92 },
-    l: { lvl: 0.98, pan: -0.28, room: 0.54, punch: 1.25, sus: 0.94 },
-    h: { lvl: 0.85, pan:  0.18, room: 0.18, punch: 1.20, sus: 0.85 },
-    o: { lvl: 0.80, pan:  0.20, room: 0.30, punch: 1.10, sus: 0.95 },
-    f: { lvl: 0.62, pan:  0.14, room: 0.16, punch: 1.15, sus: 0.85 },
-    r: { lvl: 0.72, pan:  0.24, room: 0.35, punch: 1.10, sus: 1.00 },
-    x: { lvl: 0.80, pan: -0.20, room: 0.45, punch: 1.05, sus: 1.00 },
+    k: { lvl: 1.00 }, s: { lvl: 1.00 }, p: { lvl: 0.50 }, c: { lvl: 0.95 },
+    t: { lvl: 0.95 }, m: { lvl: 0.95 }, l: { lvl: 0.98 }, h: { lvl: 0.85 },
+    o: { lvl: 0.80 }, f: { lvl: 0.62 }, r: { lvl: 0.72 }, x: { lvl: 0.80 },
   };
   // ---- THE MACHINES' PLACE IN THAT MIX -------------------------------------
   // Four kits are DRUM MACHINES — tr808, tr909, tr606, cr78 — and the parent
-  // engine voices every one of them (audio/to-engine.js MACHINE_KIT is the
-  // whole routing table, live and pressed). What is left for this file is the
-  // half a machine changes about a MIX rather than about a sound, which is one
-  // number: `room`. A drum machine is a line-out, not a kit in a room, and the
-  // hats especially take far less of the ambience send than a recorded hat or
-  // the machine stops sounding like a machine. Levels ride down with it where
-  // the box was polite (the CR-78 sat behind an organ; every record that loved
-  // it mixed it quietly).
+  // voices every one of them (audio/to-engine.js MACHINE_KIT is the whole
+  // routing table, live and pressed). What a machine changes about a MIX rather
+  // than about a sound used to be said here in two columns; `room` went out
+  // with its bus (the DRUMMIX tombstone above has the argument) and what is
+  // left is the half a machine really does change, which is how loud it sits.
+  // A drum machine is a line-out, and the boxes that were polite were mixed
+  // politely: the CR-78 sat behind an organ, and every record that loved it
+  // kept it down.
   //
-  // NO punch/sus HERE, and their absence is the point: transient shaping is a
-  // gain envelope over a SAMPLE, and these lanes are not samples any more —
-  // they are the parent's modules, triggered per hit with their own attacks. A
-  // row that named a `punch` for them would be a number nobody reads.
+  // ONLY THE ROWS THAT DIFFER. An absent lane falls straight through to DRUMMIX
+  // (mixFor below), so tr808's kick and snare are simply the kit's — the same
+  // absent-is-today spelling the rest of this box uses. tr606 is the one machine
+  // with no level of its own on any lane but the clap, which is what a 606 is.
   const MACHINEMIX = {
-    tr808: { k: { room: 0.04 }, s: { room: 0.28 }, c: { room: 0.30 }, p: { room: 0.20 },
-             h: { room: 0.06 }, o: { room: 0.10 }, f: { room: 0.05 },
-             r: { room: 0.12, lvl: 0.6 }, x: { room: 0.18, lvl: 0.7 },
-             t: { room: 0.20 }, m: { room: 0.20 }, l: { room: 0.22 } },
-    tr909: { k: { room: 0.06 }, s: { room: 0.32 }, c: { room: 0.34 }, p: { room: 0.20 },
-             h: { room: 0.07 }, o: { room: 0.12 }, f: { room: 0.06 },
-             r: { room: 0.15, lvl: 0.62 }, x: { room: 0.20, lvl: 0.75 },
-             t: { room: 0.22 }, m: { room: 0.22 }, l: { room: 0.24 } },
-    tr606: { k: { room: 0.05 }, s: { room: 0.24 }, c: { room: 0.26, lvl: 0.8 }, p: { room: 0.18 },
-             h: { room: 0.06 }, o: { room: 0.10 }, f: { room: 0.05 },
-             r: { room: 0.12, lvl: 0.6 }, x: { room: 0.16, lvl: 0.7 },
-             t: { room: 0.18 }, m: { room: 0.18 }, l: { room: 0.20 } },
-    cr78:  { k: { room: 0.08, lvl: 0.9 }, s: { room: 0.30, lvl: 0.85 },
-             c: { room: 0.28, lvl: 0.7 }, p: { room: 0.22, lvl: 0.45 },
-             h: { room: 0.08, lvl: 0.7 }, o: { room: 0.12, lvl: 0.65 },
-             f: { room: 0.06, lvl: 0.5 }, r: { room: 0.14, lvl: 0.5 },
-             x: { room: 0.18, lvl: 0.6 }, t: { room: 0.22, lvl: 0.8 },
-             m: { room: 0.22, lvl: 0.8 }, l: { room: 0.24, lvl: 0.82 } },
+    tr808: { r: { lvl: 0.6 },  x: { lvl: 0.7 } },
+    tr909: { r: { lvl: 0.62 }, x: { lvl: 0.75 } },
+    tr606: { c: { lvl: 0.8 },  r: { lvl: 0.6 },  x: { lvl: 0.7 } },
+    cr78:  { k: { lvl: 0.9 },  s: { lvl: 0.85 }, c: { lvl: 0.7 },  p: { lvl: 0.45 },
+             h: { lvl: 0.7 },  o: { lvl: 0.65 }, f: { lvl: 0.5 },  r: { lvl: 0.5 },
+             x: { lvl: 0.6 },  t: { lvl: 0.8 },  m: { lvl: 0.8 },  l: { lvl: 0.82 } },
   };
-  // THE ONE MERGE — the kit desk's lane strips and the drum player both read
-  // this, so the table and the sound cannot drift apart. (NO CALLER, 2026-08-28
-  // — see the DRUMMIX tombstone above. Both readers named here were deleted with
-  // audio/voices.js; the table and the sound have drifted exactly as far apart
-  // as this sentence promised they could not.) A sampled kit falls straight
-  // through to DRUMMIX.
+  // THE ONE MERGE — the machine's row over the kit's, so a sampled kit falls
+  // straight through and a machine only overrides what it actually changes.
+  // audio/to-engine.js is the reader, once per hit, and it is the only one:
+  // there is no drum player on this page any more and no second copy of this
+  // arithmetic anywhere. (`laneKey` stood beside this and is RETIRED, 2026-08-28
+  // — it answered "which desk strip does this hit land on" for a desk of node
+  // chains that no longer exists, and it looked used only because ui/derive.js
+  // and kernel.js each define their own local `laneKey` and shadow it.)
   const mixFor = (kit, lane) => {
     const o = kit && MACHINEMIX[kit] && MACHINEMIX[kit][lane];
     const base = DRUMMIX[lane];
     return o ? { ...base, ...o } : base;
   };
-  // which strip a hit lands on: sampled kits share one strip per lane (the
-  // original desk, node for node); a machine lane with its own row earns its own
-  const laneKey = (kit, lane) =>
-    (kit && MACHINEMIX[kit] && MACHINEMIX[kit][lane]) ? kit + "|" + lane : lane;
-
-  // THE DRUM BUS. hpf/sat/satMix are the parent's transient-preserving drum
-  // strip verbatim (state-engine STRIP_PROFILES.drum: no compressor, no dulling
-  // filter — the attack IS the instrument). `room` is the bus trim on the whole
-  // kit's ambience send, so a genre-level "less room" is one number, and
-  // `punchMs` is how long a transient boost lasts before the body takes over.
-  // (NO CALLER, 2026-08-28 — the DRUMMIX tombstone above has the measurement.
-  // The parent applies its own STRIP_PROFILES.drum; this is a second copy of
-  // the same idea that nothing reads.)
-  const DRUMBUS = { hpf: 28, sat: 0.15, satMix: 0.22, room: 0.9, punchMs: 0.012,
-                    susMs: 0.09 };
+  // `DRUMBUS` STOOD HERE AND IS RETIRED, 2026-08-28: { hpf, sat, satMix, room,
+  // punchMs, susMs }, a second copy of the parent's own drum strip. The owner is
+  // state-engine STRIP_PROFILES.drum — transient-preserving, HPF plus a whisper
+  // of glue saturation and no compressor — which every drum unit already takes
+  // through stripFor(role="drum"), on every path. `room` and the two envelope
+  // times belonged to the same retired stages as DRUMMIX's own columns.
 
   // ---- THE INSTRUMENT'S OWN RANGE ------------------------------------------
   // MIDI windows, C4 = 60, lifted from engine/faust/voices/state-engine.js
@@ -342,16 +326,12 @@
     // other two EPs since the table was written.)
     synth_strings_2: [36, 96], space_voice: [48, 88],
   };
-  // How far past its own zone ROOTS a sample may be stretched and still be the
-  // instrument — the parent's numbers (SAMPLER_STRETCH_ST / SAMPLER_FLOOR_ST).
-  // Up-stretch shrieks sooner than down-stretch rumbles, hence the asymmetry.
-  // (NO CALLER, 2026-08-28. Grepped across nukernel/, engine/ and tools/: named
-  // only here and on the ui/deps.js barrel line, which stopped re-exporting them
-  // the same day. The parent applies SAMPLER_STRETCH_ST / SAMPLER_FLOOR_ST
-  // itself, which is why nothing broke when this copy went quiet — it is a
-  // second spelling of the parent's own two numbers, and the parent's is the one
-  // that reaches the sound.)
-  const STRETCH_UP = 6, STRETCH_DOWN = 12;
+  // `STRETCH_UP = 6` / `STRETCH_DOWN = 12` STOOD HERE AND ARE RETIRED,
+  // 2026-08-28: how far past its own zone ROOTS a sample may be stretched and
+  // still be the instrument. They were a second spelling of the parent's
+  // SAMPLER_STRETCH_ST / SAMPLER_FLOOR_ST, which is why nothing broke when this
+  // copy went quiet — the parent applies its own two numbers to every zone fold
+  // on every path, and a duplicate constant is a fact waiting to disagree.
 
   // ---- FONTS, the main app's own logic ----
   // engine/faust/data/fonts.json lists fourteen. Eleven are SOUNDFONTS: a
@@ -1246,146 +1226,57 @@
   // Bass and drums decline it there — the role owns those two.
   const stripFor = (id, pad) => STRIPS[familyOf(id, pad)] || STRIPS.lead;
 
-  // ---- THE SECOND KIND OF DYNAMICS -----------------------------------------
-  // Velocity used to change one thing: LOUDNESS. The event tier now writes a
-  // real range and a real shape into it (kernel.js stress/phrase/touch), and a
-  // line whose only answer to being played harder is being played louder still
-  // reads as "extremely synthesized and robotic", because that is not what a
-  // struck or blown instrument does. A harder note is a BRIGHTER note with a
-  // faster front edge; a soft one is dull and slow. That is timbre, not level.
+  // ---- THE SECOND KIND OF DYNAMICS: RETIRED, 2026-08-28 ---------------------
+  // `DYN`, `dynFor`, `dynCurve`, `DYN_BRIGHT`, `DYN_ATK`, `DYN_ATK_OCT` and
+  // `DYN_SKIP` stood here — eleven families x five numbers plus four constants,
+  // 55 tuned values — and they are gone rather than left standing.
   //
-  // THE PARENT SOLVES THIS AND WE CANNOT USE ITS SOLUTION.
-  // engine/faust/voices/sampler.js zoneFor(zones, midi, vel) takes a SELECTION
-  // VELOCITY and picks a velocity LAYER — a genuinely differently-recorded
-  // sample for a soft note — and its comment records the measured bug where a
-  // mix-staged gain capped that velocity at 61 over 10,109 notes so every forte
-  // layer was unreachable. the engine's own sampler passes velocity through to it
-  // (correct the day a layered font lands, see there). But the precondition
-  // fails here: measured on the shipped registry, 123 samplers / 629 zones,
-  // zone keys are file,root,lo,hi,loop,ls,le — no vlo/vhi, ONE layer per
-  // instrument. The parent gets timbre-from-velocity because its SoundFont has
-  // layers. We have to synthesize the difference instead.
+  // WHAT THEY SAID, because it is the right idea and it should not be lost: a
+  // harder note is not a louder note, it is a BRIGHTER note with a faster front
+  // edge. Five numbers per family — `tilt` dB of high shelf per unit of velocity
+  // distance (brass the extreme, a string section the mildest), `corner` where
+  // brightness starts for that instrument, `bite` extra dB on the onset of a
+  // full-force note, `dec` how long that onset takes to settle, `hand` how much
+  // of the sound IS the strike — plus an ASYMMETRY that was the honest part: a
+  // one-layer GM font was captured at a confident level, so subtracting its top
+  // for a soft note is truthful and adding to it for a hard one is invention, so
+  // the loud side got only DYN_BRIGHT (0.55) of the tilt. `organ` and `pad` were
+  // absent on purpose — a drawbar organ has no velocity response, and a per-note
+  // transient shelf chops the one voice whose job is not having an edge.
   //
-  // WHAT SHAPE THE TREATMENT TAKES, and the measurement that chose it. The
-  // first attempt was the obvious one — a lowpass per note, wide open at the
-  // default velocity and closing as the note softens. It gates, it is cheap,
-  // and it is INAUDIBLE: measured on rock's crunch guitar, offline, one note at
-  // velocity 2 against the same note at velocity 9, the spectral-shape
-  // correlation came out 0.988 against a level-only control of 0.991. The
-  // reason is arithmetic. Byte-identity at the default velocity pins the curve
-  // to "no filter" at neutral, a lowpass can only ever subtract, and a lowpass
-  // anchored at bypass has nowhere to go on the loud half — so half the range
-  // did nothing and the other half rolled off 6 kHz of a guitar that had almost
-  // no energy up there.
+  // WHY THEY ARE RETIRED AND NOT WIRED. MEASURED 2026-08-28: perturbing all 55
+  // numbers (x1.5 + 0.011 on every leaf) left the engine handoff BIT-IDENTICAL
+  // on house, hymn and dub — no reader, anywhere in nukernel/, engine/ or
+  // tools/. And there is nowhere to put them. This is a PER-NOTE treatment and
+  // the parent's sampled note is `{ tSec, durSec, freq, gain, vel, atk, rel,
+  // zones, pan }` — where `atk` is the UNIT's, not the note's
+  // (engine/faust/live/stream-renderer.js, the sampler branch). No per-note
+  // filter, no per-note attack, no per-note sample-start offset: every term of
+  // dynCurve except the level is a write with no port, at any granularity, and
+  // opening one means a filter instance per voice per note.
   //
-  // SO IT IS A TILT, not a corner: one HIGH SHELF whose gain in dB is
-  // proportional to the distance from the default velocity. Negative below it,
-  // positive above it, exactly 0 dB — a literal bypass — at it. That keeps the
-  // skip law intact and gives the loud half somewhere to go.
-  //
-  // AND IT IS ASYMMETRIC, for the same reason the parent's velocity layer does
-  // not exist here: THE SAMPLE IS ALREADY THE FIRM NOTE. A one-layer GM font was
-  // captured at a confident level, so going DOWN from it is honest subtraction
-  // (that top end really was not there when the note was played softly) and
-  // going up is inventing high end the recording never had. So the soft side
-  // gets the full tilt and the loud side gets DYN_BRIGHT of it, plus the one
-  // thing a hard hit genuinely does add — a transient.
-  //
-  // FIVE NUMBERS PER FAMILY, and they are the five things dynamic response is:
-  //   tilt   dB the shelf moves per unit of velocity distance. The big one, and
-  //          the ordering is the physical one: brass is the extreme (a forte
-  //          trumpet and a piano one are barely the same instrument), a string
-  //          section is the mildest.
-  //   corner Hz the shelf hinges at — where "brightness" starts for THIS
-  //          instrument. A bass's is under a kilohertz; a marimba's is up where
-  //          the mallet noise lives.
-  //   bite   extra dB on the ONSET of a full-force note, decaying into the
-  //          settled tilt. This is the strike itself, and it is the half of the
-  //          treatment a static shelf cannot say.
-  //   dec    seconds that onset takes to settle. A struck string is done in
-  //          40 ms; a bowed one takes a sixth of a second.
-  //   hand   0..1, how much of this sound IS the strike — it scales BOTH the
-  //          amp-attack shortening and the sample-start offset (see
-  //          the parent's STRIP stage). A plucked string is all hand; a string section
-  //          has none.
-  //
-  // TWO FAMILIES ARE ABSENT ON PURPOSE, and absent means the old path exactly:
-  //   organ  a drawbar organ has NO velocity response. The key is a contact,
-  //          the footages are sines, and a hard-played Hammond is the same
-  //          sound. Faking one would be the opposite of this whole round.
-  //   pad    a pad is a wash, not a stroke: a per-note transient shelf chops
-  //          the one voice whose job is not having an edge. It is also the
-  //          worst cost on the page — STRIPS.pad already builds a chorus AND a
-  //          phaser per note, on the voice that holds the longest notes.
-  // NO READER, MEASURED 2026-08-28 — the same tombstone DRUMMIX carries, and the
-  // same cause. `dynFor`, `dynCurve`, `DYN_BRIGHT` and `DYN_ATK` are named
-  // nowhere in nukernel/, engine/ or tools/ outside this file; ui/deps.js
-  // re-exported three of them to nobody until 2026-08-28. Rendered proof:
-  // perturbing all 55 numbers in this table (×1.5 + 0.011 on every leaf) leaves
-  // the engine handoff BIT-IDENTICAL on house, hymn and dub.
-  //
-  // The comment below says "the parent's STRIP stage" and that is exactly where
-  // the response lives NOW — in the parent, off the parent's own tables. This is
-  // a per-family velocity curve written for audio/voices.js, which the
-  // one-engine round deleted. Left standing rather than deleted: whether the
-  // parent should adopt these numbers is a musical decision, not a cleanup.
-  const DYN = {
-    keys:    { tilt: 11, corner: 1600, bite: 4.0, dec: 0.050, hand: 1.00 },
-    guitar:  { tilt: 10, corner: 1900, bite: 4.0, dec: 0.045, hand: 1.00 },
-    // an overdriven amp COMPRESSES: less swing, and the bite is the pick rather
-    // than the tone stack (the dirty strip's own tanh already squares the top off)
-    dirty:   { tilt:  7, corner: 2200, bite: 3.0, dec: 0.040, hand: 0.80 },
-    mallet:  { tilt: 12, corner: 2600, bite: 5.0, dec: 0.030, hand: 1.00 },
-    brass:   { tilt: 13, corner: 1400, bite: 3.0, dec: 0.100, hand: 0.50 },
-    reed:    { tilt:  9, corner: 1500, bite: 2.5, dec: 0.090, hand: 0.45 },
-    bowed:   { tilt:  8, corner: 1800, bite: 2.0, dec: 0.140, hand: 0.25 },
-    strings: { tilt:  6, corner: 2000, bite: 1.5, dec: 0.160, hand: 0.15 },
-    vox:     { tilt:  6, corner: 2200, bite: 1.5, dec: 0.130, hand: 0.15 },
-    // the bass chair, reached by id rather than by family (nothing in the
-    // regex table claims acoustic_bass, and adding a rule would re-strip any
-    // future *_bass voice) — a fingered bass is most of the way to a guitar,
-    // hinged low because a bass's whole "brightness" lives under a kilohertz
-    bass:    { tilt:  9, corner:  900, bite: 3.5, dec: 0.050, hand: 0.90 },
-    // an id in no family: the same fallback stripFor makes, deliberately mild
-    lead:    { tilt:  8, corner: 1900, bite: 3.0, dec: 0.050, hand: 0.70 },
-  };
-  // the share of the tilt a note ABOVE the default velocity gets. See the
-  // asymmetry note above: the shipped one-layer font is already a firm note, so
-  // subtracting its top is honest and adding to it is invention.
-  const DYN_BRIGHT = 0.55;
-  // the amp attack at the default velocity — today's number for every sampled
-  // note — and how far a full-force note may halve it (in octaves of time).
-  // 0.006 / 2^0.9 is 3.2 ms, a hair above sampler.js's own 3 ms floor, so the
-  // hardest note this page can write still lands inside the parent's envelope.
-  const DYN_ATK = 0.006, DYN_ATK_OCT = 0.9;
-  // seconds of the sample's own head a full-force note skips. Small on purpose:
-  // this is the soft ramp before the transient, not the transient.
-  const DYN_SKIP = 0.004;
-  const dynFor = (id, pad) => (id === BASS_INSTR ? DYN.bass : DYN[familyOf(id, pad)]) || null;
-  // THE CURVE ITSELF, HERE RATHER THAN IN THE PLAYER. voices.js writes it onto
-  // AudioParams and the gates check it as arithmetic; two copies of these four
-  // lines is how the table and the sound drift apart one edit at a time. `u` is
-  // the signed distance from the default velocity (voices.js velU): -1.25 at a
-  // ghosted 0, 0 at the default 5, +1 at a hammered 9. EVERY TERM IS ZERO AT
-  // u === 0 — that is the whole byte-identity claim, and it is why the player
-  // can skip building anything at all there.
-  const dynCurve = (u, d) => {
-    const force = u > 0 ? u : 0;
-    const db = d.tilt * (u < 0 ? u : u * DYN_BRIGHT);
-    return { db, peakDb: db + d.bite * force,
-             atk: DYN_ATK / Math.pow(2, DYN_ATK_OCT * d.hand * u),
-             skip: DYN_SKIP * d.hand * force };
-  };
+  // WHAT THE PARENT USES INSTEAD, which is why nothing broke when this went
+  // quiet. Velocity on a SAMPLED voice picks a velocity LAYER (SP.selVelOf off
+  // the musical amp) and scales the note's gain. Velocity on a MODELLED voice
+  // drives the instrument's own physical control through state-engine MODEL_DYN
+  // — stk_guitar's `pick` 0.12..1, stk_piano's `hammer` 0.3..1, mallet's `hard`
+  // 0.05..1, voice_lead's `push` — which is the same idea done one layer down,
+  // in the model rather than on a shelf after it, and measurably better: across
+  // MIDI 67-79 a ghosted mallet note measures 2252 Hz of spectral centroid
+  // against a hammered one's 3722, where the sampled zone it replaced moved 922
+  // to 940. This table was the shelf you build when you cannot reach inside the
+  // instrument. The parent can.
 
-  const api = { instrOf, isSection, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNTH, PATCHES, STRIPS,
+  // WHAT LEAVES THIS FILE. Fourteen names came off this line on 2026-08-28 —
+  // DRUMDIR, DRUMFILE, STRETCH_UP, STRETCH_DOWN, DRUMBUS, laneKey, DYN, dynFor,
+  // dynCurve, DYN_BRIGHT, DYN_ATK and the three private constants — because the
+  // tables they named are retired above with their measurements. `DRUMMIX`,
+  // `MACHINEMIX` and `mixFor` stay, and they are WIRED: audio/to-engine.js reads
+  // the merge once per drum hit. An export is the only evidence most readers
+  // ever get that a table is live, so nothing may be exported that nothing reads.
+  const api = { instrOf, isSection, BASS_INSTR, FONTS, BASSSYNTH, PATCHES, STRIPS,
                 stripFor, familyOf, RANGES, SAMPLED_INSERTS, PEDAL, BOARDS, boardOf,
-                STRETCH_UP, STRETCH_DOWN, DRUMMIX, DRUMBUS,
-                MACHINEMIX, mixFor, laneKey,
-                // DYN_ATK is the one raw constant the player still needs (the
-                // default attack for a note that asked for no treatment at all);
-                // DYN_ATK_OCT and DYN_SKIP stay private to dynCurve, which is
-                // the only thing that should ever be reading them
-                DYN, dynFor, dynCurve, DYN_BRIGHT, DYN_ATK };
+                DRUMMIX, MACHINEMIX, mixFor };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuInstruments = api;
 })(typeof window !== "undefined" ? window : globalThis);

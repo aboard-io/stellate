@@ -1913,6 +1913,14 @@ table.nu-trims{ color: var(--ink); }
 .w-hush{ background: var(--hand); color: #fff; }
 .w-back{ background: var(--hand-tint); }
 .w-mid{ background: var(--panel); color: var(--dim); }
+/* DIM IS DERIVED, BRIGHT IS SET — the page's own law, on the word grid
+   (2026-08-28). A cell the hand has not touched draws the dB the RECORD deals
+   that voice in that section (audio/desk.js derivedTrim), and it must read as
+   a reading rather than as a setting: same well as `—`, tabular figures so a
+   column of them lines up, and no weight of its own. The moment a word is set
+   the cell takes that word's own colour and this class comes off. */
+.nu-trimbtn.is-derived{ font-variant-numeric: tabular-nums; font-weight: 400;
+                        letter-spacing: 0; opacity: .78; }
 .w-fwd{ background: var(--flag-tint); }
 .w-lift{ background: var(--flag); font-weight: 800; }
 /* A SET CELL KEEPS ITS WORD'S PAINT UNDER THE POINTER. The global

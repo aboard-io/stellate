@@ -42,7 +42,7 @@ export const { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
                RATES, RATELABEL, SWINGS, SWINGLABEL, GROOVELABEL, METERLABEL,
                KITLABEL, DRUMKITS, BASSOPS,
                FX, fxChain, FXSEND, fxMix, fxSendable,
-               SENDS, SENDLABEL, VERBS,
+               SENDS, SENDLABEL,
                DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
                VOX, VOXPARAM, OCTAVES, ARTICS, CMODES, CLAMPLABEL,
                KEYS, KEYLABEL, PROGCHOICES, PROGLABEL, PERIODS, PERIODLABEL,
@@ -163,9 +163,18 @@ export const { instrOf, familyOf, BASS_INSTR, FONTS, BASSSYNTH,
    its own drum mix and its own velocity response — so the table and the sound
    had already drifted as far apart as two things can get.
 
-   THE TABLES THEMSELVES STAY IN instruments.js, tombstoned in place. Deleting
-   182 tuned numbers is a design decision (either the parent adopts them or they
-   go), and this file's job is only to stop them LOOKING wired. */
+   AND THE DECISION LANDED THE SAME DAY (2026-08-28, Paul on the dead-facts
+   list: "Yes do that and wire all the other stuff too"). Of the twelve, exactly
+   ONE column could reach the sound and it did: DRUMMIX/MACHINEMIX's `lvl` is
+   now multiplied into every drum HIT's amp by audio/to-engine.js, through
+   `mixFor`, which is why those three names are the only ones instruments.js
+   still exports. The other nine are retired IN that file, each with the reason
+   it could not be received — pan has an owner (state-engine MASTER_PAN), room
+   has no bus, punch/sus have no per-hit envelope port, DYN has no per-note
+   filter port, and DRUMDIR/DRUMFILE/STRETCH_* were second spellings of numbers
+   the parent already applies. A barrel that re-exports a table is the only
+   evidence most readers ever see that the table is wired; this line is now
+   telling the truth in both directions. */
 
 // ---- arranger policy (compose.js) + the shipped songs (presets.js) ----
 export const { compose } = window.NuCompose;

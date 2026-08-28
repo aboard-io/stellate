@@ -29,22 +29,30 @@
 //   echo send    (box `echo`)-> unit `del`     the shared delay bus send
 //   room send    (box `room`)-> the drum units' `rev` (the ambience the kit
 //                               lanes already feed IS the parent's rev bus)
-//   verb name    (box `verb`)-> NOTHING. MEASURED 2026-08-28: this file, and
-//                               every other file in the audio path, reads only
-//                               `tone.verb` — a GENRE NUMBER, 0..1 — and never
-//                               the box's `verb` word (fields.js VERBS:
-//                               room|hall|plate). Walking all three words onto
-//                               every box of a house record, with `rev: drown`
-//                               under them so a reverb decision could be heard
-//                               at all, produced ONE render: state `reverb` and
-//                               `reverbColor` did not move a bit. The live
-//                               spelling of this fact is `buses.rev.color`
-//                               (fields.js REVERBS -> masterState `reverbColor`,
-//                               at the foot of this file), which picks the wasm
-//                               module the return runs. The registry row is
-//                               tombstoned where it is declared; retiring the
-//                               stored key is Paul's call, because 139 shipped
-//                               records carry it.
+//   verb name    (box `verb`)-> RETIRED 2026-08-28, and the row is gone from
+//                               fields.js with the argument on it. It reached
+//                               nothing (measured: all three words onto every
+//                               box of a house record, `rev: drown` under them,
+//                               one bit-identical handoff) and it could not be
+//                               made to: `state.reverbColor` names a wasm
+//                               module instantiated ONCE at stream open, so a
+//                               per-section room is five reverbs and a
+//                               crossfade — a stage this engine does not have.
+//                               The live spelling is `buses.rev.color`, on the
+//                               rack. song.js migrate() deletes the saved key.
+//   echo time    (box `dtime`)-> state.delay's own `dtime`, PER BAR (2026-08-28,
+//                               this round). `barEchoSec` below is the one
+//                               arithmetic — the same DTIMES fraction of the
+//                               same nominal bar masterState uses for
+//                               `buses.echo.time` — and plan.js barPlan carries
+//                               it as the bar's `fx`, which the parent glides
+//                               onto fx_bus from that bar's first block
+//                               (stream-renderer feedBar). ONE delay machine
+//                               still: the box BORROWS the song's knob for its
+//                               own bars, and a bar whose box says nothing is
+//                               handed the song's own value back explicitly,
+//                               because a glide writes only changed keys and a
+//                               silent fallback would leave the delay sticky.
 //   the MASTER strip (fields.js MASTER)
 //                            -> state fields the parent's own fx_bus resolves:
 //                               drive->grit, glue->comp, tape->wob+tsat,
@@ -257,8 +265,13 @@ const FAM_EQ = {
   organ:   { mid: 0.5 },
   // `lead` (the no-family fallback) and `drums` are deliberately absent: an
   // id in no family has no tonal character to derive (the flat-when-no-source
-  // law, visible), and the kit's truth already lives on the lane strips
-  // (DRUMMIX) — repeating it here would be the double the audit forbids.
+  // law, visible), and the kit's tone is the parent's own drum strip
+  // (state-engine STRIP_PROFILES.drum) — repeating it here would be the double
+  // the audit forbids. (That last clause used to cite instruments.js DRUMMIX as
+  // "the lane strips", and it was wrong from the one-engine round onward: those
+  // rows reached nothing and the four columns that said anything tonal are
+  // retired as of 2026-08-28. The reason for the absence is unchanged; the
+  // owner it names is now the one that exists.)
 };
 // A COLOUR MUST NOT ALSO SAY "LOUDER" (2026-08-25).
 //
@@ -321,6 +334,51 @@ function shade(sec, base) {
     if (base === "drums") db += 0.5; else if (base === "pad") db -= 0.5;
   } else if (e === "arch") { if (melodic) db += 0.5; }
   return { db, eq };
+}
+/**
+ * WHAT THE RECORD ITSELF DEALS THIS VOICE IN THIS SECTION (2026-08-28).
+ *
+ * THE ASK, and what measuring it turned up. Paul: *"Shouldn't automation already
+ * have values preset per generated song."* The word grid on the board draws only
+ * the HAND's trims, so it reads blank — and the belief this function was written
+ * to surface was that the record is in fact being shaped underneath, by `shade`
+ * below, off the `lvl`/`env` the composer deals per section.
+ *
+ * MEASURED FIRST, 2026-08-28, and the belief was HALF true. `shade` is real and
+ * it reaches the sound: all four LEVELS words and all eight ENVLABEL words move
+ * the engine handoff, and they move it DIFFERENTLY PER VOICE (`hush` on a house
+ * box: lead −1.0, the second lead −2.0, pad −1.0, drums −2.0, bass 0). But the
+ * composer deals neither word: over all 199 catalogue anchors, 2,075 sections,
+ * `lvl` and `env` are set on ZERO of them (and so are `mot`, `intro` and
+ * `outro`). A generated section carries a `role`, a bar count and sometimes a
+ * `period`, and nothing about level at all. So the grid was not lying by
+ * omission — it was telling the truth, and the emptiness is the record's.
+ *
+ * WHICH IS WHY THIS FUNCTION ONLY SURFACES. Deriving a level arc from the
+ * section's `role` would fill every grid on the page and CHANGE THE SOUND OF
+ * EVERY RECORD, which is the one thing the ask ruled out ("not one record
+ * changes sound"). So the board draws what the record deals: zero today, and a
+ * voice's own dealt dB the moment a section names a word, with no further edit.
+ *
+ * RESOLVED PER VOICE, NOT PER SECTION, and that was the open question. A cell in
+ * that grid is a VOICE × SECTION cell and the word a hand writes in it is a trim
+ * on THAT VOICE's fader; if the dim value under it were the section's word, the
+ * derived and the set halves of one cell would be answering two different
+ * questions, which is exactly the pun that let `verb` sit dead for a year. And
+ * per-voice costs nothing: `shade` is already keyed on the seat, so the honest
+ * answer is the one already being computed.
+ *
+ * IT ANSWERS dB, NOT A WORD, and that is deliberate too. TRIMS' rungs are
+ * −6 / −2.5 / 0 / +2.5 / +5; the dealt values are ±0.5..2.5. Rounding −2.0 to
+ * "back" would print a word whose value is not the value in play — a knob that
+ * says something other than what it does, on the surface built to stop that.
+ */
+export function derivedTrim(sec, key) {
+  if (!sec) return { db: 0, eq: null };
+  const m = /^([a-z]+?)(\d+)?$/.exec(String(key || "")) || [];
+  const sh = shade(sec, m[1] || "line");
+  const eq = (sh.eq && (sh.eq.lo || sh.eq.mid || sh.eq.hi)) ? sh.eq : null;
+  return { db: Math.round(sh.db * 10) / 10, eq };
 }
 // ONE PART'S DERIVED (gain, tone), the model-level truth the board parks on
 // and deskUnits writes onto the parent's units. Deterministic over (sec, key) — same walk, same
@@ -1136,6 +1194,53 @@ const lerpTbl = (tbl, x) => {
 const trimFor = (tbl, x, eff) =>
   Math.max(0.05, Math.min(2, Math.pow(10, -lerpTbl(tbl, x) / eff / 20)));
 
+/* ---------- THE ECHO'S LENGTH, SAID ONCE ---------------------------------
+ * A BAR, IN BEATS — see the METERS/stepsIn import note at the top: fields.js
+ * DTIMES is a fraction of a BAR, so a dotted eighth is 0.1875 of a bar in any
+ * metre and 0.75 beats only in four. Under `three` a bar is 3 beats and the
+ * same word has to come out 0.5625 or the delay is in a different metre from
+ * the band.
+ */
+const barBeatsNominal = () => stepsIn({ meter: METERS[METER] }) / 4;
+/**
+ * ONE ECHO WORD -> THE PARENT'S OWN `dtime`, IN SECONDS (2026-08-28).
+ *
+ * TWO CALLERS, ONE LINE, AND THAT IS THE POINT. `masterState` below turns the
+ * RACK's `buses.echo.time` into `state.delay.beats` and lets state-engine
+ * `fxParams` do the last multiply (`clamp(beats * spb, 0.02, 1.9)`); the BOX's
+ * `dtime` (fields.js, the row's own tombstone-turned-wire) has no state field
+ * to ride, because it lands on a bar rather than on a song — plan.js hands it
+ * over as that bar's `fx`, which the parent glides straight onto the fx_bus
+ * slider. So this function finishes the arithmetic the parent would have
+ * finished, with the parent's own clamp quoted, and both spellings of "d8" come
+ * out the same length. `null` for a word the table does not carry, which is the
+ * absent-is-today branch every caller takes when the record says nothing.
+ */
+export function barEchoSec(word) {
+  const f = NuFields.DTIMES[String(word)];
+  if (f == null) return null;
+  return Math.max(0.02, Math.min(1.9, f * barBeatsNominal() * (60 / Math.max(1, bpm))));
+}
+// THE SONG'S OWN ECHO LENGTH, for the bars no box speaks for. A per-bar glide
+// writes only CHANGED keys onto the persistent proc, so a bar that says nothing
+// after a bar that said "1/2" would keep playing at 1/2 — the same bar sounding
+// differently depending on what preceded it, which is the opposite of the
+// determinism this page is built on. Every bar therefore gets an explicit
+// answer: the rack's word where the rack has one, and otherwise fxParams' own
+// compiled default (`(dl.beats || 0.75) * spb`), which is byte-identically what
+// that bar has always played.
+export function songEchoSec() {
+  const B = BUSES ? NuFields.resolveBuses(BUSES) : null;
+  // `resolveBuses` hands back the RESOLVED NUMBER, not the word (it picks
+  // through each knob's own table), which is why this reads a fraction where
+  // `barEchoSec` above reads a word — the box stores the word, the rack stores
+  // the knob. Same fraction, same nominal bar, same clamp: one length.
+  const f = B && B.echo && B.echo.time;
+  const frac = f != null ? f : 0.75 / barBeatsNominal();
+  return Math.max(0.02, Math.min(1.9,
+    frac * barBeatsNominal() * (60 / Math.max(1, bpm))));
+}
+
 /**
  * THE MASTER STRIP AND THE RACK, ON THE PARENT'S OWN STATE.
  *
@@ -1180,8 +1285,7 @@ export function masterState(MASTER, BUSES, SEV) {
     if (B.rev.color) out.reverbColor = B.rev.color;
   }
   if (B && B.echo) {
-    // a bar, in beats — see the METERS/stepsIn import note at the top
-    const beats = stepsIn({ meter: METERS[METER] }) / 4;
+    const beats = barBeatsNominal();
     const d = {};
     // THE DELAY'S RETURN, 2026-08-27 (FUTURE.md Phase 0). Bus 1's `ret` has
     // reached `state.reverb` -> rgain since the rack was built; bus 2's return

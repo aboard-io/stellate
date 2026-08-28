@@ -38,7 +38,8 @@ import { GENRES, BASSSYNTH, BASS_INSTR, instrOf } from "../ui/deps.js";
 import { SONG, SLOTS, GROOVE, SWING, POOL, RUBATO, loopOnly, bpm } from "../ui/state.js";
 import { gid, songBars, poolInstrOf, kitOf } from "../ui/derive.js";
 import { toEngine, samplerLibFor, recipeFor } from "./to-engine.js";
-import { deskUnits, deskAmp, deskSweeps, voiceRoster } from "./desk.js";
+import { deskUnits, deskAmp, deskSweeps, voiceRoster,
+         barEchoSec, songEchoSec } from "./desk.js";
 import { isSynthFont, fontDef } from "./fonts.js";
 
 /* ---------- the parent, loaded once ---------- */
@@ -168,7 +169,7 @@ export function homeFor(notes, win) {
 // chair's sampled instrument. A second opinion about any of those is a band that
 // is not the one on screen.
 function castOf(bars) {
-  const seats = [];                  // global voice index -> { chair, instr, synth, tone }
+  const seats = [];                  // global voice index -> { chair, instr, synth, tone, vox }
   const ix = new Map();              // recipe key -> global index
   // WHICH DESK TRACK EACH UNIT ANSWERS TO, per box. The cast is the SONG's, so a
   // unit key is song-wide; a desk address (fields.js chairKeys — lead / pad2 /
@@ -177,10 +178,22 @@ function castOf(bars) {
   const addr = new Map();            // si -> { unitKey: partKey }
   const rosters = new Map();
   const font = isSynthFont() ? fontDef().synth : null;
-  const seatFor = (chair, instr, synth, tone) => {
-    const key = chair + "|" + instr + "|" + (synth ? synth.dsp : "") + "|" + (tone ? JSON.stringify(tone) : "");
+  // ...AND ITS FIVE VOICE WORDS (2026-08-28). `vox` is the LAYER'S — dark/warm/
+  // open/bright/screaming, soft/hot/on the edge, snap/drone — and it belongs in
+  // the seat KEY for exactly the reason `tone` and `synth` already are: two
+  // layers that differ only in how their filter is set are two different
+  // sounds, and folding them onto one seat would play both on whichever the
+  // walk saw first. In the key they are two units, resolved once each, for the
+  // life of the compile — which is the whole argument for wiring the words per
+  // LAYER instead of per note: "the cast is the song's, not the bar's", and a
+  // setting is a cast fact. (Absent-is-today is free: a record that writes no
+  // vox adds an empty segment to every key, so every seat, its index and its
+  // unit are byte-identical to before. Held on ten anchors.)
+  const seatFor = (chair, instr, synth, tone, vox) => {
+    const key = chair + "|" + instr + "|" + (synth ? synth.dsp : "") + "|" + (tone ? JSON.stringify(tone) : "")
+      + "|" + (vox ? JSON.stringify(vox) : "");
     let v = ix.get(key);
-    if (v == null) { v = seats.length; ix.set(key, v); seats.push({ chair, instr, synth: synth || null, tone: tone || null }); }
+    if (v == null) { v = seats.length; ix.set(key, v); seats.push({ chair, instr, synth: synth || null, tone: tone || null, vox: vox || null }); }
     return v;
   };
   for (const bar of bars) {
@@ -217,8 +230,13 @@ function castOf(bars) {
         // The chair's declared tone outranks it; a genre without chairs is
         // byte-identical.
         const ch = chSeat;
+        // `e.vox` is what ui/derive.js sectionEvents tagged this note's LAYER
+        // with (voxAll — the layer's own chip, else the box's, knob by knob).
+        // It is read here and nowhere downstream: by the time the words are on
+        // a seat they are a patch, and the scheduler has nothing left to do
+        // with them.
         e._seat = seatFor(chair, over || instrOf(owner, vi), useSyn ? gsyn : null,
-                          (ch && ch.tone) || G.tone || null);
+                          (ch && ch.tone) || G.tone || null, e.vox || null);
         e._syn = useSyn;
         const r = roster.find((x) => x.v === e.v);
         if (r) A["v" + e._seat] = r.key;
@@ -231,8 +249,12 @@ function castOf(bars) {
         // note. It is `bassTone` rather than `tone` on purpose: absent, this
         // is byte-identical for all 110 genres, and a genre that wants its
         // bass shaped says so.
+        // the bass takes the BOX'S words (derive.js tags a bass event with
+        // `voxAll(sec, null)` — a bass line belongs to the box, not to one
+        // layer's stack entry), and a sampled upright simply owns none of the
+        // five and is untouched.
         e._seat = seatFor("bass", (POOL && POOL.bass) || BASS_INSTR, bs,
-                          (GENRES[e.layer || gid(sec)] || {}).bassTone || null);
+                          (GENRES[e.layer || gid(sec)] || {}).bassTone || null, e.vox || null);
         e._syn = !!bs;
         A["v" + e._seat] = "bass";
       }
@@ -298,6 +320,9 @@ export function warmSources() {
 // must be a walk and nothing else — no fetch, no context, no node.
 export function compile() {
   TL = songBars(SONG, SLOTS, GROOVE, SWING, loopOnly, { rubato: RUBATO });
+  // does ANY box name a section echo time? — the one question barFx asks, asked
+  // once per compile rather than once per bar (barPlan runs on the pump's clock)
+  SONG_HAS_DTIME = SONG.some((b) => b && b.dtime != null);
   let beat0 = 0;
   for (const bar of TL) { bar.beat0 = beat0; beat0 += bar.barSteps / 4; }
   if (!D || !TL.length) { BARS = []; UNITS = {}; KITS = {}; STATE = null; totalBeats = 0; return TL; }
@@ -503,6 +528,8 @@ function trimStripLoad(kits, tl) {
 }
 
 /* ---------- the handoff ---------- */
+// set by compile(): whether the record uses the box-scoped echo time at all
+let SONG_HAS_DTIME = false;
 // how long bar n is, in beats — the parent's walk asks per bar
 export const barBeats = ({ serial }) => barBeatsAt(serial);
 
@@ -533,7 +560,34 @@ export function barPlan(n) {
   }
   return { ev: { pitched, drums, found: [], sfx: deskSweeps(sec, b.beats, boxBeatOf),
                  srcById: {}, totalBeats: b.beats },
-           units: deskUnits(KITS[b.kit] || UNITS, A, sec, boxBeatOf, D && D.SE) };
+           units: deskUnits(KITS[b.kit] || UNITS, A, sec, boxBeatOf, D && D.SE),
+           // THE BAR'S OWN MASTER-STAGE OVERRIDES (2026-08-28) — the third
+           // thing a bar may carry, beside its notes and its units, and it
+           // exists for exactly one word so far. See barFx below for the whole
+           // law; `null` is the answer for every record that has never named a
+           // section's echo time, and a null key is never written.
+           ...(barFx(sec) || {}) };
+}
+// THE SECTION'S ECHO TIME, AS A PER-BAR fx_bus WRITE (2026-08-28).
+//
+// `bar.fxParams` is the parent's own port for this (stream-renderer feedBar:
+// "master-stage (fx_bus) param glide — changed keys only, applied to the
+// persistent proc so the change takes effect from this bar's first block"), and
+// the rack's echo knob has ridden it once a bar since the rack was built. What
+// is new is that a BOX may now name the length for its own bars.
+//
+// ANY BOX, THEN EVERY BAR. `SONG_HAS_DTIME` is compiled once: if no box in the
+// song names a `dtime`, this returns null and not one bar carries an `fx` key —
+// the handoff is byte-identical to every render before this existed, which is
+// the absent-is-today law. The moment ONE box names one, EVERY bar carries an
+// explicit answer, because the glide writes only CHANGED keys: a bar that fell
+// silent after a "1/2" bar would keep playing at 1/2, and the same bar would
+// then sound different depending on what preceded it. An explicit fallback is
+// what makes the record the same on every play and from any starting bar.
+function barFx(sec) {
+  if (!SONG_HAS_DTIME) return null;
+  const own = sec && sec.dtime != null ? barEchoSec(sec.dtime) : null;
+  return { fx: { dtime: own != null ? own : songEchoSec() } };
 }
 /**
  * WHAT THE ENGINE WILL ACTUALLY DO WITH A CHANNEL, keyed by the desk address.

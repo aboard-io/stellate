@@ -159,7 +159,7 @@ function feed(worker, D, state) {
   const { E, SE } = D;
   const n = barCount();
   const spb = 60 / Math.max(1, bpm);
-  const fxParams = SE.fxParams(state);
+  const fxBase = SE.fxParams(state);
   let baseSec = 0;
   for (let i = 0; i < n; i++) {
     const p = barPlan(i);
@@ -172,7 +172,15 @@ function feed(worker, D, state) {
         t1: baseSec + (sw.beat + sw.durB) * spb, from: sw.from, to: sw.to }));
     }
     worker.postMessage({ type: "feedBar", bar: {
-      units: p ? p.units : {}, events, fxParams, spb, lo: 0, hi: beats,
+      units: p ? p.units : {}, events,
+      // ...AND THE BAR'S OWN fx OVERRIDES (2026-08-28), merged the same way the
+      // live walk merges them (engine/faust/live/live.js, the foreign-composer
+      // seam): a delta over the song's fxParams, this bar only. A section's
+      // echo time is the one word that uses it today. Absent = the shared
+      // object, byte-identical — and the object is only copied when a bar
+      // actually says something, so the untouched path allocates nothing.
+      fxParams: p && p.fx ? { ...fxBase, ...p.fx } : fxBase,
+      spb, lo: 0, hi: beats,
       barStartSec: baseSec, sweeps, found, foundCi: 0, vapor: 0,
       meta: { serial: i } } });
     baseSec += beats * spb;
