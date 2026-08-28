@@ -109,7 +109,12 @@ vowelM  = min(4.0, max(0.0, vowel + vowelSway * swayLfo));
 // constant, and it was FITTED — pressed against the sampled `solo_vox` zone
 // this stands in for, same music, same recipe level, same master chain, on the
 // press's own pre-makeup peak so the normalizer cannot hide the answer.
+// voxRoom (voice_tract.lib) is the singer's own small space, AFTER the amp
+// envelope so the note's end can bloom instead of being cut, and BEFORE the
+// mic — `cutoff` is the room and the capsule, and a capsule hears the room the
+// singer is standing in. On by default, no param, every record.
 process = voxTract(voice, vowelM, breath, fnom, voxGlottis(pushM, fsrc), gate)
         : *(voxEnv(attack, release, gate) * level * gain * 3.7)
+        : voxRoom
         : fi.lowpass(2, max(800.0, min(cutoff, 16000.0)))
         : fi.dcblocker;

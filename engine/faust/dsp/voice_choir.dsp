@@ -79,9 +79,15 @@ singer(i, t) = os.sawtooth(fnom * (1.0 + ba.take(i+1,CENT)*spread*0.00057762)
                                        * os.osc(ba.take(i+1,VHZ))));
 
 // one throat: two singers into one mouth, on that mouth's own entry
+// EACH THROAT STANDS SOMEWHERE, which is why voxRoom is here and not on the
+// sum: the pair is placed at opposite ends of the field below, so two rooms
+// under two throats arrive as the section occupying a space rather than as one
+// room printed across the middle of it. It costs the same either way — the sum
+// is stereo, so a room after it would also be two.
 throat(j) = voxTract(voice, vowel, breath, fnom,
                      (singer(2*j, tj) + singer(2*j+1, tj))*0.5 : voxTilt(push), gj)
             : *(voxEnv(attack*ba.take(j+1,AMUL), release, gj))
+            : voxRoom
 with {
   gj = gate : de.delay(8192, int(ba.take(j+1,DLY)*drift*ma.SR));
   tj = voxSince(gj);

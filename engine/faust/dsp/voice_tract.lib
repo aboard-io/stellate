@@ -77,6 +77,15 @@
 //   voice in the catalogue is what it was — and while it is shut the
 //   aspiration is gone and the release tail is the tone falling away.
 //
+//   A LITTLE FILTERING AND A LITTLE ROOM, ALWAYS, BECAUSE A MODELLED THROAT
+//   HAS NEITHER. Paul, 2026-08-28: *"The modeled throat is okay but I think we
+//   always need a tiny bit of filtering and reverb inside the voice itself to
+//   smooth some of the natural weirdness of the synthesis."* Both halves of
+//   that are `voxVoicing` and `voxRoom` below, and the scope is his word
+//   INSIDE: they are the instrument's own voicing, not a send on the channel,
+//   so they travel with the singer into every record and no hand dials them.
+//   There is not one new param in this round.
+//
 //   THE VIBRATO THAT GROWS. A singer does not arrive vibrating; the wobble
 //   comes in after the note is established and widens while it is held.
 //   voxVib delays it by a breath and ramps it, and it modulates the SOURCE
@@ -109,11 +118,120 @@ with {
   gg = target / max(0.0005, r) : min(80.0) : max(0.02) : si.smooth(ba.tau2pole(tau));
 };
 
+// ---------------------------------------------------------------------------
+// THE VOICING. A gentle fixed tilt, two corners, both constants, both here
+// because the LIBRARY MODEL is wrong at those ends and not because a mix
+// wanted them.
+//
+//   55 Hz, TWO POLES, BELOW A THROAT. `pm.formantFilterbankBP` is five
+//   `fi.resonbp` in parallel and nothing else: there is no radiation term and
+//   no highpass anywhere in it, so everything under the first formant is the
+//   bandpass skirts, the sawtooth's own sub-fundamental leakage and voxAgc's
+//   gain wander at 30 ms — none of which is a person. The corner is set by the
+//   lowest note a modelled singer is ever SENT: state-engine's VOICE_TYPE puts
+//   the bass compass at 82 Hz, and 55 is a fifth under that, so the deepest
+//   fundamental in the catalogue loses 0.8 dB while 40 Hz — where Paul is
+//   right that nothing sings — loses 6.6 and 20 Hz loses 17.6. Two poles
+//   rather than one because the `fi.dcblocker` already at the end of every
+//   voice module is a single pole at 35 Hz, and the point of this one is to be
+//   steeper than that and to be INSIDE, where it also travels to whatever
+//   seats the tract next.
+//     AND IT IS INSURANCE RATHER THAN A CURE, WHICH IS WHAT THE MEASUREMENT
+//   SAID. On the rendered singer this corner moves 20-80 Hz by 0.7 dB and on a
+//   bass held at its floor note (82 Hz, the lowest VOICE_TYPE allows) by 0.6 —
+//   because there was hardly anything there to take: a sixth-order bandpass on
+//   the shipped module puts 20-80 Hz 46 dB under the whole signal for the
+//   singer and 29 dB under it for the bass. (AND DO NOT ASK AN FFT. A Hann
+//   window's skirts leak the first formant's 37 dB straight into a band 45 dB
+//   below it, so a 4096-point Welch reads this band some 55 dB hot and its
+//   deltas are the formant's, not the sub's. Measure the low end of a voice
+//   with a steep IIR in the time domain; this round nearly filed a 1.3 dB rise
+//   that the audio does not contain.)
+//   The corner stays because eight chairs sum on a bus and because the next
+//   instrument to sit at this tract may not be so well behaved, but nobody
+//   should expect to HEAR it, and the smoothing Paul asked for is the other
+//   two paragraphs.
+//
+//   4.2 kHz, ONE POLE, ABOVE THE TABLES. The buzz has two named sources and
+//   both of them live above the highest formant the model carries. First,
+//   `pm.SFFormantModel` mixes `exType` of RAW `no.noise` into the source —
+//   white, flat to Nyquist, with no turbulence spectrum on it at all, which is
+//   the whole of `fric` and therefore the whole of the breath. Second, the
+//   filterbank is bandpasses, so the sawtooth partials above F5 are held up by
+//   resonbp skirts rather than falling the way a real tract's higher poles
+//   keep falling. Where "above the tables" is: the formant table tops out at
+//   F5 4950 Hz for alto and soprano AT GAIN 0.001, and the highest formant
+//   with real weight in it is the soprano's F4 at 3900 (gain 0.1) — so 4.2 kHz
+//   is over every formant that carries anything, and one pole is the gentlest
+//   slope that keeps falling instead of shelving out. It costs the soprano's
+//   top formant 2.5 dB and takes 6.7 dB off 8 kHz and 11.9 off 16 kHz.
+//
+//   AND IT SITS BEFORE voxAgc ON PURPOSE. Source, tract, voicing, normalizer:
+//   the thing whose steady state gets held at a fixed loudness should be the
+//   FINISHED throat, so the fitted trims downstream (voice_lead's *3.7,
+//   voice_choir's *1.4) still mean what they were measured to mean and this
+//   round is a colour change and not a level change.
+voxVoicing = fi.highpass(2, 55.0) : fi.lowpass(1, 4200.0);
+
+// THE ROOM, and it is the SINGER'S and not the RECORD'S. The plate and the
+// hall on the bus are the space the record was made in; a hand sets those per
+// genre and they are already there. This is the other thing, the one a
+// modelled throat cannot have: a mouth in air, with a body under it and
+// something to stand in. Without it the model reads as a formant filter
+// because it arrives with no early energy at all — measured on the shipped
+// module, 40 ms after the gate shuts on a 20 ms release the output is 108 dB
+// under the note, which is not a quiet room, it is a vacuum.
+//
+//   FOUR ALLPASSES AND NO COMB, which is what keeps it a room and not an
+//   effect. A Schroeder diffuser is magnitude-flat: it spreads the note in
+//   TIME without putting a resonance anywhere, so nothing here can add a note
+//   the singer did not sing, and at 16% it cannot be heard as reverb — it is
+//   heard as the buzz having an edge taken off it.
+//   4.7 / 7.3 / 11.9 / 17.9 ms, mutually prime enough that the cascade has no
+//   common period to ring on, and summing to about 42 ms of spread: Paul's
+//   "a few tens of milliseconds", which is a person in a small space rather
+//   than the plate two files over.
+//   THE GAINS FALL (0.62 .. 0.50) so the density grows while the energy does
+//   not: the tail is under -30 dB inside 100 ms and gone by 250.
+//   THE WET IS DAMPED at 4.8 kHz, one pole, for the same reason as the
+//   voicing: a room made of the model's own top end would hand back exactly
+//   the buzz the voicing just took out.
+//   AND THE WET IS HIGHPASSED AT 140 Hz, WHICH THE FIRST BUILD OF THIS FILE
+//   DID NOT DO. An allpass cascade has unity gain at DC — H(0) = (1-a)/(1-a)
+//   = 1, every section — so with no corner on it the wet arrives at 0 Hz
+//   exactly in phase with the dry and the sum is 1.16 there, +1.29 dB: the
+//   room handing the 55 Hz corner its work back, and putting sub under a
+//   singer where the whole point was to take it out. It is also the physics —
+//   4.7 to 17.9 ms of path is a space 1.6 to 6 m across, and a space has no
+//   reflection to give at a wavelength longer than it is.
+//   0.16 IS THE MIX, about -16 dB under the dry. Uncorrelated, that is +0.11
+//   dB of level, so it does not move a record's balance.
+//   AND IT IS CHEAP because it has to be — this is per voice, per chair, in
+//   the ring, and the crackle cost a whole round to kill. Four delay lines
+//   under 800 samples and five multiply-adds, against a filterbank that
+//   interpolates fifteen tables a sample. MEASURED as its own module against a
+//   null one, so the number is absolute and not a ratio of two noisy big ones:
+//   the room is +2.07 ms per audio second and the voicing +0.88, the pair
+//   +2.36 — 3.5% of voice_lead's own 68 ms, and 0.24% of one core per sounding
+//   voice. The choir carries two of each (two throats) and pays 4.3%.
+//   IT IS APPLIED AFTER THE AMPLITUDE ENVELOPE, in each voice module rather
+//   than inside voxTract, and that is the one thing about it that is not
+//   arbitrary. The tract's source never stops running — that is what lets
+//   voxAgc normalize a steady state — so a room inside voxTract would be
+//   multiplied by the gate on its way out and the note would end as abruptly
+//   as it does now. After the envelope, the note ends and its room does not.
+voxRoom = _ <: _, (diffuse : fi.highpass(2, 140.0) : fi.lowpass(1, 4800.0) : *(0.16)) :> _
+with {
+  ap(ms, g) = fi.allpass_comb(4096, int(ms*0.001*ma.SR), g);
+  diffuse = ap(4.7, 0.62) : ap(7.3, 0.58) : ap(11.9, 0.54) : ap(17.9, 0.50);
+};
+
 // THE TRACT ITSELF. `fnom` is the note's nominal pitch — what the formant
 // correction (autobend, vocal effort) is read at; `src` is the glottal wave,
 // which may be detuned and wobbling away from it.
 voxTract(voice, vowel, breath, fnom, src, gate) =
   pm.SFFormantModel(voice, vowel, fric, fnom, 0.7, src, pm.formantFilterbankBP, 0)
+  : voxVoicing
   : voxAgc(0.10, 0.030)
 with {
   // `*gate` is the whole of the 2026-08-27 fix (header, THE BREATH BEFORE THE
