@@ -2366,7 +2366,24 @@
       // is what a Detroit riff is made of, over a Juno holding the chord.
       instr: ["fifth_sawtooth_wave", "polysynth"],
       drumkit: "tr909",            // Detroit's kick-and-open-hat is the 909's
-      entry: v => v * 2, reg: v => v - 2,
+      /* THE STAB AND THE PAD CAME UP TWO OCTAVES, 2026-08-28. Paul, listening:
+         *"On techno, voice and pad are each two octaves too low."* This read
+         `reg: v => v - 2`, which put voice 0 (the stab, `fifth_sawtooth_wave`
+         — a saw hard-synced to its own fifth, a LEAD instrument) at −2 and the
+         `polysynth` pad at −1. Two octaves under a Detroit stab is not a stab:
+         it is the thing Paul reported earlier the same week as *"this very
+         fuzzy bass synth that sounds like distant thunder … It just eats the
+         song"*, and the two complaints are one fault heard twice. The ramp by
+         voice index is kept — it is what stacks the pad above the stab — and
+         only its floor moves: 0 for the stab, +1 for the pad, which is where
+         `reg: v => v` would put them (kernel.js:1387 `ctr = 60 + 12 *
+         g.reg(v)`) — but this anchor seats FOUR pitched voices, not two
+         (`voice, pad, pad2, riff`), so an unbounded ramp raised for the first
+         two throws the fourth to C7. THE RAMP IS CAPPED AT ONE OCTAVE: 60 for
+         the stab, 72 for the pad and for everything stacked above it. Paul's
+         two move the two octaves he named; the pads behind them gain one and
+         stop. The bass is not affected: it is not seated from this ramp. */
+      entry: v => v * 2, reg: v => Math.min(v, 1),
       realize: v => (v === 1 ? "pad" : "line"),
       harmony: "modal",
       artic: "staccato", maxHold: 2,
