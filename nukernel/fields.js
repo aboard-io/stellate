@@ -1437,9 +1437,25 @@
   // at 0.475 (-6.5 dB) and pressed against its hard cap at 0.7125 (-2.93 dB).
   // Every one of them was inside the clipper. That is the "very hot mic".
   //
-  // THE COLUMN REACHES NOW: `clip` is fx_bus's `clipl` (the soft clip's limit,
-  // 0 = the stage is not built) and `push` is its `mpush` (the gain INTO it —
-  // the honest way to spell "louder", and a multiply by exactly 1 elsewhere).
+  // THE `clip` COLUMN REACHES NOW: it is fx_bus's `clipl`, the soft clip's
+  // limit, and 0 means the stage is not built.
+  //
+  // `push` DOES NOT, AND THAT IS A MEASUREMENT AND NOT AN OVERSIGHT. It WAS
+  // wired to a new fx_bus gain in front of the clip in this same round — the
+  // obvious home for it — and rendered on the two families that draw the
+  // words (8 bars, seed 1):
+  //     house  (loud,   push 1.7)   RMS -11.71 -> -8.14   crest 8.72 -> 5.20
+  //     techno (louder, push 2.6)   RMS -27.31 -> -19.15  crest 21.02 -> 16.21
+  // +3.6 and +8.2 dB of level, every dB of it bought with crest, peak pinned
+  // on the clipper throughout. That is the honest-master deception of
+  // 2026-08-21 word for word, arriving through a new door in the round whose
+  // brief was that everything is too hot. So the gain was deleted again and
+  // `push` stays an unreached column beside `thr`: it belongs in front of
+  // dsp/master_limit.dsp's fixed threshold, which the offline chain does not
+  // instantiate. Consequence, stated rather than left to be discovered:
+  // `safe`, `loud` and `louder` all resolve to clip 0.95 and sound the same.
+  // They sounded the same before this round as well — no ceiling value reached
+  // anything — so nothing regressed; breaking the tie is the limiter's job.
   //
   // AND `open` IS REWRITTEN RATHER THAN HONOURED, which is the one place this
   // round declines to take a table at its word. Reading `open`'s 0 as "off"

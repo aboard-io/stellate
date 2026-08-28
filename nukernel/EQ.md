@@ -205,10 +205,21 @@ gate's isolated audio, and not yet by the tape. It is the one measurement this
 report is missing, and it is a twenty-minute job once the map settles.
 
 **A bus EQ — does not exist, and is not in this round.** The three knobs are
-per channel. There is no tone control on the reverb return, on the delay
-return, or on the master. The master's `width`, `tilt` and `ceiling` still draw
-disabled and still say *"this one round-trips and draws but reaches no sound"*,
-which remains the honest thing for them to say.
+per channel. There is no tone control on the reverb return or on the delay
+return.
+
+> **REVERSED 2026-08-28** — this paragraph used to end "The master's `width`,
+> `tilt` and `ceiling` still draw disabled and still say *'this one
+> round-trips and draws but reaches no sound'*, which remains the honest thing
+> for them to say." It stopped being honest the moment somebody measured what
+> `ceiling` was claiming: the Bram de Jong soft clip in `fx_bus.dsp` ran on
+> every record unconditionally, and `ceiling` was the word that said it could
+> be opened. Paul, on the Iranian pop record: *"Everything sounds like it was
+> recorded on very hot mic or amp… there doesn't seem to be a way to even turn
+> the final mix off."* All three reach the sound now — `width` → `mswidth`,
+> `tilt` → `mtilt` (which IS a tone control on the master, so the sentence
+> above is narrowed to the two returns), `ceiling` → `clipl` — and
+> every master vocabulary opens with a genuine `none`.
 
 **A per-section EQ — still not expressible.** A voice's tone is one decision for
 the whole record.

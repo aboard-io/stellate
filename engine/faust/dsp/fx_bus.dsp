@@ -4,11 +4,15 @@
 //   instr 95 ping-pong (cross-fed L<->R taps, tone darkening, 0.12 to reverb)
 //   instr 99 reverb (reverbsc -> zita_rev1_stereo here)
 //   instr 97 crackle (dust2 -> no.sparse_noise + hiss, way under the music)
-//   instr 96/100 master: gkCut sweep lowpass (mcut), sidechain pump (phasor
-//   duck like csound, optionally blended with an an.amp_follower on the sc
-//   input), grit (tanh drive), comp (dam -> co.compressor_stereo +
-//   makeup), tone tilt (lowcut/highcut butterworths), then
-//   co.limiter_1176_R4_stereo + the 0.95 clip.
+//   instr 96/100 master: mid/side width trim (mswidth), gkCut sweep lowpass
+//   (mcut), sidechain pump (phasor duck like csound, optionally blended with
+//   an an.amp_follower on the sc input), grit (tanh drive), comp (dam ->
+//   co.compressor_stereo + makeup), tone (lowcut/highcut butterworths), the
+//   master TILT (mtilt), the tape head, the AIR shelf and the soft clip
+//   (clipl — 0.95 by default, 0 = no clip stage; `push` was measured and NOT
+//   wired — see the block at the mswidth slider).
+//   EVERY ONE OF THOSE STAGES HAS AN OFF NOW (2026-08-28); see the block at
+//   the mswidth slider for what that cost and why it was owed.
 // Inputs: 0 dryL, 1 dryR, 2 reverb send, 3 delay send, 4 ping-pong send,
 //         5 sidechain source (kick bus; optional, silence = pure phasor pump)
 declare name "fx_bus";
@@ -116,6 +120,94 @@ TSAT_K  = 1.8;    // saturation drive at tsat=1
 //   dtrim  DRY trim in the mix sum            — the `space` crossfade: a send
 //                                               that adds a room should not
 //                                               also add level
+// ---- THE MASTER HAS AN OFF, 2026-08-28 ----------------------------------
+// Paul, listening to the Iranian pop record: *"Everything is hot and needs more
+// filtering. Everything sounds like it was recorded on very hot mic or amp.
+// Turning that stuff down doesn't do enough in the final mix. There doesn't
+// seem to be a way to even turn the final mix off — the minimum amount of
+// things is soft, not none."*
+//
+// He is describing THIS FILE. Three stages in master() below ran on every
+// record ever rendered and no state could remove any of them:
+//   · the Bram de Jong soft clip at 0.95, applied unconditionally as the last
+//     line of the chain — measured 2026-08-28, all four probe records peaked
+//     -3.3 to -4.0 dBFS, above its knee (0.475) and against its cap (0.7125).
+//     THAT is the hot mic. It is `clipl` now, and 0 means the stage is not in
+//     the signal.
+//   · `tapesat`, whose own comment claimed "exact bypass at tsat=0 (the
+//     (…-x)*tsat term dies)" over an expression that HAS NO SUCH TERM:
+//       x + (ma.tanh(x*k)/k - x)   with k = 1 + TSAT_K*tsat
+//     at tsat=0 is k=1, i.e. plain ma.tanh(x) — a second full-strength soft
+//     clip, one stage above the first. The comment was the bug report.
+//   · `mswidth` / `mtilt` did not exist at all: the board's `width` and `tilt`
+//     words drew, saved and reached nothing (audio/desk.js said so out loud).
+//     `tilt` is the direct answer to "needs more filtering", so it is built.
+//
+// A `mpush` SLIDER WAS BUILT IN THIS ROUND AND THEN TAKEN BACK OUT, and the
+// measurement is why. The board's CEILING vocabulary carries a `push` column
+// (loud 1.7, louder 2.6) that had never reached anything, and a gain INTO the
+// clip stage is where it obviously belongs. Rendered both ways on the two
+// families that draw those words (8 bars, seed 1):
+//     house  (loud,   push 1.7)   RMS -11.71 -> -8.14   crest 8.72 -> 5.20
+//     techno (louder, push 2.6)   RMS -27.31 -> -19.15  crest 21.02 -> 16.21
+// +3.6 and +8.2 dB of level, bought with 3.5 and 4.8 dB of crest, with the
+// peak pinned on the clipper the whole way — which is the EXACT deception the
+// 2026-08-21 honest-master round above was written to end, arriving through a
+// new door in the round whose brief was "everything is hot". So it is not
+// shipped: `push` stays an unreached column, named as one, next to `thr`. A
+// push belongs in front of dsp/master_limit.dsp's fixed threshold, which this
+// chain does not instantiate offline. Nothing is declared here that does not
+// arrive.
+//
+// MEASURED, 8 bars, seed 1, four records through nukernel/export/_satpress.js
+// (float PCM, so a peak over 1.0 is visible instead of encoder-clamped). Five
+// columns: [1] the master as it stood before this round, [2] the same records
+// as they ship after it, [3] ceiling `none` ONLY (the clip out, the tape head
+// still in), [4] tape `none` only (the head out, the clip still in), [5] all
+// seven words at `none`.
+//
+//   crest dB      [1]     [2]     [3]     [4]     [5]
+//   iranpop      8.48   10.27   10.75    9.93   15.09
+//   rock        11.28   10.52   11.32   10.22   20.37
+//   steely      14.34   15.02   18.51   14.49   22.56
+//   hymn        12.45   12.65   13.09   12.87   18.12
+//   peak dBFS
+//   iranpop     -3.98   -3.24   -2.76   -2.50   +4.13
+//   rock        -3.91   -3.35   -2.53   -2.94   +6.43
+//   steely      -3.33   -2.50   +1.00   -2.50   +5.23
+//   hymn        -3.50   -3.30   -2.86   -2.50   +2.89
+//
+// READ COLUMNS [3] AND [4] TOGETHER AND PAUL'S SENTENCE IS EXPLAINED. Removing
+// the clipper alone buys 0.44 to 3.49 dB of crest; removing the tape head alone
+// buys LESS THAN NOTHING on three of the four. Removing both buys 5.5 to 9.9 dB.
+// They are two brickwalls in series doing the same job, and whichever one you
+// open, the other one closes over the transient — which is exactly *"turning
+// that stuff down doesn't do enough in the final mix"*. Note the peaks in [3]
+// and [4]: -2.5 dBFS over and over, because 0.75 is the Bram de Jong cap at
+// limit 1.0 AND ma.tanh(x*1.324)/1.324 at the default tsat 0.18 saturates at
+// 0.755. Two independent stages, the same ceiling, neither of them announced.
+//
+// AND WHAT THE RAW RECORD IS, which is the thing nobody has been able to hear:
+// column [5] peaks at +2.9 to +6.4 dBFS with 198 to 5,869 samples at or over
+// full scale. The live path is safe (dsp/master_limit.dsp, after fx_bus in
+// engine/faust/live/live.js, a real 2 ms-lookahead brickwall at 0.98); the
+// OFFLINE press and the wav export end at this file, so a bypassed master there
+// will clip in the encoder. Stated, not hidden: raw means raw.
+//
+// EVERY BYPASS HERE IS A select2, NEVER A FORMULA THAT HAPPENS TO EQUAL ONE.
+// `x + (f(x) - x)*0` is exact, but `(l+r)*0.5 + (l-r)*0.5` is NOT bit-identical
+// to `l` in float and `lo*1 + (x-lo)*1` is not bit-identical to `x`. A select2
+// picks the untouched sample, so the identity is the sample and not a
+// re-derivation of it — which is what lets a record that says nothing about
+// width or tilt render byte-for-byte what it rendered before.
+mswidth = hslider("mswidth", 1, 0, 2.4, 0.01);   // mid/side SIDE gain; 1 = the image as recorded
+mtilt   = hslider("mtilt", 0, -12, 12, 0.1);     // dB: lows -mtilt, highs +mtilt, about TILT_FC
+TILT_FC = 1000;
+// the soft clip's own limit. 0 = NO CLIP STAGE (the ceiling word `none`, and
+// the only thing in this file that was never optional). 0.95 = the csound
+// literal every record has been rendered through.
+clipl   = hslider("clipl", 0.95, 0, 1.5, 0.01);
+
 gtrim   = hslider("gtrim", 1, 0.05, 2, 0.001);
 cpar    = hslider("cpar", 0, 0, 1, 0.01);
 ctrim   = hslider("ctrim", 1, 0.05, 2, 0.001);
@@ -177,9 +269,26 @@ wowL = os.osc(0.61)*0.75 + os.osc(5.70)*0.25;
 wowR = os.osc(0.53)*0.75 + os.osc(6.30)*0.25;
 wobble(lfo, x) = de.fdelay(1024, dly, x)
   with { base = WOB_MS*0.001*ma.SR; dly = base*(1 + 0.9*wob*lfo); };
-// level-preserving soft knee; exact bypass at tsat=0 (the (…-x)*tsat term dies)
-tapesat(x) = x + (ma.tanh(x*k)/k - x)
+// level-preserving soft knee. THE BYPASS AT tsat=0 IS REAL NOW (2026-08-28):
+// this comment used to say "exact bypass at tsat=0 (the (…-x)*tsat term dies)"
+// and there was no such term — at tsat=0, k=1 and the expression is plain
+// ma.tanh(x), a full-strength saturator nothing could switch off. select2 picks
+// the untouched sample instead. At tsat>0 the arithmetic is unchanged, so every
+// record that carries the shipped 0.18 head renders bit-for-bit as before.
+tapesat(x) = select2(tsat > 0, x, x + (ma.tanh(x*k)/k - x))
   with { k = 1 + TSAT_K*tsat; };
+// WIDTH: a mid/side trim on the whole master. Four multiplies, and select2'd
+// out at 1 so "no width word" is the recorded image untouched, not a rebuild
+// of it that rounds differently.
+widthfx(l, r) = select2(mswidth != 1, l, ml + sd), select2(mswidth != 1, r, ml - sd)
+  with { ml = (l + r)*0.5; sd = (l - r)*0.5*mswidth; };
+// TILT: ONE first-order split about TILT_FC — the low half takes -mtilt dB and
+// the high half +mtilt, so one number rocks the spectrum about its middle.
+// A shelf PAIR would be two biquads per channel; this is one 1-pole, and the
+// earlier sidechain-keying round costed two biquads here at 0.285 points of
+// realtime, which is why the cheap spelling is the one that got built.
+tiltfx(x) = select2(mtilt != 0, x, lo*ba.db2linear(0 - mtilt) + (x - lo)*ba.db2linear(mtilt))
+  with { lo = fi.lowpass(1, TILT_FC, x); };
 // THE GLUE STAGE, opened up. It was `co.compressor_stereo(...) : *(makeup)`,
 // which is EXACTLY what the lines below compute when cpar and ctrim sit
 // at their defaults — compressor_stereo is `cgm*x, cgm*y with { cgm =
@@ -206,6 +315,7 @@ with {
   wr = cgm * y * makeup;
 };
 master(sc, l, r) = l, r
+  : widthfx                                                       // the image, before anything colours it
   : (wobble(wowL), wobble(wowR))                                  // the transport, before everything downstream
   : (fi.lowpass(2, min(mcut, 20500)), fi.lowpass(2, min(mcut, 20500)))
   : (*(duck), *(duck))
@@ -216,6 +326,7 @@ master(sc, l, r) = l, r
   : (fi.lowpass(2, highcut), fi.lowpass(2, highcut))
   : (tapesat, tapesat)                                             // tape saturation, under the clip stage
   : (*(ttrim), *(ttrim))                                           // tape pays for its own level
+  : (tiltfx, tiltfx)                                               // the master TILT (the board's `tilt` word)
   : (fi.high_shelf(shelf, AIR_FC), fi.high_shelf(shelf, AIR_FC))   // master AIR shelf (see hslider above)
   : (clip, clip)
 with {
@@ -225,7 +336,18 @@ with {
   // 0.7125 (the csound renders' exact -2.9 dB max). The 1176 limiter that
   // used to sit here gain-reduced hot mixes ~5 dB below the csound render —
   // replaced during the Phase-2 six-genre A/B gate.
-  clip(x) = ma.signum(x)*0.95*bdj(min(abs(x)/0.95, 1.0)) with {
+  // …AND IT IS DEFEATABLE NOW (2026-08-28, the ceiling word). `clipl` is the
+  // limit; 0 removes the stage from the signal entirely and select2 hands the
+  // untouched sample through, so this is a bypass and not a very high ceiling.
+  // WHAT PROTECTS THE LISTENER WITH THE CLIP OFF, stated rather than assumed:
+  // on the LIVE path, dsp/master_limit.dsp — a real 2 ms-lookahead brickwall
+  // guaranteeing 0.98, wired after fx_bus in engine/faust/live/live.js and
+  // untouched by any of this. On the OFFLINE press and the wav export the
+  // chain ENDS at fx_bus, so with clipl 0 nothing catches peaks and a hot
+  // record can exceed full scale — the 16-bit encoder is then the hard clip.
+  // That is the honest state of it: raw means raw, and only offline.
+  clip(x) = select2(clipl > 0, x, ma.signum(x)*L*bdj(min(abs(x)/L, 1.0))) with {
+    L = max(clipl, 0.000001);
     a = 0.5;
     bdj(v) = ba.if(v < a, v, a + (v-a)/(1.0 + ((v-a)/(1.0-a))^2));
   };

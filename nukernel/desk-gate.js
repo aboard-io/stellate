@@ -1633,7 +1633,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // THE CLAIM IS REVERSED, 2026-08-28. It used to be that width, tilt and
     // ceiling "round-trip and reach no sound", so the gate held them DISABLED
     // with their reason printed. All three are wired now — audio/desk.js
-    // masterState -> fx_bus mswidth / mtilt / mpush + clipl — and the last of
+    // masterState -> fx_bus mswidth / mtilt / clipl — and the last of
     // them was the round's headline: Paul, listening to the Iranian pop
     // record, *"There doesn't seem to be a way to even turn the final mix off
     // — the minimum amount of things is soft, not none."* `ceiling` was the

@@ -3857,6 +3857,7 @@
   "params": [
    "/fx_bus/bleed",
    "/fx_bus/bps",
+   "/fx_bus/clipl",
    "/fx_bus/comp",
    "/fx_bus/cpar",
    "/fx_bus/crackle",
@@ -3872,6 +3873,8 @@
    "/fx_bus/lowcut",
    "/fx_bus/mcut",
    "/fx_bus/mrev",
+   "/fx_bus/mswidth",
+   "/fx_bus/mtilt",
    "/fx_bus/ppfb",
    "/fx_bus/pptime",
    "/fx_bus/pptone",

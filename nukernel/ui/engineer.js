@@ -1055,8 +1055,8 @@ export function mount(parent, ctx) {
   /* HOMELESS IS GONE, 2026-08-28. `const HOMELESS = { width: 1, tilt: 1,
      ceiling: 1 }` stood here and disabled those three cells with the sentence
      "this one round-trips and draws but reaches no sound". All three reach the
-     sound now (audio/desk.js masterState -> fx_bus mswidth / mtilt / mpush +
-     clipl), and the last of them was the round's whole point: Paul, listening
+     sound now (audio/desk.js masterState -> fx_bus mswidth / mtilt / clipl),
+     and the last of them was the round's whole point: Paul, listening
      to the Iranian pop record, *"There doesn't seem to be a way to even turn
      the final mix off — the minimum amount of things is soft, not none"* —
      `ceiling` was the word that claimed the clipper and the clipper was
@@ -1644,7 +1644,7 @@ function listening() {
 /* MASTER_WHY IS RETIRED (2026-08-28). It said "this one round-trips and draws
    but reaches no sound — audio/desk.js:769 names all three and says why", and
    the three were width, tilt and ceiling. audio/desk.js no longer names them:
-   width is fx_bus `mswidth`, tilt is `mtilt`, ceiling is `mpush` + `clipl`,
+   width is fx_bus `mswidth`, tilt is `mtilt`, ceiling is `clipl`,
    and the last of those is the soft clip that had been unconditional on every
    record since the csound port. The sentence is deleted rather than softened
    because a refusal that has been kept is not a refusal. */

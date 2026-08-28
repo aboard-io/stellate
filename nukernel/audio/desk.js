@@ -1116,10 +1116,20 @@ export function deskLevelAt(sec, f) {
 //     pair is two biquads per channel and the sidechain-keying round already
 //     costed two biquads in fx_bus at 0.285 points of realtime. Same gesture,
 //     a quarter of the bill, and it is the direct answer to "more filtering".
-//   * `ceiling` -> fx_bus `mpush` (the gain INTO the clip) and `clipl` (the
-//     clip's limit, 0 = the stage is not in the signal). `thr` is STILL
-//     unreachable and stays named as such: the live brickwall is
-//     dsp/master_limit.dsp and its threshold is fixed in that DSP.
+//   * `ceiling` -> fx_bus `clipl`, the soft clip's limit, and 0 means the
+//     stage is not in the signal at all. TWO OF ITS THREE COLUMNS STILL REACH
+//     NOTHING and are named rather than approximated: `thr`, because the live
+//     brickwall is dsp/master_limit.dsp and its threshold is fixed in that
+//     DSP; and `push`, which WAS wired into the clip in this round and taken
+//     back out on the measurement (fx_bus.dsp carries the numbers) because a
+//     gain into a clipper is level bought with crest, which is the one thing
+//     the honest-master round exists to refuse.
+//     CONSEQUENCE, SAID OUT LOUD: `safe`, `loud` and `louder` all resolve to
+//     clip 0.95 and therefore sound the same. They sounded the same before
+//     this round too — all four ceiling words reached nothing — so nothing
+//     regressed; what is new is that `none` and `open` are now genuinely
+//     different from them and from each other's reputation. Breaking the tie
+//     needs the limiter the ladder was designed for, not a louder clipper.
 // Every one of them is an exact identity at its default, so a record that says
 // nothing about width, tilt or ceiling renders byte-for-byte as before.
 // the tables are the REGISTRY's — read through NuFields rather than copied, for
@@ -1299,15 +1309,21 @@ export function masterState(MASTER, BUSES, SEV) {
     // which is rewritten). width -> fx_bus `mswidth` (a mid/side SIDE gain,
     // four multiplies, select2'd past at 1); tilt -> `mtilt` (one first-order
     // split about 1 kHz — Paul: *"Everything is hot and needs more
-    // filtering"*); ceiling -> `mpush` + `clipl`, which is the round's
+    // filtering"*); ceiling -> `clipl`, which is the round's
     // headline: the Bram de Jong soft clip was UNCONDITIONAL in fx_bus and
     // `ceiling` was the word that claimed to control it.
     const w = WIDTHS[m.width];
     if (w != null) out.mswidth = w;
     const ti = TILTS[m.tilt];
     if (ti != null) out.mtilt = ti;
+    // …and `ceiling` reaches the CLIP LIMIT ONLY. Its `push` column was wired
+    // in the same round and un-wired the same day on the measurement: house
+    // (loud, 1.7) RMS -11.71 -> -8.14 and crest 8.72 -> 5.20; techno (louder,
+    // 2.6) RMS -27.31 -> -19.15 and crest 21.02 -> 16.21. That is the honest-
+    // master deception exactly — level bought with transient, peak pinned on
+    // the clipper — arriving through a new door. See fx_bus.dsp.
     const c = CEILINGS[m.ceiling];
-    if (c) { out.clipl = c.clip; out.mpush = c.push; }
+    if (c) out.clipl = c.clip;
   }
   // THE RACK. Every knob fields.js BUSROWS still declares lands here, and the
   // test for whether a knob may exist at all is whether it can: `room` carries

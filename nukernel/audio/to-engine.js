@@ -1438,7 +1438,35 @@ export function toEngine(plan, deps) {
     const s = seatOf(v) || {};
     const chair = s.chair || part || "line";
     const { role, m, source } = recipeFor(chair, s, lib, unrouted);
-    const c = { key: "v" + v, chair, role, m, source };
+    // THE BASS CHAIR IS A BASS ROLE, and until 2026-08-28 it was a LEAD one.
+    // `bassSeat` below has always corrected this on the line under it, and the
+    // comment at recipeBase's famStrip says why the correction is the caller's
+    // job: CHAIR_ROLE has no `bass` row, so recipeFor builds a bass recipe with
+    // role "melody" and the caller re-roles. THE OTHER CALLER NEVER DID.
+    // audio/plan.js does not use `plan.bass` — it seats the bass through
+    // `seatFor("bass", ...)` like any other voice (plan.js:256, `A["v"+seat] =
+    // "bass"`), so every record in the catalogue arrived here with chair "bass"
+    // and role "melody", and the parent's stripFor picked STRIP_PROFILES.lead
+    // off the role: A 200 Hz HIGH-PASS AND A +3 dB LIFT AT 3 kHz ON THE BASS.
+    // MEASURED 2026-08-28 on the rendered artifact (units of bar 0, iranpop /
+    // steely / rock): `acoustic_bass` came back carrying
+    // {hpf:200, eq:{f:3000,gain:+3}, sat:0.30/0.44} — the lead carve — where
+    // STRIP_PROFILES.bass is {hpf:30, lpf:5200, eq:{f:110,gain:+2.5}}. A bass
+    // line lives at MIDI 28-52 (41-196 Hz): the corner was above the whole
+    // fundamental range, so what reached the mix was the bass's SECOND and
+    // THIRD harmonics with a presence lift on them and no top-cut, which is
+    // both "there is no low end" and "everything sounds like a hot amp" in one
+    // stage. Two more consequences fell out of the same wrong role: the
+    // parent's AIR_REV gave the bass the melody lane's +10% reverb send, and
+    // voiceFxStage gave it the lead's 20%-mix tape delay — the two things its
+    // own header says a bass must never get ("bass/drums stay tight, no
+    // leslie/delay mud").
+    // Paul, 2026-08-28: "Everything is hot and needs more filtering …
+    // everything sounds like it was recorded on very hot mic or amp."
+    // ONE OWNER: this is the same line `bassSeat` runs, said once for both
+    // callers, so a third caller cannot rediscover it.
+    const c = { key: "v" + v, chair, role: chair === "bass" ? "bass" : role,
+                m, source };
     chairs.set(v, c);
     return c;
   };

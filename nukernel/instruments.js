@@ -826,28 +826,54 @@
   // So the id ROTATES the genre's word: the aahs sing it from the top, the oohs a
   // syllable behind. Doowop's "ou" comes out as o-u against u-o, which is what
   // four men round a microphone actually do, and it costs no new vocabulary.
-  // A LEAD IS SYNTHESISED; A CHORUS IS RECORDED. "Keep it a
-  // soloist and use sampled choruses for choral arrangements."
+  // A LEAD IS SYNTHESISED; A CHORUS IS RECORDED — WITHDRAWN, 2026-08-28, AND
+  // IT NEVER REACHED THE SOUND IN THE FIRST PLACE. What stood here was a
+  // reversal ("Keep it a soloist and use sampled choruses for choral
+  // arrangements") written as though it had been applied, and it had not:
+  // PATCH_VOICE below still carries all three rows, so `ahh_choir` and
+  // `ohh_voices` have resolved to `voice_choir` every day since they were
+  // added. MEASURED 2026-08-28 over all 199 anchors, seed 1, by asking
+  // audio/to-engine.js recipeFor itself (never the table): 1080 line chairs,
+  // 367 of them vocal, and 367 of 367 come back MODELLED — 234 solo_vox ->
+  // voice_lead, 111 ahh_choir -> voice_choir, 17 ohh_voices -> voice_choir,
+  // 5 synth_voice -> the tract or the VP-330. ZERO sampled vocal chairs in the
+  // catalogue. So the paragraph was a description of a change nobody made, and
+  // a file that says one thing while the tape does another is the exact drift
+  // this table's header spends four paragraphs refusing.
   //
-  // This reverses a judgement made the day before, and the reversal is right. The
-  // lane that built voice_choir argued the sampled choirs are the flattest thing in
-  // the catalogue — six zones, one recording, one dynamic, and the take's own
-  // vibrato baked in and beating against every other note of the chord. All true,
-  // and all of it matters on an EXPOSED LEAD, where one voice is naked and its one
-  // vibrato is the only movement there is. It matters much less under a PAD, and a
-  // recorded ensemble brings the two things four detuned formant voices cannot
-  // synthesise: a room, and forty people not agreeing.
+  // AND PAUL HAS NOW DECIDED IT THE OTHER WAY, which is why this is a
+  // withdrawal and not a bug fix: *"The vocals should be native"* — and, when
+  // the sampled reading was offered back to him, *"You're not putting native
+  // vox in things you're using sampled."* NATIVE IS THE MODELLED THROAT.
+  // voice_lead and voice_choir are what a vocal chair takes, the code already
+  // does that, and this comment now agrees with it.
   //
-  // The measurement agreed before the ear did. gregorian's choir read 0.998-1.000
-  // L/R correlation at the master while its width demonstrably arrived at the unit
-  // — so the synthesised chorus was not even delivering the spread it was chosen
-  // for, and was paying four voices for a mono result.
+  // THE ARGUMENT THAT WAS OVERRULED, kept because it is a real musical claim
+  // and the next lane should not have to rediscover it: a recorded ensemble
+  // brings two things four detuned formant voices cannot synthesise — a room,
+  // and forty people not agreeing — and that matters much more under a held
+  // PAD than on an exposed lead. The counter-measurement was already on the
+  // record and stands: gregorian's sampled choir read 0.998-1.000 L/R
+  // correlation at the master while its width demonstrably arrived at the unit,
+  // so the recording was not delivering the spread it was chosen for either.
+  // The honest statement of the cost is that a section of THREE detuned,
+  // staggered throats is not forty people; if that thinness is ever the
+  // complaint, the fix is `blend` and `pool` on voice_choir — the section's own
+  // raggedness, which is a parameter — and not a return to six zones and one
+  // recording.
   //
-  // So solo_vox keeps voice_lead, which is where a formant model earns its place:
-  // one voice, moving continuously through a vowel, in front. The three CHORAL ids
-  // fall through to the sampled library again. Fourteen genres change back —
-  // gregorian, spem, bulgarian, hymn, doowop, the Beatles' and the boy band's
-  // backing stacks — and every one of them is a chorus, not a soloist.
+  // WHAT THE SAMPLE ACTUALLY SOUNDS LIKE, since the claim is now measured
+  // rather than argued. iranpop's vocal chair soloed and pressed 8 bars through
+  // the shipped engine (export/_satpress.js), octave-band medians, modelled vs
+  // the same record with PATCH_VOICE emptied so the chair falls through to the
+  // `solo_vox` zone:
+  //             250 Hz    500 Hz    1 kHz    2 kHz    4 kHz     RMS
+  //   modelled  -43.70    -45.99   -61.72   -72.49   -88.19   -13.60
+  //   sampled  -117.19    -60.93   -72.35   -92.18   -89.78   -28.95
+  // The two are within 1.6 dB of each other at 4 kHz and SEVENTY-THREE dB apart
+  // at 250 Hz, which is where the sung line's fundamentals are. The recording is
+  // one held vowel transposed out of its own register: air, and no voice under
+  // it. That is the squeak, and it is not a mix problem.
   /* ---------- THE PEDALBOARD A SAMPLED VOICE MAY DECLARE ------------------
      Every electric in PATCH_MODEL names its own inserts (the de-jangle round,
      2026-08-21) because a recipe with none gets defaultInserts' pad chain.
@@ -1129,6 +1155,49 @@
     // still paid per note per sample on the tape — and a strip is a register
     // carve, not a pedalboard. Only `pad` carries both mods (pads play few,
     // long notes). The dropped organ leslie could return behind a measurement.
+    /* ---- THE TOP CUT THESE ROWS DO NOT HAVE, TRIED AND REMOVED --------
+       Paul, 2026-08-28, listening to iranpop: "Everything is hot and needs
+       more filtering. Everything sounds like it was recorded on very hot mic
+       or amp." The obvious reading of that is a low-pass, and the shape of
+       this table invites it: of the fourteen rows, exactly ONE carries an
+       `lpf` (`bass`, 5200). The other thirteen are a high-pass, a PRESENCE
+       LIFT of +1.5 to +3 dB between 1.8 and 4.2 kHz, a tanh and a compressor
+       with makeup — thirteen channels that boost the top and none that cuts
+       it.
+
+       SO IT WAS BUILT AND MEASURED, AND IT MOVED NOTHING. A corner per family
+       to the idiom (guitar 6000 — a 12-inch speaker; organ 6500 — a Leslie
+       horn; reed 7500; brass 8000; strings 8000; bowed 9000; keys 9000;
+       mallet 12000; vox 10000 and dirty 5000 for the two that reach nothing)
+       was written into these rows and rendered through the shipped press
+       (export/_satpress.js via _satdrive.cjs, 8 bars, seed 1, iranpop /
+       steely / rock / hymn). THE RESULT WAS BIT-IDENTICAL on every statistic
+       of three of the four records, and 0.18 dB of one band on the fourth
+       (hymn 8-16 kHz, -119.88 -> -120.06). It reached the sound — the unit
+       dump showed `harpsichord` carrying {hpf:40, lpf:9000} and the biquad
+       runs in both lanes (sampler.js makeStrip:119, buildStripNodes:956) —
+       and there was simply nothing up there to remove.
+
+       WHY, IN THE MEASUREMENT THAT SETTLES IT: octave-band medians on the
+       rendered artifact put every record's energy in ONE PLACE. iranpop's
+       250 Hz octave reads -44.97 dB, its 1 kHz octave -61.55, its 4 kHz
+       -78.19 and its 8 kHz -93.06. The band a low-pass at 6-9 kHz can touch
+       sits FORTY-EIGHT dB under the band the record actually lives in. The
+       sampled library is not bright; a top-cut on it is theatre, which is the
+       same verdict this file already records for the tape head and the
+       strip's own tanh.
+       WHERE THE HEAT ACTUALLY WAS, so the next lane does not re-run this:
+       rendered with the master bypassed (_satdrive --master none) the four
+       records peak at +4.29 / +6.70 / +8.27 / +2.86 dBFS — the mix arrives at
+       the master already 3 to 8 dB over full scale, and the master's soft clip
+       is doing 6 to 12 dB of the mixing. The heat is gain structure and one
+       wrong channel strip (audio/to-engine.js seatFor, the bass chair that was
+       taking the LEAD carve), not brightness.
+       AND IF A CORNER IS EVER WANTED HERE, note where it would sit: the strip
+       runs hp -> lp -> eq -> eq2 -> sat -> comp, so an `lpf` is a MICROPHONE
+       AND PREAMP top-cut on what the channel is fed, and NOT a cabinet — a
+       cabinet would have to come after the tanh, which is a different stage
+       and a different argument. */
     keys: { hpf: 40, eq: { f: 2600, gain: 1.5, q: 0.7 }, sat: 0.18, satMix: 0.3,
             comp: { thresh: 0.28, ratio: 2.6, atk: 0.005, rel: 0.16, makeup: 1.03 },
             trim: 0.95 },

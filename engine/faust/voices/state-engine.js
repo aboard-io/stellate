@@ -2537,6 +2537,24 @@
       ttrim: clamp(state.ttrim != null ? state.ttrim : 1, 0.05, 2),
       dtrim: clamp(state.dtrim != null ? state.dtrim : 1, 0.05, 2),
       cpar: clamp(state.cpar || 0, 0, 1),
+      // ── THE MASTER'S OFF SWITCH (2026-08-28). Paul: *"There doesn't seem to
+      // be a way to even turn the final mix off — the minimum amount of things
+      // is soft, not none."* Four fields, and every one of them is the
+      // IDENTITY by default, so a state that has never heard of them writes
+      // exactly the value fx_bus already had:
+      //   mswidth  mid/side SIDE gain (1 = the image as recorded)
+      //   mtilt    master tilt in dB about 1 kHz (0 = no tone stage)
+      //   clipl    the soft clip's LIMIT, and 0 means NO CLIP STAGE — the one
+      //            thing in the master that was never optional. It has been
+      //            applied unconditionally at 0.95 since the csound port, and
+      //            0.95 is still what absent means here (ABSENT IS TODAY: 139
+      //            saved records spell "I said nothing about mastering" by
+      //            having no master key, and they must re-render as
+      //            themselves). Turning it off is a WORD you choose — the
+      //            board's ceiling `none`.
+      mswidth: clamp(state.mswidth != null ? state.mswidth : 1, 0, 2.4),
+      mtilt: clamp(state.mtilt || 0, -12, 12),
+      clipl: clamp(state.clipl != null ? state.clipl : 0.95, 0, 1.5),
     };
   }
   // -3 -> -7 and the corner 7 kHz -> 4.5 kHz on 2026-08-27 (Paul: "very high
