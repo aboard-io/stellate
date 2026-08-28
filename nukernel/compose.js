@@ -1423,7 +1423,17 @@
     vox:    ["gregorian", "counterpoint", "fugue", "drone", "vocal", "vocal"],
     // the floor's guest is a LINE, because the floor already has everything
     // else: a topline over it, a pad under it, an acid riff across it
-    club:   ["vocal", "vocal", "pad", "pad", "riff", "drone", "backing"],
+    /* THE FLOOR'S RIFF IS A SYNTH, 2026-08-28. Paul, on the Chicago house
+       record: *"Fix the palm muted guitar."* The line above has always said
+       what belongs here — "an acid riff ACROSS it" — and the `riff` part it
+       hired hard-codes `instr: "palm_muted_guitar"` (genres.js), which is the
+       right instrument for a rock riff and a 1986 anachronism on a dancefloor.
+       The part is not changed: on a `band`, `soul`, `groove` or `roots`
+       record a riff IS a guitar and those rows still hire it. Only the CLUB
+       row swaps its riff for `acid` — the table's own 303 line, the sound the
+       comment was already describing — so a house, techno, garage or dnb
+       record gets a squelch across the four instead of a muted strat. */
+    club:   ["vocal", "vocal", "pad", "pad", "acid", "drone", "backing"],
     // "and the horns come in" — plus the thing the census will never show you,
     // which is three people singing behind the one who is singing
     soul:   ["backing", "backing", "vocal", "riff", "neoclassical", "pad"],
