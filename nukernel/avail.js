@@ -494,7 +494,7 @@
        "default"          time.rate, dev.bass, cast.bassStyle, and fields.js
                           stress / phrase / orn — the ones renamed, plus the
                           rate button in ui/eight.js that is the same option
-       "the voice's own"  material.cell — this SECTION says nothing, so the
+       "—" (was "the voice's own")  material.cell — this SECTION says nothing, so the
                           voice's own standing cell is read
        "as written"       dev.line, dev.kit, and `time.rate`'s value 1 — and
                           NOTE THAT IT MEANS TWO DIFFERENT THINGS: on dev.line
@@ -608,7 +608,17 @@
        and no default, and materialAt would return undefined for all of them. */
     "material.cell": { label: "reads", scope: "voice.section", chair: "line",
       absent: "", local: true,          // cell names, not a vocabulary — see above
-      values: (doc, s) => [{ value: "", label: "the voice's own" },
+      /* "—", NOT "the voice's own", 2026-08-28 (Paul: *"Replace 'the voice's
+         own' with '—' everywhere"*). This is the per-SECTION material cell's
+         empty detent: absent means the section says nothing and the voice's
+         own cell stands. The old label narrated that inheritance in four
+         words on a row that already prints what actually sounds; the dash is
+         the same fact at a glance, and it is the shape a table wants — a
+         column of dashes with the exceptions visible in it. The RECORD-wide
+         empty detent is still the word "default" (FUTURE.md §5): that one
+         answers "what did you choose", this one answers "did this section
+         override", and they are different questions. */
+      values: (doc, s) => [{ value: "", label: "—" },
                            ...opts(cellsFor(doc, kindOf(doc, s)))],
       get: (doc, s) => { const m = V(doc, s).material;
         return (m && typeof m === "object" && m[SEC(doc, s).id] != null)
