@@ -973,7 +973,25 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    sticky lane column, the board's sticky row labels — lands on the plate it
    is actually sitting on instead of on the ground the plate is screwed to.
    Same mechanism the section wash uses, one level further in. */
-table{ border-collapse: collapse; --paper: var(--panel);
+/* A TABLE IS AS WIDE AS THE COLUMN IT IS IN (2026-08-28). Paul: *"Make
+   elements like tables and grids 100% wide."* Every table on this page was
+   shrink-to-fit before this line — the browser's default for a table with no
+   width — so a form list of five short sections came out 307.7px in the 366px
+   the phone leaves, the kit's step grid 129.7px in the same 366, and the
+   engineer's mirror right under them 366px because ITS words happened to be
+   long. Three plates of three different widths screwed to one chassis, and
+   the width meant nothing: it was a measure of the longest word in the table,
+   not of anything about the song. One declaration here is the whole change —
+   `inline-size: 100%` is a MAXIMUM for a table under `table-layout: auto`,
+   not a straitjacket: the browser still gives each column its content and
+   only distributes the SLACK, so a table that was already at or over its
+   column is untouched by this line and the ones that were narrow grow into
+   the room they were already given.
+   IT IS NOT AN OVERFLOW RULE. A table whose min-content is wider than its
+   column is still wider than its column and still needs the `.nu-pane` below
+   to scroll it; see `td > select`'s length cap and `.nu-fitcell`, which are
+   how the two tables that were over the line got under it. */
+table{ border-collapse: collapse; --paper: var(--panel); inline-size: 100%;
   background: var(--panel); border: var(--bw) solid var(--ink); }
 .nu-pane{ --paper: var(--panel); }
 caption{ text-align: left; font-size: .85rem; color: var(--dim); opacity: 1;
@@ -1479,8 +1497,25 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
    not a dropdown in a column. A LENGTH is a real cap: at 9em the same table is
    inside the pane, the select ellipsizes its own text (which is what a browser
    does with a narrow select), and the popup undoes it the moment you open it.
-   The chord chart's own quality menus are shorter than 9em and are unmoved. */
-td > select{ max-inline-size: 9em; }
+   The chord chart's own quality menus are shorter than 9em and are unmoved.
+
+   AND `inline-size: 100%` JOINED IT 2026-08-28 — the cap says how WIDE a menu
+   may get, this says it is as wide as its COLUMN and, more to the point, that
+   it may be NARROWER. Paul: *"Make elements like tables and grids 100% wide."*
+   A table that is 100% of its column can still be wider than the column if
+   nothing in it can shrink, and "the changes" was exactly that: measured at
+   390 with the tables widened and nothing else changed, its six columns came
+   to 397.9px inside a 366px pane and the chart scrolled 32px sideways inside
+   itself. Every other cell there is at its floor — 39px of bar number, 13.5px
+   of "i", two 84px sliders (a degree is a PICTURE of a position; shrink it and
+   it stops being one, which is the argument three blocks up) and 41px of
+   "root". The menu is the one cell with slack, because a <select> is the one
+   control that renders its own text short. `inline-size: 100%` with
+   `min-inline-size: 0` is what tells the table so: measured after, the quality
+   menu is 76.3px, the table 366px, and the pane's scrollWidth equals its
+   clientWidth. Above 9em nothing changes — the cap still wins — so on a
+   1280px page the menus are the same size they were. */
+td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 /* GREYED, NOT HIDDEN, THE SAME AS EVERYWHERE ELSE HERE — AND WITH NO NEW RULE.
    selects.js puts `is-off` on a refused option and `is-quiet` on an inert one,
    which the two rules already at the top of this file
@@ -1549,13 +1584,29 @@ td > select{ max-inline-size: 9em; }
    half screens of console is a mixing board.
 
    `#strips` holds exactly ONE strip now, so there is nothing to lay out
-   ACROSS and the only rule it needs is a WIDTH CAP. 780px is the rack's own
+   ACROSS and the only rule it needs is a WIDTH.
+
+   IT WAS A 780px CAP UNTIL 2026-08-28 and the argument is kept rather than
+   deleted, because it was a real one: "780px is the rack's own
    `max-inline-size` two blocks down, chosen so the strip and the buses it
    sends into are the same object on the page rather than two column widths;
    a single strip stretched to a 1280px window would put its fader a screen
-   away from its sends. Below 780 the cap is inert and the strip is the
-   column, which is what a phone wants anyway. */
-.nu-strips{ display: grid; max-inline-size: 780px;
+   away from its sends. Below 780 the cap is inert and the strip is the column,
+   which is what a phone wants anyway."
+
+   Paul, 2026-08-28: *"Make elements like tables and grids 100% wide."* The cap
+   was inert at 390 exactly as it claimed, so this changes nothing a phone
+   sees; at 1280 it was the one thing on the Mix tab that was NOT the width of
+   the column, and the section-automation table directly under it — a table,
+   now 100% by the rule at the top of this file — made the mismatch impossible
+   to read as anything but an unfinished edge. The old argument's worry is
+   answered where it actually lives: the strip's own rows (`.nu-srow-ins`,
+   `.nu-sends`, `.nu-fadwrap`) lay their controls out from the left in signal
+   order, so a wider strip puts more paper to the RIGHT of the fader, not more
+   distance between the fader and the sends above it. Measured after the
+   change at 1280: strip 1256px, the fader still 1,090px BELOW the sends and
+   0px further from them across. */
+.nu-strips{ display: grid; inline-size: 100%;
   gap: .8em; align-items: start; margin-block: .8em; }
 .nu-strip{ background: var(--panel); border: var(--bw) solid var(--ink);
   border-radius: var(--r1); box-shadow: var(--shadow);
@@ -1750,11 +1801,15 @@ td > select{ max-inline-size: 9em; }
    `#boardpanel` holds whichever tab is open — a `.nu-strips` with one strip in
    it, or a `.nu-rack` with one plate. It needs no rule of its own except the
    one thing a swapping container must promise: that it cannot grow sideways
-   whatever is put in it (desk-gate G13 measures it at 390 and at 1280). Both
-   its children already cap at the same 780px, so the cap here is a belt and
-   the `min-inline-size: 0` is the braces — a grid/flex child's default `auto`
-   minimum is how a wide table pushes a page sideways. */
-.nu-boardpanel{ max-inline-size: 780px; min-inline-size: 0; }
+   whatever is put in it (desk-gate G13 measures it at 390 and at 1280). The
+   `min-inline-size: 0` is what keeps that promise — a grid/flex child's
+   default `auto` minimum is how a wide table pushes a page sideways.
+   (`max-inline-size: 780px` stood beside it as "a belt" over two children that
+   capped themselves at the same number. Both children are 100% since
+   2026-08-28 — Paul: *"Make elements like tables and grids 100% wide."* — so
+   the belt now holds the panel narrower than the two things it exists to
+   contain, which is the one thing it must not do.) */
+.nu-boardpanel{ min-inline-size: 0; }
 
 /* ---- THE SEAM: the bus tabs are their own group, on their own line ----
    The voices and the buses are different kinds of thing (a voice tab is a
@@ -1780,10 +1835,13 @@ td > select{ max-inline-size: 9em; }
 
 /* ---- the bus rack, in series, top to bottom ----
    `#rack` holds exactly ONE plate since the board tabs (2026-08-27); the grid
-   is what it always was and lays out one child perfectly well, and the width
-   cap is the one that matters — it is the same 780px `.nu-strips` takes, so
-   the strip and the plates it sends into are one object on the page. */
-.nu-rack{ max-inline-size: 780px; display: grid; margin-block: .8em; }
+   is what it always was and lays out one child perfectly well, and its width
+   is the same one `.nu-strips` takes, so the strip and the plates it sends
+   into are one object on the page. That shared number was 780px until
+   2026-08-28 and is 100% now — Paul: *"Make elements like tables and grids
+   100% wide."* The pairing is the point and it is preserved: whatever the
+   strip is, the plate under it is. */
+.nu-rack{ inline-size: 100%; display: grid; margin-block: .8em; }
 .nu-plate{ background: var(--panel); border: var(--bw) solid var(--ink);
   border-radius: var(--r1); box-shadow: var(--shadow);
   padding: .7em; display: grid; gap: .6em; }
@@ -2965,3 +3023,136 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
   background-size: 2px 16px; }
 #atlasWhen #atlasYear::-moz-range-thumb{
   inline-size: 34px; block-size: 32px; background-size: 2px 16px; }
+
+/* ===== THE MARKS ON THE TABS (2026-08-28) ================================
+   Paul: *"Please make all the tabs and top buttons into sensible icons to save
+   space. Voice 2 for example could be more symbol plus the number 2. Provide a
+   simple long tap or hover tooltip to explain what they are."*
+
+   SIX ROWS, ONE FACE. `.nu-bar` (play/rewrite/take), `#toptabs` (the nine),
+   `#tabs` (the band's voices), `#motif-tabs`, `#boardtabs` and `.nu-decktabs`
+   all draw the same button now — ui/glyph.js `icon()` — and every rule about
+   them is here rather than six times over. This is the same trade `.nu-tf`
+   made on 2026-08-27 and it is stated the same way: the glyph is a picture,
+   the word is still in the DOM as `.nu-vh`, and with this stylesheet turned
+   off every strip reads as its words in order.
+
+   WHAT IT BOUGHT, MEASURED ON THE RENDERED PAGE (the shipped chant — two
+   voices, three motifs — before → after, in row height and in lines):
+     AT 390px, where the second line was the cost:
+       .nu-bar       160.3px of button ink → 132.0. One line either way and
+                     still 52.00px tall — `--bar-h` is a PROMISE (`.nu-tabs`
+                     sits at `top: var(--bar-h)`) and it did not move; the 28px
+                     went to the room slider, which had been at its 4em floor.
+       #toptabs      490.4 → 437.9 of ink · 2 lines → 2 lines (103.39px)
+       #tabs          558.7 → 322.0 · 2 lines → ONE (94.39px → 44.00px)
+       #motif-tabs    378.1 → 229.2 · 2 lines → ONE (94.39px → 44.00px)
+       #boardtabs     385.5 → 267.8 · 3 lines → TWO (147.17px → 96.78px)
+       .nu-decktabs   160.9 →  88.0 · one line either way (68.94px → 44.00px:
+                     the roll's legend used to be pushed onto a second line by
+                     the two words and now sits beside them)
+     AT 1280px every row is what it was — one line each, `#boardtabs` two —
+     and each is narrower. `documentElement.scrollWidth === clientWidth` and
+     `row.scrollWidth === row.clientWidth` at both widths, on all nine tabs.
+
+   THE NINE CANNOT BE ONE LINE AT 390 AND NO ARRANGEMENT COULD MAKE THEM: nine
+   44px targets are 396px against the 366 a 390px phone leaves, before a single
+   gap. That row's saving is spent on a UNIFORM TARGET instead — every tab was
+   between 38.9 and 70.9px wide and every tab is 44 now — and on the open tab's
+   word, which the row could not afford before.
+
+   THE 44px FLOOR IS A WIDTH RULE HERE FOR THE REASON `.nu-tf-row` GIVES: "an
+   <svg> brought its own 40px of width; a glyph brings 10-30px, so `←` in a
+   2px-padded button is a 20px target — under half the floor." A shorter label
+   is not permission for a smaller button. */
+#toptabs > button, #tabs > button, #motif-tabs > button,
+#boardtabs button, .nu-decktabs > button, .nu-bar > button{
+  min-inline-size: var(--tap); }
+/* THE FACE. Same size and same stack as `.nu-tf` and for the same two reasons
+   written there — 1.2rem was measured against the 44px floor, and a system-ui
+   symbol stack keeps every row in one hand rather than letting a serif ↕ sit
+   beside a sans ↑. `pointer-events: none` so the picture can never eat the
+   press, which is the half-hour the globe round lost to a decorative stroke
+   swallowing every tap. */
+.nu-ic{ display: inline-flex; align-items: center; gap: .06em;
+  pointer-events: none; }
+.nu-g{ font-size: 1.2rem; line-height: 1; letter-spacing: -.02em;
+  font-family: system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif; }
+/* THE NUMBER, AND IT IS THE ONLY TEXT THAT SHOWS. Paul: "more symbol plus the
+   number 2." Smaller than the mark and bolder than the page, so it reads as an
+   index on a picture rather than as a word beside one. Tabular figures because
+   a strip of ten voices may not shuffle sideways at voice 10. */
+.nu-n{ font-size: .78rem; font-weight: 700; line-height: 1;
+  font-variant-numeric: tabular-nums; }
+/* THE OPEN TAB OF THE NINE KEEPS ITS WORD, at every width, and it is the only
+   row that does so unconditionally. Measured above: the nine are two lines at
+   390 whatever they wear, so the word is FREE there — and one labelled tab in
+   a row of pictures is the thing that tells a first-time reader what the
+   pictures are.
+   IT IS `.nu-vh`'s OWN UNDOING, not a second definition of a look — the same
+   four declarations `.nu-bar label > .nu-vh` reverses for "room", for the same
+   reason and in the same words. */
+#toptabs > button[aria-pressed="true"] .nu-vh{
+  position: static; width: auto; height: auto; margin: 0 0 0 .25em;
+  overflow: visible; clip-path: none; }
+/* …AND THE FOUR NESTED ROWS TAKE THEIR WORD BACK WHEN THERE IS ROOM FOR IT.
+   Above 700px the strips are nowhere near their width and hiding a name there
+   buys nothing: the band's open tab says `♪2 schola`, the board's says
+   `≋3 reverb`, the deck's says `▤ notation` — and the panel under a voice tab
+   is named again, which it was NOT for the first hour of this change and which
+   was the one thing lost rather than saved. Below 700px they are marks and
+   digits, which is the line Paul asked for back.
+
+   700px AND NOT THE PAGE'S OTHER BREAKPOINT (430, where `.nu-bar` prints
+   "room"). MEASURED, and against the WORST case rather than the shipped one:
+   the widest thing any of these rows can have open is `◈ performance` at
+   123.7px, and the band strip with that open plus its three add buttons comes
+   to 440px of ink and gap, which wants a 464px viewport. A breakpoint at 430
+   would make the row one line for some tabs and two for others AT THE SAME
+   WIDTH — the strip would jump a line as you moved along it, which is worse
+   than either state. 700 clears every combination by 200px and is
+   unambiguously not a phone.
+   AND IT IS A SWEEP, NOT ONE SAMPLE: every tab of every row opened in turn at
+   390, 700 and 1280 — band form/performance/cantor/schola, the three motifs,
+   the six board tabs, both deck views — and each row holds the SAME number of
+   lines whichever of its tabs is open (band 1, motifs 1, board 2, deck 1), with
+   `row.scrollWidth === row.clientWidth` and no sideways scroll on the document
+   at any of the forty-five. That is the check the number was chosen for: a
+   strip that changes height as you move along it is the failure, not a wide
+   one. */
+@media (min-width: 700px) {
+  #tabs > button[aria-pressed="true"] .nu-vh,
+  #motif-tabs > button[aria-pressed="true"] .nu-vh,
+  #boardtabs button[aria-pressed="true"] .nu-vh,
+  .nu-decktabs > button[aria-pressed="true"] .nu-vh{
+    position: static; width: auto; height: auto; margin: 0 0 0 .25em;
+    overflow: visible; clip-path: none; }
+}
+
+/* ===== THE EXPLAINER (2026-08-28) ========================================
+   Paul: *"Provide a simple long tap or hover tooltip to explain what they
+   are."* This REVERSES nukernel/ideal/design-system.html's voice rule 5 ("No
+   tooltips. A tooltip is information hidden from a finger") and that rule is
+   REWRITTEN THERE rather than deleted, because its own reasoning is what says
+   how to obey both: the objection was to the HOVER, so there is a LONG-PRESS
+   as well and nothing is hidden from a finger. ui/glyph.js carries the full
+   argument and the gesture numbers.
+
+   `position: fixed` IS THE LOAD-BEARING DECLARATION. The box is positioned,
+   never inserted into flow, so opening one cannot move a row under a thumb —
+   which is the whole difference between an explainer and a layout bug on this
+   page. It is clamped into the viewport by ui/glyph.js rather than allowed to
+   overhang, because a box hanging off the right edge is A1 (no sideways
+   scroll) failing in a place nobody looks.
+
+   IT IS NOT A CONTROL AND IT DOES NOT TAKE A PRESS: `pointer-events: none`, so
+   the press that would close it reaches whatever is underneath and the popover
+   can never swallow a tap on the row it is explaining. */
+.nu-say{ position: fixed; z-index: 60; pointer-events: none;
+  max-inline-size: min(30ch, calc(100vw - 12px));
+  padding: .45em .6em;
+  background: var(--panel); color: var(--ink);
+  border: var(--bw) solid var(--ink); border-radius: var(--r1, 6px);
+  box-shadow: var(--shadow);
+  font-size: .82rem; line-height: 1.35; }
+.nu-say[hidden]{ display: none; }

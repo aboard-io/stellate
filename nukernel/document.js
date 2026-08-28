@@ -175,7 +175,28 @@
       /* MATERIAL */    kit, ...(on ? {} : noKit),
       /* CAST */        voices: lines.length,
                         entry: (v) => lines[v].cast.entry,
-                        reg: (v) => lines[v].cast.reg,
+                        // THE CHAIR'S OWN PART REACHES THE KERNEL (2026-08-28).
+                        // This handed over `realize` and nothing else, so the
+                        // kernel fell back to its two-value shim ("pad" or
+                        // "line") on the 104 anchors with no `part` scheme and
+                        // read the ANCHOR's array — wrapped, and blind to every
+                        // edit made since — on the other 95. A document that
+                        // says a chair is the counter-line got a chair playing
+                        // whatever `part[v % part.length]` happened to name:
+                        // 421 of 1081 seated chairs were cast in a role the
+                        // kernel did not play. `cast.part` is the one owner of
+                        // that fact and this is the wire.
+                        part: (v) => lines[v].cast.part,
+                        // ...AND ITS REGISTER IS ALREADY FINAL. `cast.reg` is
+                        // what the chair SHOWS, and precompose seated it with
+                        // the part's octave lean already spent (§7b writes the
+                        // sounding centre, not a base). The kernel's contract
+                        // is base-plus-lean, so hand it the base this number
+                        // implies: K.partLean is the same table K.regOf will
+                        // add back, which makes the round trip exact by
+                        // construction and leaves ONE number — the one on the
+                        // chair — saying where the chair sits.
+                        reg: (v) => lines[v].cast.reg - K.partLean(lines[v].cast.part),
                         realize: (v) => lines[v].cast.part,
                         bassStyle: bass ? bass.cast.style : undefined,
                         nobass: !bass,

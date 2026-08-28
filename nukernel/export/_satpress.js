@@ -125,6 +125,7 @@ export function stats(L, R) {
            crest: +(db(peak) - db(rms)).toFixed(2), over99: over, over1,
            hf8_16Db: b.hf8_16Db, hf4_8Db: b.hf4_8Db,
            hf2_8Db: b.hf2_8Db, mid300_3kDb: b.mid300_3kDb,
+           lo60_300Db: b.lo60_300Db,
            harmRatioDb: b.harmRatioDb,
            frames: n, secs: +(n / 44100).toFixed(2) };
 }
@@ -137,8 +138,15 @@ function bands(L, R) {
   // hf4_8Db added 2026-08-27 (Paul: "very high tones get shrieky") — the
   // shriek band proper. hf2_8 is too wide to show a shelf at 5 kHz moving,
   // because half of it sits under the corner.
+  // lo60_300Db added 2026-08-28 — the round that wired instruments.js STRIPS to
+  // the engine moves HIGH-PASS CORNERS (200 Hz for every pitched voice, down to
+  // 40 for keys / 80 for strings / 90 for guitar / 110 for a bowed section), and
+  // not one of the four bands above looks below 300 Hz. Measuring that round on
+  // 300-3k alone reported +0.01 dB on a ragtime whose two pianos had just got
+  // their left hands back. This is the band the corner actually moves.
   const SPEC = [["hf8_16Db", 8000, 16000], ["hf4_8Db", 4000, 8000],
-                ["hf2_8Db", 2000, 8000], ["mid300_3kDb", 300, 3000]];
+                ["hf2_8Db", 2000, 8000], ["mid300_3kDb", 300, 3000],
+                ["lo60_300Db", 60, 300]];
   const acc = SPEC.map(() => []);
   for (let o = 0; o + N <= n; o += hop) {
     for (let i = 0; i < N; i++) { re[i] = (L[o + i] + R[o + i]) * 0.5 * win[i]; im[i] = 0; }

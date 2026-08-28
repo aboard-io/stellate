@@ -426,7 +426,30 @@
              jobOf, gateOf, toneOf, pedalOf, pedalsOf, stepWord, DECISIONS };
   }
 
-  return { N, COUNT, SUB, stepWord, stepCell, z, on, every, deg,
+  /* ---------- THE THREE-RUNG REGISTER, ONE OWNER (2026-08-28) ----------------
+     Four chairs declared a `REG` of their own and two of them were the same
+     three words on the same three numbers, character for character —
+     ideas-kit.js and vocal-kit.js. A register offset REACHES THE SOUND (it is
+     the kernel's own `reg`, an octave on the whole line), so two copies of it
+     is two places for a tune to move an octave, and this file already exists
+     because six copies of a walker is six places for a walker bug.
+
+     THE OTHER TWO STAY WHERE THEY ARE, and that is not an oversight: they
+     genuinely differ. guitar-kit's top rung is "up the neck" — the same number
+     under a word only a guitarist would use — and keys-kit has FOUR rungs, its
+     own `top` at +2, because a keyboard has somewhere further to go. This file's
+     standing law is that the mechanism is shared and the NOUNS are the chair's;
+     a table that says something different about its own instrument is a noun.
+
+     Frozen, because it is one object handed to two chairs now and a shared table
+     nothing can write to is the only kind worth sharing. */
+  const REG3 = Object.freeze({
+    low:  Object.freeze({ w: "down low",       v: -1 }),
+    mid:  Object.freeze({ w: "where it sits",  v:  0 }),
+    high: Object.freeze({ w: "up high",        v:  1 }),
+  });
+
+  return { N, COUNT, SUB, stepWord, stepCell, z, on, every, deg, REG3,
            MET4, METS, metOf, stepsOf, regrid, refit, barOf,
            vocab, tryIs, mapOpts,
            catalogSlimOf, catalogFullOf, sayOf, saysOf, saysLooseOf,

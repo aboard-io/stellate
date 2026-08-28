@@ -1562,15 +1562,34 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       if (!g) return null;
       return { text: g.innerText.replace(/\s+/g, " ").trim(),
                arrows: g.querySelectorAll(".nu-tabarrow").length,
+               /* THE CHAIN, READ OFF THE NAMES AND NOT OFF THE FACES
+                  (2026-08-28). The bus tabs are marks and stage numbers now —
+                  Paul: "make all the tabs and top buttons into sensible icons
+                  to save space" — so `innerText` reads "✳ 1 genre fx → ⋯ 2
+                  delay → …" and a regex over four contiguous words cannot
+                  match it. The claim was never about which characters are
+                  painted; it is "the series is drawn in the row, in order,
+                  from every tab". So the order comes off the buttons'
+                  `aria-label`s, which is one string per tab from one table,
+                  and the STAGE NUMBERS come off `.nu-n` — which makes this a
+                  stronger check than the regex it replaces: it now proves the
+                  row numbers the chain 1-2-3-4 as well as ordering it. */
+               chain: [...g.querySelectorAll("button")]
+                 .map((b) => (b.getAttribute("aria-label") || "").trim())
+                 .join(" → "),
+               stages: [...g.querySelectorAll("button .nu-n")]
+                 .map((n) => n.textContent.trim()).join(""),
                role: g.getAttribute("role"),
                label: g.getAttribute("aria-label"),
                openKind: (document.querySelector("#boardpanel > *") || {}).id };
     });
     ok(seriesRow && seriesRow.role === "group" && seriesRow.arrows === 4 &&
-       /genre fx → delay → reverb → main/.test(seriesRow.text) &&
+       seriesRow.chain === "genre fx → delay → reverb → main" &&
+       seriesRow.stages === "1234" &&
        seriesRow.openKind === "strips",
-       "THE SERIES IS DRAWN IN THE TAB ROW, from every tab including a " +
-       "voice's: " + JSON.stringify(seriesRow && seriesRow.text),
+       "THE SERIES IS DRAWN IN THE TAB ROW, in order and numbered, from every " +
+       "tab including a voice's: " + JSON.stringify(seriesRow &&
+         (seriesRow.chain + "  [" + seriesRow.stages + "]")),
        JSON.stringify(seriesRow));
     const saysWhereItGoes = await perBus(() => page.evaluate(() => {
       const p = document.querySelector("#boardpanel #rack .nu-plate");

@@ -29,8 +29,22 @@
 //   echo send    (box `echo`)-> unit `del`     the shared delay bus send
 //   room send    (box `room`)-> the drum units' `rev` (the ambience the kit
 //                               lanes already feed IS the parent's rev bus)
-//   verb name    (box `verb`)-> state `reverb` amount + the parent's own
-//                               reverbColor choice for the stream
+//   verb name    (box `verb`)-> NOTHING. MEASURED 2026-08-28: this file, and
+//                               every other file in the audio path, reads only
+//                               `tone.verb` — a GENRE NUMBER, 0..1 — and never
+//                               the box's `verb` word (fields.js VERBS:
+//                               room|hall|plate). Walking all three words onto
+//                               every box of a house record, with `rev: drown`
+//                               under them so a reverb decision could be heard
+//                               at all, produced ONE render: state `reverb` and
+//                               `reverbColor` did not move a bit. The live
+//                               spelling of this fact is `buses.rev.color`
+//                               (fields.js REVERBS -> masterState `reverbColor`,
+//                               at the foot of this file), which picks the wasm
+//                               module the return runs. The registry row is
+//                               tombstoned where it is declared; retiring the
+//                               stored key is Paul's call, because 139 shipped
+//                               records carry it.
 //   the MASTER strip (fields.js MASTER)
 //                            -> state fields the parent's own fx_bus resolves:
 //                               drive->grit, glue->comp, tape->wob+tsat,
@@ -212,6 +226,14 @@ export function partKeysOf(sec, roster) {
 //     at ≤2 dB. The per-note strip keeps its own stage at its own
 //     frequencies; this is the board-level seating tone, built ONCE on the
 //     part bus — the resolved chain contains each tone stage exactly once.
+//     AND THE PAIR IS ONLY REAL SINCE 2026-08-28: until that round the strip
+//     this row echoes reached no speaker at all (STRIPS was never handed to the
+//     engine — audio/to-engine.js recipeBase, the wiring note there), so these
+//     twelve rows were the ONLY family tone in the box. They are kept because
+//     they are the VISIBLE, user-overridable half — a board knob a player can
+//     see and clear — and because 120/1000/7200 is not where the strip carves
+//     (vox dips 400, keys lifts 2600). If a family now reads over-carved, this
+//     is the second statement of it and the first place to look.
 //   * GENRE CHARACTER (derivedSecEq): tone.cut / tone.verb, where they are
 //     EQ-shaped, seed the SECTION strip only — disjoint from the part strips
 //     by construction, so the genre's darkness is never said twice.

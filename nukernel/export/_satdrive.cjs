@@ -47,13 +47,24 @@ const SRCPATCH = {
   // and the reason is upstream — state-engine `pitchedUnitRaw` writes
   // `strip: stripFor(role, id, state, m)` from the PARENT's three-profile
   // table, so a record with a harpsichord, two guitars and a choir came back
-  // carrying only `lead`, `pad` and `drum` values. The families (keys, guitar,
-  // vox, dirty, mallet, organ, brass, reed, bowed, strings) are decorative on
-  // this path. Kept as the probe that says so.
+  // carrying only `lead`, `pad` and `drum` values.
+  // REVERSED 2026-08-28 — the paragraph above is the BUG REPORT, not the
+  // behaviour. audio/to-engine.js recipeBase now hands the family's strip over
+  // on the recipe and the parent's stripFor takes it as the base, so this probe
+  // moves the tape again for eight of the families (keys, guitar, strings,
+  // brass, reed, organ, bowed, mallet). `dirty` and `vox` still do nothing, for
+  // the other reason: their ids resolve to MODELS (stk_guitar, voice_choir) and
+  // never enter the sampled strip. `nofam` below is the before/after switch.
   nstrip: ["**/nukernel/instruments.js", (b) =>
     b.replace(/sat: *[0-9.]+, *satMix: *[0-9.]+/g, "sat: 0, satMix: 0")
      .replace(/sat: *[0-9.]+, *satDrive: *[0-9.]+, *satMix: *[0-9.]+/g,
               "sat: 0, satDrive: 1, satMix: 0")],
+  // THE FAMILY-STRIP WIRING, OFF (2026-08-28) — the "before" for the round that
+  // finally handed instruments.js STRIPS to the engine, on ONE build with one
+  // binary. Deleting the spread puts every sampled voice back on the parent's
+  // role profile, which is where they all were until that round.
+  nofam: ["**/nukernel/audio/to-engine.js", (b) =>
+    b.replace(/\s*\.\.\.\(famStrip \? \{ strip: famStrip \} : \{\}\)/, "")],
   // ...and the strip's COMPRESSOR + makeup, the other half of "hot"
   ncomp: ["**/nukernel/instruments.js", (b) =>
     b.replace(/comp: *\{[^}]*\},/g, "").replace(/comp: *\{[^}]*\}/g, "x1: 0")],
@@ -180,6 +191,7 @@ const SRCPATCH = {
            "over99 " + r.over99, "over1 " + r.over1,
            "8-16k " + r.hf8_16Db, "4-8k " + r.hf4_8Db,
            "2-8k " + r.hf2_8Db, "300-3k " + r.mid300_3kDb,
+           "60-300 " + r.lo60_300Db,
            "harm " + r.harmRatioDb, "smp " + r.sampled, "sat[" + r.sats + "]",
            r.secs + "s"].join("  "));
   }

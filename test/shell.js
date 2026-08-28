@@ -284,10 +284,22 @@ const BANDS = async () => {
       .map((h) => h.textContent.trim()),
     // …and that the row itself never scrolls sideways (A6b)
     rowScroll: [row.scrollWidth, row.clientWidth],
-    names: [...row.querySelectorAll("button")].map((b) => b.textContent.trim()),
-    marks: [...row.querySelectorAll("mark")].map((m) => m.textContent.trim()),
+    /* READ OFF `aria-label` AND NOT OFF THE TEXT, 2026-08-28. The nine tabs
+       are glyphs now (Paul: "Please make all the tabs and top buttons into
+       sensible icons to save space"), so `textContent` is "⊕Where" — the
+       mark, the `.nu-vh` word, and on the open one the printed word too. The
+       durable claim these three lines make is "the row names all nine places
+       and the open one is marked", and the ACCESSIBLE NAME is where that claim
+       lives now: it is what a screen reader is told, it is one string from one
+       table (ui/glyph.js), and it is exactly what `aria-label` is for. A gate
+       that drove by the visible face would have to be rewritten again the next
+       time somebody changes a picture. */
+    names: [...row.querySelectorAll("button")]
+      .map((b) => (b.getAttribute("aria-label") || "").trim()),
+    marks: [...row.querySelectorAll("mark")]
+      .map((m) => (m.closest("button").getAttribute("aria-label") || "").trim()),
     pressed: [...row.querySelectorAll('button[aria-pressed="true"]')]
-      .map((b) => b.textContent.trim()),
+      .map((b) => (b.getAttribute("aria-label") || "").trim()),
     now: window.__eightTabNow(),
     rowH: +row.getBoundingClientRect().height.toFixed(1),
     rowLines: (() => { const tops = new Set();
@@ -366,11 +378,41 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
     }
     // A6d — nine names, Paul's words, Paul's order, read off the RENDERED
     // buttons (not off the probe, which is the page agreeing with itself)
+    /* A6d — nine names, Paul's words, Paul's order, read off the RENDERED
+       buttons. THE READING MOVED FROM THE FACE TO THE NAME, 2026-08-28: the
+       tabs are glyphs and the word is the button's `aria-label`, so this asks
+       for the accessible name. It is a STRONGER check than the one it
+       replaces, not a weaker one — it now also proves that no tab is a naked
+       picture to a screen reader, which is the thing a row of icons can
+       actually get wrong. A6g is the other half: the word is in the DOM too,
+       so the page still reads as itself with the stylesheet off.
+       A6g / A6h AND NOT A6e / A6f: both of those labels were already spoken
+       for further down this file (the scroll-memory walk and the pane sweep),
+       and two checks answering to one name is a report nobody can read. */
     const rowNames = await page.evaluate(() =>
-      [...document.querySelectorAll("#toptabs button")].map((b) => b.textContent.trim()));
+      [...document.querySelectorAll("#toptabs button")]
+        .map((b) => (b.getAttribute("aria-label") || "").trim()));
     is(JSON.stringify(rowNames) === JSON.stringify(PAULS_TABS),
       "A6d " + width + " · nine tabs, Paul's words, Paul's order — "
       + JSON.stringify(rowNames));
+    const rowWords = await page.evaluate(() =>
+      [...document.querySelectorAll("#toptabs button")]
+        .map((b) => { const v = b.querySelector(".nu-vh, mark .nu-vh");
+                      return v ? v.textContent.trim() : null; }));
+    is(JSON.stringify(rowWords) === JSON.stringify(PAULS_TABS),
+      "A6g " + width + " · and every word is still IN the button, so the row "
+      + "reads with the stylesheet off — " + JSON.stringify(rowWords));
+    // A6h — every glyph on the page is decoration beside a name: a mark with
+    // no `aria-label` on its button is the one failure an icon row can hide.
+    const nakedGlyphs = await page.evaluate(() =>
+      [...document.querySelectorAll("button .nu-g")]
+        .map((g) => g.closest("button"))
+        .filter((b) => !(b.getAttribute("aria-label") || "").trim() ||
+                       !b.querySelector(".nu-vh"))
+        .map((b) => b.dataset.k || b.id || "?"));
+    is(nakedGlyphs.length === 0,
+      "A6h " + width + " · no naked glyph — every mark has a word and a name "
+      + JSON.stringify(nakedGlyphs));
 
     // THE KIT GRID IS THE WIDEST THING THIS PAGE DRAWS and the default record
     // has no drummer, so a gate that does not add one never measures it.

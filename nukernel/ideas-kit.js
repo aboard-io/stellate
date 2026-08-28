@@ -217,8 +217,10 @@
   // an octave of its own on top (PARTS.lead ctr:+12, "up top, sings,
   // breathes"), which is why "where it sits" is 0 here and not 1: writing
   // the octave in both places put every tune in the top of the piano.
-  const REG = { low: { w: "down low", v: -1 }, mid: { w: "where it sits", v: 0 },
-                high: { w: "up high", v: 1 } };
+  // ONE OWNER, 2026-08-28 (chair.js REG3): the singer's copy of this table was
+  // byte-for-byte this one. guitar-kit and keys-kit keep their own — theirs say
+  // something different about their own instrument (see REG3's note).
+  const REG = C.REG3;
 
   const blank = () => ({ on: false, cell: "three", contour: "arch", land: "root",
                          len: "two", reg: "mid", answer: true, name: "the hook",

@@ -1137,9 +1137,32 @@
     stab:    { chordLock: true, maxHold: 1 },     // its own rhythm, the bar's chord
     drone:   { ctr: -12, artic: "tie" },          // refuses to move
   };
-  const partOf = (g, v) => (g.part
-    ? (typeof g.part === "function" ? g.part(v) : g.part[v % g.part.length])
-    : (g.realize(v) === "pad" ? "pad" : "line"));
+  // A CHAIR PAST THE END OF THE CASTING SHEET IS NOT CAST (2026-08-28, and this
+  // REVERSES `g.part[v % g.part.length]`). The wrap dealt a borrowed role to
+  // anybody seated past the last name on the sheet: house's ["stab","lead"]
+  // gave chair 2 a stab nobody wrote, rock's guest read as a `riff`, cumbia's
+  // voices 3-5 wrapped onto 0-2. House was patched by LENGTHENING its array,
+  // which fixes one anchor and not the fault. A short sheet is a short sheet:
+  // the chairs it names are cast, and everyone after them falls to the neutral
+  // shim — exactly what a genre with no sheet at all has always answered, so
+  // refusing to borrow can only ever quiet a role, never invent one.
+  const castAs = (g, v) =>
+    (typeof g.part === "function" ? g.part(v) : g.part[v]) || null;
+  const partOf = (g, v) => (g.part && castAs(g, v))
+    || (g.realize(v) === "pad" ? "pad" : "line");
+
+  // ---- THE REGISTER IS ONE NUMBER ------------------------------------------
+  // `ctr` above is an octave lean written in semitones, and until today it was
+  // added privately inside render() — so the register a chair SHOWED (its
+  // `reg`) and the register it PLAYED differed by an octave wherever a part
+  // leaned, which is the one thing this box legislates against. `regOf` is
+  // that sum, said once, in the register's own units, and it is exported: a
+  // caller that has to print or SEAT a chair (precompose, writing the
+  // document) reads the same number the fold below will use. `partLean` is
+  // the addend alone, for the adapter that has to undo it (document.js
+  // toGenre, whose chairs are already seated and whose `reg` is final).
+  const partLean = (part) => ((PARTS[part] || {}).ctr || 0) / 12;
+  const regOf = (g, v) => g.reg(v) + (g.part ? partLean(partOf(g, v)) : 0);
 
   // ---- BAR SCHEDULE: the SIXTH type -----------------------------------------
   // `g.period` is a per-bar operator word — entry s of the cycle applies on
@@ -1383,9 +1406,11 @@
     const ornAt = ornAlphabet(subj, g, key);
     for (let v = 0; v < g.voices; v++) {
       // the part's register lean sits ON TOP of g.reg, and only when the genre
-      // actually declares parts — the shim keeps every partless genre exact
+      // actually declares parts — the shim keeps every partless genre exact.
+      // regOf() is that sum and the ONLY place it is taken (see above), so
+      // what a caller prints for this chair cannot differ from what it plays.
       const part = partOf(g, v), pol = g.part ? PARTS[part] || {} : {};
-      const ctr = 60 + 12 * g.reg(v) + (pol.ctr || 0), pad = part === "pad",
+      const ctr = 60 + 12 * regOf(g, v), pad = part === "pad",
             sc = g.scale || PENT, md = g.mode || MODE;
       let voicing = null;      // pad voice-leading memory: per voice, across bars
       let compv = null;        // the comping hand's voicing memory, same law
@@ -2990,7 +3015,7 @@
                 PENT, MODE, ROMAN, romanOf, pitch, mp, fold, near,
                 QSTEPS, QFIX, chordsOf, chordAt, withCadence, harmonizeStage,
                 seatNote, tempoWarp, prng,
-                PARTS, partOf, periodOps, OPKEYS, pipes, PIPES,
+                PARTS, partOf, partLean, regOf, periodOps, OPKEYS, pipes, PIPES,
                 ORN, ORNNAME, ORNPARTS, ornament,
                 DRUM_LANES, DMARK, DRUM_SWING,
                 harm, render, drums, bass };

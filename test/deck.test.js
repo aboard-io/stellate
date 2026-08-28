@@ -261,7 +261,9 @@ const readable = (r) => !!r && r.inside && r.text.length > 0;
   // ---- D2 — one clock, two views, and only [data-live] moves ---------------
   await page.click("#play");
   const started = await page.waitForFunction(() =>
-    document.getElementById("play").textContent === "stop" &&
+    // THE PLAY BUTTON IS A MARK SINCE 2026-08-28 (▶ / ■) and its WORD is its
+    // `aria-label` — still "the next tap", still written by `say()` alone.
+    document.getElementById("play").getAttribute("aria-label") === "stop" &&
     window.__eightScore().step > 0.5, null, { timeout: 45000 })
     .then(() => true).catch(() => false);
   is(started, "D2 · the record started (the deck's clock is running)");

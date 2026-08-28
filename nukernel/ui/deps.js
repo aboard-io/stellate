@@ -135,17 +135,37 @@ export const NuSong = window.NuSong;
 export const { blank, emptyBox } = window.NuSong;
 
 // ---- the sound sources as data (instruments.js) ----
-export const { instrOf, familyOf, BASS_INSTR, DRUMDIR, DRUMFILE, FONTS, BASSSYNTH,
-               STRIPS, stripFor, RANGES, STRETCH_UP, STRETCH_DOWN,
-               DRUMMIX, DRUMBUS,
-               // the machine kits' place in that mix, and the ONE merge over
-               // DRUMMIX that the kit desk and the drum player both read
-               MACHINEMIX, mixFor, laneKey,
-               // the per-family DYNAMIC RESPONSE (the parent's STRIP stage) — the same
-               // family walk stripFor uses, answering timbre instead of mix.
-               // `dynCurve` is the arithmetic; the player only writes it onto
-               // AudioParams, so the table and the sound cannot drift apart
-               dynFor, dynCurve, DYN_ATK } = window.NuInstruments;
+export const { instrOf, familyOf, BASS_INSTR, FONTS, BASSSYNTH,
+               STRIPS, stripFor, RANGES } = window.NuInstruments;
+/* TWELVE NAMES CAME OFF THIS LINE, 2026-08-28, AND THEY WERE THE DECLARED-BUT-
+   NEVER-ARRIVING BUG IN ITS QUIETEST FORM: a barrel that re-exports a table is
+   the only evidence most readers ever see that the table is WIRED, and these
+   twelve were re-exported to nobody.
+
+     DRUMDIR, DRUMFILE, STRETCH_UP, STRETCH_DOWN, DRUMMIX, DRUMBUS,
+     MACHINEMIX, mixFor, laneKey, dynFor, dynCurve, DYN_ATK
+
+   MEASURED TWO WAYS, 2026-08-28. (1) Grep: outside instruments.js and this
+   line, not one of the twelve is named anywhere in nukernel/, engine/ or
+   tools/ — `laneKey` looks used and is not, because ui/derive.js:756 and
+   kernel.js:2930 each define their OWN local `laneKey` and shadow this one.
+   (2) Render: perturbing every number in DRUMMIX (60), MACHINEMIX (67) and DYN
+   (55) — ×1.5 + 0.011 on every leaf — leaves the engine handoff (plan.js
+   parentState + desk.js masterState + every barPlan) BIT-IDENTICAL on house,
+   hymn and dub. 182 numbers, zero bits.
+
+   THE COMMENTS THAT STOOD HERE WERE THE ROT, and they are quoted so the next
+   reader knows what to distrust: "the ONE merge over DRUMMIX that the kit desk
+   and the drum player both read", and "`dynCurve` is the arithmetic; the player
+   only writes it onto AudioParams, so the table and the sound cannot drift
+   apart". Both were true of audio/voices.js, the WebAudio player the one-engine
+   round deleted. There is no player here now — the parent's state-engine carries
+   its own drum mix and its own velocity response — so the table and the sound
+   had already drifted as far apart as two things can get.
+
+   THE TABLES THEMSELVES STAY IN instruments.js, tombstoned in place. Deleting
+   182 tuned numbers is a design decision (either the parent adopts them or they
+   go), and this file's job is only to stop them LOOKING wired. */
 
 // ---- arranger policy (compose.js) + the shipped songs (presets.js) ----
 export const { compose } = window.NuCompose;

@@ -214,6 +214,16 @@ import { mount as mountAtlas } from "./atlas.js";
 // what the WAV press is measured against.
 import { writeSmf, parseSmf, headGM } from "../export/smf.js";
 import { songDurSec } from "../audio/plan.js";
+// THE MARKS ON THE TABS, AND THE ONE EXPLAINER (2026-08-28). Paul: "Please
+// make all the tabs and top buttons into sensible icons to save space. Voice 2
+// for example could be more symbol plus the number 2. Provide a simple long
+// tap or hover tooltip to explain what they are." `KINDGLYPH` used to live in
+// THIS file, three characters keyed by a voice's kind, with a comment on it
+// about the last time it was copied — and ui/engineer.js obeyed that comment
+// by refusing the glyphs and drawing its tabs as words. Paul asked for marks
+// on every strip on the page, in four files, so the table is EXTRACTED to
+// ui/glyph.js and imported here; nothing about the three characters changed.
+import { GLYPH, kindGlyph, sayVoice, icon, paintIcon, wireSay } from "./glyph.js";
 
 // THE ONE GLOBAL LEFT IN THIS FILE, and it is deliberate rather than an
 // oversight: `design()` calls `K[name](...)` with a name out of the DESIGNS
@@ -3283,8 +3293,14 @@ function setDeckView(v) {
   deckView = v;
   if (deckNotView) deckNotView.hidden = v !== "not";
   if (deckRollView) deckRollView.hidden = v !== "roll";
-  if (deckTabNot) deckTabNot.setAttribute("aria-pressed", v === "not" ? "true" : "false");
-  if (deckTabRoll) deckTabRoll.setAttribute("aria-pressed", v === "roll" ? "true" : "false");
+  /* THE MARK MOVES WITH THE STATE, and it is `paintIcon` that moves it — the
+     <mark>/<span> swap the other four strips already make, so the deck's pair
+     is not a fifth spelling of "which one is open". (This set `aria-pressed`
+     alone, which was the whole of the old skin when the button was a word.) */
+  if (deckTabNot) paintIcon(deckTabNot, { glyph: GLYPH.view.not.g,
+    word: GLYPH.view.not.w, say: GLYPH.view.not.s, on: v === "not" });
+  if (deckTabRoll) paintIcon(deckTabRoll, { glyph: GLYPH.view.roll.g,
+    word: GLYPH.view.roll.w, say: GLYPH.view.roll.s, on: v === "roll" });
   if (v === "roll") { sizeRoll(); drawRoll(stepAbs()); }
 }
 addEventListener("resize", () => {
@@ -3403,12 +3419,18 @@ function deckBlock(parent) {
   // case rule every heading now follows.
   ax.append(el("h2", "The score"));
   // the tabs — CONTROLS, so outside both [data-live] blocks (A1's law)
+  /* TWO MARKS THAT ARE ONE BOX TURNED (Paul, 2026-08-28). ▤ is ruled paper —
+     the staff, which runs across; ▥ is the roll — blocks standing up the pitch
+     axis. Turn one and you have the other, which is exactly what these two
+     buttons do to the same record. `GLYPH.view` in ui/glyph.js owns them and
+     the words "notation" and "piano roll" go on as `aria-label` and `.nu-vh`,
+     so `setDeckView` is still the only thing that decides which is marked. */
   const row = el("div", null, "nu-row nu-decktabs");
-  deckTabNot = el("button", "notation");
-  deckTabNot.type = "button"; deckTabNot.dataset.k = "deck.view.not";
+  deckTabNot = icon({ k: "deck.view.not", glyph: GLYPH.view.not.g,
+    word: GLYPH.view.not.w, say: GLYPH.view.not.s, on: deckView === "not" });
   deckTabNot.addEventListener("click", () => setDeckView("not"));
-  deckTabRoll = el("button", "piano roll");
-  deckTabRoll.type = "button"; deckTabRoll.dataset.k = "deck.view.roll";
+  deckTabRoll = icon({ k: "deck.view.roll", glyph: GLYPH.view.roll.g,
+    word: GLYPH.view.roll.w, say: GLYPH.view.roll.s, on: deckView === "roll" });
   deckTabRoll.addEventListener("click", () => setDeckView("roll"));
   row.append(deckTabNot, deckTabRoll);
   // the legend: who wears which paint on the roll — the voices' own names,
@@ -4419,13 +4441,28 @@ function motifTabRow(parent) {
   // off they are what keeps two tabs from reading as one word.
   bar.id = "motif-tabs";
   bar.className = "nu-row";
-  for (const name of names) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.dataset.k = "motiftab-" + name;
-    b.setAttribute("aria-pressed", String(name === motifTab));
-    if (name === motifTab) b.append(el("mark", name));
-    else b.append(el("span", name));
+  /* A MARK AND A NUMBER HERE TOO (Paul, 2026-08-28). A motif is one of two
+     KINDS — a tune or a beat — and `H.kind === "drum"` is the record's own
+     word for which, so the strip borrows the voices' marks: ♪ for a motif, ◉
+     for a drum pattern, off the one table in ui/glyph.js. The digit is the
+     cell's place in the bank. The NAME is the accessible name, the `.nu-vh`
+     word and what a hold prints, because a motif's name is the composer's and
+     no picture can carry it — `psalm` and `neume` are the sort of word this
+     box exists to let somebody choose. (The block under the strip prints it
+     too — "psalm — read by cantor" — so nothing about which motif is open
+     depends on the tab alone.) */
+  names.forEach((name, i) => {
+    const H = DOC.material.cells[name] || {};
+    const drum = H.kind === "drum";
+    const b = icon({
+      k: "motiftab-" + name,
+      glyph: kindGlyph(drum ? "drums" : "line"),
+      num: i + 1,
+      word: name,
+      say: name + " — " + (drum ? "a drum pattern" : "a motif") +
+           ", " + (i + 1) + " of " + names.length + " in the bank",
+      on: name === motifTab,
+    });
     // THE TAP SOUNDS IT (Paul: "If I tap the motif play the motif in an
     // associated voice"), and it sounds AFTER the redraw, so the sentence the
     // audition writes lands in the block that is now on the page. A tab that
@@ -4444,7 +4481,7 @@ function motifTabRow(parent) {
       drawMaterial();
     });
     bar.append(b, document.createTextNode(" "));
-  }
+  });
   /* ---------- AND TWO WAYS TO GROW THE BANK ------------------------------
      Paul, 2026-08-25: *"motifs: give me a way to add a motif and a way to add a
      drum pattern."*
@@ -4472,11 +4509,19 @@ function motifTabRow(parent) {
      ...AND IT OPENS THE TAB IT MADE, which is the half that makes it a
      gesture rather than an announcement: `motifTab = n` before the redraw, so
      the block you are looking at afterwards is the one you just created. */
+  /* AND THE TWO ADD BUTTONS WEAR THE BAND'S OWN COMPOSITION, a plus and the
+     kind — the two surfaces are deliberately the same object (see the note
+     over this function) and a person who has learned one strip has learned
+     both. "+ drum pattern" was 128px on its own, a third of the row, and it is
+     the single widest saving on this page. The words are the accessible names
+     and the `.nu-vh` text, unchanged; `data-k` is unchanged. */
   for (const [label, kind] of [["+ motif", "line"], ["+ drum pattern", "drum"]]) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.dataset.k = kind === "drum" ? "adddrumcell" : "addcell";
-    b.append(el("span", label));
+    const b = icon({
+      k: kind === "drum" ? "adddrumcell" : "addcell",
+      glyph: "+" + kindGlyph(kind === "drum" ? "drums" : "line"),
+      word: label,
+      say: label + " — a new cell in the bank, opened as you make it",
+    });
     b.addEventListener("click", () => { motifTab = addCell(kind); push(); draw(); });
     bar.append(b, document.createTextNode(" "));
   }
@@ -5812,20 +5857,27 @@ function drumGrid(parent, cellName) {
    and not one — four voices side by side would be twenty columns. And it is
    a page state, never a document one: which tab you are looking at is not a
    fact about the record. */
-// BY KIND, AND THERE IS ONE TABLE. The glyphs used to be keyed by NAME, from
-// when the voices were called line/pad/bass/drums — so a LINE named "bass" drew
-// the bass mark. A name is the composer's; a kind is the machine's. That fix
-// left a second table behind it (`GLYPH`, six keys, five of them a stale copy
-// of these three and only `form` ever read), which is the drift this file
-// spends its comments warning about, so it is one table and a constant now.
-const FORMGLYPH = "▦";                   // the form tab is not a voice
-// ...AND NEITHER IS PERFORMANCE (Paul, 2026-08-25: "Why don't you move
-// performance in as a tab too"). There are two SONG-LEVEL tabs in front of the
-// voices now, so both need a mark that is not a player's: ◈ beside ▦, from the
-// same geometric family, because what those two have in common is that nobody
-// plays them.
-const PERFGLYPH = "◈";
-const KINDGLYPH = { line: "♪", bass: "▼", drums: "◉" };
+// BY KIND, AND THERE IS ONE TABLE — AND ON 2026-08-28 IT LEFT THIS FILE. The
+// three sentences this block has always made are still true and are still the
+// reason the table exists, so they are kept here rather than deleted: "The
+// glyphs used to be keyed by NAME, from when the voices were called
+// line/pad/bass/drums — so a LINE named 'bass' drew the bass mark. A name is
+// the composer's; a kind is the machine's. That fix left a second table behind
+// it (six keys, five of them a stale copy of these three and only `form` ever
+// read), which is the drift this file spends its comments warning about, so it
+// is one table and a constant now."
+//
+// WHAT MOVED AND WHY. `KINDGLYPH`, `FORMGLYPH` (▦ — the form tab is not a
+// voice) and `PERFGLYPH` (◈ — "and neither is performance", Paul 2026-08-25)
+// are the `kind` and `song` columns of `GLYPH` in ui/glyph.js now, character
+// for character. They had to leave because Paul asked for marks on EVERY tab
+// row on this page (2026-08-28) and three of those rows are drawn by other
+// files — ui/engineer.js's own note says it drew its tabs as WORDS precisely
+// so it would not have to copy these three characters out of here. A table two
+// files cannot both read is a table that gets copied; extraction is the fix
+// this file has recommended for the same hazard four times.
+const FORMGLYPH = GLYPH.song.form.g;
+const PERFGLYPH = GLYPH.song.performance.g;
 // THE SONG-LEVEL TABS, NAMED ONCE. `tab === "form"` was compared against a
 // string literal in four places, and a voice may legally be CALLED "form" —
 // `freeName` keeps voice names unique among THEMSELVES and knows nothing about
@@ -5836,7 +5888,7 @@ const KINDGLYPH = { line: "♪", bass: "▼", drums: "◉" };
 const SONGTABS = ["form", "performance"];
 const glyphOf = (name) => name === "form" ? FORMGLYPH
   : name === "performance" ? PERFGLYPH
-  : KINDGLYPH[(VOICE(name) || {}).kind] || "•";
+  : kindGlyph((VOICE(name) || {}).kind);
 // (WHAT EACH VOICE CAN BE TOLD used to be `menuFor(kind)` here — a ternary over
 //  songs.js WORDS, fields.js BASSOPS and fields.js KITLABEL. It is
 //  avail.js `devSheetFor(kind)` now, which answers with a sheet KEY instead of
@@ -7621,13 +7673,33 @@ function bandBlock(parent) {
   const bar = el("p");
   bar.id = "tabs";
   bar.className = "nu-row";   // one name for a strip of buttons — nu.css
+  /* A MARK AND A NUMBER, AND THE NUMBER IS THE ONLY TEXT (Paul, 2026-08-28:
+     "Voice 2 for example could be more symbol plus the number 2"). The mark
+     says the KIND — ♪ a line, ▼ the bass, ◉ the kit, and ▦ / ◈ for the two
+     tabs nobody plays — and the digit says WHICH. It is the voice's place in
+     `DOC.voices`, the RECORD's own roster, and the board's tabs number the
+     same players off the same list, so "voice 2" means one player wherever you
+     are looking (ui/glyph.js `sayVoice` carries that argument).
+     THE WORD DID NOT GO ANYWHERE: it is the button's `aria-label` and its
+     `.nu-vh` text, so a screen reader hears "schola" and never "eighth note",
+     and with the stylesheet off this strip still reads as its names in order.
+     Above 700px the OPEN tab prints its word again (nu.css) — there is room
+     for it there and the panel under a voice tab is named by nothing else.
+     Holding a tab (or hovering it with a mouse) names it out loud — the one
+     explainer, ui/glyph.js. */
+  const vTotal = DOC.voices.length;
   for (const name of tabs) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.dataset.k = "tab" + name;
-    b.setAttribute("aria-pressed", String(name === tab));
-    const label = glyphOf(name) + " " + name;
-    if (name === tab) b.append(el("mark", label)); else b.append(el("span", label));
+    const v = SONGTABS.includes(name) ? null : VOICE(name);
+    const vi = v ? DOC.voices.indexOf(v) + 1 : null;
+    const b = icon({
+      k: "tab" + name,
+      glyph: glyphOf(name),
+      num: vi,
+      word: name,
+      say: v ? sayVoice(name, v.kind, vi, vTotal)
+             : (GLYPH.song[name] || {}).s,
+      on: name === tab,
+    });
     // ...AND TAPPING `form` IS THE WAY BACK (Paul, 2026-08-25: "When you
     // click form the list comes back up"). It is not a special case bolted on
     // to one tab: `formSec` is which section's questions are open, and leaving
@@ -7638,14 +7710,28 @@ function bandBlock(parent) {
     b.addEventListener("click", () => { tab = name; formSec = null; draw(); });
     bar.append(b, document.createTextNode(" "));
   }
+  /* …AND THE THREE WAYS TO GROW THE BAND WEAR THE SAME MARKS. "+ line" was
+     the widest thing in this strip after "◈ performance" and the three of them
+     together were 206.6px of the 366 a phone leaves — the second line, more or
+     less exactly. They are a PLUS and the KIND's own glyph now, which is the
+     one composition in the row that has to be read as two things: what you are
+     about to do, and what you are about to do it to. The full words are still
+     the accessible names and still the `.nu-vh` text, so nothing was deleted —
+     `+ line`, `+ bass`, `+ drums` is what this strip reads as with the
+     stylesheet off, exactly as before. `data-k` is UNCHANGED: test/shell.js
+     hires a drummer through `[data-k="adddrums"]` and focus is put back across
+     a redraw by that key (PROGRAM.md §2.2), so the keys may not move because
+     the faces did. */
   const offer = [["line", "+ line"]];
   if (!BASSV()) offer.push(["bass", "+ bass"]);
   if (!DRUMV()) offer.push(["drums", "+ drums"]);
   for (const [kind, label] of offer) {
-    const add = document.createElement("button");
-    add.type = "button";
-    add.dataset.k = kind === "line" ? "addvoice" : "add" + kind;
-    add.append(el("span", label));
+    const add = icon({
+      k: kind === "line" ? "addvoice" : "add" + kind,
+      glyph: "+" + kindGlyph(kind),
+      word: label,
+      say: label + " — hire another player and give them their own tab",
+    });
     add.addEventListener("click", () => { addVoice(kind); push(); draw(); });
     bar.append(add, document.createTextNode(" "));
   }
@@ -8331,11 +8417,30 @@ function tabsRow() {
   tabRow = bar;
   bar.textContent = "";
   tabBtn.clear();
+  /* NINE MARKS, AND THE OPEN ONE KEEPS ITS WORD (Paul, 2026-08-28: "Please
+     make all the tabs and top buttons into sensible icons to save space").
+     `GLYPH.tab` in ui/glyph.js is keyed by the same nine words `TABS` owns and
+     carries the argument for each mark; a tab renamed there and not here draws
+     nothing rather than the wrong thing, which is the failure you can see.
+
+     THE ROW IS STILL TWO LINES AT 390 AND NO ARRANGEMENT COULD MAKE IT ONE:
+     nine 44px targets are 396px against the 366 a 390px phone leaves, before a
+     single gap. So this row does not spend its saving on a line — it spends it
+     on a UNIFORM TARGET (every tab was between 38.9 and 70.9px and every tab
+     is 44 now) and on the open tab's word, which the row could not afford
+     before and can now. One labelled tab in a row of pictures is what tells a
+     first-time reader what the pictures are; nu.css's `.nu-vh`-undoing rule is
+     unconditional for `#toptabs` and only above 700px for the four nested
+     rows, where the word is what costs a second line. */
   for (const [name] of TABS) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.dataset.k = "toptab-" + name;
-    b.append(el("span", name));
+    const t = GLYPH.tab[name] || {};
+    const b = icon({
+      k: "toptab-" + name,
+      glyph: t.g || "•",
+      word: name,
+      say: t.s,
+      on: name === openTab,
+    });
     b.addEventListener("click", () => showTab(name));
     bar.append(b, document.createTextNode(" "));
     tabBtn.set(name, b);
@@ -8344,12 +8449,9 @@ function tabsRow() {
 }
 function paintTabs() {
   for (const [name, b] of tabBtn) {
-    const on = name === openTab;
-    b.setAttribute("aria-pressed", String(on));
-    const want = on ? "MARK" : "SPAN";
-    if ((b.firstChild || {}).tagName === want) continue;
-    b.textContent = "";
-    b.append(el(on ? "mark" : "span", name));
+    const t = GLYPH.tab[name] || {};
+    paintIcon(b, { glyph: t.g || "•", word: name, say: t.s,
+                   on: name === openTab });
   }
 }
 
@@ -8724,7 +8826,63 @@ function shareCard(grid) {
 /* ---------- transport ---------- */
 const playBtn = $("play"), volEl = $("vol"),
       rewriteBtn = $("rewrite"), takeBtn = $("take");
-const say = (onNow) => { playBtn.textContent = (onNow || playing) ? "stop" : "play"; };
+/* ===== THE TRANSPORT WEARS MARKS (2026-08-28) ============================
+   Paul: *"Please make all the tabs and top buttons into sensible icons to save
+   space."* The strip is the one row on this page that may not wrap — `.nu-bar`
+   is `flex-wrap: nowrap` and `--bar-h` is a PROMISE the tab row's `top`
+   depends on — so its saving is not a line, it is WIDTH: 160.3px of button ink
+   became 132.0, and the 28px went to the room slider, which is the control in
+   here that had been squeezed to its 4em floor.
+
+   ▶ AND ■ ARE ONE BUTTON IN TWO STATES, which is the tri-state play button's
+   own law unchanged: "the word on it is the NEXT tap". The mark moves with the
+   word, so ■ means "stop it" exactly as the word did, and `say()` is still the
+   only thing that writes it. `aria-label` moves with it too — a screen reader
+   is told "stop", never "black square" — and the `.nu-vh` word underneath is
+   what the strip reads as with the stylesheet off: "play rewrite take room",
+   as before.
+   THE CLOCK MAY STILL FLIP IT, and that is the one write from the transport
+   this page has always allowed (ideal/composer.html annotation 5: "the clock
+   may move that line and the sentence beside the play button; it may not press
+   a button"). Nothing about who writes changed here; only what is drawn. */
+const paintPlay = (onNow) => {
+  const a = (onNow || playing) ? GLYPH.act.stop : GLYPH.act.play;
+  paintIcon(playBtn, { glyph: a.g, word: a.w, say: a.s });
+};
+const say = (onNow) => paintPlay(onNow);
+paintIcon(takeBtn, { glyph: GLYPH.act.take.g, word: GLYPH.act.take.w,
+                     say: GLYPH.act.take.s });
+say();
+/* #rewrite IS PAINTED BY HAND BECAUSE IT CARRIES A READOUT. `paintIcon` empties
+   the button, and this one holds `<b id="reading">` — the seed, printed on the
+   gesture that moves it (Paul, 2026-08-27: "I clicked rewrite multiple times
+   and never saw a different seed"). So the face is PREPENDED and the digit is
+   left exactly where it was, with its literal space still a real text node
+   between them: with the stylesheet off this button reads "↻rewrite 5" and not
+   "rewrite5", which is the joining bug the note over #rewrite in
+   nukernel/index.html measured through CDP and fixed once already.
+   AND THE ACCESSIBLE NAME KEEPS THE NUMBER. It used to be assembled from the
+   content ("rewrite 5"); an `aria-label` would have frozen it at "rewrite", so
+   `printReading` writes both — one number, two places, one writer. */
+(() => {
+  const a = GLYPH.act.rewrite, rd = $("reading");
+  const box = el("span", null, "nu-ic");
+  const g = el("span", a.g, "nu-g");
+  g.setAttribute("aria-hidden", "true");
+  box.append(g, el("span", a.w, "nu-vh"));
+  while (rewriteBtn.firstChild && rewriteBtn.firstChild !== rd)
+    rewriteBtn.removeChild(rewriteBtn.firstChild);
+  rewriteBtn.prepend(box, document.createTextNode(" "));
+  rewriteBtn.dataset.say = a.s;
+  // the name before the first reading lands (`printReading()` runs at boot,
+  // below, and replaces this with "rewrite 1")
+  rewriteBtn.setAttribute("aria-label", a.w);
+})();
+/* AND THE EXPLAINER IS WIRED ONCE, HERE, FOR THE WHOLE PAGE. One delegated set
+   of listeners on `document` (ui/glyph.js `wireSay`), so a row that grows a tab
+   grows an explainer by saying `data-say` and nothing else — no view installs a
+   handler of its own and no rebuild can leave one behind. */
+wireSay();
 playBtn.addEventListener("click", () => {
   if (playing) { stop(); say(false); } else { startAt(0); say(true); }
 });
@@ -8814,7 +8972,12 @@ const startNow = () => { startAt(0); say(true); };
    said nothing until you pressed it would be the readout Paul was missing. */
 const readingEl = $("reading");
 const printReading = () => {
-  if (readingEl && ATLAS) readingEl.textContent = String(ATLAS.reading());
+  if (!readingEl || !ATLAS) return;
+  const n = String(ATLAS.reading());
+  readingEl.textContent = n;
+  // the name a screen reader hears, and it is the same number: see the
+  // hand-painted face above for why this is written rather than inherited.
+  rewriteBtn.setAttribute("aria-label", GLYPH.act.rewrite.w + " " + n);
 };
 on("box", printReading);
 

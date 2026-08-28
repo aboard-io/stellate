@@ -1528,24 +1528,23 @@
       // reg 1, and every voice past the second sits centred at 0.
       reg: v => Math.max(0, 1 - v),
       realize: v => (v === 0 ? "pad" : "line"),
-      // FIVE CHAIRS GET SEATED, NOT TWO, and `partOf` reads this table MODULO
-      // its length — so two entries were dealing stab/lead/stab/lead/stab
-      // across the singer and the two guests a precomposed record adds. That
-      // put the backing choir in chordLock beside the poly, and it stacked
-      // PARTS.lead's +12 on top of a layer's own +1 register and sent the
-      // guest riff to E5..F#6, screaming an octave over the piano. THE ANCHOR
-      // NAMES THE TWO CHAIRS IT OWNS AND GIVES EVERY GUEST ONE NEUTRAL ROLE.
-      // It stays an ARRAY — precompose reads `G.part[v]` to name the two base
-      // chairs, and a function form silently renamed them "pad"/"voice" — but
-      // the tail entries are all `counter` rather than a per-slot casting,
-      // because the guest ORDER is not stable across seeds (seed 3 seats the
-      // riff where seed 1 seats the singer), so a positional table sooner or
-      // later puts a vocalist in `riff` at ctr 48 and a guitar in `lead` at
-      // ctr 84. `counter` is register-NEUTRAL (PARTS.counter has no ctr), so
-      // every guest keeps exactly the octave its own part-genre asked for,
-      // which is what all 92 partless anchors already do — and it leaves the
-      // piano as the top line of the record, which is "melody in piano".
-      part: ["stab", "lead", "counter", "counter", "counter"],
+      // THE ANCHOR NAMES THE TWO CHAIRS IT OWNS, and that is the whole of it
+      // (2026-08-28; this read ["stab","lead","counter","counter","counter"]
+      // for three days). The three trailing `counter`s were padding against a
+      // fault that is now fixed at its source: `partOf` read this table MODULO
+      // its length, so two entries dealt stab/lead/stab/lead/stab across the
+      // singer and the two guests a precomposed record adds — the backing
+      // choir landed in chordLock beside the poly, and PARTS.lead's +12 on top
+      // of a layer's own +1 register sent the guest riff to E5..F#6, screaming
+      // an octave over the piano. Lengthening the array bought house alone out
+      // of it while rock's guest still read as a `riff` and cumbia's voices
+      // 3-5 still wrapped onto 0-2. kernel.js partOf now REFUSES to wrap and
+      // document.js hands the kernel each chair's own `cast.part`, so a guest
+      // is cast by the anchor it came from and these three entries address
+      // nobody: house seats two chairs and `G.voices` says two. Byte-identical
+      // to the padded form — the entries past the second were unreachable the
+      // moment the wrap went.
+      part: ["stab", "lead"],
       roots: [1, 4, 0, 5], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       prog: [{ d: 1, q: "7" }, { d: 4, q: "7" }, { d: 0, q: "7" }, { d: 5, q: "7" }],

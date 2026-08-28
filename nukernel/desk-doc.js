@@ -41,27 +41,27 @@
   const soundOf = (doc) => (doc && doc.sound) || {};
 
   /* ---------- THE ADDRESS -------------------------------------------------
-     THE CHAIR KEY IS THE ADDRESS, and it is NOT the document's `cast.part`.
-     ui/eight.js hands the kernel `realize`, never `part` (document.js toGenre),
-     so kernel.js:1140 partOf answers "pad" or "line" and nothing else — a voice
-     the document calls a `counter` is addressed `line2`. Adding `g.part` would
-     fix the name and MOVE THE MUSIC (kernel.js:1387 applies PARTS' ctr ±12 and
-     maxHold), so the name stays wrong here and the BOARD prints the voice's own
-     name instead. desk-gate G2 pins this walk to audio/desk.js voiceRoster's,
-     because a drift between them silently re-addresses every stored entry.
+     THE CHAIR KEY IS THE ADDRESS, AND IT IS THE DOCUMENT'S `cast.part`
+     (2026-08-28, REVERSING what stood here). What stood here said the opposite,
+     and said why: "ui/eight.js hands the kernel `realize`, never `part`, so
+     partOf answers pad-or-line and a voice the document calls a `counter` is
+     addressed `line2`. Adding `g.part` would fix the name and MOVE THE MUSIC,
+     so the name stays wrong here." Both halves of that are now settled the
+     other way. document.js toGenre hands the kernel `part: v =>
+     lines[v].cast.part`, so the chair the document casts IS the chair the
+     kernel plays — 421 of 1081 seated chairs were addressed as a role nobody
+     was playing, and the wrap this file copied ("part[v % part.length]") was
+     the fault, not the workaround. The music it would have moved has moved,
+     deliberately, in the same round.
 
-     `GENRES` is optional and is read for ONE thing: a basis genre that declares
-     its own `part` scheme. toGenre spreads the whole anchor before it overrides
-     `realize`, so partOf reads that scheme when there is one — reproducing it
-     here is derivation; assuming "pad-or-line" would be a second source of
-     truth that happens to agree on today's catalog. */
-  function chairsOf(doc, GENRES) {
-    const lines = LINES(doc);
-    const g = (GENRES && GENRES[doc.basis]) || {};
-    const partAt = (v) => (g.part
-      ? (typeof g.part === "function" ? g.part(v) : g.part[v % g.part.length])
-      : (lines[v].cast && lines[v].cast.part === "pad" ? "pad" : "line"));
-    return F.chairKeys(lines.map((c, v) => partAt(v)));
+     So this reads the ONE owner of the fact and derives nothing: no anchor
+     lookup, no wrap, no pad-or-line assumption. `GENRES` stays in the
+     signature — every caller passes it and the parameter is part of the
+     published shape — and is no longer consulted. desk-gate G2 still pins this
+     walk to audio/desk.js voiceRoster's, because a drift between them silently
+     re-addresses every stored entry. */
+  function chairsOf(doc, GENRES) {          // eslint-disable-line no-unused-vars
+    return F.chairKeys(LINES(doc).map((c) => (c.cast && c.cast.part) || "line"));
   }
 
   // THE ONE WALK. Every other function here reads it, so the board's columns,

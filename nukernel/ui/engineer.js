@@ -106,6 +106,14 @@ import { gid } from "./derive.js";
 // `sheet` and ui/produce.js still calls it, so the widget lives; what ended is
 // this file's need for it.
 import { selectEl } from "./selects.js";
+// THE MARKS ON THE TABS (2026-08-28). THIS FILE REFUSED THE GLYPHS ONCE AND
+// SAID SO — see THE TAB ROW below: "THE GLYPHS STAY IN eight.js … copying
+// three characters here would be that drift again, so a board tab wears the
+// voice's NAME." That refusal was right about the hazard and wrong about the
+// only available fix; Paul asked for marks on every tab row on the page
+// (2026-08-28), so the table was EXTRACTED out of ui/eight.js into ui/glyph.js
+// and this file reads the same three characters rather than copying them.
+import { GLYPH, kindGlyph, sayVoice, icon, paintIcon } from "./glyph.js";
 
 const el = (tag, text, cls) => { const n = document.createElement(tag);
   if (text != null) n.textContent = text; if (cls) n.className = cls; return n; };
@@ -695,12 +703,30 @@ export function mount(parent, ctx) {
      `role="tablist"` with a `role="tabpanel"` to point at, and this page has
      no such construct anywhere.
 
-     THE GLYPHS STAY IN eight.js. The band's tabs draw `glyphOf(name)` off
-     `KINDGLYPH`, which is a private table in ui/eight.js with a comment on it
-     about the last time it was copied ("the glyphs used to be keyed by NAME…
-     that fix left a second table behind it"). Copying three characters here
-     would be that drift again, so a board tab wears the voice's NAME, which is
-     the same word `.nu-sname` prints at the top of the strip it opens.
+     THE GLYPHS STAYED IN eight.js UNTIL 2026-08-28, AND THE ARGUMENT THAT KEPT
+     THEM THERE IS KEPT HERE BECAUSE IT WAS RIGHT ABOUT THE HAZARD. It read:
+     "The band's tabs draw `glyphOf(name)` off `KINDGLYPH`, which is a private
+     table in ui/eight.js with a comment on it about the last time it was
+     copied ('the glyphs used to be keyed by NAME… that fix left a second table
+     behind it'). Copying three characters here would be that drift again, so a
+     board tab wears the voice's NAME, which is the same word `.nu-sname`
+     prints at the top of the strip it opens."
+
+     WHAT ENDED IT is Paul, 2026-08-28: *"Please make all the tabs and top
+     buttons into sensible icons to save space. Voice 2 for example could be
+     more symbol plus the number 2."* Every tab row on the page, drawn by four
+     different files. A table two files cannot both read is a table that gets
+     copied, so it was EXTRACTED rather than copied: `KINDGLYPH`, `FORMGLYPH`
+     and `PERFGLYPH` are the `kind` and `song` columns of `GLYPH` in
+     ui/glyph.js now, character for character, and both rows import the same
+     three marks. The paragraph's real claim — one owner, never a second copy —
+     is what the move preserves.
+     AND THE NAME IS STILL ON THE TAB. It is the button's `aria-label` and its
+     `.nu-vh` word, so it is what a screen reader hears and what this strip
+     reads as with the stylesheet off; it is still the same word `.nu-sname`
+     prints at the top of the strip it opens, and above 700px it is printed on
+     the open tab again (nu.css). What it stopped being is the visible face on
+     a phone, which is what cost the row its third line.
 
      WHICH TAB IS OPEN IS A PAGE FACT AND KEYED BY NAME. `BOARDTAB` is a module
      `let` — it survives every redraw of the board (mount() runs on every edit)
@@ -1135,13 +1161,21 @@ export function mount(parent, ctx) {
      the half of the old rack argument that was right (a record-level fact
      must not read as a per-voice gesture): the four bus tabs sit in their own
      `role="group"` inside the row, labelled "the bus series", and that group
-     is `flex-basis: 100%` so it always begins its own line. MEASURED at 390 on
-     the shipped chant (two voices): the voice tabs are one line of 2×83px, and
-     the bus group is TWO lines — its four buttons plus three arrows measure
-     more than the 366px the row has, so it would have wrapped anyway; the
-     group costs nothing it was not already going to spend, and buys a break
-     that is always in the same place. At 1280 the voices take one line and the
-     series takes one, which is exactly the picture. A row that WRAPS is the
+     is `flex-basis: 100%` so it always begins its own line.
+     RE-MEASURED 2026-08-28, WHEN THE TABS BECAME MARKS, and the numbers moved
+     while the argument did not. It read: "MEASURED at 390 on the shipped chant
+     (two voices): the voice tabs are one line of 2×83px, and the bus group is
+     TWO lines — its four buttons plus three arrows measure more than the 366px
+     the row has, so it would have wrapped anyway; the group costs nothing it
+     was not already going to spend, and buys a break that is always in the
+     same place." The wrap it was paying for is GONE: at 390 the voice tabs are
+     one line of 2×44px and the bus group is now ONE line (4×44 plus its three
+     arrows and its "the strips feed" label fit inside 366), so the whole row
+     is two lines instead of three — 147.17px to 96.78px. The GROUP still earns
+     its keep, and now for the reason that was always the better one: the break
+     between the players and the series is in the same place at every width,
+     whether or not the width forces it. At 1280 the voices take one line and
+     the series takes one, which is still exactly the picture. A row that WRAPS is the
      whole of the no-sideways-scroll law here (`.nu-row` is `flex-wrap: wrap`,
      nu.css) and desk-gate G13 measures the document, the row and the panel to
      prove none of the three grows sideways at either width.
@@ -1189,9 +1223,41 @@ export function mount(parent, ctx) {
   // renamed row is renamed on the tab by existing. `main` is not a BUSROWS row
   // (it is where the series ends), so it is the one word this file spells.
   const busLabel = (k) => (BUS_FIELDS.find((b) => b.bus === k) || {}).label || k;
-  const TABS = names.map((n) => ({ kind: "voice", key: n, label: n }))
-    .concat(busKeys.map((k) => ({ kind: "bus", key: k, label: busLabel(k) })))
-    .concat([{ kind: "bus", key: "main", label: "main" }]);
+  /* A MARK AND A NUMBER ON EVERY TAB IN THIS ROW (Paul, 2026-08-28: "Voice 2
+     for example could be more symbol plus the number 2").
+
+     A VOICE tab takes the KIND's mark and the voice's place in the RECORD's
+     roster — `doc.voices`, not the channel walk this row is built from. That
+     is deliberate and it is the one number in here that is read off a
+     different list than everything else: `channelVoicesOf` orders lines, then
+     bass, then drums, and DROPS a kit that has not been hired, so a number
+     taken from it would make the same player voice 2 on the board and voice 3
+     in the band. One roster, one number, both screens (ui/glyph.js sayVoice).
+
+     A BUS tab takes its own mark and its STAGE — 1 genre fx, 2 delay, 3
+     reverb, 4 main — which is the series' own numbering, the one the four
+     shipped positional names already use ("bus 1".."bus 4"). The `→` glyphs
+     between them stay: they draw the chain from every tab, including a
+     voice's, which is the thing a hand riding a send needs.
+
+     THE WORD IS UNTOUCHED AS A FACT. `busLabel` is still the registry's own
+     label and this file still spells only `main` — "a renamed row is renamed
+     on the tab by existing" — and the label is now the button's `aria-label`
+     and its `.nu-vh` text instead of its visible face below 700px. */
+  const roster = (doc.voices || []);
+  const TABS = names.map((n) => {
+      const v = roster.find((x) => x.name === n) || {};
+      const i = roster.indexOf(v) + 1;
+      return { kind: "voice", key: n, label: n,
+               glyph: kindGlyph(v.kind), num: i || null,
+               say: sayVoice(n, v.kind, i || "?", roster.length) };
+    })
+    .concat(busKeys.map((k, i) => ({ kind: "bus", key: k, label: busLabel(k),
+      glyph: (GLYPH.bus[k] || {}).g || "•", num: i + 1,
+      say: (GLYPH.bus[k] || {}).s || busLabel(k) })))
+    .concat([{ kind: "bus", key: "main", label: "main",
+      glyph: GLYPH.bus.main.g, num: busKeys.length + 1,
+      say: GLYPH.bus.main.s }]);
   const busTabs = TABS.filter((t) => t.kind === "bus");
   // the open tab survives a redraw; a voice that left the bank does not.
   if (!TABS.some((t) => t.kind === BOARDTAB.kind && t.key === BOARDTAB.key))
@@ -1206,9 +1272,8 @@ export function mount(parent, ctx) {
   const markTabs = () => {
     for (const t2 of tabBtns) {
       const on = t2.tab.kind === BOARDTAB.kind && t2.tab.key === BOARDTAB.key;
-      t2.b.setAttribute("aria-pressed", String(on));
-      t2.b.textContent = "";
-      t2.b.append(on ? el("mark", t2.tab.label) : el("span", t2.tab.label));
+      paintIcon(t2.b, { glyph: t2.tab.glyph, num: t2.tab.num,
+                        word: t2.tab.label, say: t2.tab.say, on });
     }
   };
   // REBUILDS THE PANEL AND NOTHING ELSE — which is what makes "switching tabs
@@ -1240,13 +1305,16 @@ export function mount(parent, ctx) {
     }
   };
   const tabBtn = (t) => {
-    const b = document.createElement("button");
-    b.type = "button";
     // KEYED `boardtab|<kind>|<name>`, 2026-08-27 (it was `boardtab-<name>`
     // while only voices had tabs). The page's own scoping convention — the
     // strips key `b|rev|cantor` the same way — and it is what keeps a voice
-    // called `main` from claiming the main plate's tab.
-    b.dataset.k = "boardtab|" + t.kind + "|" + t.key;
+    // called `main` from claiming the main plate's tab. THE KEY DID NOT MOVE
+    // WHEN THE FACE DID (2026-08-28): nukernel/desk-gate.js drives this whole
+    // row by `[data-k="boardtab|…"]` and always did, which is exactly what
+    // those attributes are for.
+    const b = icon({ k: "boardtab|" + t.kind + "|" + t.key,
+      glyph: t.glyph, num: t.num, word: t.label, say: t.say,
+      on: t.kind === BOARDTAB.kind && t.key === BOARDTAB.key });
     b.addEventListener("click", () => {
       if (t.kind === BOARDTAB.kind && t.key === BOARDTAB.key) return;
       BOARDTAB = { kind: t.kind, key: t.key };

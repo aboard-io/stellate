@@ -57,8 +57,10 @@
     solo_vox: "one singer", synth_voice: "a synth voice",
     space_voice: "a breathy vocal pad",
   };
-  const REG = { low: { w: "down low", v: -1 }, mid: { w: "where it sits", v: 0 },
-                high: { w: "up high", v: 1 } };
+  // ONE OWNER, 2026-08-28 (chair.js REG3) — see the note there. Byte-for-byte
+  // ideas-kit's table before this line; the guitarist's and the keys player's
+  // stay their own, because those two genuinely differ.
+  const REG = C.REG3;
   // AT THE MIC. Four words, and two of them are new because the singer was the
   // one chair with nothing to say about the instrument itself.
   //   `voice` is WHOSE THROAT — the five formant tables the parent has carried

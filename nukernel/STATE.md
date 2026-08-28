@@ -22,7 +22,7 @@ worker):
 | lane gains | `to-engine.js` LEVEL_LANES | ×2.2 / ×2.8 | **yes — the biggest lever measured** |
 | `GLUES`' makeup, `CEILINGS`' push | `fields.js` | 1.2–2.2, 1.7/2.6 | **no.** `resolveMaster` has no caller; both render bit-identical when zeroed |
 | per-voice strip `sat`/`satMix` | state-engine STRIP_PROFILES | .15–.34 | **no authority.** `sat: 0` and `sat: 1, satDrive: 12, satMix: 1` both land within 0.14 dB |
-| `instruments.js` STRIPS (14 families) | `nukernel/instruments.js` | — | **never handed to the engine.** `SE.pitchedUnit` writes `strip: stripFor(...)` from the PARENT's three-profile table; a record with a harpsichord, two guitars and a choir carried only `lead`/`pad`/`drum` values |
+| `instruments.js` STRIPS (14 families) | `nukernel/instruments.js` | — | **WIRED 2026-08-28** (was: never handed to the engine). `to-engine.js` `recipeBase` carries the family strip over as `m.strip`; the parent's `stripFor` takes it as the base, REPLACING the role profile, for every pitched non-bass sampled voice. Reaches 8 families over 139 of 204 records (keys 53 chairs, guitar 53, strings 47, brass 32, reed 28, organ 21, bowed 10, mallet 4). Band move on 6 spanning records: 300–3k −0.04…+1.36 dB, 2–8k −1.10…+0.14 dB, peak −0.01…+0.72 dB, no new clipping. `dirty` and `vox` still reach nothing — their ids resolve to MODELS (stk_guitar, voice_choir), not to the sampler |
 
 **THE MECHANISM.** Five of the six records peaked between −3.16 and −4.09 dBFS
 — *inside the soft clip's knee, within 1.2 dB of its asymptote*. The proof it

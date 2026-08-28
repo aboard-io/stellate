@@ -421,5 +421,27 @@
 <script src="atlas.js"></script>
 <script src="atlas-land.js"></script>
 <script type="module" src="ui/eight.js"></script>
+
+<!-- THE EXPLAINER'S ONE BOX (Paul, 2026-08-28: "Provide a simple long tap or
+     hover tooltip to explain what they are"). Every tab on this page is a
+     glyph now, and a glyph that a person cannot read is a control with no
+     name; ui/glyph.js fills this on hover and on a 450ms hold and empties it
+     on Escape, on a scroll and on the next press.
+
+     IT SHIPS HERE, EMPTY, AND THAT IS THE WHOLE ARGUMENT FOR IT BEING IN THIS
+     FILE. Three separate promises are structural rather than remembered:
+       · it is OUTSIDE #app, so draw() cannot destroy it mid-explanation and
+         `window.__eightFrozen` never sees it — the same reason #engine and the
+         atlas are outside (see their notes above);
+       · it is outside every `[data-live]` subtree, so the clock can never
+         write here and the "playback mutates nothing outside [data-live]"
+         claim is untouched by a popover being open while the record plays;
+       · it is LAST in <body> and `position: fixed` (nu.css), so it is
+         positioned and never inserted into flow — opening one cannot reflow a
+         row under a thumb, which is the failure a tooltip would otherwise be.
+     `hidden` while shut, so the text diet never counts words nobody can see,
+     and `role="tooltip"` with nothing focusable in it, because it is an
+     explanation and not a control. -->
+<div id="nu-say" role="tooltip" class="nu-say" hidden></div>
 </body>
 </html>

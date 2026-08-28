@@ -719,7 +719,12 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
       <p class="why">An unreachable control goes faint <b>with its reason printed</b> — one
       line, measured, riding the control as <span class="data">data-why</span> for gates and
       screen readers alike. Faint is not hidden: the control keeps its place, its label, and
-      its shape. No tooltips, ever — a finger cannot hover.</p>
+      its shape. A REFUSAL STILL NEVER GOES IN A TOOLTIP, and that half of the
+      old sentence is the half that binds: the reason is on the page, printed, always.
+      (This read "No tooltips, ever &mdash; a finger cannot hover." Rewritten 2026-08-28 with
+      voice rule 5 below: there ARE explainers now, on hover and on a long press, and a
+      reason is still not one of them &mdash; a reason a reader has to go looking for is a
+      silent grey, which is this page's named bug.)</p>
     </div>
 
     <!-- data-live -->
@@ -782,8 +787,25 @@ footer { margin-top: var(--s7); border-top: var(--bw) solid var(--ink);
     <li><p><b>Only the clock speaks in time,</b> and only inside
       <span class="data">[data-live]</span>. No other text on the page may change while the
       record plays.</p></li>
-    <li><p><b>No tooltips.</b> A tooltip is information hidden from a finger. Anything worth
-      saying is on the page; anything not worth the space is deleted.</p></li>
+    <li><p><b>An explainer answers a thumb as well as a mouse.</b> Paul, 2026-08-28:
+      <i>"Please make all the tabs and top buttons into sensible icons to save space &hellip;
+      Provide a simple long tap or hover tooltip to explain what they are."</i>
+      A glyph that a person cannot read is a control with no name, so every mark carries its
+      full word in <span class="data">aria-label</span> and in a
+      <span class="data">.nu-vh</span> span, and one clause of context opens on
+      <b>hover</b> for a mouse and on a <b>450ms long press</b> for a thumb. Escape closes it,
+      and so does the next press. It is <span class="data">position: fixed</span>, so it is
+      positioned and never inserted into flow &mdash; it cannot move a row under a finger.
+      Never the native <span class="data">title</span> attribute alone: that one never fires
+      on touch at all.
+      <span class="eg"><s>No tooltips. A tooltip is information hidden from a finger. Anything
+      worth saying is on the page; anything not worth the space is deleted.</s></span>
+      THE STRUCK SENTENCE IS KEPT BECAUSE ITS REASONING IS WHAT WROTE THE NEW RULE. The
+      objection was never to the explanation; it was to the <b>hover</b>, a mouse-only gesture
+      on a page whose reader has a thumb. Answer the thumb and the objection is met. What did
+      not change: nothing a reader NEEDS is in there &mdash; not a refusal, not a state, not a
+      number. An explainer adds context to a control that already names itself, and anything
+      not worth the space is still deleted.</p></li>
     <li><p><b>A sentence must carry state no control shows.</b> Otherwise it goes.
       <span class="eg">looping hook &mdash; tb303 &nbsp;&middot;&nbsp; riding &minus;3.2 dB seated</span></p></li>
   </ol>

@@ -1147,16 +1147,18 @@
   // it (audio/desk.js's "what has no home" note), so these are half-places and
   // not hard ones.
   //
-  // COUNTED ON THE CAST, NOT ON THE ADDRESS, and the difference is real: this
-  // walk groups by `cast.part`, while desk-doc.js chairsOf re-derives the role
-  // by CYCLING the anchor's `part` scheme (`g.part[v % g.part.length]`) and can
-  // therefore call the second `lead` of this record `stab2`. Measured in the
-  // browser on Kingston: the vocal is the second lead here and the board's
-  // second stab there. It does not matter and must not be "fixed" by copying
-  // the address in — the entry lives ON THE VOICE, so it reaches that voice's
-  // channel whatever the channel is called, and what this row is deciding is
-  // a musical fact (two people playing the same role) rather than a routing
-  // one. desk-doc's own header says why the address is not `cast.part`.
+  // COUNTED ON THE CAST, AND SO IS THE ADDRESS NOW (2026-08-28). This said the
+  // two were different on purpose: "this walk groups by `cast.part`, while
+  // desk-doc.js chairsOf re-derives the role by CYCLING the anchor's `part`
+  // scheme (`g.part[v % g.part.length]`) and can therefore call the second
+  // `lead` of this record `stab2` … it does not matter and must not be
+  // 'fixed'". It was right that the entry lives ON THE VOICE and reaches its
+  // channel whatever the channel is called, and right that this row decides a
+  // musical fact rather than a routing one. It was wrong about the cycling,
+  // which was the wrap bug — measured in the browser on Kingston, the vocal
+  // was the second lead here and the board's second stab there, and the board
+  // was naming a role nobody played. chairsOf now reads `cast.part` too, so
+  // the two walks group by the same fact and Kingston's board says `lead2`.
   const CHAIRPAN = ["hl", "hr"];
   // A DRUM MACHINE HAS NO ROOM. `room` is bus 3 and bus 3 folds into bus 1
   // (audio/desk.js:908), so this is the kit asking for a little more of the
@@ -1348,19 +1350,19 @@
     drone: 1,
   };
 
-  // kernel.js:1387 is `ctr = 60 + 12 * g.reg(v) + (pol.ctr || 0)`, and `pol`
-  // is consulted ONLY when the genre declares a `part` scheme — which is what
-  // document.js toGenre carries through by spreading the anchor (desk-doc.js:45
-  // says the same thing from the other end: the document hands the kernel
-  // `realize`, never `part`). The index is the LINE index and the lookup wraps,
-  // exactly as partOf does, so a layer seated past the end of a short `part`
-  // array is measured where the kernel will actually play it.
-  const partCtrOf = (G, v) => {
-    if (!G.part) return 0;
-    const p = typeof G.part === "function" ? G.part(v) : G.part[v % G.part.length];
-    return (K.PARTS[p] || {}).ctr || 0;
-  };
-  const centreOf = (G, v, reg) => 60 + 12 * reg + partCtrOf(G, v);
+  // THE LEAN IS THE CHAIR'S, NOT THE INDEX'S (2026-08-28; this took `(G, v)`
+  // and re-derived the part from the anchor's array, wrapping "exactly as
+  // partOf does"). Both halves of that were wrong. The wrap dealt a borrowed
+  // role past the end of a short sheet — a LAYER, seated after the whole base
+  // cast, was measured against whatever name the host's array wrapped onto,
+  // which is not the part the guest brings and not the part the kernel plays.
+  // And the wrap itself is gone from kernel.js partOf. So this takes the PART
+  // the chair is actually cast in — the same `cast.part` the document writes
+  // and toGenre now hands the kernel — and asks kernel.js for its lean, which
+  // makes this file's centre arithmetic a reading of the kernel's rather than
+  // a copy of it.
+  const partCtrOf = (part) => 12 * K.partLean(part);
+  const centreOf = (part, reg) => 60 + 12 * reg + partCtrOf(part);
 
   /** A CHAIR IS NOT TOLD TWICE TO GET DOWN. `KINDS.riff` and `KINDS.seq` say
    *  "low" (-1 octave) and kernel.js PARTS.riff / PARTS.drone say `ctr: -12`
@@ -1370,7 +1372,7 @@
    *  this. Where the KERNEL is going to drop the chair, the word does not say
    *  it again; on the 104 anchors that declare no `part` scheme the word is
    *  the only statement there is and it stands untouched. */
-  const sayOnce = (G, v, w) => (w < 0 && partCtrOf(G, v) < 0 ? 0 : w);
+  const sayOnce = (part, w) => (w < 0 && partCtrOf(part) < 0 ? 0 : w);
 
   // AND THERE IS A LID ON IT. Lifting a cast that is already four octaves
   // wide would put a sung `lead` (PARTS.lead is another +12) at MIDI 96 — a
@@ -1384,18 +1386,18 @@
   const floorCtrOf = (G, gk) =>
     36 + 12 * (+G.bassReg || 0) + (SUBTERRANEAN[gk] ? 0 : 12);
   /** The lowest register this chair may be written at, in the kernel's units. */
-  const floorRegOf = (G, gk, v) => (G.nobass ? -4
-    : Math.ceil((floorCtrOf(G, gk) - 60 - partCtrOf(G, v)) / 12));
+  const floorRegOf = (G, gk, part) => (G.nobass ? -4
+    : Math.ceil((floorCtrOf(G, gk) - 60 - partCtrOf(part)) / 12));
 
   /** How far the whole cast comes up so that no chair sits under the bass —
    *  one number for the record, capped by the headroom over its top chair.
    *  0 for the 24 `nobass` anchors, where the low chair IS the bass. */
-  function regLift(G, gk, raw) {
+  function regLift(G, gk, raw, parts) {
     if (G.nobass) return 0;
     const floor = floorCtrOf(G, gk);
     let need = 0, head = Infinity;
     for (let v = 0; v < raw.length; v++) {
-      const c = centreOf(G, v, raw[v]);
+      const c = centreOf(parts[v], raw[v]);
       need = Math.max(need, Math.ceil((floor - c) / 12));
       head = Math.min(head, Math.floor((CEILING - c) / 12));
     }
@@ -1403,8 +1405,19 @@
   }
   /** The register one chair is written at: the record's lift, then the floor,
    *  then the clamp this file has always ended on. */
-  const regAt = (G, gk, v, raw, lift) =>
-    Math.max(-4, Math.min(3, Math.max(raw + lift, floorRegOf(G, gk, v))));
+  const regAt = (G, gk, part, raw, lift) =>
+    Math.max(-4, Math.min(3, Math.max(raw + lift, floorRegOf(G, gk, part))));
+  /** WHAT THE CHAIR SHOWS IS WHAT THE CHAIR PLAYS. `regAt` answers the BASE
+   *  register the arithmetic above reasons in; the sounding centre is that
+   *  plus the part's lean (`centreOf`), and until today the document wrote
+   *  down the base and the box played the centre — merengue's lead read -2 on
+   *  the chair and sang at MIDI 48, which is -1. 319 of 1081 seated chairs
+   *  disagreed with themselves that way. `cast.reg` is now the SOUNDING
+   *  register, one number, and document.js toGenre hands the kernel back the
+   *  base it implies (K.partLean, the same table this reads). The sound does
+   *  not move: base + lean is what the centre always was. */
+  const seatRegAt = (G, gk, part, raw, lift) =>
+    regAt(G, gk, part, raw, lift) + K.partLean(part);
 
   /* ======================================================================
      8 · genreToDocument — the whole record
@@ -1601,16 +1614,29 @@
        first, then the layers, which is the order they are pushed below and
        therefore the index kernel.js reads them at. `regLift` turns that list
        into one number; § 7b has the rule and the reason. */
+    // WHAT EACH CHAIR IS CAST AS, decided ONCE, before anything measures where
+    // it sits (2026-08-28). The two loops below each used to re-derive this at
+    // the point of writing `cast.part` while the register arithmetic derived
+    // its own from the anchor's array with a wrap — two answers to one
+    // question, and where they differed the number written on the chair was
+    // measured against a role the chair was not in. This list is the answer;
+    // everything after it reads from here, and `cast.part` is written from it.
+    const basePart = [];
+    for (let v = 0; v < nBase; v++) basePart.push((G.part && G.part[v]) || G.realize(v));
+    const layerPart = layerKeys.map((lk) => {
+      const L = GENRES[lk];
+      return (L.part && L.part[0]) || L.realize(0);
+    });
     const baseKinds = [];
     for (let v = 0; v < nBase; v++) baseKinds.push(R.song.map((b, i) => baseKind[i](v)));
     const rawReg = baseKinds.map((kinds, v) => G.reg(v) +
-      sayOnce(G, v, (REG[(KINDS[dflt(kinds)] || {}).reg || row.reg] || REG.mid).v));
+      sayOnce(basePart[v], (REG[(KINDS[dflt(kinds)] || {}).reg || row.reg] || REG.mid).v));
     // THE LIFT IS THE BAND'S, NOT THE GUEST'S. It is measured over and applied
     // to the BASE cast only: a layer's register is its own anchor's fact (the
     // +1 is derive.js:466's `reg: v => L.reg(v) + 1`), and dragging a guest up
     // an octave because the host band was written low moves music nobody wrote
     // low. A layer still answers to the floor, one chair at a time, below.
-    const lift = regLift(G, gk, rawReg);
+    const lift = regLift(G, gk, rawReg, basePart);
     for (const lk of layerKeys) rawReg.push((GENRES[lk].reg(0) | 0) + 1);
 
     for (let v = 0; v < nBase; v++) {
@@ -1622,7 +1648,7 @@
         if (k && k !== home) material[sid(i)] = k;
         development[sid(i)] = k ? sayOps(R.song[i].ops, k) : "out";
       });
-      const part = (G.part && G.part[v]) || G.realize(v);
+      const part = basePart[v];
       voices.push({
         name: nameFor(part === "line" ? "voice" : part),
         kind: "line",
@@ -1638,7 +1664,7 @@
                 // ...AND IT IS FLOORED SO IT DOES NOT LAND UNDER THE BASS
                 // (§ 7b). The lift is the record's, not this chair's, so the
                 // spread the anchor wrote survives being moved.
-                reg: regAt(G, gk, v, rawReg[v], lift),
+                reg: seatRegAt(G, gk, part, rawReg[v], lift),
                 // ENTRY IS BARS INTO EVERY SECTION HERE, not into the record
                 // (ui/derive.js renders each box independently), so an
                 // unclamped entry of 3 SILENCES a voice in a two-bar intro.
@@ -1665,7 +1691,7 @@
         // a guest rather than a second band member.
         development[sid(i)] = k ? sayOps(R.song[i].ops, k) : "out";
       });
-      const part = (L.part && L.part[0]) || L.realize(0);
+      const part = layerPart[li];
       /* ONE ROOM. `backing` is a guest whose whole instrument is `ahh_choir`,
          and the records it lands on are frequently records that ALREADY have a
          vocal section — merseybeat's "ooh"s, the Beatles' — so the record was
@@ -1700,7 +1726,7 @@
       voices.push({
         name: nameFor(lk), kind: "line",
         cast: { part,
-                reg: regAt(G, gk, nBase + li, rawReg[nBase + li], 0),
+                reg: seatRegAt(G, gk, part, rawReg[nBase + li], 0),
                 entry: 0 },
         material, development,
         instrument,

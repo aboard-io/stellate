@@ -1189,8 +1189,42 @@ function recipeBase(chair, seat, lib, unrouted) {
   // with no row is byte-identical to before, because an absent key adds
   // nothing to the recipe.
   const ped = (NI.SAMPLED_INSERTS || {})[seat.instr];
+  // ...AND ITS FAMILY'S CHANNEL STRIP (2026-08-28). instruments.js STRIPS has
+  // carried a strip per FAMILY since it was written — the dirty scoop, the vox
+  // mud dip, the mallet air — and MEASURED 2026-08-27 not one of them reached a
+  // speaker: zeroing the whole table rendered bit-identical, because the only
+  // strip a sampled voice ever got was the one the parent's stripFor picks from
+  // the ROLE (lead/pad/bass/drum). So a harpsichord, two guitars and a choir all
+  // came back on the `lead` strip: high-passed at 200 Hz and lifted 3 dB at
+  // 3 kHz, whatever they were. This line is the whole wiring — the courier hands
+  // the family's strip over on the recipe, exactly the way SAMPLED_INSERTS above
+  // hands over a declared pedalboard, and state-engine `stripFor` decides
+  // whether the ROLE overrides it (it does for bass and drums; see there).
+  //
+  // REPLACES, NEVER COMPOSES, and that is the argument: a family strip and a
+  // role profile are two answers to ONE question — what carve does this channel
+  // get — not two different facts. Composed, an upright piano would take the
+  // lead strip's 200 Hz high-pass AND the keys strip's 40 Hz one (the harder
+  // wins, and it is the wrong one), and two presence lifts at 3 kHz and 2.6 kHz
+  // an octave apart would read as one loud honk. STRIPS says so itself: these
+  // are "the parent's own profiles re-cut per family".
+  //
+  // `familyOf` is asked ONCE, here, and it answers `pad` for any pad chair and
+  // `lead` for an id in no family — both of which ARE the parent's own profiles
+  // (STRIPS.pad/lead are copies of STRIP_PROFILES.pad/lead), so writing them
+  // would only be a slightly staler copy of what the role already gives. Absent
+  // is today there, deliberately: the TEN real families are what change.
+  const fam = NI.familyOf(seat.instr, role === "pad");
+  // ...and a bass chair declines it at the seam as well as at the owner: the
+  // chair's own role is not known here (CHAIR_ROLE has no `bass` row, so a bass
+  // recipe is built with role "melody" and re-roled by the caller), and
+  // `contrabass` reads as the `bowed` family, which is a section strip, not a
+  // bottom-end one.
+  const famStrip = (chair === "bass" || fam === "pad" || fam === "lead")
+    ? null : (NI.STRIPS || {})[fam];
   return { role, m: { ...tone, model: "sampler", sampler: spec,
-                      ...(ped ? { inserts: ped } : {}) },
+                      ...(ped ? { inserts: ped } : {}),
+                      ...(famStrip ? { strip: famStrip } : {}) },
            source: "sampler:" + seat.instr };
 }
 

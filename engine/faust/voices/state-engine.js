@@ -344,12 +344,38 @@
     // Units without declared inserts keep the exact pre-existing strip.
     // BOLD path: a genre-declared distortion on a sampled voice becomes a real
     // heavy channel strip (distort stays strip-folded — see samplerUnit).
+    // A DECLARED DISTORTION OUTRANKS A FAMILY DEFAULT (2026-08-28): `m.strip`
+    // below is a house answer to "what is this instrument", the heavy strip is
+    // the GENRE saying what it wants done to it, and the specific wins — the
+    // same law as defaultInserts. (aggressiveStrip is the `dirty` family strip's
+    // shape anyway, drive-parametrised, so a fuzz guitar loses nothing here.)
     if (drive >= HEAVY_MIN) {
       const heavy = aggressiveStrip(role, drive);
       const extra = hasNativeInserts ? null : voiceFxStage(role, id, state);   // leads keep their delay/leslie air on top
       return extra ? { ...heavy, ...extra } : heavy;
     }
-    const base = role === "bass" ? (BORROWED_BASS(id) ? STRIP_PROFILES.bassBorrowed : STRIP_PROFILES.bass)
+    // A RECIPE MAY NAME ITS OWN CHANNEL STRIP (2026-08-28). The four profiles
+    // below are keyed on the ROLE — which chair the voice sits in — and that is
+    // all this function could ever say, so every pitched non-pad voice in the
+    // catalogue took the `lead` carve whatever instrument was making the sound:
+    // a 200 Hz high-pass and a 3 dB lift at 3 kHz on a choir, a marimba, an
+    // upright piano alike. A caller that knows the INSTRUMENT can say better,
+    // and nukernel does (instruments.js STRIPS, one strip per family, measured
+    // 2026-08-27 to be reaching nothing at all because this line ignored it).
+    // So `m.strip` is honoured as the BASE — it REPLACES the role profile, it
+    // does not compose with it: both are answers to the one question "what carve
+    // does this channel get", and stacking two high-passes and two presence
+    // lifts is a doubled tilt, not a richer one.
+    //
+    // THE ROLE STILL WINS FOR BASS AND DRUMS, and this is where that is decided:
+    // the bass chair's profile is chosen by a second fact this function owns
+    // (BORROWED_BASS — whether a real bass or a borrowed instrument is down
+    // there), and a drum strip is transient-preserving by design. A caller that
+    // hands a `bowed` or `keys` strip in for a bass part would undo both.
+    // ABSENT IS TODAY: no `m.strip` key => the exact previous object.
+    const own = (m && m.strip && role !== "bass" && role !== "drum") ? m.strip : null;
+    const base = own ? own
+      : role === "bass" ? (BORROWED_BASS(id) ? STRIP_PROFILES.bassBorrowed : STRIP_PROFILES.bass)
       : role === "pad" ? STRIP_PROFILES.pad
       : (role === "melody" || role === "solo") ? STRIP_PROFILES.lead
       : STRIP_PROFILES.drum;

@@ -616,6 +616,34 @@
   // THE SYNTH KNOBS, as chips. Because the value is a NORMALIZED position
   // rather than a number in Hz, the same chips drive the 303, the Model D and
   // the reese/wobble basses through their own differently-named params.
+  /* THE FIVE SYNTH KNOBS, AND THEY REACH NO SOUND — MEASURED 2026-08-28.
+     Nineteen words across cut/res/emod/dec/wave, written onto every layer of a
+     house record one at a time: ONE engine handoff, bit-identical every time
+     (plan.js parentState + desk.js masterState + every barPlan).
+
+     THE BOX ALREADY KNEW, AND SAID SO WHERE NOBODY READS IT. The whole path
+     exists and is correct right up to the door — ui/derive.js:70 walks these
+     keys onto the compiled genre per layer, kernel.js carries them onto the
+     event as `e.vox` — and then audio/to-engine.js:1377 does
+     `if (e.vox) notes.push("vox")` and drops the note on the floor, returning
+     `notes: ["per-note vox knobs are nukernel's own and do not cross"]`. That
+     string is the honest report of a knob that cannot reach the sound, and it
+     is emitted into a field no surface prints.
+
+     VOXPARAM BELOW IS THE HALF THAT WAS NEVER WRITTEN: it names, per knob, the
+     DSP params the value would ride (`cutoff`, `resonance`, `envmod`…) and it
+     has no reader anywhere in nukernel/ or engine/. So the map from word to DSP
+     param exists, the value exists, the event carries it, and the one line that
+     would write it onto the unit was never written.
+
+     NOT WIRED IN THIS ROUND ON PURPOSE. Wiring it means deciding what a
+     per-NOTE param write means to a parent that resolves a unit ONCE per song
+     (audio/plan.js: "the cast is the song's, not the bar's") — per note, per
+     bar, or per layer as a unit default — and each answer sounds different.
+     That is Paul's call, not a guess. compose.js:1304 already writes
+     `b.vox = { cut: "bright", res: "hot", emod: "mid", dec: "short" }` for the
+     acid box, so the record the box writes for its most filter-shaped genre is
+     asking for this out loud and being refused in silence. */
   const VOX = {
     cut:  { labels: { dark: "dark", warm: "warm", open: "open", bright: "bright", scream: "screaming" },
             t: { dark: 0.06, warm: 0.16, open: 0.34, bright: 0.6, scream: 0.9 }, log: true },
@@ -631,6 +659,9 @@
   // wins, so one chip covers tb303 / modeld / bass_reese / bass_wobble without
   // a per-synth table — and a DSP that has none of them (the DX7) is simply not
   // touched rather than being fed a param it does not own.
+  // (NO READER, 2026-08-28 — see the VOX tombstone above. This table describes a
+  // write that no file performs; it is the specification for the missing line,
+  // not evidence of one.)
   const VOXPARAM = { cut: ["cutoff"], res: ["resonance", "res"],
                      emod: ["envmod", "envAmount", "fenvAmount"],
                      dec: ["decay", "envDecay", "fenvDecay"],
@@ -1989,6 +2020,24 @@
       tab: "fx",     group: "effects", max: MAX_FX,    default: [] },
     { key: "rev",     scope: "box",   table: SENDS,    labels: SENDLABEL,
       tab: "fx",     group: "reverb",                  default: null },
+    // MEASURED DEAD 2026-08-28, AND LEFT DECLARED ON PURPOSE. Walking all three
+    // words onto every box of a house record — with `rev: drown` under them, so
+    // a reverb decision had something to colour — produced ONE engine handoff:
+    // plan.js parentState, desk.js masterState and every barPlan came back
+    // bit-identical. Nothing in nukernel/audio/ reads a box's `verb`; every
+    // `verb` in that directory is `tone.verb`, the genre's 0..1 wetness, which
+    // is a different fact wearing the same word (audio/desk.js's header carries
+    // the same tombstone from the other end).
+    //
+    // THE LIVE SPELLING IS `buses.rev.color` (REVERBS above -> masterState
+    // `reverbColor`), and it is a better one: it names the wasm module the
+    // return runs rather than a room shape nothing resolves.
+    //
+    // THE ROW STAYS because deleting it is not a cleanup, it is a save-format
+    // change: song.js validates a box against this list, so a row removed stops
+    // REJECTING a bad value as well as accepting a good one, and 139 shipped
+    // records carry the key. Retire-or-wire is Paul's call; what this comment
+    // buys today is that no surface starts drawing it.
     { key: "verb",    scope: "box",   table: VERBS,    labels: VERBS,
       tab: "fx",     group: "space",                   default: null },
     // `echo` was persisted as `del` through v:1 — a name shared with both the
@@ -1996,6 +2045,17 @@
     // kind of pun that survives until a grep goes wrong. song.js migrates.
     { key: "echo",    scope: "box",   table: SENDS,    labels: SENDLABEL,
       tab: "fx",     group: "echo",                    default: null },
+    // MEASURED DEAD 2026-08-28, on the same walk and for the same reason as
+    // `verb` above. All six subdivisions onto every box, with `echo: drown`
+    // under them: one render, bit-identical. `dtime` is named nowhere in
+    // nukernel/audio/ — audio/live.js:296's `fx.dtime` is the ENGINE's delay
+    // time coming back out in the report, not this key going in.
+    //
+    // THE LIVE SPELLING IS `buses.echo.time`, off THIS SAME TABLE
+    // (masterState: `d.beats = B.echo.time * beats`). So the vocabulary
+    // arrives; only the box-scoped row does not — the delay is one song-level
+    // machine in the parent, and a per-section echo time would need a per-bar
+    // write the engine has no port for. Same retire-or-wire call as `verb`.
     { key: "dtime",   scope: "box",   table: DTIMES,   labels: DTLABEL,
       tab: "fx",     group: "echo time",               default: null },
     // the box's THIRD send, so the section strip speaks the same three-bus

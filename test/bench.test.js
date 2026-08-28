@@ -294,7 +294,8 @@ async function openMotif(pg) {
   const A = await page.evaluate(() => window.__eightFrozen());
   await page.click("#play");
   await page.waitForFunction(() =>
-    document.getElementById("play").textContent === "stop", null,
+    // ▶ / ■ since 2026-08-28: the word is the `aria-label` now (ui/glyph.js).
+    document.getElementById("play").getAttribute("aria-label") === "stop", null,
     { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(5000);
   const B = await page.evaluate(() => window.__eightFrozen());

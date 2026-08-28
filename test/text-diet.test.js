@@ -120,8 +120,23 @@ const MEASURE = () => {
     h2: (() => { const pan = document.querySelector(".nu-pan:not([data-off])");
       const h = pan && pan.querySelector("h2");
       return h ? h.textContent.trim() : null; })(),
+    /* THE TAB'S NAME IS ITS `aria-label` SINCE 2026-08-28, because the nine
+       are glyphs now (Paul: "make all the tabs and top buttons into sensible
+       icons"). T2's claim never was "these characters are painted here" — it
+       is "the page names its sections, in Paul's words, in Paul's order" — and
+       the accessible name is where that word lives. `nakedTabs` below is the
+       other half and it is new: a glyph with no name would satisfy a list of
+       words read off `aria-label` and fail a reader, so the gate asks for the
+       `.nu-vh` word as well. Between them, "no control is naked" is measured
+       rather than assumed. */
     tabNames: [...document.querySelectorAll("#toptabs button")]
-      .map((b) => b.textContent.trim()),
+      .map((b) => (b.getAttribute("aria-label") || "").trim()),
+    nakedTabs: [...document.querySelectorAll("button .nu-g")]
+      .map((g) => g.closest("button"))
+      .filter((b) => !(b.getAttribute("aria-label") || "").trim() ||
+                     !b.querySelector(".nu-vh") ||
+                     !b.querySelector(".nu-vh").textContent.trim())
+      .map((b) => b.dataset.k || b.id || "?"),
     openTab: window.__eightTabNow ? window.__eightTabNow() : null,
     rateSel: document.querySelectorAll('select[data-sel^="time.rate"]').length,
     /* T3 — every visible disabled control and where its reason lives. A
@@ -168,7 +183,7 @@ const MEASURE = () => {
        the board is behind the Mix tab and there is nothing to wait for until
        that tab is opened. */
     const m = { total: 0, top: [], h2: [], naked: [], rateSel: 0,
-                tabNames: [], per: {} };
+                tabNames: [], nakedTabs: [], per: {} };
     for (const t of TABS) {
       await p.evaluate((tt) => window.__eightTab && window.__eightTab(tt), t);
       await p.waitForTimeout(t === "Score" ? 1600 : 500);
@@ -180,6 +195,7 @@ const MEASURE = () => {
       m.naked = m.naked.concat(r.naked);
       m.rateSel += r.rateSel;
       m.tabNames = r.tabNames;
+      m.nakedTabs = m.nakedTabs.concat(r.nakedTabs);
     }
     console.log("     [" + width + "] prose per tab: " +
       TABS.map((t) => t + " " + m.per[t]).join(" · "));
@@ -195,6 +211,17 @@ const MEASURE = () => {
     check(JSON.stringify(m.tabNames) === JSON.stringify(TABS),
       "T2 " + width + " · the nine tabs are Paul's words in Paul's order — " +
       JSON.stringify(m.tabNames));
+    /* T2 · …AND NO CONTROL IS NAKED, which is the half of this gate's claim
+       that a row of pictures can newly get wrong (2026-08-28). A glyph button
+       must carry its full word twice — as `aria-label`, so a screen reader
+       hears "reverb" and not "almost equal to", and as a `.nu-vh` span, so the
+       page still reads as itself with the stylesheet off. Summed over all nine
+       tabs, so the band's, the board's, the motifs' and the deck's strips are
+       all measured and not just the nine at the top. */
+    check(m.nakedTabs.length === 0,
+      "T2 " + width + " · every glyph carries its word, as a name and in the " +
+      "DOM — " + (m.nakedTabs.length ? JSON.stringify(m.nakedTabs.slice(0, 8))
+                                     : "none naked"));
     check(JSON.stringify(m.h2) === JSON.stringify(HEADINGS),
       "T2 " + width + " · one hidden <h2> per panel, in tab order, still the " +
       "vocabulary's own names — " + JSON.stringify(m.h2));

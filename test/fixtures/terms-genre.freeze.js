@@ -52,6 +52,18 @@
 // `push` from velocity every note; see the long note at the deletion site in
 // songs.js). They came out of the record, so they came out of its portrait.
 //
+// AND A SECOND TIME (2026-08-28), for one added key and nothing else.
+// `document.js toGenre` now hands the kernel `part: (v) => lines[v].cast.part`
+// — until this round it handed `realize` alone, so kernel.js partOf fell back
+// to its two-value shim and the document's own casting sheet reached no sound
+// (the part axis was inert on the 104 anchors with no `part` scheme, and read
+// the ANCHOR's array, wrapped, on the other 95). A new function on the genre
+// is a new row in the portrait, so `calls.part` appears. THE CHANT DID NOT
+// MOVE: its two chairs are cast `line`, PARTS.line is the empty policy, and
+// every other row of all five sections — `reg` included — is character for
+// character what it was. The proof is the diff: 20 inserted lines, 5 sections
+// x 4 lines of one new key, 0 deletions, 0 changes.
+//
 // THE UPDATE WAS DERIVED, NOT RETYPED, because this file cannot be re-run: its
 // CLI half slices a PRE-MOVE `ui/eight.js` that no longer exists in the tree or
 // in git (eight.js was rewritten this round and is not yet committed), and

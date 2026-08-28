@@ -100,6 +100,27 @@
   // THESE ROWS ARE THE SAMPLED KITS' TRUTH, and the machine kits ride them
   // through the per-machine overrides below (MACHINEMIX, merged by mixFor —
   // one merge, read by the desk and the player both).
+  //
+  // ...AND THAT LAST SENTENCE IS FALSE, MEASURED 2026-08-28. There is no desk
+  // and no player reading it: DRUMMIX, MACHINEMIX, mixFor, laneKey and DRUMBUS
+  // below are named NOWHERE in nukernel/, engine/ or tools/ outside this file —
+  // ui/deps.js re-exported five of them to nobody until 2026-08-28, and that
+  // barrel line was the whole of the evidence they were wired. Rendered proof,
+  // not grep alone: perturbing every number in DRUMMIX (60) and MACHINEMIX (67)
+  // — ×1.5 + 0.011 on every leaf — leaves the engine handoff (plan.js
+  // parentState + desk.js masterState + every barPlan) BIT-IDENTICAL on house,
+  // hymn and dub.
+  //
+  // WHY: audio/voices.js, the WebAudio drum player these rows were tuned for,
+  // went with the one-engine round. The parent voices every lane now
+  // (to-engine.js MACHINE_KIT, state-engine's own drum strip), and it carries
+  // its own levels, its own pans and its own room sends. Two tuned mixes exist;
+  // exactly one of them is audible, and it is not this one.
+  //
+  // LEFT STANDING, NOT DELETED, because which mix wins is Paul's call — either
+  // the parent adopts these numbers (they are the ones a person tuned by ear)
+  // or they go. What must not happen again is a reader believing the sentence
+  // above. Same tombstone on DYN, at the foot of this file.
   const DRUMMIX = {
     k: { lvl: 1.00, pan:  0.00, room: 0.10, punch: 1.45, sus: 1.00 },
     s: { lvl: 1.00, pan: -0.02, room: 0.55, punch: 1.35, sus: 0.94 },
@@ -150,8 +171,11 @@
              m: { room: 0.22, lvl: 0.8 }, l: { room: 0.24, lvl: 0.82 } },
   };
   // THE ONE MERGE — the kit desk's lane strips and the drum player both read
-  // this, so the table and the sound cannot drift apart. A sampled kit falls
-  // straight through to DRUMMIX.
+  // this, so the table and the sound cannot drift apart. (NO CALLER, 2026-08-28
+  // — see the DRUMMIX tombstone above. Both readers named here were deleted with
+  // audio/voices.js; the table and the sound have drifted exactly as far apart
+  // as this sentence promised they could not.) A sampled kit falls straight
+  // through to DRUMMIX.
   const mixFor = (kit, lane) => {
     const o = kit && MACHINEMIX[kit] && MACHINEMIX[kit][lane];
     const base = DRUMMIX[lane];
@@ -167,6 +191,9 @@
   // filter — the attack IS the instrument). `room` is the bus trim on the whole
   // kit's ambience send, so a genre-level "less room" is one number, and
   // `punchMs` is how long a transient boost lasts before the body takes over.
+  // (NO CALLER, 2026-08-28 — the DRUMMIX tombstone above has the measurement.
+  // The parent applies its own STRIP_PROFILES.drum; this is a second copy of
+  // the same idea that nothing reads.)
   const DRUMBUS = { hpf: 28, sat: 0.15, satMix: 0.22, room: 0.9, punchMs: 0.012,
                     susMs: 0.09 };
 
@@ -318,6 +345,12 @@
   // How far past its own zone ROOTS a sample may be stretched and still be the
   // instrument — the parent's numbers (SAMPLER_STRETCH_ST / SAMPLER_FLOOR_ST).
   // Up-stretch shrieks sooner than down-stretch rumbles, hence the asymmetry.
+  // (NO CALLER, 2026-08-28. Grepped across nukernel/, engine/ and tools/: named
+  // only here and on the ui/deps.js barrel line, which stopped re-exporting them
+  // the same day. The parent applies SAMPLER_STRETCH_ST / SAMPLER_FLOOR_ST
+  // itself, which is why nothing broke when this copy went quiet — it is a
+  // second spelling of the parent's own two numbers, and the parent's is the one
+  // that reaches the sound.)
   const STRETCH_UP = 6, STRETCH_DOWN = 12;
 
   // ---- FONTS, the main app's own logic ----
@@ -1052,6 +1085,26 @@
   // state-engine.js and handed to SamplerLive as `strip`. sampler.js then
   // builds the real chain (HPF/LPF/EQ -> saturation -> compressor ->
   // chorus/phaser), which is why a bass sits under a lead instead of beside it.
+  // THREE OF THESE ROWS ARE READ-ONLY COPIES, AND SAYING SO IS THE POINT
+  // (2026-08-28). `bass`, `pad` and `lead` below are transcriptions of the
+  // parent's STRIP_PROFILES, and the wiring that finally handed this table to
+  // the engine deliberately does NOT hand those three over: the parent picks
+  // them from the ROLE, it owns them, and the copies have already drifted (its
+  // `pad` chorus carries `two: true` and its phaser `fb: 0.3`; neither is here).
+  // So editing bass/pad/lead in this file still changes nothing you can hear —
+  // edit engine/faust/voices/state-engine.js STRIP_PROFILES. They stay because
+  // `familyOf` must be able to answer "pad" and "lead" for the desk's FAM_EQ
+  // walk and for anything reading a family's shape on the page.
+  //
+  // AND TWO ROWS STILL REACH NOTHING, for a different reason than the one this
+  // round fixed. MEASURED 2026-08-28 over the whole shipped sampler library:
+  // every `dirty` id (crunch/distortion/overdrive_guitar) and every `vox` id
+  // but `space_voice` (ahh_choir, ohh_voices, solo_vox, synth_voice) is claimed
+  // upstream by PATCH_MODEL/PATCH_VOICE — they resolve to stk_guitar, to
+  // voice_choir, to a tract — and a modelled voice never enters the sampler's
+  // strip at all. The other eight families do arrive: keys 53 chairs, guitar 53,
+  // strings 47, brass 32, reed 28, organ 21, bowed 10, mallet 4, over 139 of the
+  // 204 records. `dirty` and `vox` are still unheard, and still unjudged.
   const STRIPS = {
     // BASS — kill subsonics, roll the top off, low-mid warmth, slow glue comp.
     bass: { hpf: 30, lpf: 5200, eq: { f: 110, gain: 2.5, q: 0.9 }, sat: 0.34, satMix: 0.42,
@@ -1179,6 +1232,18 @@
     return "lead";
   };
   // THE STRIP A VOICE ACTUALLY GETS.
+  //
+  // AND IT ACTUALLY GETS IT SINCE 2026-08-28 — the reversal, in writing. Every
+  // word above this line was true about the TABLE and false about the SOUND:
+  // measured 2026-08-27 (export/_satdrive.cjs --patch nstrip) zeroing every
+  // `sat` in STRIPS rendered BIT-IDENTICAL, because nothing ever handed the
+  // table to the engine. A sampled voice's strip is written by state-engine
+  // `stripFor(role, id, state, m)` off the parent's four ROLE profiles, so the
+  // harpsichord, the two guitars and the choir all played through `lead`.
+  // audio/to-engine.js `recipeBase` now carries this answer over on the recipe
+  // as `m.strip`, and the parent's stripFor takes it as the BASE (replacing the
+  // role profile, keeping the drive fold and the hashed voice-FX on top).
+  // Bass and drums decline it there — the role owns those two.
   const stripFor = (id, pad) => STRIPS[familyOf(id, pad)] || STRIPS.lead;
 
   // ---- THE SECOND KIND OF DYNAMICS -----------------------------------------
@@ -1252,6 +1317,18 @@
   //          the one voice whose job is not having an edge. It is also the
   //          worst cost on the page — STRIPS.pad already builds a chorus AND a
   //          phaser per note, on the voice that holds the longest notes.
+  // NO READER, MEASURED 2026-08-28 — the same tombstone DRUMMIX carries, and the
+  // same cause. `dynFor`, `dynCurve`, `DYN_BRIGHT` and `DYN_ATK` are named
+  // nowhere in nukernel/, engine/ or tools/ outside this file; ui/deps.js
+  // re-exported three of them to nobody until 2026-08-28. Rendered proof:
+  // perturbing all 55 numbers in this table (×1.5 + 0.011 on every leaf) leaves
+  // the engine handoff BIT-IDENTICAL on house, hymn and dub.
+  //
+  // The comment below says "the parent's STRIP stage" and that is exactly where
+  // the response lives NOW — in the parent, off the parent's own tables. This is
+  // a per-family velocity curve written for audio/voices.js, which the
+  // one-engine round deleted. Left standing rather than deleted: whether the
+  // parent should adopt these numbers is a musical decision, not a cleanup.
   const DYN = {
     keys:    { tilt: 11, corner: 1600, bite: 4.0, dec: 0.050, hand: 1.00 },
     guitar:  { tilt: 10, corner: 1900, bite: 4.0, dec: 0.045, hand: 1.00 },
