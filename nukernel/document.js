@@ -221,9 +221,23 @@
                         // voice), or nothing, which leaves the record's
                         // signature in place. A cantor and a schola are two
                         // different throats and this is what lets them be.
-                        chairs: lines.map((c) => nativeOf(c, NATIVE)
-                          ? { synth: nativeOf(c, NATIVE) }
-                          : c.instrument === "synth" ? {} : { instr: c.instrument }),
+                        // ...AND WHAT THE SAMPLER WAS TOLD (2026-08-28, the
+                        // sampler-control round). `voice.sound` is the three
+                        // words a recording can answer — attack, release,
+                        // doubling (fields.js VOX, avail.js `sound.attack`
+                        // and its two siblings) — and this is their whole
+                        // wire: the chairs seam already carries a chair's
+                        // instrument, its native model and its tone, and
+                        // audio/plan.js reads `chairs[v].vox` onto the seat
+                        // beside the layer's own chips. A voice that says
+                        // nothing adds no key, so every record written before
+                        // this line compiles byte-identically.
+                        chairs: lines.map((c) => ({
+                          ...(nativeOf(c, NATIVE)
+                            ? { synth: nativeOf(c, NATIVE) }
+                            : c.instrument === "synth" ? {} : { instr: c.instrument }),
+                          ...(c.sound && Object.keys(c.sound).length
+                            ? { vox: c.sound } : {}) })),
                         ...(on ? { drumkit: drums.instrument } : {}),
       /* SOUND, THE RECORD'S BALANCE */
                         ...(doc.sound && doc.sound.level != null &&

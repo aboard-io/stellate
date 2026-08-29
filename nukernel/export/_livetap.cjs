@@ -1,0 +1,122 @@
+#!/usr/bin/env node
+/* _livetap.cjs — THE LISTENER'S OWN NODE, MEASURED. The sibling of
+   _satdrive.cjs, and it exists because of what _satdrive CANNOT see.
+
+   _satdrive presses a record through the shipped stream-worker and reads the
+   float PCM that comes out. That PCM is the RING's output — every stage of
+   engine/faust/live/live.js's master bus (the user fader, the glue compressor,
+   the make-up rider, the two master lowpasses, the brickwall) sits DOWNSTREAM
+   of it and none of them is in the number. So every turn-down since 2026-08-26
+   was judged on a measurement taken before the stage that decides how loud the
+   record actually is, and the make-up rider handed most of each cut straight
+   back: six records arriving at that bus 13 dB apart left it 2.6 dB apart, with
+   the brickwall holding all of them at the ceiling. A cut a normaliser undoes
+   is not a cut, and this is the harness that can tell.
+
+   It opens nukernel in a borrowed Chromium, writes a named record with the same
+   in-flight door _satdrive uses, presses PLAY through the page's own transport,
+   and taps `handle.analyser` — the node live.js hangs off masterOut, i.e. the
+   last thing before the ear.
+
+     node nukernel/export/_livetap.cjs                        — the six records
+     node nukernel/export/_livetap.cjs --records rock --secs 30
+     node nukernel/export/_livetap.cjs --mk -20 --mkmin 0.35  — the rider, patched
+     node nukernel/export/_livetap.cjs --lane 0.708           — LEVEL_LANES, scaled
+
+   THREE THINGS THAT WILL FAKE A RESULT IF YOU CHANGE THEM:
+     * SERVICE WORKERS MUST BE BLOCKED. The page ships one, and a SW-served
+       response bypasses page.route entirely — the first --mk run here reported
+       no patch and no change, and the "no change" was the harness, not the
+       stage. It is the fifth lie of this kind on this page.
+     * THE SETTLE MUST BE LONG. The rider moves on a 1.5 s time constant off a
+       one-pole envelope, so a 6 s settle reads its ATTACK. 8 s settle + a 30 s
+       window is the shortest pair that repeats: the same six records read 5 dB
+       apart at 10 s and within 0.4 dB at 30 s.
+     * THE FADER IS PART OF THE READING. ui/state.js boots vol at 80, so the tap
+       is 1.9 dB under the engine's own output. Constant across runs; do not
+       compare a run of this against anything that had a different volume. */
+module.paths.push("/home/ford/ftrain-2025/node_modules");
+const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i < 0 ? d : process.argv[i + 1]; };
+const PAGE = arg("page", "http://localhost:8777/nukernel/index.html");
+const EXE = process.env.HOME + "/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome";
+const RECORDS = arg("records", "iranpop,steely,rock,neoclassical,ambient,hymn").split(",");
+const SEED = +arg("seed", 1);
+const SECS = +arg("secs", 14);
+const MK = arg("mk", null);            // rewrite MK_TARGET_DB in flight
+const MKMIN = arg("mkmin", null);      // ...and the rider's floor
+const LANE = arg("lane", null);        // scale LEVEL_LANES in flight
+(async () => {
+  const { chromium } = require("playwright");
+  const browser = await chromium.launch({ executablePath: EXE,
+    args: ["--autoplay-policy=no-user-gesture-required", "--mute-audio"] });
+  // SERVICE WORKERS BLOCKED — the page ships one, and a SW-served response
+  // bypasses page.route entirely: the first --mk run reported no patch and no
+  // change because engine/faust/live/live.js came out of the SW cache.
+  const ctx0 = await browser.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
+  const page = await ctx0.newPage();
+  const errs = [];
+  page.on("pageerror", (e) => errs.push("pageerror: " + e.message));
+  await page.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
+  if (MK || MKMIN) await page.route("**/engine/faust/live/live.js", async (route) => {
+    const res = await route.fetch(); const b = await res.text();
+    let a = b;
+    if (MK) a = a.replace(/MK_TARGET_DB = -?[0-9.]+/, "MK_TARGET_DB = " + MK);
+    if (MKMIN) a = a.replace(/MK_MIN = [0-9.]+/, "MK_MIN = " + MKMIN);
+    console.log("   [mk " + MK + " min " + MKMIN + "]" + (a === b ? " !! MATCHED NOTHING" : " ok"));
+    await route.fulfill({ response: res, body: a });
+  });
+  if (LANE) await page.route("**/nukernel/audio/to-engine.js", async (route) => {
+    const res = await route.fetch(); const b = await res.text();
+    const a = b.replace(/const LEVEL_LANES = \{[\s\S]*?\n *\};/, (m) =>
+      m.replace(/(scale|lo|hi): ([0-9.]+)/g, (_, k, v) => k + ": " + +(+v * +LANE).toFixed(4)));
+    console.log("   [lane x" + LANE + "]" + (a === b ? " !! MATCHED NOTHING" : " ok"));
+    await route.fulfill({ response: res, body: a });
+  });
+  await page.route("**/nukernel/ui/eight.js", async (route) => {
+    const res = await route.fetch(); const body = await res.text();
+    await route.fulfill({ response: res, body: body + "\nwindow.__satPut = (d) => CTX.setDocument(d);\n" });
+  });
+  await page.goto(PAGE, { waitUntil: "networkidle" });
+  await page.waitForFunction(() => typeof window.__satPut === "function", null, { timeout: 30000 });
+  for (const gk of RECORDS) {
+    const r = await page.evaluate(async ([gk, seed, secs]) => {
+      const LV = await import("/nukernel/audio/live.js");
+      try { LV.stop(); } catch (e) {}
+      window.__satPut(window.NuPrecompose.genreToDocument(gk, seed));
+      const PL = await import("/nukernel/audio/plan.js");
+      await PL.deps();
+      for (let i = 0; i < 60; i++) { PL.compile(); if (PL.barCount() > 0) break; await new Promise((r) => setTimeout(r, 250)); }
+      await LV.startAt(0);
+      const t0 = Date.now();
+      while (!LV.playing && Date.now() - t0 < 30000) await new Promise((r) => setTimeout(r, 200));
+      const h = LV.engineHandle();
+      if (!h || !h.analyser) return { error: "no analyser (playing=" + LV.playing + ")" };
+      const an = h.analyser, buf = new Float32Array(an.fftSize);
+      // let the rider settle: it moves on a 1.5 s time constant off a 0.06
+      // one-pole, so anything under ~6 s reads the ATTACK and not the record.
+      await new Promise((r) => setTimeout(r, 6000));
+      let peak = 0, sum = 0, n = 0, silent = 0;
+      const end = Date.now() + secs * 1000;
+      while (Date.now() < end) {
+        an.getFloatTimeDomainData(buf);
+        let s = 0, p = 0;
+        for (let i = 0; i < buf.length; i++) { const a = Math.abs(buf[i]); if (a > p) p = a; s += buf[i] * buf[i]; }
+        if (p < 1e-6) silent++;
+        if (p > peak) peak = p;
+        sum += s; n += buf.length;
+        await new Promise((r) => setTimeout(r, 40));
+      }
+      try { LV.stop(); } catch (e) {}
+      const rms = Math.sqrt(sum / Math.max(1, n));
+      const db = (x) => (x > 0 ? +(20 * Math.log10(x)).toFixed(2) : -999);
+      return { peakDb: db(peak), rmsDb: db(rms), crest: +(db(peak) - db(rms)).toFixed(2),
+               windows: Math.round(n / buf.length), silentWindows: silent };
+    }, [gk, SEED, SECS]).catch((e) => ({ error: String((e && e.message) || e) }));
+    console.log(gk.padEnd(14), r.error ? "ERROR " + r.error
+      : ["peak " + r.peakDb, "rms " + r.rmsDb, "crest " + r.crest,
+         "win " + r.windows, "silent " + r.silentWindows].join("  "));
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  await browser.close();
+  if (errs.length) console.log("page errors:\n  " + errs.slice(0, 5).join("\n  "));
+})().catch((e) => { console.error(e); process.exit(1); });

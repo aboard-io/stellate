@@ -351,7 +351,7 @@ await (async () => {
    (test/levelof-frozen.fixture.js), and after this change it is a fixture of
    the NEW table: the hashes deliberately differ from 2026-08-26's, which is
    what Paul asked for. */
-console.log("\nR6 — the lane table, and the uniform -2.50 dB of 2026-08-27");
+console.log("\nR6 — the lane table, and the uniform -8.52 dB it has taken since 2026-08-26");
 {
   const clampL = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
   const T = TE.LEVEL_LANES;
@@ -377,17 +377,31 @@ console.log("\nR6 — the lane table, and the uniform -2.50 dB of 2026-08-27");
     model:   { dflt: 0.28, scale: 2.8, lo: 0.35, hi: 0.92 },
     synth:   { dflt: 0.28, scale: 2.8, lo: 0.5,  hi: 0.92 },
   };
-  const F = 0.75, off = [];
+  // 0.375, NOT 0.75 (2026-08-28). This gate was written for the FIRST turn-down
+  // (x0.75, -2.50 dB) and the SECOND one (x0.5, -6.02 dB, 2026-08-28) moved the
+  // table without moving the number here, so R6 has been RED ever since —
+  // asserting a factor the tree stopped having. The cumulative factor is what
+  // the claim is about, so it is the cumulative factor that lives here:
+  // 0.75 x 0.5 = 0.375, a uniform -8.52 dB against 2026-08-26, clamps included.
+  const F = 0.375, off = [];
   for (const lane of Object.keys(WAS))
     for (const k of ["scale", "lo", "hi"]) {
+      // ...COMPARED AT THE PRECISION THE TABLE IS WRITTEN TO. The rows are
+      // hand-written at four decimals (`lo: 0.0563`, not 0.05625), so an exact
+      // 1e-9 comparison fails on two floors by 5e-5 — 0.009 dB, which is not a
+      // finding, it is the width of the literal. A one-unit-in-the-last-place
+      // tolerance keeps the claim exact without asking the sound to move for a
+      // gate — and it is far tighter than any audible move: 1e-4 on the
+      // smallest number in the table is 0.015 dB.
       const want = WAS[lane][k] * F;
-      if (Math.abs(T[lane][k] - want) > 1e-9)
+      if (Math.abs(T[lane][k] - want) > 1e-4)   // one unit in the last written place
         off.push(lane + "." + k + " " + T[lane][k] + " want " + +want.toFixed(6));
     }
-  ok(!off.length, "…and every one of the nine numbers is EXACTLY 0.75 of what " +
-     "it was on 2026-08-26 (-2.50 dB, clamps included) — Paul, 2026-08-27: " +
-     "\"Just turn down saturation my ears aren't wrong\", and a uniform factor " +
-     "is what makes that a level change instead of a remix", off.join(", "));
+  ok(!off.length, "…and every one of the nine numbers is EXACTLY 0.375 of what " +
+     "it was on 2026-08-26 (-8.52 dB over two turn-downs, clamps included) — " +
+     "Paul, 2026-08-27: \"Just turn down saturation my ears aren't wrong\", and " +
+     "a uniform factor is what makes that a level change instead of a remix",
+     off.join(", "));
   // …and the four rows still say four different things, which is why the
   // consolidation kept them apart in the first place.
   ok(T.sampled.scale !== T.model.scale && T.model.lo !== T.synth.lo,

@@ -218,19 +218,48 @@ function g18() {
      at. The globe's own size is width-driven — measured 300px tall at every
      height from 480 to 844 — so nothing else in the gesture changes.
 
-     600 IS THE HEIGHT BOTH HALVES SURVIVE AT, and the pair is tight enough to
-     write down. The `Where` panel's whole document is 731px, so the room to
-     scroll is 731 - H and the globe is on screen only while H is large. At 460
-     there were 269px of scroll and the globe's centre sat at y=557, so every
-     drag this file starts BELOW the centre began off the bottom of the screen:
-     G13 "passed" by touching nothing and G21's diagonals turned the earth 0.0
-     degrees. At 600 the globe's centre is at 561, the Kingston mark at 555, and
-     131px are left to scroll into — everything the checks touch is on the
-     screen and each still asks for more than 100px of scroll. The drags that
-     run here therefore start ABOVE the centre (`c.y - 60`, `c.y - 120`): the
-     same distance onto the same globe, on the half of it a short screen
-     shows. */
-  const SHORT_H = 600;
+     600 WAS THE HEIGHT BOTH HALVES SURVIVED AT, AND THE PANEL MOVED UNDER IT
+     (2026-08-28). The room to scroll is (panel - H), so this number is a
+     measurement of a layout and not a constant, and the layout changed in
+     795f4c7 "one gutter down the right, and nothing goes under it": the `Where`
+     panel went from 735px tall to 608, the globe from 300px to 254, and its
+     centre from y=557 up to y=401. 735 - 600 left 135px to scroll into; 608 -
+     600 leaves 8, and G13/G16/G21 have been failing "0 -> 0" and "0 -> 8" ever
+     since — on a page that is behaving perfectly, which is the SECOND time this
+     stage has reported its own geometry as a defect in the globe.
+
+     MEASURED TODAY, at 390 wide, and this is the whole of the argument:
+
+       · the `Where` panel is 608px cold and 643 with 1969's longer sentence in
+         it; the globe spans document y 274..528 (centre 401), Kingston's mark
+         y=420 — every one of them viewport-height-independent, because the
+         globe is width-driven and nothing in this panel is sized in vh.
+       · every label and every child of one computes `pointer-events: none`
+         (106 of 106, no backplate rects), `#atlasIndexBtn` is `position:
+         static` / `touch-action: auto` and sits BELOW the globe, `#atlasIndex`
+         is hidden at 0px, and `elementsFromPoint` at the globe's centre returns
+         the land path inside #atlasMap. Nothing new is standing in the
+         gesture's way.
+       · the lock is doing its job and says so in the failure text itself: the
+         near-vertical drags turned the earth 0.000 degrees and the page moved
+         by exactly its maximum. The globe declined the gesture; the page had
+         nowhere to take it.
+
+     460 IS THE HEIGHT NOW, and the reason 460 was rejected in the note above no
+     longer holds: it was rejected because the globe's centre sat at y=557 and
+     the drags began off the bottom of the screen, and the globe's centre is at
+     401 now. At 460 there are 148px of scroll cold and 183 with the sentence
+     wrapped, the globe's on-screen half runs 274..460, and every path these
+     three checks draw starts inside it — G13 at c.y-120 = 281, G21 at c.y-60 =
+     341, G16 on Kingston at 420 — while each still asks for more than 100px of
+     scroll. THE CLAIM IS UNCHANGED AND NOT ONE ASSERTION IS RELAXED: what moved
+     is the stage, and it moved because the page it stands on did.
+
+     AND IF THIS FAILS AGAIN, MEASURE THE PANEL FIRST. `608 - SHORT_H > 100` is
+     the whole precondition; a round that adds a control under the globe makes
+     it truer and a round that takes one away makes it false, and neither is a
+     defect in who owns a swipe. */
+  const SHORT_H = 460;
   const setH = async (h) => { await p.setViewportSize({ width: 390, height: h });
     await p.waitForTimeout(250); };
   const shortPage = () => setH(SHORT_H);
@@ -1286,11 +1315,21 @@ function g18() {
      both are gone — the gesture is `#rewrite` in the .nu-bar now. The claim
      this check makes did not change: the sentence names the year, the slider
      sets it, the globe shows what it lit, and the places are behind the
-     slider in the tab order rather than in front of it. */
+     slider in the tab order rather than in front of it.
+
+     SIX SINCE 2026-08-28, and the claim is unchanged AGAIN because the two new
+     children are BEHIND the globe rather than in front of it. Paul: "Let me
+     click to see a big list of all the genres in chronological order." The
+     index's button and its (closed) list are back matter — the door and the
+     chronology come after the two controls Paul asked to be left with, so the
+     reader still meets the sentence, then the slider, then the earth. That
+     ORDER is the whole assertion, which is why the list is checked here rather
+     than in a gate of its own. */
   check(JSON.stringify(order) === JSON.stringify(
-      ["H2#atlasHead", "P#atlasSay", "DIV#atlasWhen", "DIV#atlasWrap"]),
-    "G11 · reading order is heading, sentence, when-slider, globe — " +
-    JSON.stringify(order));
+      ["H2#atlasHead", "P#atlasSay", "DIV#atlasWhen", "DIV#atlasWrap",
+       "BUTTON#atlasIndexBtn", "DIV#atlasIndex"]),
+    "G11 · reading order is heading, sentence, when-slider, globe, then the " +
+    "index's door and its list — " + JSON.stringify(order));
   await p.evaluate(() => document.getElementById("atlasYear").focus());
   const walk = [];
   // THE PRESS COUNT IS DERIVED — REWRITTEN 2026-08-26, THE THIRD TIME THIS
@@ -1498,6 +1537,185 @@ function g18() {
     "reads " + back.year + ", Kingston is drawn (" + JSON.stringify(back.when) +
     "), current and ringed. " + JSON.stringify(back.say.slice(0, 60)));
 
+  /* ---- G23 THE GENRE UNDER THE PLACE, AND THE CHRONOLOGY --------------
+     Paul, 2026-08-28, two sentences: *"Put the names of the genres under the
+     locations on the map."* and *"Let me click to see a big list of all the
+     genres in chronological order."*
+
+     BOTH ARE READ OFF THE RENDERED PAGE, which is the only way either can be
+     proved: the second line's TEXT is written by paint() out of `shown`, its
+     INK is written by the greedy crowding pass on settle, and its POSITION is
+     a transform shared with the dot — three different code paths, one visible
+     result, and a source reading would bless a genre name that no reader ever
+     sees. (memory: "test the artifact".) */
+  await fresh();
+  await p.waitForTimeout(900);
+  await setYear(1969);
+  await p.waitForTimeout(300);
+  await bring();
+  await p.waitForTimeout(300);
+  const g23 = await p.evaluate(() => {
+    const box = document.getElementById("atlasMap").getBoundingClientRect();
+    const labs = [...document.querySelectorAll("#atlasNames .lab")];
+    const shown = window.NuAtlas.atYear(1969).shown;
+    const out = { inked: 0, paired: 0, wrong: [], drift: [], clipped: [], names: [] };
+    for (const lg of labs) {
+      const place = lg.dataset.place;
+      const [t1, t2] = lg.querySelectorAll("text");
+      if (!t1 || !t2) { out.wrong.push(place + ": one line"); continue; }
+      const o1 = +t1.getAttribute("opacity"), o2 = +t2.getAttribute("opacity");
+      if (lg.getAttribute("data-far") === "1" || !(o1 > 0)) continue;
+      out.inked++;
+      // ONE DECISION FOR BOTH LINES: the place is inked, so the genre is too,
+      // at exactly the same ink. A genre name floating with no place over it,
+      // or a place whose genre never arrived, is the bug this asserts against.
+      if (o2 === o1) out.paired++;
+      // …AND IT IS THE RECORD THE TAP WOULD PICK. Same object choose() reads.
+      const r = shown.get(place);
+      if (!r || t2.textContent !== r.gk)
+        out.wrong.push(place + ": " + JSON.stringify(t2.textContent) +
+                       " vs " + (r && r.gk));
+      // THE TWO NODES CARRY THE MARK'S OWN TRANSFORM — the no-smear promise,
+      // asserted as the string rather than as a pixel distance.
+      const g = document.querySelector('#atlasMarks .place[data-place="' +
+        place.replace(/"/g, '\\"') + '"]');
+      if (!g || g.getAttribute("transform") !== lg.getAttribute("transform"))
+        out.drift.push(place);
+      // AND NEITHER LINE RUNS OFF THE MAP. A clipped word is not a label.
+      for (const t of [t1, t2]) {
+        const b = t.getBoundingClientRect();
+        if (b.width && (b.left < box.left - 1 || b.right > box.right + 1))
+          out.clipped.push(place + "/" + t.textContent);
+      }
+      out.names.push(t1.textContent + "/" + t2.textContent);
+    }
+    return out;
+  });
+  check(g23.inked > 0 && g23.paired === g23.inked && !g23.wrong.length,
+    "G23 · every name on the earth is TWO lines — the place, and under it the " +
+    "genre the tap would pick: " + g23.inked + " inked, " + g23.paired +
+    " with the genre at the same ink, " + g23.wrong.length + " wrong " +
+    JSON.stringify(g23.wrong.slice(0, 3)) + " · " + JSON.stringify(g23.names.slice(0, 4)));
+  check(!g23.drift.length,
+    "G23 · …and both lines ride the mark's own transform, so a drag cannot " +
+    "smear them off their dot (" + g23.drift.length + " adrift)");
+  check(!g23.clipped.length,
+    "G23 · …and neither line runs off the map — a name that would overflow the " +
+    "right edge is mirrored to the left of its dot (" + g23.clipped.length +
+    " clipped " + JSON.stringify(g23.clipped.slice(0, 3)) + ")");
+
+  /* THE INDEX. Closed at boot (it is back matter, not the front door), built
+     on the click, 199 rows — every genre genres.js has, the 193 with a place
+     and a year in year order and the six ROLES after them, which have neither
+     and are not pretended into the sequence. */
+  const idx = await p.evaluate(async () => {
+    const btn = document.getElementById("atlasIndexBtn");
+    const before = { rows: document.querySelectorAll("#atlasIndexRows li").length,
+                     hidden: document.getElementById("atlasIndex").hidden,
+                     expanded: btn.getAttribute("aria-expanded") };
+    btn.click();
+    await new Promise((r) => setTimeout(r, 60));
+    const rows = [...document.querySelectorAll("#atlasIndexRows .nu-ixrow")];
+    const cells = (r) => [...r.children].map((c) => c.textContent);
+    const yrs = rows.map((r) => r.children[0].textContent)
+      .filter((t) => /^\d+$/.test(t)).map(Number);
+    let ooo = 0;
+    for (let i = 1; i < yrs.length; i++) if (yrs[i] < yrs[i - 1]) ooo++;
+    const doc = document.documentElement;
+    const A = window.NuAtlas;
+    return { before, n: rows.length, dated: yrs.length, ooo,
+             first: cells(rows[0]), last: cells(rows[rows.length - 1]),
+             catalogue: Object.keys(window.NuGenres.GENRES)
+               .filter((k) => k.indexOf("lab.eight.") !== 0).length,
+             placed: A.ALL.length, roles: Object.keys(A.EXCLUDE).length,
+             /* THE RESIDUE, PRINTED AND NOT ASSERTED — see the check below.
+
+                `lab.eight.N` IS NOT A GENRE AND MUST NEVER BE BAKED. The page
+                registers one such row per SECTION of the record currently open
+                into the same shared GENRES table (ui/eight.js `GK`, and see
+                precompose.js:381 / ui/produce.js:16 / document.js:327). They are
+                session rows — they change every time Paul opens a different
+                record — so counting them here read as "5 anchors are missing
+                from WHEN" and sent the reader to `--bake`, which would have
+                written five rows of the open song into the atlas's permanent
+                table. Measured 2026-08-28: the note said 5 unbaked of 206;
+                excluding the prefix it says 201 of 201, all baked. */
+             unbaked: Object.keys(window.NuGenres.GENRES)
+               .filter((k) => !A.WHEN[k] && !A.EXCLUDE[k]
+                           && k.indexOf("lab.eight.") !== 0),
+             tap: Math.min(...rows.slice(0, 40)
+               .map((r) => r.getBoundingClientRect().height)),
+             hscroll: doc.scrollWidth - doc.clientWidth,
+             expanded: document.getElementById("atlasIndexBtn")
+               .getAttribute("aria-expanded") };
+  });
+  check(idx.before.hidden === true && idx.before.rows === 0
+        && idx.before.expanded === "false" && idx.expanded === "true",
+    "G23 · the index is SHUT at boot and its 199 buttons are not even built — " +
+    JSON.stringify(idx.before) + " -> expanded " + JSON.stringify(idx.expanded));
+  /* EVERY GENRE THE ATLAS HOLDS, AND THE CLAIM IS SAID IN THE ATLAS'S OWN
+     TERMS RATHER THAN IN genres.js's. `ALL` (193 place-and-year rows) plus
+     `EXCLUDE` (6 roles) IS the atlas's catalogue, and the list is exactly it —
+     the 193 in year order and the 6 that have no year after them, not
+     pretended into the sequence.
+
+     genres.js CAN BE AHEAD OF IT, AND THAT IS NOT THIS LIST'S BUG TO CARRY.
+     `WHEN` is BAKED from the labels by `node nukernel/atlas.gate.js --bake`
+     and atlas.gate.js G2 is the gate that fails when a new anchor's label has
+     not been baked in yet; an index that closed the gap by parsing `label` at
+     draw time would be exactly what nukernel/atlas.js's header forbids ("the
+     day somebody writes 'London, 1979' the map silently loses a record"). So
+     the residue is PRINTED here with its owner named — the same idiom as
+     atlas.gate.js G6b's placeless rows — and asserted where it belongs. */
+  check(idx.n === idx.placed + idx.roles && idx.dated === idx.placed
+        && idx.ooo === 0,
+    "G23 · one click, every genre the atlas holds, oldest first: " + idx.n +
+    " rows = " + idx.placed + " placed + " + idx.roles + " roles, " + idx.ooo +
+    " out of order · " + JSON.stringify(idx.first) + " … " +
+    JSON.stringify(idx.last) +
+    (idx.unbaked.length ? " · NOTE " + idx.unbaked.length + " of genres.js's " +
+      idx.catalogue + " are not in WHEN yet (" +
+      JSON.stringify(idx.unbaked.slice(0, 6)) +
+      ") — run `node nukernel/atlas.gate.js --bake`; atlas.gate.js G2 owns that gap"
+      : " · genres.js has " + idx.catalogue + ", all baked"));
+  check(idx.tap >= 44 && idx.hscroll === 0,
+    "G23 · …and a row is a thumb (" + idx.tap + " CSS px) with no horizontal " +
+    "page scroll (" + idx.hscroll + " px)");
+
+  /* AND A ROW IS THE GLOBE'S OWN DOOR. Not a second compose path: the row moves
+     the SLIDER to the record's year and calls choose(place), so what it writes
+     is decided by recordAt exactly as a thumb on the dot is. Proved by the two
+     things only the real path can do — #title becomes the record, and the mark
+     on the earth takes the ring. */
+  await p.evaluate(() => {
+    const r = [...document.querySelectorAll("#atlasIndexRows .nu-ixrow")]
+      .find((x) => x.dataset.gk === "dub");
+    r.scrollIntoView({ block: "center" }); r.click();
+  });
+  await p.waitForFunction(() => window.__nuName() === "Kingston 1973",
+    null, { timeout: 5000 }).catch(() => {});
+  await bring();
+  await p.waitForTimeout(400);
+  const row = await p.evaluate(() => {
+    const g = [...document.querySelectorAll("#atlasMarks .place")]
+      .find((x) => x.dataset.place === "Kingston");
+    return { title: window.__nuName(),
+             year: document.getElementById("atlasYearOut").textContent,
+             ring: g && g.querySelector(".ring").getAttribute("opacity"),
+             gname: [...document.querySelectorAll("#atlasNames .lab")]
+               .filter((l) => l.dataset.place === "Kingston")
+               .map((l) => l.querySelectorAll("text")[1].textContent)[0],
+             cur: [...document.querySelectorAll(
+               '#atlasIndexRows .nu-ixrow[aria-current="true"]')]
+               .map((x) => x.dataset.gk) };
+  });
+  check(row.title === "Kingston 1973" && row.year === "1973" && row.ring === "1"
+        && row.gname === "dub" && JSON.stringify(row.cur) === JSON.stringify(["dub"]),
+    "G23 · a row opens its record through the globe's own door — #title " +
+    JSON.stringify(row.title) + ", the slider reads " + row.year + ", the mark " +
+    "wears the ring, its second line says " + JSON.stringify(row.gname) +
+    " and the list marks " + JSON.stringify(row.cur));
+
   /* ---- G14 NOBODY PHONED HOME ----------------------------------------- */
   const hosts = await p.evaluate((h) => [...new Set(
     performance.getEntriesByType("resource").map((e) => new URL(e.name).host))]
@@ -1507,9 +1725,15 @@ function g18() {
 
   for (const n of notes) console.log(n);
   for (const f of fails) console.log(f);
-  console.log(fails.length ? "\nFAILED " + fails.length + " of " +
-    (fails.length + notes.filter((n) => /^ok/.test(n)).length + fails.length) :
-    "\nALL PASS (" + notes.filter((n) => /^ok/.test(n)).length + " checks)  " + PAGE);
+  /* THE DENOMINATOR COUNTED THE FAILURES TWICE (fixed 2026-08-28). It read
+     `fails + oks + fails`, so the run that reported "FAILED 3 of 108" had
+     actually made 105 checks and passed 102 of them — and the round that read
+     that line went looking for 108 passes that never existed. A gate that
+     cannot count its own checks is a gate that argues with itself about
+     whether it is green. */
+  const ok = notes.filter((n) => /^ok/.test(n)).length;
+  console.log(fails.length ? "\nFAILED " + fails.length + " of " + (ok + fails.length) :
+    "\nALL PASS (" + ok + " checks)  " + PAGE);
   await b.close();
   process.exit(fails.length ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

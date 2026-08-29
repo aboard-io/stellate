@@ -44,7 +44,7 @@ export const { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
                FX, fxChain, FXSEND, fxMix, fxSendable,
                SENDS, SENDLABEL,
                DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
-               VOX, VOXPARAM, OCTAVES, ARTICS, CMODES, CLAMPLABEL,
+               VOX, VOXPARAM, VOICINGS, VOICING_KEYS, OCTAVES, ARTICS, CMODES, CLAMPLABEL,
                KEYS, KEYLABEL, PROGCHOICES, PROGLABEL, PERIODS, PERIODLABEL,
                BREATHS, BREATHLABEL, PIPESETS, PIPELABEL, PARTCHOICES,
                PARTNAMES, PARTLABEL, PARTMIX, PARTMIXBY, MAX_CHAIRS,
@@ -135,7 +135,10 @@ export const NuSong = window.NuSong;
 export const { blank, emptyBox } = window.NuSong;
 
 // ---- the sound sources as data (instruments.js) ----
-export const { instrOf, familyOf, BASS_INSTR, FONTS, BASSSYNTH,
+// `throatOf` joined the list 2026-08-28 (the singer-cast round): WHICH of
+// genres.js MOUTHS' thirty throats a record's vocal chair is cast with when the
+// genre states no mouth of its own. audio/plan.js is its only reader.
+export const { instrOf, familyOf, throatOf, voicedAs, BASS_INSTR, FONTS, BASSSYNTH,
                STRIPS, stripFor, RANGES } = window.NuInstruments;
 /* TWELVE NAMES CAME OFF THIS LINE, 2026-08-28, AND THEY WERE THE DECLARED-BUT-
    NEVER-ARRIVING BUG IN ITS QUIETEST FORM: a barrel that re-exports a table is

@@ -180,6 +180,42 @@
        is now the ONE place on the page where the fact that this is the room
        and not the record is written in words. -->
   <input type="range" id="vol" min="0" max="100" step="1" value="100" aria-label="room">
+  <!-- ===== THE FIFTH CONTROL, AND THE ARITHMETIC IT COST (2026-08-28) =====
+       Paul: *"I want to be able to choose whether to use synthesized voices or
+       instrumentation to replace voices. Put this as a multi-state toggle right
+       next to the main volume slider: Vox (default), Instruments, All analog,
+       All FM."* It is AFTER the slider because "next to" and because the range
+       is the only `flex: 1` child in here — anything after it sits hard against
+       its right edge at every width, and anything before it does not.
+
+       IT IS A TOGGLE AND ITS MARK IS ITS STATE, which is a different law from
+       #play's ("the word on it is the NEXT tap") and the difference is worth
+       stating: play is a GESTURE with two spellings, this is a SETTING with
+       four positions, and a setting that showed you the next position rather
+       than the one you are in would be unreadable at the third tap. The word
+       under the mark (`.nu-vh`, per `paintIcon`) is the state's own name, so
+       with the stylesheet off the strip reads "play rewrite take room sung",
+       and `aria-label` says the same thing.
+
+       WHAT IT COST, measured on the rendered page in the gate's own chromium at
+       320x844, with `stop` in the play button and a two-digit reading — the
+       widest everything can be at once:
+                          play  rewrite  take  toggle  gaps   range   total
+         before            44.0    48.2   44.0     —   19.2    84.6   240.0
+         a 5th button      44.0    48.2   44.0   44.0  25.6    64.0*  269.8
+       against 264px of content: 5.8px OVER, and `flex-wrap: nowrap` would have
+       spent it as a sideways scroll. (*the range at its own 4em floor.) EVERY
+       control in here is already an icon since this morning's round, so there
+       is no word left to clip — the 44px is the tap target, not the label.
+       nu.css pays the 5.8 out of the strip's GAP below 375px and writes the
+       reading out there; measured after: 52.00px tall and
+       scrollWidth === clientWidth at 320, 375, 390, 430, 820 and 1280.
+
+       WHERE IT WOULD HAVE GONE IF IT HAD NOT FIT, since that was the standing
+       instruction: the board's master strip (ui/engineer.js), which is the one
+       other place on this page that already carries a fader and already teaches
+       "the room, not the record". It fits here, so it is here. -->
+  <button id="voicing" type="button"></button>
 </div>
 <!-- ===== THE ENGINE READOUT MOVED INTO THE LOGGER, 2026-08-28 ============
      Paul: *"Get rid of the media (mediaEl) held plays offline etc section on
@@ -238,11 +274,23 @@
      'nearby' select box, the genre list, etc." What is left is two controls —
      a globe and a full-width when-slider — and neither is a wall.
 
+     AND A LIST CAME BACK ON 2026-08-28, WHICH IS A REVERSAL WITH A DIFFERENT
+     OBJECT IN IT. Paul: "Let me click to see a big list of all the genres in
+     chronological order." What was deleted was #atlasList, a FALLBACK — a
+     permanently-present alphabetical second door to the same records, there
+     because the map's marks were not yet a real keyboard path. What is there
+     now is #atlasIndex, a CHRONOLOGY: the catalogue read end to end in the one
+     order a globe physically cannot show you, shut until it is asked for, and
+     opening its rows through the globe's own choose(). The old id stays dead
+     and test/atlas.js G7 still fails the day it comes back. The full argument
+     is on `#atlasIndexBtn` in ui/atlas.js.
+
      THE <h2> SHIPS HERE, not in the view, so the heading survives with the
      stylesheet off and so the view has something it must NOT delete. Under it,
-     ui/atlas.js appends the sentence, the when-slider, the globe and one
-     button, in that order — DOM order is reading order is tab order, and the
-     slider comes before the places it scopes.
+     ui/atlas.js appends the sentence, the when-slider, the globe, and then the
+     index's button and its list, in that order — DOM order is reading order is
+     tab order, the slider comes before the places it scopes, and the back
+     matter comes after the two controls rather than in front of them.
 
      Still ABOVE #app and still OUTSIDE it, for the reason #engine is outside
      it: draw() empties #app on every edit, and a globe that was destroyed and

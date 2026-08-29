@@ -700,6 +700,166 @@
     return out;
   }
 
+  /* ---------- DEVELOPMENT: WHAT HAPPENS TO A FIGURE WHEN IT COMES BACK ----
+     Paul, listening across the catalogue: *"So many songs have a do-do-doooo
+     motif across genres, it shows up everywhere."* He is right, and the
+     measurement underneath the complaint is worse than the complaint: over
+     201 anchors x 3 readings, 4,915 line cells, a record's hook took exactly
+     ONE rhythm from bar one to the end — 588 of 588 records, mean 1.00
+     distinct hook rhythms. The box STATES material and then repeats it. That
+     is not a hook, it is a loop with verses over it.
+
+     WHY IT COULD NOT DO OTHERWISE. `material.cells` is keyed by PART, and a
+     part has one figure; `form.sections[]` names no cell, so every return of
+     the hook — verse after verse, chorus after chorus, eleven sections — was
+     the identical figure by construction. Nothing here was broken; the
+     DEVELOPMENT axis (nukernel/AXES.md) simply had no operator at the scale
+     it lives at.
+
+     WHY NOT `TRANSFORMS`, WHICH IS RIGHT ABOVE THIS. Those are the composer's
+     RETURNS — a word a section says about the theme, offered as a menu on the
+     band page (band-kit.js:5184) and dominated by PITCH moves: `up`, `inv`,
+     `retro` change what the notes are, and `frag` means "the first BAR",
+     which on a one-bar cell is the whole thing and therefore nothing. What a
+     figure needs when it comes round again is the rhythmic half of the same
+     tradition — and a table nobody has to be shown a menu of, because the
+     record deals it rather than the hand naming it. So this is a second,
+     smaller table beside that one: seven devices, every one of them a thing a
+     composer does to a motif, all seven RHYTHM-ONLY, so the figure keeps its
+     own contour, its own landing and its own genre.
+
+     THE SEVEN, and where each is heard:
+       aug     AUGMENTATION — the figure at half speed, over the same bar.
+               The last chorus of a hymn; the head of a fugue in the pedals.
+               (`transform` already writes this one, so it is called and not
+               re-written: one owner per operation.)
+       dim     DIMINUTION — half the spacing, and therefore said twice.
+               Bebop doubling a head; a drum-and-bass tune under its own
+               breakbeat; the stretto of any fugue you like.
+       trunc   TRUNCATION — the last onset goes and the figure stops early.
+               The single commonest thing a singer does to a line on its
+               second pass, and the one device that makes a phrase END SHORT.
+       ext     EXTENSION — the landing said once more, an echo out. The
+               tag on a soul chorus, the extra "yeah" at the end of the line.
+       pick    THE PICKUP ADDED — an anacrusis before the first note, a step
+               under it. What a horn section does the second time round.
+       nopick  THE PICKUP REMOVED — the first note goes and the figure enters
+               on the beat instead of leaning into it. The reverse move, and
+               the one that makes a returning verse sound settled.
+       later   DISPLACEMENT — the whole figure entering a pulse later, round
+               the bar. Afrobeat, gqom and every clave music alive do this
+               on purpose; so does Stravinsky.
+
+     RHYTHM-ONLY IS A FENCE, NOT A SHRUG. `pick` and `ext` are the only two
+     that write a degree that was not in the phrase, and both write one the
+     phrase already implies — a step under the first note, and the landing
+     again. Nothing here transposes, inverts or reverses, because a genre's
+     identity lives in its contour and its landing and a development that
+     moved those would be a different tune rather than the same one, later.
+
+     PURE, LIKE `transform`: these take a RENDERED phrase and hand back a new
+     one, never writing back onto the theme. `same` returns the phrase object
+     itself, so a figure nobody developed is byte-identical. */
+  const DEVELOP = {
+    same:   { w: "as it was" },
+    aug:    { w: "stretched out" },
+    dim:    { w: "doubled" },
+    trunc:  { w: "cut short" },
+    ext:    { w: "one more time on the way out" },
+    pick:   { w: "with a pickup" },
+    nopick: { w: "in on the beat" },
+    later:  { w: "a pulse later" },
+  };
+  function develop(ph, kind, met) {
+    if (!kind || kind === "same" || !DEVELOP[kind]) return ph;
+    // the two the composer's own table already writes — called, not copied
+    if (kind === "aug" || kind === "dim") return transform(ph, kind, met);
+    const n = ph.gate.length;
+    const on = []; for (let i = 0; i < n; i++) if (ph.gate[i]) on.push(i);
+    // A FIGURE OF ONE NOTE HAS NOTHING TO DEVELOP, and one of two has nothing
+    // left after a device takes a note away. Both come back untouched rather
+    // than as a stump; the deal that calls this checks the result anyway.
+    if (on.length < 2) return ph;
+    // THE FIGURE'S OWN PULSE — its smallest gap, never a constant. A cell
+    // that moves in eighths is displaced by an eighth and one that moves in
+    // sixteenths by a sixteenth: the device is measured in the music's units.
+    let pulse = n;
+    for (let j = 1; j < on.length; j++) pulse = Math.min(pulse, on[j] - on[j - 1]);
+    pulse = Math.max(1, pulse);
+    const out = { deg: z(n), oct: z(n), vel: new Array(n).fill(6), inc: z(n),
+                  stk: z(n), gate: z(n), acc: z(n), sld: z(n) };
+    const hh = ph.hold ? z(n) : null;
+    // carry a note whole — pitch, octave, weight and its tie, the same law
+    // `transform`'s own `put` keeps
+    const put = (to, from) => {
+      if (to < 0 || to >= n || out.gate[to]) return false;
+      out.gate[to] = 1; out.deg[to] = ph.deg[from]; out.oct[to] = ph.oct[from];
+      out.vel[to] = ph.vel[from];
+      if (hh && ph.hold[from]) hh[to] = ph.hold[from];
+      return true;
+    };
+    // ...and write a note the figure implies but does not contain
+    const say = (to, deg, vel) => {
+      if (to < 0 || to >= n || out.gate[to]) return false;
+      out.gate[to] = 1; out.deg[to] = deg; out.vel[to] = vel; return true;
+    };
+    const first = on[0], last = on[on.length - 1];
+    if (kind === "later") {
+      // round the bar, because a cell LOOPS: a figure pushed off the end
+      // arrives at the top of the next statement, which is what displacement
+      // sounds like when the material is one bar long.
+      // ...AND A FIGURE DISPLACED BY ITS OWN PERIOD IS ITSELF. Running
+      // eighths moved an eighth are running eighths — measured, 810 of 1,809
+      // (device, cell) pairs came back identical for exactly this reason — so
+      // an evenly-spaced figure is displaced by HALF its pulse instead, which
+      // is the move that actually exists in this music: eighths pushed onto
+      // the offbeat.
+      const evenly = on.every((i, j) => j === 0 || i - on[j - 1] === pulse);
+      const by = evenly && pulse > 1 ? pulse >> 1 : pulse;
+      if (evenly && pulse === 1) return ph;     // it sounds on every step
+      for (const i of on) put((i + by) % n, i);
+    } else if (kind === "trunc") {
+      if (on.length < 3) return ph;
+      for (const i of on) if (i !== last) put(i, i);
+    } else if (kind === "nopick") {
+      if (on.length < 3) return ph;
+      for (const i of on) if (i !== first) put(i, i);
+    } else if (kind === "ext") {
+      for (const i of on) put(i, i);
+      // the landing again, one of the figure's own pulses after it — and
+      // where the bar is too full for that, AS SOON AS THERE IS ROOM, which
+      // is what a tag does: it comes in on the first free breath, not on a
+      // grid. A figure whose last note is already the last step of the bar
+      // has nothing after it to extend into and comes back untouched.
+      let out2 = false;
+      for (let g = Math.min(pulse, n - 1 - last); g >= 1 && !out2; g--)
+        out2 = say(last + g, ph.deg[last], 5);
+      if (!out2) return ph;
+    } else if (kind === "pick") {
+      for (const i of on) put(i, i);
+      // a step under the first note, one pulse ahead of it — and where the
+      // figure already starts at the top of the bar the pickup goes where a
+      // pickup actually goes: the end of the bar before, which on a looping
+      // cell is this one. Four places tried in the order a player would try
+      // them: a pulse early, one step early, a pulse from the end, the last
+      // step of all. A figure that fills every one of them is a figure with
+      // no room for an anacrusis.
+      let din = false;
+      for (const at of [first - pulse, first - 1, n - pulse, n - 1])
+        if (!din) din = say(at, ph.deg[first] - 1, 5);
+      if (!din) return ph;
+    }
+    if (hh) out.hold = hh;
+    // THE DEVELOPMENT IS REGISTERED AS THE THEME — `transform`'s own law and
+    // for its own reason: the kernel's whole-line octave shift is a mean over
+    // degrees, and a device that drops the phrase's lowest note would move
+    // that mean and flip the whole return an octave. The figure carries the
+    // phrase it was made from.
+    out.regDeg = ph.regDeg || ph.deg.slice();
+    out.regGate = ph.regGate || ph.gate.slice();
+    return out;
+  }
+
   /* ---------- THE SOLO LADDER: WHAT A PLAYER DOES TO A TUNE OVER TIME ----
      Paul: "develop theme-improvisation methods and hours-long solo handoffs".
 
@@ -1073,5 +1233,10 @@
            SOLO, SOLORATE, SOLOORDER, SOLOPERIOD, soloWord,
            regOf, gridOf, liftOf, octsOf, wroteOf, handOf, stepWord,
            blank, V, catalog, say, says, BARMARKS, BARWORD, MAXB,
-           decisions, nextAsk, answer, toPhrase, transform, describe, barsOf, cellOf };
+           decisions, nextAsk, answer, toPhrase, transform, describe, barsOf, cellOf,
+           // the development table and its operator, exported on the same law
+           // TRANSFORMS is: a vocabulary the caller cannot read is one it can
+           // only guess at, and precompose's deal has to check its own words
+           // against this table rather than against a second copy of it
+           DEVELOP, develop };
 });

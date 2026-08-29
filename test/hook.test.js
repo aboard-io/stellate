@@ -217,11 +217,24 @@ ok("idiom respect: every stated axis holds in every slot at every reading", () =
       : own[f] == null ? all
       : f === "contour" ? [own[f]]
       : all;                                          // `land` is open
+    // ...AND THE RELEASE IS AN AXIS OF THE COMPOSED CELL (2026-08-28,
+    // precompose §6c). The last onset of a figure has no next onset, so its
+    // length was the whole rest of the bar and 84.7% of the catalogue ended on
+    // its longest note. `RELEASE` is the word for how that note stops — `ring`
+    // is that old law and still the commonest draw, `clip` and `lean` are the
+    // two ways a figure ends short — and a record deals it per part on its own
+    // stream. It is NOT a claim an IDIOM_ANCHOR row makes about itself (no
+    // anchor states one), so it is unconstrained here: every anchor may draw
+    // every word, and the space this gate fences has to contain all three or it
+    // is fencing the day before the deal landed.
     const legal = new Set();
+    const RELS = [null].concat(Object.keys(P.RELEASE).map((w) => ({ rel: w })));
     for (const c of pool("cell", CELLS))
       for (const ct of pool("contour", CONT))
         for (const l of pool("land", LAND))
-          legal.add(J(P.cellOf(row, k, cb, G, steps, { cell: c, contour: ct, land: l }).cell));
+          for (const rl of RELS)
+            legal.add(J(P.cellOf(row, k, cb, G, steps,
+                                 { cell: c, contour: ct, land: l }, rl).cell));
     spaceCache.set(ck, legal);
     return legal;
   };
@@ -234,6 +247,17 @@ ok("idiom respect: every stated axis holds in every slot at every reading", () =
       for (const k of Object.keys(cells)) {
         const c = cells[k];
         if (c.kind !== "line") continue;              // the kit is not a phrase
+        // ...AND A DEVELOPED RETURN IS NOT A SLOT (2026-08-28, precompose §6c).
+        // A record now carries the part's figure AS STATED under the slot's own
+        // name and, beside it, the figure as it comes back — "hook stretched
+        // out", "riff cut short" — which is BY CONSTRUCTION outside the space a
+        // reading may draw from: development is what happens to a figure after
+        // the reading has chosen it, and a return that stayed inside the draw
+        // would not be a development. The claim this gate makes is about the
+        // SLOT, and the slot is the statement; the developed cells are fenced
+        // where they are made (`keepsIts`: two onsets or more, a rest left in
+        // the bar, and a density within a doubling of the statement's).
+        if (!P.KINDS[k]) continue;
         const legal = spaceFor(g, k);
         assert(legal.has(J(c)), g + " seed " + s + " slot " + k + " composed a cell " +
                "outside what its IDIOM_ANCHOR row allows (" + J(own) + ")");

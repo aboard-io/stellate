@@ -34,7 +34,8 @@
 // level, pan, sends and tone, and none of those are in the signature, so the
 // desk rides in on a glide (stream-renderer feedBar applies changed params to
 // the persistent procs and the DSP smooths them).
-import { GENRES, BASSSYNTH, BASS_INSTR, instrOf } from "../ui/deps.js";
+import { GENRES, BASSSYNTH, BASS_INSTR, instrOf, throatOf, voicedAs,
+         VOICINGS } from "../ui/deps.js";
 import { SONG, SLOTS, GROOVE, SWING, POOL, RUBATO, loopOnly, bpm } from "../ui/state.js";
 import { gid, songBars, poolInstrOf, kitOf } from "../ui/derive.js";
 import { toEngine, samplerLibFor, recipeFor } from "./to-engine.js";
@@ -163,6 +164,40 @@ export function homeFor(notes, win) {
   return best;
 }
 
+/* ---------- HOW THE VOCAL CHAIRS ARE REALISED — A VIEW (2026-08-28) ------
+   Paul: *"I want to be able to choose whether to use synthesized voices or
+   instrumentation to replace voices. Put this as a multi-state toggle right
+   next to the main volume slider: Vox (default), Instruments, All analog,
+   All FM."*
+
+   THIS IS WHERE IT LIVES, and the whole of the answer to "is it an axis?" is
+   in the three lines below: ONE module-scoped string, no store, no document
+   key, no save, no share link, no migration. It is a view over the CAST — the
+   same kind of thing as the room slider in the strip beside it — and `castOf`
+   is the only reader, which is what makes it cheap to have and cheap to
+   withdraw.
+
+   WHY THE CAST AND NOT THE SCORE: nothing about the music moves. The vocal
+   line is the same notes, in the same register, with the same words on it; what
+   changes is the SEAT it is played from. That is also why the swap has to be
+   here rather than in the document — `castOf` is the one place that resolves a
+   seat, and a document rewrite would make the choice a fact about the record
+   and lose it on the next `rewrite`.
+
+   IT DOES NOT PERSIST, deliberately, and the cost is stated in fields.js
+   VOICINGS: reload and you are back on `vox`. A setting that survives a reload
+   is a setting somebody has to be able to see they made.
+
+   `vox` IS ABSENT-IS-TODAY. instruments.js `voicedAs` answers null for it, the
+   seat is untouched, and the compile is byte-identical to a build with no
+   toggle. */
+let VOICING = "vox";
+export const voicing = () => VOICING;
+export function setVoicing(v) {
+  VOICING = (v && VOICINGS[v]) ? v : "vox";
+  return VOICING;
+}
+
 /* ---------- the cast: who plays what, across the whole song ---------- */
 // Resolved exactly the way the score resolves it — the pool cast wins over the
 // genre's signature synth, the synth FONT wins over both, and `instrOf` names the
@@ -230,14 +265,56 @@ function castOf(bars) {
         // The chair's declared tone outranks it; a genre without chairs is
         // byte-identical.
         const ch = chSeat;
+        // ...AND A THROAT, WHERE THE RECORD NAMED NONE (2026-08-28).
+        // "SOLO VOX shows up everywhere." Measured over all 201 anchors at
+        // seed 1: 369 vocal chairs, and 201 of them sang one of TWO
+        // signatures, because 173 anchors state no `tone.mouth` and a vocal
+        // id with no mouth falls to PATCH_VOICE's ONE row per GM id — one
+        // throat for Lagos, Nashville and Vienna alike. instruments.js
+        // `throatOf` casts one from the record's own idiom (the place and
+        // year in its label, and its family) out of the thirty measured
+        // throats genres.js MOUTHS already carries.
+        //
+        // IT IS MERGED ONTO THE TONE AND NOT PASSED BESIDE IT, because the
+        // tone is the seat's IDENTITY (the key below): a lead and a section on
+        // the same record are two throats and must be two seats, and two
+        // records that share a tone block and not a label must not share a
+        // singer. A genre that states its own `mouth` — nineteen anchors, and
+        // every chair a band page has given a voice type to — is untouched
+        // and renders byte-identically, which is the whole of the law here:
+        // if a genre states its own, that wins.
+        // ...AND THE VOICING VIEW, which may take the chair away from the
+        // singer altogether (the toggle in the transport). It is asked with the
+        // chair's own held/moving flag, because a section and a soloist are
+        // replaced by different things — instruments.js `voicedAs` owns which.
+        const vcd = voicedAs(VOICING, owner, over || instrOf(owner, vi), e.pad);
+        const seatTone = (ch && ch.tone) || G.tone || null;
+        const throat = (seatTone && !seatTone.mouth)
+          ? throatOf(owner, over || instrOf(owner, vi)) : null;
         // `e.vox` is what ui/derive.js sectionEvents tagged this note's LAYER
         // with (voxAll — the layer's own chip, else the box's, knob by knob).
         // It is read here and nowhere downstream: by the time the words are on
         // a seat they are a patch, and the scheduler has nothing left to do
         // with them.
-        e._seat = seatFor(chair, over || instrOf(owner, vi), useSyn ? gsyn : null,
-                          (ch && ch.tone) || G.tone || null, e.vox || null);
-        e._syn = useSyn;
+        // the view outranks the record's own signature for THIS chair only —
+        // "all FM" means the singer is on FM, not that the Minimoog under it
+        // is; every other seat resolves exactly as it did.
+        const useSyn2 = vcd ? !!vcd.synth : useSyn;
+        // THE CHAIR'S OWN WORDS, UNDER THE LAYER'S (2026-08-28). `ch.vox` is
+        // what the DOCUMENT said about this voice's sound — the three sampler
+        // words, document.js `toGenre` -> `chairs[v].vox` — and `e.vox` is what
+        // a LAYER chip said about this note's stack entry. Merged knob by knob
+        // with the layer on top, which is the same law ui/derive.js `voxOf`
+        // already states for a layer against its box: a chip set in one place
+        // must not throw away the one it was inheriting. Both absent is null,
+        // and null is byte-identical to every compile before this.
+        const seatVox = (ch && ch.vox) || e.vox
+          ? { ...((ch && ch.vox) || null), ...(e.vox || null) } : null;
+        e._seat = seatFor(chair, vcd ? vcd.instr : (over || instrOf(owner, vi)),
+                          vcd ? (vcd.synth || null) : (useSyn ? gsyn : null),
+                          throat ? { ...seatTone, mouth: throat } : seatTone,
+                          seatVox);
+        e._syn = useSyn2;
         const r = roster.find((x) => x.v === e.v);
         if (r) A["v" + e._seat] = r.key;
       } else if (e.kind === "bass") {

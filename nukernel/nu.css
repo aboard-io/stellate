@@ -663,6 +663,46 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
   padding-block-start: env(safe-area-inset-top); }
 .nu-bar > *{ flex: 0 0 auto; }
 .nu-bar > button{ padding-inline: .4em; }   /* see the arithmetic above */
+/* THE FIFTH CONTROL, AND THE 5.8px IT COST (2026-08-28 — the voicing toggle).
+   index.html carries the argument for why it is in this strip and after the
+   slider; this is the bill. Measured at 320x844 on the rendered page in the
+   gate's own chromium, with `stop` in the play button and a two-digit reading
+   (the widest everything can be at once), against 264px of content:
+
+                     play  rewrite  take  toggle   gaps   range   scrollWidth
+     four controls   44.0     48.2  44.0      —    19.2    84.6   264 (= 264)
+     five            44.0     48.2  44.0   44.0    25.6    64.0*  269 (> 264)
+                                                             (*its own 4em floor)
+
+   FIVE PIXELS over, and this bar is `flex-wrap: nowrap`, so the failure is a
+   sideways scroll and not a second row. THERE IS NO LABEL LEFT TO CLIP — the
+   room word went on 2026-08-28 and every control in here became a mark the same
+   day, so the 44px is the TAP TARGET and not the text; shrinking it would be
+   trading a real accessibility floor for a phone width. So it comes out of the
+   two numbers in this strip that are preferences rather than promises, and
+   under 375px only: the gap first, .4em -> .2em (five children, four gaps:
+   25.6 -> 12.8).
+
+   ...AND THE GAP ALONE MOVED NOTHING, which is the part worth writing down
+   because the first count was wrong about WHERE the slack goes. Measured with
+   the .2em gap in place the strip was STILL 269 against 264: the range is
+   `flex: 1 1 auto` and simply grew into the 12.8px the gaps gave back, so the
+   overflow never moved. The buttons cannot pay it either — every one of them
+   is at the 44px TAP FLOOR and not at its text, so the padding this strip cut
+   in 2026-08-27 (`.4em`, three buttons, 19.2px) buys nothing now that the
+   labels are marks. So the five come off the range's own FLOOR, 4em -> 3.5em:
+   8px against 5 needed, and the range measures 56.0 at 320 with the bar at
+   264 = 264. A 56px slider is still a slider
+   you can drag with a thumb (the track is the full 56 and the thumb is 26 —
+   `.nu-circ`'s own target), and it is 89.3px at 375 and 994.3 at 1280, so this
+   is a phone-width floor and not the control's size.
+
+   MEASURED AFTER, same page, same chromium, `stop` and a two-digit reading:
+   the bar is 52.00px at 320, 375, 390, 430, 820 and 1280, and
+   scrollWidth === clientWidth at every one — the two things --bar-h and
+   `nowrap` are actually promising. The buttons' padding and every rule outside
+   this strip are exactly what the 2026-08-27 arithmetic left them. */
+@media (max-width: 374px){ .nu-bar{ gap: .2em; } }
 /* THE READING, ON THE BUTTON THAT MOVES IT (2026-08-27). Paul: "I clicked
    rewrite multiple times and never saw a different seed." index.html carries
    the argument for why a control may print it; this is what it costs.
@@ -721,6 +761,10 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    width and goes where it went at 320: into the range, which was the control
    squeezed to its 4em floor. Measured after — see the table under `.nu-rd`. */
 .nu-bar > input[type=range]{ flex: 1 1 auto; min-inline-size: 4em; }
+/* ...and its phone floor, which is the other half of the five-control bill
+   above — AFTER the base rule, because the two have the same specificity and
+   the later one is the one that wins. */
+@media (max-width: 374px){ .nu-bar > input[type=range]{ min-inline-size: 3.5em; } }
 
 /* ===== THE ENGINE READOUT IS A LOG LINE NOW (2026-08-28) ================
    Paul: *"Get rid of the media (mediaEl) held plays offline etc section on the
@@ -2910,8 +2954,97 @@ table.nu-trims{ color: var(--ink); }
       writes it in CSS px through the renderer's units-per-pixel (HALO_PX). */
 #atlasMap .lab{ pointer-events: none; }
 #atlasMap .lab[data-far="1"]{ opacity: 0; }
+/* AND THE SELECTOR COVERS BOTH LINES BECAUSE THERE IS ONE CLASS FOR BOTH.
+   2026-08-28, Paul: *"Put the names of the genres under the locations on the
+   map."* A `.lab` now holds two <text> nodes — `.name` (the place) and
+   `.name.gname` (the genre the when-slider is answering for it) — and the
+   second one is a `.name` rather than a class of its own SO THAT IT CANNOT
+   MISS THIS RULE. The halo is the only thing making a word legible over the
+   10% land wash in a black-and-white picture; a second line added to this
+   selector by hand is a second line that gets forgotten one round later and
+   paints raw ink across a coastline. Its stroke-width, its size (11.5 CSS px
+   against the place's 13) and its 13px of leading are all written by
+   ui/atlas.js through the renderer's units-per-pixel, for the reason stated at
+   HALO_PX there: a stroke-width declared here would be in USER units and this
+   viewBox is 1000 units across whatever the column happens to be. */
 #atlasMap text.name{ paint-order: stroke; stroke: var(--paper);
   stroke-linejoin: round; stroke-linecap: round; }
+/* THE GENRE LINE IS THE SECOND VOICE, and it says so in weight rather than in
+   colour ("keep it black and white"): the place is the mark's own name and
+   does not move while you look at it, the genre under it is what the SLIDER is
+   currently answering, and the lighter face is the one that changes. */
+#atlasMap text.gname{ font-weight: 500; }
+
+/* ---------- THE INDEX: EVERY GENRE, OLDEST FIRST ------------------------
+   Paul, 2026-08-28: *"Let me click to see a big list of all the genres in
+   chronological order."* The door is `#atlasIndexBtn`, an ordinary plate
+   button under the globe; what opens is 199 rows, and 199 ENAMEL PLATES IS NOT
+   A LIST, IT IS A WALL. So a row gives up the plate — and that is the same
+   exception the stylesheet already makes 2,400 lines up, carried one step
+   further and for the same reason: `td button{ box-shadow: none }` says "a
+   button seated in a table cell is already framed by the grid". A row in an
+   index is framed by the rule under it and by the two rows either side; the
+   frame is the LIST. What a button may never give up is its behaviour — the
+   press still travels (`:active` takes the flag, the way a table-seated button
+   does), hover still warns, focus still shows, and the tap target is still
+   `min-height: var(--tap)` from the base rule. */
+#atlasIndexBtn{ display: flex; align-items: center; gap: .5em;
+  inline-size: 100%; justify-content: flex-start; margin-block-start: .75rem; }
+/* the caret is state, drawn: it turns when `aria-expanded` does, and it is the
+   ONLY thing that moves, so the label never reflows */
+.nu-ixcaret{ font-family: var(--mono); transition: rotate .12s ease-out;
+  display: inline-block; }
+#atlasIndexBtn[aria-expanded="true"] .nu-ixcaret{ rotate: 90deg; }
+@media (prefers-reduced-motion: reduce){ .nu-ixcaret{ transition: none; } }
+
+/* A SCROLLER OF ITS OWN, AND THAT IS A DECISION ABOUT A PHONE. 199 rows at
+   44px is 8,700 px of document; poured into the page it would bury the sticky
+   tray's own scroll position and put the way back three flicks above the
+   reader's thumb. Capped at 60vh with `overscroll-behavior: contain`, the list
+   is one screen of catalogue that scrolls under your finger and stops there,
+   and the globe it feeds stays on screen above it — press a row, the map turns
+   behind the list, and you keep reading. */
+#atlasIndex{ margin-block-start: .5rem; max-block-size: min(60vh, 560px);
+  overflow-y: auto; overscroll-behavior: contain;
+  border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  background: var(--panel); }
+.nu-ix{ list-style: none; margin: 0; padding: 0; }
+.nu-ixli{ margin: 0; }
+/* THE ROW. Three cells: the year in the machine voice (tabular figures, so 540
+   and 1969 line up down the column and the eye can read the chronology as a
+   column rather than as 199 separate facts), then the genre — the thing Paul
+   asked to see — then the place. `minmax(0, 1fr)` on both text cells is what
+   keeps a 17-character place name ("Greenwich Village") inside a 390px phone
+   instead of pushing the page sideways: a `1fr` track has a min-content floor
+   and would have overflowed. */
+.nu-ixrow{ display: grid; grid-template-columns: 5ch minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: .5em; align-items: center; inline-size: 100%; text-align: start;
+  border: 0; border-block-end: var(--bw) solid var(--rule); border-radius: 0;
+  box-shadow: none; background: transparent;
+  padding-inline: .75em; padding-block: .35em; }
+.nu-ixli:last-child .nu-ixrow{ border-block-end: 0; }
+.nu-ixrow:active{ transform: none; background: var(--flag); }
+/* WHAT IS PLAYING, SAID THE WAY THE GLOBE SAYS IT. The mark on the earth wears
+   a ring; the row wears the hand — the page's own colour for "a value you set"
+   — and it keys off `aria-current`, the state ui/atlas.js already writes from
+   the same `here` the ring is drawn from. One fact, two pictures. */
+.nu-ixrow[aria-current="true"]{ background: var(--hand-tint);
+  box-shadow: inset 3px 0 0 var(--hand); }
+/* AND ON A WIDE SCREEN THE GENRE COLUMN STOPS STRETCHING. Measured at 1280:
+   two proportional tracks put "Kingston" 590 px to the right of "reggae" with
+   nothing in between — a row you read by sweeping your eye across a gap rather
+   than at a glance. Above 700 px the genre takes a fixed 18ch (wider than the
+   longest key, "singersongwriter") and the place follows it immediately, so
+   the three facts stay a phrase at every width. Below 700 the tracks stay
+   proportional, because 18ch of a 390 px phone would leave the place nowhere
+   to go. */
+@media (min-width: 700px){
+  .nu-ixrow{ grid-template-columns: 5ch minmax(0, 18ch) minmax(0, 1fr); }
+}
+.nu-ixy{ font-family: var(--mono); font-variant-numeric: tabular-nums;
+  color: var(--dim); }
+.nu-ixg{ font-weight: 600; overflow-wrap: anywhere; }
+.nu-ixp{ color: var(--dim); overflow-wrap: anywhere; }
 /* `#atlasActs button { min-block-size: var(--tap); margin-inline-end: .4rem }`
    STOOD HERE AND BOTH HALVES ARE GONE (2026-08-26). The tap floor was already
    `button { min-height: var(--tap) }` at the top of this file and had been for

@@ -387,9 +387,11 @@ function sectionEvents(doc, i) {
   // including non western stuff over a long period of time", Paul,
   // 2026-08-26: 21 in Latin America and the Caribbean, 9 in Africa, 5 in East
   // Asia, 6 in Southeast Asia, 3 in South Asia, 6 in the Middle East and
-  // Central Asia, 5 in Europe and 5 in North America).
-  ok("G0 the catalog is 199 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 199,
+  // Central Asia, 5 in Europe and 5 in North America)
+  // + the TWO news themes ("I want you to add 1970s news theme and 2000s news
+  // theme as genres", Paul, 2026-08-28: London 1970 and New York 2006).
+  ok("G0 the catalog is 201 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 201,
       "anchors() returned " + ANCHORS.length));
   ok("G0b 366 records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));

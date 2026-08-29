@@ -1220,7 +1220,80 @@ export function patchForInstr(id, tone, padish) {
 // four ids that name a person (PATCH_VOICE), then — for every other id, which
 // is most of them — the sampled one, the parent's default sound.
 export function recipeFor(chair, seat, lib, unrouted) {
-  return pedalled(recipeBase(chair, seat, lib, unrouted), seat && seat.tone);
+  return pedalled(worded(recipeBase(chair, seat, lib, unrouted), seat && seat.vox),
+                  seat && seat.tone);
+}
+
+/* ---------- THE THREE WORDS A RECORDING CAN HEAR (2026-08-28) -------------
+   "I expect SOME control of the native sampled voices, envelopes, perhaps
+   voice doubling, normal sampler options. Right now they are monolithic."
+
+   `voxSet` above is the layer's five SYNTH knobs and it says in its own header
+   why a sampled voice gets none of them: they ride a cutoff, a resonance, an
+   envelope amount, a decay and an oscillator, and a recording has none. This is
+   the other half — the words a RECORDING can answer — and the list is short
+   because it was READ off the engine rather than invented:
+
+     · `attack`  -> state-engine samplerUnit `atk: mp("attack", …, 0.003, 5)`,
+                   which is sampler.js's `n.atk` — the gain envelope's linear
+                   declick ramp (sampler.js:687, and the same number on the live
+                   path at :1338).
+     · `release` -> `rel: mp("release", …, 0.02, 6)` -> `n.rel`, the release
+                   ramp (sampler.js:829/854).
+     · `swell`   -> `swell: (m.swell || 0) >= 0.5` -> `n.swell`, which replaces
+                   the linear attack ramp with the x² crescendo the sampled
+                   string pads use. A different SHAPE, not a longer one.
+     · an INSERT -> state-engine's INSERTS-ON-SAMPLED-VOICES: an explicit chain
+                   on the recipe is normalized by insertChain and run on the
+                   native PCM lane, in press and live both. `dbl` spends one
+                   slot of it on a slow, shallow chorus, which is a second
+                   detuned pass of the same take summed with the first — what
+                   double-tracking IS, and the only unison this engine can pay
+                   for (a real sampler unison would be a second zone read at a
+                   second rate, and sampler.js has no lane for one).
+
+   NOTHING ELSE IS OFFERED. Loop points, zone crossfade, key tracking, a filter
+   — a normal sampler's other pages — have no port on this engine, and a word
+   that writes a number nothing reads is the bug this file spends its whole
+   header refusing.
+
+   THEY REACH A SYNTH TOO, so no layer draws a dead chip: `attack`/`release` are
+   recipe keys every pitched unit reads (state-engine:1234/1240) and an insert
+   chain runs on every voice in the fleet. Only `swell` is sampler-only, and the
+   word that sets it also sets a 1.2 s attack, so it is a slow swell either way.
+
+   THE WORDS ARE fields.js's (VOX.atk / VOX.rel / VOX.dbl, and VOXDOUBLE for the
+   chorus's numbers, which are FX.chorus's own scaled). This function is the
+   dispatch and owns no vocabulary — the same division as voxSet. */
+export function samplerVox(vox) {
+  if (!vox || !NF || !NF.VOX) return null;
+  const V = NF.VOX, out = {};
+  const secs = (k) => { const w = vox[k], t = V[k] && V[k].t;
+    return (w != null && t && t[w] != null) ? t[w] : null; };
+  const a = secs("atk");
+  // the x² crescendo is the WORD's, not a second chip: "swelling" is a shape
+  if (a != null) { out.attack = a; if (vox.atk === "swell") out.swell = 1; }
+  const r = secs("rel"); if (r != null) out.release = r;
+  const d = NF.VOXDOUBLE && NF.VOXDOUBLE[vox.dbl];
+  if (d) out.inserts = [{ type: "chorus", ...d }];
+  return Object.keys(out).length ? out : null;
+}
+
+/* the layer's words onto a finished recipe. Applied BEFORE `pedalled` so the
+   double sits with the instrument and the player's board runs after it — the
+   same ordering argument the board already makes against an amp. A layer that
+   named none of the three is byte-identical: an absent key adds nothing.
+   (insertChain caps a chain at 2, so a chair carrying a full pedalboard AND a
+   double will lose the last chip. That is the parent's cap and it is stated
+   there; the alternative — silently dropping the double instead — would be a
+   knob that reaches the sound only sometimes and says nothing about it.) */
+function worded(r, vox) {
+  const w = samplerVox(vox);
+  if (!r || !r.m || !w) return r;
+  const { inserts, ...rest } = w;
+  const own = Array.isArray(r.m.inserts) ? r.m.inserts : [];
+  return { ...r, m: { ...r.m, ...rest,
+    ...(inserts ? { inserts: [...own, ...inserts] } : {}) } };
 }
 
 /* A CHAIR'S PEDALBOARD, AFTER THE INSTRUMENT'S OWN CHAIN (2026-08-23).

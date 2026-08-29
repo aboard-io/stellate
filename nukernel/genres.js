@@ -10278,6 +10278,320 @@
               "the guitar, chopping"],
       word: v => (v === 1 ? [rotate(8), drop(2)] : v === 2 ? [only("acc", rotate(2))] : []),
     },
+
+    // ======================================================================
+    // THE NEWS THEME — added 2026-08-28
+    // ======================================================================
+    // Paul: "I want you to add 1970s news theme and 2000s news theme as
+    // genres."
+    //
+    // They are genres, and the catalogue's own definition is why. Every other
+    // anchor here is a music somebody chose to listen to. These two are a
+    // music nobody chose and everybody in a country heard at the same minute
+    // every night for a decade — which makes the idiom harder, not softer:
+    // a cue that has to be recognised in two seconds through a wall, by
+    // people who are not listening, has less room for invention than a pop
+    // single and therefore a much more fixed grammar. That grammar is the
+    // thing being written down twice below, thirty-six years apart, doing the
+    // same job with the technology of two different decades.
+
+    // NEWS FANFARE — London 1970, and the year is a broadcast identity rather
+    // than a decade's midpoint, which is this file's standing rule for a
+    // label. On 14 September 1970 the BBC's Nine O'Clock News went on the air
+    // as the corporation's flagship bulletin; by then ITN's News at Ten had
+    // been opening every night for three years with Johnny Pearson's "The
+    // Awakening" — timpani, then brass, over the Big Ben strike — written for
+    // KPM, a LIBRARY. That last word is the fact about this music: nobody's
+    // band, an arranger's score, session players hired for the morning, a
+    // stopwatch, and a cue whose only job is to be identified instantly from
+    // the next room. 1970 is the year the sound stops belonging to one
+    // programme and becomes the schedule's — the same brass-and-timpani
+    // grammar is on ITN, on the BBC, on the Tagesschau, on the American
+    // evening bulletins, everywhere at once, because everyone is buying from
+    // the same handful of London and Munich library houses.
+    //
+    // THE IDIOM, SAID AS FOUR CHAIRS: a fanfare that CLIMBS and lands, a
+    // string ostinato that refuses to develop, a timpani hammering the root
+    // of the bar, and the held chord the climb lands on. Every one of those
+    // four is an OPERATOR in this file rather than an adjective about it,
+    // which is the whole reason the anchor is writable at all:
+    //
+    //   the fanfare   `fill(8), rotate(7)` — a fanfare ANNOUNCES, so it has
+    //                 to be on the downbeat, and the subject this box writes
+    //                 usually is not (MEASURED over eight seeds: its first
+    //                 gate lands on step 0, 2 or 7). fill(8) guarantees a
+    //                 gate on step 7 and 15, rotate(7) drags those onto beats
+    //                 1 and 3, and the figure that follows is whatever the
+    //                 subject's own first move was — announced.
+    //   the ostinato  `spread(0.5), fill(2)` — an ostinato is NARROW and it
+    //                 is CONSTANT. Halving every interval means the cell
+    //                 cannot grow into a tune — MEASURED over eight seeds the
+    //                 strings' widest move inside a bar is six semitones and
+    //                 is usually two, where the brass reach eleven — and
+    //                 filling the gate means it is simply always there: ten
+    //                 to twelve of the sixteen steps, every bar, for the
+    //                 length of the cue.
+    //                 `excerpt(0, 4)` was the first draft of this line and
+    //                 the reason the note is here: an excerpt IS the honest
+    //                 spelling of "a cell repeated", and it rendered a SILENT
+    //                 CHAIR, because the subject is sparse and its first four
+    //                 steps are four rests. The gate said so immediately,
+    //                 which is the argument for reading the notes.
+    //   the timpani   `spread(0), fill(4), rotate(3)` — flatten every degree
+    //                 to the pivot and the line is a MONOTONE, which harm()
+    //                 then moves to the root of each bar; fill(4) puts a gate
+    //                 on the last sixteenth of every beat and rotate(3) drags
+    //                 all four onto the beats themselves, so the hammer is
+    //                 there whatever subject walked in. That is a timpanist
+    //                 exactly: two drums, the floor of the harmony, nothing
+    //                 else. MEASURED over eight seeds, chair 2's widest move
+    //                 inside a bar is ZERO semitones and its distinct-pitch
+    //                 count over the whole cue is exactly FIVE — one per
+    //                 chord in the progression — on every one of them.
+    //   the climb     `period`, argued at the bottom of the entry where it is
+    //                 written, because it is the one claim in the label that
+    //                 a reader can check against a number.
+    //
+    // AND THIS IS WHERE THE TIMPANI FINALLY GETS PLAYED. romantic (Vienna
+    // 1876) says in its own comment that timpani "exist in the registry but
+    // the kit has twelve fixed lanes and no timpani file; casting one as a
+    // pitched voice would make it melodic, so it waits for a PERC lane rather
+    // than being faked." That reasoning is right about a symphony and wrong
+    // about a news theme, and the difference is the point: here the timpani IS
+    // supposed to be pitched — it plays the tonic and the fifth, it is the
+    // reason the cue sounds like news and not like light music — and spread(0)
+    // is the operator that makes a pitched chair play one note. Vienna 1876
+    // still wants its perc lane. London 1970 does not need it.
+    //
+    // TWO STRING PATCHES, ON PURPOSE. `strings` plays the ostinato and
+    // `slow_strings` holds the landing chord, and casting one patch for both
+    // would be wrong twice over: the fast ensemble sample would swell where it
+    // should chatter, and the slow one would chatter where it should swell.
+    // Those two patches ARE the two things a string section does in this
+    // music, and the section really did play both parts on the same date.
+    //
+    // HARMONIC MINOR, and it is load-bearing rather than atmospheric: the
+    // raised seventh is what makes the climb LAND. Natural minor rises to a
+    // flat seventh and drifts; harmonic minor rises to a leading tone and
+    // arrives, which is the difference between a bed and a fanfare.
+    //
+    // LINEAGE. The orchestra itself — brass over timpani over strings, built
+    // to a swell — is `romantic`'s, one war and one recording industry later.
+    // The BRASS WRITING is `swing`'s: library composers of this generation
+    // were dance-band arrangers, and a section punching a chord in unison on
+    // the beat is Kansas City's invention, not Vienna's. What makes it 1970
+    // rather than 1935 is `funk` — there is a rhythm section under the
+    // orchestra, a backbeat and a driving bass, and that combination is
+    // exactly what library music sold. And `concerto` for the FORM: the cue
+    // returns to its opening material unchanged the way a ritornello does,
+    // because a viewer has to recognise it, which is the one formal demand a
+    // Baroque tutti and a news theme genuinely share.
+    newsfanfare: {
+      label: "London 1970", voices: 4, bars: 8, near: "romantic",
+      plan: "arc", bpm: 132,
+      parents: { romantic: 0.4, swing: 0.25, funk: 0.2, concerto: 0.15 },
+      wants: ["library music", "military march", "crime jazz"],
+      cannot: ["the stopwatch — a news cue is written to a DURATION (a thirty-" +
+               "second open with four seconds of tail under the announcer), and " +
+               "a section in this box is counted in bars at a tempo, so the one " +
+               "constraint the whole idiom is composed against cannot be stated",
+               "the teleprinter and the bongs — the chatter under the cue and " +
+               "the Big Ben strike over it are the sound of the thing being a " +
+               "NEWS theme, and an anchor casts instruments and drum lanes with " +
+               "no way to say 'and a machine runs underneath all of it'"],
+      instr: ["brass_section", "strings", "timpani", "slow_strings"],
+      drumkit: "room",
+      part: ["lead", "riff", "riff", "pad"],
+      entry: v => (v === 3 ? 4 : 0), reg: v => [0, 0, -1, 0][v],
+      realize: v => (v === 3 ? "pad" : "line"),
+      // i i VI vii° | i iv V i — the fanfare's own eight bars, and degree 6 in
+      // HARMONIC minor is the raised seventh, so bar 4 is the leading-tone
+      // chord and not a flat-VII: it leans back onto the tonic instead of
+      // sliding away from it, which is the whole reason this anchor is not in
+      // aeolian. The second half is the cadence the first half exists to set
+      // up, and the V is the only chord in the row that is not a triad —
+      // `dom7` is what makes bar 8 sound like an ending rather than a stop.
+      roots: [0, 0, 5, 6, 0, 3, 4, 0],
+      prog: [{ d: 0, q: "triad" }, { d: 0, q: "triad" }, { d: 5, q: "triad" },
+             { d: 6, q: "triad" }, { d: 0, q: "triad" }, { d: 3, q: "triad" },
+             { d: 4, q: "dom7" },  { d: 0, q: "triad" }],
+      mode: MODES.harmonic, scale: DIATONIC, diatonic: true,
+      artic: "staccato", maxHold: 3, bassStyle: "eighths",
+      // THE DRIVE. Kick on 1 and the and-of-2, backbeat on 2 and 4, eighths on
+      // the hat, and the low tom doubling the timpani on the two downbeats so
+      // the pitched drum has a struck drum agreeing with it. The fill bar is
+      // the roll into the landing — the snare closes to sixteenths and the
+      // crash lands on the bar 8 downbeat, which is where the cue arrives.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             l: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0] },
+      kitVel: { h: [8,0,5,0, 7,0,5,0, 8,0,5,0, 7,0,5,0] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 1,1,1,1, 1,1,1,1],
+              x: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] },
+      tone: { wave: "sawtooth", cut: 2400, q: 1.0, atk: .008, rel: .6, gain: .27, verb: .34 },
+      words: ["the fanfare, climbing to the landing",
+              "the strings, narrowed and constant — the drive",
+              "the timpani, hammering the root of the bar",
+              "the chord it lands on"],
+      word: v => (v === 0 ? [fill(8), rotate(7)]
+                : v === 1 ? [spread(0.5), fill(2)]
+                : v === 2 ? [spread(0), fill(4), rotate(3)]
+                : [drop(2)]),
+      // THE CLIMB, WRITTEN AGAINST THE CHORDS RATHER THAN WITH THEM, and it
+      // touches only the brass: the ostinato's whole job is to be the thing
+      // that does not change while everything above it does.
+      //
+      // `diatonic` makes a line follow the progression by DEGREES, folded to
+      // the nearer direction — kernel.js, "up 3 or down 3, never up 6" — so
+      // the melody's contour IS the progression's contour, and i-i-VI-VII-i
+      // makes a tune sag in exactly the four bars a fanfare is supposed to
+      // climb. This vector is the correction: each entry is the degree that
+      // puts bar b one step above bar b-1 after the near-fold has had its say.
+      // MEASURED, chair 0's top note per bar over the first six bars:
+      //   seed 1  70 72 74 75 77 80      seed 4  77 79 80 82 84 87
+      //   seed 3  67 68 70 72 74 77      seed 7  68 70 72 74 75 79
+      // — strictly rising on all eight seeds tried, ten or eleven semitones
+      // of climb, which is the thing the label claims and the notes now say.
+      //
+      // BAR 7 CANNOT BE THE PEAK, and this is a fact about the box rather
+      // than a compromise about the music: the near-fold sends a degree-4
+      // root DOWN a third, so the highest note this schedule can reach over
+      // the dominant (74) is below the LOWEST it can reach over the
+      // subdominant (75) — there is no entry in [-3..+2] that climbs through
+      // it, and +3 folds the whole line an octave. It is also what a brass
+      // section does with a leading tone, so the line falls to the cadence
+      // and bar 8 lands. `spread(0)` flattens it onto the tonic and `drop(2)`
+      // leaves the two long notes underneath the pad's held chord.
+      //
+      // `s` is bars-since-entry and unbounded, so it is read modulo the cue's
+      // own length — a schedule that trusts a raw bar counter walks the
+      // fanfare out of the room on the second pass.
+      period: (v, s) => {
+        if (v !== 0) return [];
+        const b = s % 8;
+        return b === 7 ? [spread(0), drop(2)]
+                       : [transpose([-3, -2, 1, 1, 1, 0, 2][b])];
+      },
+    },
+
+    // BREAKING NEWS — New York 2006. The same job two generations on, and the
+    // year is again an identity: in September 2006 the CBS Evening News
+    // relaunched with Katie Couric and a new theme by James Horner — a film
+    // composer, hired for a bulletin, which is the whole story of what
+    // happened to this idiom between 1970 and now. The library house is gone;
+    // the network buys a name off a picture score, and the reference everybody
+    // in the room is making is Hans Zimmer's — the Media Ventures action
+    // vocabulary of ostinato strings, layered brass and a four-on-the-floor
+    // pulse, arriving in news via trailers and sport.
+    //
+    // WHAT ACTUALLY CHANGED, and the table can say it in one field. THE 1970
+    // THEME HAS A TUNE; THIS ONE DOES NOT. Chair 0 is `part: "stab"` rather
+    // than `"lead"` — chordLock, the sounding chord punched on its own rhythm
+    // — because the brass in a modern package is not a melody, it is a hit,
+    // and everything the ear takes for a melody is the string ostinato moving
+    // underneath it. That one word is the difference between an arranger
+    // writing a fanfare and a producer stacking stems, and it is why this
+    // anchor is a separate genre rather than the 1970 one at a faster tempo.
+    //
+    // AND THE PLAN AGREES: `arc` up there, `dance` down here. A 1970 cue is
+    // through-composed to a stopwatch by one person and played once by an
+    // orchestra. A 2006 package is a LOOP with layers, mixed rather than
+    // written, and the arrangement is a question of which stems are up — which
+    // is what `plan: "dance"` means everywhere else in this table too. Four
+    // bars rather than eight, for the same reason.
+    //
+    // i - VI - III - VII, the four chords every network package of the decade
+    // is built from, and they are not a cliché by accident: the progression
+    // never resolves, so a bed made of it can be faded under a presenter at
+    // any point without sounding cut off. That is a broadcast requirement
+    // wearing a harmonic costume, and the `sus4` on the last chord is the same
+    // requirement said twice — a suspended seventh degree has nowhere it must
+    // go, so the loop can turn over forever or stop dead on a word.
+    //
+    // THE OSTINATO IS A RHYTHM AND A REGISTER, and the honest measurement says
+    // so: chair 1's widest move INSIDE a bar is ZERO semitones on seven of the
+    // eight seeds tried, at eight to sixteen notes a bar. All the motion the
+    // ear hears from it is the harmony moving under it once a bar. That is not
+    // a limitation being dressed up — it is what a Zimmer string ostinato
+    // literally is, four notes of the chord repeated until the chord changes —
+    // but it IS the reason the strings and the timpani had to be separated by
+    // rhythm and register rather than by tune: they are playing the same
+    // pitch, two octaves apart, at four times the density.
+    //
+    // THE BIG PROCESSED TIMPANI is the same pitched chair London 1970 uses and
+    // the same `spread(0)` monotone, thinned harder — MEASURED over eight
+    // seeds it plays TWO notes a bar, on beats 1 and 3, where 1970's plays six
+    // to eight and marches. `fill(8), rotate(7)` is what guarantees those two
+    // (fill puts a gate on steps 7 and 15, rotate drags them to 0 and 8) and
+    // `drop(2)` takes away whatever else the subject brought. What makes it
+    // "processed" is not in this row and honestly cannot be: `verb` and the
+    // low tom doubling it are the whole of what this box has to say about a
+    // compressor.
+    //
+    // AND THE STAB IS ON EVERY BEAT — `fill(4), rotate(3)`, London 1970's own
+    // timpani trick borrowed for the brass, which is the joke of the whole
+    // anchor: in 2006 the hit does what the drum used to do. Measured, chair 0
+    // fires four times a bar and holds FOUR distinct pitches over the loop,
+    // one per chord, because a chordLock stab has no tune to have.
+    //
+    // LINEAGE. `newsfanfare` at 0.35 is the direct one, written into the table
+    // in the same round — the brass-and-timpani grammar, the ostinato and the
+    // job survive intact and the technology under them does not. `house` is
+    // the pulse: a four-on-the-floor kick with the bass running eighths under
+    // an orchestra is a dance record's floor, and the moment it arrived is the
+    // moment the idiom stopped being library music. `minimalism` is the
+    // ostinato as an AESTHETIC rather than a device — New York 1964's repeated
+    // cell with the harmony changing slowly around it is what Zimmer took to
+    // film and film handed to news. And `romantic` is what the whole thing is
+    // still pretending to be, at a quarter weight, because the orchestra here
+    // is a sample library and everybody knows it.
+    breakingnews: {
+      label: "New York 2006", voices: 4, near: "newsfanfare",
+      plan: "dance", bpm: 128,
+      parents: { newsfanfare: 0.35, house: 0.25, minimalism: 0.2, romantic: 0.2 },
+      wants: ["hollywood action score", "trance", "sports broadcast package"],
+      cannot: ["the package — a 2006 identity is a FAMILY of cues cut from one " +
+               "motif (the thirty-second open, the eight-second bumper, the " +
+               "two-second breaking-news sting, the headline bed), and this " +
+               "table has one row per sound and no way to say 'and here are " +
+               "the four shorter versions of this'",
+               "the riser and the sub-drop — the non-pitched, non-metrical " +
+               "noise sweeps that glue a modern package together are neither " +
+               "a note nor a struck drum, and the twelve kit lanes are all " +
+               "struck drums"],
+      instr: ["brass_section", "strings", "timpani", "warm_pad"],
+      drumkit: "electronic",
+      part: ["stab", "riff", "riff", "pad"],
+      entry: v => (v === 0 ? 2 : 0), reg: v => [0, 0, -1, 0][v],
+      realize: v => (v === 3 ? "pad" : "line"),
+      roots: [0, 5, 2, 6],
+      prog: [{ d: 0, q: "triad" }, { d: 5, q: "triad" },
+             { d: 2, q: "triad" }, { d: 6, q: "sus4" }],
+      mode: MODES.aeolian, scale: DIATONIC, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      // FOUR ON THE FLOOR, and it is the machine's, not a drummer's: the kick
+      // is on every beat, the clap answers on 2 and 4, the hat is offbeat
+      // eighths, and the low tom carries the processed-timpani weight on 1 and
+      // the and-of-3. The fill bar is the sting arriving — the crash on the
+      // downbeat and the tom closing into it.
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             l: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0] },
+      kitVel: { h: [0,0,6,0, 0,0,5,0, 0,0,6,0, 0,0,5,0] },
+      fill: { l: [1,0,0,0, 0,0,1,0, 1,0,1,0, 1,1,1,1],
+              x: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] },
+      tone: { wave: "sawtooth", cut: 2800, q: 1.2, atk: .006, rel: .9, gain: .26, verb: .42 },
+      words: ["the brass, punching the chord on every beat — no tune, a hit",
+              "the strings, the cell that never stops",
+              "the timpani, twice a bar with the tail on it",
+              "the pad, holding the whole thing together"],
+      word: v => (v === 0 ? [fill(4), rotate(3), drop(2)]
+                : v === 1 ? [excerpt(0, 4), fill(2)]
+                : v === 2 ? [spread(0), fill(8), rotate(7), drop(2)]
+                : [drop(2)]),
+    },
   };
 
   // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane. `p` says "Ghost perc"
@@ -10425,7 +10739,15 @@
                 // 1968, Manila 1976, Tehran 1974, Hong Kong 1984 and Taipei
                 // 2003 are all records ARRANGED — a band plus an arranger
                 // plus a desk — which is this cluster and not `band`.
-                "tropicalia", "manilasound", "iranpop", "cantopop", "mandopop"]],
+                "tropicalia", "manilasound", "iranpop", "cantopop", "mandopop",
+                // ...and the two news themes (2026-08-28). `studio` is defined
+                // one line up as "records ARRANGED — a band plus an arranger
+                // plus a desk", and a broadcast theme is the purest case of it
+                // in the whole table: there is no band, only an arranger, a
+                // desk and people hired for the morning. Neither takes the
+                // family's dynamics row — both are named below, in opposite
+                // directions from it and from each other.
+                "newsfanfare", "breakingnews"]],
     ["drift",  ["ambient", "drone", "vaporwave", "shoegaze", "postrock",
                 "neoclassical", "minimalism", "spacerock"]],
     // the pre-rock traditions, and the two ancestors that joined them are
@@ -10734,6 +11056,23 @@
     riff:      { stress: 0.6,  phrase: 0.15, touch: { t: 0.03,  v: 0.9 } },
     pad:       { stress: 0.08, phrase: 0.4,  touch: { t: 0.02,  v: 0.6 } },
     vocal:     { stress: 0.18, phrase: 0.9,  touch: { t: 0.07,  v: 0.9 } },
+    // THE TWO NEWS THEMES (2026-08-28), and they disagree with `studio`
+    // (stress .35 / phrase .4 / t .035) in opposite directions, which is the
+    // argument for writing two anchors instead of one.
+    //   London 1970 is the most METRE of anything in the family, and it has to
+    // be: the cue's job is urgency, the ostinato IS the message, and a library
+    // date is a room of players reading a chart hard at 132. Its hand is loose
+    // for the cluster (t .045, v .9) because those are people, recorded live to
+    // two-track in a morning, not a record built over weeks.
+    newsfanfare:  { stress: 0.55, phrase: 0.45, touch: { t: 0.045, v: 0.9 } },
+    //   New York 2006 is the opposite trade and nearly the tightest hand in
+    // the table — only the drone (0), the Kling Klang line (motorik .002,
+    // kraftwerk .004, roboticpop .005) and hyperpop (.008) are under it. It
+    // has to be: this is a sample library on a grid, edited to the frame, and
+    // a string ostinato that wanders is a mistake somebody would fix. The
+    // phrase is the lowest of the two because there is no tune to shape — the
+    // brass is a hit, which is what `part: "stab"` says up in the anchor.
+    breakingnews: { stress: 0.4,  phrase: 0.2,  touch: { t: 0.01,  v: 0.5 } },
   };
   // NO SILENT DEFAULT (the compose.js law, one tier down): a genre resolves to
   // its own row or to its family's, and `null` is a DECISION rather than an

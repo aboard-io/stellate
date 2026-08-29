@@ -413,6 +413,8 @@
     bluegrass:      { place: "Nashville", year: 1946 },
     sacredharp:     { place: "Philadelphia", year: 1844 },
     zydeco:         { place: "Lafayette", year: 1955 },
+    newsfanfare:    { place: "London", year: 1970 },
+    breakingnews:   { place: "New York", year: 2006 },
   };
   /* WHEN:END */
 

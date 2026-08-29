@@ -223,7 +223,9 @@
     "swing": {"title":"Swing_music","kind":"genre","why":"Kansas City 1938 is Basie. The bare `Swing` is a disambiguation and Swung note is the rhythm rather than the music."},
     "bluegrass": {"title":"Bluegrass_music","kind":"genre","why":"Nashville 1946 is Monroe with Scruggs; the bare `Bluegrass` is a grass and a region of Kentucky."},
     "sacredharp": {"title":"Sacred_Harp","kind":"genre","why":"Philadelphia 1844 is the tunebook's own publication decade; the article is the shape-note tradition."},
-    "zydeco": {"title":"Zydeco","kind":"genre","why":"Lafayette 1955 is Clifton Chenier's own city."}
+    "zydeco": {"title":"Zydeco","kind":"genre","why":"Lafayette 1955 is Clifton Chenier's own city."},
+    "newsfanfare": {"title":"Television_news_music","kind":"broader","why":"London 1970. `News music` redirects here and the run follows it. Not News at Ten, which is the programme rather than the music, and not Production music, which is the library trade this cue was written for but is wider than the genre."},
+    "breakingnews": {"title":"Television_news_music","kind":"broader","why":"New York 2006. Not CBS Evening News, which is the programme whose relaunch Horner scored; a genre row does not link a bulletin."}
   };
   const MISSES = [
     {"key":"retrofunkpop","label":"Los Angeles 2013","why":"Los Angeles 2013 — the 2010s retro-funk pop revival has no article of its own in this ZIM. `Retro-funk` redirects to Funk, which is already this row's own parent and a different, older music; Nu-disco is disco's revival, not funk's. The nearest honest targets are individual singles (Treasure, Uptown Funk), and a genre row does not link a single."},
@@ -240,10 +242,10 @@
       .replace(/%28/g, "(").replace(/%29/g, ")") : null;
   }
   return {
-    "built": "2026-08-26",
+    "built": "2026-08-29",
     "from": "nukernel/wiki-extract.js",
     "book": BOOK,
-    "counts": { "links": 191, "misses": 2, "roles": 6, "anchors": 199 },
+    "counts": { "links": 193, "misses": 2, "roles": 6, "anchors": 201 },
     WIKI, MISSES, url,
   };
 });

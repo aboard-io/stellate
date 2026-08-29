@@ -676,7 +676,111 @@
     dec:  { labels: { snap: "snap", short: "short", long: "long", drone: "drone" },
             t: { snap: 0.04, short: 0.16, long: 0.45, drone: 0.9 } },
     wave: { labels: { saw: "saw", square: "square" }, t: { saw: 0, square: 1 } },
+    /* ---------- AND THE THREE A RECORDING CAN ANSWER (2026-08-28) ---------
+       "I expect SOME control of the native sampled voices, envelopes, perhaps
+       voice doubling, normal sampler options. Right now they are monolithic."
+       (Paul.)
+
+       HE IS RIGHT AND THE FILE ALREADY SAID SO. The paragraph fifty lines up
+       ends "…and none on any sampled voice, which has no filter to set", and
+       that is true of all five words above — they ride a synth's cutoff, its
+       resonance, its envelope amount, its decay and its oscillator, and a
+       recording has none of those. So on the ~600 sampled chairs in the
+       catalogue every chip on the voice tab was inert, and the only thing that
+       could shape a sampled voice was the genre's own `tone` block.
+
+       WHAT THE SAMPLER ACTUALLY HONOURS was read off
+       engine/faust/voices/sampler.js and state-engine.js `samplerUnit`, not
+       guessed, and the list is short: `atk` (the gain envelope's linear
+       declick ramp, sampler.js:687 `n.atk`, range 0.003–5 s), `rel` (the
+       release ramp, `n.rel`, 0.02–6 s), `swell` (the x²-shaped crescendo
+       attack the sampled string pads use, `n.swell`), and the INSERT CHAIN,
+       which state-engine honours on the native PCM lane
+       (INSERTS-ON-SAMPLED-VOICES). Everything else a sampler normally offers —
+       loop points, zone crossfade, filter cutoff, key tracking — has no port
+       on this engine, so it is NOT DRAWN. A word that cannot reach the sound
+       is the bug this round exists to fix, not a feature to add more of.
+
+         atk   how it comes in. Four words, and the last of them is the
+               sampler's own `swell`: a x² crescendo rather than a linear
+               ramp, which is a different SHAPE and not a longer one.
+         rel   how it lets go — the tail after the note.
+         dbl   DOUBLING, the one "normal sampler option" this engine can pay
+               for. A sampler unison would mean a second zone read at a second
+               rate, which sampler.js has no lane for; a slow, shallow chorus
+               insert IS a second detuned pass of the same take summed with
+               the first, which is what double-tracking is, and it costs one
+               insert on a chain the parent already runs for sampled voices.
+               `single` is the dry word and writes nothing.
+
+       ALL THREE REACH A SYNTH TOO, and that is why they are here beside the
+       other five rather than in a sampled-only table: `attack` and `release`
+       are recipe keys every pitched unit reads (state-engine:1234/1240) and an
+       insert chain runs on every voice in the fleet. So no layer draws a chip
+       that does nothing — which is the law, stated once, in both directions.
+       (`swell` alone is inert off the sampled lane; the word still moves that
+       layer's attack to 1.2 s, so it is a slow swell either way.) */
+    atk:  { labels: { snap: "straight in", soft: "soft", slow: "slow", swell: "swelling" },
+            t: { snap: 0.004, soft: 0.05, slow: 0.35, swell: 1.2 } },
+    rel:  { labels: { tight: "cut off", nat: "natural", ring: "ringing", long: "long tail" },
+            t: { tight: 0.03, nat: 0.12, ring: 0.8, long: 2.4 } },
+    dbl:  { labels: { single: "one take", double: "double-tracked", wide: "wide" },
+            t: { single: 0, double: 0.5, wide: 0.8 } },
   };
+  // THE THREE SAMPLER WORDS, AS THE RECIPE KEYS THEY WRITE. Kept beside the
+  // table above rather than inside audio/to-engine.js because it is the same
+  // kind of fact VOXPARAM below is — which param a word rides — and this file
+  // is where nukernel says what a control IS. audio/to-engine.js `samplerVox`
+  // is the one reader.
+  //   `atk`/`rel` write the recipe's own `attack`/`release` seconds directly
+  // (they are seconds in the table, not normalized positions, because both
+  // ends of the range are the ENGINE'S clamp and there is nothing to normalize
+  // against); `swell` additionally raises the sampler's x² flag.
+  //   `dbl` is a chorus CHIP and its params are FX.chorus's own, scaled: one
+  // owner for what a chorus is, exactly as BOARDS in instruments.js takes its
+  // chains from `fxChain` rather than restating them.
+  const VOXDOUBLE = { double: { rate: 0.28, depth: 0.35, mix: 0.5 },
+                      wide:   { rate: 0.45, depth: 0.7,  mix: 0.75 } };
+
+  /* ---------- HOW THE VOCAL CHAIRS ARE REALISED (2026-08-28) -------------
+     Paul: *"I want to be able to choose whether to use synthesized voices or
+     instrumentation to replace voices. Put this as a multi-state toggle right
+     next to the main volume slider: Vox (default), Instruments, All analog,
+     All FM."*
+
+     IT IS A VIEW AND NOT AN AXIS, and this table is the vocabulary only —
+     four words and what each one means. The VALUE lives in audio/plan.js as
+     module state (`voicing()` / `setVoicing()`), which is where the CAST is
+     resolved and the only place that reads it; no document carries it, no save
+     carries it, a share link does not, and `vox` — the default — recompiles
+     byte-identically to a build without this table. That is the whole argument
+     for keeping it out of the eight axes: it is a way of LISTENING to a record,
+     like the room slider beside it, not a fact the record states about itself.
+     (The cost of that choice, said out loud: reload and you are back on `vox`.
+     If Paul wants it to stick it becomes one line in ui/state.js's view store,
+     beside VOLSTORE, and still not an axis.)
+
+     WHICH CHAIRS IT TOUCHES: every chair whose instrument names a PERSON —
+     instruments.js PATCH_VOICE (solo vox, the aah choir, the ooh voices) and
+     PATCH_MOUTH (the talking tract). Nothing else on the record moves.
+     instruments.js `voicedAs` is the one owner of what each word swaps to,
+     because "which instrument plays this" is an instruments.js fact.
+
+     THE MARK is here beside the word rather than in ui/glyph.js because the
+     four states are a VOCABULARY — a menu of what the control may be — and
+     this file is where nukernel says what a control is. glyph.js's `act` rows
+     are single gestures (play, stop, rewrite, take); this is one control with
+     four positions, and its marks belong with its words. */
+  const VOICINGS = {
+    vox:    { w: "sung", g: "◉",
+              says: "the singers sing it — the record as it was cast" },
+    instr:  { w: "instruments", g: "♪",
+              says: "an instrument takes the vocal line — the band plays it" },
+    analog: { w: "all analog", g: "∿",
+              says: "the vocal chairs on analogue synthesis" },
+    fm:     { w: "all FM", g: "⋔",
+              says: "the vocal chairs on two-operator FM" } };
+  const VOICING_KEYS = Object.keys(VOICINGS);
   // The param a knob rides, per DSP naming. First name that EXISTS on the node
   // wins, so one chip covers tb303 / modeld / bass_reese / bass_wobble without
   // a per-synth table — and a DSP that has none of them (the DX7) is simply not
@@ -2218,6 +2322,16 @@
       tab: "voice",  group: "decay",                   default: null },
     { key: "wave",    scope: "layer", type: "vox", table: VOX.wave.t, labels: VOX.wave.labels,
       tab: "voice",  group: "waveform",                default: null },
+    // THE THREE A RECORDING CAN ANSWER (2026-08-28) — see the VOX table's own
+    // note. They are on the same tab as the five synth knobs because they are
+    // the same kind of decision (what this voice sounds like, per layer), and
+    // they are the FIRST controls on this page that a sampled chair can hear.
+    { key: "atk",     scope: "layer", type: "vox", table: VOX.atk.t,  labels: VOX.atk.labels,
+      tab: "voice",  group: "attack",                  default: null },
+    { key: "rel",     scope: "layer", type: "vox", table: VOX.rel.t,  labels: VOX.rel.labels,
+      tab: "voice",  group: "release",                 default: null },
+    { key: "dbl",     scope: "layer", type: "vox", table: VOX.dbl.t,  labels: VOX.dbl.labels,
+      tab: "voice",  group: "doubling",                default: null },
     { key: "clamp",   scope: "layer", table: CLAMPS,   labels: CLAMPLABEL,
       tab: "voice",  group: "ramp limit",              default: null },
     { key: "cmode",   scope: "layer", table: CMODES,   labels: CMODES,
@@ -2502,7 +2616,7 @@
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
                 RETURNS, RETURNLABEL, ERETURNS, REVERBS, REVERBLABEL,
                 EBLEEDS, EBLEEDLABEL, GLEVELS, GLEVELLABEL, GXCHIPS,
-                VOX, VOXPARAM, OCTAVES, ARTICS, CMODES, CLAMPS, CLAMPLABEL,
+                VOX, VOXPARAM, VOXDOUBLE, VOICINGS, VOICING_KEYS, OCTAVES, ARTICS, CMODES, CLAMPS, CLAMPLABEL,
                 KEYS, KEYLABEL, KEYNAMES, wrapKey, KEYMODES, KEYMODELABEL,
                 FIFTHS, relMinorOf, RELMINNAME, minorish,
                 PROGCHOICES, PROGLABEL, PERIODS, PERIODLABEL,

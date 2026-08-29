@@ -369,6 +369,17 @@ const ASK = {
   bluegrass:  { q: "Bluegrass music", why: "Nashville 1946 is Monroe with Scruggs; the bare `Bluegrass` is a grass and a region of Kentucky." },
   sacredharp: { q: "Sacred Harp", why: "Philadelphia 1844 is the tunebook's own publication decade; the article is the shape-note tradition." },
   zydeco:     { q: "Zydeco", why: "Lafayette 1955 is Clifton Chenier's own city." },
+
+  /* ---- MUSIC WRITTEN TO BRAND A BROADCAST ------------------------------ */
+  // Both rows point at the SAME article on purpose, the way the ten blues
+  // descendants share `Blues`: what these two anchors have in common is the
+  // commission, not the sound. "Television news music is used by television
+  // stations to brand their news operations" is the article's own first line,
+  // and it is exactly what both records are. The difference between them is
+  // internal to this table (1970 has a tune, 2006 has a hit), and a link
+  // cannot carry it — the anchors' own comments do.
+  newsfanfare: { q: "Television news music", why: "London 1970. `News music` redirects here and the run follows it. Not News at Ten, which is the programme rather than the music, and not Production music, which is the library trade this cue was written for but is wider than the genre.", kind: "broader" },
+  breakingnews: { q: "Television news music", why: "New York 2006. Not CBS Evening News, which is the programme whose relaunch Horner scored; a genre row does not link a bulletin.", kind: "broader" },
 };
 
 /* ---------------------------------------------------------------------------

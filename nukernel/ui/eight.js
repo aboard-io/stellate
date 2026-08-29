@@ -242,7 +242,7 @@ import { writeSmf, parseSmf, headGM } from "../export/smf.js";
    ui/engineer.js `factsNow` asks audio/plan.js, and the strip it feeds is the
    only strip on the page. `songDurSec` is unchanged — the score's own length
    in seconds, which is what the WAV press is measured against. */
-import { songDurSec } from "../audio/plan.js";
+import { songDurSec, voicing, setVoicing } from "../audio/plan.js";
 // THE MARKS ON THE TABS, AND THE ONE EXPLAINER (2026-08-28). Paul: "Please
 // make all the tabs and top buttons into sensible icons to save space. Voice 2
 // for example could be more symbol plus the number 2. Provide a simple long
@@ -8158,6 +8158,19 @@ function bandBlock(parent) {
                                    "default material")]);
   if (!onForm && kind === "line" && fInst)
     selectRow(panel, null, [shSpec("sound.instrument", { voice: voice.name })]);
+  /* ...AND WHAT THE SAMPLER WAS TOLD (2026-08-28). Paul: *"I expect SOME
+     control of the native sampled voices, envelopes, perhaps voice doubling,
+     normal sampler options. Right now they are monolithic."* Three menus on
+     the same facet as the instrument, because they answer the same question
+     it does — WHAT THIS PLAYER IS, said once and left alone — and because
+     they are settled parameters, which is the evening-of-2026-08-24 test for
+     a menu rather than a sheet. avail.js `sound.attack` / `sound.release` /
+     `sound.double` own the words, the reading and the writing; this line only
+     says where they are drawn. */
+  if (!onForm && kind === "line" && fInst)
+    selectRow(panel, null, [shSpec("sound.attack", { voice: voice.name }),
+                            shSpec("sound.release", { voice: voice.name }),
+                            shSpec("sound.double", { voice: voice.name })]);
   // ...and these two are NOT on the evening list and stay sheets. The drum kit
   // in particular: Paul's question about it in the same message was "can i pick
   // more than one options for the drum kit?", and more-than-one is a row of
@@ -10647,6 +10660,43 @@ const printReading = () => {
   rewriteBtn.setAttribute("aria-label", GLYPH.act.rewrite.w + " " + n);
 };
 on("box", printReading);
+
+/* ---------- THE VOICING TOGGLE (2026-08-28) -----------------------------
+   Paul: *"I want to be able to choose whether to use synthesized voices or
+   instrumentation to replace voices. Put this as a multi-state toggle right
+   next to the main volume slider: Vox (default), Instruments, All analog,
+   All FM."*
+
+   THREE FACTS, THREE OWNERS, AND NONE OF THEM IS HERE. The WORDS and the marks
+   are fields.js VOICINGS; WHAT each word puts in the chair is instruments.js
+   `voicedAs`; the VALUE is audio/plan.js module state, which is also the only
+   thing that reads it. This block is the hand on the control and nothing else,
+   which is why it is nine lines in a file of eleven thousand.
+
+   IT IS A SETTING AND ITS MARK IS ITS STATE, not the next tap. #play's law
+   ("the word on it is the NEXT tap") is right for a gesture with two spellings
+   and wrong for a setting with four positions — at the third press nobody can
+   read a control that shows you where you are going. `paintIcon` writes the
+   `aria-label` and the `.nu-vh` word from the same row, so the strip still
+   reads as words with the stylesheet off.
+
+   `commit("pool")` IS THE DOOR, and it is the right one by name: audio/live.js
+   listens to it as "the band changed: register homes and zones with it", which
+   is exactly what a voicing swap is — the seats are re-resolved, the register
+   homes are taken again off the new units, and while stopped it discards the
+   held pre-render so the tape cannot play the old band under the new word. */
+const voicingBtn = $("voicing");
+const paintVoicing = () => {
+  const v = NuFields.VOICINGS[voicing()] || NuFields.VOICINGS.vox;
+  paintIcon(voicingBtn, { glyph: v.g, word: v.w, say: v.says });
+};
+paintVoicing();
+voicingBtn.addEventListener("click", () => {
+  const k = NuFields.VOICING_KEYS;
+  setVoicing(k[(k.indexOf(voicing()) + 1) % k.length]);
+  paintVoicing();
+  commit("pool");
+});
 
 takeBtn.addEventListener("click", () => {
   /* THE NEXT TAKE, AND WHY 0 GOES TO 2. The slider's own domain is 0..99 and

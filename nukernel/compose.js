@@ -57,6 +57,187 @@
   // the alias comes out and nothing else moves.
   const ALIAS = { prechorus: "verse", build: "breakdown" };
 
+  // ---- THE FORM DEAL -------------------------------------------------------
+  // Paul, 2026-08-28: "Is form variable? It seems to always choose very similar
+  // song shapes. We should allow more variety and encourage it."
+  //
+  // MEASURED FIRST, eight readings each of twelve anchors spanning the ten
+  // families (compose(gk, 1..8), counting DISTINCT ROLE SEQUENCES):
+  //
+  //   beatles rock motown jazz (song)   1, 1, 2, 2      fugue tango solo (arc) 1
+  //   techno house (dance)              2, 2            drone (arc)            1
+  //   reggae dub (groove)               4, 3
+  //
+  // and every one of those 2s, 3s and 4s was the INTRO BED — `introSections`
+  // opening on drums, or on bass and a groove, before the head. The BODY of the
+  // record — everything after the head intro — was byte-identical across all
+  // eight readings of all twelve anchors: one sequence per PLAN, not per
+  // record. Of course it was: `PLANS` is three literal arrays, `compose` read
+  // `PLANS[G.plan]` and arranged exactly those words in exactly that order, and
+  // the only seeded thing about form was the head and the bar counts. Every
+  // song-plan record ever written by this box had two verses, two prechoruses,
+  // three choruses, a bridge and a solo, in that order. That is a template.
+  //
+  // THE READING MECHANISM ALREADY EXISTED and form was never given it:
+  // precompose's `reading(gk, seed, kinds)` varies the TUNE inside the anchor's
+  // declared bands and compose deals its dynamics on its own seeded stream.
+  // This is the same move, on the same law, for the shape.
+  //
+  // WHAT A FORM MAY VARY — and it is a short list on purpose, because the three
+  // plans are three different KINDS of record and "a song plan is not a dance
+  // plan and a vamp is neither":
+  //
+  //   song   how many verses before the first chorus; a prechorus, or none, or
+  //          one that arrives only the second time round; a bridge, or none; a
+  //          solo, or none; a verse back after the departure; whether the last
+  //          chorus doubles.
+  //   dance  a build before the first drop, or a cold one; a vamp in; the
+  //          breakdown, or none; a verse after it, or straight back to the
+  //          build; one closing drop or two, and a second breakdown between.
+  //   arc    one, two or three statements before the departure; the departure
+  //          itself; the solo; whether the climax is restated at the end.
+  //
+  // WHAT IT MAY NOT: invent a word. Every deal below is built out of the words
+  // of ITS OWN plan and nothing else, and `formOf` checks that against the
+  // plan's own vocabulary before it hands the list back — a dance record cannot
+  // grow a prechorus and a song cannot grow a drop, however the dice fall.
+  //
+  // AND A DRONE MUST NOT GROW A BRIDGE. `STEADY` is the same opt-out it is for
+  // the dynamics ladder, and it is honoured the same way: a steady anchor draws
+  // every coin below (the stream-position law — retuning a pop move must not
+  // move a drone) and then KEEPS only the ones its plan lists under `keep`,
+  // which for the arc plan is the count of held statements and nothing else.
+  // Drone and ambient get a record that is one, two or three long held things,
+  // never one that grew a departure.
+  //
+  // MEASURED AFTER, the same twelve anchors and the same eight readings —
+  // distinct role sequences, before -> after:
+  //
+  //   beatles 1->5   rock 1->8   motown 2->8   jazz 2->7   reggae 4->7
+  //   techno 2->7    house 2->7  dub 3->8      fugue 1->6  tango 1->4
+  //   solo 1->6      drone 1->2 (the steady exemption: the count, and nothing
+  //                              else, so it is 8 or 9 sections of the same
+  //                              held thing)
+  //
+  // ...and over all 199 anchors, distinct sequences in eight readings went from
+  // {1:109, 2:52, 3:27, 4:11} to {2:2, 4:6, 5:18, 6:39, 7:66, 8:68} — mean 6.82
+  // of a possible 8, no anchor left at 1, and the two 2s are the drones. The
+  // record did not get LONGER, it got more different: median length 184s before
+  // and 180s after, over the same 199 anchors at seeds 2..8.
+  //
+  // READING 1 IS THE PLAN AS WRITTEN, exactly as precompose's `reading` is the
+  // idiom as written: `formOf` returns before it draws anything at seed <= 1,
+  // so every record this box has ever landed on at seed 1 is byte-identical,
+  // and the bar's REWRITE (atlas.js reseed: seed++) is what deals a new shape.
+  // The stream is `rng(ihash(gk + "/form/" + seed))` — its own, genre-salted,
+  // like every other ballot in this file, so a retuned form cannot move a bar
+  // line, a guest or a drum.
+  const DEALS = {
+    // ONE COIN PER DECISION, all drawn unconditionally and in a fixed order, so
+    // adding a move later renumbers nothing that came before it. `plain` is the
+    // coin-set that reproduces the plan as written — checked below, not
+    // asserted by comment — and `words` is the only place a form is built.
+    song: {
+      coins: f => ({ lifts: chance(f, 0.72),   // does this song have a prechorus at all
+                     late:  chance(f, 0.25),   // ...if it does, the first verse goes without
+                     twoUp: chance(f, 0.30),   // two verses before the first chorus
+                     br:    chance(f, 0.78),   // a bridge
+                     solo:  chance(f, 0.62),   // an instrumental break
+                     back:  chance(f, 0.30),   // a verse back after the departure
+                     dbl:   chance(f, 0.35) }), // the last chorus doubles
+      plain: { lifts: true, late: false, twoUp: false, br: true,
+               solo: true, back: false, dbl: false },
+      keep: [],                                // no steady anchor is on this plan
+      words: c => {
+        const lift = n => (c.lifts && !(c.late && n === 1) ? ["prechorus"] : []);
+        const o = ["intro", "verse"];
+        if (c.twoUp) o.push("verse");
+        o.push(...lift(1), "chorus", "verse", ...lift(2), "chorus");
+        if (c.br) o.push("bridge");
+        if (c.solo) o.push("solo");
+        // ...and a song with NO departure at all takes the verse anyway: the
+        // form a verse-chorus record without a bridge actually has is a THIRD
+        // cycle, not two choruses back to back with nothing between them
+        // (measured on rock seed 3 of the first cut of this deal, which came
+        // out chorus-chorus-chorus — the sameness this round is fixing, in a
+        // smaller box).
+        if (c.back || (!c.br && !c.solo)) o.push("verse", ...lift(3));
+        o.push("chorus");
+        if (c.dbl) o.push("chorus");
+        return [...o, "outro"];
+      },
+    },
+    dance: {
+      coins: f => ({ b1:    chance(f, 0.75),   // the first drop gets its build
+                     vamp:  chance(f, 0.25),   // an extra verse at the top: the long groove in
+                     brk:   chance(f, 0.85),   // the breakdown
+                     v2:    chance(f, 0.70),   // a verse after it, or straight back to the build
+                     two:   chance(f, 0.55),   // the closing run is two drops, not one
+                     brk2:  chance(f, 0.25) }), // ...with a second breakdown between them
+      plain: { b1: true, vamp: false, brk: true, v2: true, two: true, brk2: false },
+      keep: [],
+      words: c => {
+        const o = ["intro", "verse"];
+        if (c.vamp) o.push("verse");
+        if (c.b1) o.push("build");
+        o.push("drop");
+        if (c.brk) o.push("breakdown");
+        if (c.v2) o.push("verse");
+        o.push("build", "drop");
+        if (c.two) { if (c.brk2) o.push("breakdown"); o.push("drop"); }
+        return [...o, "outro"];
+      },
+    },
+    arc: {
+      coins: f => ({ three: chance(f, 0.28),   // three statements before the departure
+                     one:   chance(f, 0.20),   // ...or one
+                     br:    chance(f, 0.80),   // the departure itself
+                     solo:  chance(f, 0.70),   // the single voice out of the texture
+                     ret:   chance(f, 0.30) }), // the climax restated at the end
+      plain: { three: false, one: false, br: true, solo: true, ret: false },
+      // the one move a drone is dealt: how many times the held thing comes
+      // round. Not a bridge, not a solo, not a restatement.
+      keep: ["three", "one"],
+      words: c => {
+        const o = ["intro"];
+        for (let i = 0, n = c.three ? 3 : c.one ? 1 : 2; i < n; i++) o.push("verse");
+        if (c.br) o.push("bridge");
+        o.push("chorus");
+        if (c.solo) o.push("solo");
+        o.push("verse");
+        if (c.ret) o.push("chorus");
+        return [...o, "outro"];
+      },
+    },
+  };
+  // THE DEAL'S OWN VOCABULARY IS THE PLAN'S, checked at load rather than
+  // trusted: `words(plain)` must BE the plan (so the plan as written is inside
+  // the space the deal can say, and reading 1 and reading 2 are the same kind
+  // of object), and no deal may reach a word its plan does not own. A table
+  // that disagrees with its plan is a bug that would otherwise surface as a
+  // genre arranging with a role its loader has never seen.
+  for (const [k, D] of Object.entries(DEALS)) {
+    const want = PLANS[k].join(" ");
+    if (D.words(D.plain).join(" ") !== want)
+      throw new Error(`compose: the ${k} form deal does not reproduce its plan`);
+  }
+  const formOf = (key, plan, gk, seed, steady) => {
+    if (seed == null || seed <= 1) return plan;   // reading 1 = the plan as written
+    const D = DEALS[key];
+    if (!D) return plan;
+    const c = D.coins(rng(ihash(gk + "/form/" + seed)));   // every coin, always
+    const use = steady ? Object.assign({}, D.plain,
+      Object.fromEntries(D.keep.map(k => [k, c[k]]))) : c;
+    const words = D.words(use);
+    const own = new Set(plan);
+    // the two fences, and a form that trips either is not shipped: no invented
+    // word, and a record between six and sixteen boxes (band-kit MAXSECS is 24
+    // and the head intro can add two, so sixteen is the honest ceiling here)
+    if (words.length < 6 || words.length > 16 || !words.every(w => own.has(w)))
+      return plan;
+    return words;
+  };
+
   // ---- THE ARC -------------------------------------------------------------
   // One intensity curve over the whole plan, replacing per-role constants.
   // Per-role sizing is why every chorus in a song was the same size and the
@@ -2164,23 +2345,30 @@
     if (!Number.isInteger(bpm0) || bpm0 < 70 || bpm0 > 160)
       throw new Error(`compose: genre "${gk}" declares no bpm ` +
                       `(bpm: an integer 70..160 on its GENRES row)`);
-    const xs = arcOf(plan, !!STEADY[gk]);
-    const ord = ordinals(plan);
+    // ...AND THIS READING'S SHAPE. The plan is the genre's kind of record; the
+    // FORM is this reading of it (the form deal, :58). Everything below reads
+    // `form` and nothing reads `plan` again — the arc, the ordinals, the peak
+    // and the boxes themselves — because a form that only some of them saw
+    // would be a record whose dynamics were arranged for a different song.
+    // At seed 1 `form === plan`, which is why every landed record is untouched.
+    const form = formOf(G.plan, plan, gk, seed, !!STEADY[gk]);
+    const xs = arcOf(form, !!STEADY[gk]);
+    const ord = ordinals(form);
     // THE ONE CHORUS THE SOLOIST VISITS, or none — drawn here, before a section
     // exists, for the reason the cast is: "one section, maybe a chorus" is a
     // fact about the record, and a per-chorus coin would put a lead break in
     // two of the three.
     {
-      const peakAt = Math.max(plan.lastIndexOf("chorus"), plan.lastIndexOf("drop"));
-      const spare = plan.map((w, i) => (w === "chorus" && i !== peakAt ? i : -1))
+      const peakAt = Math.max(form.lastIndexOf("chorus"), form.lastIndexOf("drop"));
+      const spare = form.map((w, i) => (w === "chorus" && i !== peakAt ? i : -1))
         .filter(i => i > 0);
       S.visit = spare.length && chance(S.out, 0.35) ? pick(S.out, spare) : -1;
     }
-    // the plan's own "intro" is replaced by however this song decided to begin,
+    // the form's own "intro" is replaced by however this song decided to begin,
     // which may be one section or three
     const song = [...introSections(G, gk, r, S,
                                    rng(ihash(gk + "/" + (seed == null ? 1 : seed)))),
-                  ...plan.slice(1).map((role, i) =>
+                  ...form.slice(1).map((role, i) =>
                     build(role, G, gk, r, S,
                           { x: xs[i + 1], next: xs[i + 2], peak: xs[i + 1] === 1,
                             i: i + 1, again: ord[i + 1] }))];
@@ -2285,6 +2473,10 @@
   }
 
   const api = { compose, ROLES, BEDS, PLANS, PLAN_OF, BPM, ALIAS, arcOf, dynOf, rng, phrase,
+                // THE FORM DEAL and its table, exported on the same law every
+                // other ballot in this file is: a policy the suite cannot read
+                // is a policy the suite can only measure indirectly.
+                DEALS, formOf,
                 INTRO_LEAN, INTRO_NOKIT, introEdge, SOLO_LEAN, LAYERABLE, partSlot, PARTS5,
                 GUEST_LEAN, guestCast, AWAY_FX, SOLO_FX, MASTER_LEAN, MASTER_GENRE, masterOf,
                 // the five tables and three helpers this round added, exported

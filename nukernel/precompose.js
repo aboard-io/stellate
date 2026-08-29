@@ -466,26 +466,52 @@
   // reading may only move an axis §6b already decided it may move: the anchor's
   // own row and the kind's are merged in ahead of it and §6b never puts one of
   // theirs in the map.
-  function cellOf(row, kind, cb, G, steps, rd) {
+  // `dv` (2026-08-28) is THIS RECORD'S DEVELOPMENT for this cell — §6c's deal,
+  // or null, which is every reading before it existed. Two fields, and they act
+  // at two different moments: `dev` names a DEVICE applied to the rendered
+  // phrase (so the figure that gets measured out into `play` is already the
+  // developed one), and `rel` names the RELEASE, which is length arithmetic and
+  // therefore belongs at the bottom of this function beside the cap.
+  function cellOf(row, kind, cb, G, steps, rd, dv) {
     const m = { ...Id.blank(), ...row, ...KINDS[kind], ...(rd || {}),
                 len: cb === 4 ? "four" : cb === 2 ? "two" : "one", answer: true };
-    const ph = Id.toPhrase(m, null);              // ideas-kit.js:425, pure, cached
+    let ph = Id.toPhrase(m, null);                // ideas-kit.js:425, pure, cached
+    // THE DEVICE LANDS ON THE PHRASE, NOT ON THE THEME. `Id.develop` is pure
+    // and returns the phrase object itself for `same`, so a cell nobody
+    // developed takes no branch and comes out byte-identical.
+    if (dv && dv.dev) ph = Id.develop(ph, dv.dev);
     const n = cb * steps, cap = capOf(G);
     const deg = ph.deg.slice(0, n), vel = ph.vel.slice(0, n);
     const play = new Array(n).fill("r"), acc = new Array(n).fill(0);
     const on = [];
     for (let i = 0; i < n; i++) if (ph.gate[i]) on.push(i);
-    on.forEach((i, j) => {
+    // A WRITTEN LENGTH BEATS NOTHING HERE. ideas-kit's own `hold` is the
+    // sentence's tie across a barline; the gap to the next onset is the
+    // default; and the anchor's articulation caps both, which is the only
+    // way a `legato` chant and a `staccato` punk hook come out of the same
+    // contour as two different rows of "play".
+    const L = on.map((i, j) => {
       const next = j + 1 < on.length ? on[j + 1] : n;
-      // A WRITTEN LENGTH BEATS NOTHING HERE. ideas-kit's own `hold` is the
-      // sentence's tie across a barline; the gap to the next onset is the
-      // default; and the anchor's articulation caps both, which is the only
-      // way a `legato` chant and a `staccato` punk hook come out of the same
-      // contour as two different rows of "play".
-      const L = Math.max(1, Math.min(ph.hold && ph.hold[i] ? ph.hold[i] : next - i,
-                                     cap, next - i));
+      return Math.max(1, Math.min(ph.hold && ph.hold[i] ? ph.hold[i] : next - i,
+                                  cap, next - i));
+    });
+    // THE RELEASE (§6c). The last onset's `next` is the END OF THE CELL, so
+    // until today the last note of every figure ran to the bar line and 84.7%
+    // of the catalogue's 4,915 cells ended on their longest note. `ring` is
+    // that law, unchanged and still the commonest draw — a hymn lands long.
+    // `clip` and `lean` are the two ways a figure ends SHORT, measured against
+    // the figure's own notes rather than against a constant: `clip` is no
+    // longer than the shortest note before it (the bar ends in silence),
+    // `lean` is one step and gone (it leans into what comes next).
+    // A figure of one note has no "notes before it" and keeps its ring.
+    if (dv && dv.rel && dv.rel !== "ring" && on.length > 1) {
+      const pulse = Math.max(1, Math.min(...L.slice(0, -1)));
+      const want = RELEASE[dv.rel].last(pulse);
+      L[L.length - 1] = Math.max(1, Math.min(L[L.length - 1], want));
+    }
+    on.forEach((i, j) => {
       play[i] = "n";
-      for (let k = 1; k < L; k++) play[i + k] = "h";
+      for (let k = 1; k < L[j]; k++) play[i + k] = "h";
       // AN ACCENT WHERE AN ACCENT MEANS SOMETHING — the top of a bar, which
       // is compose.js:424's own rule and what kernel.bass reads.
       if (i % steps === 0) acc[i] = 1;
@@ -881,6 +907,251 @@
     }
     const key = KEYSHIFT[Math.floor(r() * KEYSHIFT.length) % KEYSHIFT.length];
     return { cells: Object.keys(cells).length ? cells : null, key };
+  }
+
+  /* ======================================================================
+     6c · THE DEVELOPMENT DEAL — what happens to a figure over a record
+     ======================================================================
+     Paul, 2026-08-28, listening across the catalogue: *"So many songs have a
+     do-do-doooo motif across genres, it shows up everywhere."*
+
+     MEASURED FIRST, 201 anchors x seeds 1..3 = 603 records, 4,915 line cells,
+     read off the RENDERED `play` rows and not off the declared words:
+
+       notes per phrase   3:33.9%  4:18.0%  6:16.1%  2:16.0%  8:10.5%  5:5.5%
+       ends on its longest note (ties included)                        84.7%
+       three notes whose last is the longest                           33.9%
+       DISTINCT RHYTHMS THE HOOK TAKES ACROSS ONE RECORD          1.00, 588/588
+
+     The last line is the real one, and the first two are its symptoms. TWO
+     defects, one deal, because they are two halves of the same missing axis:
+
+     (A) THE MECHANICAL ENDING. `cellOf`'s last onset has no next onset, so its
+         length is the whole rest of the bar, capped by the anchor's
+         articulation and by nothing else. 84.7% is therefore not a style, it
+         is the arithmetic: every figure in the box ends by ringing out. A real
+         tune also stops short, on a rest, or leans into the next phrase. The
+         fix is a RELEASE word at the one place a note gets its length — and
+         NOT a ban on long endings, because a hymn should still land long,
+         which is why the coin is weighted by the anchor's own `artic`:
+         a legato anchor rings about two times in three, a normal one under a
+         half. `ring` is today's law, unchanged, and still the single
+         commonest draw in the catalogue.
+
+     (B) THE HOOK NEVER DEVELOPS. `material.cells` is keyed by PART and
+         `form.sections[]` names no cell, so the hook had ONE figure for the
+         whole record — every verse, every chorus, eleven sections, the same
+         bar. This deals a DEVICE (ideas-kit `DEVELOP`, seven rhythm-only
+         devices) for each RETURN of each part, renders it as its own cell, and
+         points that section's material at it. The mechanism underneath was
+         already built and unused: `voice.material` has been a
+         `{ "<secId>": "<cell>" }` map since document.js:78, and precompose has
+         been writing that map for the KIND rotation all along — this writes
+         the same map with the same part's own developed figure in it.
+
+     THE STATEMENT IS NEVER DEVELOPED. The FIRST section a part sounds in is
+     the part as written: you cannot develop what has not been said yet, and a
+     record whose hook is varied before it is stated has no hook.
+
+     ONE STREAM, ITS OWN, GENRE-SALTED — `rng(ihash(gk + "/develop/" + seed))`,
+     the idiom compose.js `formOf` uses and this file's §6b uses, so a retuned
+     development cannot move a bar line, a guest, a key or a drum. Coins are
+     drawn in a FIXED ORDER and drawn UNCONDITIONALLY — every kind's release,
+     then every (kind, section) pair whether or not that kind sounds there — so
+     adding a device later renumbers nothing, and a record that gains a section
+     at a later seed does not renumber the sections beside it. That is §6b's
+     spent-and-discarded discipline, verbatim.
+
+     READING 1 IS TODAY, BYTE FOR BYTE. `developOf` returns before it draws
+     anything at seed <= 1, exactly as `reading` and `formOf` do; measured
+     after, all 201 anchors at seed 1 serialize identically to the day before
+     this block existed.
+
+     A GENRE KEEPS ITS IDENTITY, and it is checked rather than asserted. Three
+     fences, all of them read off tables this file already keeps:
+       · the DECLARED cell is untouched — dub still reads `long`, punk `even`,
+         techno `even`. A device varies a figure; it never swaps it.
+       · every device is RHYTHM-ONLY (ideas-kit DEVELOP's own fence), so the
+         contour and the landing that make a part a part survive it.
+       · the developed figure must land within ONE BAND of the statement's
+         density (`bandOf`, §6b's own table) and must still be a figure at all
+         — two onsets or more, and actually different from the statement.
+         Anything else falls back to the statement, which is always playable.
+         This is `nearPool`'s law applied to the same figure over time instead
+         of across readings: a pad that puts three notes in the bar instead of
+         two is still a pad; one running eighths is not.
+
+     ...AND A DRONE DOES NOT DEVELOP A MOTIF. `STEADY` is compose.js's own
+     opt-out, honoured the way `formOf` honours it: a steady anchor draws every
+     coin below — the stream-position law, so retuning a pop record's
+     development cannot move a drone's — and KEEPS NOTHING. `formOf`'s arc plan
+     keeps a count of statements because how many times a held thing comes
+     round is a real decision; there is no equivalent here, because "the same
+     held note, again" is the entire claim drone and ambient make about
+     themselves. Their releases stay `ring` and their returns stay the
+     statement, and that is a decision, not an untested branch.
+
+     THREE OR FOUR RHYTHMS, NOT ELEVEN. `DEVCAP` is the number of DISTINCT
+     devices one part may take in one record. A hook that is different every
+     time it comes round is not a hook either — it is a development section —
+     so a part states its figure and takes at most three shapes besides, and a
+     return past the cap comes back as the variation the record has already
+     established. Measured after, the hook takes a mean of 2.6 rhythms per
+     record against 1.00 before. */
+  // THE RELEASE, in the figure's own units. `last(pulse)` is how long the last
+  // note may be, where `pulse` is the shortest note before it — so the same
+  // word means a longer note in a slow figure than in a fast one, which is
+  // what "short" means to an ear.
+  const RELEASE = {
+    ring: { w: "rings out",  last: () => Infinity },   // today, and a hymn
+    clip: { w: "ends short", last: (p) => p },         // the bar ends in silence
+    lean: { w: "leans on",   last: () => 1 },          // one step, into the next
+  };
+  // ...AND THE ANCHOR'S ARTICULATION WEIGHTS IT, because the release of a
+  // phrase's last note IS articulation and the catalog already writes that
+  // word down (85 of 201 anchors; `capOf` above reads the same field for the
+  // same reason). A legato anchor — chant, ballad, drone, 84 of them — rings
+  // two times in three; a normal one lands long a little under half the time;
+  // a staccato one is capped at one step per note anyway (HOLDCAP), so its
+  // weights are a formality and are written as an even hand rather than as a
+  // claim about music that cannot hear the difference.
+  // WEIGHTS, NOT A BAN: every anchor can still draw `ring`, and does.
+  const RELDEAL = {
+    legato:   [["ring", 0.66], ["clip", 0.22], ["lean", 0.12]],
+    tie:      [["ring", 0.72], ["clip", 0.18], ["lean", 0.10]],
+    normal:   [["ring", 0.42], ["clip", 0.30], ["lean", 0.28]],
+    staccato: [["ring", 0.34], ["clip", 0.33], ["lean", 0.33]],
+  };
+  // THE LADDER — what a return may be. `same` is the biggest single entry on
+  // purpose: a figure that never comes back unchanged is not a figure anybody
+  // remembers, and the ask is that a hook CAN develop, not that it must.
+  // The order of the rows is the order of the coin and nothing else; adding a
+  // row at the END renumbers no draw already made.
+  const DEVDEAL = [
+    ["same",   0.34],   // it comes back as it was — still the commonest thing
+    ["trunc",  0.13],   // it stops early: the second-pass move a singer makes
+    ["later",  0.12],   // it enters a pulse late
+    ["ext",    0.11],   // the landing said once more on the way out
+    ["dim",    0.09],   // twice as fast, and twice over
+    ["aug",    0.08],   // half speed — the big return
+    ["pick",   0.07],   // an anacrusis in front of it
+    ["nopick", 0.06],   // ...or the one it had taken away
+  ];
+  const DEVCAP = 3;     // distinct devices one part may take in one record
+  // one coin, one word — a cumulative walk, so the weights read as the
+  // percentages they are and the last row catches any rounding
+  const pickBy = (u, rows) => {
+    let acc = 0;
+    for (const [w, p] of rows) { acc += p; if (u < acc) return w; }
+    return rows[rows.length - 1][0];
+  };
+  // THE TABLES ANSWER FOR THEMSELVES, at load, the same law §1's assertTables
+  // keeps: a device this file names and ideas-kit does not have would compose
+  // an undeveloped record in silence, which is exactly the failure this file
+  // legislates against. And the weights must be weights.
+  for (const [w] of DEVDEAL)
+    if (!Id.DEVELOP[w]) throw new Error(`precompose: no such development device "${w}"`);
+  for (const [k, rows] of Object.entries(RELDEAL)) {
+    for (const [w] of rows)
+      if (!RELEASE[w]) throw new Error(`precompose: RELDEAL.${k} names no release "${w}"`);
+    const s = rows.reduce((a, r) => a + r[1], 0);
+    if (Math.abs(s - 1) > 1e-9) throw new Error(`precompose: RELDEAL.${k} sums to ${s}`);
+  }
+  {
+    const s = DEVDEAL.reduce((a, r) => a + r[1], 0);
+    if (Math.abs(s - 1) > 1e-9) throw new Error(`precompose: DEVDEAL sums to ${s}`);
+  }
+  // ...AND THE PLAIN DEAL REPRODUCES TODAY, checked and not asserted by
+  // comment — `formOf`'s own load-time law ("the plan as written is inside the
+  // space the deal can say"). The plain deal is `ring` everywhere and `same`
+  // everywhere, and the claim is that both are no-ops: `RELEASE.ring` caps the
+  // last note at nothing, and `Id.develop(ph, "same")` hands back the phrase
+  // object itself. A device word that stopped being a no-op at rest would
+  // otherwise surface as 201 anchors quietly changing at seed 1.
+  {
+    const probe = Id.toPhrase({ ...Id.blank(), cell: "three", len: "one" }, null);
+    if (Id.develop(probe, "same") !== probe)
+      throw new Error("precompose: the plain development deal does not reproduce today");
+    if (RELEASE.ring.last(1) !== Infinity)
+      throw new Error("precompose: the plain release deal does not reproduce today");
+  }
+
+  /* WHAT THE DEAL HANDS BACK, and it is deliberately two flat maps rather than
+     a structure: `rel[kind]` — one release per part, for the whole record,
+     because a part's way of letting go of a note is a fact about the part —
+     and `dev[kind + "@" + sectionIndex]` — the device this part's figure takes
+     at this return. Absent from `dev` means "the statement", which is most of
+     the record and writes nothing.
+
+     `at` is where each kind SOUNDS, a Set of section indices per kind, built
+     by the caller off the same slot walk that builds `usedKinds`. The deal
+     needs it for one reason only: the first index is the statement. */
+  // ...AND ONE LONG NOTE WITH HOLES IN IT HAS NO RELEASE TO DEAL. §6b's own
+  // sentence, applied: "A BAND OF ONE IS A PIN, and `long` is alone in its band
+  // on purpose — drone, ambient, dub, arabesk and enka say the same thing about
+  // themselves — one long note with holes in it — and there is no second way to
+  // say it." A release word is a claim about how a note STOPS, and "it does not
+  // stop, it decays" is precisely what those five anchors have already said, so
+  // the deal has nothing to say to them and says nothing. Read off the table
+  // rather than listed: a sixth anchor that pins itself to a band of one is
+  // covered the day it lands, and a retuned CELLS row reclassifies itself.
+  const heldPin = (gk) => {
+    const own = IDIOM_ANCHOR[gk];
+    return !!(own && own.cell && (CELLBAND[bandOf(own.cell)] || []).length <= 1);
+  };
+  function developOf(gk, G, seed, at, nsec, steady) {
+    if (seed == null || seed <= 1) return null;    // reading 1 = the day before
+    const r = rng(ihash(gk + "/develop/" + seed));
+    const rel = {}, dev = {};
+    const rows = RELDEAL[G.artic] || RELDEAL.normal;
+    const noRel = steady || heldPin(gk);
+    for (const k of KIND_OF) {                     // ALWAYS, kept or not
+      const w = pickBy(r(), rows);
+      if (!noRel && w !== "ring") rel[k] = w;
+    }
+    for (const k of KIND_OF) {
+      const secs = at[k];
+      const first = secs && secs.size ? Math.min(...secs) : -1;
+      const took = [];                             // the distinct devices so far
+      let lastDev = null;
+      for (let i = 0; i < nsec; i++) {
+        const u = r();                             // ALWAYS, sounding or not
+        if (steady || !secs || !secs.has(i) || i <= first) continue;
+        let d = pickBy(u, DEVDEAL);
+        if (d === "same") continue;
+        if (!took.includes(d)) {
+          // past the cap the return comes back as the variation this record
+          // has already established, rather than as a ninth new shape
+          if (took.length >= DEVCAP) { d = lastDev; if (!d) continue; }
+          else took.push(d);
+        }
+        lastDev = d;
+        dev[k + "@" + i] = d;
+      }
+    }
+    return { rel, dev };
+  }
+  /* IS THE DEVELOPED FIGURE STILL THIS FIGURE? The third fence, and the one
+     that is measured rather than declared. Read off the rendered `play` rows,
+     because that is what an ear gets: the same number of onsets a phrase
+     compiles to, put through §6b's own density bands. */
+  const onsetsIn = (cell) => cell.play.filter((x) => x === "n").length;
+  function keepsIts(made, stated) {
+    const a = onsetsIn(made), b = onsetsIn(stated);
+    if (a < 2) return false;                                   // not a figure
+    if (made.play.join("") === stated.play.join("")) return false;  // did nothing
+    // A FIGURE THAT SOUNDS ON EVERY STEP IS NOT A FIGURE. ideas-kit's own
+    // opening law — "the RESTS are the content; a tune that plays on every
+    // sixteenth is a scale" — and it is the one thing a diminution of running
+    // eighths would otherwise produce.
+    if (a >= made.play.length) return false;
+    // THE DENSITY MAY DOUBLE OR HALVE AND NO MORE. A device may say the figure
+    // twice (diminution) or say half of it (truncation, augmentation losing
+    // its tail), because those ARE the devices; anything past that is not this
+    // figure any more, it is another one. Written as the ratio rather than as
+    // §6b's four bands because the bands are cut for choosing BETWEEN cells and
+    // a diminution crosses two of them by definition.
+    return a <= 2 * b && a >= Math.ceil(b / 2);
   }
   /* ======================================================================
      7 · THE ENGINEER'S PASS — the Sound axis, and the pocket
@@ -1515,13 +1786,19 @@
         if (GENRES[e.g] && !layerKeys.includes(e.g)) layerKeys.push(e.g);
 
     /* ---- MATERIAL. One cell per kind the record actually uses. ---------- */
+    // ...AND WHERE EACH KIND SOUNDS, which the same walk already knew and threw
+    // away. §6c needs it for one thing: the FIRST section a part sounds in is
+    // the statement, and a statement is never developed.
     const usedKinds = new Set();
+    const kindAt = {};
+    const sounds = (k, i) => { if (!k) return; usedKinds.add(k);
+      (kindAt[k] = kindAt[k] || new Set()).add(i); };
     for (let i = 0; i < NSEC; i++) {
-      for (let v = 0; v < nBase; v++) { const k = baseKind[i](v); if (k) usedKinds.add(k); }
+      for (let v = 0; v < nBase; v++) sounds(baseKind[i](v), i);
       for (const e of R.song[i].stack.slice(1))
-        if (GENRES[e.g] && (e.slots || []).length) usedKinds.add(KIND_OF[e.slots[0]]);
+        if (GENRES[e.g] && (e.slots || []).length) sounds(KIND_OF[e.slots[0]], i);
     }
-    if (!usedKinds.size) usedKinds.add("hook");   // a record is never cell-less
+    if (!usedKinds.size) { usedKinds.add("hook"); kindAt.hook = new Set([0]); }
     const cells = {};
     const phraseOf = {};
     // THIS READING'S OWN WORDS (§6b). Drawn once, here, from the stream §6
@@ -1529,10 +1806,44 @@
     // actually deals, and before the loop because the loop must ask and not
     // decide. `null` on reading 1: the loop then calls cellOf exactly as it did.
     const rd = reading(gk, s, usedKinds);
+    // ...AND THIS RECORD'S OWN DEVELOPMENT (§6c), on its own stream, after the
+    // reading and before the cells: the reading says what the figure IS and the
+    // deal says what happens to it. `null` on reading 1, and then every call
+    // below passes `undefined` as its seventh argument, which is the day before
+    // this existed.
+    const dv = developOf(gk, G, s, kindAt, NSEC, !!NC.STEADY[gk]);
+    const readOf = (k) => rd && rd.cells && rd.cells[k];
     for (const k of KIND_OF) if (usedKinds.has(k)) {
-      const made = cellOf(row, k, cb, G, steps, rd && rd.cells && rd.cells[k]);
+      const rel = dv && dv.rel[k];
+      const made = cellOf(row, k, cb, G, steps, readOf(k), rel ? { rel } : null);
       cells[k] = made.cell; phraseOf[k] = made.ph;
     }
+    /* ---- ...AND THE FIGURE AS IT COMES BACK (§6c) ------------------------
+       One cell per (part, device) the record actually reaches, named for what
+       it is — "hook stretched out", "riff cut short" — because a document says
+       what it plays and a cell called `hook2` says nothing. The name is the
+       part's plus ideas-kit's own word for the device, so the two tables cannot
+       drift apart and the band page's motif list reads as English.
+       THE THIRD FENCE IS APPLIED HERE, on the rendered cell: a device whose
+       result is not still this figure (`keepsIts`) is dropped and that return
+       comes back as the statement, which is always playable. */
+    const devName = {};
+    if (dv) for (const key of Object.keys(dv.dev)) {
+      const k = key.slice(0, key.indexOf("@")), d = dv.dev[key];
+      const name = k + " " + Id.DEVELOP[d].w;
+      if (!(name in cells)) {
+        const made = cellOf(row, k, cb, G, steps, readOf(k),
+                            { rel: dv.rel[k], dev: d });
+        if (keepsIts(made.cell, cells[k])) {
+          cells[name] = made.cell; phraseOf[name] = made.ph;
+        } else cells[name] = null;                 // remembered as refused
+      }
+      if (cells[name]) devName[key] = name;
+    }
+    for (const n of Object.keys(cells)) if (!cells[n]) delete cells[n];
+    // what this part plays in this section: its development if the deal
+    // reached one, and the statement otherwise
+    const cellAt = (k, i) => devName[k + "@" + i] || k;
     // THE KIT TRAVELS BY VALUE, EVERY KEY. The catalog uses eighteen lane
     // letters and some lanes are VELOCITY-valued (punk's crash lane is
     // [9,…,8], not [1,…,1]) and some are sidecars (~k ?k !p ~r ~s ?s). A
@@ -1662,8 +1973,17 @@
       const material = { "": home };
       const development = {};
       kinds.forEach((k, i) => {
-        if (k && k !== home) material[sid(i)] = k;
-        development[sid(i)] = k ? sayOps(R.song[i].ops, k) : "out";
+        // THE CELL THIS SECTION READS is the part's DEVELOPED figure where
+        // §6c dealt one and the part's own figure otherwise — the same map,
+        // the same law, one more thing written into it. `cellAt` returns the
+        // kind itself on reading 1, so this line is byte-identical there.
+        const nm = k && cellAt(k, i);
+        if (nm && nm !== home) material[sid(i)] = nm;
+        // ...and the section's WORD is tested against the figure the section
+        // actually plays: a word that speaks over the statement can still miss
+        // a truncated return, and a word that leaves no onset mutes the voice
+        // (the measured failure this `speaks` check exists for).
+        development[sid(i)] = nm ? sayOps(R.song[i].ops, nm) : "out";
       });
       const part = basePart[v];
       voices.push({
@@ -1701,12 +2021,13 @@
       const material = { "": home };
       const development = {};
       kinds.forEach((k, i) => {
-        if (k && k !== home) material[sid(i)] = k;
+        const nm = k && cellAt(k, i);          // §6c, as above
+        if (nm && nm !== home) material[sid(i)] = nm;
         // A LAYER IS SILENT WHERE IT DOES NOT APPEAR, and `out` is the word
         // songs.js documents for exactly that ("a voice can be silent for a
         // section without leaving the record") — which is what makes a guest
         // a guest rather than a second band member.
-        development[sid(i)] = k ? sayOps(R.song[i].ops, k) : "out";
+        development[sid(i)] = nm ? sayOps(R.song[i].ops, nm) : "out";
       });
       const part = layerPart[li];
       /* ONE ROOM. `backing` is a guest whose whole instrument is `ahh_choir`,
@@ -1850,6 +2171,13 @@
 
   return { genreToDocument, anchors, idiomOf, cellBarsOf, cellOf, CELL_BAR_CEILING,
            IDIOM, IDIOM_ANCHOR, KINDS, KIND_OF, SAY, HOLDCAP, capOf, progOf,
+           // §6c THE DEVELOPMENT DEAL and its three tables, exported on the law
+           // compose.js exports `DEALS`/`formOf` under: "a policy the suite
+           // cannot read is a policy the suite can only measure indirectly."
+           // `RELEASE` in particular is a new AXIS of a composed cell — a gate
+           // that enumerates what a reading may compose has to enumerate it
+           // too, or it is testing yesterday's space.
+           RELEASE, RELDEAL, DEVDEAL, DEVCAP, developOf, keepsIts,
            // § 7, exported so the gate measures THE CHOOSER rather than a
            // second copy of it — the same law `idiomOf` is exported under
            grooveOf, busesOf, soundFxOf, kitFacts, retOf, ROOM, ECHOSEND };

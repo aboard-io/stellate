@@ -61,6 +61,23 @@ const PAGE = process.env.PAGE || "http://localhost:8777/nukernel/index.html";
    `.nu-why` word — so T3 below is what actually holds them, and it still says
    "none naked". The ceiling drops with the achievement because a ceiling left
    at the old number is permission to write the paragraphs back. */
+/* MEASURED AGAIN ON 2026-08-28, AND DELIBERATELY NOT LOWERED. The map-names
+   round (Paul: "Put the names of the genres under the locations on the map" /
+   "Let me click to see a big list of all the genres in chronological order")
+   read 582 at both widths — 126 under this number — and 0 of that drop is its
+   own: the Where tab measured 38 chars before it and 38 after, because the
+   genre names it added are SVG <text> (a machine surface, excluded above) and
+   the 199-row index is 199 <button>s (a control, excluded above), closed by
+   default and costing nothing until it is asked for.
+
+   THE CEILING DROPS WITH AN ACHIEVEMENT, AND 582 IS NOT THIS ROUND'S TO BANK.
+   The rule below is right — "a ceiling left at the old number is permission to
+   write the paragraphs back" — and it is a rule about the round that TOOK THE
+   PROSE OUT lowering the bar behind itself. Banking somebody else's in-flight
+   126 chars here would put a ceiling of 641 around work that is still being
+   written this hour, and red-line the first legitimate value caption it grows.
+   The number is recorded instead, which is what makes the next round able to
+   lower it on purpose. */
 const ACHIEVED = 708;
 const CEILING = Math.ceil(ACHIEVED * 1.10);   // 779
 const HARD = 1200;

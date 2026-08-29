@@ -669,6 +669,48 @@
       values: () => opts(Object.keys(DRUMKITS), DRUMKITS),
       get: (doc, s) => V(doc, s).instrument,
       set: (doc, s, v) => { V(doc, s).instrument = v; } },
+    /* ---- 7 SOUND: THE THREE A RECORDING CAN ANSWER (2026-08-28) ----------
+       Paul: *"I expect SOME control of the native sampled voices, envelopes,
+       perhaps voice doubling, normal sampler options. Right now they are
+       monolithic."*
+
+       THEY ARE ON THE VOICE AND NOT ON THE BOX, and that is the same
+       distinction `sound.instrument` above already draws: what this player IS,
+       said once and then left alone. An envelope is a fact about the voice, so
+       it is stored beside the instrument (`voice.sound`), carried by
+       document.js `toGenre` onto the chair's own seat and read by
+       audio/plan.js — the `chairs[v]` seam that already carries a chair's
+       instrument, its native model and its tone.
+
+       WHAT EACH WORD DOES is fields.js VOX (atk/rel/dbl) and what it REACHES
+       is audio/to-engine.js `samplerVox`, which was written against
+       engine/faust/voices/sampler.js rather than guessed: the gain envelope's
+       attack ramp and its `swell` shape, the release ramp, and one insert slot
+       spent on the doubling chorus. Nothing else a sampler normally offers has
+       a port on this engine, so nothing else is drawn.
+
+       THEY ARE NOT chair="line" ONLY BECAUSE OF THE SAMPLER. A modelled voice
+       and a declared synth read `attack`/`release` too (state-engine's own
+       base params), so the menu is never dead — which is the law this table's
+       `sound.bassinstrument` tombstone twelve lines up states from the other
+       side.
+
+       `""` IS ABSENT-IS-TODAY and it is spelled "—", the page's word for an
+       empty detent (see `material.cell` above): the genre's own tone block
+       decides, exactly as it did before these rows existed. */
+    ...(function () {
+      const row = (key, label) => ({
+        label, scope: "voice", chair: "line", absent: "",
+        values: () => [{ value: "", label: "—" },
+                       ...opts(Object.keys(NF.VOX[key].t), NF.VOX[key].labels)],
+        get: (doc, s) => (V(doc, s).sound || {})[key] || "",
+        set: (doc, s, v) => { const x = V(doc, s), o = { ...(x.sound || {}) };
+          if (v) o[key] = v; else delete o[key];
+          if (Object.keys(o).length) x.sound = o; else delete x.sound; } });
+      return { "sound.attack": row("atk", "attack"),
+               "sound.release": row("rel", "release"),
+               "sound.double": row("dbl", "doubling") };
+    })(),
 
     /* ---- 5 DEVELOPMENT (one voice, one section) ----
        Three sheets, not one, because the three vocabularies are three

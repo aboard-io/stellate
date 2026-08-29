@@ -65,7 +65,7 @@ import { makeGlobe, ARC_MIN, ARC_MAX } from "./globe.js";
    data tier, for the dots and the tab order and the labels and the sentence
    together. An unused import is a trap, so it goes rather than sitting here
    looking like the rule still lives on this side. */
-const { PLACES, WITHIN, WHEN, EXCLUDE, YEARS, UNITS,
+const { PLACES, WITHIN, WHEN, EXCLUDE, YEARS, UNITS, ALL,
         recordAt, arcFor, atYear, indexOf, eraOf, canon } = NuAtlas;
 
 /* THE 760 IS GONE, AND SO IS THE SCALE IT BECAME. — the second reversal of the
@@ -174,8 +174,37 @@ const GLIDE_DEG = 25;
 const HIT_MIN = 15, HIT_MAX = 23;
 /* THE LABEL ANTI-COLLISION BOX, in CSS px, carried over from the plate carrée
    (46 x 14 map units at z = 1). Without the pass the world view piles
-   Philadelphia, Harlem and Greenwich Village on top of each other. */
-const LOD_X = 46, LOD_Y = 14;
+   Philadelphia, Harlem and Greenwich Village on top of each other.
+
+   THE Y GREW FROM 14 TO 26 ON 2026-08-28, and it is the whole of this round's
+   answer to "where do the genre names go when the map is crowded". Paul: *"Put
+   the names of the genres under the locations on the map."* A label is TWO
+   LINES now — the place on top, the genre under it (GENRE_PX below) — so the
+   block an eye has to separate from its neighbour is 26 px tall, not 14, and
+   the box that reserves it has to say so or the second lines interleave with
+   the first lines of the marks below them.
+
+   AND THAT IS THE ANSWER TO "HIDE LABELS BELOW SOME ARC", STATED IN THE UNIT
+   THAT ACTUALLY DECIDES IT. The obvious alternative was a degree threshold —
+   "no genre line above 60 degrees of arc" — and it is the wrong shape of rule
+   twice. Crowding is a fact about how many CSS PX APART TWO DOTS LANDED, and
+   that depends on the YEAR as much as on the zoom: 600 draws one place on the
+   whole earth and has room for a paragraph, 1969 draws 45 and has room for
+   nine. And a second visibility rule standing beside the greedy pass would be
+   a second owner of "is this name drawn" — the one thing labels() exists to
+   be. The taller box IS the arc rule, applied automatically at every zoom and
+   every year, and it thins exactly where an eye would have failed anyway.
+
+   MEASURED on the rendered page, 1969, names inked out of the near-side marks,
+   one-line box (46 x 14) -> two-line box (46 x 26):
+       390 x 900    180 deg 13 -> 9 · 60 deg 20 -> 18 · 20 deg 27 -> 27 · 2 deg 33 -> 32
+      1280 x 900    180 deg 23 -> 21 · 60 deg 26 -> 24 · 20 deg 34 -> 33 · 2 deg 38 -> 37
+   The phone's world view gives up four names to fit a second line under the
+   nine it keeps; from 20 degrees in — the zoom at which you are reading one
+   region — it gives up nothing at all. That is the trade a reader wants: the
+   names thin where they would have overlapped, and arrive in full where there
+   is room. */
+const LOD_X = 46, LOD_Y = 26;
 /* THE TYPE AND ITS HALO, IN CSS PIXELS. Both are converted through the
    renderer's units-per-pixel at write time, because everything an eye is
    measured in has to be — the tap box above is the same rule, and it is not a
@@ -196,6 +225,33 @@ const LOD_X = 46, LOD_Y = 14;
           and erase the coastline behind the whole word. That is a label PLATE:
           a different design, and it hides the thing the label points at. */
 const LABEL_PX = 13, HALO_PX = 2.6;
+/* AND THE GENRE'S OWN LINE, 2026-08-28. Paul: *"Put the names of the genres
+   under the locations on the map."* 11.5 px against the place's 13, and the
+   hierarchy is not decoration: the place name is the MARK'S OWN NAME and does
+   not change while you look at it; the genre under it is what the WHEN SLIDER
+   is currently answering for that place, and the smaller line is the one that
+   moves. Same halo, same paint-order, same `opacity` gate — see `.gname` in
+   ui/atlas.js's mark builder and `#atlasMap text.name` in nu.css.
+
+   ONE DECISION FOR BOTH LINES, which is the trap this could have been. Two
+   <text> nodes with two visibility rules is two answers to "is this place
+   named", and a genre name floating with no place name over it is the
+   "declared but never arriving" bug in typography. The greedy pass writes ONE
+   opacity per mark and both lines take it. */
+const GENRE_PX = 11.5;
+/* AND ITS HALO IS PROPORTIONAL TO ITS TYPE, not a copy of the place line's.
+   HALO_PX was picked by looking at a 13 px word over a coastline; the same 2.6
+   px of stroke under an 11.5 px face is 23% of the em against 20%, and it eats
+   into the glyph — measured on the rendered 1280 world view, "reggae" under
+   "Kingston" read a shade lighter than the line above it for that reason and
+   not because anything asked it to. Scaled by the same ratio as the face, it
+   is the same halo, one size down. */
+const GENRE_HALO_PX = +(HALO_PX * GENRE_PX / LABEL_PX).toFixed(2);
+/* WHERE THE SECOND LINE SITS UNDER THE FIRST, in CSS px of baseline-to-
+   baseline. 13 px of leading on an 11.5 px face — the place's descenders clear
+   the genre's ascenders and the pair still reads as ONE block rather than as
+   two labels that happen to be near each other. */
+const GENRE_DY = 13;
 
 const el = (t, a) => Object.assign(document.createElement(t), a || {});
 const NS = "http://www.w3.org/2000/svg";
@@ -379,7 +435,142 @@ export function mount(parent, ctx) {
      `#rewrite` in the .nu-bar, the take is `#take` beside it, and what stays
      here is the seed and `reseed()` — the counter and its door. */
 
-  parent.append(say, when, wrap);
+  /* ---------- THE INDEX: EVERY GENRE, OLDEST FIRST (2026-08-28) ---------
+     Paul: *"Let me click to see a big list of all the genres in chronological
+     order."*
+
+     THIS IS A REVERSAL AND IT IS WRITTEN OUT RATHER THAN SLIPPED IN. Paul,
+     2026-08-24: *"get rid of the era select boxes, the look at select box, the
+     'nearby' select box, THE GENRE LIST, etc."* — and `#atlasList` has been
+     deleted, not hidden, ever since (test/atlas.js G7 still fails the day an
+     element with that id comes back). What he killed and what he has now asked
+     for are not the same object, and the difference is why the id is not
+     reused:
+
+       #atlasList WAS a FALLBACK — a permanently-present second door to the
+       same records, sitting under the map, alphabetical, existing because the
+       marks were not yet a real keyboard path. Two doors to one room, one of
+       them a duplicate of the other, always on the page. G11 is the record of
+       killing it: "the globe's own marks are the accessible path, so there is
+       ONE code path instead of a visible one and a hidden twin".
+
+       #atlasIndex IS A CHRONOLOGY — the catalogue read END TO END, in the one
+       order the globe physically cannot show you, opened on a click and shut
+       the rest of the time. The map answers "what is here, now"; this answers
+       "what is there, ever". Neither is the other's twin.
+
+     AND IT IS NOT A SECOND COMPOSE PATH, which is the part of the old
+     objection that stays true and is honoured in code rather than in a
+     sentence: a row does not call genreToDocument. It moves the SLIDER to the
+     record's own year and then calls `choose(place)` — the exact function the
+     thumb and the Enter key call — so the record a row opens is decided by
+     `shown`/recordAt like every other record on this page, the camera flies
+     the same way, and pressing the row you are already on bumps the seed the
+     same way a second tap on a mark does.
+
+     WHY THE DOOR IS HERE, AT THE FOOT, AND NOT ON THE SENTENCE. #atlasSay is
+     the obvious host — the button IS that sentence expanded ("600 · 1 record
+     within ten years · Rome" is one year of what this list is all of) and the
+     button's own label is written in the sentence's grammar for that reason.
+     It is not IN it because #atlasSay is `aria-live="polite"` and is
+     overwritten by pick()'s progress line, by every refusal and by every
+     slider tick: a control living inside a live region is a control announced
+     again on every one of those, and its accessible state (expanded/collapsed)
+     would be re-read to a screen-reader user each time the year moved. So the
+     sentence stays a sentence and the door sits under the globe, where the
+     reading order Paul described ("a slider for time and a world map on top")
+     is untouched — heading, sentence, slider, globe, and only then the back
+     matter. test/atlas.js G11's reading-order assertion carries the new list.
+
+     BUILT ON FIRST OPEN, NEVER AT BOOT. 199 rows is 199 buttons; the atlas is
+     the page's front door and nothing that a reader has not asked for should
+     be in the DOM while they look at the earth. */
+  const ROLES = Object.keys(EXCLUDE).sort();
+  const idxBtn = el("button", { id: "atlasIndexBtn", className: "nu-ixbtn",
+    type: "button" });
+  idxBtn.setAttribute("aria-expanded", "false");
+  idxBtn.setAttribute("aria-controls", "atlasIndex");
+  /* THE COUNT IS DERIVED, NOT TYPED, for the same reason every other number on
+     this page is: the catalogue grew from 122 to 199 in four days. */
+  /* THE CARET IS `aria-hidden` BY setAttribute AND NOT BY `el()`. `el()` is
+     Object.assign over a created element, so a hyphenated key sets a JS
+     PROPERTY nothing reads and no attribute at all — the caret would have been
+     announced as "black right-pointing small triangle" before the label. */
+  const caret = el("span", { className: "nu-ixcaret", textContent: "\u25B8" });
+  caret.setAttribute("aria-hidden", "true");
+  idxBtn.append(caret, el("span", { textContent:
+    "all " + (ALL.length + ROLES.length) + " genres, oldest first" }));
+  const idx = el("div", { id: "atlasIndex" });
+  idx.hidden = true;
+  const idxRows = el("ol", { id: "atlasIndexRows", className: "nu-ix" });
+  idxRows.setAttribute("aria-label",
+    "every genre in the catalogue, oldest first");
+  idx.append(idxRows);
+
+  parent.append(say, when, wrap, idxBtn, idx);
+
+  /* ONE ROW PER GENRE, in `ALL`'s order — which is atlas.js's own sort (year
+     ascending, then place, then key) and is DERIVED there rather than re-sorted
+     here, because "chronological" is a fact about the catalogue and two files
+     sorting it two ways is how a gate and a page stop agreeing. The six ROLES
+     have no year and no place (genres.js: "a role has a job, not a history"),
+     so they cannot be chronological and are not pretended into the sequence —
+     they close the list under their own group, each still pressable, each
+     carrying EXCLUDE's own sentence as its accessible name. 193 + 6 = the 199
+     the button counts: "all the genres" means all of them. */
+  let idxBuilt = false, idxHere = null;
+  function idxRow(year, genre, place, gk, why) {
+    const b = el("button", { className: "nu-ixrow", type: "button" });
+    b.dataset.gk = gk;
+    b.append(el("span", { className: "nu-ixy", textContent: year }),
+             el("span", { className: "nu-ixg", textContent: genre }),
+             el("span", { className: "nu-ixp", textContent: place }));
+    if (why) b.setAttribute("aria-label", genre + " — " + why);
+    const li = el("li", { className: "nu-ixli" });
+    li.append(b);
+    return li;
+  }
+  function buildIndex() {
+    if (idxBuilt) return;
+    idxBuilt = true;
+    const f = document.createDocumentFragment();
+    for (const r of ALL) f.append(idxRow(String(r.year), r.gk, r.place, r.gk, null));
+    for (const gk of ROLES) f.append(idxRow("—", gk, "a role", gk, EXCLUDE[gk]));
+    idxRows.append(f);
+    syncIndex(true);
+  }
+  /* WHICH ROW IS THE RECORD ON THE PAGE — the list's own version of the globe's
+     ring, keyed off the SAME `here`, so the map and the index cannot disagree
+     about what is playing. Guarded on `here` so calling it from redraw() (which
+     a wheel calls) costs one comparison. */
+  function syncIndex(force) {
+    if (!idxBuilt) return;
+    if (!force && idxHere === here) return;
+    idxHere = here;
+    for (const b of idxRows.querySelectorAll(".nu-ixrow"))
+      b.setAttribute("aria-current", b.dataset.gk === here ? "true" : "false");
+  }
+  /* THE ROW'S DOOR IS THE GLOBE'S DOOR. Slider first, then `choose(place)`:
+     every record's year is a slider stop (YEARS is derived from the same WHEN
+     rows ALL is), and recordAt(place, thatYear) returns exactly this row —
+     verified over all 193, zero mismatches. A ROLE has no place, so it takes
+     `pick()` directly, which is the function `choose()` itself ends in. */
+  function openRow(gk) {
+    const w = WHEN[gk];
+    if (!w) { pick(gk); return; }
+    setYear(indexOf(w.year));
+    choose(canon(w.place));
+  }
+  idxRows.addEventListener("click", (e) => {
+    const b = e.target.closest ? e.target.closest(".nu-ixrow") : null;
+    if (b && b.dataset.gk) openRow(b.dataset.gk);
+  });
+  idxBtn.addEventListener("click", () => {
+    const open = idx.hidden;
+    if (open) buildIndex();
+    idx.hidden = !open;
+    idxBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
 
   /* ---------- the marks, BUILT ONCE, NEVER REBUILT ----------------------
      ONE MARK PER PLACE THAT HAS A RECORD — 62 of the 65 PLACES rows on the tree
@@ -458,11 +649,26 @@ export function mount(parent, ctx) {
     const t = S("text", { class: "name", x: 10, y: 5, "font-size": 13,
       fill: "CanvasText", opacity: "0" });
     t.textContent = name;
-    lg.appendChild(t);
+    /* THE GENRE'S LINE, UNDER THE PLACE'S — 2026-08-28, Paul: *"Put the names
+       of the genres under the locations on the map."* It is a SIBLING inside
+       the same <g class="lab">, so it takes the mark's transform on the same
+       line as the place name and the dot: the drift under a drag is 0 px by
+       construction, which is the fix ui/atlas.js already bought once for the
+       place names (see the `tr` cache in paint()) and does not have to buy
+       again. Its text is written by paint() from `shown`, never here, because
+       WHICH genre a place holds is a fact about the SLIDER and the mark is
+       built once and never rebuilt.
+       `class="name gname"` and not `class="gname"`: nu.css's halo rule is
+       `#atlasMap text.name`, and a second line that had to be added to that
+       selector by hand is a second line that gets forgotten and paints raw
+       black over a coastline. It is a `.name` because it IS one. */
+    const t2 = S("text", { class: "name gname", x: 10, y: 18,
+      "font-size": 11.5, fill: "CanvasText", opacity: "0" });
+    lg.append(t, t2);
     g.append(ring, dot, hit);
     gNames.append(lg);
     gMarks.append(g);
-    mark[name] = { g, dot, hit, ring, t, lg };
+    mark[name] = { g, dot, hit, ring, t, t2, lg };
   }
 
   /* ---------- the frame ------------------------------------------------ */
@@ -528,7 +734,7 @@ export function mount(parent, ctx) {
      when a value moves. `setAttribute` with an identical string is not free. */
   function paint(moving) {
     globe.draw(moving);
-    const { u, arc } = globe.get();
+    const { u, arc, VB: VBW } = globe.get();
     const Y = YEARS[yi];
     const hitR = ((HIT_MIN + (HIT_MAX - HIT_MIN)
       * Math.max(0, Math.min(1, (60 - arc) / 40))) * u).toFixed(1);
@@ -567,7 +773,15 @@ export function mount(parent, ctx) {
           m.g.setAttribute("tabindex", "-1"); m.g.removeAttribute("aria-label");
           m.ti = m.lab = m.cur = m.op = m.lk = null; m.ringOn = false;
           m.ring.setAttribute("opacity", "0");
-          m.t.setAttribute("opacity", "0"); }
+          /* BOTH LINES LEAVE TOGETHER. The genre line is the one that would
+             lie here: a place the year does not hold has no genre to name, and
+             a leftover second line under nothing is the ghost Paul asked to be
+             rid of, wearing a smaller face. `m.gn` is cleared too so the next
+             year that draws this place writes its text again rather than
+             trusting a cache from a year that is gone. */
+          m.gn = null;
+          m.t.setAttribute("opacity", "0");
+          m.t2.setAttribute("opacity", "0"); }
         continue;
       }
       if (m.on !== true) { m.on = true;
@@ -632,6 +846,22 @@ export function mount(parent, ctx) {
       const lab = name + (WITHIN[name] ? ", in " + WITHIN[name] : "")
         + " " + r.year + ", " + r.gk;
       if (m.lab !== lab) { m.lab = lab; m.g.setAttribute("aria-label", lab); }
+      /* AND THE GENRE NAME IS PRINTED — the one the TAP WOULD PICK, never a
+         pile. `r` is `shown.get(name)`, which atlas.js built from recordAt():
+         nearest year, tie to the earlier. That is the same object `choose()`
+         reads to decide what Enter and a thumb write, and the same one the
+         accessible name above is built from, so the ink under the dot, the
+         name a screen reader speaks and the record that plays are one fact
+         resolved once. Kingston at 1971 says "reggae" and not "reggae / dub",
+         because 1969 is two years away and 1973 is four.
+         THE NAME IS THE ANCHOR KEY. genres.js has one string for a record and
+         it is `label` — "Kingston 1969", a place and a year, which is what the
+         dot and the slider are already saying. The key IS the genre's name on
+         this page: it is what #atlasSay prints after the middot, what the
+         aria-label above ends with, and what pick()'s refusal names. A second,
+         prettier spelling invented here would be a second owner of what a
+         genre is called. */
+      if (m.gn !== r.gk) { m.gn = r.gk; m.t2.textContent = r.gk; }
       const cur = here && r.gk === here ? "true" : "false";
       if (m.cur !== cur) { m.cur = cur; m.g.setAttribute("aria-current", cur); }
       // a mark behind the earth cannot be seen, so nothing about its INK is
@@ -676,11 +906,52 @@ export function mount(parent, ctx) {
          ring is drawn at the dot's radius plus 9 CSS px and the name started at
          the dot's radius plus 4, so the "R" of "Rome" sat under the ring's
          stroke, on the one mark a reader is most likely to be reading. */
-      const lx = +dotR + (ringOn ? 13 : 4) * u, ly = 4 * u;
-      const lk = lx.toFixed(1) + "|" + u.toFixed(3);
+      /* AND A NAME THAT WOULD RUN OFF THE RIGHT EDGE IS MIRRORED TO THE LEFT
+         OF ITS DOT. MEASURED at 390x844 with the second line in: at 180
+         degrees of arc, 1969, Tehran, Addis Ababa and Johannesburg all sit
+         near the eastern limb and both of their lines were CUT by the viewBox
+         — "Johanne", "mbaqan". A clipped word is not a label, it is a
+         typographic error the reader has to guess at, and the genre line
+         doubled the number of them.
+
+         THE WIDTH IS ESTIMATED, NOT MEASURED, AND THAT IS DELIBERATE. The
+         honest measurement is getBBox(), which forces a layout of the SVG —
+         once per drawn mark, inside a frame that has to fit beside an audio
+         worklet, and this file's whole budget is "write only what changed".
+         0.58 em per character over the LONGER of the two lines is an upper
+         bound for the page's sans at both sizes (checked against the widest
+         real pair, "Greenwich Village" / "singersongwriter"), and being a
+         little pessimistic only means a name flips a few pixels earlier than
+         it strictly had to, which costs nothing and never clips.
+
+         IT IS A FACT ABOUT THE POSE, so it rides in `lk` with the rest: a mark
+         that crosses the flip line during a drag rewrites five attributes on
+         the one frame it crosses, and nothing on the others. */
+      const wide = Math.max(name.length * LABEL_PX,
+                            (r.gk || "").length * GENRE_PX) * 0.58 * u;
+      const gap = (ringOn ? 13 : 4) * u;
+      const flip = (p.x + +dotR + gap + wide) > VBW - 4 * u
+                && (p.x - +dotR - gap - wide) > 4 * u;
+      const lx = flip ? -(+dotR + gap) : +dotR + gap, ly = 4 * u;
+      const lk = lx.toFixed(1) + "|" + u.toFixed(3) + "|" + (flip ? "e" : "s");
       if (m.lk !== lk) { m.lk = lk;
+        /* `text-anchor` and not a second x per line: one attribute says "this
+           block is right-aligned" and both lines obey it, so the two can never
+           end up ragged against each other. */
+        const an = flip ? "end" : "start";
+        m.t.setAttribute("text-anchor", an); m.t2.setAttribute("text-anchor", an);
         m.t.setAttribute("x", lx.toFixed(1)); m.t.setAttribute("y", ly.toFixed(1));
         m.t.setAttribute("font-size", (LABEL_PX * u).toFixed(1));
+        /* THE SECOND LINE TAKES THE SAME x AND THE SAME CACHE. Left-aligned
+           with the place name — a centred pair would need the rendered width
+           of two strings every frame, which is a getBBox() per mark per zoom
+           and the one measurement this file refuses to take inside a frame.
+           Its y is the first line's plus GENRE_DY, in CSS px through `u`, so a
+           pinch keeps the leading exactly as it keeps the gap to the dot. */
+        m.t2.setAttribute("x", lx.toFixed(1));
+        m.t2.setAttribute("y", (ly + GENRE_DY * u).toFixed(1));
+        m.t2.setAttribute("font-size", (GENRE_PX * u).toFixed(1));
+        m.t2.setAttribute("stroke-width", (GENRE_HALO_PX * u).toFixed(2));
         /* THE HALO IS A STROKE UNDER THE FILL (paint-order, nu.css), AND ITS
            WIDTH HAS TO BE SAID HERE and not there: a stroke-width in a
            stylesheet is in USER units, and this viewBox is 1000 units across
@@ -730,7 +1001,10 @@ export function mount(parent, ctx) {
     cand.sort((a, b) => (b.ring ? 1 : 0) - (a.ring ? 1 : 0)
                      || b.z - a.z || (a.name < b.name ? -1 : 1));
     const put = [];
-    for (const name of NAMES) mark[name].t.setAttribute("opacity", "0");
+    for (const name of NAMES) {
+      mark[name].t.setAttribute("opacity", "0");
+      mark[name].t2.setAttribute("opacity", "0");
+    }
     for (const c of cand) {
       /* THE COLLISION TEST IS STILL IN SCREEN SPACE — it has to be, it is about
          what an eye can separate — but the number WRITTEN is now the opacity
@@ -745,7 +1019,15 @@ export function mount(parent, ctx) {
       if (put.some((q) => Math.abs(q.x - tx) < LOD_X * u && Math.abs(q.y - ty) < LOD_Y * u))
         continue;
       put.push({ x: tx, y: ty });
-      mark[c.name].t.setAttribute("opacity", (0.35 + 0.65 * c.z).toFixed(2));
+      /* ONE OPACITY, WRITTEN TWICE, DECIDED ONCE (2026-08-28). The place line
+         and the genre line under it are one block: they are inked together or
+         not at all, because a genre name with no place over it is a word
+         floating on an ocean and a place name with the genre missing is the
+         thing Paul asked for going quietly absent. The box the greedy pass
+         reserves grew to hold both (LOD_Y, 14 -> 26). */
+      const ink = (0.35 + 0.65 * c.z).toFixed(2);
+      mark[c.name].t.setAttribute("opacity", ink);
+      mark[c.name].t2.setAttribute("opacity", ink);
     }
   }
 
@@ -796,7 +1078,13 @@ export function mount(parent, ctx) {
     paint(moving);
     if (moving) raf = requestAnimationFrame(tick);
   }
-  const redraw = () => { labelsStale = true; need(); };
+  /* AND THE INDEX FOLLOWS THE RING. `syncIndex` is guarded on `here` (it does
+     nothing while the value has not moved), so putting it on the one function
+     every state change already ends in is cheaper than remembering to call it
+     from pick(), showing(), open() and choose() separately — four callers is
+     four chances to forget one, which is exactly how a list ends up marking a
+     record the page stopped playing. */
+  const redraw = () => { labelsStale = true; syncIndex(false); need(); };
 
   /* ---------- flyTo: the camera moves, and only if it has to ------------ */
   function flyTo(name, ms, wantArc) {

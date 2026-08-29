@@ -1052,6 +1052,200 @@
   // is answered by both without either being edited.
   const isSection = (id) => !!(PATCH_VOICE[id] && PATCH_VOICE[id].dsp === "voice_choir");
 
+  /* ---------- WHO IS SINGING, WHEN NOBODY SAID ---------------------------
+     "SOLO VOX shows up everywhere" (Paul, 2026-08-28).
+
+     MEASURED FIRST, over all 201 anchors at seed 1, by walking every
+     precomposed document's line chairs and resolving each vocal one exactly
+     the way audio/plan.js seats it (the record's own `tone`, then
+     to-engine voiceForInstr): 1093 line chairs, 369 of them vocal, and the
+     throats came back
+         tenor 186 · alto 111 · soprano 33 · countertenor 21 · bass 13 · tract 5
+     with the top TWO signatures — `tenor/"ao"/vib .45/air .07/syll .5` and
+     `alto/"a"/vib .3/air .22/syll 4` — covering 201 of the 369. That is not a
+     casting decision; it is the ABSENCE of one. 173 of the 201 anchors state
+     no `tone.mouth` at all, so their singer is whatever PATCH_VOICE's row
+     defaults to, and PATCH_VOICE has one row per GM id — one throat for a
+     Lagos record, a Nashville record and a Vienna record alike.
+
+     THE TABLE WAS ALREADY THERE. genres.js MOUTHS carries thirty measured
+     throats — the crooner's late wobble, the Bulgarian straight tone, the
+     shape-note room, zema's pressed bass — and nineteen anchors reach them.
+     What was missing is the rule that casts one when a genre has not, and the
+     rule this file can honestly write is the one the LABEL already states:
+     every anchor's label is "<place> <year>" (genres.js), and a place and a
+     year plus the `family` word ARE an idiom. So a singer is cast from where
+     and when the record is, and from what kind of record it is — the same
+     three facts a musical director would use, and no new data anywhere.
+
+     A GENRE THAT STATES ITS OWN STILL WINS, absolutely: `throatOf` is asked
+     only where `tone.mouth` is absent (audio/plan.js), so all nineteen
+     anchors with a mouth block, and every chair a band page has given a
+     voice type to by hand, render byte-identically.
+
+     WHY IT IS CAST FROM THE ROWS THAT EXIST rather than from thirty new ones.
+     genres.js's own doctrine for the world round is the precedent: "a mouth is
+     a MEASURED tract setting, and this round adds anchors, not throats —
+     fifty-seven of the sixty name a row that already exists and the comment in
+     each says which and why it is the nearest". Same here. Where no row is the
+     right room the nearest is named and the distance is admitted in the
+     comment, which is an argument the next lane can overrule with one edit.
+
+     AND IT IS A CAST, NOT A BLEND. `tone` is a NOUN in this tree — it snaps —
+     so this returns ONE row, whole, and never an average of two. */
+  // WHERE A RECORD IS, from the place half of its label. Eight regions and not
+  // ninety-eight cities, because what a region buys here is a VOCAL TRADITION
+  // and the throats below are only distinguishable at about that grain: a
+  // Kingston record and a Havana record sing more like each other than either
+  // sings like a Leipzig one. A place this map does not name answers null and
+  // falls through to the family rules, which is the honest failure — a city
+  // added to genres.js without a line here still gets a singer, just not a
+  // regional one.
+  const PLACES = {
+    isles: ["London", "Liverpool", "Manchester", "Basildon", "Glasgow", "Dublin",
+            "Essex", "Kent", "Crawley", "Muswell Hill", "Stourbridge", "Swindon"],
+    america: ["New York", "Chicago", "Detroit", "Los Angeles", "Nashville",
+              "Philadelphia", "New Orleans", "Boston", "Harlem", "San Francisco",
+              "Austin", "Atlanta", "Cincinnati", "Cleveland", "Kansas City",
+              "Lafayette", "Las Vegas", "Miami", "Oklahoma City", "Orlando",
+              "Portland", "San Diego", "Sausalito", "Sedalia", "St. Louis",
+              "Tampa", "Teaneck", "Chapel Hill", "Charlotte", "Toronto",
+              "Greenwich Village"],
+    latin: ["Havana", "Mexico City", "Rio de Janeiro", "São Paulo",
+            "Buenos Aires", "Santo Domingo", "San Juan", "Barranquilla",
+            "Valledupar", "Cusco", "Guadalajara", "Mazatlán", "Monterrey",
+            "Recife", "Port of Spain", "Kingston"],
+    africa: ["Lagos", "Accra", "Abidjan", "Johannesburg", "Kinshasa", "Nairobi",
+             "Bamako", "Douala", "Freetown", "Luanda", "Addis Ababa", "Aksum"],
+    // the maqam belt — one region because one vocal grammar (a modal melisma
+    // over a drone), not because the countries are one thing
+    maqam: ["Cairo", "Oran", "Istanbul", "Tehran", "Kabul"],
+    southasia: ["Mumbai", "Jalandhar", "Chandigarh", "Faisalabad"],
+    eastasia: ["Tokyo", "Seoul", "Hong Kong", "Taipei", "Shanghai", "Bangkok",
+               "Jakarta", "Manila", "Phnom Penh", "Ho Chi Minh City"],
+    europe: ["Leipzig", "Vienna", "Berlin", "Paris", "Reims", "Rome", "Florence",
+             "Venice", "Antwerp", "Sofia", "Piraeus", "Lisbon", "Provence",
+             "Düsseldorf", "Guča", "Barcelona"],
+  };
+  const REGION = {};
+  for (const r of Object.keys(PLACES)) for (const p of PLACES[r]) REGION[p] = r;
+  // THE LABEL, TAKEN APART. "Detroit 1965" -> { place, year }. Three-digit
+  // years are real here ("Rome 600", "Aksum 540"), which is why the year is
+  // three-or-four digits and not the four the rest of the tree assumes.
+  const idiomOf = (gk) => {
+    const g = GENRES[gk] || {};
+    const m = /^(.*?)\s*(\d{3,4})\s*$/.exec(g.label || "");
+    const place = (m ? m[1] : (g.label || "")).trim();
+    return { place, region: REGION[place] || null,
+             // no year on the five FUNCTION genres and on `simple`; they are
+             // not records and their chairs are seated on a host that is
+             year: m ? +m[2] : 0, family: g.family || null };
+  };
+  // ---- THE CAST ITSELF -----------------------------------------------------
+  // Two ordered lists, first match wins, and every row names a genres.js MOUTHS
+  // key. SECTIONS are cast from the rows that carry `blend` (a section's
+  // raggedness); a SOLO may be cast from any row, because `blend` is simply not
+  // read for a single throat (to-engine voiceForInstr's `choir` branch).
+  const THROAT = {
+    // ONE PERSON AT A MICROPHONE.
+    solo: [
+      // the deep past, where the region is Europe by construction
+      { w: (I) => I.year && I.year < 1300, m: "trobar" },
+      { w: (I) => I.year && I.year < 1650, m: "monody" },
+      // ...and America before the recording industry: the shape-note singing
+      // school is the only untrained straight-tone row in the table and it is
+      // what a hymn tune and a rag were sung with
+      { w: (I) => I.year && I.year < 1900 && I.region === "america", m: "shapenote" },
+      { w: (I) => I.year && I.year < 1900, m: "monody" },
+      // THE REGIONS. Each of these is the NEAREST row and the comment says how
+      // near: none of them is a row written for that music.
+      //   the Horn: zema is the only row in the table cut for it
+      { w: (I) => /Addis Ababa|Aksum|Nairobi/.test(I.place), m: "zemachant" },
+      //   the rest of Africa gets mbube's throat — a bass, close to the mic,
+      //   the driest row here. Written for Johannesburg 1939 and lent to Lagos
+      //   and Accra, which is a real distance and the honest one available: it
+      //   is a GROUP-SINGING tone rather than a griot's, and the alternative
+      //   (the British skiffle row) would be further.
+      { w: (I) => I.region === "africa", m: "mbubestack" },
+      //   the maqam belt and South Asia both take the qawwal: pushed hard,
+      //   high in the tenor, more air than any sacred row, the wobble late and
+      //   narrow. It is a Faisalabad row and Cairo is not Faisalabad — but a
+      //   modal melisma sung at the top of the chest is what the two share, and
+      //   nothing else in the table is that.
+      { w: (I) => I.region === "maqam" || I.region === "southasia", m: "qawwal" },
+      //   East Asia: the ballad traditions (enka, trot, cantopop, filmi's
+      //   cousins) hold one vowel across many notes, which is what `melisma`
+      //   IS — two beats a syllable, the only solo row above one.
+      { w: (I) => I.region === "eastasia", m: "melisma" },
+      //   Latin America takes the bolerista, which is the row written for it
+      { w: (I) => I.region === "latin", m: "bolerista" },
+      // THE FAMILIES, for everything the regions did not answer — which after
+      // the rows above is Britain, America and Europe, where the family word
+      // is doing more work than the map is.
+      { w: (I) => I.family === "vox", m: "plainchant" },
+      //   the church and what came out of it, up to the point the ballad took
+      //   over: the gospel row is an alto with the widest vibrato in the table
+      { w: (I) => I.family === "soul" && I.year && I.year < 1975, m: "gospelchoir" },
+      { w: (I) => I.family === "soul", m: "melisma" },
+      //   a drift record is a head voice with the wobble taken out of it
+      { w: (I) => I.family === "drift", m: "falsetto" },
+      //   the studio family before the beat groups is a man at a microphone
+      //   selling a tone; after it, the big lead
+      { w: (I) => I.family === "studio" && I.year && I.year < 1962, m: "crooning" },
+      { w: (I) => I.family === "studio", m: "belter" },
+      //   roots: rough, close, almost no air — the skiffle row is a British
+      //   name on an Appalachian tone and both are the same singing
+      { w: (I) => I.family === "roots", m: "skiffler" },
+      //   the beat groups, where the stack IS the lead
+      { w: (I) => I.family === "band" && I.region === "isles" && I.year < 1970,
+        m: "merseystack" },
+      { w: (I) => I.family === "band", m: "skiffler" },
+      //   the club, after the machines: tight, high, produced
+      { w: (I) => I.family === "club" && I.year >= 2000, m: "boygroup" },
+      //   ...and the modern pop lead, which is the row the whole catalogue was
+      //   getting by accident and now gets on purpose, as a LAST resort
+      { w: () => true, m: "poplead" },
+    ],
+    // A ROOM FULL OF PEOPLE.
+    section: [
+      { w: (I) => I.year && I.year < 1600 && I.region === "africa", m: "zemachant" },
+      { w: (I) => I.year && I.year < 1600, m: "plainchant" },
+      { w: (I) => I.year && I.year < 1750, m: "motet" },
+      { w: (I) => I.year && I.year < 1900 && I.region === "america", m: "shapenote" },
+      { w: (I) => I.year && I.year < 1900, m: "hymnal" },
+      { w: (I) => /Addis Ababa|Aksum/.test(I.place), m: "zemachant" },
+      { w: (I) => I.region === "africa", m: "mbubestack" },
+      { w: (I) => I.region === "maqam" || I.region === "southasia", m: "qawwal" },
+      //   a Latin American coro is four men round one microphone answering the
+      //   lead, which is the doowop stack's own room
+      { w: (I) => I.region === "latin", m: "doowopstack" },
+      //   an East Asian backing is a wash rather than a stack
+      { w: (I) => I.region === "eastasia", m: "dreamchoir" },
+      { w: (I) => I.family === "vox", m: "hymnal" },
+      { w: (I) => I.family === "drift", m: "dreamchoir" },
+      { w: (I) => I.family === "soul" && I.year && I.year < 1975, m: "gospelchoir" },
+      { w: (I) => I.region === "isles" && I.year && I.year < 1970, m: "merseystack" },
+      { w: (I) => I.family === "club" && I.year >= 1995, m: "boygroup" },
+      { w: (I) => I.family === "roots" && I.region === "america", m: "shapenote" },
+      //   ...and the room in the back: quiet, round, out of the way
+      { w: () => true, m: "backingroom" },
+    ],
+  };
+  // WHICH MOUTHS KEY a genre's vocal chair is cast with — the NAME, so a gate
+  // and a readout can print it without holding a row.
+  const throatKeyOf = (gk, id) => {
+    if (!PATCH_VOICE[id]) return null;          // not a chair that names a person
+    const I = idiomOf(gk);
+    for (const r of THROAT[isSection(id) ? "section" : "solo"]) if (r.w(I)) return r.m;
+    return null;
+  };
+  // ...and the ROW itself, which is what a tone block wants. genres.js MOUTHS is
+  // the one owner of what a throat IS; this file only says which one.
+  const throatOf = (gk, id) => {
+    const k = throatKeyOf(gk, id);
+    return (k && NG.MOUTHS && NG.MOUTHS[k]) ? NG.MOUTHS[k] : null;
+  };
+
   // ---- AND THE MOUTH THAT TALKS (the table half; the chair law that decides
   // WHO gets one lives with the dispatch, audio/to-engine.js mouthForInstr) ---
   // THERE ARE NO VOICE TYPES ON A TRACT, which is the other half of why this is
@@ -1077,6 +1271,70 @@
     //          sounding like a yawn
     synth_voice: { dsp: "tract_voice", vowels: "aeo", syll: 0.5,
                    talk: 0.82, hiss: 0.16, nasal: 0.06, air: 0.05, vib: 0.1 },
+  };
+
+  /* ---------- AND WHO ELSE COULD PLAY THE LINE (2026-08-28) --------------
+     "I want to be able to choose whether to use synthesized voices or
+     instrumentation to replace voices … Vox (default), Instruments, All
+     analog, All FM." (Paul.)
+
+     THE WORDS ARE fields.js VOICINGS and the VALUE is audio/plan.js's (see
+     both). This is the third fact — WHAT each word puts in the chair — and it
+     lives here for the same reason PATCH_VOICE does: "which instrument plays
+     this" is an instruments.js question, and the two tables have to be able to
+     see each other (a chair is swapped only if PATCH_VOICE or PATCH_MOUTH
+     claims it, which is exactly `patchedVoice` below).
+
+     WHY A SECTION AND A SOLO ANSWER DIFFERENTLY, which is the same distinction
+     PATCH_VOICE's own header spends a paragraph on: a room full of people and
+     one person at a microphone are not two volumes of one thing.
+       · INSTRUMENTS. A section becomes `slow_strings`, and the argument is
+         this file's own, already written one table up: "a violin section is
+         people too, and there is no model of it here". A SOLO becomes the
+         record's own first non-vocal instrument — on an instrumental take the
+         BAND plays the tune, and the band is what the genre's `instr` list
+         says it is. A record whose every chair is a voice (the four choral
+         anchors) has no band to hand it to, so it falls to the alto sax, which
+         is the instrument that has taken a vocal line on a record since 1955.
+       · ALL ANALOG. A line gets `modeld` — a mono Minimoog, which is what a
+         synthesiser playing a TUNE is — and a held chair gets `juno60`, a
+         polysynth with its own chorus, because a mono voice cannot hold a
+         chord. Both are `SYNTH` rows the fleet already compiles.
+       · ALL FM. `fm2op` for both, and it is one row rather than two because
+         two operators hold a pad as happily as they play a lead (to-engine's
+         own note on the row) and the parent's `fm` case builds the same module
+         for either chair.
+
+     THE INSTRUMENT IS REWRITTEN TOO on the two synth words, and that is not
+     belt-and-braces: `recipeFor` asks `mouthForInstr` BEFORE it looks at a
+     declared synth ("a signature synth does not displace a chair that was cast
+     as a voice"), so a `synth_voice` line would keep its tract however loudly
+     the seat asked for FM. Moving the id off the voice tables is what makes
+     the swap reach every chair instead of most of them.
+
+     ABSENT IS TODAY: `vox` returns null here and audio/plan.js does not touch
+     the seat, so the default renders byte-identically to a build with no
+     toggle at all. */
+  const patchedVoice = (id) => !!(PATCH_VOICE[id] || PATCH_MOUTH[id]);
+  // the sax is the fallback and the strings are the rule; both are registry ids
+  // the sampled library ships (RANGES above names them).
+  const LINE_TAKER = "alto_sax", SECTION_TAKER = "slow_strings";
+  const voicedAs = (mode, gk, id, pad) => {
+    if (!mode || mode === "vox" || !patchedVoice(id)) return null;
+    const section = pad || isSection(id);
+    if (mode === "instr") {
+      if (section) return { instr: SECTION_TAKER };
+      const e = (GENRES[gk] || {}).instr;
+      const list = Array.isArray(e) ? e : (e ? [e] : []);
+      return { instr: list.find((i) => !patchedVoice(i)) || LINE_TAKER };
+    }
+    if (mode === "analog")
+      return { instr: section ? SECTION_TAKER : LINE_TAKER,
+               synth: { dsp: section ? "juno60" : "modeld" } };
+    if (mode === "fm")
+      return { instr: section ? SECTION_TAKER : LINE_TAKER,
+               synth: { dsp: "fm2op" } };
+    return null;
   };
 
   // ONE EXPORT, keyed by KIND first and id second — never one flat id-keyed
@@ -1343,7 +1601,7 @@
   // `MACHINEMIX` and `mixFor` stay, and they are WIRED: audio/to-engine.js reads
   // the merge once per drum hit. An export is the only evidence most readers
   // ever get that a table is live, so nothing may be exported that nothing reads.
-  const api = { instrOf, isSection, BASS_INSTR, FONTS, BASSSYNTH, PATCHES, STRIPS,
+  const api = { instrOf, isSection, throatOf, throatKeyOf, voicedAs, BASS_INSTR, FONTS, BASSSYNTH, PATCHES, STRIPS,
                 stripFor, familyOf, RANGES, SAMPLED_INSERTS, PEDAL, BOARDS, boardOf,
                 DRUMMIX, MACHINEMIX, mixFor };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
