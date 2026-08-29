@@ -182,6 +182,18 @@ function liveGain(sec, key) {
 
 /* ---------- the words a bus is called ------------------------------------- */
 const busName = (bus) => NuFields.busNameOf(BUSES, bus);
+/* THE PLATE'S TITLE, WITHOUT SAYING ITS OWN NAME TWICE (2026-08-29). Each bus
+   head read `"genre fx bus · " + busName("genre")`, and busNameOf answers the
+   row's own LABEL when no name is set — so the shipped default plate read
+   "GENRE FX BUS · GENRE FX", one fact printed twice in its own headline
+   (measured on the rendered Mix tab at 390px). The ` · name` clause is FOR the
+   set name — "delay bus · throw" is a plate and what it is called — so it is
+   printed exactly when a name IS set: when busNameOf's answer differs from
+   what it answers with no store at all. One owner (busNameOf) for both. */
+const busTitle = (bus, plate) => {
+  const n = busName(bus);
+  return n === NuFields.busNameOf(null, bus) ? plate : plate + " \u00b7 " + n;
+};
 function returnShut() {
   const st = masterState(MASTER, BUSES);
   return !st || !(st.reverb > 0);
@@ -990,7 +1002,7 @@ export function mount(parent, ctx) {
     p.dataset.bus = "genre";
     p.setAttribute("aria-label", "genre fx bus");
     const h = el("div", null, "nu-bushead");
-    h.append(el("b", "genre fx bus · " + busName("genre"), "nu-busname"));
+    h.append(el("b", busTitle("genre", "genre fx bus"), "nu-busname"));
     h.append(el("small", "in ← genre sends · dealt by the genre, edited here",
       "nu-busin"));
     p.append(h);
@@ -1017,7 +1029,7 @@ export function mount(parent, ctx) {
     p.dataset.bus = "echo";
     p.setAttribute("aria-label", "delay bus");
     const h = el("div", null, "nu-bushead");
-    h.append(el("b", "delay bus · " + busName("echo"), "nu-busname"));
+    h.append(el("b", busTitle("echo", "delay bus"), "nu-busname"));
     h.append(el("small", "in ← " + busName("echo") + " sends", "nu-busin"));
     p.append(h);
     const g = el("div", null, "nu-gear");
@@ -1058,7 +1070,7 @@ export function mount(parent, ctx) {
     p.dataset.bus = "rev";
     p.setAttribute("aria-label", "reverb bus");
     const h = el("div", null, "nu-bushead");
-    h.append(el("b", "reverb bus · " + busName("rev"), "nu-busname"));
+    h.append(el("b", busTitle("rev", "reverb bus"), "nu-busname"));
     h.append(el("small", "in ← " + busName("rev") +
       " sends + the delay's bleed", "nu-busin"));
     p.append(h);

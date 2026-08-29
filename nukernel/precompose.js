@@ -214,6 +214,33 @@
     // aggregate rule. The box plays P/I/R/RI but nothing counts which pitches
     // have been used, so a "row" here is a shape, not an accounting.
     serial:    { cell: "even",   contour: "zig",    sent: "vary",  len: "two" },
+    // THE 2026-08-29 GENEALOGY ROUND'S HANDOFF, WRITTEN BY THE PARENT — the
+    // catalogue lane added 32 anchors with this file outside its fence and
+    // reported, for each row whose family idiom would lie about it, the row it
+    // wanted. Same law as every entry above: the family is the default, an
+    // anchor is named here only when the family's own cell/contour/sentence is
+    // actively WRONG for the music the row argues from.
+    // — the strophes and the blues line —
+    ballad:    { cell: "three",  contour: "arch",   sent: "aabb",  len: "four" },
+    spirituals:{ contour: "arch", land: "third",    sent: "aabb" },
+    deltablues:{ cell: "hang",   contour: "fall",   land: "lead" },
+    boogiewoogie:{ cell: "riff", contour: "zig",    land: "root",  len: "two" },
+    neworleans:{ cell: "gallop", contour: "arch",   land: "third", sent: "vary" },
+    // — the long lines —
+    cemilbey:  { cell: "long",   contour: "rise",   sent: "vary",  len: "four" },
+    gagaku:    { cell: "long",   contour: "hold",   sent: "long",  len: "four" },
+    gothicrock:{ cell: "long",   contour: "hover",  sent: "long",  len: "four" },
+    dubstep:   { cell: "long",   contour: "hover",  reg: "low", sent: "long", len: "four" },
+    // — the motorik and sequencer rows —
+    krautrock: { cell: "even",   contour: "hover",  sent: "plain" },
+    berlinschool:{ cell: "even", contour: "zig",    sent: "plain", len: "two" },
+    moroder:   { cell: "even",   contour: "zig",    sent: "plain", len: "two" },
+    hardcorerave:{ cell: "even", contour: "zig",    sent: "plain", len: "two" },
+    // — the riff-and-808 rows —
+    miamibass: { cell: "riff",   contour: "insist", reg: "low",    len: "two" },
+    grime:     { cell: "riff",   contour: "zig",    reg: "low",    len: "two" },
+    gfunk:     { cell: "riff",   contour: "zig",    land: "seventh", len: "two" },
+    crunk:     { cell: "even",   contour: "insist", land: "root",  len: "two" },
     // the WRITTEN VIRTUOSO anchors: a choro, a rag, a reel and a kolo are
     // composed tunes that run, and `roots`' four-bar strophe is the one thing
     // they are not

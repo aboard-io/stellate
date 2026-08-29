@@ -3478,10 +3478,18 @@ function deckSmf() {
   return { bytes, voices: built.voices, steps: built.steps };
 }
 function expSay(t) { if (deckSay) deckSay.textContent = t || ""; }
-function exportCard(grid, glyph, cls, title, sub, mk) {
+/* THE CAP TAKES NO PAINT CLASS SINCE 2026-08-29. The signature was
+   `exportCard(grid, glyph, cls, title, sub, mk)` and `cls` was one of
+   `nu-cap-hand` / `nu-cap-meter` / `nu-cap-flag` — URL and ALS in the hand,
+   WAV in the meter, MID and MP3 in the flag. Those are the page's four STATE
+   paints ("semantic, never decorative" — nu.css :root) and a file format is
+   not a state; nu.css carries the whole argument on the `#exportdeck` block,
+   where the three class rules used to be. Every cap is the ink name plate
+   now, so the parameter went rather than being passed as null five times. */
+function exportCard(grid, glyph, title, sub, mk) {
   const card = el("div", null, "nu-exp");
   const head = el("p", null, "nu-exp-head");
-  head.append(el("b", glyph, "nu-glyph " + cls), el("span", title));
+  head.append(el("b", glyph, "nu-glyph"), el("span", title));
   const subEl = el("p", sub, "nu-hint");
   card.append(head, subEl);
   mk(card);
@@ -3495,7 +3503,7 @@ function exportRow(parent) {
   shareCard(grid);
   // WAV — LIVE. The press path exists (engine/faust/press + the stream
   // worker's PCM sink); export/wav.js is that machinery pointed at a file.
-  exportCard(grid, "WAV", "nu-cap-meter", "the render",
+  exportCard(grid, "WAV", "the render",
     "44.1 kHz · 16-bit · the exact artifact the speakers get", (card) => {
     const b = el("button", "download .wav");
     b.type = "button"; b.dataset.k = "deck.exp.wav";
@@ -3513,7 +3521,7 @@ function exportRow(parent) {
   // MIDI — LIVE. export/smf.js over the score's own notes; the toms come out
   // distinct (t/m/l → GM 50/47/45), which is the export-layer fix FUTURE.md
   // asked for — the engine's own folded mapping is untouched.
-  exportCard(grid, "MID", "nu-cap-flag", "MIDI",
+  exportCard(grid, "MID", "the notes",
     "type 1 · one track per voice · the staff's own notes", (card) => {
     const b = el("button", "download .mid");
     b.type = "button"; b.dataset.k = "deck.exp.mid";
@@ -3540,9 +3548,16 @@ function exportRow(parent) {
      "320 kbps · for the phone" while nothing encoded anything. The real
      settings are 192 kbps CBR / 44.1 kHz / stereo — CBR because lamejs 1.2.1
      exposes no VBR at all, 192 because this is the listening copy and the WAV
-     beside it is the master. export/mp3.js argues both at length. */
-  exportCard(grid, "MP3", "nu-cap-flag", "MP3",
-    "192 kbps CBR · 44.1 kHz · stereo · the listening copy", (card) => {
+     beside it is the master. export/mp3.js argues both at length.
+     THE TITLE SAID "MP3" NEXT TO A CAP SAYING "MP3" until 2026-08-29 — the
+     rendered card read "MP3MP3" (and MID's read "MIDMIDI"). The cap is the
+     FORMAT and the title is WHAT THE FILE IS in the record's own words, the
+     pattern URL ("the link") and WAV ("the render") already kept: so MP3 is
+     "the listening copy" (moved up out of the subtitle, whose measured encode
+     facts test/mp3.test.js M1 still reads), MID is "the notes", ALS is "the
+     Live set". No card says its own name twice. */
+  exportCard(grid, "MP3", "the listening copy",
+    "192 kbps CBR · 44.1 kHz · stereo", (card) => {
     const b = el("button", "download .mp3");
     b.type = "button"; b.dataset.k = "deck.exp.mp3";
     b.addEventListener("click", () => {
@@ -3591,8 +3606,8 @@ function exportRow(parent) {
      argues why P1 and not P0 (Paul asked for HIS SONG, and P0 is one clip).
      A song with more boxes than the donor has scenes REFUSES with that
      sentence; it never hands over a half-right set. */
-  exportCard(grid, "ALS", "nu-cap-hand", "Ableton",
-    "live set · one track per voice · scenes are the boxes", (card) => {
+  exportCard(grid, "ALS", "the Live set",
+    "one track per voice · scenes are the boxes", (card) => {
     const b = el("button", "download .als");
     b.type = "button"; b.dataset.k = "deck.exp.als";
     b.addEventListener("click", () => {
@@ -10382,14 +10397,23 @@ function timeAxis(box) {
      Mix, which is what the sentence promises, and the `href` STAYS: with no
      JavaScript, or with the stylesheet off (where every panel is visible and
      the page is one document again), the fragment is still the right answer.
-     `preventDefault` only on the path that handled it. */
-  { const pt = el("p", null, "nu-hint");
+     `preventDefault` only on the path that handled it.
+     ...AND IT STANDS AT THE FOOT OF THE PANEL SINCE 2026-08-29, NOT ITS HEAD.
+     It was `axTime.append(pt)` here, before the tempo slider, so the FIRST
+     sentence the Tempo tab said — measured on the rendered page at 390px, the
+     top line of the panel — was a pointer to a fact that lives on another
+     tab. Reading order is working order: a hand opening Tempo came for the
+     tempo, and a cross-reference is back matter, the way the atlas puts its
+     catalogue after its globe and the deck puts its export note under its
+     cards. The pointer is unchanged — same words, same key, same click — and
+     is appended after the meter/swing row at the end of this function. */
+  const gainPtr = (() => { const pt = el("p", null, "nu-hint");
     const a = document.createElement("a");
     a.href = "#board"; a.textContent = "record gain — on the board's main strip";
     a.dataset.k = "goto.board";
     a.addEventListener("click", (e) => { e.preventDefault(); showTab("Mix"); });
     pt.append(a);
-    axTime.append(pt); }
+    return pt; })();
   number("bpm", "tempo", D.time.bpm, (v) => D.time.bpm = v, axTime, 40, 220);
   /* (`tempoRow(axTime)` STOOD HERE — "THE TEMPO ICONS, directly under the
      tempo slider and above the reading-speed menu — between the two facts they
@@ -10422,6 +10446,8 @@ function timeAxis(box) {
   // data tier's three-way mapping, and the buttons read the same cases.
   // test/selects.js MENUS dropped the row in the same commit.
   selectRow(axTime, null, [shSpec("time.meter", {}), shSpec("time.swing", {})]);
+  // the pointer to the board, LAST — back matter (see its note above)
+  axTime.append(gainPtr);
 }
 function alphaAxis(box) {
   const D = DOC;
@@ -10679,7 +10705,7 @@ function readLink() {
    refusal ends with the whole thing selected and "press Ctrl-C", which is a
    working path and not an apology. */
 function shareCard(grid) {
-  exportCard(grid, "URL", "nu-cap-hand", "the link",
+  exportCard(grid, "URL", "the link",
     "this place, this year, this reading — and the tab you are on", (card) => {
     const f = el("input");
     f.type = "text";

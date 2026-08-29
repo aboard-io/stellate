@@ -400,10 +400,34 @@ function sectionEvents(doc, i) {
   // DRAFTED AND REFUSED under WORLD.md §4's primary-fact rule — jingju,
   // guoyue, khyal and gamelan — and the reasons are at the foot of that
   // block in genres.js, which is the point of the rule.
-  ok("G0 the catalog is 213 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 213,
+  // + the THIRTY-TWO of the genealogy round ("how can we add lots more
+  // related genres quickly across time (then do it)", Paul, 2026-08-29):
+  // grown by paying the catalog's own debts rather than a wishlist — the
+  // wants census had 23 strings wanted by two or more rows and this round
+  // paid seventeen of them by name (boogiewoogie ×3; deltablues, krautrock,
+  // miamibass, quietstorm, spirituals, moroder, neworleans, berlinschool,
+  // gothicrock, operaseria, danzon, maxixe, lundu, modinha, cemilbey and
+  // ballad ×2 each), plus habanera, hendrix, glam, phillysoul, italodisco,
+  // newjackswing, hardcorerave and crunk on single wants, plus the two
+  // ancestors the timeline demanded (gagaku Nara 752, ziryab Córdoba 822 —
+  // the 8th and 9th centuries existed and the map now says so, plus dufay
+  // Florence 1436 and lied Vienna 1814 for the two emptiest Western
+  // centuries), plus four children that densify living clusters (gfunk,
+  // grime, dubstep — the 2000s had eight rows — and quietstorm's own soul
+  // shelf). FIVE multi-dependent wants were examined and DECLINED with
+  // reasons at the foot of the genealogy block in genres.js: dastgah
+  // (quarter tones, WORLD.md §2 wall 3), tape music (the material is not
+  // notes), latin percussion (an instrumentation, not a genre), maringa
+  // (first datable records contemporary with its own child) and the full
+  // ottoman makam (paid narrowly as cemilbey in Hicaz instead). TWO
+  // backwards WANTS were found and rewritten in place, dated, at their
+  // rows (hymn asking for spirituals, continuo for opera seria), and one
+  // backwards PARENT edge was closed (motorik <- kraftwerk, three years
+  // its own child's junior, reparented onto krautrock Cologne 1971).
+  ok("G0 the catalog is 245 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 245,
       "anchors() returned " + ANCHORS.length));
-  ok("G0b 366 records, no throw", () => {
+  ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
     assert.strictEqual(nRecords, ANCHORS.length * SEEDS.length);
   });
@@ -601,7 +625,8 @@ function sectionEvents(doc, i) {
       assert.strictEqual(DD.deskIsDefault(d, GENRES), true, gk + " deskIsDefault");
     }
   });
-  ok("G8b every one of the 366 records carries a sound.buses", () =>
+  ok("G8b every one of the " + ANCHORS.length * SEEDS.length +
+     " records carries a sound.buses", () =>
     assert.strictEqual(nBuses, nRecords, nBuses + " of " + nRecords));
   ok("G8c every value is a legal registry key, walked off NF.BUSES / NF.PARTMIX", () =>
     assert.strictEqual(bad.sound.length, 0, bad.sound.length +
@@ -968,11 +993,19 @@ function sectionEvents(doc, i) {
     // an empty kit, `nobass` — by somebody who did not read compose.js's
     // predicate, and it landed in the set on its own three fields. Two
     // independent arrivals is the difference between a derivation and a list.
+    // ...AND THE GENEALOGY ROUND ADDED THREE MORE PROBES (2026-08-29):
+    // `dufay` and `spirituals` are four unaccompanied parts and `ballad`
+    // is ONE unaccompanied voice — the set's smallest possible member,
+    // which no earlier arrival had tested. All three were written without
+    // reading the predicate and landed on their own three fields; five
+    // independent arrivals now, and the derived list below is the round's
+    // whole edit to this gate.
     ok("G11c the unaccompanied law is derived, not a list — it found the " +
-       "five it was written on PLUS sacredharp and chorale, neither of " +
-       "which it has ever heard of", () => {
+       "five it was written on PLUS sacredharp, chorale, and now ballad, " +
+       "dufay and spirituals, none of which it has ever heard of", () => {
       assert.deepStrictEqual(solo.slice().sort(),
-        ["chorale", "gregorian", "mbube", "organum", "sacredharp", "spem", "zema"]);
+        ["ballad", "chorale", "dufay", "gregorian", "mbube", "organum",
+         "sacredharp", "spem", "spirituals", "zema"]);
     });
 
     // G11d — EVERY PLACE IS IN EXACTLY ONE REGION, AND EVERY REGION ROW IS A

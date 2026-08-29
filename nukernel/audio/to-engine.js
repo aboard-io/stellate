@@ -1561,7 +1561,7 @@ export function toEngine(plan, deps) {
     // ONE OWNER: this is the same line `bassSeat` runs, said once for both
     // callers, so a third caller cannot rediscover it.
     const c = { key: "v" + v, chair, role: chair === "bass" ? "bass" : role,
-                m, source };
+                m, source, instr: s.instr };   // instr rides for the seating plan's familyOf
     chairs.set(v, c);
     return c;
   };
@@ -1711,16 +1711,53 @@ export function toEngine(plan, deps) {
   if (bassSeat) units.bass = trimRoute(SE.pitchedUnit("bass", bassSeat.m, state));
   else delete units.bass;
   delete units.pad; delete units.melody;         // the placeholders; the chairs above are the real voices
-  // stereo placement + the same-timbre carve, re-run over the FINAL table: two
-  // chairs that resolved the same GM instrument read as soup otherwise, and
-  // voiceUnits ran its pass before these chairs existed.
-  for (const c of chairs.values()) {
-    // BASS IS CENTRE and the parent says so by having no MASTER_PAN entry for it
-    // — reading the melody seat for a bass chair would put the low end off axis,
-    // which is the one placement no mix makes.
+  // ---- THE SEATING PLAN (2026-08-29) ---------------------------------------
+  // REVERSED. This pass used to be one line:
+  //     units[c.key].pan = p * (1 + 0.6 * ((c.key.charCodeAt(1) % 3) - 1));
+  // — MASTER_PAN.melody/.pad scaled by charCode-of-key mod 3, a HASH, not a
+  // plan. Measured at the ear (_livetap stereo tap, 2026-08-29, seed 1, 40 s):
+  // every chair landed inside {-0.13..0.16}, rock's three stk_guitar chairs
+  // sat at 0.04/0.10/0.10 — one seat, three guitars — and the records that
+  // depend on chairs for width read near-mono: rock S/M -17.2 dB corr 0.969,
+  // steely -15.2/0.943, house -12.8/0.916, against neoclassical's -5.9 where
+  // the sampled pad's panSpread does the work. And the whole image leant
+  // right, because melody 0.10 outweighs pad -0.08 on every roster. So the
+  // chairs are SEATED instead of hashed:
+  //   · bass and drums stay centre (unchanged; the parent's kit pans stand)
+  //   · voices sit near-centre — a singer is not an ensemble effect
+  //   · instruments sit off-centre by FAMILY width, groups alternating sides
+  //     in key order so the image balances instead of leaning
+  //   · a REPEATED timbre alternates within its own group — two guitars are a
+  //     left one and a right one, never one loud one. No extra widening per
+  //     repeat: precompose's CHAIRPAN already deals `hl`/`hr` on a duplicated
+  //     role's later chairs, and that word RIDES on this seat at the desk
+  //     (audio/desk.js, where the seat also yields its SIDE to the word so
+  //     the two separate the pair together instead of cancelling)
+  //   · the `lead` chair sits at half its family width: front of the stage,
+  //     just off axis
+  // Widths stay <= 0.32 (constant-power ~8 dB L/R): the mono sum must survive,
+  // and the re-measure holds every record's L/R correlation positive.
+  // Deterministic by construction — key order and the cast alone decide.
+  const SEAT_WIDTH = { vox: 0.06, bowed: 0.14, strings: 0.14, brass: 0.18, reed: 0.18,
+                       keys: 0.24, organ: 0.24, mallet: 0.24, guitar: 0.26, dirty: 0.26,
+                       pad: 0.30 };
+  const SEAT_DEFAULT = 0.22, SEAT_CAP = 0.32;
+  const seatGroups = new Map();   // resolved timbre -> { n, side }
+  let seatSide = 1;               // group starting sides alternate, in key order
+  for (const c of [...chairs.values()]
+         .sort((a, b) => (a.key.length - b.key.length) || (a.key < b.key ? -1 : 1))) {
+    // BASS IS CENTRE, as before — off-axis low end is the one placement no
+    // mix makes. No pan field = the old byte path, same as the kick's.
     if (c.role === "bass") continue;
-    const p = SE.MASTER_PAN[c.role === "pad" ? "pad" : "melody"];
-    if (p != null) units[c.key].pan = p * (1 + 0.6 * ((c.key.charCodeAt(1) % 3) - 1));
+    const u = units[c.key]; if (!u) continue;
+    const fam = NI.familyOf(c.instr, c.role === "pad");
+    let w = SEAT_WIDTH[fam] != null ? SEAT_WIDTH[fam] : SEAT_DEFAULT;
+    if (c.chair === "lead") w *= 0.5;
+    const id = (u.sampler && u.sampler.id) || u.module || c.chair;
+    let g = seatGroups.get(id);
+    if (!g) { g = { n: 0, side: seatSide }; seatSide = -seatSide; seatGroups.set(id, g); }
+    u.pan = (g.n % 2 ? -g.side : g.side) * Math.min(SEAT_CAP, w);
+    g.n++;
   }
   SE.collisionCarve(units);
   for (const [k, u] of Object.entries(units))

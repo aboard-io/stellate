@@ -106,9 +106,11 @@
                             three transform rows wore <svg> pictures with their
                             padding cut to 2px to fit; the pictures became
                             glyphs on 2026-08-26 and the exception went with
-                            them — `.nu-tf-row` now sets a 44px MINIMUM width
+                            them — `.nu-tf-row` set a 44px MINIMUM width
                             and a .3em gap, neither of which is a second LOOK:
-                            one is the tap floor and one is spacing.)
+                            one is the tap floor and one is spacing; the rows
+                            themselves became gutter levels on 2026-08-28 and
+                            the selector's tombstone is at the `.nu-tf` block.)
      a tab        1 look    was 2 — the `<th>` bold is gone
      everything else unchanged, and every remaining second look is a STATE the
      browser draws (`:disabled` greys a control's border and face) or the flex
@@ -252,6 +254,26 @@
   --bw-hard: 2px;
   --shadow: 2px 2px 0 var(--ink);  /* hard offset, zero blur; pressed = into it */
   --press:  2px;                   /* how far a press travels — the shadow's own offset */
+  /* ===== THE SPACING SCALE — FIVE STEPS AND NO SIXTH (2026-08-29) ========
+     Counted on this sheet before this block existed: EIGHTEEN distinct em/rem
+     quanta in margin/padding/gap declarations (.15 .18 .2 .25 .3 .35 .4 .45
+     .5 .55 .6 .7 .75 .8 1 1.6em, .25rem, .75rem) — a page that grew tab by
+     tab, each tab bringing its own idea of "a little air". Structure is
+     information: eighteen gaps can encode at most five distinctions a reader
+     can actually see, so the other thirteen were noise. Every RHYTHM value on
+     this sheet now points at one of these five, and a rule that types a
+     literal em into margin/padding/gap is the drift this block exists to
+     catch in review.
+     WHAT IS NOT ON THE SCALE, by name, because it is engineering rather than
+     rhythm: 0 and auto; every px value (tap floors, scrollbar seats,
+     safe-area sums, hairline compensations like -1px and -9px); every calc()
+     that cancels a border or a page gutter; and the two glyph micro-kerns
+     (.06em in .nu-ic, .1em on .nu-tf-was), which space INK, not blocks. */
+  --s1: .2em;   /* a hair — inside a control, between a cap and its word */
+  --s2: .35em;  /* tight — cell padding, a control from its own label */
+  --s3: .55em;  /* a gap — between controls that answer one question */
+  --s4: .8em;   /* air — between questions; a plate's own padding */
+  --s5: 1.4em;  /* a block — between one subject and the next */
   /* THE BUTTON'S TEXT: SMALLER, AND NOT BOLD. It was 800/16px, the same size
      as body copy and heavier than an <h2>, which is what made a row of tabs
      read as a row of headlines. 500 is the body weight (the page already says
@@ -368,12 +390,23 @@ body{ margin: 0; background: var(--paper); color: var(--ink);
      has to be inside the gutter is the CLIPPER, and it is. */
   padding-inline: calc(var(--gl) + var(--tray-w)) var(--gr);
   padding-block-end: max(24px, env(safe-area-inset-bottom)); }
-/* the display weights; the record's name is the h1 and gets the 900 */
-h1{ font-weight: 900; letter-spacing: -.01em; line-height: 1.05; }
+/* the display weights. (The h1 rule — "the record's name is the h1 and gets
+   the 900; font-weight: 900; letter-spacing: -.01em; line-height: 1.05" —
+   went on 2026-08-29 with the heading it dressed: Paul, "Get rid of the play
+   buttons and the title of the song"; the record names the page through
+   document.title now and no view builds an <h1>. Measured after the cut: the
+   selector matched zero elements across all nine tabs.) */
 h2, h3{ font-weight: 800; }
 strong, b{ font-weight: 800; }
 /* everything counted is mono — the machine voice (design-system.html "type") */
-output, .nu-vel-out{ font-family: var(--mono); font-variant-numeric: tabular-nums; }
+/* (`, .nu-vel-out` rode this selector, and `.nu-grid td > output.nu-vel-out{
+   opacity: .75 }` stood in the step-grid block — the sliders' velocity
+   readout from the 2026-08-25 rotation. The class lost its last builder when
+   the velocity column became the weight BAR whose cap prints its own number
+   (ui/eight.js benchVel), and the 2026-08-29 dead-selector pass measured it
+   matching nothing on any tab. <output> alone still earns the mono: #reading,
+   the faders' caps, every printed value.) */
+output{ font-family: var(--mono); font-variant-numeric: tabular-nums; }
 /* index.html:5 carries `viewport-fit=cover` and band.css was never linked, so
    until today nothing paid the safe area: on a notched phone in landscape the
    left edge of the drum grid sat under the rounded corner. Do NOT remove
@@ -385,7 +418,7 @@ output, .nu-vel-out{ font-family: var(--mono); font-variant-numeric: tabular-num
 button,input,select,textarea,output,meter{ font: inherit; color: inherit; }
 button,select,input[type=number],input[type=text],input[type=range]{
   min-height: var(--tap); }
-button,select{ padding-inline: .6em; }
+button,select{ padding-inline: var(--s3); }
 /* A BUTTON LOOKS LIKE A BUTTON, EVERYWHERE — AND THE ENAMEL FACE IS WHAT
    SETTLES IT FOR GOOD (2026-08-27). What stood here was `th button, th select{
    font-weight: 400 }`, repairing the accident the audit of 2026-08-26 found:
@@ -558,8 +591,8 @@ input[type=range][list]{ accent-color: var(--hand); }
    `align-items: center` and not `baseline`: a tempo icon is 44px of picture
    with no text baseline in it, and beside a word-button baseline alignment
    drops it half a line. */
-.nu-row{ display: flex; flex-wrap: wrap; align-items: center; gap: .4em;
-  margin-block: .4em; }
+.nu-row{ display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2);
+  margin-block: var(--s2); }
 /* AND IT MADE THE STRIPS SHORTER, WHICH WAS NOT THE POINT BUT IS THE
    MEASUREMENT. Inline-block buttons pay for the whitespace text node AND for
    the baseline gap under each line; flex pays for neither. `#tabs` at 390px
@@ -568,10 +601,10 @@ input[type=range][list]{ accent-color: var(--hand); }
    because two 44px rows plus one .4em gap is more than three squeezed
    line-boxes, and that is the right trade: the tap targets were always 44 and
    now the row admits it. */
-input[type=number]{ padding-inline: .3em; inline-size: 5.5em; }
+input[type=number]{ padding-inline: var(--s2); inline-size: 5.5em; }
 input[type=checkbox],input[type=radio]{
   inline-size: var(--box); block-size: var(--box);
-  margin: 0 .35em 0 0; vertical-align: middle; }
+  margin: 0 var(--s2) 0 0; vertical-align: middle; }
 /* THIS IS WHAT TURNED 96 THIRTEEN-PIXEL RADIOS INTO 96 FULL ROWS without one
    line of ui/eight.js moving: every control on the page is already wrapped in
    a <label>, so giving the label the height gives the gesture the height.
@@ -582,7 +615,7 @@ input[type=checkbox],input[type=radio]{
    than 96. The rule did not have to move, which is the point the comment was
    making; the names it made it with were the ones that went.) */
 label{ display: inline-block; min-block-size: var(--tap); line-height: var(--tap); }
-#app p{ margin-block: .35em; }
+#app p{ margin-block: var(--s2); }
 :focus-visible{ outline: var(--bw-hard) solid var(--hand); outline-offset: 1px; }
 /* (2026-08-27: `Highlight` -> the hand. Focus is the hand's own paint in
    Enamel — the ring says "your hand is here" — and the UA Highlight blue was
@@ -615,7 +648,14 @@ label{ display: inline-block; min-block-size: var(--tap); line-height: var(--tap
    element for a gate to read and for the day somebody wants to tell an act from
    an album without reading the word. */
 a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
-.nu-wiki{ font-size: 1rem; font-weight: 400; white-space: nowrap; }
+/* (`.nu-wiki{ font-size: 1rem; font-weight: 400; white-space: nowrap }` is
+   GONE, 2026-08-29. The paragraph below says the class "moved rather than
+   went" into the genre list's column — but the column's anchor is `.nu-ixw`
+   (ui/atlas.js:665) and nothing was left wearing `.nu-wiki`: the dead-selector
+   pass measured zero matches across all nine tabs. The SHAPE the rule stated
+   lives at `.nu-ixw`, exactly where that paragraph says it was restated.
+   `.nu-kind` is alive — the list writes it for the 31 rows whose article is
+   an act or an album, ui/atlas.js:676.) */
 .nu-kind{ opacity: .7; white-space: nowrap; }
 
 /* ===== THE TWO STICKY BANDS ============================================
@@ -713,8 +753,8 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    beside #engine and takes no reserved height: an element that is not there
    must not hold a strip of the page open all day for the one deploy that lands
    while somebody is listening. */
-.nu-new{ display: flex; align-items: center; gap: .5em; flex-wrap: wrap;
-  margin-block: .25rem 0; font-size: .9rem; }
+.nu-new{ display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap;
+  margin-block: var(--s1) 0; font-size: .9rem; }
 
 /* ===== THE SECOND BAND IS THE TAB ROW, AND IT USED TO BE THE HEADING =====
    Paul, 2026-08-27: *"Why don't we make tabs at the top level and let go of
@@ -761,7 +801,7 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    it. If that pair ever drifts, this is the copy that is wrong. */
 .nu-ax > h2, #atlas > h2{ position: absolute; width: 1px; height: 1px;
   margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.nu-ax > h3, .nu-ax h3{ font-size: 1rem; margin: .8em 0 .2em; }
+.nu-ax > h3, .nu-ax h3{ font-size: 1rem; margin: var(--s4) 0 var(--s1); }
 /* ===== THE TAB ROW BECAME A GUTTER (2026-08-28) =========================
    Paul: *"Come up with a strategy for running the nav icons for a given
    modality down the right of the interface but translucent. Put them in a
@@ -818,11 +858,13 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    and there is no arrangement in this file that can produce a second column
    (the tray is `flex-direction: column` with no wrap, and the measurement
    below counts distinct button `left`s to prove it).
-   THE ARITHMETIC, MEASURED at 390x844: a mark is 47.00 x 44.00 and the pitch
-   is 48.80px (44 + a .3em gap). At the ROOT there is no head, so the list is
-   836.00px and SEVENTEEN marks fit. At a sub-level the head (`↑` + its rule)
-   is 54.59px, the list is 781.41px and SIXTEEN fit. At 1280x800 the same
-   numbers give 792.00 -> sixteen and 737.41 -> fifteen.
+   THE ARITHMETIC, RE-MEASURED 2026-08-29 for the spacing scale (the gap is
+   `--s2` now; it read "the pitch is 48.80px (44 + a .3em gap) … the list is
+   836.00px and SEVENTEEN marks fit … 781.41 and SIXTEEN … 792.00 -> sixteen
+   and 737.41 -> fifteen"): a mark is 47.00 x 44.00 and the pitch is 49.59px
+   (44 + a --s2 gap), measured at 390x844 and 1280x800 both. The list at 390
+   is 623.44px under the head -> TWELVE marks fit; at 1280 it is 579.44 ->
+   eleven.
    AND WHAT THE LEVELS ACTUALLY HOLD, on the shipped chant: root 9, band 7
    (form · performance · cantor · schola · + line · + bass · + drums), motif 5
    (psalm · bed · neume · + motif · + drum pattern), score 2. Nothing overflows
@@ -851,9 +893,7 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
   inline-size: var(--tray-w);
   display: flex; flex-direction: column; align-items: stretch;
   /* the marks stand in 56px whatever the notch does — see --tray-w */
-  padding: max(4px, env(safe-area-inset-top)) 4px
-           max(4px, env(safe-area-inset-bottom))
-           calc(4px + env(safe-area-inset-left, 0px));
+  padding: max(4px, env(safe-area-inset-top)) 4px max(4px, env(safe-area-inset-bottom)) calc(4px + env(safe-area-inset-left, 0px));
   background: var(--panel);
   /* the rule is on the side facing the page, which is now the END side */
   border-inline-end: var(--bw) solid var(--ink); }
@@ -892,7 +932,7 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
   align-items: stretch; }
 .nu-trayup{ display: flex; flex-direction: column; align-items: stretch; }
 .nu-traycut{ flex: 0 0 auto;
-  margin: .3em 0; border: 0; border-block-start: var(--bw) solid var(--ink); }
+  margin: var(--s2) 0; border: 0; border-block-start: var(--bw) solid var(--ink); }
 /* THE LIST, AND IT IS THE ONLY THING IN HERE THAT SCROLLS. `overflow-y: auto`
    so a long level stays one stripe rather than a second column.
    AND IT DOES NOT SAY `overscroll-behavior: contain`, WHICH IT DID FOR TEN
@@ -909,7 +949,7 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    dead swipe zone down the edge of the screen, so the swipe chains. Measured:
    a 300px touch drag on the gutter scrolls the document. */
 .nu-traylist{ flex: 1 1 auto; min-block-size: 0;
-  display: flex; flex-direction: column; align-items: stretch; gap: .3em;
+  display: flex; flex-direction: column; align-items: stretch; gap: var(--s2);
   overflow-y: auto; overflow-x: hidden; }
 /* ===== THE ROOM FADER, STANDING IN THE GUTTER (2026-08-29) =============
    Paul: *"The volume slider is now vertical."*
@@ -946,7 +986,7 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    `↑`), the foot is 55, and the four items of the play level are 44 + 44 + 44
    + 196 = 328 against 689px of list. It scrolls if a future level does not
    fit, which is `.nu-traylist`'s standing promise and needs no exception. */
-.nu-trayvol{ justify-self: center; align-self: center; margin-block: .2em; }
+.nu-trayvol{ justify-self: center; align-self: center; margin-block: var(--s1); }
 .nu-trayvol .nu-vs-val{ font-variant-numeric: tabular-nums; }
 /* LOSE THE SCRABBLE TILE (Paul: *"They're sort of like scrabble letters
    now"*). Inside the stripe a mark gives up the three declarations that make
@@ -1019,7 +1059,7 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    it at the size of a tray digit. Measured at 390: "16" is 17.8px wide and
    "beats" is 30.2px, both inside the 47px column with no wrap and no clip. */
 .nu-count{ display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 0; padding-block: .15em;
+  justify-content: center; gap: 0; padding-block: var(--s1);
   font-family: var(--mono); color: var(--meter); line-height: 1.05; }
 .nu-count b{ font-weight: var(--num-fw); font-size: .95rem;
   font-variant-numeric: tabular-nums; }
@@ -1042,7 +1082,7 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    white-on-cobalt with the rest of the mark when the panel is open.
    Contrast measured: --hand #1E45E0 on --flag-tint #FFEFC2 is 8.03:1. */
 .nu-trayfoot .nu-n{ align-self: center; min-inline-size: 1.6em;
-  padding-inline: .25em; border-radius: 999px;
+  padding-inline: var(--s1); border-radius: 999px;
   background: var(--flag-tint); color: var(--hand);
   font-weight: var(--num-fw); font-variant-numeric: tabular-nums; }
 .nu-trayfoot button[aria-pressed="true"] .nu-n{ background: #FFFFFF; }
@@ -1082,7 +1122,7 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
   inset-inline-start: var(--tray-w); inset-block-end: 4px;
   inline-size: min(46ch, calc(100vw - var(--tray-w) - 12px));
   max-block-size: min(60vh, 520px); overflow-y: auto; overscroll-behavior: contain;
-  margin: 0; padding: .4em .55em;
+  margin: 0; padding: var(--s2) var(--s3);
   background: var(--panel); color: var(--ink);
   border: var(--bw) solid var(--ink); border-radius: var(--r1, 6px);
   box-shadow: var(--shadow);
@@ -1093,8 +1133,8 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    its numbering off, because the numbers a reader wants are the beats and the
    values, not "1, 2, 3". */
 .nu-log ol{ list-style: none; margin: 0; padding: 0; }
-.nu-log li{ display: flex; gap: .5em; align-items: baseline;
-  padding-block: .18em; border-block-start: var(--bw) solid var(--rule); }
+.nu-log li{ display: flex; gap: var(--s3); align-items: baseline;
+  padding-block: var(--s1); border-block-start: var(--bw) solid var(--rule); }
 .nu-log li:first-child{ border-block-start: 0; }
 /* THE STAMP. Tabular, dim, and fixed-width so the sentences line up down the
    left edge of the column rather than stepping in and out with the clock. */
@@ -1315,7 +1355,7 @@ table{ border-collapse: collapse; --paper: var(--panel); inline-size: 100%;
   background: var(--panel); border: var(--bw) solid var(--ink); }
 .nu-pane{ --paper: var(--panel); }
 caption{ text-align: left; font-size: .85rem; color: var(--dim); opacity: 1;
-  font-weight: 600; padding-block: .2em; }
+  font-weight: 600; padding-block: var(--s1); }
 th,td{ border: 1px solid var(--rule); padding: 2px 4px; text-align: left;
        /* 1.3, NOT THE BODY'S 1.45 (2026-08-27): the repaint's geometry budget
           is 8px on the measured surfaces and the form table spent 9 of it on
@@ -1475,7 +1515,6 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
    a column that reflows while you use it is the same complaint one size down. */
 .nu-grid td > output{ display: inline-block; min-inline-size: 2ch;
   font-size: .8rem; line-height: 1; text-align: right; vertical-align: middle; }
-.nu-grid td > output.nu-vel-out{ opacity: .75; }
 .nu-grid th span, .nu-grid th mark{ font-size: .8rem; }
 
 /* ===== THE VOCABULARY: THE BOX, NEVER THE INSIDE ========================
@@ -1545,7 +1584,7 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
      own 2px ink */
   gap: 4px; border: var(--bw) solid var(--ink); background: var(--panel);
   --paper: var(--panel);
-  padding: 6px; margin-block: .5em;
+  padding: 6px; margin-block: var(--s3);
   min-inline-size: 0; }
 .nu-sheet[data-cols="2"]{ --cols: 2; }
 .nu-sheet[data-cols="3"]{ --cols: 3; }
@@ -1553,22 +1592,22 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
 @media (max-width: 460px){
   .nu-sheet[data-cols="3"], .nu-sheet[data-cols="4"]{ --cols: 2; } }
 @media (max-width: 340px){ .nu-sheet{ --cols: 1; } }
-.nu-sheet > legend{ padding-inline: .3em; font-weight: 600; }
+.nu-sheet > legend{ padding-inline: var(--s2); font-weight: 600; }
 .nu-sheet > .nu-grp, .nu-sheet > .nu-why{ grid-column: 1 / -1; }
-.nu-grp{ margin: .4em 0 0; font-size: .85rem; opacity: .75;
+.nu-grp{ margin: var(--s2) 0 0; font-size: .85rem; opacity: .75;
   border-block-end: 1px solid var(--rule); }
 .nu-why{ display: block; font-size: .8rem; opacity: .8; line-height: 1.25; }
 /* `.nu-sheets` is NOT on §2.4's table — sheetRow() emits it as the wrapper for
    a row of sheets under one heading (ui/sheets.js:168), and the law is that a
    name a slice needs is added HERE rather than in a second stylesheet. So it is
    added here, and this is the notice. */
-.nu-sheets > h3{ font-size: 1rem; margin: .8em 0 .2em; }
+.nu-sheets > h3{ font-size: 1rem; margin: var(--s4) 0 var(--s1); }
 /* THE OPTION IS THE TARGET, and the radio inside it is CLIPPED, never
    `display:none` (PROGRAM.md §2.3): clipped it still takes focus, still
    answers the arrow keys, and still tells a screen reader what it is. Which
    means the chosen state has to be drawn by the label — the border does it,
    and `is-on`/`is-off` from sheets.js cover the browsers without `:has()`. */
-.nu-opt{ display: flex; align-items: center; gap: .35em; flex-wrap: wrap;
+.nu-opt{ display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap;
   min-block-size: var(--tap); line-height: normal;
   /* 2px INK AND NOT 1px GREY (2026-08-27, Enamel): an option is a control and
      a control's frame is ink. The padding pays the pixel back — 2+3 = 1+4 —
@@ -1641,10 +1680,10 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
      re-declared so the twenty-four labels that punch through the ring strokes
      punch through in the plate's own white */
   --paper: var(--panel);
-  padding: 6px; margin-block: .5em;
+  padding: 6px; margin-block: var(--s3);
   min-inline-size: 0; max-inline-size: min(100%, 26em); }
-.nu-circ > legend{ padding-inline: .3em; font-weight: 600; }
-.nu-circ > .nu-why{ margin-block: .15em .4em; }
+.nu-circ > legend{ padding-inline: var(--s2); font-weight: 600; }
+.nu-circ > .nu-why{ margin-block: var(--s1) var(--s2); }
 .nu-circ-face{ position: relative; inline-size: 21em; block-size: 21em;
   font-size: clamp(.72rem, 3.6vw, 1rem); margin: 10px auto; max-inline-size: 100%; }
 /* THE TWO RING STROKES are the box's own before/after — one stroke per ring,
@@ -1697,7 +1736,7 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
    NOT go is WCAG 2.2's 24px floor for a radio (test/shell.js A3), so that is
    what is stated — a real number, not an unset. */
 .nu-circ .nu-opt{ min-block-size: 26px; min-inline-size: 26px;
-  padding: 2px .3em; line-height: 1.15; align-items: center; }
+  padding: 2px var(--s2); line-height: 1.15; align-items: center; }
 /* --r IS AN em AND em IS RESOLVED ON THE ELEMENT THAT USES IT, which is the one
    trap in this whole diagram and it cost a measurement to find. A custom
    property is substituted as TOKENS, not as a resolved length: `--r: 5.4em` set
@@ -1711,7 +1750,7 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
 .nu-circ .nu-ko{ --r: 8.6em; }
 /* ...and the outer ring, where there IS room, keeps the full thumb. */
 @media (min-width: 400px){ .nu-circ .nu-ko{ min-block-size: 34px; } }
-.nu-circ .nu-ki{ --r: 5.8em; padding-inline: .25em; }
+.nu-circ .nu-ki{ --r: 5.8em; padding-inline: var(--s1); }
 /* the inner ring's words are smaller than the outer ring's, which is the one
    thing about this diagram that is not negotiable: at equal type the twelve
    relative minors collide with each other by 5-9px (band.css measured it, and
@@ -1755,7 +1794,7 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
    rules at the top of this file — `select { min-height: var(--tap) }` and
    `label { min-block-size: var(--tap) }` — already give a menu its target size
    and already make its label part of the gesture. What is left is width. */
-.nu-sels > h3{ font-size: 1rem; margin: .8em 0 .2em; }
+.nu-sels > h3{ font-size: 1rem; margin: var(--s4) 0 var(--s1); }
 /* THE QUESTION IS A LINE OF ITS OWN AND THE CONTROL IS THE LINE UNDER IT.
    Paul, 2026-08-25: "Put interactive elements on new lines below the titles or
    questions."
@@ -1783,9 +1822,9 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
    `selectField`. Two names, one rule, because it is one question: they are
    listed together rather than given a third shared class, which would be a
    name that meant "the other two". */
-.nu-sel{ margin-block: .5em; }
+.nu-sel{ margin-block: var(--s3); }
 .nu-sel > label, .nu-field > label{
-  display: flex; align-items: center; gap: .4em; flex-wrap: wrap;
+  display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap;
   line-height: normal; min-block-size: var(--tap); }
 .nu-sel > label > .nu-w, .nu-field > label > .nu-w{
   flex: 1 0 100%; font-weight: 600; }
@@ -1799,7 +1838,7 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
    documentElement.scrollWidth == innerWidth at both. */
 .nu-sel > label > select{ flex: 0 1 auto; min-inline-size: 0;
   max-inline-size: min(100%, 30ch); }
-.nu-sel > .nu-why{ margin-block-start: .15em; }
+.nu-sel > .nu-why{ margin-block-start: var(--s1); }
 /* ...and the same cap for a menu in a table cell, where the chord quality went
    ("chord quality can be selects inside the 'the changes' table"). The cell is
    inside a `.nu-pane`, which scrolls sideways, so an unbounded select would
@@ -1886,7 +1925,7 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    IT MEASURED; the thing is gone. `.nu-eng` survives as the read-only mirror
    inside a voice's sheet. */
 .nu-eng th{ inline-size: 7em; text-align: left; }
-.nu-mirror td{ padding-inline: .4em; }
+.nu-mirror td{ padding-inline: var(--s2); }
 .nu-mirror td.is-dflt{ color: var(--dim); }
 
 /* ===== THE ONE BOARD (2026-08-27) ======================================
@@ -1929,16 +1968,16 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    here. Measured after the change at 1280: strip 1256px, the fader 459px
    below the send row and 0px further from it across. */
 .nu-strips{ display: grid; inline-size: 100%;
-  gap: .8em; align-items: start; margin-block: .8em; }
+  gap: var(--s4); align-items: start; margin-block: var(--s4); }
 .nu-strip{ background: var(--panel); border: var(--bw) solid var(--ink);
   border-radius: var(--r1); box-shadow: var(--shadow);
-  padding: .5em; display: grid; gap: .6em; align-content: start; min-width: 0; }
+  padding: var(--s3); display: grid; gap: var(--s3); align-content: start; min-width: 0; }
 .nu-strip.is-off{ opacity: .55; }
 .nu-sname{ display: block; font-size: 1.15rem; font-weight: 900;
   text-transform: uppercase; line-height: 1; }
 .nu-strip header small{ display: block; color: var(--dim); font-size: .72rem; }
-.nu-srow{ border-block-start: var(--bw) solid var(--ink); padding-block-start: .5em;
-  display: grid; gap: .4em; }
+.nu-srow{ border-block-start: var(--bw) solid var(--ink); padding-block-start: var(--s3);
+  display: grid; gap: var(--s2); }
 /* ---- THE THREE INSERT SLOTS GET THE WIDTH THE TAB BOUGHT (2026-08-27) ----
    This is the point of the tabs and not a decoration of them: a slot carries
    a seat menu, a wet and up to two of the module's own face knobs, and in a
@@ -1998,16 +2037,16 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    is the gesture's own answer arriving BELOW the menu that caused it — the
    seat row itself, and everything above it, holds still. */
 .nu-slot{ background: var(--well); border: var(--bw) solid var(--ink); border-radius: 3px;
-  padding: .35em; display: grid; gap: .35em; align-content: start; }
+  padding: var(--s2); display: grid; gap: var(--s2); align-content: start; }
 .nu-slot.is-empty{ border-style: dashed; background: transparent; }
 .nu-slot.is-off{ opacity: .6; }
-.nu-slotrow{ display: flex; gap: .35em; align-items: center; }
+.nu-slotrow{ display: flex; gap: var(--s2); align-items: center; }
 .nu-slotn{ font: 700 .75rem var(--mono, monospace); color: #fff; background: var(--ink);
   inline-size: 22px; block-size: 22px; border-radius: 3px; flex: none;
   display: inline-flex; align-items: center; justify-content: center; }
 .nu-slot.is-empty .nu-slotn{ background: var(--faint); }
 .nu-slotrow select{ flex: 1 1 auto; min-inline-size: 0; max-inline-size: 100%; }
-.nu-slotbody{ display: flex; gap: .3em; justify-content: space-between;
+.nu-slotbody{ display: flex; gap: var(--s2); justify-content: space-between;
   align-items: end; flex-wrap: wrap; }
 
 /* ---- THE SLIDER: ONE ANATOMY, TWO AXES -------------------------------
@@ -2065,8 +2104,8 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   box-shadow: var(--shadow); }
 
 /* ---- and the standing one, which is where the anatomy came from ---- */
-.nu-vcol{ display: grid; gap: .25em; justify-items: center; min-width: 0; }
-.nu-vs{ display: inline-grid; gap: .25em; justify-items: center; }
+.nu-vcol{ display: grid; gap: var(--s1); justify-items: center; min-width: 0; }
+.nu-vs{ display: inline-grid; gap: var(--s1); justify-items: center; }
 .nu-vs-lab{ font: 700 .62rem/1.2 var(--mono, monospace); letter-spacing: .08em;
   text-transform: uppercase; text-align: center; }
 .nu-vs-track{ position: relative; inline-size: var(--sl-trough); block-size: 96px;
@@ -2108,11 +2147,11 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    100% since 2026-08-28 and this 30em is now the ONLY rule holding a bank of
    sliders together, which is where that job always belonged: a bank is a
    hand's width because a hand is that wide, not because a strip was.) */
-.nu-sends{ display: flex; gap: .2em; justify-content: space-between;
+.nu-sends{ display: flex; gap: var(--s1); justify-content: space-between;
   flex-wrap: wrap; max-inline-size: 30em; }
 
 /* ---- pan detents ---- */
-.nu-panrow{ display: flex; gap: .25em; }
+.nu-panrow{ display: flex; gap: var(--s1); }
 .nu-panbtn{ flex: 1 1 0; min-block-size: 44px;
   font: var(--btn-fw) .8rem var(--mono, monospace);
   background: var(--panel); border: var(--bw) solid var(--ink); border-radius: 3px;
@@ -2125,16 +2164,16 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 /* ---- the fader row ---- */
 /* …and the same cap on the fader block, for the same reason: the level, the
    refused meter well and the mute/solo pair are ONE object on a console. */
-.nu-fadwrap{ display: flex; gap: .6em; align-items: flex-end;
+.nu-fadwrap{ display: flex; gap: var(--s3); align-items: flex-end;
   justify-content: space-between; flex-wrap: wrap; max-inline-size: 30em; }
-.nu-duo{ display: grid; gap: .35em; align-content: end; }
+.nu-duo{ display: grid; gap: var(--s2); align-content: end; }
 .nu-tgl{ min-block-size: 44px; min-inline-size: 72px; font-weight: var(--btn-fw);
   background: var(--panel); border: var(--bw) solid var(--ink); border-radius: 4px;
   cursor: pointer; }
 .nu-tgl[aria-pressed="true"]{ background: var(--hand); color: #fff; }
 .nu-drive{ display: block; }
 .nu-goes{ margin: 0; border-block-start: var(--bw) solid var(--ink);
-  padding-block-start: .35em; font: 600 .7rem var(--mono, monospace);
+  padding-block-start: var(--s2); font: 600 .7rem var(--mono, monospace);
   color: var(--dim); }
 .nu-goes b{ color: var(--ink); }
 
@@ -2166,7 +2205,7 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    line, the whole series on the next. It WRAPS and never scrolls, which is
    `.nu-row`'s own law inherited (`flex-wrap: wrap`). */
 .nu-busgroup{ flex: 0 0 100%; display: flex; flex-wrap: wrap;
-  align-items: center; gap: .4em; margin-block-start: .15em; }
+  align-items: center; gap: var(--s2); margin-block-start: var(--s1); }
 /* the connector between two bus tabs — a row item, not part of a label, so
    the `<mark>` on the open tab cannot swallow it and so it is still a glyph
    between two words with the stylesheet off. */
@@ -2184,19 +2223,19 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    2026-08-28 and is 100% now — Paul: *"Make elements like tables and grids
    100% wide."* The pairing is the point and it is preserved: whatever the
    strip is, the plate under it is. */
-.nu-rack{ inline-size: 100%; display: grid; margin-block: .8em; }
+.nu-rack{ inline-size: 100%; display: grid; margin-block: var(--s4); }
 .nu-plate{ background: var(--panel); border: var(--bw) solid var(--ink);
   border-radius: var(--r1); box-shadow: var(--shadow);
-  padding: .7em; display: grid; gap: .6em; }
+  padding: var(--s4); display: grid; gap: var(--s3); }
 .nu-plate.is-off{ opacity: .7; }
-.nu-bushead{ display: flex; flex-wrap: wrap; gap: .4em .7em; align-items: center; }
+.nu-bushead{ display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); align-items: center; }
 .nu-busname{ font: 800 .85rem/1 var(--sans, sans-serif); letter-spacing: .08em;
   text-transform: uppercase; color: #fff; background: var(--ink);
-  padding: .45em .7em; border-radius: 6px; }
+  padding: var(--s3) var(--s4); border-radius: 6px; }
 .nu-busin{ color: var(--dim); font: 600 .72rem var(--mono, monospace); }
-.nu-busrow{ display: flex; flex-wrap: wrap; gap: .8em; align-items: end; }
+.nu-busrow{ display: flex; flex-wrap: wrap; gap: var(--s4); align-items: end; }
 .nu-busmodel{ align-self: center; }
-.nu-flow{ display: grid; justify-items: center; gap: .2em; padding-block: .6em; }
+.nu-flow{ display: grid; justify-items: center; gap: var(--s1); padding-block: var(--s3); }
 .nu-tri{ inline-size: 0; block-size: 0; border-left: 18px solid transparent;
   border-right: 18px solid transparent; border-top: 22px solid var(--ink); }
 .nu-flowlab{ font: 700 .68rem var(--mono, monospace); letter-spacing: .08em;
@@ -2221,7 +2260,7 @@ table.nu-trims{ color: var(--ink); }
   text-align: center; }
 .nu-trims tbody th{ font: 700 .62rem/1.3 var(--mono, monospace);
   letter-spacing: .06em; text-transform: uppercase; text-align: left;
-  padding-inline: .3em; }
+  padding-inline: var(--s2); }
 .nu-trims tbody th small{ display: block; color: var(--dim); font-weight: 600; }
 .nu-trims td{ padding: 0; }
 .nu-trimbtn{ inline-size: 100%; min-block-size: 44px; min-inline-size: 56px;
@@ -2265,9 +2304,9 @@ table.nu-trims{ color: var(--ink); }
    exactly the shape the old `its own gear` cell did, and 108px is still the
    narrowest a labelled menu reads at (measured against "wow & flutter"). */
 .nu-gear{ display: grid; align-content: start;
-  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 0 .5em; }
-.nu-plate .nu-sel{ margin-block: .25em .45em; }
-.nu-plate .nu-sel > label{ gap: .2em; min-block-size: 0; }
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 0 var(--s3); }
+.nu-plate .nu-sel{ margin-block: var(--s1) var(--s3); }
+.nu-plate .nu-sel > label{ gap: var(--s1); min-block-size: 0; }
 .nu-plate .nu-sel > label > .nu-w{ font-size: .78rem; font-weight: 600; }
 .nu-plate select{ inline-size: 100%; max-inline-size: 100%; }
 /* THE ROW-GROUP HEADING IS GONE, AND ITS RULE IS DELETED RATHER THAN LEFT DEAD.
@@ -2327,7 +2366,7 @@ table.nu-trims{ color: var(--ink); }
    a real `<ul>` and not a definition list of `<span>`s for the reason
    everything here is a real element: it has to read with the stylesheet off. */
 .nu-rack ~ ul.nu-hint{ line-height: 1.35; }
-.nu-rack ~ ul.nu-hint > li{ margin-block: .35em; }
+.nu-rack ~ ul.nu-hint > li{ margin-block: var(--s2); }
 
 /* THE RECORD-LEVEL BAND — DELETED 2026-08-27 with the last thing in it, and
    the rule is written down rather than left standing over nothing. It read
@@ -2410,12 +2449,12 @@ table.nu-trims{ color: var(--ink); }
    `--rule-strong` and not `--rule`: this is the only division inside an axis,
    and it has to read as a stronger break than the <hr>-weight lines around the
    sheets and panes it separates. */
-.nu-motif{ margin-block: 1.6em .2em; padding-block-start: .55em;
+.nu-motif{ margin-block: var(--s5) var(--s1); padding-block-start: var(--s3);
   border-block-start: var(--bw-hard) solid var(--rule-strong); font-weight: 600; }
 /* the first block in the axis has the <h3> and the section strip over it
    already; a rule there would be a division between a heading and the thing it
    heads, which is not a division at all */
-.nu-motif.nu-first{ margin-block-start: .4em; padding-block-start: 0;
+.nu-motif.nu-first{ margin-block-start: var(--s2); padding-block-start: 0;
   border-block-start: 0; }
 
 /* THE DESIGNING BUTTONS WEAR A SYMBOL, AND THE DRAWING THEY WORE IS GONE.
@@ -2443,24 +2482,13 @@ table.nu-trims{ color: var(--ink); }
    order. That is what makes the symbol an addition rather than a replacement,
    and it is the one thing about this block the reversal did not touch.
 
-   THE 44px TAP FLOOR IS NOW A WIDTH RULE AND IT WAS NOT ONE BEFORE. An <svg>
-   brought its own 40px of width; a glyph brings 10-30px, so `←` in a 2px-padded
-   button is a 20px target — under half the floor. `min-inline-size: var(--tap)`
-   restores it, and the arithmetic still fits: seven buttons at 44px with six
-   .3em gaps is 361px inside the 366px a 390px phone leaves (the gap is argued
-   in the next paragraph). The tempo row is eight and wraps to two lines at that
-   width, exactly as it did when it was eight pictures.
-
-   ...WHICH GIVES `.nu-tf-row` ITS ORDINARY PADDING BACK AND KEEPS ONE NAMED
-   EXCEPTION, WITH A NEW MEASUREMENT UNDER IT. The 2px padding was argued from
-   the width of a 40px picture and that argument is gone with the picture — the
-   44px minimum above does the same job for a glyph, so the padding is the
-   page's own .6em again. THE GAP IS STILL TIGHTER THAN `.nu-row`'S, at .3em
-   rather than .4em, and the number is measured on the rhythm row: seven
-   buttons come to 332px of ink inside a 366px column, which leaves 34px for
-   six gaps, and six .4em gaps are 38.4. At .3em they are 28.8 and the row is
-   one line. Four pixels, and the alternative is a 44px row becoming an 88px
-   one under every motif editor on the page.
+   THE 44px TAP FLOOR WAS A WIDTH RULE while the rows lived (an <svg> brought
+   its own 40px of width; a glyph brings 10-30px, so `←` in a 2px-padded
+   button is a 20px target — under half the floor, and `min-inline-size:
+   var(--tap)` restored it). That rule, its row-fitting arithmetic and the
+   rows themselves are gone — the tombstone below `.nu-tf` carries the whole
+   account — and in the gutter the floor is `icon()`'s, stated once for every
+   mark.
 
    AND THE SYMBOL MAY NOT EAT THE TAP: `pointer-events: none`, the same as the
    <svg> carried, for the same half-hour the globe round lost to a decorative
@@ -2477,16 +2505,26 @@ table.nu-trims{ color: var(--ink); }
      different arrows, and the page's own face is not guaranteed to have any of
      them. A system-ui stack keeps all three rows in one hand. */
   font-family: system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif; }
-.nu-tf-row{ gap: .3em; }
-.nu-tf-row button{ min-inline-size: var(--tap);
-  /* 2px AND NOT THE FACE'S 3px (2026-08-27): the Enamel button border is 3px,
-     which is +2px per button, and the arithmetic above is exact — seven
-     buttons at 332px of ink in a 366px column had 34px for six gaps. Fourteen
-     more pixels of border wraps the row to two lines, an 88px strip under
-     every motif editor. So the transform row pays Enamel's chunk with one
-     fewer pixel per edge and stays one line; the shadow and the press are the
-     face's own. */
-  border-width: 2px; }
+/* ===== `.nu-tf-row` IS A DEAD SELECTOR AND ITS RULES ARE GONE (2026-08-29).
+   What stood here: `.nu-tf-row{ gap: .3em }` and `.nu-tf-row button{
+   min-inline-size: var(--tap); border-width: 2px }`, plus two paragraphs of
+   measured arithmetic — "seven buttons at 332px of ink in a 366px column had
+   34px for six gaps … six .4em gaps are 38.4. At .3em they are 28.8 and the
+   row is one line" and the border argument "the Enamel button border is 3px
+   … fourteen more pixels of border wraps the row to two lines, an 88px strip
+   under every motif editor". Every number in that was measured and right,
+   ABOUT ROWS THAT NO LONGER EXIST: the two `<p class="nu-row nu-tf-row">`
+   bands moved into `#nu-tray` as the `motifops` and `tempo` levels on
+   2026-08-28 (ui/eight.js tombstones them at `motifTabRow` and `tempoRow`),
+   where a column of 44px marks has no such sum to make. This round's spacing
+   audit found the rules by asking the rendered page — zero elements matched
+   `.nu-tf-row` at 390 and 1280 — which is the same way it found the export
+   cards' styles pointing at `#scoredeck`. A selector with no subject is not
+   harmless: the next hand reads it as a promise about the page and re-argues
+   its arithmetic, which is exactly what happened for half an hour today.
+   `.nu-tf`, `.nu-tf-was` and `.nu-tf-is` below are ALIVE — the glyph faces
+   ride inside the gutter's own marks (ui/eight.js `face()`) — so the face
+   rules stay and only the row's geometry dies with the row. */
 /* WHERE THE TUNE WAS, AND WHERE THIS BUTTON PUTS IT — the one idea worth
    keeping out of the drawing. A face may be a PAIR (`∧∨`, `■□ → □■`, `♪↑`),
    and the first half is the quiet ink and the second the full one, so the pair
@@ -2568,7 +2606,7 @@ table.nu-trims{ color: var(--ink); }
    the same argument `reserveCaption` makes one surface down). What this file
    guarantees is only that the reserve has somewhere to land: the host is a
    block, and the <svg> inside it never exceeds the column. */
-.nu-score{ margin-block: .2em 1em; padding-block-end: .6em;
+.nu-score{ margin-block: var(--s1) var(--s5); padding-block-end: var(--s3);
   border-block-end: var(--bw-hard) solid var(--rule-strong); }
 /* AND THE BOX IS SEALED OFF FROM THE PAGE'S OWN LAYOUT. `contain: layout paint`
    is the browser's word for "nothing inside this element can change anything
@@ -2697,10 +2735,10 @@ table.nu-trims{ color: var(--ink); }
    wanted to look like it had not. The ordinal lives on the PANEL now and the
    score deck is the eighth of nine, so it has its own hue and needs no
    borrowed one: see the wash block above.) */
-#scoredeck .nu-decktabs{ align-items: center; margin-block: .4em .6em; }
-#scoredeck .nu-decklegend{ display: inline-flex; flex-wrap: wrap; gap: .8em;
+#scoredeck .nu-decktabs{ align-items: center; margin-block: var(--s2) var(--s3); }
+#scoredeck .nu-decklegend{ display: inline-flex; flex-wrap: wrap; gap: var(--s4);
   margin-inline-start: auto; font-size: .8rem; opacity: .85; }
-#scoredeck .nu-legv{ display: inline-flex; align-items: center; gap: .3em; }
+#scoredeck .nu-legv{ display: inline-flex; align-items: center; gap: var(--s2); }
 #scoredeck .nu-legv > i{ inline-size: 11px; block-size: 11px; border-radius: 3px;
   border: var(--bw) solid var(--ink); display: inline-block; }
 /* THE MOTIF NAMES, UNDER EACH PART (2026-08-27, Paul: "The names of the
@@ -2741,12 +2779,12 @@ table.nu-trims{ color: var(--ink); }
    [data-live], so it does not take the clock's red the way the caption under
    it does: it is the same sentence for the whole record, and it takes its one
    line of height at creation like everything else on this surface. */
-#scoredeck .nu-keyline{ margin-block: .2em .1em; font-weight: 700;
+#scoredeck .nu-keyline{ margin-block: var(--s1) .1em; font-weight: 700;
   color: var(--ink); }
 /* THE PIANO ROLL: time runs DOWN through a fixed window; the canvas repaints
    on the clock inside [data-live="roll"], so the box is sealed exactly the way
    the score's is — fixed height, contain, no scroll container, no control. */
-#scoredeck .nu-roll{ margin-block: .2em 1em; padding-block-end: .6em;
+#scoredeck .nu-roll{ margin-block: var(--s1) var(--s5); padding-block-end: var(--s3);
   border-block-end: var(--bw-hard) solid var(--rule-strong); }
 #scoredeck .nu-rollwin{ position: relative; block-size: min(420px, 60vh);
   background: var(--panel); border: var(--bw) solid var(--rule-strong);
@@ -2754,23 +2792,43 @@ table.nu-trims{ color: var(--ink); }
 #scoredeck .nu-rollwin > canvas{ display: block; inline-size: 100%;
   block-size: 100%; }
 /* THE EXPORT ROW: four cards, each button wearing its true state — a live
-   button, or `disabled` beside its .nu-why (the no-dead-controls law). */
-#scoredeck .nu-exports{ display: grid; gap: .8em;
+   button, or `disabled` beside its .nu-why (the no-dead-controls law).
+   ===== `#exportdeck`, NOT `#scoredeck` (2026-08-29) ======================
+   Every selector in this block read `#scoredeck` until today, and the cards
+   have not rendered there since 2026-08-27, when Paul named Export its own
+   tab and ui/eight.js started building them into `#exportdeck`. The styles
+   never followed the move, so the shipped Export tab was six naked <b>s run
+   into their titles — the rendered page read "URLthe link", "MP3MP3" — while
+   every rule that would have drawn the cards sat here matching nothing.
+   Classic seam: correct in source, dead on the artifact (memory: "test the
+   artifact"). Measured before this edit at 390px: zero elements matched
+   `#scoredeck .nu-exp`.
+   ===== AND THE CAPS LOST THEIR THREE PAINTS, the same day ================
+   What stood here: `.nu-cap-hand{ background: var(--hand) }`,
+   `.nu-cap-meter{ … --meter }`, `.nu-cap-flag{ … --flag }` — URL and ALS
+   wore the hand, WAV the meter, MID and MP3 the flag. The palette's own law
+   (":root — the four paints: semantic, never decorative, never mixed") says
+   the hand is a value you set, the meter is measured signal, the flag is
+   about-to-matter; a file format is none of those, so five caps in three
+   state-paints were teaching the reader a false vocabulary at the exact
+   moment the page wants those colours to mean something. A cap is a NAME
+   PLATE, and the page already has a paint for a name plate: full ink, white
+   text — the same plate the board's `.nu-busname` wears. One rule, no
+   classes to keep in step. */
+#exportdeck .nu-exports{ display: grid; gap: var(--s4);
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  margin-block: .8em; }
-#scoredeck .nu-exp{ border: var(--bw) solid var(--rule-strong); border-radius: 6px;
-  background: var(--panel); padding: .6em .7em; display: flex;
-  flex-direction: column; gap: .35em; }
-#scoredeck .nu-exp-head{ display: flex; align-items: center; gap: .55em;
+  margin-block: var(--s4); }
+#exportdeck .nu-exp{ border: var(--bw) solid var(--rule-strong); border-radius: 6px;
+  background: var(--panel); padding: var(--s3) var(--s4); display: flex;
+  flex-direction: column; gap: var(--s2); }
+#exportdeck .nu-exp-head{ display: flex; align-items: center; gap: var(--s3);
   font-weight: 700; }
-#scoredeck .nu-glyph{ display: inline-flex; align-items: center;
+#exportdeck .nu-glyph{ display: inline-flex; align-items: center;
   justify-content: center; inline-size: 44px; block-size: 32px;
   border: var(--bw) solid var(--ink); border-radius: 5px;
-  font: 800 11px/1 monospace; flex: none; }
-#scoredeck .nu-cap-hand{ background: var(--hand); color: #FFFFFF; }
-#scoredeck .nu-cap-meter{ background: var(--meter); color: #FFFFFF; }
-#scoredeck .nu-cap-flag{ background: var(--flag); color: var(--ink); }
-#scoredeck .nu-exp > button{ margin-block-start: auto; }
+  font: 800 11px/1 monospace; flex: none;
+  background: var(--ink); color: #FFFFFF; }
+#exportdeck .nu-exp > button{ margin-block-start: auto; }
 
 /* THE PLAYHEAD LINE IS GONE (Paul, 2026-08-26: "Get rid of the playhead"), and
    with it `.nu-score .nu-head` — a 2px `color-mix` rule with a
@@ -2979,7 +3037,7 @@ table.nu-trims{ color: var(--ink); }
    under your finger and stops there, with the globe it feeds still on screen
    above it. `overscroll-behavior: contain` is what stops the flick that ends
    at the bottom of the list from carrying on down the page. */
-#atlasIndex{ margin-block-start: .75rem; max-block-size: min(60vh, 560px);
+#atlasIndex{ margin-block-start: var(--s4); max-block-size: min(60vh, 560px);
   overflow-y: auto; overscroll-behavior: contain;
   border: var(--bw) solid var(--ink); border-radius: var(--r1);
   background: var(--panel); }
@@ -3078,7 +3136,7 @@ table.nu-trims{ color: var(--ink); }
    still cut are the two longest names in the catalogue and nothing else. */
 .nu-ixli{ margin: 0; display: grid; align-items: center;
   grid-template-columns: 4ch minmax(0, 1.6fr) minmax(0, 1fr);
-  gap: 0 .5em; padding-inline: .75em;
+  gap: 0 var(--s3); padding-inline: var(--s4);
   border-block-end: var(--bw) solid var(--rule); }
 .nu-ixli:last-child{ border-block-end: 0; }
 .nu-ixli:has(> .nu-ixrow:active){ background: var(--flag); }
@@ -3089,7 +3147,7 @@ table.nu-trims{ color: var(--ink); }
   align-items: center; inline-size: 100%; text-align: start;
   border: 0; border-radius: 0;
   box-shadow: none; background: transparent;
-  padding-inline: 0; padding-block: .35em; }
+  padding-inline: 0; padding-block: var(--s2); }
 .nu-ixrow:active{ transform: none; }
 /* AND ON A WIDE SCREEN THE GENRE COLUMN STOPS STRETCHING. Measured at 1280:
    two proportional tracks put "Kingston" 590 px to the right of "reggae" with
@@ -3124,7 +3182,7 @@ table.nu-trims{ color: var(--ink); }
    the one line and the zero sideways scroll are all unchanged; what shrinks is
    whitespace, which is the right thing to spend first. */
 @media (max-width: 359px){
-  .nu-ixli{ gap: 0 .35em; padding-inline: .5em; }
+  .nu-ixli{ gap: 0 var(--s2); padding-inline: var(--s3); }
 }
 /* THE YEAR AND THE PLACE ARE PLACED, NOT FLOWED. The genre is not the button's
    child any more, so the button's subgrid has a HOLE at column 2 — and auto
@@ -3182,7 +3240,7 @@ table.nu-trims{ color: var(--ink); }
   font-weight: 600; white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; min-inline-size: 0; max-inline-size: 100%;
   display: block; block-size: var(--tap); line-height: var(--tap);
-  padding-inline-end: .5em; }
+  padding-inline-end: var(--s3); }
 /* A REFUSED CELL — the two MISSES and the six roles. IT USED TO BE AN EM DASH
    and it is THE ROW'S OWN KEY now (2026-08-29): the dash sat in a fourth
    column next to a genre word, and with the fourth column gone a dash would
@@ -3230,7 +3288,7 @@ table.nu-trims{ color: var(--ink); }
       page (one letter), so `td > select`'s 9em cap is not what sizes them. */
 .nu-knobs td:last-child{ max-inline-size: 22ch; }
 .nu-knobs td:last-child .nu-why{ display: inline; }
-.nu-vow{ display: inline-flex; flex-wrap: wrap; gap: .2em; margin-inline-start: .3em; }
+.nu-vow{ display: inline-flex; flex-wrap: wrap; gap: var(--s1); margin-inline-start: var(--s2); }
 .nu-vow select{ min-inline-size: 4.5em; }
 /* A DISABLED SLIDER IS GREYED THE SAME WAY A DISABLED OPTION IS — `.is-off`'s
    own opacity, reached through the attribute the browser already sets, so
@@ -3293,7 +3351,7 @@ table.nu-trims{ color: var(--ink); }
    all. 34em is the width past which a diagram stops being a control and starts
    being a poster; on a phone `100%` is what binds. */
 #app .nu-pad{ display: block; inline-size: 100%; max-inline-size: 34em;
-  block-size: auto; margin-block: .5em;
+  block-size: auto; margin-block: var(--s3);
   /* AND A DRAG ON THE THROAT DOES NOT SELECT THE WORDS ON IT. Paul,
      2026-08-26: *"I can't grab everything because it keeps selecting text."*
      Measured on the rendered page at 1280, one mouse drag apiece: a drag
@@ -3856,7 +3914,7 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
      back at any viewport — see the note above. `#boardtabs` is the one of the
      four still drawn as a row, so it is the one selector left.) */
   #boardtabs button[aria-pressed="true"] .nu-vh{
-    position: static; width: auto; height: auto; margin: 0 0 0 .25em;
+    position: static; width: auto; height: auto; margin: 0 0 0 var(--s1);
     overflow: visible; clip-path: none; }
 }
 
@@ -3885,7 +3943,7 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
      beside it would be clamped to a negative left. ui/glyph.js `place` does
      the clamping; this is the same arithmetic said to the box. */
   max-inline-size: min(30ch, calc(100vw - var(--tray-w) - 12px));
-  padding: .45em .6em;
+  padding: var(--s3) var(--s3);
   background: var(--panel); color: var(--ink);
   border: var(--bw) solid var(--ink); border-radius: var(--r1, 6px);
   box-shadow: var(--shadow);

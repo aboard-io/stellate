@@ -101,6 +101,15 @@
      over open water. The wall is the bake, not the music, and it is why
      Australia and the Pacific is the world round's one empty region.
 
+     AND SIX MORE ON 2026-08-29, with the genealogy round ("how can we
+     add lots more related genres quickly across time"): Clarksdale,
+     Cologne, Córdoba, Matanzas, Munich, Nara and Northampton — the
+     geography thirty-two new anchors need, and per the rule above, landed the same
+     hour their labels did. Córdoba's REGIONS row is the Middle East, and
+     the comment at that table has the Garland argument. Nara is the
+     catalog's first Japanese dot outside Tokyo and its oldest East Asian
+     one by twelve centuries.
+
      Decimal degrees, 2dp, city centre. REGIONS (Provence, Essex, Kent) take the
      region's rough centre. NEIGHBOURHOODS (Harlem, Greenwich Village, Muswell
      Hill) take the neighbourhood's, not the city's — Muswell Hill is not
@@ -125,7 +134,9 @@
     "Chapel Hill": [35.91, -79.06], "Charlotte": [35.23, -80.84],
     "Chennai": [13.08, 80.27],
     "Chicago": [41.88, -87.63], "Cincinnati": [39.10, -84.51],
-    "Cleveland": [41.50, -81.69], "Crawley": [51.11, -0.19],
+    "Clarksdale": [34.20, -90.57], "Cleveland": [41.50, -81.69],
+    "Cologne": [50.94, 6.96], "Córdoba": [37.89, -4.78],
+    "Crawley": [51.11, -0.19],
     "Cusco": [-13.53, -71.97], "Delhi": [28.61, 77.21],
     "Detroit": [42.33, -83.05],
     "Douala": [4.05, 9.77], "Dublin": [53.35, -6.26],
@@ -144,14 +155,14 @@
     "Lisbon": [38.72, -9.14], "Liverpool": [53.41, -2.98],
     "London": [51.51, -0.13], "Los Angeles": [34.05, -118.24],
     "Luanda": [-8.84, 13.23], "Manchester": [53.48, -2.24],
-    "Manila": [14.60, 120.98], "Mazatlán": [23.25, -106.41],
+    "Manila": [14.60, 120.98], "Matanzas": [23.04, -81.58], "Mazatlán": [23.25, -106.41],
     "Memphis": [35.15, -90.05], "Mexico City": [19.43, -99.13],
     "Miami": [25.76, -80.19], "Milan": [45.46, 9.19],
     "Monterrey": [25.67, -100.32],
-    "Mumbai": [19.08, 72.88], "Muswell Hill": [51.59, -0.14],
-    "Nairobi": [-1.29, 36.82], "Nashville": [36.16, -86.78],
+    "Mumbai": [19.08, 72.88], "Munich": [48.14, 11.58], "Muswell Hill": [51.59, -0.14],
+    "Nairobi": [-1.29, 36.82], "Nara": [34.69, 135.80], "Nashville": [36.16, -86.78],
     "New Orleans": [29.95, -90.07], "New York": [40.71, -74.01],
-    "Nuremberg": [49.45, 11.08],
+    "Northampton": [52.24, -0.90], "Nuremberg": [49.45, 11.08],
     "Oklahoma City": [35.47, -97.52], "Oran": [35.70, -0.63],
     "Orlando": [28.54, -81.38], "Paris": [48.86, 2.35],
     "Philadelphia": [39.95, -75.17], "Phnom Penh": [11.56, 104.92],
@@ -218,7 +229,7 @@
   };
 
   /* ======================================================================
-     2 · WHEN — 116 rows, BAKED from the genres.js labels
+     2 · WHEN — 239 rows, BAKED from the genres.js labels
      ======================================================================
      GENERATED. Do not hand-edit: `node nukernel/atlas.gate.js --bake` rewrites
      everything between the two markers, and G2 fails if it drifts. The regex is
@@ -433,6 +444,38 @@
     sizhu:          { place: "Shanghai", year: 1920 },
     dhrupad:        { place: "Delhi", year: 1955 },
     carnatic:       { place: "Chennai", year: 1935 },
+    gagaku:         { place: "Nara", year: 752 },
+    ziryab:         { place: "Córdoba", year: 822 },
+    dufay:          { place: "Florence", year: 1436 },
+    ballad:         { place: "London", year: 1666 },
+    operaseria:     { place: "London", year: 1724 },
+    modinha:        { place: "Lisbon", year: 1775 },
+    lundu:          { place: "Lisbon", year: 1798 },
+    lied:           { place: "Vienna", year: 1814 },
+    habanera:       { place: "Havana", year: 1860 },
+    spirituals:     { place: "Nashville", year: 1871 },
+    danzon:         { place: "Matanzas", year: 1879 },
+    maxixe:         { place: "Rio de Janeiro", year: 1895 },
+    cemilbey:       { place: "Istanbul", year: 1910 },
+    neworleans:     { place: "New Orleans", year: 1923 },
+    boogiewoogie:   { place: "Chicago", year: 1928 },
+    deltablues:     { place: "Clarksdale", year: 1929 },
+    hendrix:        { place: "London", year: 1967 },
+    glam:           { place: "London", year: 1971 },
+    krautrock:      { place: "Cologne", year: 1971 },
+    berlinschool:   { place: "Berlin", year: 1972 },
+    phillysoul:     { place: "Philadelphia", year: 1972 },
+    quietstorm:     { place: "Los Angeles", year: 1975 },
+    moroder:        { place: "Munich", year: 1977 },
+    gothicrock:     { place: "Northampton", year: 1979 },
+    italodisco:     { place: "Milan", year: 1982 },
+    miamibass:      { place: "Miami", year: 1986 },
+    newjackswing:   { place: "New York", year: 1987 },
+    hardcorerave:   { place: "Essex", year: 1991 },
+    gfunk:          { place: "Los Angeles", year: 1992 },
+    crunk:          { place: "Memphis", year: 1997 },
+    grime:          { place: "London", year: 2003 },
+    dubstep:        { place: "London", year: 2005 },
   };
   /* WHEN:END */
 
@@ -480,16 +523,17 @@
      map is the alarm, not the specification" only works if somebody sees the
      alarm. */
   const REGIONS = {
-    "Europe": ["Antwerp", "Barcelona", "Basildon", "Berlin", "Bristol", "Crawley",
+    "Europe": ["Antwerp", "Barcelona", "Basildon", "Berlin", "Bristol",
+               "Cologne", "Crawley",
                "Dublin", "Düsseldorf", "Essex", "Florence", "Glasgow", "Guča",
-               "Milan", "Nuremberg",
+               "Milan", "Munich", "Northampton", "Nuremberg",
                "Kent", "Leipzig", "Lisbon", "Liverpool", "London", "Manchester",
                "Muswell Hill", "Paris", "Piraeus", "Provence", "Reims",
                "Reykjavík", "Rome", "Sofia", "Stourbridge", "Swindon", "Venice",
                "Vienna"],
     "North America": ["Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
                       "Chicago", "Cincinnati", "Cleveland", "Detroit",
-                      "Greenwich Village", "Harlem", "Kansas City", "Lafayette",
+                      "Greenwich Village", "Harlem", "Clarksdale", "Kansas City", "Lafayette",
                       "Las Vegas", "Los Angeles", "Memphis", "Miami", "Nashville",
                       "New Orleans", "New York", "Oklahoma City", "Orlando",
                       "Philadelphia", "Portland", "San Diego", "San Francisco",
@@ -501,7 +545,8 @@
     // Nashville record.
     "Latin America and the Caribbean":
       ["Barranquilla", "Buenos Aires", "Cusco", "Guadalajara", "Havana",
-       "Kingston", "Mazatlán", "Mexico City", "Monterrey", "Port of Spain",
+       "Kingston", "Matanzas", "Mazatlán", "Mexico City", "Monterrey",
+       "Port of Spain",
        "Recife", "Rio de Janeiro", "San Juan", "Santo Domingo", "São Paulo",
        "Valledupar"],
     // CAIRO AND ORAN ARE IN THE MIDDLE EAST ROW AND NOT IN THIS ONE, which
@@ -513,8 +558,8 @@
     "Africa": ["Abidjan", "Accra", "Addis Ababa", "Aksum", "Bamako",
                "Douala", "Freetown", "Johannesburg", "Kinshasa", "Lagos",
                "Luanda", "Nairobi"],
-    "East Asia": ["Beijing", "Hong Kong", "Seoul", "Shanghai", "Taipei",
-                  "Tokyo"],
+    "East Asia": ["Beijing", "Hong Kong", "Nara", "Seoul", "Shanghai",
+                  "Taipei", "Tokyo"],
     "Southeast Asia": ["Bangkok", "Ho Chi Minh City", "Jakarta", "Manila",
                        "Phnom Penh"],
     "South Asia": ["Chandigarh", "Chennai", "Delhi", "Faisalabad",
@@ -526,7 +571,14 @@
     // TETOUAN JOINS ORAN IN THIS ROW, for the reason the Africa comment above
     // already gives: Garland's volume 6 covers the Maghreb, and the Andalusian
     // nuba answers to Fez, Algiers and Cairo rather than to Bamako.
-    "Middle East": ["Cairo", "Istanbul", "Oran", "Tehran", "Tetouan"],
+    // AND CÓRDOBA JOINS TETOUAN (2026-08-29), which looks odd beside
+    // Barcelona-in-Europe until you ask the Garland question the Tetouan
+    // comment already answered: the dot is `ziryab`, Córdoba 822, the
+    // Umayyad court school whose repertory IS the nuba's — volume 6
+    // material, answering to Baghdad and Fez, not to a Spain that would
+    // not exist for six centuries. The geography follows the record, the
+    // way Kinshasa's spelling followed the map.
+    "Middle East": ["Cairo", "Córdoba", "Istanbul", "Oran", "Tehran", "Tetouan"],
     "Central Asia": ["Kabul"],
   };
   /* AND THE EMPTY CELL, DECLARED. One region of the nine has no dot at all,

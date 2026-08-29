@@ -2530,6 +2530,15 @@
       // relative genre identity is untouched) and shared by press + live +
       // wavOut via this one fxParams choke point.
       shelf: MASTER_AIR_SHELF_DB,
+      // MASTER MUD DIP (2026-08-29) — the air shelf's twin one octave-band
+      // down: a -2.5 dB peaking cut at 316 Hz on the final mix, because the
+      // 200-500 Hz band measured +3.8..+7.4 dB over a pink-band reference at
+      // the ear on six of eight probe records while everything above 2 kHz
+      // read UNDER it (the "hot mic" is low-mid stack-up, not top). fx_bus
+      // owns the corner and the bandwidth and carries the numbers; this owns
+      // the depth, the same division as shelf/AIR_FC. A state may deepen or
+      // zero it (`mud: 0` is a real select2 bypass in the DSP).
+      mud: clamp(state.mud != null ? state.mud : MASTER_MUD_DB, -6, 0),
       mcut: 21000, scmix: 0,
       // ── THE TAPE AND THE GLOBAL ROOM. fx_bus has carried `wob` (wow+flutter
       // on a fractional delay), `tsat` (the level-preserving head saturation)
@@ -2594,6 +2603,7 @@
   // which owns the corner and carries the measurement; this owns the depth, and
   // the two are read together.
   const MASTER_AIR_SHELF_DB = -7;   // dB above the fx_bus AIR_FC (4.5 kHz) — the headphone ask
+  const MASTER_MUD_DB = -2.5;       // dB at the fx_bus MUD_FC (316 Hz) — the low-mid stack-up, measured 2026-08-29
 
   // ---- MULTIBAND MASTER COMP (fx wings stage 4) — an OPT-IN external node ----
   // Returns {module:"master_mb", mbdrive} or null. NOT baked into fx_bus: the

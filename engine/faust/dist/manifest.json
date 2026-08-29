@@ -3875,6 +3875,7 @@
    "/fx_bus/mrev",
    "/fx_bus/mswidth",
    "/fx_bus/mtilt",
+   "/fx_bus/mud",
    "/fx_bus/ppfb",
    "/fx_bus/pptime",
    "/fx_bus/pptone",

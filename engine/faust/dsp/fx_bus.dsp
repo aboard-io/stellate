@@ -70,6 +70,23 @@ highcut = hslider("highcut", 20500, 1000, 20500, 1);
 // is why the numbers are these and not those. Still a SHELF — the air dims, it does not stop.
 shelf   = hslider("shelf", -7, -12, 0, 0.1);
 AIR_FC  = 4500;   // shelf corner: midpoint of the cut — -3.5 dB at 4.5 kHz, -7 dB above ~9 kHz
+// MASTER MUD DIP (2026-08-29) — the air shelf's twin, one octave-band down.
+// MEASURED AT THE EAR (_livetap with the stereo/tilt tap, 8 records, 40 s
+// each, seed 1): the 200-500 Hz band sits +3.8 to +7.4 dB over a pink-band
+// reference on six of the eight (iranpop -1.3 dB rel total = +7.4 over pink,
+// steely +3.8, house +4.3, rock +5.6, jazz +6.2, neoclassical +5.7) while
+// everything above 2 kHz reads UNDER pink — the same "hot mic" Paul named
+// 2026-08-28, only it is low-mid pile-up where the chairs stack, not top.
+// A gentle peak CUT at the band's geometric centre (√(200·500) ≈ 316 Hz),
+// bandwidth 360 Hz (Q ≈ 0.9 — the same shape the collision carve uses at
+// 450). Value from state-engine fxParams (MASTER_MUD_DB, -2.5) on every path,
+// exactly the air shelf's plumbing; default mirrors that constant. dub keeps
+// its sub: 20-200 is below the dip's reach (-0.9 dB at 200, -0.2 at 100).
+// BYPASS PROVABLY ZERO: select2 at mud == 0 hands the untouched sample
+// through — a bypass, not a very small cut.
+mud     = hslider("mud", -2.5, -6, 0, 0.1);
+MUD_FC  = 320;
+MUD_BW  = 360;
 // THE TAPE (Paul 2026-07-25: "just a bit of saturated tape wobble plus reverb
 // in the final mix"). Three always-on master colours — the machine the whole
 // catalogue is played back on. Defaults mirror the state-engine constants so a
@@ -289,6 +306,9 @@ widthfx(l, r) = select2(mswidth != 1, l, ml + sd), select2(mswidth != 1, r, ml -
 // realtime, which is why the cheap spelling is the one that got built.
 tiltfx(x) = select2(mtilt != 0, x, lo*ba.db2linear(0 - mtilt) + (x - lo)*ba.db2linear(mtilt))
   with { lo = fi.lowpass(1, TILT_FC, x); };
+// MUD: one peaking cut per channel (see the mud slider for the measurement).
+// select2, like every bypass in this file — mud 0 is the sample untouched.
+mudfx(x) = select2(mud != 0, x, fi.peak_eq(mud, MUD_FC, MUD_BW, x));
 // THE GLUE STAGE, opened up. It was `co.compressor_stereo(...) : *(makeup)`,
 // which is EXACTLY what the lines below compute when cpar and ctrim sit
 // at their defaults — compressor_stereo is `cgm*x, cgm*y with { cgm =
@@ -327,6 +347,7 @@ master(sc, l, r) = l, r
   : (tapesat, tapesat)                                             // tape saturation, under the clip stage
   : (*(ttrim), *(ttrim))                                           // tape pays for its own level
   : (tiltfx, tiltfx)                                               // the master TILT (the board's `tilt` word)
+  : (mudfx, mudfx)                                                 // master MUD dip (see the mud slider)
   : (fi.high_shelf(shelf, AIR_FC), fi.high_shelf(shelf, AIR_FC))   // master AIR shelf (see hslider above)
   : (clip, clip)
 with {

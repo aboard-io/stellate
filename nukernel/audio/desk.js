@@ -974,10 +974,21 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
                            ...fxChain([...S.fx, ...((o && o.fx) || [])])]) : [];
     if (chips.length) v.inserts = [...(u.inserts || []), ...chips];
     // the parent's placement pass already carved this voice's stereo seat; the
-    // box's pan chip and a part's place RIDE ON it rather than replacing it
+    // box's pan chip and a part's place RIDE ON it rather than replacing it.
+    // ...AND THE SEAT YIELDS ITS SIDE (2026-08-29). u.pan is the DERIVED seat
+    // (to-engine's seating plan) and `pan` is the record's or the hand's word
+    // (precompose deals `hl`/`hr` on a duplicated role's second and third
+    // chairs). A derived seat's left-or-right is arbitrary — SEPARATION is
+    // the fact it owns — so when the two point opposite ways they must not
+    // cancel: measured in the worker (PANTRACE, rock seed 1), a guitar seated
+    // +0.26 carrying the record's `hl` -0.35 landed at -0.09, nearer centre
+    // than either owner wanted, and the record read S/M -22.8 dB at the ear.
+    // The word owns the side; the seat flips to cooperate. A voice with no
+    // word keeps its seat exactly, a voice with no seat keeps its word.
     const pan = (autoPan != null ? autoPan : S.pan) + (p ? p.pan : 0)
       + (o && o.pan ? o.pan : 0);
-    if (pan) v.pan = Math.max(-1, Math.min(1, (u.pan || 0) + pan));
+    const seatBase = (pan && u.pan && pan * u.pan < 0) ? -u.pan : (u.pan || 0);
+    if (pan) v.pan = Math.max(-1, Math.min(1, seatBase + pan));
     // THE TONE DECISION, ON EVERY VOICE — the part EQ, the section EQ, the family
     // tone and the seat shading, merged once above into `eqAll` and then carried.
     // ("The modeled voice needs to go through the EQ as do all the faust
