@@ -294,6 +294,12 @@
     doom:      { cell: "long",   contour: "hold",   reg: "low",    len: "four" },
     jpop:      { cell: "pickup", contour: "arch",   land: "third", sent: "vary", len: "four" },
     dunstaple: { cell: "three",  contour: "rise",   land: "third", sent: "vary" },
+    // THE GOTH-AND-GLOBE HANDOFF (2026-08-30, 297 -> 313), parent-written.
+    // Four rows where the family lies; the other twelve take their families.
+    gypsyjazz: { cell: "gallop", contour: "zig",    land: "third", len: "two" },
+    nordicjazz:{ cell: "long",   contour: "hover",  sent: "long",  len: "four" },
+    witchhouse:{ cell: "long",   contour: "hover",  reg: "low" },
+    japanjazz: { cell: "hang",   contour: "fall",   land: "lead" },
     // the WRITTEN VIRTUOSO anchors: a choro, a rag, a reel and a kolo are
     // composed tunes that run, and `roots`' four-bar strophe is the one thing
     // they are not

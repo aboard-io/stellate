@@ -602,39 +602,58 @@ export function mount(parent, ctx) {
          playing and zoom in the map on that place"; test/atlas.js G23).
        · THE LINK MUST BE A REAL LINK — middle-click, long-press, new tab.
        · ONE LINE.
-     So the <li> is a THREE-column grid (year, genre, place); the <button>
-     spans all three as one plate — `grid-template-columns: subgrid`, so the
-     year and the place sit in the li's own tracks and there is ONE piece of
-     column arithmetic on the page rather than two that have to agree — and the
-     <a> is a SIBLING of the button, placed in column 2 on the same grid row,
-     painted over the plate. It comes after the button in source order, so it
-     wins the hit test on its own word with no z-index and no stacking context;
-     it shrink-wraps (`justify-self: start`), so the rest of the genre column
-     is still plate.
+     So the <li> is a grid; the <button> spans every track as one plate —
+     `grid-template-columns: subgrid`, so the cells sit in the li's own tracks
+     and there is ONE piece of column arithmetic on the page rather than two
+     that have to agree — and the link is a SIBLING of the button, painted
+     over the plate on the same grid row. It comes after the button in source
+     order, so it wins the hit test on its own pixels with no z-index and no
+     stacking context.
 
-     AND THERE IS NO stopPropagation, WHICH IS THE POINT OF THE SHAPE. The
+     THE LINK LEFT THE WORD AND BECAME A MARK IN A FOURTH COLUMN (2026-08-30).
+     Paul: *"In the genre list get rid of the Wikipedia link but leave the
+     text. Put the link in a new icon on the right that isn't underlined."*
+     This is a REVERSAL of the paragraph above as it stood: the <a> was
+     "placed in column 2 … it shrink-wraps (`justify-self: start`), so the
+     rest of the genre column is still plate", and the seam claim read "a tap
+     on the word does not play, a tap on the row does." The word is PLAIN TEXT
+     now and it is INSIDE the button — a span may nest in a <button> where an
+     <a> may not, which is why the word had to be a sibling before and does
+     not have to be one any more — so the genre column is plate all the way
+     across and the row got EASIER to play, which is the point. The <a> is
+     still a real link (middle-click, new tab) and still the button's sibling,
+     overlaid on the NEW FOURTH TRACK, a --tap square on the right edge.
+
+     AND THERE IS STILL NO stopPropagation, WHICH IS STILL THE POINT. The
      anchor is the button's SIBLING, so a click on it never passes through the
      button at all: the delegated handler below asks `closest(".nu-ixrow")` and
      an anchor has no such ancestor. A `stopPropagation` here would work by
      accident and would go on working the day somebody nested the two again —
      which is the bug it would be hiding. G23 asserts both halves: a tap on the
-     word does not play, a tap on the row does.
+     mark does not play, a tap on the word (plate now) does.
 
      nu.css carries the arithmetic and the five-width measurement. */
   let idxBuilt = false, idxHere = null;
   const W = () => (typeof window !== "undefined" ? window.NuWiki : null);
   /* THE GENRE CELL, AND IT IS THE ONE PLACE ON THIS PAGE THAT DECIDES WHAT A
-     ROW SAYS ABOUT ITS ARTICLE. Three answers, one function:
-       a LINK      — the anchors nukernel/wiki.js resolved. The href is
-                     `NuWiki.url(gk)` and the visible word is the article's own
-                     title with its underscores spent; `target=_blank` +
-                     `rel=noopener` because leaving the box mid-record would
-                     stop the music. WHAT KIND of article it is rides in
-                     `data-kind` and, for the 31 rows whose article is not a
-                     genre (an act, an album, something wider), as a REAL span:
-                     "Lo-fi music · the broader" beside "Los Angeles 2020" is a
-                     reader being told which. That is the paragraph the <h1>'s
-                     one link carried, kept whole and applied once per row.
+     ROW SAYS ABOUT ITS ARTICLE. Three answers, one function — it returns
+     `{ plate, over }`: what goes INSIDE the button, and what lies OVER it as
+     the li's last child. (2026-08-30 — Paul: *"In the genre list get rid of
+     the Wikipedia link but leave the text. Put the link in a new icon on the
+     right that isn't underlined."* The single-node return became two slots
+     the day the word and the link stopped being one element.)
+       a WORD + a MARK — the anchors nukernel/wiki.js resolved. The WORD is
+                     the article's own title with its underscores spent, PLAIN
+                     TEXT in the plate: no href, no underline, no hand-blue,
+                     tapping it plays the record like the rest of the row.
+                     WHAT KIND of article it is stays beside it as a REAL
+                     span: "Lo-fi music · the broader" beside "Los Angeles
+                     2020" is a reader being told which. The LINK is the ↗
+                     mark in the fourth column — href `NuWiki.url(gk)`,
+                     `target=_blank` + `rel=noopener` because leaving the box
+                     mid-record would stop the music, `data-kind` riding on it
+                     because the mark is the row's whole statement about its
+                     article now.
        a REFUSAL   — the two MISSES. It used to be an em dash. IT IS THE ROW'S
                      OWN KEY NOW (2026-08-29), because the dash lived in a
                      fourth column beside a genre word and there is no fourth
@@ -646,7 +665,14 @@ export function mount(parent, ctx) {
                      machine face this page uses for machine words, with
                      wiki-extract's own unedited sentence on `data-why`.
                      INVENTING a title for a row with no article is the one
-                     thing this branch may never do.
+                     thing this branch may never do. AND IT GETS NO ↗ MARK
+                     (2026-08-30): a mark with nowhere to go would be a greyed
+                     control, and this page's law is absent, not disabled —
+                     the reason for the absence is already on the cell.
+                     (It stays the button's SIBLING, unlike the linked word:
+                     the delegated explainer answers a tap on `data-why`, and
+                     a tap that both explained a refusal and started a record
+                     would be two answers to one question.)
        A ROLE      — the same, carrying EXCLUDE's sentence instead. The six
                      roles have no history to link to and their key IS their
                      name ("simple", "pad"), so they lose nothing by it.
@@ -662,7 +688,24 @@ export function mount(parent, ctx) {
     const w = W(), row = w && w.WIKI[gk];
     if (w && row) {
       const title = row.title.replace(/_/g, " ");
-      const a = el("a", { className: "nu-ixw", textContent: title });
+      const kind = row.kind !== "genre" ? " · the " + row.kind : "";
+      const s = el("span", { className: "nu-ixw", textContent: title });
+      s.dataset.gk = gk;
+      if (kind) s.append(el("span", { className: "nu-kind", textContent: kind }));
+      /* THE MARK IS ↗ AND NOT A "W" (2026-08-30), argued rather than picked:
+           · a W is Wikipedia's WORDMARK shrunk to one letter — a logo on a
+             page that draws marks, and the one thing the mark would say
+             (the destination) is what the aria-label already speaks;
+           · what a thumb needs to know BEFORE the tap is the departure:
+             this control leaves the box. ↗ is that fact drawn, and it is
+             the same statement glyph.js's Export tab makes with ⇩ ("out of
+             the box and onto your disk") — out of the box and onto the web,
+             one arrow family, one hand (nu.css sets the same symbol face
+             glyph.js's table names, for the reason written there);
+           · it is a CHARACTER, not an emoji and not an SVG — glyph.js's own
+             law: a glyph is text, it inherits the ink, it scales with the
+             type, it survives forced colours, it costs no request. */
+      const a = el("a", { className: "nu-ixgo", textContent: "↗" });
       // PROPERTIES, NOT MARKUP: three titles carry an `&` (Contemporary R&B,
       // Alternative R&B, Speak & Spell) and a %26 in an attribute string would
       // need escaping. Assigning `href` escapes nothing and needs to.
@@ -672,13 +715,11 @@ export function mount(parent, ctx) {
       a.dataset.kind = row.kind;
       a.dataset.gk = gk;
       a.title = row.why;
-      const kind = row.kind !== "genre" ? " · the " + row.kind : "";
-      if (kind) a.append(el("span", { className: "nu-kind", textContent: kind }));
-      // the name a screen reader hears is THE WORD ON THE PAGE and then the
-      // destination — "Lo-fi music · the broader on Wikipedia" — and not the
-      // bare word "Wikipedia" once per row.
+      // an aria-label REPLACES an element's content (the 2026-08-29 lesson,
+      // one column over) and the content is one arrow now — so the label
+      // carries the whole of the name: the word, its kind, the destination.
       a.setAttribute("aria-label", title + kind + " on Wikipedia");
-      return a;
+      return { plate: s, over: a };
     }
     const miss = w && (w.MISSES || []).find((m) => m.key === gk);
     const why = roleWhy
@@ -691,22 +732,31 @@ export function mount(parent, ctx) {
     s.dataset.say = why;
     s.title = why;
     s.setAttribute("aria-label", genre + " — no article: " + why);
-    return s;
+    return { plate: null, over: s };
   }
   function idxRow(year, genre, place, gk, why) {
     const b = el("button", { className: "nu-ixrow", type: "button" });
     b.dataset.gk = gk;
-    /* TWO CELLS IN THE PLATE AND A HOLE BETWEEN THEM. The genre lives in
-       column 2 and is not this button's child, so the year and the place are
-       PLACED (nu.css `.nu-ixy { grid-column: 1 }`, `.nu-ixp { grid-column: 3 }`)
-       rather than flowed — auto-placement would slide the place left into the
-       hole the moment the genre stopped being a child. */
+    const cell = genreCell(gk, genre, why || null);
+    /* THE CELLS ARE PLACED, NOT FLOWED, AND THE HOLE MOVED (2026-08-30). This
+       read "TWO CELLS IN THE PLATE AND A HOLE BETWEEN THEM. The genre lives
+       in column 2 and is not this button's child" — the genre word is plain
+       text now and IS this button's child (a linked row's `cell.plate`), so
+       the plate holds the first three facts and the hole is column 4, where
+       the ↗ mark lies over it. A refused row still has the column-2 hole its
+       overlay span covers. Explicit placement (nu.css `.nu-ixy/.nu-ixw/
+       .nu-ixp`) survives both shapes; auto-placement would slide the place
+       into whichever hole the row has. */
     b.append(el("span", { className: "nu-ixy", textContent: year }),
+             ...(cell.plate ? [cell.plate] : []),
              el("span", { className: "nu-ixp", textContent: place }));
     /* AND THE PLATE SAYS WHAT IT DOES, ALWAYS. The button's accessible name
        used to be its own text — "1973 dub Kingston" — and the genre has left
        it, so a name read off the content would now be "1973 Kingston" with the
-       music missing and the verb never there at all. It is written instead,
+       music missing and the verb never there at all. (2026-08-30: the article
+       TITLE is back in the plate as plain text, but the written name below
+       stands unchanged — it carries the verb and the KEY, and the key is what
+       the globe's mark says, which content never did.) It is written instead,
        from the same three facts, in the order the record itself is named
        (`__nuName()` is "Kingston 1973"), with the KEY on the end: the key is
        what the mark's second line says on the globe, so a reader who hears
@@ -741,7 +791,7 @@ export function mount(parent, ctx) {
        fixed middle column as its CE siblings instead of the proportional
        one the shim couldn't give it. */
     if (WHEN[gk] && WHEN[gk].year < 0) li.dataset.bc = "1";
-    li.append(b, genreCell(gk, genre, why || null));
+    li.append(b, cell.over);
     return li;
   }
   /* BUILT AT BOOT, ONCE, AND MEASURED (2026-08-29 — Paul: "Make the genre list
@@ -1005,13 +1055,17 @@ export function mount(parent, ctx) {
     choose(canon(w.place));
   }
   /* AND THE LINK IS NOT A DOOR, WHICH THIS HANDLER SAYS BY NOT MENTIONING IT
-     (2026-08-29). The genre word is an <a> lying over the plate, and it is the
-     plate's SIBLING rather than its child, so `closest(".nu-ixrow")` simply
-     does not find one from an anchor: a tap on "Dub music" goes to Wikipedia
-     and never reaches `openRow`. There is deliberately no `stopPropagation` on
-     the anchor — it would make the same thing true by accident, and it would
-     go on being true the day the two got nested again, which is the exact bug
-     it would be hiding. test/atlas.js G23 asserts both halves of the seam. */
+     (2026-08-29; the link became the ↗ mark in column 4 on 2026-08-30 — this
+     paragraph read "a tap on 'Dub music' goes to Wikipedia", and that word is
+     plate now, so a tap on "Dub music" PLAYS and a tap on ↗ goes to
+     Wikipedia; the mechanism below is character-for-character the same). The
+     mark is an <a> lying over the plate, and it is the plate's SIBLING rather
+     than its child, so `closest(".nu-ixrow")` simply does not find one from
+     an anchor and the tap never reaches `openRow`. There is deliberately no
+     `stopPropagation` on the anchor — it would make the same thing true by
+     accident, and it would go on being true the day the two got nested again,
+     which is the exact bug it would be hiding. test/atlas.js G23 asserts both
+     halves of the seam. */
   idxRows.addEventListener("click", (e) => {
     const b = e.target.closest ? e.target.closest(".nu-ixrow") : null;
     if (b && b.dataset.gk) openRow(b.dataset.gk);

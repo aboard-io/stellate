@@ -3145,6 +3145,15 @@ table.nu-trims{ color: var(--ink); }
      titles that ellipsise      116       72         2
      places that ellipsise       64       22         0
 
+   RE-COUNTED 2026-08-30, the ↗-mark round (the icon track below costs the
+   words a --tap square per row, the catalogue is 297 rows now, and the gate
+   prints these on every run as cutT/cutP so this table can never silently
+   age again):
+
+                              320px    390px    1280px
+     titles that ellipsise      196      130         2
+     places that ellipsise      174       69         0
+
    That is the trade Paul asked for in the sentence — a phone shows the start of
    a name instead of showing the whole of a name twice on two lines — and it is
    written down rather than discovered. The WHOLE string is the anchor's
@@ -3154,7 +3163,14 @@ table.nu-trims{ color: var(--ink); }
    of a sweep of the eye across 590px of nothing — and on a desktop the two
    still cut are the two longest names in the catalogue and nothing else. */
 .nu-ixli{ margin: 0; display: grid; align-items: center;
-  grid-template-columns: 4ch minmax(0, 1.6fr) minmax(0, 1fr);
+  /* THE FOURTH TRACK IS THE ↗ MARK'S (2026-08-30). Paul: "Put the link in a
+     new icon on the right that isn't underlined." One --tap square on the
+     right edge, at every breakpoint below, [data-bc] included — a fixed track
+     because a tap target may not shrink, so what yields on a narrow phone is
+     the PLACE column's fr, never the thumb. A row with no article leaves the
+     track empty (absent, not disabled) and the plate spans it like any other
+     hole. */
+  grid-template-columns: 4ch minmax(0, 1.6fr) minmax(0, 1fr) var(--tap);
   /* THE EIGHT ROWS BEFORE THE YEAR ONE (2026-08-30): "33000 BC" does not fit
      a 4ch year track — measured, it wrapped the row to 51.4px and broke the
      one-line law at every width. The deep-time round marked its rows
@@ -3163,7 +3179,7 @@ table.nu-trims{ color: var(--ink); }
      breakpoints, and the inline shim in ui/atlas.js idxRow can now retire. */
   gap: 0 var(--s3); padding-inline: var(--s4);
   border-block-end: var(--bw) solid var(--rule); }
-.nu-ixli[data-bc]{ grid-template-columns: 8ch minmax(0, 1.6fr) minmax(0, 1fr); }
+.nu-ixli[data-bc]{ grid-template-columns: 8ch minmax(0, 1.6fr) minmax(0, 1fr) var(--tap); }
 .nu-ixli:last-child{ border-block-end: 0; }
 .nu-ixli:has(> .nu-ixrow:active){ background: var(--flag); }
 .nu-ixli:has(> .nu-ixrow[aria-current="true"]){ background: var(--hand-tint);
@@ -3186,8 +3202,8 @@ table.nu-trims{ color: var(--ink); }
    tracks stay proportional, because 26ch of a 390 px phone would leave the
    place nowhere to go. */
 @media (min-width: 700px){
-  .nu-ixli{ grid-template-columns: 4ch minmax(0, 26ch) minmax(0, 1fr); }
-  .nu-ixli[data-bc]{ grid-template-columns: 8ch minmax(0, 26ch) minmax(0, 1fr); }
+  .nu-ixli{ grid-template-columns: 4ch minmax(0, 26ch) minmax(0, 1fr) var(--tap); }
+  .nu-ixli[data-bc]{ grid-template-columns: 8ch minmax(0, 26ch) minmax(0, 1fr) var(--tap); }
 }
 /* AND THE DESKTOP GETS A WIDER ONE, because 26ch on a 1280 was still cutting
    words with 700px of empty place column beside them — "Music of Punjab · the
@@ -3199,8 +3215,8 @@ table.nu-trims{ color: var(--ink); }
    row of the list. 34ch is where the curve flattens — two long tails ellipsised
    instead of eleven, and the place still lands within a glance of the name. */
 @media (min-width: 1100px){
-  .nu-ixli{ grid-template-columns: 4ch minmax(0, 34ch) minmax(0, 1fr); }
-  .nu-ixli[data-bc]{ grid-template-columns: 8ch minmax(0, 34ch) minmax(0, 1fr); }
+  .nu-ixli{ grid-template-columns: 4ch minmax(0, 34ch) minmax(0, 1fr) var(--tap); }
+  .nu-ixli[data-bc]{ grid-template-columns: 8ch minmax(0, 34ch) minmax(0, 1fr) var(--tap); }
 }
 /* AND ON THE NARROWEST PHONE THE ROW GIVES BACK ITS OWN SLACK BEFORE IT ASKS
    THE WORDS TO. 320px is 238px of line after the 56px gutter, and the two
@@ -3212,11 +3228,14 @@ table.nu-trims{ color: var(--ink); }
 @media (max-width: 359px){
   .nu-ixli{ gap: 0 var(--s2); padding-inline: var(--s3); }
 }
-/* THE YEAR AND THE PLACE ARE PLACED, NOT FLOWED. The genre is not the button's
-   child any more, so the button's subgrid has a HOLE at column 2 — and auto
-   placement would slide the place straight into it. Two explicit columns is
-   the whole fix, and it is also the honest description of the row: the button
-   holds the first and third facts and the second is a link lying over it. */
+/* THE CELLS ARE PLACED, NOT FLOWED. (2026-08-30: this read "The genre is not
+   the button's child any more, so the button's subgrid has a HOLE at column 2
+   … the button holds the first and third facts and the second is a link lying
+   over it." The genre came back into the plate as plain text and the LINK
+   moved to the ↗ mark, so the hole is column 4 now on a linked row — and
+   still column 2 on a refused one, whose key-span stays the overlay. Explicit
+   placement is what lets one plate serve both shapes; auto placement would
+   slide the place into whichever hole the row has.) */
 .nu-ixy{ grid-column: 1; font-family: var(--mono);
   font-variant-numeric: tabular-nums; color: var(--dim); }
 .nu-ixp{ grid-column: 3; color: var(--dim);
@@ -3241,13 +3260,26 @@ table.nu-trims{ color: var(--ink); }
    footnote size while being the only name on the row would be exactly the
    silent demotion this stylesheet's other notes keep refusing.
 
-   IT IS ITS OWN 44px TAP TARGET, LYING ON ANOTHER ONE. Two controls sharing a
-   44px row is the case the tap floor exists for: the anchor takes
-   `min-block-size: var(--tap)` and centres its text in it, and `justify-self:
-   start` keeps it as wide as its word and no wider — so the thumb that lands
-   on the word gets Wikipedia and the thumb that lands anywhere else on the row
-   gets the record. `padding-inline-end` is slack for a fat thumb on a short
-   title ("Fugue" is five characters).
+   THE WORD STOPPED BEING THE LINK (2026-08-30). Paul: *"In the genre list get
+   rid of the Wikipedia link but leave the text. Put the link in a new icon on
+   the right that isn't underlined."* That is a REVERSAL of this block's two
+   claims as they stood, quoted so the reasoning stays findable:
+     · "IT IS ITS OWN 44px TAP TARGET, LYING ON ANOTHER ONE. Two controls
+       sharing a 44px row is the case the tap floor exists for: the anchor
+       takes `min-block-size: var(--tap)` and centres its text in it … so the
+       thumb that lands on the word gets Wikipedia and the thumb that lands
+       anywhere else on the row gets the record." The word is a SPAN inside
+       the plate now — a thumb that lands on it gets the record, and the tap
+       height left this rule with the anchor: `.nu-ixw-no` keeps it (the
+       refusal is still an overlaid pressable word) and `.nu-ixgo` carries it
+       for the link. A 44px-tall child inside a plate that also has
+       `padding-block` would push the row past the 46px ceiling, which is why
+       the height may not stay here.
+     · "the browser's own underline left alone, because that underline is the
+       affordance for 'this leaves the page', and hand-blue from the base `a`
+       rule". A span takes neither, which is the ask: the word reads as the
+       row's name in the row's own ink, and 'this leaves the page' is now the
+       ↗ mark's whole shape, one column over.
 
    `text-overflow: ellipsis` AND `min-inline-size: 0`: the title is the only
    text in this row whose length nobody controls, and a column that widened for
@@ -3267,8 +3299,7 @@ table.nu-trims{ color: var(--ink); }
 .nu-ixw{ grid-column: 2; grid-row: 1; justify-self: start;
   font-weight: 600; white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; min-inline-size: 0; max-inline-size: 100%;
-  display: block; block-size: var(--tap); line-height: var(--tap);
-  padding-inline-end: var(--s3); }
+  display: block; padding-inline-end: var(--s3); }
 /* A REFUSED CELL — the two MISSES and the six roles. IT USED TO BE AN EM DASH
    and it is THE ROW'S OWN KEY now (2026-08-29): the dash sat in a fourth
    column next to a genre word, and with the fourth column gone a dash would
@@ -3280,7 +3311,31 @@ table.nu-trims{ color: var(--ink); }
    else: a reason on the artifact, spoken by the same delegated explainer,
    never a silent grey. */
 .nu-ixw-no{ color: var(--dim); font-family: var(--mono); font-weight: 400;
-  font-size: .9em; cursor: help; text-decoration: none; }
+  font-size: .9em; cursor: help; text-decoration: none;
+  /* the tap height that used to live on `.nu-ixw` (see the reversal above):
+     this word is still an OVERLAY the explainer answers, so it is still its
+     own thumb-height target lying on the plate. */
+  block-size: var(--tap); line-height: var(--tap); }
+/* ---------- THE ↗ MARK — THE LINK'S OWN CELL (2026-08-30) ---------------
+   Paul: *"Put the link in a new icon on the right that isn't underlined."*
+   It is the fourth track's whole occupant: a real <a> (middle-click,
+   long-press, new tab all work) lying over the plate exactly the way the
+   word-anchor used to lie over column 2, sibling not child, after the button
+   in source order so it wins the hit test on its own square with no z-index.
+   `--tap` in both axes — a mark is a thumb target or it is decoration.
+   NOT underlined and NOT hand-blue: the base `a` rule paints both, and both
+   are the affordance for a link that is a WORD among words. This link is a
+   MARK, and the mark's own shape — an arrow leaving — is the affordance, in
+   the ink like the tray's marks and the tab strip's glyphs (ui/glyph.js: "a
+   glyph is text — it inherits the ink"). The symbol face is glyph.js's own
+   stack, repeated here for its reason: "a serif ↕ next to a sans ↑ is two
+   different arrows." A row with NO article renders NO mark at all — absent,
+   not disabled; the refusal's reason lives on the word span, not here. */
+.nu-ixgo{ grid-column: 4; grid-row: 1; justify-self: stretch;
+  display: block; block-size: var(--tap); line-height: var(--tap);
+  min-inline-size: var(--tap); text-align: center;
+  color: var(--ink); text-decoration: none;
+  font-family: system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif; }
 /* `#atlasActs button { min-block-size: var(--tap); margin-inline-end: .4rem }`
    STOOD HERE AND BOTH HALVES ARE GONE (2026-08-26). The tap floor was already
    `button { min-height: var(--tap) }` at the top of this file and had been for

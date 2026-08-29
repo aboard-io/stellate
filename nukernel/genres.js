@@ -3204,9 +3204,14 @@
       // PAID 2026-08-29, the debts round: "work song" is `holler`
       // (South Carolina 1853) — the Lead Belly records a skiffle group
       // worked from are prison work song, which is the holler with a job.
+      // "trad jazz revival" PAID 2026-08-30, the goth-and-globe round:
+      // `tradjazz` (London 1954) is the Chris Barber Band's New Orleans
+      // Joys — the record whose OWN interval number was "Rock Island
+      // Line", performed by Donegan. The want said "the one it was
+      // literally born inside", and the anchor is literally that album.
       parents: { countrypop: 0.35, blues: 0.3, deltablues: 0.15, gospel: 0.2,
-                 holler: 0.1 },
-      wants: ["trad jazz revival"],
+                 holler: 0.1, tradjazz: 0.2 },
+      wants: [],
       instr: ["steel_string_guitar", "solo_vox", "banjo"],
       // BRUSHES, because a washboard is SCRAPED and every other sampled kit
       // here is struck: the brush kit is the only one whose snare is a sound
@@ -5569,7 +5574,13 @@
       label: "Manchester 1979", near: "kraftwerk",
       plan: "song", bpm: 138,
       parents: { punk: 0.4, kraftwerk: 0.3, rock: 0.3 },
-      wants: ["cold wave"],
+      // `wants: ["cold wave"]` STOOD HERE until 2026-08-30, and it
+      // pointed FORWARD: cold wave is Manchester 1979's French child,
+      // not its ancestor (the hymn-asking-for-spirituals shape). The
+      // debt is settled by ARRIVAL rather than by a parent edge —
+      // `coldwave` (Rennes 1979) lands in the goth-and-globe round and
+      // declares THIS row its dominant parent.
+      wants: [],
       instr: ["clean_guitar", "synth_strings_1"],
       drumkit: "room",
       entry: v => v, reg: v => v - 2, realize: () => "line",
@@ -13175,7 +13186,13 @@
       // are Bowie's, and the band said so; `dub` (Kingston 1973) is
       // the empty middle and the echo send, audible in the first bar.
       parents: { punk: 0.35, glam: 0.35, dub: 0.3 },
-      wants: ["the batcave's dressing-up box"],
+      // `wants: ["the batcave's dressing-up box"]` STOOD HERE until
+      // 2026-08-30, and it pointed FORWARD: the Batcave opened at 69
+      // Dean Street on 21 July 1982, three years after this record was
+      // cut. Settled by ARRIVAL, not a parent edge — `batcave` (London
+      // 1982) lands in the goth-and-globe round on the zodiak ruling
+      // and declares this row its dominant parent.
+      wants: [],
       instr: ["overdrive_guitar", "warm_pad"],
       drumkit: "room",
       entry: v => (v === 0 ? 2 : v), reg: v => (v === 0 ? 1 : -1),
@@ -15683,6 +15700,670 @@
       word: (v, s) => (v < 2 ? [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4]
                     : [drop(12)]),
     },
+
+    // ================================================================
+    // THE GOTH-AND-GLOBE ROUND — 2026-08-30 (Paul: "Need way more gothy
+    // genres and way more spread of global jazz. Keep using Wikipedia
+    // to add density.") Sixteen rows: the goth family tree filled in
+    // around Northampton 1979, and jazz given back its geography — the
+    // catalog held ONE non-US jazz dot (Addis Ababa 1969) against a
+    // literature that runs Paris, Havana, Cape Town, London, Bombay-
+    // via-London, Tokyo, Oslo and Bulawayo. Every row from a named
+    // record, every link read in the ZIM before it was written down.
+    //
+    // EXAMINED AND DECLINED, dated here so the next round does not
+    // re-litigate them:
+    //   · darkwave — the article is real (Dark wave, "late 1970s -
+    //     early 1980s, Europe") but it is the scene's UMBRELLA, and its
+    //     own stylistic tree — gothic rock, cold wave, ethereal wave,
+    //     neoclassical dark wave — is this catalog's rows. A row for
+    //     the family name would be a genre made only of other genres;
+    //     the vaudeville ruling (a format, not a music) applies.
+    //   · ethereal wave — the article exists, but its archetype is the
+    //     Cocteau Twins on 4AD, and `dreampop` (London 1984, Treasure)
+    //     IS that record. One record, one row: ethereal wave is the
+    //     goth scene's name for the same music dreampop holds, and the
+    //     honest split is a comment, not a duplicate anchor.
+    //   · freejazz, hardbop, cooljazz, fusion, spiritualjazz — the US
+    //     history, and this round's ask was geography; none is owed by
+    //     the wants ledger (bossa's repaired lineage already routes
+    //     "cool jazz's harmony" through `jazz`, whose label is bebop).
+    //     `nordicjazz` below opens "free jazz" as a want BY NAME, so
+    //     the ledger now asks for Ornette the honest way.
+    //   · jazz manouche as a second key — the same music as gypsyjazz;
+    //     Wikipedia files the article at Gypsy jazz and one music gets
+    //     one row. The naming is recorded at the row.
+    //   · "township jazz" as its own row — an umbrella like darkwave:
+    //     `marabi` (Johannesburg 1935) already holds the root, and
+    //     `skokiaan` (Bulawayo 1947) below is the datable record of the
+    //     step after it. The umbrella word names a shelf, not a record.
+    // ================================================================
+
+    // DEATHROCK — Pomona 1982. Christian Death, Only Theatre of Pain
+    // (Frontier, 24 March 1982): the American answer to Northampton
+    // 1979, cut by a band formed in Los Angeles County in 1979 around
+    // Rozz Williams — the label says Pomona, Williams's own town, the
+    // rule that keeps the Kinks in Muswell Hill and Bauhaus in
+    // Northampton (and it keeps (place, year) a key: Los Angeles 1982
+    // is toto's). Punk speed under horror-matinee theatre: a scratchy
+    // chorused guitar, a tribal floor-tom beat, the B-movie dead sung
+    // as camp and meant anyway.
+    deathrock: {
+      label: "Pomona 1982", voices: 2, bars: 8, near: "gothicrock",
+      plan: "song", bpm: 148,
+      // LINEAGE: the article's own three origins are punk rock, the
+      // horror film score and glam rock; two are anchors and the third
+      // is the want. `gothicrock` is real but smaller than it looks —
+      // the LA bands were building the same room in parallel and heard
+      // Bauhaus after the walls were up.
+      parents: { punk: 0.45, glam: 0.25, gothicrock: 0.2 },
+      wants: ["the horror film score"],
+      instr: ["overdrive_guitar", "clean_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 0 ? 0 : 1),
+      realize: () => "line",
+      part: ["lead", "counter"],
+      harmony: "modal", mode: MODES.phrygian, scale: DIATONIC,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      // THE TOM BEAT IS THE GENRE: kick and floor tom trading the bar
+      // while the snare cracks the backbeat — the "tribal" lane every
+      // description of this scene reaches for.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             l: [0,0,1,0, 0,0,0,1, 0,0,1,0, 0,1,0,0],
+             m: [0,1,0,0, 0,0,0,0, 0,1,0,0, 0,0,1,0] },
+      fill: { l: [0,0,0,0, 0,0,0,0, 1,0,1,0, 1,1,1,0] },
+      fx: ["chorus", "echo"],
+      tone: { wave: "sawtooth", cut: 2000, q: 1.6, atk: .006, rel: .5, gain: .27, verb: .45 },
+      words: ["the guitar, scratched through the chorus pedal",
+              "the second guitar, a graveyard surf line"],
+      word: (v, s) => (v === 0 ? [[], [rotate(3)], [invert(2)], [fill(2)]][s % 4]
+                    : [transpose(-5), keep(0, 4, 8, 12)]),
+    },
+
+    // THE BATCAVE — London 1982. The club-night at 69 Dean Street,
+    // Soho, opened 21 July 1982 — the article calls it the birthplace
+    // of the Southern English goth subculture — run by Specimen, with
+    // Jon Klein as art director; the compilation Young Limbs And Numb
+    // Hymns (London Records, the following year) is the room's sound
+    // on record, Specimen's "Dead Mans Autochop" on it. THE ZODIAK
+    // RULING APPLIES (Berlin 1968): a venue is a row when the room's
+    // house sound is on a named record, and `gothicrock` has carried
+    // "the batcave's dressing-up box" in its wants since its lineage
+    // was written — a want that pointed FORWARD, paid today by the
+    // child arriving rather than by a parent edge.
+    batcave: {
+      label: "London 1982", voices: 2, bars: 8, near: "deathrock",
+      plan: "song", bpm: 118,
+      // LINEAGE: `gothicrock` is the licence three years old by the
+      // opening night; `glam` is the dressing-up box itself — the
+      // club's own bill ran glam rock beside gothic rock, and Specimen
+      // were a glam band in cobwebs.
+      parents: { gothicrock: 0.4, glam: 0.35 },
+      wants: [],
+      cannot: ["the dressing-up box itself — the club was a WARDROBE " +
+               "as much as a sound, and a costume has no lane; what " +
+               "is sayable is the cabaret stomp and the cobwebbed " +
+               "synth, which is what the lanes say"],
+      instr: ["overdrive_guitar", "saw_wave"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => (v === 0 ? 0 : 1),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad"],
+      roots: [0, 0, 3, 4], mode: MODES.harmonic, scale: DIATONIC,
+      harmony: "cycle",
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
+             h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      fx: ["echo"],
+      tone: { wave: "sawtooth", cut: 2100, q: 1.7, atk: .005, rel: .4, gain: .26, verb: .5 },
+      words: ["the guitar, a cabaret stomp in eyeliner",
+              "the synth, cobwebs on a fairground organ"],
+      word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)], [reverse()]][s % 4]
+                    : [drop(8)]),
+    },
+
+    // COLD WAVE — Rennes 1979. Marquis de Sade, Dantzig Twist: the
+    // French answer record, cut by the Rennes band the article files
+    // as post-punk, in the year Manchester's own row is labelled —
+    // the same music with the blood drained further out of it, sung
+    // in French over a colder, drier room. Wikipedia's article (Cold
+    // wave (music)) places the genre in late-70s France, Poland and
+    // Belgium; `postpunk` has carried "cold wave" in its wants since
+    // its lineage was written — another FORWARD want, paid today by
+    // the child arriving.
+    coldwave: {
+      label: "Rennes 1979", voices: 2, bars: 8, near: "postpunk",
+      plan: "song", bpm: 142,
+      // LINEAGE: `postpunk` at dominant weight — this IS post-punk,
+      // pronounced differently; `kraftwerk` is the synth discipline
+      // the French scene admitted more readily than Manchester did
+      // (the article's own origins name electronic music beside punk).
+      parents: { postpunk: 0.45, punk: 0.2, kraftwerk: 0.25 },
+      wants: [],
+      instr: ["clean_guitar", "polysynth"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 0 ? 0 : -1),
+      realize: () => "line",
+      part: ["lead", "counter"],
+      roots: [0, 5, 0, 3], mode: MODES.aeolian, scale: DIATONIC,
+      harmony: "cycle",
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fx: ["chorus"],
+      tone: { wave: "square", cut: 1500, q: 1.6, atk: .004, rel: .35, gain: .27, verb: .3 },
+      words: ["the guitar, dry ice on the strings",
+              "the synth, one cold line, no vibrato"],
+      word: (v, s) => (v === 0 ? [[], [rotate(4)], [transpose(-1)], [fill(1)]][s % 4]
+                    : [transpose(-9), keep(0, 4, 8, 12)]),
+    },
+
+    // THE SISTERS OF MERCY — York 1981. An artist row, the sabbath
+    // kind, DATED THE SABBATH WAY: the definitive Doktor/Eldritch/
+    // Marx/Adams formation's first gig (Riley Smith Hall, Leeds) has
+    // no recorded date — the article says so — and the performance
+    // the band and fans themselves celebrate, 16 February 1981 at
+    // Alcuin College, York, is the second show and the first DATABLE
+    // one. The Leeds dot is also measured blocked: Halifax/Leeds is
+    // 5.8 CSS px at the Britain arc against G10's 8.5 floor, the
+    // Southall situation again (atlas.js WITHIN's own note: "Britain
+    // is simply full"), and Workington-not-Birmingham is the standing
+    // ruling for exactly this. The CHASSIS the row writes is the one
+    // First and Last and Always (11 March 1985) photographs: DOKTOR
+    // AVALANCHE — the drum machine, in the band from this lineup on —
+    // running a motorik-straight floor under two arpeggiating guitars
+    // and a baritone drone. HONESTLY DISTINCT from Northampton 1979:
+    // Bauhaus is dub space and live drums; this is a machine that
+    // never leans, which is the DYNAMICS row's whole claim.
+    sisters: {
+      label: "York 1981", voices: 2, bars: 8, near: "gothicrock",
+      plan: "song", bpm: 120,
+      // LINEAGE: `gothicrock` is the licence and the wardrobe;
+      // `motorik` is the Doktor — Eldritch said the band drove on
+      // autobahn records, and the machine's refusal to lean is this
+      // row's whole difference from its parent; `glam` is the leather
+      // and the sunglasses at night.
+      parents: { gothicrock: 0.35, motorik: 0.25, glam: 0.15 },
+      wants: [],
+      instr: ["clean_guitar", "overdrive_guitar"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => (v === 0 ? 0 : -1),
+      realize: () => "line",
+      part: ["lead", "riff"],
+      roots: [0, 0, 5, 3], mode: MODES.aeolian, scale: DIATONIC,
+      harmony: "cycle",
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      // the Doktor: a machine floor in a band family — dead straight,
+      // every bar the same, which is what the DYNAMICS row below says.
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fx: ["echo"],
+      tone: { wave: "sawtooth", cut: 1800, q: 1.4, atk: .008, rel: .8, gain: .27, verb: .5 },
+      words: ["the guitar, arpeggios off the cliff edge",
+              "the second guitar, the riff under the baritone"],
+      word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [transpose(-1)]][s % 4]
+                    : [drop(4), transpose(-5)]),
+    },
+
+    // GOTHIC METAL — Halifax 1991. Paradise Lost, Gothic (Peaceville,
+    // 19 March 1991; cut at Academy Music Studios, West Yorkshire,
+    // November 1990 - January 1991): the record whose title NAMED the
+    // genre, a Halifax death-doom band letting a soprano and a string
+    // patch into the growl — the article's own origins are heavy
+    // metal, gothic rock and death-doom, and death-doom is this
+    // catalog's `deathmetal` and `doom` shaking hands.
+    gothicmetal: {
+      label: "Halifax 1991", voices: 3, rate: 0.5, near: "doom",
+      plan: "arc", bpm: 88,
+      // LINEAGE: the death-doom halves at the top, `gothicrock` for
+      // the atmosphere the title admits to — the band said the Sisters
+      // records were in the room.
+      parents: { deathmetal: 0.35, doom: 0.3, gothicrock: 0.25 },
+      wants: [],
+      instr: ["distortion_guitar", "slow_strings", "ohh_voices"],
+      drumkit: "power",
+      entry: v => v * 2, reg: v => (v === 0 ? -1 : v === 1 ? 0 : 1),
+      realize: v => (v === 0 ? "line" : "pad"),
+      part: ["riff", "pad", "pad"],
+      roots: [0, 0, 1, 0], harmony: "modal",
+      mode: MODES.harmonic, scale: DIATONIC,
+      artic: "tie", maxHold: 5, bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             r: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0] },
+      fill: { x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,0,9] },
+      fx: ["crunch"],
+      tone: { wave: "sawtooth", cut: 1300, q: 1.5, atk: .01, rel: 1.4, gain: .28, verb: .5 },
+      words: ["the riff, death-doom at a funeral pace",
+              "the strings, a stone ceiling over it",
+              "the voice, wordless, above the growl's register"],
+      word: (v, s) => (v === 0 ? [[], [transpose(1)], [rotate(2)], [invert(2)]][s % 4]
+                    : v === 1 ? [drop(8)]
+                    : [drop(10), transpose(7)]),
+    },
+
+    // DUNGEON SYNTH — Notodden 1994. Mortiis, Født til å Herske
+    // (Malicious/Dark Dungeon Music, 1994): Håvard Ellefsen out of
+    // Emperor — Notodden's own black metal band — alone with one
+    // synthesizer, two side-long tracks of cardboard-castle fanfares.
+    // The article's origins are dark ambient and black metal, early
+    // 1990s Norway, and NEITHER parent is in this catalog: the row
+    // lands with the biggest residue of the round, and both debts are
+    // opened by name below.
+    dungeonsynth: {
+      label: "Notodden 1994", voices: 2, bars: 8, near: "berlinschool",
+      plan: "arc", bpm: 80,
+      // LINEAGE: `berlinschool` is the FORM — a side-long synthesizer
+      // suite in movements — bought secondhand and played on one cheap
+      // keyboard; `ambient` is the room it drones in. The missing
+      // parents are the genre's actual blood and they are wants, not
+      // guesses.
+      parents: { berlinschool: 0.3, ambient: 0.25 },
+      wants: ["black metal", "dark ambient"],
+      instr: ["recorder", "warm_pad"],
+      entry: v => v * 2, reg: v => (v === 0 ? 0 : -1),
+      realize: v => (v === 0 ? "line" : "pad"),
+      part: ["lead", "pad"],
+      kit: {}, harmony: "modal",
+      mode: MODES.aeolian, scale: DIATONIC,
+      artic: "tie", maxHold: 5, bassStyle: "pedal",
+      fx: ["echo"],
+      tone: { wave: "triangle", cut: 1600, q: 1.0, atk: .04, rel: 2.0, gain: .24, verb: .7 },
+      words: ["the fake flute, a fanfare down a corridor",
+              "the pad, torchlight on wet stone"],
+      word: (v, s) => (v === 0 ? [[], [transpose(2)], [rotate(3)], [transpose(-2)]][s % 4]
+                    : [drop(10)]),
+    },
+
+    // WITCH HOUSE — Traverse City 2010. Salem, King Night (Iamsound,
+    // 28 September 2010): the record that carried the name out of the
+    // blogs, by the band Wikipedia files in Traverse City, Michigan.
+    // THE DATE IS THE RECORD'S, said plainly: the article dates the
+    // scene itself c. 2006-2007 (New Orleans and New York, the "drag"
+    // originators), and this catalog's law is the named record, so the
+    // label follows King Night. Chopped and screwed's wrist-drag under
+    // gothic synth weather, crunk's hi-hats at half time.
+    witchhouse: {
+      label: "Traverse City 2010", voices: 2, bars: 8, near: "chopped",
+      plan: "dance", bpm: 72,
+      // LINEAGE: the article's first-named origin is chopped and
+      // screwed, and `chopped` (Houston 1995) carries the drag;
+      // `drone` is the noise floor, `gothicrock` the eyeliner the
+      // scene wore on purpose. Crunk — the hat grid — is the want.
+      parents: { chopped: 0.4, drone: 0.2, gothicrock: 0.15 },
+      wants: ["crunk"],
+      instr: ["warm_pad", "saw_wave"],
+      drumkit: "tr808",
+      entry: v => v, reg: v => (v === 0 ? 0 : -1),
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["pad", "lead"],
+      roots: [0, 0, 5, 5], mode: MODES.phrygian, scale: DIATONIC,
+      harmony: "cycle",
+      artic: "tie", maxHold: 4, bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             h: [1,0,1,1, 1,0,1,0, 1,1,1,0, 1,0,1,1] },
+      fx: ["echo"],
+      tone: { wave: "sawtooth", cut: 1100, q: 1.3, atk: .02, rel: 1.8, gain: .26, verb: .75,
+              mouth: MOUTHS.dreamchoir },
+      words: ["the pad, a choir slowed past recognition",
+              "the synth, a lead dragged flat by the wrist"],
+      word: (v, s) => (v === 0 ? [drop(10)]
+                    : [[], [transpose(-2)], [rotate(2)], [spread(2)]][s % 4]),
+    },
+
+    // GYPSY JAZZ — Paris 1934. The Quintette du Hot Club de France,
+    // first Ultraphone session, December 1934: Django Reinhardt and
+    // Stéphane Grappelli over three guitars and Louis Vola's bass —
+    // the article's own dating is "c. 1934, Paris", and the band is
+    // the first great EUROPEAN jazz institution: no drums at all, the
+    // rhythm guitars' la pompe doing the kit's whole job. (Called
+    // jazz manouche at home; Wikipedia files the article under Gypsy
+    // jazz and one music gets one key — the decline at the round's
+    // header.)
+    gypsyjazz: {
+      label: "Paris 1934", voices: 3, bars: 8, near: "swing",
+      // 160 is compose.js's own ceiling (bpm: 70..160) and the Quintette
+      // ran hotter; the ceiling is the sayable tempo, dnb's own deal.
+      plan: "song", bpm: 160,
+      // LINEAGE: `neworleans` is the hot jazz on the 78s the Quintette
+      // learned from — Armstrong by record, an ocean from the source;
+      // the other two bloodlines have no anchor and are owed by name:
+      // the musette waltz Django played for hire before jazz reached
+      // him, and the Romani string-band tradition the family carried.
+      parents: { neworleans: 0.4 },
+      wants: ["bal-musette", "the romani string band"],
+      instr: ["jazz_guitar", "violin", "jazz_guitar"],
+      swing: 0.3,
+      entry: v => (v === 2 ? 0 : v), reg: v => (v === 1 ? 1 : 0),
+      realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      kit: {}, harmony: "cycle",
+      roots: [0, 0, 3, 4, 0, 0, 4, 0], mode: MODES.melodic, scale: DIATONIC,
+      artic: "staccato", maxHold: 2, bassStyle: "walk",
+      orn: { grace: 0.35, approach: 0.3 },
+      tone: { wave: "triangle", cut: 2600, q: 1.0, atk: .005, rel: .4, gain: .27, verb: .28 },
+      words: ["the solo guitar, runs like a card trick",
+              "the violin, answering an octave up",
+              "la pompe — the rhythm guitar is the drummer"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [rotate(3)], [transpose(2)]][s % 4]
+                    : v === 1 ? [[drop(2)], [drop(2), transpose(5)]][s % 2]
+                    : [keep(0, 4, 8, 12)]),
+    },
+
+    // LATIN JAZZ — New York 1947. "Manteca", co-written by Dizzy
+    // Gillespie, Chano Pozo and Gil Fuller and cut that December —
+    // the article calls it one of the earliest foundational tunes of
+    // Afro-Cuban jazz, and it is the record where bebop's own founder
+    // put a conga player IN the band and let the tumbao carry the
+    // form: the bass riff is Pozo's, the bridge is Gillespie's, and
+    // the two halves are the genre's whole treaty.
+    latinjazz: {
+      label: "New York 1947", voices: 3, bars: 8, near: "jazz",
+      plan: "arc", bpm: 152,
+      // LINEAGE: `jazz` (New York 1945) is Gillespie's own row two
+      // years and two blocks away; `son` (Havana 1928) is the clave
+      // and the tumbao's home; the rumba Pozo actually drummed — the
+      // street music, not the ballroom — has no anchor and is owed by
+      // name, the spelling matched with descarga's so the ledger
+      // counts one debt.
+      parents: { jazz: 0.4, son: 0.3 },
+      wants: ["the afro-cuban rumba"],
+      instr: ["trumpet", "brass_section", "tenor_sax"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 1 ? -1 : v === 2 ? 0 : 1),
+      realize: () => "line",
+      part: ["lead", "riff", "counter"],
+      harmony: "modal", mode: MODES.mixo, scale: SCALES.major,
+      artic: "staccato", maxHold: 2,
+      // the tumbao is the bassGrid — "Manteca" is the bass riff — and
+      // the congas live on the toms, the ethiojazz precedent.
+      bassGrid: [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,1,0,0],
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,0,1, 0,0,1,0, 0,0,1,0, 1,0,0,0],
+             m: [0,0,1,0, 0,0,0,0, 1,0,0,0, 0,0,1,0],
+             l: [0,0,0,0, 0,1,0,0, 0,0,0,1, 0,0,0,0] },
+      fill: { m: [0,0,1,0, 0,1,0,0, 1,0,1,0, 0,1,1,0] },
+      tone: { wave: "triangle", cut: 2700, q: 1.0, atk: .006, rel: .5, gain: .27, verb: .32 },
+      words: ["the trumpet, bebop over the clave",
+              "the brass, the Manteca riff",
+              "the tenor, the bridge's long answer"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [rotate(4)]][s % 4]
+                    : v === 1 ? [keep(0, 3, 6, 10)]
+                    : [drop(4), transpose(-3)]),
+    },
+
+    // DESCARGA — Havana 1957. Cachao's Panart jam sessions — the
+    // article names 1957's "Chanchullo", composed by Israel "Cachao"
+    // López, WHO ORGANIZED THE SESSION, which is the genre in one
+    // clause: the descarga is the Cuban jam session as a form, son
+    // montuno's vamp held open all night so the soloists can talk.
+    descarga: {
+      label: "Havana 1957", voices: 3, bars: 8, near: "latinjazz",
+      plan: "arc", bpm: 120,
+      // LINEAGE: the article's own origins are son cubano, filin,
+      // rumba and mambo — `son` and `mambo` are anchors, `danzon` is
+      // Cachao's first trade (he and Orestes wrote thousands), and
+      // the two missing are owed by name, rumba's spelling matched
+      // with latinjazz's.
+      parents: { son: 0.35, mambo: 0.25, danzon: 0.15 },
+      wants: ["the afro-cuban rumba", "filin"],
+      instr: ["upright_piano", "trumpet", "tenor_sax"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 0 ? 0 : v === 1 ? 1 : 0),
+      realize: () => "line",
+      part: ["riff", "lead", "counter"],
+      roots: [0, 4, 0, 4], mode: MODES.mixo, scale: SCALES.major,
+      harmony: "cycle",
+      artic: "staccato", maxHold: 2,
+      bassGrid: [1,0,0,1, 0,0,1,0, 0,0,1,0, 0,1,0,0],
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [1,0,1,0, 0,1,0,0, 1,0,1,0, 0,1,0,0],
+             m: [0,0,0,1, 0,0,1,0, 0,0,0,1, 0,0,1,0] },
+      fill: { p: [1,0,1,0, 1,1,0,0, 1,0,1,1, 0,1,1,0] },
+      tone: { wave: "triangle", cut: 2500, q: 1.0, atk: .006, rel: .5, gain: .27, verb: .3 },
+      words: ["the piano, the montuno that never closes",
+              "the trumpet, taking a chorus",
+              "the tenor, waiting its turn"],
+      word: (v, s) => (v === 0 ? [keep(0, 3, 6, 10)]
+                    : v === 1 ? [[], [fill(2)], [rotate(3)], [transpose(2)]][s % 4]
+                    : [drop(6), transpose(-3)]),
+    },
+
+    // CAPE JAZZ — Cape Town 1974. Abdullah Ibrahim (Dollar Brand),
+    // "Mannenberg", recorded 1974 with Rashid Vally producing — the
+    // article files the song as Cape jazz itself, and the genre's own
+    // article says Cape Town, late 1950s, with marabi in its topics
+    // list. A hymn-simple two-chord vamp rolling under saxophone
+    // choruses: American jazz harmony played like a church organ in a
+    // dance hall, and the record apartheid's townships took as an
+    // anthem.
+    capejazz: {
+      label: "Cape Town 1974", voices: 3, bars: 8, near: "ethiojazz",
+      plan: "arc", bpm: 100,
+      // LINEAGE: `marabi` (Johannesburg 1935) is the cyclical
+      // three-chord shebeen music this row's vamp descends from —
+      // the Johannesburg-vs-Cape split the round DECLINED to blur
+      // (see the header); `jazz` is Ibrahim's own schooling (the
+      // article lists him bebop first); `mbaqanga` the township
+      // groove alongside. The Cape's own carnival beat is the want.
+      parents: { marabi: 0.4, jazz: 0.25, mbaqanga: 0.1 },
+      wants: ["the ghoema beat"],
+      instr: ["upright_piano", "alto_sax", "tenor_sax"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 0 ? -1 : 0),
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["riff", "lead", "counter"],
+      roots: [0, 3, 4, 3], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      harmony: "cycle",
+      artic: "legato", maxHold: 3, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      orn: { pass: 0.2, grace: 0.2 },
+      tone: { wave: "triangle", cut: 2300, q: 0.9, atk: .01, rel: .8, gain: .27, verb: .38 },
+      words: ["the piano, the two chords that hold the town",
+              "the alto, the long unhurried sermon",
+              "the tenor, agreeing behind it"],
+      word: (v, s) => (v === 0 ? [keep(0, 4, 8, 12)]
+                    : v === 1 ? [[], [fill(2)], [transpose(2)], [rotate(2)]][s % 4]
+                    : [drop(6)]),
+    },
+
+    // TRAD JAZZ — London 1954. The Chris Barber Band, New Orleans
+    // Joys (Decca): the British trad revival's breakthrough record —
+    // Barber's band formed that year when Ken Colyer moved on, and
+    // the album included "Rock Island Line", performed by Lonnie
+    // Donegan, WHICH IS THE SKIFFLE INTERVAL ITSELF: `skiffle`
+    // (London 1956) has wanted "trad jazz revival" by name since its
+    // lineage was written, and it takes this row as a parent today —
+    // the debt was always this specific band, this specific record.
+    tradjazz: {
+      label: "London 1954", voices: 3, bars: 8, near: "skiffle",
+      plan: "song", bpm: 132,
+      // LINEAGE: `neworleans` (New Orleans 1923) at dominant weight —
+      // the revival is that record shelf replayed note-for-loving-
+      // note; `musichall` is the British room it was replayed in.
+      parents: { neworleans: 0.55, musichall: 0.15 },
+      wants: [],
+      instr: ["trumpet", "clarinet", "trombone"],
+      drumkit: "acoustic",
+      swing: 0.28,
+      entry: v => v, reg: v => (v === 1 ? 1 : v === 2 ? -1 : 0),
+      realize: () => "line",
+      part: ["lead", "counter", "counter"],
+      roots: [0, 0, 3, 0, 4, 4, 0, 0], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "walk",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             r: [1,0,0,1, 1,0,0,1, 1,0,0,1, 1,0,0,1] },
+      orn: { pass: 0.25, grace: 0.2 },
+      tone: { wave: "triangle", cut: 2600, q: 1.0, atk: .006, rel: .5, gain: .27, verb: .3 },
+      words: ["the trumpet, the lead of the front line",
+              "the clarinet, weaving over it",
+              "the trombone, tailgating under"],
+      word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [reverse()]][s % 4]
+                    : v === 1 ? [fill(1), transpose(5)]
+                    : [drop(4), transpose(-7)]),
+    },
+
+    // INDO JAZZ — London 1966. The Joe Harriott-John Mayer double
+    // quintet, Indo-Jazz Suite (Atlantic, 1966): five jazz musicians
+    // and five Indian classical musicians playing Mayer's raga forms
+    // at once — the article on Harriott calls it an early attempt at
+    // building on music from diverse traditions, and the genre has
+    // its own article (Indo jazz, mid-1950s origins). The Jamaican-
+    // born altoist's London band over sitar, tabla and tambura: a
+    // modal jazz whose mode is a raga.
+    indojazz: {
+      label: "London 1966", voices: 3, bars: 8, near: "modaljazz",
+      plan: "arc", bpm: 116,
+      // LINEAGE: `jazz` is Harriott's half of the bandstand;
+      // `dhrupad` (Delhi 1955) is the catalog's Hindustani anchor and
+      // Mayer's half — the raga discipline, the drone, the long line.
+      parents: { jazz: 0.35, dhrupad: 0.3 },
+      wants: [],
+      instr: ["alto_sax", "sitar", "flute"],
+      drumkit: "jazz",
+      entry: v => v, reg: v => (v === 1 ? 0 : v === 2 ? 1 : 0),
+      realize: () => "line",
+      part: ["lead", "counter", "counter"],
+      harmony: "modal", mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+             r: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             p: [0,0,1,0, 0,1,0,0, 0,0,1,0, 0,1,0,0] },
+      orn: { grace: 0.3, pass: 0.2 },
+      tone: { wave: "triangle", cut: 2300, q: 1.1, atk: .01, rel: .9, gain: .26, verb: .4 },
+      words: ["the alto, bebop phrasing over the drone",
+              "the sitar, the raga answering",
+              "the flute, floating between the two camps"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [rotate(3)], [transpose(2)]][s % 4]
+                    : v === 1 ? [[drop(2)], [drop(2), rotate(4)]][s % 2]
+                    : [drop(8)]),
+    },
+
+    // JAPANESE JAZZ — Tokyo 1974. The Tsuyoshi Yamamoto Trio,
+    // Midnight Sugar (Three Blind Mice): a slow blues cut direct to
+    // audiophile tape for the label founded in June 1970 as a
+    // showcase for Japan's emerging jazz players — the article's own
+    // sentence — at the peak of the kissa decade, when Tokyo's jazz
+    // cafés were the densest listening culture the music had
+    // anywhere. The genre's article is Japanese jazz; the row is the
+    // trio's reading of it: piano deep in the keys, brushes, a walk.
+    japanjazz: {
+      label: "Tokyo 1974", voices: 2, bars: 8, near: "jazz",
+      plan: "song", bpm: 76,
+      // LINEAGE: `jazz` at dominant weight — the idiom is bebop's
+      // ballad book, mastered from records an ocean away; `blues` is
+      // what Midnight Sugar literally is, twelve bars at midnight.
+      parents: { jazz: 0.5, blues: 0.25 },
+      wants: ["the jazz kissa"],
+      instr: ["yamaha_grand_piano", "vibraphone"],
+      drumkit: "brush",
+      swing: 0.4,
+      entry: v => v * 2, reg: v => (v === 0 ? 0 : 1),
+      realize: () => "line",
+      part: ["lead", "counter"],
+      // the twelve bars themselves, blues' own cycle — the record is a
+      // slow blues and the row says so with the parent's exact roots.
+      roots: [0,0,0,0, 3,3,0,0, 4,3,0,4], scale: BLUES, harmony: "cycle",
+      artic: "legato", maxHold: 3, bassStyle: "walk",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             r: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      orn: { approach: 0.3, grace: 0.25 },
+      tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .008, rel: .9, gain: .27, verb: .35 },
+      words: ["the piano, a blues hit hard and slow",
+              "the vibraphone, late-night answers"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(-2)], [rotate(2)]][s % 4]
+                    : [drop(6)]),
+    },
+
+    // NORDIC JAZZ — Oslo 1970. The Jan Garbarek Quartet, Afric
+    // Pepperbird, recorded 22-23 September 1970 at Bendiksen Studio,
+    // Oslo — ECM 1007, Manfred Eicher producing: the session that
+    // made the label's northern sound a place on the jazz map. The
+    // genre's own article (Nordic jazz) names jazz, Nordic folk music
+    // and modal jazz as its origins; the row is the tone — a saxophone
+    // with all the vibrato frozen out of it, in a room recorded so
+    // honestly the silence is a member of the band.
+    nordicjazz: {
+      label: "Oslo 1970", voices: 2, bars: 8, near: "modaljazz",
+      plan: "arc", bpm: 88,
+      // LINEAGE: `modaljazz` (New York 1959) is the article's own
+      // named origin and the harmonic floor; the two the article
+      // names that the catalog lacks are owed BY NAME — Ornette's
+      // free jazz (Garbarek's quartet was playing his language) and
+      // the folk tone. This is the round's deliberate reopening of a
+      // US debt: the ledger, not a guess, now asks for Ornette.
+      parents: { modaljazz: 0.4 },
+      wants: ["free jazz", "nordic folk song"],
+      instr: ["tenor_sax", "bowed_glass"],
+      drumkit: "brush",
+      entry: v => v * 2, reg: v => (v === 0 ? 0 : -1),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad"],
+      harmony: "modal", mode: MODES.dorian, scale: DIATONIC,
+      artic: "tie", maxHold: 5, bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+             r: [1,0,0,0, 0,0,1,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,0] },
+      fx: ["echo"],
+      tone: { wave: "triangle", cut: 2000, q: 1.0, atk: .02, rel: 1.6, gain: .25, verb: .6 },
+      words: ["the tenor, a fjord with a reed in it",
+              "the drone, the room saying nothing back"],
+      word: (v, s) => (v === 0 ? [[], [spread(2)], [transpose(2)], [reverse()]][s % 4]
+                    : [drop(10)]),
+    },
+
+    // SKOKIAAN — Bulawayo 1947. August Musarurwa's "Skokiaan", cut by
+    // the African Dance Band of the Cold Storage Commission of
+    // Southern Rhodesia (Gallotone): a sax-band tune in the
+    // tsaba-tsaba style the article says SUCCEEDED MARABI, named for
+    // the illegal shebeen liquor, and later carried around the world
+    // by everyone from Bulawayo to Satchmo. THE WINSTONS RULING: the
+    // honest row is the record — tsaba-tsaba has no article of its
+    // own in this ZIM and the record is as datable as mbube — and
+    // Musarurwa's own later band was named the Bulawayo Sweet Rhythm
+    // Band, which settles the dot.
+    skokiaan: {
+      label: "Bulawayo 1947", voices: 3, bars: 8, near: "kwela",
+      plan: "song", bpm: 138,
+      // LINEAGE: `marabi` (Johannesburg 1935) is the cyclic harmony
+      // tsaba-tsaba grew straight out of — the article's own verb —
+      // and `swing` (Kansas City 1938) is the big-band instrumentation
+      // the Cold Storage Commission's band wore it in.
+      parents: { marabi: 0.45, swing: 0.25 },
+      wants: [],
+      instr: ["alto_sax", "brass_section", "banjo"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 1 ? -1 : v === 2 ? 0 : 0),
+      realize: () => "line",
+      part: ["lead", "riff", "riff"],
+      roots: [0, 3, 4, 0], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2500, q: 1.0, atk: .006, rel: .5, gain: .27, verb: .3 },
+      words: ["the alto, the tune everybody whistled for fifty years",
+              "the brass, riffing the answer",
+              "the banjo, four to the bar"],
+      word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [transpose(2)]][s % 4]
+                    : v === 1 ? [drop(2), transpose(-3)]
+                    : [keep(0, 4, 8, 12)]),
+    },
   };
 
   // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane. `p` says "Ghost perc"
@@ -15847,7 +16528,13 @@
                 // triphop and chopped with a hand in the loop, because a
                 // clavinet vamp, a sung hook over a loop and a pitch wheel
                 // dragged by a wrist are hands, whatever the decks say.
-                "blockparty", "triphop", "chopped", "footwork", "gqom"]],
+                "blockparty", "triphop", "chopped", "footwork", "gqom",
+                // ...and the goth-and-globe round's one (2026-08-30), on
+                // the deal every member above signed: `club` has NO
+                // family fallback, so `witchhouse` is named in DYNAMICS
+                // below — a hand in the loop, chopped's own wrist an
+                // octave darker.
+                "witchhouse"]],
     ["soul",   ["doowop", "motown", "isley", "funk", "disco", "gospel", "rnb",
                 "jodeci", "clubpop", "retrofunkpop", "boyband", "darkrnb",
                 "blueeyedsoul",
@@ -15935,7 +16622,16 @@
                 // (sabbath, nwobhm, thrash) lands HERE beside deathmetal,
                 // which waited twenty years for its own parents.
                 "garagerock", "psychrock", "velvets", "progrock", "sabbath",
-                "nwobhm", "thrash"]],
+                "nwobhm", "thrash",
+                // ...and the goth-and-globe round's five (2026-08-30):
+                // an amplifier and a rhythm section five more times —
+                // Pomona 1982, London 1982, Rennes 1979, York 1981 and
+                // Halifax 1991, the goth wing seated beside gothicrock
+                // and postpunk, its own two doors. `sisters` is a drum
+                // MACHINE in a band family and disagrees with the
+                // family's hand, so it takes a DYNAMICS row below.
+                "deathrock", "batcave", "coldwave", "sisters",
+                "gothicmetal"]],
     ["studio", ["beatles", "steely", "toto", "kraftwerk", "eurythmics",
                 "synthpop", "citypop", "merseybeat", "psychpop", "motorik",
                 "roboticpop", "confessionalpop",
@@ -15986,7 +16682,12 @@
                 // `dreampop` files where its own child shoegaze already
                 // sits — guitar as weather is texture-first, the
                 // cluster's definition.
-                "dreampop"]],
+                "dreampop",
+                // ...and the goth-and-globe round's one (2026-08-30):
+                // `dungeonsynth` is sustained texture with no backbeat —
+                // one synthesizer down a stone corridor — filed beside
+                // berlinschool, its own declared parent.
+                "dungeonsynth"]],
     // the pre-rock traditions, and the two ancestors that joined them are
     // exactly that: Buenos Aires 1935, Nashville 1945, New York 1945,
     // London 1956. Kling Klang is `studio` and not `club` for the same kind of
@@ -16086,7 +16787,20 @@
                 // ...and the forward half's two 1940s country rooms
                 // (2026-08-30): a barroom band and a dance-hall string
                 // band with horns — pre-rock traditions on their face.
-                "honkytonk", "westernswing"]],
+                "honkytonk", "westernswing",
+                // ...AND NINE ON 2026-08-30, the goth-and-globe round:
+                // jazz given back its geography, and every row is people
+                // playing acoustic instruments at each other — a Paris
+                // string quintet with no drummer, Gillespie's band with
+                // a conga in it, a Havana jam session, Ibrahim's Cape
+                // hymn-vamp, the Barber band's front line, a double
+                // quintet of two traditions, a Tokyo piano trio, an Oslo
+                // quartet recorded honestly, and a Bulawayo sax band.
+                // `nordicjazz` disagrees with the family's backbeat-era
+                // stress and takes a DYNAMICS row below.
+                "gypsyjazz", "latinjazz", "descarga", "capejazz",
+                "tradjazz", "indojazz", "japanjazz", "nordicjazz",
+                "skokiaan"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.
@@ -16449,6 +17163,26 @@
     // the chant's own numbers, three centuries before Rome 600's own row
     // was practice.
     gagaku:       { stress: 0.06, phrase: 0.88, touch: { t: 0.05,  v: 0.5 } },
+    // THE GOTH-AND-GLOBE ROUND'S THREE (2026-08-30). Thirteen of the
+    // sixteen new anchors take their family row unchanged — the table's
+    // own law — and these are the three that measurably disagree:
+    //
+    // witchhouse is `club`'s newest member and the family has no
+    // fallback, so it is named per the law. It sits with `chopped`,
+    // its own dominant parent — the drag IS a hand — but tighter and
+    // quieter: a laptop's wrist, not a turntable's.
+    witchhouse: { stress: 0.22, phrase: 0.3,  touch: { t: 0.045, v: 0.55 } },
+    // sisters is a drum MACHINE in the band family: Doktor Avalanche
+    // does not lean, and `band`'s 0.95-velocity human hand would be a
+    // costume on it. It sits near ebm's numbers — the same years, the
+    // same refusal — with a little more phrase because there is a song
+    // on top.
+    sisters:    { stress: 0.35, phrase: 0.25, touch: { t: 0.012, v: 0.35 } },
+    // nordicjazz disagrees with roots' backbeat-era 0.45 the way the
+    // old-world soloists do, and further: the Bendiksen room's whole
+    // aesthetic is rubato over a pulse barely stated, so the phrase
+    // carries nearly everything and the hand is jazz's own loose one.
+    nordicjazz: { stress: 0.18, phrase: 0.8,  touch: { t: 0.07,  v: 0.7 } },
   };
   // NO SILENT DEFAULT (the compose.js law, one tier down): a genre resolves to
   // its own row or to its family's, and `null` is a DECISION rather than an

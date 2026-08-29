@@ -150,6 +150,25 @@
     "Berlin": [52.52, 13.40], "Boston": [42.36, -71.06],
     "Bristol": [51.45, -2.59], "Bronx": [40.84, -73.87],
     "Buenos Aires": [-34.60, -58.38],
+    /* NINE MORE ON 2026-08-30, the goth-and-globe round: the goth
+       family tree (Pomona, Rennes, Notodden, Traverse City, Halifax,
+       York) and jazz's geography (Cape Town, Oslo, Bulawayo) — the
+       first dots in Zimbabwe and Norway, and the map's southernmost
+       city. */
+    "Bulawayo": [-20.15, 28.58], "Cape Town": [-33.93, 18.42],
+    "Halifax": [53.72, -1.86],
+    "Notodden": [59.56, 9.26], "Oslo": [59.91, 10.75],
+    "Pomona": [34.06, -117.76], "Rennes": [48.11, -1.68],
+    "Traverse City": [44.76, -85.62], "York": [53.96, -1.08],
+    /* NOT LEEDS, AND MEASURED: the Sisters of Mercy are a Leeds band
+       and the round drafted "Leeds 1985" — the dot lands 5.8 CSS px
+       from Halifax at the Britain arc, under G10's 8.5 px floor, and
+       the two are sibling towns WITHIN cannot relate (the Southall
+       situation exactly). The anchor took the band's first datable
+       performance instead — Alcuin College, York, 16 February 1981,
+       the show the band itself celebrates — the Workington-not-
+       Birmingham ruling replayed. This note is here so nobody
+       re-derives the attempt. */
     "Cairo": [30.04, 31.24], "Chandigarh": [30.73, 76.78],
     "Chapel Hill": [35.91, -79.06], "Charlotte": [35.23, -80.84],
     "Chennai": [13.08, 80.27],
@@ -574,6 +593,22 @@
     doom:           { place: "Stockholm", year: 1986 },
     jpop:           { place: "Tokyo", year: 1999 },
     dunstaple:      { place: "London", year: 1420 },
+    deathrock:      { place: "Pomona", year: 1982 },
+    batcave:        { place: "London", year: 1982 },
+    coldwave:       { place: "Rennes", year: 1979 },
+    sisters:        { place: "York", year: 1981 },
+    gothicmetal:    { place: "Halifax", year: 1991 },
+    dungeonsynth:   { place: "Notodden", year: 1994 },
+    witchhouse:     { place: "Traverse City", year: 2010 },
+    gypsyjazz:      { place: "Paris", year: 1934 },
+    latinjazz:      { place: "New York", year: 1947 },
+    descarga:       { place: "Havana", year: 1957 },
+    capejazz:       { place: "Cape Town", year: 1974 },
+    tradjazz:       { place: "London", year: 1954 },
+    indojazz:       { place: "London", year: 1966 },
+    japanjazz:      { place: "Tokyo", year: 1974 },
+    nordicjazz:     { place: "Oslo", year: 1970 },
+    skokiaan:       { place: "Bulawayo", year: 1947 },
   };
   /* WHEN:END */
 
@@ -655,7 +690,12 @@
                "Delphi", "Hohle Fels", "Tralles",
                // ...and the forward debts' one (2026-08-30): Stockholm,
                // plain European geography, the doom row's own city.
-               "Stockholm"],
+               "Stockholm",
+               // ...and the goth-and-globe round's five (2026-08-30):
+               // Rennes, York, Halifax, Notodden and Oslo — plain
+               // European geography, the goth wing's towns and the
+               // first Norwegian dots on the map.
+               "Halifax", "Notodden", "Oslo", "Rennes", "York"],
     "North America": ["Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
                       "Chicago", "Cincinnati", "Cleveland", "Detroit",
                       "Greenwich Village", "Harlem", "Clarksdale", "Kansas City", "Lafayette",
@@ -673,7 +713,11 @@
                       "Bronx", "Houston", "South Carolina", "Washington",
                       // ...and the forward debts' two (2026-08-30): the
                       // 1940s' missing Texas and Oklahoma country rooms.
-                      "Fort Worth", "Tulsa"],
+                      "Fort Worth", "Tulsa",
+                      // ...and the goth-and-globe round's two (2026-08-30):
+                      // Pomona (deathrock's LA County town, the Kinks rule)
+                      // and Traverse City, Michigan (Salem's own).
+                      "Pomona", "Traverse City"],
     // Mexico is here and not in North America, which is a choice and is the
     // one Garland's own volumes make: the musical basin is Ibero-American,
     // and a Sinaloan banda has more to say to a Colombian cumbia than to a
@@ -692,7 +736,11 @@
     // volume 1 and belongs to it.
     "Africa": ["Abidjan", "Accra", "Addis Ababa", "Aksum", "Bamako",
                "Douala", "Durban", "Freetown", "Johannesburg", "Kinshasa",
-               "Lagos", "Luanda", "Nairobi"],
+               "Lagos", "Luanda", "Nairobi",
+               // ...and the goth-and-globe round's two (2026-08-30):
+               // Bulawayo (skokiaan, the first Zimbabwean dot) and Cape
+               // Town (capejazz), the map's southernmost city.
+               "Bulawayo", "Cape Town"],
     // Jiahu (2026-08-30) is the region's oldest dot by seven millennia —
     // a Neolithic site on the Huai River plain, Garland's East Asia volume
     // opens with exactly these flutes.

@@ -617,6 +617,17 @@ function g18() {
          `#atlasIndexRows`, for `data-kind`, and for a real `.nu-kind` span,
          and all three are true of the cell in its new column. What moved is
          asserted in G23, which owns the row's shape.
+         REWRITTEN AGAIN 2026-08-30 — Paul: *"In the genre list get rid of the
+         Wikipedia link but leave the text. Put the link in a new icon on the
+         right that isn't underlined."* The link is the ↗ mark (`a.nu-ixgo`)
+         in a fourth column now, and the genre word is plain text in the
+         plate. The three questions survive verbatim — a wikipedia href in
+         `#atlasIndexRows`, `data-kind`, a real `.nu-kind` span — but the
+         href and the kind live on the MARK while the `.nu-kind` span stayed
+         with the WORD (it is a fact about the name, not about the link), so
+         `saidOut` follows the span to the mark's sibling word. It read
+         `[...querySelectorAll("#atlasIndexRows a.nu-ixw")]` and
+         `x.querySelector(".nu-kind")`.
        · "the wiki table shipped (191 links)" — the 191 WAS TYPED and went
          stale by a round: measured 2026-08-29 the table holds 205 titles,
          because the genre catalogue is another round's file and it grew. What
@@ -628,7 +639,7 @@ function g18() {
     const W = window.NuWiki;
     const a = document.querySelector(
       "#atlasIndexRows a[href^='https://en.wikipedia.org/']");
-    const kinds = [...document.querySelectorAll("#atlasIndexRows a.nu-ixw")]
+    const kinds = [...document.querySelectorAll("#atlasIndexRows a.nu-ixgo")]
       .filter((x) => x.dataset.kind && x.dataset.kind !== "genre");
     return { table: !!W, links: W ? Object.keys(W.WIKI).length : 0,
              roles: W ? ["simple", "solo", "vocal", "backing", "riff", "pad"]
@@ -637,7 +648,8 @@ function g18() {
              inApp: !!(a && a.closest("#app")),
              kind: a ? a.dataset.kind : null,
              notGenre: kinds.length,
-             saidOut: kinds.filter((x) => x.querySelector(".nu-kind")).length,
+             saidOut: kinds.filter((x) =>
+               x.closest("li").querySelector(".nu-ixw .nu-kind")).length,
              inDom: document.querySelectorAll(
                "a[href^='https://en.wikipedia.org/']").length };
   });
@@ -1890,8 +1902,14 @@ function g18() {
                .map((r) => r.getBoundingClientRect().height)),
              hscroll: doc.scrollWidth - doc.clientWidth,
              /* ---- ONE GENRE WORD PER ROW, AND IT IS THE LINK (2026-08-29)
-                The round's whole claim, read off the rendered page. THREE
-                facts, none of them a count:
+                REWRITTEN 2026-08-30 — Paul: *"In the genre list get rid of
+                the Wikipedia link but leave the text. Put the link in a new
+                icon on the right that isn't underlined."* The heading's
+                second clause is REVERSED: the word is NOT the link any more,
+                it is plain text ON THE PLATE — a linked row's `.nu-ixw` must
+                be a SPAN inside the `.nu-ixrow` button (tapping the name
+                plays; the row got easier to play, which is the point), and
+                zero `a.nu-ixw` may remain. The rest survives word for word:
                   · every <li> holds EXACTLY ONE genre cell, and no <a> is
                     nested in a <button> or the other way round — the invalid
                     markup this shape exists to avoid;
@@ -1899,13 +1917,14 @@ function g18() {
                     underscores spent, plus the ` · the <kind>` span when the
                     article is not a genre. Typed anywhere, invented anywhere,
                     and this fails: extraction is never by hand;
-                  · a REFUSED row's word is the row's OWN KEY. It was an em
-                    dash in a fourth column; a dash in the genre column would
-                    be a row with no name at all, so the check is that the
-                    eight say their key and not that they say nothing. */
+                  · a REFUSED row's word is the row's OWN KEY, and it stays
+                    the button's SIBLING — its data-why overlay must not both
+                    explain and play on one tap. */
              one: (() => {
                const W = window.NuWiki, o = { rows: 0, cells: [], nested: 0,
-                                              wrong: [], slugs: [] };
+                                              wrong: [], slugs: [],
+                                              aWords: document.querySelectorAll(
+                                                "#atlasIndexRows a.nu-ixw").length };
                o.nested = document.querySelectorAll(
                  "#atlasIndexRows button a, #atlasIndexRows a button").length;
                for (const li of document.querySelectorAll("#atlasIndexRows li")) {
@@ -1920,11 +1939,18 @@ function g18() {
                    if (c.textContent !== want)
                      o.wrong.push(gk + ": " + JSON.stringify(c.textContent) +
                                   " want " + JSON.stringify(want));
+                   if (c.tagName !== "SPAN" || !c.closest(".nu-ixrow"))
+                     o.wrong.push(gk + ": word is " + c.tagName +
+                                  (c.closest(".nu-ixrow") ? " in" : " OUTSIDE") +
+                                  " the plate — it must be plate a tap plays");
                  } else {
                    o.slugs.push(gk);
                    if (c.textContent !== gk)
                      o.wrong.push(gk + ": refused row says " +
                                   JSON.stringify(c.textContent) + ", not its key");
+                   if (c.closest(".nu-ixrow"))
+                     o.wrong.push(gk + ": a refusal inside the plate would " +
+                                  "explain and play on one tap");
                  }
                }
                return o;
@@ -1936,16 +1962,43 @@ function g18() {
                 or one built with a different escaping of an `&` or an accent,
                 fails here. The rows with NO link are counted too, because "a
                 row with no link shows no link" is half the promise and a
-                silent blank is the other half of the failure. */
+                silent blank is the other half of the failure.
+                REWRITTEN 2026-08-30 — the link is the ↗ MARK now (Paul: "Put
+                the link in a new icon on the right that isn't underlined").
+                It read `const a = li.querySelector("a.nu-ixw")`; the href
+                moved to `a.nu-ixgo` and the mark's whole anatomy is asserted
+                where the anchor's was:
+                  · the glyph is ↗ and nothing else — a mark, not a word;
+                  · NOT underlined, read off the RENDERED page
+                    (getComputedStyle, memory: test the artifact) because the
+                    base `a` rule underlines and a stylesheet regression here
+                    would be invisible to a DOM-only check;
+                  · `data-kind` rides on it, and its aria-label is the word +
+                    its kind + " on Wikipedia" — the content is one arrow, so
+                    the label must carry the whole name;
+                  · a REFUSED row has NO mark AT ALL — absent, not disabled:
+                    a grey arrow with nowhere to go is the silent grey this
+                    page legislates against. */
              wiki: (() => {
                const W = window.NuWiki, o = { links: 0, bad: [], no: 0, why: 0 };
                for (const li of document.querySelectorAll("#atlasIndexRows li")) {
                  const gk = li.dataset.gk;
-                 const a = li.querySelector("a.nu-ixw");
+                 const a = li.querySelector("a.nu-ixgo");
                  const n = li.querySelector(".nu-ixw-no");
                  if (a) {
                    o.links++;
                    if (a.getAttribute("href") !== W.url(gk)) o.bad.push(gk);
+                   if (a.textContent !== "↗")
+                     o.bad.push(gk + ": mark says " + JSON.stringify(a.textContent));
+                   if (getComputedStyle(a).textDecorationLine !== "none")
+                     o.bad.push(gk + ": the mark is underlined");
+                   const w = W.WIKI[gk], title = w.title.replace(/_/g, " ")
+                     + (w.kind !== "genre" ? " · the " + w.kind : "");
+                   if (a.dataset.kind !== w.kind)
+                     o.bad.push(gk + ": data-kind " + a.dataset.kind);
+                   if (a.getAttribute("aria-label") !== title + " on Wikipedia")
+                     o.bad.push(gk + ": label " + a.getAttribute("aria-label"));
+                   if (n) o.bad.push(gk + ": a mark AND a refusal on one row");
                  } else if (n) {
                    o.no++;
                    if ((n.dataset.why || "").length > 10) o.why++;
@@ -1968,9 +2021,10 @@ function g18() {
      different speeds and atlas.gate.js G2 is the gate that owns that gap. */
   check(!idx.wiki.bad.length && idx.wiki.links + idx.wiki.no === idx.n
         && idx.wiki.why === idx.wiki.no,
-    "G23 · the article column is wiki.js and nothing else: " + idx.wiki.links +
-    " hrefs, all === NuWiki.url(row), + " + idx.wiki.no + " refused with a " +
-    "reason on each (" + idx.wiki.why + ") = " + idx.n + " rows · wiki.js " +
+    "G23 · the article mark is wiki.js and nothing else: " + idx.wiki.links +
+    " ↗ anchors, href === NuWiki.url(row), data-kind + full aria-label, not " +
+    "underlined, + " + idx.wiki.no + " refused with a reason and NO mark (" +
+    idx.wiki.why + ") = " + idx.n + " rows · wiki.js " +
     "holds " + idx.wiki.table + " titles" +
     (idx.wiki.bad.length ? " · BAD " + JSON.stringify(idx.wiki.bad.slice(0, 4)) : ""));
   /* EVERY GENRE THE ATLAS HOLDS, AND THE CLAIM IS SAID IN THE ATLAS'S OWN
@@ -2008,11 +2062,17 @@ function g18() {
      copy is what pushed a row onto two lines. The key is off the page; the
      link stands in the genre column. Asserted as a DERIVATION and not as a
      count: every word must equal what wiki.js says, or be the row's own key
-     where wiki.js says nothing. */
-  check(!idx.one.cells.length && !idx.one.nested && !idx.one.wrong.length,
-    "G23 · ONE genre word per row and it is the link: " + idx.one.rows +
+     where wiki.js says nothing.
+     ("AND IT IS THE LINK" REVERSED 2026-08-30 — Paul: "get rid of the
+     Wikipedia link but leave the text". The word is plain plate text now,
+     `aWords` counts any anchor still wearing .nu-ixw and must be zero; the
+     collector above owns the rest of the rewrite.) */
+  check(!idx.one.cells.length && !idx.one.nested && !idx.one.wrong.length
+        && !idx.one.aWords,
+    "G23 · ONE genre word per row and it is PLATE, not a link: " + idx.one.rows +
     " rows, one .nu-ixw each, " + idx.one.nested + " <a> nested in a <button> " +
-    "(or the reverse), every linked word === NuWiki title + its kind and every " +
+    "(or the reverse), " + idx.one.aWords + " words still anchors, every " +
+    "linked word === NuWiki title + its kind and every " +
     "one of the " + idx.one.slugs.length + " refusals saying its own key " +
     JSON.stringify(idx.one.slugs) +
     (idx.one.cells.length ? " · CELLS " + JSON.stringify(idx.one.cells.slice(0, 4)) : "") +
@@ -2026,6 +2086,16 @@ function g18() {
      ceiling are both asserted — 44 <= h <= 46 — because a row that shrank
      under the thumb target would fail the opposite way and pass a check that
      only looked up. Nothing may scroll sideways at any of them. */
+  /* WHAT IS A THUMB CHANGED HANDS 2026-08-30 (Paul: "Put the link in a new
+     icon on the right"). It read `genre: +Math.min(...a).toFixed(1)` over the
+     `.nu-ixw` heights with `r.genre < 44` in the filter — the word was its
+     own 44px anchor then. The word is plate text now (its target is the
+     `.nu-ixrow` already asserted at `btn`), and the 44px control this round
+     has to hold is the ↗ MARK: min width AND height over every `.nu-ixgo`,
+     both axes, because a track that quietly narrowed would keep the height
+     green while the thumb lost the square. `cutT`/`cutP` print the ellipsis
+     bill (titles/places cut) at each width — the icon track is paid for out
+     of the place column, and the price is written down, not discovered. */
   const lines = [];
   for (const w of [320, 375, 390, 430, 1280]) {
     await p.setViewportSize({ width: w, height: 844 });
@@ -2034,21 +2104,28 @@ function g18() {
       const li = [...document.querySelectorAll("#atlasIndexRows li")];
       const box = document.getElementById("atlasIndex");
       const h = li.map((n) => n.getBoundingClientRect().height);
-      const a = li.map((n) => n.querySelector(".nu-ixw").getBoundingClientRect().height);
       const b = li.map((n) => n.querySelector(".nu-ixrow").getBoundingClientRect().height);
+      const go = li.map((n) => n.querySelector(".nu-ixgo")).filter(Boolean)
+        .map((n) => n.getBoundingClientRect());
+      const cut = (q) => li.filter((n) => { const c = n.querySelector(q);
+        return c && c.scrollWidth > c.clientWidth; }).length;
       return { w, li: [+Math.min(...h).toFixed(1), +Math.max(...h).toFixed(1)],
-               btn: +Math.min(...b).toFixed(1), genre: +Math.min(...a).toFixed(1),
+               btn: +Math.min(...b).toFixed(1),
+               go: [+Math.min(...go.map((r) => r.width)).toFixed(1),
+                    +Math.min(...go.map((r) => r.height)).toFixed(1)],
+               marks: go.length,
+               cutT: cut(".nu-ixw"), cutP: cut(".nu-ixp"),
                list: box.scrollWidth - box.clientWidth,
                page: document.documentElement.scrollWidth
                      - document.documentElement.clientWidth };
     }, w));
   }
   const wide = lines.filter((r) => r.li[0] < 44 || r.li[1] > 46 || r.btn < 44
-                              || r.genre < 44 || r.list || r.page);
+                              || r.go[0] < 44 || r.go[1] < 44 || r.list || r.page);
   check(!wide.length,
     "G23 · …and EVERY row is one line at 320/375/390/430/1280 — 44 <= <li> " +
-    "<= 46, the plate and the link both thumbs, zero sideways scroll: " +
-    JSON.stringify(lines));
+    "<= 46, the plate and the ↗ mark both thumbs (mark in BOTH axes), zero " +
+    "sideways scroll: " + JSON.stringify(lines));
   await p.setViewportSize({ width: 390, height: 844 });
   await p.waitForTimeout(300);
 
@@ -2088,26 +2165,29 @@ function g18() {
     "wears the ring, its second line says " + JSON.stringify(row.gname) +
     " and the list marks " + JSON.stringify(row.cur));
 
-  /* ---- THE SEAM: THE WORD IS A LINK, THE REST OF THE ROW IS THE RECORD
-     (2026-08-29, new) ---------------------------------------------------
-     Paul: *"Replace the slug for genre with the Wikipedia link so everything
-     is on one line."*  That put a LINK and a PLAY BUTTON in the same 44px row
-     — the anchor lying over the plate in the genre column — and nothing on
-     this page covered the boundary between them. It is the one seam this
-     round created, so it is the one thing this round has to prove:
+  /* ---- THE SEAM: THE MARK IS A LINK, THE REST OF THE ROW IS THE RECORD
+     (2026-08-29; REWRITTEN 2026-08-30) -----------------------------------
+     Paul, 2026-08-30: *"In the genre list get rid of the Wikipedia link but
+     leave the text. Put the link in a new icon on the right that isn't
+     underlined."*  The seam MOVED, so the proof moves with it — this block's
+     heading read "THE WORD IS A LINK", its first bullet read "A TAP ON THE
+     WORD DOES NOT START A RECORD", and its first check read "a tap on the
+     WORD is a link and not a record". All three are REVERSED on the word and
+     re-made on the mark:
 
-       · A TAP ON THE WORD DOES NOT START A RECORD. The anchor is the button's
-         SIBLING (ui/atlas.js: an <a> may not nest in a <button>), so a click
-         on it never reaches the delegated handler's `closest(".nu-ixrow")` —
-         and that is asserted rather than assumed, because the day somebody
-         nests the two again this is what fails.
-       · A TAP ON THE ROW STILL DOES, on the SAME row, straight after — so a
-         green half cannot come from a list that has simply stopped working.
-       · AND THE HIT TEST IS READ OFF THE PIXELS, `elementFromPoint` on three
-         points across one row: the word is the anchor, the empty part of the
-         genre column is the plate, the year is the plate's own child. That is
-         what a thumb actually meets, and it is the half a listener-only check
-         would bless while the anchor silently covered the whole column.
+       · A TAP ON THE ↗ MARK DOES NOT START A RECORD. The anchor is the
+         button's SIBLING (ui/atlas.js: an <a> may not nest in a <button>),
+         so a click on it never reaches the delegated handler's
+         `closest(".nu-ixrow")` — asserted rather than assumed, because the
+         day somebody nests the two again this is what fails.
+       · A TAP ON THE WORD NOW PLAYS. The word is plate — that is the point
+         of the round (the row got EASIER to play) — and it is proved by
+         clicking the `.nu-ixw` SPAN ITSELF, not the button around it.
+       · AND THE HIT TEST IS READ OFF THE PIXELS, `elementFromPoint` across
+         one row: the word is the plate's own span, the mark is the anchor,
+         the year is the plate's child. That is what a thumb actually meets,
+         and it is the half a listener-only check would bless while an anchor
+         silently covered the wrong column.
 
      THE NAVIGATION IS CANCELLED IN A CAPTURE LISTENER and not by clicking
      something other than the link: `preventDefault` stops the browser leaving
@@ -2126,30 +2206,34 @@ function g18() {
     li.scrollIntoView({ block: "center" });
     await wait(400);
     const before = window.__nuName();
-    const a = li.querySelector("a.nu-ixw");
+    const a = li.querySelector("a.nu-ixgo");
     a.click();
     await wait(800);
-    const afterWord = window.__nuName();
+    const afterMark = window.__nuName();
     li.scrollIntoView({ block: "center" });
     await wait(300);
-    const r = a.getBoundingClientRect(), box = li.getBoundingClientRect();
-    const at = (x) => { const n = document.elementFromPoint(x, r.top + r.height / 2);
-                        return n ? n.tagName + "." + (n.className || "") : "nothing"; };
-    const hits = { word: at(r.left + 3), gap: at(r.right + 10),
-                   year: at(box.left + (box.width > 200 ? 20 : 14)) };
-    li.querySelector(".nu-ixrow").click();
+    const word = li.querySelector(".nu-ixw");
+    const box = li.getBoundingClientRect();
+    const at = (x, y) => { const n = document.elementFromPoint(x, y);
+                           return n ? n.tagName + "." + (n.className || "") : "nothing"; };
+    const wr = word.getBoundingClientRect(), ar = a.getBoundingClientRect();
+    const hits = { word: at(wr.left + 3, wr.top + wr.height / 2),
+                   mark: at(ar.left + ar.width / 2, ar.top + ar.height / 2),
+                   year: at(box.left + (box.width > 200 ? 20 : 14),
+                            box.top + box.height / 2) };
+    word.click();
     await wait(900);
-    return { before, afterWord, afterRow: window.__nuName(),
+    return { before, afterMark, afterWord: window.__nuName(),
              href: a.getAttribute("href"), hits };
   });
-  check(seam.before === "Kingston 1973" && seam.afterWord === "Kingston 1973",
-    "G23 · a tap on the WORD is a link and not a record — the page was " +
+  check(seam.before === "Kingston 1973" && seam.afterMark === "Kingston 1973",
+    "G23 · a tap on the ↗ MARK is a link and not a record — the page was " +
     JSON.stringify(seam.before) + " and after clicking " + seam.href +
-    " it is still " + JSON.stringify(seam.afterWord));
-  check(seam.afterRow === "Leipzig 1725",
-    "G23 · …and a tap on the SAME row's plate does open its record: " +
-    JSON.stringify(seam.afterRow));
-  check(/^A\./.test(seam.hits.word) && /^BUTTON\.nu-ixrow/.test(seam.hits.gap)
+    " it is still " + JSON.stringify(seam.afterMark));
+  check(seam.afterWord === "Leipzig 1725",
+    "G23 · …and a tap on the WORD ITSELF now opens its record (the reversal " +
+    "this round shipped — the name is plate): " + JSON.stringify(seam.afterWord));
+  check(/^SPAN\.nu-ixw/.test(seam.hits.word) && /^A\.nu-ixgo/.test(seam.hits.mark)
         && /^SPAN\.nu-ixy/.test(seam.hits.year),
     "G23 · …and that is what a THUMB meets, not just what a listener hears — " +
     JSON.stringify(seam.hits));

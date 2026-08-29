@@ -148,10 +148,16 @@ ok("iranpop: 10 rewrites, >= 8 distinct hooks and >= 5 distinct rhythms", () => 
    freezes is what always freezes, the long cell: hohlefels (a bone flute's
    held tone in a cave), hurrian (the contested line held long), dreampop and
    doom (the two forward rows that argue for the drone's band). */
+/* ...AND THE GOTH-AND-GLOBE ROUND ADDED TWO (2026-08-30) — and for once the
+   round PREDICTED its own freezes: its handoff table warned that adopting
+   nordicjazz's held ECM line and witchhouse's chopped-an-octave-darker row
+   "will likely freeze its hook rhythm", and the measurement agreed exactly:
+   those two froze, gypsyjazz and japanjazz (gallop, hang) did not. */
 const FROZEN_RHYTHM = ["ambient", "arabesk", "cemilbey", "chopped", "doom",
                        "dreampop", "drone", "dub", "dubstep", "enka",
                        "gagaku", "gothicrock", "gqom", "hohlefels", "hurrian",
-                       "modaljazz", "psychrock", "satie", "triphop"];
+                       "modaljazz", "nordicjazz", "psychrock", "satie",
+                       "triphop", "witchhouse"];
 ok("catalog: hook rhythm and degrees vary at nearly every anchor", () => {
   let rv = 0, dv = 0, kv = 0; const frozen = [];
   for (const g of ANCHORS) {

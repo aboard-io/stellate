@@ -481,8 +481,39 @@ function sectionEvents(doc, i) {
   // and dunstaple (London 1420, the Old Hall Manuscript, paying dufay's
   // contenance-angloise want). The 2000s stay thin on purpose — 10 rows
   // to the 1990s' 29 — named as the next ask rather than half-paid.
-  ok("G0 the catalog is 297 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 297,
+  // + the SIXTEEN of the goth-and-globe round (Paul, 2026-08-30: "Need
+  // way more gothy genres and way more spread of global jazz. Keep
+  // using Wikipedia to add density."). THE GOTH WING, seven: deathrock
+  // (Pomona 1982, Only Theatre of Pain — Pomona is Rozz Williams's own
+  // town, the Kinks rule, LA 1982 being toto's), batcave (London 1982,
+  // the Dean Street club-night on the zodiak venue ruling, paying
+  // gothicrock's forward-pointing want by arrival), coldwave (Rennes
+  // 1979, Dantzig Twist, paying postpunk's forward want the same way),
+  // sisters (York 1981 — the first DATABLE show; Leeds measured
+  // blocked by Halifax at 5.8px under G10's 8.5 floor, the
+  // Workington-not-Birmingham ruling replayed, noted in atlas.js),
+  // gothicmetal (Halifax 1991, Paradise Lost's Gothic, the record that
+  // named it), dungeonsynth (Notodden 1994, Født til å Herske) and
+  // witchhouse (Traverse City 2010, King Night). THE JAZZ GEOGRAPHY,
+  // nine, against a catalog that held ONE non-US jazz dot: gypsyjazz
+  // (Paris 1934), latinjazz (New York 1947, Manteca), descarga (Havana
+  // 1957, Cachao's Panart session), capejazz (Cape Town 1974,
+  // Mannenberg), tradjazz (London 1954, New Orleans Joys — paying
+  // skiffle's "trad jazz revival" BY NAME: Rock Island Line was cut
+  // inside that album), indojazz (London 1966, Indo-Jazz Suite),
+  // japanjazz (Tokyo 1974, Midnight Sugar), nordicjazz (Oslo 1970,
+  // Afric Pepperbird — which deliberately OPENS "free jazz" as a want,
+  // so the ledger asks for Ornette by name) and skokiaan (Bulawayo
+  // 1947, the winstons a-record-is-the-honest-row ruling). EXAMINED
+  // AND DECLINED with reasons at the round's header in genres.js:
+  // darkwave and "township jazz" (umbrellas made of the catalog's own
+  // rows), ethereal wave (its archetype record IS dreampop's anchor),
+  // jazz manouche as a second key (Wikipedia's own filing), and the
+  // five US-history jazz rooms (freejazz, hardbop, cooljazz, fusion,
+  // spiritualjazz) the ask's geography did not cover and the ledger
+  // did not owe.
+  ok("G0 the catalog is 313 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 313,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
