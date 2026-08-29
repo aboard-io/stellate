@@ -250,12 +250,21 @@ const readable = (r) => !!r && r.inside && r.text.length > 0;
      lands. What the MP3 button actually PRODUCES is not this gate's business
      and never was: test/mp3.test.js clicks it, catches the download and
      decodes those bytes back. */
-  is(!exps.find((e) => e.k === "deck.exp.wav").disabled &&
-     !exps.find((e) => e.k === "deck.exp.mid").disabled &&
-     !exps.find((e) => e.k === "deck.exp.mp3").disabled,
-    "D5 · WAV, MIDI and MP3 are LIVE buttons");
-  is(exps.find((e) => e.k === "deck.exp.als").disabled,
-    "D5 · Ableton is a refusal, not a dead control");
+  /* ...AND ABLETON CROSSED IT THE SAME DAY, later the same day. The line
+     above said "it moves again the day the Ableton splice lands", and this is
+     that day: the pair below read "WAV, MIDI and MP3 are LIVE buttons" /
+     "Ableton is a refusal, not a dead control", and the second half is gone
+     because the refusal is. export/als-page.js splices the donor IN THE PAGE
+     — nukernel/export/donor.js carries it in the module graph, nothing is
+     fetched — so all four format cards are buttons and there is no refusal
+     left in this row to assert. The rule these assertions stand for is
+     untouched and is still the loop above: every card is either live or
+     refused with a reason. What the .als button actually PRODUCES is not this
+     gate's business, exactly as with the MP3: test/als-page.browser.js clicks
+     it, catches the download, un-gzips it and holds the bytes to
+     tools/ableton/als-gate.js. */
+  is(FORMATS.every((k) => !exps.find((e) => e.k === k).disabled),
+    "D5 · all four format cards are LIVE buttons — " + JSON.stringify(FORMATS));
 
   // ---- D6 — geometry + shots ----------------------------------------------
   fs.mkdirSync(SHOTS, { recursive: true });

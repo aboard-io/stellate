@@ -3527,16 +3527,56 @@ function exportRow(parent) {
     });
     card.append(b);
   });
-  // ABLETON — REFUSED in-page: tools/ableton/export-als.js is a node CLI
-  // (zlib, fs — its own header says "zero deps (zlib + string XML are built
-  // in)"), so the button prints where the export actually lives.
+  /* ABLETON — LIVE, AND THAT IS A REVERSAL, 2026-08-29. This card was disabled
+     and its reason read: *"exports from the command line today — node
+     tools/ableton/export-als.js --genre <key> --out <file.als>; the in-page
+     splice is engine work"*, over a comment that said the button "prints where
+     the export actually lives" because "tools/ableton/export-als.js is a node
+     CLI (zlib, fs)". Both sentences were true and neither is any more, so they
+     are quoted here rather than deleted — Paul asked "Can I download Ableton
+     yet", and "from the CLI, not the button" was not an answer to it.
+
+     WHAT CLOSED IT, and Paul's own sentence is the design: *"Why is any of it
+     on the server just make it all browser."* So nothing is fetched — not the
+     donor, not from our own origin.
+       · the node half was only ever FOUR CALLS — readFileSync, gunzipSync,
+         gzipSync, writeFileSync. export/als-page.js is that same wrapper with
+         DecompressionStream / CompressionStream / a Blob in their place; the
+         splice is export/als.js, the one file the CLI also imports.
+       · the DONOR travels in the module graph. export/donor-extract.js reads
+         the committed tools/ableton/donor/Generic.als and emits its 55,010
+         gzipped bytes as base64 into export/donor.js (73 KB, DO-NOT-EDIT, the
+         gates-extract/wiki-extract/knobs-extract pattern, with a --check the
+         gate runs). Embedding the GZIP and not the XML is what makes it 73 KB
+         and not 1,030 KB, and it costs no compatibility: writing an .als needs
+         CompressionStream anyway and DecompressionStream shipped beside it.
+       · it is reached by `import("../export/als-page.js")` INSIDE the click,
+         exactly like the WAV and MP3 cards, so a visitor who never exports
+         never loads a byte of the donor.
+     THE SUBTITLE STATES WHAT LANDS IN LIVE, and it changed with the button:
+     "live set · donor-spliced .als" described the format while nothing wrote
+     one. P1 is what the button does — every lane of every box, one track per
+     voice, Session clips in scene order plus the Arrangement — and als-page.js
+     argues why P1 and not P0 (Paul asked for HIS SONG, and P0 is one clip).
+     A song with more boxes than the donor has scenes REFUSES with that
+     sentence; it never hands over a half-right set. */
   exportCard(grid, "ALS", "nu-cap-hand", "Ableton",
-    "live set · donor-spliced .als", (card) => {
+    "live set · one track per voice · scenes are the boxes", (card) => {
     const b = el("button", "download .als");
-    b.type = "button"; b.dataset.k = "deck.exp.als"; b.disabled = true;
-    card.append(b, el("span", "exports from the command line today — " +
-      "node tools/ableton/export-als.js --genre <key> --out <file.als>; " +
-      "the in-page splice is engine work", "nu-why"));
+    b.type = "button"; b.dataset.k = "deck.exp.als";
+    b.addEventListener("click", () => {
+      b.disabled = true; expSay("splicing…");
+      import("../export/als-page.js")
+        .then((m) => m.pressAls(expSay))
+        .then((r) => { handOff(deckFile() + ".als", r.bytes, "application/octet-stream");
+                       expSay("spliced — " + r.tracks + " track" +
+                              (r.tracks === 1 ? "" : "s") + ", " + r.clips +
+                              " clips, " + r.notes + " notes at " + r.bpm +
+                              " bpm (" + (r.bytes.byteLength / 1024).toFixed(0) + " KB)"); })
+        .catch((e) => expSay("the splice failed — " + ((e && e.message) || e)))
+        .finally(() => { b.disabled = false; });
+    });
+    card.append(b);
   });
   parent.append(grid);
   deckSay = el("p", "", "nu-hint");

@@ -15,7 +15,16 @@
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import * as ALS from "../../nukernel/export/als.js";
+// THE FOLD IS NOT HERE ANY MORE, 2026-08-29. Everything between "group the
+// bars into boxes" and "sort each lane" used to be written out below; it is now
+// nukernel/export/score.js `scoreOf`, because the in-page ⤓ button needs the
+// identical arithmetic and a second copy of it in ui/eight.js would be the
+// drift this repo has a law against. What is left in this file is the only part
+// that is genuinely node's: standing a window up under the UMD data tier, and
+// getting a record out of a file or a genre key. The re-exports below keep
+// every old importer of this module working.
+import { scoreOf, midiOfPch, velOfWritten } from "../../nukernel/export/score.js";
+export { midiOfPch, velOfWritten };
 
 const require = createRequire(import.meta.url);
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -72,23 +81,6 @@ export function shimWindow() {
   return W;
 }
 
-/** The exporter's own words for a song. The core takes only this. */
-/** @typedef {{ midi:number, beat:number, dur:number, vel:number }} Note */
-/** @typedef {{ name:string, chair:string, notes:Note[] }} Lane */
-/** @typedef {{ name:string, beat0:number, beats:number, lanes:Lane[] }} Box */
-/** @typedef {{ title:string, bpm:number, grid:boolean, engine:boolean, boxes:Box[] }} Score */
-
-// The inverse of to-engine.js:47's pchOf. csound pch is octave.semitone with the
-// semitone in hundredths: 8 -> 60, 8.05 -> 65, 9 -> 72, 7.11 -> 59.
-export const midiOfPch = (p) => {
-  const o = Math.floor(p + 1e-9);
-  return 60 + (o - 8) * 12 + Math.round((p - o) * 100);
-};
-
-// P0 reads plan.timeline(), whose events carry the WRITTEN velocity 0..9
-// (derive.js songBars). MIDI velocity 1..127 off a 0..9 scale, 9 -> 127.
-export const velOfWritten = (v) => Math.max(1, Math.min(127, Math.round((v == null ? 5 : v) / 9 * 127)));
-
 /**
  * Load a nukernel song and hand back a Score.
  *
@@ -115,7 +107,44 @@ export const velOfWritten = (v) => Math.max(1, Math.min(127, Math.round((v == nu
  * (plan.js:520-527), so writing it as velocity and THEN writing volume
  * envelopes counts the desk twice. The migration is named in the als.js header.
  */
-export async function loadScore({ songPath = null, genre = null, grid = true, engine = true } = {}) {
+export async function loadScore({ songPath = null, genre = null, scorePath = null,
+                                  grid = true, engine = true } = {}) {
+  /* A SCORE CAN ALSO ARRIVE ALREADY FOLDED, 2026-08-29, and it exists for one
+     reason: THE PAGE CANNOT HAND ITS RECORD TO NODE.
+
+     `ui/state.js songJSON()` is lossy for an eight.js record and the gate found
+     it: eight.js `push()` (eight.js:413) writes its compiled sections straight
+     into the live table as `GENRES["lab.eight."+i]` and then adopts with
+     `genres: {}`, so GENRESET is empty by design and the saved JSON names five
+     genre keys whose recipes it does not carry. Re-adopted in node, all five
+     miss and song.js falls back to `simple` — measured: the shipped chant came
+     back as five boxes of "Simple" at 126 bpm instead of the record at 58.
+     That is a real gap in state.js's serialiser and it is not this slice's to
+     fix; what it means here is that "give the CLI the same record" cannot go
+     through a song file.
+
+     So it goes through the SCORE. test/als-page.browser.js takes the page's own
+     `pageScore()` — the exact object the button spliced — and hands it to this
+     CLI, which reads the donor OFF DISK and splices it with the same
+     `alsFromScore`. Byte-identical XML then proves the three things that are
+     actually different between the two ends: the EMBEDDED donor is the
+     committed donor, the splice is one implementation, and the browser's gzip
+     round-trips. It does NOT prove two independent folds agree, and it cannot:
+     since this file's own fold moved to nukernel/export/score.js there is only
+     one fold, which is the point. The fold's own gate is `--genre <key>`, which
+     recompiles from the record and is what als-gate.js Gate 1 has always run.
+
+     Nothing is warmed and nothing is adopted on this path; a Score is already
+     the exporter's whole vocabulary (see nukernel/export/score.js). */
+  if (scorePath) {
+    const { readFile } = await import("node:fs/promises");
+    const sc = JSON.parse(await readFile(scorePath, "utf8"));
+    for (const k of ["bpm", "boxes"]) if (sc[k] == null)
+      throw new Error("not a score: " + scorePath + " has no ." + k);
+    if (!Array.isArray(sc.boxes) || !sc.boxes.length)
+      throw new Error("not a score: " + scorePath + " has no boxes");
+    return { title: scorePath, cast: [], skipped: 0, folded: 0, grid, engine, ...sc };
+  }
   shimWindow();
   const state = await import(new URL("../../nukernel/ui/state.js", import.meta.url));
   const plan  = await import(new URL("../../nukernel/audio/plan.js", import.meta.url));
@@ -145,96 +174,8 @@ export async function loadScore({ songPath = null, genre = null, grid = true, en
   if (grid) state.setRubato(false);
 
   plan.compile();
-  const TL = plan.timeline();
-  if (!TL.length) throw new Error("compile() produced no bars");
-  const cast = engine ? plan.cast() : [];
-
-  const boxes = [];
-  for (const bar of TL) {
-    if (bar.first || !boxes.length)
-      boxes.push({ si: bar.si, name: (bar.si + 1) + " " + labelOf(bar), beat0: bar.beat0, beats: 0, bars: [] });
-    const box = boxes[boxes.length - 1];
-    box.beats += bar.barSteps / 4;
-    box.bars.push(bar);
-  }
-  let skipped = 0, folded = 0;
-  for (const box of boxes) {
-    const lanes = new Map();
-    const put = (key, chair, note) => {
-      let lane = lanes.get(key);
-      if (!lane) lanes.set(key, lane = { name: key, chair, instr: instrOf(key, cast), notes: [] });
-      lane.notes.push(note);
-    };
-    for (const bar of box.bars) {
-      const t0 = bar.beat0 - box.beat0;             // where this bar starts inside its own box
-      // `off` is the position INSIDE the bar in steps, and it is the HUMANIZED
-      // one: derive.js:718-720 warps off and dur through the groove/swing map
-      // before the bar list is built. Four steps to a beat.
-      const at = (e) => t0 + e.off / 4;
-      for (const e of bar.ev) {
-        if (e.kind === "hit") {
-          const midi = ALS.GM_DRUM[e.d];
-          if (midi == null) { skipped++; continue; }
-          // A drum hit carries no written length — the sample decides. A 16th
-          // is the shortest thing that still reads as a bar in Live's editor.
-          put("drums", "drums", { midi, beat: at(e), dur: 0.25, vel: velOfWritten(e.vel) });
-        } else if (e.n != null) {
-          const key = e._seat != null ? "v" + e._seat
-                    : e.kind === "bass" ? "bass" : "v" + (e.v == null ? 0 : e.v);
-          put(key, e.kind === "bass" ? "bass" : (e.part || "line"),
-              { midi: e.n + (e.home || 0), beat: at(e),
-                dur: Math.max(0.03125, (e.dur || 1) / 4), vel: velOfWritten(e.vel) });
-        } else skipped++;
-      }
-    }
-    // v0, v1, … then the unseated bass, then drums: the order Live shows them in.
-    const rank = (n) => (n === "drums" ? 2 : n === "bass" ? 1 : 0);
-    box.lanes = [...lanes.values()].sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name));
-    for (const l of box.lanes) { folded += fitMidi(l); l.notes.sort((a, b) => a.beat - b.beat || a.midi - b.midi); }
-    delete box.bars;
-  }
-  return { title: (genre || songPath || "nukernel"), bpm: state.bpm, grid,
-           engine: !!engine, cast, skipped, folded, boxes };
+  return scoreOf({ timeline: plan.timeline(), cast: engine ? plan.cast() : [],
+                   bpm: state.bpm, grid, engine,
+                   title: (genre || songPath || "nukernel") });
 }
 
-// THE BOX NUMBER IS PART OF THE NAME, and it is not decoration. A four-box song
-// on one genre gives four boxes the same label ("New York 1994" x4), the clip
-// names collide, and gate 1 counted eight clips where it wanted two — which is
-// how this line came to exist, rather than by taste.
-const labelOf = (bar) => (bar.g && (bar.g.label || bar.g.name)) || "box";
-/**
- * Bring a lane inside MIDI 0..127, A WHOLE LINE AT A TIME.
- *
- * This exists because the gate caught it, not because anybody predicted it:
- * `--genre hymn --all` put seat v0 (ahh_choir) at register home +2 over a part
- * written 24..110, which is MIDI 134 — and midiClip was silently clamping it to
- * 127, so five notes in the first clip arrived as a wrong pitch and gate 1's
- * multiset said "want 134, got 127". The engine never had this problem: it
- * works in Hz and csound pch, where 134 is just a high note, and only the
- * export has a 7-bit ceiling.
- *
- * The move is plan.js's own law, applied one layer down — "A WHOLE LINE MOVES,
- * OR THE LINE BREAKS" (plan.js:90): shift the entire lane by whole octaves so
- * the intervals survive. A lane wider than ten octaves cannot fit, and only
- * then does a note move on its own; that has never happened on the 122 anchors.
- */
-function fitMidi(lane) {
-  if (!lane.notes.length) return 0;
-  let moved = 0;
-  const hi = () => Math.max(...lane.notes.map((n) => n.midi));
-  const lo = () => Math.min(...lane.notes.map((n) => n.midi));
-  while (hi() > 127 && lo() - 12 >= 0) { for (const n of lane.notes) n.midi -= 12; moved++; }
-  while (lo() < 0 && hi() + 12 <= 127) { for (const n of lane.notes) n.midi += 12; moved++; }
-  for (const n of lane.notes) {
-    while (n.midi > 127) { n.midi -= 12; moved++; }
-    while (n.midi < 0) { n.midi += 12; moved++; }
-  }
-  return moved;
-}
-
-// The instrument the cast seated in this chair, or nothing when the engine was
-// not warmed and there is no cast to ask.
-const instrOf = (key, cast) => {
-  const seat = cast.find((c) => c.v === key);
-  return (seat && seat.instr) || "";
-};

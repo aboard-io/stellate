@@ -122,7 +122,7 @@ const diffOf = (want, got) => {
   return "sizes " + want.size + " vs " + got.size;
 };
 
-export async function runGates(file, { genre = null, song = null, all = false, grid = true, engine = true } = {}) {
+export async function runGates(file, { genre = null, song = null, score: scorePath = null, all = false, grid = true, engine = true } = {}) {
   const xml = gunzipSync(readFileSync(file)).toString("utf8");
   const donorXml = gunzipSync(readFileSync(new URL("./donor/Generic.als", import.meta.url))).toString("utf8");
   const fail = (g, msg) => { console.error("  FAIL  " + g + " — " + msg); return false; };
@@ -156,7 +156,7 @@ export async function runGates(file, { genre = null, song = null, all = false, g
   }
 
   /* ---- Gate 1 ---------------------------------------------------------- */
-  const score = await loadScore({ genre, songPath: song, grid, engine });
+  const score = await loadScore({ genre, songPath: song, scorePath, grid, engine });
   const donorNames = new Set(tracksOf(donorXml).map((t) => t.name));
   const boxes = all ? score.boxes : score.boxes.slice(0, 1);
   /** Compare a whole document against the recompiled song. Null = agrees. */
@@ -255,8 +255,8 @@ if (direct) {
   const argv = process.argv.slice(2);
   const file = argv.find((a) => !a.startsWith("--"));
   const at = (f) => { const i = argv.indexOf(f); return i < 0 ? null : argv[i + 1]; };
-  if (!file) { console.log("usage: node tools/ableton/als-gate.js <out.als> (--genre <key> | --song <file.json>) [--all] [--rubato] [--no-engine]"); process.exit(2); }
-  runGates(file, { genre: at("--genre"), song: at("--song"), all: argv.includes("--all"),
+  if (!file) { console.log("usage: node tools/ableton/als-gate.js <out.als> (--genre <key> | --song <file.json> | --score <file.json>) [--all] [--rubato] [--no-engine]"); process.exit(2); }
+  runGates(file, { genre: at("--genre"), song: at("--song"), score: at("--score"), all: argv.includes("--all"),
                    grid: !argv.includes("--rubato"), engine: !argv.includes("--no-engine") })
     .then((ok) => {
       // GATE 4 IS THE LAST LINE, whichever way you got here. The CLI prints it

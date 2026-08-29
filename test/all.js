@@ -266,6 +266,20 @@ const GATES = [
   // row and the first non-zero exit is the row's verdict.
   // ...and the .als goes to a per-run path now, because two runners in the same
   // minute writing /tmp/n.als was one gate reading the other's export.
+  /* THE .als BUTTON, IN THE PAGE (2026-08-29). Paul: "Make it in page" and
+     then "Why is any of it on the server just make it all browser" — so the
+     donor is EMBEDDED (nukernel/export/donor.js, derived from the committed
+     .als by donor-extract.js) and the export fetches nothing. This gate drives
+     the real card, un-gzips what the browser handed over, and diffs the
+     DECOMPRESSED XML byte-for-byte against the CLI's for the same record; it
+     also deletes window.CompressionStream and re-clicks, so the refusal path
+     is measured rather than read. Registered here because a gate nobody runs
+     is not a gate — the browser tier is where it belongs, beside pool-ui. */
+  { name: "als-page",   wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/als-page.browser.js"], need: ["test/als-page.browser.js"],
+    covers: ["test/als-page.browser.js", "nukernel/export/als-page.js",
+             "nukernel/export/als.js", "nukernel/export/donor.js",
+             "nukernel/export/donor-extract.js", "nukernel/export/score.js"] },
   { name: "ableton",    wave: 2, kind: "node", steps: [
       ["tools/ableton/export-als.js", "--genre", "boombap", "--out", "@TMP@/n.als"],
       ["tools/ableton/als-gate.js", "@TMP@/n.als", "--genre", "boombap"]],

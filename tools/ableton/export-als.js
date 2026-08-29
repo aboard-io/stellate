@@ -23,11 +23,12 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const DONOR = path.join(HERE, "donor", "Generic.als");
 
 function parseArgs(argv) {
-  const a = { genre: null, song: null, out: null, all: false, grid: true, gate: true, engine: true };
+  const a = { genre: null, song: null, score: null, out: null, all: false, grid: true, gate: true, engine: true };
   for (let i = 0; i < argv.length; i++) {
     const v = argv[i];
     if (v === "--genre") a.genre = argv[++i];
     else if (v === "--song") a.song = argv[++i];
+    else if (v === "--score") a.score = argv[++i];
     else if (v === "--out") a.out = argv[++i];
     else if (v === "--all") a.all = true;
     else if (v === "--rubato") a.grid = false;
@@ -40,7 +41,9 @@ function parseArgs(argv) {
   return a;
 }
 
-const USAGE = `usage: node tools/ableton/export-als.js (--genre <key> | --song <file.json>) --out <file.als>
+const USAGE = `usage: node tools/ableton/export-als.js (--genre <key> | --song <file.json> | --score <file.json>) --out <file.als>
+  --score    splice a Score the PAGE already folded (test/als-page.browser.js
+             hands this the browser button's own output — score-node.mjs says why).
   --all      P1: every lane of every box, session + arrangement + scene names.
              The default is P0: the first box's first lane, one clip.
   --rubato   keep nukernel's tempo map (bars come out fractional in Live).
@@ -49,15 +52,16 @@ const USAGE = `usage: node tools/ableton/export-als.js (--genre <key> | --song <
 
 export async function main(argv) {
   const a = parseArgs(argv);
-  if (a.help || (!a.genre && !a.song) || !a.out) { console.log(USAGE); return a.help ? 0 : 2; }
+  if (a.help || (!a.genre && !a.song && !a.score) || !a.out) { console.log(USAGE); return a.help ? 0 : 2; }
 
-  const score = await loadScore({ genre: a.genre, songPath: a.song, grid: a.grid, engine: a.engine });
+  const score = await loadScore({ genre: a.genre, songPath: a.song, scorePath: a.score,
+                                 grid: a.grid, engine: a.engine });
   const donorXml = gunzipSync(readFileSync(DONOR)).toString("utf8");
   const res = alsFromScore(donorXml, score, { all: a.all });
   writeFileSync(a.out, gzipSync(Buffer.from(res.xml, "utf8")));
 
   console.log("nukernel -> Ableton  ·  " + (a.all ? "P1 (all lanes)" : "P0 (one lane)"));
-  console.log("  song     " + (a.song || a.genre) + "  ·  " + score.bpm + " bpm  ·  " +
+  console.log("  song     " + (a.song || a.genre || a.score) + "  ·  " + score.bpm + " bpm  ·  " +
               score.boxes.length + " boxes");
   // The flag prints its choice on every run, because the alternative is Paul
   // opening a set whose bars are 3.98 beats long and having no idea why.
@@ -79,7 +83,8 @@ export async function main(argv) {
 
   if (a.gate) {
     const { runGates } = await import("./als-gate.js");
-    const ok = await runGates(a.out, { genre: a.genre, song: a.song, all: a.all, grid: a.grid, engine: a.engine });
+    const ok = await runGates(a.out, { genre: a.genre, song: a.song, score: a.score,
+                                      all: a.all, grid: a.grid, engine: a.engine });
     if (!ok) return 1;
   }
   console.log("");
