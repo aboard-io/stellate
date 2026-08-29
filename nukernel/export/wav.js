@@ -1,5 +1,8 @@
-// nukernel/export/wav.js — the record, PRESSED to one .wav, in the page,
-// offline. This is not a second renderer: it is the parent's own stream
+// nukernel/export/wav.js — the record, PRESSED to float PCM and then WRITTEN
+// as one .wav, in the page, offline. Two jobs, two exports: `pressPcm` (the
+// press, which export/mp3.js shares) and `pressWav` (the WAV writer over it).
+//
+// This is not a second renderer: it is the parent's own stream
 // machinery pointed at a file. A dedicated engine/faust/live/stream-worker.js
 // is spawned (the exact Worker the live ring and the phone's WAV-first route
 // run), opened on its PCM-accumulating path (`openLivePcm` →
@@ -91,12 +94,22 @@ function encodeWav(L, R) {
   return buf;
 }
 
-/* ---------- the press ----------------------------------------------------- */
+/* ---------- the press: ONE extraction, then the writers ------------------- */
+// PRESSING AND WRITING ARE TWO JOBS AND THEY ARE TWO FUNCTIONS NOW
+// (2026-08-29). FUTURE.md's shape for this row is "one extraction with four
+// writers": the record is rendered ONCE, to float PCM, and each format is a
+// thin writer over that buffer. `pressPcm` is the extraction — the whole of
+// the worker choreography above and below this line, unchanged, ending at the
+// `segeos` join; `pressWav` and export/mp3.js `pressMp3` are writers over it.
+// No format may press the record a second time, and no second file may copy
+// this choreography: that is the whole reason the seam is here.
 /**
- * pressWav(onSay?) -> Promise<{ bytes: ArrayBuffer, frames, durSec, songSec }>
- * Renders the CURRENT record, whole, to canonical 44.1k/16-bit stereo WAV.
+ * pressPcm(onSay?) -> Promise<{ L: Float32Array, R: Float32Array, frames, songSec }>
+ * Renders the CURRENT record, whole, to 44.1k stereo float PCM. Fresh arrays
+ * every call, so a writer may transfer them into a worker without stealing
+ * anything the next press needs.
  */
-export async function pressWav(onSay) {
+export async function pressPcm(onSay) {
   const say = (t) => { try { if (onSay) onSay(t); } catch (e) {} };
   const D = await deps();
   compile();
@@ -147,9 +160,20 @@ export async function pressWav(onSay) {
 
   try {
     const { L, R, frames } = await finished;
-    const bytes = encodeWav(L, R);
-    return { bytes, frames, durSec: frames / SR, songSec: songDurSec() };
+    return { L, R, frames, songSec: songDurSec() };
   } finally { worker.terminate(); }
+}
+
+/**
+ * pressWav(onSay?) -> Promise<{ bytes: ArrayBuffer, frames, durSec, songSec }>
+ * The WAV writer: one press, then the canonical 44.1k/16-bit stereo header
+ * and samples. Byte-determinism (test/deck.test.js D3) is a property of the
+ * press, not of this line, so moving the render out did not move the claim.
+ */
+export async function pressWav(onSay) {
+  const { L, R, frames, songSec } = await pressPcm(onSay);
+  const bytes = encodeWav(L, R);
+  return { bytes, frames, durSec: frames / SR, songSec };
 }
 
 // the conductor's bar bake, per bar 0..n-1, then EOS. Quoted from

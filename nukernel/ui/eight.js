@@ -3101,8 +3101,10 @@ function syllLine(si, k) {
      3  THE EXPORT ROW, honest states wired where cheap: WAV pressed through
         the parent's own stream worker (export/wav.js), MIDI written by
         export/smf.js over this page's own score notes (toms distinct — the
-        export-layer fix FUTURE.md asked for), MP3 and Ableton refused with
-        their measured reasons.
+        export-layer fix FUTURE.md asked for), MP3 encoded from the SAME press
+        as the WAV by export/mp3.js (2026-08-29 — this sentence said "MP3 and
+        Ableton refused with their measured reasons" and half of it stopped
+        being true that day), Ableton still refused with its measured reason.
 
    ONE CLOCK, TWO VIEWS. Notation and the roll read the same `stepAbs()`;
    the tab flip touches `hidden` and nothing else, so it cannot lose the
@@ -3492,18 +3494,38 @@ function exportRow(parent) {
     });
     card.append(b);
   });
-  // MP3 — REFUSED, with the measured reason. lamejs IS in the tree
-  // (engine/faust/vendor/lamejs.min.js) and it already drives the phone's
-  // rolling stream (engine/faust/codec/mp3-worker.js) — what does not exist
-  // is a one-press encode of THIS render, and a button that pretended would
-  // be the dead control this page forbids.
+  /* MP3 — LIVE, AND THAT IS A REVERSAL, 2026-08-29. This card refused, and the
+     refusal read: *"the encoder is vendored — lamejs already streams the
+     phone's rolling MP3 — but no one-press encode of this render is wired;
+     the WAV is the record today."* It was true and it is not any more, so it
+     is rewritten here rather than deleted — the reason it gave is exactly the
+     thing that got built. What closed it: export/wav.js's press was split into
+     `pressPcm` (the render) and `pressWav` (the writer), which is FUTURE.md's
+     "one extraction with four writers"; export/mp3.js is the second writer
+     over that same buffer, encoding with the vendored lamejs in its own worker
+     (export/mp3-encode-worker.js) so a multi-minute record never freezes this
+     page. The record is pressed ONCE, whichever button you press.
+     THE SUBTITLE STATES THE ENCODE, and it changed with the button: it said
+     "320 kbps · for the phone" while nothing encoded anything. The real
+     settings are 192 kbps CBR / 44.1 kHz / stereo — CBR because lamejs 1.2.1
+     exposes no VBR at all, 192 because this is the listening copy and the WAV
+     beside it is the master. export/mp3.js argues both at length. */
   exportCard(grid, "MP3", "nu-cap-flag", "MP3",
-    "320 kbps · for the phone", (card) => {
+    "192 kbps CBR · 44.1 kHz · stereo · the listening copy", (card) => {
     const b = el("button", "download .mp3");
-    b.type = "button"; b.dataset.k = "deck.exp.mp3"; b.disabled = true;
-    card.append(b, el("span", "the encoder is vendored — lamejs already " +
-      "streams the phone's rolling MP3 — but no one-press encode of this " +
-      "render is wired; the WAV is the record today", "nu-why"));
+    b.type = "button"; b.dataset.k = "deck.exp.mp3";
+    b.addEventListener("click", () => {
+      b.disabled = true; expSay("pressing…");
+      import("../export/mp3.js")
+        .then((m) => m.pressMp3(expSay))
+        .then((r) => { handOff(deckFile() + ".mp3", r.bytes, "audio/mpeg");
+                       expSay("encoded — " + r.durSec.toFixed(1) + "s at " +
+                              r.kbps + " kbps (" +
+                              (r.bytes.byteLength / 1048576).toFixed(1) + " MB)"); })
+        .catch((e) => expSay("the encode failed — " + ((e && e.message) || e)))
+        .finally(() => { b.disabled = false; });
+    });
+    card.append(b);
   });
   // ABLETON — REFUSED in-page: tools/ableton/export-als.js is a node CLI
   // (zlib, fs — its own header says "zero deps (zlib + string XML are built

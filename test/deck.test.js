@@ -36,7 +36,9 @@
 //     score, because the shipped chant has no toms to disagree about.
 // D5  the export row is honest: four cards, each button either live or
 //     `disabled` beside a non-empty reason (.nu-why) — nothing greys
-//     silently, nothing pretends.
+//     silently, nothing pretends. (Which cards are live is a roster that
+//     moves: MP3 became a button on 2026-08-29 — see the note at the
+//     assertion — and test/mp3.test.js is what tests its output.)
 // D6  no page errors; no horizontal overflow at 390 or 1280; screenshots to
 //     the wave directory.
 //
@@ -238,12 +240,22 @@ const readable = (r) => !!r && r.inside && r.text.length > 0;
       (e.disabled ? "refused with its reason: \"" + (e.why || "").slice(0, 60) + "…\""
                   : "live (\"" + e.label + "\")"));
   }
+  /* MP3 CROSSED THE LINE, 2026-08-29. This pair read "WAV and MIDI are LIVE
+     buttons" / "MP3 and Ableton are refusals, not dead controls", and the
+     second half of that is no longer true: export/mp3.js encodes the press
+     with the vendored lamejs in a worker, so the card is a button. The rule
+     the assertion was standing for is untouched and is the loop above —
+     every card is either live or refused with a reason. Only the roster of
+     which is which moved, and it moves again the day the Ableton splice
+     lands. What the MP3 button actually PRODUCES is not this gate's business
+     and never was: test/mp3.test.js clicks it, catches the download and
+     decodes those bytes back. */
   is(!exps.find((e) => e.k === "deck.exp.wav").disabled &&
-     !exps.find((e) => e.k === "deck.exp.mid").disabled,
-    "D5 · WAV and MIDI are LIVE buttons");
-  is(exps.find((e) => e.k === "deck.exp.mp3").disabled &&
-     exps.find((e) => e.k === "deck.exp.als").disabled,
-    "D5 · MP3 and Ableton are refusals, not dead controls");
+     !exps.find((e) => e.k === "deck.exp.mid").disabled &&
+     !exps.find((e) => e.k === "deck.exp.mp3").disabled,
+    "D5 · WAV, MIDI and MP3 are LIVE buttons");
+  is(exps.find((e) => e.k === "deck.exp.als").disabled,
+    "D5 · Ableton is a refusal, not a dead control");
 
   // ---- D6 — geometry + shots ----------------------------------------------
   fs.mkdirSync(SHOTS, { recursive: true });
