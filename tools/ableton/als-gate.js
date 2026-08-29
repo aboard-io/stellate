@@ -15,6 +15,20 @@
 // state.adoptSong) and compares the MULTISET of (MidiKey, Time, Duration,
 // Velocity) per clip, plus the two totals. A dropped bar, a doubled clip, a
 // swing offset rounded away — each of those changes the multiset.
+//
+// 2026-08-28 — THERE ARE NOW TWO DONORS, AND THIS GATE STILL USES ONE.
+// `donor/Ableton2.als` (Live 12.4.5) joined `donor/Generic.als` (Live 12.4.3);
+// the schema stamp is identical in both (MinorVersion 12.0_12402,
+// SchemaChangeCount 5), so nothing here breaks and nothing here changes.
+// Generic stays the splice base AND the sole Gate-2 conformance corpus ON
+// PURPOSE: Ableton2 contains DrumGroupDevice / MultiSampler / SampleRef /
+// AudioClip shapes the exporter has no business emitting before P2 exists, and
+// widening the corpus to the union would quietly license every one of them.
+// P2 is the moment to make the corpus `Generic ∪ Ableton2`, and not before.
+// What Ableton2 DID settle is recorded where it belongs — donor/README.md and
+// the header of nukernel/export/als.js. Both donors still have zero <Locator>,
+// so the Gate 2 refusal below is as live as it was, and the ask it points at is
+// now the single ask at the end of donor/README.md.
 import { gunzipSync } from "node:zlib";
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
@@ -205,7 +219,8 @@ export async function runGates(file, { genre = null, song = null, all = false, g
     const caught = [...probe].some((s) => !donorShapes.has(s));
     if (!caught) ok = fail("gate 2", "the locator probe was NOT refused — the conformance check is broken");
     else pass("gate 2", "every element shape in the output was written by Live 12.4.3 itself · " +
-      "<Locator> probe REFUSED (the donor has none; Ask #1 is what changes that)");
+      "<Locator> probe REFUSED (NEITHER donor has one; the single ask at the end " +
+      "of donor/README.md is what changes that)");
   }
 
   /* ---- Gate 3 ---------------------------------------------------------- */
@@ -250,7 +265,7 @@ if (direct) {
       // ask is the whole point of the exercise. Only Live proves a set opens.
       if (ok) {
         console.log("");
-        console.log('GATE 4 — PAUL: open "' + resolve(file) + '" in Live 12.4.3 and say whether it opens.');
+        console.log('GATE 4 — PAUL: open "' + resolve(file) + '" in Live 12 and say whether it opens.');
       }
       process.exit(ok ? 0 : 1);
     },

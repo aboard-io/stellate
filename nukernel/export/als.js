@@ -23,6 +23,24 @@
 // accepts a groove-pool clip as a Session or Arrangement clip. That single
 // unknown is what Ask #1 closes, and it is why P0 ships one clip and not fifty.
 //
+// 2026-08-28 — THAT UNKNOWN IS CLOSED, AND THE PARAGRAPH ABOVE IS KEPT AS THE
+// HISTORY OF IT. A second donor arrived (`tools/ableton/donor/Ableton2.als`,
+// Live 12.4.5, same MinorVersion/SchemaChangeCount stamp as 12.4.3) and it has
+// six Session clips ON TRACKS as well as the same GroovePool clip. Diffed
+// inside that one file, a Session ClipSlot MidiClip and the GroovePool MidiClip
+// are the SAME SHAPE: both open `<MidiClip Id="0" Time="0">`, both have exactly
+// 42 direct children, the same tags in the same order, and nothing appears on
+// one and not the other in either direction — all seven clips in the file agree.
+// A groove-pool clip IS an ordinary Session clip in this schema, so copying one
+// onto a track is not a guess any more. Read out of the file, not remembered:
+// tools/ableton/donor/README.md carries the 42-tag list and the method. Live
+// still has to open the whole set (Gate 4); this particular fear is retired.
+//
+// STILL OPEN, and narrower than it was: an ARRANGEMENT clip. Ableton2 has 16
+// `<ArrangerAutomation>` and every one is `<Events />`, so `CurrentStart` for a
+// clip in the arrangement (below, `arrangement ? time : 0`) is still inferred.
+// That plus `<Locator>` — zero in both donors — is the whole remaining ask.
+//
 // VELOCITY, AND THE MIGRATION P3 MUST NOT FORGET. P0 reads plan.timeline(),
 // whose events carry the WRITTEN velocity 0..9, so vel is the composer's mark
 // and nothing else. P1+ read plan.barPlan(), whose `amp` is
@@ -202,6 +220,16 @@ export function midiClip(tpl, { name, beats, time = 0, notes, id = 0, arrangemen
   // the swing nukernel has already baked into the note offsets — the same
   // groove counted twice. -1 is "no groove", which is what every ordinary clip
   // in a fresh set carries.
+  //
+  // 2026-08-28 — THE PREMISE ABOVE IS BACKWARDS; THE LINE BELOW STAYS. Measured
+  // both ways: in Generic.als the ONLY GrooveId value in the entire document is
+  // -1, and it is on the groove-pool clip — so this rewrite was replacing -1
+  // with -1. In Ableton2.als it is the pool clip that carries -1 and the six
+  // TRACK clips that carry GrooveId 4, pointing at the pool's "Swing 16ths 66".
+  // A pool entry does not name itself; a track clip names the groove it was
+  // assigned. So the rewrite was right for the wrong reason and is now MORE
+  // clearly load-bearing, not less: a track clip is exactly where a live
+  // GrooveId lands, and leaving one there is the double-swing bug.
   x = x.replace(/<GrooveId Value="[^"]*" \/>/, '<GrooveId Value="-1" />');
   // strip the donor's notes and put ours in their place
   const old = elementAfter(x, "Notes");
