@@ -1155,6 +1155,21 @@
   const THROAT = {
     // ONE PERSON AT A MICROPHONE.
     solo: [
+      // ANTIQUITY, BEFORE THE TROUBADOURS COULD BE (2026-08-30, the
+      // instrumentation round). The rung below said "the deep past, where
+      // the region is Europe by construction" — true the day it was
+      // written, false since deep time landed: Ur 2500 BC, Ugarit, Delphi,
+      // Rome 17 BC and Tralles all parse to years now (idiomOf learned BC)
+      // and every one of them fell through to trobar, a courtly Occitan
+      // tone from c. 1100. No RENDERED singer was wrong — each of those
+      // rows states its own tone.mouth, which wins absolutely — so this
+      // rung fixes the RULE, not a record: the next ancient row written
+      // without a mouth is not cast as a troubadour. plainchant is the
+      // table's least-claiming solo row (straight tone, modal, no wobble),
+      // which is the honest reach for a singer millennia out of range; 800
+      // is where the plainchant repertory itself is codified, safely
+      // before anything "trobar" could mean.
+      { w: (I) => I.year && I.year < 800, m: "plainchant" },
       // the deep past, where the region is Europe by construction
       { w: (I) => I.year && I.year < 1300, m: "trobar" },
       { w: (I) => I.year && I.year < 1650, m: "monody" },

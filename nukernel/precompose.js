@@ -1880,10 +1880,68 @@
     // Its part, register and instrument are read off ITS OWN anchor (and the
     // +1 register is derive.js:466's own `reg: v => L.reg(v) + 1`, so a layer
     // still sits above the band the way it does in a box).
+    //
+    /* ---- TWO DOORS ON THE GUEST LIST (2026-08-30, the instrumentation
+       round; Paul: "make sure that voices are there, not misplaced, and
+       appropriate to region and era, and that vocals aren't there when
+       they're supposed to be instrumentals").
+
+       DOOR 1 — AN INSTRUMENTAL RECORD STAYS INSTRUMENTAL. Measured over 308
+       anchors x seeds 1..3: `hohlefels` — voices:1, "one flute, alone, in a
+       stone room" — composed to a flute PLUS a forward lead singer, because
+       compose.js books the `vocal` layer off the family lean (SINGS.roots)
+       and never asks whether the HOST can have one; its own INSTRUMENTAL
+       table already knows the question (singerOf, and guestCast's "an
+       instrumental record books no singing guests") but stops at the
+       FUNCTION parts — `gregorian`, a real genre whose whole instrument is
+       a choir, walked onto fugue and counterpoint through the same lean.
+       So the door is held HERE, where the chair is seated, over the same
+       owners: a record that neither sings with its own instr nor states a
+       tone.mouth, and that is declared instrumental (compose's table, or
+       the row's own `instrumental: true` — genres.js, this round), seats
+       no chair whose instrument resolves to a PATCHES.voice/.mouth id.
+       compose.js should read the declared field at its own doors too —
+       reported, out of this round's fence.
+
+       DOOR 2 — A GUEST RESPECTS THE HOST'S LINEAGE. The era half already
+       exists (compose.js eraOK — measured CLEAN over the same walk: no
+       dated guest postdates its host). The genealogy half did not, and the
+       hole it left is exactly the one the vox GUEST_LEAN's own comment
+       apologises for ("every name below is European… it is the era door
+       that decides") — the era door checks TIME and not KINSHIP, so a
+       Latin plainchant choir walked onto a Varanasi dhrupad, a Beijing
+       guqin, an Istanbul taksim and Nara gagaku, all of them post-1725
+       records with no path to Rome in the parents graph. The law: a DATED
+       real-genre guest on a DATED host must reach a shared ancestor within
+       6 generations of both (undirected through `parents`; `wants` are
+       prose, not keys). SIX IS MEASURED, not chosen: the farthest good
+       pairing shipped today is dub <- drone at 6, and every deliberate
+       cross survives — beatles <- counterpoint at 1, vaporwave <-
+       gregorian at 3 (the drift lean's own taste). Undated guests (the
+       FUNCTION parts, `simple`) carry no claim and pass, exactly as
+       eraOK's own null branch reads. */
+    const MOUTHY = (id) => !!(NI.PATCHES.mouth[id] || NI.PATCHES.voice[id]);
+    const ownVoice = !!(G.tone && G.tone.mouth) ||
+      Array.from({ length: G.voices || 1 }, (_, v) => instrOf(gk, v)).some(MOUTHY);
+    const voiceBarred = !ownVoice && !!(NC.INSTRUMENTAL[gk] || G.instrumental);
+    const hostYear = NC.genreYear(gk);
+    const ancestry = (k, N) => { const seen = new Map([[k, 0]]); let front = [k];
+      for (let d = 1; d <= N; d++) { const next = [];
+        for (const f of front) for (const p of Object.keys((GENRES[f] || {}).parents || {}))
+          if (!seen.has(p)) { seen.set(p, d); next.push(p); }
+        front = next; }
+      return seen; };
+    const GENERATIONS = 6;
+    const kin = (lk) => { const A = ancestry(gk, GENERATIONS), B = ancestry(lk, GENERATIONS);
+      for (const k of A.keys()) if (B.has(k)) return true; return false; };
+    const seated = (lk) => { const L = GENRES[lk]; if (!L) return false;
+      if (voiceBarred && MOUTHY(instrOf(lk, 0))) return false;               // door 1
+      if (hostYear != null && NC.genreYear(lk) != null && !kin(lk)) return false; // door 2
+      return true; };
     const layerKeys = [];
     for (const b of R.song)
       for (const e of b.stack.slice(1))
-        if (GENRES[e.g] && !layerKeys.includes(e.g)) layerKeys.push(e.g);
+        if (seated(e.g) && !layerKeys.includes(e.g)) layerKeys.push(e.g);
 
     /* ---- MATERIAL. One cell per kind the record actually uses. ---------- */
     // ...AND WHERE EACH KIND SOUNDS, which the same walk already knew and threw
@@ -1895,8 +1953,11 @@
       (kindAt[k] = kindAt[k] || new Set()).add(i); };
     for (let i = 0; i < NSEC; i++) {
       for (let v = 0; v < nBase; v++) sounds(baseKind[i](v), i);
+      // ...asked through `seated` (2026-08-30) so a guest the doors above
+      // refused registers no kind: a cell nobody plays is a falsehood in
+      // the document, and the reading draw (§6b) reads `usedKinds`.
       for (const e of R.song[i].stack.slice(1))
-        if (GENRES[e.g] && (e.slots || []).length) sounds(KIND_OF[e.slots[0]], i);
+        if (seated(e.g) && (e.slots || []).length) sounds(KIND_OF[e.slots[0]], i);
     }
     if (!usedKinds.size) { usedKinds.add("hook"); kindAt.hook = new Set([0]); }
     const cells = {};
@@ -1990,6 +2051,23 @@
     const used = new Set();
     const nameFor = (base) => { let n = base, i = 1;
       while (used.has(n)) n = base + (++i); used.add(n); return n; };
+    /* THE CAPTION TELLS THE TRUTH (2026-08-30). The line below used to read
+       `nameFor(part === "line" ? "voice" : part)` — every single-line chair
+       was captioned "voice", so hohlefels' shakuhachi printed as "voice" in
+       the document and everywhere the page repeats it (measured: 582 chairs
+       across the catalogue wore the word while holding a guitar, an organ, a
+       piano). A chair is named by what it IS: the part where the part is a
+       word ("lead", "counter", "pad"…), and for the unmarked "line" part the
+       instrument's own head noun — "voice" only when the id resolves to one
+       (the same two tables the doors above read), "synth" when the record's
+       signature covers it, and otherwise the last word of the id with
+       trailing digits dropped (compose.js kindOf's own derivation, said
+       again here rather than imported for the layer-graph reason its SUNG
+       regex gives; the instrumentation gate holds the two in step). */
+    const capWord = (id) => { const t = String(id).split("_").filter((x) => !/^\d+$/.test(x));
+      return t[t.length - 1] || String(id); };
+    const captionOf = (part, id) => part !== "line" ? part
+      : MOUTHY(id) ? "voice" : capWord(id);
 
     /* ---- THE RECORD'S OWN SIGNATURE, WHICH THIS FILE USED TO OVERRULE -----
        Measured 2026-08-26 over 199 anchors x 3 seeds: 3228 line chairs, every
@@ -2032,7 +2110,8 @@
        replaced it with a Minimoog doubling the part beside it, which is the
        exact regression that comment was written about. */
     const PAD_PART = { pad: 1, drone: 1, stab: 1 };
-    const MOUTHY = (id) => !!(NI.PATCHES.mouth[id] || NI.PATCHES.voice[id]);
+    // MOUTHY moved up beside the guest doors (2026-08-30) — one spelling of
+    // the same two tables; this clause reads it from there.
     const sigSynth = G.synth && G.synth.dsp ? G.synth : null;
     const signed = (part, id) => !!sigSynth && !MOUTHY(id) &&
       !(sigSynth.lineOnly && PAD_PART[part]);
@@ -2086,8 +2165,9 @@
         development[sid(i)] = nm ? sayOps(R.song[i].ops, nm) : "out";
       });
       const part = basePart[v];
+      const instrument = signed(part, instrOf(gk, v)) ? "synth" : instrOf(gk, v);
       voices.push({
-        name: nameFor(part === "line" ? "voice" : part),
+        name: nameFor(captionOf(part, instrument)),   // the honest word — see captionOf
         kind: "line",
         cast: { part,
                 // THE REGISTER IS A GENRE FACT AND A KIND FACT AT ONCE. The
@@ -2107,8 +2187,8 @@
                 // unclamped entry of 3 SILENCES a voice in a two-bar intro.
                 entry: Math.max(0, Math.min(G.entry(v) | 0, minBars - 1)) },
         material, development,
-        instrument: signed(part, instrOf(gk, v)) ? "synth" : instrOf(gk, v),
-      });
+        instrument,             // computed once above, so the caption and the
+      });                       // seat can never disagree about what is held
     }
 
     layerKeys.forEach((lk, li) => {

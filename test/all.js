@@ -180,6 +180,15 @@ const GATES = [
   { name: "document",   wave: 1, kind: "node",
     argv: ["test/document.test.js"],
     need: ["test/document.test.js"], covers: ["test/document.test.js"] },
+  /* WHO IS IN THE ROOM (2026-08-30, "make sure that voices are there, not
+     misplaced, and appropriate to region and era, and that vocals aren't
+     there when they're supposed to be instrumentals"). Five laws over every
+     anchor x seeds 1..3, all derived from tables the tree already owns —
+     the day it landed it convicted a lead singer on a Paleolithic bone
+     flute and 582 chairs captioned "voice" while holding a guitar. */
+  { name: "instrumentation", wave: 1, kind: "node",
+    argv: ["test/instrumentation.test.js"],
+    need: ["test/instrumentation.test.js"], covers: ["test/instrumentation.test.js"] },
   { name: "desk",       wave: 2, kind: "node",
     argv: ["nukernel/desk-gate.js"],
     need: ["nukernel/desk-gate.js"], covers: ["nukernel/desk-gate.js"] },

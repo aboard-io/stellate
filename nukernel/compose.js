@@ -1108,7 +1108,7 @@
   // ...and an INSTRUMENTAL record's solo is never sung either (the same law
   // guestCast applies at its own door: "the lead should be 303, not vocal")
   const soloCast = (G, gk) => castOf(G, gk).filter(w => w !== "backing" &&
-    !(INSTRUMENTAL[gk] && w === "vocal"));
+    !(instru(gk) && w === "vocal"));
   // WHICH PHRASE the part is handed. A singer gets the topline — the melody the
   // composer wrote to be sung, with its motif, its breath and its one climax
   // (phrase("topline") below) — and the instrumental parts get the material
@@ -1154,6 +1154,14 @@
   // sim"): its every chair IS the sampled choir (the anchor's own ahh_choir),
   // and the singer this table blocks was a formant cantor composed over the
   // top of a forty-part motet that never had one.
+  // ...AND THE ROW MAY NOW SAY IT ITSELF (2026-08-30, the instrumentation
+  // audit). genres.js grew `instrumental: true` on 32 anchors — the bone
+  // flutes, the piano-alone rows, the nine global-jazz rows — declared at the
+  // row, each quoting its own prose, because a hand table here rots the day
+  // the catalogue grows (it had: a singer seated on hohlefels). `instru(gk)`
+  // is the ONE reading of both sources and every door below asks it; the
+  // hand rows keep their dated arguments and the row's own word extends them.
+  const instru = (gk2) => !!(INSTRUMENTAL[gk2] || (GENRES[gk2] || {}).instrumental);
   const INSTRUMENTAL = { techno: 1, dnb: 1, acid: 1, dub: 1,
                          fugue: 1, counterpoint: 1, tango: 1, spem: 1,
                          // THE OLD WORLD (2026-08-21). Two kinds of refusal:
@@ -1306,7 +1314,7 @@
   };
   const SINGER_GENRE = { shoegaze: "vocal" };
   const singerOf = (G, gk) => {
-    if (INSTRUMENTAL[gk]) return null;
+    if (instru(gk)) return null;
     const who = SINGER_GENRE[gk] || SINGS[G.family] || null;
     return who && who !== gk ? who : null;      // a `vocal` record does not book a singer
   };
@@ -1821,7 +1829,7 @@
     // through the side door.
     const pool = (GUEST_LEAN[G.family] || GUEST_LEAN.kernel)
       .filter(w => w !== gk && w !== singer)
-      .filter(w => !(INSTRUMENTAL[gk] && (w === "vocal" || w === "backing")))
+      .filter(w => !(instru(gk) && (w === "vocal" || w === "backing")))
       .filter(w => eraOK(year, w, gk));
     if (!pool.length) return null;
     const a = pick(rG, pool);

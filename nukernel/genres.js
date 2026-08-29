@@ -7178,6 +7178,7 @@
     // and one sacred/secular boundary over with an edge is exactly the move
     // this round exists to stop.
     ethiojazz: {
+      instrumental: true,   // Mulatu's front line is a vibraphone and a tenor — instrumental
       label: "Addis Ababa 1969", bars: 8, voices: 3, near: "jazz",
       // an arc: a groove you stay inside while the horn arrives
       plan: "arc", bpm: 94,
@@ -7865,6 +7866,7 @@
     // is trombones and a piano montuno in dorian over an eight-bar cycle at
     // 100. The two anchors share a clave and disagree about everything else.
     mambo: {
+      instrumental: true,   // the row's own words: "a BRASS SECTION playing riffs in block harmony"
       label: "Mexico City 1950", voices: 3, near: "son",
       plan: "dance", bpm: 132,
       // LINEAGE: son is the rhythm section, whole and undisguised. The other
@@ -8124,6 +8126,7 @@
     // below goes to the relative and back, which nothing else in this batch
     // does. It is also the one that is not danced.
     choro: {
+      instrumental: true,   // the file's own line 8109: "Brazil's instrumental virtuoso music"
       label: "Rio de Janeiro 1900", voices: 3, bars: 8, near: "ragtime",
       plan: "arc", bpm: 116,
       // LINEAGE: a ROOT under protest. Choro is the European salon dances —
@@ -8822,6 +8825,7 @@
     // difference from Johannesburg 1935 is that there the flute was a colour
     // on top of an organ and here it IS the record.
     kwela: {
+      instrumental: true,   // the pennywhistle IS the lead voice — what a kwela player does with it
       label: "Johannesburg 1955", voices: 3, near: "marabi",
       plan: "dance", bpm: 138,
       // LINEAGE: marabi is the four-bar cycle, verbatim — kwela plays
@@ -10510,6 +10514,7 @@
     // because a rag has no drummer and a rag played with one is a novelty
     // record from a different decade.
     ragtime: {
+      instrumental: true,   // the row's own words: "IT IS A PIANO ALONE, WHICH IS THE ARRANGEMENT"
       label: "Sedalia 1899", voices: 2, bars: 8, near: "parlor",
       plan: "arc", bpm: 96,
       // LINEAGE: `parlor` (New York 1892) is the SHEET MUSIC INDUSTRY and
@@ -10856,6 +10861,7 @@
     // because a viewer has to recognise it, which is the one formal demand a
     // Baroque tutti and a news theme genuinely share.
     newsfanfare: {
+      instrumental: true,   // a library cue — an orchestra over a rhythm section, no singer
       label: "London 1970", voices: 4, bars: 8, near: "romantic",
       plan: "arc", bpm: 132,
       // PAID 2026-08-29, the debts round: "military march" is
@@ -11019,6 +11025,7 @@
     // still pretending to be, at a quarter weight, because the orchestra here
     // is a sample library and everybody knows it.
     breakingnews: {
+      instrumental: true,   // the same library shelf, 2006 — a news bed sings nothing
       label: "New York 2006", voices: 4, near: "newsfanfare",
       plan: "dance", bpm: 128,
       parents: { newsfanfare: 0.35, house: 0.25, minimalism: 0.2, romantic: 0.2 },
@@ -11440,6 +11447,7 @@
     // there is none to declare, which is the honest word for atonality in
     // this table's three-word vocabulary.
     serial: {
+      instrumental: true,   // the row's own words: "Cast is a piano — two hands"
       label: "Vienna 1923", voices: 2, near: "neoclassical",
       plan: "arc", bpm: 96,
       // LINEAGE: Schoenberg's own claim, and it is a better historical
@@ -11511,6 +11519,7 @@
     // ASCENT: each section climbs a jins, which is a real structural fact
     // and is what the transposition schedule below encodes.
     taqsim: {
+      instrumental: true,   // a taqsim is an instrumental recital — the row is an oud and a viola
       label: "Cairo 1932", voices: 2, rate: 0.5, near: "gregorian",
       plan: "arc", bpm: 76,
       // LINEAGE: a declared ROOT, and honestly. The maqam tradition's
@@ -11746,6 +11755,7 @@
     // its comment. It is the closest call of the twelve and a reviewer
     // who disagrees should delete the row, not soften it.
     guqin: {
+      instrumental: true,   // the qin alone; the row's one id is the koto stand-in
       label: "Beijing 1956", voices: 2, rate: 0.5, near: "gregorian",
       plan: "arc", bpm: 70,
       // LINEAGE: a declared ROOT. The qin repertory is its own line back
@@ -11803,6 +11813,7 @@
     // Development (each voice ornaments it its own way), Cast (a club, not
     // a section), Time (the halving is the variation).
     sizhu: {
+      instrumental: true,   // the row's own header: "Ming and Qing instrumental suites"
       label: "Shanghai 1920", voices: 4, bars: 8, near: "arsnova",
       plan: "song", bpm: 78,
       // LINEAGE: a declared ROOT. The repertory's own ancestors are the
@@ -12120,6 +12131,7 @@
     // gagaku's pulse is enormous and breathing, said here as half rate
     // and long holds rather than pretended to be a metre.
     gagaku: {
+      instrumental: true,   // the Nara court ensemble is winds and strings; no singer to book
       label: "Nara 752", voices: 3, rate: 0.5, near: "drone",
       plan: "arc", bpm: 72,
       // LINEAGE: a declared root. Its true parents — Tang banquet music
@@ -12591,6 +12603,7 @@
     // ballroom uncle and the mambo was BORN as a danzón section —
     // Orestes López's 1938 "Mambo" is a danzón's final strain.
     danzon: {
+      instrumental: true,   // an orquesta típica under dancers — the danzón is played, not sung
       label: "Matanzas 1879", voices: 3, bars: 8, near: "son",
       plan: "song", bpm: 84,
       // LINEAGE: `habanera` (Havana 1860) at real weight — the baqueteo
@@ -12632,6 +12645,7 @@
     // `samba` and `choro` have both wanted it by name since the world
     // round; it is the danced link between the lundu's cell and both.
     maxixe: {
+      instrumental: true,   // Corta-Jaca is a revue number for the choro ternos — danced, not sung
       label: "Rio de Janeiro 1895", voices: 3, bars: 8, near: "choro",
       plan: "song", bpm: 100,
       // LINEAGE: `lundu` (Lisbon 1798) is the syncope, `habanera`
@@ -12672,6 +12686,7 @@
     // maqam-family alphabet this table says exactly — which is why this
     // row can ship where dastgah (declared EMPTY below) cannot.
     cemilbey: {
+      instrumental: true,   // the Istanbul taksim, same recital — a tanbur and a cello
       label: "Istanbul 1910", voices: 2, rate: 0.5, near: "taqsim",
       plan: "arc", bpm: 72,
       // LINEAGE: a declared root — the Ottoman court fasıl and the
@@ -12723,6 +12738,7 @@
     // trombone tailgates below), which is counterpoint reinvented by
     // ear in a dance hall. The word schedule below is those jobs.
     neworleans: {
+      instrumental: true,   // the row's own cast: "THREE lines at once" — lead, clarinet, trombone
       label: "New Orleans 1923", voices: 3, bars: 8, near: "swing",
       plan: "song", bpm: 104,
       // LINEAGE: `ragtime` (Sedalia 1899) is the repertory and the
@@ -12780,6 +12796,7 @@
     // eighths under a kit that is one empty object, because a rent
     // party had a piano and no drummer.
     boogiewoogie: {
+      instrumental: true,   // the row's own words: "One player, two hands"
       label: "Chicago 1928", voices: 2, bars: 8, near: "ragtime",
       plan: "song", bpm: 126,
       // LINEAGE: `ragtime` (Sedalia 1899) is the professional piano
@@ -13843,6 +13860,7 @@
     // today; the date is the anonymous print's, because the table
     // dates by document.
     contradanza: {
+      instrumental: true,   // Saumell's contradanzas are danced piano pieces — no singer
       label: "Havana 1803", voices: 2, bars: 8, near: "habanera",
       plan: "song", bpm: 96,
       // LINEAGE: a declared root. The French contredanse arrived with
@@ -13985,6 +14003,7 @@
     // notes cite the furniture-music idea outright — and takes the
     // parent today.
     satie: {
+      instrumental: true,   // three pages for piano alone — the Gymnopédies have no singer
       label: "Paris 1888", voices: 2, bars: 8, near: "nocturne",
       // bpm 70 is the table's floor (compose's 70..160); Lent et douloureux
       // sits under it, and 70 is the closest the grid can walk.
@@ -14019,6 +14038,7 @@
     // march" want is this form in a television blazer. Both take the
     // parent today.
     march: {
+      instrumental: true,   // the Marine Band on the Smithsonian grounds; a concert march sings nothing
       label: "Washington 1889", voices: 3, bars: 8, near: "ragtime",
       plan: "song", bpm: 120,
       // LINEAGE: a declared root — the military band trade behind it
@@ -14176,6 +14196,7 @@
     // lineage was written — the static field it repeats inside is
     // this record's — and takes the parent today.
     modaljazz: {
+      instrumental: true,   // Kind of Blue: the band is handed scales, nobody is handed words
       label: "New York 1959", voices: 3, bars: 8, near: "jazz",
       plan: "arc", bpm: 132,
       // LINEAGE: `jazz` (New York 1945) is the band and the
@@ -15102,6 +15123,19 @@
     // that is not a convention. Landesmuseum Württemberg holds the
     // Geißenklösterle flutes; the Hohle Fels flute is shown at Blaubeuren.
     hohlefels: {
+      // THE ROW DECLARES ITS INSTRUMENTAL IDENTITY (2026-08-30, Paul: "make
+      // sure … vocals aren't there when they're supposed to be
+      // instrumentals"). Measured over 308 anchors x seeds 1..3: this record
+      // and thirty-one others whose own entries stake an instrumental
+      // identity were each handed a forward lead singer (solo_vox) and often
+      // an ahh_choir behind him, because compose.js books the singer off the
+      // FAMILY lean (SINGS.roots -> "vocal") and its INSTRUMENTAL table is a
+      // hand list this file cannot reach into. So the row says it the way it
+      // says `nobass`: one declared fact, read by precompose's voice door
+      // (no chair resolving to a PATCHES.voice/.mouth id may be seated here)
+      // and by test/instrumentation.test.js. compose.js singerOf/guestCast
+      // should read this field too — reported, out of this round's fence.
+      instrumental: true,   // the row's own words: "one flute, alone, in a stone room"
       label: "Hohle Fels 33000 BC", voices: 1, rate: 0.5, near: "jiahu",
       plan: "arc", bpm: 72,   // 70..160 is the compose.js contract; rate .5 above is where the slowness lives
       // LINEAGE: the deepest root there is. Nothing upstream is even
@@ -15146,6 +15180,7 @@
     // Henan; settled c. 7000 BC, flooded and abandoned c. 5700 BC — the
     // label takes the span's own centre, the highlife rule).
     jiahu: {
+      instrumental: true,   // "the gudi line" alone — same admission as hohlefels
       label: "Jiahu 6000 BC", voices: 1, rate: 0.5, near: "gagaku",
       plan: "arc", bpm: 76,   // same contract; the gudi line breathes through rate .5, not the clock
       // LINEAGE: a root, and — per the round header — a root nothing
@@ -15581,7 +15616,17 @@
       // parent supplies.
       parents: { gothicrock: 0.35, ambient: 0.25 },
       wants: [],
-      instr: ["clean_guitar", "warm_pad"],
+      // THE VOICE ARRIVES (2026-08-30 instrumentation round). This row's own
+      // `words` have always said it — "the voice, syllables not words" for
+      // the lead, "the guitar, as weather" for the wash — and its lineage
+      // note says the residue IS Fraser's voice; but `instr` handed the lead
+      // a clean_guitar and the wash a warm_pad, so the declared
+      // MOUTHS.dreamchoir below reached no chair at seed 1 (measured: the
+      // one L3 violation in the catalogue — a tone.mouth declared and never
+      // arriving, the box's characteristic bug). The ids now match the
+      // words: the lead sings, the guitar is the weather (chorus + echo +
+      // verb .8 on a pad chair is exactly that).
+      instr: ["solo_vox", "clean_guitar"],
       drumkit: "electronic",
       entry: v => v, reg: v => (v === 0 ? 0 : -1),
       realize: v => (v === 1 ? "pad" : "line"),
@@ -16026,6 +16071,7 @@
     // jazz and one music gets one key — the decline at the round's
     // header.)
     gypsyjazz: {
+      instrumental: true,   // the family round's own words: "people playing acoustic instruments at each other" — the Paris string quintet
       label: "Paris 1934", voices: 3, bars: 8, near: "swing",
       // 160 is compose.js's own ceiling (bpm: 70..160) and the Quintette
       // ran hotter; the ceiling is the sayable tempo, dnb's own deal.
@@ -16063,6 +16109,7 @@
     // form: the bass riff is Pozo's, the bridge is Gillespie's, and
     // the two halves are the genre's whole treaty.
     latinjazz: {
+      instrumental: true,   // Gillespie's band with a conga in it — the front line is brass
       label: "New York 1947", voices: 3, bars: 8, near: "jazz",
       plan: "arc", bpm: 152,
       // LINEAGE: `jazz` (New York 1945) is Gillespie's own row two
@@ -16104,6 +16151,7 @@
     // clause: the descarga is the Cuban jam session as a form, son
     // montuno's vamp held open all night so the soloists can talk.
     descarga: {
+      instrumental: true,   // a Havana jam session — Cachao's descargas are blown, not sung
       label: "Havana 1957", voices: 3, bars: 8, near: "latinjazz",
       plan: "arc", bpm: 120,
       // LINEAGE: the article's own origins are son cubano, filin,
@@ -16145,6 +16193,7 @@
     // dance hall, and the record apartheid's townships took as an
     // anthem.
     capejazz: {
+      instrumental: true,   // Ibrahim's Cape hymn-vamp is a piano trio's
       label: "Cape Town 1974", voices: 3, bars: 8, near: "ethiojazz",
       plan: "arc", bpm: 100,
       // LINEAGE: `marabi` (Johannesburg 1935) is the cyclical
@@ -16186,6 +16235,7 @@
     // lineage was written, and it takes this row as a parent today —
     // the debt was always this specific band, this specific record.
     tradjazz: {
+      instrumental: true,   // the Barber band's front line — trumpet, clarinet, trombone
       label: "London 1954", voices: 3, bars: 8, near: "skiffle",
       plan: "song", bpm: 132,
       // LINEAGE: `neworleans` (New Orleans 1923) at dominant weight —
@@ -16224,6 +16274,7 @@
     // born altoist's London band over sitar, tabla and tambura: a
     // modal jazz whose mode is a raga.
     indojazz: {
+      instrumental: true,   // the double quintet — two traditions, neither of them a singer
       label: "London 1966", voices: 3, bars: 8, near: "modaljazz",
       plan: "arc", bpm: 116,
       // LINEAGE: `jazz` is Harriott's half of the bandstand;
@@ -16260,6 +16311,7 @@
     // anywhere. The genre's article is Japanese jazz; the row is the
     // trio's reading of it: piano deep in the keys, brushes, a walk.
     japanjazz: {
+      instrumental: true,   // a Tokyo piano trio
       label: "Tokyo 1974", voices: 2, bars: 8, near: "jazz",
       plan: "song", bpm: 76,
       // LINEAGE: `jazz` at dominant weight — the idiom is bebop's
@@ -16297,6 +16349,7 @@
     // with all the vibrato frozen out of it, in a room recorded so
     // honestly the silence is a member of the band.
     nordicjazz: {
+      instrumental: true,   // an Oslo quartet recorded honestly — the sax is the voice
       label: "Oslo 1970", voices: 2, bars: 8, near: "modaljazz",
       plan: "arc", bpm: 88,
       // LINEAGE: `modaljazz` (New York 1959) is the article's own
@@ -16336,6 +16389,7 @@
     // Musarurwa's own later band was named the Bulawayo Sweet Rhythm
     // Band, which settles the dot.
     skokiaan: {
+      instrumental: true,   // a Bulawayo sax band
       label: "Bulawayo 1947", voices: 3, bars: 8, near: "kwela",
       plan: "song", bpm: 138,
       // LINEAGE: `marabi` (Johannesburg 1935) is the cyclic harmony
