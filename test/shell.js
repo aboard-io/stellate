@@ -50,9 +50,10 @@
 //       editing". So A5 asserts the thing the pane was ever FOR.)
 //   A5c no `.nu-pane` wraps a rotated step grid (`table.nu-grid`) — the exact
 //       unnecessary scroll container named above, kept out by name.
-//   A6  ONE STICKY BAND, AND THE NAVIGATION IS A FIXED GUTTER (rewritten
-//       2026-08-28). This check has been rewritten twice and both rewrites
-//       were forced by Paul moving the navigation, so both are kept.
+//   A6  THERE IS NO STICKY BAND LEFT, AND THE NAVIGATION IS A FIXED GUTTER
+//       (rewritten 2026-08-29). This check has been rewritten three times and
+//       every rewrite was forced by Paul moving the navigation, so all of them
+//       are kept.
 //       IT FIRST READ: "at scrollY 600/1400/2400 the .nu-bar sits at 0 and
 //       EXACTLY ONE .nu-ax > h2 sits in 0 < top < 120 — and it is the heading
 //       of the axis the viewport is actually inside. Two bands, never three."
@@ -66,11 +67,27 @@
 //       under it."* There is no second band left to pin: `#toptabs` is
 //       `#nu-tray`, `position: fixed` down the right edge, and it does not
 //       move with the scroll because it is not in the scroll.
-//       SO THE CLAIM IS THE ONE THAT IS STILL TRUE AT EVERY PIXEL: over the
-//       whole height of every tab, `.nu-bar` sits at 0 once it has pinned, the
-//       stripe sits at viewport top 0 and never moves, and no `.nu-ax > h2` is
-//       `position: sticky` anywhere — the half that proves the old bands went
-//       rather than being drawn twice.
+//       IT THEN READ (2026-08-28, the fixed gutter): "over the whole height of
+//       every tab, `.nu-bar` sits at 0 once it has pinned, the stripe sits at
+//       viewport top 0 and never moves, and no `.nu-ax > h2` is `position:
+//       sticky` anywhere — the half that proves the old bands went rather than
+//       being drawn twice."
+//       Paul, 2026-08-29: *"Get rid of the play buttons and the title of the
+//       song"* / *"Add a permanent play button to the top of the nav."* THE
+//       BAND IS DELETED — `.nu-bar` and `<h1 id="title">` with it, tombstoned
+//       in index.html and in nu.css at THE .nu-bar IS GONE — and the transport
+//       is a level of the gutter. So the first half of the sentence had no
+//       subject: measured against the shipped page, `document.querySelector(
+//       ".nu-bar")` was null and this gate did not fail, it THREW ("Cannot
+//       read properties of null (reading \'getBoundingClientRect\')") and
+//       stopped the run at the first tab.
+//       SO THE CLAIM IS WHAT SURVIVED THE DELETION, AND IT IS THE STRONGER
+//       HALF: over the whole height of every tab, at eleven stops from 0 to
+//       the bottom, the stripe sits at viewport top 0 and never moves — it is
+//       `position: fixed`, so there is no pin point to wait for and EVERY stop
+//       is asserted rather than only the ones past a pin — and no `.nu-ax >
+//       h2` is `position: sticky` anywhere, which is the half that proves both
+//       old bands went rather than being drawn twice.
 //   A6b THE STRIPE IS ONE COLUMN AND IT NEVER SCROLLS SIDEWAYS. (It read "the
 //       tab row NEVER SCROLLS SIDEWAYS … `.nu-row` wraps." A column that
 //       wrapped would be the second stripe Paul's "one vertical stripe max"
@@ -103,11 +120,33 @@
 //       motif's transforms and the bank is one `↑` above them.)
 //   A6e A TAB REMEMBERS ITS SCROLL. Scroll a tall tab, leave it, come back:
 //       the window is where you left it, and a tab never opened starts at 0.
-//   A7  the .nu-bar is exactly --bar-h tall. `.nu-tabs { top: var(--bar-h) }`
-//       is a promise about a number, and a fifth control in the bar that
-//       wrapped would open a gap under the tab row that nothing else would
-//       catch. (It said `.nu-ax > h2 { top: var(--bar-h) }` — the creditor of
-//       the promise moved on 2026-08-27; the promise did not.)
+//   A7  ONE GUTTER, AND IT IS EXACTLY --tray-w WIDE (rewritten 2026-08-29).
+//       IT READ: "the .nu-bar is exactly --bar-h tall. `.nu-tabs { top:
+//       var(--bar-h) }` is a promise about a number, and a fifth control in
+//       the bar that wrapped would open a gap under the tab row that nothing
+//       else would catch." (And before that: "`.nu-ax > h2 { top: var(--bar-h)
+//       }` — the creditor of the promise moved on 2026-08-27; the promise did
+//       not.")
+//       THE BAND IS GONE ON PURPOSE (Paul, 2026-08-29 — see A6), so this line
+//       was measuring furniture that had been deleted: against the shipped
+//       page it failed thirty-six times with "exactly one .nu-bar (found 0)",
+//       which is a stale gate and not a regression.
+//       WHAT IT WAS EVER FOR: the page's chrome EXISTS, there is exactly ONE
+//       of it, and it is the size the stylesheet declares — because the rest
+//       of the layout is arithmetic on that number. All three are still
+//       promises and the number is `--tray-w` now: `body { padding-inline:
+//       calc(var(--gl) + var(--tray-w)) --gr }` is the whole of "nothing goes
+//       under the gutter" (nu.css), so a `.nu-tray` a pixel wider than its
+//       token is a stripe standing on the page, and a second `.nu-tray` is the
+//       second stripe A6b already forbids by geometry.
+//       SO: exactly one LAID-OUT `.nu-tray`, and its border box is `--tray-w`
+//       wide, on every tab at every width. The token is `calc(56px +
+//       env(safe-area-inset-left, 0px))` — a substitution, not a computed
+//       length, so `getPropertyValue` hands back the calc() text — and it is
+//       therefore RESOLVED BY THE PAGE off a probe element rather than parsed
+//       here or typed as 56.
+//       IT DOES NOT RE-TEST THE TRANSPORT. That `#play` is in `.nu-trayhead`
+//       at every level, and what pressing it does, is test/gutter.js T2/T3.
 //   A8  every `.nu-pane` that ACTUALLY SCROLLS and declares its first column
 //       sticky keeps that column pinned: after pane.scrollLeft = 200 it has
 //       moved <= 2px. (WAS: scoped to `.nu-pane` holding a `table.nu-grid`,
@@ -194,13 +233,35 @@ const SURVEY = () => {
     scrollHeight: de.scrollHeight,
     linked: !!document.querySelector('link[rel="stylesheet"]'),
     sheets: document.styleSheets.length,
-    bars: all(".nu-bar").length,
+    /* A7 — THE GUTTER, WHICH IS WHAT `bars` / `barH` / `barVar` COUNTED
+       UNTIL 2026-08-29. They read `.nu-bar` and `--bar-h`; the band is
+       deleted and the chrome that carries the same promise is `.nu-tray` at
+       `--tray-w`. `trays` is filtered by `shown` like everything else here,
+       so a stripe that is on the page but not laid out is not one. */
+    trays: all(".nu-tray").length,
     axes: all(".nu-ax").length,
     panes: all(".nu-pane").length,
     grids: all(".nu-grid").length,
-    barH: document.querySelector(".nu-bar")
-      ? +rect(document.querySelector(".nu-bar")).height.toFixed(2) : null,
-    barVar: getComputedStyle(de).getPropertyValue("--bar-h").trim(),
+    trayW: document.querySelector(".nu-tray")
+      ? +rect(document.querySelector(".nu-tray")).width.toFixed(2) : null,
+    /* THE TOKEN, RESOLVED BY THE PAGE. `--tray-w` is `calc(56px +
+       env(safe-area-inset-left, 0px))`, and an unregistered custom property
+       is a token stream: `getPropertyValue("--tray-w")` returns that calc()
+       text, which `parseFloat` reads as NaN. So the page is asked what the
+       declaration MEANS — one off-screen `box-sizing: border-box` div whose
+       inline-size IS `var(--tray-w)`, measured and removed — which keeps the
+       notch in the answer and keeps the number out of this file. (The old
+       `barVar` could be parsed because `--bar-h` was a bare length; that is
+       the only reason it worked, not a rule.) */
+    trayVar: (() => {
+      const probe = document.createElement("div");
+      probe.style.cssText = "position:absolute;left:-9999px;top:0;" +
+        "block-size:1px;inline-size:var(--tray-w);box-sizing:border-box";
+      document.body.appendChild(probe);
+      const w = +rect(probe).width.toFixed(2);
+      probe.remove();
+      return w;
+    })(),
     // A2 — every button/select/number, EXCEPT the kit's step buttons: a
     // `.nu-kc` is kind 7 in nu.css's vocabulary (one of sixteen, dense-grid
     // floor), so it is measured with the steps below, not against --tap.
@@ -248,7 +309,7 @@ const SURVEY = () => {
   };
 };
 
-/* ---------- the two bands, swept rather than sampled ----------------------
+/* ---------- the one stripe, swept rather than sampled ---------------------
    WAS "the sticky trace": three literal scroll stops (600/1400/2400, offset
    from #app after the atlas landed above it) and, at each, "exactly one pinned
    `.nu-ax > h2`". nu.css's own note had to explain that the claim could only
@@ -258,58 +319,61 @@ const SURVEY = () => {
    2026-08-27, the tabs) and its heading is neither sticky nor visible.
 
    So this sweeps instead of sampling, and asks the claim that IS true at every
-   pixel: the transport at 0, the tab row at exactly --bar-h, all the way down
-   whatever this tab happens to be, and nothing else sticky anywhere. Ten stops
-   rather than three, spread across the tab's own height, so a tall tab is
-   swept where it is tall and a short one is not asked about scroll it does not
-   have. */
+   pixel: the stripe at viewport top 0, all the way down whatever this tab
+   happens to be, and nothing sticky anywhere. Ten stops rather than three,
+   spread across the tab's own height, so a tall tab is swept where it is tall
+   and a short one is not asked about scroll it does not have.
+
+   AND IT IS ONE BAND, NOT TWO, SINCE 2026-08-29. Two paragraphs stood here and
+   both are kept because both are the reason the shape of this sweep is what it
+   is. THE FIRST: "WHERE THE BANDS PIN, AND IT IS NOT ZERO. `#title` is above
+   the transport and always has been, so at scrollY 0 the bar sits wherever the
+   record's name leaves it (measured: 110.1 at 320px on the shipped chant, 76.5
+   at 375) and neither band is pinned yet. That is not a failure — it is what
+   `position: sticky` means — and the old three-stop version never had to say so
+   because 600/1400/2400 were all far past it. A sweep from zero does, so the
+   pin point is measured first and the claim is made about the stops that are
+   past it." THE SECOND: "TWO PIN POINTS, NOT ONE, and that is the whole shape
+   of a two-band page: the transport pins when the record's name has gone under
+   it, and the tab row pins one band later … Measured at 320px on the shipped
+   chant: the bar at 110.1 and the row at 228.7 … pins at y = 228.7 - 52 =
+   176.7."
+
+   THERE IS NO PIN POINT LEFT TO MEASURE. Paul deleted the heading and the band
+   on 2026-08-29 ("Get rid of the play buttons and the title of the song"), and
+   the one piece of chrome left is `position: fixed` — at viewport top 0 from
+   the first frame, with nothing above it to hold it down and nothing to wait
+   for. So `pinBar` is gone with the band it measured (it read `bar
+   .getBoundingClientRect().top` off a null and threw), `pinRow` stays 0, and
+   the arithmetic that survives is the strongest form of the claim: EVERY stop
+   is asserted, including scrollY 0, rather than only the stops past a pin. */
 const BANDS = async () => {
   const raf = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-  const barH = parseFloat(getComputedStyle(document.documentElement)
-    .getPropertyValue("--bar-h")) || 52;
   const row = document.getElementById("nu-tray");
-  const bar = document.querySelector(".nu-bar");
   const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-  /* WHERE THE BANDS PIN, AND IT IS NOT ZERO. `#title` is above the transport
-     and always has been, so at scrollY 0 the bar sits wherever the record's
-     name leaves it (measured: 110.1 at 320px on the shipped chant, 76.5 at
-     375) and neither band is pinned yet. That is not a failure — it is what
-     `position: sticky` means — and the old three-stop version never had to say
-     so because 600/1400/2400 were all far past it. A sweep from zero does, so
-     the pin point is measured first and the claim is made about the stops that
-     are past it. */
   window.scrollTo(0, 0);
   await raf();
-  /* TWO PIN POINTS, NOT ONE, and that is the whole shape of a two-band page:
-     the transport pins when the record's name has gone under it, and the tab
-     row pins one band later — when the transport has taken the top --bar-h of
-     the screen and the row has reached the underside of it. Measured at 320px
-     on the shipped chant: the bar at 110.1 and the row at 228.7, so the row is
-     at rest 118.6 below the bar (52 of transport plus the engine line's own
-     room) and pins at y = 228.7 - 52 = 176.7. A single pin point would have
-     asked the row to be pinned sixty-five pixels before it can be. */
-  const pinBar = Math.ceil(bar.getBoundingClientRect().top);
-  /* THE STRIPE HAS NO PIN POINT, 2026-08-28: it is `position: fixed`, so it is
-     at viewport top 0 from the first frame and stays there. `pinRow` was the
-     scroll at which `#toptabs` reached the underside of the transport; the
-     number that replaces it is 0, and the claim it feeds is that the stripe's
-     top is 0 at EVERY stop rather than past one. */
   const pinRow = 0;
   const out = [];
   for (let k = 0; k <= 10; k++) {
     window.scrollTo(0, Math.round(max * k / 10));
     await raf();
+    /* `rowLeft` joins `rowTop` on 2026-08-29: "fixed" is a claim about both
+       axes and the stripe changed edges once already (nu.css, THE GUTTER MOVED
+       TO THE LEFT). What is asserted is that it does not MOVE under the
+       scroll, so the left is compared against its own first reading rather
+       than against a side typed here. */
     out.push({ y: window.scrollY,
-      barPinned: window.scrollY >= pinBar, rowPinned: window.scrollY >= pinRow,
-      barTop: +bar.getBoundingClientRect().top.toFixed(1),
+      rowPinned: window.scrollY >= pinRow,
       rowTop: +row.getBoundingClientRect().top.toFixed(1),
+      rowLeft: +row.getBoundingClientRect().left.toFixed(1),
       want: 0 });
   }
   window.scrollTo(0, 0);
   await raf();
   return {
-    stops: out, pinBar, pinRow,
-    // the half that proves the old band GONE rather than drawn twice
+    stops: out, pinRow,
+    // the half that proves the old bands GONE rather than drawn twice
     stickyHeads: [...document.querySelectorAll(".nu-ax > h2, #atlas > h2")]
       .filter((h) => getComputedStyle(h).position === "sticky")
       .map((h) => h.textContent.trim()),
@@ -614,7 +678,7 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
       const at = width + "/" + tab;
       const s = await page.evaluate(SURVEY);
       console.log("[" + at + "] scroll " + s.scrollWidth + "/" + s.clientWidth
-        + " · h" + s.scrollHeight + " · bars " + s.bars + " · axes " + s.axes
+        + " · h" + s.scrollHeight + " · trays " + s.trays + " · axes " + s.axes
         + " · panes " + s.panes + " · grids " + s.grids
         + " · sheets " + s.sheets + (s.linked ? " (linked)" : " (NO <link>)"));
 
@@ -641,13 +705,15 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
         "A5b " + at + " · one table per pane, no nesting"
         + (s.crowdedPanes.length ? " — " + JSON.stringify(s.crowdedPanes) : "")
         + (s.nestedPanes ? " — " + s.nestedPanes + " nested" : ""));
-      // A7 — the promise --bar-h makes to the tab row
-      if (s.bars !== 1) fail("A7 " + at + " · exactly one .nu-bar (found " + s.bars + ")");
-      else {
-        const want = parseFloat(s.barVar);
-        is(Math.abs(s.barH - want) <= 0.5,
-          "A7 " + at + " · .nu-bar is " + s.barH + "px, --bar-h says " + s.barVar);
-      }
+      /* A7 — the promise --tray-w makes to the whole page's flow.
+         (WAS "the promise --bar-h makes to the tab row": `if (s.bars !== 1)
+         fail("exactly one .nu-bar") else Math.abs(s.barH - parseFloat(s.barVar))
+         <= 0.5`. Same three claims — one piece of chrome, laid out, at the size
+         the sheet declares — asked of the chrome that exists. See A7 above.) */
+      if (s.trays !== 1) fail("A7 " + at + " · exactly one .nu-tray (found " + s.trays + ")");
+      else is(Math.abs(s.trayW - s.trayVar) <= 0.5,
+        "A7 " + at + " · the gutter is " + s.trayW + "px, --tray-w resolves to "
+        + s.trayVar + "px");
       is(s.overflowSins.length === 0,
         "A0 " + at + " · body and #app keep overflow-x: visible"
         + (s.overflowSins.length ? " — " + s.overflowSins.join(", ")
@@ -661,26 +727,28 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
           "A8 " + at + " · " + lane.what + "'s sticky first column moved "
           + lane.moved + "px over a " + lane.scrolled + "px scroll");
 
-      /* A6 / A6b / A6c — the ONE band and the fixed stripe, swept down this
-         tab's whole height. `pinRow` is 0 since 2026-08-28 (the stripe is
-         `position: fixed` and is at the top of the viewport from the first
-         frame), so every stop is a stop the stripe is asked about and the
-         "too short to pin" skip only ever fires for the transport. */
+      /* A6 / A6b / A6c — the fixed stripe, swept down this tab's whole
+         height. `pinRow` is 0 since 2026-08-28 (the stripe is `position:
+         fixed` and is at the top of the viewport from the first frame), so
+         EVERY stop is a stop the stripe is asked about.
+         AND THERE IS NO SKIP LEFT (2026-08-29). This read `const pinB =
+         b.stops.filter((t) => t.barPinned)` and, when a tab was short enough
+         to fit on the screen, skipped with "this tab is too short to pin the
+         transport". That escape belonged to `position: sticky`: a band that
+         has not been scrolled to its pin is not late, it is not pinned yet.
+         Nothing here is sticky any more — the band is deleted (A6) — so a
+         short tab is not an excuse and the assertion is made at all eleven
+         stops on every tab, scrollY 0 included. */
       const b = await page.evaluate(BANDS);
-      const pinB = b.stops.filter((t) => t.barPinned);
       const pinR = b.stops.filter((t) => t.rowPinned);
-      const badBar = pinB.filter((t) => Math.abs(t.barTop) > 0.5);
-      const badRow = pinR.filter((t) => Math.abs(t.rowTop - t.want) > 0.5);
+      const x0 = b.stops[0].rowLeft;
+      const badRow = pinR.filter((t) => Math.abs(t.rowTop - t.want) > 0.5 ||
+        Math.abs(t.rowLeft - x0) > 0.5);
       const end = b.stops[b.stops.length - 1].y;
-      if (!pinB.length)
-        skip("A6 " + at + " · this tab is too short to pin the transport — the "
-          + "whole panel is on the screen (page ends at y=" + end
-          + ", the bar pins at " + b.pinBar + ")");
-      else is(badBar.length === 0 && badRow.length === 0,
-        "A6 " + at + " · over " + pinB.length + " pinned stops to y=" + end
-        + ": .nu-bar at 0 and the stripe fixed at 0 ("
+      is(badRow.length === 0 && pinR.length === b.stops.length,
+        "A6 " + at + " · over " + pinR.length + " stops to y=" + end
+        + ": the stripe is fixed at top 0, x=" + x0 + " ("
         + b.rowH + "px tall, level \"" + b.level + "\")"
-        + (badBar.length ? " — bar off at " + JSON.stringify(badBar.slice(0, 3)) : "")
         + (badRow.length ? " — stripe off at " + JSON.stringify(badRow.slice(0, 3)) : ""));
       is(b.stickyHeads.length === 0,
         "A6 " + at + " · no axis heading is sticky any more — the navigation "
@@ -758,7 +826,24 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
        scroll to lose cannot prove anything about losing it. The scroll is set
        with `window.scrollTo`, never with an element click — Playwright's own
        scroll-into-view centres its target and would manufacture the number
-       being measured (ui/eight.js ANCHOR_MAX carries that finding). */
+       being measured (ui/eight.js ANCHOR_MAX carries that finding).
+
+       AND IT ASKS EACH TAB FOR A DEPTH THAT TAB HAS (rewritten 2026-08-29).
+       IT READ: `out.filter((x) => x[1] > 200)` … `window.scrollTo(0, 220)` …
+       `is(walk.a2 === walk.a1 && walk.b2 === 220)` — two typed numbers, 200
+       and 220, from a page that was 110px taller at the top of every tab.
+       Paul's 2026-08-29 round deleted `<h1 id="title">` and the whole `.nu-bar`
+       (see A6/A7) and every panel came up that much shorter, which broke this
+       line in both directions at once: at 820 the Mix tab's whole scroll is
+       218px, so `scrollTo(0, 220)` landed at 218, came back at 218, and was
+       reported as a memory failure against a number the tab could not reach —
+       and at 320/375/430 only ONE tab was left over 200, so the check skipped
+       and asserted nothing at three of the four widths.
+       So the depth is now a fraction of the tab's OWN scroll, measured at the
+       moment it is set, and the claim is `came back where it was left` rather
+       than `came back at 220`. The floor comes down with it: a tab that can
+       scroll at all is a tab that can forget, and `b0 > 0` is asserted so the
+       check can never pass by leaving both tabs at the top. */
     const tall = await page.evaluate(async (settle) => {
       const out = [];
       for (const t of window.__eightTabs()) {
@@ -766,7 +851,7 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
         await new Promise((r) => setTimeout(r, settle));
         out.push([t, document.documentElement.scrollHeight - window.innerHeight]);
       }
-      return out.filter((x) => x[1] > 200).sort((a, b) => b[1] - a[1]).slice(0, 2);
+      return out.filter((x) => x[1] > 40).sort((a, b) => b[1] - a[1]).slice(0, 2);
     }, 350);
     if (tall.length < 2) skip("A6e " + width + " · fewer than two scrollable tabs");
     else {
@@ -774,18 +859,26 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
       const walk = await page.evaluate(async ([A, B]) => {
         const go = async (t) => { window.__eightTab(t);
           await new Promise((r) => setTimeout(r, 350)); };
-        await go(A); window.scrollTo(0, 400);
-        await new Promise((r) => setTimeout(r, 150));
-        const a1 = Math.round(window.scrollY);
+        /* six tenths of whatever THIS tab can scroll, read back off the window
+           rather than assumed: a browser clamps a scroll it cannot make and a
+           gate that did not read the clamp was asserting about a pixel that
+           does not exist on the page. */
+        const put = async () => {
+          const max = document.documentElement.scrollHeight - window.innerHeight;
+          window.scrollTo(0, Math.round(max * 0.6));
+          await new Promise((r) => setTimeout(r, 150));
+          return Math.round(window.scrollY);
+        };
+        await go(A); const a1 = await put();
         await go(B); const b1 = Math.round(window.scrollY);
-        window.scrollTo(0, 220); await new Promise((r) => setTimeout(r, 150));
+        const b0 = await put();
         await go(A); const a2 = Math.round(window.scrollY);
         await go(B); const b2 = Math.round(window.scrollY);
-        return { a1, b1, a2, b2 };
+        return { a1, b1, b0, a2, b2 };
       }, [A, B]);
-      is(walk.a2 === walk.a1 && walk.b2 === 220,
+      is(walk.a2 === walk.a1 && walk.b2 === walk.b0 && walk.b0 > 0,
         "A6e " + width + " · " + A + " left at " + walk.a1 + " came back at "
-        + walk.a2 + "; " + B + " left at 220 came back at " + walk.b2
+        + walk.a2 + "; " + B + " left at " + walk.b0 + " came back at " + walk.b2
         + " (and " + B + " opened for the first time at " + walk.b1 + ")");
       is(walk.b1 === 0,
         "A6e " + width + " · a tab never opened starts at the top (" + B

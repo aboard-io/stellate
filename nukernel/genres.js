@@ -65,6 +65,29 @@
     // shared by reference on purpose, not a lookalike literal: aeolian is not
     // a new alphabet, it is the default one finally wearing its name.
     aeolian:  DIATONIC,
+    // ...AND HIJAZ (2026-08-29, the four-traditions round). The flat second
+    // with a NATURAL third over it — the augmented second between them is the
+    // most identifiable interval in Arab, Turkish and Balkan music, and it is
+    // the reason this row exists rather than another reach for `phrygian`:
+    // phrygian's third is minor, so the one interval that names the maqam is
+    // exactly the one it cannot say. `mahraganat`'s comment has admitted this
+    // since it was written — phrygian was "the nearest one the box can SAY".
+    //
+    // AND IT IS 12-TET EXACT, which is the whole argument for adding it.
+    // WORLD.md §2's measured table puts Arab rast, bayati and saba up to 50
+    // cents off the nearest semitone on the degree that NAMES them, against a
+    // 10-20 cent JND — those four maqamat are unreachable until cents land.
+    // Hijaz is not one of them: every degree is a whole semitone, so an
+    // anchor in hijaz is in tune rather than approximately in tune, and
+    // `taqsim` below is written in it for exactly that reason.
+    //
+    // NOT OFFERED BY THE BAND PAGE, and that is a decision rather than an
+    // omission. band-kit.js COLORS asks "what kind of minor?" and lists the
+    // minors; hijaz has a major third and is not an answer to that question,
+    // and filing it under either family would misname it. The interview is a
+    // CURATED surface (WORLD.md §4's own recommendation) and the catalog is
+    // the front door — this mode is reached by choosing the record.
+    hijaz:    [0, 1, 4, 5, 7, 8, 10],
   };
   // "harmonic minor", 2026-08-27 (FUTURE.md §5, the musicologist's row): its
   // sibling already read "melodic minor", and bare "harmonic" is a different
@@ -72,7 +95,7 @@
   const MODELABEL = { dorian: "dorian", phrygian: "phrygian",
                       harmonic: "harmonic minor", mixo: "mixolydian",
                       ionian: "major", lydian: "lydian", melodic: "melodic minor",
-                      aeolian: "natural minor" };
+                      aeolian: "natural minor", hijaz: "hijaz" };
 
   // SCALES — the SUBJECT's alphabet, offered per section. Swapping it changes
   // the chromatic width of a phrase without moving a single degree: the contour
@@ -414,9 +437,13 @@
       plan: "arc", bpm: 108,
       // LINEAGE: a fugue is species counterpoint set in MOTION — Bach taught
       // from Fux's Gradus — over subjects whose stepwise grammar is chant's;
-      // the missing third is the Lutheran chorale his subjects harmonized.
-      parents: { counterpoint: 0.7, gregorian: 0.3 },
-      wants: ["chorale"],
+      // the third is the Lutheran chorale his subjects harmonized, and it
+      // ARRIVED 2026-08-29 as `chorale` (Nuremberg 1586) — a want moved off
+      // the shopping list and into the genealogy on the day the row landed,
+      // which is the law THE ANCESTORS set. Bach taught the Well-Tempered
+      // Clavier and the chorale harmonisations from the same desk.
+      parents: { counterpoint: 0.55, chorale: 0.25, gregorian: 0.2 },
+      wants: [],
       // A FUGUE IS PIPES. `rock_organ` is a Hammond with a rotary cabinet and
       // an overdrive on it — the right organ for sophisti-rock and the wrong
       // century for Leipzig. church_organ is the same six-zone extraction with
@@ -626,7 +653,16 @@
       // NAMED, and naming a debt costs nothing and changes no fit. This is
       // the truest single line available to this table today.
       parents: {},
-      wants: ["delta blues", "boogie-woogie", "jump blues",
+      // "jump blues" CAME OFF THIS LIST 2026-08-29 WITHOUT BEING PAID, and
+      // the reason is the only interesting thing in it. `jumpblues` (Los
+      // Angeles 1946) is now an anchor, and declaring it a parent here would
+      // make a CYCLE: jump blues is a blues played at a dance tempo and its
+      // own parents are `swing` and this row. The debt is real — Chicago 1952
+      // got its backbeat and its shuffle from the jump bands — and it is a
+      // debt this anchor owes to its own child, because `blues` is the
+      // table's generic blues root wearing an electric Chicago label. A
+      // genealogy cannot say that and the comment can.
+      wants: ["delta blues", "boogie-woogie",
               "field holler", "griot ngoni", "the banjo's west african line"],
       // AN ARCHTOP AND A HARP, because the anchor is a BAND and not a porch:
       // Chess in 1952 is a hollow-body through a small valve amp with Little
@@ -844,23 +880,83 @@
     // piece: where one rises the other falls, because that is what invert(4)
     // means. It is the smallest complete statement of the idea the fugue then
     // elaborates, and having both makes the difference legible.
+    //
+    // ---- "WHY IS COUNTERPOINT IN 1725" (Paul, 2026-08-29) -----------------
+    //
+    // THE DATE IS RIGHT AND THE NAME IS WRONG, and the second half is the
+    // answer. 1725 is Johann Joseph Fux's *Gradus ad Parnassum*, published in
+    // Vienna that year: the species method — a given cantus firmus, one voice
+    // added to it under rules, one species at a time — and the species method
+    // is exactly and only what the fields below implement. Two voices, same
+    // rhythm, contrary motion, the cantus stating itself alone first. Every
+    // number in this row is Fux's.
+    //
+    // WHAT IS WRONG IS THAT THE ROW IS CALLED `counterpoint`. Read in the
+    // atlas's chronological list — which is where Paul read it — the line says
+    // "counterpoint · 1725", and that sentence claims a textbook invented a
+    // practice that was already eight centuries old. Counterpoint as a
+    // practice starts with organum around 900 (this table dates its own at
+    // Paris 1200), runs through Machaut, Josquin and Palestrina, and was
+    // finished as an art form roughly a century BEFORE Fux sat down to
+    // describe it. The table already knew this and said it twice: `spem`'s
+    // lineage note ("the label years invert — Fux's 1725 textbook CODIFIES the
+    // Palestrina-era practice Tallis worked in") and `chorale`'s, added the
+    // same day. Two rows apologising for a third row's label is the tell.
+    //
+    // THE FIX IS TO THE DISPLAY AND NOT THE KEY, and here is the accounting,
+    // because "just rename it `species`" was the first instinct and it is
+    // wrong. The key `counterpoint` is a JOIN, not a label. It is read by
+    // compose.js (LAYERABLE, four GUEST_LEAN rows, the confusion matrix),
+    // precompose.js (IDIOM_ANCHOR), atlas.js (WHEN), songs.js (nine
+    // word-to-genre rows: "at the fifth", "in contrary motion", "in
+    // retrograde"…), keys-kit.js, ideas-kit.js, wiki.js, and by two anchors in
+    // this file as a declared parent. A key rename is a nine-file change to
+    // buy one better word on one screen. So the row keeps its key and the
+    // three things a reader actually SEES were rewritten instead: this
+    // comment, the `words` below (which the page prints per voice and which
+    // now say "species" and "cantus firmus" out loud), and the wiki row's
+    // `why`. The one display fix that was NOT available: `Species
+    // counterpoint` is not an article in the ZIM, it is a redirect to
+    // `Counterpoint#Species_counterpoint`, and wiki-extract.js rejects a
+    // section-with-a-fragment by its own rule — a line in an article is not
+    // this row's article.
+    //
+    // AND THE GENEALOGY IS THE OTHER HALF OF THE ANSWER. `wants: ["organum"]`
+    // sat here after organum landed on 2026-08-21, so the one row that could
+    // have said "this practice is five hundred years older than my label"
+    // wasn't saying it. Organum is now a declared parent at equal weight with
+    // chant, which means the chronological list Paul was reading shows this
+    // row descending from Paris 1200 — and that, rather than any change of
+    // date, is what stops "counterpoint · 1725" reading as an origin story.
     counterpoint: {
-      // named "Vienna 1725" — Fux's Gradus ad Parnassum, the species exercise
-      // this anchor implements, published in Vienna that year.
+      // named "Vienna 1725" — Fux's Gradus ad Parnassum, published in Vienna
+      // that year. THE LABEL DATES THE BOOK, NOT THE PRACTICE, exactly as
+      // `nuba`'s "Tetouan 1790" dates al-Ha'ik's songbook and not the nuba.
+      // See the paragraph above: this is a codification date and the row's
+      // parents are where the music is.
       label: "Vienna 1725",
       plan: "arc", bpm: 100,
       // LINEAGE: the cantus firmus IS a chant-shaped line — Fux's whole
       // method is rules for adding a voice to one, which is organum's move
-      // formalized five centuries later. One parent, and it is the root.
-      parents: { gregorian: 1 },
-      wants: ["organum"],
+      // formalized five centuries later. ORGANUM IS A PARENT NOW (2026-08-29)
+      // and not a wish: it has been Paris 1200 in this table since
+      // 2026-08-21, and a `wants` entry naming a row that exists is a
+      // shopping list nobody crossed off. Even weights, because the method
+      // takes its material from the one and its move from the other.
+      parents: { gregorian: 0.5, organum: 0.5 },
+      wants: [],
       instr: "harpsichord",
       entry: () => 0, reg: v => 1 - v, realize: () => "line",
       kit: {}, nobass: true, harmony: "emergent",
       intro: "solo",                 // the cantus states itself before anything
       scale: DIATONIC, artic: "legato",
       tone: { wave: "square", cut: 2800, q: 1.0, atk: .006, rel: .6, gain: .22, verb: .3 },
-      words: ["the line", "contrary motion — every rise is a fall"],
+      // THE WORDS SAY "SPECIES" BECAUSE THE KEY CANNOT (2026-08-29, and the
+      // long paragraph above is why). These two strings are what the page
+      // prints beside each voice, so they are the row's real name on the
+      // screen: a cantus firmus, and one voice added to it by rule.
+      words: ["the cantus firmus, given",
+              "the species: one voice added by rule, in contrary motion"],
       // THE AXIS IS THE HARMONY. Both voices play the same rhythm, so every
       // note is a simultaneity and the vertical interval is decided entirely by
       // where the mirror is: invert(c) sends degree d to c-d, so the two voices
@@ -931,12 +1027,19 @@
       // strings holding tones over a pedal that never moves.
       label: "New York 1964", rate: 0.25,
       plan: "arc", bpm: 70,
-      // LINEAGE: a root under protest — Young's held tones came from
-      // Hindustani raga (he studied under Pran Nath), gagaku and organum's
-      // sustained fifths, none of which the catalog holds. Chant is the
-      // nearest anchor and still the wrong claim: chant MOVES.
-      parents: {},
-      wants: ["hindustani raga", "gagaku", "organum"],
+      // LINEAGE: NO LONGER A ROOT (2026-08-29). This comment used to end
+      // "none of which the catalog holds", and two of the three have been
+      // held for a while: `organum` landed 2026-08-21 and this row went on
+      // asking for it, which is what a stale `wants` looks like. Both are
+      // paid now. Organum's sustained fifths are the claim Young made
+      // himself (he named Perotin), and `dhrupad` is the Hindustani half —
+      // with one caveat kept rather than tidied away: he began studying
+      // under Pran Nath in 1970, six years after this row's label, so the
+      // tanpura reached the Theatre of Eternal Music through records and
+      // through Riley before it reached it through a teacher. Gagaku is
+      // still owed.
+      parents: { organum: 0.55, dhrupad: 0.45 },
+      wants: ["gagaku"],
       instr: "slow_strings",
       entry: () => 0, reg: v => v - 2, realize: v => (v === 0 ? "pad" : "line"),
       kit: {}, harmony: "modal", mode: MODES.dorian, scale: DIATONIC,
@@ -1199,8 +1302,17 @@
       // LINEAGE: session players raised on Steely Dan's studio craft playing
       // a rock band's form over funk's pocket; the rolling tom lope is the
       // African percussion loop the record borrows and the catalog lacks.
+      // "yacht rock" CAME OFF `wants` 2026-08-29 WITHOUT BEING PAID, and the
+      // reason is worth the four lines. `yachtrock` has been Austin 1979
+      // since the world round, so this was a stale entry either way — but it
+      // cannot become a parent, because `yachtrock` already declares THIS row
+      // as one of its own, and the edge would close a cycle. It is the same
+      // shape as `blues` and `jumpblues` four screens up: the retronym was
+      // coined in 2005 to describe records like Toto IV, so the genre and one
+      // of its exemplars each have a fair claim to being upstream, and a
+      // directed graph has to pick. The graph picks the one already written.
       parents: { steely: 0.45, rock: 0.3, funk: 0.25 },
-      wants: ["african percussion", "yacht rock"],
+      wants: ["african percussion"],
       instr: ["synth_strings_1", "marimba", "clean_guitar"],
       drumkit: "room",
       entry: v => (v === 2 ? 4 : 0), reg: v => (v === 1 ? 1 : v - 1),
@@ -1714,8 +1826,8 @@
       // its own now that highlife, marabi and rumba have stopped hanging off
       // American anchors. See blues' own `wants`, which is where the debt is
       // now named in its own words.
-      parents: { gospel: 0.45, blues: 0.35, motown: 0.2 },
-      wants: ["new orleans second line", "jump blues"],
+      parents: { gospel: 0.4, blues: 0.25, motown: 0.2, jumpblues: 0.15 },
+      wants: ["new orleans second line"],
       instr: ["clavinet", "brass_section"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: () => "line",
@@ -1749,9 +1861,13 @@
       // moved: the Miracles, the Marvelettes and the Temptations were vocal
       // groups before Gordy signed them, so gospel and blues each step back.
       // (Fitted 0.39 against a declared 0.35: the data wants almost exactly
-      // what the history claims.) Tin Pan Alley's song forms are still owed.
-      parents: { gospel: 0.4, blues: 0.25, doowop: 0.35 },
-      wants: ["tin pan alley"],
+      // what the history claims.) Tin Pan Alley's song forms ARRIVED
+      // 2026-08-29 as `tinpanalley` (New York 1924) and are owed no longer:
+      // Hitsville was organised as a publishing house on purpose, with
+      // writers in rooms and a quality-control meeting on Fridays, which is
+      // West 28th Street's own method moved to West Grand Boulevard.
+      parents: { gospel: 0.35, doowop: 0.3, blues: 0.2, tinpanalley: 0.15 },
+      wants: [],
       // THE VIBES ARE THE FUNK BROTHERS' OWN COLOUR — Jack Ashford's bars on
       // the hook, beside the tambourine the kit already plays. A lone trumpet
       // answering a Motown vocal is a horn section that lost its section, and
@@ -2012,8 +2128,11 @@
       // because ska is a mento band that heard R&B, not the other way round;
       // `jump blues` is what remains on the list, because Chicago 1952 is a
       // blues and not the jump band the horn writing actually comes from.
-      parents: { mento: 0.35, blues: 0.25, jazz: 0.2, calypso: 0.2 },
-      wants: ["jump blues"],
+      // ...and the jump band the horn writing actually comes from landed
+      // 2026-08-29: the Jamaican sound systems were playing New Orleans and
+      // Los Angeles jump records, and `jumpblues` takes a fifth of this row.
+      parents: { mento: 0.3, jumpblues: 0.2, calypso: 0.2, blues: 0.15, jazz: 0.15 },
+      wants: [],
       // DON DRUMMOND PLAYED TROMBONE. The Skatalites' front line is a bone
       // out front with the trumpet behind it, and the squeak the register law
       // spent a round chasing was partly a casting fault: ska's horn line is
@@ -2502,8 +2621,8 @@
       // Sedalia 1899 — and swing takes the largest weight, which is the
       // whole argument of the comment above: Parker learned to play in the
       // town that record comes from.
-      parents: { swing: 0.5, blues: 0.3, ragtime: 0.2 },
-      wants: ["tin pan alley", "new orleans jazz"],
+      parents: { swing: 0.45, blues: 0.25, tinpanalley: 0.15, ragtime: 0.15 },
+      wants: ["new orleans jazz"],
       // MEASURED, and it is the declared parent — which is what a well-behaved
       // lineage looks like. Of the anchors the confusion metric compares, the
       // closest to this one is `blues`, against a 0.03 floor. Same band, same
@@ -2634,8 +2753,8 @@
       // itself is hambone, the juba pattin' rhythm played on the thighs, whose
       // shape is the same clave the Afro-Cuban records of those years carried;
       // neither is an anchor, and between them they are what this genre adds.
-      parents: { blues: 0.7, gospel: 0.3 },
-      wants: ["hambone", "latin percussion", "jump blues"],
+      parents: { blues: 0.55, gospel: 0.25, jumpblues: 0.2 },
+      wants: ["hambone", "latin percussion"],
       instr: ["clean_guitar", "harmonica"],
       drumkit: "acoustic",
       entry: v => v * 2, reg: v => v, realize: () => "line",
@@ -2714,8 +2833,8 @@
       // Walker, whose double stops these literally are; Louis Jordan's jump
       // shuffle, which is the tempo and the small band; and the boogie-woogie
       // left hand Johnnie Johnson brought to the piano stool.
-      parents: { blues: 0.6, countrypop: 0.4 },
-      wants: ["t-bone walker", "jump blues", "boogie-woogie"],
+      parents: { blues: 0.45, countrypop: 0.3, jumpblues: 0.25 },
+      wants: ["t-bone walker", "boogie-woogie"],
       instr: ["clean_guitar", "clean_guitar", "upright_piano"],
       drumkit: "room",
       // NO reg() TERM AT ALL, which is the point: voices 0 and 1 are `lead`
@@ -2838,8 +2957,8 @@
       // shuffle it had been playing since jump. The songs came from Tin Pan
       // Alley by way of the pop vocal groups, and barbershop is where the added
       // sixth was already sitting; neither of those is an anchor yet.
-      parents: { gospel: 0.6, blues: 0.4 },
-      wants: ["jubilee quartets", "barbershop", "tin pan alley", "jump blues"],
+      parents: { gospel: 0.45, blues: 0.2, jumpblues: 0.2, tinpanalley: 0.15 },
+      wants: ["jubilee quartets", "barbershop"],
       // ONE GROUP IS ONE SOUND: the lead is a solo voice and the other two are
       // the recorded choir, closed vowel on top for the syllables and the
       // rounder one underneath for the bass, because that is literally what is
@@ -3482,9 +3601,12 @@
       // vocal-group blend behind the lead is doo-wop's, one voice standing
       // out front of it instead of three trading it; gospel supplies the
       // trained, held, unhurried breath. Tin Pan Alley's standard songbook
-      // — the actual repertoire a crooner sings — is still uncredited.
-      parents: { jazz: 0.55, doowop: 0.25, gospel: 0.2 },
-      wants: ["tin pan alley"],
+      // — the actual repertoire a crooner sings — WAS uncredited until
+      // 2026-08-29, and `tinpanalley` (New York 1924) is now the second
+      // largest share of this row, which is right: the songs came first and
+      // the microphone came second.
+      parents: { jazz: 0.45, tinpanalley: 0.25, doowop: 0.2, gospel: 0.1 },
+      wants: [],
       instr: ["solo_vox", "slow_strings"],
       drumkit: "brush",
       entry: v => (v === 0 ? 2 : 0), reg: v => (v === 0 ? 0 : -1),
@@ -4490,8 +4612,14 @@
       // supplies the raw, unsubtle directness. EBM's own club-industrial
       // half is the missing rung — this anchor is the metal side of that
       // same argument.
+      // "EBM" CAME OFF THIS LIST UNPAID 2026-08-29, which needs a sentence
+      // because `ebm` IS an anchor. It is Chicago 1989, a year AFTER this
+      // row's own label, and the music this row wants is the 1980 Belgian
+      // and German one — DAF, Front 242 — which the Wax Trax row is a later
+      // American reading of. A parent edge pointing at a younger anchor
+      // would be a date the graph cannot hold, so the debt goes here.
       parents: { deathmetal: 0.4, kraftwerk: 0.35, punk: 0.25 },
-      wants: ["EBM"],
+      wants: [],
       instr: ["distortion_guitar", "metal_pad"],
       drumkit: "electronic",
       entry: () => 0, reg: v => -v, realize: () => "line",
@@ -5837,7 +5965,11 @@
     nocturne: {
       label: "Paris 1835", rate: 0.5, bars: 8,
       plan: "arc", bpm: 72,
-      parents: { classical: 0.6, continuo: 0.4 }, wants: ["bel canto opera"],
+      // ...and "bel canto opera" was PAID 2026-08-29 by `belcanto` (Milan
+      // 1831), four years before this row's label. Chopin said outright that
+      // he was writing Bellini for the piano, which makes this the least
+      // arguable parent edge added that day.
+      parents: { belcanto: 0.4, classical: 0.35, continuo: 0.25 }, wants: [],
       near: "neoclassical",
       instr: "yamaha_grand_piano",
       part: ["lead", "pad"],
@@ -5922,7 +6054,11 @@
     parlor: {
       label: "New York 1892",
       plan: "song", bpm: 96,
-      parents: { hymn: 0.4, classical: 0.35, barcarolle: 0.25 }, wants: ["ragtime"],
+      // "ragtime" came off `wants` 2026-08-29 unpaid and BACKWARDS: `ragtime`
+      // is Sedalia 1899, seven years after this row, and the syncopation ran
+      // from the rag into the parlor song rather than the other way. The
+      // debt is `tinpanalley`'s, which now declares it.
+      parents: { hymn: 0.4, classical: 0.35, barcarolle: 0.25 }, wants: [],
       near: "doowop",
       instr: ["solo_vox", "upright_piano"],
       entry: () => 0, reg: v => (v === 0 ? 0 : -1),
@@ -6141,8 +6277,11 @@
       // Brazilian, and `bossa` is the only anchor that carries it. Samba
       // itself — the percussion tradition the tamborzão is a sample OF — is
       // the missing rung, and it is a large one.
-      parents: { electro: 0.4, reggaeton: 0.3, bossa: 0.3 },
-      wants: ["samba", "miami bass"],
+      // ...and "samba" came off `wants` 2026-08-29 by being PAID: `samba`
+      // has been Rio de Janeiro 1939 since the world round and this row went
+      // on asking for it from the same city eighty years later.
+      parents: { electro: 0.35, reggaeton: 0.25, samba: 0.25, bossa: 0.15 },
+      wants: ["miami bass"],
       instr: ["solo_vox", "square_lead"],
       drumkit: "tr808",
       entry: () => 0, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
@@ -6631,8 +6770,12 @@
       // LINEAGE: a root under protest, and the protest is the whole history —
       // marabi is Sotho and Zulu vocal cycles, American 78s heard through a
       // shebeen door, and kwela's own street ancestry, none of which is here.
+      // "kwela" came off `wants` 2026-08-29 unpaid and backwards, the way
+      // `parlor`'s "ragtime" did: `kwela` is Johannesburg 1955, twenty years
+      // after this row and in the same city, and it is marabi's CHILD. A
+      // root that wants its own descendant is a shopping list nobody read.
       parents: {},
-      wants: ["kwela", "american 78s", "sotho-zulu vocal cycle"],
+      wants: ["american 78s", "sotho-zulu vocal cycle"],
       // THE CAST IS UNUSUALLY EXACT. The marabi instrument was the PEDAL
       // ORGAN and `reed_organ` is one (six zones, every file on disk —
       // confirmed at genres.js:5713 when punjabipop's harmonium wanted it).
@@ -7043,8 +7186,12 @@
       // cheikha tradition the vocal comes from and the Egyptian film
       // orchestra the horn writing comes from — has no anchor, so the weight
       // normalises to 1 over what exists, the way bossa's does.
-      parents: { synthpop: 0.5, disco: 0.5 },
-      wants: ["bedoui raï", "egyptian film orchestra"],
+      // ...and the Egyptian film orchestra ARRIVED 2026-08-29 as `firqa`
+      // (Cairo 1964). Every Algerian singer of this generation grew up on
+      // Umm Kulthum on the radio, and the massed-violin arrangement is what
+      // pop raï's synthesiser is imitating.
+      parents: { synthpop: 0.35, disco: 0.35, firqa: 0.3 },
+      wants: ["bedoui raï"],
       instr: ["accordion", "polysynth", "trumpet"],
       drumkit: "cr78",
       entry: v => v, reg: v => (v === 1 ? -1 : v === 2 ? 1 : 0),
@@ -9607,8 +9754,12 @@
     arabesk: {
       label: "Istanbul 1980", voices: 3, bars: 8, near: "romantic",
       plan: "arc", bpm: 88,
-      parents: { filmi: 0.35, romantic: 0.2 },
-      wants: ["türk sanat müziği", "bağlama âşık song", "egyptian film orchestra"],
+      // ...and the Egyptian film orchestra ARRIVED 2026-08-29 as `firqa`
+      // (Cairo 1964), which is the single most direct debt this row has:
+      // Egyptian films and their orchestras played in Istanbul cinemas for
+      // thirty years and arabesk is what Turkish singers made of them.
+      parents: { filmi: 0.3, firqa: 0.3, romantic: 0.15 },
+      wants: ["türk sanat müziği", "bağlama âşık song"],
       cannot: ["the 53-comma notation — Turkish makam writes itself in commas " +
                "and this box has twelve names, so the PITCH is inside the JND " +
                "and the WRITING is not sayable at all",
@@ -10107,8 +10258,8 @@
       // a form that is decades older, and a Kansas City riff band is built
       // out of blues choruses whatever year the catalog happens to have
       // photographed the blues in.
-      parents: { blues: 0.55, ragtime: 0.2 },
-      wants: ["new orleans jazz", "territory bands", "tin pan alley"],
+      parents: { blues: 0.45, tinpanalley: 0.2, ragtime: 0.2 },
+      wants: ["new orleans jazz", "territory bands"],
       instr: ["tenor_sax", "brass_section", "jazz_guitar"],
       drumkit: "jazz",
       swing: 0.33,
@@ -10592,6 +10743,991 @@
                 : v === 2 ? [spread(0), fill(8), rotate(7), drop(2)]
                 : [drop(2)]),
     },
+
+    /* ====================================================================
+       2026-08-29 — THE WANTS GAP, AND THE FOUR CLASSICAL TRADITIONS
+       ====================================================================
+       Paul: *"Add the missing genres and start filling in western, Arabic
+       and Chinese and Indian classical music."*
+
+       WHICH GENRES ARE MISSING IS NOT A WISH LIST — IT IS A MEASUREMENT.
+       Every anchor above declares `wants`: the ancestors it names and this
+       table does not have. Counted over the 201 anchors that shipped before
+       this block there are 262 distinct wants, and only two of them are
+       wanted by more than two rows:
+
+           6  jump blues      blues funk ska bodiddley chuckberry doowop
+           5  tin pan alley   motown jazz doowop crooner swing
+           2  ...and twenty-one more, each wanted by exactly two
+
+       An ancestor six rows depend on is a hole in the genealogy and not a
+       gap in a collection: filling it makes six existing records more
+       honest about where they came from. Those two land first below, and
+       the six/five rows that asked for them move the name off `wants` and
+       into `parents` on the same day, which is the law THE ANCESTORS set.
+
+       SEVEN OF THE WANTS WERE ALREADY IN THE TABLE and are repaired in
+       place rather than added: `counterpoint` and `drone` wanted "organum",
+       which has been Paris 1200 since 2026-08-21; `toto` wanted "yacht
+       rock", `industrialmetal` "EBM", `parlor` "ragtime", `bailefunk`
+       "samba" and `marabi` "kwela", all of them anchors. A `wants` entry
+       naming a row that exists is a shopping list nobody crossed off, and
+       it inflates the measurement above — those seven are the difference
+       between "262 things missing" and 255.
+
+       THE FOUR TRADITIONS, MEASURED BEFORE ANYTHING WAS WRITTEN.
+       Western art music was already the deepest thing in this catalog:
+       nineteen place-year anchors from Aksum 540 to Sedalia 1899 —
+       zema, gregorian, organum, troubadour, estampie, arsnova, pavane,
+       spem, continuo, fugue, counterpoint, concerto, classical, hymn,
+       nocturne, sacredharp, romantic, barcarolle, parlor. It gets three
+       rows here and they are the three holes the table itself named: the
+       chorale (`fugue` has wanted it since the lineage field existed), the
+       opera (`nocturne`, `continuo` and `romantic` each want a different
+       era of it and there is no opera anchor at all), and the twelve-tone
+       row, which is the one Western idiom this kernel can say BETTER than
+       most — P, I, R and RI are literally `[]`, `invert`, `reverse` and
+       the two together.
+
+       The other three had nothing. Arabic: five anchors (shaabi, aljil,
+       rai, arabesk, mahraganat), every one of them recorded pop, none
+       older than 1978. Chinese: three (shidaiqu, cantopop, mandopop), all
+       recorded pop, none older than 1940. Indian: four (filmi, bhangra,
+       qawwali, punjabipop), all recorded pop, none older than 1960. That
+       is WORLD.md §4's sentence about the whole catalog — *"knows one deep
+       tradition and knows the rest of the world only through the record
+       industry"* — still exactly true of these three regions after the
+       world round.
+
+       AND FOUR CELLS ARE DECLARED EMPTY RATHER THAN FILLED, which
+       WORLD.md §4 says is a legitimate answer and PROGRAM's own stopping
+       rule ("a cell is filled or declared empty with a reason"). See THE
+       FOUR THAT DID NOT SHIP at the foot of this block: jingju, guoyue,
+       khyal and gamelan. Refusing the two WORLD.md itself names is not
+       timidity; it is the primary-fact rule doing the job it was written
+       for, and the alternative — a Peking opera with no banshi, played on
+       a violin — is the caricature that document caught running.
+
+       WHAT EVERY ROW BELOW OWES, and it is more than a sound: a `cannot`
+       list. WORLD.md §5 is the register — *"not an apology, not a promise
+       — a statement of what the grid can and cannot say, on the page,
+       beside the record"* — and ELEVEN of the twelve rows here carry one,
+       because eleven of them are reaching past this box's vocabulary and
+       saying so is the difference between a genre and a costume. The one
+       that does not is `jumpblues`, which is a five-piece band playing a
+       twelve-bar blues with a backbeat, and there is nothing about that
+       this table has ever been unable to say.
+
+       AND SIX NEW COORDINATES ARE OWED TO atlas.js, which this round did
+       NOT touch and did not bake: Nuremberg, Milan, Tetouan, Beijing,
+       Delhi and Chennai are in six labels below and in none of that
+       file's PLACES rows. The bake (`node nukernel/atlas.gate.js --bake`)
+       and those six hand-checked rows are a separate hand's job on a
+       separate day, because atlas.js was owned elsewhere while this was
+       written. Until both land the twelve rows here have no dot.
+       ==================================================================== */
+
+    // JUMP BLUES — Los Angeles 1946. Louis Jordan and his Tympany Five cut
+    // "Choo Choo Ch'Boogie" for Decca in Los Angeles in January 1946; it
+    // held the top of the race chart for eighteen weeks and it is the
+    // single most-copied record between the swing band and rock and roll.
+    // SIX ROWS ABOVE ASKED FOR THIS ONE — more than asked for anything
+    // else in the table — and the reason is the same in all six: a big
+    // band shrunk to five men, a shuffle you can hear the individual
+    // eighth notes in, a shouted vocal and a honking tenor. That is what
+    // `blues` grew a backbeat from, what `chuckberry` and `bodiddley`
+    // sped up, what `doowop` sang over, what `ska` heard on the Miami
+    // radio stations and turned inside out, and what `funk` took the horn
+    // section from.
+    //
+    // THE EIGHT AXES, and the one that carries the identity is TIME.
+    // Material is a riff and a shout; Alphabet is the twelve bars with a
+    // dominant seventh on every chord (`blues12`, the table's own); Form
+    // is the chorus said again; Cast is five men and no more. What makes
+    // it a jump record rather than a blues is the COUNT: 158 against
+    // `blues`'s 104, at the same swing. It is a blues played at a dance
+    // tempo, which is the whole invention.
+    jumpblues: {
+      label: "Los Angeles 1946", voices: 4, bars: 12, near: "swing",
+      // 158 AND NOT THE 168 THIS ROW WAS DRAFTED AT: compose.js holds every
+      // anchor to an integer 70..160 and refuses by name outside it, which is
+      // the floor `dhrupad` runs into from the other end. 158 is still the
+      // fastest thing in the neighbourhood and the fact survives.
+      plan: "song", bpm: 158,
+      // LINEAGE: `swing` is the band it shrank from (Kansas City 1938,
+      // Basie's riff-and-answer chassis with nine fewer players) and
+      // `blues` is the form it plays. Two parents, near enough even, with
+      // swing ahead because the ARRANGEMENT is the band's and only the
+      // chord grid is the blues'.
+      parents: { swing: 0.55, blues: 0.45 },
+      // "boogie-woogie" spelled the way `blues` and `chuckberry` already
+      // spell it, so the three of them aggregate into one hole rather than
+      // two near-identical strings — a want list that is measured has to
+      // agree with itself about names.
+      wants: ["boogie-woogie", "territory band riffs"],
+      instr: ["solo_vox", "tenor_sax", "upright_piano", "jazz_guitar"],
+      drumkit: "jazz",
+      entry: v => (v === 0 ? 1 : 0), reg: v => [0, 0, -1, -1][v],
+      realize: () => "line",
+      part: ["lead", "riff", "riff", "riff"],
+      roots: [0, 0, 0, 0, 3, 3, 0, 0, 4, 3, 0, 4], prog: PROGS.blues12,
+      scale: SCALES.blues, harmony: "cycle",
+      swing: 0.33, bassStyle: "walk", artic: "staccato", maxHold: 1,
+      orn: { grace: 0.2 },
+      // THE SHUFFLE, WRITTEN OUT: a kick on 1 and the and-of-2, a snare
+      // on the backbeat, and the ride carrying straight eighths that the
+      // swing field bends into triplets. The hand-clap lane is the crowd,
+      // on 2 and 4 with the snare, because a jump record was made to be
+      // danced to in a room that answers back.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             r: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { c: [0,0,0,0, 6,0,0,0, 0,0,0,0, 6,0,0,0] },
+      fill: { s: [1,0,1,1, 1,0,1,0, 1,1,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 3000, q: 1.0, atk: .008, rel: .5, gain: .27, verb: .3,
+              // WHO SINGS: the shouter. `belter` is the row — a voice at
+              // the front of a band at full volume — and it is a soprano
+              // where Jordan is a light baritone, which is the nearest
+              // measured tract this table holds for somebody selling a
+              // song over four loud men.
+              mouth: MOUTHS.belter },
+      words: ["the shout, on the second bar", "the tenor, honking the riff",
+              "the piano, boogie in the left hand", "the guitar, chording every beat"],
+      word: (v, s) => [
+        [[], [rotate(4)], [reverse()]][s % 3],
+        [[fill(2)], [fill(2), rotate(2)], [fill(2), transpose(2)]][s % 3],
+        [[fill(1), drop(2)], [fill(1)], [fill(1), rotate(3)]][s % 3],
+        [[only(0, 4, 8, 12)], [only(0, 4, 8, 12)], [fill(4)]][s % 3],
+      ][v],
+    },
+
+    // TIN PAN ALLEY — New York 1924. West 28th Street between Fifth and
+    // Broadway, where the song-publishing trade kept its cubicles and its
+    // upright pianos, and 1924 is the year the SONG the whole business was
+    // built to sell reached its finished shape: Youmans and Caesar's "Tea
+    // for Two" (No, No, Nanette) and Gershwin's "Fascinating Rhythm" (Lady,
+    // Be Good), both published in New York that year, both a thirty-two bar
+    // chorus in four eight-bar phrases.
+    // FIVE ROWS ABOVE ASKED FOR THIS ONE. `crooner` sings its repertory,
+    // `swing` and `jazz` improvise over its chord grids, `doowop` harmonises
+    // its cadences on a street corner and `motown` was written in a building
+    // organised as a publishing house on purpose.
+    //
+    // THE AXES: this anchor is FORM and ALPHABET and almost nothing else,
+    // which is right, because a Tin Pan Alley song was SHEET MUSIC — the
+    // sound was whoever bought it. Alphabet is the circle of fifths taken
+    // seriously (ii-V-I, a secondary dominant on the way, a chorus that
+    // modulates by thirds); Material is a two-bar cell SEQUENCED, which is
+    // literally how "Tea for Two" is built; Cast is two — a plugger and a
+    // piano, which is what the room contained.
+    tinpanalley: {
+      label: "New York 1924", voices: 2, bars: 8, near: "parlor",
+      plan: "song", bpm: 108,
+      // LINEAGE: `parlor` (New York 1892) is the same trade one technology
+      // earlier — the piano in the front room the sheet was sold for — and
+      // `ragtime` (Sedalia 1899) is where the syncopation in the melody
+      // came from. The alley is the parlor song with a rag's rhythm and a
+      // publisher's discipline over the form.
+      parents: { parlor: 0.6, ragtime: 0.4 },
+      wants: ["operetta", "the coon song", "vaudeville"],
+      cannot: ["AABA — the thirty-two-bar chorus with a bridge in the third " +
+               "eight is what this music INVENTED, and section order is a " +
+               "song fact decided by the composer, not a field an anchor " +
+               "can declare; `bars: 8` says how long a phrase is and " +
+               "nothing says which phrase comes back",
+               "the modulation up a semitone for the last chorus, which is " +
+               "the plugger's own trick and needs a key change inside one " +
+               "record"],
+      instr: ["solo_vox", "yamaha_grand_piano"],
+      entry: () => 0, reg: v => (v === 0 ? 0 : -1),
+      realize: () => "line",
+      part: ["lead", "counter"],
+      // ii-V-I twice, with the third phrase leaning on the relative minor:
+      // the alley's own harmony, and the reason a jazz musician can still
+      // read a 1924 chorus at sight in 2026.
+      roots: [1, 4, 0, 0, 5, 1, 4, 0],
+      prog: [{ d: 1, q: "m7" }, { d: 4, q: "dom7" }, { d: 0, q: "maj7" }, { d: 0, q: "six" },
+             { d: 5, q: "m7" }, { d: 1, q: "m7" }, { d: 4, q: "dom7" }, { d: 0, q: "maj7" }],
+      mode: MODES.ionian, scale: SCALES.major, diatonic: true, harmony: "cycle",
+      swing: 0.15, artic: "legato", maxHold: 3, nobass: true, kit: {},
+      orn: { grace: 0.15 },
+      tone: { wave: "triangle", cut: 2900, q: 0.8, atk: .01, rel: .9, gain: .27, verb: .3,
+              // WHO SINGS: the crooner's own mouth, which is what this
+              // repertory was sung with the moment a microphone existed.
+              mouth: MOUTHS.crooning },
+      words: ["the chorus, a two-bar cell sequenced", "the piano, ii-V under it"],
+      word: (v, s) => (v === 0
+        ? [[], [transpose(1)], [transpose(-1), rotate(2)]][s % 3]
+        : [[drop(2)], [drop(2), fill(2)], [drop(2)]][s % 3]),
+    },
+
+    // CHORALE — Nuremberg 1586. Lucas Osiander's *Fünfftzig geistliche
+    // Lieder und Psalmen*, the collection that did the one thing this row
+    // is: it put the hymn tune in the TOP voice and harmonised it note
+    // against note underneath, so a congregation could sing the melody and
+    // a choir could sing the rest. Everything before it kept the tune in
+    // the tenor where the congregation could not find it.
+    //
+    // THE YEAR IS THE INVENTION AND NOT THE FAMOUS EXAMPLE. The chorale
+    // everybody can hum is Bach's — "O Haupt voll Blut und Wunden",
+    // harmonised five separate times inside one St Matthew Passion,
+    // Leipzig 1727 — and Leipzig 1727 was the first draft of this label.
+    // It was wrong for exactly the reason `counterpoint`'s label is wrong
+    // (see that row, rewritten the same day): dating a practice by its
+    // most-taught specimen makes a textbook or a masterpiece look like the
+    // moment of invention. Bach is the best user of this row's technique
+    // and Osiander is where it starts.
+    //
+    // THE AXES. Development is the interesting one: THERE IS NONE. The
+    // tune is stated once, straight, and never transformed — `word` returns
+    // an empty list for the melody voice on every section, which nothing
+    // else in this table does. What moves is the HARMONY under a fixed
+    // line, which is the exact inverse of the fugue two rows up, and having
+    // both is what makes either legible.
+    chorale: {
+      label: "Nuremberg 1586", voices: 4, bars: 8, near: "hymn",
+      plan: "song", bpm: 72,
+      // LINEAGE: half the chorale melodies ARE plainsong with German words
+      // on them (Luther set Veni redemptor gentium himself), and the
+      // note-against-note technique is species counterpoint's. The label
+      // years run backwards here — 1586 with a 1725 parent — and that is
+      // the counterpoint row's own admission, not an error: its label is a
+      // publication date sitting on a practice seven centuries older. The
+      // table already carries the same inversion at `spem` 1570.
+      parents: { gregorian: 0.5, counterpoint: 0.5 },
+      wants: ["the lutheran hymnal", "the meistersinger's bar form"],
+      cannot: ["the fermata at the end of every line — a chorale BREATHES " +
+               "between phrases and the pause is not in the metre; this " +
+               "grid has sixteen steps a bar and no way to say 'everybody " +
+               "stops here for as long as the organist wants'",
+               "the text — a chorale is a strophic HYMN and which syllable " +
+               "falls on which note is the composition (WORLD.md §5.7); " +
+               "the mouth below sets a vowel and a syllable rate and that " +
+               "is a crude proxy, described as crude"],
+      instr: "ahh_choir",
+      entry: () => 0, reg: v => 1 - v, realize: () => "line",
+      kit: {}, nobass: true, harmony: "cycle", intro: "solo",
+      // FOUR PARTS, AND THE CADENCE IS THE POINT: every second bar arrives
+      // somewhere, and the last two are the perfect cadence this whole
+      // idiom exists to teach.
+      roots: [0, 4, 0, 5, 3, 0, 4, 0],
+      prog: [{ d: 0, q: "triad" }, { d: 4, q: "triad" }, { d: 0, q: "triad" }, { d: 5, q: "triad" },
+             { d: 3, q: "triad" }, { d: 0, q: "triad" }, { d: 4, q: "dom7" }, { d: 0, q: "triad" }],
+      mode: MODES.ionian, scale: DIATONIC, diatonic: true,
+      artic: "legato", maxHold: 2,
+      tone: { wave: "triangle", cut: 2300, q: 0.8, atk: .05, rel: 1.6, gain: .2, verb: .7,
+              // WHO SINGS: the hymnal row — a congregation, not a choir,
+              // which is the whole social fact Osiander was arranging for
+              mouth: MOUTHS.hymnal },
+      words: ["the tune, in the top voice, unaltered",
+              "the alto, filling", "the tenor, filling", "the bass, walking the cadence"],
+      word: v => (v === 0 ? []
+                : v === 1 ? [transpose(-2)]
+                : v === 2 ? [transpose(-4), drop(2)]
+                : [only(0, 4, 8, 12), transpose(-7)]),
+    },
+
+    // BEL CANTO — Milan 1831. Bellini's *Norma* opened at La Scala on 26
+    // December 1831, and "Casta diva" is the argument for every field
+    // below: a melody so long that the orchestra has to get out of its way,
+    // over an accompaniment that is a broken chord and a bass note and
+    // nothing else, ornamented differently the second time through.
+    // THREE ROWS ABOVE WANT AN OPERA and there was none in the catalog:
+    // `nocturne` asks for "bel canto opera" by name and this pays it —
+    // Chopin said outright that he was writing Bellini for the piano —
+    // while `continuo`'s "opera seria" and `romantic`'s "opera orchestra"
+    // stay unpaid on purpose, because they are a different century's opera
+    // at each end and one row cannot honestly be three.
+    //
+    // THE AXES. SOUND and CAST carry it: one trained voice at the front,
+    // strings holding, a harp arpeggiating, and a deliberately empty
+    // middle. Alphabet is almost naive — tonic and dominant for eight bars
+    // at a time — and that is not a simplification, it is the style: the
+    // harmony is slow BECAUSE the melody is doing everything.
+    belcanto: {
+      label: "Milan 1831", voices: 3, bars: 8, near: "nocturne",
+      plan: "arc", bpm: 70,
+      // LINEAGE: `classical` (Vienna 1785) is the period whose orchestra
+      // and phrase structure this inherits whole, and `continuo` (Florence
+      // 1602) is opera's own root in this table — the recitative-and-aria
+      // machinery and the accompanied solo voice both start there.
+      parents: { classical: 0.6, continuo: 0.4 },
+      wants: ["opera seria", "the neapolitan school", "the castrato repertory"],
+      cannot: ["the cavatina-and-cabaletta pair — a bel canto number is a " +
+               "SLOW half and then a fast half, and one record has one " +
+               "tempo (WORLD.md §5.2); per-section `pace` is designed and " +
+               "not landed, so this row is the cavatina alone",
+               "the fioritura the singer writes — the ornament was the " +
+               "PERFORMER's composition, different every night, and `orn` " +
+               "is a density number the box applies evenly"],
+      instr: ["solo_vox", "strings", "harp"],
+      entry: v => (v === 0 ? 2 : 0), reg: v => (v === 0 ? 0 : v === 1 ? -1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "counter"],
+      roots: [0, 0, 4, 4, 0, 3, 4, 0],
+      mode: MODES.ionian, scale: SCALES.major, diatonic: true, harmony: "cycle",
+      artic: "legato", maxHold: 4, nobass: false, bassStyle: "pedal", kit: {},
+      orn: { grace: 0.35, pass: 0.25 },
+      tone: { wave: "triangle", cut: 2600, q: 0.9, atk: .04, rel: 1.8, gain: .24, verb: .6,
+              // WHO SINGS: `belter` — the trained soprano with a wide,
+              // late wobble and very little air in the tone. It is the
+              // only row in MOUTHS written for a voice that is meant to
+              // fill a hall without help.
+              mouth: MOUTHS.belter },
+      words: ["the aria, long-breathed, ornamented more each time",
+              "the strings, holding under it", "the harp, arpeggiating the chord"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [fill(2), rotate(2)]][s % 3]
+                    : v === 1 ? [drop(8)]
+                    : [fill(2), only(0, 2, 4, 6, 8, 10, 12, 14)]),
+    },
+
+    // SERIAL — Vienna 1923. Schoenberg's Suite für Klavier op. 25, written
+    // 1921-23 and the first work composed entirely with twelve tones
+    // related only to one another. It is a Baroque dance suite — Prelude,
+    // Gavotte, Musette, Menuett, Gigue — and that joke is load-bearing:
+    // the row is a SUBJECT and the four forms it appears in are the four
+    // things this kernel's operator vocabulary has always been able to do.
+    //
+    // THIS IS THE ONE ROW IN THE BLOCK WHERE THE BOX IS BETTER THAN THE
+    // NEAREST THING, NOT WORSE. The prime is `[]`. The inversion is
+    // `invert`. The retrograde is `reverse`. The retrograde inversion is
+    // both, and the transposition levels are `transpose`. Kernel.js has
+    // carried Schoenberg's whole apparatus since the day it was written
+    // for fugal answers, and `word(v, s)` cycling the four forms per
+    // section IS the twelve-tone method, not an impression of it.
+    //
+    // THE AXES: Development is everything and Alphabet is chromatic, which
+    // together is a definition of the style. Cast is a piano — two hands,
+    // the `ragtime` reading of `voices: 2`. Harmony is `emergent` because
+    // there is none to declare, which is the honest word for atonality in
+    // this table's three-word vocabulary.
+    serial: {
+      label: "Vienna 1923", voices: 2, near: "neoclassical",
+      plan: "arc", bpm: 96,
+      // LINEAGE: Schoenberg's own claim, and it is a better historical
+      // argument than most in this table. `romantic` (Vienna 1876) is the
+      // chromaticism pushed until the key stopped meaning anything;
+      // `counterpoint` is the technique the row forms come from wholesale;
+      // `classical` is the Suite's own dance-movement frame.
+      parents: { romantic: 0.45, counterpoint: 0.35, classical: 0.2 },
+      wants: ["free atonality", "the second viennese school's cabaret years"],
+      cannot: ["the ROW ITSELF — the rule is that all twelve pitch classes " +
+               "sound before any repeats, and `deg` is a signed index into " +
+               "an alphabet with nothing counting what has been used; this " +
+               "row plays the four forms of a subject through a chromatic " +
+               "scale, which is the method's MOTION without its constraint",
+               "the octave displacement that gives serial music its shape " +
+               "— an interval class is meant to be free to appear as a " +
+               "seventh or a ninth, and `oct` is a per-step flag on the " +
+               "phrase rather than a property of the operation"],
+      instr: "yamaha_grand_piano",
+      entry: () => 0, reg: v => (v === 0 ? 1 : -1), realize: () => "line",
+      kit: {}, nobass: true, harmony: "emergent", intro: "solo",
+      scale: SCALES.chromatic, artic: "staccato", maxHold: 1, incClamp: 1,
+      tone: { wave: "triangle", cut: 3400, q: 0.7, atk: .004, rel: .5, gain: .26, verb: .22 },
+      words: ["P and R — the row, then the row backwards",
+              "I and RI — the row upside down, then both at once"],
+      word: (v, s) => (v === 0
+        ? [[], [reverse()], [transpose(6)], [reverse(), transpose(6)]][s % 4]
+        : [[invert(0)], [invert(0), reverse()], [invert(0), transpose(6)],
+           [invert(0), reverse(), transpose(6)]][s % 4]),
+    },
+
+    /* ---- ARABIC: THREE ROWS AND ONE HARD WALL --------------------------
+       THE WALL IS TUNING AND IT IS MEASURED, not asserted. WORLD.md §2's
+       own table: Arab rast / bayati / saba deviate up to 50 cents from the
+       nearest 12-TET semitone, on the degree that NAMES the maqam, against
+       a melodic-interval JND of 10-20 cents. Cents are Phase 4 of that
+       program and have not landed. So a row called "maqam music" playing
+       twelve equal semitones would be the caricature WORLD.md §4 caught
+       running, and this block does not write one.
+
+       WHAT IT WRITES INSTEAD: the maqamat that 12-TET says EXACTLY. Not
+       every maqam has a neutral degree. Hijaz (root, flat second, natural
+       third, fourth) is all semitones; kurd is phrygian to the note; ajam
+       is major and nahawand is the minor scale. The half-flat lives in
+       rast, bayati, saba and sikah — which are, unhelpfully, the four a
+       listener names as Arab fastest. So the two rows below that declare
+       an alphabet declare one of the exact ones and say in `cannot` which
+       four they are locked out of. That is a smaller claim than "Arabic
+       music" and it is a TRUE one. */
+
+    // TAQSIM — Cairo 1932. The Congress of Arab Music, convened by King
+    // Fuad in March and April of that year, is the single best-documented
+    // event in this tradition: a recording commission cut something like
+    // 175 discs of takht ensembles and regional players from across the
+    // Arab world, Bartók and Hindemith sat in the audience, and the whole
+    // congress argued for a fortnight about exactly the thing this row
+    // cannot do — whether the Arab scale should be tempered.
+    //
+    // THE FORM: a taqsim is the unmetered solo improvisation that opens a
+    // performance. It starts in the lowest jins of the maqam, introduces
+    // it, climbs, modulates, and comes home. There is no drum, no
+    // composition, and often a second player holding the tonic.
+    //
+    // THE AXES, and TIME is the one that hurts. There is no bar. This box
+    // counts sixteenths, so the row takes exactly the compromise
+    // `gregorian` has taken since it was written and WORLD.md §5.1 blesses
+    // — half speed, long holds, tied articulation — and says so out loud
+    // rather than pretending a taqsim has a pulse. Development is the
+    // ASCENT: each section climbs a jins, which is a real structural fact
+    // and is what the transposition schedule below encodes.
+    taqsim: {
+      label: "Cairo 1932", voices: 2, rate: 0.5, near: "gregorian",
+      plan: "arc", bpm: 76,
+      // LINEAGE: a declared ROOT, and honestly. The maqam tradition's
+      // ancestors are Abbasid court practice, Persian and Byzantine
+      // modal theory and the Andalusi schools, and not one of them is an
+      // anchor here or can be dated to a city and a year without
+      // inventing the fact. `parents: {}` plus a `wants` is WORLD.md §4's
+      // own instruction for exactly this case, and `bulgarian` is the
+      // model: claiming a parent would be tidier than it is true.
+      parents: {},
+      // "dastgah" spelled `iranpop`'s way, for the reason `jumpblues` gives
+      // above: two spellings of one missing ancestor is two holes in the
+      // measurement and one in the world.
+      wants: ["ottoman makam", "dastgah", "abbasid court song"],
+      cannot: ["the neutral second — rast, bayati, saba and sikah put a " +
+               "note HALF A FLAT between the semitones, up to 50 cents " +
+               "off the grid on the degree that names the maqam, and this " +
+               "table's alphabets are integer semitones. This row is in " +
+               "hijaz, which 12-TET says exactly; those four are out of " +
+               "reach until cents land (WORLD.md §2, wall 3)",
+               "the oud — there is no oud, ney, qanun or riq in the " +
+               "instrument registry, which WORLD.md calls the emptiest " +
+               "slot on the map. The nylon-string guitar below is a " +
+               "plucked gut-strung lute and it is FRETTED, and a fretless " +
+               "neck is most of what an oud is",
+               "free rhythm — a taqsim has no bar at all, and half speed " +
+               "with long holds is as close as an honest grid gets " +
+               "(WORLD.md §5.1, the chant's own admission)"],
+      instr: ["nylon_string_guitar", "viola"],
+      entry: v => (v === 1 ? 0 : 1), reg: v => (v === 0 ? 0 : -2),
+      realize: v => (v === 0 ? "line" : "pad"),
+      part: ["lead", "pad"],
+      kit: {}, nobass: true, harmony: "modal", intro: "padin",
+      mode: MODES.hijaz, scale: MODES.hijaz, artic: "tie", maxHold: 6, incClamp: 2,
+      orn: { grace: 0.45 },
+      tone: { wave: "sawtooth", cut: 2100, q: 1.1, atk: .01, rel: 1.4, gain: .25, verb: .5 },
+      words: ["the taqsim, climbing a jins each time", "the tonic, held under it"],
+      word: (v, s) => (v === 0
+        ? [[drop(2)], [transpose(2), fill(2)], [transpose(4), fill(2), rotate(3)],
+           [transpose(2), reverse()]][s % 4]
+        : [drop(12)]),
+    },
+
+    // FIRQA — Cairo 1964. "Enta Omri", Umm Kulthum's first record with
+    // Baligh Hamdi, premiered on the first Thursday of February 1964 and
+    // famous for the thing this row is: a takht of five or six players
+    // grown into an orchestra of massed violins, with an electric guitar
+    // and a Farfisa organ in it, and a twelve-minute instrumental
+    // introduction before the singer opens her mouth.
+    //
+    // THE MAQAM IS KURD AND THAT IS WHY THIS ROW CAN SHIP. Enta Omri is in
+    // maqam kurd, which is the phrygian mode note for note — no neutral
+    // degree, nothing off the grid. The row above says which four maqamat
+    // this box is locked out of; this one is simply not one of them, and
+    // `MODES.phrygian` here is not the nearest-Western approximation that
+    // `mahraganat` had to settle for, it is the right answer.
+    //
+    // THE AXES: CAST is the identity. Thirty violins playing the SAME line
+    // as the singer, an octave apart, not a harmony — and Development is
+    // tarab, the line repeated and repeated with the ornament pushed
+    // further each time until the hall shouts. The `word` schedule below
+    // is that escalation and it is the closest thing in this table to an
+    // audience.
+    firqa: {
+      label: "Cairo 1964", voices: 4, bars: 8, near: "filmi",
+      plan: "song", bpm: 92,
+      // LINEAGE: `taqsim` is the modal tradition the singer and every
+      // instrumentalist grew up inside — the record still opens with one —
+      // and `romantic` is named at a real weight for the same reason
+      // `filmi` names it: a massed violin section with a conductor is a
+      // nineteenth-century European institution, and the arrangers were
+      // trained on it. That is not a resemblance, it is a debt.
+      parents: { taqsim: 0.6, romantic: 0.4 },
+      wants: ["the takht", "muwashshah", "the egyptian film musical"],
+      cannot: ["heterophony — the violins play the singer's OWN line, " +
+               "slightly differently, at the same time; this table has " +
+               "`line` chairs that get their own operator word and `pad` " +
+               "chairs that voice chords, and 'the same tune, thirty " +
+               "times, imperfectly' is neither",
+               "the length — a tarab performance repeats a line as many " +
+               "times as the room asks for and runs an hour; the form " +
+               "here is fixed when the record compiles and nobody in it " +
+               "is listening",
+               "the riq and the darbuka — there is no hand drum among the " +
+               "kit samples, so the wahda is voiced on a kick and a rim, " +
+               "which is the same bol loss `filmi` declares"],
+      instr: ["solo_vox", "strings", "accordion", "jazz_guitar"],
+      drumkit: "acoustic",
+      entry: v => (v === 0 ? 2 : 0), reg: v => [0, 0, -1, -1][v],
+      realize: v => (v === 3 ? "pad" : "line"),
+      part: ["lead", "counter", "counter", "pad"],
+      roots: [0, 0, 1, 0, 4, 4, 1, 0],
+      mode: MODES.phrygian, scale: DIATONIC, diatonic: true, harmony: "modal",
+      artic: "legato", maxHold: 4, bassStyle: "pedal",
+      orn: { grace: 0.4, approach: 0.25 },
+      // THE WAHDA: dum on 1, tak on the and-of-2, dum on 3, tak on 4 —
+      // four beats with the weight at the front, which is the rhythm a
+      // long Umm Kulthum verse sits on. The `p` lane is the riq's
+      // continuous jingle and it is a rim sample doing a tambourine's job.
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             p: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1],
+             h: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
+      kitVel: { p: [8,0,4,4, 6,0,4,4, 8,0,4,4, 6,0,4,5] },
+      tone: { wave: "sawtooth", cut: 2500, q: 1.0, atk: .012, rel: 1.3, gain: .26, verb: .5,
+              // WHO SINGS: `melisma` — one vowel held across many notes,
+              // which is the literal description of what she does to a
+              // line of Ahmad Shafiq Kamal's poetry
+              mouth: MOUTHS.melisma },
+      words: ["the singer, the line said again, further each time",
+              "the violins, thirty of them on her tune",
+              "the accordion, answering in the gaps", "the guitar, holding the mode"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [fill(2), rotate(2)], [fill(4), rotate(5)]][s % 4]
+                    : v === 1 ? [transpose(7), drop(2)]
+                    : v === 2 ? [rotate(8), drop(4)]
+                    : [drop(8)]),
+    },
+
+    // NUBA — Tetouan 1790. Muhammad al-Ha'ik's *kunnash*, the songbook
+    // compiled in Tetouan at the end of the eighteenth century that wrote
+    // down the eleven surviving Andalusi nubat and is the reason there are
+    // eleven rather than none. Twenty-four were counted in the medieval
+    // sources; the other thirteen were already lost when he wrote.
+    // IT IS THE SAME KIND OF ROW AS `counterpoint`: a codification, dated
+    // by the book, sitting on a practice that runs back through the
+    // Maghribi courts to Ziryab's Cordoba in the ninth century — and this
+    // block dates it by the book on purpose, with the comment saying so,
+    // which is the repair `counterpoint` needed.
+    //
+    // WHAT IT DOES NOT PAY. `troubadour` wants "andalusi song" and `fado`
+    // wants "moorish andalusi song", and this row is NOT either of them:
+    // both want the twelfth-century music of al-Andalus itself, and this
+    // is its North African survival codified six hundred years later. Both
+    // wants stay open. Paying them with this would be the conscription
+    // WORLD.md §4 names.
+    //
+    // THE AXES: FORM is the identity and it is the one this box cannot
+    // hold. A nuba is five movements in five different metres, each
+    // starting slow and accelerating into the next. What ships is one
+    // movement of it, said plainly in the row's `cannot`.
+    nuba: {
+      label: "Tetouan 1790", voices: 4, bars: 8, near: "troubadour",
+      plan: "arc", bpm: 84,
+      // LINEAGE: a declared ROOT for the same reason `taqsim` is one —
+      // the ancestor is Andalusi court music and there is no anchor for
+      // it, and there will not be one until somebody can name a place, a
+      // year and a source for it that is not this book.
+      parents: {},
+      wants: ["ziryab's cordoban court music", "muwashshah", "the algerian sanaa"],
+      cannot: ["the five mayazin — a nuba runs basit, qaim wa nisf, btayhi, " +
+               "darj, insiraf and quddam, in 6/4, 8/4, 4/4, 5/8 and 6/8, " +
+               "each accelerating to a khalas; an anchor cannot declare a " +
+               "metre at all in this table and one record has one tempo " +
+               "(WORLD.md §2 walls 1 and 2, neither landed)",
+               "the orchestra — no oud, no rabab, no qanun, no tar. The " +
+               "fiddle below is a violin played on the knee in the real " +
+               "thing, which is at least the same instrument; the rest are " +
+               "cognates and the harp is a guess at a qanun"],
+      instr: ["ahh_choir", "fiddle", "nylon_string_guitar", "harp"],
+      entry: v => (v === 0 ? 2 : 0), reg: v => [0, 0, -1, -1][v],
+      realize: v => (v === 3 ? "pad" : "line"),
+      part: ["lead", "counter", "counter", "pad"],
+      roots: [0, 0, 3, 3, 4, 4, 0, 0],
+      mode: MODES.dorian, scale: DIATONIC, harmony: "modal", intro: "solo",
+      artic: "legato", maxHold: 3, nobass: true,
+      orn: { grace: 0.25, pass: 0.2 },
+      // the tar and darbuka's basic cycle, voiced on what there is: a
+      // frame-drum stroke on the beat and the tar's rattle between.
+      kit: { p: [1,0,1,0, 1,0,1,1, 1,0,1,0, 1,0,1,1],
+             k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0] },
+      kitVel: { p: [8,0,4,0, 6,0,4,4, 8,0,4,0, 6,0,4,5] },
+      tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .02, rel: 1.2, gain: .24, verb: .55,
+              // WHO SINGS: `trobar` — a chant-trained tenor, open vowels,
+              // more breath than a church allows, one syllable a beat.
+              // The row was written for Provence 1210 and the joke is that
+              // it is right here for a reason: that is the direction the
+              // borrowing actually ran.
+              mouth: MOUTHS.trobar },
+      words: ["the chorus, singing the sana'a in unison",
+              "the violin, on the same line", "the oud, filling under it",
+              "the qanun, holding the mode"],
+      word: v => (v === 0 ? []
+                : v === 1 ? [transpose(7)]
+                : v === 2 ? [fill(2), drop(2)]
+                : [drop(8)]),
+    },
+
+    /* ---- CHINESE: TWO ROWS, TWO REFUSALS -------------------------------
+       WORLD.md's own verdict on China is the harshest in that document:
+       *"China is entirely empty, no guzheng, pipa, erhu, dizi, suona"* —
+       and for jingju it adds the banshi wall on top. So the two rows here
+       are the two whose IDENTITY IS STRUCTURAL rather than timbral, and
+       jingju and guoyue are declared empty at the foot of this block with
+       the reason. Tuning is NOT the wall for China: sanfen sunyi is 10
+       cents from equal temperament at its worst, inside the JND, and that
+       is measured in WORLD.md §2 rather than assumed here. */
+
+    // GUQIN — Beijing 1956. The Music Research Institute's nationwide qin
+    // survey, which found and recorded something under a hundred living
+    // players; Guan Pinghu's "Liu Shui" (Flowing Water) comes out of that
+    // work and is the take NASA put on the Voyager Golden Record. A
+    // seven-string zither played alone in a room, with no audience
+    // assumed.
+    //
+    // THE AXES: TIME is free — the piece is paced by breath and by the
+    // player's hand, and takes the chant compromise. ALPHABET is a
+    // pentatonic and, unusually for this block, is not an approximation:
+    // the qin's own tuning is measured at 10 cents from equal temperament
+    // at its worst. SOUND is a very quiet instrument in a dry room, which
+    // is `gain` and `verb` doing real work rather than decoration.
+    //
+    // AND THE PRIMARY-FACT RULE IS TIGHT HERE, so it is said rather than
+    // hidden: a qin's music lives in the LEFT HAND — the slides, the
+    // vibratos, the pull-offs into silence — and that is in `cannot`
+    // below. WORLD.md §4 says an anchor does not ship when its tradition's
+    // primary fact is in its own `cannot`. This row is a judgement that
+    // the qin's primary fact is the solo, unmetered, gestural line and
+    // that the left hand is its ORNAMENT — the same judgement the table
+    // already makes for `gregorian`, which ships with "no metre at all" in
+    // its comment. It is the closest call of the twelve and a reviewer
+    // who disagrees should delete the row, not soften it.
+    guqin: {
+      label: "Beijing 1956", voices: 2, rate: 0.5, near: "gregorian",
+      plan: "arc", bpm: 70,
+      // LINEAGE: a declared ROOT. The qin repertory is its own line back
+      // to the Han and there is nothing in this table that is upstream of
+      // it — the nearest anchors by SOUND are European chant and a drone,
+      // and naming either as a parent would be the conscription WORLD.md
+      // §4 caught `worldfolk` in.
+      parents: {},
+      wants: ["the shen qi mi pu repertory", "literati song (qin ge)"],
+      cannot: ["huayin — the left hand's slides, the vibrato that arrives " +
+               "after the note and the pull into silence are what a qin " +
+               "piece IS made of, and `sld` is a binary flag on a step " +
+               "with no pitch trajectory behind it (WORLD.md §5.3)",
+               "jianzipu — the qin's own notation prescribes a STRING, a " +
+               "finger and a stopping position, not a pitch and a " +
+               "duration; a piece is a sequence of gestures and this box " +
+               "is a grid of notes and gates",
+               "free time — half speed and long holds again, and a qin " +
+               "player's pulse is slower and more elastic than a monk's",
+               "the instrument — there is no qin, no guzheng and no pipa " +
+               "in the registry. `koto` below is a long plucked zither " +
+               "with a wooden body, which is the mechanism; it has " +
+               "thirteen strings on movable bridges and is played with a " +
+               "plectrum, where a qin has seven strings, no bridges at " +
+               "all and bare fingers, and it is Japanese"],
+      instr: "koto",
+      entry: v => v * 2, reg: v => (v === 0 ? 0 : 1),
+      realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      scale: SCALES.majpent, artic: "tie", maxHold: 8, incClamp: 1,
+      tone: { wave: "triangle", cut: 2000, q: 0.6, atk: .006, rel: 2.2, gain: .18, verb: .25 },
+      words: ["the stopped tones, one gesture at a time",
+              "the harmonics, answering an octave up"],
+      word: (v, s) => (v === 0
+        ? [[drop(2)], [drop(2), rotate(3)], [drop(4)], [drop(2), reverse()]][s % 4]
+        : [drop(8), transpose(7)]),
+    },
+
+    // JIANGNAN SIZHU — Shanghai 1920. The "silk and bamboo" clubs of the
+    // teahouses around Shanghai and Suzhou: eight or so amateurs, no
+    // conductor, no audience to speak of, playing the eight great pieces
+    // for each other. The canonical one is "Zhonghua liuban", which is the
+    // skeletal tune "Laoliuban" played at half the speed with twice the
+    // notes — a process the tradition names, *fangman jiahua*, "slow it
+    // down and add flowers".
+    //
+    // THIS IS THE BEST FIT IN THE WHOLE BLOCK AND IT IS WORTH SAYING WHY.
+    // Sizhu's identity is HETEROPHONY: every player plays the same tune,
+    // simultaneously, differently, each according to what their instrument
+    // does well. That is not something this box approximates — it is
+    // literally the kernel's mechanism, one subject read by several voices
+    // through different operator words, which is how `organum` and
+    // `arsnova` are built. And *fangman jiahua* is `rate` and `fill`.
+    // Four of the eight axes land exactly: Material (one skeletal tune),
+    // Development (each voice ornaments it its own way), Cast (a club, not
+    // a section), Time (the halving is the variation).
+    sizhu: {
+      label: "Shanghai 1920", voices: 4, bars: 8, near: "arsnova",
+      plan: "song", bpm: 78,
+      // LINEAGE: a declared ROOT. The repertory's own ancestors are the
+      // Ming and Qing instrumental suites and the regional opera
+      // ensembles, and none of them is an anchor. `shidaiqu` (Shanghai
+      // 1940) is a CHILD twenty years later and in the same city, not a
+      // parent, and this row does not claim it.
+      parents: {},
+      wants: ["kunqu instrumental music", "the eight great pieces",
+              "shifan gong-and-drum music"],
+      cannot: ["the dimo — a dizi's tone is a rice-paper membrane buzzing " +
+               "over a hole, and the flute below is a Western concert " +
+               "flute with none of it",
+               "off-grid ornament — the heterophony here is real (four " +
+               "voices, one tune, four different words) but every " +
+               "player's added flower lands on this box's sixteenth-note " +
+               "grid, where a real club's do not, which is why the four " +
+               "of them agree more tidily than eight amateurs ever have"],
+      // THE CAST IS THE HONEST HALF: `dulcimer` for a yangqin is not an
+      // approximation at all — a yangqin IS a hammered dulcimer, the same
+      // instrument that reached China from Persia — and `flute` for a
+      // dizi and `fiddle` for an erhu are the right TYPE with the wrong
+      // body. Only the pipa is a guess, and a nylon-string guitar is at
+      // least a fretted plucked lute.
+      instr: ["flute", "fiddle", "dulcimer", "nylon_string_guitar"],
+      entry: v => (v < 2 ? 0 : v - 1), reg: v => [1, 0, 0, -1][v],
+      realize: () => "line",
+      part: ["lead", "counter", "counter", "counter"],
+      roots: [0, 0, 4, 4, 5, 5, 0, 0],
+      scale: SCALES.majpent, mode: MODES.ionian, harmony: "modal",
+      artic: "legato", maxHold: 2, nobass: true,
+      orn: { pass: 0.35 },
+      // THE BAN, and only the ban: a clapper marking the strong beat and
+      // the drum tapping the weak ones. There is no drum kit in a sizhu
+      // club and `drumkit` is deliberately unset.
+      kit: { p: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             h: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
+      kitVel: { p: [9,0,0,0, 0,0,0,0, 7,0,0,0, 0,0,0,0] },
+      tone: { wave: "triangle", cut: 2700, q: 0.8, atk: .012, rel: .9, gain: .23, verb: .35 },
+      words: ["the dizi, the tune with the most flowers on it",
+              "the erhu, the same tune, sustained",
+              "the yangqin, the same tune, struck twice as often",
+              "the pipa, the same tune, plucked on the bones of it"],
+      word: v => (v === 0 ? [fill(2), rotate(1)]
+                : v === 1 ? [drop(2)]
+                : v === 2 ? [fill(1)]
+                : [only(0, 2, 4, 6, 8, 10, 12, 14)]),
+    },
+
+    /* ---- INDIAN: TWO ROWS, AND THE RAGA IS ADMITTED --------------------
+       Tuning is NOT the wall here and that is measured: WORLD.md §2 puts
+       Hindustani shruti at 14 cents from equal temperament and Carnatic
+       just intonation at 16, both at or inside the JND. The walls are
+       METRE (an anchor in this table cannot declare one, so a 12-beat
+       chautal and a 10-beat jhaptal are unsayable and only 8- and
+       16-matra talas fit the sixteen-step bar), TEMPO (vilambit lay runs
+       one matra every two seconds, and compose.js refuses any anchor
+       outside 70..160 bpm),
+       and gamak/meend, which WORLD.md §5.3 says has no channel.
+
+       AND THE BIG ONE, which both rows carry: a RAGA IS NOT A SCALE. The
+       ascent and the descent are different lines, one of them missing a
+       note the other has; a vadi is emphasised and a phrase — the pakad —
+       identifies the raga to a listener in four notes. This table has one
+       `scale` array read the same way in both directions, and an anchor
+       cannot declare material. WORLD.md §4's primary-fact rule names
+       exactly this as Hindustani's primary fact, which makes both rows
+       below a JUDGEMENT and not a routine addition: what they ship
+       honestly is the DRONE, the modal stasis, the register-by-register
+       unfolding and the tala; what they admit is the raga. A reviewer who
+       reads the rule strictly should delete them and leave the traditions
+       declared empty, and this paragraph is here so that is a decision
+       somebody makes rather than something that slid through. */
+
+    // DHRUPAD — Delhi 1955. Ustad Nasir Moinuddin and Ustad Nasir
+    // Aminuddin Dagar — the senior Dagar brothers — singing at All India
+    // Radio: an alap of forty minutes on the syllables of a mantra with
+    // nothing under it but two tanpuras, and then a composition in the
+    // twelve-beat chautal with a pakhawaj. The oldest surviving form of
+    // Hindustani art music and the austere one: no ornament for its own
+    // sake, no tabla, two voices in the low register.
+    //
+    // THE AXES. Time and Development carry it: the alap has NO metre and
+    // unfolds register by register — mandra, then madhya, then tara — and
+    // then a pulse arrives (jor) and accelerates (jhala). The register
+    // ladder is `reg` and the section schedule below; the acceleration is
+    // not available. Alphabet is one raga with no changes for the whole
+    // performance, which `harmony: "modal"` says exactly right.
+    dhrupad: {
+      label: "Delhi 1955", voices: 3, rate: 0.5, near: "gregorian",
+      plan: "arc", bpm: 70,
+      // LINEAGE: a declared ROOT. Dhrupad's own line runs back through the
+      // haveli temple singing and the prabandha forms to a court at
+      // Gwalior in the fifteenth century, and nothing in this catalog is
+      // upstream of it. `filmi` and `qawwali` are downstream cousins, not
+      // parents, and neither is claimed.
+      parents: {},
+      wants: ["prabandha", "haveli sangit", "the gwalior court of man singh"],
+      cannot: ["a raga is not a scale — the ascent and the descent are " +
+               "different lines and the pakad that identifies it is a " +
+               "PHRASE; this row declares one symmetrical alphabet and no " +
+               "material, which is the tradition's own primary fact " +
+               "admitted rather than faked (WORLD.md §4)",
+               "chautal — the composition is in twelve beats and an " +
+               "anchor in this table cannot declare a metre at all; the " +
+               "bar below is sixteen steps, which is not a tala",
+               "vilambit lay — a real alap moves at a matra every second " +
+               "or two, and compose.js refuses an anchor under 70 bpm, so " +
+               "what plays is " +
+               "madhya lay with the holds stretched as far as `maxHold` " +
+               "goes",
+               "gamak and meend — the shaken note and the slide between " +
+               "two notes are how the raga is IDENTIFIED, and there is no " +
+               "pitch-trajectory channel (WORLD.md §5.3). Reporting zero " +
+               "ornament here would be correct output; the small `grace` " +
+               "below is a crude proxy and is described as crude",
+               "the tanpura — the drone is four plucked strings tuned to " +
+               "Pa-Sa-Sa-Sa with a buzzing bridge that generates the " +
+               "overtones the singer tunes against. `sitar` below is the " +
+               "nearest plucked thing with sympathetic strings in the " +
+               "registry and it is a different instrument doing a " +
+               "different job"],
+      instr: ["solo_vox", "solo_vox", "sitar"],
+      entry: v => (v === 1 ? 2 : 0), reg: v => (v === 2 ? -2 : v),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      kit: {}, nobass: true, harmony: "modal", intro: "padin",
+      mode: MODES.harmonic, scale: DIATONIC, artic: "tie", maxHold: 8, incClamp: 2,
+      orn: { grace: 0.3 },
+      tone: { wave: "triangle", cut: 2000, q: 0.7, atk: .05, rel: 2.4, gain: .22, verb: .45,
+              // WHO SINGS: `zemachant` — bass, no wobble at all, pressed
+              // rather than floated, two beats a syllable. It was written
+              // for an Ethiopian dabtara and it is the nearest measured
+              // tract in this table to a dhrupad singer, for the same
+              // reasons in the same order.
+              mouth: MOUTHS.zemachant },
+      words: ["the alap, climbing a register each time",
+              "the second Dagar, answering", "the tanpura, four strings, never changing"],
+      word: (v, s) => (v === 0
+          ? [[drop(4)], [drop(2)], [fill(2)], [fill(2), rotate(2)]][s % 4]
+        : v === 1 ? [drop(4), transpose(-3)]
+        : [drop(12)]),
+    },
+
+    // CARNATIC — Chennai 1935. Not a record but a FORM, and it has an
+    // author: Ariyakudi Ramanuja Iyengar fixed the order of the modern
+    // South Indian concert in Madras in the 1930s — a varnam to warm up, a
+    // run of kritis, then one raga taken apart at length (alapana, then
+    // niraval, then kalpanaswaram), the drummer's solo, and light pieces
+    // to finish. Every kacheri since has followed it, and the December
+    // season at the Music Academy is where it was settled.
+    //
+    // THE AXES: FORM is the identity, which is unusual and is exactly why
+    // this row can ship where a Peking opera cannot — a concert order is
+    // sections, and sections are the one thing this box has always had.
+    // Development is niraval and kalpanaswaram: the same line re-sung
+    // differently, which is what a per-section `word` schedule IS. Time is
+    // adi tala, eight beats in 4+2+2, and eight fits the sixteen-step bar
+    // at two steps a matra, so the row can voice the tala honestly rather
+    // than admitting it away.
+    //
+    // AND THE VIOLIN IS NOT AN APPROXIMATION. The Carnatic violin is a
+    // European violin, adopted around 1800, held with the scroll on the
+    // player's ankle and tuned in fifths and fourths — the accompanist
+    // shadows the singer's line a beat behind. It is the only instrument
+    // in this whole block that needs no apology.
+    carnatic: {
+      label: "Chennai 1935", voices: 3, bars: 8, near: "filmi",
+      plan: "arc", bpm: 96,
+      // LINEAGE: a declared ROOT, and a different one from `dhrupad` —
+      // these are two systems, not two dialects. They share a Sanskrit
+      // theory and they part company before any anchor in this table:
+      // different repertory, different tala system, different instruments,
+      // different relationship between composition and improvisation.
+      parents: {},
+      wants: ["the trinity's kritis", "varnam", "ragam-tanam-pallavi",
+              "temple periya melam"],
+      cannot: ["gamaka — in this music the OSCILLATION IS THE NOTE. A " +
+               "plain steady 12-TET pitch is not an under-ornamented " +
+               "Carnatic note, it is the wrong note, and there is no " +
+               "pitch-trajectory channel (WORLD.md §5.3). The `grace` " +
+               "number below is the crude proxy that section allows and " +
+               "nothing more",
+               "a raga is not a scale — same admission as `dhrupad`, and " +
+               "here it is sharper still: the seventy-two melakarta are a " +
+               "generative system and this table has eight modes",
+               "the tala's angas — adi tala is counted on the hand, a " +
+               "clap and three finger-counts and then two waves, and the " +
+               "audience counts with the player. The kit below puts the " +
+               "8 = 4+2+2 into a drum pattern, which is the sound of it " +
+               "and not the structure",
+               "the mridangam — no hand drum in the kit samples, so its " +
+               "bols go on a kick and a rim, the loss `filmi` already " +
+               "declares"],
+      instr: ["solo_vox", "violin", "sitar"],
+      entry: v => (v === 1 ? 1 : 0), reg: v => (v === 2 ? -2 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      roots: [0, 0, 0, 0, 0, 0, 0, 0],
+      mode: MODES.harmonic, scale: DIATONIC, harmony: "modal", intro: "padin",
+      artic: "legato", maxHold: 4, nobass: true,
+      orn: { grace: 0.6, approach: 0.3 },
+      // ADI TALA, 4 + 2 + 2, at two steps a matra. The kick is the sam and
+      // the head of each anga; the rim carries the mridangam's filling
+      // strokes; the hat marks the two drutams so the 4+2+2 is audible as
+      // a shape rather than eight even beats.
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 1,0,0,0],
+             p: [1,0,1,1, 1,0,1,0, 1,0,1,1, 1,0,1,0],
+             h: [0,0,0,0, 0,0,0,0, 1,0,0,0, 1,0,0,0] },
+      kitVel: { p: [9,0,4,4, 6,0,4,0, 8,0,4,4, 6,0,5,0] },
+      fill: { p: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .015, rel: 1.2, gain: .25, verb: .4,
+              // WHO SINGS: `melisma` — one vowel across many notes, an
+              // alto with a real wobble and little air. A Carnatic vocalist
+              // sings a whole phrase on one syllable of a kriti's text and
+              // that is what this row measures.
+              mouth: MOUTHS.melisma },
+      words: ["the kriti, then the same line re-sung (niraval)",
+              "the violin, a beat behind the voice", "the tanpura"],
+      word: (v, s) => (v === 0
+          ? [[], [fill(2)], [fill(2), rotate(2)], [fill(4), rotate(6)]][s % 4]
+        : v === 1 ? [rotate(2), drop(2)]
+        : [drop(12)]),
+    },
+
+    /* ---- THE FOUR THAT DID NOT SHIP, AND WHY ---------------------------
+       WORLD.md §4's stopping rule: *"a cell is filled or declared empty
+       with a reason"*, and §7's phase-6 acceptance: *"no anchor ships
+       whose primary fact is in its own `cannot`"*. These four were
+       drafted and withdrawn. They are written down so nobody re-derives
+       them and, more to the point, so nobody quietly writes the easy
+       version of them next month.
+
+       JINGJU (Peking opera, Beijing 1930, Mei Lanfang). Its primary fact
+       is BANSHI — the aria moves manban to yuanban to kuaiban to sanban,
+       slow to metred to fast to free, and that SEQUENCE is the dramatic
+       structure rather than a tempo marking on top of one. Paul reversed
+       the no-time-in-a-section law on 2026-08-25 precisely to make it
+       sayable; per-section `pace` is WORLD.md phase 2 and has not landed,
+       and an anchor here cannot declare a metre or a pace at all. Second
+       wall: the whole instrumentarium is absent — jinghu, yueqin, the
+       guban, the daluo whose gong FALLS in pitch as it rings. Third: the
+       role registers (sheng, dan, jing, chou) are timbre as the genre,
+       WORLD.md §5.5. A jingju row today is a violin and a snare drum in
+       4/4, which is the caricature that document caught running.
+
+       GUOYUE (the modern Chinese orchestra, Beijing 1953). Refused for
+       the opposite reason to sizhu's admission. Sizhu's identity is
+       TEXTURE and FORM, which this kernel holds; guoyue's identity is
+       TIMBRE and ORCHESTRATION — sections of erhu, pipa, ruan, dizi and
+       sheng, conducted, harmonised. Strip the instruments and there is
+       nothing left that a Western string orchestra is not already doing,
+       and there are no Chinese instruments in the registry. WORLD.md's
+       own sentence: *"an erhu playing 12-TET in 4/4 at one tempo is a
+       Chinese-sounding timbre on a Western record"* — and this box does
+       not even have the erhu.
+
+       KHYAL (Hindustani vocal, Mumbai 1965, Amir Khan). The dominant
+       form of North Indian classical music and the biggest single hole
+       left after this block — `filmi` has wanted it by name since the
+       lineage field existed and still does. Two strikes: its primary
+       fact is the VILAMBIT unfolding, one matra every two seconds over a
+       sixteen-beat tintal, and compose.js's floor is 70 bpm with no metre
+       declarable; and the raga admission `dhrupad` and `carnatic` carry
+       is at its worst here, because khyal's whole art is the badhat, the
+       gradual raga exposition, which is material and phrase rather than
+       alphabet. Dhrupad ships in its place because its alap takes the
+       chant's own free-time compromise honestly. `filmi`'s want stays
+       open, on purpose, which is what a `wants` entry is for.
+
+       GAMELAN. Not attempted, and WORLD.md §5.4 is the reason: slendro
+       and pelog are non-2:1 period systems, `degPitch` hardcodes
+       `12*Math.floor(d/len)` and `foldInto` steps by 12, so cents would
+       buy unequal steps inside an octave and nothing else. That document
+       says to *"say gamelan is out of reach, out loud, rather than claim
+       it"*, and this paragraph is that sentence. */
   };
 
   // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane. `p` says "Ghost perc"
@@ -10658,7 +11794,24 @@
                 // it is the first member that is not a church's own music.
                 // Its own DYNAMICS row is below, because a hundred people in
                 // a hollow square is not a choir in a stone building.
-                "sacredharp"]],
+                "sacredharp",
+                // ...AND FOUR MORE ON 2026-08-29, and three of them stretch
+                // the cluster's own definition on purpose, so it is said here
+                // rather than discovered. `chorale` is the definition exactly:
+                // four unaccompanied parts singing a hymn tune. The other
+                // three are here for the IDIOM ROW rather than for the choir —
+                // vox is the only family whose line is long, falling and
+                // VARYING rather than strophic, and a taqsim, a qin piece and
+                // a dhrupad alap are each one long line that never says a
+                // measure twice. `roots`' aabb would be actively wrong for all
+                // three. Each takes its own DYNAMICS row below, because the
+                // family's stress is a metre and none of them has one.
+                //
+                // THE HONEST VERSION IS AN IDIOM_ANCHOR ROW EACH, in
+                // precompose.js, which this round could not write — that file
+                // was owned elsewhere on the day. Family choice was the only
+                // lever available and this comment is the handoff.
+                "chorale", "taqsim", "guqin", "dhrupad"]],
     ["club",   ["acid", "house", "techno", "garage", "dnb", "trap", "boombap",
                 "electro", "bigbeat", "drill", "kpop", "bigroom", "ebm", "synthduo",
                 // the five newcomers below are the SAME "no family fallback"
@@ -10729,7 +11882,12 @@
                 // organ and a rhythm section, which is what this cluster is,
                 // and the fact that the catalog can now hold both of them
                 // beside London 1969 is a small argument for the round.
-                "khmerrock", "anadolurock"]],
+                "khmerrock", "anadolurock",
+                // ...and Los Angeles 1946 (2026-08-29). A band playing a short
+                // call and saying it again is this cluster's own sentence, and
+                // `jumpblues` belongs beside `blues` and `chuckberry`, which
+                // are the two rows it turned into.
+                "jumpblues"]],
     ["studio", ["beatles", "steely", "toto", "kraftwerk", "eurythmics",
                 "synthpop", "citypop", "merseybeat", "psychpop", "motorik",
                 "roboticpop", "confessionalpop",
@@ -10795,7 +11953,21 @@
                 "huayno", "mariachi", "nortena", "banda", "palmwine",
                 "shidaiqu", "enka", "trot", "kroncong", "lukthung", "nhacvang",
                 "filmi", "qawwali", "arabesk", "kabulpop", "rebetiko", "fado",
-                "irishtrad", "balkanbrass", "ragtime", "swing", "bluegrass"]],
+                "irishtrad", "balkanbrass", "ragtime", "swing", "bluegrass",
+                // ...AND SEVEN ON 2026-08-29. The cluster's row is the
+                // strophic one — statement, statement, departure, return —
+                // and it is right for a Tin Pan Alley chorus, a bel canto
+                // cavatina, an Umm Kulthum verse, an Andalusi sana'a, a sizhu
+                // variation cycle and a Carnatic kriti, all six of which say a
+                // measure twice on purpose. `serial` is the misfit and sits
+                // here for the tradition rather than for the row: a
+                // twelve-tone line is the one thing in this table that never
+                // repeats anything, and the IDIOM_ANCHOR row it wants
+                // ({cell:"even", contour:"zig", sent:"vary", len:"two"}) lives
+                // in precompose.js, which this round did not own. Five of the
+                // seven take their own DYNAMICS row below.
+                "tinpanalley", "belcanto", "serial", "firqa", "nuba",
+                "sizhu", "carnatic"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.
@@ -10911,6 +12083,48 @@
     // line has a process rather than an arch, and a phase that wanders is just
     // two people out of time
     minimalism: { stress: 0.12, phrase: 0.15, touch: { t: 0.012, v: 0.4 } },
+    // THE FOUR-TRADITIONS ROUND'S NINE (2026-08-29). Five of the twelve new
+    // anchors take their family row unchanged and are not listed here — that
+    // is the table's own law (a row exists only where the anchor is not its
+    // family) and writing nine more rows that repeat a family's numbers is the
+    // photocopy this file exists to avoid.
+    //
+    // THE THREE UNMETERED SOLOISTS, which is why they were put in `vox` in
+    // the first place: a taqsim, a qin piece and a dhrupad alap have NO BAR,
+    // and the vox family's 0.22 stress is a metre being felt. They take
+    // `gregorian`'s own near-zero — the plainchant row is the precedent and
+    // the argument is identical — with all the shape in the phrase.
+    taqsim:    { stress: 0.05, phrase: 0.9,  touch: { t: 0.07,  v: 0.6 } },
+    dhrupad:   { stress: 0.07, phrase: 0.88, touch: { t: 0.06,  v: 0.55 } },
+    // ...and the qin is the LOOSEST HAND of the three and the quietest: it is
+    // one person in a room with nobody listening, so the timing wanders more
+    // than a monk in a choir can afford to and the level barely moves at all.
+    guqin:     { stress: 0.03, phrase: 0.92, touch: { t: 0.085, v: 0.45 } },
+    // THE OLD-WORLD SOLOISTS' ARGUMENT AGAIN, one row down the same line the
+    // continuo/nocturne/romantic block already makes: rubato music, the
+    // phrase over the bar, against `roots`' backbeat-era 0.45. A bel canto
+    // aria and an Umm Kulthum verse are the same fact about who is waiting
+    // for whom — the band follows the singer — and tarab is the more extreme
+    // of the two, which is why its hand is looser.
+    belcanto:  { stress: 0.2,  phrase: 0.9,  touch: { t: 0.075, v: 0.9 } },
+    firqa:     { stress: 0.25, phrase: 0.85, touch: { t: 0.08,  v: 0.95 } },
+    // a kacheri is the opposite trade and it is worth stating rather than
+    // defaulting: the tala is felt HARD (the audience is counting it on their
+    // hands) and the line is still all phrase. Nothing else in this table
+    // combines a stress that high with a phrase that high.
+    carnatic:  { stress: 0.4,  phrase: 0.82, touch: { t: 0.055, v: 0.8 } },
+    // eight amateurs in a teahouse with no conductor: the metre is a clapper
+    // rather than a drummer, and the time moves because nobody is in charge.
+    sizhu:     { stress: 0.15, phrase: 0.7,  touch: { t: 0.07,  v: 0.6 } },
+    // a twelve-tone line has a metre it is not trying to make you feel, and
+    // it is PLAYED — the pianist is a person — so the level moves where the
+    // time does not. Nearest neighbour in this table is `minimalism`, one
+    // notch less severe.
+    serial:    { stress: 0.15, phrase: 0.5,  touch: { t: 0.02,  v: 0.75 } },
+    // ...and a jump record is the loosest end of the band family on purpose:
+    // this is dance music played fast by five men, so the metre is felt as
+    // hard as `blues` feels it and the hand is looser than any of them.
+    jumpblues: { stress: 0.5,  phrase: 0.45, touch: { t: 0.075, v: 1.05 } },
     // drum machines with singers over them: the machine is the floor, the
     // performance is on top, so metre stays modest and the level moves
     jodeci:    { stress: 0.3,  phrase: 0.5,  touch: { t: 0.04,  v: 0.8 } },

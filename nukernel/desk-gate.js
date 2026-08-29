@@ -1946,28 +1946,79 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // always on the page; it is the same control with the same id on the tab
     // the main now lives behind.
     await openBus("main");
+    /* …AND ITS PARTNER IS A LEVEL OF THE GUTTER NOW, SO THE LEVEL IS OPENED
+       TOO (2026-08-29). This check reads `#vol` — the other view of the same
+       store — and until today `#vol` was in the `.nu-bar`, which was on the
+       page from boot to close. Paul, 2026-08-29: *"Get rid of the play buttons
+       and the title of the song"* / *"Add a permanent play button to the top
+       of the nav. When I tap it the nav is taken over by play options. The
+       volume slider is now vertical."* The band is deleted and `#vol` exists
+       only while the gutter is standing on its `play` level, so
+       `document.getElementById("vol")` answered null here and the whole check
+       returned `null` — both assertions failing on an absence rather than on
+       a scale.
+       THE GESTURE IS PAUL'S OWN and it is TWO taps, not one. The first press
+       is what a person does to see the transport (it drops the stripe to the
+       `play` level, where the vertical fader is) and it also STARTS the
+       record; the second stops it again and the level stays put — measured on
+       the rendered page, 2026-08-29: after two presses `__eightTray().level`
+       is still `"play"`, `#vol` is still laid out, `#play`'s accessible name is
+       back to "play", and `#boardpanel #rack .nu-plate` is still the main. So
+       the gate leaves the transport exactly as it found it and every check
+       after this one runs against a silent box, which is what they were
+       written against.
+       THE PLATE STAYS UP BEHIND THE LEVEL — the gutter's level and the panel
+       under it are two different facts — which is why `openBus` comes first
+       and why both faders can be read in one round trip. */
+    await page.evaluate(() => document.getElementById("play").click());
+    await page.waitForTimeout(900);
+    await page.evaluate(() => document.getElementById("play").click());
+    await page.waitForTimeout(500);
     const lis = await page.evaluate(async () => {
       const v2 = document.getElementById("vol2"), v1 = document.getElementById("vol");
       if (!v2 || !v1) return null;
+      // `.closest(".nu-vs")` since 2026-08-27: the fader stood up (vertical
+      // chassis — the input rides inside the track, the output is the wrap's),
+      // so the readout is no longer a sibling of the input's parent. Same
+      // control, same store, same claim. Both faders are vertical now, so both
+      // are read the same way.
+      const say = (el) => ((el.closest(".nu-vs") || el.parentNode)
+        .querySelector("output") || {}).textContent;
       const shape = { min: v2.min, max: v2.max, step: v2.step, value: v2.value,
-                      barMin: v1.min, barMax: v1.max };
-      v2.value = "55"; v2.dispatchEvent(new Event("input", { bubbles: true }));
-      await new Promise((r) => setTimeout(r, 300));
-      return { shape, store: localStorage.getItem("nukernel.vol.v1"),
-               // `.closest(".nu-vs")` since 2026-08-27: the fader stood up
-               // (vertical chassis — the input rides inside the track, the
-               // output is the wrap's), so the readout is no longer a sibling
-               // of the input's parent. Same control, same store, same claim.
-               out: ((v2.closest(".nu-vs") || v2.parentNode)
-                 .querySelector("output") || {}).textContent };
+                      barMin: v1.min, barMax: v1.max, barStep: v1.step };
+      const drive = async (el, v) => { el.value = String(v);
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        await new Promise((r) => setTimeout(r, 300));
+        return localStorage.getItem("nukernel.vol.v1"); };
+      /* THE GUTTER'S FADER IS DRIVEN TOO, AND IT IS DRIVEN FIRST (2026-08-29).
+         The claim this check was written for is "two views over ONE store",
+         and until today only one of the two views was ever touched: the scale
+         halves matched, which proves they were DESIGNED alike, not that they
+         OWN the same number. Now each is driven in turn and the store is read
+         after each — one key, `nukernel.vol.v1`, written by both. The order
+         puts the main plate's touch last so the box is left at 55 exactly as
+         it was before this line was rewritten, and the checks that follow do
+         not have to know this one happened. */
+      const barStore = await drive(v1, 42);
+      const store = await drive(v2, 55);
+      return { shape, barStore, barOut: say(v1), store, out: say(v2) };
     });
     ok(lis && lis.shape.min === lis.shape.barMin && lis.shape.max === lis.shape.barMax,
-       "the listening fader runs on the same 0..100 the transport bar's volume " +
+       "the listening fader runs on the same 0..100 the gutter's own volume " +
        "does — two views over ONE store means one SCALE too",
        JSON.stringify(lis && lis.shape));
+    ok(lis && +lis.barStore === 42 && lis.barOut === "42%",
+       "…and the GUTTER's fader owns that store: a touch on `#vol` writes 42 " +
+       "to nukernel.vol.v1 and prints 42%",
+       JSON.stringify(lis && { barStore: lis.barStore, barOut: lis.barOut }));
     ok(lis && +lis.store === 55 && lis.out === "55%",
        "…and a touch on it writes 55 to the store and prints 55%, not 0.55",
        JSON.stringify(lis));
+    /* MEASURED AND SAID OUT LOUD, 2026-08-29: the two views share the store
+       but neither REPAINTS when the other is moved (drive `#vol2` to 55 and
+       `#vol` still reads 80 until it is touched). That is a fact about the
+       page, not about this gate, and it is not asserted either way here — the
+       store is the owner and both faders write it, which is the claim. */
     // put the board back on its first BUS tab, so the checks after this one
     // start where the page starts. (It read "its first voice tab" until
     // 2026-08-28; there is no voice tab on this board now, and leaving the

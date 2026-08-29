@@ -171,7 +171,13 @@ const ASK = {
   gregorian:  { q: "Gregorian chant", why: "Rome 600 is the tradition's own attributed date; `Gregorian` alone is a calendar." },
   bulgarian:  { q: "Bulgarian State Television Female Vocal Choir", why: "the anchor's comment names Le Mystere des Voix Bulgares, and that record IS this choir — the ensemble whose held-second diaphony this row is written from. Not Music of Bulgaria, which is a country survey; not the album, which is one release of the choir's work.", kind: "artist" },
   spem:       { q: "Spem in alium", why: "the anchor is one PIECE — Tallis's forty-voice motet — and its article is that piece.", kind: "work" },
-  counterpoint: { q: "Counterpoint", why: "Vienna 1725 is Fux's Gradus ad Parnassum and the article covers species counterpoint, which is what this row teaches the kernel." },
+  // REWRITTEN 2026-08-29 (Paul: "Why is counterpoint in 1725"). The date is
+  // right and the row's NAME is what was wrong — see the long paragraph above
+  // the anchor in genres.js. `Species counterpoint` was tried as the target
+  // and REJECTED by this file's own rule: it is not an article, it is a
+  // meta-refresh stub pointing at `Counterpoint#Species_counterpoint`, and a
+  // line in an article is not this row's article.
+  counterpoint: { q: "Counterpoint", why: "Vienna 1725 dates FUX'S BOOK and not the practice: Gradus ad Parnassum is the species method this row implements, and counterpoint itself runs from organum around 900 through Josquin and Palestrina — which is why this anchor's parents are `gregorian` and `organum` (Paris 1200) rather than nothing. The article is the practice at that full width and its own species section is the part this row teaches the kernel. `Species counterpoint` is a redirect to a section, not an article." },
   neoclassical: { q: "Contemporary classical music", why: "Berlin 2011, parents ambient/postrock/minimalism — sustained strings under a turning piano figure. THREE CANDIDATES WERE REJECTED BY READING WHAT THEY SAY: `Neoclassicism (music)` is Stravinsky in the 1920s; `Neoclassical new-age music` redirects to New-age music, whose lead is about yoga and massage; `Neoclassical dark wave` is a goth genre. This is wider than the anchor and it is the only one that is not simply a different music.", kind: "broader" },
   drone:      { q: "Drone music", why: "New York 1964 is La Monte Young; `Drone` alone is an aircraft." },
   sludge:     { q: "Sludge metal", why: "New Orleans 1991; the i-to-flat-II phrygian riff at half speed is this article's subject." },
@@ -380,6 +386,31 @@ const ASK = {
   // cannot carry it — the anchors' own comments do.
   newsfanfare: { q: "Television news music", why: "London 1970. `News music` redirects here and the run follows it. Not News at Ten, which is the programme rather than the music, and not Production music, which is the library trade this cue was written for but is wider than the genre.", kind: "broader" },
   breakingnews: { q: "Television news music", why: "New York 2006. Not CBS Evening News, which is the programme whose relaunch Horner scored; a genre row does not link a bulletin.", kind: "broader" },
+
+  /* ---- THE TWO MOST-WANTED MISSING ANCESTORS (2026-08-29) --------------- */
+  // Not a taste round: these two were chosen by counting `wants` across the
+  // catalogue. Six anchors named jump blues and five named tin pan alley,
+  // more than named anything else, and both now exist.
+  jumpblues:  { q: "Jump blues", why: "Los Angeles 1946 is Louis Jordan's Choo Choo Ch'Boogie on Decca, and the article is about exactly this music — the small swing band playing a shuffle at a dance tempo. Not Blues, which is this row's own parent and a different, slower thing; not Rhythm and blues, which is the wider trade name the jump bands were sold under." },
+  tinpanalley: { q: "Tin Pan Alley", why: "New York 1924, Youmans and Gershwin. The article is the PUBLISHING DISTRICT and its trade, which is wider than the anchor: this row is the thirty-two-bar song those firms sold, not the firms. There is no article for the song form itself — `Thirty-two-bar form` exists but is a form, and this row is the repertory, the harmony and the trade together.", kind: "broader" },
+
+  /* ---- WESTERN ART MUSIC, THE THREE HOLES THE TABLE NAMED --------------- */
+  chorale:    { q: "Chorale", why: "Nuremberg 1586 is Osiander, and this article's own third bullet is what this row implements: a hymn tune \"presented in a homophonic or homorhythmic harmonisation, usually four-part harmony\". Not Chorale (disambiguation) and not Choir, which is the hatnote's own warning. Not `Lutheran chorale` either, which is the repertory of tunes rather than the four-part setting technique." },
+  belcanto:   { q: "Bel canto", why: "Milan 1831 is Bellini's Norma at La Scala. The article is the singing style and the repertory together, which is what the anchor is — a long line over an accompaniment that gets out of its way. Not Opera, which is four centuries wide, and not Norma (opera), which is one work where this row is an idiom." },
+  serial:     { q: "Twelve-tone technique", why: "Vienna 1923 is Schoenberg's op. 25, and this is the article for the METHOD — prime, inversion, retrograde and retrograde inversion — which is exactly what this row's operator schedule plays. Deliberately NOT `Serialism`, which is the wider postwar movement that took the method to duration and dynamics; the anchor implements the row and not the movement, and the key is a shortening rather than a claim." },
+
+  /* ---- ARABIC ----------------------------------------------------------- */
+  taqsim:     { q: "Taqsim", why: "Cairo 1932, the Congress of Arab Music. The article is the form itself and its first paragraph is this anchor's own argument — the improvisation starts in the lower ajnas of a maqam and climbs. Not `Taksim`, which is the disambiguation the article hatnotes to, and not `Taksim Square`." },
+  firqa:      { q: "Firqa", why: "Cairo 1964 is Enta Omri. The article is this exact ensemble — \"a similar ensemble called takht typically comprised between two and five musicians, the firqa generally numbers eight or more\" — and it names Umm Kulthum in its own third paragraph. Not Firqa (military), which the hatnote warns about; not Umm Kulthum, which is the singer where this row is her band." },
+  nuba:       { q: "Andalusi nubah", why: "Tetouan 1790 is al-Ha'ik's kunnash. `Nuba (music)` and `Andalusian classical music` both redirect here and the run follows them. The article is the SUITE — the thing this row is — where Andalusi music at large would be the tradition it sits inside. Not `Nuubaat`, which the hatnote sends the Algerian form to." },
+
+  /* ---- CHINESE ---------------------------------------------------------- */
+  guqin:      { q: "Guqin", why: "Beijing 1956, the Music Research Institute's qin survey. The article is the instrument and its repertory together, which is right for a row whose entire identity is one instrument played alone. Not `Guzheng`, which is the other Chinese zither and a different music; not Chinese music, which is a continent." },
+  sizhu:      { q: "Jiangnan sizhu", why: "Shanghai 1920, the teahouse clubs. The article is this regional chamber tradition by name. Not `Sizhu`, which would be the wider silk-and-bamboo category across several provinces, and not Music of China." },
+
+  /* ---- INDIAN ----------------------------------------------------------- */
+  dhrupad:    { q: "Dhrupad", why: "Delhi 1955, the Dagar brothers at All India Radio. The article is the form — alap, then a composition in a long tala — and it is the older half of Hindustani art music, which is precisely the half this row models. Not `Hindustani classical music`, which is the tradition and would collapse the distinction between this row and the khyal this round refused to write." },
+  carnatic:   { q: "Carnatic music", why: "Chennai 1935 is Ariyakudi's concert order. The article is the South Indian system as a whole, which is wider than the anchor — the row is one kacheri's shape — and it is the only honest target: `Kacheri` is not an article and `Kriti` is one item inside the concert. The link names the system; the label names the format.", kind: "broader" },
 };
 
 /* ---------------------------------------------------------------------------

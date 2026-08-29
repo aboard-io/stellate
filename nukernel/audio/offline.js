@@ -131,9 +131,40 @@ function newVersion(version) {
 
 // THE LINE, AND IT IS OUTSIDE #app. ui/eight.js draw() empties #app on every
 // edit, so a notice mounted inside it would be destroyed by the next
-// keystroke — the same reason #engine sits under the bar and not in it. The
-// button is the only thing on the page that reloads: the page never decides
-// for a hand once a hand is working.
+// keystroke — the same reason the engine readout was never inside it either.
+// The button is the only thing on the page that reloads: the page never
+// decides for a hand once a hand is working.
+//
+// WHERE IT LANDS, AND IT IS A DECISION AGAIN (2026-08-29). This anchored on
+// `document.querySelector(".nu-bar")` and hung the line `afterend` of the
+// transport band — the top of the content column, under the chrome, above
+// whatever panel was open. Paul deleted the band that day (*"Get rid of the
+// play buttons and the title of the song"* / *"Add a permanent play button to
+// the top of the nav"*), so that query answers null and the `else` took over:
+// `insertBefore(p, document.body.firstChild)`, which still works and is why
+// nothing was broken — but "first node in the body" is wherever the markup
+// happens to start, not a place anybody chose.
+//
+// SO IT ANCHORS ON THE CHROME THAT REPLACED THE BAND: `afterend` of
+// `#nu-tray`, which is the same READING POSITION the line has always had —
+// chrome, then the notice, then the panels — and the same PAINTED position,
+// because the gutter is `position: fixed` and takes no room in the flow while
+// `body { padding-inline: calc(var(--gl) + var(--tray-w)) }` keeps every body
+// child, this one included, out from under it (nu.css). It is a child of
+// <body> and carries `.nu-new` rather than `.nu-pan`, so no tab hides it: the
+// nine panels are shown one at a time and the notice is not one of them.
+// Measured on the rendered page at 375x667: the line sits at the top of the
+// content column, its left edge at x=68 (the gutter's 56 plus the page's own
+// 12) and clear of the gutter's band on every tab.
+//
+// THIS IS A PROD PATH AND THE FALLBACK STAYS. The page is served at the ROOT
+// of test.stellate.app as well as at /nukernel/, and staging deliberately
+// ships a self-unregistering worker — so the branch that speaks here is the
+// one that runs in front of people. If the gutter is not on the page yet (the
+// worker can activate before ui/eight.js has built the <nav>'s contents, and
+// a future shell may not have a <nav> at all) the old `insertBefore` fallback
+// puts the line at the top of the body, where it can still be read and
+// pressed. A notice nobody can find is the same as no notice.
 function sayNew(v) {
   let p;
   try { p = document.getElementById("swnew"); } catch (e) { return; }
@@ -148,8 +179,8 @@ function sayNew(v) {
     b.textContent = "reload";
     b.addEventListener("click", () => { location.reload(); });
     p.appendChild(b);
-    const bar = document.querySelector(".nu-bar");
-    if (bar && bar.parentNode) bar.insertAdjacentElement("afterend", p);
+    const tray = document.getElementById("nu-tray");
+    if (tray && tray.parentNode) tray.insertAdjacentElement("afterend", p);
     else document.body.insertBefore(p, document.body.firstChild);
   } catch (e) { /* a page with no body yet: the next load is fresh anyway */ }
 }

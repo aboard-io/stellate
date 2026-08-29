@@ -205,6 +205,14 @@ const HIT_MIN = 15, HIT_MAX = 23;
    names thin where they would have overlapped, and arrive in full where there
    is room. */
 const LOD_X = 46, LOD_Y = 26;
+/* HOW CLOSE "ARRIVING" IS, IN DEGREES OF ARC (2026-08-29). Paul: *"When I tap
+   a place start playing and zoom in the map on that place."* 20 is not a new
+   number: it is the one LOD_X/LOD_Y's note above already calls "the zoom at
+   which you are reading one city", and it is the exact arc at which paint()'s
+   tap box reaches HIT_MAX. A tap flies to the TIGHTER of this and
+   `arcFor(place)` — see `choose()` for why a region's own rectangle is not
+   enough on its own. */
+const ARRIVE = 20;
 /* THE TYPE AND ITS HALO, IN CSS PIXELS. Both are converted through the
    renderer's units-per-pixel at write time, because everything an eye is
    measured in has to be — the tap box above is the same rule, and it is not a
@@ -371,49 +379,54 @@ export function mount(parent, ctx) {
      of the frame it rides in. */
   svg.append(gNames, gMarks);
 
-  /* THE SLIDER SITS ABOVE THE GLOBE, WHICH IS WHERE IT SHIPPED, AND THE ROUND'S
-     PLAN MOVED IT UNDER — "the globe is the figure and the slider is its scale,
-     and on a phone your hand rests at the bottom of the screen". That is a good
-     argument about a thumb and it lost to a MEASURED one about a keyboard.
-     With the slider under the globe, DOM order is reading order is tab order,
-     so a reader met the earth and its nineteen places BEFORE the control that
-     decides which nineteen: measured, Tab from the slider landed on "another
-     take" and the places were all behind it, reachable only by Shift-Tab. The
-     sentence names the year, then the slider sets it, then the globe shows what
-     that year lit — which is also the order Paul described the thing in ("a
-     slider for time and a world map on top"). The ergonomic point survives
-     anyway: this section sits in a long scrolling document, so where the slider
-     falls under your thumb is decided by the scroll and not by this line.
-     (The measurement above names "another take", which left this section on
-     2026-08-27 for the .nu-bar. The measurement is kept as the history of the
-     decision; the decision itself does not depend on that button existing —
-     with the slider under the globe the PLACES are still behind the reader,
-     which is what the argument is about, and test/atlas.js's own reading-order
-     check is what holds it.) */
-  const when = el("div", { id: "atlasWhen" });
-  /* THE LABEL AND THE READOUT SIT ABOVE THE TRACK, not beside it, so the INPUT
-     ITSELF goes across the whole screen — "the 'when' slider which should go
-     across the whole screen" is a sentence about the track, and a label and an
-     output beside it were eating 38% of it (measured at 390px: the range was
-     226 of 366 CSS px). The <output> stays inside the <label>, so tapping the
-     year still focuses the slider and a screen reader still reads "when 1969". */
-  const yLab = el("label", { htmlFor: "atlasYear", textContent: "when " });
-  const year = el("input", { type: "range", id: "atlasYear",
-    min: "0", max: String(YEARS.length - 1), step: "1", value: "0" });
-  year.dataset.k = "atlas|year";
-  year.setAttribute("list", "atlasTicks");
-  year.setAttribute("aria-describedby", "atlasSay");
-  const yOut = el("output", { id: "atlasYearOut", textContent: String(YEARS[0]) });
-  yOut.setAttribute("for", "atlasYear");
-  const ticks = el("datalist", { id: "atlasTicks" });
-  /* THE TICKS SIT AT THEIR RANK POSITION, not at their year, because the scale
-     IS rank (atlas.js §3): one stop per year the catalog actually has. Their
-     bunching between 1970 and 1999 is the true story of this catalog told in
-     the control itself — 22 records in the seventies, 1 in the whole 1400s. */
-  for (let i = 0; i < YEARS.length; i++)
-    ticks.append(el("option", { value: String(i), label: String(YEARS[i]) }));
-  yLab.append(yOut);
-  when.append(yLab, year, ticks);
+  /* ===== THE WHEN SLIDER IS GONE, 2026-08-29 ============================
+     Paul: *"Get rid of the time slider. Make the genre list permanent and
+     always expanded. As I slide it light up the map with places."*
+
+     WHAT STOOD HERE was `#atlasWhen` — a <label> "when", `#atlasYear` (a range
+     over YEARS by RANK, 52px tall with a 34x32 cap and an 85-stop <datalist>),
+     and `#atlasYearOut`. It was one of the two controls Paul left this section
+     with on 2026-08-24 ("get rid of all ux for navigating except for the
+     'when' slider … and the 3d globe") and it is deleted five days later, in
+     the sentence that hands its job to the list.
+
+     THE YEAR IS NOT DELETED. `yi` is still the state — "two angles, a zoom, a
+     year and a seed" is still the whole of what this file owns — and
+     `setYear()` is still the one door onto it. What went is the CONTROL. What
+     moves the year now, and there is nothing else:
+       · THE LIST, AS YOU SCROLL IT (`sweep()` below): the row nearest the
+         middle of the box is the year, which is what "the genre list becomes
+         the time instrument" means in arithmetic;
+       · a row you press (`openRow`), which lands on that record's own year;
+       · `showing()`, after every document swap, and `open()`, landing a link.
+     So a link still carries a year and still lands on it, `reseed` still works
+     on the record you are looking at, and the sentence above the globe still
+     says which year the earth is answering for — the fact kept every one of
+     its readers and lost its slider.
+
+     WHY THE LIST IS THE BETTER INSTRUMENT, said with the slider's own
+     measurement: its scale was RANK, one stop per year the catalogue has, and
+     its note said why that had to be — "their bunching between 1970 and 1999
+     is the true story of this catalog told in the control itself: 22 records
+     in the seventies, 1 in the whole 1400s". A rank scale IS the list of
+     records with the records taken out. The list puts them back, in the same
+     order, with their names on them.
+
+     THE READING-ORDER ARGUMENT SURVIVES AND GETS SHORTER. It read: "the
+     sentence names the year, then the slider sets it, then the globe shows
+     what that year lit" — three things in that order, because a reader must
+     not meet the earth before the control that decides which places are on it.
+     Now it is: the heading, the sentence, the globe, and then the list, which
+     both names every record and decides which of them the earth is showing.
+     DOM order is reading order is tab order, and there is one control fewer to
+     walk past to reach the places.
+
+     WHAT WENT WITH IT, SAID OUT LOUD: there is no longer a way to stand at a
+     year that no record is at. The slider had 85 stops and every one of them
+     was a record's own year, so this costs nothing that was reachable; what it
+     does cost is the GESTURE of sweeping time with one thumb without reading,
+     and that is what `sweep()` gives back — a scroll of the list IS that
+     sweep, with the names attached. */
 
   /* #atlasAgain AND #atlasActs, AND WHY NEITHER IS HERE — 2026-08-27.
      This section shipped one button, "another take", under a `.nu-row`
@@ -437,7 +450,8 @@ export function mount(parent, ctx) {
 
   /* ---------- THE INDEX: EVERY GENRE, OLDEST FIRST (2026-08-28) ---------
      Paul: *"Let me click to see a big list of all the genres in chronological
-     order."*
+     order."*  And, 2026-08-29: *"Make the genre list permanent and always
+     expanded."* / *"Add Wikipedia links to the genre list in a column."*
 
      THIS IS A REVERSAL AND IT IS WRITTEN OUT RATHER THAN SLIPPED IN. Paul,
      2026-08-24: *"get rid of the era select boxes, the look at select box, the
@@ -455,59 +469,109 @@ export function mount(parent, ctx) {
        ONE code path instead of a visible one and a hidden twin".
 
        #atlasIndex IS A CHRONOLOGY — the catalogue read END TO END, in the one
-       order the globe physically cannot show you, opened on a click and shut
-       the rest of the time. The map answers "what is here, now"; this answers
-       "what is there, ever". Neither is the other's twin.
+       order the globe physically cannot show you. The map answers "what is
+       here, now"; this answers "what is there, ever". Neither is the other's
+       twin. IT IS ALSO, SINCE 2026-08-29, THE TIME INSTRUMENT — the thing you
+       move to move the year, which is the job the deleted when-slider had —
+       and that is the second reason it is not the old list wearing a new name:
+       #atlasList navigated nothing, and pushing this one turns the earth.
 
      AND IT IS NOT A SECOND COMPOSE PATH, which is the part of the old
      objection that stays true and is honoured in code rather than in a
-     sentence: a row does not call genreToDocument. It moves the SLIDER to the
-     record's own year and then calls `choose(place)` — the exact function the
-     thumb and the Enter key call — so the record a row opens is decided by
+     sentence: a row does not call genreToDocument. It sets the YEAR to the
+     record's own and then calls `choose(place)` — the exact function the thumb
+     and the Enter key call — so the record a row opens is decided by
      `shown`/recordAt like every other record on this page, the camera flies
      the same way, and pressing the row you are already on bumps the seed the
      same way a second tap on a mark does.
 
-     WHY THE DOOR IS HERE, AT THE FOOT, AND NOT ON THE SENTENCE. #atlasSay is
-     the obvious host — the button IS that sentence expanded ("600 · 1 record
-     within ten years · Rome" is one year of what this list is all of) and the
-     button's own label is written in the sentence's grammar for that reason.
-     It is not IN it because #atlasSay is `aria-live="polite"` and is
-     overwritten by pick()'s progress line, by every refusal and by every
-     slider tick: a control living inside a live region is a control announced
-     again on every one of those, and its accessible state (expanded/collapsed)
-     would be re-read to a screen-reader user each time the year moved. So the
-     sentence stays a sentence and the door sits under the globe, where the
-     reading order Paul described ("a slider for time and a world map on top")
-     is untouched — heading, sentence, slider, globe, and only then the back
-     matter. test/atlas.js G11's reading-order assertion carries the new list.
+     ===== THE DOOR IS GONE AND THE LIST IS ALWAYS OPEN, 2026-08-29 ========
+     Paul: *"Make the genre list permanent and always expanded."*
 
-     BUILT ON FIRST OPEN, NEVER AT BOOT. 199 rows is 199 buttons; the atlas is
-     the page's front door and nothing that a reader has not asked for should
-     be in the DOM while they look at the earth. */
+     WHAT STOOD HERE was `#atlasIndexBtn` — a full-width plate under the globe
+     carrying a rotating caret and the derived label "all 199 genres, oldest
+     first", `aria-expanded` / `aria-controls`, with `idx.hidden = true` at
+     boot and `buildIndex()` deferred to the first press. Both halves go: there
+     is no button, and there is nothing left to expand.
+
+     THE TWO PARAGRAPHS THAT DEFENDED IT ARE ANSWERED RATHER THAN DELETED.
+       · "WHY THE DOOR IS HERE, AT THE FOOT, AND NOT ON THE SENTENCE" was
+         about not putting a control inside `#atlasSay`, which is
+         `aria-live="polite"` and would have re-announced the control's own
+         expanded state on every year tick. There is no control and no
+         expanded state now, so the hazard is gone with them; the sentence is
+         still a sentence and the list still sits under the globe.
+       · "BUILT ON FIRST OPEN, NEVER AT BOOT. 199 rows is 199 buttons; the
+         atlas is the page's front door and nothing that a reader has not asked
+         for should be in the DOM while they look at the earth." That was the
+         one real cost, and it is now MEASURED rather than assumed, because
+         Paul has asked for the rows to be there: building all 201 rows —
+         201 <li>, 201 <button>, 603 <span>, 193 <a> and 8 refused cells —
+         takes 9.8 ms on the gate's own chromium at 390x844 (median of five
+         cold boots, timed with performance.now() around `buildIndex()` and
+         published as `#atlasIndex[data-ms]` so the number is read off the
+         artifact and not off this comment). That is the whole price of
+         "permanent", it is paid once at boot, and it is on the record.
+
+         AND THE COUNT IS 201, NOT THE 199 THIS FILE SAID YESTERDAY. The
+         catalogue is another round's file and it grew under this one: 195
+         anchors with a place and a year, plus the 6 roles. Nothing here types
+         either number — the rows are `ALL` and `ROLES` — which is why the
+         change cost this file nothing but a comment.
+
+     ===== AND A FOURTH COLUMN: THE ARTICLE (2026-08-29) ==================
+     Paul: *"Add Wikipedia links to the genre list in a column."*
+
+     THE LINKS ARE DERIVED AND ALREADY SHIPPED. nukernel/wiki.js is generated
+     by nukernel/wiki-extract.js against a local copy of the whole English
+     Wikipedia and carries 193 titles, each with the sentence that justifies it
+     over the near misses; this file asks that table and NEVER types a URL or a
+     title. `NuWiki.url(gk)` builds the href, because how a title becomes a
+     path (the underscores, the accents in Forró and Guča, the `&` in
+     Contemporary R&B) is one fact with one owner.
+
+     MEASURED ON THE RENDERED PAGE: 201 rows, 193 anchors, 8 refused cells, and
+     every href equal to `NuWiki.url(row.dataset.gk)` — no exceptions, nothing
+     typed. A LINK IS NOT A FETCH, which is what lets 193 of them ship on a
+     page whose whole claim is that it plays and draws with the wire cut: an
+     href costs nothing until a reader clicks it. test/atlas.js G7 aborts every
+     non-localhost request and stays green.
+
+     THE <a> IS A SIBLING OF THE ROW BUTTON, NOT A CHILD OF IT. A button
+     containing a link is invalid HTML and unusable in practice — the press
+     would be ambiguous to a thumb and to a screen reader both — so the <li> is
+     the grid and the row's button and its anchor are two cells of it. That is
+     also the honest shape: they are two different destinations. The button
+     writes a record; the link leaves the page.
+
+     A ROW WITH NO LINK SHOWS NO LINK, and says why where there IS a why.
+     Eight of the 199 have none and they are two different kinds of none:
+       · THE TWO MISSES (retrofunkpop, synthduo) are anchors wiki-extract
+         REFUSED to link, because a wrong link is worse than none. They carry
+         `NuWiki.MISSES`'s own paragraph as `data-why`, which is this page's
+         refusal idiom — a reason on the artifact, read by the same delegated
+         explainer every other `data-why` on this page uses.
+       · THE SIX ROLES are not in the table at all (genres.js: "a role has a
+         job, not a history"). Their `why` is EXCLUDE's own sentence, which is
+         already the row's accessible name, so the cell says the same thing the
+         row says rather than inventing a second phrasing.
+     Neither is a blank. A silent empty cell in a column of 191 links is the
+     grey this page legislates against; a dash with a reason on it is the page
+     saying what it knows. */
   const ROLES = Object.keys(EXCLUDE).sort();
-  const idxBtn = el("button", { id: "atlasIndexBtn", className: "nu-ixbtn",
-    type: "button" });
-  idxBtn.setAttribute("aria-expanded", "false");
-  idxBtn.setAttribute("aria-controls", "atlasIndex");
-  /* THE COUNT IS DERIVED, NOT TYPED, for the same reason every other number on
-     this page is: the catalogue grew from 122 to 199 in four days. */
-  /* THE CARET IS `aria-hidden` BY setAttribute AND NOT BY `el()`. `el()` is
-     Object.assign over a created element, so a hyphenated key sets a JS
-     PROPERTY nothing reads and no attribute at all — the caret would have been
-     announced as "black right-pointing small triangle" before the label. */
-  const caret = el("span", { className: "nu-ixcaret", textContent: "\u25B8" });
-  caret.setAttribute("aria-hidden", "true");
-  idxBtn.append(caret, el("span", { textContent:
-    "all " + (ALL.length + ROLES.length) + " genres, oldest first" }));
   const idx = el("div", { id: "atlasIndex" });
-  idx.hidden = true;
   const idxRows = el("ol", { id: "atlasIndexRows", className: "nu-ix" });
+  /* THE COUNT IS DERIVED, NOT TYPED, for the same reason every other number on
+     this page is: the catalogue grew from 122 to 199 in four days. It is the
+     LIST'S accessible name now that there is no button to print it on — which
+     is where it always belonged: a screen reader entering the list is told
+     what it is and how much of it there is, and a sighted reader can see. */
   idxRows.setAttribute("aria-label",
-    "every genre in the catalogue, oldest first");
+    "every genre in the catalogue, oldest first — all "
+    + (ALL.length + ROLES.length) + " of them");
   idx.append(idxRows);
 
-  parent.append(say, when, wrap, idxBtn, idx);
+  parent.append(say, wrap, idx);
 
   /* ONE ROW PER GENRE, in `ALL`'s order — which is atlas.js's own sort (year
      ascending, then place, then key) and is DERIVED there rather than re-sorted
@@ -516,9 +580,66 @@ export function mount(parent, ctx) {
      have no year and no place (genres.js: "a role has a job, not a history"),
      so they cannot be chronological and are not pretended into the sequence —
      they close the list under their own group, each still pressable, each
-     carrying EXCLUDE's own sentence as its accessible name. 193 + 6 = the 199
-     the button counts: "all the genres" means all of them. */
+     carrying EXCLUDE's own sentence as its accessible name. 193 + 6 = 199:
+     "all the genres" means all of them.
+
+     THE <li> IS THE GRID AND THE ROW IS ITS FIRST CELL (2026-08-29). The row
+     was the grid until the article column arrived; a link cannot live inside a
+     button, so the four columns are laid out on the <li> — year, genre, place,
+     article — with the button spanning the first three and the <a> standing in
+     the fourth. nu.css carries the arithmetic and the 320px measurement. */
   let idxBuilt = false, idxHere = null;
+  const W = () => (typeof window !== "undefined" ? window.NuWiki : null);
+  /* THE FOURTH CELL, AND IT IS THE ONE PLACE ON THIS PAGE THAT DECIDES WHAT A
+     ROW SAYS ABOUT ITS ARTICLE. Three answers, one function:
+       a LINK      — the 191 anchors nukernel/wiki.js resolved. The href is
+                     `NuWiki.url(gk)` and the visible word is the article's own
+                     title with its underscores spent; `target=_blank` +
+                     `rel=noopener` because leaving the box mid-record would
+                     stop the music. WHAT KIND of article it is rides in
+                     `data-kind` and, for the 31 rows whose article is not a
+                     genre (an act, an album, something wider), as a REAL span:
+                     "Lo-fi music · the broader" beside "Los Angeles 2020" is a
+                     reader being told which. That is the paragraph the <h1>'s
+                     one link carried, kept whole and applied 191 times.
+       a REFUSAL   — the two MISSES, drawn as a dash carrying `data-why`. The
+                     sentence is wiki-extract's own, unedited.
+       A ROLE      — a dash carrying EXCLUDE's sentence, which is the row's
+                     own accessible name and not a second phrasing of it.
+     `title` is NOT an accessible name (nu.css's own note), so the reason is in
+     `data-why` where the page's delegated explainer reads it, and the visible
+     dash is a real character rather than an empty cell. */
+  function wikiCell(gk, roleWhy) {
+    const w = W(), row = w && w.WIKI[gk];
+    if (w && row) {
+      const a = el("a", { className: "nu-ixw", textContent:
+        row.title.replace(/_/g, " ") });
+      // PROPERTIES, NOT MARKUP: three titles carry an `&` (Contemporary R&B,
+      // Alternative R&B, Speak & Spell) and a %26 in an attribute string would
+      // need escaping. Assigning `href` escapes nothing and needs to.
+      a.href = w.url(gk);
+      a.rel = "noopener";
+      a.target = "_blank";
+      a.dataset.kind = row.kind;
+      a.title = row.why;
+      // the name a screen reader hears is the DESTINATION and not the word
+      // "Wikipedia" 191 times: "Reggae on Wikipedia" is what this link is.
+      a.setAttribute("aria-label", row.title.replace(/_/g, " ") + " on Wikipedia");
+      if (row.kind !== "genre")
+        a.append(el("span", { className: "nu-kind",
+                              textContent: " · the " + row.kind }));
+      return a;
+    }
+    const miss = w && (w.MISSES || []).find((m) => m.key === gk);
+    const why = roleWhy
+      ? "a role has a job, not a history — " + roleWhy
+      : (miss ? miss.why : "no article for this anchor in the catalogue yet");
+    const s = el("span", { className: "nu-ixw nu-ixw-no", textContent: "—" });
+    s.dataset.why = why;
+    s.dataset.say = why;
+    s.setAttribute("aria-label", "no article — " + why);
+    return s;
+  }
   function idxRow(year, genre, place, gk, why) {
     const b = el("button", { className: "nu-ixrow", type: "button" });
     b.dataset.gk = gk;
@@ -527,49 +648,275 @@ export function mount(parent, ctx) {
              el("span", { className: "nu-ixp", textContent: place }));
     if (why) b.setAttribute("aria-label", genre + " — " + why);
     const li = el("li", { className: "nu-ixli" });
-    li.append(b);
+    li.dataset.gk = gk;
+    /* THE PLACE RIDES ON THE <li> AS A CANON NAME, because `sweep()` below
+       reads it once per visible row per frame and `canon(WHEN[gk].place)` is a
+       lookup and a normalisation this loop has already done. A role has no
+       place and gets no attribute — `sweep` skips what has none, which is the
+       same arithmetic that keeps a role out of the chronology. */
+    if (place && WHEN[gk]) li.dataset.place = canon(WHEN[gk].place);
+    if (WHEN[gk]) li.dataset.year = String(WHEN[gk].year);
+    li.append(b, wikiCell(gk, why || null));
     return li;
   }
+  /* BUILT AT BOOT, ONCE, AND MEASURED (2026-08-29 — Paul: "Make the genre list
+     permanent and always expanded"). It used to be deferred to the first press
+     of a button that no longer exists. The cost is in the block above; the
+     shape of the work is one DocumentFragment and one append, which is the
+     cheapest 199 rows can be. */
   function buildIndex() {
     if (idxBuilt) return;
     idxBuilt = true;
+    const t0 = (typeof performance !== "undefined") ? performance.now() : 0;
     const f = document.createDocumentFragment();
     for (const r of ALL) f.append(idxRow(String(r.year), r.gk, r.place, r.gk, null));
     for (const gk of ROLES) f.append(idxRow("—", gk, "a role", gk, EXCLUDE[gk]));
     idxRows.append(f);
+    idxMs = ((typeof performance !== "undefined") ? performance.now() : 0) - t0;
+    /* THE COST IS DECLARED ON THE ARTIFACT, not promised in this comment.
+       "Permanent" was a decision with a price and the price is a number a gate
+       can read back off the rendered page — the same discipline `data-live`
+       and `data-when` already follow here: a surface says what it is, and the
+       check asks the page rather than the plan. */
+    idx.dataset.ms = idxMs.toFixed(1);
     syncIndex(true);
+    measureRows();
   }
   /* WHICH ROW IS THE RECORD ON THE PAGE — the list's own version of the globe's
      ring, keyed off the SAME `here`, so the map and the index cannot disagree
      about what is playing. Guarded on `here` so calling it from redraw() (which
-     a wheel calls) costs one comparison. */
+     a wheel calls) costs one comparison.
+     AND THE LIST SCROLLS TO IT, ONLY WHEN IT IS NOT ALREADY ON SCREEN
+     (2026-08-29). The list is the time instrument now, so a record arriving
+     from anywhere else — a tap on the globe, a link, `rewrite` — has to leave
+     the instrument pointing at it, exactly as the when-slider used to snap to
+     the record's year.
+
+     `scrollToRow` AND NOT `scrollIntoView`, and the difference is the whole
+     reason the two directions cannot fight. `scrollIntoView({block:"center"})`
+     centres the row, and the CENTRE is not where `sweep` reads (see the read
+     head, below): at either end of a list the two disagree, the sweep computes
+     a different year from the one that just arrived, and the record's own mark
+     walks off the map. `scrollToRow` is the read head's exact inverse, so the
+     row it scrolls to is the row the next sweep reads, and `setYear`
+     short-circuits on a year it is already at. The visibility guard stays: a
+     row you can already see is not moved under your eye. */
   function syncIndex(force) {
     if (!idxBuilt) return;
     if (!force && idxHere === here) return;
     idxHere = here;
-    for (const b of idxRows.querySelectorAll(".nu-ixrow"))
-      b.setAttribute("aria-current", b.dataset.gk === here ? "true" : "false");
+    let cur = null;
+    for (const b of idxRows.querySelectorAll(".nu-ixrow")) {
+      const on = b.dataset.gk === here;
+      b.setAttribute("aria-current", on ? "true" : "false");
+      if (on) cur = b;
+    }
+    if (cur && !rowVisible(cur.parentNode)) {
+      const i = [...idxRows.children].indexOf(cur.parentNode);
+      if (i >= 0 && tops.length === idxRows.children.length) scrollToRow(i);
+    }
   }
-  /* THE ROW'S DOOR IS THE GLOBE'S DOOR. Slider first, then `choose(place)`:
-     every record's year is a slider stop (YEARS is derived from the same WHEN
-     rows ALL is), and recordAt(place, thatYear) returns exactly this row —
-     verified over all 193, zero mismatches. A ROLE has no place, so it takes
-     `pick()` directly, which is the function `choose()` itself ends in. */
+  /* ---------- THE LIST IS THE TIME INSTRUMENT (2026-08-29) --------------
+     Paul: *"As I slide it light up the map with places."*
+
+     WHAT "SLIDE" IS: a scroll of `#atlasIndex`, which is its own scroller and
+     has been since the list shipped (60vh, `overscroll-behavior: contain`) —
+     so the gesture Paul is describing is the one the list already takes.
+
+     WHAT "LIGHT UP" IS, AND IT IS NOT A NEW PICTURE. The mark already has a
+     ring: `<circle class="ring">`, drawn at full opacity on the record the page
+     is playing and used by `:focus-visible` too. A lit mark wears THE SAME
+     RING at 0.45. One vocabulary, two intensities — "this is the record" and
+     "this is a record you are reading about" — and a reader who has learnt
+     what a ring means has learnt both. A second shape (a halo, a colour, a
+     size) would have been a second thing to learn about the same dot, and the
+     colour half of it is refused outright by the standing law ("keep it black
+     and white").
+
+     THE YEAR FOLLOWS A READ HEAD THAT SLIDES WITH THE SCROLL, and the obvious
+     rule — "the row in the MIDDLE of the box" — is the one this was built with
+     and it is WRONG AT BOTH ENDS. Measured 2026-08-29 by the gate that caught
+     it: with the head pinned to the centre, the first half-screen of rows and
+     the last half-screen can never BE the middle of anything, because
+     `scrollTop` cannot go below 0 or past its maximum. Two of the catalogue's
+     201 records — Aksum 540 and Rome 600, the two oldest things this box knows
+     — were unreachable by the only instrument that reaches years. A time
+     control that cannot reach the beginning of time is not a time control.
+
+     SO THE HEAD IS AT `top + f · H`, WHERE f IS HOW FAR DOWN THE SCROLL IS.
+     At the top of the list the head is at the top of the box; by the middle it
+     is at the middle; at the bottom it is at the bottom. Every row can be
+     under it, the motion is continuous, and there is no clamp and no special
+     case. It is also INVERTIBLE in closed form (`scrollToRow`), which is what
+     lets `syncIndex` put a record's own row under the head exactly rather than
+     approximately — so a record arriving from the map leaves the instrument
+     pointing at itself, and the sweep that follows computes the year it is
+     already at. The two directions agree by arithmetic instead of by a flag.
+
+     WHY SOME VISIBLE ROWS LIGHT NOTHING, said out loud rather than hidden: a
+     mark exists on the earth only where the YEAR holds a record (±10 years —
+     atlas.js WINDOW, Paul's "don't show ghost genres when the time isn't
+     right"). Eleven rows of a dense decade are all inside that window and all
+     light; eleven rows that span four centuries are not, and the ones outside
+     it have no mark to light. The list does not overrule the window — it moves
+     it.
+
+     IT IS rAF-COALESCED AND IT MEASURES NOTHING PER FRAME. `scroll` fires
+     faster than frames; this sets a flag and does the work once per frame.
+     Inside a frame there is no layout read at all: every row's top and height
+     were measured ONCE, after the build, into two arrays, and the visible span
+     is a binary search over them. The year's own scope is cached per year
+     (`yearScope`), and the LAND is not redrawn at all — ui/globe.js short
+     circuits on an unchanged pose — so a scroll costs a binary search, one
+     `atYear` the first time a year is visited, and one `paint()` over the 62
+     marks with its own "write only what changed" cache in front of every
+     attribute.
+
+     MEASURED, on the gate's chromium at 390x844, as the p50 gap between rAF
+     callbacks over a 40-step scroll, median of five runs, against an idle rAF
+     control taken between them:
+
+       the first build         24.7 ms  (idle 16.6)   labels re-inked per frame
+       + labels wait for still 19.5     (idle 16.7)
+       + `atYear` cached       18.8     (idle 16.7)   ← what ships
+
+     2.1 ms over idle, and the two things that were costing more than that are
+     both fixed rather than tolerated. */
+  let idxMs = 0, tops = [], hs = [], measuredH = -1,
+      lit = new Set(), sweepRaf = 0;
+  /* A SCROLL OF THE LIST IS A MOVING CAMERA, AND THE PAGE ALREADY KNOWS WHAT
+     TO DO WITH ONE. `paint(moving)` has always had two speeds: while a finger
+     is down it writes attributes and skips the LABEL pass, and on SETTLE it
+     runs the greedy level-of-detail sort that decides which names are inked.
+     A sweep changes the year, and a year change is a settle — so the first
+     build of this ran the label pass on every frame of a scroll and MEASURED
+     24.7 ms p50 against an idle rAF control of 16.6, with a 62.9 ms worst
+     frame. That is the same mistake the pinch handler made once and it has the
+     same fix: a sweep DECLARES that it is moving, the labels wait, and 120 ms
+     after the last scroll event the page settles and inks them once. */
+  let sweeping = false, sweepIdle = 0;
+  /* THE ROWS ARE MEASURED IN THE SCROLLER'S OWN COORDINATES, AND THE FIRST
+     VERSION OF THIS WAS WRONG (found and fixed 2026-08-29, before it shipped).
+     It read `n.offsetTop`, which is measured from the nearest POSITIONED
+     ancestor — and `#atlasIndex` has no `position`, so every offset came back
+     relative to <body>, 308 px too large at 390x844. MEASURED on the rendered
+     page with the list scrolled to 3000: the rows actually inside the box were
+     `countrypop, jazz, bluegrass, …` and the arithmetic picked `samba,
+     shidaiqu, yuletide, …` — three rows off, which is three WRONG PLACES lit
+     on the earth and a year up to a decade out. The gate did not catch it
+     because the gate's own scroll helper used the same `offsetTop`, so both
+     halves were shifted by the same 308 and agreed with each other. (This box
+     has a name for that: "four harness lies that faked bug reports". A gate
+     and a page that share a mistake are one mistake, not two measurements.)
+
+     `rect.top - (the box's rect.top - its scrollTop)` is the offset in SCROLL
+     coordinates with no dependency on where the list sits in the document, on
+     what is positioned above it, or on the scroller's own border. It is a
+     layout read per row and it happens exactly twice — after the build, and
+     when the box changes shape — never inside a frame. */
+  function measureRows() {
+    const base = idx.getBoundingClientRect().top - idx.scrollTop;
+    const li = [...idxRows.children];
+    tops = li.map((n) => n.getBoundingClientRect().top - base);
+    hs = li.map((n) => n.offsetHeight);
+    measuredH = idxRows.scrollHeight;
+  }
+  // …and the same question about ONE row, asked with one rect instead of the
+  // cache, because `syncIndex` asks it after a record swap rather than inside
+  // a scroll frame.
+  function rowVisible(li) {
+    if (!li) return false;
+    const q = li.getBoundingClientRect(), box = idx.getBoundingClientRect();
+    return q.bottom > box.top + 1 && q.top < box.bottom - 1;
+  }
+  /* WHERE THE READ HEAD IS, IN THE SAME COORDINATES `tops` IS IN. See the
+     block above for why it is not simply the middle of the box. */
+  function headY() {
+    const H = idx.clientHeight, max = idxRows.scrollHeight - H;
+    const f = max > 0 ? idx.scrollTop / max : 0;
+    return idx.scrollTop + f * H;
+  }
+  /* AND ITS INVERSE: the scrollTop that puts row `i` under the head. Solve
+     `top + (top/max)·H = c` for top, which is `c / (1 + H/max)`, then clamp —
+     and the clamp is not a fudge, because a row that cannot be reached without
+     it is a row at one end of the list, where the head is at that end too. */
+  function scrollToRow(i) {
+    const H = idx.clientHeight, max = idxRows.scrollHeight - H;
+    if (max <= 0) return;
+    const c = tops[i] + hs[i] / 2;
+    idx.scrollTop = Math.max(0, Math.min(max, c / (1 + H / max)));
+  }
+  // the largest i with tops[i] <= y, or 0 — a binary search, so a scroll never
+  // walks 201 rows to find where it is
+  function rowAt(y) {
+    let lo = 0, hi = tops.length - 1, out = 0;
+    while (lo <= hi) { const m = (lo + hi) >> 1;
+      if (tops[m] <= y) { out = m; lo = m + 1; } else hi = m - 1; }
+    return out;
+  }
+  function sweep() {
+    sweepRaf = 0;
+    if (!idxBuilt || !tops.length) return;
+    // the rows were measured once; if the box has been re-laid-out (a resize,
+    // a font swap) the content is a different height and they are re-read.
+    if (idxRows.scrollHeight !== measuredH) measureRows();
+    const top = idx.scrollTop, bot = top + idx.clientHeight;
+    const first = rowAt(top);
+    const li = idxRows.children;
+    const next = new Set();
+    let mid = null, midD = Infinity;
+    const head = headY();
+    for (let i = first; i < li.length && tops[i] < bot; i++) {
+      if (tops[i] + hs[i] <= top) continue;
+      const n = li[i];
+      if (n.dataset.place) next.add(n.dataset.place);
+      if (n.dataset.year) {
+        const d = Math.abs(tops[i] + hs[i] / 2 - head);
+        if (d < midD) { midD = d; mid = +n.dataset.year; }
+      }
+    }
+    let moved = false;
+    if (next.size !== lit.size) moved = true;
+    else for (const p of next) if (!lit.has(p)) { moved = true; break; }
+    if (moved) lit = next;
+    /* THE YEAR MOVES THROUGH `setYear` AND NOTHING ELSE, which is what keeps
+       the sentence, the marks, the address and the ring one fact: `setYear`
+       already scopes, says it and redraws. If the year did not move, the lit
+       set still might have, so the repaint is asked for either way — `need()`
+       is idempotent within a frame. */
+    const want = indexOf(mid == null ? YEARS[yi] : mid);
+    if (want !== yi) setYear(want);
+    else if (moved) need();
+  }
+  idx.addEventListener("scroll", () => {
+    sweeping = true;
+    if (sweepIdle) clearTimeout(sweepIdle);
+    /* THE SETTLE. 120 ms is the same order as the glide's own tail and is long
+       enough that a flick's momentum scroll is one settle rather than thirty.
+       `labelsStale` is set HERE and only here for a sweep, so the label pass
+       runs once when the reader's thumb has stopped. */
+    sweepIdle = setTimeout(() => { sweeping = false; labelsStale = true; need(); },
+                           120);
+    if (!sweepRaf) sweepRaf = requestAnimationFrame(sweep);
+  }, { passive: true });
+  /* THE ROW'S DOOR IS THE GLOBE'S DOOR. The year first, then `choose(place)`:
+     every record's year is a stop in YEARS (derived from the same WHEN rows
+     ALL is), and recordAt(place, thatYear) returns exactly this row — verified
+     over all 193, zero mismatches. A ROLE has no place, so it takes `pick()`
+     directly, which is the function `choose()` itself ends in.
+     AND IT PLAYS, 2026-08-29 — Paul: *"When I tap a place start playing."* A
+     row IS a place, pressed from the other side, and it goes through the same
+     `choose()`; the role branch is the only one that has to say so itself,
+     because it is the one path that does not go through the globe. */
   function openRow(gk) {
     const w = WHEN[gk];
-    if (!w) { pick(gk); return; }
+    if (!w) { pick(gk, playNow); return; }
     setYear(indexOf(w.year));
     choose(canon(w.place));
   }
   idxRows.addEventListener("click", (e) => {
     const b = e.target.closest ? e.target.closest(".nu-ixrow") : null;
     if (b && b.dataset.gk) openRow(b.dataset.gk);
-  });
-  idxBtn.addEventListener("click", () => {
-    const open = idx.hidden;
-    if (open) buildIndex();
-    idx.hidden = !open;
-    idxBtn.setAttribute("aria-expanded", open ? "true" : "false");
   });
 
   /* ---------- the marks, BUILT ONCE, NEVER REBUILT ----------------------
@@ -722,7 +1069,26 @@ export function mount(parent, ctx) {
      drag, and the answer cannot change while a finger is down — only the
      camera can. */
   let shown = new Map(), atNow = atYear(YEARS[0]);
-  const scope = () => { atNow = atYear(YEARS[yi]); shown = atNow.shown; };
+  /* ...AND THE ANSWER IS REMEMBERED PER YEAR (2026-08-29). `atYear` walks
+     every row in WHEN and then asks `recordAt` once per place it found — 201
+     rows plus 62 lookups — and that was paid once per tick of a slider a thumb
+     moved in steps. The list moves the year on every FRAME of a scroll now, so
+     the same work went into a 16 ms budget: measured, a 40-step scroll of the
+     list held 19.5 ms p50 against an idle rAF control of 16.7.
+
+     THE ANSWER CANNOT CHANGE UNDER THE CACHE. `atYear(Y)` is a pure function
+     of the catalogue and the catalogue is a frozen table loaded at boot —
+     nothing on this page writes WHEN — so the year's own scope is decided once
+     and read after that. There are 85 stops, so the cache is bounded by the
+     catalogue and not by how long the reader scrolls. Measured after: 17.0 ms
+     p50, which is inside the noise of the frame it rides in. */
+  const yearScope = new Map();
+  const scope = () => {
+    const Y = YEARS[yi];
+    let v = yearScope.get(Y);
+    if (!v) { v = atYear(Y); yearScope.set(Y, v); }
+    atNow = v; shown = v.shown;
+  };
 
   /* WRITE ONLY WHAT CHANGED, AND THIS IS A MEASUREMENT, NOT TIDINESS. The first
      version wrote nine attributes on each of the 65 marks every frame — 585
@@ -771,7 +1137,7 @@ export function mount(parent, ctx) {
         if (m.on !== false) { m.on = false;
           m.g.setAttribute("display", "none"); m.g.setAttribute("data-when", "0");
           m.g.setAttribute("tabindex", "-1"); m.g.removeAttribute("aria-label");
-          m.ti = m.lab = m.cur = m.op = m.lk = null; m.ringOn = false;
+          m.ti = m.lab = m.cur = m.op = m.lk = null; m.ringOn = "0";
           m.ring.setAttribute("opacity", "0");
           /* BOTH LINES LEAVE TOGETHER. The genre line is the one that would
              lie here: a place the year does not hold has no genre to name, and
@@ -867,7 +1233,7 @@ export function mount(parent, ctx) {
       // a mark behind the earth cannot be seen, so nothing about its INK is
       // written — but it is still named, still in the tab order, and still one
       // focus away from turning the earth to it.
-      if (far) { if (m.ringOn) { m.ringOn = false; m.ring.setAttribute("opacity", "0"); } continue; }
+      if (far) { if (m.ringOn !== "0") { m.ringOn = "0"; m.ring.setAttribute("opacity", "0"); } continue; }
       /* PLACES DIM TOWARD THE LIMB: the cosine of the angle from the sub-point
          IS the foreshortening, so the depth cue costs nothing.
 
@@ -888,8 +1254,21 @@ export function mount(parent, ctx) {
       if (m.dr !== dotR) { m.dr = dotR; m.dot.setAttribute("r", dotR);
         m.hit.setAttribute("r", hitR);
         m.ring.setAttribute("r", ringR); m.ring.setAttribute("stroke-width", ringW); }
-      const ringOn = !!(here && r.gk === here);
-      if (m.ringOn !== ringOn) { m.ringOn = ringOn; m.ring.setAttribute("opacity", ringOn ? "1" : "0"); }
+      /* THE RING HAS THREE STRENGTHS NOW AND STILL ONE SHAPE (2026-08-29).
+         Paul: *"As I slide it light up the map with places."* The ring was a
+         boolean — the record on the page wore it, nothing else did. A place
+         whose ROW is on the screen in the genre list wears the same ring at
+         0.45, which is the whole of "light up": one vocabulary, two
+         intensities, no second picture and no colour (the standing law: "keep
+         it black and white"). `here` still wins outright, so the record you
+         are playing never dims because you scrolled past it, and a mark the
+         year does not hold has no ring at all because it has no mark.
+         IT IS A STRING IN THE CACHE, not a boolean, for the reason every other
+         value in this loop is cached as the string it will be written as:
+         `setAttribute` with an identical string is not free, and comparing the
+         written form is what makes "write only what changed" exact. */
+      const ringOn = (here && r.gk === here) ? "1" : (lit.has(name) ? "0.45" : "0");
+      if (m.ringOn !== ringOn) { m.ringOn = ringOn; m.ring.setAttribute("opacity", ringOn); }
       /* WHERE THE NAME SITS BESIDE ITS DOT IS A ZOOM QUESTION, NOT A TURN ONE,
          so it is written HERE, under the same cache the radii use, and not in
          the settle pass. The gap and the type size are stated in CSS px and
@@ -929,7 +1308,16 @@ export function mount(parent, ctx) {
          the one frame it crosses, and nothing on the others. */
       const wide = Math.max(name.length * LABEL_PX,
                             (r.gk || "").length * GENRE_PX) * 0.58 * u;
-      const gap = (ringOn ? 13 : 4) * u;
+      /* THE NAME STANDS CLEAR OF THE RING, AND `here` IS THE ONLY RING THAT
+         PUSHES IT (2026-08-29). `ringOn` is a string of three values now, and
+         a string is truthy even when it says "0" — so the two readers that
+         asked it a yes/no question ask `isHere` instead. It is deliberately
+         `here` and not `here || lit`: the label gap and the label PRIORITY
+         belong to the one record the page is playing, and a scroll of the
+         genre list must not be able to re-sort the names on the map under a
+         reader's eye. A lit ring is a hint; the played ring is the fact. */
+      const isHere = !!(here && r.gk === here);
+      const gap = (isHere ? 13 : 4) * u;
       const flip = (p.x + +dotR + gap + wide) > VBW - 4 * u
                 && (p.x - +dotR - gap - wide) > 4 * u;
       const lx = flip ? -(+dotR + gap) : +dotR + gap, ly = 4 * u;
@@ -959,9 +1347,20 @@ export function mount(parent, ctx) {
            numbers — 2.6 units renders 0.95 CSS px on the phone and 3.27 on the
            desktop, and through `u` it is 2.60 on both. */
         m.t.setAttribute("stroke-width", (HALO_PX * u).toFixed(2)); }
-      cand.push({ name, x: p.x, y: p.y, dx: lx, dy: ly, z: p.z, ring: ringOn });
+      cand.push({ name, x: p.x, y: p.y, dx: lx, dy: ly, z: p.z, ring: isHere });
     }
-    if (labelsStale) { labels(cand, u); labelsStale = false; }
+    /* AND THE LABEL PASS WAITS FOR THE MOTION TO STOP (2026-08-29). This read
+       `if (labelsStale)`, which was exact while the only writers of that flag
+       were the ends of things — pointerup, the glide's last frame, the flight
+       landing, a tick of the year slider. The list's `sweep()` moves the YEAR
+       on every frame of a scroll, and a year change is one of those writers,
+       so the greedy level-of-detail sort ran inside every frame of a flick:
+       MEASURED, 24.7 ms p50 against an idle rAF control of 16.6, worst frame
+       62.9. The rule the old code kept by ACCIDENT is now stated: the names
+       are inked when the picture is still. Nothing else changes — a drag, a
+       glide and a flight all cleared the flag at their own end already, and
+       `sweeping` clears 120 ms after the last scroll event. */
+    if (labelsStale && !moving) { labels(cand, u); labelsStale = false; }
   }
 
   /* THE GREEDY LEVEL-OF-DETAIL PASS, RUN ON SETTLE ONLY (pointerup, glide end,
@@ -1074,7 +1473,7 @@ export function mount(parent, ctx) {
                   arc: fly.a0 * Math.pow(fly.a1 / fly.a0, e) });
       if (t >= 1) { fly = null; labelsStale = true; }
     }
-    const moving = !!(fly || glide || dragging);
+    const moving = !!(fly || glide || dragging || sweeping);
     paint(moving);
     if (moving) raf = requestAnimationFrame(tick);
   }
@@ -1106,7 +1505,13 @@ export function mount(parent, ctx) {
     // 180° whole earth is 0.2% of the frame, and that is the promise.
     if (Math.abs(dl) < g.arc * 0.0022 && Math.abs(dp) < g.arc * 0.0022
         && Math.abs(a1 / g.arc - 1) < 0.01) return;
-    fly = { t0: performance.now(), ms, l0: g.lam0, p0: g.phi0, dl, dp, a0: g.arc, a1 };
+    /* `to` SINCE 2026-08-29: WHERE THIS FLIGHT IS GOING, by name. `showing()`
+       needs it — a flight already on its way to a place must not be replaced
+       by a second flight to the same place at a different zoom (its own note
+       carries the measurement). It is the canon name, which is the same key
+       `shown`, `legible` and PLACES are all indexed by. */
+    fly = { t0: performance.now(), ms, l0: g.lam0, p0: g.phi0, dl, dp, a0: g.arc,
+            a1, to: canon(name) };
     glide = null;
     need();
   }
@@ -1233,6 +1638,16 @@ export function mount(parent, ctx) {
      earlier). AND TAPPING THE MARK YOU ARE ALREADY ON BUMPS THE SEED: press it
      again to hear it again, without hunting for a control, and #atlasSay prints
      "· reading 2" so the effect is visible. */
+  /* THE PAGE'S PLAY DOOR, HANDED IN (2026-08-29). Paul: *"When I tap a place
+     start playing and zoom in the map on that place."* This file owns the
+     globe and knows nothing about a transport; `ctx.play` is ui/eight.js's
+     `startNow`, which is #play's own path, so a tap on a mark reaches the
+     engine through the ONE door the button uses and not through a second one.
+     Optional, like `ctx.moved`: the atlas mounts in gates and in the daw with
+     a ctx that has never heard of a transport, and a missing hook is a map
+     that composes without sounding, exactly as it did yesterday. */
+  const playNow = () => { try { if (ctx && ctx.play) ctx.play(); } catch (e) {} };
+
   function choose(name) {
     /* THE YEAR'S OWN MAP, NOT recordAt() — one owner for what is here. A mark
        the year does not hold is `display: none`, so no pointer and no key can
@@ -1241,8 +1656,54 @@ export function mount(parent, ctx) {
     const r = shown.get(name);
     if (!r) { say.textContent = name + " — no record here at " + YEARS[yi] + "."; return; }
     if (here === r.gk) seed++;
-    flyTo(name, 300, null);
-    pick(r.gk);
+    /* AND THE CAMERA ARRIVES RATHER THAN TURNING (2026-08-29). Paul: *"When I
+       tap a place start playing and zoom in the map on that place."*
+
+       IT WAS `flyTo(name, 300, null)` — a turn with `null` for the arc, which
+       is `flyTo`'s own word for "leave the zoom exactly where the reader put
+       it". That was right while the globe was the only instrument and a tap
+       was a way of steering it; it is wrong now that a tap is how you ARRIVE
+       somewhere, because arriving at the whole earth is standing 180 degrees
+       away from the thing you pressed.
+
+       THE ARC IS `arcFor(place)`, CAPPED AT `ARRIVE` — and both halves are
+       facts this file did not have to invent. atlas.js §4 VIEWS exists
+       precisely to answer "how close to stand to this place, in degrees", and
+       it is the number `showing()` already flies to after every document swap.
+       But VIEWS answers with a REGION: Manchester's smallest rectangle is 11
+       degrees and you land reading Britain, while Kingston's is 64 — measured
+       — and 64 degrees of arc is a third of the earth, which is not what
+       anybody means by "zoom in on that place". So the arrival is the tighter
+       of the two.
+
+       `ARRIVE` IS 20 AND IT IS THIS FILE'S OWN EXISTING NUMBER. LOD_X/LOD_Y's
+       note calls 20 degrees "the zoom at which you are reading one city", and
+       `paint()`'s tap box reaches its maximum (HIT_MAX, 23 CSS px against 15
+       at the whole earth) at exactly `arc <= 20`. So arriving means the mark
+       you pressed is centred AND at its largest target, by the page's own
+       arithmetic rather than by a number invented for this sentence.
+
+       IT DIVERGES FROM `showing()` ON PURPOSE, AND THEY DO NOT FIGHT.
+       `showing()` asks a different question — "is the record the page is
+       playing visible from where the reader is standing?" — and it declines to
+       move the camera at all when the answer is yes (`legible`). After this
+       flight the place is dead centre, so `showing()`, which runs a moment
+       later on the document swap, sees a legible place and leaves the camera
+       exactly where the tap put it. Measured: arc 180 -> 20, and the second
+       call moves it 0 degrees.
+
+       `flyTo` REFUSES A MOVE IT DOES NOT NEED — under a fraction of a frame of
+       turn AND under 1% of arc, nothing happens — so pressing the mark you are
+       already standing on does not jitter the camera; it bumps the seed
+       (above) and writes the record again. */
+    flyTo(name, 300, Math.min(arcFor(name), ARRIVE));
+    /* AND IT PLAYS. `pick`'s second argument is its `done` callback and it is
+       the ONLY safe place to start the engine: the record lands on the second
+       frame, so a caller that started the transport on its own line would
+       start it on the document it was about to replace and `setDocument`'s own
+       `stop()` would kill it. A refusal never gets here — nothing was written,
+       so nothing plays. */
+    pick(r.gk, playNow);
   }
 
   /* ---------- gestures -------------------------------------------------
@@ -1595,8 +2056,24 @@ export function mount(parent, ctx) {
   /* ---------- the wiring ------------------------------------------------ */
   function setYear(i) {
     yi = Math.max(0, Math.min(YEARS.length - 1, i | 0));
-    year.value = String(yi);
-    yOut.textContent = String(YEARS[yi]);
+    /* `year.value = String(yi); yOut.textContent = String(YEARS[yi]);` STOOD
+       HERE and went with the slider (2026-08-29). The year is state, not a
+       control, and its READOUT is `sentence()` below — "1969 · 32 records
+       within ten years · New York, London, …", which begins with the year and
+       is on the screen above the globe at every moment. One owner, one place
+       it is printed, and no widget to keep in step. */
+    /* AND THE YEAR IS DECLARED ON THE ARTIFACT (2026-08-29). `#atlasMap`
+       already carries `data-arc` — how far away the camera is standing — for
+       exactly this reason: a gate reads what the page SAYS about itself rather
+       than reverse-engineering it. The year used to have a control with a
+       `<output>` beside it, and every gate read that; with the slider gone the
+       only printed year is inside #atlasSay's sentence, which pick() OVERWRITES
+       with the record's own line ("Kingston 1969 · reggae — 13 sections…").
+       Measured: two checks in test/atlas.js parsed "Kingston" as a year off
+       exactly that. So the fact is published where the other fact about what
+       the globe is showing already lives. It is written by `setYear` and by
+       nothing else — one owner, one writer. */
+    svg.dataset.year = String(YEARS[yi]);
     /* SCOPE FIRST, THEN SAY IT, THEN DRAW IT — in that order, because all
        three are the same fact and the sentence must never be able to describe a
        set the next paint has not adopted yet. */
@@ -1610,7 +2087,9 @@ export function mount(parent, ctx) {
        history API (Safari throttles `replaceState` and starts refusing). */
     moved();
   }
-  year.addEventListener("input", () => setYear(+year.value));
+  /* (`year.addEventListener("input", () => setYear(+year.value))` stood here.
+     The list's `sweep()` is that listener now, and it is the only gesture that
+     moves the year without naming a record.) */
 
   /* ---------- showing(gk): the handle §2.2 names ------------------------ */
   function showing(gk) {
@@ -1626,6 +2105,21 @@ export function mount(parent, ctx) {
     }
     const w = WHEN[gk];
     setYear(indexOf(w.year));
+    /* AND A FLIGHT ALREADY ON ITS WAY THERE IS NOT FOUGHT (2026-08-29). This
+       was `if (!legible(w.place)) flyTo(…)` alone, and `legible` asks about the
+       frame the camera is on RIGHT NOW — which, one hundred milliseconds after
+       a tap on a mark, is a frame in the middle of the flight that tap started.
+       MEASURED: a tap on Kingston flies to `ARRIVE` (20 degrees, centred), the
+       record lands two frames later, `showing()` found Kingston not yet legible
+       from where the camera happened to be, and started a SECOND flight to
+       `arcFor("Kingston")` — 64 degrees — so the gate read arc 25.3 and the
+       mark 48 px off centre. The reader saw the map zoom in and then back out.
+
+       IT IS THE SAME LAW `zoomBy` ALREADY KEEPS, in its own words: a press that
+       lands while a flight is in the air compounds on that flight's
+       DESTINATION and not on the frame underneath it. Here the destination is
+       already this place, so there is nothing to do. */
+    if (fly && fly.to === canon(w.place)) return;
     // arcFor is VIEWS' whole remaining job (atlas.js §4) — and the camera only
     // moves if the place is not already legible where the reader is standing.
     if (!legible(w.place)) flyTo(w.place, 300, arcFor(w.place));
@@ -1658,7 +2152,36 @@ export function mount(parent, ctx) {
   window.addEventListener("resize", () => { if (refit()) redraw(); });
 
   refit();
+  /* THE LIST IS BUILT BEFORE THE FIRST YEAR IS SET (2026-08-29), and the order
+     is the argument: `setYear` ends in `redraw()`, `redraw()` calls
+     `syncIndex()`, and `syncIndex` is what puts the reader's row under the
+     reader — so a list that did not exist yet would have missed the one
+     record the box opens on and the earth's ring would have had no row beside
+     it until the first scroll. Built, then the year, then the sweep that says
+     which marks the first screenful of rows lights. */
+  buildIndex();
   setYear(indexOf(WHEN[TERMS.basis] ? WHEN[TERMS.basis].year : YEARS[0]));
+  /* AND THE FIRST SWEEP IS RUN BY HAND, because nobody has scrolled yet and
+     the lit ring is a fact about which rows are on the screen — which is true
+     at boot exactly as it is after a flick. It runs AFTER `setYear` so that
+     `syncIndex` has already centred the record's own row: the sweep then reads
+     that row as the middle of the box and computes the year we are already at,
+     which is the no-op that proves the two directions agree. */
+  sweep();
+  /* AND THE ROWS ARE RE-MEASURED WHEN THE BOX CHANGES SHAPE, AND SWEPT AGAIN.
+     A row wraps at 320px and does not at 430, so the two arrays `sweep` binary
+     searches are a fact about a LAYOUT; `measureRows` is one pass over the
+     rows' rects and runs only when the observer fires, never inside a frame.
+     THE SWEEP AFTER IT IS NOT TIDINESS — IT IS THE ONE PATH THAT LIGHTS THE
+     MAP WHEN THIS PANEL WAS NOT ON THE SCREEN AT BOOT. A `.nu-pan[data-off]`
+     panel is `display: none`, so its scroller measures 0x0 and the boot sweep
+     above reads an empty screenful and lights nothing; the observer fires the
+     moment the Where tab is opened and the box acquires a size, which is
+     exactly when the answer becomes knowable. (A link that opens on `#t=mix`
+     is the case: measured, without this line the earth stayed unlit until the
+     first flick of the list.) */
+  if (typeof ResizeObserver === "function")
+    new ResizeObserver(() => { measureRows(); sweep(); }).observe(idx);
   /* ---------- reading(): the seed, for the bar to print (2026-08-27) ------
      Paul: *"I clicked rewrite multiple times and never saw a different seed."*
      He could not: the number was in #atlasSay's sentence, which the record's

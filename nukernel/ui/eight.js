@@ -215,6 +215,16 @@ import { selectRow, selectEl, sheetRow, keyCircle } from "./selects.js";
    THERE — ui/engineer.js is fenced this round — and is now uncalled from
    anywhere; its deletion is the first item of the round's report. */
 import { mount as mountBoard, paintBoard, voiceMix,
+         /* AND THE VERTICAL FADER'S CHASSIS, 2026-08-29. Paul: *"The volume
+            slider is now vertical."* ui/engineer.js has owned what a vertical
+            slider IS on this page since 2026-08-27 — the track that takes the
+            pointer, the fill, the thumb, and the native <input> riding inside
+            it as the keyboard channel — and the room fader in the gutter is
+            that same control, not a second one. It is imported rather than
+            copied so the TOUCH LAW (setPointerCapture on the track, the value
+            read against the track's own rect, `touch-action: none` on the
+            control and only the control) has one owner on this page. */
+         vchassis,
          paintVoiceMix } from "./engineer.js";
 // THE PRODUCER (D4) — "somebody with taste saying a few things about the record
 // the eight describe". It is not a ninth axis and it is not a second compiler:
@@ -1005,11 +1015,14 @@ const CTX = {
                            if (ATLAS) ATLAS.showing(DOC.basis);
                            /* AND THE LOG SAYS WHICH RECORD ARRIVED (2026-08-28).
                               AFTER draw(), because the record's name is read off
-                              `#title` — the heading draw() writes — which is
-                              this page's one owner of what a record is called,
-                              and reading it here rather than re-deriving it is
-                              the same discipline the action lines use: the log
-                              says what the RENDERED page says. */
+                              `document.title` — the page's own name, which
+                              draw() writes and which is this page's one owner
+                              of what a record is called (it was the `#title`
+                              heading until 2026-08-29; the heading is gone and
+                              the fact is not). Reading it here rather than
+                              re-deriving it is the same discipline the action
+                              lines use: the log says what the RENDERED page
+                              says. */
                            logRecord(); },
   /* THE ATLAS MOVED, SO THE ADDRESS DOES (see THE ADDRESS). It is a hook and
      not a subscription because the seed and the year live in ui/atlas.js and
@@ -1018,6 +1031,24 @@ const CTX = {
      write is debounced here, not there: the atlas does not know that an
      address is expensive to write. */
   moved: () => markLink(),
+  /* AND A TAP ON A PLACE PLAYS IT (2026-08-29). Paul: *"When I tap a place
+     start playing and zoom in the map on that place."*
+
+     IT IS A HOOK FOR THE SAME REASON `moved` IS ONE. ui/atlas.js owns the
+     globe and knows nothing about a transport — it cannot import `startAt`
+     without becoming a second door into the engine — so the page hands it the
+     door it already has. `startNow` is #play's own path (`startAt(0)` plus the
+     word on the button), which is the one play path on this page, so a tap on
+     a mark reaches the tape wave's adoption, the gesture unlock and the
+     pending-start queue exactly the way the button does.
+
+     IT IS CALLED AFTER THE RECORD LANDS, NEVER BEFORE. `pick()` writes the
+     document on the second frame and this is its `done` callback — the
+     callback exists because a caller that composed and then started the engine
+     on its own line would start it on the document it was replacing, and
+     `setDocument`'s own `stop()` would then kill it. A refusal never calls it:
+     nothing was written, so nothing plays. */
+  play: () => startNow(),
   // on() returns nothing today, so this returns undefined rather than an off().
   // Nothing mounted in W2 calls it — the board is painted from the page's own
   // on("pos") handler below — but a W3 module that wants to unsubscribe has to
@@ -8649,62 +8680,47 @@ on("transport:state", () => {
 });
 
 function draw() {
-  // the record names the page, not the HTML: this is a composition surface,
-  // and which composition is a fact about the document
-  // A SONG IS NAMED BY ITS GENRE (2026-08-24). Not titled: a title is a claim
-  // about a record, and what this page has is a point in genre space with
-  // eight axes moved off it. The basis says its own name.
-  const h1 = $("title");
-  if (h1) {
-    h1.textContent = (GENRES[DOC.basis] || {}).label || DOC.basis;
-    /* WHAT THIS RECORD IS, SOMEWHERE ELSE (Paul, 2026-08-26: "add actual
-       Wikipedia links for each genre we have at the top by the title").
-       Resolved at BUILD time against a local copy of the whole English
-       Wikipedia — nukernel/wiki.js, derived by nukernel/wiki-extract.js — so
-       this is the extraction law in its ordinary form: derive it, commit the
-       derivation, ship the table. A LINK IS NOT A FETCH: the href costs no
-       request until a reader clicks it, which is why it does not break the
-       offline law (test/atlas.js G7 aborts every non-localhost request and
-       stays green with 191 wikipedia hrefs in the DOM).
+  /* ===== THE RECORD STILL NAMES THE PAGE — IN THE TAB, NOT IN AN <h1>
+     (2026-08-29) ========================================================
+     Paul: *"Get rid of the play buttons and the title of the song."*
 
-       `textContent =` wipes children, so the link cannot be appended once and
-       left — it is rebuilt every draw, synchronously, onto an element that
-       already exists. THE PAGE DOES NOT JUMP: nothing here is a host that
-       grows after draw() returns, and `#title` is OUTSIDE `#app`, so MOTIF.md's
-       frozen-DOM law is not touched either.
+     THE FACT SURVIVES THE ELEMENT, and the original sentence is why: "the
+     record names the page, not the HTML: this is a composition surface, and
+     which composition is a fact about the document. A SONG IS NAMED BY ITS
+     GENRE (2026-08-24). Not titled: a title is a claim about a record, and
+     what this page has is a point in genre space with eight axes moved off
+     it. The basis says its own name." Every word of that is an argument about
+     WHAT the name is, not about which box it is printed in — so the name goes
+     to `document.title`, where a page's name has always belonged, and the
+     heading goes.
 
-       TWO ANCHORS AND THE SIX ROLES GET NO LINK, on purpose: a wrong link is
-       worse than none (nukernel/WIKI.md, and `NuWiki.MISSES` carries the
-       paragraph for each). The title simply draws without one. */
-    const W = window.NuWiki, w = W && W.WIKI[DOC.basis];
-    if (w) {
-      const a = el("a", w.title.replace(/_/g, " "), "nu-wiki");
-      // PROPERTIES, NOT MARKUP: three titles carry an `&` (Contemporary R&B,
-      // Alternative R&B, Speak & Spell) and a %26 in an attribute string would
-      // need escaping. Assigning `href` escapes nothing and needs to.
-      a.href = W.url(DOC.basis);
-      a.rel = "noopener";
-      a.target = "_blank";
-      // WHAT KIND OF ARTICLE IT IS, IN THE DOM AND NOT ONLY IN A TOOLTIP.
-      // 31 of the 191 rows are not a genre article: 20 point at the ACT
-      // genres.js names in brackets, 4 at the ALBUM that is the era
-      // (analogsynthpop -> Speak & Spell, gothsynth -> Violator: the same band
-      // nine years apart, which one link to Depeche Mode would erase), 7 at an
-      // article wider than the anchor. A reader who sees only "Lo-fi music"
-      // beside "Los Angeles 2020" cannot tell which. `title` is NOT an
-      // accessible name (this file's own note at :3032), so the word is a REAL
-      // span in the DOM — visible, read aloud, and still there with the
-      // stylesheet off. `.nu-vh` was the recipe's suggestion and is refused
-      // here for one reason: a `::after` or a clipped span would need a
-      // VISIBLE counterpart to do its job, and two spellings of one word is
-      // the second owner this round exists to delete. 160 of the 191 rows are
-      // plain genres and get no span at all.
-      a.dataset.kind = w.kind;
-      a.title = w.why;
-      if (w.kind !== "genre") a.append(el("span", " · the " + w.kind, "nu-kind"));
-      h1.append(" ", a);
-    }
-  }
+     IT IS EXACTLY THE STRING THE <h1> HELD, with nothing appended. "Kingston
+     1969 — nukernel" was the obvious spelling and it is refused: a suffix
+     makes every reader of this fact — the gates, the log line below, a person
+     reading a tab — split a string to get at it, and a page whose name is
+     assembled from two owners is the drift this file spends eleven thousand
+     lines avoiding. `<title>nukernel</title>` in index.html is what the tab
+     says before a record lands, which is the honest answer for a box with no
+     record in it yet.
+
+     AND THE READER STILL SEES THE NAME, TWICE, WITHOUT THIS LINE: #atlasSay
+     prints "Kingston 1969 · reggae — 4 sections, 6 voices, take 1" after every
+     pick, and the genre list's own row wears `aria-current` with the hand down
+     its edge. The <h1> was the third picture of one fact.
+
+     THE WIKIPEDIA LINK LEFT WITH IT, AND WENT WHERE PAUL PUT IT. What stood
+     here appended one <a class="nu-wiki"> to the heading (2026-08-26: "add
+     actual Wikipedia links for each genre we have at the top by the title"),
+     with `data-kind` and a `.nu-kind` span for the 31 rows whose article is an
+     act, an album or something wider than the anchor. Paul, 2026-08-29: *"Add
+     Wikipedia links to the genre list in a column."* — so that code is in
+     ui/atlas.js now, one link per ROW, 191 of them where there was one, and
+     the whole of the paragraph it carried moved with it: the offline law (a
+     link is not a fetch), the `href =` property assignment that escapes an `&`
+     correctly, and the argument for a visible `.nu-kind` word rather than a
+     tooltip. nukernel/wiki.js is still the only owner of which article an
+     anchor is. */
+  document.title = (GENRES[DOC.basis] || {}).label || DOC.basis;
   const wasKey = document.activeElement && document.activeElement.dataset
     ? document.activeElement.dataset.k : null;
   const wasPicker = opensAPicker(document.activeElement);
@@ -9239,8 +9255,13 @@ let booted = false;
 function logRecord() {
   if (!booted) return;
   const H = describeHand(theHand());
-  const t = $("title");
-  logPut("act", H ? H.what : "record", CLIP(CLEAN(t ? t.textContent : "")) || null);
+  /* WHAT THE RECORD IS CALLED, ASKED OF THE PAGE'S OWN NAME. This read
+     `$("title").textContent` — the <h1> — and the heading is gone (2026-08-29,
+     Paul: "Get rid of the play buttons and the title of the song"). `draw()`
+     writes the same string to `document.title` and this reads it back there,
+     so the log line and the browser tab still cannot disagree: one owner, one
+     string, a reader rather than a copy. */
+  logPut("act", H ? H.what : "record", CLIP(CLEAN(document.title)) || null);
   announceChange(H ? H.what : "record", null, {});
 }
 
@@ -9493,12 +9514,21 @@ const TRAYSUB = { Band: "band", Motif: "motifops", Score: "score",
                   Tempo: "tempo" };
 const TRAYUP  = { band: "root", motif: "root", score: "root", motifops: "motif",
                   tempo: "root", sections: "band", section: "sections",
-                  voice: "band" };
+                  voice: "band",
+                  /* AND THE PLAY LEVEL GOES HOME (2026-08-29). It is the one
+                     level that belongs to NO tab — the transport reaches the
+                     record and the record is what all nine tabs are a view of
+                     — so it is absent from TRAYTAB below and `↑` puts the nine
+                     back with whichever tab was open still marked and still
+                     open underneath. Nothing about the panel changed while you
+                     were in here; only the stripe did. */
+                  play: "root" };
 const TRAYTAB = { band: "Band", motif: "Motif", motifops: "Motif", score: "Score",
                   tempo: "Tempo", sections: "Band", section: "Band",
                   voice: "Band" };
 let trayLevel = "root";
-let trayHead = null, trayList = null, traySig = "", trayHeadSig = "";
+let trayHead = null, trayUpBox = null, trayList = null,
+    traySig = "", trayHeadSig = "";
 let trayBtn = new Map();
 
 /* THE ROOT LEVEL — Paul's nine, and `TABS` is still their one owner. This is
@@ -9902,6 +9932,49 @@ const scoreTrayItems = () => [
     act: () => setDeckView("roll") },
 ];
 
+/* ===== THE PLAY LEVEL, 2026-08-29 =======================================
+   Paul: *"Add a permanent play button to the top of the nav. When I tap it the
+   nav is taken over by play options. The volume slider is now vertical."*
+
+   IT IS A LEVEL AND NOT A WIDGET, which is the whole of why this is nine lines
+   and not a panel. The stripe already knew how to be a level of ACTIONS with
+   no marked sibling (`motifops`, `tempo`), and it already knew that arriving
+   somewhere IS descending into it (`showTab`). "The nav is taken over by play
+   options" is those two shapes applied to the transport, so nothing new is
+   invented: `trayNow` gains a branch, `TRAYUP` gains a row, and the five
+   controls are the same five nodes ui/eight.js built at the head of the
+   transport section.
+
+   FOUR ITEMS HERE AND FIVE CONTROLS ON THE SCREEN. #play is not in this list
+   because it is in the HEAD, where it is on the screen at every level —
+   Paul's "permanent play button at the top of the nav" — and the head sits
+   directly above the list in the same 56px column, so what a reader sees at
+   this level is one stripe of five: ▶/■, then the rule, then rewrite, take,
+   the voicing and the room. A second #play in the list would be two owners of
+   one gesture, which is the one thing this page legislates against
+   everywhere else.
+
+   THEY ARE `node` ITEMS AND THAT IS A NEW WORD IN THIS TABLE. Every other
+   level describes a mark and lets `icon()` build it; these four are controls
+   this file already holds — one carries a readout inside it (#rewrite's
+   `<b id="reading">`), one is a four-position setting, and one is a fader with
+   a pointer law — so the level hands over THE NODE and `paintTray` appends it
+   instead of constructing one. The keys still name them, so the signature
+   still decides when the list is rebuilt, and the four keep their listeners,
+   their focus and their value across every repaint.
+
+   `acts: true` FOR THE REASON `motifops` GIVES: these are not siblings one of
+   which is open. Three of them are WRITES (a rewrite, a take, a level) and one
+   is a setting whose own mark is its state, so there is no single "you are
+   here" to mark and the page SAYS so rather than leaving a gate to infer it
+   from an absence. */
+const playTrayItems = () => [
+  { key: "tp.rewrite", node: rewriteBtn },
+  { key: "tp.take", node: takeBtn },
+  { key: "tp.voicing", node: voicingBtn },
+  { key: "tp.vol", node: volWrap },
+];
+
 /* WHICH LEVEL IS SHOWING, AND THE GUARD THAT KEEPS IT HONEST. A sub-level only
    exists while its own tab is open — a `band` stripe over a Mix panel would be
    a set of siblings none of which is on the screen — so a mismatch falls back
@@ -9910,6 +9983,16 @@ const scoreTrayItems = () => [
    still checked, because the two states have two writers and one of them is a
    fragment. */
 function trayNow() {
+  /* THE PLAY LEVEL IS TESTED BEFORE THE GUARD, because the guard asks "does
+     this level belong to the open tab" and the honest answer for this one is
+     "no, and it never will". The transport is not in a tab (index.html has
+     carried that sentence since the bar was a bar); a level of it is not in
+     one either, so it is exempt by NAME here rather than by a fake row in
+     TRAYTAB that would claim it belonged to whichever tab you happened to be
+     on when you pressed play. */
+  if (trayLevel === "play")
+    return { level: "play", parent: "the transport", up: "root",
+             back: "where you were", acts: true, items: playTrayItems() };
   if (trayLevel !== "root" && TRAYTAB[trayLevel] !== openTab) trayLevel = "root";
   /* THE TEMPO'S EIGHT, AND THE SECOND LEVEL OF ACTIONS ON THIS PAGE
      (2026-08-28). `acts: true` for the reason `motifops` gives below, in full:
@@ -9995,6 +10078,32 @@ function trayRow() {
   if (!nav) return;
   nav.textContent = "";
   trayHead = el("div", null, "nu-trayhead");
+  /* ===== THE PLAY MARK, AT THE TOP, AT EVERY LEVEL (2026-08-29) ==========
+     Paul: *"Add a permanent play button to the top of the nav."*
+
+     IT IS THE FIRST THING IN THE GUTTER AND IT NEVER LEAVES. `#play` is the
+     same tri-state button the deleted `.nu-bar` held — same id, same law ("the
+     word on it is the NEXT tap"), same single door into `startAt(0)`/`stop()`
+     — and it is built into the head rather than into a level because a level
+     is a set of siblings you can be standing among and the transport is not
+     one of those: it is the thing every level is a view of the record OF.
+
+     ABOVE `↑`, AND SEPARATED FROM IT BY A REAL <hr>. The rule says what the
+     other rules in this stripe say — "what is above this line is a different
+     kind of thing from what is below it" — and it says it with the stylesheet
+     off, which a border would not. Reading down the gutter with no CSS: play,
+     a rule, up, a rule, the level, a rule, the log. Four kinds, three rules,
+     one column.
+
+     THE PLAY MARK IS OUTSIDE EVERYTHING `paintTray` REBUILDS, which is the
+     mechanical half of "permanent": `paintTray` empties `trayUpBox` and
+     `trayList`, never `trayHead` itself, so no repaint at any level can
+     destroy the button, drop its listener or take it out from under a thumb.
+     That is the same promise `paintTray` already makes about a mark whose key
+     did not move, made structurally instead of by a signature. */
+  trayHead.append(playBtn, el("hr", null, "nu-traycut"));
+  trayUpBox = el("div", null, "nu-trayup");
+  trayHead.append(trayUpBox);
   trayList = el("div", null, "nu-traylist");
   nav.append(trayHead, trayList);
   /* ...AND THE FOOT, WHICH IS THE LOGGER (2026-08-28). It is BUILT HERE and
@@ -10059,7 +10168,12 @@ function paintTray() {
   const headSig = (L.parent || "") + "|" + (L.up || "");
   if (headSig !== trayHeadSig) {
     trayHeadSig = headSig;
-    trayHead.textContent = "";
+    /* `trayHead.textContent = ""` STOOD HERE AND IT IS `trayUpBox` NOW
+       (2026-08-29). The head holds two things since the play mark landed —
+       the permanent `#play` and the `↑` that moves with the level — and
+       emptying the head would have deleted the first to redraw the second.
+       Only the box that owns the changing half is cleared. */
+    trayUpBox.textContent = "";
     if (L.parent) {
       const up = L.up || "root";
       const u = icon({ k: "trayup", glyph: GLYPH.nav.up.g,
@@ -10070,7 +10184,7 @@ function paintTray() {
          that is a statement the document makes whether or not this stylesheet
          loads — with nu.css off the stripe reads `up`, a horizontal rule, then
          the level. A border would have said it only to an eye. */
-      trayHead.append(u, el("hr", null, "nu-traycut"));
+      trayUpBox.append(u, el("hr", null, "nu-traycut"));
     }
   }
   const sig = L.level + "|" + L.items.map((i) => i.key).join(",");
@@ -10079,6 +10193,18 @@ function paintTray() {
     trayList.textContent = "";
     trayBtn.clear();
     for (const it of L.items) {
+      /* A LEVEL MAY HAND OVER A NODE INSTEAD OF DESCRIBING A MARK
+         (2026-08-29, the play level). Four of the transport's controls cannot
+         be spelled as `{glyph, word, say}` — one carries a readout inside it,
+         one is a four-position setting, one is a fader with a pointer law —
+         and they are nodes this file already holds and already wired. So the
+         item says `node` and this loop APPENDS it: no `icon()`, no listener
+         bound here, and no rebuild, which is what lets #rewrite keep its
+         reading and #vol keep its value across every repaint of the stripe.
+         The key still names it, so the signature still decides when the list
+         is rebuilt at all. */
+      if (it.node) { trayList.append(it.node, document.createTextNode(" "));
+                     trayBtn.set(it.key, null); continue; }
       /* `why` SINCE 2026-08-28 — a refused mark, spelled by ui/glyph.js (the
          one owner of what a gutter button is). The listener is bound on a
          refused button too and that is not an oversight: `disabled` is what
@@ -10097,6 +10223,9 @@ function paintTray() {
     }
   } else {
     for (const it of L.items) {
+      // a `node` item paints itself — it is a live control, not a face this
+      // loop draws (see the append above)
+      if (it.node) continue;
       const b = trayBtn.get(it.key);
       if (b) paintIcon(b, { glyph: it.glyph, num: it.num, word: it.word,
                             say: it.say, on: it.on, why: it.why });
@@ -10565,16 +10694,97 @@ function shareCard(grid) {
   });
 }
 
-/* ---------- transport ---------- */
-const playBtn = $("play"), volEl = $("vol"),
-      rewriteBtn = $("rewrite"), takeBtn = $("take");
+/* ---------- transport ----------
+   ===== THE FIVE CONTROLS ARE BUILT HERE NOW, 2026-08-29 ==================
+   Paul: *"Get rid of the play buttons and the title of the song."* / *"Add a
+   permanent play button to the top of the nav. When I tap it the nav is taken
+   over by play options. The volume slider is now vertical."*
+
+   THIS LINE READ `const playBtn = $("play"), volEl = $("vol"), …` — five
+   `getElementById` calls against markup nukernel/index.html shipped inside a
+   `<div class="nu-bar">`. The band is deleted (its tombstone is in that file)
+   and the five controls stand in the gutter instead, so this file MAKES them:
+   the gutter's contents are this file's and always have been, which is the
+   same rule `trayRow` obeys when it builds the head, the list and the foot
+   into an empty <nav>.
+
+   THE IDS DO NOT MOVE. #play, #rewrite, #reading, #take, #vol, #voicing are
+   the names other files and eleven gates call these controls by
+   (test/motif-frozen.js reads #play's accessible name five times;
+   nukernel/desk-gate.js reads #vol's min/max to prove the listening fader is
+   on the same 0..100 store). What moved is WHERE they stand, not what they
+   are, so every one of those readers still finds what it asks for — and #play
+   is now MORE reachable than it was, because it is the one mark that is on
+   the screen at every level of the stripe.
+
+   NOTHING IS CREATED IN THE DOCUMENT YET. These four are detached until
+   `playTrayItems()` hands them to the level (and #play until `trayRow` puts it
+   in the head), which is what lets the level be repainted in place: the same
+   five nodes go back into the list every time, with their listeners, their
+   focus and their value intact. A control rebuilt on every repaint is a
+   control that loses its place under a screen reader's cursor — the argument
+   `paintTray` already makes about buttons, made about the transport. */
+const mkBtn = (id) => { const b = el("button"); b.id = id; b.type = "button";
+                        return b; };
+const playBtn = mkBtn("play"), rewriteBtn = mkBtn("rewrite"),
+      takeBtn = mkBtn("take"), voicingBtn = mkBtn("voicing");
+/* #reading SHIPS INSIDE #rewrite, exactly as index.html shipped it, WITH THE
+   LITERAL SPACE BEFORE IT — measured through CDP on 2026-08-27 and written up
+   in that file's own note: `<button>rewrite<b>5</b></button>` computes its
+   accessible name as "rewrite5", because an inline element joins without one.
+   The space is a real text node here for the same reason it was there. */
+const readingEl = el("b", "1", "nu-rd");
+readingEl.id = "reading";
+rewriteBtn.append(document.createTextNode(" "), readingEl);
+/* THE ROOM, STOOD UP (Paul: *"The volume slider is now vertical"*). The
+   <input> is the same control it always was — same id, same 0..100 domain,
+   same `aria-label`, same store — and what changed is the CHASSIS around it:
+   `vchassis` from ui/engineer.js, which is the vertical fader this page has
+   shipped on the mix board since 2026-08-27 and which carries the touch law
+   in one place:
+
+     · the <input type=range> is the KEYBOARD AND SCREEN-READER CHANNEL. It
+       keeps its id, its aria-label and its arrow keys, and sits over the
+       track at `opacity: 0; pointer-events: none` (nu.css .nu-vs-in);
+     · the TRACK owns the pointer — `setPointerCapture` on pointerdown, the
+       value computed from the pointer against the TRACK'S OWN RECT, and
+       `touch-action: none` on the control AND ONLY THE CONTROL (nu.css
+       .nu-vs-track), so a drag on the fader never becomes a scroll of the
+       page and the page keeps its scroll everywhere else.
+
+   IT IS IMPORTED AND NOT COPIED, and that is the whole reason this round did
+   not write forty lines of pointer arithmetic: a gutter fader with its own
+   copy of the law would be the second owner of "how a vertical slider takes a
+   thumb on this page", and the two would drift the first time one of them was
+   fixed. A vertical range built out of `writing-mode: vertical-lr` +
+   `direction: rtl` was the other candidate and it is refused for the reason
+   the board refused it: the native vertical range still hands its own
+   touch behaviour to the UA, and this page has already measured what that
+   costs in a scrolling column. What ships is the chassis that is already
+   proven on the artifact.
+
+   TWO VIEWS, ONE STORE, and that was already true before this round: #vol2 is
+   the same 0..100 value on the board's main strip (ui/engineer.js
+   `listening`), and ui/state.js VOLSTORE is the one owner. */
+const volEl = document.createElement("input");
+volEl.type = "range"; volEl.min = "0"; volEl.max = "100"; volEl.step = "1";
+volEl.value = "100"; volEl.id = "vol"; volEl.className = "nu-vs-in";
+volEl.setAttribute("aria-label", "room");
+const volOut = el("output", "100%", "nu-vs-val");
+const volWrap = el("span", null, "nu-vs nu-vs-tall nu-trayvol");
 /* ===== THE TRANSPORT WEARS MARKS (2026-08-28) ============================
    Paul: *"Please make all the tabs and top buttons into sensible icons to save
-   space."* The strip is the one row on this page that may not wrap — `.nu-bar`
-   is `flex-wrap: nowrap` and `--bar-h` is a PROMISE the tab row's `top`
-   depends on — so its saving is not a line, it is WIDTH: 160.3px of button ink
-   became 132.0, and the 28px went to the room slider, which is the control in
-   here that had been squeezed to its 4em floor.
+   space."*
+
+   ITS FIRST PARAGRAPH WAS AN ARITHMETIC ABOUT A ROW THAT NO LONGER EXISTS and
+   is kept as the history of the marks rather than as a live claim: "The strip
+   is the one row on this page that may not wrap — `.nu-bar` is `flex-wrap:
+   nowrap` and `--bar-h` is a PROMISE the tab row's `top` depends on — so its
+   saving is not a line, it is WIDTH: 160.3px of button ink became 132.0, and
+   the 28px went to the room slider." The marks OUTLIVED the row (2026-08-29,
+   the gutter): five icons in a 56px column is what "one vertical stripe max"
+   costs, and the words are still under them in `.nu-vh` for a page with no
+   stylesheet.
 
    ▶ AND ■ ARE ONE BUTTON IN TWO STATES, which is the tri-state play button's
    own law unchanged: "the word on it is the NEXT tap". The mark moves with the
@@ -10607,14 +10817,18 @@ say();
    content ("rewrite 5"); an `aria-label` would have frozen it at "rewrite", so
    `printReading` writes both — one number, two places, one writer. */
 (() => {
-  const a = GLYPH.act.rewrite, rd = $("reading");
+  const a = GLYPH.act.rewrite;
   const box = el("span", null, "nu-ic");
   const g = el("span", a.g, "nu-g");
   g.setAttribute("aria-hidden", "true");
   box.append(g, el("span", a.w, "nu-vh"));
-  while (rewriteBtn.firstChild && rewriteBtn.firstChild !== rd)
-    rewriteBtn.removeChild(rewriteBtn.firstChild);
-  rewriteBtn.prepend(box, document.createTextNode(" "));
+  /* THE `while` LOOP THAT STOOD HERE IS GONE, 2026-08-29, and its absence is
+     the whole difference the move made: it swept out whatever markup
+     index.html had shipped before `<b id="reading">`, because this button was
+     the document's and this file was correcting it. The button is this file's
+     now — built four lines up as `<button id="rewrite"> <b id="reading">1</b>`
+     — so there is nothing to sweep and the face is simply put in front. */
+  rewriteBtn.prepend(box);
   rewriteBtn.dataset.say = a.s;
   // the name before the first reading lands (`printReading()` runs at boot,
   // below, and replaces this with "rewrite 1")
@@ -10625,23 +10839,54 @@ say();
    grows an explainer by saying `data-say` and nothing else — no view installs a
    handler of its own and no rebuild can leave one behind. */
 wireSay();
+/* ONE TAP, TWO EFFECTS, AND THE SECOND ONE IS NAVIGATION (2026-08-29).
+   Paul: *"Add a permanent play button to the top of the nav. When I tap it the
+   nav is taken over by play options."*
+
+   THE GESTURE IS UNCHANGED — the two lines that were here are the two lines
+   that are here: playing, stop; stopped, start from the top. What is added is
+   the STRIPE going down a level with you, which is not a new gesture but the
+   gutter's oldest one: `showTab` has descended into a tab since the levels
+   landed, because "opening a tab IS going into it", and pressing play IS going
+   into the transport. So the mark you pressed is still on the screen (the head
+   is above the list at every level), it now says ■, and the four controls that
+   belong with it are the level under it.
+
+   IT DESCENDS ON A STOP TOO, and that is deliberate rather than sloppy: the
+   level is where the transport's controls live, not a state the transport is
+   in, and a stripe that jumped somewhere else when you pressed stop would move
+   the four marks out from under a thumb that is most likely reaching for
+   `take` or `rewrite` next. `↑` is the way out and it is one press. */
 playBtn.addEventListener("click", () => {
   if (playing) { stop(); say(false); } else { startAt(0); say(true); }
+  trayLevel = "play";
+  paintTray();
 });
 on("transport:state", () => say());
 volEl.value = String(vol);
-/* THE ROOM SLIDER PUBLISHES ITS OWN FILL (2026-08-27, with Paul's "the
-   horizontal sliders should have the same handles and vibes as the vertical
-   sliders"). nu.css paints every slider on the page itself — well, hand fill,
-   cap — and for a NATIVE range it can reach the well and the cap through the
-   shadow parts but NOT the fill: WebKit and Blink have no progress
-   pseudo-element, and CSS cannot read a form control's value. So the one
-   place that already knows the number says it out loud as `--p`, and the
-   stylesheet does the rest. Two lines, no new state: `vol` is still the only
-   owner of the level and this only mirrors it. */
-const volFill = () => volEl.style.setProperty("--p", volEl.value + "%");
-volFill();
-volEl.addEventListener("input", () => { volFill(); setVol(+volEl.value); commit("transport"); });
+/* AND THE FADER IS ASSEMBLED — the track, its fill, its thumb, and the input
+   riding inside it at `opacity: 0`.
+
+   `const volFill = () => volEl.style.setProperty("--p", volEl.value + "%")`
+   STOOD HERE AND IS RETIRED WITH THE HORIZONTAL CONTROL (2026-08-29). Its
+   argument was exactly right about a NATIVE range — "WebKit and Blink have no
+   progress pseudo-element, and CSS cannot read a form control's value, so the
+   one place that already knows the number says it out loud as `--p`" — and
+   `vchassis` makes the same statement in the same idiom, writing `--v` on the
+   track from its own `paint()`. One publisher, one custom property, and the
+   fill is a real element the stylesheet can size rather than a shadow part it
+   cannot reach. `vol` is still the only owner of the level.
+
+   THE READOUT IS AN <output> AND NOT A LABEL. A 56px column has no room for a
+   word beside a fader, and the fader's own name is on the input where a screen
+   reader reads it; the number under the track is what an eye needs and is the
+   same shape every other fader on this page prints (`.nu-vs-val`). */
+const sayVol = () => { volOut.textContent = Math.round(+volEl.value) + "%";
+                       volEl.setAttribute("aria-valuetext", volOut.textContent); };
+sayVol();
+volEl.addEventListener("input", () => { sayVol(); setVol(+volEl.value);
+                                        commit("transport"); });
+volWrap.append(vchassis(volEl, () => (+volEl.value) / 100).track, volOut);
 
 /* ---------- THE TWO GESTURES BESIDE PLAY (2026-08-27) -------------------
    Paul: *"I'd like a button next to play that seeds a completely different
@@ -10712,7 +10957,9 @@ const startNow = () => { startAt(0); say(true); };
    `CTX.setDocument`, which is `push(true)` and `commit("box")`. Painted at
    boot too, where the answer is 1: absent has to be today, and a button that
    said nothing until you pressed it would be the readout Paul was missing. */
-const readingEl = $("reading");
+/* (`const readingEl = $("reading")` stood here. The <b> is built with its
+   button now — see the five controls at the head of this section — so this
+   line would have been a second lookup for a node this file is holding.) */
 const printReading = () => {
   if (!readingEl || !ATLAS) return;
   const n = String(ATLAS.reading());
@@ -10747,7 +10994,8 @@ on("box", printReading);
    is exactly what a voicing swap is — the seats are re-resolved, the register
    homes are taken again off the new units, and while stopped it discards the
    held pre-render so the tape cannot play the old band under the new word. */
-const voicingBtn = $("voicing");
+/* (`const voicingBtn = $("voicing")` stood here, for the same reason and with
+   the same answer: the button is built at the head of this section.) */
 const paintVoicing = () => {
   const v = NuFields.VOICINGS[voicing()] || NuFields.VOICINGS.vox;
   paintIcon(voicingBtn, { glyph: v.g, word: v.w, say: v.says });

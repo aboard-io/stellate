@@ -299,7 +299,12 @@ function detentsOf(field, table, labels, emptyLabel, dfltOverride) {
 
 // the shared vertical chassis: track + fill + thumb + the hidden input.
 // `paint` maps input.value -> fill fraction; callers wire input/change.
-function vchassis(input, frac) {
+// EXPORTED 2026-08-29, and that is the only edit this round made to this file.
+// Paul: *"The volume slider is now vertical."* The room fader moved into the
+// gutter (ui/eight.js, THE FIVE CONTROLS) and it is THIS control stood in a
+// 56px column, not a second one — so the touch law above keeps one owner
+// instead of acquiring a copy that drifts the first time either is fixed.
+export function vchassis(input, frac) {
   const track = el("span", null, "nu-vs-track");
   const fill = el("i", null, "nu-vs-fill");
   const thumb = el("b", null, "nu-vs-thumb");

@@ -45,6 +45,22 @@ const SECS = +arg("secs", 14);
 const MK = arg("mk", null);            // rewrite MK_TARGET_DB in flight
 const MKMIN = arg("mkmin", null);      // ...and the rider's floor
 const LANE = arg("lane", null);        // scale LEVEL_LANES in flight
+// ...and PAGE_TRIM, one row at a time: `--trim stk_piano=0.21`. The lane flag
+// above moves every voice on the page at once, which is the wrong instrument
+// for a question about ONE module — and PAGE_TRIM is the table with a row that
+// says in its own comment it was never measured. Repeat with commas.
+const TRIM = (arg("trim", "") || "").split(",").filter(Boolean);
+// THE COMMUTED PIANO'S STABILITY FENCE, in flight. state-engine's pianoFence
+// decides how high a note may reach stk_piano before mapEvents folds it an
+// octave, and the table it returns was fitted against a NaN sweep. `--fence
+// 1245` serves the module's ceiling as one number so the ear can hear what a
+// different fence would sound like WITHOUT editing the engine.
+const FENCE = arg("fence", null);
+// THE SETTLE, SAYABLE. The header above says 8 s and the loop below said 6 —
+// the two disagreed, and the rider's 1.5 s time constant is exactly the range
+// where that gap changes the answer. Default is now the number the header
+// argues for; --settle keeps an old run reproducible.
+const SETTLE = +arg("settle", 8);
 (async () => {
   const { chromium } = require("playwright");
   const browser = await chromium.launch({ executablePath: EXE,
@@ -65,6 +81,24 @@ const LANE = arg("lane", null);        // scale LEVEL_LANES in flight
     console.log("   [mk " + MK + " min " + MKMIN + "]" + (a === b ? " !! MATCHED NOTHING" : " ok"));
     await route.fulfill({ response: res, body: a });
   });
+  if (FENCE) await page.route("**/engine/faust/voices/state-engine.js", async (route) => {
+    const res = await route.fetch(); const b = await res.text();
+    const a = b.replace(
+      /stiff <= 0\.25 \? 4000 : stiff <= 0\.35 \? 2000 : stiff <= 0\.55 \? 1880 : 1770;/,
+      FENCE + ";");
+    console.log("   [fence " + FENCE + "]" + (a === b ? " !! MATCHED NOTHING" : " ok"));
+    await route.fulfill({ response: res, body: a });
+  });
+  if (TRIM.length) await page.route("**/nukernel/audio/to-engine.js", async (route) => {
+    const res = await route.fetch(); const b = await res.text();
+    let a = b;
+    for (const t of TRIM) {
+      const [dsp, v] = t.split("=");
+      a = a.replace(new RegExp("(" + dsp + ": *)[0-9.]+"), "$1" + v);
+    }
+    console.log("   [trim " + TRIM.join(" ") + "]" + (a === b ? " !! MATCHED NOTHING" : " ok"));
+    await route.fulfill({ response: res, body: a });
+  });
   if (LANE) await page.route("**/nukernel/audio/to-engine.js", async (route) => {
     const res = await route.fetch(); const b = await res.text();
     const a = b.replace(/const LEVEL_LANES = \{[\s\S]*?\n *\};/, (m) =>
@@ -79,7 +113,7 @@ const LANE = arg("lane", null);        // scale LEVEL_LANES in flight
   await page.goto(PAGE, { waitUntil: "networkidle" });
   await page.waitForFunction(() => typeof window.__satPut === "function", null, { timeout: 30000 });
   for (const gk of RECORDS) {
-    const r = await page.evaluate(async ([gk, seed, secs]) => {
+    const r = await page.evaluate(async ([gk, seed, secs, settle]) => {
       const LV = await import("/nukernel/audio/live.js");
       try { LV.stop(); } catch (e) {}
       window.__satPut(window.NuPrecompose.genreToDocument(gk, seed));
@@ -94,7 +128,7 @@ const LANE = arg("lane", null);        // scale LEVEL_LANES in flight
       const an = h.analyser, buf = new Float32Array(an.fftSize);
       // let the rider settle: it moves on a 1.5 s time constant off a 0.06
       // one-pole, so anything under ~6 s reads the ATTACK and not the record.
-      await new Promise((r) => setTimeout(r, 6000));
+      await new Promise((r) => setTimeout(r, settle * 1000));
       let peak = 0, sum = 0, n = 0, silent = 0;
       const end = Date.now() + secs * 1000;
       while (Date.now() < end) {
@@ -111,7 +145,7 @@ const LANE = arg("lane", null);        // scale LEVEL_LANES in flight
       const db = (x) => (x > 0 ? +(20 * Math.log10(x)).toFixed(2) : -999);
       return { peakDb: db(peak), rmsDb: db(rms), crest: +(db(peak) - db(rms)).toFixed(2),
                windows: Math.round(n / buf.length), silentWindows: silent };
-    }, [gk, SEED, SECS]).catch((e) => ({ error: String((e && e.message) || e) }));
+    }, [gk, SEED, SECS, SETTLE]).catch((e) => ({ error: String((e && e.message) || e) }));
     console.log(gk.padEnd(14), r.error ? "ERROR " + r.error
       : ["peak " + r.peakDb, "rms " + r.rmsDb, "crest " + r.crest,
          "win " + r.windows, "silent " + r.silentWindows].join("  "));

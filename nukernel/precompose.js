@@ -200,6 +200,20 @@
     forro:     { cell: "even",   contour: "insist", sent: "plain", len: "two" },
     rumbacatalana: { cell: "even", contour: "insist", sent: "plain", len: "two" },
     swing:     { cell: "riff",   contour: "insist", sent: "plain", land: "seventh" },
+    // THE ROW IS NOT A STROPHE (2026-08-29, the handoff the classical round
+    // could not make itself — precompose.js was outside its fence, so it put
+    // `serial` in `roots` as the least-wrong family and wrote the values it
+    // wanted into its report). `roots` deals `aabb`, and a four-bar strophe
+    // that says its first phrase twice is the one shape a twelve-tone row
+    // forbids: the whole method is that no pitch returns until the other
+    // eleven have been. So `vary` — never the same sentence twice — and
+    // `zig`, because Schoenberg op. 25's row turns back on itself rather than
+    // rising or falling. `even` states it as an unaccented series of equals,
+    // which is what a row is before a rhythm is imposed on it.
+    // WHAT THIS STILL CANNOT SAY, and the row's own `cannot` says it too: the
+    // aggregate rule. The box plays P/I/R/RI but nothing counts which pitches
+    // have been used, so a "row" here is a shape, not an accounting.
+    serial:    { cell: "even",   contour: "zig",    sent: "vary",  len: "two" },
     // the WRITTEN VIRTUOSO anchors: a choro, a rag, a reel and a kolo are
     // composed tunes that run, and `roots`' four-bar strophe is the one thing
     // they are not

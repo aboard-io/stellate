@@ -22,8 +22,12 @@
  *   G7  every non-localhost request aborted (THE OFFLINE LAW), no pageerror,
  *       one mark per PLACES row and a button for every place with a record, the
  *       land drawn from LAND.RUNS, and BOOT ON THE WHOLE EARTH
- *   G8  #atlasYear := indexOf(1969), tap Kingston's rendered centre, #title
- *       becomes "Kingston 1969" within 3 s with the eight-axis headings intact
+ *   G8  the year is put on 1969 by scrolling the genre list, tap Kingston's
+ *       rendered centre, the page's own name (document.title) becomes
+ *       "Kingston 1969" within 3 s with the eight-axis headings intact
+ *       (it read "#atlasYear := indexOf(1969) … #title becomes"; the
+ *       when-slider and the <h1> were both deleted on 2026-08-29 and the two
+ *       facts moved rather than went — see `setYear` and `__nuName`)
  *   G9  the same tap twice is byte-identical; the bar's "rewrite" differs
  *   G11 THE GLOBE IS THE KEYBOARD PATH — the headline of this round
  *   G12 tap boxes >= 28 CSS px at the whole earth, >= 44 at 20 degrees or closer
@@ -289,18 +293,28 @@ function g18() {
     await p.evaluate(() => window.scrollTo(0, 0));
     await p.waitForTimeout(300); };
   const errs = [], foreign = [];
-  /* `__nuName()` IS THE SAME READING AS `nameOf()` BELOW, INSIDE THE PAGE, and
-     it is installed with addInitScript because this file reloads six times and
-     an `evaluate`-installed helper does not survive a reload. See the long note
-     at `nameOf` for why the record's name stopped being the whole of `#title`. */
+  /* `__nuName()` IS WHAT THE PAGE CALLS THE RECORD ON IT, and it is installed
+     with addInitScript because this file reloads six times and an
+     `evaluate`-installed helper does not survive a reload.
+
+     REWRITTEN 2026-08-29 AND THE ASSERTIONS DID NOT MOVE. Paul: *"Get rid of
+     the play buttons and the title of the song."* `#title` — the <h1> this
+     helper has read since the file was written — is deleted, and ui/eight.js
+     `draw()` writes the same string to `document.title` instead ("the record
+     names the page, not the HTML" is the sentence the heading carried and it
+     is a sentence about WHAT the name is, not about which box it sits in). So
+     the sixteen callers below still ask "what does the page say this record
+     is" and still get "Kingston 1969"; only the address of the answer moved.
+
+     IT IS ALSO SIMPLER THAN IT WAS, and the paragraph it replaces is worth
+     keeping because it explains why: on 2026-08-26 a Wikipedia link was
+     appended INSIDE the heading, so this helper had to strip an `<a
+     class="nu-wiki">` out of the element's own text before comparing. The link
+     is a column of the genre list now (Paul, 2026-08-29: "Add Wikipedia links
+     to the genre list in a column") — G7 counts the hrefs there — so nothing
+     sits beside the name any more and there is nothing to filter out. */
   await p.addInitScript(() => {
-    window.__nuName = () => {
-      const t = document.getElementById("title");
-      if (!t) return null;
-      return [...t.childNodes]
-        .filter((n) => !(n.nodeType === 1 && n.classList.contains("nu-wiki")))
-        .map((n) => n.textContent).join("").trim();
-    };
+    window.__nuName = () => (document.title || "").trim();
   });
   /* ---- fresh(): A RELOAD ONTO A PAGE WITH NO ADDRESS (2026-08-27) -------
      Every `p.reload()` in this file meant "start this page over from nothing",
@@ -382,32 +396,105 @@ function g18() {
     const b = g.getBoundingClientRect();
     return { x: b.left + b.width / 2, y: b.top + b.height / 2, w: b.width, h: b.height };
   }, name);
-  const setYear = (y) => p.evaluate((y) => {
-    const r = document.getElementById("atlasYear");
-    r.value = String(window.NuAtlas.indexOf(y));
-    r.dispatchEvent(new Event("input", { bubbles: true }));
-    return document.getElementById("atlasYearOut").textContent;
-  }, y);
+  /* ---- setYear(): THE LIST IS THE TIME INSTRUMENT NOW (2026-08-29) -----
+     Paul: *"Get rid of the time slider. Make the genre list permanent and
+     always expanded. As I slide it light up the map with places."*
 
-  /* THE RECORD'S NAME IS NOT THE WHOLE OF `#title` ANY MORE — REWRITTEN
-     2026-08-26, and the page was right on every one of the six checks this
-     changed. Until the wiki round `#title.textContent` was exactly the anchor's
-     label ("Kingston 1969"), so four checks here compared it to that string
-     with `===` and a fifth parsed it with `/^(.+) (\d{3,4})$/`. Paul, 2026-08-26:
-     "add actual Wikipedia links for each genre we have at the top by the title"
-     — so `ui/eight.js draw()` now appends `<a class="nu-wiki">` (and, on the 31
-     rows that are not a plain genre article, a `.nu-kind` span inside it) to the
-     same element, and the textContent reads "Kingston 1969 Reggae". Every one of
-     those five went red while the tap, the touch tap, the pile and the ring all
-     demonstrably worked — G22's own ring assertion passed in the same run off
-     the same click.
+     THIS DROVE `#atlasYear` — set the range's value, fire `input`, read the
+     `<output>` back. Both elements are deleted with the control, so the helper
+     drives what a reader now drives: it scrolls `#atlasIndex` until the row
+     nearest the wanted year is at the middle of the box, which is exactly the
+     row `sweep()` reads the year from. The gesture the gate makes is the
+     gesture the page ships.
 
-     So the name is read as the element's OWN text with the link taken out,
-     which is what "the record names the page" always meant, and the link is
-     asserted separately where it belongs (G7 counts the hrefs). A gate that
-     compares against the whole string is asserting that nothing may ever sit
-     beside the name, which is not a promise this page makes. */
+     THE SCROLL IS WRITTEN AS `scrollTop` AND NOT `scrollIntoView`, and that is
+     not fussiness: `scrollIntoView` on a row inside a nested scroller also
+     scrolls the WINDOW, and half this file's checks are about where the page
+     is standing. A relative `scrollTop +=` off the two rects centres the row
+     and moves nothing else.
+
+     AND IT READS THE YEAR BACK OFF `#atlasMap[data-year]`, the globe's own
+     declaration beside its `data-arc`. #atlasSay's first word was the obvious
+     reader and it is wrong half the time: that paragraph is `aria-live` and
+     `pick()` overwrites it with the RECORD's line ("Kingston 1969 · reggae —
+     13 sections…"), so a check that parsed it after a compose read "Kingston"
+     as a year — measured, two checks failed exactly that way before this line
+     was written. */
+  const yearNow = () => p.evaluate(() =>
+    (document.getElementById("atlasMap").dataset.year || "").trim());
+  const setYear = async (y) => {
+    /* THE LIST HAS TO BE THERE BEFORE A SCROLL CAN MEAN ANYTHING. Eleven of
+       this file's blocks open with `fresh(); waitForTimeout(900)`, and 900 ms
+       was a number chosen when the year was a slider the DOCUMENT shipped —
+       `#atlasYear` existed the moment the HTML parsed. The list is built by
+       ui/atlas.js's mount, which is a module load, an ES import graph and a
+       first paint away, so under a loaded machine 900 ms is sometimes not
+       enough: measured 2026-08-29, this threw
+       "Cannot read properties of null" once, in a run sharing the box with
+       another browser gate. Waiting for the thing rather than for a duration
+       is the fix, and it is the same discipline `waitForFunction` already
+       gives the rest of this file. */
+    await p.waitForSelector("#atlasIndexRows li[data-year]", { timeout: 10000 });
+    await p.evaluate((y) => {
+      const idx = document.getElementById("atlasIndex");
+      const rows = [...idx.querySelectorAll("#atlasIndexRows li[data-year]")];
+      let best = rows[0], bd = Infinity;
+      for (const r of rows) {
+        const d = Math.abs(+r.dataset.year - y);
+        if (d < bd) { bd = d; best = r; }
+      }
+      /* AND IT PUTS THE ROW UNDER THE PAGE'S OWN READ HEAD, which is not the
+         middle of the box: ui/atlas.js `headY` is `scrollTop + f·H`, so the
+         head is at the top of the box at the top of the list and at the bottom
+         at the bottom. Centring instead made the first and last half-screens
+         of rows unreachable — measured, two of the 201 records (Aksum 540 and
+         Rome 600) could not be selected at all. This is `scrollToRow`'s closed
+         form, in the gate: solve `top + (top/max)·H = c`.
+         IN THE SCROLLER'S COORDINATES, NOT `offsetTop`: that property is
+         measured from the nearest POSITIONED ancestor and `#atlasIndex` has
+         none, so it reads 308 px too large at 390x844. */
+      const H = idx.clientHeight;
+      const max = document.getElementById("atlasIndexRows").scrollHeight - H;
+      const c = idx.scrollTop + best.getBoundingClientRect().top
+        - idx.getBoundingClientRect().top + best.offsetHeight / 2;
+      idx.scrollTop = Math.max(0, Math.min(max, c / (1 + H / max)));
+    }, y);
+    // the sweep is rAF-coalesced and settles its labels 120 ms after the last
+    // scroll event, so the gate waits for the page rather than racing it
+    await p.waitForTimeout(400);
+    return yearNow();
+  };
+
+  /* WHAT THE PAGE CALLS THE RECORD ON IT — `document.title` since 2026-08-29
+     (see `__nuName` above for the move and for what it retired). The two
+     history-bearing paragraphs that stood here are kept in that note, because
+     between them they are the reason this gate reads a NAME rather than an
+     element's text: on 2026-08-26 a Wikipedia link was appended beside the
+     name and five `===` comparisons went red while the tap, the touch tap, the
+     pile and the ring all demonstrably worked. "A gate that compares against
+     the whole string is asserting that nothing may ever sit beside the name,
+     which is not a promise this page makes" — and now nothing does. */
   const nameOf = () => p.evaluate(() => window.__nuName());
+
+  /* ---- pressRewrite(): THE TRANSPORT IS A LEVEL NOW (2026-08-29) --------
+     Paul: *"Add a permanent play button to the top of the nav. When I tap it
+     the nav is taken over by play options."*
+
+     #rewrite exists on the page exactly when a reader can see it, which is the
+     whole point of a level, so a gate reaching for it has to walk there. Two
+     presses of #play and not one: the first descends into the play level AND
+     starts the record, the second stops it, and the level stays put (that is
+     the play mark's own documented behaviour — "it descends on a stop too").
+     Then the real button, pressed. Nothing about which record gets written
+     depends on the transport running, which is what both callers are asking
+     about. */
+  const pressRewrite = async () => {
+    await p.evaluate(() => document.getElementById("play").click());
+    await p.waitForTimeout(200);
+    await p.evaluate(() => document.getElementById("play").click());
+    await p.waitForTimeout(200);
+    await p.evaluate(() => document.getElementById("rewrite").click());
+  };
 
   /* ---- G7 THE PICTURE ------------------------------------------------- */
   const shape = await p.evaluate(() => {
@@ -415,7 +502,11 @@ function g18() {
       .filter((x) => x.getAttribute("d")).length;
     const marks = [...document.querySelectorAll("#atlasMarks .place")];
     const L = (window.NuAtlasLand || {}).LAND || {};
-    const Y = window.NuAtlas.YEARS[+document.getElementById("atlasYear").value];
+    /* THE BOOT YEAR IS READ OFF #atlasSay, NOT OFF A SLIDER (2026-08-29 — the
+       when-slider is deleted). The sentence's first word IS the year and
+       always was; `#atlasYear.value` was a rank index into YEARS that this
+       line then had to translate back. One fewer indirection, same fact. */
+    const Y = +(document.getElementById("atlasMap").dataset.year);
     return {
       marks: marks.length,
       buttons: marks.filter((m) => m.getAttribute("role") === "button").length,
@@ -482,31 +573,58 @@ function g18() {
      rather than written as a new gate because these two facts are one fact.
      Nothing below clicks a link; clicking is the reader's choice, not the
      page's. */
+  /* REWRITTEN 2026-08-29 — THE LINK MOVED AND THE COUNT WAS TYPED.
+     Paul: *"Add Wikipedia links to the genre list in a column."* There was ONE
+     link on this page and it was appended to the `<h1 id="title">`; there are
+     193 now, one per row of the genre list, and the <h1> is deleted with the
+     rest of the round's furniture. Three checks stood here and each is
+     answered rather than dropped:
+       · "the title carries its article" — the title is gone, so the same
+         question is asked of the FIRST ROW that has one, which is where a
+         reader now meets it. G23 asserts that every one of the 193 equals
+         `NuWiki.url()` of its own row's key; this asks the shape of the href.
+       · "the link says WHAT KIND of article it is" — `data-kind` and the
+         visible `.nu-kind` span moved with the link, so the check follows it
+         to the row.
+       · "the wiki table shipped (191 links)" — the 191 WAS TYPED and went
+         stale by a round: measured 2026-08-29 the table holds 205 titles,
+         because the genre catalogue is another round's file and it grew. What
+         the check actually means is "the table is here and the page asked the
+         network for none of it", so it is written that way and the number is
+         printed. A gate that hard-codes somebody else's count fails on their
+         work, not on its own subject. */
   const wiki = await p.evaluate(() => {
     const W = window.NuWiki;
-    const a = document.querySelector("#title a[href^='https://en.wikipedia.org/']");
+    const a = document.querySelector(
+      "#atlasIndexRows a[href^='https://en.wikipedia.org/']");
+    const kinds = [...document.querySelectorAll("#atlasIndexRows a.nu-ixw")]
+      .filter((x) => x.dataset.kind && x.dataset.kind !== "genre");
     return { table: !!W, links: W ? Object.keys(W.WIKI).length : 0,
              roles: W ? ["simple", "solo", "vocal", "backing", "riff", "pad"]
                           .filter((r) => W.WIKI[r]) : ["no table"],
              href: a ? a.href : null, abs: a ? a.getAttribute("href") : null,
              inApp: !!(a && a.closest("#app")),
              kind: a ? a.dataset.kind : null,
+             notGenre: kinds.length,
+             saidOut: kinds.filter((x) => x.querySelector(".nu-kind")).length,
              inDom: document.querySelectorAll(
                "a[href^='https://en.wikipedia.org/']").length };
   });
-  check(wiki.table && wiki.links === 191,
-    "G7 · the wiki table shipped (" + wiki.links + " links, and the page made " +
+  check(wiki.table && wiki.links > 100,
+    "G7 · the wiki table shipped (" + wiki.links + " titles, and the page made " +
     "no request for any of them)");
   check(!wiki.roles.length,
     "G7 · THE SIX INTERNAL ROLES GET NO LINK — a role has a job, not a " +
     "history " + JSON.stringify(wiki.roles));
   check(/^https:\/\/en\.wikipedia\.org\/wiki\/.+/.test(wiki.href || ""),
-    "G7 · the title carries its article: " + wiki.href);
+    "G7 · a genre row carries its article: " + wiki.href);
   check(wiki.href === wiki.abs,
     "G7 · and it is absolute, so nothing resolves against this origin");
-  check(!!wiki.kind,
-    "G7 · the link says WHAT KIND of article it is (" + wiki.kind + ") — 31 of " +
-    "the 191 are an act, an album or something wider than the anchor");
+  check(!!wiki.kind && wiki.notGenre > 0 && wiki.saidOut === wiki.notGenre,
+    "G7 · the link says WHAT KIND of article it is (the first row's is " +
+    JSON.stringify(wiki.kind) + ") — " + wiki.notGenre + " of the rows point " +
+    "at an act, an album or something wider than the anchor, and every one of " +
+    "them says so in a REAL span (" + wiki.saidOut + ") rather than in a tooltip");
   /* MOTIF.md: the frozen half of the page is `#app`, and `#title` is outside it
      — which is why draw() may rebuild this anchor every time without going
      anywhere near the clock's own DOM. */
@@ -591,13 +709,25 @@ function g18() {
     return a === b;
   });
   check(dTwice, "G9 · and the same (gk, seed) twice is byte-identical");
-  /* #rewrite AND NOT #atlasAgain, 2026-08-27. The button moved to the .nu-bar
-     and split into the two verbs it had been spelling with one label (Paul:
-     "a button next to play that seeds a completely different version of the
-     song … The another take button should just be called take"). The gesture
-     under test is unchanged — it is still the atlas's own seed, bumped through
-     `ATLAS.reseed` — so this reads the control a hand now presses. */
-  await p.evaluate(() => document.getElementById("rewrite").click());
+  /* #rewrite AND NOT #atlasAgain, 2026-08-27. The button moved out of this
+     section and split into the two verbs it had been spelling with one label
+     (Paul: "a button next to play that seeds a completely different version of
+     the song … The another take button should just be called take"). The
+     gesture under test is unchanged — it is still the atlas's own seed, bumped
+     through `ATLAS.reseed` — so this reads the control a hand now presses.
+
+     AND A HAND HAS TO OPEN THE PLAY LEVEL FIRST, 2026-08-29. Paul: *"Add a
+     permanent play button to the top of the nav. When I tap it the nav is
+     taken over by play options."* The transport is a LEVEL of the gutter now,
+     so #rewrite exists on the page exactly when a reader can see it — which is
+     the point of a level and is why the gate presses its way there rather than
+     reaching for an element that would only be there if the design had not
+     changed. Two presses of #play and not one: the first descends AND starts
+     the record, the second stops it, and the level stays where it is (that is
+     the play mark's own documented behaviour — "it descends on a stop too").
+     G9 is about which document was written, and the transport running or not
+     does not touch that. */
+  await pressRewrite();
   await p.waitForTimeout(1400);
   const d3 = await p.evaluate(() => JSON.stringify(window.__eightDoc()));
   check(d3 !== d2, "G9 · \"rewrite\" writes a DIFFERENT record (" + d3.length + " chars)");
@@ -1225,7 +1355,11 @@ function g18() {
       wrap: document.getElementById("atlasWrap").scrollWidth
           - document.getElementById("atlasWrap").clientWidth,
       page: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      slider: Math.round(document.getElementById("atlasYear").getBoundingClientRect().width),
+      /* THE LIST IS WHAT GOES ACROSS THE SCREEN NOW (2026-08-29). This read
+         `#atlasYear`'s width, and the slider is deleted. The claim it made —
+         "the widest control on this page is as wide as anything on this page
+         may be" — is kept and moved onto the control that replaced it. */
+      list: Math.round(document.getElementById("atlasIndex").getBoundingClientRect().width),
       vw: document.documentElement.clientWidth,
       // what the widest thing on this page is allowed to be: the viewport less
       // the two safe-area gutters nu.css keeps (--gl / --gr, 12px minimum)
@@ -1235,16 +1369,21 @@ function g18() {
     check(fit.wrap === 0 && fit.page === 0,
       "G15 · " + w + "px: nothing scrolls sideways (#atlasWrap " + fit.wrap +
       "px, the document " + fit.page + "px)");
-    /* PAUL: "the 'when' slider which should go across the whole screen." The
-       track is as wide as ANYTHING on this page is allowed to be — the viewport
-       less the two safe-area gutters nu.css keeps for a notch in landscape. The
-       row itself is full-bleed to the screen edge (the .nu-bar idiom at
-       nu.css:112) and re-pays the gutter as padding; 100vw was rejected because
-       vw includes the scrollbar and a sideways scroll on the body is the one
-       thing that file exists to prevent. */
-    check(fit.slider >= fit.col - 2,
-      "G15 · " + w + "px: the when-slider goes across the whole screen — the track is " +
-      fit.slider + " px, the widest anything on this page may be is " + fit.col +
+    /* REWRITTEN 2026-08-29 WITH THE CONTROL IT WAS ABOUT. It said: PAUL, "the
+       'when' slider which should go across the whole screen" — the track is as
+       wide as ANYTHING on this page is allowed to be, the viewport less the
+       two safe-area gutters nu.css keeps for a notch in landscape; 100vw was
+       rejected because vw includes the scrollbar and a sideways scroll on the
+       body is the one thing that file exists to prevent.
+
+       THE SLIDER IS GONE (Paul: "Get rid of the time slider") AND THE LIST IS
+       THE TIME INSTRUMENT. The promise is the same promise about the same
+       column, made about the thing a thumb now moves: the catalogue is as wide
+       as this page lets anything be, at every width, and never one pixel
+       wider. */
+    check(fit.list >= fit.col - 2 && fit.list <= fit.col + 2,
+      "G15 · " + w + "px: the genre list goes across the whole screen — it is " +
+      fit.list + " px, the widest anything on this page may be is " + fit.col +
       " (viewport " + fit.vw + " less the safe gutters)");
   }
   await p.setViewportSize({ width: 390, height: 844 });
@@ -1273,10 +1412,27 @@ function g18() {
       // recordsAt is year-ascending, so [0] is the place's earliest record —
       // one deterministic year per place, and the same one on every run.
       const own = window.NuAtlas.recordsAt(n)[0];
-      const sl = document.getElementById("atlasYear");
-      sl.value = String(window.NuAtlas.indexOf(own.year));
-      sl.dispatchEvent(new Event("input", { bubbles: true }));
-      await new Promise((r) => setTimeout(r, 60));
+      /* THE YEAR IS PUT ON THE PLACE'S OWN RECORD BY SCROLLING THE LIST
+         (2026-08-29 — the when-slider is deleted). Same gesture the helper
+         `setYear` above makes and the same one a reader makes: the row nearest
+         that year is centred in `#atlasIndex` and `sweep()` reads it. Written
+         out here rather than calling the helper because this whole block runs
+         inside ONE page.evaluate, once per place, and 62 round trips to node
+         would be the slow half of this gate. */
+      const idx = document.getElementById("atlasIndex");
+      const rows = [...idx.querySelectorAll("#atlasIndexRows li[data-year]")];
+      let best = rows[0], bd = Infinity;
+      for (const r2 of rows) {
+        const d = Math.abs(+r2.dataset.year - own.year);
+        if (d < bd) { bd = d; best = r2; }
+      }
+      // the same read-head inverse as `setYear` above
+      const H2 = idx.clientHeight;
+      const max2 = idx.querySelector("#atlasIndexRows").scrollHeight - H2;
+      const c2 = idx.scrollTop + best.getBoundingClientRect().top
+        - idx.getBoundingClientRect().top + best.offsetHeight / 2;
+      idx.scrollTop = Math.max(0, Math.min(max2, c2 / (1 + H2 / max2)));
+      await new Promise((r) => setTimeout(r, 200));
       const g = [...document.querySelectorAll("#atlasMarks .place")]
         .find((x) => x.dataset.place === n);
       g.focus();
@@ -1301,36 +1457,38 @@ function g18() {
   /* ---- G11 (last) THE ORDER A READER MEETS IT IN ---------------------- */
   /* DOM ORDER IS READING ORDER IS TAB ORDER, and this is the assertion that
      caught the plan putting the slider UNDER the globe: Tab from the slider
-     landed on "another take" (a button that has since moved to the .nu-bar)
-     and all nineteen places were behind the reader,
-     reachable only by Shift-Tab. The sentence names the year, the slider sets
-     it, the globe shows what it lit. */
+     landed on "another take" (a button that has since moved to the gutter)
+     and all nineteen places were behind the reader, reachable only by
+     Shift-Tab. */
   await fresh();
   await p.waitForTimeout(900);
   await setYear(1969);
   await p.waitForTimeout(250);
   const order = await p.evaluate(() =>
     [...document.getElementById("atlas").children].map((n) => n.tagName + "#" + n.id));
-  /* FOUR, NOT FIVE, SINCE 2026-08-27: `P#atlasActs` held "another take" and
-     both are gone — the gesture is `#rewrite` in the .nu-bar now. The claim
-     this check makes did not change: the sentence names the year, the slider
-     sets it, the globe shows what it lit, and the places are behind the
-     slider in the tab order rather than in front of it.
-
-     SIX SINCE 2026-08-28, and the claim is unchanged AGAIN because the two new
-     children are BEHIND the globe rather than in front of it. Paul: "Let me
-     click to see a big list of all the genres in chronological order." The
-     index's button and its (closed) list are back matter — the door and the
-     chronology come after the two controls Paul asked to be left with, so the
-     reader still meets the sentence, then the slider, then the earth. That
-     ORDER is the whole assertion, which is why the list is checked here rather
-     than in a gate of its own. */
+  /* THE LIST OF CHILDREN HAS BEEN FOUR, THEN SIX, AND IS THREE — 2026-08-29 —
+     AND THE CLAIM HAS NOT MOVED ONCE. Each rewrite is a control leaving:
+       · 2026-08-27, `P#atlasActs` ("another take") went to the transport;
+       · 2026-08-28, the index's door and its shut list arrived as BACK MATTER,
+         behind the globe, which is why they did not disturb the order;
+       · 2026-08-29, Paul: *"Get rid of the time slider. Make the genre list
+         permanent and always expanded."* `DIV#atlasWhen` is deleted and
+         `BUTTON#atlasIndexBtn` is deleted, and the list that was behind them
+         is the instrument now.
+     WHAT IS ASSERTED IS STILL THE SENTENCE, THEN THE EARTH, THEN THE
+     CATALOGUE: a reader meets a line of prose that names the year, then the
+     picture that year lit, then the 201 rows that both name every record and
+     move the year. The places are still ahead of the reader in the tab order
+     and never behind them, which is the promise this check exists for. */
   check(JSON.stringify(order) === JSON.stringify(
-      ["H2#atlasHead", "P#atlasSay", "DIV#atlasWhen", "DIV#atlasWrap",
-       "BUTTON#atlasIndexBtn", "DIV#atlasIndex"]),
-    "G11 · reading order is heading, sentence, when-slider, globe, then the " +
-    "index's door and its list — " + JSON.stringify(order));
-  await p.evaluate(() => document.getElementById("atlasYear").focus());
+      ["H2#atlasHead", "P#atlasSay", "DIV#atlasWrap", "DIV#atlasIndex"]),
+    "G11 · reading order is heading, sentence, globe, then the genre list — " +
+    JSON.stringify(order));
+  /* THE WALK STARTS AT THE GLOBE, NOT AT THE SLIDER (2026-08-29). It focused
+     `#atlasYear`, which was the element immediately before the map; the map
+     itself is now the first control in this section, and Tab from it is the
+     walk this check has always been about. */
+  await p.evaluate(() => document.getElementById("atlasMap").focus());
   const walk = [];
   // THE PRESS COUNT IS DERIVED — REWRITTEN 2026-08-26, THE THIRD TIME THIS
   // NUMBER WENT STALE AND THE LAST. The tab order IS the drawn set in the
@@ -1363,12 +1521,20 @@ function g18() {
     }));
     if (walk[walk.length - 1] === "Kingston 1969, reggae") break;
   }
-  check(walk[0] === "atlasMap" && walk[1] === first,
-    "G11 · Tab from the slider walks INTO the globe and then its places, in the " +
-    "globe's own order (" + drawn69 + " drawn at 1969): " + JSON.stringify(walk.slice(0, 4)));
+  /* REWRITTEN 2026-08-29 BECAUSE THE WALK NOW STARTS ON THE GLOBE. It read
+     `walk[0] === "atlasMap" && walk[1] === first` — one Tab from the
+     when-slider into the map, a second onto its first place. The slider is
+     deleted, the map is the first control in this section, so the first Tab
+     lands on the first PLACE and the assertion loses one step and no
+     substance: what it has always been about is that the globe's marks are
+     walked in the globe's own alphabetical order, forwards, with the record
+     the page is playing REACHABLE rather than behind the reader. */
+  check(walk[0] === first,
+    "G11 · Tab from the globe walks onto its places, in the globe's own " +
+    "order (" + drawn69 + " drawn at 1969): " + JSON.stringify(walk.slice(0, 4)));
   const toKingston = walk.indexOf("Kingston 1969, reggae");
-  check(toKingston > 0, "G11 · …and Kingston is " + (toKingston + 1) +
-    " Tabs from the slider at 1969 (" + JSON.stringify(walk.slice(0, 8)) + ")");
+  check(toKingston >= 0, "G11 · …and Kingston is " + (toKingston + 1) +
+    " Tabs from the globe at 1969 (" + JSON.stringify(walk.slice(0, 8)) + ")");
 
   /* ---- G22 NO GHOSTS -------------------------------------------------- */
   /* PAUL, 2026-08-24, after looking at the deployed page: "Don't show ghost
@@ -1491,7 +1657,7 @@ function g18() {
       .find((x) => x.dataset.place === "Kingston");
     return { when: g.getAttribute("data-when"), cur: g.getAttribute("aria-current"),
              ring: g.querySelector(".ring").getAttribute("opacity"),
-             year: document.getElementById("atlasYearOut").textContent };
+             year: document.getElementById("atlasMap").dataset.year };
   });
   check(lit.when === "1" && lit.cur === "true" && lit.ring === "1",
     "G22 · the record the page is playing wears the ring — Kingston at " + lit.year +
@@ -1505,14 +1671,23 @@ function g18() {
       .find((x) => x.dataset.place === "Kingston");
     return { when: g.getAttribute("data-when"), ring: g.querySelector(".ring").getAttribute("opacity"),
              drawn: document.querySelectorAll('#atlasMarks .place[data-when="1"]').length,
+             /* DERIVED, NOT TYPED (2026-08-29). This compared `drawn === 1` —
+                "at 600 the only mark on the earth is Rome" — and the catalogue
+                is another round's file: it grew an Aksum 540 anchor, which is
+                inside 600's own ±10 window, and the 1 became 2. The fact this
+                check is making is "the year decides, with no exception for the
+                record you are playing", so it asks the year what it holds. */
+             holds: window.NuAtlas.atYear(
+               +document.getElementById("atlasMap").dataset.year).shown.size,
              title: window.__nuName() };
   });
-  check(away.when === "0" && away.ring === "0" && away.drawn === 1
+  check(away.when === "0" && away.ring === "0" && away.drawn === away.holds
         && away.title === "Kingston 1969",
     "G22 · …and at 600 it leaves with its year, ring and all (" + away.drawn +
-    " mark on the earth) while the page goes on playing " + JSON.stringify(away.title) +
+    " marks on the earth, which is exactly what the year holds: " + away.holds +
+    ") while the page goes on playing " + JSON.stringify(away.title) +
     " — one rule, no exception for the favourite");
-  await p.evaluate(() => document.getElementById("rewrite").click());
+  await pressRewrite();
   await p.waitForTimeout(900);
   /* AND THE SECTION IS BROUGHT BACK ON SCREEN BEFORE THE MARKS ARE READ. This
      check went green, then red, then green on the same code, and the reason is
@@ -1529,11 +1704,11 @@ function g18() {
       .find((x) => x.dataset.place === "Kingston");
     return { when: g.getAttribute("data-when"), cur: g.getAttribute("aria-current"),
              ring: g.querySelector(".ring").getAttribute("opacity"),
-             year: document.getElementById("atlasYearOut").textContent,
+             year: document.getElementById("atlasMap").dataset.year,
              say: document.getElementById("atlasSay").textContent };
   });
   check(back.year === "1969" && back.when === "1" && back.cur === "true" && back.ring === "1",
-    "G22 · showing(\"reggae\") from 600 turns the globe back to the record: the slider " +
+    "G22 · showing(\"reggae\") from 600 turns the globe back to the record: the sentence " +
     "reads " + back.year + ", Kingston is drawn (" + JSON.stringify(back.when) +
     "), current and ringed. " + JSON.stringify(back.say.slice(0, 60)));
 
@@ -1604,17 +1779,26 @@ function g18() {
     "right edge is mirrored to the left of its dot (" + g23.clipped.length +
     " clipped " + JSON.stringify(g23.clipped.slice(0, 3)) + ")");
 
-  /* THE INDEX. Closed at boot (it is back matter, not the front door), built
-     on the click, 199 rows — every genre genres.js has, the 193 with a place
-     and a year in year order and the six ROLES after them, which have neither
-     and are not pretended into the sequence. */
+  /* THE INDEX. REWRITTEN 2026-08-29 — Paul: *"Make the genre list permanent
+     and always expanded."* / *"Add Wikipedia links to the genre list in a
+     column."*
+
+     WHAT THIS CHECKED, AND WHY IT NO LONGER CAN: "the index is SHUT at boot
+     and its 199 buttons are not even built", proved by reading
+     `#atlasIndex.hidden`, `#atlasIndexBtn[aria-expanded]` and a row count of
+     zero, then clicking the door and counting again. There is no door and
+     nothing is shut, so that assertion is not weakened, it is INVERTED: the
+     rows must be there before anybody touches anything. The click is gone with
+     the button.
+
+     THE ROWS ARE STILL COUNTED THE SAME WAY, in the atlas's own terms (`ALL` +
+     `EXCLUDE`), which is why the count moving from 199 to 201 under this round
+     cost the gate nothing: it never typed the number. */
   const idx = await p.evaluate(async () => {
-    const btn = document.getElementById("atlasIndexBtn");
     const before = { rows: document.querySelectorAll("#atlasIndexRows li").length,
                      hidden: document.getElementById("atlasIndex").hidden,
-                     expanded: btn.getAttribute("aria-expanded") };
-    btn.click();
-    await new Promise((r) => setTimeout(r, 60));
+                     door: !!document.getElementById("atlasIndexBtn"),
+                     ms: document.getElementById("atlasIndex").dataset.ms };
     const rows = [...document.querySelectorAll("#atlasIndexRows .nu-ixrow")];
     const cells = (r) => [...r.children].map((c) => c.textContent);
     const yrs = rows.map((r) => r.children[0].textContent)
@@ -1646,13 +1830,50 @@ function g18() {
              tap: Math.min(...rows.slice(0, 40)
                .map((r) => r.getBoundingClientRect().height)),
              hscroll: doc.scrollWidth - doc.clientWidth,
-             expanded: document.getElementById("atlasIndexBtn")
-               .getAttribute("aria-expanded") };
+             /* ---- THE ARTICLE COLUMN, 2026-08-29 ----------------------
+                EVERY href COMES FROM nukernel/wiki.js AND NOTHING IS TYPED.
+                The gate asks the table for each row's own key and compares the
+                string the page actually rendered; a link this page invented,
+                or one built with a different escaping of an `&` or an accent,
+                fails here. The rows with NO link are counted too, because "a
+                row with no link shows no link" is half the promise and a
+                silent blank is the other half of the failure. */
+             wiki: (() => {
+               const W = window.NuWiki, o = { links: 0, bad: [], no: 0, why: 0 };
+               for (const li of document.querySelectorAll("#atlasIndexRows li")) {
+                 const gk = li.dataset.gk;
+                 const a = li.querySelector("a.nu-ixw");
+                 const n = li.querySelector(".nu-ixw-no");
+                 if (a) {
+                   o.links++;
+                   if (a.getAttribute("href") !== W.url(gk)) o.bad.push(gk);
+                 } else if (n) {
+                   o.no++;
+                   if ((n.dataset.why || "").length > 10) o.why++;
+                 } else o.bad.push(gk + ": no cell at all");
+               }
+               o.table = Object.keys(W.WIKI).length;
+               return o;
+             })() };
   });
-  check(idx.before.hidden === true && idx.before.rows === 0
-        && idx.before.expanded === "false" && idx.expanded === "true",
-    "G23 · the index is SHUT at boot and its 199 buttons are not even built — " +
-    JSON.stringify(idx.before) + " -> expanded " + JSON.stringify(idx.expanded));
+  check(idx.before.rows === idx.n && idx.before.hidden === false
+        && idx.before.door === false,
+    "G23 · the index is BUILT AND OPEN AT BOOT with no door to open — " +
+    JSON.stringify(idx.before) + " (buildIndex took " + idx.before.ms + " ms, " +
+    "published on #atlasIndex[data-ms])");
+  /* THE DERIVATION IS THE CLAIM, NOT A COUNT. Every href must equal
+     `NuWiki.url()` of that row's own key and every linkless row must carry a
+     reason; the TABLE'S size is printed and not compared, because wiki.js
+     holds 205 titles against the atlas's 195 placed anchors (measured
+     2026-08-29) — the genre catalogue and the baked WHEN table move at
+     different speeds and atlas.gate.js G2 is the gate that owns that gap. */
+  check(!idx.wiki.bad.length && idx.wiki.links + idx.wiki.no === idx.n
+        && idx.wiki.why === idx.wiki.no,
+    "G23 · the article column is wiki.js and nothing else: " + idx.wiki.links +
+    " hrefs, all === NuWiki.url(row), + " + idx.wiki.no + " refused with a " +
+    "reason on each (" + idx.wiki.why + ") = " + idx.n + " rows · wiki.js " +
+    "holds " + idx.wiki.table + " titles" +
+    (idx.wiki.bad.length ? " · BAD " + JSON.stringify(idx.wiki.bad.slice(0, 4)) : ""));
   /* EVERY GENRE THE ATLAS HOLDS, AND THE CLAIM IS SAID IN THE ATLAS'S OWN
      TERMS RATHER THAN IN genres.js's. `ALL` (193 place-and-year rows) plus
      `EXCLUDE` (6 roles) IS the atlas's catalogue, and the list is exactly it —
@@ -1669,7 +1890,7 @@ function g18() {
      atlas.gate.js G6b's placeless rows — and asserted where it belongs. */
   check(idx.n === idx.placed + idx.roles && idx.dated === idx.placed
         && idx.ooo === 0,
-    "G23 · one click, every genre the atlas holds, oldest first: " + idx.n +
+    "G23 · every genre the atlas holds, oldest first, with no click: " + idx.n +
     " rows = " + idx.placed + " placed + " + idx.roles + " roles, " + idx.ooo +
     " out of order · " + JSON.stringify(idx.first) + " … " +
     JSON.stringify(idx.last) +
@@ -1682,11 +1903,13 @@ function g18() {
     "G23 · …and a row is a thumb (" + idx.tap + " CSS px) with no horizontal " +
     "page scroll (" + idx.hscroll + " px)");
 
-  /* AND A ROW IS THE GLOBE'S OWN DOOR. Not a second compose path: the row moves
-     the SLIDER to the record's year and calls choose(place), so what it writes
-     is decided by recordAt exactly as a thumb on the dot is. Proved by the two
-     things only the real path can do — #title becomes the record, and the mark
-     on the earth takes the ring. */
+  /* AND A ROW IS THE GLOBE'S OWN DOOR. Not a second compose path: the row sets
+     the YEAR to the record's own and calls choose(place), so what it writes is
+     decided by recordAt exactly as a thumb on the dot is. Proved by the two
+     things only the real path can do — the page's own name becomes the record,
+     and the mark on the earth takes the ring. (It read "the row moves the
+     SLIDER"; the slider is deleted and the year is state now — 2026-08-29 —
+     which changes the mechanism and not one word of the claim.) */
   await p.evaluate(() => {
     const r = [...document.querySelectorAll("#atlasIndexRows .nu-ixrow")]
       .find((x) => x.dataset.gk === "dub");
@@ -1700,7 +1923,7 @@ function g18() {
     const g = [...document.querySelectorAll("#atlasMarks .place")]
       .find((x) => x.dataset.place === "Kingston");
     return { title: window.__nuName(),
-             year: document.getElementById("atlasYearOut").textContent,
+             year: document.getElementById("atlasMap").dataset.year,
              ring: g && g.querySelector(".ring").getAttribute("opacity"),
              gname: [...document.querySelectorAll("#atlasNames .lab")]
                .filter((l) => l.dataset.place === "Kingston")
@@ -1711,8 +1934,8 @@ function g18() {
   });
   check(row.title === "Kingston 1973" && row.year === "1973" && row.ring === "1"
         && row.gname === "dub" && JSON.stringify(row.cur) === JSON.stringify(["dub"]),
-    "G23 · a row opens its record through the globe's own door — #title " +
-    JSON.stringify(row.title) + ", the slider reads " + row.year + ", the mark " +
+    "G23 · a row opens its record through the globe's own door — the page is " +
+    JSON.stringify(row.title) + ", the sentence reads " + row.year + ", the mark " +
     "wears the ring, its second line says " + JSON.stringify(row.gname) +
     " and the list marks " + JSON.stringify(row.cur));
 

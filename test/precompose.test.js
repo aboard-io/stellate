@@ -389,9 +389,19 @@ function sectionEvents(doc, i) {
   // Asia, 6 in Southeast Asia, 3 in South Asia, 6 in the Middle East and
   // Central Asia, 5 in Europe and 5 in North America)
   // + the TWO news themes ("I want you to add 1970s news theme and 2000s news
-  // theme as genres", Paul, 2026-08-28: London 1970 and New York 2006).
-  ok("G0 the catalog is 201 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 201,
+  // theme as genres", Paul, 2026-08-28: London 1970 and New York 2006)
+  // + the TWELVE of the four-traditions round ("Add the missing genres and
+  // start filling in western, Arabic and Chinese and Indian classical music",
+  // Paul, 2026-08-29): the two most-wanted missing ancestors in the whole
+  // catalogue (jumpblues, wanted by six rows, and tinpanalley, wanted by
+  // five), three Western art-music holes the table itself named (chorale,
+  // belcanto, serial), three Arabic (taqsim, firqa, nuba), two Chinese
+  // (guqin, sizhu) and two Indian (dhrupad, carnatic). FOUR MORE WERE
+  // DRAFTED AND REFUSED under WORLD.md §4's primary-fact rule — jingju,
+  // guoyue, khyal and gamelan — and the reasons are at the foot of that
+  // block in genres.js, which is the point of the rule.
+  ok("G0 the catalog is 213 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 213,
       "anchors() returned " + ANCHORS.length));
   ok("G0b 366 records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
@@ -953,10 +963,16 @@ function sectionEvents(doc, i) {
     // name list wearing a function, it would not, and this assertion is the
     // difference between the two.
     const solo = ANCHORS.filter((gk) => NC.unaccompanied(gk));
+    // ...AND `chorale` IS THE SECOND PROBE (2026-08-29). Nuremberg 1586 was
+    // written the same way sacredharp was — four voices, `instr: "ahh_choir"`,
+    // an empty kit, `nobass` — by somebody who did not read compose.js's
+    // predicate, and it landed in the set on its own three fields. Two
+    // independent arrivals is the difference between a derivation and a list.
     ok("G11c the unaccompanied law is derived, not a list — it found the " +
-       "five it was written on PLUS sacredharp, which it has never heard of", () => {
+       "five it was written on PLUS sacredharp and chorale, neither of " +
+       "which it has ever heard of", () => {
       assert.deepStrictEqual(solo.slice().sort(),
-        ["gregorian", "mbube", "organum", "sacredharp", "spem", "zema"]);
+        ["chorale", "gregorian", "mbube", "organum", "sacredharp", "spem", "zema"]);
     });
 
     // G11d — EVERY PLACE IS IN EXACTLY ONE REGION, AND EVERY REGION ROW IS A
