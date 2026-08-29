@@ -482,6 +482,7 @@
   const REGIONS = {
     "Europe": ["Antwerp", "Barcelona", "Basildon", "Berlin", "Bristol", "Crawley",
                "Dublin", "Düsseldorf", "Essex", "Florence", "Glasgow", "Guča",
+               "Milan", "Nuremberg",
                "Kent", "Leipzig", "Lisbon", "Liverpool", "London", "Manchester",
                "Muswell Hill", "Paris", "Piraeus", "Provence", "Reims",
                "Reykjavík", "Rome", "Sofia", "Stourbridge", "Swindon", "Venice",
@@ -512,15 +513,20 @@
     "Africa": ["Abidjan", "Accra", "Addis Ababa", "Aksum", "Bamako",
                "Douala", "Freetown", "Johannesburg", "Kinshasa", "Lagos",
                "Luanda", "Nairobi"],
-    "East Asia": ["Hong Kong", "Seoul", "Shanghai", "Taipei", "Tokyo"],
+    "East Asia": ["Beijing", "Hong Kong", "Seoul", "Shanghai", "Taipei",
+                  "Tokyo"],
     "Southeast Asia": ["Bangkok", "Ho Chi Minh City", "Jakarta", "Manila",
                        "Phnom Penh"],
-    "South Asia": ["Chandigarh", "Faisalabad", "Jalandhar", "Mumbai"],
+    "South Asia": ["Chandigarh", "Chennai", "Delhi", "Faisalabad",
+                   "Jalandhar", "Mumbai"],
     // Turkey and Iran sit here rather than in Europe or in Central Asia, and
     // Istanbul is the case that forces the decision: the city is on two
     // continents and the MUSIC — makam, usul, the arabesk string orchestra —
     // answers to Cairo and Tehran, not to Vienna.
-    "Middle East": ["Cairo", "Istanbul", "Oran", "Tehran"],
+    // TETOUAN JOINS ORAN IN THIS ROW, for the reason the Africa comment above
+    // already gives: Garland's volume 6 covers the Maghreb, and the Andalusian
+    // nuba answers to Fez, Algiers and Cairo rather than to Bamako.
+    "Middle East": ["Cairo", "Istanbul", "Oran", "Tehran", "Tetouan"],
     "Central Asia": ["Kabul"],
   };
   /* AND THE EMPTY CELL, DECLARED. One region of the nine has no dot at all,

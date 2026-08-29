@@ -1189,8 +1189,40 @@
   // FOLD" — the dx7 [50,1000] precedent): a note above it drops an octave, in
   // key, into a register the model can actually voice — up there the model was
   // near-silent anyway (peak ~0.01..0.03 against ~0.3 an octave down).
+  //
+  // 2026-08-29 — THE 0.35 BUCKET WAS 2000 AND IT IS NOW 1245, because the sweep
+  // above asked the wrong question. Paul: "Classical music is unbearably loud."
+  // Measured at the ear, the classical corner is NOT loud — its 17 other
+  // anchors span -16.0..-26.1 dB, sitting on top of the controls' -15.5..-21.2.
+  // One record was wrong: `classical` itself, the loudest of 29 and, far more
+  // telling, CREST 6.79 against a 13.8..19.0 band — 7 dB below anything else in
+  // the catalogue, and the only record that read differently run to run. At the
+  // ring it arrives 11.5 dB hotter than rock at crest 2.87, where a sine is
+  // 3.01, with 81.8% of its energy under 120 Hz. That is not music with a level
+  // problem; it is a low-frequency oscillation with music behind it.
+  //
+  // The edge is a step function on ONE semitone: fold above MIDI 87 and the
+  // record reads -15.57/12.02; above MIDI 88 (E6, 1318.5 Hz) it reads
+  // -6.39/3.43. MIDI 88 is where the commuted waveguide SELF-OSCILLATES at
+  // stiff 0.28. The sweep recorded above hunted NaN, and this failure is not a
+  // NaN — it is a BOUNDED oscillation that starts nine semitones lower, so the
+  // fence was set above it and let 150 of `classical`'s 890 piano notes (16.85%
+  // at 7.55 notes/s, all on one shared unit) into the band.
+  //
+  // Cost, stated: 16.85% of that record's piano notes drop an octave through
+  // the fold this fence already drives. Proof at the ear — classical
+  // -14.13/6.79 -> -15.79/15.48 (-1.7 dB, +8.7 dB of crest returned), landing
+  // between rock and minimalism; rock +0.04, parlor -0.07, ambient -0.10,
+  // minimalism -0.11 hold to a tenth. The two that move a dB (jazz, nocturne)
+  // are the only other piano records with notes in the band.
+  //
+  // STILL UNMEASURED, and worth someone's afternoon: the other three buckets.
+  // felt_piano (stiff 0.22) gets 4000 and upright_piano (0.44) gets 1880, and
+  // the lowest bucket, 1770, still measured broken at -6.4/3.4. Re-run the
+  // 08-21 sweep looking for a bounded low-frequency oscillation rather than
+  // only for NaN — the old stopping condition is why this number was wrong.
   const pianoFence = (stiff) =>
-    stiff <= 0.25 ? 4000 : stiff <= 0.35 ? 2000 : stiff <= 0.55 ? 1880 : 1770;
+    stiff <= 0.25 ? 4000 : stiff <= 0.35 ? 1245 : stiff <= 0.55 ? 1880 : 1770;
 
   function pitchedUnitRaw(role, m, state) {
     // param-reader: clamp(m[k]!=null?m[k]:d,lo,hi) — the null-coalescing default
