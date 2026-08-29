@@ -37,7 +37,24 @@ const fs = require("fs"), path = require("path");
 const A = require("./atlas.js");
 const { GENRES } = require("./genres.js");
 
-const LABEL_RE = /^(.+?)\s+(\d{3,4})$/;      // THE ONE READER OF A LABEL AS DATA
+/* THE ONE READER OF A LABEL AS DATA — and since 2026-08-30 it reads two eras.
+   Paul: "look backwards in time to bone flutes and lutes." The catalog started
+   at Rome 600 and the convention was "Place Year", CE assumed. The BC
+   convention is "Place Year BC" — "Ur 2500 BC", a trailing BC, 1-5 digits —
+   and it bakes a NEGATIVE year, so every piece of year arithmetic downstream
+   (sorting, YEARS, ERAS, nearest-year, the ±10 window) works unchanged.
+
+   WHY TRAILING "BC" AND NOT A MINUS SIGN, measured before choosing: three
+   OTHER files parse trailing digits off a label on their own — compose.js
+   genreYear (/(\d{3,4})\s*$/, the era law), instruments.js idiomOf (the
+   throat cast) and song.js's session-label check — and none of them is this
+   slice's to edit. On "Ur 2500 BC" all three FAIL CLOSED to their no-year
+   branch (null / 0), which is the honest state until each owner teaches its
+   parser. On "Ur -2500" every one of them would have matched the bare digits
+   and read the year as 2500 CE — a wrong POSITIVE five centuries in the
+   future, silently. A convention that fails closed everywhere it is not yet
+   understood beats one that lies where it is not yet understood. */
+const LABEL_RE = /^(.+?)\s+(?:(\d{1,5})\s+BC|(\d{3,4}))$/;
 const ATLAS = path.join(__dirname, "atlas.js");
 
 let fails = 0, checks = 0;
@@ -53,7 +70,7 @@ function extract() {
   const out = {};
   for (const gk of Object.keys(GENRES)) {
     const m = LABEL_RE.exec(GENRES[gk].label || "");
-    if (m) out[gk] = { place: m[1], year: +m[2] };
+    if (m) out[gk] = { place: m[1], year: m[2] ? -m[2] : +m[3] };
   }
   return out;
 }

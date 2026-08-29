@@ -275,6 +275,25 @@
     synthwave: { cell: "riff",   contour: "hover",  reg: "low",    len: "two" },
     footwork:  { cell: "even",   contour: "insist", reg: "low",    len: "two" },
     gqom:      { cell: "long",   contour: "hover",  reg: "low",    sent: "long" },
+    // THE DEEP-TIME HANDOFF (2026-08-30, 282 -> 297): eight rows before the
+    // year one and seven forward debts, written by the parent as before.
+    // Antiquity first — the arguments are the artifacts':
+    hohlefels: { cell: "long",   contour: "hover",  sent: "long",  len: "four" },
+    jiahu:     { cell: "three",  contour: "arch",   sent: "vary",  len: "four" },
+    urlyre:    { cell: "three",  contour: "fall",   land: "root",  sent: "vary" },
+    hurrian:   { cell: "long",   contour: "fall",   land: "root", sent: "vary", len: "four" },
+    delphic:   { cell: "three",  contour: "arch",   sent: "vary",  len: "four" },
+    carmen:    { cell: "three",  contour: "fall",   sent: "vary",  len: "four" },
+    seikilos:  { cell: "pickup", contour: "arch",   land: "third", sent: "hold", len: "two" },
+    oxyrhynchus:{ cell: "three", contour: "fall",   sent: "plain", len: "four" },
+    // — and the forward seven —
+    hardcore:  { cell: "even",   contour: "insist", land: "root",  len: "two" },
+    honkytonk: { cell: "pickup", contour: "fall",   land: "third", sent: "vary" },
+    westernswing:{ cell: "gallop", contour: "arch", land: "fifth", sent: "vary" },
+    dreampop:  { cell: "long",   contour: "hover",  sent: "long",  len: "four" },
+    doom:      { cell: "long",   contour: "hold",   reg: "low",    len: "four" },
+    jpop:      { cell: "pickup", contour: "arch",   land: "third", sent: "vary", len: "four" },
+    dunstaple: { cell: "three",  contour: "rise",   land: "third", sent: "vary" },
     // the WRITTEN VIRTUOSO anchors: a choro, a rag, a reel and a kolo are
     // composed tunes that run, and `roots`' four-bar strophe is the one thing
     // they are not

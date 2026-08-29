@@ -817,7 +817,16 @@
       // LINEAGE: the one TRUE root. What chant descends from — synagogue
       // psalmody, Byzantine and Gallican practice — predates anything this
       // catalog could ever hold as an anchor, so the empty wants is honest.
-      parents: {},
+      // ...REVISED 2026-08-30, the deep-time round, and the paragraph above
+      // is kept because it was right until the catalog grew: "predates
+      // anything this catalog could ever hold as an anchor" stopped being
+      // true the day `oxyrhynchus` (Oxyrhynchus 300) landed — the oldest
+      // notated CHRISTIAN music, Greek psalmodic hymnody two-and-a-half
+      // centuries before this label. The weight is small on purpose:
+      // one Egyptian papyrus is a WITNESS to the practice Latin chant grew
+      // out of, not the practice itself, and the synagogue psalmody half
+      // of the old sentence stays unanchored and unclaimed.
+      parents: { oxyrhynchus: 0.25 },
       wants: [],
       instr: "ahh_choir",
       entry: () => 0, reg: v => -v, realize: () => "line",
@@ -2463,8 +2472,11 @@
       // PAID 2026-08-29, the debts round: "velvet underground" is
       // `velvets` (New York 1966) — the drone under the pop song is this
       // row's entire inheritance.
-      parents: { punk: 0.4, drone: 0.3, beatles: 0.3, velvets: 0.25 },
-      wants: ["dream pop"],
+      // PAID 2026-08-30, the deep-time round's forward half: "dream pop"
+      // is `dreampop` (London 1984, Treasure) — the guitar-as-weather this
+      // row put a wall of fuzz in front of.
+      parents: { punk: 0.4, drone: 0.3, beatles: 0.3, velvets: 0.25, dreampop: 0.25 },
+      wants: [],
       instr: ["overdrive_guitar", "overdrive_guitar"],
       drumkit: "room",
       entry: () => 0, reg: v => v - 1, realize: () => "line",
@@ -4327,8 +4339,12 @@
       // edge by punk's raw directness and death metal's chromatic dissonance
       // and ridden cymbal. Hardcore, the actual scene emo and screamo both
       // grew out of, is the one uncredited rung between all three.
-      parents: { emo: 0.5, punk: 0.25, deathmetal: 0.25 },
-      wants: ["hardcore"],
+      // PAID 2026-08-30, the deep-time round's forward half: "hardcore"
+      // is `hardcore` (Washington 1980, Bad Brains) — the uncredited rung
+      // has a name, and punk's share moves to it, since hardcore is where
+      // this row's punk actually arrived from.
+      parents: { emo: 0.5, hardcore: 0.25, deathmetal: 0.25 },
+      wants: [],
       instr: ["distortion_guitar", "distortion_guitar"],
       drumkit: "power",
       entry: () => 0, reg: v => -v, realize: () => "line",
@@ -6868,6 +6884,17 @@
       // `eraOK` are where the claim is enforced, and they enforce it off these
       // very fields: no kit, no bass, an `instr` that is nothing but voices,
       // and a year sixty earlier than Rome's.
+      // ...EXAMINED AGAIN 2026-08-30 AND LEFT EMPTY, on purpose. The
+      // deep-time round landed `oxyrhynchus` (Oxyrhynchus 300) — an
+      // EGYPTIAN Christian hymn, and the Ethiopian church was founded
+      // from Alexandria within a generation of that papyrus, so the edge
+      // was drafted. It was declined because the descent is
+      // ECCLESIASTICAL, not musical-documentary: one Greek hymn in Greek
+      // notation says nothing about what Aksum's choirs sang, and zema's
+      // own alphabet (pentatonic, mələkkət formulae) shares nothing with
+      // the papyrus's diatonic octave. "A pre-catalog Eastern
+      // Mediterranean liturgical practice nobody can place-and-year" now
+      // has one placed witness — and it is still not this row's parent.
       parents: {},
       wants: [],
       instr: "ahh_choir",
@@ -12198,8 +12225,14 @@
       // descend from. The missing third is the contenance angloise —
       // Dunstaple's thirds, which contemporaries said changed Du Fay's
       // sound — named below, not invented.
-      parents: { arsnova: 0.6, organum: 0.2 },
-      wants: ["the contenance angloise (dunstaple)", "binchois' chansons"],
+      // PAID 2026-08-30, the deep-time round's forward half: "the
+      // contenance angloise (dunstaple)" is `dunstaple` (London 1420,
+      // the Old Hall Manuscript) — the thirds contemporaries said
+      // changed Du Fay's sound now stand upstream by name, and the
+      // isorhythm keeps the larger share because the machine is still
+      // Machaut's.
+      parents: { arsnova: 0.55, dunstaple: 0.25, organum: 0.2 },
+      wants: ["binchois' chansons"],
       cannot: ["the mensural proportions themselves — 6:4:2:3 is the " +
                "same music at four speeds SIMULTANEOUSLY re-scored, and " +
                "this table's rate is one number per record; the word " +
@@ -13510,8 +13543,16 @@
       // singers the Aghani itself cites as the source — has no earlier
       // datable performance to anchor; named below, not invented.
       parents: {},
+      // ...AND THE LUTE LINE, NAMED 2026-08-30 (Paul: "look backwards in
+      // time to bone flutes and lutes"): the oud this court played is the
+      // short-necked end of a lineage that enters the record on Akkadian
+      // seals ~2300 BC and runs through the Persian barbat — three
+      // thousand years with no named piece and no named player, which is
+      // why it is a WANT here and a comment on `urlyre` (Ur 2500 BC, the
+      // catalog's deep Mesopotamian end) rather than an edge anywhere.
       wants: ["the hijazi school (ibn misjah, ma'bad)",
-              "the qiyan singing schools"],
+              "the qiyan singing schools",
+              "the barbat and the long-necked lute of the akkadian seals"],
       cannot: ["the wusta zalzal — the neutral third Zalzal of Baghdad " +
                "put on the oud in this row's own century sits a quarter " +
                "tone off this table's grid (WORLD.md §2 wall 3), so the " +
@@ -13548,7 +13589,14 @@
       // Byzantine and Roman chants are sibling liturgies, not parent
       // and child, and an edge between them would invent a descent
       // neither tradition claims.
-      parents: {},
+      // ...THE ROOT GREW A ROOT 2026-08-30, the deep-time round: what
+      // Byzantine hymnody descends from is GREEK-LANGUAGE CHRISTIAN
+      // HYMNODY, and the catalog now holds its one notated witness —
+      // `oxyrhynchus` (Oxyrhynchus 300), a Greek hymn to the Trinity in
+      // classical vocal notation. That is this row's own language, its
+      // own church's east, and the strongest downstream edge the papyrus
+      // has; the sibling-liturgies refusal above stands untouched.
+      parents: { oxyrhynchus: 0.3 },
       wants: ["romanos the melodist's kontakia"],
       cannot: ["the ison — the drone under the line is later Byzantine " +
                "practice, centuries after this row's date, and singing " +
@@ -14689,8 +14737,14 @@
       // the same debt on its books as "hardcore" since its lineage
       // was written: the want below shares that spelling ON PURPOSE,
       // so the ledger counts one debt, not two.
-      parents: { nwobhm: 0.5, punk: 0.25 },
-      wants: ["hardcore"],
+      // PAID 2026-08-30, the deep-time round's forward half: "hardcore"
+      // is `hardcore` (Washington 1980). The row's own comment asked for
+      // Discharge's d-beat specifically; Bad Brains won the anchor (the
+      // measurement is on the hardcore row itself) and the accelerator
+      // is the same scene either way. punk stays: the downstroke
+      // discipline predates the acceleration.
+      parents: { nwobhm: 0.5, punk: 0.25, hardcore: 0.25 },
+      wants: [],
       instr: ["distortion_guitar", "distortion_guitar"],
       drumkit: "power",
       entry: () => 0, reg: v => (v === 0 ? 0 : -1),
@@ -14974,6 +15028,661 @@
        block gives above: an anchor that counts in three needs
        twelve-step cells plus its compose.js rows, which is a catalog
        job nobody has done. `barcarolle` keeps the debt on the books. */
+
+    /* =====================================================================
+       THE DEEP-TIME ROUND, 2026-08-30 (Paul: "look backwards in time to
+       bone flutes and lutes" / "Don't forget Ancient Rome") — eight rows,
+       and the standard RISES with the age, because the temptation to
+       invent is stronger: every row below is argued from a NAMED ARTIFACT
+       in a named museum or a NAMED NOTATED PIECE, and the `cannot` carries
+       what nobody knows. The catalog started at Rome 600; it now starts
+       forty millennia earlier, and the label convention that makes that
+       possible — "Place Year BC", baked to a negative year — is argued at
+       atlas.gate.js LABEL_RE.
+
+       THE ERA LAW CANNOT SEE THESE ROWS YET, said here so nobody trusts it
+       to: compose.js genreYear reads trailing digits and fails closed to
+       null on a "… BC" label, so rules 1-4 of the hire law (and the
+       `unaccompanied` predicate) skip the six BC rows below. Their casts
+       are written so there is nothing to protect — voices, one period
+       stand-in, empty kits — but the null is a debt on compose.js's
+       parser, which this slice does not own, and it is REPORTED rather
+       than reached over the fence.
+
+       DECLINED, WITH REASONS, so nobody re-derives them:
+       · THE HYDRAULIS as its own row (Ctesibius's water organ, Alexandria
+         ~250 BC) — a real, datable INSTRUMENT, but no surviving piece and
+         no named performance to compose from; an instrument is not a
+         genre (the latin-percussion wall). It is named in carmen's
+         comment, where Rome's instrumentarium belongs.
+       · A LUTE row of its own — the long-necked lute enters on Akkadian
+         seals ~2300 BC, which is a lineage fact and not a performance:
+         no named piece, no named player, no melody. The seals are carried
+         on `urlyre`'s comment and the debt is a WANT there and on
+         `mawsili`, whose oud is where the lute line surfaces in this
+         catalog with a name on it.
+       · JIAHU -> ANYTHING DOWNSTREAM — seven millennia separate the gudi
+         from the oldest East Asian row (Nara 752) and no chain of named
+         intermediaries exists; an edge would be a costume. Same ruling
+         for hohlefels: these rows are ROOTS that later rows do not
+         declare, because nobody can honestly draw the arrow.
+       · THE DIVJE BABE "FLUTE" — the linked article's own text: later
+         dating moved it to 50-60k BP and "other scientists have argued
+         that the holes were chewed by an animal". A contested artifact
+         is not an anchor.
+       ================================================================== */
+
+    // THE HOHLE FELS FLUTE — Hohle Fels 33000 BC. A flute carved from a
+    // griffon-vulture radius, five finger holes, found in the Hohle Fels
+    // cave in the Swabian Jura and dated to about 35,000 radiocarbon years
+    // before present — the linked article's own number, which is roughly
+    // 33,000 BC, and that is the label: the ARTIFACT's date, not the
+    // tradition's (the neighbouring Geißenklösterle flutes push the
+    // tradition itself to 42-43,000 BP). This is the oldest thing in the
+    // catalog by five orders of naming and the row claims almost nothing:
+    // what is REAL is the instrument, its rough range, and the room — a
+    // cave is a reverb, and verb .9 below is the one number in this entry
+    // that is not a convention. Landesmuseum Württemberg holds the
+    // Geißenklösterle flutes; the Hohle Fels flute is shown at Blaubeuren.
+    hohlefels: {
+      label: "Hohle Fels 33000 BC", voices: 1, rate: 0.5, near: "jiahu",
+      plan: "arc", bpm: 72,   // 70..160 is the compose.js contract; rate .5 above is where the slowness lives
+      // LINEAGE: the deepest root there is. Nothing upstream is even
+      // conceivable as a row, and nothing downstream declares this one —
+      // see the round header: forty millennia with no named intermediary
+      // is an arrow nobody can honestly draw.
+      parents: {},
+      wants: [],
+      cannot: ["a melody — not one note of what was played on this " +
+               "instrument survives anywhere, and every pitch choice in " +
+               "this row is a modern convention wearing an old bone; the " +
+               "pentatonic below is the least-claiming alphabet the table " +
+               "has, not a fact about the Aurignacian",
+               "the scale itself — the five holes fix a set of pitches " +
+               "only once a replica fixes the blowing technique, so the " +
+               "row is a property of the replica, not the artifact",
+               "the instrument's own voice — a bird-bone speaks smaller " +
+               "and breathier than any sampled pipe; the shakuhachi below " +
+               "is the registry's one end-blown notched flute and that " +
+               "shared geometry is the whole of the claim"],
+      instr: "shakuhachi",
+      entry: () => 0, reg: () => 0, realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.ionian, scale: SCALES.majpent,
+      artic: "legato", maxHold: 4, incClamp: 2,
+      // THE CAVE IS THE ONE HONEST PRODUCTION FACT: verb .9 is the highest
+      // send in the catalog and it is the point — the room is real and
+      // the box CAN say a room.
+      tone: { wave: "triangle", cut: 1600, q: 0.8, atk: .06, rel: 2.6, gain: .24, verb: .9 },
+      words: ["one flute, alone, in a stone room"],
+      word: (v, s) => [[], [fill(2)], [transpose(2)], [reverse()]][s % 4],
+    },
+
+    // THE JIAHU GUDI — Jiahu 6000 BC, and of the two bone flutes this is
+    // the STRONGER anchor, which is why both ship and this one carries the
+    // scale argument: the Jiahu flutes (33 pieces, red-crowned-crane wing
+    // bones, five to eight holes) are PLAYABLE and were PLAYED — Zhang,
+    // Harbottle, Wang & Kong, "Oldest playable musical instruments found
+    // at Jiahu", Nature 401 (Sept 1999), sounded the best-preserved
+    // seven-hole flute and measured its tone row. A real artifact, a real
+    // blowing test, a real place (the site is 22 km north of Wuyang,
+    // Henan; settled c. 7000 BC, flooded and abandoned c. 5700 BC — the
+    // label takes the span's own centre, the highlife rule).
+    jiahu: {
+      label: "Jiahu 6000 BC", voices: 1, rate: 0.5, near: "gagaku",
+      plan: "arc", bpm: 76,   // same contract; the gudi line breathes through rate .5, not the clock
+      // LINEAGE: a root, and — per the round header — a root nothing
+      // downstream declares: gagaku (Nara 752) is the oldest East Asian
+      // row and it reaches Tang court music, not a Neolithic village
+      // seven millennia before it. The arrow is not drawable and the
+      // refusal is the honesty.
+      parents: {},
+      wants: [],
+      cannot: ["the measured tone row itself — the 1999 blowing test's " +
+               "intervals are, in the linked article's own words, 'a " +
+               "function of culture… a larger set compared to that now " +
+               "familiar in the West', and they do not sit on this " +
+               "table's integer semitones; the pentatonic below is the " +
+               "nearest reusable alphabet, claimed as NEAR, never as the " +
+               "measurement (WORLD.md §2's wall, forty centuries early)",
+               "the crane bone's voice — same admission as hohlefels: " +
+               "the shakuhachi is the registry's one end-blown flute and " +
+               "geometry is the whole of the claim"],
+      instr: "shakuhachi",
+      entry: () => 0, reg: () => 0, realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.ionian, scale: SCALES.majpent,
+      artic: "legato", maxHold: 4, incClamp: 2,
+      orn: { grace: 0.2 },
+      tone: { wave: "triangle", cut: 1900, q: 0.8, atk: .05, rel: 1.8, gain: .25, verb: .5 },
+      words: ["the gudi line, small steps and a held note"],
+      word: (v, s) => [[], [transpose(2)], [fill(2)], [rotate(2)]][s % 4],
+    },
+
+    // THE LYRES OF UR — Ur 2500 BC. Four instruments (three lyres and a
+    // harp) excavated by Woolley from the Royal Cemetery at Ur from 1922
+    // on, Early Dynastic III, 2550-2450 BC — the label is the range's own
+    // centre — and the world's oldest surviving stringed instruments, in
+    // real museums by name: the Golden Lyre in the Iraq Museum, the
+    // Queen's Lyre and Silver Lyre in the British Museum, the Bull-Headed
+    // Lyre in the Penn Museum. Eleven strings each. The CAST below is the
+    // Standard of Ur's own "Peace" panel, excavated from the same site: a
+    // lyrist, and a singer beside the lyre.
+    //
+    // THE LUTE, ASKED FOR BY NAME AND NOT SHIPPED AS A ROW: the
+    // long-necked lute enters the record on Akkadian seals ~2300 BC, two
+    // centuries after these graves and a few hundred km upriver — a
+    // lineage fact with no named piece attached, so it is a WANT here and
+    // on `mawsili` (Baghdad 800), whose oud is where the plucked-lute
+    // line next carries a name this catalog can verify. The genealogy gap
+    // ziryab's oud implied — nothing upstream because nothing upstream
+    // existed — now has its deep end.
+    urlyre: {
+      label: "Ur 2500 BC", voices: 2, rate: 0.5, near: "mawsili",
+      plan: "arc", bpm: 76,
+      // LINEAGE: a root. What stands upstream — whatever the third
+      // millennium's temples sang before these graves — has no artifact
+      // and no name.
+      parents: {},
+      wants: ["the long-necked lute of the akkadian seals"],
+      cannot: ["any melody of Ur — no note from 2500 BC survives; what " +
+               "survives is instruments, and the DIATONIC claim below " +
+               "leans on the Old Babylonian tuning tablet from Ur itself " +
+               "(UET VII 74), which is the same tradition and THREE " +
+               "HUNDRED YEARS LATER, an anachronism this row states " +
+               "rather than hides",
+               "the bull lyre's own voice — eleven gut strings over a " +
+               "bull-hide soundbox, and reconstructions that buzz; the " +
+               "concert harp below is plucked strings and nothing else, " +
+               "the begena refusal half-applying and said out loud"],
+      instr: ["solo_vox", "harp"],
+      entry: v => v, reg: v => (v === 0 ? 0 : -1),
+      realize: () => "line",
+      part: ["lead", "counter"],
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.ionian, scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 4, incClamp: 2,
+      tone: { wave: "triangle", cut: 2000, q: 0.8, atk: .03, rel: 1.6, gain: .24, verb: .55,
+              mouth: MOUTHS.melisma },
+      words: ["the singer of the Peace panel", "the eleven-string lyre under her"],
+      word: (v, s) => (v === 0
+        ? [[], [fill(2)], [transpose(2)], [reverse()]][s % 4]
+        : [keep(0, 4, 8, 12), transpose(-2)]),
+    },
+
+    // THE HURRIAN HYMN TO NIKKAL — Ugarit 1400 BC. Tablet h.6, excavated
+    // at Ras Shamra, now in the National Museum of Damascus: the oldest
+    // surviving SUBSTANTIALLY COMPLETE notated music in the world —
+    // Hurrian words to the goddess of orchards over Akkadian musical
+    // instructions for a singer with a nine-stringed sammûm lyre, signed
+    // by the scribe Ammurabi. The colophon names the tuning: nitkibli,
+    // the nid qabli cycle of the Babylonian tuning texts — which is a
+    // DIATONIC seven-note species, so the alphabet below is the tablet's
+    // own claim, not a Western convenience.
+    hurrian: {
+      label: "Ugarit 1400 BC", voices: 2, rate: 0.5, near: "urlyre",
+      plan: "arc", bpm: 72,
+      // LINEAGE: `urlyre` and honestly so — the notation names string
+      // pairs of the Mesopotamian lyre, the tuning procedure survives on
+      // a tablet from Ur, and the instrument in the colophon is the same
+      // family Woolley lifted out of the cemetery a millennium earlier.
+      // The residue is Ugarit's own: a Hurrian cult song is not a Sumerian
+      // burial, and the weight says so.
+      parents: { urlyre: 0.5 },
+      wants: [],
+      cannot: ["the melody as ONE melody — the reading is CONTESTED: at " +
+               "least five rival transcriptions of h.6 exist (Kilmer, " +
+               "Duchesne-Guillemin, Wulstan, West, Dumbrill among them), " +
+               "'each yielding entirely different results' in the linked " +
+               "article's own words, so this row sings the tuning and the " +
+               "forces and claims NO transcription as the tune",
+               "the sammûm itself — same stand-in admission as urlyre, " +
+               "one row up"],
+      instr: ["solo_vox", "harp"],
+      entry: v => v, reg: v => (v === 0 ? 0 : -1),
+      realize: () => "line",
+      part: ["lead", "counter"],
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.ionian, scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 5, incClamp: 2,
+      orn: { grace: 0.25 },
+      tone: { wave: "triangle", cut: 2100, q: 0.9, atk: .03, rel: 1.5, gain: .24, verb: .5,
+              mouth: MOUTHS.melisma },
+      words: ["the singer, the zaluzi prayer", "the sammûm, in nid qabli"],
+      word: (v, s) => (v === 0
+        ? [[], [fill(2)], [transpose(2), fill(2)], [transpose(-1)]][s % 4]
+        : [keep(0, 4, 8, 12), transpose(-2)]),
+    },
+
+    // THE DELPHIC HYMNS — Delphi 128 BC. Two paeans to Apollo inscribed
+    // on the south outer wall of the Athenian Treasury at Delphi, found
+    // 1893, fragments now in the Delphi Archaeological Museum — and the
+    // composers are NAMED: Athenaeus son of Athenaeus wrote the First,
+    // Limenios son of Thoinos the Second, both for the Athenian Pythaid
+    // of 128 BC (the First was long dated 138; recent scholarship puts
+    // both at 128, and the label follows it). The First Hymn is the
+    // earliest substantial notated music in the West whose composer has a
+    // name. The CAST is the hymn's own text: "the shrill, blaring aulos
+    // weaves a melody… and the golden, sweet-voiced kithara blends with
+    // the song" — a choir, and the aulos answering, which is what the
+    // oboe (a double reed, the registry's nearest aulos) is doing below.
+    delphic: {
+      label: "Delphi 128 BC", voices: 2, near: "seikilos",
+      plan: "arc", bpm: 88,
+      // LINEAGE: a root. The paean tradition it crowns — Pindar's odes
+      // were sung, and their melodies are gone — has no earlier notated
+      // piece to anchor; named in the want, not invented.
+      parents: {},
+      wants: ["pindar's sung odes, melodies lost"],
+      cannot: ["the cretic foot — the First Hymn is in quintuple metre " +
+               "THROUGHOUT, five beats to the foot, and this table's bar " +
+               "is sixteen even steps; the row phrases long over the " +
+               "grid and admits the five is not in it (the bulgarian " +
+               "limp is the nearest thing the table can say and it is " +
+               "not claimed here)",
+               "the pyknon — the chromatic passages wander a group of " +
+               "notes packed closer than a semitone ('probably less than " +
+               "a modern semitone', the linked article), which is off " +
+               "this table's integer grid by construction; the row sings " +
+               "the diatonic verses and leaves the pyknon unsaid"],
+      instr: ["ahh_choir", "oboe"],
+      entry: v => v * 2, reg: v => (v === 0 ? 0 : 1),
+      realize: () => "line",
+      part: ["lead", "counter"],
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.dorian, scale: DIATONIC,
+      artic: "legato", maxHold: 4, incClamp: 2,
+      tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .04, rel: 1.6, gain: .24, verb: .6,
+              mouth: MOUTHS.plainchant },
+      words: ["the paean choir", "the aulos, weaving over it"],
+      word: (v, s) => (v === 0
+        ? [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4]
+        : [fill(2), transpose(4)]),
+    },
+
+    // CARMEN SAECULARE — Rome 17 BC, Ancient Rome asked for by name. A
+    // NAMED COMMISSIONED PERFORMANCE, the best-documented of antiquity:
+    // Horace's hymn for Augustus's Ludi Saeculares, sung on the third day
+    // of the games (June, 17 BC) on the Palatine and again on the
+    // Capitol, and the stone says so — the acta of the games (CIL VI
+    // 32323) record twenty-seven boys and as many girls singing, and then
+    // three words no other ancient performance gets: carmen composuit
+    // Q. Horatius Flaccus. The POEM survives complete, nineteen Sapphic
+    // stanzas; the MELODY does not, and the split is this row's whole
+    // honesty: words, forces, occasion and metre real, tune not.
+    //
+    // ROME'S INSTRUMENTARIUM, real and datable, lives in this comment
+    // rather than in rows: the tibia (the Roman aulos — the tibicines'
+    // collegium was old enough to STRIKE in 311 BC, a dated musicians'
+    // strike in Livy 9.30), the cornu and tuba of the legions and the
+    // arena, and the hydraulis, Ctesibius's water organ (Alexandria ~250
+    // BC), declined as a row at the round header. Horace's own ode calls
+    // for the lyre; the acta name only the choir, and the cast follows
+    // the acta.
+    //
+    // SAME CITY, TWO MUSICS, SIX CENTURIES APART: "Rome" already stands
+    // in PLACES for gregorian's Rome 600 — the first two-records-one-
+    // place pair to straddle the BC/CE line. The year does the
+    // separating (the Cairo 1932/1964 precedent), and the map draws one
+    // dot whose record the slider chooses.
+    carmen: {
+      label: "Rome 17 BC", voices: 2, rate: 0.5, near: "gregorian",
+      plan: "arc", bpm: 84,
+      // LINEAGE: Horace's metre is Sappho's, the paean-to-Apollo frame is
+      // Greek choral practice whole, and the one notated Greek anchor of
+      // the century before is the Delphic paean — the weight is the
+      // borrowing Rome itself never denied. The residue is Latin: a state
+      // hymn on a censused occasion is Roman civic religion, not a
+      // Pythaid.
+      parents: { delphic: 0.45 },
+      wants: [],
+      cannot: ["the tune — no note of the Carmen Saeculare survives, and " +
+               "unlike hurrian there is not even a contested notation to " +
+               "refuse: every pitch below is convention; what is real is " +
+               "the words, the double choir of fifty-four children, the " +
+               "day and the stone that names the composer",
+               "the sapphic stanza — eleven, eleven, eleven and five " +
+               "syllables against a sixteen-step bar; the phrase shape " +
+               "below is the stanza's long-long-long-short SILHOUETTE, " +
+               "not its scansion"],
+      instr: "ahh_choir",
+      // the two half-choirs — the boys, and the girls answering, zema's
+      // own antiphony arithmetic on a Roman occasion
+      entry: v => v * 2, reg: v => -v, realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.dorian, scale: DIATONIC,
+      artic: "legato", maxHold: 4, incClamp: 2,
+      tone: { wave: "triangle", cut: 2100, q: 0.8, atk: .06, rel: 2.0, gain: .25, verb: .65,
+              // straight-toned trained children; the bank has no children's
+              // choir and plainchant's no-vibrato is the honest nearest
+              mouth: MOUTHS.plainchant },
+      words: ["the twenty-seven boys", "the twenty-seven girls, answering"],
+      word: (v, s) => [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4],
+    },
+
+    // THE SEIKILOS EPITAPH — Tralles 100. A marble stele from Tralles in
+    // Asia Minor (found 1883 in the Ottoman Railway works at Aydın, now
+    // in the National Museum of Denmark), carrying a complete song in
+    // Greek vocal notation with its rhythm signs: the OLDEST COMPLETE
+    // SURVIVING MUSICAL COMPOSITION anywhere — twelve bars, words and
+    // tune and durations, "hoson zēs phainou": while you live, shine.
+    // Dated 1st-2nd century CE on the letter forms; the label takes the
+    // century boundary the sources argue across. Everything hurrian
+    // cannot claim, this row CAN: the melody is secure, the rhythm is
+    // secure, and it is the only pre-medieval row in the catalog whose
+    // material is simply readable off the artifact.
+    seikilos: {
+      label: "Tralles 100", voices: 1, near: "delphic",
+      plan: "song", bpm: 96,
+      // LINEAGE: the same Greek vocal notation as the Delphic paeans,
+      // two-and-a-half centuries downstream — the notation IS the edge.
+      // The residue is the genre gulf: a drinking-song-sized epitaph for
+      // one voice is not a processional paean for a trained choir.
+      parents: { delphic: 0.35 },
+      wants: [],
+      cannot: ["the tonos argument — the song is 'either in the Phrygian " +
+               "octave species or the Ionian (Iastian) tonos' (the linked " +
+               "article's own either); the dorian mode below IS the " +
+               "Phrygian species note for note on this table's grid, and " +
+               "the row claims the notes, not the ancient name"],
+      instr: "solo_vox",
+      entry: () => 0, reg: () => 0, realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.dorian, scale: MODES.dorian,
+      swing: 0.2, artic: "legato", maxHold: 3, incClamp: 2,
+      orn: { grace: 0.15 },
+      tone: { wave: "triangle", cut: 2300, q: 0.9, atk: .02, rel: 1.2, gain: .25, verb: .4,
+              mouth: MOUTHS.monody },
+      words: ["one voice: while you live, shine"],
+      word: (v, s) => [[], [transpose(2)], [fill(2)], [transpose(-1)]][s % 4],
+    },
+
+    // THE OXYRHYNCHUS HYMN — Oxyrhynchus 300. Papyrus Oxyrhynchus XV
+    // 1786, found 1918 at Oxyrhynchus in Egypt, published 1922, now in
+    // the Bodleian's papyrology collection: the oldest notated CHRISTIAN
+    // music — a Greek hymn to the Trinity from the end of the 3rd
+    // century, in the SAME Greek vocal notation as the Seikilos stele,
+    // which is the whole genealogical point: erudite Christian Greeks
+    // keeping their classical predecessors' notation. It also closes the
+    // catalog's 100 -> 540 gap. The music is entirely diatonic, an exact
+    // octave F to F with the final on G — which on this table's grid is
+    // the mixolydian row, note for note — set syllabically with a few
+    // short melismas, in an essentially anapaestic metre.
+    oxyrhynchus: {
+      label: "Oxyrhynchus 300", voices: 1, rate: 0.5, near: "kassia",
+      plan: "arc", bpm: 76,
+      // LINEAGE: `seikilos` at half weight — the notation system, the
+      // language and the diatonic practice are Greek song's, inherited
+      // whole. The residue is the new thing itself: a congregation's hymn
+      // to the Trinity is not an epitaph, and what fills the other half
+      // — synagogue psalmody, the unnotated first Christian centuries —
+      // has no artifact to anchor.
+      parents: { seikilos: 0.5 },
+      wants: ["the psalmody of the unnotated christian centuries"],
+      cannot: ["its own rhythm signs at full fidelity — the papyrus " +
+               "carries diseme, stigme, hyphen and colon, a duration " +
+               "vocabulary richer than this table's held-or-not, and the " +
+               "row keeps the syllabic surface without claiming the " +
+               "sign-level readings"],
+      instr: "ahh_choir",
+      entry: () => 0, reg: () => 0, realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.mixo, scale: DIATONIC,
+      artic: "legato", maxHold: 4, incClamp: 2,
+      tone: { wave: "triangle", cut: 2100, q: 0.8, atk: .05, rel: 1.8, gain: .24, verb: .6,
+              mouth: MOUTHS.plainchant },
+      words: ["the hymn, syllabic, an octave's compass"],
+      word: (v, s) => [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4],
+    },
+
+    /* =====================================================================
+       THE FORWARD DEBTS OF THE SAME SHIFT (2026-08-30) — seven rows, the
+       last catalogue shift's own named leftovers, paid after antiquity
+       because antiquity was the ask. Two shared wants close by name
+       (hardcore ×2, dream pop ×1 plus the contenance angloise on dufay);
+       the 1940s get their two missing country rooms; the metal wing gets
+       the doom it lacked; and the 2000s stay thin (10 rows to the 1990s'
+       29) — named at the foot as the next ask, not half-paid here.
+       ================================================================== */
+
+    // HARDCORE — Washington 1980: Bad Brains, "Pay to Cum", the single
+    // recorded and released in 1980 by the fastest band in the capital.
+    // `screamo` and `thrash` have carried the matched want string
+    // "hardcore" since their lineages were written; both take this row as
+    // a parent today. DISCHARGE (Stoke 1982) WAS THE OTHER CANDIDATE and
+    // the Britain arc was measured before choosing, per the shift's own
+    // instruction: Stoke-on-Trent lands ~14-16 CSS px from Manchester and
+    // Stourbridge at the 11-degree Britain arc — ABOVE G10's 8.5 px
+    // floor, so Stoke was not blocked; Washington won because "Pay to
+    // Cum" is two years earlier, the place already stands in PLACES
+    // (march 1889, winstons 1969 — a third record on one dot), and the
+    // d-beat is a DRUM claim this row's kit does not make.
+    hardcore: {
+      label: "Washington 1980", voices: 1, near: "punk",
+      // 160 is the table's ceiling (compose's 70..160) and hardcore
+      // stands on it beside thrash — Pay to Cum runs faster still, and
+      // the sixteenth grid at 160 carries the blur that is the point.
+      plan: "song", bpm: 160,
+      // LINEAGE: punk, played angrier and twice as fast — the residue IS
+      // the tempo and the attack, which is why the weight is high and
+      // alone. (Bad Brains' own reggae half is real and is not this row:
+      // the catalog already holds Kingston.)
+      parents: { punk: 0.75 },
+      wants: [],
+      instr: "distortion_guitar",
+      drumkit: "power",
+      entry: () => 0, reg: () => 0, realize: () => "line",
+      roots: [0, 0, 1, 0], mode: MODES.phrygian,
+      scale: SCALES.majpent, harmony: "modal",
+      artic: "staccato", maxHold: 1, bassStyle: "eighths",
+      kit: { k: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             s: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      fill: { x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
+      fx: ["crunch"],
+      tone: { wave: "sawtooth", cut: 2400, q: 1.4, atk: .002, rel: .2, gain: .3, verb: .12 },
+      words: ["the riff, downstroked flat out"],
+      word: (v, s) => [[], [rotate(2)], [transpose(1)], [rotate(2)]][s % 4],
+    },
+
+    // HONKY TONK — Fort Worth 1941: Ernest Tubb records "Walking the
+    // Floor Over You" for Decca in Fort Worth, April 1941 — the electric
+    // lead guitar on a country record, cut loud enough to carry over a
+    // Texas barroom, which is the room the genre is named for. One of
+    // the 1940s' two missing country rooms (westernswing, one row down,
+    // is the other).
+    honkytonk: {
+      label: "Fort Worth 1941", voices: 2, near: "countrypop",
+      plan: "song", bpm: 96,
+      // LINEAGE: hillbilly song plus the blues' flat grief, electrified
+      // for a room full of noise. Both parents are the table's own
+      // generics and the residue is the barroom itself.
+      parents: { countrypop: 0.55, blues: 0.25 },
+      wants: [],
+      instr: ["clean_guitar", "steel_string_guitar"],
+      drumkit: "brush",
+      entry: v => v, reg: v => (v === 0 ? 0 : -1),
+      realize: () => "line",
+      part: ["lead", "counter"],
+      roots: [0, 0, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "fifths",   // root-and-fifth, the two-beat country floor — "roots" is not a vocabulary word (measured, G1)
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      orn: { pass: 0.2, grace: 0.4 },     // countrypop's own hammer-on row
+      tone: { wave: "triangle", cut: 2600, q: 0.9, atk: .008, rel: .5, gain: .27, verb: .25,
+              mouth: MOUTHS.crooning },
+      words: ["the barroom lead, electric", "the rhythm guitar under it"],
+      word: (v, s) => (v === 0 ? [[], [transpose(2)], [fill(2)], [transpose(-1)]][s % 4]
+                    : [keep(0, 4, 8, 12)]),
+    },
+
+    // WESTERN SWING — Tulsa 1940: Bob Wills and His Texas Playboys,
+    // resident at Cain's Ballroom, record "New San Antonio Rose" in 1940
+    // — the fiddle band that hired a horn section and swung like Basie,
+    // because that is who the dancers were listening to on the radio.
+    westernswing: {
+      label: "Tulsa 1940", voices: 3, near: "swing",
+      plan: "song", bpm: 116,
+      // LINEAGE: a string band playing a swing band's book — the two
+      // halves are the name, and mariachi's borderland fiddle thirds are
+      // real but a different row's claim. The residue is the dance hall.
+      parents: { countrypop: 0.35, swing: 0.4 },
+      wants: [],
+      instr: ["fiddle", "jazz_guitar", "trumpet"],
+      drumkit: "jazz",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
+      realize: () => "line",
+      part: ["lead", "counter", "pad"],
+      roots: [0, 3, 4, 0], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      swing: 0.25, artic: "legato", maxHold: 3, bassStyle: "walk",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             r: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      orn: { pass: 0.25, grace: 0.3 },
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .01, rel: .6, gain: .26, verb: .3 },
+      words: ["the fiddle, swinging the tune", "the guitar comping fours",
+              "the horn, a riff behind the beat"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [reverse()]][s % 4]
+                    : v === 1 ? [keep(0, 4, 8, 12)]
+                    : [drop(8), transpose(-2)]),
+    },
+
+    // DREAM POP — London 1984: Cocteau Twins, Treasure, on 4AD — the
+    // guitar as weather, the voice as an instrument singing syllables
+    // that are not words, seven years before shoegaze put a wall of fuzz
+    // in front of exactly this. `shoegaze` has wanted "dream pop" by
+    // name since its lineage was written; it takes this row as a parent
+    // today.
+    dreampop: {
+      label: "London 1984", voices: 2, bars: 8, near: "shoegaze",
+      plan: "song", bpm: 92,
+      // LINEAGE: 4AD's post-goth atmosphere with ambient's room, sung
+      // instead of droned. The residue is Fraser's voice, which no
+      // parent supplies.
+      parents: { gothicrock: 0.35, ambient: 0.25 },
+      wants: [],
+      instr: ["clean_guitar", "warm_pad"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => (v === 0 ? 0 : -1),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad"],
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "tie", maxHold: 5,
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0] },
+      fx: ["chorus", "echo"],
+      tone: { wave: "triangle", cut: 1800, q: 1.1, atk: .03, rel: 2.2, gain: .25, verb: .8,
+              mouth: MOUTHS.dreamchoir },
+      words: ["the voice, syllables not words", "the guitar, as weather"],
+      word: (v, s) => (v === 0 ? [[], [transpose(2)], [fill(2)], [transpose(-1)]][s % 4]
+                    : [drop(10)]),
+    },
+
+    // DOOM — Stockholm 1986: Candlemass, Epicus Doomicus Metallicus —
+    // the record whose title NAMED the genre, Sabbath's slow half taken
+    // whole and played slower. The metal wing this catalog grew in the
+    // debts round (nwobhm, thrash, deathmetal, sludge) had no doom row,
+    // which was the wing's most conspicuous hole: sludge (New Orleans
+    // 1991) descends from doom it could not cite.
+    doom: {
+      label: "Stockholm 1986", voices: 2, rate: 0.5, near: "sludge",
+      plan: "song", bpm: 76,
+      // LINEAGE: sabbath (Workington 1969), nearly alone — doom is the
+      // genre that took ONE parent's slowest idea and made it the whole
+      // aesthetic. nwobhm supplies the operatic vocal register Messiah
+      // Marcolin actually sang in.
+      parents: { sabbath: 0.65, nwobhm: 0.2 },
+      wants: [],
+      instr: ["distortion_guitar", "distortion_guitar"],
+      drumkit: "power",
+      entry: v => v * 2, reg: v => (v === 0 ? -1 : 0),
+      realize: () => "line",
+      roots: [0, 0, 1, 0], harmony: "modal",
+      mode: MODES.aeolian, scale: SCALES.majpent,
+      artic: "tie", maxHold: 6, bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             r: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0] },
+      fill: { x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
+      fx: ["crunch"],
+      tone: { wave: "sawtooth", cut: 1200, q: 1.5, atk: .01, rel: 1.2, gain: .29, verb: .4 },
+      words: ["the riff, at half the speed it was born at",
+              "the same riff an octave down, later"],
+      word: (v, s) => (v === 0 ? [[], [transpose(1)], [rotate(2)], [transpose(-1)]][s % 4]
+                    : [drop(4)]),
+    },
+
+    // J-POP — Tokyo 1999: Utada Hikaru, First Love — the best-selling
+    // Japanese album there has ever been, and the record where J-pop's
+    // 1990s (the term is J-WAVE radio's, coined for exactly this
+    // domestic-international pop) meets American R&B production sung in
+    // Japanese with English hooks. `citypop` (Tokyo 1984) is fifteen
+    // years upstream on the same dot; the year separates them, the
+    // Rome/Cairo rule again.
+    jpop: {
+      label: "Tokyo 1999", voices: 2, bars: 8, near: "kpop",
+      plan: "song", bpm: 104,
+      // LINEAGE: city pop's session polish is the domestic inheritance,
+      // contemporary R&B the production language First Love actually
+      // speaks. kpop (one seat over) took this row's own formula and
+      // industrialized it a decade later.
+      parents: { citypop: 0.35, rnb: 0.4 },
+      wants: [],
+      instr: ["rhodes_ep", "synth_strings_1"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => (v === 0 ? 0 : -1),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad"],
+      roots: [5, 3, 0, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 4,
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,1, 1,0,1,0, 1,1,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .01, rel: .8, gain: .26, verb: .35,
+              mouth: MOUTHS.poplead },
+      words: ["the melody, R&B melisma in Japanese", "the pad, ninths under it"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4]
+                    : [drop(10)]),
+    },
+
+    // DUNSTAPLE — London 1420: the Old Hall Manuscript, compiled for the
+    // royal household chapel around 1420 — the first big surviving
+    // English polyphonic collection, and the book the contenance
+    // angloise lived in before the continent had a name for it: full
+    // triads, thirds and sixths sung as CONSONANCE while Paris still
+    // filed them as spice. Named for Dunstaple because the continent
+    // named the sound for him (Martin le Franc's poem is the citation
+    // dufay's own row has carried as a want since it was written; dufay
+    // takes this row as a parent today).
+    dunstaple: {
+      label: "London 1420", voices: 3, rate: 0.5, near: "dufay",
+      plan: "arc", bpm: 80,
+      // LINEAGE: organum is the held-tenor practice every Old Hall mass
+      // movement still stands on; the English discant that filled it
+      // with thirds has no earlier datable anchor and is the residue.
+      parents: { organum: 0.4 },
+      wants: [],
+      instr: "ahh_choir",
+      entry: v => v * 2, reg: v => 1 - v, realize: () => "line",
+      kit: {}, nobass: true, harmony: "emergent",
+      // IONIAN ON PURPOSE, and it is the whole claim: the contenance
+      // angloise is the major third sung sweet, and this is the oldest
+      // row in the catalog whose alphabet is the modern major.
+      mode: MODES.ionian, scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 4, incClamp: 2,
+      orn: { pass: 0.25 },
+      tone: { wave: "triangle", cut: 2200, q: 0.8, atk: .05, rel: 1.8, gain: .24, verb: .6,
+              mouth: MOUTHS.motet },
+      words: ["the triplum", "the mean, a third under", "the tenor, holding"],
+      word: (v, s) => (v < 2 ? [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4]
+                    : [drop(12)]),
+    },
   };
 
   // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane. `p` says "Ghost perc"
@@ -15083,9 +15792,23 @@
                 // vox's near-absent metre is the only honest reading of a
                 // cry that never had a bar line.
                 "kassia", "sequence", "winchester", "hildegard", "josquin",
-                "monteverdi", "schutz", "holler"]],
+                "monteverdi", "schutz", "holler",
+                // ...and the deep-time round's three (2026-08-30), each of
+                // them the cluster's definition — people singing,
+                // unaccompanied: carmen is fifty-four children in two
+                // half-choirs, oxyrhynchus one Greek hymn line, and
+                // seikilos files beside `ballad` as the set's other
+                // smallest member, one voice and a complete tune.
+                "carmen", "seikilos", "oxyrhynchus",
+                // ...and the forward half's one: dunstaple is three
+                // unaccompanied parts, the cluster's whole definition,
+                // filing beside dufay's own teachers.
+                "dunstaple"]],
     ["club",   ["acid", "house", "techno", "garage", "dnb", "trap", "boombap",
-                "electro", "bigbeat", "drill", "kpop", "bigroom", "ebm", "synthduo",
+                // `jpop` (2026-08-30) files beside kpop, which took its
+                // formula and industrialized it — the ear hears the two
+                // as one shelf, produced pop with a machine floor.
+                "electro", "bigbeat", "drill", "jpop", "kpop", "bigroom", "ebm", "synthduo",
                 // the five newcomers below are the SAME "no family fallback"
                 // deal every existing member already signed: each gets its own
                 // DYNAMICS row rather than resolving to nothing (§39's law).
@@ -15180,6 +15903,11 @@
                 // desk. The ear files Halleluhwah with the grooves.
                 "krautrock"]],
     ["band",   ["rock", "punk", "blues", "bodiddley", "chuckberry", "newwave",
+                // ...the deep-time round's forward half (2026-08-30) put
+                // `hardcore` beside punk and `doom` beside sludge — the
+                // metal wing's missing floor and ceiling, both guitars
+                // in a room, which is this cluster.
+                "hardcore", "doom",
                 "sludge", "deathmetal", "powerballad", "emo", "screamo",
                 "jamband", "sophistirock", "industrialmetal",
                 "musichallrock", "grebo", "janglepop", "industrialrock",
@@ -15253,7 +15981,12 @@
                 // — and Berlin 1968 is berlinschool's own declared parent
                 // sitting one seat over, exactly as berlinschool sits by
                 // spacerock.
-                "stockhausen", "zodiak"]],
+                "stockhausen", "zodiak",
+                // ...and the deep-time round's forward half (2026-08-30):
+                // `dreampop` files where its own child shoegaze already
+                // sits — guitar as weather is texture-first, the
+                // cluster's definition.
+                "dreampop"]],
     // the pre-rock traditions, and the two ancestors that joined them are
     // exactly that: Buenos Aires 1935, Nashville 1945, New York 1945,
     // London 1956. Kling Klang is `studio` and not `club` for the same kind of
@@ -15337,7 +16070,23 @@
                 // Aghani says they lived: same court music, one generation
                 // and one sea apart.
                 "mawsili", "contradanza", "operetta", "musichall", "satie",
-                "march", "broadway", "territoryband", "modaljazz"]],
+                "march", "broadway", "territoryband", "modaljazz",
+                // ...AND FIVE ON 2026-08-30, the deep-time round, and "the
+                // pre-rock traditions" absorbs its oldest housemates by
+                // thirty millennia without changing its definition once:
+                // a bone flute alone in a cave, a crane-bone flute at a
+                // Neolithic village, a singer with an eleven-string lyre,
+                // a Hurrian hymn over the same lyre family, and a paean
+                // choir with an aulos are all of them people playing
+                // acoustic instruments at each other. (`carmen`,
+                // `seikilos` and `oxyrhynchus` file in vox instead —
+                // unaccompanied singing is that cluster's whole
+                // definition, whatever the millennium.)
+                "hohlefels", "jiahu", "urlyre", "hurrian", "delphic",
+                // ...and the forward half's two 1940s country rooms
+                // (2026-08-30): a barroom band and a dance-hall string
+                // band with horns — pre-rock traditions on their face.
+                "honkytonk", "westernswing"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.

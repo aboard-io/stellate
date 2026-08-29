@@ -815,7 +815,11 @@ function g18() {
       const r = window.NuAtlas.recordAt(n, 1969);
       return r && Math.abs(r.year - 1969) <= window.NuAtlas.WINDOW;
     });
-    const RE = /^.+ \d{3,4}, [a-z0-9]+$/;
+    /* the year in a spoken name has two shapes since the deep-time round
+       (2026-08-30): "Kingston 1969, reggae" and "Ur 2500 BC, urlyre". At
+       1969 every drawn mark is CE, but the shape a name may take is the
+       page's fact, not this year's. */
+    const RE = /^.+ (?:\d{1,5} BC|\d{3,4}), [a-z0-9]+$/;
     return { n: on.length, want: want.length,
       drawn: document.querySelectorAll('#atlasMarks .place[data-when="1"]').length,
       all: document.querySelectorAll("#atlasMarks .place").length,
@@ -1324,9 +1328,10 @@ function g18() {
     "G19 · a tap into the pile resolves to ONE record and the same tap twice writes the " +
     "same bytes — " + JSON.stringify(one.title) + " (" + one.doc.length + " chars)");
   const near69 = await p.evaluate((t) => {
-    const m = /^(.+) (\d{3,4})$/.exec(t); if (!m) return null;
+    // both label shapes since the deep-time round: "Place 1969" / "Place 2500 BC"
+    const m = /^(.+?) (?:(\d{1,5}) BC|(\d{3,4}))$/.exec(t); if (!m) return null;
     const r = window.NuAtlas.recordAt(m[1], 1969);
-    return r ? { got: +m[2], want: r.year } : null;
+    return r ? { got: m[2] ? -m[2] : +m[3], want: r.year } : null;
   }, one.title);
   check(near69 && near69.got === near69.want,
     "G19 · …and it is the record NEAREST the slider's year, not the first in the DOM (" +
@@ -1604,7 +1609,10 @@ function g18() {
          plus the "+N more" tail sum to atYear's place count, and that sum is
          what `said` carries. The claim is unchanged — the earth and the
          sentence are the same fact, read off the artifact. */
-      const m = say.match(/^\d+ · \d+ records? within ten years · (.+)$/);
+      // the year's two printed shapes since the deep-time round (2026-08-30):
+      // "600 · …" and "2500 BC · …" — this loop's three years are all CE, but
+      // the parse states the sentence's real grammar, not this loop's slice
+      const m = say.match(/^(?:\d{1,5} BC|\d+) · \d+ records? within ten years · (.+)$/);
       let said = -1;
       if (m) {
         const parts = m[1].split(", ");
@@ -1842,8 +1850,18 @@ function g18() {
     const cells = (r) => [".nu-ixy", ".nu-ixw", ".nu-ixp"]
       .map((q) => { const n = r.closest("li").querySelector(q);
                     return n ? n.textContent : null; });
+    /* REWRITTEN 2026-08-30, the deep-time round. This read
+       `.filter((t) => /^\d+$/.test(t)).map(Number)`, which was the whole
+       parse when every year cell was a bare CE number — but the catalog now
+       starts at "40000 BC" and a filter that drops what it cannot read would
+       have quietly exempted the eight oldest rows from the very chronology
+       this check exists to hold. The cell's two shapes are the two shapes
+       atlas.js yearWord() can print, mapped back to the signed number the
+       rows are sorted by; nothing dated is dropped. */
     const yrs = rows.map((r) => r.querySelector(".nu-ixy").textContent)
-      .filter((t) => /^\d+$/.test(t)).map(Number);
+      .map((t) => { const m = /^(?:(\d{1,5}) BC|(\d{1,4}))$/.exec(t);
+                    return m ? (m[1] ? -m[1] : +m[2]) : null; })
+      .filter((y) => y !== null);
     let ooo = 0;
     for (let i = 1; i < yrs.length; i++) if (yrs[i] < yrs[i - 1]) ooo++;
     const doc = document.documentElement;

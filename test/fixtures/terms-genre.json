@@ -60,7 +60,9 @@
      "pass": 0.35
     },
     "padRoom": true,
-    "parents": {},
+    "parents": {
+        "oxyrhynchus": 0.25
+      },
     "phrase": 0.9,
     "plan": "arc",
     "prog": [
@@ -488,7 +490,9 @@
      "pass": 0.35
     },
     "padRoom": true,
-    "parents": {},
+    "parents": {
+        "oxyrhynchus": 0.25
+      },
     "phrase": 0.9,
     "plan": "arc",
     "prog": [
@@ -916,7 +920,9 @@
      "pass": 0.35
     },
     "padRoom": true,
-    "parents": {},
+    "parents": {
+        "oxyrhynchus": 0.25
+      },
     "phrase": 0.9,
     "plan": "arc",
     "prog": [
@@ -1344,7 +1350,9 @@
      "pass": 0.35
     },
     "padRoom": true,
-    "parents": {},
+    "parents": {
+        "oxyrhynchus": 0.25
+      },
     "phrase": 0.9,
     "plan": "arc",
     "prog": [
@@ -1772,7 +1780,9 @@
      "pass": 0.35
     },
     "padRoom": true,
-    "parents": {},
+    "parents": {
+        "oxyrhynchus": 0.25
+      },
     "phrase": 0.9,
     "plan": "arc",
     "prog": [

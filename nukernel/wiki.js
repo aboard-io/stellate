@@ -306,7 +306,22 @@
     "chopped": {"title":"Chopped_and_screwed","kind":"genre","why":"Houston 1995 is 3 'N the Mornin'; the article is the technique-become-genre by name, DJ Screw its own subject. Not the MC Breed album; not Chopped 'n' Skrewed, the T-Pain song."},
     "synthwave": {"title":"Synthwave","kind":"genre","why":"Paris 2010 is Nightcall; the article is the retro genre by name. Not Cold wave (music) or Minimal wave, which the hatnote separates — those are the 1980s term's other meanings."},
     "footwork": {"title":"Footwork_(genre)","kind":"genre","why":"Chicago 2013 is Double Cup; the parenthesis is the whole link — Footwork alone is the dance and the disambiguation."},
-    "gqom": {"title":"Gqom","kind":"genre","why":"Durban 2016 is Ice Drop; the article is the genre by name, Durban in its first line."}
+    "gqom": {"title":"Gqom","kind":"genre","why":"Durban 2016 is Ice Drop; the article is the genre by name, Durban in its first line."},
+    "hohlefels": {"title":"Paleolithic_flute","kind":"broader","why":"Hohle Fels 33000 BC is the griffon-vulture-radius flute with five finger holes; its own title is a section redirect in this ZIM, so the link is the Aurignacian flute group whose article carries the find, the dating and the cave by name."},
+    "jiahu": {"title":"Gudi_(instrument)","kind":"broader","why":"Jiahu 6000 BC is the crane-bone flutes as playable INSTRUMENTS — the 1999 Nature blowing test is this article's own subject matter — so the instrument article wins over `Jiahu`, the site survey (millet, proto-writing, fermentation), which mentions the flutes in passing."},
+    "urlyre": {"title":"Lyres_of_Ur","kind":"work","why":"Ur 2500 BC is these four instruments from the Royal Cemetery — Golden, Queen's, Silver and Bull-Headed, each named with its museum in the article's own first lines — and the article is exactly them."},
+    "hurrian": {"title":"Hurrian_songs","kind":"work","why":"Ugarit 1400 BC is tablet h.6 and its siblings; the article is the tablet collection by name, with h.6, the nid qabli colophon and the five rival readings all in its own text. There is no separate article for h.6 alone in this ZIM."},
+    "delphic": {"title":"Delphic_Hymns","kind":"work","why":"Delphi 128 BC is the two paeans on the Treasury wall and the article is those two pieces, composers named in its first section."},
+    "carmen": {"title":"Carmen_Saeculare","kind":"work","why":"Rome 17 BC is Horace's hymn for the Ludi Saeculares and the article is the poem-and-performance itself, the acta inscription in its own text. Not Horace at full career width; not Secular Games, which is the festival around it."},
+    "seikilos": {"title":"Seikilos_epitaph","kind":"work","why":"Tralles 100 is the stele itself — the oldest complete surviving composition — and the article is the stele, its melody transcribed in the article's own body."},
+    "oxyrhynchus": {"title":"Oxyrhynchus_hymn","kind":"work","why":"Oxyrhynchus 300 is P.Oxy. XV 1786 and the article is that papyrus — the oldest notated Christian music, its diatonic octave and anapaestic metre in its own description. Not Oxyrhynchus, the town and its whole papyrus hoard."},
+    "hardcore": {"title":"Hardcore_punk","kind":"genre","why":"Washington 1980 is Pay to Cum; the article is the genre by name with Bad Brains and D.C. in its own history. Not Hardcore (the disambiguation), not Breakbeat hardcore, which is the table's own hardcorerave."},
+    "honkytonk": {"title":"Ernest_Tubb","kind":"artist","why":"Fort Worth 1941 is Walking the Floor Over You and the article is the man who cut it — the Texas Troubadour whose electric barroom band is this row's whole cast; the genre's own titles resolve to a disambiguation and a section stub in this ZIM, and a wrong link is worse than a narrower true one."},
+    "westernswing": {"title":"Western_swing","kind":"genre","why":"Tulsa 1940 is New San Antonio Rose from the Cain's Ballroom band; the article is the genre by name, Wills its own centerpiece."},
+    "dreampop": {"title":"Dream_pop","kind":"genre","why":"London 1984 is Treasure; the article is the genre by name and the Cocteau Twins are in its first lines. Not Shoegaze, the table's own child row."},
+    "doom": {"title":"Doom_metal","kind":"genre","why":"Stockholm 1986 is Epicus Doomicus Metallicus, the record whose title names the article's subject. Not Doom (the game); not Candlemass alone, who are the row's named performers."},
+    "jpop": {"title":"J-pop","kind":"genre","why":"Tokyo 1999 is First Love; the article is the genre by name, the J-WAVE coinage in its own history. Not City pop, the table's own upstream row on the same dot."},
+    "dunstaple": {"title":"John_Dunstaple","kind":"artist","why":"London 1420 is the Old Hall Manuscript, but the ROW is the contenance angloise — the sound the continent named for this man, which is how dufay's want spelled it — so the article is the man. Old Hall Manuscript was read and passed over for the same reason schutz links Schütz and not the Exequien: the row is the practice he names, not one book of it."}
   };
   const MISSES = [
     {"key":"retrofunkpop","label":"Los Angeles 2013","why":"Los Angeles 2013 — the 2010s retro-funk pop revival has no article of its own in this ZIM. `Retro-funk` redirects to Funk, which is already this row's own parent and a different, older music; Nu-disco is disco's revival, not funk's. The nearest honest targets are individual singles (Treasure, Uptown Funk), and a genre row does not link a single."},
@@ -326,7 +341,7 @@
     "built": "2026-08-29",
     "from": "nukernel/wiki-extract.js",
     "book": BOOK,
-    "counts": { "links": 274, "misses": 2, "roles": 6, "anchors": 282 },
+    "counts": { "links": 289, "misses": 2, "roles": 6, "anchors": 297 },
     WIKI, MISSES, url,
   };
 });

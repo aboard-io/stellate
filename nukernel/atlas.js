@@ -110,6 +110,25 @@
      catalog's first Japanese dot outside Tokyo and its oldest East Asian
      one by twelve centuries.
 
+     AND SEVEN MORE ON 2026-08-30, with the deep-time round (Paul: "look
+     backwards in time to bone flutes and lutes"): Hohle Fels, Jiahu, Ur,
+     Ugarit, Delphi, Tralles and Oxyrhynchus — the geography eight ancient
+     anchors need, landed the same hour their labels did, per the standing
+     rule. Four are SITES rather than living cities (Hohle Fels is a cave in
+     the Swabian Jura, Jiahu a village site in Wuyang County, Ur is Tell
+     el-Muqayyar, Ugarit is Ras Shamra) and the dot is the site's own
+     coordinates, the way Provence takes the region's centre — a site that
+     has a fixed archaeological location is BETTER geography than a city
+     centre, not worse. Tralles is under modern Aydın and Oxyrhynchus under
+     el-Bahnasa; both keep the ancient name because the RECORD is ancient
+     (the Kinshasa rule, run backwards for the first time: there the modern
+     name won because the city is the living thing, here the ancient name
+     wins because the site is the remembered thing, and no modern music
+     claims either dot). Rome takes NO new row: Rome 17 BC and Rome 600 are
+     the same city and the same coordinates, two eras apart — the first
+     two-records-one-place pair to straddle the BC/CE boundary; the year
+     does the separating, exactly as Cairo 1932/1964 established.
+
      Decimal degrees, 2dp, city centre. REGIONS (Provence, Essex, Kent) take the
      region's rough centre. NEIGHBOURHOODS (Harlem, Greenwich Village, Muswell
      Hill) take the neighbourhood's, not the city's — Muswell Hill is not
@@ -140,17 +159,21 @@
     "Cologne": [50.94, 6.96], "Córdoba": [37.89, -4.78],
     "Crawley": [51.11, -0.19],
     "Cusco": [-13.53, -71.97], "Delhi": [28.61, 77.21],
+    "Delphi": [38.48, 22.50],
     "Detroit": [42.33, -83.05],
     "Douala": [4.05, 9.77], "Dresden": [51.05, 13.74],
     "Dublin": [53.35, -6.26], "Durban": [-29.86, 31.02],
     "Düsseldorf": [51.23, 6.78], "Essex": [51.75, 0.50],
     "Faisalabad": [31.42, 73.08], "Florence": [43.77, 11.26],
+    "Fort Worth": [32.76, -97.33],
     "Freetown": [8.48, -13.23], "Glasgow": [55.86, -4.25],
     "Greenwich Village": [40.73, -74.00], "Guadalajara": [20.67, -103.35],
     "Guča": [43.78, 20.23], "Harlem": [40.81, -73.94], "Havana": [23.13, -82.38],
-    "Ho Chi Minh City": [10.82, 106.63], "Hong Kong": [22.32, 114.17],
+    "Ho Chi Minh City": [10.82, 106.63], "Hohle Fels": [48.38, 9.75],
+    "Hong Kong": [22.32, 114.17],
     "Houston": [29.76, -95.37], "Isle of Wight": [50.69, -1.32],
     "Istanbul": [41.01, 28.98], "Jakarta": [-6.21, 106.85],
+    "Jiahu": [33.61, 113.66],
     "Johannesburg": [-26.20, 28.05], "Kabul": [34.53, 69.17],
     "Kansas City": [39.10, -94.58], "Kent": [51.20, 0.75],
     "Kingston": [17.97, -76.79], "Kinshasa": [-4.32, 15.31],
@@ -180,13 +203,17 @@
     "Sausalito": [37.86, -122.49], "Sedalia": [38.70, -93.23],
     "Seoul": [37.57, 126.98], "Shanghai": [31.23, 121.47],
     "Sofia": [42.70, 23.32], "South Carolina": [34.00, -81.03],
-    "St. Gallen": [47.42, 9.37],
+    "St. Gallen": [47.42, 9.37], "Stockholm": [59.33, 18.07],
     "St. Louis": [38.63, -90.20], "Stourbridge": [52.46, -2.15],
     "Swindon": [51.56, -1.78], "Taipei": [25.03, 121.57],
     "Tampa": [27.95, -82.46], "Teaneck": [40.89, -74.02],
     "Tehran": [35.69, 51.39], "Tetouan": [35.57, -5.37],
     "Tokyo": [35.68, 139.65],
-    "Toronto": [43.65, -79.38], "Valledupar": [10.46, -73.25],
+    "Toronto": [43.65, -79.38], "Tulsa": [36.15, -95.99],
+    "Tralles": [37.85, 27.84],
+    "Ugarit": [35.60, 35.78], "Ur": [30.96, 46.10],
+    "Oxyrhynchus": [28.53, 30.66],
+    "Valledupar": [10.46, -73.25],
     "Washington": [38.91, -77.04], "Winchester": [51.06, -1.31],
     "Workington": [54.64, -3.55],
     "Venice": [45.44, 12.32], "Vienna": [48.21, 16.37],
@@ -236,12 +263,24 @@
   };
 
   /* ======================================================================
-     2 · WHEN — 239 rows, BAKED from the genres.js labels
+     2 · WHEN — 291 rows, BAKED from the genres.js labels
      ======================================================================
      GENERATED. Do not hand-edit: `node nukernel/atlas.gate.js --bake` rewrites
      everything between the two markers, and G2 fails if it drifts. The regex is
-     /^(.+?)\s+(\d{3,4})$/ over `GENRES[gk].label`, and it is the ONLY place a
-     label is ever read as anything but a display string. */
+     /^(.+?)\s+(?:(\d{1,5})\s+BC|(\d{3,4}))$/ over `GENRES[gk].label`, and it is
+     the ONLY place a label is ever read as anything but a display string.
+
+     BC YEARS ARE NEGATIVE NUMBERS (2026-08-30, the deep-time round — Paul:
+     "look backwards in time to bone flutes and lutes"). The label convention
+     is "Place Year BC" ("Ur 2500 BC"); the bake writes `year: -2500`, and all
+     the arithmetic below — the ascending sort, YEARS, nearest-year,
+     the window — runs on the signed number with no special case anywhere.
+     What a PERSON reads is yearWord() at the bottom of this file, the one
+     owner of turning -2500 back into "2500 BC"; the two label reconstructions
+     in this file (recordAt, ALL) go through it so `place + year` round-trips
+     to the exact genres.js label in both eras. atlas.gate.js's LABEL_RE
+     comment has the measurement for why the convention is a trailing word and
+     not a minus sign. */
   /* WHEN:BEGIN */
   const WHEN = {
     fugue:          { place: "Leipzig", year: 1725 },
@@ -520,6 +559,21 @@
     synthwave:      { place: "Paris", year: 2010 },
     footwork:       { place: "Chicago", year: 2013 },
     gqom:           { place: "Durban", year: 2016 },
+    hohlefels:      { place: "Hohle Fels", year: -33000 },
+    jiahu:          { place: "Jiahu", year: -6000 },
+    urlyre:         { place: "Ur", year: -2500 },
+    hurrian:        { place: "Ugarit", year: -1400 },
+    delphic:        { place: "Delphi", year: -128 },
+    carmen:         { place: "Rome", year: -17 },
+    seikilos:       { place: "Tralles", year: 100 },
+    oxyrhynchus:    { place: "Oxyrhynchus", year: 300 },
+    hardcore:       { place: "Washington", year: 1980 },
+    honkytonk:      { place: "Fort Worth", year: 1941 },
+    westernswing:   { place: "Tulsa", year: 1940 },
+    dreampop:       { place: "London", year: 1984 },
+    doom:           { place: "Stockholm", year: 1986 },
+    jpop:           { place: "Tokyo", year: 1999 },
+    dunstaple:      { place: "London", year: 1420 },
   };
   /* WHEN:END */
 
@@ -589,7 +643,19 @@
                // names, one harbour, two musics, and the geography follows
                // the record both times — Córdoba's own rule, run in reverse.
                "Bingen", "Constantinople", "Dresden",
-               "Isle of Wight", "St. Gallen", "Winchester", "Workington"],
+               "Isle of Wight", "St. Gallen", "Winchester", "Workington",
+               // ...AND THE DEEP-TIME ROUND'S THREE (2026-08-30). Hohle Fels
+               // and Delphi are plain European geography. TRALLES needs its
+               // sentence, because it sits in Anatolia and Istanbul — the
+               // same peninsula — is in the Middle East row below: the dot
+               // is `seikilos`, Tralles 100, a Greek song in Greek notation
+               // on a Greek stele, answering to Delphi and Athens fifteen
+               // centuries before makam. The geography follows the record —
+               // the Córdoba/Constantinople rule, applied a third time.
+               "Delphi", "Hohle Fels", "Tralles",
+               // ...and the forward debts' one (2026-08-30): Stockholm,
+               // plain European geography, the doom row's own city.
+               "Stockholm"],
     "North America": ["Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
                       "Chicago", "Cincinnati", "Cleveland", "Detroit",
                       "Greenwich Village", "Harlem", "Clarksdale", "Kansas City", "Lafayette",
@@ -604,7 +670,10 @@
                       // city cannot: Olmsted's holler names no town, and the
                       // dot is the state's own centre, the Provence/Essex
                       // precedent one column over.
-                      "Bronx", "Houston", "South Carolina", "Washington"],
+                      "Bronx", "Houston", "South Carolina", "Washington",
+                      // ...and the forward debts' two (2026-08-30): the
+                      // 1940s' missing Texas and Oklahoma country rooms.
+                      "Fort Worth", "Tulsa"],
     // Mexico is here and not in North America, which is a choice and is the
     // one Garland's own volumes make: the musical basin is Ibero-American,
     // and a Sinaloan banda has more to say to a Colombian cumbia than to a
@@ -624,7 +693,10 @@
     "Africa": ["Abidjan", "Accra", "Addis Ababa", "Aksum", "Bamako",
                "Douala", "Durban", "Freetown", "Johannesburg", "Kinshasa",
                "Lagos", "Luanda", "Nairobi"],
-    "East Asia": ["Beijing", "Hong Kong", "Nara", "Seoul", "Shanghai",
+    // Jiahu (2026-08-30) is the region's oldest dot by seven millennia —
+    // a Neolithic site on the Huai River plain, Garland's East Asia volume
+    // opens with exactly these flutes.
+    "East Asia": ["Beijing", "Hong Kong", "Jiahu", "Nara", "Seoul", "Shanghai",
                   "Taipei", "Tokyo"],
     "Southeast Asia": ["Bangkok", "Ho Chi Minh City", "Jakarta", "Manila",
                        "Phnom Penh"],
@@ -646,8 +718,14 @@
     // way Kinshasa's spelling followed the map.
     // AND BAGHDAD JOINS (2026-08-29) — the dot is `mawsili`, Baghdad 800,
     // the Abbasid court the whole row answers to; volume 6's own centre.
+    // AND THE DEEP-TIME ROUND'S THREE (2026-08-30): Ur and Ugarit are
+    // Mesopotamia and the Levant, the row's own deepest past — Garland
+    // volume 6 opens its history with exactly these lyres and this tablet.
+    // OXYRHYNCHUS is Egypt, the same Garland ruling that put Cairo here;
+    // that its one record is a CHRISTIAN hymn in Greek does not move the
+    // dot, any more than zema's church moved Aksum out of Africa.
     "Middle East": ["Baghdad", "Cairo", "Córdoba", "Istanbul", "Oran",
-                    "Tehran", "Tetouan"],
+                    "Oxyrhynchus", "Tehran", "Tetouan", "Ugarit", "Ur"],
     "Central Asia": ["Kabul"],
   };
   /* AND THE EMPTY CELL, DECLARED. One region of the nine has no dot at all,
@@ -706,13 +784,36 @@
      G5b measures. */
   const ERAS = (() => {
     const rows = [
+      // DEEP TIME ARRIVED 2026-08-30 (Paul: "look backwards in time to bone
+      // flutes and lutes"). Five era words for the forty millennia the
+      // catalog now reaches below Aksum, each `y` the FIRST catalog year of
+      // its era per this table's own rule, each a REAL record: the Hohle
+      // Fels flute (33000 BC — the artifact's own ~35,000 BP, not the
+      // tradition's 43,000), the Jiahu gudi (6000 BC), the Ur lyres
+      // (2500 BC; the bronze age also holds Ugarit 1400 BC), the Delphic
+      // Hymns (128 BC; antiquity also holds Rome 17 BC), and the Seikilos
+      // epitaph (Tralles 100; the first centuries also hold Oxyrhynchus
+      // 300). G5b holds every one of these to an anchor standing behind it.
+      { w: "the old stone age",     y: -33000 },
+      { w: "the new stone age",     y: -6000 },
+      { w: "the bronze age",        y: -2500 },
+      { w: "antiquity",             y: -128 },
+      { w: "the first centuries",   y: 100 },
       // THE FIVE-HUNDREDS ARRIVED 2026-08-25 with zema, "Aksum 540" — the
       // oldest record in the catalog and the first era word that is not
       // European. G5b's law is satisfied the only way it can be: 540 is a
       // real catalog year, because an anchor is standing behind it.
       { w: "the five-hundreds",     y: 540 },
       { w: "the six-hundreds",      y: 600 },  { w: "the twelve-hundreds",   y: 1200 },
-      { w: "the thirteen-hundreds", y: 1300 }, { w: "the fifteen-hundreds",  y: 1551 },
+      { w: "the thirteen-hundreds", y: 1300 },
+      // ...and the fourteen-hundreds arrived 2026-08-30 with dunstaple,
+      // "London 1420": the century had records (dufay 1436) but no word,
+      // because this table's rule is that each `y` is the FIRST catalog
+      // year of its era and until this round the century's first year was
+      // taken for granted under "the thirteen-hundreds". GROW-ONLY holds:
+      // every earlier word keeps its place.
+      { w: "the fourteen-hundreds", y: 1420 },
+      { w: "the fifteen-hundreds",  y: 1551 },
       { w: "the sixteen-hundreds",  y: 1602 }, { w: "the seventeen-hundreds", y: 1725 },
       { w: "the eighteen-hundreds", y: 1835 },
       // ...and the two eras the world round put records into, 2026-08-26.
@@ -999,7 +1100,7 @@
       if (d < bd) { bd = d; best = gk; }
     }
     return best === null ? null
-      : { gk: best, year: WHEN[best].year, label: WHEN[best].place + " " + WHEN[best].year };
+      : { gk: best, year: WHEN[best].year, label: WHEN[best].place + " " + yearWord(WHEN[best].year) };
   }
 
   /* VIEWS' WHOLE REMAINING JOB: how close to stand to a place, in DEGREES OF
@@ -1025,9 +1126,19 @@
   /* THE FALLBACK'S ORDER, and the map's label pass, want the same list: every
      record, year ascending, then place, then key. Derived here so the view and
      the gate cannot sort it two different ways. */
+  /* THE YEAR, AS A PERSON READS IT — the ONE owner of "-2500 is 2500 BC".
+     A raw negative is arithmetic, not a year anybody says; a CE year prints
+     exactly as it always has, no "AD", because that is what every label since
+     Rome 600 already looked like. Everything that PRINTS a year (the list's
+     year cell, the marks' spoken names, the sentence, pick()'s progress line)
+     goes through this; everything that COMPUTES on a year (sorting, the
+     window, dataset attributes the gates read back) stays on the signed
+     number. */
+  const yearWord = (y) => (y < 0 ? (-y) + " BC" : String(y));
+
   const ALL = Object.keys(WHEN).map((gk) => ({
     gk, place: canon(WHEN[gk].place), year: WHEN[gk].year,
-    label: WHEN[gk].place + " " + WHEN[gk].year,
+    label: WHEN[gk].place + " " + yearWord(WHEN[gk].year),
   })).sort((a, b) => a.year - b.year
     || (a.place < b.place ? -1 : a.place > b.place ? 1 : 0)
     || (a.gk < b.gk ? -1 : a.gk > b.gk ? 1 : 0));
@@ -1041,7 +1152,7 @@
   const api = { PLACES, ALIAS, WITHIN, REGIONS, REGIONS_EMPTY, WHEN, EXCLUDE, YEARS, ERAS, VIEWS, ALL, W, WINDOW,
                 UNITS, unit, recordAt, arcFor,
                 project, heightOf, inView, placeOf, recordsAt, atYear,
-                yearAt, indexOf, eraOf, canon };
+                yearAt, indexOf, eraOf, yearWord, canon };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuAtlas = api;
 })(typeof self !== "undefined" ? self : this);

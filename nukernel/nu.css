@@ -3155,8 +3155,15 @@ table.nu-trims{ color: var(--ink); }
    still cut are the two longest names in the catalogue and nothing else. */
 .nu-ixli{ margin: 0; display: grid; align-items: center;
   grid-template-columns: 4ch minmax(0, 1.6fr) minmax(0, 1fr);
+  /* THE EIGHT ROWS BEFORE THE YEAR ONE (2026-08-30): "33000 BC" does not fit
+     a 4ch year track — measured, it wrapped the row to 51.4px and broke the
+     one-line law at every width. The deep-time round marked its rows
+     `data-bc` and shimmed the track inline because this sheet was outside
+     its fence; the rule below ADOPTS that handoff at the sheet's own three
+     breakpoints, and the inline shim in ui/atlas.js idxRow can now retire. */
   gap: 0 var(--s3); padding-inline: var(--s4);
   border-block-end: var(--bw) solid var(--rule); }
+.nu-ixli[data-bc]{ grid-template-columns: 8ch minmax(0, 1.6fr) minmax(0, 1fr); }
 .nu-ixli:last-child{ border-block-end: 0; }
 .nu-ixli:has(> .nu-ixrow:active){ background: var(--flag); }
 .nu-ixli:has(> .nu-ixrow[aria-current="true"]){ background: var(--hand-tint);
@@ -3180,6 +3187,7 @@ table.nu-trims{ color: var(--ink); }
    place nowhere to go. */
 @media (min-width: 700px){
   .nu-ixli{ grid-template-columns: 4ch minmax(0, 26ch) minmax(0, 1fr); }
+  .nu-ixli[data-bc]{ grid-template-columns: 8ch minmax(0, 26ch) minmax(0, 1fr); }
 }
 /* AND THE DESKTOP GETS A WIDER ONE, because 26ch on a 1280 was still cutting
    words with 700px of empty place column beside them — "Music of Punjab · the
@@ -3192,6 +3200,7 @@ table.nu-trims{ color: var(--ink); }
    instead of eleven, and the place still lands within a glance of the name. */
 @media (min-width: 1100px){
   .nu-ixli{ grid-template-columns: 4ch minmax(0, 34ch) minmax(0, 1fr); }
+  .nu-ixli[data-bc]{ grid-template-columns: 8ch minmax(0, 34ch) minmax(0, 1fr); }
 }
 /* AND ON THE NARROWEST PHONE THE ROW GIVES BACK ITS OWN SLACK BEFORE IT ASKS
    THE WORDS TO. 320px is 238px of line after the 56px gutter, and the two

@@ -1178,8 +1178,19 @@
   // shipped anchors' own claims (drone's 1964 filter sweep, the Isleys' 1973
   // modulation are real records). Applied as a draw-free filter at the end
   // of build(), so no stream moves and ALL hundred-ten genres are swept.
+  // ...AND THE LABEL LEARNED "BC" (2026-08-30, the deep-time round). Eight
+  // anchors now live before the year one — "Ur 2500 BC", "Rome 17 BC" — and
+  // this parser failed CLOSED on them (null), which quietly excused antiquity
+  // from the era law: a wah pedal on the Ur lyre was legal because the row
+  // had no year. atlas.gate.js LABEL_RE is the convention's one owner; this
+  // reads the same trailing-BC form and returns the NEGATIVE year, so every
+  // comparison below (`year < FX_YEAR[...]`) holds for antiquity by ordinary
+  // signed arithmetic — everything electric postdates 1400 BC.
   const genreYear = gk2 => {
-    const m = /(\d{3,4})\s*$/.exec((GENRES[gk2] || {}).label || "");
+    const L = (GENRES[gk2] || {}).label || "";
+    const bc = /(\d{1,5})\s+BC\s*$/.exec(L);
+    if (bc) return -bc[1];
+    const m = /(\d{3,4})\s*$/.exec(L);
     return m ? +m[1] : null;
   };
   const FX_YEAR = { echo: 1950, ringmod: 1956, sweep: 1964, flanger: 1966,

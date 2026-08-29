@@ -1134,12 +1134,18 @@
   // three-or-four digits and not the four the rest of the tree assumes.
   const idiomOf = (gk) => {
     const g = GENRES[gk] || {};
-    const m = /^(.*?)\s*(\d{3,4})\s*$/.exec(g.label || "");
+    // "BC" LEARNED 2026-08-30 (deep time): "Ur 2500 BC" parsed as no-year, so
+    // the eight ancient rows cast their throats with year 0 and region null —
+    // a Sumerian singer seated by the fallback row. The year comes back
+    // NEGATIVE; every rule below that compares years works by signed
+    // arithmetic, and the place is the place either way.
+    const m = /^(.*?)\s*(?:(\d{1,5})\s+BC|(\d{3,4}))\s*$/.exec(g.label || "");
+    const yr = m ? (m[2] ? -m[2] : +m[3]) : 0;
     const place = (m ? m[1] : (g.label || "")).trim();
     return { place, region: REGION[place] || null,
              // no year on the five FUNCTION genres and on `simple`; they are
              // not records and their chairs are seated on a host that is
-             year: m ? +m[2] : 0, family: g.family || null };
+             year: yr, family: g.family || null };
   };
   // ---- THE CAST ITSELF -----------------------------------------------------
   // Two ordered lists, first match wins, and every row names a genres.js MOUTHS

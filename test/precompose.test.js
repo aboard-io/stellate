@@ -458,8 +458,31 @@ function sectionEvents(doc, i) {
   // unbeaten. TWO new shared wants were opened on purpose with matched
   // spellings so the ledger counts one debt each ("jamaican sound
   // system": boombap + blockparty; "hardcore": screamo + thrash).
-  ok("G0 the catalog is 282 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 282,
+  // + the EIGHT of the deep-time round ("Great keep going but also look
+  // backwards in time to bone flutes and lutes" / "Don't forget Ancient
+  // Rome", Paul, 2026-08-30): the catalog started at Rome 600 and now
+  // starts forty millennia earlier — hohlefels (Hohle Fels 33000 BC, the
+  // griffon-vulture flute), jiahu (Jiahu 6000 BC, the playable gudi),
+  // urlyre (Ur 2500 BC, the Royal Cemetery lyres), hurrian (Ugarit 1400
+  // BC, tablet h.6), delphic (Delphi 128 BC), carmen (Rome 17 BC,
+  // Horace's Carmen Saeculare), seikilos (Tralles 100, the oldest
+  // complete song) and oxyrhynchus (Oxyrhynchus 300, the oldest notated
+  // Christian music). BC years are NEGATIVE in WHEN — the label
+  // convention ("Place Year BC") and the fail-closed argument are at
+  // atlas.gate.js LABEL_RE. Declined with reasons at the round's header
+  // in genres.js: the hydraulis, a lute row of its own, any
+  // jiahu-to-downstream edge, and the Divje Babe artifact.
+  // + the SEVEN of the same round's forward half — the previous shift's
+  // own named debts: hardcore (Washington 1980, Bad Brains — paying the
+  // matched "hardcore" want on screamo and thrash), honkytonk (Fort Worth
+  // 1941) and westernswing (Tulsa 1940) for the 1940s' two missing
+  // country rooms, dreampop (London 1984, paying shoegaze's want), doom
+  // (Stockholm 1986, the metal wing's missing floor), jpop (Tokyo 1999)
+  // and dunstaple (London 1420, the Old Hall Manuscript, paying dufay's
+  // contenance-angloise want). The 2000s stay thin on purpose — 10 rows
+  // to the 1990s' 29 — named as the next ask rather than half-paid.
+  ok("G0 the catalog is 297 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 297,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
@@ -1043,13 +1066,29 @@ function sectionEvents(doc, i) {
     // (`winchester` is in the set and worth a beat: two ahh_choir voices,
     // empty kit, nobass — the predicate found the organum practice
     // unaccompanied, which it was.)
+    // ...AND THE DEEP-TIME ROUND ADDED TWO MORE PROBES (2026-08-30):
+    // `seikilos` (one voice, a complete tune) and `oxyrhynchus` (one
+    // Greek hymn line) — both written to the recipe, not to the
+    // predicate, and both landed on their own three fields. `carmen` WAS
+    // the instructive ABSENCE: fifty-four unaccompanied children, empty
+    // kit, nobass — excluded only because genreYear failed closed on a BC
+    // label. THE ALARM RANG AND WAS ANSWERED THE SAME DAY (2026-08-30):
+    // genreYear learned the trailing-BC form and returns a negative year,
+    // and carmen joined this list exactly as predicted. The prediction's
+    // OTHER half was wrong and the measurement settles it: the five other
+    // BC rows did NOT join, because they were never unaccompanied singing
+    // — a bone flute, two lyres and an aulos hymn all carry instruments,
+    // and the predicate correctly reads their fields, not their era. One
+    // more independent arrival; the derived list below grew by one.
     ok("G11c the unaccompanied law is derived, not a list — it found the " +
        "five it was written on PLUS sacredharp, chorale, ballad, dufay, " +
-       "spirituals, and now the debts round's six, none of which it has " +
-       "ever heard of", () => {
+       "spirituals, the debts round's six, and the deep-time round's two, " +
+       "none of which it has ever heard of", () => {
       assert.deepStrictEqual(solo.slice().sort(),
-        ["ballad", "chorale", "dufay", "gregorian", "hildegard", "holler",
-         "josquin", "kassia", "mbube", "organum", "sacredharp", "sequence",
+        ["ballad", "carmen", "chorale", "dufay", "dunstaple", "gregorian",
+         "hildegard", "holler",
+         "josquin", "kassia", "mbube", "organum", "oxyrhynchus",
+         "sacredharp", "seikilos", "sequence",
          "spem", "spirituals", "winchester", "zema"]);
     });
 

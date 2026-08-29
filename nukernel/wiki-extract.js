@@ -484,6 +484,38 @@ const ASK = {
   synthwave:  { q: "Synthwave", why: "Paris 2010 is Nightcall; the article is the retro genre by name. Not Cold wave (music) or Minimal wave, which the hatnote separates — those are the 1980s term's other meanings." },
   footwork:   { q: "Footwork (genre)", why: "Chicago 2013 is Double Cup; the parenthesis is the whole link — Footwork alone is the dance and the disambiguation." },
   gqom:       { q: "Gqom", why: "Durban 2016 is Ice Drop; the article is the genre by name, Durban in its first line." },
+
+  /* ---- THE DEEP-TIME ROUND (2026-08-30) — eight anchors ------------------
+     Every row below links a NAMED ARTIFACT or NAMED NOTATED PIECE, because
+     that is what each anchor is argued from; none of the eight is a "genre"
+     in Wikipedia's filing and the kinds say so. */
+  // `Hohle Fels Flute` was tried FIRST and rejected by the run itself: in
+  // this ZIM it is a meta-refresh stub onto Paleolithic_flute#Early_flutes —
+  // a SECTION, not an article — which is this file's own counterpoint rule.
+  // The group article is the honest fallback and the flute is its subject's
+  // centrepiece; `Hohle Fels` alone is the cave and mostly the Venus.
+  hohlefels:  { q: "Paleolithic flutes", why: "Hohle Fels 33000 BC is the griffon-vulture-radius flute with five finger holes; its own title is a section redirect in this ZIM, so the link is the Aurignacian flute group whose article carries the find, the dating and the cave by name.", kind: "broader" },
+  jiahu:      { q: "Gudi (instrument)", why: "Jiahu 6000 BC is the crane-bone flutes as playable INSTRUMENTS — the 1999 Nature blowing test is this article's own subject matter — so the instrument article wins over `Jiahu`, the site survey (millet, proto-writing, fermentation), which mentions the flutes in passing.", kind: "broader" },
+  urlyre:     { q: "Lyres of Ur", why: "Ur 2500 BC is these four instruments from the Royal Cemetery — Golden, Queen's, Silver and Bull-Headed, each named with its museum in the article's own first lines — and the article is exactly them.", kind: "work" },
+  hurrian:    { q: "Hurrian songs", why: "Ugarit 1400 BC is tablet h.6 and its siblings; the article is the tablet collection by name, with h.6, the nid qabli colophon and the five rival readings all in its own text. There is no separate article for h.6 alone in this ZIM.", kind: "work" },
+  delphic:    { q: "Delphic Hymns", why: "Delphi 128 BC is the two paeans on the Treasury wall and the article is those two pieces, composers named in its first section.", kind: "work" },
+  carmen:     { q: "Carmen Saeculare", why: "Rome 17 BC is Horace's hymn for the Ludi Saeculares and the article is the poem-and-performance itself, the acta inscription in its own text. Not Horace at full career width; not Secular Games, which is the festival around it.", kind: "work" },
+  seikilos:   { q: "Seikilos epitaph", why: "Tralles 100 is the stele itself — the oldest complete surviving composition — and the article is the stele, its melody transcribed in the article's own body.", kind: "work" },
+  oxyrhynchus:{ q: "Oxyrhynchus hymn", why: "Oxyrhynchus 300 is P.Oxy. XV 1786 and the article is that papyrus — the oldest notated Christian music, its diatonic octave and anapaestic metre in its own description. Not Oxyrhynchus, the town and its whole papyrus hoard.", kind: "work" },
+
+  /* ---- THE SAME ROUND'S FORWARD HALF (2026-08-30) — seven anchors -------- */
+  hardcore:   { q: "Hardcore punk", why: "Washington 1980 is Pay to Cum; the article is the genre by name with Bad Brains and D.C. in its own history. Not Hardcore (the disambiguation), not Breakbeat hardcore, which is the table's own hardcorerave." },
+  // The genre's own names were tried FIRST and both rejected by the run's
+  // own rules: `Honky-tonk` is a DISAMBIGUATION page in this ZIM and
+  // `Honky-tonk music` is a meta-refresh stub onto Honky-tonk#Music — a
+  // section, not an article. The named performer is the jodeci/toto
+  // precedent and the honest remainder.
+  honkytonk:  { q: "Ernest Tubb", why: "Fort Worth 1941 is Walking the Floor Over You and the article is the man who cut it — the Texas Troubadour whose electric barroom band is this row's whole cast; the genre's own titles resolve to a disambiguation and a section stub in this ZIM, and a wrong link is worse than a narrower true one.", kind: "artist" },
+  westernswing: { q: "Western swing", why: "Tulsa 1940 is New San Antonio Rose from the Cain's Ballroom band; the article is the genre by name, Wills its own centerpiece." },
+  dreampop:   { q: "Dream pop", why: "London 1984 is Treasure; the article is the genre by name and the Cocteau Twins are in its first lines. Not Shoegaze, the table's own child row." },
+  doom:       { q: "Doom metal", why: "Stockholm 1986 is Epicus Doomicus Metallicus, the record whose title names the article's subject. Not Doom (the game); not Candlemass alone, who are the row's named performers." },
+  jpop:       { q: "J-pop", why: "Tokyo 1999 is First Love; the article is the genre by name, the J-WAVE coinage in its own history. Not City pop, the table's own upstream row on the same dot." },
+  dunstaple:  { q: "John Dunstaple", why: "London 1420 is the Old Hall Manuscript, but the ROW is the contenance angloise — the sound the continent named for this man, which is how dufay's want spelled it — so the article is the man. Old Hall Manuscript was read and passed over for the same reason schutz links Schütz and not the Exequien: the row is the practice he names, not one book of it.", kind: "artist" },
 };
 
 /* ---------------------------------------------------------------------------

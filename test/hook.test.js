@@ -142,9 +142,16 @@ ok("iranpop: 10 rewrites, >= 8 distinct hooks and >= 5 distinct rhythms", () => 
    also changed from a typed 0.95 to the DERIVED complement of this list,
    because a threshold that has to be re-typed every time the catalogue grows
    is a number waiting to be wrong. */
-const FROZEN_RHYTHM = ["ambient", "arabesk", "cemilbey", "chopped", "drone",
-                       "dub", "dubstep", "enka", "gagaku", "gothicrock",
-                       "gqom", "modaljazz", "psychrock", "satie", "triphop"];
+/* ...AND DEEP TIME ADDED FOUR (2026-08-30, measured, not guessed — the round's
+   own candidate list named jiahu, seikilos and oxyrhynchus, and all three
+   VARY: a three-note cell deals like any other however old the tune is. What
+   freezes is what always freezes, the long cell: hohlefels (a bone flute's
+   held tone in a cave), hurrian (the contested line held long), dreampop and
+   doom (the two forward rows that argue for the drone's band). */
+const FROZEN_RHYTHM = ["ambient", "arabesk", "cemilbey", "chopped", "doom",
+                       "dreampop", "drone", "dub", "dubstep", "enka",
+                       "gagaku", "gothicrock", "gqom", "hohlefels", "hurrian",
+                       "modaljazz", "psychrock", "satie", "triphop"];
 ok("catalog: hook rhythm and degrees vary at nearly every anchor", () => {
   let rv = 0, dv = 0, kv = 0; const frozen = [];
   for (const g of ANCHORS) {

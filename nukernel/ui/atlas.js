@@ -66,7 +66,7 @@ import { makeGlobe, ARC_MIN, ARC_MAX } from "./globe.js";
    together. An unused import is a trap, so it goes rather than sitting here
    looking like the rule still lives on this side. */
 const { PLACES, WITHIN, WHEN, EXCLUDE, YEARS, UNITS, ALL,
-        recordAt, arcFor, atYear, indexOf, eraOf, canon } = NuAtlas;
+        recordAt, arcFor, atYear, indexOf, eraOf, yearWord, canon } = NuAtlas;
 
 /* THE 760 IS GONE, AND SO IS THE SCALE IT BECAME. — the second reversal of the
    same rule, and both belong in it, because reversing a decision silently is
@@ -724,6 +724,23 @@ export function mount(parent, ctx) {
        same arithmetic that keeps a role out of the chronology. */
     if (place && WHEN[gk]) li.dataset.place = canon(WHEN[gk].place);
     if (WHEN[gk]) li.dataset.year = String(WHEN[gk].year);
+    /* A BC ROW'S YEAR CELL IS WIDER THAN THE COLUMN (2026-08-30, the
+       deep-time round). nu.css sizes the year track at 4ch, which held
+       every year the catalog had for its whole life — and "33000 BC" is
+       eight characters, so the cell wrapped and the row broke the
+       one-line law (measured: 51.4px against the 44-46 floor, at every
+       width). nu.css is NOT this slice's file, so the eight BC rows carry
+       their own track inline — 8ch is exactly the widest cell the
+       convention can produce ("33000 BC"), and the row's subgrid follows
+       it. THE SEAM THIS BUYS: at >=700px these rows keep the proportional
+       middle track where their CE siblings get the fixed 26/34ch one.
+       THE RULE LANDED THE SAME DAY (2026-08-30): nu.css now carries
+       `.nu-ixli[data-bc]` at all three of its own breakpoints, so the
+       inline shim that stood here is retired — the attribute stays, the
+       sheet owns the track, and at >=700px a BC row now gets the same
+       fixed middle column as its CE siblings instead of the proportional
+       one the shim couldn't give it. */
+    if (WHEN[gk] && WHEN[gk].year < 0) li.dataset.bc = "1";
     li.append(b, genreCell(gk, genre, why || null));
     return li;
   }
@@ -737,7 +754,12 @@ export function mount(parent, ctx) {
     idxBuilt = true;
     const t0 = (typeof performance !== "undefined") ? performance.now() : 0;
     const f = document.createDocumentFragment();
-    for (const r of ALL) f.append(idxRow(String(r.year), r.gk, r.place, r.gk, null));
+    /* THE YEAR CELL IS yearWord, NOT String — a raw "-40000" is arithmetic,
+       not a year a person reads (2026-08-30, the deep-time round). The
+       <li>'s data-year attribute two lines up stays the SIGNED number,
+       because sweep() computes on it; print and compute are two jobs and
+       atlas.js yearWord is the one owner of the print half. */
+    for (const r of ALL) f.append(idxRow(yearWord(r.year), r.gk, r.place, r.gk, null));
     for (const gk of ROLES) f.append(idxRow("—", gk, "a role", gk, EXCLUDE[gk]));
     idxRows.append(f);
     idxMs = ((typeof performance !== "undefined") ? performance.now() : 0) - t0;
@@ -1286,7 +1308,7 @@ export function mount(parent, ctx) {
          isn't right". A mark that exists only where its record does needs no
          disclaimer. */
       const lab = name + (WITHIN[name] ? ", in " + WITHIN[name] : "")
-        + " " + r.year + ", " + r.gk;
+        + " " + yearWord(r.year) + ", " + r.gk;
       if (m.lab !== lab) { m.lab = lab; m.g.setAttribute("aria-label", lab); }
       /* AND THE GENRE NAME IS PRINTED — the one the TAP WOULD PICK, never a
          pile. `r` is `shown.get(name)`, which atlas.js built from recordAt():
@@ -1634,7 +1656,7 @@ export function mount(parent, ctx) {
        the dashes; eraOf stays exported by atlas.js for whoever needs an
        era's name. */
     const nR = at.exact.size + at.near.size;
-    say.textContent = Y + " · " + nR + " record" + (nR === 1 ? "" : "s")
+    say.textContent = yearWord(Y) + " · " + nR + " record" + (nR === 1 ? "" : "s")
       + " within ten years · " + six.join(", ")
       + (more > 0 ? ", +" + more + " more" : "");
   }
@@ -1650,7 +1672,7 @@ export function mount(parent, ctx) {
      #atlasSay carries the one measured line. */
   function pick(gk, done) {
     const w = WHEN[gk];
-    const where = w ? w.place + " " + w.year : gk;
+    const where = w ? w.place + " " + yearWord(w.year) : gk;
     /* WHAT IT SAYS WHILE IT WORKS. genreToDocument is fast table work, but
        ctx.setDocument recompiles the whole song and redraws the whole page, and
        the staves land late on an abcjs promise. So the sentence paints FIRST and

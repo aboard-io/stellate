@@ -74,6 +74,17 @@
 // and nothing else. The proof is the diff — 10 deleted lines, 5 sections x 2
 // keys, 0 insertions, 0 other changes — and G7a passing on everything that was
 // left.
+//
+// AND A THIRD TIME (2026-08-30, the deep-time round), for one field's value
+// and nothing else. `gregorian` declared its first parent — `oxyrhynchus`
+// (Oxyrhynchus 300, the oldest notated Christian music; the argument is a
+// dated paragraph on the anchor itself) — so the chant's portrait carries
+// `parents: { oxyrhynchus: 0.25 }` where it carried `parents: {}`. THE CHANT
+// DID NOT MOVE: `parents` is genealogy data, it reaches no cell, cast, call
+// or synth row, and the proof is the diff — the same one-line substitution in
+// each of the five sections, 0 other changes — applied by exactly the edit
+// the source took (the same derived-not-retyped procedure as 2026-08-25,
+// since the CLI half still cannot be re-run).
 "use strict";
 const fs = require("fs");
 const path = require("path");
