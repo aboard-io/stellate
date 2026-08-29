@@ -804,6 +804,19 @@ const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
           if (c === tray || c.id === "nu-say") continue;
           const cs = getComputedStyle(c);
           if (cs.display === "none" || cs.visibility === "hidden") continue;
+          /* THE SCREEN-READER BOXES ARE NOT ON THE SCREEN (2026-08-30). When
+             the outer gutter went to zero (Paul: "Get rid of all margins and
+             padding on the outside of the views"), this sweep failed 36 times
+             on H2@55.0-56.0 — every one of them the sr-only recipe (.nu-ax >
+             h2 and its kin: 1x1px, margin -1px, clip-path inset(50%)), whose
+             negative margin parks an INVISIBLE box one pixel into the tray's
+             band now that content starts at the tray's own edge. Nothing is
+             painted there — clip-path clips the whole box — so "under the
+             gutter" was never true of them; with 12px of page gutter they
+             merely never got close enough for the stage to notice they exist.
+             A clipped-to-nothing box is skipped the way display:none is. */
+          if (cs.clipPath && cs.clipPath.indexOf("inset") === 0
+              && parseFloat(cs.width) <= 1 && parseFloat(cs.height) <= 1) continue;
           const r = c.getBoundingClientRect();
           if (!r.width && !r.height) continue;
           if (r.right > t.left + 0.5 && r.left < t.right - 0.5)

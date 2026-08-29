@@ -323,9 +323,19 @@
      how the next round discovers it by breaking. */
   --head-h: 38px;
   /* the page gutter, named once because the two sticky bands cancel it to go
-     full-bleed and a second copy of the number would drift */
-  --gl: max(12px, env(safe-area-inset-left));
-  --gr: max(12px, env(safe-area-inset-right));
+     full-bleed and a second copy of the number would drift.
+
+     12px OF AIR STOOD HERE AND IT IS GONE (2026-08-30). Paul: *"Get rid of
+     all margins and padding on the outside of the views."* The views run to
+     the edges now: the left inset is already PAID by the tray (its own
+     padding carries env(safe-area-inset-left), see .nu-tray), so --gl owes
+     nothing; --gr keeps only the notch inset for landscape, which is not a
+     margin — it is the part of the glass a finger cannot reach. Every
+     full-bleed negative-margin trick below re-pays these same two tokens, so
+     the whole arithmetic follows this one edit — that is why the number is
+     named once. */
+  --gl: 0px;
+  --gr: env(safe-area-inset-right, 0px);
   /* ===== THE FIXED GUTTER (2026-08-28) ================================
      Paul: *"Make it a fixed gutter"* and *"Dont let anything go under it."*
      56px, and the number is arithmetic rather than taste: a tap target is
@@ -889,7 +899,16 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
         and keeps the popover out of it on whichever edge it finds it. That is
         the shape the other two would take if either could be written without
         naming a side, and it is the one to copy if this moves again. */
-.nu-tray{ position: fixed; inset-block: 0; inset-inline-start: 0; z-index: 40;
+/* 100% VERTICAL, BY THE DYNAMIC VIEWPORT (2026-08-30). Paul: *"Make the nav
+   gutter run 100% vertically so it doesn't cut off on iPhone."* This read
+   `inset-block: 0`, which pins both ends to the LAYOUT viewport — and on iOS
+   Safari the layout viewport and the visible glass disagree by the height of
+   the collapsing toolbar, so the gutter's foot could sit under the bar. The
+   honest length is the DYNAMIC viewport: top pinned, block-size 100dvh (100vh
+   is the fallback for engines without dvh; dvh tracks the toolbar as it
+   comes and goes). Bottom padding still pays the home indicator. */
+.nu-tray{ position: fixed; inset-block-start: 0; block-size: 100vh; block-size: 100dvh;
+  inset-inline-start: 0; z-index: 40;
   inline-size: var(--tray-w);
   display: flex; flex-direction: column; align-items: stretch;
   /* the marks stand in 56px whatever the notch does — see --tray-w */
