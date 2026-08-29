@@ -129,7 +129,22 @@ ok("iranpop: 10 rewrites, >= 8 distinct hooks and >= 5 distinct rhythms", () => 
    alone in its density band (two onsets in the bar — precompose §6b), and a
    band of one is a pin. A drone is a drone. They move on contour, landing and
    key like everything else. */
-const FROZEN_RHYTHM = ["ambient", "arabesk", "drone", "dub", "enka"];
+/* ...AND THE TWO GENEALOGY ROUNDS OF 2026-08-29 GREW THE BAND. The list below
+   was five when the catalogue was 201; the rounds that took it to 282 seated
+   ten more rows whose IDIOM_ANCHOR states `cell: "long"` BY ARGUMENT — a
+   gagaku is a held court line, satie's refusal to develop IS the idiom,
+   dubstep and gqom are the drone against the broken kick, modaljazz is
+   bebop's opposite (space), triphop and chopped are dub's row at other
+   tempos, cemilbey's taksim rises through a held line, gothicrock and
+   psychrock carry the journey-out line. Same pin, same reason: `long` is a
+   band of one. They move on contour, landing and key like everything else —
+   the degree and key asserts below still hold them to that. The ratio assert
+   also changed from a typed 0.95 to the DERIVED complement of this list,
+   because a threshold that has to be re-typed every time the catalogue grows
+   is a number waiting to be wrong. */
+const FROZEN_RHYTHM = ["ambient", "arabesk", "cemilbey", "chopped", "drone",
+                       "dub", "dubstep", "enka", "gagaku", "gothicrock",
+                       "gqom", "modaljazz", "psychrock", "satie", "triphop"];
 ok("catalog: hook rhythm and degrees vary at nearly every anchor", () => {
   let rv = 0, dv = 0, kv = 0; const frozen = [];
   for (const g of ANCHORS) {
@@ -149,7 +164,9 @@ ok("catalog: hook rhythm and degrees vary at nearly every anchor", () => {
   console.log("      record KEY varies    " + kv + "/" + n + "  " + (kv / n).toFixed(3));
   console.log("      rhythm-frozen: " + (frozen.join(" ") || "none") + "\n");
   assert(n >= 50, "the sweep must cover at least 50 anchors, covered " + n);
-  assert(rv / n >= 0.95, "hook rhythm varies at only " + (rv / n).toFixed(3) + " of anchors");
+  assert(rv === n - FROZEN_RHYTHM.length, "hook rhythm varies at " + rv +
+         " of " + n + " anchors; expected all but the " + FROZEN_RHYTHM.length +
+         " decided long-cell rows");
   assert(dv === n, "hook degrees frozen at " + (n - dv) + " anchors");
   assert(kv === n, "key frozen at " + (n - kv) + " anchors");
   assert.deepStrictEqual(frozen.slice().sort(), FROZEN_RHYTHM,

@@ -124,28 +124,32 @@
     "Abidjan": [5.32, -4.03], "Accra": [5.60, -0.19],
     "Addis Ababa": [9.03, 38.74], "Aksum": [14.13, 38.72],
     "Antwerp": [51.22, 4.40], "Atlanta": [33.75, -84.39],
-    "Austin": [30.27, -97.74], "Bamako": [12.64, -8.00],
+    "Austin": [30.27, -97.74], "Baghdad": [33.31, 44.37], "Bamako": [12.64, -8.00],
     "Bangkok": [13.75, 100.50], "Barcelona": [41.39, 2.17],
     "Barranquilla": [10.96, -74.80], "Basildon": [51.57, 0.46],
-    "Beijing": [39.90, 116.41],
+    "Beijing": [39.90, 116.41], "Bingen": [49.97, 7.90],
     "Berlin": [52.52, 13.40], "Boston": [42.36, -71.06],
-    "Bristol": [51.45, -2.59], "Buenos Aires": [-34.60, -58.38],
+    "Bristol": [51.45, -2.59], "Bronx": [40.84, -73.87],
+    "Buenos Aires": [-34.60, -58.38],
     "Cairo": [30.04, 31.24], "Chandigarh": [30.73, 76.78],
     "Chapel Hill": [35.91, -79.06], "Charlotte": [35.23, -80.84],
     "Chennai": [13.08, 80.27],
     "Chicago": [41.88, -87.63], "Cincinnati": [39.10, -84.51],
+    "Constantinople": [41.01, 28.98],
     "Clarksdale": [34.20, -90.57], "Cleveland": [41.50, -81.69],
     "Cologne": [50.94, 6.96], "Córdoba": [37.89, -4.78],
     "Crawley": [51.11, -0.19],
     "Cusco": [-13.53, -71.97], "Delhi": [28.61, 77.21],
     "Detroit": [42.33, -83.05],
-    "Douala": [4.05, 9.77], "Dublin": [53.35, -6.26],
+    "Douala": [4.05, 9.77], "Dresden": [51.05, 13.74],
+    "Dublin": [53.35, -6.26], "Durban": [-29.86, 31.02],
     "Düsseldorf": [51.23, 6.78], "Essex": [51.75, 0.50],
     "Faisalabad": [31.42, 73.08], "Florence": [43.77, 11.26],
     "Freetown": [8.48, -13.23], "Glasgow": [55.86, -4.25],
     "Greenwich Village": [40.73, -74.00], "Guadalajara": [20.67, -103.35],
     "Guča": [43.78, 20.23], "Harlem": [40.81, -73.94], "Havana": [23.13, -82.38],
     "Ho Chi Minh City": [10.82, 106.63], "Hong Kong": [22.32, 114.17],
+    "Houston": [29.76, -95.37], "Isle of Wight": [50.69, -1.32],
     "Istanbul": [41.01, 28.98], "Jakarta": [-6.21, 106.85],
     "Johannesburg": [-26.20, 28.05], "Kabul": [34.53, 69.17],
     "Kansas City": [39.10, -94.58], "Kent": [51.20, 0.75],
@@ -175,13 +179,16 @@
     "Santo Domingo": [18.47, -69.90], "São Paulo": [-23.55, -46.63], "Jalandhar": [31.33, 75.58],
     "Sausalito": [37.86, -122.49], "Sedalia": [38.70, -93.23],
     "Seoul": [37.57, 126.98], "Shanghai": [31.23, 121.47],
-    "Sofia": [42.70, 23.32],
+    "Sofia": [42.70, 23.32], "South Carolina": [34.00, -81.03],
+    "St. Gallen": [47.42, 9.37],
     "St. Louis": [38.63, -90.20], "Stourbridge": [52.46, -2.15],
     "Swindon": [51.56, -1.78], "Taipei": [25.03, 121.57],
     "Tampa": [27.95, -82.46], "Teaneck": [40.89, -74.02],
     "Tehran": [35.69, 51.39], "Tetouan": [35.57, -5.37],
     "Tokyo": [35.68, 139.65],
     "Toronto": [43.65, -79.38], "Valledupar": [10.46, -73.25],
+    "Washington": [38.91, -77.04], "Winchester": [51.06, -1.31],
+    "Workington": [54.64, -3.55],
     "Venice": [45.44, 12.32], "Vienna": [48.21, 16.37],
   };
 
@@ -476,6 +483,43 @@
     crunk:          { place: "Memphis", year: 1997 },
     grime:          { place: "London", year: 2003 },
     dubstep:        { place: "London", year: 2005 },
+    mawsili:        { place: "Baghdad", year: 800 },
+    kassia:         { place: "Constantinople", year: 843 },
+    sequence:       { place: "St. Gallen", year: 884 },
+    winchester:     { place: "Winchester", year: 1000 },
+    hildegard:      { place: "Bingen", year: 1151 },
+    josquin:        { place: "Venice", year: 1502 },
+    monteverdi:     { place: "Venice", year: 1610 },
+    schutz:         { place: "Dresden", year: 1636 },
+    contradanza:    { place: "Havana", year: 1803 },
+    holler:         { place: "South Carolina", year: 1853 },
+    operetta:       { place: "London", year: 1878 },
+    musichall:      { place: "London", year: 1892 },
+    satie:          { place: "Paris", year: 1888 },
+    march:          { place: "Washington", year: 1889 },
+    broadway:       { place: "New York", year: 1927 },
+    territoryband:  { place: "Kansas City", year: 1932 },
+    stockhausen:    { place: "Cologne", year: 1956 },
+    modaljazz:      { place: "New York", year: 1959 },
+    brill:          { place: "New York", year: 1960 },
+    garagerock:     { place: "Portland", year: 1963 },
+    beachboys:      { place: "Los Angeles", year: 1966 },
+    psychrock:      { place: "San Francisco", year: 1966 },
+    velvets:        { place: "New York", year: 1966 },
+    zodiak:         { place: "Berlin", year: 1968 },
+    winstons:       { place: "Washington", year: 1969 },
+    progrock:       { place: "Isle of Wight", year: 1970 },
+    sabbath:        { place: "Workington", year: 1969 },
+    blockparty:     { place: "Bronx", year: 1973 },
+    pfunk:          { place: "Detroit", year: 1975 },
+    ymo:            { place: "Tokyo", year: 1978 },
+    nwobhm:         { place: "London", year: 1980 },
+    thrash:         { place: "San Francisco", year: 1983 },
+    triphop:        { place: "Bristol", year: 1991 },
+    chopped:        { place: "Houston", year: 1995 },
+    synthwave:      { place: "Paris", year: 2010 },
+    footwork:       { place: "Chicago", year: 2013 },
+    gqom:           { place: "Durban", year: 2016 },
   };
   /* WHEN:END */
 
@@ -530,7 +574,22 @@
                "Kent", "Leipzig", "Lisbon", "Liverpool", "London", "Manchester",
                "Muswell Hill", "Paris", "Piraeus", "Provence", "Reims",
                "Reykjavík", "Rome", "Sofia", "Stourbridge", "Swindon", "Venice",
-               "Vienna"],
+               "Vienna",
+               // THE DEBTS ROUND'S SEVEN (2026-08-29). Six are plain European
+               // geography: Bingen, Dresden, St. Gallen, Winchester,
+               // Workington (NOT Birmingham — the Southall note below
+               // measured that dot blocked in advance, and `sabbath` takes
+               // its first named performance instead; the wall held) and
+               // the Isle of Wight. CONSTANTINOPLE is the one
+               // that needs its sentence, because Istanbul — the same
+               // coordinates — sits in the Middle East row below: the dot is
+               // `kassia`, Constantinople 843, Byzantine chant answering to
+               // Rome and Athens six centuries before the Ottoman court music
+               // that put Istanbul where Garland's volume 6 puts it. Two
+               // names, one harbour, two musics, and the geography follows
+               // the record both times — Córdoba's own rule, run in reverse.
+               "Bingen", "Constantinople", "Dresden",
+               "Isle of Wight", "St. Gallen", "Winchester", "Workington"],
     "North America": ["Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
                       "Chicago", "Cincinnati", "Cleveland", "Detroit",
                       "Greenwich Village", "Harlem", "Clarksdale", "Kansas City", "Lafayette",
@@ -538,7 +597,14 @@
                       "New Orleans", "New York", "Oklahoma City", "Orlando",
                       "Philadelphia", "Portland", "San Diego", "San Francisco",
                       "Sausalito", "Sedalia", "St. Louis", "Tampa", "Teaneck",
-                      "Toronto"],
+                      "Toronto",
+                      // ...and the debts round's four (2026-08-29): Washington
+                      // (a march and a B-side eighty years apart), the Bronx,
+                      // Houston, and SOUTH CAROLINA — a state standing where a
+                      // city cannot: Olmsted's holler names no town, and the
+                      // dot is the state's own centre, the Provence/Essex
+                      // precedent one column over.
+                      "Bronx", "Houston", "South Carolina", "Washington"],
     // Mexico is here and not in North America, which is a choice and is the
     // one Garland's own volumes make: the musical basin is Ibero-American,
     // and a Sinaloan banda has more to say to a Colombian cumbia than to a
@@ -556,8 +622,8 @@
     // rather than to Lagos. Aksum stays here — Ethiopian sacred chant is in
     // volume 1 and belongs to it.
     "Africa": ["Abidjan", "Accra", "Addis Ababa", "Aksum", "Bamako",
-               "Douala", "Freetown", "Johannesburg", "Kinshasa", "Lagos",
-               "Luanda", "Nairobi"],
+               "Douala", "Durban", "Freetown", "Johannesburg", "Kinshasa",
+               "Lagos", "Luanda", "Nairobi"],
     "East Asia": ["Beijing", "Hong Kong", "Nara", "Seoul", "Shanghai",
                   "Taipei", "Tokyo"],
     "Southeast Asia": ["Bangkok", "Ho Chi Minh City", "Jakarta", "Manila",
@@ -578,7 +644,10 @@
     // material, answering to Baghdad and Fez, not to a Spain that would
     // not exist for six centuries. The geography follows the record, the
     // way Kinshasa's spelling followed the map.
-    "Middle East": ["Cairo", "Córdoba", "Istanbul", "Oran", "Tehran", "Tetouan"],
+    // AND BAGHDAD JOINS (2026-08-29) — the dot is `mawsili`, Baghdad 800,
+    // the Abbasid court the whole row answers to; volume 6's own centre.
+    "Middle East": ["Baghdad", "Cairo", "Córdoba", "Istanbul", "Oran",
+                    "Tehran", "Tetouan"],
     "Central Asia": ["Kabul"],
   };
   /* AND THE EMPTY CELL, DECLARED. One region of the nine has no dot at all,

@@ -424,8 +424,42 @@ function sectionEvents(doc, i) {
   // rows (hymn asking for spirituals, continuo for opera seria), and one
   // backwards PARENT edge was closed (motorik <- kraftwerk, three years
   // its own child's junior, reparented onto krautrock Cologne 1971).
-  ok("G0 the catalog is 245 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 245,
+  // + the THIRTY-SEVEN of the debts round ("Keep going on genres", Paul,
+  // 2026-08-29, the same lane's next shift): grown by paying the wants
+  // ledger again — six multi-dependent debts paid BY NAME (field holler as
+  // `holler`, South Carolina 1853, Olmsted's eyewitness print, ×4 counting
+  // skiffle's "work song"; stockhausen ×3; the amen break ×2 as `winstons`,
+  // the band and the B-side, because a seven-second sample is a record and
+  // not a genre; the cuban contradanza ×2, Havana 1803; abbasid court song
+  // ×2 as `mawsili`, Baghdad 800; the zodiak free arts lab ×2) — plus the
+  // decade histogram's own thin stretches filled at the dufay standard:
+  // four rows where the 800s-1100s held three for seven centuries (kassia,
+  // sequence, winchester — which closes organum's gregorian:1
+  // simplification — and hildegard), Josquin's 1500s (josquin, Venice 1502,
+  // Petrucci's first single-composer print), BOTH halves of the 1610-1660
+  // gap (monteverdi, schutz), the 1840s-50s (contradanza 1803 predates it;
+  // holler 1853 and nothing else could be argued — the viennese waltz
+  // stays declined on the triple-meter reason), twelve want-paying 19th-
+  // and 20th-century rows (operetta, musichall, satie, march, broadway,
+  // territoryband, modaljazz, brill — which pays songwriterpiano AND
+  // punk's "girl groups" — garagerock, beachboys, psychrock, velvets,
+  // progrock), the metal wing the table lacked entirely (sabbath
+  // Workington 1969 — NOT Birmingham: the atlas's own Southall note
+  // measured that dot blocked, so the row takes the first named
+  // performance under the name, 30 August 1969 — nwobhm, thrash), the
+  // culture gap before electro (blockparty, Bronx 1973), pfunk, ymo,
+  // triphop, chopped, and the 2010s brought from seven rows to ten
+  // (synthwave Paris 2010, footwork Chicago 2013, gqom Durban 2016).
+  // FOUR were examined and DECLINED with reasons at the debts round's
+  // foot in genres.js: the amen break as its own row (a record, not a
+  // genre), barbershop (no verifiable named dated performance found this
+  // shift), vaudeville (a stage format, not a music) and muzak (a
+  // licensing company). The genealogy round's five declines stand
+  // unbeaten. TWO new shared wants were opened on purpose with matched
+  // spellings so the ledger counts one debt each ("jamaican sound
+  // system": boombap + blockparty; "hardcore": screamo + thrash).
+  ok("G0 the catalog is 282 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 282,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
@@ -1000,12 +1034,23 @@ function sectionEvents(doc, i) {
     // reading the predicate and landed on their own three fields; five
     // independent arrivals now, and the derived list below is the round's
     // whole edit to this gate.
+    // ...AND THE DEBTS ROUND ADDED FIVE MORE PROBES (2026-08-29): `kassia`,
+    // `sequence` and `hildegard` are one unaccompanied chant voice each,
+    // `winchester` is two, `josquin` four, and `holler` repeats ballad's
+    // smallest-member test from the other side of an ocean. All were
+    // written without reading the predicate and landed on their own three
+    // fields; the derived list below is again the round's whole edit here.
+    // (`winchester` is in the set and worth a beat: two ahh_choir voices,
+    // empty kit, nobass — the predicate found the organum practice
+    // unaccompanied, which it was.)
     ok("G11c the unaccompanied law is derived, not a list — it found the " +
-       "five it was written on PLUS sacredharp, chorale, and now ballad, " +
-       "dufay and spirituals, none of which it has ever heard of", () => {
+       "five it was written on PLUS sacredharp, chorale, ballad, dufay, " +
+       "spirituals, and now the debts round's six, none of which it has " +
+       "ever heard of", () => {
       assert.deepStrictEqual(solo.slice().sort(),
-        ["ballad", "chorale", "dufay", "gregorian", "mbube", "organum",
-         "sacredharp", "spem", "spirituals", "zema"]);
+        ["ballad", "chorale", "dufay", "gregorian", "hildegard", "holler",
+         "josquin", "kassia", "mbube", "organum", "sacredharp", "sequence",
+         "spem", "spirituals", "winchester", "zema"]);
     });
 
     // G11d — EVERY PLACE IS IN EXACTLY ONE REGION, AND EVERY REGION ROW IS A

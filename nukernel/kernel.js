@@ -124,6 +124,26 @@
   // every operator above rewrites all five at once.
   const only = (k, op) => p => ({ ...p, [k]: op(p)[k] });
 
+  // KEEP — the thinning the catalogue kept reaching for and the alphabet did
+  // not have (2026-08-29). Forty-eight word-schedule sites across the two
+  // genealogy rounds wrote `only(0, 4, 8, 12)` meaning "keep the notes on
+  // these bar positions and rest the others" — but `only` is the one-vector
+  // combinator above, so each of those words THREW `op is not a function` the
+  // moment render() applied it: dufay, chorale, gagaku, jumpblues, operaseria,
+  // sizhu and belcanto crashed the kernel's own render while every gate stayed
+  // green, because the document path rebuilds words and never runs the raw
+  // rows. (Measured: K.render(cellOf(...).ph, GENRES.dufay, 12) threw; rock
+  // rendered 64 events beside it.)
+  //
+  // The positions are read MODULO 16 — every one of the forty-eight sites
+  // wrote 16-grid positions (0,2,4..14), and a two-bar phrase asked to keep
+  // the beats should keep them in BOTH bars, not silence its second half.
+  // A step that survives keeps every vector it had; a step that does not is
+  // gated off but its degree stays, exactly like drop — lossy on the gate,
+  // information-preserving underneath, so a later word can still read the line.
+  const keep = (...steps) => { const S = new Set(steps.map((n) => n % 16));
+    return p => ({ ...p, gate: p.gate.map((b, i) => (b && S.has(i % 16) ? b : 0)) }); };
+
   // LIST OPERATIONS. repeat and del change the SEQUENCE, not just its gates —
   // they stretch and close it, and every vector moves together, which is why
   // they are mapv and not a gate mask. drop left a hole where a note had been;
@@ -3010,7 +3030,7 @@
     outro(intro(ev, i, span, bs, met), o, span, bs, met);
 
   const api = { METERS, MET4, metOf, stepsIn, pulseIn,
-                at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, SHAPES, edges, intro, outro, groove, GROOVES, stressAt, perform, KITOPS, mapKit, LANES, TOMS, HATS, CYMBALS, LIMBORDER, rollAt, swing, rotate, reverse, transpose, invert, complement,
+                at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, SHAPES, edges, intro, outro, groove, GROOVES, stressAt, perform, KITOPS, mapKit, LANES, TOMS, HATS, CYMBALS, LIMBORDER, rollAt, swing, rotate, reverse, transpose, invert, complement, keep,
                 crossmap, excerpt, only, word,
                 PENT, MODE, ROMAN, romanOf, pitch, mp, fold, near,
                 QSTEPS, QFIX, chordsOf, chordAt, withCadence, harmonizeStage,

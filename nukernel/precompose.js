@@ -241,6 +241,40 @@
     grime:     { cell: "riff",   contour: "zig",    reg: "low",    len: "two" },
     gfunk:     { cell: "riff",   contour: "zig",    land: "seventh", len: "two" },
     crunk:     { cell: "even",   contour: "insist", land: "root",  len: "two" },
+    // THE DEBTS ROUND'S HANDOFF (2026-08-29, second shift, 245 -> 282), written
+    // by the parent as before. Twenty-six rows where the family idiom
+    // measurably lies about the music the row argues from; the other eleven of
+    // the round's thirty-seven take their family rows deliberately.
+    // — early polyphony and the concerted line —
+    josquin:   { cell: "walkup", contour: "rise",   sent: "vary" },
+    monteverdi:{ cell: "pickup", contour: "arch",   land: "third", sent: "vary" },
+    schutz:    { cell: "three",  contour: "arch",   sent: "vary",  len: "four" },
+    mawsili:   { cell: "three",  contour: "fall",   sent: "vary",  len: "four" },
+    // — the long unaccompanied line and its refusals —
+    holler:    { cell: "hang",   contour: "fall",   land: "lead", sent: "long", len: "four" },
+    satie:     { cell: "long",   contour: "hover",  sent: "plain", len: "four" },
+    march:     { cell: "even",   contour: "rise",   land: "root",  len: "two" },
+    modaljazz: { cell: "long",   contour: "hover",  land: "seventh", sent: "long", len: "four" },
+    // — the band rooms —
+    garagerock:{ cell: "riff",   contour: "insist", land: "root" },
+    beachboys: { contour: "arch", land: "third",    sent: "vary" },
+    psychrock: { cell: "long",   contour: "zig",    sent: "vary",  len: "four" },
+    velvets:   { cell: "even",   contour: "hover",  sent: "plain" },
+    stockhausen:{ cell: "three", contour: "zig",    sent: "vary",  len: "two" },
+    winstons:  { cell: "riff",   contour: "insist", land: "root" },
+    progrock:  { cell: "walkup", contour: "rise",   sent: "vary",  len: "four" },
+    sabbath:   { cell: "riff",   contour: "hold",   land: "root", reg: "low", len: "two" },
+    blockparty:{ cell: "riff",   contour: "insist", land: "root",  len: "two" },
+    pfunk:     { cell: "riff",   contour: "zig",    land: "root",  reg: "low" },
+    ymo:       { cell: "even",   contour: "zig",    sent: "plain" },
+    nwobhm:    { cell: "riff",   contour: "rise",   land: "root",  len: "two" },
+    thrash:    { cell: "even",   contour: "insist", reg: "low",    len: "two" },
+    // — the slow floors —
+    triphop:   { cell: "long",   contour: "fall",   sent: "long",  len: "four" },
+    chopped:   { cell: "long",   contour: "hover",  reg: "low", sent: "long", len: "four" },
+    synthwave: { cell: "riff",   contour: "hover",  reg: "low",    len: "two" },
+    footwork:  { cell: "even",   contour: "insist", reg: "low",    len: "two" },
+    gqom:      { cell: "long",   contour: "hover",  reg: "low",    sent: "long" },
     // the WRITTEN VIRTUOSO anchors: a choro, a rag, a reel and a kolo are
     // composed tunes that run, and `roots`' four-bar strophe is the one thing
     // they are not
