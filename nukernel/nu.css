@@ -2984,120 +2984,217 @@ table.nu-trims{ color: var(--ink); }
   border: var(--bw) solid var(--ink); border-radius: var(--r1);
   background: var(--panel); }
 .nu-ix{ list-style: none; margin: 0; padding: 0; }
-/* ===== THE ROW IS THE <li> AND THE BUTTON IS ITS FIRST THREE CELLS ======
-   FOUR COLUMNS SINCE 2026-08-29: the year in the machine voice (tabular
-   figures, so 540 and 1969 line up down the column and the eye reads the
-   chronology as a column rather than as 199 separate facts), the genre, the
-   place, and THE ARTICLE. `minmax(0, …)` on every text track is what keeps a
-   17-character place name ("Greenwich Village") inside a 390px phone instead
-   of pushing the page sideways: a `1fr` track has a min-content floor and
-   would have overflowed.
+/* ===== THE ROW IS THE <li>, AND THE BUTTON IS A PLATE UNDER IT ==========
+   Paul, 2026-08-29: *"Replace the slug for genre with the Wikipedia link so
+   everything is on one line."*
 
-   THE GRID MOVED FROM THE BUTTON TO THE <li> because a link cannot live inside
-   a button — invalid HTML, and ambiguous to a thumb and to a screen reader
-   both. So the button spans the first three columns and the anchor stands in
-   the fourth, and the two are siblings in one grid rather than one control
-   pretending to be two.
+   THREE COLUMNS, NOT FOUR, AND THE GENRE COLUMN IS THE LINK. This grid had
+   four tracks for six hours this morning — year, genre, place, article — and
+   the genre track held the genres.js KEY ("zema", "sizhu") while the article
+   track held the same music's real name ("Television news music"). Two names
+   for one row is what made the row too wide to fit, so the key comes off the
+   page and the title moves into its column. `minmax(0, …)` on every text track
+   is what keeps a 17-character place name ("Greenwich Village") inside a 390px
+   phone instead of pushing the page sideways: a `1fr` track has a min-content
+   floor and would have overflowed. The genre takes 1.6 of those parts against
+   the place's 1 (it was 1.1 to 1 when it held a KEY): an article title is
+   longer than "dub" and it is now the word the row is FOR, so the slack goes
+   to the name rather than being shared evenly with a place that is usually one
+   short word. AND THE YEAR TRACK CAME DOWN FROM 5ch TO 4ch, measured rather
+   than guessed: the widest year on the page is a four-digit one and it wants
+   33.7 CSS px, against 50.9 that 5ch was buying — 17 px a row of nothing,
+   which at 320 is 7% of the whole line. 4ch is 40.7, seven px of slack for a
+   fallback face, and every px it gives back goes to the title.
 
-   BELOW 560px THE ARTICLE TAKES ITS OWN LINE, and that is the one place this
-   grid stops being four columns. At 320 the row has 240px of column to spend
-   (the 56px gutter and the body's own margins are already gone); a fourth
-   track leaves the genre and the place about 6ch each, which is not a phrase
-   any more, it is two truncations. So under 560 the <li> is one column and the
-   article sits under the three facts, indented to line up with them — two
-   controls, one above the other, each its own tap target.
+   THE PARAGRAPH THIS REPLACES IS QUOTED BECAUSE HALF OF IT IS STILL TRUE:
+   "THE GRID MOVED FROM THE BUTTON TO THE <li> because a link cannot live
+   inside a button — invalid HTML, and ambiguous to a thumb and to a screen
+   reader both. So the button spans the first three columns and the anchor
+   stands in the fourth, and the two are siblings in one grid rather than one
+   control pretending to be two." — still the law. What is dead is the rest:
+   "BELOW 560px THE ARTICLE TAKES ITS OWN LINE, and that is the one place this
+   grid stops being four columns. At 320 the row has 240px of column to spend;
+   a fourth track leaves the genre and the place about 6ch each, which is not a
+   phrase any more, it is two truncations. So under 560 the <li> is one column
+   and the article sits under the three facts… two controls, one above the
+   other, each its own tap target." THERE IS NO FOURTH TRACK TO DROP. The
+   `@media (max-width: 559px)` block that did the dropping is deleted with it,
+   and every row is one line at every width — which is the sentence Paul
+   actually asked for.
+
+   THE BUTTON SPANS ALL THREE TRACKS WITH `subgrid`, so the year and the place
+   sit in the <li>'s OWN columns. The alternative was to repeat the three track
+   sizes on the button and hope the two copies stayed equal; they would not
+   have, because the anchor is positioned by the <li>'s tracks and the year by
+   the button's, and a page whose two grids disagree by 2px is a page whose
+   link does not line up with the column it is supposed to be in. One
+   definition, one place, and the <li>'s `padding-inline` is what insets the
+   row (the button carries none, so its content box IS the <li>'s and the
+   subgrid lines land exactly on the parent's).
+
+   THE ANCHOR IS PAINTED OVER THE PLATE and wins the hit test on its own word
+   by SOURCE ORDER — it comes after the button in the DOM, so no z-index and no
+   stacking context is needed. `justify-self: start` shrink-wraps it to the
+   width of the title, so the rest of the genre column is still plate: a tap on
+   "Dub music" opens Wikipedia, a tap two centimetres to its right plays the
+   record. (ui/atlas.js argues why there is no `stopPropagation`.)
+
+   AND THE STATE PAINT MOVED TO THE <li> WITH THE GRID. It was
+   `.nu-ixrow[aria-current="true"]` and `.nu-ixrow:active`; the button no
+   longer reaches the row's edges (the <li> holds the padding now), so a tint
+   painted on the button would stop 12px short on both sides and the "what is
+   playing" bar would float inside the row instead of running down its edge.
+   `:has()` keys the same fact off the same attribute — one fact, still one
+   owner (ui/atlas.js `syncIndex` writes `aria-current` and nothing else) —
+   painted on the element that is now the row.
+
+   WHAT IS PLAYING, SAID THE WAY THE GLOBE SAYS IT: the mark on the earth wears
+   a ring; the row wears the hand — the page's own colour for "a value you
+   set". One fact, two pictures.
 
    THE ARITHMETIC AT FIVE WIDTHS, measured on the rendered page in the gate's
-   own chromium with all 201 rows built:
+   own chromium with all 201 rows built (2026-08-29):
 
                     320     375     390     430    1280
-     the <li>     88-95   88-95   88-95   88-89   44-45
+     the <li>        44      44      44      44      44
      its button      44      44      44      44      44   (the tap floor)
-     the article     44      44      44      44      44
+     the genre       44      44      44      44      44
      sideways         0       0       0       0       0   (page and list both)
 
-   Every number in the second and third rows is `--tap` and none of them is
-   broken at any width: two controls, two full tap targets, side by side above
-   560 and stacked below it. The <li> is what grows, which is the honest place
-   for the cost to land.
+   ONE LINE COSTS AN ELLIPSIS, AND HERE IS THE BILL, counted on the rendered
+   page over all 213 rows rather than described:
 
-   At 1280 the four columns fit in one 44px line and the article takes the
-   full floor. `text-overflow: ellipsis` on the article is what keeps that
-   true for "Bulgarian State Television Female Vocal Choir" (46 characters). */
+                              320px    390px    1280px
+     titles that ellipsise      116       72         2
+     places that ellipsise       64       22         0
+
+   That is the trade Paul asked for in the sentence — a phone shows the start of
+   a name instead of showing the whole of a name twice on two lines — and it is
+   written down rather than discovered. The WHOLE string is the anchor's
+   `aria-label` (so nothing is lost to a screen reader), the reason the article
+   was chosen is in `title`, and above 700px the genre takes a fixed track with
+   the place following it immediately, so the three facts stay a phrase instead
+   of a sweep of the eye across 590px of nothing — and on a desktop the two
+   still cut are the two longest names in the catalogue and nothing else. */
 .nu-ixli{ margin: 0; display: grid; align-items: center;
-  grid-template-columns: minmax(0, 1fr) auto; gap: 0 .5em;
+  grid-template-columns: 4ch minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 0 .5em; padding-inline: .75em;
   border-block-end: var(--bw) solid var(--rule); }
 .nu-ixli:last-child{ border-block-end: 0; }
-.nu-ixrow{ display: grid;
-  grid-template-columns: 5ch minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: .5em; align-items: center; inline-size: 100%; text-align: start;
+.nu-ixli:has(> .nu-ixrow:active){ background: var(--flag); }
+.nu-ixli:has(> .nu-ixrow[aria-current="true"]){ background: var(--hand-tint);
+  box-shadow: inset 3px 0 0 var(--hand); }
+.nu-ixrow{ grid-column: 1 / -1; grid-row: 1;
+  display: grid; grid-template-columns: subgrid;
+  align-items: center; inline-size: 100%; text-align: start;
   border: 0; border-radius: 0;
   box-shadow: none; background: transparent;
-  padding-inline: .75em; padding-block: .35em; }
-.nu-ixrow:active{ transform: none; background: var(--flag); }
-/* WHAT IS PLAYING, SAID THE WAY THE GLOBE SAYS IT. The mark on the earth wears
-   a ring; the row wears the hand — the page's own colour for "a value you set"
-   — and it keys off `aria-current`, the state ui/atlas.js already writes from
-   the same `here` the ring is drawn from. One fact, two pictures. */
-.nu-ixrow[aria-current="true"]{ background: var(--hand-tint);
-  box-shadow: inset 3px 0 0 var(--hand); }
+  padding-inline: 0; padding-block: .35em; }
+.nu-ixrow:active{ transform: none; }
 /* AND ON A WIDE SCREEN THE GENRE COLUMN STOPS STRETCHING. Measured at 1280:
    two proportional tracks put "Kingston" 590 px to the right of "reggae" with
    nothing in between — a row you read by sweeping your eye across a gap rather
-   than at a glance. Above 700 px the genre takes a fixed 18ch (wider than the
-   longest key, "singersongwriter") and the place follows it immediately, so
-   the three facts stay a phrase at every width. Below 700 the tracks stay
-   proportional, because 18ch of a 390 px phone would leave the place nowhere
-   to go. */
+   than at a glance. Above 700 px the genre takes a fixed 26ch (18ch was the
+   number when this column held the KEY, and the longest key is
+   "singersongwriter"; it holds article titles now, and "Bulgarian State
+   Television Female Vocal Choir" is 46 characters) and the place follows it
+   immediately, so the three facts stay a phrase at every width. Below 700 the
+   tracks stay proportional, because 26ch of a 390 px phone would leave the
+   place nowhere to go. */
 @media (min-width: 700px){
-  .nu-ixrow{ grid-template-columns: 5ch minmax(0, 18ch) minmax(0, 1fr); }
+  .nu-ixli{ grid-template-columns: 4ch minmax(0, 26ch) minmax(0, 1fr); }
 }
-.nu-ixy{ font-family: var(--mono); font-variant-numeric: tabular-nums;
-  color: var(--dim); }
-.nu-ixg{ font-weight: 600; overflow-wrap: anywhere; }
-.nu-ixp{ color: var(--dim); overflow-wrap: anywhere; }
-/* ---------- THE ARTICLE COLUMN (2026-08-29) ----------------------------
-   Paul: *"Add Wikipedia links to the genre list in a column."*
+/* AND THE DESKTOP GETS A WIDER ONE, because 26ch on a 1280 was still cutting
+   words with 700px of empty place column beside them — "Music of Punjab · the
+   broa…" next to "Chandigarh" is an ellipsis that has no excuse. Measured over
+   all 213 titles at 1280: the median wants 104px, the 90th 237, the 98th 314,
+   and the longest ("Bulgarian State Television Female Vocal Choir · the
+   artist") 515. 26ch is 264 and cuts 11; 34ch is 346 and cuts 2; 46ch is 468
+   and cuts 1, at the price of putting the place 470px from the year on every
+   row of the list. 34ch is where the curve flattens — two long tails ellipsised
+   instead of eleven, and the place still lands within a glance of the name. */
+@media (min-width: 1100px){
+  .nu-ixli{ grid-template-columns: 4ch minmax(0, 34ch) minmax(0, 1fr); }
+}
+/* AND ON THE NARROWEST PHONE THE ROW GIVES BACK ITS OWN SLACK BEFORE IT ASKS
+   THE WORDS TO. 320px is 238px of line after the 56px gutter, and the two
+   gaps and the two paddings are 40 of them — 17% of the row spent on air. At
+   .35em and .5em they are 27, and the 13px goes to the title and the place:
+   measured, 130 -> 116 titles and 93 -> 64 places ellipsised. The 44px floor,
+   the one line and the zero sideways scroll are all unchanged; what shrinks is
+   whitespace, which is the right thing to spend first. */
+@media (max-width: 359px){
+  .nu-ixli{ gap: 0 .35em; padding-inline: .5em; }
+}
+/* THE YEAR AND THE PLACE ARE PLACED, NOT FLOWED. The genre is not the button's
+   child any more, so the button's subgrid has a HOLE at column 2 — and auto
+   placement would slide the place straight into it. Two explicit columns is
+   the whole fix, and it is also the honest description of the row: the button
+   holds the first and third facts and the second is a link lying over it. */
+.nu-ixy{ grid-column: 1; font-family: var(--mono);
+  font-variant-numeric: tabular-nums; color: var(--dim); }
+.nu-ixp{ grid-column: 3; color: var(--dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-inline-size: 0; }
+/* ---------- THE GENRE IS THE ARTICLE (2026-08-29) ----------------------
+   Paul: *"Replace the slug for genre with the Wikipedia link so everything is
+   on one line."*
 
-   IT IS A FOOTNOTE TO THE ROW AND NOT A SECOND TITLE, which is the sentence
-   `.nu-wiki` used to make beside the <h1> and makes here instead: smaller than
-   the genre it sits beside, the browser's own underline left alone (that is
-   the affordance for "this leaves the page"), and hand-blue from the base `a`
-   rule like every other link on this page.
+   IT IS THE ROW'S NAME NOW, NOT A FOOTNOTE TO IT, and that is a REVERSAL of
+   the paragraph that stood here this morning: "IT IS A FOOTNOTE TO THE ROW AND
+   NOT A SECOND TITLE, which is the sentence `.nu-wiki` used to make beside the
+   <h1> and makes here instead: smaller than the genre it sits beside." There
+   is no genre beside it to be smaller than — it IS the genre. So `.8rem` goes
+   and it takes the column's own size and weight (`.nu-ixg` held the slug and
+   wore `font-weight: 600; overflow-wrap: anywhere`; the rule is DELETED with
+   the cell, and its weight is inherited here — a title does not `anywhere`,
+   it ellipsises, because wrapping is the two-line bug this round closed), with
+   the browser's own underline left alone, because that underline is the
+   affordance for "this leaves the page", and hand-blue from the base `a` rule
+   like every other link on this page. A link that had been quietly shrunk to
+   footnote size while being the only name on the row would be exactly the
+   silent demotion this stylesheet's other notes keep refusing.
 
-   IT IS ITS OWN 44px TAP TARGET, sitting beside another one. Two controls in a
-   44px row is exactly the case the page's tap floor exists for, so the anchor
-   takes `min-block-size: var(--tap)` and centres its text in it — a link you
-   can hit with a thumb without hitting the row, which is the whole reason the
-   two are siblings rather than nested.
+   IT IS ITS OWN 44px TAP TARGET, LYING ON ANOTHER ONE. Two controls sharing a
+   44px row is the case the tap floor exists for: the anchor takes
+   `min-block-size: var(--tap)` and centres its text in it, and `justify-self:
+   start` keeps it as wide as its word and no wider — so the thumb that lands
+   on the word gets Wikipedia and the thumb that lands anywhere else on the row
+   gets the record. `padding-inline-end` is slack for a fat thumb on a short
+   title ("Fugue" is five characters).
 
    `text-overflow: ellipsis` AND `min-inline-size: 0`: the title is the only
-   text in this row whose length nobody controls ("Bulgarian State Television
-   Female Vocal Choir" is 46 characters), and a column that widens for it would
-   push the place name off a phone. The full name is in `aria-label`, the
-   reason the article was chosen is in `title`, and the row is unbroken. */
-.nu-ixw{ font-size: .8rem; white-space: nowrap; overflow: hidden;
-  text-overflow: ellipsis; min-inline-size: 0; max-inline-size: 22ch;
-  display: flex; align-items: center; min-block-size: var(--tap);
-  padding-inline-end: .75em; }
-/* A REFUSED CELL — the two MISSES and the six roles. It is a dash and not a
-   blank, and it carries `data-why`, which is this page's refusal idiom
-   everywhere else: a reason on the artifact, spoken by the same delegated
-   explainer, never a silent grey. It is NOT hand-blue, because it goes
-   nowhere. */
-.nu-ixw-no{ color: var(--dim); font-family: var(--mono); cursor: help; }
-/* AND UNDER 560px THE ARTICLE DROPS TO ITS OWN LINE (see the arithmetic on
-   `.nu-ixli`). `justify-self: start` and the row's own inline padding so the
-   link lines up under the genre rather than floating in the middle. */
-@media (max-width: 559px){
-  .nu-ixli{ grid-template-columns: minmax(0, 1fr); }
-  /* AND IT KEEPS THE FULL 44px FLOOR ON ITS OWN LINE. 32 was tried and is
-     refused: this page's floor is `--tap` and an exception argued in a comment
-     is exactly the kind of quiet shrink the floor exists to stop. Two stacked
-     44px targets is 88px of row, which is what two controls cost. */
-  .nu-ixw{ justify-self: start; padding-inline: .75em;
-           max-inline-size: 100%; }
-}
+   text in this row whose length nobody controls, and a column that widened for
+   it would push the place name off a phone. The full name is in `aria-label`
+   and the reason the article was chosen is in `title`.
+
+   AND IT IS A BLOCK, NOT A FLEX BOX, WHICH IS A BUG THIS ROUND FOUND BY
+   LOOKING (2026-08-29). The rule read `display: flex; align-items: center;
+   min-block-size: var(--tap)` and its note promised an ellipsis — but
+   `text-overflow` applies to a BLOCK CONTAINER'S inline content, and inside a
+   flex box the text is an anonymous flex ITEM, so the browser clipped the
+   title mid-letter with no ellipsis at all and had been doing it since the
+   column shipped. Screenshotted at 390px: "Bhangra (mus". The centring flex
+   was buying is bought by `line-height: var(--tap)` on a single line, which is
+   the same 44px and does not take the ellipsis away with it. (memory: "test
+   the artifact" — every count was green while the word was being cut.) */
+.nu-ixw{ grid-column: 2; grid-row: 1; justify-self: start;
+  font-weight: 600; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; min-inline-size: 0; max-inline-size: 100%;
+  display: block; block-size: var(--tap); line-height: var(--tap);
+  padding-inline-end: .5em; }
+/* A REFUSED CELL — the two MISSES and the six roles. IT USED TO BE AN EM DASH
+   and it is THE ROW'S OWN KEY now (2026-08-29): the dash sat in a fourth
+   column next to a genre word, and with the fourth column gone a dash would
+   leave the row with no name at all. What it prints is the only name the
+   catalogue holds for these eight — "retrofunkpop", "simple" — and it is
+   dressed as what it is rather than as what it is not: no underline, not
+   hand-blue, dim, and in the machine face this page keeps for machine words.
+   It still carries `data-why`, which is this page's refusal idiom everywhere
+   else: a reason on the artifact, spoken by the same delegated explainer,
+   never a silent grey. */
+.nu-ixw-no{ color: var(--dim); font-family: var(--mono); font-weight: 400;
+  font-size: .9em; cursor: help; text-decoration: none; }
 /* `#atlasActs button { min-block-size: var(--tap); margin-inline-end: .4rem }`
    STOOD HERE AND BOTH HALVES ARE GONE (2026-08-26). The tap floor was already
    `button { min-height: var(--tap) }` at the top of this file and had been for

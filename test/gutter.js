@@ -172,9 +172,16 @@ function standUpServer() {
   /* ---- T3 THE PLAY LEVEL ---------------------------------------------- */
   /* FIVE CONTROLS, AND WHERE EACH ONE STANDS IS PART OF THE CLAIM. #play is in
      the HEAD (that is what makes it permanent); the other four are the level's
-     own items, in Paul's order. The level is reached by pressing #play, which
-     is the only way a reader reaches it. */
-  await p.evaluate(() => document.getElementById("play").click());
+     own items, in Paul's order.
+
+     THIS READ "the level is reached by pressing #play, which is the only way a
+     reader reaches it", AND IT IS REVERSED, 2026-08-29. Paul, on the shipped
+     stripe: *"Make play/stop permanent and make a new icon underneath for all
+     the play/volume/seed functions. It's too weird when those are together."*
+     #play now only starts and stops the record; #playops, the mark directly
+     under it, is the door. T2 above still proves the toggle, and it proves it
+     WITHOUT arriving here — which is the whole point of the split. */
+  await p.evaluate(() => document.getElementById("playops").click());
   await p.waitForTimeout(300);
   const t3 = await p.evaluate(() => {
     const L = window.__eightTray();
@@ -192,8 +199,42 @@ function standUpServer() {
              trayW: +document.querySelector(".nu-tray").getBoundingClientRect().width.toFixed(1) };
   });
   check(t3.level === "play" && t3.up === "root" && t3.acts === true,
-    "T3 · pressing #play takes the stripe to the play level, whose ↑ is the " +
-    "root (" + JSON.stringify({ level: t3.level, up: t3.up, acts: t3.acts }) + ")");
+    "T3 · pressing #playops takes the stripe to the play level, whose ↑ is " +
+    "the root (" + JSON.stringify({ level: t3.level, up: t3.up, acts: t3.acts }) + ")");
+  /* AND THE SPLIT ITSELF, ASSERTED — the thing Paul asked for, which is that
+     these two marks do ONE JOB EACH. A stop must not move the stripe, and the
+     door must not touch the record. Without this the two could quietly fuse
+     again and every check above would still pass. */
+  const t3b = await p.evaluate(async () => {
+    const lvl = () => window.__eightTray().level;
+    const word = () => (document.getElementById("play")
+      .getAttribute("aria-label") || "").trim();
+    document.getElementById("play").click();          // start, from the play level
+    await new Promise((r) => setTimeout(r, 250));
+    const afterStart = { level: lvl(), word: word() };
+    document.getElementById("play").click();          // stop
+    await new Promise((r) => setTimeout(r, 250));
+    const afterStop = { level: lvl(), word: word() };
+    document.getElementById("playops").click();       // the door closes again
+    await new Promise((r) => setTimeout(r, 250));
+    return { afterStart, afterStop, closed: lvl(),
+             expanded: document.getElementById("playops")
+               .getAttribute("aria-expanded") };
+  });
+  check(t3b.afterStart.level === "play" && t3b.afterStop.level === "play"
+        && t3b.afterStart.word === "stop" && t3b.afterStop.word === "play",
+    "T3 · …and the transport does not move the stripe: play then stop both " +
+    "leave the level at " + JSON.stringify(t3b.afterStop.level) +
+    " while the mark reads " + JSON.stringify([t3b.afterStart.word, t3b.afterStop.word]));
+  check(t3b.closed === "root" && t3b.expanded === "false",
+    "T3 · …and the door shuts the way it opened, saying so: level " +
+    JSON.stringify(t3b.closed) + ", aria-expanded " + JSON.stringify(t3b.expanded));
+  /* AND IT IS RE-OPENED FOR T4, which measures the fader and needs the level
+     it lives on. Said out loud rather than left as a side effect of the check
+     above: shutting the door is an assertion here, not the state the rest of
+     this file runs in. */
+  await p.evaluate(() => document.getElementById("playops").click());
+  await p.waitForTimeout(250);
   check(t3.five.length === 5 && t3.head === true,
     "T3 · …and the five transport controls are on the page — #play in the " +
     "head, the other four in the level: " + JSON.stringify(t3.five) +
@@ -235,7 +276,14 @@ function standUpServer() {
     return best;
   });
   await p.waitForTimeout(300);
-  await p.evaluate(() => document.getElementById("play").click());   // the play level
+  /* `#play` STOOD HERE AND IT IS `#playops` NOW, 2026-08-29 — the split Paul
+     asked for ("Make play/stop permanent and make a new icon underneath for
+     all the play/volume/seed functions"). The walk above ends in
+     `__eightTab`, which sets the level from TRAYSUB, so the door has to be
+     opened again to reach the fader — and it is the DOOR that opens it now.
+     Pressing #play here would have started the record instead, which is the
+     confusion the split removes. */
+  await p.evaluate(() => document.getElementById("playops").click());   // the play level
   await p.waitForTimeout(300);
   const room = await p.evaluate(() => {
     const t = document.querySelector(".nu-trayvol .nu-vs-track");

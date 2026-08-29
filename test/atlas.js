@@ -488,11 +488,34 @@ function g18() {
      Then the real button, pressed. Nothing about which record gets written
      depends on the transport running, which is what both callers are asking
      about. */
+  /* REWRITTEN IN PLACE 2026-08-29 — THE MARK IT PRESSED SPLIT IN TWO, and this
+     gate crashed rather than failed (`Cannot read properties of null (reading
+     'click')`), which is a gate reaching for an element that would only be
+     there if the design had not changed. It read:
+
+       await p.evaluate(() => document.getElementById("play").click());
+       await p.waitForTimeout(200);
+       await p.evaluate(() => document.getElementById("play").click());
+       await p.waitForTimeout(200);
+       await p.evaluate(() => document.getElementById("rewrite").click());
+
+     and the paragraph above it argued for the two presses: "the first descends
+     into the play level AND starts the record, the second stops it, and the
+     level stays put (that is the play mark's own documented behaviour — 'it
+     descends on a stop too')."  #play NO LONGER DESCENDS. Paul: *"Make
+     play/stop permanent and make a new icon underneath for all the play/volume/
+     seed functions. It's too weird when those are together."*  The door is its
+     own mark now, `#playops`, and ui/eight.js says why: "a transport button's
+     job is to start and stop the record, and moving the whole stripe out from
+     under the thumb while doing it is a second job the mark never advertised."
+
+     So the walk is ONE press of the door instead of two of the transport, and
+     the record is never started at all — which the old comment already said
+     was irrelevant here ("Nothing about which record gets written depends on
+     the transport running"). Same destination, one fewer side effect. */
   const pressRewrite = async () => {
-    await p.evaluate(() => document.getElementById("play").click());
-    await p.waitForTimeout(200);
-    await p.evaluate(() => document.getElementById("play").click());
-    await p.waitForTimeout(200);
+    await p.evaluate(() => document.getElementById("playops").click());
+    await p.waitForTimeout(250);
     await p.evaluate(() => document.getElementById("rewrite").click());
   };
 
@@ -586,6 +609,14 @@ function g18() {
        · "the link says WHAT KIND of article it is" — `data-kind` and the
          visible `.nu-kind` span moved with the link, so the check follows it
          to the row.
+         REWRITTEN AGAIN 2026-08-29 (second pass) — Paul: *"Replace the slug
+         for genre with the Wikipedia link so everything is on one line."*
+         There is no article COLUMN any more: the link IS the genre cell, and
+         the genres.js key it used to sit beside is off the page. Not one of
+         these three checks changes a word — they ask for a wikipedia href in
+         `#atlasIndexRows`, for `data-kind`, and for a real `.nu-kind` span,
+         and all three are true of the cell in its new column. What moved is
+         asserted in G23, which owns the row's shape.
        · "the wiki table shipped (191 links)" — the 191 WAS TYPED and went
          stale by a round: measured 2026-08-29 the table holds 205 titles,
          because the genre catalogue is another round's file and it grew. What
@@ -1800,8 +1831,18 @@ function g18() {
                      door: !!document.getElementById("atlasIndexBtn"),
                      ms: document.getElementById("atlasIndex").dataset.ms };
     const rows = [...document.querySelectorAll("#atlasIndexRows .nu-ixrow")];
-    const cells = (r) => [...r.children].map((c) => c.textContent);
-    const yrs = rows.map((r) => r.children[0].textContent)
+    /* REWRITTEN 2026-08-29 (second pass) — Paul: *"Replace the slug for genre
+       with the Wikipedia link so everything is on one line."*  It read
+       `const cells = (r) => [...r.children].map((c) => c.textContent)` with
+       `r` a `.nu-ixrow`, and `const yrs = rows.map((r) => r.children[0]...)`,
+       because the BUTTON held all three facts. The genre has left the button —
+       it is a link now, and a link may not live inside a button — so a row's
+       three cells are read off the <li> and the year off the button's first
+       child, which is still the year. Same three facts, one level up. */
+    const cells = (r) => [".nu-ixy", ".nu-ixw", ".nu-ixp"]
+      .map((q) => { const n = r.closest("li").querySelector(q);
+                    return n ? n.textContent : null; });
+    const yrs = rows.map((r) => r.querySelector(".nu-ixy").textContent)
       .filter((t) => /^\d+$/.test(t)).map(Number);
     let ooo = 0;
     for (let i = 1; i < yrs.length; i++) if (yrs[i] < yrs[i - 1]) ooo++;
@@ -1830,6 +1871,46 @@ function g18() {
              tap: Math.min(...rows.slice(0, 40)
                .map((r) => r.getBoundingClientRect().height)),
              hscroll: doc.scrollWidth - doc.clientWidth,
+             /* ---- ONE GENRE WORD PER ROW, AND IT IS THE LINK (2026-08-29)
+                The round's whole claim, read off the rendered page. THREE
+                facts, none of them a count:
+                  · every <li> holds EXACTLY ONE genre cell, and no <a> is
+                    nested in a <button> or the other way round — the invalid
+                    markup this shape exists to avoid;
+                  · a LINKED row's word is `NuWiki.WIKI[gk].title` with its
+                    underscores spent, plus the ` · the <kind>` span when the
+                    article is not a genre. Typed anywhere, invented anywhere,
+                    and this fails: extraction is never by hand;
+                  · a REFUSED row's word is the row's OWN KEY. It was an em
+                    dash in a fourth column; a dash in the genre column would
+                    be a row with no name at all, so the check is that the
+                    eight say their key and not that they say nothing. */
+             one: (() => {
+               const W = window.NuWiki, o = { rows: 0, cells: [], nested: 0,
+                                              wrong: [], slugs: [] };
+               o.nested = document.querySelectorAll(
+                 "#atlasIndexRows button a, #atlasIndexRows a button").length;
+               for (const li of document.querySelectorAll("#atlasIndexRows li")) {
+                 o.rows++;
+                 const cs = li.querySelectorAll(".nu-ixw");
+                 if (cs.length !== 1) { o.cells.push(li.dataset.gk + ":" + cs.length);
+                                        continue; }
+                 const c = cs[0], gk = li.dataset.gk, w = W.WIKI[gk];
+                 if (w) {
+                   const want = w.title.replace(/_/g, " ")
+                     + (w.kind !== "genre" ? " \u00b7 the " + w.kind : "");
+                   if (c.textContent !== want)
+                     o.wrong.push(gk + ": " + JSON.stringify(c.textContent) +
+                                  " want " + JSON.stringify(want));
+                 } else {
+                   o.slugs.push(gk);
+                   if (c.textContent !== gk)
+                     o.wrong.push(gk + ": refused row says " +
+                                  JSON.stringify(c.textContent) + ", not its key");
+                 }
+               }
+               return o;
+             })(),
              /* ---- THE ARTICLE COLUMN, 2026-08-29 ----------------------
                 EVERY href COMES FROM nukernel/wiki.js AND NOTHING IS TYPED.
                 The gate asks the table for each row's own key and compares the
@@ -1902,6 +1983,56 @@ function g18() {
   check(idx.tap >= 44 && idx.hscroll === 0,
     "G23 · …and a row is a thumb (" + idx.tap + " CSS px) with no horizontal " +
     "page scroll (" + idx.hscroll + " px)");
+  /* ---- ONE GENRE WORD PER ROW, AND IT IS THE LINK (2026-08-29) ---------
+     Paul: *"Replace the slug for genre with the Wikipedia link so everything
+     is on one line."*  The row printed the genre twice — the genres.js key in
+     `.nu-ixg` and the article's real title in a fourth cell — and the second
+     copy is what pushed a row onto two lines. The key is off the page; the
+     link stands in the genre column. Asserted as a DERIVATION and not as a
+     count: every word must equal what wiki.js says, or be the row's own key
+     where wiki.js says nothing. */
+  check(!idx.one.cells.length && !idx.one.nested && !idx.one.wrong.length,
+    "G23 · ONE genre word per row and it is the link: " + idx.one.rows +
+    " rows, one .nu-ixw each, " + idx.one.nested + " <a> nested in a <button> " +
+    "(or the reverse), every linked word === NuWiki title + its kind and every " +
+    "one of the " + idx.one.slugs.length + " refusals saying its own key " +
+    JSON.stringify(idx.one.slugs) +
+    (idx.one.cells.length ? " · CELLS " + JSON.stringify(idx.one.cells.slice(0, 4)) : "") +
+    (idx.one.wrong.length ? " · WRONG " + JSON.stringify(idx.one.wrong.slice(0, 3)) : ""));
+
+  /* ---- AND IT REALLY IS ONE LINE, AT THE FIVE WIDTHS THIS PAGE MEASURES
+     AT (2026-08-29). "One line" is a claim about a BOX and not about a
+     stylesheet, so it is read as a height: a row that wrapped would be two
+     `--tap` floors of <li> (88-95px, which is exactly what the four-column
+     shape measured below 560 and is written down in nu.css). The floor and the
+     ceiling are both asserted — 44 <= h <= 46 — because a row that shrank
+     under the thumb target would fail the opposite way and pass a check that
+     only looked up. Nothing may scroll sideways at any of them. */
+  const lines = [];
+  for (const w of [320, 375, 390, 430, 1280]) {
+    await p.setViewportSize({ width: w, height: 844 });
+    await p.waitForTimeout(350);
+    lines.push(await p.evaluate((w) => {
+      const li = [...document.querySelectorAll("#atlasIndexRows li")];
+      const box = document.getElementById("atlasIndex");
+      const h = li.map((n) => n.getBoundingClientRect().height);
+      const a = li.map((n) => n.querySelector(".nu-ixw").getBoundingClientRect().height);
+      const b = li.map((n) => n.querySelector(".nu-ixrow").getBoundingClientRect().height);
+      return { w, li: [+Math.min(...h).toFixed(1), +Math.max(...h).toFixed(1)],
+               btn: +Math.min(...b).toFixed(1), genre: +Math.min(...a).toFixed(1),
+               list: box.scrollWidth - box.clientWidth,
+               page: document.documentElement.scrollWidth
+                     - document.documentElement.clientWidth };
+    }, w));
+  }
+  const wide = lines.filter((r) => r.li[0] < 44 || r.li[1] > 46 || r.btn < 44
+                              || r.genre < 44 || r.list || r.page);
+  check(!wide.length,
+    "G23 · …and EVERY row is one line at 320/375/390/430/1280 — 44 <= <li> " +
+    "<= 46, the plate and the link both thumbs, zero sideways scroll: " +
+    JSON.stringify(lines));
+  await p.setViewportSize({ width: 390, height: 844 });
+  await p.waitForTimeout(300);
 
   /* AND A ROW IS THE GLOBE'S OWN DOOR. Not a second compose path: the row sets
      the YEAR to the record's own and calls choose(place), so what it writes is
@@ -1938,6 +2069,72 @@ function g18() {
     JSON.stringify(row.title) + ", the sentence reads " + row.year + ", the mark " +
     "wears the ring, its second line says " + JSON.stringify(row.gname) +
     " and the list marks " + JSON.stringify(row.cur));
+
+  /* ---- THE SEAM: THE WORD IS A LINK, THE REST OF THE ROW IS THE RECORD
+     (2026-08-29, new) ---------------------------------------------------
+     Paul: *"Replace the slug for genre with the Wikipedia link so everything
+     is on one line."*  That put a LINK and a PLAY BUTTON in the same 44px row
+     — the anchor lying over the plate in the genre column — and nothing on
+     this page covered the boundary between them. It is the one seam this
+     round created, so it is the one thing this round has to prove:
+
+       · A TAP ON THE WORD DOES NOT START A RECORD. The anchor is the button's
+         SIBLING (ui/atlas.js: an <a> may not nest in a <button>), so a click
+         on it never reaches the delegated handler's `closest(".nu-ixrow")` —
+         and that is asserted rather than assumed, because the day somebody
+         nests the two again this is what fails.
+       · A TAP ON THE ROW STILL DOES, on the SAME row, straight after — so a
+         green half cannot come from a list that has simply stopped working.
+       · AND THE HIT TEST IS READ OFF THE PIXELS, `elementFromPoint` on three
+         points across one row: the word is the anchor, the empty part of the
+         genre column is the plate, the year is the plate's own child. That is
+         what a thumb actually meets, and it is the half a listener-only check
+         would bless while the anchor silently covered the whole column.
+
+     THE NAVIGATION IS CANCELLED IN A CAPTURE LISTENER and not by clicking
+     something other than the link: `preventDefault` stops the browser leaving
+     the page (`target=_blank` would open a tab and take the gate with it) and
+     does NOT stop propagation, so the list's own handler still gets the event
+     it would have got. The question being asked is "does the row hear this
+     click", and cancelling the default is the only way to ask it. */
+  const seam = await p.evaluate(async () => {
+    document.addEventListener("click", (e) => {
+      const a = e.target.closest && e.target.closest("a[href]");
+      if (a) e.preventDefault();
+    }, true);
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const li = [...document.querySelectorAll("#atlasIndexRows li")]
+      .find((n) => n.dataset.gk === "fugue");
+    li.scrollIntoView({ block: "center" });
+    await wait(400);
+    const before = window.__nuName();
+    const a = li.querySelector("a.nu-ixw");
+    a.click();
+    await wait(800);
+    const afterWord = window.__nuName();
+    li.scrollIntoView({ block: "center" });
+    await wait(300);
+    const r = a.getBoundingClientRect(), box = li.getBoundingClientRect();
+    const at = (x) => { const n = document.elementFromPoint(x, r.top + r.height / 2);
+                        return n ? n.tagName + "." + (n.className || "") : "nothing"; };
+    const hits = { word: at(r.left + 3), gap: at(r.right + 10),
+                   year: at(box.left + (box.width > 200 ? 20 : 14)) };
+    li.querySelector(".nu-ixrow").click();
+    await wait(900);
+    return { before, afterWord, afterRow: window.__nuName(),
+             href: a.getAttribute("href"), hits };
+  });
+  check(seam.before === "Kingston 1973" && seam.afterWord === "Kingston 1973",
+    "G23 · a tap on the WORD is a link and not a record — the page was " +
+    JSON.stringify(seam.before) + " and after clicking " + seam.href +
+    " it is still " + JSON.stringify(seam.afterWord));
+  check(seam.afterRow === "Leipzig 1725",
+    "G23 · …and a tap on the SAME row's plate does open its record: " +
+    JSON.stringify(seam.afterRow));
+  check(/^A\./.test(seam.hits.word) && /^BUTTON\.nu-ixrow/.test(seam.hits.gap)
+        && /^SPAN\.nu-ixy/.test(seam.hits.year),
+    "G23 · …and that is what a THUMB meets, not just what a listener hears — " +
+    JSON.stringify(seam.hits));
 
   /* ---- G14 NOBODY PHONED HOME ----------------------------------------- */
   const hosts = await p.evaluate((h) => [...new Set(

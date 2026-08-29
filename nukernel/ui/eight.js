@@ -10101,7 +10101,13 @@ function trayRow() {
      destroy the button, drop its listener or take it out from under a thumb.
      That is the same promise `paintTray` already makes about a mark whose key
      did not move, made structurally instead of by a signature. */
-  trayHead.append(playBtn, el("hr", null, "nu-traycut"));
+  /* TWO MARKS, NOT ONE (2026-08-29 — the split above). They sit together above
+     the rule because they are the same KIND of thing — the transport and its
+     own door — and both are outside everything `paintTray` rebuilds, which is
+     the mechanical half of "permanent" for the new one exactly as it was for
+     `#play`. */
+  playOpsBtn.setAttribute("aria-expanded", trayLevel === "play" ? "true" : "false");
+  trayHead.append(playBtn, playOpsBtn, el("hr", null, "nu-traycut"));
   trayUpBox = el("div", null, "nu-trayup");
   trayHead.append(trayUpBox);
   trayList = el("div", null, "nu-traylist");
@@ -10160,6 +10166,15 @@ function trayRow() {
 function paintTray() {
   if (!trayList) return;
   const L = trayNow();
+  /* THE DOOR SAYS WHETHER IT IS OPEN, ON EVERY REPAINT AND NOT ONLY WHEN IT IS
+     BUILT (2026-08-29). `trayRow` sets this once; the level also moves through
+     `showTab`, through `↑`, and through the guard in `trayNow` that falls back
+     to the root — three writers this button does not hear from. Reading it off
+     `L.level` here is the same rule the head's own signature obeys: the stripe
+     is repainted from what `trayNow` says, never from what a listener
+     remembered. */
+  if (playOpsBtn)
+    playOpsBtn.setAttribute("aria-expanded", L.level === "play" ? "true" : "false");
   /* THE HEAD'S SIGNATURE IS WHAT IT SAYS PLUS WHERE IT GOES (2026-08-28). It
      was `L.parent` alone, which was exact while every `↑` went to the root;
      with three depths the DESTINATION is a second fact the button carries, in
@@ -10857,9 +10872,33 @@ wireSay();
    in, and a stripe that jumped somewhere else when you pressed stop would move
    the four marks out from under a thumb that is most likely reaching for
    `take` or `rewrite` next. `↑` is the way out and it is one press. */
+/* ONE CONTROL, ONE JOB, 2026-08-29. Paul: *"Make play/stop permanent and make
+   a new icon underneath for all the play/volume/seed functions. It's too weird
+   when those are together."*
+
+   THIS LISTENER READ `trayLevel = "play"; paintTray();` AFTER THE TOGGLE, and
+   the paragraph above it argued for that — "it descends on a stop too, and
+   that is deliberate rather than sloppy". The argument was about which level
+   to land on, and it answered a question nobody asked: a transport button's
+   job is to start and stop the record, and moving the whole stripe out from
+   under the thumb while doing it is a second job the mark never advertised.
+   The door to those controls is now its own mark, `#playops`, directly under
+   this one — so the level is entered on purpose and pressing stop no longer
+   rearranges the gutter. */
 playBtn.addEventListener("click", () => {
   if (playing) { stop(); say(false); } else { startAt(0); say(true); }
-  trayLevel = "play";
+});
+/* ...AND THE DOOR TO THEM, WHICH IS THE OTHER HALF OF THE SPLIT. It carries no
+   transport state at all — it never reads `playing` — so nothing about it
+   changes when the record starts. `aria-expanded` is the honest word for a
+   control that shows a set of siblings and is the one `#atlasIndexBtn` used
+   before it retired; `paintTray` re-reads it every repaint so a level entered
+   any other way still reports true. */
+const playOpsBtn = mkBtn("playops");
+playOpsBtn.textContent = "opts";
+playOpsBtn.setAttribute("aria-label", "play options — rewrite, take, voices, volume");
+playOpsBtn.addEventListener("click", () => {
+  trayLevel = trayLevel === "play" ? "root" : "play";
   paintTray();
 });
 on("transport:state", () => say());
