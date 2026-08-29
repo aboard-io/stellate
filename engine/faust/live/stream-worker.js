@@ -184,6 +184,24 @@ async function initDeps() {
   await import(FAUST + "voices/sampler.js");        // -> self.FaustSampler (mixPCM)
   await import(BASE + "stream-renderer.js");        // -> self.FaustStreamRenderer (makeStreamEngine)
 
+  // ── ONE LINE PER PROCESSOR IS NOT A REPORT, IT IS NOISE ──────────────────
+  // faustwasm's FaustMonoWebAudioDsp constructor logs "sampleSize: 4 bufferSize:
+  // 64" for EVERY processor it builds (node_modules/@grame/faustwasm/dist/esm/
+  // index.js:3178). A stream open builds a dozen or two, so Paul's console reads
+  // "[Log] sampleSize: 4 bufferSize: 64 ... x21" and nothing about the record.
+  // The vendored file is git-ignored AND excluded from the deploy, so patching
+  // IT would quiet nobody's console but ours — this worker owns its own console,
+  // so the line is dropped here, counted rather than merely swallowed. The
+  // number it was standing in for is `self.__nuProcCensus`, which answers when
+  // asked instead of shouting once per processor.
+  {
+    const log = console.log.bind(console);
+    const NOISE = /^sampleSize: \d+ bufferSize: \d+$/;
+    let muted = 0;
+    console.log = (...a) => { if (typeof a[0] === "string" && NOISE.test(a[0])) { muted++; return; } log(...a); };
+    self.__nuMutedLines = () => muted;
+  }
+
   const fw = await import(FAUST + "node_modules/@grame/faustwasm/dist/esm/index.js");
   const { FaustWasmInstantiator, FaustMonoDspGenerator } = fw;
   const gen = new FaustMonoDspGenerator();
@@ -207,7 +225,23 @@ async function initDeps() {
     FaustWasmInstantiator.loadDSPFactory(FAUST + `dist/${mod}-module.wasm`, FAUST + `dist/${mod}-meta.json`)
       .then((f) => { if (!f) throw new Error("no factory for " + mod); resolved[mod] = f; return f; }));
   };
-  const mkProc = async (mod) => gen.createOfflineProcessor(SR, BS, await factory(mod));
+  // ── PROC CENSUS (leak probe, 2026-08-28). Cheap: one counter + one WeakRef
+  // per processor, pruned as it is read. `self.__nuProcCensus` is what
+  // test/leak-procs.js reads out of the worker context — nothing on the audio
+  // path touches it. NOT the fix; the meter the fix is judged by.
+  const CENSUS = (self.__nuProcCensus = {
+    made: 0, closes: 0, refs: [],
+    live() { const keep = []; let n = 0, b = 0, d = 0;
+      for (const r of this.refs) { const p = r.deref(); if (!p) continue; keep.push(r); n++;
+        try { if (p.fDSPCode.fDestroyed) d++; } catch (e) {}
+        try { b += p.fDSPCode.fInstance.memory.buffer.byteLength; } catch (e) {} }
+      this.refs = keep; return { live: n, dead: d, wasmBytes: b, made: this.made, closes: this.closes }; },
+  });
+  const mkProc = async (mod) => {
+    const p = await gen.createOfflineProcessor(SR, BS, await factory(mod));
+    CENSUS.made++; try { CENSUS.refs.push(new WeakRef(p)); } catch (e) {}
+    return p;
+  };
   // PARAM ROOT off the UI tree, not the declared name (render-core.paramRoot):
   // dx7.lib's top-level "DX7" group renames the path root; every other module
   // is unchanged; the wrong root leaves DX7 a pure-FM drone (params never bind).
@@ -223,6 +257,14 @@ async function initDeps() {
   eng = self.FaustStreamRenderer.makeStreamEngine({
     E: ENV.E, SE: ENV.SE, FP: ENV.FP, SP: ENV.SP, mergeIvals: ENV.mergeIvals,
     mkProc: ENV.mkProc, rootOf: ENV.rootOf, SR, BS, dx7Presets: ENV.dx7Presets });
+  // CENSUS, second half: how many times this worker's stream was actually closed.
+  // "The procs are still reachable" has two very different causes — a close that
+  // frees nothing, and a close that never happened — and only the count tells
+  // them apart.
+  {
+    const rawClose = eng.close;
+    eng.close = function () { CENSUS.closes++; return rawClose.apply(eng, arguments); };
+  }
 }
 
 // pump: render chunks 0..nChunks-1 into ring `ringIndex`, respecting backpressure.

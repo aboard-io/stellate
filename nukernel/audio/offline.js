@@ -160,7 +160,13 @@ function sayNew(v) {
 // activation that speaks. Coming back to the tab is the honest moment to ask,
 // and it costs one conditional request against a no-cache script.
 function watchForNew(reg) {
-  const ask = () => { try { reg.update(); } catch (e) {} };
+  // reg.update() RETURNS A PROMISE, so the try/catch below caught nothing that
+  // mattered: WebKit rejects it with InvalidStateError "newestWorker is null"
+  // when the registration has no worker to re-check (Paul saw exactly that
+  // unhandled rejection on staging, 2026-08-28). The tab coming back into
+  // view is a guess, not a request — there is nothing to report and nothing
+  // to retry, so both channels swallow it and the next load is fresh anyway.
+  const ask = () => { try { const p = reg.update(); if (p && p.catch) p.catch(() => {}); } catch (e) {} };
   try {
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") ask();

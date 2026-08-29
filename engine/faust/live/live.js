@@ -646,8 +646,60 @@
     // -7.99/8.18), motown -9.56/9.40 (was -7.36/7.92), afrobeats -8.47/8.30 (was
     // -6.36/6.69). Nothing got louder; the hot records came back into the
     // neighbourhood they were in the day before, with their transients.
-    const MK_MAX = 2.6, MK_MIN = 1.0, MK_TARGET_DB = -14;
-    const makeup = ctx.createGain(); makeup.gain.value = MK_MAX;
+    // ── ...AND IT ONLY EVER PUSHED (2026-08-28) ────────────────────────────
+    // Paul, three rounds running: *"The mix is still too hot"*, and this round
+    // *"Bring it down even more, quiet is nice."* Two turn-downs had already
+    // been made UPSTREAM of this node — nukernel's LEVEL_LANES went to 0.375 of
+    // its 08-26 value (-8.5 dB) and fields.js DRIVES halved — and Paul could
+    // still not hear them. This node is why, and the reason is the two numbers
+    // on this line, not taste:
+    //
+    //   MEASURED AT THE LISTENER'S OWN TAP (the `analyser` below, which is the
+    //   last node before the ear), 30 s per record, six records whose level
+    //   ARRIVING here spans 13 dB (-17.0 dBFS RMS for rock down to -30.2 for
+    //   ambient, rendered through the shipped worker):
+    //
+    //     iranpop -12.96   steely -14.01   rock -12.30
+    //     neoclassical -14.19   ambient -21.51   hymn -14.85
+    //
+    //   Five of the six landed inside 2.6 dB of each other, with peaks pinned
+    //   at -0.2 to -0.9 dBFS. A 13 dB spread came in and a 2.6 dB spread went
+    //   out: this rider was not riding, it was FLATTENING, and then the
+    //   brickwall was holding the top of every one of them. THAT is the "hot
+    //   mic" — and it is also why every cut made upstream since 08-26 was
+    //   inaudible. A cut a normaliser undoes is not a cut.
+    //
+    // TWO CHANGES, both on this line:
+    //   * THE TARGET IS -20, not -14. Six dB is exactly what Paul keeps asking
+    //     for, and this is the one stage in the tree where asking for it is
+    //     answered — every stage upstream is handed straight back by the ride.
+    //   * THE FLOOR IS 0.35, NOT 1.0, so the leveller can PULL DOWN. It was
+    //     floored at unity when it was written (2026-08-25) because the problem
+    //     that day was quiet material; the consequence is that a record hotter
+    //     than the target could never be brought to it, which is every record
+    //     the box makes. 0.35 is -9.1 dB: the leveller may lift a quiet record
+    //     by up to 8.3 dB and lean on a loud one by up to 9.1, and past that the
+    //     RECORD is what is wrong and the record is where to fix it.
+    // MEASURED AFTER, same tap, same 30 s, same six (rms / crest):
+    //     iranpop -18.03/17.49 (was -12.96/12.72)   steely -19.13/18.50 (-14.01/13.71)
+    //     rock    -15.88/15.56 (-12.30/12.09)   neoclassical -17.88/16.05 (-14.19/13.55)
+    //     hymn    -17.96/16.92 (-14.85/13.99)   ambient -21.52/14.02 (-21.51/14.04)
+    // 3.1 to 5.1 dB quieter AND 2.5 to 4.8 dB of crest back — the second number
+    // is the one that answers "saturated": those dB were being spent on the
+    // limiter, and they come back as transient. Ambient is untouched to two
+    // decimal places, which is the property to keep: this pulls down only what
+    // it was pushing up.
+    // The three properties the 08-25 note lists all still hold — pre-fader, so
+    // the fader stays a fader; a 1.5 s ride off a smoothed envelope, so it
+    // follows a record and not a bar; capped, so nothing gets louder than it
+    // did. Only the direction is new.
+    const MK_MAX = 2.6, MK_MIN = 0.35, MK_TARGET_DB = -20;
+    // ...and it OPENS at unity rather than at MK_MAX. Starting at the ceiling
+    // made the first second of every play the loudest moment in the record —
+    // +8.3 dB, riding down over 1.5 s — which is the opposite of what the rest
+    // of this block is for. Unity is the honest opening: no makeup until the
+    // ride has actually read the record.
+    const makeup = ctx.createGain(); makeup.gain.value = 1;
     const mkTap = ctx.createAnalyser(); mkTap.fftSize = 2048;
     const mkBuf = new Float32Array(mkTap.fftSize);
     let mkTimer = 0, mkSlow = 0;
@@ -2110,11 +2162,13 @@
     // interruption; if the ctx still isn't running shortly after return, the next touch
     // anywhere revives it (touch handlers ARE user gestures).
     let gestureArmed = false;
+    let disarmGesture = null;   // set while the touch/pointer revive listeners are on `document`
     const armGestureResume = () => {
       if (gestureArmed || typeof document === "undefined") return;
       gestureArmed = true;
       const revive = () => {
         gestureArmed = false;
+        disarmGesture = null;
         document.removeEventListener("touchend", revive, true);
         document.removeEventListener("pointerdown", revive, true);
         if (abort) return;
@@ -2123,6 +2177,14 @@
       };
       document.addEventListener("touchend", revive, true);
       document.addEventListener("pointerdown", revive, true);
+      // ARMED IS A THING THAT CAN BE DISARMED. `revive` closes over this whole
+      // scope, and a stop while it is still armed leaves two document listeners
+      // holding the retired engine — the same shape as the click monitor below.
+      disarmGesture = () => {
+        gestureArmed = false; disarmGesture = null;
+        document.removeEventListener("touchend", revive, true);
+        document.removeEventListener("pointerdown", revive, true);
+      };
     };
     const goHidden = () => {
       if (abort) return;
@@ -2506,6 +2568,68 @@
         if (bgUrl) { try { root.URL.revokeObjectURL(bgUrl); } catch (e) {} bgUrl = null; }
         try { foundBeds.stopAll(); foundChops.stopAll(); foundVox.stopAll(); } catch (e) {}
         for (const [, ent] of samplerPlayers) { try { ent.player.stopAll(); } catch (e) {} try { teardownSamplerChain(ent); } catch (e) {} }
+        // ── THE ENGINE HAS TO LET GO OF ITSELF ────────────────────────────────
+        // PAUL, ON STAGING: "if I leave it for an hour it warns me of out of
+        // memory."
+        //
+        // MEASURED (test/leak-procs.js, 2026-08-28, headless Chromium, the ring
+        // route Paul is on): every engine generation allocates 20.2 MB of ring
+        // SharedArrayBuffer here (RING_SEC 30 x 44100 x 2ch x 4B, twice) and NOT
+        // ONE BYTE came back. Live ring bytes across four record changes:
+        // 20.2 -> 40.4 -> 60.6 -> 80.8 MB, with EVERY AudioContext closed, EVERY
+        // worker terminated, and a forced GC before each reading. Same run's
+        // whole-agent memory: 70 -> 184 MB. That is the hour.
+        //
+        // THE RETAINING PATH, off a heap snapshot, is one edge long:
+        //     AudioWorkletNode --fOutputHandler--> closure --context--> this scope
+        // The always-on click monitor is a Faust worklet node, and
+        // `setOutputParamHandler` stores the callback ON THE NODE (faustwasm
+        // FaustBaseWebAudioDsp: `this.fOutputHandler = handler`). That callback
+        // closes over `clickMonState`, which lives in THIS closure — so the node
+        // holds the whole conductor: both rings, the control block, every
+        // decoded buffer, every cache. And Blink roots the node itself in its
+        // "Pending activities" (ActiveScriptWrappable) list, where closing the
+        // AudioContext cannot reach it. faustwasm's own destroy() posts a
+        // message and closes the port; it never clears the handler, so destroy()
+        // ALONE DOES NOT CUT THIS EDGE. Cut it by hand.
+        //
+        // The counters stay readable after a stop (a gate may ask what the run
+        // measured) — it is the NODE the scope must not be reachable through.
+        try {
+          if (clickMonState && clickMonState.node) {
+            const cm = clickMonState.node;
+            try { cm.setOutputParamHandler(null); } catch (e) {}   // the edge
+            try { cm.onprocessorerror = null; } catch (e) {}
+            try { cm.disconnect(); } catch (e) {}
+            try { cm.destroy(); } catch (e) {}
+            clickMonState = { node: null, latest: clickMonState.latest };
+          }
+        } catch (e) {}
+        // the other main-thread Faust node, and the ring reader: same class of
+        // browser-rooted object, so let go of the graph rather than trusting
+        // ctx.close() to do it.
+        if (masterLimit) {
+          try { masterLimit.onprocessorerror = null; } catch (e) {}
+          try { masterLimit.disconnect(); } catch (e) {}
+          try { masterLimit.destroy(); } catch (e) {}
+          masterLimit = null;
+        }
+        try { ringNode.port.onmessage = null; } catch (e) {}
+        try { ringNode.disconnect(); } catch (e) {}
+        // THE CONTEXT'S OWN HANDLER IS THE SECOND EDGE (measured on the heap
+        // snapshot after the click monitor's was cut):
+        //   closure --context--> V8EventHandlerNonNull --> EventListener
+        //     --> AudioContext --> AudioWorkletNode --> Pending activities
+        // `ctx.onstatechange` closes over abort/goHidden/goVisible/resumeCtx —
+        // this entire scope — and it outlives ctx.close() because the context is
+        // held by a worklet node Blink still considers active.
+        try { ctx.onstatechange = null; } catch (e) {}
+        if (disarmGesture) { try { disarmGesture(); } catch (e) {} }
+        // ...AND THE ENGINE MUST STOP PUBLISHING ITSELF. `FaustLive.lastHandle`
+        // is a debugging convenience; left set, it pins one whole retired engine
+        // (its own `auditSummary` closure is the edge) for as long as the page
+        // lives. The NEXT open sets it again — this only drops the dead one.
+        try { if (root.FaustLive && root.FaustLive.lastHandle === handle) root.FaustLive.lastHandle = null; } catch (e) {}
         setTimeout(() => { for (const w of workers) if (w) { try { w.terminate(); } catch (e) {} } if (bgWorker) { try { bgWorker.terminate(); } catch (e) {} } try { ctx.close(); } catch (e) {} }, 1200);
         status("stopped");
       },
@@ -3911,6 +4035,10 @@
         for (const el of els) if (el) { try { if (el.__tt) clearTimeout(el.__tt); if (el.__tick) el.removeEventListener("timeupdate", el.__tick); el.pause(); el.src = ""; el.remove(); } catch (e) {} }
         if (mp3El) { try { mp3El.pause(); } catch (e) {} try { if (mediaSrc && mediaSrc.readyState === "open") mediaSrc.endOfStream(); } catch (e) {} try { mp3El.removeAttribute("src"); mp3El.srcObject = null; mp3El.load(); mp3El.remove(); } catch (e) {} }
         for (const q of segQueues.values()) for (const s of q) if (s && s.url) { try { root.URL.revokeObjectURL(s.url); } catch (e) {} }
+        // the same unpublish the ring conductor does: a retired engine that is
+        // still named by `FaustLive.lastHandle` is a retired engine that is still
+        // in memory, decoded buffers and all. The next open re-publishes.
+        try { if (root.FaustLive && root.FaustLive.lastHandle === handle) root.FaustLive.lastHandle = null; } catch (e) {}
         setTimeout(() => { for (const w of workers) if (w) { try { w.terminate(); } catch (e) {} } if (encWorker) { try { encWorker.terminate(); } catch (e) {} } try { ctx.close(); } catch (e) {} }, 400);
         msState("paused");
         status("stopped");
