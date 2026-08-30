@@ -2927,11 +2927,18 @@
     // stream renderer, which bakes it into the WAV segments — so vapor finally works on mobile
     // and lands over time. Was unreachable before (this path has no live output graph).
     let curVaporWav = Math.max(0, Math.min(1, +(opts && opts.vapor) || 0));
+    // BAKED MASTER VOLUME rides the same fed-bar rail as vapor (2026-08-30).
+    // element.volume is kept for engines that honor it (immediate) and the
+    // bake covers the one that does not: iOS returns 1 from a volume write —
+    // measured by writing 0.5 and reading it back below — so on that platform
+    // the fader was a no-op ("The slider inside 'opts' is the volume that
+    // doesn't work"). Where the element obeys, mvol stays 1 (no double cut).
+    let curMvolWav = 1;
     function postFeed(r) {
       workerOf(curGen).postMessage({ type: "feedBar", bar: {
         units: r.units, events: r.events, fxParams: r.fxParams, spb: r.spb, lo: r.lo, hi: r.hi,
         barStartSec: r._base, sweeps: r._sweeps, found: r.found, foundCi: r.meta.ci, meta: r.meta,
-        vapor: curVaporWav } });
+        vapor: curVaporWav, mvol: curMvolWav } });
     }
     // stream the not-yet-cached found/sampler PCM of gen `gen` in as it decodes: each
     // decode posts an addBuffers to that gen's worker, whose engine merges it into the
@@ -3928,7 +3935,14 @@
     const handle = {
       ctx, analyser: null, errors,
       // USER MASTER VOLUME — the media path can only attenuate (element.volume ≤ 1).
-      setMasterVol(v) { wavMasterVol = Math.max(0, Math.min(1, +v || 0)); applyWavVol(); },
+      setMasterVol(v) {
+        wavMasterVol = Math.max(0, Math.min(1, +v || 0)); applyWavVol();
+        // the read-back test: an element that keeps 1 after a fractional write
+        // does not do element volume (iOS); the segments carry it instead
+        const el0 = els[0] || els[1] || mp3El;
+        const obeys = !!el0 && Math.abs(el0.volume - wavMasterVol) < 0.02;
+        curMvolWav = obeys ? 1 : wavMasterVol;
+      },
       // VAPOR — baked into the WAV segments via the fed bars (finally works on mobile).
       setVapor(v) { curVaporWav = Math.max(0, Math.min(1, +v || 0)); },
       // MASTER TOP — no-op on the WAV-first mobile route: it plays a plain <audio>

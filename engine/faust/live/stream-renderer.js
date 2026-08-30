@@ -745,6 +745,13 @@
         anyStereo, fx, genre, revBleed, revColor, rc, master, mb, sweeps, S, nChunks, CBEATS,
         zero: new Float32Array(BS),
         vapor: 0, vaporTgt: Math.max(0, Math.min(1, +(state && state.vapor) || 0)), vaporSt: null,
+        // BAKED MASTER VOLUME (2026-08-30): iOS ignores HTMLMediaElement.volume
+        // — Apple reserves it for the hardware buttons — so on the WAV/media
+        // route the opts fader wrote a property the platform silently drops
+        // (Paul: "The slider inside 'opts' is the volume that doesn't work").
+        // Vapor already solved this exact problem on this exact route by baking
+        // into the segments; volume rides the same rail. 1 = byte-identical.
+        mvol: 1, mvolTgt: 1,
         cursor: 0, mcut: 21000, swi: 0, activeSw: [] };
       return { nChunks, TOTAL, SR, spb, CBEATS, S: S.slice(),
         totalSec, foundEvents: foundSec.length, unitKeys: unitOrder.map((x) => x.key) };
@@ -800,6 +807,13 @@
         anyStereo, fx, fxp: { ...fxp }, genre, revBleed, revColor, rc, master, mb,
         sweeps: [], S: null, bars: [], liveWriteEnd: 0,
         vapor: 0, vaporTgt: Math.max(0, Math.min(1, +(state && state.vapor) || 0)), vaporSt: null,
+        // BAKED MASTER VOLUME (2026-08-30): iOS ignores HTMLMediaElement.volume
+        // — Apple reserves it for the hardware buttons — so on the WAV/media
+        // route the opts fader wrote a property the platform silently drops
+        // (Paul: "The slider inside 'opts' is the volume that doesn't work").
+        // Vapor already solved this exact problem on this exact route by baking
+        // into the segments; volume rides the same rail. 1 = byte-identical.
+        mvol: 1, mvolTgt: 1,
         zero: new Float32Array(BS), cursor: 0, mcut: 21000, swi: 0, activeSw: [] };
       return { live: true, SR, spb: spb0, anyStereo, unitKeys: Object.keys(unitsSpec) };
     }
@@ -822,6 +836,7 @@
       // BAKED VAPOR: a live slider move rides in on the bar and eases in from the next chunk
       // (renderChunk smooths ST.vapor -> ST.vaporTgt), so vapor "takes effect over time".
       if (bar.vapor != null) ST.vaporTgt = Math.max(0, Math.min(1, +bar.vapor || 0));
+      if (bar.mvol != null) ST.mvolTgt = Math.max(0, Math.min(1, +bar.mvol));
       // master-stage (fx_bus) param glide — changed keys only, applied to the
       // persistent proc so the change takes effect from this bar's first block.
       if (bar.fxParams) {
@@ -1150,6 +1165,18 @@
       // at the default (vapor 0) the stream is BYTE-IDENTICAL and every fixture/segment-parity
       // gate is untouched — only a turned-up vapor adds processing.
       applyVapor(L, R, LEN);
+
+      // ── BAKED MASTER VOLUME — same law, same rail, one stage after vapor.
+      // Eases toward ST.mvolTgt across the chunk (a fader move lands over time
+      // the way vapor does — the segment queue is the latency and honesty is
+      // saying so). At 1 with no move pending the loop is skipped entirely:
+      // byte-identical, every parity gate untouched.
+      if (ST.mvol !== 1 || ST.mvolTgt !== 1) {
+        const g0 = ST.mvol, g1 = g0 + (ST.mvolTgt - g0) * Math.min(1, LEN / (SR * 0.35));
+        const dg = (g1 - g0) / LEN;
+        for (let i = 0, g = g0; i < LEN; i++, g += dg) { L[i] *= g; R[i] *= g; }
+        ST.mvol = g1;
+      }
 
       // release consumed live-feed state. A bar spec is
       // read exactly once (order enforced by ST.cursor), so NULL the slot — never
