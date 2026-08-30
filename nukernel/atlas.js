@@ -236,6 +236,15 @@
     "Washington": [38.91, -77.04], "Winchester": [51.06, -1.31],
     "Workington": [54.64, -3.55],
     "Venice": [45.44, 12.32], "Vienna": [48.21, 16.37],
+    // ...AND TWO ON 2026-08-30, the downtempo round. TROMSØ is the
+    // northernmost dot on the map by nearly six degrees over Reykjavík
+    // — 300 km inside the Arctic Circle, and above the Europe view's
+    // lat1 68, so it flies at the world arc; the nearest dots
+    // (Notodden, Oslo) are ten degrees south and no packing question
+    // arises. VERSAILLES is the opposite case and is declared in
+    // WITHIN below: its own commune, but inside INSEE's unité urbaine
+    // de Paris, ~1.8 CSS px from the Paris dot at the Europe arc.
+    "Tromsø": [69.65, 18.96], "Versailles": [48.80, 2.13],
   };
 
   /* ONE SPELLING PER PLACE. band-kit.js:814's house record says it comes from
@@ -263,6 +272,17 @@
     "Harlem": "New York",           // uptown Manhattan
     "Greenwich Village": "New York",// lower Manhattan
     "Basildon": "Essex",            // a town in the county
+    // VERSAILLES IS ITS OWN COMMUNE AND A PRÉFECTURE, and this row is
+    // still not a Sausalito lie (see that note below): INSEE's unité
+    // urbaine de Paris — the continuous built-up area — contains
+    // Versailles, the way Greater London contains Muswell Hill, and
+    // the dot lands ~1.8 CSS px from Paris at the Europe arc. The
+    // label keeps the town because the scene is NAMED for it (the
+    // press called Air's wave "the Versailles sound", and the ZIM's
+    // own first line on the band is "from Versailles"); the map says
+    // "Versailles, in Paris" in the Nearby list, which is the thumb's
+    // recovery path between two dots two pixels apart.
+    "Versailles": "Paris",          // in the Paris unité urbaine (INSEE)
     // NOT HERE, AND MEASURED: Southall. The world round's `bhangra` was
     // drafted as "Southall 1986" — the daytimer circuit, which is where UK
     // bhangra actually was — and the dot lands 4.9 CSS px from Muswell Hill
@@ -609,6 +629,18 @@
     japanjazz:      { place: "Tokyo", year: 1974 },
     nordicjazz:     { place: "Oslo", year: 1970 },
     skokiaan:       { place: "Bulawayo", year: 1947 },
+    acidjazz:       { place: "London", year: 1988 },
+    kruderdorfmeister: { place: "Vienna", year: 1993 },
+    portishead:     { place: "Bristol", year: 1994 },
+    tricky:         { place: "Bristol", year: 1995 },
+    morcheeba:      { place: "London", year: 1996 },
+    lamb:           { place: "Manchester", year: 1996 },
+    djshadow:       { place: "San Francisco", year: 1996 },
+    thieverycorporation: { place: "Washington", year: 1996 },
+    air:            { place: "Versailles", year: 1998 },
+    massiveattack:  { place: "Bristol", year: 1998 },
+    stgermain:      { place: "Paris", year: 2000 },
+    royksopp:       { place: "Tromsø", year: 2001 },
   };
   /* WHEN:END */
 
@@ -695,7 +727,11 @@
                // Rennes, York, Halifax, Notodden and Oslo — plain
                // European geography, the goth wing's towns and the
                // first Norwegian dots on the map.
-               "Halifax", "Notodden", "Oslo", "Rennes", "York"],
+               "Halifax", "Notodden", "Oslo", "Rennes", "York",
+               // ...and the downtempo round's two (2026-08-30): Versailles
+               // (declared inside Paris in WITHIN) and Tromsø, the map's
+               // northernmost dot and the third Norwegian one.
+               "Tromsø", "Versailles"],
     "North America": ["Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
                       "Chicago", "Cincinnati", "Cleveland", "Detroit",
                       "Greenwich Village", "Harlem", "Clarksdale", "Kansas City", "Lafayette",

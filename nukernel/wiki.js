@@ -337,7 +337,19 @@
     "indojazz": {"title":"Indo_jazz","kind":"genre","why":"London 1966 is the Harriott-Mayer Indo-Jazz Suite (Atlantic); the article is the genre by name, jazz and Indian classical music its stated origins."},
     "japanjazz": {"title":"Japanese_jazz","kind":"genre","why":"Tokyo 1974 is the Tsuyoshi Yamamoto Trio's Midnight Sugar on Three Blind Mice; the article is the genre by name (Jazz in Japan redirects here), a jazu kissa in its own lead photographs."},
     "nordicjazz": {"title":"Nordic_jazz","kind":"genre","why":"Oslo 1970 is Afric Pepperbird, the Jan Garbarek Quartet at Bendiksen for ECM; the article is the genre by name — jazz, Nordic folk music and modal jazz its stated origins, 1960s-1970s Scandinavia."},
-    "skokiaan": {"title":"Skokiaan","kind":"work","why":"Bulawayo 1947 is the record itself — August Musarurwa's tune, cut by the Cold Storage Commission's band in the tsaba-tsaba style the article says succeeded marabi. The winstons ruling: tsaba-tsaba has no article in this ZIM and the honest row is the record, so the link is the song's own article."}
+    "skokiaan": {"title":"Skokiaan","kind":"work","why":"Bulawayo 1947 is the record itself — August Musarurwa's tune, cut by the Cold Storage Commission's band in the tsaba-tsaba style the article says succeeded marabi. The winstons ruling: tsaba-tsaba has no article in this ZIM and the honest row is the record, so the link is the song's own article."},
+    "acidjazz": {"title":"Acid_jazz","kind":"genre","why":"London 1988 is Galliano's Frederick Lies Still, Acid Jazz AJ001 — the article's own origin sentence: 'originated in clubs in London during the 1980s with the rare groove movement'. The genre article exists and names the Brand New Heavies scene, so no band link is needed."},
+    "kruderdorfmeister": {"title":"Kruder_&_Dorfmeister","kind":"artist","why":"Vienna 1993 is G-Stoned, recorded at G-Stone Studio per the ZIM's own infobox. The anchor is named for the duo and the article's first line is this row's sound — 'trip hop/downtempo'. Not the K&D Sessions, a remix album of other people's records."},
+    "portishead": {"title":"Portishead_(band)","kind":"artist","why":"Bristol 1994 is Dummy. The bare `Portishead` is the Somerset town the band is named for — the parenthetical article is the band, and the band is the subject: Barrow, Gibbons, Utley, the torch song on a turntable."},
+    "tricky": {"title":"Tricky_(rapper)","kind":"artist","why":"Bristol 1995 is Maxinquaye. The bare `Tricky` is an adjective; the ZIM files the man at Tricky (rapper) and the run follows that redirect. Born and raised in Bristol, an early member of Massive Attack — the article's own first paragraph is this row's argument."},
+    "morcheeba": {"title":"Morcheeba","kind":"artist","why":"London 1996 is Who Can You Trust? (Indochina, 1 April 1996, the ZIM's infobox). The anchor is named for the band and the article is the band — the Godfrey brothers and Skye Edwards, the slide guitar over the loop."},
+    "lamb": {"title":"Lamb_(electronic_band)","kind":"artist","why":"Manchester 1996 is Lamb (Fontana, 30 September 1996). The bare `Lamb` is the animal; the parenthetical article is the duo, and its own lead names this row's three parents — trip hop, drum and bass and jazz."},
+    "djshadow": {"title":"DJ_Shadow","kind":"artist","why":"San Francisco 1996 is Endtroducing....., cut at The Glue Factory per the album article's infobox. The man's article, not the album's: only one row anchors on his work, so the work-link precedent (roboticpop) does not apply."},
+    "thieverycorporation": {"title":"Thievery_Corporation","kind":"artist","why":"Washington 1996 is Sounds from the Thievery Hi-Fi, first released 1996 per the album article. The anchor is named for the duo; the article's own lead lists this row's shelf — dub, acid jazz, bossa nova — and its guest singers."},
+    "air": {"title":"Air_(French_band)","kind":"artist","why":"Versailles 1998 is Moon Safari. The bare `Air` is the atmosphere; the parenthetical article is the duo, and its first line — 'a French music duo from Versailles' — is the dot's own justification."},
+    "massiveattack": {"title":"Massive_Attack","kind":"artist","why":"Bristol 1998 is Mezzanine — NOT Blue Lines, which is `triphop`'s anchor (a record pays one debt; the ruling is at the round header). The band article rather than the album: no second Massive Attack row exists for a band link to erase, so the roboticpop work-link precedent does not apply."},
+    "stgermain": {"title":"St_Germain_(musician)","kind":"artist","why":"Paris 2000 is Tourist, on Blue Note. The bare `St Germain` is a Paris quarter and a count; the parenthetical article is Ludovic Navarre, whose style the lead gives as 'house music and nu jazz' — this row exactly."},
+    "royksopp": {"title":"Röyksopp","kind":"artist","why":"Tromsø 2001 is Melody A.M. (Wall of Sound, 13 September 2001). The diaeresis is the filing, the Forró lesson again; the article's first line — 'a Norwegian electronic music duo from Tromsø' — is the dot, per the Kinks/Pomona rule."}
   };
   const MISSES = [
     {"key":"retrofunkpop","label":"Los Angeles 2013","why":"Los Angeles 2013 — the 2010s retro-funk pop revival has no article of its own in this ZIM. `Retro-funk` redirects to Funk, which is already this row's own parent and a different, older music; Nu-disco is disco's revival, not funk's. The nearest honest targets are individual singles (Treasure, Uptown Funk), and a genre row does not link a single."},
@@ -354,10 +366,10 @@
       .replace(/%28/g, "(").replace(/%29/g, ")") : null;
   }
   return {
-    "built": "2026-08-29",
+    "built": "2026-08-30",
     "from": "nukernel/wiki-extract.js",
     "book": BOOK,
-    "counts": { "links": 305, "misses": 2, "roles": 6, "anchors": 313 },
+    "counts": { "links": 317, "misses": 2, "roles": 6, "anchors": 325 },
     WIKI, MISSES, url,
   };
 });

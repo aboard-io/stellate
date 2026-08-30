@@ -300,6 +300,20 @@
     nordicjazz:{ cell: "long",   contour: "hover",  sent: "long",  len: "four" },
     witchhouse:{ cell: "long",   contour: "hover",  reg: "low" },
     japanjazz: { cell: "hang",   contour: "fall",   land: "lead" },
+    // THE DOWNTEMPO HANDOFF (2026-08-30, 313 -> 325), parent-written. Nine
+    // overrides; air, royksopp and thieverycorporation take their family
+    // rows honestly. Portishead's pickup-into-torch-song is NOT triphop's
+    // drift, and massiveattack's two-note grudge is not either — the two
+    // Bristol rows differ from the genre row the way the records do.
+    portishead:{ cell: "pickup", contour: "fall",   land: "third", sent: "hold", len: "four" },
+    massiveattack:{ cell: "riff", contour: "insist", reg: "low",   len: "two" },
+    tricky:    { cell: "long",   contour: "hover",  sent: "vary",  len: "four" },
+    morcheeba: { cell: "pickup", contour: "arch",   land: "third", len: "four" },
+    lamb:      { cell: "long",   contour: "arch",   sent: "vary",  len: "four" },
+    djshadow:  { cell: "even",   contour: "hover",  reg: "low", sent: "plain", len: "four" },
+    kruderdorfmeister:{ cell: "long", contour: "hover", sent: "long", len: "four" },
+    stgermain: { cell: "gallop", contour: "fall",   land: "seventh", sent: "vary" },
+    acidjazz:  { cell: "riff",   contour: "zig",    land: "root",  len: "two" },
     // the WRITTEN VIRTUOSO anchors: a choro, a rag, a reel and a kolo are
     // composed tunes that run, and `roots`' four-bar strophe is the one thing
     // they are not

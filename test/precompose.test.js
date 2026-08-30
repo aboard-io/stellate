@@ -512,8 +512,35 @@ function sectionEvents(doc, i) {
   // five US-history jazz rooms (freejazz, hardbop, cooljazz, fusion,
   // spiritualjazz) the ask's geography did not cover and the ledger
   // did not owe.
-  ok("G0 the catalog is 313 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 313,
+  // + the TWELVE of the downtempo round (Paul, 2026-08-30: "Now we need
+  // more portishead massive attack and maybe 10 more downtempo bands.").
+  // THE RULING FIRST: Blue Lines is `triphop`'s anchor, so Massive
+  // Attack's own artist row (massiveattack, Bristol 1998) anchors on
+  // Mezzanine — a record pays one debt, the winstons rule generalized;
+  // the argument is at the round header in genres.js. The Bristol wing:
+  // portishead (Bristol 1994, Dummy — Barrow was a Coach House tape op
+  // on Blue Lines) and tricky (Bristol 1995, Maxinquaye — the dot is
+  // Bristol on the Kinks/Pomona rule, the tape ran in London). The
+  // diaspora: acidjazz (London 1988, Frederick Lies Still — AJ001, the
+  // scene the 90s crate-dug), kruderdorfmeister (Vienna 1993, G-Stoned),
+  // morcheeba (London 1996, Who Can You Trust?), lamb (Manchester 1996,
+  // Lamb), djshadow (San Francisco 1996, Endtroducing — instrumental by
+  // its own genre line), thieverycorporation (Washington 1996, Sounds
+  // from the Thievery Hi-Fi — NOT instrumental, the ZIM lead names its
+  // guest singers), air (Versailles 1998, Moon Safari — Versailles is a
+  // new dot declared inside Paris in atlas.js WITHIN), stgermain (Paris
+  // 2000, Tourist, instrumental) and royksopp (Tromsø 2001, Melody A.M.
+  // — the map's northernmost dot). EXAMINED AND DECLINED with reasons
+  // at the round header: a `downtempo` umbrella row (the darkwave
+  // ruling), chillout (a compilation of other people's records fails
+  // the batcave test), nightmaresonwax (Leeds is measured blocked,
+  // 5.8px, the sisters wall), hooverphonic (Sint-Niklaas lands ~1 px
+  // from Antwerp and "Antwerp 1996" would contradict the ZIM's own
+  // infobox), boardsofcanada (the IDM shelf, which the catalog does
+  // not hold at all — a named next ask), and zero7/bonobo/
+  // groovearmada/unkle as thin.
+  ok("G0 the catalog is 325 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 325,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));

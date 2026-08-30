@@ -14807,6 +14807,10 @@
     // over strings while the deck crackles. `bedroompop` (Los Angeles
     // 2020) has wanted "trip-hop" by name since its lineage was
     // written and takes the parent today.
+    // 2026-08-30, the downtempo round: Blue Lines stays THIS row's
+    // anchor — a record pays one debt — and Massive Attack's own
+    // artist row (`massiveattack`, Bristol 1998) anchors on Mezzanine
+    // instead; the ruling is argued at that round's header.
     triphop: {
       label: "Bristol 1991", voices: 3, bars: 8, near: "boombap",
       plan: "song", bpm: 84,
@@ -16418,6 +16422,569 @@
                     : v === 1 ? [drop(2), transpose(-3)]
                     : [keep(0, 4, 8, 12)]),
     },
+
+    // ================================================================
+    // THE DOWNTEMPO ROUND — 2026-08-30 (Paul: "Now we need more
+    // portishead massive attack and maybe 10 more downtempo bands.")
+    // Twelve rows: the Bristol scene given its records (the catalog
+    // held ONE — `triphop`, Blue Lines — for a city with a trinity),
+    // and the 90s downtempo diaspora those records started: London,
+    // Vienna, San Francisco, Washington, Manchester, Versailles,
+    // Paris, Tromsø. Every row from a named record with place and
+    // year, every article read in the ZIM before it was written down.
+    //
+    // THE MASSIVE ATTACK RULING, argued once, here: `triphop` is
+    // "Bristol 1991" and Bristol 1991 IS Blue Lines — Massive Attack
+    // already anchor the GENRE row, and a record pays one debt (the
+    // winstons/amen ruling, generalized). So the band's own row
+    // anchors on a DIFFERENT record: Mezzanine (1998), the era the
+    // two links would otherwise erase — the analogsynthpop/gothsynth
+    // precedent, one band twice because the records are two sounds.
+    // Blue Lines stays triphop's; Mezzanine is `massiveattack`'s; no
+    // two rows claim one record.
+    //
+    // EXAMINED AND DECLINED, dated here so the next round does not
+    // re-litigate them:
+    //   · downtempo as an umbrella row — the ZIM's own lead: "a broad
+    //     label for electronic music", whose named subgenres (trip
+    //     hop, ambient house, chillwave, lofi hip hop) are this
+    //     catalog's rows or its open asks. The darkwave refusal is
+    //     the precedent: a family name is not a record.
+    //   · chillout — the lead says "loosely defined … anything that
+    //     might be identified as a modern type of easy listening",
+    //     which is the article admitting it is not one music. And the
+    //     candidate record fails the batcave test: Young Limbs was
+    //     the Batcave's OWN bands cutting the room's sound; Café del
+    //     Mar Volumen Uno (1994) compiles other people's finished
+    //     records, each of which pays its own debt elsewhere.
+    //   · nightmaresonwax — REFUSED ON A MEASUREMENT, the sisters
+    //     precedent: Smokers Delight (Warp, 1995) is a Leeds record
+    //     and Leeds lands 5.8 CSS px from Halifax at the Britain arc,
+    //     under G10's 8.5 floor (measured at the goth round, noted in
+    //     atlas.js). No honest other dot exists: Sheffield is Warp's
+    //     town, not Evelyn's, and the York first-datable-show ruling
+    //     needs a datable show, which a bedroom record does not have.
+    //   · hooverphonic — REFUSED ON A MEASUREMENT TOO. The ZIM's own
+    //     infobox says A New Stereophonic Sound Spectacular was cut
+    //     at ACP, Sint-Niklaas — the band's own town — so "Antwerp
+    //     1996" would be a lie, and a Sint-Niklaas dot lands ~1.0 CSS
+    //     px from Antwerp at the Europe arc (57°): tighter than any
+    //     pair the map ships, two towns with no WITHIN relation (the
+    //     Southall situation — siblings, the relation the table
+    //     cannot say). Belgium's trip hop is real; its dot is not.
+    //   · boardsofcanada — a different cluster, refused as such:
+    //     Music Has the Right to Children (Warp, 1998) is the IDM
+    //     shelf, and this catalog holds NO IDM at all — no Aphex, no
+    //     Autechre, no Warp lane for BoC to sit beside. Filing it
+    //     under a downtempo ask would misname it; IDM is a named
+    //     next ask instead.
+    //   · zero7, bonobo, groovearmada, unkle — thin, each for its own
+    //     reason: Simple Things (2001) is Moon Safari's London echo
+    //     and would restate `air`; Bonobo is the djshadow/Ninja Tune
+    //     shelf a generation later; Groove Armada's records live on
+    //     the bigbeat/house side of this line; and Psyence Fiction is
+    //     DJ Shadow at the desk again — his row holds that desk, and
+    //     a record pays one debt. Ten good ones beat eighteen thin.
+    // ================================================================
+
+    // ACID JAZZ — London 1988. Galliano's "Frederick Lies Still"
+    // (Acid Jazz AJ001): the first record on Eddie Piller and Gilles
+    // Peterson's Acid Jazz label — the ZIM dates the label 1987 and
+    // files the genre's origin in London's rare-groove club scene —
+    // a Curtis Mayfield rework talked over a live jazz-funk band,
+    // named as a joke on the acid house filling every other room
+    // that summer. The Brand New Heavies and Jamiroquai are this
+    // scene two years later; the downtempo 90s (Vienna, Washington,
+    // Paris below) all crate-dug this shelf, which is why the row
+    // lands first in the round.
+    acidjazz: {
+      label: "London 1988", voices: 3, bars: 8, near: "funk",
+      plan: "dance", bpm: 104,
+      // LINEAGE: `funk` (Cincinnati 1967) is the body on the decks
+      // and on the stage; `jazz` (New York 1945) the changes and the
+      // solos the name promises; `house` (Chicago 1986) the era the
+      // name winks at — the clubs were one corridor apart.
+      parents: { funk: 0.35, jazz: 0.25, house: 0.15 },
+      // rare groove joins triphop's own outstanding ask — two rows
+      // now want Norman Jay's shelf by name.
+      wants: ["rare groove", "jazz-funk (roy ayers, lonnie liston smith)"],
+      instr: ["percussive_organ", "clean_guitar", "brass_section"],
+      drumkit: "acoustic",
+      entry: v => v, reg: () => 0,
+      realize: () => "line",
+      part: ["lead", "riff", "riff"],
+      harmony: "modal",
+      mode: MODES.dorian, scale: SCALES.blues, artic: "staccato", maxHold: 2,
+      swing: 0.15, bassStyle: "sixteenths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,1,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
+             h: [1,0,1,1, 1,0,1,0, 1,1,1,0, 1,0,1,1] },
+      fx: ["wah"],
+      tone: { wave: "square", cut: 2400, q: 1.1, atk: .006, rel: .3, gain: .26, verb: .3 },
+      words: ["the organ, a dorian vamp with its collar open",
+              "the guitar, sixteenth-note scratch",
+              "the horns, punctuation from the funk shelf"],
+      word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(2)], [fill(2)]][s % 4]
+                    : v === 1 ? [keep(0, 4, 8, 12), transpose(-3)]
+                    : [[drop(2)], [drop(2)], [fill(2)], [drop(2)]][s % 4]),
+    },
+
+    // KRUDER & DORFMEISTER — Vienna 1993. G-Stoned (G-Stone, 1993;
+    // the ZIM's infobox: recorded September-October at G-Stone Studio,
+    // Vienna): two Viennese producers slowing the boom-bap they loved
+    // to the tempo of the city that invented the coffee house — dub
+    // bass, brushed loops, a muted trumpet in the haze, a Simon &
+    // Garfunkel pose on the sleeve as the whole manifesto. The K&D
+    // Sessions (1998) made the sound world-famous but it is a remix
+    // album — other people's records, each paying its own debt — so
+    // the EP is the honest anchor, the winstons rule again.
+    kruderdorfmeister: {
+      label: "Vienna 1993", voices: 2, bars: 8, near: "triphop",
+      plan: "dance", bpm: 82,
+      // LINEAGE: `dub` (Kingston 1973) is the bass and the patience;
+      // `boombap` (New York 1994) is a year LATE as a parent — the
+      // craft arrived in Vienna off earlier records, so `electro`
+      // (New York 1982) carries the breakbeat edge instead, exactly
+      // as triphop's own lineage routes it; `acidjazz` (London 1988)
+      // the crates the haze was rolled from.
+      parents: { dub: 0.35, electro: 0.2, acidjazz: 0.2 },
+      wants: ["the vienna rooms either side (tosca, sofa surfers)"],
+      instr: ["muted_trumpet", "warm_pad"],
+      drumkit: "electronic",
+      entry: v => (v === 0 ? 2 : 0), reg: v => (v === 0 ? 0 : -1),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad"],
+      harmony: "modal",
+      mode: MODES.dorian, scale: DIATONIC, artic: "legato", maxHold: 4,
+      swing: 0.25, bassStyle: "pedal", fx: ["echo"],
+      tone: { wave: "triangle", cut: 1500, q: 0.9, atk: .025, rel: 1.4, gain: .24, verb: .5 },
+      words: ["the trumpet, muted, in no hurry, in smoke",
+              "the pad, the room after midnight"],
+      word: (v, s) => (v === 0 ? [[], [spread(2)], [transpose(-2)], [rotate(3)]][s % 4]
+                    : [drop(8)]),
+    },
+
+    // PORTISHEAD — Bristol 1994. Dummy (Go! Beat, 22 August 1994):
+    // Geoff Barrow was a tape op at the Coach House during the Blue
+    // Lines sessions, and Dummy is what he built when he got the
+    // room to himself — beats cut to lacquer and scratched back so
+    // the hiss is IN the loop, Adrian Utley's spy-theme guitar,
+    // Beth Gibbons singing torch songs a foot from the mic. Paul
+    // asked for the band by name and the row is honestly distinct
+    // from Blue Lines: this is a TORCH SONG on a turntable, not a
+    // sound system slowed down.
+    portishead: {
+      label: "Bristol 1994", voices: 3, bars: 8, near: "triphop",
+      plan: "song", bpm: 76,
+      // LINEAGE: `triphop` (Bristol 1991) is the room he was a tape
+      // op in; `boombap` (New York 1994) shares the year, so the
+      // break craft routes through `electro` (New York 1982) the way
+      // triphop's own row does; `jazz` (New York 1945) is Utley's
+      // trade and the torch harmony under Gibbons.
+      parents: { triphop: 0.35, electro: 0.2, jazz: 0.2 },
+      wants: ["the spy-film score (john barry, lalo schifrin)"],
+      cannot: ["the surface noise itself — Dummy presses its beats to " +
+               "lacquer and plays the crackle as a member of the band, " +
+               "and this box renders scores, not shellac; the row says " +
+               "the slow kit and the torch line, not the dust"],
+      instr: ["solo_vox", "jazz_guitar", "rhodes_ep"],
+      drumkit: "electronic",
+      entry: v => (v === 0 ? 2 : v === 1 ? 0 : 4),
+      reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      harmony: "modal",
+      mode: MODES.aeolian, scale: DIATONIC, artic: "legato", maxHold: 4,
+      swing: 0.15, bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,0,0, 1,0,1,0, 1,0,0,0, 1,0,1,0] },
+      kitVel: { h: [5,0,0,0, 3,0,2,0, 5,0,0,0, 3,0,2,0] },
+      fx: ["tremolo", "echo"],
+      tone: { wave: "triangle", cut: 1700, q: 0.9, atk: .02, rel: 1.3, gain: .24, verb: .55,
+              // WHO SINGS: close, plain, full of breath — Gibbons is
+              // the confessional mouth's defining case in this table.
+              mouth: MOUTHS.confessional },
+      words: ["the voice, hurt, a foot from the mic",
+              "the guitar, a spy theme through the tremolo",
+              "the rhodes, two dark chords under everything"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(-2)], []][s % 4]
+                    : v === 1 ? [[rotate(4)], [reverse()], [rotate(4)], [transpose(1)]][s % 4]
+                    : [drop(8)]),
+    },
+
+    // TRICKY — Bristol 1995. Maxinquaye (4th & B'way, 20 February
+    // 1995), named for his mother: the third Bristol record and the
+    // proof the city is a SCENE and not a crowd — he rapped on Blue
+    // Lines, left, and cut the claustrophobic answer: his whisper
+    // shadowing Martina Topley-Bird's deadpan an octave down, loops
+    // detuned till they seasick, Public Enemy's "Black Steel" sung
+    // by a woman over a live punk band. THE DOT IS BRISTOL AND THE
+    // TAPE RAN IN LONDON: the Kinks/Pomona rule — born and raised
+    // Knowle West, the record is that upbringing wherever the desk
+    // stood. (Bristol now holds four records across seven years —
+    // Paris holds seven across eight centuries; a place is allowed
+    // to be a scene.)
+    tricky: {
+      label: "Bristol 1995", voices: 2, bars: 8, near: "portishead",
+      plan: "song", bpm: 78,
+      // LINEAGE: `triphop` (Bristol 1991) is the band he walked out
+      // of; `dub` (Kingston 1973) the blood — his grandmother's
+      // sound-system Knowle West; `punk` (New York 1976) the live
+      // band "Black Steel" is sung over.
+      parents: { triphop: 0.45, dub: 0.15, punk: 0.15 },
+      wants: [],
+      cannot: ["the doubled throat — his asthmatic whisper UNDER her " +
+               "level line, two mouths on one melody an octave apart, " +
+               "is the record's signature and this box casts one mouth " +
+               "per chair; the row keeps her side of the pair"],
+      instr: ["solo_vox", "crunch_guitar"],
+      drumkit: "electronic",
+      entry: v => (v === 0 ? 2 : 0), reg: () => 0,
+      realize: () => "line",
+      part: ["lead", "counter"],
+      harmony: "modal",
+      mode: MODES.phrygian, scale: DIATONIC, artic: "legato", maxHold: 4,
+      swing: 0.3, bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,0,1, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
+             h: [1,0,0,1, 0,0,1,0, 1,0,0,0, 0,1,0,0] },
+      fx: ["crunch", "echo"],
+      tone: { wave: "sawtooth", cut: 1400, q: 1.2, atk: .02, rel: 1.1, gain: .24, verb: .5,
+              // WHO SINGS: Topley-Bird's side of the pair — level,
+              // unimpressed, no belt anywhere in it.
+              mouth: MOUTHS.confessional },
+      words: ["the voice, deadpan over the seasick loop",
+              "the guitar, detuned till the room tilts"],
+      word: (v, s) => (v === 0 ? [[], [transpose(-1)], [rotate(2)], [transpose(-1)]][s % 4]
+                    : [[fill(2)], [fill(2), transpose(1)], [reverse()], [fill(2)]][s % 4]),
+    },
+
+    // MORCHEEBA — London 1996. Who Can You Trust? (Indochina, 1 April
+    // 1996): the Godfrey brothers' beats and psychedelia under Skye
+    // Edwards's balm — and the one thing no other row in this wing
+    // has, a SLIDE GUITAR, country blues laid over the loop as if
+    // Beck's Odelay and Dummy shared a porch. The ear files it beside
+    // portishead; the guitar is why it is not a copy.
+    morcheeba: {
+      label: "London 1996", voices: 3, bars: 8, near: "portishead",
+      plan: "song", bpm: 80,
+      // LINEAGE: `triphop` (Bristol 1991) is the licence the press
+      // filed them under; `blues` (Chicago 1952) the slide and the
+      // porch; `psychpop` (London 1968) Ross Godfrey's record shelf.
+      parents: { triphop: 0.35, blues: 0.2, psychpop: 0.15 },
+      wants: [],
+      instr: ["solo_vox", "steel_string_guitar", "electric_piano"],
+      drumkit: "electronic",
+      entry: v => (v === 0 ? 2 : v === 1 ? 0 : 4),
+      reg: v => (v === 1 ? 0 : v === 2 ? -1 : 1),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      harmony: "modal",
+      mode: MODES.dorian, scale: SCALES.blues, artic: "legato", maxHold: 4,
+      swing: 0.2, bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fx: ["echo"],
+      tone: { wave: "triangle", cut: 1800, q: 0.9, atk: .02, rel: 1.1, gain: .24, verb: .45,
+              // WHO SINGS: Edwards is the wing's warmest mouth — the
+              // pop lead's breath without its belt.
+              mouth: MOUTHS.poplead },
+      words: ["the voice, warm where the others are wounded",
+              "the slide guitar, country blues over a break",
+              "the keys, holding the couch down"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], []][s % 4]
+                    : v === 1 ? [[rotate(3)], [spread(2)], [rotate(3)], [reverse()]][s % 4]
+                    : [drop(8)]),
+    },
+
+    // LAMB — Manchester 1996. Lamb (Fontana, 30 September 1996):
+    // Andy Barlow's fractured jungle programming under Lou Rhodes's
+    // torch line — "Górecki" names a living composer in a love song
+    // — the row where this wing touches `dnb` instead of dub. The
+    // breaks are dnb's, the tempo is a ballad's: half-time song over
+    // double-time drums, which no other row in the table says.
+    lamb: {
+      label: "Manchester 1996", voices: 2, bars: 8, near: "dnb",
+      plan: "song", bpm: 82,
+      // LINEAGE: the ZIM's own three — trip hop, drum and bass and
+      // jazz: `triphop` (Bristol 1991) the singer-over-loop deal,
+      // `dnb` (London 1994) the kit language, `jazz` (New York 1945)
+      // the upright bass and the harmony under the torch line.
+      parents: { triphop: 0.3, dnb: 0.3, jazz: 0.15 },
+      wants: [],
+      instr: ["solo_vox", "electric_piano"],
+      drumkit: "electronic",
+      entry: v => (v === 0 ? 2 : 0), reg: v => (v === 0 ? 1 : 0),
+      realize: () => "line",
+      part: ["lead", "counter"],
+      harmony: "modal",
+      mode: MODES.aeolian, scale: DIATONIC, artic: "legato", maxHold: 4,
+      bassStyle: "pedal",
+      kit: { k: [1,0,0,1, 0,0,1,0, 0,1,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,0,0],
+             h: [1,0,1,0, 1,1,1,0, 1,0,1,1, 1,0,1,0] },
+      kitVel: { s: [0,0,0,0, 9,0,0,4, 0,0,5,0, 9,0,0,0] },
+      fx: ["echo"],
+      tone: { wave: "triangle", cut: 1900, q: 1.0, atk: .015, rel: 1.2, gain: .24, verb: .5,
+              // WHO SINGS: Rhodes's folk quaver, close and plain.
+              mouth: MOUTHS.confessional },
+      words: ["the voice, a torch song at half the drums' speed",
+              "the keys, jazz chords keeping the cut-up honest"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(-2)], []][s % 4]
+                    : [[rotate(4)], [split(2)], [rotate(4)], [fill(2)]][s % 4]),
+    },
+
+    // DJ SHADOW — San Francisco 1996. Endtroducing..... (Mo' Wax,
+    // 16 September 1996), cut at The Glue Factory on an Akai MPC60
+    // over two years by Josh Davis, the Solesides crate-digger from
+    // Davis up the causeway (KDVS 90.3 FM is in the comment because
+    // the scene was): Guinness cites it as the first album created
+    // entirely from samples — jazz, funk, prog and rain, chopped
+    // into moods with no rapper anywhere on it. `blockparty`'s
+    // merry-go-round became a pad bank, which is the lineage edge
+    // drawn below.
+    djshadow: {
+      instrumental: true,   // the ZIM's own genre line: instrumental hip hop — no singer on the record
+      label: "San Francisco 1996", voices: 2, bars: 8, near: "boombap",
+      plan: "song", bpm: 88,
+      // LINEAGE: `boombap` (New York 1994) is the kit craft at its
+      // most reverent; `blockparty` (Bronx 1973) the DJ culture the
+      // record is a monument to — Herc's two copies become sixty
+      // thousand records in a basement; `jazz` (New York 1945) what
+      // the crates mostly held.
+      parents: { boombap: 0.4, blockparty: 0.25, jazz: 0.15 },
+      wants: ["the mo' wax shelf beside it (u.n.k.l.e.)",
+              "the library-music vinyl the crates held"],
+      cannot: ["the lift itself — Guinness calls this the first record " +
+               "built entirely of samples, and this box owns no crates " +
+               "and lifts nothing; the row says the mood and the break, " +
+               "not the theft"],
+      instr: ["electric_piano", "strings"],
+      drumkit: "electronic",
+      entry: v => (v === 0 ? 0 : 2), reg: v => (v === 0 ? 0 : 1),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad"],
+      harmony: "modal",
+      mode: MODES.aeolian, scale: DIATONIC, artic: "legato", maxHold: 4,
+      swing: 0.15, bassStyle: "pedal",
+      kit: { k: [1,0,0,1, 0,0,1,0, 0,1,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,1, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,1,1,0] },
+      fx: ["echo"],
+      tone: { wave: "triangle", cut: 1600, q: 1.0, atk: .02, rel: 1.4, gain: .25, verb: .5 },
+      words: ["the piano loop, four bars of somebody else's melancholy",
+              "the strings, weather moving in over the break"],
+      word: (v, s) => (v === 0 ? [[], [rotate(4)], [transpose(-2)], [rotate(4)]][s % 4]
+                    : [drop(8), keep(0, 8)]),
+    },
+
+    // THIEVERY CORPORATION — Washington 1996. Sounds from the
+    // Thievery Hi-Fi (first released 1996; ESL Music, the label
+    // named for the Eighteenth Street Lounge where Garza and Hilton
+    // met over a shared shelf of dub and bossa records): sitar and
+    // Rhodes over dub bass at lounge tempo, Washington's fourth
+    // record and its first since hardcore — the same city, sixteen
+    // years and an entire temperature apart. The ZIM's own lead
+    // names the guests (Pam Bricker, Bebel Gilberto), so the row is
+    // NOT declared instrumental: singers are welcome at this door
+    // and always were.
+    thieverycorporation: {
+      label: "Washington 1996", voices: 3, bars: 8, near: "kruderdorfmeister",
+      plan: "dance", bpm: 84,
+      // LINEAGE: `dub` (Kingston 1973) is the bass and the echo;
+      // `bossa` (Rio de Janeiro 1958) the other half of the shared
+      // shelf — Gilberto's own daughter sings on the record;
+      // `acidjazz` (London 1988) the club economy that made a lounge
+      // a label.
+      parents: { dub: 0.4, bossa: 0.25, acidjazz: 0.15 },
+      wants: [],
+      instr: ["sitar", "rhodes_ep", "warm_pad"],
+      drumkit: "electronic",
+      entry: v => (v === 0 ? 2 : v === 1 ? 0 : 4),
+      reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      harmony: "modal",
+      mode: MODES.dorian, scale: DIATONIC, artic: "legato", maxHold: 4,
+      swing: 0.2, bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,1,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             p: [0,0,1,0, 0,1,0,0, 0,0,1,0, 0,1,0,1] },
+      fx: ["echo"],
+      tone: { wave: "triangle", cut: 1600, q: 0.9, atk: .02, rel: 1.3, gain: .24, verb: .5 },
+      words: ["the sitar, a borrowed raga over a dub bass",
+              "the rhodes, the lounge's own upholstery",
+              "the pad, incense in the air conditioning"],
+      word: (v, s) => (v === 0 ? [[], [spread(2)], [transpose(2)], [rotate(3)]][s % 4]
+                    : v === 1 ? [[fill(2)], [fill(2)], [rotate(2)], [fill(2)]][s % 4]
+                    : [drop(10)]),
+    },
+
+    // AIR — Versailles 1998. Moon Safari (Source/Virgin, 16 January
+    // 1998): Godin and Dunckel, the ZIM's own first line "a French
+    // music duo from Versailles" — Moog and Rhodes and a vocoder
+    // singing "Sexy Boy", the sixties' idea of the future remembered
+    // at downtempo BPM from the town of the palace. THE DOT IS NEW
+    // AND DECLARED INSIDE PARIS: Versailles is its own commune and
+    // préfecture, but it sits in INSEE's unité urbaine de Paris —
+    // the continuous built-up area — so atlas.js WITHIN says
+    // "Versailles, in Paris" the way it says Muswell Hill is, and
+    // the map keeps the scene's real name (the press called this
+    // wave "the Versailles sound"; filing it under Paris would erase
+    // the town the joke and the sound are both about).
+    air: {
+      label: "Versailles 1998", voices: 3, bars: 8, near: "synthwave",
+      plan: "song", bpm: 84,
+      // LINEAGE: `psychpop` (London 1968) is the orchestrated pop
+      // song underneath; `roboticpop` (Düsseldorf 1978) the vocoder
+      // folded into a verse-chorus; `ambient` (London 1978) the
+      // patience and the air.
+      parents: { psychpop: 0.3, roboticpop: 0.25, ambient: 0.15 },
+      wants: ["gainsbourg's histoire de melody nelson",
+              "french library music (perrey's moog)"],
+      instr: ["synth_voice", "rhodes_ep", "warm_pad"],
+      drumkit: "cr78",
+      entry: v => (v === 0 ? 2 : v === 1 ? 0 : 4),
+      reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      harmony: "cycle", roots: [0, 5, 3, 4],
+      mode: MODES.ionian, scale: SCALES.major, artic: "legato", maxHold: 4,
+      bassStyle: "eighths",
+      fx: ["chorus"],
+      tone: { wave: "triangle", cut: 1600, q: 0.8, atk: .03, rel: 1.4, gain: .24, verb: .4 },
+      words: ["the vocoder, singing like a polite machine",
+              "the rhodes, major sevenths at walking pace",
+              "the pad, the moon through a hotel window"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], []][s % 4]
+                    : v === 1 ? [[rotate(2)], [spread(2)], [rotate(2)], [transpose(-2)]][s % 4]
+                    : [drop(8)]),
+    },
+
+    // MASSIVE ATTACK — Bristol 1998. Mezzanine (Circa/Virgin, 20
+    // April 1998). THE RULING IS AT THE ROUND HEADER: Blue Lines is
+    // `triphop`'s anchor and a record pays one debt, so the band's
+    // own row anchors on the record where they outgrew the genre
+    // they founded — the ZIM's own lead: "a darker aesthetic …
+    // influenced by British post-punk, industrial, hip hop and dub".
+    // Two-note bass under Liz Fraser on "Teardrop", Horace Andy on
+    // "Angel", a Manzanera lift on "Inertia Creeps": the soundsystem
+    // drift of 1991 hardened into a band sound with guitars. The
+    // gothsynth/analogsynthpop precedent: one act, two rows, because
+    // the two records are two musics — and the label says the year
+    // that separates them.
+    massiveattack: {
+      label: "Bristol 1998", voices: 3, bars: 8, near: "triphop",
+      plan: "song", bpm: 80,
+      // LINEAGE: `triphop` (Bristol 1991) is their own earlier
+      // record; `postpunk` (Manchester 1979) the article's first
+      // named influence and the source of the samples; `dub`
+      // (Kingston 1973) the bass Horace Andy has sung over since
+      // before the band existed.
+      parents: { triphop: 0.4, postpunk: 0.25, dub: 0.2 },
+      wants: [],
+      instr: ["solo_vox", "overdrive_guitar", "warm_pad"],
+      drumkit: "electronic",
+      entry: v => (v === 0 ? 4 : v === 1 ? 0 : 2),
+      reg: v => (v === 0 ? 1 : v === 1 ? -1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "riff", "pad"],
+      harmony: "modal",
+      mode: MODES.phrygian, scale: DIATONIC, artic: "tie", maxHold: 4,
+      bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0] },
+      fx: ["echo", "crunch"],
+      tone: { wave: "sawtooth", cut: 1500, q: 1.2, atk: .015, rel: 1.5, gain: .24, verb: .5,
+              // WHO SINGS: the head voice held nearly straight —
+              // Fraser's "Teardrop" register, not a belt.
+              mouth: MOUTHS.falsetto },
+      words: ["the voice, high and nearly still",
+              "the guitar riff, two notes with a grudge",
+              "the pad, the dread under the floorboards"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(-1)], []][s % 4]
+                    : v === 1 ? [keep(0, 4, 8, 12), transpose(-5)]
+                    : [drop(10)]),
+    },
+
+    // ST GERMAIN — Paris 2000. Tourist (Blue Note, 2000): Ludovic
+    // Navarre signed to the jazz label itself, a house floor with
+    // LIVE horns and guitar soloing over it — the ZIM files him as
+    // "house music and nu jazz" and the record as nu jazz and acid
+    // jazz. The one row in this round at house tempo: downtempo's
+    // Paris end kept the four-on-the-floor and slowed the harmony
+    // instead of the kick.
+    stgermain: {
+      instrumental: true,   // the record books players, not singers — the voices on it are sampled texture, not a chair
+      label: "Paris 2000", voices: 2, bars: 8, near: "house",
+      plan: "dance", bpm: 120,
+      // LINEAGE: `house` (Chicago 1986) is the floor, kept honest;
+      // `jazz` (New York 1945) the solos and the label's own name;
+      // `acidjazz` (London 1988) the deal itself — jazz players over
+      // club drums — a decade before Blue Note signed it.
+      parents: { house: 0.35, jazz: 0.25, acidjazz: 0.2 },
+      wants: ["the f communications shelf before blue note (boulevard)"],
+      instr: ["trumpet", "jazz_guitar"],
+      drumkit: "tr909",
+      entry: v => (v === 0 ? 2 : 0), reg: () => 0,
+      realize: () => "line",
+      part: ["lead", "counter"],
+      harmony: "modal",
+      mode: MODES.dorian, scale: SCALES.blues, artic: "legato", maxHold: 3,
+      swing: 0.1, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      fx: ["echo"],
+      tone: { wave: "square", cut: 2200, q: 1.0, atk: .01, rel: .6, gain: .25, verb: .35 },
+      words: ["the trumpet, a blue note over a metronome",
+              "the guitar, comping like the rent is paid"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [reverse()]][s % 4]
+                    : [[rotate(2)], [rotate(2)], [fill(2)], [rotate(2)]][s % 4]),
+    },
+
+    // RÖYKSOPP — Tromsø 2001. Melody A.M. (Wall of Sound, 13
+    // September 2001): Berge and Brundtland, childhood friends from
+    // Tromsø — the ZIM's own filing — who grew up in the town's
+    // improbable electronica school (Biosphere, Bel Canto, three
+    // hundred kilometres inside the Arctic Circle) and cut the
+    // record during the Bergen Wave; the dot is the Kinks/Pomona
+    // rule, the band's own town, and it is the NORTHERNMOST POINT ON
+    // THE MAP — sixty-nine degrees, past Reykjavík by five. Analogue
+    // synth melodies with frost on them over an unhurried house
+    // floor: the melancholy is written into the tune, not played
+    // into the time, which is what the DYNAMICS null below means.
+    royksopp: {
+      label: "Tromsø 2001", voices: 2, bars: 8, near: "air",
+      plan: "dance", bpm: 104,
+      // LINEAGE: `house` (Chicago 1986) is the floor; `ambient`
+      // (London 1978) the patience — Biosphere is this row's want
+      // because the Tromsø school deserves its own record; `synthpop`
+      // (Basildon 1981) the tune discipline on top.
+      parents: { house: 0.3, ambient: 0.25, synthpop: 0.2 },
+      wants: ["the tromsø school itself (biosphere's substrata)"],
+      instr: ["polysynth", "warm_pad"],
+      drumkit: "electronic",
+      entry: v => (v === 0 ? 2 : 0), reg: v => (v === 0 ? 0 : -1),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad"],
+      harmony: "cycle", roots: [0, 5, 3, 6],
+      mode: MODES.aeolian, scale: DIATONIC, artic: "legato", maxHold: 3,
+      bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,1,1,0] },
+      fx: ["sweep"],
+      tone: { wave: "sawtooth", cut: 1800, q: 1.0, atk: .02, rel: 1.2, gain: .25, verb: .45 },
+      words: ["the synth, a tune you could hum in mittens",
+              "the pad, the sun not coming up"],
+      word: (v, s) => (v === 0 ? [[], [transpose(2)], [rotate(4)], [transpose(-2)]][s % 4]
+                    : [drop(8)]),
+    },
   };
 
   // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane. `p` says "Ghost perc"
@@ -16588,7 +17155,19 @@
                 // family fallback, so `witchhouse` is named in DYNAMICS
                 // below — a hand in the loop, chopped's own wrist an
                 // octave darker.
-                "witchhouse"]],
+                "witchhouse",
+                // ...and the downtempo round's nine (2026-08-30), on the
+                // deal every member above signed: `club` has NO family
+                // fallback, so every one is named in DYNAMICS below —
+                // royksopp as a machine (null, the melancholy is written,
+                // not played) and eight with a hand in the loop, because
+                // a torch singer over a loop, an MPC with the quantize
+                // off and a trumpet soloing over a 909 are hands,
+                // whatever the floor says. (`acidjazz` files in soul —
+                // it is a live funk band, and the ear says so.)
+                "kruderdorfmeister", "portishead", "tricky",
+                "morcheeba", "lamb", "djshadow", "massiveattack",
+                "stgermain", "royksopp"]],
     ["soul",   ["doowop", "motown", "isley", "funk", "disco", "gospel", "rnb",
                 "jodeci", "clubpop", "retrofunkpop", "boyband", "darkrnb",
                 "blueeyedsoul",
@@ -16609,7 +17188,13 @@
                 // York 1960 is doowop's own stack with better paperwork, and
                 // Detroit 1975 is funk grown a costume department. All three
                 // take the family's dynamics row unchanged.
-                "winstons", "brill", "pfunk"]],
+                "winstons", "brill", "pfunk",
+                // ...and the downtempo round's one (2026-08-30): acid
+                // jazz is a live funk band with jazz changes in a London
+                // club, and the ear files a Brand New Heavies record as
+                // a funk record; it takes the family's own dynamics row
+                // unchanged, which is what a live rhythm section earns.
+                "acidjazz"]],
     // ...and the two 2020s newcomers that are grooves and not floors: both are
     // a hand layer over a rhythm section, which is what this cluster is, and
     // both take the family's own dynamics row unchanged.
@@ -16642,7 +17227,12 @@
                 // Can was a RHYTHM SECTION with a hand layer over it —
                 // Liebezeit is the whole argument — where Kling Klang is a
                 // desk. The ear files Halleluhwah with the grooves.
-                "krautrock"]],
+                "krautrock",
+                // ...and the downtempo round's one (2026-08-30): a sitar,
+                // a Rhodes and a hand-percussion lane over dub bass is
+                // this cluster's definition at lounge tempo — thievery
+                // takes the family's own dynamics row unchanged.
+                "thieverycorporation"]],
     ["band",   ["rock", "punk", "blues", "bodiddley", "chuckberry", "newwave",
                 // ...the deep-time round's forward half (2026-08-30) put
                 // `hardcore` beside punk and `doom` beside sludge — the
@@ -16716,7 +17306,12 @@
                 // an arranger plus a desk, and the arranger IS the record;
                 // YMO is Kling Klang's own answer record; synthwave is a
                 // desk remembering a decade of desks.
-                "beachboys", "ymo", "synthwave"]],
+                "beachboys", "ymo", "synthwave",
+                // ...and the downtempo round's one (2026-08-30): Moon
+                // Safari is the cluster's definition in French — a duo
+                // plus an arranger's record shelf plus a desk — and air
+                // takes the family's dynamics row unchanged.
+                "air"]],
     ["drift",  ["ambient", "drone", "vaporwave", "shoegaze", "postrock",
                 "neoclassical", "minimalism", "spacerock",
                 // ...and the genealogy round's two (2026-08-29): Nara 752 —
@@ -17237,6 +17832,35 @@
     // aesthetic is rubato over a pulse barely stated, so the phrase
     // carries nearly everything and the hand is jazz's own loose one.
     nordicjazz: { stress: 0.18, phrase: 0.8,  touch: { t: 0.07,  v: 0.7 } },
+    // THE DOWNTEMPO ROUND'S CLUB MEMBERS (2026-08-30) — nine new `club`
+    // rows, still no family fallback, all nine named per the table's own
+    // law. ONE is a machine and null means it: Melody A.M.'s melancholy
+    // is written into the tune, not played into the time — the floor
+    // never leans, the same argument every null above makes.
+    royksopp: null,
+    //   ...and the eight with a hand in the loop. The Bristol wing all
+    // sit near triphop's own numbers — the loop is dead-tight, the
+    // voice carries the phrase — and they differ where the records do:
+    // portishead is slower and nearly all torch line; massiveattack is
+    // Mezzanine's grid, the tightest and quietest hand of the wing;
+    // tricky drags the loosest time of the three because the seasick
+    // detune IS a wrist; morcheeba and lamb keep the singer's phrase
+    // with lamb on dnb's near-frozen breaks (dnb's own t 0.015, a
+    // fraction looser for the live keys).
+    portishead:    { stress: 0.25, phrase: 0.6,  touch: { t: 0.03,  v: 0.65 } },
+    massiveattack: { stress: 0.32, phrase: 0.4,  touch: { t: 0.015, v: 0.45 } },
+    tricky:        { stress: 0.22, phrase: 0.45, touch: { t: 0.05,  v: 0.7 } },
+    morcheeba:     { stress: 0.25, phrase: 0.55, touch: { t: 0.03,  v: 0.6 } },
+    lamb:          { stress: 0.2,  phrase: 0.55, touch: { t: 0.018, v: 0.5 } },
+    //   ...djshadow is boombap's own MPC hand with the quantize off,
+    // a shade heavier on the pads; kruderdorfmeister brushes the same
+    // deal at Vienna tempo; stgermain is the round's one live-solo
+    // row — the 909 never moves, but everything ON it is played, so
+    // the phrase and the hand are jazz-side while the stress stays
+    // the floor's.
+    djshadow:          { stress: 0.38, phrase: 0.3,  touch: { t: 0.055, v: 0.9 } },
+    kruderdorfmeister: { stress: 0.28, phrase: 0.45, touch: { t: 0.035, v: 0.6 } },
+    stgermain:         { stress: 0.35, phrase: 0.6,  touch: { t: 0.055, v: 0.85 } },
   };
   // NO SILENT DEFAULT (the compose.js law, one tier down): a genre resolves to
   // its own row or to its family's, and `null` is a DECISION rather than an

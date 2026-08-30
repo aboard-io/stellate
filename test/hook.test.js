@@ -153,10 +153,16 @@ ok("iranpop: 10 rewrites, >= 8 distinct hooks and >= 5 distinct rhythms", () => 
    nordicjazz's held ECM line and witchhouse's chopped-an-octave-darker row
    "will likely freeze its hook rhythm", and the measurement agreed exactly:
    those two froze, gypsyjazz and japanjazz (gallop, hang) did not. */
+/* ...AND THE DOWNTEMPO ROUND ADDED THREE (2026-08-30): the round predicted
+   kruderdorfmeister ("dub's own row — likely freeze") and it froze; tricky
+   and lamb joined on the same law — the long cell is the freeze, whatever
+   the contour and sentence do around it. massiveattack and djshadow, the
+   two the prediction watched, did NOT freeze: riff and even deal on. */
 const FROZEN_RHYTHM = ["ambient", "arabesk", "cemilbey", "chopped", "doom",
                        "dreampop", "drone", "dub", "dubstep", "enka",
                        "gagaku", "gothicrock", "gqom", "hohlefels", "hurrian",
-                       "modaljazz", "nordicjazz", "psychrock", "satie",
+                       "kruderdorfmeister", "lamb", "modaljazz", "nordicjazz",
+                       "psychrock", "satie", "tricky",
                        "triphop", "witchhouse"];
 ok("catalog: hook rhythm and degrees vary at nearly every anchor", () => {
   let rv = 0, dv = 0, kv = 0; const frozen = [];
