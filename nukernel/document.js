@@ -241,12 +241,25 @@
                         // into the pinned per-unit params loopa/loopb/loopon.
                         // Absent is still today, byte for byte — proven per
                         // anchor per seed by test/loop-words.test.js.
-                        chairs: lines.map((c) => ({
-                          ...(nativeOf(c, NATIVE)
-                            ? { synth: nativeOf(c, NATIVE) }
-                            : c.instrument === "synth" ? {} : { instr: c.instrument }),
-                          ...(c.sound && Object.keys(c.sound).length
-                            ? { vox: c.sound } : {}) })),
+                        /* ...AND THE RECORD GAIN REACHES A NATIVE CHAIR TOO
+                           (2026-08-30, the volume census). nativeOf hands back
+                           the voice's own declared level and synthRecipe lets
+                           it WIN, so a chair like the shipped chant's cantor
+                           (songs.js level 0.15) bypassed tone.gain x
+                           doc.sound.level entirely — measured: record gain
+                           x0.5 moved the schola exactly x0.5 and the cantor
+                           0.00 dB. The knob now multiplies into the declared
+                           level, clamped at 1, absent-is-today by the same
+                           null guard the sound block below already uses. */
+                        chairs: lines.map((c) => {
+                          const nat = nativeOf(c, NATIVE);
+                          if (nat && doc.sound && doc.sound.level != null)
+                            nat.level = +Math.min(1, nat.level * doc.sound.level).toFixed(3);
+                          return { ...(nat ? { synth: nat }
+                                     : c.instrument === "synth" ? {} : { instr: c.instrument }),
+                                   ...(c.sound && Object.keys(c.sound).length
+                                     ? { vox: c.sound } : {}) };
+                        }),
                         ...(on ? { drumkit: drums.instrument } : {}),
       /* SOUND, THE RECORD'S BALANCE */
                         ...(doc.sound && doc.sound.level != null &&

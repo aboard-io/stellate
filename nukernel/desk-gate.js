@@ -1931,10 +1931,11 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     ok(new Set(ret.words).size === ret.words.length,
        "…and no two stops on it say the same word: " + JSON.stringify(ret.words),
        JSON.stringify(ret.words));
-    console.log("  note the artifact cannot be read any further than this today:" +
-      " audio/live.js engineReport() resolves parentState() and the stream is" +
-      " opened with getState(), so __nuMix().master is blind to the whole rack" +
-      " (measured: buses.echo.fb=\"more\" -> master.echo.fb still \"0.25\").");
+    console.log("  note the recipe this line used to leave was TAKEN, 2026-08-30" +
+      " (the volume-census round): engineReport() reads getState() now — the" +
+      " state the stream is opened with — and prints the default zita's own" +
+      " return, so __nuMix().master follows the rack. The artifact-level drag" +
+      " of `bus|rev|ret` against that report is test/vol-reach.browser.js V5.");
 
     // ---- 5 · THE LISTENING FADER IS ON THE STORE'S OWN SCALE.
     // Paul: "the 'listening' slider doesn't make much sense." It did not: it
@@ -1957,22 +1958,23 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        `document.getElementById("vol")` answered null here and the whole check
        returned `null` — both assertions failing on an absence rather than on
        a scale.
-       THE GESTURE IS PAUL'S OWN and it is TWO taps, not one. The first press
-       is what a person does to see the transport (it drops the stripe to the
-       `play` level, where the vertical fader is) and it also STARTS the
-       record; the second stops it again and the level stays put — measured on
-       the rendered page, 2026-08-29: after two presses `__eightTray().level`
-       is still `"play"`, `#vol` is still laid out, `#play`'s accessible name is
-       back to "play", and `#boardpanel #rack .nu-plate` is still the main. So
-       the gate leaves the transport exactly as it found it and every check
-       after this one runs against a silent box, which is what they were
-       written against.
+       THE GESTURE WAS PAUL'S OWN AND THE PAGE TOOK IT AWAY — CORRECTED
+       2026-08-30 (the volume-census round). This block pressed `#play` twice:
+       written 2026-08-29, when pressing play dropped the stripe to the `play`
+       level (where the fader is) as a side effect. v192 SPLIT the transport —
+       ui/eight.js, "ONE CONTROL, ONE JOB": `#play` only starts and stops now,
+       and the door to the play level is its own mark, `#playops` — so the two
+       presses started and stopped the record, the stripe never moved, `#vol`
+       was never on the page, and all three checks below failed on `null`
+       (measured on this gate's own run, 2026-08-30: `FAIL … null` three
+       times). The gesture is the person's CURRENT one — one tap on the door —
+       and it starts nothing, so the silent-box promise below needs no
+       start/stop dance at all; the second `#playops` tap after the read puts
+       the stripe back at root, leaving the page exactly as found.
        THE PLATE STAYS UP BEHIND THE LEVEL — the gutter's level and the panel
        under it are two different facts — which is why `openBus` comes first
        and why both faders can be read in one round trip. */
-    await page.evaluate(() => document.getElementById("play").click());
-    await page.waitForTimeout(900);
-    await page.evaluate(() => document.getElementById("play").click());
+    await page.evaluate(() => document.getElementById("playops").click());
     await page.waitForTimeout(500);
     const lis = await page.evaluate(async () => {
       const v2 = document.getElementById("vol2"), v1 = document.getElementById("vol");
@@ -2014,6 +2016,10 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     ok(lis && +lis.store === 55 && lis.out === "55%",
        "…and a touch on it writes 55 to the store and prints 55%, not 0.55",
        JSON.stringify(lis));
+    // the stripe goes back up to root — the door out is the door in (v192's
+    // own law: the level is entered on purpose, so it is left on purpose)
+    await page.evaluate(() => document.getElementById("playops").click());
+    await page.waitForTimeout(300);
     /* MEASURED AND SAID OUT LOUD, 2026-08-29: the two views share the store
        but neither REPAINTS when the other is moved (drive `#vol2` to 55 and
        `#vol` still reads 80 until it is touched). That is a fact about the

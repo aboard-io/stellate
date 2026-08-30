@@ -201,6 +201,17 @@ const GATES = [
      exemption by byte-comparison, the precedence order, and that the hand
      ARRIVES on the document path — the round found it declared and never
      arriving there (precompose.js:2417's `|| 0`). */
+  /* EVERY KNOB NAMED VOLUME, DRAGGED FOR REAL (2026-08-30, the census after
+     Paul's "The volume slider no longer works at all"). V1-V7 drag each level
+     control with CDP touches and assert at the ANALYSER — including V7, an
+     iPhone-shaped run (element.volume stubbed read-only-1, media route) that
+     holds the v200 baked-mvol fix. Registered because a gate nobody runs is
+     not a gate, and this one exists precisely because "writes the store" wore
+     a green checkmark for a month while a phone played at full level. */
+  { name: "vol-reach", wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/vol-reach.browser.js"], need: ["test/vol-reach.browser.js"],
+    covers: ["test/vol-reach.browser.js", "nukernel/audio/live.js",
+             "nukernel/audio/desk.js"] },
   { name: "hand", wave: 2, kind: "node",
     argv: ["test/hand.test.js"],
     need: ["test/hand.test.js"], covers: ["test/hand.test.js"] },
@@ -219,6 +230,16 @@ const GATES = [
   { name: "smf-tempo", wave: 2, kind: "node",
     argv: ["test/smf-tempo.test.js"],
     need: ["test/smf-tempo.test.js"], covers: ["test/smf-tempo.test.js"] },
+  /* THE DYNAMICS ON THE PAPER (2026-08-30, "crescendos and decrescendos and
+     ppp to fff markings in the score"): the dealt lvl/env words drawn as
+     dynamic marks and hairpins on the engraved score, and the lvl half —
+     which the velocities never carried — as CC11 in the .mid. Read off the
+     ABC string AND the rendered SVG (abcjs drops unknown decorations
+     silently), with the strip-the-ink byte-equivalence claim on a worded
+     record and the no-words-no-marks claim on the shipped chant. */
+  { name: "dynamics", wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/dynamics.test.js"],
+    need: ["test/dynamics.test.js"], covers: ["test/dynamics.test.js"] },
   /* THE BAND HIRED FOR THE RECORD (2026-08-28, "Fix the pool thing too"). Two
      gates and not one, because the pool's two failures are two KINDS of
      failure: what a chair may be handed and what a save carries are

@@ -287,8 +287,23 @@ export const onMedia = () => /^(mms|mse|segAB|media)/.test(st.route || "");
 // stages are the parent's now, so the answer comes from the parent's own
 // resolvers over the same state the stream was opened with. Same question, one
 // engine's answer instead of a second engine's.
+// ...AND "the same state the stream was opened with" IS getState(), NOT
+// parentState() — FIXED 2026-08-30 (the volume-census round). parentState()
+// is the COMPILED base and carries plan.js's deliberate `reverb: 0`; the
+// stream is opened over getState(), which spreads masterState(MASTER, BUSES)
+// on top, so this readout was blind to the whole rack and the whole master
+// strip. desk-gate check 4 measured it and left the recipe: with
+// `buses.echo.fb = "more"` (0.62) and `tone = "bright"` (5600) in the
+// document, `__nuMix().master.echo` still answered the engine's own defaults
+// `{ ret: "1.00", fb: "0.25", tone: 2600 }`, and with `buses.rev.color =
+// "plate"` set, `master.rev` was `{}`. The SOUND was right the whole time
+// (getState folds the rack in per bar); the REPORT — the board's own model
+// line — said the knob you had just turned did not exist, which is the
+// "writes the store, moves nothing you can see" bug in readout form.
+// test/vol-reach.browser.js V5 now drags `bus|rev|ret` for real and asserts
+// this report follows.
 export function engineReport() {
-  const base = parentState();
+  const base = getState();
   if (!base || !deps) return null;
   const { SE } = deps;
   const fx = SE.fxParams(base) || {};
@@ -299,7 +314,15 @@ export function engineReport() {
   if (mb) stages.push(mb.module.replace(/^master_/, "") + " " + mb.mbdrive.toFixed(2));
   stages.push("limit");
   return { stages,
-    rev: rc ? { [rc.module.replace(/^reverb_/, "")]: rc.rgain.toFixed(2) } : {},
+    // THE DEFAULT REVERB IS A STAGE TOO (2026-08-30, the volume-census round).
+    // `rc` names only a COLORED room (reverbColor returns null for the
+    // default => fx_bus's internal zita, whose return is fxParams `rgain`) —
+    // so this field answered `{}` for every record with a hand on the rack's
+    // `ret` knob and no hand on `color`, and the knob read as unwired. The
+    // zita's own return is printed under its own name; `rgain` 0 prints
+    // "0.00", because a return turned OFF is a fact and not an absence.
+    rev: rc ? { [rc.module.replace(/^reverb_/, "")]: rc.rgain.toFixed(2) }
+            : (fx.rgain != null ? { zita: fx.rgain.toFixed(2) } : {}),
     echo: fx.dtime != null ? { ret: (fx.dgain || 0).toFixed(2),
                                fb: (fx.dfb || 0).toFixed(2),
                                tone: Math.round(fx.dcut || 0) } : null,
