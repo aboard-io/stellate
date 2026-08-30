@@ -122,6 +122,15 @@ export const NuPrecompose = window.NuPrecompose;
 export const NuAtlas = window.NuAtlas;
 export const NuAtlasLand = window.NuAtlasLand;
 
+// ---- which Wikipedia article each anchor is (wiki.js) ----
+// The whole module under its own name, for the reason NuAtlas takes one: it is
+// a GENERATED table (nukernel/wiki-extract.js, resolved against a local ZIM)
+// and its `url()` is the one owner of how a title becomes an href. ui/atlas.js
+// reads it off window directly (its own `W()` closure predates this line);
+// ui/explain.js arrives through here, because a SECOND direct window read is
+// how a law stops being one — the same sentence TERMS came in on.
+export const NuWiki = window.NuWiki;
+
 // ---- the shipped record itself (songs.js) ----
 // ui/eight.js read this off window directly, which predated this file's law and
 // was the last global read left in ui/. The atlas needs TERMS too — "back to

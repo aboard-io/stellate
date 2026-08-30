@@ -902,12 +902,11 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     // dry and wet together, at the same gain. All three, never one — clamping
     // the wet while the dry moved would change the balance a fader must not.
     //
-    // NOT the per-channel faders, deliberately: the BAND writes those itself
-    // (band-kit mixOf writes `bass`, `vocals`, `unit:kick`, `unit:hat` faders
-    // on 24 of the 30 records), so routing them here would re-balance records
-    // nobody has touched — measured at -3.50..+3.00 dB over 25% of modelled
-    // unit rows. `master.fader` is written by NO record, so this is exactly
-    // 1.0 until a hand moves it, and the catalog is byte-identical.
+    // NOT the per-channel faders — that stood here deliberately, and it is
+    // REVERSED 2026-08-30: see the offset-layer block after the p.gain one
+    // below, which quotes this paragraph as it stood and carries the
+    // measurements. `master.fader` is still written by NO record, so this
+    // block is exactly 1.0 until a hand moves it.
     if (mo && mo.fader && !u.sampler && !isDrum) {
       const mf = Math.pow(10, faderDb(mo.fader) / 20);
       v.dry = (v.dry != null ? v.dry : 1) * mf;
@@ -943,6 +942,52 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
       v.rev = (v.rev || 0) * p.gain;
       v.del = (v.del || 0) * p.gain;
       if (v.genre) v.genre *= p.gain;   // all the sends, never some (series-bus round)
+    }
+    // ...AND SO DOES THE MIX-OFFSET LAYER'S OWN FADER AND MUTE (2026-08-30,
+    // the fader lane; Paul: "Fix that"). The `if (o)` block far above writes
+    // the board's unit/part/instrument-chan fader and mute onto `v.lvl`, and
+    // lvl is read by sampled voices and drums AND BY NOTHING ELSE — the same
+    // dead control the master fader and the part strip already had fixed on
+    // this page, still live on the board for the third layer. Measured at the
+    // ring before this block existed (test/_deskreach.cjs, pressFloat,
+    // 8 bars, seed 1): a unit-level MUTE on the modelled stk_piano chairs of
+    // jazz, nocturne and parlor moved the rendered output 0.00 dB on all
+    // three (full == without, contribution 0.00), while the same word on any
+    // sampled chair cuts it dead.
+    //
+    // REVERSED IN PLACE: the master-fader block above used to say "NOT the
+    // per-channel faders, deliberately: the BAND writes those itself
+    // (band-kit mixOf writes `bass`, `vocals`, `unit:kick`, `unit:hat` faders
+    // on 24 of the 30 records), so routing them here would re-balance records
+    // nobody has touched — measured at -3.50..+3.00 dB over 25% of modelled
+    // unit rows." Both halves of that are now settled the other way. First,
+    // a fader drawn on a chair that moves nothing is the dead control this
+    // page forbids, and the board draws it today. Second, THE COST WAS
+    // RE-MEASURED 2026-08-30 and is no longer there to pay on any shipped
+    // artifact: band-kit mixOf reaches MIXER only through ui/band.js push,
+    // and no page has loaded ui/band.js since band.html became index.html
+    // (ui/state.js's own measurement, 2026-08-28); the live writers of this
+    // layer are the producer's notes — 0 of 350 precomposed documents carry
+    // one (walked genreToDocument, seed 1) — and a hand. So the catalog is
+    // byte-identical under this block, and the 24 band records' words are
+    // enumerated in the fader-lane report for the day that surface returns:
+    // `vocals` fader -3 lands on the modelled voice_choir on the 12
+    // hall-desk records, `bass` fader ±3 on the tb303 rows of house, techno,
+    // hiphop, jungle and slow; every other fader word lands sampled or drums
+    // and always reached.
+    //
+    // Same law, same route as the two blocks above: ONE trim over
+    // dry/rev/del/genre together — all the sends, never some — and never
+    // `level` (clamped) or `gmul` (dirt). `v.lvl` still carries the offset
+    // for the table's other readers; nothing modelled reads lvl, so nothing
+    // is applied twice. A mute is the same trim at zero — the mute that
+    // CUTS, the parent's own zero.
+    if (o && (o.mute || o.fader) && !u.sampler && !isDrum) {
+      const og = o.mute ? 0 : Math.pow(10, faderDb(o.fader) / 20);
+      v.dry = (v.dry != null ? v.dry : 1) * og;
+      v.rev = (v.rev || 0) * og;
+      v.del = (v.del || 0) * og;
+      if (v.genre) v.genre *= og;
     }
     // A CHIP IS AN INSERT HERE. The page's own vocabulary calls it a send and had
     // one shared bus per effect; the parent has no page-wide effect bus and a

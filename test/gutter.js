@@ -36,6 +36,15 @@
  *   T6  scrolling the list changes WHICH marks are lit, by count and by name
  *   T7  a tap on a place writes its record, STARTS it, and leaves the mark
  *       centred within a pixel and measurably larger — three numbers
+ *   T8  the ? mark (Paul, 2026-08-30: "add a ? Icon above the log icon that
+ *       fully explains every aspect of a genre"): present in the foot at
+ *       every level, directly above the log; opens/closes with
+ *       aria-expanded; the panel is organized by the EIGHT AXES (AXES.md's
+ *       own eight headings); playback does not rebuild it while open (the
+ *       [data-live] law, read as bytes over a playing second); the parents
+ *       are tappable and NAVIGATE through the atlas door; hohlefels shows
+ *       its `cannot` VERBATIM against genres.js; a role shows EXCLUDE's own
+ *       sentence; no sideways scroll at 320 or 1280 and 44px targets
  *
  * RUN:  NODE_PATH=/home/ford/ftrain-2025/node_modules node test/gutter.js
  *       (it stands up its own COOP/COEP server on a port the OS picks, the
@@ -552,6 +561,174 @@ function standUpServer() {
     "T7 · …and LARGER, measured on its tap box, which is what grows when you " +
     "arrive (the dot itself shrinks on purpose): " + before7.w + " -> " +
     after7.w + " CSS px");
+
+  /* ---- T8 THE ? MARK EXPLAINS THE RECORD'S GENRE ----------------------- */
+  /* Paul, 2026-08-30: *"add a ? Icon above the log icon that fully explains
+     every aspect of a genre."* Every assertion below is against the RENDERED
+     panel, and the strong checks are byte-for-byte against the tables that
+     own the facts (genres.js `cannot`, atlas.js EXCLUDE) — the panel's whole
+     law is extraction, so the gate holds it to the extracted bytes. */
+
+  /* T8a — the mark is in the foot at EVERY level, directly above the log.
+     The same walk T2 does: entering a tab IS entering its level. */
+  const t8a = await p.evaluate(() => {
+    const at = (where) => {
+      const q = document.querySelector('#nu-tray .nu-trayfoot [data-k="explain"]');
+      const log = document.querySelector('#nu-tray .nu-trayfoot [data-k="logger"]');
+      const above = q && log &&
+        !!(q.compareDocumentPosition(log) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+        q.getBoundingClientRect().bottom <= log.getBoundingClientRect().top + 1;
+      return { where, there: !!q, above,
+               exp: q ? q.getAttribute("aria-expanded") : null };
+    };
+    const out = [at("root")];
+    for (const name of window.__eightTabs()) {
+      window.__eightTab(name); out.push(at(name));
+    }
+    window.__eightUp(); window.__eightUp();
+    return out;
+  });
+  const t8bad = t8a.filter((r) => !r.there || !r.above || r.exp == null);
+  check(!t8bad.length,
+    "T8 · the ? mark is in the foot, directly above the log, wearing " +
+    "aria-expanded, at every level (" + t8a.length + " stops" +
+    (t8bad.length ? "; missing at " + JSON.stringify(t8bad) : "") + ")");
+
+  /* T8b — it opens, the page is the eight axes, and the record is playing
+     from T7, so a playing second must not move a byte of it: the [data-live]
+     law read off the artifact (the panel is outside #app and outside every
+     [data-live] subtree; only a hand may write it). */
+  await p.evaluate(() => document.getElementById("explain").click());
+  await p.waitForTimeout(200);
+  const t8b = await p.evaluate(() => {
+    const q = document.getElementById("explain");
+    const pn = document.getElementById("nu-explain");
+    return { exp: q.getAttribute("aria-expanded"),
+             open: !!pn && !pn.hidden,
+             heads: pn ? [...pn.querySelectorAll("h3")].map((h) => h.textContent) : [],
+             bytes: pn ? pn.innerHTML : "",
+             playing: document.getElementById("play").getAttribute("aria-label") };
+  });
+  const AXES8 = ["Time", "Alphabet", "Material", "Form",
+                 "Development", "Cast", "Sound", "Performance"];
+  check(t8b.exp === "true" && t8b.open,
+    "T8 · the ? opens its page and says so (aria-expanded " + t8b.exp + ")");
+  check(AXES8.every((a) => t8b.heads.includes(a)),
+    "T8 · …organized by the eight axes: headings " + JSON.stringify(t8b.heads));
+  await p.waitForTimeout(1200);
+  const t8live = await p.evaluate(() => ({
+    bytes: document.getElementById("nu-explain").innerHTML,
+    playing: document.getElementById("play").getAttribute("aria-label") }));
+  check(t8b.playing === "stop" && t8live.playing === "stop" &&
+        t8live.bytes === t8b.bytes,
+    "T8 · …and a playing second moved ZERO bytes of the open panel " +
+    "(the [data-live] law; " + t8b.bytes.length + " bytes, #play says " +
+    JSON.stringify(t8live.playing) + ")");
+
+  /* T8c — a parent is a door: tapping it navigates through the atlas door
+     (the list rows' own seam) and the panel follows the record. */
+  const t8pre = await p.evaluate(() => {
+    const b = document.querySelector("#nu-explain .nu-xgo[data-gk]");
+    return { basis: window.__eightDoc().basis,
+             gk: b ? b.dataset.gk : null,
+             label: b && window.NuGenres.GENRES[b.dataset.gk]
+               ? window.NuGenres.GENRES[b.dataset.gk].label : null };
+  });
+  check(!!t8pre.gk,
+    "T8 · the panel for " + JSON.stringify(t8pre.basis) +
+    " offers a tappable relation (" + JSON.stringify(t8pre.gk) + ")");
+  await p.evaluate(() =>
+    document.querySelector("#nu-explain .nu-xgo[data-gk]").click());
+  await p.waitForTimeout(900);
+  const t8c = await p.evaluate(() => ({
+    basis: window.__eightDoc().basis,
+    title: document.title,
+    open: !document.getElementById("nu-explain").hidden,
+    h2: (document.querySelector("#nu-explain h2") || {}).textContent }));
+  check(t8c.basis === t8pre.gk && t8c.title === t8pre.label &&
+        t8c.open && t8c.h2 === t8pre.label,
+    "T8 · …tapping it NAVIGATES and the open panel follows: basis " +
+    JSON.stringify(t8pre.basis) + " -> " + JSON.stringify(t8c.basis) +
+    ", page " + JSON.stringify(t8c.title) + ", panel h2 " +
+    JSON.stringify(t8c.h2));
+
+  /* T8d — hohlefels: the `cannot` is shown VERBATIM (the row's own bytes),
+     and a root renders honestly (parents: {} says so, it does not grey). */
+  await p.evaluate(() =>
+    document.querySelector('.nu-ixrow[data-gk="hohlefels"]').click());
+  await p.waitForTimeout(900);
+  const t8d = await p.evaluate(() => {
+    const pn = document.getElementById("nu-explain");
+    return { basis: window.__eightDoc().basis,
+             open: !pn.hidden,
+             cannot: [...pn.querySelectorAll(".nu-xcannot li")]
+               .map((n) => n.textContent),
+             want: window.NuGenres.GENRES.hohlefels.cannot,
+             root: /none declared/.test(pn.textContent) };
+  });
+  check(t8d.basis === "hohlefels" && t8d.open &&
+        JSON.stringify(t8d.cannot) === JSON.stringify(t8d.want) &&
+        t8d.want.length === 3,
+    "T8 · hohlefels shows what the box CANNOT say, verbatim against " +
+    "genres.js (" + t8d.cannot.length + " of " +
+    (t8d.want || []).length + " admissions, byte-equal " +
+    (JSON.stringify(t8d.cannot) === JSON.stringify(t8d.want)) + ")");
+  check(t8d.root,
+    "T8 · …and a record with no parents says so (a root, declared, not a blank)");
+
+  /* T8e — the widths and the thumb: no sideways scroll at 320 or 1280 with
+     the panel open, and a tappable relation is 44px of target. */
+  await p.setViewportSize({ width: 320, height: 700 });
+  await p.waitForTimeout(400);
+  const t8e = await p.evaluate(() => {
+    const b = document.querySelector("#nu-explain button.nu-xgo");
+    return { sideways: document.documentElement.scrollWidth -
+                       document.documentElement.clientWidth,
+             target: b ? b.getBoundingClientRect().height : 0 };
+  });
+  await p.setViewportSize({ width: 1280, height: 900 });
+  await p.waitForTimeout(400);
+  const t8w = await p.evaluate(() =>
+    document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  await p.setViewportSize({ width: 390, height: 844 });
+  await p.waitForTimeout(300);
+  check(t8e.sideways === 0 && t8w === 0,
+    "T8 · nothing scrolls sideways with the panel open at 320 (" +
+    t8e.sideways + " px) or 1280 (" + t8w + " px)");
+  check(t8e.target >= 44,
+    "T8 · …and a tappable relation is a thumb's target at 320: " +
+    t8e.target.toFixed(1) + " px >= 44");
+
+  /* T8f — a ROLE renders honestly: EXCLUDE's own sentence, verbatim. */
+  await p.evaluate(() =>
+    document.querySelector('.nu-ixrow[data-gk="pad"]').click());
+  await p.waitForTimeout(900);
+  const t8f = await p.evaluate(() => {
+    const pn = document.getElementById("nu-explain");
+    return { basis: window.__eightDoc().basis,
+             text: pn.textContent,
+             want: "a role has a job, not a history — " +
+                   window.NuAtlas.EXCLUDE.pad };
+  });
+  check(t8f.basis === "pad" && t8f.text.includes(t8f.want),
+    "T8 · a role shows EXCLUDE's own sentence verbatim: " +
+    JSON.stringify(t8f.want));
+
+  /* T8g — and it CLOSES cleanly, both ways: the toggle and Escape. */
+  await p.evaluate(() => document.getElementById("explain").click());
+  const t8shut = await p.evaluate(() => ({
+    exp: document.getElementById("explain").getAttribute("aria-expanded"),
+    hid: document.getElementById("nu-explain").hidden }));
+  await p.evaluate(() => document.getElementById("explain").click());
+  await p.keyboard.press("Escape");
+  const t8esc = await p.evaluate(() => ({
+    exp: document.getElementById("explain").getAttribute("aria-expanded"),
+    hid: document.getElementById("nu-explain").hidden }));
+  check(t8shut.exp === "false" && t8shut.hid &&
+        t8esc.exp === "false" && t8esc.hid,
+    "T8 · it closes on the toggle AND on Escape, and aria-expanded says so " +
+    "(toggle " + t8shut.exp + "/" + t8shut.hid + ", Escape " + t8esc.exp +
+    "/" + t8esc.hid + ")");
 
   check(!errs.length,
     "T· zero pageerrors / console errors " + JSON.stringify(errs.slice(0, 3)));

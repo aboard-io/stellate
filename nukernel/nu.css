@@ -1175,6 +1175,57 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    refused, there is simply nothing yet — so it is the page's ordinary quiet
    second voice and it carries no `.nu-why` furniture. */
 .nu-log p{ margin: 0; color: var(--dim); }
+
+/* ===== THE EXPLAINER'S PAGE (2026-08-30) =================================
+   Paul: "add a ? Icon above the log icon that fully explains every aspect of
+   a genre." The sheet the ? opens — ui/explain.js builds it, appended to
+   <body> on the first press. It is the logger's own chassis one rule up:
+   fixed on the gutter's inner side, the --panel plate, the hard shadow,
+   its own scroll — POSITIONED, never inserted into flow, so opening it moves
+   nothing under a thumb. Wider than the log (52ch against 46) because it
+   carries sentences the genre table wrote, and top-anchored because it is a
+   document you read from the top, not a tail you read from the bottom.
+   `overflow-wrap` guards A1 at 320: a `cannot` sentence is the longest prose
+   this page ships and it must fold, never widen. */
+.nu-explain{ position: fixed; z-index: 55;
+  inset-inline-start: var(--tray-w); inset-block-start: 4px;
+  inline-size: min(52ch, calc(100vw - var(--tray-w) - 12px));
+  max-block-size: min(88vh, 88dvh); overflow-y: auto; overscroll-behavior: contain;
+  margin: 0; padding: var(--s2) var(--s3);
+  background: var(--panel); color: var(--ink);
+  border: var(--bw) solid var(--ink); border-radius: var(--r1, 6px);
+  box-shadow: var(--shadow);
+  font-size: .82rem; line-height: 1.4;
+  overflow-wrap: break-word; }
+.nu-explain[hidden]{ display: none; }
+.nu-explain h2{ margin: 0; font-size: 1rem; }
+/* the eight axis headings — the vocabulary the panel teaches. A rule above
+   each, the same sentence the tray's <hr> says: "a different kind of thing
+   begins here", said in ink. */
+.nu-explain h3{ margin: var(--s3) 0 var(--s1);
+  padding-block-start: var(--s1);
+  border-block-start: var(--bw) solid var(--rule);
+  font-size: .82rem; text-transform: none; }
+.nu-explain .nu-xf{ padding-block: 2px; }
+.nu-explain .nu-xf > b{ font-weight: 600; }
+.nu-explain .nu-xnote{ margin: var(--s1) 0 0; color: var(--dim); }
+.nu-explain ul{ margin: 0; padding-inline-start: 1.1em; }
+.nu-explain li{ padding-block: 2px; }
+/* WHAT THE BOX CANNOT SAY takes the well — a cut into the plate — because
+   the admission is the crown of the page and a tint says so without a word
+   of chrome. The sentences themselves are genres.js `cannot`, verbatim. */
+.nu-explain .nu-xcannot{ background: var(--well);
+  margin-inline: calc(-1 * var(--s3)); padding: var(--s1) var(--s3) var(--s2); }
+.nu-explain .nu-xcannot h3{ border-block-start: 0; }
+/* a tappable name — a parent, a child, a neighbour, the article. 44px of
+   block-size at 320 (the touch law), full-width so the target is the row and
+   not the word, start-aligned because it is a line of a list and not a verb. */
+.nu-explain button.nu-xgo, .nu-explain a.nu-xgo{
+  display: block; inline-size: 100%; min-block-size: 44px;
+  text-align: start; padding: var(--s1) var(--s2); }
+.nu-explain a.nu-xgo{ display: inline-block; inline-size: auto;
+  padding: var(--s1) var(--s2) var(--s1) 0; }
+
 /* A SHUT PANEL, AND IT IS SHUT BY A RULE AND NOT BY AN ATTRIBUTE. `hidden`
    would have been one character and it would have cost this file the one
    promise the reversal above is allowed to keep: with the stylesheet off the

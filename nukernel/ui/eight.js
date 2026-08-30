@@ -266,6 +266,13 @@ import { songDurSec, voicing, setVoicing } from "../audio/plan.js";
 // ui/glyph.js and imported here; nothing about the three characters changed.
 import { GLYPH, kindGlyph, sayVoice, sayUp, sayLog, icon, paintIcon,
          wireSay } from "./glyph.js";
+// THE ? MARK AND THE PAGE IT OPENS (2026-08-30, Paul: "add a ? Icon above the
+// log icon that fully explains every aspect of a genre"). The whole explainer
+// is its own module — it is an EXTRACTION over tables this file does not own
+// (genres.js, atlas.js WHEN/EXCLUDE, wiki.js, the document) — and this file
+// contributes exactly two things: the two getters it is handed at makeExplain
+// (DOC and ATLAS, read at press time), and a seat in the tray's foot.
+import { makeExplain } from "./explain.js";
 
 // THE ONE GLOBAL LEFT IN THIS FILE, and it is deliberate rather than an
 // oversight: `design()` calls `K[name](...)` with a name out of the DESIGNS
@@ -1015,6 +1022,15 @@ const CTX = {
                            try { draw(); } finally { anchorOff = false; }
                            anchorWant = null;
                            if (ATLAS) ATLAS.showing(DOC.basis);
+                           /* AND THE OPEN EXPLAINER FOLLOWS THE RECORD
+                              (2026-08-30). A document swap is a GESTURE —
+                              this function is reached from taps and links,
+                              never from the clock — so rebuilding the ?
+                              panel here keeps it honest about the record on
+                              the page without ever letting playback touch
+                              it: audio's feeds have no path to this line.
+                              Shut, set(false) is a no-op on a hidden panel. */
+                           EXPLAIN.set(EXPLAIN.open());
                            /* AND THE LOG SAYS WHICH RECORD ARRIVED (2026-08-28).
                               AFTER draw(), because the record's name is read off
                               `document.title` — the page's own name, which
@@ -10290,6 +10306,24 @@ function trayNow() {
   return { level: "root", parent: null, up: null, items: rootTrayItems() };
 }
 
+/* ===== THE ? MARK (2026-08-30) ==========================================
+   Paul: *"add a ? Icon above the log icon that fully explains every aspect
+   of a genre."*
+
+   BUILT AT MODULE SCOPE, LIKE #play — the mechanical half of "permanent at
+   every level": the button is one node, `trayRow` seats it in the FOOT
+   (which `paintTray` never touches — it empties only `trayUpBox` and
+   `trayList`), so no repaint at any level can destroy it, drop its listener
+   or take it out from under a thumb. Directly above the log mark, because
+   the two are the same kind of thing: readouts of the record, not controls
+   on it. It is a DOOR and wears `aria-expanded` — the #playops discipline —
+   and everything it opens is ui/explain.js's: extraction over the tables
+   that own each fact, never prose typed here. The TWO GETTERS are the whole
+   of what this file hands over, read at press time, because both names are
+   reassigned by a document swap and a captured value would be a stale
+   record wearing a live button. */
+const EXPLAIN = makeExplain({ doc: () => DOC, atlas: () => ATLAS });
+
 /* BUILT ONCE, AT BOOT. The <nav> ships empty in nukernel/index.html; this puts
    its two boxes in it — the head, which holds `↑` and never scrolls, and the
    list, which is the only thing in the stripe that does. */
@@ -10358,6 +10392,13 @@ function trayRow() {
   logCountEl = el("div", null, "nu-count");
   logCountEl.dataset.live = "pending";
   foot.append(logCountEl);
+  /* THE ? MARK, DIRECTLY ABOVE THE LOG (2026-08-30 — see EXPLAIN above).
+     After the countdown, before the log button, so it is literally the mark
+     above the log mark at rest AND while an edit is in flight: the countdown
+     appears above both and neither button moves, which is the foot's own
+     "geometry reserved at creation" promise kept for a second control. The
+     button is a hand's and sits OUTSIDE the `[data-live]` countdown box. */
+  foot.append(EXPLAIN.btn);
   logBtn = icon({ k: "logger", glyph: GLYPH.log.g, word: sayLog(logs.length),
                   say: GLYPH.log.s, on: false });
   logBtn.setAttribute("aria-controls", "nu-log");
