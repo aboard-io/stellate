@@ -314,6 +314,23 @@
     kruderdorfmeister:{ cell: "long", contour: "hover", sent: "long", len: "four" },
     stgermain: { cell: "gallop", contour: "fall",   land: "seventh", sent: "vary" },
     acidjazz:  { cell: "riff",   contour: "zig",    land: "root",  len: "two" },
+    // THE HEARTH-AND-SCREEN HANDOFF (2026-08-30, 325 -> 350), parent-written.
+    // Fourteen overrides; the other eleven of the round's twenty-five take
+    // their family rows honestly (measured: none froze at the family idiom).
+    mbuti:     { cell: "even",   contour: "zig",    sent: "plain", len: "two" },
+    shanty:    { cell: "three",  contour: "arch",   sent: "aabb",  len: "two" },
+    seannos:   { cell: "long",   contour: "arch",   sent: "vary",  len: "four" },
+    miamivice: { cell: "long",   contour: "arch",   sent: "hold",  len: "four" },
+    carpenter: { cell: "even",   contour: "insist", reg: "low",    len: "two" },
+    herrmann:  { cell: "even",   contour: "insist", land: "root",  len: "two" },
+    korngold:  { cell: "walkup", contour: "rise",   sent: "vary",  len: "four" },
+    morricone: { cell: "hang",   contour: "arch",   land: "fifth" },
+    barry:     { cell: "riff",   contour: "zig",    reg: "low",    len: "two" },
+    flamenco:  { cell: "hang",   contour: "fall",   sent: "vary" },
+    klezmer:   { cell: "gallop", contour: "zig",    len: "two" },
+    taraf:     { cell: "gallop", contour: "zig",    len: "two" },
+    georgian:  { cell: "three",  contour: "arch",   sent: "aabb" },
+    nursery:   { cell: "three",  contour: "arch",   sent: "vary" },
     // the WRITTEN VIRTUOSO anchors: a choro, a rag, a reel and a kolo are
     // composed tunes that run, and `roots`' four-bar strophe is the one thing
     // they are not

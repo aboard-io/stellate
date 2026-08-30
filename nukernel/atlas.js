@@ -245,6 +245,34 @@
     // WITHIN below: its own commune, but inside INSEE's unité urbaine
     // de Paris, ~1.8 CSS px from the Paris dot at the Europe arc.
     "Tromsø": [69.65, 18.96], "Versailles": [48.80, 2.13],
+    /* NINE MORE ON 2026-08-30, the folk-floor round. GALAX and HOT
+       SPRINGS are the Blue Ridge, two counties' worth of the round's
+       Appalachian pair; CARNA is Connemara, the map's first Irish dot
+       outside Dublin; CLEJANI is a village on the Wallachian plain
+       (the taraf's own, the Pomona/Kinks rule); GALATINA is deep
+       Salento; GRANADA joins Córdoba's peninsula but files in EUROPE
+       where Córdoba files in the Middle East row — the geography
+       follows the record both times (`flamenco` answers to Seville
+       and Madrid; `ziryab` to Baghdad and Fez — the Córdoba/
+       Constantinople rule, fourth application); PRAGUE and TBILISI
+       are plain European geography (Garland's Europe volume runs to
+       the Caucasus and says so); EPULU is the Ituri forest, the
+       map's first dot in the DR Congo's east and its first
+       rainforest interior anywhere.
+       NOT RAYNE, AND CONSIDERED: `cajun`'s own town measures inside
+       Lafayette's dot (25 km — the Southall situation, sibling towns
+       WITHIN cannot relate), so the anchor takes the session city
+       instead (New Orleans, 27 April 1928), the skokiaan
+       a-record-is-the-honest-row ruling. NOT SELJORD: Lindeman's
+       collecting parish lands 35 km from Notodden's dungeonsynth dot,
+       under any plausible floor at the Europe arc — the anchor takes
+       the city of publication (Christiania), which the Kinshasa rule
+       spells Oslo. */
+    "Carna": [53.31, -9.84], "Clejani": [44.33, 25.68],
+    "Epulu": [1.42, 28.58], "Galatina": [40.17, 18.17],
+    "Galax": [36.66, -80.92], "Granada": [37.18, -3.60],
+    "Hot Springs": [35.89, -82.83], "Prague": [50.08, 14.44],
+    "Tbilisi": [41.72, 44.79],
   };
 
   /* ONE SPELLING PER PLACE. band-kit.js:814's house record says it comes from
@@ -641,6 +669,31 @@
     massiveattack:  { place: "Bristol", year: 1998 },
     stgermain:      { place: "Paris", year: 2000 },
     royksopp:       { place: "Tromsø", year: 2001 },
+    shanty:         { place: "London", year: 1961 },
+    appalachia:     { place: "Hot Springs", year: 1916 },
+    oldtime:        { place: "Galax", year: 1935 },
+    klezmer:        { place: "New York", year: 1923 },
+    georgian:       { place: "Tbilisi", year: 1966 },
+    nordicfolk:     { place: "Oslo", year: 1853 },
+    chanson:        { place: "Paris", year: 1936 },
+    taraf:          { place: "Clejani", year: 1986 },
+    flamenco:       { place: "Granada", year: 1922 },
+    mbuti:          { place: "Epulu", year: 1958 },
+    nursery:        { place: "London", year: 1744 },
+    polka:          { place: "Prague", year: 1837 },
+    cajun:          { place: "New Orleans", year: 1928 },
+    tarantella:     { place: "Galatina", year: 1959 },
+    seannos:        { place: "Carna", year: 1957 },
+    barbershop:     { place: "New York", year: 1910 },
+    photoplay:      { place: "Cleveland", year: 1913 },
+    korngold:       { place: "Los Angeles", year: 1938 },
+    herrmann:       { place: "Los Angeles", year: 1960 },
+    morricone:      { place: "Rome", year: 1966 },
+    barry:          { place: "London", year: 1962 },
+    carpenter:      { place: "Los Angeles", year: 1978 },
+    miamivice:      { place: "Miami", year: 1984 },
+    sitcom:         { place: "Los Angeles", year: 1983 },
+    seinfeld:       { place: "Los Angeles", year: 1989 },
   };
   /* WHEN:END */
 
@@ -731,7 +784,19 @@
                // ...and the downtempo round's two (2026-08-30): Versailles
                // (declared inside Paris in WITHIN) and Tromsø, the map's
                // northernmost dot and the third Norwegian one.
-               "Tromsø", "Versailles"],
+               "Tromsø", "Versailles",
+               // ...and the folk-floor round's six (2026-08-30). Carna,
+               // Clejani, Galatina and Prague are plain European
+               // geography. GRANADA files here while Córdoba sits in the
+               // Middle East row — two Andalusian dots, two musics: the
+               // 1922 Concurso answers to Seville and Madrid, the 822
+               // court school to Baghdad and Fez (the Córdoba/
+               // Constantinople rule, run forward this time). TBILISI is
+               // Garland's own filing: the Europe volume runs to the
+               // Caucasus, and a three-part table song answers to no
+               // maqam.
+               "Carna", "Clejani", "Galatina", "Granada", "Prague",
+               "Tbilisi"],
     "North America": ["Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
                       "Chicago", "Cincinnati", "Cleveland", "Detroit",
                       "Greenwich Village", "Harlem", "Clarksdale", "Kansas City", "Lafayette",
@@ -753,7 +818,12 @@
                       // ...and the goth-and-globe round's two (2026-08-30):
                       // Pomona (deathrock's LA County town, the Kinks rule)
                       // and Traverse City, Michigan (Salem's own).
-                      "Pomona", "Traverse City"],
+                      "Pomona", "Traverse City",
+                      // ...and the folk-floor round's two (2026-08-30):
+                      // the Blue Ridge pair, Hot Springs (Sharp in Jane
+                      // Gentry's kitchen, 1916) and Galax (the fiddlers'
+                      // convention, 1935).
+                      "Galax", "Hot Springs"],
     // Mexico is here and not in North America, which is a choice and is the
     // one Garland's own volumes make: the musical basin is Ibero-American,
     // and a Sinaloan banda has more to say to a Colombian cumbia than to a
@@ -776,7 +846,11 @@
                // ...and the goth-and-globe round's two (2026-08-30):
                // Bulawayo (skokiaan, the first Zimbabwean dot) and Cape
                // Town (capejazz), the map's southernmost city.
-               "Bulawayo", "Cape Town"],
+               "Bulawayo", "Cape Town",
+               // ...and the folk-floor round's one (2026-08-30): Epulu,
+               // the Ituri forest — Turnbull's own camp, the map's first
+               // dot in the rainforest interior.
+               "Epulu"],
     // Jiahu (2026-08-30) is the region's oldest dot by seven millennia —
     // a Neolithic site on the Huai River plain, Garland's East Asia volume
     // opens with exactly these flutes.

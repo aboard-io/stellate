@@ -2420,8 +2420,10 @@
       // mouths, and Barbara Allen — the named song of the new anchor's
       // named night — was collected in Virginia more times than any
       // other song in the canon.
-      parents: { gospel: 0.4, blues: 0.4, ballad: 0.2 },
-      wants: ["appalachian fiddle"],
+      // "appalachian fiddle" PAID 2026-08-30, the folk-floor round:
+      // `oldtime` (Galax 1935) is the fiddle convention itself.
+      parents: { gospel: 0.4, blues: 0.4, ballad: 0.2, oldtime: 0.2 },
+      wants: [],
       instr: ["banjo", "fiddle"],
       drumkit: "acoustic",
       entry: () => 0, reg: v => v, realize: () => "line",
@@ -3122,8 +3124,12 @@
       // shuffle it had been playing since jump. The songs came from Tin Pan
       // Alley by way of the pop vocal groups, and barbershop is where the added
       // sixth was already sitting; neither of those is an anchor yet.
-      parents: { gospel: 0.45, blues: 0.2, jumpblues: 0.2, tinpanalley: 0.15 },
-      wants: ["jubilee quartets", "barbershop"],
+      // "barbershop" PAID 2026-08-30, the folk-floor round (New York
+      // 1910) — the added sixth now has an address; the comment above
+      // said "neither of those is an anchor yet" and one now is.
+      parents: { gospel: 0.45, blues: 0.2, jumpblues: 0.2, tinpanalley: 0.15,
+                 barbershop: 0.15 },
+      wants: ["jubilee quartets"],
       // ONE GROUP IS ONE SOUND: the lead is a solo voice and the other two are
       // the recorded choir, closed vowel on top for the syllables and the
       // rounder one underneath for the bass, because that is literally what is
@@ -4585,8 +4591,12 @@
       // discipline, thinned from a mirror to a parallel third. The
       // Appalachian ballad tradition both duo and trio folk revivalists
       // actually drew their repertoire from is still uncredited.
-      parents: { skiffle: 0.4, countrypop: 0.35, counterpoint: 0.25 },
-      wants: ["appalachian ballad"],
+      // "appalachian ballad" PAID 2026-08-30, the folk-floor round:
+      // `appalachia` (Hot Springs 1916) is that tradition's own named
+      // collection, and the comment above stops being true today.
+      parents: { skiffle: 0.4, countrypop: 0.35, counterpoint: 0.25,
+                 appalachia: 0.2 },
+      wants: [],
       // A DUO IN THE VILLAGE PLAYS A STEEL-STRING. The nylon is a classical
       // and a bossa instrument (Rio, two rows up, keeps it); what is under
       // two voices singing a third apart in 1964 is a dreadnought with bronze
@@ -8647,8 +8657,11 @@
     nortena: {
       label: "Monterrey 1955", voices: 3, near: "vallenato",
       plan: "song", bpm: 132,
-      parents: {},
-      wants: ["corrido fronterizo", "bohemian polka", "redova"],
+      // "bohemian polka" PAID 2026-08-30, the folk-floor round:
+      // `polka` (Prague 1837) is the ballroom the conjunto's oom-pah
+      // walked out of.
+      parents: { polka: 0.3 },
+      wants: ["corrido fronterizo", "redova"],
       cannot: ["the diatonic accordion's push-pull, the same fact vallenato " +
                "declares one continent south"],
       instr: ["accordion", "steel_string_guitar", "solo_vox"],
@@ -9640,8 +9653,10 @@
     nhacvang: {
       label: "Ho Chi Minh City 1968", voices: 3, near: "bolero",
       plan: "song", bpm: 70,
-      parents: { bolero: 0.45, crooner: 0.25 },
-      wants: ["cải lương", "ca trù", "french chanson"],
+      // "french chanson" PAID 2026-08-30, the folk-floor round:
+      // `chanson` (Paris 1936) — the colonial radio's other voice.
+      parents: { bolero: 0.45, crooner: 0.25, chanson: 0.2 },
+      wants: ["cải lương", "ca trù"],
       cannot: ["the đàn bầu's monochord glide — one string and a lever, all " +
                "pitch and no fret, which is the continuous gesture WORLD.md " +
                "§5.3 says this box has no channel for"],
@@ -10381,8 +10396,11 @@
     rumbacatalana: {
       label: "Barcelona 1970", voices: 2, near: "rai",
       plan: "dance", bpm: 116,
-      parents: { son: 0.4 },
-      wants: ["flamenco rumba", "gitano palo", "guaracha"],
+      // "gitano palo" PAID 2026-08-30, the folk-floor round: `flamenco`
+      // (Granada 1922) — the rumba flamenca is a palo, and the palo's
+      // own row now exists.
+      parents: { son: 0.4, flamenco: 0.3 },
+      wants: ["flamenco rumba", "guaracha"],
       cannot: ["the flamenco compás — twelve beats accented 3-6-8-10-12, " +
                "which is why the round ships the rumba and not the soleá"],
       instr: ["nylon_string_guitar", "solo_vox"],
@@ -10432,8 +10450,11 @@
     irishtrad: {
       label: "Dublin 1963", voices: 3, near: "skiffle",
       plan: "arc", bpm: 116,
-      parents: {},
-      wants: ["seán-nós", "uilleann piping", "the O'Neill collection"],
+      // "seán-nós" PAID 2026-08-30, the folk-floor round: `seannos`
+      // (Carna 1957) — the singing the session grew around, six years
+      // older than the session's own record.
+      parents: { seannos: 0.25 },
+      wants: ["uilleann piping", "the O'Neill collection"],
       cannot: ["the jig, the slip jig and the slide — compound metres this " +
                "file's sixteen-place cells cannot write",
                "the cut and the cran — an ornament that separates two notes " +
@@ -10662,8 +10683,10 @@
       // "anglo-celtic balladry" PAID 2026-08-29 (London 1666): the high
       // lonesome sound is ballad singing at a fiddle tune's tempo, and
       // Monroe's own repertory keeps a dozen Child ballads.
-      parents: { countrypop: 0.45, blues: 0.2, ballad: 0.2 },
-      wants: ["appalachian old-time", "shape-note singing"],
+      // "appalachian old-time" PAID 2026-08-30, the folk-floor round:
+      // `oldtime` (Galax 1935) — Monroe sped up exactly this.
+      parents: { countrypop: 0.45, blues: 0.2, ballad: 0.2, oldtime: 0.3 },
+      wants: ["shape-note singing"],
       instr: ["banjo", "fiddle", "steel_string_guitar"],
       entry: v => v * 2, reg: v => (v === 0 ? 1 : v === 1 ? 1 : 0),
       realize: () => "line",
@@ -10758,8 +10781,10 @@
     zydeco: {
       label: "Lafayette 1955", voices: 3, bars: 12, near: "blues",
       plan: "song", bpm: 132,
-      parents: { blues: 0.55, countrypop: 0.2 },
-      wants: ["la-la", "juré", "cajun two-step"],
+      // "cajun two-step" PAID 2026-08-30, the folk-floor round: `cajun`
+      // (New Orleans 1928) — the same accordion one parish over.
+      parents: { blues: 0.55, countrypop: 0.2, cajun: 0.3 },
+      wants: ["la-la", "juré"],
       instr: ["accordion", "harmonica", "clean_guitar"],
       drumkit: "acoustic",
       entry: v => v, reg: v => (v === 2 ? -1 : 0), realize: () => "line",
@@ -10891,9 +10916,12 @@
       plan: "arc", bpm: 132,
       // PAID 2026-08-29, the debts round: "military march" is
       // `march` (Washington 1889) — the fanfare's spine in a blazer.
+      // "library music" PAID 2026-08-30, the folk-floor round:
+      // `photoplay` (Cleveland 1913) — the cue book KPM's shelf
+      // descends from; the tradition finally predates its own peak.
       parents: { romantic: 0.4, swing: 0.25, funk: 0.2, concerto: 0.15,
-                 march: 0.15 },
-      wants: ["library music", "crime jazz"],
+                 march: 0.15, photoplay: 0.15 },
+      wants: ["crime jazz"],
       cannot: ["the stopwatch — a news cue is written to a DURATION (a thirty-" +
                "second open with four seconds of tail under the announcer), and " +
                "a section in this box is counted in bars at a tempo, so the one " +
@@ -12676,8 +12704,10 @@
       // LINEAGE: `lundu` (Lisbon 1798) is the syncope, `habanera`
       // (Havana 1860) the bass cell — the maxixe is the two of them
       // wearing a polka's clothes, and the polka is named below.
-      parents: { lundu: 0.35, habanera: 0.3 },
-      wants: ["the polka, as rio danced it"],
+      // "the polka, as rio danced it" PAID 2026-08-30, the folk-floor
+      // round: `polka` (Prague 1837) — the clothes now have an owner.
+      parents: { lundu: 0.35, habanera: 0.3, polka: 0.25 },
+      wants: [],
       instr: ["flute", "nylon_string_guitar", "banjo"],
       drumkit: "acoustic",
       entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? -1 : 0),
@@ -14936,8 +14966,13 @@
       // being remembered; `italodisco` (Milan 1982) the melodic
       // chrome. John Carpenter's own scores are the missing third,
       // named below.
-      parents: { moroder: 0.35, italodisco: 0.25 },
-      wants: ["carpenter's film scores (assault on precinct 13)"],
+      // "carpenter's film scores" PAID 2026-08-30, the folk-floor
+      // round — and the OTHER remembered thing landed the same day:
+      // `miamivice` (Miami 1984), the mood synth this genre spends its
+      // whole life quoting. Both edges dated, the organum precedent.
+      parents: { moroder: 0.35, italodisco: 0.25, carpenter: 0.2,
+                 miamivice: 0.2 },
+      wants: [],
       instr: ["saw_wave", "warm_pad"],
       drumkit: "tr808",
       entry: v => (v === 0 ? 0 : 2), reg: v => (v === 0 ? 0 : -1),
@@ -15851,8 +15886,11 @@
       // is the want. `gothicrock` is real but smaller than it looks —
       // the LA bands were building the same room in parallel and heard
       // Bauhaus after the walls were up.
-      parents: { punk: 0.45, glam: 0.25, gothicrock: 0.2 },
-      wants: ["the horror film score"],
+      // "the horror film score" PAID 2026-08-30, the folk-floor round:
+      // `carpenter` (Los Angeles 1978) — the article's third origin,
+      // four years older than this record and one county over.
+      parents: { punk: 0.45, glam: 0.25, gothicrock: 0.2, carpenter: 0.2 },
+      wants: [],
       instr: ["overdrive_guitar", "clean_guitar"],
       drumkit: "room",
       entry: v => v, reg: v => (v === 0 ? 0 : 1),
@@ -16131,8 +16169,19 @@
       // the other two bloodlines have no anchor and are owed by name:
       // the musette waltz Django played for hire before jazz reached
       // him, and the Romani string-band tradition the family carried.
+      // 2026-08-30, the folk-floor round, both debts REVISITED and
+      // neither closed by an edge — the honest outcome twice over.
+      // "bal-musette" counts in three and stays behind the catalog's
+      // triple-meter wall (the round header's first decline; `chanson`
+      // now shares the debt under the matched spelling). The Romani
+      // string band has its row at last — `taraf`, Clejani 1986 — but
+      // an edge cannot point at a record fifty-two years this one's
+      // junior (the WHEN law), so the want narrows to the artifact
+      // still missing: the lăutari 78s Django's family would actually
+      // have heard.
       parents: { neworleans: 0.4 },
-      wants: ["bal-musette", "the romani string band"],
+      wants: ["bal-musette",
+              "the lautari 78s before the Quintette (Bucharest, 1900s)"],
       instr: ["jazz_guitar", "violin", "jazz_guitar"],
       swing: 0.3,
       entry: v => (v === 2 ? 0 : v), reg: v => (v === 1 ? 1 : 0),
@@ -16408,8 +16457,11 @@
       // free jazz (Garbarek's quartet was playing his language) and
       // the folk tone. This is the round's deliberate reopening of a
       // US debt: the ledger, not a guess, now asks for Ornette.
-      parents: { modaljazz: 0.4 },
-      wants: ["free jazz", "nordic folk song"],
+      // "nordic folk song" PAID 2026-08-30, the folk-floor round:
+      // `nordicfolk` (Oslo 1853) — Lindeman's collection, the same
+      // city's dot a century earlier. Ornette stays owed by name.
+      parents: { modaljazz: 0.4, nordicfolk: 0.25 },
+      wants: ["free jazz"],
       instr: ["tenor_sax", "bowed_glass"],
       drumkit: "brush",
       entry: v => v * 2, reg: v => (v === 0 ? 0 : -1),
@@ -16627,8 +16679,11 @@
       // break craft routes through `electro` (New York 1982) the way
       // triphop's own row does; `jazz` (New York 1945) is Utley's
       // trade and the torch harmony under Gibbons.
-      parents: { triphop: 0.35, electro: 0.2, jazz: 0.2 },
-      wants: ["the spy-film score (john barry, lalo schifrin)"],
+      // "the spy-film score" PAID 2026-08-30, the folk-floor round:
+      // `barry` (London 1962) — the shelf Dummy was sampling, named.
+      // Schifrin stays uncredited and unowed; one record pays one debt.
+      parents: { triphop: 0.35, electro: 0.2, jazz: 0.2, barry: 0.15 },
+      wants: [],
       cannot: ["the surface noise itself — Dummy presses its beats to " +
                "lacquer and plays the crackle as a member of the band, " +
                "and this box renders scores, not shellac; the row says " +
@@ -16800,9 +16855,15 @@
       // record is a monument to — Herc's two copies become sixty
       // thousand records in a basement; `jazz` (New York 1945) what
       // the crates mostly held.
-      parents: { boombap: 0.4, blockparty: 0.25, jazz: 0.15 },
-      wants: ["the mo' wax shelf beside it (u.n.k.l.e.)",
-              "the library-music vinyl the crates held"],
+      // "the library-music vinyl" PAID 2026-08-30, the folk-floor
+      // round — by a row that already existed: `newsfanfare` (London
+      // 1970) IS a KPM 1000-series bed, which is exactly the vinyl the
+      // crates held, and the edge should have been drawn the day the
+      // want was written. The folk-floor round drew it while building
+      // the library cluster around that anchor.
+      parents: { boombap: 0.4, blockparty: 0.25, jazz: 0.15,
+                 newsfanfare: 0.15 },
+      wants: ["the mo' wax shelf beside it (u.n.k.l.e.)"],
       cannot: ["the lift itself — Guinness calls this the first record " +
                "built entirely of samples, and this box owns no crates " +
                "and lifts nothing; the row says the mood and the break, " +
@@ -17031,6 +17092,934 @@
       word: (v, s) => (v === 0 ? [[], [transpose(2)], [rotate(4)], [transpose(-2)]][s % 4]
                     : [drop(8)]),
     },
+
+    /* ====================================================================
+       2026-08-30 — THE FOLK FLOOR AND THE COMMISSIONED SCREEN
+       ====================================================================
+       Paul: *"we're missing all kinds of folk traditions plus Pygmy and
+       Romm and classic nursery rhymes. We also could use some classic film
+       soundtracks, 80s and 90s sitcom themes, John carpenter horror and
+       incidental stock music of all kinds. Plus tons of Miami vice jan
+       hammer michael mann synth incidental stuff — mood setting synth."*
+
+       TWO CLUSTERS, ONE ROUND. The FOLK FLOOR is the catalog's biggest
+       structural hole measured from its own table: the pre-industrial
+       singing and dancing that everything in `roots` grew out of held
+       exactly six rows (ballad, holler, sacredharp, irishtrad, skiffle,
+       bluegrass) against sixty for the club era. Sixteen rows land, every
+       one on a NAMED collection, recording or documented event — the
+       Lomax/field-recording standard the delta rows set. The COMMISSIONED
+       SCREEN is the news pair's own law widened: newsfanfare and
+       breakingnews established that "the commission is the genre", and the
+       film score, the sitcom theme, the horror ostinato, the Mann/Hammer
+       mood synth and the silent-film cue book are the same law at other
+       desks — nine rows, each a named score.
+
+       PAID BY NAME THIS ROUND (want -> parent, both years checked):
+       carpenter -> deathrock AND synthwave; miamivice -> synthwave;
+       barry -> portishead; photoplay -> newsfanfare; newsfanfare ->
+       djshadow (the library vinyl); flamenco -> rumbacatalana;
+       nordicfolk -> nordicjazz; cajun -> zydeco; barbershop -> doowop;
+       oldtime -> bluegrass AND countrypop; appalachia -> folkduo;
+       polka -> nortena AND maxixe; chanson -> nhacvang; seannos ->
+       irishtrad.
+
+       EXAMINED AND DECLINED, with the standing rulings cited:
+       · BAL-MUSETTE — asked for twice (gypsyjazz, and this round's own
+         list). The valse musette and the java both count in THREE, and
+         the catalog's triple-meter wall stands exactly where the
+         old-world round left it (the barcarolle header: every pattern in
+         this file is written on sixteen places; the viennese waltz was
+         declined on this reason and stays declined). Paying the debt
+         with a 4/4 costume would be worse than owing it. `chanson` now
+         wants it under the matched spelling, so the ledger counts one
+         debt owed by two rows — the round's own device for keeping a
+         refusal visible.
+       · MUZAK — vaporwave's want; the debts round's ruling ("a licensing
+         company") stands unbeaten. The mood-setting bed this round DOES
+         pay is `photoplay`, which is a repertory and not a firm.
+       · THE HAMMER HORROR SCORE — sabbath's want; James Bernard's
+         Dracula (Bray 1958) is arguable and REMAINS THE NEXT ASK; this
+         round's horror seat went to carpenter, who pays two standing
+         wants where Bernard pays one.
+       · "FOLK" ITSELF, "world music", "stock music of all kinds", "Roma
+         music" — umbrellas; the darkwave/batcave rulings. Every row
+         below is one tradition, one place, one dated artifact.
+       · THE GRIOT / JELIYA row (mandeguitar's want) — the honest anchor
+         is probably Arthur Alberts' 1949 Bamako/Kankan field reels, but
+         this shift could not pin the named performer to the named reel
+         with confidence, and WORLD.md §4's primary-fact rule says a row
+         that cannot name its record is not written. NEXT ASK.
+       · A SECOND LIBRARY-BEDS ROW (DeWolfe/Bruton) — newsfanfare IS the
+         London library bed at its own peak year; a second row one shelf
+         over would be the massiveattack/triphop problem without the
+         twenty-year gap that solved it. The cluster is photoplay (1913)
+         -> newsfanfare (1970) -> breakingnews (2006), three desks, one
+         lineage, and djshadow's crates now point at the middle one.
+
+       THE PYGMY HOCKET RULING, in full, because it is the round's
+       hardest row: measured at `mbuti` below — the box CAN say hocket.
+       `fill(1)` gates all sixteen places and `keep(...)` with DISJOINT
+       step sets per voice leaves each singer holding only her own
+       places; four voices sum to one continuous line no one of them
+       sings. That is the definition of hocket, achieved with two words
+       the kernel already had, the same way sizhu said heterophony. What
+       the box CANNOT say is the yodel break itself — the chest/head
+       flip inside one throat — and the row's `cannot` says so.
+       ==================================================================== */
+
+    // SEA SHANTY — London 1961. Stan Hugill's SHANTIES FROM THE SEVEN SEAS
+    // (Routledge, London 1961), the last working shantyman writing the
+    // whole repertory down: the dot is the publication, the ballad row's
+    // own 1666 broadside ruling. One voice calls, the watch answers — the
+    // call in the front half of the bar, the crew stamped into the back
+    // half, said literally with keep() masks that split the sixteen
+    // places between them. Parents: the ballad stock the verses were cut
+    // from, and the holler — the African-American cotton-screwing crews
+    // Hugill's own book credits as the other bloodline.
+    shanty: {
+      label: "London 1961", voices: 2, bars: 4, near: "ballad",
+      plan: "song", bpm: 88,
+      parents: { ballad: 0.4, holler: 0.3 },
+      wants: ["the packet-ship halyard repertory at sea",
+              "the gaelic rowing song (iorram)"],
+      cannot: ["the work itself — a shanty is timed to a PULL, the line " +
+               "comes taut on the crew's beat and the tempo is the job's, " +
+               "not a metronome's; this box counts bars, not hauls"],
+      instr: ["solo_vox", "ahh_choir"],
+      entry: () => 0, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.dorian, scale: DIATONIC, artic: "legato", maxHold: 3,
+      tone: { wave: "triangle", cut: 2200, q: 0.8, atk: .02, rel: .8, gain: .26, verb: .3,
+              // WHO SINGS: the skiffler throat — rough, forward, unschooled,
+              // which is what a watch of sailors is.
+              mouth: MOUTHS.skiffler },
+      words: ["the shantyman, calling the verse",
+              "the watch, answering on the pull"],
+      word: v => (v === 0 ? [fill(1), keep(0, 2, 4, 6)]
+                          : [fill(1), keep(8, 10, 12, 14), drop(2)]),
+    },
+
+    // APPALACHIAN BALLADRY — Hot Springs 1916. Cecil Sharp and Maud
+    // Karpeles in Jane Hicks Gentry's kitchen, Hot Springs, North
+    // Carolina, August 1916: seventy songs from one singer, the spine of
+    // ENGLISH FOLK SONGS FROM THE SOUTHERN APPALACHIANS. The row is the
+    // London 1666 ballad two centuries and an ocean on — the same genus,
+    // parents say so — sung higher, harder and more gapped (the
+    // "lonesome" sound is the pentatonic-leaning modal reading below).
+    appalachia: {
+      label: "Hot Springs 1916", voices: 1, bars: 8, near: "ballad",
+      plan: "song", bpm: 70,
+      parents: { ballad: 0.6 },
+      wants: ["the border ballads themselves",
+              "the scots-irish fiddle at the crossing"],
+      instr: "solo_vox",
+      entry: () => 0, reg: () => 1, realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.dorian, scale: SCALES.majpent, artic: "legato", maxHold: 3,
+      orn: { grace: 0.3 },
+      tone: { wave: "triangle", cut: 2600, q: 0.8, atk: .02, rel: .9, gain: .26, verb: .26,
+              mouth: MOUTHS.trobar },
+      words: ["the ballad, high and lonesome, verse on verse"],
+      word: (v, s) => [[], [transpose(2)], [fill(1), drop(2)], []][s % 4],
+    },
+
+    // OLD-TIME STRING BAND — Galax 1935. The first Old Fiddlers'
+    // Convention at Galax, Virginia, 1935 — still running, still the
+    // tradition's own courthouse. Fiddle carries the tune, clawhammer
+    // banjo rolls constant eighths under it, the guitar is the drummer
+    // (boom-chick on the keep() mask, la pompe's own trick one row over
+    // in Paris 1934). Pays THREE standing debts by name: bluegrass's
+    // "appalachian old-time", countrypop's "appalachian fiddle", and it
+    // gives the Bristol-sessions generation the parent it never had.
+    oldtime: {
+      instrumental: true,   // a fiddle convention — the singing tradition is `appalachia`, one row up
+      label: "Galax 1935", voices: 3, bars: 8, near: "bluegrass",
+      plan: "song", bpm: 126,
+      parents: { appalachia: 0.4 },
+      wants: ["the scots-irish fiddle at the crossing",
+              "the minstrel banjo (briggs' instructor, 1855)"],
+      instr: ["fiddle", "banjo", "steel_string_guitar"],
+      swing: 0.12,
+      entry: () => 0, reg: v => [1, 0, -1][v], realize: () => "line",
+      part: ["lead", "riff", "riff"],
+      kit: {}, harmony: "cycle",
+      roots: [0, 0, 4, 4, 0, 0, 4, 0], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "fifths",
+      orn: { grace: 0.3, pass: 0.15 },
+      tone: { wave: "triangle", cut: 2800, q: 0.9, atk: .006, rel: .3, gain: .27, verb: .22 },
+      words: ["the fiddle, sawing the tune",
+              "the banjo, rolling under it — the clawhammer",
+              "the guitar, boom-chick — the drummer this band does not have"],
+      word: v => (v === 0 ? [fill(2)]
+                : v === 1 ? [fill(1), drop(2)]
+                : [keep(0, 4, 8, 12), drop(2)]),
+    },
+
+    // KLEZMER — New York 1923. Naftule Brandwein cutting freylekhs and
+    // bulgars for Victor: the kapelye on shellac, the year the immigrant
+    // dance-hall repertory became records. The mode is HIJAZ — the
+    // freygish steyger IS the catalog's hijaz row, the flat second with
+    // the major third over it, and this anchor is the second music (after
+    // taqsim) that exists in this file because that mode landed. The kit
+    // is the poyk's bulgar cell, 3+3+2 on both halves of the bar.
+    klezmer: {
+      instrumental: true,   // Brandwein's sides are dance sets — the badkhn's verses are not on them
+      label: "New York 1923", voices: 3, bars: 8, near: "balkanbrass",
+      plan: "song", bpm: 116,
+      // LINEAGE: declared roots only — the cantorial nusach the clarinet
+      // imitates and the Moldavian lautari repertory the klezmorim shared
+      // have no anchor, and both are owed by name below.
+      parents: {},
+      wants: ["the cantorial nusach", "the moldavian lautari repertory"],
+      cannot: ["the krekhts — the sobbing catch between notes, a glottal " +
+               "break the clarinet copies from the cantor's throat; the " +
+               "grace table can lean INTO a note but cannot crack it open"],
+      instr: ["clarinet", "violin", "accordion"],
+      entry: () => 0, reg: v => [1, 0, 0][v], realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      drumkit: "acoustic",
+      kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0],
+             h: [0,0,1,0, 1,0,0,1, 0,0,1,0, 1,0,0,1] },
+      harmony: "modal",
+      mode: MODES.hijaz, scale: DIATONIC, artic: "staccato", maxHold: 2,
+      bassStyle: "octaves",
+      orn: { grace: 0.4 },
+      tone: { wave: "square", cut: 2400, q: 1.1, atk: .008, rel: .4, gain: .26, verb: .3 },
+      words: ["the clarinet, laughing and crying in one phrase",
+              "the fiddle, shadowing it a third below",
+              "the accordion, holding the freygish chord"],
+      word: v => (v === 0 ? [fill(2)]
+                : v === 1 ? [drop(2), transpose(-2)]
+                : [drop(9)]),
+    },
+
+    // GEORGIAN TABLE SONG — Tbilisi 1966. The year the Tbilisi
+    // Conservatoire taped Artem Erkomaishvili singing all three parts of
+    // the chant repertory against himself, and Radio Tbilisi's cut of
+    // CHAKRULO — the three-part Kakhetian table song NASA later sealed
+    // onto the Voyager record. Three parts, unaccompanied: two upper
+    // voices twining over a bass that moves like ground shifting, said
+    // here as `emergent` harmony because the chords ARE the voices —
+    // there is no progression anybody wrote.
+    georgian: {
+      label: "Tbilisi 1966", voices: 3, bars: 8, near: "bulgarian",
+      plan: "arc", bpm: 76,
+      parents: {},
+      wants: ["the svan ritual hymn (zar)", "the gurian trio song"],
+      cannot: ["the krimanchuli — the yodelled top part that cracks " +
+               "between registers on purpose; one mouth here is one " +
+               "register, the same wall the mbuti row names",
+               "the tuning — Georgian thirds and fifths sit between the " +
+               "piano's, close enough to hear and too far to ignore, and " +
+               "this box is twelve-tone equal (WORLD.md §2's own wall)"],
+      instr: ["solo_vox", "ahh_choir", "ahh_choir"],
+      entry: v => (v === 0 ? 0 : 1), reg: v => [1, 0, -2][v],
+      realize: () => "line",
+      kit: {}, nobass: true, harmony: "emergent", intro: "solo",
+      mode: MODES.mixo, scale: DIATONIC, artic: "legato", maxHold: 4,
+      tone: { wave: "triangle", cut: 2200, q: 0.8, atk: .04, rel: 1.3, gain: .26, verb: .4,
+              // WHO SINGS: the motet blend — straight-toned, chested,
+              // three men at one table rather than a choir in a loft.
+              mouth: MOUTHS.motet },
+      words: ["the first voice, starting the toast alone",
+              "the second, twining against it",
+              "the bass, the ground the other two stand on"],
+      word: v => (v === 2 ? [spread(0), drop(2)]
+                : v === 1 ? [transpose(-2)]
+                : []),
+    },
+
+    // NORDIC FOLK SONG — Oslo 1853. Ludvig Mathias Lindeman's AELDRE OG
+    // NYERE NORSKE FJELDMELODIER, first volume, Christiania 1853 — the
+    // collection Grieg mined for the rest of the century, spelled Oslo by
+    // the Kinshasa rule (one spelling per place, the modern one). The
+    // medieval ballad genus (Draumkvedet's own family) sung solo, in the
+    // grave modal minor the collection's own settings keep reaching for.
+    // PAYS nordicjazz's "nordic folk song" — Garbarek's owed bloodline,
+    // and the two rows now share one dot a century apart.
+    nordicfolk: {
+      label: "Oslo 1853", voices: 1, bars: 8, near: "ballad",
+      // 70 is compose.js's own floor (bpm: 70..160) and a mountain
+      // ballad drags under it; the floor is the sayable tempo, the
+      // gypsyjazz ceiling ruling read from below.
+      plan: "song", bpm: 70,
+      // LINEAGE: the Scandinavian medieval ballad and the Anglo-Scots one
+      // are the same genus — the TSB and Child indices cross-reference
+      // each other — so `ballad` is a real parent and not a convenience.
+      parents: { ballad: 0.4 },
+      wants: ["the hardingfele slatter", "kulning — the herding call"],
+      instr: "solo_vox",
+      entry: () => 0, reg: () => 0, realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.aeolian, scale: DIATONIC, artic: "legato", maxHold: 4,
+      tone: { wave: "triangle", cut: 2300, q: 0.8, atk: .03, rel: 1.2, gain: .26, verb: .34,
+              mouth: MOUTHS.trobar },
+      words: ["the ballad, slow and grave, the mountain holding the echo"],
+      word: (v, s) => [[], [drop(2)], [transpose(-2)], []][s % 4],
+    },
+
+    // CHANSON RÉALISTE — Paris 1936. Piaf's first Polydor sides (cut
+    // December 1935, on sale 1936): the street-corner story-song of the
+    // faubourgs, one voice pushed all the way forward, the accordion
+    // where the musette dance floor left it. The valse half of that floor
+    // counts in three and stays refused (the round header); what this row
+    // keeps is the SINGER — which is the half nhacvang's Saigon
+    // songwriters actually learned from, and that debt is paid here.
+    chanson: {
+      label: "Paris 1936", voices: 2, bars: 8, near: "musichall",
+      plan: "song", bpm: 84,
+      parents: {},
+      wants: ["the cafe-concert stage", "bal-musette"],
+      instr: ["solo_vox", "accordion"],
+      entry: () => 0, reg: v => (v === 0 ? 0 : 0), realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad"],
+      kit: {}, harmony: "cycle",
+      roots: [0, 4, 0, 4, 5, 3, 4, 0], mode: MODES.aeolian, scale: DIATONIC,
+      diatonic: true,
+      prog: [{ d: 0 }, { d: 4 }, { d: 0 }, { d: 4 },
+             { d: 5 }, { d: 3 }, { d: 4, q: "dom7" }, { d: 0 }],
+      artic: "legato", maxHold: 4, bassStyle: "pedal",
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .02, rel: .9, gain: .26, verb: .32,
+              // WHO SINGS: the belter — the voice that carried a story
+              // over a room with no microphone worth trusting.
+              mouth: MOUTHS.belter },
+      words: ["the singer, the whole story pushed to the front",
+              "the accordion, the street the story happens on"],
+      word: v => (v === 0 ? [] : [drop(9)]),
+    },
+
+    // THE LAUTARI TARAF — Clejani 1986. The village string band of
+    // Wallachia, taped in Clejani by Bucharest's own ethnomusicologists
+    // and issued on Ocora in 1988 — the musicians the world met four
+    // years later as Taraf de Haidouks. Fiddle over cimbalom over bass,
+    // the tempo pushing all night. PAYS THE TRADITION, NOT THE EDGE:
+    // gypsyjazz (Paris 1934) wants the Romani string band Django came
+    // from, and this row is that band — but its honest dated record
+    // postdates the Quintette by half a century, so the edge cannot
+    // close (the WHEN law), and gypsyjazz's want is REWORDED at its row
+    // to name the pre-Django artifact still owed: the lautari 78s of the
+    // 1900s. A row and an honest ledger beat a backdated parent.
+    taraf: {
+      label: "Clejani 1986", voices: 3, bars: 8, near: "balkanbrass",
+      plan: "song", bpm: 138,
+      parents: {},
+      wants: ["the lautari 78s before the Quintette (Bucharest, 1900s)",
+              "the doina"],
+      instr: ["violin", "dulcimer", "contrabass"],
+      swing: 0.1,
+      entry: () => 0, reg: v => [1, 0, -1][v], realize: () => "line",
+      part: ["lead", "riff", "riff"],
+      kit: {}, harmony: "modal",
+      mode: MODES.hijaz, scale: DIATONIC, artic: "staccato", maxHold: 2,
+      bassStyle: "octaves",
+      orn: { grace: 0.35, pass: 0.2 },
+      tone: { wave: "triangle", cut: 2700, q: 1.0, atk: .005, rel: .3, gain: .27, verb: .26 },
+      words: ["the fiddle, ornamenting faster than the ear can count",
+              "the cimbalom, hammering the harmony into sixteenths",
+              "the bass, two strings and a wedding to carry"],
+      word: v => (v === 0 ? [fill(2)]
+                : v === 1 ? [fill(1), drop(2)]
+                : [keep(0, 4, 8, 12), drop(2)]),
+    },
+
+    // FLAMENCO — Granada 1922. The Concurso de Cante Jondo, Alhambra,
+    // June 1922: Falla and Lorca staging the deep song to save it from
+    // the cafés, which is the tradition's own most datable act of
+    // self-definition. Cante over guitar; phrygian on its own terms (the
+    // andalusian cadence below is iv-III-II-I read downward). PAYS
+    // rumbacatalana's "gitano palo" by name.
+    flamenco: {
+      label: "Granada 1922", voices: 2, bars: 8, near: "fado",
+      plan: "arc", bpm: 96,
+      parents: {},
+      wants: ["moorish andalusi song", "the gitano juerga before the cafes"],
+      cannot: ["the compas — bulerias counts twelve with accents on 3, 6, " +
+               "8, 10 and 12, and a twelve-count with internal accents is " +
+               "not sayable on sixteen places (the triple-meter wall, at " +
+               "its hardest angle)"],
+      instr: ["solo_vox", "nylon_string_guitar"],
+      entry: v => (v === 0 ? 1 : 0), reg: () => 0, realize: () => "line",
+      part: ["lead", "riff"],
+      kit: {}, harmony: "cycle", intro: "solo",
+      roots: [3, 3, 2, 2, 1, 1, 0, 0], mode: MODES.phrygian, scale: DIATONIC,
+      diatonic: true,
+      prog: [{ d: 3 }, { d: 3 }, { d: 2 }, { d: 2 },
+             { d: 1 }, { d: 1 }, { d: 0 }, { d: 0 }],
+      artic: "legato", maxHold: 3, bassStyle: "pedal",
+      orn: { grace: 0.4, pass: 0.2 },
+      tone: { wave: "triangle", cut: 2500, q: 0.9, atk: .015, rel: .8, gain: .26, verb: .3,
+              // WHO SINGS: the melisma throat — the line bent around one
+              // vowel until the vowel gives, which is what cante jondo is.
+              mouth: MOUTHS.melisma },
+      words: ["the cante, tearing the line open a note at a time",
+              "the guitar, falling down the andalusian steps"],
+      word: v => (v === 0 ? [] : [fill(2), drop(2)]),
+    },
+
+    // MBUTI HOCKET — Epulu 1958. Colin Turnbull's Ituri recordings (the
+    // 1951-52 reels with Francis Chapman, then the 1957-58 stay at Epulu
+    // that became the Folkways sides and THE FOREST PEOPLE): the elima
+    // and molimo song cycles of the Mbuti — each singer holding ONE OR
+    // TWO NOTES of a melody nobody sings whole. THE MEASUREMENT, because
+    // this row exists to answer a question: the box CAN say hocket.
+    // `fill(1)` gates all sixteen places, then four DISJOINT `keep()`
+    // masks deal the places out — voice 0 holds 0/4/8/12, voice 1 holds
+    // 2/6/10/14, voices 2 and 3 split the offbeats — so the four chairs
+    // interlock into one continuous line, verified by rendering: no two
+    // voices attack the same step, the union covers the bar. Two kernel
+    // words, no new machinery: sizhu's heterophony ruling, one texture
+    // deeper. The vowels alternate ohh/ahh across the circle for the
+    // open-throat/head-voice flicker of the yodel — an approximation,
+    // and the `cannot` owns the difference.
+    mbuti: {
+      label: "Epulu 1958", voices: 4, bars: 4, near: "mbube",
+      plan: "arc", bpm: 108,
+      parents: {},
+      wants: ["the elima initiation cycle", "the molimo trumpet nights"],
+      cannot: ["the yodel break — one voice flipping chest to head INSIDE " +
+               "a note is the sound's own signature, and one mouth here is " +
+               "one register from entry to release",
+               "the drift — a real hocket circle breathes, singers trade " +
+               "places mid-cycle, and these masks are dealt once per song"],
+      instr: ["ohh_voices", "ahh_choir", "ohh_voices", "ahh_choir"],
+      entry: () => 0, reg: v => [1, 1, 0, 0][v], realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal",
+      mode: MODES.ionian, scale: SCALES.majpent, artic: "staccato", maxHold: 1,
+      tone: { wave: "triangle", cut: 2600, q: 0.8, atk: .01, rel: .5, gain: .25, verb: .38,
+              // WHO SINGS: the dream-choir mouth — open vowels, high air,
+              // maximum blend: a circle, not a section.
+              mouth: MOUTHS.dreamchoir },
+      words: ["the first voice, holding places 1 and 3 of every four",
+              "the second, the places between",
+              "the third, the offbeats the first two leave",
+              "the fourth, closing the circle"],
+      word: v => (v === 0 ? [fill(1), keep(0, 4, 8, 12)]
+                : v === 1 ? [fill(1), keep(2, 6, 10, 14)]
+                : v === 2 ? [fill(1), keep(1, 5, 9, 13)]
+                : [fill(1), keep(3, 7, 11, 15)]),
+    },
+
+    // NURSERY RHYME — London 1744. TOMMY THUMB'S PRETTY SONG BOOK, Mary
+    // Cooper's shop, London, c.1744: the oldest surviving printed
+    // collection of English nursery rhymes — Baa Baa Black Sheep and
+    // London Bridge are in it. One honest row, not a novelty: a caregiver's
+    // voice, major pentatonic, AABB with the tune said again the way a
+    // child demands it — `sent` machinery's plainest possible case.
+    nursery: {
+      label: "London 1744", voices: 1, bars: 4, near: "ballad",
+      plan: "song", bpm: 92,
+      // LINEAGE: many rhymes are ballad and broadside fragments worn
+      // smooth by small listeners — the Opies' own finding.
+      parents: { ballad: 0.35 },
+      wants: ["the lullaby itself", "the singing game in the street"],
+      instr: "solo_vox",
+      entry: () => 0, reg: () => 1, realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.ionian, scale: SCALES.majpent, artic: "staccato", maxHold: 2,
+      tone: { wave: "triangle", cut: 2800, q: 0.8, atk: .015, rel: .5, gain: .26, verb: .2,
+              mouth: MOUTHS.hymnal },
+      words: ["the rhyme, four bars, said twice, sleep at the end of it"],
+      word: (v, s) => [[], [], [transpose(2)], [drop(2)]][s % 4],
+    },
+
+    // POLKA — Prague 1837. The Bohemian couple dance arrives in Prague's
+    // ballrooms (1837 is the year the city's own dancing masters date the
+    // craze; Paris follows in 1840 and the world within the decade). In
+    // 2/4 with the oom on the beat and the pah answering — the one
+    // nineteenth-century ballroom dance the sixteen-place bar can say
+    // WHOLE, which is exactly why it is here and the waltz still is not.
+    // PAYS TWO DEBTS: nortena's "bohemian polka" (the conjunto's own
+    // declared bloodline) and maxixe's "the polka, as rio danced it".
+    polka: {
+      instrumental: true,   // a ballroom dance — the band plays, the room does the talking
+      label: "Prague 1837", voices: 3, bars: 8, near: "nortena",
+      plan: "dance", bpm: 112,
+      parents: {},
+      wants: ["the bohemian village band", "the landler"],
+      instr: ["clarinet", "accordion", "tuba"],
+      entry: () => 0, reg: v => [1, 0, -2][v], realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      drumkit: "acoustic",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
+      harmony: "cycle",
+      roots: [0, 0, 4, 4, 0, 0, 4, 0], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "fifths",
+      tone: { wave: "square", cut: 2600, q: 0.9, atk: .008, rel: .3, gain: .26, verb: .24 },
+      words: ["the clarinet, skipping the tune",
+              "the accordion, filling the middle",
+              "the tuba, the oom the pah answers"],
+      word: v => (v === 0 ? [fill(2)]
+                : v === 1 ? [drop(2), rotate(2)]
+                : [keep(0, 4, 8, 12), drop(2)]),
+    },
+
+    // CAJUN — New Orleans 1928. Joe Falcon and Cléoma Breaux cut ALLONS
+    // À LAFAYETTE for Columbia, 27 April 1928 — the first Cajun record;
+    // the dot is the session (the skokiaan a-record-is-the-honest-row
+    // ruling; Rayne, their own town, measures inside Lafayette's dot).
+    // Accordion and fiddle in unison heterophony, a voice pitched to cut
+    // through a dance hall with no PA, the triangle keeping eighths.
+    // PAYS zydeco's "cajun two-step" by name — the two Lafayette musics
+    // now hold hands across the 1955 row.
+    cajun: {
+      label: "New Orleans 1928", voices: 3, bars: 8, near: "zydeco",
+      plan: "song", bpm: 120,
+      parents: {},
+      wants: ["the acadian ballad stock the exile carried",
+              "the home dance (bal de maison)"],
+      instr: ["solo_vox", "accordion", "fiddle"],
+      entry: v => (v === 0 ? 1 : 0), reg: v => [1, 0, 0][v], realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      drumkit: "acoustic",
+      kit: { h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      harmony: "cycle",
+      roots: [0, 0, 4, 4, 0, 0, 4, 0], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "fifths",
+      orn: { grace: 0.25 },
+      tone: { wave: "square", cut: 2500, q: 0.9, atk: .01, rel: .35, gain: .26, verb: .24 },
+      words: ["the voice, thrown hard over the hall",
+              "the accordion, the tune with the bellows leaning on it",
+              "the fiddle, doubling rough — the triangle keeps the eighths"],
+      word: v => (v === 0 ? []
+                : v === 1 ? [fill(2)]
+                : [fill(2), drop(2)]),
+    },
+
+    // PIZZICA TARANTATA — Galatina 1959. Ernesto de Martino's équipe —
+    // Diego Carpitella on the tape machine — recording the tarantate at
+    // Galatina, June 1959 (LA TERRA DEL RIMORSO, 1961): the healing
+    // dance of Salento on field reels, violin circling one figure over a
+    // tambourine that does not stop. The compound whirl is said as a
+    // hard shuffle on sixteen places — the barcarolle's own 6/8
+    // admission, at trance tempo.
+    tarantella: {
+      label: "Galatina 1959", voices: 3, bars: 4, near: "rumbacatalana",
+      plan: "dance", bpm: 138,
+      parents: {},
+      wants: ["the feast of san paolo at galatina",
+              "the neapolitan tammurriata"],
+      cannot: ["the ritual — the music is a TREATMENT, hours long, tuned " +
+               "to one sufferer's colour and saint; a record here is bars " +
+               "at a tempo and stops when the form says, not when she does"],
+      instr: ["violin", "solo_vox", "nylon_string_guitar"],
+      swing: 0.3,
+      entry: () => 0, reg: v => [1, 0, 0][v], realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      drumkit: "acoustic",
+      kit: { h: [1,1,0,1, 1,1,0,1, 1,1,0,1, 1,1,0,1],
+             k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0] },
+      harmony: "modal",
+      mode: MODES.dorian, scale: DIATONIC, artic: "staccato", maxHold: 2,
+      bassStyle: "pedal",
+      tone: { wave: "triangle", cut: 2700, q: 1.0, atk: .006, rel: .3, gain: .27, verb: .3 },
+      words: ["the fiddle, circling the one figure that works",
+              "the voice, calling over the drum",
+              "the guitar, strumming the wheel around — the tamburello never stops"],
+      word: v => (v === 0 ? [fill(2)]
+                : v === 1 ? [drop(2)]
+                : [fill(1), keep(0, 3, 6, 8, 11, 14), drop(2)]),
+    },
+
+    // SEAN-NÓS — Carna 1957. Seosamh Ó hÉanaí (Joe Heaney), Connemara's
+    // own, cutting his first Gael-Linn sides: the old style —
+    // unaccompanied, Irish-language, free of the bar line, the ornament
+    // carrying what harmony would carry anywhere else. PAYS irishtrad's
+    // "seán-nós" by name: Dublin 1963's session now has the singing it
+    // grew around as a parent instead of a wish.
+    seannos: {
+      label: "Carna 1957", voices: 1, bars: 8, near: "ballad",
+      // 70 is compose.js's floor; the old style is slower than any
+      // metronome word for it, and the long maxHold carries the rest.
+      plan: "song", bpm: 70,
+      parents: {},
+      wants: ["the caoineadh — the keen itself", "the aisling repertory"],
+      instr: "solo_vox",
+      entry: () => 0, reg: () => 0, realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.mixo, scale: DIATONIC, artic: "legato", maxHold: 4,
+      orn: { grace: 0.45, pass: 0.2 },
+      tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .025, rel: 1.1, gain: .26, verb: .3,
+              // WHO SINGS: the monody throat — one ornamented solo line,
+              // Caccini's job description and Carna's.
+              mouth: MOUTHS.monody },
+      words: ["the old style: one voice, no bar line, the turns doing the harmony's work"],
+      word: (v, s) => [[], [transpose(-2)], [fill(1), drop(2)], []][s % 4],
+    },
+
+    // BARBERSHOP — New York 1910. The American Quartet's PLAY THAT
+    // BARBER SHOP CHORD (Victor, 1910): the named, dated record the
+    // debts round said it could not find, found — the year the ringing
+    // chord got its own hit. The debts-round decline is therefore
+    // OVERTURNED on its own terms, not argued around. Four unaccompanied
+    // voices, the lead inside the stack, every chord bent toward a
+    // dominant seventh; the historians' half of the story (Abbott 1992:
+    // the practice is African-American recreational singing before it is
+    // anything else) is carried by the `spirituals` parent.
+    barbershop: {
+      label: "New York 1910", voices: 4, bars: 8, near: "doowop",
+      plan: "song", bpm: 88,
+      parents: { parlor: 0.3, spirituals: 0.3 },
+      wants: ["jubilee quartets", "the pitch pipe and the woodshed"],
+      instr: ["solo_vox", "ahh_choir", "ahh_choir", "ahh_choir"],
+      entry: () => 0, reg: v => [0, 1, -1, -2][v], realize: () => "line",
+      kit: {}, nobass: true, harmony: "cycle",
+      roots: [0, 0, 5, 1, 4, 4, 0, 0], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      prog: [{ d: 0 }, { d: 0, q: "dom7" }, { d: 5, q: "dom7" }, { d: 1, q: "dom7" },
+             { d: 4, q: "dom7" }, { d: 4, q: "dom7" }, { d: 0 }, { d: 0 }],
+      artic: "legato", maxHold: 4,
+      tone: { wave: "triangle", cut: 2300, q: 0.8, atk: .03, rel: 1.0, gain: .26, verb: .3,
+              // WHO SINGS: the doowop stack's own blend, forty-five years
+              // earlier — the corner the corner learned from.
+              mouth: MOUTHS.doowopstack },
+      words: ["the lead, second voice from the top",
+              "the tenor, ringing over it",
+              "the baritone, finding the note nobody else wanted",
+              "the bass, walking the sevenths home"],
+      word: v => (v === 0 ? []
+                : v === 1 ? [transpose(2), drop(2)]
+                : v === 2 ? [transpose(-3), drop(2)]
+                : [spread(0), keep(0, 4, 8, 12), drop(2)]),
+    },
+
+    // ---- THE COMMISSIONED SCREEN — the news pair's law, widened ---------
+
+    // PHOTOPLAY MUSIC — Cleveland 1913. J. S. Zamecnik's SAM FOX MOVING
+    // PICTURE MUSIC, vol. 1 (Sam Fox Publishing, Cleveland, 1913): the
+    // first widely-sold book of cues written FOR the screen — "Hurry",
+    // "Mysterioso", "Indian Music" — a mood per page, played by whoever
+    // the theatre could afford. This is the stock-music tradition at its
+    // root: music as a CATALOG of feelings, sold by the situation, which
+    // is what KPM was still selling in 1970 — so `newsfanfare` gains this
+    // row as a parent today and its "library music" want is PAID. The
+    // library cluster now reads photoplay 1913 -> newsfanfare 1970 ->
+    // breakingnews 2006: three desks, one job.
+    photoplay: {
+      instrumental: true,   // a cue book — the picture does the talking
+      label: "Cleveland 1913", voices: 3, bars: 8, near: "newsfanfare",
+      plan: "arc", bpm: 100,
+      parents: { romantic: 0.4, operetta: 0.2, march: 0.15 },
+      wants: ["vaudeville", "the nickelodeon pit itself"],
+      cannot: ["the picture — every cue in the book is written to be cut " +
+               "off mid-phrase when the scene turns, and a section here " +
+               "runs its bars to the double bar whatever is on screen"],
+      instr: ["upright_piano", "strings", "cello"],
+      entry: () => 0, reg: v => [0, 0, -1][v], realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "counter"],
+      kit: {}, harmony: "cycle",
+      roots: [0, 0, 3, 4, 0, 5, 4, 0], mode: MODES.harmonic, scale: DIATONIC,
+      diatonic: true,
+      prog: [{ d: 0 }, { d: 0 }, { d: 3 }, { d: 4 },
+             { d: 0 }, { d: 5 }, { d: 4, q: "dom7" }, { d: 0 }],
+      artic: "legato", maxHold: 3, bassStyle: "octaves",
+      tone: { wave: "triangle", cut: 2300, q: 0.9, atk: .015, rel: .7, gain: .26, verb: .3 },
+      words: ["the pit piano, playing the weather of the scene",
+              "the strings, if the house could pay for them",
+              "the cello, the villain's own register"],
+      word: v => (v === 0 ? [fill(2)]
+                : v === 1 ? [drop(9)]
+                : [drop(2), transpose(-3)]),
+    },
+
+    // THE GOLDEN-AGE SCORE — Los Angeles 1938. Korngold's THE ADVENTURES
+    // OF ROBIN HOOD (Warner Bros., scored on the Burbank stages, the
+    // Oscar that made film scoring a composer's job): Viennese
+    // late-romantic opera grammar — the leitmotif, the surging string
+    // line, the horn tune — hired by the picture business whole. The
+    // parents say the sentence: romantic Vienna plus the operetta stage
+    // plus the photoplay cue book it professionalized.
+    korngold: {
+      instrumental: true,   // a picture score — the dialogue is the singer
+      label: "Los Angeles 1938", voices: 4, bars: 8, near: "romantic",
+      plan: "arc", bpm: 112,
+      parents: { romantic: 0.45, operetta: 0.2, photoplay: 0.2 },
+      wants: ["the wagner leitmotif system, as vienna taught it"],
+      instr: ["french_horns", "strings", "harp", "slow_strings"],
+      entry: v => (v === 3 ? 2 : 0), reg: v => [0, 0, 0, -1][v],
+      realize: v => (v === 3 ? "pad" : "line"),
+      part: ["lead", "counter", "riff", "pad"],
+      drumkit: "room",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             l: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0] },
+      harmony: "cycle",
+      roots: [0, 5, 3, 4, 0, 5, 4, 0], mode: MODES.lydian, scale: SCALES.major,
+      diatonic: true,
+      prog: [{ d: 0 }, { d: 5 }, { d: 3 }, { d: 4 },
+             { d: 0 }, { d: 5 }, { d: 4, q: "dom7" }, { d: 0 }],
+      artic: "legato", maxHold: 4, bassStyle: "octaves",
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .02, rel: 1.0, gain: .26, verb: .42 },
+      words: ["the horns, the hero's own tune",
+              "the violins, taking it over the battlements",
+              "the harp, glittering the cadence",
+              "the low strings, the forest under all of it"],
+      word: v => (v === 0 ? [fill(4)]
+                : v === 1 ? [fill(2), transpose(2)]
+                : v === 2 ? [drop(2), rotate(3)]
+                : [drop(9)]),
+    },
+
+    // THE HERRMANN STRING SCORE — Los Angeles 1960. PSYCHO: strings
+    // only — Hitchcock's black-and-white picture given a black-and-white
+    // orchestra, the two-note ostinato, the stab. Deliberately NOT the
+    // Korngold grammar and half-descended from it anyway (a refusal is a
+    // lineage; the serial parent is the dissonance's own teacher). The
+    // stab chair is `part: "stab"` — breakingnews's own word, and
+    // Herrmann is where the picture business learned it.
+    herrmann: {
+      instrumental: true,   // forty strings and no one else in the room
+      label: "Los Angeles 1960", voices: 4, bars: 8, near: "korngold",
+      plan: "arc", bpm: 120,
+      parents: { romantic: 0.3, korngold: 0.2, serial: 0.15 },
+      wants: ["the cbs radio drama workshop"],
+      instr: ["violin", "strings", "cello", "contrabass"],
+      entry: v => (v === 0 ? 2 : 0), reg: v => [1, 0, -1, -2][v],
+      realize: () => "line",
+      part: ["stab", "riff", "counter", "riff"],
+      kit: {}, harmony: "modal",
+      mode: MODES.phrygian, scale: SCALES.chromatic, artic: "staccato", maxHold: 2,
+      bassStyle: "pedal",
+      tone: { wave: "sawtooth", cut: 2600, q: 1.2, atk: .004, rel: .5, gain: .26, verb: .36 },
+      words: ["the violins, the stab — every beat a knife",
+              "the middle strings, the two-note cell that will not resolve",
+              "the cellos, answering a tritone down",
+              "the basses, the dread held under everything"],
+      word: v => (v === 0 ? [fill(4), rotate(3), drop(2)]
+                : v === 1 ? [excerpt(0, 2), fill(2)]
+                : v === 2 ? [transpose(-3), drop(2)]
+                : [spread(0), keep(0, 8), drop(2)]),
+    },
+
+    // THE MORRICONE WESTERN — Rome 1966. IL BUONO, IL BRUTTO, IL CATTIVO,
+    // scored at RCA Italiana before the picture was cut: the two-note
+    // coyote call, the whistle, the electric guitar in an orchestra, the
+    // wordless soprano as an INSTRUMENT — which is why this row carries
+    // `ohh_voices` in the cast and stays instrumental: true. Nobody
+    // sings; a voice is played. The parents: the Hollywood grammar he
+    // answered (korngold), the opera his soprano walked out of
+    // (belcanto), and the march the trumpets deserted.
+    morricone: {
+      instrumental: true,   // the voice on it is scored as an instrument, not a singer
+      label: "Rome 1966", voices: 4, bars: 8, near: "korngold",
+      plan: "arc", bpm: 108,
+      parents: { korngold: 0.25, belcanto: 0.2, march: 0.15 },
+      wants: ["duane eddy's twang guitar", "the rca italiana canzone bench"],
+      instr: ["whistle", "overdrive_guitar", "brass_section", "ohh_voices"],
+      entry: v => [0, 1, 2, 3][v], reg: v => [1, 0, 0, 1][v],
+      realize: v => (v === 3 ? "pad" : "line"),
+      part: ["lead", "riff", "counter", "pad"],
+      drumkit: "room",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0] },
+      harmony: "cycle",
+      roots: [0, 0, 6, 6, 0, 0, 4, 4], mode: MODES.aeolian, scale: DIATONIC,
+      diatonic: true,
+      artic: "legato", maxHold: 3, bassStyle: "octaves",
+      fx: ["echo"],
+      tone: { wave: "triangle", cut: 2700, q: 1.0, atk: .01, rel: .8, gain: .26, verb: .44 },
+      words: ["the whistle, the two-note call across the mesa",
+              "the guitar, twanging the ostinato",
+              "the trumpets, the death-march the duel is set to",
+              "the soprano, wordless, scored like a violin"],
+      word: v => (v === 0 ? [excerpt(0, 2), fill(4)]
+                : v === 1 ? [fill(2), drop(2)]
+                : v === 2 ? [drop(2), rotate(2)]
+                : [drop(9)]),
+    },
+
+    // THE BARRY SPY SCORE — London 1962. THE JAMES BOND THEME, CTS
+    // Studios, 21 June 1962: Monty Norman's tune in John Barry's
+    // arrangement, Vic Flick's guitar through an amp on the edge of
+    // breakup, big-band brass punched over it. The commission is the
+    // genre (the news pair's law): music written to BRAND a franchise.
+    // PAYS portishead's want by name — the Bristol records were sampling
+    // exactly this shelf, and the edge now says so.
+    barry: {
+      instrumental: true,   // a title theme — the picture's name is the lyric
+      label: "London 1962", voices: 3, bars: 8, near: "newsfanfare",
+      plan: "arc", bpm: 136,
+      parents: { swing: 0.3, jazz: 0.2, korngold: 0.15 },
+      wants: ["the stan kenton brass book"],
+      instr: ["clean_guitar", "brass_section", "strings"],
+      swing: 0.15,
+      entry: v => (v === 1 ? 2 : 0), reg: v => [0, 0, 0][v], realize: () => "line",
+      part: ["riff", "stab", "counter"],
+      drumkit: "jazz",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             r: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      harmony: "modal",
+      mode: MODES.melodic, scale: SCALES.chromatic, artic: "staccato", maxHold: 2,
+      bassStyle: "walk",
+      tone: { wave: "sawtooth", cut: 2500, q: 1.1, atk: .006, rel: .4, gain: .27, verb: .3 },
+      words: ["the guitar, the riff with the raincoat on",
+              "the brass, hitting the chord like a door kicked in",
+              "the strings, the chromatic slink between"],
+      word: v => (v === 0 ? [excerpt(0, 4), fill(2)]
+                : v === 1 ? [fill(4), rotate(3), drop(2)]
+                : [drop(2), transpose(-2)]),
+    },
+
+    // THE CARPENTER SCORE — Los Angeles 1978. HALLOWEEN, scored by the
+    // director in days at Sound Arts on rented synthesizers: the piano
+    // ostinato, the held stinger, the fog pad. PAYS TWO STANDING DEBTS
+    // BY NAME — deathrock's "the horror film score" and synthwave's
+    // "carpenter's film scores" — which makes this the round's most
+    // structural row: Pomona 1982 and Paris 2010 both named it before it
+    // existed. The lineage is Berlin running through a grindhouse:
+    // berlinschool's sequenced pulse, herrmann's suspense grammar,
+    // krautrock's refusal to swing.
+    carpenter: {
+      instrumental: true,   // the scream is on the picture, not the score
+      label: "Los Angeles 1978", voices: 3, bars: 8, near: "berlinschool",
+      plan: "arc", bpm: 136,
+      parents: { berlinschool: 0.35, herrmann: 0.25, krautrock: 0.15 },
+      wants: ["the hammer horror scores (james bernard's dracula)"],
+      cannot: ["the 5/4 — the Halloween ostinato counts ten quavers to " +
+               "the bar and this box counts sixteen; the figure below is " +
+               "the tattoo squared off, and the difference is audible to " +
+               "anyone who knows the picture (the triple-meter wall's " +
+               "asymmetric cousin)"],
+      instr: ["upright_piano", "saw_wave", "warm_pad"],
+      drumkit: "electronic",
+      entry: v => (v === 2 ? 2 : 0), reg: v => [1, -1, 0][v],
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["riff", "riff", "pad"],
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      harmony: "modal",
+      mode: MODES.aeolian, scale: SCALES.chromatic, artic: "staccato", maxHold: 2,
+      bassStyle: "pedal",
+      fx: ["echo"],
+      tone: { wave: "sawtooth", cut: 1600, q: 1.3, atk: .005, rel: .7, gain: .25, verb: .4 },
+      words: ["the piano figure, high and cold, never stopping",
+              "the synth bass, the shape in the doorway",
+              "the pad, the street at night holding still"],
+      word: v => (v === 0 ? [fill(1), keep(0, 2, 4, 6, 8, 10, 12, 14)]
+                : v === 1 ? [spread(0), keep(0, 8), drop(2)]
+                : [drop(9)]),
+    },
+
+    // THE MANN/HAMMER MOOD SYNTH — Miami 1984. Jan Hammer scoring MIAMI
+    // VICE from the pilot on (and "Crockett's Theme", 1986, the one
+    // everybody hums): a cue a week, played alone into a Fairlight and a
+    // Memorymoog, WRITTEN TO SET A MOOD under neon and water. The dot is
+    // Miami on the news pair's law — the commission is the genre and the
+    // commission was the city — said plainly: Hammer's own studio was a
+    // farmhouse in upstate New York. THIS IS NOT SYNTHWAVE: Paris 2010
+    // is the 2010s MEMORY of this, and synthwave's parents now carry
+    // that as a dated edge instead of an implication. Fusion hands
+    // (Mahavishnu was his band) on sequencer time is the whole sound —
+    // the phrase leans while the grid does not.
+    miamivice: {
+      instrumental: true,   // an incidental cue — the dialogue sits where the singer would
+      label: "Miami 1984", voices: 3, bars: 8, near: "synthwave",
+      plan: "arc", bpm: 100,
+      parents: { carpenter: 0.25, moroder: 0.25, synthpop: 0.2, jazz: 0.1 },
+      wants: ["the mahavishnu orchestra's fusion",
+              "the linndrum session-pop of 1983"],
+      instr: ["polysynth", "fantasia", "warm_pad"],
+      drumkit: "electronic",
+      entry: v => (v === 0 ? 2 : 0), reg: v => [0, 1, -1][v],
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      kit: { k: [1,0,0,0, 0,0,0,1, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      harmony: "cycle",
+      roots: [0, 0, 5, 5, 3, 3, 4, 4], mode: MODES.aeolian, scale: DIATONIC,
+      diatonic: true,
+      artic: "legato", maxHold: 3,
+      bassStyle: "eighths",
+      fx: ["chorus", "echo"],
+      tone: { wave: "sawtooth", cut: 2000, q: 1.0, atk: .012, rel: 1.0, gain: .25, verb: .48 },
+      words: ["the lead, a fusion hand on a synthesizer — the phrase leans",
+              "the bells, headlights on the causeway",
+              "the pad, the ocean at 3 a.m."],
+      word: v => (v === 0 ? [fill(2)]
+                : v === 1 ? [drop(2), rotate(2)]
+                : [drop(9)]),
+    },
+
+    // THE SITCOM THEME — Los Angeles 1983. "Where Everybody Knows Your
+    // Name" (Portnoy/Hart Angelo), the Cheers main title: sixty seconds
+    // of piano-bar warmth commissioned to brand a Thursday night —
+    // newsfanfare's law at the other end of the broadcast day (the cue
+    // says URGENT; this one says STAY). The dot is the commission
+    // (Paramount's lot; the show premiered September 1982, the full
+    // single is 1983) — the writers cut the demo in New York, said
+    // plainly, the Kinks rule's honest footnote.
+    sitcom: {
+      label: "Los Angeles 1983", voices: 3, bars: 8, near: "yachtrock",
+      plan: "song", bpm: 104,
+      parents: { brill: 0.3, broadway: 0.25, yachtrock: 0.2 },
+      wants: ["the tv variety-show orchestra"],
+      cannot: ["the sixty seconds — a main title is written to a clock " +
+               "with a card cut on every fourth bar, and this box counts " +
+               "bars at a tempo (the stopwatch, newsfanfare's own first " +
+               "cannot, at a friendlier speed)"],
+      instr: ["solo_vox", "bright_yamaha_grand", "slow_strings"],
+      entry: v => (v === 0 ? 1 : 0), reg: v => [0, 0, 0][v],
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      drumkit: "brush",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      harmony: "cycle",
+      roots: [0, 3, 4, 0, 3, 1, 4, 4], mode: MODES.ionian, scale: SCALES.major,
+      diatonic: true,
+      prog: [{ d: 0 }, { d: 3 }, { d: 4 }, { d: 0 },
+             { d: 3 }, { d: 1, q: "m7" }, { d: 4, q: "dom7" }, { d: 4, q: "sus4" }],
+      artic: "legato", maxHold: 3, bassStyle: "octaves",
+      tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .015, rel: .8, gain: .26, verb: .3,
+              mouth: MOUTHS.crooning },
+      words: ["the voice, glad you came back",
+              "the piano, the bar it all happens in",
+              "the strings, the lamplight"],
+      word: v => (v === 0 ? []
+                : v === 1 ? [fill(2), drop(2)]
+                : [drop(9)]),
+    },
+
+    // THE SITCOM STING — Los Angeles 1989. Jonathan Wolff's SEINFELD
+    // music: a sampled slap bass and mouth pops, re-improvised around
+    // Jerry's monologue for every episode, played from a keyboard in a
+    // Burbank studio — the theme reduced to a TRANSITION, which is what
+    // happened to the commission between 1982 and 1989 (breakingnews's
+    // own arc, run on the comedy side). One player, one sampler, no
+    // tune to hum on purpose.
+    seinfeld: {
+      instrumental: true,   // the comedian is the vocalist and he is not on the record
+      label: "Los Angeles 1989", voices: 2, bars: 4, near: "sitcom",
+      plan: "song", bpm: 116,
+      parents: { sitcom: 0.3, funk: 0.3, newjackswing: 0.15 },
+      wants: ["the synclavier one-man bench"],
+      cannot: ["the monologue — Wolff timed every bar to that week's " +
+               "stand-up and re-cut the part per episode; a genre here is " +
+               "one record, not twenty-two variable ones a season"],
+      instr: ["slap_bass", "synth_brass_1"],
+      swing: 0.2,
+      entry: v => (v === 1 ? 2 : 0), reg: v => [-1, 0][v], realize: () => "line",
+      part: ["riff", "stab"],
+      drumkit: "electronic",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,1,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      harmony: "modal",
+      mode: MODES.mixo, scale: BLUES, artic: "staccato", maxHold: 1,
+      nobass: true,
+      tone: { wave: "square", cut: 2200, q: 1.2, atk: .004, rel: .25, gain: .27, verb: .18 },
+      words: ["the slap bass, talking over the applause",
+              "the synth brass, the punchline hit"],
+      word: v => (v === 0 ? [fill(2), drop(2)]
+                : [fill(4), rotate(3), drop(2)]),
+    },
   };
 
   // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane. `p` says "Ghost perc"
@@ -17151,7 +18140,18 @@
                 // ...and the forward half's one: dunstaple is three
                 // unaccompanied parts, the cluster's whole definition,
                 // filing beside dufay's own teachers.
-                "dunstaple"]],
+                "dunstaple",
+                // ...AND EIGHT ON 2026-08-30, the folk-floor round, every
+                // one of them the cluster's definition — people singing
+                // with nothing under them: a shantyman and his watch, a
+                // Madison County ballad singer, three Georgians at a
+                // table, a Norwegian mountain ballad, four Mbuti voices
+                // dealt one line between them, a caregiver with a rhyme,
+                // Joe Heaney alone, and four barbershop parts. All eight
+                // land in compose.js's derived unaccompanied set on their
+                // own three fields — eight more independent arrivals.
+                "shanty", "appalachia", "georgian", "nordicfolk", "mbuti",
+                "nursery", "seannos", "barbershop"]],
     ["club",   ["acid", "house", "techno", "garage", "dnb", "trap", "boombap",
                 // `jpop` (2026-08-30) files beside kpop, which took its
                 // formula and industrialized it — the ear hears the two
@@ -17340,6 +18340,17 @@
                 // family's dynamics row — both are named below, in opposite
                 // directions from it and from each other.
                 "newsfanfare", "breakingnews",
+                // ...and the folk-floor round's nine screen rows
+                // (2026-08-30): the commissioned-screen cluster, seated
+                // where the news pair set the precedent — no band, only
+                // an arranger, a desk and people hired for the session.
+                // A cue book, three picture scores, a title theme, the
+                // Carpenter ostinato, the Hammer mood cue, and the two
+                // sitcom commissions. carpenter, miamivice and seinfeld
+                // are machines or samplers in a hand family and take
+                // DYNAMICS rows below.
+                "photoplay", "korngold", "herrmann", "morricone", "barry",
+                "carpenter", "miamivice", "sitcom", "seinfeld",
                 // ...and Munich 1977 (2026-08-29): Musicland was a DESK and a
                 // bench of session players — "records ARRANGED", this
                 // cluster's own definition one comment up — and moroder sits
@@ -17495,7 +18506,17 @@
                 // stress and takes a DYNAMICS row below.
                 "gypsyjazz", "latinjazz", "descarga", "capejazz",
                 "tradjazz", "indojazz", "japanjazz", "nordicjazz",
-                "skokiaan"]],
+                "skokiaan",
+                // ...AND EIGHT ON 2026-08-30, the folk-floor round: a
+                // Galax string band, Brandwein's kapelye, Piaf's
+                // street-song orchestra, the Clejani taraf, cante over
+                // one guitar, a Prague ballroom band, Falcon's accordion-
+                // and-fiddle duo with a triangle, and the Galatina
+                // therapy ensemble — every one of them people playing
+                // acoustic instruments at each other, which has been
+                // this cluster's definition since the day it was typed.
+                "oldtime", "klezmer", "chanson", "taraf", "flamenco",
+                "polka", "cajun", "tarantella"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.
@@ -17907,6 +18928,44 @@
     djshadow:          { stress: 0.38, phrase: 0.3,  touch: { t: 0.055, v: 0.9 } },
     kruderdorfmeister: { stress: 0.28, phrase: 0.45, touch: { t: 0.035, v: 0.6 } },
     stgermain:         { stress: 0.35, phrase: 0.6,  touch: { t: 0.055, v: 0.85 } },
+    // THE FOLK-FLOOR ROUND'S NINE (2026-08-30). Sixteen of the round's
+    // twenty-five take their family row unchanged; these disagree, each
+    // for a reason the record itself states:
+    //
+    // shanty is sacredharp's argument at sea — the vox default says "the
+    // barline is a scribe's convenience" and a halyard song is STAMPED,
+    // the beat is the pull and the whole point; ragged hands because a
+    // watch is not a choir.
+    shanty:     { stress: 0.5,  phrase: 0.35, touch: { t: 0.07,  v: 1 } },
+    // appalachia and nordicfolk are ballads and take ballad's own shape
+    // — one voice, no bar to stress, a strophic arch — not the family
+    // default the mountain and the fjord would both shrug at.
+    appalachia: { stress: 0.12, phrase: 0.85, touch: { t: 0.06,  v: 0.6 } },
+    nordicfolk: { stress: 0.1,  phrase: 0.85, touch: { t: 0.06,  v: 0.55 } },
+    // seannos has the least metre of anything in the family but the
+    // taksim rows — no bar line at all, the line and its ornaments are
+    // the entire performance.
+    seannos:    { stress: 0.05, phrase: 0.9,  touch: { t: 0.065, v: 0.6 } },
+    // mbuti is the family's OTHER extreme and the reason it needed a
+    // row: an interlocked hocket is nothing BUT metre — each voice's two
+    // notes land or the circle falls apart — yet every hand is real.
+    // The most stress in vox by a distance, sacredharp included.
+    mbuti:      { stress: 0.55, phrase: 0.2,  touch: { t: 0.05,  v: 0.85 } },
+    // flamenco disagrees with roots' backbeat-era reading from both
+    // sides at once: the cante is nearly all phrase and drag, the palmas
+    // under it are exact — a loose voice over a hard clock.
+    flamenco:   { stress: 0.3,  phrase: 0.75, touch: { t: 0.07,  v: 0.9 } },
+    // chanson is the singer pushed all the way forward; the orchestra
+    // follows HER, which no 0.45 stress can describe.
+    chanson:    { stress: 0.2,  phrase: 0.75, touch: { t: 0.06,  v: 0.85 } },
+    // ...and the screen cluster's three machines-in-a-hand-family.
+    // carpenter is a director playing to a click, tight and small;
+    // miamivice is fusion hands over a sequenced grid — the phrase
+    // leans while the time does not; seinfeld is a sampler keyed live,
+    // tight time, real pops on the level.
+    carpenter:  { stress: 0.3,  phrase: 0.15, touch: { t: 0.012, v: 0.4 } },
+    miamivice:  { stress: 0.3,  phrase: 0.55, touch: { t: 0.02,  v: 0.6 } },
+    seinfeld:   { stress: 0.4,  phrase: 0.25, touch: { t: 0.02,  v: 0.85 } },
   };
   // NO SILENT DEFAULT (the compose.js law, one tier down): a genre resolves to
   // its own row or to its family's, and `null` is a DECISION rather than an

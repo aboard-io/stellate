@@ -539,8 +539,49 @@ function sectionEvents(doc, i) {
   // infobox), boardsofcanada (the IDM shelf, which the catalog does
   // not hold at all — a named next ask), and zero7/bonobo/
   // groovearmada/unkle as thin.
-  ok("G0 the catalog is 325 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 325,
+  // + the TWENTY-FIVE of the folk-floor round (Paul, 2026-08-30: "we're
+  // missing all kinds of folk traditions plus Pygmy and Romm and classic
+  // nursery rhymes. We also could use some classic film soundtracks, 80s
+  // and 90s sitcom themes, John carpenter horror and incidental stock
+  // music of all kinds. Plus tons of Miami vice jan hammer michael mann
+  // synth incidental stuff"). THE FOLK FLOOR, sixteen, each on a named
+  // collection/record/event: shanty (London 1961, Hugill), appalachia
+  // (Hot Springs 1916, Sharp at Jane Gentry's), oldtime (Galax 1935, the
+  // fiddlers' convention — paying THREE wants: bluegrass's old-time,
+  // countrypop's fiddle, and folkduo's ballad via its parent row),
+  // klezmer (New York 1923, Brandwein — the hijaz mode's second music),
+  // georgian (Tbilisi 1966, Chakrulo/Erkomaishvili), nordicfolk (Oslo
+  // 1853, Lindeman — paying nordicjazz), chanson (Paris 1936, Piaf —
+  // paying nhacvang), taraf (Clejani 1986, the Ocora tapes — the row
+  // pays the TRADITION, the edge to gypsyjazz cannot close by the WHEN
+  // law and its want is reworded to the pre-Django 78s), flamenco
+  // (Granada 1922, the Concurso — paying rumbacatalana), mbuti (Epulu
+  // 1958, Turnbull — the HOCKET RULING: fill(1) + disjoint keep() masks
+  // interlock four voices into one line, measured disjoint with the
+  // union covering all sixteen places; the yodel break stays a cannot),
+  // nursery (London 1744, Tommy Thumb's), polka (Prague 1837 — paying
+  // nortena AND maxixe), cajun (New Orleans 1928, Falcon — paying
+  // zydeco), tarantella (Galatina 1959, De Martino), seannos (Carna
+  // 1957, Joe Heaney — paying irishtrad) and barbershop (New York 1910,
+  // the American Quartet's Play That Barber Shop Chord — OVERTURNING
+  // the debts round's decline on its own terms: the named dated record
+  // it said was missing, found). THE COMMISSIONED SCREEN, nine, the
+  // news pair's law at other desks: photoplay (Cleveland 1913, Zamecnik
+  // — paying newsfanfare's "library music" and, via the existing
+  // anchor, djshadow's crates), korngold (Los Angeles 1938), herrmann
+  // (Los Angeles 1960), morricone (Rome 1966, voices scored as
+  // instruments), barry (London 1962, the Bond theme — paying
+  // portishead), carpenter (Los Angeles 1978 — paying deathrock AND
+  // synthwave), miamivice (Miami 1984 — synthwave's second dated
+  // memory-edge), sitcom (Los Angeles 1983, Cheers) and seinfeld (Los
+  // Angeles 1989, Wolff's sampler sting, a NOLINK by honest failure).
+  // DECLINED with reasons at the round header in genres.js:
+  // bal-musette and the compás (the triple-meter wall, unchanged),
+  // muzak (the debts ruling stands), the Hammer horror score, the
+  // griot/jeliya row (primary-fact rule; named next ask), a second
+  // library-beds row, and every umbrella the ask's plural implied.
+  ok("G0 the catalog is 350 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 350,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
@@ -1140,13 +1181,16 @@ function sectionEvents(doc, i) {
     // more independent arrival; the derived list below grew by one.
     ok("G11c the unaccompanied law is derived, not a list — it found the " +
        "five it was written on PLUS sacredharp, chorale, ballad, dufay, " +
-       "spirituals, the debts round's six, and the deep-time round's two, " +
+       "spirituals, the debts round's six, the deep-time round's two, " +
+       "and the folk-floor round's eight, " +
        "none of which it has ever heard of", () => {
       assert.deepStrictEqual(solo.slice().sort(),
-        ["ballad", "carmen", "chorale", "dufay", "dunstaple", "gregorian",
+        ["appalachia", "ballad", "barbershop", "carmen", "chorale", "dufay",
+         "dunstaple", "georgian", "gregorian",
          "hildegard", "holler",
-         "josquin", "kassia", "mbube", "organum", "oxyrhynchus",
-         "sacredharp", "seikilos", "sequence",
+         "josquin", "kassia", "mbube", "mbuti", "nordicfolk", "nursery",
+         "organum", "oxyrhynchus",
+         "sacredharp", "seannos", "seikilos", "sequence", "shanty",
          "spem", "spirituals", "winchester", "zema"]);
     });
 

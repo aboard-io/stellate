@@ -158,11 +158,14 @@ ok("iranpop: 10 rewrites, >= 8 distinct hooks and >= 5 distinct rhythms", () => 
    and lamb joined on the same law — the long cell is the freeze, whatever
    the contour and sentence do around it. massiveattack and djshadow, the
    two the prediction watched, did NOT freeze: riff and even deal on. */
+/* ...AND THE HEARTH-AND-SCREEN ROUND ADDED TWO (2026-08-30), both predicted
+   by the round itself, both long-cell: seannos (Joe Heaney's unmetered line)
+   and miamivice (the mood synth is long-cell country, as the ask said). */
 const FROZEN_RHYTHM = ["ambient", "arabesk", "cemilbey", "chopped", "doom",
                        "dreampop", "drone", "dub", "dubstep", "enka",
                        "gagaku", "gothicrock", "gqom", "hohlefels", "hurrian",
-                       "kruderdorfmeister", "lamb", "modaljazz", "nordicjazz",
-                       "psychrock", "satie", "tricky",
+                       "kruderdorfmeister", "lamb", "miamivice", "modaljazz",
+                       "nordicjazz", "psychrock", "satie", "seannos", "tricky",
                        "triphop", "witchhouse"];
 ok("catalog: hook rhythm and degrees vary at nearly every anchor", () => {
   let rv = 0, dv = 0, kv = 0; const frozen = [];
