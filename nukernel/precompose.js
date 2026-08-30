@@ -314,6 +314,12 @@
     kruderdorfmeister:{ cell: "long", contour: "hover", sent: "long", len: "four" },
     stgermain: { cell: "gallop", contour: "fall",   land: "seventh", sent: "vary" },
     acidjazz:  { cell: "riff",   contour: "zig",    land: "root",  len: "two" },
+    // THE DARK-ROOMS HANDOFF (2026-08-30): trap had NO row and fell to club's
+    // {push, vary, hover, fifth} — the "sounds melodic" wander Paul heard; it
+    // takes miamibass/dancehall's own shape. And a guaguanco is an ostinato,
+    // not roots' aabb strophe.
+    trap:      { cell: "riff",   contour: "insist", reg: "low", land: "root", len: "two" },
+    rumba:     { cell: "riff",   contour: "zig",    sent: "plain", len: "two" },
     // THE HEARTH-AND-SCREEN HANDOFF (2026-08-30, 325 -> 350), parent-written.
     // Fourteen overrides; the other eleven of the round's twenty-five take
     // their family rows honestly (measured: none froze at the family idiom).

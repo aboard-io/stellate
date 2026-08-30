@@ -2031,7 +2031,7 @@
                  // turns every knob (the full-desk gate's own law)
                  space: [null], width: [null] },
     trap:      { ceiling: ["louder", "louder", "loud"], glue: ["tight", "pump"],
-                 tilt: ["bright", "clear"], space: ["touch", null] },
+                 tilt: ["dark", null] /* was ["bright","clear"] - every pressed trap master came out bright; Paul 2026-08-30: "Trap sounds melodic with tinkly beats". A trap master leans dark or leaves the tilt alone (boombap's own row is dark) - the dark-rooms round. */, space: ["touch", null] },
     jazz:      { glue: ["soft", "soft", "glue"], space: ["room", "room", "hall"],
                  tape: ["warm", "tape"], ceiling: ["open", "open", "safe"] },
     motown:    { tape: ["tape", "tape", "warm"], glue: ["glue", "tight"],

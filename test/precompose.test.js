@@ -585,8 +585,14 @@ function sectionEvents(doc, i) {
   // for the five felled walls (genres.js, the walls-down block).
   // bal-musette's own decline above was REVERSED the same day it was
   // written (meter landed); guoyue was examined and stays EMPTY.
-  ok("G0 the catalog is 358 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 358,
+  // 358 -> 369 on 2026-08-30, the ledger round ("Fill in missing genres
+  // that are wanted"): eleven rows, each the payment of a written want —
+  // hammerhorror, idm, exotica (the first Pacific dot; the coastline
+  // re-bake), muwashshah, zajal, soundsystem, jubilee, rumba, lautari,
+  // doina, chazzanut. The wants that stay open are CLOSED-with-reason at
+  // the round's own ledger block in genres.js.
+  ok("G0 the catalog is 369 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 369,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
@@ -1198,11 +1204,18 @@ function sectionEvents(doc, i) {
        "spirituals, the debts round's six, the deep-time round's two, " +
        "and the folk-floor round's eight, " +
        "none of which it has ever heard of", () => {
+      // ...and the ledger round's three (2026-08-30), each an
+      // independent arrival on its own fields: `jubilee` is four
+      // unaccompanied voices (the cluster's definition), `doina` one
+      // voice on a mountain, `chazzanut` one voice over a hum. The
+      // predicate found all three before this list heard of them.
       assert.deepStrictEqual(solo.slice().sort(),
-        ["appalachia", "ballad", "barbershop", "carmen", "chorale", "dufay",
+        ["appalachia", "ballad", "barbershop", "carmen", "chazzanut",
+         "chorale", "doina", "dufay",
          "dunstaple", "georgian", "gregorian",
          "hildegard", "holler",
-         "josquin", "kassia", "mbube", "mbuti", "nordicfolk", "nursery",
+         "josquin", "jubilee", "kassia", "mbube", "mbuti", "nordicfolk",
+         "nursery",
          "organum", "oxyrhynchus",
          "sacredharp", "seannos", "seikilos", "sequence", "shanty",
          "spem", "spirituals", "winchester", "zema"]);
@@ -1436,7 +1449,15 @@ function sectionEvents(doc, i) {
       // 6); and a ceiling that a real band cannot reach is a ceiling nobody
       // reads. What it does catch is the seam coming back: measured, writing
       // an instrument onto every chair again puts a record over 43.
-      const CEILING = 43;
+      // 43 -> 46 on 2026-08-30, the ledger round, MEASURED not guessed:
+      // the catalog grew 358 -> 369 and the guest draws re-dealt (they
+      // hash the catalog), so beachboys/1 gained a model-resolved guest
+      // chair and became the worst record at 44.91 where synthpop/3's
+      // 42.00 had been. That is a re-deal, not the seam: the per-chair
+      // costs are unchanged, one record simply seats one more model. The
+      // new ceiling keeps the same one-unit headroom over the measured
+      // worst that 43 kept over 42.
+      const CEILING = 46;
       assert.ok(cost[0].cost <= CEILING, cost[0].key + " costs " +
         cost[0].cost + ", over the stated ceiling of " + CEILING);
     });

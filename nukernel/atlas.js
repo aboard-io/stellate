@@ -100,6 +100,11 @@
      Ryukyus and no Lesser Antilles in the file at all. Those dots would draw
      over open water. The wall is the bake, not the music, and it is why
      Australia and the Pacific is the world round's one empty region.
+     [HONOLULU LANDED 2026-08-30, the ledger round: the bake was re-run
+     with the city in PLACES, whose PKEEP box keeps Oahu's ring, and the
+     region opened with `exotica`. Honiara, Naha and Pointe-à-Pitre are
+     still held back — nobody has written their anchors yet, and each
+     will need its ring kept the same way.]
 
      AND SIX MORE ON 2026-08-29, with the genealogy round ("how can we
      add lots more related genres quickly across time"): Clarksdale,
@@ -187,6 +192,30 @@
     "Fort Worth": [32.76, -97.33],
     "Freetown": [8.48, -13.23], "Glasgow": [55.86, -4.25],
     "Greenwich Village": [40.73, -74.00], "Guadalajara": [20.67, -103.35],
+    /* THE LEDGER ROUND'S FIVE, 2026-08-30 ("Fill in missing genres that
+       are wanted") — geography follows the catalog, per the standing
+       rule, each landing the hour its label did:
+       · Bray — `hammerhorror`, the village whose studios Hammer shot
+         Dracula in; ~43 km west of London, checked against the Britain
+         arc at the gate (the Basildon distance, mirrored).
+       · Sheffield — `idm`, Warp's own town; the sisters precedent asked
+         the Britain-arc question and the gate answers it (Halifax and
+         Manchester are both over the floor from here).
+       · Bucharest — `lautari`, the Scaune neighbourhood's guild; NOTE
+         Clejani (taraf) sits ~35 km southwest and the pair is measured
+         at the gate, not assumed.
+       · Maramureș — `doina`, Bartók's 1912 collecting ground: a REGION
+         row like Provence, the county's rough centre, because the
+         cylinders were cut village by village.
+       · HONOLULU — `exotica`, and the first Pacific dot on the map. The
+         four-anchors-held-back note below said "the wall is the bake,
+         not the music"; the bake was RE-RUN this round with Honolulu in
+         PLACES, whose PKEEP box keeps Oahu's ring (the 1:50m source has
+         the island at 0.02° from the city), so the dot stands on land
+         and the empty region below stops being empty. */
+    "Bray": [51.51, -0.70], "Sheffield": [53.38, -1.47],
+    "Bucharest": [44.43, 26.10], "Maramureș": [47.67, 24.00],
+    "Honolulu": [21.31, -157.86],
     "Guča": [43.78, 20.23], "Harlem": [40.81, -73.94], "Havana": [23.13, -82.38],
     "Ho Chi Minh City": [10.82, 106.63], "Hohle Fels": [48.38, 9.75],
     "Hong Kong": [22.32, 114.17],
@@ -710,6 +739,20 @@
     khyal:          { place: "Mumbai", year: 1965 },
     gamelan:        { place: "Surakarta", year: 1956 },
     tapemusic:      { place: "Paris", year: 1948 },
+    // the ledger round's eleven (2026-08-30) — every dot the payment of
+    // a written want; Honolulu is the map's first Pacific dot and the
+    // reason the empty region below closed
+    hammerhorror:   { place: "Bray", year: 1958 },
+    idm:            { place: "Sheffield", year: 1992 },
+    exotica:        { place: "Honolulu", year: 1957 },
+    muwashshah:     { place: "Cairo", year: 1200 },
+    zajal:          { place: "Córdoba", year: 1150 },
+    soundsystem:    { place: "Kingston", year: 1950 },
+    jubilee:        { place: "Nashville", year: 1909 },
+    rumba:          { place: "Matanzas", year: 1956 },
+    lautari:        { place: "Bucharest", year: 1906 },
+    doina:          { place: "Maramureș", year: 1912 },
+    chazzanut:      { place: "New York", year: 1912 },
   };
   /* WHEN:END */
 
@@ -812,7 +855,12 @@
                // Caucasus, and a three-part table song answers to no
                // maqam.
                "Carna", "Clejani", "Galatina", "Granada", "Prague",
-               "Tbilisi"],
+               "Tbilisi",
+               // ...and the ledger round's four (2026-08-30): Bray,
+               // Sheffield, Bucharest and Maramureș — plain European
+               // geography, the horror stage, Warp's town, the lăutari's
+               // neighbourhood and Bartók's collecting ground.
+               "Bray", "Sheffield", "Bucharest", "Maramureș"],
     "North America": ["Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
                       "Chicago", "Cincinnati", "Cleveland", "Detroit",
                       "Greenwich Village", "Harlem", "Clarksdale", "Kansas City", "Lafayette",
@@ -872,8 +920,12 @@
     // opens with exactly these flutes.
     "East Asia": ["Beijing", "Hong Kong", "Jiahu", "Nara", "Seoul", "Shanghai",
                   "Taipei", "Tokyo"],
+    // Surakarta (2026-08-30, the walls-down round's own dot): `gamelan`
+    // landed at Lokananta's city the same morning this row was last read,
+    // and the region gate (G11d) caught the dot with no region within the
+    // day — central Java, the same island Jakarta already proves.
     "Southeast Asia": ["Bangkok", "Ho Chi Minh City", "Jakarta", "Manila",
-                       "Phnom Penh"],
+                       "Phnom Penh", "Surakarta"],
     "South Asia": ["Chandigarh", "Chennai", "Delhi", "Faisalabad",
                    "Jalandhar", "Mumbai"],
     // Turkey and Iran sit here rather than in Europe or in Central Asia, and
@@ -901,21 +953,33 @@
     "Middle East": ["Baghdad", "Cairo", "Córdoba", "Istanbul", "Oran",
                     "Oxyrhynchus", "Tehran", "Tetouan", "Ugarit", "Ur"],
     "Central Asia": ["Kabul"],
+    // THE NINTH REGION OPENS, 2026-08-30 (the ledger round). It was
+    // declared EMPTY below with the sentence "one re-bake of the
+    // coastline unblocks the Pacific half of this row" — the re-bake
+    // happened this round (Honolulu in PLACES, PKEEP keeping Oahu's
+    // ring out of the 1:50m source), and `exotica` (Honolulu 1957) is
+    // the region's first record. Honiara, and Australia's own two
+    // musically-blocked candidates, are still owed — see the reversed
+    // declaration just below, kept as history.
+    "Australia and the Pacific": ["Honolulu"],
   };
-  /* AND THE EMPTY CELL, DECLARED. One region of the nine has no dot at all,
-     and the reason is NOT that the music is unplayable — four Tier-1 anchors
-     for it were written and withdrawn. It is the coastline bake. */
-  const REGIONS_EMPTY = {
-    "Australia and the Pacific":
-      "no dot in this region can be PROVED to stand on land: atlas-land.js " +
-      "bakes Natural Earth's physical land and holds no Pacific islands at " +
-      "all — the nearest baked point to Honolulu is 33.9 degrees away and to " +
-      "Honiara 9.0 — so hapa-haole (Honolulu 1915) and Melanesian string " +
-      "band (Honiara 1975) were written, measured, and held back rather than " +
-      "drawn over open water. Australia's own two candidates are blocked " +
-      "musically instead: manikay has no yidaki id and no bar. One re-bake " +
-      "of the coastline unblocks the Pacific half of this row.",
-  };
+  /* THE EMPTY CELL, DECLARED — AND THEN FILLED (2026-08-30). The
+     declaration below held from the world round until the ledger round
+     re-baked the coastline; it is kept verbatim as the record of WHY the
+     region was empty, with the table above now holding the dot it said a
+     re-bake would unblock. REGIONS_EMPTY is empty and stays exported —
+     the gates iterate it and a region going empty again must land here
+     with a reason, exactly as before.
+     The old declaration, verbatim: "no dot in this region can be PROVED
+     to stand on land: atlas-land.js bakes Natural Earth's physical land
+     and holds no Pacific islands at all — the nearest baked point to
+     Honolulu is 33.9 degrees away and to Honiara 9.0 — so hapa-haole
+     (Honolulu 1915) and Melanesian string band (Honiara 1975) were
+     written, measured, and held back rather than drawn over open water.
+     Australia's own two candidates are blocked musically instead:
+     manikay has no yidaki id and no bar. One re-bake of the coastline
+     unblocks the Pacific half of this row." */
+  const REGIONS_EMPTY = {};
 
   /* ======================================================================
      3 · THE DERIVED YEAR AXIS

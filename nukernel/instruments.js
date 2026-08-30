@@ -257,7 +257,7 @@
     // music box: the parent's own window, RESTORED. It was deliberately absent
     // for one release because a bare per-note fold would have mangled trap's
     // melody — but the register home (audio/plan.js) now moves the WHOLE
-    // line by octaves first, contour intact, so trap's plinks land in the
+    // line by octaves first, contour intact, so trap's plinks land in the [2026-08-30: STALE - trap no longer casts it; the dark-rooms round reseated trap on tubular_bells after Paul heard the tines. The instrument stays for the rows that mean it.]
     // register a music box actually has tines for.
     music_box: [72, 100],
     // voices

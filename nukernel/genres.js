@@ -1677,8 +1677,13 @@
       // inheritance from the borough next door ten years earlier — a nickel
       // off each declared parent, no more. The sound-system culture that
       // taught them to loop is still owed.
-      parents: { isley: 0.35, funk: 0.3, disco: 0.2, electro: 0.15 },
-      wants: ["jamaican sound system"],
+      // "jamaican sound system" PAID 2026-08-30 (Kingston 1950): the
+      // lineage note below always said the culture that taught them to
+      // loop was still owed; `soundsystem` lands and takes a dime off
+      // nobody — the edge is additional, the way a missing ancestor is.
+      parents: { isley: 0.35, funk: 0.3, disco: 0.2, electro: 0.15,
+                 soundsystem: 0.1 },
+      wants: [],
       instr: ["electric_piano", "muted_trumpet"],
       drumkit: "room",
       entry: v => v * 2, reg: v => v - 1,
@@ -1721,9 +1726,25 @@
       // craft (boombap), which keeps the largest single share.
       parents: { boombap: 0.4, crunk: 0.35, miamibass: 0.25 },
       wants: [],
-      instr: ["music_box", "square_lead"],
+      // THE BELL IS A CHURCH BELL, NOT A MUSIC BOX (2026-08-30, Paul: "Trap
+      // sounds melodic with tinkly beats and sweet little tinkly sounds").
+      // Measured on the pressed record before the fix: voice 0 seated
+      // `music_box` — a GM celesta-class tine whose range table row is
+      // [72, 100], so the register home HAD to park the tune above C5
+      // whatever `reg` said, and "sweet little tinkly" is that instrument's
+      // literal job description. The row's own citation is the argument for
+      // what replaces it: Trap Muzik's bell (DJ Toomp — "24's", "Be Easy")
+      // and the sound this row grew into (Lex Luger/808 Mafia c. 2010 —
+      // "Hard in da Paint", "B.M.F.") is ORCHESTRAL menace: a tolling bell,
+      // dark keys, strings — never a lullaby tine. `tubular_bells` [60, 89]
+      // keeps every word of "the bell, up top" and moves it from the
+      // nursery to the church; the crunk parent's own want ("the memphis
+      // horrorcore tapes") is the same bell, Three 6 Mafia's. The reg ramp
+      // (`1 - 2*v`) that lifted voice 0 a further octave goes with it —
+      // the bell tolls at its own pitch, the sub stays down.
+      instr: ["tubular_bells", "square_lead"],
       drumkit: "tr808",            // "the 808 ties" — it does, and now it is one
-      entry: v => v * 2, reg: v => 1 - 2 * v, realize: () => "line",
+      entry: v => v * 2, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
       roots: [0, 0, 5, 5],
       artic: "tie",
       bassStyle: "octaves",
@@ -1732,7 +1753,9 @@
              h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
       kitVel: { h: [7,2,4,2, 6,2,4,2, 7,2,4,2, 6,2,5,3] },
       fill: { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 1,1,1,1] },
-      tone: { wave: "square", cut: 2400, q: 1.8, atk: .003, rel: .5, gain: .28, verb: .3 },
+      // cut 2400 -> 1800 the same day, same measurement: the tone row is the
+      // record's ceiling and a trap record's top end is hats, not melody
+      tone: { wave: "square", cut: 1800, q: 1.8, atk: .003, rel: .5, gain: .28, verb: .3 },
       words: ["the bell, up top", "the sub line, tied"],
       word: v => (v === 0 ? [] : [only("gate", rotate(4)), drop(2)]),
     },
@@ -3176,8 +3199,11 @@
       // 1910) — the added sixth now has an address; the comment above
       // said "neither of those is an anchor yet" and one now is.
       parents: { gospel: 0.45, blues: 0.2, jumpblues: 0.2, tinpanalley: 0.15,
-                 barbershop: 0.15 },
-      wants: ["jubilee quartets"],
+                 barbershop: 0.15,
+                 // "jubilee quartets" PAID 2026-08-30 (Nashville 1909) —
+                 // the trained-quartet line under the street corner.
+                 jubilee: 0.15 },
+      wants: [],
       // ONE GROUP IS ONE SOUND: the lead is a solo voice and the other two are
       // the recorded choir, closed vowel on top for the syllables and the
       // rounder one underneath for the bass, because that is literally what is
@@ -6104,7 +6130,13 @@
       // which the length and the tempo of the real form honestly separate
       label: "Provence 1210", bars: 8,
       plan: "song", bpm: 76,
-      parents: { gregorian: 1 }, wants: ["andalusi song"], near: "gregorian",
+      // "andalusi song" PAID 2026-08-30 (`zajal`, Córdoba 1150): Ibn
+      // Quzman died sixty years before this label, living — the ZIM's
+      // own phrase — "a lifestyle similar to that of troubadours", and
+      // whether the strophe-and-refrain crossed the Pyrenees is the
+      // oldest open question in the field; the edge states the kinship
+      // at a weight that does not rule on the direction.
+      parents: { gregorian: 0.8, zajal: 0.2 }, wants: [], near: "gregorian",
       instr: ["solo_vox", "nylon_string_guitar"],
       // the lute is a BORDUN, not a second line: medieval accompaniment
       // holds the mode under the song (the fiddle's drone string, the open
@@ -10454,8 +10486,11 @@
       // the point: Caldas Barbosa's salon songs and danced lundus are the
       // city's own documented song culture two generations before the
       // fado houses, and every history of the form routes through both.
-      parents: { modinha: 0.35, lundu: 0.15 },
-      wants: ["moorish andalusi song"],
+      // "moorish andalusi song" PAID 2026-08-30 (`zajal`, Córdoba 1150)
+      // — the twelfth-century music of al-Andalus itself, which the nuba
+      // row's comment always said its Maghribi codification was not.
+      parents: { modinha: 0.35, lundu: 0.15, zajal: 0.1 },
+      wants: [],
       cannot: ["fado corrido's cousins in three — the Coimbra repertory and " +
                "the older fados are in a metre this file's sixteen-place " +
                "cells cannot write"],
@@ -11778,8 +11813,12 @@
       // earlier era — the takht behind Umm Kulthum on the radio's first
       // night — so the takht debt is paid by the era that WAS the takht,
       // and taqsim's weight flows partly through it.
-      parents: { tarab: 0.4, taqsim: 0.3, romantic: 0.3 },
-      wants: ["muwashshah", "the egyptian film musical"],
+      // "muwashshah" PAID 2026-08-30 (Cairo 1200, Dar at-Tiraz — the
+      // dated source the old decline said did not exist): Umm Kulthum's
+      // repertory and the firqa's own concert form both keep the
+      // strophic inheritance, and the edge finally says so.
+      parents: { tarab: 0.4, taqsim: 0.3, romantic: 0.3, muwashshah: 0.1 },
+      wants: ["the egyptian film musical"],
       cannot: ["heterophony — the violins play the singer's OWN line, " +
                "slightly differently, at the same time; this table has " +
                "`line` chairs that get their own operator word and `pad` " +
@@ -11859,8 +11898,13 @@
       // "muwashshah" stays on the books: the strophic form's identity is
       // its aksak metres and no named dated source predates its
       // dependents (the genealogy round's declined list).
-      parents: { ziryab: 0.5 },
-      wants: ["muwashshah", "the algerian sanaa"],
+      // "muwashshah" PAID 2026-08-30 (Cairo 1200) — the comment below
+      // said it stayed on the books because "no named dated source
+      // predates its dependents"; Dar at-Tiraz predates this row by six
+      // centuries and the sentence is defeated, not argued around. The
+      // nuba's own repertory IS muwashshah texts by the hundred.
+      parents: { ziryab: 0.5, muwashshah: 0.2 },
+      wants: ["the algerian sanaa"],
       cannot: ["the five mayazin — a nuba runs basit, qaim wa nisf, btayhi, " +
                "darj, insiraf and quddam, in 6/4, 8/4, 4/4, 5/8 and 6/8, " +
                "each accelerating to a khalas; an anchor cannot declare a " +
@@ -13733,9 +13777,23 @@
       wants: ["the eskibeat instrumentals", "uk garage's dark side"],
       instr: ["square_lead", "saw_wave"],
       drumkit: "electronic",
-      entry: v => v, reg: v => (v === 0 ? 1 : -1), realize: () => "line",
+      // TWO REVERSALS, ONE MEASUREMENT (2026-08-30, Paul: "Grime also seems
+      // way off"). Composed at seeds 1-3 and read off the document: (1) the
+      // lead SEATED at reg 2 — this row's `1` plus the `lead` part's own
+      // octave (the same PARTS.lead lift house's comment documents) — two
+      // octaves over the bass, where a square wave reads twinkly rather
+      // than cheap; Wiley's eski square ("Eskimo", "Igloo") sits an octave
+      // over the sub, not two, so the row now says 0 and lets the part say
+      // the rest. (2) the alphabet said `majpent` — the MAJOR pentatonic,
+      // major third and sixth on a record whose own comment says "the
+      // melody deliberately cheap" off Boy in da Corner, the darkest chart
+      // record of its year. The scale key is deleted, not swapped: the
+      // kernel's default subject alphabet IS the minor pentatonic, and
+      // grime's alphabet is the default one — dark, five notes, no third
+      // to sweeten.
+      entry: v => v, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
       part: ["lead", "riff"],
-      harmony: "modal", mode: MODES.aeolian, scale: SCALES.majpent,
+      harmony: "modal", mode: MODES.aeolian,
       artic: "staccato", maxHold: 2, bassStyle: "pedal",
       kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,1, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
@@ -14826,8 +14884,13 @@
       // edge needs the ancestor measurably earlier, maringa's law.)
       // The horror-film organ trade the name came from is real and
       // unanchored; named below.
-      parents: { blues: 0.4, hendrix: 0.25 },
-      wants: ["the hammer horror scores the band was named after"],
+      // "the hammer horror scores" PAID 2026-08-30 (Bray 1958): the
+      // ledger round landed `hammerhorror` — James Bernard's Dracula,
+      // the exact score the debts round called "arguable and REMAINS
+      // THE NEXT ASK" — and the band named after a horror bill takes
+      // the edge to the scores that filled the bill.
+      parents: { blues: 0.4, hendrix: 0.25, hammerhorror: 0.15 },
+      wants: [],
       instr: ["distortion_guitar", "overdrive_guitar"],
       drumkit: "power",
       entry: v => (v === 0 ? 0 : 1), reg: () => 0,
@@ -14864,8 +14927,11 @@
       // outstanding want, now shared (dub itself is Kingston 1973,
       // the SAME year — an edge needs the ancestor measurably
       // earlier, maringa's law, so the want stays a want).
-      parents: { funk: 0.45, winstons: 0.25 },
-      wants: ["jamaican sound system"],
+      // "jamaican sound system" PAID 2026-08-30 (Kingston 1950): Kool
+      // Herc grew up on exactly this practice and carried it to Sedgwick
+      // Avenue — the largest missing edge this row had.
+      parents: { funk: 0.45, winstons: 0.25, soundsystem: 0.2 },
+      wants: [],
       cannot: ["the two copies of the same record — the merry-go-round " +
                "is a PLAYBACK art, two turntables holding one bar open " +
                "for as long as the floor wants it, and this box plays " +
@@ -14955,8 +15021,11 @@
       // record at 43.36 against G12d's ceiling of 43 — measured, not
       // guessed — and the counter-line was the one the MC-8 could
       // spare. The sevenths live in the keys chair that remains.)
-      parents: { kraftwerk: 0.4, disco: 0.25 },
-      wants: ["exotica (martin denny's quiet village)"],
+      // "exotica (martin denny's quiet village)" PAID 2026-08-30
+      // (Honolulu 1957, the coastline re-bake that let the dot stand
+      // on Oahu): Firecracker is a Denny cover and the edge says so.
+      parents: { kraftwerk: 0.4, disco: 0.25, exotica: 0.15 },
+      wants: [],
       instr: ["square_lead", "electric_piano"],
       drumkit: "tr808",
       entry: v => (v === 0 ? 0 : 2),
@@ -16394,8 +16463,11 @@
       // junior (the WHEN law), so the want narrows to the artifact
       // still missing: the lăutari 78s Django's family would actually
       // have heard.
-      parents: { neworleans: 0.4, musette: 0.25 },
-      wants: ["the lautari 78s before the Quintette (Bucharest, 1900s)"],
+      // "the lautari 78s" PAID 2026-08-30 (`lautari`, Bucharest 1906):
+      // Django's people came through exactly this guild's repertory,
+      // and the Quintette's violin chair is its direct line.
+      parents: { neworleans: 0.4, musette: 0.25, lautari: 0.15 },
+      wants: [],
       instr: ["jazz_guitar", "violin", "jazz_guitar"],
       swing: 0.3,
       entry: v => (v === 2 ? 0 : v), reg: v => (v === 1 ? 1 : 0),
@@ -16432,7 +16504,15 @@
       // name, the spelling matched with descarga's so the ledger
       // counts one debt.
       parents: { jazz: 0.4, son: 0.3 },
-      wants: ["the afro-cuban rumba"],
+      // "the afro-cuban rumba" EXAMINED 2026-08-30 (the ledger round):
+      // `rumba` ships at last — but as Matanzas 1956, nine years this
+      // label's JUNIOR, and an edge cannot point at a record younger
+      // than its child (the maringa rule). The ZIM says the genre's
+      // "recorded history... began in the 1940s" and names no side
+      // before the Muñequitos' LP, so the want stays on the books,
+      // narrowed to the artifact still missing: the unnamed 1940s
+      // rumba sides — Chano Pozo's own drum — that the boppers heard.
+      wants: ["the 1940s rumba sides (chano pozo's drum)"],
       instr: ["trumpet", "brass_section", "tenor_sax"],
       drumkit: "acoustic",
       entry: v => v, reg: v => (v === 1 ? -1 : v === 2 ? 0 : 1),
@@ -16472,8 +16552,12 @@
       // Cachao's first trade (he and Orestes wrote thousands), and
       // the two missing are owed by name, rumba's spelling matched
       // with latinjazz's.
-      parents: { son: 0.35, mambo: 0.25, danzon: 0.15 },
-      wants: ["the afro-cuban rumba", "filin"],
+      // "the afro-cuban rumba" PAID 2026-08-30 (`rumba`, Matanzas 1956,
+      // one year this row's senior — the Muñequitos' first LP): the
+      // hand-drum conversation a descarga is trying to have with a
+      // rhythm section.
+      parents: { son: 0.35, mambo: 0.25, danzon: 0.15, rumba: 0.15 },
+      wants: ["filin"],
       instr: ["upright_piano", "trumpet", "tenor_sax"],
       drumkit: "acoustic",
       entry: v => v, reg: v => (v === 0 ? 0 : v === 1 ? 1 : 0),
@@ -16790,6 +16874,10 @@
     //     Autechre, no Warp lane for BoC to sit beside. Filing it
     //     under a downtempo ask would misname it; IDM is a named
     //     next ask instead.
+    //     [THE ASK IS PAID 2026-08-30, the ledger round: `idm`
+    //     (Sheffield 1992, Artificial Intelligence) is at the foot of
+    //     this file, and BoC's record is now that row's own named
+    //     want — the shelf exists for it to sit beside.]
     //   · zero7, bonobo, groovearmada, unkle — thin, each for its own
     //     reason: Simple Things (2001) is Moon Safari's London echo
     //     and would restate `air`; Bonobo is the djshadow/Ninja Tune
@@ -17362,6 +17450,10 @@
          Dracula (Bray 1958) is arguable and REMAINS THE NEXT ASK; this
          round's horror seat went to carpenter, who pays two standing
          wants where Bernard pays one.
+         [ASKED AND PAID 2026-08-30, the ledger round: carpenter's own
+         row arrived wanting Bernard BY NAME, which made the debt ×2,
+         and `hammerhorror` (Bray 1958) is at the foot of this file.
+         Both edges dated at their rows.]
        · "FOLK" ITSELF, "world music", "stock music of all kinds", "Roma
          music" — umbrellas; the darkwave/batcave rulings. Every row
          below is one tradition, one place, one dated artifact.
@@ -17370,6 +17462,13 @@
          this shift could not pin the named performer to the named reel
          with confidence, and WORLD.md §4's primary-fact rule says a row
          that cannot name its record is not written. NEXT ASK.
+         [RE-EXAMINED 2026-08-30, the ledger round, and the pin still
+         cannot be made: this ZIM has NO Arthur Alberts article at all
+         (404 at every spelling tried), its Griot article names no
+         recording, and the elder Sidiki Diabaté of the Ancient Strings
+         session resolves to his kora-playing grandson's page. The
+         refusal stands ON THE ZIM's silence, which is the only kind of
+         evidence the offline law admits. STILL THE NEXT ASK.]
        · A SECOND LIBRARY-BEDS ROW (DeWolfe/Bruton) — newsfanfare IS the
          London library bed at its own peak year; a second row one shelf
          over would be the massiveattack/triphop problem without the
@@ -17488,11 +17587,18 @@
       instrumental: true,   // Brandwein's sides are dance sets — the badkhn's verses are not on them
       label: "New York 1923", voices: 3, bars: 8, near: "balkanbrass",
       plan: "song", bpm: 116,
-      // LINEAGE: declared roots only — the cantorial nusach the clarinet
-      // imitates and the Moldavian lautari repertory the klezmorim shared
-      // have no anchor, and both are owed by name below.
-      parents: {},
-      wants: ["the cantorial nusach", "the moldavian lautari repertory"],
+      // LINEAGE: "the cantorial nusach" PAID 2026-08-30 (`chazzanut`,
+      // New York 1912 — Rosenblatt at Ohab Zedek, eleven years and
+      // eighty blocks from Brandwein's sides): the prayer modes the
+      // clarinet imitates now have an address, and the chazzanut row's
+      // own alphabet is the freygish this band plays. The Moldavian
+      // lautari repertory stays owed — `lautari` (Bucharest 1906) is
+      // the Wallachian guild, and paying a Moldavian debt with a
+      // Bucharest record would be the two-spellings conscription the
+      // want was written to prevent; the lautari row now carries the
+      // same want, so the ledger counts one debt owed by two rows.
+      parents: { chazzanut: 0.3 },
+      wants: ["the moldavian lautari repertory"],
       cannot: ["the krekhts — the sobbing catch between notes, a glottal " +
                "break the clarinet copies from the cantor's throat; the " +
                "grace table can lean INTO a note but cannot crack it open"],
@@ -17628,9 +17734,11 @@
     taraf: {
       label: "Clejani 1986", voices: 3, bars: 8, near: "balkanbrass",
       plan: "song", bpm: 138,
-      parents: {},
-      wants: ["the lautari 78s before the Quintette (Bucharest, 1900s)",
-              "the doina"],
+      // BOTH WANTS PAID 2026-08-30: `lautari` (Bucharest 1906) is the
+      // guild this village band is the country cousin of, and `doina`
+      // (Maramureș 1912) the unmetred line its slow sets open with.
+      parents: { lautari: 0.35, doina: 0.2 },
+      wants: [],
       instr: ["violin", "dulcimer", "contrabass"],
       swing: 0.1,
       entry: () => 0, reg: v => [1, 0, -1][v], realize: () => "line",
@@ -17657,8 +17765,11 @@
     flamenco: {
       label: "Granada 1922", voices: 2, bars: 8, near: "fado",
       plan: "arc", bpm: 96,
-      parents: {},
-      wants: ["moorish andalusi song", "the gitano juerga before the cafes"],
+      // "moorish andalusi song" PAID 2026-08-30 (`zajal`, Córdoba 1150):
+      // the vernacular strophic song of al-Andalus, wanted since this
+      // row was a root with no parent at all; the juerga stays owed.
+      parents: { zajal: 0.2 },
+      wants: ["the gitano juerga before the cafes"],
       cannot: ["the compas — bulerias counts twelve with accents on 3, 6, " +
                "8, 10 and 12, and a twelve-count with internal accents is " +
                "not sayable on sixteen places (the triple-meter wall, at " +
@@ -17887,8 +17998,13 @@
     barbershop: {
       label: "New York 1910", voices: 4, bars: 8, near: "doowop",
       plan: "song", bpm: 88,
-      parents: { parlor: 0.3, spirituals: 0.3 },
-      wants: ["jubilee quartets", "the pitch pipe and the woodshed"],
+      // "jubilee quartets" PAID 2026-08-30 (Nashville 1909) — one year
+      // this row's senior, so the edge points backward as the maringa
+      // rule requires; Abbott 1992's half of the story (the practice is
+      // African-American recreational singing first) now has an anchor
+      // to stand on instead of only the spirituals edge.
+      parents: { parlor: 0.3, spirituals: 0.3, jubilee: 0.2 },
+      wants: ["the pitch pipe and the woodshed"],
       instr: ["solo_vox", "ahh_choir", "ahh_choir", "ahh_choir"],
       entry: () => 0, reg: v => [0, 1, -1, -2][v], realize: () => "line",
       kit: {}, nobass: true, harmony: "cycle",
@@ -18102,8 +18218,14 @@
       instrumental: true,   // the scream is on the picture, not the score
       label: "Los Angeles 1978", voices: 3, bars: 8, near: "berlinschool",
       plan: "arc", bpm: 136,
-      parents: { berlinschool: 0.35, herrmann: 0.25, krautrock: 0.15 },
-      wants: ["the hammer horror scores (james bernard's dracula)"],
+      // "the hammer horror scores (james bernard's dracula)" PAID
+      // 2026-08-30 (Bray 1958) — the want named the record and the
+      // ledger round landed it; the edge is smaller than herrmann's
+      // because Carpenter's economy is Herrmann's and only the dread
+      // is Bernard's.
+      parents: { berlinschool: 0.35, herrmann: 0.25, krautrock: 0.15,
+                 hammerhorror: 0.1 },
+      wants: [],
       cannot: ["the 5/4 — the Halloween ostinato counts ten quavers to " +
                "the bar and this box counts sixteen; the figure below is " +
                "the tattoo squared off, and the difference is audible to " +
@@ -18417,8 +18539,11 @@
       // years and one recording commission earlier — the Congress sides
       // are the takht tradition's own reference documents; `mawsili`
       // (Baghdad 800) is the court line both name.
-      parents: { taqsim: 0.5, mawsili: 0.15 },
-      wants: ["muwashshah", "the qasida recital"],
+      // "muwashshah" PAID 2026-08-30 (Cairo 1200): the wasla a tarab
+      // evening opens with IS a muwashshah set, and the edge lands in
+      // the same city the treatise was written in, 734 years apart.
+      parents: { taqsim: 0.5, mawsili: 0.15, muwashshah: 0.15 },
+      wants: ["the qasida recital"],
       cannot: ["heterophony — the takht plays the singer's OWN line, " +
                "slightly differently, at the same time; `line` chairs get " +
                "their own operator word and `pad` chairs voice chords, " +
@@ -18815,6 +18940,537 @@
                     : v === 1 ? [drop(10)]
                     : [drop(8), transpose(12)]),
     },
+
+    /* =====================================================================
+       THE LEDGER ROUND, 2026-08-30 ("Fill in missing genres that are
+       wanted") — eleven rows, every one the payment of a debt the wants
+       census could name. The >=2 table had fourteen strings; the rows
+       below pay eight of them (muwashshah ×3, moorish andalusi song ×2
+       via zajal, jamaican sound system ×2, jubilee quartets ×2, the
+       afro-cuban rumba ×2, the lautari 78s ×2, hammer horror ×2 counting
+       carpenter's, vaudeville stays closed) plus four singles with a
+       named collection or performer the ZIM can date (exotica, doina,
+       the cantorial nusach, IDM — the boardsofcanada refusal's own
+       "named next ask").
+
+       EXAMINED AND CLOSED THE SAME DAY, dated here so the next round
+       does not re-litigate:
+       · RARE GROOVE (triphop, acidjazz — Norman Jay's shelf). The ZIM's
+         own lead: "music that is very hard to source or relatively
+         obscure... vinyl records that fall into this category generally
+         have high re-sale prices" — a record-COLLECTING category, not a
+         music. And the scene-row argument fails the batcave test on the
+         chillout precedent's exact wording: Young Limbs was the
+         Batcave's OWN bands cutting the room's sound, where the rare
+         groove shelf compiles other decades' finished funk 45s, each of
+         which pays its debt at `funk`'s own row. The scene's first OWN
+         record is Acid Jazz AJ001 — and `acidjazz` already anchors it;
+         the ZIM files acid jazz's origin "in London's rare-groove club
+         scene", so the scene is not unhonoured, it is a parent's
+         comment rather than a row. CLOSED.
+       · VAUDEVILLE (tinpanalley, photoplay) — refused by the debts
+         round as "a stage FORMAT, not a music", RE-CLOSED on the ZIM's
+         own first clause: "Vaudeville... is a theatrical genre of
+         variety entertainment." The songs on the bill are tinpanalley's
+         row; the pit that played them is photoplay's cousin and stays
+         inside photoplay's comment. The reason was examined to be
+         defeated and held instead.
+       · LATIN PERCUSSION (disco, bodiddley) — declined twice already
+         ("an instrumentation, not a genre") and the reason is unbeaten
+         a third time: the thing wanted is `son`'s clave and `mambo`'s
+         section, both anchored; a row named after an instrument case
+         would be an umbrella.
+       · THE QIYAN SINGING SCHOOLS (ziryab, mawsili — the round's
+         hardest refusal, because the music is real and the dependents
+         are the catalog's two oldest Arab rows). The dufay standard
+         requires a named school or performer at a datable place-year
+         BEFORE 800 (both dependents' dots), and the ZIM cannot say one:
+         its Qiyan article names the institution, its treatises (al-
+         Jahiz) and its cities (Basra, Ta'if, Medina) but no dated
+         school, and "Jamila" — the Medina teacher every history names —
+         is a disambiguation page in this ZIM with no singer on it.
+         CLOSED until a ZIM lands her article. Both wants stay on the
+         books, the ledger's own device.
+       · THE BORDER BALLADS THEMSELVES (ballad, appalachia) — a TRUE
+         ROOT, closed directionally: every datable source (Scott's
+         Minstrelsy 1802, Child 1882) is younger than `ballad`'s own
+         London 1666 broadside dot, and an edge cannot point at a record
+         younger than its child (the maringa rule). The performances
+         themselves are undatable; the want is the honest declaration of
+         a root and stays declared.
+       · THE SCOTS-IRISH FIDDLE AT THE CROSSING (appalachia, oldtime) —
+         the crossing is a MIGRATION, not a music; the dated tradition
+         behind it would be Niel Gow's Dunkeld publications and this
+         shift could not pin a dated collection in the ZIM's Niel Gow
+         article (no year on any collection sentence). NEXT ASK with
+         Gow's 1784 Collection named, if a ZIM can date it.
+       · MARINGA (palmwine, congorumba) — the rule that carries its name
+         rules it: Ebenezer Calendar's Maringa Band sides are Freetown
+         1950s, contemporary with `palmwine`'s own label (the ZIM's
+         Calendar article is dateless on records; its Maringa article
+         redirects to Music of Sierra Leone). A record cannot parent its
+         own contemporary, and the Kru transmission congorumba heard is
+         undated. STAYS CLOSED, reasons unbeaten.
+       · TASNIF (iranpop, dastgah) — the record that would pay it is
+         Qamar's own HMV box, and that box already anchors `dastgah`
+         (Tehran 1925); a record pays one debt. The ZIM's Tasnif article
+         names the form and its masters (Aref, Neydavoud, Morq-e sahar)
+         but no dated side; the want narrows to the pre-Qamar Gramophone
+         Company Tehran sessions, NEXT ASK when a ZIM can name one.
+       · KULNING and THE HARDINGFELE SLATTER (nordicfolk ×2 singles) —
+         the ZIM's Kulning article dates nothing ("developed centuries
+         ago"), and its Hardanger fiddle article holds no dated
+         collection — Grieg's op. 72 does not appear even in the ZIM's
+         own Grieg article. Both stay owed; the dufay standard holds.
+       ================================================================== */
+
+    // HAMMER HORROR — Bray 1958. James Bernard's score for DRACULA
+    // (Hammer Film Productions, shot at Bray Studios, released May
+    // 1958): the three-note DRA-CU-LA motif stabbed by massed brass
+    // over racing strings, the sound every British horror picture
+    // borrowed for twenty years. TWO ROWS want it by name — `sabbath`
+    // ("the hammer horror scores the band was named after": Black
+    // Sabbath took their name from a horror bill) and `carpenter`
+    // ("james bernard's dracula" verbatim) — and the debts round's own
+    // ledger called it "arguable and REMAINS THE NEXT ASK". Asked, paid.
+    // NOT parented on `herrmann`: Los Angeles 1960 is two years this
+    // row's junior and an edge cannot point at a record younger than
+    // its child (the maringa rule). The lineage is the late-romantic
+    // orchestra (Bernard was Britten's copyist) and the picture-house
+    // cue craft photoplay anchored.
+    hammerhorror: {
+      instrumental: true,
+      label: "Bray 1958", voices: 3, bars: 8, near: "herrmann",
+      plan: "arc", bpm: 76,
+      parents: { romantic: 0.4, photoplay: 0.2 },
+      wants: ["the theremin pictures (rózsa's spellbound)"],
+      cannot: ["the picture — a stinger is timed to a cut and this box " +
+               "has no film to hit; what ships is the idiom at concert " +
+               "length"],
+      instr: ["strings", "brass_section", "tubular_bells"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => [0, 0, 1][v],
+      realize: v => (v === 0 ? "line" : v === 1 ? "line" : "pad"),
+      part: ["lead", "riff", "pad"],
+      kit: { l: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0] },
+      harmony: "modal", mode: MODES.phrygian, scale: SCALES.bluesx,
+      artic: "staccato", maxHold: 3, bassStyle: "pedal",
+      tone: { wave: "sawtooth", cut: 1900, q: 1.2, atk: .01, rel: .9, gain: .26, verb: .45 },
+      words: ["the strings, racing", "the brass, three syllables of a name",
+              "the bell, tolling over the crypt"],
+      word: (v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [transpose(-1)]][s % 4]
+                    : v === 1 ? [keep(0, 2, 4), transpose(-2)]
+                    : [keep(0), drop(8)]),
+    },
+
+    // IDM — Sheffield 1992. ARTIFICIAL INTELLIGENCE (Warp): the ZIM's
+    // own genealogy — Warp "founded in Sheffield in 1989", and in 1992
+    // "it released Artificial Intelligence, a compilation of tracks by
+    // various artists that helped establish intelligent dance music, a
+    // genre of electronic music intended for home listening rather
+    // than dancing". This is the row the boardsofcanada refusal NAMED
+    // ("this catalog holds NO IDM at all... IDM is a named next ask")
+    // — the cluster, found and paid at its own first artifact. The
+    // Warp/Sheffield dot was checked against the Britain arc the way
+    // the sisters precedent demands, at the gate rather than by eye.
+    idm: {
+      label: "Sheffield 1992", voices: 3, bars: 8, near: "techno",
+      plan: "dance", bpm: 110,
+      // LINEAGE: bleeptechno (Manchester 1989) is Warp's own first
+      // catalog — LFO and Sweet Exorcist are named in the label's
+      // article — techno the Detroit listening strain the sleeve notes
+      // courted, ambient the home the records were headed to.
+      parents: { bleeptechno: 0.35, techno: 0.25, ambient: 0.2 },
+      wants: ["boards of canada (music has the right to children)"],
+      instr: ["polysynth", "saw_wave", "warm_pad"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => [0, -1, 0][v],
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "riff", "pad"],
+      roots: [0, 0, 3, 5],
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,1, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,1, 0,1,1,0, 1,1,0,1, 0,1,1,0] },
+      kitVel: { h: [5,0,3,6, 0,4,6,0, 5,6,0,3, 0,6,4,0] },
+      artic: "staccato", maxHold: 3, bassStyle: "eighths",
+      fx: ["echo"],
+      tone: { wave: "triangle", cut: 2400, q: 1.1, atk: .005, rel: .7, gain: .26, verb: .35 },
+      words: ["the melody, sincere over a broken grid",
+              "the bass, moving more than the floor needs",
+              "the pad, the armchair the sleeve promised"],
+      word: (v, s) => (v === 0 ? [[], [rotate(3)], [split(2)], [rotate(5), fill(2)]][s % 4]
+                    : v === 1 ? [only("gate", rotate(2)), drop(2)]
+                    : [drop(10)]),
+    },
+
+    // EXOTICA — Honolulu 1957. Martin Denny's EXOTICA (Liberty,
+    // recorded December 1956, released 1957 — the ZIM dates both), cut
+    // by the combo Denny formed in 1955 "performing under contract at
+    // the Shell Bar in the Hawaiian Village on Oahu": Les Baxter's
+    // "Quiet Village" rescored for vibes, piano and birdcalls, the
+    // record the whole genre was then NAMED after by Liberty's own
+    // chairman. Pays `ymo`'s want by name ("exotica (martin denny's
+    // quiet village)" — the record they covered to make Firecracker).
+    // THE DOT IS THE POINT: this is the catalog's first Pacific place.
+    // The wall was never musical — atlas.js held Honolulu back because
+    // the coastline bake had no Pacific islands — and the same day this
+    // row landed, the bake was re-run with Honolulu in PLACES, whose
+    // PKEEP rule keeps Oahu's ring. "One re-bake of the coastline
+    // unblocks the Pacific half of this row," the empty-region note
+    // said. Re-baked, unblocked, paid.
+    exotica: {
+      instrumental: true,   // the voices are frogs and macaws, not words
+      label: "Honolulu 1957", voices: 3, bars: 8, near: "latinjazz",
+      plan: "song", bpm: 92,
+      // LINEAGE: mambo for the Afro-Cuban percussion vocabulary the
+      // arrangements borrow, romantic for the Hollywood scoring craft
+      // Denny trained in (Los Angeles Conservatory, per the ZIM).
+      parents: { mambo: 0.3, romantic: 0.2 },
+      wants: ["les baxter's ritual of the savage (1951)",
+              "hapa-haole (honolulu 1915)"],
+      cannot: ["the birdcalls — Augie Colon's frogs and macaws are the " +
+               "record's signature and its actual hook, and no registry " +
+               "voice says them; the room plays the notes and owes the " +
+               "jungle"],
+      instr: ["vibraphone", "yamaha_grand_piano", "warm_pad"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => [1, 0, 0][v],
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             p: [0,0,1,0, 1,0,0,1, 0,0,1,0, 1,0,0,1],
+             h: [0,1,0,1, 0,1,0,1, 0,1,0,1, 0,1,0,1] },
+      swing: 0.1, harmony: "cycle", roots: [0, 3, 4, 0],
+      mode: MODES.ionian, scale: SCALES.majpent, diatonic: true,
+      prog: [{ d: 0, q: "maj7" }, { d: 3, q: "maj7" }, { d: 4, q: "7" }, { d: 0, q: "maj7" }],
+      artic: "legato", maxHold: 3, bassStyle: "pedal",
+      tone: { wave: "triangle", cut: 2300, q: 0.9, atk: .008, rel: 1.2, gain: .25, verb: .5 },
+      words: ["the vibes, the quiet village at dusk",
+              "the piano, answering across the lagoon",
+              "the pad, the tropical ersatz itself"],
+      word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(2)], [spread(2)]][s % 4]
+                    : v === 1 ? [rotate(8), drop(2)]
+                    : [drop(10)]),
+    },
+
+    // MUWASHSHAH — Cairo 1200. Ibn Sanā' al-Mulk's DĀR AṬ-ṬIRĀZ, "the
+    // most complete contemporary description of the genre" (the ZIM's
+    // own words): an anthology of 34 Andalusi and Maghribi muwaššaḥāt
+    // with the theory of the form, by "the first person in the Mashriq
+    // to compose muwaššaḥāt". The genealogy round declined this row
+    // because "no named dated source predates its dependents" — and
+    // that sentence is DEFEATED by this book, not argued around: the
+    // treatise is dated six centuries before `nuba` (Tetouan 1790),
+    // seven before `tarab` and `firqa`, and it is the same species of
+    // source as the Kitab al-Aghani that anchors `mawsili`. Three rows
+    // wanted this by name — the census's only ×3 — and all three take
+    // the edge today. The OTHER half of the old decline (the aksak
+    // metres) was true and stays true: it lives in the cannot now,
+    // where a wall belongs once the room is built.
+    muwashshah: {
+      label: "Cairo 1200", voices: 3, bars: 8, near: "nuba",
+      plan: "arc", bpm: 88,
+      // LINEAGE: the form is al-Andalus's own invention (the ZIM: "the
+      // major Andalusi innovation in Arabic poetry... sung and
+      // performed musically"), so the edge points at the Cordoban
+      // school that raised the musicians who sang it.
+      parents: { ziryab: 0.4 },
+      wants: ["the aleppo wasla", "the cairo congress recordings (1932)"],
+      cannot: ["the aksak metres — the old decline's own reason, kept: a " +
+               "sung muwashshah counts in 10/8 and 16/8 cycles and this " +
+               "grid says sixteen even places; what ships is the strophe " +
+               "in common time, said plainly",
+               "the kharja's language switch — the final verses jump to " +
+               "vernacular or Romance and a register change is not a " +
+               "language change"],
+      instr: ["solo_vox", "nylon_string_guitar", "fiddle"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => [0, -1, 0][v],
+      realize: () => "line",
+      part: ["lead", "riff", "counter"],
+      kit: { h: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0] },
+      harmony: "modal", mode: MODES.hijaz,
+      artic: "legato", maxHold: 3, bassStyle: "pedal",
+      orn: { grace: 0.35, pass: 0.15 },
+      tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .012, rel: .8, gain: .26, verb: .35,
+              mouth: MOUTHS.melisma },
+      words: ["the strophe, girdled — five aghsan and the turn",
+              "the oud's cognate, doubling under",
+              "the answering line, the qafl coming back"],
+      word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)], [fill(2)]][s % 4]
+                    : v === 1 ? [transpose(-4), drop(2)]
+                    : [rotate(8), drop(4)]),
+    },
+
+    // ZAJAL — Córdoba 1150. The dīwān of Ibn Quzman (1087-1160), "the
+    // single most famous poet in the history of Al-Andalus" — the ZIM's
+    // words, and its Zajal article opens with him: "the earliest
+    // recorded zajal poet was Ibn Quzman of al-Andalus". Strophic song
+    // entirely in the vernacular, sung in the street where the
+    // muwashshah was sung in the salon, by a poet who lived (the ZIM
+    // again) "a lifestyle similar to that of troubadours". THIS is the
+    // twelfth-century music of al-Andalus that `fado` and `flamenco`
+    // want as "moorish andalusi song" and `troubadour` as "andalusi
+    // song" — three wants, one form, and the nuba row's own comment
+    // always said `nuba` (its eighteenth-century Maghribi codification)
+    // was NOT it. The dot is the city he was born and died in.
+    zajal: {
+      label: "Córdoba 1150", voices: 2, bars: 8, near: "troubadour",
+      plan: "song", bpm: 100,
+      parents: { ziryab: 0.45 },
+      wants: ["the kharja corpus in romance"],
+      cannot: ["the crowd — a zajal is call and refrain with the street " +
+               "answering, and two chairs are not a street"],
+      instr: ["solo_vox", "nylon_string_guitar"],
+      drumkit: "acoustic",
+      entry: v => v, reg: () => 0,
+      realize: () => "line",
+      part: ["lead", "riff"],
+      kit: { h: [1,0,1,0, 0,1,0,0, 1,0,1,0, 0,1,0,0],
+             k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0] },
+      harmony: "modal", mode: MODES.dorian,
+      artic: "staccato", maxHold: 2, bassStyle: "pedal",
+      tone: { wave: "triangle", cut: 2400, q: 1.0, atk: .01, rel: .5, gain: .27, verb: .3,
+              // WHO SINGS: the trobar throat, and the shared mouth IS the
+              // scholarly question — whether the troubadours learned the
+              // strophe-and-refrain from exactly this music is the oldest
+              // open argument in the field, and the cast states the kinship
+              // without ruling on the direction.
+              mouth: MOUTHS.trobar },
+      words: ["the zajal, vernacular and licentious, verse then refrain",
+              "the strings, the wheel the refrain turns on"],
+      word: (v, s) => (v === 0 ? [[], [rotate(4)], [transpose(-2)], [rotate(2), fill(2)]][s % 4]
+                    : [keep(0, 4, 8, 12), drop(2)]),
+    },
+
+    // THE SOUND SYSTEM — Kingston 1950. Tom the Great Sebastian, "the
+    // all-time giant of sound systems" (the ZIM's own quote), started
+    // by Tom Wong in 1950: American rhythm and blues on exclusive
+    // shellac, played to downtown Kingston over speaker stacks built
+    // for bass, Count Matchuki talking over the intros as the first
+    // deejay. TWO rows want "jamaican sound system" by name — boombap,
+    // whose comment has carried "the sound-system culture that taught
+    // them to loop is still owed" since its lineage was written, and
+    // blockparty, whose own Kool Herc brought exactly this practice to
+    // the Bronx. The `blockparty` precedent is the whole argument that
+    // a playback culture can anchor: the music IS the records plus the
+    // system — the bass stack, the exclusive, the voice over the top.
+    soundsystem: {
+      label: "Kingston 1950", voices: 2, bars: 8, near: "jumpblues",
+      plan: "dance", bpm: 92,
+      // LINEAGE: the records on the decks were jump blues and R&B
+      // exclusives — retitled, label scratched off, so no rival could
+      // buy the tune out from under you.
+      parents: { jumpblues: 0.5 },
+      wants: ["mento (the yard the system played in)",
+              "the exclusive acetate era (coxsone and reid, 1957)"],
+      cannot: ["the exclusive itself — the identity of a sound was WHICH " +
+               "record it alone owned, and a catalog whose every record " +
+               "is public cannot keep a secret"],
+      instr: ["tenor_sax", "solo_vox"],
+      drumkit: "room",
+      entry: v => v * 2, reg: v => (v === 0 ? 0 : 1),
+      realize: () => "line",
+      part: ["lead", "counter"],
+      swing: 0.2,
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { s: [0,0,0,0, 8,0,0,0, 0,0,0,0, 8,0,0,0] },
+      harmony: "cycle", roots: [0, 0, 3, 4],
+      mode: MODES.mixo, scale: SCALES.blues, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 0, q: "7" }, { d: 3, q: "7" }, { d: 4, q: "7" }],
+      artic: "staccato", maxHold: 2, bassStyle: "pedal",
+      tone: { wave: "square", cut: 1700, q: 1.2, atk: .006, rel: .4, gain: .28, verb: .3 },
+      words: ["the record on the deck — a honking Memphis tenor",
+              "Count Matchuki, talking the tune in"],
+      word: (v, s) => (v === 0 ? [[], [rotate(4)], [excerpt(0, 8)], [rotate(2)]][s % 4]
+                    : [keep(0, 3, 6), drop(3)]),
+    },
+
+    // THE JUBILEE QUARTET — Nashville 1909. The Fisk Jubilee Singers'
+    // quartet recording of "Swing Low, Sweet Chariot" (Victor, 1909) —
+    // the record the Library of Congress added to the National
+    // Recording Registry, per the ZIM's own first paragraph. Four
+    // trained voices singing the spirituals repertory in close,
+    // precise harmony: the school `doowop` and `barbershop` both want
+    // by the same name ("jubilee quartets"), and the dated artifact
+    // the debts round's barbershop paragraph said this shift lacked.
+    // 1909 sits one year before barbershop's own Victor record, so
+    // both edges point backward, as the maringa rule requires.
+    jubilee: {
+      label: "Nashville 1909", voices: 4, bars: 8, near: "spirituals",
+      plan: "song", bpm: 84,
+      parents: { spirituals: 0.6 },
+      wants: ["the dinwiddie colored quartet (1902)"],
+      instr: ["solo_vox", "ahh_choir", "ahh_choir", "ahh_choir"],
+      entry: () => 0, reg: v => [0, 1, -1, -2][v],
+      realize: v => (v === 0 ? "line" : "pad"),
+      part: ["lead", "counter", "pad", "pad"],
+      kit: {}, nobass: true, harmony: "cycle",
+      roots: [0, 3, 0, 4],
+      mode: MODES.ionian, scale: SCALES.majpent, diatonic: true,
+      prog: [{ d: 0, q: "triad" }, { d: 3, q: "triad" }, { d: 0, q: "triad" }, { d: 4, q: "7" }],
+      artic: "legato", maxHold: 4,
+      tone: { wave: "triangle", cut: 2100, q: 0.8, atk: .02, rel: .9, gain: .26, verb: .35,
+              mouth: MOUTHS.hymnal },
+      words: ["the lead, lining the chariot out",
+              "the tenor, above and inside",
+              "the baritone, the chord's own floor",
+              "the bass, swinging low"],
+      word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)], []][s % 4]
+                    : v === 1 ? [drop(4), transpose(2)]
+                    : v === 2 ? [drop(6)]
+                    : [drop(8), transpose(-5)]),
+    },
+
+    // RUMBA — Matanzas 1956. Los Muñequitos de Matanzas (then Conjunto
+    // Guaguancó Matancero), "established in 1952... released their
+    // first LP in 1956 through Puchito" — the ZIM's own dates, on the
+    // group its Cuban rumba article files first among the genre's
+    // named bands. Voices and drums and NOTHING else: the diana, the
+    // coro, the tumbadoras, the claves. `descarga` (Havana 1957) takes
+    // the edge it asked for; `latinjazz` (New York 1947) asked too and
+    // CANNOT take it — the ZIM says the genre's "recorded history...
+    // began in the 1940s" but names no side before this LP, and an
+    // edge cannot point at a record younger than its child (the
+    // maringa rule, again). Its want narrows to the unnamed 1940s
+    // sides, at its row.
+    rumba: {
+      label: "Matanzas 1956", voices: 2, bars: 8, near: "son",
+      plan: "dance", bpm: 104,
+      // LINEAGE: the coros de clave and the Abakuá drumming the ZIM
+      // names as origins are unanchored; son (Havana 1928) shares the
+      // clave and the call-and-refrain economy and takes a low edge.
+      parents: { son: 0.2 },
+      wants: ["the yuka and abakuá drumming behind it", "coros de clave"],
+      cannot: ["the quinto — the third drum IMPROVISES against the other " +
+               "two for the dancer's feet, and a fixed kit row cannot " +
+               "converse",
+               "clave as a law — the pattern fits sixteen places but " +
+               "nothing enforces the parts' allegiance to it"],
+      instr: ["solo_vox", "ohh_voices"],
+      drumkit: "acoustic",
+      entry: v => v, reg: () => 0,
+      realize: () => "line",
+      part: ["lead", "counter"],
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             p: [1,0,0,1, 0,0,1,0, 0,1,0,0, 1,0,0,0],
+             h: [0,0,1,0, 1,0,0,1, 0,0,1,0, 1,0,0,1] },
+      nobass: true, harmony: "modal", mode: MODES.mixo, scale: SCALES.majpent,
+      artic: "staccato", maxHold: 2,
+      tone: { wave: "triangle", cut: 2300, q: 1.0, atk: .008, rel: .4, gain: .27, verb: .3,
+              mouth: MOUTHS.melisma },
+      words: ["the diana, syllables before words",
+              "the coro, answering as one"],
+      word: (v, s) => (v === 0 ? [[], [rotate(3)], [transpose(-2)], [fill(2)]][s % 4]
+                    : [keep(0, 4, 8, 12), drop(2)]),
+    },
+
+    // THE LĂUTARI — Bucharest 1906. Grigoraș Dinicu's "Hora staccato"
+    // (1906) — the ZIM dates the showpiece in its first sentence and
+    // files the man under "Genres: Lăutărească music": born in Scaune,
+    // "the neighborhood of the lăutari", grandson of Angheluș Dinicu,
+    // whose "Ciocârlia" he made famous. The hereditary Romani guild
+    // whose 78s `gypsyjazz` and `taraf` both want by name ("the
+    // lautari 78s before the Quintette (Bucharest, 1900s)") — the
+    // Quintette's swing violin descends from exactly this school, and
+    // Clejani's own village band is its country cousin eighty years
+    // on. The 78s themselves stay wanted at this row (the shellac the
+    // Gramophone Company cut in Bucharest is not in this ZIM by name);
+    // the dated artifact is the guild's own conservatory-trained son's
+    // 1906 showpiece, the dufay standard's kind of date.
+    lautari: {
+      label: "Bucharest 1906", voices: 2, bars: 8, near: "taraf",
+      plan: "arc", bpm: 132,
+      parents: {},
+      wants: ["the gramophone company's bucharest sessions",
+              "the moldavian lautari repertory"],
+      cannot: ["the rubato of the slow hora — the lăutar's pulse follows " +
+               "the table he is playing for, and this clock follows a bar"],
+      instr: ["fiddle", "dulcimer"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => (v === 0 ? 1 : 0),
+      realize: () => "line",
+      part: ["lead", "riff"],
+      kit: { h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0] },
+      harmony: "modal", mode: MODES.harmonic,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      orn: { grace: 0.4, pass: 0.2 },
+      tone: { wave: "sawtooth", cut: 2600, q: 1.1, atk: .005, rel: .3, gain: .27, verb: .25 },
+      words: ["the fiddle, staccato off the top of the bow",
+              "the cimbalom, hammering the wheel around"],
+      word: (v, s) => (v === 0 ? [[], [rotate(2)], [split(2)], [fill(1)]][s % 4]
+                    : [keep(0, 2, 4, 6, 8, 10, 12, 14), drop(2)]),
+    },
+
+    // THE DOINA — Maramureș 1912. "Béla Bartók discovered the doina in
+    // Northern Transylvania in 1912" — the ZIM's own sentence, and the
+    // cylinders he cut there are the named dated collection this
+    // payment stands on (published as his Maramureș volume). One
+    // free-rhythm, melismatic, improvised line — the ZIM compares it
+    // to the taksim by name, which is why `near` says taqsim and the
+    // family is vox, on cemilbey's own argument. Pays `taraf`'s want
+    // ("the doina"); klezmer's doyne is the same object one migration
+    // north, carried by its own row's parents.
+    doina: {
+      label: "Maramureș 1912", voices: 1, bars: 8, near: "taqsim",
+      plan: "song", bpm: 70,
+      parents: {},
+      wants: ["the hora lungă itself, cylinder by cylinder"],
+      cannot: ["free rhythm — Bartók wrote 'parlando rubato' over every " +
+               "transcription and this box counts sixteen places; the " +
+               "long holds and the ornament policy are the honest " +
+               "approximation, said plainly"],
+      instr: "solo_vox",
+      entry: () => 0, reg: () => 0, realize: () => "line",
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.harmonic, artic: "legato", maxHold: 4,
+      orn: { grace: 0.5, pass: 0.25 },
+      tone: { wave: "triangle", cut: 2200, q: 0.8, atk: .02, rel: 1.2, gain: .26, verb: .4,
+              mouth: MOUTHS.monody },
+      words: ["one voice on the mountain, no bar line, the turns doing " +
+              "the grieving"],
+      word: (v, s) => [[], [transpose(-2)], [fill(1), drop(2)], [rotate(2)]][s % 4],
+    },
+
+    // CHAZZANUT — New York 1912. Yossele Rosenblatt arrives at the
+    // Ohab Zedek congregation, Harlem — the ZIM dates the post — and
+    // the 78s that follow made him the most famous cantor on record
+    // ("since the 78 RPM era, Rosenblatt's recordings have been
+    // re-issued many times"). The cantorial nusach is `klezmer`'s own
+    // named want: the prayer modes the bands borrowed for the bandstand
+    // — and the row says that kinship as an ALPHABET, because the
+    // Ahavah Rabbah steyger IS this table's hijaz row, the flat second
+    // under the natural third, note for note. One ornamented voice
+    // over a congregation's hum; the vox family's long varying line,
+    // the dastgah/khyal argument one liturgy west.
+    chazzanut: {
+      label: "New York 1912", voices: 2, bars: 8, near: "klezmer",
+      // 70 is compose.js's floor (the seannos ruling); the davenen is
+      // slower than any metronome word for it and maxHold carries that.
+      plan: "song", bpm: 70,
+      parents: {},
+      wants: ["the odessa choral synagogues (nissan blumenthal)",
+              "the baal tefillah's unwritten nusach"],
+      cannot: ["the krechts — the sob inside one syllable that is the " +
+               "whole art; a grace note approaches it and does not " +
+               "arrive"],
+      instr: ["solo_vox", "ahh_choir"],
+      entry: v => v, reg: v => (v === 0 ? 0 : -1),
+      realize: v => (v === 0 ? "line" : "pad"),
+      part: ["lead", "pad"],
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.hijaz, artic: "legato", maxHold: 4,
+      orn: { grace: 0.45, pass: 0.2 },
+      tone: { wave: "triangle", cut: 2000, q: 0.8, atk: .025, rel: 1.3, gain: .26, verb: .5,
+              mouth: MOUTHS.melisma },
+      words: ["the chazzan, one voice carrying the whole room's prayer",
+              "the congregation, a hum under the melisma"],
+      word: (v, s) => (v === 0 ? [[], [transpose(1)], [fill(1)], [rotate(2)]][s % 4]
+                    : [keep(0), drop(10)]),
+    },
   };
 
   // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane. `p` says "Ghost perc"
@@ -18875,6 +19531,15 @@
     // more, and a chant and a stamped Zulu cycle should not share a number.
     ["vox",    ["gregorian", "bulgarian", "spem", "counterpoint", "fugue", "hymn",
                 "organum", "arsnova", "zema", "mbube",
+                // ...AND THE LEDGER ROUND'S THREE (2026-08-30). `jubilee` is
+                // the cluster's definition exactly — four unaccompanied
+                // voices, the spirituals' own quartet. `doina` and
+                // `chazzanut` are ONE LONG VARYING LINE each and vox is the
+                // family whose idiom row says so — the cemilbey/dastgah
+                // argument, a mountain and a synagogue west; both take
+                // DYNAMICS rows below because neither has a metre for the
+                // family's stress to land on.
+                "jubilee", "doina", "chazzanut",
                 // ...and Philadelphia 1844 joined 2026-08-26 with the world
                 // round. `sacredharp` is this cluster's definition exactly —
                 // four unaccompanied parts, no instrument of any kind — and
@@ -19047,6 +19712,11 @@
     // both take the family's own dynamics row unchanged.
     ["groove", ["reggae", "dub", "ska", "afrobeat", "bossa", "reggaeton", "latinpop",
                 "afrobeats", "punjabipop",
+                // ...and the ledger round's one (2026-08-30): `soundsystem`,
+                // Kingston 1950 — the family whose own header says "the echo
+                // chamber is an instrument in every one of these traditions"
+                // gets the culture that built the chamber.
+                "soundsystem",
                 // ...and the five African anchors that are a HAND LAYER OVER A
                 // RHYTHM SECTION, which is this cluster's definition and is
                 // what every one of them is: Accra 1957 (maracas and claps
@@ -19126,6 +19796,11 @@
     ["studio", ["beatles", "steely", "toto", "kraftwerk", "eurythmics",
                 "synthpop", "citypop", "merseybeat", "psychpop", "motorik",
                 "roboticpop", "confessionalpop",
+                // ...and the ledger round's two (2026-08-30): `hammerhorror`
+                // files beside herrmann and photoplay — a scoring desk, not
+                // a band — and `exotica` beside ymo, the studio confection
+                // ymo's own want names.
+                "hammerhorror", "exotica",
                 "coastrock", "yachtrock", "yachtsoul", "analogsynthpop",
                 "gothsynth", "dancepostpunk", "orchpsych",
                 // ...and five from the world round (2026-08-26): São Paulo
@@ -19172,6 +19847,10 @@
                 "air"]],
     ["drift",  ["ambient", "drone", "vaporwave", "shoegaze", "postrock",
                 "neoclassical", "minimalism", "spacerock",
+                // ...and the ledger round's one (2026-08-30): `idm` — the
+                // ZIM's own clause files it ("intended for home listening
+                // rather than dancing"), which is this cluster and not club.
+                "idm",
                 // ...and the genealogy round's two (2026-08-29): Nara 752 —
                 // the oldest row in the family by twelve centuries, and the
                 // cluster's definition anyway: sustained texture, breath
@@ -19206,6 +19885,12 @@
     // built out of it.
     ["roots",  ["countrypop", "skiffle", "tango", "jazz", "crooner", "yuletide",
                 "folkduo", "worldfolk",
+                // ...and the ledger round's four (2026-08-30): two Andalusi
+                // song forms (`muwashshah`, `zajal`), the Matanzas street
+                // (`rumba`) and the Bucharest guild (`lautari`) — every one
+                // a pre-rock tradition with a named dated source, which is
+                // what this cluster is.
+                "muwashshah", "zajal", "rumba", "lautari",
                 "altcountry", "songwriterpiano", "softfolk", "singersongwriter",
                 // ...and the OLD WORLD slate (2026-08-21): everything pre-rock
                 // that is not unaccompanied polyphony lands here, because
@@ -19469,6 +20154,13 @@
     // breath more metre than the dhrupad it descends from.
     dastgah:   { stress: 0.04, phrase: 0.92, touch: { t: 0.075, v: 0.55 } },
     khyal:     { stress: 0.1,  phrase: 0.85, touch: { t: 0.06,  v: 0.6 } },
+    // ...and the ledger round's two unmetred lines (2026-08-30), on the
+    // cemilbey rule — the same musical object takes the same numbers:
+    // `doina` is parlando rubato (Bartók's own marking) and takes
+    // dastgah's near-absent stress; `chazzanut` breathes with a prayer's
+    // phrase and takes khyal's.
+    doina:     { stress: 0.04, phrase: 0.92, touch: { t: 0.075, v: 0.55 } },
+    chazzanut: { stress: 0.1,  phrase: 0.85, touch: { t: 0.06,  v: 0.6 } },
     // ...and the qin is the LOOSEST HAND of the three and the quietest: it is
     // one person in a room with nobody listening, so the timing wanders more
     // than a monk in a choir can afford to and the level barely moves at all.
