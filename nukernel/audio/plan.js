@@ -308,8 +308,19 @@ function castOf(bars) {
         // already states for a layer against its box: a chip set in one place
         // must not throw away the one it was inheriting. Both absent is null,
         // and null is byte-identical to every compile before this.
-        const seatVox = (ch && ch.vox) || e.vox
-          ? { ...((ch && ch.vox) || null), ...(e.vox || null) } : null;
+        // ...AND THE VIEW'S OWN WORDS UNDER THE HAND'S (2026-08-30, the
+        // grace-run fix). `vcd.vox` is instruments.js clamping a melismatic
+        // line's taker articulate (voicedAs clause b — the words reach the
+        // sampler's atk/rel ports and a synth's attack/release alike). It
+        // sits OVER the document's chair words (the view outranks the
+        // record's signature for this chair, exactly as `useSyn2` above
+        // already rules for the synth) and UNDER the layer's chip (`e.vox` —
+        // a word the hand set on the page must not be quietly rewritten by a
+        // toggle). vox mode and every non-melisma chair carry no `vcd.vox`,
+        // so this line is byte-identical for all of them.
+        const vcdVox = (vcd && vcd.vox) || null;
+        const seatVox = (ch && ch.vox) || vcdVox || e.vox
+          ? { ...((ch && ch.vox) || null), ...vcdVox, ...(e.vox || null) } : null;
         e._seat = seatFor(chair, vcd ? vcd.instr : (over || instrOf(owner, vi)),
                           vcd ? (vcd.synth || null) : (useSyn ? gsyn : null),
                           throat ? { ...seatTone, mouth: throat } : seatTone,

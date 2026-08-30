@@ -237,12 +237,14 @@ import { produced as producedDoc, revise as reviseProd,
 // whole record to CTX.setDocument.
 import { mount as mountAtlas } from "./atlas.js";
 // THE SCORE DECK's export seams (2026-08-27, nukernel/ideal/score-deck.html):
-// the SMF writer reads the SAME toScore() fold the engraving is drawn from —
-// one owner per note — and the deck's piano roll borrows its notehead→GM fold
-// (`headGM` over SCOREHEAD) so a drum block lands on the same key in the file
-// and on the roll. `songDurSec` is the score's own length in seconds, which is
-// what the WAV press is measured against.
-import { writeSmf, parseSmf, headGM } from "../export/smf.js";
+// the SMF writer folds the PLAYED record (export/score.js scoreOf via
+// smfFromScore — the .als's own fold; the 2026-08-30 reversal at deckSmf
+// says why it stopped reading buildScore()). The deck's piano roll still
+// borrows the notehead→GM fold (`headGM` over SCOREHEAD) so a drum block
+// lands on the same key on the roll as in the file. `songDurSec` is the
+// score's own length in seconds, which is what the WAV press is measured
+// against.
+import { smfFromScore, parseSmf, headGM } from "../export/smf.js";
 /* `channelFacts` CAME OFF THIS IMPORT 2026-08-28, WITH `voiceSound`. Its note
    read: "the engine's own answer about the seated voice, which is how
    `voiceSound` knows a voice is STEREO and refuses its insert slots with the
@@ -3467,15 +3469,31 @@ function handOff(name, bytes, type) {
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 30000);
 }
-// the whole record as an SMF, over the page's OWN score fold — the very
-// buildScore() the staff and the roll draw, so the file, the ink and the roll
-// are one note list (a probe below hands a gate the same value).
-function deckSmf() {
-  const built = buildScore();
-  if (!built) return null;
-  const bytes = writeSmf({ bpm: DOC.time.bpm, beatsPerBar: beatsPerBar(),
-    stepsPerBar: SCORE_SPB, voices: built.voices }, { drumMap: HEAD_GM });
-  return { bytes, voices: built.voices, steps: built.steps };
+/* THE .MID IS THE PLAYED RECORD — A REVERSAL, DATED 2026-08-30. This comment
+   read: *"the whole record as an SMF, over the page's OWN score fold — the
+   very buildScore() the staff and the roll draw, so the file, the ink and the
+   roll are one note list"*. Paul, listening to the export: "My guess is
+   you're not capturing these timing subtleties with MIDI export" — and the
+   measurement agreed (iranpop's hook: 112 played events, 23 ornaments, 74
+   fractional onsets; the notated fold shipped none of the ornaments and a
+   quantized grid). The .als already ruled for itself in als-page.js
+   pageScore: "a Live set is a session you press play on, so it takes the
+   played one" — and a .mid is a session another DAW presses play on. So this
+   folds the IDENTICAL Score the .als splices (export/score.js scoreOf, over
+   plan.timeline() — ONE fold, two writers; export/smf.js smfFromScore is the
+   second) and the staff and the roll keep buildScore(), because engraving is
+   what notation is for. Ticks: TPQ 480, one quarter per writeSmf step, so a
+   grace a tenth of a bar off the beat keeps its own tick. */
+async function deckSmf() {
+  const m = await import("../export/als-page.js");
+  const score = await m.pageScore({ say: expSay });
+  const bytes = smfFromScore(score, { beatsPerBar: beatsPerBar() });
+  const names = new Set();
+  let notes = 0;
+  for (const b of score.boxes) for (const l of b.lanes) {
+    names.add(l.name); notes += l.notes.length;
+  }
+  return { bytes, score, notes, tracks: names.size };
 }
 function expSay(t) { if (deckSay) deckSay.textContent = t || ""; }
 /* THE CAP TAKES NO PAINT CLASS SINCE 2026-08-29. The signature was
@@ -3518,18 +3536,29 @@ function exportRow(parent) {
     });
     card.append(b);
   });
-  // MIDI — LIVE. export/smf.js over the score's own notes; the toms come out
-  // distinct (t/m/l → GM 50/47/45), which is the export-layer fix FUTURE.md
-  // asked for — the engine's own folded mapping is untouched.
+  /* MIDI — LIVE, AND IT EXPORTS THE PLAYED RECORD — A REVERSAL, 2026-08-30.
+     This card's comment read: *"export/smf.js over the score's own notes; the
+     toms come out distinct (t/m/l → GM 50/47/45), which is the export-layer
+     fix FUTURE.md asked for"*. The tom fix stands (LANE_GM is untouched and
+     the roll still reads HEAD_GM); what reversed is WHICH record the file
+     carries — see deckSmf above for the listening report and the .als
+     precedent. The subtitle changed with the fold: "the staff's own notes"
+     described the notated grid, and the file is the played timeline now,
+     ornaments at their real offsets. */
   exportCard(grid, "MID", "the notes",
-    "type 1 · one track per voice · the staff's own notes", (card) => {
+    "type 1 · one track per seat · the played record, ornaments and all", (card) => {
     const b = el("button", "download .mid");
     b.type = "button"; b.dataset.k = "deck.exp.mid";
     b.addEventListener("click", () => {
-      const r = deckSmf();
-      if (!r) { expSay("the record would not fold to a score — nothing to write"); return; }
-      handOff(deckFile() + ".mid", r.bytes, "audio/midi");
-      expSay("written — " + r.voices.length + " tracks");
+      b.disabled = true; expSay("folding the played record…");
+      deckSmf()
+        .then((r) => {
+          if (!r) { expSay("the record would not fold — nothing to write"); return; }
+          handOff(deckFile() + ".mid", r.bytes, "audio/midi");
+          expSay("written — " + r.tracks + " tracks, " + r.notes + " notes");
+        })
+        .catch((e) => expSay("the fold failed — " + ((e && e.message) || e)))
+        .finally(() => { b.disabled = false; });
     });
     card.append(b);
   });
@@ -11481,14 +11510,24 @@ window.__deckState = () => ({
   }),
 });
 window.__deckView = (v) => setDeckView(v);
-window.__deckSmf = () => {
-  const r = deckSmf();
+/* THE PROBE MOVED WITH THE FOLD (2026-08-30 — the played-record reversal at
+   deckSmf). It returned the NOTATED voices (`r.voices` off buildScore, with
+   `drumMap`/`steps` for the gate's own re-quantization); it hands the gate
+   the PLAYED lanes now — absolute quarter-note beats, GM keys already
+   resolved — because that is what the file carries and TEST THE ARTIFACT
+   means the gate compares the bytes against the record they claim to be. */
+window.__deckSmf = async () => {
+  const r = await deckSmf();
   if (!r) return null;
-  return { bytes: Array.from(r.bytes), parsed: parseSmf(r.bytes),
-           drumMap: HEAD_GM, steps: r.steps,
-           score: r.voices.map((v) => ({ name: v.name, clef: v.clef,
-             notes: v.notes.map((n) => ({ at: n.at, len: n.len,
-               midi: Array.isArray(n.midi) ? n.midi : [n.midi] })) })) };
+  const beat0 = r.score.boxes.length ? r.score.boxes[0].beat0 : 0;
+  const lanes = {};
+  for (const box of r.score.boxes) for (const l of box.lanes) {
+    const at = box.beat0 - beat0;
+    (lanes[l.name] = lanes[l.name] || []).push(...l.notes.map((n) => ({
+      beat: at + n.beat, dur: n.dur, midi: n.midi, vel: n.vel })));
+  }
+  return { bytes: Array.from(r.bytes), parsed: parseSmf(r.bytes), lanes,
+           bpm: r.score.bpm, notes: r.notes, tracks: r.tracks };
 };
 window.__deckPressWav = async () => {
   const m = await import("../export/wav.js");

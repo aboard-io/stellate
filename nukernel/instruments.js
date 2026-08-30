@@ -1366,21 +1366,83 @@
   // the sax is the fallback and the strings are the rule; both are registry ids
   // the sampled library ships (RANGES above names them).
   const LINE_TAKER = "alto_sax", SECTION_TAKER = "slow_strings";
+  /* ---- THE ORNAMENTED SINGERS, AND WHO MAY TAKE THEIR LINE (2026-08-30) ---
+     Paul, listening to iranpop off vox mode: "grace notes, which are
+     everywhere, would play separately in sequence but now they all seem to
+     run together" — and the SCORE was measured innocent (23 ornament events,
+     zero overlapping, identical across three commits). The cause is this
+     function: `instr` mode handed the singer's line to the genre's first
+     non-vocal instr, which for iranpop is `strings` — a section recording
+     with a slow attack and a long ring — and ten graces a tenth of a bar
+     apart through a 1.1 s release stack into a sounding cluster the score
+     never wrote. Two clauses, each argued here:
+
+     (a) WHO TAKES IT. A genre whose singer is one of the ORNAMENTED mouths
+         prefers an ARTICULATE taker from its own instr list — a guitarist
+         can play graces, a string section cannot. The class is a set of
+         genres.js MOUTHS rows, never a list of genres (28 anchors share
+         these three throats today and a new anchor that names one joins by
+         naming it): `melisma` (the held-vowel run is the technique),
+         `qawwal` (the qawwali lead's melisma over the party) and `belter`
+         (the belted run — powerballad, fado, belcanto all deal graces).
+         Which row a genre sings is read off its own tone.mouth, else off
+         the throat this file itself casts (throatKeyOf) — the same two
+         answers audio/plan.js resolves a singer from, in the same order.
+         ARTICULATE is a fact about the exciting mechanism, asked through
+         familyOf: plucked and struck families (guitar, dirty, keys, mallet)
+         speak on the attack; bowed, blown and sung ones swell.
+     (b) HOW IT PLAYS. Whatever taker wins a melismatic LINE — the genre may
+         carry no plucked instrument at all, and analog/fm hand it to a
+         synth — its envelope is CLAMPED articulate through the vox words
+         (fields.js VOX.atk/rel), which reach the sampler's atk/rel ports
+         and a synth's attack/release recipe keys alike ("THEY REACH A SYNTH
+         TOO", fields.js). A CLAMP and not a setting: the word is written
+         only where the genre's own tone exceeds it (iranpop's atk .015
+         stays; its rel 1.1 becomes `nat` 0.12), so a tone already
+         articulate is untouched. The tone defaults compared against are
+         to-engine samplerRecipe's own (atk 0.01 / rel 0.4). Sections keep
+         their swell — a pad replaced by slow_strings is still a pad. */
+  const ORNATE_MOUTHS = { melisma: 1, qawwal: 1, belter: 1 };
+  const ARTICULATE_FAMS = { guitar: 1, dirty: 1, keys: 1, mallet: 1 };
+  const mouthKeyOf = (gk, id) => {
+    const t = (GENRES[gk] || {}).tone;
+    if (t && t.mouth && NG.MOUTHS)
+      for (const k in NG.MOUTHS) if (NG.MOUTHS[k] === t.mouth) return k;
+    return throatKeyOf(gk, id);
+  };
+  const singsOrnate = (gk, id) => !!ORNATE_MOUTHS[mouthKeyOf(gk, id) || ""];
+  const clampArticulate = (gk) => {
+    const t = (GENRES[gk] || {}).tone || {};
+    const V = NF && NF.VOX;
+    if (!V) return null;
+    const out = {};
+    if ((t.atk != null ? t.atk : 0.01) > V.atk.t.soft) out.atk = "soft";
+    if ((t.rel != null ? t.rel : 0.4) > V.rel.t.nat) out.rel = "nat";
+    return (out.atk || out.rel) ? out : null;
+  };
   const voicedAs = (mode, gk, id, pad) => {
     if (!mode || mode === "vox" || !patchedVoice(id)) return null;
     const section = pad || isSection(id);
+    // the clamp rides every mode's LINE replacement — "whatever taker wins"
+    const ornate = !section && singsOrnate(gk, id);
+    const vox = ornate ? clampArticulate(gk) : null;
     if (mode === "instr") {
       if (section) return { instr: SECTION_TAKER };
       const e = (GENRES[gk] || {}).instr;
       const list = Array.isArray(e) ? e : (e ? [e] : []);
-      return { instr: list.find((i) => !patchedVoice(i)) || LINE_TAKER };
+      const band = list.filter((i) => !patchedVoice(i));
+      const take = (ornate && band.find((i) => ARTICULATE_FAMS[familyOf(i)]))
+        || band[0] || LINE_TAKER;
+      return vox ? { instr: take, vox } : { instr: take };
     }
     if (mode === "analog")
       return { instr: section ? SECTION_TAKER : LINE_TAKER,
-               synth: { dsp: section ? "juno60" : "modeld" } };
+               synth: { dsp: section ? "juno60" : "modeld" },
+               ...(vox ? { vox } : {}) };
     if (mode === "fm")
       return { instr: section ? SECTION_TAKER : LINE_TAKER,
-               synth: { dsp: "fm2op" } };
+               synth: { dsp: "fm2op" },
+               ...(vox ? { vox } : {}) };
     return null;
   };
 

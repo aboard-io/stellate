@@ -1,8 +1,28 @@
 // nukernel/export/smf.js — the record's score, written out as a Standard MIDI
-// File. ~200 dependency-free lines: SMF type 1, one track per voice, over the
-// page's OWN score note list (ui/eight.js buildScore() → toScore().voices —
-// the same fold the engraving and the piano roll draw, so the .mid can never
-// disagree with the staff; attribute-grammar law, one owner per note).
+// File. Dependency-free: SMF type 1, one track per voice.
+//
+// THE .MID IS THE PLAYED RECORD NOW — A REVERSAL, DATED 2026-08-30. This
+// header read: *"over the page's OWN score note list (ui/eight.js
+// buildScore() → toScore().voices — the same fold the engraving and the piano
+// roll draw, so the .mid can never disagree with the staff; attribute-grammar
+// law, one owner per note)"*. That was true and it was the wrong record to
+// ship: Paul, listening to the export against the speakers — "My guess is
+// you're not capturing these timing subtleties with MIDI export" — and the
+// measurement agreed: iranpop's hook holds 112 played events, 23 of them
+// ornaments, 74 on fractional onsets, and the notated fold carried none of
+// the ornaments and quantized every onset to the step grid. The .als round
+// had already ruled on this exact question, in export/als-page.js pageScore:
+// *"`buildScore()` is the NOTATED record — what the staff draws …
+// `plan.timeline()` is the PLAYED record: register home applied, groove and
+// swing and humanize already warped into `off` … A Live set is a session you
+// press play on, so it takes the played one."* A .mid is a session another
+// DAW presses play on, so it takes the played one too — ONE fold
+// (export/score.js scoreOf), two writers (als.js and smfFromScore below), the
+// .als precedent verbatim. Ornaments are real notes at their real offsets and
+// TPQ 480 carries a tenth of a bar without rounding it away. The staff keeps
+// buildScore() — engraving is what notation is FOR — and `writeSmf` still
+// takes a step-grid score, so a notated export remains one call away; the
+// BUTTON's default is played, because the button is next to the speakers.
 //
 // THE TOM FIX LIVES HERE, IN THE EXPORT LAYER, ON PURPOSE. FUTURE.md names the
 // defect: audio/to-engine.js folds the three tom lanes t/m/l onto the parent's
@@ -95,10 +115,17 @@ export function writeSmf(score, opts = {}) {
     // events: [{ tick, bytes:[...] }] — sorted, then delta-encoded
     events.sort((a, b) => a.tick - b.tick || a.ord - b.ord);
     const body = [];
+    // ROUND THE TICK, THEN DELTA (2026-08-30). This encoded
+    // `round(e.tick - last)` with `last = round(e.tick)`, which is exact on an
+    // integer grid and drifts ±1 tick on the played record's fractional
+    // onsets (the sum of rounded deltas is not the rounded sum). Rounding the
+    // absolute tick first makes every parsed position exactly
+    // `round(e.tick)`, which is what the parse-back gate compares.
     let last = 0;
     for (const e of events) {
-      body.push(...vlq(Math.max(0, Math.round(e.tick - last))), ...e.bytes);
-      last = Math.round(e.tick);
+      const tk = Math.max(last, Math.round(e.tick));
+      body.push(...vlq(tk - last), ...e.bytes);
+      last = tk;
     }
     body.push(0x00, 0xff, 0x2f, 0x00);                       // end of track
     return [...str("MTrk"), ...u32(body.length), ...body];
@@ -123,9 +150,19 @@ export function writeSmf(score, opts = {}) {
                                             ...str(String(v.name || ""))] }];
     for (const n of v.notes || []) {
       const on = n.at * tickPerStep;
-      const off = (n.at + Math.max(1, n.len)) * tickPerStep;
+      // THE FLOOR MOVED WITH THE PLAYED RECORD (2026-08-30): it was
+      // `Math.max(1, n.len)` — one whole STEP, right on a grid where a step
+      // is the shortest thing the staff writes, and a lie on the played
+      // record, where a grace lasts a fraction of a step and flooring it to
+      // one would hold every ornament into its principal. 1/32 step is under
+      // any audible note and above a zero-length that some players drop.
+      // A notated caller's integer lens (always >= 1) pass through untouched.
+      const off = (n.at + Math.max(1 / 32, n.len)) * tickPerStep;
+      // the played record carries its written velocity (score.js
+      // velOfWritten); a score without one keeps the old flat 96.
+      const vel = Math.max(1, Math.min(127, Math.round(n.vel || 96)));
       for (const key of keysOf(n.midi, perc, drumMap, dropped)) {
-        evs.push({ tick: on, ord: 2, bytes: [0x90 | ch, key, 96] });
+        evs.push({ tick: on, ord: 2, bytes: [0x90 | ch, key, vel] });
         evs.push({ tick: off, ord: 1, bytes: [0x80 | ch, key, 0] });
       }
     }
@@ -139,6 +176,44 @@ export function writeSmf(score, opts = {}) {
   for (const t of tracks) { bytes.set(t, o); o += t.length; }
   bytes.dropped = dropped.length;      // how many heads had no key (a gate reads it)
   return bytes;
+}
+
+/* ---------- the PLAYED record's writer (2026-08-30) ------------------------
+   ONE FOLD, TWO WRITERS — the .als precedent (see the header's reversal).
+   Takes export/score.js scoreOf()'s Score — the same value als.js splices
+   into the donor — and flattens its boxes onto writeSmf's own dialect: one
+   track per LANE (a lane's name is the cast's seat key, "v0"/"bass"/"drums",
+   stable across boxes, so the same seat is the same track for the whole
+   record), `at` in quarter-note beats made absolute against the first box,
+   and stepsPerBar set equal to beatsPerBar so one writeSmf "step" IS one
+   quarter — 480 ticks — and a played offset of a tenth of a bar lands on its
+   own tick instead of a grid line. The drums lane's notes already carry GM
+   key numbers (score.js put them through als.js GM_DRUM), so no drumMap; it
+   is marked `perc` for channel 10. */
+export function smfFromScore(score, { beatsPerBar = 4 } = {}) {
+  const boxes = (score && score.boxes) || [];
+  const beat0 = boxes.length ? boxes[0].beat0 : 0;
+  const lanes = new Map();
+  for (const box of boxes) {
+    const off = box.beat0 - beat0;
+    for (const l of box.lanes) {
+      let v = lanes.get(l.name);
+      if (!v) lanes.set(l.name, v = {
+        key: l.name,
+        name: l.name + (l.instr ? " " + l.instr : ""),
+        clef: l.name === "drums" ? "perc" : "",
+        notes: [] });
+      for (const n of l.notes)
+        v.notes.push({ at: off + n.beat, len: n.dur, midi: n.midi, vel: n.vel });
+    }
+  }
+  // v0, v1, … then bass, then drums — scoreOf's own rank, so the .mid's track
+  // order and the .als's lane order are one order.
+  const rank = (n) => (n === "drums" ? 2 : n === "bass" ? 1 : 0);
+  const voices = [...lanes.values()]
+    .sort((a, b) => rank(a.key) - rank(b.key) || a.key.localeCompare(b.key));
+  return writeSmf({ bpm: score.bpm, beatsPerBar,
+                    stepsPerBar: beatsPerBar, voices });
 }
 
 /* ---------- the reader — OUR OWN, for the parse-back gate ----------------- */

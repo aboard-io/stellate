@@ -29,11 +29,19 @@
 //     (sha256 over the whole file), the bytes decode as canonical
 //     44.1k/16-bit stereo PCM with nonzero RMS, and the duration matches the
 //     score's own length.
-// D4  the MIDI export parses back with OUR OWN reader: one track per voice
-//     plus the conductor, and every note's tick position equals the score
-//     fold's `at` in ticks. The tom lanes come out DISTINCT (t/m/l →
-//     GM 50/47/45) — proved in node over export/smf.js with a synthetic
-//     score, because the shipped chant has no toms to disagree about.
+// D4  the MIDI export parses back with OUR OWN reader. REVERSAL 2026-08-30
+//     (the played-record .mid): this line read "every note's tick position
+//     equals the score fold's `at` in ticks", and that score fold was
+//     buildScore() — the NOTATED staff, quantized, ornament-free. Paul: "My
+//     guess is you're not capturing these timing subtleties with MIDI
+//     export" — measured true (iranpop hook: 112 played events, 23
+//     ornaments, 74 fractional onsets; the .mid had none of them). The .mid
+//     now folds the PLAYED record through export/score.js scoreOf — the
+//     .als's own fold, one fold two writers — so D4b compares the parsed
+//     bytes against the played lanes: one track per SEAT plus the conductor,
+//     every note at round(beat × TPQ), and two exports byte-identical.
+//     The tom lanes still come out DISTINCT (t/m/l → GM 50/47/45) in D4a —
+//     LANE_GM and writeSmf are untouched by the reversal.
 // D5  the export row is honest: four cards, each button either live or
 //     `disabled` beside a non-empty reason (.nu-why) — nothing greys
 //     silently, nothing pretends. (Which cards are live is a roster that
@@ -372,21 +380,27 @@ const readable = (r) => !!r && r.inside && r.text.length > 0;
   await page.click("#play");   // stop — the presses below get the whole CPU
   await page.waitForTimeout(800);
 
-  // ---- D4b — the .mid, parsed back against the page's own score fold -------
-  const d4 = await page.evaluate(() => {
-    const r = window.__deckSmf();
+  // ---- D4b — the .mid, parsed back against the PLAYED record ---------------
+  /* REVERSAL, 2026-08-30 (see D4 in the header): this block compared the
+     bytes to the NOTATED fold — `r.score` was buildScore()'s voices and the
+     gate re-quantized "ticks per score step". The probe hands the PLAYED
+     lanes now (export/score.js scoreOf, absolute quarter-note beats, GM keys
+     resolved), so the equality is against the timeline the speakers play:
+     one track per seat, every note at round(beat × TPQ). D4c below is the
+     determinism half — two exports, byte-identical. */
+  const d4 = await page.evaluate(async () => {
+    const r = await window.__deckSmf();
     if (!r) return null;
-    const bpb = r.parsed.tracks[0].timesig ? r.parsed.tracks[0].timesig[0] : 4;
-    const tps = (r.parsed.division * bpb) / 16;     // ticks per score step
+    const TPQ = r.parsed.division;
+    const rank = (n) => (n === "drums" ? 2 : n === "bass" ? 1 : 0);
+    const names = Object.keys(r.lanes)
+      .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
     const want = [], got = [];
-    r.score.forEach((v, i) => {
-      const perc = /^perc/.test(v.clef || "");
-      for (const n of v.notes)
-        for (const m of n.midi) {
-          const key = typeof m === "number" ? Math.max(0, Math.min(127, m | 0))
-            : (perc && r.drumMap[m] != null ? r.drumMap[m] : null);
-          if (key != null) want.push((i + 1) + "@" + Math.round(n.at * tps) + ":" + key);
-        }
+    names.forEach((nm, i) => {
+      for (const n of r.lanes[nm])
+        for (const m of (Array.isArray(n.midi) ? n.midi : [n.midi]))
+          want.push((i + 1) + "@" + Math.round(n.beat * TPQ) + ":" +
+                    Math.max(0, Math.min(127, m | 0)));
       for (const n of r.parsed.tracks[i + 1].notes)
         got.push((i + 1) + "@" + n.tick + ":" + n.key);
     });
@@ -394,19 +408,35 @@ const readable = (r) => !!r && r.inside && r.text.length > 0;
     let firstDiff = null;
     for (let i = 0; i < Math.max(want.length, got.length); i++)
       if (want[i] !== got[i]) { firstDiff = (want[i] || "∅") + " vs " + (got[i] || "∅"); break; }
-    return { n: r.parsed.tracks.length, nv: r.score.length,
-             want: want.length, got: got.length, firstDiff,
+    // the timing subtleties the reversal exists for: onsets OFF the old
+    // sixteenth-step grid (TPQ/4 ticks), counted so the report can show them
+    const offGrid = r.parsed.tracks.slice(1).reduce((s, t) =>
+      s + t.notes.filter((n) => n.tick % (TPQ / 4) !== 0).length, 0);
+    return { n: r.parsed.tracks.length, nv: names.length,
+             want: want.length, got: got.length, firstDiff, offGrid,
              tempo: r.parsed.tracks[0].tempo, bytes: r.bytes.length };
   });
-  is(!!d4, "D4b · the page folded its score to a .mid (" + (d4 ? d4.bytes : 0) + " bytes)");
+  is(!!d4, "D4b · the page folded the played record to a .mid (" + (d4 ? d4.bytes : 0) + " bytes)");
   if (d4) {
-    is(d4.n === d4.nv + 1, "D4b · SMF type 1, one track per voice + conductor (" +
-      d4.n + " tracks for " + d4.nv + " voices)");
+    is(d4.n === d4.nv + 1, "D4b · SMF type 1, one track per seat + conductor (" +
+      d4.n + " tracks for " + d4.nv + " seats)");
     is(d4.want === d4.got && !d4.firstDiff,
-      "D4b · parse-back equality: " + d4.got + " notes, every tick position equal " +
-      "to the score's own fold" + (d4.firstDiff ? " — first diff " + d4.firstDiff : ""));
+      "D4b · parse-back equality against the PLAYED fold: " + d4.got +
+      " notes, every tick at round(beat × TPQ)" +
+      (d4.firstDiff ? " — first diff " + d4.firstDiff : "") +
+      " (" + d4.offGrid + " off the old step grid)");
     is(d4.tempo != null, "D4b · the conductor track carries the record's tempo");
   }
+  // ---- D4c — the .mid is deterministic: two exports, byte-identical --------
+  const d4c = await page.evaluate(async () => {
+    const a = await window.__deckSmf(), b = await window.__deckSmf();
+    if (!a || !b) return null;
+    return { same: a.bytes.length === b.bytes.length &&
+                   a.bytes.every((x, i) => x === b.bytes[i]),
+             len: a.bytes.length };
+  });
+  is(!!d4c && d4c.same, "D4c · two .mid exports are byte-identical (" +
+    (d4c ? d4c.len : 0) + " bytes)");
 
   // ---- D3 — the WAV press: bytes, duration, determinism --------------------
   console.log("     pressing the record twice (this renders the whole song, offline)…");

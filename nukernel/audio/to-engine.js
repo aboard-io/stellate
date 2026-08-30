@@ -544,7 +544,34 @@ const TRACT_DYN = SE.TRACT_DYN;
  *                right for both vowels. This one splits them.
  */
 const PAGE_TRIM = {
-  stk_guitar:  2.55,
+  /* stk_guitar WAS 2.55, CUT ×0.70 (-3.1 dB) 2026-08-30. Paul, listening:
+     "In general the riff and solo guitars are about 30 percent too loud
+     everywhere." The row's own provenance above already confessed the risk —
+     the 2.55 was "measured on the waveguide this module replaced, and
+     inherited", i.e. fitted against a chain this page no longer runs (the
+     lane table has since been cut ×0.375 and the master rebuilt) — the same
+     ancestry the stk_piano row admits outright. MEASURED before cutting
+     (test/_chairtap.cjs, mute-complement at the ring output, upstream of the
+     make-up rider that hands cuts back; 48 bars, seed 1): the guitar chairs'
+     active RMS sat -0.0..-4.0 dB against the whole rest of their own band
+     (garagerock -0.86, steely -0.01, rock -3.02, chuckberry -4.00) while
+     every equivalent non-guitar melodic chair sat far under it (jazz
+     sax+trumpet -11.8, funk brass -21.5, and — the discriminator that
+     acquits the LANE — motown's modelled mallet -12.4). Instrument-shaped,
+     not lane-shaped or role-shaped, so the cut lands on this one row and
+     LEVEL_LANES / SITS / DEPTH stay untouched. The lever was proven live
+     first: this row ×0.5 in flight moved exactly the guitar chairs -5.9 dB
+     and the rest of the band 0.00. All six guitar ids (clean/jazz/palm/
+     crunch/overdrive/distortion) route through this module, which is what
+     "everywhere" is.
+     RE-MEASURED AFTER THE CUT, same probe: guitar chairs now sit -1.8..-6.6
+     vs band (delivered -1.9..-2.6 dB of the asked 3.1 — the channel strip's
+     compressor hands ~1 dB back on the dense riffs; if the ear still says
+     hot, this row is still the owner). Controls held: jazz 0.00 dB
+     (byte-identical — no guitar), ambient and hymn byte-identical under an
+     in-flight restore of 2.55, funk -0.16 dB (its own booked rhythm-guitar
+     layer taking the cut). */
+  stk_guitar:  1.78,
   stk_piano:   2.35,
   mallet:      2.16,
   voice_lead:  8.2,
