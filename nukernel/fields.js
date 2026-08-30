@@ -2293,18 +2293,26 @@
     //   TEXTURE  atmosphere, soundtrack, ice_rain, crystal, fantasia,
     //            star_theme, brightness, goblin — the GM FX shelf: looped
     //            zones that sustain under the gate, which is what a bed IS.
-    //   SFX      sea_shore (GM 122) — the one true SFX-bank recording the
-    //            library registers. THE MEASURED GAP, reported not papered
-    //            over: gun_shot, helicopter, applause, telephone, bird_tweet,
-    //            reverse_cymbal, breath_noise and fret_noise have zones ON
-    //            DISK (found/samples/instruments/) and NO row in the parent's
-    //            SAMPLERS registry — recipeFor returns `unrouted` for all
-    //            eight — so offering them here would be a word that cannot
-    //            reach the sound. They join this list the day the engine lane
-    //            registers them.
+    //   SFX      sea_shore (GM 122) and, SINCE 2026-08-30, the eight this
+    //            block used to name as a MEASURED GAP. It read: "gun_shot,
+    //            helicopter, applause, telephone, bird_tweet, reverse_cymbal,
+    //            breath_noise and fret_noise have zones ON DISK and NO row in
+    //            the parent's SAMPLERS registry — recipeFor returns
+    //            `unrouted` for all eight — so offering them here would be a
+    //            word that cannot reach the sound. They join this list the
+    //            day the engine lane registers them." That day is today:
+    //            engine/registry-data.js carries all eight, each row
+    //            EXTRACTED from its own zones.json by build/samplers-row.js
+    //            (whose proof is that it re-derives the committed sea_shore
+    //            line byte-identically), and test/sfx-shelf.test.js renders
+    //            every one through the shipped mixPCM — helicopter and
+    //            applause sustain as beds, the other six are one-shots.
     for (const id of ["orchestra_hit", "atmosphere", "soundtrack", "ice_rain",
                       "crystal", "fantasia", "star_theme", "brightness",
-                      "goblin", "sea_shore"]) ids.add(id);
+                      "goblin", "sea_shore",
+                      "gun_shot", "helicopter", "applause", "telephone",
+                      "bird_tweet", "reverse_cymbal", "breath_noise",
+                      "fret_noise"]) ids.add(id);
     for (const id of [...ids].sort()) INSTRCHOICES[id] = id.replace(/_/g, " ");
   }
   // THE POOL CHAIRS — which seats the song's INSTRUMENT POOL may cast. They

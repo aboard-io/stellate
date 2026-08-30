@@ -260,6 +260,17 @@
        land (Jakarta's dot proves the island), so the G-series land
        check holds without a re-bake. */
     "Surakarta": [-7.57, 110.82],
+    /* THE UNLOCKING ROUND'S TWO, 2026-08-30 ("Unlock the missing stuff.
+       Get qiyan working") — geography follows the catalog, as always.
+       · Medina — `qiyan`, Azza al-Mayla's majlis; the map's first dot on
+         the Arabian peninsula, ~340 km north of Mecca and 900 km south
+         of Baghdad, so no packing question arises against any existing
+         Middle East dot. It files in the MIDDLE EAST row below by the
+         Garland logic that already put Córdoba and Baghdad there.
+       · Edinburgh — `scotsfiddle`, Nathaniel Gow's firm at 41 North
+         Bridge; 66 km east of Glasgow, which is the Basildon distance
+         doubled and clears the arc check the way Bray did. */
+    "Edinburgh": [55.95, -3.19], "Medina": [24.47, 39.61],
     "St. Louis": [38.63, -90.20], "Stourbridge": [52.46, -2.15],
     "Swindon": [51.56, -1.78], "Taipei": [25.03, 121.57],
     "Tampa": [27.95, -82.46], "Teaneck": [40.89, -74.02],
@@ -596,6 +607,10 @@
     carnatic:       { place: "Chennai", year: 1935 },
     gagaku:         { place: "Nara", year: 752 },
     ziryab:         { place: "Córdoba", year: 822 },
+    qiyan:          { place: "Medina", year: 705 },
+    hardingfele:    { place: "Oslo", year: 1849 },
+    tasnif:         { place: "Tehran", year: 1924 },
+    scotsfiddle:    { place: "Edinburgh", year: 1796 },
     dufay:          { place: "Florence", year: 1436 },
     ballad:         { place: "London", year: 1666 },
     operaseria:     { place: "London", year: 1724 },
@@ -860,7 +875,11 @@
                // Sheffield, Bucharest and Maramureș — plain European
                // geography, the horror stage, Warp's town, the lăutari's
                // neighbourhood and Bartók's collecting ground.
-               "Bray", "Sheffield", "Bucharest", "Maramureș"],
+               "Bray", "Sheffield", "Bucharest", "Maramureș",
+               // ...and the unlocking round's one (2026-08-30):
+               // EDINBURGH, plain European geography, the second
+               // Scottish dot and the Gow family's publishing town.
+               "Edinburgh"],
     "North America": ["Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
                       "Chicago", "Cincinnati", "Cleveland", "Detroit",
                       "Greenwich Village", "Harlem", "Clarksdale", "Kansas City", "Lafayette",
@@ -950,8 +969,16 @@
     // OXYRHYNCHUS is Egypt, the same Garland ruling that put Cairo here;
     // that its one record is a CHRISTIAN hymn in Greek does not move the
     // dot, any more than zema's church moved Aksum out of Africa.
-    "Middle East": ["Baghdad", "Cairo", "Córdoba", "Istanbul", "Oran",
-                    "Oxyrhynchus", "Tehran", "Tetouan", "Ugarit", "Ur"],
+    // ...AND MEDINA JOINS (2026-08-30, the unlocking round) — the row's
+    // first dot on the Arabian peninsula and the oldest Arab record on
+    // the map, `qiyan` (Medina 705), ninety-five years upstream of the
+    // Baghdad dot beside it and a hundred and seventeen upstream of the
+    // Córdoba one. No Garland argument is even needed here: the Hejaz is
+    // the Middle East by every filing anyone has ever used, and the two
+    // rows it parents are already in this row.
+    "Middle East": ["Baghdad", "Cairo", "Córdoba", "Istanbul", "Medina",
+                    "Oran", "Oxyrhynchus", "Tehran", "Tetouan", "Ugarit",
+                    "Ur"],
     "Central Asia": ["Kabul"],
     // THE NINTH REGION OPENS, 2026-08-30 (the ledger round). It was
     // declared EMPTY below with the sentence "one re-bake of the

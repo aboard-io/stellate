@@ -540,3 +540,92 @@ on renders:
 - **build.js now writes `dsp/*.lib` into libfaust's virtual filesystem** before
   compiling, which is what lets two modules `import` one tract instead of
   carrying two copies of it.
+
+## The BOW — an erhu, and the registry's first Chinese instrument (2026-08-30)
+
+`dsp/erhu.dsp`. Model `erhu` in state-engine `pitchedUnit`; `nukernel/audio/
+to-engine.js` SYNTH names it, so a chair with `synth:{dsp:"erhu"}` reaches it.
+
+WHY IT IS A MODEL AND NOT A RECORDING, measured rather than asserted: every
+soundfont in this tree is General MIDI bank 0 — 128 presets, and
+`found/samples/instruments/_gm-extract-summary.json` lists all of them — and
+General MIDI has **no erhu, no dizi, no pipa and no sheng**. The nearest ids are
+other countries' instruments: GM 111 Shenai (a North Indian shehnai), 107 Koto
+and 106 Shamisen (Japanese), 104 Sitar (Indian), 77 Shakuhachi (Japanese), 109
+BagPipe, 15 Dulcimer. Grepping all eleven alternate font manifests for erhu /
+dizi / pipa / sheng / guzheng / guqin / suona / yangqin / ruan / jinghu returns
+**nothing, in any of them**. So the sampler cannot get there from here.
+
+`nukernel/genres.js` has refused the `guoyue` cell on precisely that and named
+its own price — *"EMPTY until the registry holds an erhu, a dizi, a pipa or a
+sheng"* — and `sizhu`'s `cannot` names the missing gesture: *"the erhu's
+continuous portamento between the notes"*. This module is the engine half of
+the answer. **Whether any genre casts it is the catalogue's call, not this
+file's**, and as of this writing nothing does.
+
+EVERY STRUCTURAL DECISION IS THE ZIM'S (Wikipedia "Erhu",
+`wikipedia_en_all_maxi_2026-02`, the only evidence the offline law admits) — the
+dsp header quotes each sentence beside the line it produced:
+
+| the article says | the module does |
+|---|---|
+| "covered with **python skin** on the front"; "the python skin is the primary tone-producing surface … with either **no back**, but the violin has a **sound post** that couples the top and the back" | the body is ONE membrane bank and there is no second radiator, no coupled cavity, no plate |
+| a circular membrane (implied by the skin) | six modes at j(m,n)/j(0,1) — 1, 1.5933, 2.1355, 2.2954, 2.6531, 2.9173 — **computed** from the Bessel zeros, and `test/erhu.test.js` E1 recomputes them and fails on drift |
+| "a small loop of string (**qiān jīn**) … acting as a nut" | the upper termination is a soft cord — a lowpass, not a leak: it gives more back than the bridge does, which is the point |
+| "**fretless** … hua yin (slides)" | pitch IS the delay length, so `glide` bends a sounding string (`slideParam`, the guitar's contract, 0.09 s) |
+| "inside string … **D4** … outside **A4**"; "maximum range … **from D4 up to A7**" | `freqMin` 293.66, `freqMax` 3520; the string the note is on is chosen by pitch and flips the bow's sign |
+| "the bow … **passes between** them"; "pushes … when bowing the A string … pulls … the inside D" | `bowSign` is a function of which string, not a performance choice |
+| "the bow **rests on the barrel**" | `bowPos` is measured **from the bridge** |
+| "**qín diàn**, pad … between the strings and skin below the bridge" | `pad` damps the membrane's Q and the bridge's reflection |
+
+MEASURED (all in `test/erhu.test.js`, off the real `dist/erhu-module.wasm`):
+
+- **In tune to 0.0 cents** at D4, A4, D5, A5 and A6, and −1.0 at A7 — no fitted
+  correction term. The loop is exactly `P` because the two symmetric FIR
+  terminations are one sample each and Faust's `~` is one sample each.
+- **It sustains**: late/early RMS 0.83–1.02 over 1.5 s of held note. A bow puts
+  energy in; a pluck does not.
+- **The body stays put**: the loudest partial of a D4 and of a D5 is the SAME
+  1175 Hz. Retuning `skin` 800 → 1800 Hz moves it 587 → 1762 Hz and moves the
+  string's pitch by under 12 cents. That is a resonator, not a tone control.
+- **Not a violin patch**, against `pm.violinModel` compiled and rendered in the
+  same file at the same pitch: spectral centroid **1947 Hz vs 938**, and
+  membrane-band over low-band energy **0.70 vs 0.09**.
+- **Velocity is a bow arm** (`MODEL_DYN.erhu` moves `force` and `speed`):
+  centroid ×1.65 at D4, ×1.19 at A4. It INVERTS at the top (×0.86 at A5) and
+  the table says so — up there the string's partials are already above the
+  skin's modes.
+- **Priced, not defaulted**: `COST.erhu` 0.94 against pad_saw, measured
+  min-of-3 over 8 s at 48 kHz with `voice_lead` (2.51 vs its committed 2.4) and
+  `modeld` (1.58 vs 1.48) as controls in the same run. One delay loop and six
+  `resonbp`s is cheap for a physical model.
+- **Level-fitted** to `stk_guitar`: 0.0039 RMS / 0.0111 peak at A4 against its
+  0.0039 / 0.0231, both at their own defaults, which is why `PAGE_TRIM.erhu`
+  takes the guitar's 1.78 and is labelled DERIVED.
+
+THREE THINGS THIS MODULE IS NOT, said out loud:
+
+1. **`skin` is a CHOICE, not a measurement.** Neither this tree nor the ZIM
+   article carries a measured python-skin resonance — the article has no
+   acoustics section — so 1180 Hz is the one number in the file that nobody
+   measured. It is a slider for exactly that reason, and Paul's ears are the
+   backstop for it.
+2. **One string sounds at a time.** The model has the erhu's two tunings and
+   picks between them; it does not run two strings with sympathetic coupling.
+3. **The bow does not run out.** A real bow reverses; this one draws forever.
+   Bow changes are a phrasing fact the scheduler would have to say, and it
+   cannot say it yet.
+
+WHAT IT COST, and the two dead ends, because the next person should not pay
+them again:
+
+- The first version put `bowPos` **from the nut**. Measured, the model came back
+  with its fundamental 16–83 dB below its own loudest partial at every pitch,
+  oscillating on the third and the fifth, and 88 cents sharp at A6. Read from
+  the bridge instead: within a cent at every pitch, fundamental on top. One
+  number.
+- The first version summed the two travelling waves for its output. That put a
+  comb between two taps 112 samples apart at D4, whose second null landed at
+  295 Hz — **the fundamental** — which is the same failure `stk_guitar`'s header
+  records for the waveguide it replaced, reached by a different road. The tap is
+  the bridge, and only the bridge.

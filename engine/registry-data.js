@@ -1003,6 +1003,35 @@
     violin: { label:"Violin (FluidR3, MIT)", dir:"violin", sr:44100, zones:[{file:"z00_r56.wav",root:55.85,lo:0,hi:58,loop:1,ls:55974,le:64117},{file:"z01_r65.wav",root:65,lo:65,hi:67,loop:1,ls:50770,le:59099},{file:"z02_r74.wav",root:74.157,lo:72,hi:74,loop:1,ls:67663,le:75312},{file:"z03_r83.wav",root:82.837,lo:81,hi:83,loop:1,ls:58675,le:66559},{file:"z04_r89.wav",root:88.954,lo:87,hi:89,loop:1,ls:50513,le:58174},{file:"z05_r98.wav",root:97.8,lo:97,hi:101,loop:1,ls:25376,le:33537}] },
     xylophone: { label:"Xylophone (FluidR3, MIT)", dir:"xylophone", sr:44100, zones:[{file:"z00_r54.wav",root:54,lo:0,hi:59,loop:0,ls:8,le:64161},{file:"z01_r66.wav",root:66,lo:66,hi:71,loop:0,ls:8,le:53880},{file:"z02_r78.wav",root:78,lo:78,hi:83,loop:0,ls:8,le:46584},{file:"z03_r84.wav",root:84,lo:84,hi:89,loop:0,ls:8,le:43952},{file:"z04_r96.wav",root:96,lo:96,hi:101,loop:0,ls:8,le:29160},{file:"z05_r108.wav",root:108,lo:108,hi:127,loop:0,ls:8,le:23032}] },
     yamaha_grand_piano: { label:"Yamaha Grand Piano (FluidR3, MIT)", dir:"yamaha_grand_piano", sr:44100, zones:[{file:"z00_r26.wav",root:26,lo:0,hi:26,loop:1,ls:235512,le:302497},{file:"z01_r42.wav",root:42,lo:39,hi:42,loop:1,ls:166050,le:214439},{file:"z02_r58.wav",root:58,lo:55,hi:58,loop:1,ls:72608,le:120644},{file:"z03_r70.wav",root:70,lo:67,hi:70,loop:1,ls:70933,le:97968},{file:"z04_r90.wav",root:90,lo:85,hi:90,loop:1,ls:55512,le:83140},{file:"z05_r108.wav",root:108,lo:105,hi:108,loop:1,ls:16604,le:17548}] },
+    // ---- THE SFX SHELF (2026-08-30, the registry lane) -------------------
+    // GM 120-127 minus 122: the eight FluidR3 presets extract-gm.js wrote to
+    // found/samples/instruments/ in the sampled-by-default pass and NOTHING
+    // ever registered, so `sea_shore` (GM 122) has been the library's only
+    // SFX-bank recording and the other eight came back `unrouted` from
+    // audio/to-engine.js recipeFor — a sound on disk with no name that
+    // reaches it. Every row below is a PROJECTION of its own zones.json,
+    // printed by engine/faust/build/samplers-row.js (whose text output is
+    // byte-identical to the committed sea_shore row above — that is the
+    // check that makes "extracted" a fact rather than a claim), never typed.
+    // APPENDED rather than filed alphabetically on purpose: applySampledOnly
+    // walks Object.keys(SAMPLERS) to ride zone wavs onto state.foundSources,
+    // so a row inserted mid-table would move every later record's source
+    // list. At the end, nothing that exists moves.
+    // Each is ONE zone spanning the whole keymap — they are recordings of an
+    // event, not of a note, which is what "thin" meant in extract-gm.js's log
+    // and why the roots are what they are (bird_tweet 60, breath_noise 105,
+    // reverse_cymbal 79, fret_noise 63). Two LOOP and six do not, and the
+    // difference is the sound's own: helicopter and applause sustain (a bed),
+    // a gunshot, a phone, a bird, a swept cymbal, a breath and a fret squeak
+    // happen once (a hit). The loop flags are read off the font, not chosen.
+    gun_shot: { label:"Gun Shot (FluidR3, MIT)", dir:"gun_shot", sr:44100, zones:[{file:"z00_r60.wav",root:60,lo:0,hi:127,loop:0,ls:32,le:61544}] },
+    helicopter: { label:"Helicopter (FluidR3, MIT)", dir:"helicopter", sr:44100, zones:[{file:"z00_r60.wav",root:59.61,lo:0,hi:127,loop:1,ls:9224,le:29264}] },
+    applause: { label:"Applause (FluidR3, MIT)", dir:"applause", sr:44100, zones:[{file:"z00_r60.wav",root:60,lo:0,hi:127,loop:1,ls:72192,le:128516}] },
+    telephone: { label:"Telephone (FluidR3, MIT)", dir:"telephone", sr:44100, zones:[{file:"z00_r60.wav",root:60,lo:0,hi:127,loop:0,ls:8,le:123245}] },
+    bird_tweet: { label:"Bird Tweet (FluidR3, MIT)", dir:"bird_tweet", sr:44100, zones:[{file:"z00_r60.wav",root:60,lo:0,hi:127,loop:0,ls:8,le:61993}] },
+    reverse_cymbal: { label:"Reverse Cymbal (FluidR3, MIT)", dir:"reverse_cymbal", sr:44100, zones:[{file:"z00_r79.wav",root:79,lo:0,hi:127,loop:0,ls:8,le:90633}] },
+    breath_noise: { label:"Breath Noise (FluidR3, MIT)", dir:"breath_noise", sr:44100, zones:[{file:"z00_r105.wav",root:105,lo:0,hi:127,loop:0,ls:8,le:8450}] },
+    fret_noise: { label:"Fret Noise (FluidR3, MIT)", dir:"fret_noise", sr:44100, zones:[{file:"z00_r60.wav",root:63,lo:0,hi:127,loop:0,ls:8,le:11661}] },
   };
   D.PERCBANK = { dir:"standard", sr:44100, hits:{
     sideStick:{file:"sideStick.wav",note:37,len:64000}, clap:{file:"clap.wav",note:39,len:16896},

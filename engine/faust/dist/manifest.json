@@ -3826,6 +3826,25 @@
    "/DX7/gate"
   ]
  },
+ "erhu": {
+  "inputs": 0,
+  "outputs": 1,
+  "params": [
+   "/erhu/bowPos",
+   "/erhu/force",
+   "/erhu/freq",
+   "/erhu/gain",
+   "/erhu/gate",
+   "/erhu/glide",
+   "/erhu/level",
+   "/erhu/pad",
+   "/erhu/release",
+   "/erhu/skin",
+   "/erhu/speed",
+   "/erhu/vibRate",
+   "/erhu/vibrato"
+  ]
+ },
  "fm2op": {
   "inputs": 0,
   "outputs": 1,

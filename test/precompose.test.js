@@ -591,8 +591,16 @@ function sectionEvents(doc, i) {
   // re-bake), muwashshah, zajal, soundsystem, jubilee, rumba, lautari,
   // doina, chazzanut. The wants that stay open are CLOSED-with-reason at
   // the round's own ledger block in genres.js.
-  ok("G0 the catalog is 369 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 369,
+  // 369 -> 373 on 2026-08-30, the unlocking round ("Unlock the missing
+  // stuff. Get qiyan working"): four rows, each the DEFEAT of a refusal
+  // this catalog had already written down and dated — qiyan (Medina 705),
+  // hardingfele (Oslo 1849), tasnif (Tehran 1924), scotsfiddle (Edinburgh
+  // 1796). Every one fell to the same method and the ledger says so: the
+  // previous shift probed one name per refusal, this one probed fifty.
+  // Kulning and the griot/jeliya row were re-probed and STAY CLOSED, both
+  // re-dated in place with the evidence that closed them.
+  ok("G0 the catalog is 373 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 373,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));

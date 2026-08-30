@@ -88,6 +88,13 @@ words that this is "not a binding provision". It is compatible with this
 repository's MIT grant, so no carve-out is needed: unlike lamejs and eSpeak NG
 above, nothing here is excluded.
 
+`engine/faust/dsp/erhu.dsp` (2026-08-30) takes ONE function from the same
+lineage through the standard library rather than by copying: `pm.bowTable` in
+`physmodels.lib`, the STK/Smith friction curve `pow(|v|+0.75, -4)`. Everything
+else in that file — the two terminations, the string selection, the membrane
+body and its Bessel-zero mode ratios, the output stage — is this project's own,
+and its header says which sentence of the source article produced each line.
+
 What was taken and what was changed is written at the top of each `.dsp` file.
 In summary: `stk_guitar.dsp` uses the extended Karplus-Strong string of
 `NLFeks.dsp` (Smith's "Virtual Electric Guitars in Faust",

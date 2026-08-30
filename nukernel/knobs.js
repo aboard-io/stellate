@@ -26,7 +26,7 @@
 //            is nothing for `voiceUnit` to be asked. The pad in ui/eight.js
 //            plots your tongue against the vowel's, which is what `artic` IS.
 //
-// THE CENSUS: 247 controls across 27 voices —
+// THE CENSUS: 255 controls across 28 voices —
 //   tract_voice 22
 //   hammond 18
 //   juno60 17
@@ -40,6 +40,7 @@
 //   voice_choir 11
 //   lead_fuzz 10
 //   fm2op 9
+//   erhu 8
 //   solina 7
 //   stk_guitar 7
 //   gtr_amp 7
@@ -62,9 +63,9 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
   return {
-    "built": "2026-08-26",
+    "built": "2026-08-30",
     "from": "nukernel/knobs-extract.js",
-    "total": 247,
+    "total": 255,
     "budget": 40,
     "census": {
       "modeld": 12,
@@ -89,6 +90,7 @@
       "stk_piano": 5,
       "gtr_amp": 7,
       "mallet": 5,
+      "erhu": 8,
       "voice_lead": 13,
       "voice_choir": 11,
       "tract_voice": 22,
@@ -3163,6 +3165,103 @@
             "step": 0.005,
             "unit": "s",
             "derived": 1.5
+          }
+        ],
+        "quiet": []
+      },
+      "erhu": {
+        "module": "erhu",
+        "role": "melody",
+        "mouth": false,
+        "cost": 2.82,
+        "rows": [
+          {
+            "key": "force",
+            "param": "force",
+            "label": "force",
+            "kind": "number",
+            "min": 0.35,
+            "max": 1,
+            "step": 0.001,
+            "unit": null,
+            "derived": 0.88
+          },
+          {
+            "key": "speed",
+            "param": "speed",
+            "label": "speed",
+            "kind": "number",
+            "min": 0.05,
+            "max": 1,
+            "step": 0.001,
+            "unit": null,
+            "derived": 0.22
+          },
+          {
+            "key": "bowPos",
+            "param": "bowPos",
+            "label": "bowPos",
+            "kind": "number",
+            "min": 0.04,
+            "max": 0.3,
+            "step": 0.0005,
+            "unit": null,
+            "derived": 0.13
+          },
+          {
+            "key": "skin",
+            "param": "skin",
+            "label": "skin",
+            "kind": "number",
+            "min": 500,
+            "max": 2600,
+            "step": 1,
+            "unit": null,
+            "derived": 1180
+          },
+          {
+            "key": "pad",
+            "param": "pad",
+            "label": "pad",
+            "kind": "number",
+            "min": 0,
+            "max": 1,
+            "step": 0.001,
+            "unit": null,
+            "derived": 0.42
+          },
+          {
+            "key": "vibrato",
+            "param": "vibrato",
+            "label": "vibrato",
+            "kind": "number",
+            "min": 0,
+            "max": 0.05,
+            "step": 0.0001,
+            "unit": null,
+            "derived": 0
+          },
+          {
+            "key": "vibRate",
+            "param": "vibRate",
+            "label": "how fast the vibrato is",
+            "kind": "number",
+            "min": 0.1,
+            "max": 12,
+            "step": 0.01,
+            "unit": "hz",
+            "derived": 5.2
+          },
+          {
+            "key": "release",
+            "param": "release",
+            "label": "release",
+            "kind": "number",
+            "min": 0.005,
+            "max": 1.5,
+            "step": 0.001,
+            "unit": "s",
+            "derived": 0.14
           }
         ],
         "quiet": []

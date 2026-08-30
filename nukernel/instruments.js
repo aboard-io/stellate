@@ -351,6 +351,13 @@
     // 73/80). The window hugs the roots so a seated wave stays a wave rather
     // than a rumble or a hiss two octaves off its own recording.
     sea_shore: [48, 84],
+    // THE EIGHT SFX SHELF ROWS (2026-08-30, the unlock round). These are the
+    // ENGINE's own windows, not a taste: SAMPLER_FLOOR_ST -12 / STRETCH +6
+    // off each zone's measured root, reported by the registry lane with the
+    // roots beside them. W5 wants a compass for any offered crate id.
+    gun_shot: [48, 66], helicopter: [48, 66], applause: [48, 66],
+    telephone: [48, 66], bird_tweet: [48, 66], reverse_cymbal: [67, 85],
+    breath_noise: [93, 111], fret_noise: [51, 69],
   };
   // `STRETCH_UP = 6` / `STRETCH_DOWN = 12` STOOD HERE AND ARE RETIRED,
   // 2026-08-28: how far past its own zone ROOTS a sample may be stretched and

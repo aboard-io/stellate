@@ -10325,8 +10325,16 @@
       // "dastgah" PAID 2026-08-30, the walls-down round: `dastgah`
       // (Tehran 1925) — the classical line every Golha arranger was
       // trained inside, forty-nine years earlier on the labels.
-      parents: { filmi: 0.3, romantic: 0.2, crooner: 0.2, dastgah: 0.2 },
-      wants: ["tasnif", "golha radio orchestra"],
+      // "tasnif" PAID 2026-08-30, the unlocking round: `tasnif` (Tehran
+      // 1924) is at the foot of this file, and the Tasnif article draws
+      // this exact line itself — "in the post-World War II period... the
+      // music of the tasnif has been affected by western popular songs.
+      // This more 'modern' type of tasnif is generally called tarane."
+      // The tarane IS this row's repertory, so the edge is the article's
+      // own sentence and the weight is the fifth this row's residue had.
+      parents: { filmi: 0.3, romantic: 0.2, crooner: 0.2, dastgah: 0.2,
+                 tasnif: 0.15 },
+      wants: ["golha radio orchestra"],
       cannot: ["the koron — the quarter-flat second that defines dastgah-e " +
                "shur, which is the same fifty cents that keeps tarab out"],
       instr: ["solo_vox", "strings", "clean_guitar"],
@@ -12469,15 +12477,48 @@
     ziryab: {
       label: "Córdoba 822", voices: 2, rate: 0.5, near: "taqsim",
       plan: "arc", bpm: 80,
-      // LINEAGE: a declared root. Ziryab was Ishaq al-Mawsili's student
+      // LINEAGE: a declared root. Ziryab was the Mawsili house's student
       // in Abbasid Baghdad and the want below is that debt in its own
       // name — the same string `taqsim` already carries, spelled the
       // same way on purpose (one missing ancestor, one spelling).
       // PAID 2026-08-29, the debts round: "abbasid court song" is
-      // `mawsili` (Baghdad 800) — Ziryab was Ishaq al-Mawsili's student
-      // before Córdoba; the root was never a root, only an undated teacher.
-      parents: { mawsili: 0.4 },
-      wants: ["the qiyan singing schools"],
+      // `mawsili` (Baghdad 800) — Ziryab studied in that house before
+      // Córdoba; the root was never a root, only an undated teacher.
+      // WHICH MAWSILI, CORRECTED 2026-08-30 (the unlocking round). This
+      // comment said ISHAQ twice, in two places, and this ZIM says the
+      // teacher was his FATHER — three articles, no disagreement.
+      // Ziryab's own: "the musician Ibrahim al-Mawsili was Ziryab's
+      // teacher", and again, "a gifted pupil of Ibrahim al-Mawsili in
+      // Baghdad, where he got his beginner lessons". Ibrahim's own: "his
+      // other pupils included the musicians Mukhariq, Zalzal and
+      // Ziryab". And Ishaq's own puts the two men on OPPOSITE sides —
+      // Ishaq "succeeded his father in leading the conservative musical
+      // establishment. This put him at odds with progressive musicians
+      // such as Ibrahim ibn al-Mahdi and Ziryab". Student, not rival,
+      // was the wrong word for the wrong man. The EDGE does not move:
+      // `mawsili` is the HOUSE and its label year, Baghdad 800, is
+      // Ibrahim's own peak (742–804, Harun al-Rashid's favourite). Only
+      // the name in the sentence was wrong, and it is a reminder that a
+      // remembered fact is not a measured one.
+      // "the qiyan singing schools" PAID 2026-08-30, the unlocking round:
+      // `qiyan` (Medina 705) is at the foot of this file, and the edge is
+      // the Qiyan article's own sentence about this row's own decade —
+      // "Qiyan-slave-girls were initially imported to al-Andalus from
+      // Medina, which was first noted during the reign of al-Hakam I
+      // (r. 796-822)". Ziryab's patron, Ziryab's years, the transmission
+      // stated rather than inferred. It takes the smaller weight because
+      // Baghdad is the nearer teacher and the Medinan singing girls are
+      // the stock the Andalusi court was buying.
+      parents: { mawsili: 0.4, qiyan: 0.2 },
+      // THE LIST DID NOT EMPTY, 2026-08-30: with both old strings paid it
+      // would have been the only place-year anchor in this file with no
+      // `wants` at all, which is a silent grey rather than a fact. The
+      // ZIM supplies a real one — Ziryab did not sail straight from
+      // Baghdad. "He then traveled first to Syria and then Ifriqiya
+      // (Tunisia) in Kairouan, where he lived at the Aghlabid court of
+      // Ziyadat Allah (ruled 816–837)": a named court with a dated reign
+      // between the two ends of this row's own lineage, and no anchor.
+      wants: ["the aghlabid court at kairouan (ziyadat allah, 816-837)"],
       cannot: ["the wusta of Zalzal — the neutral third the Baghdad " +
                "school argued about is between this table's frets, the " +
                "same wall taqsim declares for rast and bayati",
@@ -13866,12 +13907,19 @@
     // THE MAWSILI SCHOOL — Baghdad 800. The Kitab al-Aghani, the tenth
     // century's Book of Songs, documents it song by song: Ibrahim
     // al-Mawsili singing for Harun al-Rashid, his son Ishaq codifying
-    // the court repertory, named singers, named patrons, a named city
+    // the court repertory (and writing the theory: "his creation of a
+    // comprehensive theoretical system for Arab music, without Ancient
+    // Greek influence, would retain relevance into at least the 14th
+    // century"), named singers, named patrons, a named city
     // at the height of the caliphate. No notation survives — the
     // argument is documentary, the way `ballad` argues from Pepys's
     // diary — but the Aghani names the songs, and TWO rows have wanted
     // "abbasid court song" since their lineages were written: `ziryab`
-    // (Córdoba 822), who was Ishaq's own student before he sailed, and
+    // (Córdoba 822), who was IBRAHIM's own student before he sailed
+    // (corrected 2026-08-30 from "Ishaq's" — three ZIM articles agree
+    // and Ishaq's own calls Ziryab his RIVAL; the ziryab row carries the
+    // evidence and the edge does not move, because this row is the
+    // HOUSE and 800 is Ibrahim's year), and
     // `taqsim` (Cairo 1932), the maqam practice this court is the
     // documented fountainhead of. Both take it as a parent today.
     mawsili: {
@@ -13881,7 +13929,20 @@
       // Ibn Misjah, Ma'bad, the seventh-century Mecca and Medina
       // singers the Aghani itself cites as the source — has no earlier
       // datable performance to anchor; named below, not invented.
-      parents: {},
+      // ...AND THE ROOT GREW A ROOT 2026-08-30, the unlocking round.
+      // "the qiyan singing schools" is `qiyan` (Medina 705) — Azza
+      // al-Mayla's majlis, a century up this row's own documentary chain —
+      // and the Qiyan article puts THIS HOUSE inside that institution:
+      // "Ibrahim al-Mawsili (742-804 CE) is reported to have claimed that
+      // his father was the first to train... girls as qiyan". The father
+      // of the man this row is named for, in the qiyan trade, before the
+      // label year. The declared root was never a root.
+      // THE OTHER HIJAZI WANT STAYS OPEN and the reason is worth keeping:
+      // this ZIM has no Ibn Misjah article and no Ma'bad ibn Wahb article
+      // (404 at both, checked this round), so that string is still a debt
+      // even though Tuways — Ibn Surayj's own teacher — is now dated in
+      // the qiyan row's comment. Two names, one school, one payable.
+      parents: { qiyan: 0.3 },
       // ...AND THE LUTE LINE, NAMED 2026-08-30 (Paul: "look backwards in
       // time to bone flutes and lutes"): the oud this court played is the
       // short-necked end of a lineage that enters the record on Akkadian
@@ -13890,7 +13951,6 @@
       // why it is a WANT here and a comment on `urlyre` (Ur 2500 BC, the
       // catalog's deep Mesopotamian end) rather than an edge anywhere.
       wants: ["the hijazi school (ibn misjah, ma'bad)",
-              "the qiyan singing schools",
               "the barbat and the long-necked lute of the akkadian seals"],
       cannot: ["the wusta zalzal — the neutral third Zalzal of Baghdad " +
                "put on the oud in this row's own century sits a quarter " +
@@ -17469,6 +17529,32 @@
          session resolves to his kora-playing grandson's page. The
          refusal stands ON THE ZIM's silence, which is the only kind of
          evidence the offline law admits. STILL THE NEXT ASK.]
+         [RE-EXAMINED A THIRD TIME 2026-08-30, the unlocking round, and
+         THE PIN CAN NOW BE MADE — the refusal above is beaten on its own
+         terms and the row STILL does not ship, for a different and
+         better reason. Two articles agree, and neither is the Griot page
+         the last shift kept re-reading. KORA (INSTRUMENT), discography:
+         "Mali: cordes anciennes ('Mali: Ancient Strings'), Sidiki
+         Diabaté, Batourou Sekou Kouyaté and Djelimadi Sissoko, Buda
+         Music, 2000. First published in 1970, this CD was the first
+         album totally devoted to the kora." TOUMANI DIABATÉ, which
+         disambiguates the father from the grandson in one clause: "his
+         father, Sidiki Diabaté, recorded the first-ever kora album, in
+         1970." Three named players, a named record, a stated year, the
+         primary-fact rule satisfied.
+         AND THEN THE MARINGA RULE KILLS IT. `mandeguitar` — the ONLY row
+         that wants jeliya — is Bamako 1970. The record is its exact
+         contemporary, and "a record cannot parent its own contemporary"
+         is this ledger's own sentence, written about Sierra Leone and
+         binding here without amendment. The ZIM also never names a CITY
+         for the session, so the label could not be written even if the
+         edge were legal. Arthur Alberts is still 404 at every spelling
+         (Arthur_Alberts, Arthur_S._Alberts, Arthur_Alberts_(recordist));
+         Batourou Sekou Kouyaté has no article; Mande_music is an empty
+         stub, a title with no body; and Music of Mali names no earlier
+         griot record than this one. CLOSED — and the next ask is now
+         SHARP where it used to be hopeful: a pre-1970 kora or ngoni
+         recording with a PLACE on it, or nothing.]
        · A SECOND LIBRARY-BEDS ROW (DeWolfe/Bruton) — newsfanfare IS the
          London library bed at its own peak year; a second row one shelf
          over would be the massiveattack/triphop problem without the
@@ -17529,9 +17615,15 @@
     appalachia: {
       label: "Hot Springs 1916", voices: 1, bars: 8, near: "ballad",
       plan: "song", bpm: 70,
-      parents: { ballad: 0.6 },
-      wants: ["the border ballads themselves",
-              "the scots-irish fiddle at the crossing"],
+      // "the scots-irish fiddle at the crossing" PAID 2026-08-30, the
+      // unlocking round: `scotsfiddle` (Edinburgh 1796) is at the foot of
+      // this file. It is a SMALL weight and deliberately so — this row is
+      // the SUNG half, a Madison County ballad singer with nothing under
+      // her, and what the Gow assemblies gave her is the tune stock and
+      // the modal habit, not the band. `oldtime` one row down takes the
+      // larger share because a fiddle tradition parents a fiddle band.
+      parents: { ballad: 0.6, scotsfiddle: 0.1 },
+      wants: ["the border ballads themselves"],
       instr: "solo_vox",
       entry: () => 0, reg: () => 1, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
@@ -17555,9 +17647,16 @@
       instrumental: true,   // a fiddle convention — the singing tradition is `appalachia`, one row up
       label: "Galax 1935", voices: 3, bars: 8, near: "bluegrass",
       plan: "song", bpm: 126,
-      parents: { appalachia: 0.4 },
-      wants: ["the scots-irish fiddle at the crossing",
-              "the minstrel banjo (briggs' instructor, 1855)"],
+      // "the scots-irish fiddle at the crossing" PAID 2026-08-30, the
+      // unlocking round: `scotsfiddle` (Edinburgh 1796). The Strathspey
+      // article draws the edge in its own words — "in the New World, the
+      // Cape Breton strathspey differs from its Scottish cousins in that
+      // the 'snaps' can come at any point in the measure" — a New World
+      // fiddle style described as a variant of this one. The crossing is
+      // still a migration and not a music; what crossed was a repertory,
+      // and Edinburgh 1796 is where that repertory got printed.
+      parents: { appalachia: 0.4, scotsfiddle: 0.25 },
+      wants: ["the minstrel banjo (briggs' instructor, 1855)"],
       instr: ["fiddle", "banjo", "steel_string_guitar"],
       swing: 0.12,
       entry: () => 0, reg: v => [1, 0, -1][v], realize: () => "line",
@@ -17674,8 +17773,16 @@
       // LINEAGE: the Scandinavian medieval ballad and the Anglo-Scots one
       // are the same genus — the TSB and Child indices cross-reference
       // each other — so `ballad` is a real parent and not a convenience.
-      parents: { ballad: 0.4 },
-      wants: ["the hardingfele slatter", "kulning — the herding call"],
+      // "the hardingfele slatter" PAID 2026-08-30, the unlocking round:
+      // `hardingfele` (Oslo 1849) is at the foot of this file — Ole Bull's
+      // Christiania concert with Myllarguten, four years before this
+      // collection's first volume and in the same city under its older
+      // name. Lindeman collected in a country that concert had just taught
+      // to listen to its own fiddlers, which is the edge.
+      // KULNING STAYS OWED, re-probed and re-closed at the ledger block
+      // above: the article still dates nothing at all.
+      parents: { ballad: 0.4, hardingfele: 0.2 },
+      wants: ["kulning — the herding call"],
       instr: "solo_vox",
       entry: () => 0, reg: () => 0, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
@@ -18610,7 +18717,17 @@
       // fact. (`mawsili` is NOT claimed: Barbad's Persia fed Baghdad, not
       // the other way round, and a backwards edge is worse than a root.)
       parents: {},
-      wants: ["mirza abdollah's radif", "the qajar court ensembles", "tasnif"],
+      // "tasnif" CAME OFF THIS LIST 2026-08-30 WITHOUT BEING PAID, the
+      // `jumpblues` device, and the reason is the interesting part.
+      // `tasnif` (Tehran 1924) is now an anchor and it is one year this
+      // row's SENIOR on the labels — so the maringa rule would allow the
+      // edge — but a tasnif is a form INSIDE this tradition, sung by these
+      // singers in these dastgahs, not a music upstream of it. Twelve
+      // months of gramophone history is not a genealogy, and declaring
+      // this parent would assert a descent the tradition does not claim.
+      // The two rows are SIBLINGS, and the catalog can say that by leaving
+      // the edge unwritten and saying so here.
+      wants: ["mirza abdollah's radif", "the qajar court ensembles"],
       cannot: ["the tahrir — the glottal break that is Persian singing's " +
                "signature ornament has no channel (WORLD.md §5.3's wall, " +
                "still standing); the grace rate below is the crude proxy " +
@@ -18991,6 +19108,26 @@
          is a disambiguation page in this ZIM with no singer on it.
          CLOSED until a ZIM lands her article. Both wants stay on the
          books, the ledger's own device.
+         [DEFEATED 2026-08-30, the unlocking round (Paul: "Unlock the
+         missing stuff. Get qiyan working"), and the refusal above was
+         wrong in ONE CLAUSE: "the ZIM cannot say one". It can. The
+         previous shift probed a SINGLE name and stopped at it; this one
+         probed twenty-three and three came back 200 with dates on them.
+         AZZA AL-MAYLA — "(7th-century - d. 705) was a Medinan Qiyan
+         musician, composer, singer, poet and teacher", who managed "their
+         own majlis" in Medina, where "the musicians performed and
+         attracted patrons and students". TUWAYS — Medina, 8 June 632 to
+         c. 710, "an Arab singer and teacher", "an important teacher to
+         prominent Arab musicians, including Ibn Surayj". SA'IB KHATHIR
+         — d. 683, "responsible for introducing music to Medina", and
+         Azza's own teacher in Persian airs. The refusal was RIGHT about
+         Jamila (still a given-name page here, re-checked) and drew the
+         wrong conclusion from her: one absent article was read as the
+         ZIM's silence when it was only the shift's stopping point. THE
+         LESSON, WORTH MORE THAN THE ROW: a refusal built on ONE probe is
+         a refusal built on nothing. `qiyan` (Medina 705) is at the foot
+         of this file, both wanters have moved the string into `parents`,
+         and Medina is on the map.]
        · THE BORDER BALLADS THEMSELVES (ballad, appalachia) — a TRUE
          ROOT, closed directionally: every datable source (Scott's
          Minstrelsy 1802, Child 1882) is younger than `ballad`'s own
@@ -19004,6 +19141,21 @@
          shift could not pin a dated collection in the ZIM's Niel Gow
          article (no year on any collection sentence). NEXT ASK with
          Gow's 1784 Collection named, if a ZIM can date it.
+         [ASKED AND HALF-ANSWERED 2026-08-30, the unlocking round. The
+         1784 Collection is STILL NOT DATEABLE HERE — Niel Gow's article
+         was re-read line by line and carries no year on any collection
+         sentence, its only dated publication reference being John Glen's
+         1895 count of his tunes. But the ask was aimed one generation
+         too far back. NATHANIEL GOW's article, one click away and never
+         opened by the shift that wrote this refusal, says "in 1796, Gow
+         started a music-selling and publishing business with William
+         Shepherd at 41 North Bridge, Edinburgh" and "between 1799 and
+         1824, he published a significant number of collections of tunes"
+         — a named performer, a named city, a street address and a
+         stated year. `scotsfiddle` (Edinburgh 1796) is at the foot of
+         this file and BOTH wanters (appalachia, oldtime) have moved the
+         string. The crossing is still a migration and not a music; what
+         got anchored is the repertory that crossed.]
        · MARINGA (palmwine, congorumba) — the rule that carries its name
          rules it: Ebenezer Calendar's Maringa Band sides are Freetown
          1950s, contemporary with `palmwine`'s own label (the ZIM's
@@ -19017,11 +19169,46 @@
          names the form and its masters (Aref, Neydavoud, Morq-e sahar)
          but no dated side; the want narrows to the pre-Qamar Gramophone
          Company Tehran sessions, NEXT ASK when a ZIM can name one.
+         [PAID 2026-08-30, the unlocking round, AND NOT BY THE ROUTE THIS
+         ASKED FOR — said plainly so nobody re-reads this as a win for the
+         narrowed want. The Gramophone Company article in this ZIM does
+         not contain the words Tehran, Iran or Persia; the pre-Qamar
+         sessions stay unnameable here. What fell is the clause above it,
+         "a record pays one debt". The MORQ-E SAHAR article: "the first
+         recording artist to sing Morqe Sahar was Qamar-ol-Moluk Vaziri
+         who sang it in 1924 at a Tehran hotel during her first formal
+         vocal performance" — a CONCERT, a year before the HMV box, on a
+         composed metrical song rather than a free avaz. Two artifacts,
+         two musics, two debts. `tasnif` (Tehran 1924) is at the foot of
+         this file; `iranpop` pays it as a parent, and `dastgah` takes it
+         OFF its wants UNPAID (the jumpblues device — a sibling form is
+         not an ancestor, and that row now says so).]
        · KULNING and THE HARDINGFELE SLATTER (nordicfolk ×2 singles) —
          the ZIM's Kulning article dates nothing ("developed centuries
          ago"), and its Hardanger fiddle article holds no dated
          collection — Grieg's op. 72 does not appear even in the ZIM's
          own Grieg article. Both stay owed; the dufay standard holds.
+         [SPLIT 2026-08-30, the unlocking round: one paid, one re-closed
+         on fresh evidence.
+         THE HARDINGFELE IS PAID, and the refusal above was hunting the
+         wrong KIND of artifact. It wanted a dated COLLECTION; the ZIM
+         holds a dated CONCERT, which is the `ziryab`/`zema` precedent
+         this file already runs — "Bull endeavored to make a concert with
+         Myllarguten in Christiania February 1849... the hall was packed
+         with 1500 excited listeners", about a fiddler the same article
+         calls "arguably the most acknowledged Norwegian folk musician to
+         this day". `hardingfele` (Oslo 1849) is at the foot of this
+         file, four years senior to the row that wanted it, and
+         nordicfolk carries the edge.
+         KULNING STAYS CLOSED, and the article is now QUOTED rather than
+         paraphrased so the next round need not re-open it to find out:
+         "high-pitched herding calls that were developed centuries ago in
+         Norway and Sweden", and "it has been used on farms in
+         stock-raising since medieval times". Two undated phrases and no
+         third. Everything else in that article is ACOUSTICS — Eklund,
+         McAllister and Pehrson measuring partials at 1 and 11 metres
+         near Dalarna — which is a laboratory and not a performance. A
+         row cannot be anchored on a spectrogram.]
        ================================================================== */
 
     // HAMMER HORROR — Bray 1958. James Bernard's score for DRACULA
@@ -19470,6 +19657,311 @@
               "the congregation, a hum under the melisma"],
       word: (v, s) => (v === 0 ? [[], [transpose(1)], [fill(1)], [rotate(2)]][s % 4]
                     : [keep(0), drop(10)]),
+    },
+
+    /* =====================================================================
+       THE UNLOCKING ROUND, 2026-08-30 ("Unlock the missing stuff. Get
+       qiyan working") — four rows, every one the defeat of a refusal this
+       file had already written down and dated. The method was the one the
+       ask named: PROBE EXHAUSTIVELY BEFORE CONCLUDING. The previous round
+       asked this ZIM one name per refusal; this one asked it fifty, and
+       four of the six fell. The probe log with its HTTP codes is in the
+       round's report; what belongs here is which sentence did the work.
+       ===================================================================== */
+
+    // THE QIYAN — Medina 705. Azza al-Mayla, whose article's first
+    // sentence is the whole payment: "Azza al-Mayla (7th-century - d. 705)
+    // was a Medinan Qiyan musician, composer, singer, poet and teacher."
+    // She and Jamila (d. 720) "was one of only two free female musicians
+    // known to have managed their own majlis... The majlis played a big
+    // role in the lively musical life of Medina, in which the musicians
+    // performed and attracted patrons and students." A named singer, a
+    // named city, a year this ZIM states — the dufay standard, met.
+    //
+    // AND SHE IS NOT ALONE ON THE PAGE. The same ZIM dates the school
+    // around her: TUWAYS (Medina, 8 June 632 – c. 710—711), "an Arab
+    // singer and teacher during the Rashidun Caliphate and early Umayyad
+    // Caliphate", who "was an important teacher to prominent Arab
+    // musicians, including Ibn Surayj"; and SA'IB KHATHIR (d. 683),
+    // "responsible for introducing music to Medina", who is named in
+    // Azza's own article as her teacher in Persian airs. Three dated
+    // Medinan musicians where the last round found none.
+    //
+    // NO NOTATION SURVIVES AND THAT IS ALREADY RULED ON: `mawsili`, this
+    // row's own child, says "the argument is documentary, the way `ballad`
+    // argues from Pepys's diary". This dot is one century further up the
+    // same documentary chain — the Kitab al-Aghani, which anchors mawsili,
+    // is where these three singers' songs are written down — so the row
+    // stands on a precedent the catalog set for its own descendant rather
+    // than on a new indulgence.
+    //
+    // BOTH WANTERS MOVE THE STRING TODAY, and the Qiyan article argues
+    // each edge in its own words. `ziryab` (Córdoba 822): "Qiyan-slave-
+    // girls were initially imported to al-Andalus from Medina, which was
+    // first noted during the reign of al-Hakam I (r. 796–822)" — Ziryab's
+    // own patron, Ziryab's own decade, the transmission stated. `mawsili`
+    // (Baghdad 800): "Ibrahim al-Mawsili (742–804 CE) is reported to have
+    // claimed that his father was the first to train... girls as qiyan",
+    // which puts the Mawsili house inside this institution a generation
+    // before its own label year.
+    //
+    // THE AXES: CAST is one trained singer and the oud she accompanies
+    // herself on — the majlis was a room, not an ensemble. ALPHABET IS
+    // DELIBERATELY NOT HIJAZ AND NOT RAST, and this is also the round's
+    // answer to the standing ask for bayati/saba/sikah: the maqam system
+    // is centuries downstream of this dot, this ZIM dates no mode to
+    // Umayyad Medina, and the walls-down rule is that a mode arrives
+    // WITH A ROW THAT PLAYS IT. No row written this round plays one, so
+    // no mode was added; this row plays the plain diatonic its own child
+    // `mawsili` plays and claims nothing it cannot cite.
+    qiyan: {
+      label: "Medina 705", voices: 2, bars: 8, near: "mawsili",
+      plan: "arc", bpm: 72,
+      // LINEAGE: a declared ROOT, and the oldest Arab dot this catalog
+      // holds. What fed it is named below rather than invented: Azza's
+      // teachers split two ways in her own article — "a student in
+      // Arabian songs of the female singers Ra'iqa, Sirin and Zerneb, and
+      // a student in Persian airs of Sa'ib Khathir and Nashit" — and
+      // neither line has a datable place-year anywhere in this ZIM.
+      parents: {},
+      wants: ["the persian airs of sa'ib khathir and nashit",
+              "the arabian song of ra'iqa, sirin and zerneb"],
+      cannot: ["both repertories at once — the article's whole claim for " +
+               "this singer is that she 'combined old and new music' in " +
+               "her art, Arabian song against Persian airs, and an anchor " +
+               "declares ONE alphabet; what ships is one half of a fusion " +
+               "whose fusing was the point",
+               "the majlis — the salon WAS the performance: patrons and " +
+               "students in the room, the qayna sometimes behind a screen " +
+               "and sometimes visible, the room answering between songs. " +
+               "A mix has no room and no screen (tapemusic's aisles, " +
+               "thirteen centuries early)",
+               "the other six arts — this ZIM says a qayna's training " +
+               "'extended well beyond singing, including for example, " +
+               "dancing, composing music and verse, reciting historical " +
+               "or literary anecdotes (akhbar), calligraphy, or shadow " +
+               "play'; this box has one of the seven and the label names " +
+               "the whole"],
+      instr: ["solo_vox", "nylon_string_guitar"],
+      entry: v => v, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
+      part: ["lead", "counter"],
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.dorian, scale: DIATONIC, artic: "legato", maxHold: 4,
+      orn: { grace: 0.35 },
+      tone: { wave: "triangle", cut: 2250, q: 0.85, atk: .025, rel: 1.3, gain: .24, verb: .42,
+              // WHO SINGS: melisma — the ornamented line both descendants
+              // inherited. Said here first, a century before Baghdad.
+              mouth: MOUTHS.melisma },
+      words: ["the qayna, the verse ornamented further on each return",
+              "her own oud, under the line she is singing"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2), fill(2)], [rotate(3)]][s % 4]
+                    : [transpose(-5), drop(3)]),
+    },
+
+    // THE HARDINGFELE SLÅTT — Oslo 1849. "Bull endeavored to make a
+    // concert with Myllarguten in Christiania February 1849, when romantic
+    // nationalism was at its very peak in Norway. The concert became a
+    // commercial success, and the hall was packed with 1500 excited
+    // listeners" — this ZIM's own sentence about Torgeir Augundsson
+    // (1801–1872), "arguably the most acknowledged Norwegian folk musician
+    // to this day", who "laid the ground for a brand new way of playing
+    // the hardanger fiddle in Telemark". Christiania is spelled Oslo by
+    // the Kinshasa rule, which `nordicfolk` four years downstream already
+    // invokes for its own dot; the two rows now share a city and are four
+    // years apart, the Cairo 1932/1964 arrangement in miniature.
+    //
+    // THE REFUSAL THIS DEFEATS said "its Hardanger fiddle article holds no
+    // dated collection — Grieg's op. 72 does not appear even in the ZIM's
+    // own Grieg article". Still true, and beside the point: the dot is not
+    // a COLLECTION but a dated concert, the `ziryab`/`zema` precedent (a
+    // documented arrival, not a record). The refusal looked for one kind
+    // of artifact and the ZIM held the other.
+    //
+    // THE AXES: SOUND is the whole row and it is said with two chairs, not
+    // with a cannot. The article: "The player usually bows on two of the
+    // upper strings at a time, and sometimes three... The objective is to
+    // create a continuous sound of two (or more...) pitches." So the
+    // second fiddle holds the drone string against the first's tune — the
+    // double stop cast as a pair, the way `mbuti` cast hocket with masks.
+    hardingfele: {
+      instrumental: true,   // a slått is a dance tune; nobody sings on this bill
+      label: "Oslo 1849", voices: 2, bars: 8, near: "nordicfolk",
+      plan: "song", bpm: 128,
+      // LINEAGE: `nordicfolk` is NOT a parent and the maringa rule is why
+      // — Oslo 1853 is this row's junior by four years, and an edge cannot
+      // point at a record younger than its child. The instrument's own
+      // ancestry is dated and unmusical ("The earliest known example of
+      // the hardingfele is from 1651, made by Ole Jonsen Jaastad in
+      // Hardanger"): a fiddle is not a repertory. The teachers Myllarguten
+      // names — Knut Lurås, Håvard Gibøen — have no dated performance.
+      parents: {},
+      wants: ["knut lurås and håvard gibøen's telemark slåtter",
+              "the bygdedans repertory before the concert hall"],
+      cannot: ["the understrings — 'four of the strings are strung and " +
+               "played like a violin, while the rest, named understrings " +
+               "or sympathetic strings, resonate under the influence of " +
+               "the other four'. Nothing in the registry sounds without " +
+               "being played, so the halo under every note is missing and " +
+               "the two chairs below are the bowed half only",
+               "scordatura — 'in Norway, more than 20 different tunings " +
+               "are recorded', and troll tuning (A-E-A-C♯) is what the " +
+               "fanitullen tunes ARE. A row declares one alphabet once; " +
+               "here the retuning between tunes is the tradition's own " +
+               "filing system"],
+      instr: ["fiddle", "fiddle"],
+      entry: () => 0, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
+      part: ["lead", "riff"],
+      kit: {}, nobass: true, harmony: "modal",
+      mode: MODES.mixo, scale: DIATONIC, artic: "staccato", maxHold: 2,
+      orn: { grace: 0.4, pass: 0.15 },
+      tone: { wave: "sawtooth", cut: 2700, q: 1.0, atk: .008, rel: .35, gain: .26, verb: .3 },
+      words: ["the fiddle, the slått turning on itself",
+              "the second string, held under it — the double stop"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [rotate(4)], [fill(2), transpose(2)]][s % 4]
+                    : [keep(0, 4, 8, 12), transpose(-7)]),
+    },
+
+    // TASNIF — Tehran 1924. "The first recording artist to sing Morqe
+    // Sahar was Qamar-ol-Moluk Vaziri who sang it in 1924 at a Tehran
+    // hotel during her first formal vocal performance" — this ZIM's own
+    // sentence, in its Morq-e sahar article. A named singer, a named song,
+    // a named city, a stated year, one year BEFORE the sides that anchor
+    // `dastgah`. The song is the form's most famous example, "written by
+    // Mohammad-Taqi Bahar and composed by Morteza Neidavoud in the early
+    // 20th century under the wake of Iranian constitutional revolution",
+    // and the Tasnif article names the same wave: "A large number of
+    // tasnifs were composed during the first two decades of the twentieth
+    // century. Many of them are based on patriotic themes reflecting the
+    // spirit of the constitutional movement of that period."
+    //
+    // THE REFUSAL'S NAMED ASK WAS NOT MET, AND THE ROW SAYS SO. The ledger
+    // round narrowed the want to "the pre-Qamar Gramophone Company Tehran
+    // sessions"; this ZIM's Gramophone Company article does not contain
+    // the words Tehran, Iran or Persia, and that ask stays unanswerable
+    // here. What fell instead is the refusal's OTHER clause — "a record
+    // pays one debt". `dastgah`'s dot is the 1925 HMV BOX. This is a
+    // concert in a hotel a year earlier, a different artifact of a
+    // different music (a composed metrical song against a free-rhythm
+    // avaz), so the one-debt rule is satisfied in its letter and in the
+    // reason it exists. The comment names the tension rather than hiding
+    // that the two dots are one singer twelve months apart.
+    //
+    // THE AXES: TIME is the entire difference from `dastgah` one row over.
+    // An avaz has no bar and takes half speed with everything tied; a
+    // tasnif is "a composed song in a slow metre", the article's words,
+    // and this row COUNTS. Same alphabet, opposite clock.
+    tasnif: {
+      label: "Tehran 1924", voices: 2, bars: 8, near: "dastgah",
+      plan: "song", bpm: 78,
+      // LINEAGE: a declared ROOT under protest. `dastgah` is NOT a parent
+      // — Tehran 1925 is this row's junior by a year and the maringa rule
+      // forbids the edge — though the radif is plainly the mode stock both
+      // draw on, and the catalog holds nothing older that says so.
+      parents: {},
+      wants: ["the qajar court song the tasnif was metred out of",
+              "aref qazvini's constitutional songs"],
+      cannot: ["the metre itself, named honestly — the article says 'a " +
+               "slow metre' and stops. Persian tasnif cycles have names " +
+               "this ZIM does not attach to this song, so what ships is a " +
+               "bar of four and the row does not invent a cycle it cannot " +
+               "cite",
+               "the second stanza — the fact this ZIM keeps about this " +
+               "song is that Reza Shah 'banned' its political half 'from " +
+               "1925 until his forced abdication in 1941' while the first " +
+               "stanza 'was often sung publicly'. A form whose sections " +
+               "carried DIFFERENT RISKS in different rooms has a shape no " +
+               "arrangement can hold; every section here plays to the " +
+               "same room"],
+      instr: ["solo_vox", "nylon_string_guitar"],
+      entry: v => v, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
+      part: ["lead", "counter"],
+      kit: {}, nobass: true, harmony: "modal", intro: "solo",
+      mode: MODES.shur, scale: MODES.shur, artic: "legato", maxHold: 3,
+      orn: { grace: 0.4, pass: 0.15 },
+      tone: { wave: "triangle", cut: 2250, q: 0.9, atk: .02, rel: 1.0, gain: .25, verb: .4,
+              mouth: MOUTHS.melisma },
+      words: ["the singer, the strophe returning, ornamented at the turn",
+              "the tar, answering inside the bar this time"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [fill(2), rotate(2)]][s % 4]
+                    : [transpose(-5), drop(4)]),
+    },
+
+    // THE SCOTS FIDDLE — Edinburgh 1796. "In 1796, Gow started a music-
+    // selling and publishing business with William Shepherd at 41 North
+    // Bridge, Edinburgh, which continued until Shepherd's death in 1813",
+    // and "between 1799 and 1824, he published a significant number of
+    // collections of tunes": Nathaniel Gow (1763–1831), Niel Gow's fourth
+    // son, "a celebrated performer, composer and arranger of tunes, songs
+    // and other pieces on his own right", with about 200 tunes of his own
+    // and the leadership of "many bands... at many assemblies such as the
+    // Caledonian Hunt Balls". A named performer, a named city, a street
+    // address and a stated year.
+    //
+    // THE REFUSAL'S NAMED ASK WAS NOT MET, AND THE ROW SAYS SO. The ledger
+    // round asked for "Gow's 1784 Collection... if a ZIM can date it": it
+    // cannot. Niel Gow's article was re-read line by line this round and
+    // still carries no year on any collection sentence — its only dated
+    // publication reference is John Glen's 1895 count of his tunes, which
+    // is a century of hindsight and not a fiddler's book. THE SON'S HOUSE
+    // IS DATED WHERE THE FATHER'S BOOK IS NOT, so the label sits on
+    // Edinburgh 1796 and the comment refuses to move the year onto the
+    // more famous name (the `jingju` rule, applied to a family instead of
+    // to a star).
+    //
+    // THE AXES: FORM is the payload, and the Strathspey article states it
+    // as a law rather than a tendency — "traditionally, a strathspey will
+    // be followed by a reel, which is in 2/2 with even eighth-notes, as a
+    // release of the rhythmic tension created during the strathspey". That
+    // sentence is the `paces` row below: the dotted sections hold steady
+    // and the release sections push. A set, not a tune.
+    scotsfiddle: {
+      instrumental: true,   // a ball band; the song tradition is a different room
+      label: "Edinburgh 1796", voices: 3, bars: 8, near: "oldtime",
+      plan: "song", bpm: 116,
+      // THE STRATHSPEY-THEN-REEL SET AS DATA: the tension sections at the
+      // written tempo, the release sections at half again, exactly the
+      // relation the article names. Sanban's lesson from `jingju` holds —
+      // a pace word is a ratio a band can feel, not a metronome mark.
+      // PRECHORUS IS NAMED because it would otherwise sit unpaced between
+      // the two halves of the set and put a bar of the written tempo
+      // inside the strathspey — measured, not assumed (compose deals
+      // PLANCUE's word, and "prechorus" is its own key).
+      paces: { verse: "steady", prechorus: "steady", chorus: "push",
+               solo: "push" },
+      // LINEAGE: a declared ROOT. The tradition behind it is the pre-
+      // publication bygde repertory the Menzies manuscript of 1749 is the
+      // earliest NAME for — dated, but anonymous and placeless in this
+      // ZIM, which is the dufay standard's other half failing — and the
+      // pipe repertory the fiddle borrowed its ornaments from. Both owed
+      // below.
+      parents: {},
+      wants: ["the menzies manuscript's dance strathspeys (1749)",
+              "the highland pipe repertory the bow imitates"],
+      cannot: ["the Scotch snap said exactly — 'dotted rhythms (both " +
+               "long-short and short-long \"Scotch snaps\"), which in " +
+               "traditional playing are generally somewhat exaggerated " +
+               "rhythmically'. The exaggeration is the style and this " +
+               "box's swing leans one way only; the snap that goes " +
+               "SHORT first has no channel, and `artic` below is the " +
+               "crude proxy for the pair",
+               "the bowing — hack bowing, snap bowing and the driven bow " +
+               "are what this ZIM says distinguishes Scottish fiddling " +
+               "from Irish, and a chair has articulation but no arm"],
+      instr: ["fiddle", "fiddle", "steel_string_guitar"],
+      entry: () => 0, reg: v => [1, 0, -1][v], realize: () => "line",
+      part: ["lead", "riff", "riff"],
+      kit: {}, harmony: "cycle",
+      roots: [0, 0, 4, 0, 0, 5, 4, 0], mode: MODES.ionian,
+      scale: SCALES.major, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "fifths",
+      orn: { grace: 0.35, pass: 0.15 },
+      tone: { wave: "sawtooth", cut: 2800, q: 1.0, atk: .006, rel: .3, gain: .26, verb: .26 },
+      words: ["the first fiddle, the strathspey's dotted turn",
+              "the second, the octave under it at the assembly",
+              "the guitar, the ball's own floor"],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [rotate(2)], [fill(2), transpose(4)]][s % 4]
+                    : v === 1 ? [keep(0, 2, 4, 6, 8, 10, 12, 14), transpose(-12)]
+                    : [keep(0, 4, 8, 12), drop(2)]),
     },
   };
 
@@ -20011,7 +20503,18 @@
                 // playing acoustic instruments at each other, every one —
                 // a takht, a ballroom orchestra, a bal's accordion and
                 // banjo, a jingju stage band, a bronze court ensemble.
-                "tarab", "waltz", "musette", "jingju", "gamelan"]],
+                "tarab", "waltz", "musette", "jingju", "gamelan",
+                // ...AND FOUR ON 2026-08-30, the unlocking round, and the
+                // cluster's own definition covers every one without
+                // stretching: a qayna with her oud in a Medina majlis, a
+                // Telemark fiddler and his drone string in a Christiania
+                // hall, a Tehran hotel's singer and tar, and two fiddles
+                // and a guitar at a Caledonian Hunt ball. `qiyan` files
+                // beside `mawsili` and `ziryab` for the reason the debts
+                // round gave when it put those two together — same court
+                // music, one generation apart — and this is the
+                // generation before both.
+                "qiyan", "hardingfele", "tasnif", "scotsfiddle"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.

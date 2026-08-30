@@ -1039,6 +1039,21 @@
     stk_guitar:  { pick: [0.12, 1], drive: [-0.05, 0.05, "rel"] },
     stk_piano:   { hammer: [0.3, 1] },
     mallet:      { hard: [0.05, 1] },
+    //   erhu.force  the bow arm, and it is TWO things because a bow arm is:
+    //                 how hard the hair is pressed into the string (the
+    //                 friction table's slope) and how fast it travels. Measured
+    //                 at equal settings across the instrument's own range, the
+    //                 spectral centroid moves x1.65 at D4, x1.15 at A4 and
+    //                 x1.20 at D5 from the soft end of this span to the hard
+    //                 one — a smaller swing than the plectrum's because the
+    //                 python skin is the loudest thing in the note and a body
+    //                 does not change with the bow. AND IT INVERTS AT THE TOP
+    //                 (x0.86 at A5, x1.00 at A6): up there the string's own
+    //                 partials are already above the skin's modes, so digging
+    //                 in adds energy BELOW the centroid rather than above it.
+    //                 That is measured, it is not a defect, and it is why the
+    //                 span is quoted per pitch rather than as one number.
+    erhu:        { force: [0.42, 1], speed: [0.14, 0.34] },
     voice_lead:  { push: [0.06, 0.95] },
     voice_choir: { push: [0.05, 0.68] },
   };
@@ -1641,6 +1656,52 @@
             ring, exPos: mp("exPos", 1, 0, 4), tilt: mp("tilt", 5, 1, 12),
             release: clamp(m.release != null ? m.release : 1.5, 0.02, 3) } };
       }
+      // ---- THE BOW (dsp/erhu.dsp) ------------------------------------------
+      // The registry's FIRST Chinese instrument, and it is a model because it
+      // could not be a recording: every soundfont in this tree is GM bank 0 —
+      // 128 presets, measured — and GM has no erhu, no dizi, no pipa and no
+      // sheng. nukernel/genres.js has refused the `guoyue` cell on exactly that
+      // ("EMPTY until the registry holds an erhu, a dizi, a pipa or a sheng"),
+      // and this case is the engine half of the answer; whether any genre casts
+      // it is the catalogue's own call.
+      //
+      // THE RANGE IS THE INSTRUMENT'S, not the model's: D4 (293.66, its own
+      // inside open string) to A7 (3520), which is Wikipedia's "the maximum
+      // range of the instrument is three and a half octaves, from D4 up to A7,
+      // before a stopping finger reaches the part of the string in contact with
+      // the bow hair". Nothing under the open string exists to be stopped, and
+      // the register law folds a line that goes there back up, in key, the same
+      // way it does for the guitar's low E. Measured in tune to 0.0 cents at
+      // D4, A4, D5, A5 and A6 and -1.0 at A7 (test/erhu.test.js E2).
+      //
+      // `slideParam` is the point of the thing. genres.js's own `cannot` on
+      // jiangnan sizhu names what the box could not say — "the erhu's
+      // continuous portamento between the notes" — and on a fretless spike
+      // fiddle that is not an ornament, it is how the left hand travels. The
+      // pitch here IS the delay length, so the slide bends a sounding string.
+      // 0.09 s is longer than the guitar's 0.06 because hua yin is a gesture
+      // and a guitar's slide is a repair.
+      case "erhu": return { ...base, module: "erhu",
+        freqMax: 3520, freqMin: 293.66, pool: role === "pad" ? 3 : 2,
+        dyn: MODEL_DYN.erhu, slideParam: "glide", slideSec: 0.09,
+        params: { ...base.params,
+          // the bow's own two, which velocity moves (MODEL_DYN.erhu above); a
+          // recipe may still seat them, and a seated value is what the dyn span
+          // moves AROUND on the units that ask for one.
+          force: mp("force", 0.88, 0.35, 1),
+          speed: mp("speed", 0.22, 0.05, 1),
+          // where the hair sits, FROM THE BRIDGE — the bow rests on the barrel.
+          bowPos: mp("bowPos", 0.13, 0.04, 0.30),
+          // the skin and the pad under it. `skin` is the one number in the
+          // module that is a choice rather than a measurement (erhu.dsp says so
+          // in its own header: neither this tree nor the ZIM article carries a
+          // measured python-skin resonance), so it is left where a recipe can
+          // reach it instead of being buried.
+          skin: mp("skin", 1180, 500, 2600),
+          pad: mp("pad", 0.42, 0, 1),
+          vibrato: clamp(m.vibrato != null ? m.vibrato : 0, 0, 0.05),
+          vibRate: clamp(m.vibRate != null ? m.vibRate : 5.2, 0.1, 12),
+          release: clamp(m.release != null ? m.release : 0.14, 0.02, 1.5) } };
       // ---- THE THROAT (dsp/voice_lead.dsp, dsp/voice_choir.dsp) ------------
       // Two seatings of ONE vocal tract (dsp/voice_tract.lib) — a glottal
       // source through the CSOUND formant tables — and the third FAMILY in here
@@ -1975,6 +2036,15 @@
     // the second-heaviest voice in the fleet after the DX7, and HEAVY_FLEET
     // below caps its pool for exactly that reason.
     voice_lead: 2.4, voice_choir: 3.8,
+    // the BOW (2026-08-30), and it is priced rather than left to the 0.6
+    // default, because a default is a guess wearing a number. Measured on this
+    // box by the same recipe the rows above used — min-of-3, 8 s of offline
+    // render at 48 kHz, against pad_saw — with two CONTROLS in the same run to
+    // prove the probe still agrees with the table: voice_lead came back 2.51
+    // against its committed 2.4 and modeld 1.58 against 1.48, both inside 5%.
+    // The erhu is CHEAP for a physical model: one delay loop and six resonbps,
+    // where the throat is fifteen interpolated formant tables.
+    erhu: 0.94,
     // and the tube, which is the most expensive voice in the fleet by a wide
     // margin — heavier than the DX7. Not measured through the same probe as the
     // rows above (it is newer than the probe run) but through realtime factors
@@ -2692,6 +2762,16 @@
                   mute: true },                   // the palm — a per-note hand on the strings (see the np block)
     stk_piano:  { cut: ["cutoff", 200, 16000] },  // the lid; the HAMMER's brightness is `hammer`, same rule
     mallet:  { cut: ["cutoff", 400, 16000] },  // likewise: the mallet's own hardness is velocity's, not a pipe's
+    // erhu takes `vib` and NO `cut`, and both halves are deliberate.
+    // ROU XIAN is a left-hand roll on a fretless string, so the module's
+    // vibrato moves the delay LENGTH — the string bends — and a pipes vibrato
+    // annotation reaching it is the real gesture rather than an amplitude
+    // wobble. There is NO `cut` because there is no filter in the module for a
+    // brightness knob to turn: what a hand changes about this instrument's top
+    // is the bow (velocity's, via MODEL_DYN.erhu) and the felt pad under the
+    // bridge, and a `cut` row here would be a knob wired to nothing — which is
+    // this box's own characteristic bug.
+    erhu:    { vib: true },
   };
 
   // ---- VELOCITY IS A CHANGE OF TIMBRE, on an instrument you play ------------
