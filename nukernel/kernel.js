@@ -2381,7 +2381,22 @@
     // the two seeded facts, read once: a hand that is not the grid, and the
     // salt that makes this genre's dice its own
     const handed = HAND_KITS[g.drumkit] === 1 && g.hand !== "exact";
-    const hum = humanOf(g.humanize != null ? g.humanize
+    // A BARE ZERO IS NOBODY TALKING (2026-08-30, "shouldn't more genres be
+    // humanized"). The document compiler writes `humanize: G.humanize || 0`
+    // (precompose.js:2417), which turned every anchor that SAID NOTHING into
+    // an anchor that said "exactly on the grid" — measured at the artifact:
+    // vaporwave/rock/bulgarian/sludge/tango/deathmetal rendered ZERO off-grid
+    // drum hits through toGenre while the same anchors jittered on the raw
+    // GENRES path. So the hand law reads a bare 0 as ABSENT and decides.
+    // A zero somebody actually chose still means the grid, and it is
+    // recognisable because the one place a person can choose it — the drum
+    // interview — writes the trio together (askable.js:125: "answers writes
+    // humanize + touch + hand together"): `touch: 0` or `hand: "exact"`
+    // rides along. An ANCHOR that wants the grid on an acoustic kit says
+    // `hand: "exact"`, which has been the opt-out since the law was written.
+    const saidHum = g.humanize != null &&
+      (g.humanize !== 0 || g.touch === 0 || g.hand === "exact");
+    const hum = humanOf(saidHum ? g.humanize
       : (handed ? HAND_HUM : null)), seed = g.kitSeed | 0;
     for (let b = 0; b < bars; b++) {
       // KIT SCHEDULE: `g.kits` is the kit read per BAR — a two-bar groove, a
