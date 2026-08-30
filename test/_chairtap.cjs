@@ -42,21 +42,16 @@ const TRIM = (arg("trim", "") || "").split(",").filter(Boolean);   // PAGE_TRIM 
   const errs = [];
   page.on("pageerror", (e) => errs.push("pageerror: " + e.message));
   await page.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
-  /* THE MUTE LEVER, IN FLIGHT. The board's unit mute writes v.lvl = 0, and
-     desk.js's own comment states lvl is read by the sampled voices and the
-     drums "and BY NOTHING ELSE" — a MODELLED chair (stk_guitar, the very
-     chairs under measurement) ignores it. So the probe extends the mute to
-     the ROUTE (dry/rev/del/genre — the same three sends the master fader
-     rides for modelled voices, desk.js's own precedent) in the served source
-     only; the tree is untouched and the lever moves nothing until a mute
-     offset exists, which only this probe sets. */
-  await page.route("**/nukernel/audio/desk.js", async (route) => {
-    const res = await route.fetch(); const b = await res.text();
-    const a = b.replace("if (o.mute) v.lvl = 0;",
-      "if (o.mute) { v.lvl = 0; v.dry = 0; v.rev = 0; v.del = 0; if (v.genre) v.genre = 0; }");
-    if (a === b) console.log("   [mute-lever] !! MATCHED NOTHING");
-    await route.fulfill({ response: res, body: a });
-  });
+  /* THE MUTE LEVER CAME OUT 2026-08-30 (the fader lane). It stood here
+     because the board's unit mute wrote v.lvl = 0 and a MODELLED chair
+     ignored lvl, so this probe extended the mute to the ROUTE in the served
+     source only. The tree itself routes the offset layer's mute AND fader to
+     modelled voices now (audio/desk.js, the offset-layer block after the
+     p.gain one — measured at the ring by test/_deskreach.cjs: mute = silence,
+     -12 dB fader = -11.5 rendered on the very chairs this probe measures),
+     so the lever would have been a second application of the same zero.
+     What it patched is what the fix landed; nothing here needs to reach into
+     the served source any more. */
   if (TRIM.length) await page.route("**/nukernel/audio/to-engine.js", async (route) => {
     const res = await route.fetch(); const b = await res.text();
     let a = b;

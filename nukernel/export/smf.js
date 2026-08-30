@@ -89,7 +89,13 @@ function keysOf(midi, perc, drumMap, dropped) {
   const list = Array.isArray(midi) ? midi : [midi];
   const out = [];
   for (const m of list) {
-    if (typeof m === "number" && isFinite(m)) out.push(Math.max(0, Math.min(127, m | 0)));
+    // NEAREST, not truncated (2026-08-30, the pitch wall): a microtonal note
+    // (fractional MIDI, cents carried in the record) quantizes HONESTLY to the
+    // nearest GM key — `| 0` floored 62.6 to 62, a wrong note, not a rounding.
+    // Integers round to themselves, so every existing .mid is byte-identical.
+    // Deliberately NO pitch-bend lane: one bend wheel per channel cannot say
+    // per-note cents on chords, and the .mid is a 12-TET creature by contract.
+    if (typeof m === "number" && isFinite(m)) out.push(Math.max(0, Math.min(127, Math.round(m))));
     else if (typeof m === "string" && perc && drumMap && drumMap[m] != null) out.push(drumMap[m]);
     else if (m != null) dropped.push(m);
   }

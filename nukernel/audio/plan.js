@@ -403,11 +403,64 @@ export function warmSources() {
   return { foundSrcs: [], samplerSrcs: [...wants].map((id) => byId[id]), speechSrc: null };
 }
 
+/* ---------- the section's own clock: PACE (2026-08-30) ----------------------
+ * ui/derive.js:697 declared, on purpose: "There is no per-section tempo
+ * control and there will not be one: the tempo is a fact about the SONG."
+ * REVERSED 2026-08-30, the five-walls round — jingju banshi, the cavatina/
+ * cabaletta, the nuba's acceleration and vilambit-to-drut are records whose
+ * FORM is a tempo shape, and that sentence refused all four at the door. The
+ * reversal keeps the sentence's TRUTH: the record still has ONE bpm (the
+ * 70..160 fence per record, engine spb = 60/bpm on both paths — live.js:259
+ * and export/wav.js:185) and the engine never learns a second one. A paced
+ * section stretches its bars in BEATS, which is the rail the tempo map
+ * already rides: the parent walk asks `barBeats` per bar and the press bakes
+ * `baseSec += beats * spb` off the same BARS table, so bar SECONDS move at
+ * the PCM on both paths with the engine's clock untouched.
+ *
+ * THE WORD IS COMPOSE'S, THE NUMBER IS THE CLOCK'S — the split lvl/LEVELS
+ * made (compose deals `lvl`, audio/desk.js knows its dB). compose.js PACES
+ * is the ladder; this table is what each word is worth, as a TEMPO
+ * multiplier, proportional the way the mensural signs were (dupla,
+ * sesquialtera): a `half` verse plays at half the record's bpm, so its bars
+ * take twice the seconds — vilambit is half the record's own base, drut is
+ * double, and the base still fences 70..160.
+ *
+ * WHY HERE AND NOT IN warpBars: the tempo map (ui/derive.js) is the record
+ * BREATHING — ±1.2% role leans, seam gestures, drift — and it must keep
+ * summing to the song the arrangement wrote. Pace is a section-sized STEP the
+ * ear is meant to hear as a step (banshi is a ladder, not a lean), applied
+ * after the breathing so the breathing rides the paced bar unchanged.
+ * Everything in the bar scales together — barSteps (the clock), the events'
+ * offsets and durations, and the box's own boxSteps sum so the automation
+ * ratio (barPlan's boxNom/boxSteps) stretches a lane over the section it
+ * hears. `steps`/boxNom keep the GRID, exactly as warpBars leaves them.
+ *
+ * ABSENT IS TODAY, to the byte: a bar whose section says no word takes no
+ * multiplication at all — not even ×1, so no float can wobble.
+ */
+const PACE_RATE = { half: 0.5, slow: 0.75, steady: 1, push: 1.5, double: 2 };
+function paceTL(tl) {
+  for (const bar of tl) {
+    const sec = SONG[bar.si];
+    const r = sec && sec.pace != null ? PACE_RATE[sec.pace] : null;
+    if (r == null || r === 1) continue;            // no word, or the word for 1
+    const k = 1 / r;
+    bar.barSteps *= k;
+    if (bar.boxSteps > 0) bar.boxSteps *= k;       // uniform over the section
+    for (const e of bar.ev) {
+      e.off *= k;
+      if (e.dur > 0) e.dur *= k;
+    }
+  }
+}
+export const paceRateOf = (w) => (w != null && PACE_RATE[w] != null ? PACE_RATE[w] : 1);
+
 // PURE over the current state: build the bar list, the cast and the translation.
 // Runs on every musical edit while playing (the "something changed" law), so it
 // must be a walk and nothing else — no fetch, no context, no node.
 export function compile() {
   TL = songBars(SONG, SLOTS, GROOVE, SWING, loopOnly, { rubato: RUBATO });
+  paceTL(TL);
   // does ANY box name a section echo time? — the one question barFx asks, asked
   // once per compile rather than once per bar (barPlan runs on the pump's clock)
   SONG_HAS_DTIME = SONG.some((b) => b && b.dtime != null);

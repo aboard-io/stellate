@@ -527,6 +527,62 @@
       b.lvl = levelWord(db * depth);
     }
   }
+
+  // ---- WHERE THE SECTION SITS IN TIME: THE PACE DEAL (2026-08-30) ----------
+  // The wall this reverses declared itself on purpose — ui/derive.js:697:
+  // "There is no per-section tempo control and there will not be one: the
+  // tempo is a fact about the SONG." REVERSED 2026-08-30 (the five-walls
+  // round; Paul: "I think we need to deal with those in the engine and make
+  // sure we have exemplars of all"), because four repertoires are refused at
+  // the door by exactly that sentence: the jingju banshi ladder, the bel canto
+  // cavatina/cabaletta pair, the nuba's staged acceleration, and vilambit-to-
+  // drut — records whose FORM is a tempo shape. The record still keeps its ONE
+  // bpm and the 70..160 fence on it is untouched; `pace` is a section WORD, a
+  // multiplier on that base, so vilambit reads as half the record's own bpm
+  // and the bpm still fences.
+  //
+  // THE LADDER, five words, proportional the way the mensural signs were —
+  // dupla and sesquialtera, ratios a band can feel rather than percentages:
+  //   half ×0.5 · slow ×0.75 · steady ×1 · push ×1.5 · double ×2
+  // The WORDS live here; the NUMBER a word is worth lives at the clock
+  // (audio/plan.js PACE_RATE) — the same split lvl already made with
+  // audio/desk.js LEVELS: compose deals words, the desk knows their price.
+  //
+  // ABSENT IS TODAY, twice over. An anchor with no `paces:` row writes no
+  // word and is byte-identical at EVERY seed — the deal below returns before
+  // its stream is even drawn, which is safe by the stream-position law
+  // because the stream is pace's OWN (gk + "/pace/" + seed), reachable by no
+  // other ballot. And at seed <= 1 a declared map is applied VERBATIM — the
+  // formOf law: reading 1 is the row as written.
+  //
+  // THE ANCHOR SYNTAX (for genres.js — the exemplar lane's side of the wall):
+  //   paces: { <role>: <word> }     e.g. { verse: "half", solo: "push",
+  //                                        outro: "double" }
+  // keyed by the role words the anchor's own plan owns (PLANCUE applies: a
+  // stored build is addressed as "build", a stored prechorus as "prechorus").
+  const PACES = ["half", "slow", "steady", "push", "double"];
+  function dealPaces(song, G, gk, f, seed) {
+    const P = G.paces;
+    if (!P) return;                                 // no row, no word, no draw
+    for (const b of song) {
+      const w = P[sectionWord(b)];
+      if (w && PACES.indexOf(w) >= 0) b.pace = w;
+    }
+    if (seed == null || seed <= 1) return;          // reading 1: the row as written
+    // The deal may lean a paced section one rung along the ladder — and only
+    // onto rungs the anchor's own row already uses, because no deal may reach
+    // a word its plan does not own (the DEALS law, verbatim). Coins are drawn
+    // unconditionally per section (the stream-position law inside this
+    // stream), so retuning one section cannot renumber its neighbours.
+    const own = {};
+    for (const k of Object.keys(P)) own[P[k]] = 1;
+    for (const b of song) {
+      const moves = chance(f, 0.25), up = chance(f, 0.5);   // every coin, always
+      if (!b.pace || !moves) continue;
+      const j = PACES.indexOf(b.pace) + (up ? 1 : -1);
+      if (j >= 0 && j < PACES.length && own[PACES[j]]) b.pace = PACES[j];
+    }
+  }
   // ---- WHERE THE PLAN AND TEMPO TABLES WENT --------------------------------
   // Two 110-row genre-keyed tables lived here — PLAN_OF (dance|song|arc) and
   // BPM (70..160) — and both moved ONTO THE ANCHORS on 2026-08-20: every
@@ -2464,6 +2520,12 @@
     // both are): `depthOf` answers 0 for those anchors, so the flat record is
     // the table's own answer rather than a second exemption to keep in step.
     dealLevels(song, G, gk, rng(ihash(gk + "/level/" + (seed == null ? 1 : seed))));
+    // ...AND THE PACE DEAL, after the ladder for the same reason the level
+    // deal is: it writes a section fact and must see the sections as they
+    // will stand. Its own genre-salted stream; an anchor without a `paces:`
+    // row returns before the stream is read (dealPaces, the absent-is-today
+    // note there).
+    dealPaces(song, G, gk, rng(ihash(gk + "/pace/" + (seed == null ? 1 : seed))), seed);
     // NO SECTION RESTATES ITS NEIGHBOUR. Two drops in a row (the dance plan
     // has them on purpose) must be two different bars of music, not one bar
     // twice with two labels — so a repeated role is FORCED apart with an
@@ -2509,6 +2571,10 @@
                 // 199 records, and `depthOf` is the one line that has to agree
                 // with the ask ("a drone must not get pop dynamics").
                 SITS, DEPTH, TAKES, levelWord, depthOf, dealLevels,
+                // THE PACE DEAL and its ladder, exported on that same law —
+                // the words are compose's, the number a word is worth is the
+                // clock's (audio/plan.js PACE_RATE)
+                PACES, dealPaces,
                 // the seam pass and its two lists, exported for the same reason
                 // the stop tables are: a policy the suite cannot read is a
                 // policy the suite can only measure indirectly

@@ -382,10 +382,23 @@ grid can and cannot say, on the page, beside the record.
    ornament density as **0% for raga is correct output**, and it is the evidence
    that funds the work.
 4. **Non-2:1 periods** — real slendro, real pelog, stretched octaves.
-   `degPitch` carries `12*Math.floor(d/a.length)`, `foldInto` steps by 12,
-   `staffPos` divides by 12. Cents buy unequal steps INSIDE an octave and
-   nothing more. **Compromise: say gamelan is out of reach, out loud, rather
-   than claim it.**
+   REVERSED 2026-08-30 (the pitch wall; Paul: "I think we need to deal with
+   those in the engine"). This entry said: *"`degPitch` carries
+   `12*Math.floor(d/a.length)`, `foldInto` steps by 12, `staffPos` divides by
+   12. Cents buy unequal steps INSIDE an octave and nothing more. Compromise:
+   say gamelan is out of reach, out loud, rather than claim it."* Now:
+   `degPitch` reads `(a.period || 12)` — a scale row carries float semitone
+   values and an optional `period` (genres.js `tuned(steps, period)`), the
+   kernel's register fold and octave word move by that period, the bridge
+   carries the sub-semitone remainder as integer `cents` beside the 12-TET
+   `pch` spelling, and `mapEvents` lands it on every voice's Hz. Proven on
+   rendered samples (`test/pitch-wall.test.js`): a +50c note's FFT peak at
+   452.89 Hz (+0.03c), an 11.8-semitone period closing at 1180.0c, slendro's
+   240c step at 240.0c. What stays 12: the pch/staff/`.mid` SPELLINGS
+   (nearest chromatic, honestly, cents in the data), the chord machinery
+   (period scales should say `harmony: modal`), and the engine's
+   register-safety folds. `staffPos` (ui/abc.js) still divides by 12 and
+   still needs its nearest-chromatic intake — the page half is open.
 5. **Timbre as the genre.** pansori's rasp, jingju's role registers, tsuyogin's
    near-pitchless declamation, throat singing, the drummers' *kakegoe* (an
    instrument that shouts is not in the registry's model). **Compromise: a

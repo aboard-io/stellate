@@ -2768,6 +2768,15 @@
       // ~83 hits the dx7's 1000 Hz cap in a register where the patch's operator
       // scaling is ~zero, giving present-but-silent bars. Hence the octave FOLD.
       let noteHz = clamp(cpspch(p.pch), 20, 1e9);
+      // THE CENTS ARRIVE HERE (2026-08-30, the pitch wall). pch is a 12-TET
+      // spelling by construction (cpspch rounds its semitone field); a note
+      // written between the semitones carries the remainder as integer cents
+      // (to-engine centsOf) and it lands on the Hz itself, BEFORE the register
+      // folds — the folds move whole octaves, so the deviation survives them —
+      // and for EVERY voice: synth freq, physical model, sampler rate are all
+      // this one number. No cents key => this line multiplies by nothing and
+      // the note is byte-identical.
+      if (p.cents) noteHz *= Math.pow(2, p.cents / 1200);
       // INSTRUMENT-REGISTER LAW: fold the note into the instrument's MUSICAL
       // range first (a flute out of its top drops an octave, staying in key), THEN
       // the sampler's technical zone fold runs as the safety net. Keyed by the GM

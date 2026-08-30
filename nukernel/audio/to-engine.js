@@ -50,6 +50,14 @@ export function pchOf(midi) {
   const semi = m - 60 - 12 * (oct - 8);
   return oct + semi / 100;
 }
+// THE CENTS THAT ROUNDING THREW AWAY (2026-08-30, the pitch wall). pchOf
+// rounds a fractional MIDI note to the nearest semitone — the pch encoding
+// is a 12-TET spelling and stays one — so the remainder is carried BESIDE
+// the pch as integer cents (-50..+50), and mapEvents multiplies it back into
+// the note's Hz for EVERY voice (freq is freq: synth slider, model delay
+// line, sampler rate alike). An integer note has zero remainder, writes no
+// key, and its event object is byte-identical to yesterday's.
+export const centsOf = (midi) => Math.round((midi - Math.round(midi)) * 100);
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number(v) || 0));
 const STEPS_PER_BEAT = 4;
@@ -572,7 +580,28 @@ const PAGE_TRIM = {
      in-flight restore of 2.55, funk -0.16 dB (its own booked rhythm-guitar
      layer taking the cut). */
   stk_guitar:  1.78,
-  stk_piano:   2.35,
+  /* stk_piano WAS 2.35, CUT ×0.766 (-2.32 dB) 2026-08-30. Paul: fix the
+     +2.3 dB the ear round measured against its whole band. The row's own
+     provenance above always confessed it ("NOT MEASURED ON THE PAGE, and the
+     only row here that is not… the one line in this file waiting on ears") —
+     the ears arrived. MEASURED before cutting (test/_deskreach.cjs,
+     mute-complement at the ring, upstream of the make-up rider; 8 bars,
+     seed 1, targets = every unit whose module is stk_piano, any chair):
+     the piano chairs' active RMS against the whole rest of their own band —
+     jazz +0.92, tradjazz +2.39 (Paul's number), parlor -0.81,
+     songwriterpiano -1.52 — where the guitar round's balanced melodic
+     chairs sit -11..-21 on the same metric. Instrument-shaped: the lever
+     was proven in flight first (this row ×0.766 moved exactly the piano
+     chairs and the rest of each band 0.00 to a hundredth).
+     RE-MEASURED AFTER THE CUT, same probe: jazz -1.05, tradjazz +0.26,
+     parlor -2.93, songwriterpiano -3.74 vs band; delivered -1.97..-2.22 dB
+     of the asked 2.32 — the channel strip's compressor hands back
+     0.1..0.35 dB on the dense stab bars, the same hand-back the guitar
+     round documented at ~1 dB. If the ear still says hot, this row is
+     still the owner. Controls held to a tenth: every record's
+     rest-of-band RMS byte-stable under the in-flight A/B, and records
+     with no stk_piano chair press byte-identical (deck.test D3). */
+  stk_piano:   1.80,
   mallet:      2.16,
   voice_lead:  8.2,
   voice_choir: 15,
@@ -1709,13 +1738,18 @@ export function toEngine(plan, deps) {
         // way acc/sld always have — carried as `mute` for the string model's
         // own hand-on-the-strings param. Absent, nothing is written and the
         // note object is byte-identical.
+        // the cents key rides only a fractional note (centsOf comment above)
+        const lc = centsOf(e.n);
         pitched.push({ voice: c.key, beat, dur: durB, pch: pchOf(e.n),
           amp: pitchAmp(e.vel, e.acc), accent: e.acc ? 1 : 0, slide: e.sld ? 1 : 0,
+          ...(lc ? { cents: lc } : {}),
           ...(e.mut ? { mute: e.mut } : {}) });
       } else if (e.kind === "bass") {
         if (e.n == null || !bassSeat) continue;
+        const bc = centsOf(e.n);
         pitched.push({ voice: "bass", beat, dur: durB, pch: pchOf(e.n),
           amp: pitchAmp(e.vel, e.acc), accent: e.acc ? 1 : 0, slide: e.sld ? 1 : 0,
+          ...(bc ? { cents: bc } : {}),
           ...(e.mut ? { mute: e.mut } : {}) });
       } else if (e.kind === "hit") {
         // A HIT AT ZERO IS SILENCE, on the record as on the page. The kit

@@ -141,8 +141,33 @@
   // A step that survives keeps every vector it had; a step that does not is
   // gated off but its degree stays, exactly like drop — lossy on the gate,
   // information-preserving underneath, so a later word can still read the line.
+  //
+  // ...AND METER-AWARE (2026-08-30, the triple-meter round — the line above,
+  // "read MODULO 16", was the dated debt). A twelve-step phrase read modulo
+  // sixteen wraps its second bar onto positions 12..15 of a bar that has no
+  // such places, so "keep the beats" silences and mis-keeps by bar parity.
+  // A phrase may carry its own bar — `p.bar`/`p.pulse`, present-only stamps
+  // document.js toPhrase writes ONLY under a declared meter — and then each
+  // authored 16-grid position is re-seated by chair.js regrid's own law
+  // ((which beat, how far into it), folded home; the law is restated here
+  // because the kernel sits below chair.js and cannot import it) and the gate
+  // is read modulo ITS bar. keep(0,4,8,12) in three keeps {0,4,8}; in six it
+  // keeps the two big beats {0,6}. A phrase with no stamp takes the identical
+  // mod-16 line it always did, to the byte.
+  const seat16 = (pos, N, pulse) => {
+    const beats = N / pulse;
+    const b = Math.floor(pos / 4) % beats;
+    const sub = Math.min(pulse - 1, Math.round((pos % 4) * pulse / 4));
+    return b * pulse + sub;
+  };
   const keep = (...steps) => { const S = new Set(steps.map((n) => n % 16));
-    return p => ({ ...p, gate: p.gate.map((b, i) => (b && S.has(i % 16) ? b : 0)) }); };
+    return p => {
+      const N = p.bar, P = p.pulse || 4;
+      if (!N || N === 16)
+        return { ...p, gate: p.gate.map((b, i) => (b && S.has(i % 16) ? b : 0)) };
+      const M = new Set([...S].map((n) => seat16(n, N, P)));
+      return { ...p, gate: p.gate.map((b, i) => (b && M.has(i % N) ? b : 0)) };
+    }; };
 
   // LIST OPERATIONS. repeat and del change the SEQUENCE, not just its gates —
   // they stretch and close it, and every vector moves together, which is why
@@ -234,8 +259,16 @@
   // ONE body for both alphabets; `pitch` and `mp` below are the two names,
   // kept because the subject-vs-chord distinction is a real one (see above),
   // not because the arithmetic ever differed.
+  // THE PERIOD IS THE ALPHABET'S, NOT THE KEYBOARD'S (2026-08-30, the pitch
+  // wall). This line hardcoded `12 *` — the gamelan refusal quoted it — which
+  // asserts every alphabet repeats at the 2:1 octave. A scale row may now
+  // carry fractional semitone values (1.5 = the quarter-flat second shur
+  // needs; 2.4 = a slendro step) and a `period` in float semitones (a
+  // property on the row, genres.js `tuned()`); absent, the period is 12 and
+  // every existing row computes the identical bytes it always has.
   const degPitch = (d, a) =>
-    a[((d % a.length) + a.length) % a.length] + 12 * Math.floor(d / a.length);
+    a[((d % a.length) + a.length) % a.length]
+      + (a.period || 12) * Math.floor(d / a.length);
   // The subject's alphabet is a GENRE fact, not a constant: blues needs the
   // flat five, and the blue note is a passing tone the pentatonic cannot say.
   const pitch = (d, sc = PENT) => degPitch(d, sc);
@@ -361,6 +394,12 @@
   // the distinction, which is why `pulse` is declared rather than computed.
   //
   //   g.meter  { steps, pulse }   present-only; ABSENT = { steps: 16, pulse: 4 }
+  //   g.meter  "three" | "six"    ...or the WORD, resolved against METERS here
+  //            (2026-08-30, the catalog path: an anchor row says its meter the
+  //            way a saved song does — song.js:846 stores only the word, "a
+  //            saved word and a live table cannot drift apart" — and ONE
+  //            resolver owns the translation. A word METERS does not know
+  //            falls to MET4, the same answer an absent meter gives.)
   //
   // Absent-is-today is a law, not an aspiration: every reader below is
   // `g.meter ? … : the old literal`, so a genre that says nothing about meter
@@ -372,7 +411,8 @@
   };
   // the bar's own arithmetic, off a genre. Total: anything without a meter is
   // sixteen steps of four, which is every genre that has ever shipped.
-  const metOf = (g) => (g && g.meter && g.meter.steps) ? g.meter : MET4;
+  const metOf = (g) => { const m = g && g.meter;
+    return (m && m.steps) ? m : (typeof m === "string" && METERS[m]) || MET4; };
   const stepsIn = (g) => metOf(g).steps;
   const pulseIn = (g) => metOf(g).pulse;
 
@@ -432,7 +472,7 @@
   const groove = (ev, name, barSteps, amount, met) => {
     const G = GROOVES[name];
     if (!G || !barSteps) return ev;
-    if (met && met.steps && met.steps !== 16) return ev;
+    if (metOf({ meter: met }).steps !== 16) return ev;   // word or object alike
     const amt = amount == null ? 1 : Math.max(0, Math.min(1, amount));
     if (!amt) return ev;
     const unit = barSteps / 16;
@@ -1074,7 +1114,7 @@
         // the FELT beat, not a quarter: an ornament leans onto the pulse the
         // bar actually counts in (6/8 has two, 3/4 has three), and absent a
         // meter it is the quarter it always was
-        const beats = Math.max(1, (g.meter && g.meter.pulse) || N / 4);
+        const beats = Math.max(1, g.meter ? pulseIn(g) : N / 4);
         const strong = stepOf(e) % beats === 0;
         if (o.roll && e.dur * rate >= 1.5 && die(e, ORNSALT.roll) < o.roll) {
           if (ratchet(list, k, die(e, ORNSALT.roll + 1) < 0.5 ? 2 : 3)) { touched = true; continue; }
@@ -1349,7 +1389,7 @@
   const chordFeel = (g, b, i, lane, N) => {
     const st = +g.stress || 0, feel = humanOf(g.touch);
     if (!st && !feel) return null;
-    let dv = st ? 2.4 * st * stressAt(i, N, g.meter && g.meter.pulse) : 0;
+    let dv = st ? 2.4 * st * stressAt(i, N, g.meter ? pulseIn(g) : 0) : 0;
     if (feel && feel.v) dv += (perfDice(g, b, i, lane, 6) * 2 - 1) * feel.v;
     return { dv, push: feel && feel.t ? (perfDice(g, b, i, lane, 4) * 2 - 1) * feel.t / g.rate : 0 };
   };
@@ -1381,7 +1421,7 @@
     for (let k = 1; k < m; k++) if (bar[k].n > bar[pk].n) pk = k;
     for (let k = 0; k < m; k++) {
       const e = bar[k];
-      let d = st ? 2.4 * st * stressAt(steps[k], N, g.meter && g.meter.pulse) : 0;
+      let d = st ? 2.4 * st * stressAt(steps[k], N, g.meter ? pulseIn(g) : 0) : 0;
       // two notes have no arch to hear, so the tent starts at three
       if (ph && m >= 3) {
         const tent = k <= pk ? (pk ? k / pk : 1) : (m - 1 - k) / (m - 1 - pk);
@@ -1431,7 +1471,13 @@
       // what a caller prints for this chair cannot differ from what it plays.
       const part = partOf(g, v), pol = g.part ? PARTS[part] || {} : {};
       const ctr = 60 + 12 * regOf(g, v), pad = part === "pad",
-            sc = g.scale || PENT, md = g.mode || MODE;
+            sc = g.scale || PENT, md = g.mode || MODE,
+            // the subject alphabet's own repeat interval (degPitch's law):
+            // the register fold and the octave word both move the line by
+            // WHOLE PERIODS of the scale it is written in, or a period scale
+            // changes pitch class every time it changes register. 12 for
+            // every row that says nothing — same bytes by construction.
+            per = sc.period || 12;
       let voicing = null;      // pad voice-leading memory: per voice, across bars
       let compv = null;        // the comping hand's voicing memory, same law
       for (let b = g.entry(v); b < bars; b++) {
@@ -1584,7 +1630,7 @@
         const on = [];
         for (let i = 0; i < N; i++) if (rgate[i]) on.push(pitch(rdeg[i], sc));
         const mean = on.length ? on.reduce((a, b2) => a + b2, 0) / on.length : 0;
-        const shift = 12 * Math.round((ctr - mean) / 12);
+        const shift = per * Math.round((ctr - mean) / per);
         // A PAD IS ONE CHORD PER BAR, HELD. Firing it on every gated step of the
         // phrase re-triggered the same three pitches sixteen times a bar, which
         // reads as a stutter rather than a pad — the harmony only changes at the
@@ -1740,9 +1786,9 @@
             const rs = rootShiftAt(i);
             const pitchOf = n == null
               ? anchored(set
-                  ? chordWalk(pitch(dg, sc) + shift + rs + 12 * p.oct[i],
+                  ? chordWalk(pitch(dg, sc) + shift + rs + per * p.oct[i],
                               rampOf(p, i, b, clamp, cmode, subj), set)
-                  : pitch(dg + rampOf(p, i, b, clamp, cmode, subj), sc) + shift + rs + 12 * p.oct[i],
+                  : pitch(dg + rampOf(p, i, b, clamp, cmode, subj), sc) + shift + rs + per * p.oct[i],
                   held * legato, set)
               : fold(n, ctr);                                    // chords voice per note
             prevN = pitchOf;
@@ -2760,7 +2806,10 @@
   // meter says otherwise, which is why every literal below reads through `u`
   // rather than through `/ 16`. Absent a meter every number here is the one
   // that was written.
-  const barMet = (met) => { const m2 = (met && met.steps) ? met : MET4;
+  // ...and it resolves through metOf (2026-08-30), so a meter that arrives as
+  // its WORD — the anchor-row spelling — counts here too instead of silently
+  // falling home to four. Object and absent behave exactly as they did.
+  const barMet = (met) => { const m2 = metOf({ meter: met });
     return { n: m2.steps, p: m2.pulse }; };
   const beatsOf = (t0, u, steps) => steps.map(s => t0 + s * u);
   // one drum event, written in the same shape drums() emits

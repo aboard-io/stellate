@@ -223,6 +223,14 @@
     "Seoul": [37.57, 126.98], "Shanghai": [31.23, 121.47],
     "Sofia": [42.70, 23.32], "South Carolina": [34.00, -81.03],
     "St. Gallen": [47.42, 9.37], "Stockholm": [59.33, 18.07],
+    /* SURAKARTA, 2026-08-30, the walls-down round: `gamelan` is dated by
+       Lokananta — "established on 29 October 1956 at Surakarta", the
+       first record label of Indonesia, whose catalog is the largest
+       collection of gamelan recordings anywhere — and geography follows
+       the catalog, never the other way round. Central Java is baked
+       land (Jakarta's dot proves the island), so the G-series land
+       check holds without a re-bake. */
+    "Surakarta": [-7.57, 110.82],
     "St. Louis": [38.63, -90.20], "Stourbridge": [52.46, -2.15],
     "Swindon": [51.56, -1.78], "Taipei": [25.03, 121.57],
     "Tampa": [27.95, -82.46], "Teaneck": [40.89, -74.02],
@@ -694,6 +702,14 @@
     miamivice:      { place: "Miami", year: 1984 },
     sitcom:         { place: "Los Angeles", year: 1983 },
     seinfeld:       { place: "Los Angeles", year: 1989 },
+    waltz:          { place: "Vienna", year: 1867 },
+    musette:        { place: "Paris", year: 1880 },
+    tarab:          { place: "Cairo", year: 1934 },
+    dastgah:        { place: "Tehran", year: 1925 },
+    jingju:         { place: "Beijing", year: 1918 },
+    khyal:          { place: "Mumbai", year: 1965 },
+    gamelan:        { place: "Surakarta", year: 1956 },
+    tapemusic:      { place: "Paris", year: 1948 },
   };
   /* WHEN:END */
 

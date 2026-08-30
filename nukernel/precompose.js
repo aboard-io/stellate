@@ -1833,10 +1833,30 @@
     const s = seed == null ? 1 : seed;
     const G = GENRES[gk];
     const R = compose(gk, s);                     // ONCE. Everything else reads R.
-    const { row } = idiomOf(gk);
+    const { row: row0 } = idiomOf(gk);
     const scale = scaleName(gk, G);                // throws by name if unnameable
 
-    const steps = stepsIn({ meter: null });        // 0 of 122 anchors declare a meter
+    // THE ANCHOR'S OWN COUNT (2026-08-30, the triple-meter round). This line
+    // read `stepsIn({ meter: null })` with the comment "0 of 122 anchors
+    // declare a meter" — which was the wall, not a fact of nature: kernel.js
+    // METERS, chair.js regrid and ideas-kit CELLS3/CELLS6 all existed, and
+    // this file was the one door that would not read the word. An anchor row
+    // says `meter: "three" | "six"` (the same word song.js:846 stores — only
+    // the word is ever written down, so a saved row and the live table cannot
+    // drift), it is validated BY NAME here, and the whole extraction below —
+    // the theme (ideas-kit metOf reads m.met and regrids its cells), the cell
+    // slices (`cb * steps`), the accents (`i % steps`) and the document's own
+    // Time axis — counts in it. An anchor that says nothing takes steps = 16
+    // and is byte-identical, which the determinism sweep holds.
+    const met = (() => {
+      if (G.meter == null) return null;
+      const m = K.METERS[G.meter];
+      if (!m) throw new Error(`precompose: anchor "${gk}" declares a meter ` +
+        `no METERS key names (meter: "three"|"six" on its GENRES row)`);
+      return m;
+    })();
+    const row = met ? { ...row0, met } : row0;     // the theme counts with the record
+    const steps = stepsIn({ meter: met });
     const cb = cellBarsOf(gk, R.song.map((b) => b.len));
     const sid = (i) => "s" + i;
     const NSEC = R.song.length;
@@ -1894,6 +1914,11 @@
       // writes nothing.
       ...(b.lvl ? { lvl: b.lvl } : {}),
       ...(b.env ? { env: b.env } : {}),
+      // ...AND ITS PACE (2026-08-30): the section's own tempo word, dealt by
+      // compose (dealPaces — an anchor row's `paces:` map, verbatim at seed 1)
+      // and carried the way lvl/env are: an EXTRACTION, present-only, so a
+      // record whose composer dealt nothing writes nothing.
+      ...(b.pace ? { pace: b.pace } : {}),
     }));
     const minBars = Math.min(...sections.map((x) => x.bars));
 
@@ -2326,7 +2351,9 @@
       basis: gk,
       time: {
         bpm: R.bpm, rate: G.rate == null ? 1 : G.rate,
-        meter: null,                               // 0 of 122 anchors declare one
+        // the WORD, never the numbers (song.js:846's own law) — and only when
+        // the anchor row says one; absent stays the null it always was
+        meter: G.meter || null,
         swing: swingOf(R, G),
         // setGroove has existed in ui/state.js:190 since the day it was
         // written and has never once been called; the groove is a SONG fact

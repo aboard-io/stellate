@@ -195,6 +195,13 @@ const GATES = [
   { name: "precompose", wave: 2, kind: "node",
     argv: ["test/precompose.test.js"],
     need: ["test/precompose.test.js"], covers: ["test/precompose.test.js"] },
+  /* THE PITCH WALL (2026-08-30, "deal with those in the engine"): cents and
+     non-2:1 scale periods, proven on rendered samples — a +50c note's FFT
+     peak at 452.89 Hz, an 11.8-semitone period closing at 1180c not 1200c,
+     and the absent-is-today no-cents-key claim for every integer record. */
+  { name: "pitch-wall", wave: 2, kind: "node",
+    argv: ["test/pitch-wall.test.js"],
+    need: ["test/pitch-wall.test.js"], covers: ["test/pitch-wall.test.js"] },
   /* THE BAND HIRED FOR THE RECORD (2026-08-28, "Fix the pool thing too"). Two
      gates and not one, because the pool's two failures are two KINDS of
      failure: what a chair may be handed and what a save carries are

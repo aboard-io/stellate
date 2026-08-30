@@ -580,8 +580,13 @@ function sectionEvents(doc, i) {
   // muzak (the debts ruling stands), the Hammer horror score, the
   // griot/jeliya row (primary-fact rule; named next ask), a second
   // library-beds row, and every umbrella the ask's plural implied.
-  ok("G0 the catalog is 350 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 350,
+  // 350 -> 358 on 2026-08-30, the walls-down round: waltz, musette,
+  // tarab, dastgah, jingju, khyal, gamelan, tapemusic — the exemplars
+  // for the five felled walls (genres.js, the walls-down block).
+  // bal-musette's own decline above was REVERSED the same day it was
+  // written (meter landed); guoyue was examined and stays EMPTY.
+  ok("G0 the catalog is 358 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 358,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
@@ -703,11 +708,20 @@ function sectionEvents(doc, i) {
      "all — absent is today, on every anchor", () => {
     const bad = [];
     for (const gk of ANCHORS) {
-      const { row } = P.idiomOf(gk), G = GENRES[gk];
+      const { row: row0 } = P.idiomOf(gk), G = GENRES[gk];
+      // THE ANCHOR'S OWN COUNT (2026-08-30, the walls-down round): this
+      // call read `P.cellOf(row, k, 1, G, 16)` while no anchor declared a
+      // meter; `waltz` and `musette` count in three now, and the door
+      // (precompose:1852) attaches `met` to the theme row and derives
+      // steps from it — so the mirror here must too, or the gate compares
+      // a twelve-step record against a sixteen-step re-derivation of
+      // itself and fails on the meter, not on a drift.
+      const met = G.meter ? K.METERS[G.meter] : null;
+      const row = met ? { ...row0, met } : row0;
       const cells = (docs.get(gk + "/1").material || {}).cells || {};
       for (const k of Object.keys(cells)) {
         if (cells[k].kind !== "line") continue;          // `beat` is the kit
-        const made = P.cellOf(row, k, 1, G, 16);          // no sixth argument
+        const made = P.cellOf(row, k, 1, G, met ? met.steps : 16);  // no sixth argument
         if (JSON.stringify(made.cell) !== JSON.stringify(cells[k])) bad.push(gk + "." + k);
       }
     }

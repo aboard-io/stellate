@@ -332,9 +332,18 @@
       // four, silently. Any note the hand extended now carries its length.
       if (k > 1 || next === "r") { hold[i] = k; written = true; }
     }
+    // THE PHRASE KNOWS ITS OWN BAR (2026-08-30, the triple-meter round).
+    // kernel.js keep() reads authored 16-grid positions, and a twelve-step
+    // phrase read modulo sixteen mis-keeps its second bar — so under a
+    // declared meter the phrase carries the two numbers keep needs to
+    // re-seat them (`bar`/`pulse`, kernel.js seat16). Present-only: a
+    // document with no meter stamps nothing and every phrase ever compiled
+    // is byte-identical.
+    const met = METERS[((doc.time || {}).meter)] || null;
     return { deg: H.deg.slice(), oct: z(), vel: (H.vel || z()).slice(),
              inc: z(), stk: z(), gate, acc: (H.acc || z()).slice(), sld: z(),
-             ...(written ? { hold } : {}) };
+             ...(written ? { hold } : {}),
+             ...(met ? { bar: met.steps, pulse: met.pulse } : {}) };
   }
 
   /* THE BOX CARRIES WHAT THE SECTION SAYS ABOUT THE BASS AND THE KIT — both
@@ -374,6 +383,13 @@
       intro: s2.intro || null, env: s2.env || null, outro: s2.outro || null,
       mot: s2.mot || null, lvl: s2.lvl || null, breath: s2.breath || null,
       pipe: s2.pipe || null, period: s2.period || null,
+      // ...AND ITS PACE (2026-08-30, the per-section-pace round): the section
+      // word that multiplies the record's one bpm under this section alone —
+      // compose deals it (dealPaces), audio/plan.js PACE_RATE is what a word
+      // is worth at the clock, the same words/numbers split lvl/LEVELS made.
+      // `|| null` like every key above it: a record that says nothing writes
+      // nothing.
+      pace: s2.pace || null,
       nudge: s2.nudge | 0 }));
   }
 
