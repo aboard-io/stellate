@@ -412,6 +412,64 @@ const GATES = [
     argv: ["test/nudges.js"], need: ["test/nudges.js"], covers: ["test/nudges.js"] },
   { name: "atlas",      wave: 3, kind: "browser", url: { flag: "--page" },
     argv: ["test/atlas.js"],  need: ["test/atlas.js"], covers: ["test/atlas.js"] },
+
+  /* ===== THE FOURTEEN THAT WERE NEVER REGISTERED (2026-08-30) ==============
+     Audited after a day that added ~25 commits: fourteen gate files existed
+     in test/ and NOT ONE was in this table — deck (the press's own
+     byte-determinism), erhu, gutter, mp3, chorus, loop-reach, loop-words,
+     pace-meter, sfx-shelf, series-bus, bench, text-diet, loopstrip and
+     grain-reach. Several were written TODAY by rounds that reported "green"
+     and moved on; a gate nobody runs is not a gate, and the runner is what
+     "runs" means on this tree. They are registered by hand ONCE, here, and
+     the closure walker (test/closure.js) picks up their coverage from now on.
+     WAVE AND KIND: the browser-shaped ones stand up their own COOP/COEP
+     server (gutter.js's header documents the pattern) and ignore an injected
+     --page, so they are declared `browser` for the BUDGET — a browser gate
+     costs 2 slots against a node gate's 1, and calling a chromium-spawning
+     gate `node` is how four cores get oversubscribed — and given no `url`,
+     which the runner already treats as "this gate finds its own page".
+     ===================================================================== */
+  { name: "deck",       wave: 3, kind: "browser",
+    argv: ["test/deck.test.js"], need: ["test/deck.test.js"],
+    covers: ["test/deck.test.js", "nukernel/export/wav.js",
+             "nukernel/export/score.js", "engine/faust/live/stream-renderer.js"] },
+  { name: "gutter",     wave: 3, kind: "browser",
+    argv: ["test/gutter.js"], need: ["test/gutter.js"],
+    covers: ["test/gutter.js", "nukernel/ui/explain.js"] },
+  { name: "chorus",     wave: 3, kind: "browser",
+    argv: ["test/chorus.js"], need: ["test/chorus.js"],
+    covers: ["test/chorus.js", "nukernel/instruments.js"] },
+  { name: "mp3",        wave: 3, kind: "browser",
+    argv: ["test/mp3.test.js"], need: ["test/mp3.test.js"],
+    covers: ["test/mp3.test.js", "nukernel/export/mp3.js",
+             "nukernel/export/mp3-encode-worker.js"] },
+  { name: "loopstrip",  wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/loopstrip.browser.js"], need: ["test/loopstrip.browser.js"],
+    covers: ["test/loopstrip.browser.js"] },
+  { name: "erhu",       wave: 2, kind: "node",
+    argv: ["test/erhu.test.js"], need: ["test/erhu.test.js"],
+    covers: ["test/erhu.test.js", "engine/faust/dsp/erhu.dsp"] },
+  { name: "sfx-shelf",  wave: 2, kind: "node",
+    argv: ["test/sfx-shelf.test.js"], need: ["test/sfx-shelf.test.js"],
+    covers: ["test/sfx-shelf.test.js", "engine/registry-data.js"] },
+  { name: "loop-reach", wave: 2, kind: "node",
+    argv: ["test/loop-reach.test.js"], need: ["test/loop-reach.test.js"],
+    covers: ["test/loop-reach.test.js", "engine/faust/voices/sampler.js"] },
+  { name: "loop-words", wave: 2, kind: "node",
+    argv: ["test/loop-words.test.js"], need: ["test/loop-words.test.js"],
+    covers: ["test/loop-words.test.js"] },
+  { name: "pace-meter", wave: 2, kind: "node",
+    argv: ["test/pace-meter.test.js"], need: ["test/pace-meter.test.js"],
+    covers: ["test/pace-meter.test.js"] },
+  { name: "series-bus", wave: 2, kind: "node",
+    argv: ["test/series-bus.test.js"], need: ["test/series-bus.test.js"],
+    covers: ["test/series-bus.test.js"] },
+  { name: "bench",      wave: 2, kind: "node",
+    argv: ["test/bench.test.js"], need: ["test/bench.test.js"],
+    covers: ["test/bench.test.js"] },
+  { name: "text-diet",  wave: 2, kind: "node",
+    argv: ["test/text-diet.test.js"], need: ["test/text-diet.test.js"],
+    covers: ["test/text-diet.test.js"] },
   { name: "producer-ui", wave: 3, kind: "browser", url: { flag: "--page" },
     argv: ["test/producer.browser.js"], need: ["test/producer.browser.js"],
     covers: ["test/producer.browser.js"] },
