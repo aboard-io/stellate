@@ -1201,11 +1201,47 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 .nu-explain h2{ margin: 0; font-size: 1rem; }
 /* the eight axis headings — the vocabulary the panel teaches. A rule above
    each, the same sentence the tray's <hr> says: "a different kind of thing
-   begins here", said in ink. */
+   begins here", said in ink. STICKY since 2026-08-30 ("it's hard to parse"):
+   the panel got long, and mid-scroll the reader always sees which axis they
+   are inside — a mini-heading pinned to the top of the scroll box while its
+   own section passes, at zero height cost. The plate colour under it is why
+   it may sit on top of rows at all. */
 .nu-explain h3{ margin: var(--s3) 0 var(--s1);
-  padding-block-start: var(--s1);
+  padding-block-start: var(--s1); padding-block-end: 2px;
   border-block-start: var(--bw) solid var(--rule);
-  font-size: .82rem; text-transform: none; }
+  font-size: .82rem; text-transform: none;
+  position: sticky; inset-block-start: calc(-1 * var(--s2));
+  background: var(--panel); z-index: 1; }
+/* THE ANCHOR STRIP (2026-08-30) — the eight axis words as one-tap jumps down
+   the panel. Each chip is a full thumb (44px, the touch law); the strip
+   spends its height ONCE at the top and is not sticky — the SLICE you are in
+   is the sticky h3's job, the JUMP is a top-of-panel gesture. Measured
+   2026-08-30: the strip is 136px tall at 320 (three wrapped rows of 44px
+   thumbs); sticky, that would have been 136px of EVERY viewport, so it is
+   spent once instead. */
+.nu-explain .nu-xnav{ display: flex; flex-wrap: wrap; gap: 2px;
+  margin-block: var(--s1); }
+.nu-explain .nu-xjump{ min-block-size: 44px; padding: var(--s1) var(--s2);
+  font-size: .72rem; }
+/* THE LINEAGE FLOW (2026-08-30: "give a sense of what leads into what") —
+   each generation one indent step (`--d`, set per line by ui/explain.js)
+   behind a `└` connector; years are data on the line, weights ride small and
+   dim; the open record is the bold middle line. */
+.nu-explain .nu-xkin{ padding-inline-start: calc(var(--d, 0) * 12px);
+  /* one FLEX line per relation: the `└` sits beside the name it points at,
+     the tappable name spends the rest of the width (it is still the 44px
+     block .nu-xgo is everywhere) — without this the block-level button
+     dropped the connector onto its own line (seen 2026-08-30, 320px) */
+  display: flex; align-items: center; gap: 2px; }
+.nu-explain .nu-xkin > .nu-xgo{ flex: 1 1 auto; inline-size: auto; }
+.nu-explain .nu-xtie{ color: var(--dim); flex: 0 0 auto; }
+.nu-explain .nu-xwt{ color: var(--dim); font-size: .72rem; }
+.nu-explain .nu-xme > b{ font-weight: 700; }
+/* the axis tables speak the page's own table language (the global `table`
+   rules: the plate, the ruled cells, the zebra) — only breathing room and
+   the fact column's weight are said here. */
+.nu-explain table{ margin-block: var(--s1); }
+.nu-explain td > b{ font-weight: 600; }
 .nu-explain .nu-xf{ padding-block: 2px; }
 .nu-explain .nu-xf > b{ font-weight: 600; }
 .nu-explain .nu-xnote{ margin: var(--s1) 0 0; color: var(--dim); }
@@ -1216,7 +1252,10 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    of chrome. The sentences themselves are genres.js `cannot`, verbatim. */
 .nu-explain .nu-xcannot{ background: var(--well);
   margin-inline: calc(-1 * var(--s3)); padding: var(--s1) var(--s3) var(--s2); }
-.nu-explain .nu-xcannot h3{ border-block-start: 0; }
+.nu-explain .nu-xcannot h3{ border-block-start: 0;
+  /* the sticky heading wears its own section's well, not the panel plate —
+     a white bar inside the tint read as a hole (seen 2026-08-30, 320px) */
+  background: var(--well); }
 /* a tappable name — a parent, a child, a neighbour, the article. 44px of
    block-size at 320 (the touch law), full-width so the target is the row and
    not the word, start-aligned because it is a line of a list and not a verb. */

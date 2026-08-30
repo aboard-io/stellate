@@ -44,7 +44,15 @@
  *       [data-live] law, read as bytes over a playing second); the parents
  *       are tappable and NAVIGATE through the atlas door; hohlefels shows
  *       its `cannot` VERBATIM against genres.js; a role shows EXCLUDE's own
- *       sentence; no sideways scroll at 320 or 1280 and 44px targets
+ *       sentence; no sideways scroll at five widths and 44px targets.
+ *       REVERSED IN FORM 2026-08-30 (Paul, on the first shipped panel: "The
+ *       question mark icon produces tons of stuff but it's hard to parse.
+ *       It should be in tables and give a sense of what leads into what.
+ *       It's very repetitive.") — T8h below holds the reversal to the
+ *       artifact: the LINEAGE FLOW is the panel's first section and its
+ *       generations are year-ordered; every axis is a <table> with no
+ *       all-empty row; and the duplicated-fact probe that MEASURED the
+ *       shipped panel's repetition now bounds it
  *
  * RUN:  NODE_PATH=/home/ford/ftrain-2025/node_modules node test/gutter.js
  *       (it stands up its own COOP/COEP server on a port the OS picks, the
@@ -676,25 +684,118 @@ function standUpServer() {
   check(t8d.root,
     "T8 · …and a record with no parents says so (a root, declared, not a blank)");
 
-  /* T8e — the widths and the thumb: no sideways scroll at 320 or 1280 with
-     the panel open, and a tappable relation is 44px of target. */
+  /* ---- T8h THE FORM REVERSAL (Paul, 2026-08-30) ------------------------ */
+  /* "The question mark icon produces tons of stuff but it's hard to parse.
+     It should be in tables and give a sense of what leads into what. It's
+     very repetitive." MEASURED ON THE SHIPPED PANEL before the rewrite
+     (2026-08-30, waltz open, text-node probe): "as written" printed 41
+     times, "a line, 12 steps" 8 times, "the row says" 3 times, 3229 chars —
+     those numbers are the dated record of what "very repetitive" was. The
+     checks below hold each of the three sentences to the RENDERED panel on
+     the same deep record (waltz: three generations up, two children). */
+  await p.evaluate(() =>
+    document.querySelector('.nu-ixrow[data-gk="waltz"]').click());
+  await p.waitForTimeout(900);
+  const t8h = await p.evaluate(() => {
+    const pn = document.getElementById("nu-explain");
+    /* 1 · "what leads into what": the flow is the panel's FIRST section,
+       ancestors above, the bold record between, children below, every
+       generation ordered by its lines' own data-year stamps */
+    const firstH3 = pn.querySelector("h3").textContent;
+    const kin = [...pn.querySelectorAll(".nu-xkin")].map((n) => ({
+      d: +n.style.getPropertyValue("--d") || 0,
+      dir: n.dataset.dir || (n.classList.contains("nu-xme") ? "me" : null),
+      year: n.dataset.year != null ? +n.dataset.year : null }));
+    const ups = kin.filter((k) => k.dir === "up");
+    const downs = kin.filter((k) => k.dir === "down");
+    const meAt = kin.findIndex((k) => k.dir === "me");
+    const genOrdered = (rows) => {
+      const byD = {};
+      rows.forEach((r) => (byD[r.d] = byD[r.d] || []).push(r.year));
+      return Object.keys(byD).every((d) => byD[d].every((y, i) =>
+        !i || y == null || byD[d][i - 1] == null || byD[d][i - 1] <= y));
+    };
+    /* 2 · "in tables": eight of them, in the page's own table language, and
+       no row whose every value cell is blank (a table of dashes is noise) */
+    const tables = pn.querySelectorAll("table").length;
+    let emptyRows = 0;
+    pn.querySelectorAll("table tr").forEach((tr) => {
+      const tds = [...tr.querySelectorAll("td")].slice(1);
+      if (tr.querySelector("td") && tds.length &&
+          tds.every((td) => !td.textContent.trim())) emptyRows++;
+    });
+    /* 3 · "very repetitive", as a bound: no text node of 10+ chars may
+       appear more than 3 times (the shipped panel had one at 8), and
+       "as written" is bounded by the voice rows — each voice's plan says
+       it at most once now, counted, never chanted (it was 41) */
+    const counts = {};
+    const walk = (n) => { for (const c of n.childNodes) {
+      if (c.nodeType === 3) { const t = c.textContent.trim();
+        if (t.length >= 10) counts[t] = (counts[t] || 0) + 1; }
+      else walk(c); } };
+    walk(pn);
+    const worst = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    const txt = pn.textContent;
+    let i = 0, aw = 0;
+    while ((i = txt.indexOf("as written", i)) >= 0) { aw++; i += 10; }
+    const voices = (window.__eightDoc().voices || []).length;
+    /* and the thumb's way down the long panel: eight one-word anchors that
+       scroll the PANEL, never the page */
+    const jumps = [...pn.querySelectorAll(".nu-xjump")].map((b) => b.textContent);
+    const wasAt = pn.scrollTop;
+    const snd = [...pn.querySelectorAll(".nu-xjump")]
+      .find((b) => b.textContent === "Sound");
+    if (snd) snd.click();
+    return { basis: window.__eightDoc().basis, firstH3,
+             ups: ups.length, downs: downs.length, meAt,
+             upGens: new Set(ups.map((k) => k.d)).size,
+             ordered: genOrdered(ups) && genOrdered(downs),
+             tables, emptyRows, worst, aw, voices, jumps,
+             wasAt, jumped: pn.scrollTop, pageY: window.scrollY };
+  });
+  check(t8h.basis === "waltz" && t8h.firstH3 === "Lineage" &&
+        t8h.ups >= 1 && t8h.upGens >= 2 && t8h.meAt > 0 && t8h.downs >= 1,
+    "T8h · the LINEAGE FLOW is the hero: first heading " +
+    JSON.stringify(t8h.firstH3) + ", " + t8h.ups + " ancestors over " +
+    t8h.upGens + " generations ABOVE, the record between (line " +
+    t8h.meAt + "), " + t8h.downs + " children BELOW");
+  check(t8h.ordered,
+    "T8h · …and every generation reads oldest-first by its own data-year");
+  check(t8h.tables === 8 && t8h.emptyRows === 0,
+    "T8h · the eight axes are eight TABLES with no all-empty row (" +
+    t8h.tables + " tables, " + t8h.emptyRows + " blank rows)");
+  check((!t8h.worst || t8h.worst[1] <= 3) && t8h.aw <= t8h.voices + 1,
+    "T8h · the repetition probe passes where the shipped panel failed " +
+    "(was 41ד as written”, 8ד a line, 12 steps”): worst 10+-char dupe " +
+    JSON.stringify(t8h.worst) + ", “as written” ×" + t8h.aw +
+    " <= voices+1 (" + (t8h.voices + 1) + ")");
+  check(t8h.jumps.length === 8 && t8h.jumped > t8h.wasAt && t8h.pageY === 0,
+    "T8h · the eight-word anchor strip jumps WITHIN the panel: scrollTop " +
+    t8h.wasAt + " -> " + t8h.jumped + ", page still at " + t8h.pageY +
+    " (" + t8h.jumps.join(" ") + ")");
+
+  /* T8e — the widths and the thumb: no sideways scroll at FIVE widths with
+     the panel open (five since 2026-08-30 — the tables and the flow's
+     indents are new geometry), and a tappable relation is 44px of target. */
+  const t8widths = {};
+  for (const wpx of [320, 375, 390, 430, 1280]) {
+    await p.setViewportSize({ width: wpx, height: wpx > 1000 ? 900 : 700 });
+    await p.waitForTimeout(350);
+    t8widths[wpx] = await p.evaluate(() =>
+      document.documentElement.scrollWidth -
+      document.documentElement.clientWidth);
+  }
   await p.setViewportSize({ width: 320, height: 700 });
-  await p.waitForTimeout(400);
+  await p.waitForTimeout(300);
   const t8e = await p.evaluate(() => {
     const b = document.querySelector("#nu-explain button.nu-xgo");
-    return { sideways: document.documentElement.scrollWidth -
-                       document.documentElement.clientWidth,
-             target: b ? b.getBoundingClientRect().height : 0 };
+    return { target: b ? b.getBoundingClientRect().height : 0 };
   });
-  await p.setViewportSize({ width: 1280, height: 900 });
-  await p.waitForTimeout(400);
-  const t8w = await p.evaluate(() =>
-    document.documentElement.scrollWidth - document.documentElement.clientWidth);
   await p.setViewportSize({ width: 390, height: 844 });
   await p.waitForTimeout(300);
-  check(t8e.sideways === 0 && t8w === 0,
-    "T8 · nothing scrolls sideways with the panel open at 320 (" +
-    t8e.sideways + " px) or 1280 (" + t8w + " px)");
+  check(Object.values(t8widths).every((v) => v === 0),
+    "T8 · nothing scrolls sideways with the panel open at any of the five " +
+    "widths " + JSON.stringify(t8widths));
   check(t8e.target >= 44,
     "T8 · …and a tappable relation is a thumb's target at 320: " +
     t8e.target.toFixed(1) + " px >= 44");
