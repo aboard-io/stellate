@@ -445,7 +445,24 @@ old Ask #2, which Ableton2 answered in full.)*
 > 2. drop **one locator** at bar 1 (Create → Add Locator);
 > 3. on the **Main** track, add **Saturator**, then **Glue Compressor**, then
 >    **Limiter**, defaults are fine — don't tweak anything;
-> 4. **Save**, and send the `.als` back.
+> 4. *(added 2026-08-30, the tempo-map round)* **automate the main Tempo**:
+>    in Arrangement view, show the Main track's Song Tempo envelope and draw a
+>    hard step — 120 until bar 3, then 90 — two breakpoints, nothing musical;
+>    and set the set's **time signature to 3/4** while you're there;
+> 5. **Save**, and send the `.als` back.
+>
+> Why step 4 exists: a paced record (jingju's banshi, khyal's vilambit→drut)
+> now exports its tempo map into the Main tempo envelope. The envelope itself
+> is ground truth — both donors carry `AutomationEnvelope → PointeeId 8 →
+> FloatEvent` on the MainTrack, written by Live — but every donor lane holds
+> only the single initial event at Time −63072000, so TWO things are still
+> inference, flagged the way ReceivingNote's constant is: (a) a hard STEP is
+> written as two FloatEvents on the same Time (the double-point spelling);
+> (b) the set-wide `TimeSignature Manual` enum (201 = 4/4 is the one observed
+> pair, so the exporter does NOT write it and says 3/4 on each clip's
+> `RemoteableTimeSignature` instead, whose Numerator/Denominator are explicit
+> in the donor). One save answers both, and `als-gate.js` gate T's "CONFIRM IN
+> LIVE" clause retires with it.
 
 Three unknowns, one save. (1) gives ground truth for
 `<ArrangerAutomation><Events>` and an arrangement clip's `CurrentStart`;

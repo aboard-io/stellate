@@ -1585,13 +1585,21 @@ const SCOREHEAD = { k: "F", s: "c", p: "c", c: "c",
                     t: "e", m: "d", l: "A",
                     h: "!style=x!g", o: "!style=x!g", f: "!style=x!D",
                     r: "!style=x!f", x: "!style=x!a" };
-// SIXTEEN STEPS TO A MEASURE, the same sixteen the playhead counts
-// (`lightStep`) and the written staves engrave. Not `stepsIn(g)`: the score
-// has to sit in the same measure the red note is walking through, and every
-// other surface on this page — the maker grid, the kit, the written staff —
-// is built on sixteen. A genre in a twelve-step meter draws its score the way
-// it draws its motifs, which is the disagreement to fix in one place if ever.
-const SCORE_SPB = 16;
+// THE MEASURE IS THE RECORD'S OWN, read off the kernel's METERS table.
+// REVERSED 2026-08-30, the five-walls follow-up. This was `const SCORE_SPB =
+// 16` and its comment ruled: *"SIXTEEN STEPS TO A MEASURE … Not `stepsIn(g)`:
+// the score has to sit in the same measure the red note is walking through …
+// A genre in a twelve-step meter draws its score the way it draws its motifs,
+// which is the disagreement to fix in one place if ever."* The five-walls
+// round put waltz, musette and jingju in the catalog and "if ever" arrived:
+// a 12-step record drawn on a 16-step grid put bar 2's downbeat on bar 1's
+// fourth beat, every bar, in every view. The fix IS in one place — this
+// function — and the sentence's real claim survives it: the score still sits
+// in the same measure the red note walks, because the transport's own `base`
+// (the "pos" handler) counts the same steps-per-bar this returns. A record
+// with no meter reads MET4's sixteen, so every 4/4 record's ABC string and
+// paper are byte-identical to the constant's.
+const scoreSPB = () => K.stepsIn({ meter: K.METERS[DOC.time.meter] });
 // HOW MANY BARS THE SENTENCES SPEAK FOR, and it is no longer how much is
 // DRAWN. The caption and the syllable line say "bars 2-3" — the bar that is
 // sounding and the one after it, which is the ask of 2026-08-25 morning ("I
@@ -1878,7 +1886,7 @@ function scoreParts(si, k, bars) {
   if (!R || !R.g || !R.ev) return null;
   const rate = R.g.rate || 1;
   const lines = LINES();
-  const W = bars * SCORE_SPB, from = k * SCORE_SPB;
+  const W = bars * scoreSPB(), from = k * scoreSPB();
   const z = () => new Array(W).fill(0);
   const bucket = new Map();                 // voice name -> the section's steps
   const mine = (name) => { let b = bucket.get(name);
@@ -2118,7 +2126,7 @@ function recordParts() {
       for (const k of ["deg", "oct", "vel", "gate", "midi", "hold"])
         for (const x of b[k]) a[k].push(x);
     });
-    step += M * SCORE_SPB;
+    step += M * scoreSPB();
     bars += M;
     if (si < NS - 1) divide.add(bars - 1);
   }
@@ -2137,9 +2145,17 @@ function buildScore() {
   const ott = pinOttava();
   R.parts.forEach((p, i) => { p.ott = ott[i]; });
   let sc;
+  // THE SIGNATURE IS DECLARED, NOT DERIVED, when the record declares one:
+  // twelve steps reduce to 3/4 and only ever to 3/4 (ui/abc.js meterOf says
+  // why arithmetic cannot tell 6/8 from it), so the M: line and the beam
+  // grouping come off the kernel's own METERS row — the same table
+  // scoreSPB() reads, one owner. A record with no meter passes neither key
+  // and the ABC string is byte-identical to what the constant grid drew.
+  const met = K.METERS[DOC.time.meter] || null;
   try { sc = toScore(R.parts, { key: KEYS[DOC.alphabet.key] || 0,
                                 mode: MODES[DOC.alphabet.mode] || MODES.aeolian,
-                                stepsPerBar: SCORE_SPB,
+                                stepsPerBar: scoreSPB(),
+                                ...(met ? { abc: met.abc, beam: met.beam } : {}),
                                 divide: R.divide, close: "|]" }); }
   catch (err) { return null; }
   if (!sc) return null;
@@ -2168,7 +2184,7 @@ function paperGeom(tune) {
   // musical instant (that is what barring through MEANS), so the map is built
   // by walking each voice's children and summing their durations — abcjs's own
   // `duration` is in whole notes, so a sixteenth is 0.0625 and our step is
-  // `1 / SCORE_SPB`. The staff-extras (clef, meter) are skipped: they sit in
+  // `1 / scoreSPB()`. The staff-extras (clef, meter) are skipped: they sit in
   // the left margin at time zero and their x would put the first note's
   // instant in the gutter. A NOTE BEATS A BARLINE at the same instant — the
   // barline is drawn a notehead's width to the left of the downbeat it
@@ -2218,7 +2234,7 @@ function paperGeom(tune) {
 // the closing barline past the last. Asked in one place, because the steady
 // speed below is measured against it and the two may not disagree.
 function paperX(step) {
-  const map = scoreMap, t = step / SCORE_SPB;
+  const map = scoreMap, t = step / scoreSPB();
   if (!map || !map.length) return 0;
   const mine = (x) => (x - scoreX0) * scoreS;
   if (t <= map[0][0]) return mine(map[0][1]);
@@ -2227,7 +2243,7 @@ function paperX(step) {
     if (map[m][0] <= t) lo = m; else hi = m; }
   const a = map[lo], b = map[hi];
   if (t >= b[0]) {
-    const endT = scoreSteps / SCORE_SPB;
+    const endT = scoreSteps / scoreSPB();
     if (t >= endT || endT <= b[0]) return mine(scoreW);
     return mine(b[1] + (scoreW - b[1]) * (t - b[0]) / (endT - b[0]));
   }
@@ -2281,7 +2297,7 @@ function pinSpeed() {
      section's paper by a section's time means. */
   let lo = 0, hi = 0;
   for (const [t, x] of scoreMap || []) {
-    const d = (x - scoreX0) * scoreS - paperAt(t * SCORE_SPB);
+    const d = (x - scoreX0) * scoreS - paperAt(t * scoreSPB());
     if (d < lo) lo = d;
     if (d > hi) hi = d;
   }
@@ -2526,8 +2542,8 @@ function fitPaper() {
   // the box's pixels — so they are taken again here, where `scoreS` is final
   for (const c of scoreChunks) {
     const k = +c.g.getAttribute("data-c");
-    c.x0 = paperX(k * SCORE_CHUNK * SCORE_SPB);
-    c.x1 = paperX(Math.min(scoreSteps, (k + 1) * SCORE_CHUNK * SCORE_SPB));
+    c.x0 = paperX(k * SCORE_CHUNK * scoreSPB());
+    c.x1 = paperX(Math.min(scoreSteps, (k + 1) * SCORE_CHUNK * scoreSPB()));
   }
   scoreShown = "";
   gutterFrom();
@@ -2589,8 +2605,8 @@ function chunkPaper(svg) {
     // WHERE THE CHUNK IS, IN THE SAME PIXELS `place` MOVES IN — off the map,
     // not off the page: a `getBBox` here would cost the layout this whole
     // surface is built to avoid.
-    const b0 = k * SCORE_CHUNK * SCORE_SPB;
-    const b1 = Math.min(scoreSteps, (k + 1) * SCORE_CHUNK * SCORE_SPB);
+    const b0 = k * SCORE_CHUNK * scoreSPB();
+    const b1 = Math.min(scoreSteps, (k + 1) * SCORE_CHUNK * scoreSPB());
     scoreChunks.push({ g, x0: paperX(b0), x1: paperX(b1) });
   }
 }
@@ -3014,12 +3030,14 @@ function scoreBlock(parent) {
    labels, not because anything here types them. Change the key and this line
    is the change; it cannot drift, because there is nothing here to drift.
 
-   IT NAMES THE RECORD AND NOT THE PAPER, and where those two differ it is on
-   purpose and it is `SCORE_SPB`'s difference, not this line's: the score is
-   engraved in sixteen steps to the measure whatever the record counts in (see
-   SCORE_SPB — "a genre in a twelve-step meter draws its score the way it draws
-   its motifs, which is the disagreement to fix in one place if ever"). The
-   reader asked which key they are looking at; the answer is the record's. */
+   IT NAMES THE RECORD AND THE PAPER AGREES NOW (2026-08-30, the five-walls
+   follow-up). This paragraph read: *"IT NAMES THE RECORD AND NOT THE PAPER,
+   and where those two differ it is on purpose and it is `SCORE_SPB`'s
+   difference … the score is engraved in sixteen steps to the measure whatever
+   the record counts in"* — true while SCORE_SPB was the constant 16, and
+   reversed with it: `scoreSPB()` reads the record's own meter, so the meter
+   word this line says and the measure the paper bars are one fact. The reader
+   asked which key they are looking at; the answer is the record's. */
 function keyLine() {
   const A = NuAvail;
   const said = (k) => {
@@ -3402,9 +3420,9 @@ function drawRoll(abs) {
   // bar rules — TIME IS VERTICAL, so a barline is horizontal; a section
   // boundary is a bold rule wearing the section's own name in a flag cap
   ctx.font = "700 10px ui-monospace, Menlo, monospace";
-  const bars = Math.ceil(scoreSteps / SCORE_SPB);
+  const bars = Math.ceil(scoreSteps / scoreSPB());
   for (let b = 0; b <= bars; b++) {
-    const st = b * SCORE_SPB, y = yAt(st);
+    const st = b * scoreSPB(), y = yAt(st);
     if (y < -40 || y > h + 40) continue;
     const si = scoreSecAt.indexOf(st);
     const secStart = si >= 0 && b < bars;
@@ -3503,6 +3521,12 @@ function handOff(name, bytes, type) {
 async function deckSmf() {
   const m = await import("../export/als-page.js");
   const score = await m.pageScore({ say: expSay });
+  // THE SIGNATURE IS THE RECORD'S OWN (2026-08-30, the tempo-map follow-up),
+  // and it rides the Score itself: export/score.js stamps `meterAbc` off the
+  // timeline's genre — the same kernel METERS row scoreSPB() and the staff's
+  // M: line read — and smfFromScore reads it there. ONE owner; nothing is
+  // resolved here. A record with no meter stamps null and the file is
+  // byte-identical (the D4c pin).
   const bytes = smfFromScore(score, { beatsPerBar: beatsPerBar() });
   const names = new Set();
   let notes = 0;
@@ -7132,9 +7156,16 @@ const TEMPOS = [
 // reused rather than reinvented. `voice.set` is the same field document.js:63
 // already carries and to-engine.js `synthRecipe` already renames, so no engine
 // change and no new document key for any of the 247.
-// HOW MANY BEATS A BAR OF THIS RECORD IS — the meter's own pulse, read off the
-// kernel's table so the syllable sentence counts bars the way the engine does.
-const beatsPerBar = () => K.pulseIn({ meter: K.METERS[DOC.time.meter] });
+// HOW MANY BEATS A BAR OF THIS RECORD IS — and a beat is the engine's QUARTER
+// (audio/plan.js:558, `beats: bar.barSteps / 4`), so the bar's beats are its
+// steps over four. CORRECTED 2026-08-30, the five-walls follow-up: this read
+// `K.pulseIn(...)` with the comment "the meter's own pulse … counts bars the
+// way the engine does" — but pulse is the FELT beat's width in steps (4 in
+// three, 6 in six), not the bar's beat count: a waltz bar is 12/4 = 3 engine
+// beats and pulseIn said 4, so the syllable window and the .mid's
+// time-signature both counted a beat that is not in the bar. 4/4 is 16/4 = 4
+// either way, which is how it shipped unseen.
+const beatsPerBar = () => K.stepsIn({ meter: K.METERS[DOC.time.meter] }) / 4;
 const knobSet = (voice) => (voice && voice.set) || null;
 function writeKnob(voice, key, v) {
   if (!voice.set) voice.set = {};
@@ -8746,7 +8777,9 @@ let hookCells = [];                      // [{ cells, len }] — one per maker
 let chordCell = [], formCell = [];   // the bar of the loop, and the section
 function lightStep(abs) {
   atStep = abs;
-  const step = abs < 0 ? -1 : Math.floor(abs) % 16;
+  // …modulo the record's own bar (2026-08-30, with scoreSPB(): `% 16` walked
+  // a waltz's count four steps past its barline every bar)
+  const step = abs < 0 ? -1 : Math.floor(abs) % scoreSPB();
   mark(stepCell, step, COUNT);            // the kit
   // every maker on the page, each indexed across its own cell's measures
   for (const h of hookCells) {
@@ -8817,7 +8850,13 @@ on("pos", (d) => {
   // not sounded yet. It counts pattern steps now, and at rate 1 the arithmetic
   // is what it always was.
   const rate = (GENRES[GK + Math.max(0, d.si | 0)] || {}).rate || 1;
-  const base = (inBox * 16 + (Math.max(1, d.beat || 1) - 1) * 4) * rate;
+  // …AND A BAR OF CLOCK IS NOT SIXTEEN STEPS OF THE RECORD EITHER (2026-08-30,
+  // the five-walls follow-up): the `16` here was the same hardcoded grid
+  // scoreSPB() replaced — a waltz's bar is twelve steps, so counting bars at
+  // sixteen put the red note a beat further wrong every bar. The transport's
+  // beat stays a QUARTER (four sixteenths — live.js barBeats counts
+  // barSteps/4), so `* 4` is the beat's own width and stands.
+  const base = (inBox * scoreSPB() + (Math.max(1, d.beat || 1) - 1) * 4) * rate;
   // WHERE THE SCORE IS, off the very number the playhead walks — so the paper
   // and the red note can never disagree about which bar this is. This is the
   // ONE place the transport writes the score's position: the step, when the
@@ -8842,7 +8881,7 @@ on("pos", (d) => {
      the two-bar window made first inside `scoreWinOf`: the CAPTION names this
      bar, and "bars 5-6 of 4" is a sentence about a bar that does not exist. */
   scoreMeas = Math.max(0, Math.min(scoreLen(Math.max(0, atSec)) - 1,
-                                   Math.floor(base / SCORE_SPB)));
+                                   Math.floor(base / scoreSPB())));
   repaintScore();
   lightStep(base);
   for (let sub = 1; sub < 4; sub++)

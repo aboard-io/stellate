@@ -1561,11 +1561,18 @@ export function mount(parent, ctx) {
       tr.dataset.sec = String(si);
       const th = el("th", s2.id);
       // WHERE THE DIM NUMBERS COME FROM, on the row that causes them: the
-      // section's own dealt words. `shade` reads exactly these two, so a reader
+      // section's own dealt words. `shade` reads lvl and env, so a reader
       // who wonders why a column of cells woke up can see the cause in the
       // header rather than having to know the table. Absent words print
       // nothing, which is what the record says.
-      const dealt = [(SONG[si] || {}).lvl, (SONG[si] || {}).env]
+      // …AND THE SECTION'S PACE BESIDE THEM (2026-08-30, the five-walls
+      // follow-up): `pace` is dealt the same way (compose.js dealPaces) and
+      // was the one dealt word with no surface — the declared-but-invisible
+      // shape this page legislates against. DISPLAY ONLY, extracted off the
+      // box like lvl/env; a pace CONTROL would need the deal to read a hand
+      // back, and that is not asked.
+      const dealt = [(SONG[si] || {}).lvl, (SONG[si] || {}).env,
+                     (SONG[si] || {}).pace]
         .filter(Boolean).join(" · ");
       th.append(el("small", " " + s2.bars + " bars" + (dealt ? " · " + dealt : "")));
       tr.append(th);

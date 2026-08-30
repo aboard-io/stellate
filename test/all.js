@@ -195,6 +195,15 @@ const GATES = [
   { name: "precompose", wave: 2, kind: "node",
     argv: ["test/precompose.test.js"],
     need: ["test/precompose.test.js"], covers: ["test/precompose.test.js"] },
+  /* THE HAND PROBE (2026-08-30, "shouldn't more genres be humanized"): who is
+     humanized, who is exempt, proven at the rendered events. Holds genres.js
+     §39 (every anchor resolves a DYNAMICS row or a dated null), the machine
+     exemption by byte-comparison, the precedence order, and that the hand
+     ARRIVES on the document path — the round found it declared and never
+     arriving there (precompose.js:2417's `|| 0`). */
+  { name: "hand", wave: 2, kind: "node",
+    argv: ["test/hand.test.js"],
+    need: ["test/hand.test.js"], covers: ["test/hand.test.js"] },
   /* THE PITCH WALL (2026-08-30, "deal with those in the engine"): cents and
      non-2:1 scale periods, proven on rendered samples — a +50c note's FFT
      peak at 452.89 Hz, an 11.8-semitone period closing at 1180c not 1200c,
@@ -202,6 +211,14 @@ const GATES = [
   { name: "pitch-wall", wave: 2, kind: "node",
     argv: ["test/pitch-wall.test.js"],
     need: ["test/pitch-wall.test.js"], covers: ["test/pitch-wall.test.js"] },
+  /* THE EXPORTED TEMPO MAP (2026-08-30, the five-walls follow-up): a paced
+     record's .mid carries set-tempo metas at the section doors and a metered
+     record says 3/4 or 6/8 outright; the .als writes the same map into the
+     donor's OWN tempo-envelope shape. Parsed back off the bytes; unpaced
+     records proven untouched (the byte pin vs v199 ran at land time). */
+  { name: "smf-tempo", wave: 2, kind: "node",
+    argv: ["test/smf-tempo.test.js"],
+    need: ["test/smf-tempo.test.js"], covers: ["test/smf-tempo.test.js"] },
   /* THE BAND HIRED FOR THE RECORD (2026-08-28, "Fix the pool thing too"). Two
      gates and not one, because the pool's two failures are two KINDS of
      failure: what a chair may be handed and what a save carries are

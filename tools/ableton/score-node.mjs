@@ -174,8 +174,17 @@ export async function loadScore({ songPath = null, genre = null, scorePath = nul
   if (grid) state.setRubato(false);
 
   plan.compile();
-  return scoreOf({ timeline: plan.timeline(), cast: engine ? plan.cast() : [],
-                   bpm: state.bpm, grid, engine,
-                   title: (genre || songPath || "nukernel") });
+  const score = scoreOf({ timeline: plan.timeline(), cast: engine ? plan.cast() : [],
+                          bpm: state.bpm, grid, engine,
+                          title: (genre || songPath || "nukernel") });
+  // A catalog anchor says its meter as a WORD ("three"); export/score.js may
+  // not own a copy of the kernel's METERS table to resolve it, and this file
+  // already shims the kernel — so the one lookup happens here (2026-08-30,
+  // the tempo-map follow-up). A document-born record arrives already resolved.
+  if (!score.meterAbc && score.meterWord) {
+    const KM = require(path.join(NUK, "kernel.js")).METERS[score.meterWord];
+    if (KM && KM.abc) score.meterAbc = KM.abc;
+  }
+  return score;
 }
 

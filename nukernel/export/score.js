@@ -143,7 +143,44 @@ export function scoreOf({ timeline, cast = [], bpm, grid = true, engine = true, 
     const rank = (n) => (n === "drums" ? 2 : n === "bass" ? 1 : 0);
     box.lanes = [...lanes.values()].sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name));
     for (const l of box.lanes) { folded += fitMidi(l); l.notes.sort((a, b) => a.beat - b.beat || a.midi - b.midi); }
+    /* THE SECTION'S PACE, MEASURED OFF THE TIMELINE AND NEVER OFF A TABLE
+       (2026-08-30, the five-walls follow-up — the .mid tempo map). A paced
+       section's bars were stretched in BEATS by audio/plan.js paceTL —
+       `barSteps` moved, `steps` kept the grid ("exactly as warpBars leaves
+       them") — so the stretch is a fact this fold can read off every bar it
+       already walks: k = barSteps / steps. Stamped per box so a writer that
+       CAN say tempo (export/smf.js smfFromScore) may un-stretch the beats and
+       write bpm/k as a set-tempo instead, and a writer that cannot (als.js —
+       the donor holds no legal tempo-automation shape) keeps the stretched
+       beats, which at least keep the SECONDS true. Present-only in effect: an
+       unpaced bar's barSteps IS its steps (paceTL takes no branch at all
+       there), so k is exactly 1 and every existing artifact is byte-identical.
+       A box whose bars do NOT agree (rubato left on — the warp wobbles every
+       bar) is not a section step and refuses to 1 rather than guessing. */
+    let k = null;
+    for (const bar of box.bars) {
+      const kb = bar.steps > 0 ? bar.barSteps / bar.steps : 1;
+      if (k == null) k = kb;
+      else if (Math.abs(kb - k) > 1e-9) { k = 1; break; }
+    }
+    // ...and a ratio within 5% of 1 is breathing, not a pace: the smallest
+    // step a pace word can take is 4/3 (audio/plan.js PACE_RATE), the rubato
+    // warp is under ±2% — a one-bar box under rubato must not grow a tempo
+    // event out of its own wobble.
+    box.k = k != null && k > 0 && Math.abs(k - 1) > 0.05 ? k : 1;
     delete box.bars;
   }
-  return { title, bpm, grid, engine: !!engine, cast, skipped, folded, boxes };
+  /* THE RECORD'S DECLARED METER RIDES THE SCORE (2026-08-30, the five-walls
+     follow-up) — extracted off the timeline's own genre, never typed. A
+     document's toGenre resolves the word against kernel METERS and stamps the
+     ROW (with its `abc`), so `meterAbc` is "3/4"/"6/8" straight from the one
+     table; a catalog anchor may still carry the WORD ("three"), and this file
+     may not own a copy of the table to resolve it — the CLI does the lookup
+     with the kernel it already shims (tools/ableton/score-node.mjs). One
+     record has one meter (band-kit's own law), so the first bar answers.
+     Absent = both null, and every 4/4 record's Score is the same value. */
+  const gm = timeline[0] && timeline[0].g ? timeline[0].g.meter : null;
+  return { title, bpm, grid, engine: !!engine, cast, skipped, folded, boxes,
+           meterAbc: (gm && typeof gm === "object" && gm.abc) || null,
+           meterWord: typeof gm === "string" ? gm : null };
 }

@@ -695,6 +695,18 @@ export function sectionRender(sec, slots, songGroove, songSwing) {
 // counts — so two compiles of one song give one clock, and an edit that changes
 // the arrangement changes the breathing with it. There is no per-section tempo
 // control and there will not be one: the tempo is a fact about the SONG.
+//
+// ...REVERSED 2026-08-30, the five-walls round, and the reversal lives HERE
+// because the sentence does. "There is no per-section tempo control and there
+// will not be one: the tempo is a fact about the SONG" refused jingju's banshi,
+// the cavatina/cabaletta, the nuba's acceleration and vilambit-to-drut at the
+// door — four records whose FORM is a tempo shape. What survives of the
+// sentence is its TRUTH: the record still has ONE bpm (the 70..160 fence), the
+// engine never learns a second one, and THIS curve is still the record
+// breathing — pace is a section-sized STEP applied after it, so the breathing
+// rides the paced bar unchanged. The word is compose's (compose.js PACES,
+// dealt by dealPaces), the number is the clock's (audio/plan.js PACE_RATE,
+// applied in paceTL) — the same words/numbers split lvl/LEVELS made.
 const TEMPOROLE = {
   intro: 0.988, verse: 1, prechorus: 1.004, build: 1.006, chorus: 1.008,
   drop: 1.012, breakdown: 0.976, bridge: 0.994, solo: 1.004, outro: 0.978,

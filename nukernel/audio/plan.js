@@ -406,7 +406,10 @@ export function warmSources() {
 /* ---------- the section's own clock: PACE (2026-08-30) ----------------------
  * ui/derive.js:697 declared, on purpose: "There is no per-section tempo
  * control and there will not be one: the tempo is a fact about the SONG."
- * REVERSED 2026-08-30, the five-walls round — jingju banshi, the cavatina/
+ * REVERSED 2026-08-30, the five-walls round — the dated reversal now lives
+ * where the sentence does (ui/derive.js, under the tempo-map header), as a
+ * reversal must; this block keeps the CLOCK's half of the story. Jingju
+ * banshi, the cavatina/
  * cabaletta, the nuba's acceleration and vilambit-to-drut are records whose
  * FORM is a tempo shape, and that sentence refused all four at the door. The
  * reversal keeps the sentence's TRUTH: the record still has ONE bpm (the

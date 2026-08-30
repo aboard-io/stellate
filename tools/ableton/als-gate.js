@@ -33,7 +33,7 @@ import { gunzipSync } from "node:zlib";
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
-import { balancedAt, elementAfter, pointeeIds } from "../../nukernel/export/als.js";
+import { balancedAt, elementAfter, pointeeIds, paceView } from "../../nukernel/export/als.js";
 import { loadScore } from "./score-node.mjs";
 
 const TOKEN = /<(\/?)([A-Za-z0-9._]+)((?:"[^"]*"|[^>"])*?)(\/?)>/g;
@@ -168,16 +168,26 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
       found.get(c.name).push(c);
     }
     let want = 0, wantN = 0, err = null;
-    for (const box of boxes) for (const lane of (all ? box.lanes : box.lanes.slice(0, 1))) {
+    // THE PACED VIEW IS THE EXPORTER'S OWN (2026-08-30, the tempo map): a
+    // paced box's notes go into the set UN-stretched with the tempo moving
+    // instead, so the expectation must be the same transform — als.js
+    // paceView, one arithmetic, two readers. For every unpaced record k is 1
+    // everywhere and `v.notes` is the identity, so this line changes nothing
+    // that ever shipped. (The transform itself is proved against the PCM's
+    // own bar seconds by test/smf-tempo.test.js, not here — a gate that
+    // expected what the splice writes could not catch a wrong k on its own.)
+    const views = paceView(boxes);
+    for (const v of views) { const box = v.box;
+    for (const lane of (all ? box.lanes : box.lanes.slice(0, 1))) {
       const name = box.name + " · " + lane.name;
       want += 2; wantN += lane.notes.length * 2;
       const got = found.get(name) || [];
       if (got.length !== 2) { err = err || ('clip "' + name + '" appears ' + got.length + " times, want 2 (session + arrangement)"); continue; }
-      const w = bag(lane.notes.map((n) => [Math.round(n.midi), n.beat, n.dur, Math.max(1, Math.min(127, Math.round(n.vel)))]));
+      const w = bag(v.notes(lane.notes).map((n) => [Math.round(n.midi), n.beat, n.dur, Math.max(1, Math.min(127, Math.round(n.vel)))]));
       for (const c of got) if (!bagEq(w, bag(c.notes)))
         err = err || ('clip "' + name + '" note multiset differs from the song: ' +
           diffOf(w, bag(c.notes)));
-    }
+    } }
     const flat = [...found.values()].flat();
     const gotN = flat.reduce((s2, c) => s2 + c.notes.length, 0);
     if (!err && flat.length !== want) err = "clip count " + flat.length + ", want " + want;
@@ -242,6 +252,92 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
   for (const p of abs)
     console.log("  WARN  gate 3 — an absolute macOS path the DONOR brought with it travels " +
       "with every export: " + p);
+
+  /* ---- Gate T — the tempo map and the meter (2026-08-30) ---------------- */
+  // A paced record must carry its map in the MainTrack's tempo envelope and
+  // on the scenes; an UNPACED record must leave both EXACTLY as the donor
+  // wrote them — the absent-is-today tripwire, asserted every run on every
+  // record rather than only when somebody exports jingju.
+  {
+    const views = paceView(score.boxes);
+    const paced = views.some((v) => v.k !== 1);
+    // the tempo envelope: the one whose PointeeId is the <Tempo> element's
+    // own AutomationTarget id, read out of the OUTPUT the way als.js reads
+    // the donor
+    const tEl = elementAfter(xml, "Tempo");
+    const targ = tEl && /<AutomationTarget Id="(\d+)"/.exec(tEl.text);
+    let envEvents = null;
+    if (targ) {
+      const re = /<AutomationEnvelope Id="\d+">/g;
+      let m;
+      while ((m = re.exec(xml))) {
+        const [ea, eb] = balancedAt(xml, m.index);
+        const one = xml.slice(ea, eb);
+        if (one.includes('<PointeeId Value="' + targ[1] + '" />')) {
+          envEvents = [...one.matchAll(/<FloatEvent Id="\d+" Time="([^"]+)" Value="([^"]+)" \/>/g)]
+            .map((x) => ({ time: +x[1], bpm: +x[2] }));
+          break;
+        }
+        re.lastIndex = eb;
+      }
+    }
+    const sceneOn = (xml.match(/<IsTempoEnabled Value="true" \/>/g) || []).length;
+    if (!paced) {
+      const clean = envEvents && envEvents.length === 1 && envEvents[0].time < 0 && sceneOn === 0;
+      if (!clean) ok = fail("gate T", "unpaced record, but the tempo surfaces moved: envelope has " +
+        (envEvents ? envEvents.length : 0) + " FloatEvent(s), " + sceneOn + " scene(s) tempo-enabled");
+      else pass("gate T", "unpaced: the donor's tempo envelope and scenes are untouched (1 sentinel event, 0 scenes enabled)");
+    } else {
+      const bpm = Math.max(1, +score.bpm || 120);
+      const segs = [];
+      let cur = null;
+      for (const v of views) { const b = bpm / v.k;
+        if (cur == null || b !== cur) { segs.push({ at: v.beat0, bpm: b }); cur = b; } }
+      // expected: sentinel at segs[0].bpm, then a double point per change
+      let err = null;
+      if (!envEvents) err = "no tempo AutomationEnvelope in the output";
+      else {
+        const wantN = 1 + (segs.length - 1) * 2;
+        if (envEvents.length !== wantN) err = "envelope has " + envEvents.length + " events, want " + wantN;
+        else if (Math.abs(envEvents[0].bpm - segs[0].bpm) > 1e-9 || envEvents[0].time >= 0)
+          err = "sentinel event is " + envEvents[0].bpm + " at " + envEvents[0].time + ", want " + segs[0].bpm;
+        else for (let i = 1; i < segs.length; i++) {
+          const a = envEvents[2 * i - 1], b = envEvents[2 * i];
+          if (!a || !b || Math.abs(a.time - segs[i].at) > 1e-9 || Math.abs(b.time - segs[i].at) > 1e-9 ||
+              Math.abs(a.bpm - segs[i - 1].bpm) > 1e-9 || Math.abs(b.bpm - segs[i].bpm) > 1e-9)
+            err = err || ("step " + i + " at beat " + segs[i].at + " is not the double point (" +
+              segs[i - 1].bpm + " -> " + segs[i].bpm + ")");
+        }
+      }
+      if (!err && all) {
+        const wantScenes = views.filter((v) => v.k !== 1).length;
+        if (sceneOn !== wantScenes) err = sceneOn + " scene(s) tempo-enabled, want " + wantScenes;
+      }
+      if (err) ok = fail("gate T", err);
+      else pass("gate T", "paced: " + segs.length + " tempo segment(s) in the envelope as double-point steps" +
+        (all ? " · " + views.filter((v) => v.k !== 1).length + " scene launch tempo(s)" : "") +
+        " — CONFIRM IN LIVE with gate 4; the step encoding is inferred (donor/README.md ask)");
+    }
+    // ...and the meter: a declared signature must be on every authored clip,
+    // and every box's beats must come out in whole bars of it.
+    if (score.meterAbc) {
+      const sm = /^(\d+)\/(\d+)$/.exec(score.meterAbc);
+      const barBeats = sm ? (+sm[1] * 4) / +sm[2] : 4;
+      const mine = tracksOf(xml).filter((t) => !donorNames.has(t.name));
+      let bad = null, n = 0;
+      for (const t of mine) {
+        for (const c of t.text.matchAll(/<RemoteableTimeSignature Id="\d+">\s*<Numerator Value="(\d+)" \/>\s*<Denominator Value="(\d+)" \/>/g)) {
+          n++;
+          if (+c[1] !== +sm[1] || +c[2] !== +sm[2]) bad = bad || (c[1] + "/" + c[2] + " on " + t.name);
+        }
+      }
+      const offBar = views.find((v) => Math.abs(v.beats / barBeats - Math.round(v.beats / barBeats)) > 1e-6);
+      if (bad) ok = fail("gate T", "clip signature " + bad + ", want " + score.meterAbc);
+      else if (!n) ok = fail("gate T", "meter " + score.meterAbc + " declared but no authored clip carries a RemoteableTimeSignature");
+      else if (offBar) ok = fail("gate T", "a box's " + offBar.beats + " beats is not whole bars of " + score.meterAbc);
+      else pass("gate T", "meter " + score.meterAbc + " on all " + n + " authored clips · every box is whole bars of " + barBeats + " beats");
+    }
+  }
 
   return ok;
 }

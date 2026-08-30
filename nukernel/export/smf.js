@@ -106,6 +106,15 @@ function keysOf(midi, perc, drumMap, dropped) {
  * writeSmf(score, opts) -> Uint8Array — SMF type 1.
  *   score: { bpm, beatsPerBar, stepsPerBar, voices: [{ name, clef,
  *            notes: [{ at, len, midi }] }] }   (at/len in score steps)
+ *          + timesig: [nn, dd]      — the declared signature (3/4, 6/8); absent
+ *            = the old bpb/4 meta, byte for byte (2026-08-30, the tempo map:
+ *            twelve steps reduce to 3/4 and only ever to 3/4, so a 6/8 record
+ *            must SAY so — the same argument as ui/abc.js meterOf)
+ *          + tempos: [{ at, bpm }]  — set-tempo metas at `at` (score steps),
+ *            for the paced record; absent = the one conductor tempo, byte for
+ *            byte. A tempo at step 0 lands AFTER the base tempo on the same
+ *            tick, so a record whose first section is paced starts at its own
+ *            pace and a DAW still sees the record's one bpm behind it.
  *   opts:  { drumMap }  — head string → GM key (see headGM)
  */
 export function writeSmf(score, opts = {}) {
@@ -137,11 +146,22 @@ export function writeSmf(score, opts = {}) {
     return [...str("MTrk"), ...u32(body.length), ...body];
   };
 
-  // conductor track: time signature + tempo, at tick 0
-  const uspq = Math.round(60e6 / bpm);
+  // conductor track: time signature + tempo, at tick 0 — and the tempo MAP
+  // after them, when the record has one (2026-08-30). The signature is the
+  // DECLARED one where a caller declares it (nn over dd, dd as its power of
+  // two the way 0x58 spells it) and the old bpb/4 otherwise, so every record
+  // written before this line is byte-identical.
+  const tempoBytes = (b) => { const u = Math.round(60e6 / Math.max(1, b));
+    return [0xff, 0x51, 0x03, (u >> 16) & 255, (u >> 8) & 255, u & 255]; };
+  const ts = Array.isArray(score.timesig) && score.timesig.length === 2 &&
+             score.timesig[0] > 0 && score.timesig[1] > 0 ? score.timesig : null;
+  const sig = ts ? [ts[0] & 255, Math.round(Math.log2(ts[1])) & 255, 24, 8]
+                 : [bpb, 2, 24, 8];
   const t0 = track([
-    { tick: 0, ord: 0, bytes: [0xff, 0x58, 0x04, bpb, 2, 24, 8] },  // bpb/4
-    { tick: 0, ord: 1, bytes: [0xff, 0x51, 0x03, (uspq >> 16) & 255, (uspq >> 8) & 255, uspq & 255] },
+    { tick: 0, ord: 0, bytes: [0xff, 0x58, 0x04, ...sig] },
+    { tick: 0, ord: 1, bytes: tempoBytes(bpm) },
+    ...(score.tempos || []).map((t, i) => (
+      { tick: t.at * tickPerStep, ord: 2 + i, bytes: tempoBytes(t.bpm) })),
   ]);
 
   const tracks = [t0];
@@ -196,12 +216,32 @@ export function writeSmf(score, opts = {}) {
    own tick instead of a grid line. The drums lane's notes already carry GM
    key numbers (score.js put them through als.js GM_DRUM), so no drumMap; it
    is marked `perc` for channel 10. */
-export function smfFromScore(score, { beatsPerBar = 4 } = {}) {
+export function smfFromScore(score, { beatsPerBar = 4, timesig = null } = {}) {
   const boxes = (score && score.boxes) || [];
   const beat0 = boxes.length ? boxes[0].beat0 : 0;
   const lanes = new Map();
+  /* THE TEMPO MAP (2026-08-30, the five-walls follow-up). A paced section
+     arrives from export/score.js scoreOf STRETCHED — audio/plan.js paceTL
+     moved its beats so the SECONDS come out right at a constant tempo — and a
+     .mid can say the truer thing: the notes at their written beat values and
+     a set-tempo of bpm/k at the section's door (half a `half` bar's tempo,
+     which is bpm × PACE_RATE[word], the ratio measured off the timeline as
+     box.k rather than remembered from the table). So where any box carries a
+     stretch, every box's beats are UN-stretched (÷k — exact where k is 1) and
+     a set-tempo meta lands at each boundary where the pace CHANGES, the
+     return to steady included. An unpaced record takes the old spelling of
+     the old arithmetic, byte for byte — `paced` is false, no division, no
+     walk, no tempo list. */
+  const paced = boxes.some((b) => b.k > 0 && b.k !== 1);
+  const tempos = [];
+  let tb = 0, curK = 1;
   for (const box of boxes) {
     const off = box.beat0 - beat0;
+    const k = paced && box.k > 0 ? box.k : 1;
+    if (paced && k !== curK) {
+      tempos.push({ at: tb, bpm: Math.max(1, +score.bpm || 120) / k });
+      curK = k;
+    }
     for (const l of box.lanes) {
       let v = lanes.get(l.name);
       if (!v) lanes.set(l.name, v = {
@@ -210,16 +250,28 @@ export function smfFromScore(score, { beatsPerBar = 4 } = {}) {
         clef: l.name === "drums" ? "perc" : "",
         notes: [] });
       for (const n of l.notes)
-        v.notes.push({ at: off + n.beat, len: n.dur, midi: n.midi, vel: n.vel });
+        v.notes.push(paced
+          ? { at: tb + n.beat / k, len: n.dur / k, midi: n.midi, vel: n.vel }
+          : { at: off + n.beat, len: n.dur, midi: n.midi, vel: n.vel });
     }
+    tb += (box.beats || 0) / k;
   }
   // v0, v1, … then bass, then drums — scoreOf's own rank, so the .mid's track
   // order and the .als's lane order are one order.
   const rank = (n) => (n === "drums" ? 2 : n === "bass" ? 1 : 0);
   const voices = [...lanes.values()]
     .sort((a, b) => rank(a.key) - rank(b.key) || a.key.localeCompare(b.key));
+  // …and the declared signature rides the Score itself (export/score.js
+  // stamps `meterAbc` off the timeline's own genre — one owner); a caller may
+  // still say `timesig: [nn, dd]` outright. Absent both, nothing is added and
+  // the bytes are the old bytes.
+  const sigM = !timesig && score.meterAbc ? /^(\d+)\/(\d+)$/.exec(score.meterAbc) : null;
+  const sig = timesig || (sigM ? [+sigM[1], +sigM[2]] : null);
   return writeSmf({ bpm: score.bpm, beatsPerBar,
-                    stepsPerBar: beatsPerBar, voices });
+                    stepsPerBar: beatsPerBar,
+                    ...(tempos.length ? { tempos } : {}),
+                    ...(sig ? { timesig: sig } : {}),
+                    voices });
 }
 
 /* ---------- the reader — OUR OWN, for the parse-back gate ----------------- */
@@ -243,7 +295,11 @@ export function parseSmf(bytes) {
     const len = rd32(), end = o + len;
     let tick = 0, status = 0, tempo = null, timesig = null, name = "";
     const open = new Map();            // "ch:key" -> [{tick}]
-    const notes = [];
+    const notes = [], tempos = [];     // tempos: EVERY 0x51, in file order,
+                                       // with its tick — the tempo MAP the
+                                       // parse-back gate walks (2026-08-30);
+                                       // `tempo` stays the last one seen, as
+                                       // deck.test D4b has always read it
     while (o < end) {
       tick += rvlq();
       let s = b[o];
@@ -251,7 +307,8 @@ export function parseSmf(bytes) {
       if (s === 0xff) {
         const type = b[o++], mlen = rvlq(), at = o;
         if (type === 0x03) name = String.fromCharCode(...b.slice(at, at + mlen));
-        if (type === 0x51) tempo = (b[at] << 16) | (b[at + 1] << 8) | b[at + 2];
+        if (type === 0x51) { tempo = (b[at] << 16) | (b[at + 1] << 8) | b[at + 2];
+                             tempos.push({ tick, uspq: tempo }); }
         if (type === 0x58) timesig = [b[at], 1 << b[at + 1]];
         o = at + mlen;
       } else if ((s & 0xf0) === 0x90 || (s & 0xf0) === 0x80) {
@@ -268,7 +325,7 @@ export function parseSmf(bytes) {
       } else throw new Error("unexpected byte 0x" + s.toString(16) + " at " + o);
     }
     notes.sort((a, b2) => a.tick - b2.tick || a.key - b2.key);
-    tracks.push({ name, notes, tempo, timesig });
+    tracks.push({ name, notes, tempo, tempos, timesig });
   }
   return { format, division, tracks };
 }

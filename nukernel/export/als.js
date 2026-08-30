@@ -168,7 +168,7 @@ export function renumber(xml, next) {
  * `<MidiKey Value="…" />` LAST. OffVelocity is always 64 — the donor's value,
  * and nukernel has no release velocity to say anything else with.
  */
-export function midiClip(tpl, { name, beats, time = 0, notes, id = 0, arrangement = false }) {
+export function midiClip(tpl, { name, beats, time = 0, notes, id = 0, arrangement = false, sig = null }) {
   const byKey = new Map();
   for (const n of notes) {
     const k = Math.round(n.midi);
@@ -231,6 +231,21 @@ export function midiClip(tpl, { name, beats, time = 0, notes, id = 0, arrangemen
   // clearly load-bearing, not less: a track clip is exactly where a live
   // GrooveId lands, and leaving one there is the double-swing bug.
   x = x.replace(/<GrooveId Value="[^"]*" \/>/, '<GrooveId Value="-1" />');
+  // THE CLIP SAYS ITS OWN SIGNATURE (2026-08-30, the five-walls follow-up).
+  // The donor clip carries `<RemoteableTimeSignature><Numerator Value="4"/>
+  // <Denominator Value="4"/>` (Generic.xml:22565-22567) — explicit numbers,
+  // Live's own element, no enum to infer — so a metered record's 3/4 or 6/8
+  // goes in as those two values and nothing else changes. Absent = untouched,
+  // byte for byte, which is every 4/4 record. (The MainTrack-level
+  // `<TimeSignature><Manual Value="201"/>` is NOT written: 201 is an ENUM and
+  // decoding it is inference — one observed pair, no second point — so the
+  // set-wide signature stays the donor's until a metered donor lands; the ask
+  // is in tools/ableton/donor/README.md. The clips and their loop lengths
+  // carry the bar truth regardless.)
+  if (sig) {
+    x = x.replace(/<Numerator Value="[^"]*" \/>/, '<Numerator Value="' + (sig[0] | 0) + '" />');
+    x = x.replace(/<Denominator Value="[^"]*" \/>/, '<Denominator Value="' + (sig[1] | 0) + '" />');
+  }
   // strip the donor's notes and put ours in their place
   const old = elementAfter(x, "Notes");
   if (!old) throw new Error("clip template has no <Notes> block");
@@ -294,10 +309,39 @@ export const GM_DRUM = {
  * Session clip per box in slot i, one Arrangement clip per box at its beat0,
  * scene i renamed to the box's label.
  */
+/* ---------- the paced view of a Score (2026-08-30, the five-walls follow-up) —
+   ONE ARITHMETIC, TWO READERS (this file and als-gate.js gate 1, which must
+   expect exactly what the splice writes). export/score.js scoreOf hands each
+   box its measured stretch `k` (barSteps/steps — audio/plan.js paceTL's own
+   footprint on the timeline). A record with any k ≠ 1 has a TEMPO MAP, and
+   this exporter can finally say one: the notes go in UN-stretched (their
+   written beat values) and the tempo moves instead — see spliceTempoMap. A
+   record with every k = 1 takes NO branch: identity note transform, the box's
+   own beat0/beats floats untouched, so every unpaced record is byte-identical. */
+export function paceView(boxes) {
+  const paced = boxes.some((b) => b.k > 0 && b.k !== 1);
+  let tb = boxes.length ? boxes[0].beat0 : 0;
+  return boxes.map((box) => {
+    const k = paced && box.k > 0 ? box.k : 1;
+    const v = { box, k, paced,
+                beat0: paced ? tb : box.beat0,
+                beats: paced ? box.beats / k : box.beats,
+                notes: (ns) => (k === 1 ? ns
+                  : ns.map((n) => ({ ...n, beat: n.beat / k, dur: n.dur / k }))) };
+    tb += box.beats / k;
+    return v;
+  });
+}
+
 export function alsFromScore(donorXml, score, opts = {}) {
   const all = !!opts.all;
   const donor = parseDonor(donorXml);
   const tpl = clipTemplate(donor);
+  // the record's declared signature, if it declared one (scoreOf stamps
+  // meterAbc off the timeline's own genre; the CLI resolves a word-meter
+  // through the kernel it already shims — score-node.mjs loadScore)
+  const sigM = /^(\d+)\/(\d+)$/.exec(opts.timesig || score.meterAbc || "");
+  const sig = sigM ? [+sigM[1], +sigM[2]] : null;
   const notes = [];                                   // what the run did, for the CLI to print
 
   const boxes = all ? score.boxes : score.boxes.slice(0, 1);
@@ -320,6 +364,7 @@ export function alsFromScore(donorXml, score, opts = {}) {
   const next = () => nextId++;
   let trackId = 900;                                  // clones sit above the donor's 12..18
   let clipId = 1;
+  const views = paceView(boxes);
 
   const trackXml = laneNames.map((laneName) => {
     const info = laneInfoOf(boxes, laneName);
@@ -336,17 +381,19 @@ export function alsFromScore(donorXml, score, opts = {}) {
     t = t.replace(/<UserName Value="[^"]*" \/>/, '<UserName Value="' + esc(label) + '" />');
 
     const arrangement = [];
-    boxes.forEach((box, bi) => {
+    views.forEach((v, bi) => {
+      const box = v.box;
       const lane = box.lanes.find((l) => l.name === laneName);
       if (!lane || !lane.notes.length) return;
       const clipName = box.name + " · " + laneName;
-      const session = midiClip(tpl, { name: clipName, beats: box.beats, time: 0,
-                                      notes: lane.notes, id: clipId++ });
+      const laneNotes = v.notes(lane.notes);
+      const session = midiClip(tpl, { name: clipName, beats: v.beats, time: 0,
+                                      notes: laneNotes, id: clipId++, sig });
       t = putSessionClip(t, bi, session);
-      arrangement.push(midiClip(tpl, { name: clipName, beats: box.beats,
-                                       time: box.beat0, notes: lane.notes,
-                                       id: clipId++, arrangement: true }));
-      notes.push(clipName + ": " + lane.notes.length + " notes over " + box.beats + " beats");
+      arrangement.push(midiClip(tpl, { name: clipName, beats: v.beats,
+                                       time: v.beat0, notes: laneNotes,
+                                       id: clipId++, arrangement: true, sig }));
+      notes.push(clipName + ": " + lane.notes.length + " notes over " + v.beats + " beats");
     });
     t = putArrangementClips(t, arrangement);
     return t;
@@ -354,7 +401,32 @@ export function alsFromScore(donorXml, score, opts = {}) {
 
   let out = donorXml;
   out = setTempo(out, score.bpm);
+  /* THE TEMPO MAP (2026-08-30, the five-walls follow-up). The donor DOES hold
+     the shape, measured rather than remembered: the MainTrack carries
+     `<AutomationEnvelope><EnvelopeTarget><PointeeId Value="8"/>` — the Tempo
+     element's own AutomationTarget — with a `<FloatEvent Id Time Value/>`
+     inside (Generic.xml:21613-21626, Ableton2.xml:91210-91223, both written
+     by Live itself; Ableton2 also shows a THREE-event FloatEvent list at real
+     times, Ableton2.xml:82095-82097). So a paced record writes its map as
+     more FloatEvents in that envelope — same tag, same attribute set, Gate 2
+     green by construction — and the scenes say it too: every donor scene
+     already carries `<Tempo Value/><IsTempoEnabled Value/>`, so scene i of a
+     paced box gets its own launch tempo, values only, no new element. */
+  const tempoSegs = [];
+  {
+    let cur = null;
+    for (const v of views) {
+      const b = Math.max(1, +score.bpm || 120) / v.k;
+      if (cur == null || b !== cur) { tempoSegs.push({ at: v.beat0, bpm: b }); cur = b; }
+    }
+  }
+  const hasMap = tempoSegs.length > 1 ||
+    (tempoSegs.length === 1 && views.length && views[0].k !== 1);
+  if (hasMap) out = spliceTempoMap(out, tempoSegs);
   if (all) out = nameScenes(out, boxes.map((b) => b.name));
+  if (all && hasMap)
+    out = setSceneTempos(out, views.map((v) =>
+      (v.k !== 1 ? Math.max(1, +score.bpm || 120) / v.k : null)));
   // The clones go in before </Tracks>, after every donor track, so Live's own
   // six stay where Paul left them.
   const tracksEl = elementAfter(out, "Tracks");
@@ -378,6 +450,84 @@ export function setTempo(xml, bpm) {
   const body = xml.slice(a, b).replace(/<Manual Value="[^"]*" \/>/,
     '<Manual Value="' + num(bpm) + '" />');
   return xml.slice(0, a) + body + xml.slice(b);
+}
+
+/**
+ * The MainTrack's tempo AUTOMATION envelope takes the record's map.
+ *
+ * WHERE IT LIVES, read off the donor and not off a spec: `<Tempo>` carries
+ * `<AutomationTarget Id="8">`, and the MainTrack's `<AutomationEnvelopes>`
+ * holds an `<AutomationEnvelope>` whose `<EnvelopeTarget><PointeeId Value="8"/>`
+ * points back at it, with one `<FloatEvent Id="0" Time="-63072000"
+ * Value="120"/>` inside — Live's own initial event, its sentinel Time meaning
+ * "before the beginning". Both donors carry it; the id is READ, not assumed.
+ *
+ * THE STEP ENCODING IS THE ONE INFERRED THING HERE, and it is flagged the way
+ * donor/README.md flags ReceivingNote's constant: automation between two
+ * FloatEvents is a linear ramp, so a section-sized STEP (a pace is a ladder,
+ * not a lean — audio/plan.js) is written as TWO events on the boundary tick,
+ * the old value then the new, which is the double-point spelling step
+ * automation is known to take in this schema. No donor holds a multi-point
+ * TEMPO lane yet (Ableton2's three-event FloatEvent list is a device lane);
+ * the 30-second ask in donor/README.md turns this from inference to ground
+ * truth the day it lands.
+ *
+ * segs: [{ at, bpm }] — beat where a tempo takes effect, first at the top.
+ */
+export function spliceTempoMap(xml, segs) {
+  if (!segs || !segs.length) return xml;
+  const t = /<Tempo>/.exec(xml);
+  if (!t) throw new Error("donor has no <Tempo> element");
+  const [a, b] = balancedAt(xml, t.index);
+  const idM = /<AutomationTarget Id="(\d+)"/.exec(xml.slice(a, b));
+  if (!idM) throw new Error("donor <Tempo> has no AutomationTarget");
+  // the envelope whose PointeeId is the Tempo's target — walk the envelopes
+  const re = /<AutomationEnvelope Id="\d+">/g;
+  let m, found = null;
+  while ((m = re.exec(xml))) {
+    const [ea, eb] = balancedAt(xml, m.index);
+    const one = xml.slice(ea, eb);
+    if (new RegExp('<PointeeId Value="' + idM[1] + '" />').test(one)) { found = [ea, eb, one]; break; }
+    re.lastIndex = eb;
+  }
+  if (!found) throw new Error("donor has no tempo AutomationEnvelope (PointeeId " + idM[1] + ")");
+  const [ea, eb, env] = found;
+  let id = 0;
+  const evs = ['<FloatEvent Id="' + (id++) + '" Time="-63072000" Value="' + num(segs[0].bpm) + '" />'];
+  for (let i = 1; i < segs.length; i++) {
+    evs.push('<FloatEvent Id="' + (id++) + '" Time="' + num(segs[i].at) + '" Value="' + num(segs[i - 1].bpm) + '" />');
+    evs.push('<FloatEvent Id="' + (id++) + '" Time="' + num(segs[i].at) + '" Value="' + num(segs[i].bpm) + '" />');
+  }
+  const ev = elementAfter(env, "Events");
+  if (!ev) throw new Error("tempo envelope has no <Events>");
+  const body = env.slice(0, ev.start) + "<Events>" + evs.join("") + "</Events>" + env.slice(ev.end);
+  return xml.slice(0, ea) + body + xml.slice(eb);
+}
+
+/**
+ * Scene i takes its box's launch tempo — values only, on elements every donor
+ * scene already carries (`<Tempo Value="120"/><IsTempoEnabled Value="false"/>`).
+ * `tempos[i] = null` leaves scene i byte-identical; a number writes it and
+ * flips the enable, so launching a paced box's scene in Session view runs at
+ * the box's own clock.
+ */
+export function setSceneTempos(xml, tempos) {
+  const sc = elementAfter(xml, "Scenes");
+  let body = sc.text, i = 0;
+  const open = /<Scene Id="\d+">/g;
+  let m, out = "", cursor = 0;
+  while ((m = open.exec(body))) {
+    const [a, b] = balancedAt(body, m.index);
+    let one = body.slice(a, b);
+    if (i < tempos.length && tempos[i] != null) {
+      one = one.replace(/<Tempo Value="[^"]*" \/>/, '<Tempo Value="' + num(tempos[i]) + '" />');
+      one = one.replace(/<IsTempoEnabled Value="[^"]*" \/>/, '<IsTempoEnabled Value="true" />');
+    }
+    out += body.slice(cursor, a) + one;
+    cursor = b; open.lastIndex = b; i++;
+  }
+  out += body.slice(cursor);
+  return xml.slice(0, sc.start) + out + xml.slice(sc.end);
 }
 
 /** Scene i takes box i's label. The donor's eight scenes are all `Name Value=""`. */
