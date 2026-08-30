@@ -7809,6 +7809,13 @@
          costume even when each one defends itself):
            jiangnan sizhu (Shanghai) — dizi, erhu, pipa and yangqin, and only
              the yangqin has an honest id (`dulcimer` IS a hammered dulcimer);
+             [THE CENSUS MOVED 2026-08-30, twice, and the row is no longer in
+             this tier at all: sizhu SHIPPED (Shanghai 1920, in the Chinese
+             block below) and then took a REAL erhu that evening — so "only
+             the yangqin has an honest id" is now "the yangqin is honest and
+             the erhu is not a stand-in at all". The dizi and the pipa are
+             still what this line said they were, which is why the row still
+             carries both in its own `cannot`;]
            Cuban rumba de cajón (Havana) — three tuned drums and a clave, and
              the box has twelve extracted kit WAVs with no hand drum among them;
            gnawa, mbalax, jeliya, jùjú, taarab and chimurenga — DEFERRED BY
@@ -9299,7 +9306,13 @@
        walls-down round: per-section `paces` landed and `jingju` ships
        banshi on them at the foot of this file; the INSTRUMENTS half did
        not fall, which is why `guoyue` stays empty below and jingju's role
-       registers stay in its cannot.] So what ships is the half of East Asia that
+       registers stay in its cannot.] [AND THE INSTRUMENTS HALF FELL BY
+       ONE, the same evening: `erhu` is an id now — a MODEL, because no
+       soundfont in this tree could ever have carried one — and jiangnan
+       sizhu casts it. Four of the five named here (dizi, pipa, guzheng,
+       suona) are still absent, which is why this sentence is amended and
+       not deleted; `guoyue` is re-argued on the new census at the foot of
+       the Chinese block and stays empty on a DIFFERENT wall.] So what ships is the half of East Asia that
        is a Western dance band, a Western pop group or a shamisen and a
        string section: five records that genuinely are those things.
 
@@ -9539,10 +9552,21 @@
       plan: "song", bpm: 88,
       parents: { cantopop: 0.4, rnb: 0.35, boombap: 0.25 },
       wants: [],
-      cannot: ["the guzheng, the pipa and the erhu — China has no id in the " +
-               "registry, and the `koto` cast below is a Japanese zither " +
-               "standing in for a Chinese one, which is a borrowed country " +
-               "and not only a borrowed instrument"],
+      // [RE-DATED 2026-08-30, the registry lane. It read: "the guzheng, the
+      // pipa and the erhu — China has no id in the registry, and the `koto`
+      // cast below is a Japanese zither standing in for a Chinese one, which
+      // is a borrowed country and not only a borrowed instrument". The erhu
+      // leaves that list — there is one now (engine/faust/dsp/erhu.dsp) and
+      // jiangnan sizhu plays it — and the clause is NOT thereby answered,
+      // because this row's hook is a ZITHER and an erhu is not one. The
+      // guzheng and the pipa are exactly as absent as they were, and the
+      // borrowed-country half is untouched.]
+      cannot: ["the guzheng and the pipa — neither has an id, and the " +
+               "`koto` cast below is a Japanese zither standing in for a " +
+               "Chinese one, which is a borrowed country and not only a " +
+               "borrowed instrument (the erhu came OUT of this clause on " +
+               "2026-08-30 because the registry grew one; it is not what " +
+               "this row's hook wants)"],
       instr: ["solo_vox", "koto", "rhodes_ep"],
       drumkit: "electronic",
       entry: v => v, reg: v => (v === 1 ? 1 : v === 2 ? -1 : 0),
@@ -12063,13 +12087,81 @@
                "player's added flower lands on this box's sixteenth-note " +
                "grid, where a real club's do not, which is why the four " +
                "of them agree more tidily than eight amateurs ever have"],
-      // THE CAST IS THE HONEST HALF: `dulcimer` for a yangqin is not an
-      // approximation at all — a yangqin IS a hammered dulcimer, the same
-      // instrument that reached China from Persia — and `flute` for a
-      // dizi and `fiddle` for an erhu are the right TYPE with the wrong
-      // body. Only the pipa is a guess, and a nylon-string guitar is at
-      // least a fretted plucked lute.
-      instr: ["flute", "fiddle", "dulcimer", "nylon_string_guitar"],
+      // THE CAST IS THE HONEST HALF, AND IT GOT HONESTER — the erhu is
+      // REAL as of 2026-08-30, and the sentence that stood here is quoted
+      // rather than quietly edited because a stand-in becoming an
+      // instrument is the only kind of catalog change worth dating:
+      //
+      //   "THE CAST IS THE HONEST HALF: `dulcimer` for a yangqin is not an
+      //    approximation at all — a yangqin IS a hammered dulcimer, the same
+      //    instrument that reached China from Persia — and `flute` for a
+      //    dizi and `fiddle` for an erhu are the right TYPE with the wrong
+      //    body. Only the pipa is a guess, and a nylon-string guitar is at
+      //    least a fretted plucked lute."
+      //
+      // "The right TYPE with the wrong body" was exactly right about
+      // `fiddle` (GM 110) and it is the clause that expired. There is an
+      // erhu now — engine/faust/dsp/erhu.dsp, a bowed waveguide on a
+      // CIRCULAR MEMBRANE — and it is a model rather than a recording
+      // because it could not be a recording: every soundfont in this tree
+      // is GM bank 0, 128 presets, measured, and GM has no Chinese
+      // instrument in it at all. What the swap buys, in the gate's own
+      // numbers (test/erhu.test.js, and re-measured on THIS row's seat):
+      //   · THE BODY STAYS PUT. `fiddle` on this chair put its loudest
+      //     partial at 294 Hz for a D4 and 2349 Hz for a D5 — ×8.0, the
+      //     fundamental for one note and the FOURTH HARMONIC for the note
+      //     an octave up, because the two are different zones of a
+      //     six-recording font and nothing is holding them together. That
+      //     is not a body: a body cannot even follow the note that far.
+      //     The erhu puts it at
+      //     1175 Hz for the D4 and 1175 Hz for the D5: ×1.00, the same
+      //     python-skin bump both times, which is what a body IS. (Measured
+      //     through recipeFor on THIS seat, the erhu gate's own E4a method:
+      //     the loudest harmonic, at 1.2 s into a held note.)
+      //   · IT IS BOWED RATHER THAN REPLAYED. The late half of a held note
+      //     measures 0.97 of the early half; the sample measured 1.22,
+      //     which is a recording's own swell and not this player's arm.
+      //   · VELOCITY IS THE BOW ARM. MODEL_DYN.erhu moves `force` 0.42..1
+      //     and `speed` 0.14..0.34, and E6 measures that as a TIMBRE change,
+      //     where a zone's velocity is a fader.
+      //   · AND THE PORTAMENTO HAS A DOOR. `slideParam: "glide"`, 0.09 s, on
+      //     a waveguide whose delay length IS its pitch — so hua yin bends a
+      //     sounding string. Nothing below CLAIMS a hua yin yet and this
+      //     row does not pretend to one: the door is on the unit, and the
+      //     score still has to ask — no `sld` is written anywhere in this
+      //     row. What changed is that asking is now possible; it was not.
+      // What did NOT change: the dizi and the pipa. `flute` is still a
+      // Western concert flute with no dimo (first `cannot` clause, untouched)
+      // and `nylon_string_guitar` is still a guess at a pipa. The cast is now
+      // TWO honest ids, one real instrument and one guess, where it was one
+      // honest id and three approximations. And the other three seats did
+      // not MOVE: re-measured after the swap, the flute, the dulcimer and
+      // the guitar come back at the identical loudest partial, centroid,
+      // late/early ratio and RMS they had before it (294/587, 294/1175,
+      // 881/1175 Hz), which is what "seat one instrument" is supposed to mean.
+      //
+      // AND ONE THING THE SWAP COSTS, DECLARED RATHER THAN LEFT TO BE HEARD.
+      // The erhu arrives QUIET. Measured at A4, velocity 7, through the
+      // renderer's own gain chain on both sides (the model's `gain` from
+      // to-engine pitchAmp, the bow arm from MODEL_DYN.erhu, times the route
+      // trim toEngine writes, against the sampler's `u.lvl × amp` on the dry
+      // bus): the erhu delivers 0.00317 RMS where the `fiddle` it replaces
+      // delivered 0.01713 — a 14.7 dB drop on this seat, on the row whose
+      // whole identity is FOUR AUDIBLE VOICES playing one tune four ways.
+      // It is not this file's number to fix and it has a named owner that
+      // predicted this exact morning: audio/to-engine.js PAGE_TRIM.erhu is
+      // 1.78, borrowed from stk_guitar's row, and its own comment says
+      // "DERIVED, not measured on the page… will need re-measuring the first
+      // time a record casts it — which nothing does yet". A record casts it
+      // now. Closing the 14.7 dB from that row alone is 1.78 → 9.63, which
+      // is the neighbourhood the two other DERIVED rows already sit in
+      // (voice_lead 8.2, tract_voice 9.7) — so the number is plausible and it
+      // is still a MEASUREMENT somebody has to take, not one to type here.
+      // instruments.js's own `mul` cannot do it: the model lane clamps
+      // `level` at 0.345 against this row's 0.2415, which is +3.1 dB of the
+      // 14.7, and borrowing another table's lever would move the target the
+      // real measurement has to land on.
+      instr: ["flute", "erhu", "dulcimer", "nylon_string_guitar"],
       entry: v => (v < 2 ? 0 : v - 1), reg: v => [1, 0, 0, -1][v],
       realize: () => "line",
       part: ["lead", "counter", "counter", "counter"],
@@ -12338,6 +12430,85 @@
        erhu, a dizi, a pipa or a sheng, and the day it holds ONE of
        them the honest first row is jiangnan sizhu's own upgrade, not
        this orchestra.]
+       [THE CONDITION WAS MET AND THE CELL WAS RE-DECIDED, 2026-08-30
+       (the evening of the same day, the registry lane). The refusal
+       above named its own price and the price was PAID: the registry
+       holds an erhu — engine/faust/dsp/erhu.dsp, a bowed waveguide on a
+       circular membrane whose six mode ratios test/erhu.test.js E1
+       recomputes from the Bessel zeros and holds to 1e-5. And the
+       refusal's own next sentence was honoured before this paragraph was
+       reopened: "the honest first row is jiangnan sizhu's own upgrade,
+       not this orchestra" — sizhu took it, one seat, `fiddle` out and
+       `erhu` in, measured on that row.
+       SO THE CELL IS RE-ARGUED FROM A NEW CENSUS, AND IT STAYS EMPTY. The
+       verdict kept its answer and changed its REASON, which is the only
+       kind of re-decision worth writing down.
+         WHAT FELL. "there are no Chinese instruments in the registry" is
+         simply false now. And so is the sentence under it: "a guoyue of
+         `strings`, `violin` and `cello` sections would be a WESTERN
+         STRING ORCHESTRA not standing in for anything". A guoyue built
+         this evening would be cast `erhu`, `dulcimer`, `flute`,
+         `nylon_string_guitar` — one REAL instrument (the erhu), one
+         HONEST id (a yangqin IS a hammered dulcimer), one BORROWED
+         (a concert flute for a dizi, and no dimo) and one GUESS (a
+         nylon-string lute for a pipa). That is not a Western string
+         orchestra and the old sentence cannot be used against it.
+         WHAT STANDS, AND IT IS THE HALF THE OLD PARAGRAPH ONLY GESTURED
+         AT: "guoyue's identity is TIMBRE and ORCHESTRATION — SECTIONS of
+         erhu, pipa, ruan, dizi and sheng". The TIMBRE half moved one
+         fifth. The ORCHESTRATION half did not move at all, and this round
+         can finally say why with numbers instead of an adjective.
+         MEASURED, this evening, through the shipped tables:
+           · erhu.dsp exposes thirteen params — bowPos force freq gain gate
+             glide level pad release skin speed vibRate vibrato — and not
+             one of them is `detune`, `spread`, `unison` or `voices`.
+           · two chairs seated on `erhu` in one record build BYTE-IDENTICAL
+             unit params, at one seed and across seeds. So N erhu chairs in
+             unison are one erhu N times over, perfectly correlated: a
+             louder soloist, not a section.
+           · and the box is NOT generally mute about sections, which is what
+             makes this a real wall rather than a general complaint.
+             `strings`, `slow_strings`, `brass_section` and `violin` all
+             route `sampler:` — RECORDINGS of sections, fifteen players
+             already inside the take. `ahh_choir` routes
+             `patch:ahh_choir>voice_choir`, a section MODEL, and that module
+             carries exactly the three knobs a section needs and the erhu
+             has none of: `spread`, `drift`, `width`.
+         So the wall is not "no Chinese instrument" any more. The wall is
+         that this box has exactly TWO ways to say the word SECTION — a
+         recording of one, and a model built to be one — and for the erhu
+         nobody made the recording and nobody built the model. erhu.dsp
+         models ONE PLAYER, on purpose and correctly, because that is what
+         a sizhu club has and sizhu is the row it was built for.
+         AND THE PRIMARY-FACT RULE DECIDES IT, on this file's own §4 test
+         ("if a tradition's PRIMARY fact is in its own `cannot`, it does
+         not ship under that name"). Guoyue's primary fact IS the
+         orchestration: the whole 1953 project was the conversion of a
+         teahouse ensemble into conducted, harmonised sections. A row
+         shipped tonight would have to write "the sections — every erhu,
+         pipa and dizi line here is one player" into its own `cannot`, and
+         that is the primary fact, not an ornament. jingju shipped this
+         morning because banshi — ITS primary fact — moved OUT of its
+         cannot and only the role registers stayed in. Nothing moved out of
+         guoyue's.
+         AND A SECOND REASON, INDEPENDENT OF THE FIRST, which is the one
+         this round actually found: the guoyue that IS buildable tonight
+         has jiangnan sizhu's cast, id for id. Two anchors, one cast, with
+         the NAME carrying the whole difference — which is the "different
+         ensemble wearing the name" the morning's refusal caught, arriving
+         from the other side. Then the cast was Western and the name was
+         Chinese; now the cast is right and it is somebody else's.
+         THE NEW CONDITION, replacing the old one word for word so the next
+         re-argument is not another essay: guoyue is re-decidable the day
+         this box can say SECTION about an instrument it MODELS — an
+         `erhu_section` module (voice_choir is voice_lead plus `spread`,
+         `drift` and `width`, and the erhu's string is already built and
+         measured, so this is the cheapest thing on the whole Chinese
+         backlog), or any other mechanism that makes N players out of one.
+         NOT the dizi, not the pipa, not the sheng: those three would take
+         the cast from one-real-two-borrowed to four-real, which is worth
+         having and is NOT this cell's wall. The axis guoyue IS is the one
+         the erhu did not move.]
 
        KHYAL (Hindustani vocal, Mumbai 1965, Amir Khan). The dominant
        form of North Indian classical music and the biggest single hole
@@ -18808,9 +18979,27 @@
                "repeats per bar turns stage directions into a beat, so " +
                "the kit below keeps only the ban's timekeeping and the " +
                "signals stay unsaid",
+               // [AMENDED 2026-08-30, the registry lane. It read: "the
+               // jinghu — a two-string spike fiddle an octave up; the
+               // violin is family-right and voice-wrong, sizhu's own erhu
+               // admission one row over". The cross-reference expired that
+               // evening — sizhu has no erhu admission any more, it has an
+               // erhu — and the clause is amended rather than answered.
+               // The registry's new `erhu` is a MUCH closer jinghu than
+               // `fiddle` is (the same huqin family: two strings, a
+               // snakeskin membrane, the bow hair BETWEEN the strings,
+               // where a violin has four strings and a wooden top), and
+               // this row does not take it tonight for one measured
+               // reason: erhu.dsp's compass is D4..A7 and a jinghu is
+               // tuned roughly an OCTAVE above an erhu with a bamboo
+               // barrel a fraction of the size, so seating it would be
+               // claiming an instrument nobody has measured against a
+               // jinghu. A next round that measures it owns this clause.]
                "the jinghu — a two-string spike fiddle an octave up; the " +
-               "violin is family-right and voice-wrong, sizhu's own erhu " +
-               "admission one row over"],
+               "violin below is family-right and voice-wrong, and the " +
+               "erhu the registry grew on 2026-08-30 is family-RIGHT and " +
+               "still an octave low, un-measured against a jinghu's own " +
+               "bamboo barrel"],
       instr: ["solo_vox", "fiddle", "banjo"],
       drumkit: "acoustic",
       entry: v => (v === 0 ? 2 : 0), reg: v => [0, 1, -1][v],

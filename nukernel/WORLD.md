@@ -278,6 +278,61 @@ earned knowledge and not padding. **The stopping rule is the grid, not the
 number:** a cell is filled or **declared empty with a reason**, exactly as
 `atlas.js EXCLUDE` declares the six roles that are not places.
 
+#### THE SCORECARD, TAKEN 2026-08-30 (the ledger round)
+
+Nobody had ever run §4's own numbers back against the catalog, so the targets
+above sat unaudited through nine rounds. Measured off `genres.js` and
+`atlas.js` themselves — never off a comment — with "Today" above meaning
+2026-08-24 and "now" meaning today:
+
+| region | then | target | now | verdict |
+|---|---:|---:|---:|---|
+| Africa | 5 | 24 | **25** | met, +1 |
+| Latin America & Caribbean | 8 | 16 | **35** | met, +19 |
+| Middle East & Central Asia | 1 | 16 | **23** | met, +7 — but 22 of the 23 are Middle East and **Central Asia holds one dot, Kabul** |
+| East Asia | 2 | 16 | **15** | short 1 |
+| Southeast Asia | 0 | 12 | **7** | short 5 |
+| South Asia | 1 | 16 | **7** | short 9 |
+| Australia & Pacific | 0 | 8 | **1** | short 7 — `exotica`, Honolulu 1957, landed the day the coastline was re-baked |
+
+Totals: **367 place-year anchors** (target ~209 after the six roles — passed by
+76%), **173 coordinates** (was 65), **156 year stops** (was 69), and **68
+pre-1900 anchors** where there were 17. The sentence *"all seventeen pre-1900
+anchors are European art or church music"* is **defeated**: 16 of the 68 are
+not, and the oldest three on the map (Hohle Fels −33000, Jiahu −6000, Ur −2500)
+are a bone flute, a crane-bone flute and a lyre.
+
+**The Euro-American share is 69.2% (254/367), against the 51% target** — the
+one headline number still short, and it is short because the numerator grew
+too: Europe took 139 rows and North America 115 while the four Asian and
+Pacific regions took 30 between them. **The next hundred rows cannot come from
+Europe or North America if this line is ever to be paid.**
+
+#### THE GENEALOGY PREDICTION WAS WRONG, AND THE SHAPE OF THE ERROR MATTERS
+
+§4 predicted *"at ~215 expect 6-9 components — roughly one per region for
+pre-contact traditions, plus one large and genuinely real Atlantic component —
+and declared roots going to 25-40"*. Measured at 373: **27 components and 54
+declared roots**, and the sizes are **344, 2, 2, 2, and twenty-three
+singletons** — of which six are the kernel roles (`simple`, `solo`, `vocal`,
+`backing`, `riff`, `pad`), which have no genealogy on purpose, leaving
+**seventeen real anchors alone in the graph**.
+
+That is not the predicted shape. The Atlantic component did not sit beside
+regional ones — it **absorbed** them, at 92% of the catalog — and what
+"fragmented" is not a family per region but a scatter of rows with no parent
+and no child at all: `gamelan`, `jingju`, `carnatic`, `sizhu`, `guqin`,
+`mbuti`, `georgian`, `huayno`, `mariachi`, `forro`, `kizomba`, `lukthung`,
+`balkanbrass`, `tarantella`, `zema`, `hohlefels`, `jiahu`. The three pairs are
+`irishtrad`–`seannos`, `urlyre`–`hurrian`, `klezmer`–`chazzanut`.
+
+THE CONSEQUENCE, which is §4's own: *"the fit tool's residue = the invention
+metric is only meaningful WITHIN a component"*. For seventeen anchors there is
+no within — the metric has nothing to measure, and those rows are precisely the
+non-Western ones. **A world anchor with no edges is a dot, not a genealogy**,
+and closing that is a catalog job (each of these has ancestors the table could
+hold) rather than a gate job.
+
 **The map is the alarm, not the specification**, and here is the proof: bringing
 all forty of the world's largest urban areas within 2,000 km of an anchor takes
 **six new dots** — Beijing, Jakarta, Bangkok, Chennai, Kinshasa, Lima. Six dots

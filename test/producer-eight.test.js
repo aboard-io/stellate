@@ -118,8 +118,12 @@ async function loadProduce() {
 }
 
 let pass = 0, fail = 0;
-// ONE LINE PER GATE, WITH ITS COST. The offering walks 122 anchors per subject
-// per verb and the playable() predicate renders every voice of every section,
+// ONE LINE PER GATE, WITH ITS COST. The offering walks the WHOLE genre table
+// per subject per verb — 373 anchors, re-measured 2026-08-30 (the number read
+// 122 when this line was written; producer.js `targets` walks
+// Object.keys(GENRES) and has never held a subset, so the comment was a
+// snapshot of the catalog, not of the code) — and the playable() predicate
+// renders every voice of every section,
 // so this gate is minutes rather than the seconds PROGRAM.md §5 promises for
 // the pure-node list — and a gate whose cost is invisible is a gate nobody
 // notices getting slower.
@@ -221,7 +225,9 @@ FLEET = (await import(path.join(ROOT, "nukernel/audio/to-engine.js"))).SYNTH_NAM
 
 /* ---------- THE OFFERING, MEASURED ONCE PER RECORD ----------------------
    Everything below asks the plan, never the offering. `subjects`/`targets` walk
-   122 anchors per subject per verb and every note said invalidates the cache
+   373 anchors per subject per verb (Object.keys(GENRES), re-measured
+   2026-08-30; it said 122 at a 122-anchor catalog) and every note said
+   invalidates the cache
    they memoize on, so re-asking inside an assertion loop turns one gate into
    several thousand full offering passes (measured: the first draft of this file
    had not finished after six minutes). The plan is plain data, taken with the

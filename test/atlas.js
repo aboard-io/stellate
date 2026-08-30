@@ -1525,8 +1525,10 @@ function g18() {
          is the instrument now.
      WHAT IS ASSERTED IS STILL THE SENTENCE, THEN THE EARTH, THEN THE
      CATALOGUE: a reader meets a line of prose that names the year, then the
-     picture that year lit, then the 201 rows that both name every record and
-     move the year. The places are still ahead of the reader in the tab order
+     picture that year lit, then the 367 rows that both name every record and
+     move the year. (367 = atlas.js ALL.length, re-measured 2026-08-30; the
+     line said 201 at a 201-row map and the list has never been a subset of
+     WHEN, so the number was a snapshot of the catalog, not of this gate.) The places are still ahead of the reader in the tab order
      and never behind them, which is the promise this check exists for. */
   check(JSON.stringify(order) === JSON.stringify(
       ["H2#atlasHead", "P#atlasSay", "DIV#atlasWrap", "DIV#atlasIndex"]),

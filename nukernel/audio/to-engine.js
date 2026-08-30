@@ -617,8 +617,23 @@ const PAGE_TRIM = {
      0.0111 peak against stk_guitar's 0.0039 / 0.0231, so the page's deficit
      for one is the page's deficit for the other. It takes stk_guitar's row
      unchanged and will need re-measuring the first time a record casts it —
-     which nothing does yet. */
-  erhu:        1.78,
+     which nothing does yet.
+
+     A RECORD CASTS IT NOW, AND THE PREDICTION WAS RIGHT (2026-08-30, hours
+     later): `sizhu` seats the erhu on voice 1, and measured through the
+     renderer's own gain chain at A4/vel 7 against the sampled `fiddle` it
+     replaced, the module delivered 0.00317 RMS where the fiddle delivered
+     0.01713 — 14.7 dB down on a row whose whole identity is four AUDIBLE
+     voices. The level-fit against stk_guitar was honest about RMS and blind
+     about PEAK: 0.0111 against 0.0231 is 6.4 dB of crest the derived row
+     never accounted for, and a bowed sustain spends its energy where a
+     plucked string does not.
+     1.78 -> 9.63 closes it from that one row's measurement, which lands the
+     erhu among the other two DERIVED-then-corrected rows (voice_lead 8.2,
+     tract_voice 9.7) rather than out at the plucked end. STILL DERIVED FROM
+     ONE RECORD: the day a second row casts an erhu, this wants re-measuring
+     across both, and Paul's ears are the only gate that can call it done. */
+  erhu:        9.63,
   voice_lead:  8.2,
   voice_choir: 15,
   // DERIVED, not measured on the page — the second row here that is, and it says

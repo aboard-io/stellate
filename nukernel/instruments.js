@@ -220,6 +220,18 @@
     // verbatim, because the register-law gate holds any shared id to the
     // table that actually binds (state-engine.js foldToRange).
     violin: [55, 100], fiddle: [55, 100], viola: [48, 91], cello: [36, 84],
+    // ...and the SPIKE FIDDLE, whose compass is not a compromise between a
+    // table and a zone map: the erhu is a MODEL (engine/faust/dsp/erhu.dsp),
+    // so there is no recording to fold into and the window is the instrument's
+    // own. MIDI 62..105 is D4 to A7 — the ZIM's "the maximum range of the
+    // instrument is three and a half octaves, from D4 up to A7, before a
+    // stopping finger reaches the part of the string in contact with the bow
+    // hair" — and it is the SAME pair of numbers state-engine.js `case "erhu"`
+    // writes as freqMin 293.66 / freqMax 3520, which is the law above (a
+    // borrowed value must not drift). Nothing exists under the open string to
+    // be stopped, so the floor is a real floor and not a taste: a sizhu line
+    // that goes there is folded back up, in key, exactly as a guitar's low E is.
+    erhu: [62, 105],
     // plucked + fretted (guitar tops around E6)
     nylon_string_guitar: [40, 88], steel_string_guitar: [40, 88],
     jazz_guitar: [40, 88], clean_guitar: [40, 88], palm_muted_guitar: [40, 86],
@@ -818,6 +830,52 @@
     // up top, because a thumb is the softest mallet there is.
     kalimba:    { dsp: "mallet", mul: 0.50, set: (M) => ({
       ring: 0.8, exPos: 1.4, tilt: 7, cutoff: Math.min(M.mcut, 7000), release: 1.5 }) },
+    // ---- the bow -------------------------------------------------------
+    // GM HAS NO ERHU, which is why this row is not a patch over a recording
+    // the way every other row in this table is. All eleven soundfonts in the
+    // tree are GM bank 0 — 128 presets, measured — and the catalogue has been
+    // writing that down for months: jiangnan sizhu cast `fiddle` (GM 110) and
+    // said in its own comment that it was "the right TYPE with the wrong
+    // body", and genres.js refused the `guoyue` cell on the same sentence.
+    // engine/faust/dsp/erhu.dsp is the answer and test/erhu.test.js is the
+    // measurement: a bowed waveguide on a CIRCULAR MEMBRANE whose six mode
+    // ratios are the Bessel zeros j(m,n)/j(0,1), recomputed by the gate from
+    // the functions themselves and held to 1e-5, so the body cannot be tuned
+    // into a violin's by hand.
+    //
+    // THE ROW SETS ALMOST NOTHING, ON PURPOSE, and that is the difference
+    // between this and the six guitars above. A guitar recipe picks WHICH
+    // guitar — the pluck position, the ring, the cabinet — because six ids
+    // share one string model. There is one erhu. The barrel, the bow position
+    // and the skin are erhu.dsp's own measured defaults (skin 1180 Hz is the
+    // membrane test/erhu.test.js E4 measured, and a row that moved it would be
+    // moving the instrument's body away from the thing that was proven), so
+    // they are left where their owner put them and a chair that wants them can
+    // still reach them — state-engine's `case "erhu"` keeps every one on a
+    // recipe key.
+    //
+    // AND NO `cutoff`, WHICH IS THE ONE ABSENCE WORTH SAYING OUT LOUD: every
+    // other row here writes M.cab or M.mcut, and the erhu module HAS NO
+    // cutoff param (its meta lists bowPos force freq gain gate glide level pad
+    // release skin vibRate vibrato and nothing else). A `cutoff` written here
+    // would be a knob that cannot reach the sound — this box's own house rule
+    // — so the genre's `cut` tilts nothing on this instrument and is not
+    // pretended at. What a tone block DOES get to say to a bow is how long the
+    // note takes to stop when the arm lifts, and that is the one line below.
+    // The cap is 0.4 s rather than the module's 1.5 because `rel` on these
+    // rows was written for a DECAYING sample (sizhu's is 0.9) and a bow does
+    // not decay — E3 measures the late half of a held note at 0.98 of the
+    // early half — so a literal 0.9 s release is a second of unbowed string
+    // smeared under the next note.
+    //
+    // `force` AND `speed` ARE NOT SET, for the pianos' reason one table up:
+    // they are the bow ARM and the note's own velocity writes them, through
+    // state-engine MODEL_DYN.erhu (force 0.42..1, speed 0.14..0.34) read back
+    // by audio/to-engine.js liveModel. A row that pinned them would make
+    // velocity a fader on the one instrument whose gate (E6) proves it is not.
+    erhu: { dsp: "erhu", set: (M) => ({
+      release: Math.max(0.02, Math.min(M.rel, 0.4)) }) },
+
     // AND NOT THE MUSIC BOX, which was in this table for a day. Every row here is
     // a bar over a RESONATOR TUBE, because that is what the model is; a music box
     // is a comb tooth screwed to a wooden case and has no tube at all, and the one
@@ -1737,7 +1795,11 @@
     [/choir|voices|vox|voice/, "vox"],
     [/trumpet|trombone|tuba|brass|horn/, "brass"],
     [/sax|clarinet|oboe|bassoon|flute|recorder|harmonica|whistle|pipe/, "reed"],
-    [/violin|fiddle|viola|cello|contrabass/, "bowed"],
+    // ...and `erhu` joins the bowed row rather than falling through to `lead`,
+    // which is what an id in no family gets. A spike fiddle is a bowed string
+    // by mechanism, and the strip it wants is the one the fiddle it replaces
+    // was already on. No other id in the table contains the letters.
+    [/violin|fiddle|viola|cello|contrabass|erhu/, "bowed"],
     // ...dulcimer is struck strings — a mallet instrument by mechanism, which
     // is also where the parent's own mallet test files it
     [/marimba|xylo|vibra|glock|kalimba|music_box|celesta|steel_drum|timpani|dulcimer/, "mallet"],

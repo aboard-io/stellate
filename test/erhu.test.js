@@ -421,7 +421,16 @@ const TE = await import(R("nukernel/audio/to-engine.js"));
       (un.length ? " (" + un[0].why + ")" : ""));
     assert.strictEqual(un.length, 0, "unrouted: " + JSON.stringify(un));
     assert.strictEqual(r.m.model, "erhu", "the recipe's model is " + r.m.model);
-    assert.strictEqual(TE.pageTrim("erhu"), 1.78, "no page trim for erhu");
+    /* THE PIN READ 1.78 AND IT IS 9.63 NOW (2026-08-30, hours after this gate
+       was written). That number was the DERIVED row this module shipped with —
+       stk_guitar's, taken unchanged because nothing cast an erhu yet, and its
+       own comment said "will need re-measuring the first time a record casts
+       it". `sizhu` casts it now, and measured on the page against the sampled
+       fiddle it replaced the module came back 14.7 dB down. The pin exists to
+       catch a SILENT drift, not to freeze a number the row itself called
+       provisional — so it moves WITH its reason, and stays a pin: a bare
+       `> 0` here would let the next silent drift through. */
+    assert.strictEqual(TE.pageTrim("erhu"), 9.63, "no page trim for erhu");
     console.log("       recipe: " + r.source + " -> model " + r.m.model +
       ", page trim " + TE.pageTrim("erhu"));
   });

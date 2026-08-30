@@ -7,9 +7,24 @@
 > are all live. **Its COUNTS and its GATE TABLE are not.** Two days of rounds
 > have moved underneath it:
 >
-> * every "122 anchors" and "139 anchors" below should read **199**, every
+> * ~~every "122 anchors" and "139 anchors" below should read **199**, every
 >   "62 places" or "65 places" should read **109**, and the year stops are
->   **85, 540..2023** (`nukernel/atlas.gate.js` prints all of these);
+>   **85, 540..2023**~~ — **RE-DERIVED 2026-08-30 (the ledger round), and the
+>   correction above had itself drifted by 174 anchors.** The note is struck
+>   rather than overwritten because it is the record of what the numbers were
+>   on 2026-08-26 and a correction that hides its own history is worth less
+>   than the number it carries. Measured today, off the tables themselves and
+>   not off any comment: every "122 anchors" and "139 anchors" below should
+>   read **373** (`Object.keys(GENRES).length`, and `precompose.anchors()`
+>   agrees); every "62 places" or "65 places" should read **173**
+>   (`atlas.PLACES`); the map draws **367** of the 373 (the six kernel roles
+>   — simple, solo, vocal, backing, riff, pad — carry no place-year, which is
+>   `atlas.ALL.length`); and the year stops are **156, -33000..2023**
+>   (`atlas.YEARS`), the deep end being `hohlefels`, the Palaeolithic bone
+>   flute, not `zema`'s 540. THE LESSON THIS LINE IS NOW AN EXAMPLE OF: a
+>   number typed into prose is stale the week after it is typed, which is why
+>   `nukernel/atlas.gate.js` prints all of these on every run — read the gate,
+>   not this paragraph;
 > * **§4's deferred list has been walked, re-measured and rebuilt** — go to
 >   `STATE.md` "STILL DEFERRED", which keeps every §4 id in brackets so nothing
 >   is renamed out of sight. Several §4 items are closed; §4·8 (`orn`) has
@@ -18,8 +33,10 @@
 >   rewritten** — the pane rule, the `<select>` counts, the `eng.fx` chips, the
 >   composed-staff-per-motif — each reversed on purpose and each recorded in
 >   place in its own gate file. The gate list itself is also short: the runner
->   carries **eighteen** gates now, against the thirteen commands named here
->   (and the soak, which is deliberately not in the runner).
+>   carries ~~**eighteen**~~ **thirty-two** gates now (re-counted 2026-08-30
+>   off `test/all.js` GATES itself — it read eighteen on 2026-08-26), against
+>   the thirteen commands named here (and the soak, which is deliberately not
+>   in the runner).
 >
 > Read §1–§3 and §5's PROSE for the argument and the laws. Read `STATE.md` for
 > what is true today, and `AXES.md` for the vocabulary. Nothing below has been
@@ -773,12 +790,22 @@ measured and could not finish this round.
    `WORDS`. **No kernel operator maps step *i* to step *2i*** — `split` changes
    attacks, `del` closes gaps, neither stretches. A builder must not fake it.
    Flagged for the kernel owner.
-7. **`bassGrid` has no document slot** — 15 anchors declare one and precompose
-   loses it. The shape of the fix is a `{kind:"bass"}` cell; named, not dropped.
-8. **`orn` is declared by zero of 122 genres.** `kernel.js:1029 ornament` is a
-   complete ninth type with its words already written (`askable.js:78`); D7 gives
-   it a sheet. Deciding which music decorates, and how much, is a catalog table
-   nobody has written.
+7. **`bassGrid` has no document slot** — ~~15~~ **22** anchors declare one
+   (re-counted 2026-08-30, the ledger round) and precompose loses it. The shape
+   of the fix is a `{kind:"bass"}` cell; named, not dropped. The number grew and
+   the hole did not, which is the argument for the slot getting louder, not
+   quieter.
+8. ~~**`orn` is declared by zero of 122 genres.**~~ **PAID BETWEEN THE ROUNDS,
+   MEASURED 2026-08-30: `orn` is declared by 114 of 373 anchors** — 31% of the
+   catalog, from `gregorian` and `hildegard` through `taqsim`, `dastgah`,
+   `carnatic` and `qiyan` to `hardingfele` and `scotsfiddle` — so "a catalog
+   table nobody has written" is a sentence about a table that now exists. The
+   line is struck rather than deleted because §4·8 was called *"the most
+   valuable item on the list"* in this file's own 2026-08-26 header note, and
+   the record of a priority being paid is worth as much as the priority was.
+   WHAT REMAINS OF THE ITEM: `kernel.js:1029 ornament` is a complete ninth type
+   with its words already written (`askable.js:78`), and D7's SHEET for it —
+   the editable surface, not the declaration — is the part still owed.
 9. **The theme composer, and the solo ladder.** `ideas-kit.js` CELLS × CONTOURS ×
    LANDINGS × SENTENCES is a second material model beside eight.js's hand-written
    grid. D5 uses it to WRITE cells; wiring it as an editable surface (PLAN.md's

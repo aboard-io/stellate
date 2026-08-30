@@ -1121,17 +1121,58 @@ function sectionEvents(doc, i) {
     // had ever named — sitar, koto, shamisen, steel_drums, pan_flute,
     // clarinet, alto_sax, tuba, honky_tonk among them — and a typo in any of
     // them would have shipped a silent chair.
+    //
+    // WIDENED 2026-08-30, THE FIRST TIME AN ANCHOR CAST SOMETHING THAT IS NOT
+    // A RECORDING, and the old rule is quoted rather than replaced because it
+    // was right about everything it could see: "The real authority is
+    // engine/registry-data.js SAMPLERS, the 123 ids with zones on disk". It
+    // was right while every cast in the catalog WAS a recording. jiangnan
+    // sizhu now casts `erhu`, which has no SAMPLERS row and never can: every
+    // soundfont in this tree is GM bank 0, GM has no Chinese instrument, and
+    // engine/faust/dsp/erhu.dsp exists precisely because the recording could
+    // not. Under the old rule this file would have refused the one instrument
+    // in the catalog that is NOT a stand-in.
+    //
+    // So the law is stated at the altitude it always meant: AN ANCHOR MAY NOT
+    // PROMISE A SOUND THE ENGINE CANNOT MAKE. Two ways to keep it — a zone on
+    // disk, or a compiled model the bridge routes to — and the second half is
+    // asked of `to-engine.js recipeFor` itself, the same function the tape and
+    // the page ask, rather than of a second list that could drift from it. An
+    // id that is neither comes back `unrouted` and fails here exactly as a
+    // typo did before. It is STRICTLY STRONGER than the sentence above: a
+    // SAMPLERS row proves zones exist, and this proves the bridge reaches
+    // them.
     const REG = require(path.join(__dirname, "..", "engine", "registry-data.js"));
     const REAL = new Set(Object.keys(REG.SAMPLERS));
-    const unplayable = [];
+    // the modelled half, asked of the bridge. `{}` for the library on purpose:
+    // a sampled id falls through to the (empty) lib and reports `unrouted`, so
+    // this branch answers TRUE only for an id the patch/mouth/voice tables
+    // genuinely model — which is the question being asked.
+    const modelled = (id) => {
+      const un = [];
+      const r = TE.recipeFor("line", { instr: id, tone: null, synth: null }, {}, un);
+      return !un.length && String(r.source || "").split(":")[0] !== "unrouted" &&
+             !!(r.m && r.m.model);
+    };
+    const unplayable = [], asModel = [];
     for (const gk of ANCHORS)
       for (const id of (Array.isArray(GENRES[gk].instr)
-                        ? GENRES[gk].instr : [GENRES[gk].instr]))
-        if (!REAL.has(id)) unplayable.push(gk + " -> " + id);
-    ok("G11a every instrument every anchor casts is a real registry id with " +
-       "zones on disk — " + REAL.size + " SAMPLERS ids, checked against the " +
-       "registry and not against the menu derived from these very casts", () =>
-      assert.strictEqual(unplayable.length, 0, unplayable.join(", ")));
+                        ? GENRES[gk].instr : [GENRES[gk].instr])) {
+        if (REAL.has(id)) continue;
+        if (modelled(id)) { asModel.push(gk + " -> " + id); continue; }
+        unplayable.push(gk + " -> " + id);
+      }
+    ok("G11a every instrument every anchor casts is a sound the engine can " +
+       "make — a zone on disk (" + REAL.size + " SAMPLERS ids) or a compiled " +
+       "model recipeFor routes to — checked against the registry and the " +
+       "bridge, never against the menu derived from these very casts", () => {
+      assert.strictEqual(unplayable.length, 0, unplayable.join(", "));
+      // ...and the modelled ones are PRINTED, every run, because an id that
+      // has no recording behind it is the one a reader should be able to see
+      // without reading the catalog.
+      console.log("       cast as a MODEL, not a recording: " +
+        (asModel.length ? asModel.join(", ") : "none"));
+    });
 
     // G11b — THE `cannot` FIELD IS AN ADMISSION AND MUST READ LIKE ONE.
     // WORLD.md §7: "`wants` names a missing ANCESTOR; `cannot` names a
