@@ -852,6 +852,55 @@
     chorus: { w: "chorus", g: "◎",
               says: "the vocal chairs off the tape — sampled oohs and aahs" } };
   const VOICING_KEYS = Object.keys(VOICINGS);
+
+  /* ===== WHAT HAPPENS WHEN THE RECORD ENDS (2026-08-30) ==================
+     Paul: *"There are three play modes possible—loop, once, and album which
+     keeps making new songs. Let me set that with a three state icon in opt."*
+
+     IT IS A VOCABULARY AND IT IS HERE FOR VOICINGS' REASON, WORD FOR WORD:
+     "the marks are here beside the words rather than in ui/glyph.js because
+     the states are a VOCABULARY — a menu of what the control may be — and
+     this file is where nukernel says what a control is. glyph.js's `act` rows
+     are single gestures (play, stop, rewrite, take); this is one control with
+     three positions, and its marks belong with its words."
+
+     THE THREE MARKS ARE ONE FAMILY, BY THE TABLE'S OWN CONCATENATION IDIOM
+     ("the SUBJECT first, then what is being done to it", ui/glyph.js `sec`).
+     Every one of them leads with ▶ — this is the transport, in all three
+     positions — and the second mark is the whole of the difference:
+       ▶|  to the end, and stop at the bar line. `|` is ASCII; nothing else
+           in this box's marks is a bare vertical rule.
+       ▶∞  round and round. U+221E, in every face that can draw this page,
+           and the only ∞ in the box.
+       ▶⚄  round again on a NEW THROW. ⚄ is `rewrite`'s own die (glyph.js
+           `act.rewrite`) and it is deliberately the same picture: album IS
+           the rewrite gesture, taken by the clock at the end of the record
+           instead of by a thumb. The same fact wears the same mark.
+     Distinct at a glance, and only one of them is ever drawn — the strip
+     shows the position you are ON, one mark and its word (ui/eight.js
+     `paintPlayMode`, the `paintVoicing` shape exactly).
+
+     `loop` IS THE DEFAULT BECAUSE IT IS WHAT THE BOX ALREADY DID, and that is
+     a MEASUREMENT, not a memory: audio/live.js `barOfSerial` is
+     `((barBase + serial) % barCount() + n) % n`, so the walk has wrapped for
+     ever since there was a walk. Absent-is-today: a record opened by somebody
+     who never touches this control plays exactly as it played yesterday.
+
+     THE VALUE IS NOT HERE AND DOES NOT PERSIST. It lives in ui/eight.js as
+     module state beside `deckView` — the file that holds the transport's
+     buttons and hears the end of the record — and a reload puts you back on
+     `loop`, which is VOICINGS' own trade said again: "a setting that survives
+     a reload is a setting somebody has to be able to see they made", and this
+     one can write you a different record while you are not looking. */
+  const PLAYMODES = {
+    loop:  { w: "loop", g: "▶∞",
+             says: "the record goes round and round — what it has always done" },
+    once:  { w: "once", g: "▶|",
+             says: "the record plays to its end and stops" },
+    album: { w: "album", g: "▶⚄",
+             says: "at the end of the record the box writes another one and " +
+                   "plays it — the same anchor, a new reading" } };
+  const PLAYMODE_KEYS = Object.keys(PLAYMODES);
   // The param a knob rides, per DSP naming. First name that EXISTS on the node
   // wins, so one chip covers tb303 / modeld / bass_reese / bass_wobble without
   // a per-synth table — and a DSP that has none of them (the DX7) is simply not
@@ -2725,7 +2774,8 @@
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,
                 RETURNS, RETURNLABEL, ERETURNS, REVERBS, REVERBLABEL,
                 EBLEEDS, EBLEEDLABEL, GLEVELS, GLEVELLABEL, GXCHIPS,
-                VOX, VOXPARAM, VOXDOUBLE, VOICINGS, VOICING_KEYS, OCTAVES, ARTICS, CMODES, CLAMPS, CLAMPLABEL,
+                VOX, VOXPARAM, VOXDOUBLE, VOICINGS, VOICING_KEYS,
+                PLAYMODES, PLAYMODE_KEYS, OCTAVES, ARTICS, CMODES, CLAMPS, CLAMPLABEL,
                 KEYS, KEYLABEL, KEYNAMES, wrapKey, KEYMODES, KEYMODELABEL,
                 FIFTHS, relMinorOf, RELMINNAME, minorish,
                 PROGCHOICES, PROGLABEL, PERIODS, PERIODLABEL,

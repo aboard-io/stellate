@@ -599,8 +599,17 @@ function sectionEvents(doc, i) {
   // previous shift probed one name per refusal, this one probed fifty.
   // Kulning and the griot/jeliya row were re-probed and STAY CLOSED, both
   // re-dated in place with the evidence that closed them.
-  ok("G0 the catalog is 373 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 373,
+  // 373 -> 374 on 2026-08-30, the Wax Trax round (Paul: "Where is wax trax
+  // industrial"). ONE row, and it was already named in the catalogue's own
+  // hand: `industrialrock` carried `wants: ["wax trax industrial"]` and the
+  // two Chicago rows that descend from it — `industrialmetal` 1988 and `ebm`
+  // 1989 — were already here, so the label was their missing PARENT and not
+  // a new corner. `waxtrax` (Chicago 1981) ships on the batcave rule, which
+  // the ZIM answers twice over: the label pressed Strike Under's Immediate
+  // Action in 1980 and Ministry's Cold Life in 1981, and that second record
+  // is the one the article says "set the stage".
+  ok("G0 the catalog is 374 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 374,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));

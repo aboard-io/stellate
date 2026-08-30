@@ -33,7 +33,7 @@
  *       file has run out — and the six one-shots are silent there. A gunshot
  *       that sustained would be a bed wearing a hit's name.
  *   S6  ABSENT IS TODAY. The eight are APPENDED to SAMPLERS, so against the
- *       committed tree (`git show HEAD:engine/registry-data.js`) every
+ *       PINNED pre-shelf commit (not HEAD — see the note at the check) every
  *       pre-existing id keeps its exact position in Object.keys AND its exact
  *       row — which is what keeps applySampledOnly's foundSources list, and
  *       therefore every existing record, byte-for-byte where it was.
@@ -166,7 +166,19 @@ ok("S5 the loop flags are the sound's own: the beds still sound past their own f
 
 /* ---- S6 absent is today -------------------------------------------------- */
 ok("S6 nothing that existed moved: the committed table is a PREFIX of this one", () => {
-  const before = execFileSync("git", ["show", "HEAD:engine/registry-data.js"],
+  /* THE BASELINE IS A COMMIT, NOT `HEAD` (rewritten 2026-08-30, hours after
+     this gate was written). It read `git show HEAD:` — which was exact while
+     the eight rows were UNCOMMITTED and became self-defeating the moment they
+     landed in v208: HEAD then contained them, so "the appended ids" measured
+     the empty set and the gate failed against its own success. A baseline
+     that moves with the thing it is the baseline FOR is not a baseline. It is
+     pinned to the commit before the shelf landed (13361db^ = 7e2aff8), which
+     is a fact that cannot drift, and the assertions below are unchanged: the
+     123 ids that existed then are still the first 123 keys, in order, row for
+     row, because applySampledOnly walks Object.keys and a mid-table insert
+     would move every later record's foundSources list. */
+  const BASE = "7e2aff8";
+  const before = execFileSync("git", ["show", BASE + ":engine/registry-data.js"],
     { cwd: ROOT, encoding: "utf8", maxBuffer: 64 << 20 });
   const M = { exports: {} };
   new Function("module", "exports", "globalThis", before)(M, M.exports, {});

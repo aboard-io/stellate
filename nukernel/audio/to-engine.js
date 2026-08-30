@@ -660,13 +660,128 @@ export const pageTrim = (dsp) => PAGE_TRIM[dsp] || 1;
 // on `gain` (the shaper's input: dirt) and never on `level` (3 dB of headroom).
 // `u.pageTrim` rides along so audio/desk.js can lift the sends it composes per
 // bar by the same gain, keeping the voice in the same room as the band.
-const trimRoute = (u) => {
-  const T = pageTrim(u.module || "");
-  if (T === 1) return u;
-  u.dry = (u.dry != null ? u.dry : 1) * T;
-  u.rev = (u.rev || 0) * T;
-  u.del = (u.del || 0) * T;
-  u.pageTrim = T;
+/* ---- ...AND THE SECOND KEY THE ROUTE NEEDS: THE INSTRUMENT --------------
+ * (Paul, 2026-08-30: "Wherever you use overdrive guitar bring it down 12.
+ * Throw it to some mild reverb and delay. I did this for massiveattack and it
+ * did wonders.")
+ *
+ * WHERE HIS CHANGE LIVED, because the first job was to find it and there is
+ * nothing to find: he made it on the BOARD, and the board's offset layer is
+ * `ui/state.js MIXER` — held in memory, written to `localStorage`
+ * ("nukernel.song.v1"), and adopted only from a document that carries its own
+ * `mix`. Nothing in the repository holds it. `massiveattack`'s own row
+ * (genres.js) names no send and no level for the chair, and 0 of the
+ * precomposed documents carry a `mix`. So the numbers below are derived from
+ * the sentence, not read off his desk: -12 dB is his, and "mild" is answered
+ * from the catalogue below rather than invented.
+ *
+ * WHY THIS TABLE IS NOT PAGE_TRIM AND NOT instruments.js STRIPS. Three owners
+ * were possible and two of them are wrong for a reason each file states about
+ * itself:
+ *   · PAGE_TRIM above is keyed by MODULE, and `stk_guitar` is six instruments
+ *     — clean, jazz, palm-muted, crunch, overdrive and distortion all route
+ *     through it (its own row says so: "All six guitar ids … route through this
+ *     module, which is what 'everywhere' is"). Paul named ONE of the six.
+ *   · instruments.js STRIPS is keyed by FAMILY, and its own header carries the
+ *     measurement that disqualifies it: "every `dirty` id
+ *     (crunch/distortion/overdrive_guitar) … is claimed upstream by
+ *     PATCH_MODEL/PATCH_VOICE — they resolve to stk_guitar … and a modelled
+ *     voice never enters the sampler's strip at all." A level written there
+ *     would be a knob that cannot reach the sound, which is the one thing this
+ *     page forbids outright. (It is also family-keyed, so it could not tell
+ *     the overdrive from the distortion beside it.)
+ * What is left is the ROUTE, and the route already has exactly one owner —
+ * `trimRoute` below, the single seam where a unit's dry tap and its sends are
+ * scaled together. The seat handing it a unit knows the INSTRUMENT ID
+ * (`c.instr`, which already rides for the seating plan's familyOf), so the
+ * route gains a second key rather than the fact being scattered.
+ *
+ * THE LEVEL: -12.0 dB = x0.2512, his number, flat, and MEASURED BEFORE IT WAS
+ * TAKEN (test/_odpress.cjs, mute-complement at the ring, 8 bars, seed 1). The
+ * overdrive chair's own active RMS against the whole rest of its band:
+ *     morricone +5.30   massiveattack +3.94   sludge +0.69
+ *     shoegaze  -0.48   sabbath       -2.09
+ * — where the balanced melodic chairs the guitar round already measured on the
+ * same metric sit at -11.8 (jazz sax+trumpet), -12.4 (motown's mallet) and
+ * -21.5 (funk brass). The overdrive guitar was sitting ten to twenty dB above
+ * where an equivalent chair sits, on every record that plays one. -12 dB lands
+ * the five at -6.7..-14.1, i.e. INSIDE that range and still ordered the same
+ * way: the rows where the guitar is the subject were already the loudest
+ * against their band and stay the loudest after the cut. That is why the flat
+ * number he asked for survived the measurement and no role split was written —
+ * see the ROLE RULING note at the end of this block.
+ *
+ * "MILD" IS 0.12, AND IT IS THE PAGE'S OWN WORD RATHER THAN A NEW NUMBER.
+ * fields.js SENDS is the whole send vocabulary — { none: 0, touch: 0.12,
+ * some: 0.3, wet: 0.55, drown: 0.9 } — and `touch` is its lowest non-zero
+ * step. MEASURED over the catalogue (test/_odguitar.cjs, every anchor at
+ * seed 1: 378 records, 2097 seated chairs, the sends the desk actually hands
+ * the engine, read as the ratio send/dry so a route trim cannot flatter it):
+ *     rev   min 0.06  p10 0.18  p25 0.25  med 0.30  p75 0.44  p90 0.55  max 1.0
+ *     del   2063 of 2097 chairs are ZERO; all 34 non-zero are exactly 0.30
+ * So 0.12 of reverb is UNDER the tenth percentile of what a chair already
+ * gets, and 0.12 of delay is one word below the only delay any record asks
+ * for. Mild at the low end of what real rows ask for, in both buses, without
+ * inventing a number.
+ *
+ * BOTH BUSES ARE OPEN, which is the "declared but never arriving" check this
+ * table had to pass before it was written. Bus 1 is shut unless a record opens
+ * it — audio/plan.js hands toEngine `reverb: 0` on purpose — but precompose.js
+ * `busesOf` now writes `buses.rev.ret` on every anchor from its own tone.verb,
+ * so the reverb return is open on all 378. Bus 2's return is UNITY when absent
+ * (state-engine fxParams emits `dgain: 1` and to-engine falls back to
+ * { beats: .75, feedback: .25 }), so a delay send lands on a record that never
+ * named an echo. Both are re-measured on the rendered artifact in the round's
+ * report; neither is taken on trust.
+ *
+ * ABSENT IS TODAY, AND EXPLICIT WINS. A row that names its own send for the
+ * chair holding this id keeps it: audio/desk.js drops the mild send on any
+ * bus the chair's own part already asks for (the four goth rows whose echo
+ * lands on their overdrive chair keep their 0.30 and are not given 0.42).
+ * Every id this table does not name takes the byte-identical old path.
+ *
+ * ROLE RULING, MADE AND DECLINED, in writing because the alternative was
+ * specified: the honest split would have been "a subject guitar keeps more,
+ * a texture guitar takes the full cut", and there is no seat fact to hang it
+ * on — every one of the 109 seated overdrive chairs is chair `line`, not one
+ * is `lead` or `pad`. The measurement then said it was not needed: a flat cut
+ * preserves the 7.4 dB spread between where these chairs sit, and the rows
+ * where the guitar IS the record (morricone, massiveattack) are the ones
+ * sitting highest, so they end up highest. The rows that lose most are the
+ * ones with two other guitars still at full level beside them (sabbath keeps
+ * its distortion_guitar and its palm-muted). If the ear disagrees, this row
+ * is the owner and a second column is where the split would go. */
+const ID_ROUTE = {
+  // Paul, 2026-08-30, having done it by hand on `massiveattack`: down 12,
+  // into a mild reverb and a mild delay. 109 records seat this id at seed 1
+  // (15 declare it; the rest arrive through the pool), which is why it is
+  // here and not on any of them.
+  overdrive_guitar: { trim: 0.2512, rev: 0.12, del: 0.12 },
+};
+/** the instrument's own route offset, by instrument id — null for every other. */
+export const idRoute = (id) => ID_ROUTE[id] || null;
+const trimRoute = (u, instr) => {
+  const R = ID_ROUTE[instr] || null;
+  // ONE ROUTE GAIN, not two. The module's page deficit and the instrument's
+  // own offset are the same kind of number on the same wire, so they multiply
+  // into the single field the desk already reads (`u.pageTrim`) rather than
+  // opening a second multiply nobody would remember to apply. For
+  // overdrive_guitar that is 1.78 x 0.2512 = 0.4471 — the module still gets
+  // its measured page make-up, and the instrument still sits 12.0 dB under
+  // where it sat this morning.
+  const T = pageTrim(u.module || "") * (R ? R.trim : 1);
+  if (T !== 1) {
+    u.dry = (u.dry != null ? u.dry : 1) * T;
+    u.rev = (u.rev || 0) * T;
+    u.del = (u.del || 0) * T;
+    u.pageTrim = T;
+  }
+  // ...and the sends ride as their own two fields, because they are ADDED and
+  // not multiplied: a send is a proportion of the unit's output, so the desk
+  // adds these into the base it composes and then scales the whole route by
+  // the trim above — which leaves the wet/dry RATIO at exactly (composed +
+  // 0.12), independent of how far down the instrument sits.
+  if (R) { if (R.rev) u.idRev = R.rev; if (R.del) u.idDel = R.del; }
   return u;
 };
 // the five voice types as the formant tables index them, and their compass. The
@@ -1540,6 +1655,9 @@ function recipeBase(chair, seat, lib, unrouted) {
     const frow = (RGY.SOURCES || {})[fid] || (RGY.SAMPLES || {})[fid];
     if (frow) {
       const bed = !!(RGY.SOURCES || {})[fid];
+      // a SOURCES row whose url has no scheme is a file in this repo (49 of
+      // the 192; every BBC row and everything the fetch scripts localised)
+      const localBed = !frow.file && /^[^:]*$/.test(frow.url || ":");
       // the src entry mirrors what the kernel itself writes for each family
       // (genre-kernel: a SOURCES bed decodes by url, a SAMPLES one-shot by
       // samplePath under found/samples/) — same fields, same decode doors.
@@ -1547,9 +1665,41 @@ function recipeBase(chair, seat, lib, unrouted) {
           sampler: { id: "found:" + fid, sr: 44100,
             zones: [{ srcId: fid, root: 60, lo: 0, hi: 127,
                       ...(bed ? { loop: 1, loopa: 0, loopb: 1 } : {}) }] },
-          foundSrc: { id: fid, label: frow.label || fid, url: frow.url || "",
+          foundSrc: { id: fid, label: frow.label || fid,
+                      // A LOCAL BED CARRIES NO `url`, and that is the whole
+                      // difference between a chair that sounds and one that
+                      // does not. See the note below: the decoders read
+                      // `s.url || samplePath`, url FIRST, so leaving a
+                      // repo-relative url in place defeats the samplePath
+                      // beside it. This is the same shape the kit sources are
+                      // written in twenty lines down (`url: ""`, samplePath
+                      // set) — one convention for "the file is in the tree".
+                      url: localBed ? "" : (frow.url || ""),
                       ...(frow.file ? { samplePath: "found/samples/" + frow.file,
                                         kind: frow.kind, durSec: frow.durSec } : {}),
+                      // A LOCAL BED'S URL IS REPO-RELATIVE AND THE PAGE IS NOT
+                      // (2026-08-30). Most of the crate's SOURCES rows carry an
+                      // archive.org URL, but every BBC row — and every row the
+                      // fetch scripts localised — carries a REPO-relative path
+                      // instead ("found/bbc_clock_room.64.mp3"). The consumers
+                      // do not agree about what that is relative to:
+                      // export/_satpress decodeCrate resolves `samplePath`
+                      // against the SITE root and uses `url` VERBATIM, so on
+                      // nukernel/index.html a bare "found/…" resolves to
+                      // /nukernel/found/… and 404s (measured: 404 there, 200 at
+                      // the root). The zone then decodes against an empty buffer
+                      // and the chair is SILENT — which is exactly what
+                      // `tapemusic` pressed at first: -64.1 dBFS against
+                      // -32.2 for the same record on GM patches, its three
+                      // recordings contributing nothing.
+                      //   So a bed with a local path gets `samplePath` too, and
+                      // the site-root resolution every sampled zone already
+                      // uses carries it. A row whose url has a scheme is
+                      // untouched (it is a real remote address and the local
+                      // convention resolves it elsewhere), and a SAMPLES row
+                      // already set samplePath above, so this adds a key for
+                      // exactly one case: the local bed.
+                      ...(localBed ? { samplePath: frow.url } : {}),
                       vol: 0, pitch: 1, stretch: 0.5, cutoff: 18000 } },
         source: "found:" + fid };
     }
@@ -1754,6 +1904,79 @@ export function toEngine(plan, deps) {
     for (const c of chairs.values()) if (c.role === want) return c.m;
     return null;
   };
+
+  /* ---- THE RECORD'S GRAIN (2026-08-30) -----------------------------------
+     Paul: "Does anything have found audio, samples, and vinyl crackle?
+     Nothing seems to. Portishead sure should."
+
+     MEASURED THE SAME DAY, and he is right in the exact way that matters: the
+     surface noise was BUILT, CALIBRATED AND UNREACHABLE. `fx_bus.dsp` has
+     carried instr 97 — `no.sparse_noise(30 + crackle*220)*crackle*0.5`
+     band-limited 300..6500 Hz over a 4 kHz-capped hiss floor, output-scaled
+     0.15 by a human ear on 2026-07-04 ("always make crackle half as loud as
+     you are setting it now") — summed into `mixL/mixR` beside the reverb and
+     the delay returns. state-engine `fxParams` has read `state.crackle` for
+     just as long. AND NOTHING IN NUKERNEL EVER WROTE THE FIELD: grep the box
+     for `crackle` before this line and the only hits are prose. So every
+     record in the catalogue rendered `crackle: 0`, including the five rooms
+     whose whole subject is records made out of other records.
+
+     This is the memory's "declared but never arriving" bug seen from the far
+     side — not a knob that reaches no sound, but a SOUND that no knob reaches
+     — and the fix is the missing sentence, not a new stage. Nothing was built
+     for this: the crate was searched first (the report at genres.js `grain`)
+     and it holds no surface noise as a bed, which is why the generated one is
+     the honest answer and why it is the one that already existed.
+
+     WHY IT IS AN AMOUNT AND NOT A CHAIR. A chair costs a voice, sits in the
+     register map, takes a strip and a pan, and gets an entry in the cast —
+     all of which are true of a PLAYER. Crackle is the surface the whole
+     record is played off: one bed under everything, mono like a groove is
+     mono (fx_bus sums the same `crk` into both sides), and belonging to the
+     master rather than to any lane. So a genre declares an AMOUNT, the way it
+     declares `swing` or `verb`, and the master stage it lands on is the one
+     the parent already owns.
+
+     WHY IT RIDES THE `tone` BLOCK. This bridge is handed a PLAN, not a genre —
+     `toEngine(plan, deps)` has no genre name anywhere in it — and the seat's
+     `tone` is the one place a genre-level fact already crosses this seam. The
+     MOUTH took this exact door for this exact reason (the header at
+     `mouthForInstr`: the tone block "is the one thing this bridge is already
+     handed for every chair"). It costs nothing downstream because
+     `toneRecipe` is a WHITELIST of six keys — cut/q/atk/rel/gain/verb — so a
+     seventh word cannot leak into a unit. MEASURED both ways rather than
+     asserted: test/grain-reach.test.js G2 builds one recipe from a seat with
+     grain and one from the same seat without, and they are byte-identical;
+     and test/levelof-frozen.fixture.js, which hashes the tone translation of
+     every catalogue row against a spread of GM ids, returns the SAME sha256
+     for the tree WITH the ten grain declarations and for the identical tree
+     with all ten stripped out (7fef78642d948c87e71d97e5a8d23018370aff502ba
+     ad5da84c17f0bb330c378, 374 rows). That is what makes this a state change
+     and not a re-voicing.
+
+     MAX, NOT FIRST, over the seats the record actually plays. A nukernel song
+     may layer sections from different genres, and the master bus needs ONE
+     number; `max` is the only rule that is both order-independent (so it
+     cannot change when the seating does) and true to the thing — you cannot
+     press half a record onto vinyl, so if any layer says the record has a
+     surface, the record has a surface. Absent is today: no row writing
+     `grain` leaves the key off the state entirely and `fxParams`'
+     `state.crackle || 0` renders exactly what it rendered yesterday. */
+  const grain = (() => {
+    let g = 0;
+    const seen = new Set();
+    for (const b of bars) for (const e of b.ev) {
+      if (e.v == null || seen.has(e.v)) continue;
+      seen.add(e.v);
+      const t = (seatOf(e.v) || {}).tone;
+      if (t && t.grain != null) g = Math.max(g, +t.grain || 0);
+    }
+    // the bass chair arrives beside the seats, not among them (plan.bass)
+    const bt = plan.bass && plan.bass.tone;
+    if (bt && bt.grain != null) g = Math.max(g, +bt.grain || 0);
+    return clamp(g, 0, 1);
+  })();
+
   const state = {
     bpm, seed, instrumentSeed: seed,
     sampledOnly: true, samplerLib: lib,
@@ -1765,6 +1988,9 @@ export function toEngine(plan, deps) {
     perc: wantsPerc ? { style: "nukernel", lanes: [...lanesUsed] } : null,
     reverb: plan.reverb != null ? plan.reverb : 0.4,
     delay: plan.delay || { beats: 0.75, feedback: 0.25 },
+    // the surface the record is played off — absent unless a row asked for it,
+    // so a catalogue that says nothing renders byte-for-byte as before
+    ...(grain > 0 ? { crackle: grain } : {}),
     sections: bars.map((b) => ({
       drums: b.ev.some((e) => e.kind === "hit") ? "full" : "off",
       bass: b.ev.some((e) => e.kind === "bass") ? "root" : "off" })),
@@ -1886,8 +2112,9 @@ export function toEngine(plan, deps) {
   // pitchedUnit, so every strip, every insert chain and every register law is
   // the parent's and not a copy of it.
   const units = SE.voiceUnits(E, state);
-  for (const c of chairs.values()) units[c.key] = trimRoute(SE.pitchedUnit(c.role, c.m, state));
-  if (bassSeat) units.bass = trimRoute(SE.pitchedUnit("bass", bassSeat.m, state));
+  for (const c of chairs.values()) units[c.key] = trimRoute(SE.pitchedUnit(c.role, c.m, state), c.instr);
+  if (bassSeat) units.bass = trimRoute(SE.pitchedUnit("bass", bassSeat.m, state),
+                                       plan.bass && plan.bass.instr);
   else delete units.bass;
   delete units.pad; delete units.melody;         // the placeholders; the chairs above are the real voices
   // ---- THE SEATING PLAN (2026-08-29) ---------------------------------------
@@ -1938,6 +2165,46 @@ export function toEngine(plan, deps) {
     u.pan = (g.n % 2 ? -g.side : g.side) * Math.min(SEAT_CAP, w);
     g.n++;
   }
+  /* ---- A FOUND CHAIR'S FILE, ONTO THE STATE (2026-08-30) ------------------
+     THE SAMPLING ROUND WIRED HALF THIS PATH AND THE OTHER HALF WAS NEVER
+     WRITTEN. recipeBase's found branch ends with the sentence "`foundSrc`
+     rides the recipe so toEngine can put the file on state.foundSources" —
+     and toEngine did not. `state.foundSources` was built once, at step 4,
+     out of the GM library and the kit, and a chair seated on a crate id
+     added nothing to it.
+
+     WHAT THAT COST, measured 2026-08-30 on the pressed artifact: `tapemusic`
+     cast on three BBC beds pressed at -64.1 dBFS against -32.2 dBFS for the
+     same record on GM patches — a 32 dB drop, and the residue was not the
+     recordings at all but this round's own crackle. The chairs were SILENT.
+     The chain is short and every link needs the state entry: audio/plan.js
+     `warmSources` collects a zone only `if (byId[z.srcId])`, byId being built
+     from `STATE.foundSources`, so a missing entry means the PCM is never
+     decoded, never handed to the stream worker, and the zone renders against
+     an empty buffer table. That is the parent's documented failure mode for
+     this exact omission ("like you inverted the mix", plan.js's own note).
+
+     WHY IT IS HERE AND NOT AT STEP 4: `chairs` is filled LAZILY by seatFor
+     as the events are walked, so at state-build time it is empty. The state
+     object is not read by anything until the return below, so appending to
+     its array after the walk is the same state, completed — and it is the
+     one place that has seen every chair the record actually plays.
+
+     This is why no genre row could name a `found:` id before today: the
+     feature resolved perfectly and rendered nothing, which is the memory's
+     "declared but never arriving" exactly. */
+  {
+    const have = new Set((state.foundSources || []).map((s2) => s2.id));
+    const add = (m) => {
+      const f = m && m.foundSrc;
+      if (!f || !f.id || have.has(f.id)) return;
+      have.add(f.id);
+      state.foundSources.push(f);
+    };
+    for (const c of chairs.values()) add(c.m);
+    if (bassSeat) add(bassSeat.m);
+  }
+
   SE.collisionCarve(units);
   for (const [k, u] of Object.entries(units))
     if (u && !u.__meta && !u.drum && !u.sampler && !u.module)

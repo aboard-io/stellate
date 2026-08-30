@@ -9480,10 +9480,24 @@ function logRow(L) {
    prepended a duplicate of the newest line over a freshly-built list —
    measured on the rendered page at 390: three lines in, the panel drew the
    engine sentence twice and dropped the tempo edit off the end.) */
+/* THE WORD ON THE FACE IS "log" AND THE NAME KEEPS THE COUNT (2026-08-30).
+   `word: sayLog(logs.length)` stood in both of these calls and it was exactly
+   right while the word was invisible: one string — "log — 3 lines" — in the
+   `aria-label` and in the `.nu-vh` span, which is `paintIcon`'s own promise
+   that the two are never a second owner. The labels are VISIBLE now (nu.css,
+   THE MARKS WEAR THEIR WORDS), and a printed label that grows a line every
+   time you touch a control breaks the foot's older promise: "the button is
+   always there, at a size that never changes … a control that materialises
+   under a thumb reaching for the mark above it". So this is #rewrite's
+   split, made a second time and for the same reason: the FACE carries the
+   table's stable word (`GLYPH.log.w`), the BADGE carries the count (it always
+   did — `num`), and the ACCESSIBLE NAME is written after the paint, so a
+   screen reader still hears "log — 3 lines". One writer, two places. */
 function paintBadge() {
   if (!logBtn) return;
   paintIcon(logBtn, { glyph: GLYPH.log.g, num: logs.length || null,
-                      word: sayLog(logs.length), say: GLYPH.log.s, on: logOpen });
+                      word: GLYPH.log.w, say: GLYPH.log.s, on: logOpen });
+  logBtn.setAttribute("aria-label", sayLog(logs.length));
 }
 function addRow(coalesced) {
   if (!logPanel || !logOpen) return;
@@ -10385,8 +10399,22 @@ const scoreTrayItems = () => [
    is a setting whose own mark is its state, so there is no single "you are
    here" to mark and the page SAYS so rather than leaving a gate to infer it
    from an absence. */
+/* FOUR ITEMS, AND THE DIE IS NOT ONE OF THEM ANY MORE (2026-08-30). Paul:
+   *"Move the die icon to right above the question mark so it's always
+   there."* `{ key: "tp.rewrite", node: rewriteBtn }` stood first in this list
+   and `trayRow` seats that same node in the FOOT now, above the ?. A mark
+   cannot be in two places, so this level lost one — and what it gained is the
+   PLAY MODE, which is the one control that belongs to the transport and to
+   nothing else (Paul, same breath: *"Let me set that with a three state icon
+   in opt"*). The paragraph above still holds for the four that are here: the
+   voicing is a five-position setting, the room is a fader with a pointer law,
+   the mode is a three-position setting, and all of them are nodes this file
+   holds and has already wired.
+   THE MODE IS FIRST because it is the only one of the four that says what
+   pressing ▶ will DO — it is a fact about the transport, and the take, the
+   voicing and the room are facts about the sound. */
 const playTrayItems = () => [
-  { key: "tp.rewrite", node: rewriteBtn },
+  { key: "tp.mode", node: modeBtn },
   { key: "tp.take", node: takeBtn },
   { key: "tp.voicing", node: voicingBtn },
   { key: "tp.vol", node: volWrap },
@@ -10573,6 +10601,37 @@ function trayRow() {
   logCountEl = el("div", null, "nu-count");
   logCountEl.dataset.live = "pending";
   foot.append(logCountEl);
+  /* ===== THE DIE, IN THE FOOT, AT EVERY LEVEL (2026-08-30) ==============
+     Paul: *"Move the die icon to right above the question mark so it's always
+     there."*
+
+     IT LEAVES THE PLAY LEVEL AND IT DOES NOT COME BACK. A mark cannot be in
+     two places — two #rewrites would be two owners of one gesture, which is
+     the thing this page legislates against everywhere else — so
+     `playTrayItems` is four items now and its own note carries the dated
+     move. The BUTTON is the same node with the same id, the same
+     `<b id="reading">` inside it and the same listener: eleven gates and
+     test/motif-frozen.js call it #rewrite and none of them has to learn a new
+     name because the geometry moved.
+
+     WHY IT IS PERMANENT AT ALL. The two marks it now stands with are the
+     record's READOUTS — the ? that explains this record and the log of what
+     was done to it — and the die is the record's one WRITE that answers
+     them: read what the box wrote, and throw again. Paul reached for it from
+     every level and had to open a door to find it.
+
+     THE MECHANICS ARE `#play`'s AND THE ?'s, EXACTLY (see EXPLAIN above and
+     the head below): the button is one node, seated in the FOOT, which
+     `paintTray` never touches — it empties `trayUpBox` and `trayList` and
+     nothing else — so no repaint at any level can destroy it, drop its
+     listener, or take it out from under a thumb mid-press. Nothing about
+     the button had to change to become permanent; only where `trayRow`
+     seats it.
+
+     ABOVE THE ?, WHICH IS PAUL'S WORD AND ALSO THE FOOT'S ORDER: reading
+     down the gutter it is the countdown, the die, the ?, the log — a write,
+     then two readouts, with the clock's own square inch above all three. */
+  foot.append(rewriteBtn);
   /* THE ? MARK, DIRECTLY ABOVE THE LOG (2026-08-30 — see EXPLAIN above).
      After the countdown, before the log button, so it is literally the mark
      above the log mark at rest AND while an edit is in flight: the countdown
@@ -10580,8 +10639,11 @@ function trayRow() {
      "geometry reserved at creation" promise kept for a second control. The
      button is a hand's and sits OUTSIDE the `[data-live]` countdown box. */
   foot.append(EXPLAIN.btn);
-  logBtn = icon({ k: "logger", glyph: GLYPH.log.g, word: sayLog(logs.length),
+  // the face says "log" and the NAME says how many — see `paintBadge`, which
+  // is the one writer of both and runs at the foot of this function
+  logBtn = icon({ k: "logger", glyph: GLYPH.log.g, word: GLYPH.log.w,
                   say: GLYPH.log.s, on: false });
+  logBtn.setAttribute("aria-label", sayLog(logs.length));
   logBtn.setAttribute("aria-controls", "nu-log");
   logBtn.addEventListener("click", () => setLog(!logOpen));
   foot.append(logBtn);
@@ -11195,7 +11257,12 @@ function shareCard(grid) {
 const mkBtn = (id) => { const b = el("button"); b.id = id; b.type = "button";
                         return b; };
 const playBtn = mkBtn("play"), rewriteBtn = mkBtn("rewrite"),
-      takeBtn = mkBtn("take"), voicingBtn = mkBtn("voicing");
+      takeBtn = mkBtn("take"), voicingBtn = mkBtn("voicing"),
+      /* #playmode SINCE 2026-08-30 — the sixth control and the third
+         SETTING in the gutter (the voicing and the room are the other two).
+         It is built here with the rest of them for the reason this paragraph
+         gives about all six: the gutter's contents are this file's. */
+      modeBtn = mkBtn("playmode");
 /* #reading SHIPS INSIDE #rewrite, exactly as index.html shipped it, WITH THE
    LITERAL SPACE BEFORE IT — measured through CDP on 2026-08-27 and written up
    in that file's own note: `<button>rewrite<b>5</b></button>` computes its
@@ -11378,7 +11445,18 @@ const sayVol = () => { volOut.textContent = Math.round(+volEl.value) + "%";
 sayVol();
 volEl.addEventListener("input", () => { sayVol(); setVol(+volEl.value);
                                         commit("transport"); });
-volWrap.append(vchassis(volEl, () => (+volEl.value) / 100).track, volOut);
+/* ...AND THE FADER TAKES ITS NAME INTO THE COLUMN (2026-08-30). Paul: *"Label
+   all the icons with tiny short labels underneath."* The room is the one
+   control in the gutter that is not a mark, and its name was in exactly one
+   place an eye could not reach: the <input>'s `aria-label`. The label is that
+   same string, READ OFF THE CONTROL rather than typed again here — one owner,
+   two places, which is the rule every other label in this stripe obeys by
+   coming out of a table. It is `.nu-vh`, the same span `paintIcon` puts in
+   every mark, so nu.css reveals all of them with one rule and this one needs
+   no exception. (With the stylesheet off it is what it always was: a word in
+   the DOM beside a slider.) */
+volWrap.append(vchassis(volEl, () => (+volEl.value) / 100).track, volOut,
+               el("span", volEl.getAttribute("aria-label"), "nu-vh"));
 
 /* ---------- THE TWO GESTURES BESIDE PLAY (2026-08-27) -------------------
    Paul: *"I'd like a button next to play that seeds a completely different
@@ -11508,6 +11586,123 @@ voicingBtn.addEventListener("click", () => {
   commit("pool");
 });
 
+/* ---------- THE PLAY MODE (2026-08-30) ----------------------------------
+   Paul: *"There are three play modes possible—loop, once, and album which
+   keeps making new songs. Let me set that with a three state icon in opt."*
+
+   THREE FACTS, THREE OWNERS, AND IT IS `paintVoicing`'s SPLIT EXACTLY. The
+   WORDS and the marks are fields.js PLAYMODES; the SEAM — when the record
+   comes round — is audio/live.js, which announces it as `transport:round`
+   and makes no policy about it; the VALUE is the module state below, and the
+   listener under it is the only thing that turns the fact into a gesture.
+   That is why this block is thirty lines in a file of twelve thousand.
+
+   WHAT EACH POSITION IS, MEASURED RATHER THAN REMEMBERED:
+     · loop  — THE DEFAULT, AND WHAT THE BOX ALREADY DID. audio/live.js
+               `barOfSerial` is `(barBase + serial) % barCount()`, so the walk
+               has wrapped since there was a walk; nobody chose it, it is what
+               a modulo does. Absent-is-today: this position writes nothing
+               and changes nothing.
+     · once  — the record plays to its end and stops. `stop()` at the seam,
+               which is #play's own door and the one this page has always had.
+     · album — at the end of the record the box writes another and plays it,
+               for ever. It is `rewriteNow()` — literally the die's own
+               listener, factored out — so there is exactly one reseed path in
+               this box and the clock takes the SAME gesture a thumb takes.
+
+   THE CLOCK PRESSES A GESTURE, AND THAT IS A DATED REVERSAL, NARROWLY. The
+   standing law is ideal/composer.html annotation 5: *"the clock may move that
+   line and the sentence beside the play button; it may not press a button"*,
+   and it is REVERSED for one control on 2026-08-30, because Paul asked for
+   exactly the thing it forbids: *"album which keeps making new songs"*. The
+   reversal is fenced by four facts, and each one is what keeps the law's
+   reason intact (the reason was: nothing may happen to the record that you
+   did not ask for):
+     1. it happens ONLY in `album`, a position you can see you are standing on
+        — the mark says ▶⚄ and the word under it says "album";
+     2. it does not touch the DOM button. `rewriteNow()` is the function
+        #rewrite's listener calls, not `rewriteBtn.click()` — the clock still
+        may not press a button, it may take the gesture the button takes;
+     3. it fires at ONE instant, the record's own end, announced by the
+        transport rather than by a timer this file kept;
+     4. it goes through `ATLAS.reseed`, which is the seed's one owner, so a
+        refusal is a refusal and `#reading` moves for the same reason it moves
+        under a thumb.
+
+   THERE IS A SILENCE BETWEEN THE SONGS AND IT IS THE ENGINE'S, NOT A BUG.
+   `reseed` lands a whole new record, which is `CTX.setDocument` — `stop()`,
+   `push(true)`, then `startNow` — so the next song pays the ordinary cost of
+   a start. Measured on the gate's four-bar record: the reading moves at the
+   seam, and the first sample of the new song lands about five seconds later
+   (audio/live.js buys its zero dropouts with an eight-second prefill and
+   says so). An album is therefore songs with a gap between them, like a
+   turntable arm; a crossfade would want the pre-render held across the seam,
+   which is a real round and not a line here.
+   AND A REFUSAL IS A LOOP. `rewriteNow` returns false when the atlas has no
+   place to write again from, and nothing else happens: the record simply
+   comes round, which is the position next door. A mode that fell silent on a
+   refusal would be worse than a mode that did nothing.
+
+   AND "A NEW SONG" IS THE SAME ANCHOR AT A NEW READING, WHICH IS A CHOICE.
+   The wilder album is a NEW ANCHOR — the atlas stepping to a neighbour, the
+   way Produce walks genre space — and it is NOT what shipped, for two
+   reasons worth writing down rather than re-deciding later: the anchor is
+   the one thing on this page you chose by hand (you tapped a place on the
+   globe), and a mode that quietly walked away from it would be the box
+   throwing your record out, not extending it; and the neighbour-walk already
+   has an owner and a surface (the Produce tab), so an album that stepped
+   would be a second, invisible producer. If Paul wants the wilder album it
+   is a FOURTH position of this same table — `tour`, say — reading
+   ATLAS's own neighbours, and not a change to this one.
+
+   IT DOES NOT PERSIST, on VOICINGS' argument and one of its own: "a setting
+   that survives a reload is a setting somebody has to be able to see they
+   made", and this is the only setting in the box that can write you a
+   different record while you are looking away. Reload and you are on `loop`,
+   which is what yesterday's box did. (The cost, said out loud: an album you
+   set at bedtime is a loop in the morning. If that is wrong it is one line in
+   ui/state.js's view store beside VOLSTORE, and it is still not an axis.) */
+let playMode = "loop";
+const paintPlayMode = () => {
+  const m = NuFields.PLAYMODES[playMode] || NuFields.PLAYMODES.loop;
+  paintIcon(modeBtn, { glyph: m.g, word: m.w, say: m.says });
+};
+paintPlayMode();
+/* ONE WRITER FOR THE VALUE, and it is the button's own — so the gate's door
+   (`__eightPlayMode` at the foot of this file) is the same call the thumb
+   makes and not a second way in. `setDeckView` is the shape being copied. */
+function setPlayMode(k) {
+  if (!NuFields.PLAYMODES[k]) return playMode;
+  playMode = k;
+  paintPlayMode();
+  /* IT IS NOT AN EDIT AND IT DOES NOT COMMIT. `setVoicing` ends in
+     `commit("pool")` because a voicing swap re-seats the band and the engine
+     has to hear about it; this changes nothing about the record, the plan or
+     the sound now playing — it changes what happens at a bar line that has
+     not arrived yet. A `commit` here would recompile a record for a fact the
+     compile does not read, which is the "declared but never arriving" bug in
+     its mirror image: work that reaches the engine for nothing. */
+  // ...AND IT SAYS SO IN THE LOG, which is where this page already puts the
+  // two other things that are transport and not edit ("play", "stop"). It is
+  // `logPut` and not `logEdit`: nothing was pushed, there is no countdown to
+  // start, and an edit line with no pending beats would be a lie about what
+  // is in flight.
+  logPut("act", "play mode", (NuFields.PLAYMODES[playMode] || {}).w || playMode);
+  return playMode;
+}
+modeBtn.addEventListener("click", () => {
+  const k = NuFields.PLAYMODE_KEYS;
+  setPlayMode(k[(k.indexOf(playMode) + 1) % k.length]);
+});
+/* AND THE END OF THE RECORD, WHICH IS THE ONLY THING THAT READS THE VALUE.
+   audio/live.js emits this at the first bar of a new pass and says nothing
+   about what it means; `loop` is the position that does nothing, so a mode
+   nobody set behaves as the box behaved before this listener existed. */
+on("transport:round", () => {
+  if (playMode === "once") { stop(); say(false); return; }
+  if (playMode === "album") rewriteNow();
+});
+
 takeBtn.addEventListener("click", () => {
   /* THE NEXT TAKE, AND WHY 0 GOES TO 2. The slider's own domain is 0..99 and
      its readout says "take 1 — the reading it has always had" for BOTH 0 and
@@ -11522,18 +11717,30 @@ takeBtn.addEventListener("click", () => {
   startNow();
 });
 
-rewriteBtn.addEventListener("click", () => {
+/* THE REWRITE GESTURE, AS A FUNCTION, BECAUSE IT HAS TWO CALLERS NOW
+   (2026-08-30). It was the die's listener and nothing else; `album` is the
+   same gesture taken at the end of the record, and the whole of the promise
+   this round makes about that mode is that there is STILL ONE RESEED PATH in
+   this box. A second `ATLAS.reseed(...)` written for the clock would be the
+   two-owner drift every note in this file argues against, and it would drift
+   the first time one of them learned something (a refusal, a log line, a
+   different `startNow`). It returns what `reseed` returned, so a caller can
+   tell a taken press from a refused one. */
+function rewriteNow() {
   /* THE ATLAS OWNS THE SEED, so this asks it — and it asks for `DOC.basis`
      rather than for the map's ring, because a role genre has no place on the
      map (genres.js: "a role has a job, not a history") and the record is
      rewritable either way. `reseed` returns false and says why in #atlasSay
      when it cannot; a refusal writes no record, so nothing plays. */
-  if (!ATLAS) return;
+  if (!ATLAS) return false;
   // the digit moves with the gesture, not two frames later when the record
   // lands: a press that has been taken is a press you can see was taken. A
   // refusal never gets here — `reseed` returns false without bumping.
-  if (ATLAS.reseed(DOC.basis, startNow)) printReading();
-});
+  if (!ATLAS.reseed(DOC.basis, startNow)) return false;
+  printReading();
+  return true;
+}
+rewriteBtn.addEventListener("click", rewriteNow);
 
 /* ---------- boot ---------- */
 window.__eightDoc = () => DOC;          // the raw document, for a console
@@ -11619,6 +11826,12 @@ window.__eightTray = () => { const L = trayNow();
    them mean "put the stripe back at the top", which is now a walk and not an
    assignment. It is still a HAND and still not a second owner: every step is
    `TRAYUP`, the table the button's own listener reads. */
+/* THE PLAY MODE, FOR A PROBE — THE SAME DOOR `__deckView` IS (2026-08-30).
+   Read it with no argument, set it with one, and setting it goes through
+   `setPlayMode`, which is what the mark's own listener calls. A gate that
+   assigned the module variable would be testing its own idea of the control;
+   this is the control. */
+window.__eightPlayMode = (m) => (m == null ? playMode : setPlayMode(m));
 window.__eightUp = () => {
   for (let i = 0; i < 8 && trayLevel !== "root"; i++)
     trayLevel = TRAYUP[trayLevel] || "root";

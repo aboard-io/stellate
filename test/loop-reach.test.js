@@ -191,9 +191,25 @@ ok(rBed.source === "found:bbc_arcade_85" && zBed && zBed.srcId === "bbc_arcade_8
    && zBed.loop === 1 && zBed.loopa === 0 && zBed.loopb === 1,
    "L7 a SOURCES bed seats as a one-zone sampler unit, whole-file loop by default",
    JSON.stringify(rBed.m && rBed.m.sampler));
+/* L7b CHANGED 2026-08-30 (the grain round), and the old assertion was pinning
+   a bug. It read `foundSrc.url === "found/bbc_arcade_85.64.mp3"` — the
+   registry's own repo-relative path, copied through verbatim — and that is
+   exactly what made a found chair SILENT on the page. The consumers read
+   `s.url || samplePath` with url FIRST (export/_satpress decodeCrate), and
+   nukernel/index.html lives one directory down, so a bare "found/…" resolves
+   to /nukernel/found/… — measured 404 there, 200 at the site root. The zone
+   then decodes against an empty buffer table.
+   MEASURED, on the pressed record: `tapemusic` cast on three BBC beds came
+   back at -64.1 dBFS with the old shape and -38.1 dBFS with this one, a 26 dB
+   arrival, its three recordings going from inaudible to the record itself.
+   So a LOCAL bed now carries `samplePath` and NO url — the same convention
+   the kit sources next to it have always used (`url: ""`, samplePath set) —
+   and a bed whose url has a scheme is untouched. */
 ok(rBed.m.foundSrc && rBed.m.foundSrc.id === "bbc_arcade_85" && rBed.m.foundSrc.vol === 0
-   && rBed.m.foundSrc.url === "found/bbc_arcade_85.64.mp3",
-   "L7b the bed's src entry rides the recipe for state.foundSources");
+   && rBed.m.foundSrc.samplePath === "found/bbc_arcade_85.64.mp3"
+   && rBed.m.foundSrc.url === "",
+   "L7b a LOCAL bed's src entry rides the recipe by samplePath, not by a page-relative url",
+   JSON.stringify(rBed.m.foundSrc));
 const uBed = SE.pitchedUnit(rBed.role, rBed.m, { bpm: 120, seed: 1 });
 ok(uBed.sampler && uBed.sampler.zones[0].srcId === "bbc_arcade_85" && !uBed.module,
    "L7c the parent seats the found unit through samplerUnit (native lane)");

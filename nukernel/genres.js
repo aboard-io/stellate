@@ -360,6 +360,99 @@
     shapenote: { voice: "alto",  vowels: "aeo", vib: 0.08, air: 0.28, blend: 0.95, syll: 2 },
   };
 
+  /* ---- `grain`: THE SURFACE THE RECORD IS PLAYED OFF (2026-08-30) ----------
+     Paul: "Does anything have found audio, samples, and vinyl crackle?
+     Nothing seems to. Portishead sure should."
+
+     He was right, and the measurement is worse than the complaint: the five
+     rooms whose ENTIRE SUBJECT is records made out of other records —
+     portishead, triphop, massiveattack, tricky, djshadow — composed with no
+     found sound and no surface noise of any kind, every chair a GM instrument.
+     The only anchor in 274 that cast a found sound was `vaporwave`.
+
+     `grain` is a number from 0 to 1 written in a row's `tone` block. It is the
+     amount of SURFACE NOISE under the whole record: audio/to-engine.js takes
+     the max over the seats a record plays and writes `state.crackle`, which
+     the parent's `fxParams` has read — and `fx_bus.dsp` has rendered as instr
+     97, sparse impulses band-limited 300..6500 Hz over a 4 kHz hiss floor —
+     since long before this table existed. NOTHING WAS BUILT FOR THIS. The one
+     missing thing was a row that said the word.
+
+     WHY IT IS NOT A CHAIR, which is the whole design. A chair costs a voice:
+     it takes a register, a strip, a pan and a line in the cast, all of which
+     are facts about a PLAYER. Crackle is not a player — it is the medium the
+     band was pressed onto, one bed under everything, and mono the way a groove
+     is mono (fx_bus sums one `crk` into both sides). So it is an AMOUNT beside
+     `swing` and `verb`, not a name beside `instr`. This is also why it reaches
+     the phone: `state.crackle` goes through the ONE fxParams choke point that
+     press, live and the WAV segments all share, so the grain is on the tape
+     and in the ring and in the pocket without a second owner anywhere.
+
+     WHAT THE CRATE HELD, since the honest answer was checked before the
+     generated one was chosen. found/ has 192 beds and 366 one-shots and NOT
+     ONE of them is surface noise. The nearest candidates were measured against
+     the fx_bus crackle on the same three numbers (spectral flatness /
+     impulsiveness / share of energy under 300 Hz): the crackle reads
+     0.47 / 23x / 0.8%, and the best bed in the tree — `power_em`, `pebble_surf`
+     — reads 0.16 / 5x / 20-54%. Rain is rumble, surf is rumble, shortwave is a
+     midband tone; every one of them is bass-heavy where crackle is empty, and
+     none is impulsive. The 78rpm transfers (78s/blues_vox_78, caruso_78,
+     laughs_78, horns_78) DO carry real shellac noise — their floor sits only
+     12-15 dB under their own signal — but it is baked inside a musical
+     recording, so they are found MATERIAL and can never be a texture. The
+     generated crackle is therefore not a shortcut past the crate; it is the
+     only thing in the tree that is actually the shape of the thing.
+
+     READ THE DEPTH, NEVER THE NUMBER. `grain` is a LEVEL, and a level only
+     means something against the record it sits under. Within a record it is
+     fixed — the noise in a groove does not duck when the band gets loud, and
+     nothing here makes it duck. Across records it cannot be compared at all,
+     because the catalogue's presses span 18 dB (massiveattack -17.8 dBFS,
+     blockparty -36.4), so the SAME number lands anywhere from 26 to 56 dB
+     down depending only on how loud the record happens to be. What the rows
+     below are actually ordered by is DEPTH UNDER THEIR OWN MIX, measured on
+     the pressed artifact, 8 bars at seed 1:
+
+       row            grain   dB under its own mix
+       portishead      0.62    31.5   the dust is in the loop
+       djshadow        0.39    33.2   a break and a hiss
+       boombap         0.39    34.8   the 45 under the SP-1200
+       tapemusic       0.23    35     the shellac the etudes were cut to
+       chopped         0.45    36.1   a dubbed cassette, not a groove
+       tricky          0.83    36.4   tape murk, a step behind Dummy
+       blockparty      0.14    36.5   two decks in a rec room
+       triphop         0.61    37.9   the deck under a studio record
+       massiveattack   0.64    40.6   1998, digital, and nearly clean
+       vaporwave       0.50    43.7   a rip of a rip; the sleeve, not the record
+
+     — and read the two columns against each other before touching anything.
+     blockparty's 0.14 is a MORE audible surface than massiveattack's 0.64.
+     The numbers are levels; only the decibels are the record.
+
+     EVERY VALUE WAS PRESSED AND MEASURED, AND SIX WERE MOVED BY WHAT CAME
+     BACK. The first pass set them by ear-from-the-armchair and three of the
+     ten did not arrive at all: massiveattack at 0.22 measured 56 dB down and
+     left the record's noise floor unchanged TO THE DECIBEL, vaporwave at 0.30
+     did the same, and blockparty at 0.35 went the other way and sat 26 dB
+     down — a layer, not a surface. A row declaring a texture that does not
+     reach a speaker is precisely the bug this round exists to fix, so the
+     numbers here are outputs of a measurement, not inputs to one.
+
+     THE CEILING IS REAL AND IT IS NOT OURS TO RAISE. fx_bus scales instr 97
+     by 0.15, halved from 0.3 by a human ear on 2026-07-04 ("always make
+     crackle half as loud as you are setting it now") and called "THE
+     authoritative crackle gain" in its own comment. Measured consequence: on
+     a record pressed at -18 dBFS even grain 1.0 reaches only about 34 dB
+     under the mix. That is a limit this table accepts rather than routes
+     around; a row wanting more surface than that is asking for the
+     calibration to be re-argued with ears, not for a bigger number here.
+
+     THE NUMBERS ARE PER RECORD AND THEY DIFFER ON PURPOSE. Every row below
+     argues its own amount from what its record sounds like, and the spread is
+     the point: Dummy is not Mezzanine. A single catalogue-wide dusting would
+     be the same lie in the other direction — the table would once again be
+     saying one thing about five different records. */
+
   // ---- NAMED PROGRESSIONS --------------------------------------------------
   // Chord OBJECTS per bar (kernel.js chordsOf: {d, q, inv, borrow, beats}),
   // named so the composer can deal a DIFFERENT one per section role — the
@@ -687,7 +780,32 @@
              s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
              h: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
       fill: { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0] }, // bar 4: the snare answers itself
-      tone: { wave: "sawtooth", cut: 1500, q: 2.2, atk: .05, rel: 1.6, gain: .20, verb: .55 },
+      // GRAIN 0.50 -> 40 dB UNDER ITS OWN MIX (measured). The one row that
+      // already had a found sound (sea_shore, the sampling round) and still
+      // had no surface. What vaporwave slows down is a rip of a rip — a
+      // 1984 ballad off a cassette or a VHS — so the noise is real but thin
+      // and mostly tape, and it is set DEEP on purpose: the identity here
+      // is the wrong speed, and the dust is only the sleeve.
+      //   MEASURED UP FROM A FIRST TRY OF 0.30, which landed 45.7 dB under
+      // this record (the catalogue's hottest press at -18.0 dBFS) and moved
+      // its noise floor by 0.00 dB — a row declaring a texture that did not
+      // arrive, which is the whole bug this round is about.
+      //   AND THIS ROW'S GRAIN COMES OUT IN STEREO, alone in the wing, which
+      // took a measurement to understand and turned out to be right. On the
+      // other nine records the added signal is pure MID — the side component
+      // sits 25 to 43 dB under it, because fx_bus sums one `crk` into both
+      // channels and a groove is mono. On vaporwave mid and side come back
+      // EQUAL (-64.7 against -64.7). The cause is this record's own master
+      // word: it is the only row of the four probed carrying `tape: "wow"`,
+      // and fx_bus runs wowL and wowR off different LFO rates on purpose
+      // ("so the drift decorrelates into width instead of shifting the
+      // image"), so a mono surface entering the tape stage leaves it spread.
+      // A warped record smears its own surface noise into width; the box
+      // does the same thing for the same reason, and the 3.7 dB the grain
+      // reads under prediction is that stage's interpolation eating the
+      // impulses' top end.
+      tone: { grain: 0.50,
+              wave: "sawtooth", cut: 1500, q: 2.2, atk: .05, rel: 1.6, gain: .20, verb: .55 },
       words: ["chords from the harmony", "a moving 8-step window on the phrase",
               "the sea, looped under the record"],
       // THE WINDOW MOVES. A fixed excerpt(2,8) looped ONE half-phrase for the
@@ -1699,7 +1817,13 @@
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
       kitVel: { s: [0,0,0,0, 9,0,0,0, 0,0,0,0, 9,0,0,0] },
       fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
-      tone: { wave: "triangle", cut: 2000, q: 1.4, atk: .006, rel: .6, gain: .28, verb: .2 },
+      // GRAIN 0.39 -> 35 dB UNDER ITS OWN MIX (measured). The chopped soul
+      // loop comes off a 45 and the SP-1200 keeps its noise floor along
+      // with its swing. Set behind the Bristol rooms because boom bap is a
+      // PRESENT record — the snare hand at 9 on every backbeat wants air
+      // around it, and a heavy surface would fill the air the snare needs.
+      tone: { grain: 0.39,
+              wave: "triangle", cut: 2000, q: 1.4, atk: .006, rel: .6, gain: .28, verb: .2 },
       words: ["the chop — eight steps of the phrase's rhythm, chords on it",
               "the horn, answering from bar 3"],
       word: v => (v === 0 ? [excerpt(0, 8)] : [only("gate", rotate(8))]),
@@ -4918,6 +5042,126 @@
       word: v => (v === 1 ? [only("gate", complement("gate")), transpose(-7)] : []),
     },
 
+    // WAX TRAX! [the label]. THE ROOM THAT MADE THE RECORDS, and it ships
+    // under the batcave rule — a room or a label earns a row only when the
+    // record is its OWN, and the ZIM names two of them outright. Wax Trax!
+    // Records: "The first official Wax Trax! release was Strike Under's
+    // Immediate Action twelve inch EP in 1980... But it was the release of
+    // Cold Life by Ministry in 1981—along with the licensing of Front 242's
+    // Endless Riddance EP—that set the stage for Wax Trax! to become
+    // America's preeminent industrial label of the 1980s and 1990s." That is
+    // a discography, not a scene, which is what separates this from a mood.
+    //
+    // CHICAGO 1981, ARGUED FROM THE ZIM'S OWN SENTENCES AND NOT FROM THE
+    // SHOP SIGN. The store is older than the label and it is not even the
+    // same city: "It began as a record shop in Denver, Colorado in 1974...
+    // who sold the store in 1978 and moved to Chicago. In November of that
+    // year, they opened a store under the same name in the Lincoln Park
+    // neighborhood." So Chicago 1978 is a SHOP and this row is a SOUND. The
+    // first release is 1980 and it is Strike Under, a hardcore EP — the
+    // label's punk half, not the music four anchors below descend from. The
+    // year the ZIM itself picks out is 1981, the one it says "set the stage",
+    // and Ministry's article agrees from the other side: the "I'm Falling /
+    // Cold Life" single "reached No. 45 in the Billboard Hot Dance/Disco
+    // chart... thus scoring Wax Trax!' first hit."
+    //
+    // AND THE SOUND OF THAT RECORD IS NOT THE SOUND OF THE LABEL'S LEGEND.
+    // Ministry in 1981 is not the riff wall of 1988; the ZIM says "Originally
+    // a synth-pop outfit", and the room it was made in is itemised: Jourgensen
+    // "began to write and record songs in his apartment, using a newly bought
+    // ARP Omni synthesizer, a drum machine, and a reel-to-reel tape recorder."
+    // Three objects, and this catalogue can seat all three honestly. The ARP
+    // Omni IS the ARP string ensemble, which is exactly what `synth_strings_1`
+    // reaches (instruments.js: "the Solina/ARP string ensemble, which is what
+    // every record meaning 'synth strings' was actually playing") — so the
+    // signature instrument here is a STRING MACHINE, not a lead. `cr78` is
+    // the drum machine of that year. And Jourgensen sings because the ZIM says
+    // the auditions failed: "he auditioned several singers, all of whom were
+    // unsatisfactory, so he decided to perform vocals himself."
+    //
+    // EIGHT TITLES WERE PROBED, NOT ONE (the qiyan lesson: one probe is not a
+    // search). Wax_Trax!_Records · Wax_Trax! (a REDIRECT to the same article
+    // in this ZIM — there is no separate shop page, so the shop/label fork
+    // this row was afraid of does not exist and the dating above has to do
+    // that work instead) · Ministry_(band) · Front_242 · KMFDM ("Konietzko
+    // and Esch moved to the United States, where they found much greater
+    // success with seminal industrial record label Wax Trax!") ·
+    // Revolting_Cocks ("began as a musical side project for Richard 23 of
+    // Front 242, Luc van Acker, and Al Jourgensen of Ministry" — the label as
+    // the room where its own acts met) · My_Life_with_the_Thrill_Kill_Kult
+    // (Chicago, "pioneers of the industrial music genre") · Al_Jourgensen
+    // ("Closely related with the independent record label Wax Trax! Records",
+    // and Ministry "which he founded in 1981", the third independent arrival
+    // at this row's year). All eight are 200s in this ZIM.
+    //
+    // THE ROW EXISTS TO BE A PARENT. It is the rung `industrialrock` has been
+    // asking for in `wants` since it was written, and it is the literal label
+    // of `industrialmetal` (Ministry) and the American door `ebm` came through
+    // (Front 242's licence) and the reason `industrialbreaks` is filed as
+    // industrial at all (Meat Beat Manifesto: "Sweat Box Records sold the
+    // rights to the LP to Wax Trax Records for release in the United States"
+    // — which is why, the article says, they "got pigeonholed as an industrial
+    // act"). All four children are 1988 or later, so every edge runs forward.
+    waxtrax: {
+      label: "Chicago 1981", near: "synthpop",
+      // a 12-inch single with a verse and a chorus that happened to chart on
+      // a disco list. 122 lands in the one gap its own family leaves —
+      // synthpop 118, roboticpop 120, analogsynthpop 124 — which is where a
+      // record that is a synth-pop song and a dance-chart entry at once
+      // belongs.
+      plan: "song", bpm: 122,
+      // LINEAGE: synth-pop is what the ZIM calls this band at this date and it
+      // is the dominant share; post-punk is where the player came from
+      // (Jourgensen "replaced Tom Hoffmann on guitars in Special Affect, a
+      // post-punk group") and what the label itself was filed as (Larkin:
+      // "Along with Touch & Go Records, Wax Trax is Chicago's most important
+      // post-punk label"); disco is the CHART the first hit landed on; punk is
+      // Strike Under's Immediate Action, the first record the label pressed.
+      // The synthpop edge is same-year (Basildon 1981) rather than older,
+      // which this graph already permits where the label dates a SOUND —
+      // `coldwave` 1979 takes `postpunk` 1979 on the same reading.
+      parents: { synthpop: 0.35, postpunk: 0.3, disco: 0.2, punk: 0.15 },
+      wants: [],
+      // THE ARP OMNI IS THE ROW. `synth_strings_1` is the Solina/ARP ensemble
+      // (instruments.js PATCH_SYNTH), and its chorus is the instrument, which
+      // is why the parent drops inserts on it — the right refusal for a record
+      // whose whole apparatus was one string machine in a bedroom. The second
+      // chair is the voice the auditions failed to find.
+      instr: ["synth_strings_1", "synth_voice"],
+      drumkit: "cr78",
+      entry: v => v, reg: v => v - 1, realize: () => "line",
+      // NOT ITS NEIGHBOURS' CYCLE. [0,5,3,4] — i-vi-iv-v — is what
+      // `analogsynthpop` and `roboticpop` both already play, and writing a
+      // third copy of it into the same family would be the twin this round is
+      // elsewhere pulling apart. [0,6,5,4] is the descending minor line,
+      // i-VII-VI-v, which is what a machine holding chords under a singer
+      // actually does and what a string ensemble is FOR — it sustains through
+      // the descent instead of restriking it. `cycle` because roots are
+      // declared, which is the reading all three neighbours make.
+      roots: [0, 6, 5, 4], mode: MODES.aeolian,
+      scale: MODES.aeolian, diatonic: true,
+      harmony: "cycle",
+      // LEGATO, and it is the field that separates this row from the three
+      // beside it — all of them staccato. An ARP Omni is a string machine and
+      // a string machine's note does not stop.
+      artic: "legato", maxHold: 3, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
+      // AN ENSEMBLE IS NOT A LEAD, so the filter sits open and the resonance
+      // sits low: a string machine's character is its chorus and its slow
+      // speech, and a squelch on it would be a different, later instrument.
+      tone: { wave: "sawtooth", cut: 3000, q: 0.7, atk: .05, rel: .9, gain: .28, verb: .26 },
+      words: ["the string machine, the figure turning",
+              "the voice over it, the phrase answered"],
+      // the voice answers rather than doubles — the string machine holds and
+      // the singer moves, which is the shape of a record made by one person
+      // playing everything (the quote-box law §51's own test).
+      word: v => (v === 1 ? [rotate(2)] : []),
+      fx: [],
+    },
+
     // INDUSTRIAL METAL [deathmetal]. Death metal's chromatic riff wall and
     // locrian ♭5-is-home scale, cited whole, played to a QUANTIZED machine
     // kick instead of a drummer's blast — the field that separates a band
@@ -4938,7 +5182,19 @@
       // and German one — DAF, Front 242 — which the Wax Trax row is a later
       // American reading of. A parent edge pointing at a younger anchor
       // would be a date the graph cannot hold, so the debt goes here.
-      parents: { deathmetal: 0.4, kraftwerk: 0.35, punk: 0.25 },
+      //
+      // ...AND THE WAX TRAX ROW ARRIVED 2026-08-30, which settles it from the
+      // other end. That sentence above was written when "the Wax Trax row"
+      // was a figure of speech; `waxtrax` is now Chicago 1981, an anchor,
+      // SEVEN YEARS OLDER than this one, and it is not a later reading of
+      // anything — it is this band's own label and this band's own first
+      // record. Ministry (band): Jim Nash "suggested Jourgensen record a
+      // single and form a touring band, which Jourgensen decided to call
+      // Ministry", and Cold Life came out "in late 1981 on Wax Trax! in the
+      // US". Land of Rape and Honey is what that apartment record became
+      // after seven years, so the edge is the largest single share here: the
+      // riff wall is death metal's, but the ROOM is Chicago 1981's.
+      parents: { waxtrax: 0.35, deathmetal: 0.3, kraftwerk: 0.2, punk: 0.15 },
       wants: [],
       instr: ["distortion_guitar", "metal_pad"],
       drumkit: "electronic",
@@ -4972,7 +5228,20 @@
       // underneath; punk supplies the shouted, direct chant vocal. New
       // beat, the slowed-down Belgian club scene this style traded records
       // with directly, is the missing rung.
-      parents: { kraftwerk: 0.4, techno: 0.35, punk: 0.25 },
+      //
+      // WAX TRAX JOINED 2026-08-30 AND IT IS THE SMALLEST EDGE ON PURPOSE.
+      // EBM is Belgian — Front 242 "came into prominence during the 1980s...
+      // Pioneering the style they called electronic body music" — and this
+      // anchor's label says Chicago, which needs an argument rather than a
+      // shrug. The argument is the licence: Wax Trax! Records names "the
+      // licensing of Front 242's Endless Riddance EP" as half of what "set
+      // the stage for Wax Trax! to become America's preeminent industrial
+      // label", and Front 242's "Headhunter" was later "the label's
+      // best-selling record to date". Chicago 1981 is the DOOR this music
+      // came through, not the room it was written in, so it takes a fifth of
+      // the share and Belgium keeps the rest through `techno` and the
+      // unpaid `new beat` below.
+      parents: { kraftwerk: 0.35, techno: 0.3, waxtrax: 0.2, punk: 0.15 },
       wants: ["new beat"],
       // THE CHANT IS SHOUTED, AND A SHOUT IS MOSTLY CONSONANTS — and until
  // 2026-08-18 it was not even a voice: the Model D below is declared without
@@ -15163,11 +15432,21 @@
       // Avenue — the largest missing edge this row had.
       parents: { funk: 0.45, winstons: 0.25, soundsystem: 0.2 },
       wants: [],
+      // "this box plays scores, not records" WAS TRUE UNTIL 2026-08-30 and
+      // is not any more — the grain round put the surface of a record
+      // under this one (`grain` in the tone block below), and the sampling
+      // round before it made the crate seatable. The cannot is re-cut to
+      // the thing that is still out of reach, which was always the
+      // stronger half of it: TWO DECKS. One record's surface is a texture;
+      // two copies of one record, hand-cued against each other so a
+      // four-bar break never ends, is a second transport this box has no
+      // port for. The merry-go-round is the technique, not the dust.
       cannot: ["the two copies of the same record — the merry-go-round " +
                "is a PLAYBACK art, two turntables holding one bar open " +
-               "for as long as the floor wants it, and this box plays " +
-               "scores, not records; the row says the break-centered " +
-               "form, not the technique",
+               "for as long as the floor wants it, and this box has one " +
+               "transport and no hand on it; the row says the " +
+               "break-centered form, and now the surface, not the " +
+               "technique",
                "the MC's toasts over the top — speech over a groove is " +
                "the tube voice's job and it affords two voices; the row " +
                "keeps the floor's side of the night"],
@@ -15181,7 +15460,20 @@
       harmony: "modal",
       mode: MODES.dorian, scale: SCALES.blues, artic: "staccato", maxHold: 2,
       swing: 0.1, bassStyle: "eighths",
-      tone: { wave: "square", cut: 2500, q: 1.1, atk: .006, rel: .3, gain: .26, verb: .3 },
+      // GRAIN 0.14 — this row's two `words` are "the record on the left
+      // deck" and "the record on the right", which is the table saying the
+      // subject out loud and then rendering no record at all. Herc played
+      // funk 45s through a rec-room system in 1973; the surface is theirs.
+      //   THE SMALLEST NUMBER IN THE WING, and it was MEASURED down to it.
+      // At 0.35 the pressed record put the grain 26.4 dB under its own mix
+      // — audible as a LAYER, which is the one thing surface noise must
+      // never be — because this record is a quiet press (-36.4 dBFS, two
+      // voices at 112) and a fixed noise level reads loud against it. 0.14
+      // puts it back around 35 dB down. A 45 is a strong pressing and a
+      // block party is not a listening room; the dust belongs under the
+      // floor, not on it.
+      tone: { grain: 0.14,
+              wave: "square", cut: 2500, q: 1.1, atk: .006, rel: .3, gain: .26, verb: .3 },
       words: ["the clavinet vamp, the record on the left deck",
               "the horns, the record on the right"],
       // THE MERRY-GO-ROUND AS A SCHEDULE: the same bar, again, again
@@ -15383,7 +15675,17 @@
       harmony: "modal",
       mode: MODES.aeolian, scale: DIATONIC, artic: "legato", maxHold: 4,
       swing: 0.25, bassStyle: "pedal", fx: ["echo"],
-      tone: { wave: "triangle", cut: 1900, q: 0.9, atk: .02, rel: 1.2, gain: .24, verb: .5,
+      // GRAIN 0.61 -> 38 dB UNDER ITS OWN MIX (measured). This row's own
+      // header has said "while the deck crackles" since it was written,
+      // and until 2026-08-30 that was a sentence about a sound nothing
+      // rendered. Set well behind Dummy: Blue Lines is a 1991 STUDIO
+      // record whose crackle rides in on the rare-groove loops rather
+      // than a mix cut to lacquer entire. (0.38 was the first try and
+      // MEASURED 43.7 dB down — too far to hear on a press this hot at
+      // -20.4 dBFS, which is why the number moved and the DEPTH is what
+      // the sentence claims.)
+      tone: { grain: 0.61,
+              wave: "triangle", cut: 1900, q: 0.9, atk: .02, rel: 1.2, gain: .24, verb: .5,
               mouth: MOUTHS.confessional },
       words: ["the voice, hurt and level",
               "the strings, the loop's borrowed grandeur",
@@ -15427,7 +15729,13 @@
       harmony: "modal",
       mode: MODES.dorian, scale: SCALES.blues, artic: "tie", maxHold: 4,
       swing: 0.2, bassStyle: "pedal", fx: ["echo"],
-      tone: { wave: "sawtooth", cut: 1400, q: 1.1, atk: .03, rel: 1.6, gain: .25, verb: .45 },
+      // GRAIN 0.45 — and it is HISS, not groove. Screw's records left the
+      // house on dubbed cassettes, tape to tape, and what that adds is a
+      // floor rather than a crackle. instr 97 carries both halves (a
+      // sparse-impulse layer over a 4 kHz-capped noise bed), so the number
+      // buys the right texture here even though the cause is not a stylus.
+      tone: { grain: 0.45,
+              wave: "sawtooth", cut: 1400, q: 1.1, atk: .03, rel: 1.6, gain: .25, verb: .45 },
       words: ["the lead, a third low, in no hurry at all",
               "the pad, the afternoon it happens in"],
       word: (v, s) => (v === 0 ? [[], [rotate(-2)], [transpose(-2)], [rotate(-2)]][s % 4]
@@ -17217,10 +17525,41 @@
       // Schifrin stays uncredited and unowed; one record pays one debt.
       parents: { triphop: 0.35, electro: 0.2, jazz: 0.2, barry: 0.15 },
       wants: [],
-      cannot: ["the surface noise itself — Dummy presses its beats to " +
-               "lacquer and plays the crackle as a member of the band, " +
-               "and this box renders scores, not shellac; the row says " +
-               "the slow kit and the torch line, not the dust"],
+      // THE `cannot` IS PAID, 2026-08-30 (the grain round), and it is the
+      // one Paul came back for by name: "Does anything have found audio,
+      // samples, and vinyl crackle? Nothing seems to. Portishead sure
+      // should." Its text is kept in full because it named the debt
+      // exactly — "the surface noise itself — Dummy presses its beats to
+      // lacquer and plays the crackle as a member of the band, and this
+      // box renders scores, not shellac; the row says the slow kit and
+      // the torch line, not the dust."
+      //   WHAT WAS WRONG WITH IT was never the reading of the record; it
+      // was "this box renders scores, not shellac", which was FALSE when
+      // it was written. engine/faust/dsp/fx_bus.dsp has rendered surface
+      // noise as instr 97 since the fx wings and `fxParams` has read
+      // `state.crackle` for as long — and nukernel had simply never
+      // written the field, on this row or any other. The cannot was
+      // describing a missing sentence as if it were a missing engine.
+      //   THE HIGHEST `grain` IN THE CATALOGUE, and the row has the best
+      // claim to it: Barrow cut the band's own playing to acetate and
+      // sampled it back, so the dust is not on the record, it is IN the
+      // loop — a member of the band, as the paid sentence says.
+      //   MEASURED on the pressed record, 8 bars at seed 1, as the
+      // difference against the same press without it: the grain lands
+      // 31.5 dB under this record's own mix and moves the mix's own RMS
+      // by 0.00 dB — a surface you hear under a torch song and never a
+      // layer on it. The record's noise floor rises from -62.2 to
+      // -56.2 dBFS, which is the whole point: there is a floor now.
+      //   WHAT IS STILL TRUE stays in the cannot, because the debt is paid
+      // in the SURFACE and not in the method: the noise below is generated,
+      // and Dummy's was picked up by a stylus off a lacquer the band had
+      // just cut of its own playing. That loop — play it, cut it, sample
+      // the cut — is a studio act with no port on this box.
+      cannot: ["the acetate itself — the dust here is SYNTHESISED under " +
+               "the mix, and Barrow got his by cutting the band's own " +
+               "take to lacquer and sampling it back, so his noise " +
+               "carries the room and the take with it; this row has the " +
+               "surface without the detour that made it"],
       instr: ["solo_vox", "jazz_guitar", "rhodes_ep"],
       drumkit: "electronic",
       entry: v => (v === 0 ? 2 : v === 1 ? 0 : 4),
@@ -17235,7 +17574,8 @@
              h: [1,0,0,0, 1,0,1,0, 1,0,0,0, 1,0,1,0] },
       kitVel: { h: [5,0,0,0, 3,0,2,0, 5,0,0,0, 3,0,2,0] },
       fx: ["tremolo", "echo"],
-      tone: { wave: "triangle", cut: 1700, q: 0.9, atk: .02, rel: 1.3, gain: .24, verb: .55,
+      tone: { grain: 0.62,   // the dust is in the loop — see the paid cannot
+              wave: "triangle", cut: 1700, q: 0.9, atk: .02, rel: 1.3, gain: .24, verb: .55,
               // WHO SINGS: close, plain, full of breath — Gibbons is
               // the confessional mouth's defining case in this table.
               mouth: MOUTHS.confessional },
@@ -17284,7 +17624,19 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
              h: [1,0,0,1, 0,0,1,0, 1,0,0,0, 0,1,0,0] },
       fx: ["crunch", "echo"],
-      tone: { wave: "sawtooth", cut: 1400, q: 1.2, atk: .02, rel: 1.1, gain: .24, verb: .5,
+      // GRAIN 0.83 -> 37 dB UNDER ITS OWN MIX (measured). The second-
+      // dustiest room in the table and a step behind Dummy's 31.5:
+      // Maxinquaye's murk is TAPE and room and a whisper too close to the
+      // mic, where Portishead's is a stylus in a groove the band cut that
+      // afternoon. Both are surface; one is a degree less of it.
+      //   THE NUMBER IS BIG BECAUSE THE RECORD IS LOUD. This press comes
+      // back at -18.6 dBFS against portishead's -25.9 — seven decibels
+      // hotter — so the same surface reads seven decibels further down,
+      // and the level has to be raised to say the quieter thing. Read the
+      // DEPTH, never the number, when comparing two rows (the essay
+      // beside MOUTHS says why).
+      tone: { grain: 0.83,
+              wave: "sawtooth", cut: 1400, q: 1.2, atk: .02, rel: 1.1, gain: .24, verb: .5,
               // WHO SINGS: Topley-Bird's side of the pair — level,
               // unimpressed, no belt anywhere in it.
               mouth: MOUTHS.confessional },
@@ -17397,10 +17749,20 @@
       parents: { boombap: 0.4, blockparty: 0.25, jazz: 0.15,
                  newsfanfare: 0.15 },
       wants: ["the mo' wax shelf beside it (u.n.k.l.e.)"],
+      // THE `cannot` IS HALF PAID, 2026-08-30 (the grain round), and the
+      // half that fell was a claim about the BOX rather than about the
+      // record: "this box owns no crates and lifts nothing". It owns a
+      // crate — found/ carries 192 beds and 366 one-shots, seatable as
+      // units since the sampling round — and as of this round it carries
+      // the surface those records were played off too. What Guinness's
+      // sentence is actually about survives all of that, so the cannot
+      // keeps it and drops the false half.
       cannot: ["the lift itself — Guinness calls this the first record " +
-               "built entirely of samples, and this box owns no crates " +
-               "and lifts nothing; the row says the mood and the break, " +
-               "not the theft"],
+               "built entirely of samples, and a lift is a CHOICE OF " +
+               "SOMEBODY ELSE'S RECORD: Shadow spent years in a basement " +
+               "deciding which four bars, and this box picks from a fixed " +
+               "crate nobody dug for; the row says the mood, the break " +
+               "and now the dust, but never the find"],
       instr: ["electric_piano", "strings"],
       drumkit: "electronic",
       entry: v => (v === 0 ? 0 : 2), reg: v => (v === 0 ? 0 : 1),
@@ -17413,7 +17775,17 @@
              s: [0,0,0,0, 1,0,0,1, 0,0,0,0, 1,0,0,0],
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,1,1,0] },
       fx: ["echo"],
-      tone: { wave: "triangle", cut: 1600, q: 1.0, atk: .02, rel: 1.4, gain: .25, verb: .5 },
+      // GRAIN 0.39 -> 33 dB UNDER ITS OWN MIX (measured). "A break and a
+      // hiss" is the whole texture of Endtroducing and the hiss half is
+      // the one the box had no way to say. Sits just behind Dummy and
+      // ahead of everything else, because Shadow's dust comes off the
+      // LIBRARY RECORDS he lifted — already a generation of vinyl noise,
+      // but played back clean off an MPC rather than cut again.
+      //   The number is small because the press is QUIET (-33.1 dBFS,
+      // two voices and a lot of air): a forward surface costs less level
+      // here than a buried one does on tricky.
+      tone: { grain: 0.39,
+              wave: "triangle", cut: 1600, q: 1.0, atk: .02, rel: 1.4, gain: .25, verb: .5 },
       words: ["the piano loop, four bars of somebody else's melancholy",
               "the strings, weather moving in over the break"],
       word: (v, s) => (v === 0 ? [[], [rotate(4)], [transpose(-2)], [rotate(4)]][s % 4]
@@ -17539,7 +17911,32 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0] },
       fx: ["echo", "crunch"],
-      tone: { wave: "sawtooth", cut: 1500, q: 1.2, atk: .015, rel: 1.5, gain: .24, verb: .5,
+      // GRAIN 0.64 -> 40.6 dB UNDER ITS OWN MIX (measured): THE DEEPEST
+      // SURFACE IN THE WING, and the distance is the argument. Mezzanine
+      // is 1998 and digital — Del Naja's dread is built out of black
+      // space and a clean bottom end, not dust, and its samples are
+      // post-punk records played rather than degraded. Giving Mezzanine
+      // Dummy's surface would collapse the two rows the downtempo round
+      // went to the trouble of separating; nine decibels of depth between
+      // them is that separation, said where a listener can hear it.
+      //   THE NUMBER IS THE SECOND HIGHEST HERE AND THE SOUND IS THE
+      // QUIETEST, which is the clearest case in the table for reading
+      // depth over number: this press is hot, so it takes a large amount
+      // to place a small surface. The first try of 0.22 measured 56 dB
+      // down and left the record's noise floor unchanged to the decibel
+      // — declared, and never arriving.
+      //   MEASURED TWICE AND THE SECOND TIME ALONE, because this row is
+      // where the harness lied. Pressed inside a multi-record session it
+      // came back at -17.8 dBFS with grain absent and -20.6 with grain
+      // 0.64, which read as "the surface is squashing the master" and is
+      // not true: pressed ALONE the record is -20.64 dBFS with grain
+      // absent, with 0.22, and with 0.64 — the same three decimals — so
+      // the level moves with the SESSION and never with the grain. (The
+      // fx_bus was cleared independently: driven with this record's own
+      // fxParams, its output RMS is identical to three decimals at
+      // crackle 0, 0.22 and 0.64.) The numbers above are the solo press.
+      tone: { grain: 0.64,
+              wave: "sawtooth", cut: 1500, q: 1.2, atk: .015, rel: 1.5, gain: .24, verb: .5,
               // WHO SINGS: the head voice held nearly straight —
               // Fraser's "Teardrop" register, not a belt.
               mouth: MOUTHS.falsetto },
@@ -19229,7 +19626,35 @@
                "the five loudspeakers and the potentiomètre d'espace — " +
                "diffusion was the performance and a mix has no aisles " +
                "(stockhausen's admission, six years early)"],
-      instr: ["goblin", "sea_shore", "atmosphere"],
+      // THE MATERIAL IS RECORDINGS — AND UNTIL 2026-08-30 IT WAS THREE
+      // SYNTHESISER PATCHES. This row shipped on the sampling round with
+      // the argument printed above it ("the registry holds RECORDINGS
+      // now... A found unit re-triggered as material is exactly what this
+      // row is") and then cast `goblin`, `sea_shore` and `atmosphere` —
+      // General MIDI 101, 122 and 100, three synth pads with weather in
+      // their names. The one anchor in the table whose PRIMARY FACT is
+      // that the material is not notes was made of notes, and the crate
+      // it was written for went unused by every row in the catalogue:
+      // `found:` seating has existed in audio/to-engine.js since that
+      // round and nothing had ever named one. Measured before fixing —
+      // recipeFor("found:bbc_italian_steam") returns a one-zone sampler
+      // on found/bbc_italian_steam.64.mp3; recipeFor("sea_shore")
+      // returns UNROUTED and falls back to a bare tone.
+      //   THE THREE ARE THE ETUDES' OWN OBJECTS, not a mood board.
+      // Schaeffer's first étude of 1948 is the Etude aux chemins de fer,
+      // cut from locomotives he recorded at the Gare des Batignolles, so
+      // v0 — the chair whose word is "cut and re-pitched, the splice
+      // audible" — is a steam engine from inside the train, and per-note
+      // sampler rate does to it exactly what a variable-speed turntable
+      // did to his discs. v1 is the PLATFORM that engine stands at: the
+      // second recording of one world, which is how an étude is built.
+      // v2 is a room full of ticking clocks, hung an octave up and let
+      // ring — a found object that is already a rhythm, which is the
+      // Etude aux tourniquets' whole idea.
+      //   All three are BBC-crate ids carrying a LOCAL url
+      // (found/<id>.64.mp3), so nothing here reaches off-origin.
+      instr: ["found:bbc_italian_steam", "found:bbc_termini_platform",
+              "found:bbc_clock_room"],
       entry: v => (v === 0 ? 0 : v === 1 ? 1 : 3),
       reg: v => [0, -1, 1][v],
       realize: v => (v === 0 ? "line" : "pad"),
@@ -19238,10 +19663,22 @@
       mode: MODES.phrygian, scale: SCALES.chromatic,
       artic: "staccato", maxHold: 2,
       fx: ["echo"],
-      tone: { wave: "triangle", cut: 2600, q: 0.9, atk: .003, rel: .9, gain: .23, verb: .45 },
-      words: ["the found object, cut and re-pitched, the splice audible",
-              "the shore, a locked groove under the gate",
-              "the second recording, hung high and let ring"],
+      // GRAIN 0.23 -> 35 dB UNDER ITS OWN MIX (measured). The most literal
+      // claim in the table: Schaeffer's 1948 studio had no tape yet, the
+      // Etudes were cut to SHELLAC and played on locked grooves, so
+      // surface noise is not a colour on this music, it is the medium the
+      // music is made of. The row casts three real recordings as chairs
+      // (above); this is the disc they are turning on.
+      //   MEASURED DOWN FROM 0.50, which landed 26 dB under this record —
+      // a layer, the same error blockparty made and for the same reason:
+      // once the three field recordings replaced three GM pads the press
+      // dropped to -38.1 dBFS, and a fixed surface reads loud against a
+      // quiet record.
+      tone: { grain: 0.23,
+              wave: "triangle", cut: 2600, q: 0.9, atk: .003, rel: .9, gain: .23, verb: .45 },
+      words: ["the locomotive, cut and re-pitched, the splice audible",
+              "the platform it stands at, a locked groove under the gate",
+              "the room of clocks, hung high and let ring"],
       word: (v, s) => (v === 0 ? [[], [reverse()], [spread(3)], [excerpt(2, 8)]][s % 4]
                     : v === 1 ? [drop(10)]
                     : [drop(8), transpose(12)]),
@@ -20484,6 +20921,13 @@
                 "hammerhorror", "exotica",
                 "coastrock", "yachtrock", "yachtsoul", "analogsynthpop",
                 "gothsynth", "dancepostpunk", "orchpsych",
+                // ...and Chicago 1981 joined 2026-08-30 with the Wax Trax
+                // round. `waxtrax` is one man, an ARP Omni, a drum machine
+                // and a reel-to-reel in an apartment — no band at all, which
+                // is this cluster's own definition read to its limit, and it
+                // files beside `synthpop` and `analogsynthpop`, the two rows
+                // its own comment argues from.
+                "waxtrax",
                 // ...and five from the world round (2026-08-26): São Paulo
                 // 1968, Manila 1976, Tehran 1974, Hong Kong 1984 and Taipei
                 // 2003 are all records ARRANGED — a band plus an arranger
@@ -20936,6 +21380,13 @@
     kpop:      { stress: 0.28, phrase: 0.3,  touch: { t: 0.02,  v: 0.5 } },
     bigroom:   { stress: 0.3,  phrase: 0.25, touch: { t: 0.015, v: 0.45 } },
     ebm:       { stress: 0.3,  phrase: 0.15, touch: { t: 0.01,  v: 0.35 } },
+    // WAX TRAX! IS NOT ITS OWN CHILDREN'S MACHINE. `ebm` one line up is a
+    // sequencer at t 0.01 — no hand at all — and that is the 1989 club, eight
+    // years after this row. Chicago 1981 is a man playing an ARP Omni over a
+    // CR-78 in an apartment: the box keeps the time, so stress stays low, but
+    // a player is touching the keys, so the timing wobble is a real one. It
+    // sits at analogsynthpop's own reading, which is the record next door.
+    waxtrax:   { stress: 0.35, phrase: 0.3,  touch: { t: 0.022, v: 0.5  } },
     synthduo:  { stress: 0.28, phrase: 0.35, touch: { t: 0.02,  v: 0.5 } },
  // ...and the five rooms added 2026-08-17, same law, same reason: `club`
     // still has no fallback row, so a machine-floor newcomer that disagrees

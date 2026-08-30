@@ -844,10 +844,42 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
       { fader: sum("fader"), rev: sum("rev"), del: sum("del"), pan: sum("pan"),
         fx: os.flatMap(x => x.fx || []) }) : null;
     const grp = feedSplit(p || {}, S, isDrum, ROUTE);
+    // THE INSTRUMENT'S OWN MILD SEND (2026-08-30). Paul, having done it by
+    // hand on `massiveattack`: *"Wherever you use overdrive guitar bring it
+    // down 12. Throw it to some mild reverb and delay."* The level half of
+    // that is a ROUTE TRIM and rides `u.pageTrim` below; this is the other
+    // half, and it is an ADD rather than a multiply because a send is a
+    // PROPORTION of what the unit puts out — added into the composed base
+    // here and then scaled by the trim with everything else, which leaves the
+    // wet/dry ratio at exactly (composed + the mild number) however far down
+    // the instrument sits. The table and the whole argument are one file over
+    // (audio/to-engine.js ID_ROUTE); what arrives here is two fields on the
+    // unit, the same way PAGE_TRIM arrives as `u.pageTrim`.
+    //
+    // EXPLICIT WINS, WHICH IS WHY THIS IS NOT A FLOOR AND NOT UNCONDITIONAL.
+    // `p.rev` / `p.del` are the CHAIR'S OWN sends — what this record asked for
+    // on this strip, on top of the section — and a record that has named a
+    // number for a bus has already answered the question. Measured over the
+    // catalogue (test/_odguitar.cjs, 378 anchors at seed 1): four of the 109
+    // overdrive chairs carry an echo of their own (batcave, deathrock,
+    // gothicrock, psychrock — precompose's ECHOSEND, 0.30, spent on the chair
+    // carrying the tune), and those four keep 0.30 rather than being handed
+    // 0.42. No overdrive chair carries a `rev` of its own, so that arm is
+    // absent-is-today for every record in the catalogue today and is written
+    // for the record that names one tomorrow.
+    //
+    // WHAT THE METER DOES NOT SHOW, said rather than hidden: deskChannelBase
+    // above is handed (sec, key) and never sees a unit, so the board's strip
+    // draws the composed send without this add — exactly as it already draws
+    // it without `u.pageTrim`. Both are the ROUTE and not the hand, which is
+    // the distinction this file has drawn since the trim block below was
+    // written; a hand's own move is still the whole of what the strip shows.
+    const idRev = (p && p.rev) ? 0 : (u.idRev || 0);
+    const idDel = (p && p.del) ? 0 : (u.idDel || 0);
     const rev = (p ? p.rev || 0 : 0)
-      + (autoRev != null ? autoRev : S.rev) + grp.rev;
+      + (autoRev != null ? autoRev : S.rev) + grp.rev + idRev;
     const del = (p && p.del ? p.del : 0)
-      + (autoDel != null ? autoDel : S.del) + grp.del;
+      + (autoDel != null ? autoDel : S.del) + grp.del + idDel;
     const v = { ...u,
       lvl: (u.lvl != null ? u.lvl : 1) * S.lvl * (p ? p.gain : 1),
       rev: Math.min(1, rev), del: Math.min(1, del) };

@@ -53,6 +53,21 @@
  *       generations are year-ordered; every axis is a <table> with no
  *       all-empty row; and the duplicated-fact probe that MEASURED the
  *       shipped panel's repetition now bounds it
+ *   T9  Paul, 2026-08-30: "Move the die icon to right above the question mark
+ *       so it's always there." #rewrite is in the FOOT, above the ? and the
+ *       log, at every level, still carrying #reading and still reseeding —
+ *       and the play level has LOST it (a mark cannot be in two places)
+ *  T10  "Label all the icons with tiny short labels underneath." Every mark
+ *       in the gutter wears its own `.nu-vh` word, the visible word IS the
+ *       accessible name (an extraction, not a second dictionary), no label is
+ *       clipped by its 47px mark, the 44px floor survives — and the COLUMN IS
+ *       MEASURED at both phones and reported, because "every level fits at
+ *       320x568" is not true, was not true before this round, and cannot be
+ *       made true at a 44px tap floor (T10b carries the arithmetic)
+ *  T11  "There are three play modes possible—loop, once, and album which keeps
+ *       making new songs." The mark cycles fields.js PLAYMODES, and each
+ *       position is DRIVEN TO THE END OF A FOUR-BAR RECORD made by hand:
+ *       loop keeps going, once stops itself, album's reading moves
  *
  * RUN:  NODE_PATH=/home/ford/ftrain-2025/node_modules node test/gutter.js
  *       (it stands up its own COOP/COEP server on a port the OS picks, the
@@ -252,9 +267,16 @@ function standUpServer() {
      this file runs in. */
   await p.evaluate(() => document.getElementById("playops").click());
   await p.waitForTimeout(250);
+  /* SIX CONTROLS NOW, AND ONE OF THE FIVE MOVED OUT OF THE LEVEL, 2026-08-30.
+     This read "the five transport controls are on the page — #play in the
+     head, the other four in the level", and Paul moved the die: *"Move the
+     die icon to right above the question mark so it's always there."* So
+     what is asserted here is that all six exist and #play is in the head;
+     WHERE the die stands and what the level holds instead of it are T9's,
+     which is the check the move belongs to. */
   check(t3.five.length === 5 && t3.head === true,
-    "T3 · …and the five transport controls are on the page — #play in the " +
-    "head, the other four in the level: " + JSON.stringify(t3.five) +
+    "T3 · …and the transport's controls are on the page — #play in the " +
+    "head: " + JSON.stringify(t3.five) +
     ", items " + JSON.stringify(t3.items));
   check(t3.minTap >= 44 && t3.trayW === 56,
     "T3 · …every mark in it is a thumb (" + t3.minTap + " CSS px) inside the " +
@@ -336,6 +358,276 @@ function standUpServer() {
       "T4 · …and the page does not move a pixel under it: scrollY " + room.y +
       " -> " + after.y);
   }
+
+
+  /* ---- THE TRANSPORT, PUT DOWN ON PURPOSE ---------------------------- */
+  /* #play IS A TOGGLE AND A GATE THAT CLICKS IT IS NOT PRESSING "STOP" — it
+     is pressing "the other one". Worse, a start is ASYNCHRONOUS: the engine
+     takes seconds to open, `playing` is false the whole time, and a second
+     click during the wait QUEUES ANOTHER START rather than cancelling the
+     first (audio/live.js `setPendingStart`). The first draft of T11 lost
+     four checks to exactly that — a rewrite in T9 left a start in flight, the
+     drive's click stopped the record it meant to begin, and sixty seconds of
+     silence were measured and reported as a dead control.
+     So: `press(want)` reads the mark's own word — the fact a thumb reads —
+     and only presses when the word disagrees with what is wanted; `quiet()`
+     waits for a start in flight to LAND before pressing stop, and then waits
+     for the stop. Both are hands, not doors: they press #play. */
+  const press = (want) => p.evaluate((w) => {
+    const b = document.getElementById("play");
+    const on = (b.getAttribute("aria-label") || "").trim() === "stop";
+    if (on !== w) b.click();
+    return on;
+  }, want);
+  const quiet = async () => {
+    for (let i = 0; i < 60; i++) {                   // let a start land first
+      const s = await p.evaluate(() => ({ playing: window.__nuBounce().playing,
+                                          state: window.__nuBounce().state }));
+      if (s.playing || s.state !== "starting") break;
+      await p.waitForTimeout(500);
+    }
+    await press(false);
+    for (let i = 0; i < 20; i++) {
+      if (!await p.evaluate(() => window.__nuBounce().playing)) break;
+      await p.waitForTimeout(200);
+    }
+    return p.evaluate(() => window.__nuBounce().playing);
+  };
+
+  /* ---- T9 THE DIE IS PERMANENT, IN THE FOOT, ABOVE THE ? -------------- */
+  /* Paul, 2026-08-30: *"Move the die icon to right above the question mark so
+     it's always there."*
+
+     THREE CLAIMS AND THEY ARE THREE DIFFERENT KINDS OF FACT, so they are
+     three checks: WHERE it stands (the foot's own order, read off the
+     rendered children), that it stands there AT EVERY LEVEL (the walk T2
+     makes for #play, made again for this mark — "permanent" is a claim about
+     every level and a check at the root would pass on a button that vanished
+     the moment you opened the Band), and that it STILL DOES ITS JOB (the
+     reading moves and the record starts, which is the whole gesture; a mark
+     that moved house and lost its listener is exactly the bug a geometry
+     check cannot see).
+     AND THE PLAY LEVEL LOST IT, which is the other half of "a mark cannot be
+     in two places" — asserted as an ABSENCE from `__eightTray().items`
+     alongside the presence of the new mode mark, because two #rewrites would
+     be two owners of one gesture. */
+  await p.evaluate(() => window.__eightUp());
+  await p.waitForTimeout(150);
+  const t9 = await p.evaluate(() => {
+    const foot = document.querySelector(".nu-trayfoot");
+    const kids = [...foot.children].map((n) =>
+      n.id || n.dataset.k || n.className || n.tagName.toLowerCase());
+    const seat = (id) => kids.indexOf(id);
+    return { kids, die: seat("rewrite"), q: seat("explain"),
+             log: kids.indexOf("logger"),
+             inList: !!document.querySelector(".nu-traylist #rewrite"),
+             tap: +document.getElementById("rewrite")
+                    .getBoundingClientRect().height.toFixed(1),
+             reading: !!document.querySelector("#rewrite #reading") };
+  });
+  check(t9.die >= 0 && t9.q === t9.die + 1 && t9.log === t9.q + 1 && !t9.inList,
+    "T9 · the die is in the FOOT, directly above the ? and the log, and not " +
+    "in the list — " + JSON.stringify(t9.kids));
+  check(t9.tap >= 44 && t9.reading,
+    "T9 · …still a thumb (" + t9.tap + " px) and still carrying #reading");
+  /* AT EVERY LEVEL. The same walk T2 makes for #play — the nine tabs pressed,
+     which is what puts the stripe on each of its sub-levels — plus the play
+     level, which no tab reaches. */
+  const t9b = await p.evaluate(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const missing = [], seen = [];
+    for (const name of window.__eightTabs()) {
+      window.__eightTab(name); await wait(60);
+      const lvl = window.__eightTray().level;
+      seen.push(lvl);
+      if (!document.querySelector(".nu-trayfoot #rewrite")) missing.push(lvl);
+      window.__eightUp(); await wait(30);
+    }
+    document.getElementById("playops").click(); await wait(120);
+    const play = window.__eightTray();
+    if (!document.querySelector(".nu-trayfoot #rewrite")) missing.push("play");
+    document.getElementById("playops").click(); await wait(80);
+    return { missing, seen: [...new Set(seen)], items: play.items };
+  });
+  check(!t9b.missing.length,
+    "T9 · …in the foot at every level the nine tabs reach and at the play " +
+    "level (" + JSON.stringify(t9b.seen) + ", missing " +
+    JSON.stringify(t9b.missing) + ")");
+  check(t9b.items.indexOf("tp.rewrite") < 0 && t9b.items.indexOf("tp.mode") === 0,
+    "T9 · …and the play level LOST it — a mark cannot be in two places: " +
+    JSON.stringify(t9b.items));
+  /* AND IT STILL RESEEDS. The press is the whole gesture: the seed moves, the
+     digit on the button moves with it (Paul, 2026-08-27: "I clicked rewrite
+     multiple times and never saw a different seed"), and the record starts,
+     because #rewrite has gone through `startNow` since the day it landed. */
+  const t9c = await p.evaluate(async () => {
+    const rd = () => document.getElementById("reading").textContent;
+    const was = rd();
+    document.getElementById("rewrite").click();
+    await new Promise((r) => setTimeout(r, 700));
+    const now = rd();
+    const name = document.getElementById("rewrite").getAttribute("aria-label");
+    return { was, now, name, playing: window.__nuBounce().playing };
+  });
+  // ...and the box is put down again, ON PURPOSE — see `quiet` above. The
+  // rewrite STARTS the record (it always has: #rewrite goes through
+  // `startNow`), and a start left in flight is the state every check after
+  // this one would have inherited.
+  await quiet();
+  check(t9c.now !== t9c.was && t9c.name === "rewrite " + t9c.now,
+    "T9 · …and it still reseeds from the foot: reading " + t9c.was + " -> " +
+    t9c.now + ", and the name says it too (" + JSON.stringify(t9c.name) + ")");
+
+  /* ---- T10 EVERY MARK WEARS ITS WORD, AND THE COLUMN IS MEASURED ------ */
+  /* Paul, 2026-08-30: *"Label all the icons with tiny short labels
+     underneath."*
+
+     THE LABEL IS THE `.nu-vh` SPAN UNHIDDEN — one string, from the table that
+     owns the name, in the `aria-label` and on the screen (ui/glyph.js
+     `paintIcon` has put it in every mark since the marks landed). So the
+     check is not "there is some text": it is that the VISIBLE word is the
+     ACCESSIBLE name, mark by mark, which is what makes it an extraction and
+     not a second dictionary. Two marks are exempt by construction and named
+     rather than skipped: `#playops`, whose face IS its word ("opts", no
+     glyph, nothing to reveal), and the room fader, which is not a button —
+     its word is asserted separately, off the <input>'s own `aria-label`.
+
+     AND NOTHING IS CLIPPED. `.nu-traylist` is `overflow-x: hidden`, so a
+     label wider than its 47px mark would be trimmed in silence — which is the
+     bug this round measured and fixed (performance 62.4px, instrument 54.0,
+     backwards 52.5, all before `min-inline-size: 0`). Every label's box is
+     asserted INSIDE its button's box. */
+  const t10 = await p.evaluate(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const bad = [], wide = [], small = [];
+    const sweep = () => {
+      for (const b of document.querySelectorAll("#nu-tray button")) {
+        const v = b.querySelector(".nu-vh");
+        const k = b.id || b.dataset.k || "?";
+        if (!v) { if (b.id !== "playops") bad.push([k, "no label"]); continue; }
+        const r = v.getBoundingClientRect(), br = b.getBoundingClientRect();
+        const name = (b.getAttribute("aria-label") || "").trim();
+        if (!r.width || !r.height) bad.push([k, "label not drawn"]);
+        // the name may carry a number or a refusal's reason; the WORD is its head
+        else if (name !== v.textContent.trim() &&
+                 name.indexOf(v.textContent.trim()) !== 0)
+          bad.push([k, v.textContent + " vs " + name]);
+        /* BOTH AXES. Sideways is where the gutter clips (`.nu-traylist` is
+           `overflow-x: hidden`); DOWNWARD is where a flex column clips, and
+           it did: a three-line label on an overflowing level was squeezed
+           into a 44px mark by the default `flex-shrink: 1` while the box
+           still reported the tap floor (nu.css `.nu-traylist > *`). A check
+           that only measured width would have passed on that. */
+        if (r.left < br.left - 0.5 || r.right > br.right + 0.5 ||
+            r.top < br.top - 0.5 || r.bottom > br.bottom + 0.5)
+          wide.push([k, v.textContent, +r.width.toFixed(1),
+                     +br.width.toFixed(1), +r.height.toFixed(1),
+                     +br.height.toFixed(1)]);
+        if (br.height < 44) small.push([k, +br.height.toFixed(1)]);
+      }
+    };
+    sweep();
+    for (const name of window.__eightTabs()) {
+      window.__eightTab(name); await wait(60); sweep(); window.__eightUp();
+      await wait(30);
+    }
+    document.getElementById("playops").click(); await wait(120); sweep();
+    const room = document.querySelector(".nu-trayvol .nu-vh");
+    const out = { bad, wide, small,
+      room: room ? room.textContent : null,
+      roomName: document.getElementById("vol").getAttribute("aria-label"),
+      mode: (document.querySelector("#playmode .nu-vh") || {}).textContent };
+    document.getElementById("playops").click(); await wait(80);
+    return out;
+  });
+  check(!t10.bad.length,
+    "T10 · every mark in the gutter — head, list and foot — wears its own " +
+    "word, and the word IS the accessible name " + JSON.stringify(t10.bad));
+  check(!t10.wide.length,
+    "T10 · …and no label is clipped: every one is inside its mark's box " +
+    JSON.stringify(t10.wide));
+  check(!t10.small.length,
+    "T10 · …and the 44px tap floor survived the labels " +
+    JSON.stringify(t10.small));
+  check(t10.room === t10.roomName && t10.room === "room",
+    "T10 · the room fader is labelled off its own control's aria-label (" +
+    JSON.stringify(t10.room) + " / " + JSON.stringify(t10.roomName) + ")");
+
+  /* T10b — THE ARITHMETIC, AT BOTH PHONES, AND IT IS REPORTED RATHER THAN
+     WISHED. The ask was "every level fits at 320x568 with no list scroll".
+     IT DOES NOT, IT DID NOT BEFORE THIS ROUND, AND NO TYPE SIZE CAN MAKE IT:
+     measured on the SHIPPED page the morning of 2026-08-30 at 320x568, the
+     root was 441px of marks against a 360px list (over by 81), the fourteen
+     motif operations 689 against 303 (over by 386), the tempo level 391 and
+     the band level 342 against the same 303. Nine 44px targets are 396px
+     before a single gap — the TAP FLOOR is the binding constraint, not the
+     words. What this round adds on top of that is 0 to 14px a level for the
+     labels and 44px of LIST for the die, which is a mark in the foot now:
+     after, at the same width, root 441/316, tempo 405/259, motifops 703/259.
+     nu.css THE MARKS WEAR THEIR WORDS carries the whole table and the three
+     things that could give if Paul wants the scroll back.
+
+     SO THIS CHECK ASSERTS THE TWO THINGS THAT CAN HONESTLY BE ASSERTED:
+       · at 390x844 — the phone this box is drawn for — every level fits
+         except the fourteen motif operations, which is the one level that has
+         never fitted anywhere;
+       · at 320x568 every mark is REACHABLE: the list is a scroller, and after
+         scrolling it to the end the last mark of the longest level is inside
+         the list's own box. Nothing is silently clipped, which is the law;
+         "nothing scrolls" was never a law and is not one now
+         (`.nu-traylist`'s standing promise: "it scrolls if a future level
+         does not fit").
+     The numbers are PRINTED either way, so the next round can see what the
+     gutter costs without re-measuring it. */
+  const levelsAt = async () => p.evaluate(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const list = () => document.querySelector(".nu-traylist");
+    const out = [];
+    const take = () => { const L = window.__eightTray(), l = list();
+      out.push({ level: L.level, n: L.items.length,
+                 h: +l.clientHeight.toFixed(0), want: +l.scrollHeight.toFixed(0) }); };
+    take();
+    for (const name of window.__eightTabs()) {
+      window.__eightTab(name); await wait(60); take(); window.__eightUp();
+      await wait(30);
+    }
+    document.getElementById("playops").click(); await wait(120); take();
+    document.getElementById("playops").click(); await wait(60);
+    const seen = {}; const uniq = [];
+    for (const r of out) if (!seen[r.level]) { seen[r.level] = 1; uniq.push(r); }
+    return uniq;
+  });
+  const t10b = await levelsAt();
+  const over = t10b.filter((r) => r.want > r.h);
+  check(over.length === 1 && over[0].level === "motifops",
+    "T10 · at 390x844 every level fits with the words on except the fourteen " +
+    "motif operations — " + JSON.stringify(t10b.map((r) =>
+      r.level + " " + r.want + "/" + r.h)));
+  await p.setViewportSize({ width: 320, height: 568 });
+  await p.waitForTimeout(400);
+  const t10c = await levelsAt();
+  const reach = await p.evaluate(async () => {
+    window.__eightTab("Motif");
+    await new Promise((r) => setTimeout(r, 200));
+    const l = document.querySelector(".nu-traylist");
+    l.scrollTop = l.scrollHeight;
+    await new Promise((r) => setTimeout(r, 120));
+    const last = l.querySelector("button:last-of-type");
+    const lr = last.getBoundingClientRect(), br = l.getBoundingClientRect();
+    return { level: window.__eightTray().level,
+             k: last.dataset.k, inside: lr.bottom <= br.bottom + 1,
+             scrolled: l.scrollTop > 0,
+             sideways: document.documentElement.scrollWidth -
+                       document.documentElement.clientWidth };
+  });
+  await p.evaluate(() => window.__eightUp());
+  check(reach.inside && reach.scrolled && reach.sideways === 0,
+    "T10 · at 320x568 the list SCROLLS and every mark is reachable — the " +
+    "last of the " + reach.level + " level (" + reach.k + ") is inside the " +
+    "list after scrolling, and nothing goes sideways. The column, measured: " +
+    JSON.stringify(t10c.map((r) => r.level + " " + r.want + "/" + r.h)));
+  await p.setViewportSize({ width: 390, height: 844 });
+  await p.waitForTimeout(400);
 
   /* ---- T5 THE LIST IS PERMANENT, AND IT HAS AN ARTICLE COLUMN --------- */
   /* BACK TO THE ROOT FIRST, THEN THE TAB. The stripe is standing on the play
@@ -830,6 +1122,162 @@ function standUpServer() {
     "T8 · it closes on the toggle AND on Escape, and aria-expanded says so " +
     "(toggle " + t8shut.exp + "/" + t8shut.hid + ", Escape " + t8esc.exp +
     "/" + t8esc.hid + ")");
+
+  /* ---- T11 THREE PLAY MODES, AND EACH ONE REACHES THE TRANSPORT ------- */
+  /* Paul, 2026-08-30: *"There are three play modes possible—loop, once, and
+     album which keeps making new songs. Let me set that with a three state
+     icon in opt."*
+
+     THIS IS THE "NO KNOB THAT CANNOT REACH THE SOUND" CHECK AND IT IS THE
+     REASON THIS FILE GOT LONGER BY A MINUTE OF WALL CLOCK. A three-state icon
+     is trivial to draw and trivial to draw DEAD: album is exactly the kind of
+     control that could cycle its mark, log its line, satisfy every geometry
+     assertion above and quietly do nothing at the end of the record. So the
+     record is DRIVEN TO ITS END, three times, and what is asserted is what
+     the transport did.
+
+     THE RECORD IS MADE SHORT BY HAND, WITH THE PAGE'S OWN CONTROLS — the
+     sections level's `remove` pressed until one section is left, then the
+     tempo level's `twice the tempo` / `a little faster` / `double time`. No
+     probe writes the document: a gate is a hand, and a four-bar record made
+     by pressing the buttons is a record this box can actually be in. Measured
+     on the boot record: 5 sections / 36 bars / 149.1 s becomes 1 section /
+     4 bars / 2.2 s, which the engine plays out in about ten seconds counting
+     its own eight-second prefill.
+
+     WHAT EACH POSITION HAS TO PROVE:
+       loop  — the control. Past the end of the record it is STILL PLAYING and
+               the reading has NOT moved. Without this one, `once` and `album`
+               could both be passing on an engine that stops by itself.
+       once  — `playing` goes false at the seam and the mark reads "play"
+               again (the word on it is the next tap).
+       album — the READING MOVES and the box is playing again: that is the
+               rewrite gesture taken by the clock, through `ATLAS.reseed`,
+               which is the seed's one owner. */
+  const shorten = () => p.evaluate(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const tap = async (k) => {
+      const b = document.querySelector('#nu-tray [data-k="' + k + '"]');
+      if (!b || b.disabled) return false;
+      b.click(); await wait(120); return true;
+    };
+    for (let i = 0; i < 8; i++) {                    // down to one section
+      window.__eightTab("Band"); await wait(120);
+      if (!await tap("tabform")) break;
+      const secs = [...document.querySelectorAll("#nu-tray .nu-traylist button")]
+        .filter((b) => /^secnav/.test(b.dataset.k || ""));
+      if (secs.length <= 1) break;
+      secs[secs.length - 1].click(); await wait(150);
+      if (!await tap("secdrop")) break;
+    }
+    window.__eightTab("Tempo"); await wait(150);     // and as fast as it counts
+    await tap("tempo-twice the tempo");
+    for (let i = 0; i < 12; i++) await tap("tempo-a little faster");
+    await tap("tempo-double time");
+    window.__eightUp(); await wait(120);
+    return { secs: window.__eightDoc().form.sections.length,
+             bpm: window.__eightDoc().time.bpm,
+             bars: window.__nuRender().bars,
+             dur: +window.__nuBounce().durSec.toFixed(2) };
+  });
+  /* WHAT THE TRANSPORT IS DOING, AND WHY IF IT IS DOING NOTHING. The engine's
+     own state travels with every sample — `state`, `stage` and `lastError` —
+     because "the record stopped" and "the engine gave up" are two different
+     findings and a check that could not tell them apart would blame this
+     round for the box's weather. */
+  const tstate = () => p.evaluate(() => {
+    const b = window.__nuBounce();
+    return { reading: (document.getElementById("reading") || {}).textContent,
+             mode: window.__eightPlayMode(),
+             playing: b.playing, state: b.state, stage: b.stage,
+             err: b.lastError || null,
+             bar: (() => { try { const m = window.__nuMix();
+                                 return m ? m.bar : null; } catch (e) { return null; } })(),
+             word: (document.getElementById("play").getAttribute("aria-label") || "").trim() };
+  });
+  // `press` and `quiet` are defined above T9, where the first start in this
+  // file is made; every drive below goes through them.
+  const drive = async (want, secs) => {              // play, and watch
+    const t0 = Date.now();
+    let sounded = false, hit = null, prev = "";
+    const trail = [];
+    await press(true);
+    while (Date.now() - t0 < secs * 1000) {
+      const s = await tstate();
+      const k = [s.playing, s.state, s.err, s.reading].join("/");
+      if (k !== prev) { trail.push(((Date.now() - t0) / 1000).toFixed(1) + "s " + k);
+                        prev = k; }
+      if (s.playing) sounded = true;
+      if (sounded && want(s)) { hit = { ...s, at: +((Date.now() - t0) / 1000).toFixed(1) }; break; }
+      await p.waitForTimeout(300);
+    }
+    return { sounded, hit, last: await tstate(), trail: trail.slice(0, 8),
+             log: await p.evaluate(() => window.__nuLog().slice(0, 6)
+               .map((L) => L.kind + ":" + L.what)) };
+  };
+
+  /* THE MARK ITSELF FIRST: three states, in the table's order, each one drawn
+     from fields.js PLAYMODES and each one saying its own word. */
+  await p.evaluate(() => { window.__eightUp();
+                           document.getElementById("playops").click(); });
+  await p.waitForTimeout(250);
+  const t11a = await p.evaluate(async () => {
+    const seen = [];
+    for (let i = 0; i < 4; i++) {
+      const b = document.getElementById("playmode");
+      seen.push([window.__eightPlayMode(),
+                 (b.querySelector(".nu-vh") || {}).textContent,
+                 (b.querySelector(".nu-g") || {}).textContent]);
+      b.click(); await new Promise((r) => setTimeout(r, 80));
+    }
+    return { seen, table: Object.keys(window.NuFields.PLAYMODES),
+             marks: Object.values(window.NuFields.PLAYMODES).map((m) => m.g) };
+  });
+  check(JSON.stringify(t11a.seen.map((s) => s[0])) ===
+          JSON.stringify(t11a.table.concat(t11a.table[0])) &&
+        t11a.seen.every((s, i) => s[1] === t11a.table[i % 3] &&
+                                  s[2] === t11a.marks[i % 3]),
+    "T11 · the mark cycles the three states of fields.js PLAYMODES and wears " +
+    "each one's own mark and word: " + JSON.stringify(t11a.seen));
+
+  const short = await shorten();
+  check(short.bars > 0 && short.dur < 12,
+    "T11 · the record is made short BY HAND — " + short.secs + " section, " +
+    short.bars + " bars, " + short.dur + " s (from 5 / 36 / 149.1)");
+
+  /* loop — the control: past the end, still going, same reading. */
+  await p.evaluate(() => window.__eightPlayMode("loop"));
+  const before = await tstate();
+  const loop = await drive((s) => !s.playing || s.reading !== before.reading,
+                           16 + short.dur * 3);
+  check(loop.sounded && !loop.hit && loop.last.playing,
+    "T11 · loop is what the box already did: " + (16 + short.dur * 3).toFixed(0) +
+    " s past a " + short.dur + " s record it is still playing and the reading " +
+    "has not moved (" + JSON.stringify(loop.last) + " · " +
+    JSON.stringify(loop.trail) + " · " + JSON.stringify(loop.log) + ")");
+  await quiet();
+
+  /* once — it stops itself at the seam. */
+  await p.evaluate(() => window.__eightPlayMode("once"));
+  const once = await drive((s) => !s.playing, 60);
+  check(!!once.hit && once.hit.word === "play",
+    "T11 · once plays the record to its end and STOPS — playing went false " +
+    "at " + (once.hit ? once.hit.at : "never") + " s and the mark reads " +
+    JSON.stringify(once.last.word) + " again (" + JSON.stringify(once.last) +
+    " · " + JSON.stringify(once.trail) + ")");
+
+  /* album — the clock takes the rewrite gesture. */
+  const short2 = await shorten();
+  await p.evaluate(() => window.__eightPlayMode("album"));
+  const was = await tstate();
+  const album = await drive((s) => s.reading !== was.reading, 90);
+  check(!!album.hit,
+    "T11 · album writes another record at the end of this one — the reading " +
+    "moved " + was.reading + " -> " + (album.hit ? album.hit.reading : "never") +
+    " at " + (album.hit ? album.hit.at : "-") + " s on a " + short2.dur +
+    " s record, and it is playing again (" + album.last.playing + ")");
+  await p.evaluate(() => window.__eightPlayMode("loop"));
+  await quiet();
 
   check(!errs.length,
     "T· zero pageerrors / console errors " + JSON.stringify(errs.slice(0, 3)));

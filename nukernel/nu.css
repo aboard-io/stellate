@@ -970,6 +970,18 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 .nu-traylist{ flex: 1 1 auto; min-block-size: 0;
   display: flex; flex-direction: column; align-items: stretch; gap: var(--s2);
   overflow-y: auto; overflow-x: hidden; }
+/* AND A MARK IN IT IS NEVER SQUEEZED (2026-08-30). A flex item's default is
+   `flex-shrink: 1`, so on a level that OVERFLOWS — which at 320x568 is most
+   of them, see THE MARKS WEAR THEIR WORDS — the browser takes the missing
+   pixels out of the items themselves. Measured the moment the words became
+   visible: on the fourteen motif operations at 390x844 the two three-line
+   marks ("each note in two", "drop every fourth") stood at 44.0px while the
+   same two marks on the tempo level, which fits, stood at 50.9 — the third
+   line of the label squeezed out of a box that was still reporting the tap
+   floor. That is a silent clip, and the list already has the honest answer
+   for a level that does not fit: it SCROLLS. `flex: 0 0 auto` says the marks
+   keep their own height and the scrollbar takes the difference. */
+.nu-traylist > *{ flex: 0 0 auto; }
 /* ===== THE ROOM FADER, STANDING IN THE GUTTER (2026-08-29) =============
    Paul: *"The volume slider is now vertical."*
 
@@ -1038,6 +1050,140 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
   gap: 0; inline-size: 100%; }
 .nu-tray .nu-n{ font-size: .7rem; }
 
+/* ===== THE MARKS WEAR THEIR WORDS (2026-08-30) ==========================
+   Paul: *"Label all the icons with tiny short labels underneath."*
+
+   THIS IS A DATED REVERSAL AND THE THING IT REVERSES IS TWO SCREENS UP, kept
+   where it stands. THE MARKS ON THE TABS says: *"THE OPEN TAB OF THE NINE
+   KEPT ITS WORD, AND IN THE STRIPE IT CANNOT (2026-08-28) … 'performance' is
+   123.7px of type and there is nowhere for it to go but out through the
+   rule."* Every number in that paragraph is still true AT 1.2rem, which is
+   the size it was measuring; what reverses it is that a label does not have
+   to be that size, and that the objection was about WIDTH in a row, not about
+   the word existing. Paul asked for the words back, tiny.
+
+   NOTHING IS ADDED TO THE DOM AND NO DICTIONARY IS WRITTEN. Every mark in
+   this stripe has carried its full word since the day it became a picture —
+   `.nu-vh` inside `.nu-ic`, put there by ui/glyph.js `paintIcon`, from the
+   table that owns the name (GLYPH.tab, GLYPH.sec, GLYPH.facet, fields.js
+   VOICINGS.w and PLAYMODES.w, TEMPOS/DESIGNS/TIMES `.w`, a voice's own name,
+   a motif's own name). This rule UNHIDES what is already there, exactly as
+   `#boardtabs button[aria-pressed="true"] .nu-vh` has done at ≥700px since
+   the marks landed. One string, one owner, two readers — the eye and the
+   screen reader — which is what `paintIcon`'s own note promised the day it
+   made them one.
+
+   THE LABEL COSTS ZERO VERTICAL PIXELS ON EVERY MARK THAT FITS TWO LINES, and
+   that is the whole arithmetic of this round. `.nu-tray .nu-ic` is already a
+   COLUMN (the glyph over the digit, above), a mark is `min-height: 44px` at
+   the tap floor, and the glyph is 1.2rem × line-height 1 = 19.2px. A label at
+   .55rem × 1.05 is 9.2px a line, so:
+       one line   19.2 + 9.2  = 28.4  ·  two lines 37.6  ·  both inside the
+       42px content box of a 44px button (1px of UA padding each side)
+       three lines 46.8 — the only case that grows a mark, to 50.9 measured
+   FOUR MARKS IN THE WHOLE VOCABULARY TAKE THREE LINES — "twice the tempo",
+   "the default speed", "each note in two", "drop every fourth" — and they are
+   on the two levels that already did not fit. Every other word in the box
+   fits one line or two, including the three that had to be BROKEN to fit the
+   width at all (performance, instrument, backwards; see `min-inline-size`
+   below).
+
+   THE WHOLE COLUMN, MEASURED ON THE RENDERED PAGE, BEFORE AND AFTER, ON THE
+   SAME RECORD (the boot gregorian) at 320x568 — head 100.2 at the root and
+   156.4 under a `↑`, foot 144.2:
+                        BEFORE (list 360 / 303)      AFTER (list 316 / 259)
+       root      9      441   over by  81            441   over by 125
+       tempo     8      391   over by  88            405   over by 146
+       motifops 14      689   over by 386            703   over by 444
+       band      7      342   over by  39            342   over by  83
+       play      4      351   over by  48            364   over by 105
+       score     2      303   fits                   259   fits
+   THE WORDS COST BETWEEN 0 AND 14px A LEVEL. What costs 44 is the DIE, which
+   is a mark in the foot now and takes it out of the list at every level —
+   Paul's own ask, and the price of it is written here rather than discovered
+   later.
+
+   AND THE LIST ALREADY SCROLLED AT 320x568 BEFORE ANY OF THIS: five of the
+   six levels are in the BEFORE column too. NINE 44px TARGETS ARE 396px
+   AGAINST A 360px LIST BEFORE A SINGLE GAP, so no type size could ever have
+   made the root fit that phone — the TAP FLOOR is the binding constraint and
+   the labels are not. `.nu-traylist` is the only scroller in the stripe and
+   this is its standing promise being kept, not a new cost: "it scrolls if a
+   future level does not fit". At 390x844 — the phone this box is drawn for —
+   the list is 592 at the root and 535 under a `↑`, and every level fits with
+   the words on except the fourteen motif operations (703 against 535), which
+   is the level that has never fitted anywhere.
+   IF THAT IS TOO MUCH SCROLL, THE THINGS THAT COULD GIVE, in the order they
+   cost the least: the foot's three marks could become two (the ? and the log
+   are both readouts and could share one door); `--tray-w` could go to 72px
+   and take two columns of marks at 320, which is the only change that makes
+   the root FIT rather than scroll less; or the labels could be dropped on
+   the levels of ACTIONS (tempo, motifops) where every mark is a verb and the
+   hold-and-hover already says the sentence. None of them is done here: Paul
+   asked for the words and the scroll is what the words cost.
+
+   WHY .55rem. The page's smallest existing type is `.nu-count small` at
+   .6rem, and this is one step under it because a label is under a picture
+   that already says the thing: 8.8px of type reads as an annotation rather
+   than as a second row of controls. `overflow-wrap: break-word` is the one
+   declaration here that is a refusal to lie — the widest single word in the
+   vocabulary is "performance" (11 characters), and a word wider than 47px
+   must BREAK where a reader can see it broke rather than be clipped by
+   `.nu-traylist`'s `overflow-x: hidden`. Nothing greys silently and nothing
+   is trimmed silently either.
+
+   IT IS `#nu-tray` AND NOT `.nu-tray`, so it reaches the head, the list AND
+   the foot with one selector — the ? and the log wear their words too, which
+   is what "label all the icons" says.
+
+   `min-inline-size: 0` IS THE DECLARATION THAT KEEPS THE PROMISE, AND IT WAS
+   MEASURED WRONG WITHOUT IT. The label is a flex item in `.nu-ic`'s column,
+   and a flex item's automatic minimum size is its MIN-CONTENT — the longest
+   unbreakable word — which `overflow-wrap: break-word` does not shrink (only
+   `anywhere` does, and `anywhere` breaks words that had somewhere to go). So
+   the first pass drew "performance" 62.4px wide in a 47px mark, 7.7px out
+   through the gutter's rule on each side, where `.nu-traylist`'s
+   `overflow-x: hidden` clipped it in silence. Measured on the rendered page,
+   three of them: performance 62.4, instrument 54.0, backwards 52.5. With
+   `min-inline-size: 0` the item may be narrower than its longest word and
+   `break-word` then breaks it, `hyphens: auto` preferring a hyphen where the
+   language has one. Do not delete this line to tidy the rule. */
+#nu-tray .nu-vh{ position: static; inline-size: auto; block-size: auto;
+  margin: 0; overflow: visible; clip-path: none;
+  white-space: normal; overflow-wrap: break-word; hyphens: auto;
+  min-inline-size: 0;
+  font-size: .55rem; line-height: 1.05; font-weight: 600;
+  letter-spacing: -.01em; text-align: center; }
+/* THE ROOM'S LABEL SITS UNDER ITS READOUT, not under the trough: the fader is
+   track + <output> + word, in that order, so the column reads 100% then room.
+   It is the same span with the same rule; this only says it may not be
+   stretched by the flex column it stands in. */
+.nu-trayvol{ display: flex; flex-direction: column; align-items: center; }
+/* THE ONE MARK IN THE GUTTER WHOSE FACE IS ITS OWN WORD. `#playops` has no
+   picture — ui/eight.js writes "opts" into it — so it has no `.nu-vh` to
+   reveal and no glyph to stand over. It is sized between the two: bigger than
+   a label, smaller than the 1rem it inherited, so the head reads as one
+   column rather than as a word shouting beside two marks. A PICTURE FOR IT IS
+   OWED and it wants a row in ui/glyph.js `GLYPH.act`, which this round's
+   fence does not open; said here so the next hand finds the debt where the
+   symptom is. */
+#playops{ font-size: .7rem; font-weight: 600; }
+/* THE DIE STACKS TIGHT, AND THIS IS WHY IT NEEDS A RULE THE OTHER MARKS DO
+   NOT (2026-08-30). `#rewrite` is the one button in the gutter with a child
+   OUTSIDE its `.nu-ic` — `<b id="reading">`, with a literal space before it,
+   both of which are load-bearing (ui/eight.js: the space is what keeps the
+   accessible name from joining into "rewrite5" with the stylesheet off). In
+   normal flow that space is an anonymous line box between the mark and the
+   number: 19px of nothing, measured, which pushed the button to 48.7px and
+   the whole foot with it. A FLEX CONTAINER DROPS WHITESPACE-ONLY CHILDREN
+   (they generate no flex item, per spec) without removing them from the DOM
+   — so the space is still there for a screen reader and for a stylesheet-off
+   reading, and the column is mark, word, number with nothing between.
+   Measured after: 44.0px, the tap floor exactly, and the foot back to what
+   the ? and the log alone cost plus one mark. */
+#nu-tray #rewrite{ display: flex; flex-direction: column;
+  align-items: center; justify-content: center; }
+
 /* ===== THE FOOT OF THE GUTTER: THE LOGGER (2026-08-28) ==================
    Paul: *"Add a logger on the bottom right. Log actions. … Badge the logger
    with the number of lines it holds. Make the logger also have a countdown for
@@ -1100,10 +1246,34 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    the flag tint, which is the page's own "look at this" pair, and it goes to
    white-on-cobalt with the rest of the mark when the panel is open.
    Contrast measured: --hand #1E45E0 on --flag-tint #FFEFC2 is 8.03:1. */
-.nu-trayfoot .nu-n{ align-self: center; min-inline-size: 1.6em;
+/* ...AND THE READING WEARS IT TOO, SINCE THE DIE MOVED IN (2026-08-30). Paul:
+   *"Move the die icon to right above the question mark so it's always
+   there."* `#reading` is the same KIND of number as the log's badge — a count
+   the box keeps, printed on the mark that moves it — and the two now stand
+   one above the other in the same 47px column, so they wear one look. This is
+   the page's standing rule said again ("the same fact wears the same mark");
+   what it replaces is nothing, because `.nu-rd`'s own rule went with the
+   `.nu-bar` on 2026-08-29 and the digit has been unstyled since.
+   THE ORDER INSIDE THE DIE IS MARK, WORD, THEN NUMBER, and the log's is mark,
+   number, then word — because `<b id="reading">` ships OUTSIDE `.nu-ic` (it
+   always has: index.html built it that way and ui/eight.js kept the shape and
+   the literal space before it, so the accessible name never joined into
+   "rewrite5"). Moving it inside would rewrite a button eleven gates read by
+   name to buy one line of consistency in a 9px annotation. */
+.nu-trayfoot .nu-n, .nu-trayfoot .nu-rd{ align-self: center;
+  min-inline-size: 1.6em;
   padding-inline: var(--s1); border-radius: 999px;
   background: var(--flag-tint); color: var(--hand);
-  font-weight: var(--num-fw); font-variant-numeric: tabular-nums; }
+  font-weight: var(--num-fw); font-variant-numeric: tabular-nums;
+  /* `line-height: 1` IS ARITHMETIC AND NOT TASTE. `.nu-n` has carried it
+     since the badge was drawn; `.nu-rd` had no rule at all and took the
+     page's 1.45, which is 16.2px against 11.2 — and 2.6px of leading is the
+     whole difference between a 44px die and a 46.6px one, because the mark,
+     its word and its number are within a hair of the tap floor by design
+     (19.2 + 9.2 + 11.2 = 39.6 in a 42px box). Measured both ways. */
+  line-height: 1; font-size: .7rem; }
+.nu-trayfoot .nu-rd{ display: block; inline-size: fit-content;
+  margin-inline: auto; }
 .nu-trayfoot button[aria-pressed="true"] .nu-n{ background: #FFFFFF; }
 
 /* ===== THE LOG ITSELF ===================================================

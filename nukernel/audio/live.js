@@ -49,6 +49,27 @@ export let playingSec = -1;
 let handle = null;                 // the parent's live handle
 let barBase = 0;                   // which nukernel bar the walk's serial 0 is
 let passStart = 0, passBar = 0, loopStart = 0, lastBar = -1;
+/* THE SERIAL THE RECORD COMES ROUND ON — THE END-OF-RECORD SEAM (2026-08-30).
+   Paul: *"There are three play modes possible—loop, once, and album which
+   keeps making new songs."*
+
+   THIS FILE ANNOUNCES A FACT AND MAKES NO POLICY. Nothing in here knows what
+   `loop`, `once` or `album` mean: the walk wraps for ever (`barOfSerial` is a
+   modulo and always has been, which is why LOOP is what the box already did),
+   and the one thing the transport can honestly say is WHEN THE RECORD CAME
+   ROUND. `emit("transport:round")` says it; ui/eight.js — which owns the
+   transport's buttons and its views — is what stops on `once` and rewrites on
+   `album`. A mode enum in here would be a second owner of a control this file
+   cannot draw.
+
+   THE DETECTOR IS THE PENDINGS' OWN, WORD FOR WORD: "the honest detector on
+   every route is the first heard bar at or past the landing". A count of
+   `onBar` calls would drift the first time the media route's poll missed one;
+   a serial is the parent's own monotonic number for a baked bar, so `>=` a
+   target serial is right on the ring route and on the media routes alike.
+   `null` until the first bar of a start is heard — that bar is where the
+   record's own clock begins, whichever box `startAt` was given. */
+let roundAt = null;                // serial at which the record next comes round
 let deps = null;
 
 /* ---------- the position + pending feeds' state ---------- */
@@ -261,6 +282,25 @@ function onBar(info) {
     }
   }
   if (n === 0) loopStart = info.when;
+  /* ...AND THE RECORD CAME ROUND, IF IT DID (2026-08-30 — see `roundAt`). This
+     is the whole of the end-of-record seam: the bar now beginning is the first
+     bar of another pass, so what a listener is told is that the pass that just
+     finished is over. `once` stops here, `album` writes the next record here,
+     `loop` does nothing and is what happens if nobody is listening — which is
+     what makes this an addition to the transport rather than a change to it.
+     ONE BAR OF THE REPEAT IS ALREADY SOUNDING when this fires, and that is
+     stated rather than smoothed: `onBar` fires at the bar's own instant (the
+     parent's read-cursor→ctx-clock scheduler, engine/faust/live/live.js), the
+     engine bakes one continuous ring, and there is no way to ask it to end at
+     a bar line it has already passed the runway for. So `once` is heard as
+     "the record, and then the seam", not as a fade. */
+  if (barCount() > 0) {
+    if (roundAt == null) roundAt = info.serial + barCount();
+    else if (info.serial >= roundAt) {
+      roundAt = info.serial + barCount();
+      emit("transport:round", { bar: n, serial: info.serial, when: info.when });
+    }
+  }
   // A QUEUED JUMP LANDS ON A BAR LINE. The parent schedules a runway ahead, so
   // the jump takes effect as soon as the walk reaches it rather than on the very
   // next bar the ear hears — which is the honest cost of one engine with a
@@ -269,6 +309,12 @@ function onBar(info) {
     const at = firstBarOfBox(pendingStart);
     setPendingStart(null);
     if (at >= 0) barBase = (at - info.serial - 1 + barCount() * 2) % Math.max(1, barCount());
+    // ...AND THE SEAM IS RE-ANCHORED WITH THE WALK. A queued jump re-bases the
+    // record under the serial, so a `roundAt` measured from the old base names
+    // a bar that is no longer the record's last. `null` makes the next heard
+    // bar the new beginning, which is the same rule the first bar of a start
+    // obeys.
+    roundAt = null;
   }
 }
 const safeRms = () => { try { return handle && handle.rms ? handle.rms() : 0; } catch (e) { return 0; } };
@@ -595,6 +641,12 @@ export async function startAt(boxIndex) {
   if (st.state === "starting") { setPendingStart(boxIndex); return; }
   st.state = "starting"; st.capped = null; st.lastError = null;
   st.startedAt = Date.now();
+  // A START BEGINS ITS OWN PASS (2026-08-30). `stop()` clears this too; it is
+  // cleared HERE as well because a start is not always preceded by a stop —
+  // the engine's own give-up path (`settle(null, …)` below) drops `playing`
+  // without going through it, and a stale seam would announce the end of a
+  // record that is not the one now playing.
+  roundAt = null;
   emit("status", { text: "starting the engine…" });
 
   // ── ADOPT THE IDLE PRE-RENDER, if one is fresh and starts where this press
@@ -759,6 +811,7 @@ async function open(FL, forceMedia) {
 
 export function stop() {
   playing = false; playingSec = -1; setPendingStart(null);
+  roundAt = null;                  // the next start begins its own pass
   stopPosFeed();
   clearTimeout(deadlineTimer); deadlineTimer = null;
   if (handle) { try { handle.stop(); } catch (e) {} handle = null; }

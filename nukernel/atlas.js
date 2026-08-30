@@ -476,6 +476,14 @@
     sophistirock:   { place: "London", year: 1986 },
     motorik:        { place: "Düsseldorf", year: 1974 },
     roboticpop:     { place: "Düsseldorf", year: 1978 },
+    // WAX TRAX! IS THE SHOP'S CITY, NOT THE SHOP'S YEAR. The store began in
+    // Denver in 1974 and moved; the Lincoln Park storefront opened November
+    // 1978; the LABEL's first release is 1980 and the record this row is
+    // written from — Ministry's Cold Life, the label's first hit — is 1981.
+    // Chicago is unambiguous, the year is the one the article itself picks
+    // out, and both of this row's Chicago children sit seven and eight years
+    // later on the same dot.
+    waxtrax:        { place: "Chicago", year: 1981 },
     industrialmetal: { place: "Chicago", year: 1988 },
     ebm:            { place: "Chicago", year: 1989 },
     synthduo:       { place: "London", year: 1985 },
