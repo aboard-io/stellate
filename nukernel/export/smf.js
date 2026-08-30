@@ -115,6 +115,15 @@ function keysOf(midi, perc, drumMap, dropped) {
  *            byte. A tempo at step 0 lands AFTER the base tempo on the same
  *            tick, so a record whose first section is paced starts at its own
  *            pace and a DAW still sees the record's one bpm behind it.
+ *          + exprs: [{ at, val }]   — expression CCs (CC11, 0..127) at `at`
+ *            (score steps), written on EVERY voice's channel because the
+ *            section level they carry is a whole-section gain
+ *            (audio/desk.js sectionOf — one multiplier over the section, not
+ *            a per-voice trim). Off before on at the same tick, so the level
+ *            lands under the downbeat and never clips the note leaving.
+ *            Absent = no bytes, byte for byte (2026-08-30, the dynamics
+ *            round: velocities carry `env`, this lane carries `lvl` — the
+ *            half the file never spoke).
  *   opts:  { drumMap }  — head string → GM key (see headGM)
  */
 export function writeSmf(score, opts = {}) {
@@ -174,6 +183,11 @@ export function writeSmf(score, opts = {}) {
 
     const evs = [{ tick: 0, ord: 0, bytes: [0xff, 0x03, String(v.name || "").length,
                                             ...str(String(v.name || ""))] }];
+    // the record's section levels, said on this channel too — ord 1.5 sits
+    // between the note-offs (1) and the note-ons (2) on the boundary tick
+    for (const x of score.exprs || [])
+      evs.push({ tick: x.at * tickPerStep, ord: 1.5,
+                 bytes: [0xb0 | ch, 11, Math.max(0, Math.min(127, x.val | 0))] });
     for (const n of v.notes || []) {
       const on = n.at * tickPerStep;
       // THE FLOOR MOVED WITH THE PLAYED RECORD (2026-08-30): it was
@@ -216,10 +230,30 @@ export function writeSmf(score, opts = {}) {
    own tick instead of a grid line. The drums lane's notes already carry GM
    key numbers (score.js put them through als.js GM_DRUM), so no drumMap; it
    is marked `perc` for channel 10. */
-export function smfFromScore(score, { beatsPerBar = 4, timesig = null } = {}) {
+export function smfFromScore(score, { beatsPerBar = 4, timesig = null, levels = null } = {}) {
   const boxes = (score && score.boxes) || [];
   const beat0 = boxes.length ? boxes[0].beat0 : 0;
   const lanes = new Map();
+  /* THE SECTION LEVEL LANE (2026-08-30, the dynamics round). MEASURED FIRST:
+     of the two section dynamics the composer deals, `env` is already IN this
+     file — kernel envelope multiplies the written velocities before the bar
+     list exists, so every note arrives pre-shaped — and `lvl` never was: it
+     is a desk gain (audio/desk.js sectionOf), and the header of
+     export/score.js has always warned that folding a desk gain into velocity
+     counts the fader twice. So the file gains the missing half AS a fader:
+     one CC11 (expression) per boundary where the dealt level CHANGES, on
+     every channel, because the desk's multiplier is section-wide. The WORD
+     rides the Score (box.lvl, extracted by ui/derive.js from the composed
+     section); the PRICE is the caller's copy of fields.js LEVELS — the same
+     words/numbers split the desk itself keeps, and no second table here. GM's
+     own expression law is gain ≈ (cc/ref)², inverted about ref 100 —
+     cc = 100·√gain — so norm sits at 100 with headroom for fwd (+2.6 dB →
+     116) instead of clipping at 127: hush 63 · back 84 · norm 100 · fwd 116.
+     A record that deals no `lvl` word anywhere computes no lane and the
+     bytes are the old bytes. */
+  const worded = !!(levels && boxes.some((b) => b.lvl));
+  const exprs = [];
+  let curE = null;
   /* THE TEMPO MAP (2026-08-30, the five-walls follow-up). A paced section
      arrives from export/score.js scoreOf STRETCHED — audio/plan.js paceTL
      moved its beats so the SECONDS come out right at a constant tempo — and a
@@ -241,6 +275,14 @@ export function smfFromScore(score, { beatsPerBar = 4, timesig = null } = {}) {
     if (paced && k !== curK) {
       tempos.push({ at: tb, bpm: Math.max(1, +score.bpm || 120) / k });
       curK = k;
+    }
+    if (worded) {
+      // absent is the record's own level — gain 1, cc 100 — and it is SAID
+      // when the record deals levels at all, because a reader coming off a
+      // fwd chorus has to be told the floor came back
+      const g = box.lvl != null && levels[box.lvl] > 0 ? levels[box.lvl] : 1;
+      const val = Math.max(0, Math.min(127, Math.round(100 * Math.sqrt(g))));
+      if (val !== curE) { exprs.push({ at: tb, val }); curE = val; }
     }
     for (const l of box.lanes) {
       let v = lanes.get(l.name);
@@ -271,6 +313,7 @@ export function smfFromScore(score, { beatsPerBar = 4, timesig = null } = {}) {
                     stepsPerBar: beatsPerBar,
                     ...(tempos.length ? { tempos } : {}),
                     ...(sig ? { timesig: sig } : {}),
+                    ...(exprs.length ? { exprs } : {}),
                     voices });
 }
 
@@ -295,6 +338,10 @@ export function parseSmf(bytes) {
     const len = rd32(), end = o + len;
     let tick = 0, status = 0, tempo = null, timesig = null, name = "";
     const open = new Map();            // "ch:key" -> [{tick}]
+    const ccs = [];                    // every control change, with its tick —
+                                       // the writer emits CC11 for the section
+                                       // levels (2026-08-30) and the parse-back
+                                       // gate walks them like the tempo map
     const notes = [], tempos = [];     // tempos: EVERY 0x51, in file order,
                                        // with its tick — the tempo MAP the
                                        // parse-back gate walks (2026-08-30);
@@ -320,12 +367,15 @@ export function parseSmf(bytes) {
           const q = open.get(k);
           if (q && q.length) { const st = q.shift(); notes.push({ tick: st.tick, key, ch, dur: tick - st.tick }); }
         }
+      } else if ((s & 0xf0) === 0xb0) {
+        const cc = b[o++], val = b[o++];
+        ccs.push({ tick, ch: s & 0x0f, cc, val });
       } else if ((s & 0xf0) >= 0xa0 && (s & 0xf0) <= 0xe0) {
         o += ((s & 0xf0) === 0xc0 || (s & 0xf0) === 0xd0) ? 1 : 2;
       } else throw new Error("unexpected byte 0x" + s.toString(16) + " at " + o);
     }
     notes.sort((a, b2) => a.tick - b2.tick || a.key - b2.key);
-    tracks.push({ name, notes, tempo, tempos, timesig });
+    tracks.push({ name, notes, tempo, tempos, timesig, ccs });
   }
   return { format, division, tracks };
 }

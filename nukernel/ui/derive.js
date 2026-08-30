@@ -1102,7 +1102,17 @@ export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
       buckets[b].push({ ...e, off: e.t - b * barSteps });
     }
     for (let b = 0; b < bars; b++)
-      out.push({ si, g, barSteps, steps: barSteps, first: b === 0, ev: buckets[b] });
+      // …AND THE SECTION'S DEALT LEVEL RIDES ITS BARS (2026-08-30, the score
+      // dynamics round). `lvl` is the one section word that reaches the sound
+      // WITHOUT touching the events — audio/desk.js sectionOf is a desk gain,
+      // so the velocities this list carries never held it (`env` they do:
+      // kernel envelope ran three lines up) — and the export fold
+      // (export/score.js scoreOf → export/smf.js expression CCs) can only say
+      // it if the one walk that knows the section writes it down. PRESENT-ONLY,
+      // like `pace` on the anchor: a wordless section stamps no key and every
+      // reader of the bar list sees the exact object it always saw.
+      out.push({ si, g, barSteps, steps: barSteps, first: b === 0, ev: buckets[b],
+                 ...(sec.lvl ? { lvl: sec.lvl } : {}) });
   }
   if (o.pickups !== false) leadIns(out, song, slots);
   // `o.ending` — see tempoNodes: absent means WRAP (the live transport only

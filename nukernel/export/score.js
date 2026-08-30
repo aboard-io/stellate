@@ -104,7 +104,16 @@ export function scoreOf({ timeline, cast = [], bpm, grid = true, engine = true, 
   const boxes = [];
   for (const bar of timeline) {
     if (bar.first || !boxes.length)
-      boxes.push({ si: bar.si, name: (bar.si + 1) + " " + labelOf(bar), beat0: bar.beat0, beats: 0, bars: [] });
+      // THE SECTION'S DEALT LEVEL, PRESENT-ONLY (2026-08-30, the score
+      // dynamics round). ui/derive.js songBars stamps the composed `lvl` WORD
+      // on every bar of a worded section — the one dynamic the velocities in
+      // this fold do NOT carry (the header above says why: `env` is in the
+      // written velocities, `lvl` is the desk's gain and never touched an
+      // event). The box keeps the word so a writer that can say it
+      // (export/smf.js, expression CCs) may; a wordless section stamps no key
+      // and every existing Score is the same value.
+      boxes.push({ si: bar.si, name: (bar.si + 1) + " " + labelOf(bar), beat0: bar.beat0, beats: 0, bars: [],
+                   ...(bar.lvl ? { lvl: bar.lvl } : {}) });
     const box = boxes[boxes.length - 1];
     box.beats += bar.barSteps / 4;
     box.bars.push(bar);

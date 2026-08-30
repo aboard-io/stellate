@@ -2133,6 +2133,129 @@ function recordParts() {
   return { parts, secAt, divide, bars, steps: step };
 }
 
+/* ---------- THE DYNAMICS, ON THE PAPER (2026-08-30) -----------------------
+   Paul: "Would love crescendos and decrescendos and ppp to fff markings in
+   the score." The words are ALREADY DEALT — compose.js dealLevels writes
+   `lvl` (where the section sits; fields.js LEVELS is what a word is worth at
+   the desk) and the arc writes `env` (the level's shape over the section;
+   kernel.js SHAPES is the curve the velocities are multiplied by) — and both
+   reach the sound (audio/desk.js sectionOf/shade, kernel envelope). This
+   block only DRAWS them. It deals nothing and prices nothing of its own:
+
+     · THE SCALE IS fields.js LEVELS READ AS dB, one dynamic step = the
+       ladder's own MEAN RUNG SPACING (hush −8 · back −3.1 · norm 0 ·
+       fwd +2.6 → 3.5 dB a step), `norm` anchored at mf because norm IS "the
+       record's own level" (compose.js levelWord writes it as ABSENT for the
+       same reason). So back/-3.1 says mp, fwd/+2.6 says f, hush/−8 says p —
+       which is where the standard MIDI dynamic curve puts those decibels
+       too — and the compounds go further: a breakdown dealt hush AND soft
+       is −11.3 dB and honestly pp. ppp and fff become REACHABLE the day
+       the vocabulary carries words that far out (−17/+10 dB), and not
+       before: the staff may not claim a range the desk cannot play.
+     · A SECTION'S dB IS ITS lvl RUNG PLUS ITS env's CONSTANT, and "constant"
+       is MEASURED off kernel SHAPES itself — a word whose curve is flat IS a
+       level (soft 0.68, big 1.14), never a second table typed here.
+     · A WORD WHOSE CURVE TRAVELS IS A HAIRPIN, direction read off the
+       curve's own ends: in/cresc/lift rise and open a crescendo, out/dim
+       fall and open a diminuendo, and arch/swell/duck — curves that end
+       where they began — mark nothing, because a hairpin that returns to
+       its own level is not a hairpin.
+
+   THE INK RULES. Marks land on V1 — the desk moves the WHOLE section
+   (audio/desk.js sectionOf), so one line speaks for the system, the way a
+   short score says it. A dynamic is written ONCE, at a section boundary
+   WHERE IT CHANGES — a mark restated every bar is the repetition disease on
+   paper. A hairpin opens on its section's first token and closes on the
+   last beam group of its last bar. Verified against the vendored abcjs
+   (chromium, 2026-08-30): all eight marks !ppp!..!fff! draw, both hairpin
+   pairs draw (one .abcjs-decoration per pair), a mark on a REST draws, and
+   the .abcjs-note count is untouched either way — so the glyph map and the
+   playhead's lighting cannot shift under the ink. */
+const DYNMARKS = ["ppp", "pp", "p", "mp", "mf", "f", "ff", "fff"]; // abc's own words
+// one dynamic step in dB, derived from the vocabulary itself: the mean gap
+// between fields.js LEVELS' adjacent rungs (3.5 dB today) — never a typed
+// constant, so retuning `back` retunes the staff
+function dynStep() {
+  const L = NuFields.LEVELS;
+  const dbs = Object.keys(L).map((w) => 20 * Math.log10(L[w])).sort((a, b) => a - b);
+  let gaps = 0;
+  for (let i = 1; i < dbs.length; i++) gaps += dbs[i] - dbs[i - 1];
+  return dbs.length > 1 ? gaps / (dbs.length - 1) : 6;
+}
+const markOfDb = (db, step) => DYNMARKS[Math.max(0, Math.min(DYNMARKS.length - 1,
+  DYNMARKS.indexOf("mf") + Math.round(db / step)))];
+// what an env word says about LEVEL: a flat curve is a constant gain (its
+// dB joins the section's), a moving curve is a hairpin (sign of its travel),
+// and a word SHAPES does not hold (drop, stutter — cuts, not curves) says
+// nothing here at all.
+function envFacts(word) {
+  const f = word && K.SHAPES ? K.SHAPES[word] : null;
+  if (typeof f !== "function") return { db: 0, pin: 0 };
+  const a = f(0), m = f(0.5), b = f(1);
+  if (a === m && m === b) return { db: 20 * Math.log10(Math.max(1e-4, a)), pin: 0 };
+  return { db: 0, pin: b - a > 0.05 ? 1 : a - b > 0.05 ? -1 : 0 };
+}
+// one { mark, pin } per section, or null when the record deals no word at
+// all — a record with no dynamics gains NO ink, which is the gate's own
+// first claim. A worded record's wordless section computes norm+nothing =
+// mf, because absent IS "the record's own level" and the reader coming off
+// an f chorus must be told the floor came back.
+function scoreDyn() {
+  const secs = DOC.form.sections;
+  if (!secs.length || !secs.some((s) => s.lvl || s.env)) return null;
+  const step = dynStep(), L = NuFields.LEVELS;
+  return secs.map((s) => {
+    const ef = envFacts(s.env);
+    const db = (s.lvl && L[s.lvl] > 0 ? 20 * Math.log10(L[s.lvl]) : 0) + ef.db;
+    return { mark: markOfDb(db, step), pin: ef.pin };
+  });
+}
+/* string surgery on toScore's own paper, never a second fold: V1's music
+   line is split at the barlines toScore wrote (" | ", the divide's " || ")
+   and decorations are PREFIXED to existing tokens, so every note, rest, tie
+   and beam space stays byte-identical — strip the !…! tokens back out and
+   the bare string returns (test/dynamics.test.js holds exactly that). A
+   shape this function does not recognize is left alone whole, because a
+   staff mis-inked is worse than a staff unmarked. */
+function inkDynamics(abc, dyn, secBar, totalBars) {
+  const lines = abc.split("\n");
+  const vi = lines.findIndex((l) => /^V:V1(\s|$)/.test(l));
+  if (vi < 0) return abc;
+  let mi = vi + 1;
+  while (mi < lines.length && /^K:/.test(lines[mi])) mi++;   // a drum V1's K:none
+  if (mi >= lines.length) return abc;
+  const bits = lines[mi].split(/( \|{1,2} )/);               // bars at even indexes
+  if ((bits.length + 1) / 2 !== totalBars) return abc;       // refuse to mis-ink
+  let close = "";                                            // the final barline,
+  const cm = / \|\]$/.exec(bits[bits.length - 1]);           // off the operating table
+  if (cm) { close = cm[0]; bits[bits.length - 1] = bits[bits.length - 1].slice(0, cm.index); }
+  let prev = null;
+  for (let si = 0; si < dyn.length; si++) {
+    const b0 = secBar[si];
+    const b1 = (si + 1 < dyn.length ? secBar[si + 1] : totalBars) - 1;
+    if (!(b0 >= 0) || b0 >= totalBars || b1 < b0 || b1 >= totalBars) continue;
+    const d = dyn[si];
+    let open = "";
+    if (d.mark !== prev) { open += "!" + d.mark + "!"; prev = d.mark; }
+    let pin = d.pin;
+    // a hairpin needs two ends: a one-bar section that is one beam group
+    // has nowhere to close, and keeps its mark alone
+    if (pin && b1 === b0 && bits[2 * b0].indexOf(" ") < 0) pin = 0;
+    if (pin) open += pin > 0 ? "!crescendo(!" : "!diminuendo(!";
+    if (open) bits[2 * b0] = open + bits[2 * b0];
+    if (pin) {
+      const bar = bits[2 * b1], sp = bar.lastIndexOf(" ");
+      const deco = pin > 0 ? "!crescendo)!" : "!diminuendo)!";
+      bits[2 * b1] = sp < 0 ? deco + bar : bar.slice(0, sp + 1) + deco + bar.slice(sp + 1);
+    }
+  }
+  lines[mi] = bits.join("") + close;
+  return lines.join("\n");
+}
+// the record without its marks — kept so the gate can strip the ink and
+// demand the bare string back, byte for byte (window.__eightAbcBare)
+let scoreBare = "";
+
 /* WHAT THE PAGE WOULD ENGRAVE IF IT ENGRAVED NOW, as a string. This is the
    CHANGE DETECTOR and it is the whole reason a full render can be afforded at
    all: it is compared byte for byte against the ABC the picture on the page is
@@ -2159,7 +2282,18 @@ function buildScore() {
                                 divide: R.divide, close: "|]" }); }
   catch (err) { return null; }
   if (!sc) return null;
-  return { abc: sc.abc, voices: sc.voices, secAt: R.secAt, steps: R.steps,
+  // THE DYNAMICS RIDE THE STRING, LAST (the block above buildScore). toScore's
+  // own abc is kept as `scoreBare` — the identical record without its marks —
+  // because the claim is per-record EQUIVALENCE OF NOTES with marks added:
+  // strip the !…! ink and the bare string must return byte for byte, and a
+  // record whose sections deal no word inks nothing so the two strings are
+  // one string (test/dynamics.test.js holds both).
+  scoreBare = sc.abc;
+  const dyn = scoreDyn();
+  const abc = dyn
+    ? inkDynamics(sc.abc, dyn, R.secAt.map((s) => s / scoreSPB()), R.bars)
+    : sc.abc;
+  return { abc, voices: sc.voices, secAt: R.secAt, steps: R.steps,
            bars: R.bars, dense: sc.dense | 0 };
 }
 
@@ -3527,7 +3661,15 @@ async function deckSmf() {
   // M: line read — and smfFromScore reads it there. ONE owner; nothing is
   // resolved here. A record with no meter stamps null and the file is
   // byte-identical (the D4c pin).
-  const bytes = smfFromScore(score, { beatsPerBar: beatsPerBar() });
+  // …AND THE SECTION LEVELS RIDE AS EXPRESSION (2026-08-30, the dynamics
+  // round). The velocities already carry `env` (kernel envelope shaped them
+  // before the bar list existed); `lvl` is a desk gain and never reached the
+  // file, so smfFromScore writes it as CC11 at the boundaries where it
+  // changes. The WORD is on the Score's own boxes (export/score.js); the
+  // PRICE is fields.js LEVELS handed through here — the same words-here,
+  // numbers-there split the desk keeps, so no table is retyped in an export.
+  const bytes = smfFromScore(score, { beatsPerBar: beatsPerBar(),
+                                      levels: NuFields.LEVELS });
   const names = new Set();
   let notes = 0;
   for (const b of score.boxes) for (const l of b.lanes) {
@@ -11487,6 +11629,12 @@ window.__eightScoreEngraves = () => scoreEngraves;
 // staff can be diagnosed by READING what was asked for rather than by adding
 // a hook first (2026-08-28: a round lost its diagnosis to exactly that).
 window.__eightAbc = () => scoreAbc;
+// …AND THE SAME MUSIC WITHOUT ITS DYNAMICS — toScore's string before
+// inkDynamics prefixed the marks (buildScore keeps it). The gate's whole
+// dynamics claim is "notes byte-identical, marks added": strip the !…! ink
+// from __eightAbc() and THIS must come back, and on a record that deals no
+// lvl/env word the two are already equal.
+window.__eightAbcBare = () => scoreBare;
 // …AND WHAT THEY COST, in milliseconds of main thread, last twenty first-hand.
 // The claim this round makes is that a whole-record render is affordable if
 // you say so out loud (`SCORE_LOADER_MS`); this is the artifact that says what
