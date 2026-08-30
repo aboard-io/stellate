@@ -806,10 +806,33 @@
      because "which instrument plays this" is an instruments.js fact.
 
      THE MARK is here beside the word rather than in ui/glyph.js because the
-     four states are a VOCABULARY — a menu of what the control may be — and
+     five states are a VOCABULARY — a menu of what the control may be — and
      this file is where nukernel says what a control is. glyph.js's `act` rows
      are single gestures (play, stop, rewrite, take); this is one control with
-     four positions, and its marks belong with its words. */
+     five positions, and its marks belong with its words.
+
+     A FIFTH POSITION, 2026-08-30. Paul: *"Add another option to the
+     instrumentation switcher in opts — this would be just the classic sampled
+     oohs and ahs replacing the tract voices"* · *"Chorus basically."*
+
+     THE WORD IS PAUL'S AND THE COLLISION IS NAMED RATHER THAN RENAMED
+     AROUND: `dbl` a few lines up is "a chorus CHIP" and means FX.chorus, the
+     modulated delay. This `chorus` is the ENSEMBLE — people, on tape. They
+     share four rows of this file and nothing else: the chip is a word a
+     recording hears (VOXDOUBLE), this is a position of the cast switch, and
+     no reader of either can be handed the other.
+
+     AND IT IS THE ARGUMENT THAT WAS OVERRULED, ASKED FOR AS A CHOICE. The
+     paragraph instruments.js withdrew on 2026-08-28 — "A LEAD IS SYNTHESISED;
+     A CHORUS IS RECORDED — WITHDRAWN, 2026-08-28, AND IT NEVER REACHED THE
+     SOUND IN THE FIRST PLACE" — was withdrawn as a silent DEFAULT that the
+     tape did not agree with, and its musical claim was kept on the record
+     ("a recorded ensemble brings two things four detuned formant voices
+     cannot synthesise — a room, and forty people not agreeing"). A default
+     nobody chose and a POSITION somebody turns to are not the same object:
+     the first is a lie about what the box does, the second is the box
+     offering the thing and saying which it is. `vox` is still the default and
+     still renders byte-identically. */
   const VOICINGS = {
     vox:    { w: "sung", g: "◉",
               says: "the singers sing it — the record as it was cast" },
@@ -818,7 +841,16 @@
     analog: { w: "all analog", g: "∿",
               says: "the vocal chairs on analogue synthesis" },
     fm:     { w: "all FM", g: "⋔",
-              says: "the vocal chairs on two-operator FM" } };
+              says: "the vocal chairs on two-operator FM" },
+    // THE MARK IS ◎ AND IT IS ◉ WITH THE VOICE TAKEN OUT OF IT. Beside the
+    // singer's filled throat this is the same circle as a GROOVE — a record,
+    // a take that already happened — which is exactly the difference the
+    // position names: nobody is singing, the singing is on tape. Distinct at
+    // a glance from ♪ ∿ ⋔ (a note, a wave, two operators), and the two
+    // circles are never on the page together — the strip shows the position
+    // you are ON, one mark and its word (ui/eight.js paintVoicing).
+    chorus: { w: "chorus", g: "◎",
+              says: "the vocal chairs off the tape — sampled oohs and aahs" } };
   const VOICING_KEYS = Object.keys(VOICINGS);
   // The param a knob rides, per DSP naming. First name that EXISTS on the node
   // wins, so one chip covers tb303 / modeld / bass_reese / bass_wobble without

@@ -11476,10 +11476,18 @@ on("box", printReading);
 
    IT IS A SETTING AND ITS MARK IS ITS STATE, not the next tap. #play's law
    ("the word on it is the NEXT tap") is right for a gesture with two spellings
-   and wrong for a setting with four positions — at the third press nobody can
+   and wrong for a setting with five positions — at the third press nobody can
    read a control that shows you where you are going. `paintIcon` writes the
    `aria-label` and the `.nu-vh` word from the same row, so the strip still
    reads as words with the stylesheet off.
+
+   FIVE, 2026-08-30, AND THIS BLOCK DID NOT CHANGE TO GET THERE. Paul asked for
+   "another option to the instrumentation switcher … Chorus basically", and the
+   whole of it was a fifth row in fields.js VOICINGS: the cycle below is
+   `VOICING_KEYS` and the paint reads the row it lands on, so a position is
+   added by saying what it IS and never by touching the hand. That is the
+   three-owners split doing its job, and it is the reason this note is the only
+   edit here.
 
    `commit("pool")` IS THE DOOR, and it is the right one by name: audio/live.js
    listens to it as "the band changed: register homes and zones with it", which

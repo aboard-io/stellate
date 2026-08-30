@@ -311,6 +311,13 @@ const SYNTH = {
   stk_piano:  { model: "piano" },
   gtr_amp:    { model: "eguitar" },   // the hand-rolled string, kept nameable
   mallet:     { model: "mallet" },
+  // …and the BOW (2026-08-30, the registry lane). The one instrument in this
+  // dictionary that exists because it could NOT be a recording: every soundfont
+  // in the tree is GM bank 0, all 128 presets measured, and GM has no erhu, no
+  // dizi, no pipa and no sheng — which is the whole of genres.js's refusal of
+  // the `guoyue` cell. No `role`, for the guitar's reason: a fiddle carries the
+  // tune and it also holds a drone under somebody else's.
+  erhu:       { model: "erhu" },
   // THE THROAT. Both roles are declared, because a singer and a section are not
   // interchangeable seatings of one thing the way pad_saw and supersaw are: a
   // lead follows the TUNE and a choir holds the HARMONY, and the parent's `pad`
@@ -603,6 +610,15 @@ const PAGE_TRIM = {
      with no stk_piano chair press byte-identical (deck.test D3). */
   stk_piano:   1.80,
   mallet:      2.16,
+  /* erhu — DERIVED, not measured on the page, and it says so for stk_piano's
+     and tract_voice's reason. The module was LEVEL-FITTED against stk_guitar
+     at extraction (erhu.dsp's own trim note): with both at their own defaults
+     at A4 through the same offline renderer, erhu comes back at 0.0039 RMS /
+     0.0111 peak against stk_guitar's 0.0039 / 0.0231, so the page's deficit
+     for one is the page's deficit for the other. It takes stk_guitar's row
+     unchanged and will need re-measuring the first time a record casts it —
+     which nothing does yet. */
+  erhu:        1.78,
   voice_lead:  8.2,
   voice_choir: 15,
   // DERIVED, not measured on the page — the second row here that is, and it says
@@ -674,10 +690,16 @@ const TRACT_ROW = [2, 1, 0, 3, 4];
 // buy volume by driving the guitar amp's shaper harder — which is dirt, not
 // level.
 const LIVE_AMP = [PITCH_AMP_FLOOR, PITCH_AMP_FLOOR + PITCH_AMP_SPAN];
-const liveModel = (dsp) => dsp === "stk_guitar"
-  // a slide on a waveguide is a real portamento: the string's delay length IS
-  // its pitch, so `glide` bends it rather than crossfading two notes
-  ? { dyn: LIVE_DYN.stk_guitar, slideParam: "glide", slideSec: 0.06, amp: LIVE_AMP }
+// A SLIDE ON A WAVEGUIDE IS A REAL PORTAMENTO: the string's delay length IS its
+// pitch, so `glide` bends a sounding note rather than crossfading two. The two
+// modules that can do it are listed with the SAME numbers the parent's own unit
+// factory writes (state-engine `case "eguitar"` / `case "erhu"`), because two
+// spellings of one fact is a fact waiting to disagree — the erhu's 0.09 s is
+// longer than the guitar's 0.06 because hua yin is a gesture and a guitar's
+// slide is a repair.
+const LIVE_SLIDE = { stk_guitar: 0.06, erhu: 0.09 };
+const liveModel = (dsp) => LIVE_SLIDE[dsp] != null
+  ? { dyn: LIVE_DYN[dsp], slideParam: "glide", slideSec: LIVE_SLIDE[dsp], amp: LIVE_AMP }
   : { dyn: LIVE_DYN[dsp], amp: LIVE_AMP };
 
 /**
@@ -713,6 +735,16 @@ const liveModel = (dsp) => dsp === "stk_guitar"
  * pair per cast part.
  */
 export function voiceForInstr(id, tone) {
+  /* THE CHORUS POSITION DECLINES THE TRACT (2026-08-30). Paul: "Add another
+     option to the instrumentation switcher... just the classic sampled oohs
+     and ahs replacing the tract voices" / "Chorus basically." instruments.js
+     voicedAs("chorus") hands the chair its OWN id back with tone.recorded set,
+     and this one line is what makes that mean anything: with all four of
+     mouth/synth/model/voice answering null, recipeBase falls to the sampler
+     library — the classic sound reached through routing the box already has,
+     not a second instrument table. Absent = today, byte for byte: a vox press
+     on a build with this line is bit-identical to one without. */
+  if (tone && tone.recorded) return null;
   const P = PATCH_VOICE[id];
   if (!P) return null;
   const t = tone || {};

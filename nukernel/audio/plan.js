@@ -321,9 +321,20 @@ function castOf(bars) {
         const vcdVox = (vcd && vcd.vox) || null;
         const seatVox = (ch && ch.vox) || vcdVox || e.vox
           ? { ...((ch && ch.vox) || null), ...vcdVox, ...(e.vox || null) } : null;
+        // ...AND THE VIEW MAY WRITE ON THE TONE (2026-08-30, the `chorus`
+        // position). `vcd.tone` is instruments.js saying something about HOW
+        // this chair is realised that only the seat can carry — today it is
+        // the one word `recorded`, which audio/to-engine.js `voiceForInstr`
+        // reads as "decline", dropping the chair out of the patch chain and
+        // into the sampler library. It sits OVER the record's own tone and
+        // the cast throat for the same reason `useSyn2` does: the view
+        // outranks the record's signature for THIS chair. The four older
+        // positions carry no `vcd.tone`, so this line is byte-identical for
+        // vox / instr / analog / fm alike.
+        const baseTone = throat ? { ...seatTone, mouth: throat } : seatTone;
         e._seat = seatFor(chair, vcd ? vcd.instr : (over || instrOf(owner, vi)),
                           vcd ? (vcd.synth || null) : (useSyn ? gsyn : null),
-                          throat ? { ...seatTone, mouth: throat } : seatTone,
+                          (vcd && vcd.tone) ? { ...baseTone, ...vcd.tone } : baseTone,
                           seatVox);
         e._syn = useSyn2;
         const r = roster.find((x) => x.v === e.v);

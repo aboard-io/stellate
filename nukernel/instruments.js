@@ -888,6 +888,15 @@
   // raggedness, which is a parameter — and not a return to six zones and one
   // recording.
   //
+  // ...AND IT IS ON THE PAGE AS A POSITION NOW, 2026-08-30 — not as a default,
+  // which is what was withdrawn here. Paul: *"Add another option to the
+  // instrumentation switcher in opts — this would be just the classic sampled
+  // oohs and ahs replacing the tract voices"* · *"Chorus basically."* The
+  // fifth `VOICINGS` row (`chorus`) makes these three ids fall to the sampler
+  // for as long as a hand holds the switch there; `vox` — this table, the
+  // modelled throat — is still what the box does, and still what it renders
+  // with nobody touching anything. See `voicedAs`'s chorus clause.
+  //
   // WHAT THE SAMPLE ACTUALLY SOUNDS LIKE, since the claim is now measured
   // rather than argued. iranpop's vocal chair soloed and pressed 8 bars through
   // the shipped engine (export/_satpress.js), octave-band medians, modelled vs
@@ -1363,6 +1372,11 @@
      the seat, so the default renders byte-identically to a build with no
      toggle at all. */
   const patchedVoice = (id) => !!(PATCH_VOICE[id] || PATCH_MOUTH[id]);
+  // THE ONE WORD THE `chorus` POSITION WRITES, frozen so every chair that takes
+  // it takes the identical object and the seat key below cannot fork on it.
+  // Its ONE reader is audio/to-engine.js `voiceForInstr`, which declines when it
+  // sees it; see the chorus clause in `voicedAs` for why a flag and not an id.
+  const RECORDED = Object.freeze({ recorded: 1 });
   // the sax is the fallback and the strings are the rule; both are registry ids
   // the sampled library ships (RANGES above names them).
   const LINE_TAKER = "alto_sax", SECTION_TAKER = "slow_strings";
@@ -1426,6 +1440,68 @@
     // the clamp rides every mode's LINE replacement — "whatever taker wins"
     const ornate = !section && singsOrnate(gk, id);
     const vox = ornate ? clampArticulate(gk) : null;
+    /* ---- CHORUS: THE CHAIR KEEPS ITS ID AND STOPS BEING MODELLED --------
+       (2026-08-30.) Paul: *"Add another option to the instrumentation
+       switcher in opts — this would be just the classic sampled oohs and ahs
+       replacing the tract voices"* · *"Chorus basically."*
+
+       THIS IS THE WITHDRAWN PARAGRAPH, TURNED INTO A POSITION. What stood one
+       table up until 2026-08-28 was "A LEAD IS SYNTHESISED; A CHORUS IS
+       RECORDED — WITHDRAWN, 2026-08-28, AND IT NEVER REACHED THE SOUND IN THE
+       FIRST PLACE": a reversal written as though it had been applied, measured
+       false over all 199 anchors (367 of 367 vocal chairs came back MODELLED),
+       and then overruled on the music too — *"The vocals should be native"* ·
+       *"You're not putting native vox in things you're using sampled."* Every
+       word of that stands. A DEFAULT NOBODY CHOSE IS NOT A POSITION SOMEBODY
+       TURNS TO, which is the whole difference here: `vox` is still what the
+       box does, this is the box offering the other reading and saying so, and
+       the claim the withdrawal kept on the record — "a recorded ensemble
+       brings two things four detuned formant voices cannot synthesise — a
+       room, and forty people not agreeing" — is now something a hand can hear
+       rather than something a comment asserts. The counter-measurement in that
+       same paragraph stands too, and is the honest label on this position:
+       iranpop's chair sampled read SEVENTY-THREE dB under the model at 250 Hz,
+       "one held vowel transposed out of its own register". That is what the
+       classic ooh is. It is a sound, not an improvement.
+
+       THE MECHANISM IS THE ONLY HONEST ONE: the chair KEEPS ITS OWN ID. The
+       sampled oohs and aahs ARE `solo_vox` / `ahh_choir` / `ohh_voices` — the
+       GM zones every soundfont in the library ships under those numbers — so
+       there is no substitute instrument to name and naming one would be a
+       second opinion about which recording an id means. What changes is that
+       audio/to-engine.js `voiceForInstr` DECLINES, and with it declining the
+       whole `patchForInstr` chain answers null (the id is in no synth, model
+       or mouth table) and recipeBase falls to the sampler library — which is
+       precisely what "classic sampled" means, reached by the routing the box
+       already has rather than by a branch written for this position.
+         THE FLAG IS ON THE TONE because `tone` is the one thing a seat carries
+       into to-engine that voiceForInstr already reads (audio/plan.js merges
+       `vcd.tone` onto the seat tone; the parent ignores recipe keys it does not
+       know). The guard is ONE LINE, at the top of voiceForInstr beside its
+       existing `if (!P) return null`:
+             if (tone && tone.recorded) return null;
+
+       `synth_voice` IS NOT A PERSON AND IS NOT HERE, which is PATCH_VOICE's own
+       rule read out loud: "GM 54 'synth voice' is NOT here on purpose — it is a
+       photograph of a VP-330, an actual machine the parent owns". A chorus is
+       people on tape; a string machine is a machine either way, and there is no
+       recording of forty people behind GM 54 to fall to. So chorus asks
+       PATCH_VOICE and not `patchedVoice`, and the talking tract keeps its tube
+       (and a `synth_voice` PAD keeps the VP-330, exactly as today). It is the
+       one place this position's guard is NARROWER than instr/analog/fm, which
+       swap the mouth because they are replacing a person with a player.
+
+       THE ARTICULATE CLAMP RIDES THIS POSITION TOO, and for the reason clause
+       (b) above was written rather than by inheritance: the taker here is a
+       held-vowel RECORDING with a long ring, which is the same smear a string
+       section made of iranpop's ten graces a tenth of a bar apart. A melismatic
+       LINE gets fields.js VOX's atk/rel clamp, which reaches the sampler's own
+       atk/rel ports (VOXPARAM); a SECTION keeps its swell, because a choir
+       holding a chord is supposed to. */
+    if (mode === "chorus") {
+      if (!PATCH_VOICE[id]) return null;
+      return vox ? { instr: id, tone: RECORDED, vox } : { instr: id, tone: RECORDED };
+    }
     if (mode === "instr") {
       if (section) return { instr: SECTION_TAKER };
       const e = (GENRES[gk] || {}).instr;
