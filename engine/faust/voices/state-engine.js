@@ -1368,12 +1368,35 @@
       // samplers — absent-law); state rides along for rateBars tempo-sync.
       const nativeIns = declaredAll.length ? insertChain({ ...m, inserts: declaredAll }, c, null, state) : [];
       const zs = Array.isArray(sp.zones) ? sp.zones : [];
+      // LOOP-POINT OVERRIDES (2026-08-30, the sampling round). The pinned
+      // per-unit params — `loopa` (loop start, 0..1 fraction of the zone),
+      // `loopb` (loop end, 0..1), `loopon` (0 = zone default, 1 = force loop,
+      // 2 = force one-shot) — are read HERE and nowhere else, off the recipe
+      // the bridge merged (to-engine samplerVox, the same channel the vox
+      // words ride). They are stamped onto the ZONES because zones already
+      // travel to both play paths (press/stream notes carry u.sampler.zones;
+      // live reads them off the unit) — sampler.js resolveLoop is the one
+      // resolver of what they mean, zero-cross snap and all. A zone's own SF2
+      // points stay the default; absent keys leave `zs` the SAME array, so
+      // every existing record is byte-identical (the absent-law).
+      const lopA = m.loopa != null ? clamp(m.loopa, 0, 1) : null;
+      const lopB = m.loopb != null ? clamp(m.loopb, 0, 1) : null;
+      const lopOn = (m.loopon === 1 || m.loopon === 2) ? m.loopon : 0;
+      const loopOv = (lopA != null || lopB != null || lopOn)
+        ? { ...(lopA != null ? { loopa: lopA } : {}),
+            ...(lopB != null ? { loopb: lopB } : {}),
+            ...(lopOn ? { loopon: lopOn } : {}) }
+        : null;
+      const zsEff = loopOv ? zs.map((z) => ({ ...z, ...loopOv })) : zs;
       const zRoots = zs.map((z) => z.root || 60);
       const topRoot = zRoots.length ? Math.max(...zRoots) : 0;
       const botRoot = zRoots.length ? Math.min(...zRoots) : 0;
       return { ...base, inserts: nativeIns, rev: airRev, gmul: base.gmul * (role === "bass" ? 0.5 : 1), module: null, sampler: {
           id: sp.id || "?", sr: sp.sr || 44100,
-          zones: zs,
+          zones: zsEff,
+          // the pinned per-unit params, echoed on the spec so the desk/page/
+          // probes can read what the unit was told (absent = no keys = today)
+          ...(loopOv || {}),
           ...(topRoot ? { stretchMaxHz: 440 * Math.pow(2, (topRoot + SAMPLER_STRETCH_ST - 69) / 12),
                           stretchMinHz: 440 * Math.pow(2, (botRoot - SAMPLER_FLOOR_ST - 69) / 12) } : {}),
           atk: mp("attack", role === "bass" ? 0.006 : 0.012, 0.003, 5),

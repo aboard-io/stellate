@@ -726,6 +726,45 @@
             t: { tight: 0.03, nat: 0.12, ring: 0.8, long: 2.4 } },
     dbl:  { labels: { single: "one take", double: "double-tracked", wide: "wide" },
             t: { single: 0, double: 0.5, wide: 0.8 } },
+    /* THE LOOP WORDS (2026-08-30, the sampling round — Paul: "bring over
+       sampling from the old version … add loop points and make them
+       editable"). THE PARAGRAPH ABOVE THIS TABLE IS AMENDED, dated in place:
+       it says "loop points … have no port on this engine, so it is NOT
+       DRAWN", and that stopped being true today. The engine grew three
+       per-unit params — the PINNED CONTRACT between the two lanes, spelled
+       once here and once at the engine's own dispatch (audio/to-engine.js
+       samplerVox), neither side renaming it:
+
+         loopa   loop start, 0..1 fraction of the zone
+         loopb   loop end,   0..1 fraction of the zone
+         loopon  0 = the zone's own default · 1 = force loop · 2 = one-shot
+
+       They ride the SAME channel atk/rel/dbl ride — voice.sound on the
+       document, the chairs seam's `vox`, samplerVox at the seat — so the
+       desk, the page and the press reach them through one owner. The words:
+
+         looping   the one WORDED control — "loops" forces a sustained loop
+                   under the gate (a bed, a texture), "one-shot" forces the
+                   zone to play through and stop (a stab, an SFX hit), absent
+                   is the zone's OWN flag (an SF2 pad loops, a hit does not),
+                   which is byte-identical to every record written before
+                   this row existed.
+         loopin / loopout   NOT here, ON PURPOSE: they are the two loop
+                   POINTS, 0..1 fractions, and a point is edited, not worded
+                   — the page's loop strip (ui/eight.js) writes the NUMBER
+                   onto voice.sound.loopin/.loopout and samplerVox passes a
+                   number through unmapped. A word table for a continuous
+                   fraction would be a lie about what the control is. The
+                   avail.js sheets (`sound.loopin` / `sound.loopout`) quantize
+                   for the sheet surface only; the strip is the editor.
+
+       UNLIKE atk/rel, these reach ONLY a sampled voice — a synth has no zone
+       to loop — so no FIELDS layer row is added below (a loop chip on a
+       synth layer would be the dead knob this file legislates against) and
+       the page draws the strip only on chairs whose id `sampledId` claims
+       (instruments.js, measured against recipeFor's own routing). */
+    looping: { labels: { loop: "loops", once: "one-shot" },
+               t: { loop: 1, once: 2 } },
   };
   // THE THREE SAMPLER WORDS, AS THE RECIPE KEYS THEY WRITE. Kept beside the
   // table above rather than inside audio/to-engine.js because it is the same
@@ -2204,6 +2243,36 @@
                       "space_voice",
                       "fretless_bass", "slap_bass", "pop_bass", "contrabass",
                       "synth_bass_1", "synth_bass_2"]) ids.add(id);
+    // ...and THE SAMPLING CRATE (2026-08-30 — Paul: "bring over sampling from
+    // the old version. We use it for texture and we use it as way of doing
+    // vocal stabs and SFX"). Ten recordings the parent's sampler library has
+    // carried all along with no word to reach them — MEASURED 2026-08-30
+    // through audio/to-engine.js recipeFor itself: every id below comes back
+    // `sampler:<id>` (never a patch, never unrouted), which is what makes the
+    // loop strip honest on the chair that seats one. Three uses, Paul's own
+    // words, and the ids that answer each:
+    //   STABS    orchestra_hit — THE rave stab (Essex 1991 plays it now); its
+    //            two zones are the only UNLOOPED ones in this crate, a hit by
+    //            construction. (The VOCAL stab is `space_voice`, already
+    //            offered eight lines up — the one voice-family recording the
+    //            patch tables leave to the sampler; instruments.js
+    //            SAMPLED_VOICES is where it is declared a voice for the
+    //            instrumental-record door.)
+    //   TEXTURE  atmosphere, soundtrack, ice_rain, crystal, fantasia,
+    //            star_theme, brightness, goblin — the GM FX shelf: looped
+    //            zones that sustain under the gate, which is what a bed IS.
+    //   SFX      sea_shore (GM 122) — the one true SFX-bank recording the
+    //            library registers. THE MEASURED GAP, reported not papered
+    //            over: gun_shot, helicopter, applause, telephone, bird_tweet,
+    //            reverse_cymbal, breath_noise and fret_noise have zones ON
+    //            DISK (found/samples/instruments/) and NO row in the parent's
+    //            SAMPLERS registry — recipeFor returns `unrouted` for all
+    //            eight — so offering them here would be a word that cannot
+    //            reach the sound. They join this list the day the engine lane
+    //            registers them.
+    for (const id of ["orchestra_hit", "atmosphere", "soundtrack", "ice_rain",
+                      "crystal", "fantasia", "star_theme", "brightness",
+                      "goblin", "sea_shore"]) ids.add(id);
     for (const id of [...ids].sort()) INSTRCHOICES[id] = id.replace(/_/g, " ");
   }
   // THE POOL CHAIRS — which seats the song's INSTRUMENT POOL may cast. They

@@ -3697,6 +3697,45 @@ table.nu-trims{ color: var(--ink); }
 .nu-bench tr.is-rest .nu-pit, .nu-bench tr.is-rest .nu-velA,
 .nu-bench tr.is-hold .nu-pit, .nu-bench tr.is-hold .nu-velA{
   opacity: .3; pointer-events: none; }
+
+/* ==== THE LOOP STRIP (2026-08-30, the sampling round — ui/eight.js
+   loopStrip). The pitch bar's own grammar one control over: the same
+   --sl-line height, the same trough, the same hidden native inputs as the
+   keyboard channel, and THE TOUCH LAW's paint half — `touch-action: none`
+   on the strip and only the strip. Drawn only on sampled chairs (the JS
+   decides; there is no greyed variant of this control on purpose). ==== */
+.nu-loop{ display: flex; align-items: center; gap: 8px;
+  margin-block: 6px; min-inline-size: 0; }
+.nu-lplab{ font: var(--num-fw, 500) .75rem var(--mono);
+  color: var(--ink); opacity: .7; flex: none; }
+.nu-lps{ position: relative; display: block; flex: 1 1 auto;
+  block-size: var(--sl-line); min-inline-size: 60px;
+  touch-action: none; cursor: ew-resize; }
+.nu-lpb{ position: absolute; inset-inline: 0; display: block;
+  inset-block: calc((var(--sl-line) - var(--sl-trough)) / 2);
+  background: var(--faint); }
+.nu-lpf{ position: absolute; inset-block: 0; background: var(--hand);
+  display: block; }
+/* the two handles: caps a thumb can own, standing ON the value. The 2px
+   translate splits the pair optically when they meet at the GAP. */
+.nu-lph{ position: absolute; inset-block: -4px; inline-size: var(--bw-hard);
+  min-inline-size: 3px; background: var(--ink); display: block; z-index: 2;
+  transform: translateX(-50%); }
+.nu-lph.b{ background: var(--ink); }
+/* absent = the zone's own points: a reading, not a statement */
+.nu-loop.abs .nu-lpf{ opacity: .25; }
+.nu-loop.abs .nu-lph{ opacity: .45; }
+.nu-lpin{ position: absolute; inset: 0; inline-size: 100%; block-size: 100%;
+  margin: 0; opacity: 0; pointer-events: none; min-height: 0; min-block-size: 0; }
+.nu-lps:focus-within{ outline: var(--bw-hard) solid var(--hand);
+  outline-offset: 2px; border-radius: 2px; }
+.nu-lpon, .nu-lpr{ flex: none; font: var(--num-fw, 500) .75rem var(--mono); }
+/* the way back is VISIBILITY-hidden, never display-none: hiding it with
+   display re-lays the flex row and the strip changes width — which it did,
+   measured 2026-08-30 at 320, UNDER A MOVING FINGER (the first landed value
+   showed this word and the bar shrank 110px mid-drag). A control may not
+   resize because you are using it, so the word always holds its seat. */
+.nu-lpr.off{ visibility: hidden; }
 /* (`.nu-benchbar` stood here — the flex line that held the lattice pointer and
    the refused `♯ accidentals` toggle above every motif's rows. DELETED
    2026-08-28 with the control: Paul, *"accidentals need the chromatic alphabet

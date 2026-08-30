@@ -1935,6 +1935,19 @@
        FUNCTION parts, `simple`) carry no claim and pass, exactly as
        eraOK's own null branch reads. */
     const MOUTHY = (id) => !!(NI.PATCHES.mouth[id] || NI.PATCHES.voice[id]);
+    /* ...AND THE SAMPLED VOICES ARE VOICES AT THIS DOOR (2026-08-30, the
+       sampling round). `space_voice` is a RECORDING of people singing that
+       routes to the sampler rather than to a modelled throat, so it is in
+       none of the patch tables and walked straight past door 1 — a vocal
+       stab on a record whose own row says nobody sings. instruments.js
+       SAMPLED_VOICES is the one owner of "this id is people"; the widening
+       is door-1-only ON PURPOSE: `ownVoice` below keeps reading MOUTHY,
+       because a sampled aah seated as texture does not make the record a
+       vocal record (L3's claim, "a vocal-identity host seats a singer",
+       must not be conjured by a pad), it only makes it refusable where
+       singers are refused. test/instrumentation.test.js L6 holds this. */
+    const VOCAL = (id) => MOUTHY(id) ||
+      !!(NI.SAMPLED_VOICES && NI.SAMPLED_VOICES[id]);
     const ownVoice = !!(G.tone && G.tone.mouth) ||
       Array.from({ length: G.voices || 1 }, (_, v) => instrOf(gk, v)).some(MOUTHY);
     const voiceBarred = !ownVoice && !!(NC.INSTRUMENTAL[gk] || G.instrumental);
@@ -1949,7 +1962,7 @@
     const kin = (lk) => { const A = ancestry(gk, GENERATIONS), B = ancestry(lk, GENERATIONS);
       for (const k of A.keys()) if (B.has(k)) return true; return false; };
     const seated = (lk) => { const L = GENRES[lk]; if (!L) return false;
-      if (voiceBarred && MOUTHY(instrOf(lk, 0))) return false;               // door 1
+      if (voiceBarred && VOCAL(instrOf(lk, 0))) return false;                // door 1 (VOCAL: sampled voices too, 2026-08-30)
       if (hostYear != null && NC.genreYear(lk) != null && !kin(lk)) return false; // door 2
       return true; };
     const layerKeys = [];

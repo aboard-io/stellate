@@ -232,6 +232,15 @@
                         // beside the layer's own chips. A voice that says
                         // nothing adds no key, so every record written before
                         // this line compiles byte-identically.
+                        // ...PLUS THE LOOP (2026-08-30, the sampling round).
+                        // `voice.sound` now also carries `loopin`/`loopout`
+                        // (NUMBERS, 0..1 fractions of the zone — the loop
+                        // strip's own writes) and `looping` (a word,
+                        // fields.js VOX.looping). Same spread, same seam, no
+                        // new wire: audio/to-engine.js samplerVox turns them
+                        // into the pinned per-unit params loopa/loopb/loopon.
+                        // Absent is still today, byte for byte — proven per
+                        // anchor per seed by test/loop-words.test.js.
                         chairs: lines.map((c) => ({
                           ...(nativeOf(c, NATIVE)
                             ? { synth: nativeOf(c, NATIVE) }

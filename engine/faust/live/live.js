@@ -1968,6 +1968,18 @@
         // zone seconds — both ends shift together so the loop keeps its length.
         const lead = SP.zoneLeadIn ? SP.zoneLeadIn(buf, z, buf.sampleRate, zsr) : 0;   // guard: a stale sw-cached sampler.js
         const leadSec = lead ? lead / (buf.sampleRate || zsr) : 0;
+        // LOOP-POINT OVERRIDES (loopa/loopb/loopon stamped on the zone by
+        // state-engine samplerUnit): resolved by the ONE resolver both paths
+        // share (sampler.js resolveLoop — zero-cross snapped, so a moved point
+        // does not reintroduce the lead-in click documented there). A zone
+        // without the keys keeps the exact old arithmetic; SP.resolveLoop is
+        // guarded like zoneLeadIn above against a stale sw-cached sampler.js.
+        let loopF = { loop: !!z.loop, a: (z.loopStart || 0) / zsr + leadSec, b: (z.loopEnd || 0) / zsr + leadSec };
+        if (SP.hasLoopOv && SP.hasLoopOv(z) && SP.resolveLoop) {
+          const bufSr = buf.sampleRate || zsr;
+          const L = SP.resolveLoop(z, buf.getChannelData(0), bufSr / zsr, lead);
+          loopF = { loop: L.loop, a: L.loopStart / bufSr, b: L.loopEnd / bufSr };
+        }
         ent.player.note(buf, at(e.beat), { rate: SP.rateFor(z, midi), durSec: e.durB * spb,
           gain: (u.lvl != null ? u.lvl : 0.5) * (e.sets.gain != null ? e.sets.gain : 0.13),
           atk: u.sampler.atk, rel: u.sampler.rel, swell: !!u.sampler.swell, mello: u.sampler.mello || null,
@@ -1977,7 +1989,7 @@
           rsend: chained ? 0 : (u.rev || 0), dsend: chained ? 0 : (u.del || 0),
           bendFrom: e.bend ? e.bend.from : 0, bendMs: e.bend ? e.bend.ms : 0,
           offsetSec: leadSec,
-          loop: !!z.loop, loopStartSec: (z.loopStart || 0) / zsr + leadSec, loopEndSec: (z.loopEnd || 0) / zsr + leadSec });
+          loop: loopF.loop, loopStartSec: loopF.a, loopEndSec: loopF.b });
       }
       // found chops + beds (bed re-anchored at bar start of chord 0)
       // AUDIT lane for a found event — mirrors the ⓘ timeline's own split (a spoken/

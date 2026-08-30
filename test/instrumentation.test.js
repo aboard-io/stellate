@@ -82,7 +82,18 @@ const ok = (name, fn) => { try { fn(); pass++; console.log("  ok   " + name); }
   catch (e) { fail++; console.log("  FAIL " + name + "\n       " + e.message); } };
 
 /* ---- the owners, read, never re-listed ---------------------------------- */
-const isVoiceId = (id) => !!(NI.PATCHES.voice[id] || NI.PATCHES.mouth[id]);
+/* ...AND A RECORDING OF PEOPLE IS PEOPLE (2026-08-30, the sampling round).
+   instruments.js SAMPLED_VOICES names the ids that are sampled human voices
+   routed through the SAMPLER rather than a modelled throat (`space_voice` —
+   the vocal-stab recording), invisible to the patch tables by design. At
+   these doors they count as voices: L1 refuses them on barred records
+   exactly as it refuses a singer (Paul: "a VOCAL stab on an instrumental:
+   true row must be refused by the same doors"), L5 accepts "voice" as their
+   honest caption, and L3 counts a host that casts one as vocal-identity —
+   footwork, whose paid `cannot` is the case that opened this. L4 stays on
+   PATCHES.voice alone: a recording needs no throat cast. */
+const isVoiceId = (id) => !!(NI.PATCHES.voice[id] || NI.PATCHES.mouth[id] ||
+                             NI.SAMPLED_VOICES[id]);
 const ownVoice = (gk) => { const G = GENRES[gk];
   if (G.tone && G.tone.mouth) return true;
   for (let v = 0; v < (G.voices || 1); v++) if (isVoiceId(NI.instrOf(gk, v))) return true;
@@ -197,6 +208,54 @@ ok("L5 …and \"synth\" is only worn by a chair the record's own signature cover
     for (const v of lineChairs(doc)) if (v.instrument === "synth")
       assert.ok(GENRES[gk].synth && GENRES[gk].synth.dsp,
         gk + " chair " + v.name + " says synth but the anchor declares none");
+});
+
+/* ---- L6  the sampling round's vocal stab, both sides of the door --------
+   (2026-08-30.) The vocal stab is a SAMPLED_VOICES id. The refusal side:
+   `stgermain` is the catalogue's own statement of the law — instrumental:
+   true, its comment reading "the voices on it are sampled texture, not a
+   chair" — so no seed may seat one there (precompose door 1, the same door
+   that bars singers; L1 above holds it across the whole catalogue now that
+   isVoiceId counts recordings). The arrival side: `footwork` PAID its
+   `cannot` today — the chair must actually hold the recording at every
+   seed, because a cast that is declared and never arrives is the box's
+   characteristic bug. */
+ok("L6 the vocal stab arrives on footwork and is refused on stgermain", () => {
+  const SV = Object.keys(NI.SAMPLED_VOICES);
+  assert.ok(SV.length, "instruments.js SAMPLED_VOICES is empty");
+  for (const { gk, seed, doc } of docs) {
+    const held = lineChairs(doc).filter((v) => NI.SAMPLED_VOICES[v.instrument]);
+    if (gk === "footwork")
+      assert.ok(held.length, "footwork/" + seed + " seats no sampled voice — the paid cannot never arrived");
+    if (gk === "stgermain")
+      assert.strictEqual(held.length, 0,
+        "stgermain/" + seed + " seats " + held.map((v) => v.instrument) + " on an instrumental record");
+  }
+});
+
+/* ---- L7  the crate arrives, and an SFX/texture unit is not a voice ------
+   The three casts of the sampling round are tripwired by name — hardcorerave's
+   orchestra hit IN THE STAB CHAIR, dnb's atmosphere, vaporwave's sea_shore as
+   a pad — and the generic half holds for every sampled non-voice recording on
+   every record: `sampledId` claims it (it plays through the sampler, which is
+   what makes the loop strip honest) and its chair never wears the caption
+   "voice". */
+ok("L7 stabs/texture/sfx are seated where cast and never read as a voice", () => {
+  const want = { hardcorerave: ["orchestra_hit", "stab"],
+                 dnb: ["atmosphere", null], vaporwave: ["sea_shore", "pad"] };
+  for (const { gk, seed, doc } of docs) {
+    const w = want[gk];
+    if (w) {
+      const c = lineChairs(doc).find((v) => v.instrument === w[0]);
+      assert.ok(c, gk + "/" + seed + " never seats " + w[0]);
+      if (w[1]) assert.strictEqual((c.cast || {}).part, w[1],
+        gk + "/" + seed + " " + w[0] + " sits in " + (c.cast || {}).part + ", not " + w[1]);
+    }
+    for (const v of lineChairs(doc))
+      if (NI.sampledId(v.instrument) && !NI.SAMPLED_VOICES[v.instrument])
+        assert.ok(!/^voice\d*$/.test(v.name),
+          gk + "/" + seed + " " + v.instrument + " wears the caption \"voice\"");
+  }
 });
 
 console.log("\n" + pass + " passed, " + fail + " failed");

@@ -711,6 +711,61 @@
                "sound.release": row("rel", "release"),
                "sound.double": row("dbl", "doubling") };
     })(),
+    /* ---- 7 SOUND: THE LOOP, on the chairs that have one (2026-08-30) ------
+       Paul: "bring over sampling from the old version … add loop points and
+       make them editable." The PINNED CONTRACT (fields.js VOX `looping`'s own
+       header) names the engine params — loopa / loopb / loopon — and these
+       three sheets are the words' side of it: they read and write
+       `voice.sound.loopin` / `.loopout` / `.looping` beside atk/rel/dbl,
+       document.js's chairs seam carries the whole `sound` object as `vox`,
+       and audio/to-engine.js samplerVox is the one dispatch.
+
+       TWO OF THE THREE ARE NUMBERS. A loop point is a 0..1 fraction of the
+       zone and its real editor is the voice panel's loop STRIP (ui/eight.js),
+       which writes the exact number a finger lands on; the sheet surface
+       quantizes to eighths because a sheet is a finite offer, and get()
+       returns the stored number so a strip-written 0.37 is never rounded by
+       being LOOKED AT. Stored as NUMBERS, never strings — samplerVox passes
+       `typeof w === "number"` through and drops a string it has no word for.
+       `set` clamps to [0,1]; the in-before-out ordering is enforced where the
+       two values meet ONCE (the engine's own resolveLoop swap/clamp, and the
+       strip's handles cannot cross), not duplicated here.
+
+       ABSENT IS TODAY, and 0 is not absent: loopin 0 forces the loop to the
+       zone's start, which on a zone whose own loopStart sits mid-file is an
+       audible edit — so the empty detent is "" and only "" deletes.
+
+       These rows reach ONLY a sampled chair (a synth has no zone), unlike
+       their three siblings above — which is why ui/eight.js draws the strip
+       behind `sampledVoice` below and draws nothing on a synth chair rather
+       than a dead editor. */
+    ...(function () {
+      const EIGHTHS = () => [{ value: "", label: "—" },
+        ...[0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1]
+          .map((f) => ({ value: String(f), label: f === 0 ? "the zone's start"
+                          : f === 1 ? "the zone's end" : String(f) }))];
+      const num = (key, label) => ({
+        label, scope: "voice", chair: "line", absent: "",
+        values: EIGHTHS,
+        get: (doc, s) => { const v = (V(doc, s).sound || {})[key];
+          return typeof v === "number" ? String(v) : ""; },
+        set: (doc, s, v) => { const x = V(doc, s), o = { ...(x.sound || {}) };
+          const n = v === "" || v == null ? NaN : +v;
+          if (isFinite(n)) o[key] = Math.min(1, Math.max(0, n));
+          else delete o[key];
+          if (Object.keys(o).length) x.sound = o; else delete x.sound; } });
+      return {
+        "sound.loopin":  num("loopin", "loop in"),
+        "sound.loopout": num("loopout", "loop out"),
+        "sound.looping": { label: "looping", scope: "voice", chair: "line", absent: "",
+          values: () => [{ value: "", label: "—" },
+                         ...opts(Object.keys(NF.VOX.looping.t), NF.VOX.looping.labels)],
+          get: (doc, s) => (V(doc, s).sound || {}).looping || "",
+          set: (doc, s, v) => { const x = V(doc, s), o = { ...(x.sound || {}) };
+            if (v) o.looping = v; else delete o.looping;
+            if (Object.keys(o).length) x.sound = o; else delete x.sound; } },
+      };
+    })(),
 
     /* ---- 5 DEVELOPMENT (one voice, one section) ----
        Three sheets, not one, because the three vocabularies are three
@@ -843,6 +898,25 @@
     return { options, why, ungated, value: cur };
   }
 
+  /* WHICH CHAIR GETS THE LOOP STRIP (2026-08-30). One answer, owned here
+     because "what can be said on this chair" is this file's whole subject: a
+     line chair whose instrument the SAMPLER plays. The pieces are their own
+     owners' — `sampledId` is instruments.js's complement of the patch tables
+     (measured against recipeFor's routing, see its header), the fleet is the
+     caller's env exactly as instrOptions takes it (a native Faust voice is
+     not a recording), and "synth" is the signature sentinel sampledId already
+     refuses. ui/eight.js draws the strip on a yes and NOTHING on a no — a
+     synth chair gets no dead loop editor, which is the no-silent-grey law's
+     other half: absence of a control that cannot exist is not a greying. */
+  const sampledVoice = (doc, s, env) => {
+    const v = V(doc, s);
+    if (!v || v.kind !== "line") return false;
+    const id = v.instrument;
+    if (!id || ((env || {}).fleet || []).includes(id)) return false;
+    return NI.sampledId(id);
+  };
+
   return { docFeatures, evalRule, whyOf, reasonFor, WHY, SHEETS, optionsFor,
-           devSheetFor, HARMONIES, PARTS, lineCells, drumCells, cellsFor };
+           devSheetFor, HARMONIES, PARTS, lineCells, drumCells, cellsFor,
+           sampledVoice };
 });

@@ -598,6 +598,79 @@
     return n;
   }
 
+  // ---- LOOP-POINT OVERRIDES (2026-08-30, the sampling round) --------------
+  // The pinned per-unit params: `loopa` (loop start, 0..1 fraction of the
+  // ZONE), `loopb` (loop end, 0..1), `loopon` (0 = the zone's own default,
+  // 1 = force loop, 2 = force one-shot). state-engine samplerUnit is the ONE
+  // owner that reads them off the unit recipe and stamps them onto the zones
+  // (zones already travel to every consumer — press notes, stream notes,
+  // live's u.sampler.zones — so no play path grows a second channel), and
+  // THIS is the one resolver both play paths call. Absent keys => the callers
+  // never enter here and keep their exact old arithmetic, byte-identical.
+  //
+  // THE CLICK LAW (the MP3 lead-in comment above documents what a loop seam
+  // 25 ms off sounds like: "an audible click at every loop wrap"): a MOVED
+  // point is snapped to the nearest RISING zero crossing on both ends, so the
+  // seam matches in value (~0) and in slope sign. Zero-cross snap over a
+  // seam crossfade because it has to hold on BOTH paths: mixPCM's wrap is a
+  // modulo read a crossfade could straddle, but the live path is an
+  // AudioBufferSourceNode loop — no per-sample hook exists there, and baking
+  // a crossfaded copy of the buffer would be a second decoder by another
+  // name. Snap is a pure function of (decoded PCM, requested point): same
+  // seed, same bytes, no clock. The zone's OWN SF2 points are never snapped —
+  // they were authored loop-clean and must stay bit-identical.
+  const ZC_WIN = 1024;   // ±23 ms at 44.1k — wider than any musical cycle below ~43 Hz
+  function snapZC(src, idx, lo, hi) {
+    const i0 = Math.max(lo + 1, Math.min(hi, Math.round(idx)));
+    const from = Math.max(lo + 1, i0 - ZC_WIN), to = Math.min(hi, i0 + ZC_WIN);
+    for (let d = 0; i0 - d >= from || i0 + d <= to; d++) {
+      const a = i0 - d, b = i0 + d;
+      if (a >= from && src[a - 1] <= 0 && src[a] > 0) return a;
+      if (d && b <= to && src[b - 1] <= 0 && src[b] > 0) return b;
+    }
+    return i0;   // no crossing in the window (DC-offset material): the raw point
+  }
+  // z: the zone (may carry loopa/loopb/loopon); src: the DECODED samples the
+  // caller plays (Float32Array / getChannelData(0)); zk: zone->buffer rate
+  // scale; lead: decoder lead-in in BUFFER samples (zoneLeadIn). Returns
+  // {loop, loopStart, loopEnd} in BUFFER samples. `nosnap` exists for the
+  // reach probe to measure the click the snap removes — no engine path sets it.
+  function resolveLoop(z, src, zk, lead, nosnap) {
+    // the base geometry, EXACTLY as the un-overridden path computes it
+    let loopEnd = Math.min(z.loopEnd * zk + lead, src.length - 1);
+    let loopStart = z.loopStart * zk + lead;
+    let loop = !!(z.loop && loopEnd > loopStart + 8);
+    // the ZONE's length in buffer samples: z.len is the true decoded count at
+    // z.sr; without it (found-crate zones, pre-transcode wavs) the buffer past
+    // the lead-in IS the zone.
+    const zlen = z.len ? z.len * zk : (src.length - lead);
+    let moved = false;
+    if (z.loopa != null || z.loopb != null) {
+      let fa = z.loopa != null ? clampS(z.loopa, 0, 1) : (loop ? (loopStart - lead) / zlen : 0);
+      let fb = z.loopb != null ? clampS(z.loopb, 0, 1) : (loop ? (loopEnd - lead) / zlen : 1);
+      if (fb < fa) { const t = fa; fa = fb; fb = t; }   // an editor may cross the handles
+      loopStart = lead + fa * zlen;
+      loopEnd = Math.min(lead + fb * zlen, src.length - 1);
+      loop = loopEnd > loopStart + 8;
+      moved = true;
+    }
+    if (z.loopon === 2) loop = false;                    // force one-shot
+    else if (z.loopon === 1) {
+      if (!loop && !moved) {                             // force loop, no honest points: the whole zone
+        loopStart = lead; loopEnd = Math.min(lead + zlen, src.length - 1);
+        moved = true;
+      }
+      loop = loopEnd > loopStart + 8;
+    }
+    if (moved && loop && !nosnap) {
+      loopStart = snapZC(src, loopStart, 0, src.length - 1);
+      loopEnd = snapZC(src, loopEnd, 0, src.length - 1);
+      loop = loopEnd > loopStart + 8;
+    }
+    return { loop, loopStart, loopEnd };
+  }
+  const hasLoopOv = (z) => z.loopa != null || z.loopb != null || !!z.loopon;
+
   // ---- (a) press path: notes -> Float32Array buses -----------------------
   // notes: [{tSec, durSec, freq, amp, atk, rel, zones, sr(zoneFileRate)}]
   // buffers: {srcId: Float32Array mono at engine sr}
@@ -707,9 +780,16 @@
       const zsr = z.sr || n.sr || sr;
       const zk = zsr && zsr !== sr ? sr / zsr : 1;
       const lead = zoneLeadIn(src, z, sr, zsr);
-      const loopEnd = Math.min(z.loopEnd * zk + lead, src.length - 1);
-      const loopStart = z.loopStart * zk + lead;
-      const loop = z.loop && loopEnd > loopStart + 8;
+      let loopEnd = Math.min(z.loopEnd * zk + lead, src.length - 1);
+      let loopStart = z.loopStart * zk + lead;
+      let loop = z.loop && loopEnd > loopStart + 8;
+      // LOOP-POINT OVERRIDES (see resolveLoop above): only a zone carrying
+      // loopa/loopb/loopon enters — every other zone keeps the exact float
+      // arithmetic of the three lines above, byte-identical.
+      if (hasLoopOv(z)) {
+        const L = resolveLoop(z, src, zk, lead);
+        loop = L.loop; loopStart = L.loopStart; loopEnd = L.loopEnd;
+      }
       const loopLen = loop ? loopEnd - loopStart : 0;
       const g = (n.gain != null ? n.gain : 0.5) * GAIN;
       // per-note channel strip (fresh state each note -> window-independent;
@@ -1434,6 +1514,11 @@
   }
 
   return { midiOfFreq, zoneFor, rateFor, zoneLeadIn, mixPCM, decodeUrlRaw, SamplerLive, buildInsertNodes, GAIN,
+    // LOOP-POINT OVERRIDES: the ONE resolver of a zone's effective loop
+    // geometry (loopa/loopb/loopon, zero-cross snapped) — mixPCM calls it
+    // internally, live.js calls it for the AudioBufferSourceNode points, the
+    // reach probe measures it. hasLoopOv is the entry test both share.
+    resolveLoop, hasLoopOv,
     // THE STRIP, AS A STAGE ANYONE CAN RUN (2026-08-24, the desk-EQ round).
     // These were reachable only under `__test`, which is why the strip could
     // only ever run where the sampler ran — inside mixPCM's per-note loop — and

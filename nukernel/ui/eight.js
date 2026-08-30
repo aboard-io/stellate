@@ -5403,6 +5403,172 @@ function benchVel(key, aria, get, set, commitFn) {
   return { el: wrap, paint, input: inp };
 }
 
+/* ---- THE LOOP STRIP (2026-08-30, the sampling round) ----------------------
+   Paul: "bring over sampling from the old version … add loop points and make
+   them editable." One horizontal bar standing for the seated recording's
+   ZONE, two handles — loop in, loop out — and the looping word beside it.
+   It writes `voice.sound.loopin` / `.loopout` as NUMBERS (0..1 fractions of
+   the zone) and `.looping` as a fields.js word, which is the same channel
+   the three sampler menus above it ride: the chairs seam carries `sound`
+   whole as `vox`, audio/to-engine.js samplerVox turns it into the pinned
+   per-unit params loopa/loopb/loopon, and test/loop-words.test.js measures
+   the whole run so the strip can never be a slider that lies.
+
+   DRAWN ONLY ON A SAMPLED CHAIR (NuAvail.sampledVoice — instruments.js's
+   complement of the patch tables, measured against the engine's routing). A
+   synth chair gets NOTHING here, not a grey editor: a zone is the one thing
+   a synth does not have, and absence of an impossible control is not a
+   silent greying (the benchRefusal tombstone below has the law's two
+   permitted answers; this is the first).
+
+   THE TOUCH LAW, verbatim from benchPitch/benchVel above: the strip takes
+   setPointerCapture on pointerdown, every value is read against the BAR's
+   own rect, `touch-action: none` is declared on the strip and only the
+   strip (nu.css .nu-lps), and the two native <input type=range> are the
+   keyboard channel — opacity 0, pointer-events none, focusable, one paint
+   path for both. A two-handle strip is a scroll-steal magnet, so the
+   browser gate (test/loopstrip.browser.js) drags a handle with real CDP
+   touches at 320 and 1280 and asserts scrollY never moves.
+
+   ABSENT IS TODAY. Until a handle is dragged the document carries no loop
+   key: the handles park at 0 and 1 wearing `.abs` (dimmed — a reading of
+   the zone's own points, not a statement), and the ↺ word puts a stated
+   pair back to absent rather than to "0 and 1", because loopin 0 is a FACT
+   (force the loop to the zone's start) and absence is a different one (the
+   zone's own loopStart). Same argument as avail.js's own header. The
+   looping word cycles — (the zone's own) → loops → one-shot — through the
+   same three values loopon carries. */
+function loopStrip(voice) {
+  const wrap = el("div", null, "nu-loop");
+  const S = () => voice.sound || {};
+  const put = (k, v) => {
+    const o = { ...(voice.sound || {}) };
+    if (v == null) delete o[k]; else o[k] = v;
+    if (Object.keys(o).length) voice.sound = o; else delete voice.sound;
+  };
+  const GAP = 0.01;                    // handles may meet but never cross
+  const r3 = (v) => +Math.min(1, Math.max(0, v)).toFixed(3);
+  const aOf = () => (typeof S().loopin === "number" ? S().loopin : 0);
+  const bOf = () => (typeof S().loopout === "number" ? S().loopout : 1);
+  const stated = () => typeof S().loopin === "number" ||
+                       typeof S().loopout === "number";
+
+  wrap.append(el("span", "loop", "nu-lplab"));
+  const strip = el("span", null, "nu-lps");
+  strip.dataset.k = "loopstrip" + voice.name;
+  const bar = el("i", null, "nu-lpb");
+  const fill = el("i", null, "nu-lpf");
+  const ha = el("b", null, "nu-lph a");
+  const hb = el("b", null, "nu-lph b");
+  bar.append(fill, ha, hb);
+  const mkIn = (which, aria) => {
+    const inp = document.createElement("input");
+    inp.type = "range"; inp.min = "0"; inp.max = "1"; inp.step = "0.01";
+    inp.className = "nu-lpin"; inp.dataset.k = which + voice.name;
+    inp.setAttribute("aria-label", voice.name + " " + aria);
+    return inp;
+  };
+  const inA = mkIn("loopin", "loop in");
+  const inB = mkIn("loopout", "loop out");
+  strip.append(bar, inA, inB);
+  wrap.append(strip);
+
+  // the looping word — the third value of the contract, cycled like a chip
+  const LW = NuFields.VOX.looping.labels;
+  const onBtn = el("button", "", "nu-lpon");
+  onBtn.type = "button"; onBtn.dataset.k = "looping" + voice.name;
+  const CYC = { "": "loop", loop: "once", once: "" };
+  onBtn.addEventListener("click", () => {
+    put("looping", CYC[S().looping || ""] || null); changed();
+  });
+  // ...and the way back to the zone's own points, only when a point is stated
+  const reset = el("button", "↺ zone's own", "nu-lpr");
+  reset.type = "button"; reset.dataset.k = "loopreset" + voice.name;
+  reset.setAttribute("aria-label", voice.name + " loop points back to the zone's own");
+  reset.addEventListener("click", () => {
+    put("loopin", null); put("loopout", null); changed();
+  });
+  wrap.append(onBtn, reset);
+
+  const pctText = (f) => Math.round(f * 100) + "% of the zone";
+  function paint() {
+    const a = aOf(), b = bOf(), st = stated();
+    ha.style.insetInlineStart = (a * 100) + "%";
+    hb.style.insetInlineStart = (b * 100) + "%";
+    fill.style.insetInlineStart = (a * 100) + "%";
+    fill.style.inlineSize = (Math.max(0, b - a) * 100) + "%";
+    wrap.classList.toggle("abs", !st);
+    reset.classList.toggle("off", !st);
+    inA.value = String(a); inB.value = String(b);
+    inA.setAttribute("aria-valuetext",
+      (typeof S().loopin === "number" ? "loop in at " + pctText(a)
+        : "the zone's own loop start"));
+    inB.setAttribute("aria-valuetext",
+      (typeof S().loopout === "number" ? "loop out at " + pctText(b)
+        : "the zone's own loop end"));
+    const w = S().looping || "";
+    onBtn.textContent = w ? LW[w] : "—";
+    onBtn.setAttribute("aria-label", voice.name + " looping: " +
+      (w ? LW[w] : "the zone's own"));
+  }
+
+  // the touch law: capture on the strip, value from the bar's own rect, the
+  // nearest handle takes the finger — a tap lands it, a drag rides it
+  let drag = null, dirty = false, grect = null;
+  /* THE RECT IS TAKEN ONCE PER GESTURE, at pointerdown — measured bug,
+     2026-08-30, at 320 wide: the first landed value made paint() show the ↺
+     word, the flex row re-laid, the bar SHRANK 110px under the still-moving
+     finger, and every following move read f=1 off the new geometry. A
+     control may not change size because you are using it (the reset word
+     now reserves its space in CSS too — .nu-lpr.off is visibility, not
+     display), and the gesture's own frame of reference is the rect the
+     finger landed in. */
+  const fOf = (e) => {
+    const r = grect || bar.getBoundingClientRect();
+    return Math.max(0, Math.min(1, (e.clientX - r.left) / (r.width || 1)));
+  };
+  const land = (f) => {
+    if (drag === "a") {
+      const v = r3(Math.min(f, bOf() - GAP));
+      if (S().loopin !== v) { put("loopin", v); dirty = true; paint(); }
+    } else if (drag === "b") {
+      const v = r3(Math.max(f, aOf() + GAP));
+      if (S().loopout !== v) { put("loopout", v); dirty = true; paint(); }
+    }
+  };
+  strip.addEventListener("pointerdown", (e) => {
+    grect = bar.getBoundingClientRect();
+    const f = fOf(e);
+    drag = Math.abs(f - aOf()) <= Math.abs(f - bOf()) ? "a" : "b";
+    try { strip.setPointerCapture(e.pointerId); } catch (err) {}
+    land(f);
+    e.preventDefault();
+  });
+  strip.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    if (!strip.hasPointerCapture || !strip.hasPointerCapture(e.pointerId)) return;
+    land(fOf(e));
+  });
+  const done = () => {
+    drag = null; grect = null;
+    if (dirty) { dirty = false; changed(); }   // ONE recompile per gesture
+  };
+  strip.addEventListener("pointerup", done);
+  strip.addEventListener("pointercancel", done);
+  // the keyboard channel writes the same facts through the same put()
+  inA.addEventListener("input", () => {
+    put("loopin", r3(Math.min(+inA.value, bOf() - GAP))); paint();
+  });
+  inB.addEventListener("input", () => {
+    put("loopout", r3(Math.max(+inB.value, aOf() + GAP))); paint();
+  });
+  inA.addEventListener("change", () => changed());
+  inB.addEventListener("change", () => changed());
+
+  paint();
+  return wrap;
+}
+
 /* (`benchRefusal` STOOD HERE — a `.nu-benchbar` line above every motif's rows
    carrying "pitch lattice — aeolian, set under Harmony" and a permanently
    disabled `♯ accidentals` button with its reason printed beside it. DELETED
@@ -8279,6 +8445,16 @@ function bandBlock(parent) {
     selectRow(panel, null, [shSpec("sound.attack", { voice: voice.name }),
                             shSpec("sound.release", { voice: voice.name }),
                             shSpec("sound.double", { voice: voice.name })]);
+  /* ...AND THE LOOP, on the chairs that have one (2026-08-30, the sampling
+     round). Behind `sampledVoice` and not a facet flag: the strip exists
+     only where the SAMPLER plays the chair — a synth has no zone, so a
+     synth chair gets no editor at all rather than a grey one (the
+     loopStrip header carries the whole argument, and the avail.js sheets
+     `sound.loopin`/`sound.loopout`/`sound.looping` are the words it
+     writes). */
+  if (!onForm && kind === "line" && fInst &&
+      NuAvail.sampledVoice(DOC, { voice: voice.name }, ENV))
+    panel.append(loopStrip(voice));
   // ...and these two are NOT on the evening list and stay sheets. The drum kit
   // in particular: Paul's question about it in the same message was "can i pick
   // more than one options for the drum kit?", and more-than-one is a row of

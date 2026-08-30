@@ -325,6 +325,32 @@
     // piano" — needs no row here: it has carried the Rhodes' [28, 96] with the
     // other two EPs since the table was written.)
     synth_strings_2: [36, 96], space_voice: [48, 88],
+    // ---- THE SAMPLING CRATE (2026-08-30 — texture / stabs / SFX) ----------
+    // Ten recordings fields.js INSTRCHOICES now offers (its own comment holds
+    // the survey and the measured gap). No parent INSTRUMENT_RANGE row exists
+    // for any of them, so every window below is this table's own policy for
+    // the parent-unlisted: the instrument's honest compass intersected with
+    // the zones the library actually has — MEASURED 2026-08-30 off
+    // samplerLibFor(K,1).samplerLib, zone roots quoted per row.
+    // The rave stab: two UNLOOPED zones rooted 68/80 — a hit, played where a
+    // hand plays it, one octave either side of middle C.
+    orchestra_hit: [48, 84],
+    // the GM FX shelf — looped zones, beds by construction. Multi-zone rows
+    // (roots quoted) take the pads' keyboard-honest window; the one-zone rows
+    // (soundtrack, brightness — a single zone rooted 84, warm_pad's own case)
+    // take warm_pad's reasoning exactly.
+    atmosphere: [36, 96],            // roots 40..84
+    soundtrack: [36, 96],            // one zone, root 84
+    ice_rain: [36, 96],              // roots 45..84
+    crystal: [45, 96],               // roots 45..93
+    fantasia: [36, 96],              // roots 45..84
+    star_theme: [36, 96],            // roots 40..84
+    brightness: [36, 96],            // one zone, root 84
+    goblin: [48, 96],                // roots 72..84, zones spanning the keyboard
+    // the SFX recording: an unpitched wash (two full-keyboard zones rooted
+    // 73/80). The window hugs the roots so a seated wave stays a wave rather
+    // than a rumble or a hiss two octaves off its own recording.
+    sea_shore: [48, 84],
   };
   // `STRETCH_UP = 6` / `STRETCH_DOWN = 12` STOOD HERE AND ARE RETIRED,
   // 2026-08-28: how far past its own zone ROOTS a sample may be stretched and
@@ -1366,6 +1392,38 @@
   const PATCHES = { synth: PATCH_SYNTH, model: PATCH_MODEL,
                     voice: PATCH_VOICE, mouth: PATCH_MOUTH };
 
+  /* ---------- WHICH IDS ARE THE SAMPLER'S, AS ONE PREDICATE ----------------
+     (2026-08-30, the sampling round.) The page needs one answer to "does this
+     chair's id play through the sampler" — the loop strip is drawn on exactly
+     those chairs and no dead editor on a synth (the no-silent-grey law) — and
+     the answer is NOT a list, because a list beside the four patch tables is
+     the second copy that drifts. It is the patch tables' own complement: an id
+     none of the four claims is what audio/to-engine.js recipeBase hands to the
+     sampler library. The fields.js guard keeps a junk id (which recipeBase
+     would report `unrouted`, not sample) from answering yes; "synth" is the
+     signature-synth sentinel and is nobody's recording.
+     MEASURED 2026-08-30 and gated (test/loop-words.test.js): over every
+     INSTRCHOICES id, sampledId(id) === (recipeFor's source starts "sampler:"),
+     so the page's predicate and the engine's routing cannot disagree without
+     a gate going red. */
+  const sampledId = (id) => !!id && id !== "synth" &&
+    Object.prototype.hasOwnProperty.call(NF.INSTRCHOICES, String(id)) &&
+    !(PATCH_SYNTH[id] || PATCH_MODEL[id] || PATCH_VOICE[id] || PATCH_MOUTH[id]);
+
+  /* ---------- ...AND WHICH OF THEM ARE RECORDINGS OF PEOPLE ----------------
+     `space_voice` is the one voice-family id the patch tables leave to the
+     sampler (the STRIPS header's own measurement: "every `vox` id but
+     `space_voice` is claimed upstream"), which made it invisible to every
+     door that asks "is this a voice" through PATCHES.voice/.mouth — so a
+     VOCAL STAB could be seated on a record whose own row says nobody sings.
+     Paul, 2026-08-30: a vocal stab on an `instrumental: true` row is refused
+     by the same doors that keep singers off it. This table is the fact those
+     doors read (precompose.js door 1, test/instrumentation.test.js L6); it is
+     NOT folded into PATCH_VOICE because these ids must keep ROUTING to the
+     sampler — a stab is a recording re-triggered, not a modelled throat —
+     and PATCH_VOICE is a routing table before it is anything else. */
+  const SAMPLED_VOICES = { space_voice: 1 };
+
   // CHANNEL STRIPS — STRIP_PROFILES lifted from engine/faust/voices/
   // state-engine.js and handed to SamplerLive as `strip`. sampler.js then
   // builds the real chain (HPF/LPF/EQ -> saturation -> compressor ->
@@ -1542,7 +1600,14 @@
     [/strings|orchestra|tremolo/, "strings"],
     // the soft synth patches that are pads by behaviour even when the genre
     // does not call the voice one (ambient's bowed glass, techno's metal pad)
-    [/halo|_pad$|glass|atmosph|sweep|warm_pad/, "pad"],
+    // ...and THE SAMPLING CRATE's beds (2026-08-30): the GM FX shelf and the
+    // seashore are TEXTURE — looped washes that carry the space — so they
+    // take the pad strip (declutter the lows, wide air), not the lead's
+    // 200 Hz high-pass and presence lift, which on a bed is hiss. Every id
+    // here is in fields.js INSTRCHOICES' crate list; `orchestra_hit` is NOT —
+    // /orchestra/ two rows up already files the hit under `strings`, which is
+    // what the recording is (a section, struck once).
+    [/halo|_pad$|glass|atmosph|sweep|warm_pad|soundtrack|ice_rain|sea_shore|crystal|fantasia|star_theme|brightness|goblin/, "pad"],
     [/piano|grand|rhodes|_ep|_ep_\d|epiano|clav|harpsi|honky|legend|felt|bandoneon|accordion/, "keys"],
   ];
   // WHICH FAMILY A VOICE IS IN, as one answer. `pad` is a fact about the ROLE
@@ -1622,9 +1687,13 @@
   // `MACHINEMIX` and `mixFor` stay, and they are WIRED: audio/to-engine.js reads
   // the merge once per drum hit. An export is the only evidence most readers
   // ever get that a table is live, so nothing may be exported that nothing reads.
+  // `sampledId` and `SAMPLED_VOICES` joined 2026-08-30 (the sampling round)
+  // and both are read the day they ship: sampledId by avail.js sampledVoice
+  // (which ui/eight.js draws the loop strip against) and by the seam gate;
+  // SAMPLED_VOICES by precompose.js door 1 and instrumentation L6.
   const api = { instrOf, isSection, throatOf, throatKeyOf, voicedAs, BASS_INSTR, FONTS, BASSSYNTH, PATCHES, STRIPS,
                 stripFor, familyOf, RANGES, SAMPLED_INSERTS, PEDAL, BOARDS, boardOf,
-                DRUMMIX, MACHINEMIX, mixFor };
+                DRUMMIX, MACHINEMIX, mixFor, sampledId, SAMPLED_VOICES };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuInstruments = api;
 })(typeof window !== "undefined" ? window : globalThis);

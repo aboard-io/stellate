@@ -1276,6 +1276,27 @@ export function samplerVox(vox) {
   const r = secs("rel"); if (r != null) out.release = r;
   const d = NF.VOXDOUBLE && NF.VOXDOUBLE[vox.dbl];
   if (d) out.inserts = [{ type: "chorus", ...d }];
+  /* THE LOOP WORDS (2026-08-30, the sampling round — the pinned contract).
+     "NOTHING ELSE IS OFFERED. Loop points … have no port on this engine" was
+     true when the header above was written and is not any more: state-engine
+     samplerUnit now reads three per-unit params — `loopa` (loop start, 0..1
+     fraction of the zone), `loopb` (loop end, 0..1), `loopon` (0 = the zone's
+     own default, 1 = force loop, 2 = force one-shot) — stamps them onto the
+     zones, and sampler.js resolveLoop (zero-cross snapped) is what they mean
+     on BOTH play paths. This is the dispatch for the page's words — fields.js
+     sheets `sound.loopin` / `sound.loopout` / `sound.looping`, and OWNS the
+     vocabulary exactly as it owns atk/rel above; a word missing from its
+     table (or a table not yet sheeted) writes nothing and is byte-identical.
+     A NUMBER passes through directly, because a loop point is the one control
+     here that is EDITABLE rather than worded — the page's loop handles hand
+     0..1 fractions down the same channel the words ride, one owner, no
+     second path. */
+  const lv = (k) => { const w = vox[k]; if (w == null) return null;
+    if (typeof w === "number" && isFinite(w)) return w;
+    const t = V[k] && V[k].t; return (t && t[w] != null) ? t[w] : null; };
+  const la = lv("loopin");  if (la != null) out.loopa = Math.min(1, Math.max(0, la));
+  const lb = lv("loopout"); if (lb != null) out.loopb = Math.min(1, Math.max(0, lb));
+  const lo = lv("looping"); if (lo === 1 || lo === 2) out.loopon = lo;
   return Object.keys(out).length ? out : null;
 }
 
@@ -1393,6 +1414,42 @@ function recipeBase(chair, seat, lib, unrouted) {
   }
   const spec = lib[seat.instr];
   if (!spec) {
+    // ---- THE FOUND CRATE AS UNITS (2026-08-30, the sampling round) --------
+    // Texture, vocal stabs and SFX: a chair may be seated on a found-crate id
+    // — `found:bbc_arcade_85`, or the bare registry id once the GM library has
+    // declined it — and it becomes a ONE-ZONE SAMPLER unit through the exact
+    // lane every sampled instrument already rides: state-engine samplerUnit,
+    // sampler.js on both play paths, the zone decode via state.foundSources
+    // (press bedPath / live kickSamplerBuf — NO second decoder). The registry
+    // (__REGISTRY.SOURCES = the beds, .SAMPLES = the one-shots) is the one
+    // catalogue, exactly as it is for the bed layer.
+    //   root 60: the file plays verbatim at middle C and repitches from there
+    //   (rateFor's +16 st cap and the register fold both apply — honest).
+    //   A BED loops by default (loopa 0 / loopb 1 — the whole file through
+    //   resolveLoop's zero-cross snap, so the wrap doesn't click); a SAMPLE is
+    //   a one-shot. Both yield to the unit's own loopa/loopb/loopon since the
+    //   samplerUnit stamp spreads OVER the zone's keys — the loop-point
+    //   overrides are the editor for found units too, one owner.
+    // `foundSrc` rides the recipe so toEngine can put the file on
+    // state.foundSources; the parent ignores unknown recipe keys.
+    const fid = String(seat.instr || "").replace(/^found:/, "");
+    const RGY = G.__REGISTRY || {};
+    const frow = (RGY.SOURCES || {})[fid] || (RGY.SAMPLES || {})[fid];
+    if (frow) {
+      const bed = !!(RGY.SOURCES || {})[fid];
+      // the src entry mirrors what the kernel itself writes for each family
+      // (genre-kernel: a SOURCES bed decodes by url, a SAMPLES one-shot by
+      // samplePath under found/samples/) — same fields, same decode doors.
+      return { role, m: { ...tone, model: "sampler",
+          sampler: { id: "found:" + fid, sr: 44100,
+            zones: [{ srcId: fid, root: 60, lo: 0, hi: 127,
+                      ...(bed ? { loop: 1, loopa: 0, loopb: 1 } : {}) }] },
+          foundSrc: { id: fid, label: frow.label || fid, url: frow.url || "",
+                      ...(frow.file ? { samplePath: "found/samples/" + frow.file,
+                                        kind: frow.kind, durSec: frow.durSec } : {}),
+                      vol: 0, pitch: 1, stretch: 0.5, cutoff: 18000 } },
+        source: "found:" + fid };
+    }
     unrouted.push({ what: "instrument:" + seat.instr, why: "not in the parent sampler library", chair });
     return { role, m: { ...tone }, source: "unrouted" };
   }
@@ -1699,6 +1756,20 @@ export function toEngine(plan, deps) {
   // them. Either way the parent's own bass unit is resolved from something real,
   // because its reverb budget and its stereo pass read it.
   state.instruments.bass = bassSeat ? bassSeat.m : (firstOf("bass") || {});
+
+  // FOUND UNITS RIDE THE CRATE. A chair seated on a found source (recipeBase's
+  // found branch puts `foundSrc` on the recipe) needs its file in
+  // state.foundSources — that list is the ONE decode registry on both engines
+  // (press decodeInputs walks it; live kickSamplerBuf looks a zone's srcId up
+  // in it, and an id absent at first ask would be silent for the session).
+  // vol 0: the file arrives as a sampler ZONE, never as a bed behind the
+  // record. No found chairs => no push => state byte-identical.
+  for (const c of chairs.values())
+    if (c.m && c.m.foundSrc && !state.foundSources.some((s) => s.id === c.m.foundSrc.id))
+      state.foundSources.push(c.m.foundSrc);
+  if (bassSeat && bassSeat.m && bassSeat.m.foundSrc
+      && !state.foundSources.some((s) => s.id === bassSeat.m.foundSrc.id))
+    state.foundSources.push(bassSeat.m.foundSrc);
 
   // ---- 6. the unit table ---------------------------------------------------
   // The parent builds the whole table (drums, the perc lane, stab, sfx, the

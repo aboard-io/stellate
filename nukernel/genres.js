@@ -611,7 +611,18 @@
       // is that machine's own patch id and to-engine.js plays it on the
       // parent's `solina`, so the pad stops being a sampled string section
       // pitched down and becomes the box it always was.
-      instr: ["synth_strings_1", "legend_ep_2"],
+      // ...AND A THIRD CHAIR IS THE FOUND SOUND, 2026-08-30 (the sampling
+      // round — Paul: "we use it for texture"). Vaporwave's identity has
+      // always been half found sound — the mall, the weather channel, the
+      // beach on the Floral Shoppe sleeve — and this record carried none of
+      // it. `sea_shore` (GM 122, the SFX bank's one registered recording) is
+      // the bed: two looped full-keyboard zones, routed `sampler:sea_shore`
+      // (measured 2026-08-30), seated as a second pad under the machine so
+      // the loop strip can move its points and `looping` can hold it under
+      // the gate. voices: 3 is declared with it — the third entry was
+      // unreachable without the count.
+      voices: 3,
+      instr: ["synth_strings_1", "legend_ep_2", "sea_shore"],
       drumkit: "room",              // the SAMPLED kit, not a sine and some noise
       // BOTH VOICES SIT LOW. The pad was always down here; the melody was an
       // octave above it, up where the DX7's declared freq ceiling (1000 Hz) is
@@ -619,7 +630,9 @@
       // slowed down. Vaporwave is a record playing at the wrong speed, and the
       // wrong speed is DOWN — the line belongs under the pad's top, not over it.
       entry: () => 0, reg: () => -1,
-      realize: v => (v === 0 ? "pad" : "line"),
+      // v1 is the DX7 line; v0 (the machine) and v2 (the sea) are pads —
+      // same answer for the two voices that existed before 2026-08-30.
+      realize: v => (v === 1 ? "line" : "pad"),
       roots: [3, 4, 2, 5],   // iv v III VI
       // FM, from a real cartridge. "E.PIANO 1" is the DX7 patch vaporwave is
       // actually made of; the pad stays off the DX7 because a DX7 node is
@@ -630,7 +643,8 @@
              h: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
       fill: { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0] }, // bar 4: the snare answers itself
       tone: { wave: "sawtooth", cut: 1500, q: 2.2, atk: .05, rel: 1.6, gain: .20, verb: .55 },
-      words: ["chords from the harmony", "a moving 8-step window on the phrase"],
+      words: ["chords from the harmony", "a moving 8-step window on the phrase",
+              "the sea, looped under the record"],
       // THE WINDOW MOVES. A fixed excerpt(2,8) looped ONE half-phrase for the
       // whole section — six pitches, eight times over — and threw steps 11..16
       // of the seed away entirely, so writing a melody changed almost nothing.
@@ -1828,7 +1842,18 @@
       // plays on the parent's detuned `supersaw`, is literally that. The
       // synced-fifths lead it used to cast belongs to techno's stab and put an
       // interval nobody wrote into every jungle line.
-      instr: ["saw_wave", "echo_drops"],
+      // ...AND THE PADS ARE A SAMPLE, 2026-08-30 (the sampling round). The
+      // words below have said "the pads drifting over the break" since the
+      // row was written, and `echo_drops` never played a pad: PATCH_SYNTH
+      // routes it to a BELL model. Jungle's drift is sampled texture — the
+      // string-wash and choir beds every '94 dubplate floats over the amens
+      // — and `atmosphere` is that shelf's own recording: looped zones that
+      // sustain under the gate (measured, samplerLib 2026-08-30), routed
+      // `sampler:atmosphere`, so the chair is a sampled unit with the loop
+      // strip on it. (A VOCAL bed is refused here on purpose: dnb is in
+      // compose's INSTRUMENTAL table, and the sampling round's door treats a
+      // recording of people as people — see precompose door 1.)
+      instr: ["saw_wave", "atmosphere"],
       drumkit: "electronic",
       entry: v => v, reg: v => v - 2, realize: () => "line",
       harmony: "modal",
@@ -13371,7 +13396,19 @@
       // `winstons` (Washington 1969), same edge as dnb one row over.
       parents: { acid: 0.35, techno: 0.3, dub: 0.2, winstons: 0.2 },
       wants: ["belgian hoover techno"],
-      instr: ["saw_wave", "polysynth"],
+      // THE STAB IS THE ORCHESTRA HIT, 2026-08-30 (the sampling round —
+      // Paul: "we use it … as way of doing vocal stabs and SFX"). The stab
+      // chair held `polysynth`, a synth patch wearing a rave's clothes; the
+      // 1991 record's actual stab vocabulary is the SAMPLED orchestra hit —
+      // Altern-8, SL2, every white-label of the year — and `orchestra_hit`
+      // is that recording: two UNLOOPED zones, a hit by construction, the
+      // first cast of the sampling crate fields.js INSTRCHOICES opened
+      // today. MEASURED: recipeFor routes it `sampler:orchestra_hit`, so the
+      // chair is a sampled unit and the loop strip (one-shot by its zones'
+      // own flag) is drawn on it. The word below changes with the sound —
+      // the hoover this row never actually played stays on `wants`, where
+      // it has honestly lived all along.
+      instr: ["saw_wave", "orchestra_hit"],
       drumkit: "electronic",
       entry: v => v, reg: v => (v === 0 ? 0 : 1), realize: () => "line",
       part: ["riff", "stab"],
@@ -13383,7 +13420,7 @@
       kitVel: { s: [0,0,0,0, 8,0,0,4, 0,4,0,0, 8,0,5,0] },
       fill: { s: [0,1,0,1, 1,0,1,1, 0,1,1,0, 1,1,1,1] },
       tone: { wave: "sawtooth", cut: 2800, q: 1.6, atk: .002, rel: .35, gain: .28, verb: .3 },
-      words: ["the riff, rushing", "the hoover, stabbing the drop"],
+      words: ["the riff, rushing", "the orchestra hit, stabbing the drop"],
       word: (v, s) => (v === 0 ? [[], [rotate(2)], [transpose(2), rotate(4)]][s % 3]
                     : [keep(0, 6, 8, 14), transpose(-2)]),
     },
@@ -14931,11 +14968,20 @@
       plan: "dance", bpm: 160,
       parents: { house: 0.45 },
       wants: ["ghetto house (dance mania)"],
-      cannot: ["the chopped vocal — a footwork track's lead is one " +
-               "SAMPLED syllable re-triggered as percussion, and the " +
-               "registry holds instruments, not recordings; the square " +
-               "lead below stutters the shape without the mouth"],
-      instr: ["square_lead", "saw_wave"],
+      // THE `cannot` IS PAID, 2026-08-30 (the sampling round), and its text
+      // is kept because it named the debt exactly: "a footwork track's lead
+      // is one SAMPLED syllable re-triggered as percussion, and the registry
+      // holds instruments, not recordings; the square lead below stutters
+      // the shape without the mouth." The registry offers the recording now:
+      // `space_voice` is people singing, on the sampler (the one vox-family
+      // id the patch tables leave to it — instruments.js SAMPLED_VOICES),
+      // and at maxHold 1 / staccato it IS the syllable re-triggered until it
+      // is a drum. The square lead hands the chair back to the mouth it was
+      // standing in for. (This is also why the row is the catalog's vocal
+      // stab exemplar: not instrumental, so the door that refuses a sampled
+      // voice on an instrumental record — precompose door 1 — does not bar
+      // it, and the same seat on `stgermain` is refused. L6 holds both.)
+      instr: ["space_voice", "saw_wave"],
       drumkit: "tr808",
       entry: () => 0, reg: v => (v === 0 ? 0 : -1),
       realize: () => "line",
