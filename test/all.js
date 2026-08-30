@@ -449,6 +449,13 @@ const GATES = [
   { name: "erhu",       wave: 2, kind: "node",
     argv: ["test/erhu.test.js"], need: ["test/erhu.test.js"],
     covers: ["test/erhu.test.js", "engine/faust/dsp/erhu.dsp"] },
+  // the overdrive guitar's own route — audio/to-engine.js ID_ROUTE and the
+  // desk arm that adds its send. `covers` names both owners, so an edit to
+  // either selects this gate in an impacted run.
+  { name: "od-route",   wave: 2, kind: "node",
+    argv: ["test/od-route.test.js"], need: ["test/od-route.test.js"],
+    covers: ["test/od-route.test.js", "nukernel/audio/to-engine.js",
+             "nukernel/audio/desk.js"] },
   { name: "sfx-shelf",  wave: 2, kind: "node",
     argv: ["test/sfx-shelf.test.js"], need: ["test/sfx-shelf.test.js"],
     covers: ["test/sfx-shelf.test.js", "engine/registry-data.js"] },

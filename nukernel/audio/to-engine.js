@@ -634,14 +634,81 @@ const PAGE_TRIM = {
      ONE RECORD: the day a second row casts an erhu, this wants re-measuring
      across both, and Paul's ears are the only gate that can call it done. */
   erhu:        9.63,
-  voice_lead:  8.2,
-  voice_choir: 15,
+  /* THE THREE SINGERS WERE CUT x0.5012 (-6.00 dB) 2026-08-30, all three by the
+     same number, and it is Paul's own. Having fixed one record by hand: *"Air
+     (as a band) is good but the main vocals are 2x too loud and the other vocal
+     line should be about 20% quieter"* — then, generalising it himself: *"Same
+     all over. Voices just too loud everywhere. Portishead good example."* He
+     had said it once before, of iranpop: *"Everything is hot."* 2x is -6.02 dB;
+     these rows are that number, flat, on every voice the box can sing with.
+
+     THE ROWS' OWN PROVENANCE ALREADY CONFESSED THE RISK, exactly as
+     stk_guitar's did the same morning: the numbers above were fitted as a
+     DEFICIT against the recordings the modules stand in for (voice_lead "Vocal
+     (solo_vox), -18.3 dB", voice_choir "Backing vocals -27.2 dB, Rome 600
+     -19.5 dB"), measured one chair at a time with no drums — i.e. against a
+     SOLO, which is the one context in which a singer cannot be too loud. Put
+     the same chair in a band and the make-up that made it level with a record
+     makes it the whole record.
+
+     MEASURED BEFORE THE CUT, two ways, and they agree:
+     · STRUCTURE, over all 379 records at seed 1 (test/_voxtap.cjs --census: the
+       compiled unit table, `units[k].lvl * units[k].dry`, which is what the
+       renderer multiplies into every sample). 490 vocal units, median +7.64 dB,
+       p10 +3.11, p90 +12.57; 4905 band units, median -3.10, p10 -14.87, p90
+       0.00. EVERY vocal unit in the catalogue sits above the loudest decile of
+       the band it plays in, and the median singer is 10.7 dB over the median
+       chair beside it.
+     · RENDERED, mute-complement at the ring, 8 bars, seed 1 (test/_voxtap.cjs)
+       — each record's vocal chairs against its own band with every voice muted:
+           portishead +15.76   hymn +18.74   air +13.88   doowop +11.30
+           iranpop +8.71
+       and the 300 Hz-3 kHz share of the whole mix with the voices in and out:
+       portishead 97.2% / 20.0%, air 83.4% / 20.8%, doowop 69.2% / 5.7%,
+       iranpop 78.7% / 16.4%. On portishead one chair is 96.6% of the record's
+       energy. The guitar round's own yardstick, on the same metric and the same
+       probe family: the guitars Paul called "30 percent too loud" sat -0.9 to
+       -4.0 against their band, and a balanced melodic chair sits -12.
+
+     WHY -6 AND NOT THE -10 THE SPREAD ARGUES FOR, said out loud because the
+     alternative was measured: a flat -10 would land the five at -1.3 to +8.7,
+     which is where a mix engineer would put them, and it is 4 dB past what
+     Paul asked for. His two hand-calibrations both say +9: the air fix he
+     describes (its vocoder -6, its sung line -1.9, its choir untouched) leaves
+     air's vocals ~+9.4 over its band and he called that record good, and
+     iranpop — the complaint he made and the one round already fixed — sits at
+     +8.7 today. So -6 is not a rounding of his sentence, it is the number two
+     of his own judgements land on, and going deeper would be arguing past his
+     ear on a metric this file invented. RE-MEASURED AFTER (the round's report
+     has the table): portishead +15.76 -> +7.5, air +13.88 -> +7.2, doowop
+     +11.30 -> ~+5, iranpop +8.71 -> +0.7, hymn +18.74 -> ~+12 with the voices
+     still carrying 10.3 dB of the record — the choir record is still a choir
+     record, which is the control that had to hold. If the ear still says hot,
+     these three rows are the owner and -10 is the next rung, already measured.
+
+     ALL THREE BY THE SAME AMOUNT, and the ruling that says so: the census has
+     voice_choir 3.2 dB HIGHER than voice_lead in composed gain (median +9.47 vs
+     +6.30), which looks like a backing sitting on top of its own lead and was
+     nearly cut as one. It does not survive to the ear — rendered, the choir is
+     the QUIETEST vocal chair on every record that has both (air: choir -3.5,
+     singer -0.7, vocoder +3.2 against the rest of the band; doowop: choirs
+     +4.7/+6.4, singer +11.0), because a room of /a/ and /u/ through a formant
+     bank really is quieter than one throat. The composed inversion is the
+     make-up doing its job, so a deeper choir cut would have been taste with a
+     measurement standing next to it saying no. */
+  voice_lead:  4.11,
+  voice_choir: 7.52,
   // DERIVED, not measured on the page — the second row here that is, and it says
   // so for stk_piano's reason. tract_voice.dsp's own header states the fit: with
   // both modules at their defaults voice_lead peaks 0.39 and the tract babbles at
   // 0.33, which is 1.4 dB under, so the page's deficit for one is the page's
-  // deficit for the other times that ratio. It is waiting on ears like the piano.
-  tract_voice: 9.7,
+  // deficit for the other times that ratio. THE EARS ARRIVED FOR THIS ONE: air's
+  // vocoder lead IS this module, it is the chair Paul's "the main vocals are 2x
+  // too loud" names, and measured at the ring it was the loudest vocal chair on
+  // that record (+13.4 against the instrumental band, 2.8 dB over the sung line
+  // beside it). It takes the singers' -6.00 dB, keeping its derived ratio to
+  // voice_lead (9.7/8.2 = 1.183, 4.86/4.11 = 1.182).
+  tract_voice: 4.86,
 };
 /** the page's trim for a pooled module, by dsp id — 1 for everything else. */
 export const pageTrim = (dsp) => PAGE_TRIM[dsp] || 1;

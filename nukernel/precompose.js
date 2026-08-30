@@ -1542,6 +1542,57 @@
      all from this row and a record's board is not covered in decisions nobody
      made. */
   const CHAIRLVL = { lead: "fwd", pad: "back", drone: "back" };
+  /* ...AND THE SECOND CHAIR OF THE SAME ROLE IS NOT A SECOND SUBJECT
+     (2026-08-30). Paul, having fixed one record by hand: *"Air (as a band) is
+     good but the main vocals are 2x too loud and the other vocal line should
+     be about 20% quieter"* — and then, generalising it himself: *"Same all
+     over. Voices just too loud everywhere. Portishead good example."* He had
+     said it before, of iranpop: *"Everything is hot."*
+
+     MEASURED ON THE DOCUMENTS THIS FILE WRITES, all 374 anchors at seed 1,
+     before anything was changed: 305 records seat a vocal chair, 653 vocal
+     chairs in all — 377 carry `fwd`, 263 carry nothing, and the only 13 that
+     are pulled BACK are pads. Every one of the 377 is a `lead`, because the
+     row above is keyed by part ALONE: `lead` meant `fwd` however many leads a
+     record had. And records have several — 169 of the 374 seat two lead
+     chairs, 38 seat three, one seats four, so 248 chairs were dealt the front
+     of a record that has one front. THE DEFAULT POSTURE OF A SINGER IN THIS
+     BOX WAS FORWARD, and nothing in the catalogue said otherwise.
+
+     air is the record he fixed and it is that shape exactly: a `synth_voice`
+     lead and a `solo_vox` lead, both `fwd`, with an `ahh_choir` beside them —
+     three vocal things, two of them boosted. Measured at the ring on the
+     rendered artifact (test/_voxtap.cjs, mute-complement, 8 bars, seed 1),
+     air's three vocal chairs sit +13.4, +10.6 and +8.7 dB above the whole
+     instrumental band, and muting them drops the record 12.84 dB: 83% of the
+     spectrum's energy in 300 Hz-3 kHz with them, 21% without.
+
+     A RECORD HAS ONE VOICE OUT FRONT. That is the whole law here, and it is
+     the one thing a part-keyed table could not say. The FIRST chair of a role
+     keeps the seat the role means; the second and third are the same role
+     played AGAIN, and a second lead is a harmony, a double or an answering
+     line — Paul's "the other vocal line" — not a second subject. So the later
+     ones fall back to `norm`, which is ABSENT (the row above's own law), and
+     the record's board stays free of decisions nobody made.
+
+     WHAT IT IS WORTH, in the ladder's own units: fields.js LEVELS is
+     { hush: 0.4, back: 0.7, norm: 1, fwd: 1.35 }, so `fwd` -> `norm` is
+     -2.61 dB and `fwd` -> `back` would be -5.71. Paul asked for -20% on air's
+     second vocal line, which is -1.94 dB: `norm` is the rung his number is
+     nearest, `back` is more than twice his ask, and this is why the ladder
+     does NOT gain a rung for it. (The desk adds -1 dB more of its own on the
+     ordinal — audio/desk.js derivedPartTone subtracts min(2, ord-1) — so the
+     second lead lands 3.6 dB under the first, which is the CONTRAST the
+     complaint is really about: everything was forward and nothing was back.)
+
+     IT IS ROLE-SHAPED AND DELIBERATELY NOT VOICE-SHAPED. `deskFor` is handed
+     the whole voice and could ask whether this chair sings, but "a record has
+     one subject" is true of the two trumpets on a swing side as much as of two
+     singers, and the INSTRUMENT half of the same complaint has its own owner
+     with its own measurement: audio/to-engine.js PAGE_TRIM, the per-module
+     page make-up, where the singer's own +18.3 dB was cut this same day. Two
+     facts, two tables, neither said twice. */
+  const CHAIRLVL2 = { lead: "norm" };
   // ...AND WHO WANTS MORE ROOM THAN THE RECORD DOES. A part's `rev` ADDS to
   // the section's own `tone.verb` (fields.js:814: "the part send is what this
   // chair asks for ON TOP of the section, so absent must mean adds nothing"),
@@ -1619,7 +1670,10 @@
   function deskFor(voice, nth, echo, fx) {
     const part = (voice.cast && voice.cast.part) || "line";
     const e = {};
-    if (CHAIRLVL[part]) e.lvl = CHAIRLVL[part];
+    // the second chair of a role takes CHAIRLVL2's word if it has one, and
+    // `norm` is absent — see the block above.
+    const lvl = (nth > 0 && CHAIRLVL2[part]) ? CHAIRLVL2[part] : CHAIRLVL[part];
+    if (lvl && lvl !== "norm") e.lvl = lvl;
     if (CHAIRREV[part]) e.rev = CHAIRREV[part];
     if (nth > 0) e.pan = CHAIRPAN[(nth - 1) % CHAIRPAN.length];
     if (voice.kind === "drums" &&

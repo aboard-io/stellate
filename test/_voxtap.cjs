@@ -296,8 +296,21 @@ const QUICK = has("quick");
         }
         let pk = 0;
         for (let i = 0; i < frames; i++) { const m = Math.abs((L[i] + R[i]) * 0.5); if (m > pk) pk = m; }
+        // A BYTE SIGNATURE OF THE PRESSED AUDIO — the control an instrumental
+        // record has to pass. rms to a hundredth of a dB is not identity; this
+        // is FNV-1a over the raw float bits of both channels, so one sample
+        // moved by one bit changes it.
+        let h = 2166136261 >>> 0;
+        const dv = new DataView(new ArrayBuffer(4));
+        for (let i = 0; i < frames; i++) {
+          for (const ch of [L, R]) {
+            dv.setFloat32(0, ch[i]);
+            for (let b = 0; b < 4; b++) { h ^= dv.getUint8(b); h = Math.imul(h, 16777619) >>> 0; }
+          }
+        }
         const rms = Math.sqrt(s / Math.max(1, frames));
-        return { db: 20 * Math.log10(rms || 1e-12),
+        return { sig: h.toString(16), frames,
+                 db: 20 * Math.log10(rms || 1e-12),
                  peak: 20 * Math.log10(pk || 1e-12),
                  crest: 20 * Math.log10((pk || 1e-12) / (rms || 1e-12)),
                  act: 20 * Math.log10(actRms || 1e-12),
@@ -332,6 +345,7 @@ const QUICK = has("quick");
                bandDb: noVox ? r2(noVox.db) : null,
                soloVsBandRms: (soloVox && noVox) ? r2(soloVox.db - noVox.db) : null,
                units: { vox: vox.length, lead: lead.length, back: back.length, band: others.length },
+               sig: full.sig, frames: full.frames,
                rms: r2(full.db), peak: r2(full.peak), crest: r2(full.crest),
                share: +(full.share * 100).toFixed(1),
                noVoxShare: noVox ? +(noVox.share * 100).toFixed(1) : null,
@@ -401,7 +415,8 @@ const QUICK = has("quick");
          "ringRms " + ring.rms, "crest " + ring.crest,
          "voxContrib " + ring.voxContrib, "lead " + ring.leadContrib, "back " + ring.backContrib,
          "voxVsBand(act) " + ring.voxVsBand, "vsBand(rms) " + ring.soloVsBandRms,
-         "share " + ring.share + "% (band-only " + ring.noVoxShare + "%)"].join("  "));
+         "share " + ring.share + "% (band-only " + ring.noVoxShare + "%)",
+         "sig " + ring.sig].join("  "));
       if (ear && !ear.error) console.log("".padEnd(14),
         ["EAR rms " + ear.rmsDb, "peak " + ear.peakDb, "crest " + ear.crest,
          "share " + ear.share + "%", "win " + ear.windows].join("  "));
