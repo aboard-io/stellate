@@ -57,7 +57,9 @@ export async function main(argv) {
   const score = await loadScore({ genre: a.genre, songPath: a.song, scorePath: a.score,
                                  grid: a.grid, engine: a.engine });
   const donorXml = gunzipSync(readFileSync(DONOR)).toString("utf8");
-  const res = alsFromScore(donorXml, score, { all: a.all });
+  const { RACK_GZIP_B64 } = await import("../../nukernel/export/drumrack.js");
+  const rack = gunzipSync(Buffer.from(RACK_GZIP_B64, "base64")).toString("utf8");
+  const res = alsFromScore(donorXml, score, { all: a.all, drumRack: rack });
   writeFileSync(a.out, gzipSync(Buffer.from(res.xml, "utf8")));
 
   console.log("nukernel -> Ableton  ·  " + (a.all ? "P1 (all lanes)" : "P0 (one lane)"));

@@ -56,13 +56,42 @@
     typeof require !== "undefined" ? require("./kernel.js") : root.NuKernel,
     typeof require !== "undefined" ? require("./genres.js") : root.NuGenres,
     typeof require !== "undefined" ? require("./fields.js") : root.NuFields,
-    typeof require !== "undefined" ? require("./bass-kit.js") : root.NuBass);
+    typeof require !== "undefined" ? require("./bass-kit.js") : root.NuBass,
+    typeof require !== "undefined" ? require("./atlas.js") : root.NuAtlas);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuProducer = api;
-})(typeof self !== "undefined" ? self : this, function (K, NG, F, B) {
+})(typeof self !== "undefined" ? self : this, function (K, NG, F, B, A) {
   "use strict";
 
   const GENRES = NG.GENRES;
+
+  /* THE GENRES ARE OFFERED IN TIME ORDER, NOT IN FILE ORDER (2026-08-31).
+     Paul: "in producer mode list the genres in the same chronological order as
+     in the 'where/when' list. right now they're just a big messy dropdown."
+     They were `Object.keys(GENRES)` — the order rows happen to sit in
+     genres.js, which is the order they were WRITTEN in over a dozen rounds and
+     means nothing to a reader.
+
+     THE ORDER IS THE ATLAS'S OWN AND IS NOT RE-DERIVED HERE. ui/atlas.js says
+     it plainly of the where/when list: the rows are "in `ALL`'s order — which
+     is atlas.js's own sort (year ascending, then place, then key) and is
+     DERIVED there rather than re-sorted ... sorting it two ways is how a gate
+     and a page stop agreeing." So this reads that same array and takes a rank
+     off it. Two lists, one sort.
+
+     ANYTHING THE ATLAS DOES NOT PLACE STILL SHIPS, after the dated rows and in
+     its own order — a genre with no dot is not a genre with no sound, and
+     silently dropping it from the producer would be a refusal nobody asked
+     for. */
+  const GENRE_KEYS = (() => {
+    const keys = Object.keys(GENRES);
+    const all = (A && A.ALL) || [];
+    if (!all.length) return keys;                    // no atlas: the old order
+    const rank = new Map();
+    all.forEach((r, i) => rank.set(r.gk, i));
+    const dated = keys.filter((k) => rank.has(k)).sort((a, b) => rank.get(a) - rank.get(b));
+    return dated.concat(keys.filter((k) => !rank.has(k)));
+  })();
   const { KITOPS, LANES } = K;
   const KITLABEL = F.KITLABEL;
 
@@ -1671,7 +1700,7 @@
   function targets(model2, secs, verb, sid) {
     const out = [];
     if (verb === "make") {
-      for (const gid of Object.keys(GENRES))
+      for (const gid of GENRE_KEYS)
         if (firstStep(model2, secs, sid, gid) >= EPS_STEPS)
           out.push({ id: gid, w: gid, label: GENRES[gid].label, kind: "genre" });
       // AN ADJECTIVE IS ASKED THE SAME QUESTION, AND ANSWERS IT BY DOING IT.
@@ -1696,7 +1725,7 @@
       const S = SUB[sid];
       const g0 = secs[0] && secs[0].genre;
       const grids = !(g0 && g0.meter && g0.meter.steps !== 16);
-      if (S.lane) for (const gid of Object.keys(GENRES))
+      if (S.lane) for (const gid of GENRE_KEYS)
         if (canAdd(secs, S, GENRES[gid], grids, true))
           out.push({ id: gid, w: gid, label: GENRES[gid].label, kind: "genre" });
     }

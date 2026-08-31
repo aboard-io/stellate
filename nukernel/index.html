@@ -495,6 +495,11 @@
      the words it says about a bass line); it reads chair.js and instruments.js,
      which are already here. No DOM, no audio, no network. -->
 <script src="bass-kit.js"></script>
+<!-- atlas.js moved AHEAD of producer.js 2026-08-31: the producer now offers
+     its genres in the atlas's own chronological order, so the table has to
+     exist before the factory runs. atlas.js takes only `root` and requires
+     nothing, so moving it earlier cannot break anything below it. -->
+<script src="atlas.js"></script>
 <script src="producer.js"></script>
 <!-- WHERE AND WHEN THE RECORDS ARE (D6). atlas.js is 116 baked rows of place
      and year, extracted from the genres.js labels by
@@ -506,7 +511,6 @@
      fetches anything, ever — the offline law — and atlas.js reads no other
      module, so it may sit anywhere after the classic tier. ui/deps.js is what
      hands both to the view. -->
-<script src="atlas.js"></script>
 <script src="atlas-land.js"></script>
 <script type="module" src="ui/eight.js"></script>
 
