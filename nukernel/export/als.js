@@ -361,18 +361,27 @@ export function alsFromScore(donorXml, score, opts = {}) {
   const notes = [];                                   // what the run did, for the CLI to print
 
   const boxes = all ? score.boxes : score.boxes.slice(0, 1);
-  /* THE SCENE FENCE MOVED TO THE SLOT COUNT (2026-08-31) — see growScenes.
-     It read: "song has N boxes and the donor has 8 scenes. Refusing: cloning
-     a scene is a guess, and a wrong guess here opens as a broken set. Save a
-     donor with more scenes." Measured, a Scene is self-contained and every
-     track already carries sixteen ClipSlots against eight Scenes, so a clone
-     fills a table Live sized rather than inventing a shape. Past the SLOTS
-     the old sentence is still exactly right, and it keeps its words. */
-  if (boxes.length > donor.nSlots)
-    throw new Error("song has " + boxes.length + " boxes and the donor track " +
-      "has " + donor.nSlots + " clip slots. Refusing: fabricating slot rows is " +
-      "a guess, and a wrong guess here opens as a broken set. Save a donor " +
-      "with more scenes.");
+  /* THE COUNT FENCE IS GONE, AND THE REASON IT EXISTED IS NOW SATISFIED
+     RATHER THAN AVOIDED (2026-08-31, third pass — Paul hit all three of its
+     shapes in a row). It read, in its last form: "song has N boxes and the
+     donor track has 8 clip slots. Refusing: fabricating slot rows is a
+     guess, and a wrong guess here opens as a broken set."
+     What made it a guess was fabricating; nothing fabricates now. growScenes
+     and growSlots CLONE elements Live itself wrote — a Scene and a ClipSlot
+     are both self-contained (measured: nothing in either indexes a track or
+     names a clip; the only per-instance field is an id), lifted with
+     `balancedAt` so a nested empty slot cannot truncate the copy, renumbered
+     in each list's own sequence, and passed through the pointee renumber so
+     gate 0's duplicate probe covers them like every other spliced element.
+     WHAT REMAINS A REAL REFUSAL is a donor with nothing to clone FROM, which
+     is the honest floor and is checked below. And the note that outlived the
+     fence: a longer song is more scenes, and Live's session view is happy
+     with them — but this is still a shape only Live can confirm, so the
+     twelve-scene set is the one to open for gate 4. */
+  if (!donor.nSlots || !donor.nScenes)
+    throw new Error("the donor has " + donor.nScenes + " scenes and " +
+      donor.nSlots + " clip slots — there is nothing to clone from. " +
+      "Save a donor with at least one scene.");
 
   // The lanes, in one order for the whole song, so track N is the same voice in
   // every box.
@@ -392,6 +401,15 @@ export function alsFromScore(donorXml, score, opts = {}) {
     const isDrums = laneName === "drums";
     const donorName = DONOR_TRACK[isDrums ? "drums" : info.chair] || DONOR_TRACK[""];
     let t = renumber(trackTemplate(donor, donorName), next);
+    /* THE ROWS GROW ON THE TEMPLATE, NOT ONLY ON THE ASSEMBLED FILE
+       (2026-08-31, fourth pass). growSlots ran at the end, on `out` — but
+       putSessionClip writes into THIS `t`, which was cloned from the donor
+       before that, so a twelfth box still found an eight-slot track and threw
+       "track has no ClipSlot 8". The clone has to be long enough at the
+       moment it is filled. growSlots is idempotent (a list already at or past
+       the want is returned untouched), so the later pass over `out` still
+       covers any donor track that survives into the file. */
+    t = growSlots(t, boxes.length);
     t = t.replace(/^<MidiTrack Id="\d+"/, '<MidiTrack Id="' + (trackId++) + '"');
     // `v0 electric_piano` when the engine was warmed and there is a cast to
     // ask; `v0 stab` when there is not. Either way the seat number leads, so
