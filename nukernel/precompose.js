@@ -391,7 +391,12 @@
     sparse:    { cell: "long",   contour: "hover" },                  // 6
     climb:     { cell: "walkup", contour: "rise",  land: "fifth" },   // 7
     verseline: { contour: "arch", land: "lead" },                     // 8 — the tune, developing
-    seq:       { cell: "even",   contour: "zig",   reg: "low", sent: "plain" }, // 9, machines only
+    // 9, machines only — SIXTEENTHS since 2026-08-31 (it was `even`, i.e.
+    // eighths, which made every sequencer in the catalogue play at half the
+    // speed a sequencer plays at; see ideas-kit CELLS.sixteenths for the
+    // measurement). `zig` stays: a 303 line turns back on itself, it does not
+    // run up a scale, and the contour is what makes it a figure and not a run.
+    seq:       { cell: "sixteenths", contour: "zig", reg: "low", sent: "plain" },
   };
   // compose.js:1793 deals the slots in this order and nothing else may reorder
   // them: the index IS the identity, because b.stack[].slots holds indices.

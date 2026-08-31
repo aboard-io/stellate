@@ -2346,7 +2346,47 @@
     // above), dealt LAST and from its OWN genre-salted stream, so every
     // other genre's record — and every draw the nine slots above make — is
     // byte-identical to before this slot existed.
-    const MACHINE_SEQ = { acid: 32, techno: 32, house: 32, bleeptechno: 32, ebm: 32 };
+    /* WHO GETS A SEQUENCER LINE — widened 2026-08-31, and this table was the
+       whole of the bug. Paul: "Young Galaxy is missing a line of synth
+       arpeggios or figures as discussed. Really nice swirling is what I
+       expect." Then: "sounds like there are lots of places where arpeggios
+       might need to be across the genres."
+
+       HE IS RIGHT, AND NOTHING NEEDED INVENTING. `seqPhrase` below already
+       builds exactly the asked-for thing — a two-bar line, SIXTEEN TO THE BAR,
+       with accents and slides — and it was gated to five genres. The
+       arpeggios were not missing because the box cannot make one; they were
+       missing because this list named acid, techno, house, bleeptechno and ebm
+       and nothing else. Measured before touching it: younggalaxy, moroder,
+       italodisco, synthpop, dancepostpunk and trance drew slot 9 ZERO times in
+       five seeds each, while techno and house drew it 22 times each.
+
+       THE TEN ADDED ARE RECORDS WHOSE SEQUENCER IS A PRIMARY FACT, not
+       machine-adjacent genres in general:
+         berlinschool    Berlin 1972 — Tangerine Dream and Schulze; the
+                         sequencer IS the genre, and its absence here was the
+                         most conspicuous hole in the table
+         moroder         Munich 1977 — I Feel Love. The row's own comment
+                         already said "the arpeggiated octave" and the record
+                         had no arpeggio
+         roboticpop      Düsseldorf 1978 — Kraftwerk, sequenced end to end
+         analogsynthpop  Basildon 1980
+         synthpop        Basildon 1981
+         italodisco      Milan 1982 — the arpeggiated bassline is the signature
+         electro         New York 1982 — 808 under a sequenced synth
+         dancepostpunk   Manchester 1983 — the Blue Monday pulse is a sequencer
+         synthwave       Paris 2010 — a genre made of arpeggios
+         younggalaxy     Montreal 2011 — Paul's own ask, and the reason the
+                         other nine were found
+
+       THIS CHANGES THOSE TEN RECORDS, deliberately: they gain a voice they
+       always should have had, so their bytes move. Everything not named here
+       is untouched. */
+    const MACHINE_SEQ = { acid: 32, techno: 32, house: 32, bleeptechno: 32, ebm: 32,
+                          berlinschool: 32, moroder: 32, roboticpop: 32,
+                          analogsynthpop: 32, synthpop: 32, italodisco: 32,
+                          electro: 32, dancepostpunk: 32, synthwave: 32,
+                          younggalaxy: 32 };
     const seqSteps = MACHINE_SEQ[gk] || 0;
     if (seqSteps)
       slots.push(seqPhrase(rng(ihash(gk + "/seq/" + (seed == null ? 1 : seed))), seqSteps));

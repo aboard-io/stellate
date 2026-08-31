@@ -44,6 +44,22 @@
   const CELLS = {
     long:   { w: "long notes", g: g16(0, 8) },
     even:   { w: "even eighths", g: g16(0, 2, 4, 6, 8, 10, 12, 14) },
+    /* SIXTEEN TO THE BAR — added 2026-08-31, and it is the densest cell here
+       by design. Paul, of Young Galaxy: "the arpeggios tend to be tight and
+       synthy and steady flows of 16 steps per bar", and then, when the line
+       still was not on the staff: "I'm looking at the score play, it's not
+       there. Not just my ear."
+
+       HE WAS RIGHT AND THE REASON WAS THIS TABLE. The densest cell in the box
+       was `even` — EIGHTHS — so "sixteen to the bar" was not a thing any part
+       could be asked for. The sequencer part (precompose KINDS.seq) was
+       therefore built out of eighths, and every machine genre in the catalogue
+       has been playing a half-speed sequencer since the part was written:
+       measured on techno's own staff, its `acid` and `wave` voices max at 8
+       and 10 notes a bar, never 16. This is not a Young Galaxy bug; it was the
+       whole machine wing's, and one missing row of this table. */
+    sixteenths: { w: "sixteen to the bar",
+                  g: g16(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15) },
     three:  { w: "three notes and a rest", g: g16(0, 2, 4) },
     pickup: { w: "a pickup into the bar", g: g16(7, 8, 12) },
     push:   { w: "pushed, off the beat", g: g16(2, 6, 10, 14) },
