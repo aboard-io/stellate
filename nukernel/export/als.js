@@ -345,13 +345,18 @@ export function alsFromScore(donorXml, score, opts = {}) {
   const notes = [];                                   // what the run did, for the CLI to print
 
   const boxes = all ? score.boxes : score.boxes.slice(0, 1);
-  if (all && boxes.length > donor.nScenes)
-    throw new Error("song has " + boxes.length + " boxes and the donor has " +
-      donor.nScenes + " scenes. Refusing: cloning a scene is a guess, and a " +
-      "wrong guess here opens as a broken set. Save a donor with more scenes.");
+  /* THE SCENE FENCE MOVED TO THE SLOT COUNT (2026-08-31) — see growScenes.
+     It read: "song has N boxes and the donor has 8 scenes. Refusing: cloning
+     a scene is a guess, and a wrong guess here opens as a broken set. Save a
+     donor with more scenes." Measured, a Scene is self-contained and every
+     track already carries sixteen ClipSlots against eight Scenes, so a clone
+     fills a table Live sized rather than inventing a shape. Past the SLOTS
+     the old sentence is still exactly right, and it keeps its words. */
   if (boxes.length > donor.nSlots)
     throw new Error("song has " + boxes.length + " boxes and the donor track " +
-      "has " + donor.nSlots + " clip slots.");
+      "has " + donor.nSlots + " clip slots. Refusing: fabricating slot rows is " +
+      "a guess, and a wrong guess here opens as a broken set. Save a donor " +
+      "with more scenes.");
 
   // The lanes, in one order for the whole song, so track N is the same voice in
   // every box.
@@ -423,6 +428,9 @@ export function alsFromScore(donorXml, score, opts = {}) {
   const hasMap = tempoSegs.length > 1 ||
     (tempoSegs.length === 1 && views.length && views[0].k !== 1);
   if (hasMap) out = spliceTempoMap(out, tempoSegs);
+  // GROW THE SCENE LIST FIRST — nameScenes walks the Scenes it finds, so a
+  // clone that arrives after it would ship unnamed (2026-08-31).
+  if (all) out = growScenes(out, boxes.length);
   if (all) out = nameScenes(out, boxes.map((b) => b.name));
   if (all && hasMap)
     out = setSceneTempos(out, views.map((v) =>
@@ -511,6 +519,42 @@ export function spliceTempoMap(xml, segs) {
  * flips the enable, so launching a paced box's scene in Session view runs at
  * the box's own clock.
  */
+/* GROW THE SCENE LIST BY CLONING ONE OF LIVE'S OWN (2026-08-31).
+   Paul, on a twelve-box song: "the splice failed... can't you splice".
+   He is right and the refusal was over-cautious. It read "cloning a scene is
+   a guess", and the donors say otherwise on both halves:
+     · A <Scene> IS SELF-CONTAINED. Measured on Generic.als, scene 3 entire:
+       a FollowAction block, Name "", Annotation "", Color -1, Tempo 120,
+       IsTempoEnabled false, TimeSignatureId, IsTimeSignatureEnabled false,
+       LomId 0, ClipSlotsListWrapper. Nothing in it indexes a track, names a
+       clip, or points anywhere. The only thing that distinguishes one from
+       the next is its `Id`.
+     · THE SLOTS ARE ALREADY THERE. Every MidiTrack in both donors carries
+       SIXTEEN ClipSlots against EIGHT Scenes — Live wrote the rows to hold
+       twice what the scene list declares. Cloning up to that count is not
+       inventing a shape; it is filling a table Live already sized.
+   So the fence moves from 8 to nSlots and stays a real fence: past the slot
+   count a clone WOULD be a guess, because the slot rows do not exist and
+   fabricating those means writing ClipSlot elements per track in an order
+   nothing observed. That refusal keeps its old words.
+   Ids are taken above the donor's own maximum and the pointee renumber pass
+   runs after, so gate 0's duplicate probe covers this exactly as it covers
+   every other spliced element. */
+export function growScenes(xml, want) {
+  const scenes = elementAfter(xml, "Scenes");
+  if (!scenes) return xml;
+  const ids = [...scenes.text.matchAll(/<Scene Id="(\d+)"/g)].map((m) => +m[1]);
+  if (!ids.length || ids.length >= want) return xml;
+  const one = /<Scene Id="\d+"[\s\S]*?<\/Scene>/.exec(scenes.text);
+  if (!one) return xml;
+  let next = Math.max(...ids) + 1, add = "";
+  for (let i = ids.length; i < want; i++)
+    add += "\n\t\t\t" + one[0].replace(/^<Scene Id="\d+"/, '<Scene Id="' + (next++) + '"');
+  const close = scenes.text.lastIndexOf("</Scene>") + "</Scene>".length;
+  const grown = scenes.text.slice(0, close) + add + scenes.text.slice(close);
+  return xml.slice(0, scenes.start) + grown + xml.slice(scenes.end);
+}
+
 export function setSceneTempos(xml, tempos) {
   const sc = elementAfter(xml, "Scenes");
   let body = sc.text, i = 0;
