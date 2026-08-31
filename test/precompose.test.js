@@ -614,8 +614,28 @@ function sectionEvents(doc, i) {
      anchors and the ethereal-wave ruling forbids a second row for one
      archetype. The Lissvik production is the thing this table did not hold.
      Montreal is a new dot (North America), baked to 369 WHEN rows. */
-  ok("G0 the catalog is 375 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 375,
+  /* 375 -> 377, 2026-08-31: `slowdive` (Sutton Courtenay 1993) and
+     `galaxie500` (Boston 1989). Paul, after younggalaxy landed: "I guess we
+     need Slowdive and Galaxie 500 too right?" — and the two rows ship for two
+     DIFFERENT reasons, which is why neither is a duplicate. galaxie500 fills a
+     HOLE: its own infobox reads "Indie rock / dream pop / slowcore" and
+     slowcore had no anchor here at all, the Velvets-descended slow thin thing
+     that is neither shoegaze's wall nor dreampop's wash. slowdive is the
+     massiveattack-vs-triphop shape instead: `shoegaze` is anchored on Loveless
+     by its own comment, and Souvlaki is a different record making a different
+     claim — half the snare, a sung lead, and a pad where the second wall of
+     fuzz goes. The ethereal-wave ruling forbids a row whose ARCHETYPE is
+     another row's anchor, and neither of these is that.
+     ONE new dot for two rows, and the arithmetic is in atlas.js: Sutton
+     Courtenay (9.3 px from Swindon, clearing the 8.5 floor by under a pixel),
+     with Reading REFUSED at 5.1 px from Bray, Weston-super-Mare at 7.7 from
+     Bristol, and Cambridge MA at 0.2 from Boston — that last one a refusal the
+     gate could not have made, since G10 asserts only at the Britain arc.
+     galaxie500 takes Boston, a dot the map already drew. Baked to 371 WHEN
+     rows. `younggalaxy`'s generic shoegaze 0.2 edge was replaced the same day
+     by the two acts its article actually names. */
+  ok("G0 the catalog is 377 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 377,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));

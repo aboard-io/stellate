@@ -320,6 +320,8 @@
     "honkytonk": {"title":"Ernest_Tubb","kind":"artist","why":"Fort Worth 1941 is Walking the Floor Over You and the article is the man who cut it — the Texas Troubadour whose electric barroom band is this row's whole cast; the genre's own titles resolve to a disambiguation and a section stub in this ZIM, and a wrong link is worse than a narrower true one."},
     "westernswing": {"title":"Western_swing","kind":"genre","why":"Tulsa 1940 is New San Antonio Rose from the Cain's Ballroom band; the article is the genre by name, Wills its own centerpiece."},
     "dreampop": {"title":"Dream_pop","kind":"genre","why":"London 1984 is Treasure; the article is the genre by name and the Cocteau Twins are in its first lines. Not Shoegaze, the table's own child row."},
+    "galaxie500": {"title":"Galaxie_500","kind":"artist","why":"Boston 1989 is On Fire, which this band's article calls \"the band's defining moment\". The band is the subject because the row is the first slowcore anchor in the table and the band, not the album, is what the Slowcore article credits: \"the band is frequently cited as one of slowcore's leading antecedents\". Not Slowcore, the genre article, which would be the wrong shape — this row is named for the act, the `velvets` and `sisters` precedent. Not the Ford car; the article's own hatnote points at Galaxie 500 (disambiguation)."},
+    "slowdive": {"title":"Slowdive","kind":"artist","why":"Sutton Courtenay 1993 is Souvlaki, cut at the Courtyard studio the album's infobox names. The band's article is the subject and it carries the row's whole argument in one sentence: \"debut album Just for a Day (1991) and follow up Souvlaki (1993), making the band one of the leading figures of the UK shoegaze scene\". Not Shoegaze, which is `shoegaze`'s link and is anchored on Loveless — the point of this row is that Souvlaki is the OTHER record. Not Souvlaki (album) either: the row is the band's spacious half, not one release, which is the `velvets`-not-the-banana-album ruling. The bare title is the band; the article's own hatnote separates the eponymous album, the EP and the Siouxsie and the Banshees song."},
     "younggalaxy": {"title":"Young_Galaxy","kind":"artist","why":"Montreal 2011 is Shapeshifting, and the band's own article is the row's whole argument: formed Vancouver 2005, moved to Montreal, \"produced by Dan Lissvik of the band Studio in Gothenburg\". Not Dream pop, which is `dreampop`'s link and would make this row a second claim on one anchor."},
     "doom": {"title":"Doom_metal","kind":"genre","why":"Stockholm 1986 is Epicus Doomicus Metallicus, the record whose title names the article's subject. Not Doom (the game); not Candlemass alone, who are the row's named performers."},
     "jpop": {"title":"J-pop","kind":"genre","why":"Tokyo 1999 is First Love; the article is the genre by name, the J-WAVE coinage in its own history. Not City pop, the table's own upstream row on the same dot."},
@@ -419,7 +421,7 @@
     "built": "2026-08-31",
     "from": "nukernel/wiki-extract.js",
     "book": BOOK,
-    "counts": { "links": 366, "misses": 3, "roles": 6, "anchors": 375 },
+    "counts": { "links": 368, "misses": 3, "roles": 6, "anchors": 377 },
     WIKI, MISSES, url,
   };
 });

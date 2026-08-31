@@ -16860,6 +16860,253 @@
                     : [drop(10)]),
     },
 
+    /* GALAXIE 500 — Boston 1989, On Fire. Paul, 2026-08-31, the shift after
+       younggalaxy landed: "I guess we need Slowdive and Galaxie 500 too
+       right?" The measurement says yes for this one because SLOWCORE HAS NO
+       ANCHOR IN THIS TABLE and the band's own infobox names it: "Indie rock
+       / dream pop / slowcore". The third word had nowhere to point — the
+       slow, thin, Velvets-descended thing that is neither shoegaze (there is
+       no wall) nor dreampop (there is no wash). That is a HOLE, and the
+       ethereal-wave ruling (a row whose archetype is another row's anchor
+       does not ship) does not reach a hole.
+
+       THE RECORD IS ON FIRE, and three separate articles agree. The band's:
+       "lo-fi psychedelia reminiscent of Jonathan Richman being backed by The
+       Velvet Underground", "is considered the band's defining moment", No. 7
+       on the UK Indie Chart. The album's: Pitchfork 10/10, no. 16 on its Top
+       100 Albums of the 1980s, and fourth on its 30 Best Dream Pop Albums.
+       The Slowcore article's, which is the one that makes it structural:
+       "Their sophomore album, On Fire (1989), strongly influenced the genre",
+       and Andrew Earles quoted calling the band slowcore's "progenitor".
+
+       BOSTON, AND THE DOT IS A REFUSAL — the ledger is in atlas.js. The
+       infobox origin is Cambridge, Massachusetts and this round drafted it as
+       a new dot. MEASURED at the gate's own projection it lands 0.2 CSS px
+       from Boston: not a crowded dot, the SAME dot with a second name. Worse,
+       it would have shipped, because Cambridge MA's arcFor is 64 deg (North
+       America) and G10 only ASSERTS at the tightest arc — Britain, 11 deg —
+       so the gate would have printed the collision in its watch list and
+       exited 0. The ZIM supplies the alternative in its own body text: "The
+       band played gigs in Boston and New York City", and its own cited
+       scholarship goes further still (Earles 2014, quoted in the Slowcore
+       article's notes: "this seminal Boston trio"). So: no new dot, and
+       Boston is a dot the map already draws, carrying only `hymn` (1831).
+
+       THE AXES ARE THE REVIEWS AND NOT A MOOD. Pete Clark's sentence is an
+       arrangement spec read straight off the page — "snaking lines of guitar,
+       restrained percussion and a confessional-style vocal" — so the guitar
+       is ONE wandering line, the kit is nearly empty, and the throat is
+       MOUTHS.confessional, which is not a guess: `velvets`, this row's
+       heaviest parent, is cast on that exact mouth, so the descendant
+       inherits the parent's throat by measurement rather than by taste. Jenn
+       Pelly gives the tempo — "the Velvet Underground slowly warming up ...
+       moving with the crawl of a cloud" — and the Slowcore article gives the
+       kit LITERALLY, in Chris Brokaw's joke about the genre: he could "play a
+       snare hit, go get a drink and be back at the drumkit before the next
+       beat". One kick, one snare, no hats, and no third chair at all, because
+       "backing instrumentation is sparse" is the article's own characteristic
+       and the absence of a pad is what separates this row from `dreampop`
+       standing two rows above it.
+
+       WHAT THE BOX CANNOT SAY, and it is half the record: the LO-FI. Kramer
+       cut this at Noise New York and the sound is a cheap chain in a live
+       room — tape compression, an amp too loud for the space, a voice left in
+       with its cracks because nobody punched it. Every one of those is a
+       RECORDING decision, not a note decision. This grid can seat three
+       players and play them slowly; it cannot make the tape the fourth.
+
+       AND IT CANNOT GO AS SLOW AS THE RECORD, WHICH IS MEASURED AND NOT A
+       GUESS: this row was drafted at bpm 68 and compose.js refused it — "genre
+       \"galaxie500\" declares no bpm (bpm: an integer 70..160 on its GENRES
+       row)". Seventy is the floor of the whole catalogue, so the one anchor
+       written to be the slowest thing in it sits one notch off the wall, at 72
+       — `postrock`'s own number. The half-time is bought back in the KIT
+       instead, where a bar between the kick and the snare is worth more than
+       four bpm anyway; but a slowcore row that cannot be slower than a
+       Viennese minuet is a limit worth writing down rather than hiding in a
+       number. NOT taken: rate 0.5, which `doom` and `postrock` use. Those are
+       half-time PROCESSES; On Fire is a song at a slow tempo, and halving the
+       cell rate under an already near-empty kit would have bought the crawl by
+       emptying the record rather than by playing it. */
+    galaxie500: {
+      label: "Boston 1989", voices: 2, bars: 8, near: "dreampop",
+      // 72, NOT the 68 this row was drafted at — see the bpm floor in the
+      // comment above. It is the catalogue's slowest legal tempo bar two.
+      plan: "song", bpm: 72,
+      // LINEAGE: the Velvets three times over, which is why they carry half
+      // the weight — the band article ("backed by The Velvet Underground"),
+      // the Slowcore article ("influenced by the music of the Velvet
+      // Underground, the Modern Lovers, Big Star and Spacemen 3") and the
+      // record's own ("sounds like the Velvet Underground slowly warming
+      // up"). dreampop is the infobox's second word. psychrock is the "lo-fi
+      // psychedelia" both articles name and the "elements of neo-psychedelia"
+      // the album's Music section adds. NOT `drone` directly, though "droning
+      // [and] doleful" is the album's first quoted description: `velvets`
+      // already holds drone at 0.35 and the edge would be counted twice.
+      parents: { velvets: 0.5, dreampop: 0.3, psychrock: 0.2 },
+      // the two names in that Slowcore sentence this table cannot point at.
+      wants: ["jonathan richman's modern lovers", "big star's memphis power pop"],
+      cannot: ["the lo-fi itself — Kramer cut this in a live room through a " +
+               "cheap chain, and tape compression, an amp too loud for the " +
+               "space and a vocal left in with its cracks are RECORDING " +
+               "decisions; the grid seats players, it cannot make the tape " +
+               "one of them",
+               "the tempo the record is actually at — this row was drafted " +
+               "at 68 and compose.js refuses anything under 70, so the " +
+               "slowest thing in the catalogue sits one notch off the wall " +
+               "and buys the rest of the crawl in the kit",
+               "the trio's emptiness — three people played On Fire and the " +
+               "guest layer seats four and five chairs here, so the sparse " +
+               "backing the genre is DEFINED by is the one axis this row " +
+               "declares and cannot hold"],
+      instr: ["solo_vox", "clean_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 0 ? 0 : -1),
+      realize: () => "line",
+      part: ["lead", "counter"],
+      roots: [0, 5, 0, 3], harmony: "modal",
+      mode: MODES.aeolian, scale: MODES.aeolian, diatonic: true,
+      artic: "tie", maxHold: 6, bassStyle: "octaves",
+      // BROKAW'S JOKE, MADE LITERAL: one kick, one snare, a whole bar between
+      // them, and no hat lane at all — the sparsest kit in the guitar wing.
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0] },
+      fx: ["echo", "tremolo"],
+      tone: { wave: "triangle", cut: 1500, q: 1.0, atk: .02, rel: 2.4, gain: .24, verb: .75,
+              mouth: MOUTHS.confessional },
+      words: ["the voice, close and short of words", "the guitar, one snaking line"],
+      word: (v, s) => (v === 0 ? [[], [transpose(-2)], [], [drop(8)]][s % 4]
+                    : [keep(0, 6, 12)]),
+    },
+
+    /* SLOWDIVE — Sutton Courtenay 1993, Souvlaki. The other half of Paul's
+       ask, and the harder half, because `shoegaze` already exists and is
+       anchored on Loveless. It ships because it is a DIFFERENT RECORD MAKING
+       A DIFFERENT CLAIM, which is the massiveattack-vs-triphop precedent and
+       not the ethereal-wave one: shoegaze's own comment names its archetype
+       as "Loveless: the held-second blur under fuzz", and Souvlaki is not
+       that. Loveless is violence held still. Souvlaki is SPACE — the album
+       article's own retrospective words are "quiet, moving, and aggressive
+       simultaneously", "trance-like beauty with the deepest delayed guitar
+       sounds around", "pillowy-soft and passionately deep". The row is built
+       on the difference: half the snare, a real sung lead, and a pad where
+       the second wall of fuzz would be.
+
+       1993, NOT 1991, and the year does the separating on its own. The band
+       article: "debut album Just for a Day (1991) and follow up Souvlaki
+       (1993), making the band one of the leading figures of the UK shoegaze
+       scene of the early 1990s". CORRECTING THE ASK IN PLACE: the band
+       article says Souvlaki came out in May 1993, the album's own article
+       says "released on 1 June 1993 through Creation Records" and its infobox
+       agrees. The album's article is the closer source and the label takes
+       its year; the month is not in the label either way, so nothing turns on
+       it, but the discrepancy is written down here rather than smoothed over.
+
+       SUTTON COURTENAY, AND THE PLACE IS A REFUSAL TWICE OVER — atlas.js
+       carries the ledger. The band is a Reading band ("formed in Reading,
+       Berkshire, in 1989") and the Pomona rule says a row takes the BAND'S
+       place, so "Reading 1993" was the draft. MEASURED, Reading lands 5.1 CSS
+       px from `Bray` at the Britain arc, under G10's 8.5 px floor, and the
+       two are sibling Thames Valley towns that WITHIN cannot relate — the
+       Leeds/Halifax rejection exactly, at almost exactly the same distance
+       (that one measured 5.8). Note that London was NOT the problem: Reading
+       clears it at 15.3 px. Weston-super-Mare, the second of the album's
+       three studios, was drafted next and REFUSED too — 7.7 px from Bristol.
+       What survives is the third: the album infobox's "Courtyard (Sutton
+       Courtenay)", which is also the studio Halstead's own quoted sentence
+       points at — "we had to start the record again back in Oxfordshire" —
+       i.e. the room where Souvlaki actually became Souvlaki after McGee binned
+       the first forty songs. It measures 9.3 px from Swindon and 11.2 from
+       Bray, so it clears, and it clears by less than a pixel; that thinness is
+       stated at the gate ledger so the next Thames Valley row knows the
+       corridor is nearly full. A village named for its studio is the `Bray`
+       ruling, which this table made and kept.
+
+       THE ENO SESSION IS THE RESIDUE AND `ambient` IS ONLY HALF OF IT. The
+       band wrote to Eno asking him to produce; he "declined" but "did agree to
+       spend a few days recording with Slowdive, and out of these sessions came
+       the tracks 'Sing' and 'Here She Comes'". `ambient` (London 1978) is Eno
+       as a genre and is a parent here on that evidence plus the infobox's
+       "ambient pop" plus the article's "Halstead began to take greater
+       influence from ambient music in his songwriting". But the SESSION is not
+       a genre — "The first thing he did when he walked into the studio was to
+       rip the clock off the wall and put it by the mixing desk" — and a
+       process instruction is the one thing this table cannot hold. It is in
+       the `cannot` below, not in a weight.
+
+       TWO EDGES REFUSED, both by their own dates. `postrock` is the fourth
+       word in this band's infobox and CANNOT be a parent: the row is Austin
+       2003, ten years downstream, and the era rule is not negotiable for a
+       genre this row plainly predates. `postpunk` (Manchester 1979, the Joy
+       Division row) has real ZIM evidence — "these early songs were influenced
+       by Joy Division and the David Bowie studio albums Low (1977) and Lodger
+       (1979)" — and is still refused, because that sentence is about the forty
+       songs McGee heard and called "shit" and the band then DISCARDED. An
+       influence that was thrown away before the record started is not an
+       ancestor of the record. The Bowie half has no row at all and becomes the
+       want. */
+    slowdive: {
+      label: "Sutton Courtenay 1993", voices: 3, bars: 8, near: "shoegaze",
+      plan: "song", bpm: 84,
+      // LINEAGE: the infobox in order — "Dream pop shoegaze ambient pop
+      // post-rock" — with shoegaze promoted to the heaviest because the band
+      // article makes it the identity ("one of the leading figures of the UK
+      // shoegaze scene") and the album article makes it the reception ("hailed
+      // as a classic of the shoegaze genre"), and post-rock struck out on its
+      // year. The residue is Eno in the room, which no parent supplies.
+      parents: { shoegaze: 0.45, dreampop: 0.3, ambient: 0.25 },
+      // Halstead named them; McGee binned the songs that had them in; the
+      // table has no rung for either record.
+      wants: ["bowie's berlin records, low and lodger"],
+      cannot: ["Eno in the room — he refused to produce and agreed to record " +
+               "for a few days, and what he did was rip the clock off the " +
+               "wall and say play something; a process instruction is not a " +
+               "note, a chair or a weight, and this table holds none of it",
+               "Ed Buller's mix, which is where a shoegaze record is " +
+               "actually made — the guitar is a send and not a part, and " +
+               "the difference between Souvlaki and Loveless is mostly a " +
+               "decision taken at a desk this box does not have"],
+      // NOT TWO WALLS OF FUZZ. shoegaze is instr ["overdrive_guitar",
+      // "overdrive_guitar"] and no declared mouth, which is Loveless. Here the
+      // second guitar is replaced by a PAD and the first chair is a person:
+      // Halstead sings and Goswell sings with him ("Neil Halstead (vocals,
+      // guitars, keyboards), Rachel Goswell (vocals, guitars, keyboards)"),
+      // and the throat is `backingroom` — the mouth this table describes as
+      // "quiet, round, out of the way" — because these are real words sung
+      // from the back of the mix, not dreampop's syllables-that-are-not-words.
+      instr: ["solo_vox", "overdrive_guitar", "halo_pad"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 0 ? 0 : v === 1 ? -1 : 1),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "riff", "pad"],
+      // MIXOLYDIAN, AND IT IS THE POINT. shoegaze is ionian, which has a
+      // leading tone and therefore a cadence and therefore an ending. The flat
+      // seventh takes the pull out, which is what "trance-like" means when you
+      // have to write it down; the flat-7 degree is in the roots so the record
+      // actually visits it rather than merely being spelled that way.
+      roots: [0, 4, 6, 4], mode: MODES.mixo,
+      scale: MODES.mixo, diatonic: true,
+      artic: "tie", maxHold: 6, bassStyle: "pedal",
+      // HALF THE SNARE. shoegaze puts a backbeat on 2 and 4 at 104; this is
+      // one snare a bar at 84, over a kick that moves and a hat that leaves
+      // three quarters of the bar empty. That gap IS the "space" the whole
+      // row is arguing for, and it is measurable rather than adjectival.
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             h: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0] },
+      fill: { s: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0] },
+      // crunch keeps the shoegaze inheritance audible; echo is the album's own
+      // most-quoted property, "the deepest delayed guitar sounds around".
+      fx: ["crunch", "echo"],
+      tone: { wave: "sawtooth", cut: 1500, q: 1.4, atk: .03, rel: 2.4, gain: .25, verb: .85,
+              mouth: MOUTHS.backingroom },
+      words: ["the voice, back in the room", "the guitar, delayed into the gap",
+              "the pad Eno left behind"],
+      word: (v, s) => (v === 0 ? [[], [transpose(-2)], [fill(2)], [transpose(3)]][s % 4]
+                    : v === 1 ? [rotate(4)]
+                    : [drop(12)]),
+    },
+
     /* YOUNG GALAXY — Montreal 2011, Shapeshifting. Paul asked for the band
        by name (2026-08-31), and the ZIM decides WHICH RECORD the row is,
        because the answer changes what the row means.
@@ -16904,7 +17151,23 @@
       // LINEAGE: dream pop is the body, synthpop the machine it was rebuilt
       // on, and the residue is the producer — a dub engineer's ear on a pop
       // record, which no parent here supplies.
-      parents: { dreampop: 0.45, synthpop: 0.35, shoegaze: 0.2 },
+      // REWIRED 2026-08-31, the same shift that wrote the two rows above.
+      // Paul: "I guess we need Slowdive and Galaxie 500 too right?" — and
+      // once they existed this row's generic `shoegaze` edge was the wrong
+      // citation, because the article does not say shoegaze. It says the
+      // bands: "Their sound has been described as similar to the bands
+      // Slowdive, Galaxie 500 and Luna as well as Pink Floyd and
+      // Spiritualized." So shoegaze 0.2 is REPLACED by the two acts the ZIM
+      // actually names, and the shoegaze inheritance still arrives — one
+      // generation further down, through `slowdive`, which holds it at 0.45.
+      // They JOIN rather than take over, and the weights say why: that
+      // sentence sits in the article's Vancouver-and-debut paragraph, and
+      // this row is anchored on Shapeshifting (2011), whose body is still
+      // dream pop rebuilt on a machine. An ancestry the band carried into the
+      // record is not the record. (Luna is Wareham's next band and is
+      // `galaxie500` continued, not a third hole; Pink Floyd's rung is
+      // `spacerock`, London 1973, already here.)
+      parents: { dreampop: 0.4, synthpop: 0.35, slowdive: 0.15, galaxie500: 0.1 },
       wants: ["the gothenburg dub-disco shelf (studio, service)"],
       instr: ["solo_vox", "warm_pad", "clean_guitar"],
       drumkit: "electronic",

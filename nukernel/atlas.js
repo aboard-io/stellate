@@ -214,6 +214,36 @@
          PLACES, whose PKEEP box keeps Oahu's ring (the 1:50m source has
          the island at 0.02° from the city), so the dot stands on land
          and the empty region below stops being empty. */
+    /* THE DREAM-POP ROUND'S ONE DOT, 2026-08-31, AND ITS THREE REFUSALS.
+       Paul: "I guess we need Slowdive and Galaxie 500 too right?" Two rows
+       landed; only ONE new place did, and the other two candidates are
+       written down here so nobody re-derives the attempt.
+       · SUTTON COURTENAY — `slowdive`, the village whose Courtyard studio the
+         album infobox names ("Courtyard (Sutton Courtenay)") and that
+         Halstead's own quoted sentence points at, "we had to start the record
+         again back in Oxfordshire". The `Bray` ruling, replayed: a village
+         named for its studio. Measured 9.3 CSS px from Swindon and 11.2 from
+         Bray at the Britain arc — it CLEARS the 8.5 px floor by less than a
+         pixel, and that thinness is the note: the Thames Valley corridor is
+         now nearly full and the next row through here should measure first.
+       · NOT READING, though Slowdive is a Reading band and the Pomona rule
+         asks for the band's town. Measured 5.1 px from Bray, under the floor,
+         and the two are sibling Thames Valley towns that WITHIN cannot relate
+         — the Leeds/Halifax rejection above at almost the same distance (5.8).
+         LONDON WAS NOT THE PROBLEM and the round's own guess was wrong about
+         that: Reading clears London at 15.3 px.
+       · NOT WESTON-SUPER-MARE, the album's second studio, drafted after
+         Reading fell: 7.7 px from Bristol, under the floor.
+       · NOT CAMBRIDGE, MASSACHUSETTS — `galaxie500`'s infobox origin, and the
+         most dangerous of the three because it would have PASSED. It lands
+         0.2 px from Boston: the same dot with a second name. G10 asserts only
+         at the tightest arc (Britain, 11 deg) and Cambridge MA's arcFor is 64
+         deg (North America), so the gate would have printed the collision to
+         its watch list and exited 0. The refusal is human, made against the
+         printed number, and the ZIM supplied the alternative in body text —
+         "The band played gigs in Boston and New York City" — so the row takes
+         Boston, a dot the map already draws. NO new North American place. */
+    "Sutton Courtenay": [51.64, -1.28],
     "Bray": [51.51, -0.70], "Sheffield": [53.38, -1.47],
     "Bucharest": [44.43, 26.10], "Maramureș": [47.67, 24.00],
     "Honolulu": [21.31, -157.86],
@@ -688,6 +718,8 @@
     honkytonk:      { place: "Fort Worth", year: 1941 },
     westernswing:   { place: "Tulsa", year: 1940 },
     dreampop:       { place: "London", year: 1984 },
+    galaxie500:     { place: "Boston", year: 1989 },
+    slowdive:       { place: "Sutton Courtenay", year: 1993 },
     younggalaxy:    { place: "Montreal", year: 2011 },
     doom:           { place: "Stockholm", year: 1986 },
     jpop:           { place: "Tokyo", year: 1999 },
@@ -879,7 +911,11 @@
                // ...and the unlocking round's one (2026-08-30):
                // EDINBURGH, plain European geography, the second
                // Scottish dot and the Gow family's publishing town.
-               "Edinburgh"],
+               "Edinburgh",
+               // ...and the dream-pop round's one (2026-08-31): SUTTON
+               // COURTENAY, `slowdive`'s Oxfordshire studio village. Its
+               // three refused siblings are in the PLACES ledger above.
+               "Sutton Courtenay"],
     "North America": ["Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
                       "Chicago", "Cincinnati", "Cleveland", "Detroit",
                       "Greenwich Village", "Harlem", "Clarksdale", "Kansas City", "Lafayette",
