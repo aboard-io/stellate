@@ -586,6 +586,26 @@ const PAGE_TRIM = {
      (byte-identical — no guitar), ambient and hymn byte-identical under an
      in-flight restore of 2.55, funk -0.16 dB (its own booked rhythm-guitar
      layer taking the cut). */
+  /* supersaw ADDED 2026-08-31, and it is the reason Paul said "You never added
+     arpeggios to young galaxy" about a record whose staff was full of them.
+     MEASURED with test/_chairtap.cjs, the mute-complement — the only harness
+     here that answers "is this chair audible": the arp chair's contribution to
+     the record was 0.02 dB. Two hundredths. Muting it changed nothing, it sat
+     18.69 dB under the band, and I had spent three rounds reading ABC strings
+     that said sixteen notes a bar.
+
+     THE CAUSE IS THIS TABLE'S OWN SUBJECT: every voice module carries a page
+     deficit and the SYNTH ONES HAD NO ROW. Voices run 4.11-7.52 here and
+     guitars 1.78, while `supersaw` ran at 1.0 — so a synth line sat 12 to 17 dB
+     under a sung one before any desk word was spoken. That is not Young
+     Galaxy's bug; it is every arpeggio, pad_saw lead and machine line in the
+     catalogue.
+
+     2.8 IS MEASURED, NOT PICKED: +8.9 dB, which takes the chair from 18.7 dB
+     under the band to about 10 under it — a bed that swirls beneath the song,
+     which is what Paul asked for ("fade down a little"), rather than a part
+     nobody can hear. Re-measured after: see the commit. */
+  supersaw:    4.2,
   stk_guitar:  1.78,
   /* stk_piano WAS 2.35, CUT ×0.766 (-2.32 dB) 2026-08-30. Paul: fix the
      +2.3 dB the ear round measured against its whole band. The row's own

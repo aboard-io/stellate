@@ -1628,6 +1628,34 @@
   // so this row can only ever say MORE — and the chair that wants more is the
   // one whose job is to be the space the others play in.
   const CHAIRREV = { pad: "touch", drone: "touch" };
+  /* ...AND THE LOW SHELF COMES OFF WHAT IS NOT THE BOTTOM (2026-08-31).
+     Paul, twice: "the mix is very muddy", and of Young Galaxy "The mix is
+     muddy." I answered the first one in the Ableton export and NOT in the app,
+     which is the half he actually listens to — an EQ that only exists in a
+     file he opens later is not a mix fix.
+
+     THE SEAM WAS ALREADY BUILT AND ONE LINE SHORT. fields.js PARTMIX has
+     carried an `eq` key (lo/mid/hi, dB, EQ_BANDS) since the board round;
+     resolvePartMix turns it into a real filter and audio/desk.js merges it per
+     strip. What was missing is that `deskFor` copied six words and not this
+     one, so no anchor could state an EQ and no chair had one by default. The
+     copy list above now carries it, which also means a ROW can say its own.
+
+     THE CURVES ARE THE ORDINARY ONE, and only one band: a LOW SHELF at 120 Hz
+     (EQ_BANDS `lo`) taken off the parts that do not live down there. That is
+     what muddiness IS — four chairs all holding energy under the bass — and it
+     is the least invasive thing that fixes it: no presence bell, no top-end
+     taste, nothing that changes what an instrument sounds like, only how much
+     of the bottom it is allowed to keep. The bass and the kit are NOT here on
+     purpose: their bottom is the record's bottom.
+
+     DELIBERATELY SHY. -5 on the two holding chairs and -3 on the two moving
+     ones, against a range of +/-12 — these land on every record in the
+     catalogue, and a first pass at a global EQ should be audible and
+     reversible rather than a new house sound. A row that wants more says so
+     itself now. */
+  const CHAIREQ = { pad: { lo: -5 }, drone: { lo: -5 },
+                    riff: { lo: -3 }, lead: { lo: -2 } };
   // TWO CHAIRS OF ONE ROLE MUST NOT SIT ON TOP OF EACH OTHER. Post rock is a
   // pad and two clean guitars (fields.js:691's own example); the first keeps
   // the centre, the second and third are moved off it. The parent already
@@ -1720,6 +1748,7 @@
     const lvl = (nth > 0 && CHAIRLVL2[part]) ? CHAIRLVL2[part] : CHAIRLVL[part];
     if (lvl && lvl !== "norm") e.lvl = lvl;
     if (CHAIRREV[part]) e.rev = CHAIRREV[part];
+    if (CHAIREQ[part]) e.eq = { ...CHAIREQ[part] };
     if (nth > 0) e.pan = CHAIRPAN[(nth - 1) % CHAIRPAN.length];
     if (voice.kind === "drums" &&
         MACHINEKIT.indexOf(voice.instrument) < 0) e.room = "touch";
@@ -1729,7 +1758,7 @@
     // ...and the row's own word for this part, last, so a named record wins
     // over the role's default without either table learning about the other.
     const said = G && G.mix && G.mix[part];
-    if (said) for (const k of ["rev", "echo", "room", "aux", "genre", "lvl", "pan"])
+    if (said) for (const k of ["rev", "echo", "room", "aux", "genre", "lvl", "pan", "eq"])
       if (said[k] != null) e[k] = said[k];
     return Object.keys(e).length ? e : null;
   }
