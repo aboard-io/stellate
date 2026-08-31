@@ -480,6 +480,14 @@
     jack7: [{ d: 0, q: "7" }, { d: 3, q: "7" }, { d: 0, q: "7" }, { d: 4, q: "7" }],
     // the beatles verse as written, and a chorus that finally goes to V —
     // the pair exists so a composed song can have two different harmonies
+    /* PRETTY BOY, dictated by Paul 2026-08-31: "Pretty boy has a A D Bm chord
+       progression for example, A D on the verse, then Bm D A D on the chorus."
+       Written as DEGREES, not as chord names, because in A ionian the degrees
+       ARE those chords and the qualities fall out of the mode: 0 is A major,
+       3 is D major, 1 is B minor. Nothing here says "minor" — the row's
+       `diatonic` does, which is why the row moved off aeolian to get them. */
+    prettyboyV: [{ d: 0 }, { d: 0 }, { d: 3 }, { d: 3 }, { d: 0 }, { d: 0 }, { d: 3 }, { d: 3 }],
+    prettyboyC: [{ d: 1 }, { d: 3 }, { d: 0 }, { d: 3 }, { d: 1 }, { d: 3 }, { d: 0 }, { d: 3 }],
     beatlesV: [{ d: 0 }, { d: 0 }, { d: 6 }, { d: 6 }, { d: 3 }, { d: 3 }, { d: 0 }, { d: 0 }],
     beatlesC: [{ d: 0 }, { d: 0 }, { d: 6 }, { d: 6 }, { d: 3 }, { d: 3 }, { d: 4 }, { d: 0 }],
   };
@@ -17167,16 +17175,60 @@
       // record is not the record. (Luna is Wareham's next band and is
       // `galaxie500` continued, not a third hole; Pink Floyd's rung is
       // `spacerock`, London 1973, already here.)
-      parents: { dreampop: 0.4, synthpop: 0.35, slowdive: 0.15, galaxie500: 0.1 },
+      /* SONIC REVISION 2026-08-31, dictated. Paul: "Young Galaxy has more of a
+         new order influence. A lot of their backing is arpeggiated. Definitely
+         favor the 909 ... Long ethereal vocal lines plus a lot of swirling
+         climbs ... the lyrics are spare and rhythmic ... back to motif one,
+         which is often just two notes." And then the specifics: "the arpeggios
+         tend to be tight and synthy and steady flows of 16 steps per bar."
+         `dancepostpunk` (Manchester 1983 — the Blue Monday pulse) is the New
+         Order rung and joins at 0.25, taken out of dreampop and synthpop
+         rather than out of the two acts the article names, because those two
+         are the row's own citation and this is a fourth thing on top. */
+      parents: { dreampop: 0.3, dancepostpunk: 0.25, synthpop: 0.2,
+                 slowdive: 0.15, galaxie500: 0.1 },
       wants: ["the gothenburg dub-disco shelf (studio, service)"],
-      instr: ["solo_vox", "warm_pad", "clean_guitar"],
-      drumkit: "electronic",
+      // the riff chair is the ARPEGGIO, so it stops being a guitar: "tight and
+      // synthy" is a saw, and a clean guitar playing sixteenths is a different
+      // record entirely.
+      instr: ["solo_vox", "warm_pad", "saw_wave"],
+      drumkit: "tr909",
       entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? -1 : 0),
       realize: v => (v === 1 ? "pad" : "line"),
       part: ["lead", "pad", "riff"],
-      roots: [0, 3, 5, 4], mode: MODES.aeolian,
-      scale: MODES.aeolian, diatonic: true,
-      artic: "tie", maxHold: 4,
+      /* THE CHANGES ARE PAUL'S AND THE MODE FOLLOWS THEM. A, D and Bm is
+         I-IV-ii, which is MAJOR — the row was aeolian, where those degrees are
+         a different three chords. `roots` stays as the fallback shape for a
+         section the family does not name; the named progressions are the
+         record's own. */
+      roots: [0, 3, 1, 3], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true, harmony: "cycle",
+      progFamily: { verse: "prettyboyV", chorus: "prettyboyC" },
+      /* THE LENGTH COMES OFF THE GATE, NOT OFF THE TAIL, and this is the one
+         judgement call in the round. "Long ethereal vocal lines" and "steady
+         flows of 16 steps per bar" are opposite demands on ONE `tone`, because
+         a row has no per-chair tone (only `bassTone` exists) — and sixteen
+         notes a bar at 104bpm are 144ms apart, so the old 1.6s release would
+         have eleven of them sounding at once. That is a smear, and it is
+         exactly what Paul reported on Iranian pop: "they all seem to run
+         together." So the singing gets its length from HELD NOTES (`artic`
+         maxHold) and the release drops to 0.55 where an arpeggio can
+         articulate. The wash is unchanged — `verb` still .55.
+
+         AND `artic: "tie"` CAME OFF, WHICH THE MEASUREMENT DECIDED. Tie is a
+         second way to lengthen a line and it does it by MERGING consecutive
+         gated steps — which is a sixteenth-note arpeggio's exact enemy.
+         Measured on the rendered lanes, four settings:
+             artic tie,  maxHold  7 -> riff 7.4/bar, lead mean .65, longest 2.25
+             artic none, maxHold  7 -> riff  12/bar, lead mean .58, longest 1.61
+             artic none, maxHold 10 -> riff  12/bar, lead mean .62, longest 1.84
+             artic none, maxHold 12 -> riff  12/bar, lead mean .62, longest 1.84
+         Tie was eating 38% of the arpeggio to buy the voice 5% of its length.
+         maxHold saturates at 10 and gets nearly all of it back. So: no tie,
+         maxHold 10 — the singing stays long and the sixteenths survive. This
+         is the whole reason the row was rendered and counted instead of
+         declared and trusted. */
+      maxHold: 10,
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,1] },
@@ -17185,11 +17237,25 @@
       // an effect return rather than a part — the same door portishead's
       // riff uses, one word quieter.
       mix: { riff: { rev: "some", echo: "some" } },
-      tone: { wave: "triangle", cut: 2000, q: 1.0, atk: .02, rel: 1.6, gain: .26, verb: .55,
+      tone: { wave: "triangle", cut: 2000, q: 1.0, atk: .02, rel: .55, gain: .26, verb: .55,
               mouth: MOUTHS.dreamchoir },
-      words: ["the voice, close and plain", "the machine underneath it"],
-      word: (v, s) => (v === 0 ? [[], [transpose(2)], [], [transpose(-3)]][s % 4]
-                    : v === 1 ? [drop(8)] : [keep(0, 4, 8, 12)]),
+      words: ["the voice, long and climbing",
+              "the pad, holding under it",
+              "the arpeggio, sixteen to the bar"],
+      /* MOTIF ONE IS TWO NOTES. Paul: "back to motif one, which is often just
+         two notes." `keep(0, 8)` is that literally — one note on the bar, one
+         on the half — and it alternates with the fuller line so the tune comes
+         and goes rather than running continuously, which is the same gesture
+         as "motifs coming in and out".
+         AND THE ARPEGGIO IS split-THEN-fill. `split(4)` is the arpeggiator:
+         it subdivides a held note and each repeat climbs by the phrase's own
+         `inc`, which is where "swirling climbs" comes from. `fill(1)` then
+         gates EVERY step, which is sixteen to the bar, said in the alphabet's
+         own words rather than as a number somewhere. */
+      word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], [keep(0, 8)]][s % 4]
+                    : v === 1 ? [drop(8)]
+                    : [[split(4), fill(1)], [split(4), fill(1)],
+                       [split(2), fill(1)], [split(4), fill(1)]][s % 4]),
     },
 
     // DOOM — Stockholm 1986: Candlemass, Epicus Doomicus Metallicus —

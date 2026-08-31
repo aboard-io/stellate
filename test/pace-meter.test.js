@@ -82,7 +82,16 @@ const PLAN = await import(R("nukernel/audio/plan.js"));
    anchor growing a paces row trips this gate and gets argued, not
    smuggled. ------------------------------------------------------------ */
 {
-  const PACED = ["jingju", "khyal"];
+  /* THE THIRD EXEMPLAR, DECLARED 2026-08-31. `scotsfiddle` grew a `paces` map
+     in the slowdive round and this gate caught it as an undeclared pace, which
+     is exactly the job: the list is a DECISION and a row cannot join it by
+     merely wanting to. The decision is yes. The record is a strathspey-into-
+     reel SET, and a set that does not accelerate is not a set — the row argues
+     it in place (steady through the strathspey, push into the reel, with the
+     prechorus named so a bar of written tempo cannot sit inside the
+     strathspey). That is the same kind of claim jingju's banshi and khyal's
+     vilambit-to-drut make, which is what this list is for. */
+  const PACED = ["jingju", "khyal", "scotsfiddle"];
   const anchors = P.anchors();
   const declared = anchors.filter((gk) => GENRES[gk] && GENRES[gk].paces);
   let worded = 0, outside = 0;
