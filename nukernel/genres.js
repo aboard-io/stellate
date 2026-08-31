@@ -17190,7 +17190,7 @@
        drop-and-return applied to pop arrangement. The grid can seat the
        chairs and it cannot make the desk the composer. */
     younggalaxy: {
-      label: "Montreal 2011", voices: 4, bars: 8, near: "dreampop",
+      label: "Montreal 2011", voices: 5, bars: 8, near: "dreampop",
       plan: "song", bpm: 104,
       // LINEAGE: dream pop is the body, synthpop the machine it was rebuilt
       // on, and the residue is the producer — a dub engineer's ear on a pop
@@ -17227,7 +17227,24 @@
       // the riff chair is the ARPEGGIO, so it stops being a guitar: "tight and
       // synthy" is a saw, and a clean guitar playing sixteenths is a different
       // record entirely.
-      instr: ["solo_vox", "warm_pad", "saw_wave", "ahh_choir"],
+      /* SIX CHAIRS, NOT FOUR (2026-08-31). Paul: "In a YG song there is a LOT
+         swirling, a lot of texture and pads and switching lines for guitar."
+         Two of those three were missing outright. The GUITAR had gone: it was
+         the riff chair until the arpeggio round took that chair for a saw, so
+         a band with two guitarists had none. And there was one pad where the
+         record has a wash. So: `clean_guitar` comes back on its own chair as a
+         COUNTER — the line that answers the voice and changes every bar, which
+         is what "switching lines" means.
+
+         AND A SECOND PAD WAS TRIED AND GIVEN BACK, by a gate rather than by
+         taste. `halo_pad` alongside `warm_pad` put this record at 46.89 against
+         precompose G12d's ceiling of 46 — the parent's mobile-safety line plus
+         one unit, raised 43 -> 46 once already and MEASURED both times. A
+         ceiling that exists to catch "an instrument on every chair" had caught
+         exactly that. Five chairs is what the budget buys, so the wash comes
+         from the choir, the arpeggio's own reverb and the room, rather than
+         from a chair nobody can afford. */
+      instr: ["solo_vox", "warm_pad", "saw_wave", "ahh_choir", "clean_guitar"],
       drumkit: "tr909",
       /* THE CHORAL DOUBLING, 2026-08-31. Paul: "the lyrics are spare and
          rhythmic with a choral doubling for the bridge — 'Whennn weeee | were
@@ -17259,7 +17276,7 @@
          precompose says so where I tried it). */
       reg: v => (v === 0 ? 1 : v === 1 ? -1 : v === 2 ? 1 : v === 3 ? 1 : 0),
       realize: v => (v === 1 ? "pad" : "line"),
-      part: ["lead", "pad", "riff", "lead"],
+      part: ["lead", "pad", "riff", "lead", "counter"],
       /* THE CHANGES ARE PAUL'S AND THE MODE FOLLOWS THEM. A, D and Bm is
          I-IV-ii, which is MAJOR — the row was aeolian, where those degrees are
          a different three chords. `roots` stays as the fallback shape for a
@@ -17305,7 +17322,20 @@
       // the riff chair takes the room, because on this record the guitar is
       // an effect return rather than a part — the same door portishead's
       // riff uses, one word quieter.
-      mix: { riff: { rev: "some", echo: "some" } },
+      /* ...AND THE ARPEGGIO SITS UNDER THE SONG (2026-08-31). Paul: the arps
+         "fade down a little and alter over the song". `back` is fields.js
+         LEVELS 0.7, -3.1 dB — a little, which is the word he used, and the
+         riff chair is the arpeggio's chair on this record.
+
+         I OWE A CORRECTION HERE. Two rounds ago I wrote, in the als.js mix
+         comment, that a row's `mix[part].lvl` "REACHES NOTHING" — measured,
+         `{pad:{lvl:"hush"}}` and `{lvl:"fwd"}` both left the unit at 0.2297.
+         That measurement was wrong and the fault was my harness: precompose
+         MEMOIZES an anchor's document, and I was mutating GENRES after the
+         document had already been built, so the engine never saw either word.
+         fields.js resolvePartMix has handled `lvl: pick(LEVELS, g.lvl, 1)` all
+         along. The als.js comment is corrected in the same commit. */
+      mix: { riff: { rev: "some", echo: "some", lvl: "back" } },
       tone: { wave: "triangle", cut: 2000, q: 1.0, atk: .02, rel: .55, gain: .26, verb: .55,
               mouth: MOUTHS.dreamchoir },
       words: ["the voice, long and climbing",
@@ -17322,7 +17352,13 @@
          `inc`, which is where "swirling climbs" comes from. `fill(1)` then
          gates EVERY step, which is sixteen to the bar, said in the alphabet's
          own words rather than as a number somewhere. */
+      /* ...AND THE GUITAR SWITCHES EVERY BAR (v4). Four readings of its own
+         line — as written, rotated, thinned, moved up — so it answers the
+         voice differently each time round rather than repeating one figure.
+         The second pad (v5) holds like the first, an octave up: two pads that
+         hold and one that moves is a wash, three that move is a crowd. */
       word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], [keep(0, 8)]][s % 4]
+                    : v === 4 ? [[], [rotate(2)], [drop(3)], [transpose(2)]][s % 4]
                     : v === 1 ? [drop(8)]
                     // the choir sings the voice's own shape, thinned: it holds
                     // the long notes and leaves the busy ones to the lead,

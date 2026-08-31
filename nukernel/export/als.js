@@ -492,10 +492,18 @@ export function setStrip(track, strip, vol) {
    trim divided back out measures lead 0.273 against pad 0.193 — also -3 dB.
    A duplicated table is a drift risk, so gate M in als-gate.js reads the real
    precompose and fields tables and FAILS if these two disagree with them.
-   (A row's own `mix[part].lvl` is NOT read here, and that is deliberate: it
-   does not reach the engine either — measured, `mix: {pad:{lvl:"hush"}}` and
-   `{lvl:"fwd"}` both leave the unit at 0.2297 — so honouring it here would
-   make the export louder or quieter than the record it came from.) */
+   (A row's own `mix[part].lvl` is NOT read here, and the REASON WAS WRONG.
+   This said the word "does not reach the engine either — measured,
+   `mix: {pad:{lvl:"hush"}}` and `{lvl:"fwd"}` both leave the unit at 0.2297".
+   CORRECTED 2026-08-31: that measurement was my harness, not the engine.
+   precompose MEMOIZES an anchor's document and I was mutating GENRES after it
+   was already built, so nothing downstream ever saw either word. Measured
+   properly — in the page, where the document exists — `mix: {riff:{lvl:"back"}}`
+   on younggalaxy puts `lvl: "back"` into `sec.parts.riff` and takes that unit
+   to 0.100 against the lead vocal's 0.205. fields.js resolvePartMix has read
+   `lvl` all along. The export still does not honour it, but now for the honest
+   reason: the strip here is built from the CHAIR tables, and reading a second
+   level source on top would count the same intent twice.) */
 export const CHAIR_LEVEL = { lead: "fwd", pad: "back", drone: "back" };
 export const LEVEL_GAIN = { hush: 0.4, back: 0.7, norm: 1, fwd: 1.35 };
 export const chairGain = (chair, nth) =>
