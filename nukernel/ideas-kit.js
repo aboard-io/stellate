@@ -85,7 +85,8 @@
      this set is the BAND that part may draw from, and an anchor may say which
      with `seqArp`. test/hook.test.js reads THIS array rather than keeping a
      list of its own, so the fence and the vocabulary cannot drift apart. */
-  const ARP_CONTOURS = ["arp", "arpup", "arpdown", "arpoct", "arpwide", "arpturn"];
+  const ARP_CONTOURS = ["arp", "arpup", "arpdown", "arpoct", "arpwide", "arpturn",
+                        "arpclose"];
 
   const CONTOURS = {
     rise:  { w: "rises", f: (k) => k },
@@ -153,6 +154,23 @@
                // deliberately not adjacent — the 303's own habit of jumping
                // the fifth and the ninth; every third bar it lands on the third
                f: (k) => (k % 48 === 47 ? 2 : [0, 4, 2, 7, 4, 9][k % 6]) },
+    /* THE CLOSE ONE — TONALLY CENTRED, added 2026-08-31. Paul: "Young Galaxy
+       is far more tonally centered. You have a lot of big leaps here. Think of
+       it melodically as closer to downtempo. Things swirl and build but don't
+       jump. Think harmonically (vertically) first then melodically
+       (horizontally) second."
+
+       Every other arpeggio here reaches the OCTAVE (degree 7) and `arpwide`
+       reaches the ninth — that is the jump he is hearing. This one never
+       leaves the triad: root, third, fifth and back, so the widest interval in
+       it is a fifth and most steps are a third. HARMONY FIRST is literally
+       what that is — the figure states the chord and the movement is what is
+       left over, rather than a line that travels and happens to land on chord
+       tones. Six steps against sixteen so it still turns over inside the bar;
+       the exception is a passing SECOND, the smallest move in the box, where
+       the other modes overshoot. */
+    arpclose:{ w: "shimmers inside the chord",
+               f: (k) => (k % 48 === 47 ? 1 : [0, 2, 4, 2, 0, 4][k % 6]) },
     arpturn: { w: "turns through the chord to the ninth",
                // the long one: eight steps, so it never lines up with the bar
                // and takes three bars to come home. Berlin-school motion.

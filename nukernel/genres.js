@@ -17274,7 +17274,14 @@
          bridge"; the doubling is on the record rather than on one section of
          it. Making that expressible is a real change to the vocabulary and is
          not smuggled in here. */
-      entry: v => (v === 3 ? 0 : v),
+      /* THE ARPEGGIO STARTS ON BAR ONE OF EVERY BOX (2026-08-31). Paul, after
+         four rounds of this: "IT'S STILL NOT THERE ... It's supposed to be ALL
+         the measures." Measured on his record, the arp staff carried 38 of 65
+         bars — and `entry: v => v` was handing voice 2 an entry of BAR TWO, so
+         the figure sat out the first two bars of every single box. A bed that
+         waits two bars each time is not a bed. Voice 2 enters at 0 with the
+         voice; the choir (3) already did. */
+      entry: v => (v === 2 || v === 3 ? 0 : v),
       /* THE ARPEGGIO CHAIR SITS AN OCTAVE UP (voice 2), 2026-08-31. Paul:
          "The mix is muddy." Sixteen notes a bar in the same octave as the bass
          and the pad IS the mud, and the New Summer tab he sent puts the synth
@@ -17297,6 +17304,10 @@
          that is still this band. Verse and chorus stay Pretty Boy's, because
          that is the anchor record. */
       progFamily: { verse: "prettyboyV", chorus: "prettyboyC", bridge: "newsummerH" },
+      // ITS OWN ARPEGGIO (2026-08-31): the CLOSE one. Paul — "far more tonally
+      // centered ... Things swirl and build but don't jump." Every other mode
+      // reaches the octave; this one never leaves the triad.
+      seqArp: "arpclose",
 
       /* THE LENGTH COMES OFF THE GATE, NOT OFF THE TAIL, and this is the one
          judgement call in the round. "Long ethereal vocal lines" and "steady

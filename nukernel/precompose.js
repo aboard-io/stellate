@@ -2418,13 +2418,30 @@
         // §6c dealt one and the part's own figure otherwise — the same map,
         // the same law, one more thing written into it. `cellAt` returns the
         // kind itself on reading 1, so this line is byte-identical there.
-        const nm = k && cellAt(k, i);
+        /* A SEQUENCER IS NOT THINNED AND NOT CUT SHORT (2026-08-31). Paul:
+           "IT'S STILL NOT THERE ... It's supposed to be ALL the measures."
+           Measured on his record, bar by bar: the arp ran 16 to the bar
+           everywhere EXCEPT eight bars of one verse that read 8, because that
+           section's development was "thinned", and the cell itself had been
+           developed to "seq stretched out". Both are ordinary devices and both
+           are right for a TUNE — a melody that comes back thinner is the whole
+           point of development. They are wrong for a BED. A sequencer that
+           halves for eight bars has stopped being the thing running under the
+           record, which is what he has now asked for four times.
+
+           So the seq kind keeps its cell undeveloped and its section word "as
+           written". It still ALTERS — the six arpeggio modes differ per
+           anchor, each carries its own exception, and the figure follows the
+           chord — but it never loses a note. Every other kind develops exactly
+           as before. */
+        const isSeq = k === "seq";
+        const nm = k && (isSeq ? k : cellAt(k, i));
         if (nm && nm !== home) material[sid(i)] = nm;
         // ...and the section's WORD is tested against the figure the section
         // actually plays: a word that speaks over the statement can still miss
         // a truncated return, and a word that leaves no onset mutes the voice
         // (the measured failure this `speaks` check exists for).
-        development[sid(i)] = nm ? sayOps(R.song[i].ops, nm) : "out";
+        development[sid(i)] = nm ? (isSeq ? "as written" : sayOps(R.song[i].ops, nm)) : "out";
       });
       const part = basePart[v];
       const instrument = signed(part, instrOf(gk, v)) ? "synth" : instrOf(gk, v);
