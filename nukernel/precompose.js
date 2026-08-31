@@ -2344,6 +2344,38 @@
     });
     const baseKinds = [];
     for (let v = 0; v < nBase; v++) baseKinds.push(R.song.map((b, i) => baseKind[i](v)));
+    /* THE SEQUENCER STAYS ON ONE CHAIR (2026-08-31). Paul, on a third seed:
+       "where are the arpeggios that are supposed to be everywhere throughout
+       the entire song? why are they not filtered down to a nice tone? I asked
+       many times."
+
+       MEASURED at that seed, and both halves of the question have ONE answer.
+       The figure was in 7 of 10 sections — but not on one instrument. Voices
+       read slots BY INDEX, so on the three CHORUSES the arpeggio moved onto
+       the WARM PAD while the Juno took the tune. An arpeggio that changes
+       instrument every few sections is not "throughout the song", it is three
+       different things; and a warm pad playing sixteenths is the opposite of
+       "filtered down to a nice tone" — it is the mush. He was hearing exactly
+       what was there.
+
+       A SEQUENCER IS THE RIFF CHAIR'S JOB — that part is "an insistent figure"
+       in this file's own words, which is what a sequencer is. So where a
+       record has a riff chair on a synth, the `seq` kind is SWAPPED onto it
+       and whatever it held goes back to the voice that had the sequencer.
+       Nothing is dropped and no section changes what it contains; one chair
+       simply stops being three chairs. Records with no riff chair, or a
+       non-synth one, are untouched. */
+    {
+      const arpV = basePart.findIndex((p, v) =>
+        p === "riff" && !!(NI.PATCHES.synth || {})[instrOf(gk, v)]);
+      if (arpV >= 0) for (let i = 0; i < R.song.length; i++) {
+        if (baseKinds[arpV][i] === "seq") continue;
+        const holder = baseKinds.findIndex((ks) => ks[i] === "seq");
+        if (holder < 0) continue;
+        baseKinds[holder][i] = baseKinds[arpV][i];
+        baseKinds[arpV][i] = "seq";
+      }
+    }
     const rawReg = baseKinds.map((kinds, v) => G.reg(v) +
       sayOnce(basePart[v], (REG[(KINDS[dflt(kinds)] || {}).reg || row.reg] || REG.mid).v));
     // THE LIFT IS THE BAND'S, NOT THE GUEST'S. It is measured over and applied

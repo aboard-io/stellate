@@ -17344,7 +17344,17 @@
          fields.js resolvePartMix has handled `lvl: pick(LEVELS, g.lvl, 1)` all
          along. The als.js comment is corrected in the same commit. */
       mix: { riff: { rev: "some", echo: "some", lvl: "back" } },
-      tone: { wave: "triangle", cut: 2000, q: 1.0, atk: .02, rel: .55, gain: .26, verb: .55,
+      /* THE FILTER HAD TO SPEAK (2026-08-31). Paul, a third time: "why are
+         they not filtered down to a nice tone? I asked many times." Measured
+         on the Juno's own params: `cutoff 2000, res 0.025` — wide open with
+         no resonance at all, which is a saw with the lid off, not a Juno.
+         to-engine derives `res = (q - 0.7) / 12`, so this row's `q: 1.0` was
+         asking for 0.025 when the rows that sound like anything ask 0.28-0.38.
+         q 4.0 gives 0.275, and the cutoff comes down to 1200 where a Juno arp
+         lives — the envelope's own sweep (envAmount 1.77) then opens it and
+         closes it on every note, which is the "textural" half of the ask and
+         is the thing a filter with no resonance cannot do. */
+      tone: { wave: "triangle", cut: 1200, q: 4.0, atk: .02, rel: .55, gain: .26, verb: .55,
               mouth: MOUTHS.dreamchoir },
       words: ["the voice, long and climbing",
               "the pad, holding under it",
