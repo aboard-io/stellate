@@ -608,8 +608,14 @@ function sectionEvents(doc, i) {
   // the ZIM answers twice over: the label pressed Strike Under's Immediate
   // Action in 1980 and Ministry's Cold Life in 1981, and that second record
   // is the one the article says "set the stage".
-  ok("G0 the catalog is 374 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 374,
+  /* 374 -> 375, 2026-08-31: `younggalaxy` (Montreal 2011). Paul asked for the
+     band by name; the ZIM chose the RECORD — Shapeshifting rather than the
+     2007 debut, because the debut is the Slowdive lineage `dreampop` already
+     anchors and the ethereal-wave ruling forbids a second row for one
+     archetype. The Lissvik production is the thing this table did not hold.
+     Montreal is a new dot (North America), baked to 369 WHEN rows. */
+  ok("G0 the catalog is 375 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 375,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));

@@ -162,6 +162,7 @@
        city. */
     "Bulawayo": [-20.15, 28.58], "Cape Town": [-33.93, 18.42],
     "Halifax": [53.72, -1.86],
+    "Montreal": [45.50, -73.57],
     "Notodden": [59.56, 9.26], "Oslo": [59.91, 10.75],
     "Pomona": [34.06, -117.76], "Rennes": [48.11, -1.68],
     "Traverse City": [44.76, -85.62], "York": [53.96, -1.08],
@@ -476,13 +477,6 @@
     sophistirock:   { place: "London", year: 1986 },
     motorik:        { place: "Düsseldorf", year: 1974 },
     roboticpop:     { place: "Düsseldorf", year: 1978 },
-    // WAX TRAX! IS THE SHOP'S CITY, NOT THE SHOP'S YEAR. The store began in
-    // Denver in 1974 and moved; the Lincoln Park storefront opened November
-    // 1978; the LABEL's first release is 1980 and the record this row is
-    // written from — Ministry's Cold Life, the label's first hit — is 1981.
-    // Chicago is unambiguous, the year is the one the article itself picks
-    // out, and both of this row's Chicago children sit seven and eight years
-    // later on the same dot.
     waxtrax:        { place: "Chicago", year: 1981 },
     industrialmetal: { place: "Chicago", year: 1988 },
     ebm:            { place: "Chicago", year: 1989 },
@@ -615,10 +609,6 @@
     carnatic:       { place: "Chennai", year: 1935 },
     gagaku:         { place: "Nara", year: 752 },
     ziryab:         { place: "Córdoba", year: 822 },
-    qiyan:          { place: "Medina", year: 705 },
-    hardingfele:    { place: "Oslo", year: 1849 },
-    tasnif:         { place: "Tehran", year: 1924 },
-    scotsfiddle:    { place: "Edinburgh", year: 1796 },
     dufay:          { place: "Florence", year: 1436 },
     ballad:         { place: "London", year: 1666 },
     operaseria:     { place: "London", year: 1724 },
@@ -698,6 +688,7 @@
     honkytonk:      { place: "Fort Worth", year: 1941 },
     westernswing:   { place: "Tulsa", year: 1940 },
     dreampop:       { place: "London", year: 1984 },
+    younggalaxy:    { place: "Montreal", year: 2011 },
     doom:           { place: "Stockholm", year: 1986 },
     jpop:           { place: "Tokyo", year: 1999 },
     dunstaple:      { place: "London", year: 1420 },
@@ -762,9 +753,6 @@
     khyal:          { place: "Mumbai", year: 1965 },
     gamelan:        { place: "Surakarta", year: 1956 },
     tapemusic:      { place: "Paris", year: 1948 },
-    // the ledger round's eleven (2026-08-30) — every dot the payment of
-    // a written want; Honolulu is the map's first Pacific dot and the
-    // reason the empty region below closed
     hammerhorror:   { place: "Bray", year: 1958 },
     idm:            { place: "Sheffield", year: 1992 },
     exotica:        { place: "Honolulu", year: 1957 },
@@ -776,6 +764,10 @@
     lautari:        { place: "Bucharest", year: 1906 },
     doina:          { place: "Maramureș", year: 1912 },
     chazzanut:      { place: "New York", year: 1912 },
+    qiyan:          { place: "Medina", year: 705 },
+    hardingfele:    { place: "Oslo", year: 1849 },
+    tasnif:         { place: "Tehran", year: 1924 },
+    scotsfiddle:    { place: "Edinburgh", year: 1796 },
   };
   /* WHEN:END */
 
@@ -893,7 +885,8 @@
                       "Greenwich Village", "Harlem", "Clarksdale", "Kansas City", "Lafayette",
                       "Las Vegas", "Los Angeles", "Memphis", "Miami", "Nashville",
                       "New Orleans", "New York", "Oklahoma City", "Orlando",
-                      "Philadelphia", "Portland", "San Diego", "San Francisco",
+                      "Montreal", "Philadelphia", "Portland", "San Diego",
+                      "San Francisco",
                       "Sausalito", "Sedalia", "St. Louis", "Tampa", "Teaneck",
                       "Toronto",
                       // ...and the debts round's four (2026-08-29): Washington

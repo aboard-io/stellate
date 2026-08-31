@@ -16860,6 +16860,75 @@
                     : [drop(10)]),
     },
 
+    /* YOUNG GALAXY — Montreal 2011, Shapeshifting. Paul asked for the band
+       by name (2026-08-31), and the ZIM decides WHICH RECORD the row is,
+       because the answer changes what the row means.
+
+       NOT THE 2007 DEBUT, and the refusal system is why. That album is the
+       Slowdive/Galaxie 500/Luna lineage the article itself names — dream pop
+       with a wash — and `dreampop` (London 1984, Treasure) already anchors
+       exactly that. A second row for the same claim is the ETHEREAL WAVE
+       ruling, which this catalogue made and kept: a row whose archetype is
+       another row's anchor does not ship.
+
+       SHAPESHIFTING IS THE RECORD THAT IS NOT ALREADY HERE. The article's
+       own pivot sentence: "Their third album, Shapeshifting, was produced by
+       Dan Lissvik of the band Studio in Gothenburg, Sweden" — a Swedish
+       dub-disco producer handed a Canadian dream-pop duo, and what came back
+       was the synthpop half of their own genre line ("indie pop, dream pop,
+       synthpop"). Long-listed for the Polaris; the band never went back.
+
+       MONTREAL, THOUGH THE PRODUCER SAT IN GOTHENBURG — the Pomona rule this
+       table has now run three times (tricky: "the tape ran in London, the
+       record is Knowle West's"; neworleans: cut in Indiana, the row is New
+       Orleans). The band formed in Vancouver in 2005 and MOVED to Montreal,
+       which is where they were when this record was made. Montreal is a new
+       dot; North America by the same volume logic every other row here uses.
+
+       THE CAST is the article's two constants — "husband and wife, Stephen
+       Ramsay and Catherine McCandless" — a sung lead over a machine, with
+       the guitar demoted from weather to punctuation, which is precisely what
+       Lissvik did to them. Ultramarine (2013) is named in the comment and not
+       the label because it is the SAME turn one step further ("their first
+       album in which all lead vocals were performed solely by McCandless"),
+       and one record pays one debt.
+
+       WHAT THIS BOX CANNOT SAY about it, and it is the interesting half: the
+       Lissvik sound is a MIX decision, not a note decision — reverb as an
+       instrument, a vocal pushed through the same chain as the synth, dub's
+       drop-and-return applied to pop arrangement. The grid can seat the
+       chairs and it cannot make the desk the composer. */
+    younggalaxy: {
+      label: "Montreal 2011", voices: 3, bars: 8, near: "dreampop",
+      plan: "song", bpm: 104,
+      // LINEAGE: dream pop is the body, synthpop the machine it was rebuilt
+      // on, and the residue is the producer — a dub engineer's ear on a pop
+      // record, which no parent here supplies.
+      parents: { dreampop: 0.45, synthpop: 0.35, shoegaze: 0.2 },
+      wants: ["the gothenburg dub-disco shelf (studio, service)"],
+      instr: ["solo_vox", "warm_pad", "clean_guitar"],
+      drumkit: "electronic",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? -1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "riff"],
+      roots: [0, 3, 5, 4], mode: MODES.aeolian,
+      scale: MODES.aeolian, diatonic: true,
+      artic: "tie", maxHold: 4,
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,1] },
+      fx: ["chorus", "echo"],
+      // the riff chair takes the room, because on this record the guitar is
+      // an effect return rather than a part — the same door portishead's
+      // riff uses, one word quieter.
+      mix: { riff: { rev: "some", echo: "some" } },
+      tone: { wave: "triangle", cut: 2000, q: 1.0, atk: .02, rel: 1.6, gain: .26, verb: .55,
+              mouth: MOUTHS.dreamchoir },
+      words: ["the voice, close and plain", "the machine underneath it"],
+      word: (v, s) => (v === 0 ? [[], [transpose(2)], [], [transpose(-3)]][s % 4]
+                    : v === 1 ? [drop(8)] : [keep(0, 4, 8, 12)]),
+    },
+
     // DOOM — Stockholm 1986: Candlemass, Epicus Doomicus Metallicus —
     // the record whose title NAMED the genre, Sabbath's slow half taken
     // whole and played slower. The metal wing this catalog grew in the

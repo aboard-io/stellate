@@ -382,6 +382,7 @@ const ASK = {
   bluegrass:  { q: "Bluegrass music", why: "Nashville 1946 is Monroe with Scruggs; the bare `Bluegrass` is a grass and a region of Kentucky." },
   sacredharp: { q: "Sacred Harp", why: "Philadelphia 1844 is the tunebook's own publication decade; the article is the shape-note tradition." },
   zydeco:     { q: "Zydeco", why: "Lafayette 1955 is Clifton Chenier's own city." },
+  younggalaxy: { q: "Young Galaxy", why: "Montreal 2011 is Shapeshifting, and the band's own article is the row's whole argument: formed Vancouver 2005, moved to Montreal, \"produced by Dan Lissvik of the band Studio in Gothenburg\". Not Dream pop, which is `dreampop`'s link and would make this row a second claim on one anchor.", kind: "artist" },
 
   /* ---- MUSIC WRITTEN TO BRAND A BROADCAST ------------------------------ */
   // Both rows point at the SAME article on purpose, the way the ten blues

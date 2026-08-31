@@ -320,6 +320,7 @@
     "honkytonk": {"title":"Ernest_Tubb","kind":"artist","why":"Fort Worth 1941 is Walking the Floor Over You and the article is the man who cut it — the Texas Troubadour whose electric barroom band is this row's whole cast; the genre's own titles resolve to a disambiguation and a section stub in this ZIM, and a wrong link is worse than a narrower true one."},
     "westernswing": {"title":"Western_swing","kind":"genre","why":"Tulsa 1940 is New San Antonio Rose from the Cain's Ballroom band; the article is the genre by name, Wills its own centerpiece."},
     "dreampop": {"title":"Dream_pop","kind":"genre","why":"London 1984 is Treasure; the article is the genre by name and the Cocteau Twins are in its first lines. Not Shoegaze, the table's own child row."},
+    "younggalaxy": {"title":"Young_Galaxy","kind":"artist","why":"Montreal 2011 is Shapeshifting, and the band's own article is the row's whole argument: formed Vancouver 2005, moved to Montreal, \"produced by Dan Lissvik of the band Studio in Gothenburg\". Not Dream pop, which is `dreampop`'s link and would make this row a second claim on one anchor."},
     "doom": {"title":"Doom_metal","kind":"genre","why":"Stockholm 1986 is Epicus Doomicus Metallicus, the record whose title names the article's subject. Not Doom (the game); not Candlemass alone, who are the row's named performers."},
     "jpop": {"title":"J-pop","kind":"genre","why":"Tokyo 1999 is First Love; the article is the genre by name, the J-WAVE coinage in its own history. Not City pop, the table's own upstream row on the same dot."},
     "dunstaple": {"title":"John_Dunstaple","kind":"artist","why":"London 1420 is the Old Hall Manuscript, but the ROW is the contenance angloise — the sound the continent named for this man, which is how dufay's want spelled it — so the article is the man. Old Hall Manuscript was read and passed over for the same reason schutz links Schütz and not the Exequien: the row is the practice he names, not one book of it."},
@@ -415,10 +416,10 @@
       .replace(/%28/g, "(").replace(/%29/g, ")") : null;
   }
   return {
-    "built": "2026-08-30",
+    "built": "2026-08-31",
     "from": "nukernel/wiki-extract.js",
     "book": BOOK,
-    "counts": { "links": 365, "misses": 3, "roles": 6, "anchors": 374 },
+    "counts": { "links": 366, "misses": 3, "roles": 6, "anchors": 375 },
     WIKI, MISSES, url,
   };
 });
