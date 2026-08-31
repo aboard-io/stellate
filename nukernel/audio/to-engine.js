@@ -615,6 +615,14 @@ const PAGE_TRIM = {
      above where the two guitars sit and lets it read as the bed that runs
      under the whole record rather than a part that comes and goes. */
   juno60:      2.0,
+  /* tb303 — THE THIRD SYNTH ROW IN TWO DAYS, and by now the pattern is the
+     finding: this table had NO synth models in it at all, so every machine
+     voice in the catalogue has been playing 12-18 dB under a sung one since it
+     was written. Moving Young Galaxy's arpeggio onto the 303 dropped it
+     straight back to 0.06 dB contribution at -18.16 vs band — inaudible again,
+     for the third instrument in a row, for the same reason. 3.5 is +10.9 dB,
+     measured to land it beside the guitars where the Juno sat. */
+  tb303:       3.5,
   stk_guitar:  1.78,
   /* stk_piano WAS 2.35, CUT ×0.766 (-2.32 dB) 2026-08-30. Paul: fix the
      +2.3 dB the ear round measured against its whole band. The row's own

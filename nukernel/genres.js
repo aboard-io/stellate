@@ -17190,7 +17190,7 @@
        drop-and-return applied to pop arrangement. The grid can seat the
        chairs and it cannot make the desk the composer. */
     younggalaxy: {
-      label: "Montreal 2011", voices: 5, bars: 8, near: "dreampop",
+      label: "Montreal 2011", voices: 6, bars: 8, near: "dreampop",
       plan: "song", bpm: 104,
       // LINEAGE: dream pop is the body, synthpop the machine it was rebuilt
       // on, and the residue is the producer — a dub engineer's ear on a pop
@@ -17252,7 +17252,22 @@
          a detuned stack with no filter movement at all. A stack is bright and
          flat; a Juno breathes. That is the whole difference he is describing,
          and it was one id. */
-      instr: ["solo_vox", "warm_pad", "polysynth", "ahh_choir", "clean_guitar"],
+      /* THE ARPEGGIO IS A 303 (2026-08-31). Paul: "Switch to a 303 for the arps
+         for Young Galaxy." `bass_lead` IS `dsp: "tb303"` — instruments.js put
+         it there so "any other chair in any other genre can hire one" — and it
+         reads this row's tone the way a 303 should: cutoff 1200, resonance
+         0.3 + res = 0.575 (a real squelch where the Juno had 0.275), envmod
+         0.525 sweeping it, and DECAY straight off `rel`, which is the pluck. */
+      /* TWO ARPEGGIOS, AND THE SECOND IS ALMOST A SINE (2026-08-31). Paul:
+         "Add a second arp on top of the pads that's just a normal arp." Then,
+         describing Stay For Real: "a really huge pad and bass in half notes and
+         an almost sine arp on top of the pad ... lots of swirling arps
+         interacting." So the second one is not another saw — `echo_drops` is
+         the box's near-sine voice, and it sits at register 2, above both the
+         pads and the 303. The 303 squelches underneath and the sine shimmers
+         over it; that is the interaction he is describing. */
+      instr: ["solo_vox", "warm_pad", "bass_lead", "ahh_choir", "clean_guitar",
+              "echo_drops"],
       drumkit: "tr909",
       /* THE CHORAL DOUBLING, 2026-08-31. Paul: "the lyrics are spare and
          rhythmic with a choral doubling for the bridge — 'Whennn weeee | were
@@ -17281,7 +17296,7 @@
          the figure sat out the first two bars of every single box. A bed that
          waits two bars each time is not a bed. Voice 2 enters at 0 with the
          voice; the choir (3) already did. */
-      entry: v => (v === 2 || v === 3 ? 0 : v),
+      entry: v => (v === 2 || v === 3 || v === 5 ? 0 : v),
       /* THE ARPEGGIO CHAIR SITS AN OCTAVE UP (voice 2), 2026-08-31. Paul:
          "The mix is muddy." Sixteen notes a bar in the same octave as the bass
          and the pad IS the mud, and the New Summer tab he sent puts the synth
@@ -17289,9 +17304,10 @@
          above the band. This is the chair's register, which is the one that
          reaches the sound (a cell's own `reg` cannot, at a one-bar ceiling —
          precompose says so where I tried it). */
-      reg: v => (v === 0 ? 1 : v === 1 ? -1 : v === 2 ? 1 : v === 3 ? 1 : 0),
+      reg: v => (v === 0 ? 1 : v === 1 ? -1 : v === 2 ? 1 : v === 3 ? 1
+               : v === 4 ? 0 : 2),          // the second arp sits above the pads
       realize: v => (v === 1 ? "pad" : "line"),
-      part: ["lead", "pad", "riff", "lead", "counter"],
+      part: ["lead", "pad", "riff", "lead", "counter", "riff"],
       /* THE CHANGES ARE PAUL'S AND THE MODE FOLLOWS THEM. A, D and Bm is
          I-IV-ii, which is MAJOR — the row was aeolian, where those degrees are
          a different three chords. `roots` stays as the fallback shape for a
@@ -17365,7 +17381,14 @@
          lives — the envelope's own sweep (envAmount 1.77) then opens it and
          closes it on every note, which is the "textural" half of the ask and
          is the thing a filter with no resonance cannot do. */
-      tone: { wave: "triangle", cut: 1200, q: 4.0, atk: .02, rel: .55, gain: .26, verb: .55,
+      /* PLUCKED, 2026-08-31. Paul: "There should be more of a plucked feeling
+         everywhere." `rel` is the release for every chair AND the 303's decay,
+         so one number does both: .55 -> .32 gives the arpeggio a short decay
+         that speaks and stops, and takes the tail off the guitars and the pad
+         with it. The SINGING does not shorten with it — a sung line gets its
+         length from held gates (`maxHold: 10`), which is why that lever exists
+         separately and why the tie came off two rounds ago. */
+      tone: { wave: "triangle", cut: 1200, q: 4.0, atk: .02, rel: .32, gain: .26, verb: .55,
               mouth: MOUTHS.dreamchoir },
       words: ["the voice, long and climbing",
               "the pad, holding under it",
@@ -17388,6 +17411,7 @@
          hold and one that moves is a wash, three that move is a crowd. */
       word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], [keep(0, 8)]][s % 4]
                     : v === 4 ? [[], [rotate(2)], [drop(3)], [transpose(2)]][s % 4]
+                    : v === 5 ? []
                     : v === 1 ? [drop(8)]
                     // the choir sings the voice's own shape, thinned: it holds
                     // the long notes and leaves the busy ones to the lead,

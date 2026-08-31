@@ -170,7 +170,15 @@
        the exception is a passing SECOND, the smallest move in the box, where
        the other modes overshoot. */
     arpclose:{ w: "shimmers inside the chord",
-               f: (k) => (k % 48 === 47 ? 1 : [0, 2, 4, 2, 0, 4][k % 6]) },
+               /* FLATTER STILL, 2026-08-31 (second pass). Paul: "Flatten the
+                  tonal range even a little more." Was [0,2,4,2,0,4] — the
+                  fifth twice in six. Now the figure lives on the root and the
+                  THIRD and touches the fifth once per cycle, so the range is
+                  the same but the WEIGHT is at the bottom of it: most steps
+                  are a third, the fifth is a colour rather than a destination.
+                  That is what "swirls and builds but doesn't jump" sounds like
+                  when you write it down. */
+               f: (k) => (k % 48 === 47 ? 1 : [0, 2, 0, 2, 4, 2][k % 6]) },
     arpturn: { w: "turns through the chord to the ninth",
                // the long one: eight steps, so it never lines up with the bar
                // and takes three bars to come home. Berlin-school motion.
