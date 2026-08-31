@@ -871,7 +871,9 @@
       // named "Chicago 1952" not the Delta — the anchor is a BAND: jazz kit,
       // ride shuffle, walking bass. That is Chess-era electric blues.
       label: "Chicago 1952", bars: 12, swing: 1 / 3,
-      plan: "song", bpm: 104,
+      // bpm 103, not 104 — measured off the track Paul sent (autocorrelation
+      // over the spectral flux: 102.8, with the 68.5 candidate its subharmonic)
+      plan: "song", bpm: 103,
       // LINEAGE: a root UNDER PROTEST — Chess electrified the Delta, and
       // every actual parent (delta blues, boogie-woogie piano, jump blues)
       // is a missing anchor, so in this catalog the blues starts the tree.
@@ -4221,7 +4223,7 @@
     // the KICK ITSELF: broken and syncopated where techno's is a plain four,
     // because a breakbeat under a machine floor is the entire joke.
     bigbeat: {
-      label: "Essex 1997", near: "techno",
+      label: "Essex 1997", voices: 3, near: "techno",
       // floor music with a breakdown where a bridge would be
       plan: "dance", bpm: 132,
       // LINEAGE: the machine floor is techno's, the guitar-sample aggression
@@ -4236,7 +4238,11 @@
       // driven `lead_fuzz`, which is the Essex lead that fights a distorted
       // sample and wins. (It came off techno, where a fuzz guitar lead was
       // never Detroit's sound.)
-      instr: ["distortion_guitar", "charang"],
+      /* ...AND THE RAVE STAB IT WANTS. `wants: ["rave breakbeat"]` was on this
+         row from the start. `rave_a` is a hits-crate stab — the punctuation a
+         big-beat record is built on, and the thing that makes an Essex 1997
+         record sound like 1997 rather than like a guitar band. */
+      instr: ["distortion_guitar", "charang", "found:rave_a"],
       drumkit: "power",
       entry: () => 0, reg: v => -v, realize: () => "line",
       harmony: "modal", mode: MODES.phrygian, scale: DIATONIC,
@@ -5863,7 +5869,7 @@
     // "phaser"]))`) and the dance plan has a breakdown, which is a sweep as
     // an EVENT — what this music actually does with one — instead of a wash.
     industrialbreaks: {
-      label: "Swindon 1989", near: "bigbeat",
+      label: "Swindon 1989", voices: 3, near: "bigbeat",
       // a machine floor; 134 is its breakbeat's own meeting point with the
       // "Blue Monday" pulse next door
       plan: "dance", bpm: 134,
@@ -5904,7 +5910,17 @@
       // thing the article actually names goes on the shopping list.
       wants: ["sample-collage industrial (throbbing gristle, hull 1976)",
               "noise rock"],
-      instr: ["charang", "metal_pad"],
+      /* THE SAMPLE CHAIR, 2026-08-31 — and this row ASKED FOR IT IN WRITING.
+         Its own `wants` has said "sample-collage industrial (throbbing gristle,
+         hull 1976)" since it was written, and it had two synths and no sample.
+         Meat Beat Manifesto's Storm the Studio is a record made of cut voices
+         over a breakbeat; a box that owns 366 one-shots and never names one is
+         the reason Paul asked why so few genres have samples.
+         `vox_a` is Apollo 11 capcom traffic (SOURCES.md: NASA radio, public
+         domain, and one of the three the beep audit KEPT — vox_b/c/e carry a
+         constant carrier whistle and were benched). A transmission voice cut
+         over a break is this record's own language, not a mood board. */
+      instr: ["charang", "metal_pad", "found:vox_a"],
       drumkit: "power",
       entry: () => 0, reg: v => -v, realize: () => "line",
       harmony: "modal", mode: MODES.phrygian, scale: MODES.phrygian,
@@ -17324,6 +17340,11 @@
       // centered ... Things swirl and build but don't jump." Every other mode
       // reaches the octave; this one never leaves the triad.
       seqArp: "arpclose",
+      /* THE HOLE BEFORE THE CHORUS (2026-08-31). Paul asked for it twice, and
+         the FFT of the record he sent settles its shape: at 96s the sub falls
+         to -23.3 dB and the bass to -10.6 while the mid holds at -3.4. The
+         bottom leaves; the middle stays. See compose.js `drops`. */
+      drops: true,
 
       /* THE LENGTH COMES OFF THE GATE, NOT OFF THE TAIL, and this is the one
          judgement call in the round. "Long ethereal vocal lines" and "steady

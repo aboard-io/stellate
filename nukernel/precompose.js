@@ -2321,7 +2321,22 @@
     // MOUTHY moved up beside the guest doors (2026-08-30) — one spelling of
     // the same two tables; this clause reads it from there.
     const sigSynth = G.synth && G.synth.dsp ? G.synth : null;
+    /* A SIGNATURE SYNTH DOES NOT RESTYLE A RECORDING (2026-08-31). Measured
+       while giving industrialbreaks the sample-collage its own `wants` has
+       asked for since it was written: the chair seated `found:vox_a` and came
+       out as `lead_fuzz` with no sampler at all, because this row declares a
+       signature synth and the signature took the chair.
+
+       That is right for an INSTRUMENT — the whole point of a signature is that
+       the anchor's machine plays its lines — and wrong for a `found:` id,
+       which is a recording of a thing that happened. You cannot re-voice a
+       tape of Apollo capcom traffic as a fuzz lead; you can only play it or
+       not. So found ids are excluded on exactly the footing MOUTHY ids already
+       are: a person and a recording are both things the signature may not
+       become. Without this, no row with a signature synth could ever hire a
+       sample — which is a large part of why 1 row of 377 used the crate. */
     const signed = (part, id) => !!sigSynth && !MOUTHY(id) &&
+      !/^found:/.test(String(id || "")) &&
       !(sigSynth.lineOnly && PAD_PART[part]);
 
     /* ---- 7b · WHERE THE CAST SITS, decided once for the whole record ----

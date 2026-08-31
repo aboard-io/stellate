@@ -889,7 +889,17 @@ const trimRoute = (u, instr) => {
   // overdrive_guitar that is 1.78 x 0.2512 = 0.4471 — the module still gets
   // its measured page make-up, and the instrument still sits 12.0 dB under
   // where it sat this morning.
-  const T = pageTrim(u.module || "") * (R ? R.trim : 1);
+  /* A FOUND SAMPLE HAS NO MODULE, SO IT HAD NO TRIM (2026-08-31). PAGE_TRIM is
+     keyed by DSP module and a one-zone found sampler has none — `u.module` is
+     empty — so pageTrim("") returns 1 and the whole crate plays at whatever
+     level the file happens to sit at. Measured the moment two rows finally
+     named a sample: industrialbreaks' Apollo stab contributed 0.01 dB at
+     -23.67 vs band. Inaudible, exactly like the three SYNTH models this week
+     and for the same structural reason: a lane with no row in the trim table.
+     6.0 is +15.6 dB. It applies ONLY to `found:` ids — the GM sampler library
+     is a different lane with its own levels and is untouched. */
+  const foundTrim = /^found:/.test(String(instr || "")) ? 6.0 : 1;
+  const T = pageTrim(u.module || "") * (R ? R.trim : 1) * foundTrim;
   if (T !== 1) {
     u.dry = (u.dry != null ? u.dry : 1) * T;
     u.rev = (u.rev || 0) * T;

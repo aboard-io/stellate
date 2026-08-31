@@ -255,7 +255,21 @@ function castOf(bars) {
         const gsyn = font || (over ? null : ((chSeat && chSeat.synth) || G.synth));
         // lineOnly: the riding lead swaps to the signature synth, the chord under
         // it stays sampled — the score's own predicate, verbatim
-        const useSyn = !!(gsyn && !(gsyn.lineOnly && e.pad && !font));
+        /* ...AND IT DOES NOT RESTYLE A RECORDING (2026-08-31). Measured while
+           giving industrialbreaks the sample-collage its own `wants` has asked
+           for since the row was written: the chair seated `found:vox_a` and
+           came out as `lead_fuzz` with no sampler at all, because the row
+           declares a signature synth and the signature took the chair. Right
+           for an INSTRUMENT — a signature exists so the anchor's machine plays
+           its lines — and wrong for a `found:` id, which is a recording of a
+           thing that happened. Apollo capcom traffic cannot be re-voiced as a
+           fuzz lead; it can only be played or not. Excluded on the same footing
+           the score's own `signed()` excludes a voice. Without this, no row
+           with a signature synth could hire a sample at all, which is part of
+           why one row of 377 ever used the crate. */
+        const seatInstr = String(over || instrOf(owner, vi) || "");
+        const useSyn = !!(gsyn && !/^found:/.test(seatInstr) &&
+                          !(gsyn.lineOnly && e.pad && !font));
         const chair = e.pad ? "pad" : "line";
         // A CHAIR'S SEAT CARRIES THE CHAIR'S OWN TONE. `G.tone` is one tone
         // for the whole genre, and on a genre that seats two chairs (the

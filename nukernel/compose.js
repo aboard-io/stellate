@@ -2530,6 +2530,42 @@
                     build(role, G, gk, r, S,
                           { x: xs[i + 1], next: xs[i + 2], peak: xs[i + 1] === 1,
                             i: i + 1, again: ord[i + 1] }))];
+    /* ---- THE DROP: A HOLE BEFORE THE BIG SECTION -------------------------
+       Paul: "Every now and then drop out everything but the lead for two or
+       four measures or add a two beat rest." Then, describing Stay For Real:
+       "Drops out and then a really huge pad and bass in half notes."
+
+       MEASURED ON THE RECORD ITSELF. He sent the track and an FFT of it says
+       the same thing in numbers: at 96 seconds the sub band falls to -23.3 dB
+       and the bass to -10.6 while the MID holds at -3.4 — so the hole is not
+       silence, it is the bottom leaving and the middle staying. Then the full
+       band returns for the rest of the song. That is exactly the gesture, and
+       it is why this section keeps the tune and drops the kit and the bass
+       rather than muting everything.
+
+       IT IS A SECTION AND NOT A BAR TRICK because that is what the box has:
+       introSections already builds 2-4 bar beds this way, so a hole is a bed
+       with the tune left in. It goes in as a PASS over the finished record,
+       which is where facts about a section's NEIGHBOURS belong — "before the
+       chorus" is a neighbour fact and build() cannot see it.
+
+       `drops` GATES IT. Absent, this whole block is skipped and every record in
+       the catalogue is byte-identical; a row that wants the gesture says so. */
+    {
+      const rD = rng(ihash(gk + "/drop/" + (seed == null ? 1 : seed)));
+      const at = G.drops && song.length > 4
+        ? song.findIndex((b, i) => i > 1 && b.role === "chorus") : -1;
+      if (at > 1 && chance(rD, 0.7)) {
+        const d = skeleton("breakdown", G, gk, S);
+        d.len = pick(rD, [2, 2, 4]);
+        d.stack[0].slots = [S.topline];   // everything but the lead, his words
+        d.kit = "nodrums";
+        d.bassop = "nobass";
+        d.cue = "drop";
+        song.splice(at, 0, d);
+      }
+    }
+
     // ---- THE FOUR PASSES OVER THE FINISHED RECORD ---------------------------
     // Each of them is a fact about a section's NEIGHBOURS, which is exactly
     // what build() cannot see, and the ORDER between them is load-bearing:
