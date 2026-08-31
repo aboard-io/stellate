@@ -1023,7 +1023,11 @@
       for (let v = 0; v < (G.voices || 1); v++)
         if ((G.realize ? G.realize(v) : "line") !== "pad" &&
             (G.entry ? G.entry(v) : 0) === 0) spare.push(v);
-      head.stack[0].slots = spare.length > 1 ? [S.topline, S.sparse] : [S.topline];
+      // the QUOTE states the chorus tune bare, so the sequencer joins it
+      // rather than replacing it — the figure under the stated hook
+      head.stack[0].slots = S.seq != null
+        ? (spare.length > 1 ? [S.topline, S.seq] : [S.topline, S.seq])
+        : (spare.length > 1 ? [S.topline, S.sparse] : [S.topline]);
       head.env = null; head.lvl = null; head.rev = null; head.mot = null;
       head.bassop = null;
       if (kit) head.kit = chance(r, 0.5) ? "sparse" : "nodrums";
@@ -1044,7 +1048,18 @@
       // the whole kit and the bass (`head.kit = null` below is the FULL kit,
       // not none), so the band covers it. The naked opening is `quote`, and
       // that is the one that changed.
-      head.stack[0].slots = chance(r, 0.5) ? [S.hook] : [S.riff, S.pad];
+      /* ...AND THE COLD OPEN KEEPS THE SEQUENCER RUNNING (2026-08-31). Paul,
+         with the URL of the record: "it has no swirling arpeggios in the
+         intro". Measured at that exact seed, the arp voices had `seq` as their
+         HOME material and section 0 overridden to `hook` — because THIS is the
+         branch that builds an intro, not the `role === "intro"` case four
+         hundred lines down that I widened last round. introSections runs
+         first and wins, so the record opened on a hook while every other
+         section ran the arpeggio. On a machine record the sequencer is what
+         the cold open IS. */
+      head.stack[0].slots = S.seq != null
+        ? (chance(r, 0.5) ? [S.seq, S.hook] : [S.seq, S.pad])
+        : (chance(r, 0.5) ? [S.hook] : [S.riff, S.pad]);
       head.env = null; head.lvl = null; head.rev = null; head.mot = null;
       head.kit = null; head.bassop = null;
       head.intro = introEdge("cold", kit, NF.INLABEL);

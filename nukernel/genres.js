@@ -17244,7 +17244,15 @@
          exactly that. Five chairs is what the budget buys, so the wash comes
          from the choir, the arpeggio's own reverb and the room, rather than
          from a chair nobody can afford. */
-      instr: ["solo_vox", "warm_pad", "saw_wave", "ahh_choir", "clean_guitar"],
+      /* THE ARPEGGIO IS A JUNO (2026-08-31). Paul: "They should be far more
+         filtered and textural. More Juno 60 or SH-01 vibes." The box has the
+         machine — instruments.js `polysynth` IS `dsp: "juno60"`, with the
+         BBD chorus (1.2/0.8), a sub oscillator, PWM and a filter the envelope
+         sweeps — and the arp was on `saw_wave`, which resolves to `supersaw`:
+         a detuned stack with no filter movement at all. A stack is bright and
+         flat; a Juno breathes. That is the whole difference he is describing,
+         and it was one id. */
+      instr: ["solo_vox", "warm_pad", "polysynth", "ahh_choir", "clean_guitar"],
       drumkit: "tr909",
       /* THE CHORAL DOUBLING, 2026-08-31. Paul: "the lyrics are spare and
          rhythmic with a choral doubling for the bridge — 'Whennn weeee | were

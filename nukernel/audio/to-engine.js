@@ -606,6 +606,15 @@ const PAGE_TRIM = {
      which is what Paul asked for ("fade down a little"), rather than a part
      nobody can hear. Re-measured after: see the commit. */
   supersaw:    4.2,
+  /* juno60 ADDED THE SAME DAY AND FOR THE SAME REASON as supersaw above: the
+     synth models had no rows in this table at all. Measured with the
+     mute-complement once the Young Galaxy arpeggio moved onto the Juno, it
+     contributed 0.10 dB at -13.06 vs band — quieter even than the stack it
+     replaced, because a Juno's filter takes energy off the top where a
+     detuned stack has none taken off. 2.0 is +6.0 dB, which puts it just
+     above where the two guitars sit and lets it read as the bed that runs
+     under the whole record rather than a part that comes and goes. */
+  juno60:      2.0,
   stk_guitar:  1.78,
   /* stk_piano WAS 2.35, CUT ×0.766 (-2.32 dB) 2026-08-30. Paul: fix the
      +2.3 dB the ear round measured against its whole band. The row's own
