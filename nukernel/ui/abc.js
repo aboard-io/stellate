@@ -101,13 +101,17 @@ function keySig(key, mode) {
 // in ABC, as on paper, an accidental holds to the barline, so a mark is
 // written only when it CHANGES what the letter currently means, and a natural
 // is written when the letter must come back.
-function spellPitch(midi, sigInfo, state) {
-  const pc = pcw(midi);
+/* WHICH LETTER A PITCH CLASS IS, GIVEN THE SIGNATURE — lifted out of
+   spellPitch 2026-08-31 so that a CHORD SYMBOL is spelled by the same rule as
+   the noteheads under it. The first version of the chord labels carried its
+   own sharp/flat table and printed "Gbm" on a staff whose notes said F#, which
+   is the drift this file's own header warns about: two spellers, one paper. */
+export function letterFor(pc, sigInfo) {
   const alt = sigInfo.alt;
   // candidate spellings: (letter, accidental) with accidental in -1..1
   const cands = [];
   for (const L of LETTERS) {
-    const d = pc - NATPC[L];
+    const d = pcw(pc) - NATPC[L];
     const a = d > 6 ? d - 12 : d < -6 ? d + 12 : d;  // nearest wrap
     if (a >= -1 && a <= 1) cands.push({ L, a });
   }
@@ -121,7 +125,17 @@ function spellPitch(midi, sigInfo, state) {
     if (y.a === 0 && x.a !== 0) return 1;
     return x.a === dir ? -1 : y.a === dir ? 1 : 0;
   });
-  const { L, a } = cands[0];
+  return cands[0];
+}
+/** A pitch class named for the page: "F#", "Bb", "C" — the staff's own spelling. */
+export function noteNameOf(pc, key, mode) {
+  const { L, a } = letterFor(pc, keySig(key, mode && mode.length ? mode : MODE));
+  return L + (a === 1 ? "#" : a === -1 ? "b" : "");
+}
+function spellPitch(midi, sigInfo, state) {
+  const pc = pcw(midi);
+  const alt = sigInfo.alt;
+  const { L, a } = letterFor(pc, sigInfo);
   // octave: ABC's C is middle C (midi 60); k counts octaves above it
   const k = (midi - a - NATPC[L] - 60) / 12;
   const octMark = k >= 1 ? "'".repeat(k - 1) : k < 0 ? ",".repeat(-k) : "";

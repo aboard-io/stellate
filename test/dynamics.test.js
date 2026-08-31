@@ -46,6 +46,15 @@ const is = (cond, m) => (cond ? ok(m) : fail(m));
 
 const MARK_RE = /!(?:ppp|pp|p|mp|mf|f|ff|fff)!/g;
 const INK_RE = /!(?:ppp|pp|p|mp|mf|f|ff|fff)!|!(?:crescendo|diminuendo)[()]!/g;
+/* THE SECOND INK, 2026-08-31 — chord symbols. Paul asked for them in the same
+   breath as the dynamics ("...or chords being labeled") and they ride the same
+   string by the same surgery, so the byte-identity claim below now covers BOTH:
+   strip every mark AND every label and toScore's bare paper must return. That
+   is a WIDER claim than before, not a weaker one — R1/C1 failed the moment the
+   labels landed, which is the gate doing its job, and the fix is to teach it
+   the new ink rather than to stop asking. */
+const CHORD_RE = /"[A-G][b#]?(?:m|dim|aug|sus4)?(?:maj7|7|6|9)?"/g;
+const ALLINK_RE = new RegExp(INK_RE.source + '|' + CHORD_RE.source, "g");
 
 /* everything the page knows about its own score, read in one evaluate */
 async function readScore(pg) {
@@ -105,10 +114,36 @@ function v1Bars(abc, steps, secAt) {
        worded + " of " + r.nudges.length + " sections)");
 
     // R1 — per-record equivalence of notes: strip the ink, get the bare fold
-    is(r.abc.replace(INK_RE, "") === r.bare,
+    is(r.abc.replace(ALLINK_RE, "") === r.bare,
        "R1 · stripping the !…! ink returns toScore's bare string BYTE FOR BYTE " +
        "— the notes never moved, the marks were added");
     is((r.abc.match(MARK_RE) || []).length > 0, "R1 · …and marks were in fact added");
+    /* R1b · EVERY STAFF, AND THE LABELS ON ONE. Measured before the fix: 22
+       marks on V1 and zero on the other nine staves, which is what Paul saw as
+       "VERY FEW". The .mid has always written the ride on every channel
+       (R6 below), so this is the paper agreeing with the file. Chord symbols
+       go the other way — above the top staff only, as in any printed score. */
+    {
+      const L = r.abc.split("\n");
+      const perVoice = [];
+      for (let i = 0; i < L.length; i++) {
+        if (!/^V:V\d+(\s|$)/.test(L[i])) continue;
+        let j = i + 1;
+        while (j < L.length && /^K:/.test(L[j])) j++;
+        if (j >= L.length || /^V:/.test(L[j])) continue;
+        perVoice.push({ v: L[i].split(/\s/)[0],
+                        marks: (L[j].match(MARK_RE) || []).length,
+                        chords: (L[j].match(CHORD_RE) || []).length });
+      }
+      const n0 = perVoice.length ? perVoice[0].marks : 0;
+      is(perVoice.length > 1 && perVoice.every((p) => p.marks === n0 && n0 > 0),
+         "R1b · every staff carries the same dynamics (" + perVoice.length +
+         " voices x " + n0 + " marks) — not just the top one");
+      is(perVoice.filter((p) => p.chords > 0).length === 1 &&
+         perVoice[0].chords > 0,
+         "R1b · …and the chord labels sit on the TOP staff alone (" +
+         perVoice[0].chords + " on " + (perVoice[0] || {}).v + ")");
+    }
 
     // R2 — the ink sits only at section boundaries, and only where it changes
     const { bars, secBar } = v1Bars(r.abc, r.steps, r.secAt);
@@ -242,11 +277,22 @@ function v1Bars(abc, steps, secAt) {
     const r = await readScore(pg);
     is(r.nudges.every((n) => !n.env && !n.lvl),
        "C0 · the premise holds: the chant's sections deal no lvl/env word");
-    is(r.abc === r.bare,
-       "C1 · a record whose sections deal no words gains NO marks — its abc IS " +
-       "the bare fold, byte for byte (the 4/4 chant of the paper round, unchanged)");
+    /* THE CLAIM SPLIT WHEN THE SECOND INK ARRIVED (2026-08-31). This used to
+       be one sentence — "no words dealt, so the abc IS the bare fold" — and it
+       was true while dynamics were the only thing added. Chord labels are NOT
+       dynamics: a record can deal no lvl and no env and still have changes to
+       name, and the chant does. So the byte-identity half now strips BOTH inks
+       (the notes still never moved) and the dynamics half still asks for
+       exactly what it always asked: no words, no marks, no CCs. Splitting it
+       keeps both claims sharp; merging them would have quietly stopped testing
+       the dynamics premise the moment a label appeared. */
+    is(r.abc.replace(ALLINK_RE, "") === r.bare,
+       "C1 · a record whose sections deal no words gains NO DYNAMICS — strip " +
+       "every ink and its abc IS the bare fold, byte for byte (the 4/4 chant)");
     is((r.abc.match(INK_RE) || []).length === 0 && r.dyn === 0,
        "C1 · …and neither the string nor the SVG holds a single dynamic");
+    is((r.abc.match(CHORD_RE) || []).length > 0,
+       "C1 · …while its CHANGES are still named — a chord label is not a dynamic");
     const mid = await pg.evaluate(async () => {
       const m = await window.__deckSmf();
       return m ? m.parsed.tracks.map((t) => (t.ccs || []).length) : null;

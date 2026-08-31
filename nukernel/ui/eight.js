@@ -181,7 +181,7 @@ import { startAt, stop, playing, warmup, getPosition, passAt,
 import { registerSW, warmShell, warmCache } from "../audio/offline.js";
 // ...AND THE SAME COMPILER ASSEMBLING A WHOLE SYSTEM. `toScore` is the score
 // block's half of ui/abc.js: several parts under one head, barred together.
-import { toEngraving, toScore, toNotes, ottavaFor } from "./abc.js";
+import { toEngraving, toScore, toNotes, ottavaFor, noteNameOf } from "./abc.js";
 // …AND THE READING OF ONE, WHICH IS THE SAME NOTES OUT LOUD. `toNotes` is the
 // timeline `toABC` folds into bars, so the motif you tap and the staff you are
 // looking at cannot disagree about a pitch or a length (audio/audition.js).
@@ -2217,15 +2217,124 @@ function scoreDyn() {
    the bare string returns (test/dynamics.test.js holds exactly that). A
    shape this function does not recognize is left alone whole, because a
    staff mis-inked is worse than a staff unmarked. */
-function inkDynamics(abc, dyn, secBar, totalBars) {
+/* THE CHORDS, LABELLED — and the quality is DERIVED, never typed.
+   Paul: "...or chords being labeled. Or we got VERY FEW of them." Dynamics
+   were arriving and hiding on one staff; chord symbols were not arriving at
+   all, because nothing in this repo has ever written an ABC chord symbol.
+
+   THE RECORD ALREADY KNOWS ITS CHANGES: `DOC.alphabet` carries `key`, `mode`
+   and `prog` as DEGREES ({d, q}), one chord per bar, which is the same shape
+   the kernel's own chordsOf reads. So the name is computed the way the sound
+   is: take the degree through the mode to a pitch class, take the third and
+   fifth the same way, and MEASURE the intervals to decide major, minor,
+   diminished or augmented. Nothing here says "B minor" — A ionian's second
+   degree says it, exactly as it does in the progression Paul dictated. A
+   hand-written degree->quality table would be a second opinion about the mode
+   and would go wrong the first time a row used dorian.
+
+   SPELLING IS THE STAFF'S OWN, NOT A SECOND TABLE. The first version of this
+   carried its own sharp/flat lists keyed off the tonic, and it printed "Gbm"
+   on a record whose noteheads said F# — measured on London 1969, where the
+   labels read E / Bm / Gbm and disagreed with the accidentals under them. So
+   the name comes from ui/abc.js `noteNameOf`, which is `spellPitch`'s own
+   letter-choosing rule (extracted for exactly this) run against `keySig`. One
+   speller, one paper. */
+// the sevenths a `q` can ask for, on top of the triad the mode decides
+const QTAIL = { 7: "7", dom7: "7", m7: "7", maj7: "maj7", six: "6", nine: "9",
+                sus4: "sus4", triad: "" };
+function chordName(d, q, key, mode) {
+  const md = mode && mode.length ? mode : K.MODE;
+  const at = (i) => md[((i % md.length) + md.length) % md.length] +
+                    12 * Math.floor(i / md.length);
+  const root = at(d), third = at(d + 2), fifth = at(d + 4);
+  const t = ((third - root) % 12 + 12) % 12, f = ((fifth - root) % 12 + 12) % 12;
+  const name = noteNameOf(root + key, key, md);
+  let qual = "";
+  if (q === "sus4") qual = "sus4";
+  else if (t === 3 && f === 6) qual = "dim";
+  else if (t === 4 && f === 8) qual = "aug";
+  else if (t === 3) qual = "m";
+  const tail = q === "sus4" ? "" : (QTAIL[q] || "");
+  // a minor seventh is "m7", not "m" + "maj7"
+  return name + qual + (qual === "dim" || qual === "aug" ? "" : tail);
+}
+/** One chord name per bar, or null when the record declares no changes. */
+function scoreChords(bars) {
+  const A = DOC.alphabet || {};
+  const prog = A.prog;
+  if (!Array.isArray(prog) || !prog.length) return null;
+  const key = A.key | 0, mode = MODES[A.mode] || MODES.aeolian;
+  const out = [];
+  for (let b = 0; b < bars; b++) {
+    const c = prog[b % prog.length];
+    out.push(c ? chordName(c.d || 0, c.q || "triad", key, mode) : null);
+  }
+  return out;
+}
+/* ...and inked ABOVE THE TOP STAFF ONLY, which is where a chord symbol goes
+   in every score ever printed — repeating it on ten staves is not ten times
+   as informative, it is noise. Only where the chord CHANGES, for the same
+   reason. Same surgery as the dynamics: prefixed to an existing token, so
+   stripping the labels back out returns the bare string byte for byte. */
+function inkChords(abc, names, totalBars) {
+  if (!names) return abc;
   const lines = abc.split("\n");
   const vi = lines.findIndex((l) => /^V:V1(\s|$)/.test(l));
   if (vi < 0) return abc;
   let mi = vi + 1;
-  while (mi < lines.length && /^K:/.test(lines[mi])) mi++;   // a drum V1's K:none
-  if (mi >= lines.length) return abc;
+  while (mi < lines.length && /^K:/.test(lines[mi])) mi++;
+  if (mi >= lines.length || /^V:/.test(lines[mi])) return abc;
+  const bits = lines[mi].split(/( \|{1,2} )/);
+  if ((bits.length + 1) / 2 !== totalBars) return abc;      // refuse to mis-label
+  let close = "";
+  const cm = / \|\]$/.exec(bits[bits.length - 1]);
+  if (cm) { close = cm[0]; bits[bits.length - 1] = bits[bits.length - 1].slice(0, cm.index); }
+  let prev = null;
+  for (let b = 0; b < totalBars; b++) {
+    const n = names[b];
+    if (!n || n === prev) continue;
+    prev = n;
+    bits[2 * b] = '"' + n + '"' + bits[2 * b];
+  }
+  lines[mi] = bits.join("") + close;
+  return lines.join("\n");
+}
+
+/* EVERY STAFF, NOT JUST THE TOP ONE (2026-08-31). Paul: "We never got the
+   crescendo/descrescendos or ppp..fff markings ... Or we got VERY FEW of
+   them." Measured on a real record before changing anything: the marks were
+   arriving, 22 of them — and all 22 were on V1, with ZERO on the other nine
+   staves. A ten-staff score with one staff marked is a score that looks
+   unmarked, which is exactly what "very few" describes.
+
+   AND THE FILE ALREADY DISAGREED WITH THE PAPER. test/dynamics.test.js R6
+   asserts of the .mid that "every voice track carries the SAME expression
+   ride — the dealt level is a whole-section gain, so every channel says it".
+   The export said it on every channel and the staff said it once. This makes
+   the paper agree with the file rather than inventing anything: the words are
+   the same words, dealt per section, and a section's dynamic belongs to all of
+   it. The refusal moves WITH the ink — a voice whose bar count does not match
+   is skipped ON ITS OWN and the others are still marked, where before one odd
+   staff would have silently cost the whole system its dynamics. */
+function inkDynamics(abc, dyn, secBar, totalBars) {
+  const lines = abc.split("\n");
+  let any = false;
+  for (let vi = 0; vi < lines.length; vi++) {
+    if (!/^V:V\d+(\s|$)/.test(lines[vi])) continue;
+    let mi = vi + 1;
+    while (mi < lines.length && /^K:/.test(lines[mi])) mi++;  // a drum voice's K:none
+    if (mi >= lines.length || /^V:/.test(lines[mi])) continue;
+    const inked = inkOneStaff(lines[mi], dyn, secBar, totalBars);
+    if (inked != null) { lines[mi] = inked; any = true; }
+  }
+  return any ? lines.join("\n") : abc;
+}
+/** One staff's music line, marked — or null when its bars do not line up. */
+function inkOneStaff(line, dyn, secBar, totalBars) {
+  const lines = [line];
+  const mi = 0;
   const bits = lines[mi].split(/( \|{1,2} )/);               // bars at even indexes
-  if ((bits.length + 1) / 2 !== totalBars) return abc;       // refuse to mis-ink
+  if ((bits.length + 1) / 2 !== totalBars) return null;      // refuse to mis-ink
   let close = "";                                            // the final barline,
   const cm = / \|\]$/.exec(bits[bits.length - 1]);           // off the operating table
   if (cm) { close = cm[0]; bits[bits.length - 1] = bits[bits.length - 1].slice(0, cm.index); }
@@ -2249,8 +2358,7 @@ function inkDynamics(abc, dyn, secBar, totalBars) {
       bits[2 * b1] = sp < 0 ? deco + bar : bar.slice(0, sp + 1) + deco + bar.slice(sp + 1);
     }
   }
-  lines[mi] = bits.join("") + close;
-  return lines.join("\n");
+  return bits.join("") + close;
 }
 // the record without its marks — kept so the gate can strip the ink and
 // demand the bare string back, byte for byte (window.__eightAbcBare)
@@ -2290,9 +2398,10 @@ function buildScore() {
   // one string (test/dynamics.test.js holds both).
   scoreBare = sc.abc;
   const dyn = scoreDyn();
-  const abc = dyn
+  let abc = dyn
     ? inkDynamics(sc.abc, dyn, R.secAt.map((s) => s / scoreSPB()), R.bars)
     : sc.abc;
+  abc = inkChords(abc, scoreChords(R.bars), R.bars);
   return { abc, voices: sc.voices, secAt: R.secAt, steps: R.steps,
            bars: R.bars, dense: sc.dense | 0 };
 }
