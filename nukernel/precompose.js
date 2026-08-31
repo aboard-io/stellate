@@ -1667,7 +1667,23 @@
   // which chair of its own role this is, counted in document order — the same
   // count fields.js chairKeys makes when it addresses them (line, line2, line3).
   // `echo` is true for the one chair the record's echo is spent on.
-  function deskFor(voice, nth, echo, fx) {
+  /* A ROW MAY NAME ITS OWN CHAIR'S SENDS (2026-08-31). Paul, on portishead:
+     "when the guitar starts to riff send it through lots of delay and
+     reverb". The tables above are ROLE-keyed and catalogue-wide — CHAIRREV
+     puts `touch` on every pad in 374 records — so moving one of them to
+     answer one record would have re-mixed the whole table, and the row's
+     own `fx` list is the wrong door too: it seeds an INSERT on every seated
+     voice, which is exactly the mechanism that buried the industrial rows
+     under one shared filter sweep. A send is neither: it is one chair's
+     proportion into a bus the record already has.
+     So `G.mix` is a part-keyed override — `mix: { riff: { rev: "wet",
+     echo: "wet" } }` — read here, AFTER the dealt words and over them, in
+     the same SENDS vocabulary the desk already speaks (fields.js: none 0,
+     touch .12, some .3, wet .55, drown .9). Absent is today: no `mix` key,
+     no lookup, byte-identical. It cannot invent a bus (a word the enum does
+     not hold is dropped by the desk exactly as it always was) and it cannot
+     reach a chair that is not seated. */
+  function deskFor(voice, nth, echo, fx, G) {
     const part = (voice.cast && voice.cast.part) || "line";
     const e = {};
     // the second chair of a role takes CHAIRLVL2's word if it has one, and
@@ -1681,6 +1697,11 @@
     if (echo) e.echo = ECHOSEND;
     // THE CHARACTER CHIPS, ON THE STRIP (2026-08-27) — see deskThe below.
     if (fx && fx.length) e.fx = fx.slice();
+    // ...and the row's own word for this part, last, so a named record wins
+    // over the role's default without either table learning about the other.
+    const said = G && G.mix && G.mix[part];
+    if (said) for (const k of ["rev", "echo", "room", "aux", "genre", "lvl", "pan"])
+      if (said[k] != null) e[k] = said[k];
     return Object.keys(e).length ? e : null;
   }
 
@@ -1731,7 +1752,7 @@
     voices.forEach((v, i) => {
       const part = (v.cast && v.cast.part) || v.kind;
       const nth = (seen[part] = (seen[part] || 0) + 1) - 1;
-      const e = deskFor(v, nth, i === lead, fx);
+      const e = deskFor(v, nth, i === lead, fx, G);
       if (e) v.desk = e;
     });
     return voices;

@@ -261,15 +261,29 @@
                                      ? { vox: c.sound } : {}) };
                         }),
                         ...(on ? { drumkit: drums.instrument } : {}),
-      /* SOUND, THE RECORD'S BALANCE */
-                        ...(doc.sound && doc.sound.level != null &&
-                            (GENRES[doc.basis] || {}).tone
+      /* SOUND, THE RECORD'S BALANCE — and, since 2026-08-31, ITS SURFACE.
+         `level` scales the basis tone's gain; `grain` REPLACES the basis
+         tone's grain outright, because the two facts are different shapes: a
+         gain is a proportion of what the row asked for, and surface noise is
+         an absolute amount of dust on the record — halving a row's declared
+         0.62 and setting 0.31 are the same sentence, so the dial says the
+         number. Both fold into ONE tone spread so a record that moves both
+         does not get two tone objects, and either alone leaves the other at
+         the basis exactly as before. Absent-is-today survives at the writer:
+         ui/engineer.js deletes the key when the dial returns to the basis
+         value, so this branch is not even entered by an untouched record. */
+                        ...((doc.sound &&
+                             (doc.sound.level != null || doc.sound.grain != null) &&
+                             (GENRES[doc.basis] || {}).tone)
                           // clamped at 1: the engine caps a tone's gain there,
                           // so level 3 and level 4 measured the same RMS to the
                           // millivolt and the slider was lying above the cap
                           ? { tone: { ...GENRES[doc.basis].tone,
-                              gain: +Math.min(1, GENRES[doc.basis].tone.gain *
-                                                 doc.sound.level).toFixed(3) } }
+                              ...(doc.sound.level != null ? {
+                                gain: +Math.min(1, GENRES[doc.basis].tone.gain *
+                                                   doc.sound.level).toFixed(3) } : {}),
+                              ...(doc.sound.grain != null ? {
+                                grain: +Math.max(0, Math.min(1, doc.sound.grain)).toFixed(3) } : {}) } }
                           : {}),
       // THE SEEDED HUMAN LAYER, WHICH THIS PAGE HAS NEVER OFFERED. All four are
       // spreads and not assignments, because absent must be the byte-identical

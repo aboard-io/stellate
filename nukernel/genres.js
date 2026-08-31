@@ -579,6 +579,20 @@
       // named "Leipzig 1725" — the subject/answer-at-the-fifth machinery is
       // Bach's, Thomaskantor at Leipzig by then.
       label: "Leipzig 1725", voices: 4,
+      // NOBASS, 2026-08-31. Paul: "What's with the bass in the fugue it just
+      // plays eight notes is that canonical" — it is not, and the catalogue
+      // already knew: counterpoint, organum, josquin, spem, dufay and
+      // winchester ALL declare nobass and fugue was the only polyphonic row
+      // that did not. A four-voice fugue's bass IS one of the four (v3, the
+      // organ at reg -1, the SATB floor this row already seats correctly);
+      // without this field the box seated a FIFTH chair on the generic bass
+      // fallback — root notes on quarters, eight of them — doubling the
+      // fourth voice an octave down under a texture that is complete without
+      // it. The measured sweep that found this also refused to generalise:
+      // 36 kitless rows seat a bass and nearly all of them SHOULD (mariachi's
+      // guitarron, ragtime's stride left hand, bluegrass's upright, and
+      // continuo, which IS a bass). The outlier was one row.
+      nobass: true,
       plan: "arc", bpm: 108,
       // LINEAGE: a fugue is species counterpoint set in MOTION — Bach taught
       // from Fux's Gradus — over subjects whose stepwise grammar is chant's;
@@ -17832,7 +17846,29 @@
              h: [1,0,0,0, 1,0,1,0, 1,0,0,0, 1,0,1,0] },
       kitVel: { h: [5,0,0,0, 3,0,2,0, 5,0,0,0, 3,0,2,0] },
       fx: ["tremolo", "echo"],
-      tone: { grain: 0.62,   // the dust is in the loop — see the paid cannot
+      /* THE RIFF GOES INTO THE ROOM (2026-08-31). Paul: "when the guitar
+         starts to riff on portishead send it through lots of delay and
+         reverb." Dummy's guitar is not a rhythm part sitting in the mix —
+         it is a figure arriving from somewhere else, which is what the spy
+         -film debt on this row's `wants` has always been about. `wet` is
+         .55 of each bus, the second-loudest word the enum holds, on the
+         riff chair only: the sung lead keeps its own `some` echo, the pads
+         keep their `touch`, and the solo chair keeps the seating the
+         overdrive route gave it. This is the first row to use `mix` —
+         precompose deskFor's part-keyed override — and the fence it obeys
+         is that a send is a proportion into a bus the record already has,
+         never an insert on the whole band. */
+      mix: { riff: { rev: "wet", echo: "wet" } },
+      tone: { grain: 0.34,   // the dust is in the loop — see the paid cannot
+              // 0.62 -> 0.34, 2026-08-31. Paul, on the shipped record: "how do
+              // I control the amount of crackle on portishead it's way too
+              // much". The pressed number that chose 0.62 was -31.5 dB under
+              // the mix, which measured like a plausible acetate and hears
+              // like a fault; halved to -37 dB under, where the surface is
+              // under the record rather than on top of it. The ear outranks
+              // the press here — the press could only say the dust ARRIVED,
+              // never how much of it a person wants.
+
               wave: "triangle", cut: 1700, q: 0.9, atk: .02, rel: 1.3, gain: .24, verb: .55,
               // WHO SINGS: close, plain, full of breath — Gibbons is
               // the confessional mouth's defining case in this table.

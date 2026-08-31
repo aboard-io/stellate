@@ -1200,6 +1200,36 @@ export function mount(parent, ctx) {
         set: (v) => { doc.sound = doc.sound || {}; doc.sound.level = v;
                       ctx.changed(); } })));
     }
+    /* SURFACE — the crackle, on a hand's dial at last (2026-08-31).
+       Paul: "how do I control the amount of crackle on portishead it's way
+       too much". He could not: `grain` shipped on ten rows the day before
+       and had NO control anywhere — not in fields.js, not in avail.js. The
+       box held the fact and gave nobody a way to reach it, which is the
+       dead-knob law running in reverse and just as bad: a sound nobody can
+       turn down is a sound nobody chose.
+       It stands beside RECORD GAIN because it is the same KIND of fact —
+       one number about the whole record, not a chair — and the same seam
+       carries it: `doc.sound.grain` rides toGenre's tone the way
+       `sound.level` rides its gain, and to-engine's grain pass already
+       takes the MAX over seats (you cannot press half a record onto vinyl).
+       Absent stays absent: at the genre's own value the field is deleted
+       rather than written, so a row that declares no grain is byte-identical
+       and the ten that do keep their measured castings until a hand moves
+       them. 0 is a real value — silence is a choice — so the delete tests
+       against the basis, never against zero. */
+    {
+      const base = ((GENRES[doc.basis] || {}).tone || {}).grain || 0;
+      const cur = doc.sound && doc.sound.grain != null ? doc.sound.grain : base;
+      r.append(col("surface", vnum("grain", {
+        min: 0, max: 1, step: 0.05, value: cur,
+        aria: "surface noise", tall: true,
+        fmt: (v) => (v <= 0 ? "clean" : Math.round(v * 100) + "%"),
+        set: (v) => { doc.sound = doc.sound || {};
+                      if (Math.abs(v - base) < 1e-9) delete doc.sound.grain;
+                      else doc.sound.grain = v;
+                      if (!Object.keys(doc.sound).length) delete doc.sound;
+                      ctx.changed(); } })));
+    }
     // THE ONE MEASURED METER ON THE BOARD — the master tap the engine already
     // carries (audio/live.js rmsNow, the crackle monitor's own signal), green
     // because green is MEASURED and nothing else on this page may wear it.
