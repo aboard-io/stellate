@@ -818,7 +818,15 @@
       // does the same thing for the same reason, and the 3.7 dB the grain
       // reads under prediction is that stage's interpolation eating the
       // impulses' top end.
-      tone: { grain: 0.50,
+      tone: { /* grain: 0.50 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the
+        //   measured value for a hand that wants it back. Paul: "Make the
+        //   default for surface 0 and I can turn it on only if I want to,
+        //   don't put it on anything by default." The castings were real —
+        //   each was pressed and six moved on what came back — but a
+        //   texture nobody asked for is a texture on every play, and the
+        //   board's `surface` dial (ui/engineer.js, 2026-08-31) is where
+        //   the choice belongs. The engine path stays wired and gated;
+        //   what leaves is the ROW declaring it for you. */
               wave: "sawtooth", cut: 1500, q: 2.2, atk: .05, rel: 1.6, gain: .20, verb: .55 },
       words: ["chords from the harmony", "a moving 8-step window on the phrase",
               "the sea, looped under the record"],
@@ -1836,7 +1844,15 @@
       // with its swing. Set behind the Bristol rooms because boom bap is a
       // PRESENT record — the snare hand at 9 on every backbeat wants air
       // around it, and a heavy surface would fill the air the snare needs.
-      tone: { grain: 0.39,
+      tone: { /* grain: 0.39 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the
+        //   measured value for a hand that wants it back. Paul: "Make the
+        //   default for surface 0 and I can turn it on only if I want to,
+        //   don't put it on anything by default." The castings were real —
+        //   each was pressed and six moved on what came back — but a
+        //   texture nobody asked for is a texture on every play, and the
+        //   board's `surface` dial (ui/engineer.js, 2026-08-31) is where
+        //   the choice belongs. The engine path stays wired and gated;
+        //   what leaves is the ROW declaring it for you. */
               wave: "triangle", cut: 2000, q: 1.4, atk: .006, rel: .6, gain: .28, verb: .2 },
       words: ["the chop — eight steps of the phrase's rhythm, chords on it",
               "the horn, answering from bar 3"],
@@ -15744,7 +15760,15 @@
       // puts it back around 35 dB down. A 45 is a strong pressing and a
       // block party is not a listening room; the dust belongs under the
       // floor, not on it.
-      tone: { grain: 0.14,
+      tone: { /* grain: 0.14 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the
+        //   measured value for a hand that wants it back. Paul: "Make the
+        //   default for surface 0 and I can turn it on only if I want to,
+        //   don't put it on anything by default." The castings were real —
+        //   each was pressed and six moved on what came back — but a
+        //   texture nobody asked for is a texture on every play, and the
+        //   board's `surface` dial (ui/engineer.js, 2026-08-31) is where
+        //   the choice belongs. The engine path stays wired and gated;
+        //   what leaves is the ROW declaring it for you. */
               wave: "square", cut: 2500, q: 1.1, atk: .006, rel: .3, gain: .26, verb: .3 },
       words: ["the clavinet vamp, the record on the left deck",
               "the horns, the record on the right"],
@@ -15956,7 +15980,15 @@
       // MEASURED 43.7 dB down — too far to hear on a press this hot at
       // -20.4 dBFS, which is why the number moved and the DEPTH is what
       // the sentence claims.)
-      tone: { grain: 0.61,
+      tone: { /* grain: 0.61 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the
+        //   measured value for a hand that wants it back. Paul: "Make the
+        //   default for surface 0 and I can turn it on only if I want to,
+        //   don't put it on anything by default." The castings were real —
+        //   each was pressed and six moved on what came back — but a
+        //   texture nobody asked for is a texture on every play, and the
+        //   board's `surface` dial (ui/engineer.js, 2026-08-31) is where
+        //   the choice belongs. The engine path stays wired and gated;
+        //   what leaves is the ROW declaring it for you. */
               wave: "triangle", cut: 1900, q: 0.9, atk: .02, rel: 1.2, gain: .24, verb: .5,
               mouth: MOUTHS.confessional },
       words: ["the voice, hurt and level",
@@ -16006,7 +16038,15 @@
       // floor rather than a crackle. instr 97 carries both halves (a
       // sparse-impulse layer over a 4 kHz-capped noise bed), so the number
       // buys the right texture here even though the cause is not a stylus.
-      tone: { grain: 0.45,
+      tone: { /* grain: 0.45 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the
+        //   measured value for a hand that wants it back. Paul: "Make the
+        //   default for surface 0 and I can turn it on only if I want to,
+        //   don't put it on anything by default." The castings were real —
+        //   each was pressed and six moved on what came back — but a
+        //   texture nobody asked for is a texture on every play, and the
+        //   board's `surface` dial (ui/engineer.js, 2026-08-31) is where
+        //   the choice belongs. The engine path stays wired and gated;
+        //   what leaves is the ROW declaring it for you. */
               wave: "sawtooth", cut: 1400, q: 1.1, atk: .03, rel: 1.6, gain: .25, verb: .45 },
       words: ["the lead, a third low, in no hurry at all",
               "the pad, the afternoon it happens in"],
@@ -17859,7 +17899,15 @@
          is that a send is a proportion into a bus the record already has,
          never an insert on the whole band. */
       mix: { riff: { rev: "wet", echo: "wet" } },
-      tone: { grain: 0.34,   // the dust is in the loop — see the paid cannot
+      tone: { /* grain: 0.34 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the
+        //   measured value for a hand that wants it back. Paul: "Make the
+        //   default for surface 0 and I can turn it on only if I want to,
+        //   don't put it on anything by default." The castings were real —
+        //   each was pressed and six moved on what came back — but a
+        //   texture nobody asked for is a texture on every play, and the
+        //   board's `surface` dial (ui/engineer.js, 2026-08-31) is where
+        //   the choice belongs. The engine path stays wired and gated;
+        //   what leaves is the ROW declaring it for you. */   // the dust is in the loop — see the paid cannot
               // 0.62 -> 0.34, 2026-08-31. Paul, on the shipped record: "how do
               // I control the amount of crackle on portishead it's way too
               // much". The pressed number that chose 0.62 was -31.5 dB under
@@ -17929,7 +17977,15 @@
       // and the level has to be raised to say the quieter thing. Read the
       // DEPTH, never the number, when comparing two rows (the essay
       // beside MOUTHS says why).
-      tone: { grain: 0.83,
+      tone: { /* grain: 0.83 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the
+        //   measured value for a hand that wants it back. Paul: "Make the
+        //   default for surface 0 and I can turn it on only if I want to,
+        //   don't put it on anything by default." The castings were real —
+        //   each was pressed and six moved on what came back — but a
+        //   texture nobody asked for is a texture on every play, and the
+        //   board's `surface` dial (ui/engineer.js, 2026-08-31) is where
+        //   the choice belongs. The engine path stays wired and gated;
+        //   what leaves is the ROW declaring it for you. */
               wave: "sawtooth", cut: 1400, q: 1.2, atk: .02, rel: 1.1, gain: .24, verb: .5,
               // WHO SINGS: Topley-Bird's side of the pair — level,
               // unimpressed, no belt anywhere in it.
@@ -18078,7 +18134,15 @@
       //   The number is small because the press is QUIET (-33.1 dBFS,
       // two voices and a lot of air): a forward surface costs less level
       // here than a buried one does on tricky.
-      tone: { grain: 0.39,
+      tone: { /* grain: 0.39 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the
+        //   measured value for a hand that wants it back. Paul: "Make the
+        //   default for surface 0 and I can turn it on only if I want to,
+        //   don't put it on anything by default." The castings were real —
+        //   each was pressed and six moved on what came back — but a
+        //   texture nobody asked for is a texture on every play, and the
+        //   board's `surface` dial (ui/engineer.js, 2026-08-31) is where
+        //   the choice belongs. The engine path stays wired and gated;
+        //   what leaves is the ROW declaring it for you. */
               wave: "triangle", cut: 1600, q: 1.0, atk: .02, rel: 1.4, gain: .25, verb: .5 },
       words: ["the piano loop, four bars of somebody else's melancholy",
               "the strings, weather moving in over the break"],
@@ -18229,7 +18293,15 @@
       // fx_bus was cleared independently: driven with this record's own
       // fxParams, its output RMS is identical to three decimals at
       // crackle 0, 0.22 and 0.64.) The numbers above are the solo press.
-      tone: { grain: 0.64,
+      tone: { /* grain: 0.64 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the
+        //   measured value for a hand that wants it back. Paul: "Make the
+        //   default for surface 0 and I can turn it on only if I want to,
+        //   don't put it on anything by default." The castings were real —
+        //   each was pressed and six moved on what came back — but a
+        //   texture nobody asked for is a texture on every play, and the
+        //   board's `surface` dial (ui/engineer.js, 2026-08-31) is where
+        //   the choice belongs. The engine path stays wired and gated;
+        //   what leaves is the ROW declaring it for you. */
               wave: "sawtooth", cut: 1500, q: 1.2, atk: .015, rel: 1.5, gain: .24, verb: .5,
               // WHO SINGS: the head voice held nearly straight —
               // Fraser's "Teardrop" register, not a belt.
@@ -19968,7 +20040,15 @@
       // once the three field recordings replaced three GM pads the press
       // dropped to -38.1 dBFS, and a fixed surface reads loud against a
       // quiet record.
-      tone: { grain: 0.23,
+      tone: { /* grain: 0.23 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the
+        //   measured value for a hand that wants it back. Paul: "Make the
+        //   default for surface 0 and I can turn it on only if I want to,
+        //   don't put it on anything by default." The castings were real —
+        //   each was pressed and six moved on what came back — but a
+        //   texture nobody asked for is a texture on every play, and the
+        //   board's `surface` dial (ui/engineer.js, 2026-08-31) is where
+        //   the choice belongs. The engine path stays wired and gated;
+        //   what leaves is the ROW declaring it for you. */
               wave: "triangle", cut: 2600, q: 0.9, atk: .003, rel: .9, gain: .23, verb: .45 },
       words: ["the locomotive, cut and re-pitched, the splice audible",
               "the platform it stands at, a locked groove under the gate",

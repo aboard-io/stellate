@@ -82,19 +82,48 @@ const { GENRES } = window.NuGenres;
    table falling silent — the exact failure this round is undoing. */
 const WING = ["portishead", "tricky", "djshadow", "tapemusic", "chopped",
               "boombap", "triphop", "blockparty", "vaporwave", "massiveattack"];
+/* THE LADDER THIS GATE DRIVES, now that no row ships one. These are the
+   values the wing was cast at on 2026-08-30 — each PRESSED, six of them
+   moved by what came back — kept here so the rendered-ladder checks below
+   still exercise the real spread rather than a tidy arithmetic one. They
+   are applied through `doc.sound.grain`, which is the board dial's own
+   door, so this gate now tests the path a hand actually uses. */
+const LADDER = { portishead: 0.34, tricky: 0.83, djshadow: 0.39,
+                 tapemusic: 0.23, chopped: 0.45, triphop: 0.61,
+                 massiveattack: 0.64, boombap: 0.39, blockparty: 0.14,
+                 vaporwave: 0.50 };
 
 (async () => {
 console.log("test/grain-reach.test.js — the surface reaches the record\n");
 
 /* ---------- G1 · the rows say it, and they do not all say the same ------- */
 console.log("G1 — the wing declares a grain, and the spread is real");
+/* THE ROWS NO LONGER SAY IT, AND THAT IS THE POINT NOW (rewritten
+   2026-08-31). This block asserted that each of the ten wing rows DECLARED a
+   grain, which was true for one day. Paul: "Make the default for surface 0
+   and I can turn it on only if I want to, don't put it on anything by
+   default." The castings were withdrawn to comments — the measured numbers
+   are kept there for a hand that wants them back — so a gate demanding they
+   be live would now be a gate demanding the bug.
+   WHAT MUST STILL HOLD IS THE CAPABILITY, and it is the whole reason this
+   file exists ("declared but never arriving"): the surface must reach the
+   sound WHEN ASKED, at the amount asked, and be silent when not. So the
+   ladder below is this gate's OWN, driven the way the board's dial drives
+   it (doc.sound.grain), and G1 now asserts the two things the withdrawal
+   made true: no row ships a default, and the values it used to ship are
+   still recoverable from the file rather than lost. */
 const grains = {};
-for (const k of WING) {
-  const g = ((GENRES[k] || {}).tone || {}).grain;
-  ok(typeof g === "number" && g > 0 && g <= 1,
-     k + " declares grain " + g, "expected a number in (0,1]");
-  grains[k] = g;
+{
+  let live = 0;
+  for (const k of WING) if (((GENRES[k] || {}).tone || {}).grain != null) live++;
+  ok(live === 0, "no row ships a surface by default (" + live + " of " +
+     WING.length + " declare one)", "a texture nobody asked for is a texture on every play");
+  const src = require("fs").readFileSync(R("nukernel/genres.js"), "utf8");
+  const kept = (src.match(/grain: [0-9.]+ — WITHDRAWN AS A DEFAULT/g) || []).length;
+  ok(kept >= WING.length, "the " + kept + " measured castings are kept in the file",
+     "the numbers were pressed for; losing them would cost that work twice");
 }
+for (const k of WING) grains[k] = LADDER[k];
 const vals = WING.map((k) => grains[k]);
 const counts = {};
 for (const v of vals) counts[v] = (counts[v] || 0) + 1;
@@ -256,7 +285,12 @@ function shape(x) {
      "grain 0 sits " + (quietestDb - silentDb).toFixed(0) + " dB under the quietest declared amount (" +
      quietest + ")", "silence " + silentDb.toFixed(1) + " dBFS vs " + quietestDb.toFixed(1) + " dBFS");
 
-  const g = GENRES.portishead.tone.grain;
+  /* `GENRES.portishead.tone.grain` STOOD HERE and is undefined since the
+     defaults were withdrawn (2026-08-31) — it made every shape check below
+     read NaN, which is a gate failing for the reason it should be testing
+     around. The shape of the crackle is a property of the STAGE, not of any
+     row's taste, so it is asked at the ladder's own portishead value. */
+  const g = LADDER.portishead;
   const out = await renderCrackle(g);
   const s = shape(out.L);
   ok(s.flat > 0.3, "BROADBAND: spectral flatness " + s.flat.toFixed(3) + " > 0.3",
