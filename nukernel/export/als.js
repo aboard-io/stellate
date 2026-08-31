@@ -434,8 +434,9 @@ export const clipNameOf = (box, col) =>
    `fader` writes 1 and a missing `pan` writes 0 — the donor's own values. */
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 const SEND_FLOOR = 0.0003162277571;      // Live's -inf, the donor's own spelling
-export function setStrip(track, strip) {
-  if (!strip) return track;
+export function setStrip(track, strip, vol) {
+  strip = strip || {};
+  if (vol == null && !Object.keys(strip).length) return track;
   const mix = elementAfter(track, "Mixer");
   if (!mix) return track;
   let body = mix.text;
@@ -456,13 +457,122 @@ export function setStrip(track, strip) {
     const k = body.indexOf("/>", j) + 2;
     body = body.slice(0, j) + '<Manual Value="' + value + '" />' + body.slice(k);
   };
-  if (strip.fader != null) put("Volume", clamp(strip.fader, SEND_FLOOR, 1.99526238));
+  if (vol != null) put("Volume", clamp(vol, SEND_FLOOR, 1.99526238));
   if (strip.pan != null) put("Pan", clamp(strip.pan, -1, 1));
   // A-Reverb is send 0 and B-Delay is send 1 — the donor's own order, and the
   // two returns this splice has always shipped.
   if (strip.rev != null) send(0, clamp(strip.rev, SEND_FLOOR, 1));
   if (strip.del != null) send(1, clamp(strip.del, SEND_FLOOR, 1));
   return track.slice(0, mix.start) + body + track.slice(mix.end);
+}
+
+/* THE MIX IS MUDDY AND THE PADS ARE LOUD, AND BOTH ARE ONE OMISSION.
+   Paul: "Pads are always too loud in Ableton" and "Always add basic EQ
+   filtering on drums, bass, etc -- the mix is very muddy."
+
+   WHY EVERY TRACK CAME OUT AT UNITY. I wrote the mixer from `strip.fader`
+   last round — and there is no `fader` key on a unit. The gain the engine
+   actually carries is `lvl`, and reading the wrong name meant every track got
+   the donor's 1.0 and the pad sat exactly as loud as the voice. That is the
+   whole of "pads are always too loud".
+
+   ...AND WHY `lvl` IS STILL NOT WHAT SHIPS. Chasing it down, audio/desk.js
+   says of that number: "lvl is read by sampled voices and drums AND BY
+   NOTHING ELSE — nothing modelled reads lvl". So the engine's per-renderer
+   gain is not one number, and worse, what differentiates the voices audibly is
+   `dry`/`pageTrim` — a trim that compensates for OUR modules being quiet
+   (voice_lead 4.11, voice_choir 7.52). Live's Meld is not our vocal model, so
+   carrying that trim across would make the exported voices ~12 dB too loud.
+   It is the wrong quantity by construction.
+
+   WHAT SHIPS IS THE DESK'S WORD, which is device-independent by design:
+   precompose CHAIRLVL says what a chair asks for and fields.js LEVELS says
+   what the word is worth. Two independent routes agree on the pad: the table
+   says `back` (0.7, -3.1 dB), and the engine's own balance with the module
+   trim divided back out measures lead 0.273 against pad 0.193 — also -3 dB.
+   A duplicated table is a drift risk, so gate M in als-gate.js reads the real
+   precompose and fields tables and FAILS if these two disagree with them.
+   (A row's own `mix[part].lvl` is NOT read here, and that is deliberate: it
+   does not reach the engine either — measured, `mix: {pad:{lvl:"hush"}}` and
+   `{lvl:"fwd"}` both leave the unit at 0.2297 — so honouring it here would
+   make the export louder or quieter than the record it came from.) */
+export const CHAIR_LEVEL = { lead: "fwd", pad: "back", drone: "back" };
+export const LEVEL_GAIN = { hush: 0.4, back: 0.7, norm: 1, fwd: 1.35 };
+export const chairGain = (chair, nth) =>
+  LEVEL_GAIN[(nth > 0 && chair === "lead") ? "norm"          // CHAIRLVL2
+             : (CHAIR_LEVEL[chair] || "norm")];
+
+/* THE EQ, OUT OF THE DONOR'S OWN Eq8, AND NOT ONE FILTER TYPE IS GUESSED.
+   The donor's Eq8 ships Live's default eight-band layout, measured:
+       band 0  Mode 2 (low shelf)  30 Hz     band 4..7  off
+       band 1  Mode 3 (bell)      200 Hz
+       band 2  Mode 3 (bell)        1 kHz
+       band 3  Mode 5 (high shelf)  5 kHz
+   So this sets FREQ AND GAIN ONLY and never writes `Mode`. That matters: the
+   Mode enum's meaning is not printed anywhere in the file, and a wrong guess
+   would turn a shelf into a notch silently. Working inside the modes Live
+   itself left there costs nothing and cannot be wrong.
+
+   THE CURVES ARE THE ORDINARY ONES, which is what "basic EQ filtering" asks
+   for: everything that is not the bass or the kick gets its bottom taken off
+   so it stops competing down there, the 200 Hz mud is pulled on the parts that
+   sit in it, and the top is opened a little on the parts that carry the tune.
+   The pad gets the deepest low cut, because a sustained chord holding low
+   energy under everything IS the muddiness being described. */
+export const CHAIR_EQ = {
+  //            low shelf (band 0)      200 Hz bell (1)     5 kHz shelf (3)
+  bass:   [{ n: 0, f: 45,   g: 1.5 }, { n: 1, f: 220, g: -2.5 }, { n: 3, f: 5000, g: -4 }],
+  drums:  [{ n: 0, f: 55,   g: 1.5 }, { n: 1, f: 300, g: -3 },   { n: 3, f: 6000, g: 2 }],
+  pad:    [{ n: 0, f: 260,  g: -9 },  { n: 1, f: 420, g: -3 },   { n: 3, f: 6000, g: -1 }],
+  drone:  [{ n: 0, f: 260,  g: -9 },  { n: 1, f: 420, g: -3 },   { n: 3, f: 6000, g: -1 }],
+  lead:   [{ n: 0, f: 140,  g: -6 },  { n: 1, f: 300, g: -2 },   { n: 3, f: 6000, g: 2 }],
+  riff:   [{ n: 0, f: 170,  g: -6 },  { n: 1, f: 350, g: -2 },   { n: 3, f: 6000, g: 1.5 }],
+  counter:[{ n: 0, f: 170,  g: -6 },  { n: 1, f: 350, g: -2 },   { n: 3, f: 6000, g: 1 }],
+  "":     [{ n: 0, f: 150,  g: -5 },  { n: 1, f: 320, g: -2 },   { n: 3, f: 6000, g: 1 }],
+};
+/** The donor's Eq8 device, lifted whole. */
+export function eqTemplate(donor) {
+  const t = donor.tracks.find((x) => x.name === "1-MIDI");
+  if (!t) return null;
+  const seg = donor.xml.slice(t.start, t.end);
+  const i = seg.indexOf("<Eq8 Id=");
+  if (i < 0) return null;
+  const [a, b] = balancedAt(seg, i);
+  return seg.slice(a, b);
+}
+/** Set Freq and Gain (never Mode) on the named bands, both channels. */
+export function setEqBands(eq, bands) {
+  let out = eq;
+  for (const { n, f, g } of bands) {
+    const s0 = out.indexOf("<Bands." + n + ">");
+    if (s0 < 0) continue;
+    const [a, b] = balancedAt(out, s0);
+    let one = out.slice(a, b);
+    // ParameterA and ParameterB are the two channels; both move together
+    const put = (tag, value) => {
+      let from = 0;
+      for (;;) {
+        const i = one.indexOf("<" + tag + ">", from);
+        if (i < 0) break;
+        const j = one.indexOf("<Manual Value=", i);
+        if (j < 0 || j > i + 400) { from = i + 1; continue; }
+        const k = one.indexOf("/>", j) + 2;
+        one = one.slice(0, j) + '<Manual Value="' + value + '" />' + one.slice(k);
+        from = j + 30;
+      }
+    };
+    put("Freq", f);
+    put("Gain", g);
+    out = out.slice(0, a) + one + out.slice(b);
+  }
+  return out;
+}
+/** Put a device at the END of a track's own device chain (after the instrument). */
+export function addDevice(track, device) {
+  const d = elementAfter(track, "Devices");
+  if (!d) return track;
+  const at = d.end - "</Devices>".length;
+  return track.slice(0, at) + device + track.slice(at);
 }
 
 /* AND THE COLUMNS NOBODY PLAYS COME OUT. Paul: "Then kill the columns/
@@ -616,6 +726,16 @@ export function alsFromScore(donorXml, score, opts = {}) {
      gone anywhere: it now shows as the DEVICE on the track, which is the
      thing a person opens the set to look at. */
   const colName = columnNames(boxes, laneNames);
+  // how many chairs of this role we have already seen — CHAIRLVL2's `nth`
+  const chairNth = {};
+  {
+    const used = {};
+    for (const n of laneNames) {
+      const c = laneInfoOf(boxes, n).chair || (n === "drums" ? "drums" : "");
+      chairNth[n] = (used[c] = (used[c] || 0) + 1) - 1;
+    }
+  }
+  const eqTpl = eqTemplate(donor);
 
   const trackXml = laneNames.map((laneName) => {
     const info = laneInfoOf(boxes, laneName);
@@ -662,8 +782,17 @@ export function alsFromScore(donorXml, score, opts = {}) {
       notes.push(clipName + ": " + lane.notes.length + " notes over " + v.beats + " beats");
     });
     t = putArrangementClips(t, arrangement);
+    /* THE EQ GOES ON AFTER THE INSTRUMENT and is renumbered like any other
+       clone — five tracks carrying one donor device would otherwise be five
+       copies of the same pointee ids, which is precisely what gate 0 exists to
+       catch and what would silently point an automation lane at the wrong
+       knob. */
+    const chair = isDrums ? "drums" : (info.chair || "");
+    if (eqTpl)
+      t = addDevice(t, renumber(setEqBands(eqTpl, CHAIR_EQ[chair] || CHAIR_EQ[""]), next));
     // ...and the desk, last, so nothing above can overwrite it
-    t = setStrip(t, (boxes[0].lanes.find((l) => l.name === laneName) || {}).strip);
+    t = setStrip(t, (boxes[0].lanes.find((l) => l.name === laneName) || {}).strip,
+                 chairGain(chair, chairNth[laneName] || 0));
     return t;
   });
 

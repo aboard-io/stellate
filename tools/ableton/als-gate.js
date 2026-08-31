@@ -48,7 +48,8 @@ import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
 import { balancedAt, elementAfter, pointeeIds, paceView,
-         columnNames, clipNameOf } from "../../nukernel/export/als.js";
+         columnNames, clipNameOf, CHAIR_LEVEL, LEVEL_GAIN } from "../../nukernel/export/als.js";
+import { createRequire } from "node:module";
 import { loadScore } from "./score-node.mjs";
 
 const TOKEN = /<(\/?)([A-Za-z0-9._]+)((?:"[^"]*"|[^>"])*?)(\/?)>/g;
@@ -293,6 +294,44 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
       " send knobs but the set has " + nRet + " return tracks");
     else pass("gate O", seq.length - nRet + " tracks then " + nRet + " returns, in Live's order · " +
       maxSends + " send knob(s) per track, " + nRet + " returns to land on");
+  }
+
+  /* ---- Gate M: the mix tables have not drifted from their owners ---------
+     als.js keeps its own copy of "what a chair asks for" (CHAIR_LEVEL) and
+     "what that word is worth" (LEVEL_GAIN), because the exporter is browser-
+     safe and cannot import the UMD modules that own them. A copied table is a
+     drift risk, so this gate reads the REAL ones out of precompose.js and
+     fields.js and fails the moment the two disagree. That is the same shape as
+     gate 1 asking the exporter for its clip names: duplicate the value if you
+     must, never duplicate the authority. */
+  {
+    const req = createRequire(import.meta.url);
+    let real = null, err = null;
+    try {
+      const src = readFileSync(new URL("../../nukernel/precompose.js", import.meta.url), "utf8");
+      const m = /const CHAIRLVL = (\{[^}]*\})/.exec(src);
+      const m2 = /const CHAIRLVL2 = (\{[^}]*\})/.exec(src);
+      const NF = req("../../nukernel/fields.js");
+      const LEVELS = (NF.LEVELS || (NF.NuFields && NF.NuFields.LEVELS));
+      if (!m || !m2) err = "could not find CHAIRLVL/CHAIRLVL2 in precompose.js";
+      else if (!LEVELS) err = "fields.js exports no LEVELS";
+      else real = { lvl: eval("(" + m[1] + ")"), lvl2: eval("(" + m2[1] + ")"), LEVELS };
+    } catch (e) { err = e.message; }
+    if (err) ok = fail("gate M", "cannot read the owning tables: " + err);
+    else {
+      const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+      if (!same(real.lvl, CHAIR_LEVEL))
+        ok = fail("gate M", "als.js CHAIR_LEVEL " + JSON.stringify(CHAIR_LEVEL) +
+          " has drifted from precompose CHAIRLVL " + JSON.stringify(real.lvl));
+      else if (!same(real.LEVELS, LEVEL_GAIN))
+        ok = fail("gate M", "als.js LEVEL_GAIN " + JSON.stringify(LEVEL_GAIN) +
+          " has drifted from fields LEVELS " + JSON.stringify(real.LEVELS));
+      else if (real.lvl2.lead !== "norm")
+        ok = fail("gate M", "precompose CHAIRLVL2.lead is " + real.lvl2.lead +
+          ", but als.js chairGain hard-codes the second lead to norm");
+      else pass("gate M", "the mix tables match their owners · chairs " +
+        Object.keys(CHAIR_LEVEL).join("/") + " · second lead sits at norm");
+    }
   }
 
   /* ---- Gate 3 ---------------------------------------------------------- */

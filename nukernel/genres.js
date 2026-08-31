@@ -17154,7 +17154,7 @@
        drop-and-return applied to pop arrangement. The grid can seat the
        chairs and it cannot make the desk the composer. */
     younggalaxy: {
-      label: "Montreal 2011", voices: 3, bars: 8, near: "dreampop",
+      label: "Montreal 2011", voices: 4, bars: 8, near: "dreampop",
       plan: "song", bpm: 104,
       // LINEAGE: dream pop is the body, synthpop the machine it was rebuilt
       // on, and the residue is the producer — a dub engineer's ear on a pop
@@ -17191,11 +17191,32 @@
       // the riff chair is the ARPEGGIO, so it stops being a guitar: "tight and
       // synthy" is a saw, and a clean guitar playing sixteenths is a different
       // record entirely.
-      instr: ["solo_vox", "warm_pad", "saw_wave"],
+      instr: ["solo_vox", "warm_pad", "saw_wave", "ahh_choir"],
       drumkit: "tr909",
-      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? -1 : 0),
+      /* THE CHORAL DOUBLING, 2026-08-31. Paul: "the lyrics are spare and
+         rhythmic with a choral doubling for the bridge — 'Whennn weeee | were
+         lost', 'You're my pretty boy, aaaaaalwaaaays.'"
+
+         IT IS A SECOND `lead`, WHICH THE DESK ALREADY UNDERSTANDS. precompose
+         CHAIRLVL2 says `{ lead: "norm" }` — the second chair of a role is not
+         a second subject — and that rule exists because of Paul's own note on
+         Air ("the main vocals are 2x too loud and the other vocal line should
+         be about 20% quieter"). So the choir arrives BEHIND the voice by the
+         table's own arithmetic, which is what a doubling is, and CHAIRPAN
+         moves it off centre so the two are not one flanged voice.
+
+         WHAT I COULD NOT DO, SAID PLAINLY: make it happen only at the bridge.
+         A row has no section-aware voice. `word(v, s)` gets a BAR index —
+         kernel.js: `const s = b - g.entry(v)` — and `entry` is a bar index too
+         (precompose clamps it to minBars - 1). Neither reaches the section
+         ROLE, and `kits` is per-bar as well. So a genre cannot say "at the
+         bridge"; the doubling is on the record rather than on one section of
+         it. Making that expressible is a real change to the vocabulary and is
+         not smuggled in here. */
+      entry: v => (v === 3 ? 0 : v),
+      reg: v => (v === 0 ? 1 : v === 1 ? -1 : v === 3 ? 1 : 0),
       realize: v => (v === 1 ? "pad" : "line"),
-      part: ["lead", "pad", "riff"],
+      part: ["lead", "pad", "riff", "lead"],
       /* THE CHANGES ARE PAUL'S AND THE MODE FOLLOWS THEM. A, D and Bm is
          I-IV-ii, which is MAJOR — the row was aeolian, where those degrees are
          a different three chords. `roots` stays as the fallback shape for a
@@ -17241,7 +17262,8 @@
               mouth: MOUTHS.dreamchoir },
       words: ["the voice, long and climbing",
               "the pad, holding under it",
-              "the arpeggio, sixteen to the bar"],
+              "the arpeggio, sixteen to the bar",
+              "the choir, doubling the voice a step behind it"],
       /* MOTIF ONE IS TWO NOTES. Paul: "back to motif one, which is often just
          two notes." `keep(0, 8)` is that literally — one note on the bar, one
          on the half — and it alternates with the fuller line so the tune comes
@@ -17254,6 +17276,11 @@
          own words rather than as a number somewhere. */
       word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], [keep(0, 8)]][s % 4]
                     : v === 1 ? [drop(8)]
+                    // the choir sings the voice's own shape, thinned: it holds
+                    // the long notes and leaves the busy ones to the lead,
+                    // which is what a doubling does and what "aaaalwaaaays"
+                    // sounds like against a rhythmic lyric
+                    : v === 3 ? [[keep(0, 8)], [keep(0, 8)], [keep(0, 4, 8)], [keep(0, 8)]][s % 4]
                     : [[split(4), fill(1)], [split(4), fill(1)],
                        [split(2), fill(1)], [split(4), fill(1)]][s % 4]),
     },
