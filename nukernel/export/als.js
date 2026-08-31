@@ -110,7 +110,23 @@ export function parseDonor(xml) {
   const scenes = elementAfter(xml, "Scenes");
   const nScenes = scenes ? (scenes.text.match(/<Scene Id="\d+"/g) || []).length : 0;
   const drift = tracks.find((t) => t.name === "2-Drift");
-  const nSlots = drift ? (xml.slice(drift.start, drift.end).match(/<ClipSlot Id="\d+"/g) || []).length : 0;
+  /* nSlots COUNTED BOTH LISTS AND SAID 16 (corrected 2026-08-31). A MidiTrack
+     carries TWO ClipSlotLists — walked with a tag stack: `MidiTrack >
+     DeviceChain > MainSequencer` (the session grid) and `MidiTrack >
+     DeviceChain > FreezeSequencer` (its freeze mirror) — each EIGHT long,
+     ids 0..7 twice. Counting the flat matches doubled it, which is what let
+     the scene fence move to 12 and then fail on "track has no ClipSlot 8":
+     the scenes were cloned and the rows to hold them were not. The count is
+     the MAIN sequencer's list alone, which is the one a clip goes into. */
+  const mainOf = (t) => {
+    const seg = xml.slice(t.start, t.end);
+    const ms = seg.indexOf("<MainSequencer>");
+    if (ms < 0) return null;
+    const fs = seg.indexOf("<FreezeSequencer>");
+    return seg.slice(ms, fs > ms ? fs : seg.length);
+  };
+  const dm = drift ? mainOf(drift) : null;
+  const nSlots = dm ? (dm.match(/<ClipSlot Id="\d+"/g) || []).length : 0;
   return { xml, nextPointeeId: np ? +np[1] : 0, tracks, nScenes, nSlots };
 }
 
@@ -430,7 +446,7 @@ export function alsFromScore(donorXml, score, opts = {}) {
   if (hasMap) out = spliceTempoMap(out, tempoSegs);
   // GROW THE SCENE LIST FIRST — nameScenes walks the Scenes it finds, so a
   // clone that arrives after it would ship unnamed (2026-08-31).
-  if (all) out = growScenes(out, boxes.length);
+  if (all) { out = growScenes(out, boxes.length); out = growSlots(out, boxes.length); }
   if (all) out = nameScenes(out, boxes.map((b) => b.name));
   if (all && hasMap)
     out = setSceneTempos(out, views.map((v) =>
@@ -540,6 +556,45 @@ export function spliceTempoMap(xml, segs) {
    Ids are taken above the donor's own maximum and the pointee renumber pass
    runs after, so gate 0's duplicate probe covers this exactly as it covers
    every other spliced element. */
+/* AND THE ROWS TO HOLD THEM (2026-08-31, the same day and the same hour the
+   scene clone shipped and failed). Cloning scenes without cloning slots is
+   precisely the broken set the original refusal predicted — Paul got "track
+   has no ClipSlot 8" one message after "can't you splice", and he was owed
+   both halves. A ClipSlot is as self-contained as a Scene (an id, a LomId, an
+   empty Value, HasStop, NeedRefreeze) and BOTH of a track's lists are
+   scene-indexed, so both grow: the MainSequencer's grid is where a clip
+   lands, and the FreezeSequencer's mirror must stay the same length or the
+   two disagree about how many rows the track has. Ids continue the list's own
+   sequence (0..7 -> 0..11), which is what Live's own numbering does — unlike
+   Scenes, these ids are POSITIONAL and start from zero in each list. */
+export function growSlots(xml, want) {
+  let out = "", cursor = 0;
+  const re = /<ClipSlotList>([\s\S]*?)<\/ClipSlotList>/g;
+  let m;
+  while ((m = re.exec(xml))) {
+    const body = m[1];
+    const ids = [...body.matchAll(/<ClipSlot Id="(\d+)">/g)].map((x) => +x[1]);
+    out += xml.slice(cursor, m.index);
+    if (!ids.length || ids.length >= want) { out += m[0]; cursor = m.index + m[0].length; continue; }
+    /* BALANCED, NOT NON-GREEDY — the first cut of this used
+       /<ClipSlot Id="\d+">[\s\S]*?<\/ClipSlot>/ and it copied HALF an
+       element: an empty session slot NESTS a second <ClipSlot> inside its
+       own <Value>, so the lazy match closed on the inner tag. Measured: 104
+       opens added against 52 closes. `balancedAt` is the file's own answer
+       to exactly this and it is what putSessionClip already uses. */
+    const at = body.search(/<ClipSlot Id="\d+">/);
+    const [oa, ob] = balancedAt(body, at);
+    const one = body.slice(oa, ob);
+    let add = "", next = Math.max(...ids) + 1;
+    for (let i = ids.length; i < want; i++)
+      add += "\n\t\t\t\t\t\t" + one.replace(/^<ClipSlot Id="\d+">/,
+        '<ClipSlot Id="' + (next++) + '">');
+    out += "<ClipSlotList>" + body + add + "</ClipSlotList>";
+    cursor = m.index + m[0].length;
+  }
+  return out + xml.slice(cursor);
+}
+
 export function growScenes(xml, want) {
   const scenes = elementAfter(xml, "Scenes");
   if (!scenes) return xml;
