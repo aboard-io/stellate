@@ -486,6 +486,18 @@
        ARE those chords and the qualities fall out of the mode: 0 is A major,
        3 is D major, 1 is B minor. Nothing here says "minor" — the row's
        `diatonic` does, which is why the row moved off aeolian to get them. */
+    /* NEW SUMMER, off the chart Paul sent 2026-08-31. In E: the verse is
+       E A C#m B and the chorus A E C#m B — I IV vi V and IV I vi V, the same
+       four chords rotated, which is why the song sounds like one long phrase.
+       The hook ("Hey, it's a new summer") turns to F#m C#m A B — ii vi IV V.
+       Degrees, not chord names, as everywhere here: in ionian, 1 IS minor.
+       DATED HONESTLY — this is Ultramarine (2013) and the row is anchored on
+       Shapeshifting (2011), so New Summer is not the anchor record. It is
+       kept because it CORROBORATES the same harmonic habit two records apart,
+       and its hook is the one turn Pretty Boy does not make. */
+    newsummerV: [{ d: 0 }, { d: 0 }, { d: 3 }, { d: 3 }, { d: 5 }, { d: 5 }, { d: 4 }, { d: 4 }],
+    newsummerC: [{ d: 3 }, { d: 3 }, { d: 0 }, { d: 0 }, { d: 5 }, { d: 5 }, { d: 4 }, { d: 4 }],
+    newsummerH: [{ d: 1 }, { d: 1 }, { d: 5 }, { d: 5 }, { d: 3 }, { d: 3 }, { d: 4 }, { d: 4 }],
     prettyboyV: [{ d: 0 }, { d: 0 }, { d: 3 }, { d: 3 }, { d: 0 }, { d: 0 }, { d: 3 }, { d: 3 }],
     prettyboyC: [{ d: 1 }, { d: 3 }, { d: 0 }, { d: 3 }, { d: 1 }, { d: 3 }, { d: 0 }, { d: 3 }],
     beatlesV: [{ d: 0 }, { d: 0 }, { d: 6 }, { d: 6 }, { d: 3 }, { d: 3 }, { d: 0 }, { d: 0 }],
@@ -17238,7 +17250,14 @@
          it. Making that expressible is a real change to the vocabulary and is
          not smuggled in here. */
       entry: v => (v === 3 ? 0 : v),
-      reg: v => (v === 0 ? 1 : v === 1 ? -1 : v === 3 ? 1 : 0),
+      /* THE ARPEGGIO CHAIR SITS AN OCTAVE UP (voice 2), 2026-08-31. Paul:
+         "The mix is muddy." Sixteen notes a bar in the same octave as the bass
+         and the pad IS the mud, and the New Summer tab he sent puts the synth
+         figure at the ninth and twelfth frets of the B and G strings — well
+         above the band. This is the chair's register, which is the one that
+         reaches the sound (a cell's own `reg` cannot, at a one-bar ceiling —
+         precompose says so where I tried it). */
+      reg: v => (v === 0 ? 1 : v === 1 ? -1 : v === 2 ? 1 : v === 3 ? 1 : 0),
       realize: v => (v === 1 ? "pad" : "line"),
       part: ["lead", "pad", "riff", "lead"],
       /* THE CHANGES ARE PAUL'S AND THE MODE FOLLOWS THEM. A, D and Bm is
@@ -17248,7 +17267,12 @@
          record's own. */
       roots: [0, 3, 1, 3], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true, harmony: "cycle",
-      progFamily: { verse: "prettyboyV", chorus: "prettyboyC" },
+      /* THE BRIDGE IS NEW SUMMER'S TURN — the one move Pretty Boy never makes
+         (ii vi IV V against its two chords), so the song has somewhere to go
+         that is still this band. Verse and chorus stay Pretty Boy's, because
+         that is the anchor record. */
+      progFamily: { verse: "prettyboyV", chorus: "prettyboyC", bridge: "newsummerH" },
+
       /* THE LENGTH COMES OFF THE GATE, NOT OFF THE TAIL, and this is the one
          judgement call in the round. "Long ethereal vocal lines" and "steady
          flows of 16 steps per bar" are opposite demands on ONE `tone`, because

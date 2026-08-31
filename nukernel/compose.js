@@ -1466,7 +1466,26 @@
     if (G.progFamily && G.progFamily[role]) b.prog = G.progFamily[role];
 
     if (role === "intro") {
-      b.stack[0].slots = chance(r, 0.5) ? [S.pad] : [S.pad, S.sparse];
+/* A SEQUENCER RECORD RUNS ITS SEQUENCER (2026-08-31). Paul, on Young Galaxy:
+   "The arps are a big part of intros and outros and transitions and fade down
+   a little and alter over the song ... Right now you make me wait, drop an arp
+   in, and drop it out."
+
+   MEASURED: slot 9 reached exactly TWO roles — `verse` and `drop`. Intro,
+   outro, prechorus, build, bridge and breakdown never saw it, so the figure
+   appeared when a verse arrived and vanished when it left, which is precisely
+   the "wait, drop in, drop out" he describes. He also sent the New Summer tab,
+   which settles it from the record's own side: the synth part "plays during
+   the chorus" AND "is also played in the intro right after the tiny part
+   above" — one motif, stated at the top and running through the song.
+
+   So the sequencer is offered to every role that is not a solo, ALWAYS beside
+   something else rather than alone, so it reads as a bed under the section and
+   not as the section. `S.seq != null` guards every line: a genre with no
+   sequencer takes the identical branch it took before, coin for coin. */
+      b.stack[0].slots = S.seq != null
+        ? (chance(r, 0.5) ? [S.seq, S.pad] : [S.seq, S.sparse])
+        : (chance(r, 0.5) ? [S.pad] : [S.pad, S.sparse]);
       b.env = "in"; b.lvl = "back"; b.rev = "wet";
       b.len = halfLen(G);
       // the intro EDGE is not decided here: introSections owns how the song
@@ -1512,7 +1531,9 @@
       // up, and a snare roll into the downbeat. The cadence is the
       // anticipation — the last bar borrows the dominant's door so the chorus
       // is an ARRIVAL rather than the next thing that happens.
-      b.stack[0].slots = chance(r, 0.5) ? [S.answer] : [S.answer, S.sparse];
+      b.stack[0].slots = S.seq != null
+        ? (chance(r, 0.5) ? [S.seq, S.answer] : [S.seq, S.sparse])
+        : (chance(r, 0.5) ? [S.answer] : [S.answer, S.sparse]);
       // A SECOND PRECHORUS DOES NOT FADE IN AGAIN. `in` is a fade — it starts
       // at zero — and a band that fades up twice in one record is a band with
       // a mixing desk problem. The second time round the same gesture is `lift`
@@ -1532,7 +1553,9 @@
     } else if (role === "build") {
       // the dance floor's prechorus: same gesture, different clothes —
       // a thinned phrase under a riser, everything held back for the drop
-      b.stack[0].slots = chance(r, 0.5) ? [S.sparse] : [S.climb];
+      b.stack[0].slots = S.seq != null
+        ? (chance(r, 0.5) ? [S.seq, S.sparse] : [S.seq, S.climb])
+        : (chance(r, 0.5) ? [S.sparse] : [S.climb]);
       b.env = again ? "lift" : "in"; b.mot = "rise"; b.echo = "touch";
       if (kit) { b.kit = chance(r, 0.5) ? "busy" : "nokick"; b.outro = fillOf(S, G, kit, LIFT); }
       b.len = halfLen(G);
@@ -1540,7 +1563,8 @@
       // THE CHORUS HAS ITS OWN MELODY — the topline, written for it, instead
       // of a re-deal of the verse's hook. The hook may come back as the third
       // line, which is a counter-hook, not a substitute.
-      b.stack[0].slots = chance(r, 0.55) ? [S.topline, S.counter]
+      b.stack[0].slots = S.seq != null ? [S.topline, S.seq]
+        : chance(r, 0.55) ? [S.topline, S.counter]
                                          : [S.topline, S.counter, S.hook];
       // AND THE SINGER SINGS IT — every time, not on a coin. The topline moves
       // OFF the band and onto the record's `vocal` layer and the host keeps the
@@ -1614,7 +1638,9 @@
         if (chance(r, 0.4)) b.key = NF.wrapKey(S.tonic + 2);
       } else guest(0.45, [S.counter]);
     } else if (role === "bridge") {
-      b.stack[0].slots = chance(r, 0.5) ? [S.counter] : [S.counter, S.sparse];
+      b.stack[0].slots = S.seq != null
+        ? (chance(r, 0.5) ? [S.seq, S.counter] : [S.seq, S.sparse])
+        : (chance(r, 0.5) ? [S.counter] : [S.counter, S.sparse]);
       b.mode = pick(r, ["dorian", "phrygian", "harmonic", "mixo"]);
       // THE RELATIVE-MINOR BRIDGE. A bridge already changes colour (b.mode,
       // just above); on a genre with real harmonic function it sometimes
@@ -1643,7 +1669,7 @@
       // more, which was the measured complaint
       voice(0.55, [S.counter]);
     } else if (role === "breakdown") {
-      b.stack[0].slots = [S.sparse];
+      b.stack[0].slots = S.seq != null ? [S.seq, S.sparse] : [S.sparse];
       b.len = halfLen(G);
       b.rev = "drown"; b.echo = "some";
       if (kit) b.kit = pick(r, ["nokick", "nodrums", "snareonly", "soft", "stickside", "h.half"]);
@@ -1737,7 +1763,9 @@
         }
       }
     } else {                                            // outro
-      b.stack[0].slots = chance(r, 0.6) ? [S.pad] : [S.pad, S.riff];
+      b.stack[0].slots = S.seq != null
+        ? (chance(r, 0.6) ? [S.seq, S.pad] : [S.seq, S.riff])
+        : (chance(r, 0.6) ? [S.pad] : [S.pad, S.riff]);
       b.env = "out"; b.rev = "wet"; b.mot = "close";
       b.len = halfLen(G);
       // the last bar of the record: a crash more often than not, but a tom

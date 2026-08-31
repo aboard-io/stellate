@@ -628,6 +628,16 @@
        which way ITS machine runs. Absent, every record takes the updown `arp`
        it had before this line, byte for byte. `rd` still wins, because a
        reading is more specific than an anchor. */
+    /* `seqReg` WAS TRIED HERE AND DELETED THE SAME HOUR (2026-08-31), and the
+       note is kept so nobody adds it again. Paul: "The mix is muddy", and
+       KINDS.seq says `reg: "low"` — right for a 303, wrong for the figure his
+       New Summer tab shows at the ninth and twelfth frets. So I let the row
+       state the arpeggio's register here, measured the staff, and the notes had
+       not moved one step: `GBdg dBGB` before and after. test/hook.test.js says
+       why in its own words — "a stated `len`, `sent` or `reg` cannot reach a
+       one-bar cell" — and CELL_BAR_CEILING is 1. It was a knob that could not
+       reach the sound, which is the one thing this repo will not ship. The
+       register lives on the CHAIR, so the row moves it there instead. */
     const arpOf = (kind === "seq" && G && G.seqArp) ? { contour: G.seqArp } : null;
     const m = { ...Id.blank(), ...row, ...KINDS[kind], ...(arpOf || {}), ...(rd || {}),
                 len: cb === 4 ? "four" : cb === 2 ? "two" : "one", answer: true };
