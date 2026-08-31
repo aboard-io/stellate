@@ -824,6 +824,22 @@ const ID_ROUTE = {
   // (15 declare it; the rest arrive through the pool), which is why it is
   // here and not on any of them.
   overdrive_guitar: { trim: 0.2512, rev: 0.12, del: 0.12 },
+  /* Paul, 2026-08-31: "You love that palm chug guitar. You use it everywhere.
+     Wherever you use it, bring it down 20% and add some reverb and a little
+     delay." The first sentence is measurable and he is right: 97 of the 377
+     anchors seat `palm_muted_guitar` at seed 1, and only TWO of them declare
+     it (ska and riff) — the other 95 arrive through the pool, which is exactly
+     why this belongs here and not on any row. Same shape, and the same reason,
+     as the overdrive line above.
+
+     0.8 IS THE TWENTY PER CENT, read as amplitude (-1.94 dB), not as dB.
+     The sends sit between the two SENDS words either side of what he asked
+     for: fields.js has touch 0.12 and some 0.30, and "some reverb" against
+     "a little delay" is the difference between them, so reverb takes 0.18 and
+     delay 0.10. I stayed under a literal `some` deliberately — this lands on
+     ninety-seven records at once and a wash on all of them is a bigger claim
+     than the ask — and these are the two numbers to move if it is still shy. */
+  palm_muted_guitar: { trim: 0.8, rev: 0.18, del: 0.10 },
 };
 /** the instrument's own route offset, by instrument id — null for every other. */
 export const idRoute = (id) => ID_ROUTE[id] || null;

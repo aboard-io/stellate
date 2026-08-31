@@ -85,10 +85,23 @@ ok(ROW && ROW.trim > 0, "overdrive_guitar has a route row", JSON.stringify(ROW))
 // whole reason this table is keyed by instrument and PAGE_TRIM is not enough
 const SIX = ["clean_guitar", "jazz_guitar", "palm_muted_guitar",
              "crunch_guitar", "distortion_guitar", "overdrive_guitar"];
+/* SOME OF THE SIX, NEVER ALL SIX — widened 2026-08-31 and the claim got
+   STRONGER, not weaker. This said "exactly ONE is named", which was true while
+   overdrive_guitar was the only routed id; the point it was making is O1's own
+   title, that the table names an INSTRUMENT and not a module's worth. Paul
+   then asked for the palm chug: "You love that palm chug guitar. You use it
+   everywhere. Wherever you use it, bring it down 20% and add some reverb and a
+   little delay" — and two of six siblings carrying DIFFERENT routes through
+   ONE shared module is a better demonstration of per-instrument keying than
+   one was. What would falsify the claim is all six being named with the same
+   row, because that is a module trim wearing six hats — and that is what this
+   now fails on. */
 const named = SIX.filter((id) => TE.idRoute(id));
-ok(named.length === 1 && named[0] === "overdrive_guitar",
-   "…and of the six ids that route through stk_guitar, exactly ONE is named: " +
-   named.join(", "));
+const distinct = new Set(named.map((id) => JSON.stringify(TE.idRoute(id))));
+ok(named.length >= 1 && named.length < SIX.length && distinct.size === named.length,
+   "…and of the six ids that route through stk_guitar, " + named.length +
+   " are named and each route differs — a per-INSTRUMENT table, not a module " +
+   "trim: " + named.join(", "));
 ok(!TE.idRoute("solo_vox") && !TE.idRoute("acoustic_bass") && !TE.idRoute(""),
    "every other instrument answers null — absent is today");
 
