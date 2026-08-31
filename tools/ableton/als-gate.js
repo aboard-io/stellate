@@ -233,6 +233,32 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
       "of donor/README.md is what changes that)");
   }
 
+  /* ---- Gate O: the order Live insists on --------------------------------
+     Paul, the first report from inside Live itself: "Track has more send
+     knobs than set has return tracks" — on a file all five gates passed.
+     Every element was Live's own, so gate 2 saw nothing; what was wrong was
+     WHERE ours sat. Live writes ReturnTracks last in <Tracks>, and a track
+     placed after them is read with the return list already closed, so its
+     send knobs point at nothing. Order is not shape, so it needs its own
+     gate: no regular track may follow a return. */
+  {
+    const te = xml.indexOf("<Tracks>"), tz = xml.indexOf("</Tracks>");
+    const seq = [...xml.slice(te, tz).matchAll(/<(MidiTrack|AudioTrack|ReturnTrack) Id="(\d+)"/g)];
+    const firstRet = seq.findIndex((m) => m[1] === "ReturnTrack");
+    const late = firstRet === -1 ? [] : seq.slice(firstRet).filter((m) => m[1] !== "ReturnTrack");
+    const nRet = seq.filter((m) => m[1] === "ReturnTrack").length;
+    const maxSends = Math.max(0, ...seq.map((m) => {
+      const a = xml.indexOf(m[0], te), b = xml.indexOf("</" + m[1] + ">", a);
+      return (xml.slice(a, b).match(/<TrackSendHolder Id=/g) || []).length;
+    }));
+    if (late.length) ok = fail("gate O", late.length + " track(s) sit AFTER the returns (" +
+      late.map((m) => m[1] + " " + m[2]).join(", ") + "); Live reads their sends against a closed return list");
+    else if (maxSends > nRet) ok = fail("gate O", "a track carries " + maxSends +
+      " send knobs but the set has " + nRet + " return tracks");
+    else pass("gate O", seq.length - nRet + " tracks then " + nRet + " returns, in Live's order · " +
+      maxSends + " send knob(s) per track, " + nRet + " returns to land on");
+  }
+
   /* ---- Gate 3 ---------------------------------------------------------- */
   const count = (x, re) => (x.match(re) || []).length;
   const sampleRe = /<(SampleRef|UserSample|MultiSamplePart|OriginalSimpler)[\s/>]/g;

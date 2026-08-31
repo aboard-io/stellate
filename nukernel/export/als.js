@@ -469,11 +469,23 @@ export function alsFromScore(donorXml, score, opts = {}) {
   if (all && hasMap)
     out = setSceneTempos(out, views.map((v) =>
       (v.k !== 1 ? Math.max(1, +score.bpm || 120) / v.k : null)));
-  // The clones go in before </Tracks>, after every donor track, so Live's own
-  // six stay where Paul left them.
+  /* THE CLONES GO IN BEFORE THE FIRST RETURN, NOT AT THE END OF THE LIST.
+     Live, opening a file whose tracks sat after the returns: "Track has more
+     send knobs than set has return tracks" (2026-08-31, Paul's first report
+     from inside Live itself). The counts were never wrong — two sends per
+     track, two returns, in the export exactly as in the donor. The ORDER was:
+     every .als Live writes puts ReturnTracks last in <Tracks>, and a track
+     after them is read with the return list already closed, so its two send
+     knobs point at nothing. Shape gates cannot see this — every element here
+     was written by Live — which is why gate 2 passed a file Live refused.
+     Donor tracks keep their places; ours land after the last of them and
+     before A-Reverb, where a track Live added itself would go. */
   const tracksEl = elementAfter(out, "Tracks");
-  out = out.slice(0, tracksEl.end - "</Tracks>".length) + trackXml.join("") +
-        out.slice(tracksEl.end - "</Tracks>".length);
+  const firstRet = out.indexOf("<ReturnTrack ", tracksEl.start);
+  const at = (firstRet !== -1 && firstRet < tracksEl.end)
+    ? out.lastIndexOf("\n", firstRet) + 1
+    : tracksEl.end - "</Tracks>".length;
+  out = out.slice(0, at) + trackXml.join("") + out.slice(at);
   out = out.replace(/<NextPointeeId Value="\d+" \/>/, '<NextPointeeId Value="' + nextId + '" />');
   return { xml: out, tracks: laneNames.length, clips: clipId - 1, notes };
 }
