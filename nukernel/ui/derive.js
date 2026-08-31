@@ -1112,7 +1112,25 @@ export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
       // like `pace` on the anchor: a wordless section stamps no key and every
       // reader of the bar list sees the exact object it always saw.
       out.push({ si, g, barSteps, steps: barSteps, first: b === 0, ev: buckets[b],
-                 ...(sec.lvl ? { lvl: sec.lvl } : {}) });
+                 ...(sec.lvl ? { lvl: sec.lvl } : {}),
+                 /* THE SECTION'S OWN WORD TRAVELS WITH THE BAR (2026-08-31).
+                    Paul, of the exported set: "You named all the track rows
+                    and clips the same thing." Every scene said "1 London
+                    1969" because the only section fact reaching the exporter
+                    was `si` and the genre label — and this walk is the one
+                    that HAS the section. `sec.role` is "intro"/"verse"/
+                    "chorus" and `sec.cue` refines it ("prechorus", "drop"),
+                    both already written by compose's PLANS; they were simply
+                    not written down here. THE WORD IS `roleOf`'s, not a second
+                    reading of the same two keys — that function (line 720) is
+                    already this file's owner of "which word names this
+                    section", because compose stores a prechorus as a verse and
+                    keeps the honest name in `cue`, and the tempo shaping four
+                    hundred lines up has always asked it. An exporter naming
+                    boxes must get the same answer the accelerando did.
+                    Present-only, exactly like `lvl` above: a roleless section
+                    stamps no key. */
+                 ...(roleOf(sec) ? { role: roleOf(sec) } : {}) });
   }
   if (o.pickups !== false) leadIns(out, song, slots);
   // `o.ending` — see tempoNodes: absent means WRAP (the live transport only

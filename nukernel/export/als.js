@@ -110,6 +110,9 @@ export function parseDonor(xml) {
   const scenes = elementAfter(xml, "Scenes");
   const nScenes = scenes ? (scenes.text.match(/<Scene Id="\d+"/g) || []).length : 0;
   const drift = tracks.find((t) => t.name === "2-Drift");
+  // how many returns a track's sends have to land on — the number Live counts
+  // when it says "more send knobs than set has return tracks"
+  const nReturns = tracks.filter((t) => t.tag === "ReturnTrack").length;
   /* nSlots COUNTED BOTH LISTS AND SAID 16 (corrected 2026-08-31). A MidiTrack
      carries TWO ClipSlotLists — walked with a tag stack: `MidiTrack >
      DeviceChain > MainSequencer` (the session grid) and `MidiTrack >
@@ -127,7 +130,7 @@ export function parseDonor(xml) {
   };
   const dm = drift ? mainOf(drift) : null;
   const nSlots = dm ? (dm.match(/<ClipSlot Id="\d+"/g) || []).length : 0;
-  return { xml, nextPointeeId: np ? +np[1] : 0, tracks, nScenes, nSlots };
+  return { xml, nextPointeeId: np ? +np[1] : 0, tracks, nScenes, nSlots, nReturns };
 }
 
 /** The whole `<MidiTrack>…</MidiTrack>` of the donor track with this name. */
@@ -285,6 +288,213 @@ export const DONOR_TRACK = {
   drums: "2-Drift",       // and renamed loudly — see DRUM_TRACK_NAME
   "": "2-Drift",          // the default
 };
+
+/* ...AND THEN THE INSTRUMENT GETS A SAY, WHICH IT NEVER HAD (2026-08-31).
+   Paul, opening the working export: "you're choosing instruments but just
+   giving them default settings ... you're using only operator and drift.
+   Obviously things could align better than that."
+
+   He is right twice, and the second half is the interesting one. The table
+   above is keyed on the CHAIR — lead, pad, bass — so a jazz guitar, a solo
+   voice and a Rhodes all landed on the same two devices, and the exporter had
+   the instrument the whole time: export/score.js has put `instr` on every lane
+   since the fold was written, off `plan.cast()`. It was simply never read.
+   That is this repo's most familiar bug (docs: "declared but never arriving"),
+   and it is why four voices arrived as two synths.
+
+   THE DONOR HAS FOUR INSTRUMENTS THAT SOUND, and they are genuinely different
+   machines, so the mapping is by SYNTHESIS METHOD and not by taste:
+     6-Tension   StringStudio, a physically modelled STRING — bowed and
+                 plucked. Everything with a string in it goes here, which is
+                 the biggest family we have (guitars, the bowed strings, harp,
+                 sitar, koto, and the two plucked keyboards, harpsichord and
+                 clavinet, which are strings a key plucks).
+     4-Operator  FM. Struck and blown: pianos, electric pianos, organs, tuned
+                 percussion, brass and reeds. FM is what an electric piano and
+                 a bell ARE, so this is the least arbitrary edge here.
+     5-Meld      two oscillators built for evolving sustain — pads, voices,
+                 atmospheres, the chairs that hold.
+     2-Drift     subtractive, with glide. The synths, and every bass, for the
+                 reason the table above already gives: `sld` needs portamento.
+   3-Sampler still takes nothing: its MultiSampler has zero zones, so a chair
+   sent there is silent, and silence is the worst export there is.
+
+   ORDER MATTERS AND IS TESTED: "steel_string_guitar" must meet the string row
+   before the "steel_drums" word in the FM row, so strings are asked first. */
+export const DONOR_BY_INSTR = [
+  [/guitar|banjo|mandolin|sitar|koto|shamisen|dulcimer|harp|violin|viola|cello|contrabass|fiddle|erhu|strings|harpsichord|clavinet/, "6-Tension"],
+  [/piano|grand|_ep|organ|vibraphone|marimba|glockenspiel|kalimba|music_box|tubular|steel_drums|timpani|trumpet|trombone|tuba|horn|brass|sax|clarinet|oboe|flute|recorder|whistle|shenai|harmonica|accordion|bandoneon/, "4-Operator"],
+  [/vox|voice|choir|pad|atmosphere|fantasia|glass|sea_shore|space/, "5-Meld"],
+];
+export function donorFor(chair, instr) {
+  if (chair === "drums") return DONOR_TRACK.drums;
+  if (chair === "bass") return DONOR_TRACK.bass;   // glide outranks the family
+  for (const [re, track] of DONOR_BY_INSTR) if (re.test(instr || "")) return track;
+  return DONOR_TRACK[chair] || DONOR_TRACK[""];
+}
+
+/* THE SECOND DONOR'S ONE TRACK, MADE FIT FOR THE FIRST DONOR'S SET.
+   The drum rack comes out of Ableton2 (export/drumrack.js) and everything else
+   in the file comes out of Generic, so the rack arrives with two things that
+   belong to the set it was saved in, and both are silent failures rather than
+   loud ones — which is the only reason they are worth this much comment.
+
+   ONE: ITS SLOTS ARE NOT EMPTY. Ableton2's probe clip sits in slot 0 of every
+   track. putSessionClip writes by REPLACING the empty inner
+   `<ClipSlot><Value /></ClipSlot>`, so against a filled slot it matches
+   nothing, changes nothing, throws nothing — box 1's drums would simply be
+   missing, and the set would open looking fine. The slots are emptied first.
+
+   TWO: IT HAS ONE SEND AND THIS SET HAS TWO RETURNS. Ableton2 has a single
+   return track, so its tracks carry a single TrackSendHolder; Generic has
+   A-Reverb and B-Delay. That is the same class of mismatch Live complained
+   about out loud this morning ("more send knobs than set has return tracks"),
+   pointing the other way, and the fix is the same shape as growSlots: clone the
+   holder Live wrote and renumber it. */
+function emptySlots(track) {
+  const re = /<ClipSlot Id="(\d+)">/g;
+  let m, out = "", cursor = 0;
+  while ((m = re.exec(track))) {
+    const [a, b] = balancedAt(track, m.index);
+    let one = track.slice(a, b);
+    const inner = one.indexOf("<ClipSlot>");
+    if (inner >= 0) {
+      const [ia, ib] = balancedAt(one, inner);
+      one = one.slice(0, ia) + "<ClipSlot><Value /></ClipSlot>" + one.slice(ib);
+    }
+    out += track.slice(cursor, a) + one;
+    cursor = b; re.lastIndex = b;
+  }
+  return out + track.slice(cursor);
+}
+function fitSends(track, want) {
+  const holders = [...track.matchAll(/<TrackSendHolder Id="(\d+)">/g)];
+  if (!holders.length || holders.length >= want) return track;
+  const [a, b] = balancedAt(track, holders[0].index);
+  const one = track.slice(a, b);
+  let add = "", next = Math.max(...holders.map((h) => +h[1])) + 1;
+  for (let i = holders.length; i < want; i++)
+    add += "\n" + one.replace(/^<TrackSendHolder Id="\d+">/,
+      '<TrackSendHolder Id="' + (next++) + '">');
+  const last = balancedAt(track, holders[holders.length - 1].index)[1];
+  return track.slice(0, last) + add + track.slice(last);
+}
+/** The Ableton2 drum-rack track, made ready to be a track in THIS set. */
+export function rackTemplate(rackXml, returns) {
+  return fitSends(emptySlots(rackXml), returns);
+}
+
+/* THE NAMES, IN ONE PLACE, BECAUSE TWO PLACES IS HOW THEY DRIFT.
+   als-gate.js gate 1 rebuilds every clip name to look it up in the file, and
+   when the naming changed here the gate reported "clip ... appears 0 times" —
+   not a defect in the export, a second implementation of the same rule going
+   stale. So the rule is exported and the gate asks for it.
+
+   THE COLUMN IS THE CHAIR (Paul: "the column should be named 'drums'"). Two
+   chairs of one role are told apart by a count, the same way boxes are.
+   THE CLIP IS "intro drums 1" — Paul's own example: the section, the part,
+   and which time round it is, so a clip dragged out on its own still says
+   where it came from. A roleless box keeps its label, which carries the box
+   number, so the name stays unique either way — which is what gate 1 counts
+   by, and why the number was there in the first place. */
+export function columnNames(boxes, laneNames) {
+  const used = {}, out = {};
+  for (const n of laneNames) {
+    const c = laneInfoOf(boxes, n).chair || (n === "drums" ? "drums" : "voice");
+    const k = used[c] = (used[c] || 0) + 1;
+    out[n] = k > 1 ? c + " " + k : c;
+  }
+  return out;
+}
+export const clipNameOf = (box, col) =>
+  (box.role ? box.role + " " + col + " " + (box.nth || 1) : box.name + " " + col);
+
+/* THE STRIP THE DESK GAVE THIS CHANNEL, WRITTEN ONTO LIVE'S OWN MIXER.
+   Paul: "Could you sculpt the sound more to be appropriate and then use the
+   sends?" Every track shipped at unity with both sends at -inf, and the
+   numbers to do better were already computed and already heard: audio/desk.js
+   deskUnits sums `fader`, `rev`, `del` and `pan` per unit, and plan.js now
+   hands them out per seat (stripOf). This writes those four onto the four
+   controls Live has for them, so the exported mixer is a QUOTE of the desk
+   rather than a second opinion about it.
+
+   IT IS NOT A DOUBLE COUNT, and score-node.mjs's header is why: the velocities
+   in this export are the WRITTEN 0..9, deliberately not barPlan's desk-
+   multiplied `amp`, precisely so that the fader could be written here instead.
+   The two halves finally meet.
+
+   TWO HONEST LOSSES, said out loud rather than smoothed:
+     · A SEND IS 0..1 IN LIVE and the engine's bus gain is not bounded — a
+       drowned chair measures 2.26. It is clamped, so the wettest chairs arrive
+       at Live's maximum rather than at their own number.
+     · THE RIDE IS DROPPED. These are per-bar in the engine and one value on a
+       Live track; box 0 is the answer (plan.js stripOf says why). Automation
+       envelopes are P3.
+   ABSENT IS UNITY: deskUnits omits a key it did not move, so a missing
+   `fader` writes 1 and a missing `pan` writes 0 — the donor's own values. */
+const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+const SEND_FLOOR = 0.0003162277571;      // Live's -inf, the donor's own spelling
+export function setStrip(track, strip) {
+  if (!strip) return track;
+  const mix = elementAfter(track, "Mixer");
+  if (!mix) return track;
+  let body = mix.text;
+  // one <Manual> per named control, the FIRST inside that control's element
+  const put = (tag, value) => {
+    const i = body.indexOf("<" + tag + ">");
+    if (i < 0) return;
+    const j = body.indexOf("<Manual Value=", i);
+    if (j < 0) return;
+    const k = body.indexOf("/>", j) + 2;
+    body = body.slice(0, j) + '<Manual Value="' + value + '" />' + body.slice(k);
+  };
+  const send = (n, value) => {
+    const i = body.indexOf('<TrackSendHolder Id="' + n + '">');
+    if (i < 0) return;
+    const j = body.indexOf("<Manual Value=", i);
+    if (j < 0) return;
+    const k = body.indexOf("/>", j) + 2;
+    body = body.slice(0, j) + '<Manual Value="' + value + '" />' + body.slice(k);
+  };
+  if (strip.fader != null) put("Volume", clamp(strip.fader, SEND_FLOOR, 1.99526238));
+  if (strip.pan != null) put("Pan", clamp(strip.pan, -1, 1));
+  // A-Reverb is send 0 and B-Delay is send 1 — the donor's own order, and the
+  // two returns this splice has always shipped.
+  if (strip.rev != null) send(0, clamp(strip.rev, SEND_FLOOR, 1));
+  if (strip.del != null) send(1, clamp(strip.del, SEND_FLOOR, 1));
+  return track.slice(0, mix.start) + body + track.slice(mix.end);
+}
+
+/* AND THE COLUMNS NOBODY PLAYS COME OUT. Paul: "Then kill the columns/
+   instruments you don't actually use." The donor's six MIDI tracks are the
+   TEMPLATES — every exported track is a clone of one of them — and once the
+   clones exist the originals are six empty columns in the way, one of which
+   (1-MIDI) also carries the Max for Live device whose absolute macOS path gate
+   3 has warned about on every single run. Deleting them retires that warning
+   as a side effect, which is the good kind of side effect: the hazard leaves
+   because the thing carrying it was not being used.
+   THE RETURNS AND THE MAIN STAY, obviously — the sends above land on them. */
+export function dropDonorTracks(xml) {
+  const te = elementAfter(xml, "Tracks");
+  if (!te) return xml;
+  let body = te.text, out = "", cursor = 0;
+  // NO CLOSING ANGLE HERE, and it cost a round: a donor track opens
+  // `<MidiTrack Id="12" SelectedToolPanel="7" ...>`, carrying view attributes,
+  // so a pattern that demanded `Id="12">` matched nothing and this function
+  // silently returned the file unchanged. Silently is the operative word — it
+  // threw nothing and every gate passed, which is what gate C below is for.
+  const open = /<MidiTrack Id="(\d+)"/g;
+  let m;
+  while ((m = open.exec(body))) {
+    const [a, b] = balancedAt(body, m.index);
+    const id = +m[1];
+    // the clones are numbered from 900 (see trackId below); the donor's are 12..18
+    if (id < 900) { out += body.slice(cursor, a); cursor = b; }
+    open.lastIndex = b;
+  }
+  out += body.slice(cursor);
+  return xml.slice(0, te.start) + out + xml.slice(te.end);
+}
 export const DRUM_TRACK_NAME = "DRUMS — load a Drum Rack";
 
 // THE DRUM LANE LETTER -> GM NOTE.
@@ -351,6 +561,8 @@ export function paceView(boxes) {
 
 export function alsFromScore(donorXml, score, opts = {}) {
   const all = !!opts.all;
+  // the drum-rack track XML, when the caller has one to give (export/drumrack.js)
+  const rack = opts.drumRack || null;
   const donor = parseDonor(donorXml);
   const tpl = clipTemplate(donor);
   // the record's declared signature, if it declared one (scoreOf stamps
@@ -396,11 +608,24 @@ export function alsFromScore(donorXml, score, opts = {}) {
   let clipId = 1;
   const views = paceView(boxes);
 
+  /* THE COLUMN IS NAMED FOR WHAT IT DOES. Paul: "the column should be named
+     'drums'". It used to read "v0 crunch_guitar" — the seat number and the
+     patch, which is the exporter's own bookkeeping showing through. The chair
+     IS the function, and two chairs of one role are told apart by a count
+     ("lead", "lead 2"), the same way the boxes are. The instrument has not
+     gone anywhere: it now shows as the DEVICE on the track, which is the
+     thing a person opens the set to look at. */
+  const colName = columnNames(boxes, laneNames);
+
   const trackXml = laneNames.map((laneName) => {
     const info = laneInfoOf(boxes, laneName);
     const isDrums = laneName === "drums";
-    const donorName = DONOR_TRACK[isDrums ? "drums" : info.chair] || DONOR_TRACK[""];
-    let t = renumber(trackTemplate(donor, donorName), next);
+    const donorName = donorFor(isDrums ? "drums" : info.chair, info.instr);
+    // the drums get the real rack when one was handed in; otherwise the old
+    // placeholder, which is a Drift under a track name asking to be replaced
+    let t = renumber(isDrums && rack
+      ? rackTemplate(rack, donor.nReturns || 2)
+      : trackTemplate(donor, donorName), next);
     /* THE ROWS GROW ON THE TEMPLATE, NOT ONLY ON THE ASSEMBLED FILE
        (2026-08-31, fourth pass). growSlots ran at the end, on `out` — but
        putSessionClip writes into THIS `t`, which was cloned from the donor
@@ -411,11 +636,13 @@ export function alsFromScore(donorXml, score, opts = {}) {
        covers any donor track that survives into the file. */
     t = growSlots(t, boxes.length);
     t = t.replace(/^<MidiTrack Id="\d+"/, '<MidiTrack Id="' + (trackId++) + '"');
-    // `v0 electric_piano` when the engine was warmed and there is a cast to
-    // ask; `v0 stab` when there is not. Either way the seat number leads, so
-    // the track list reads in the order the score does.
-    const label = isDrums ? DRUM_TRACK_NAME
-                : laneName + " " + (info.instr || info.chair || "");
+    /* THE PLACEHOLDER NAME RETIRES WHEN THE RACK ARRIVES. "DRUMS — load a
+       Drum Rack" was an exporter asking a person to finish its job, and it was
+       honest while the drums lane cloned a Drift. With the real rack spliced
+       there is nothing to load, so the column is named like every other one:
+       for what it does. The old name stays reachable for a caller with no rack
+       to give, because the request it makes is still true in that case. */
+    const label = isDrums && !rack ? DRUM_TRACK_NAME : colName[laneName];
     t = t.replace(/<EffectiveName Value="[^"]*" \/>/, '<EffectiveName Value="' + esc(label) + '" />');
     t = t.replace(/<UserName Value="[^"]*" \/>/, '<UserName Value="' + esc(label) + '" />');
 
@@ -424,7 +651,7 @@ export function alsFromScore(donorXml, score, opts = {}) {
       const box = v.box;
       const lane = box.lanes.find((l) => l.name === laneName);
       if (!lane || !lane.notes.length) return;
-      const clipName = box.name + " · " + laneName;
+      const clipName = clipNameOf(box, colName[laneName]);
       const laneNotes = v.notes(lane.notes);
       const session = midiClip(tpl, { name: clipName, beats: v.beats, time: 0,
                                       notes: laneNotes, id: clipId++, sig });
@@ -435,6 +662,8 @@ export function alsFromScore(donorXml, score, opts = {}) {
       notes.push(clipName + ": " + lane.notes.length + " notes over " + v.beats + " beats");
     });
     t = putArrangementClips(t, arrangement);
+    // ...and the desk, last, so nothing above can overwrite it
+    t = setStrip(t, (boxes[0].lanes.find((l) => l.name === laneName) || {}).strip);
     return t;
   });
 
@@ -486,6 +715,7 @@ export function alsFromScore(donorXml, score, opts = {}) {
     ? out.lastIndexOf("\n", firstRet) + 1
     : tracksEl.end - "</Tracks>".length;
   out = out.slice(0, at) + trackXml.join("") + out.slice(at);
+  out = dropDonorTracks(out);
   out = out.replace(/<NextPointeeId Value="\d+" \/>/, '<NextPointeeId Value="' + nextId + '" />');
   return { xml: out, tracks: laneNames.length, clips: clipId - 1, notes };
 }

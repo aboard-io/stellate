@@ -62,6 +62,21 @@ export async function donorXml() {
   return new TextDecoder().decode(xml);
 }
 
+/** The drum-rack track, same shape, out of the second donor. */
+export async function drumRackXml() {
+  if (!canGzip()) throw new Error(NO_GZIP);
+  const { RACK_GZIP_B64, RACK_GZIP_BYTES, RACK_SOURCE, RACK_TRACK } =
+    await import("./drumrack.js");
+  const bin = atob(RACK_GZIP_B64);
+  const gz = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) gz[i] = bin.charCodeAt(i);
+  if (gz.length !== RACK_GZIP_BYTES)
+    throw new Error("the embedded drum rack is " + gz.length + " bytes, not the " +
+      RACK_GZIP_BYTES + " of " + RACK_TRACK + " in " + RACK_SOURCE +
+      " — run node nukernel/export/drumrack-extract.js");
+  return new TextDecoder().decode(await through(gz, new DecompressionStream("gzip")));
+}
+
 /**
  * THE RECORD ON SCREEN, FOLDED FOR THE EXPORTER.
  *
@@ -109,6 +124,7 @@ export async function pageScore({ grid = true, engine = true, say = () => {} } =
     if (grid && wasRubato) state.setRubato(false);
     plan.compile();
     return scoreOf({ timeline: plan.timeline(), cast: engine ? plan.cast() : [],
+                     drums: engine ? plan.drumStrip() : null,
                      bpm: state.bpm, grid, engine, title: "the record" });
   } finally {
     if (grid && wasRubato) {
@@ -150,7 +166,7 @@ export async function pressAls(say = () => {}, opts = {}) {
   const score = await pageScore({ grid, engine, say });
   say("splicing the donor…");
   const donor = await donorXml();
-  const res = alsFromScore(donor, score, { all });
+  const res = alsFromScore(donor, score, { all, drumRack: await drumRackXml() });
   say("gzipping…");
   const bytes = await through(new TextEncoder().encode(res.xml), new CompressionStream("gzip"));
   // WHAT WENT IN, COUNTED THE WAY als-gate.js COUNTS IT: every note is written

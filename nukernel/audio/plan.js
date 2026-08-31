@@ -389,7 +389,41 @@ export const homes = () => HOMES.slice();
 // the first pitched event it finds is a gate that will lie the moment a
 // second chair sits down, so the cast says who it is.
 export const cast = () => SEATS.map((s, i) => ({ v: "v" + i, chair: s.chair,
-  instr: s.instr, synth: !!s.synth, tone: s.tone || null }));
+  instr: s.instr, synth: !!s.synth, tone: s.tone || null,
+  strip: stripOf("v" + i) }));
+/* THE CHANNEL STRIP, SO AN EXPORT CAN QUOTE THE DESK INSTEAD OF GUESSING IT.
+   Paul, of the exported set: "you're choosing instruments but just giving them
+   default settings ... Could you sculpt the sound more to be appropriate and
+   then use the sends?" Every exported track sat at unity with both sends at
+   -inf, because the exporter had no channel to read — and the engine has had
+   one all along: deskUnits sums `fader`, `rev`, `del` and `pan` per unit and
+   the renderer plays exactly that. This hands the same four numbers out.
+
+   THE FIRST BOX IS THE STRIP. These four are per BAR in the engine, because a
+   send can ride inside a section; a Live track's mixer is one value. Box 0 is
+   the honest single answer and the ride stays in the engine — the alternative
+   is automation envelopes, which is P3 and named as such in the als.js header.
+
+   ABSENT IS UNITY, deliberately: deskUnits omits `fader` where the chair asks
+   for no move, so a `{}` strip means "this channel is untouched" and every
+   reader may treat a missing key as the default rather than as zero. */
+export function stripOf(v) {
+  if (!BARS.length) return null;
+  const p = barPlan(0);
+  const u = p && p.units && p.units[v];
+  if (!u) return null;
+  const out = {};
+  for (const k of ["fader", "rev", "del", "pan"]) if (u[k] != null) out[k] = u[k];
+  return Object.keys(out).length ? out : null;
+}
+/* THE KIT IS ONE TRACK IN LIVE AND FOUR CHANNELS HERE. kick/snare/hat/tom each
+   carry their own strip; an export that folds them into one Drum Rack has to
+   pick, and the kick is the pick — it is the lane that is always present (a
+   kit without a kick is not a kit), so this never returns the strip of a lane
+   that happened to exist in one genre and not the next. The per-lane pans the
+   other three carry are LOST in that fold, and that loss is the drum rack's to
+   fix, pad by pad, not the track mixer's. */
+export const drumStrip = () => stripOf("kick") || stripOf("snare");
 export const seats = () => SEATS.slice();
 export const barBeatsAt = (n) => (BARS.length ? BARS[((n % BARS.length) + BARS.length) % BARS.length].beats : 4);
 // THE WARM SET, NAMED BY THE CALLER (the parent's opts.warmSrcs seam): every

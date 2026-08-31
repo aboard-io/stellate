@@ -57,6 +57,37 @@ const instrOf = (key, cast) => {
   const seat = cast.find((c) => c.v === key);
   return (seat && seat.instr) || "";
 };
+// ...and the channel the desk gave that seat — `{fader, rev, del, pan}`, any
+// key absent meaning "not moved" (plan.js stripOf). A writer that has a mixer
+// (export/als.js) sets it from here rather than inventing a balance; a writer
+// that has none ignores it, and an unwarmed export has no cast so it is null.
+const stripOf = (key, cast) => {
+  const seat = cast.find((c) => c.v === key);
+  return (seat && seat.strip) || null;
+};
+
+/* THE BOX IS NAMED BY WHAT IT DOES, NOT BY WHERE THE GENRE IS FROM.
+   Paul, of the exported set: "You named all the track rows and clips the same
+   thing. Name them functionally, i.e the row should be named 'Intro'". Every
+   scene said "3 London 1969" — the genre's label and the box number, which is
+   the same words eleven times over and tells a person nothing about the
+   arrangement they are looking at.
+
+   THE WORD IS ALREADY OWNED, and this fold does not get a second opinion.
+   ui/derive.js `roleOf` (line 720) resolves role-vs-cue against compose's own
+   PLANCUE rule — a prechorus is STORED as a verse with cue "prechorus", so
+   reading `role` alone mislabels it — and songBars now stamps that resolved
+   word on every bar. The first version of this block reimplemented that rule
+   here from a fresh table, which is the drift this repo has a law against;
+   it was deleted rather than kept in parallel. The bar's `role` is the word.
+
+   THE NUMBER IS THE ROLE'S OWN COUNT, so a song reads Verse 1 / Chorus 1 /
+   Verse 2 / Chorus 2, and a role that happens only once carries no number at
+   all ("Intro"). Uniqueness still holds — which matters, because it is what
+   gate 1 counts clips by, and the box number used to be here for exactly that
+   reason (see labelOf above). Two boxes can only collide now if they share a
+   role, and then their counts differ. */
+const titleCase = (w) => w.charAt(0).toUpperCase() + w.slice(1);
 
 /**
  * Bring a lane inside MIDI 0..127, A WHOLE LINE AT A TIME.
@@ -99,7 +130,8 @@ function fitMidi(lane) {
  * @param {boolean} o.engine   whether the engine was warmed (cast + register home)
  * @param {string} o.title     what to call the song in the CLI's own printout
  */
-export function scoreOf({ timeline, cast = [], bpm, grid = true, engine = true, title = "nukernel" }) {
+export function scoreOf({ timeline, cast = [], bpm, grid = true, engine = true,
+                          drums = null, title = "nukernel" }) {
   if (!timeline || !timeline.length) throw new Error("compile() produced no bars");
   const boxes = [];
   for (const bar of timeline) {
@@ -112,18 +144,36 @@ export function scoreOf({ timeline, cast = [], bpm, grid = true, engine = true, 
       // event). The box keeps the word so a writer that can say it
       // (export/smf.js, expression CCs) may; a wordless section stamps no key
       // and every existing Score is the same value.
-      boxes.push({ si: bar.si, name: (bar.si + 1) + " " + labelOf(bar), beat0: bar.beat0, beats: 0, bars: [],
+      boxes.push({ si: bar.si, name: (bar.si + 1) + " " + labelOf(bar),
+                   label: labelOf(bar), role: bar.role || null,
+                   beat0: bar.beat0, beats: 0, bars: [],
                    ...(bar.lvl ? { lvl: bar.lvl } : {}) });
     const box = boxes[boxes.length - 1];
     box.beats += bar.barSteps / 4;
     box.bars.push(bar);
+  }
+  /* ...AND THEN THE ROLES ARE COUNTED, which cannot happen in the loop above
+     because "Verse 1" is only knowable once it is known whether there is a
+     Verse 2. A box whose section carried no role keeps the old number-and-
+     label name, so an unwarmed or roleless record exports exactly as before. */
+  {
+    const total = {}, seen = {};
+    for (const b of boxes) if (b.role) total[b.role] = (total[b.role] || 0) + 1;
+    for (const b of boxes) {
+      if (!b.role) continue;
+      b.nth = seen[b.role] = (seen[b.role] || 0) + 1;
+      b.name = titleCase(b.role) + (total[b.role] > 1 ? " " + b.nth : "");
+    }
   }
   let skipped = 0, folded = 0;
   for (const box of boxes) {
     const lanes = new Map();
     const put = (key, chair, note) => {
       let lane = lanes.get(key);
-      if (!lane) lanes.set(key, lane = { name: key, chair, instr: instrOf(key, cast), notes: [] });
+      if (!lane) lanes.set(key, lane = { name: key, chair, instr: instrOf(key, cast),
+                                        strip: key === "drums" ? (drums || null)
+                                                               : stripOf(key, cast),
+                                        notes: [] });
       lane.notes.push(note);
     };
     for (const bar of box.bars) {

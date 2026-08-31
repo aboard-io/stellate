@@ -175,6 +175,7 @@ export async function loadScore({ songPath = null, genre = null, scorePath = nul
 
   plan.compile();
   const score = scoreOf({ timeline: plan.timeline(), cast: engine ? plan.cast() : [],
+                          drums: engine ? plan.drumStrip() : null,
                           bpm: state.bpm, grid, engine,
                           title: (genre || songPath || "nukernel") });
   // A catalog anchor says its meter as a WORD ("three"); export/score.js may

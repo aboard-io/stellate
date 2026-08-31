@@ -16,6 +16,20 @@
 // Velocity) per clip, plus the two totals. A dropped bar, a doubled clip, a
 // swing offset rounded away — each of those changes the multiset.
 //
+// 2026-08-31 — AND NOW IT USES BOTH, BECAUSE THE EXPORT DOES. The note below
+// set the condition exactly right and then the condition arrived: "P2 is the
+// moment to make the corpus `Generic ∪ Ableton2`, and not before." The moment
+// is Paul asking for the drum rack he supplied — "I gave you lots of
+// instruments including a drum rack and you're using only operator and drift" —
+// and the exporter now splices `1-DS Drum Rack` out of Ableton2 for the drums
+// lane. Its shapes (DrumGroupDevice, DrumBranch, InstrumentGroupDevice,
+// MidiToAudioDeviceChain) and its ten `/Applications/Ableton Live 12 Suite.app`
+// paths are LIVE'S OWN, out of a committed donor, so the corpus is the union
+// and the licence the note worried about is granted DELIBERATELY rather than
+// quietly. What is NOT granted: the corpus is still two files Live wrote, so an
+// element in neither is still a guess and still fails — which is the whole
+// point, and the <Locator> refusal below still proves it every run.
+//
 // 2026-08-28 — THERE ARE NOW TWO DONORS, AND THIS GATE STILL USES ONE.
 // `donor/Ableton2.als` (Live 12.4.5) joined `donor/Generic.als` (Live 12.4.3);
 // the schema stamp is identical in both (MinorVersion 12.0_12402,
@@ -33,7 +47,8 @@ import { gunzipSync } from "node:zlib";
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
-import { balancedAt, elementAfter, pointeeIds, paceView } from "../../nukernel/export/als.js";
+import { balancedAt, elementAfter, pointeeIds, paceView,
+         columnNames, clipNameOf } from "../../nukernel/export/als.js";
 import { loadScore } from "./score-node.mjs";
 
 const TOKEN = /<(\/?)([A-Za-z0-9._]+)((?:"[^"]*"|[^>"])*?)(\/?)>/g;
@@ -42,6 +57,18 @@ const attrsOf = (s) => (s.match(/([A-Za-z0-9._]+)\s*=\s*"/g) || [])
 const val = (xml, tag) => { const m = new RegExp("<" + tag + ' Value="([^"]*)"').exec(xml); return m && m[1]; };
 
 /** Every (tag, sorted attribute names) shape in a document. */
+// the one track of the second donor the exporter actually splices — so this
+// gate's sample ceiling is raised by what we TAKE, not by everything Ableton2
+// happens to contain (its Cabasa rack has 60 sampler zones we never touch)
+function rackTrackOf(xml) {
+  for (const m of xml.matchAll(/<MidiTrack Id="\d+"/g)) {
+    const end = xml.indexOf("</MidiTrack>", m.index);
+    const seg = xml.slice(m.index, end);
+    if (seg.includes('<EffectiveName Value="1-DS Drum Rack"')) return seg;
+  }
+  return "";
+}
+
 function shapes(xml) {
   const out = new Set();
   TOKEN.lastIndex = 0;
@@ -125,6 +152,8 @@ const diffOf = (want, got) => {
 export async function runGates(file, { genre = null, song = null, score: scorePath = null, all = false, grid = true, engine = true } = {}) {
   const xml = gunzipSync(readFileSync(file)).toString("utf8");
   const donorXml = gunzipSync(readFileSync(new URL("./donor/Generic.als", import.meta.url))).toString("utf8");
+  // the second donor, which the drums lane is now spliced out of
+  const rackXml = gunzipSync(readFileSync(new URL("./donor/Ableton2.als", import.meta.url))).toString("utf8");
   const fail = (g, msg) => { console.error("  FAIL  " + g + " — " + msg); return false; };
   const pass = (g, msg) => { console.log("  pass  " + g + " — " + msg); return true; };
   let ok = true;
@@ -177,9 +206,16 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
     // own bar seconds by test/smf-tempo.test.js, not here — a gate that
     // expected what the splice writes could not catch a wrong k on its own.)
     const views = paceView(boxes);
+    // the same lane order the exporter walks, so the columns get the same names
+    const laneNames = [];
+    for (const b of boxes) for (const l of (all ? b.lanes : b.lanes.slice(0, 1)))
+      if (!laneNames.includes(l.name)) laneNames.push(l.name);
+    const cols = columnNames(boxes, laneNames);
     for (const v of views) { const box = v.box;
     for (const lane of (all ? box.lanes : box.lanes.slice(0, 1))) {
-      const name = box.name + " · " + lane.name;
+      // the exporter owns the name; this gate asks it rather than rebuilding
+      // it (it rebuilt it once, and went stale the day the naming changed)
+      const name = clipNameOf(box, cols[lane.name]);
       want += 2; wantN += lane.notes.length * 2;
       const got = found.get(name) || [];
       if (got.length !== 2) { err = err || ('clip "' + name + '" appears ' + got.length + " times, want 2 (session + arrangement)"); continue; }
@@ -211,7 +247,7 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
   // table of "tags the exporter emits" to drift out of date. That is the
   // standing law of this repo applied to a gate: the conversion is done by
   // EXTRACTION, never by hand.
-  const donorShapes = shapes(donorXml);
+  const donorShapes = new Set([...shapes(donorXml), ...shapes(rackXml)]);
   const novel = [...shapes(xml)].filter((s) => !donorShapes.has(s));
   if (novel.length) ok = fail("gate 2", novel.length + " element shape(s) the donor never wrote: " +
     novel.slice(0, 6).join("  ") + " — Live 12.4.3 wrote every other byte of this file; " +
@@ -262,9 +298,14 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
   /* ---- Gate 3 ---------------------------------------------------------- */
   const count = (x, re) => (x.match(re) || []).length;
   const sampleRe = /<(SampleRef|UserSample|MultiSamplePart|OriginalSimpler)[\s/>]/g;
-  const before = count(donorXml, sampleRe), after = count(xml, sampleRe);
+  // the DS rack carries no samples of its own (its pads are Drum Synth Max
+  // devices, not samplers), so this ceiling is still Generic's — measured, not
+  // assumed: a rack that DID bring zones would raise it here and say so.
+  const before = count(donorXml, sampleRe) + count(rackTrackOf(rackXml), sampleRe);
+  const after = count(xml, sampleRe);
   const paths = [...xml.matchAll(/<Path Value="([^"]+)"/g)].map((m) => m[1]);
-  const donorPaths = new Set([...donorXml.matchAll(/<Path Value="([^"]+)"/g)].map((m) => m[1]));
+  const donorPaths = new Set([...donorXml.matchAll(/<Path Value="([^"]+)"/g)].map((m) => m[1])
+    .concat([...rackXml.matchAll(/<Path Value="([^"]+)"/g)].map((m) => m[1])));
   const newAbs = paths.filter((p) => !donorPaths.has(p) && /^(\/|[A-Za-z]:\\)/.test(p));
   if (after > before) ok = fail("gate 3", "the export introduced " + (after - before) +
     " sample reference(s); P0-P1 ship no samples");

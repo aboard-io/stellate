@@ -13,9 +13,26 @@ engineer Ableton' into 'string-surgery on a file Ableton itself wrote.'"* The
 exporter emits nothing these files do not already contain, and
 `tools/ableton/als-gate.js` Gate 2 enforces that mechanically.
 
-**`Generic.als` is the splice base.** `Ableton2.als` is a **grammar reference**:
-nothing splices from it yet, and Gate 2's conformance corpus is still Generic
-alone. It is here so that P2 has ground truth for samples instead of a guess.
+**`Generic.als` is the splice base.** ~~`Ableton2.als` is a **grammar
+reference**: nothing splices from it yet, and Gate 2's conformance corpus is
+still Generic alone.~~ **REVERSED 2026-08-31** — one track of it splices now.
+Paul, of a working export: *"I gave you lots of instruments including a drum
+rack and you're using only operator and drift."* The drums lane is spliced from
+Ableton2's **`1-DS Drum Rack`**, extracted to `nukernel/export/drumrack.js`
+(63,643 gzip bytes — the one subtree, not the 258 KB donor, because the module
+graph carries it into the page), and Gate 2's corpus is now `Generic ∪
+Ableton2`. The original sentence is kept struck through because this repo does
+not delete a claim it reverses. It is still here for the samples too: P2's
+ground truth is unchanged.
+
+**The rack needed no note remapping, and that was measured rather than hoped.**
+Its pads read, through `pitch = 128 - ReceivingNote`: 36 Kick, 37 FM, 38 Snare,
+39 Clap, 40 Snare, 41/43/45 Tom, 42 HHC, 44 HHP, 46 HHO, 47/48 FM, 49 Cymbal,
+50 Clang, 51 Cymbal. That is **General MIDI order**, which is what a factory
+Live Drum Rack is, and our drum clips already write GM notes. **It is
+Suite-only**: every pad is an `MxDeviceInstrument` under
+`/Applications/Ableton Live 12 Suite.app/…`, ten absolute paths that travel
+with every export and resolve on a Mac with Live Suite and nowhere else.
 
 *Every number in this file was read out of the file, not remembered.*
 
