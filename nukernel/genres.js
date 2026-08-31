@@ -17206,7 +17206,7 @@
        drop-and-return applied to pop arrangement. The grid can seat the
        chairs and it cannot make the desk the composer. */
     younggalaxy: {
-      label: "Montreal 2011", voices: 6, bars: 8, near: "dreampop",
+      label: "Montreal 2011", voices: 5, bars: 8, near: "dreampop",
       plan: "song", bpm: 104,
       // LINEAGE: dream pop is the body, synthpop the machine it was rebuilt
       // on, and the residue is the producer — a dub engineer's ear on a pop
@@ -17282,8 +17282,21 @@
          the box's near-sine voice, and it sits at register 2, above both the
          pads and the 303. The 303 squelches underneath and the sine shimmers
          over it; that is the interaction he is describing. */
-      instr: ["solo_vox", "warm_pad", "bass_lead", "ahh_choir", "clean_guitar",
-              "echo_drops"],
+      /* REBUILT FROM THE MEASUREMENTS, 2026-08-31. Paul: "Still no arps ...
+         just take what we learned and start young galaxy again from scratch.
+         You're struggling here." He was right, and ONE measurement of the whole
+         cast said why in two lines:
+
+           v1 bass_lead -> tb303    16.0 notes/bar   PLAYING, in every bar
+           v3 echo_drops -> bell    10.0 notes/bar   and SILENT: solo -240 dB
+
+         The arpeggio was never missing. It was (a) in the BASS REGISTER —
+         `bass_lead` is a bass id and KINDS.seq asks `reg: "low"` on top of it,
+         so sixteen notes a bar landed below the bass guitar and read as a
+         burbling bassline, which is precisely what a listener calls "no arps";
+         and (b) doubled by a chair whose module emits nothing at all. `bell`
+         is dropped on that evidence, not on taste. */
+      instr: ["solo_vox", "warm_pad", "bass_lead", "ahh_choir", "clean_guitar"],
       drumkit: "tr909",
       /* THE CHORAL DOUBLING, 2026-08-31. Paul: "the lyrics are spare and
          rhythmic with a choral doubling for the bridge — 'Whennn weeee | were
@@ -17312,7 +17325,7 @@
          the figure sat out the first two bars of every single box. A bed that
          waits two bars each time is not a bed. Voice 2 enters at 0 with the
          voice; the choir (3) already did. */
-      entry: v => (v === 2 || v === 3 || v === 5 ? 0 : v),
+      entry: v => (v === 2 || v === 3 ? 0 : v),
       /* THE ARPEGGIO CHAIR SITS AN OCTAVE UP (voice 2), 2026-08-31. Paul:
          "The mix is muddy." Sixteen notes a bar in the same octave as the bass
          and the pad IS the mud, and the New Summer tab he sent puts the synth
@@ -17320,10 +17333,24 @@
          above the band. This is the chair's register, which is the one that
          reaches the sound (a cell's own `reg` cannot, at a one-bar ceiling —
          precompose says so where I tried it). */
-      reg: v => (v === 0 ? 1 : v === 1 ? -1 : v === 2 ? 1 : v === 3 ? 1
-               : v === 4 ? 0 : 2),          // the second arp sits above the pads
+      /* THE ARPEGGIO CHAIR IS LIFTED THREE, and this is the whole fix. A 303 is
+         a BASS machine and KINDS.seq asks `reg: "low"` on top of it, so the
+         figure sat an octave and more BELOW where an arpeggio lives. +3 puts it
+         over the bass and the pad — where Paul's own tab has the synth figure
+         (ninth and twelfth frets) and where the FFT of the track he sent puts
+         its continuous sixteenth layer: 6.3 onsets/sec in the HIGH band,
+         against a sixteenth at 6.85/sec.
+
+         +1, NOT +3, AND THE FIRST TRY WAS MEASURED AND THROWN AWAY. At +3 the
+         figure came out C6-D8 — above the singer, up where nothing on this
+         record lives. Each step here is an OCTAVE, so the range is the whole
+         instruction: bass C2-F2, pad G2-F3, voice F3-D6, and the arpeggio
+         wants to sit over the first two and with the third. +1 puts it at
+         C4-D6. Measured both times rather than reasoned about, because
+         reasoning about this row is what cost Paul five rounds. */
+      reg: v => (v === 0 ? 1 : v === 1 ? -1 : v === 2 ? 1 : v === 3 ? 1 : 0),
       realize: v => (v === 1 ? "pad" : "line"),
-      part: ["lead", "pad", "riff", "lead", "counter", "riff"],
+      part: ["lead", "pad", "riff", "lead", "counter"],
       /* THE CHANGES ARE PAUL'S AND THE MODE FOLLOWS THEM. A, D and Bm is
          I-IV-ii, which is MAJOR — the row was aeolian, where those degrees are
          a different three chords. `roots` stays as the fallback shape for a
@@ -17432,7 +17459,6 @@
          hold and one that moves is a wash, three that move is a crowd. */
       word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], [keep(0, 8)]][s % 4]
                     : v === 4 ? [[], [rotate(2)], [drop(3)], [transpose(2)]][s % 4]
-                    : v === 5 ? []
                     : v === 1 ? [drop(8)]
                     // the choir sings the voice's own shape, thinned: it holds
                     // the long notes and leaves the busy ones to the lead,
