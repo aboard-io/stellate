@@ -79,6 +79,14 @@
   // same thing about it. Real tunes move by SECONDS most of the time and
   // leap on purpose. These are scale DEGREES, so ±1 is a step, and the
   // shapes are written in steps.
+  /* THE ARPEGGIO FAMILY, NAMED ONCE. Every one of these climbs a chord rather
+     than walking the scale, which is what makes the sequencer part a sequencer
+     — so where the rest of the box pins a part's contour to a single value,
+     this set is the BAND that part may draw from, and an anchor may say which
+     with `seqArp`. test/hook.test.js reads THIS array rather than keeping a
+     list of its own, so the fence and the vocabulary cannot drift apart. */
+  const ARP_CONTOURS = ["arp", "arpup", "arpdown", "arpoct", "arpwide", "arpturn"];
+
   const CONTOURS = {
     rise:  { w: "rises", f: (k) => k },
     arch:  { w: "arches over", f: (k, n) => { const h = Math.floor((n - 1) / 2);
@@ -93,6 +101,62 @@
     zig:   { w: "turns back on itself", f: (k) => [0, 1, 0, 2, 1, 3, 2][k % 7] },
     insist:{ w: "says one note, then moves", f: (k) => [0, 0, 0, 1, 2, 1][k % 6] },
     hold:  { w: "sits on one note", f: () => 0 },
+    /* THE BROKEN CHORD, ON PURPOSE — added 2026-08-31. Paul, on the first
+       sixteenth line to reach the staff: "There are eighth-note runs with
+       Young Galaxy but no 16th note arps." The durations were right by then
+       (M:4/4, L:1/16, sixteen notes to the bar) and the SHAPE was not: a bar
+       read `GAGB AcBG AGBA cBGG`, which is stepwise wandering — a run, which
+       is his word for it and the correct one.
+
+       EVERY OTHER CONTOUR IN THIS TABLE MOVES BY SECONDS, deliberately: the
+       note above these says so, and says a first cut that leapt was rejected
+       because "that is not a melody, it is a broken chord". That judgement
+       stands and is not being reversed — it is about MELODIES. A sequencer
+       chair is not a melody, and a broken chord is precisely what it should
+       be. So this contour is the one place in the table where leaping is the
+       point, and it is available only to a part that asks for it.
+
+       THE SHAPE IS root, third, fifth, octave, and back down through fifth and
+       third — in scale degrees 0, 2, 4, 7, 4, 2. SIX steps against a SIXTEEN
+       step bar, which is the "swirling" Paul asked for twice: the cycle does
+       not line up with the bar, so the figure turns over inside itself and
+       only comes back round every three bars. A four-cycle would sit still. */
+    arp:   { w: "climbs the chord and comes back", f: (k) => [0, 2, 4, 7, 4, 2][k % 6] },
+    /* ...AND FIVE MORE WAYS TO DO IT (2026-08-31). Paul: "arps should do
+       different arp things and have little exceptions. Not just up and down.
+       All the arp options and custom arp twists -- you should do those."
+
+       These are the modes a hardware arpeggiator actually offers — up, down,
+       octave-pedal, wide, and a long turn — and each carries ONE EXCEPTION,
+       which is the other half of the ask. The exception is a function of `k`
+       alone, so it stays pure and the record stays deterministic: it fires on
+       a fixed step of a long cycle, which is why it reads as a player's habit
+       rather than as noise. A twist every bar would be a pattern; one every
+       two or three bars is a twist.
+
+       WHY EACH CYCLE LENGTH IS ODD AGAINST SIXTEEN: 4 divides 16 and would sit
+       still, so the shapes that use a 4-cycle get their motion from the
+       exception instead, and the longer ones (6, 8) turn over inside the bar
+       on their own. */
+    arpup:   { w: "climbs the chord",
+               // straight up, and every fourth bar it overshoots to the ninth
+               f: (k) => (k % 64 === 63 ? 9 : [0, 2, 4, 7][k % 4]) },
+    arpdown: { w: "falls down the chord",
+               // ...and once every two bars it catches the note under the root
+               f: (k) => (k % 32 === 31 ? -1 : [7, 4, 2, 0][k % 4]) },
+    arpoct:  { w: "pedals the octave between chord tones",
+               // the I Feel Love shape: every other note is the octave. The
+               // exception drops that pedal an octave for one step, which is
+               // the bass-note flick a sequencer player leans on.
+               f: (k) => (k % 48 === 47 ? 0 : [0, 7, 2, 7, 4, 7][k % 6]) },
+    arpwide: { w: "leaps around the chord",
+               // deliberately not adjacent — the 303's own habit of jumping
+               // the fifth and the ninth; every third bar it lands on the third
+               f: (k) => (k % 48 === 47 ? 2 : [0, 4, 2, 7, 4, 9][k % 6]) },
+    arpturn: { w: "turns through the chord to the ninth",
+               // the long one: eight steps, so it never lines up with the bar
+               // and takes three bars to come home. Berlin-school motion.
+               f: (k) => (k % 64 === 63 ? 11 : [0, 2, 4, 7, 9, 7, 4, 2][k % 8]) },
   };
 
   /* ---------- 3. WHERE IT LANDS ------------------------------------------ */
@@ -1245,7 +1309,7 @@
     { w: "an octave down", id: (i) => "odn:" + i },
   ];
   return { N, NOF, CELLS, CELLS3, CELLS6, extraCells, cellOf,
-           CONTOURS, LANDINGS, LENGTHS, REG, SENTENCES, ROLES, TRANSFORMS,
+           CONTOURS, ARP_CONTOURS, LANDINGS, LENGTHS, REG, SENTENCES, ROLES, TRANSFORMS,
            SOLO, SOLORATE, SOLOORDER, SOLOPERIOD, soloWord,
            regOf, gridOf, liftOf, octsOf, wroteOf, handOf, stepWord,
            blank, V, catalog, say, says, BARMARKS, BARWORD, MAXB,

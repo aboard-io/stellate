@@ -251,7 +251,22 @@ ok("idiom respect: every stated axis holds in every slot at every reading", () =
     // bands either side of it since 2026-08-27, an anchor's word as wide as
     // its own. What still PINS a slot is its GESTURE: a `contour` stated by
     // the kind is one value, always, which is what keeps a pad a pad.
+    /* ...AND THE SEQUENCER'S GESTURE IS A BAND, NOT A VALUE (2026-08-31).
+       Paul: "arps should do different arp things and have little exceptions.
+       Not just up and down." So `seq` may draw any of the arpeggio contours
+       and an anchor says which with `seqArp` — moroder pedals the octave
+       because that is I Feel Love, acid leaps because that is a 303,
+       berlinschool turns because those cycles are long.
+
+       THIS IS THE SAME SHAPE THE `cell` CASE ABOVE ALREADY HAS, and it is not
+       a hole: the pin exists so that "a pad stays a pad", and every member of
+       this band climbs a CHORD rather than walking the scale, so a sequencer
+       stays a sequencer under all six. What would break the pin is `seq`
+       drawing `fall` or `hover`, and this still fails that. The list is
+       ideas-kit's own export, not a copy — the fence cannot drift from the
+       vocabulary it fences. */
     const pool = (f, all) => f === "cell" ? cellPool(g, k)
+      : (k === "seq" && f === "contour") ? Id.ARP_CONTOURS
       : kind[f] != null ? [kind[f]]
       : own[f] == null ? all
       : f === "contour" ? [own[f]]

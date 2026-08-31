@@ -639,6 +639,8 @@
     // the one with no fugal equivalent (cyclic, not reflective). Modal: the 303
     // line is simultaneously melody, bass and the entire harmony.
     acid: {
+      // ITS OWN ARPEGGIO (2026-08-31): a 303 leaps — the fifth and the ninth, not the next note up.
+      seqArp: "arpwide",
       // named "Chicago 1987" — Phuture's Acid Tracks: the 303 squelch this
       // anchor's signature-synth law exists for.
       label: "Chicago 1987",
@@ -1927,6 +1929,8 @@
     // major key, a stab part on the phrase's own rhythm, and the open hat on
     // the offbeat doing the work acid's sixteenth hats did.
     house: {
+      // ITS OWN ARPEGGIO (2026-08-31): the Chicago line lifts; it is dance music that goes up.
+      seqArp: "arpup",
       // named "Chicago 1986" not 1985 — the anchor's identity is the PIANO
       // STAB over the four, and that is Move Your Body's year.
       label: "Chicago 1986", near: "acid",
@@ -3837,6 +3841,8 @@
     // DEGREES when the root moves, which is what a keyboard player transposing
     // a pattern does and what keeps a seven-note line in one key.
     electro: {
+      // ITS OWN ARPEGGIO (2026-08-31): the same leaping habit as acid, over an 808 instead of a 909.
+      seqArp: "arpwide",
       // named "New York 1982" — Planet Rock's city and year. Detroit's own
       // half of it (Cybotron's "Clear") is the same year and the same machine;
       // the twelve-inch went out of New York, so the label follows it.
@@ -5040,6 +5046,8 @@
     // the field that separates the two Kraftwerk children.
     roboticpop: {
       label: "Düsseldorf 1978", near: "synthpop",
+      // ITS OWN ARPEGGIO (2026-08-31): Kraftwerk's most quoted lines descend (the Model, Computer Love); a lean.
+      seqArp: "arpdown",
       plan: "song", bpm: 120,
       // LINEAGE: the vocoder-and-sequencer chassis and the deadpan machine
       // delivery are kraftwerk's own; synthpop supplies the actual pop-song
@@ -5259,6 +5267,8 @@
     // sequence stabbing back), the club's version of a call and response.
     ebm: {
       label: "Chicago 1989", near: "techno",
+      // ITS OWN ARPEGGIO (2026-08-31): Front 242's figures push DOWN into the floor; a lean, not a claim about every record.
+      seqArp: "arpdown",
       // floor music with a breakdown where a bridge would be, like bigbeat
       plan: "dance", bpm: 134,
       // LINEAGE: the sequenced, pulsing bass and the four-on-the-floor club
@@ -5770,6 +5780,8 @@
     // is the missing rung — Manchester's 808 State crossed over into it.
     bleeptechno: {
       label: "Manchester 1989", near: "acid",
+      // ITS OWN ARPEGGIO (2026-08-31): the Sheffield bleep is a long figure, not a four-note loop.
+      seqArp: "arpturn",
       // a machine floor — no bridge, a drop
       plan: "dance", bpm: 124,
       parents: { techno: 0.4, house: 0.3, electro: 0.3 },
@@ -6123,6 +6135,8 @@
     // four-on-the-floor gives it a dance floor to live on. New romantic
     // synth-pop, the wider scene this record broke out of, is missing.
     analogsynthpop: {
+      // ITS OWN ARPEGGIO (2026-08-31): the early Basildon machine runs up under the song.
+      seqArp: "arpup",
       // "Basildon 1980" — the year the band itself formed (as Composition of
       // Sound); "Basildon 1981" was already synthpop's own label, and
       // gothsynth below takes "Basildon 1990" for the same band nine years on.
@@ -6282,6 +6296,8 @@
     // parent; nothing here is missing.
     dancepostpunk: {
       label: "Manchester 1983", near: "postpunk",
+      // ITS OWN ARPEGGIO (2026-08-31): Blue Monday's sequencer drives upward under the whole record.
+      seqArp: "arpup",
       // a machine floor — no bridge, a drop; 130 is the "Blue Monday" pulse
       plan: "dance", bpm: 130,
       parents: { postpunk: 0.4, disco: 0.3, kraftwerk: 0.3 },
@@ -14078,6 +14094,8 @@
     // drum). Both take it as a parent today.
     berlinschool: {
       label: "Berlin 1972", voices: 2, bars: 8, near: "spacerock",
+      // ITS OWN ARPEGGIO (2026-08-31): Tangerine Dream and Schulze run LONG cycles that never line up with the bar; the eight-step turn is that motion.
+      seqArp: "arpturn",
       plan: "arc", bpm: 96,
       // LINEAGE: `drone` (New York 1964) is the sustained-tone
       // doctrine; `psychpop` (London 1968) is the rock scene these
@@ -14204,6 +14222,8 @@
     // precedent: the producer is the genre.
     moroder: {
       label: "Munich 1977", voices: 3, bars: 8, near: "synthpop",
+      // ITS OWN ARPEGGIO (2026-08-31): I Feel Love IS the octave pedal — this row's own comment already said "the arpeggiated octave" while the record had none.
+      seqArp: "arpoct",
       plan: "dance", bpm: 124,
       // LINEAGE: `phillysoul` (Philadelphia 1972) is the four-on-the-
       // floor and the string ceiling the sequencer replaced player by
@@ -14295,6 +14315,8 @@
     // 1977 and Chicago 1986, now a link instead of a gap.
     italodisco: {
       label: "Milan 1982", voices: 3, bars: 8, near: "synthpop",
+      // ITS OWN ARPEGGIO (2026-08-31): the octave-jumping sequenced bassline is the signature of the Milan sound.
+      seqArp: "arpoct",
       plan: "dance", bpm: 118,
       // LINEAGE: `moroder` (Munich 1977) is the whole blueprint one
       // country north — the octave bass, the machine four — and
@@ -16073,6 +16095,8 @@
     // but not its founding lane.
     synthwave: {
       label: "Paris 2010", voices: 2, bars: 8, near: "italodisco",
+      // ITS OWN ARPEGGIO (2026-08-31): the genre's whole gesture is a rising synth figure.
+      seqArp: "arpup",
       plan: "dance", bpm: 92,
       // LINEAGE: `moroder` (Munich 1977) is the arpeggiated engine
       // being remembered; `italodisco` (Milan 1982) the melodic

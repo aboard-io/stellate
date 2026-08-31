@@ -391,12 +391,17 @@
     sparse:    { cell: "long",   contour: "hover" },                  // 6
     climb:     { cell: "walkup", contour: "rise",  land: "fifth" },   // 7
     verseline: { contour: "arch", land: "lead" },                     // 8 — the tune, developing
-    // 9, machines only — SIXTEENTHS since 2026-08-31 (it was `even`, i.e.
-    // eighths, which made every sequencer in the catalogue play at half the
-    // speed a sequencer plays at; see ideas-kit CELLS.sixteenths for the
-    // measurement). `zig` stays: a 303 line turns back on itself, it does not
-    // run up a scale, and the contour is what makes it a figure and not a run.
-    seq:       { cell: "sixteenths", contour: "zig", reg: "low", sent: "plain" },
+    /* 9, machines only — SIXTEENTHS and a BROKEN CHORD since 2026-08-31, and
+       both halves were needed. The cell was `even` (eighths), which made every
+       sequencer in the catalogue play at half the speed a sequencer plays; and
+       the contour was `zig`, which walks by steps. Fixing only the first got a
+       bar of sixteen notes that read `GAGB AcBG AGBA cBGG` — Paul: "There are
+       eighth-note runs with Young Galaxy but no 16th note arps." A run at any
+       speed is still a run. `arp` climbs the chord (see ideas-kit CONTOURS),
+       and I was wrong to keep `zig` "because a 303 turns back on itself": it
+       does, but it turns back through the CHORD, which is what makes it an
+       arpeggio and not a scale. */
+    seq:       { cell: "sixteenths", contour: "arp", reg: "low", sent: "plain" },
   };
   // compose.js:1793 deals the slots in this order and nothing else may reorder
   // them: the index IS the identity, because b.stack[].slots holds indices.
@@ -615,7 +620,16 @@
   // developed one), and `rel` names the RELEASE, which is length arithmetic and
   // therefore belongs at the bottom of this function beside the cap.
   function cellOf(row, kind, cb, G, steps, rd, dv) {
-    const m = { ...Id.blank(), ...row, ...KINDS[kind], ...(rd || {}),
+    /* A ROW MAY NAME ITS OWN ARPEGGIO (2026-08-31). `seqArp` on the anchor
+       overrides the sequencer part's contour and nothing else — the part still
+       owns its cell, its register and its sentence, because those are what
+       make it a sequencer rather than a tune. This is the narrowest possible
+       seam for Paul's "different arp things": one word, on the anchor, saying
+       which way ITS machine runs. Absent, every record takes the updown `arp`
+       it had before this line, byte for byte. `rd` still wins, because a
+       reading is more specific than an anchor. */
+    const arpOf = (kind === "seq" && G && G.seqArp) ? { contour: G.seqArp } : null;
+    const m = { ...Id.blank(), ...row, ...KINDS[kind], ...(arpOf || {}), ...(rd || {}),
                 len: cb === 4 ? "four" : cb === 2 ? "two" : "one", answer: true };
     let ph = Id.toPhrase(m, null);                // ideas-kit.js:425, pure, cached
     // THE DEVICE LANDS ON THE PHRASE, NOT ON THE THEME. `Id.develop` is pure
@@ -2302,7 +2316,29 @@
     for (const lk of layerKeys) rawReg.push((GENRES[lk].reg(0) | 0) + 1);
 
     for (let v = 0; v < nBase; v++) {
-      const kinds = baseKinds[v];
+      /* AN ARPEGGIO IS NOT SUNG (2026-08-31). Paul, on the round that gave the
+         machine wing its sequencer back: "Arps should never be vocal! It makes
+         no sense. You did that with Meat Beat. Synths can do that. Not people."
+
+         He is right and the mechanism is plain: a section puts slot 9 in its
+         stack and the voices read slots BY INDEX, so the sequencer lands on
+         whichever chair the arithmetic reaches — and on industrialbreaks that
+         chair was a singer. Sixteen notes a bar of broken chord is a thing a
+         machine does; a person breathes. The refusal belongs HERE, at the one
+         place that knows both the kind and the instrument, rather than in the
+         dealer, which knows the slot and not who will play it.
+
+         WHAT THE VOICE GETS INSTEAD is `topline` — the sung eight. Not
+         silence: taking the part away would leave a hole in the arrangement
+         where a voice was cast, and the point is that the singer should be
+         singing, not that the singer should be absent.
+
+         THE TEST IS `VOCAL`, not MOUTHY — the same door the instrumentation
+         law uses, so a SAMPLED choir counts as people too. One owner for
+         "this id is a person". */
+      const kinds = VOCAL(instrOf(gk, v))
+        ? baseKinds[v].map((k) => (k === "seq" ? "topline" : k))
+        : baseKinds[v];
       const home = dflt(kinds);
       const material = { "": home };
       const development = {};
