@@ -2563,8 +2563,32 @@
     // e.acc/e.sld) since the bass chair existed, and nothing could ever set
     // them. Absent = every stream below is what it was.
     const fig = g.bassFig || null;
-    const grid = (fig && fig.grid) || STYLEGRID[g.bassStyle]
-      || (subj.acc.some(Boolean) ? subj.acc : (g.bassGrid || QUARTERS));
+    // ...AND `bassGrid` IS SECOND, NOT FOURTH (2026-09-01). It sat under both
+    // STYLEGRID and the melody's accents, which meant it never fired: measured
+    // across every anchor that writes one, 13 of 22 were outranked by their own
+    // `bassStyle: "eighths"` and 9 by `subj.acc`, and the bass played the
+    // declared grid on exactly THREE — drone, waltz and musette, and only
+    // because their grid IS a lone downbeat, which is what the branch above
+    // them happened to produce. So `bodiddley` wrote the Bo Diddley clave
+    // (`x..x..x.........`) and played straight eighths; `reggae` wrote
+    // `x.........x.....` and played straight eighths; `tango` wrote the
+    // habanera and played straight eighths. Nineteen bass rhythms typed into
+    // the catalog reached no sound.
+    //
+    // The order is the one this file's own comment argues for, three lines up:
+    // a FIGURE says all of it at once, a GRID says where the genre's notes
+    // fall, a STYLE says only how DENSE the line is, and `subj.acc` is not
+    // about the bass at all — it is the MELODY's accents standing in for a
+    // bass part nobody wrote. Specific beats general, so the grid goes above
+    // the density word and above the borrowed vector.
+    //
+    // `askable.js` calls `bassGrid` "superseded by `bassFig`". Measured today:
+    // **0 of 387 anchors declare a `bassFig`** — the successor has no rows, so
+    // the supersession was a promise and the demotion was its down payment.
+    // Nothing is invented here and no grid is written by hand: the 22 that
+    // exist are simply read.
+    const grid = (fig && fig.grid) || g.bassGrid || STYLEGRID[g.bassStyle]
+      || (subj.acc.some(Boolean) ? subj.acc : QUARTERS);
     const sp = spans(grid);                                     // holds to the next hit
     // A BASS SCHEDULE, READ PER BAR — the shape `kits` already gives the
     // drums, and for the same reason: a grid is one bar restated, and some

@@ -62,15 +62,55 @@ const ihash = (s) => { let h = 2166136261 >>> 0;
 const MODES = ["straight", "kaleido", "spin", "matte", "difference",
                "split", "posterize", "rgbsplit"];
 
-const VERT = `attribute vec2 p; varying vec2 uv;
+/* EXPORTED SO A GATE READS THE SHIPPED SHADER (2026-09-01), and not a copy
+   of it pasted into a test file — the same law compose.js exports DEALS under:
+   a gate that measures a second opinion is measuring the second opinion.
+   test/video-cut.js compiles THESE strings on a real GL driver. */
+export const VERT = `attribute vec2 p; varying vec2 uv;
 void main(){ uv = p * 0.5 + 0.5; gl_Position = vec4(p, 0.0, 1.0); }`;
 
-const FRAG = `precision mediump float;
+export const FRAG = `precision mediump float;
 varying vec2 uv;
 uniform sampler2D texA, texB, prev;
 uniform float mode, amt, t, fade, feedback, sat, spin, xfade, lines, glitch;
-uniform sampler2D texN;   // the INCOMING clip, rising before the barline
 const float PI = 3.14159265;
+
+/* THE CROSSFADE IS AT THE SOURCE, NOT OVER THE PICTURE (2026-09-01). Paul:
+   "After the fade in is done then it cuts! I want it to stay on the thing that
+   just faded in! Smoooooth my friend."
+   He was right and there were THREE cuts landing on that one downbeat frame:
+
+     1. The mix used to be the LAST thing this shader did — the mode ran on
+        texA, and then the finished picture was mixed toward a RAW sample of
+        the incoming clip. So at xfade = 1, every mode collapsed to untreated
+        footage, and one frame later the slots swapped, xfade fell to 0 and the
+        full effect snapped on. On kaleido, spin, posterize and rgbsplit that is
+        a hard jump; it is the cut he is describing.
+     2. The VHS pass read texA directly for its chroma bleed and its
+        head-switch band, so those two layers were still showing the OUTGOING
+        clip while the picture had already faded to the incoming — and they
+        changed clip in one frame at the swap, on every mode including
+        straight.
+     3. glitch is a per-block number, so the torn band at the bottom jumped
+        sideways on the downbeat. (Fixed on the JS side, by the same curve.)
+
+   ONE HELPER FIXES ALL OF IT: every read of the picture goes through sA/sB,
+   which blend the two slots, so THE EFFECT RUNS ON THE BLEND. At xfade = 1 the
+   shader is already drawing the incoming clip fully treated — which is exactly
+   what it will draw on the next frame, when the slots swap and xfade returns
+   to 0. The downbeat becomes a no-op you cannot see.
+
+   sB IS THE COMPLEMENTARY MIX, and that is what keeps the two-source modes
+   (matte, difference, split) alive across the swap. Before the swap A is the
+   outgoing clip and B the incoming; after it they have traded places. So the
+   second layer has to travel the opposite way — B toward A — and then a swap
+   with xfade back at 0 lands on the same two pictures in the same two roles.
+
+   (texN used to be declared here as "the INCOMING clip". It was bound to
+   texture unit 1, which is the same unit texB is bound to: two names for one
+   texture. The name is gone; the blend is what it was trying to be.) */
+vec3 sA(vec2 c){ return mix(texture2D(texA, c).rgb, texture2D(texB, c).rgb, xfade); }
+vec3 sB(vec2 c){ return mix(texture2D(texB, c).rgb, texture2D(texA, c).rgb, xfade); }
 
 /* ROTATION ZOOMS IN, so a turned frame still covers the canvas. Paul: "When
    you rotate zoom in so there arent all the black bars." A square turned by
@@ -96,44 +136,48 @@ void main(){
   if (spin > 0.001) q = rot(q, spin);
 
   if (mode < 0.5) {                    // straight
-    o = texture2D(texA, q).rgb;
+    o = sA(q);
   } else if (mode < 1.5) {             // kaleido — BOTH halves outward, not folded over
     vec2 k = q; k.x = 0.5 + abs(k.x - 0.5) * (1.0 + amt);
     k.y = 0.5 + abs(k.y - 0.5) * (1.0 + amt);
-    o = texture2D(texA, fract(k)).rgb;
+    o = sA(fract(k));
   } else if (mode < 2.5) {             // spin — a harder rotation on top of the global one
-    o = texture2D(texA, rot(q, t * amt)).rgb;
+    o = sA(rot(q, t * amt));
   } else if (mode < 3.5) {             // matte — B keyed through A's luma
-    a = texture2D(texA, q).rgb; b = texture2D(texB, q).rgb;
+    a = sA(q); b = sB(q);
     float l = dot(a, vec3(0.299, 0.587, 0.114));
     o = mix(b, a, smoothstep(0.35 - amt * 0.3, 0.65 + amt * 0.3, l));
   } else if (mode < 4.5) {             // difference — the Toaster's own trick
-    a = texture2D(texA, q).rgb; b = texture2D(texB, rot(q, 0.15)).rgb;
+    a = sA(q); b = sB(rot(q, 0.15));
     o = abs(a - b);
   } else if (mode < 5.5) {             // split — A left, B right, hard seam
-    o = (q.x < 0.5 ? texture2D(texA, q) : texture2D(texB, q)).rgb;
+    o = q.x < 0.5 ? sA(q) : sB(q);
   } else if (mode < 6.5) {             // posterize
     float st = 3.0 + floor(amt * 5.0);
-    o = floor(texture2D(texA, q).rgb * st) / st;
+    o = floor(sA(q) * st) / st;
   } else {                             // rgbsplit — chroma pulled apart
     float d = 0.004 + amt * 0.02;
-    o = vec3(texture2D(texA, q + vec2(d, 0.0)).r,
-             texture2D(texA, q).g,
-             texture2D(texA, q - vec2(d, 0.0)).b);
+    o = vec3(sA(q + vec2(d, 0.0)).r, sA(q).g, sA(q - vec2(d, 0.0)).b);
   }
   /* THE CROSSFADE FINISHES ON THE DOWNBEAT. Paul: "You fade in new clips after
      the measure starts but it should fade in before and get to 100% on beat
-     one." So xfade runs 0 to 1 across the last third of a second BEFORE the
-     barline and is exactly 1 when the bar turns over. Arriving at full after
-     the beat is what reads as late, which is what he saw.
+     one." So xfade runs 0 to 1 across the two bars BEFORE the barline and is
+     exactly 1 when the bar turns over. Arriving at full after the beat is what
+     reads as late, which is what he saw.
+     THE MIX ITSELF MOVED UP TO sA/sB (see the top of this shader): a line
+     stood HERE that mixed the finished picture toward a raw sample of the
+     incoming clip, and that line was the cut. It is not replaced by anything —
+     the blend has already happened, at every source read above.
      (NO BACKTICKS ANYWHERE IN THIS SHADER SOURCE. It is a template literal, so
      a backtick closes the string. I wrote this warning once, then did it again
      two hours later quoting a registry key. Both were caught by the syntax
-     check; neither should have been written.) */
-  /* EASED, NOT LINEAR. A straight ramp reads as a switch that happens to take
-     time; smoothstep leaves and arrives gently, which is what "smooth it all
-     out" asks for, and it still reaches exactly 1.0 on the downbeat. */
-  if (xfade > 0.001) o = mix(o, texture2D(texN, q).rgb, smoothstep(0.0, 1.0, xfade));
+     check; neither should have been written.)
+     EASED, NOT LINEAR, and the easing is done ONCE ON THE JS SIDE now. A
+     straight ramp reads as a switch that happens to take time; smoothstep
+     leaves and arrives gently. It is applied before the uniform is written so
+     that the pixels and the head-switch band ride the identical curve — two
+     smoothsteps of the same number, computed in two languages, is how a band
+     ends up sliding while the picture holds still. */
   o = grade(o, sat);
 
   /* ---- THE VHS PASS, over everything (2026-09-01) -----------------------
@@ -160,7 +204,7 @@ void main(){
   float ny = uv.y * 262.0;                        // NTSC lines per field
   float scan = 0.86 + 0.14 * smoothstep(0.35, 0.65, fract(ny));
   // chroma lags luma: sample colour a little to the left, keep this luma
-  vec3 cb = texture2D(texA, q + vec2(0.006 + amt * 0.004, 0.0)).rgb;
+  vec3 cb = sA(q + vec2(0.006 + amt * 0.004, 0.0));
   float lum = dot(o, vec3(0.299, 0.587, 0.114));
   o = mix(o, vec3(lum) + (cb - vec3(dot(cb, vec3(0.299, 0.587, 0.114)))) * 1.15, 0.35);
   // tracking: a slow wobble that is not the same at the top and the bottom
@@ -173,7 +217,7 @@ void main(){
      from the JS side, so the band sits still and only moves when the picture
      cuts. */
   if (uv.y < 0.02) {
-    o = texture2D(texA, vec2(fract(q.x + (glitch - 0.5) * 0.05), q.y)).rgb * 0.8;
+    o = sA(vec2(fract(q.x + (glitch - 0.5) * 0.05), q.y)) * 0.8;
   }
   vec2 vg = uv - 0.5;
   o *= scan * (1.0 - dot(vg, vg) * 0.55);
@@ -394,8 +438,16 @@ export function mountVideo(host, CTX) {
     if (nextBar === block && incoming) { cur = incoming; incoming = null; slot = 1 - slot; }
     if (nextBar === -1) { nextBar = block; cur = pick(block); loadInto(vids[slot], cur); }
 
-    // 0 -> 1 across the last two bars of the block; exactly 1 on the downbeat
-    const xfade = barsToNext <= FADE_BARS ? 1 - (barsToNext / FADE_BARS) : 0;
+    /* 0 -> 1 across the last two bars of the block; exactly 1 on the downbeat.
+       EASED HERE AND NOWHERE ELSE (2026-09-01). The shader used to smoothstep
+       this number itself, which was fine while it was the only thing riding
+       it; now the picture, the chroma bleed, the head-switch band AND the
+       glitch offset below all move on it, and two of those are computed in
+       JS. One curve, computed once, handed to everything — `smoothstep(0,1,x)`
+       is `x*x*(3-2*x)`, so this is the same easing the shader was doing, in
+       the one place that can feed all four. */
+    const raw = barsToNext <= FADE_BARS ? 1 - (barsToNext / FADE_BARS) : 0;
+    const xfade = raw * raw * (3 - 2 * raw);
 
     const A = vids[slot], B = vids[1 - slot];
     if (A.readyState >= 2) {
@@ -408,9 +460,11 @@ export function mountVideo(host, CTX) {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, B);
       gl.uniform1i(U("texB"), 1);
     }
-    // the incoming clip is the OTHER slot, which has been loading since PRE
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texB);
-    gl.uniform1i(U("texN"), 1);
+    /* (A THIRD SAMPLER, `texN`, WAS BOUND HERE and it was texB under another
+       name — same texture, same unit 1, bound twice. It existed only for the
+       post-mix line the shader no longer has. Both are gone: the incoming clip
+       is the OTHER slot, it has been loading since the block was armed, and
+       sA/sB read it as texB.) */
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, prevTex);
     gl.uniform1i(U("prev"), 2);
     gl.uniform1f(U("mode"), MODES.indexOf(cur.mode));
@@ -418,7 +472,16 @@ export function mountVideo(host, CTX) {
     gl.uniform1f(U("fade"), 1);
     gl.uniform1f(U("xfade"), xfade);
     gl.uniform1f(U("lines"), 262);
-    gl.uniform1f(U("glitch"), cur.glitch != null ? cur.glitch : 0.5);
+    /* THE HEAD-SWITCH BAND TRAVELS WITH THE PICTURE (2026-09-01). `glitch` is
+       the sideways displacement of the torn band at the bottom of the frame,
+       and it is drawn fresh per block — so it used to change in ONE FRAME on
+       the downbeat, which is a cut of its own even when everything above it is
+       continuous. It rides the same eased xfade as the pixels now, so the band
+       slides across the two-bar fade and holds still afterwards, which is what
+       its own comment always claimed it did. */
+    const gOf = (c) => (c && c.glitch != null ? c.glitch : 0.5);
+    gl.uniform1f(U("glitch"), incoming ? gOf(cur) + (gOf(incoming) - gOf(cur)) * xfade
+                                       : gOf(cur));
     gl.uniform1f(U("feedback"), 0.18 + cur.amt * 0.3);
     gl.uniform1f(U("sat"), 0.7 + cur.amt * 0.7);
     /* THE MOTION RUNS ON A SMOOTH CLOCK, THE CUTS ON THE RECORD'S. `el` comes
@@ -437,10 +500,20 @@ export function mountVideo(host, CTX) {
 
     const si = bars[bar % totalBars];
     cells.forEach((li, k) => li.classList.toggle("on", k === si));
+    /* THE CAPTION NAMES WHAT IS ON THE GLASS. It named `cur` for the whole
+       fade, so for the second bar of every crossfade it was printing the
+       outgoing clip's filename over a picture that was mostly the incoming
+       one. Past the halfway point the incoming IS the picture, so that is the
+       name it gets, with the outgoing still shown behind the arrow — a readout
+       that disagrees with the screen is how the last three of these were
+       misdiagnosed. */
+    const nm = (c) => c.clip.f.replace(/\.mp4$/, "");
+    const lead = incoming && xfade >= 0.5 ? incoming : cur;
+    const behind = lead === cur ? incoming : cur;
+    const behindPct = Math.round((lead === cur ? xfade : 1 - xfade) * 100);
     cap.textContent = "bar " + (bar + 1) + "/" + totalBars + " · " +
-      (secs[si].role || "section") + " · " + cur.mode +
-      (xfade > 0 ? " → " + Math.round(xfade * 100) + "%" : "") + " · " +
-      cur.clip.f.replace(/\.mp4$/, "");
+      (secs[si].role || "section") + " · " + cur.mode + " · " + nm(lead) +
+      (behind ? " ← " + behindPct + "% " + nm(behind) : "");
   };
   raf = requestAnimationFrame(frame);
   return () => { dead = true; cancelAnimationFrame(raf);

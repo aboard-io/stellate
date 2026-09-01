@@ -499,6 +499,46 @@ function feedSplit(m, S, isDrums, route) {
   }
   return add;
 }
+/* THE KIT TAKES A SHARE OF THE ROOM, NOT ALL OF IT (2026-09-01). Paul: "You're
+   throwing tons of delay on drums, like on blue eyed soul."
+
+   HE HEARD IT AND THE WORD WAS THE ONLY THING WRONG — it is the REVERB bus, not
+   the delay. Measured on the deployed page, off `plan.barPlan(0).units`:
+   blueeyedsoul's ten kit lanes each carry `del` **0.000** and `rev` **0.400**,
+   and the same holds across the catalogue (reggae 0.42, dreampop 0.80,
+   skinnypuppy 0.50, portishead 0.55, boombap 0.32 — delay 0.000 on every drum
+   lane of all of them). A long plate on a kick reads as slapback, which is why
+   the report says delay; there is no delay on it.
+
+   WHERE 0.400 CAME FROM. `sectionOf` defaults the section's reverb send to the
+   GENRE'S OWN `tone.verb` — "absent means as the genre asks" — and every unit
+   takes it, the kit included. blueeyedsoul declares `verb: 0.28`. Then
+   `deskFor` puts `room: "touch"` on every acoustic kit (fields.js SENDS, 0.12)
+   and `feedSplit` folds bus 3 into the same return. 0.28 + 0.12 = 0.400,
+   exactly what the artifact reports.
+
+   THE FAULT IS THAT `tone.verb` IS A DECISION ABOUT THE BAND. dreampop declares
+   0.8 because the guitar is weather and the voice sings syllables that are not
+   words; nothing in that sentence is about the kick drum, and the kick was
+   getting 0.8 of it plus a room. No engineer sends a kit into a plate at the
+   same proportion as a pad — the kit is what the room is measured against.
+
+   SO IT IS A SHARE AND A CEILING, AND NOT A REBALANCE OF THE TABLE. Every
+   `tone.verb` in the catalogue stays exactly the number the row wrote; the KIT
+   takes half of it and never more than `some` (fields.js SENDS 0.30) from the
+   record's wash. Its own `room` is untouched and unscaled, because that send is
+   already the kit's room and is the one number here that was chosen for a kit.
+   A hand's automation lane is not scaled either: a drawn `send.rev` lane is an
+   explicit answer and outranks a default.
+
+   ONE OWNER, which is this function's own law two lines down — "one function
+   for the drawn number and the built one". `deskUnits` composes the same share
+   through the same helper, so the strip on the board and the unit in the ring
+   cannot disagree about how wet the kit is. */
+export const KIT_WASH = 0.5, KIT_WASH_CAP = 0.3;
+const kitShare = (S, isDrums) =>
+  isDrums ? Math.min(KIT_WASH_CAP, (S.rev || 0) * KIT_WASH) : (S.rev || 0);
+
 // THE CHANNEL'S COMPOSED BASE, for the mixer surface: the "real" mix the
 // offsets ride on, one function for the drawn number and the built one.
 export function deskChannelBase(sec, key) {
@@ -510,7 +550,7 @@ export function deskChannelBase(sec, key) {
   return {
     gain: +(r.gain * S.lvl).toFixed(4),
     pan: (S.pan || 0) + (m.pan || 0),
-    rev: Math.min(1, (m.rev || 0) + S.rev + g.rev),
+    rev: Math.min(1, (m.rev || 0) + kitShare(S, key === "drums") + g.rev),
     del: Math.min(1, (m.del || 0) + S.del + g.del),
     // the genre-bus send (series-bus round) — per-part only: no section lane,
     // no group folds into it, so the composed base IS the strip's own word
@@ -877,7 +917,7 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     const idRev = (p && p.rev) ? 0 : (u.idRev || 0);
     const idDel = (p && p.del) ? 0 : (u.idDel || 0);
     const rev = (p ? p.rev || 0 : 0)
-      + (autoRev != null ? autoRev : S.rev) + grp.rev + idRev;
+      + (autoRev != null ? autoRev : kitShare(S, isDrum)) + grp.rev + idRev;
     const del = (p && p.del ? p.del : 0)
       + (autoDel != null ? autoDel : S.del) + grp.del + idDel;
     const v = { ...u,

@@ -4260,7 +4260,13 @@
          row from the start. `rave_a` is a hits-crate stab — the punctuation a
          big-beat record is built on, and the thing that makes an Essex 1997
          record sound like 1997 rather than like a guitar band. */
-      instr: ["distortion_guitar", "charang", "found:rave_a"],
+      instr: ["distortion_guitar", "charang", "found:collage:rave_stab"],
+      // THE COLLAGE, SPREAD (2026-09-01). Paul: "spread the sample voices
+      // around to collage-heavy genres." This row seated `found:rave_a` — ONE
+      // stab, played at every pitch the line writes, which is a sample and not
+      // a collage. `rave_stab` is the crate's own eight and 8/8 of them are
+      // local: rave_a..d, both hoovers, the organ and the saw stab. Big beat
+      // IS a stab collage; now the line chooses which stab.
       drumkit: "power",
       entry: () => 0, reg: v => -v, realize: () => "line",
       harmony: "modal", mode: MODES.phrygian, scale: DIATONIC,
@@ -5926,8 +5932,9 @@
       // the second, off the same sentence, and it is what `punk` was standing
       // in for here until this round — so punk comes off the parents and the
       // thing the article actually names goes on the shopping list.
-      wants: ["sample-collage industrial (throbbing gristle, hull 1976)",
-              "noise rock"],
+      // the sample-collage half is answered by the vocal_stab collage below;
+      // noise rock is still a real gap.
+      wants: ["noise rock"],
       /* THE SAMPLE CHAIR, 2026-08-31 — and this row ASKED FOR IT IN WRITING.
          Its own `wants` has said "sample-collage industrial (throbbing gristle,
          hull 1976)" since it was written, and it had two synths and no sample.
@@ -5938,7 +5945,12 @@
          domain, and one of the three the beep audit KEPT — vox_b/c/e carry a
          constant carrier whistle and were benched). A transmission voice cut
          over a break is this record's own language, not a mood board. */
-      instr: ["charang", "metal_pad", "found:vox_a"],
+      instr: ["charang", "metal_pad", "found:collage:vocal_stab"],
+      // THE COLLAGE, SPREAD (2026-09-01) — and this row asked for it in
+      // writing: its own `wants` says "sample-collage industrial (throbbing
+      // gristle, hull 1976)". It seated `found:vox_a`, one Apollo
+      // transmission. `vocal_stab` is 5/5 local and the line now cuts between
+      // all of them.
       drumkit: "power",
       entry: () => 0, reg: v => -v, realize: () => "line",
       harmony: "modal", mode: MODES.phrygian, scale: MODES.phrygian,
@@ -17608,8 +17620,31 @@
       label: "Vancouver 1986", voices: 3, bars: 8, near: "waxtrax",
       plan: "dance", bpm: 112,
       parents: { waxtrax: 0.4, postpunk: 0.3, kraftwerk: 0.3 },
-      wants: ["the sample collage a tape-splice record is made of"],
-      instr: ["saw_wave", "metal_pad", "found:vox_d"],
+      /* THE COLLAGE ARRIVED, 2026-09-01. This row read
+         `wants: ["the sample collage a tape-splice record is made of"]` and
+         `instr: [..., "found:vox_d"]` — ONE recording, an Apollo transmission,
+         on the counter chair. Paul: "Why doesn't skinny puppy have samples? Or
+         does it?" It did: exactly one, which is why the row confessed a want
+         beside it. Measured the same day, only 4 anchors of 387 seated a
+         `found:` chair at all and every one of them seated a single file.
+         `found:collage:voices` is the crate's OWN 24-row voices pool — the
+         Conet numbers stations, the shipping-forecast time lady, WWVH, station
+         announcers at Pulkovo and Kaohsiung, a football terrace — cut across
+         the keyboard one recording per band, so the counter line's own notes
+         choose which voice speaks and a moving line is a splice. That is the
+         want, met with the crate rather than with a new table, so the `wants`
+         entry goes: a confession that has been answered is a lie. */
+      wants: [],
+      instr: ["saw_wave", "metal_pad", "found:collage:vocal_stab"],
+      // `vocal_stab`, NOT `voices`, and the reason is locality rather than
+      // taste: the 24-row `voices` pool is 20/24 REMOTE archive.org rows and
+      // this page is COEP-isolated, so those twenty can never decode — the
+      // collage would have been four recordings wearing a choir's name.
+      // `vocal_stab` is 5/5 local (the three Apollo transmissions, a Caruso
+      // 78, a laugh off a 78) and the counter line writes exactly FIVE
+      // distinct pitches, so every note of the phrase is a different voice
+      // and none of them is silent. The day the vx_* rows are repointed at
+      // the 72 copies already sitting in `found/`, this becomes one word.
       drumkit: "tr808",
       entry: () => 0, reg: v => (v === 0 ? 0 : v === 1 ? -1 : 0),
       realize: v => (v === 1 ? "pad" : "line"),
@@ -20936,7 +20971,9 @@
       // names; neither has an anchor and the first is next round's ask —
       // the Art of Noises manifesto is datable to the day.
       parents: {},
-      wants: ["russolo's intonarumori (milan 1913)", "the rtf radio-play studio"],
+      // "russolo's intonarumori" is answered by the perc_hit collage above and
+      // comes off the list; the RTF radio-play studio is still a real gap.
+      wants: ["the rtf radio-play studio"],
       cannot: ["the units are the registry's, not the composer's — " +
                "Schaeffer's premise was RECORDING THE WORLD and then " +
                "composing with what came back; this box chooses from a " +
@@ -20981,7 +21018,20 @@
       //   All three are BBC-crate ids carrying a LOCAL url
       // (found/<id>.64.mp3), so nothing here reaches off-origin.
       instr: ["found:bbc_italian_steam", "found:bbc_termini_platform",
-              "found:bbc_clock_room"],
+              "found:collage:perc_hit"],
+      /* THE COLLAGE, SPREAD (2026-09-01). Paul: "spread the sample voices
+         around to collage-heavy genres" — and no row is more collage-heavy
+         than this one, which is Schaeffer at the RTF in 1948.
+         THE STEAM TRAIN STAYS ON THE LEAD, deliberately: `bbc_italian_steam`
+         IS the Etude aux chemins de fer, and swapping it for a pool would
+         have thrown away the reference to buy variety. What changes is the
+         third chair, `bbc_clock_room` — a second room behind a room. It takes
+         `perc_hit` instead: the crate's seven struck objects, 7/7 local —
+         timpani, gong, ANVIL, wood, slap, agogo, cowbell. That answers this
+         row's own `wants` entry with the crate rather than a new table, since
+         "russolo's intonarumori (milan 1913)" is a box of struck and scraped
+         metal and a chair that picks a different one per note is the closest
+         this box gets to one. */
       entry: v => (v === 0 ? 0 : v === 1 ? 1 : 3),
       reg: v => [0, -1, 1][v],
       realize: v => (v === 0 ? "line" : "pad"),

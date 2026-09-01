@@ -195,6 +195,26 @@ const GATES = [
   { name: "precompose", wave: 2, kind: "node",
     argv: ["test/precompose.test.js"],
     need: ["test/precompose.test.js"], covers: ["test/precompose.test.js"] },
+  /* THE GENRE'S OWN BASS RHYTHM (2026-09-01). Twenty-two anchors write their
+     bass line out step by step — the habanera under `tango`, the off-beat
+     under `reggae`, the clave under `bodiddley` — and `kernel.js` ranked
+     `bassGrid` LAST of four, under a density word and under the MELODY's
+     accents, so nineteen of them reached no note. Registered because this is
+     the third time a field has been found declared-and-never-arriving here
+     (`inv`, the hand, this) and the gate reads the NOTES, not the
+     precedence. */
+  { name: "bass-grid", wave: 2, kind: "node",
+    argv: ["test/bass-grid.test.js"],
+    need: ["test/bass-grid.test.js"], covers: ["test/bass-grid.test.js"] },
+  /* NOT ONE BYTE OF FILM UNTIL THE TAB IS OPENED (2026-09-01). Paul: "Don't
+     download video until I go to the video tab." Measured, the page already
+     did — so this gate converts an accident into a law: the clips are
+     0.4-3.7 MB each and nothing anywhere STATED that they must not be
+     preloaded, precached or warmed onto the offline hold. */
+  { name: "video-lazy", wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/video-lazy.js"], need: ["test/video-lazy.js"],
+    covers: ["test/video-lazy.js", "nukernel/ui/video.js",
+             "nukernel/ui/video-clips.js"] },
   /* THE HAND PROBE (2026-08-30, "shouldn't more genres be humanized"): who is
      humanized, who is exempt, proven at the rendered events. Holds genres.js
      §39 (every anchor resolves a DYNAMICS row or a dated null), the machine

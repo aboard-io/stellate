@@ -104,8 +104,21 @@
     anchor:   "an identity field the daw's catalog uses; a session has no anchor",
     swing:    "the SONG's, not the genre's — the word in a numeric field was the " +
               "NaN that stopped the engine dead, so it is routed through setSwing",
-    bassGrid: "superseded by `bassFig`, which says where the notes fall AND which " +
-              "octave, accent and slide each one takes",
+    // THE WORD "SUPERSEDED" CAME OFF THIS ROW ON 2026-09-01. It read
+    // "superseded by `bassFig`, which says where the notes fall AND which
+    // octave, accent and slide each one takes" — and measured that day, **0 of
+    // 387 anchors declare a `bassFig`**, while 22 declare a `bassGrid`. A
+    // successor with no rows supersedes nothing, and the sentence had already
+    // been cashed once: kernel.js ranked `bassGrid` last of four on the
+    // strength of it, so nineteen catalog bass rhythms reached no note
+    // (STATE.md item 5, `test/bass-grid.test.js`). It is second now, under the
+    // figure. What is still true is the half that keeps it off the question
+    // list: it is a SIXTEEN-STEP VECTOR, not a value, so it belongs to a cell
+    // the tracker writes and not to a sentence anybody can be asked.
+    bassGrid: "a per-step vector and not a value: where the genre's own bass " +
+              "notes fall, which is a cell the tracker writes rather than a " +
+              "question anybody can be asked. `bassFig` says the same thing " +
+              "plus octave, accent and slide, and no anchor declares one yet",
     ghost:    "takes a WORD LIST (an operator phrase), not a value: it is content, " +
               "and content lives in a kit file",
     incMode:  "how the line's `inc` steps are read — an internal of the line " +

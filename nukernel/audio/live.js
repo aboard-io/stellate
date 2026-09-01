@@ -772,6 +772,34 @@ async function open(FL, forceMedia) {
   // is too long the retreat is a SMALLER prefill, not none: 5 s still covers the
   // measured startup deficit (one 3.1 s bar plus ~0.6 s of producer shortfall)
   // with about a second to spare.
+  /* ONE LIVE ENGINE, ENFORCED AT THE ONLY LINE THAT CAN BREAK IT (2026-09-01).
+     Paul: "Sometimes two streams play at once."
+
+     `handle = await FL.exploreLive(...)` ASSIGNS OVER WHATEVER `handle` HELD,
+     and the assignment is the last reference to the old engine — so if one was
+     live, it keeps sounding and nothing can ever stop it again. Two paths reach
+     here with a live handle:
+
+       · THE DEMOTION. The catch below retries once on the media route
+         (`forceMedia`), and it reaches that retry from a THROW — which can be a
+         throw AFTER the engine opened its graph (a start deadline, a worklet
+         that came up late). The old ring engine is then sounding, `handle` has
+         been set to null by the catch, and the media route opens on top of it.
+         That is the doubled stream, and the null is what makes it permanent.
+       · A stale hold whose `h.stop()` in `discardPre` did not take.
+
+     So the invariant is stated here rather than assumed: whatever is live stops
+     before anything new is installed. Idempotent — `stop()` on a dead handle is
+     already wrapped everywhere in this file — and a no-op on every start that
+     was already correct, which is every start that has ever worked. */
+  const takeOver = (why) => {
+    if (!handle) return;
+    try { handle.stop(); } catch (e) {}
+    try { console.warn("live.js: stopped a live engine before " + why +
+                       " — one engine at a time"); } catch (e) {}
+    handle = null;
+  };
+  takeOver("opening a new one");
   try {
     handle = await FL.exploreLive(getState, (m) => emit("status", { text: m }), {
       // the prefill is an OPT-IN on the engine: a caller that says nothing gets
@@ -791,7 +819,11 @@ async function open(FL, forceMedia) {
     st.route = handle.outputRoute || (forceMedia ? "media" : "ring");
   } catch (e) {
     st.lastError = String((e && e.message) || e).slice(0, 160);
-    handle = null;
+    // ...AND A THROW MAY HAVE LEFT AN ENGINE SOUNDING. This read `handle = null`,
+    // which drops the only reference to a graph that may already be running —
+    // the demotion below then opens a SECOND one beside it. Stop it first; the
+    // null is what `takeOver` does last anyway.
+    takeOver("giving up on it");
     // THE CEILING. One demotion — to the parent's own media route, which needs
     // no SharedArrayBuffer and no worklet in an offline context — and then the
     // give-up is written down. It is never tried a third time and never retried

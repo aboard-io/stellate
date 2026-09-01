@@ -857,19 +857,54 @@ sight.
 4. **[§4·6] Augmentation and diminution as Development words.** Implemented in
    `ideas-kit.js` over a RENDERED phrase, therefore unnameable in `WORDS`. **No
    kernel operator maps step *i* to step *2i*.** Do not fake it.
-5. **[§4·7] `bassGrid` has no document slot.** Re-measured: **18 anchors declare
-   one and 0 of 199 precomposed records carry it.** Same shape as `inv` was.
-6. **[§4·8] `orn` — THE TABLE NOW EXISTS AND PRECOMPOSE DROPS IT.** This item
-   used to read *"declared by zero of 122 genres; deciding which music decorates
-   is a catalog table nobody has."* Somebody wrote it: `genres.js ORNAMENT` is
-   **58 anchors** with reasons — bebop's approach note, the blues crushed note,
-   plainchant's passing tones and no flam, drill's ratchet. And **0 of 199
-   precomposed records carry `performance.orn`.** `blues` declares
-   `{pass: 0.3, grace: 0.45}`; its document's `performance` is
-   `{take, humanize, ontime}`. `document.js:252` carries the field the moment it
-   arrives and `kernel.js:1030` honours it. **This is `inv` again, one layer up,
-   and it is now the highest-value item on this list** because the table it
-   would deliver already exists.
+5. **~~[§4·7] `bassGrid` has no document slot.~~ CLOSED 2026-09-01, AND THE
+   REASON WRITTEN HERE WAS THE WRONG ONE.** The item read: *"Re-measured: 18
+   anchors declare one and 0 of 199 precomposed records carry it. Same shape as
+   `inv` was."* The count is now **22 of 387**, and the document slot was never
+   the mechanism: `document.js toGenre` opens with `...GENRES[doc.basis]`, so
+   every field an anchor declares reaches the kernel whether or not any
+   precomposed record repeats it. `g.bassGrid` was arriving at the OBJECT and
+   dying at the EXPRESSION — `kernel.js` chose the bass grid in a four-way
+   chain and ranked it LAST, under `STYLEGRID[g.bassStyle]` and under the
+   MELODY's accent vector `subj.acc`. Measured before the fix: **13 of the 22
+   were outranked by their own `bassStyle: "eighths"` and 9 by `subj.acc`**, and
+   the declared rhythm survived on exactly three — `drone`, `waltz`, `musette` —
+   and only because each writes a lone downbeat, which is what the branch above
+   it happened to produce anyway. So `bodiddley` wrote the Bo Diddley clave and
+   played straight eighths; `reggae` wrote the off-beat and played straight
+   eighths; `tango` wrote the habanera and played straight eighths. **Nineteen
+   bass rhythms typed into the catalog reached no note.** Fixed as a
+   PRECEDENCE and not a table — nothing invented, the 22 that exist are simply
+   read — in the order kernel.js's own comment already argued for: figure, then
+   grid, then the density word, then the melody's accents. `askable.js` calls
+   `bassGrid` *"superseded by `bassFig`"*; measured the same day, **0 of 387
+   anchors declare a `bassFig`**, so the successor has no rows and the
+   supersession was a promise the demotion had already been paid for.
+   `test/bass-grid.test.js` holds it at the NOTES (22 of 22 play their declared
+   grid; all 365 anchors without one byte-identical), and fails 25 of 31 on the
+   old order. **BEHIND EARS:** nineteen records' bass moves, by design.
+6. **~~[§4·8] `orn` — THE TABLE NOW EXISTS AND PRECOMPOSE DROPS IT.~~ WITHDRAWN
+   2026-09-01: IT WAS NEVER DROPPED, AND THIS ENTRY MEASURED THE WRONG LAYER.**
+   The item read: *"`genres.js ORNAMENT` is 58 anchors with reasons … and 0 of
+   199 precomposed records carry `performance.orn`. This is `inv` again, one
+   layer up, and it is now the highest-value item on this list."* Both halves of
+   the measurement are still true — the table is **40 rows over 115 genres**
+   today, and **0 of 387 precomposed records carry `performance.orn`** — and the
+   conclusion drawn from them is false. `document.js toGenre` opens with
+   `...GENRES[doc.basis]`, so `blues`'s `{pass: 0.3, grace: 0.45}` is on the
+   object the kernel is handed whether the document repeats it or not.
+   Measured at the RENDER: setting `performance.orn` to the genre's own policy
+   moves the section-0 events of **0 of 115** anchors, because they were already
+   moving — `blues` section 0 renders **8 grace-marked notes** with the field
+   absent. `performance.orn` is the HAND's slot (a policy a document may state
+   that its basis does not), which is exactly what `document.js:292`'s own
+   comment says it is.
+
+   **THE LESSON, AND IT COST TWO ENTRIES ON THIS LIST.** "N anchors declare it
+   and 0 records carry it" is not a measurement of arrival — it is a
+   measurement of REPETITION, and under a basis spread the two are unrelated.
+   Every future declared-but-never-arriving claim on this list must be taken at
+   the rendered events, the way `test/bass-grid.test.js` takes item 5's.
 7. **[§4·9] The theme composer and the solo ladder.** `ideas-kit.js` is a second
    material model beside the hand-written grid; D5 uses it to WRITE cells,
    wiring it as an editable surface is a slice of its own.
@@ -976,6 +1011,48 @@ sight.
     12-TET anchors are withdrawn because `atlas-land.js` bakes physical land
     only. One re-bake unblocks them; the gate that catches a city in the sea is
     the same gate that refuses to let them in.
+27. **[NEW 2026-09-01] THE ARRIVAL SWEEP, and the shortlist it printed.** Item
+    5 was found by hand and items 5 and 6 between them proved that counting
+    which records REPEAT a field says nothing about whether it arrives. So the
+    question was asked of every field at once: for each of the ~54 things a
+    genre may declare, delete it from the object `document.js toGenre` hands
+    the kernel and re-render — `K.render`, `K.bass`, `K.drums` — on **every one
+    of the 387 anchors that declares it**. A field that changes no note on any
+    anchor is not reaching the music. The run is
+    `test/_arrival-sweep.cjs` — a PROBE and not a gate, which is what this
+    directory's `_` prefix means — ~6 minutes, pure node, and it re-derives `bassGrid`'s 19-of-22 from scratch, which is the
+    calibration that makes the rest of the column worth reading.
+
+    **THE SWEEP IS A SCREEN, NOT A VERDICT**, and it must be read with its
+    three limits in hand: it renders **section 0 only**, at **seed 1**, and it
+    reads **NOTES only**. So `bpm`, `tone`, `instr`, `synth`, `mix`, `fx`,
+    `words`, `plan`, `realize`, `family`, `near`, `wants` all print 0 and are
+    all innocent — they are sound and casting, and this instrument cannot hear
+    them. `intro` (65) and `instrumental` (53) print 0 for the section-0 limit:
+    the kernel's `intro()`/`outro()` run at section EDGES.
+
+    What is left after those are set aside is the shortlist, and every line of
+    it is a claim to be re-measured one at a time before anything is touched:
+
+    | field | declares | moves a note on | the suspicion |
+    |---|---|---|---|
+    | `seqArp` | 13 | **0** | an arpeggiator setting that reached nothing at section 0 |
+    | `arpAlways` | 1 | **0** | same family, one anchor |
+    | `progFamily` | 2 | **0** | two anchors, no effect |
+    | `paces` | 3 | **0** | |
+    | `drops` | 1 | **0** | |
+    | `incMode` / `incClamp` | 9 / 30 | **0** | already confessed: `askable.js` says "nothing in this box writes `inc`" |
+    | `maxHold` | 343 | 2 | declared by nearly everything, bites almost nowhere |
+    | `roots` | 248 | 15 | |
+    | `ghost` | 4 | 2 | |
+    | `artic` | 349 | 81 | |
+    | `phrase` | 359 | 92 | |
+    | `orn` | 115 | 92 | **healthy** — item 6's proof, and the calibration for this column's high end |
+
+    `maxHold` is the one to take first: 343 anchors declare it and two of them
+    can tell. That is either a field doing nothing or a field doing something
+    only under conditions section 0 never reaches, and the difference is one
+    afternoon's measurement rather than an argument.
 
 ---
 

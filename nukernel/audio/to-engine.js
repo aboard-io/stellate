@@ -1800,6 +1800,142 @@ function recipeBase(chair, seat, lib, unrouted) {
     // state.foundSources; the parent ignores unknown recipe keys.
     const fid = String(seat.instr || "").replace(/^found:/, "");
     const RGY = G.__REGISTRY || {};
+
+    /* ---- THE COLLAGE CHOIR (2026-09-01) ---------------------------------
+       Paul: "build the collage choir." The ask behind it is a `wants` line
+       three rows in this catalogue have carried since they were written —
+       skinnypuppy's *"the sample collage a tape-splice record is made of"* —
+       and the measurement that made it a job: **only 4 anchors of 387 seat a
+       `found:` chair at all** (bigbeat, industrialbreaks, skinnypuppy,
+       tapemusic) and every one of them seats exactly ONE recording, on one
+       chair, playing the line. One astronaut is not a collage.
+
+       A COLLAGE IS NOT A NEW ENGINE, IT IS THE ZONE ARRAY USED AS INTENDED.
+       The branch below already turns a found id into a sampler unit; its
+       `zones` is an array and has only ever held one entry. Seat a chair on
+       `found:collage:<pool>` and it holds the WHOLE POOL — the keyboard is
+       cut into as many bands as the pool has members, each band a different
+       recording. So the note the phrase writes chooses WHICH VOICE SPEAKS,
+       and a line that moves is a line that splices. That is what a tape
+       collage is: the same performance, re-cut, one fragment per edit.
+
+       ROOT = THE BAND'S OWN CENTRE, which is the point of doing it this way
+       rather than pitching one clip around. A found recording repitched two
+       octaves is a chipmunk; a recording that plays at its own speed in the
+       middle of its band is a voice. The register fold and rateFor's +16 st
+       cap still apply at the edges, honestly.
+
+       THE POOL IS THE REGISTRY'S OWN (`SOURCE_POOLS`), never a list typed
+       here — the same law the kit sources are read under. A pool name that
+       does not resolve, or resolves to rows the crate does not have, falls
+       through to `unrouted` and says so, rather than seating a silent chair. */
+    const oneSrc = (id) => {
+      const row = (RGY.SOURCES || {})[id] || (RGY.SAMPLES || {})[id];
+      if (!row) return null;
+      const bed = !!(RGY.SOURCES || {})[id];
+      const localBed = !row.file && /^[^:]*$/.test(row.url || ":");
+      return { bed, row, src: { id, label: row.label || id,
+        url: localBed ? "" : (row.url || ""),
+        ...(row.file ? { samplePath: "found/samples/" + row.file,
+                         kind: row.kind, durSec: row.durSec } : {}),
+        ...(localBed ? { samplePath: row.url } : {}),
+        vol: 0, pitch: 1, stretch: 0.5, cutoff: 18000 } };
+    };
+    const cm = /^collage(?::(.+))?$/.exec(fid);
+    if (cm) {
+      const poolName = cm[1] || "vocal_stab";
+      /* LOCAL ROWS ONLY, AND THIS RAIL IS NOT OPTIONAL (2026-09-01). Most of
+         the crate's SOURCES rows carry an archive.org address, and this page
+         is served cross-origin-isolated (COEP require-corp) precisely so the
+         ring engine gets SharedArrayBuffer — which means a remote row without
+         CORP cannot be fetched at all. The first build of this branch pointed
+         at the 24-row `voices` pool and **20 of its 24 rows were remote**: a
+         chair seated on twenty recordings that can never decode is a silent
+         chair, which is this box's characteristic bug and the exact failure
+         `tapemusic` already shipped once (-64.1 dBFS, its three recordings
+         contributing nothing). So the pool is filtered to what can sound
+         before a zone is built, and if that leaves nothing the chair refuses
+         in writing rather than seating silence. `vocal_stab` is 5/5 local. */
+      const isLocal = (m) => !!(m.row.file) || /^[^:]*$/.test(m.row.url || ":");
+      const all = ((RGY.SOURCE_POOLS || {})[poolName] || [])
+        .map((id) => oneSrc(id)).filter(Boolean);
+      const members = all.filter(isLocal);
+      if (all.length && members.length < all.length)
+        unrouted.push({ what: "instrument:" + seat.instr,
+          why: "collage pool \"" + poolName + "\" dropped " + (all.length - members.length) +
+               " of " + all.length + " rows: remote urls cannot decode under COEP", chair });
+      if (members.length) {
+        /* THE BANDS SIT WHERE THE LINE ACTUALLY PLAYS, and this is the whole
+           difference between a collage and a gimmick. Cutting 0..127 into N
+           equal bands puts a 24-row pool at five semitones each — and a
+           counter line lives in about two octaves, so it would only ever
+           reach four of the twenty-four recordings and the other twenty would
+           be dead weight the page had loaded. Measured on the first build of
+           this branch: `vx_timelady` rooted at MIDI 2, `vx_wwvh` at 8.
+           So the pool is laid over the PLAYING WINDOW (MIDI 42..89, a shade
+           under four octaves), which puts a 24-row pool at two semitones a
+           band — nearly every step of a phrase is a different voice, which is
+           the splice. The outer zones stretch to the keyboard's ends so a
+           stray octave still speaks rather than falling into no zone. */
+        /* ONE RECORDING PER SEMITONE, ROOTED ON ITS OWN KEY. Two earlier
+           layouts were measured on the deployed page and both were wrong, in
+           the same direction:
+             · 24 bands over the whole keyboard (5 semitones each) — the chair
+               plays MIDI 51..58, so it reached FOUR of the twenty-four and
+               `vx_timelady` was rooted at MIDI 2.
+             · 24 bands over a four-octave window (2 semitones each) — five of
+               twenty-four.
+           The chair's measured span is EIGHT SEMITONES, so no layout wider
+           than one-per-semitone can reach more than eight recordings, and the
+           honest grain is therefore the smallest one a zone table can express:
+           a semitone. Every distinct pitch the phrase writes is a different
+           voice, which is the splice; a repeated pitch is the same voice,
+           which is what a tape loop is.
+           ROOT = THE ZONE'S OWN KEY, so a found recording inside the window
+           plays at EXACTLY natural speed and is never repitched at all. That
+           matters more here than anywhere else in the box: these are speaking
+           voices and a numbers station transposed a fifth is a cartoon.
+           CENTRED ON MIDI 54, which is where the counter chair actually sits
+           (measured 51..58 on skinnypuppy). It is a constant because the
+           recipe cannot see the phrase; the outer two zones stretch to the
+           keyboard's ends so nothing falls into silence. */
+        /* THE POOL SPREADS OVER THE LINE'S OWN SPAN — measured, not assumed:
+           skinnypuppy's counter chair plays MIDI 51..58 and writes FIVE
+           distinct pitches. Ten semitones is that span with a little room, so
+           the band is `10 / n` wide and never narrower than a semitone (which
+           is all a zone table can express). A five-row pool gets two semitones
+           a band and the phrase reaches all five; a twenty-four-row pool gets
+           one and the phrase reaches as many as it has distinct pitches. One
+           rule, both ends.
+           A FIXED BAND OF ONE SEMITONE WAS THE VERSION BEFORE THIS and it
+           measured 3 of 5: the two outer zones stretch to the keyboard's ends
+           so nothing falls silent, and with a ten-semitone line against a
+           five-semitone window that stretch swallowed both edges of the
+           phrase. The window has to be at least as wide as the line.
+           ROOT IS THE BAND'S CENTRE, so a speaking voice is never repitched
+           by more than half a band — these are numbers stations and Apollo
+           transmissions, and a transposed voice is a cartoon. */
+        const n = members.length;
+        const width = Math.max(1, Math.round(10 / n));
+        const LO = 54 - ((n * width) >> 1);
+        const zones = members.map((mem, i) => {
+          const lo = LO + i * width, hi = lo + width - 1;
+          return { srcId: mem.src.id, root: lo + (width >> 1),
+                   lo: i === 0 ? 0 : lo, hi: i === n - 1 ? 127 : hi,
+                   ...(mem.bed ? { loop: 1, loopa: 0, loopb: 1 } : {}) };
+        });
+        return { role, m: { ...tone, model: "sampler",
+            sampler: { id: "found:collage:" + poolName, sr: 44100, zones },
+            // AN ARRAY, and the two push sites below normalise — a collage is
+            // the first recipe in this file that owns more than one file.
+            foundSrc: members.map((mem) => mem.src) },
+          source: "found:collage:" + poolName };
+      }
+      unrouted.push({ what: "instrument:" + seat.instr,
+                      why: "collage pool \"" + poolName + "\" is empty or unknown", chair });
+      return { role, m: { ...tone }, source: "unrouted" };
+    }
+
     const frow = (RGY.SOURCES || {})[fid] || (RGY.SAMPLES || {})[fid];
     if (frow) {
       const bed = !!(RGY.SOURCES || {})[fid];
@@ -2246,12 +2382,15 @@ export function toEngine(plan, deps) {
   // in it, and an id absent at first ask would be silent for the session).
   // vol 0: the file arrives as a sampler ZONE, never as a bed behind the
   // record. No found chairs => no push => state byte-identical.
-  for (const c of chairs.values())
-    if (c.m && c.m.foundSrc && !state.foundSources.some((s) => s.id === c.m.foundSrc.id))
-      state.foundSources.push(c.m.foundSrc);
-  if (bassSeat && bassSeat.m && bassSeat.m.foundSrc
-      && !state.foundSources.some((s) => s.id === bassSeat.m.foundSrc.id))
-    state.foundSources.push(bassSeat.m.foundSrc);
+  // ...AND A RECIPE MAY OWN MORE THAN ONE FILE (2026-09-01, the collage
+  // choir): `foundSrc` is one entry for a single found chair and an ARRAY for
+  // a collage, so both push sites read it through the same normaliser. A
+  // single entry takes the identical path it always did.
+  const srcList = (m) => (m && m.foundSrc ? [].concat(m.foundSrc) : []);
+  const pushSrc = (f) => { if (f && f.id && !state.foundSources.some((s) => s.id === f.id))
+                             state.foundSources.push(f); };
+  for (const c of chairs.values()) srcList(c.m).forEach(pushSrc);
+  if (bassSeat) srcList(bassSeat.m).forEach(pushSrc);
 
   // ---- 6. the unit table ---------------------------------------------------
   // The parent builds the whole table (drums, the perc lane, stab, sfx, the
@@ -2343,11 +2482,14 @@ export function toEngine(plan, deps) {
      "declared but never arriving" exactly. */
   {
     const have = new Set((state.foundSources || []).map((s2) => s2.id));
+    // one entry or an array — see the normaliser above; the collage chair is
+    // the reason this takes a list.
     const add = (m) => {
-      const f = m && m.foundSrc;
-      if (!f || !f.id || have.has(f.id)) return;
-      have.add(f.id);
-      state.foundSources.push(f);
+      for (const f of (m && m.foundSrc ? [].concat(m.foundSrc) : [])) {
+        if (!f || !f.id || have.has(f.id)) continue;
+        have.add(f.id);
+        state.foundSources.push(f);
+      }
     };
     for (const c of chairs.values()) add(c.m);
     if (bassSeat) add(bassSeat.m);
