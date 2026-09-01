@@ -455,20 +455,43 @@ same commit. What lands:
 
 ### 2.12 Screensaver — the aliens dance
 
+> **REVERSED 2026-09-01, later the same evening, BEFORE any dancer was built.**
+> The paragraph below first said "drawn on the same 2D canvas — no three.js".
+> Paul, on reading it: *"Why not three js? It's fine. Don't reinvent."* So:
+> **the real aliens come back.** THIS PARAGRAPH OVERRIDES ANY AGENT PROMPT
+> THAT STILL SAYS 2D. The creatures are `app/starcruise/alien.js` (2465
+> lines), `traits.js`, `geom.js`, `scene.js`'s dancer ring and `bridge.js`'s
+> loudness/onset plan at commit **`f0f9d89`** (`git show f0f9d89:app/starcruise/alien.js`
+> etc. — deleted by `4a4d730`), with `vendor/three/three.module.min.js` +
+> `MarchingCubes.js` + LICENSE re-vendored from the same commit (NOTICE gets
+> its three.js row back). Port, do not rewrite: put the creature files under
+> `nukernel/ui/starcruise/` unchanged where possible, `import()` three.js
+> and the creature module lazily INSIDE `mountScreensaver` (never at module
+> scope; the mount stays synchronous and returns a stop() that cancels a
+> pending import — the `starcruise-load.js` single-flight pattern), and
+> replace `traitsFromGenre`'s missing `GenreVerifier.features()` with a
+> `traitsFromDoc(doc, GENRES[doc.basis])` shim that fills the TRAITS shape
+> (`groove:{bounce,sway,headbob,energy}` is all the dancer branch reads) from
+> the genre row's kit/bpm/stress/swing/touch. The screensaver-lazy gate's S6
+> offline regex is widened so a `.js` import is COUNTED and then the three
+> module files are named as the sanctioned exception (they are local files,
+> not foreign requests — the offline law is about the wire, and `vendor/`
+> is on the disk); S7 launches chromium with the swiftshader flags the old
+> `alien-dancer.test.js` used. The rest of the contract below stands.
+
 `ui/screensaver.js` keeps its contract (synchronous mount → `stop()`, the
-`.nu-saver-canvas`, `__saverFrames`, `__saverDrift` as a growing number,
-park-on-`data-off`, zero requests, same-record-same-picture) and replaces
-the wander with a DANCE FLOOR drawn on the same 2D canvas — no three.js (the
-offline law stands; the 2026-08-20 grave stays shut for the 3D creatures, and
-this is said in the file). The troupe is dealt from `ihash(doc.basis)`: one
-alien per band member (its category colour, a body superellipse, two eyes,
-antennae, arms and legs as bent lines, a mouth), plus 0..4 extras by energy.
-Each frame reads `CTX.transport()` for the beat (position, never a clock)
-and a per-bar loudness + per-member onset table derived ONCE per document
-from `songBars` (the old bridge's 30 lines, re-derived over `ev` by kind).
-Quiet = each on its own phase; loud = the troupe locks. A member's alien hops
-on ITS onsets and sways otherwise; the stars stay, faint, behind. Stopped =
-held, shimmering.
+`.nu-saver-canvas` (now a WebGL canvas), `__saverFrames`, `__saverDrift` as a
+growing number, park-on-`data-off` incl. disposing the renderer/geometries,
+same-record-same-troupe) and replaces the wander with the starcruise DANCE
+FLOOR. The troupe is dealt from `ihash(doc.basis)`: one alien per band
+member (category colour where the creature's material allows), plus 0..4
+extras by energy (the old `traits.js:611-620` gate). Each frame reads
+`CTX.transport()` for the beat (position, never a clock) and a per-bar
+loudness + per-member onset table derived ONCE per document from `songBars`
+(the old `bridge.js:167 buildEventPlan`, re-derived over `ev` by kind).
+Quiet = each on its own phase; loud = the troupe locks (the `alien.js:2038`
+groove block, verbatim). A member's alien hops on ITS onsets and sways
+otherwise; the stars may stay, faint, behind. Stopped = held, shimmering.
 
 ### 2.13 Genre list, name, and arrival
 
