@@ -139,6 +139,55 @@
        the `seq` kind's cell back to `sixteenths` AFTER this row is spread, so
        an anchor's idiom cannot reach the sequencer. The instruction "don't
        lose the arps" is enforced by the same line that made them sixteenths. */
+    /* THE TEN NAMED ACTS GET IDIOMS, 2026-09-01 — and this is a REGRESSION I
+       caused, reported by Paul as "The 'do do dooo' phrase is back everywhere".
+       He is describing `three`, which is g16(0, 2, 4): 1010100000000000, three
+       notes at the top of the bar and then silence. It is the FAMILY DEFAULT,
+       so any anchor without its own row takes it — and I shipped ten named
+       bands last round having written an idiom for exactly one of them. All
+       ten resolved to cell `three`, contour `arch`. Ten different acts, one
+       figure. Measured: the catalogue went from 120 rows on `three` to 129,
+       and the nine are mine.
+       (The other 120 predate this round and are NOT touched here: changing a
+       family default is a catalogue-wide sound change and belongs to its own
+       measured round, not to a fix for a bug I introduced.) */
+    // OK Computer's own gesture: a long sung line falling over a slow descent.
+    // `long` is two notes a bar — the sparsest thing here — and `fall` is what
+    // makes it melancholy rather than merely slow.
+    radiohead:    { cell: "long",   contour: "fall",   land: "root",  sent: "hold" },
+    // the jangle: continuous eighths that never stop and never resolve upward,
+    // which is what a guitar figure over a dance floor has to do
+    stoneroses:   { cell: "even",   contour: "zig",    land: "fifth", len: "four" },
+    // a McCartney tune is a SUNG EIGHT with a pickup into the bar and a landing
+    // on the third — the warm note, not the plain one
+    wings:        { cell: "pickup", contour: "arch",   land: "third", len: "eight" },
+    // a machine record chopped into an insistent figure; `insist` says one note
+    // and then moves, which is the tape-splice gesture in a rhythm
+    skinnypuppy:  { cell: "riff",   contour: "insist", land: "root" },
+    // early Ministry is a SYNTH-POP record, and it is separated from
+    // bronskibeat (which also runs even eighths) by where it LANDS: this one
+    // arches back to the root like the pop song it was sold as, where the
+    // Brixton record climbs to the fifth and stays up there.
+    ministrysynth:{ cell: "even",   contour: "arch",   land: "root" },
+    // one long note and then a run — the widest melodic gesture in this table,
+    // for the singer with the widest range in it
+    katebush:     { cell: "hang",   contour: "arch",   land: "third", len: "eight" },
+    // the rhythm-first record: `push` puts every onset OFF the beat, which is
+    // what a song built on its drums rather than its chords sounds like
+    petergabriel: { cell: "push",   contour: "hover",  land: "root" },
+    // long ornamented lines over a modal backing. SHARES `long` with radiohead
+    // and is separated on the axis that actually differs: a tarab phrase is
+    // EIGHT bars and hovers around its tonic rather than falling away from it,
+    // where OK Computer's line is short and descends. Same cell, different
+    // music, and the row says which axis carries the difference.
+    fairuz:       { cell: "long",   contour: "hover",  land: "root",
+                    len: "eight",   sent: "hold" },
+    // falsetto over a four-on-the-floor: eighths, climbing, landing on the
+    // fifth so it never settles
+    bronskibeat:  { cell: "even",   contour: "rise",   land: "fifth" },
+    // the walk up to the beat is OMD's own figure — a plain tune approaching
+    // its note rather than arriving on it
+    omd:          { cell: "walkup", contour: "rise",   land: "root" },
     younggalaxy: { cell: "long", contour: "hover", land: "root", sent: "hold" },
     punk:      { cell: "even",   contour: "insist", land: "root",    len: "two" },
     // a sung line that warms on the third, entering before the bar

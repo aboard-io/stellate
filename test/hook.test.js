@@ -161,12 +161,19 @@ ok("iranpop: 10 rewrites, >= 8 distinct hooks and >= 5 distinct rhythms", () => 
 /* ...AND THE HEARTH-AND-SCREEN ROUND ADDED TWO (2026-08-30), both predicted
    by the round itself, both long-cell: seannos (Joe Heaney's unmetered line)
    and miamivice (the mood synth is long-cell country, as the ask said). */
+/* 26 -> 28, 2026-09-01, MEASURED and not guessed: `radiohead` and `fairuz`
+   joined when the ten named acts got idioms of their own. Both take a two-
+   onset figure — Radiohead's long falling line and Fairuz's long hovering one
+   — and a hook with two onsets has no rhythm left to vary, which is exactly
+   the property this list records. Measured the way the gate measures: eight
+   seeds each, the document's own `play` string, and only these two changed.
+   Nothing fell OUT of the list, which is the other half of the check. */
 const FROZEN_RHYTHM = ["ambient", "arabesk", "cemilbey", "chopped", "doom",
                        "dreampop", "drone", "dub", "dubstep", "enka",
-                       "gagaku", "gothicrock", "gqom", "hohlefels", "hurrian",
-                       "kruderdorfmeister", "lamb", "miamivice", "modaljazz",
-                       "nordicjazz", "psychrock", "satie", "seannos", "tricky",
-                       "triphop", "witchhouse"];
+                       "fairuz", "gagaku", "gothicrock", "gqom", "hohlefels",
+                       "hurrian", "kruderdorfmeister", "lamb", "miamivice",
+                       "modaljazz", "nordicjazz", "psychrock", "radiohead",
+                       "satie", "seannos", "tricky", "triphop", "witchhouse"];
 ok("catalog: hook rhythm and degrees vary at nearly every anchor", () => {
   let rv = 0, dv = 0, kv = 0; const frozen = [];
   for (const g of ANCHORS) {
