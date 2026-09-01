@@ -1003,6 +1003,17 @@ let ATLAS = null;
 
 const CTX = {
   doc: () => DOC,
+  /* THE POSITION FEED, HANDED TO A VIEW AS A READING (2026-09-01). Paul:
+     "Video shouldn't play unless music is playing I think there's a lot to
+     check when it comes to sync." He is right twice: the Video deck was
+     free-running on performance.now(), so it played with the transport stopped
+     and its "bar 3" had no relationship to the record's bar 3.
+     This is the same shape the board's meters already use — `atStep` is the
+     absolute step the clock last announced and `playing` is the transport's
+     own flag, so the view READS the position and never installs a clock of its
+     own. That rule is written at the top of this file and the video deck was
+     the one surface breaking it. */
+  transport: () => ({ playing, atStep, spb: scoreSPB() }),
   changed: () => changed(),
   redraw: () => draw(),
   section: (parent, id, title) => axis(parent, id, title),

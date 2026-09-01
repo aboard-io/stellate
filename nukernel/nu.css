@@ -4358,8 +4358,17 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
 
 /* the stage is what goes fullscreen, so the controls stay reachable inside it */
 .nu-video-stage { position: relative; background: #000; line-height: 0; }
-.nu-video-stage:fullscreen { display: flex; align-items: center; justify-content: center; }
-.nu-video-stage:fullscreen .nu-video-canvas { inline-size: auto; block-size: 100vh; }
+/* both spellings: Safari needs the -webkit- pseudo-class, and a selector list
+   containing one it does not know would drop the WHOLE rule, so they are
+   written as separate rules on purpose */
+.nu-video-stage:fullscreen { display: flex; align-items: center; justify-content: center;
+  inline-size: 100vw; block-size: 100vh; }
+.nu-video-stage:-webkit-full-screen { display: flex; align-items: center;
+  justify-content: center; inline-size: 100vw; block-size: 100vh; }
+.nu-video-stage:fullscreen .nu-video-canvas {
+  inline-size: auto; block-size: auto; max-inline-size: 100vw; max-block-size: 100vh; }
+.nu-video-stage:-webkit-full-screen .nu-video-canvas {
+  inline-size: auto; block-size: auto; max-inline-size: 100vw; max-block-size: 100vh; }
 .nu-video-controls { display: flex; gap: .4rem; }
 .nu-video-controls button {
   font: inherit; font-size: .78rem; padding: .2rem .6rem;

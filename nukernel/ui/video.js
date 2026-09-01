@@ -168,10 +168,26 @@ export function mountVideo(host, CTX) {
   let paused = false;
   const bPause = mk("pause", () => { paused = !paused; bPause.textContent = paused ? "play" : "pause"; });
   mk("cut", () => { cur = pick((Math.random() * 1e6) | 0); loadInto(vids[slot], cur); });
-  mk("full screen", () => {
-    if (document.fullscreenElement) document.exitFullscreen();
-    else if (stage.requestFullscreen) stage.requestFullscreen();
-  });
+  /* FULL SCREEN, WITH THE WEBKIT SPELLINGS (2026-09-01). Paul: "Full screen
+     does nothing." Measured in Chromium it worked — requestFullscreen resolved
+     and document.fullscreenElement was set — which is exactly why the report
+     mattered: SAFARI does not implement the unprefixed call on a plain element
+     and needs `webkitRequestFullscreen`, so the button was a no-op there and
+     fine everywhere I was testing. Both spellings, both directions, and a
+     `<video>` fallback for iOS, which refuses fullscreen on anything but a
+     media element. */
+  const goFull = () => {
+    const d = document;
+    const on = d.fullscreenElement || d.webkitFullscreenElement;
+    if (on) { (d.exitFullscreen || d.webkitExitFullscreen || (() => {})).call(d); return; }
+    const req = stage.requestFullscreen || stage.webkitRequestFullscreen ||
+                stage.webkitRequestFullScreen || stage.msRequestFullscreen;
+    if (req) { try { req.call(stage); return; } catch {} }
+    // iOS: only a media element may go fullscreen at all
+    const v = vids[slot];
+    if (v && v.webkitEnterFullscreen) { try { v.webkitEnterFullscreen(); } catch {} }
+  };
+  mk("full screen", goFull);
   wrap.appendChild(bar);
 
   const vids = [0, 1].map(() => { const v = document.createElement("video");
@@ -224,18 +240,54 @@ export function mountVideo(host, CTX) {
   const bars = [];                       // bar index -> section index
   secs.forEach((s, i) => { for (let b = 0; b < Math.max(1, s.bars || 4); b++) bars.push(i); });
   const totalBars = bars.length, total = totalBars * barSec;
-  const PRE = 0.35;                      // how long before the barline the fade starts
+  /* FOUR MEASURES A CLIP, TWO MEASURES OF FADE (2026-09-01). Paul, revising
+     his own earlier "something new every measure": "Video should change every
+     four measures. The video should fade far more slowly in it should take two
+     measures to fade in."
+     A bar-per-clip at 103bpm is a cut every 2.3 seconds, which is a strobe
+     rather than a film; four bars is a phrase, and it is also the length of
+     the shortest section this box makes. The fade then occupies HALF the
+     block: the incoming clip starts rising two bars before the change and is
+     at full exactly on the downbeat of the new block — the same "100% on beat
+     one" rule as before, just over eight beats instead of a third of a second,
+     so the two pictures genuinely live together for a while. */
+  const BLOCK = 4;                       // bars per clip
+  const FADE_BARS = 2;                   // ...and how many of them the fade takes
 
-  const pick = (bar) => {
-    const h = ihash(salt + "/" + bar);
+  /* ONE EFFECT PER SONG (2026-09-01). Paul: "Pick one effect per song." Then,
+     of the per-bar cutting he had asked for an hour earlier: "I was wrong
+     about how jittery it needs to be."
+     So the LOOK is a property of the record — drawn once from the same salt as
+     everything else, so a given song always gets the same treatment and two
+     songs get different ones — and only the CLIP changes, every four bars. A
+     film that switches technique every few seconds is a demo reel; one that
+     holds a technique and changes its subject is a film. The nine modes are
+     still all reachable, just one per record rather than nine per minute. */
+  const songMode = MODES[(salt >>> 8) % MODES.length];
+  const songAmt = ((salt >>> 16) & 255) / 255;
+  const pick = (block) => {
+    const h = ihash(salt + "/" + block);
     return { clip: CLIPS[h % CLIPS.length],
-             mode: MODES[(h >>> 8) % MODES.length],
-             amt: ((h >>> 16) & 255) / 255,
+             mode: songMode,
+             amt: songAmt,
              inAt: (((h >>> 20) & 1023) / 1023) };
   };
 
+  /* THE RECORD'S CLOCK, NOT THE WALL'S (2026-09-01). Paul: "Video shouldn't
+     play unless music is playing I think there's a lot to check when it comes
+     to sync." Both halves were true. This loop ran on performance.now(), so it
+     cut bars with the transport stopped and its bar number was its own
+     invention. It now reads CTX.transport() — `atStep`, the absolute step the
+     clock last announced, and `playing` — which is the feed the board's meters
+     already use and the rule this file was breaking: a view reads the
+     position, it never keeps a clock.
+     STOPPED MEANS HELD, not black: the last frame stays up and the <video>
+     elements are paused, so the deck looks like a paused film rather than a
+     broken one. */
+  const readT = () => (CTX && CTX.transport ? CTX.transport()
+                                            : { playing: false, atStep: -1, spb: 16 });
   let nextBar = -1, cur = pick(0), incoming = null, slot = 0, raf = 0, dead = false;
-  const t0 = performance.now();
+  let wasPlaying = false;
 
   const loadInto = (v, choice) => {
     v.src = VIDEO_DIR + choice.clip.f;
@@ -249,22 +301,38 @@ export function mountVideo(host, CTX) {
   const frame = () => {
     if (dead) return;
     raf = requestAnimationFrame(frame);
-    if (paused) return;
-    const el = ((performance.now() - t0) / 1000) % total;
-    const bar = Math.floor(el / barSec);
-    const into = el - bar * barSec;
+    const T = readT();
+    const rolling = T.playing && T.atStep >= 0 && !paused;
+    if (!rolling) {
+      // hold: pause the sources once, leave the last frame on the canvas
+      if (wasPlaying) { vids.forEach((v) => v.pause()); wasPlaying = false; }
+      cap.textContent = T.playing ? "paused" : "stopped — press play";
+      return;
+    }
+    if (!wasPlaying) { vids.forEach((v) => v.play().catch(() => {})); wasPlaying = true; }
+    // THE BAR IS THE RECORD'S. atStep counts steps from the top of the song;
+    // spb is this record's own steps-per-bar (a waltz is not sixteen).
+    const spb = T.spb || 16;
+    const absBar = Math.floor(T.atStep / spb);
+    const bar = ((absBar % totalBars) + totalBars) % totalBars;
+    const into = ((T.atStep % spb) / spb) * barSec;     // seconds into this bar
+    const el = absBar * barSec + into;
+    // the BLOCK is what a clip lasts; the bar is only how we count toward it
+    const block = Math.floor(absBar / BLOCK);
+    const barsIntoBlock = (absBar % BLOCK) + into / barSec;
+    const barsToNext = BLOCK - barsIntoBlock;
 
-    // ARM THE NEXT BAR EARLY so its fade can be finished by the downbeat
-    if (into > barSec - PRE && nextBar !== bar + 1) {
-      nextBar = bar + 1;
-      incoming = pick(nextBar % totalBars);
+    // ARM THE NEXT BLOCK two bars early, so the fade has somewhere to run from
+    if (barsToNext <= FADE_BARS && nextBar !== block + 1) {
+      nextBar = block + 1;
+      incoming = pick(nextBar);
       loadInto(vids[1 - slot], incoming);
     }
-    if (nextBar === bar && incoming) { cur = incoming; incoming = null; slot = 1 - slot; }
+    if (nextBar === block && incoming) { cur = incoming; incoming = null; slot = 1 - slot; }
+    if (nextBar === -1) { nextBar = block; cur = pick(block); loadInto(vids[slot], cur); }
 
-    // 0 -> 1 across the PRE seconds BEFORE the barline; exactly 1 at the bar
-    const toNext = barSec - into;
-    const xfade = toNext < PRE ? 1 - (toNext / PRE) : 0;
+    // 0 -> 1 across the last two bars of the block; exactly 1 on the downbeat
+    const xfade = barsToNext <= FADE_BARS ? 1 - (barsToNext / FADE_BARS) : 0;
 
     const A = vids[slot], B = vids[1 - slot];
     if (A.readyState >= 2) {
@@ -297,8 +365,9 @@ export function mountVideo(host, CTX) {
 
     const si = bars[bar % totalBars];
     cells.forEach((li, k) => li.classList.toggle("on", k === si));
-    cap.textContent = "bar " + ((bar % totalBars) + 1) + "/" + totalBars + " · " +
-      (secs[si].role || "section") + " · " + cur.mode + " · " +
+    cap.textContent = "bar " + (bar + 1) + "/" + totalBars + " · " +
+      (secs[si].role || "section") + " · " + cur.mode +
+      (xfade > 0 ? " → " + Math.round(xfade * 100) + "%" : "") + " · " +
       cur.clip.f.replace(/\.mp4$/, "");
   };
   raf = requestAnimationFrame(frame);
