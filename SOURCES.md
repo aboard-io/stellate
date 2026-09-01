@@ -268,10 +268,28 @@ sources in `engine/genre-kernel.js`, and re-render.
 
 # Found-video sources & attribution
 
-> **THE VIDEO LAYER IS GONE — THE LEDGER STAYS, DELIBERATELY.** No video is
-> fetched, cached, played or deployed: nothing in the app holds a `<video>`
-> element, and `tools/deploy/deploy-stellate.sh` excludes `found/video/`
-> outright. Every video section in this file (this one, the *library* section,
+> **REVERSED 2026-09-01 — THE VIDEO LAYER IS BACK, AND THE LEDGER MATTERS MORE
+> THAN IT DID.** `nukernel/ui/video.js` (the Video deck) plays these clips from
+> `/found/video/`, cut one per section against the record's own form. It shipped
+> first with the `av_` tier alone — the 1920s–30s abstract film listed below as
+> PD by age and CC Public Domain Mark 1.0 — and was then widened to the whole
+> crate. Paul, that day: *"Serve everything. I take responsibility for
+> copyright."* That is the operator's decision, recorded here with his words and
+> the date, because this ledger is the only place the obligation, the exposure
+> and now the decision are written down.
+>
+> **Nothing below has been softened or removed.** The tiering still says what it
+> said: most of this material is tier-2/tier-3, "none stated" licences on
+> LaserDisc rips, and a rights holder who objects can still be answered from
+> these rows — which is the whole reason they were kept when the layer was
+> withdrawn. An attribution ledger that shrinks when the policy changes is not a
+> ledger, and that holds in both directions.
+>
+> *The paragraph this replaces, kept because this repo does not delete a claim
+> it reverses:* "**THE VIDEO LAYER IS GONE — THE LEDGER STAYS, DELIBERATELY.**
+> No video is fetched, cached, played or deployed: nothing in the app holds a
+> `<video>` element, and `tools/deploy/deploy-stellate.sh` excludes
+> `found/video/` outright." Every video section in this file (this one, the *library* section,
 > and "Streaming found-video sources" near the end) is retained as the
 > **attribution record of material this project did serve publicly**.
 >
