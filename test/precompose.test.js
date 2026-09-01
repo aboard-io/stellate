@@ -634,8 +634,14 @@ function sectionEvents(doc, i) {
      galaxie500 takes Boston, a dot the map already drew. Baked to 371 WHEN
      rows. `younggalaxy`'s generic shoegaze 0.2 edge was replaced the same day
      by the two acts its article actually names. */
-  ok("G0 the catalog is 377 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 377,
+  /* 377 -> 387, 2026-09-01: Paul's list of missing acts — radiohead,
+     stoneroses, wings, skinnypuppy, ministrysynth, katebush, petergabriel,
+     fairuz, bronskibeat, omd. Every place was checked in the ZIM (three of my
+     guesses were wrong) and every parent checked for being EARLIER than its
+     child; ministrysynth is the early era only, because the later ones were
+     already here as industrialmetal and waxtrax. */
+  ok("G0 the catalog is 387 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 387,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));

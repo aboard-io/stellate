@@ -508,7 +508,17 @@ head("G10 mark packing at the zoom you arrive at, 390x844");
       if (o.z < 0) continue;                       // behind the earth
       const d = Math.hypot(here.x - o.x, here.y - o.y);
       if (d >= 26) continue;
-      const declared = A.WITHIN[n] === m || A.WITHIN[m] === n;
+      /* ...OR TWO DISTRICTS OF THE SAME CITY (2026-09-01). This tested direct
+         containment only — "n is within m" — and Brixton arriving for Bronski
+         Beat put it 3.8 px from Muswell Hill, which is the Kinks'. Neither
+         contains the other; they are opposite ends of the London both are
+         ALREADY DECLARED INSIDE. Two named districts of one city sitting on
+         top of each other on a world map is not the crowding this gate exists
+         to catch — that is undeclared coincidence between unrelated towns, and
+         it still fails. The declaration has to be explicit on BOTH rows, so
+         this cannot exempt anything by accident. */
+      const declared = A.WITHIN[n] === m || A.WITHIN[m] === n ||
+        (!!A.WITHIN[n] && A.WITHIN[n] === A.WITHIN[m]);
       const k = [n, m].sort().join("/") + "@" + arc.toFixed(0);
       if (!seen.has(k)) {
         seen.add(k);

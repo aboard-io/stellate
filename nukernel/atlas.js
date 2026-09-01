@@ -244,6 +244,16 @@
          "The band played gigs in Boston and New York City" — so the row takes
          Boston, a dot the map already draws. NO new North American place. */
     "Sutton Courtenay": [51.64, -1.28],
+    /* THREE DOTS FOR THE 2026-09-01 ROUND, and only three: of the six places
+       Paul's ten acts come from, Brixton measures 6 km from London and Meols
+       11 km from Liverpool, so both are the dot they sit inside rather than a
+       second name for it (the Cambridge/Boston ruling, applied again). And
+       Radiohead's own Abingdon lands 3 km from Sutton Courtenay above — which
+       is Slowdive's village — so that row takes Oxford, 12 km clear, rather
+       than wearing another band's town. */
+    "Oxford": [51.75, -1.26], "Vancouver": [49.28, -123.12],
+    "Brixton": [51.46, -0.11],
+    "Beirut": [33.89, 35.50],
     "Bray": [51.51, -0.70], "Sheffield": [53.38, -1.47],
     "Bucharest": [44.43, 26.10], "Maramureș": [47.67, 24.00],
     "Honolulu": [21.31, -157.86],
@@ -375,6 +385,16 @@
      (The alternative, moving a dot until a gate is happy, would be putting the
      Kinks somewhere they never lived.) */
   const WITHIN = {
+    // SUTTON COURTENAY IS IN OXFORD'S COUNTY, declared 2026-09-01 because G10
+    // measured the pair at 3.2 CSS px — well under its 8.5 floor — the moment
+    // Radiohead arrived. The two are 12 km apart in Oxfordshire: the village
+    // Slowdive recorded in and the county town Radiohead is filed under. This
+    // is the Muswell Hill case exactly, and declaring it is the honest answer
+    // where moving one of them would have been a lie about where a band is
+    // from. (Radiohead's own Abingdon is 3 km from the village and would have
+    // been worse; Oxford is the furthest TRUE dot available to that row.)
+    "Sutton Courtenay": "Oxford",
+    "Brixton": "London",            // a south London district; Bronski Beat's own
     "Muswell Hill": "London",       // a north London suburb; the Kinks' own
     "Harlem": "New York",           // uptown Manhattan
     "Greenwich Village": "New York",// lower Manhattan
@@ -702,6 +722,29 @@
     nwobhm:         { place: "London", year: 1980 },
     thrash:         { place: "San Francisco", year: 1983 },
     triphop:        { place: "Bristol", year: 1991 },
+    radiohead:      { place: "Oxford", year: 1997 },
+    // the album's own infobox: "Recorded June 1988 - February 1989". 1988 is
+    // when the record was made and Manchester|1989 was bleeptechno's key.
+    stoneroses:     { place: "Manchester", year: 1988 },
+    // Band on the Run was cut in LAGOS, which is the record's own place and
+    // frees London|1973 for spacerock, whose key it was.
+    wings:          { place: "Lagos", year: 1973 },
+    skinnypuppy:    { place: "Vancouver", year: 1986 },
+    ministrysynth:  { place: "Chicago", year: 1983 },
+    // Bexleyheath is in the historic county of KENT, which is her own origin
+    // and not a dodge: London|1985 was already synthduo's key.
+    katebush:       { place: "Kent", year: 1985 },
+    // the SOLO DEBUT (1977) rather than So (1986): "all the eras" starts
+    // there, and London|1986 was already sophistirock's key.
+    petergabriel:   { place: "London", year: 1977 },
+    fairuz:         { place: "Beirut", year: 1957 },
+    // BRIXTON, which is what the article actually says and what I should have
+    // written first. London|1984 is dreampop's key and London|1983 is
+    // eurythmics', and I moved this row's YEAR twice before noticing that the
+    // year was never the wrong part — the PLACE was. Brixton is declared
+    // within London below, the Muswell Hill case exactly.
+    bronskibeat:    { place: "Brixton", year: 1984 },
+    omd:            { place: "Liverpool", year: 1980 },
     chopped:        { place: "Houston", year: 1995 },
     synthwave:      { place: "Paris", year: 2010 },
     footwork:       { place: "Chicago", year: 2013 },
@@ -848,6 +891,7 @@
      alarm. */
   const REGIONS = {
     "Europe": ["Antwerp", "Barcelona", "Basildon", "Berlin", "Bristol",
+               "Oxford", "Brixton",
                "Cologne", "Crawley",
                "Dublin", "Düsseldorf", "Essex", "Florence", "Glasgow", "Guča",
                "Milan", "Munich", "Northampton", "Nuremberg",
@@ -916,7 +960,7 @@
                // COURTENAY, `slowdive`'s Oxfordshire studio village. Its
                // three refused siblings are in the PLACES ledger above.
                "Sutton Courtenay"],
-    "North America": ["Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
+    "North America": ["Vancouver", "Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
                       "Chicago", "Cincinnati", "Cleveland", "Detroit",
                       "Greenwich Village", "Harlem", "Clarksdale", "Kansas City", "Lafayette",
                       "Las Vegas", "Los Angeles", "Memphis", "Miami", "Nashville",
@@ -1013,7 +1057,7 @@
     // Córdoba one. No Garland argument is even needed here: the Hejaz is
     // the Middle East by every filing anyone has ever used, and the two
     // rows it parents are already in this row.
-    "Middle East": ["Baghdad", "Cairo", "Córdoba", "Istanbul", "Medina",
+    "Middle East": ["Beirut", "Baghdad", "Cairo", "Córdoba", "Istanbul", "Medina",
                     "Oran", "Oxyrhynchus", "Tehran", "Tetouan", "Ugarit",
                     "Ur"],
     "Central Asia": ["Kabul"],

@@ -2762,7 +2762,25 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
       fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0] },
-      tone: { wave: "sawtooth", cut: 1600, q: 1.6, atk: .02, rel: 1.6, gain: .26, verb: .8 },
+      /* DRENCHED, NOT GLOOPY (2026-09-01). Paul: "Shoegaze should be drenched
+         in delay and reverb but it just sounds kind of gloopy."
+
+         MEASURED FIRST, on the guitar chair: rev 0.37 and del 0.05 — five
+         hundredths of a delay on the genre whose whole sound is delay. What it
+         had instead was `rel: 1.6` and `verb: .8`, i.e. LENGTH ON EVERY VOICE'S
+         OWN TAIL. That is exactly the difference between drenched and gloopy: a
+         send puts every guitar in ONE room, where the reflections line up and
+         you still hear the pick; a long release per voice just smears each note
+         over the next one and nothing has an edge.
+
+         So the length moves to the sends — `drown` (0.9) of reverb and `wet`
+         (0.55) of echo on the LINE parts, which is both guitars — and `rel`
+         comes down to 0.7 so the attack survives to be washed. `verb` drops to
+         .55 because the room is now doing that job and two rooms is the gloop
+         again. It is the same lesson Young Galaxy taught three rounds ago,
+         applied to the genre that needs it most. */
+      tone: { wave: "sawtooth", cut: 1600, q: 1.6, atk: .02, rel: .7, gain: .26, verb: .55 },
+      mix: { line: { rev: "drown", echo: "wet" } },
       words: ["the tune", "the same tune a second up — the blur"],
       word: v => (v === 1 ? [transpose(1)] : []),
       fx: ["crunch", "chorus"],
@@ -17473,6 +17491,334 @@
                     : v === 3 ? [[keep(0, 8)], [keep(0, 8)], [keep(0, 4, 8)], [keep(0, 8)]][s % 4]
                     : [[split(4), fill(1)], [split(4), fill(1)],
                        [split(2), fill(1)], [split(4), fill(1)]][s % 4]),
+    },
+
+    /* ==================================================================
+       TEN NAMED ACTS, 2026-09-01 — Paul's list, verbatim: "We're missing
+       Radiohead ... Stone Roses ... Wings ... skinny puppy ... all the eras of
+       ministry ... Kate bush and all the eras of peter Gabriel ... fairuz ...
+       bronski beat and OMD."
+
+       EVERY PLACE WAS CHECKED IN THE ZIM AND THREE OF MY GUESSES WERE WRONG:
+       Radiohead is Abingdon (not Oxford), OMD is Meols on Merseyside (not
+       "Wirral"), Bronski Beat is Brixton (not "London" flatly). Then the DOTS
+       were measured against the map the way the Cambridge/Boston refusal was:
+       Abingdon lands 3 km from Sutton Courtenay — which is SLOWDIVE's dot,
+       added days ago — so Radiohead takes OXFORD at 12 km rather than wearing
+       another band's village; Brixton is 6 km from London and Meols 11 km from
+       Liverpool, so both take the dot they are inside. Only Vancouver (419 km
+       from Portland) and Beirut (192 km from Ugarit) are new geography.
+       Every parent below was checked for BEING EARLIER than its child. */
+
+    // RADIOHEAD — Oxford 1997: OK Computer. Paul names the span, "creep to kid
+    // a and esp karma police", and the anchor is the middle of it because that
+    // is where the two ends meet: a guitar band playing something with the
+    // harmony of a hymn and the arrangement of a machine. `ambient` is Kid A's
+    // side of the row and it is a real parent, not a nod — the record's own
+    // pull toward held electronic texture is why the band stopped sounding
+    // like its debut.
+    radiohead: {
+      label: "Oxford 1997", voices: 3, bars: 8, near: "shoegaze",
+      plan: "song", bpm: 91,
+      parents: { postpunk: 0.3, shoegaze: 0.25, ambient: 0.25, beatles: 0.2 },
+      wants: ["the piano-and-strings side the catalogue has no anchor for"],
+      instr: ["solo_vox", "clean_guitar", "warm_pad"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      roots: [0, 5, 3, 4], mode: MODES.aeolian,
+      scale: MODES.aeolian, diatonic: true,
+      artic: "tie", maxHold: 8,
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fx: ["echo"],
+      mix: { counter: { rev: "some", echo: "some" } },
+      tone: { wave: "triangle", cut: 1700, q: 1.4, atk: .02, rel: .8, gain: .26, verb: .5 },
+      words: ["the voice, high and plain", "the guitar, arpeggiating the changes",
+              "the pad, holding under it"],
+      word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], []][s % 4]
+                    : v === 1 ? [[], [rotate(2)], [], [drop(3)]][s % 4] : [drop(8)]),
+    },
+
+    // THE STONE ROSES — Manchester 1989, the debut (2 May 1989, per its own
+    // article). IT SHIPS BECAUSE IT IS EARLIER THAN THE ROOM IT MADE: madchester
+    // is Manchester 1990 in this table, and the maringa precedent says an
+    // ancestor must be measurably earlier. It is, by a year — so this is the
+    // record and that is the scene, and the edge runs the right way.
+    stoneroses: {
+      label: "Manchester 1988", voices: 3, bars: 8, near: "madchester",
+      plan: "song", bpm: 118,
+      parents: { psychrock: 0.35, postpunk: 0.35, house: 0.3 },
+      wants: [],
+      instr: ["solo_vox", "clean_guitar", "jazz_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 0 : 0),
+      realize: () => "line",
+      part: ["lead", "riff", "counter"],
+      roots: [0, 3, 5, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 5, bassStyle: "walk",
+      kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,1, 1,0,1,0, 1,0,1,1, 1,0,1,0] },
+      fx: ["chorus", "echo"],
+      tone: { wave: "triangle", cut: 2000, q: 1.2, atk: .01, rel: .6, gain: .27, verb: .45 },
+      words: ["the voice, half spoken", "the jangle, ringing over the beat",
+              "the second guitar, answering it"],
+      word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [], [transpose(2)]][s % 4]
+                    : v === 1 ? [fill(2)] : [[rotate(2)], [], [drop(3)], []][s % 4]),
+    },
+
+    // WINGS — London 1973, Band on the Run. The row exists because `beatles`
+    // (Liverpool 1962) has no CHILD in this table: everything downstream of it
+    // is a scene rather than the same writer carrying on. This is the one act
+    // that is literally the parent continued, which is why the weight on that
+    // edge is the heaviest here.
+    wings: {
+      label: "Lagos 1973", voices: 3, bars: 8, near: "beatles",
+      plan: "song", bpm: 116,
+      parents: { beatles: 0.6, rock: 0.25, countrypop: 0.15 },
+      wants: [],
+      instr: ["solo_vox", "crunch_guitar", "upright_piano"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "riff", "pad"],
+      roots: [0, 4, 5, 3], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 5,
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fx: ["chorus"],
+      tone: { wave: "triangle", cut: 2100, q: 1.0, atk: .015, rel: .7, gain: .27, verb: .35 },
+      words: ["the voice", "the guitar figure", "the piano under it"],
+      word: (v, s) => (v === 0 ? [[], [transpose(2)], [], [keep(0, 8)]][s % 4]
+                    : v === 1 ? [[], [rotate(2)], [], []][s % 4] : [drop(4)]),
+    },
+
+    // SKINNY PUPPY — Vancouver 1986, Mind: The Perpetual Intercourse. NOT a
+    // child of `ebm`, which is the obvious guess and is WRONG BY DATE: ebm is
+    // Chicago 1989 here, three years after this record. The parents are the
+    // ones that were actually available to it — the Wax Trax floor, post-punk,
+    // and the machine.
+    skinnypuppy: {
+      label: "Vancouver 1986", voices: 3, bars: 8, near: "waxtrax",
+      plan: "dance", bpm: 112,
+      parents: { waxtrax: 0.4, postpunk: 0.3, kraftwerk: 0.3 },
+      wants: ["the sample collage a tape-splice record is made of"],
+      instr: ["saw_wave", "metal_pad", "found:vox_d"],
+      drumkit: "tr808",
+      entry: () => 0, reg: v => (v === 0 ? 0 : v === 1 ? -1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["riff", "pad", "counter"],
+      roots: [0, 0, 3, 1], mode: MODES.phrygian,
+      scale: MODES.phrygian, harmony: "modal",
+      artic: "staccato", maxHold: 2, bassStyle: "sixteenths",
+      kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,1] },
+      fx: ["crunch", "echo"],
+      mix: { counter: { rev: "wet", echo: "wet" } },
+      tone: { wave: "sawtooth", cut: 1300, q: 3.0, atk: .003, rel: .3, gain: .27, verb: .5 },
+      words: ["the machine line", "the metal pad over it", "the voice, cut up"],
+      word: (v, s) => (v === 0 ? [[], [rotate(2)], [drop(3)], []][s % 4]
+                    : v === 1 ? [drop(8)] : [keep(0, 8)]),
+    },
+
+    // MINISTRY, THE FIRST ERA — Chicago 1983, With Sympathy. Paul: "all the
+    // eras of ministry". The LATER eras are already here and always were —
+    // `industrialmetal` (Chicago 1988) says Ministry in its own comment and
+    // `waxtrax` is the label they came through. What was missing is the era
+    // nobody expects: a synth-pop record, on Arista, that the band spent the
+    // rest of its life disowning. That is a different genre, so it is a
+    // different row, and the pair is the "all the eras" he asked for.
+    ministrysynth: {
+      label: "Chicago 1983", voices: 3, bars: 8, near: "synthpop",
+      plan: "song", bpm: 124,
+      parents: { synthpop: 0.5, newwave: 0.3, disco: 0.2 },
+      wants: [],
+      instr: ["solo_vox", "polysynth", "saw_wave"],
+      drumkit: "tr808",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? -1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "riff"],
+      roots: [0, 3, 5, 4], mode: MODES.aeolian,
+      scale: MODES.aeolian, diatonic: true,
+      artic: "staccato", maxHold: 3,
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fx: ["chorus", "echo"],
+      tone: { wave: "sawtooth", cut: 1900, q: 1.6, atk: .01, rel: .4, gain: .26, verb: .4 },
+      words: ["the voice, clean and English-sounding on purpose",
+              "the poly pad", "the sequenced line"],
+      word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], []][s % 4]
+                    : v === 1 ? [drop(8)] : [fill(2)]),
+    },
+
+    // KATE BUSH — London 1985, Hounds of Love (16 September 1985). The row is
+    // built on the thing that makes that record singular in this table: a POP
+    // song whose second side is a suite, sung at the top of a soprano's range
+    // over a drum sound borrowed from the machines. `ambient` is here for the
+    // side-two texture and `glam` for the theatre, which are the two ancestors
+    // this catalogue actually holds — it has no `artrock` row to point at,
+    // and that absence is named rather than papered over.
+    katebush: {
+      label: "Kent 1985", voices: 3, bars: 8, near: "dreampop",
+      plan: "arc", bpm: 108,
+      parents: { beatles: 0.3, glam: 0.3, ambient: 0.2, psychrock: 0.2 },
+      wants: ["an art-rock rung this table does not have"],
+      instr: ["solo_vox", "warm_pad", "ahh_choir"],
+      drumkit: "power",
+      entry: v => v, reg: v => (v === 0 ? 2 : v === 1 ? -1 : 1),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "lead"],
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "tie", maxHold: 9,
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             t: [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,1] },
+      fx: ["echo"],
+      mix: { lead: { rev: "wet", echo: "some" } },
+      tone: { wave: "triangle", cut: 2200, q: 1.2, atk: .03, rel: 1.0, gain: .26, verb: .6,
+              mouth: MOUTHS.dreamchoir },
+      words: ["the voice, at the top of its range", "the pad under it",
+              "the choir, answering"],
+      word: (v, s) => (v === 0 ? [[], [transpose(2)], [keep(0, 4, 8)], []][s % 4]
+                    : v === 1 ? [drop(8)] : [keep(0, 8)]),
+    },
+
+    // PETER GABRIEL — London 1986, So (19 May 1986). "All the eras" is two
+    // things and this table can only hold the second honestly: the Genesis era
+    // is a BAND and a different row's job, and there is no `prog` anchor here
+    // to hang it on, which is said in `wants` rather than fudged. What this row
+    // is, is the solo record where a rhythm section from outside the English
+    // tradition became the point — which is why the kit is the loud one and
+    // the parents are theatre and machine rather than folk.
+    petergabriel: {
+      label: "London 1977", voices: 3, bars: 8, near: "artrock",
+      plan: "song", bpm: 100,
+      parents: { glam: 0.3, rock: 0.3, kraftwerk: 0.2, ambient: 0.2 },
+      wants: ["a prog rung for the Genesis era, which this table has not got"],
+      instr: ["solo_vox", "polysynth", "slap_bass"],
+      drumkit: "power",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? -1 : -1),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "riff"],
+      roots: [0, 3, 4, 3], mode: MODES.mixo,
+      scale: MODES.mixo, diatonic: true,
+      artic: "legato", maxHold: 6,
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             t: [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,1,0] },
+      fx: ["echo"],
+      tone: { wave: "triangle", cut: 1900, q: 1.3, atk: .02, rel: .7, gain: .27, verb: .5 },
+      words: ["the voice", "the poly pad", "the bass figure"],
+      word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], []][s % 4]
+                    : v === 1 ? [drop(8)] : [[], [rotate(2)], [], [drop(3)]][s % 4]),
+    },
+
+    // FAIRUZ — Beirut 1957, the Baalbeck years. Her own article gives the
+    // genres as Arabic music, Lebanese music and TARAB, and years active from
+    // 1950 — so `tarab` (Cairo 1934) is a parent the record itself names, not
+    // one I inferred. The row is the Rahbani arrangement: a tarab voice over a
+    // written, orchestrated backing rather than a takht improvising under her,
+    // which is the whole difference between this and its parent.
+    fairuz: {
+      label: "Beirut 1957", voices: 3, bars: 8, near: "tarab",
+      plan: "arc", bpm: 92,
+      parents: { tarab: 0.6, muwashshah: 0.4 },
+      wants: [],
+      cannot: ["the Rahbani orchestration itself — strings and a written " +
+               "counter-line arranged bar by bar is a score, and this table " +
+               "seats players rather than writing parts for them",
+               "the oud's own voice — the catalogue's plucked-lute proxy is a " +
+               "nylon-string guitar, which is a fretted instrument where the " +
+               "oud is fretless, so every slide between two notes is lost"],
+      // `nylon_string_guitar` IS THE OUD HERE, and it is not my improvisation:
+      // tarab, muwashshah, taqsim and qiyan all seat the same id for the same
+      // instrument, so the proxy is the catalogue's own and this row does not
+      // get a private one. `oud` is not an id in this box — I wrote it, the
+      // check caught it, and the convention was already decided.
+      instr: ["solo_vox", "strings", "nylon_string_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "counter"],
+      roots: [0, 1, 0, 4], mode: MODES.phrygian,
+      scale: MODES.phrygian, harmony: "modal",
+      artic: "tie", maxHold: 8, orn: 0.35,
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0] },
+      fx: [],
+      tone: { wave: "triangle", cut: 2200, q: 1.1, atk: .04, rel: 1.0, gain: .26, verb: .45 },
+      words: ["the voice, ornamented", "the strings, written",
+              "the oud, answering the line"],
+      word: (v, s) => (v === 0 ? [[], [transpose(1)], [], [rotate(2)]][s % 4]
+                    : v === 1 ? [drop(8)] : [keep(0, 4, 8)]),
+    },
+
+    // BRONSKI BEAT — London 1984, The Age of Consent. The article puts the
+    // band in BRIXTON, which is 6 km from London's dot and therefore the same
+    // dot; the label keeps the city. The row's own fact is the falsetto over a
+    // four-on-the-floor built from a drum machine and a sequencer — a disco
+    // record made by three people, which is why `disco` carries real weight
+    // beside the synth-pop.
+    bronskibeat: {
+      label: "Brixton 1984", voices: 3, bars: 8, near: "synthpop",
+      plan: "dance", bpm: 126,
+      parents: { synthpop: 0.4, disco: 0.35, newwave: 0.25 },
+      wants: [],
+      instr: ["solo_vox", "polysynth", "saw_wave"],
+      drumkit: "tr909",
+      entry: () => 0, reg: v => (v === 0 ? 2 : v === 1 ? -1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "riff"],
+      roots: [0, 3, 5, 4], mode: MODES.aeolian,
+      scale: MODES.aeolian, diatonic: true,
+      artic: "staccato", maxHold: 3,
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      fx: ["echo"],
+      tone: { wave: "sawtooth", cut: 2100, q: 1.5, atk: .008, rel: .35, gain: .26, verb: .45,
+              mouth: MOUTHS.falsetto },
+      words: ["the falsetto", "the pad", "the sequencer"],
+      word: (v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], []][s % 4]
+                    : v === 1 ? [drop(8)] : [fill(2)]),
+    },
+
+    // OMD — Liverpool 1980, Organisation. The article's origin is MEOLS on
+    // Merseyside, 11 km from Liverpool's dot and therefore inside it; the
+    // label keeps the city the dot is named for. The row is the pair this
+    // catalogue was missing between `kraftwerk` and `synthpop`: a band who
+    // took the German machine and wrote pop songs on it a year before
+    // Basildon did.
+    omd: {
+      label: "Liverpool 1980", voices: 3, bars: 8, near: "synthpop",
+      plan: "song", bpm: 120,
+      parents: { kraftwerk: 0.45, roboticpop: 0.3, newwave: 0.25 },
+      wants: [],
+      instr: ["solo_vox", "polysynth", "saw_wave"],
+      drumkit: "cr78",
+      entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? -1 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad", "riff"],
+      roots: [0, 5, 3, 4], mode: MODES.aeolian,
+      scale: MODES.aeolian, diatonic: true,
+      artic: "legato", maxHold: 5,
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fx: ["chorus", "echo"],
+      tone: { wave: "sawtooth", cut: 1800, q: 1.4, atk: .02, rel: .6, gain: .26, verb: .5 },
+      words: ["the voice, plain and northern", "the pad", "the machine line"],
+      word: (v, s) => (v === 0 ? [[], [transpose(2)], [], [keep(0, 8)]][s % 4]
+                    : v === 1 ? [drop(8)] : [fill(2)]),
     },
 
     // DOOM — Stockholm 1986: Candlemass, Epicus Doomicus Metallicus —
