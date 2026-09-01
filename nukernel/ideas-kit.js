@@ -193,7 +193,20 @@
                   is what "tonally centered ... don't jump" asked for. What it
                   is not is static. The lesson is that "flatter" meant a
                   narrower RANGE, never fewer notes. */
-               f: (k) => (k % 48 === 47 ? 1 : [0, 2, 4, 2][k % 4]) },
+               /* UP, THEN DOWN — 2026-09-01. Paul: "The direction of the arps
+                  should change with chord changes. Up then down. There's too
+                  much lift everywhere and young galaxy is melancholic."
+                  [0,2,4,2] began EVERY cycle by rising, four times a bar, so
+                  the figure was all lift and never came home. Now the bar is
+                  two halves: the first eight steps climb the triad, the second
+                  eight fall through it and END ON THE ROOT. The progression
+                  puts one chord under each bar, so the direction turns over
+                  exactly where the harmony does — which is what he asked for —
+                  and the phrase resolves DOWNWARD, which is the melancholy.
+                  Still no octave and no ninth: the span is a fifth. */
+               f: (k) => (k % 48 === 47 ? 1
+                          : (k % 16) < 8 ? [0, 2, 4, 2][k % 4]
+                                         : [4, 2, 0, 2][k % 4]) },
     arpturn: { w: "turns through the chord to the ninth",
                // the long one: eight steps, so it never lines up with the bar
                // and takes three bars to come home. Berlin-school motion.

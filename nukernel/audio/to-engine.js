@@ -623,6 +623,24 @@ const PAGE_TRIM = {
      for the third instrument in a row, for the same reason. 3.5 is +10.9 dB,
      measured to land it beside the guitars where the Juno sat. */
   tb303:       3.5,
+  /* THE REST OF THE SYNTH WING, measured 2026-09-01 with the mute-complement,
+     one representative record each. This table had NO synth rows at all until
+     this week; these are the four remaining models that are actually seated
+     and could be measured on a LINE seat.
+         solina   newwave           0.10 dB   -11.95 vs band  -> 1.6  (+4.1 dB)
+         synclead techno            0.17 dB   -13.65          -> 1.9  (+5.6)
+         modeld   kraftwerk         0.06 dB   ~-17.3          -> 2.8  (+8.9)
+         casiocz  industrialmetal   0.02 dB   ~-18.2          -> 3.2  (+10.1)
+     Each lands near -8 vs band, where the guitars sit and where the three
+     synths trimmed earlier this week were put.
+     `ppg` AND `vp330` ARE NOT HERE, and that is deliberate: both are seated on
+     PAD chairs, which test/_chairtap.cjs only targets as line seats, so it
+     answered "no target chairs" for them. I am not writing a number I could
+     not measure — that is the whole discipline this week was about. */
+  solina:      1.6,
+  synclead:    1.9,
+  modeld:      2.8,
+  casiocz:     3.2,
   stk_guitar:  1.78,
   /* stk_piano WAS 2.35, CUT ×0.766 (-2.32 dB) 2026-08-30. Paul: fix the
      +2.3 dB the ear round measured against its whole band. The row's own

@@ -182,6 +182,8 @@ import { registerSW, warmShell, warmCache } from "../audio/offline.js";
 // ...AND THE SAME COMPILER ASSEMBLING A WHOLE SYSTEM. `toScore` is the score
 // block's half of ui/abc.js: several parts under one head, barred together.
 import { toEngraving, toScore, toNotes, ottavaFor, noteNameOf } from "./abc.js";
+import { mountVideo } from "./video.js";
+let videoStop = null;
 // …AND THE READING OF ONE, WHICH IS THE SAME NOTES OUT LOUD. `toNotes` is the
 // timeline `toABC` folds into bars, so the motif you tap and the staff you are
 // looking at cannot disagree about a pitch or a length (audio/audition.js).
@@ -9376,6 +9378,7 @@ const TABS = [
   ["Mix",     "deck"],
   ["Produce", "produce"],
   ["Score",   "scoredeck"],
+  ["Video",   "videodeck"],
   ["Export",  "exportdeck"],
 ];
 const TABNAMES = TABS.map((t) => t[0]);
@@ -9420,6 +9423,10 @@ const BUILD = {
   Mix: (host) => mountBoard(host, CTX),
   Produce: (host) => mountProduce(host, CTX),
   Score: (host) => deckBlock(host),
+  /* THE VIDEO DECK (2026-09-01). It returns a stop(), which nothing else here
+     does, because it owns a rAF loop and a <video>: a tab rebuild that left
+     those running would stack a second film on the first. */
+  Video: (host) => { if (videoStop) videoStop(); videoStop = mountVideo(host, CTX); },
   Export: (host) => exportBlock(host),
 };
 

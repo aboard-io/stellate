@@ -126,6 +126,20 @@
     // and a shout. `even` rather than `call` because a one-bar `call` has
     // three onsets and `insist` needs four before it moves at all — measured,
     // punk's hook came out a monotone.
+    /* YOUNG GALAXY — SLOW AND SPARE, 2026-09-01. Paul, once the arpeggio was
+       right: "you need to make the other motifs in young galaxy slower and
+       more spare. A lot of them are quite plinky and childish. It should feel
+       like more of a chug with dub dynamics and a lot slower — think downtempo
+       or portishead for how you compose but don't lose the arps."
+       `long` is this box's sparsest cell — g16(0, 8), two notes a bar — and
+       `hover` is the contour that circles one note instead of travelling, so
+       the tune stops picking its way up and down a scale. Landing on the root
+       keeps it from resolving upward, which is the other half of plinky.
+       THE ARPEGGIO IS UNAFFECTED AND THAT IS STRUCTURAL, not luck: cellOf pins
+       the `seq` kind's cell back to `sixteenths` AFTER this row is spread, so
+       an anchor's idiom cannot reach the sequencer. The instruction "don't
+       lose the arps" is enforced by the same line that made them sixteenths. */
+    younggalaxy: { cell: "long", contour: "hover", land: "root", sent: "hold" },
     punk:      { cell: "even",   contour: "insist", land: "root",    len: "two" },
     // a sung line that warms on the third, entering before the bar
     bossa:     { cell: "pickup", contour: "fall",   land: "third",   sent: "hold" },

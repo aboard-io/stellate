@@ -385,7 +385,7 @@ const BANDS = async () => {
       for (const b of row.querySelectorAll("button"))
         lefts.add(Math.round(b.getBoundingClientRect().left));
       return lefts.size; })(),
-    /* READ OFF `aria-label` AND NOT OFF THE TEXT, 2026-08-28. The nine tabs
+    /* READ OFF `aria-label` AND NOT OFF THE TEXT, 2026-08-28. The ten tabs
        are glyphs now (Paul: "Please make all the tabs and top buttons into
        sensible icons to save space"), so `textContent` is "⊕Where" — the
        mark, the `.nu-vh` word, and on the open one the printed word too. The
@@ -468,13 +468,22 @@ const LANE = async () => {
    measured AGAINST, so it has to be a quotation and not a reading —
    `window.__eightTabs()` would agree with the page no matter what the page
    said. Paul, 2026-08-27: "The tabs are: Where / Tempo / Key / Motif / Band /
-   Mix / Produce / Score / Export." */
+   Mix / Produce / Score / Export."
+   ...AND A TENTH, 2026-09-01: "add a major icon and section: Video." It goes
+   between Score and Export because those three are the record LOOKED AT rather
+   than composed — the staff, the film, and the file you take away — and the
+   quotation above is kept whole rather than edited, because it was true when
+   he said it and the change is a new sentence, not a correction of the old
+   one. This gate stays a QUOTATION either way: it is what the page is measured
+   against, so it may only ever move when he moves it. */
 const PAULS_TABS = ["Where", "Tempo", "Key", "Motif", "Band",
-                    "Mix", "Produce", "Score", "Export"];
+                    "Mix", "Produce", "Score", "Video", "Export"];
 // how long a tab is given to settle after it is opened. The Score engraves a
 // whole record on a promise the first time it is asked; everything else is
 // synchronous and the wait is only for layout.
-const TAB_SETTLE = (t) => (t === "Score" ? 1800 : 600);
+// the Video deck opens a <video> and a WebGL context, so it gets the
+// Score's grace rather than the synchronous 600ms
+const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
 
 (async () => {
   const { chromium } = require("playwright");
