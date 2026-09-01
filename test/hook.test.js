@@ -51,7 +51,20 @@ function hookOf(doc) {
   return cells.hook || Object.values(cells).find((c) => c && c.kind === "line");
 }
 // the RHYTHM, as the document spells it: n a note, h held, r a rest
-const rhythmOf = (c) => c.play.join("");
+/* FOLDED PER BAR since the two-bar release (2026-09-01): a cell is 1 or 2
+   bars now, and WHICH of the two an anchor gets can flip seed-to-seed with
+   the form's own drawn section lengths. A 32-step cell whose two bars are
+   the same figure is the same RHYTHM as its 16-step reading — comparing raw
+   strings called that a variation and unfroze three decided rows whose bars
+   had not moved. The fold compares the SET of distinct bars, so a genuinely
+   varied second bar still counts as variation and a restated one does not. */
+const rhythmOf = (c) => {
+  const raw = c.play.join("");
+  const spb = c.play.length % 16 === 0 ? 16 : c.play.length % 12 === 0 ? 12 : c.play.length;
+  const bars = [];
+  for (let i = 0; i < raw.length; i += spb) bars.push(raw.slice(i, i + spb));
+  return [...new Set(bars)].sort().join("|");
+};
 // what an ear would call the hook: which steps sound, and on which degree
 const hookLine = (c) => {
   const out = [];
@@ -76,7 +89,29 @@ const BANDS = ["held", "short", "moving", "running"];
 const onsets = (c) => Id.CELLS[c].g.filter((v) => v === 1).length;
 const bandOf = (c) => { const n = onsets(c);
   return n <= 2 ? "held" : n <= 3 ? "short" : n <= 5 ? "moving" : "running"; };
-const bandOfCell = (c) => { const n = onsetsIn(c);      // off the DOCUMENT's own row
+const bandOfCell = (c) => {                             // off the DOCUMENT's own row
+  /* PER BAR since the two-bar release (2026-09-01): the density words were
+     always claims about a BAR ("two notes a bar" is `long`'s own comment),
+     and a two-bar cell of the same figure counts twice the onsets — artrock's
+     held line read "short" the day cb reached 2, with not one onset moved.
+     cb is read off the cell itself, the same way the precompose mirror reads
+     it: its play vector is cb bars of steps. */
+  const len = Array.isArray(c.play) ? c.play.length : String(c.play || "").length;
+  const spb = len % 16 === 0 ? 16 : len % 12 === 0 ? 12 : len;
+  /* ...AND THE BAND IS THE DENSEST BAR'S, not the average: the sentence may
+     rest its second bar (nordicscore's riff states a moving figure and its
+     `develop` bar breathes — six slots read "short" under an average), and a
+     figure does not leave its band by pausing. The claim is about the figure
+     AS STATED; the statement is the densest bar. */
+  const pv = Array.isArray(c.play) ? c.play : [...String(c.play || "")];
+  let best = 0;
+  for (let i = 0; i < pv.length; i += spb) {
+    let n = 0;
+    for (let j = i; j < Math.min(i + spb, pv.length); j++)
+      if (pv[j] === "n") n++;               // the file's own onset predicate (onsetsIn)
+    best = Math.max(best, n);
+  }
+  const n = best;
   return n <= 2 ? "held" : n <= 3 ? "short" : n <= 5 ? "moving" : "running"; };
 const nearBands = (c) => { const i = BANDS.indexOf(bandOf(c));
   return BANDS.slice(Math.max(0, i - 1), i + 2); };
@@ -178,6 +213,16 @@ const FROZEN_RHYTHM = ["ambient", "arabesk", "artrock", "beiruttarab",
                        // rhythm per reading would stop being the braam.
                        // (Keys are the 2026-09-01 great-rename spellings;
                        // the LIST IS SORTED because the assertion sorts.)
+                       // THE TWO-BAR RELEASE CHANGED NOTHING HERE, and the
+                       // proof cost a wrong edit (2026-09-01): raw-string
+                       // comparison briefly unfroze artrock/enka/psychrock,
+                       // but their only "variation" was cell LENGTH flipping
+                       // with the form's own drawn section lengths — folded
+                       // per bar (rhythmOf above), all three figures stand
+                       // still, `sent: "vary"` on enka/psychrock reaching
+                       // degrees and octaves, never the rhythm. The list is
+                       // a transcript of decisions and it survived the
+                       // ceiling intact.
                        "chopped", "copshowsynth", "doom", "dreampop", "drone",
                        "dub", "dubstep", "enka", "epichybrid",
                        "furnituremusic", "gagaku", "gothicrock", "gqom",
@@ -252,8 +297,16 @@ ok("determinism: same seed, byte-identical document, 20 anchors x 8 seeds", () =
    space is reported next to the full 10 x 8 x 5 = 400 so it is visible that
    the gate is constraining something. */
 ok("idiom respect: every stated axis holds in every slot at every reading", () => {
-  assert.strictEqual(P.CELL_BAR_CEILING, 1, "this gate reads one-bar cells");
-  const cb = 1, steps = 16;
+  /* CEILING 2 SINCE 2026-09-01 (the two-bar release). This line asserted
+     CELL_BAR_CEILING === 1 and built the legal space at one bar — correct as
+     a transcript of the old decision, wrong the day the decision changed.
+     The space below is now built AT EVERY cb THE DOOR MAY CHOOSE (1 and 2 —
+     the form's drawn lengths decide per record, so both are reachable), and
+     the cell under test must live in the union. Nothing else loosened: the
+     contour pin, the density band and the release axis fence exactly as
+     they did. */
+  assert.strictEqual(P.CELL_BAR_CEILING, 2, "this gate reads up-to-two-bar cells");
+  const CBS = [1, 2], steps = 16;
   const CONT = Object.keys(Id.CONTOURS), LAND = Object.keys(Id.LANDINGS);
   const rows = Object.keys(P.IDIOM_ANCHOR).filter((g) => ANCHORS.includes(g));
   // EVERY SLOT, not only the hook: a KIND's own word pins every axis it
@@ -301,12 +354,13 @@ ok("idiom respect: every stated axis holds in every slot at every reading", () =
     // is fencing the day before the deal landed.
     const legal = new Set();
     const RELS = [null].concat(Object.keys(P.RELEASE).map((w) => ({ rel: w })));
-    for (const c of pool("cell", CELLS))
-      for (const ct of pool("contour", CONT))
-        for (const l of pool("land", LAND))
-          for (const rl of RELS)
-            legal.add(J(P.cellOf(row, k, cb, G, steps,
-                                 { cell: c, contour: ct, land: l }, rl).cell));
+    for (const cb of CBS)
+      for (const c of pool("cell", CELLS))
+        for (const ct of pool("contour", CONT))
+          for (const l of pool("land", LAND))
+            for (const rl of RELS)
+              legal.add(J(P.cellOf(row, k, cb, G, steps,
+                                   { cell: c, contour: ct, land: l }, rl).cell));
     spaceCache.set(ck, legal);
     return legal;
   };

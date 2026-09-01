@@ -775,6 +775,47 @@ The soak is **not** in the runner and was **not** run: *"Don't do the soak."*
 
 ---
 
+## THE TWO-BAR RELEASE (2026-09-01, same day as the great rename)
+
+Paul, hearing `spaceopera` loop three onsets forever: *"No matter what I do, I
+get a 'do do dooo' motif ... would two-bar motifs help?"* — and then, on
+`balearic`: *"Yeah it's back, it's a motif that goes sixteenth + quarter +
+quarter, it's all over young galaxy."*
+
+Yes. `CELL_BAR_CEILING` went 1 → 2, and the measurement says the ceiling was
+the disease itself, `bassGrid` at catalogue scale:
+
+* **all 395 idiom rows** declare `len` two or four (126/265/4, zero one) —
+  hand-written declarations, every one clamped to a one-bar loop;
+* at one bar, **three of the idiom's six words were dead by construction**
+  (the gate's own words: "a stated `len`, `sent` or `reg` cannot reach a
+  one-bar cell") — SENTENCES has rows for 2/4/8 bars and none for 1, so
+  `sent: "vary"` could never vary a bar;
+* the 1904df8 "do do dooo" tombstone treated the symptom (better one-bar
+  cells) while this constant kept every cure one bar long.
+
+**The second half**: `cellBarsOf` let ANY odd drawn section length veto the
+whole record's two-bar cells — measured at seed 1 (the reading the atlas
+opens), 121 of 395 records were held at cb 1 that way, `balearic` included.
+The declaration now wins: where the idiom asks ≥2, an odd section rounds UP
+one bar before cb is computed. After both halves: **395/395 records at cb 2
+at seed 1**; `balearic` seed 1's bar 1 differs from bar 0 for the first time.
+
+Gates that were transcripts of the ceiling-1 decision, updated with the
+argument in place: precompose G6g (the mirror reads cb off the cell's own
+`play` length), hook `rhythmOf` (folded per bar — a length flip from the
+form's own draws is not a rhythm change; the FROZEN list survived intact, 30
+of 30), hook `bandOfCell` (density is per bar, banded by the DENSEST bar —
+the statement — because a sentence may rest its second bar), hook idiom-
+respect (legal space built at cb 1 AND 2). `balearic`'s idiom `sent` went
+hold → vary the same day the sentence first arrived.
+
+**BEHIND EARS, and it is the largest single sound change this box has ever
+shipped in one constant**: every record's motif is twice as long and its
+second bar finally answers its first. The chant moved too. If it is wrong
+anywhere, the retreat is per-row (`len: "one"` now REACHES the cell — the
+knob works both ways), not the ceiling.
+
 ## STILL DEFERRED, REBUILT FROM SCRATCH
 
 Every item in `PROGRAM.md` §4 (fifteen), every item on the 2026-08-25

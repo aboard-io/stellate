@@ -191,7 +191,16 @@
     // the walk up to the beat is OMD's own figure — a plain tune approaching
     // its note rather than arriving on it
     newpop:          { cell: "walkup", contour: "rise",   land: "root" },
-    balearic: { cell: "long", contour: "hover", land: "root", sent: "hold" },
+    /* `sent` hold -> vary, 2026-09-01, THE SAME DAY THE SENTENCE FIRST
+       ARRIVED. Paul, on this record: "Yeah it's back, it's a motif that goes
+       sixteenth + quarter + quarter, it's all over young galaxy." Measured:
+       seed 1's lead renders `.......xx...x...` — his figure exactly — and
+       `hold` ("state, carry") restates it every bar even at a two-bar cell,
+       so the one gesture IS the whole tune. The record's identity is the
+       sixteenth-note arp UNDER the tune (the seq chair, untouched); the tune
+       over it may breathe. `vary` = "say it, then vary it", which at the
+       two-bar cell means the second bar finally differs on every seed. */
+    balearic: { cell: "long", contour: "hover", land: "root", sent: "vary" },
     /* THE SOUNDTRACK ROUND'S EIGHT, 2026-09-01 — written WITH the anchors,
        not after them, because the "do do dooo" tombstone above is exactly
        one round old: ship an anchor without an idiom row and it plays the
@@ -696,7 +705,24 @@
   // live — and this function reports what the idiom WANTS while returning what
   // is playable. When the words learn to scale with the bar (or a second word
   // table arrives keyed by cell length), the ceiling is one constant.
-  const CELL_BAR_CEILING = 1;
+  /* RAISED 1 -> 2 ON 2026-09-01. Paul, hearing spaceopera play `call`'s
+     three onsets identically forever: "No matter what I do, I get a 'do do
+     dooo' motif ... would two-bar motifs help?" Yes — and the measurement
+     says this ceiling was the whole disease, not one row's idiom:
+       · every one of the 395 anchors' idiom rows declares `len` two or four
+         (126 two / 265 four / 4 eight, 0 one) — hand-written declarations,
+         all silently clamped to one bar here;
+       · at one bar, THREE of the idiom's six words are dead by construction
+         — the block below says it plainly ("a stated `len`, `sent` or `reg`
+         cannot reach a one-bar cell"), and SENTENCES carries rows for 2, 4
+         and 8 bars and none for 1, so `sent: "vary"` could never vary a bar;
+       · which is why ten different records could keep resolving to one
+         identical figure — the 1904df8 tombstone treated the symptom (better
+         one-bar cells) while this constant kept every cure one bar long.
+     This is `bassGrid` at catalogue scale: declared, costed, reaching no
+     sound. Two, not four: one doubling, judged by ear before the next
+     (the hook gate re-derives its legal space at the anchor's own cb). */
+  const CELL_BAR_CEILING = 2;
   function cellBarsOf(gk, lens) {
     const want = LENGTHS[idiomOf(gk).row.len].bars;
     let cb = want >= 4 ? 4 : want >= 2 ? 2 : 1;
@@ -2122,6 +2148,27 @@
     })();
     const row = met ? { ...row0, met } : row0;     // the theme counts with the record
     const steps = stepsIn({ meter: met });
+    /* AN ODD DRAW MAY NOT VETO A DECLARED PHRASE LENGTH (2026-09-01, the
+       two-bar release's second half). cellBarsOf demands EVERY section length
+       divide by cb, so one 3-bar build in an eleven-section form dropped the
+       whole record back to one-bar cells — measured at seed 1, which is the
+       reading the atlas opens: 121 of 395 records were held at cb 1, every
+       one of them by an odd length, `balearic` among them — which is why
+       Paul's "it's a motif that goes sixteenth + quarter + quarter, it's all
+       over young galaxy" was true on the very record whose idiom declares
+       `len: "two"`. The idiom length is a hand-written declaration on all
+       395 rows; the section length is a dealt draw. The declaration wins:
+       where the row asks for a multi-bar phrase, an odd section rounds UP
+       one bar (3 -> 4, a build becomes the four-bar build every dance record
+       has anyway) BEFORE cb is computed, so the form's cell-bar accounting
+       stays integer. Records whose idiom says one bar — there are none
+       today, but the guard is the law — and records whose draws were already
+       even are byte-identical through this block. */
+    {
+      const want = LENGTHS[idiomOf(gk).row.len].bars;
+      if (want >= 2)
+        for (const b of R.song) if (b.len % 2) b.len += 1;
+    }
     const cb = cellBarsOf(gk, R.song.map((b) => b.len));
     const sid = (i) => "s" + i;
     const NSEC = R.song.length;

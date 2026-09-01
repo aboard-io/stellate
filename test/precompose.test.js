@@ -785,10 +785,29 @@ function sectionEvents(doc, i) {
       // itself and fails on the meter, not on a drift.
       const met = G.meter ? K.METERS[G.meter] : null;
       const row = met ? { ...row0, met } : row0;
-      const cells = (docs.get(gk + "/1").material || {}).cells || {};
+      const doc1 = docs.get(gk + "/1");
+      const cells = (doc1.material || {}).cells || {};
+      /* THE MIRROR READS cb OFF THE ARTIFACT (2026-09-01, the two-bar
+         release). This call hard-coded `cb = 1` — correct while
+         CELL_BAR_CEILING was 1, and the moment the ceiling rose to 2 the
+         gate was comparing a two-bar record against a one-bar re-derivation
+         of itself and failing on the ceiling, not on a drift (the same
+         mirror bug this block already fixed once for the meter, above).
+         Re-deriving cb from the section lens is CIRCULAR here — the doc's
+         `bars` count cell bars, which already have cb divided out — so the
+         mirror takes it from the cell under test: a cell's gate is cb bars
+         of steps, and gate.length / steps-per-bar is a fact the document
+         states rather than one this gate assumes. */
+      const spb = met ? met.steps : 16;
       for (const k of Object.keys(cells)) {
         if (cells[k].kind !== "line") continue;          // `beat` is the kit
-        const made = P.cellOf(row, k, 1, G, met ? met.steps : 16);  // no sixth argument
+        // `play` is the cell's onset vector (spaceopera at cb 2: 32 entries,
+        // waltz in three: 12) — measured, the first draft of this mirror read
+        // a `gate` field cells do not carry and silently fell back to cb 1
+        const pl = cells[k].play;
+        const plen = Array.isArray(pl) ? pl.length : String(pl || "").length;
+        const cb1 = Math.max(1, Math.round((plen || spb) / spb));
+        const made = P.cellOf(row, k, cb1, G, spb);  // no sixth argument
         if (JSON.stringify(made.cell) !== JSON.stringify(cells[k])) bad.push(gk + "." + k);
       }
     }
