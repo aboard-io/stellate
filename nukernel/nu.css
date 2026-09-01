@@ -4355,3 +4355,15 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
 .nu-video-sec span { font-variant-numeric: tabular-nums; opacity: .75; }
 .nu-video-sec.on { opacity: 1; border-color: currentColor; }
 .nu-video-cap { margin: 0; font-size: .78rem; opacity: .7; }
+
+/* the stage is what goes fullscreen, so the controls stay reachable inside it */
+.nu-video-stage { position: relative; background: #000; line-height: 0; }
+.nu-video-stage:fullscreen { display: flex; align-items: center; justify-content: center; }
+.nu-video-stage:fullscreen .nu-video-canvas { inline-size: auto; block-size: 100vh; }
+.nu-video-controls { display: flex; gap: .4rem; }
+.nu-video-controls button {
+  font: inherit; font-size: .78rem; padding: .2rem .6rem;
+  background: transparent; color: inherit;
+  border: 1px solid var(--rule); cursor: pointer;
+}
+.nu-video-controls button:hover { border-color: currentColor; }
