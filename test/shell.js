@@ -639,10 +639,19 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
        than typed, because a section's id is the RECORD's (`c1`, `s0`, whatever
        precompose dealt it) and a gate that typed one would be asserting about
        one shipped record instead of about the stripe. */
+    /* ...MINUS THE VOICE DESCENT, 2026-09-01. Paul: "In the nav only have
+       two levels but pop up a second shaded under-level. So it goes CLICK
+       BAND / CLICK 1 LEAD / INSTRUMENT MIX WHAT IT PLAYS AND PER-SECTION
+       APPEAR IN GRAY UNDER 1 LEAD." Tapping a voice no longer descends —
+       the stripe stays at `band` and the four facets arrive as shaded
+       `.nu-sub` rows under the voice's own mark. So the voice walk asserts
+       the NEW law: after the tap the level is still band, the facet rows
+       are ON the stripe (A6l below), and one ↑ goes home. The sections
+       descent is untouched — sections are a list a level deep by design. */
     const deep = [];
     for (const [start, marks, want] of [
       ["Band", ["tabform", 0], ["section", "sections", "band", "root"]],
-      ["Band", ["voice"], ["voice", "band", "root"]],
+      ["Band", ["voice"], ["band", "root"]],
     ]) {
       await page.evaluate((t) => window.__eightTab(t), start);
       await page.waitForTimeout(TAB_SETTLE(start));
@@ -674,6 +683,33 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
     is(badDeep.length === 0,
       "A6k " + width + " · a mark descends and ↑ climbs back one level at a "
       + "time — " + deep.map((D) => D[1] + ": " + D[2].join(" ↑ ")).join(", "));
+    /* A6l — THE SHADED UNDER-LEVEL IS REALLY THERE (2026-09-01, the walk the
+       A6k rewrite above promises): open a voice, and the four facet rows sit
+       on the band-level stripe as `.nu-sub`, the voice's own mark wears
+       aria-expanded, and exactly one <mark> still names the open thing. */
+    {
+      await page.evaluate((t) => window.__eightTab(t), "Band");
+      await page.waitForTimeout(TAB_SETTLE("Band"));
+      const L0 = await now();
+      const vk = L0.items.find((x) => x.startsWith("tab") &&
+        x !== "tabform" && x !== "tabperformance");
+      if (vk) {
+        await page.click('[data-k="' + vk + '"]');
+        await page.waitForTimeout(300);
+        const r = await page.evaluate((key) => ({
+          level: (window.__eightTray() || {}).level,
+          subs: [...document.querySelectorAll(".nu-traylist .nu-sub")].length,
+          exp: (document.querySelector('[data-k="' + key + '"]') || {})
+                 .getAttribute ? document.querySelector('[data-k="' + key + '"]')
+                 .getAttribute("aria-expanded") : null,
+          marks: document.querySelectorAll("#nu-tray mark, .nu-tray mark").length,
+        }), vk);
+        is(r.level === "band" && r.subs === 4 && r.exp === "true",
+          "A6l " + width + " · the four facets shade in under the open voice "
+          + "at the band level (level=" + r.level + " subs=" + r.subs
+          + " expanded=" + r.exp + ")");
+      } else skip(width + " · no voice mark for A6l");
+    }
 
     // THE KIT GRID IS THE WIDEST THING THIS PAGE DRAWS and the default record
     // has no drummer, so a gate that does not add one never measures it.

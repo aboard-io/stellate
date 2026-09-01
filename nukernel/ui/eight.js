@@ -10161,10 +10161,18 @@ function bandTrayItems() {
     const song = name === "form"
       ? { w: GLYPH.sec.list.w, s: GLYPH.sec.list.s }
       : { w: name, s: (GLYPH.song[name] || {}).s };
+    /* THE MARK MOVES DOWN A ROW WHEN THE SHADE IS OPEN: with the facets
+       inline, "the open thing" is the FACET, and shell A6c's law — exactly
+       one <mark> and one aria-pressed in the stripe — would be broken by a
+       pressed voice row above a pressed facet. The expanded voice wears
+       `aria-expanded` instead (the #playops discipline: a door, not a
+       state), and the shade under it is what says you are inside. */
+    const expanded = !!v && name === tab;
     return { key: "tab" + name, glyph: glyphOf(name), num: vi,
              word: v ? name : song.w,
              say: v ? sayVoice(name, v.kind, vi, vTotal) : song.s,
-             on: name === tab,
+             on: v ? false : name === tab,
+             exp: v ? expanded : undefined,
              /* AND IT SAYS SO IN THE ADDRESS (2026-08-28). `markLink` is
                 the same debounced writer `showTab` uses and this is a hand
                 reaching it, never the clock — a voice tab is a tap. */
@@ -10175,11 +10183,32 @@ function bandTrayItems() {
                 does not, because it is one panel of song-level questions with
                 no siblings to name — the same reason six of the nine tabs
                 leave the stripe at the root. */
+             /* TWO LEVELS, NOT THREE (2026-09-01). Paul: "In the nav only
+                have two levels but pop up a second shaded under-level. So it
+                goes CLICK BAND / CLICK 1 LEAD / INSTRUMENT MIX WHAT IT PLAYS
+                AND PER-SECTION APPEAR IN GRAY UNDER 1 LEAD." A voice used to
+                DESCEND — trayLevel "voice", the band list replaced by the
+                four facets, and the way back a ↑. The descent is gone: the
+                tap opens the voice's tab and stays at the band level, and
+                bandTrayItems splices the four facets in under the open
+                voice's own row, shaded (`sub` below, .nu-sub in nu.css).
+                Comparing two players is now tap-tap instead of tap-up-tap. */
              act: () => { tab = name; formSec = null;
-                          trayLevel = v ? "voice"
-                                    : name === "form" ? "sections" : "band";
+                          trayLevel = name === "form" ? "sections" : "band";
                           draw(); markLink(); } };
   });
+  /* THE SHADED UNDER-LEVEL: the open voice's four facets, spliced in
+     directly under its own row, each carrying `sub` so paintTray shades and
+     indents it. Their keys enter the list signature, so opening a voice —
+     or moving the shade to another voice — rebuilds the stripe exactly as a
+     level change used to. */
+  {
+    const vi = out.findIndex((it) => it.key === "tab" + tab);
+    const openIsVoice = vi >= 0 && !SONGTABS.includes(tab) && VOICE(tab);
+    if (openIsVoice)
+      out.splice(vi + 1, 0,
+        ...voiceTrayItems().map((it) => ({ ...it, sub: true })));
+  }
   const offer = [["line", "+ line"]];
   if (!BASSV()) offer.push(["bass", "+ bass"]);
   if (!DRUMV()) offer.push(["drums", "+ drums"]);
@@ -10602,12 +10631,12 @@ function trayNow() {
        · `sections` is never empty (a record always has at least one section and
                     the level carries `+ section` regardless), so it has no
                     fallback and needs none. */
-  if (trayLevel === "voice") {
-    const fs = voiceTrayItems();
-    if (fs.length) return { level: "voice", parent: tab, up: "band",
-                            back: "the band", items: fs };
-    trayLevel = "band";
-  }
+  /* THE VOICE LEVEL IS GONE (2026-09-01) — Paul: "In the nav only have two
+     levels but pop up a second shaded under-level." Its branch stood here;
+     nothing sets trayLevel "voice" any more (the voice tap stays at "band"
+     and bandTrayItems splices the facets in as `sub` rows). The fold below
+     keeps any stale address or restored state honest. */
+  if (trayLevel === "voice") trayLevel = "band";
   if (trayLevel === "section") {
     const ops = secOpsTrayItems();
     if (ops.length) {
@@ -10872,6 +10901,11 @@ function paintTray() {
          live again after the tempo moved must already carry its handler. */
       const b = icon({ k: it.key, glyph: it.glyph, num: it.num, word: it.word,
                        say: it.say, on: it.on, why: it.why });
+      // the shaded under-level (2026-09-01): a facet row is a child of the
+      // voice above it and says so in both channels — the class for the eye,
+      // aria-expanded on the parent for the reader
+      if (it.sub) b.classList.add("nu-sub");
+      if (it.exp != null) b.setAttribute("aria-expanded", String(it.exp));
       b.addEventListener("click", it.act);
       /* THE LITERAL " " STAYS, and it is the same text node `motifTabRow` kept
          for the same reason: with the stylesheet off it is what keeps two
@@ -10887,8 +10921,9 @@ function paintTray() {
       // loop draws (see the append above)
       if (it.node) continue;
       const b = trayBtn.get(it.key);
-      if (b) paintIcon(b, { glyph: it.glyph, num: it.num, word: it.word,
-                            say: it.say, on: it.on, why: it.why });
+      if (b) { paintIcon(b, { glyph: it.glyph, num: it.num, word: it.word,
+                              say: it.say, on: it.on, why: it.why });
+               if (it.exp != null) b.setAttribute("aria-expanded", String(it.exp)); }
     }
   }
 }

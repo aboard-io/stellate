@@ -206,6 +206,13 @@ const GATES = [
   { name: "bass-grid", wave: 2, kind: "node",
     argv: ["test/bass-grid.test.js"],
     need: ["test/bass-grid.test.js"], covers: ["test/bass-grid.test.js"] },
+  /* NO TWO RECORDS SHARE A SOLO BY DEFAULT (2026-09-01, "Art rock has the
+     same solo as iranian pop on seed 19"): the climb slot's triple pin gave
+     390 records 32 solos; the widen gave them 212. This gate keeps the space
+     from quietly re-collapsing. */
+  { name: "solo-space", wave: 2, kind: "node",
+    argv: ["test/solo-space.test.js"],
+    need: ["test/solo-space.test.js"], covers: ["test/solo-space.test.js"] },
   /* NOT ONE BYTE OF FILM UNTIL THE TAB IS OPENED (2026-09-01). Paul: "Don't
      download video until I go to the video tab." Measured, the page already
      did — so this gate converts an accident into a law: the clips are

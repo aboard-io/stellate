@@ -773,6 +773,43 @@
       set: (M) => ({
       drive: 0.82, pluckPos: 0.12, pickup: 0.16, bright: 0.64, ring: 6.0,
       cutoff: Math.min(M.cab, 4000), release: M.rel }) },
+
+    /* ---- THE LAST FOUR GUITARS COME OFF THE SHELF (2026-09-01). Paul:
+       "Merciliessly replace ALL guitars with the synthesized faust guitars
+       everywhere." The six electrics above went EKS in the de-jangle round;
+       these four were still sampled zones — measured at seed 1, 39 nylon
+       seats and 27 steel, plus di_guitar and guitar_harmonics reachable by
+       hand — and one of them was the standing "cumbia's nylon chair renders
+       silent" lead. Same string, four more setups; `damp`->`ring`,
+       `stiff`->`bright`, pluckPos from the nearer end, exactly as the header
+       above translates them. NO AMP on the acoustics: a nylon top through a
+       higain stage is an electric with a costume, and the whole point of the
+       plain-family staging (below, ~:994) is that acoustics live dry.
+       BANJO IS NOT SWEPT, on purpose: a banjo is not a guitar, whatever the
+       string thinks, and renaming it under this order would be the
+       instrument-room version of the key rename's keeper list. */
+    // GM 25. Over the soundhole, warm and round: low bright, mid pluck, no
+    // drive at all — the one guitar here that must never spit.
+    nylon_string_guitar: { dsp: "stk_guitar", set: (M) => ({
+      drive: 0.0, pluckPos: 0.36, pickup: 0.44, bright: 0.24, ring: 3.2,
+      cutoff: Math.min(M.cab, 5200), release: M.rel }) },
+    // GM 26. A steel top is the same box with a stiffer, louder string:
+    // brighter tilt, nearer-bridge pluck, longer ring than the nylon.
+    steel_string_guitar: { dsp: "stk_guitar", set: (M) => ({
+      drive: 0.02, pluckPos: 0.20, pickup: 0.34, bright: 0.66, ring: 4.6,
+      cutoff: M.cab, release: M.rel }) },
+    // The re-amped DI (guitar-kit "a re-amped DI"): full-range and dead dry —
+    // the amp, when a record wants one, is SAMPLED_INSERTS' own di_guitar
+    // higain row and stays that row's business, not this recipe's.
+    di_guitar: { dsp: "stk_guitar", set: (M) => ({
+      drive: 0.06, pluckPos: 0.24, pickup: 0.5, bright: 0.5, ring: 4.0,
+      cutoff: 9000, release: M.rel }) },
+    // GM 31. Harmonics ring pure and long: plucked AT the node (0.5 kills the
+    // even partials, which is what a natural harmonic is), maximum tilt,
+    // the longest ring in the family.
+    guitar_harmonics: { dsp: "stk_guitar", set: (M) => ({
+      drive: 0.0, pluckPos: 0.5, pickup: 0.30, bright: 0.9, ring: 6.0,
+      cutoff: M.cab, release: M.rel }) },
     // ---- the pianos ----
     // AND THE PIANOS ARE HERE NOW, on a measurement that overturns the reason
     // they were not. The note that used to sit below this table said pianos stay

@@ -338,6 +338,14 @@ ok("idiom respect: every stated axis holds in every slot at every reading", () =
        vocabulary it fences. */
     const pool = (f, all) => f === "cell" ? cellPool(g, k)
       : (k === "seq" && f === "contour") ? Id.ARP_CONTOURS
+      /* ...and the SOLO'S GESTURE IS A BAND TOO (2026-09-01, "Art rock has
+         the same solo as iranian pop"): climb draws from SOLO_CONTOURS the
+         way seq draws from ARP_CONTOURS — every member travels, so a solo
+         stays a solo under all five. Its landing was already open here. */
+      : (k === "climb" && f === "contour") ? Id.SOLO_CONTOURS
+      // ...and its LANDING with it: the maker salts both per anchor (cellOf
+      // soloOf), and this gate's own comment has held `land` open all along
+      : (k === "climb" && f === "land") ? all
       : kind[f] != null ? [kind[f]]
       : own[f] == null ? all
       : f === "contour" ? [own[f]]

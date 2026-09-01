@@ -85,6 +85,16 @@
      this set is the BAND that part may draw from, and an anchor may say which
      with `seqArp`. test/hook.test.js reads THIS array rather than keeping a
      list of its own, so the fence and the vocabulary cannot drift apart. */
+  /* THE SOLO'S OWN BAND (2026-09-01). Paul: "Art rock has the same solo as
+     iranian pop on seed 19" — and measured, he had found one pair of 26:
+     `climb`'s contour was PINNED to `rise`, so 390 records shared 32 distinct
+     solos and the most-played one belonged to 56 anchors at once. The same
+     cure the sequencer got (`ARP_CONTOURS` below, "arps should do different
+     arp things"): a solo may rise, arch, turn back on itself, insist on a
+     note before moving, or drop and climb — every member still TRAVELS, so a
+     solo stays a solo under all five (what would break the kind is `hover`
+     or `hold`, and this list refuses them). */
+  const SOLO_CONTOURS = ["rise", "arch", "zig", "insist", "drop"];
   const ARP_CONTOURS = ["arp", "arpup", "arpdown", "arpoct", "arpwide", "arpturn",
                         "arpclose"];
 
@@ -1363,7 +1373,7 @@
     { w: "an octave down", id: (i) => "odn:" + i },
   ];
   return { N, NOF, CELLS, CELLS3, CELLS6, extraCells, cellOf,
-           CONTOURS, ARP_CONTOURS, LANDINGS, LENGTHS, REG, SENTENCES, ROLES, TRANSFORMS,
+           CONTOURS, ARP_CONTOURS, SOLO_CONTOURS, LANDINGS, LENGTHS, REG, SENTENCES, ROLES, TRANSFORMS,
            SOLO, SOLORATE, SOLOORDER, SOLOPERIOD, soloWord,
            regOf, gridOf, liftOf, octsOf, wroteOf, handOf, stepWord,
            blank, V, catalog, say, says, BARMARKS, BARWORD, MAXB,

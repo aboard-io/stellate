@@ -253,10 +253,18 @@ console.log("\nO5 — the guitar census rows (2026-09-01): trims by measurement,
   ok(mc.m.model !== "sampler" && near(mc.m.release, 0.9, 1e-9),
      "model lane: clean_guitar on a tone.rel 0.3 genre rings 0.9 s — the floor, " +
      "through PATCH_MODEL: " + mc.m.release);
+  /* LANE CHANGE, 2026-09-01. Paul: "Merciliessly replace ALL guitars with
+     the synthesized faust guitars everywhere" — steel_string_guitar (this
+     check's sampled-lane specimen) is an EKS recipe now, so the identical
+     assertion flipped from proof of the sampled floor to proof of the sweep:
+     same id, same tone.rel 0.3, same 0.9 s floor, MODEL lane. The sampled-
+     lane floor code in toneRecipe still ships and is dormant — every id with
+     a rel column rides the model lane today — so the day a sampled row lands
+     in ID_ROUTE, restore the old form of this check against that id. */
   const ms = rFor("steel_string_guitar", { rel: 0.3 });
-  ok(ms.m.model === "sampler" && near(ms.m.release, 0.9, 1e-9),
-     "sampled lane: steel_string_guitar on tone.rel 0.3 rings 0.9 s — same floor, " +
-     "through toneRecipe: " + ms.m.release);
+  ok(ms.m.model !== "sampler" && near(ms.m.release, 0.9, 1e-9),
+     "the swept steel guitar rides the MODEL lane and keeps its 0.9 s floor: " +
+     "model=" + ms.m.model + " release=" + ms.m.release);
   const ml = rFor("clean_guitar", { rel: 1.5 });
   ok(near(ml.m.release, 1.5, 1e-9),
      "a genre already ringing 1.5 s is untouched — a FLOOR, not a set: " + ml.m.release);

@@ -982,6 +982,20 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    for a level that does not fit: it SCROLLS. `flex: 0 0 auto` says the marks
    keep their own height and the scrollbar takes the difference. */
 .nu-traylist > *{ flex: 0 0 auto; }
+/* THE SHADED UNDER-LEVEL (2026-09-01). Paul: "In the nav only have two levels
+   but pop up a second shaded under-level ... INSTRUMENT MIX WHAT IT PLAYS AND
+   PER-SECTION APPEAR IN GRAY UNDER 1 LEAD." A `.nu-sub` mark is a facet of
+   the voice ABOVE it: stepped in, its ink dropped to the second voice
+   (--dim), and standing on a shade of the ground rather than the ground —
+   which is what "in gray" is in this palette. The open facet still wears the
+   one <mark>; the shade never touches the mark discipline. */
+/* ...WITH AN EDGE-BAR, NOT AN INDENT (measured the hour it shipped: a 10px
+   margin pushed the mark to 52px in a 47px stripe and A6b caught the sideways
+   scroll — the gutter is a glyph column and has no pixels to give). The gray
+   bar on the leading edge says "child of the row above" at zero width cost. */
+.nu-traylist .nu-sub{ color: var(--dim);
+  border-inline-start: 3px solid var(--dim);
+  background: color-mix(in srgb, var(--ink) 7%, var(--paper)); }
 /* ===== THE ROOM FADER, STANDING IN THE GUTTER (2026-08-29) =============
    Paul: *"The volume slider is now vertical."*
 

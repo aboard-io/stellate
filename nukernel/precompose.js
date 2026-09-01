@@ -768,7 +768,35 @@
        reach the sound, which is the one thing this repo will not ship. The
        register lives on the CHAIR, so the row moves it there instead. */
     const arpOf = (kind === "seq" && G && G.seqArp) ? { contour: G.seqArp } : null;
-    const m = { ...Id.blank(), ...row, ...KINDS[kind], ...(arpOf || {}), ...(rd || {}),
+    /* THE SOLO GESTURE IS THE ANCHOR'S OWN (2026-09-01). Paul: "Art rock has
+       the same solo as iranian pop on seed 19." KINDS.climb pinned `contour:
+       "rise"`, and reading 1 draws nothing — so at the reading the atlas
+       opens, 390 records shared 32 distinct solos (worst: one solo on 56
+       anchors; artrock/19 ≈ iranpop/1 was the pair his ear caught, aor/19 ≡
+       iranpop/5 exactly). No salt can widen a pinned space; the space itself
+       had to. Each anchor now states its own gesture, drawn once from
+       Id.SOLO_CONTOURS on a hash of its own LABEL — deterministic forever,
+       distinct across the catalog, and a reading's own word (rd, spread
+       after) still outranks it, so REWRITE varies the gesture too (poolFor
+       hands readings the same five-word band). The seqArp mirror above is
+       the precedent, one shelf up: there the anchor writes the word in its
+       row; here the anchor's identity draws it, because zero of 395 rows
+       have ever stated a solo contour and a table nobody writes is a table
+       nobody maintains. */
+    const soloOf = (() => {
+      if (kind !== "climb") return null;
+      const h = ihash(String((G && G.label) || ""));
+      const lands = Object.keys(Id.LANDINGS);
+      // ...and the LANDING is the anchor's own too (a second, offset draw on
+      // the same hash): the gate has always held `land` OPEN for exactly this
+      // — "a bop head that resolves to the root is still a bop head" — while
+      // the KIND pinned it to the fifth. 5 gestures x the landings took the
+      // catalog from 85 distinct reading-1 solos to the measured figure in
+      // test/solo-space.test.js; the pin was the last clamp.
+      return { contour: Id.SOLO_CONTOURS[h % Id.SOLO_CONTOURS.length],
+               land: lands[(h >>> 8) % lands.length] };
+    })();
+    const m = { ...Id.blank(), ...row, ...KINDS[kind], ...(arpOf || {}), ...(soloOf || {}), ...(rd || {}),
                 len: cb === 4 ? "four" : cb === 2 ? "two" : "one", answer: true };
     /* A SEQUENCER'S DENSITY IS NOT A BAND (2026-09-01). Paul: "in sixteenth
        notes ... from the first to last measure ... for every young galaxy
@@ -1171,8 +1199,12 @@
   // one place, so they are read side by side instead of inferred from a chain.
   // A POOL OF ONE IS A PIN and the caller needs no other test for one.
   function poolFor(f, law, kind, own) {
-    if (kind[f] != null)                            // the PART stated it
+    if (kind[f] != null) {                          // the PART stated it
+      // ...except the solo's gesture, which is a BAND (see cellOf's soloOf
+      // block): a reading may redraw it, same as the sequencer's arp
+      if (f === "contour" && kind === KINDS.climb) return Id.SOLO_CONTOURS.slice();
       return f === "cell" ? nearPool(kind[f], own[f]) : [kind[f]];
+    }
     if (own[f] == null || law === "open") return Object.keys(FIELDTABLE[f]);
     return law === "band" ? CELLBAND[bandOf(own[f])] : [own[f]];   // "pin"
   }
