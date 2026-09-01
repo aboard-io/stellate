@@ -178,7 +178,22 @@
                   are a third, the fifth is a colour rather than a destination.
                   That is what "swirls and builds but doesn't jump" sounds like
                   when you write it down. */
-               f: (k) => (k % 48 === 47 ? 1 : [0, 2, 0, 2, 4, 2][k % 6]) },
+               /* AND THEN I FLATTENED IT UNTIL IT STOPPED BEING AN ARPEGGIO
+                  (corrected 2026-09-01). Paul asked to "flatten the tonal
+                  range even a little more" and I went to [0,2,0,2,4,2] — which
+                  PRINTS, over a bar, as 0 2 0 2 4 2 0 2 0 2 4 2 0 2 0 2: four
+                  of every six steps alternating between two notes and the
+                  fifth touched twice. That is a TRILL. He then said, three
+                  times, that there was no arp voice, and he was describing it
+                  exactly: a pulsing texture is not a figure that climbs a
+                  chord.
+                  [0,2,4,2] is the classic close arpeggio — root, third, fifth,
+                  third — and it is still flat by the only measure that matters
+                  here: the span is a FIFTH, with no octave and no ninth, which
+                  is what "tonally centered ... don't jump" asked for. What it
+                  is not is static. The lesson is that "flatter" meant a
+                  narrower RANGE, never fewer notes. */
+               f: (k) => (k % 48 === 47 ? 1 : [0, 2, 4, 2][k % 4]) },
     arpturn: { w: "turns through the chord to the ninth",
                // the long one: eight steps, so it never lines up with the bar
                // and takes three bars to come home. Berlin-school motion.
