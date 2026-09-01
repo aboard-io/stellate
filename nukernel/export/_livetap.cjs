@@ -39,7 +39,7 @@ module.paths.push("/home/ford/ftrain-2025/node_modules");
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i < 0 ? d : process.argv[i + 1]; };
 const PAGE = arg("page", "http://localhost:8777/nukernel/index.html");
 const EXE = process.env.HOME + "/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome";
-const RECORDS = arg("records", "iranpop,steely,rock,neoclassical,ambient,hymn").split(",");
+const RECORDS = arg("records", "iranpop,jazzrock,rock,neoclassical,ambient,hymn").split(",");
 const SEED = +arg("seed", 1);
 const SECS = +arg("secs", 14);
 const MK = arg("mk", null);            // rewrite MK_TARGET_DB in flight

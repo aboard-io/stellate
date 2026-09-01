@@ -207,8 +207,8 @@
               : [transpose(4), rotate(5 * s)]),   <em>genres.js:5664</em></pre></details>
     </div>
 
-    <div class="ex" id="g-spem">
-      <div class="exhead"><span class="place">London 1570</span><span class="gname">spem</span><span class="facts">word</span></div>
+    <div class="ex" id="g-polychoral">
+      <div class="exhead"><span class="place">London 1570</span><span class="gname">polychoral</span><span class="facts">word</span></div>
       <div class="rules"><span class="sub">voice 1</span> <span class="colon">:</span> <span class="verb">as written</span> <span class="cmt"># transpose(0), the identity</span><br>
 <span class="sub">voice 2</span> <span class="colon">:</span> <span class="verb">up</span> <span class="warn"><span class="num">4</span></span><br>
 <span class="sub">voice 3</span> <span class="colon">:</span> <span class="verb">up</span> <span class="num">2</span><br>
@@ -303,8 +303,8 @@
     <div class="era-head"><h3>The Bandstand</h3><span class="span">Chicago 1955 → Kingston 1973 · hands on instruments</span></div>
     <div class="exgrid">
 
-    <div class="ex" id="g-bodiddley">
-      <div class="exhead"><span class="place">Chicago 1955</span><span class="gname">bodiddley</span><span class="facts">word</span></div>
+    <div class="ex" id="g-hambone">
+      <div class="exhead"><span class="place">Chicago 1955</span><span class="gname">hambone</span><span class="facts">word</span></div>
       <div class="rules"><span class="sub">voice 1</span> <span class="colon">:</span> <span class="err"><span class="verb">breath</span> <span class="num">1001·0010·0010·1000</span></span><br>
 <span class="sub">voices 2..</span> <span class="colon">:</span> <span class="err"><span class="verb">breath</span> <span class="num">0000·1100·0100·0011</span></span> <span class="dot">·</span> <span class="verb">up</span> <span class="num">2</span></div>
       <div class="meaning"><b>The clave and its answer.</b> The guitar is masked to the Bo Diddley
@@ -364,8 +364,8 @@ word: (v, s) =&gt; (v === 0 ? [breath([1,0,0,1, 0,0,0,0, 1,0,0,1, 0,0,0,0])]
       <details><summary>genres.js:4299 — the closure</summary><pre>word: (v, s) =&gt; (v === 0 ? [] : [rotate((s % 4) + 2)]),   <em>genres.js:4299</em></pre></details>
     </div>
 
-    <div class="ex" id="g-isley">
-      <div class="exhead"><span class="place">Teaneck 1973</span><span class="gname">isley</span><span class="facts">pipes + word</span></div>
+    <div class="ex" id="g-psychsoul">
+      <div class="exhead"><span class="place">Teaneck 1973</span><span class="gname">psychsoul</span><span class="facts">pipes + word</span></div>
       <div class="rules"><span class="sub">pads</span> <span class="colon">:</span> <span class="verb">strum</span> <span class="num">60ms</span><br>
 <span class="sub">voice 3</span> <span class="colon">:</span> <span class="verb">thin</span> <span class="num">2</span> <span class="dot">·</span> <span class="verb">down</span> <span class="num">2</span></div>
       <div class="meaning"><b>The Rhodes rolled like a hand.</b> The strum pipe spreads each chord
@@ -568,7 +568,7 @@ word: () =&gt; [spread(0.5), breath(SUNG)],   <em>genres.js:5437 · SUNG at genr
     the shipped operator.</span></li>
 
     <li><b>Masks have no literal.</b> <code>breath(mask)</code> <span class="cite2">genres.js:337</span>
-    takes a 16-step array; the grammar's expr is scalar arithmetic only. Witnesses: bodiddley:2624,
+    takes a 16-step array; the grammar's expr is scalar arithmetic only. Witnesses: hambone:2624,
     doowop:2840, ebm:4507 (a 4-step mask read cyclically — a second implicit convention),
     vocal:5437, backing:5472.
     <span class="fix">a mask literal — <code>breath 1001·0010·0010·1000</code> — with the cyclic
@@ -608,7 +608,7 @@ word: () =&gt; [spread(0.5), breath(SUNG)],   <em>genres.js:5437 · SUNG at genr
 
     <li><b>No conditional inside an argument.</b> counterpoint:878 <code>invert(s % 2 ? 0 : 5)</code>,
     electro:3313 <code>excerpt(s % 2 ? 8 : 0, 8)</code>, and the spread-conditional append idiom
-    <code>...(s % 2 ? [op] : [])</code> in 13 genres (acid, spem, dub, concerto, classical, …). All
+    <code>...(s % 2 ? [op] : [])</code> in 13 genres (acid, polychoral, dub, concerto, classical, …). All
     sayable by splitting one closure into rules under <span class="whn">in odd</span> /
     <span class="whn">in even</span> — legal, but a rewrite.
     <span class="fix">none — instead, the extraction gate must accept an n-line rendering of a
@@ -657,7 +657,7 @@ word: () =&gt; [spread(0.5), breath(SUNG)],   <em>genres.js:5437 · SUNG at genr
     <li><b>Three features, zero witnesses.</b> Honesty runs the other way too:
     <code>crossmap</code> / "copy a to b" is used by no genre (only the OPKEYS slides/stick keys
     exist); the echo pipe (<code>echoCanon</code>) is used by no genre; and no catalog period uses
-    the OPKEYS string form (<code>["thin3"]</code>) the doc celebrates — beatles:1315 and
+    the OPKEYS string form (<code>["thin3"]</code>) the doc celebrates — beatgroup:1315 and
     garage:1551 hold raw closures. §8's extraction gate would ship three grammar features with no
     fixture.
     <span class="fix">either seed one catalog witness each, or mark them speculative in the

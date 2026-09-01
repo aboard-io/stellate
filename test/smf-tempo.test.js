@@ -17,7 +17,7 @@
 //   T2  an UNPACED record's .mid has exactly one tempo meta and no
 //       signature change — and two exports are byte-identical (the D4c pin;
 //       the before/after pin against v199's own writer was run once at land
-//       time: beatles --genre, 10,001 bytes, byte-identical).
+//       time: beatgroup --genre, 10,001 bytes, byte-identical).
 //   T3  a metered record's .mid says its true signature (3/4, 6/8 — kernel
 //       METERS' own abc through the Score's meterAbc stamp) and its implied
 //       bar seconds match the PCM measurement the pace-meter gate reported.
@@ -268,7 +268,7 @@ const fold = () => { PLAN.compile();
   const a = alsFromScore(donorXml, pscore, { all: true }).xml;
   const b = alsFromScore(donorXml, pscore, { all: true }).xml;
   ok(a === b, "T4 · the unpaced .als XML is deterministic" +
-     " (the v199-vs-now byte pin ran at land time: beatles --genre --all, XML byte-identical)");
+     " (the v199-vs-now byte pin ran at land time: beatgroup --genre --all, XML byte-identical)");
   ok(!/<IsTempoEnabled Value="true" \/>/.test(a) &&
      (a.match(/<FloatEvent /g) || []).length === (donorXml.match(/<FloatEvent /g) || []).length,
      "T4 · ...and its tempo surfaces are the donor's own, untouched");

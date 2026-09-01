@@ -197,7 +197,7 @@ const GATES = [
     need: ["test/precompose.test.js"], covers: ["test/precompose.test.js"] },
   /* THE GENRE'S OWN BASS RHYTHM (2026-09-01). Twenty-two anchors write their
      bass line out step by step — the habanera under `tango`, the off-beat
-     under `reggae`, the clave under `bodiddley` — and `kernel.js` ranked
+     under `reggae`, the clave under `hambone` — and `kernel.js` ranked
      `bassGrid` LAST of four, under a density word and under the MELODY's
      accents, so nineteen of them reached no note. Registered because this is
      the third time a field has been found declared-and-never-arriving here
@@ -215,6 +215,13 @@ const GATES = [
     argv: ["test/video-lazy.js"], need: ["test/video-lazy.js"],
     covers: ["test/video-lazy.js", "nukernel/ui/video.js",
              "nukernel/ui/video-clips.js"] },
+  /* THE SAME LAW FOR THE SKY (2026-09-01, "Bring back the screensaver"):
+     zero rAF and zero bytes until the Screensaver tab opens; the counter
+     freezes when you leave and revives when you return. Currency is FRAMES
+     where video-lazy's is requests, because the saver owns no media. */
+  { name: "screensaver-lazy", wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/screensaver-lazy.js"], need: ["test/screensaver-lazy.js"],
+    covers: ["test/screensaver-lazy.js", "nukernel/ui/screensaver.js"] },
   /* THE HAND PROBE (2026-08-30, "shouldn't more genres be humanized"): who is
      humanized, who is exempt, proven at the rendered events. Holds genres.js
      §39 (every anchor resolves a DYNAMICS row or a dated null), the machine

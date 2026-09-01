@@ -19,7 +19,7 @@
    line seats whose unit module is stk_guitar or whose sampler id matches
    /guitar/ (the guitar chairs), else line seats matching --chairs <re>.
 
-     node test/_chairtap.cjs --records rock,garagerock,chuckberry,steely
+     node test/_chairtap.cjs --records rock,garagerock,rocknroll,jazzrock
      node test/_chairtap.cjs --records jazz --chairs "sax|trumpet"
      node test/_chairtap.cjs --records rock --trim stk_guitar=1.79   (in flight)
 */
@@ -27,7 +27,7 @@ module.paths.push("/home/ford/ftrain-2025/node_modules");
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i < 0 ? d : process.argv[i + 1]; };
 const PAGE = arg("page", "http://localhost:8777/nukernel/index.html");
 const EXE = process.env.HOME + "/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome";
-const RECORDS = arg("records", "rock,garagerock,chuckberry,steely,jazz,funk").split(",");
+const RECORDS = arg("records", "rock,garagerock,rocknroll,jazzrock,jazz,funk").split(",");
 const CHAIRS = arg("chairs", null);          // control override: line seats matching re
 const BARS = +arg("bars", 8);
 const SEED = +arg("seed", 1);

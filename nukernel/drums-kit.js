@@ -242,7 +242,7 @@
     blast: ["blast beat"], sparse: ["bare bones"],
     rock: ["straight rock"], rockdrive: ["driving rock"], punkbeat: ["punk"],
     stomp: ["stomp"], surf: ["surf"], shufflerock: ["shuffle"],
-    motownbeat: ["motown"], train: ["train beat"], marchbeat: ["march"],
+    motownbeat: ["detroit soul"], train: ["train beat"], marchbeat: ["march"],
     bossa: ["bossa nova"], samba: ["samba"], rumba: ["rumba"], chacha: ["cha cha"],
     mambo: ["mambo"], songo: ["songo"], onedrop: ["one drop"],
     steppers: ["steppers"], rockers: ["rockers"],

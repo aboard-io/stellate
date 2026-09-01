@@ -148,7 +148,7 @@ export async function pageScore({ grid = true, engine = true, say = () => {} } =
  * voice, one Session clip per box in scene order, the same clips laid out in
  * the Arrangement, and the scenes named after the boxes. It is also the shape
  * the CLI's own `--all` has been gated on since it shipped (4 tracks, 32 clips,
- * 2,328 notes on `--genre beatles`), so the button is held to gates that have
+ * 2,328 notes on `--genre beatgroup`), so the button is held to gates that have
  * actually been run rather than to a path nobody exercises.
  *
  * P1 REFUSES RATHER THAN GUESSES, and that refusal is inherited, not written

@@ -238,6 +238,13 @@ export function mountVideo(host, CTX) {
   host.textContent = "";
   const doc = CTX && CTX.doc ? CTX.doc() : null;
   const secs = (doc && doc.form && doc.form.sections) || [];
+  /* THE PANEL'S HIDDEN NAME, FIRST (2026-09-01). Every axis heads itself
+     ("The score", "The band"...); the decks shipped headless and text-diet
+     T2 only noticed when its roster grew past nine. `.nu-vh` = read by a
+     screen reader and by the stylesheet-off law, invisible otherwise. */
+  const vh = document.createElement("h2");
+  vh.className = "nu-vh"; vh.textContent = "The film";
+  host.appendChild(vh);
   const wrap = document.createElement("div");
   wrap.className = "nu-video";
   host.appendChild(wrap);
@@ -515,7 +522,26 @@ export function mountVideo(host, CTX) {
       (secs[si].role || "section") + " · " + cur.mode + " · " + nm(lead) +
       (behind ? " ← " + behindPct + "% " + nm(behind) : "");
   };
+  /* THE TAB CLOSING IS THE OFF SWITCH (2026-09-01, lifted from the
+     screensaver deck, which shipped it first and honester). Measured before
+     this block: with the Video tab CLOSED, this loop kept ticking behind
+     `display:none` — the two <video> elements kept playing and the block
+     boundary kept arming loads, which is why test/video-lazy.js V4 counted 2
+     mp4 fetches AFTER leaving the tab. Parking the loop parks the loads:
+     the sources pause with it, the last frame stays on the canvas, and
+     re-opening the tab resumes on the record's own clock (readT), so nothing
+     drifts while parked. showTab writes `data-off` on every panel but the
+     open one; the observer fires on that one attribute and nothing else. */
+  let parked = false;
+  const mo = new MutationObserver(() => {
+    const off = host.hasAttribute("data-off");
+    if (off && !parked) { parked = true; cancelAnimationFrame(raf); raf = 0;
+                          vids.forEach((v) => v.pause()); wasPlaying = false; }
+    else if (!off && parked && !dead) { parked = false;
+                                        raf = requestAnimationFrame(frame); }
+  });
+  mo.observe(host, { attributes: true, attributeFilter: ["data-off"] });
   raf = requestAnimationFrame(frame);
-  return () => { dead = true; cancelAnimationFrame(raf);
+  return () => { dead = true; cancelAnimationFrame(raf); mo.disconnect();
                  vids.forEach((v) => { v.pause(); v.src = ""; }); };
 }

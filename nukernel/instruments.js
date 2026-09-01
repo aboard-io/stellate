@@ -1679,7 +1679,7 @@
     // THREE strips could not do that. Every non-pad pitched voice on the page
     // took `lead` whatever it was, so an upright piano, a Rhodes, a choir and a
     // marimba were all high-passed at 200 Hz and given a 3 dB lift at 3 kHz —
-    // motown's piano lost its left hand, spem's choir lost its chest and gained
+    // detroitsoul's piano lost its left hand, polychoral's choir lost its chest and gained
     // a hiss. These are the parent's own profiles re-cut per family
     // (state-engine STRIP_PROFILES + aggressiveStrip + samplerFamily); the
     // three above are untouched, so anything already sitting right still does.
@@ -1711,7 +1711,7 @@
        mallet 12000; vox 10000 and dirty 5000 for the two that reach nothing)
        was written into these rows and rendered through the shipped press
        (export/_satpress.js via _satdrive.cjs, 8 bars, seed 1, iranpop /
-       steely / rock / hymn). THE RESULT WAS BIT-IDENTICAL on every statistic
+       jazzrock / rock / hymn). THE RESULT WAS BIT-IDENTICAL on every statistic
        of three of the four records, and 0.18 dB of one band on the fourth
        (hymn 8-16 kHz, -119.88 -> -120.06). It reached the sound — the unit
        dump showed `harpsichord` carrying {hpf:40, lpf:9000} and the biquad

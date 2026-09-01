@@ -475,9 +475,14 @@ const LANE = async () => {
    quotation above is kept whole rather than edited, because it was true when
    he said it and the change is a new sentence, not a correction of the old
    one. This gate stays a QUOTATION either way: it is what the page is measured
-   against, so it may only ever move when he moves it. */
+   against, so it may only ever move when he moves it.
+   ...AND AN ELEVENTH, 2026-09-01: "Bring back the screensaver from stellate
+   as a new view like the video view." "Like the video view" places it — beside
+   Video, in the looked-at family between Score and Export — and, like Video's
+   line above, it is a new sentence added to the list, not an edit of any old
+   one. */
 const PAULS_TABS = ["Where", "Tempo", "Key", "Motif", "Band",
-                    "Mix", "Produce", "Score", "Video", "Export"];
+                    "Mix", "Produce", "Score", "Video", "Screensaver", "Export"];
 // how long a tab is given to settle after it is opened. The Score engraves a
 // whole record on a promise the first time it is asked; everything else is
 // synchronous and the wait is only for layout.

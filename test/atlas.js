@@ -556,8 +556,14 @@ function g18() {
      show genres that align with time." A dot with no record aligns with no time
      there is, so Bristol, Memphis and Reykjavík are not drawn at all — the
      drift they record stays visible where drift belongs, in
-     atlas.gate.js G6b's printed note, and G3 still holds their PLACES row. */
-  check(shape.marks === shape.withRecord && shape.marks < shape.places,
+     atlas.gate.js G6b's printed note, and G3 still holds their PLACES row.
+     ...AND THE INERT SET CAN REACH ZERO (2026-09-01): Bristol and Memphis
+     got records in the rounds since, and the soundtrack round's `nordicscore`
+     (Reykjavík 2015) filled the last one — so the strict `marks < places`
+     half of this check, which was only ever a restatement of "three dots are
+     inert", is now `<=`. The load-bearing half (marks === withRecord) is
+     unchanged: a mark still exists only where there is a record to press. */
+  check(shape.marks === shape.withRecord && shape.marks <= shape.places,
     "G7 · one mark per place that HAS a record (" + shape.marks + " marks, " +
     shape.places + " PLACES rows) — the " + (shape.places - shape.marks) +
     " placeless rows are not drawn at any year");

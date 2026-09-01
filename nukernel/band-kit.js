@@ -873,7 +873,7 @@
                instr: ["fingers on a P-bass", "with a pick"],
                chg: ["a twelve-bar blues", "the doo-wop changes"], hrw: HRSLOW },
     funk:    { w: "a funk record", fam: "funk", bpm: 96, chords: "nines", when: ["the seventies", "the eighties"], where: ["New Orleans", "Detroit", "Los Angeles"], venue: ["a club", "a bar", "a festival"], gtr: ["a clean electric", "a muted one", "a jazz box"], gjob: "skank", keys: ["a clav", "a Rhodes", "an organ", "an electric piano"], kjobs: ["skank", "comp", "riff", "push"], forms: ["vamp", "versechorus", "dance"], fig: "funk16", artic: "staccato", tone: { cut: 900,  q: 7,  rel: 0.14 },
-               grooves: ["funk", "linear funk", "new orleans", "motown"],
+               grooves: ["funk", "linear funk", "new orleans", "detroit soul"],
                machines: ["acoustic kit", "room kit", "808"],
                styles: ["busy sixteenths", "octaves", "hold the root"],
                instr: ["fingers on a P-bass", "with a pick"],

@@ -21,12 +21,12 @@ const BARS = +arg("bars", 8);
 const SEED = +arg("seed", 1);
 const RECORDS = arg("records",
   // SIX RECORDS SPANNING THE CLASSES, 2026-08-27: a modelled-voice ballad
-  // (iranpop), a sampled-instrument record (steely, 30 sampler sources), a
+  // (iranpop), a sampled-instrument record (jazzrock, 30 sampler sources), a
   // drum-forward one that also carries the master `drive` word (rock), one
   // seating desk.fx inserts on every chair (neoclassical, chorus), one that is
   // all bus (ambient — cavern space, no sampled voice at all) and one plain
   // (hymn — no drive, no tape word, no chips).
-  "iranpop,steely,rock,neoclassical,ambient,hymn").split(",");
+  "iranpop,jazzrock,rock,neoclassical,ambient,hymn").split(",");
 const JSONOUT = arg("json", null);
 /* THE BISECT. `--drop` neutralises a DOCUMENT fact (a master word, the chairs'
    chips) by deleting it before the record reaches the page — absent is what

@@ -132,10 +132,10 @@ ok("iranpop: 10 rewrites, >= 8 distinct hooks and >= 5 distinct rhythms", () => 
 /* ...AND THE TWO GENEALOGY ROUNDS OF 2026-08-29 GREW THE BAND. The list below
    was five when the catalogue was 201; the rounds that took it to 282 seated
    ten more rows whose IDIOM_ANCHOR states `cell: "long"` BY ARGUMENT — a
-   gagaku is a held court line, satie's refusal to develop IS the idiom,
+   gagaku is a held court line, furnituremusic's refusal to develop IS the idiom,
    dubstep and gqom are the drone against the broken kick, modaljazz is
    bebop's opposite (space), triphop and chopped are dub's row at other
-   tempos, cemilbey's taksim rises through a held line, gothicrock and
+   tempos, ottoman's taksim rises through a held line, gothicrock and
    psychrock carry the journey-out line. Same pin, same reason: `long` is a
    band of one. They move on contour, landing and key like everything else —
    the degree and key asserts below still hold them to that. The ratio assert
@@ -143,7 +143,7 @@ ok("iranpop: 10 rewrites, >= 8 distinct hooks and >= 5 distinct rhythms", () => 
    because a threshold that has to be re-typed every time the catalogue grows
    is a number waiting to be wrong. */
 /* ...AND DEEP TIME ADDED FOUR (2026-08-30, measured, not guessed — the round's
-   own candidate list named jiahu, seikilos and oxyrhynchus, and all three
+   own candidate list named jiahu, skolion and oxyrhynchus, and all three
    VARY: a three-note cell deals like any other however old the tune is. What
    freezes is what always freezes, the long cell: hohlefels (a bone flute's
    held tone in a cave), hurrian (the contested line held long), dreampop and
@@ -154,26 +154,37 @@ ok("iranpop: 10 rewrites, >= 8 distinct hooks and >= 5 distinct rhythms", () => 
    "will likely freeze its hook rhythm", and the measurement agreed exactly:
    those two froze, gypsyjazz and japanjazz (gallop, hang) did not. */
 /* ...AND THE DOWNTEMPO ROUND ADDED THREE (2026-08-30): the round predicted
-   kruderdorfmeister ("dub's own row — likely freeze") and it froze; tricky
-   and lamb joined on the same law — the long cell is the freeze, whatever
-   the contour and sentence do around it. massiveattack and djshadow, the
+   viennadownbeat ("dub's own row — likely freeze") and it froze; knowlewest
+   and torchbreaks joined on the same law — the long cell is the freeze, whatever
+   the contour and sentence do around it. bristolsound and instrumentalhiphop, the
    two the prediction watched, did NOT freeze: riff and even deal on. */
 /* ...AND THE HEARTH-AND-SCREEN ROUND ADDED TWO (2026-08-30), both predicted
    by the round itself, both long-cell: seannos (Joe Heaney's unmetered line)
-   and miamivice (the mood synth is long-cell country, as the ask said). */
-/* 26 -> 28, 2026-09-01, MEASURED and not guessed: `radiohead` and `fairuz`
+   and copshowsynth (the mood synth is long-cell country, as the ask said). */
+/* 26 -> 28, 2026-09-01, MEASURED and not guessed: `artrock` and `beiruttarab`
    joined when the ten named acts got idioms of their own. Both take a two-
    onset figure — Radiohead's long falling line and Fairuz's long hovering one
    — and a hook with two onsets has no rhythm left to vary, which is exactly
    the property this list records. Measured the way the gate measures: eight
    seeds each, the document's own `play` string, and only these two changed.
    Nothing fell OUT of the list, which is the other half of the check. */
-const FROZEN_RHYTHM = ["ambient", "arabesk", "cemilbey", "chopped", "doom",
-                       "dreampop", "drone", "dub", "dubstep", "enka",
-                       "fairuz", "gagaku", "gothicrock", "gqom", "hohlefels",
-                       "hurrian", "kruderdorfmeister", "lamb", "miamivice",
-                       "modaljazz", "nordicjazz", "psychrock", "radiohead",
-                       "satie", "seannos", "tricky", "triphop", "witchhouse"];
+const FROZEN_RHYTHM = ["ambient", "arabesk", "artrock", "beiruttarab",
+                       // ...and the soundtrack round's two (2026-09-01), each
+                       // frozen BY ITS OWN CLAIM: `epichybrid`'s braam is
+                       // "one note, most of a bar" (IDIOM_ANCHOR cell `long`
+                       // + contour `hold` — the band of one is a pin), and
+                       // `nordicscore` is the drone school taking a scoring
+                       // job (`long` + sent `long`). A braam that varied its
+                       // rhythm per reading would stop being the braam.
+                       // (Keys are the 2026-09-01 great-rename spellings;
+                       // the LIST IS SORTED because the assertion sorts.)
+                       "chopped", "copshowsynth", "doom", "dreampop", "drone",
+                       "dub", "dubstep", "enka", "epichybrid",
+                       "furnituremusic", "gagaku", "gothicrock", "gqom",
+                       "hohlefels", "hurrian", "knowlewest", "modaljazz",
+                       "nordicjazz", "nordicscore", "ottoman", "psychrock",
+                       "seannos", "torchbreaks", "triphop", "viennadownbeat",
+                       "witchhouse"];
 ok("catalog: hook rhythm and degrees vary at nearly every anchor", () => {
   let rv = 0, dv = 0, kv = 0; const frozen = [];
   for (const g of ANCHORS) {
@@ -261,7 +272,7 @@ ok("idiom respect: every stated axis holds in every slot at every reading", () =
     /* ...AND THE SEQUENCER'S GESTURE IS A BAND, NOT A VALUE (2026-08-31).
        Paul: "arps should do different arp things and have little exceptions.
        Not just up and down." So `seq` may draw any of the arpeggio contours
-       and an anchor says which with `seqArp` — moroder pedals the octave
+       and an anchor says which with `seqArp` — eurodisco pedals the octave
        because that is I Feel Love, acid leaps because that is a 303,
        berlinschool turns because those cycles are long.
 

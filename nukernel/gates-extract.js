@@ -514,7 +514,7 @@ const MIN_ROWS = 8;                 // below this a "rule" is a coincidence
    score in STEP units (`score` above returns each event's `t` as a step) and
    the tempo is seconds-per-step, applied after the kernel has emitted every
    event. Measured, 8 precomposed records rewritten to a different bpm — punk
-   160->58, dub 76->58, motown 122->58, marabi 105->58 and four more:
+   160->58, dub 76->58, detroitsoul 122->58, marabi 105->58 and four more:
    8 of 8 compile to a BYTE-IDENTICAL event list. A feature that cannot move
    the measurement can only ever fingerprint the records that carry it, so a
    rule built on it is a rule about which record you are looking at.

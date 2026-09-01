@@ -428,7 +428,47 @@
   // That is a VIEW fact — which cell has the cursor in it is not something the
   // record says — so it stayed in ui/eight.js and this function only touches
   // the document. Mutates in place and returns it, the way the page's did.
+  /* ---- THE GREAT RENAME'S DOOR (2026-09-01) ---------------------------
+     Paul: "Rename everything to a genre. No more band names or album name
+     or people names. ONLY genre." 68 anchor keys changed in genres.js on
+     that ruling — and every record ALREADY SAVED under an old key (a
+     session in localStorage, a keep, a share link) would otherwise load as
+     `GENRES[doc.basis] || {}` = an EMPTY genre: no error, wrong sound, the
+     exact silent degrade this box legislates against. So the old keys are
+     FOLDED HERE, AT THE DOOR, ONCE — the sound.fx precedent below, same
+     law, one owner. ABSENT IS TODAY: a basis this map does not name takes
+     no branch and comes out byte-identical. */
+  const OLDKEYS = {
+    spem: "polychoral", eurythmics: "synthsoul", isley: "psychsoul",
+    toto: "aor", jodeci: "hiphopsoul", beatles: "beatgroup",
+    steely: "jazzrock", motown: "detroitsoul", bodiddley: "hambone",
+    chuckberry: "rocknroll", kraftwerk: "dusseldorfschool",
+    waxtrax: "industrialdance", hendrix: "acidrock", moroder: "eurodisco",
+    beachboys: "baroquepop", velvets: "protopunk", winstons: "amenbreak",
+    sabbath: "heavymetal", ymo: "technopop", pfunk: "psychfunk",
+    galaxie500: "slowcore", slowdive: "ambientpop", younggalaxy: "balearic",
+    radiohead: "artrock", stoneroses: "baggy", wings: "softrock",
+    skinnypuppy: "electroindustrial", ministrysynth: "electropop",
+    katebush: "artpop", petergabriel: "worldbeat", fairuz: "beiruttarab",
+    bronskibeat: "hinrg", omd: "newpop", sisters: "leedsgoth",
+    seinfeld: "sitcomsting", miamivice: "copshowsynth",
+    korngold: "goldenagescore", herrmann: "suspensescore",
+    morricone: "spaghettiwestern", barry: "spyscore",
+    carpenter: "horrorsynth", hammerhorror: "horrorscore",
+    kruderdorfmeister: "viennadownbeat", portishead: "noirhop",
+    tricky: "knowlewest", morcheeba: "chillout", lamb: "torchbreaks",
+    djshadow: "instrumentalhiphop", thieverycorporation: "downtempo",
+    air: "versailles", massiveattack: "bristolsound", stgermain: "nujazz",
+    royksopp: "tromso", skokiaan: "tsabatsaba", seikilos: "skolion",
+    mawsili: "abbasid", kassia: "sticheron", hildegard: "antiphon",
+    dunstaple: "contenanceangloise", dufay: "isorhythm",
+    josquin: "francoflemish", monteverdi: "secondapratica",
+    schutz: "sacredconcerto", satie: "furnituremusic",
+    stockhausen: "cologneschool", ziryab: "andalusi", cemilbey: "ottoman",
+    brill: "girlgroup",
+  };
   function normalize(doc) {
+    if (doc && doc.basis && OLDKEYS[doc.basis]) doc.basis = OLDKEYS[doc.basis];
     const ids = doc.form.sections.map((s2) => s2.id);
     /* ---- THE RETIRED RECORD-WIDE CHIP, RESOLVED ON READ (2026-08-27) -------
        Paul: *"We can get rid of Character right? We don't really use it any
@@ -543,5 +583,9 @@
     return { bars: bar, events: out };
   }
 
-  return { toGenre, toPhrase, materialAt, barsOf, boxesOf, normalize, scoreOf };
+  return { toGenre, toPhrase, materialAt, barsOf, boxesOf, normalize, scoreOf,
+           // THE RENAME'S ALIAS MAP, EXPORTED (2026-09-01): song.js migrate()
+           // folds saved catalog keys through the same one map at ITS door —
+           // two doors, one owner. See the OLDKEYS block above for the law.
+           OLDKEYS };
 });

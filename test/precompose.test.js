@@ -405,12 +405,12 @@ function sectionEvents(doc, i) {
   // grown by paying the catalog's own debts rather than a wishlist — the
   // wants census had 23 strings wanted by two or more rows and this round
   // paid seventeen of them by name (boogiewoogie ×3; deltablues, krautrock,
-  // miamibass, quietstorm, spirituals, moroder, neworleans, berlinschool,
-  // gothicrock, operaseria, danzon, maxixe, lundu, modinha, cemilbey and
-  // ballad ×2 each), plus habanera, hendrix, glam, phillysoul, italodisco,
+  // miamibass, quietstorm, spirituals, eurodisco, neworleans, berlinschool,
+  // gothicrock, operaseria, danzon, maxixe, lundu, modinha, ottoman and
+  // ballad ×2 each), plus habanera, acidrock, glam, phillysoul, italodisco,
   // newjackswing, hardcorerave and crunk on single wants, plus the two
-  // ancestors the timeline demanded (gagaku Nara 752, ziryab Córdoba 822 —
-  // the 8th and 9th centuries existed and the map now says so, plus dufay
+  // ancestors the timeline demanded (gagaku Nara 752, andalusi Córdoba 822 —
+  // the 8th and 9th centuries existed and the map now says so, plus isorhythm
   // Florence 1436 and lied Vienna 1814 for the two emptiest Western
   // centuries), plus four children that densify living clusters (gfunk,
   // grime, dubstep — the 2000s had eight rows — and quietstorm's own soul
@@ -419,35 +419,35 @@ function sectionEvents(doc, i) {
   // (quarter tones, WORLD.md §2 wall 3), tape music (the material is not
   // notes), latin percussion (an instrumentation, not a genre), maringa
   // (first datable records contemporary with its own child) and the full
-  // ottoman makam (paid narrowly as cemilbey in Hicaz instead). TWO
+  // ottoman makam (paid narrowly as ottoman in Hicaz instead). TWO
   // backwards WANTS were found and rewritten in place, dated, at their
   // rows (hymn asking for spirituals, continuo for opera seria), and one
-  // backwards PARENT edge was closed (motorik <- kraftwerk, three years
+  // backwards PARENT edge was closed (motorik <- dusseldorfschool, three years
   // its own child's junior, reparented onto krautrock Cologne 1971).
   // + the THIRTY-SEVEN of the debts round ("Keep going on genres", Paul,
   // 2026-08-29, the same lane's next shift): grown by paying the wants
   // ledger again — six multi-dependent debts paid BY NAME (field holler as
   // `holler`, South Carolina 1853, Olmsted's eyewitness print, ×4 counting
-  // skiffle's "work song"; stockhausen ×3; the amen break ×2 as `winstons`,
+  // skiffle's "work song"; cologneschool ×3; the amen break ×2 as `amenbreak`,
   // the band and the B-side, because a seven-second sample is a record and
   // not a genre; the cuban contradanza ×2, Havana 1803; abbasid court song
-  // ×2 as `mawsili`, Baghdad 800; the zodiak free arts lab ×2) — plus the
-  // decade histogram's own thin stretches filled at the dufay standard:
-  // four rows where the 800s-1100s held three for seven centuries (kassia,
+  // ×2 as `abbasid`, Baghdad 800; the zodiak free arts lab ×2) — plus the
+  // decade histogram's own thin stretches filled at the isorhythm standard:
+  // four rows where the 800s-1100s held three for seven centuries (sticheron,
   // sequence, winchester — which closes organum's gregorian:1
-  // simplification — and hildegard), Josquin's 1500s (josquin, Venice 1502,
+  // simplification — and antiphon), Josquin's 1500s (francoflemish, Venice 1502,
   // Petrucci's first single-composer print), BOTH halves of the 1610-1660
-  // gap (monteverdi, schutz), the 1840s-50s (contradanza 1803 predates it;
+  // gap (secondapratica, sacredconcerto), the 1840s-50s (contradanza 1803 predates it;
   // holler 1853 and nothing else could be argued — the viennese waltz
   // stays declined on the triple-meter reason), twelve want-paying 19th-
-  // and 20th-century rows (operetta, musichall, satie, march, broadway,
-  // territoryband, modaljazz, brill — which pays songwriterpiano AND
-  // punk's "girl groups" — garagerock, beachboys, psychrock, velvets,
-  // progrock), the metal wing the table lacked entirely (sabbath
+  // and 20th-century rows (operetta, musichall, furnituremusic, march, broadway,
+  // territoryband, modaljazz, girlgroup — which pays songwriterpiano AND
+  // punk's "girl groups" — garagerock, baroquepop, psychrock, protopunk,
+  // progrock), the metal wing the table lacked entirely (heavymetal
   // Workington 1969 — NOT Birmingham: the atlas's own Southall note
   // measured that dot blocked, so the row takes the first named
   // performance under the name, 30 August 1969 — nwobhm, thrash), the
-  // culture gap before electro (blockparty, Bronx 1973), pfunk, ymo,
+  // culture gap before electro (blockparty, Bronx 1973), psychfunk, technopop,
   // triphop, chopped, and the 2010s brought from seven rows to ten
   // (synthwave Paris 2010, footwork Chicago 2013, gqom Durban 2016).
   // FOUR were examined and DECLINED with reasons at the debts round's
@@ -465,7 +465,7 @@ function sectionEvents(doc, i) {
   // griffon-vulture flute), jiahu (Jiahu 6000 BC, the playable gudi),
   // urlyre (Ur 2500 BC, the Royal Cemetery lyres), hurrian (Ugarit 1400
   // BC, tablet h.6), delphic (Delphi 128 BC), carmen (Rome 17 BC,
-  // Horace's Carmen Saeculare), seikilos (Tralles 100, the oldest
+  // Horace's Carmen Saeculare), skolion (Tralles 100, the oldest
   // complete song) and oxyrhynchus (Oxyrhynchus 300, the oldest notated
   // Christian music). BC years are NEGATIVE in WHEN — the label
   // convention ("Place Year BC") and the fail-closed argument are at
@@ -478,18 +478,18 @@ function sectionEvents(doc, i) {
   // 1941) and westernswing (Tulsa 1940) for the 1940s' two missing
   // country rooms, dreampop (London 1984, paying shoegaze's want), doom
   // (Stockholm 1986, the metal wing's missing floor), jpop (Tokyo 1999)
-  // and dunstaple (London 1420, the Old Hall Manuscript, paying dufay's
+  // and contenanceangloise (London 1420, the Old Hall Manuscript, paying isorhythm's
   // contenance-angloise want). The 2000s stay thin on purpose — 10 rows
   // to the 1990s' 29 — named as the next ask rather than half-paid.
   // + the SIXTEEN of the goth-and-globe round (Paul, 2026-08-30: "Need
   // way more gothy genres and way more spread of global jazz. Keep
   // using Wikipedia to add density."). THE GOTH WING, seven: deathrock
   // (Pomona 1982, Only Theatre of Pain — Pomona is Rozz Williams's own
-  // town, the Kinks rule, LA 1982 being toto's), batcave (London 1982,
+  // town, the Kinks rule, LA 1982 being aor's), batcave (London 1982,
   // the Dean Street club-night on the zodiak venue ruling, paying
   // gothicrock's forward-pointing want by arrival), coldwave (Rennes
   // 1979, Dantzig Twist, paying postpunk's forward want the same way),
-  // sisters (York 1981 — the first DATABLE show; Leeds measured
+  // leedsgoth (York 1981 — the first DATABLE show; Leeds measured
   // blocked by Halifax at 5.8px under G10's 8.5 floor, the
   // Workington-not-Birmingham ruling replayed, noted in atlas.js),
   // gothicmetal (Halifax 1991, Paradise Lost's Gothic, the record that
@@ -503,8 +503,8 @@ function sectionEvents(doc, i) {
   // inside that album), indojazz (London 1966, Indo-Jazz Suite),
   // japanjazz (Tokyo 1974, Midnight Sugar), nordicjazz (Oslo 1970,
   // Afric Pepperbird — which deliberately OPENS "free jazz" as a want,
-  // so the ledger asks for Ornette by name) and skokiaan (Bulawayo
-  // 1947, the winstons a-record-is-the-honest-row ruling). EXAMINED
+  // so the ledger asks for Ornette by name) and tsabatsaba (Bulawayo
+  // 1947, the amenbreak a-record-is-the-honest-row ruling). EXAMINED
   // AND DECLINED with reasons at the round's header in genres.js:
   // darkwave and "township jazz" (umbrellas made of the catalog's own
   // rows), ethereal wave (its archetype record IS dreampop's anchor),
@@ -513,28 +513,28 @@ function sectionEvents(doc, i) {
   // spiritualjazz) the ask's geography did not cover and the ledger
   // did not owe.
   // + the TWELVE of the downtempo round (Paul, 2026-08-30: "Now we need
-  // more portishead massive attack and maybe 10 more downtempo bands.").
+  // more noirhop massive attack and maybe 10 more downtempo bands.").
   // THE RULING FIRST: Blue Lines is `triphop`'s anchor, so Massive
-  // Attack's own artist row (massiveattack, Bristol 1998) anchors on
-  // Mezzanine — a record pays one debt, the winstons rule generalized;
+  // Attack's own artist row (bristolsound, Bristol 1998) anchors on
+  // Mezzanine — a record pays one debt, the amenbreak rule generalized;
   // the argument is at the round header in genres.js. The Bristol wing:
-  // portishead (Bristol 1994, Dummy — Barrow was a Coach House tape op
-  // on Blue Lines) and tricky (Bristol 1995, Maxinquaye — the dot is
+  // noirhop (Bristol 1994, Dummy — Barrow was a Coach House tape op
+  // on Blue Lines) and knowlewest (Bristol 1995, Maxinquaye — the dot is
   // Bristol on the Kinks/Pomona rule, the tape ran in London). The
   // diaspora: acidjazz (London 1988, Frederick Lies Still — AJ001, the
-  // scene the 90s crate-dug), kruderdorfmeister (Vienna 1993, G-Stoned),
-  // morcheeba (London 1996, Who Can You Trust?), lamb (Manchester 1996,
-  // Lamb), djshadow (San Francisco 1996, Endtroducing — instrumental by
-  // its own genre line), thieverycorporation (Washington 1996, Sounds
+  // scene the 90s crate-dug), viennadownbeat (Vienna 1993, G-Stoned),
+  // chillout (London 1996, Who Can You Trust?), torchbreaks (Manchester 1996,
+  // Lamb), instrumentalhiphop (San Francisco 1996, Endtroducing — instrumental by
+  // its own genre line), downtempo (Washington 1996, Sounds
   // from the Thievery Hi-Fi — NOT instrumental, the ZIM lead names its
   // guest singers), air (Versailles 1998, Moon Safari — Versailles is a
-  // new dot declared inside Paris in atlas.js WITHIN), stgermain (Paris
-  // 2000, Tourist, instrumental) and royksopp (Tromsø 2001, Melody A.M.
+  // new dot declared inside Paris in atlas.js WITHIN), nujazz (Paris
+  // 2000, Tourist, instrumental) and tromso (Tromsø 2001, Melody A.M.
   // — the map's northernmost dot). EXAMINED AND DECLINED with reasons
   // at the round header: a `downtempo` umbrella row (the darkwave
   // ruling), chillout (a compilation of other people's records fails
   // the batcave test), nightmaresonwax (Leeds is measured blocked,
-  // 5.8px, the sisters wall), hooverphonic (Sint-Niklaas lands ~1 px
+  // 5.8px, the leedsgoth wall), hooverphonic (Sint-Niklaas lands ~1 px
   // from Antwerp and "Antwerp 1996" would contradict the ZIM's own
   // infobox), boardsofcanada (the IDM shelf, which the catalog does
   // not hold at all — a named next ask), and zero7/bonobo/
@@ -542,7 +542,7 @@ function sectionEvents(doc, i) {
   // + the TWENTY-FIVE of the folk-floor round (Paul, 2026-08-30: "we're
   // missing all kinds of folk traditions plus Pygmy and Romm and classic
   // nursery rhymes. We also could use some classic film soundtracks, 80s
-  // and 90s sitcom themes, John carpenter horror and incidental stock
+  // and 90s sitcom themes, John Carpenter horror and incidental stock
   // music of all kinds. Plus tons of Miami vice jan hammer michael mann
   // synth incidental stuff"). THE FOLK FLOOR, sixteen, each on a named
   // collection/record/event: shanty (London 1961, Hugill), appalachia
@@ -568,12 +568,12 @@ function sectionEvents(doc, i) {
   // it said was missing, found). THE COMMISSIONED SCREEN, nine, the
   // news pair's law at other desks: photoplay (Cleveland 1913, Zamecnik
   // — paying newsfanfare's "library music" and, via the existing
-  // anchor, djshadow's crates), korngold (Los Angeles 1938), herrmann
-  // (Los Angeles 1960), morricone (Rome 1966, voices scored as
-  // instruments), barry (London 1962, the Bond theme — paying
-  // portishead), carpenter (Los Angeles 1978 — paying deathrock AND
-  // synthwave), miamivice (Miami 1984 — synthwave's second dated
-  // memory-edge), sitcom (Los Angeles 1983, Cheers) and seinfeld (Los
+  // anchor, instrumentalhiphop's crates), goldenagescore (Los Angeles 1938), suspensescore
+  // (Los Angeles 1960), spaghettiwestern (Rome 1966, voices scored as
+  // instruments), spyscore (London 1962, the Bond theme — paying
+  // noirhop), horrorsynth (Los Angeles 1978 — paying deathrock AND
+  // synthwave), copshowsynth (Miami 1984 — synthwave's second dated
+  // memory-edge), sitcom (Los Angeles 1983, Cheers) and sitcomsting (Los
   // Angeles 1989, Wolff's sampler sting, a NOLINK by honest failure).
   // DECLINED with reasons at the round header in genres.js:
   // bal-musette and the compás (the triple-meter wall, unchanged),
@@ -587,7 +587,7 @@ function sectionEvents(doc, i) {
   // written (meter landed); guoyue was examined and stays EMPTY.
   // 358 -> 369 on 2026-08-30, the ledger round ("Fill in missing genres
   // that are wanted"): eleven rows, each the payment of a written want —
-  // hammerhorror, idm, exotica (the first Pacific dot; the coastline
+  // horrorscore, idm, exotica (the first Pacific dot; the coastline
   // re-bake), muwashshah, zajal, soundsystem, jubilee, rumba, lautari,
   // doina, chazzanut. The wants that stay open are CLOSED-with-reason at
   // the round's own ledger block in genres.js.
@@ -604,24 +604,24 @@ function sectionEvents(doc, i) {
   // hand: `industrialrock` carried `wants: ["wax trax industrial"]` and the
   // two Chicago rows that descend from it — `industrialmetal` 1988 and `ebm`
   // 1989 — were already here, so the label was their missing PARENT and not
-  // a new corner. `waxtrax` (Chicago 1981) ships on the batcave rule, which
+  // a new corner. `industrialdance` (Chicago 1981) ships on the batcave rule, which
   // the ZIM answers twice over: the label pressed Strike Under's Immediate
   // Action in 1980 and Ministry's Cold Life in 1981, and that second record
   // is the one the article says "set the stage".
-  /* 374 -> 375, 2026-08-31: `younggalaxy` (Montreal 2011). Paul asked for the
+  /* 374 -> 375, 2026-08-31: `balearic` (Montreal 2011). Paul asked for the
      band by name; the ZIM chose the RECORD — Shapeshifting rather than the
      2007 debut, because the debut is the Slowdive lineage `dreampop` already
      anchors and the ethereal-wave ruling forbids a second row for one
      archetype. The Lissvik production is the thing this table did not hold.
      Montreal is a new dot (North America), baked to 369 WHEN rows. */
-  /* 375 -> 377, 2026-08-31: `slowdive` (Sutton Courtenay 1993) and
-     `galaxie500` (Boston 1989). Paul, after younggalaxy landed: "I guess we
+  /* 375 -> 377, 2026-08-31: `ambientpop` (Sutton Courtenay 1993) and
+     `slowcore` (Boston 1989). Paul, after balearic landed: "I guess we
      need Slowdive and Galaxie 500 too right?" — and the two rows ship for two
-     DIFFERENT reasons, which is why neither is a duplicate. galaxie500 fills a
+     DIFFERENT reasons, which is why neither is a duplicate. slowcore fills a
      HOLE: its own infobox reads "Indie rock / dream pop / slowcore" and
      slowcore had no anchor here at all, the Velvets-descended slow thin thing
-     that is neither shoegaze's wall nor dreampop's wash. slowdive is the
-     massiveattack-vs-triphop shape instead: `shoegaze` is anchored on Loveless
+     that is neither shoegaze's wall nor dreampop's wash. ambientpop is the
+     bristolsound-vs-triphop shape instead: `shoegaze` is anchored on Loveless
      by its own comment, and Souvlaki is a different record making a different
      claim — half the snare, a sung lead, and a pad where the second wall of
      fuzz goes. The ethereal-wave ruling forbids a row whose ARCHETYPE is
@@ -631,17 +631,29 @@ function sectionEvents(doc, i) {
      with Reading REFUSED at 5.1 px from Bray, Weston-super-Mare at 7.7 from
      Bristol, and Cambridge MA at 0.2 from Boston — that last one a refusal the
      gate could not have made, since G10 asserts only at the Britain arc.
-     galaxie500 takes Boston, a dot the map already drew. Baked to 371 WHEN
-     rows. `younggalaxy`'s generic shoegaze 0.2 edge was replaced the same day
+     slowcore takes Boston, a dot the map already drew. Baked to 371 WHEN
+     rows. `balearic`'s generic shoegaze 0.2 edge was replaced the same day
      by the two acts its article actually names. */
-  /* 377 -> 387, 2026-09-01: Paul's list of missing acts — radiohead,
-     stoneroses, wings, skinnypuppy, ministrysynth, katebush, petergabriel,
-     fairuz, bronskibeat, omd. Every place was checked in the ZIM (three of my
+  /* 377 -> 387, 2026-09-01: Paul's list of missing acts — artrock,
+     baggy, softrock, electroindustrial, electropop, artpop, worldbeat,
+     beiruttarab, hinrg, newpop. Every place was checked in the ZIM (three of my
      guesses were wrong) and every parent checked for being EARLIER than its
-     child; ministrysynth is the early era only, because the later ones were
-     already here as industrialmetal and waxtrax. */
-  ok("G0 the catalog is 387 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 387,
+     child; electropop is the early era only, because the later ones were
+     already here as industrialmetal and industrialdance. */
+  /* 387 -> 395, 2026-09-01, the soundtrack round: Paul, "add lots of movie
+     soundtracks especially the Hans Zimmer type but also just in general
+     nail down the current big braaaannnng sound and synth sweeps and
+     orchestral vibes. Star Wars etc." Eight rows, keys all GENRE terms per
+     the same message's naming law: spaceopera, epichybrid (the braam),
+     trailerscore, crimejazz (paying newsfanfare's standing want by name),
+     fantasyscore, nordicscore, dramascore, frontierscore. Two parents were
+     refused on DATES against the round's own spec (suspensescore 1960 and rnb
+     1994 out of crimejazz 1955; trailerscore re-dated 2012 so epichybrid
+     2010 stays legal), and one label was refused by the MAP (spaceopera's
+     Denham measured 4.0 px from Bray — the Reading ruling; the row's own
+     comment carries the whole story). */
+  ok("G0 the catalog is 395 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 395,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
@@ -952,7 +964,7 @@ function sectionEvents(doc, i) {
           the one being fixed;
        4. an UNACCOMPANIED anchor — dated, no kit, no bass, every `instr` id a
           sung one — hires nobody at all. That predicate reads the anchor's own
-          fields and finds gregorian, spem, organum, zema and mbube, which is
+          fields and finds gregorian, polychoral, organum, zema and mbube, which is
           why the two names in the complaint are not special cases in the code.
      Measured by re-running these very rules against the shipped composer:
      254 violations of rules 1-3 across 157 of the 417 records and 74 of the
@@ -1014,7 +1026,7 @@ function sectionEvents(doc, i) {
       assert.strictEqual(late.length, 0, late.length + " anachronistic, first " +
         "eight:\n      " + late.slice(0, 8).join("\n      ")));
     ok("G8e2 …and an anchor that sings unaccompanied hires nobody (26 hires " +
-       "in 15 records before) — zema, mbube, gregorian, spem and organum, " +
+       "in 15 records before) — zema, mbube, gregorian, polychoral and organum, " +
        "found by reading their own kit/nobass/instr", () =>
       assert.strictEqual(hired.length, 0, hired.length + ":\n      " +
         hired.slice(0, 8).join("\n      ")));
@@ -1027,9 +1039,9 @@ function sectionEvents(doc, i) {
        "the harpsichord on a 1962 Liverpool record is still the proof", () => {
       assert.ok(visited.length > 800, "only " + visited.length + " hires over " +
         (ANCHORS.length * SEEDS.length) + " records — the era law emptied the ballots");
-      const quartet = [1, 2, 3].some((s2) => (docs.get("beatles/" + s2) || { voices: [] })
+      const quartet = [1, 2, 3].some((s2) => (docs.get("beatgroup/" + s2) || { voices: [] })
         .voices.some((v) => v.name === "counterpoint" && v.instrument === "harpsichord"));
-      assert.ok(quartet, "no seed of beatles books the string quartet any more");
+      assert.ok(quartet, "no seed of beatgroup books the string quartet any more");
     });
   }
 
@@ -1260,15 +1272,15 @@ function sectionEvents(doc, i) {
     // predicate, and it landed in the set on its own three fields. Two
     // independent arrivals is the difference between a derivation and a list.
     // ...AND THE GENEALOGY ROUND ADDED THREE MORE PROBES (2026-08-29):
-    // `dufay` and `spirituals` are four unaccompanied parts and `ballad`
+    // `isorhythm` and `spirituals` are four unaccompanied parts and `ballad`
     // is ONE unaccompanied voice — the set's smallest possible member,
     // which no earlier arrival had tested. All three were written without
     // reading the predicate and landed on their own three fields; five
     // independent arrivals now, and the derived list below is the round's
     // whole edit to this gate.
-    // ...AND THE DEBTS ROUND ADDED FIVE MORE PROBES (2026-08-29): `kassia`,
-    // `sequence` and `hildegard` are one unaccompanied chant voice each,
-    // `winchester` is two, `josquin` four, and `holler` repeats ballad's
+    // ...AND THE DEBTS ROUND ADDED FIVE MORE PROBES (2026-08-29): `sticheron`,
+    // `sequence` and `antiphon` are one unaccompanied chant voice each,
+    // `winchester` is two, `francoflemish` four, and `holler` repeats ballad's
     // smallest-member test from the other side of an ocean. All were
     // written without reading the predicate and landed on their own three
     // fields; the derived list below is again the round's whole edit here.
@@ -1276,7 +1288,7 @@ function sectionEvents(doc, i) {
     // empty kit, nobass — the predicate found the organum practice
     // unaccompanied, which it was.)
     // ...AND THE DEEP-TIME ROUND ADDED TWO MORE PROBES (2026-08-30):
-    // `seikilos` (one voice, a complete tune) and `oxyrhynchus` (one
+    // `skolion` (one voice, a complete tune) and `oxyrhynchus` (one
     // Greek hymn line) — both written to the recipe, not to the
     // predicate, and both landed on their own three fields. `carmen` WAS
     // the instructive ABSENCE: fifty-four unaccompanied children, empty
@@ -1290,7 +1302,7 @@ function sectionEvents(doc, i) {
     // and the predicate correctly reads their fields, not their era. One
     // more independent arrival; the derived list below grew by one.
     ok("G11c the unaccompanied law is derived, not a list — it found the " +
-       "five it was written on PLUS sacredharp, chorale, ballad, dufay, " +
+       "five it was written on PLUS sacredharp, chorale, ballad, isorhythm, " +
        "spirituals, the debts round's six, the deep-time round's two, " +
        "and the folk-floor round's eight, " +
        "none of which it has ever heard of", () => {
@@ -1300,15 +1312,12 @@ function sectionEvents(doc, i) {
       // voice on a mountain, `chazzanut` one voice over a hum. The
       // predicate found all three before this list heard of them.
       assert.deepStrictEqual(solo.slice().sort(),
-        ["appalachia", "ballad", "barbershop", "carmen", "chazzanut",
-         "chorale", "doina", "dufay",
-         "dunstaple", "georgian", "gregorian",
-         "hildegard", "holler",
-         "josquin", "jubilee", "kassia", "mbube", "mbuti", "nordicfolk",
-         "nursery",
-         "organum", "oxyrhynchus",
-         "sacredharp", "seannos", "seikilos", "sequence", "shanty",
-         "spem", "spirituals", "winchester", "zema"]);
+["antiphon", "appalachia", "ballad", "barbershop", "carmen",
+         "chazzanut", "chorale", "contenanceangloise", "doina",
+         "francoflemish", "georgian", "gregorian", "holler", "isorhythm",
+         "jubilee", "mbube", "mbuti", "nordicfolk", "nursery", "organum",
+         "oxyrhynchus", "polychoral", "sacredharp", "seannos", "sequence",
+         "shanty", "skolion", "spirituals", "sticheron", "winchester", "zema"]);
     });
 
     // G11d — EVERY PLACE IS IN EXACTLY ONE REGION, AND EVERY REGION ROW IS A
@@ -1581,7 +1590,7 @@ function sectionEvents(doc, i) {
       // an instrument onto every chair again puts a record over 43.
       // 43 -> 46 on 2026-08-30, the ledger round, MEASURED not guessed:
       // the catalog grew 358 -> 369 and the guest draws re-dealt (they
-      // hash the catalog), so beachboys/1 gained a model-resolved guest
+      // hash the catalog), so baroquepop/1 gained a model-resolved guest
       // chair and became the worst record at 44.91 where synthpop/3's
       // 42.00 had been. That is a re-deal, not the seam: the per-chair
       // costs are unchanged, one record simply seats one more model. The

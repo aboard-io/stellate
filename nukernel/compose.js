@@ -64,7 +64,7 @@
   // MEASURED FIRST, eight readings each of twelve anchors spanning the ten
   // families (compose(gk, 1..8), counting DISTINCT ROLE SEQUENCES):
   //
-  //   beatles rock motown jazz (song)   1, 1, 2, 2      fugue tango solo (arc) 1
+  //   beatgroup rock detroitsoul jazz (song)   1, 1, 2, 2      fugue tango solo (arc) 1
   //   techno house (dance)              2, 2            drone (arc)            1
   //   reggae dub (groove)               4, 3
   //
@@ -113,7 +113,7 @@
   // MEASURED AFTER, the same twelve anchors and the same eight readings —
   // distinct role sequences, before -> after:
   //
-  //   beatles 1->5   rock 1->8   motown 2->8   jazz 2->7   reggae 4->7
+  //   beatgroup 1->5   rock 1->8   detroitsoul 2->8   jazz 2->7   reggae 4->7
   //   techno 2->7    house 2->7  dub 3->8      fugue 1->6  tango 1->4
   //   solo 1->6      drone 1->2 (the steady exemption: the count, and nothing
   //                              else, so it is 8 or 9 sections of the same
@@ -1012,7 +1012,7 @@
       // ...BUT ONLY WHERE THERE IS A VOICE TO SPARE, and the measurement that
       // forced the condition is worth keeping: a PAD voice takes its pitches
       // from the chord and only its rhythm from the phrase, so on a genre that
-      // comps (toto, citypop, jodeci — `realize(0) === "pad"`, with one line
+      // comps (aor, citypop, hiphopsoul — `realize(0) === "pad"`, with one line
       // voice playing from bar 1) handing the second voice a companion left
       // the quoted MELODY nowhere at all. Twenty-five genre/seed pairs stopped
       // quoting. The doubling was never those genres' problem anyway: it comes
@@ -1195,7 +1195,7 @@
 
   // ---- THE SINGER ----------------------------------------------------------
   // "The vocal is a guest, and it should be the through-line." MEASURED on
-  // beatles/5: the `vocal` layer appeared on the BRIDGE and nowhere else, while
+  // beatgroup/5: the `vocal` layer appeared on the BRIDGE and nowhere else, while
   // every chorus carried a `solo`. That is backwards, and it was backwards for
   // a structural reason rather than a tuning one — there was no such thing as
   // the record's SINGER. A voice could only arrive the way a string quartet
@@ -1221,7 +1221,7 @@
   const SINGS = { vox: "vocal", soul: "vocal", studio: "vocal", roots: "vocal",
                   band: "vocal", groove: "vocal", club: "vocal", kernel: "vocal",
                   drift: null, parts: null };
-  // ...spem included (2026-08-19, "Spem should be choir samples not vocal
+  // ...polychoral included (2026-08-19, "Spem should be choir samples not vocal
   // sim"): its every chair IS the sampled choir (the anchor's own ahh_choir),
   // and the singer this table blocks was a formant cantor composed over the
   // top of a forty-part motet that never had one.
@@ -1234,15 +1234,15 @@
   // hand rows keep their dated arguments and the row's own word extends them.
   const instru = (gk2) => !!(INSTRUMENTAL[gk2] || (GENRES[gk2] || {}).instrumental);
   const INSTRUMENTAL = { techno: 1, dnb: 1, acid: 1, dub: 1,
-                         fugue: 1, counterpoint: 1, tango: 1, spem: 1,
+                         fugue: 1, counterpoint: 1, tango: 1, polychoral: 1,
                          // THE OLD WORLD (2026-08-21). Two kinds of refusal:
                          // the truly instrumental records — a consort, a
                          // concerto, an orchestra, a nocturne have no singer
-                         // to book — and organum/arsnova by spem's own law
+                         // to book — and organum/arsnova by polychoral's own law
                          // ("its every chair IS the sampled choir"): their
                          // cast is already the voices, and a formant topline
                          // over a Notre Dame organum is the composed cantor
-                         // spem was rid of. troubadour/continuo/barcarolle/
+                         // polychoral was rid of. troubadour/continuo/barcarolle/
                          // parlor stay OFF this list on crooner's precedent —
                          // they are SONG traditions and the singer layer
                          // taking the tune is what a song record is.
@@ -1364,7 +1364,7 @@
   // WHOSE SOUND IS NOTHING BUT VOICES — asked of the anchor rather than listed,
   // because a list is the thing that went wrong. Three of the anchor's own
   // fields answer it: no kit, no bass, and every id in `instr` a sung one. It
-  // finds gregorian, spem, organum, zema and mbube, which is exactly the set of
+  // finds gregorian, polychoral, organum, zema and mbube, which is exactly the set of
   // records whose entries say so in prose — "Zema is properly unaccompanied and
   // that is why `kit: {}` is the truest line in this entry", and mbube's
   // "letting the bass chair pick up its default upright would put an instrument
@@ -1585,7 +1585,7 @@
       // OFF the band and onto the record's `vocal` layer and the host keeps the
       // parts, because a chorus sung by the guitar player AND the singer in
       // unison is one line twice. This used to be a per-section draw over a
-      // ballot that also held the lead guitarist, which is how beatles/5 came
+      // ballot that also held the lead guitarist, which is how beatgroup/5 came
       // out with a solo on every chorus and the voice on the bridge only.
       //
       // WITHOUT A SINGER (techno, a fugue, a lone part) the band leads with the
@@ -1719,7 +1719,7 @@
       // THE DROP IS WHERE A DANCE RECORD'S GUEST LIVES, and its absence here is
       // the whole reason eleven genres never stacked: the dance plan has no
       // chorus and no solo, so until this line acid, techno, house, garage,
-      // dnb, trap, disco, dub, vaporwave, newwave and eurythmics had no role
+      // dnb, trap, disco, dub, vaporwave, newwave and synthsoul had no role
       // that could call anybody. The peak drop is not a coin — a floor record's
       // last drop is exactly where the topline arrives.
       //
@@ -1823,7 +1823,7 @@
   // "You have stopped adding elements from other genres into the randomly
   // generated songs." Measured before this: 10.7% of boxes carried a second
   // genre and ELEVEN genres never stacked at all — acid, newwave, vaporwave,
-  // eurythmics, trap, house, garage, dnb, disco, dub, techno. That list is not
+  // synthsoul, trap, house, garage, dnb, disco, dub, techno. That list is not
   // a coincidence and it is not eleven separate bugs: every one of them
   // arranges on the DANCE plan, and the only two roles that ever called for a
   // layer were `chorus` and `solo`, neither of which a dance plan has. A
@@ -2077,7 +2077,7 @@
                  tilt: ["dark", null] /* was ["bright","clear"] - every pressed trap master came out bright; Paul 2026-08-30: "Trap sounds melodic with tinkly beats". A trap master leans dark or leaves the tilt alone (boombap's own row is dark) - the dark-rooms round. */, space: ["touch", null] },
     jazz:      { glue: ["soft", "soft", "glue"], space: ["room", "room", "hall"],
                  tape: ["warm", "tape"], ceiling: ["open", "open", "safe"] },
-    motown:    { tape: ["tape", "tape", "warm"], glue: ["glue", "tight"],
+    detroitsoul:    { tape: ["tape", "tape", "warm"], glue: ["glue", "tight"],
                  tilt: ["bright", "clear"], space: ["room", "touch"] },
     disco:     { glue: ["pump", "pump", "glue"], space: ["room", "hall"],
                  ceiling: ["loud", "loud", "safe"], tilt: ["bright", null] },
@@ -2099,7 +2099,7 @@
                  space: ["room", "room", "touch"], tape: ["warm", "warm", "tape"] },
     punk:      { drive: ["dirt", "dirt", "hair"], glue: ["tight", "pump"],
                  ceiling: ["loud", "loud"], space: [null, "touch"] },
-    kraftwerk: { glue: ["tight", "tight"], space: ["touch", "touch", "room"],
+    dusseldorfschool: { glue: ["tight", "tight"], space: ["touch", "touch", "room"],
                  tilt: ["clear", "clear", "bright"], width: ["wide", "wide", "huge"] },
     bossa:     { glue: ["soft", "soft"], tape: ["warm", "warm", "tape"],
                  space: ["room", "room", "touch"], ceiling: ["open", "safe"] },
@@ -2400,7 +2400,7 @@
        with accents and slides — and it was gated to five genres. The
        arpeggios were not missing because the box cannot make one; they were
        missing because this list named acid, techno, house, bleeptechno and ebm
-       and nothing else. Measured before touching it: younggalaxy, moroder,
+       and nothing else. Measured before touching it: balearic, eurodisco,
        italodisco, synthpop, dancepostpunk and trance drew slot 9 ZERO times in
        five seeds each, while techno and house drew it 22 times each.
 
@@ -2409,7 +2409,7 @@
          berlinschool    Berlin 1972 — Tangerine Dream and Schulze; the
                          sequencer IS the genre, and its absence here was the
                          most conspicuous hole in the table
-         moroder         Munich 1977 — I Feel Love. The row's own comment
+         eurodisco         Munich 1977 — I Feel Love. The row's own comment
                          already said "the arpeggiated octave" and the record
                          had no arpeggio
          roboticpop      Düsseldorf 1978 — Kraftwerk, sequenced end to end
@@ -2419,17 +2419,17 @@
          electro         New York 1982 — 808 under a sequenced synth
          dancepostpunk   Manchester 1983 — the Blue Monday pulse is a sequencer
          synthwave       Paris 2010 — a genre made of arpeggios
-         younggalaxy     Montreal 2011 — Paul's own ask, and the reason the
+         balearic     Montreal 2011 — Paul's own ask, and the reason the
                          other nine were found
 
        THIS CHANGES THOSE TEN RECORDS, deliberately: they gain a voice they
        always should have had, so their bytes move. Everything not named here
        is untouched. */
     const MACHINE_SEQ = { acid: 32, techno: 32, house: 32, bleeptechno: 32, ebm: 32,
-                          berlinschool: 32, moroder: 32, roboticpop: 32,
+                          berlinschool: 32, eurodisco: 32, roboticpop: 32,
                           analogsynthpop: 32, synthpop: 32, italodisco: 32,
                           electro: 32, dancepostpunk: 32, synthwave: 32,
-                          younggalaxy: 32 };
+                          balearic: 32 };
     const seqSteps = MACHINE_SEQ[gk] || 0;
     if (seqSteps)
       slots.push(seqPhrase(rng(ihash(gk + "/seq/" + (seed == null ? 1 : seed))), seqSteps));
@@ -2603,7 +2603,7 @@
     // ...and the law does not impose on the THROUGH-COMPOSED forms (pre-1900:
     // the motet, the fugue, the hymn) — their long sections evolve by
     // construction (subject entries, verses), and an imposed period sentence
-    // measured as pushing spem INTO counterpoint on the confusion matrix:
+    // measured as pushing polychoral INTO counterpoint on the confusion matrix:
     // homogenization wearing evolution's name.
     const evImpose = !evYear || evYear >= 1900;
     // ...AND THE ARC POINTS AT THE FORM (the tension/release read, 2026-08-19,

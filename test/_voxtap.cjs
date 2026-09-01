@@ -19,7 +19,7 @@
    second engine, nothing that could differ between the two halves but the word
    on the chair.
 
-     node test/_voxtap.cjs --records air,portishead --vlaw off
+     node test/_voxtap.cjs --records air,noirhop --vlaw off
      node test/_voxtap.cjs --records air --vlaw "fwd,back,back"
      node test/_voxtap.cjs --records air --vlaw "back,hush,back" --noear
 */
@@ -28,7 +28,7 @@ const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i < 0 ?
 const has = (k) => process.argv.indexOf("--" + k) >= 0;
 const PAGE = arg("page", "http://localhost:8777/nukernel/index.html");
 const EXE = process.env.HOME + "/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome";
-const RECORDS = arg("records", "portishead,air,doowop,gospel,iranpop,dub").split(",");
+const RECORDS = arg("records", "noirhop,air,doowop,gospel,iranpop,dub").split(",");
 const SEED = +arg("seed", 1);
 const BARS = +arg("bars", 8);
 const SECS = +arg("secs", 14);
@@ -65,7 +65,7 @@ const JSONOUT = has("json");
 // Their product is what the renderer multiplies into every sample the chair
 // puts out, so it is the honest structural number to rank chairs by — and it is
 // UNIT-level, which the document count is not: two `lead:solo_vox` chairs on one
-// record collapse onto ONE kernel voice (iranpop, portishead), so a law written
+// record collapse onto ONE kernel voice (iranpop, noirhop), so a law written
 // against document chairs would reach a seat nobody plays.
 const CENSUS = has("census");
 // PER-VOCAL-CHAIR, one press each (`--each`): the aggregate cannot tell a
@@ -257,7 +257,7 @@ const QUICK = has("quick");
           voxWhat.push(k + ":" + (u.module || "-") + "/" + mid + " dry=" + (u.dry == null ? 1 : +u.dry.toFixed(3)));
           // A SOLO VOICE OR A ROOM OF PEOPLE — split by the MODULE the parent
           // loaded, not by the document's `cast.part`: the seating collapses
-          // duplicate chairs (portishead's two `lead:solo_vox` chairs arrive
+          // duplicate chairs (noirhop's two `lead:solo_vox` chairs arrive
           // as ONE voice_lead unit), so a part-keyed split would name a chair
           // nobody plays. voice_lead/tract_voice sing the line; voice_choir is
           // the backing room.

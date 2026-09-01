@@ -499,7 +499,7 @@ export function setStrip(track, strip, vol) {
    precompose MEMOIZES an anchor's document and I was mutating GENRES after it
    was already built, so nothing downstream ever saw either word. Measured
    properly — in the page, where the document exists — `mix: {riff:{lvl:"back"}}`
-   on younggalaxy puts `lvl: "back"` into `sec.parts.riff` and takes that unit
+   on balearic puts `lvl: "back"` into `sec.parts.riff` and takes that unit
    to 0.100 against the lead vocal's 0.205. fields.js resolvePartMix has read
    `lvl` all along. The export still does not honour it, but now for the honest
    reason: the strip here is built from the CHAIR tables, and reading a second

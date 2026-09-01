@@ -1148,9 +1148,22 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    `min-inline-size: 0` the item may be narrower than its longest word and
    `break-word` then breaks it, `hyphens: auto` preferring a hyphen where the
    language has one. Do not delete this line to tidy the rule. */
+/* `break-word` BECAME `anywhere`, 2026-09-01, AND THE OLD OBJECTION DOES NOT
+   REACH HERE. The paragraph above rejected `anywhere` because it "breaks
+   words that had somewhere to go" — true where a flex column can widen, and
+   this gutter CANNOT: it is 47px inside a 56px stripe, fixed, so no word ever
+   had anywhere to go. And `break-word` was measured NOT keeping the promise:
+   the marks are `align-items: center` (.nu-ic:4243), so the label shrink-to-
+   fits to its MIN-CONTENT — which `break-word` does not shrink — and
+   "Screensaver" drew 60.3px on ONE line through the stripe's rule (headless
+   chromium, where `hyphens: auto` has no dictionary to save it; test/shell.js
+   A6b caught it as 54 vs 47 on every root-level read). `anywhere` puts the
+   min-content at a character, the label wraps inside its 47px, and words that
+   fit — all ten others, Produce at 40px the widest — still never break,
+   because `anywhere` only breaks what overflows. */
 #nu-tray .nu-vh{ position: static; inline-size: auto; block-size: auto;
   margin: 0; overflow: visible; clip-path: none;
-  white-space: normal; overflow-wrap: break-word; hyphens: auto;
+  white-space: normal; overflow-wrap: anywhere; hyphens: auto;
   min-inline-size: 0;
   font-size: .55rem; line-height: 1.05; font-weight: 600;
   letter-spacing: -.01em; text-align: center; }
@@ -4369,6 +4382,26 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
   inline-size: auto; block-size: auto; max-inline-size: 100vw; max-block-size: 100vh; }
 .nu-video-stage:-webkit-full-screen .nu-video-canvas {
   inline-size: auto; block-size: auto; max-inline-size: 100vw; max-block-size: 100vh; }
+/* THE SCREENSAVER (2026-09-01, "a new view like the video view"). Same shape
+   as the video deck — stage, canvas, the video deck's own control bar reused —
+   but the canvas is 16/9 and in fullscreen it FILLS the screen instead of
+   letterboxing: a screensaver with black bars is a window, not a sky. The
+   background is the old chart's #0c0a1a, not #000. */
+.nu-saver { display: flex; flex-direction: column; gap: .6rem; }
+.nu-saver-stage { position: relative; background: #0c0a1a; line-height: 0; }
+.nu-saver-canvas {
+  inline-size: 100%; aspect-ratio: 16 / 9; display: block;
+  background: #0c0a1a; border: 1px solid var(--rule);
+}
+/* both spellings, separate rules — the video stage's own warning: a selector
+   list with one unknown pseudo-class drops the WHOLE rule */
+.nu-saver-stage:fullscreen { inline-size: 100vw; block-size: 100vh; }
+.nu-saver-stage:-webkit-full-screen { inline-size: 100vw; block-size: 100vh; }
+.nu-saver-stage:fullscreen .nu-saver-canvas {
+  inline-size: 100%; block-size: 100%; aspect-ratio: auto; border: none; }
+.nu-saver-stage:-webkit-full-screen .nu-saver-canvas {
+  inline-size: 100%; block-size: 100%; aspect-ratio: auto; border: none; }
+
 .nu-video-controls { display: flex; gap: .4rem; }
 .nu-video-controls button {
   font: inherit; font-size: .78rem; padding: .2rem .6rem;

@@ -421,6 +421,13 @@
 <div id="produce" class="nu-pan"></div>
 <div id="scoredeck" class="nu-pan"></div>
 <div id="videodeck" class="nu-pan"></div>
+<!-- #saverdeck (2026-09-01): the star map back as a screensaver, "a new view
+     like the video view" — one host, filled only when its tab opens. Each
+     deck's hidden <h2> is the MOUNT's first append (video.js/screensaver.js)
+     — buildTab clears the host on every rebuild, so a heading shipped here
+     would be wiped on first open; the builders own their headings the way
+     eight.js's own axes do (`ax.append(el("h2", "The score"))`). -->
+<div id="saverdeck" class="nu-pan"></div>
 <div id="exportdeck" class="nu-pan"></div>
 
 <script src="../engine/registry-data.js"></script>

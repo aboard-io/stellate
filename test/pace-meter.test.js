@@ -83,7 +83,7 @@ const PLAN = await import(R("nukernel/audio/plan.js"));
    smuggled. ------------------------------------------------------------ */
 {
   /* THE THIRD EXEMPLAR, DECLARED 2026-08-31. `scotsfiddle` grew a `paces` map
-     in the slowdive round and this gate caught it as an undeclared pace, which
+     in the ambientpop round and this gate caught it as an undeclared pace, which
      is exactly the job: the list is a DECISION and a row cannot join it by
      merely wanting to. The decision is yes. The record is a strathspey-into-
      reel SET, and a set that does not accelerate is not a set — the row argues

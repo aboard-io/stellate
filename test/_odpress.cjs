@@ -2,7 +2,7 @@
 /* test/_odpress.cjs — THE OVERDRIVE GUITAR'S CONTRIBUTION AND THE MIX AROUND IT,
    on the RENDERED artifact, deterministically.
    (2026-08-30, Paul: "Wherever you use overdrive guitar bring it down 12. Throw
-   it to some mild reverb and delay. I did this for massiveattack and it did
+   it to some mild reverb and delay. I did this for bristolsound and it did
    wonders.")
 
    Targets are found from the COMPILED CAST by INSTRUMENT ID — never by module
@@ -19,14 +19,14 @@
    a CHECKSUM of the float PCM so a control record can be proved byte-identical
    and a changed one proved deterministic twice.
 
-     node test/_odpress.cjs --records massiveattack,rock,sabbath
+     node test/_odpress.cjs --records bristolsound,rock,heavymetal
      node test/_odpress.cjs --records jazz --instr none      (control: no mute pass)
 */
 module.paths.push("/home/ford/ftrain-2025/node_modules");
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i < 0 ? d : process.argv[i + 1]; };
 const PAGE = arg("page", "http://localhost:8777/nukernel/index.html");
 const EXE = process.env.HOME + "/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome";
-const RECORDS = arg("records", "massiveattack,rock,sabbath,shoegaze,morricone,portishead").split(",");
+const RECORDS = arg("records", "bristolsound,rock,heavymetal,shoegaze,spaghettiwestern,noirhop").split(",");
 const INSTR = arg("instr", "overdrive_guitar");
 const BARS = +arg("bars", 8);
 const SEED = +arg("seed", 1);

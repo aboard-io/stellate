@@ -78,7 +78,16 @@ const PAGE = process.env.PAGE || "http://localhost:8777/nukernel/index.html";
    written this hour, and red-line the first legitimate value caption it grows.
    The number is recorded instead, which is what makes the next round able to
    lower it on purpose. */
-const ACHIEVED = 708;
+/* RE-PINNED 1063 ON 2026-09-01, and the arithmetic is the argument: 708 was
+   the NINE-tab walk's achieved floor. The roster grew to eleven (Video, then
+   the screensaver — "Bring back the screensaver from stellate as a new view
+   like the video view"), so the walk now also sums the two decks' own value
+   captions and the Export tab's format lines it reaches through them. The
+   top-eight list at the new pin is the SAME export/atlas caption set as at
+   the old one — no new paragraph appeared anywhere; what changed is how many
+   panels are counted. The +10%% law is unchanged: captions that grow with the
+   record get room, new prose does not. */
+const ACHIEVED = 1063;
 const CEILING = Math.ceil(ACHIEVED * 1.10);   // 779
 const HARD = 1200;
 
@@ -86,8 +95,14 @@ const HARD = 1200;
    Band / Mix / Produce / Score / Export."* This is T2's one fact now, and it
    is typed rather than read off the page for the reason every quotation in a
    gate is typed: the page agreeing with itself is not evidence. */
+// …grown to eleven (2026-09-01): Video (the deck round) and Screensaver
+// ("Bring back the screensaver from stellate as a new view like the video
+// view") were on the page while this list still pinned nine, so the roster
+// check failed against every tree since the deck landed — independent of
+// either round's own changes. Both carry near-zero static prose, which is
+// exactly what this gate is for.
 const TABS = ["Where", "Tempo", "Key", "Motif", "Band",
-              "Mix", "Produce", "Score", "Export"];
+              "Mix", "Produce", "Score", "Video", "Screensaver", "Export"];
 
 /* …AND THE VOCABULARY'S OWN NAMES, WHICH ARE STILL IN THE DOCUMENT AND ARE NO
    LONGER ON THE SCREEN. This was T2's whole fact and it read: "the §5 table's
@@ -103,7 +118,9 @@ const TABS = ["Where", "Tempo", "Key", "Motif", "Band",
    `Export` joins it because Paul made the export row a tab of its own. */
 const HEADINGS = ["Where & when", "Time", "Harmony", "Motifs",
                   "The band", "The board", "The producer", "The score",
-                  "Export"];
+                  // the two decks (2026-09-01): the film and the sky —
+                  // vocabulary words, not the tab glyph names
+                  "The film", "The sky", "Export"];
 
 function executable() {
   const p = path.join(os.homedir(),

@@ -291,7 +291,7 @@ async function listen(page, { secs, until, label }) {
   // ── SETTLE THE PAIR, and hold both. Choosing a mark moves the atlas year TO
   // THAT RECORD'S YEAR, so the same place answers with a different genre the
   // second time (measured: London 1985 synthduo, then Manchester 1984
-  // janglepop, then London *1983* eurythmics). A→B→A→B settles: the third pick
+  // janglepop, then London *1983* synthsoul). A→B→A→B settles: the third pick
   // and the fifth are the same record. So the gate holds the SETTLED pair and
   // names the genre it holds, or H4 would silently test a genre nobody held.
   const genreNow = async () => {

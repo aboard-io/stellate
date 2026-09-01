@@ -131,6 +131,9 @@
        more spare. A lot of them are quite plinky and childish. It should feel
        like more of a chug with dub dynamics and a lot slower — think downtempo
        or portishead for how you compose but don't lose the arps."
+       (Quoted VERBATIM — Paul spoke before the 2026-09-01 great rename;
+       his "portishead" is the row now keyed `noirhop`, his "young galaxy"
+       the row now keyed `balearic`.)
        `long` is this box's sparsest cell — g16(0, 8), two notes a bar — and
        `hover` is the contour that circles one note instead of travelling, so
        the tune stops picking its way up and down a scale. Landing on the root
@@ -154,41 +157,78 @@
     // OK Computer's own gesture: a long sung line falling over a slow descent.
     // `long` is two notes a bar — the sparsest thing here — and `fall` is what
     // makes it melancholy rather than merely slow.
-    radiohead:    { cell: "long",   contour: "fall",   land: "root",  sent: "hold" },
+    artrock:    { cell: "long",   contour: "fall",   land: "root",  sent: "hold" },
     // the jangle: continuous eighths that never stop and never resolve upward,
     // which is what a guitar figure over a dance floor has to do
-    stoneroses:   { cell: "even",   contour: "zig",    land: "fifth", len: "four" },
+    baggy:   { cell: "even",   contour: "zig",    land: "fifth", len: "four" },
     // a McCartney tune is a SUNG EIGHT with a pickup into the bar and a landing
     // on the third — the warm note, not the plain one
-    wings:        { cell: "pickup", contour: "arch",   land: "third", len: "eight" },
+    softrock:        { cell: "pickup", contour: "arch",   land: "third", len: "eight" },
     // a machine record chopped into an insistent figure; `insist` says one note
     // and then moves, which is the tape-splice gesture in a rhythm
-    skinnypuppy:  { cell: "riff",   contour: "insist", land: "root" },
+    electroindustrial:  { cell: "riff",   contour: "insist", land: "root" },
     // early Ministry is a SYNTH-POP record, and it is separated from
-    // bronskibeat (which also runs even eighths) by where it LANDS: this one
+    // hinrg (which also runs even eighths) by where it LANDS: this one
     // arches back to the root like the pop song it was sold as, where the
     // Brixton record climbs to the fifth and stays up there.
-    ministrysynth:{ cell: "even",   contour: "arch",   land: "root" },
+    electropop:{ cell: "even",   contour: "arch",   land: "root" },
     // one long note and then a run — the widest melodic gesture in this table,
     // for the singer with the widest range in it
-    katebush:     { cell: "hang",   contour: "arch",   land: "third", len: "eight" },
+    artpop:     { cell: "hang",   contour: "arch",   land: "third", len: "eight" },
     // the rhythm-first record: `push` puts every onset OFF the beat, which is
     // what a song built on its drums rather than its chords sounds like
-    petergabriel: { cell: "push",   contour: "hover",  land: "root" },
-    // long ornamented lines over a modal backing. SHARES `long` with radiohead
+    worldbeat: { cell: "push",   contour: "hover",  land: "root" },
+    // long ornamented lines over a modal backing. SHARES `long` with artrock
     // and is separated on the axis that actually differs: a tarab phrase is
     // EIGHT bars and hovers around its tonic rather than falling away from it,
     // where OK Computer's line is short and descends. Same cell, different
     // music, and the row says which axis carries the difference.
-    fairuz:       { cell: "long",   contour: "hover",  land: "root",
+    beiruttarab:       { cell: "long",   contour: "hover",  land: "root",
                     len: "eight",   sent: "hold" },
     // falsetto over a four-on-the-floor: eighths, climbing, landing on the
     // fifth so it never settles
-    bronskibeat:  { cell: "even",   contour: "rise",   land: "fifth" },
+    hinrg:  { cell: "even",   contour: "rise",   land: "fifth" },
     // the walk up to the beat is OMD's own figure — a plain tune approaching
     // its note rather than arriving on it
-    omd:          { cell: "walkup", contour: "rise",   land: "root" },
-    younggalaxy: { cell: "long", contour: "hover", land: "root", sent: "hold" },
+    newpop:          { cell: "walkup", contour: "rise",   land: "root" },
+    balearic: { cell: "long", contour: "hover", land: "root", sent: "hold" },
+    /* THE SOUNDTRACK ROUND'S EIGHT, 2026-09-01 — written WITH the anchors,
+       not after them, because the "do do dooo" tombstone above is exactly
+       one round old: ship an anchor without an idiom row and it plays the
+       family default (`studio` deals cell `pickup`), and MEASURED, that is
+       what the braam did on its first compile — barPlan showed chair 0
+       firing 3/bar at 1.5 beats on pickup's own steps 7/8/12, when the row
+       claimed one blast holding most of a bar. The row below is what makes
+       the claim true at the artifact. */
+    // the fanfare tattoo rising to its arrival — `call` is the dotted
+    // figure (1..1.1), the closest cell this box has to a brass tattoo
+    spaceopera:    { cell: "call",   contour: "rise",   land: "root",  len: "four" },
+    // THE BRAAM: `long` is the sparsest cell here (two onsets a bar),
+    // `hold` the contour that refuses to move, `reg: "low"` the register
+    // the blast lives in. Everything else about it is on the anchor
+    // (crunch, verb, pedal bass, the taiko lane).
+    epichybrid:    { cell: "long",   contour: "hold",   land: "root",
+                     sent: "hold",   reg: "low" },
+    // a trailer figure insists — the same short shape said harder, never
+    // resolving anywhere but the root it started on
+    trailerscore:  { cell: "riff",   contour: "insist", land: "root",  len: "two" },
+    // noir: one long note, then the run, hanging UNDER the root — blues'
+    // own landing (`lead`) because the crushed approach is the idiom
+    crimejazz:     { cell: "hang",   contour: "fall",   land: "lead",  len: "four" },
+    // the folk tune whole, then again — aabb is the one sentence form
+    // that says "a tune from the small country" rather than a cue
+    fantasyscore:  { cell: "pickup", contour: "arch",   land: "root",
+                     len: "eight",   sent: "aabb" },
+    // two notes a bar circling the tonic — separated from epichybrid on
+    // the axis that differs: this one BREATHES (hover, not hold) and sits
+    // in the section's own register, not the floor's
+    nordicscore:   { cell: "long",   contour: "hover",  land: "root",  sent: "long" },
+    // the question asked politely: a short figure that circles and comes
+    // to rest on the warm note, not the plain one
+    dramascore:    { cell: "call",   contour: "hover",  land: "third", len: "four" },
+    // the gallop IS the genre — jazz's `gallop` cell at a canter, arching
+    // over the 3-3-2 and coming home
+    frontierscore: { cell: "gallop", contour: "arch",   land: "root",  len: "four" },
     punk:      { cell: "even",   contour: "insist", land: "root",    len: "two" },
     // a sung line that warms on the third, entering before the bar
     bossa:     { cell: "pickup", contour: "fall",   land: "third",   sent: "hold" },
@@ -222,14 +262,14 @@
     // the counterpoint anchors answer the vox row's falling psalm with a
     // rising subject, because a subject that only falls cannot be answered
     counterpoint: { cell: "walkup", contour: "rise", sent: "vary" },
-    spem:      { cell: "three",  contour: "arch",   sent: "vary",    len: "four" },
-    // rock and roll is a RIFF — chuckberry is the case the `band` row's
+    polychoral:      { cell: "three",  contour: "arch",   sent: "vary",    len: "four" },
+    // rock and roll is a RIFF — rocknroll is the case the `band` row's
     // three-note call gets wrong by a mile
-    chuckberry:{ cell: "riff",   contour: "zig",    land: "root" },
-    bodiddley: { cell: "riff",   contour: "insist", land: "root" },
-    // motorik and kraftwerk are machines wearing a studio badge
+    rocknroll:{ cell: "riff",   contour: "zig",    land: "root" },
+    hambone: { cell: "riff",   contour: "insist", land: "root" },
+    // motorik and dusseldorfschool are machines wearing a studio badge
     motorik:   { cell: "even",   contour: "hover",  sent: "plain" },
-    kraftwerk: { cell: "even",   contour: "zig",    sent: "plain" },
+    dusseldorfschool: { cell: "even",   contour: "zig",    sent: "plain" },
     // a hymn is the strophic case at its purest, and it rises to its cadence
     hymn:      { cell: "three",  contour: "arch",   sent: "aabb",    len: "four" },
     // gospel and doowop are sung ARCHES, not falls: the soul row's fall is
@@ -290,14 +330,14 @@
     boogiewoogie:{ cell: "riff", contour: "zig",    land: "root",  len: "two" },
     neworleans:{ cell: "gallop", contour: "arch",   land: "third", sent: "vary" },
     // — the long lines —
-    cemilbey:  { cell: "long",   contour: "rise",   sent: "vary",  len: "four" },
+    ottoman:  { cell: "long",   contour: "rise",   sent: "vary",  len: "four" },
     gagaku:    { cell: "long",   contour: "hold",   sent: "long",  len: "four" },
     gothicrock:{ cell: "long",   contour: "hover",  sent: "long",  len: "four" },
     dubstep:   { cell: "long",   contour: "hover",  reg: "low", sent: "long", len: "four" },
     // — the motorik and sequencer rows —
     krautrock: { cell: "even",   contour: "hover",  sent: "plain" },
     berlinschool:{ cell: "even", contour: "zig",    sent: "plain", len: "two" },
-    moroder:   { cell: "even",   contour: "zig",    sent: "plain", len: "two" },
+    eurodisco:   { cell: "even",   contour: "zig",    sent: "plain", len: "two" },
     hardcorerave:{ cell: "even", contour: "zig",    sent: "plain", len: "two" },
     // — the riff-and-808 rows —
     miamibass: { cell: "riff",   contour: "insist", reg: "low",    len: "two" },
@@ -309,27 +349,27 @@
     // measurably lies about the music the row argues from; the other eleven of
     // the round's thirty-seven take their family rows deliberately.
     // — early polyphony and the concerted line —
-    josquin:   { cell: "walkup", contour: "rise",   sent: "vary" },
-    monteverdi:{ cell: "pickup", contour: "arch",   land: "third", sent: "vary" },
-    schutz:    { cell: "three",  contour: "arch",   sent: "vary",  len: "four" },
-    mawsili:   { cell: "three",  contour: "fall",   sent: "vary",  len: "four" },
+    francoflemish:   { cell: "walkup", contour: "rise",   sent: "vary" },
+    secondapratica:{ cell: "pickup", contour: "arch",   land: "third", sent: "vary" },
+    sacredconcerto:    { cell: "three",  contour: "arch",   sent: "vary",  len: "four" },
+    abbasid:   { cell: "three",  contour: "fall",   sent: "vary",  len: "four" },
     // — the long unaccompanied line and its refusals —
     holler:    { cell: "hang",   contour: "fall",   land: "lead", sent: "long", len: "four" },
-    satie:     { cell: "long",   contour: "hover",  sent: "plain", len: "four" },
+    furnituremusic:     { cell: "long",   contour: "hover",  sent: "plain", len: "four" },
     march:     { cell: "even",   contour: "rise",   land: "root",  len: "two" },
     modaljazz: { cell: "long",   contour: "hover",  land: "seventh", sent: "long", len: "four" },
     // — the band rooms —
     garagerock:{ cell: "riff",   contour: "insist", land: "root" },
-    beachboys: { contour: "arch", land: "third",    sent: "vary" },
+    baroquepop: { contour: "arch", land: "third",    sent: "vary" },
     psychrock: { cell: "long",   contour: "zig",    sent: "vary",  len: "four" },
-    velvets:   { cell: "even",   contour: "hover",  sent: "plain" },
-    stockhausen:{ cell: "three", contour: "zig",    sent: "vary",  len: "two" },
-    winstons:  { cell: "riff",   contour: "insist", land: "root" },
+    protopunk:   { cell: "even",   contour: "hover",  sent: "plain" },
+    cologneschool:{ cell: "three", contour: "zig",    sent: "vary",  len: "two" },
+    amenbreak:  { cell: "riff",   contour: "insist", land: "root" },
     progrock:  { cell: "walkup", contour: "rise",   sent: "vary",  len: "four" },
-    sabbath:   { cell: "riff",   contour: "hold",   land: "root", reg: "low", len: "two" },
+    heavymetal:   { cell: "riff",   contour: "hold",   land: "root", reg: "low", len: "two" },
     blockparty:{ cell: "riff",   contour: "insist", land: "root",  len: "two" },
-    pfunk:     { cell: "riff",   contour: "zig",    land: "root",  reg: "low" },
-    ymo:       { cell: "even",   contour: "zig",    sent: "plain" },
+    psychfunk:     { cell: "riff",   contour: "zig",    land: "root",  reg: "low" },
+    technopop:       { cell: "even",   contour: "zig",    sent: "plain" },
     nwobhm:    { cell: "riff",   contour: "rise",   land: "root",  len: "two" },
     thrash:    { cell: "even",   contour: "insist", reg: "low",    len: "two" },
     // — the slow floors —
@@ -347,7 +387,7 @@
     hurrian:   { cell: "long",   contour: "fall",   land: "root", sent: "vary", len: "four" },
     delphic:   { cell: "three",  contour: "arch",   sent: "vary",  len: "four" },
     carmen:    { cell: "three",  contour: "fall",   sent: "vary",  len: "four" },
-    seikilos:  { cell: "pickup", contour: "arch",   land: "third", sent: "hold", len: "two" },
+    skolion:  { cell: "pickup", contour: "arch",   land: "third", sent: "hold", len: "two" },
     oxyrhynchus:{ cell: "three", contour: "fall",   sent: "plain", len: "four" },
     // — and the forward seven —
     hardcore:  { cell: "even",   contour: "insist", land: "root",  len: "two" },
@@ -356,7 +396,7 @@
     dreampop:  { cell: "long",   contour: "hover",  sent: "long",  len: "four" },
     doom:      { cell: "long",   contour: "hold",   reg: "low",    len: "four" },
     jpop:      { cell: "pickup", contour: "arch",   land: "third", sent: "vary", len: "four" },
-    dunstaple: { cell: "three",  contour: "rise",   land: "third", sent: "vary" },
+    contenanceangloise: { cell: "three",  contour: "rise",   land: "third", sent: "vary" },
     // THE GOTH-AND-GLOBE HANDOFF (2026-08-30, 297 -> 313), parent-written.
     // Four rows where the family lies; the other twelve take their families.
     gypsyjazz: { cell: "gallop", contour: "zig",    land: "third", len: "two" },
@@ -364,18 +404,18 @@
     witchhouse:{ cell: "long",   contour: "hover",  reg: "low" },
     japanjazz: { cell: "hang",   contour: "fall",   land: "lead" },
     // THE DOWNTEMPO HANDOFF (2026-08-30, 313 -> 325), parent-written. Nine
-    // overrides; air, royksopp and thieverycorporation take their family
+    // overrides; air, tromso and downtempo take their family
     // rows honestly. Portishead's pickup-into-torch-song is NOT triphop's
-    // drift, and massiveattack's two-note grudge is not either — the two
+    // drift, and bristolsound's two-note grudge is not either — the two
     // Bristol rows differ from the genre row the way the records do.
-    portishead:{ cell: "pickup", contour: "fall",   land: "third", sent: "hold", len: "four" },
-    massiveattack:{ cell: "riff", contour: "insist", reg: "low",   len: "two" },
-    tricky:    { cell: "long",   contour: "hover",  sent: "vary",  len: "four" },
-    morcheeba: { cell: "pickup", contour: "arch",   land: "third", len: "four" },
-    lamb:      { cell: "long",   contour: "arch",   sent: "vary",  len: "four" },
-    djshadow:  { cell: "even",   contour: "hover",  reg: "low", sent: "plain", len: "four" },
-    kruderdorfmeister:{ cell: "long", contour: "hover", sent: "long", len: "four" },
-    stgermain: { cell: "gallop", contour: "fall",   land: "seventh", sent: "vary" },
+    noirhop:{ cell: "pickup", contour: "fall",   land: "third", sent: "hold", len: "four" },
+    bristolsound:{ cell: "riff", contour: "insist", reg: "low",   len: "two" },
+    knowlewest:    { cell: "long",   contour: "hover",  sent: "vary",  len: "four" },
+    chillout: { cell: "pickup", contour: "arch",   land: "third", len: "four" },
+    torchbreaks:      { cell: "long",   contour: "arch",   sent: "vary",  len: "four" },
+    instrumentalhiphop:  { cell: "even",   contour: "hover",  reg: "low", sent: "plain", len: "four" },
+    viennadownbeat:{ cell: "long", contour: "hover", sent: "long", len: "four" },
+    nujazz: { cell: "gallop", contour: "fall",   land: "seventh", sent: "vary" },
     acidjazz:  { cell: "riff",   contour: "zig",    land: "root",  len: "two" },
     // THE DARK-ROOMS HANDOFF (2026-08-30): trap had NO row and fell to club's
     // {push, vary, hover, fifth} — the "sounds melodic" wander Paul heard; it
@@ -389,12 +429,12 @@
     mbuti:     { cell: "even",   contour: "zig",    sent: "plain", len: "two" },
     shanty:    { cell: "three",  contour: "arch",   sent: "aabb",  len: "two" },
     seannos:   { cell: "long",   contour: "arch",   sent: "vary",  len: "four" },
-    miamivice: { cell: "long",   contour: "arch",   sent: "hold",  len: "four" },
-    carpenter: { cell: "even",   contour: "insist", reg: "low",    len: "two" },
-    herrmann:  { cell: "even",   contour: "insist", land: "root",  len: "two" },
-    korngold:  { cell: "walkup", contour: "rise",   sent: "vary",  len: "four" },
-    morricone: { cell: "hang",   contour: "arch",   land: "fifth" },
-    barry:     { cell: "riff",   contour: "zig",    reg: "low",    len: "two" },
+    copshowsynth: { cell: "long",   contour: "arch",   sent: "hold",  len: "four" },
+    horrorsynth: { cell: "even",   contour: "insist", reg: "low",    len: "two" },
+    suspensescore:  { cell: "even",   contour: "insist", land: "root",  len: "two" },
+    goldenagescore:  { cell: "walkup", contour: "rise",   sent: "vary",  len: "four" },
+    spaghettiwestern: { cell: "hang",   contour: "arch",   land: "fifth" },
+    spyscore:     { cell: "riff",   contour: "zig",    reg: "low",    len: "two" },
     flamenco:  { cell: "hang",   contour: "fall",   sent: "vary" },
     klezmer:   { cell: "gallop", contour: "zig",    len: "two" },
     taraf:     { cell: "gallop", contour: "zig",    len: "two" },
@@ -1802,7 +1842,7 @@
   // which chair of its own role this is, counted in document order — the same
   // count fields.js chairKeys makes when it addresses them (line, line2, line3).
   // `echo` is true for the one chair the record's echo is spent on.
-  /* A ROW MAY NAME ITS OWN CHAIR'S SENDS (2026-08-31). Paul, on portishead:
+  /* A ROW MAY NAME ITS OWN CHAIR'S SENDS (2026-08-31). Paul, on noirhop:
      "when the guitar starts to riff send it through lots of delay and
      reverb". The tables above are ROLE-keyed and catalogue-wide — CHAIRREV
      puts `touch` on every pad in 374 records — so moving one of them to
@@ -1967,6 +2007,14 @@
     sludge: 1,
     // "a pedal bass that never leaves the tonic" under held tones, rate 0.25
     drone: 1,
+    // NOT epichybrid, AND MEASURED (2026-09-01): the braam chair was tried
+    // here — centre 36, folding the blast to brass_section's floor of 40 —
+    // and the register HOME undid it at the artifact: the chair's other
+    // sections straddle the sampler window at that depth, homeFor dealt the
+    // seat +1, and barPlan played 52 anyway with the whole line shoved
+    // around to get there. The floor law's centre (48) is where the blast
+    // honestly lives in this box; the record's bottom octave is the pedal
+    // bass chair's, which the anchor already declares.
   };
 
   // THE LEAN IS THE CHAIR'S, NOT THE INDEX'S (2026-08-28; this took `(G, v)`
@@ -2189,7 +2237,7 @@
        6 generations of both (undirected through `parents`; `wants` are
        prose, not keys). SIX IS MEASURED, not chosen: the farthest good
        pairing shipped today is dub <- drone at 6, and every deliberate
-       cross survives — beatles <- counterpoint at 1, vaporwave <-
+       cross survives — beatgroup <- counterpoint at 1, vaporwave <-
        gregorian at 3 (the drift lean's own taste). Undated guests (the
        FUNCTION parts, `simple`) carry no claim and pass, exactly as
        eraOK's own null branch reads. */
@@ -2367,7 +2415,7 @@
 
        — so on a precomposed record the fourth line nulls the signature synth of
        every chair, and all fifteen anchors that declare one (`acid`'s 303,
-       `industrialrock`'s fuzz at drive 0.85, `vaporwave`'s DX7, kraftwerk's
+       `industrialrock`'s fuzz at drive 0.85, `vaporwave`'s DX7, dusseldorfschool's
        Model D) played a sampled photograph of themselves instead. Paul heard it
        as "industrial rock sounds more like fela kuti than nine inch nails".
        THE BOX HAS ALWAYS PLAYED THESE RIGHT — a catalog genre sets no `chairs`,
@@ -2622,7 +2670,7 @@
          being given TWO choirs. As a sample that read as a thicker aah; as the
          MODEL it is two independent three-voice sections, 12.2 cost units
          apiece, and it is what took the heaviest records over the parent's
-         BUDGET of 40 — measured, doowop 44.40, merseybeat 43.18, beatles
+         BUDGET of 40 — measured, doowop 44.40, merseybeat 43.18, beatgroup
          41.50, all three of them back under it with this rule in place.
          THE RULE IS THE PROJECT'S OWN AND NOT A BUDGET DODGE: "a guest brings
          its line, not its instrument" (ui/derive.js:123), which is measured —

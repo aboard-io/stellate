@@ -12,14 +12,14 @@
    neutralised, so both readings come from one browser session against one
    working copy of the catalogue.
 
-     node test/_odear.cjs --od off --records massiveattack,rock,sabbath
-     node test/_odear.cjs          --records massiveattack,rock,sabbath
+     node test/_odear.cjs --od off --records bristolsound,rock,heavymetal
+     node test/_odear.cjs          --records bristolsound,rock,heavymetal
 */
 module.paths.push("/home/ford/ftrain-2025/node_modules");
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i < 0 ? d : process.argv[i + 1]; };
 const PAGE = arg("page", "http://localhost:8777/nukernel/index.html");
 const EXE = process.env.HOME + "/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome";
-const RECORDS = arg("records", "massiveattack,rock,sabbath,sludge,shoegaze,morricone,kraftwerk").split(",");
+const RECORDS = arg("records", "bristolsound,rock,heavymetal,sludge,shoegaze,spaghettiwestern,dusseldorfschool").split(",");
 const OD = arg("od", null);
 const SEED = +arg("seed", 1);
 const SECS = +arg("secs", 14);

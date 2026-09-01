@@ -405,7 +405,7 @@ const WAVES = SE.WAVES;
  * it is a clip and not a mix is that TRIMMING THE INPUT BARELY MOVES THE PEAK
  * AND MOVES THE CREST INSTEAD — at -2.0 dB into this table the peak fell
  * 0.10-0.24 dB while the crest ROSE 0.67-1.47 dB, and at -3.0 dB the crest rose
- * 1.97 dB on steely. Roughly a dB of transient was being handed to the clipper
+ * 1.97 dB on jazzrock. Roughly a dB of transient was being handed to the clipper
  * per 2 dB of level, and getting it back is heard as "less saturated" rather
  * than as "quieter", because that is exactly what it is.
  *
@@ -435,7 +435,7 @@ const WAVES = SE.WAVES;
 
    THE NUMBER IS NOT TASTE, IT IS A MEASUREMENT. With the master bypassed
    this morning, every record arrived at the master ALREADY over full scale:
-   iranpop +4.29 dBFS, rock +8.27, steely +6.70, hymn +2.86. So the mix was
+   iranpop +4.29 dBFS, rock +8.27, jazzrock +6.70, hymn +2.86. So the mix was
    being made by the clipper - 6 to 12 dB of it - and a soft clipper working
    that hard is the "recorded on a very hot mic" sound Paul has now reported
    three times. The earlier cut here (x0.75, -2.5 dB) was measured against a
@@ -569,10 +569,10 @@ const PAGE_TRIM = {
      (test/_chairtap.cjs, mute-complement at the ring output, upstream of the
      make-up rider that hands cuts back; 48 bars, seed 1): the guitar chairs'
      active RMS sat -0.0..-4.0 dB against the whole rest of their own band
-     (garagerock -0.86, steely -0.01, rock -3.02, chuckberry -4.00) while
+     (garagerock -0.86, jazzrock -0.01, rock -3.02, rocknroll -4.00) while
      every equivalent non-guitar melodic chair sat far under it (jazz
      sax+trumpet -11.8, funk brass -21.5, and — the discriminator that
-     acquits the LANE — motown's modelled mallet -12.4). Instrument-shaped,
+     acquits the LANE — detroitsoul's modelled mallet -12.4). Instrument-shaped,
      not lane-shaped or role-shaped, so the cut lands on this one row and
      LEVEL_LANES / SITS / DEPTH stay untouched. The lever was proven live
      first: this row ×0.5 in flight moved exactly the guitar chairs -5.9 dB
@@ -629,7 +629,7 @@ const PAGE_TRIM = {
      and could be measured on a LINE seat.
          solina   newwave           0.10 dB   -11.95 vs band  -> 1.6  (+4.1 dB)
          synclead techno            0.17 dB   -13.65          -> 1.9  (+5.6)
-         modeld   kraftwerk         0.06 dB   ~-17.3          -> 2.8  (+8.9)
+         modeld   dusseldorfschool         0.06 dB   ~-17.3          -> 2.8  (+8.9)
          casiocz  industrialmetal   0.02 dB   ~-18.2          -> 3.2  (+10.1)
      Each lands near -8 vs band, where the guitars sit and where the three
      synths trimmed earlier this week were put.
@@ -716,11 +716,11 @@ const PAGE_TRIM = {
        chair beside it.
      · RENDERED, mute-complement at the ring, 8 bars, seed 1 (test/_voxtap.cjs)
        — each record's vocal chairs against its own band with every voice muted:
-           portishead +15.76   hymn +18.74   air +13.88   doowop +11.30
+           noirhop +15.76   hymn +18.74   air +13.88   doowop +11.30
            iranpop +8.71
        and the 300 Hz-3 kHz share of the whole mix with the voices in and out:
-       portishead 97.2% / 20.0%, air 83.4% / 20.8%, doowop 69.2% / 5.7%,
-       iranpop 78.7% / 16.4%. On portishead one chair is 96.6% of the record's
+       noirhop 97.2% / 20.0%, air 83.4% / 20.8%, doowop 69.2% / 5.7%,
+       iranpop 78.7% / 16.4%. On noirhop one chair is 96.6% of the record's
        energy. The guitar round's own yardstick, on the same metric and the same
        probe family: the guitars Paul called "30 percent too loud" sat -0.9 to
        -4.0 against their band, and a balanced melodic chair sits -12.
@@ -735,7 +735,7 @@ const PAGE_TRIM = {
      +8.7 today. So -6 is not a rounding of his sentence, it is the number two
      of his own judgements land on, and going deeper would be arguing past his
      ear on a metric this file invented. RE-MEASURED AFTER (the round's report
-     has the table): portishead +15.76 -> +7.5, air +13.88 -> +7.2, doowop
+     has the table): noirhop +15.76 -> +7.5, air +13.88 -> +7.2, doowop
      +11.30 -> ~+5, iranpop +8.71 -> +0.7, hymn +18.74 -> ~+12 with the voices
      still carrying 10.3 dB of the record — the choir record is still a choir
      record, which is the control that had to hold. If the ear still says hot,
@@ -783,15 +783,16 @@ export const pageTrim = (dsp) => PAGE_TRIM[dsp] || 1;
 // `u.pageTrim` rides along so audio/desk.js can lift the sends it composes per
 // bar by the same gain, keeping the voice in the same room as the band.
 /* ---- ...AND THE SECOND KEY THE ROUTE NEEDS: THE INSTRUMENT --------------
- * (Paul, 2026-08-30: "Wherever you use overdrive guitar bring it down 12.
- * Throw it to some mild reverb and delay. I did this for massiveattack and it
- * did wonders.")
+ * (Paul, 2026-08-30, verbatim — he typed the then-key: "Wherever you use
+ * overdrive guitar bring it down 12. Throw it to some mild reverb and delay.
+ * I did this for massiveattack and it did wonders." The row is keyed
+ * `bristolsound` since 2026-09-01.)
  *
  * WHERE HIS CHANGE LIVED, because the first job was to find it and there is
  * nothing to find: he made it on the BOARD, and the board's offset layer is
  * `ui/state.js MIXER` — held in memory, written to `localStorage`
  * ("nukernel.song.v1"), and adopted only from a document that carries its own
- * `mix`. Nothing in the repository holds it. `massiveattack`'s own row
+ * `mix`. Nothing in the repository holds it. `bristolsound`'s own row
  * (genres.js) names no send and no level for the chair, and 0 of the
  * precomposed documents carry a `mix`. So the numbers below are derived from
  * the sentence, not read off his desk: -12 dB is his, and "mild" is answered
@@ -821,10 +822,10 @@ export const pageTrim = (dsp) => PAGE_TRIM[dsp] || 1;
  * THE LEVEL: -12.0 dB = x0.2512, his number, flat, and MEASURED BEFORE IT WAS
  * TAKEN (test/_odpress.cjs, mute-complement at the ring, 8 bars, seed 1). The
  * overdrive chair's own active RMS against the whole rest of its band:
- *     morricone +5.30   massiveattack +3.94   sludge +0.69
- *     shoegaze  -0.48   sabbath       -2.09
+ *     spaghettiwestern +5.30   bristolsound +3.94   sludge +0.69
+ *     shoegaze  -0.48   heavymetal       -2.09
  * — where the balanced melodic chairs the guitar round already measured on the
- * same metric sit at -11.8 (jazz sax+trumpet), -12.4 (motown's mallet) and
+ * same metric sit at -11.8 (jazz sax+trumpet), -12.4 (detroitsoul's mallet) and
  * -21.5 (funk brass). The overdrive guitar was sitting ten to twenty dB above
  * where an equivalent chair sits, on every record that plays one. -12 dB lands
  * the five at -6.7..-14.1, i.e. INSIDE that range and still ordered the same
@@ -868,13 +869,13 @@ export const pageTrim = (dsp) => PAGE_TRIM[dsp] || 1;
  * on — every one of the 109 seated overdrive chairs is chair `line`, not one
  * is `lead` or `pad`. The measurement then said it was not needed: a flat cut
  * preserves the 7.4 dB spread between where these chairs sit, and the rows
- * where the guitar IS the record (morricone, massiveattack) are the ones
+ * where the guitar IS the record (spaghettiwestern, bristolsound) are the ones
  * sitting highest, so they end up highest. The rows that lose most are the
- * ones with two other guitars still at full level beside them (sabbath keeps
+ * ones with two other guitars still at full level beside them (heavymetal keeps
  * its distortion_guitar and its palm-muted). If the ear disagrees, this row
  * is the owner and a second column is where the split would go. */
 const ID_ROUTE = {
-  // Paul, 2026-08-30, having done it by hand on `massiveattack`: down 12,
+  // Paul, 2026-08-30, having done it by hand on `bristolsound`: down 12,
   // into a mild reverb and a mild delay. 109 records seat this id at seed 1
   // (15 declare it; the rest arrive through the pool), which is why it is
   // here and not on any of them.
@@ -895,6 +896,53 @@ const ID_ROUTE = {
      ninety-seven records at once and a wash on all of them is a bigger claim
      than the ask — and these are the two numbers to move if it is still shy. */
   palm_muted_guitar: { trim: 0.8, rev: 0.18, del: 0.10 },
+  /* Paul, 2026-09-01: "Whenever you bring in guitar it's like 2x too loud and
+     needs more tail, it's a loud plink every time." Six rows follow, and the
+     table grows a THIRD kind of number to carry the second half of the ask:
+     `rel` is a FLOOR on the recipe's release in seconds, applied in recipeFor
+     between recipeBase and worded (so a chair's own VOX `rel` word still lands
+     after it and wins — the recipe-seam version of desk law O3). A floor and
+     not a set, so postrock's 2.0 and dub's 1.4 pass through untouched; a flat
+     floor over the genre's own tone.rel and not an absent-only default,
+     because 156/156 guitar-declaring rows write tone.rel — an explicit-wins
+     carve-out here would reach zero records, the same shape as the overdrive
+     trim being flat over its 109. Arrival is the proven lane both ways:
+     model -> m.release -> PATCH_MODEL M.rel (stk_guitar keeps the name,
+     clamp 0.05..1.8); sampled -> toneRecipe release -> samplerUnit
+     mp("release") -> sampler.js n.rel (clamp 0.02..6, the 2026-08-28 words
+     round proved the wire). palm_muted_guitar's row above stays rel-less ON
+     PURPOSE: its 0.06 s release IS the mute, and a tail floor there would
+     un-chug the chug.
+
+     "2x" is measurable and he is right where the chair is dense. Pressed at
+     the ring (test/_odpress.cjs mute-complement, 8 bars, seed 1; vsBand =
+     the guitar alone against the rest of the band; the balanced-chair
+     yardstick from the header above is -11.8..-21.5 dB):
+       clean_guitar      rocknroll -5.69, citypop -7.37, hambone -9.99 —
+                         4..6 dB over the top of the range, with the plink
+                         signature (solo crest 19.6..26.4 dB where the
+                         sustained distortion chairs measure 9.4..10.5);
+       distortion_guitar heavymetal +4.37, punk +7.16, doom +3.52, nwobhm +1.93
+                         — ABOVE the band, exactly yesterday's overdrive
+                         (+5.3..-2.1 before its -12);
+       crunch_guitar     garagerock -5.58, glam -10.79, rock -11.10 — over
+                         the line, re-pressed 2026-09-01 before landing
+                         because the 2026-08-21 re-stage already took -2.7 dB
+                         at the insert;
+       steel/nylon       -9.6..-16.7 / -12.6..-15.2 — IN RANGE, so the
+                         sampled pair takes tail and a touch of reverb only,
+                         no trim; jazz_guitar likewise (its drive-.04 neck
+                         box was fitted quiet, eff +0.7 dB vs catalog med).
+     -6.0 dB (0.5012) IS the "2x", amplitude read as he said it; distortion
+     takes the overdrive's own -12 for the overdrive's own measured reason.
+     Floors double the tail where it is shortest (distortion tone.rel med
+     0.35 -> 0.7, steel 0.5 -> 0.9, clean bottom half 0.5 -> 0.9). */
+  clean_guitar:        { trim: 0.5012, rev: 0.12, rel: 0.9 },  // lands -11.7/-13.4/-16.0
+  distortion_guitar:   { trim: 0.2512, rev: 0.12, del: 0.12, rel: 0.7 },  // lands -5.8..-10.1; guitar-IS-the-record rows stay loudest, the ROLE RULING's shape
+  crunch_guitar:       { trim: 0.5012, rev: 0.12, rel: 0.9 },  // lands -11.6/-16.8/-17.1
+  jazz_guitar:         { rel: 0.9 },                           // NO trim, tail only
+  nylon_string_guitar: { rel: 1.1, rev: 0.12 },                // NO trim: already in range
+  steel_string_guitar: { rel: 0.9, rev: 0.12 },                // NO trim: already in range
 };
 /** the instrument's own route offset, by instrument id — null for every other. */
 export const idRoute = (id) => ID_ROUTE[id] || null;
@@ -917,7 +965,10 @@ const trimRoute = (u, instr) => {
      6.0 is +15.6 dB. It applies ONLY to `found:` ids — the GM sampler library
      is a different lane with its own levels and is untouched. */
   const foundTrim = /^found:/.test(String(instr || "")) ? 6.0 : 1;
-  const T = pageTrim(u.module || "") * (R ? R.trim : 1) * foundTrim;
+  // `R.trim != null`, not `R`: since 2026-09-01 a row may carry only a tail
+  // floor and a send (jazz/nylon/steel), and `undefined` in this product
+  // would be NaN on the whole route — a silent chair wearing a mild reverb.
+  const T = pageTrim(u.module || "") * (R && R.trim != null ? R.trim : 1) * foundTrim;
   if (T !== 1) {
     u.dry = (u.dry != null ? u.dry : 1) * T;
     u.rev = (u.rev || 0) * T;
@@ -1144,7 +1195,7 @@ export function voiceForInstr(id, tone) {
 //   ON A PAD it is the machine that SINGS — a Roland VP-330, a string choir
 //     holding a vowel behind the band, which is what the preset meant on a pad
 //     in 1979 and what PATCH_SYNTH above has always played it as. That reading
-//     does not move: kraftwerk's vocoder chorale and dance post-punk's held
+//     does not move: dusseldorfschool's vocoder chorale and dance post-punk's held
 //     sequence are both pads, and both keep their string machine.
 //   ON A LINE it is the machine that TALKS — the formant speech synthesiser
 //     that put a robot at the FRONT of a record in 1978. That is a tube with a
@@ -1586,8 +1637,25 @@ export function patchForInstr(id, tone, padish) {
 // four ids that name a person (PATCH_VOICE), then — for every other id, which
 // is most of them — the sampled one, the parent's default sound.
 export function recipeFor(chair, seat, lib, unrouted) {
-  return pedalled(worded(recipeBase(chair, seat, lib, unrouted), seat && seat.vox),
+  return pedalled(worded(relFloored(recipeBase(chair, seat, lib, unrouted), seat),
+                         seat && seat.vox),
                   seat && seat.tone);
+}
+
+/* THE ID_ROUTE TAIL FLOOR (2026-09-01) — the other half of "it's a loud plink
+   every time". The table's `rel` is a minimum on `m.release`, seated HERE and
+   not in trimRoute because release is a recipe fact, not a desk fact: both
+   lanes have already resolved the genre's tone.rel onto `m.release` by the
+   time recipeBase returns (model: PATCH_MODEL M.rel; sampled: toneRecipe),
+   and this is the one seam where the two lanes are still one object. Before
+   `worded`, so a chair's own VOX `rel` word — the user's per-chair edit —
+   spreads over it afterwards and wins. Math.max, so a genre that already
+   rings longer than the floor is byte-identical. The parent's clamps hold it
+   honest downstream (model 0.05..1.8, sampled 0.02..6). */
+function relFloored(r, seat) {
+  const R = ID_ROUTE[seat && seat.instr];
+  if (!R || R.rel == null || !r || !r.m) return r;
+  return { ...r, m: { ...r.m, release: Math.max(r.m.release || 0, R.rel) } };
 }
 
 /* ---------- THE THREE WORDS A RECORDING CAN HEAR (2026-08-28) -------------
@@ -1804,9 +1872,9 @@ function recipeBase(chair, seat, lib, unrouted) {
     /* ---- THE COLLAGE CHOIR (2026-09-01) ---------------------------------
        Paul: "build the collage choir." The ask behind it is a `wants` line
        three rows in this catalogue have carried since they were written —
-       skinnypuppy's *"the sample collage a tape-splice record is made of"* —
+       electroindustrial's *"the sample collage a tape-splice record is made of"* —
        and the measurement that made it a job: **only 4 anchors of 387 seat a
-       `found:` chair at all** (bigbeat, industrialbreaks, skinnypuppy,
+       `found:` chair at all** (bigbeat, industrialbreaks, electroindustrial,
        tapemusic) and every one of them seats exactly ONE recording, on one
        chair, playing the line. One astronaut is not a collage.
 
@@ -1896,11 +1964,11 @@ function recipeBase(chair, seat, lib, unrouted) {
            matters more here than anywhere else in the box: these are speaking
            voices and a numbers station transposed a fifth is a cartoon.
            CENTRED ON MIDI 54, which is where the counter chair actually sits
-           (measured 51..58 on skinnypuppy). It is a constant because the
+           (measured 51..58 on electroindustrial). It is a constant because the
            recipe cannot see the phrase; the outer two zones stretch to the
            keyboard's ends so nothing falls into silence. */
         /* THE POOL SPREADS OVER THE LINE'S OWN SPAN — measured, not assumed:
-           skinnypuppy's counter chair plays MIDI 51..58 and writes FIVE
+           electroindustrial's counter chair plays MIDI 51..58 and writes FIVE
            distinct pitches. Ten semitones is that span with a little room, so
            the band is `10 / n` wide and never narrower than a semitone (which
            is all a zone table can express). A five-row pool gets two semitones
@@ -1929,7 +1997,17 @@ function recipeBase(chair, seat, lib, unrouted) {
             // AN ARRAY, and the two push sites below normalise — a collage is
             // the first recipe in this file that owns more than one file.
             foundSrc: members.map((mem) => mem.src) },
-          source: "found:collage:" + poolName };
+          /* "sampler:" BECAUSE IT IS ONE (2026-09-01). A found chair plays
+             through samplerUnit + sampler.js on both paths — the recipe's own
+             `model` says so two lines up — and the loop words land on found
+             units (one owner). instruments.js `sampledId` answers true for
+             the five found:* INSTRCHOICES ids by its complement-of-the-patch-
+             tables law, which is what avail.js sampledVoice needs to draw the
+             loop strip on a found chair; the source string was the one voice
+             in the room saying otherwise (loop-words W1). No app code keys on
+             the prefix — dispatch is on m.model, trimRoute's foundTrim on
+             `instr` — so the string gets truthful and nothing else moves. */
+          source: "sampler:found:collage:" + poolName };
       }
       unrouted.push({ what: "instrument:" + seat.instr,
                       why: "collage pool \"" + poolName + "\" is empty or unknown", chair });
@@ -1985,7 +2063,8 @@ function recipeBase(chair, seat, lib, unrouted) {
                       // exactly one case: the local bed.
                       ...(localBed ? { samplePath: frow.url } : {}),
                       vol: 0, pitch: 1, stretch: 0.5, cutoff: 18000 } },
-        source: "found:" + fid };
+        // "sampler:" for the collage's reason, one comment up.
+        source: "sampler:found:" + fid };
     }
     unrouted.push({ what: "instrument:" + seat.instr, why: "not in the parent sampler library", chair });
     return { role, m: { ...tone }, source: "unrouted" };
@@ -2138,7 +2217,7 @@ export function toEngine(plan, deps) {
     // and role "melody", and the parent's stripFor picked STRIP_PROFILES.lead
     // off the role: A 200 Hz HIGH-PASS AND A +3 dB LIFT AT 3 kHz ON THE BASS.
     // MEASURED 2026-08-28 on the rendered artifact (units of bar 0, iranpop /
-    // steely / rock): `acoustic_bass` came back carrying
+    // jazzrock / rock): `acoustic_bass` came back carrying
     // {hpf:200, eq:{f:3000,gain:+3}, sat:0.30/0.44} — the lead carve — where
     // STRIP_PROFILES.bass is {hpf:30, lpf:5200, eq:{f:110,gain:+2.5}}. A bass
     // line lives at MIDI 28-52 (41-196 Hz): the corner was above the whole
@@ -2412,7 +2491,7 @@ export function toEngine(plan, deps) {
   // every chair landed inside {-0.13..0.16}, rock's three stk_guitar chairs
   // sat at 0.04/0.10/0.10 — one seat, three guitars — and the records that
   // depend on chairs for width read near-mono: rock S/M -17.2 dB corr 0.969,
-  // steely -15.2/0.943, house -12.8/0.916, against neoclassical's -5.9 where
+  // jazzrock -15.2/0.943, house -12.8/0.916, against neoclassical's -5.9 where
   // the sampled pad's panSpread does the work. And the whole image leant
   // right, because melody 0.10 outweighs pad -0.08 on every roster. So the
   // chairs are SEATED instead of hashed:

@@ -658,8 +658,8 @@
      two units), and audio/to-engine.js `voxSet` resolves the words into that
      unit's own `set` block once, at the one seam where a chair's params are
      already decided. Absent stays absent: a record that writes no vox renders
-     byte-identically — held on ten anchors (house techno rock jazz motown hymn
-     dub vaporwave acid steely, identical engine handoff before and after).
+     byte-identically — held on ten anchors (house techno rock jazz detroitsoul hymn
+     dub vaporwave acid jazzrock, identical engine handoff before and after).
 
      MEASURED, NOT CLAIMED (rendered PCM, acid and ebm, 8 bars, seed 1 — the
      numbers are in the round's report): `cut` moves the record's 2–8 kHz band
@@ -1082,7 +1082,7 @@
   const PROGCHOICES = { off: "off" };
   const PROGLABEL = { off: "plain triads", blues12: "blues 12-bar",
                       soul7: "soul 7ths", jack7: "new jack",
-                      beatlesV: "beatles verse", beatlesC: "beatles chorus" };
+                      beatgroupV: "beatgroup verse", beatgroupC: "beatgroup chorus" };
   for (const k of Object.keys(NG.PROGS)) {
     PROGCHOICES[k] = k;
     if (PROGLABEL[k] == null) PROGLABEL[k] = k;
@@ -1534,12 +1534,12 @@
   // No new node is built for any of them: this is a param write.
  // MAKEUPS RESTAGED 2026-08-16, measured rather than felt. At makeup 2.2 a
   // composed song rendered at −6 to −7 dBFS RMS with its peaks PINNED on the
-  // brickwall (beatles peak −1.53 dBFS == the limiter threshold; rock 1.10,
+  // brickwall (beatgroup peak −1.53 dBFS == the limiter threshold; rock 1.10,
   // OVER full scale through the safety shaper's oversampling overshoot, which
   // the 16-bit encode then hard-clips — the "hot and distorted" report, as
   // numbers). The whole table is scaled by one factor so the characters keep
   // their relative loudness; the default now leaves the limiter with ~0
-  // reduction at default settings (beatles peak −3.5 dBFS after), so the
+  // reduction at default settings (beatgroup peak −3.5 dBFS after), so the
   // brickwall is a net again instead of the sound.
   // `none` FIRST (2026-08-28): the compressor OUT, not a gentle one. It resolves
   // to audio/desk.js GLUE_COMP 0, which is fx_bus `comp` 0 — cratio

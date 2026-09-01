@@ -2,7 +2,7 @@
 // test/od-route.test.js — THE OVERDRIVE GUITAR'S OWN ROUTE, MEASURED.
 //
 // Paul, 2026-08-30: "Wherever you use overdrive guitar bring it down 12. Throw
-// it to some mild reverb and delay. I did this for massiveattack and it did
+// it to some mild reverb and delay. I did this for bristolsound and it did
 // wonders." The table is audio/to-engine.js ID_ROUTE and its whole argument is
 // written there; this file holds the four things a later edit could break
 // without anything else going red.
@@ -96,14 +96,27 @@ const SIX = ["clean_guitar", "jazz_guitar", "palm_muted_guitar",
    one was. What would falsify the claim is all six being named with the same
    row, because that is a module trim wearing six hats — and that is what this
    now fails on. */
+/* ALL SIX ARE NAMED NOW — rewritten 2026-09-01, Paul: "Whenever you bring in
+   guitar it's like 2x too loud and needs more tail, it's a loud plink every
+   time." The previous check's own falsification is the one that survives: a
+   module trim wearing six hats would be SIX IDENTICAL ROWS, and these are
+   not — the trims run from none at all (jazz_guitar carries only a tail
+   floor) through -1.9 (palm) and -6 (clean/crunch, which measured the same
+   and honestly share a row) to -12 (overdrive/distortion). The count check
+   ("some, never all") had to go because the census went and measured all
+   six: every id that pressed over the balanced band got a row, and jazz —
+   fitted quiet at the neck box — got the tail without the cut. */
 const named = SIX.filter((id) => TE.idRoute(id));
 const distinct = new Set(named.map((id) => JSON.stringify(TE.idRoute(id))));
-ok(named.length >= 1 && named.length < SIX.length && distinct.size === named.length,
-   "…and of the six ids that route through stk_guitar, " + named.length +
-   " are named and each route differs — a per-INSTRUMENT table, not a module " +
-   "trim: " + named.join(", "));
-ok(!TE.idRoute("solo_vox") && !TE.idRoute("acoustic_bass") && !TE.idRoute(""),
-   "every other instrument answers null — absent is today");
+const JZ = TE.idRoute("jazz_guitar");
+ok(named.length === SIX.length && distinct.size > 1 && JZ && JZ.trim == null,
+   "…and all six ids that route through stk_guitar are named with " +
+   distinct.size + " distinct rows — including one with NO trim at all — " +
+   "a per-INSTRUMENT table, not a module trim");
+ok(!TE.idRoute("solo_vox") && !TE.idRoute("acoustic_bass") && !TE.idRoute("") &&
+   !TE.idRoute("guitar_harmonics") && !TE.idRoute("di_guitar"),
+   "every other instrument answers null — absent is today " +
+   "(guitar_harmonics and di_guitar seat zero records and stay un-rowed)");
 
 /* ---- O2 · the product, in dB -------------------------------------------- */
 console.log("\nO2 — the route is a PRODUCT: the module's page make-up x the instrument's offset");
@@ -205,6 +218,55 @@ function renderModelled(u) {
      " while the whole voice went down 12 dB — which is the difference between " +
      "a send and a fader",
      ((on.rev / on.dry) - (off.rev / off.dry)).toFixed(4));
+}
+
+/* ---- O5 · the 2026-09-01 guitar rows: the trims, and the tail floor ------ */
+console.log("\nO5 — the guitar census rows (2026-09-01): trims by measurement, tail as a floor");
+{
+  // the trim column, in dB — clean/crunch take Paul's "2x" (-6.0), distortion
+  // takes the overdrive's own -12 for the overdrive's own measured reason
+  const CG = TE.idRoute("clean_guitar"), DG = TE.idRoute("distortion_guitar"),
+        KG = TE.idRoute("crunch_guitar");
+  ok(near(db(CG.trim), -6, 0.05) && near(db(KG.trim), -6, 0.05) && CG.rev > 0 && KG.rev > 0,
+     "clean and crunch sit -6.00 dB (\"2x too loud\") with a mild reverb: " +
+     db(CG.trim).toFixed(2) + " / " + db(KG.trim).toFixed(2) + " dB");
+  ok(near(db(DG.trim), -12, 0.05) && DG.rev > 0 && DG.del > 0,
+     "distortion sits -12.00 dB, the overdrive precedent for a chair pressing " +
+     "OVER its band: " + db(DG.trim).toFixed(2) + " dB");
+  const NY = TE.idRoute("nylon_string_guitar"), ST = TE.idRoute("steel_string_guitar");
+  ok(NY && NY.trim == null && ST && ST.trim == null && NY.rel > 0 && ST.rel > 0,
+     "the sampled pair (nylon/steel) pressed IN range and carries NO trim — " +
+     "tail and a touch of reverb only");
+  ok(!TE.idRoute("palm_muted_guitar").rel,
+     "palm_muted_guitar keeps NO tail floor — its 0.06 s release IS the mute");
+}
+{
+  // THE FLOOR ARRIVES, ON BOTH LANES, AND ONLY AS A FLOOR. recipeFor is the
+  // seam (relFloored, between recipeBase and worded) and m.release is the one
+  // field both lanes read — model via PATCH_MODEL's M.rel, sampled via
+  // toneRecipe. A VOX rel word is the user's own edit and lands AFTER.
+  const K = require(R("engine/genre-kernel.js"));
+  const lib = TE.samplerLibFor(K, 1).samplerLib || {};
+  const rFor = (instr, tone, vox) =>
+    TE.recipeFor("line", { instr, tone, ...(vox ? { vox } : {}) }, lib, []);
+  const mc = rFor("clean_guitar", { rel: 0.3 });
+  ok(mc.m.model !== "sampler" && near(mc.m.release, 0.9, 1e-9),
+     "model lane: clean_guitar on a tone.rel 0.3 genre rings 0.9 s — the floor, " +
+     "through PATCH_MODEL: " + mc.m.release);
+  const ms = rFor("steel_string_guitar", { rel: 0.3 });
+  ok(ms.m.model === "sampler" && near(ms.m.release, 0.9, 1e-9),
+     "sampled lane: steel_string_guitar on tone.rel 0.3 rings 0.9 s — same floor, " +
+     "through toneRecipe: " + ms.m.release);
+  const ml = rFor("clean_guitar", { rel: 1.5 });
+  ok(near(ml.m.release, 1.5, 1e-9),
+     "a genre already ringing 1.5 s is untouched — a FLOOR, not a set: " + ml.m.release);
+  const mv = rFor("clean_guitar", { rel: 0.3 }, { rel: "tight" });
+  ok(near(mv.m.release, 0.03, 1e-9),
+     "…and a chair's own VOX word still wins over the floor (\"tight\" -> 0.03 s), " +
+     "worded runs after: " + mv.m.release);
+  const mo = rFor("overdrive_guitar", { rel: 0.3 });
+  ok(near(mo.m.release, 0.3, 1e-9),
+     "a row with no rel column moves nothing: overdrive keeps its genre's 0.3 s");
 }
 
 console.log("\n" + (fails ? "FAILED " + fails + " of " + checks

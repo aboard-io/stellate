@@ -540,7 +540,7 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
     // `part` chip lands here; prog and period stay the authority's alone —
     // said EXPLICITLY, because {...L} carries them: a prog-carrying layer
     // (blues stacked on house) voice-led its own chords against the box's,
-    // and a layered beatles kept its own four-bar sentence. prog is the
+    // and a layered beatgroup kept its own four-bar sentence. prog is the
     // authority's (so the layer voice-leads the box's actual changes, and a
     // prog chip on the box reaches it); period is dropped outright.
     const lg = { ...L, harmony: g.harmony, roots: g.roots, rate: g.rate,
@@ -575,7 +575,7 @@ export function sectionEvents(sec, slots, songGroove, songSwing) {
   // holds across all genres × 3 seeds against pre-change hashes.
   //
   // THE EMERGENT RULING, genre by genre (the "does a drone opt out" question):
-  // the three `harmony: "emergent"` anchors — fugue, spem, counterpoint — are
+  // the three `harmony: "emergent"` anchors — fugue, polychoral, counterpoint — are
   // all the COUNTERPOINT family, and none opts out. Their identity lives in
   // the authority voices, which this stage never touches; their harm() walk
   // IS a per-bar timeline (nobody wrote the chords down, but the voices did),

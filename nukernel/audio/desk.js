@@ -506,7 +506,7 @@ function feedSplit(m, S, isDrums, route) {
    the delay. Measured on the deployed page, off `plan.barPlan(0).units`:
    blueeyedsoul's ten kit lanes each carry `del` **0.000** and `rev` **0.400**,
    and the same holds across the catalogue (reggae 0.42, dreampop 0.80,
-   skinnypuppy 0.50, portishead 0.55, boombap 0.32 — delay 0.000 on every drum
+   electroindustrial 0.50, noirhop 0.55, boombap 0.32 — delay 0.000 on every drum
    lane of all of them). A long plate on a kick reads as slapback, which is why
    the report says delay; there is no delay on it.
 
@@ -885,7 +885,7 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
         fx: os.flatMap(x => x.fx || []) }) : null;
     const grp = feedSplit(p || {}, S, isDrum, ROUTE);
     // THE INSTRUMENT'S OWN MILD SEND (2026-08-30). Paul, having done it by
-    // hand on `massiveattack`: *"Wherever you use overdrive guitar bring it
+    // hand on `bristolsound`: *"Wherever you use overdrive guitar bring it
     // down 12. Throw it to some mild reverb and delay."* The level half of
     // that is a ROUTE TRIM and rides `u.pageTrim` below; this is the other
     // half, and it is an ADD rather than a multiply because a send is a

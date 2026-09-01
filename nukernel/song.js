@@ -195,6 +195,45 @@
   function migrate(raw) {
     if (!raw || typeof raw !== "object") return raw;
     const r = JSON.parse(JSON.stringify(raw));
+    /* THE GREAT RENAME'S SECOND DOOR (2026-09-01). Paul: "Rename everything
+       to a genre. No more band names or album name or people names." The
+       catalog renamed 68 keys, and this file's own law four screens down —
+       "an unknown CATALOG key means the file is from a build this one cannot
+       honestly play, and that still errors" — would have made that sentence
+       refuse EVERY song saved before the rename. Measured before this block
+       existed: a v2 save with one `chuckberry` box fails load with
+       `song[0].stack[0].g: a known genre`, and the page hands back the
+       starter — the record is simply gone.
+       The map is document.js's OLDKEYS — ONE owner; this door only reads it.
+       Read LAZILY at call time, never at load: song.js sits below document.js
+       in both graphs (index.html loads this file at :451 and document.js at
+       :463; in node the require would be a cycle), and migrate runs at adopt
+       time when both are long since loaded. A missing map (a stripped-down
+       node harness) folds nothing, which is exactly today for every new key.
+       Folded in MIGRATE and not in validate because migrate owns versions —
+       "the storage key deliberately keeps its old name: it names the slot,
+       not the schema; migrate owns versions" (ui/state.js). Old keys are a
+       retired SHAPE of the save, same as the period interregnum below.
+       Also folded: a session recipe's `parents`, which name catalog keys and
+       would otherwise dangle (validate drops unknown parents silently — a
+       saved invention would quietly lose its ancestry rather than erroring,
+       which is worse, because nothing would ever say so). */
+    {
+      const doc = (typeof module !== "undefined" && module.exports)
+        ? (function () { try { return require("./document.js"); } catch (e) { return null; } })()
+        : root.NuDocument;
+      const OLD = (doc && doc.OLDKEYS) || null;
+      if (OLD) {
+        for (const b of Array.isArray(r.song) ? r.song : [])
+          for (const e of (b && Array.isArray(b.stack)) ? b.stack : [])
+            if (e && OLD[e.g]) e.g = OLD[e.g];
+        if (r.genres && typeof r.genres === "object")
+          for (const rec of Object.values(r.genres))
+            if (rec && rec.parents && typeof rec.parents === "object")
+              for (const pk of Object.keys(rec.parents))
+                if (OLD[pk]) { rec.parents[OLD[pk]] = rec.parents[pk]; delete rec.parents[pk]; }
+      }
+    }
     // THE PERIOD INTERREGNUM. For a few hours between the P2b and P4 commits,
     // composed saves carried the bar schedule as a raw op-list array riding
     // an unknown key. The registry now speaks preset names, and okEnum would

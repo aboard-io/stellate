@@ -150,6 +150,12 @@ export const GLYPH = {
                s: "the producer — a step through genre space, and what it moved" },
     Score:   { g: "𝄞", w: "Score",
                s: "the record as notation and as a piano roll" },
+    /* Screensaver (2026-09-01, "Bring back the screensaver from stellate as a
+       new view like the video view"): ✷ is a star with rays — the old star
+       map's whole subject — and ✦ was already spent on Produce. (Video is not
+       in this table and draws the "•" fallback; that is its own open ask.) */
+    Screensaver: { g: "✷", w: "Screensaver",
+               s: "the star map as a screensaver — the record's sky, drifting with the bars" },
     Export:  { g: "⇩", w: "Export",
                s: "a link, a .wav, a .mid — the record out of the box" },
   },

@@ -205,6 +205,34 @@ const ok = (name, fn) => { try { fn(); pass++; console.log("  ok   " + name); }
     assert.deepStrictEqual(without, { instr: "tract_voice" });
   });
 
+  /* G10 — THE GREAT RENAME'S DOOR HOLDS (2026-09-01). Paul: "Rename
+     everything to a genre... ONLY genre." 68 anchor keys changed, and every
+     session, keep and share-resolved doc saved under an old key comes through
+     normalize() — the one door — or it loads as GENRES[undefined] = {} with
+     no error and the wrong sound. TEST THE ARTIFACT: not the map, the
+     render — a doc saved under the old key must render byte-identically to
+     the same doc under the new key, and a basis the map never named must
+     pass through untouched (absent is today). */
+  ok("G10 an old-key session folds at the door and renders byte-identically", () => {
+    const P2 = require(R + "/nukernel/precompose.js");
+    for (const [oldk, newk] of [["beatles", "beatgroup"], ["motown", "detroitsoul"],
+                                ["air", "versailles"], ["portishead", "noirhop"]]) {
+      const fresh = Doc.normalize(P2.genreToDocument(newk, 1));
+      const legacy = J(fresh); legacy.basis = oldk;
+      Doc.normalize(legacy);
+      assert.strictEqual(legacy.basis, newk, oldk + " did not fold to " + newk);
+      // scoreOf is the render this file already trusts (G8b): the events,
+      // not the table. (`__v` and per-call counters make toGenre unequal.)
+      assert.deepStrictEqual(J(Doc.scoreOf(legacy, GENRES, FLEET).events),
+                             J(Doc.scoreOf(fresh, GENRES, FLEET).events),
+                             oldk + " renders a different score than " + newk);
+    }
+    const un = Doc.normalize(P2.genreToDocument("tango", 1));
+    const before = un.basis;
+    Doc.normalize(un);
+    assert.strictEqual(un.basis, before, "an unmapped basis moved at the door");
+  });
+
   console.log("\n" + pass + " passed, " + fail + " failed");
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

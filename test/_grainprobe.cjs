@@ -9,7 +9,7 @@
  * IS the grain: it can be levelled, spectrum'd, and shown to be zero on a
  * record that was not asked to change.
  *
- *   node test/_grainprobe.cjs --records portishead,rock --out /tmp/before
+ *   node test/_grainprobe.cjs --records noirhop,rock --out /tmp/before
  *
  * THE PAGE IS NOT PATCHED — the same in-flight door _satdrive opens
  * (`window.__satPut` appended to ui/eight.js's served body, landing in the
@@ -25,7 +25,7 @@ const EXE = arg("chrome", process.env.HOME +
   "/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome");
 const BARS = +arg("bars", 8), SEED = +arg("seed", 1);
 const OUT = arg("out", "/tmp/grain");
-const RECORDS = arg("records", "portishead").split(",").filter(Boolean);
+const RECORDS = arg("records", "noirhop").split(",").filter(Boolean);
 
 (async () => {
   const { chromium } = require("playwright");

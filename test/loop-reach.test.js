@@ -187,7 +187,12 @@ ok(TE.samplerVox({ atk: "soft" }) && TE.samplerVox({ atk: "soft" }).loopa === un
 const seatBed = { chair: "line", instr: "found:bbc_arcade_85", synth: null, tone: null, vox: null };
 const rBed = TE.recipeFor("line", seatBed, {}, []);
 const zBed = rBed.m && rBed.m.sampler && rBed.m.sampler.zones[0];
-ok(rBed.source === "found:bbc_arcade_85" && zBed && zBed.srcId === "bbc_arcade_85"
+/* "sampler:found:" since 2026-09-01 (loop-words W1): a found chair plays
+   through samplerUnit + sampler.js — the recipe's own `model` says sampler,
+   and instruments.js sampledId answers true — so the source string now says
+   the lane it went down. The claim this line makes is unchanged: a SOURCES
+   bed seats as a ONE-ZONE looped sampler unit. */
+ok(rBed.source === "sampler:found:bbc_arcade_85" && zBed && zBed.srcId === "bbc_arcade_85"
    && zBed.loop === 1 && zBed.loopa === 0 && zBed.loopb === 1,
    "L7 a SOURCES bed seats as a one-zone sampler unit, whole-file loop by default",
    JSON.stringify(rBed.m && rBed.m.sampler));

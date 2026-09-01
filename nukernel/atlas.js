@@ -196,10 +196,10 @@
     /* THE LEDGER ROUND'S FIVE, 2026-08-30 ("Fill in missing genres that
        are wanted") — geography follows the catalog, per the standing
        rule, each landing the hour its label did:
-       · Bray — `hammerhorror`, the village whose studios Hammer shot
+       · Bray — `horrorscore`, the village whose studios Hammer shot
          Dracula in; ~43 km west of London, checked against the Britain
          arc at the gate (the Basildon distance, mirrored).
-       · Sheffield — `idm`, Warp's own town; the sisters precedent asked
+       · Sheffield — `idm`, Warp's own town; the leedsgoth precedent asked
          the Britain-arc question and the gate answers it (Halifax and
          Manchester are both over the floor from here).
        · Bucharest — `lautari`, the Scaune neighbourhood's guild; NOTE
@@ -218,7 +218,7 @@
        Paul: "I guess we need Slowdive and Galaxie 500 too right?" Two rows
        landed; only ONE new place did, and the other two candidates are
        written down here so nobody re-derives the attempt.
-       · SUTTON COURTENAY — `slowdive`, the village whose Courtyard studio the
+       · SUTTON COURTENAY — `ambientpop`, the village whose Courtyard studio the
          album infobox names ("Courtyard (Sutton Courtenay)") and that
          Halstead's own quoted sentence points at, "we had to start the record
          again back in Oxfordshire". The `Bray` ruling, replayed: a village
@@ -234,7 +234,7 @@
          that: Reading clears London at 15.3 px.
        · NOT WESTON-SUPER-MARE, the album's second studio, drafted after
          Reading fell: 7.7 px from Bristol, under the floor.
-       · NOT CAMBRIDGE, MASSACHUSETTS — `galaxie500`'s infobox origin, and the
+       · NOT CAMBRIDGE, MASSACHUSETTS — `slowcore`'s infobox origin, and the
          most dangerous of the three because it would have PASSED. It lands
          0.2 px from Boston: the same dot with a second name. G10 asserts only
          at the tightest arc (Britain, 11 deg) and Cambridge MA's arcFor is 64
@@ -253,6 +253,31 @@
        than wearing another band's town. */
     "Oxford": [51.75, -1.26], "Vancouver": [49.28, -123.12],
     "Brixton": [51.46, -0.11],
+    /* THE SOUNDTRACK ROUND'S TWO DOTS AND ONE REFUSAL, 2026-09-01 (Paul:
+       "add lots of movie soundtracks especially the Hans Zimmer type...
+       Star Wars etc."), geography following the catalog per the rule:
+       · NOT DENHAM — `spaceopera`'s first label, the Buckinghamshire
+         village whose Anvil Studios scoring stage held the March 1977
+         main-title sessions. The Sutton Courtenay note above warned "the
+         next row through here should measure first"; it was measured, and
+         G10 said no: 4.0 CSS px from Bray at the Britain arc (floor 8.5),
+         6.9 from London, 7.8 from Brixton, 6.5 from Muswell Hill —
+         FOUR undeclared pairs, and Bray is a sibling village WITHIN
+         cannot relate (the Reading ruling at 5.1 px, replayed at 4.0).
+         The row takes Los Angeles 1979, the revival's own scoring stage
+         on the other coast — a dot the map already draws, the Cambridge/
+         Boston recovery — and its genres.js comment keeps Denham in
+         prose where the label could not.
+       · SANTA MONICA — `epichybrid`, the studio complex the epic-hybrid
+         idiom was built in; ~23 km from the Los Angeles dot, the
+         Brixton/London question asked on another coast, and it clears at
+         the North America arc where Denham could not clear Britain's.
+       · WELLINGTON — `fantasyscore`, the year the biggest orchestral
+         commission on earth moved there; the FIRST New Zealand dot, and
+         the second entry in the Australia-and-the-Pacific region row
+         Honolulu unblocked (the land bake holds both islands). */
+    "Santa Monica": [34.02, -118.49],
+    "Wellington": [-41.29, 174.78],
     "Beirut": [33.89, 35.50],
     "Bray": [51.51, -0.70], "Sheffield": [53.38, -1.47],
     "Bucharest": [44.43, 26.10], "Maramureș": [47.67, 24.00],
@@ -342,7 +367,7 @@
        Salento; GRANADA joins Córdoba's peninsula but files in EUROPE
        where Córdoba files in the Middle East row — the geography
        follows the record both times (`flamenco` answers to Seville
-       and Madrid; `ziryab` to Baghdad and Fez — the Córdoba/
+       and Madrid; `andalusi` to Baghdad and Fez — the Córdoba/
        Constantinople rule, fourth application); PRAGUE and TBILISI
        are plain European geography (Garland's Europe volume runs to
        the Caucasus and says so); EPULU is the Ituri forest, the
@@ -351,7 +376,7 @@
        NOT RAYNE, AND CONSIDERED: `cajun`'s own town measures inside
        Lafayette's dot (25 km — the Southall situation, sibling towns
        WITHIN cannot relate), so the anchor takes the session city
-       instead (New Orleans, 27 April 1928), the skokiaan
+       instead (New Orleans, 27 April 1928), the tsabatsaba
        a-record-is-the-honest-row ruling. NOT SELJORD: Lindeman's
        collecting parish lands 35 km from Notodden's dungeonsynth dot,
        under any plausible floor at the Europe arc — the anchor takes
@@ -457,19 +482,19 @@
     rock:           { place: "London", year: 1969 },
     gregorian:      { place: "Rome", year: 600 },
     bulgarian:      { place: "Sofia", year: 1975 },
-    spem:           { place: "London", year: 1570 },
+    polychoral:     { place: "London", year: 1570 },
     counterpoint:   { place: "Vienna", year: 1725 },
     neoclassical:   { place: "Berlin", year: 2011 },
     drone:          { place: "New York", year: 1964 },
     sludge:         { place: "New Orleans", year: 1991 },
     tango:          { place: "Buenos Aires", year: 1935 },
     deathmetal:     { place: "Tampa", year: 1990 },
-    eurythmics:     { place: "London", year: 1983 },
-    isley:          { place: "Teaneck", year: 1973 },
-    toto:           { place: "Los Angeles", year: 1982 },
-    jodeci:         { place: "Charlotte", year: 1991 },
-    beatles:        { place: "Liverpool", year: 1962 },
-    steely:         { place: "Los Angeles", year: 1977 },
+    synthsoul:      { place: "London", year: 1983 },
+    psychsoul:      { place: "Teaneck", year: 1973 },
+    aor:            { place: "Los Angeles", year: 1982 },
+    hiphopsoul:     { place: "Charlotte", year: 1991 },
+    beatgroup:      { place: "Liverpool", year: 1962 },
+    jazzrock:       { place: "Los Angeles", year: 1977 },
     postrock:       { place: "Austin", year: 2003 },
     boombap:        { place: "New York", year: 1994 },
     trap:           { place: "Atlanta", year: 2003 },
@@ -478,7 +503,7 @@
     dnb:            { place: "London", year: 1994 },
     disco:          { place: "New York", year: 1977 },
     funk:           { place: "Cincinnati", year: 1967 },
-    motown:         { place: "Detroit", year: 1965 },
+    detroitsoul:    { place: "Detroit", year: 1965 },
     rnb:            { place: "Philadelphia", year: 1994 },
     gospel:         { place: "Chicago", year: 1932 },
     reggae:         { place: "Kingston", year: 1969 },
@@ -494,12 +519,12 @@
     ambient:        { place: "London", year: 1978 },
     techno:         { place: "Detroit", year: 1988 },
     jazz:           { place: "New York", year: 1945 },
-    bodiddley:      { place: "Chicago", year: 1955 },
-    chuckberry:     { place: "St. Louis", year: 1955 },
+    hambone:        { place: "Chicago", year: 1955 },
+    rocknroll:      { place: "St. Louis", year: 1955 },
     doowop:         { place: "Harlem", year: 1955 },
     skiffle:        { place: "London", year: 1956 },
     minimalism:     { place: "New York", year: 1967 },
-    kraftwerk:      { place: "Düsseldorf", year: 1977 },
+    dusseldorfschool: { place: "Düsseldorf", year: 1977 },
     electro:        { place: "New York", year: 1982 },
     hymn:           { place: "Boston", year: 1831 },
     crooner:        { place: "Los Angeles", year: 1953 },
@@ -527,7 +552,7 @@
     sophistirock:   { place: "London", year: 1986 },
     motorik:        { place: "Düsseldorf", year: 1974 },
     roboticpop:     { place: "Düsseldorf", year: 1978 },
-    waxtrax:        { place: "Chicago", year: 1981 },
+    industrialdance: { place: "Chicago", year: 1981 },
     industrialmetal: { place: "Chicago", year: 1988 },
     ebm:            { place: "Chicago", year: 1989 },
     synthduo:       { place: "London", year: 1985 },
@@ -658,8 +683,8 @@
     dhrupad:        { place: "Delhi", year: 1955 },
     carnatic:       { place: "Chennai", year: 1935 },
     gagaku:         { place: "Nara", year: 752 },
-    ziryab:         { place: "Córdoba", year: 822 },
-    dufay:          { place: "Florence", year: 1436 },
+    andalusi:       { place: "Córdoba", year: 822 },
+    isorhythm:      { place: "Florence", year: 1436 },
     ballad:         { place: "London", year: 1666 },
     operaseria:     { place: "London", year: 1724 },
     modinha:        { place: "Lisbon", year: 1775 },
@@ -669,17 +694,17 @@
     spirituals:     { place: "Nashville", year: 1871 },
     danzon:         { place: "Matanzas", year: 1879 },
     maxixe:         { place: "Rio de Janeiro", year: 1895 },
-    cemilbey:       { place: "Istanbul", year: 1910 },
+    ottoman:        { place: "Istanbul", year: 1910 },
     neworleans:     { place: "New Orleans", year: 1923 },
     boogiewoogie:   { place: "Chicago", year: 1928 },
     deltablues:     { place: "Clarksdale", year: 1929 },
-    hendrix:        { place: "London", year: 1967 },
+    acidrock:       { place: "London", year: 1967 },
     glam:           { place: "London", year: 1971 },
     krautrock:      { place: "Cologne", year: 1971 },
     berlinschool:   { place: "Berlin", year: 1972 },
     phillysoul:     { place: "Philadelphia", year: 1972 },
     quietstorm:     { place: "Los Angeles", year: 1975 },
-    moroder:        { place: "Munich", year: 1977 },
+    eurodisco:      { place: "Munich", year: 1977 },
     gothicrock:     { place: "Northampton", year: 1979 },
     italodisco:     { place: "Milan", year: 1982 },
     miamibass:      { place: "Miami", year: 1986 },
@@ -689,62 +714,39 @@
     crunk:          { place: "Memphis", year: 1997 },
     grime:          { place: "London", year: 2003 },
     dubstep:        { place: "London", year: 2005 },
-    mawsili:        { place: "Baghdad", year: 800 },
-    kassia:         { place: "Constantinople", year: 843 },
+    abbasid:        { place: "Baghdad", year: 800 },
+    sticheron:      { place: "Constantinople", year: 843 },
     sequence:       { place: "St. Gallen", year: 884 },
     winchester:     { place: "Winchester", year: 1000 },
-    hildegard:      { place: "Bingen", year: 1151 },
-    josquin:        { place: "Venice", year: 1502 },
-    monteverdi:     { place: "Venice", year: 1610 },
-    schutz:         { place: "Dresden", year: 1636 },
+    antiphon:       { place: "Bingen", year: 1151 },
+    francoflemish:  { place: "Venice", year: 1502 },
+    secondapratica: { place: "Venice", year: 1610 },
+    sacredconcerto: { place: "Dresden", year: 1636 },
     contradanza:    { place: "Havana", year: 1803 },
     holler:         { place: "South Carolina", year: 1853 },
     operetta:       { place: "London", year: 1878 },
     musichall:      { place: "London", year: 1892 },
-    satie:          { place: "Paris", year: 1888 },
+    furnituremusic: { place: "Paris", year: 1888 },
     march:          { place: "Washington", year: 1889 },
     broadway:       { place: "New York", year: 1927 },
     territoryband:  { place: "Kansas City", year: 1932 },
-    stockhausen:    { place: "Cologne", year: 1956 },
+    cologneschool:  { place: "Cologne", year: 1956 },
     modaljazz:      { place: "New York", year: 1959 },
-    brill:          { place: "New York", year: 1960 },
+    girlgroup:      { place: "New York", year: 1960 },
     garagerock:     { place: "Portland", year: 1963 },
-    beachboys:      { place: "Los Angeles", year: 1966 },
+    baroquepop:     { place: "Los Angeles", year: 1966 },
     psychrock:      { place: "San Francisco", year: 1966 },
-    velvets:        { place: "New York", year: 1966 },
+    protopunk:      { place: "New York", year: 1966 },
     zodiak:         { place: "Berlin", year: 1968 },
-    winstons:       { place: "Washington", year: 1969 },
+    amenbreak:      { place: "Washington", year: 1969 },
     progrock:       { place: "Isle of Wight", year: 1970 },
-    sabbath:        { place: "Workington", year: 1969 },
+    heavymetal:     { place: "Workington", year: 1969 },
     blockparty:     { place: "Bronx", year: 1973 },
-    pfunk:          { place: "Detroit", year: 1975 },
-    ymo:            { place: "Tokyo", year: 1978 },
+    psychfunk:      { place: "Detroit", year: 1975 },
+    technopop:      { place: "Tokyo", year: 1978 },
     nwobhm:         { place: "London", year: 1980 },
     thrash:         { place: "San Francisco", year: 1983 },
     triphop:        { place: "Bristol", year: 1991 },
-    radiohead:      { place: "Oxford", year: 1997 },
-    // the album's own infobox: "Recorded June 1988 - February 1989". 1988 is
-    // when the record was made and Manchester|1989 was bleeptechno's key.
-    stoneroses:     { place: "Manchester", year: 1988 },
-    // Band on the Run was cut in LAGOS, which is the record's own place and
-    // frees London|1973 for spacerock, whose key it was.
-    wings:          { place: "Lagos", year: 1973 },
-    skinnypuppy:    { place: "Vancouver", year: 1986 },
-    ministrysynth:  { place: "Chicago", year: 1983 },
-    // Bexleyheath is in the historic county of KENT, which is her own origin
-    // and not a dodge: London|1985 was already synthduo's key.
-    katebush:       { place: "Kent", year: 1985 },
-    // the SOLO DEBUT (1977) rather than So (1986): "all the eras" starts
-    // there, and London|1986 was already sophistirock's key.
-    petergabriel:   { place: "London", year: 1977 },
-    fairuz:         { place: "Beirut", year: 1957 },
-    // BRIXTON, which is what the article actually says and what I should have
-    // written first. London|1984 is dreampop's key and London|1983 is
-    // eurythmics', and I moved this row's YEAR twice before noticing that the
-    // year was never the wrong part — the PLACE was. Brixton is declared
-    // within London below, the Muswell Hill case exactly.
-    bronskibeat:    { place: "Brixton", year: 1984 },
-    omd:            { place: "Liverpool", year: 1980 },
     chopped:        { place: "Houston", year: 1995 },
     synthwave:      { place: "Paris", year: 2010 },
     footwork:       { place: "Chicago", year: 2013 },
@@ -755,22 +757,32 @@
     hurrian:        { place: "Ugarit", year: -1400 },
     delphic:        { place: "Delphi", year: -128 },
     carmen:         { place: "Rome", year: -17 },
-    seikilos:       { place: "Tralles", year: 100 },
+    skolion:        { place: "Tralles", year: 100 },
     oxyrhynchus:    { place: "Oxyrhynchus", year: 300 },
     hardcore:       { place: "Washington", year: 1980 },
     honkytonk:      { place: "Fort Worth", year: 1941 },
     westernswing:   { place: "Tulsa", year: 1940 },
     dreampop:       { place: "London", year: 1984 },
-    galaxie500:     { place: "Boston", year: 1989 },
-    slowdive:       { place: "Sutton Courtenay", year: 1993 },
-    younggalaxy:    { place: "Montreal", year: 2011 },
+    slowcore:       { place: "Boston", year: 1989 },
+    ambientpop:     { place: "Sutton Courtenay", year: 1993 },
+    balearic:       { place: "Montreal", year: 2011 },
+    artrock:        { place: "Oxford", year: 1997 },
+    baggy:          { place: "Manchester", year: 1988 },
+    softrock:       { place: "Lagos", year: 1973 },
+    electroindustrial: { place: "Vancouver", year: 1986 },
+    electropop:     { place: "Chicago", year: 1983 },
+    artpop:         { place: "Kent", year: 1985 },
+    worldbeat:      { place: "London", year: 1977 },
+    beiruttarab:    { place: "Beirut", year: 1957 },
+    hinrg:          { place: "Brixton", year: 1984 },
+    newpop:         { place: "Liverpool", year: 1980 },
     doom:           { place: "Stockholm", year: 1986 },
     jpop:           { place: "Tokyo", year: 1999 },
-    dunstaple:      { place: "London", year: 1420 },
+    contenanceangloise: { place: "London", year: 1420 },
     deathrock:      { place: "Pomona", year: 1982 },
     batcave:        { place: "London", year: 1982 },
     coldwave:       { place: "Rennes", year: 1979 },
-    sisters:        { place: "York", year: 1981 },
+    leedsgoth:      { place: "York", year: 1981 },
     gothicmetal:    { place: "Halifax", year: 1991 },
     dungeonsynth:   { place: "Notodden", year: 1994 },
     witchhouse:     { place: "Traverse City", year: 2010 },
@@ -782,19 +794,19 @@
     indojazz:       { place: "London", year: 1966 },
     japanjazz:      { place: "Tokyo", year: 1974 },
     nordicjazz:     { place: "Oslo", year: 1970 },
-    skokiaan:       { place: "Bulawayo", year: 1947 },
+    tsabatsaba:     { place: "Bulawayo", year: 1947 },
     acidjazz:       { place: "London", year: 1988 },
-    kruderdorfmeister: { place: "Vienna", year: 1993 },
-    portishead:     { place: "Bristol", year: 1994 },
-    tricky:         { place: "Bristol", year: 1995 },
-    morcheeba:      { place: "London", year: 1996 },
-    lamb:           { place: "Manchester", year: 1996 },
-    djshadow:       { place: "San Francisco", year: 1996 },
-    thieverycorporation: { place: "Washington", year: 1996 },
-    air:            { place: "Versailles", year: 1998 },
-    massiveattack:  { place: "Bristol", year: 1998 },
-    stgermain:      { place: "Paris", year: 2000 },
-    royksopp:       { place: "Tromsø", year: 2001 },
+    viennadownbeat: { place: "Vienna", year: 1993 },
+    noirhop:        { place: "Bristol", year: 1994 },
+    knowlewest:     { place: "Bristol", year: 1995 },
+    chillout:       { place: "London", year: 1996 },
+    torchbreaks:    { place: "Manchester", year: 1996 },
+    instrumentalhiphop: { place: "San Francisco", year: 1996 },
+    downtempo:      { place: "Washington", year: 1996 },
+    versailles:     { place: "Versailles", year: 1998 },
+    bristolsound:   { place: "Bristol", year: 1998 },
+    nujazz:         { place: "Paris", year: 2000 },
+    tromso:         { place: "Tromsø", year: 2001 },
     shanty:         { place: "London", year: 1961 },
     appalachia:     { place: "Hot Springs", year: 1916 },
     oldtime:        { place: "Galax", year: 1935 },
@@ -812,14 +824,22 @@
     seannos:        { place: "Carna", year: 1957 },
     barbershop:     { place: "New York", year: 1910 },
     photoplay:      { place: "Cleveland", year: 1913 },
-    korngold:       { place: "Los Angeles", year: 1938 },
-    herrmann:       { place: "Los Angeles", year: 1960 },
-    morricone:      { place: "Rome", year: 1966 },
-    barry:          { place: "London", year: 1962 },
-    carpenter:      { place: "Los Angeles", year: 1978 },
-    miamivice:      { place: "Miami", year: 1984 },
+    goldenagescore: { place: "Los Angeles", year: 1938 },
+    suspensescore:  { place: "Los Angeles", year: 1960 },
+    spaghettiwestern: { place: "Rome", year: 1966 },
+    spyscore:       { place: "London", year: 1962 },
+    horrorsynth:    { place: "Los Angeles", year: 1978 },
+    copshowsynth:   { place: "Miami", year: 1984 },
     sitcom:         { place: "Los Angeles", year: 1983 },
-    seinfeld:       { place: "Los Angeles", year: 1989 },
+    sitcomsting:    { place: "Los Angeles", year: 1989 },
+    spaceopera:     { place: "Los Angeles", year: 1979 },
+    epichybrid:     { place: "Santa Monica", year: 2010 },
+    trailerscore:   { place: "Los Angeles", year: 2012 },
+    crimejazz:      { place: "Los Angeles", year: 1955 },
+    fantasyscore:   { place: "Wellington", year: 2001 },
+    nordicscore:    { place: "Reykjavík", year: 2015 },
+    dramascore:     { place: "Los Angeles", year: 1999 },
+    frontierscore:  { place: "Los Angeles", year: 1958 },
     waltz:          { place: "Vienna", year: 1867 },
     musette:        { place: "Paris", year: 1880 },
     tarab:          { place: "Cairo", year: 1934 },
@@ -828,7 +848,7 @@
     khyal:          { place: "Mumbai", year: 1965 },
     gamelan:        { place: "Surakarta", year: 1956 },
     tapemusic:      { place: "Paris", year: 1948 },
-    hammerhorror:   { place: "Bray", year: 1958 },
+    horrorscore:    { place: "Bray", year: 1958 },
     idm:            { place: "Sheffield", year: 1992 },
     exotica:        { place: "Honolulu", year: 1957 },
     muwashshah:     { place: "Cairo", year: 1200 },
@@ -902,12 +922,12 @@
                // THE DEBTS ROUND'S SEVEN (2026-08-29). Six are plain European
                // geography: Bingen, Dresden, St. Gallen, Winchester,
                // Workington (NOT Birmingham — the Southall note below
-               // measured that dot blocked in advance, and `sabbath` takes
+               // measured that dot blocked in advance, and `heavymetal` takes
                // its first named performance instead; the wall held) and
                // the Isle of Wight. CONSTANTINOPLE is the one
                // that needs its sentence, because Istanbul — the same
                // coordinates — sits in the Middle East row below: the dot is
-               // `kassia`, Constantinople 843, Byzantine chant answering to
+               // `sticheron`, Constantinople 843, Byzantine chant answering to
                // Rome and Athens six centuries before the Ottoman court music
                // that put Istanbul where Garland's volume 6 puts it. Two
                // names, one harbour, two musics, and the geography follows
@@ -918,7 +938,7 @@
                // and Delphi are plain European geography. TRALLES needs its
                // sentence, because it sits in Anatolia and Istanbul — the
                // same peninsula — is in the Middle East row below: the dot
-               // is `seikilos`, Tralles 100, a Greek song in Greek notation
+               // is `skolion`, Tralles 100, a Greek song in Greek notation
                // on a Greek stele, answering to Delphi and Athens fifteen
                // centuries before makam. The geography follows the record —
                // the Córdoba/Constantinople rule, applied a third time.
@@ -957,10 +977,14 @@
                // Scottish dot and the Gow family's publishing town.
                "Edinburgh",
                // ...and the dream-pop round's one (2026-08-31): SUTTON
-               // COURTENAY, `slowdive`'s Oxfordshire studio village. Its
+               // COURTENAY, `ambientpop`'s Oxfordshire studio village. Its
                // three refused siblings are in the PLACES ledger above.
+               // (the soundtrack round, 2026-09-01, added NO British dot:
+               // Denham was refused at the gate — the PLACES ledger above
+               // has the measurement.)
                "Sutton Courtenay"],
-    "North America": ["Vancouver", "Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
+    "North America": ["Santa Monica",
+                      "Vancouver", "Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
                       "Chicago", "Cincinnati", "Cleveland", "Detroit",
                       "Greenwich Village", "Harlem", "Clarksdale", "Kansas City", "Lafayette",
                       "Las Vegas", "Los Angeles", "Memphis", "Miami", "Nashville",
@@ -1008,7 +1032,7 @@
                "Douala", "Durban", "Freetown", "Johannesburg", "Kinshasa",
                "Lagos", "Luanda", "Nairobi",
                // ...and the goth-and-globe round's two (2026-08-30):
-               // Bulawayo (skokiaan, the first Zimbabwean dot) and Cape
+               // Bulawayo (tsabatsaba, the first Zimbabwean dot) and Cape
                // Town (capejazz), the map's southernmost city.
                "Bulawayo", "Cape Town",
                // ...and the folk-floor round's one (2026-08-30): Epulu,
@@ -1037,12 +1061,12 @@
     // nuba answers to Fez, Algiers and Cairo rather than to Bamako.
     // AND CÓRDOBA JOINS TETOUAN (2026-08-29), which looks odd beside
     // Barcelona-in-Europe until you ask the Garland question the Tetouan
-    // comment already answered: the dot is `ziryab`, Córdoba 822, the
+    // comment already answered: the dot is `andalusi`, Córdoba 822, the
     // Umayyad court school whose repertory IS the nuba's — volume 6
     // material, answering to Baghdad and Fez, not to a Spain that would
     // not exist for six centuries. The geography follows the record, the
     // way Kinshasa's spelling followed the map.
-    // AND BAGHDAD JOINS (2026-08-29) — the dot is `mawsili`, Baghdad 800,
+    // AND BAGHDAD JOINS (2026-08-29) — the dot is `abbasid`, Baghdad 800,
     // the Abbasid court the whole row answers to; volume 6's own centre.
     // AND THE DEEP-TIME ROUND'S THREE (2026-08-30): Ur and Ugarit are
     // Mesopotamia and the Levant, the row's own deepest past — Garland
@@ -1069,7 +1093,10 @@
     // the region's first record. Honiara, and Australia's own two
     // musically-blocked candidates, are still owed — see the reversed
     // declaration just below, kept as history.
-    "Australia and the Pacific": ["Honolulu"],
+    // ...and the soundtrack round's one (2026-09-01): WELLINGTON, the
+    // region's second dot and its first south of the equator — the row
+    // Honolulu unblocked now has a pair.
+    "Australia and the Pacific": ["Honolulu", "Wellington"],
   };
   /* THE EMPTY CELL, DECLARED — AND THEN FILLED (2026-08-30). The
      declaration below held from the world round until the ledger round
@@ -1152,8 +1179,8 @@
       { w: "the five-hundreds",     y: 540 },
       { w: "the six-hundreds",      y: 600 },  { w: "the twelve-hundreds",   y: 1200 },
       { w: "the thirteen-hundreds", y: 1300 },
-      // ...and the fourteen-hundreds arrived 2026-08-30 with dunstaple,
-      // "London 1420": the century had records (dufay 1436) but no word,
+      // ...and the fourteen-hundreds arrived 2026-08-30 with contenanceangloise,
+      // "London 1420": the century had records (isorhythm 1436) but no word,
       // because this table's rule is that each `y` is the FIRST catalog
       // year of its era and until this round the century's first year was
       // taken for granted under "the thirteen-hundreds". GROW-ONLY holds:

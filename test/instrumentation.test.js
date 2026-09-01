@@ -12,7 +12,7 @@
  * pushed forward on a Paleolithic record. The singer arrived through the
  * layer stack: compose.js books the `vocal` layer off the family lean
  * (SINGS.roots), and the deal never asked whether the HOST can have a
- * singer. Same for jiahu, satie, ragtime, the nine global-jazz rows…
+ * singer. Same for jiahu, furnituremusic, ragtime, the nine global-jazz rows…
  * Measured pre-fix over 308 anchors x seeds 1..3: the counts are in each
  * law's own header below.
  *
@@ -43,7 +43,7 @@
  *       (parents graph, undirected through ancestors; 6 is MEASURED — the
  *       farthest good pairing shipped today is dub>drone at 6, and the only
  *       unreachable pairs were the euro-liturgy-on-Asian-art-music ones:
- *       gregorian/fugue/counterpoint on dhrupad, guqin, taqsim, cemilbey,
+ *       gregorian/fugue/counterpoint on dhrupad, guqin, taqsim, ottoman,
  *       gagaku — plus the NYC 1964 drone on unrelated dance-pop). The era
  *       half (a guest may not postdate the host) is compose's own eraOK and
  *       was measured CLEAN — asserted here so it stays clean.
@@ -212,7 +212,7 @@ ok("L5 …and \"synth\" is only worn by a chair the record's own signature cover
 
 /* ---- L6  the sampling round's vocal stab, both sides of the door --------
    (2026-08-30.) The vocal stab is a SAMPLED_VOICES id. The refusal side:
-   `stgermain` is the catalogue's own statement of the law — instrumental:
+   `nujazz` is the catalogue's own statement of the law — instrumental:
    true, its comment reading "the voices on it are sampled texture, not a
    chair" — so no seed may seat one there (precompose door 1, the same door
    that bars singers; L1 above holds it across the whole catalogue now that
@@ -220,16 +220,16 @@ ok("L5 …and \"synth\" is only worn by a chair the record's own signature cover
    `cannot` today — the chair must actually hold the recording at every
    seed, because a cast that is declared and never arrives is the box's
    characteristic bug. */
-ok("L6 the vocal stab arrives on footwork and is refused on stgermain", () => {
+ok("L6 the vocal stab arrives on footwork and is refused on nujazz", () => {
   const SV = Object.keys(NI.SAMPLED_VOICES);
   assert.ok(SV.length, "instruments.js SAMPLED_VOICES is empty");
   for (const { gk, seed, doc } of docs) {
     const held = lineChairs(doc).filter((v) => NI.SAMPLED_VOICES[v.instrument]);
     if (gk === "footwork")
       assert.ok(held.length, "footwork/" + seed + " seats no sampled voice — the paid cannot never arrived");
-    if (gk === "stgermain")
+    if (gk === "nujazz")
       assert.strictEqual(held.length, 0,
-        "stgermain/" + seed + " seats " + held.map((v) => v.instrument) + " on an instrumental record");
+        "nujazz/" + seed + " seats " + held.map((v) => v.instrument) + " on an instrumental record");
   }
 });
 

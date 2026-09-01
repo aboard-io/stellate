@@ -1201,7 +1201,7 @@ export function mount(parent, ctx) {
                       ctx.changed(); } })));
     }
     /* SURFACE — the crackle, on a hand's dial at last (2026-08-31).
-       Paul: "how do I control the amount of crackle on portishead it's way
+       Paul: "how do I control the amount of crackle on noirhop it's way
        too much". He could not: `grain` shipped on ten rows the day before
        and had NO control anywhere — not in fields.js, not in avail.js. The
        box held the fact and gave nobody a way to reach it, which is the

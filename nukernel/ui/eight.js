@@ -184,6 +184,12 @@ import { registerSW, warmShell, warmCache } from "../audio/offline.js";
 import { toEngraving, toScore, toNotes, ottavaFor, noteNameOf } from "./abc.js";
 import { mountVideo } from "./video.js";
 let videoStop = null;
+// THE SCREENSAVER (2026-09-01). Paul: "Bring back the screensaver from
+// stellate as a new view like the video view." Same contract as the video
+// deck: a mount that returns a stop(), held here so a rebuild kills the old
+// loop before starting the next.
+import { mountScreensaver } from "./screensaver.js";
+let saverStop = null;
 // …AND THE READING OF ONE, WHICH IS THE SAME NOTES OUT LOUD. `toNotes` is the
 // timeline `toABC` folds into bars, so the motif you tap and the staff you are
 // looking at cannot disagree about a pitch or a length (audio/audition.js).
@@ -9390,6 +9396,10 @@ const TABS = [
   ["Produce", "produce"],
   ["Score",   "scoredeck"],
   ["Video",   "videodeck"],
+  /* Screensaver rides with Score/Video/Export — the record LOOKED AT rather
+     than composed (2026-09-01, "Bring back the screensaver from stellate as a
+     new view like the video view"). It sits beside the view it is "like". */
+  ["Screensaver", "saverdeck"],
   ["Export",  "exportdeck"],
 ];
 const TABNAMES = TABS.map((t) => t[0]);
@@ -9438,6 +9448,10 @@ const BUILD = {
      does, because it owns a rAF loop and a <video>: a tab rebuild that left
      those running would stack a second film on the first. */
   Video: (host) => { if (videoStop) videoStop(); videoStop = mountVideo(host, CTX); },
+  /* THE SCREENSAVER (2026-09-01) — the same stop-handle discipline for the
+     same reason: it owns a rAF loop, and its own data-off watcher parks that
+     loop the moment the tab shuts (screensaver.js carries the argument). */
+  Screensaver: (host) => { if (saverStop) saverStop(); saverStop = mountScreensaver(host, CTX); },
   Export: (host) => exportBlock(host),
 };
 

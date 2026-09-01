@@ -15,11 +15,11 @@
   "questions": 115,
   "seatQuestions": 98,
   "sectionQuestions": 17,
-  "options": 943,
+  "options": 959,
   "writePaths": 179,
   "scorePaths": 248,
-  "declarable": 49,
-  "opaque": 49,
+  "declarable": 48,
+  "opaque": 50,
   "computed": 0,
   "section": 17,
   "proof": {
@@ -59,8 +59,8 @@
    }
   },
   "proofHeld": {
-   "rows": 906,
-   "identical": 905,
+   "rows": 885,
+   "identical": 884,
    "moved": 1,
    "pruner": {
     "rows": 98,
@@ -95,7 +95,7 @@
    }
   },
   "heldOutModels": 20,
-  "seconds": 66.1
+  "seconds": 91.8
  },
  "exceptions": {
   "casts-a-record": {
@@ -120,6 +120,7 @@
     "arranger/hr",
     "arranger/idea:cell",
     "arranger/idea:sent",
+    "arranger/idea:contour",
     "arranger/ideaB:cell",
     "arranger/ideaB:contour",
     "drums/fills",
@@ -6334,7 +6335,7 @@
    "varies": [],
    "distinctWrites": "always",
    "regenerates": true,
-   "checked": 26,
+   "checked": 27,
    "kind": "declarable",
    "why": null,
    "whyCode": null
@@ -6434,7 +6435,7 @@
    "varies": [],
    "distinctWrites": "always",
    "regenerates": true,
-   "checked": 7,
+   "checked": 8,
    "kind": "declarable",
    "why": null,
    "whyCode": null
@@ -6653,6 +6654,7 @@
     "words": [
      "long notes",
      "even eighths",
+     "sixteen to the bar",
      "three notes and a rest",
      "a pickup into the bar",
      "pushed, off the beat",
@@ -6673,6 +6675,7 @@
      "\"four\"": [
       "long notes",
       "even eighths",
+      "sixteen to the bar",
       "three notes and a rest",
       "a pickup into the bar",
       "pushed, off the beat",
@@ -6685,6 +6688,7 @@
      "\"six\"": [
       "long notes",
       "even eighths",
+      "sixteen to the bar",
       "three notes and a rest",
       "a pickup into the bar",
       "pushed, off the beat",
@@ -6700,6 +6704,7 @@
      "\"three\"": [
       "long notes",
       "even eighths",
+      "sixteen to the bar",
       "three notes and a rest",
       "a pickup into the bar",
       "pushed, off the beat",
@@ -6746,6 +6751,14 @@
      "w": "even eighths",
      "sets": {
       "idea.cell": "even"
+     },
+     "constant": true,
+     "shapes": 1
+    },
+    {
+     "w": "sixteen to the bar",
+     "sets": {
+      "idea.cell": "sixteenths"
      },
      "constant": true,
      "shapes": 1
@@ -6871,11 +6884,11 @@
    "regenerateWhy": "the offered words differ from the box's",
    "regenerateExample": {
     "on": "a waltz",
-    "box": "idea:cell(long notes·even eighths·three notes and a rest·a pickup into the bara*·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilt)",
-    "mine": "idea:cell(long notes·even eighths·three notes and a rest·a pickup into the bara*·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilt·long, then short)"
+    "box": "idea:cell(long notes·even eighths·sixteen to the bar·three notes and a rest·a pickup into the bara*·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilt)",
+    "mine": "idea:cell(long notes·even eighths·sixteen to the bar·three notes and a rest·a pickup into the bara*·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilt·long, then short)"
    },
    "kind": "opaque",
-   "why": "DISTINCT ON THE RECORD, IDENTICAL IN THE SCORE. Every word here writes a different value, so no comparison of writes can predict the box's menu — and the box composes the section once per option and drops the words that make the SAME SECTION. Measured: on a waltz the box offers idea:cell(long notes·even eighths·three notes and a rest·a pickup into the bara*·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilt) and the rules offer idea:cell(long notes·even eighths·three notes and a rest·a pickup into the bara*·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilt·long, then short). This is the pruner being a musician, and it is the one part of the offering that is a render and not a lookup.",
+   "why": "DISTINCT ON THE RECORD, IDENTICAL IN THE SCORE. Every word here writes a different value, so no comparison of writes can predict the box's menu — and the box composes the section once per option and drops the words that make the SAME SECTION. Measured: on a waltz the box offers idea:cell(long notes·even eighths·sixteen to the bar·three notes and a rest·a pickup into the bara*·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilt) and the rules offer idea:cell(long notes·even eighths·sixteen to the bar·three notes and a rest·a pickup into the bara*·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilt·long, then short). This is the pruner being a musician, and it is the one part of the offering that is a render and not a lookup.",
    "whyCode": "prune-by-sound"
   },
   {
@@ -7120,7 +7133,7 @@
    },
    "domain": {
     "kind": "dependent",
-    "shapes": 2,
+    "shapes": 3,
     "words": [
      "rises",
      "arches over",
@@ -7129,11 +7142,21 @@
      "drops, then climbs",
      "turns back on itself",
      "says one note, then moves",
-     "sits on one note"
+     "sits on one note",
+     "climbs the chord and comes back",
+     "climbs the chord",
+     "falls down the chord",
+     "pedals the octave between chord tones",
+     "leaps around the chord",
+     "shimmers inside the chord",
+     "turns through the chord to the ninth"
     ],
-    "on": "genre.gjob",
+    "on": [
+     "genre.when",
+     "said.drums.groove"
+    ],
     "cases": {
-     "\"skank\"": [
+     "[\"[\\\"the eighties\\\",\\\"the nineties\\\",\\\"now\\\"]\",\"house\"]": [
       "rises",
       "arches over",
       "falls away",
@@ -7141,9 +7164,16 @@
       "drops, then climbs",
       "turns back on itself",
       "says one note, then moves",
-      "sits on one note"
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
      ],
-     "\"out\"": [
+     "[\"[\\\"the eighties\\\",\\\"the nineties\\\",\\\"now\\\"]\",\"techno\"]": [
       "rises",
       "arches over",
       "falls away",
@@ -7151,9 +7181,16 @@
       "drops, then climbs",
       "turns back on itself",
       "says one note, then moves",
-      "sits on one note"
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
      ],
-     "\"power\"": [
+     "[\"[\\\"the seventies\\\",\\\"the eighties\\\"]\",\"disco\"]": [
       "rises",
       "arches over",
       "falls away",
@@ -7161,25 +7198,14 @@
       "drops, then climbs",
       "turns back on itself",
       "says one note, then moves",
-      "sits on one note"
+      "sits on one note",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord"
      ],
-     "\"drive\"": [
-      "rises",
-      "falls away",
-      "drops, then climbs",
-      "says one note, then moves"
-     ],
-     "\"chug\"": [
-      "rises",
-      "arches over",
-      "falls away",
-      "hovers",
-      "drops, then climbs",
-      "turns back on itself",
-      "says one note, then moves",
-      "sits on one note"
-     ],
-     "\"strum\"": [
+     "[\"[\\\"the eighties\\\",\\\"the nineties\\\",\\\"the two-thousands\\\"]\",\"boom bap\"]": [
       "rises",
       "arches over",
       "falls away",
@@ -7187,9 +7213,16 @@
       "drops, then climbs",
       "turns back on itself",
       "says one note, then moves",
-      "sits on one note"
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
      ],
-     "\"riff\"": [
+     "[\"[\\\"the nineties\\\",\\\"the two-thousands\\\"]\",\"amen break\"]": [
       "rises",
       "arches over",
       "falls away",
@@ -7197,9 +7230,16 @@
       "drops, then climbs",
       "turns back on itself",
       "says one note, then moves",
-      "sits on one note"
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
      ],
-     "\"ring\"": [
+     "[\"[\\\"the sixties\\\",\\\"the seventies\\\",\\\"the eighties\\\",\\\"the nineties\\\"]\",\"straight rock\"]": [
       "rises",
       "arches over",
       "falls away",
@@ -7207,11 +7247,569 @@
       "drops, then climbs",
       "turns back on itself",
       "says one note, then moves",
-      "sits on one note"
+      "sits on one note",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord"
+     ],
+     "[\"[\\\"the seventies\\\",\\\"the eighties\\\"]\",\"punk\"]": [
+      "rises",
+      "falls away",
+      "drops, then climbs",
+      "says one note, then moves",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord"
+     ],
+     "[\"[\\\"the seventies\\\",\\\"the eighties\\\"]\",\"motorik\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the fifties\\\",\\\"the sixties\\\",\\\"now\\\"]\",\"jazz ride\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the fifties\\\",\\\"the sixties\\\"]\",\"shuffle\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the seventies\\\",\\\"the eighties\\\"]\",\"funk\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the seventies\\\",\\\"the eighties\\\"]\",\"one drop\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord"
+     ],
+     "[\"[\\\"the sixties\\\",\\\"the seventies\\\"]\",\"bossa nova\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord"
+     ],
+     "[\"[\\\"the nineties\\\",\\\"the two-thousands\\\",\\\"now\\\"]\",\"bare bones\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the sixties\\\",\\\"the seventies\\\"]\",\"nobody on the kit\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord"
+     ],
+     "[\"[\\\"the six-hundreds\\\",\\\"the twelve-hundreds\\\"]\",\"nobody on the kit\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the twelve-hundreds\\\"]\",\"nobody on the kit\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the twelve-hundreds\\\",\\\"the thirteen-hundreds\\\"]\",\"nobody on the kit\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the thirteen-hundreds\\\"]\",\"the tabor\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the fifteen-hundreds\\\",\\\"the sixteen-hundreds\\\"]\",\"a processional\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the fifteen-hundreds\\\",\\\"the sixteen-hundreds\\\"]\",\"nobody on the kit\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the sixteen-hundreds\\\",\\\"the seventeen-hundreds\\\"]\",\"nobody on the kit\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the seventeen-hundreds\\\"]\",\"nobody on the kit\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord"
+     ],
+     "[\"[\\\"the eighteen-hundreds\\\"]\",\"nobody on the kit\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the eighteen-hundreds\\\"]\",\"a processional\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the eighteen-hundreds\\\",\\\"now\\\"]\",\"a waltz\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord"
+     ],
+     "[\"[\\\"the eighteen-hundreds\\\",\\\"now\\\"]\",\"nobody on the kit\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the seventies\\\",\\\"now\\\"]\",\"a rock waltz\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord"
+     ],
+     "[\"[\\\"the six-hundreds\\\",\\\"the twelve-hundreds\\\"]\",\"a march in six\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the eighties\\\",\\\"the nineties\\\",\\\"now\\\"]\",\"nobody on the kit\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the fifteen-hundreds\\\",\\\"the sixteen-hundreds\\\"]\",\"a march in six\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the sixteen-hundreds\\\",\\\"the seventeen-hundreds\\\"]\",\"a tarantella\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the fifties\\\",\\\"the sixties\\\",\\\"now\\\"]\",\"nobody on the kit\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord"
+     ],
+     "[\"[\\\"the fifteen-hundreds\\\",\\\"the sixteen-hundreds\\\"]\",\"a slow three\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the sixteen-hundreds\\\",\\\"the seventeen-hundreds\\\"]\",\"a slow three\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the nineties\\\",\\\"the two-thousands\\\"]\",\"nobody on the kit\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the fifties\\\",\\\"the sixties\\\"]\",\"nobody on the kit\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord"
+     ],
+     "[\"[\\\"the seventies\\\",\\\"the eighties\\\"]\",\"nobody on the kit\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[\"[\\\"the fifties\\\",\\\"the sixties\\\"]\",\"a rock waltz\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord"
+     ],
+     "[\"[\\\"the fifteen-hundreds\\\",\\\"the sixteen-hundreds\\\"]\",\"a siciliana\"]": [
+      "rises",
+      "arches over",
+      "falls away",
+      "hovers",
+      "drops, then climbs",
+      "turns back on itself",
+      "says one note, then moves",
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
      ]
     },
     "fit": {
-     "cases": 8,
+     "cases": 40,
      "ofModels": 60,
      "note": "a measured correlate held against unseen records, not a proof of cause; the closer cases is to ofModels the more this is a lookup"
     }
@@ -7291,16 +7889,78 @@
      },
      "constant": true,
      "shapes": 1
+    },
+    {
+     "w": "climbs the chord and comes back",
+     "sets": {
+      "idea.contour": "arp"
+     },
+     "constant": true,
+     "shapes": 1
+    },
+    {
+     "w": "climbs the chord",
+     "sets": {
+      "idea.contour": "arpup"
+     },
+     "constant": true,
+     "shapes": 1
+    },
+    {
+     "w": "falls down the chord",
+     "sets": {
+      "idea.contour": "arpdown"
+     },
+     "constant": true,
+     "shapes": 1
+    },
+    {
+     "w": "pedals the octave between chord tones",
+     "sets": {
+      "idea.contour": "arpoct"
+     },
+     "constant": true,
+     "shapes": 1
+    },
+    {
+     "w": "leaps around the chord",
+     "sets": {
+      "idea.contour": "arpwide"
+     },
+     "constant": true,
+     "shapes": 1
+    },
+    {
+     "w": "shimmers inside the chord",
+     "sets": {
+      "idea.contour": "arpclose"
+     },
+     "constant": true,
+     "shapes": 1
+    },
+    {
+     "w": "turns through the chord to the ninth",
+     "sets": {
+      "idea.contour": "arpturn"
+     },
+     "constant": true,
+     "shapes": 1
     }
    ],
    "constantWrites": true,
    "varies": [],
    "distinctWrites": "always",
-   "regenerates": true,
-   "checked": 80,
-   "kind": "declarable",
-   "why": null,
-   "whyCode": null
+   "regenerates": false,
+   "checked": 60,
+   "regenerateWhy": "the box offers it and the rules do not",
+   "regenerateExample": {
+    "on": "unseen #1 (pianobar)",
+    "box": "idea:contour(rises·arches over·falls awaya*·hovers·drops, then climbs·turns back on itself·says one note, then moves·sits on one note·climbs the chord and comes back·climbs the chord·falls down the chord·pedals the octave between chord tones·leaps around the chord·shimmers inside the chord·turns through the chord to the ninth)",
+    "mine": "(not produced)"
+   },
+   "kind": "opaque",
+   "why": "DISTINCT ON THE RECORD, IDENTICAL IN THE SCORE. Every word here writes a different value, so no comparison of writes can predict the box's menu — and the box composes the section once per option and drops the words that make the SAME SECTION. Measured: on unseen #1 (pianobar) the box offers idea:contour(rises·arches over·falls awaya*·hovers·drops, then climbs·turns back on itself·says one note, then moves·sits on one note·climbs the chord and comes back·climbs the chord·falls down the chord·pedals the octave between chord tones·leaps around the chord·shimmers inside the chord·turns through the chord to the ninth) and the rules offer (not produced). This is the pruner being a musician, and it is the one part of the offering that is a render and not a lookup.",
+   "whyCode": "prune-by-sound"
   },
   {
    "id": "idea:land",
@@ -7397,7 +8057,7 @@
    "seat": "arranger",
    "head": "the tune",
    "ask": "where does it sit?",
-   "declaredIn": "nukernel/ideas-kit.js",
+   "declaredIn": "nukernel/chair.js",
    "flags": [],
    "rank": 34,
    "exists": {
@@ -7552,7 +8212,7 @@
    "varies": [],
    "distinctWrites": "always",
    "regenerates": true,
-   "checked": 23,
+   "checked": 22,
    "kind": "declarable",
    "why": null,
    "whyCode": null
@@ -7583,6 +8243,7 @@
     "words": [
      "long notes",
      "even eighths",
+     "sixteen to the bar",
      "three notes and a rest",
      "a pickup into the bar",
      "pushed, off the beat",
@@ -7603,6 +8264,7 @@
      "\"four\"": [
       "long notes",
       "even eighths",
+      "sixteen to the bar",
       "three notes and a rest",
       "a pickup into the bar",
       "pushed, off the beat",
@@ -7615,6 +8277,7 @@
      "\"six\"": [
       "long notes",
       "even eighths",
+      "sixteen to the bar",
       "three notes and a rest",
       "a pickup into the bar",
       "pushed, off the beat",
@@ -7630,6 +8293,7 @@
      "\"three\"": [
       "long notes",
       "even eighths",
+      "sixteen to the bar",
       "three notes and a rest",
       "a pickup into the bar",
       "pushed, off the beat",
@@ -7678,6 +8342,14 @@
      "w": "even eighths",
      "sets": {
       "ideaB.cell": "even"
+     },
+     "constant": true,
+     "shapes": 1
+    },
+    {
+     "w": "sixteen to the bar",
+     "sets": {
+      "ideaB.cell": "sixteenths"
      },
      "constant": true,
      "shapes": 1
@@ -7803,11 +8475,11 @@
    "regenerateWhy": "the offered words differ from the box's",
    "regenerateExample": {
     "on": "rolled #9 (pavane)",
-    "box": "ideaB:cell(long notes·even eighths·three notes and a rest·a pickup into the bar·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilta*)",
-    "mine": "ideaB:cell(long notes·even eighths·three notes and a rest·a pickup into the bar·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilta*·long, then short)"
+    "box": "ideaB:cell(long notes·even eighths·sixteen to the bar·three notes and a rest·a pickup into the bar·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilta*)",
+    "mine": "ideaB:cell(long notes·even eighths·sixteen to the bar·three notes and a rest·a pickup into the bar·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilta*·long, then short)"
    },
    "kind": "opaque",
-   "why": "DISTINCT ON THE RECORD, IDENTICAL IN THE SCORE. Every word here writes a different value, so no comparison of writes can predict the box's menu — and the box composes the section once per option and drops the words that make the SAME SECTION. Measured: on rolled #9 (pavane) the box offers ideaB:cell(long notes·even eighths·three notes and a rest·a pickup into the bar·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilta*) and the rules offer ideaB:cell(long notes·even eighths·three notes and a rest·a pickup into the bar·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilta*·long, then short). This is the pruner being a musician, and it is the one part of the offering that is a render and not a lookup.",
+   "why": "DISTINCT ON THE RECORD, IDENTICAL IN THE SCORE. Every word here writes a different value, so no comparison of writes can predict the box's menu — and the box composes the section once per option and drops the words that make the SAME SECTION. Measured: on rolled #9 (pavane) the box offers ideaB:cell(long notes·even eighths·sixteen to the bar·three notes and a rest·a pickup into the bar·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilta*) and the rules offer ideaB:cell(long notes·even eighths·sixteen to the bar·three notes and a rest·a pickup into the bar·pushed, off the beat·a gallop·one long note, then a run·a short call·a walk up to the beat·an insistent figure·one note a beat·a dotted lilta*·long, then short). This is the pruner being a musician, and it is the one part of the offering that is a render and not a lookup.",
    "whyCode": "prune-by-sound"
   },
   {
@@ -7844,7 +8516,7 @@
    },
    "domain": {
     "kind": "dependent",
-    "shapes": 2,
+    "shapes": 3,
     "words": [
      "one cell, said again",
      "say it, then vary it",
@@ -7883,7 +8555,6 @@
      ],
      "\"some crunch\"": [
       "one cell, said again",
-      "say it, then vary it",
       "a long note, then it moves",
       "carry it over the barline"
      ],
@@ -8007,14 +8678,21 @@
      "drops, then climbs",
      "turns back on itself",
      "says one note, then moves",
-     "sits on one note"
+     "sits on one note",
+     "climbs the chord and comes back",
+     "climbs the chord",
+     "falls down the chord",
+     "pedals the octave between chord tones",
+     "leaps around the chord",
+     "shimmers inside the chord",
+     "turns through the chord to the ninth"
     ],
     "on": [
-     "record.space",
-     "genre.gjob"
+     "role.bridge",
+     "said.drums.loose"
     ],
     "cases": {
-     "[\"half\",\"out\"]": [
+     "[false,\"a human hand\"]": [
       "rises",
       "arches over",
       "falls away",
@@ -8022,27 +8700,27 @@
       "drops, then climbs",
       "turns back on itself",
       "says one note, then moves",
-      "sits on one note"
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
      ],
-     "[\"bar\",\"strum\"]": [
-      "rises",
-      "arches over",
-      "falls away"
-     ],
-     "[\"four\",\"out\"]": [
+     "[false,\"on the grid\"]": [
       "rises",
       "arches over",
       "falls away",
       "drops, then climbs",
-      "says one note, then moves"
+      "says one note, then moves",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord"
      ],
-     "[\"half\",\"strum\"]": [
-      "rises",
-      "falls away",
-      "drops, then climbs",
-      "says one note, then moves"
-     ],
-     "[\"bar\",\"out\"]": [
+     "[true,\"a machine\"]": [
       "rises",
       "arches over",
       "falls away",
@@ -8050,15 +8728,26 @@
       "drops, then climbs",
       "turns back on itself",
       "says one note, then moves",
-      "sits on one note"
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
      ],
-     "[\"bar\",\"riff\"]": [
+     "[true,\"a human hand\"]": [
       "rises",
       "falls away",
       "drops, then climbs",
-      "says one note, then moves"
+      "says one note, then moves",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord"
      ],
-     "[\"four\",\"strum\"]": [
+     "[false,\"loose\"]": [
       "rises",
       "arches over",
       "falls away",
@@ -8066,15 +8755,14 @@
       "drops, then climbs",
       "turns back on itself",
       "says one note, then moves",
-      "sits on one note"
+      "sits on one note",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord"
      ],
-     "[\"none\",\"ring\"]": [
-      "rises",
-      "falls away",
-      "drops, then climbs",
-      "says one note, then moves"
-     ],
-     "[\"four\",\"ring\"]": [
+     "[false,\"a machine\"]": [
       "rises",
       "arches over",
       "falls away",
@@ -8082,11 +8770,28 @@
       "drops, then climbs",
       "turns back on itself",
       "says one note, then moves",
-      "sits on one note"
+      "sits on one note",
+      "climbs the chord and comes back",
+      "climbs the chord",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord",
+      "shimmers inside the chord",
+      "turns through the chord to the ninth"
+     ],
+     "[true,\"on the grid\"]": [
+      "rises",
+      "falls away",
+      "drops, then climbs",
+      "says one note, then moves",
+      "climbs the chord and comes back",
+      "falls down the chord",
+      "pedals the octave between chord tones",
+      "leaps around the chord"
      ]
     },
     "fit": {
-     "cases": 9,
+     "cases": 7,
      "ofModels": 12,
      "note": "a measured correlate held against unseen records, not a proof of cause; the closer cases is to ofModels the more this is a lookup"
     }
@@ -8167,6 +8872,62 @@
      },
      "constant": true,
      "shapes": 1
+    },
+    {
+     "w": "climbs the chord and comes back",
+     "sets": {
+      "ideaB.contour": "arp"
+     },
+     "constant": true,
+     "shapes": 1
+    },
+    {
+     "w": "climbs the chord",
+     "sets": {
+      "ideaB.contour": "arpup"
+     },
+     "constant": true,
+     "shapes": 1
+    },
+    {
+     "w": "falls down the chord",
+     "sets": {
+      "ideaB.contour": "arpdown"
+     },
+     "constant": true,
+     "shapes": 1
+    },
+    {
+     "w": "pedals the octave between chord tones",
+     "sets": {
+      "ideaB.contour": "arpoct"
+     },
+     "constant": true,
+     "shapes": 1
+    },
+    {
+     "w": "leaps around the chord",
+     "sets": {
+      "ideaB.contour": "arpwide"
+     },
+     "constant": true,
+     "shapes": 1
+    },
+    {
+     "w": "shimmers inside the chord",
+     "sets": {
+      "ideaB.contour": "arpclose"
+     },
+     "constant": true,
+     "shapes": 1
+    },
+    {
+     "w": "turns through the chord to the ninth",
+     "sets": {
+      "ideaB.contour": "arpturn"
+     },
+     "constant": true,
+     "shapes": 1
     }
    ],
    "constantWrites": true,
@@ -8177,11 +8938,11 @@
    "regenerateWhy": "the offered words differ from the box's",
    "regenerateExample": {
     "on": "unseen #1 (pianobar)",
-    "box": "ideaB:contour(rises·arches over·falls away·hovers·drops, then climbsa*·turns back on itself·says one note, then moves·sits on one note)",
-    "mine": "ideaB:contour(rises·falls away·drops, then climbsa*·says one note, then moves)"
+    "box": "ideaB:contour(rises·falls away·drops, then climbs·says one note, then moves·climbs the chord and comes back·falls down the chorda*·pedals the octave between chord tones·leaps around the chord)",
+    "mine": "ideaB:contour(rises·arches over·falls away·hovers·drops, then climbs·turns back on itself·says one note, then moves·sits on one note·climbs the chord and comes back·climbs the chord·falls down the chorda*·pedals the octave between chord tones·leaps around the chord·shimmers inside the chord·turns through the chord to the ninth)"
    },
    "kind": "opaque",
-   "why": "DISTINCT ON THE RECORD, IDENTICAL IN THE SCORE. Every word here writes a different value, so no comparison of writes can predict the box's menu — and the box composes the section once per option and drops the words that make the SAME SECTION. Measured: on unseen #1 (pianobar) the box offers ideaB:contour(rises·arches over·falls away·hovers·drops, then climbsa*·turns back on itself·says one note, then moves·sits on one note) and the rules offer ideaB:contour(rises·falls away·drops, then climbsa*·says one note, then moves). This is the pruner being a musician, and it is the one part of the offering that is a render and not a lookup.",
+   "why": "DISTINCT ON THE RECORD, IDENTICAL IN THE SCORE. Every word here writes a different value, so no comparison of writes can predict the box's menu — and the box composes the section once per option and drops the words that make the SAME SECTION. Measured: on unseen #1 (pianobar) the box offers ideaB:contour(rises·falls away·drops, then climbs·says one note, then moves·climbs the chord and comes back·falls down the chorda*·pedals the octave between chord tones·leaps around the chord) and the rules offer ideaB:contour(rises·arches over·falls away·hovers·drops, then climbs·turns back on itself·says one note, then moves·sits on one note·climbs the chord and comes back·climbs the chord·falls down the chorda*·pedals the octave between chord tones·leaps around the chord·shimmers inside the chord·turns through the chord to the ninth). This is the pruner being a musician, and it is the one part of the offering that is a render and not a lookup.",
    "whyCode": "prune-by-sound"
   },
   {
@@ -8272,7 +9033,7 @@
    "varies": [],
    "distinctWrites": "always",
    "regenerates": true,
-   "checked": 23,
+   "checked": 22,
    "kind": "declarable",
    "why": null,
    "whyCode": null
@@ -8344,7 +9105,7 @@
    "varies": [],
    "distinctWrites": "always",
    "regenerates": true,
-   "checked": 23,
+   "checked": 22,
    "kind": "declarable",
    "why": null,
    "whyCode": null
@@ -8591,7 +9352,7 @@
      "brush swing",
      "shuffle",
      "train beat",
-     "motown",
+     "detroitsoul",
      "funk",
      "new orleans",
      "linear funk",
@@ -8671,8 +9432,8 @@
       "shuffle",
       "train beat"
      ],
-     "[\"four\",\"[\\\"funk\\\",\\\"linear funk\\\",\\\"new orleans\\\",\\\"motown\\\"]\"]": [
-      "motown",
+     "[\"four\",\"[\\\"funk\\\",\\\"linear funk\\\",\\\"new orleans\\\",\\\"detroitsoul\\\"]\"]": [
+      "detroitsoul",
       "funk",
       "new orleans",
       "linear funk"
@@ -8778,7 +9539,7 @@
      "[\"six\",\"[\\\"disco\\\",\\\"four on the floor\\\",\\\"two step\\\"]\"]": [
       "nobody on the kit"
      ],
-     "[\"three\",\"[\\\"funk\\\",\\\"linear funk\\\",\\\"new orleans\\\",\\\"motown\\\"]\"]": [
+     "[\"three\",\"[\\\"funk\\\",\\\"linear funk\\\",\\\"new orleans\\\",\\\"detroitsoul\\\"]\"]": [
       "nobody on the kit"
      ]
     },
@@ -10125,7 +10886,7 @@
      "shapes": 2
     },
     {
-     "w": "motown",
+     "w": "detroitsoul",
      "sets": {
       "drums.kit.c": [
        0,

@@ -57,7 +57,7 @@
     mixo:     [0, 2, 4, 5, 7, 9, 10],
     // THE MAJOR SIDE, which simply did not exist: mixolydian was the only
     // bright option and three genres leaned on it as a stand-in. Ionian is
-    // major itself — motown, country, gospel, disco, ska, punk and most of the
+    // major itself — detroitsoul, country, gospel, disco, ska, punk and most of the
     // pop canon were unreachable without it. Lydian is major with the raised
     // fourth (the film-score shimmer); melodic minor is the minor that can
     // still make a real dominant AND a major sixth on the way up.
@@ -165,7 +165,7 @@
     majpent:   [0, 2, 4, 7, 9],                           // 2.4
     // ...AND THE TWO THE TABLE COULD NOT NAME (2026-08-24, D5). Ninety-nine
     // anchors declare a subject alphabet and five of them wrote it out as a
-    // literal array with no key in here to answer to — blues and bodiddley
+    // literal array with no key in here to answer to — blues and hambone
     // spell [0,3,5,6,7,10], deathmetal, screamo and industrialmetal spell
     // [0,1,3,5,6,8,10]. That is not a shrug: a document says its alphabet by
     // NAME (`alphabet.scale`, PROGRAM.md §2.1), so an anchor whose scale has
@@ -366,7 +366,7 @@
 
      He was right, and the measurement is worse than the complaint: the five
      rooms whose ENTIRE SUBJECT is records made out of other records —
-     portishead, triphop, massiveattack, tricky, djshadow — composed with no
+     noirhop, triphop, bristolsound, knowlewest, instrumentalhiphop — composed with no
      found sound and no surface noise of any kind, every chair a GM instrument.
      The only anchor in 274 that cast a found sound was `vaporwave`.
 
@@ -407,31 +407,31 @@
      means something against the record it sits under. Within a record it is
      fixed — the noise in a groove does not duck when the band gets loud, and
      nothing here makes it duck. Across records it cannot be compared at all,
-     because the catalogue's presses span 18 dB (massiveattack -17.8 dBFS,
+     because the catalogue's presses span 18 dB (bristolsound -17.8 dBFS,
      blockparty -36.4), so the SAME number lands anywhere from 26 to 56 dB
      down depending only on how loud the record happens to be. What the rows
      below are actually ordered by is DEPTH UNDER THEIR OWN MIX, measured on
      the pressed artifact, 8 bars at seed 1:
 
        row            grain   dB under its own mix
-       portishead      0.62    31.5   the dust is in the loop
-       djshadow        0.39    33.2   a break and a hiss
+       noirhop      0.62    31.5   the dust is in the loop
+       instrumentalhiphop        0.39    33.2   a break and a hiss
        boombap         0.39    34.8   the 45 under the SP-1200
        tapemusic       0.23    35     the shellac the etudes were cut to
        chopped         0.45    36.1   a dubbed cassette, not a groove
-       tricky          0.83    36.4   tape murk, a step behind Dummy
+       knowlewest          0.83    36.4   tape murk, a step behind Dummy
        blockparty      0.14    36.5   two decks in a rec room
        triphop         0.61    37.9   the deck under a studio record
-       massiveattack   0.64    40.6   1998, digital, and nearly clean
+       bristolsound   0.64    40.6   1998, digital, and nearly clean
        vaporwave       0.50    43.7   a rip of a rip; the sleeve, not the record
 
      — and read the two columns against each other before touching anything.
-     blockparty's 0.14 is a MORE audible surface than massiveattack's 0.64.
+     blockparty's 0.14 is a MORE audible surface than bristolsound's 0.64.
      The numbers are levels; only the decibels are the record.
 
      EVERY VALUE WAS PRESSED AND MEASURED, AND SIX WERE MOVED BY WHAT CAME
      BACK. The first pass set them by ear-from-the-armchair and three of the
-     ten did not arrive at all: massiveattack at 0.22 measured 56 dB down and
+     ten did not arrive at all: bristolsound at 0.22 measured 56 dB down and
      left the record's noise floor unchanged TO THE DECIBEL, vaporwave at 0.30
      did the same, and blockparty at 0.35 went the other way and sat 26 dB
      down — a layer, not a surface. A row declaring a texture that does not
@@ -476,9 +476,9 @@
       { d: 0, q: "7" }, { d: 0, q: "7" }, { d: 3, q: "7" }, { d: 3, q: "7" },
       { d: 0, q: "7" }, { d: 0, q: "7" }, { d: 4, q: "7" }, { d: 4, q: "7" },
     ],
-    // new jack: the jodeci cycle with its sevenths said out loud
+    // new jack: the hiphopsoul cycle with its sevenths said out loud
     jack7: [{ d: 0, q: "7" }, { d: 3, q: "7" }, { d: 0, q: "7" }, { d: 4, q: "7" }],
-    // the beatles verse as written, and a chorus that finally goes to V —
+    // the beatgroup verse as written, and a chorus that finally goes to V —
     // the pair exists so a composed song can have two different harmonies
     /* PRETTY BOY, dictated by Paul 2026-08-31: "Pretty boy has a A D Bm chord
        progression for example, A D on the verse, then Bm D A D on the chorus."
@@ -500,8 +500,8 @@
     newsummerH: [{ d: 1 }, { d: 1 }, { d: 5 }, { d: 5 }, { d: 3 }, { d: 3 }, { d: 4 }, { d: 4 }],
     prettyboyV: [{ d: 0 }, { d: 0 }, { d: 3 }, { d: 3 }, { d: 0 }, { d: 0 }, { d: 3 }, { d: 3 }],
     prettyboyC: [{ d: 1 }, { d: 3 }, { d: 0 }, { d: 3 }, { d: 1 }, { d: 3 }, { d: 0 }, { d: 3 }],
-    beatlesV: [{ d: 0 }, { d: 0 }, { d: 6 }, { d: 6 }, { d: 3 }, { d: 3 }, { d: 0 }, { d: 0 }],
-    beatlesC: [{ d: 0 }, { d: 0 }, { d: 6 }, { d: 6 }, { d: 3 }, { d: 3 }, { d: 4 }, { d: 0 }],
+    beatgroupV: [{ d: 0 }, { d: 0 }, { d: 6 }, { d: 6 }, { d: 3 }, { d: 3 }, { d: 0 }, { d: 0 }],
+    beatgroupC: [{ d: 0 }, { d: 0 }, { d: 6 }, { d: 6 }, { d: 3 }, { d: 3 }, { d: 4 }, { d: 0 }],
   };
 
   // THE SKANK — an absolute gate, written as its own total operator because no
@@ -569,6 +569,20 @@
   // child its declared parents actually explain, feature by feature, and how
   // big the leftover invention is — is nukernel/genealogy.js (hand-run;
   // findings committed in nukernel/GENEALOGY.md).
+  // THE GREAT RENAME (2026-09-01). Paul: "Rename everything to a genre. No
+  // more band names or album name or people names. ONLY genre. We don't want
+  // to claim to have anything to do with all that." THE LAW: a KEY is a genre
+  // word — never a band, an album, a person, a label, a show or a studio.
+  // 68 keys renamed in one pass (beatles->beatgroup, motown->detroitsoul,
+  // katebush->artpop, air->versailles, hendrix->acidrock ...); where no
+  // established genre word exists the key is a flagged COINAGE (synthsoul,
+  // noirhop, torchbreaks, leedsgoth, beiruttarab, sitcomsting, copshowsynth)
+  // or a place-scene word on the madchester pattern (knowlewest, tromso,
+  // viennadownbeat, versailles). Old keys still open at the door:
+  // document.js normalize() folds them via OLDKEYS, so saved sessions and
+  // share links keep playing. COMMENTS keep the historical names — the
+  // record and the argument are the point of a comment — but every KEY and
+  // every rendered surface is genre-only.
   const GENRES = {
     // SIMPLE — the phrase and nothing else. One voice, one bar, no kit, no bass,
     // no harmonic motion, no operator word: the sixteen steps played as written
@@ -601,7 +615,7 @@
       label: "Leipzig 1725", voices: 4,
       // NOBASS, 2026-08-31. Paul: "What's with the bass in the fugue it just
       // plays eight notes is that canonical" — it is not, and the catalogue
-      // already knew: counterpoint, organum, josquin, spem, dufay and
+      // already knew: counterpoint, organum, francoflemish, polychoral, isorhythm and
       // winchester ALL declare nobass and fugue was the only polyphonic row
       // that did not. A four-voice fugue's bass IS one of the four (v3, the
       // organ at reg -1, the SATB floor this row already seats correctly);
@@ -734,13 +748,13 @@
       // pop hooks (the Cars are beatlesque to the bone) over a straight
       // dance-floor eighth pulse disco normalized; the synth sheen on top is
       // Kraftwerk's, one row up — the smallest of that anchor's four edges,
-      // taken off beatles and disco alike, because what disco gave new wave
+      // taken off beatgroup and disco alike, because what disco gave new wave
       // is the four on the floor and not the timbre.
       // "glam rock" PAID 2026-08-29 (London 1971): the art-school half
       // of this cohort learned staging and irony from Bolan and Bowie
-      // before punk gave them permission — the weight comes off beatles,
+      // before punk gave them permission — the weight comes off beatgroup,
       // whose share was carrying "English pop theatre" at one remove.
-      parents: { punk: 0.35, beatles: 0.2, glam: 0.15, disco: 0.2, kraftwerk: 0.1 },
+      parents: { punk: 0.35, beatgroup: 0.2, glam: 0.15, disco: 0.2, dusseldorfschool: 0.1 },
       wants: [],
       instr: ["clean_guitar", "synth_strings_1"],
       entry: v => v, reg: v => v - 1, realize: () => "line",
@@ -994,7 +1008,7 @@
       // off Chess LPs, and skiffle is why Page and Jones owned a guitar at
       // all — upstream of the music, which is why it takes a tenth and no
       // more.
-      parents: { blues: 0.45, chuckberry: 0.2, beatles: 0.25, skiffle: 0.1 },
+      parents: { blues: 0.45, rocknroll: 0.2, beatgroup: 0.25, skiffle: 0.1 },
       wants: [],
       instr: "crunch_guitar",
       drumkit: "power",              // the SAMPLED kit, not a sine and some noise
@@ -1080,10 +1094,10 @@
       // diaphony older than notation; the ison under it is Orthodox chant's,
       // and neither parent is in the catalog. Gregorian is chant, but the
       // wrong church: claiming it would be tidier than it is true.
-      // PAID 2026-08-29, the debts round: "orthodox chant" is `kassia`
+      // PAID 2026-08-29, the debts round: "orthodox chant" is `sticheron`
       // (Constantinople 843) — the diaphony's held second is village
       // practice over exactly this liturgy's line.
-      parents: { kassia: 0.25 },
+      parents: { sticheron: 0.25 },
       wants: ["village diaphony"],
       instr: "ohh_voices",
       drumkit: "acoustic",
@@ -1110,7 +1124,7 @@
     // and a dead browser; eight is one per choir, which is the structural unit
     // anyway. Harmony is emergent — nobody wrote the chords down, they are what
     // happens when eight transpositions of one line arrive on top of each other.
-    spem: {
+    polychoral: {
       // named "London 1570" — Tallis at the Chapel Royal; the forty-part motet
       // premiered in the Arundel/Nonsuch orbit around 1570.
       label: "London 1570", rate: 0.5, bars: 8, voices: 8,
@@ -1158,7 +1172,7 @@
     // practice starts with organum around 900 (this table dates its own at
     // Paris 1200), runs through Machaut, Josquin and Palestrina, and was
     // finished as an art form roughly a century BEFORE Fux sat down to
-    // describe it. The table already knew this and said it twice: `spem`'s
+    // describe it. The table already knew this and said it twice: `polychoral`'s
     // lineage note ("the label years invert — Fux's 1725 textbook CODIFIES the
     // Palestrina-era practice Tallis worked in") and `chorale`'s, added the
     // same day. Two rows apologising for a third row's label is the tell.
@@ -1202,14 +1216,14 @@
       // and not a wish: it has been Paris 1200 in this table since
       // 2026-08-21, and a `wants` entry naming a row that exists is a
       // shopping list nobody crossed off. This said "even weights" until
-      // 2026-08-29, when the genealogy round landed `dufay` (Florence
+      // 2026-08-29, when the genealogy round landed `isorhythm` (Florence
       // 1436) and the five-century jump this row's own long paragraph
       // apologizes for — organum 1200 straight to a 1725 textbook — got
       // its missing middle: Fux codifies Palestrina, who learned from
       // Josquin's generation, who learned from Du Fay's. The two old
       // claims keep their ratio (1:1); the new weight is the century the
       // practice actually matured in.
-      parents: { gregorian: 0.35, organum: 0.35, dufay: 0.3 },
+      parents: { gregorian: 0.35, organum: 0.35, isorhythm: 0.3 },
       wants: [],
       instr: "harpsichord",
       entry: () => 0, reg: v => 1 - v, realize: () => "line",
@@ -1428,7 +1442,7 @@
       // PAID 2026-08-29, the debts round: both wants — "nwobhm" is
       // `nwobhm` (London 1980) and "thrash metal" is `thrash` (San
       // Francisco 1983): the row waited twenty years for parents that
-      // are its actual parents, and `sabbath` (Workington 1969) now
+      // are its actual parents, and `heavymetal` (Workington 1969) now
       // stands behind both.
       parents: { punk: 0.55, rock: 0.45, nwobhm: 0.25, thrash: 0.2 },
       wants: [],
@@ -1461,7 +1475,7 @@
     // two-chord vamp, i to VI, which is the entire song. The bass pulses in
     // octaves under it. Analog, from the Model D, because a sample cannot be a
     // monosynth any more than it can be a 303.
-    eurythmics: {
+    synthsoul: {
       // named "London 1983" — Sweet Dreams: the two-chord i-VI vamp, the
       // sequencer that never varies, the drum machine and nothing else.
       label: "London 1983",
@@ -1477,7 +1491,7 @@
       // Hitsville, but "a sequencer and a drum machine and nothing else in
       // the room" is a description of Kling Klang's floor plan. `wants` empties
       // — Düsseldorf was the whole of this anchor's shopping list.
-      parents: { synthpop: 0.4, motown: 0.25, kraftwerk: 0.2, funk: 0.15 },
+      parents: { synthpop: 0.4, detroitsoul: 0.25, dusseldorfschool: 0.2, funk: 0.15 },
       wants: [],
       // "nothing else in the room" — so not a string ensemble. The riff is a
       // monosynth (the modeld below plays it) and the answer is a poly; both
@@ -1513,7 +1527,7 @@
     // bright sixth that separates soul from a minor blues; a light sixteenth
     // shuffle, because nothing here lands exactly on the grid; and a bass that
     // syncopates rather than marches.
-    isley: {
+    psychsoul: {
       // named "Teaneck 1973" — T-Neck Records IS Teaneck NJ, the Isleys' label
       // and home; the Rhodes-plus-fuzz-lead anchor is 3+3.
       label: "Teaneck 1973", bars: 8, voices: 3, swing: 0.16,
@@ -1525,12 +1539,12 @@
       // mostly out of funk — the 3+3 groove was carrying both the pocket and
       // the vocal-group blend. (The fit asks for nearly twice that; 0.15 is
       // what the history claims, and the gap is the finding.)
-      // "hendrix" PAID 2026-08-29 (London 1967), and the history is
+      // "acidrock" PAID 2026-08-29 (London 1967), and the history is
       // family history: Jimmy played in the brothers' band in 1964 and
       // Ernie's fuzz line on this label's own record is that
       // apprenticeship handed back. The weight comes off rock, which was
       // standing in for one specific guitarist the whole time.
-      parents: { gospel: 0.3, funk: 0.25, hendrix: 0.2, rock: 0.1, doowop: 0.15 },
+      parents: { gospel: 0.3, funk: 0.25, acidrock: 0.2, rock: 0.1, doowop: 0.15 },
       wants: [],
       instr: ["rhodes_ep", "overdrive_guitar", "rhodes_ep"],
       drumkit: "room",
@@ -1578,7 +1592,7 @@
     // without ever leaving the key. A marimba carries the kalimba-ish hook, a
     // guitar answers it from bar 5, and a synth pad holds the chords, which
     // is three instruments and was one until INSTR learned to take a list.
-    toto: {
+    aor: {
       // named "Los Angeles 1982" — Toto IV: the Africa lope this comment
       // describes, cut by LA session players.
       label: "Los Angeles 1982", bars: 8, voices: 3, swing: 0.08,
@@ -1595,7 +1609,7 @@
       // coined in 2005 to describe records like Toto IV, so the genre and one
       // of its exemplars each have a fair claim to being upstream, and a
       // directed graph has to pick. The graph picks the one already written.
-      parents: { steely: 0.45, rock: 0.3, funk: 0.25 },
+      parents: { jazzrock: 0.45, rock: 0.3, funk: 0.25 },
       wants: ["african percussion"],
       instr: ["synth_strings_1", "marimba", "clean_guitar"],
       drumkit: "room",
@@ -1636,7 +1650,7 @@
     // gospel's minor, the one with the bright sixth — and a stack of voices
     // holding the chord while a Rhodes plays around it. Slow; the tempo is the
     // point, and the composer knows it.
-    jodeci: {
+    hiphopsoul: {
       // named "Charlotte 1991" — Forever My Lady's year, and the choir-over-808
       // anchor is the Hailey brothers' Charlotte church sound; the new jack
       // swing TECHNIQUE itself would be Harlem 1987 (Teddy Riley).
@@ -1653,7 +1667,7 @@
       // The second want folds into the first: the hip-hop drum
       // programming this row asked for separately IS what the SP-1200
       // brought, and two names for one debt is the taqsim hole.
-      parents: { newjackswing: 0.35, gospel: 0.35, funk: 0.2, motown: 0.1 },
+      parents: { newjackswing: 0.35, gospel: 0.35, funk: 0.2, detroitsoul: 0.1 },
       wants: [],
       instr: ["ahh_choir", "rhodes_ep"],
       // "a drum machine that cannot swing on its own" — the 808; the swing is
@@ -1685,7 +1699,7 @@
     // song sound like them rather than like everyone else. The first thing is
     // simpler — the second voice sings a THIRD above the first, which in a
     // seven-note alphabet is exactly transpose(2), and in parallel the whole way.
-    beatles: {
+    beatgroup: {
       // named "Liverpool 1962" — Love Me Do: the ♭VII already in the tune and
       // two voices in thirds, before the studio years moved them to London.
       label: "Liverpool 1962", bars: 8,
@@ -1702,11 +1716,11 @@
       // Liverpool heard of "the blues" was largely Chuck Berry 45s, the beat
       // under the early setlists is Bo Diddley's, and the stacked thirds
       // behind Lennon are the corner rather than counterpoint. So blues,
-      // motown and countrypop each step back and counterpoint — the one claim
+      // detroitsoul and countrypop each step back and counterpoint — the one claim
       // a rhythm figure and a harmony stack cannot explain, and the one the
       // fit keeps using — barely moves. Nothing is left on the list.
-      parents: { skiffle: 0.18, chuckberry: 0.15, doowop: 0.12, bodiddley: 0.1,
-                 blues: 0.12, motown: 0.1, countrypop: 0.08, counterpoint: 0.15 },
+      parents: { skiffle: 0.18, rocknroll: 0.15, doowop: 0.12, hambone: 0.1,
+                 blues: 0.12, detroitsoul: 0.1, countrypop: 0.08, counterpoint: 0.15 },
       wants: [],
       instr: ["steel_string_guitar", "ohh_voices"],
       drumkit: "acoustic",
@@ -1718,7 +1732,7 @@
       // cadence bar makes room for the harmony to land. A per-bar schedule,
       // not a word closure, so the DAW's own palette could have said it.
       period: [[], [], [], [drop(3)]],
-      progFamily: { verse: "beatlesV", chorus: "beatlesC" },
+      progFamily: { verse: "beatgroupV", chorus: "beatgroupC" },
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
@@ -1737,7 +1751,7 @@
     // over forever and never resolves anywhere emphatic, which is the point. A
     // Rhodes, a jazz guitar over it, a walking bass, and a shuffle small enough
     // that it reads as feel rather than as swing.
-    steely: {
+    jazzrock: {
       // named "Los Angeles 1977" — Aja: the Rhodes/jazz-guitar/walking-bass
       // session polish is the LA years, not the NY bar band of 1972.
       label: "Los Angeles 1977", bars: 8, voices: 3, swing: 0.2,
@@ -1749,7 +1763,7 @@
       // BLUES (0.35 -> 0.10) — that is the honest bookkeeping, since all three
       // of those things arrive here through 52nd Street rather than through
       // Chess. The band format and the session polish barely move.
-      parents: { jazz: 0.35, rock: 0.3, motown: 0.25, blues: 0.1 },
+      parents: { jazz: 0.35, rock: 0.3, detroitsoul: 0.25, blues: 0.1 },
       wants: ["bacharach"],
       instr: ["rhodes_ep", "jazz_guitar", "rhodes_ep"],
       drumkit: "jazz",
@@ -1819,19 +1833,19 @@
     // which FIELD separates them — that field is the genre, everything else is
     // orchestration. Between them they exercise every piece of the depth round:
     // reggae's skank proves PARTS, house's seventh loop proves PROGRESSION,
-    // motown proves the major modes, dnb proves the kit schedule, garage
+    // detroitsoul proves the major modes, dnb proves the kit schedule, garage
     // proves the period.
 
-    // BOOM BAP [isley]. The nearest record is the soul record it would have
+    // BOOM BAP [psychsoul]. The nearest record is the soul record it would have
     // sampled, and the difference IS the sampling: the keys are a STAB whose
     // gate is excerpt(0,8) — half the phrase's rhythm looped like a chop
-    // lifted off vinyl, voicing the sounding seventh chord, where isley plays
+    // lifted off vinyl, voicing the sounding seventh chord, where psychsoul plays
     // the whole tune live. The snare hand (kitVel) does the rest — every
     // backbeat at 9.
     boombap: {
       // named "New York 1994" — Illmatic-era: the chopped soul loop with the
       // snare hand at 9 on every backbeat.
-      label: "New York 1994", swing: 0.2, near: "isley",
+      label: "New York 1994", swing: 0.2, near: "psychsoul",
       plan: "song", bpm: 92,
       // LINEAGE: the `near` field already told the truth — boom bap's chops
       // ARE the Isley-shaped soul records it samples, its breaks are funk
@@ -1845,7 +1859,7 @@
       // lineage note below always said the culture that taught them to
       // loop was still owed; `soundsystem` lands and takes a dime off
       // nobody — the edge is additional, the way a missing ancestor is.
-      parents: { isley: 0.35, funk: 0.3, disco: 0.2, electro: 0.15,
+      parents: { psychsoul: 0.35, funk: 0.3, disco: 0.2, electro: 0.15,
                  soundsystem: 0.1 },
       wants: [],
       instr: ["electric_piano", "muted_trumpet"],
@@ -2080,10 +2094,10 @@
       // spread was approximating. "the amen break" stays: a record's
       // six seconds, not a genre, and still the truest debt here.
       // PAID 2026-08-29, the debts round: "the amen break" is
-      // `winstons` (Washington 1969) — the record the break lives on;
+      // `amenbreak` (Washington 1969) — the record the break lives on;
       // the kit language of this whole row is those four bars chopped.
       parents: { hardcorerave: 0.4, dub: 0.3, funk: 0.15, techno: 0.15,
-                 winstons: 0.2 },
+                 amenbreak: 0.2 },
       wants: [],
       // A REESE IS TWO SAWS BEATING AGAINST EACH OTHER, and the comment above
       // says the line is in reese register — so GM 82, which to-engine.js
@@ -2142,11 +2156,11 @@
       // built the sound are missing anchors.
       // "philly soul" PAID 2026-08-29 (Philadelphia 1972): Earl Young's
       // open hat IS the disco hi-hat, MFSB's "Love Is the Message" was
-      // the Loft's anthem, and the weight comes chiefly off motown —
+      // the Loft's anthem, and the weight comes chiefly off detroitsoul —
       // Gamble and Huff are the step between Hitsville and the floor.
       // "latin percussion" stays: an instrumentation, not a genre — the
       // genealogy round's declined list has the argument.
-      parents: { funk: 0.35, phillysoul: 0.3, motown: 0.2, gospel: 0.15 },
+      parents: { funk: 0.35, phillysoul: 0.3, detroitsoul: 0.2, gospel: 0.15 },
       wants: ["latin percussion"],
       instr: ["strings", "clean_guitar"],
       drumkit: "room",
@@ -2169,14 +2183,14 @@
       word: v => (v === 1 ? [only("gate", rotate(4))] : []),
     },
 
-    // FUNK [isley]. Soul with the harmony taken away: MODAL, one dorian chord
+    // FUNK [psychsoul]. Soul with the harmony taken away: MODAL, one dorian chord
     // for the whole record, because the groove is the song. A clavinet where
     // the Rhodes was, a sixteenth bass with a hard rest cap, ghost snares as
     // a velocity fact (kitVel 2s between the 9s), and the ghost lane armed.
     funk: {
       // named "Cincinnati 1967" — Cold Sweat at King Records: the first
       // one-chord modal groove, which is exactly what this anchor is.
-      label: "Cincinnati 1967", swing: 0.12, near: "isley",
+      label: "Cincinnati 1967", swing: 0.12, near: "psychsoul",
       plan: "song", bpm: 100,
       // LINEAGE: James Brown took gospel's scream and blues' shout, kept
       // Motown's showband discipline, and threw the harmony away — the
@@ -2197,7 +2211,7 @@
       // its own now that highlife, marabi and rumba have stopped hanging off
       // American anchors. See blues' own `wants`, which is where the debt is
       // now named in its own words.
-      parents: { gospel: 0.4, blues: 0.25, motown: 0.2, jumpblues: 0.15 },
+      parents: { gospel: 0.4, blues: 0.25, detroitsoul: 0.2, jumpblues: 0.15 },
       wants: ["new orleans second line"],
       instr: ["clavinet", "brass_section"],
       drumkit: "room",
@@ -2216,14 +2230,14 @@
       word: v => (v === 1 ? [only("gate", rotate(2)), drop(2)] : []),
     },
 
-    // MOTOWN [beatles]. Both are bright sixties three-minute machines; the
+    // MOTOWN [beatgroup]. Both are bright sixties three-minute machines; the
     // field that separates them is the SNARE ON ALL FOUR — the Funk Brothers'
     // stamp, with the tambourine offbeats beside it — over a walking bass and
     // an ionian I-vi-IV-V said with its sevenths out loud.
-    motown: {
+    detroitsoul: {
       // named "Detroit 1965" — the Funk Brothers' snare-on-all-four at
       // Hitsville's peak.
-      label: "Detroit 1965", swing: 0.12, near: "beatles",
+      label: "Detroit 1965", swing: 0.12, near: "beatgroup",
       plan: "song", bpm: 122,
       // LINEAGE: gospel moved to the assembly line — the Funk Brothers were
       // church and jazz players, the writers blues-schooled — under pop
@@ -2269,18 +2283,18 @@
       word: () => [],
     },
 
-    // R&B [jodeci]. Jodeci is new jack — swung, triadic, a drum machine
+    // R&B [hiphopsoul]. Jodeci is new jack — swung, triadic, a drum machine
     // playing sixteenths. This is the other nineties: STRAIGHT time and
     // EXTENDED chords, Imaj7–iii7–vi7–IVmaj7, a rim on 3, an EP that holds,
     // and backing vocals that are a harmonize PIPE, chord-locked sixths.
     rnb: {
       // named "Philadelphia 1994" — the straight-time maj7 ballad with a rim
       // on 3 and stacked thirds is Boyz II Men's Philadelphia.
-      label: "Philadelphia 1994", near: "jodeci",
+      label: "Philadelphia 1994", near: "hiphopsoul",
       plan: "song", bpm: 72,
       // LINEAGE: Boyz II Men is the doo-wop revival sung with gospel
       // technique over Motown songcraft, arriving through new jack's door
-      // (the jodeci share); doo-wop itself is an anchor now and the parent
+      // (the hiphopsoul share); doo-wop itself is an anchor now and the parent
       // this comment already named is real. What the revival kept is the FORM
       // — four voices and the a-cappella tag — and none of the measurable
       // surface (straight time, electronic kit, maj7s), which is why the
@@ -2288,10 +2302,10 @@
       // late-night radio format is still owed.
       // "quiet storm" PAID 2026-08-29 (Los Angeles 1975): the slow-jam
       // half of a 90s R&B record is that format's child directly, and
-      // the weight comes off motown and doowop, which were splitting the
+      // the weight comes off detroitsoul and doowop, which were splitting the
       // ballad claim between them.
-      parents: { gospel: 0.3, jodeci: 0.25, quietstorm: 0.2,
-                 motown: 0.15, doowop: 0.1 },
+      parents: { gospel: 0.3, hiphopsoul: 0.25, quietstorm: 0.2,
+                 detroitsoul: 0.15, doowop: 0.1 },
       wants: [],
       // THE MELISMA IS A PERSON. It was cast on `synth_voice`, and the round
       // that sorted that id kept it here on the theory that this was one of the
@@ -2325,7 +2339,7 @@
       word: () => [],
     },
 
-    // GOSPEL [motown]. Same church, one street over — and the field that
+    // GOSPEL [detroitsoul]. Same church, one street over — and the field that
     // separates them is the SECONDARY DOMINANT: I goes to IV through its own
     // V7 (the one deliberate exit from the key), and the form ends on the
     // plagal amen, IV–I inside the last bar. Shuffled hard, organ under
@@ -2333,7 +2347,7 @@
     gospel: {
       // named "Chicago 1932" — Thomas A. Dorsey at Pilgrim Baptist: the organ,
       // the shuffle, the secondary dominant and the plagal amen.
-      label: "Chicago 1932", voices: 3, swing: 1 / 3, near: "motown",
+      label: "Chicago 1932", voices: 3, swing: 1 / 3, near: "detroitsoul",
       plan: "song", bpm: 76,
       // LINEAGE: the label years invert and the claim survives it — Dorsey
       // was Georgia Tom, Ma Rainey's blues pianist, and carried the blues
@@ -2598,22 +2612,22 @@
       word: (v, s) => [[], [rotate(4), drop(2)], [rotate(8), drop(3)]][v],
     },
 
-    // BOSSA NOVA [steely]. Both live on sevenths and understatement; the
+    // BOSSA NOVA [jazzrock]. Both live on sevenths and understatement; the
     // field that separates them is the CLAVE — the rim figure the whole bar
     // hangs off — plus brushes, no snare at all, and the ii7–V7 packed into
-    // HALF a bar (`beats: 8`), which is the turnaround steely spreads over
+    // HALF a bar (`beats: 8`), which is the turnaround jazzrock spreads over
     // two whole bars.
     bossa: {
       // named "Rio de Janeiro 1958" — Chega de Saudade, cut in Rio that July:
       // the clave, the brushes, the ii7-V7 in half a bar.
-      label: "Rio de Janeiro 1958", near: "steely",
+      label: "Rio de Janeiro 1958", near: "jazzrock",
       plan: "song", bpm: 132,
       // LINEAGE: it stops being a root under protest. Jobim and Gilberto
       // folded samba's rhythm and cool jazz's harmony into the apartment
       // voice; cool jazz is bebop's chamber wing and IS in the catalog now —
       // the ii7-V7 in half a bar, the sevenths everywhere, the understatement
       // — so the weight normalizes to 1 over what exists. Samba and choro,
-      // the older Rio string tradition, are still owed. `near: steely` now
+      // the older Rio string tradition, are still owed. `near: jazzrock` now
       // reads better: the neighbour is a SIBLING, both children of 1945.
       // LINEAGE, REPAIRED 2026-08-26. `{ jazz: 1 }` with
       // `wants: ["samba", "choro"]` beside it made Rio 1958 a wholly
@@ -2649,7 +2663,7 @@
       word: () => [],
     },
 
-    // COUNTRY [beatles]. Both are I-loving guitar pop; the fields that
+    // COUNTRY [beatgroup]. Both are I-loving guitar pop; the fields that
     // separate them are the TRAIN BEAT — brushes on every offbeat eighth, no
     // backbeat snare at all — and the FIFTHS bass, the boogie root-five
     // figure. The fiddle answers late instead of doubling in thirds all the
@@ -2657,7 +2671,7 @@
     countrypop: {
       // named "Nashville 1945" — voice 0's word is literally "the banjo roll",
       // and the roll is Earl Scruggs', debuted with Monroe at the Ryman in 1945.
-      label: "Nashville 1945", swing: 0.1, near: "beatles",
+      label: "Nashville 1945", swing: 0.1, near: "beatgroup",
       plan: "song", bpm: 120,
       // LINEAGE: bluegrass is Appalachian fiddle tunes driven with blues
       // phrasing and gospel's close harmony — the catalog holds the second
@@ -2688,14 +2702,14 @@
       word: v => (v === 1 ? [only("gate", rotate(8)), transpose(2)] : []),
     },
 
-    // SYNTH POP [eurythmics]. Eurythmics is a two-chord vamp with two lines;
+    // SYNTH POP [synthsoul]. Eurythmics is a two-chord vamp with two lines;
     // this is the FOUR-chord aeolian anthem (i–VI–III–VII, the loop under
     // half the eighties) with a STAB where the second sequence was, a huge
     // gated snare and — the tell — no hats at all.
     synthpop: {
       // named "Basildon 1981" — early Depeche Mode: all-synth staccato stabs
       // on the CR-era box, the aeolian anthem loop.
-      label: "Basildon 1981", near: "eurythmics",
+      label: "Basildon 1981", near: "synthsoul",
       plan: "song", bpm: 118,
       // LINEAGE: new wave with the guitars traded for sequencers and
       // disco's four still on the floor; the whole all-synth AESTHETIC is
@@ -2705,11 +2719,11 @@
       // disco's is the kick on every quarter, which Düsseldorf never played.
       // Note Kraftwerk reaches Basildon twice: 0.25 direct, plus 0.45 x 0.1
       // through new wave.
-      // "moroder" PAID 2026-08-29 (Munich 1977): the sequencer carrying
+      // "eurodisco" PAID 2026-08-29 (Munich 1977): the sequencer carrying
       // the whole rhythm section is I Feel Love's patent, and Basildon
       // licensed it knowingly — the weight comes off disco, which was
       // carrying Munich's share under New York's name.
-      parents: { newwave: 0.4, moroder: 0.2, disco: 0.2, kraftwerk: 0.2 },
+      parents: { newwave: 0.4, eurodisco: 0.2, disco: 0.2, dusseldorfschool: 0.2 },
       wants: [],
       instr: ["polysynth", "saw_wave"],
       drumkit: "cr78",             // the CR-era anthem box, like its neighbour
@@ -2745,12 +2759,12 @@
       // MBV covered by anyone comes out as a Beatles song. The Velvets,
       // who connected all three first, are the missing citation.
       // PAID 2026-08-29, the debts round: "velvet underground" is
-      // `velvets` (New York 1966) — the drone under the pop song is this
+      // `protopunk` (New York 1966) — the drone under the pop song is this
       // row's entire inheritance.
       // PAID 2026-08-30, the deep-time round's forward half: "dream pop"
       // is `dreampop` (London 1984, Treasure) — the guitar-as-weather this
       // row put a wall of fuzz in front of.
-      parents: { punk: 0.4, drone: 0.3, beatles: 0.3, velvets: 0.25, dreampop: 0.25 },
+      parents: { punk: 0.4, drone: 0.3, beatgroup: 0.3, protopunk: 0.25, dreampop: 0.25 },
       wants: [],
       instr: ["overdrive_guitar", "overdrive_guitar"],
       drumkit: "room",
@@ -2786,7 +2800,7 @@
       fx: ["crunch", "chorus"],
     },
 
-    // CITY POP [toto]. Session players either side of the Pacific; the field
+    // CITY POP [aor]. Session players either side of the Pacific; the field
     // that separates them is the SWING (a 0.1 lean, not the Porcaro triplet)
     // and the ROYAL ROAD — IVmaj7–V7–iii7–vi7, the progression this whole
     // project was once named after, finally in the table under its own flag.
@@ -2794,13 +2808,13 @@
     citypop: {
       // named "Tokyo 1984" — Plastic Love's year: the royal road with slap
       // sixteenths under it.
-      label: "Tokyo 1984", swing: 0.1, near: "toto",
+      label: "Tokyo 1984", swing: 0.1, near: "aor",
       plan: "song", bpm: 108,
       // LINEAGE: the best-documented lineage in the table — Japanese
       // session players explicitly absorbing Toto's polish and Steely Dan's
       // changes over disco's floor; the boogie/Chic half of the groove is
       // the one missing citation.
-      parents: { toto: 0.35, steely: 0.35, disco: 0.3 },
+      parents: { aor: 0.35, jazzrock: 0.35, disco: 0.3 },
       wants: ["boogie"],
       // 1984 IN TOKYO IS AN FM ELECTRIC PIANO — the digital, bell-edged EP
       // that vaporwave two rows up literally slows a DX7 down to imitate.
@@ -2846,10 +2860,10 @@
       // step and the girl groups themselves are still missing.
       // PAID 2026-08-29, the debts round: both wants — "garage rock"
       // is `garagerock` (Portland 1963, the Nuggets shelf), "girl groups"
-      // is `brill` (New York 1960, the Shirelles): the Ramones' melodic
+      // is `girlgroup` (New York 1960, the Shirelles): the Ramones' melodic
       // half at double speed.
-      parents: { rock: 0.45, beatles: 0.4, chuckberry: 0.15,
-                 garagerock: 0.25, brill: 0.1 },
+      parents: { rock: 0.45, beatgroup: 0.4, rocknroll: 0.15,
+                 garagerock: 0.25, girlgroup: 0.1 },
       wants: [],
       instr: ["distortion_guitar", "crunch_guitar"],
       drumkit: "power",
@@ -2895,13 +2909,13 @@
       // keeps the larger share because the SOUND, held and slow and pulseless,
       // is Young's: ambient took the method and threw the pulse away. Satie's
       // furniture music and the tape loops are still named in liner notes.
-      // PAID 2026-08-29, the debts round: "satie" is `satie` (Paris
+      // PAID 2026-08-29, the debts round: "furnituremusic" is `furnituremusic` (Paris
       // 1888) — furniture music is the sleeve note's own citation. "tape
       // music" stays declined and stays owed.
       // ...AND PAID 2026-08-30, the walls-down round: "tape music" is
       // `tapemusic` (Paris 1948) — the loops in Eno's liner notes are
       // that studio's own technique, thirty years downstream.
-      parents: { drone: 0.65, minimalism: 0.35, satie: 0.2, tapemusic: 0.2 },
+      parents: { drone: 0.65, minimalism: 0.35, furnituremusic: 0.2, tapemusic: 0.2 },
       wants: [],
       instr: ["halo_pad", "bowed_glass"],
       entry: v => v * 4, reg: v => v - 1,
@@ -2937,10 +2951,10 @@
       // around it. Synthpop takes the big cut because it was the stand-in and
       // keeps a real sliver, since the Belleville Three genuinely did play the
       // British records; house keeps the floor but stops being the plurality.
-      // (The fit corroborates kraftwerk at 0.27 against the declared 0.25 and
+      // (The fit corroborates dusseldorfschool at 0.27 against the declared 0.25 and
       // reads electro as already spanned by funk + synthpop + disco — which is
       // what electro IS, so the weight is the historical claim.)
-      parents: { house: 0.3, kraftwerk: 0.25, electro: 0.2, funk: 0.2, synthpop: 0.05 },
+      parents: { house: 0.3, dusseldorfschool: 0.25, electro: 0.2, funk: 0.2, synthpop: 0.05 },
       wants: [],
       // DETROIT IS SYNTHESIS, and `charang` is a fuzz GUITAR lead — the buzz
       // belongs to big beat, one row over, where a guitar sample really is
@@ -2994,7 +3008,7 @@
     // now shorter, and the children's weights moved on the same day (see each
     // child's LINEAGE comment for where the share came from).
 
-    // JAZZ. The catalog's largest hole: four anchors — steely, ska, afrobeat,
+    // JAZZ. The catalog's largest hole: four anchors — jazzrock, ska, afrobeat,
     // bossa — named it in `wants`, and it was the biggest residue in the fit
     // (1.048, half again the next one). What the four are asking for turns out
     // to be the SAME THREE THINGS, which is why one anchor pays all four:
@@ -3024,7 +3038,7 @@
       // instead (see the kit). At sixteen steps to the bar a step is a
       // sixteenth, and the eighth-note swing this music is actually made of
       // lands on even steps, where the scalar cannot reach it; 0.2 is the lean
-      // it CAN say — the same lean its own descendant steely reads as feel
+      // it CAN say — the same lean its own descendant jazzrock reads as feel
       // rather than as shuffle.
       label: "New York 1945", bars: 8, voices: 3, swing: 0.2,
       // a head, solos and the head again — a song whose middle is the blowing;
@@ -3172,7 +3186,7 @@
     // only one where a sixteen-step kit, a bass grid and a velocity hand can
     // all land on the same five hits: 1, the a of 1, the and of 2, the a of 3,
     // and 4.
-    bodiddley: {
+    hambone: {
       // named "Chicago 1955" — Ellas McDaniel's first Chess single, cut in the
       // same room and for the same label as the electric-blues anchor three
       // years earlier, playing a rhythm nobody in that room had recorded.
@@ -3248,7 +3262,7 @@
     // triplets, and the record splits the difference at swing 0.15. That split
     // is the genre — the one anchor here whose identity is a compromise about
     // TIME rather than a mode, a kit or a chord.
-    chuckberry: {
+    rocknroll: {
       // named "St. Louis 1955" — the Sir John's Trio at the Cosmopolitan Club
       // in East St. Louis: guitar, piano, drums, no horns, which is the band
       // this anchor models. Maybellene was cut in Chicago that May; the group
@@ -3337,7 +3351,7 @@
       fx: ["echo"],
     },
 
-    // DOO-WOP [motown]. The table's first vocal-group anchor, and the one with
+    // DOO-WOP [detroitsoul]. The table's first vocal-group anchor, and the one with
     // no instrument in it at all: three singers, an upright and a drummer,
     // which is what a street corner has. It and Motown are both ionian
     // I-vi-IV-V machines — the ice-cream changes — so the fields that separate
@@ -3384,7 +3398,7 @@
       // named "Harlem 1955" — the Cadillacs cutting "Speedoo" for Josie and the
       // Harptones working the Apollo, the year the corner went on record;
       // uptown New York, not the Penguins' LA or the Moonglows' Chicago.
-      label: "Harlem 1955", bars: 8, voices: 3, swing: 1 / 3, near: "motown",
+      label: "Harlem 1955", bars: 8, voices: 3, swing: 1 / 3, near: "detroitsoul",
       // 84 is the 12/8 side of doo-wop
       plan: "song", bpm: 84,
       // LINEAGE: the jubilee/gospel quartet is where the parts, the blend and
@@ -3413,7 +3427,7 @@
       entry: v => (v === 2 ? 2 : 0), reg: () => 0,
       part: ["stab", "riff", "lead"],
       // the stab declares itself "pad" to the realize() shim exactly as
-      // motown's does — it is a chord, not a line, and the octave law reads it
+      // detroitsoul's does — it is a chord, not a line, and the octave law reads it
       // that way
       realize: v => (v === 0 ? "pad" : "line"),
       mode: MODES.ionian, scale: MODES.ionian, diatonic: true,
@@ -3481,7 +3495,7 @@
       // named "London 1956" — Rock Island Line in the charts and the coffee
       // bars full of teenagers with tea chests; Liverpool 1957 (the Quarrymen,
       // and Lennon meeting McCartney at the Woolton fête) is the other
-      // claimant, and it is the one the beatles anchor downstream is made of.
+      // claimant, and it is the one the beatgroup anchor downstream is made of.
       label: "London 1956", bars: 8, voices: 3, swing: 0.15,
       // 148 makes skiffle the fastest thing in the roots family, because these
       // records rush and nobody stops them
@@ -3721,7 +3735,7 @@
     // The band's own words for it were Roboterpop and Industrielle Volksmusik
     // — industrial folk music, which describes this anchor better than this
     // comment does.
-    kraftwerk: {
+    dusseldorfschool: {
       // named "Düsseldorf 1977" — Trans-Europe Express, the record every one
       // of the four children actually heard: Bowie carried it to Berlin,
       // Bambaataa cut it up in the Bronx, Detroit built a genre on it.
@@ -3749,7 +3763,7 @@
       // is the drone's. The pop half is the larger share because it is the
       // decision; the drone half is why the decision sounds like this. (With
       // only those two declared the fit read 58.1% and put ALL of it on
-      // beatles, because none of the 27 features measures "a cell held past
+      // beatgroup, because none of the 27 features measures "a cell held past
       // event" and the drone half is carried by the word table the fit cannot
       // read. Naming the third parent is what fixed that rather than a bigger
       // weight: 76.0%, with minimalism fitted at 0.60 — the pulse and the
@@ -3757,12 +3771,12 @@
       // the conservative read of a fit that wants more.)
       // "krautrock" PAID 2026-08-29 (Cologne 1971): Hütter and Schneider
       // came up inside exactly that scene — Organisation played the same
-      // festivals as Can — and the weight comes mostly off beatles, whose
+      // festivals as Can — and the weight comes mostly off beatgroup, whose
       // share was carrying "the German sixties" at one remove.
-      // PAID 2026-08-29, the debts round: "stockhausen" is
-      // `stockhausen` (Cologne 1956) — the studio down the Rhine.
-      parents: { beatles: 0.3, krautrock: 0.25, drone: 0.25, minimalism: 0.2,
-                 stockhausen: 0.2 },
+      // PAID 2026-08-29, the debts round: "cologneschool" is
+      // `cologneschool` (Cologne 1956) — the studio down the Rhine.
+      parents: { beatgroup: 0.3, krautrock: 0.25, drone: 0.25, minimalism: 0.2,
+                 cologneschool: 0.2 },
       wants: ["schlager"],
       instr: ["square_lead", "saw_wave", "synth_voice"],
       // NOT the CR-78, and that is the point: all three synth children reach
@@ -3880,7 +3894,7 @@
       // the twelve-inch went out of New York, so the label follows it.
       label: "New York 1982", near: "trap",
       // the one ancestor that is a floor record; 128 is Planet Rock — the same
-      // one-bar clave reading as bodiddley
+      // one-bar clave reading as hambone
       plan: "dance", bpm: 128,
       // LINEAGE: Bambaataa was a FUNK DJ first — the syncopation, the body and
       // the break are James Brown's and P-funk's — playing to a floor disco
@@ -3890,17 +3904,17 @@
       // parent and not a want. Synthpop keeps a fifth beside it because the
       // all-synth chassis reached the Bronx as British pop records too, and
       // those were on the radio where the German twelve-inch was not.
-      // "moroder" PAID 2026-08-29 (Munich 1977): the arpeggiated octave
+      // "eurodisco" PAID 2026-08-29 (Munich 1977): the arpeggiated octave
       // bass under Planet Rock's 808 is Munich's line as much as
       // Düsseldorf's melody, and the weight comes off disco for the same
       // reason as synthpop's note one cluster over.
       // PAID 2026-08-29, the debts round: both wants — "yellow magic
-      // orchestra" is `ymo` (Tokyo 1978, the yellow records on
+      // orchestra" is `technopop` (Tokyo 1978, the yellow records on
       // Bambaataa's decks beside the German ones) and "hip-hop dj
       // culture" is `blockparty` (Bronx 1973, the party this record
       // electrified).
-      parents: { funk: 0.3, kraftwerk: 0.25, moroder: 0.15,
-                 synthpop: 0.15, disco: 0.15, ymo: 0.15, blockparty: 0.15 },
+      parents: { funk: 0.3, dusseldorfschool: 0.25, eurodisco: 0.15,
+                 synthpop: 0.15, disco: 0.15, technopop: 0.15, blockparty: 0.15 },
       wants: [],
       // the square-wave sequencer and the vocoder: the two voices on every
       // electro record, and the second one is a MACHINE SINGING — which, from
@@ -3992,7 +4006,7 @@
     // subjects harmonized"), and this is that answer, generalized past Bach's
     // own harmonizations to the plain SATB a hymnal prints. No kit, no bass
     // voice of its own — the bass part IS the fourth voice, exactly as
-    // counterpoint and spem already declare it.
+    // counterpoint and polychoral already declare it.
     hymn: {
       label: "Boston 1831", bars: 8, voices: 4, near: "gospel",
       // a chorale — one text, one shape, no chorus to come back to
@@ -4152,22 +4166,22 @@
                                           : [only("gate", excerpt(0, 8)), transpose(2)]),
     },
 
-    // MERSEYBEAT [beatles]. Same city, one year earlier, and a wider room:
-    // where the `beatles` anchor is one particular band's counterpoint-taught
+    // MERSEYBEAT [beatgroup]. Same city, one year earlier, and a wider room:
+    // where the `beatgroup` anchor is one particular band's counterpoint-taught
     // thirds, this is the whole 1962-63 Cavern circuit — cleaner and plainer,
     // built on the OFFBEAT HANDCLAP hook and a call that gets an answer,
     // which is the field the two genres actually differ on.
     merseybeat: {
-      label: "Liverpool 1963", near: "beatles",
+      label: "Liverpool 1963", near: "beatgroup",
       // 148: rushes the way punk and skiffle already do
       plan: "song", bpm: 148,
-      // LINEAGE: the beat-group format is the catalog's own `beatles` anchor
+      // LINEAGE: the beat-group format is the catalog's own `beatgroup` anchor
       // taken as a scene rather than one band; doo-wop's vocal-group answer
       // figure and Chuck Berry's downstroke are the two things every Cavern
       // band actually played covers of before writing their own. Skiffle is
       // the smallest share because by 1963 the tea-chest bass was long gone —
       // it is the door the scene walked in through, not what it still plays.
-      parents: { beatles: 0.35, doowop: 0.3, chuckberry: 0.2, skiffle: 0.15 },
+      parents: { beatgroup: 0.35, doowop: 0.3, rocknroll: 0.2, skiffle: 0.15 },
       wants: [],
       instr: ["clean_guitar", "ohh_voices"],
       drumkit: "room",
@@ -4180,22 +4194,22 @@
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
       fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0] },
       tone: { wave: "triangle", cut: 2400, q: 1.0, atk: .005, rel: .6, gain: .28, verb: .22,
-              // WHO SINGS: the same close harmony as beatles, one town and two years earlier
+              // WHO SINGS: the same close harmony as beatgroup, one town and two years earlier
               mouth: MOUTHS.merseystack },
       words: ["the tune, straight ahead",
               "the harmony, a third above — answering the handclap hook"],
       word: v => (v === 0 ? [] : [transpose(2), only("gate", offbeats(4))]),
     },
 
-    // PSYCH POP [beatles]. The same songwriter, further out: an eight-bar
+    // PSYCH POP [beatgroup]. The same songwriter, further out: an eight-bar
     // form that spends its first half as a plain verse and its second half
     // as one long vamp with a choir answering into it — postrock's shape
     // (one figure, arriving voice by voice, one crescendo) written for a pop
     // band with a gospel choir instead of a wall of guitars.
     psychpop: {
-      label: "London 1968", bars: 8, near: "beatles",
+      label: "London 1968", bars: 8, near: "beatgroup",
       plan: "song", bpm: 112,
-      // LINEAGE: the songwriting craft is `beatles`' own, further along the
+      // LINEAGE: the songwriting craft is `beatgroup`' own, further along the
       // same career; the massed choir answering "na na na" into a long vamp
       // is gospel's call-and-response, not the band's own invention; and the
       // shape of the arrival — quiet, then one instrument at a time, then
@@ -4212,9 +4226,9 @@
       // a description of INFLUENCE RUNNING THE OTHER WAY. The 0.2 goes back
       // to the two real parents in the ratio they already declared.
       // PAID 2026-08-29, the debts round: "orchestral pop" is
-      // `beachboys` (Los Angeles 1966) — Pet Sounds is the record this
+      // `baroquepop` (Los Angeles 1966) — Pet Sounds is the record this
       // row's own comment was already describing.
-      parents: { beatles: 0.55, gospel: 0.45, beachboys: 0.25 },
+      parents: { beatgroup: 0.55, gospel: 0.45, baroquepop: 0.25 },
       wants: ["mellotron"],
       instr: ["clean_guitar", "ahh_choir"],
       drumkit: "room",
@@ -4406,7 +4420,7 @@
       // LINEAGE: the clavinet-and-horns vocabulary is funk's, played over
       // Motown's song discipline (a real changing progression rather than a
       // vamp) with disco's four-on-the-floor pop polish underneath.
-      parents: { funk: 0.45, motown: 0.3, disco: 0.25 },
+      parents: { funk: 0.45, detroitsoul: 0.3, disco: 0.25 },
       wants: [],
       instr: ["clavinet", "brass_section"],
       drumkit: "room",
@@ -4583,7 +4597,7 @@
       // R&B's; disco keeps the floor moving underneath. The vocal-audition
       // pop-factory system that actually assembled these groups has no
       // musical anchor to name.
-      parents: { motown: 0.3, doowop: 0.3, rnb: 0.25, disco: 0.15 },
+      parents: { detroitsoul: 0.3, doowop: 0.3, rnb: 0.25, disco: 0.15 },
       wants: [],
       instr: ["solo_vox", "ohh_voices", "legend_ep_2"],
       drumkit: "electronic",
@@ -4831,18 +4845,18 @@
       word: v => (v === 1 ? [transpose(2)] : []),
     },
 
-    // BLUE-EYED SOUL [motown]. Motown's changes and stab-and-lead scheme
+    // BLUE-EYED SOUL [detroitsoul]. Motown's changes and stab-and-lead scheme
     // kept, the walking bass swapped for funk's sixteenth-note hand and the
     // snare-on-all-four thinned to a real backbeat — smoother, less showband,
     // more session — which is the whole genre in one sentence.
     blueeyedsoul: {
-      label: "Philadelphia 1976", near: "motown",
+      label: "Philadelphia 1976", near: "detroitsoul",
       plan: "song", bpm: 104,
       // LINEAGE: the changes (I-vi-IV-V-with-sevenths) and the stab-and-lead
-      // register scheme are motown's own, kept nearly whole; funk supplies
-      // the sixteenth-note bass hand in place of motown's walk; rock supplies
+      // register scheme are detroitsoul's own, kept nearly whole; funk supplies
+      // the sixteenth-note bass hand in place of detroitsoul's walk; rock supplies
       // the smoother, guitar-forward session-band backbone.
-      parents: { motown: 0.45, rock: 0.3, funk: 0.25 },
+      parents: { detroitsoul: 0.45, rock: 0.3, funk: 0.25 },
       wants: [],
       instr: ["electric_piano", "clean_guitar"],
       drumkit: "room",
@@ -4866,7 +4880,7 @@
     // duo does not compute contrary motion by rule, it just sings the tune a
     // third under, by ear, over one implied chord. `harmony:"emergent"` is
     // the counterpoint family's own roster (the §48 ruling names it exactly
-    // fugue/spem/counterpoint) and a parallel third is a different, plainer
+    // fugue/polychoral/counterpoint) and a parallel third is a different, plainer
     // thing than that machinery — the same distinction drone draws against
     // gregorian one row up.
     folkduo: {
@@ -4997,17 +5011,17 @@
       word: (v, s) => (v === 0 ? [] : [rotate((s % 4) + 2)]),
     },
 
-    // SOPHISTI-ROCK [steely]. Steely's jazz-schooled changes and walking
+    // SOPHISTI-ROCK [jazzrock]. Steely's jazz-schooled changes and walking
     // bass, played on a Hammond instead of a Rhodes and a real backbeat
     // instead of a laid-back shuffle — a rock band with a jazz education
     // rather than a studio band with a rock format, which is the field
     // that separates the two.
     sophistirock: {
-      label: "London 1986", bars: 8, swing: 0.15, near: "steely",
+      label: "London 1986", bars: 8, swing: 0.15, near: "jazzrock",
       plan: "song", bpm: 104,
       // LINEAGE: the band format and the muscular backbeat are rock's own;
       // funk's syncopated hand colours the groove underneath; jazz supplies
-      // the dorian changes and the walking bass, the same vocabulary steely
+      // the dorian changes and the walking bass, the same vocabulary jazzrock
       // draws on but played harder. Progressive rock's extended-arrangement
       // ambition, the format this style actually grew up inside, is the
       // missing rung.
@@ -5031,25 +5045,25 @@
       word: v => (v === 1 ? [drop(2), transpose(-7)] : []),
     },
 
-    // MOTORIK [kraftwerk]. Kraftwerk's own machine pulse, before the pop
+    // MOTORIK [dusseldorfschool]. Kraftwerk's own machine pulse, before the pop
     // song arrived — kick and snare struck TOGETHER on every quarter
     // (Jaki Liebezeit's beat, not a four-on-the-floor: the snare answers the
     // kick rather than the backbeat answering it) under even, unaccented
     // sixteenths that never let up. NO FILL, ever, and that absence is the
     // whole discipline: the beat does not vary bar to bar, on principle.
     motorik: {
-      label: "Düsseldorf 1974", bars: 8, near: "kraftwerk",
+      label: "Düsseldorf 1974", bars: 8, near: "dusseldorfschool",
       // one pulse held for eight minutes while things arrive on top of it (its
       // parent minimalism is an arc for the same reason, and like minimalism it
       // is NOT steady: the process goes somewhere); 144 is a motorik
       // eighth-note at the speed the pulse stops being heard as separate hits
       plan: "arc", bpm: 144,
       // LINEAGE, REPARENTED 2026-08-29. This declared
-      // `{ kraftwerk: 0.6, minimalism: 0.4 }` and said "kraftwerk's own
+      // `{ dusseldorfschool: 0.6, minimalism: 0.4 }` and said "dusseldorfschool's own
       // machine-pulse half, isolated from the pop-song half that anchor
       // also carries; Neu!, the actual other half of this sound, has no
       // separate anchor to cite" — and the edge ran BACKWARDS: this label
-      // is Düsseldorf 1974 and kraftwerk's is Düsseldorf 1977, a parent
+      // is Düsseldorf 1974 and dusseldorfschool's is Düsseldorf 1977, a parent
       // three years its child's junior, the parlor/ragtime error wearing a
       // sequencer. The band predates its own anchor's label, but the
       // genealogy reads LABELS, and the scene both bands walked out of is
@@ -5062,7 +5076,7 @@
       wants: ["neu"],
       instr: ["polysynth", "synth_strings_1"],
       // THE PULSE IS A MOOG, not a keyboard patch pretending to be one — both
-      // voices are line, so both get the real Model D kraftwerk's own line
+      // voices are line, so both get the real Model D dusseldorfschool's own line
       // plays; a sampled pad cannot repeat eight bars with a machine's
       // exactness, and that exactness is the whole genre.
       synth: { dsp: "modeld", root: "modeld", level: 0.78,
@@ -5082,7 +5096,7 @@
       word: () => [],
     },
 
-    // ROBOTIC POP [kraftwerk]. Motorik's mechanical pulse folded back into
+    // ROBOTIC POP [dusseldorfschool]. Motorik's mechanical pulse folded back into
     // an actual verse-chorus SONG — synthpop's I-vi-IV-V-with-sevenths sung
     // by a vocoder rather than motorik's wordless process piece, which is
     // the field that separates the two Kraftwerk children.
@@ -5092,10 +5106,10 @@
       seqArp: "arpdown",
       plan: "song", bpm: 120,
       // LINEAGE: the vocoder-and-sequencer chassis and the deadpan machine
-      // delivery are kraftwerk's own; synthpop supplies the actual pop-song
+      // delivery are dusseldorfschool's own; synthpop supplies the actual pop-song
       // form (a real changing progression, a hook) that anchor's motorik
       // sibling refuses to have.
-      parents: { kraftwerk: 0.55, synthpop: 0.45 },
+      parents: { dusseldorfschool: 0.55, synthpop: 0.45 },
       wants: [],
       // DÜSSELDORF 1978 IS A FORMANT SPEECH SYNTHESISER, not a metaphor for one:
       // the deadpan machine at the front of those records is a Votrax, a Speak &
@@ -5190,7 +5204,7 @@
     // rights to the LP to Wax Trax Records for release in the United States"
     // — which is why, the article says, they "got pigeonholed as an industrial
     // act"). All four children are 1988 or later, so every edge runs forward.
-    waxtrax: {
+    industrialdance: {
       label: "Chicago 1981", near: "synthpop",
       // a 12-inch single with a verse and a chorus that happened to chart on
       // a disco list. 122 lands in the one gap its own family leaves —
@@ -5259,7 +5273,7 @@
       label: "Chicago 1988", bars: 8, near: "deathmetal",
       plan: "song", bpm: 126,
       // LINEAGE: the chromatic riff wall and the ♭5-is-home locrian colour
-      // are death metal's own, cited whole; kraftwerk supplies the machine-
+      // are death metal's own, cited whole; dusseldorfschool supplies the machine-
       // sequenced, unwavering kick underneath in place of a drummer; punk
       // supplies the raw, unsubtle directness. EBM's own club-industrial
       // half is the missing rung — this anchor is the metal side of that
@@ -5273,7 +5287,7 @@
       //
       // ...AND THE WAX TRAX ROW ARRIVED 2026-08-30, which settles it from the
       // other end. That sentence above was written when "the Wax Trax row"
-      // was a figure of speech; `waxtrax` is now Chicago 1981, an anchor,
+      // was a figure of speech; `industrialdance` is now Chicago 1981, an anchor,
       // SEVEN YEARS OLDER than this one, and it is not a later reading of
       // anything — it is this band's own label and this band's own first
       // record. Ministry (band): Jim Nash "suggested Jourgensen record a
@@ -5282,7 +5296,7 @@
       // US". Land of Rape and Honey is what that apartment record became
       // after seven years, so the edge is the largest single share here: the
       // riff wall is death metal's, but the ROOM is Chicago 1981's.
-      parents: { waxtrax: 0.35, deathmetal: 0.3, kraftwerk: 0.2, punk: 0.15 },
+      parents: { industrialdance: 0.35, deathmetal: 0.3, dusseldorfschool: 0.2, punk: 0.15 },
       wants: [],
       instr: ["distortion_guitar", "metal_pad"],
       drumkit: "electronic",
@@ -5303,7 +5317,7 @@
     },
 
     // EBM [techno]. Electronic Body Music: techno's kick-driven floor and
-    // kraftwerk's machine pulse, made aggressive by a punk-direct vocal
+    // dusseldorfschool's machine pulse, made aggressive by a punk-direct vocal
     // chant — the two lines TRADE PLACES bar to bar (the sequence solid,
     // the chant on the offbeats, then a straight run answered by the
     // sequence stabbing back), the club's version of a call and response.
@@ -5314,7 +5328,7 @@
       // floor music with a breakdown where a bridge would be, like bigbeat
       plan: "dance", bpm: 134,
       // LINEAGE: the sequenced, pulsing bass and the four-on-the-floor club
-      // discipline are techno's; kraftwerk supplies the machine chassis
+      // discipline are techno's; dusseldorfschool supplies the machine chassis
       // underneath; punk supplies the shouted, direct chant vocal. New
       // beat, the slowed-down Belgian club scene this style traded records
       // with directly, is the missing rung.
@@ -5331,7 +5345,7 @@
       // came through, not the room it was written in, so it takes a fifth of
       // the share and Belgium keeps the rest through `techno` and the
       // unpaid `new beat` below.
-      parents: { kraftwerk: 0.35, techno: 0.3, waxtrax: 0.2, punk: 0.15 },
+      parents: { dusseldorfschool: 0.35, techno: 0.3, industrialdance: 0.2, punk: 0.15 },
       wants: ["new beat"],
       // THE CHANT IS SHOUTED, AND A SHOUT IS MOSTLY CONSONANTS — and until
  // 2026-08-18 it was not even a voice: the Model D below is declared without
@@ -5381,14 +5395,14 @@
       plan: "song", bpm: 122,
       // LINEAGE: the all-synth chassis and the anthem changes are synthpop's
       // own; disco supplies the four-on-the-floor club discipline and the
-      // open hat where synthpop has none at all; kraftwerk supplies the
+      // open hat where synthpop has none at all; dusseldorfschool supplies the
       // deadpan, detached vocal delivery underneath the melody.
-      parents: { synthpop: 0.4, disco: 0.3, kraftwerk: 0.3 },
+      parents: { synthpop: 0.4, disco: 0.3, dusseldorfschool: 0.3 },
       wants: [],
       // LEGATO means a sustained SAW, not a choir: the hook is one held
       // monosynth line (the juno60 below rides it) over the string machine's
       // wash. The choir patch this used to lead on belongs to the records
-      // that really are vocoders — kraftwerk, electro, robotic pop — and a
+      // that really are vocoders — dusseldorfschool, electro, robotic pop — and a
       // sustained melodic hook is the opposite of a voice holding a vowel.
       instr: ["saw_wave", "synth_strings_1"],
       drumkit: "tr909",
@@ -5477,12 +5491,12 @@
       // those features are already carried by London 1968, which is
       // orchestral psychedelia's own anchor and thirty-one years the right
       // side of this one. So psychopop takes the freed weight whole and
-      // `beatles` keeps the 0.4 it always declared. The resemblance to Austin
+      // `beatgroup` keeps the 0.4 it always declared. The resemblance to Austin
       // 2003 is real and is now written in `near`, which is the field for it.
       // (This is the one weight in the 2026-08-25 slate I would call
       // contestable rather than settled — 0.6 is a large plurality, and a
       // reader who wants it split further has a case.)
-      parents: { psychpop: 0.6, beatles: 0.4 },
+      parents: { psychpop: 0.6, beatgroup: 0.4 },
       wants: ["chamber pop"],
       instr: ["slow_strings", "clean_guitar", "halo_pad"],
       drumkit: "room",
@@ -5533,12 +5547,12 @@
     // borrowed halves. Quiet storm, the smoother FM-radio format this style
     // fed directly, is the missing rung.
     yachtsoul: {
-      label: "San Francisco 1976", bars: 8, near: "isley",
+      label: "San Francisco 1976", bars: 8, near: "psychsoul",
       plan: "song", bpm: 104,
       // "quiet storm" PAID 2026-08-29 (Los Angeles 1975): one year older
       // than this label and the same after-hours radio — the weight
-      // comes off motown, whose share was Smokey's record all along.
-      parents: { isley: 0.35, quietstorm: 0.25, funk: 0.2, motown: 0.2 },
+      // comes off detroitsoul, whose share was Smokey's record all along.
+      parents: { psychsoul: 0.35, quietstorm: 0.25, funk: 0.2, detroitsoul: 0.2 },
       wants: [],
       instr: ["rhodes_ep", "clean_guitar"],
       drumkit: "room",
@@ -5563,9 +5577,9 @@
     // changes-sense. The Doobie Brothers/Michael McDonald crossover this
     // sound is actually named for has no anchor of its own yet.
     yachtrock: {
-      label: "Austin 1979", near: "toto",
+      label: "Austin 1979", near: "aor",
       plan: "song", bpm: 100,
-      parents: { toto: 0.4, steely: 0.3, motown: 0.3 },
+      parents: { aor: 0.4, jazzrock: 0.3, detroitsoul: 0.3 },
       wants: ["blue-eyed AOR"],
       instr: ["electric_piano", "clean_guitar"],
       drumkit: "room",
@@ -5593,9 +5607,9 @@
       // 82 is Tapestry counted slow
       plan: "song", bpm: 82,
       // PAID 2026-08-29, the debts round: "brill building pop" is
-      // `brill` (New York 1960) — Tapestry is the cubicle writer stepping
+      // `girlgroup` (New York 1960) — Tapestry is the cubicle writer stepping
       // out front, which is this row's whole premise.
-      parents: { motown: 0.4, gospel: 0.3, crooner: 0.3, brill: 0.25 },
+      parents: { detroitsoul: 0.4, gospel: 0.3, crooner: 0.3, girlgroup: 0.25 },
       wants: [],
       instr: ["upright_piano", "ohh_voices"],
       drumkit: "brush",
@@ -5678,10 +5692,10 @@
     // is actually named for has no anchor of its own.
     coastrock: {
       // "Sausalito 1977" — Record Plant Sausalito, where Rumours was
-      // actually tracked; "Los Angeles 1977" was already steely's own label.
+      // actually tracked; "Los Angeles 1977" was already jazzrock's own label.
       label: "Sausalito 1977", near: "rock",
       plan: "song", bpm: 122,
-      parents: { rock: 0.35, motown: 0.3, countrypop: 0.35 },
+      parents: { rock: 0.35, detroitsoul: 0.3, countrypop: 0.35 },
       wants: ["california folk rock"],
       instr: ["clean_guitar", "electric_piano"],
       drumkit: "room",
@@ -5864,7 +5878,7 @@
     // industrial at all — "The pair then recorded the LP Storm The Studio,
     // which got them pigeonholed as an industrial act because Sweat Box
     // Records sold the rights to the LP to Wax Trax Records for release in
-    // the United States" — which is the `waxtrax` edge below, an American
+    // the United States" — which is the `industrialdance` edge below, an American
     // label deciding what an English record was.
     //
     // AND THE GUITAR CAME OFF, BECAUSE THE ARTICLE REFUSES IT. This row
@@ -5916,10 +5930,10 @@
       // hip hop's own root is `blockparty` (Bronx 1973), the break played on
       // two turntables, which is what a breakbeat record inherits; `techno`
       // keeps the mechanical floor. Every one of them is older than 1989.
-      // `waxtrax` is the smallest share because Chicago did not write this
+      // `industrialdance` is the smallest share because Chicago did not write this
       // record, it CLASSIFIED it (see above).
       parents: { electro: 0.25, blockparty: 0.2, dub: 0.2, techno: 0.2,
-                 waxtrax: 0.15 },
+                 industrialdance: 0.15 },
       // ...and two debts, not one. The sample-collage tradition is still
       // unpaid and it is now NAMEABLE: `Throbbing_Gristle` is a 200 in this
       // ZIM — Kingston upon Hull, public debut October 1976, their own
@@ -6084,7 +6098,7 @@
       // LINEAGE, REDEALT 2026-08-30. `deathmetal` was the largest share and
       // it is the one edge the article refuses outright ("not in the vein of
       // metal"); it stays only as `near`, because the neighbouring ROOM is
-      // still where this record is filed. `waxtrax` is the want, paid: the
+      // still where this record is filed. `industrialdance` is the want, paid: the
       // debt this row has carried since it was written, and Reznor's own
       // measuring stick is a Wax Trax act — Spin wrote that "Trent Reznor's
       // one-man band comes across like an accessible Front 242", and he
@@ -6094,12 +6108,12 @@
       // directly: "DM was one of our favorite bands and the Black
       // Celebration record took my love for them to a new level", and the
       // Chicago Tribune heard it in the record ("a brighter techno-pop
-      // element that might remind some of Depeche Mode"). `kraftwerk` keeps
+      // element that might remind some of Depeche Mode"). `dusseldorfschool` keeps
       // the quantized machine chassis, `punk` the rough first takes, and
       // `rock` takes the smallest share because the article gives it one
       // song ("the most rock-inspired song on the album was Head Like a
       // Hole").
-      parents: { waxtrax: 0.3, analogsynthpop: 0.25, kraftwerk: 0.2,
+      parents: { industrialdance: 0.3, analogsynthpop: 0.25, dusseldorfschool: 0.2,
                  punk: 0.15, rock: 0.1 },
       wants: [],
       // THE MINIMOOG AND THE OBERHEIM, both named in the article, and the
@@ -6189,7 +6203,7 @@
     // OPEN: a `tb303` set bright and low-resonance (waveform square, envmod
     // shallow) is the exact opposite performance from acid's squelch — thin,
     // sequenced, unmistakably one monosynth rather than a band. Synthpop's
-    // anthem changes and kraftwerk's machine chassis argue the rest; disco's
+    // anthem changes and dusseldorfschool's machine chassis argue the rest; disco's
     // four-on-the-floor gives it a dance floor to live on. New romantic
     // synth-pop, the wider scene this record broke out of, is missing.
     analogsynthpop: {
@@ -6198,13 +6212,13 @@
       // "Basildon 1980" — the year the band itself formed (as Composition of
       // Sound); "Basildon 1981" was already synthpop's own label, and
       // gothsynth below takes "Basildon 1990" for the same band nine years on.
-      label: "Basildon 1980", near: "eurythmics",
+      label: "Basildon 1980", near: "synthsoul",
       // a verse-chorus record on a different synthesizer is still a
       // verse-chorus record; 124 lands inside two bpm of madchester and indie
       // dance on purpose — that IS the early-90s crossover the three argue
       // about from different rooms
       plan: "song", bpm: 124,
-      parents: { synthpop: 0.5, kraftwerk: 0.3, disco: 0.2 },
+      parents: { synthpop: 0.5, dusseldorfschool: 0.3, disco: 0.2 },
       wants: ["new romantic synth pop"],
       // "unmistakably one monosynth rather than a band" — so a thin square
       // sequence out front and a poly behind it, and not a choir patch. The
@@ -6244,7 +6258,7 @@
       // "gothic rock" PAID 2026-08-29 (London 1979): Violator's black
       // romance is the Batcave's, ten years on and sequenced — the
       // weight comes off rock for the same reason as gothicpop's note.
-      parents: { analogsynthpop: 0.4, gothicrock: 0.25, rock: 0.15, kraftwerk: 0.2 },
+      parents: { analogsynthpop: 0.4, gothicrock: 0.25, rock: 0.15, dusseldorfschool: 0.2 },
       wants: [],
       instr: ["crunch_guitar", "metal_pad"],
       drumkit: "electronic",
@@ -6256,7 +6270,7 @@
       // he is describing this line, the held resonant modeld chord that reads
       // as a synth organ. Measured against the shipped table this was the
       // loudest and the most driven modeld in the catalogue at once: level
-      // 0.85 where kraftwerk/motorik/roboticpop sit at 0.78-0.80, and drive
+      // 0.85 where dusseldorfschool/motorik/roboticpop sit at 0.78-0.80, and drive
       // 0.4 where they sit at 0.15-0.25. And drive is not a colour knob —
       // modeld.dsp is `stack * (1 + drive*5) : tanh : *(1/(1 + drive*1.2))`,
       // so 0.4 pushed 3x into the saturator and came back a SQUARED-OFF wave,
@@ -6313,7 +6327,7 @@
       fx: ["chorus"],
     },
 
-    // POST-PUNK [Joy Division]. Punk's raw directness under kraftwerk's
+    // POST-PUNK [Joy Division]. Punk's raw directness under dusseldorfschool's
     // machine-pulse discipline — kick and snare landing TOGETHER, the
     // motorik trick, but sung as a real song instead of held as one process
     // — with a synth line running its own countermelody a tenth below the
@@ -6321,9 +6335,9 @@
     // production, the actual missing rung, is `fx:["echo"]` made explicit
     // and still lacks its own anchor.
     postpunk: {
-      label: "Manchester 1979", near: "kraftwerk",
+      label: "Manchester 1979", near: "dusseldorfschool",
       plan: "song", bpm: 138,
-      parents: { punk: 0.4, kraftwerk: 0.3, rock: 0.3 },
+      parents: { punk: 0.4, dusseldorfschool: 0.3, rock: 0.3 },
       // `wants: ["cold wave"]` STOOD HERE until 2026-08-30, and it
       // pointed FORWARD: cold wave is Manchester 1979's French child,
       // not its ancestor (the hymn-asking-for-spirituals shape). The
@@ -6358,7 +6372,7 @@
       seqArp: "arpup",
       // a machine floor — no bridge, a drop; 130 is the "Blue Monday" pulse
       plan: "dance", bpm: 130,
-      parents: { postpunk: 0.4, disco: 0.3, kraftwerk: 0.3 },
+      parents: { postpunk: 0.4, disco: 0.3, dusseldorfschool: 0.3 },
       wants: [],
       instr: ["synth_voice", "polysynth"],
       drumkit: "electronic",
@@ -6419,7 +6433,7 @@
     janglepop: {
       label: "Manchester 1984", swing: 1/3, near: "rock",
       plan: "song", bpm: 126,
-      parents: { rock: 0.4, motown: 0.35, folkduo: 0.25 },
+      parents: { rock: 0.4, detroitsoul: 0.35, folkduo: 0.25 },
       wants: ["byrds jangle"],
       instr: ["clean_guitar", "clean_guitar"],
       drumkit: "room",
@@ -6444,7 +6458,7 @@
     // INDIE DANCE [Soup Dragons]. Madchester's baggy sway sent all the way
     // onto the floor — house's four-on-the-floor discipline in full rather
     // than borrowed, a walking bassline doing the melodic work a lead
-    // instrument would elsewhere carry (jazz and isley's own walking-bass
+    // instrument would elsewhere carry (jazz and psychsoul's own walking-bass
     // idiom, read as the dance-floor's hook). Rock supplies the guitar body
     // underneath. Nothing named here is missing; the crossover itself IS
     // the genre.
@@ -6839,7 +6853,7 @@
     arsnova: {
       label: "Reims 1360", voices: 3, bars: 8,
       plan: "arc", bpm: 104,
-      parents: { organum: 0.6, troubadour: 0.4 }, wants: [], near: "spem",
+      parents: { organum: 0.6, troubadour: 0.4 }, wants: [], near: "polychoral",
       instr: ["ahh_choir", "solo_vox", "recorder"],  // tenor / motetus / triplum
       entry: v => [0, 2, 4][v], reg: v => v - 1,
       realize: v => (v === 0 ? "pad" : "line"),
@@ -6849,7 +6863,7 @@
       // default (detached) reading, not a tied line
       mode: MODES.dorian, scale: DIATONIC,
       tone: { wave: "triangle", cut: 2300, q: 0.8, atk: .06, rel: 2.0, gain: .2, verb: .7,
-              // WHO SINGS: the motet mouth — spem's own, two centuries early
+              // WHO SINGS: the motet mouth — polychoral's own, two centuries early
               mouth: MOUTHS.motet },
       words: ["the tenor: the talea, turning", "the motetus", "the triplum, high and quick"],
       word: (v, s) => (v === 0 ? [rotate(3 * s), drop(2)]
@@ -6862,7 +6876,7 @@
     // ground is the real passamezzo antico, mined from history rather than
     // invented — one chord a bar, eight bars, the progression the whole
     // Renaissance danced over. (Renaissance polyphony itself is NOT
-    // re-anchored: spem + counterpoint own the idiom; this draws on spem.)
+    // re-anchored: polychoral + counterpoint own the idiom; this draws on polychoral.)
     pavane: {
       label: "Antwerp 1551", voices: 3, bars: 8,
       // `arc` for the estampie's reason (see that anchor): the kernel's dance
@@ -6870,8 +6884,8 @@
       // and a consort has none — a processional danced through is one shape
       // end to end, tango's own plan.
       plan: "arc", bpm: 76,
-      parents: { estampie: 0.4, spem: 0.35, troubadour: 0.25 }, wants: ["galliard"],
-      near: "spem",
+      parents: { estampie: 0.4, polychoral: 0.35, troubadour: 0.25 }, wants: ["galliard"],
+      near: "polychoral",
       instr: ["nylon_string_guitar", "recorder", "viola"],   // lute, pipe, viol
       drumkit: "room",
       entry: v => (v === 2 ? 2 : 0), reg: v => (v === 0 ? -1 : v - 1),
@@ -6901,7 +6915,7 @@
       // back HERE at dominant weight, which is the same fact with the
       // arrow the right way round. A 1602 record cannot descend from
       // 1724; the parlor/ragtime rule, applied on arrival.
-      parents: { troubadour: 0.55, spem: 0.45 }, wants: [], near: "crooner",
+      parents: { troubadour: 0.55, polychoral: 0.45 }, wants: [], near: "crooner",
       instr: ["solo_vox", "harpsichord"],
       entry: v => (v === 0 ? 2 : 0), reg: v => (v === 0 ? 0 : -1),
       realize: v => (v === 0 ? "line" : "pad"),
@@ -7596,7 +7610,7 @@
     //     no bell, no shaker and no hand drum among them. registry-data.js
     //     PERCBANK has 24 real percussion hits and nukernel does not read it
     //     (grepped: zero references). So the house answer, set twice already —
-    //     bodiddley's maracas on the hat (`genres.js:2462`) and amapiano's
+    //     hambone's maracas on the hat (`genres.js:2462`) and amapiano's
     //     shekere on the rim (`:5748`) — is the answer here: bell and claves
     //     to `p`, shaker to `h`, hand drums to the toms, and the compromise
     //     named in the comment every time rather than smuggled.
@@ -7763,7 +7777,7 @@
       // idea; that difference is real and it is the two anchors' clearest
       // separation in the kit.
       //
-      // AND THE MARACAS ARE THE HAT LANE AGAIN — bodiddley's compromise, said
+      // AND THE MARACAS ARE THE HAT LANE AGAIN — hambone's compromise, said
       // out loud a second time: there is no shaker among the twelve extracted
       // drums, so sixteen closed hats carry it and `kitVel` carries the hand.
       // The claps are not a stand-in at all; they are handclaps.
@@ -8283,7 +8297,7 @@
        below inherits them without saying anything:
          · the UNACCOMPANIED law (compose.js) — DERIVED from `kit`, `nobass`
            and `instr`, not a name list, so `sacredharp` below joins
-           {gregorian, spem, organum, zema, mbube} the moment it is written
+           {gregorian, polychoral, organum, zema, mbube} the moment it is written
            and hires nobody, with nothing here to declare;
          · the ERA law for players AND instruments — a record may not hire a
            guest from after its own year, nor seat an instrument the catalog
@@ -8511,7 +8525,7 @@
        and no bell, no shaker, no scraper, no conga and no clave among them;
        registry-data.js PERCBANK holds 24 real percussion hits and nukernel
        reads none of them (grepped: zero references). So the house answer,
-       set three times already — bodiddley's maracas on the hat
+       set three times already — hambone's maracas on the hat
        (genres.js:2462), amapiano's shekere on the rim (:5748), highlife's
        maracas on the hat again (:6412) — is the answer here: the clave and
        the cáscara to `p`, the shaker, güira and guacharaca to `h`, the
@@ -9243,11 +9257,11 @@
     rocksteady: {
       label: "Kingston 1966", voices: 3, near: "reggae",
       plan: "song", bpm: 78,
-      // LINEAGE: ska is the band and the island; motown is the other half
+      // LINEAGE: ska is the band and the island; detroitsoul is the other half
       // and it is not a guess — Jamaican producers were cutting versions of
       // Detroit records that year and the bass writing comes straight off
       // them.
-      parents: { ska: 0.6, motown: 0.4 },
+      parents: { ska: 0.6, detroitsoul: 0.4 },
       wants: [],
       instr: ["clean_guitar", "percussive_organ", "trombone"],
       drumkit: "room",
@@ -10397,7 +10411,7 @@
       // record wears openly. (`disco` was the obvious third and it is New
       // York 1977, one year AFTER this label — near enough to be tempting
       // and still the wrong direction, so Detroit 1965 takes the weight.)
-      parents: { blueeyedsoul: 0.4, merseybeat: 0.3, motown: 0.3 },
+      parents: { blueeyedsoul: 0.4, merseybeat: 0.3, detroitsoul: 0.3 },
       wants: ["kundiman", "rondalla"],
       instr: ["solo_vox", "clean_guitar", "rhodes_ep"],
       drumkit: "room",
@@ -11108,7 +11122,7 @@
       // players who became rebetiko's Smyrna school grew up inside the
       // repertoire Cemil Bey's 78s recorded, and those discs circulated
       // in Piraeus itself. The nearer, still-missing steps stay named.
-      parents: { cemilbey: 0.3 },
+      parents: { ottoman: 0.3 },
       wants: ["smyrneiko", "cafe aman"],
       cannot: ["the zeibekiko's nine, which is the dance every rebetiko " +
                "record is known for and is a metre this file cannot write",
@@ -11725,6 +11739,10 @@
       // descends from; the tradition finally predates its own peak.
       parents: { romantic: 0.4, swing: 0.25, funk: 0.2, concerto: 0.15,
                  march: 0.15, photoplay: 0.15 },
+      // "crime jazz" PAID 2026-09-01, the soundtrack round: `crimejazz`
+      // (Los Angeles 1955) — the big band walking into the pictures,
+      // fifteen years before this cue borrowed its brass punch. The want
+      // string stays in place per house style at other PAID sites.
       wants: ["crime jazz"],
       cannot: ["the stopwatch — a news cue is written to a DURATION (a thirty-" +
                "second open with four seconds of tail under the announcer), and " +
@@ -11941,8 +11959,8 @@
        this block there are 262 distinct wants, and only two of them are
        wanted by more than two rows:
 
-           6  jump blues      blues funk ska bodiddley chuckberry doowop
-           5  tin pan alley   motown jazz doowop crooner swing
+           6  jump blues      blues funk ska hambone rocknroll doowop
+           5  tin pan alley   detroitsoul jazz doowop crooner swing
            2  ...and twenty-one more, each wanted by exactly two
 
        An ancestor six rows depend on is a hole in the genealogy and not a
@@ -11953,7 +11971,7 @@
 
        SEVEN OF THE WANTS WERE ALREADY IN THE TABLE and are repaired in
        place rather than added: `counterpoint` and `drone` wanted "organum",
-       which has been Paris 1200 since 2026-08-21; `toto` wanted "yacht
+       which has been Paris 1200 since 2026-08-21; `aor` wanted "yacht
        rock", `industrialmetal` "EBM", `parlor` "ragtime", `bailefunk`
        "samba" and `marabi` "kwela", all of them anchors. A `wants` entry
        naming a row that exists is a shopping list nobody crossed off, and
@@ -11964,7 +11982,7 @@
        Western art music was already the deepest thing in this catalog:
        nineteen place-year anchors from Aksum 540 to Sedalia 1899 —
        zema, gregorian, organum, troubadour, estampie, arsnova, pavane,
-       spem, continuo, fugue, counterpoint, concerto, classical, hymn,
+       polychoral, continuo, fugue, counterpoint, concerto, classical, hymn,
        nocturne, sacredharp, romantic, barcarolle, parlor. It gets three
        rows here and they are the three holes the table itself named: the
        chorale (`fugue` has wanted it since the lineage field existed), the
@@ -12020,7 +12038,7 @@
     // else in the table — and the reason is the same in all six: a big
     // band shrunk to five men, a shuffle you can hear the individual
     // eighth notes in, a shouted vocal and a honking tenor. That is what
-    // `blues` grew a backbeat from, what `chuckberry` and `bodiddley`
+    // `blues` grew a backbeat from, what `rocknroll` and `hambone`
     // sped up, what `doowop` sang over, what `ska` heard on the Miami
     // radio stations and turned inside out, and what `funk` took the horn
     // section from.
@@ -12053,7 +12071,7 @@
       // tempo is that circuit's own trick.
       parents: { swing: 0.5, blues: 0.35, boogiewoogie: 0.15,
                  territoryband: 0.2 },
-      // "boogie-woogie" spelled the way `blues` and `chuckberry` already
+      // "boogie-woogie" spelled the way `blues` and `rocknroll` already
       // spell it, so the three of them aggregate into one hole rather than
       // two near-identical strings — a want list that is measured has to
       // agree with itself about names.
@@ -12104,7 +12122,7 @@
     // chorus in four eight-bar phrases.
     // FIVE ROWS ABOVE ASKED FOR THIS ONE. `crooner` sings its repertory,
     // `swing` and `jazz` improvise over its chord grids, `doowop` harmonises
-    // its cadences on a street corner and `motown` was written in a building
+    // its cadences on a street corner and `detroitsoul` was written in a building
     // organised as a publishing house on purpose.
     //
     // THE AXES: this anchor is FORM and ALPHABET and almost nothing else,
@@ -12191,7 +12209,7 @@
       // years run backwards here — 1586 with a 1725 parent — and that is
       // the counterpoint row's own admission, not an error: its label is a
       // publication date sitting on a practice seven centuries older. The
-      // table already carries the same inversion at `spem` 1570.
+      // table already carries the same inversion at `polychoral` 1570.
       parents: { gregorian: 0.5, counterpoint: 0.5 },
       wants: ["the lutheran hymnal", "the meistersinger's bar form"],
       cannot: ["the fermata at the end of every line — a chorale BREATHES " +
@@ -12397,16 +12415,16 @@
       // own instruction for exactly this case, and `bulgarian` is the
       // model: claiming a parent would be tidier than it is true.
       // "ottoman makam" PAID 2026-08-29 — NARROWLY, which is the honest
-      // width: `cemilbey` (Istanbul 1910) anchors the Ottoman court line
+      // width: `ottoman` (Istanbul 1910) anchors the Ottoman court line
       // in Hicaz, the one family 12-TET says exactly, and the Congress
       // this label dates had the Istanbul delegation in the room. The
       // root claim shrinks by exactly that much and no more.
-      parents: { cemilbey: 0.35, mawsili: 0.2, dastgah: 0.15 },
+      parents: { ottoman: 0.35, abbasid: 0.2, dastgah: 0.15 },
       // "dastgah" spelled `iranpop`'s way, for the reason `jumpblues` gives
       // above: two spellings of one missing ancestor is two holes in the
       // measurement and one in the world.
       // PAID 2026-08-29, the debts round: "abbasid court song" moved
-      // into the parents as `mawsili` (Baghdad 800).
+      // into the parents as `abbasid` (Baghdad 800).
       // "dastgah" PAID 2026-08-30, the walls-down round: `dastgah`
       // (Tehran 1925, Qamar's HMV sides) — the Persian modal line the
       // Congress had in the room, seven years earlier on the labels, at
@@ -12562,7 +12580,7 @@
       // the ancestor is Andalusi court music and there is no anchor for
       // it, and there will not be one until somebody can name a place, a
       // year and a source for it that is not this book.
-      // "ziryab's cordoban court music" PAID 2026-08-29 (Córdoba 822):
+      // "andalusi's cordoban court music" PAID 2026-08-29 (Córdoba 822):
       // al-Ha'ik's Tetouan songbook is that school's repertory written
       // down after the expulsions carried it to the Maghreb — the
       // tradition's own account of itself, now sayable as an edge.
@@ -12574,7 +12592,7 @@
       // predates its dependents"; Dar at-Tiraz predates this row by six
       // centuries and the sentence is defeated, not argued around. The
       // nuba's own repertory IS muwashshah texts by the hundred.
-      parents: { ziryab: 0.5, muwashshah: 0.2 },
+      parents: { andalusi: 0.5, muwashshah: 0.2 },
       wants: ["the algerian sanaa"],
       cannot: ["the five mayazin — a nuba runs basit, qaim wa nisf, btayhi, " +
                "darj, insiraf and quddam, in 6/4, 8/4, 4/4, 5/8 and 6/8, " +
@@ -13272,7 +13290,7 @@
     // reached the Umayyad court of Abd al-Rahman II in 822 — the arrival
     // is documented in Ibn Hayyan and al-Maqqari — and founded at Córdoba
     // the school of court song the whole Andalusi tradition descends
-    // from. `nuba` (Tetouan 1790) has wanted "ziryab's cordoban court
+    // from. `nuba` (Tetouan 1790) has wanted "andalusi's cordoban court
     // music" by name since the world round; al-Ha'ik's songbook is this
     // school written down nine hundred years downstream. The dating is
     // the `zema` precedent exactly: a founder's documented court arrival,
@@ -13284,7 +13302,7 @@
     // plucked line shadowing it. Alphabet is hijaz, the one maqam-family
     // sound this table says exactly (12-TET integer semitones — see the
     // MODES row), which the Moroccan descendant tradition kept singable.
-    ziryab: {
+    andalusi: {
       label: "Córdoba 822", voices: 2, rate: 0.5, near: "taqsim",
       plan: "arc", bpm: 80,
       // LINEAGE: a declared root. Ziryab was the Mawsili house's student
@@ -13292,7 +13310,7 @@
       // name — the same string `taqsim` already carries, spelled the
       // same way on purpose (one missing ancestor, one spelling).
       // PAID 2026-08-29, the debts round: "abbasid court song" is
-      // `mawsili` (Baghdad 800) — Ziryab studied in that house before
+      // `abbasid` (Baghdad 800) — Ziryab studied in that house before
       // Córdoba; the root was never a root, only an undated teacher.
       // WHICH MAWSILI, CORRECTED 2026-08-30 (the unlocking round). This
       // comment said ISHAQ twice, in two places, and this ZIM says the
@@ -13306,7 +13324,7 @@
       // establishment. This put him at odds with progressive musicians
       // such as Ibrahim ibn al-Mahdi and Ziryab". Student, not rival,
       // was the wrong word for the wrong man. The EDGE does not move:
-      // `mawsili` is the HOUSE and its label year, Baghdad 800, is
+      // `abbasid` is the HOUSE and its label year, Baghdad 800, is
       // Ibrahim's own peak (742–804, Harun al-Rashid's favourite). Only
       // the name in the sentence was wrong, and it is a reminder that a
       // remembered fact is not a measured one.
@@ -13319,7 +13337,7 @@
       // stated rather than inferred. It takes the smaller weight because
       // Baghdad is the nearer teacher and the Medinan singing girls are
       // the stock the Andalusi court was buying.
-      parents: { mawsili: 0.4, qiyan: 0.2 },
+      parents: { abbasid: 0.4, qiyan: 0.2 },
       // THE LIST DID NOT EMPTY, 2026-08-30: with both old strings paid it
       // would have been the only place-year anchor in this file with no
       // `wants` at all, which is a silent grey rather than a fact. The
@@ -13367,8 +13385,8 @@
     // The `word` below re-states the tenor at new lengths per section
     // (excerpt and fill are the proportions), which is the piece's
     // actual engineering, not a resemblance.
-    dufay: {
-      label: "Florence 1436", voices: 4, bars: 8, near: "spem",
+    isorhythm: {
+      label: "Florence 1436", voices: 4, bars: 8, near: "polychoral",
       plan: "arc", bpm: 84,
       // LINEAGE: `arsnova` (Reims 1360) is the direct teacher — the
       // isorhythmic motet is Machaut's machine, and Du Fay is its last
@@ -13377,12 +13395,12 @@
       // Dunstaple's thirds, which contemporaries said changed Du Fay's
       // sound — named below, not invented.
       // PAID 2026-08-30, the deep-time round's forward half: "the
-      // contenance angloise (dunstaple)" is `dunstaple` (London 1420,
+      // contenance angloise (contenanceangloise)" is `contenanceangloise` (London 1420,
       // the Old Hall Manuscript) — the thirds contemporaries said
       // changed Du Fay's sound now stand upstream by name, and the
       // isorhythm keeps the larger share because the machine is still
       // Machaut's.
-      parents: { arsnova: 0.55, dunstaple: 0.25, organum: 0.2 },
+      parents: { arsnova: 0.55, contenanceangloise: 0.25, organum: 0.2 },
       wants: ["binchois' chansons"],
       cannot: ["the mensural proportions themselves — 6:4:2:3 is the " +
                "same music at four speeds SIMULTANEOUSLY re-scored, and " +
@@ -13395,7 +13413,7 @@
       kit: {}, nobass: true, harmony: "emergent", intro: "solo",
       mode: MODES.dorian, scale: DIATONIC, artic: "legato", maxHold: 4,
       tone: { wave: "triangle", cut: 2300, q: 0.8, atk: .05, rel: 1.8, gain: .21, verb: .68,
-              // WHO SINGS: the motet mouth — spem's own, a papal choir
+              // WHO SINGS: the motet mouth — polychoral's own, a papal choir
               // being the case it was written for.
               mouth: MOUTHS.motet },
       words: ["the triplum, free above",
@@ -13815,7 +13833,7 @@
     // The recordings are in makam Hicaz among others — hijaz, the one
     // maqam-family alphabet this table says exactly — which is why this
     // row can ship where dastgah (declared EMPTY below) cannot.
-    cemilbey: {
+    ottoman: {
       instrumental: true,   // the Istanbul taksim, same recital — a tanbur and a cello
       label: "Istanbul 1910", voices: 2, rate: 0.5, near: "taqsim",
       plan: "arc", bpm: 72,
@@ -13916,7 +13934,7 @@
     // record that NAMED the music, with Smith talking the dancers
     // through the breaks over that rolling left hand. THREE rows have
     // wanted this by name since their lineages were written — `blues`,
-    // `chuckberry` and `jumpblues`, which is the census's own top want
+    // `rocknroll` and `jumpblues`, which is the census's own top want
     // — because the eight-to-the-bar left hand is where the shuffle,
     // the walking eighths and half of rock and roll's right hand come
     // from. All three take it as a parent today.
@@ -14008,22 +14026,22 @@
     // Olympic in the first weeks of 1967: the electric guitar's whole
     // modern vocabulary — controlled feedback, the wah pedal, the
     // studio as amplifier — arriving on one three-minute single by an
-    // American in London. `isley` (Teaneck 1973) has wanted this row
+    // American in London. `psychsoul` (Teaneck 1973) has wanted this row
     // by name since its lineage was written, and the history is
     // literal: Hendrix played in the Isley Brothers' band in 1964 and
     // Ernie Isley's fuzz line IS his apprenticeship paid forward.
-    // An ARTIST anchor, the toto/steely/eurythmics precedent: the
+    // An ARTIST anchor, the aor/jazzrock/synthsoul precedent: the
     // style has no other name.
-    hendrix: {
+    acidrock: {
       label: "London 1967", voices: 2, bars: 8, near: "rock",
       plan: "song", bpm: 104,
       // LINEAGE: `blues` (Chicago 1952) is the language — the E7#9 is
       // a blues chord and the solos are Delta phrasing at volume —
-      // and `chuckberry` (St. Louis 1955) is the showman's guitar the
+      // and `rocknroll` (St. Louis 1955) is the showman's guitar the
       // chitlin' circuit taught him behind. `rock` (London 1969) is
       // this row's CHILD, not its parent, whatever the family sounds
       // like — the dates say so and the dates are right.
-      parents: { blues: 0.5, chuckberry: 0.3 },
+      parents: { blues: 0.5, rocknroll: 0.3 },
       wants: ["the chitlin' circuit apprenticeship", "curtis mayfield's guitar"],
       cannot: ["feedback — the guitar exciting itself through the amp " +
                "is a LOOP between instrument and room, and this " +
@@ -14061,11 +14079,11 @@
     glam: {
       label: "London 1971", voices: 3, bars: 8, near: "rock",
       plan: "song", bpm: 100,
-      // LINEAGE: `chuckberry` is the riff, said almost without
+      // LINEAGE: `rocknroll` is the riff, said almost without
       // alteration; `musichallrock` (Muswell Hill 1966) is the English
       // theatricality the strut is wearing; `rock` (London 1969) is
       // the amplifier stack it stands on.
-      parents: { chuckberry: 0.4, musichallrock: 0.3, rock: 0.3 },
+      parents: { rocknroll: 0.4, musichallrock: 0.3, rock: 0.3 },
       wants: ["the ziggy stardust stagecraft"],
       cannot: ["the television — half of glam is COSTUME, and a record " +
                "has no body in it, the lundu's own admission two " +
@@ -14100,7 +14118,7 @@
     // bar with a machine's patience and a hand's weight, the band
     // editing hours of tape into a groove that goes nowhere on
     // purpose. TWO rows have wanted this by name since their lineages
-    // were written — `kraftwerk` (Düsseldorf 1977), whose members
+    // were written — `dusseldorfschool` (Düsseldorf 1977), whose members
     // passed through this scene on their way to the machines, and
     // `postrock` (Austin 2003), which is this music rediscovered by
     // people who read about it — and `motorik` (Düsseldorf 1974) is
@@ -14119,7 +14137,7 @@
       // the Zodiak (Berlin 1968) is the room this scene's Berlin half
       // walked out of.
       parents: { psychpop: 0.35, minimalism: 0.35, funk: 0.3,
-                 stockhausen: 0.2, zodiak: 0.15 },
+                 cologneschool: 0.2, zodiak: 0.15 },
       wants: [],
       instr: ["clean_guitar", "percussive_organ"],
       drumkit: "room",
@@ -14163,7 +14181,7 @@
       // for the doctrine, Berlin 1968 for the room: Schnitzler and
       // Roedelius OPENED the Zodiak, so the edge is autobiography.
       parents: { drone: 0.4, psychpop: 0.3, minimalism: 0.3,
-                 stockhausen: 0.2, zodiak: 0.2 },
+                 cologneschool: 0.2, zodiak: 0.2 },
       wants: [],
       cannot: ["the side-long form — an Irrlicht movement is twenty " +
                "minutes of one slow change, and this table's records " +
@@ -14195,11 +14213,11 @@
     phillysoul: {
       label: "Philadelphia 1972", voices: 3, bars: 8, near: "disco",
       plan: "song", bpm: 108,
-      // LINEAGE: `motown` (Detroit 1965) is the assembly-line model
+      // LINEAGE: `detroitsoul` (Detroit 1965) is the assembly-line model
       // Gamble and Huff rebuilt with lusher rooms; `doowop` (Harlem
       // 1955) is the street-corner harmony the lead groups grew up
       // in; `gospel` is where every voice on the floor learned.
-      parents: { motown: 0.4, doowop: 0.25, gospel: 0.2 },
+      parents: { detroitsoul: 0.4, doowop: 0.25, gospel: 0.2 },
       wants: ["mfsb themselves", "the intruders' philly beat"],
       instr: ["strings", "rhodes_ep", "brass_section"],
       drumkit: "acoustic",
@@ -14239,10 +14257,10 @@
     quietstorm: {
       label: "Los Angeles 1975", voices: 3, bars: 8, near: "yachtsoul",
       plan: "song", bpm: 72,
-      // LINEAGE: `motown` is literal — Smokey was its vice president
+      // LINEAGE: `detroitsoul` is literal — Smokey was its vice president
       // when he cut it; `doowop` is the ballad harmony underneath;
       // `jazz` the seventh-chord vocabulary the changes breathe in.
-      parents: { motown: 0.45, doowop: 0.2, jazz: 0.15 },
+      parents: { detroitsoul: 0.45, doowop: 0.2, jazz: 0.15 },
       wants: ["the whur evening format", "marvin's what's going on"],
       instr: ["rhodes_ep", "solo_vox", "slow_strings"],
       drumkit: "brush",
@@ -14273,12 +14291,12 @@
     // Moroder and Pete Bellotte sequence a Moog Modular for the whole
     // rhythm track — the delay throwing every eighth into the gap —
     // and Donna Summer floats over the machine. The record dance music
-    // dates its own mechanization from. TWO rows have wanted "moroder"
+    // dates its own mechanization from. TWO rows have wanted "eurodisco"
     // by name since their lineages were written — `synthpop` (Basildon
     // 1981) and `electro` (New York 1982) — and `italodisco` below is
-    // built on it directly. An ARTIST anchor, the eurythmics
+    // built on it directly. An ARTIST anchor, the synthsoul
     // precedent: the producer is the genre.
-    moroder: {
+    eurodisco: {
       label: "Munich 1977", voices: 3, bars: 8, near: "synthpop",
       // ITS OWN ARPEGGIO (2026-08-31): I Feel Love IS the octave pedal — this row's own comment already said "the arpeggiated octave" while the record had none.
       seqArp: "arpoct",
@@ -14286,7 +14304,7 @@
       // LINEAGE: `phillysoul` (Philadelphia 1972) is the four-on-the-
       // floor and the string ceiling the sequencer replaced player by
       // player; `funk` the syncopated bass the Moog line abstracts;
-      // `kraftwerk` is deliberately NOT here — Trans-Europe Express is
+      // `dusseldorfschool` is deliberately NOT here — Trans-Europe Express is
       // the same year, and this row's machine groove was built in
       // parallel, not inherited (the two records famously heard each
       // other AFTER the fact).
@@ -14376,12 +14394,12 @@
       // ITS OWN ARPEGGIO (2026-08-31): the octave-jumping sequenced bassline is the signature of the Milan sound.
       seqArp: "arpoct",
       plan: "dance", bpm: 118,
-      // LINEAGE: `moroder` (Munich 1977) is the whole blueprint one
+      // LINEAGE: `eurodisco` (Munich 1977) is the whole blueprint one
       // country north — the octave bass, the machine four — and
       // `disco` (New York 1977) is the floor it was built for;
       // `synthpop` (Basildon 1981) is the same synths sung English
       // a year earlier, which is why the vocal below is poplead.
-      parents: { moroder: 0.5, disco: 0.3, synthpop: 0.2 },
+      parents: { eurodisco: 0.5, disco: 0.3, synthpop: 0.2 },
       wants: ["the cosmic sound of the adriatic clubs"],
       instr: ["polysynth", "solo_vox", "square_lead"],
       drumkit: "electronic",
@@ -14448,17 +14466,17 @@
     // debut inside the following year): the SP-1200's swung sixteenth
     // shuffle under gospel-stacked synth chords — R&B's drums handed
     // to hip-hop's machines, which is the whole genre in one clause.
-    // `jodeci` (Charlotte 1991) has wanted "new jack swing" by name
+    // `hiphopsoul` (Charlotte 1991) has wanted "new jack swing" by name
     // since its lineage was written — Devante Swing's name is a
     // homage — and takes it as a parent today.
     newjackswing: {
-      label: "New York 1987", voices: 3, bars: 8, near: "jodeci",
+      label: "New York 1987", voices: 3, bars: 8, near: "hiphopsoul",
       plan: "song", bpm: 108,
       // LINEAGE: `electro` (New York 1982) is the machine lineage the
       // SP-1200 sits in; `gospel` the chord stacks and the melisma;
-      // `motown` the pop discipline Riley kept while the drums
+      // `detroitsoul` the pop discipline Riley kept while the drums
       // hardened.
-      parents: { electro: 0.35, gospel: 0.3, motown: 0.2 },
+      parents: { electro: 0.35, gospel: 0.3, detroitsoul: 0.2 },
       wants: ["the sp-1200's swung sixteenth", "uptown's harlem r&b"],
       instr: ["polysynth", "solo_vox", "electric_piano"],
       drumkit: "electronic",
@@ -14504,8 +14522,8 @@
       // stab vocabulary the hoover hardened; `dub` (Kingston 1973)
       // the sound-system culture the whole rave circuit ran on.
       // PAID 2026-08-29, the debts round: "the amen break" is
-      // `winstons` (Washington 1969), same edge as dnb one row over.
-      parents: { acid: 0.35, techno: 0.3, dub: 0.2, winstons: 0.2 },
+      // `amenbreak` (Washington 1969), same edge as dnb one row over.
+      parents: { acid: 0.35, techno: 0.3, dub: 0.2, amenbreak: 0.2 },
       wants: ["belgian hoover techno"],
       // THE STAB IS THE ORCHESTRA HIT, 2026-08-30 (the sampling round —
       // Paul: "we use it … as way of doing vocal stabs and SFX"). The stab
@@ -14552,9 +14570,9 @@
       // (New York 1982) is the LA machine scene Dre came up in (the
       // World Class Wreckin' Cru is his own CV); `quietstorm` (Los
       // Angeles 1975) is the slow-jam radio the melodies whisper.
-      // PAID 2026-08-29, the debts round: "p-funk by name" is `pfunk`
+      // PAID 2026-08-29, the debts round: "p-funk by name" is `psychfunk`
       // (Detroit 1975) — Dre's harmonic book, named at last.
-      parents: { funk: 0.45, electro: 0.3, quietstorm: 0.15, pfunk: 0.25 },
+      parents: { funk: 0.45, electro: 0.3, quietstorm: 0.15, psychfunk: 0.25 },
       wants: ["zapp's talk box"],
       cannot: ["the portamento — the whine's GLIDE between notes is " +
                "the lead's whole identity and deg is a step into an " +
@@ -14709,7 +14727,7 @@
        rows, grown the way the genealogy round proved: by paying the
        catalog's own written debts. The wants census had eleven strings
        wanted by two or more rows; SIX are paid below by name (field
-       holler ×4 counting skiffle's "work song", stockhausen ×3, the amen
+       holler ×4 counting skiffle's "work song", cologneschool ×3, the amen
        break ×2, the cuban contradanza ×2, abbasid court song ×2, the
        zodiak free arts lab ×2) and five stay declined — the genealogy
        round's own list, reasons unbeaten. The rest of the block is the
@@ -14730,16 +14748,16 @@
     // at the height of the caliphate. No notation survives — the
     // argument is documentary, the way `ballad` argues from Pepys's
     // diary — but the Aghani names the songs, and TWO rows have wanted
-    // "abbasid court song" since their lineages were written: `ziryab`
+    // "abbasid court song" since their lineages were written: `andalusi`
     // (Córdoba 822), who was IBRAHIM's own student before he sailed
     // (corrected 2026-08-30 from "Ishaq's" — three ZIM articles agree
-    // and Ishaq's own calls Ziryab his RIVAL; the ziryab row carries the
+    // and Ishaq's own calls Ziryab his RIVAL; the andalusi row carries the
     // evidence and the edge does not move, because this row is the
     // HOUSE and 800 is Ibrahim's year), and
     // `taqsim` (Cairo 1932), the maqam practice this court is the
     // documented fountainhead of. Both take it as a parent today.
-    mawsili: {
-      label: "Baghdad 800", voices: 2, bars: 8, near: "ziryab",
+    abbasid: {
+      label: "Baghdad 800", voices: 2, bars: 8, near: "andalusi",
       plan: "arc", bpm: 76,
       // LINEAGE: a declared root. The Hijazi school it learned from —
       // Ibn Misjah, Ma'bad, the seventh-century Mecca and Medina
@@ -14779,7 +14797,7 @@
       mode: MODES.dorian, scale: DIATONIC, artic: "legato", maxHold: 4,
       orn: { grace: 0.3 },
       tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .03, rel: 1.2, gain: .24, verb: .4,
-              // WHO SINGS: ziryab's own melisma — the student carried
+              // WHO SINGS: andalusi's own melisma — the student carried
               // the master's line to Córdoba, so the mouth is shared.
               mouth: MOUTHS.melisma },
       words: ["the singer, the qasida line ornamented",
@@ -14797,7 +14815,7 @@
     // "orthodox chant" since its lineage was written — the diaphony's
     // held second is village practice OVER this chant — and takes it
     // as a parent today.
-    kassia: {
+    sticheron: {
       label: "Constantinople 843", voices: 1, bars: 8, near: "gregorian",
       plan: "arc", bpm: 72,
       // LINEAGE: a declared root, deliberately NOT `gregorian` — the
@@ -14895,7 +14913,7 @@
     // hold to a fifth — chant by a composer, not a committee, which is
     // the whole reason the row is a person. Fills the 1100s, which
     // held nothing between Winchester and Notre-Dame.
-    hildegard: {
+    antiphon: {
       label: "Bingen 1151", voices: 1, bars: 8, near: "gregorian",
       plan: "arc", bpm: 70,
       parents: { gregorian: 0.6, sequence: 0.3 },
@@ -14923,14 +14941,14 @@
     // Franco-Flemish polyphony stood at its height. The catalogue's
     // own report called the 1436-1551 stretch the biggest remaining
     // Western gap; this is the row it named.
-    josquin: {
-      label: "Venice 1502", voices: 4, bars: 8, near: "dufay",
+    francoflemish: {
+      label: "Venice 1502", voices: 4, bars: 8, near: "isorhythm",
       plan: "arc", bpm: 80,
-      // LINEAGE: `dufay` (Florence 1436) is the school he perfected —
+      // LINEAGE: `isorhythm` (Florence 1436) is the school he perfected —
       // points of imitation replacing the isorhythmic scaffold. The
       // missing teacher is Ockeghem, mourned by name in Josquin's own
       // Nymphes des bois; named below, not invented.
-      parents: { dufay: 0.6 },
+      parents: { isorhythm: 0.6 },
       wants: ["ockeghem's masses", "the l'homme armé tradition"],
       cannot: ["the soggetto cavato — carving a melody from a patron's " +
                "NAME (Hercules dux Ferrariae) is a pun between text and " +
@@ -14964,13 +14982,13 @@
     // stretch. `continuo` (Florence 1602) is eight years older and
     // one city over; this is what the new practice sounded like at
     // full cathedral scale.
-    monteverdi: {
+    secondapratica: {
       label: "Venice 1610", voices: 3, bars: 8, near: "continuo",
       plan: "arc", bpm: 84,
-      // LINEAGE: the two praticas by name — `josquin` (Venice 1502)
+      // LINEAGE: the two praticas by name — `francoflemish` (Venice 1502)
       // is the polyphony the collection still writes, `continuo`
       // (Florence 1602) the monody it puts over the bass.
-      parents: { continuo: 0.45, josquin: 0.35 },
+      parents: { continuo: 0.45, francoflemish: 0.35 },
       wants: ["the gabrielis' polychoral san marco"],
       cannot: ["the cori spezzati — two choirs across a basilica are a " +
                "STEREO fact, opposed galleries answering each other in " +
@@ -15001,16 +15019,16 @@
     // funeral mass for a named patron (Heinrich Posthumus of Reuss,
     // who chose his own burial texts), Monteverdi's concerted style
     // carried over the Alps and set on the chorale's own tongue. With
-    // `monteverdi` above it closes the 1610-1660 gap from the German
+    // `secondapratica` above it closes the 1610-1660 gap from the German
     // side — the bridge on which Lutheran music walks from `chorale`
     // (Nuremberg 1586) to `fugue` (Leipzig 1725).
-    schutz: {
+    sacredconcerto: {
       label: "Dresden 1636", voices: 3, bars: 8, near: "chorale",
       plan: "arc", bpm: 72,
       // LINEAGE: he studied with Giovanni Gabrieli in Venice and
       // visited Monteverdi in 1628; the chorale is the congregation
       // he wrote for. Gabrieli is the missing teacher, named below.
-      parents: { chorale: 0.45, monteverdi: 0.35 },
+      parents: { chorale: 0.45, secondapratica: 0.35 },
       wants: ["giovanni gabrieli, his teacher"],
       instr: ["solo_vox", "ahh_choir", "church_organ"],
       entry: v => (v === 0 ? 2 : v === 1 ? 0 : 0),
@@ -15180,10 +15198,10 @@
     // in 1888: three pages that refuse every ambition their century
     // prized — no development, no climax, a modal tune circling over
     // two chords at walking pace. `ambient` (London 1978) has wanted
-    // "satie" by name since its lineage was written — Eno's sleeve
+    // "furnituremusic" by name since its lineage was written — Eno's sleeve
     // notes cite the furniture-music idea outright — and takes the
     // parent today.
-    satie: {
+    furnituremusic: {
       instrumental: true,   // three pages for piano alone — the Gymnopédies have no singer
       label: "Paris 1888", voices: 2, bars: 8, near: "nocturne",
       // bpm 70 is the table's floor (compose's 70..160); Lent et douloureux
@@ -15230,7 +15248,7 @@
               "the civil war brass bands"],
       instr: ["brass_section", "clarinet", "tuba"],
       entry: v => (v === 0 ? 0 : v === 1 ? 2 : 0),
-      reg: v => (v === 0 ? 0 : v === 1 ? 1 : -1),
+      reg: v => (v === 0 ? 0 : v === 1 ? 1 : 0),
       realize: () => "line",
       kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
              s: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,1,1,0],
@@ -15330,12 +15348,12 @@
     // the WDR's Grosser Sendesaal on the 30th of May 1956: a boy's
     // voice from the Book of Daniel dissolved into sine tones and
     // reassembled, the Cologne studio's proof that timbre itself
-    // could be composed. THREE rows have wanted "stockhausen" by name
+    // could be composed. THREE rows have wanted "cologneschool" by name
     // since their lineages were written — `krautrock` (Cologne 1971:
     // Czukay and Schmidt were literally his students), `berlinschool`
-    // (Berlin 1972) and `kraftwerk` (Düsseldorf 1977, down the Rhine
+    // (Berlin 1972) and `dusseldorfschool` (Düsseldorf 1977, down the Rhine
     // from the studio) — and all three take the parent today.
-    stockhausen: {
+    cologneschool: {
       label: "Cologne 1956", voices: 2, bars: 8, near: "serial",
       plan: "arc", bpm: 88,
       // LINEAGE: `serial` (Vienna 1923) is the school — Webern's
@@ -15420,7 +15438,7 @@
     // — the Ramones' whole melodic half is this record at double
     // speed, and the Shirelles are the form's founding case. Both
     // take the parent today.
-    brill: {
+    girlgroup: {
       label: "New York 1960", voices: 3, bars: 8, near: "doowop",
       plan: "song", bpm: 104,
       // LINEAGE: `tinpanalley` (New York 1924) is the same building
@@ -15463,10 +15481,10 @@
     garagerock: {
       label: "Portland 1963", voices: 2, bars: 4, near: "punk",
       plan: "song", bpm: 126,
-      // LINEAGE: `chuckberry` and `bodiddley` are the whole reading
+      // LINEAGE: `rocknroll` and `hambone` are the whole reading
       // list — the riff and the stomp, learned off 45s, played
       // louder and worse and therefore new.
-      parents: { chuckberry: 0.4, bodiddley: 0.25 },
+      parents: { rocknroll: 0.4, hambone: 0.25 },
       wants: ["the pacific northwest teen-dance circuit (the wailers " +
               "of tacoma)"],
       instr: ["crunch_guitar", "percussive_organ"],
@@ -15495,14 +15513,14 @@
     // (London 1968) has wanted "orchestral pop" since its lineage was
     // written — its own comment is this record's wake — and takes the
     // parent today.
-    beachboys: {
+    baroquepop: {
       label: "Los Angeles 1966", voices: 3, bars: 8, near: "psychpop",
       plan: "song", bpm: 108,
       // LINEAGE: `doowop` (Harlem 1955) is the vocal stack's school;
-      // `brill` (New York 1960) the songcraft and the Spector rooms —
+      // `girlgroup` (New York 1960) the songcraft and the Spector rooms —
       // Wilson learned Be My Baby by heart. The Four Freshmen, who
       // taught him the close voicings, are named below.
-      parents: { doowop: 0.35, brill: 0.3 },
+      parents: { doowop: 0.35, girlgroup: 0.3 },
       wants: ["the four freshmen's close harmony",
               "spector's wall of sound"],
       instr: ["ohh_voices", "ahh_choir", "electric_piano"],
@@ -15574,14 +15592,14 @@
     // option. `shoegaze` (London 1991) has wanted "velvet
     // underground" by name since its lineage was written and takes
     // the parent today.
-    velvets: {
+    protopunk: {
       label: "New York 1966", voices: 3, bars: 8, near: "punk",
       plan: "song", bpm: 108,
       // LINEAGE: `drone` (New York 1964) is Cale's day job brought
       // downtown — the table's cleanest two-blocks-over edge;
-      // `chuckberry` the rhythm guitar Reed never renounced;
+      // `rocknroll` the rhythm guitar Reed never renounced;
       // `garagerock` the recording budget as an aesthetic.
-      parents: { drone: 0.35, chuckberry: 0.25, garagerock: 0.15 },
+      parents: { drone: 0.35, rocknroll: 0.25, garagerock: 0.15 },
       wants: ["pickwick's song factory, where reed clocked in"],
       instr: ["clean_guitar", "viola", "solo_vox"],
       drumkit: "room",
@@ -15656,7 +15674,7 @@
     // the break section IS the form's own fact (the word schedule
     // drops every voice at the third section, which is what a break
     // is).
-    winstons: {
+    amenbreak: {
       label: "Washington 1969", voices: 2, bars: 8, near: "funk",
       plan: "song", bpm: 136,
       // LINEAGE: `funk` (Cincinnati 1967) is the band's trade;
@@ -15750,22 +15768,22 @@
     // table had FOUR metal rows (deathmetal, industrialmetal, sludge,
     // screamo) and no metal — the wing's founding act was the hole
     // every one of them leaned over.
-    sabbath: {
+    heavymetal: {
       label: "Workington 1969", voices: 2, bars: 8, near: "deathmetal",
       plan: "song", bpm: 84,
       // LINEAGE: `blues` (Chicago 1952) played slower and darker —
-      // the band's own account; `hendrix` (London 1967) the volume
+      // the band's own account; `acidrock` (London 1967) the volume
       // and the bent-note vocabulary the volume was bought for.
       // (`rock` is London 1969 — the SAME year as this label, and an
       // edge needs the ancestor measurably earlier, maringa's law.)
       // The horror-film organ trade the name came from is real and
       // unanchored; named below.
       // "the hammer horror scores" PAID 2026-08-30 (Bray 1958): the
-      // ledger round landed `hammerhorror` — James Bernard's Dracula,
+      // ledger round landed `horrorscore` — James Bernard's Dracula,
       // the exact score the debts round called "arguable and REMAINS
       // THE NEXT ASK" — and the band named after a horror bill takes
       // the edge to the scores that filled the bill.
-      parents: { blues: 0.4, hendrix: 0.25, hammerhorror: 0.15 },
+      parents: { blues: 0.4, acidrock: 0.25, horrorscore: 0.15 },
       wants: [],
       instr: ["distortion_guitar", "overdrive_guitar"],
       drumkit: "power",
@@ -15797,7 +15815,7 @@
       label: "Bronx 1973", voices: 2, bars: 8, near: "electro",
       plan: "dance", bpm: 112,
       // LINEAGE: `funk` (Cincinnati 1967) is the records on the
-      // decks; `winstons` (Washington 1969) is literally one of them
+      // decks; `amenbreak` (Washington 1969) is literally one of them
       // — the edge from the break to the party that isolated it. The
       // Kingston sound system Herc carried over is `boombap`'s own
       // outstanding want, now shared (dub itself is Kingston 1973,
@@ -15806,7 +15824,7 @@
       // "jamaican sound system" PAID 2026-08-30 (Kingston 1950): Kool
       // Herc grew up on exactly this practice and carried it to Sedgwick
       // Avenue — the largest missing edge this row had.
-      parents: { funk: 0.45, winstons: 0.25, soundsystem: 0.2 },
+      parents: { funk: 0.45, amenbreak: 0.25, soundsystem: 0.2 },
       wants: [],
       // "this box plays scores, not records" WAS TRUE UNTIL 2026-08-30 and
       // is not any more — the grain round put the surface of a record
@@ -15875,13 +15893,13 @@
     // wanted "p-funk by name" since its lineage was written — Dre's
     // whole harmonic book is this band's — and takes the parent
     // today.
-    pfunk: {
+    psychfunk: {
       label: "Detroit 1975", voices: 3, bars: 8, near: "funk",
       plan: "song", bpm: 100,
       // LINEAGE: `funk` (Cincinnati 1967) is the chassis; `psychrock`
-      // (San Francisco 1966) is Funkadelic's acid half; `hendrix`
+      // (San Francisco 1966) is Funkadelic's acid half; `acidrock`
       // (London 1967) is where Eddie Hazel's guitar goes to church.
-      parents: { funk: 0.4, psychrock: 0.2, hendrix: 0.2 },
+      parents: { funk: 0.4, psychrock: 0.2, acidrock: 0.2 },
       wants: ["sun ra's arkestra, the costume's own teacher"],
       instr: ["polysynth", "brass_section", "ohh_voices"],
       drumkit: "room",
@@ -15917,10 +15935,10 @@
     // orchestra" by name since its lineage was written — Bambaataa
     // sampled the yellow records alongside the German ones — and
     // takes the parent today.
-    ymo: {
-      label: "Tokyo 1978", voices: 2, bars: 8, near: "kraftwerk",
+    technopop: {
+      label: "Tokyo 1978", voices: 2, bars: 8, near: "dusseldorfschool",
       plan: "song", bpm: 120,
-      // LINEAGE: `kraftwerk` (Düsseldorf 1977) is the dare being
+      // LINEAGE: `dusseldorfschool` (Düsseldorf 1977) is the dare being
       // answered; `disco` (New York 1977) the floor the answer aims
       // at. Martin Denny's exotica — the record they covered to make
       // the point — is real and unanchored; named below.
@@ -15931,7 +15949,7 @@
       // "exotica (martin denny's quiet village)" PAID 2026-08-30
       // (Honolulu 1957, the coastline re-bake that let the dot stand
       // on Oahu): Firecracker is a Denny cover and the edge says so.
-      parents: { kraftwerk: 0.4, disco: 0.25, exotica: 0.15 },
+      parents: { dusseldorfschool: 0.4, disco: 0.25, exotica: 0.15 },
       wants: [],
       instr: ["square_lead", "electric_piano"],
       drumkit: "tr808",
@@ -15960,10 +15978,10 @@
     nwobhm: {
       label: "London 1980", voices: 2, bars: 8, near: "deathmetal",
       plan: "song", bpm: 152,
-      // LINEAGE: `sabbath` (Workington 1969) is the weight; `punk`
+      // LINEAGE: `heavymetal` (Workington 1969) is the weight; `punk`
       // (New York 1976) the velocity and the self-released 45s — the
       // genre is the first stack multiplied by the second's clock.
-      parents: { sabbath: 0.5, punk: 0.3 },
+      parents: { heavymetal: 0.5, punk: 0.3 },
       wants: ["deep purple in rock, the speed's other teacher"],
       instr: ["distortion_guitar", "distortion_guitar"],
       drumkit: "power",
@@ -16036,7 +16054,7 @@
     // written and takes the parent today.
     // 2026-08-30, the downtempo round: Blue Lines stays THIS row's
     // anchor — a record pays one debt — and Massive Attack's own
-    // artist row (`massiveattack`, Bristol 1998) anchors on Mezzanine
+    // artist row (`bristolsound`, Bristol 1998) anchors on Mezzanine
     // instead; the ruling is argued at that round's header.
     triphop: {
       label: "Bristol 1991", voices: 3, bars: 8, near: "boombap",
@@ -16156,16 +16174,16 @@
       // ITS OWN ARPEGGIO (2026-08-31): the genre's whole gesture is a rising synth figure.
       seqArp: "arpup",
       plan: "dance", bpm: 92,
-      // LINEAGE: `moroder` (Munich 1977) is the arpeggiated engine
+      // LINEAGE: `eurodisco` (Munich 1977) is the arpeggiated engine
       // being remembered; `italodisco` (Milan 1982) the melodic
       // chrome. John Carpenter's own scores are the missing third,
       // named below.
-      // "carpenter's film scores" PAID 2026-08-30, the folk-floor
+      // "horrorsynth's film scores" PAID 2026-08-30, the folk-floor
       // round — and the OTHER remembered thing landed the same day:
-      // `miamivice` (Miami 1984), the mood synth this genre spends its
+      // `copshowsynth` (Miami 1984), the mood synth this genre spends its
       // whole life quoting. Both edges dated, the organum precedent.
-      parents: { moroder: 0.35, italodisco: 0.25, carpenter: 0.2,
-                 miamivice: 0.2 },
+      parents: { eurodisco: 0.35, italodisco: 0.25, horrorsynth: 0.2,
+                 copshowsynth: 0.2 },
       wants: [],
       instr: ["saw_wave", "warm_pad"],
       drumkit: "tr808",
@@ -16209,7 +16227,7 @@
       // standing in for. (This is also why the row is the catalog's vocal
       // stab exemplar: not instrumental, so the door that refuses a sampled
       // voice on an instrumental record — precompose door 1 — does not bar
-      // it, and the same seat on `stgermain` is refused. L6 holds both.)
+      // it, and the same seat on `nujazz` is refused. L6 holds both.)
       instr: ["space_voice", "saw_wave"],
       drumkit: "tr808",
       entry: () => 0, reg: v => (v === 0 ? 0 : -1),
@@ -16267,7 +16285,7 @@
 
        THE AMEN BREAK AS A ROW OF ITS OWN — the want is a RECORD, seven
        seconds of one, and a record is not a genre; it is paid above as
-       `winstons`, the band and the B-side the break lives on, which is
+       `amenbreak`, the band and the B-side the break lives on, which is
        the honest row (the break section is in its word schedule). The
        want strings on `dnb` and `hardcorerave` move into parents.
 
@@ -16275,7 +16293,7 @@
        machinery could say four close voices; but the first datable
        NAMED performance this shift could verify is a publishing-era
        song sheet, not a quartet on a dated stage, and a row argued
-       from a guess fails the dufay standard. Next round's ask.
+       from a guess fails the isorhythm standard. Next round's ask.
 
        VAUDEVILLE (wanted by `tinpanalley`) — a stage FORMAT, not a
        music: the songs on a vaudeville bill are tinpanalley's own
@@ -16289,7 +16307,7 @@
 
        And the five the genealogy round declined stay declined —
        dastgah, tape music, latin percussion, muwashshah, maringa —
-       reasons above, unbeaten. `stockhausen` above pays the Cologne
+       reasons above, unbeaten. `cologneschool` above pays the Cologne
        studio debt WITHOUT reopening tape music: elektronische Musik
        synthesizes its material, which is exactly what this box does;
        musique concrète records its material, which this box cannot.
@@ -16319,7 +16337,7 @@
        wants are paid as edges.]
 
        OTTOMAN MAKAM AT FULL WIDTH — paid NARROWLY instead, on purpose:
-       `cemilbey` above ships in Hicaz, the family 12-TET says exactly,
+       `ottoman` above ships in Hicaz, the family 12-TET says exactly,
        and its `cannot` names the nine-comma degrees it will not claim.
 
        TAPE MUSIC (wanted by `ambient` and `minimalism`). Schaeffer,
@@ -16340,7 +16358,7 @@
        not: the composer's own captures, splice-per-note, the continuous
        speed sweep.]
 
-       LATIN PERCUSSION (wanted by `disco` and `bodiddley`). Not a
+       LATIN PERCUSSION (wanted by `disco` and `hambone`). Not a
        genre: an instrumentation. There is no place-year record OF
        "latin percussion" — there are records of son, mambo and salsa,
        which are anchors already. The want names a section this box's
@@ -16402,7 +16420,7 @@
          seals ~2300 BC, which is a lineage fact and not a performance:
          no named piece, no named player, no melody. The seals are carried
          on `urlyre`'s comment and the debt is a WANT there and on
-         `mawsili`, whose oud is where the lute line surfaces in this
+         `abbasid`, whose oud is where the lute line surfaces in this
          catalog with a name on it.
        · JIAHU -> ANYTHING DOWNSTREAM — seven millennia separate the gudi
          from the oldest East Asian row (Nara 752) and no chain of named
@@ -16530,12 +16548,12 @@
     // long-necked lute enters the record on Akkadian seals ~2300 BC, two
     // centuries after these graves and a few hundred km upriver — a
     // lineage fact with no named piece attached, so it is a WANT here and
-    // on `mawsili` (Baghdad 800), whose oud is where the plucked-lute
+    // on `abbasid` (Baghdad 800), whose oud is where the plucked-lute
     // line next carries a name this catalog can verify. The genealogy gap
-    // ziryab's oud implied — nothing upstream because nothing upstream
+    // andalusi's oud implied — nothing upstream because nothing upstream
     // existed — now has its deep end.
     urlyre: {
-      label: "Ur 2500 BC", voices: 2, rate: 0.5, near: "mawsili",
+      label: "Ur 2500 BC", voices: 2, rate: 0.5, near: "abbasid",
       plan: "arc", bpm: 76,
       // LINEAGE: a root. What stands upstream — whatever the third
       // millennium's temples sang before these graves — has no artifact
@@ -16624,7 +16642,7 @@
     // the song" — a choir, and the aulos answering, which is what the
     // oboe (a double reed, the registry's nearest aulos) is doing below.
     delphic: {
-      label: "Delphi 128 BC", voices: 2, near: "seikilos",
+      label: "Delphi 128 BC", voices: 2, near: "skolion",
       plan: "arc", bpm: 88,
       // LINEAGE: a root. The paean tradition it crowns — Pindar's odes
       // were sung, and their melodies are gone — has no earlier notated
@@ -16728,7 +16746,7 @@
     // cannot claim, this row CAN: the melody is secure, the rhythm is
     // secure, and it is the only pre-medieval row in the catalog whose
     // material is simply readable off the artifact.
-    seikilos: {
+    skolion: {
       label: "Tralles 100", voices: 1, near: "delphic",
       plan: "song", bpm: 96,
       // LINEAGE: the same Greek vocal notation as the Delphic paeans,
@@ -16766,15 +16784,15 @@
     // the mixolydian row, note for note — set syllabically with a few
     // short melismas, in an essentially anapaestic metre.
     oxyrhynchus: {
-      label: "Oxyrhynchus 300", voices: 1, rate: 0.5, near: "kassia",
+      label: "Oxyrhynchus 300", voices: 1, rate: 0.5, near: "sticheron",
       plan: "arc", bpm: 76,
-      // LINEAGE: `seikilos` at half weight — the notation system, the
+      // LINEAGE: `skolion` at half weight — the notation system, the
       // language and the diatonic practice are Greek song's, inherited
       // whole. The residue is the new thing itself: a congregation's hymn
       // to the Trinity is not an epitaph, and what fills the other half
       // — synagogue psalmody, the unnotated first Christian centuries —
       // has no artifact to anchor.
-      parents: { seikilos: 0.5 },
+      parents: { skolion: 0.5 },
       wants: ["the psalmody of the unnotated christian centuries"],
       cannot: ["its own rhythm signs at full fidelity — the papyrus " +
                "carries diseme, stigme, hyphen and colon, a duration " +
@@ -16796,7 +16814,7 @@
        THE FORWARD DEBTS OF THE SAME SHIFT (2026-08-30) — seven rows, the
        last catalogue shift's own named leftovers, paid after antiquity
        because antiquity was the ask. Two shared wants close by name
-       (hardcore ×2, dream pop ×1 plus the contenance angloise on dufay);
+       (hardcore ×2, dream pop ×1 plus the contenance angloise on isorhythm);
        the 1940s get their two missing country rooms; the metal wing gets
        the doom it lacked; and the 2000s stay thin (10 rows to the 1990s'
        29) — named at the foot as the next ask, not half-paid here.
@@ -16812,7 +16830,7 @@
     // Stourbridge at the 11-degree Britain arc — ABOVE G10's 8.5 px
     // floor, so Stoke was not blocked; Washington won because "Pay to
     // Cum" is two years earlier, the place already stands in PLACES
-    // (march 1889, winstons 1969 — a third record on one dot), and the
+    // (march 1889, amenbreak 1969 — a third record on one dot), and the
     // d-beat is a DRUM claim this row's kit does not make.
     hardcore: {
       label: "Washington 1980", voices: 1, near: "punk",
@@ -16951,7 +16969,7 @@
     },
 
     /* GALAXIE 500 — Boston 1989, On Fire. Paul, 2026-08-31, the shift after
-       younggalaxy landed: "I guess we need Slowdive and Galaxie 500 too
+       balearic landed: "I guess we need Slowdive and Galaxie 500 too
        right?" The measurement says yes for this one because SLOWCORE HAS NO
        ANCHOR IN THIS TABLE and the band's own infobox names it: "Indie rock
        / dream pop / slowcore". The third word had nowhere to point — the
@@ -16986,7 +17004,7 @@
        arrangement spec read straight off the page — "snaking lines of guitar,
        restrained percussion and a confessional-style vocal" — so the guitar
        is ONE wandering line, the kit is nearly empty, and the throat is
-       MOUTHS.confessional, which is not a guess: `velvets`, this row's
+       MOUTHS.confessional, which is not a guess: `protopunk`, this row's
        heaviest parent, is cast on that exact mouth, so the descendant
        inherits the parent's throat by measurement rather than by taste. Jenn
        Pelly gives the tempo — "the Velvet Underground slowly warming up ...
@@ -17007,7 +17025,7 @@
 
        AND IT CANNOT GO AS SLOW AS THE RECORD, WHICH IS MEASURED AND NOT A
        GUESS: this row was drafted at bpm 68 and compose.js refused it — "genre
-       \"galaxie500\" declares no bpm (bpm: an integer 70..160 on its GENRES
+       \"slowcore\" declares no bpm (bpm: an integer 70..160 on its GENRES
        row)". Seventy is the floor of the whole catalogue, so the one anchor
        written to be the slowest thing in it sits one notch off the wall, at 72
        — `postrock`'s own number. The half-time is bought back in the KIT
@@ -17018,7 +17036,7 @@
        half-time PROCESSES; On Fire is a song at a slow tempo, and halving the
        cell rate under an already near-empty kit would have bought the crawl by
        emptying the record rather than by playing it. */
-    galaxie500: {
+    slowcore: {
       label: "Boston 1989", voices: 2, bars: 8, near: "dreampop",
       // 72, NOT the 68 this row was drafted at — see the bpm floor in the
       // comment above. It is the catalogue's slowest legal tempo bar two.
@@ -17031,9 +17049,9 @@
       // up"). dreampop is the infobox's second word. psychrock is the "lo-fi
       // psychedelia" both articles name and the "elements of neo-psychedelia"
       // the album's Music section adds. NOT `drone` directly, though "droning
-      // [and] doleful" is the album's first quoted description: `velvets`
+      // [and] doleful" is the album's first quoted description: `protopunk`
       // already holds drone at 0.35 and the edge would be counted twice.
-      parents: { velvets: 0.5, dreampop: 0.3, psychrock: 0.2 },
+      parents: { protopunk: 0.5, dreampop: 0.3, psychrock: 0.2 },
       // the two names in that Slowcore sentence this table cannot point at.
       wants: ["jonathan richman's modern lovers", "big star's memphis power pop"],
       cannot: ["the lo-fi itself — Kramer cut this in a live room through a " +
@@ -17072,7 +17090,7 @@
     /* SLOWDIVE — Sutton Courtenay 1993, Souvlaki. The other half of Paul's
        ask, and the harder half, because `shoegaze` already exists and is
        anchored on Loveless. It ships because it is a DIFFERENT RECORD MAKING
-       A DIFFERENT CLAIM, which is the massiveattack-vs-triphop precedent and
+       A DIFFERENT CLAIM, which is the bristolsound-vs-triphop precedent and
        not the ethereal-wave one: shoegaze's own comment names its archetype
        as "Loveless: the held-second blur under fuzz", and Souvlaki is not
        that. Loveless is violence held still. Souvlaki is SPACE — the album
@@ -17135,7 +17153,7 @@
        influence that was thrown away before the record started is not an
        ancestor of the record. The Bowie half has no row at all and becomes the
        want. */
-    slowdive: {
+    ambientpop: {
       label: "Sutton Courtenay 1993", voices: 3, bars: 8, near: "shoegaze",
       plan: "song", bpm: 84,
       // LINEAGE: the infobox in order — "Dream pop shoegaze ambient pop
@@ -17198,7 +17216,9 @@
     },
 
     /* YOUNG GALAXY — Montreal 2011, Shapeshifting. Paul asked for the band
-       by name (2026-08-31), and the ZIM decides WHICH RECORD the row is,
+       by name (2026-08-31) — key renamed to `balearic` 2026-09-01, the
+       great rename: the Lissvik mix-as-composer school's established
+       word. The ZIM decides WHICH RECORD the row is,
        because the answer changes what the row means.
 
        NOT THE 2007 DEBUT, and the refusal system is why. That album is the
@@ -17216,7 +17236,7 @@
        synthpop"). Long-listed for the Polaris; the band never went back.
 
        MONTREAL, THOUGH THE PRODUCER SAT IN GOTHENBURG — the Pomona rule this
-       table has now run three times (tricky: "the tape ran in London, the
+       table has now run three times (knowlewest: "the tape ran in London, the
        record is Knowle West's"; neworleans: cut in Indiana, the row is New
        Orleans). The band formed in Vancouver in 2005 and MOVED to Montreal,
        which is where they were when this record was made. Montreal is a new
@@ -17235,7 +17255,7 @@
        instrument, a vocal pushed through the same chain as the synth, dub's
        drop-and-return applied to pop arrangement. The grid can seat the
        chairs and it cannot make the desk the composer. */
-    younggalaxy: {
+    balearic: {
       label: "Montreal 2011", voices: 5, bars: 8, near: "dreampop",
       plan: "song", bpm: 104,
       // LINEAGE: dream pop is the body, synthpop the machine it was rebuilt
@@ -17249,13 +17269,13 @@
       // Slowdive, Galaxie 500 and Luna as well as Pink Floyd and
       // Spiritualized." So shoegaze 0.2 is REPLACED by the two acts the ZIM
       // actually names, and the shoegaze inheritance still arrives — one
-      // generation further down, through `slowdive`, which holds it at 0.45.
+      // generation further down, through `ambientpop`, which holds it at 0.45.
       // They JOIN rather than take over, and the weights say why: that
       // sentence sits in the article's Vancouver-and-debut paragraph, and
       // this row is anchored on Shapeshifting (2011), whose body is still
       // dream pop rebuilt on a machine. An ancestry the band carried into the
       // record is not the record. (Luna is Wareham's next band and is
-      // `galaxie500` continued, not a third hole; Pink Floyd's rung is
+      // `slowcore` continued, not a third hole; Pink Floyd's rung is
       // `spacerock`, London 1973, already here.)
       /* SONIC REVISION 2026-08-31, dictated. Paul: "Young Galaxy has more of a
          new order influence. A lot of their backing is arpeggiated. Definitely
@@ -17268,7 +17288,7 @@
          rather than out of the two acts the article names, because those two
          are the row's own citation and this is a fourth thing on top. */
       parents: { dreampop: 0.3, dancepostpunk: 0.25, synthpop: 0.2,
-                 slowdive: 0.15, galaxie500: 0.1 },
+                 ambientpop: 0.15, slowcore: 0.1 },
       wants: ["the gothenburg dub-disco shelf (studio, service)"],
       // the riff chair is the ARPEGGIO, so it stops being a guitar: "tight and
       // synthy" is a saw, and a clean guitar playing sixteenths is a different
@@ -17439,7 +17459,7 @@
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,1] },
       fx: ["chorus", "echo"],
       // the riff chair takes the room, because on this record the guitar is
-      // an effect return rather than a part — the same door portishead's
+      // an effect return rather than a part — the same door noirhop's
       // riff uses, one word quieter.
       /* ...AND THE ARPEGGIO SITS UNDER THE SONG (2026-08-31). Paul: the arps
          "fade down a little and alter over the song". `back` is fields.js
@@ -17454,7 +17474,23 @@
          document had already been built, so the engine never saw either word.
          fields.js resolvePartMix has handled `lvl: pick(LEVELS, g.lvl, 1)` all
          along. The als.js comment is corrected in the same commit. */
-      mix: { riff: { rev: "some", echo: "some", lvl: "back" } },
+      /* DELAY ALL OVER (2026-09-01). Paul: "Try young galaxy again from first
+         principles, making sure to keep tight arps with delay all over." The
+         arps were remeasured first — v2 sixteen onsets a bar, 76/76 bars, on
+         every seed tried — so "again from first principles" keeps the machine
+         and pays the half that was missing: the delay reached ONE chair. The
+         bus was already right (echoBus derives time d8, fb "more" off verb
+         .55, tone dark off cut 1200 — a dotted-eighth dark throw); what was
+         missing was senders. Measured at the document desk: with this block
+         7 of 8 line chairs carry an echo word into that one bus (the lone
+         dry chair is a parent-layer guest with part "line", and "line" gets
+         no entry on purpose — a floor under the swirl). The riff goes WET —
+         sixteen dry sixteenths plus their dotted-eighth repeats IS the
+         swirl — and drops to "back" so the repeats have room. */
+      mix: { riff:    { rev: "some", echo: "wet",  lvl: "back" },
+             lead:    { echo: "some" },   // both lead chairs: voice + choir doubling
+             pad:     { echo: "touch" },  // both pads breathe, don't smear
+             counter: { echo: "some" } }, // the switching guitar answers into the same room
       /* THE FILTER HAD TO SPEAK (2026-08-31). Paul, a third time: "why are
          they not filtered down to a nice tone? I asked many times." Measured
          on the Juno's own params: `cutoff 2000, res 0.025` — wide open with
@@ -17509,7 +17545,8 @@
        TEN NAMED ACTS, 2026-09-01 — Paul's list, verbatim: "We're missing
        Radiohead ... Stone Roses ... Wings ... skinny puppy ... all the eras of
        ministry ... Kate bush and all the eras of peter Gabriel ... fairuz ...
-       bronski beat and OMD."
+       bronski beat and OMD." (Verbatim — spoken before the 2026-09-01
+       great rename; every act on the list now lives under a genre key.)
 
        EVERY PLACE WAS CHECKED IN THE ZIM AND THREE OF MY GUESSES WERE WRONG:
        Radiohead is Abingdon (not Oxford), OMD is Meols on Merseyside (not
@@ -17529,10 +17566,10 @@
     // side of the row and it is a real parent, not a nod — the record's own
     // pull toward held electronic texture is why the band stopped sounding
     // like its debut.
-    radiohead: {
+    artrock: {
       label: "Oxford 1997", voices: 3, bars: 8, near: "shoegaze",
       plan: "song", bpm: 91,
-      parents: { postpunk: 0.3, shoegaze: 0.25, ambient: 0.25, beatles: 0.2 },
+      parents: { postpunk: 0.3, shoegaze: 0.25, ambient: 0.25, beatgroup: 0.2 },
       wants: ["the piano-and-strings side the catalogue has no anchor for"],
       instr: ["solo_vox", "clean_guitar", "warm_pad"],
       drumkit: "room",
@@ -17559,7 +17596,7 @@
     // is Manchester 1990 in this table, and the maringa precedent says an
     // ancestor must be measurably earlier. It is, by a year — so this is the
     // record and that is the scene, and the edge runs the right way.
-    stoneroses: {
+    baggy: {
       label: "Manchester 1988", voices: 3, bars: 8, near: "madchester",
       plan: "song", bpm: 118,
       parents: { psychrock: 0.35, postpunk: 0.35, house: 0.3 },
@@ -17583,15 +17620,15 @@
                     : v === 1 ? [fill(2)] : [[rotate(2)], [], [drop(3)], []][s % 4]),
     },
 
-    // WINGS — London 1973, Band on the Run. The row exists because `beatles`
+    // WINGS — London 1973, Band on the Run. The row exists because `beatgroup`
     // (Liverpool 1962) has no CHILD in this table: everything downstream of it
     // is a scene rather than the same writer carrying on. This is the one act
     // that is literally the parent continued, which is why the weight on that
     // edge is the heaviest here.
-    wings: {
-      label: "Lagos 1973", voices: 3, bars: 8, near: "beatles",
+    softrock: {
+      label: "Lagos 1973", voices: 3, bars: 8, near: "beatgroup",
       plan: "song", bpm: 116,
-      parents: { beatles: 0.6, rock: 0.25, countrypop: 0.15 },
+      parents: { beatgroup: 0.6, rock: 0.25, countrypop: 0.15 },
       wants: [],
       instr: ["solo_vox", "crunch_guitar", "upright_piano"],
       drumkit: "room",
@@ -17616,10 +17653,10 @@
     // Chicago 1989 here, three years after this record. The parents are the
     // ones that were actually available to it — the Wax Trax floor, post-punk,
     // and the machine.
-    skinnypuppy: {
-      label: "Vancouver 1986", voices: 3, bars: 8, near: "waxtrax",
+    electroindustrial: {
+      label: "Vancouver 1986", voices: 3, bars: 8, near: "industrialdance",
       plan: "dance", bpm: 112,
-      parents: { waxtrax: 0.4, postpunk: 0.3, kraftwerk: 0.3 },
+      parents: { industrialdance: 0.4, postpunk: 0.3, dusseldorfschool: 0.3 },
       /* THE COLLAGE ARRIVED, 2026-09-01. This row read
          `wants: ["the sample collage a tape-splice record is made of"]` and
          `instr: [..., "found:vox_d"]` — ONE recording, an Apollo transmission,
@@ -17666,11 +17703,11 @@
     // MINISTRY, THE FIRST ERA — Chicago 1983, With Sympathy. Paul: "all the
     // eras of ministry". The LATER eras are already here and always were —
     // `industrialmetal` (Chicago 1988) says Ministry in its own comment and
-    // `waxtrax` is the label they came through. What was missing is the era
+    // `industrialdance` is the label they came through. What was missing is the era
     // nobody expects: a synth-pop record, on Arista, that the band spent the
     // rest of its life disowning. That is a different genre, so it is a
     // different row, and the pair is the "all the eras" he asked for.
-    ministrysynth: {
+    electropop: {
       label: "Chicago 1983", voices: 3, bars: 8, near: "synthpop",
       plan: "song", bpm: 124,
       parents: { synthpop: 0.5, newwave: 0.3, disco: 0.2 },
@@ -17701,10 +17738,10 @@
     // side-two texture and `glam` for the theatre, which are the two ancestors
     // this catalogue actually holds — it has no `artrock` row to point at,
     // and that absence is named rather than papered over.
-    katebush: {
+    artpop: {
       label: "Kent 1985", voices: 3, bars: 8, near: "dreampop",
       plan: "arc", bpm: 108,
-      parents: { beatles: 0.3, glam: 0.3, ambient: 0.2, psychrock: 0.2 },
+      parents: { beatgroup: 0.3, glam: 0.3, ambient: 0.2, psychrock: 0.2 },
       wants: ["an art-rock rung this table does not have"],
       instr: ["solo_vox", "warm_pad", "ahh_choir"],
       drumkit: "power",
@@ -17734,10 +17771,10 @@
     // is, is the solo record where a rhythm section from outside the English
     // tradition became the point — which is why the kit is the loud one and
     // the parents are theatre and machine rather than folk.
-    petergabriel: {
+    worldbeat: {
       label: "London 1977", voices: 3, bars: 8, near: "artrock",
       plan: "song", bpm: 100,
-      parents: { glam: 0.3, rock: 0.3, kraftwerk: 0.2, ambient: 0.2 },
+      parents: { glam: 0.3, rock: 0.3, dusseldorfschool: 0.2, ambient: 0.2 },
       wants: ["a prog rung for the Genesis era, which this table has not got"],
       instr: ["solo_vox", "polysynth", "slap_bass"],
       drumkit: "power",
@@ -17763,7 +17800,7 @@
     // one I inferred. The row is the Rahbani arrangement: a tarab voice over a
     // written, orchestrated backing rather than a takht improvising under her,
     // which is the whole difference between this and its parent.
-    fairuz: {
+    beiruttarab: {
       label: "Beirut 1957", voices: 3, bars: 8, near: "tarab",
       plan: "arc", bpm: 92,
       parents: { tarab: 0.6, muwashshah: 0.4 },
@@ -17803,7 +17840,7 @@
     // four-on-the-floor built from a drum machine and a sequencer — a disco
     // record made by three people, which is why `disco` carries real weight
     // beside the synth-pop.
-    bronskibeat: {
+    hinrg: {
       label: "Brixton 1984", voices: 3, bars: 8, near: "synthpop",
       plan: "dance", bpm: 126,
       parents: { synthpop: 0.4, disco: 0.35, newwave: 0.25 },
@@ -17830,13 +17867,13 @@
     // OMD — Liverpool 1980, Organisation. The article's origin is MEOLS on
     // Merseyside, 11 km from Liverpool's dot and therefore inside it; the
     // label keeps the city the dot is named for. The row is the pair this
-    // catalogue was missing between `kraftwerk` and `synthpop`: a band who
+    // catalogue was missing between `dusseldorfschool` and `synthpop`: a band who
     // took the German machine and wrote pop songs on it a year before
     // Basildon did.
-    omd: {
+    newpop: {
       label: "Liverpool 1980", voices: 3, bars: 8, near: "synthpop",
       plan: "song", bpm: 120,
-      parents: { kraftwerk: 0.45, roboticpop: 0.3, newwave: 0.25 },
+      parents: { dusseldorfschool: 0.45, roboticpop: 0.3, newwave: 0.25 },
       wants: [],
       instr: ["solo_vox", "polysynth", "saw_wave"],
       drumkit: "cr78",
@@ -17865,11 +17902,11 @@
     doom: {
       label: "Stockholm 1986", voices: 2, rate: 0.5, near: "sludge",
       plan: "song", bpm: 76,
-      // LINEAGE: sabbath (Workington 1969), nearly alone — doom is the
+      // LINEAGE: heavymetal (Workington 1969), nearly alone — doom is the
       // genre that took ONE parent's slowest idea and made it the whole
       // aesthetic. nwobhm supplies the operatic vocal register Messiah
       // Marcolin actually sang in.
-      parents: { sabbath: 0.65, nwobhm: 0.2 },
+      parents: { heavymetal: 0.65, nwobhm: 0.2 },
       wants: [],
       instr: ["distortion_guitar", "distortion_guitar"],
       drumkit: "power",
@@ -17931,10 +17968,10 @@
     // triads, thirds and sixths sung as CONSONANCE while Paris still
     // filed them as spice. Named for Dunstaple because the continent
     // named the sound for him (Martin le Franc's poem is the citation
-    // dufay's own row has carried as a want since it was written; dufay
+    // isorhythm's own row has carried as a want since it was written; isorhythm
     // takes this row as a parent today).
-    dunstaple: {
-      label: "London 1420", voices: 3, rate: 0.5, near: "dufay",
+    contenanceangloise: {
+      label: "London 1420", voices: 3, rate: 0.5, near: "isorhythm",
       plan: "arc", bpm: 80,
       // LINEAGE: organum is the held-tenor practice every Old Hall mass
       // movement still stands on; the English discant that filled it
@@ -17991,7 +18028,7 @@
     //     one row. The naming is recorded at the row.
     //   · "township jazz" as its own row — an umbrella like darkwave:
     //     `marabi` (Johannesburg 1935) already holds the root, and
-    //     `skokiaan` (Bulawayo 1947) below is the datable record of the
+    //     `tsabatsaba` (Bulawayo 1947) below is the datable record of the
     //     step after it. The umbrella word names a shelf, not a record.
     // ================================================================
 
@@ -18001,7 +18038,7 @@
     // Rozz Williams — the label says Pomona, Williams's own town, the
     // rule that keeps the Kinks in Muswell Hill and Bauhaus in
     // Northampton (and it keeps (place, year) a key: Los Angeles 1982
-    // is toto's). Punk speed under horror-matinee theatre: a scratchy
+    // is aor's). Punk speed under horror-matinee theatre: a scratchy
     // chorused guitar, a tribal floor-tom beat, the B-movie dead sung
     // as camp and meant anyway.
     deathrock: {
@@ -18013,9 +18050,9 @@
       // the LA bands were building the same room in parallel and heard
       // Bauhaus after the walls were up.
       // "the horror film score" PAID 2026-08-30, the folk-floor round:
-      // `carpenter` (Los Angeles 1978) — the article's third origin,
+      // `horrorsynth` (Los Angeles 1978) — the article's third origin,
       // four years older than this record and one county over.
-      parents: { punk: 0.45, glam: 0.25, gothicrock: 0.2, carpenter: 0.2 },
+      parents: { punk: 0.45, glam: 0.25, gothicrock: 0.2, horrorsynth: 0.2 },
       wants: [],
       instr: ["overdrive_guitar", "clean_guitar"],
       drumkit: "room",
@@ -18096,10 +18133,10 @@
       label: "Rennes 1979", voices: 2, bars: 8, near: "postpunk",
       plan: "song", bpm: 142,
       // LINEAGE: `postpunk` at dominant weight — this IS post-punk,
-      // pronounced differently; `kraftwerk` is the synth discipline
+      // pronounced differently; `dusseldorfschool` is the synth discipline
       // the French scene admitted more readily than Manchester did
       // (the article's own origins name electronic music beside punk).
-      parents: { postpunk: 0.45, punk: 0.2, kraftwerk: 0.25 },
+      parents: { postpunk: 0.45, punk: 0.2, dusseldorfschool: 0.25 },
       wants: [],
       instr: ["clean_guitar", "polysynth"],
       drumkit: "room",
@@ -18120,7 +18157,7 @@
                     : [transpose(-9), keep(0, 4, 8, 12)]),
     },
 
-    // THE SISTERS OF MERCY — York 1981. An artist row, the sabbath
+    // THE SISTERS OF MERCY — York 1981. An artist row, the heavymetal
     // kind, DATED THE SABBATH WAY: the definitive Doktor/Eldritch/
     // Marx/Adams formation's first gig (Riley Smith Hall, Leeds) has
     // no recorded date — the article says so — and the performance
@@ -18137,7 +18174,7 @@
     // and a baritone drone. HONESTLY DISTINCT from Northampton 1979:
     // Bauhaus is dub space and live drums; this is a machine that
     // never leans, which is the DYNAMICS row's whole claim.
-    sisters: {
+    leedsgoth: {
       label: "York 1981", voices: 2, bars: 8, near: "gothicrock",
       plan: "song", bpm: 120,
       // LINEAGE: `gothicrock` is the licence and the wardrobe;
@@ -18635,7 +18672,7 @@
     // own in this ZIM and the record is as datable as mbube — and
     // Musarurwa's own later band was named the Bulawayo Sweet Rhythm
     // Band, which settles the dot.
-    skokiaan: {
+    tsabatsaba: {
       instrumental: true,   // a Bulawayo sax band
       label: "Bulawayo 1947", voices: 3, bars: 8, near: "kwela",
       plan: "song", bpm: 138,
@@ -18667,8 +18704,9 @@
     },
 
     // ================================================================
-    // THE DOWNTEMPO ROUND — 2026-08-30 (Paul: "Now we need more
-    // portishead massive attack and maybe 10 more downtempo bands.")
+    // THE DOWNTEMPO ROUND — 2026-08-30 (Paul, verbatim: "Now we need more
+    // portishead massive attack and maybe 10 more downtempo bands." — the
+    // two acts are the rows now keyed `noirhop` and `bristolsound`.)
     // Twelve rows: the Bristol scene given its records (the catalog
     // held ONE — `triphop`, Blue Lines — for a city with a trinity),
     // and the 90s downtempo diaspora those records started: London,
@@ -18679,11 +18717,11 @@
     // THE MASSIVE ATTACK RULING, argued once, here: `triphop` is
     // "Bristol 1991" and Bristol 1991 IS Blue Lines — Massive Attack
     // already anchor the GENRE row, and a record pays one debt (the
-    // winstons/amen ruling, generalized). So the band's own row
+    // amenbreak/amen ruling, generalized). So the band's own row
     // anchors on a DIFFERENT record: Mezzanine (1998), the era the
     // two links would otherwise erase — the analogsynthpop/gothsynth
     // precedent, one band twice because the records are two sounds.
-    // Blue Lines stays triphop's; Mezzanine is `massiveattack`'s; no
+    // Blue Lines stays triphop's; Mezzanine is `bristolsound`'s; no
     // two rows claim one record.
     //
     // EXAMINED AND DECLINED, dated here so the next round does not
@@ -18700,7 +18738,7 @@
     //     the Batcave's OWN bands cutting the room's sound; Café del
     //     Mar Volumen Uno (1994) compiles other people's finished
     //     records, each of which pays its own debt elsewhere.
-    //   · nightmaresonwax — REFUSED ON A MEASUREMENT, the sisters
+    //   · nightmaresonwax — REFUSED ON A MEASUREMENT, the leedsgoth
     //     precedent: Smokers Delight (Warp, 1995) is a Leeds record
     //     and Leeds lands 5.8 CSS px from Halifax at the Britain arc,
     //     under G10's 8.5 floor (measured at the goth round, noted in
@@ -18727,7 +18765,7 @@
     //     want — the shelf exists for it to sit beside.]
     //   · zero7, bonobo, groovearmada, unkle — thin, each for its own
     //     reason: Simple Things (2001) is Moon Safari's London echo
-    //     and would restate `air`; Bonobo is the djshadow/Ninja Tune
+    //     and would restate `air`; Bonobo is the instrumentalhiphop/Ninja Tune
     //     shelf a generation later; Groove Armada's records live on
     //     the bigbeat/house side of this line; and Psyence Fiction is
     //     DJ Shadow at the desk again — his row holds that desk, and
@@ -18784,8 +18822,8 @@
     // Garfunkel pose on the sleeve as the whole manifesto. The K&D
     // Sessions (1998) made the sound world-famous but it is a remix
     // album — other people's records, each paying its own debt — so
-    // the EP is the honest anchor, the winstons rule again.
-    kruderdorfmeister: {
+    // the EP is the honest anchor, the amenbreak rule again.
+    viennadownbeat: {
       label: "Vienna 1993", voices: 2, bars: 8, near: "triphop",
       plan: "dance", bpm: 82,
       // LINEAGE: `dub` (Kingston 1973) is the bass and the patience;
@@ -18817,10 +18855,15 @@
     // room to himself — beats cut to lacquer and scratched back so
     // the hiss is IN the loop, Adrian Utley's spy-theme guitar,
     // Beth Gibbons singing torch songs a foot from the mic. Paul
-    // asked for the band by name and the row is honestly distinct
+    // asked for the band by name (2026-08-30) — REVERSED 2026-09-01,
+    // the great rename ("ONLY genre... we don't want to claim to have
+    // anything to do with all that"): the key is now the coinage
+    // noirhop, because triphop was already Blue Lines' word and the
+    // torch-song-on-a-turntable shelf has no other name. The row is
+    // otherwise untouched, and honestly distinct
     // from Blue Lines: this is a TORCH SONG on a turntable, not a
     // sound system slowed down.
-    portishead: {
+    noirhop: {
       label: "Bristol 1994", voices: 3, bars: 8, near: "triphop",
       plan: "song", bpm: 76,
       // LINEAGE: `triphop` (Bristol 1991) is the room he was a tape
@@ -18829,9 +18872,9 @@
       // triphop's own row does; `jazz` (New York 1945) is Utley's
       // trade and the torch harmony under Gibbons.
       // "the spy-film score" PAID 2026-08-30, the folk-floor round:
-      // `barry` (London 1962) — the shelf Dummy was sampling, named.
+      // `spyscore` (London 1962) — the shelf Dummy was sampling, named.
       // Schifrin stays uncredited and unowed; one record pays one debt.
-      parents: { triphop: 0.35, electro: 0.2, jazz: 0.2, barry: 0.15 },
+      parents: { triphop: 0.35, electro: 0.2, jazz: 0.2, spyscore: 0.15 },
       wants: [],
       // THE `cannot` IS PAID, 2026-08-30 (the grain round), and it is the
       // one Paul came back for by name: "Does anything have found audio,
@@ -18884,7 +18927,7 @@
       fx: ["tremolo", "echo"],
       /* THE RIFF GOES INTO THE ROOM (2026-08-31). Paul: "when the guitar
          starts to riff on portishead send it through lots of delay and
-         reverb." Dummy's guitar is not a rhythm part sitting in the mix —
+         reverb." (Verbatim; the row is keyed `noirhop` since 2026-09-01.) Dummy's guitar is not a rhythm part sitting in the mix —
          it is a figure arriving from somewhere else, which is what the spy
          -film debt on this row's `wants` has always been about. `wet` is
          .55 of each bus, the second-loudest word the enum holds, on the
@@ -18906,7 +18949,7 @@
         //   what leaves is the ROW declaring it for you. */   // the dust is in the loop — see the paid cannot
               // 0.62 -> 0.34, 2026-08-31. Paul, on the shipped record: "how do
               // I control the amount of crackle on portishead it's way too
-              // much". The pressed number that chose 0.62 was -31.5 dB under
+              // much" (verbatim; the row is keyed `noirhop` since 2026-09-01). The pressed number that chose 0.62 was -31.5 dB under
               // the mix, which measured like a plausible acetate and hears
               // like a fault; halved to -37 dB under, where the surface is
               // under the record rather than on top of it. The ear outranks
@@ -18937,8 +18980,8 @@
     // stood. (Bristol now holds four records across seven years —
     // Paris holds seven across eight centuries; a place is allowed
     // to be a scene.)
-    tricky: {
-      label: "Bristol 1995", voices: 2, bars: 8, near: "portishead",
+    knowlewest: {
+      label: "Bristol 1995", voices: 2, bars: 8, near: "noirhop",
       plan: "song", bpm: 78,
       // LINEAGE: `triphop` (Bristol 1991) is the band he walked out
       // of; `dub` (Kingston 1973) the blood — his grandmother's
@@ -18968,7 +19011,7 @@
       // mic, where Portishead's is a stylus in a groove the band cut that
       // afternoon. Both are surface; one is a degree less of it.
       //   THE NUMBER IS BIG BECAUSE THE RECORD IS LOUD. This press comes
-      // back at -18.6 dBFS against portishead's -25.9 — seven decibels
+      // back at -18.6 dBFS against noirhop's -25.9 — seven decibels
       // hotter — so the same surface reads seven decibels further down,
       // and the level has to be raised to say the quieter thing. Read the
       // DEPTH, never the number, when comparing two rows (the essay
@@ -18997,9 +19040,9 @@
     // Edwards's balm — and the one thing no other row in this wing
     // has, a SLIDE GUITAR, country blues laid over the loop as if
     // Beck's Odelay and Dummy shared a porch. The ear files it beside
-    // portishead; the guitar is why it is not a copy.
-    morcheeba: {
-      label: "London 1996", voices: 3, bars: 8, near: "portishead",
+    // noirhop; the guitar is why it is not a copy.
+    chillout: {
+      label: "London 1996", voices: 3, bars: 8, near: "noirhop",
       plan: "song", bpm: 80,
       // LINEAGE: `triphop` (Bristol 1991) is the licence the press
       // filed them under; `blues` (Chicago 1952) the slide and the
@@ -19037,7 +19080,7 @@
     // — the row where this wing touches `dnb` instead of dub. The
     // breaks are dnb's, the tempo is a ballad's: half-time song over
     // double-time drums, which no other row in the table says.
-    lamb: {
+    torchbreaks: {
       label: "Manchester 1996", voices: 2, bars: 8, near: "dnb",
       plan: "song", bpm: 82,
       // LINEAGE: the ZIM's own three — trip hop, drum and bass and
@@ -19077,9 +19120,9 @@
     // into moods with no rapper anywhere on it. `blockparty`'s
     // merry-go-round became a pad bank, which is the lineage edge
     // drawn below.
-    djshadow: {
+    instrumentalhiphop: {
       instrumental: true,   // the ZIM's own genre line: instrumental hip hop — no singer on the record
-      label: "San Francisco 1996", voices: 2, bars: 8, near: "boombap",
+      label: "San Francisco 1996", voices: 3, bars: 8, near: "boombap",
       plan: "song", bpm: 88,
       // LINEAGE: `boombap` (New York 1994) is the kit craft at its
       // most reverent; `blockparty` (Bronx 1973) the DJ culture the
@@ -19109,11 +19152,37 @@
                "deciding which four bars, and this box picks from a fixed " +
                "crate nobody dug for; the row says the mood, the break " +
                "and now the dust, but never the find"],
-      instr: ["electric_piano", "strings"],
+      /* THE BREAK ARRIVES, 2026-09-01. Paul: "Why doesn't dj shadow have
+         samples" — and he was right the way the row's own words already
+         admitted: "a break and a hiss" declared an electric piano and
+         strings, bpm 88, drumkit "electronic", and NO break. The collage
+         door shipped this morning (to-engine `found:collage:<pool>`), so the
+         third chair is the whole pool `break_75_95` — twelve file-backed
+         SAMPLES rows (81-94 bpm, 88 sits mid-pool; `break_95_115` is the
+         wrong shelf here), all local, so the COEP local-only rail drops
+         nothing: 12/12 seat. Twelve one-semitone zones over MIDI 48-59,
+         each rooted on its own key, and SAMPLES rows are one-shots — every
+         note retriggers its break from the top, which is the MPC chop, not
+         a defect: a line that moves is a splice, a repeated pitch is a
+         loop. That is Endtroducing's actual grammar. The piano stays
+         seated; "somebody else's melancholy" is the other half of the
+         record. bigbeat is the seated precedent for the instr shape. */
+      instr: ["electric_piano", "strings", "found:collage:break_75_95"],
       drumkit: "electronic",
-      entry: v => (v === 0 ? 0 : 2), reg: v => (v === 0 ? 0 : 1),
+      /* the break runs from bar one — it IS the record; the strings still
+         wait two bars, weather moving in over it */
+      entry: v => (v === 1 ? 2 : 0),
+      /* v2 reg MEASURED, not assumed (the balearic +1 note is the law
+         here). Three settings against the zone window 48-59:
+             reg +1  ->  MIDI 60..79 (seed 1) — every note in the stretched
+                         top zone, ONE recording, i.e. a loop, not a splice
+             reg  0  ->  48..67 (seed 1), 51..63 (seed 5) — the bulk inside
+                         the window
+             reg -1  ->  identical to 0 (the low floor clamps it)
+         So 0, and the numbers above are why. */
+      reg: v => (v === 0 ? 0 : v === 1 ? 1 : 0),
       realize: v => (v === 1 ? "pad" : "line"),
-      part: ["lead", "pad"],
+      part: ["lead", "pad", "riff"],
       harmony: "modal",
       mode: MODES.aeolian, scale: DIATONIC, artic: "legato", maxHold: 4,
       swing: 0.15, bassStyle: "pedal",
@@ -19129,7 +19198,7 @@
       // but played back clean off an MPC rather than cut again.
       //   The number is small because the press is QUIET (-33.1 dBFS,
       // two voices and a lot of air): a forward surface costs less level
-      // here than a buried one does on tricky.
+      // here than a buried one does on knowlewest.
       tone: { /* grain: 0.39 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the
         //   measured value for a hand that wants it back. Paul: "Make the
         //   default for surface 0 and I can turn it on only if I want to,
@@ -19141,8 +19210,13 @@
         //   what leaves is the ROW declaring it for you. */
               wave: "triangle", cut: 1600, q: 1.0, atk: .02, rel: 1.4, gain: .25, verb: .5 },
       words: ["the piano loop, four bars of somebody else's melancholy",
-              "the strings, weather moving in over the break"],
+              "the strings, weather moving in over the break",
+              "the break, twelve records cut against each other"],
+      /* the v2 arm must MOVE — on this chair pitch chooses WHICH RECORD
+         speaks, so a static pitch is one loop and a rotated one is a
+         re-splice; verses splice differently */
       word: (v, s) => (v === 0 ? [[], [rotate(4)], [transpose(-2)], [rotate(4)]][s % 4]
+                    : v === 2 ? [[], [rotate(4)], [drop(2)], [rotate(4)]][s % 4]
                     : [drop(8), keep(0, 8)]),
     },
 
@@ -19156,8 +19230,8 @@
     // names the guests (Pam Bricker, Bebel Gilberto), so the row is
     // NOT declared instrumental: singers are welcome at this door
     // and always were.
-    thieverycorporation: {
-      label: "Washington 1996", voices: 3, bars: 8, near: "kruderdorfmeister",
+    downtempo: {
+      label: "Washington 1996", voices: 3, bars: 8, near: "viennadownbeat",
       plan: "dance", bpm: 84,
       // LINEAGE: `dub` (Kingston 1973) is the bass and the echo;
       // `bossa` (Rio de Janeiro 1958) the other half of the shared
@@ -19201,7 +19275,7 @@
     // the map keeps the scene's real name (the press called this
     // wave "the Versailles sound"; filing it under Paris would erase
     // the town the joke and the sound are both about).
-    air: {
+    versailles: {
       label: "Versailles 1998", voices: 3, bars: 8, near: "synthwave",
       plan: "song", bpm: 84,
       // LINEAGE: `psychpop` (London 1968) is the orchestrated pop
@@ -19242,7 +19316,7 @@
     // gothsynth/analogsynthpop precedent: one act, two rows, because
     // the two records are two musics — and the label says the year
     // that separates them.
-    massiveattack: {
+    bristolsound: {
       label: "Bristol 1998", voices: 3, bars: 8, near: "triphop",
       plan: "song", bpm: 80,
       // LINEAGE: `triphop` (Bristol 1991) is their own earlier
@@ -19317,7 +19391,7 @@
     // jazz. The one row in this round at house tempo: downtempo's
     // Paris end kept the four-on-the-floor and slowed the harmony
     // instead of the kick.
-    stgermain: {
+    nujazz: {
       instrumental: true,   // the record books players, not singers — the voices on it are sampled texture, not a chair
       label: "Paris 2000", voices: 2, bars: 8, near: "house",
       plan: "dance", bpm: 120,
@@ -19357,8 +19431,8 @@
     // synth melodies with frost on them over an unhurried house
     // floor: the melancholy is written into the tune, not played
     // into the time, which is what the DYNAMICS null below means.
-    royksopp: {
-      label: "Tromsø 2001", voices: 2, bars: 8, near: "air",
+    tromso: {
+      label: "Tromsø 2001", voices: 2, bars: 8, near: "versailles",
       plan: "dance", bpm: 104,
       // LINEAGE: `house` (Chicago 1986) is the floor; `ambient`
       // (London 1978) the patience — Biosphere is this row's want
@@ -19390,7 +19464,7 @@
        ====================================================================
        Paul: *"we're missing all kinds of folk traditions plus Pygmy and
        Romm and classic nursery rhymes. We also could use some classic film
-       soundtracks, 80s and 90s sitcom themes, John carpenter horror and
+       soundtracks, 80s and 90s sitcom themes, John Carpenter horror and
        incidental stock music of all kinds. Plus tons of Miami vice jan
        hammer michael mann synth incidental stuff — mood setting synth."*
 
@@ -19408,9 +19482,9 @@
        desks — nine rows, each a named score.
 
        PAID BY NAME THIS ROUND (want -> parent, both years checked):
-       carpenter -> deathrock AND synthwave; miamivice -> synthwave;
-       barry -> portishead; photoplay -> newsfanfare; newsfanfare ->
-       djshadow (the library vinyl); flamenco -> rumbacatalana;
+       horrorsynth -> deathrock AND synthwave; copshowsynth -> synthwave;
+       spyscore -> noirhop; photoplay -> newsfanfare; newsfanfare ->
+       instrumentalhiphop (the library vinyl); flamenco -> rumbacatalana;
        nordicfolk -> nordicjazz; cajun -> zydeco; barbershop -> doowop;
        oldtime -> bluegrass AND countrypop; appalachia -> folkduo;
        polka -> nortena AND maxixe; chanson -> nhacvang; seannos ->
@@ -19436,13 +19510,13 @@
        · MUZAK — vaporwave's want; the debts round's ruling ("a licensing
          company") stands unbeaten. The mood-setting bed this round DOES
          pay is `photoplay`, which is a repertory and not a firm.
-       · THE HAMMER HORROR SCORE — sabbath's want; James Bernard's
+       · THE HAMMER HORROR SCORE — heavymetal's want; James Bernard's
          Dracula (Bray 1958) is arguable and REMAINS THE NEXT ASK; this
-         round's horror seat went to carpenter, who pays two standing
+         round's horror seat went to horrorsynth, who pays two standing
          wants where Bernard pays one.
-         [ASKED AND PAID 2026-08-30, the ledger round: carpenter's own
+         [ASKED AND PAID 2026-08-30, the ledger round: horrorsynth's own
          row arrived wanting Bernard BY NAME, which made the debt ×2,
-         and `hammerhorror` (Bray 1958) is at the foot of this file.
+         and `horrorscore` (Bray 1958) is at the foot of this file.
          Both edges dated at their rows.]
        · "FOLK" ITSELF, "world music", "stock music of all kinds", "Roma
          music" — umbrellas; the darkwave/batcave rulings. Every row
@@ -19487,10 +19561,10 @@
          recording with a PLACE on it, or nothing.]
        · A SECOND LIBRARY-BEDS ROW (DeWolfe/Bruton) — newsfanfare IS the
          London library bed at its own peak year; a second row one shelf
-         over would be the massiveattack/triphop problem without the
+         over would be the bristolsound/triphop problem without the
          twenty-year gap that solved it. The cluster is photoplay (1913)
          -> newsfanfare (1970) -> breakingnews (2006), three desks, one
-         lineage, and djshadow's crates now point at the middle one.
+         lineage, and instrumentalhiphop's crates now point at the middle one.
 
        THE PYGMY HOCKET RULING, in full, because it is the round's
        hardest row: measured at `mbuti` below — the box CAN say hocket.
@@ -19931,7 +20005,7 @@
 
     // CAJUN — New Orleans 1928. Joe Falcon and Cléoma Breaux cut ALLONS
     // À LAFAYETTE for Columbia, 27 April 1928 — the first Cajun record;
-    // the dot is the session (the skokiaan a-record-is-the-honest-row
+    // the dot is the session (the tsabatsaba a-record-is-the-honest-row
     // ruling; Rayne, their own town, measures inside Lafayette's dot).
     // Accordion and fiddle in unison heterophony, a voice pitched to cut
     // through a dance hall with no PA, the triangle keeping eighths.
@@ -20110,7 +20184,7 @@
     // line, the horn tune — hired by the picture business whole. The
     // parents say the sentence: romantic Vienna plus the operetta stage
     // plus the photoplay cue book it professionalized.
-    korngold: {
+    goldenagescore: {
       instrumental: true,   // a picture score — the dialogue is the singer
       label: "Los Angeles 1938", voices: 4, bars: 8, near: "romantic",
       plan: "arc", bpm: 112,
@@ -20147,11 +20221,11 @@
     // lineage; the serial parent is the dissonance's own teacher). The
     // stab chair is `part: "stab"` — breakingnews's own word, and
     // Herrmann is where the picture business learned it.
-    herrmann: {
+    suspensescore: {
       instrumental: true,   // forty strings and no one else in the room
-      label: "Los Angeles 1960", voices: 4, bars: 8, near: "korngold",
+      label: "Los Angeles 1960", voices: 4, bars: 8, near: "goldenagescore",
       plan: "arc", bpm: 120,
-      parents: { romantic: 0.3, korngold: 0.2, serial: 0.15 },
+      parents: { romantic: 0.3, goldenagescore: 0.2, serial: 0.15 },
       wants: ["the cbs radio drama workshop"],
       instr: ["violin", "strings", "cello", "contrabass"],
       entry: v => (v === 0 ? 2 : 0), reg: v => [1, 0, -1, -2][v],
@@ -20177,13 +20251,13 @@
     // wordless soprano as an INSTRUMENT — which is why this row carries
     // `ohh_voices` in the cast and stays instrumental: true. Nobody
     // sings; a voice is played. The parents: the Hollywood grammar he
-    // answered (korngold), the opera his soprano walked out of
+    // answered (goldenagescore), the opera his soprano walked out of
     // (belcanto), and the march the trumpets deserted.
-    morricone: {
+    spaghettiwestern: {
       instrumental: true,   // the voice on it is scored as an instrument, not a singer
-      label: "Rome 1966", voices: 4, bars: 8, near: "korngold",
+      label: "Rome 1966", voices: 4, bars: 8, near: "goldenagescore",
       plan: "arc", bpm: 108,
-      parents: { korngold: 0.25, belcanto: 0.2, march: 0.15 },
+      parents: { goldenagescore: 0.25, belcanto: 0.2, march: 0.15 },
       wants: ["duane eddy's twang guitar", "the rca italiana canzone bench"],
       instr: ["whistle", "overdrive_guitar", "brass_section", "ohh_voices"],
       entry: v => [0, 1, 2, 3][v], reg: v => [1, 0, 0, 1][v],
@@ -20214,13 +20288,13 @@
     // arrangement, Vic Flick's guitar through an amp on the edge of
     // breakup, big-band brass punched over it. The commission is the
     // genre (the news pair's law): music written to BRAND a franchise.
-    // PAYS portishead's want by name — the Bristol records were sampling
+    // PAYS noirhop's want by name — the Bristol records were sampling
     // exactly this shelf, and the edge now says so.
-    barry: {
+    spyscore: {
       instrumental: true,   // a title theme — the picture's name is the lyric
       label: "London 1962", voices: 3, bars: 8, near: "newsfanfare",
       plan: "arc", bpm: 136,
-      parents: { swing: 0.3, jazz: 0.2, korngold: 0.15 },
+      parents: { swing: 0.3, jazz: 0.2, goldenagescore: 0.15 },
       wants: ["the stan kenton brass book"],
       instr: ["clean_guitar", "brass_section", "strings"],
       swing: 0.15,
@@ -20246,22 +20320,22 @@
     // director in days at Sound Arts on rented synthesizers: the piano
     // ostinato, the held stinger, the fog pad. PAYS TWO STANDING DEBTS
     // BY NAME — deathrock's "the horror film score" and synthwave's
-    // "carpenter's film scores" — which makes this the round's most
+    // "horrorsynth's film scores" — which makes this the round's most
     // structural row: Pomona 1982 and Paris 2010 both named it before it
     // existed. The lineage is Berlin running through a grindhouse:
-    // berlinschool's sequenced pulse, herrmann's suspense grammar,
+    // berlinschool's sequenced pulse, suspensescore's suspense grammar,
     // krautrock's refusal to swing.
-    carpenter: {
+    horrorsynth: {
       instrumental: true,   // the scream is on the picture, not the score
       label: "Los Angeles 1978", voices: 3, bars: 8, near: "berlinschool",
       plan: "arc", bpm: 136,
       // "the hammer horror scores (james bernard's dracula)" PAID
       // 2026-08-30 (Bray 1958) — the want named the record and the
-      // ledger round landed it; the edge is smaller than herrmann's
+      // ledger round landed it; the edge is smaller than suspensescore's
       // because Carpenter's economy is Herrmann's and only the dread
       // is Bernard's.
-      parents: { berlinschool: 0.35, herrmann: 0.25, krautrock: 0.15,
-                 hammerhorror: 0.1 },
+      parents: { berlinschool: 0.35, suspensescore: 0.25, krautrock: 0.15,
+                 horrorscore: 0.1 },
       wants: [],
       cannot: ["the 5/4 — the Halloween ostinato counts ten quavers to " +
                "the bar and this box counts sixteen; the figure below is " +
@@ -20299,11 +20373,11 @@
     // that as a dated edge instead of an implication. Fusion hands
     // (Mahavishnu was his band) on sequencer time is the whole sound —
     // the phrase leans while the grid does not.
-    miamivice: {
+    copshowsynth: {
       instrumental: true,   // an incidental cue — the dialogue sits where the singer would
       label: "Miami 1984", voices: 3, bars: 8, near: "synthwave",
       plan: "arc", bpm: 100,
-      parents: { carpenter: 0.25, moroder: 0.25, synthpop: 0.2, jazz: 0.1 },
+      parents: { horrorsynth: 0.25, eurodisco: 0.25, synthpop: 0.2, jazz: 0.1 },
       wants: ["the mahavishnu orchestra's fusion",
               "the linndrum session-pop of 1983"],
       instr: ["polysynth", "fantasia", "warm_pad"],
@@ -20340,7 +20414,7 @@
     sitcom: {
       label: "Los Angeles 1983", voices: 3, bars: 8, near: "yachtrock",
       plan: "song", bpm: 104,
-      parents: { brill: 0.3, broadway: 0.25, yachtrock: 0.2 },
+      parents: { girlgroup: 0.3, broadway: 0.25, yachtrock: 0.2 },
       wants: ["the tv variety-show orchestra"],
       cannot: ["the sixty seconds — a main title is written to a clock " +
                "with a card cut on every fourth bar, and this box counts " +
@@ -20377,7 +20451,7 @@
     // happened to the commission between 1982 and 1989 (breakingnews's
     // own arc, run on the comedy side). One player, one sampler, no
     // tune to hum on purpose.
-    seinfeld: {
+    sitcomsting: {
       instrumental: true,   // the comedian is the vocalist and he is not on the record
       label: "Los Angeles 1989", voices: 2, bars: 4, near: "sitcom",
       plan: "song", bpm: 116,
@@ -20402,6 +20476,412 @@
               "the synth brass, the punchline hit"],
       word: v => (v === 0 ? [fill(2), drop(2)]
                 : [fill(4), rotate(3), drop(2)]),
+    },
+
+    /* =====================================================================
+       THE SOUNDTRACK ROUND, 2026-09-01. Paul: "add lots of movie
+       soundtracks especially the Hans Zimmer type but also just in general
+       nail down the current big braaaannnng sound and synth sweeps and
+       orchestral vibes. Star Wars etc." Eight rows, and the naming law from
+       the same message holds on every one: keys and labels are GENRE terms,
+       never composer or film names — the composer-named keys above
+       (goldenagescore, suspensescore, spaghettiwestern, spyscore, horrorsynth) predate the law and
+       ship as they are; nothing new joins them.
+
+       THE BRAAM IS SAYABLE WITH EXISTING MACHINERY, measured 2026-09-01
+       before any of this was written: four committed facts stacked on one
+       chair. spread(0)+keep(0)+drop(2) is ONE monotone event a bar that
+       harm() pins to the root (horrorsynth's stinger, thinned); fx:["crunch"]
+       compiles to the parent's one-stage insert_higain (fields.js FX, drive
+       .35 mix .55); tone.verb ARRIVES at the rendered units (Bray 1958
+       probe: verb .45 -> barPlan(2).units.v1.rev === 0.45 on every chair,
+       drums scaled to .345); and bassStyle:"pedal" plus the low-tom lane is
+       newsfanfare's "struck drum agreeing with the pitched one". The
+       master-bus grit the trailers print is a DESK word (fields.js MASTER)
+       and a genre cannot say it — the per-chair crunch is the whole of the
+       edge a row owns. fx:["sweep"] was probed the same morning (London
+       1978, fresh context): units.v0.inserts carries insert_filtersweep
+       {rateBars 4, lo 400, hi 5200} inline — a real four-bar rise, today. */
+
+    // THE NEO-ROMANTIC REVIVAL — Los Angeles 1979, AND THE MAP CHOSE THE
+    // CITY. The idiom's year zero is March 1977, a symphony orchestra
+    // reading the main-title fanfare to picture at Anvil Studios, Denham,
+    // when every studio head believed the orchestra was landfill — and
+    // Denham was this row's first label, REFUSED 2026-09-01 by G10: the
+    // village measures 4.0 CSS px from Bray at the Britain arc, half the
+    // 8.5 floor, and sibling Thames Valley villages are exactly what
+    // WITHIN cannot relate (the Reading ruling, replayed — atlas.js keeps
+    // the refusal in its PLACES ledger). So the dot takes the revival's
+    // American wing: the Fox scoring stage, Los Angeles, where the OTHER
+    // space fanfare of the revival was recorded through the autumn of
+    // 1979 — same idiom, same studio system, twenty months on, and a
+    // year Los Angeles had free. The label is a STUDIO CITY, not a film
+    // — the naming law above. IONIAN, not
+    // lydian, and it is a decision with an argument: goldenagescore (Los Angeles
+    // 1938) already holds lydian's raised-fourth shimmer, and the 1977
+    // revival's main titles cadence in plain major — what makes it 1977
+    // rather than 1938 is the MARCH under it, which the parents say at 0.2.
+    // The timpani chair is London 1970's own trick verbatim (spread(0),
+    // fill(4), rotate(3) — the monotone harm() moves to the bar's root),
+    // cited because CHECK THE PARENT FIRST is how this row got written.
+    spaceopera: {
+      instrumental: true,   // a picture score — the crawl is the singer
+      label: "Los Angeles 1979", voices: 4, bars: 8, near: "goldenagescore",
+      plan: "arc", bpm: 116,
+      parents: { goldenagescore: 0.45, romantic: 0.25, march: 0.2, newsfanfare: 0.1 },
+      wants: ["the leitmotif book, one tune per character"],
+      cannot: ["the modulation up a third at the cut — the box holds one " +
+               "tonic per record, and the revival's signature key-lift is " +
+               "an edit-room fact before it is a harmonic one"],
+      instr: ["trumpet", "french_horns", "strings", "timpani"],
+      part: ["lead", "counter", "riff", "riff"],
+      entry: v => (v === 2 ? 2 : 0), reg: v => [0, 0, 0, -1][v],
+      realize: () => "line",
+      drumkit: "room",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             l: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0] },
+      // the roll into the landing — newsfanfare's fill bar, verbatim
+      fill: { s: [0,0,0,0, 1,0,1,0, 1,1,1,1, 1,1,1,1],
+              x: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] },
+      harmony: "cycle",
+      roots: [0, 3, 4, 0, 5, 3, 4, 0], mode: MODES.ionian, scale: SCALES.major,
+      diatonic: true,
+      prog: [{ d: 0 }, { d: 3 }, { d: 4 }, { d: 0 },
+             { d: 5 }, { d: 3 }, { d: 4, q: "dom7" }, { d: 0 }],
+      artic: "staccato", maxHold: 3, bassStyle: "octaves",
+      tone: { wave: "sawtooth", cut: 2600, q: 1.0, atk: .01, rel: .7, gain: .27, verb: .38 },
+      words: ["the trumpets, the fanfare over the crawl",
+              "the horns, the answer from the throne room",
+              "the strings, racing between the hits",
+              "the timpani, the empire underneath"],
+      word: v => (v === 0 ? [fill(4), rotate(3)]
+                : v === 1 ? [fill(2), transpose(-3)]
+                : v === 2 ? [spread(0.5), fill(1)]
+                : [spread(0), fill(4), rotate(3)]),
+    },
+
+    // THE EPIC HYBRID SCORE — Santa Monica 2010, THE BRAAAM. The label is
+    // the Santa Monica studio complex the idiom was built in; 2010 is the
+    // year the blast escaped into every trailer on earth. The parents say
+    // what the conservatory never admits: the idiom's inventors came out of
+    // SYNTHPOP, not the academy — eurodisco's floor at 0.2, minimalism's
+    // ostinato-instead-of-tune at 0.25, goldenagescore's orchestra hired back at
+    // 0.2, horrorsynth's economy, horrorscore's dread. The braam chair is
+    // the header block's four measured facts on v0; no timekeeper lane on
+    // purpose — the ostinato IS the clock.
+    //
+    // VERIFY IT ARRIVES (the box's characteristic bug is declared-but-
+    // never-arriving): fresh context, #at=Santa Monica&y=2010, then
+    //   (a) the blast — v0 has <=2 pitched events/bar, monotone, held
+    //       ~1.5 beats, midi <= 52 (the register-law fold, see the reg
+    //       comment below; midi = (floor(pch)-8)*12 + round(frac*100) + 60);
+    //   (b) the grit — barPlan(2).units.vN.inserts carries insert_higain;
+    //   (c) the wash — units.vN.rev ~ 0.55, tone.verb's proven arrival;
+    //   (d) the floor — the bass holds one pitch class; lane l in the kit.
+    // MEASURED AT LANDING, 2026-09-01, after two real fixes this probe
+    // forced: the first compile played the STUDIO FAMILY's pickup cell
+    // (3 hits/bar at 1.5 beats — precompose's "do do dooo" tombstone,
+    // one round old) until the IDIOM_ANCHOR row landed (`long`+`hold`,
+    // two blasts a bar, hold 6 steps); and the register story is below.
+    // Final: 2 events/bar, monotone 52, 1.5 beats, higain + filtersweep
+    // in v0.inserts, rev 0.55 on every pitched chair.
+    epichybrid: {
+      instrumental: true,   // a cue — the picture talks, the score blasts
+      label: "Santa Monica 2010", voices: 4, bars: 8, near: "horrorsynth",
+      plan: "arc", bpm: 112,
+      parents: { goldenagescore: 0.2, minimalism: 0.25, eurodisco: 0.2,
+                 horrorsynth: 0.15, horrorscore: 0.1 },
+      wants: ["the shepard-tone riser", "the solo duduk over the strings"],
+      cannot: ["the octave of sub printed UNDER the braam — that bottom is " +
+               "a sound-design stem below the orchestra; the bass chair " +
+               "here is one instrument on a line",
+               "the ten-minute single crescendo — a cue builds over reels, " +
+               "a box counts bars"],
+      instr: ["brass_section", "tremolo", "cello", "warm_pad"],
+      part: ["riff", "riff", "counter", "pad"],
+      // WHERE THE BLAST SITS, measured 2026-09-01 at barPlan rather than
+      // asserted: the register floor law centres a non-bass riff chair at
+      // 48 and the monotone folds to the root nearest it — MIDI 52 on an
+      // E record, held 1.5 beats, twice a bar. Centring it lower was
+      // TRIED (precompose SUBTERRANEAN, centre 36 → fold 40) and the
+      // register home undid it — homeFor dealt the seat +1 because the
+      // chair's other sections straddle the sampler window down there,
+      // and the page played 52 anyway. So the chair keeps the box's own
+      // centre and the record's floor octave belongs to the PEDAL BASS
+      // under it, doubled by the taiko lane — which is how the real stems
+      // are printed too (the `cannot` below refuses the sub for a reason).
+      entry: v => [0, 0, 2, 4][v], reg: v => [-1, 0, -1, 0][v],
+      realize: v => (v === 3 ? "pad" : "line"),
+      drumkit: "power",
+      // the taiko quarter-pulse on the low tom; NO hat lane — no timekeeper
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             l: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0] },
+      fill: { l: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+              x: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] },
+      harmony: "modal",
+      mode: MODES.aeolian, scale: DIATONIC,
+      artic: "tie", maxHold: 6, bassStyle: "pedal",
+      fx: ["crunch", "sweep"],   // the higain edge on the blast + the 4-bar riser
+      tone: { wave: "sawtooth", cut: 1300, q: 1.1, atk: .06, rel: 1.8, gain: .27, verb: .55 },
+      words: ["the low brass, the blast — one note, most of a bar",
+              "the tremolo strings, dread by the yard",
+              "the cellos, the four-note figure that never grows",
+              "the pad, the skyline behind it"],
+      word: v => (v === 0 ? [spread(0), keep(0), drop(2)]   // THE BRAAM
+                : v === 1 ? [spread(0.5), fill(2)]          // newsfanfare's ostinato
+                : v === 2 ? [excerpt(0, 4), fill(4)]        // the cell, looped
+                : [drop(9)]),
+    },
+
+    // TRAILER MUSIC — Los Angeles 2012. The trailer houses' library albums
+    // as their own genre: the hybrid grammar cut to thirty seconds and sold
+    // by the cue. DATED 2012 AND NOT 2008, against this round's own first
+    // draft (2026-09-01): `epichybrid` (Santa Monica 2010) is the dominant
+    // parent at 0.4, and a parent cannot postdate its child — electroindustrial's
+    // date-refusal precedent, applied to my own spec. 2012 is honest
+    // anyway: the year the braam was in every campaign and the library
+    // records started charting on their own names. The job description is
+    // newsfanfare's at 0.2 — recognised through a wall by people not
+    // listening — and the rave stab is literally in the cast:
+    // `orchestra_hit` ships in hardcorerave (Essex 1991), two UNLOOPED
+    // zones, a hit by construction.
+    trailerscore: {
+      instrumental: true,   // thirty seconds of score for a picture it is not in
+      label: "Los Angeles 2012", voices: 4, bars: 8, near: "epichybrid",
+      plan: "arc", bpm: 128,
+      parents: { epichybrid: 0.4, newsfanfare: 0.2, goldenagescore: 0.15,
+                 hardcorerave: 0.1 },
+      wants: [],
+      cannot: ["the three-act cut — risers resolve on title cards this box " +
+               "cannot show",
+               "the boom-and-black — a bar of silence is sayable, half a " +
+               "second of black is not"],
+      instr: ["orchestra_hit", "strings", "brass_section", "ahh_choir"],
+      part: ["stab", "riff", "riff", "pad"],
+      entry: v => [0, 0, 4, 4][v], reg: v => [0, 0, -1, 0][v],
+      realize: v => (v === 3 ? "pad" : "line"),
+      drumkit: "power",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             l: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             x: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] },
+      // the all-skins bar
+      fill: { s: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
+              l: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      harmony: "modal",
+      mode: MODES.phrygian, scale: SCALES.chromatic,
+      artic: "staccato", maxHold: 2, bassStyle: "pedal",
+      fx: ["sweep", "crunch"],
+      tone: { wave: "sawtooth", cut: 2000, q: 1.2, atk: .005, rel: .8, gain: .28, verb: .5 },
+      words: ["the hit — the whole orchestra as one drum",
+              "the strings, sixteenths, the panic engine",
+              "the low brass, the blast on the card",
+              "the choir, vowels the size of the screen"],
+      word: v => (v === 0 ? [fill(4), rotate(3), drop(2)]   // spyscore's door-kick
+                : v === 1 ? [spread(0.5), fill(1)]
+                : v === 2 ? [spread(0), keep(0, 8), drop(2)] // horrorsynth's stinger
+                : [drop(2)]),
+    },
+
+    // CRIME JAZZ — Los Angeles 1955, the year the big band walked into the
+    // pictures: a jazz orchestra scoring a narcotics picture as itself, in
+    // a main title built from a blaring brass riff over a walking bass.
+    // PAYS newsfanfare's standing want ["crime jazz"] BY NAME — annotated
+    // at the site, horrorsynth's PAID precedent. TWO PARENTS REFUSED ON
+    // DATES, 2026-09-01, against this round's own spec: `suspensescore` is Los
+    // Angeles 1960, five years AFTER this label, and `rnb` here is
+    // Philadelphia 1994 — both out, electroindustrial's rule. What was actually
+    // on the stand in 1955: swing's section writing (0.35), jumpblues'
+    // small-band shuffle heat (0.25, the same city nine years earlier),
+    // goldenagescore's scoring desk (0.15), blues (0.1, Chicago 1952, in time by
+    // three years). The ornament row is jazz's, dimmed — session players
+    // reading a chart, not soloists.
+    crimejazz: {
+      instrumental: true,   // the voiceover sits where the singer would
+      label: "Los Angeles 1955", voices: 4, bars: 8, near: "spyscore",
+      plan: "arc", bpm: 112,
+      parents: { swing: 0.35, jumpblues: 0.25, goldenagescore: 0.15, blues: 0.1 },
+      wants: ["the bongos under the brass"],
+      instr: ["muted_trumpet", "tenor_sax", "brass_section", "vibraphone"],
+      swing: 0.2,
+      part: ["lead", "counter", "stab", "pad"],
+      entry: v => [0, 2, 0, 4][v], reg: v => [0, 0, 0, 1][v],
+      realize: v => (v === 3 ? "pad" : "line"),
+      drumkit: "brush",
+      // ride, not hats — spyscore's jazz-kit idiom, one shelf over
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             r: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      harmony: "modal",
+      mode: MODES.dorian, scale: SCALES.chromatic,
+      artic: "staccato", maxHold: 2, bassStyle: "walk",
+      tone: { wave: "sawtooth", cut: 2300, q: 1.1, atk: .006, rel: .5, gain: .26, verb: .33 },
+      words: ["the muted trumpet, the tail under the streetlight",
+              "the tenor, the confession",
+              "the brass, the blackmail chord",
+              "the vibes, neon through the blinds"],
+      word: v => (v === 0 ? [excerpt(0, 4), fill(2)]
+                : v === 1 ? [transpose(-3), fill(2)]
+                : v === 2 ? [fill(4), rotate(3), drop(3)]
+                : [drop(9)]),
+    },
+
+    // THE FANTASY EPIC SCORE — Wellington 2001, the year the biggest
+    // orchestral commission on earth moved to Wellington: the golden-age
+    // grammar with FOLK modal writing and a congregation in it, which is
+    // the whole difference from Los Angeles 1938 and the parents say it —
+    // irishtrad's fiddle tune at 0.15, hymn's four-part congregation at
+    // 0.15, under goldenagescore's leitmotif desk. DORIAN WITH THE bVII in the
+    // cycle (roots bar 2 and 6 on degree 6): folk minor, not harmonic —
+    // the old world does not lean on a leading tone. Open fifths in the
+    // bass = the old world twice. The one drum is a FIELD drum, not a kit:
+    // lane l alone, the crash saved for the fill bar.
+    fantasyscore: {
+      instrumental: true,   // a picture score — the dialogue is in Elvish anyway
+      label: "Wellington 2001", voices: 4, bars: 8, near: "goldenagescore",
+      plan: "arc", bpm: 92,
+      parents: { goldenagescore: 0.3, romantic: 0.2, irishtrad: 0.15, hymn: 0.15 },
+      wants: [],
+      instr: ["fiddle", "french_horns", "ahh_choir", "slow_strings"],
+      part: ["lead", "counter", "pad", "pad"],
+      entry: v => [0, 2, 4, 0][v], reg: v => [0, 0, 0, -1][v],
+      realize: v => (v >= 2 ? "pad" : "line"),
+      drumkit: "room",
+      kit: { l: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0] },
+      fill: { x: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] },
+      harmony: "cycle",
+      roots: [0, 6, 3, 0, 0, 6, 4, 0], mode: MODES.dorian, scale: DIATONIC,
+      diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "fifths",
+      tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .03, rel: 1.4, gain: .26, verb: .55 },
+      words: ["the fiddle, the tune from the small country",
+              "the horns, the tune again with the army behind it",
+              "the choir, the dead language",
+              "the low strings, the mountains"],
+      word: v => (v === 0 ? [fill(2)]
+                : v === 1 ? [fill(2), transpose(-3)]
+                : v === 2 ? [drop(2)]
+                : [drop(9)]),
+    },
+
+    // THE NORDIC DRONE SCORE — Reykjavík 2015. The string-cluster school:
+    // a chamber section played at the edge of tone, processed until the
+    // room is the instrument, scoring prestige pictures from a Reykjavík
+    // that had spent two decades exporting exactly this weather. The
+    // parents put drone (New York 1964) FIRST at 0.35, over the suspense
+    // desk it ends up hired for — the idiom is minimalist texture that
+    // took a scoring job, not a score that discovered texture. The
+    // four-bar filter open (fx: sweep, measured arriving as
+    // insert_filtersweep) IS the form; the kit is a thump a bar and its
+    // echo half a bar later, nothing else.
+    nordicscore: {
+      instrumental: true,   // the picture breathes; the score holds it
+      label: "Reykjavík 2015", voices: 4, bars: 8, near: "suspensescore",
+      // 70, not the 66 this round's spec asked for: compose.js fences bpm
+      // to 70..160 and 66 fails the gate by name (measured 2026-09-01,
+      // precompose G6a). 70 is the floor and the floor is the point.
+      plan: "arc", bpm: 70,
+      parents: { drone: 0.35, suspensescore: 0.2, ambient: 0.2, minimalism: 0.15 },
+      wants: [],
+      cannot: ["the detuned cluster — a section a quarter-tone at war with " +
+               "itself needs per-chair cents the box does not yet deal to " +
+               "sections",
+               "the processed bow — half this idiom is a cello through a " +
+               "broken tape machine, and the tape here is the master's, " +
+               "not a chair's"],
+      instr: ["cello", "tremolo", "contrabass", "halo_pad"],
+      part: ["lead", "riff", "riff", "pad"],
+      entry: v => [4, 0, 0, 0][v], reg: v => [0, 0, -1, 0][v],
+      realize: v => (v === 3 ? "pad" : "line"),
+      drumkit: "power",
+      kit: { k: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
+             l: [0,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0] },
+      harmony: "modal",
+      mode: MODES.phrygian, scale: SCALES.chromatic,
+      artic: "tie", maxHold: 6, bassStyle: "pedal",
+      fx: ["sweep"],
+      tone: { wave: "sawtooth", cut: 900, q: 1.4, atk: .15, rel: 2.6, gain: .24, verb: .7 },
+      words: ["the cello, a breath away from the bridge",
+              "the tremolo strings, the weather warning",
+              "the basses, the pulse under the floor",
+              "the pad, the coastline"],
+      word: v => (v === 0 ? [spread(0.5), fill(2)]
+                : v === 1 ? [spread(0), fill(2)]
+                : v === 2 ? [spread(0), keep(0, 8)]
+                : [drop(9)]),
+    },
+
+    // THE PRESTIGE-DRAMA UNDERSCORE — Los Angeles 1999, the suburban-
+    // interiors school: mallets, felt piano and air under a picture about
+    // lawns and what they cost. The parents are the honest surprise —
+    // minimalism at 0.4 (the looped cell IS the cue), ambient's air,
+    // furnituremusic's furniture-music refusal to insist (Paris 1888, the
+    // great-grandparent every mallet cue of this school quotes without
+    // knowing it), exotica's mallet timbre as studio confection. NO kick,
+    // NO snare: lane p alone, rim ticks — percussion toys, not a kit.
+    dramascore: {
+      instrumental: true,   // the score asks questions the dialogue avoids
+      label: "Los Angeles 1999", voices: 3, bars: 8, near: "minimalism",
+      plan: "arc", bpm: 100,
+      parents: { minimalism: 0.4, ambient: 0.2, furnituremusic: 0.15, exotica: 0.1 },
+      wants: [],
+      instr: ["marimba", "felt_piano", "warm_pad"],
+      part: ["riff", "lead", "pad"],
+      entry: v => [0, 2, 4][v], reg: () => 0,
+      realize: v => (v === 2 ? "pad" : "line"),
+      drumkit: "brush",
+      kit: { p: [1,0,0,1, 0,0,1,0, 0,1,0,0, 1,0,0,0] },
+      harmony: "modal",
+      mode: MODES.ionian, scale: SCALES.majpent,
+      artic: "staccato", maxHold: 2, bassStyle: "pedal",
+      tone: { wave: "triangle", cut: 2800, q: 0.8, atk: .004, rel: .9, gain: .26, verb: .45 },
+      words: ["the marimba, the question asked politely",
+              "the felt piano, the answer withheld",
+              "the pad, the lawn at dusk"],
+      word: v => (v === 0 ? [excerpt(0, 4), fill(2)]   // minimalism's looped cell
+                : v === 1 ? [drop(2), rotate(2)]
+                : [drop(9)]),
+    },
+
+    // THE BIG-SKY WESTERN SCORE — Los Angeles 1958, the year the
+    // big-country main-title grammar was set: open fifths, the gallop, the
+    // horizon tune — the American answer Rome 1966 later talked back to
+    // (which is why `near` points at spaghettiwestern while the parents do not:
+    // proximity is not lineage, and Rome is eight years downstream).
+    // MIXOLYDIAN because the flat seven is the prairie — the hoedown's own
+    // mode, appalachia's at 0.2 saying where the tune actually comes from.
+    // The gallop is the kick's 3-3-2 with the low tom doubling it, said
+    // again by the low brass at spread(0.5) — the same figure at two
+    // heights, which is what a western main title IS.
+    frontierscore: {
+      instrumental: true,   // a main title — the territory is the singer
+      label: "Los Angeles 1958", voices: 4, bars: 8, near: "spaghettiwestern",
+      plan: "arc", bpm: 126,
+      parents: { goldenagescore: 0.25, march: 0.2, appalachia: 0.2, westernswing: 0.1 },
+      wants: [],
+      instr: ["strings", "french_horns", "brass_section", "harp"],
+      part: ["lead", "counter", "riff", "riff"],
+      entry: v => [0, 2, 0, 4][v], reg: v => [0, 0, -1, 1][v],
+      realize: () => "line",
+      drumkit: "room",
+      // the gallop — 3-3-2 under the tune, the low tom agreeing
+      kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             l: [1,0,0,1, 0,0,1,0, 1,0,0,1, 0,0,1,0] },
+      fill: { x: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] },
+      harmony: "cycle",
+      roots: [0, 3, 0, 4, 0, 3, 4, 0], mode: MODES.mixo, scale: SCALES.major,
+      diatonic: true,
+      artic: "staccato", maxHold: 3, bassStyle: "fifths",
+      tone: { wave: "sawtooth", cut: 2500, q: 1.0, atk: .01, rel: .8, gain: .27, verb: .4 },
+      words: ["the strings, the horizon tune",
+              "the horns, the herd on it",
+              "the low brass, the gallop said again",
+              "the harp, the river glinting"],
+      word: v => (v === 0 ? [fill(2)]
+                : v === 1 ? [fill(2), transpose(-3)]
+                : v === 2 ? [spread(0.5), fill(2)]
+                : [drop(3), rotate(1)]),
     },
 
     /* =====================================================================
@@ -20574,12 +21054,12 @@
       plan: "song", bpm: 84,
       // LINEAGE: `taqsim` (Cairo 1932) is the modal practice itself, two
       // years and one recording commission earlier — the Congress sides
-      // are the takht tradition's own reference documents; `mawsili`
+      // are the takht tradition's own reference documents; `abbasid`
       // (Baghdad 800) is the court line both name.
       // "muwashshah" PAID 2026-08-30 (Cairo 1200): the wasla a tarab
       // evening opens with IS a muwashshah set, and the edge lands in
       // the same city the treatise was written in, 734 years apart.
-      parents: { taqsim: 0.5, mawsili: 0.15, muwashshah: 0.15 },
+      parents: { taqsim: 0.5, abbasid: 0.15, muwashshah: 0.15 },
       wants: ["the qasida recital"],
       cannot: ["heterophony — the takht plays the singer's OWN line, " +
                "slightly differently, at the same time; `line` chairs get " +
@@ -20644,7 +21124,7 @@
       // ancestors — the Qajar court line of Mirza Abdollah, and behind it
       // a chain the tradition itself traces to the Sassanid court — have
       // no anchors and cannot be dated to a record without inventing the
-      // fact. (`mawsili` is NOT claimed: Barbad's Persia fed Baghdad, not
+      // fact. (`abbasid` is NOT claimed: Barbad's Persia fed Baghdad, not
       // the other way round, and a backwards edge is worse than a root.)
       parents: {},
       // "tasnif" CAME OFF THIS LIST 2026-08-30 WITHOUT BEING PAID, the
@@ -20964,7 +21444,7 @@
     // literally: variable speed quantized to the note.
     tapemusic: {
       instrumental: true,   // there are no players; there is a bench
-      label: "Paris 1948", voices: 3, bars: 8, near: "stockhausen",
+      label: "Paris 1948", voices: 3, bars: 8, near: "cologneschool",
       plan: "arc", bpm: 88,
       // LINEAGE: a declared ROOT. Russolo's intonarumori (Milan 1913) and
       // the RTF's own radio-play craft are the ancestors the literature
@@ -20989,7 +21469,7 @@
                "sound of the motor dying, has no channel",
                "the five loudspeakers and the potentiomètre d'espace — " +
                "diffusion was the performance and a mix has no aisles " +
-               "(stockhausen's admission, six years early)"],
+               "(cologneschool's admission, six years early)"],
       // THE MATERIAL IS RECORDINGS — AND UNTIL 2026-08-30 IT WAS THREE
       // SYNTHESISER PATCHES. This row shipped on the sampling round with
       // the argument printed above it ("the registry holds RECORDINGS
@@ -21076,7 +21556,7 @@
        below pay eight of them (muwashshah ×3, moorish andalusi song ×2
        via zajal, jamaican sound system ×2, jubilee quartets ×2, the
        afro-cuban rumba ×2, the lautari 78s ×2, hammer horror ×2 counting
-       carpenter's, vaudeville stays closed) plus four singles with a
+       horrorsynth's, vaudeville stays closed) plus four singles with a
        named collection or performer the ZIM can date (exotica, doina,
        the cantorial nusach, IDM — the boardsofcanada refusal's own
        "named next ask").
@@ -21103,14 +21583,14 @@
          row; the pit that played them is photoplay's cousin and stays
          inside photoplay's comment. The reason was examined to be
          defeated and held instead.
-       · LATIN PERCUSSION (disco, bodiddley) — declined twice already
+       · LATIN PERCUSSION (disco, hambone) — declined twice already
          ("an instrumentation, not a genre") and the reason is unbeaten
          a third time: the thing wanted is `son`'s clave and `mambo`'s
          section, both anchored; a row named after an instrument case
          would be an umbrella.
-       · THE QIYAN SINGING SCHOOLS (ziryab, mawsili — the round's
+       · THE QIYAN SINGING SCHOOLS (andalusi, abbasid — the round's
          hardest refusal, because the music is real and the dependents
-         are the catalog's two oldest Arab rows). The dufay standard
+         are the catalog's two oldest Arab rows). The isorhythm standard
          requires a named school or performer at a datable place-year
          BEFORE 800 (both dependents' dots), and the ZIM cannot say one:
          its Qiyan article names the institution, its treatises (al-
@@ -21198,12 +21678,12 @@
          the ZIM's Kulning article dates nothing ("developed centuries
          ago"), and its Hardanger fiddle article holds no dated
          collection — Grieg's op. 72 does not appear even in the ZIM's
-         own Grieg article. Both stay owed; the dufay standard holds.
+         own Grieg article. Both stay owed; the isorhythm standard holds.
          [SPLIT 2026-08-30, the unlocking round: one paid, one re-closed
          on fresh evidence.
          THE HARDINGFELE IS PAID, and the refusal above was hunting the
          wrong KIND of artifact. It wanted a dated COLLECTION; the ZIM
-         holds a dated CONCERT, which is the `ziryab`/`zema` precedent
+         holds a dated CONCERT, which is the `andalusi`/`zema` precedent
          this file already runs — "Bull endeavored to make a concert with
          Myllarguten in Christiania February 1849... the hall was packed
          with 1500 excited listeners", about a fiddler the same article
@@ -21226,19 +21706,19 @@
     // (Hammer Film Productions, shot at Bray Studios, released May
     // 1958): the three-note DRA-CU-LA motif stabbed by massed brass
     // over racing strings, the sound every British horror picture
-    // borrowed for twenty years. TWO ROWS want it by name — `sabbath`
+    // borrowed for twenty years. TWO ROWS want it by name — `heavymetal`
     // ("the hammer horror scores the band was named after": Black
-    // Sabbath took their name from a horror bill) and `carpenter`
+    // Sabbath took their name from a horror bill) and `horrorsynth`
     // ("james bernard's dracula" verbatim) — and the debts round's own
     // ledger called it "arguable and REMAINS THE NEXT ASK". Asked, paid.
-    // NOT parented on `herrmann`: Los Angeles 1960 is two years this
+    // NOT parented on `suspensescore`: Los Angeles 1960 is two years this
     // row's junior and an edge cannot point at a record younger than
     // its child (the maringa rule). The lineage is the late-romantic
     // orchestra (Bernard was Britten's copyist) and the picture-house
     // cue craft photoplay anchored.
-    hammerhorror: {
+    horrorscore: {
       instrumental: true,
-      label: "Bray 1958", voices: 3, bars: 8, near: "herrmann",
+      label: "Bray 1958", voices: 3, bars: 8, near: "suspensescore",
       plan: "arc", bpm: 76,
       parents: { romantic: 0.4, photoplay: 0.2 },
       wants: ["the theremin pictures (rózsa's spellbound)"],
@@ -21270,7 +21750,7 @@
     // ("this catalog holds NO IDM at all... IDM is a named next ask")
     // — the cluster, found and paid at its own first artifact. The
     // Warp/Sheffield dot was checked against the Britain arc the way
-    // the sisters precedent demands, at the gate rather than by eye.
+    // the leedsgoth precedent demands, at the gate rather than by eye.
     idm: {
       label: "Sheffield 1992", voices: 3, bars: 8, near: "techno",
       plan: "dance", bpm: 110,
@@ -21307,7 +21787,7 @@
     // the Shell Bar in the Hawaiian Village on Oahu": Les Baxter's
     // "Quiet Village" rescored for vibes, piano and birdcalls, the
     // record the whole genre was then NAMED after by Liberty's own
-    // chairman. Pays `ymo`'s want by name ("exotica (martin denny's
+    // chairman. Pays `technopop`'s want by name ("exotica (martin denny's
     // quiet village)" — the record they covered to make Firecracker).
     // THE DOT IS THE POINT: this is the catalog's first Pacific place.
     // The wall was never musical — atlas.js held Honolulu back because
@@ -21360,7 +21840,7 @@
     // that sentence is DEFEATED by this book, not argued around: the
     // treatise is dated six centuries before `nuba` (Tetouan 1790),
     // seven before `tarab` and `firqa`, and it is the same species of
-    // source as the Kitab al-Aghani that anchors `mawsili`. Three rows
+    // source as the Kitab al-Aghani that anchors `abbasid`. Three rows
     // wanted this by name — the census's only ×3 — and all three take
     // the edge today. The OTHER half of the old decline (the aksak
     // metres) was true and stays true: it lives in the cannot now,
@@ -21372,7 +21852,7 @@
       // major Andalusi innovation in Arabic poetry... sung and
       // performed musically"), so the edge points at the Cordoban
       // school that raised the musicians who sang it.
-      parents: { ziryab: 0.4 },
+      parents: { andalusi: 0.4 },
       wants: ["the aleppo wasla", "the cairo congress recordings (1932)"],
       cannot: ["the aksak metres — the old decline's own reason, kept: a " +
                "sung muwashshah counts in 10/8 and 16/8 cycles and this " +
@@ -21415,7 +21895,7 @@
     zajal: {
       label: "Córdoba 1150", voices: 2, bars: 8, near: "troubadour",
       plan: "song", bpm: 100,
-      parents: { ziryab: 0.45 },
+      parents: { andalusi: 0.45 },
       wants: ["the kharja corpus in romance"],
       cannot: ["the crowd — a zajal is call and refrain with the street " +
                "answering, and two chairs are not a street"],
@@ -21577,7 +22057,7 @@
     // on. The 78s themselves stay wanted at this row (the shellac the
     // Gramophone Company cut in Bucharest is not in this ZIM by name);
     // the dated artifact is the guild's own conservatory-trained son's
-    // 1906 showpiece, the dufay standard's kind of date.
+    // 1906 showpiece, the isorhythm standard's kind of date.
     lautari: {
       label: "Bucharest 1906", voices: 2, bars: 8, near: "taraf",
       plan: "arc", bpm: 132,
@@ -21609,7 +22089,7 @@
     // payment stands on (published as his Maramureș volume). One
     // free-rhythm, melismatic, improvised line — the ZIM compares it
     // to the taksim by name, which is why `near` says taqsim and the
-    // family is vox, on cemilbey's own argument. Pays `taraf`'s want
+    // family is vox, on ottoman's own argument. Pays `taraf`'s want
     // ("the doina"); klezmer's doyne is the same object one migration
     // north, carried by its own row's parents.
     doina: {
@@ -21687,7 +22167,7 @@
     // known to have managed their own majlis... The majlis played a big
     // role in the lively musical life of Medina, in which the musicians
     // performed and attracted patrons and students." A named singer, a
-    // named city, a year this ZIM states — the dufay standard, met.
+    // named city, a year this ZIM states — the isorhythm standard, met.
     //
     // AND SHE IS NOT ALONE ON THE PAGE. The same ZIM dates the school
     // around her: TUWAYS (Medina, 8 June 632 – c. 710—711), "an Arab
@@ -21698,19 +22178,19 @@
     // Azza's own article as her teacher in Persian airs. Three dated
     // Medinan musicians where the last round found none.
     //
-    // NO NOTATION SURVIVES AND THAT IS ALREADY RULED ON: `mawsili`, this
+    // NO NOTATION SURVIVES AND THAT IS ALREADY RULED ON: `abbasid`, this
     // row's own child, says "the argument is documentary, the way `ballad`
     // argues from Pepys's diary". This dot is one century further up the
-    // same documentary chain — the Kitab al-Aghani, which anchors mawsili,
+    // same documentary chain — the Kitab al-Aghani, which anchors abbasid,
     // is where these three singers' songs are written down — so the row
     // stands on a precedent the catalog set for its own descendant rather
     // than on a new indulgence.
     //
     // BOTH WANTERS MOVE THE STRING TODAY, and the Qiyan article argues
-    // each edge in its own words. `ziryab` (Córdoba 822): "Qiyan-slave-
+    // each edge in its own words. `andalusi` (Córdoba 822): "Qiyan-slave-
     // girls were initially imported to al-Andalus from Medina, which was
     // first noted during the reign of al-Hakam I (r. 796–822)" — Ziryab's
-    // own patron, Ziryab's own decade, the transmission stated. `mawsili`
+    // own patron, Ziryab's own decade, the transmission stated. `abbasid`
     // (Baghdad 800): "Ibrahim al-Mawsili (742–804 CE) is reported to have
     // claimed that his father was the first to train... girls as qiyan",
     // which puts the Mawsili house inside this institution a generation
@@ -21724,9 +22204,9 @@
     // Umayyad Medina, and the walls-down rule is that a mode arrives
     // WITH A ROW THAT PLAYS IT. No row written this round plays one, so
     // no mode was added; this row plays the plain diatonic its own child
-    // `mawsili` plays and claims nothing it cannot cite.
+    // `abbasid` plays and claims nothing it cannot cite.
     qiyan: {
-      label: "Medina 705", voices: 2, bars: 8, near: "mawsili",
+      label: "Medina 705", voices: 2, bars: 8, near: "abbasid",
       plan: "arc", bpm: 72,
       // LINEAGE: a declared ROOT, and the oldest Arab dot this catalog
       // holds. What fed it is named below rather than invented: Azza's
@@ -21784,7 +22264,7 @@
     // THE REFUSAL THIS DEFEATS said "its Hardanger fiddle article holds no
     // dated collection — Grieg's op. 72 does not appear even in the ZIM's
     // own Grieg article". Still true, and beside the point: the dot is not
-    // a COLLECTION but a dated concert, the `ziryab`/`zema` precedent (a
+    // a COLLECTION but a dated concert, the `andalusi`/`zema` precedent (a
     // documented arrival, not a record). The refusal looked for one kind
     // of artifact and the ZIM held the other.
     //
@@ -21942,7 +22422,7 @@
       // LINEAGE: a declared ROOT. The tradition behind it is the pre-
       // publication bygde repertory the Menzies manuscript of 1749 is the
       // earliest NAME for — dated, but anonymous and placeless in this
-      // ZIM, which is the dufay standard's other half failing — and the
+      // ZIM, which is the isorhythm standard's other half failing — and the
       // pipe repertory the fiddle borrowed its ornaments from. Both owed
       // below.
       parents: {},
@@ -22018,7 +22498,7 @@
   // cannot land in two families, and the stamp below writes `family` onto the
   // anchor so everything downstream reads it like any other genre field (the
   // unit gate holds every anchor to exactly one). The clusters follow the
-  // MUSIC, not the machinery — jodeci and eurythmics are both drum machines,
+  // MUSIC, not the machinery — hiphopsoul and synthsoul are both drum machines,
   // but one is soul and the other is a studio record, and the ear files them
   // that way. `kernel` is simple alone, on purpose: it is the zero of the
   // table and belongs to no tradition.
@@ -22032,13 +22512,13 @@
     // takes a DYNAMICS row of its own below, in opposite directions from the
     // family's — one has less metre than the vox default, the other has far
     // more, and a chant and a stamped Zulu cycle should not share a number.
-    ["vox",    ["gregorian", "bulgarian", "spem", "counterpoint", "fugue", "hymn",
+    ["vox",    ["gregorian", "bulgarian", "polychoral", "counterpoint", "fugue", "hymn",
                 "organum", "arsnova", "zema", "mbube",
                 // ...AND THE LEDGER ROUND'S THREE (2026-08-30). `jubilee` is
                 // the cluster's definition exactly — four unaccompanied
                 // voices, the spirituals' own quartet. `doina` and
                 // `chazzanut` are ONE LONG VARYING LINE each and vox is the
-                // family whose idiom row says so — the cemilbey/dastgah
+                // family whose idiom row says so — the ottoman/dastgah
                 // argument, a mountain and a synagogue west; both take
                 // DYNAMICS rows below because neither has a metre for the
                 // family's stress to land on.
@@ -22068,22 +22548,22 @@
                 // lever available and this comment is the handoff.
                 "chorale", "taqsim", "guqin", "dhrupad",
                 // ...AND FOUR MORE ON 2026-08-29, the genealogy round.
-                // `dufay` and `spirituals` are the definition exactly —
+                // `isorhythm` and `spirituals` are the definition exactly —
                 // four unaccompanied parts — and both fall into compose.js's
                 // derived unaccompanied set on their own three fields, the
                 // third and fourth independent arrivals after sacredharp and
                 // chorale. `ballad` is ONE unaccompanied voice, the set's
-                // smallest possible member. `cemilbey` is here on taqsim's
+                // smallest possible member. `ottoman` is here on taqsim's
                 // own argument, stated where taqsim's is: a taksim is one
                 // long varying line and vox is the family whose idiom row
                 // says so; it takes taqsim's DYNAMICS numbers below because
                 // it is the same musical object one court north.
-                "dufay", "spirituals", "ballad", "cemilbey",
+                "isorhythm", "spirituals", "ballad", "ottoman",
                 // ...AND EIGHT ON 2026-08-29, the debts round. Five are the
                 // cluster's definition exactly — unaccompanied sacred lines:
-                // kassia and sequence and hildegard are one chant voice,
-                // winchester is the chant carrying its own shadow, josquin
-                // four unaccompanied parts. `monteverdi` and `schutz` keep a
+                // sticheron and sequence and antiphon are one chant voice,
+                // winchester is the chant carrying its own shadow, francoflemish
+                // four unaccompanied parts. `secondapratica` and `sacredconcerto` keep a
                 // continuo under the voices and sit here anyway, for the
                 // reason chorale's own children always did: the voices ARE
                 // the record and the idiom row's long varying line is right.
@@ -22091,19 +22571,19 @@
                 // unaccompanied voice, the smallest possible member — and
                 // vox's near-absent metre is the only honest reading of a
                 // cry that never had a bar line.
-                "kassia", "sequence", "winchester", "hildegard", "josquin",
-                "monteverdi", "schutz", "holler",
+                "sticheron", "sequence", "winchester", "antiphon", "francoflemish",
+                "secondapratica", "sacredconcerto", "holler",
                 // ...and the deep-time round's three (2026-08-30), each of
                 // them the cluster's definition — people singing,
                 // unaccompanied: carmen is fifty-four children in two
                 // half-choirs, oxyrhynchus one Greek hymn line, and
-                // seikilos files beside `ballad` as the set's other
+                // skolion files beside `ballad` as the set's other
                 // smallest member, one voice and a complete tune.
-                "carmen", "seikilos", "oxyrhynchus",
-                // ...and the forward half's one: dunstaple is three
+                "carmen", "skolion", "oxyrhynchus",
+                // ...and the forward half's one: contenanceangloise is three
                 // unaccompanied parts, the cluster's whole definition,
-                // filing beside dufay's own teachers.
-                "dunstaple",
+                // filing beside isorhythm's own teachers.
+                "contenanceangloise",
                 // ...AND EIGHT ON 2026-08-30, the folk-floor round, every
                 // one of them the cluster's definition — people singing
                 // with nothing under them: a shantyman and his watch, a
@@ -22174,17 +22654,17 @@
                 // ...and the downtempo round's nine (2026-08-30), on the
                 // deal every member above signed: `club` has NO family
                 // fallback, so every one is named in DYNAMICS below —
-                // royksopp as a machine (null, the melancholy is written,
+                // tromso as a machine (null, the melancholy is written,
                 // not played) and eight with a hand in the loop, because
                 // a torch singer over a loop, an MPC with the quantize
                 // off and a trumpet soloing over a 909 are hands,
                 // whatever the floor says. (`acidjazz` files in soul —
                 // it is a live funk band, and the ear says so.)
-                "kruderdorfmeister", "portishead", "tricky",
-                "morcheeba", "lamb", "djshadow", "massiveattack",
-                "stgermain", "royksopp"]],
-    ["soul",   ["doowop", "motown", "isley", "funk", "disco", "gospel", "rnb",
-                "jodeci", "clubpop", "retrofunkpop", "boyband", "darkrnb",
+                "viennadownbeat", "noirhop", "knowlewest",
+                "chillout", "torchbreaks", "instrumentalhiphop", "bristolsound",
+                "nujazz", "tromso"]],
+    ["soul",   ["doowop", "detroitsoul", "psychsoul", "funk", "disco", "gospel", "rnb",
+                "hiphopsoul", "clubpop", "retrofunkpop", "boyband", "darkrnb",
                 "blueeyedsoul",
                 // bedroompop is here rather than in `drift` because what it
                 // inherits is R&B's PHRASING; the ambient space is a
@@ -22203,7 +22683,7 @@
                 // York 1960 is doowop's own stack with better paperwork, and
                 // Detroit 1975 is funk grown a costume department. All three
                 // take the family's dynamics row unchanged.
-                "winstons", "brill", "pfunk",
+                "amenbreak", "girlgroup", "psychfunk",
                 // ...and the downtempo round's one (2026-08-30): acid
                 // jazz is a live funk band with jazz changes in a London
                 // club, and the ear files a Brand New Heavies record as
@@ -22243,7 +22723,7 @@
                 "kwela", "mbaqanga", "soukous", "benga", "makossa", "hiplife",
                 "kizomba", "dangdut", "bhangra", "shaabi",
                 // ...and Cologne 1971 (2026-08-29). `krautrock` files here
-                // and not in `studio` with kraftwerk/motorik on purpose:
+                // and not in `studio` with dusseldorfschool/motorik on purpose:
                 // Can was a RHYTHM SECTION with a hand layer over it —
                 // Liebezeit is the whole argument — where Kling Klang is a
                 // desk. The ear files Halleluhwah with the grooves.
@@ -22252,8 +22732,8 @@
                 // a Rhodes and a hand-percussion lane over dub bass is
                 // this cluster's definition at lounge tempo — thievery
                 // takes the family's own dynamics row unchanged.
-                "thieverycorporation"]],
-    ["band",   ["rock", "punk", "blues", "bodiddley", "chuckberry", "newwave",
+                "downtempo"]],
+    ["band",   ["rock", "punk", "blues", "hambone", "rocknroll", "newwave",
                 // ...the deep-time round's forward half (2026-08-30) put
                 // `hardcore` beside punk and `doom` beside sludge — the
                 // metal wing's missing floor and ceiling, both guitars
@@ -22271,48 +22751,48 @@
                 "khmerrock", "anadolurock",
                 // ...and Los Angeles 1946 (2026-08-29). A band playing a short
                 // call and saying it again is this cluster's own sentence, and
-                // `jumpblues` belongs beside `blues` and `chuckberry`, which
+                // `jumpblues` belongs beside `blues` and `rocknroll`, which
                 // are the two rows it turned into.
                 "jumpblues",
                 // ...and the genealogy round's three guitar bands
                 // (2026-08-29): London 1967, London 1971 and London 1979 —
-                // hendrix, glam and gothicrock — each an amplifier and a
+                // acidrock, glam and gothicrock — each an amplifier and a
                 // rhythm section, which is this cluster's whole definition.
-                "hendrix", "glam", "gothicrock",
+                "acidrock", "glam", "gothicrock",
                 // ...and the debts round's seven (2026-08-29): an amplifier
                 // and a rhythm section, seven times over — Portland 1963,
                 // San Francisco 1966 and 1983, New York 1966, the Isle of
                 // Wight 1970, Workington 1969, London 1980. The metal wing
-                // (sabbath, nwobhm, thrash) lands HERE beside deathmetal,
+                // (heavymetal, nwobhm, thrash) lands HERE beside deathmetal,
                 // which waited twenty years for its own parents.
-                "garagerock", "psychrock", "velvets", "progrock", "sabbath",
+                "garagerock", "psychrock", "protopunk", "progrock", "heavymetal",
                 "nwobhm", "thrash",
                 // ...and the goth-and-globe round's five (2026-08-30):
                 // an amplifier and a rhythm section five more times —
                 // Pomona 1982, London 1982, Rennes 1979, York 1981 and
                 // Halifax 1991, the goth wing seated beside gothicrock
-                // and postpunk, its own two doors. `sisters` is a drum
+                // and postpunk, its own two doors. `leedsgoth` is a drum
                 // MACHINE in a band family and disagrees with the
                 // family's hand, so it takes a DYNAMICS row below.
-                "deathrock", "batcave", "coldwave", "sisters",
+                "deathrock", "batcave", "coldwave", "leedsgoth",
                 "gothicmetal"]],
-    ["studio", ["beatles", "steely", "toto", "kraftwerk", "eurythmics",
+    ["studio", ["beatgroup", "jazzrock", "aor", "dusseldorfschool", "synthsoul",
                 "synthpop", "citypop", "merseybeat", "psychpop", "motorik",
                 "roboticpop", "confessionalpop",
-                // ...and the ledger round's two (2026-08-30): `hammerhorror`
-                // files beside herrmann and photoplay — a scoring desk, not
-                // a band — and `exotica` beside ymo, the studio confection
-                // ymo's own want names.
-                "hammerhorror", "exotica",
+                // ...and the ledger round's two (2026-08-30): `horrorscore`
+                // files beside suspensescore and photoplay — a scoring desk, not
+                // a band — and `exotica` beside technopop, the studio confection
+                // technopop's own want names.
+                "horrorscore", "exotica",
                 "coastrock", "yachtrock", "yachtsoul", "analogsynthpop",
                 "gothsynth", "dancepostpunk", "orchpsych",
                 // ...and Chicago 1981 joined 2026-08-30 with the Wax Trax
-                // round. `waxtrax` is one man, an ARP Omni, a drum machine
+                // round. `industrialdance` is one man, an ARP Omni, a drum machine
                 // and a reel-to-reel in an apartment — no band at all, which
                 // is this cluster's own definition read to its limit, and it
                 // files beside `synthpop` and `analogsynthpop`, the two rows
                 // its own comment argues from.
-                "waxtrax",
+                "industrialdance",
                 // ...and five from the world round (2026-08-26): São Paulo
                 // 1968, Manila 1976, Tehran 1974, Hong Kong 1984 and Taipei
                 // 2003 are all records ARRANGED — a band plus an arranger
@@ -22332,29 +22812,42 @@
                 // an arranger, a desk and people hired for the session.
                 // A cue book, three picture scores, a title theme, the
                 // Carpenter ostinato, the Hammer mood cue, and the two
-                // sitcom commissions. carpenter, miamivice and seinfeld
+                // sitcom commissions. horrorsynth, copshowsynth and sitcomsting
                 // are machines or samplers in a hand family and take
                 // DYNAMICS rows below.
-                "photoplay", "korngold", "herrmann", "morricone", "barry",
-                "carpenter", "miamivice", "sitcom", "seinfeld",
+                "photoplay", "goldenagescore", "suspensescore", "spaghettiwestern", "spyscore",
+                "horrorsynth", "copshowsynth", "sitcom", "sitcomsting",
                 // ...and Munich 1977 (2026-08-29): Musicland was a DESK and a
                 // bench of session players — "records ARRANGED", this
-                // cluster's own definition one comment up — and moroder sits
-                // beside kraftwerk the way the two records sat in 1977:
+                // cluster's own definition one comment up — and eurodisco sits
+                // beside dusseldorfschool the way the two records sat in 1977:
                 // same year, different rooms, neither descending from the
                 // other (the anchor's own lineage note).
-                "moroder",
+                "eurodisco",
                 // ...and the debts round's three (2026-08-29): Pet Sounds is
                 // the cluster's definition at its most famous — a band plus
                 // an arranger plus a desk, and the arranger IS the record;
                 // YMO is Kling Klang's own answer record; synthwave is a
                 // desk remembering a decade of desks.
-                "beachboys", "ymo", "synthwave",
+                "baroquepop", "technopop", "synthwave",
                 // ...and the downtempo round's one (2026-08-30): Moon
                 // Safari is the cluster's definition in French — a duo
-                // plus an arranger's record shelf plus a desk — and air
+                // plus an arranger's record shelf plus a desk — and versailles (né air)
                 // takes the family's dynamics row unchanged.
-                "air"]],
+                "versailles",
+                // ...and the soundtrack round's eight (2026-09-01, Paul:
+                // "add lots of movie soundtracks especially the Hans
+                // Zimmer type"): the commissioned-screen cluster grown by
+                // a full generation of scoring desks — no band, only an
+                // arranger, a desk and people hired for the session, the
+                // news pair's own definition every time. All eight take
+                // DYNAMICS rows below, because "who is playing" is the
+                // whole difference between a 1977 symphony orchestra
+                // reading to picture and a 2010 section tracked to a
+                // click under a grid.
+                "spaceopera", "epichybrid", "trailerscore", "crimejazz",
+                "fantasyscore", "nordicscore", "dramascore",
+                "frontierscore"]],
     ["drift",  ["ambient", "drone", "vaporwave", "shoegaze", "postrock",
                 "neoclassical", "minimalism", "spacerock",
                 // ...and the ledger round's one (2026-08-30): `idm` — the
@@ -22373,7 +22866,7 @@
                 // — and Berlin 1968 is berlinschool's own declared parent
                 // sitting one seat over, exactly as berlinschool sits by
                 // spacerock.
-                "stockhausen", "zodiak",
+                "cologneschool", "zodiak",
                 // ...and the deep-time round's forward half (2026-08-30):
                 // `dreampop` files where its own child shoegaze already
                 // sits — guitar as weather is texture-first, the
@@ -22385,8 +22878,8 @@
                 // berlinschool, its own declared parent.
                 "dungeonsynth",
                 // ...and the walls-down round's studio ghost (2026-08-30):
-                // `tapemusic` is texture assembled at a bench, stockhausen's
-                // own shelf, and stockhausen now declares it a parent.
+                // `tapemusic` is texture assembled at a bench, cologneschool's
+                // own shelf, and cologneschool now declares it a parent.
                 "tapemusic"]],
     // the pre-rock traditions, and the two ancestors that joined them are
     // exactly that: Buenos Aires 1935, Nashville 1945, New York 1945,
@@ -22459,10 +22952,10 @@
                 // song, a da capo aria, a salon modinha, a danced lundu, a
                 // lied strophe, a habanera verse, a danzón strain, a maxixe,
                 // a two-beat New Orleans chorus, a twelve-bar boogie and a
-                // Delta blues are all a tune said again. `ziryab` and
-                // `cemilbey`'s split is deliberate — the Córdoba court song
+                // Delta blues are all a tune said again. `andalusi` and
+                // `ottoman`'s split is deliberate — the Córdoba court song
                 // is strophic (roots), the Istanbul taksim is not (vox).
-                "ziryab", "operaseria", "modinha", "lundu", "lied",
+                "andalusi", "operaseria", "modinha", "lundu", "lied",
                 "habanera", "danzon", "maxixe", "neworleans",
                 "boogiewoogie", "deltablues",
                 // ...AND NINE ON 2026-08-29, the debts round, every one of
@@ -22473,10 +22966,10 @@
                 // thirty-two-bar Broadway chorus, a Moten riff chorus and a
                 // sixteen-bar dorian vamp (modaljazz sits by `jazz` exactly
                 // as swing does — the family's strophe is So What's own
-                // AABA). `mawsili` and `ziryab` file together the way the
+                // AABA). `abbasid` and `andalusi` file together the way the
                 // Aghani says they lived: same court music, one generation
                 // and one sea apart.
-                "mawsili", "contradanza", "operetta", "musichall", "satie",
+                "abbasid", "contradanza", "operetta", "musichall", "furnituremusic",
                 "march", "broadway", "territoryband", "modaljazz",
                 // ...AND FIVE ON 2026-08-30, the deep-time round, and "the
                 // pre-rock traditions" absorbs its oldest housemates by
@@ -22486,7 +22979,7 @@
                 // a Hurrian hymn over the same lyre family, and a paean
                 // choir with an aulos are all of them people playing
                 // acoustic instruments at each other. (`carmen`,
-                // `seikilos` and `oxyrhynchus` file in vox instead —
+                // `skolion` and `oxyrhynchus` file in vox instead —
                 // unaccompanied singing is that cluster's whole
                 // definition, whatever the millennium.)
                 "hohlefels", "jiahu", "urlyre", "hurrian", "delphic",
@@ -22506,7 +22999,7 @@
                 // stress and takes a DYNAMICS row below.
                 "gypsyjazz", "latinjazz", "descarga", "capejazz",
                 "tradjazz", "indojazz", "japanjazz", "nordicjazz",
-                "skokiaan",
+                "tsabatsaba",
                 // ...AND EIGHT ON 2026-08-30, the folk-floor round: a
                 // Galax string band, Brandwein's kapelye, Piaf's
                 // street-song orchestra, the Clejani taraf, cante over
@@ -22528,7 +23021,7 @@
                 // Telemark fiddler and his drone string in a Christiania
                 // hall, a Tehran hotel's singer and tar, and two fiddles
                 // and a guitar at a Caledonian Hunt ball. `qiyan` files
-                // beside `mawsili` and `ziryab` for the reason the debts
+                // beside `abbasid` and `andalusi` for the reason the debts
                 // round gave when it put those two together — same court
                 // music, one generation apart — and this is the
                 // generation before both.
@@ -22676,7 +23169,7 @@
     dastgah:   { stress: 0.04, phrase: 0.92, touch: { t: 0.075, v: 0.55 } },
     khyal:     { stress: 0.1,  phrase: 0.85, touch: { t: 0.06,  v: 0.6 } },
     // ...and the ledger round's two unmetred lines (2026-08-30), on the
-    // cemilbey rule — the same musical object takes the same numbers:
+    // ottoman rule — the same musical object takes the same numbers:
     // `doina` is parlando rubato (Bartók's own marking) and takes
     // dastgah's near-absent stress; `chazzanut` breathes with a prayer's
     // phrase and takes khyal's.
@@ -22736,7 +23229,7 @@
     jumpblues: { stress: 0.5,  phrase: 0.45, touch: { t: 0.075, v: 1.05 } },
     // drum machines with singers over them: the machine is the floor, the
     // performance is on top, so metre stays modest and the level moves
-    jodeci:    { stress: 0.3,  phrase: 0.5,  touch: { t: 0.04,  v: 0.8 } },
+    hiphopsoul:    { stress: 0.3,  phrase: 0.5,  touch: { t: 0.04,  v: 0.8 } },
     rnb:       { stress: 0.35, phrase: 0.55, touch: { t: 0.05,  v: 0.85 } },
     // KRAFTWERK is not `null` like the five club machines, and the difference
     // matters: this music was PLAYED — Flür hit metal with sticks, the tunes
@@ -22745,10 +23238,10 @@
     // step and a quarter of a velocity unit. The metre is genuinely felt (the
     // count is the point) and the phrase is nearly flat, because a Kraftwerk
     // line does not arch, it recurs.
-    kraftwerk: { stress: 0.3,  phrase: 0.15, touch: { t: 0.004, v: 0.25 } },
-    eurythmics:{ stress: 0.25, phrase: 0.35, touch: { t: 0.02,  v: 0.55 } },
+    dusseldorfschool: { stress: 0.3,  phrase: 0.15, touch: { t: 0.004, v: 0.25 } },
+    synthsoul:{ stress: 0.25, phrase: 0.35, touch: { t: 0.02,  v: 0.55 } },
     synthpop:  { stress: 0.25, phrase: 0.35, touch: { t: 0.02,  v: 0.5 } },
-    // kraftwerk's two direct children keep its tiny hand rather than falling
+    // dusseldorfschool's two direct children keep its tiny hand rather than falling
     // back to `studio`'s — motorik is the purer form of the pulse (barely a
     // hand at all: the beat's whole discipline is that it does not lean),
     // roboticpop lets a little more song-phrase back in now there is a verse
@@ -22771,7 +23264,7 @@
     // CR-78 in an apartment: the box keeps the time, so stress stays low, but
     // a player is touching the keys, so the timing wobble is a real one. It
     // sits at analogsynthpop's own reading, which is the record next door.
-    waxtrax:   { stress: 0.35, phrase: 0.3,  touch: { t: 0.022, v: 0.5  } },
+    industrialdance:   { stress: 0.35, phrase: 0.3,  touch: { t: 0.022, v: 0.5  } },
     synthduo:  { stress: 0.28, phrase: 0.35, touch: { t: 0.02,  v: 0.5 } },
  // ...and the five rooms added 2026-08-17, same law, same reason: `club`
     // still has no fallback row, so a machine-floor newcomer that disagrees
@@ -22806,7 +23299,7 @@
     // sampler being TRIGGERED, tight and loud, which is electro's own reading
     // with the level opened up. And hyperpop is the tightest HAND in the club
     // cluster at t .008 — in the whole table only the drone (0) and the Kling
-    // Klang line (motorik .002, kraftwerk .004, roboticpop .005) are tighter,
+    // Klang line (motorik .002, dusseldorfschool .004, roboticpop .005) are tighter,
     // which is the right company: the edit IS the performance here, and every
     // drop of expression has been moved into the level instead.
     amapiano:   { stress: 0.3,  phrase: 0.45, touch: { t: 0.055, v: 0.8 } },
@@ -22897,7 +23390,7 @@
     newsfanfare:  { stress: 0.55, phrase: 0.45, touch: { t: 0.045, v: 0.9 } },
     //   New York 2006 is the opposite trade and nearly the tightest hand in
     // the table — only the drone (0), the Kling Klang line (motorik .002,
-    // kraftwerk .004, roboticpop .005) and hyperpop (.008) are under it. It
+    // dusseldorfschool .004, roboticpop .005) and hyperpop (.008) are under it. It
     // has to be: this is a sample library on a grid, edited to the frame, and
     // a string ostinato that wanders is a mistake somebody would fix. The
     // phrase is the lowest of the two because there is no tune to shape — the
@@ -22935,11 +23428,11 @@
     chopped:    { stress: 0.2,  phrase: 0.3,  touch: { t: 0.06,  v: 0.6 } },
     //   ...and the round's two vox members that disagree with the cluster
     // (stress .22 is a metred choir and neither of these has a metre):
-    // `cemilbey` takes taqsim's own numbers because a taksim is the same
+    // `ottoman` takes taqsim's own numbers because a taksim is the same
     // musical object whichever court it is played in, and `ballad` sits
     // between chant and the hymnal — one voice, no bar to stress, but a
     // strophic tune with a real arch to it.
-    cemilbey:     { stress: 0.05, phrase: 0.9,  touch: { t: 0.065, v: 0.6 } },
+    ottoman:     { stress: 0.05, phrase: 0.9,  touch: { t: 0.065, v: 0.6 } },
     ballad:       { stress: 0.12, phrase: 0.85, touch: { t: 0.06,  v: 0.6 } },
     //   ...and `gagaku`, which out-drifts `drift` (stress .12): the pulse
     // is a breath, not a bar, and the shape lives entirely in the line —
@@ -22955,12 +23448,12 @@
     // its own dominant parent — the drag IS a hand — but tighter and
     // quieter: a laptop's wrist, not a turntable's.
     witchhouse: { stress: 0.22, phrase: 0.3,  touch: { t: 0.045, v: 0.55 } },
-    // sisters is a drum MACHINE in the band family: Doktor Avalanche
+    // leedsgoth is a drum MACHINE in the band family: Doktor Avalanche
     // does not lean, and `band`'s 0.95-velocity human hand would be a
     // costume on it. It sits near ebm's numbers — the same years, the
     // same refusal — with a little more phrase because there is a song
     // on top.
-    sisters:    { stress: 0.35, phrase: 0.25, touch: { t: 0.012, v: 0.35 } },
+    leedsgoth:    { stress: 0.35, phrase: 0.25, touch: { t: 0.012, v: 0.35 } },
     // nordicjazz disagrees with roots' backbeat-era 0.45 the way the
     // old-world soloists do, and further: the Bendiksen room's whole
     // aesthetic is rubato over a pulse barely stated, so the phrase
@@ -22971,30 +23464,30 @@
     // law. ONE is a machine and null means it: Melody A.M.'s melancholy
     // is written into the tune, not played into the time — the floor
     // never leans, the same argument every null above makes.
-    royksopp: null,
+    tromso: null,
     //   ...and the eight with a hand in the loop. The Bristol wing all
     // sit near triphop's own numbers — the loop is dead-tight, the
     // voice carries the phrase — and they differ where the records do:
-    // portishead is slower and nearly all torch line; massiveattack is
+    // noirhop is slower and nearly all torch line; bristolsound is
     // Mezzanine's grid, the tightest and quietest hand of the wing;
-    // tricky drags the loosest time of the three because the seasick
-    // detune IS a wrist; morcheeba and lamb keep the singer's phrase
-    // with lamb on dnb's near-frozen breaks (dnb's own t 0.015, a
+    // knowlewest drags the loosest time of the three because the seasick
+    // detune IS a wrist; chillout and torchbreaks keep the singer's phrase
+    // with torchbreaks on dnb's near-frozen breaks (dnb's own t 0.015, a
     // fraction looser for the live keys).
-    portishead:    { stress: 0.25, phrase: 0.6,  touch: { t: 0.03,  v: 0.65 } },
-    massiveattack: { stress: 0.32, phrase: 0.4,  touch: { t: 0.015, v: 0.45 } },
-    tricky:        { stress: 0.22, phrase: 0.45, touch: { t: 0.05,  v: 0.7 } },
-    morcheeba:     { stress: 0.25, phrase: 0.55, touch: { t: 0.03,  v: 0.6 } },
-    lamb:          { stress: 0.2,  phrase: 0.55, touch: { t: 0.018, v: 0.5 } },
-    //   ...djshadow is boombap's own MPC hand with the quantize off,
-    // a shade heavier on the pads; kruderdorfmeister brushes the same
-    // deal at Vienna tempo; stgermain is the round's one live-solo
+    noirhop:    { stress: 0.25, phrase: 0.6,  touch: { t: 0.03,  v: 0.65 } },
+    bristolsound: { stress: 0.32, phrase: 0.4,  touch: { t: 0.015, v: 0.45 } },
+    knowlewest:        { stress: 0.22, phrase: 0.45, touch: { t: 0.05,  v: 0.7 } },
+    chillout:     { stress: 0.25, phrase: 0.55, touch: { t: 0.03,  v: 0.6 } },
+    torchbreaks:          { stress: 0.2,  phrase: 0.55, touch: { t: 0.018, v: 0.5 } },
+    //   ...instrumentalhiphop is boombap's own MPC hand with the quantize off,
+    // a shade heavier on the pads; viennadownbeat brushes the same
+    // deal at Vienna tempo; nujazz is the round's one live-solo
     // row — the 909 never moves, but everything ON it is played, so
     // the phrase and the hand are jazz-side while the stress stays
     // the floor's.
-    djshadow:          { stress: 0.38, phrase: 0.3,  touch: { t: 0.055, v: 0.9 } },
-    kruderdorfmeister: { stress: 0.28, phrase: 0.45, touch: { t: 0.035, v: 0.6 } },
-    stgermain:         { stress: 0.35, phrase: 0.6,  touch: { t: 0.055, v: 0.85 } },
+    instrumentalhiphop:          { stress: 0.38, phrase: 0.3,  touch: { t: 0.055, v: 0.9 } },
+    viennadownbeat: { stress: 0.28, phrase: 0.45, touch: { t: 0.035, v: 0.6 } },
+    nujazz:         { stress: 0.35, phrase: 0.6,  touch: { t: 0.055, v: 0.85 } },
     // THE FOLK-FLOOR ROUND'S NINE (2026-08-30). Sixteen of the round's
     // twenty-five take their family row unchanged; these disagree, each
     // for a reason the record itself states:
@@ -23026,13 +23519,95 @@
     // follows HER, which no 0.45 stress can describe.
     chanson:    { stress: 0.2,  phrase: 0.75, touch: { t: 0.06,  v: 0.85 } },
     // ...and the screen cluster's three machines-in-a-hand-family.
-    // carpenter is a director playing to a click, tight and small;
-    // miamivice is fusion hands over a sequenced grid — the phrase
-    // leans while the time does not; seinfeld is a sampler keyed live,
+    // horrorsynth is a director playing to a click, tight and small;
+    // copshowsynth is fusion hands over a sequenced grid — the phrase
+    // leans while the time does not; sitcomsting is a sampler keyed live,
     // tight time, real pops on the level.
-    carpenter:  { stress: 0.3,  phrase: 0.15, touch: { t: 0.012, v: 0.4 } },
-    miamivice:  { stress: 0.3,  phrase: 0.55, touch: { t: 0.02,  v: 0.6 } },
-    seinfeld:   { stress: 0.4,  phrase: 0.25, touch: { t: 0.02,  v: 0.85 } },
+    horrorsynth:  { stress: 0.3,  phrase: 0.15, touch: { t: 0.012, v: 0.4 } },
+    copshowsynth:  { stress: 0.3,  phrase: 0.55, touch: { t: 0.02,  v: 0.6 } },
+    sitcomsting:   { stress: 0.4,  phrase: 0.25, touch: { t: 0.02,  v: 0.85 } },
+    // THE SOUNDTRACK ROUND'S EIGHT (2026-09-01), each row naming WHOSE
+    // hands it describes, the horrorsynth/copshowsynth idiom:
+    //
+    // spaceopera is a symphony orchestra reading to picture — a hundred
+    // real hands, big phrase, honest ensemble slop (the loosest of the
+    // eight on purpose: Denham 1977 was PLAYED, take after take).
+    spaceopera:    { stress: 0.45, phrase: 0.55, touch: { t: 0.04,  v: 0.85 } },
+    // epichybrid is players to a click under a grid: the section is real
+    // but it is tracked into a template, so the time is nearly the DAW's
+    // and only the level still belongs to the bows.
+    epichybrid:    { stress: 0.3,  phrase: 0.3,  touch: { t: 0.02,  v: 0.5 } },
+    // trailerscore is cut to picture, machine-tight — breakingnews's own
+    // argument one aisle over (its t 0.01 is the family's floor): a
+    // library cue is edited to the frame, and a hit that wanders is a
+    // mistake somebody would fix.
+    trailerscore:  { stress: 0.4,  phrase: 0.2,  touch: { t: 0.015, v: 0.7 } },
+    // crimejazz is real hands, smoke in the room — session players with
+    // jazz's loose clock, the most PLAYER of the eight.
+    crimejazz:     { stress: 0.45, phrase: 0.5,  touch: { t: 0.06,  v: 0.9 } },
+    // fantasyscore is goldenagescore's orchestra with a folk soloist out front:
+    // low stress, the phrase carries the tune over the field drum.
+    fantasyscore:  { stress: 0.3,  phrase: 0.7,  touch: { t: 0.05,  v: 0.8 } },
+    // nordicscore barely states its metre at all — drone's own numbers
+    // warmed up just enough to admit there are bows moving.
+    nordicscore:   { stress: 0.1,  phrase: 0.5,  touch: { t: 0.04,  v: 0.5 } },
+    // dramascore is a mallet player recorded close: quiet, even, the
+    // shape polite on purpose — the school's whole manner.
+    dramascore:    { stress: 0.25, phrase: 0.6,  touch: { t: 0.05,  v: 0.6 } },
+    // frontierscore gallops — the most metre in the screen cluster, a
+    // 1958 stage orchestra digging into the 3-3-2.
+    frontierscore: { stress: 0.5,  phrase: 0.45, touch: { t: 0.045, v: 0.9 } },
+    // THE DEBT ROUND'S THIRTEEN (2026-09-01). test/hand.test.js §1 had
+    // thirteen anchors resolving to NO dynamics beyond the dated jpop
+    // debt — every one a late-round row that landed with no family (their
+    // FAMILIES seats are a later agent's job this round; the rows resolve
+    // under their CURRENT keys and move with them). Each gets a REAL
+    // reading of whose hands are on the record, calibrated against the
+    // neighbours its own comment names:
+    //
+    // hinrg is a 909 four-on-the-floor with a falsetto over it —
+    // synthpop's machine-tight row (t .02) with the phrase lifted for
+    // the voice that IS the record.
+    hinrg:   { stress: 0.28, phrase: 0.45, touch: { t: 0.02,  v: 0.5 } },
+    // beiruttarab is the Baalbeck orchestra following HER — chanson's argument
+    // in Beirut, near tarab's numbers (its declared parent, stress .2
+    // phrase .9) with the ensemble a shade tighter than the solo throat.
+    beiruttarab:        { stress: 0.2,  phrase: 0.8,  touch: { t: 0.06,  v: 0.8 } },
+    // slowcore is a trio playing slow on purpose — real, loose hands
+    // (the drummer is the loosest thing on the record) at low heat.
+    slowcore:    { stress: 0.2,  phrase: 0.6,  touch: { t: 0.07,  v: 0.7 } },
+    // artpop is a Fairlight record with a singer's phrase all over it:
+    // studio-tight time, the arch pushed well past the family's 0.4.
+    artpop:      { stress: 0.3,  phrase: 0.65, touch: { t: 0.03,  v: 0.6 } },
+    // electropop is a drum machine and tracked synths — industrialdance's own
+    // numbers (t .022) with a little more phrase, because With Sympathy
+    // is a POP record and the vocal line has a shape the sequencer lacks.
+    electropop: { stress: 0.3,  phrase: 0.35, touch: { t: 0.02,  v: 0.45 } },
+    // newpop is a CR-78 and played keyboards — dusseldorfschool's grid (its 0.45
+    // parent) but with pop songs written on it, so the phrase is real.
+    newpop:           { stress: 0.3,  phrase: 0.5,  touch: { t: 0.02,  v: 0.5 } },
+    // worldbeat is an art-rock BAND — session hands, big phrase, the
+    // most player of the thirteen with baggy and softrock.
+    worldbeat:  { stress: 0.4,  phrase: 0.6,  touch: { t: 0.05,  v: 0.85 } },
+    // artrock is a band that breathes together — real hands, high
+    // phrase, tighter than worldbeat because 1997 was tracked to
+    // tape loops half the time.
+    artrock:     { stress: 0.35, phrase: 0.65, touch: { t: 0.045, v: 0.8 } },
+    // electroindustrial is sequencers and samplers played violently — near
+    // industrialdance (its own `near`), the level jumping harder than the time.
+    electroindustrial:   { stress: 0.35, phrase: 0.2,  touch: { t: 0.02,  v: 0.6 } },
+    // ambientpop is drift's number with the band still in the room: the
+    // wash has hands under it, barely.
+    ambientpop:      { stress: 0.15, phrase: 0.55, touch: { t: 0.05,  v: 0.55 } },
+    // baggy is the funky drummer played by a person — madchester's
+    // loose hand (t .07) a shade before the scene tightened around it.
+    baggy:    { stress: 0.45, phrase: 0.45, touch: { t: 0.06,  v: 0.85 } },
+    // softrock is a played band in a Lagos room — the band family's numbers
+    // with beatgroup' studio polish halfway back in.
+    softrock:         { stress: 0.5,  phrase: 0.45, touch: { t: 0.05,  v: 0.9 } },
+    // balearic is a 909 under a dream-pop voice — machine floor,
+    // drift's phrase, the same trade hinrg makes at half the BPM.
+    balearic:   { stress: 0.25, phrase: 0.5,  touch: { t: 0.02,  v: 0.5 } },
   };
   // NO SILENT DEFAULT (the compose.js law, one tier down): a genre resolves to
   // its own row or to its family's, and `null` is a DECISION rather than an
@@ -23079,8 +23654,8 @@
     // THE CRUSHED NOTE. A blues line leans into its thirds from underneath and
     // walks the gaps — the leaning is the style, the chromaticism is not.
     blues:       { pass: 0.3,  grace: 0.45 },
-    bodiddley:   { grace: 0.3 },
-    chuckberry:  { pass: 0.2,  grace: 0.35 },
+    hambone:   { grace: 0.3 },
+    rocknroll:  { pass: 0.2,  grace: 0.35 },
     jamband:     { pass: 0.3,  grace: 0.2 },
     gospel:      { pass: 0.35, grace: 0.25 },
     countrypop:  { pass: 0.2,  grace: 0.4 },       // the hammer-on and the slide
@@ -23092,7 +23667,7 @@
     // read through the mode, no approach and no flam. Chant decorates by
     // filling the line, never by striking twice.
     gregorian:   { pass: 0.35 },
-    spem:        { pass: 0.3 },
+    polychoral:        { pass: 0.3 },
     counterpoint:{ pass: 0.35 },
     fugue:       { pass: 0.3 },
     hymn:        { pass: 0.2 },
@@ -23108,8 +23683,8 @@
     barcarolle:  { grace: 0.2 },
     bulgarian:   { grace: 0.35 },                  // the ornament IS the style
     funk:        { grace: 0.2,  flam: 0.15 },
-    motown:      { grace: 0.15, flam: 0.12 },
-    isley:       { grace: 0.2 },
+    detroitsoul:      { grace: 0.15, flam: 0.12 },
+    psychsoul:       { grace: 0.2 },
     reggae:      { grace: 0.15 },
     ska:         { grace: 0.15 },
     rock:        { grace: 0.2 },
@@ -23149,6 +23724,17 @@
     // is carried by the mələkkət signs and nothing in this repo can source
     // them, so a number here would be a guess wearing gregorian's clothes.
     // Nothing is the honest row.
+    // THE SOUNDTRACK ROUND (2026-09-01), and only TWO of the eight earn a
+    // row — the header's law holds. crimejazz is jazz's own vocabulary
+    // dimmed: session players reading a chart still fill leaps and lean
+    // onto beats from a semitone under, they just do it less than a
+    // bandstand soloist would (jazz pass .4/approach .45, here .3/.35).
+    // fantasyscore is the fiddle's celtic grace note, countrypop's kind
+    // of claim one ocean east. The other six are orchestras reading
+    // exactly what is on the paper, or grids — a guessed ornament on the
+    // braam would be a costume, and nothing is the honest row six times.
+    crimejazz:    { pass: 0.3,  approach: 0.35, grace: 0.1 },
+    fantasyscore: { pass: 0.25, grace: 0.2 },
   };
   for (const k of Object.keys(ORNAMENT)) if (GENRES[k]) GENRES[k].orn = ORNAMENT[k];
 

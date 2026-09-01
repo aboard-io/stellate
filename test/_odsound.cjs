@@ -46,7 +46,7 @@ const INSTR = arg("instr", "overdrive_guitar");
       const ix = cast.map((c, i) => (c && c.instr === instr ? "v" + i : null)).filter(Boolean);
       const n = PL.barCount(); const cnt = {}; let tot = 0; let first = -1;
       // ...AND THE FIRST BAR IT SOUNDS IN, which is the number a press window
-      // has to clear. rock and kraftwerk seat this id and play it 70 and 85
+      // has to clear. rock and dusseldorfschool seat this id and play it 70 and 85
       // times, all of it past the 8-bar window the first press used: the
       // reading was "the chair contributes 0.00 dB", and the chair simply had
       // not come in yet.

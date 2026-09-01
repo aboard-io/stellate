@@ -129,10 +129,10 @@
   // genealogy rounds wrote `only(0, 4, 8, 12)` meaning "keep the notes on
   // these bar positions and rest the others" — but `only` is the one-vector
   // combinator above, so each of those words THREW `op is not a function` the
-  // moment render() applied it: dufay, chorale, gagaku, jumpblues, operaseria,
+  // moment render() applied it: isorhythm, chorale, gagaku, jumpblues, operaseria,
   // sizhu and belcanto crashed the kernel's own render while every gate stayed
   // green, because the document path rebuilds words and never runs the raw
-  // rows. (Measured: K.render(cellOf(...).ph, GENRES.dufay, 12) threw; rock
+  // rows. (Measured: K.render(cellOf(...).ph, GENRES.isorhythm, 12) threw; rock
   // rendered 64 events beside it.)
   //
   // The positions are read MODULO 16 — every one of the forty-eight sites
@@ -1659,7 +1659,7 @@
                 // chords move smoothly and over enough bars it can walk
                 // downhill: found at MIDI 21 on a random record, two octaves
                 // under where the chair sits. Five genres in the catalog
-                // (jodeci, gospel, bossa…) voice wider than two octaves on
+                // (hiphopsoul, gospel, bossa…) voice wider than two octaves on
                 // purpose, so this is `padRoom` rather than a law.
                 // (asymmetric on purpose: two octaves of floor below the
                 // chair, one octave of ceiling above it)
@@ -2569,7 +2569,7 @@
     // `bassStyle: "eighths"` and 9 by `subj.acc`, and the bass played the
     // declared grid on exactly THREE — drone, waltz and musette, and only
     // because their grid IS a lone downbeat, which is what the branch above
-    // them happened to produce. So `bodiddley` wrote the Bo Diddley clave
+    // them happened to produce. So `hambone` wrote the Bo Diddley clave
     // (`x..x..x.........`) and played straight eighths; `reggae` wrote
     // `x.........x.....` and played straight eighths; `tango` wrote the
     // habanera and played straight eighths. Nineteen bass rhythms typed into
@@ -2962,7 +2962,7 @@
     // so the lowest lane is by construction the one holding the material the
     // section is ABOUT. The obvious alternative — keep whichever lane is
     // busiest in the bar — was written first and measured wrong: on a genre
-    // whose voice 0 comps (toto, citypop, jodeci — `realize(0) === "pad"`) a
+    // whose voice 0 comps (aor, citypop, hiphopsoul — `realize(0) === "pad"`) a
     // two-note companion out-counts a held chord, and the opening states the
     // companion while the quoted hook never sounds. Thirty genre/seed pairs
     // failed the quote gate that way. Choosing by lane index cannot do that.

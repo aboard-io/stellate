@@ -5,7 +5,7 @@
 //
 // WHY THIS EXISTS. `genres.js` lets an anchor write its bass line out step by
 // step — `bassGrid`, twenty-two of them, the habanera under `tango`, the
-// off-beat under `reggae`, the clave under `bodiddley`. Measured 2026-09-01,
+// off-beat under `reggae`, the clave under `hambone`. Measured 2026-09-01,
 // none of them reached a note: `kernel.js` chose the bass grid in a four-way
 // chain and `bassGrid` sat LAST, under `STYLEGRID[g.bassStyle]` and under the
 // MELODY's accent vector. Thirteen of the twenty-two were outranked by their
@@ -40,7 +40,7 @@
 //   B3  ABSENT IS TODAY. Every anchor that declares no `bassGrid` renders
 //       byte-identically to the pre-2026-09-01 branch order.
 //   B4  the three named regressions, by name and by rhythm: `reggae` is not
-//       straight eighths, `tango` is the habanera, `bodiddley` is the clave.
+//       straight eighths, `tango` is the habanera, `hambone` is the clave.
 "use strict";
 const path = require("path");
 const R = (p) => require(path.join(__dirname, "..", "nukernel", p));
@@ -141,7 +141,7 @@ console.log("\nB4 — the three this gate was written for, by name");
 const EIGHTHS = "x.x.x.x.x.x.x.x.";
 const NAMED = { reggae: "x.........x.....",     // the off-beat, not eight to the bar
                 tango: "x..x..x.x..x..x.",      // the habanera
-                bodiddley: "x..x..x........." };// the clave Bo Diddley is named for
+                hambone: "x..x..x........." };// the clave Bo Diddley is named for
 for (const [a, want] of Object.entries(NAMED)) {
   const r = bassOf(a);
   if (!r) { ok(false, a + " renders at all"); continue; }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* test/_odguitar.cjs — WHO SEATS THE OVERDRIVE GUITAR, AND WHAT THE DESK SENDS.
    (2026-08-30, Paul: "Wherever you use overdrive guitar bring it down 12.
-   Throw it to some mild reverb and delay. I did this for massiveattack and it
+   Throw it to some mild reverb and delay. I did this for bristolsound and it
    did wonders.")
 
    Reads the COMPILED cast and the bar-0 unit table on the shipped page — the
@@ -10,7 +10,7 @@
    says they might.
 
      node test/_odguitar.cjs                       # every anchor, seed 1
-     node test/_odguitar.cjs --records rock,sabbath
+     node test/_odguitar.cjs --records rock,heavymetal
 */
 module.paths.push("/home/ford/ftrain-2025/node_modules");
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i < 0 ? d : process.argv[i + 1]; };

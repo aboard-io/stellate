@@ -80,17 +80,17 @@ const { GENRES } = window.NuGenres;
 /* THE WING, by name. Written out rather than derived from "which rows have
    grain", because a gate that asks the table what it says can never catch the
    table falling silent — the exact failure this round is undoing. */
-const WING = ["portishead", "tricky", "djshadow", "tapemusic", "chopped",
-              "boombap", "triphop", "blockparty", "vaporwave", "massiveattack"];
+const WING = ["noirhop", "knowlewest", "instrumentalhiphop", "tapemusic", "chopped",
+              "boombap", "triphop", "blockparty", "vaporwave", "bristolsound"];
 /* THE LADDER THIS GATE DRIVES, now that no row ships one. These are the
    values the wing was cast at on 2026-08-30 — each PRESSED, six of them
    moved by what came back — kept here so the rendered-ladder checks below
    still exercise the real spread rather than a tidy arithmetic one. They
    are applied through `doc.sound.grain`, which is the board dial's own
    door, so this gate now tests the path a hand actually uses. */
-const LADDER = { portishead: 0.34, tricky: 0.83, djshadow: 0.39,
+const LADDER = { noirhop: 0.34, knowlewest: 0.83, instrumentalhiphop: 0.39,
                  tapemusic: 0.23, chopped: 0.45, triphop: 0.61,
-                 massiveattack: 0.64, boombap: 0.39, blockparty: 0.14,
+                 bristolsound: 0.64, boombap: 0.39, blockparty: 0.14,
                  vaporwave: 0.50 };
 
 (async () => {
@@ -131,10 +131,10 @@ const commonest = Math.max(...Object.values(counts));
 ok(commonest <= WING.length / 2,
    "no single value covers more than half the wing (commonest = " + commonest + ")",
    "a catalogue-wide dusting says one thing about ten different records");
-/* NOT "portishead has the biggest number" — it does not, and it should not.
+/* NOT "noirhop has the biggest number" — it does not, and it should not.
    `grain` is a LEVEL and the catalogue's presses span 18 dB, so the row with
    the most audible surface (Dummy, measured 31.5 dB under its own mix) does
-   NOT carry the largest value: massiveattack does, at 0.64, and its surface
+   NOT carry the largest value: bristolsound does, at 0.64, and its surface
    is the quietest in the wing at 44 dB down, because its press is 8 dB hotter.
    A gate asserting an order over the raw numbers would be asserting a fact
    about mix levels while claiming to assert one about records. What IS checked
@@ -148,8 +148,8 @@ ok(Math.min(...vals) >= 0.1,
 ok(Math.max(...vals) <= 0.9,
    "no row is pinned at the ceiling (largest = " + Math.max(...vals) + ")",
    "fx_bus's 0.15 output scale is human-calibrated; a row at 1.0 is asking for that argument to be reopened");
-ok(grains.massiveattack !== grains.portishead,
-   "Mezzanine (" + grains.massiveattack + ") and Dummy (" + grains.portishead +
+ok(grains.bristolsound !== grains.noirhop,
+   "Mezzanine (" + grains.bristolsound + ") and Dummy (" + grains.noirhop +
    ") do not share a surface", "the downtempo round separated these rows on purpose");
 
 /* ---------- G2 · unit-neutral: grain cannot leak into a voice ------------ */
@@ -285,12 +285,12 @@ function shape(x) {
      "grain 0 sits " + (quietestDb - silentDb).toFixed(0) + " dB under the quietest declared amount (" +
      quietest + ")", "silence " + silentDb.toFixed(1) + " dBFS vs " + quietestDb.toFixed(1) + " dBFS");
 
-  /* `GENRES.portishead.tone.grain` STOOD HERE and is undefined since the
+  /* `GENRES.noirhop.tone.grain` STOOD HERE and is undefined since the
      defaults were withdrawn (2026-08-31) — it made every shape check below
      read NaN, which is a gate failing for the reason it should be testing
      around. The shape of the crackle is a property of the STAGE, not of any
-     row's taste, so it is asked at the ladder's own portishead value. */
-  const g = LADDER.portishead;
+     row's taste, so it is asked at the ladder's own noirhop value. */
+  const g = LADDER.noirhop;
   const out = await renderCrackle(g);
   const s = shape(out.L);
   ok(s.flat > 0.3, "BROADBAND: spectral flatness " + s.flat.toFixed(3) + " > 0.3",
