@@ -1517,6 +1517,46 @@ function sectionEvents(doc, i) {
           k + " declares dsp " + GENRES[k].synth.dsp + ", which no model names");
     });
 
+    ok("G13 an `arpAlways` row carries its sequencer in EVERY section of " +
+       "EVERY seed, at sixteen onsets to the bar", () => {
+      /* Paul, 2026-09-01, after many rounds of me tuning a part that was
+         sometimes not there at all: "I expect one four note arpeggiated phrase
+         to play in line with the chord progression in sixteenth notes on a 303
+         from the first to last measure and you must give me that for every
+         young galaxy song."
+         MEASURED BEFORE THIS GATE, bars of the arp chair carrying sixteenths:
+         seed 1 64/76, seed 3 58/70, seed 7 69/73 — and seeds 5 and 9 at 0/66
+         and 0/60, two songs in five with no arpeggio anywhere. Two causes, both
+         features working as designed: the sequencer SLOT is dealt by a seeded
+         chooser (so on an unlucky seed it was never dealt), and a kind's CELL
+         binds a density BAND (so `sixteenths` could be read as its eighth-note
+         neighbour). A promise made for every song needs a test that reads every
+         song, which is what this is. */
+      const rows = P.anchors().filter((g) => GENRES[g] && GENRES[g].arpAlways);
+      assert.ok(rows.length, "no anchor declares arpAlways");
+      for (const gk of rows) for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+        const d = P.genreToDocument(gk, seed);
+        const arp = d.voices.filter((v) => (v.material || {})[""] === "seq");
+        assert.ok(arp.length === 1,
+          gk + " seed " + seed + " has " + arp.length + " chairs homed on seq, want 1");
+        const secs = d.form.sections.length;
+        for (let i = 0; i < secs; i++) {
+          const m = arp[0].material["s" + i];
+          assert.ok(m === undefined || /^seq/.test(m),
+            gk + " seed " + seed + " section " + i + " plays \"" + m +
+            "\" on the arp chair, not the sequencer");
+        }
+      }
+      // ...and the density is the pinned one, not a neighbour of it
+      assert.strictEqual((P.KINDS.seq || {}).cell, "sixteenths",
+        "the seq kind must ask for sixteenths");
+      const Ideas = R("ideas-kit.js");
+      const g16 = Ideas.CELLS && Ideas.CELLS.sixteenths;
+      assert.ok(g16, "ideas-kit must own a `sixteenths` cell");
+      assert.strictEqual(g16.g.filter(Boolean).length, 16,
+        "the sixteenths cell must gate all sixteen steps");
+    });
+
     ok("G12d the worst record's voice cost is measured, printed, and held " +
        "under a ceiling", () => {
       // BUDGET is the parent's mobile-safety line (state-engine.js:1986) and it

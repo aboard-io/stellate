@@ -641,6 +641,21 @@
     const arpOf = (kind === "seq" && G && G.seqArp) ? { contour: G.seqArp } : null;
     const m = { ...Id.blank(), ...row, ...KINDS[kind], ...(arpOf || {}), ...(rd || {}),
                 len: cb === 4 ? "four" : cb === 2 ? "two" : "one", answer: true };
+    /* A SEQUENCER'S DENSITY IS NOT A BAND (2026-09-01). Paul: "in sixteenth
+       notes ... from the first to last measure ... for every young galaxy
+       song." Measured across five seeds, the arp came out as SIXTEENTHS on
+       three and as EIGHTHS on two — seed 5's bar prints `F2A2 c2A2 ...`, and
+       at L:1/16 a `2` is an eighth: eight onsets where sixteen were asked for.
+
+       The cause is a feature working as designed. A kind's `cell` binds a
+       DENSITY BAND rather than one value (test/hook.test.js says so in as many
+       words), so a reading may take the neighbour either side — and the
+       neighbour below `sixteenths` is `even`, which is eighths. For a TUNE
+       that is variety. For a sequencer it is the difference between the part
+       existing and not, because half speed is a different instrument's job.
+       So `seq` alone takes its cell back from the reading. Every other kind
+       still bands exactly as before. */
+    if (kind === "seq" && KINDS.seq && KINDS.seq.cell) m.cell = KINDS.seq.cell;
     let ph = Id.toPhrase(m, null);                // ideas-kit.js:425, pure, cached
     // THE DEVICE LANDS ON THE PHRASE, NOT ON THE THEME. `Id.develop` is pure
     // and returns the phrase object itself for `same`, so a cell nobody
@@ -2383,7 +2398,41 @@
     {
       const arpV = basePart.findIndex((p, v) =>
         p === "riff" && !!(NI.PATCHES.synth || {})[instrOf(gk, v)]);
-      if (arpV >= 0) for (let i = 0; i < R.song.length; i++) {
+      /* `arpAlways` IS A GUARANTEE, NOT A LEAN (2026-09-01). Paul, after many
+         rounds of me tuning something that was sometimes not there at all: "I
+         expect one four note arpeggiated phrase to play in line with the chord
+         progression in sixteenth notes on a 303 from the first to last measure
+         and you must give me that for every young galaxy song."
+
+         MEASURED ACROSS FIVE SEEDS BEFORE THIS EXISTED — bars of the arp chair
+         carrying sixteenths, first to last:
+             seed 1  64/76      seed 3  58/70      seed 7  69/73
+             seed 5   0/66      seed 9   0/60
+         Two songs in five had NO arpeggio anywhere. The swap below can only
+         move a `seq` the dealer already placed, and the dealer is seeded — so
+         on an unlucky seed there was nothing to move and the record simply had
+         no figure. Tuning a contour cannot fix a part that was never dealt.
+
+         So a row may DEMAND it: with `arpAlways`, the arp chair reads `seq` in
+         EVERY section, dealt or not, and the kind it would have taken goes to
+         whatever voice held the sequencer (so nothing is lost and no section
+         changes what it contains). Absent, every other record is untouched and
+         the seeded swap below is the only behaviour. */
+      if (arpV >= 0 && G.arpAlways) for (let i = 0; i < R.song.length; i++) {
+        /* ONE PHRASE, ON ONE CHAIR. Paul's words are "one four note
+           arpeggiated phrase ... on a 303", and G13 caught TWO chairs homed on
+           the sequencer — the 303 and the guitar, because the dealer may put
+           `seq` in a section's slots more than once. The arp chair takes it;
+           any other voice holding it gives it up and takes what the arp chair
+           would have played, or `counter` when the arp chair had nothing to
+           trade. Two chairs arpeggiating is not the thing he asked for twice. */
+        const mine = baseKinds[arpV][i];
+        baseKinds[arpV][i] = "seq";
+        for (let v = 0; v < baseKinds.length; v++) {
+          if (v === arpV || baseKinds[v][i] !== "seq") continue;
+          baseKinds[v][i] = (mine && mine !== "seq") ? mine : "counter";
+        }
+      } else if (arpV >= 0) for (let i = 0; i < R.song.length; i++) {
         if (baseKinds[arpV][i] === "seq") continue;
         const holder = baseKinds.findIndex((ks) => ks[i] === "seq");
         if (holder < 0) continue;

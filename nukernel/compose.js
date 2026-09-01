@@ -2558,7 +2558,14 @@
       if (at > 1 && chance(rD, 0.7)) {
         const d = skeleton("breakdown", G, gk, S);
         d.len = pick(rD, [2, 2, 4]);
-        d.stack[0].slots = [S.topline];   // everything but the lead, his words
+        /* THE HOLE KEEPS THE ARPEGGIO (2026-09-01). It was [S.topline] alone
+           — "everything but the lead", his earlier words — and his newest
+           instruction outranks it: the figure plays "from the first to last
+           measure". The record he sent agrees: at the drop its MID band holds
+           at -3.4 dB while sub falls to -23.3, and the arpeggio is a mid. So
+           what leaves is the kit and the bass, and what stays is the tune and
+           the figure under it. */
+        d.stack[0].slots = S.seq != null ? [S.topline, S.seq] : [S.topline];
         d.kit = "nodrums";
         d.bassop = "nobass";
         d.cue = "drop";

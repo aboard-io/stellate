@@ -17372,6 +17372,12 @@
          to -23.3 dB and the bass to -10.6 while the mid holds at -3.4. The
          bottom leaves; the middle stays. See compose.js `drops`. */
       drops: true,
+      /* THE ARPEGGIO IS NOT OPTIONAL ON THIS RECORD (2026-09-01). Paul: "you
+         must give me that for every young galaxy song." Measured before this
+         line: seeds 5 and 9 had the figure in ZERO bars, because the sequencer
+         slot is dealt by a seeded chooser and on those seeds it was never
+         dealt at all. See precompose `arpAlways`. */
+      arpAlways: true,
 
       /* THE LENGTH COMES OFF THE GATE, NOT OFF THE TAIL, and this is the one
          judgement call in the round. "Long ethereal vocal lines" and "steady
