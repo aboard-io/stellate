@@ -51,7 +51,15 @@ const ihash = (s) => { let h = 2166136261 >>> 0;
    the vocabulary of a Quantel Paintbox and a Video Toaster, which is what "full
    early 90s digital extravaganza" means. Each is a MODE the shader branches on,
    plus how hard it is pushed. A bar draws one. */
-const MODES = ["straight", "kaleido", "spin", "sphere", "matte", "difference",
+/* `sphere` WAS HERE AND IS DROPPED, 2026-09-01. Paul: "The sphere isn't
+   working, just drop it." He is right and the reason is in the mapping I
+   wrote: it scaled the sampled offset by 1/(0.55 + z*0.75), which is 0.77 at
+   the centre and 1.82 at the rim — so it EXPANDED outward where a sphere
+   compresses, pushing the edge of the picture off the texture and sampling
+   clamped pixels in a ring. That is a smear, not a ball. Removed rather than
+   fixed, because he asked for it gone and a half-right fisheye is worse than
+   the eight modes that do work. */
+const MODES = ["straight", "kaleido", "spin", "matte", "difference",
                "split", "posterize", "rgbsplit"];
 
 const VERT = `attribute vec2 p; varying vec2 uv;
@@ -60,20 +68,21 @@ void main(){ uv = p * 0.5 + 0.5; gl_Position = vec4(p, 0.0, 1.0); }`;
 const FRAG = `precision mediump float;
 varying vec2 uv;
 uniform sampler2D texA, texB, prev;
-uniform float mode, amt, t, fade, feedback, sat, spin, xfade;
+uniform float mode, amt, t, fade, feedback, sat, spin, xfade, lines, glitch;
 uniform sampler2D texN;   // the INCOMING clip, rising before the barline
 const float PI = 3.14159265;
 
+/* ROTATION ZOOMS IN, so a turned frame still covers the canvas. Paul: "When
+   you rotate zoom in so there arent all the black bars." A square turned by
+   any angle needs sqrt(2) ~ 1.414 of its own width to cover the same box at
+   45 degrees; the coordinate is scaled by 1/1.45 about the centre, which is
+   that with a little to spare, so no angle can ever pull the edge into frame.
+   The cost is a slight crop, which is the correct trade: a corner of black is
+   a mistake, a tighter frame is a choice. */
 vec2 rot(vec2 q, float a){
   q -= 0.5; float c = cos(a), s = sin(a);
-  return vec2(q.x * c - q.y * s, q.x * s + q.y * c) + 0.5;
-}
-// a hemisphere: the picture wrapped onto a ball, the single most 1993 gesture
-vec2 sphere(vec2 q){
-  vec2 d = q - 0.5; float r = length(d) * 2.0;
-  if (r > 1.0) return q;
-  float z = sqrt(1.0 - r * r);
-  return 0.5 + d * (1.0 / (0.55 + z * 0.75));
+  vec2 r = vec2(q.x * c - q.y * s, q.x * s + q.y * c);
+  return r / 1.45 + 0.5;
 }
 vec3 grade(vec3 c, float s){
   float l = dot(c, vec3(0.299, 0.587, 0.114));
@@ -94,18 +103,16 @@ void main(){
     o = texture2D(texA, fract(k)).rgb;
   } else if (mode < 2.5) {             // spin — a harder rotation on top of the global one
     o = texture2D(texA, rot(q, t * amt)).rgb;
-  } else if (mode < 3.5) {             // sphere
-    o = texture2D(texA, sphere(q)).rgb;
-  } else if (mode < 4.5) {             // matte — B keyed through A's luma
+  } else if (mode < 3.5) {             // matte — B keyed through A's luma
     a = texture2D(texA, q).rgb; b = texture2D(texB, q).rgb;
     float l = dot(a, vec3(0.299, 0.587, 0.114));
     o = mix(b, a, smoothstep(0.35 - amt * 0.3, 0.65 + amt * 0.3, l));
-  } else if (mode < 5.5) {             // difference — the Toaster's own trick
+  } else if (mode < 4.5) {             // difference — the Toaster's own trick
     a = texture2D(texA, q).rgb; b = texture2D(texB, rot(q, 0.15)).rgb;
     o = abs(a - b);
-  } else if (mode < 6.5) {             // split — A left, B right, hard seam
+  } else if (mode < 5.5) {             // split — A left, B right, hard seam
     o = (q.x < 0.5 ? texture2D(texA, q) : texture2D(texB, q)).rgb;
-  } else if (mode < 7.5) {             // posterize
+  } else if (mode < 6.5) {             // posterize
     float st = 3.0 + floor(amt * 5.0);
     o = floor(texture2D(texA, q).rgb * st) / st;
   } else {                             // rgbsplit — chroma pulled apart
@@ -119,11 +126,58 @@ void main(){
      one." So xfade runs 0 to 1 across the last third of a second BEFORE the
      barline and is exactly 1 when the bar turns over. Arriving at full after
      the beat is what reads as late, which is what he saw.
-     (No backticks in here: this is inside a template literal, and the pair I
-     first wrote around the uniform name closed the string. Caught by the
-     syntax check before it shipped.) */
-  if (xfade > 0.001) o = mix(o, texture2D(texN, q).rgb, xfade);
+     (NO BACKTICKS ANYWHERE IN THIS SHADER SOURCE. It is a template literal, so
+     a backtick closes the string. I wrote this warning once, then did it again
+     two hours later quoting a registry key. Both were caught by the syntax
+     check; neither should have been written.) */
+  /* EASED, NOT LINEAR. A straight ramp reads as a switch that happens to take
+     time; smoothstep leaves and arrives gently, which is what "smooth it all
+     out" asks for, and it still reaches exactly 1.0 on the downbeat. */
+  if (xfade > 0.001) o = mix(o, texture2D(texN, q).rgb, smoothstep(0.0, 1.0, xfade));
   o = grade(o, sat);
+
+  /* ---- THE VHS PASS, over everything (2026-09-01) -----------------------
+     Paul: "Add scanlines and old vhs aesthetics to the video." It is a LOOK
+     over the whole picture rather than a ninth mode, because that is what a
+     tape is: whatever you shot, played back off a worn cassette.
+
+     I checked for prior art first, as instructed ("We do this on stellate"),
+     and the VHS work in this repo is all AUDIO — engine/registry-data.js has
+     a crt_whine row, "CRT flyback whine at the true 15734Hz NTSC line,
+     synthesized", plus tape-noise rows. No shader to reuse. But that comment
+     hands over the one number worth having: NTSC scans 15734 lines a second
+     at 59.94 fields, which is 262.5 lines a field — so the scanline count
+     here is 262 and not a round number somebody liked the look of.
+
+     FIVE THINGS, each a real tape artefact rather than a filter:
+       · SCANLINES at the NTSC line count, darkening alternate lines
+       · CHROMA BLEED — luma is sharp, colour is smeared sideways, because a
+         VHS carries chroma at a quarter of the luma bandwidth
+       · TRACKING WOBBLE — a slow horizontal shift that varies down the frame
+       · HEAD-SWITCHING NOISE — the torn band at the very bottom, which is the
+         head drum changing over below the visible picture
+       · and a soft vignette with the saturation pulled slightly down. */
+  float ny = uv.y * 262.0;                        // NTSC lines per field
+  float scan = 0.86 + 0.14 * smoothstep(0.35, 0.65, fract(ny));
+  // chroma lags luma: sample colour a little to the left, keep this luma
+  vec3 cb = texture2D(texA, q + vec2(0.006 + amt * 0.004, 0.0)).rgb;
+  float lum = dot(o, vec3(0.299, 0.587, 0.114));
+  o = mix(o, vec3(lum) + (cb - vec3(dot(cb, vec3(0.299, 0.587, 0.114)))) * 1.15, 0.35);
+  // tracking: a slow wobble that is not the same at the top and the bottom
+  o *= 1.0 - 0.035 * sin(uv.y * 6.0 + t * 0.6) * sin(t * 0.13);
+  /* head switch: the bottom 2% tears sideways. HELD, not re-rolled every
+     frame — Paul: "your doing some twitchy stuff. Smooth it all out. For now
+     we are just fading in and out with a little glitching." A tear that picks
+     a new offset 60 times a second is static; a real head switch holds its
+     displacement for the whole field. The glitch uniform is a per-bar value
+     from the JS side, so the band sits still and only moves when the picture
+     cuts. */
+  if (uv.y < 0.02) {
+    o = texture2D(texA, vec2(fract(q.x + (glitch - 0.5) * 0.05), q.y)).rgb * 0.8;
+  }
+  vec2 vg = uv - 0.5;
+  o *= scan * (1.0 - dot(vg, vg) * 0.55);
+  o = grade(o, 0.88);
   vec3 p = texture2D(prev, (uv - 0.5) * 0.998 + 0.5).rgb;
   gl_FragColor = vec4(max(o * fade, p * feedback), 1.0);
 }`;
@@ -270,6 +324,7 @@ export function mountVideo(host, CTX) {
     return { clip: CLIPS[h % CLIPS.length],
              mode: songMode,
              amt: songAmt,
+             glitch: ((h >>> 12) & 255) / 255,   // held for the whole block
              inAt: (((h >>> 20) & 1023) / 1023) };
   };
 
@@ -288,11 +343,19 @@ export function mountVideo(host, CTX) {
                                             : { playing: false, atStep: -1, spb: 16 });
   let nextBar = -1, cur = pick(0), incoming = null, slot = 0, raf = 0, dead = false;
   let wasPlaying = false;
+  const t0 = performance.now();
 
   const loadInto = (v, choice) => {
     v.src = VIDEO_DIR + choice.clip.f;
     const go = () => { const d = v.duration || choice.clip.d || 10;
       try { v.currentTime = Math.min(d - 0.1, choice.inAt * Math.max(0, d - 1)); } catch {}
+      /* HALF SPEED, ALWAYS (2026-09-01). Paul: "Slow all video down to half
+         speed always." These are 1920s films at 24fps transferred to 25 —
+         everything in them already moves faster than it was shot — and at half
+         rate a four-bar block covers half as much footage, so a cut reads as a
+         held image rather than a clip racing past. It is set on every load
+         because a fresh <video> resets to 1.0. */
+      v.playbackRate = 0.5;
       v.play().catch(() => {}); };
     if (v.readyState >= 1) go(); else v.addEventListener("loadedmetadata", go, { once: true });
   };
@@ -309,7 +372,7 @@ export function mountVideo(host, CTX) {
       cap.textContent = T.playing ? "paused" : "stopped — press play";
       return;
     }
-    if (!wasPlaying) { vids.forEach((v) => v.play().catch(() => {})); wasPlaying = true; }
+    if (!wasPlaying) { vids.forEach((v) => { v.playbackRate = 0.5; v.play().catch(() => {}); }); wasPlaying = true; }
     // THE BAR IS THE RECORD'S. atStep counts steps from the top of the song;
     // spb is this record's own steps-per-bar (a waltz is not sixteen).
     const spb = T.spb || 16;
@@ -352,12 +415,21 @@ export function mountVideo(host, CTX) {
     gl.uniform1i(U("prev"), 2);
     gl.uniform1f(U("mode"), MODES.indexOf(cur.mode));
     gl.uniform1f(U("amt"), cur.amt);
-    gl.uniform1f(U("t"), el);
     gl.uniform1f(U("fade"), 1);
     gl.uniform1f(U("xfade"), xfade);
+    gl.uniform1f(U("lines"), 262);
+    gl.uniform1f(U("glitch"), cur.glitch != null ? cur.glitch : 0.5);
     gl.uniform1f(U("feedback"), 0.18 + cur.amt * 0.3);
     gl.uniform1f(U("sat"), 0.7 + cur.amt * 0.7);
-    gl.uniform1f(U("spin"), (cur.mode === "spin" ? 0 : cur.amt * 0.25) * Math.sin(el * 0.11));
+    /* THE MOTION RUNS ON A SMOOTH CLOCK, THE CUTS ON THE RECORD'S. `el` comes
+       from atStep, which the transport announces in 60ms jumps — good for
+       knowing which bar it is, visibly steppy for anything that moves every
+       frame. So rotation and wobble read wall-clock seconds while every CUT,
+       fade and block boundary stays on the music. That split is the whole of
+       "smooth it all out". */
+    const smooth = (performance.now() - t0) / 1000;
+    gl.uniform1f(U("t"), smooth);
+    gl.uniform1f(U("spin"), (cur.mode === "spin" ? 0 : cur.amt * 0.18) * Math.sin(smooth * 0.07));
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, prevTex);
