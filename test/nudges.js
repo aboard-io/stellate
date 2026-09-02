@@ -40,6 +40,7 @@
  */
 "use strict";
 const { chromium } = require("playwright");
+const { installCombo } = require("./lib-combo.js");
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const i = argv.indexOf(n); return i < 0 ? d : argv[i + 1]; };
 const PAGE = arg("--page", "http://localhost:8777/nukernel/index.html");
@@ -74,6 +75,7 @@ const spread = (ev) => {
   await p.goto(PAGE, { waitUntil: "networkidle" });
   await p.waitForFunction(() => document.querySelectorAll(".nu-sheet").length > 0,
     null, { timeout: 20000 }).catch(() => {});
+  await installCombo(p);
 
   /* Click a control by its `data-k` and let ui/eight.js `changed()` rebuild.
      An <input> inside a .nu-opt is hidden BY CLIP and focusable, so it is not
@@ -123,14 +125,19 @@ const spread = (ev) => {
      here. */
   const say = async (sheet, value) => {
     const hit = await p.evaluate(([k, v]) => {
-      const s = document.querySelector('select[data-sel="' + CSS.escape(k) + '"]');
+      /* A MENU IS NO LONGER A `<select>`, 2026-09-02 (wave 4). Paul: *"The
+         combo boxes just don't work and are confusing. I was expecting more of
+         onfocus show custom dropdown then filter based on input — one line
+         instead of two."* This line read `select[data-sel=…]` and matched
+         nothing on the shipped page, so it fell through to the word-grid and
+         then the radio branch and, for the four nudges still drawn as menus,
+         said NOTHING and returned false — a driver that no-ops is the failure
+         "test the artifact" exists to catch. The ADDRESS is unchanged; the tag
+         is gone from the query, and the tap is test/lib-combo.js's shared one. */
+      const s = document.querySelector('[data-sel="' + CSS.escape(k) + '"]');
       if (s) {
         if (s.disabled) return false;
-        const o = [...s.options].find((x) => x.dataset.v === v);
-        if (!o || o.disabled) return false;
-        s.value = o.value;
-        s.dispatchEvent(new Event("change", { bubbles: true }));
-        return true;
+        return window.__combo.say(s, v);
       }
       const c = document.querySelector('.nu-wcell[data-k="' + CSS.escape(k) + '"]');
       if (c) {
@@ -250,7 +257,10 @@ const spread = (ev) => {
     // nudges are all cells still counts as "the nudges are drawn".
     sheets: [...document.querySelectorAll(".nu-sheet")]
       .map((f) => f.dataset.sheet).filter((s) => window.__isNudge(s)).length +
-      [...document.querySelectorAll("select[data-sel]")]
+      // …AND A MENU IS AN `<input role=combobox>` SINCE 2026-09-02 (wave 4):
+      // this counted `select[data-sel]`, of which there are none on the page,
+      // so four of the twelve nudges went uncounted.
+      [...document.querySelectorAll("[data-sel]")]
       .map((s) => s.dataset.sel).filter((s) => window.__isNudge(s)).length +
       [...document.querySelectorAll(".nu-wcell[data-k]")]
       .map((c) => c.dataset.k).filter((s) => window.__isNudge(s)).length,
@@ -322,17 +332,23 @@ const spread = (ev) => {
         }
       }
     }
-    for (const s of document.querySelectorAll("select[data-sel]")) {
+    /* THE MENUS. `select[data-sel]` matched nothing after wave 4 turned every
+       menu into an `<input role=combobox>` with a `<ul role=listbox>` of
+       `<li role=option data-v>` beside it, so this whole loop ran zero times
+       and NO SILENT GREY was proved of nothing. The refusal still rides on the
+       option — `aria-disabled` and `data-why` — and test/lib-combo.js's
+       `words()` is what reads it back off either widget. */
+    for (const s of document.querySelectorAll("[data-sel]")) {
       const key = (s.dataset.sel || "").split("|")[0];
       if (!window.__isNudge(key)) continue;
       out.sheets++;
       const field = key.split(".")[1];
-      for (const o of s.options) {
-        const why = o.dataset.why || "";
-        const name = field + ":" + o.dataset.v;
+      for (const o of window.__combo.words(s)) {
+        const why = o.why || "";
+        const name = field + ":" + o.v;
         if (why.trim()) out.why[name] = why.trim();
-        if (o.disabled) { out.dis.push(name); if (!why.trim()) out.silent.push(name); }
-        else if (o.classList.contains("is-quiet")) {
+        if (o.off) { out.dis.push(name); if (!why.trim()) out.silent.push(name); }
+        else if (o.quiet) {
           out.quiet.push(name); if (!why.trim()) out.silent.push(name);
         }
       }

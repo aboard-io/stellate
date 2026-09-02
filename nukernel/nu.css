@@ -6836,9 +6836,23 @@ table.nu-trims{ color: var(--ink); }
   line-height: normal; font-size: var(--t2); font-weight: 500;
   white-space: normal; overflow: visible; }
 /* the controls, sized to sit in a line of type rather than to own one */
+/* THE 22ch CAP IS A MAXIMUM AND THE BOX STILL SHRINKS TO ITS WORDS — which is
+   how this block was measured, and which stopped being true for one day when
+   4B and 4D merged. A `<select>`'s intrinsic width is its longest option; an
+   `<input>`'s is its `size` attribute, twenty characters whatever is in it. So
+   every menu in a sentence drew 224px — the cap, not the content — and the
+   control wrapped onto its own line under its own words. MEASURED on the
+   rendered Rules panel at 390: `rate` / `mode` / `scale` / `harmony` 66px each
+   and `plan` 96px, which is what turned R9's "inside the two tap rows every
+   other question gets" red. The repair is in ui/selects.js (`buildCombo` sizes
+   the field to its longest word, the way the element it replaced did) and not
+   here, because the number in this rule was never wrong: nothing in a sentence
+   may be wider than 22ch, and most menus are far narrower than that. */
 .nu-rule .nu-combo{ flex: 0 1 auto; min-inline-size: 0;
   max-inline-size: min(100%, 22ch); }
-.nu-rule .nu-combo > select{ block-size: var(--tap); }
+/* (`.nu-rule .nu-combo > select{ block-size: var(--tap) }` stood here and
+   matches nothing since 2026-09-02: the field is the box's only child now and
+   `.nu-combofield` carries `block-size: var(--tap)` itself.) */
 .nu-rule input[type=range]{ flex: 0 1 130px; inline-size: auto;
   min-inline-size: 80px; block-size: var(--tap); }
 .nu-rule output{ flex: 0 0 auto; font-variant-numeric: tabular-nums; }
@@ -6896,7 +6910,8 @@ table.nu-trims{ color: var(--ink); }
    gone and the accessible one is not. */
 .nu-pal{ margin: var(--s1) 0 0; }
 .nu-pal .nu-combo{ max-inline-size: min(100%, 15ch); }
-.nu-pal .nu-combo > select{ block-size: var(--tap); }
+/* (`.nu-pal .nu-combo > select` went the same way as `.nu-rule`'s — no
+   `<select>` inside the box since 2026-09-02.) */
 /* ======================================================================
    WAVE 4B — THE COMBOBOX (2026-09-02)
    ======================================================================

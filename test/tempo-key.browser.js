@@ -66,6 +66,7 @@
  */
 "use strict";
 const { chromium } = require("playwright");
+const { installCombo } = require("./lib-combo.js");
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
@@ -138,6 +139,7 @@ function standUpServer() {
   await p.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
   await p.goto(PAGE + CHANT, { waitUntil: "domcontentloaded" });
   await p.waitForTimeout(2500);
+  await installCombo(p);
 
   /* A TAB IS OPENED THE WAY A THUMB OPENS IT — `__eightTab` is the same call
      the stripe's own button makes (ui/eight.js says so at its definition). */
@@ -148,11 +150,21 @@ function standUpServer() {
       const el = document.querySelector('[data-k="' + key + '"]');
       if (!el || el.disabled) return false; el.click(); return true; }, k);
     await p.waitForTimeout(450); return hit; };
-  const say = async (sel, v) => { await p.evaluate(([s, val]) => {
-      const el = document.querySelector('select[data-sel="' + s + '"]');
-      if (!el) return; el.value = val;
-      el.dispatchEvent(new Event("change", { bubbles: true })); }, [sel, v]);
-    await p.waitForTimeout(600); };
+  /* SAYING A WORD IN A MENU, 2026-09-02 (wave 4). This read
+     `select[data-sel="…"]`, and there is no `<select>` on the page any more —
+     Paul: *"The combo boxes just don't work and are confusing. I was expecting
+     more of onfocus show custom dropdown then filter based on input — one line
+     instead of two."* A menu is an `<input role=combobox>` with a `<ul
+     role=listbox>` beside it, at the SAME `data-sel` address. The old query
+     matched nothing and `if (!el) return` swallowed it, so T2 below wrote
+     nothing and then asserted about the groove it had not changed. The driver
+     is test/lib-combo.js's, shared with test/nudges.js and
+     test/band.browser.js, and it opens the list and taps the option. */
+  const say = async (sel, v) => {
+    const hit = await p.evaluate(([s, val]) => {
+      const el = document.querySelector('[data-sel="' + s + '"]');
+      return el ? window.__combo.say(el, val) : false; }, [sel, v]);
+    await p.waitForTimeout(600); return hit; };
   /* ...AND SAYING A PACE IS TWO TAPS NOW, 2026-09-02 (wave 4). Paul: *"make
      those tables of dropdowns full of tappable grids that change options
      rather than dropdowns … institutionalize it."* The pace strip was eight
@@ -353,33 +365,25 @@ function standUpServer() {
     const setSel = async (selKey, val) => {
       const hit = await p.evaluate(([sk, v]) => {
         const el2 = document.querySelector('#app [data-sel="' + sk + '"]');
-        if (!el2 || el2.disabled) return { ok: false, why: "no control " + sk };
-        if (el2.tagName === "SELECT") {
-          const o = [...el2.options].find((x) => x.value === v);
-          if (!o || o.disabled) return { ok: false, why: "no option " + v };
-          el2.value = v;
-          el2.dispatchEvent(new Event("change", { bubbles: true }));
-          return { ok: true };
-        }
-        el2.focus(); el2.click();
-        const own = el2.getAttribute("aria-controls");
-        const list = (own && document.getElementById(own)) || el2.parentElement;
-        const opt = list && list.querySelector('[data-v="' + v + '"]');
-        if (!opt || opt.disabled) return { ok: false, why: "no option " + v };
-        opt.click();
-        return { ok: true };
+        if (!el2) return { ok: false, why: "no control " + sk };
+        if (el2.disabled) return { ok: false, why: "control off: " +
+          (el2.dataset.why || "no reason given") };
+        if (!window.__combo.words(el2).some((o) => o.v === v && !o.off))
+          return { ok: false, why: "no option " + v };
+        return { ok: window.__combo.say(el2, v) };
       }, [selKey, val]);
       await p.waitForTimeout(700); return hit;
     };
+    /* THE WORDS, OFF THE ARTIFACT. (This walked `document.querySelectorAll
+       ("[data-v]")` and kept everything whose `dataset.sel` was absent — which
+       is every `[data-v]` on the page, because an option never carries a
+       `data-sel`. It answered with the whole document's chips. The shared
+       reader knows which list belongs to which field: test/lib-combo.js.) */
     const words = (selKey) => p.evaluate((sk) => {
       const el2 = document.querySelector('#app [data-sel="' + sk + '"]');
       if (!el2) return null;
-      const os = el2.tagName === "SELECT"
-        ? [...el2.options].map((o) => ({ v: o.value, off: o.disabled }))
-        : [...document.querySelectorAll('[data-v]')]
-            .filter((o) => (o.dataset.sel || sk) === sk)
-            .map((o) => ({ v: o.dataset.v, off: !!o.disabled }));
-      return { off: !!el2.disabled, why: el2.dataset.why || "", opts: os };
+      return { off: !!el2.disabled, why: el2.dataset.why || "",
+               opts: window.__combo.words(el2).map((o) => ({ v: o.v, off: o.off })) };
     }, selKey);
 
     const went = await setSel("alphabet.harmony", "modal");

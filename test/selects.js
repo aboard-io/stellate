@@ -165,21 +165,24 @@ const MENUS = {
    * B3 is the gate that drives it: press a chip, and the record's default cell
    * moves.
    *
-   * THE PER-SECTION HALF IS UNTOUCHED: `material.cell` below is still a menu,
-   * because "which of these does this player read HERE" is asked thirteen times
-   * down a column and a column of pictures is a wall. */
+   * THE PER-SECTION HALF WAS A MENU UNTIL 2026-09-02 — see the tombstone under
+   * `sound.instrument`, where it went and by whose sentence. */
   "sound.instrument": "voices > instrument",
-  /* ...and `material.cell` is "voices > material" ONE SCOPE DOWN, added by the
-   * integrator on the same evening and from the same two sentences. The band's
-   * voice tab now says which of the record's motifs a player reads SECTION BY
-   * SECTION, because the makers left the voices for the shared bank in the
-   * Material axis ("i thought motifs were universal not per voice?" — they are)
-   * and "'the band' is where I thought voices would be established,
-   * interpreting the progression, structure, and motif". It is a menu for
-   * exactly the reason `cast.material` is one: which cell a voice reads in the
-   * bridge is a settled parameter, and the sheet beside it is the WORD the
-   * voice does to what it reads, which is the comparison. */
-  "material.cell":    "voices > material, per section",
+  /* (`"material.cell": "voices > material, per section"` STOOD HERE and is a
+   * WORD GRID since 2026-09-02. It was on this list for the reason written
+   * beside it — "which cell a voice reads in the bridge is a settled
+   * parameter", asked thirteen times down a column — and every word of that is
+   * still true; what changed is that Paul named a better widget for exactly
+   * that shape. *"When we go into structure make those tables of dropdowns
+   * full of tappable grids that change options rather than dropdowns — like
+   * the other selection table in mix. This is a powerful element for editing a
+   * whole song — think on it and institutionalize it."* Thirteen menus down a
+   * column IS the table that sentence is about. It is one column of a
+   * `ui/wordgrid.js` grid now: a cell printing the word, a strip of chips
+   * under the row when you open it, and the SAME address — `material.cell|
+   * <voice>|<section>` is the cell's `data-k` where it was the select's
+   * `data-sel`. Check 1a below asserts it is drawn as a cell, so this fact
+   * cannot quietly stop being drawn at all; test/band.browser.js B3 drives it.) */
   /* ...and `sound.drumkit`, which joined the list on 2026-08-24 by the same
    * sentence and by a measurement. Paul asked "can i pick more than one options
    * for the drum kit?" and the selects round read that QUESTION as a request,
@@ -430,6 +433,18 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
           : f.querySelectorAll(".nu-opt").length,
         boxes: f.querySelectorAll('input[type=checkbox]').length,
         off: f.disabled })),
+      /* ...AND THE THIRD WIDGET, 2026-09-02 (wave 4). Paul: *"When we go into
+         structure make those tables of dropdowns full of tappable grids that
+         change options rather than dropdowns — like the other selection table
+         in mix. This is a powerful element for editing a whole song — think on
+         it and institutionalize it."* A `ui/wordgrid.js` CELL is a button
+         printing the word it stands on, which grows a strip of option chips
+         under its row when a thumb opens it. It carries the sheet's own
+         address as `data-k`, so it is surveyed by the same key every other
+         widget on this page answers to, and the checks below can ask "is this
+         fact drawn AT ALL, and in which of the three" instead of naming a tag. */
+      cells: q(".nu-wcell[data-k]").map((c) => ({ key: c.dataset.k,
+        k: bare(c.dataset.k), inApp: !!c.closest("#app") })),
     };
   });
 
@@ -490,8 +505,9 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      every `data-k` is byte-identical. */
   const tabs = await p.evaluate(() =>
     [...document.querySelectorAll('#nu-tray [data-k^="tab"]')].map((t) => t.dataset.k));
-  let sel = [], sheets = [];
-  const eat = (s) => { sel = sel.concat(s.sel); sheets = sheets.concat(s.sheets); };
+  let sel = [], sheets = [], cells = [];
+  const eat = (s) => { sel = sel.concat(s.sel); sheets = sheets.concat(s.sheets);
+                       cells = cells.concat(s.cells || []); };
   // EVERY ONE OF THE NINE, FIRST — the Tempo tab's meter and swing, the Key
   // tab's mode, harmony and quality cells, the Motif tab's per-cell menus and
   // the producer's verbs are each on a panel of their own now, and none of
@@ -570,6 +586,15 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   const stillLit = Object.keys(MENUS).filter((k) => sheetKeys.has(k));
   check(!missing.length, "every control Paul named is a combo box " +
     JSON.stringify(missing.map((k) => MENUS[k])));
+  /* 1a — AND THE ONE THAT LEFT THIS LIST IS DRAWN, AS THE WIDGET IT LEFT FOR.
+     A control taken off MENUS with no second claim about it is a control this
+     file has stopped watching; `material.cell` is the per-section motif choice
+     and the tombstone above says where it went. */
+  const cellKeys = new Set(cells.map((c) => c.k));
+  check(cellKeys.has("material.cell"),
+    "1a …and the per-section motif choice is a WORD GRID (Paul, 2026-09-02: " +
+    "\"tappable grids that change options rather than dropdowns\") — " +
+    cells.filter((c) => c.k === "material.cell").length + " cells");
   check(!stillLit.length, "...and none of them is still a sheet " + JSON.stringify(stillLit));
 
   /* ---- 2 THE DEVELOPMENT WORDS ARE MENUS TOO — A REVERSAL, REWRITTEN ----
@@ -599,12 +624,37 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      weaker; only the widget changed.
 
      Measured 2026-08-25 on the shipped page: 10 `dev.*` menus (5 line × 26
-     options, 5 kit × 69) and 0 `dev.*` sheets. */
+     options, 5 kit × 69) and 0 `dev.*` sheets.
+
+     ...AND ON 2026-09-02 THEY STOPPED BEING MENUS, WHICH IS THE THIRD TIME
+     THIS PAIR HAS TURNED OVER AND THE FIRST TIME IT LANDED WHERE BOTH OLD
+     ARGUMENTS WANTED IT. Paul: *"When we go into structure make those tables
+     of dropdowns full of tappable grids that change options rather than
+     dropdowns — like the other selection table in mix. This is a powerful
+     element for editing a whole song — think on it and institutionalize it."*
+     A development word is exactly the subject of that sentence: a per-voice,
+     per-section choice, asked once per section down a column, inside a table.
+     The morning-of-2026-08-24 argument at LIT above ("you are SHOPPING —
+     comparing many musical options at once, and 'you cannot say that here,
+     because there is no drummer' is the most useful thing the page can tell
+     you") gets its comparison back, and the evening argument ("a lit sheet of
+     twelve keys is 500px of page spent saying a thing that fits in a word")
+     keeps its word: a `ui/wordgrid.js` cell PRINTS the word and offers the
+     twenty-one only when a thumb asks. Neither sentence lost.
+
+     SO THE CLAIM IS THE SAME CLAIM WITH THE WIDGET RENAMED: every development
+     word is drawn, none of them is a lit sheet, and the refusals still say why
+     — which is checks 5 and 6 below and test/sheets.js gate 6, none of which
+     name a tag. Measured on the shipped page 2026-09-02: 0 `dev.*` menus, 0
+     `dev.*` sheets, and the words in `.nu-wcell` cells. */
   const devSel = sel.filter((s) => /^dev\./.test(s.k)).map((s) => s.key);
+  const devCell = cells.filter((c) => /^dev\./.test(c.k)).map((c) => c.key);
   const devLit = LIT.filter((k) => sheetKeys.has(k));
   if (REAL) {
-    check(devSel.length > 0, "EVERY development word is a menu now — " +
-      devSel.length + " of them " + JSON.stringify([...new Set(devSel.map(bare))]));
+    check(devSel.length + devCell.length > 0,
+      "EVERY development word is a WORD GRID now (menus until 2026-09-02) — " +
+      devCell.length + " cells, " + devSel.length + " menus " +
+      JSON.stringify([...new Set(devCell.concat(devSel).map(bare))]));
     check(!devLit.length, "...and not one of them is still a lit sheet " +
       JSON.stringify(devLit));
   } else {

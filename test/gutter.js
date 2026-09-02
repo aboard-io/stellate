@@ -1174,7 +1174,16 @@ function standUpServer() {
        top level, not buried under band, and below band."* This walked
        Band → `tabform` → the sections; the tab IS the sections, so the
        `tabform` hop is gone and the tab's own arrival unfolds them. */
-    for (let i = 0; i < 8; i++) {                    // down to one section
+    /* DOWN TO ONE SECTION, AND THE BOUND IS A SAFETY RAIL RATHER THAN A
+       COUNT (2026-09-02). It read `i < 8`, which was the record this file was
+       measured against — "5 sections / 36 bars / 149.1 s" in the paragraph
+       above — and the record T7 leaves behind carries THIRTEEN now, so eight
+       taps left five sections standing and the check under this loop read
+       "5 section, 28 bars, 15.29 s" and went red for the arithmetic rather
+       than for anything the gutter does. The loop's own exit is the honest
+       one — it stops when there is one section left — and the number here only
+       has to be larger than any record the composer deals. */
+    for (let i = 0; i < 32; i++) {                   // down to one section
       window.__eightTab("Structure"); await wait(120);
       const secs = [...document.querySelectorAll("#nu-tray .nu-traylist button")]
         .filter((b) => /^secnav/.test(b.dataset.k || ""));

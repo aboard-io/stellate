@@ -22,6 +22,7 @@
 "use strict";
 const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 const { chromium } = require("playwright");
+const { installCombo } = require("./lib-combo.js");
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const i = argv.indexOf(n); return i < 0 ? d : argv[i + 1]; };
 const PAGE = arg("--page", "http://localhost:8777/nukernel/index.html");
@@ -190,34 +191,21 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      the same three lines inside six `evaluate` bodies is the one-owner law
      applied to a test.
 
-     `say()` writes the option's VALUE into the control and fires `change`,
-     which is the same gesture this file made at a `<select>` — ui/selects.js
-     answers it deliberately and says so at its own listener ("A SYNTHETIC
-     `change` IS A COMMIT"). */
-  await p.evaluate(() => {
-    const box = (n2) => n2 && (n2.closest(".nu-combo") || n2.parentElement);
-    window.__combo = {
-      is: (n2) => !!n2 && n2.getAttribute("role") === "combobox",
-      /* one row per offered word, in the shape this file's checks already
-         read: `{ v, off, why, on }`, whichever element it came off */
-      words: (n2) => {
-        if (!n2) return [];
-        if (n2.getAttribute("role") !== "combobox")
-          return [...n2.querySelectorAll("option")].map((o) => ({
-            v: o.dataset.v == null ? o.value : o.dataset.v, off: o.disabled,
-            why: o.dataset.why || "", on: o.selected }));
-        const b = box(n2);
-        return b ? [...b.querySelectorAll("li[role=option]")].map((o) => ({
-          v: o.dataset.v == null ? "" : o.dataset.v,
-          off: o.getAttribute("aria-disabled") === "true",
-          why: o.dataset.why || "",
-          on: o.getAttribute("aria-selected") === "true" })) : [];
-      },
-      say: (n2, v) => { if (!n2) return false;
-        n2.value = v; n2.dispatchEvent(new Event("change", { bubbles: true }));
-        return true; },
-    };
-  });
+     `say()` opens the list the way a thumb does and taps the `li`, falling
+     back to writing the option's VALUE and firing `change` — the gesture this
+     file made at a `<select>`, which ui/selects.js answers deliberately and
+     says so at its own listener ("A SYNTHETIC `change` IS A COMMIT").
+
+     ...AND IT IS NO LONGER WRITTEN HERE, 2026-09-02 (later the same day). The
+     copy that stood in this block was the first one, and within hours three
+     more gates needed the same three lines — test/tempo-key.browser.js,
+     test/nudges.js and test/band.browser.js, all three of which had gone
+     silently vacuous on `select[data-sel=…]`. Four copies of a driver is four
+     ways to be wrong about one widget, so it moved to test/lib-combo.js and
+     this file requires it from there. `window.__combo`'s shape is unchanged;
+     `words()` gained a `w` (the option's printed word) and nothing lost a
+     field. */
+  await installCombo(p);
 
   /* ---- WALK EVERY VIEW, BECAUSE `#app` IS TABS NOW -----------------------
      THIS IS THE HOLE THAT LET THE THREE SURVEY GATES BELOW PASS ON NOTHING.
@@ -909,14 +897,31 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   else notes.push("     (the drum kit's WIDGET is ui/selects.js's router, which " +
     "this harness does not import — index.html only)");
 
-  /* ---- 5 modal harmony has no changes ----
-     THE SUBJECT MOVED WIDGET, THE LAW DID NOT. Paul asked for the chord quality
-     back as "selects inside the 'the changes' table" (2026-08-24), so on
-     nukernel/index.html this is a disabled <select> carrying `data-why` and on
-     the sheets harness it is still a disabled <fieldset> carrying a
-     `<p class="nu-why">`. Both are held to the same sentence, because the
-     sentence is the point: kernel.js:671 throws the progression away under a
-     modal harmony and every quality is then a word about nothing. */
+  /* ---- 5 modal harmony and the chord quality ----
+     THE SUBJECT MOVED WIDGET, AND THEN THE LAW ITSELF TURNED OVER, and both
+     are written here rather than in a new block.
+
+     IT SAID, UNTIL 2026-09-02: "modal harmony -> alphabet.quality disabled,
+     reading `modal harmony has no changes`". The sentence was true of the
+     kernel — kernel.js:671 throws the progression away under a modal harmony,
+     so every quality is a word about nothing — and that is exactly why the
+     control was greyed. Paul, using the composer: *"I can't change chord
+     quality, it's grayed"*. A refusal a person reads as a broken control is a
+     refusal in the wrong place: the honest answer to "I want to change the
+     quality" is to let them, and to say what that costs. So editing the
+     changes on a non-cycle record now SETS `alphabet.harmony = "cycle"` first,
+     with the side effect printed under the grid ("editing the changes makes
+     the harmony a cycle"), and the quality is LIT on a modal record.
+
+     THE HARNESS IS NOT PART OF THAT REVERSAL AND STILL GREYS IT, which is
+     right and is why the two pages are asked different questions here. The
+     sheets harness imports ui/sheets.js and avail.js directly — it is the
+     sheets TIER's own page — and `avail.js` still names the rule and still
+     carries the sentence, because the rule is true about the KERNEL. What
+     changed is what the Key panel does about it, and the Key panel is
+     index.html's. test/tempo-key.browser.js T4e is the other half of this
+     claim, driven: it makes a modal record, changes the quality, and reads the
+     compiled progression back. */
   // ON THE KEY TAB (2026-08-27): "the changes" is the Alphabet axis, which is
   // Paul's `Key`, and the quality menus are cells of its chord table.
   if (REAL) await openTop("Key");
@@ -924,12 +929,23 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     const f = document.querySelector('.nu-sheet[data-sheet^="alphabet.quality"]');
     if (f) { const w = [...f.children].find((c) => c.classList.contains("nu-why"));
              return { as: "sheet", off: f.disabled, why: w ? w.textContent : null }; }
-    const s = document.querySelector('[data-sel^="alphabet.quality"]');
-    return s ? { as: "menu", off: s.disabled, why: s.dataset.why || null } : null;
+    const q = [...document.querySelectorAll('[data-sel^="alphabet.quality"]')];
+    if (!q.length) return null;
+    return { as: "menu", n: q.length, off: q.filter((x) => x.disabled).length,
+             why: q.map((x) => x.dataset.why || "").filter(Boolean)[0] || null,
+             said: document.body.innerText
+               .includes("editing the changes makes the harmony a cycle") };
   });
-  check(!!qual && qual.off && /modal harmony has no changes/.test(qual.why || ""),
-    "modal harmony -> alphabet.quality disabled (as a " + (qual && qual.as) +
-    ") reading " + JSON.stringify(qual && qual.why));
+  if (REAL)
+    check(!!qual && qual.as === "menu" && qual.n > 0 && qual.off === 0 &&
+          !qual.why && qual.said,
+      "the chord quality is LIT on a modal record and the page says what " +
+      "editing the changes costs (Paul, 2026-09-02: \"I can't change chord " +
+      "quality, it's grayed\") " + JSON.stringify(qual));
+  else
+    check(!!qual && qual.off && /modal harmony has no changes/.test(qual.why || ""),
+      "modal harmony -> alphabet.quality disabled on the sheets tier (as a " +
+      (qual && qual.as) + ") reading " + JSON.stringify(qual && qual.why));
 
   /* ---- 6 a pad may not be transposed, but it may be silenced ---- */
   // STAND ON A VOICE'S TAB FIRST. This asked for `cast.part` on whatever the

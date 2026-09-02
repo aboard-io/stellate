@@ -374,6 +374,30 @@ function buildCombo(spec, compact) {
     rows.unshift(matched);
   }
 
+  /* THE BOX SHRINKS TO ITS WORDS, AS THE `<select>` DID — and this is the one
+     thing the element swap silently took away. A `<select>`'s intrinsic width
+     is its LONGEST OPTION, so a two-word menu was two words wide and nu.css's
+     caps (30ch standing over a question, 22ch inside a Rules sentence, 13ch in
+     a list row) only ever bit on the long ones. An `<input>`'s intrinsic width
+     is its `size` attribute — twenty characters, whatever is in it — so on the
+     day this file changed element every menu on the page drew AT ITS CAP.
+     MEASURED on the rendered Rules panel at 390: every enum row 224px wide, the
+     control wrapped onto its own line under its own sentence, `rate` / `mode` /
+     `scale` / `harmony` 66px tall and `plan` 96px, which turned the "one row is
+     one line" check red. `size` is the `<select>`'s own behaviour restated in
+     the attribute this element sizes by, and it is the WORD and not the option
+     text: the reason joined to a refused word ("at the fifth, no drummer") is
+     read in the open list, never in the shut box.
+     THE FLOOR IS 4 AND THE CEILING IS 30, both for the same reason a cap
+     exists at all — a menu of one-letter words is still a thumb target, and a
+     menu of instrument names is not allowed to be a phone and a half. The
+     stylesheet's own caps then narrow it further wherever it is standing. */
+  {
+    let widest = 0;
+    for (const r of rows) widest = Math.max(widest, r.word.length);
+    f.size = Math.max(4, Math.min(30, widest));
+  }
+
   wrap.append(f, list);
 
   /* ---- the state, and the gestures that move it ------------------------- */

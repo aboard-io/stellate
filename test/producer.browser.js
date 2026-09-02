@@ -40,6 +40,7 @@
 "use strict";
 const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 const { chromium } = require("playwright");
+const { installCombo } = require("./lib-combo.js");
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const i = argv.indexOf(n); return i < 0 ? d : argv[i + 1]; };
 const PAGE = arg("--page", "http://localhost:8777/nukernel/index.html");
@@ -81,6 +82,7 @@ const report = () => {
      run. Naming the fixture is the honest half of the change: what this file
      asserts about "the record" is now a claim about a record it chose. */
   await p.goto(PAGE, { waitUntil: "networkidle" });
+  await installCombo(p);
   /* ...AND THE FIXTURE IS THE SHIPPED CHANT ITSELF, BY NAME (2026-09-02).
      This gate's checks NAME the chant's own players (`cantor`, `schola`),
      and a COMPOSED anchor at Rome 600 names its players `voice`, `voice2`,
@@ -166,13 +168,19 @@ const report = () => {
      by `data-v` and its own `.value` is used. */
   const say = async (sheet, value) => {
     const hit = await p.evaluate(([k, v]) => {
-      const s = document.querySelector('select[data-sel="' + CSS.escape(k) + '"]');
+      /* AND A MENU IS AN `<input role=combobox>` SINCE 2026-09-02 (wave 4).
+         Paul: *"The combo boxes just don't work and are confusing. I was
+         expecting more of onfocus show custom dropdown then filter based on
+         input — one line instead of two."* This query named the TAG, which is
+         the one thing about a menu that moved: it matched nothing, fell
+         through to the `opt|…` sheet branch, found nothing there either, and
+         returned false — so P1's two taps never reached the record and every
+         check under them measured a producer nobody had spoken to. The address
+         is unchanged; the driver is test/lib-combo.js's. */
+      const s = document.querySelector('[data-sel="' + CSS.escape(k) + '"]');
       if (s) {
-        const o = [...s.options].find((x) => x.dataset.v === v);
-        if (s.disabled || !o || o.disabled) return false;
-        s.value = o.value;
-        s.dispatchEvent(new Event("change", { bubbles: true }));
-        return true;
+        if (s.disabled) return false;
+        return window.__combo.say(s, v);
       }
       const n = document.querySelector('[data-k="' +
         CSS.escape("opt|" + k + "|" + v) + '"]');
@@ -203,7 +211,7 @@ const report = () => {
     sec: !!document.getElementById("ax-produce"),
     tbl: !!document.querySelector(".nu-notes"),
     // THE VERB SHEET, WHICH MUST NOT BE THERE AT ALL (2026-09-01).
-    verbAny: document.querySelector('select[data-sel="prod.verb"]') ? "menu"
+    verbAny: document.querySelector('[data-sel="prod.verb"]') ? "menu"
       : (document.querySelector('.nu-sheet[data-sheet="prod.verb"]') ? "sheet" : "absent"),
     // ...and TAP ONE IS THE CAST, A ROW OF CHIPS (2026-09-02). One button per
     // cast row, keyed `cast|<id>`, one of them pressed once a subject is
@@ -222,7 +230,7 @@ const report = () => {
     // ...and the SCOPE MENU MUST NOT BE THERE AT ALL, the same way the verb's
     // must not: a chip row and a <select> saying the same thing would be two
     // owners of which subject is being spoken about.
-    scopeAny: document.querySelector('select[data-sel="prod.scope"]') ? "menu"
+    scopeAny: document.querySelector('[data-sel="prod.scope"]') ? "menu"
       : (document.querySelector('.nu-sheet[data-sheet="prod.scope"]') ? "sheet" : "absent"),
   }));
   check(seen.sec, "P0 · the ninth block is on the page (#ax-produce)");
@@ -286,8 +294,8 @@ const report = () => {
     "P1 · the pressed chip says so (aria-pressed=" + JSON.stringify(pressed) + ")");
   // ...and how many records tap three offered, off whichever widget drew it.
   const scope = await p.evaluate(() => {
-    const s = document.querySelector('select[data-sel="prod.record"]');
-    if (s) return s.querySelectorAll("option:not([data-placeholder])").length;
+    const s = document.querySelector('[data-sel="prod.record"]');
+    if (s) return window.__combo.words(s).length;
     return document.querySelectorAll('.nu-sheet[data-sheet="prod.record"] input').length;
   });
   const t3 = await say("prod.record", "punk");

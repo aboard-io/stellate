@@ -63,6 +63,7 @@
  */
 "use strict";
 const { chromium } = require("playwright");
+const { installCombo } = require("./lib-combo.js");
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
@@ -136,6 +137,7 @@ function standUpServer() {
   await p.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
   await p.goto(PAGE + REGGAE, { waitUntil: "domcontentloaded" });
   await p.waitForTimeout(2500);
+  await installCombo(p);
 
   /* A TAB IS OPENED THE WAY A THUMB OPENS IT — `__eightTab` is the same call
      the stripe's own button makes (ui/eight.js says so at its definition). */
@@ -159,21 +161,11 @@ function standUpServer() {
      names the control. So the query is tag-free and the write takes whichever
      shape it finds — a native select takes `value` + `change`, a combobox
      takes the input and then the option the list offers. */
-  const say = async (sel, v) => { await p.evaluate(([s, val]) => {
+  const say = async (sel, v) => {
+    const hit = await p.evaluate(([s, val]) => {
       const el = document.querySelector('[data-sel="' + s + '"]');
-      if (!el) return;
-      if (el.tagName === "SELECT") { el.value = val;
-        el.dispatchEvent(new Event("change", { bubbles: true })); return; }
-      el.focus();
-      el.value = val;
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      const list = el.getAttribute("aria-controls") &&
-        document.getElementById(el.getAttribute("aria-controls"));
-      const opt = list && [...list.querySelectorAll('[role="option"]')]
-        .find((o) => (o.dataset.v || o.dataset.value) === String(val));
-      if (opt) opt.click();
-      else el.dispatchEvent(new Event("change", { bubbles: true })); }, [sel, v]);
-    await p.waitForTimeout(700); };
+      return el ? window.__combo.say(el, val) : false; }, [sel, v]);
+    await p.waitForTimeout(700); return hit; };
   const press = async (k) => { const hit = await p.evaluate((key) => {
       const el = document.querySelector('[data-k="' + key + '"]');
       if (!el || el.disabled) return false; el.click(); return true; }, k);
@@ -228,14 +220,22 @@ function standUpServer() {
       motifs: q(".nu-rule[data-rule='motifs']").map((d) =>
         ({ text: d.textContent.trim(), say: (d.dataset.say || "").length })),
       /* R10: the instrument menu's own group order, read off the rendered
-         control. `<optgroup>` labels in document order — ui/selects.js never
-         reorders, so this is the order `nukernel/rules.js` handed it. */
+         control. Group headings in document order — ui/selects.js never
+         reorders, so this is the order `nukernel/rules.js` handed it.
+         2026-09-02: an `<optgroup>` is an `<li class="nu-combogrp" data-grp>`
+         since the combo round, and `m.options` is undefined on an `<input
+         role=combobox>` — which threw here and killed the run before R1 was
+         asked. Both spellings are read; the CLAIM ("native, then sampled") did
+         not move. */
       instr: (() => {
         const m = document.querySelector('#rulesdeck [data-sel="rule.instr.0"]');
         if (!m) return null;
-        const groups = [...m.querySelectorAll("optgroup")].map((g) => g.label);
-        const first = m.querySelector("optgroup option");
-        return { groups, first: first && first.value, n: m.options.length };
+        const box = m.closest(".nu-combo") || m.parentElement;
+        const groups = m.options
+          ? [...m.querySelectorAll("optgroup")].map((g) => g.label)
+          : [...box.querySelectorAll("li.nu-combogrp")].map((g) => g.dataset.grp);
+        const words = window.__combo.words(m);
+        return { groups, first: words[0] && words[0].v, n: words.length };
       })(),
     };
   });
@@ -434,27 +434,16 @@ function standUpServer() {
        changes are the Key panel's. */
     const grey = [];
     /* tag-free, for the same reason `say()` above is: `data-sel` is the
-       address and it survives the widget. A native menu answers `.options`; a
-       combobox's list answers `[role=option]` under the element its
-       `aria-controls` names. */
-    const optionsOf = (q) => q.options ? [...q.options]
-      : (q.getAttribute("aria-controls") &&
-         document.getElementById(q.getAttribute("aria-controls"))
-        ? [...document.getElementById(q.getAttribute("aria-controls"))
-            .querySelectorAll('[role="option"]')].map((o) => ({
-              value: o.dataset.v || o.dataset.value || o.textContent,
-              textContent: o.textContent,
-              disabled: o.getAttribute("aria-disabled") === "true",
-              dataset: o.dataset }))
-        : []);
+       address and it survives the widget. test/lib-combo.js's `words()` reads
+       either one and answers in one shape. */
+    const optionsOf = (q) => window.__combo.words(q);
     for (const q of document.querySelectorAll('[data-sel^="rule-add|"]'))
       for (const o of optionsOf(q))
-        if (o.disabled) grey.push({ sel: q.dataset.sel, v: o.value,
-                                    why: o.dataset.why || "",
-                                    said: o.textContent.endsWith(o.dataset.why || "\u0000") });
+        if (o.off) grey.push({ sel: q.dataset.sel, v: o.v, why: o.why || "",
+                               said: o.w.endsWith(o.why || "\u0000") });
     const own = optionsOf(s);
-    return { first: own[0] && own[0].textContent,
-             has: own.map((o) => o.value), grey };
+    return { first: own[0] && own[0].w,
+             has: own.map((o) => o.v), grey };
   });
   check(!!pal && /add a rule/.test(pal.first || ""),
     "R5 each axis ends in a palette whose first word is the offer " +
@@ -469,8 +458,11 @@ function standUpServer() {
     rules: window.__eightDoc().rules,
     swing: window.__eightDoc().time.swing,
     control: !!document.querySelector('#rulesdeck [data-k="rule|swing"]'),
-    still: [...((document.querySelector('[data-sel="rule-add|Time"]') || {})
-      .options || [])].map((o) => o.value),
+    // `.options` is a `<select>`'s and answered [] on the combo box, which
+    // made "the palette stops offering what the record now says" pass on an
+    // empty list (2026-09-02)
+    still: window.__combo.words(
+      document.querySelector('[data-sel="rule-add|Time"]')).map((o) => o.v),
   }));
   check((added.rules || []).some((r) => r.f === "swing"),
     "…and choosing one writes it onto the record " + JSON.stringify(added.rules));

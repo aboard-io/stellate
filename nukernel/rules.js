@@ -89,6 +89,16 @@
      sentence is not a template string with a `{}` in it. */
   const w = (s) => ({ w: String(s) });
   const val = (word, v) => ({ w: String(word), v, slot: true });
+  /* A CLAUSE THAT IS NOT PART OF THE SENTENCE (2026-09-02). Paul, on the genre
+     editor: *"It can be a lot tighter though — it has text all over the place.
+     Look at it from the point of view of a user just seeing it for the first
+     time."* One row is one sentence and nothing else stands on it; a DERIVED
+     tail — the eight section roles a plan reads out to — is an answer to a
+     question a first-time reader has not asked. It is not deleted: a view puts
+     it behind the hold (`data-say`), which is exactly what the motifs row
+     already does with its seven read-only lines. `aside` is how a rule says
+     "these words belong to the row but not to its line". */
+  const aside = (s) => ({ w: String(s), aside: true });
 
   /* ---------- dotted paths (tone.verb is the only nested one today) ------- */
   const readAt = (g, path) => {
@@ -437,7 +447,7 @@
     { field: "plan", axis: "Form", head: "arrangement", rederive: "compose",
       say: (g) => [w("it is arranged as "),
         val(g.plan === "dance" ? "a dance record" : g.plan === "arc" ? "a single arc" : "a song", g.plan),
-        w(" — " + planRoles(g).join(", "))],
+        aside(planRoles(g).join(", "))],
       read: (g) => g.plan,
       edit: { kind: "enum", values: () => Object.keys(NC.PLANS || {}).map((k) =>
         ({ value: k, label: k === "dance" ? "a dance record" : k === "arc" ? "a single arc" : "a song" })) },

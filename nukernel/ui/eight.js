@@ -11794,9 +11794,19 @@ function labelWords(c) {
    those places is the accessible name, never a private field:
      a radio / checkbox   the QUESTION is the <fieldset>'s <legend>, the ANSWER
                           is the word beside the input (ui/sheets.js's shape)
+     a combo box          `role=combobox` since 2026-09-02 (Paul: *"onfocus show
+                          custom dropdown then filter based on input — one line
+                          instead of two"*). `aria-label` is the question, the
+                          same one ui/selects.js wrote on the `<select>` before
+                          it, and the answer is the `li[role=option]` marked
+                          `aria-selected` — its own text, refusal folded in,
+                          exactly as the chosen `<option>`'s was. WITHOUT THIS
+                          BRANCH the widget fell through to "anything else" and
+                          the log line lost its value: "the groove" and no word.
      a <select>           `aria-label` is the question (ui/selects.js writes it
                           and folds any refusal into it), the answer is the
-                          selected option's own text
+                          selected option's own text — still drawn by
+                          ui/sheets.js's multiselect and ui/engineer.js's seats
      a range              `aria-label` is the question, and the answer is the
                           <output> beside it — the readout `range()` builds so
                           "a range with no readout is unusable", already
@@ -11813,6 +11823,13 @@ function describeHand(h) {
     value = labelWords(h) || CLEAN(h.value);
     if (type === "checkbox" && !h.checked) value = (value ? value + " — " : "") + "off";
     if (!what) { what = value; value = null; }
+  } else if (h.getAttribute && h.getAttribute("role") === "combobox") {
+    what = CLEAN(h.getAttribute("aria-label")) || labelWords(h) || CLEAN(h.dataset.sel);
+    // the word STANDING, not the text a filter left in the field: the marked
+    // option first, `.value` only if the list is somehow not there
+    const box = h.closest(".nu-combo") || h.parentElement;
+    const on = box && box.querySelector('li[role=option][aria-selected="true"]');
+    value = CLEAN(on ? on.textContent : h.value);
   } else if (tag === "SELECT") {
     what = CLEAN(h.getAttribute("aria-label")) || labelWords(h) || CLEAN(h.dataset.sel);
     const o = h.selectedOptions && h.selectedOptions[0];

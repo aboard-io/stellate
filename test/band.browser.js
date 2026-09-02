@@ -39,6 +39,7 @@
  */
 "use strict";
 const { chromium } = require("playwright");
+const { installCombo } = require("./lib-combo.js");
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
@@ -110,6 +111,7 @@ function standUpServer() {
   await p.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
   await p.goto(PAGE + REGGAE, { waitUntil: "domcontentloaded" });
   await p.waitForTimeout(2500);
+  await installCombo(p);
 
   /* A TAB IS OPENED THE WAY A THUMB OPENS IT — `__eightTab` is the same call
      the stripe's own button makes (ui/eight.js says so at its definition). */
@@ -120,11 +122,18 @@ function standUpServer() {
       const el = document.querySelector('[data-k="' + key + '"]');
       if (!el || el.disabled) return false; el.click(); return true; }, k);
     await p.waitForTimeout(700); return hit; };
-  const say = async (sel, v) => { await p.evaluate(([s, val]) => {
-      const el = document.querySelector('select[data-sel="' + s + '"]');
-      if (!el) return; el.value = val;
-      el.dispatchEvent(new Event("change", { bubbles: true })); }, [sel, v]);
-    await p.waitForTimeout(900); };
+  /* SAYING A WORD IN A MENU, 2026-09-02 (wave 4). Paul: *"The combo boxes just
+     don't work and are confusing. I was expecting more of onfocus show custom
+     dropdown then filter based on input — one line instead of two."* Every menu
+     is an `<input role=combobox>` now, at the same `data-sel` address, and this
+     query still named the tag — so it found nothing, returned undefined, and
+     B6b then asserted about an instrument nobody had chosen. The shared driver
+     is test/lib-combo.js's. */
+  const say = async (sel, v) => {
+    const hit = await p.evaluate(([s, val]) => {
+      const el = document.querySelector('[data-sel="' + s + '"]');
+      return el ? window.__combo.say(el, val) : false; }, [sel, v]);
+    await p.waitForTimeout(900); return hit; };
   /* A TRAY MARK'S SECOND LINE, off the stripe rather than off a module: the
      gutter builds it and the gutter is what a person reads. `.nu-sub2` is
      ui/glyph.js `paintIcon`'s own class for it. */
@@ -183,7 +192,7 @@ function standUpServer() {
       facets: [...document.querySelectorAll('#nu-tray [data-k^="facet-"]')]
         .map((x) => x.dataset.k),
       // the panel is showing this member's INSTRUMENT, not somebody's roster
-      instrSel: !!document.querySelector('select[data-sel="sound.instrument|' + last.name + '"]'),
+      instrSel: !!document.querySelector('[data-sel="sound.instrument|' + last.name + '"]'),
       solo: !!document.querySelector('button[data-k="solo|' + last.name + '"]'),
       roster: document.querySelectorAll(".nu-roster .nu-member").length,
     };
@@ -343,13 +352,22 @@ function standUpServer() {
      stripe's own address for a member and works from either state. */
   await press("tab" + bassName);
   await press("facet-inst");
+  /* THE BASS'S MENU, BY ADDRESS. This asked for a `<select>`, got null, and
+     then read `menu.pick` off it — which is a TypeError, so the run died here
+     rather than failing a check. Same address, either widget: lib-combo. */
   const menu = await p.evaluate((v) => {
-    const s = document.querySelector('select[data-sel="sound.bassinstrument|' + v + '"]');
-    return s ? { n: s.options.length,
-                 pick: [...s.options].map((o) => o.value)
-                   .filter((x) => x && x !== "acoustic_bass")[0] } : null; }, bassName);
+    const s = document.querySelector('[data-sel="sound.bassinstrument|' + v + '"]');
+    if (!s) return null;
+    const words = window.__combo.words(s);
+    return { n: words.length,
+             pick: words.map((o) => o.v)
+               .filter((x) => x && x !== "acoustic_bass")[0] }; }, bassName);
   check(!!menu && menu.n > 2,
     "B6a the bass has an instrument menu at last (" + (menu && menu.n) + " options)");
+  if (!menu || !menu.pick) {
+    console.log("  the bass instrument menu is missing or empty — B6b/B6c " +
+      "cannot be asked " + JSON.stringify(menu));
+  }
   /* THE UNIT THE ENGINE WAS HANDED, BEFORE AND AFTER. `__nuBarSecs()` compiles
      the plan (it is idempotent and needs no audio); `__nuMix()` then reports
      the units for the sounding bar — the artifact, not the arithmetic. */

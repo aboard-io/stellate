@@ -17,6 +17,11 @@
 const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 const path = require("path");
 const R = (p) => path.join(__dirname, p);
+/* THE ONE DRIVER FOR A MENU, 2026-09-02 (wave 4). ui/selects.js draws an
+   `<input role=combobox>` now and this file read `<select>` in five places;
+   test/lib-combo.js is the shared reader every browser gate uses. It is a
+   GATE's helper and never the page's — nothing in nukernel/ reads it. */
+const { installCombo } = require(path.join(__dirname, "..", "test", "lib-combo.js"));
 
 let fails = 0, checks = 0;
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -872,6 +877,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      run. Naming the fixture is the honest half of the change: what this file
      asserts about "the record" is now a claim about a record it chose. */
   await page.goto(PAGE, { waitUntil: "networkidle" });
+  await installCombo(page);
   /* ...AND THE FIXTURE IS THE SHIPPED CHANT ITSELF, BY NAME (2026-09-02).
      This gate's checks NAME the chant's own players (`cantor`, `schola`),
      and a COMPOSED anchor at Rome 600 names its players `voice`, `voice2`,
@@ -1321,8 +1327,18 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // stronger than a container filter and is where the claim always lived.
   // (test/sheets.js check 1 carries the other half of the move: a hand-rolled
   // seat inside #app is named there, dated, rather than counted as rogue.)
+  // ...AND A MENU STOPPED BEING A `<select>` ON 2026-09-02 (wave 4). Paul:
+  // *"The combo boxes just don't work and are confusing. I was expecting more
+  // of onfocus show custom dropdown then filter based on input — one line
+  // instead of two."* ui/selects.js draws an `<input role=combobox>` now, at
+  // the same `data-sel` / `data-k` addresses, and the insert seats
+  // (ui/engineer.js `seatSelect`) are still hand-rolled `<select>`s. A sweep
+  // that named only the tag therefore found NOTHING outside #app and `notRack`
+  // below passed on an empty list — a vacuous pass, which is the one result a
+  // gate must never give. Both spellings are swept, and the tag is no longer
+  // what makes something a menu: `[data-sel]` is.
   const sweepSelects = () => page.evaluate(() =>
-    [...document.querySelectorAll("select")]
+    [...document.querySelectorAll("select, [role=combobox][data-sel]")]
       .filter((s) => !s.closest("#app"))
       .map((s) => ({ k: s.dataset.k || s.id || s.getAttribute("aria-label") || "?",
                      sel: s.dataset.sel || null,
@@ -1339,7 +1355,8 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // the one that happens to be open at mount.
   const perStripMenus = await perTab(() => page.evaluate(() => {
     const strip = document.querySelector("#voicemix .nu-strip");
-    const all = [...strip.querySelectorAll("select")];
+    // both spellings, for the reason written at `sweepSelects` above
+    const all = [...strip.querySelectorAll("select, [role=combobox][data-sel]")];
     return { seats: all.filter((x) => /^ins\|/.test(x.dataset.k || ""))
                .map((x) => x.dataset.k),
              stray: all.filter((x) => !/^ins\|/.test(x.dataset.k || ""))
@@ -1373,10 +1390,10 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   const notRack = sel.filter((s) => !s.seat &&
     !/^(master[|.]|bus\|)/.test(s.sel || "") &&
     !(s.produce && /^prod\./.test(s.sel || "")));
-  ok(notRack.length === 0,
-     "…and every other <select> outside #app is one of the rack's own or the " +
-     "producer's own inside #produce (the 2026-08-27 reorder), drawn by " +
-     "ui/selects.js",
+  ok(notRack.length === 0 && sel.length > 0,
+     "…and every other menu outside #app (" + sel.length + " swept, either " +
+     "spelling) is one of the rack's own or the producer's own inside " +
+     "#produce (the 2026-08-27 reorder), drawn by ui/selects.js",
      JSON.stringify(notRack.map((s) => s.k)));
 
   /* ---- 2 · every word the board used to offer is still reachable ----
@@ -1506,9 +1523,9 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     }
     // ...AND THE SETTLED SINGLE CHOICES AS MENUS, exactly as before the
     // geometry changed: an <option>'s `data-v` is ui/selects.js's own word.
-    for (const s2 of document.querySelectorAll("select[data-sel]")) {
+    for (const s2 of document.querySelectorAll("[data-sel]")) {
       if (!/^(master|bus)\|/.test(s2.dataset.sel)) continue;
-      out[s2.dataset.sel] = [...s2.options].map((o) => o.dataset.v);
+      out[s2.dataset.sel] = window.__combo.words(s2).map((o) => o.v);
     }
     return out;
   }));
@@ -1524,7 +1541,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // (G14's model half), and a knob may not point at a stage the board does
   // not draw.
   const drawnRack = [].concat(...(await perBus(() => page.evaluate(() =>
-    [...document.querySelectorAll('select[data-sel], fieldset.nu-sheet, ' +
+    [...document.querySelectorAll('[data-sel], fieldset.nu-sheet, ' +
       '#rack input[type=range]')]
       .map((n2) => n2.dataset.sel || n2.dataset.sheet || n2.dataset.k)
       .filter((k) => /^(master|bus)\|/.test(k || ""))))).map(([, v]) => v));
@@ -1983,7 +2000,10 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       for (const k of ["drive", "glue", "tape", "space", "width", "tilt", "ceiling"]) {
         const s2 = document.querySelector('[data-sel="master|' + k + '"]');
         out.push({ k, live: !!(s2 && !s2.disabled), why: (s2 && s2.dataset.why) || null,
-                   none: !!(s2 && [...s2.options].some((o) => o.value === "none")) });
+                   // `.options` is a `<select>`'s; a combo box's words come
+                   // off its `li[role=option]`s (test/lib-combo.js, 2026-09-02)
+                   none: !!(s2 && window.__combo.words(s2)
+                     .some((o) => o.v === "none")) });
       }
       const b = document.querySelector('[data-k="master|bypass"]');
       return { words: out, bypass: !!b, pressed: b && b.getAttribute("aria-pressed") };
@@ -2328,7 +2348,13 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       const bad = [], seats2 = [];
       for (const c of document.querySelectorAll("select, input, button")) {
         const k = c.dataset.k || c.dataset.sel || c.name || c.id || "";
-        const words = [...(c.options || [])].map((o) => o.value);
+        // A MENU'S WORDS, EITHER SPELLING (2026-09-02). `.options` is
+        // undefined on the `<input role=combobox>` ui/selects.js draws now, so
+        // this read [] for every converted menu and the sweep could no longer
+        // catch a rogue one offering the FX vocabulary.
+        const words = c.getAttribute("role") === "combobox"
+          ? window.__combo.words(c).map((o) => o.v)
+          : [...(c.options || [])].map((o) => o.value);
         const offersFx = words.some((w) => fxKeys.includes(w));
         if (!offersFx) continue;
         if (/^ins\|/.test(k)) { seats2.push(k); continue; }

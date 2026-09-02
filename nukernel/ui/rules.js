@@ -134,7 +134,17 @@ const txt = (s) => document.createTextNode(String(s));
 
    the whole sentence with its values IN, for the rows that are said and not
    edited — and for every control's accessible name */
-const sayFlat = (r) => r.parts.map((p) => p.w).join("").replace(/\s+/g, " ").trim();
+const sayFlat = (r) => r.parts.filter((p) => !p.aside)
+  .map((p) => p.w).join("").replace(/\s+/g, " ").trim();
+/* THE CLAUSE THAT DOES NOT STAND ON THE ROW — rules.js `aside()`, 2026-09-02.
+   It is a derived reading of the answer (the plan's section roles), not a
+   second fact, and printing it put a 255px third line under a one-line
+   sentence: MEASURED on the rendered Rules panel at 390, the `plan` row was
+   96px against the 88px "two tap rows" ceiling every other question keeps.
+   Behind the hold it costs nothing and is still there, which is the trade the
+   motifs row already made. */
+const asideOf = (r) => r.parts.filter((p) => p.aside)
+  .map((p) => p.w).join(" ").replace(/\s+/g, " ").trim();
 
 const slotsOf = (r) => r.parts.filter((p) => p.slot);
 
@@ -423,7 +433,9 @@ export function mountRules(host, ctx) {
        which is the whole of what the two removed lines used to print, in the
        one place a first-time reader can ask for it instead of having it
        pushed at them thirty-eight times. */
-    div.dataset.say = (why ? why + " — " : "") + r.tier;
+    const tail = asideOf(r);
+    div.dataset.say = (why ? why + " — " : "") + r.tier +
+      (tail ? " — " + tail : "");
     if (why) { div.dataset.why = why; div.classList.add("is-off"); }
 
     /* SAID, NOT EDITED — one line, the sentence, and the row greyed. The
@@ -497,6 +509,7 @@ export function mountRules(host, ctx) {
   function sentenceInto(lab, r) {
     let i = 0, built = false;
     for (const p of r.parts) {
+      if (p.aside) continue;              // it rides `data-say` — see `asideOf`
       if (!p.slot) { if (p.w) lab.append(el("span", p.w, "nu-w")); continue; }
       const n = i++;
       if (controlAt(lab, r, n, p)) built = true;

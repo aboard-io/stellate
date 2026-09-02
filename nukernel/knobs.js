@@ -63,7 +63,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
   return {
-    "built": "2026-08-30",
+    "built": "2026-09-02",
     "from": "nukernel/knobs-extract.js",
     "total": 255,
     "budget": 40,
@@ -3270,7 +3270,7 @@
         "module": "voice_lead",
         "role": "melody",
         "mouth": true,
-        "cost": 7.2,
+        "cost": 2.4,
         "rows": [
           {
             "key": "voice",
