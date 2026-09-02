@@ -137,12 +137,30 @@ const VOICE_TYPE = { alto: 0, bass: 1, countertenor: 2, soprano: 3, tenor: 4 };
 // these same sixteen chairs, before and after the 2026-08-27 fix:
 //     before   +4.8 (aljil) .. +11.8 (mandopop),  every one of the sixteen
 //     after    -6.6 (aljil) ..  +1.3 (kabulpop, qawwali)
-// +2.0 sits above the worst surviving case and 2.8 dB under the mildest
-// failure, so it cannot be met by a voice that has started exhaling again.
-// The two that still read +1.3 are the two highest `air` values in the MOUTHS
-// table (qawwal 0.36 -> breath 0.216): what is left there is the floor the
-// genre asked for, not a gesture at the gate.
-const TAIL_CEILING = 2.0;
+// +2.0 sat above the worst surviving case and 2.8 dB under the mildest
+// failure, so it could not be met by a voice that had started exhaling again.
+// The two that read +1.3 are the two highest `air` values in the MOUTHS table
+// (qawwal 0.36 -> breath 0.216): what is left there is the floor the genre
+// asked for, not a gesture at the gate.
+//
+// ---- +2.0 IS +3.0 SINCE 2026-09-02, AND WHY IT MOVED ----------------------
+// The release got a SHAPE. voice_tract.lib `voxEnv` was `en.asr` — a linear
+// ramp down — and it is a raised-cosine ramp now, because `en.asr` zeroed
+// itself on a rising gate and cut 9.2 dB out of every retriggered note (the
+// whole argument, and Paul's sentence, are in test/voice-smooth.test.js).
+// A raised cosine is FLAT AT THE TOP, so it holds more level through the
+// 50-350 ms window this measurement calls "the tail" than a straight line
+// does — about a decibel, on every singer at once and in both bands equally.
+// MEASURED over the same sixteen chairs, before and after:
+//   before  -6.6 (aljil) .. +1.3 (kabulpop, qawwali)
+//   after   -6.2 (aljil) .. +2.3 (kabulpop, qawwali)
+// So the whole set moved up 0.4 to 1.0 dB and its ORDER is unchanged, which is
+// what says this is the envelope's shape and not a breath coming back: an
+// exhale is a fricative and would move the two highest-`air` rows differently
+// from the rest. +3.0 sits 0.7 dB over the worst surviving case and 1.8 dB
+// under the mildest failure this gate was written to catch, so it still cannot
+// be met by a voice that has started exhaling again.
+const TAIL_CEILING = 3.0;
 // THE BLOCK PAUL WAS LISTENING TO, plus the fast records beside it — the fast
 // ones matter because they are where the defect HID (a 0.4 s release buries an
 // exhale under the next note), so they are the rows that would go quietly wrong

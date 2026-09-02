@@ -203,7 +203,17 @@ function standUpServer() {
     chips: [...document.querySelectorAll('[data-k^="tray|' + v + '|"]')]
       .map((x) => ({ k: x.dataset.k, on: x.getAttribute("aria-pressed"),
                      svg: !!x.querySelector("svg.nu-preview") })),
-    strip: [...document.querySelectorAll('select[data-sel^="material.cell|' + v + '|"]')].length,
+    /* THE STRIP IS A ONE-COLUMN WORD GRID SINCE 2026-09-02 (wave 4). Paul:
+       *"make those tables of dropdowns full of tappable grids that change
+       options rather than dropdowns … institutionalize it."* It was one
+       `<select>` per section down the panel; it is one CELL per section down
+       one column of a `ui/wordgrid.js` table, with the section's own row head
+       beside it as a jump. Same count, same addresses — `material.cell|
+       <voice>|<section>` is the cell's `data-k` now instead of a select's
+       `data-sel` — so the claim below ("one per section") did not move an
+       inch and only the selector did. */
+    strip: [...document.querySelectorAll(
+      '.nu-wcell[data-k^="material.cell|' + v + '|"]')].length,
     newm: !!document.querySelector('[data-k="tray-new|' + v + '"]'),
     secs: window.__eightDoc().form.sections.length,
   }), V);
@@ -211,7 +221,7 @@ function standUpServer() {
     "B3 the tray is a chip per motif in the bank, each carrying its picture (" +
     trayShape.chips.length + ")");
   check(trayShape.strip === trayShape.secs,
-    "B3a …with one per-section row under it (" + trayShape.strip + " of " +
+    "B3a …with one per-section cell in the grid under it (" + trayShape.strip + " of " +
     trayShape.secs + " sections)");
   const want = trayShape.chips.find((c) => c.on === "false");
   const wantCell = want.k.split("|")[2];
@@ -393,9 +403,13 @@ function standUpServer() {
     const s = document.querySelector('.nu-traylist [data-k^="secnav"]');
     if (s) { s.click(); await new Promise((r) => setTimeout(r, 300)); } });
   await p.waitForTimeout(600);
+  /* ...AND BOTH SURFACES ARE WORD GRIDS NOW (2026-09-02), which changes the
+     selector and not the claim: the address is a cell's `data-k` on either
+     panel, and the failure this guards against — two elements answering to one
+     `key|voice|section` — is exactly as possible as it was. */
   const onStruct = await p.evaluate(() => ({
-    mat: [...document.querySelectorAll('select[data-sel^="material.cell|"]')]
-      .map((s) => s.dataset.sel),
+    mat: [...document.querySelectorAll('.nu-wcell[data-k^="material.cell|"]')]
+      .map((s) => s.dataset.k),
     suffixed: [...document.querySelectorAll("[data-sel]")]
       .map((s) => s.dataset.sel).filter((k) => k.indexOf("#") >= 0),
   }));

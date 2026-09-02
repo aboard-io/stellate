@@ -353,6 +353,21 @@ export const GLYPH = {
          s: "what the box has done — every change you made, newest first, and "
           + "what the engine says about the sound" },
 
+  /* ===== TOMBSTONE: THE ? ROW THIS TABLE WAS OWED, AND WILL NOT GET =====
+     ui/explain.js carried its own three columns — `{ g: "?", w: "explain", s:
+     … }` — as a literal beside its only caller, with a note saying the row
+     "belongs in ui/glyph.js's GLYPH table, the one owner of what a gutter
+     button is" and was left there only because that file was outside its
+     round's fence. The debt is CLOSED by deletion rather than by payment:
+     Paul, 2026-09-02, *"Get rid of explain — that's the genre editor's work
+     now."* The ? mark, its panel and its module are gone; the genre editor is
+     the Rules TAB, whose row is `GLYPH.tab.Rules` and is already here.
+     WRITTEN DOWN SO NOBODY PAYS IT LATER. A future hand reading explain.js's
+     note in the history would add a `?` row to a table nothing draws — which
+     is how a deleted feature comes back one column at a time. `log` above is
+     untouched and is not the same kind of thing: it says what a HAND did, not
+     what a record IS. */
+
   /* THE SECTIONS, THE VOICES AND THE TEMPO, AS LEVELS OF THE GUTTER
      (2026-08-28). Paul, in one batch: *"Make the sections into nav items with
      the ability to add them and remove them and recharacterize and move them

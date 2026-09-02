@@ -370,10 +370,23 @@ with {
   tx = ktConTx(ci);
   // THE RELEASE. A plosive is a closure that stops, and then a transient — the
   // pressure behind the closure discharging through a gap that is still narrow.
-  // The trigger is the moment the articulation starts to move; the 4.5 ms decay
-  // is the burst, and it is injected at the constriction like any other
-  // turbulence, which is what makes /b/ /d/ /g/ burst in three different places.
+  // The trigger is the moment the articulation starts to move; the decay is the
+  // burst, and it is injected at the constriction like any other turbulence,
+  // which is what makes /b/ /d/ /g/ burst in three different places.
+  //
+  // ---- IT WAS 4.5 ms AT 0.9 AND IT IS 9 ms AT 0.45 (2026-09-02) -------------
+  // Paul, on the deployed composer: *"There's a lot of click when they 'talk'
+  // though and overlap and we should smooth that."* A one-sample impulse into a
+  // 4.5 ms exponential is, spectrally, a click — that is what it is FOR, and at
+  // 0.9 it was the loudest thing a talking record put out between its vowels,
+  // several a second, and the ear files them as a fault in the sound rather
+  // than as consonants. Doubling the decay and halving the height keeps a
+  // plosive AS a plosive (the same trigger, at the same place in the tube, in
+  // the same three places for /b/ /d/ /g/) and takes the edge off it: the same
+  // total energy, spread over twice as long, so the burst is a `p` rather than
+  // a tick. It is the tract's own half of the declick — voice_tract.lib
+  // `voxEnv` is the other, and the two are the whole of Paul's sentence.
   trig   = (p >= hold) * (p' < hold) * ktConBu(ci);
-  bdecay = trig : + ~ *(exp(-1.0/(0.0045*ma.SR)));
-  tb = mix(ktConFr(ci), 0.0)*0.45 + bdecay*0.9;
+  bdecay = trig : + ~ *(exp(-1.0/(0.009*ma.SR)));
+  tb = mix(ktConFr(ci), 0.0)*0.45 + bdecay*0.45;
 };

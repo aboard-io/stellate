@@ -1719,7 +1719,32 @@
         const V = VOICE_TYPE[m.voice] || VOICE_TYPE.tenor;
         const relV = mp("release", 0.25, 0.02, 3);
         const word = vowelWalk(m.vowels);
-        return { ...base, module: "voice_lead",
+        /* ONE SINGER IS ONE THROAT (2026-09-02). Paul, on the deployed
+           composer: *"There's a lot of click when they 'talk' though and
+           overlap and we should smooth that."* The overlap was here. This unit
+           carried `base.pool` — three — so two vocal notes that overlap were
+           sung by two throats at once, and the record grew a singer for the
+           length of the overlap. A person cannot do that; the tract two cases
+           down has said `mono: true` since the day it was written, for exactly
+           the same reason, and the singer beside it simply had never been
+           asked the question.
+             THE WINDOW IS 6 ms AND THAT IS THE WHOLE ARGUMENT. The scheduler
+           writes a note's gate-off 8 ms before the next note's gate-on
+           (stream-renderer `offS = s + (dur - 0.008)`), so a legato window at
+           the fleet's usual 30 ms would swallow every back-to-back note in a
+           phrase into ONE held gate and the singer would stop articulating.
+           Six is under that gap, so a phrase still re-articulates note by note
+           — and a genuine OVERLAP (the next note starting before the previous
+           one's gate-off) is inside the window by construction, whatever the
+           window is, so it joins: the pending off is withdrawn, `glide` slews
+           the pitch, and the envelope rides across it instead of two throats
+           beating. That is the "crossfade rather than stack" of the ask, done
+           with the mono-legato contract the fleet already has (VOICES.md).
+             AND THE RAMP IS voice_tract.lib's `voxEnv`, rewritten the same
+           day: a re-gate resumes from where the release had got to, so a
+           steal is a ramp and not the notch it used to be. */
+        return { ...base, module: "voice_lead", mono: true, legatoSec: 0.006,
+          pool: 1,
           freqMin: V.lo, freqMax: V.hi,
           tail: Math.max(base.tail, relV + 0.3),
           dyn: MODEL_DYN.voice_lead, slideParam: "glide", slideSec: 0.09,

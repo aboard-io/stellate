@@ -18,6 +18,21 @@
  * asks a module what it would draw. Three features have shipped broken in this
  * repo while every structural check passed.
  *
+ * ===== THE FIVE GRIDS ARE `ui/wordgrid.js` INSTANCES SINCE 2026-09-02 =====
+ * Paul, after using the composer: *"When we go into structure make those
+ * tables of dropdowns full of tappable grids that change options rather than
+ * dropdowns — like the other selection table in mix. This is a powerful
+ * element for editing a whole song — think on it and institutionalize it."*
+ *
+ * EVERY CHECK BELOW IS THE CHECK IT WAS; what changed is the HAND. A cell was
+ * a `<select>` and is a BUTTON printing its word; setting a word was
+ * `el.value = v` plus a `change` event and is now two taps — the cell, then
+ * the word in the strip that opens under its row. `pick()` is that gesture,
+ * once, and it is what `say()` was. The ADDRESSES did not move
+ * (`material.cell|<voice>|<section>`, `dev.*`, `form.lvl`, `form.env`,
+ * `srow|<grid>|<id>`, `scol|<grid>|<name>`), which is why the drives below
+ * read almost exactly as they did.
+ *
  * THE CHECKS
  *   S1  the grids exist, one row per section, in the round's own order, and
  *       `form.pace` is NOT among them — it has exactly one control page-wide
@@ -125,13 +140,46 @@ function standUpServer() {
       const el = document.querySelector('[data-k="' + key + '"]');
       if (!el || el.disabled) return false; el.click(); return true; }, k);
     await p.waitForTimeout(700); return hit; };
-  const say = async (sel, v) => p.evaluate(([s, val]) => {
-      const el = document.querySelector('select[data-sel="' + s + '"]');
-      if (!el || el.disabled) return false;
-      el.value = val;
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-      return el.value === String(val); }, [sel, v])
-    .then(async (r) => { await p.waitForTimeout(900); return r; });
+  /* SAYING A WORD IS TWO TAPS NOW, AND IT IS THE READER'S TWO TAPS. It was
+     `el.value = v` plus a synthetic `change`, which is the only thing a
+     `<select>` lets a gate do; a word grid is buttons all the way down, so
+     this presses the CELL (its row grows a strip) and then the WORD (the strip
+     folds and the record moves). A chip's address is the cell's plus its own
+     value, which is what makes the second press findable without reading the
+     strip back first. */
+  const pick = async (key, v) => {
+    const opened = await p.evaluate((k) => {
+      const c = document.querySelector('.nu-wcell[data-k="' + k + '"]');
+      if (!c || c.disabled) return false;
+      if (c.getAttribute("aria-expanded") !== "true") c.click();
+      return true; }, key);
+    if (!opened) return false;
+    await p.waitForTimeout(200);
+    const took = await p.evaluate(([k, val]) => {
+      const b = document.querySelector(
+        '.nu-wchip[data-k="' + k + "|" + val + '"]');
+      if (!b || b.disabled) return false; b.click(); return true; }, [key, v]);
+    await p.waitForTimeout(900);
+    return took;
+  };
+  /* WHAT WORDS A CELL IS OFFERING, read off the STRIP the page draws rather
+     than off a module — which is the one thing the `<select>` made free and a
+     word grid makes a gesture. The strip is opened, read, and closed again. */
+  const wordsOf = async (key) => {
+    const out = await p.evaluate((k) => {
+      const c = document.querySelector('.nu-wcell[data-k="' + k + '"]');
+      if (!c || c.disabled) return null;
+      if (c.getAttribute("aria-expanded") !== "true") c.click();
+      const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
+      const chips = tr && tr.classList.contains("nu-wopen")
+        ? [...tr.querySelectorAll(".nu-wchip")].map((x) => ({
+            v: x.dataset.k.slice(k.length + 1), off: !!x.disabled,
+            on: x.getAttribute("aria-pressed") === "true" })) : [];
+      c.click();                       // fold it again — one strip at a time
+      return chips; }, key);
+    await p.waitForTimeout(150);
+    return out;
+  };
   /* THE RENDERED STREAM, which is test/nudges.js's own measurement of "the
      sound moved": the onsets ui/derive.js actually produced for a section. */
   const onsets = (si) => p.evaluate((i) =>
@@ -148,9 +196,12 @@ function standUpServer() {
 
   /* ================= S1 · THE GRIDS ==================================== */
   const G = await p.evaluate(() => ({
-    grids: [...document.querySelectorAll("#pan-structure .nu-sgrid")].map((t) => ({
+    grids: [...document.querySelectorAll("#pan-structure .nu-wordgrid")].map((t) => ({
       cap: (t.querySelector("caption") || {}).textContent || "",
-      rows: t.querySelectorAll("tbody tr").length,
+      /* `tbody tr:not(.nu-wopen)` — the accordion inserts a real row and a
+         count that included it would go up by one every time a thumb opened a
+         cell. The strip is a row of WORDS, not a row of the record. */
+      rows: t.querySelectorAll("tbody tr:not(.nu-wopen)").length,
       /* a pane per grid, so each keeps its own sideways scroll across the
          redraw every cell tap causes (ui/eight.js keepPanes/putPanes) */
       paned: !!t.closest(".nu-pane"),
@@ -159,7 +210,7 @@ function standUpServer() {
     /* ONE OWNER PER FACT, MEASURED PAGE-WIDE rather than asserted in prose:
        the pace is a per-section question with a control, and it has exactly
        one, and it is the Tempo panel's (COMPOSER §2.5, Paul's B7). */
-    pace: [...document.querySelectorAll('select[data-sel^="form.pace|"]')]
+    pace: [...document.querySelectorAll('.nu-wcell[data-k^="form.pace|"]')]
       .map((s) => (s.closest(".nu-pan") || {}).id || "?"),
   }));
   check(JSON.stringify(G.grids.map((x) => x.cap)) === JSON.stringify(CAPS),
@@ -177,13 +228,25 @@ function standUpServer() {
 
   /* ================= S2 · THE COLUMNS ARE THE BAND ===================== */
   const cols = await p.evaluate(() => {
-    const g = [...document.querySelectorAll("#pan-structure .nu-sgrid")];
-    const heads = (t) => [...t.querySelectorAll("thead th .nu-scol")].map((b) => ({
+    const g = [...document.querySelectorAll("#pan-structure .nu-wordgrid")];
+    /* `.nu-colbtn` / `.nu-colname` / `.nu-colinstr` — the component's own
+       spelling, which was the BOARD's spelling. The classes name the FACT
+       (`.nu-colname` is the player, `.nu-colinstr` is what they are on) and
+       both heads on this page now use the same three, which is the whole point
+       of there being a component. */
+    const heads = (t) => [...t.querySelectorAll("thead th .nu-colbtn")].map((b) => ({
       key: b.dataset.k,
-      name: (b.querySelector(".nu-scolname") || {}).textContent || "",
-      instr: (b.querySelector(".nu-scolinstr") || {}).textContent || "",
+      name: (b.querySelector(".nu-colname") || {}).textContent || "",
+      instr: (b.querySelector(".nu-colinstr") || {}).textContent || "",
       vi: (b.closest("th") || {}).dataset ? b.closest("th").dataset.vi : null,
-      lamp: !!b.querySelector('[data-live="lamp"]'),
+      /* THE LAMP IS A SIBLING OF THE BUTTON NOW AND NOT A CHILD OF IT
+         (2026-09-02, with the component). It read `b.querySelector` and the
+         lamp was inside the head's button — which put a `[data-live]` box
+         INSIDE a control, the shape test/motif-frozen A1 forbids and the shape
+         the board's own meter well has always avoided by being a sibling. One
+         head, one rule, both grids. Still asserted to EXIST while the record is
+         stopped, which is the whole of the check. */
+      lamp: !!(b.closest("th") || b).querySelector('[data-live="lamp"]'),
     }));
     return { reads: heads(g[0]), does: heads(g[1]),
              voices: window.__eightDoc().voices.map((v) => v.name) };
@@ -222,28 +285,34 @@ function standUpServer() {
      lead, bass"), so handing a voice a cell it already reads in another section
      is a true write with nothing to show for it in the stripe — measured on
      Kingston, where `stab` already reads `hook` in the head. */
-  const subject = await p.evaluate((sec) => {
-    const D = window.__eightDoc();
-    const used = (name) => {
-      const v = D.voices.find((x) => x.name === name) || {};
-      const m = v.material;
-      const out = new Set();
-      if (typeof m === "string") out.add(m);
-      else if (m && typeof m === "object") for (const k of Object.keys(m)) out.add(m[k]);
-      return out;
-    };
-    const sels = [...document.querySelectorAll(
-      '#pan-structure select[data-sel^="material.cell|"]')]
-      .filter((s) => !s.disabled && s.dataset.sel.endsWith("|" + sec));
-    for (const s of sels) {
-      const voice = s.dataset.sel.split("|")[1];
-      const mine = used(voice);
-      const want = [...s.options].filter((o) => o.value && !o.disabled &&
-        o.value !== s.value && !mine.has(o.value)).map((o) => o.value)[0];
-      if (want) return { sel: s.dataset.sel, voice, was: s.value, want };
-    }
-    return null;
-  }, SEC1);
+  /* THE CANDIDATE CELLS COME OFF THE PAGE AND THE WORDS COME OFF THE STRIP.
+     A `<select>` carried its whole option list in the DOM at rest; a word grid
+     carries the WORD and offers the list when you open it, which is the change
+     Paul asked for and which costs this walk one gesture per candidate. So the
+     cells are listed first and then opened, one at a time, until one of them
+     offers a motif this player does not already read. */
+  const cands = await p.evaluate((sec) =>
+    [...document.querySelectorAll(
+      '#pan-structure .nu-wcell[data-k^="material.cell|"]')]
+      .filter((c) => !c.disabled && c.dataset.k.endsWith("|" + sec))
+      .map((c) => c.dataset.k), SEC1);
+  const usedBy = (name) => p.evaluate((n) => {
+    const v = (window.__eightDoc().voices.find((x) => x.name === n)) || {};
+    const m = v.material, out = [];
+    if (typeof m === "string") out.push(m);
+    else if (m && typeof m === "object") for (const k of Object.keys(m)) out.push(m[k]);
+    return out; }, name);
+  let subject = null;
+  for (const key of cands) {
+    const voice = key.split("|")[1];
+    const mine = new Set(await usedBy(voice));
+    const words = await wordsOf(key);
+    if (!words) continue;
+    const on = (words.find((w) => w.on) || {}).v;
+    const want = words.filter((w) => w.v && !w.off && w.v !== on &&
+      !mine.has(w.v)).map((w) => w.v)[0];
+    if (want) { subject = { sel: key, voice, was: on, want }; break; }
+  }
   check(!!(subject && subject.want),
     "S3 a `reads` cell offers this record another motif " + JSON.stringify(subject));
   if (subject && subject.want) {
@@ -256,7 +325,7 @@ function standUpServer() {
         return r ? r.sub : null; }, cell); };
     const before = await subOf(subject.want);
     await top("Structure");
-    const took = await say(subject.sel, subject.want);
+    const took = await pick(subject.sel, subject.want);
     const D1 = await doc();
     const v1 = D1.voices.find((v) => v.name === subject.voice) || {};
     const m1 = v1.material;
@@ -276,13 +345,13 @@ function standUpServer() {
   const line = (await doc()).voices.find((v) => v.kind === "line");
   const devKey = "dev.line|" + (line || {}).name + "|" + SEC1;
   const ev0 = await onsets(1);
-  const moved = await say(devKey, "backwards");
+  const moved = await pick(devKey, "backwards");
   const ev1 = await onsets(1);
   check(moved, "S4 the `does` grid offers `backwards` at " + devKey);
   check(JSON.stringify(ev0) !== JSON.stringify(ev1),
     "S4a …and the RENDERED onsets moved (" + ev0.length + " -> " + ev1.length +
     " events)");
-  await say(devKey, "");
+  await pick(devKey, "");
 
   /* ================= S5 · A ROW HEAD IS THE JUMP ======================= */
   const SEC3 = (await doc()).form.sections[3].id;
@@ -320,7 +389,11 @@ function standUpServer() {
   const at6 = await p.evaluate((n) => ({
     tab: window.__eightTabNow(),
     /* the panel is showing THIS member's instrument, not somebody's roster */
-    instr: !!document.querySelector('select[data-sel="sound.instrument|' + n + '"]'),
+    /* the member's own instrument control, by ADDRESS and not by tag — this
+       page has reversed what a single-choice control IS more than once, and a
+       gate that asks for `select` is asking about the reversal rather than
+       about the panel */
+    instr: !!document.querySelector('[data-sel="sound.instrument|' + n + '"]'),
     facet: (window.__eightTray().rows.find((r) => r.key === "facet-inst") || {}).on,
   }), who.name);
   check(hit6 && at6.tab === "Band" && at6.instr,
@@ -334,8 +407,17 @@ function standUpServer() {
   await top("Structure");
   await top("Band");
   await top("Structure");
+  /* THE ADDRESSES ARE ON TWO KINDS OF NODE NOW (2026-09-02): a settled
+     parameter still carries `data-sel` (ui/selects.js), and a word grid's cell
+     carries the same string as its `data-k`. The one-owner claim is about the
+     ADDRESS and not about the widget, so both are read and pooled — which is
+     also the only way this check can see the collision it exists for, since
+     the two would-be owners of `material.cell|<voice>|<section>` are now a
+     grid cell in Structure and a grid cell in Band. */
   const S7 = await p.evaluate(() => {
-    const keys = [...document.querySelectorAll("[data-sel]")].map((s) => s.dataset.sel);
+    const keys = [...document.querySelectorAll("[data-sel]")].map((s) => s.dataset.sel)
+      .concat([...document.querySelectorAll(".nu-wcell[data-k]")]
+        .map((c) => c.dataset.k));
     const scoped = keys.filter((k) => k.split("|").length === 3);
     const seen = {}, twice = [];
     for (const k of scoped) { if (seen[k]) twice.push(k); seen[k] = 1; }
@@ -356,7 +438,7 @@ function standUpServer() {
   const bass = (await doc()).voices.find((v) => v.kind === "bass");
   const S8 = bass ? await p.evaluate((n) => {
     const s = document.querySelector(
-      '#pan-structure select[data-sel^="material.cell|' + n + '|"]');
+      '#pan-structure .nu-wcell[data-k^="material.cell|' + n + '|"]');
     return s ? { off: !!s.disabled, why: s.dataset.why || "",
                  name: s.getAttribute("aria-label") || "" } : null;
   }, bass.name) : null;

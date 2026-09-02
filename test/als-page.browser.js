@@ -243,13 +243,17 @@ const node = (args) => execFileSync(process.execPath, args, { cwd: ROOT, encodin
       fs.statSync(PAGE_ALS).size + " bytes");
   } catch (e) {
     const said = await p.evaluate(() => {
-      const n = document.querySelector("#exportdeck [role=status]");
+      const n = [...document.querySelectorAll("#exportdeck [role=status]")]
+        .filter((x) => !x.closest(".nu-exp")).pop();
       return n ? n.textContent : "";
     }).catch(() => "");
     check(false, "no download after the click — the card said " + JSON.stringify(said));
   }
+  // ...the deck's own line, not a card's — see the block at 3b for why the
+  // first `[role=status]` in this deck belongs to the JSON card
   const said = await p.evaluate(() => {
-    const n = document.querySelector("#exportdeck [role=status]");
+    const n = [...document.querySelectorAll("#exportdeck [role=status]")]
+      .filter((x) => !x.closest(".nu-exp")).pop();
     return n ? n.textContent : "";
   });
   check(/^spliced —/.test(said), "the card said what happened — " + JSON.stringify(said));
@@ -274,15 +278,30 @@ const node = (args) => execFileSync(process.execPath, args, { cwd: ROOT, encodin
      same page an old Safari would be. This runs LAST on this page because it
      is destructive to the window it runs in — everything measured above is
      already measured by the time it fires. */
+  /* IT WAS READING THE WRONG STATUS LINE (2026-09-02, the wave-4 round).
+     `#exportdeck [role=status]` matches TWO kinds of paragraph: the JSON
+     `songCard`'s own line, which lives inside that card and is second in the
+     grid, and the deck's line (`deckSay`), which is appended after the grid
+     and outside every card. querySelector returned the card's, which only
+     ever says anything when somebody saves a .song.json — so this gate read
+     `""` and reported a card that refuses without naming the reason, which is
+     the one thing this card does not do. THE DECK'S LINE IS THE ONE OUTSIDE A
+     CARD, and it is re-asked every poll because ui/eight.js rebuilds the
+     Export tab from scratch on a redraw. (test/mp3.test.js's M6 heartbeat had
+     the identical selector and the identical false red.) */
   const refusal = await p.evaluate(async () => {
     delete window.CompressionStream;
-    const say = document.querySelector("#exportdeck [role=status]");
+    const sayNow = () => {
+      const n = [...document.querySelectorAll("#exportdeck [role=status]")]
+        .filter((x) => !x.closest(".nu-exp")).pop();
+      return n ? n.textContent : "";
+    };
     const btn = document.querySelector('[data-k="deck.exp.als"]');
     btn.click();
-    for (let i = 0; i < 100 && !/CompressionStream|failed/.test(say.textContent); i++)
+    for (let i = 0; i < 100 && !/CompressionStream|failed/.test(sayNow()); i++)
       await new Promise((r) => setTimeout(r, 50));
     await new Promise((r) => setTimeout(r, 100));
-    return { said: say.textContent, disabled: btn.disabled,
+    return { said: sayNow(), disabled: btn.disabled,
              gone: typeof window.CompressionStream };
   });
   check(/CompressionStream/.test(refusal.said) && /gzipped XML/.test(refusal.said),

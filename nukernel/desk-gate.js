@@ -2581,15 +2581,34 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       const doc2 = () => window.__eightDoc();
       const v0 = () => doc2().voices.find((v) => v.kind === "line");
       const name = v0().name, secId = doc2().form.sections[1].id;
+      /* ===== TAP THE CELL, TAP THE WORD — 2026-09-02, wave 4 ==========
+         Paul: *"make those tables of dropdowns full of tappable grids that
+         change options rather than dropdowns … institutionalize it."* The
+         grid is a ui/wordgrid.js instance now, so the GESTURE this block
+         drives changed and nothing else did.
+         IT READ: `cell().click()` twice — "the cycle: — → out → hush → …" —
+         and then four more clicks to come round to `—`. Six taps to say one
+         word, and no way to see the six words at all. Now a tap on the cell
+         OPENS the strip and a tap on a CHIP says the word, so `hush` is two
+         taps and `—` is two taps, and the assertions below are word for word
+         what they were: the document reads `hush`, and clearing it deletes
+         the map. The address did not move — the cell is still
+         `t|<voice>|<secId>` and a chip is that key plus its own word. */
       const cell = () => document.querySelector(
         'button[data-k="t|' + name + '|' + secId + '"]');
-      cell().click(); await wait();          // -> out
-      cell().click(); await wait();          // -> hush
+      const chip = (w) => document.querySelector(
+        'button[data-k="t|' + name + '|' + secId + '|' + w + '"]');
+      cell().click(); await wait();          // the strip of words opens
+      const words = [...document.querySelectorAll(".nu-wopen .nu-wchip")]
+        .map((b) => b.textContent);
+      chip("hush").click(); await wait();     // -> hush
       const trimmed = JSON.parse(JSON.stringify(
         (v0().desk && v0().desk.trim) || null));
-      for (let i = 0; i < 4; i++) { cell().click(); await wait(); }
+      const shut = !document.querySelector(".nu-wopen");
+      cell().click(); await wait();
+      chip("").click(); await wait();         // -> as mixed, the absent word
       const trimCleared = (v0().desk && v0().desk.trim) || null;
-      return { trimmed, trimCleared };
+      return { trimmed, trimCleared, words, shut };
     }));
     // RECORD GAIN MOVED BEHIND THE MAIN TAB, 2026-08-27 (the board tabs) —
     // this line read the main plate out of a rack that was always on the page,
@@ -2613,11 +2632,15 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        "absent is the only spelling of a default, knobs included",
        JSON.stringify(slotTrip.cleared));
     ok(slotTrip.trimmed && slotTrip.trimmed[slotTrip.secId] === "hush",
-       "tapping a grid cell twice writes voice.desk.trim[" + slotTrip.secId +
-       "] = \"hush\" (the cycle: — → out → hush → …)",
+       "tapping a grid cell and then the `hush` chip writes voice.desk.trim[" +
+       slotTrip.secId + "] = \"hush\" — the strip offered " +
+       JSON.stringify(slotTrip.words),
        JSON.stringify(slotTrip.trimmed));
+    ok(slotTrip.shut === true,
+       "…and the strip folded behind the word — one strip open at a time, and " +
+       "none open once a word has been said");
     ok(slotTrip.trimCleared === null,
-       "…and cycling on round to `—` deletes the map — a cleared grid is a " +
+       "…and the `—` chip deletes the map — a cleared grid is a " +
        "byte-identical record", JSON.stringify(slotTrip.trimCleared));
     ok(slotTrip.recordGain,
        "record gain (`sound.level`, Time's stray slider) is on the MAIN " +

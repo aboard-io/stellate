@@ -19,7 +19,9 @@
  *     nothing, because nothing has been chosen
  * B3  #play works on it: the engine goes to `ready` and the transport says so
  * B4  tapping a genre row leaves it: the record is composed at the shown seed,
- *     it plays, and the page lands on that genre's Rules
+ *     it plays, and the page STAYS ON WHERE (2026-09-02, in place of "lands on
+ *     that genre's Rules" — Paul: "I was wrong to have you switch to the genre
+ *     panel. Add a genre editor nav element and stay on the globe and list.")
  *
  * RUN:  NODE_PATH=/home/ford/ftrain-2025/node_modules node test/silence.js
  */
@@ -158,8 +160,21 @@ function standUpServer() {
      the third is what this asserts, because the first two have shipped since
      2026-08-29 and the third is this round's. The genre is picked from the
      LIST, which is the row Paul means. */
+  /* ...AND THE THIRD EFFECT IS REVERSED, 2026-09-02, after Paul used the page:
+     *"I was wrong to have you switch to the genre panel. Add a genre editor
+     nav element and stay on the globe and list."*
+
+     TWO EFFECTS NOW, AND THE THIRD IS AN ABSENCE THIS GATE ASSERTS. The
+     sentence above is kept because it is what the tab was built for and the
+     Rules panel it names is still there — as a ROOT NAV ROW you open, which is
+     Paul's own remedy in the same breath. What changed is that a pick may not
+     move the page out from under the reader: you asked for a place, so you are
+     still standing on the map, with the record playing and its name on the
+     plate. Asserting the tab is UNCHANGED is the only way this stays fixed;
+     "not Rules" would pass on a pick that landed on Export. */
   const seedShown = await p.evaluate(() =>
     +document.getElementById("reading").textContent);
+  const tabBefore = await p.evaluate(() => window.__eightTabNow());
   await p.evaluate(() => {
     const r = [...document.querySelectorAll("#atlasIndexRows .nu-ixrow")]
       .find((x) => x.dataset.gk === "dub");
@@ -172,10 +187,11 @@ function standUpServer() {
     basis: window.__eightDoc().basis,
     voices: window.__eightDoc().voices.length,
     tab: window.__eightTabNow(),
-    panel: (() => { const h = document.querySelector("#rulesdeck h2");
-      return h ? h.textContent.trim() : null; })(),
-    name: (() => { const n = document.querySelector("#rulesdeck .nu-namebar");
-      return n ? n.textContent.trim() : null; })(),
+    /* THE RULES ROW IS STILL A DOOR, and this is the half of Paul's sentence
+       that is a presence rather than an absence: *"Add a genre editor nav
+       element."* The row is in the stripe, at the ROOT, addressable — so the
+       editor the pick no longer forces on you is one tap away. */
+    rulesRow: !!document.querySelector('.nu-traylist [data-k="toptab-Rules"]'),
     word: (document.getElementById("play").getAttribute("aria-label") || "").trim(),
     plate: (() => { const b2 = document.querySelector('.nu-trayfoot [data-k="toptab-Where"] .nu-vh');
       return b2 ? b2.textContent.trim() : null; })() }));
@@ -185,9 +201,11 @@ function standUpServer() {
   check(after.basis === "dub" && got === want,
     "B4 · tapping a genre row composes it AT THE SHOWN SEED (" + seedShown +
     "), byte for byte, and leaves the blank state — " + after.voices + " voices");
-  check(after.tab === "Rules" && after.panel === "The rules" && !!after.name,
-    "B4 · …and lands on that genre's Rules, with its name on the plate — " +
-    JSON.stringify({ tab: after.tab, h2: after.panel, name: after.name }));
+  check(after.tab === tabBefore && after.rulesRow,
+    "B4 · …and STAYS where it was (" + JSON.stringify(tabBefore) + ") — a " +
+    "pick does not move the page out from under the map — with the genre " +
+    "editor a root nav row away: " + JSON.stringify({ tab: after.tab,
+      rulesRow: after.rulesRow }));
   check(after.word === "stop" && !!after.plate,
     "B4 · …playing, with the record's name in the foot at every depth (" +
     JSON.stringify(after.plate) + ")");

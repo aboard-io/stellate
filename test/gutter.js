@@ -36,7 +36,11 @@
  *   T6  scrolling the list changes WHICH marks are lit, by count and by name
  *   T7  a tap on a place writes its record, STARTS it, and leaves the mark
  *       centred within a pixel and measurably larger — three numbers
- *   T8  the ? mark (Paul, 2026-08-30: "add a ? Icon above the log icon that
+ *   T8  RETIRED 2026-09-02 (Paul: "Get rid of explain — that's the genre
+ *       editor's work now") — the ? mark and its panel are asserted ABSENT
+ *       and the Rules row present; the two hundred and fifty lines that drove
+ *       the panel are tombstoned at the block itself. What they said:
+ *       the ? mark (Paul, 2026-08-30: "add a ? Icon above the log icon that
  *       fully explains every aspect of a genre"): present in the foot at
  *       every level, directly above the log; opens/closes with
  *       aria-expanded; the panel is organized by the EIGHT AXES (AXES.md's
@@ -509,25 +513,32 @@ function standUpServer() {
      name, the seed, the ?, the log, the play options when they are unfolded,
      the door, and play at the floor. Asserted as an ORDER rather than as
      three indices, because there are six of them and an index arithmetic that
-     grows with the row is the thing that breaks silently. */
+     grows with the row is the thing that breaks silently.
+     …AND FIVE, LATER THE SAME DAY: Paul, *"Get rid of explain — that's the
+     genre editor's work now."* The `explain` step comes out of the list and
+     nothing takes its place — the order is the argument and the argument did
+     not change, it got one clause shorter. Because this is an ORDER and not
+     an index arithmetic, that is a one-word edit, which is what the paragraph
+     above was promising. */
   const t9 = await p.evaluate(() => {
     const foot = document.querySelector(".nu-trayfoot");
     const kids = [...foot.children].map((n) =>
       n.id || n.dataset.k || n.className || n.tagName.toLowerCase());
     const at = (k) => kids.indexOf(k);
-    const order = ["toptab-Where", "rewrite", "explain", "logger",
+    const order = ["toptab-Where", "rewrite", "logger",
                    "nu-trayopts", "playops", "play"].map(at);
-    return { kids, order,
-             die: at("rewrite"), q: at("explain"), log: at("logger"),
+    return { kids, order, gone: kids.indexOf("explain"),
+             die: at("rewrite"), log: at("logger"),
              inList: !!document.querySelector(".nu-traylist #rewrite"),
              tap: +document.getElementById("rewrite")
                     .getBoundingClientRect().height.toFixed(1),
              reading: !!document.querySelector("#rewrite #reading") };
   });
   check(t9.order.every((n, i) => n >= 0 && (i === 0 || n > t9.order[i - 1]))
-        && !t9.inList,
-    "T9 · the foot reads where · seed · ? · log · [opts] · opts · play, in " +
-    "that order, and the die is not in the list — " + JSON.stringify(t9.kids));
+        && !t9.inList && t9.gone < 0,
+    "T9 · the foot reads where · seed · log · [opts] · opts · play, in " +
+    "that order, with no ? anywhere in it, and the die is not in the list — " +
+    JSON.stringify(t9.kids));
   check(t9.tap >= 44 && t9.reading,
     "T9 · …still a thumb (" + t9.tap + " px) and still carrying #reading");
   /* AT EVERY LEVEL. The same walk T2 makes for #play — the nine tabs pressed,
@@ -1083,260 +1094,43 @@ function standUpServer() {
      panel, and the strong checks are byte-for-byte against the tables that
      own the facts (genres.js `cannot`, atlas.js EXCLUDE) — the panel's whole
      law is extraction, so the gate holds it to the extracted bytes. */
+  /* ===== …AND THE MARK IS RETIRED, 2026-09-02 ==========================
+     Paul, after using the composer: *"Get rid of explain — that's the genre
+     editor's work now."*
 
-  /* T8a — the mark is in the foot at EVERY level, directly above the log.
-     The same walk T2 does: entering a tab IS entering its level. */
-  const t8a = await p.evaluate(() => {
-    const at = (where) => {
-      const q = document.querySelector('#nu-tray .nu-trayfoot [data-k="explain"]');
-      const log = document.querySelector('#nu-tray .nu-trayfoot [data-k="logger"]');
-      const above = q && log &&
-        !!(q.compareDocumentPosition(log) & Node.DOCUMENT_POSITION_FOLLOWING) &&
-        q.getBoundingClientRect().bottom <= log.getBoundingClientRect().top + 1;
-      return { where, there: !!q, above,
-               exp: q ? q.getAttribute("aria-expanded") : null };
-    };
-    const out = [at("root")];
-    for (const name of window.__eightTabs()) {
-      window.__eightTab(name); out.push(at(name));
-    }
-    window.__eightUp(); window.__eightUp();
-    return out;
-  });
-  const t8bad = t8a.filter((r) => !r.there || !r.above || r.exp == null);
-  check(!t8bad.length,
-    "T8 · the ? mark is in the foot, directly above the log, wearing " +
-    "aria-expanded, at every level (" + t8a.length + " stops" +
-    (t8bad.length ? "; missing at " + JSON.stringify(t8bad) : "") + ")");
+     TWO HUNDRED AND FIFTY LINES CAME OUT HERE, and it is worth saying exactly
+     what they were holding so nobody mourns the wrong thing. T8a-h drove the ?
+     mark and the panel behind it: the seat in the foot at every level, the
+     door's `aria-expanded`, the eight axis headings, the zero-bytes-moved
+     proof over a playing second, the tappable lineage that NAVIGATES, the
+     verbatim `cannot`, the verbatim EXCLUDE sentence, five widths with no
+     sideways scroll, and the 2026-08-30 form reversal ("it's hard to parse").
+     WHAT THEY WERE PROVING IS STILL PROVED, one tab over. Every one of those
+     facts is an EXTRACTION over the tables that own it, that extraction is
+     `ui/xtab.js` (which survives — it is the half of ui/explain.js that
+     ui/rules.js reads), and the surface it is drawn on now is the Rules panel,
+     which is the genre editor Paul asked for in B6 and which has controls
+     where the ? had values. Its own gate is test/rules.browser.js. What is
+     deleted here is a gate on a DOOR that no longer exists — pressing
+     `[data-k="explain"]` in a foot that has no such mark is the vacuous-green
+     shape this file legislates against, so it is deleted rather than softened.
+     THE ABSENCE IS ASSERTED, ONCE, BELOW — because "we removed it" is a claim
+     about the rendered page like any other, and a ? that came back in a foot
+     nobody was looking at is exactly the drift a tombstone is for. */
+  const t8gone = await p.evaluate(() => ({
+    mark: !!document.querySelector('#nu-tray [data-k="explain"]'),
+    byId: !!document.getElementById("explain"),
+    panel: !!document.getElementById("nu-explain"),
+    rules: !!document.querySelector('.nu-traylist [data-k="toptab-Rules"]'),
+    log: !!document.querySelector('#nu-tray .nu-trayfoot [data-k="logger"]') }));
+  check(!t8gone.mark && !t8gone.byId && !t8gone.panel,
+    "T8 · the ? mark and its panel are GONE from the rendered page — " +
+    JSON.stringify(t8gone));
+  check(t8gone.rules && t8gone.log,
+    "T8 · …with the genre editor a root nav row in its place and the log " +
+    "still in the foot where it stood — the explainer moved house, the " +
+    "readout did not");
 
-  /* T8b — it opens, the page is the eight axes, and the record is playing
-     from T7, so a playing second must not move a byte of it: the [data-live]
-     law read off the artifact (the panel is outside #app and outside every
-     [data-live] subtree; only a hand may write it). */
-  await p.evaluate(() => document.getElementById("explain").click());
-  await p.waitForTimeout(200);
-  const t8b = await p.evaluate(() => {
-    const q = document.getElementById("explain");
-    const pn = document.getElementById("nu-explain");
-    return { exp: q.getAttribute("aria-expanded"),
-             open: !!pn && !pn.hidden,
-             heads: pn ? [...pn.querySelectorAll("h3")].map((h) => h.textContent) : [],
-             bytes: pn ? pn.innerHTML : "",
-             playing: document.getElementById("play").getAttribute("aria-label") };
-  });
-  const AXES8 = ["Time", "Alphabet", "Material", "Form",
-                 "Development", "Cast", "Sound", "Performance"];
-  check(t8b.exp === "true" && t8b.open,
-    "T8 · the ? opens its page and says so (aria-expanded " + t8b.exp + ")");
-  check(AXES8.every((a) => t8b.heads.includes(a)),
-    "T8 · …organized by the eight axes: headings " + JSON.stringify(t8b.heads));
-  await p.waitForTimeout(1200);
-  const t8live = await p.evaluate(() => ({
-    bytes: document.getElementById("nu-explain").innerHTML,
-    playing: document.getElementById("play").getAttribute("aria-label") }));
-  check(t8b.playing === "stop" && t8live.playing === "stop" &&
-        t8live.bytes === t8b.bytes,
-    "T8 · …and a playing second moved ZERO bytes of the open panel " +
-    "(the [data-live] law; " + t8b.bytes.length + " bytes, #play says " +
-    JSON.stringify(t8live.playing) + ")");
-
-  /* T8c — a parent is a door: tapping it navigates through the atlas door
-     (the list rows' own seam) and the panel follows the record. */
-  const t8pre = await p.evaluate(() => {
-    const b = document.querySelector("#nu-explain .nu-xgo[data-gk]");
-    return { basis: window.__eightDoc().basis,
-             gk: b ? b.dataset.gk : null,
-             label: b && window.NuGenres.GENRES[b.dataset.gk]
-               ? window.NuGenres.GENRES[b.dataset.gk].label : null };
-  });
-  check(!!t8pre.gk,
-    "T8 · the panel for " + JSON.stringify(t8pre.basis) +
-    " offers a tappable relation (" + JSON.stringify(t8pre.gk) + ")");
-  await p.evaluate(() =>
-    document.querySelector("#nu-explain .nu-xgo[data-gk]").click());
-  await p.waitForTimeout(900);
-  const t8c = await p.evaluate(() => ({
-    basis: window.__eightDoc().basis,
-    title: document.title,
-    open: !document.getElementById("nu-explain").hidden,
-    h2: (document.querySelector("#nu-explain h2") || {}).textContent }));
-  check(t8c.basis === t8pre.gk && t8c.title === t8pre.label &&
-        t8c.open && t8c.h2 === t8pre.label,
-    "T8 · …tapping it NAVIGATES and the open panel follows: basis " +
-    JSON.stringify(t8pre.basis) + " -> " + JSON.stringify(t8c.basis) +
-    ", page " + JSON.stringify(t8c.title) + ", panel h2 " +
-    JSON.stringify(t8c.h2));
-
-  /* T8d — hohlefels: the `cannot` is shown VERBATIM (the row's own bytes),
-     and a root renders honestly (parents: {} says so, it does not grey). */
-  await p.evaluate(() =>
-    document.querySelector('.nu-ixrow[data-gk="hohlefels"]').click());
-  await p.waitForTimeout(900);
-  const t8d = await p.evaluate(() => {
-    const pn = document.getElementById("nu-explain");
-    return { basis: window.__eightDoc().basis,
-             open: !pn.hidden,
-             cannot: [...pn.querySelectorAll(".nu-xcannot li")]
-               .map((n) => n.textContent),
-             want: window.NuGenres.GENRES.hohlefels.cannot,
-             root: /none declared/.test(pn.textContent) };
-  });
-  check(t8d.basis === "hohlefels" && t8d.open &&
-        JSON.stringify(t8d.cannot) === JSON.stringify(t8d.want) &&
-        t8d.want.length === 3,
-    "T8 · hohlefels shows what the box CANNOT say, verbatim against " +
-    "genres.js (" + t8d.cannot.length + " of " +
-    (t8d.want || []).length + " admissions, byte-equal " +
-    (JSON.stringify(t8d.cannot) === JSON.stringify(t8d.want)) + ")");
-  check(t8d.root,
-    "T8 · …and a record with no parents says so (a root, declared, not a blank)");
-
-  /* ---- T8h THE FORM REVERSAL (Paul, 2026-08-30) ------------------------ */
-  /* "The question mark icon produces tons of stuff but it's hard to parse.
-     It should be in tables and give a sense of what leads into what. It's
-     very repetitive." MEASURED ON THE SHIPPED PANEL before the rewrite
-     (2026-08-30, waltz open, text-node probe): "as written" printed 41
-     times, "a line, 12 steps" 8 times, "the row says" 3 times, 3229 chars —
-     those numbers are the dated record of what "very repetitive" was. The
-     checks below hold each of the three sentences to the RENDERED panel on
-     the same deep record (waltz: three generations up, two children). */
-  await p.evaluate(() =>
-    document.querySelector('.nu-ixrow[data-gk="waltz"]').click());
-  await p.waitForTimeout(900);
-  const t8h = await p.evaluate(() => {
-    const pn = document.getElementById("nu-explain");
-    /* 1 · "what leads into what": the flow is the panel's FIRST section,
-       ancestors above, the bold record between, children below, every
-       generation ordered by its lines' own data-year stamps */
-    const firstH3 = pn.querySelector("h3").textContent;
-    const kin = [...pn.querySelectorAll(".nu-xkin")].map((n) => ({
-      d: +n.style.getPropertyValue("--d") || 0,
-      dir: n.dataset.dir || (n.classList.contains("nu-xme") ? "me" : null),
-      year: n.dataset.year != null ? +n.dataset.year : null }));
-    const ups = kin.filter((k) => k.dir === "up");
-    const downs = kin.filter((k) => k.dir === "down");
-    const meAt = kin.findIndex((k) => k.dir === "me");
-    const genOrdered = (rows) => {
-      const byD = {};
-      rows.forEach((r) => (byD[r.d] = byD[r.d] || []).push(r.year));
-      return Object.keys(byD).every((d) => byD[d].every((y, i) =>
-        !i || y == null || byD[d][i - 1] == null || byD[d][i - 1] <= y));
-    };
-    /* 2 · "in tables": eight of them, in the page's own table language, and
-       no row whose every value cell is blank (a table of dashes is noise) */
-    const tables = pn.querySelectorAll("table").length;
-    let emptyRows = 0;
-    pn.querySelectorAll("table tr").forEach((tr) => {
-      const tds = [...tr.querySelectorAll("td")].slice(1);
-      if (tr.querySelector("td") && tds.length &&
-          tds.every((td) => !td.textContent.trim())) emptyRows++;
-    });
-    /* 3 · "very repetitive", as a bound: no text node of 10+ chars may
-       appear more than 3 times (the shipped panel had one at 8), and
-       "as written" is bounded by the voice rows — each voice's plan says
-       it at most once now, counted, never chanted (it was 41) */
-    const counts = {};
-    const walk = (n) => { for (const c of n.childNodes) {
-      if (c.nodeType === 3) { const t = c.textContent.trim();
-        if (t.length >= 10) counts[t] = (counts[t] || 0) + 1; }
-      else walk(c); } };
-    walk(pn);
-    const worst = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-    const txt = pn.textContent;
-    let i = 0, aw = 0;
-    while ((i = txt.indexOf("as written", i)) >= 0) { aw++; i += 10; }
-    const voices = (window.__eightDoc().voices || []).length;
-    /* and the thumb's way down the long panel: eight one-word anchors that
-       scroll the PANEL, never the page */
-    const jumps = [...pn.querySelectorAll(".nu-xjump")].map((b) => b.textContent);
-    const wasAt = pn.scrollTop;
-    const snd = [...pn.querySelectorAll(".nu-xjump")]
-      .find((b) => b.textContent === "Sound");
-    if (snd) snd.click();
-    return { basis: window.__eightDoc().basis, firstH3,
-             ups: ups.length, downs: downs.length, meAt,
-             upGens: new Set(ups.map((k) => k.d)).size,
-             ordered: genOrdered(ups) && genOrdered(downs),
-             tables, emptyRows, worst, aw, voices, jumps,
-             wasAt, jumped: pn.scrollTop, pageY: window.scrollY };
-  });
-  check(t8h.basis === "waltz" && t8h.firstH3 === "Lineage" &&
-        t8h.ups >= 1 && t8h.upGens >= 2 && t8h.meAt > 0 && t8h.downs >= 1,
-    "T8h · the LINEAGE FLOW is the hero: first heading " +
-    JSON.stringify(t8h.firstH3) + ", " + t8h.ups + " ancestors over " +
-    t8h.upGens + " generations ABOVE, the record between (line " +
-    t8h.meAt + "), " + t8h.downs + " children BELOW");
-  check(t8h.ordered,
-    "T8h · …and every generation reads oldest-first by its own data-year");
-  check(t8h.tables === 8 && t8h.emptyRows === 0,
-    "T8h · the eight axes are eight TABLES with no all-empty row (" +
-    t8h.tables + " tables, " + t8h.emptyRows + " blank rows)");
-  check((!t8h.worst || t8h.worst[1] <= 3) && t8h.aw <= t8h.voices + 1,
-    "T8h · the repetition probe passes where the shipped panel failed " +
-    "(was 41ד as written”, 8ד a line, 12 steps”): worst 10+-char dupe " +
-    JSON.stringify(t8h.worst) + ", “as written” ×" + t8h.aw +
-    " <= voices+1 (" + (t8h.voices + 1) + ")");
-  check(t8h.jumps.length === 8 && t8h.jumped > t8h.wasAt && t8h.pageY === 0,
-    "T8h · the eight-word anchor strip jumps WITHIN the panel: scrollTop " +
-    t8h.wasAt + " -> " + t8h.jumped + ", page still at " + t8h.pageY +
-    " (" + t8h.jumps.join(" ") + ")");
-
-  /* T8e — the widths and the thumb: no sideways scroll at FIVE widths with
-     the panel open (five since 2026-08-30 — the tables and the flow's
-     indents are new geometry), and a tappable relation is 44px of target. */
-  const t8widths = {};
-  for (const wpx of [320, 375, 390, 430, 1280]) {
-    await p.setViewportSize({ width: wpx, height: wpx > 1000 ? 900 : 700 });
-    await p.waitForTimeout(350);
-    t8widths[wpx] = await p.evaluate(() =>
-      document.documentElement.scrollWidth -
-      document.documentElement.clientWidth);
-  }
-  await p.setViewportSize({ width: 320, height: 700 });
-  await p.waitForTimeout(300);
-  const t8e = await p.evaluate(() => {
-    const b = document.querySelector("#nu-explain button.nu-xgo");
-    return { target: b ? b.getBoundingClientRect().height : 0 };
-  });
-  await p.setViewportSize({ width: 390, height: 844 });
-  await p.waitForTimeout(300);
-  check(Object.values(t8widths).every((v) => v === 0),
-    "T8 · nothing scrolls sideways with the panel open at any of the five " +
-    "widths " + JSON.stringify(t8widths));
-  check(t8e.target >= 44,
-    "T8 · …and a tappable relation is a thumb's target at 320: " +
-    t8e.target.toFixed(1) + " px >= 44");
-
-  /* T8f — a ROLE renders honestly: EXCLUDE's own sentence, verbatim. */
-  await p.evaluate(() =>
-    document.querySelector('.nu-ixrow[data-gk="pad"]').click());
-  await p.waitForTimeout(900);
-  const t8f = await p.evaluate(() => {
-    const pn = document.getElementById("nu-explain");
-    return { basis: window.__eightDoc().basis,
-             text: pn.textContent,
-             want: "a role has a job, not a history — " +
-                   window.NuAtlas.EXCLUDE.pad };
-  });
-  check(t8f.basis === "pad" && t8f.text.includes(t8f.want),
-    "T8 · a role shows EXCLUDE's own sentence verbatim: " +
-    JSON.stringify(t8f.want));
-
-  /* T8g — and it CLOSES cleanly, both ways: the toggle and Escape. */
-  await p.evaluate(() => document.getElementById("explain").click());
-  const t8shut = await p.evaluate(() => ({
-    exp: document.getElementById("explain").getAttribute("aria-expanded"),
-    hid: document.getElementById("nu-explain").hidden }));
-  await p.evaluate(() => document.getElementById("explain").click());
-  await p.keyboard.press("Escape");
-  const t8esc = await p.evaluate(() => ({
-    exp: document.getElementById("explain").getAttribute("aria-expanded"),
-    hid: document.getElementById("nu-explain").hidden }));
-  check(t8shut.exp === "false" && t8shut.hid &&
-        t8esc.exp === "false" && t8esc.hid,
-    "T8 · it closes on the toggle AND on Escape, and aria-expanded says so " +
-    "(toggle " + t8shut.exp + "/" + t8shut.hid + ", Escape " + t8esc.exp +
-    "/" + t8esc.hid + ")");
 
   /* ---- T11 THREE PLAY MODES, AND EACH ONE REACHES THE TRANSPORT ------- */
   /* Paul, 2026-08-30: *"There are three play modes possible—loop, once, and

@@ -143,6 +143,14 @@ import { gid } from "./derive.js";
    for a label paragraph, and ui/selects.js's own header says the bare form
    exists "for a table cell". */
 import { selectEl, selectField } from "./selects.js";
+/* THE WORD GRID (2026-09-02, wave 4). Paul: *"make those tables of dropdowns
+   full of tappable grids that change options rather than dropdowns — like the
+   other selection table in mix … institutionalize it."* "The other selection
+   table in mix" is the section-automation grid in this file, so this import is
+   the shape being lifted out rather than copied in: `PLATES.auto` keeps every
+   fact about trims and hands the component every fact about what a word grid
+   IS. Four surfaces share it now. */
+import { wordGrid } from "./wordgrid.js";
 // THE MARKS ON THE TABS (2026-08-28). THIS FILE REFUSED THE GLYPHS ONCE AND
 // SAID SO — see THE TAB ROW below: "THE GLYPHS STAY IN eight.js … copying
 // three characters here would be that drift again, so a board tab wears the
@@ -942,6 +950,14 @@ export function mount(parent, ctx) {
      the last title written, so the honest/measured swap costs a string compare
      per beat rather than a DOM write. */
   let headMeters = [];
+  /* AND THE OPEN WORD GRID, IF THE FIFTH PLATE IS THE ONE ON THE BOARD
+     (2026-09-02, wave 4). `paint()` used to walk `#trimgrid tbody tr` and
+     toggle `.now` by `+tr.dataset.sec`; the grid is a ui/wordgrid.js instance
+     now and lighting it is a METHOD it hands back, which is also what keeps the
+     accordion's own inserted `<tr>` out of the walk. Cleared with the other
+     paint targets in `showPanel` for the reason they are: a handle left over
+     from the last plate is a beat's worth of writes into a detached node. */
+  let autoGrid = null;
 
   // COMPRESSED 2026-08-27 (the text diet, FUTURE.md §2: "signal flow is drawn
   // as arrows, not narrated"). It read 230 chars narrating the strip order the
@@ -1582,7 +1598,7 @@ export function mount(parent, ctx) {
      inventory are in THE TAB ROW IS DELETED above, and the five buttons that
      carry those keys are ui/eight.js `mixTrayItems`.) */
   const showPanel = () => {
-    busSays = []; masterMeter = null; headMeters = [];
+    busSays = []; masterMeter = null; headMeters = []; autoGrid = null;
     panel.textContent = "";
     const rack = el("div", null, "nu-rack");
     rack.id = "rack";
@@ -1647,6 +1663,28 @@ export function mount(parent, ctx) {
      `host.querySelector("#trimgrid")` and therefore does not care which box it
      is in). What changed is that it is RETURNED instead of appended, and
      `showPanel` seats it in `#rack` like every other plate. */
+  /* ===== …AND IT IS A `ui/wordgrid.js` INSTANCE NOW, 2026-09-02 (wave 4) ==
+     Paul, after using the composer: *"When we go into structure make those
+     tables of dropdowns full of tappable grids that change options rather than
+     dropdowns — like the other selection table in mix. This is a powerful
+     element for editing a whole song — think on it and institutionalize it."*
+
+     "LIKE THE OTHER SELECTION TABLE IN MIX" IS THIS TABLE, so what happened
+     here is that the shape was LIFTED OUT rather than changed: every fact this
+     block owned it still owns (which words there are, what a word is worth in
+     dB, what the record deals where a hand is silent, which column is which
+     chair), and every fact about what a word GRID is — the accordion, the
+     refusal spelling, the sounding row and column, the pane — moved to the
+     component that four surfaces now share.
+     NOT ONE ADDRESS MOVED. `#trimgrid`, `data-pane="trimgrid"`,
+     `data-live="trimrow"`, `t|<voice>|<secId>`, `col|<voice>` and
+     `row|<secId>` are the same strings on the same nodes; nukernel/desk-gate.js
+     and test/mix-heads.browser.js reach every one of them by name.
+     WHAT CHANGED FOR A THUMB, and it is the one behaviour Paul asked to
+     change: a tap used to CYCLE ("— → out → hush → …"), which is six taps to
+     say `lift` and no way to see the six words at all. A tap now OPENS the six
+     words under the row and the second tap says one. desk-gate G15 is
+     rewritten to that gesture in place. */
   PLATES.auto = () => {
     /* IT IS A `.nu-plate` NOW, 2026-09-02 (slice 2e). It was a bare
        `.nu-autopanel` while it was the one thing on the board that was not a
@@ -1662,11 +1700,6 @@ export function mount(parent, ctx) {
     // and a tap teaches itself; what the label must say is what a word IS.
     wrap.append(el("p", "section automation · a trim on the fader, per section",
       "nu-rowlab"));
-    const pane = el("div", null, "nu-pane");
-    pane.tabIndex = 0;
-    // the keepPanes key (ui/eight.js, 2026-08-25): the grid is one pane and
-    // its sideways scroll must survive the redraw every cell tap causes.
-    pane.dataset.pane = "trimgrid";
     // THE GRID ARRIVES FILLED (2026-08-28). Paul: *"Shouldn't automation
     // already have values preset per generated song."* It should, and the half
     // of that this surface owes is SHOWING what the record deals rather than
@@ -1699,10 +1732,6 @@ export function mount(parent, ctx) {
     // bright half does; and TRIMS' rungs are −6/−2.5/+2.5/+5 where the dealt
     // values are ±0.5..2.5, so printing the nearest WORD would print a word
     // whose value is not the value in play).
-    //
-    // THE CYCLE STILL RIDES THE STORED WORD, not the drawn one: a tap on a dim
-    // cell starts at the top of TRIMS exactly as it did before, so absent-is-
-    // today survives the redraw as well as the render.
     /* THE NEAREST RUNG. The dealt values are continuous (shade's own +-0.5..2.5)
        and TRIMS' rungs are -6 / -2.5 / 0 / +2.5 / +5, so a dealt trim is named
        by the rung it is closest to — the same vocabulary a hand has, never a
@@ -1723,15 +1752,7 @@ export function mount(parent, ctx) {
       try { return derivedTrim(SONG[si] || null, key); }
       catch (e) { return { db: 0, eq: null }; }
     };
-    const t = el("table");
-    t.id = "trimgrid";
-    t.className = "nu-trims";
-    // the playhead's row mark (`tr.now`, paint() below) walks this table once
-    // a beat, so the table declares itself to the clock the way the meters do
-    // (dataset.live = "meter" above) — the board sits outside #app, where the
-    // transport feed is free to write, but a surface the clock writes on
-    // declares itself rather than relying on where it happens to be mounted.
-    t.dataset.live = "trimrow";
+    const facts0 = factsNow();
     /* ===== THE COLUMN HEADS, 2026-09-02 (slice 2e) =======================
        Paul, B11: *"the columns should list the instrument and when I click on
        the column head let me edit the instrument! Light up which instrument is
@@ -1742,13 +1763,14 @@ export function mount(parent, ctx) {
        no meter and no click, which is three of Paul's four sentences missing
        from one line.
 
-       WHAT A HEAD IS NOW, in the order the sentence asks for it: the
-       INSTRUMENT first and loud (`--fw-block`), the player's name under it and
-       dim, both inside ONE button keyed `col|<voice.name>` whose tap opens
-       that player's `instrument` facet; the head wears the player's CATEGORY
-       colour (`data-vi`), so one player is one hue on the roster, in the
-       stripe, on the roll and here; and a small horizontal meter well sits
-       beside them.
+       THE NAME LEADS AND THE INSTRUMENT IS THE SECOND LINE (2026-09-02, wave
+       4 — the head was the other way up until the component unified the three
+       column heads on this page). Both facts are still there and both are
+       still asked for; what settles the order is that the gutter's rows, the
+       roster's boxes and the Structure grids all say NAME over INSTRUMENT, and
+       three surfaces saying one thing and a fourth saying it upside down is
+       the drift a component exists to stop. `.nu-colname` and `.nu-colinstr`
+       keep their meanings — the classes name the FACT, not the position.
 
        THE NAME IS KEPT AND IS NOT DECORATION: `voice.name` is the address
        every cell under this column already uses (`t|<voice.name>|<secId>`), so
@@ -1768,25 +1790,9 @@ export function mount(parent, ctx) {
        `voiceLevels()[chair]` — the engine's own per-unit tap (sampled chairs)
        or the bar audit's rms (Faust chairs) — and a chair that answers with
        neither shows an EMPTY well saying so. See `paint()` below. */
-    const thead = el("thead"), hr = el("tr");
-    hr.append(el("th", "section"));
-    const facts0 = factsNow();
-    for (const c of chans) {
-      const th = el("th", null, "nu-colhead");
-      const b = el("button", null, "nu-colbtn nu-vpaint");
-      b.type = "button";
-      b.dataset.k = "col|" + c.voice.name;
+    const cols = chans.map((c) => {
       const face = (ctx.voiceFace && ctx.voiceFace(c.voice.name)) || {};
       const line = face.line || c.voice.instrument || c.voice.kind || "";
-      if (face.slot >= 0) b.dataset.vi = String(face.slot);
-      b.append(el("b", line, "nu-colinstr"),
-               el("span", c.voice.name, "nu-colname"));
-      b.setAttribute("aria-label", c.voice.name +
-        (line ? " on " + line : "") + " — open this player's instrument");
-      b.title = "open " + c.voice.name + "'s instrument";
-      b.addEventListener("click", () => {
-        if (ctx.openVoice) ctx.openVoice(c.voice.name, "inst");
-      });
       /* THE WELL IS A SIBLING OF THE BUTTON, NOT A CHILD OF IT. A control
          inside a surface the clock writes is the shape test/motif-frozen A1
          forbids, and the rule is the page's discipline rather than this
@@ -1797,9 +1803,14 @@ export function mount(parent, ctx) {
       well.setAttribute("aria-hidden", "true");
       const bar = el("i", null, "nu-meterbar");
       well.append(bar);
-      th.append(b, well);
-      hr.append(th);
-      headMeters.push({ chan: c.key, th, well, bar, said: null,
+      const o = { id: "col|" + c.voice.name, word: c.voice.name, sub: line,
+        vi: face.slot >= 0 ? face.slot : null, extra: well,
+        aria: c.voice.name + (line ? " on " + line : "") +
+              " — open this player's instrument",
+        title: "open " + c.voice.name + "'s instrument",
+        act: () => { if (ctx.openVoice) ctx.openVoice(c.voice.name, "inst"); },
+        chan: c };
+      headMeters.push({ chan: c.key, th: null, well, bar, said: null,
                         // WHICH LANE THIS CHAIR IS MEASURED ON, so the title
                         // can say what the number IS: a sampled chair has a
                         // live AnalyserNode on its own unit (per frame), a
@@ -1808,147 +1819,138 @@ export function mount(parent, ctx) {
                         // (per bar). audio/plan.js channelFacts is the owner of
                         // that fact and this file asks it rather than guessing.
                         grain: (facts0[c.key] || {}).sampled ? "per frame" : "per bar" });
-    }
-    thead.append(hr); t.append(thead);
-    const tbody = el("tbody");
-    doc.form.sections.forEach((s2, si) => {
-      const tr = el("tr");
-      tr.dataset.sec = String(si);
-      /* ===== THE ROW HEAD IS A JUMP, AND IT IS NAMED, 2026-09-02 =========
-         Paul, B11: *"I need to be able to jump to a section somehow, by
-         clicking on them when in automation."* And 2026-08-28: *"The sections
-         are named so name them."*
-
-         IT READ `const th = el("th", s2.id);` — the raw id, `s0`, which the
-         2026-08-28 naming law has forbidden since the day it was written and
-         which this file's own map wrote down as an outstanding contradiction
-         ("the trim grid's row heads still print s2.id, which predates and
-         contradicts this law"). Two sentences, one line: the head is a BUTTON
-         carrying `secName(i)` — `verse 2` — and a tap on it puts the ear
-         there.
-
-         THE ID IS STILL THE ADDRESS AND ONLY THE ADDRESS: `row|<secId>`, the
-         same `s2.id` every cell in the row already keys by. A name is not an
-         address and an address is nobody's name for anything.
-
-         THE JUMP IS `ctx.playFrom(si)` AND NEVER AN IMPORT. ui/eight.js's
-         standing argument: a view "cannot import startAt without becoming a
-         second door into the engine — so the page hands it the door it already
-         has." Cold it seeks; playing it queues on the next bar line, and the
-         wait now has a countdown — audio/live.js `announceJump`, added the
-         same day for the same gesture, because a queued jump that says nothing
-         for a whole box is a gesture nobody can tell landed. */
-      const th = el("th", null, "nu-srowh");
-      {
-        const name = ctx.secName ? ctx.secName(si) : (s2.role || s2.id);
-        const jb = el("button", name, "nu-rowjump");
-        jb.type = "button";
-        jb.dataset.k = "row|" + s2.id;
-        jb.setAttribute("aria-label", "play from " + name);
-        jb.title = "put the ear here — while the record plays the jump lands " +
-          "on the next bar line, and the countdown says when";
-        jb.addEventListener("click", () => { if (ctx.playFrom) ctx.playFrom(si); });
-        th.append(jb);
-      }
-      // WHERE THE DIM NUMBERS COME FROM, on the row that causes them: the
-      // section's own dealt words. `shade` reads lvl and env, so a reader
-      // who wonders why a column of cells woke up can see the cause in the
-      // header rather than having to know the table. Absent words print
-      // nothing, which is what the record says.
-      // …AND THE SECTION'S PACE BESIDE THEM (2026-08-30, the five-walls
-      // follow-up): `pace` is dealt the same way (compose.js dealPaces) and
-      // was the one dealt word with no surface — the declared-but-invisible
-      // shape this page legislates against. DISPLAY ONLY, extracted off the
-      // box like lvl/env; a pace CONTROL would need the deal to read a hand
-      // back, and that is not asked.
-      //   REVERSED 2026-09-02, and the sentence above is kept because its
-      //   PREMISE is the interesting half and it was wrong. Paul, the composer
-      //   round, B7: *"Tap tempo, the tempo editor appears, same for key. The
-      //   tempo editor does not reflect the richness of our tempo options."*
-      //   The pace is the richest of them, so it has a control now — one
-      //   `.nu-field` row per section on the Tempo panel (ui/eight.js
-      //   `timeAxis`, the pace strip), through the `form.pace` sheet avail.js
-      //   generates off the new fields.js FIELDS row. And the deal never had
-      //   to read a hand back: `dealPaces` only ever writes onto a song the
-      //   arrangement has just built, so a hand-set pace is the same
-      //   absent-is-today enum every other box word already is.
-      //   WHAT DOES NOT CHANGE IS THIS LINE. The row header still PRINTS the
-      //   word and still owns no control — one owner per fact, and the owner
-      //   is one tab over.
-      const dealt = [(SONG[si] || {}).lvl, (SONG[si] || {}).env,
-                     (SONG[si] || {}).pace]
-        .filter(Boolean).join(" · ");
-      th.append(el("small", " " + s2.bars + " bars" + (dealt ? " · " + dealt : "")));
-      tr.append(th);
-      for (const c of chans) {
-        const td = el("td");
-        const cur = (deskOf(c.voice).trim || {})[s2.id] || "";
-        // the record's own dealt trim for THIS voice in THIS section — drawn
-        // only where the hand is silent, because a set word replaces the
-        // derived one on the fader (fields.js trimApply) as well as on the page
-        const d = cur === "" ? DRV(si, c.key) : null;
-        /* WORDS ON BOTH SIDES OF THE CELL, 2026-08-28. Paul: *"The settings
-           you put into automation are floats. Mine are words. Make them all
-           words please."* He is right and the mismatch was mine: a hand's
-           trim printed `lift`, and the record's own dealt trim printed
-           `+2.5` in the very same column — one grid answering one question
-           in two vocabularies. The dealt dB is now said in the SAME words the
-           hand writes, by naming the nearest TRIMS rung, so a column reads as
-           one list of words whether the box wrote it or you did.
-           WHY THE WORD AND NOT THE NUMBER, given that yesterday's argument
-           for the number was that rounding -2.0 to `back` prints a value that
-           is not the value in play: because the cell is not the owner of that
-           value — `derivedTrim` is, and the exact dB is one long-press away in
-           the explainer below. A grid is for reading a shape down a column,
-           and a column of words has a shape a column of decimals does not. */
-        const shown = cur !== "" ? WSHOW(cur)
-          : (d && d.db) ? WSHOW(nearestTrim(d.db))
-          : WSHOW("");
-        const b = el("button", shown, "nu-trimbtn w-" + (cur || "mid") +
-          (cur === "" && d && d.db ? " is-derived" : ""));
-        b.type = "button";
-        b.dataset.k = "t|" + c.voice.name + "|" + s2.id;
-        b.setAttribute("aria-label", c.voice.name + " in " + s2.id + ": " +
-          (cur !== "" ? cur
-            : (d && d.db) ? "as mixed, and the record deals " +
-                nearestTrim(d.db) + ", " +
-                (d.db > 0 ? "+" : "\u2212") + Math.abs(d.db).toFixed(1) + " dB here"
-            : "as mixed"));
-        // THE EXPLAINER ON THE CELL IS NOW BOTH HALVES (2026-08-28, with the
-        // legend's deletion): a SET word says what it is worth in dB — the one
-        // fact the deleted paragraph carried that a reader genuinely needs to
-        // work the grid, and TRIMS is still its only owner.
-        if (cur !== "") {
-          const dbv = NuFields.TRIMS[cur];
-          b.title = WSHOW(cur) + " \u2014 " + (dbv == null ? "silent here"
-            : (dbv > 0 ? "+" : "\u2212") + Math.abs(dbv).toFixed(1) +
-              " dB on this voice's fader for this section") +
-            " \u2014 tap to cycle; the last tap is \u201cas mixed\u201d";
-        } else if (!(d && d.db)) {
-          b.title = "as mixed \u2014 no word set here, so the fader stands " +
-            "\u2014 tap to set one";
-        }
-        if (cur === "" && d && d.db)
-          b.title = "derived: the section's own " +
-            [(SONG[si] || {}).lvl, (SONG[si] || {}).env].filter(Boolean).join(" + ") +
-            " deals this voice " + (d.db > 0 ? "+" : "\u2212") +
-            Math.abs(d.db).toFixed(1) + " dB" +
-            (d.eq ? " and a tone move" : "") + " — tap to set a word over it";
-        b.addEventListener("click", () => {
-          const now = (deskOf(c.voice).trim || {})[s2.id] || "";
-          const next = CYCLE[(CYCLE.indexOf(now) + 1) % CYCLE.length];
-          const map = { ...(deskOf(c.voice).trim || {}) };
-          if (next === "") delete map[s2.id]; else map[s2.id] = next;
-          setDesk(ctx, c.voice, "trim", Object.keys(map).length ? map : null);
-        });
-        td.append(b);
-        tr.append(td);
-      }
-      tbody.append(tr);
+      return o;
     });
-    t.append(tbody);
-    pane.append(t);
-    wrap.append(pane);
+    /* ===== THE ROW HEAD IS A JUMP, AND IT IS NAMED, 2026-09-02 =========
+       Paul, B11: *"I need to be able to jump to a section somehow, by
+       clicking on them when in automation."* And 2026-08-28: *"The sections
+       are named so name them."*
+
+       IT READ `const th = el("th", s2.id);` — the raw id, `s0`, which the
+       2026-08-28 naming law has forbidden since the day it was written and
+       which this file's own map wrote down as an outstanding contradiction
+       ("the trim grid's row heads still print s2.id, which predates and
+       contradicts this law"). Two sentences, one line: the head is a BUTTON
+       carrying `secName(i)` — `verse 2` — and a tap on it puts the ear there.
+
+       THE ID IS STILL THE ADDRESS AND ONLY THE ADDRESS: `row|<secId>`, the
+       same `s2.id` every cell in the row already keys by. A name is not an
+       address and an address is nobody's name for anything.
+
+       THE JUMP IS `ctx.playFrom(si)` AND NEVER AN IMPORT. ui/eight.js's
+       standing argument: a view "cannot import startAt without becoming a
+       second door into the engine — so the page hands it the door it already
+       has." Cold it seeks; playing it queues on the next bar line, and the
+       wait now has a countdown — audio/live.js `announceJump`, added the same
+       day for the same gesture, because a queued jump that says nothing for a
+       whole box is a gesture nobody can tell landed.
+
+       WHERE THE DIM NUMBERS COME FROM, on the row that causes them: the
+       section's own dealt words. `shade` reads lvl and env, so a reader who
+       wonders why a column of cells woke up can see the cause in the header
+       rather than having to know the table. Absent words print nothing, which
+       is what the record says.
+       …AND THE SECTION'S PACE BESIDE THEM (2026-08-30, the five-walls
+       follow-up): `pace` is dealt the same way (compose.js dealPaces) and was
+       the one dealt word with no surface — the declared-but-invisible shape
+       this page legislates against. DISPLAY ONLY, extracted off the box like
+       lvl/env; a pace CONTROL would need the deal to read a hand back, and
+       that is not asked.
+         REVERSED 2026-09-02, and the sentence above is kept because its
+         PREMISE is the interesting half and it was wrong. Paul, B7: *"Tap
+         tempo, the tempo editor appears, same for key. The tempo editor does
+         not reflect the richness of our tempo options."* The pace is the
+         richest of them, so it has a control now — the Tempo panel's pace
+         strip (ui/eight.js `timeAxis`), through the `form.pace` sheet.
+         WHAT DOES NOT CHANGE IS THIS LINE. The row header still PRINTS the
+         word and still owns no control — one owner per fact, and the owner is
+         one tab over. */
+    const rows = doc.form.sections.map((s2, si) => {
+      const name = ctx.secName ? ctx.secName(si) : (s2.role || s2.id);
+      const dealt = [(SONG[si] || {}).lvl, (SONG[si] || {}).env,
+                     (SONG[si] || {}).pace].filter(Boolean).join(" · ");
+      return { id: s2.id, k: "row|" + s2.id, word: name,
+               sub: s2.bars + " bars" + (dealt ? " · " + dealt : ""),
+               aria: "play from " + name,
+               title: "put the ear here — while the record plays the jump " +
+                      "lands on the next bar line, and the countdown says when",
+               act: () => { if (ctx.playFrom) ctx.playFrom(si); } };
+    });
+    /* WORDS ON BOTH SIDES OF THE CELL, 2026-08-28. Paul: *"The settings you
+       put into automation are floats. Mine are words. Make them all words
+       please."* He is right and the mismatch was mine: a hand's trim printed
+       `lift`, and the record's own dealt trim printed `+2.5` in the very same
+       column — one grid answering one question in two vocabularies. The dealt
+       dB is now said in the SAME words the hand writes, by naming the nearest
+       TRIMS rung, so a column reads as one list of words whether the box wrote
+       it or you did.
+       WHY THE WORD AND NOT THE NUMBER, given that yesterday's argument for the
+       number was that rounding -2.0 to `back` prints a value that is not the
+       value in play: because the cell is not the owner of that value —
+       `derivedTrim` is, and the exact dB is one long-press away in the
+       explainer on the cell. A grid is for reading a shape down a column, and
+       a column of words has a shape a column of decimals does not.
+       THE OPTIONS ARE `CYCLE`, WHICH IS STILL fields.js DATA. The list that
+       used to be walked one tap at a time is now shown all at once; it is the
+       same list, from the same table, in the same order — "" (as mixed, the
+       absent spelling) and then TRIMS' own keys — so a word added or renamed
+       there is on the strip by existing. */
+    const cell = (secId, colId) => {
+      const c = (cols.find((x) => x.id === colId) || {}).chan;
+      const si = doc.form.sections.findIndex((x) => x.id === secId);
+      if (!c || si < 0) return null;
+      const cur = (deskOf(c.voice).trim || {})[secId] || "";
+      // the record's own dealt trim for THIS voice in THIS section — drawn
+      // only where the hand is silent, because a set word replaces the derived
+      // one on the fader (fields.js trimApply) as well as on the page
+      const d = cur === "" ? DRV(si, c.key) : null;
+      const shown = cur !== "" ? WSHOW(cur)
+        : (d && d.db) ? WSHOW(nearestTrim(d.db))
+        : WSHOW("");
+      // THE EXPLAINER ON THE CELL IS BOTH HALVES (2026-08-28, with the
+      // legend's deletion): a SET word says what it is worth in dB — the one
+      // fact the deleted paragraph carried that a reader genuinely needs to
+      // work the grid, and TRIMS is still its only owner.
+      let title;
+      if (cur !== "") {
+        const dbv = NuFields.TRIMS[cur];
+        title = WSHOW(cur) + " — " + (dbv == null ? "silent here"
+          : (dbv > 0 ? "+" : "−") + Math.abs(dbv).toFixed(1) +
+            " dB on this voice's fader for this section") +
+          " — tap for the words";
+      } else if (!(d && d.db)) {
+        title = "as mixed — no word set here, so the fader stands " +
+          "— tap for the words";
+      } else {
+        title = "derived: the section's own " +
+          [(SONG[si] || {}).lvl, (SONG[si] || {}).env].filter(Boolean).join(" + ") +
+          " deals this voice " + (d.db > 0 ? "+" : "−") +
+          Math.abs(d.db).toFixed(1) + " dB" + (d.eq ? " and a tone move" : "") +
+          " — tap to set a word over it";
+      }
+      return { key: "t|" + c.voice.name + "|" + secId,
+        value: cur, label: shown, cls: "w-" + (cur || "mid"),
+        derived: cur === "" && !!(d && d.db),
+        say: c.voice.name + " in " + secId,
+        title,
+        options: CYCLE.map((w) => ({ v: w, w: WSHOW(w) })),
+        set: (v) => {
+          const map = { ...(deskOf(c.voice).trim || {}) };
+          if (v === "") delete map[secId]; else map[secId] = v;
+          setDesk(ctx, c.voice, "trim", Object.keys(map).length ? map : null);
+        } };
+    };
+    autoGrid = wordGrid(wrap, { key: "trimgrid", id: "trimgrid",
+                                live: "trimrow", corner: "section",
+                                rows, cols, cell });
+    // the heads were built before the grid was, so their `<th>`s are seated
+    // here — the meter registry needs the cell the well ended up in, and the
+    // component is the only thing that knows which that is
+    for (const m of headMeters) {
+      const h = autoGrid.colHeads.get("col|" +
+        (chans.find((c) => c.key === m.chan) || { voice: {} }).voice.name);
+      if (h) m.th = h.th;
+    }
     // THE LEGEND IS DELETED, 2026-08-28. Paul: *"the text below Section
     // Automation is vast and should all be removed."* It printed the six words
     // in TRIMS' order plus the two facts a reader needs to work the grid —
@@ -1957,9 +1959,10 @@ export function mount(parent, ctx) {
     // page already teaches: a cell's `title` (the long-press explainer) and
     // its `aria-label` say what its own word is worth in dB, what "as mixed"
     // means, and where a dim number came from. The list of six was a second
-    // owner of TRIMS anyway; the cycle already spells them one tap at a time.
+    // owner of TRIMS anyway; the strip spells them all at once now.
     return wrap;
   };
+
   /* THE PANEL IS SEATED HERE, AFTER `PLATES.auto` EXISTS (2026-09-02).
      `showPanel()` reads `PLATES[BOARDTAB.key]` at call time — so opening a
      board whose last plate was the automation grid would have found no builder
@@ -2057,11 +2060,26 @@ export function mount(parent, ctx) {
       masterMeter.bar.style.height = Math.round(f * 100) + "%";
       masterMeter.out.textContent = playing ? (r > 0 ? "live" : "…") : "stopped";
     }
-    const grid = host.querySelector("#trimgrid");
-    if (grid) {
-      const now = playing && playingSec >= 0 ? playingSec : -1;
-      for (const tr of grid.querySelectorAll("tbody tr"))
-        tr.classList.toggle("now", +tr.dataset.sec === now);
+    /* THE SOUNDING ROW AND THE SOUNDING COLUMNS, IN ONE CALL (2026-09-02,
+       wave 4). It read `#trimgrid tbody tr` and compared `+tr.dataset.sec`,
+       which is now two bugs waiting: the accordion inserts a `<tr>` that has
+       no `data-sec` (it would read NaN and clear nothing, correctly, by luck),
+       and the section INDEX is not the row's identity any more — the row is
+       keyed by the section's own id, which is the address every cell in it
+       uses. `paint(rowId, colIds)` is the component's own method and takes
+       both facts at once, so the red row and the lit heads can never be
+       painted from two different readings of the same beat. */
+    if (autoGrid) {
+      const si = playing && playingSec >= 0 ? playingSec : -1;
+      const sec = si >= 0 ? (doc.form.sections[si] || null) : null;
+      let hot = [];
+      try {
+        const on = soundingChans();
+        if (on && on.length)
+          hot = chans.filter((c) => on.indexOf(c.key) >= 0)
+                     .map((c) => "col|" + c.voice.name);
+      } catch (e) { hot = []; }
+      autoGrid.paint(sec ? sec.id : null, hot);
     }
     /* ===== THE COLUMN HEADS' TWO LIVE FACTS, 2026-09-02 (slice 2e) =======
        Paul, B11: *"Light up which instrument is playing, make a little volume
@@ -2092,7 +2110,14 @@ export function mount(parent, ctx) {
       try { hot = soundingChans() || []; } catch (e) { hot = []; }
       try { lv = voiceLevels() || {}; } catch (e) { lv = {}; }
       for (const h of headMeters) {
-        h.th.classList.toggle("is-sounding", hot.indexOf(h.chan) >= 0);
+        /* (`h.th.classList.toggle("is-sounding", …)` stood on this line and
+           came off 2026-09-02, wave 4. The head's LAMP is the word grid's now
+           — `autoGrid.paint(rowId, colIds)` above lights the sounding row and
+           the sounding columns in one call — and two writers of one class,
+           reading two calls of the same feed on the same beat, is the drift
+           the component was made to end. What is left here is the METER, which
+           is a different fact from a different feed: a schedule lights the
+           lamp, a number fills the well.) */
         const r = lv[h.chan];
         const measured = typeof r === "number" && isFinite(r);
         h.bar.style.width = measured

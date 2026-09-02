@@ -1955,9 +1955,26 @@ export function mount(parent, ctx) {
      `ctx.play` is one: this file owns the globe and must not learn what a tab
      is. Optional, like the other three hooks — a ctx without it is a map that
      composes and sounds and does not navigate, which is the daw's case. */
+  /* ===== REVERSED THE SAME WEEK: A PICK STAYS ON WHERE (2026-09-02) =====
+     Paul, after using the page: *"I was wrong to have you switch to the genre
+     panel. Add a genre editor nav element and stay on the globe and list."*
+
+     THE TAB IS THE HALF THAT GOES, AND ONLY THAT HALF. Composing and playing
+     are untouched — a tap on a mark still makes a record and still starts it,
+     which is what the 2026-08-29 sentence above asked for and what every gate
+     in test/atlas.js drives. What is deleted is the THIRD effect: the reader
+     asked for a place, and moving the page out from under the map they are
+     reading is the page answering a question nobody put. The genre editor is
+     still one tap away and it is a ROOT NAV ROW (`toptab-Rules`), which is
+     Paul's own remedy in the same sentence — a door you open, not a room you
+     are pushed into.
+     `ctx.showTab` STAYS IN THE CONTRACT and is simply not called from here.
+     ui/eight.js still hands it over and ui/atlas.js's genre list still has no
+     other use for it; a hook removed from the ctx would be a second edit in a
+     file that owns neither end of it, and the next hand that needs "go to a
+     tab" would have to re-invent it. */
   const playNow = () => {
     try { if (ctx && ctx.play) ctx.play(); } catch (e) {}
-    try { if (ctx && ctx.showTab) ctx.showTab("Rules"); } catch (e) {}
   };
 
   function choose(name) {

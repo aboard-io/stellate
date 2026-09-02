@@ -158,11 +158,28 @@ function firstFrame(buf) {
     // the heartbeat (M6) + the say-channel watcher, both installed before the
     // click so nothing about the encode is measured after the fact
     window.__hb = { gaps: [], says: [], encGaps: [] };
+    const deckSayEl = () => [...document.querySelectorAll("#exportdeck [role=status]")]
+        .filter((n) => !n.closest(".nu-exp")).pop() || null;
     let last = performance.now(), enc = false;
-    const say = document.querySelector("#exportdeck p[role=status]");
+    /* IT WAS READING THE WRONG STATUS LINE (2026-09-02, the wave-4 round).
+       This asked for `#exportdeck p[role=status]` — the FIRST one — and there
+       are two kinds in that deck: the JSON `songCard` carries its own
+       `<p role=status>` INSIDE its card (ui/eight.js songCard), and it is
+       second in the grid, so it wins the selector; the deck's own line
+       (`deckSay`) is appended AFTER the grid, outside every card. So all three
+       M6 checks read a status line that only ever says anything when somebody
+       saves a .song.json, and reported "0 sentences", "nothing" and "-1 ms
+       over 0 ticks" — which reads as a frozen main thread and was a gate
+       looking at the wrong paragraph. (test/als-page.browser.js had the same
+       selector and the same empty refusal; both are fixed the same way.)
+       THE DECK'S LINE IS THE ONE OUTSIDE A CARD, which is what it structurally
+       is — a card says what that card did, the deck says what the deck did —
+       and it is re-queried every tick because ui/eight.js rebuilds the Export
+       tab from scratch on a redraw and a press redraws the page. */
+    const sayNow = () => { const n = deckSayEl(); return n ? n.textContent : ""; };
     setInterval(() => {
       const t = performance.now(), g = t - last; last = t;
-      const s = say ? say.textContent : "";
+      const s = sayNow();
       if (s && s !== window.__hb.says[window.__hb.says.length - 1]) window.__hb.says.push(s);
       const nowEnc = /encoding/i.test(s || "");
       if (nowEnc && enc) window.__hb.encGaps.push(g);

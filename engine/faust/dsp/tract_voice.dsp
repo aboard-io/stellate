@@ -99,6 +99,17 @@ throat(b_tp, b_td, b_tl, b_lp, b_ve, b_tx, b_tb, b_vo) =
   ktTube(a_tp, a_td, a_tl, a_lp, a_ve, a_tx, hiss, src)
   : rad : fi.dcblocker
   : fi.lowpass(2, max(800.0, min(cutoff, 16000.0)))
+  // ...AND THE GRIT (voice_tract.lib `voxGrit`, where the argument and the
+  // numbers are): the singer's formant band lifted 2.5 dB at Q 1.6 and a soft
+  // knee over it, the same stage voice_lead.dsp takes, so the two mouths are
+  // grittier in the same way. 9.4 IS THE DRIVE AND IT IS THIS MODULE'S OWN:
+  // the tube arrives here BEFORE `TRIM`, at about a fifth of the level a
+  // normalized formant singer does, so the number that puts this signal on the
+  // knee is not the number that puts that one there. Fitted so the peak comes
+  // off by about 1.5 dB, which is a fold under more pressure; at voice_lead's
+  // 1.9 this module limited outright and the talking records measured 4 dB
+  // down on their own 200 Hz-1 kHz tone.
+  : voxGrit(9.4)
   : *(voxEnv(attack, release, gate) * level * gain * TRIM)
 with {
   a_tp = sm(xf(xf(ktVowTp(vowel), tongue,  artic), b_tp, babble));
@@ -107,7 +118,22 @@ with {
   a_lp = sm(xf(xf(ktVowLp(vowel), lips,    artic), b_lp, babble));
   a_ve = sm(max(velum, b_ve*babble));
   a_tx = sm(xf(fricX, b_tx, babble));
-  a_vo = xf(voiced, b_vo, babble);
+  /* IT IS OKAY TO HAVE A CONTINUOUS TONE INSTEAD OF SIBILANCE (2026-09-02).
+     Paul, in as many words: *"It's okay to have a continuous tone instead of
+     sibilance."* The driver devoices outright on the two fricatives — tract.lib
+     ktConVo is 0.00 for /s/ and /f/ — so the glottis switched off for the whole
+     consonant and what came out was hiss with no voice under it, which at
+     syllable rate is the ticking Paul heard as clicks between the words.
+     `VOICEFLOOR` is a floor and not a table edit: the phonetic rows stay what
+     they were measured to be, and what changes is that this instrument never
+     lets the tone go all the way out. What it makes is a VOICED fricative —
+     /z/ for /s/, /v/ for /f/ — which is a real consonant, and a mouth that
+     hums through its own sibilants rather than stopping to hiss.
+       IT IS SCALED BY `voiced`, so the whisper a genre can still ask for
+     (mouth `voiced: 0`, documented on to-engine's mouthForInstr) is a whisper:
+     a floor under a zero is zero. */
+  VOICEFLOOR = 0.45;
+  a_vo = max(VOICEFLOOR*voiced, xf(voiced, b_vo, babble));
   // TURBULENCE. Two shapings and one balance, all measured. The (1-dia)^2 term
   // is that a tighter constriction makes a faster jet; the min() takes it back
   // to nothing at a full closure, because a sealed tract has no flow to be
@@ -118,7 +144,11 @@ with {
   // a 1 ms smoother: fast enough to keep a release burst sharp, slow enough to
   // be the one-pole barrier the normalizer will not push into all nineteen
   // injection points.
-  turbG = max(fric, b_tb*babble) * ktSq(1.0 - a_td) * min(1.0, a_td*12.0 + 0.25) * 0.15
+  // ...AND 0.15 IS 0.09 SINCE 2026-09-02, for the sentence above: with the tone
+  // now standing under every fricative, the hiss is a colour on a voice instead
+  // of the whole of one, and at the old balance it simply sat on top of it. The
+  // shape is untouched — this is one number, and it is the amount.
+  turbG = max(fric, b_tb*babble) * ktSq(1.0 - a_td) * min(1.0, a_td*12.0 + 0.25) * 0.09
         : si.smooth(ba.tau2pole(0.001));
   // TURBULENCE IS NOT WHITE. Jet noise off an edge rolls off at both ends;
   // left flat, and then differentiated by the lip radiation, an /s/ measured a

@@ -110,6 +110,17 @@ const spread = (ev) => {
      `change`, which is the only listener ui/selects.js installs, the same as
      sheets.js's radio. A disabled control or a disabled option returns false,
      so "the sheet offers `arch` and takes a tap" still fails if it does not. */
+  /* ...AND A THIRD WIDGET, 2026-09-02 (wave 4), for the same reason the second
+     one was added: the page reversed which control a question is drawn in, and
+     this gate is about the WORD reaching the sound. Paul: *"When we go into
+     structure make those tables of dropdowns full of tappable grids that change
+     options rather than dropdowns … institutionalize it."* Six of the twelve
+     nudge sheets — every per-section one — are cells in a `ui/wordgrid.js`
+     table now: a button printing its word, which grows a strip of words under
+     its row when you tap it. So this says a word in three ways and still cares
+     about none of them: a radio, a menu, or a cell and then a chip. The strip
+     folds itself when a chip is pressed, which is why there is no third press
+     here. */
   const say = async (sheet, value) => {
     const hit = await p.evaluate(([k, v]) => {
       const s = document.querySelector('select[data-sel="' + CSS.escape(k) + '"]');
@@ -121,13 +132,23 @@ const spread = (ev) => {
         s.dispatchEvent(new Event("change", { bubbles: true }));
         return true;
       }
+      const c = document.querySelector('.nu-wcell[data-k="' + CSS.escape(k) + '"]');
+      if (c) {
+        if (c.disabled) return false;
+        if (c.getAttribute("aria-expanded") !== "true") c.click();
+        const chip = document.querySelector('.nu-wchip[data-k="' +
+          CSS.escape(k + "|" + v) + '"]');
+        if (!chip || chip.disabled) { if (c.getAttribute("aria-expanded") === "true") c.click(); return false; }
+        chip.click();
+        return true;
+      }
       const n = document.querySelector('[data-k="' +
         CSS.escape("opt|" + k + "|" + v) + '"]');
       if (!n) return false;
       n.click();
       return true;
     }, [sheet, value]);
-    await p.waitForTimeout(220);
+    await p.waitForTimeout(320);
     return hit;
   };
   const events = (si) => p.evaluate((i) => window.__eightEvents(i), si);
@@ -224,10 +245,15 @@ const spread = (ev) => {
     // three of them lit sheets (Performance) and eight of them menus (the form
     // tab), since 2026-08-24's evening. Counting only `.nu-sheet` here would
     // make this gate's own bail-out fire on a page that is working.
+    // …AND A THIRD WIDGET IN THE CENSUS (2026-09-02): a word grid's CELL
+    // carries the sheet's address as its `data-k`, so a page whose per-section
+    // nudges are all cells still counts as "the nudges are drawn".
     sheets: [...document.querySelectorAll(".nu-sheet")]
       .map((f) => f.dataset.sheet).filter((s) => window.__isNudge(s)).length +
       [...document.querySelectorAll("select[data-sel]")]
-      .map((s) => s.dataset.sel).filter((s) => window.__isNudge(s)).length,
+      .map((s) => s.dataset.sel).filter((s) => window.__isNudge(s)).length +
+      [...document.querySelectorAll(".nu-wcell[data-k]")]
+      .map((c) => c.dataset.k).filter((s) => window.__isNudge(s)).length,
     askable: !!window.NuAskable,
     words: window.NuSongs ? Object.keys(window.NuSongs.WORDS).length : 0,
   }));
@@ -310,6 +336,42 @@ const spread = (ev) => {
           out.quiet.push(name); if (!why.trim()) out.silent.push(name);
         }
       }
+    }
+    /* ...AND THE WORD GRIDS, WHICH COST A GESTURE (2026-09-02, wave 4). A
+       `<select>` carries its whole option list in the DOM at rest and a word
+       grid carries the WORD, offering the list when a thumb opens the cell —
+       which is the change Paul asked for and which means the grey scan has to
+       OPEN each nudge cell to see the words in it. So it does: open, read the
+       strip, fold it again. The law being measured is unchanged and is the
+       only one that matters here — NO SILENT GREY: a refused chip is disabled,
+       carries `data-why`, and joins that reason to its own accessible name.
+       ONE CELL PER KEY IS ENOUGH. The census is per SHEET, not per section: a
+       key's refusals are computed from the record's features, so `outro:fill`
+       is refused for the same measured reason in every row of its column. This
+       reads the first cell of each nudge column and asserts about the WORDS,
+       which is what the old two branches did too. */
+    const seenKey = {};
+    for (const c of document.querySelectorAll(".nu-wcell[data-k]")) {
+      const key = (c.dataset.k || "").split("|")[0];
+      if (!window.__isNudge(key) || seenKey[key] || c.disabled) continue;
+      seenKey[key] = 1;
+      out.sheets++;
+      const field = key.split(".")[1];
+      const shut = c.getAttribute("aria-expanded") !== "true";
+      if (shut) c.click();
+      const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
+      const chips = tr && tr.classList.contains("nu-wopen")
+        ? [...tr.querySelectorAll(".nu-wchip")] : [];
+      for (const o of chips) {
+        const why = o.dataset.why || "";
+        const name = field + ":" + o.dataset.k.slice(c.dataset.k.length + 1);
+        if (why.trim()) out.why[name] = why.trim();
+        if (o.disabled) { out.dis.push(name); if (!why.trim()) out.silent.push(name); }
+        else if (o.classList.contains("is-quiet")) {
+          out.quiet.push(name); if (!why.trim()) out.silent.push(name);
+        }
+      }
+      if (shut && c.getAttribute("aria-expanded") === "true") c.click();
     }
     out.dis = [...new Set(out.dis)].sort();
     out.quiet = [...new Set(out.quiet)].sort();

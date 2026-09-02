@@ -150,7 +150,13 @@ function standUpServer() {
       const btn = th.querySelector("button[data-k^='col|']");
       const well = th.querySelector(".nu-meterwell");
       return { k: btn && btn.dataset.k,
-               vi: btn && btn.dataset.vi,
+               /* THE CATEGORY SLOT IS ON THE `<th>` SINCE 2026-09-02 (the
+                  word-grid component). `[data-vi]` declares `--vpaint` for
+                  everything inside it and `.nu-vpaint` on the button spends
+                  it — the same shape the Structure grids have always used, and
+                  the unification made the two heads one. The claim is the same
+                  claim: this column wears this player's colour. */
+               vi: th.dataset.vi,
                instr: btn && (btn.querySelector(".nu-colinstr") || {}).textContent,
                name: btn && (btn.querySelector(".nu-colname") || {}).textContent,
                aria: btn && btn.getAttribute("aria-label"),
@@ -305,10 +311,16 @@ function standUpServer() {
      agree: the transport moved AND the plate says so. */
   let landed = false;
   for (let i = 0; i < secsToWait * 2 && !landed; i++) {
-    landed = await p.evaluate((si) => {
+    /* THE ROW'S IDENTITY IS THE SECTION'S OWN ID SINCE 2026-09-02 (the
+       word-grid component): `tr[data-row]`, not `tr[data-sec]` with an index
+       in it. An index is a position and a position moves when a section is
+       added; the id is the address every cell in the row already uses. Same
+       reading of the same paint — `tr.now` is still what the board writes on
+       the sounding row and this still reads the artifact rather than a probe. */
+    landed = await p.evaluate((id) => {
       const tr = document.querySelector("#trimgrid tbody tr.now");
-      return !!(tr && +tr.dataset.sec === si);
-    }, target.i);
+      return !!(tr && tr.dataset.row === id);
+    }, target.id);
     if (!landed) await p.waitForTimeout(500);
   }
   check(landed,

@@ -399,6 +399,9 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
         (s.dataset.k || s.outerHTML.slice(0, 40)) +
         (s.closest(".nu-strip") ? " IN A STRIP" : "") + ")"),
     sheetKeys: [...document.querySelectorAll("#app .nu-sheet")].map((f) => f.dataset.sheet),
+    // the word grids' cells (2026-09-02): the sheet key is the cell's `data-k`
+    cellKeys: [...document.querySelectorAll("#app .nu-wcell[data-k]")]
+      .map((c) => c.dataset.k),
     multiKeys: [...document.querySelectorAll("#app .nu-sheet[data-multi]")]
       .map((f) => f.dataset.sheet),
   }));
@@ -436,6 +439,18 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   const rogue = menus.filter((k) => /^\(no data-sel/.test(k) && !SEAT.test(k));
   const devMenu = menus.filter((k) => /^dev\./.test(k));
   const devSheet = sheetKeys.filter((k) => /^dev\./.test(k));
+  /* ...AND A THIRD WIDGET, 2026-09-02 (wave 4). Paul, after using the composer:
+     *"When we go into structure make those tables of dropdowns full of tappable
+     grids that change options rather than dropdowns — like the other selection
+     table in mix … institutionalize it."* So a per-section word is neither a
+     sheet nor a menu now: it is a CELL in a `ui/wordgrid.js` table, carrying
+     the sheet's own address as its `data-k` and offering its words in a strip
+     that opens under the row. The claim below is unchanged in substance — a
+     development word is a SINGLE-CHOICE control drawn as one control, never
+     half-converted into two — so it counts cells beside menus and still refuses
+     any key drawn two ways at once. */
+  const cellKeys = union(widgets, "cellKeys");
+  const devCell = cellKeys.filter((k) => /^dev\./.test(k));
   /* A MULTI SHEET IS A FIELDSET AROUND ITS OWN `<select multiple>` and the two
      share a key by construction (ui/sheets.js draws `multi` that way since
      Paul, 2026-08-24: "Wherever we allow multiple selections use a standard
@@ -443,7 +458,9 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      half-finished conversion, so it is not what this line is looking for. */
   const multiKeys = union(widgets, "multiKeys");
   const bothWays = menus.filter((k) =>
-    sheetKeys.includes(k) && !multiKeys.includes(k));
+    sheetKeys.includes(k) && !multiKeys.includes(k))
+    .concat(menus.filter((k) => cellKeys.includes(k)))
+    .concat(sheetKeys.filter((k) => cellKeys.includes(k) && !multiKeys.includes(k)));
   const seats = menus.filter((k) => SEAT.test(k));
   check(!rogue.length, "every <select> in #app came from ui/selects.js, or is " +
     "an insert SEAT on a channel strip (" + seats.length + " of those — " +
@@ -468,11 +485,13 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       JSON.stringify(seats.slice(0, 3)));
   else notes.push("     (no channel strips here — the engineer is not in this " +
     "harness, so the insert seats are index.html's claim, above)");
-  check(!bothWays.length, "no key is drawn as a sheet AND as a menu " +
+  check(!bothWays.length, "no key is drawn two ways at once — sheet, menu or " +
+    "word-grid cell, one control per address " +
     JSON.stringify(bothWays));
   if (REAL)
-    check(devMenu.length > 0 && devSheet.length === 0,
-      "EVERY DEVELOPMENT WORD IS A MENU — " + devMenu.length + " of them, and " +
+    check(devMenu.length + devCell.length > 0 && devSheet.length === 0,
+      "EVERY DEVELOPMENT WORD IS ONE CONTROL — " + devMenu.length +
+      " menus, " + devCell.length + " word-grid cells, and " +
       devSheet.length + " still drawn as a sheet " + JSON.stringify(devSheet));
   else notes.push("     (which widget a development word gets is ui/selects.js's " +
     "router, which this harness does not import — index.html only)");
@@ -688,11 +707,24 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   });
   await p.waitForTimeout(250);
   await openDoes();
+  /* ...AND A THIRD WIDGET, 2026-09-02 (wave 4). Paul: *"make those tables of
+     dropdowns full of tappable grids that change options rather than dropdowns
+     — like the other selection table in mix … institutionalize it."* Every
+     per-section word is a `ui/wordgrid.js` CELL now — a button printing its
+     word, which grows a strip of words under its row when you tap it. The
+     sheet KEY did not move (`dev.kit|kit|<secId>`), so the law below is
+     untouched and this only learns a third way to find the control. A cell
+     refuses with `aria-disabled` rather than `disabled` — see the next read,
+     which says why. */
   const kitLive = await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="dev.kit"]');
     if (f) return { as: "sheet", live: !f.disabled };
     const s2 = document.querySelector('select[data-sel^="dev.kit"]');
-    return s2 ? { as: "menu", live: !s2.disabled } : { as: "absent", live: false };
+    if (s2) return { as: "menu", live: !s2.disabled };
+    const c = document.querySelector('.nu-wcell[data-k^="dev.kit"]');
+    return c ? { as: "cell", live: !c.disabled &&
+                   c.getAttribute("aria-disabled") !== "true" }
+             : { as: "absent", live: false };
   });
   check(kitLive.live, "with a drummer, the kit's development words are live " +
     "(as a " + kitLive.as + ")");
@@ -709,21 +741,48 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   // above. A disabled <select> keeps its <option>s in the list exactly as a
   // disabled fieldset keeps its `.nu-opt` rows: greyed, not hidden, which is
   // the half of this assertion that is actually about the design.
-  const kit = await p.evaluate(() => {
+  /* ===== THE THIRD WIDGET MAKES THE SECOND HALF OF THIS CHECK TRUE FOR THE
+     FIRST TIME (2026-09-02) ===========================================
+     "…and its N options are STILL VISIBLE — greyed, not hidden" is avail.js's
+     founding law ("Hiding destroys the shape of the possible") and it was read
+     off a DISABLED `<select>`'s option list — which is in the markup and which
+     a person cannot open. A word grid's refused cell is `aria-disabled` rather
+     than `disabled`: it greys, it says why, it cannot write, and it STILL
+     OPENS, so the words are on the screen and not only in the DOM. So the
+     count below is taken the way a reader takes it — the cell is opened and
+     the chips in the strip are counted — and every one of them is asserted
+     refused, which the `<select>` branch could not say at all. */
+  const kit = await p.evaluate(async () => {
     const f = document.querySelector('.nu-sheet[data-sheet^="dev.kit"]');
     if (f) { const w = [...f.children].find((c) => c.classList.contains("nu-why"));
       return { as: "sheet", off: f.disabled, why: w ? w.textContent : null,
                visible: f.querySelectorAll(".nu-opt").length }; }
     const s2 = document.querySelector('select[data-sel^="dev.kit"]');
-    if (!s2) return null;
-    return { as: "menu", off: s2.disabled, why: s2.dataset.why || null,
-             visible: s2.options.length };
+    if (s2) return { as: "menu", off: s2.disabled, why: s2.dataset.why || null,
+                     visible: s2.options.length };
+    const c = document.querySelector('.nu-wcell[data-k^="dev.kit"]');
+    if (!c) return null;
+    const off = !!c.disabled || c.getAttribute("aria-disabled") === "true";
+    if (!c.disabled && c.getAttribute("aria-expanded") !== "true") c.click();
+    await new Promise((r) => setTimeout(r, 120));
+    const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
+    const chips = tr && tr.classList.contains("nu-wopen")
+      ? [...tr.querySelectorAll(".nu-wchip")] : [];
+    const live = chips.filter((x) => !x.disabled).length;
+    const out = { as: "cell", off, why: c.dataset.why || null,
+                  visible: chips.length, liveChips: live };
+    if (c.getAttribute("aria-expanded") === "true") c.click();
+    return out;
   });
   check(!!kit && kit.off && /no drummer/.test(kit.why || ""),
     "no drummer -> dev.kit disabled (as a " + (kit && kit.as) + ") reading " +
     JSON.stringify(kit && kit.why));
-  check(!!kit && kit.visible > 60,
-    "...and its " + (kit && kit.visible) + " options are STILL VISIBLE — greyed, not hidden");
+  check(!!kit && kit.visible > 60 &&
+        (kit.as !== "cell" || kit.liveChips === 0),
+    "...and its " + (kit && kit.visible) + " options are STILL VISIBLE — " +
+    "greyed, not hidden" + (kit && kit.as === "cell"
+      ? " (and on the artifact, not only in the markup: the refused cell opens " +
+        "and every one of its words is grey — " + kit.liveChips + " live)" : ""));
 
   /* ---- 4b THE DRUM KIT IS NOT A MULTISELECT, AND THAT IS THE SAME RULE ----
      Paul asked, 2026-08-24: "can i pick more than one options for the drum
@@ -824,7 +883,22 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (f) { for (const l of f.querySelectorAll(".nu-opt")) rows.push({ v: l.dataset.v,
       off: l.querySelector("input").disabled }); return rows; }
     const s2 = pick('select[data-sel^="dev.line"]');
-    if (s2) for (const o of s2.options) rows.push({ v: o.dataset.v, off: o.disabled });
+    if (s2) { for (const o of s2.options) rows.push({ v: o.dataset.v, off: o.disabled });
+      return rows; }
+    /* ...AND A THIRD WIDGET (2026-09-02): the word grid's cell, whose words
+       are in the strip it opens. Read the way a reader reads them — open the
+       cell, take the chips, fold it again. */
+    const c = pick('.nu-wcell[data-k^="dev.line"]');
+    if (c && !c.disabled) {
+      const shut = c.getAttribute("aria-expanded") !== "true";
+      if (shut) c.click();
+      const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
+      if (tr && tr.classList.contains("nu-wopen"))
+        for (const o of tr.querySelectorAll(".nu-wchip"))
+          rows.push({ v: o.dataset.k.slice(c.dataset.k.length + 1),
+                      off: !!o.disabled });
+      if (shut && c.getAttribute("aria-expanded") === "true") c.click();
+    }
     return rows;
   }, PADV)).filter((r) => r.off);
   // SAY "PAD" THROUGH WHICHEVER WIDGET `cast.part` IS. It was a sheet all
@@ -888,8 +962,20 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       off: l.querySelector("input").disabled,
       why: (l.querySelector(".nu-why") || {}).textContent || "" }); return rows; }
     const s2 = pick('select[data-sel^="dev.line"]');
-    if (s2) for (const o of s2.options) rows.push({ v: o.dataset.v, off: o.disabled,
-      why: o.dataset.why || "" });
+    if (s2) { for (const o of s2.options) rows.push({ v: o.dataset.v, off: o.disabled,
+      why: o.dataset.why || "" }); return rows; }
+    // ...and the word grid's cell, read off the strip it opens (2026-09-02)
+    const c = pick('.nu-wcell[data-k^="dev.line"]');
+    if (c && !c.disabled) {
+      const shut = c.getAttribute("aria-expanded") !== "true";
+      if (shut) c.click();
+      const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
+      if (tr && tr.classList.contains("nu-wopen"))
+        for (const o of tr.querySelectorAll(".nu-wchip"))
+          rows.push({ v: o.dataset.k.slice(c.dataset.k.length + 1),
+                      off: !!o.disabled, why: o.dataset.why || "" });
+      if (shut && c.getAttribute("aria-expanded") === "true") c.click();
+    }
     return rows;
   }, PADV);
   const padOn = await padRead();
@@ -911,9 +997,13 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   const padOut = padOn.find((r) => r.v === "out");
   check(padWas.length === 0 && padGrey.length > 0 &&
         padSays.length > 0 && padMute.length === 0,
-    "a pad greys " + padGrey.length + " development words (0 before the tap) " +
+    "a pad greys " + padGrey.length + " development words (" +
+    padWas.length + " before the tap) " +
     "and every one of them says why in its own text: " +
-    JSON.stringify(padGrey.map((r) => r.v)));
+    JSON.stringify(padGrey.map((r) => r.v)) +
+    (padMute.length ? " · SILENT: " + JSON.stringify(padMute.map((r) => r.v)) : "") +
+    (padSays.length ? "" : " · none says the pad's own sentence; the reasons " +
+      "found were " + JSON.stringify([...new Set(padGrey.map((r) => r.why))])));
   check(!!padOut && !padOut.off,
     "...and `out` is never one of them — a pad may always be told to sit out");
 
@@ -954,6 +1044,28 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       const o = [...s2.options].find((x) => x.dataset.v === "at the fifth");
       if (!o || !o.selected) continue;
       return { as: "menu", off: o.disabled || s2.disabled, why: o.dataset.why || null };
+    }
+    /* ...AND A THIRD WIDGET (2026-09-02, wave 4). On a word grid the standing
+       answer is TWO things and both are read: the word the CELL is printing —
+       which is the whole of "you can always see the word you are on", and
+       which a `<select>` could only say by having it selected — and the chip
+       for it inside the strip, which must not be refused. */
+    for (const c of document.querySelectorAll('.nu-wcell[data-k^="dev.line"]')) {
+      if (c.disabled) continue;
+      const shut = c.getAttribute("aria-expanded") !== "true";
+      if (shut) c.click();
+      const tr = c.closest("tr") && c.closest("tr").nextElementSibling;
+      const chip = tr && tr.classList.contains("nu-wopen")
+        ? [...tr.querySelectorAll(".nu-wchip")].find((x) =>
+            x.getAttribute("aria-pressed") === "true") : null;
+      const v = chip ? chip.dataset.k.slice(c.dataset.k.length + 1) : null;
+      const out = v === "at the fifth"
+        ? { as: "cell", off: !!chip.disabled ||
+              c.getAttribute("aria-disabled") === "true",
+            shown: c.textContent, why: chip.dataset.why || null }
+        : null;
+      if (shut && c.getAttribute("aria-expanded") === "true") c.click();
+      if (out) return out;
     }
     return null;
   });

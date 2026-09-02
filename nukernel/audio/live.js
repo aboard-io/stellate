@@ -324,11 +324,26 @@ function onBar(info) {
       emit("transport:round", { bar: n, serial: info.serial, when: info.when });
     }
   }
-  // A QUEUED JUMP LANDS ON A BAR LINE. The parent schedules a runway ahead, so
-  // the jump takes effect as soon as the walk reaches it rather than on the very
-  // next bar the ear hears — which is the honest cost of one engine with a
-  // runway, and it is bars, not seconds.
-  if (pendingStart != null && bar.first) {
+  /* A QUEUED JUMP LANDS ON THE NEXT BAR LINE.
+     ---- REVERSED IN PLACE, 2026-09-02 ------------------------------------
+     WHAT STOOD HERE, and it was the second half of the "100 beats" bug:
+     *"A QUEUED JUMP LANDS ON A BAR LINE. The parent schedules a runway ahead,
+     so the jump takes effect as soon as the walk reaches it rather than on the
+     very next bar the ear hears — which is the honest cost of one engine with
+     a runway, and it is bars, not seconds."* Every word of that is true and
+     the CODE under it said something else: the branch was gated on
+     `bar.first`, so a jump did not land on the next bar line at all, it waited
+     for the next BOX — up to a whole section of somebody else's music.
+     Paul, on the deployed composer: *"When I change a setting it's often
+     telling me I'm 100 beats out from a change."*
+     So the gate comes off. `barBase` is re-based on WHATEVER bar is beginning,
+     the walk's very next serial is the target box's first bar, and the wait is
+     the runway — which is the honest cost of one engine with a runway, and it
+     is bars, not seconds. MEASURED over the catalogue's own timelines (the
+     arithmetic in `announceChange` below): house's MEAN wait went 111 beats
+     (54 s) to 12 (5.8 s) and its worst 236 (114 s) to 12; acid's worst 252
+     (120 s) to 12 (5.7 s); softfolk's 160 (109 s) to 12 (8.2 s). */
+  if (pendingStart != null) {
     const at = firstBarOfBox(pendingStart);
     setPendingStart(null);
     if (at >= 0) barBase = (at - info.serial - 1 + barCount() * 2) % Math.max(1, barCount());
@@ -1064,29 +1079,47 @@ function stopPosFeed() {
 // WHERE AN EDIT ACTUALLY LANDS. The walk runs a runway ahead of the ear, and
 // every serial it has already asked events() for is baked with the old score
 // — so a change committed now first sounds at `lastAsked + 1` (the serial
-// rule; events() records the ask for exactly this measurement). A
-// section-scoped answer can only be HEARD when that section next comes round,
-// so its landing advances to the first future serial whose bar belongs to the
-// box. The UI calls this right after push(); everything after that is the
-// ticker's countdown and the onBar clamp — including the crossfade path,
-// where the parent prunes bars and the change arrives early.
+// rule; events() records the ask for exactly this measurement). That serial is
+// the LANDING: the next bar line the walk has not already baked. The UI calls
+// this right after push(); everything after that is the ticker's countdown and
+// the onBar clamp — including the crossfade path, where the parent prunes bars
+// and the change arrives early.
+//
+// ---- THE SECTION ADVANCE, REVERSED IN PLACE, 2026-09-02 -------------------
+// WHAT STOOD HERE: *"A section-scoped answer can only be HEARD when that
+// section next comes round, so its landing advances to the first future serial
+// whose bar belongs to the box."* — and the scan under it did exactly that,
+// walking the timeline forward to the box's next pass and counting every beat
+// of somebody else's music on the way.
+//   Paul, on the deployed composer: *"When I change a setting it's often
+// telling me I'm 100 beats out from a change."* He was reading this number and
+// it was correct and it was useless. MEASURED over the catalogue's own
+// timelines, every (sounding bar x edited box) pair: house at 124 bpm and 60
+// bars printed a MEAN of 111 beats and a worst of 236 (114 s); acid 116 and
+// 252 (120 s); softfolk 78 and 160 (109 s); rock 75 and 152. A hundred beats
+// is not a slip in this arithmetic, it is its centre — and the thing being
+// waited for, the score the walk plays, is different from the NEXT BAR LINE.
+//   THE SENTENCE THAT REPLACES IT. An edit lands when the walk next asks for a
+// bar, because that is when the new score is read; whether the EAR notices at
+// that bar is a fact about the music and not about the transport, and it is
+// not a number to hold a hand still for. `round` stays on the feed — it is
+// still true that a box-scoped edit is not audible until the box comes round,
+// and the page may still say so in WORDS — but the COUNTDOWN counts to the
+// landing, which is the runway. Measured after: 12 beats on every record in
+// the catalogue, 5.1 to 8.2 s — the runway said honestly, in bars.
 export function announceChange(label, si, info) {
   if (!playing || !label) return;
   const n = barCount();
   if (!n) return;
-  let lands = Math.max(lastAsked + 1, curBar ? curBar.serial + 1 : 0);
-  // DOES THE EAR WAIT FOR THE BOX TO COME ROUND? If the first unbaked serial
-  // is already inside the target box, the change lands THIS pass (imminent);
-  // if the scan had to advance past it, the landing is the section's next
-  // occurrence — which is the fact the page's phrasing hangs the big number
-  // on ("when the drop comes round — 21"). `round` says which.
+  const lands = Math.max(lastAsked + 1, curBar ? curBar.serial + 1 : 0);
+  // ...and whether the ear has to wait for the box to come round anyway, kept
+  // as a WORD and never as the number: true when the landing bar is not in the
+  // box the edit was scoped to.
   let round = false;
   if (si != null) {
     const TL = timeline();
-    for (let k = 0; k < n; k++)
-      if (TL[barOfSerial(lands + k)] && TL[barOfSerial(lands + k)].si === si) {
-        lands += k; round = k > 0; break;
-      }
+    const b = TL[barOfSerial(lands)];
+    round = !(b && b.si === si);
   }
   pendings.set(label, { label, landsSerial: lands,
                         landsBar: barOfSerial(lands), lastLeft: null,
@@ -1109,15 +1142,23 @@ export function announceChange(label, si, info) {
    was already true of the Structure form's section number before a board
    column ever asked for it, which is why the fix is HERE and not in a view.
 
-   THE ARITHMETIC IS THE LANDING RULE'S OWN, NOT announceChange's. An EDIT
-   lands when its section next comes round (announceChange walks the timeline
-   to `si`); a JUMP lands on the next bar-line of ANY box, because that is
-   literally what `onBar` does with `pendingStart` above — "if (pendingStart !=
-   null && bar.first)". Announcing it with the edit rule would have counted a
-   whole record's worth of beats for a wait of four. So this walks forward to
-   the next `first` bar and says that, and the same `onBar` line that applies
-   the jump is the one that clears the countdown (a countdown that landed is
-   over, whatever the arithmetic said).
+   THE ARITHMETIC IS THE LANDING RULE'S OWN.
+   ---- REWRITTEN IN PLACE, 2026-09-02 -------------------------------------
+   WHAT STOOD HERE: *"An EDIT lands when its section next comes round
+   (announceChange walks the timeline to `si`); a JUMP lands on the next
+   bar-line of ANY box, because that is literally what `onBar` does with
+   `pendingStart` above — 'if (pendingStart != null && bar.first)'. Announcing
+   it with the edit rule would have counted a whole record's worth of beats for
+   a wait of four. So this walks forward to the next `first` bar and says
+   that."* It named the bug and then implemented it: `bar.first` is a BOX's
+   first bar, not a bar line, so both halves — the landing and the countdown —
+   waited for the next section.
+   Paul, on the deployed composer: *"When I change a setting it's often telling
+   me I'm 100 beats out from a change."*
+   A jump lands on the NEXT BAR LINE, full stop, which is what `onBar` now does
+   with `pendingStart`, and this says that number and no other. The same
+   `onBar` line that applies the jump is the one that clears the countdown (a
+   countdown that landed is over, whatever the arithmetic said).
 
    ONE LABEL, so a second tap replaces the first rather than stacking: two
    queued jumps are not two waits, they are one wait with a new destination —
@@ -1126,12 +1167,7 @@ export function announceJump(si) {
   if (!playing || !curBar) return;
   const n = barCount();
   if (!n) return;
-  const TL = timeline();
-  let lands = curBar.serial + 1;
-  for (let k = 0; k < n * 2; k++) {
-    const b = TL[barOfSerial(lands + k)];
-    if (b && b.first) { lands += k; break; }
-  }
+  const lands = Math.max(lastAsked + 1, curBar.serial + 1);
   pendings.set("jump", { label: "jump", landsSerial: lands,
                          landsBar: barOfSerial(lands), lastLeft: null,
                          who: "the jump", role: null, si, round: false });

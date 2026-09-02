@@ -44,7 +44,9 @@
  *   T1b …and the tap count is printed beside the mark.
  *   T2  the groove menu writes doc.time.groove AND the word reaches ui/state.js
  *       GROOVE (which is the value ui/derive.js is handed).
- *   T3  the pace strip has one row per section, writes section 2's `pace` to
+ *   T3  the pace strip — a one-column word grid since 2026-09-02 ("make those
+ *       tables of dropdowns full of tappable grids") — has one cell per
+ *       section, writes section 2's `pace` to
  *       `push`, and audio/plan.js's bar SECONDS for that section shrink.
  *   T4  `+ bar` grows the cycle to five and the fifth chord reaches the
  *       COMPILED genre (`__eightGenres().prog`); `− bar` puts it back.
@@ -146,6 +148,22 @@ function standUpServer() {
       if (!el) return; el.value = val;
       el.dispatchEvent(new Event("change", { bubbles: true })); }, [sel, v]);
     await p.waitForTimeout(600); };
+  /* ...AND SAYING A PACE IS TWO TAPS NOW, 2026-09-02 (wave 4). Paul: *"make
+     those tables of dropdowns full of tappable grids that change options
+     rather than dropdowns … institutionalize it."* The pace strip was eight
+     `.nu-field` rows of `<select>` — the shape that sentence names — and is a
+     one-column `ui/wordgrid.js` table: sections down, `pace` across, the five
+     words under whichever cell you tap. The ADDRESS did not move, so this
+     helper takes exactly the key `say` took. */
+  const pick = async (key, v) => {
+    const hit = await p.evaluate(([k, val]) => {
+      const c = document.querySelector('.nu-wcell[data-k="' + k + '"]');
+      if (!c || c.disabled) return false;
+      if (c.getAttribute("aria-expanded") !== "true") c.click();
+      const chip = document.querySelector('.nu-wchip[data-k="' + k + "|" + val + '"]');
+      if (!chip || chip.disabled) return false;
+      chip.click(); return true; }, [key, v]);
+    await p.waitForTimeout(700); return hit; };
 
   /* ================= T1 · TAP TEMPO ================================== */
   await top("Tempo");
@@ -223,11 +241,15 @@ function standUpServer() {
 
   /* ================= T3 · THE PACE STRIP ============================== */
   const secs = (await doc()).form.sections.map((s) => s.id);
+  /* ONE CELL PER SECTION IN ONE COLUMN, which is what "one row per section"
+     became when the strip became a grid — same count, same addresses, and the
+     rows are now a table's rows rather than eight stacked fields. */
   const strip = await p.evaluate(() =>
-    [...document.querySelectorAll('#pan-tempo select[data-sel^="form.pace"]')]
-      .map((s) => s.dataset.sel));
+    [...document.querySelectorAll('#pan-tempo .nu-wcell[data-k^="form.pace"]')]
+      .map((s) => s.dataset.k));
   check(strip.length === secs.length,
-    "T3 one pace row per section (" + strip.length + " of " + secs.length + ")");
+    "T3 one pace cell per section, in one column of a word grid (" +
+    strip.length + " of " + secs.length + ")");
   /* THE BAR SECONDS BEFORE AND AFTER, off audio/plan.js's own compiled
      timeline — `paceTL` has already had its say by the time `timeline()`
      answers, so this is the number the transport would play. */
@@ -237,16 +259,18 @@ function standUpServer() {
     return mine.length ? mine.reduce((a, x) => a + x, 0) / mine.length : null;
   }, si);
   const was = await secsOf(1);
-  await say("form.pace|" + secs[1], "push");
+  const took3 = await pick("form.pace|" + secs[1], "push");
   const now = await secsOf(1);
   const pace1 = (await doc()).form.sections[1].pace;
-  check(pace1 === "push", "…and it writes form.sections[1].pace (" + pace1 + ")");
+  check(took3 && pace1 === "push",
+    "…and tapping the cell then the `push` chip writes form.sections[1].pace (" +
+    pace1 + ")");
   check(was != null && now != null && now < was * 0.9,
     "T3b …and audio/plan.js's bar seconds for that section SHRINK — " +
     (was == null ? "?" : was.toFixed(3)) + "s -> " +
     (now == null ? "?" : now.toFixed(3)) + "s");
   /* put it back, so T4 and T5 measure a record nobody has paced */
-  await say("form.pace|" + secs[1], "");
+  await pick("form.pace|" + secs[1], "");
 
   /* ================= T4 · THE CYCLE GROWS ============================= */
   await top("Key");

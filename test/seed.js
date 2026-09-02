@@ -201,17 +201,39 @@ function standUpServer() {
      throws rather than counting — a seed is a position in a domain, and
      `seed++` had no ceiling and no wrap. `next` is the +1 a hand wants when it
      is auditioning neighbours. */
+  /* ...AND ROLL SHUTS THE STRIP, 2026-09-02. Paul, after using the page:
+     *"When I 'roll' with the seed modal dismiss it."* So this walk is three
+     assertions instead of two: the reading moved, the strip is GONE, and the
+     die's own `aria-expanded` says so. `next` then has to re-open it, which is
+     the reader's gesture too — and is the proof that the closing is `roll`'s
+     alone and not something every button in the strip does. */
   const before5 = await reading(p4);
   await p4.evaluate(() => document.querySelector('[data-k="seed-roll"]').click());
   await p4.waitForTimeout(1500);
   const rolled = await reading(p4);
   check(rolled !== before5 && +rolled >= 0 && +rolled <= 65536,
     "S5 · roll throws a new reading inside the domain: " + before5 + " -> " + rolled);
+  const shut = await p4.evaluate(() => ({
+    hidden: document.getElementById("nu-seedout").hidden,
+    exp: document.getElementById("rewrite").getAttribute("aria-expanded") }));
+  check(shut.hidden === true && shut.exp === "false",
+    "S5 · …and the strip is dismissed behind it, with the die's own door " +
+    "shut too: " + JSON.stringify(shut));
+  await p4.evaluate(() => document.getElementById("rewrite").click());
+  await p4.waitForTimeout(250);
+  const back = await p4.evaluate(() =>
+    document.getElementById("nu-seedout").hidden === false);
+  check(back, "S5 · …and the die opens it again — the dismissal is roll's " +
+    "alone, not the strip giving up");
   await p4.evaluate(() => document.querySelector('[data-k="seed-next"]').click());
   await p4.waitForTimeout(1500);
   const nexted = await reading(p4);
+  const still = await p4.evaluate(() =>
+    document.getElementById("nu-seedout").hidden === false);
   check(+nexted === +rolled + 1,
     "S5 · …and next is the one after it: " + rolled + " -> " + nexted);
+  check(still, "S5 · …with the strip STILL OPEN under it — `next` is aiming " +
+    "and aiming needs the panel; only `roll` is finished when it lands");
 
   check(!errs.length, "S· zero pageerrors / console errors " +
     JSON.stringify(errs.slice(0, 4)));

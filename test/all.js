@@ -354,6 +354,25 @@ const GATES = [
   { name: "breath",     wave: 2, kind: "node",
     argv: ["test/breath.test.js"],
     need: ["test/breath.test.js"], covers: ["test/breath.test.js"] },
+  /* THE CLICK, THE OVERLAP AND THE SIBILANCE (2026-09-02). Paul, on the
+     deployed composer: "There's a lot of click when they 'talk' though and
+     overlap and we should smooth that. It's okay to have a continuous tone
+     instead of sibilance … I wouldn't mind the voice having a tiny bit more
+     grit and vocal resonance starting with his." Four defects, measured
+     before and after and held down here: `voxEnv` was `en.asr`, which zeroes
+     itself on a rising gate and so deleted 9.2 dB of a sounding note every
+     time one retriggered; the `singer` unit carried the role pool, so two
+     overlapping vocal notes were two throats; the tract devoiced outright on
+     its fricatives; and `voxGrit` is the grit and the formant resonance he
+     asked for. V1/V2 are module invariants on the shipped WASM, V3-V6 render
+     two records' vocal chairs alone through the real path. ~9 s.
+     `covers` names the four engine files whose numbers this gate holds. */
+  { name: "voice-smooth", wave: 2, kind: "node",
+    argv: ["test/voice-smooth.test.js"],
+    need: ["test/voice-smooth.test.js"],
+    covers: ["test/voice-smooth.test.js", "engine/faust/dsp/voice_tract.lib",
+             "engine/faust/dsp/tract_voice.dsp", "engine/faust/dsp/voice_lead.dsp",
+             "engine/faust/dsp/tract.lib"] },
   /* THE OPTION TABLE, THROUGH THE CACHE. test/gates-cache.js runs
      `nukernel/gates-extract.js --check` unless every file the derivation reads
      is byte-identical to the tree that last passed it — content-keyed, never
@@ -558,6 +577,17 @@ const GATES = [
   { name: "pace-meter", wave: 2, kind: "node",
     argv: ["test/pace-meter.test.js"], need: ["test/pace-meter.test.js"],
     covers: ["test/pace-meter.test.js"] },
+  /* ...AND THE FIFTEENTH, REGISTERED 2026-09-02. The block above names
+     `grain-reach` in its own list of the fourteen and then does not carry a
+     row for it — so the one gate that proves vinyl crackle reaches the sound
+     ("Does anything have found audio, samples, and vinyl crackle? Nothing
+     seems to. Portishead sure should.") has been unrun since the day it was
+     written, which is the very failure that block exists to have fixed. It
+     renders the shipped fx_bus WASM, so `covers` names that module's source
+     beside the gate. ~1 s. */
+  { name: "grain-reach", wave: 2, kind: "node",
+    argv: ["test/grain-reach.test.js"], need: ["test/grain-reach.test.js"],
+    covers: ["test/grain-reach.test.js", "engine/faust/dsp/fx_bus.dsp"] },
   { name: "series-bus", wave: 2, kind: "node",
     argv: ["test/series-bus.test.js"], need: ["test/series-bus.test.js"],
     covers: ["test/series-bus.test.js"] },

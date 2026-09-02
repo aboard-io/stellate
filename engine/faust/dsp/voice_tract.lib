@@ -237,8 +237,101 @@ with {
   // `*gate` is the whole of the 2026-08-27 fix (header, THE BREATH BEFORE THE
   // VOWEL): the h rides the gate OPENING and nothing rides it shutting. x*1.0
   // is exact in IEEE-754, so a sounding note is sample-for-sample what it was.
-  fric = min(1.0, breath + 0.55*gate*(1.0 - (gate : si.smooth(ba.tau2pole(0.03)))));
+  // ...AND THE h RIDES A RAMP NOW, NOT A STEP (2026-09-02). Paul, having
+  // listened to the deployed page: *"There's a lot of click when they 'talk'
+  // though and overlap and we should smooth that."* `gate` is a one-sample
+  // 0 -> 1, so this term put the aspiration's whole 0.55 on in ONE SAMPLE: a
+  // broadband step in the noise gain at every note start. Under the old
+  // envelope that was hidden (the amp was at zero there and climbing); under
+  // `voxEnv` below, which no longer drops to zero when a note retriggers, it
+  // would be a burst of hiss at the running note's own loudness. So the h now
+  // opens over `voxOpen`'s 3 ms — audibly the same breath, with no edge in it.
+  //   ONE-SIDED, EXACTLY AS THE 2026-08-27 FIX LEFT IT: `voxOpen` snaps to 0
+  // the sample the gate shuts, so nothing rides the gate CLOSING and the
+  // release tail is still the tone falling away.
+  fric = min(1.0, breath + 0.55*voxOpen(0.003, gate)*(1.0 - (gate : si.smooth(ba.tau2pole(0.03)))));
 };
 
+// A GATE THAT OPENS OVER `sec` AND SHUTS IN ONE SAMPLE. The h above is the only
+// caller: it wants the ASPIRATION ramped in and it must not be ramped out (see
+// the 2026-08-27 fix), and a symmetric si.smooth cannot say that.
+voxOpen(sec, gate) = (\(y). (ba.if(gate < 0.5, 0.0,
+                      min(1.0, y + 1.0/max(1.0, sec*ma.SR))))) ~ _;
+
 // the breath in and the breath out
-voxEnv(attack, release, gate) = en.asr(attack, 1.0, release, gate);
+//
+// ---- IT USED TO CUT THE NOTE'S THROAT TO RETRIGGER IT (2026-09-02) ---------
+// Paul, listening to the deployed composer: *"There's a lot of click when they
+// 'talk' though and overlap and we should smooth that."* The click was here,
+// and it was in every one of the three singers at once, because all three take
+// their amplitude from this line.
+//
+// `en.asr` RESTARTS FROM ZERO. Its attack counter is `+(gate) ~ *(gate' >= gate)`
+// — a rising edge zeroes it — and its release counter is zeroed while the gate
+// is open, so on the sample a note retriggers the envelope is `0 - 0 = 0`
+// whatever it was the sample before. MEASURED on the shipped module at the
+// params softfolk's own singer sends (attack 0.03 s, release 1.0 s, three notes
+// 8 ms apart, which is exactly what the scheduler writes for back-to-back
+// notes — stream-renderer `offS = s + (dur - 0.008)`): the envelope was at
+// 0.992 and the next sample it was 0.0008. Output RMS across the join went
+// 0.0760 -> 0.0262 -> 0.0702, a 9.2 dB notch 30 ms wide punched into the middle
+// of a sung phrase, once per note. That is the click; a mouth cannot do it.
+//
+// SO THE ENVELOPE IS A RAMP THAT REMEMBERS WHERE IT IS, and the ramp is
+// raised-cosine at both ends. `u` walks toward the gate at 1/attack or
+// 1/release per second and is CONTINUOUS across an edge — a retrigger during a
+// release resumes from 0.992 instead of from 0 — and `0.5 - 0.5*cos(pi*u)` puts
+// a smooth start and a smooth finish on every ramp, which is the declick.
+// A gate held long enough saturates `u` at 1 and the shape at exactly 1.0, so a
+// SUSTAINED note is the same number it always was; what changed is only the
+// two edges and the join.
+//
+// THE 5 ms FLOOR is the other half of the declick: `attack` runs down to 0.002 s
+// on the tract and 0.005 s on the singer, and 2 ms of ramp on a 130 Hz glottal
+// pulse is a quarter of a period — audibly a step. Five is the shortest ramp
+// that is a ramp at the bottom of a voice's compass and is still an onset
+// rather than a swell.
+//
+// ABSENT-IS-TODAY IS SUSPENDED HERE, and Paul's sentence is the suspension:
+// this changes the amplitude of every modelled vocal note in the catalogue and
+// it is meant to. test/voice-smooth.test.js holds the before/after numbers.
+voxEnv(attack, release, gate) = 0.5 - 0.5*cos(ma.PI*u)
+with {
+  up = 1.0 / max(1.0, max(0.005, attack)*ma.SR);
+  dn = 1.0 / max(1.0, max(0.005, release)*ma.SR);
+  u  = (\(y). (max(0.0, min(1.0, y + ba.if(gate > 0.5, up, 0.0 - dn))))) ~ _;
+};
+
+// ---- THE GRIT AND THE RESONANCE (2026-09-02) -------------------------------
+// Paul, in the same sentence as the click: *"I wouldn't mind the voice having a
+// tiny bit more grit and vocal resonance starting with his."* — "his" being
+// softfolk's, the James Taylor row, which is the singer he named as the good
+// one. This is that, and it is two stages and no new parameter, because it is
+// the same kind of statement `voxVoicing` and `voxRoom` above already are: the
+// instrument's own voicing, travelling with the singer into every record.
+//
+//   THE RESONANCE is a constant-Q peak at 2.6 kHz, +2.5 dB, Q 1.6. That is the
+//   SINGER'S FORMANT band — the 2.4-3.2 kHz cluster a trained voice has and a
+//   five-pole formant bank does not, because the CSOUND tables stop carrying
+//   weight above the soprano's F4 at 3900 and `voxVoicing`'s own one-pole at
+//   4.2 kHz is pulling the rest of it down. Q 1.6 is narrow enough to be a
+//   resonance rather than a presence shelf, which is what "vocal resonance"
+//   asks for and what a strip's +3 dB at 3 kHz is not.
+//   THE GRIT is a tanh, level-compensated, so it is DISTORTION and not gain:
+//   `tanh(k*x)/k` is 1.0 at small signals and softens the peaks.
+//   `drv` IS AN ARGUMENT AND NOT A CONSTANT, and it has to be, because the two
+//   callers hand this stage signals a factor of five apart. `voice_lead`
+//   arrives through `voxAgc`, which holds the finished throat at 0.10 RMS
+//   (~0.4 peak), so 1.9 puts the knee at tanh(0.76) — a few percent of third
+//   harmonic and 1.5 dB off the peak. `tract_voice` has no normalizer at all
+//   and its pre-trim signal is a fifth of that, so the same constant there was
+//   not grit but a brick wall: MEASURED, tract_voice saturated outright (its
+//   whole output pinned at 1/1.9 = 0.526) and the talking records lost 4.0-4.5
+//   dB of their own 200 Hz-1 kHz tone. Each caller passes the number that puts
+//   ITS signal on the same knee.
+//
+//   IT SITS AFTER voxTract AND BEFORE THE AMP, in the two LINE singers only:
+//   voice_lead and tract_voice. NOT the choir — a room full of people is not
+//   one throat being pushed, and a peak at 2.6 kHz on three detuned voices is a
+//   ring, not a singer.
+voxGrit(drv) = fi.peak_eq_cq(2.5, 2600.0, 1.6) : *(drv) : ma.tanh : /(drv);

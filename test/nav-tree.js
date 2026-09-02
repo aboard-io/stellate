@@ -256,7 +256,11 @@ const RECORD = "#at=Kingston&y=1969&s=1";
       const f = document.querySelector(".nu-trayfoot");
       const kids = [...f.children].map((n) =>
         n.id || n.dataset.k || n.className || n.tagName.toLowerCase());
-      const want = ["toptab-Where", "rewrite", "explain", "logger",
+      /* THE ? CAME OUT OF THIS LIST 2026-09-02 (Paul: *"Get rid of explain
+         — that's the genre editor's work now."*). It is an ORDER and not an
+         index arithmetic, so the retirement is one word deleted; the rest of
+         the foot is asserted to be exactly where it was. */
+      const want = ["toptab-Where", "rewrite", "logger",
                     "playops", "play"];
       const at = want.map((k) => kids.indexOf(k));
       const ok = at.every((n, i) => n >= 0 && (i === 0 || n > at[i - 1])) &&
@@ -278,7 +282,7 @@ const RECORD = "#at=Kingston&y=1969&s=1";
     return { seen: seen.length, bad };
   });
   check(feet.bad.length === 0,
-    "N5 · the foot reads where · seed · ? · log · opts · play and #play is its " +
+    "N5 · the foot reads where · seed · log · opts · play and #play is its " +
     "last child, in all " + feet.seen + " states — " + JSON.stringify(feet.bad));
 
   /* ---- N6 A BAND MEMBER LIGHTS UP WHILE IT SOUNDS -------------------- */
@@ -311,9 +315,18 @@ const RECORD = "#at=Kingston&y=1969&s=1";
     /* THE PAINT IS THE PLAYHEAD'S RED AND NOT THE METER'S GREEN, read off the
        rendered box shadow rather than off the class list: `--clock` means "this
        is where the record is" and `--meter` means "a number came back from the
-       engine", and this is a schedule, not a measurement. */
+       engine", and this is a schedule, not a measurement.
+       ...AND IT IS THE ROW'S OWN EDGE BAR SINCE 2026-09-02 (wave 4). Paul:
+       *"The expanded left nav needs more alignment. Icons run into icons
+       now."* Every row in the list reserves a 3px transparent inline-start
+       border now, so that a child row's depth bar and a root row's glyph start
+       at the same x; the sounding lamp lights THAT bar rather than laying an
+       inset shadow inside it, which on a child row would have drawn a second
+       3px bar beside the first. One spelling, one bar, one x, at every depth —
+       so this reads `border-inline-start-color` and the colour law it is
+       asserting has not moved an inch. */
     shadow: (() => { const b = document.querySelector("#nu-tray .is-sounding");
-      return b ? getComputedStyle(b).boxShadow : null; })(),
+      return b ? getComputedStyle(b).borderInlineStartColor : null; })(),
     clock: getComputedStyle(document.documentElement)
       .getPropertyValue("--clock").trim(),
     meter: getComputedStyle(document.documentElement)
@@ -334,7 +347,8 @@ const RECORD = "#at=Kingston&y=1969&s=1";
   check(!!onNow.shadow && onNow.shadow !== "none" &&
         (!rgb(onNow.clock) || onNow.shadow.indexOf(rgb(onNow.clock)) >= 0) &&
         (!rgb(onNow.meter) || onNow.shadow.indexOf(rgb(onNow.meter)) < 0),
-    "N6 · …and it is the playhead's red (--clock " + onNow.clock + "), never " +
+    "N6 · …and its edge bar is the playhead's red (--clock " + onNow.clock +
+    "), never " +
     "the measured green (--meter " + onNow.meter + "): " +
     JSON.stringify(onNow.shadow));
   await p.evaluate(() => document.getElementById("play").click());

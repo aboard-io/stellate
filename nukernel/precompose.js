@@ -1939,6 +1939,36 @@
      itself now. */
   const CHAIREQ = { pad: { lo: -5 }, drone: { lo: -5 },
                     riff: { lo: -3 }, lead: { lo: -2 } };
+  /* ---- ...AND ONE ROW THAT IS ABOUT WHO IS SINGING (2026-09-02) ----------
+     THE REVERSAL, IN PLACE: `deskFor`'s own header says "IT IS ROLE-SHAPED
+     AND DELIBERATELY NOT VOICE-SHAPED", and that sentence stands for LEVEL —
+     "a record has one subject" is as true of two trumpets as of two singers.
+     It does not stand for the low shelf. Paul, on the deployed composer:
+     *"The james taylor one is pretty good — figure out why and copy that."*
+     One of the things softfolk's vocal chair has and the rest of the
+     catalogue's singers do not is CHAIREQ's -2 dB low shelf, and it has it
+     for a reason that has nothing to do with singing: its vocal chair happens
+     to be the record's first `lead`. A vocal `counter`, `stab` or `line` chair
+     — softfolk's own backing choir is one — got no shelf at all, so the same
+     record voiced its front singer and its backing room differently by
+     accident of the part word.
+       SO A SUNG CHAIR TAKES softfolk's SHELF WHATEVER PART IT PLAYS, and only
+     where its part had none: the row above still wins where it speaks (a
+     vocal pad keeps -5), and this is a FLOOR under the family, not a second
+     opinion about the four parts that already have one. It is the same -2 the
+     lead row carries, so no chair in the catalogue moves twice and no number
+     new to this file is introduced.
+       WHO IS SUNG is asked of instruments.js and not of a list here — the
+     patch tables are the one owner of "does this id name a person"
+     (PATCH_VOICE / PATCH_MOUTH via `PATCHES`, plus SAMPLED_VOICES for the
+     stab the sampler keeps), so an id added there is answered here without
+     this file being edited. */
+  const sungChair = (v) => {
+    const id = v && v.instrument;
+    if (!id) return false;
+    return !!(NI.PATCHES.voice[id] || NI.PATCHES.mouth[id] || NI.SAMPLED_VOICES[id]);
+  };
+  const CHAIRVOXEQ = { lo: -2 };
   // TWO CHAIRS OF ONE ROLE MUST NOT SIT ON TOP OF EACH OTHER. Post rock is a
   // pad and two clean guitars (fields.js:691's own example); the first keeps
   // the centre, the second and third are moved off it. The parent already
@@ -2032,6 +2062,9 @@
     if (lvl && lvl !== "norm") e.lvl = lvl;
     if (CHAIRREV[part]) e.rev = CHAIRREV[part];
     if (CHAIREQ[part]) e.eq = { ...CHAIREQ[part] };
+    // ...and a sung chair that its part left bare takes softfolk's shelf (the
+    // block above CHAIRVOXEQ carries the reversal and Paul's sentence)
+    else if (sungChair(voice)) e.eq = { ...CHAIRVOXEQ };
     if (nth > 0) e.pan = CHAIRPAN[(nth - 1) % CHAIRPAN.length];
     if (voice.kind === "drums" &&
         MACHINEKIT.indexOf(voice.instrument) < 0) e.room = "touch";

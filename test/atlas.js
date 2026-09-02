@@ -417,6 +417,16 @@ function g18() {
      press (a gate is a hand), and it is put HERE, in the one helper every one
      of those checks already calls, rather than sprinkled through twenty of
      them. `scrollIntoView` still does what it always did. */
+  /* ...AND THE PICK NO LONGER LEAVES WHERE AT ALL, 2026-09-02 (the same day,
+     after Paul used it): *"I was wrong to have you switch to the genre panel.
+     Add a genre editor nav element and stay on the globe and list."* So the
+     press above is a no-op on every path this file drives — the tab it would
+     restore is the tab a pick never left. IT IS KEPT AND NOT DELETED, for one
+     reason: this helper is also called after `fresh()` and after a share-link
+     boot, where the open tab is whatever the link said, and "bring the globe
+     into view" must mean the globe is on the screen however you got here. A
+     guard that is true zero times today is the guard that makes the sentence
+     unconditional. */
   const bring = () => p.evaluate(() => {
     if (window.__eightTabNow && window.__eightTabNow() !== "Where"
         && window.__eightTab) window.__eightTab("Where");
@@ -474,7 +484,11 @@ function g18() {
        every one of the 389 rows resolves and none of them is visible — which
        playwright reports as a timeout on a selector that matched. The list is
        the time instrument and this helper drives it, so it presses Where
-       first, exactly as a reader would. */
+       first, exactly as a reader would.
+       REVERSED THE SAME DAY, and the press is kept for the reason `bring()`
+       keeps its own (see there). Paul: *"I was wrong to have you switch to the
+       genre panel. Add a genre editor nav element and stay on the globe and
+       list."* A pick stays on Where; only a link or a hand can have left it. */
     await p.evaluate(() => { if (window.__eightTabNow &&
       window.__eightTabNow() !== "Where" && window.__eightTab)
       window.__eightTab("Where"); });
@@ -1529,7 +1543,11 @@ function g18() {
        lands on its Rules (Paul: *"I click the genre, it starts to play, and
        there's a new view: A genre editor appears"*), and this walk picks; a
        `display: none` panel measures 0 and would report the list as having no
-       width at all. `bring()` is the press back to Where — see its own note. */
+       width at all. `bring()` is the press back to Where — see its own note.
+       AND THE PICK STAYS ON WHERE SINCE THE SAME AFTERNOON (Paul: *"I was
+       wrong to have you switch to the genre panel. Add a genre editor nav
+       element and stay on the globe and list."*), so what `bring()` restores
+       here is a tab the walk never leaves. The measurement is the same one. */
     await bring();
     await p.waitForTimeout(200);
     const fit = await p.evaluate(() => ({

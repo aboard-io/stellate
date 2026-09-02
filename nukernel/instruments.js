@@ -1798,8 +1798,27 @@
     // voice's fundamental is, so the dip at 400 is doing more work than the air
     // lift: this is the carve the parent applies to collisions, made standing
     // for a family that collides with everything.
-    vox: { hpf: 110, eq: { f: 400, gain: -2.5, q: 0.9 }, eq2: { f: 6000, gain: 2, q: 0.7 },
-           sat: 0.16, satMix: 0.28,
+    /* ...AND THE AIR LIFT IS A FORMANT LIFT NOW (2026-09-02). Paul, after the
+       composer round: *"I wouldn't mind the voice having a tiny bit more grit
+       and vocal resonance starting with his."* — "his" is softfolk's singer,
+       and softfolk's singer is MODELLED, so the change that answers him lives
+       in engine/faust/dsp/voice_tract.lib (`voxGrit`: +2.5 dB at 2.6 kHz, Q
+       1.6, over a soft knee). This row is the same statement said to the
+       SAMPLED half of the family, so a vocal recording and a modelled throat
+       are voiced the same way rather than two different ways by accident:
+       eq2 moves from a 6 kHz air shelf to the singer's formant band at a
+       higher Q, and `sat`/`satMix` go from 0.16/0.28 to the guitar row's
+       0.26/0.42 — the grit.
+         AND ITS REACH IS THE ONE THIS TABLE'S OWN HEADER STATES, unchanged and
+       still honest: `ahh_choir`, `ohh_voices` and `solo_vox` are claimed
+       upstream by PATCH_VOICE and never enter the sampler's strip at all. What
+       this row reaches is `space_voice` and the CHORUS position (voicedAs's
+       `recorded` word, which drops a vocal chair back into the sampler
+       library) — which is exactly the case where a listener would otherwise
+       hear the sampled voice voiced one way and the modelled one another.
+       ABSENT-IS-TODAY IS SUSPENDED for this round by Paul's sentence. */
+    vox: { hpf: 110, eq: { f: 400, gain: -2.5, q: 0.9 }, eq2: { f: 2600, gain: 2.5, q: 1.4 },
+           sat: 0.26, satMix: 0.42,
            comp: { thresh: 0.3, ratio: 2.6, atk: 0.02, rel: 0.24, makeup: 1.04 },
            trim: 0.92 },
     brass: { hpf: 150, eq: { f: 2500, gain: 2, q: 0.8 }, sat: 0.3, satMix: 0.42,

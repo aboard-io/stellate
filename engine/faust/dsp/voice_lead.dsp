@@ -113,7 +113,15 @@ vowelM  = min(4.0, max(0.0, vowel + vowelSway * swayLfo));
 // envelope so the note's end can bloom instead of being cut, and BEFORE the
 // mic — `cutoff` is the room and the capsule, and a capsule hears the room the
 // singer is standing in. On by default, no param, every record.
+// ...AND A LITTLE GRIT AND A LITTLE RESONANCE, ALWAYS (2026-09-02). Paul:
+// *"I wouldn't mind the voice having a tiny bit more grit and vocal resonance
+// starting with his."* `voxGrit` (voice_tract.lib, where the argument and the
+// numbers are) is the singer's formant band lifted 2.5 dB at Q 1.6 and a tanh
+// at 1.9 over it. It sits BEFORE the amp envelope and after the tract, so the
+// drive hears the throat's own normalized steady state and not the note's
+// shape — a fold under more pressure, not a fader through a distortion.
 process = voxTract(voice, vowelM, breath, fnom, voxGlottis(pushM, fsrc), gate)
+        : voxGrit(1.9)
         : *(voxEnv(attack, release, gate) * level * gain * 3.7)
         : voxRoom
         : fi.lowpass(2, max(800.0, min(cutoff, 16000.0)))
