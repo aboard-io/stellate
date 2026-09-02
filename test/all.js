@@ -545,10 +545,25 @@ const GATES = [
   { name: "series-bus", wave: 2, kind: "node",
     argv: ["test/series-bus.test.js"], need: ["test/series-bus.test.js"],
     covers: ["test/series-bus.test.js"] },
-  { name: "bench",      wave: 2, kind: "node",
+  /* TWO ROWS THAT SAID `node` AND SPAWN CHROMIUM (fixed 2026-09-02). Both were
+     registered by hand with the batch above and both were mis-declared: they
+     `chromium.launch()` like every browser gate, and neither was given a `url`,
+     so on a bare `--only bench` / `--only text-diet` the runner stood up no
+     server and the gate walked into whatever happened to be on :8777 — the dev
+     server if `./serve.sh` was up, nothing at all if it was not. Two costs,
+     both real: a browser gate charges 2 slots against a node gate's 1, so
+     calling one `node` is how four cores get oversubscribed (the comment on the
+     batch above says exactly this); and a gate aimed at a page nobody served is
+     a gate that reports on somebody else's tree.
+     `bench` reads `MOTIF_URL` and `text-diet` reads `PAGE`, so each takes the
+     `url: { env }` shape `shell` already uses rather than the `--page` flag the
+     others take. COMPOSER.md §4 assigns this fix to wave 1a; it is done here
+     because this round had to run both gates and could not run them honestly
+     otherwise. Said out loud so 1a finds it done rather than doing it twice. */
+  { name: "bench",      wave: 2, kind: "browser", url: { env: "MOTIF_URL" },
     argv: ["test/bench.test.js"], need: ["test/bench.test.js"],
     covers: ["test/bench.test.js"] },
-  { name: "text-diet",  wave: 2, kind: "node",
+  { name: "text-diet",  wave: 2, kind: "browser", url: { env: "PAGE" },
     argv: ["test/text-diet.test.js"], need: ["test/text-diet.test.js"],
     covers: ["test/text-diet.test.js"] },
   { name: "producer-ui", wave: 3, kind: "browser", url: { flag: "--page" },

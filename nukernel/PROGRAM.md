@@ -402,7 +402,13 @@ this list gets added HERE, not declared in a second stylesheet.**
 | `.nu-grid` | shell | step-grid table: STEPS RUN DOWN — one row per step, one column per lane (kit) or per question (motif) — 36px cells, centred, sticky first column, a heavier rule every fourth row (`tr.nu-beat`). Rotated 2026-08-25 (Paul: *"Rotate the drum kits and motif editors to be vertical. They'll fit on a phone screen that way"*); it takes no `.nu-pane`, because it no longer overflows. |
 | `.nu-hr-deg` `.nu-hr-vel` | shell | the two horizontal sliders in a motif row — 84px and 52px of inline size, 30px tall inside the 36px cell. They replaced `.nu-vr` / `.nu-vr-deg` / `.nu-vr-vel`, the vertical pair, on 2026-08-25 with the rotation. |
 | `.nu-sheet` `.nu-opt` `.nu-grp` `.nu-why` `.nu-w` | sheets (D2) | a wrapping row of ≥44px bordered options; `:has(:checked)` reads as chosen |
-| `.nu-sel` `.nu-sels` | selects (D2) | a labelled `<select>` and a heading over a row of them — the settled-parameter widget beside the sheet. Added 2026-08-24 (Paul: "We can return some things to select menus … in general where there is ONE option a dropdown is preferred"); it needs almost no rule, because `select{min-height:var(--tap)}` and `label{min-block-size:var(--tap)}` already size and target it. |
+| `.nu-sel` `.nu-sels` | selects (D2) | a labelled `<select>` and a heading over a row of them — the settled-parameter widget beside the sheet. Added 2026-08-24 (Paul: "We can return some things to select menus … in general where there is ONE option a dropdown is preferred"); it needs almost no rule, because `select{min-height:var(--tap)}` and `label{min-block-size:var(--tap)}` already size and target it. *(Its `> label` is a `.nu-field` since 2026-09-02 — see the row below — and its `<select>` is inside a `.nu-combo`.)* |
+| `.nu-field` | shell | **THE EVEN-ROW PRIMITIVE (2026-09-02).** Paul, 2026-09-01: *"things are uneven based on how text wraps."* Two `--tap` rows and no third: the question on line one at a fixed 44px with `white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-inline-size:0` (`.nu-ixli`'s proven recipe — measured 44.00px, every row, at 320/375/390/430/1280), the control on line two, 88px always. The whole question string stays in the DOM, so nothing is lost to a reader or a gate. Named in `nu.css` since 2026-08-25 and never defined until now; `.nu-sel > label` is the same rule, because it is one question. Two exemptions, both older: `.nu-plate .nu-sel` (the 108px gear grid keeps its own wrap) and `.nu-circ .nu-opt` (26px on the ring). |
+| `.nu-combo` `.nu-combo-filter` `.is-seated` `.is-said` | selects (D2) | **THE COMBO BOX (2026-09-02).** Paul, 2026-09-01: *"Things like select boxes are very plain and could be combo boxes."* A `<span>` around the `<select>`, built by `ui/selects.js selectField` and **at no other call site** — `selectEl` stays bare because it goes into a `<td>` capped at 9em. `appearance:none` plus a `::after` ▾; `.is-seated` (dim, standing at the table's default detent) / `.is-said` (hand, you moved it) written on the WRAPPER on build and on `change`, and **neither class when the table declares no default**, because "you set this" is a fact a control may not guess. Over 24 options a `.nu-combo-filter` (`<input type=search>`, 44px, 16px, `aria-label` "filter <question>") hides non-matching `<option>`s with `hidden` — it never hides the selected one, and it cannot enter a value that is not in the table. **Still a `<select>`**: the 2026-08-25 single-choice law and every menu-counting gate are untouched. |
+| `.nu-strip-out` | shell | **THE FLYOUT CHASSIS (2026-09-02).** Paul, 2026-09-01: *"strips that fly out to give us access to all options, like MacOS system settings used to."* The six declarations `.nu-log`, `.nu-explain` and `.nu-say` had each arrived at independently: `position:fixed`, `inset-inline-start: var(--tray-w)`, the `--panel` plate, `--bw` ink, `--r1`, `--shadow`, its own scroll, and `[hidden]{display:none}`. A new strip wears the class and owes three things the chassis cannot supply: a block anchor, a width in the `min(<n>ch, calc(100vw - var(--tray-w) - 12px))` shape, and a `max-block-size` argued at the strip (MENUS NEVER SCROLL INSIDE THEMSELVES is the law; a strip is the standing exception). Nothing may overhang the gutter — shell A6i. |
+| `.nu-namebar` `.nu-namebar-sub` | shell | **THE INK PLATE THAT NAMES A BLOCK (2026-09-02).** `ideal/design-system.html:101-105`'s `section > h2`, which `.nu-busname` has been on one surface since the board was built; generalised for the Rules view (*"The name of the genre should be obvious"*), the Band roster, Structure and Produce. `--t4`/`--fw-block` caps, white on `--ink`, `--r1`, with an optional dim `.nu-namebar-sub` second line. **It does not reinstate the hidden `<h2>`**: a namebar names something INSIDE a panel, which the tab's word does not say. |
+| `.nu-preview` | shell | **A PICTURE OF THE THING (2026-09-02).** Paul: *"lots of previews, small widgets"* / *"the motif editor should show me previews of the instruments using the motif."* An inline `<svg>` in a 16x8 viewBox, 4ch x 1.2em on the text baseline: one rect per step, height = velocity, a `--faint` 1px floor for a rest, .45 opacity for a hold. **No pitch** — nine usable pixels are all spent on loudness, the lesson `.nu-tf`'s deleted SVG faces paid for. Colour is `--hand`, or the player's `--vpaint` inside a `[data-vi]`. Builder: `nukernel/ui/preview.js` `preview(cell, opts?)`, an ES leaf module with no deps beyond `document`. |
+| `.nu-vpaint` `[data-vi]` | shell | **WHO IS PLAYING, AS A COLOUR (2026-09-02).** `[data-vi="0".."5"]` declares `--vpaint` for itself and its descendants from the CATEGORY family (§2.4.2); `.nu-vpaint` paints with it (the hue, white ink, an `--bw` ink border, `--r2`), and `.nu-vpaint.is-edge` is the quiet form — a 3px edge bar, no fill, for a row that keeps its own ground. A utility rather than a rule per surface, because four surfaces want it and three of them are owned by other files. |
 | `.nu-board` `.nu-ch` | engineer (D3) | a horizontally scrolling row of channel strips |
 | `.nu-eng` | engineer (D3) | the per-voice engineer table inside a voice's sheet |
 | `.nu-notes` | producer (D4) | the note-stack table |
@@ -431,6 +437,31 @@ micro-kerns). A rule that types a literal em into a spacing property is the
 drift this line exists to catch. The 36px cell clears WCAG 2.2 AA Target Size
 Minimum (24px) — the criterion that exists for dense equally-spaced grids.
 
+**the type scale, six steps and no seventh (2026-09-02)** — Paul, 2026-09-01:
+*"The design system is not consistent."* The audit that sentence produced
+counted TWENTY-TWO distinct `font-size` values plus twelve more inside `font:`
+shorthands, of which exactly one (`--btn-fs`) was a token:
+`--t0: .6rem` (**the nav label, reserved — one caller, `#nu-tray .nu-vh`**) ·
+`--t1: .72rem` (an annotation) · `--t2: .82rem` (a caption or label) ·
+`--t3: 1rem` (body, and every `h3`) · `--t4: 1.15rem` (a block's own name) ·
+`--t5: 1.5rem` (a display number).
+**the weights**: `--fw-body: 500` · `--fw-label: 700` · `--fw-block: 800` ·
+`--fw-display: 900`, with `--btn-fw` and `--num-fw` kept as aliases.
+**the radii**: `--r0: 0` (a plate) · `--r1: 6px` (a control) · `--r2: 3px` (a
+chip, or a fill inside a control) · `--r-pill: 999px` (a noun, and only a
+noun — nothing wears it yet).
+**`--ctl: 48px`** — a laid-down control's height. It was READ and never
+declared from 2026-08-27 until 2026-09-02, and the second `input[type=range]`
+skin that read it is gone: there is one range block now, not two.
+The `:root` block in `nu.css` names what is excused by kind, and the two that
+matter most here: **16px is a FLOOR on `<select>` and on text entry, not a
+step** (iOS zooms a control under it), so no `--t*` below `--t3` may ever be
+put on a menu; and **the twelve mono MACHINE LABEL rules (`.nu-rowlab`
+`.nu-vs-lab` `.nu-vs-val` `.nu-flowlab` `.nu-seamlab` `.nu-panword`
+`.nu-slotn` `.nu-busin` `.nu-tabarrow` `.nu-trims th`) are a DEBT, not an
+exemption** — `ideal/design-system.html:60-63` names the thing (`.lab`) and
+they collapse onto one token in a round that can re-measure the board.
+
 #### 2.4.2 A COLOUR PER SECTION
 
 Paul, 2026-08-26: *"Give each section a slightly different color."*
@@ -452,10 +483,21 @@ use when you do not know how many you will need. **The twelve-rule
 `:nth-child(12n+k)` ladder is retired** (2026-08-27) and its argument is kept in
 `nu.css` where it stood: it existed because `#app` held an unknown number of
 sections in a row and CSS cannot read a `:nth-child()` match back out as a
-number. The blocks are a fixed, named list now — the nine hosts in
-`index.html` — so the ordinal is written on each one, 0 through 8, in reading
-order. Nine lines, no counting, one palette decision, still "137.5 degrees
-apart". The old warning survives the change and is now the whole rule rather
+number. The blocks are a fixed, named list now — the hosts in `index.html` —
+so the ordinal is written on each one, in reading order. No counting, one
+palette decision, still "137.5 degrees apart". **The ladder is TWELVE long
+since 2026-09-02**: `#atlas` 0 · `#pan-tempo` 1 · `#pan-key` 2 · `#pan-motif` 3
+· `#pan-band` 4 · `#deck` 5 · `#produce` 6 · `#scoredeck` 7 · `#videodeck` 8 ·
+`#saverdeck` 9 · `#rulesdeck` 10 · `#pan-structure` 11 · `#exportdeck` 12.
+Video and the screensaver shipped on 2026-09-01 with no number and inherited
+`--sec: 0`, so two panels wore the atlas's hue; Rules and Structure are this
+round's (Paul: the Rules view *"will need a new icon in the left nav"*,
+Structure *"should be top level … and below band"*), and `#exportdeck` paid the
+renumbering price named in the paragraph below. **Two of those selectors match
+nothing until wave 1a builds their hosts, and that is deliberate** — the ladder
+is a DECLARED LIST, not a face, so `nu.css`'s dead-selector pass does not apply
+to it: a hole in the ladder is not a tidy absence, it is the next panel
+silently taking hue 0. The rule is written where the exemption is argued. The old warning survives the change and is now the whole rule rather
 than an exception to it: the golden angle only promises that **consecutive**
 indices are far apart, so a panel inserted in the middle renumbers the ones
 after it — one line each, and that is the price of not counting.
@@ -467,6 +509,41 @@ column and the circle's face sit on. Redefining it on the section makes all of
 those follow with no second rule. `--rule` / `--rule-strong` / `--zebra` are
 mixed against `Canvas` and not against `--paper`, so **the wash moves the ground
 and never the ink**.
+
+#### 2.4.2b TWO MORE COLOUR FAMILIES (2026-09-02)
+
+Paul, 2026-09-01: *"The design system is not consistent. It uses very little
+color."* The audit counted the four paints in use and found three of them
+nearly inert (`--clock` 5 uses, `--meter` 4, `--meter-tint` **0**) against
+`--hand`'s 38 — because all four paints are STATES and the page kept needing to
+say something that is not a state. Both new families are lifted from the
+unlinked `nukernel/hw.css`, where they are already written and argued.
+
+**CATEGORY — which player.** `--v0` `--v1` `--v2` `--v3` (four melodic lanes) ·
+`--vb` (bass) · `--drum` (kit), verbatim from `hw.css:89-90`; the set is
+complete on purpose so a seventh colour is never invented at a call site. Worn
+only through `.nu-vpaint` / `[data-vi]` (§2.4.1).
+
+**LEVEL — how much.** `--q1..--q4`, four ascending steps ending on `--hand`
+itself, for a velocity or a weight. The NAMES and the idea are `hw.css:96`'s;
+the HEXES are not — hw.css's warm 909 ramp starts at `#e14a1e`, a few points of
+hue from this page's `--clock` `#E5330E`, and a level that reads as the playhead
+ON THE STEP GRID is the one near-miss this page cannot afford. Live on
+`.nu-velA[data-v]` and `.nu-kc[data-v]`, through attributes `ui/eight.js`
+already publishes.
+
+**Two row washes** — `--row-hi` (under the pointer) / `--row-lit` (sounding),
+alphas so they lie over whatever ground a row has. `--zebra` is unchanged.
+
+**Why neither can be mistaken for the four**, and it is a rule about SHAPE
+because hue alone would not carry it (`--v0` is a sky blue beside the hand's
+cobalt; `--v1` a mid green beside the meter's): a CATEGORY hue always has a
+WORD beside it (a legend chip beside a name, a cap with a motif's name in it) —
+the four paints never carry a word; a LEVEL hue is always a FRACTION of an
+ink-bordered box whose width is the value; and neither family ever paints a
+border, a focus ring, a cap, a hover or a `<mark>`, which are the four paints'
+exclusively. Both fall to neutral under `prefers-contrast: more` and
+`forced-colors: active` by the same one-property mechanism `--wash` uses.
 
 **Measured on the rendered page.** Light: paper goes from `#ffffff` to between
 `#fff7f6` and `#fdfdf8`, and CanvasText on the darkest of them is 19.8∶1 (AAA

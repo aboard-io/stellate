@@ -127,6 +127,17 @@ export const GLYPH = {
                   paper (▤) and the roll (▥) below it, so the clef is free.
        Export  ⇩  out of the box and onto your disk */
   tab: {
+    /* RULES (2026-09-02). Paul, 2026-09-01: *"there's a new view: A genre
+       editor appears. This is the 'Rules' section; it'll need a new icon in
+       the left nav. The genre data is expressed as logical sentences and rules
+       derived from the data in the genre."* § is the section sign — the mark
+       that has meant "a numbered clause of a text you may cite and amend"
+       since the glossators, which is exactly what a rule is here: a sentence
+       with a threshold in it that you can edit. It is not ≡ (that is a list),
+       not ⚙ (that is settings, and `act.opts` takes it below), and not ⚖ (a
+       balance is a judgement; these are declarations). */
+    Rules:   { g: "§", w: "Rules",
+               s: "the genre as sentences you can edit" },
     Where:   { g: "⊕", w: "Where",
                s: "the globe and the when-slider — where and when the record comes from" },
     Tempo:   { g: "♩", w: "Tempo",
@@ -137,6 +148,16 @@ export const GLYPH = {
                s: "the motifs — the little tunes and beats the record is built from" },
     Band:    { g: "☰", w: "Band",
                s: "the form, the players, and what each one plays in each section" },
+    /* STRUCTURE (2026-09-02). Paul, 2026-09-01: *"Sections/Structure has the
+       same challenges … It should be top level, not buried under band, and
+       below band. Bring performance into structure."* ▦ is the ruled block,
+       and it is ALREADY this page's mark for a section: `sec` below uses it
+       for add/move/cut, and `facet.sections` uses it for "per-section". A tab
+       that holds the sections wearing the same mark its own rows wear is the
+       one-owner law working — a reader learns the picture once. `song.form`
+       carries ▦ for the same subject and is not a tab. */
+    Structure: { g: "▦", w: "Structure",
+               s: "the sections, and every question per section per player" },
     /* THE CLAUSE MOVED WITH THE VOICES, 2026-08-28. It read "the board — a
        strip per voice, then the bus series, then main"; the strips are inside
        the voices now (Paul: "remove the voices from the mixing board and just
@@ -152,8 +173,9 @@ export const GLYPH = {
                s: "the record as notation and as a piano roll" },
     /* Screensaver (2026-09-01, "Bring back the screensaver from stellate as a
        new view like the video view"): ✷ is a star with rays — the old star
-       map's whole subject — and ✦ was already spent on Produce. (Video is not
-       in this table and draws the "•" fallback; that is its own open ask.)
+       map's whole subject — and ✦ was already spent on Produce. (This said
+       "Video is not in this table and draws the '•' fallback; that is its own
+       open ask." The ask is CLOSED, 2026-09-02: `tab.Video` is one row up.)
 
        2026-09-02 — THE SUBJECT CHANGED AND THE GLYPH DID NOT. Paul:
        "screensaver is just a bunch of stars. It should be the little aliens
@@ -162,6 +184,18 @@ export const GLYPH = {
        the stars stay (faint, behind the floor) and because a reader finds this
        tab by its mark. The old sentence, for the record: "the star map as a
        screensaver — the record's sky, drifting with the bars". */
+    /* VIDEO (2026-09-02) — AND THIS CLOSES THE DEBT THE PARAGRAPH ABOVE
+       NAMES. The Video tab shipped on 2026-09-01 with no row here, so
+       `paintTray` drew the "•" fallback: a naked dot in a stripe where every
+       other mark is a picture of its subject. ▣ is a frame with a filled
+       centre — a screen with a picture in it — and it reads as the sibling of
+       ▦ (the ruled block, Structure) and ▥ (the roll) at 1.2rem, which is
+       the family this tab belongs to: it is the record's FORM, shown as
+       moving pictures. ▶ was not available (it is `act.play`, and a tab that
+       looks like the transport is the confusion the transport's own glyph
+       note is written to avoid). */
+    Video:   { g: "▣", w: "Video",
+               s: "the film, cut to the record's own sections" },
     Screensaver: { g: "✷", w: "Screensaver",
                s: "the little aliens dancing — one per player, hopping on its own notes" },
     Export:  { g: "⇩", w: "Export",
@@ -214,6 +248,39 @@ export const GLYPH = {
                s: "write the record again from the same place, on a new seed" },
     take:    { g: "↻", w: "take",
                s: "the same record, played again — a new roll of the hand's dice" },
+    /* THE THREE MARKS THE TRANSPORT OWED, 2026-09-02. `#playops` has drawn a
+       WORD and no picture since 2026-08-29 and nu.css records the debt at its
+       own rule; the seed and the tap tempo are new with this round (Paul,
+       2026-09-01: *"When I click seed pop up a vertical slider from zero to
+       2^16"* and *"Tap tempo, the tempo editor appears"*).
+
+         opts ⚙  the gear, and it is the ONE place on this page that mark is
+                  right: these are the settings OF THE PLAYING — mode, take,
+                  which voices, how loud — not settings of the record, which
+                  are what every other tab is. (This is why `tab.Rules` above
+                  refuses ⚙ and takes §.)
+         seed ⚄   the die, AND IT IS `act.rewrite`'S OWN GLYPH, deliberately:
+                  the seed control SETS the number and rewrite THROWS it, and
+                  they are the same fact at two levels of intent, so a reader
+                  who learns one recognises the other. THE COLLISION IS REAL
+                  AND IS NOTED HERE RATHER THAN SOLVED: the foot of the tray
+                  holds BOTH marks (test/gutter.js T9 pins `#rewrite` there,
+                  and the seed plate lands beside it), so two identical dice
+                  will stand one above the other. Each carries its own WORD
+                  underneath — "seed" and "rewrite" — which is what actually
+                  names them and what the gates read; if a reader still
+                  confuses them, the answer is one pip (⚅ is free) and it is
+                  the tray agent's call, not this table's, because it is a
+                  question about a column nobody has drawn yet.
+         tap  ⏱   the stopwatch. Not ♪ (a note is what you play, not how fast)
+                  and not ♩ (that is `tab.Tempo` itself, one level up): this
+                  mark is the ACT of timing, which is what a tap tempo is. */
+    opts:    { g: "⚙", w: "opts",
+               s: "play options — mode, take, voices, volume" },
+    seed:    { g: "⚄", w: "seed",
+               s: "the reading — roll, step, or set it" },
+    tap:     { g: "⏱", w: "tap",
+               s: "tap the tempo" },
   },
 
   /* THE BUS SERIES, IN THE ENGINE'S OWN ORDER. The board numbers these 1..4 —

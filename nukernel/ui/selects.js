@@ -233,15 +233,125 @@ export function selectEl(spec) {
   return s;
 }
 
-/** One labelled control: `<p class="nu-sel"><label>…<select></label></p>`,
- *  plus the reason when the whole thing is unavailable. Returns the <p>. */
+/* ---------- THE COMBO BOX (2026-09-02) -------------------------------------
+   Paul, 2026-09-01: *"Things like select boxes are very plain and could be
+   combo boxes."*
+
+   IT IS STILL A `<select>`, AND THAT IS THE LOAD-BEARING DECISION. The
+   2026-08-25 law — A SINGLE-CHOICE CONTROL IS A `<select>`, full stop
+   (`shouldSelect` below) — is untouched; `data-sel`, `data-k` and `data-v` are
+   untouched, which is what puts focus back after every `draw()`; every gate
+   that counts menus counts the same menus. What is added is a WRAPPER around
+   the select, HERE and at no other call site, and three things it makes
+   possible that a bare `<select>` cannot do: the page's own arrow (nu.css
+   `.nu-combo::after` over `appearance: none`), the DETENT colours, and — for a
+   list too long to be a menu — a filter.
+
+   `selectEl` STAYS BARE. It goes into a `<td>` (eight.js:1526, :6895, :6907,
+   :6913) where `td > select` caps it at 9em, into a slot row and onto a bus
+   plate; a wrapper there would fight the cell for the column. A menu in a
+   dense grid genuinely is a different control from a labelled one in a form.
+
+   ---- THE DETENT ----------------------------------------------------------
+   `.is-seated` — you are standing where the record put you — and `.is-said` —
+   you moved it. This is the one thing a plain menu cannot say and the thing a
+   composer looking at a panel of forty of them most wants: WHICH of these did
+   I touch? It is written on the WRAPPER (never on the select, which is the
+   browser's and must keep the classes `selectEl` puts on its options), on
+   build and on every `change`.
+
+   A MENU WHOSE TABLE DECLARES NO DEFAULT WEARS NEITHER CLASS. Silence rather
+   than a claim: "you set this" is a fact, and a control that cannot know it
+   may not assert it. `defaultDetent` is the whole of what "knowing" means
+   here, and it is deliberately literal — the option whose VALUE is the empty
+   string or the word "default", or whose word is an em dash. Guessing wider
+   than that (the first option? the one the record was born with?) would put a
+   hand-blue on menus nobody has touched, which is worse than saying nothing.
+
+   ---- THE FILTER ----------------------------------------------------------
+   Over LONG (24) options a menu stops being a menu and becomes a list you
+   scroll hunting for a word: `sound.instrument` offers 108. The filter is an
+   `<input type=search>` BEFORE the select that hides non-matching `<option>`s
+   with the `hidden` property (and hides an `<optgroup>` once every option
+   under it is hidden, so a group label never stands over nothing).
+
+   IT IS NOT A TEXT ENTRY FOR THE VALUE, and that is the line between a combo
+   box and a bug: you cannot type a value that is not in the table, because the
+   table IS the vocabulary and inventing a word is the one thing a settled
+   parameter must not allow (the same reason `selectEl` shows an unknown value
+   and says it is unknown rather than silently rewriting the record).
+
+   IT NEVER HIDES THE SELECTED OPTION. A filter that can hide the thing the
+   control is currently showing would make the closed menu's word disappear
+   from its own list, which reads as data loss. */
+const LONG = 24;             // over this many options, a menu wants a filter
+
+function defaultDetent(options) {
+  for (const o of options || []) {
+    const v = String(o.value == null ? "" : o.value);
+    const w = String(o.label == null ? "" : o.label).trim();
+    if (v === "" || v === "default" || w === "\u2014" || w.toLowerCase() === "default")
+      return v;
+  }
+  return null;
+}
+
+/** `.is-seated` / `.is-said` on the wrapper, from the select's value against
+ *  the table's own default detent. Neither class when there is no detent. */
+function paintDetent(combo, sel, detent) {
+  if (detent == null) return;
+  const said = String(sel.value) !== String(detent);
+  combo.classList.toggle("is-said", said);
+  combo.classList.toggle("is-seated", !said);
+}
+
+function comboFilter(sel, label) {
+  const inp = document.createElement("input");
+  inp.type = "search";
+  inp.className = "nu-combo-filter";
+  /* NO VISIBLE LABEL. The question is already on line one of the field
+     (`.nu-w`), and a second copy of it under the question is the "say it once"
+     law failing in the smallest possible way. The accessible name says what
+     this particular box does TO that question. */
+  inp.setAttribute("aria-label", "filter " + label);
+  inp.autocomplete = "off";
+  inp.addEventListener("input", () => {
+    const q = inp.value.trim().toLowerCase();
+    for (const g of sel.querySelectorAll("optgroup")) g.hidden = false;
+    for (const o of sel.options) {
+      // the option you are ON never hides — see THE FILTER, above
+      o.hidden = !!q && !o.selected && o.textContent.toLowerCase().indexOf(q) < 0;
+    }
+    for (const g of sel.querySelectorAll("optgroup")) {
+      let any = false;
+      for (const o of g.children) if (!o.hidden) { any = true; break; }
+      g.hidden = !any;
+    }
+  });
+  return inp;
+}
+
+/** One labelled control: `<p class="nu-sel"><label>…<span class="nu-combo">
+ *  <select></span></label></p>`, plus the reason when the whole thing is
+ *  unavailable. Returns the <p>. */
 export function selectField(parent, spec) {
   const p = el("p", null, "nu-sel");
   const lab = el("label");
-  lab.append(el("span", (spec.label == null ? String(spec.key) : String(spec.label)) + " ",
-                "nu-w"));
+  const label = spec.label == null ? String(spec.key) : String(spec.label);
+  lab.append(el("span", label + " ", "nu-w"));
   const s = selectEl(spec);
-  lab.append(s);
+  const combo = el("span", null, "nu-combo");
+  const options = spec.options || [];
+  if (options.length > LONG) combo.append(comboFilter(s, label));
+  combo.append(s);
+  const detent = defaultDetent(options);
+  paintDetent(combo, s, detent);
+  /* A SECOND LISTENER AND NOT A SECOND OWNER: `selectEl` owns the `change`
+     that reaches the record (`spec.set`); this one only repaints the wrapper
+     it built. Two listeners on one event is fine; two writers of one fact is
+     not, and this writes no fact. */
+  s.addEventListener("change", () => paintDetent(combo, s, detent));
+  lab.append(combo);
   p.append(lab);
   // ...AND THE VISIBLE COPY OF THE REASON. `selectEl` has already refused and
   // said why to the accessibility tree; what a wrapper adds is the sentence a
