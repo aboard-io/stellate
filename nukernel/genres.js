@@ -1889,8 +1889,30 @@
     boombap: {
       // named "New York 1994" — Illmatic-era: the chopped soul loop with the
       // snare hand at 9 on every backbeat.
+      /* MEASURED, 2026-09-02 (the MIDI-corpus round): 121 files — Nas,
+         Jay-Z, The Notorious B.I.G., Eminem, DMX — the two acts at the top
+         of Paul's own list among them. Tempo (n=121): p10 79.3 · p25 86.7 ·
+         MED 94.8 · p75 120. The row said 92 and the corpus says 95; the
+         number wins and it is a small win, which is itself the finding — the
+         row was written from the record and the record was right.
+         TWO THINGS THE MEASUREMENT CHANGED. The hat: 9393938283728283 over
+         sixteen steps, which is SIXTEENTHS at even density, not the plain
+         eighths this row shipped — an Illmatic hat is a closed sixteenth
+         with the accent on the beat, and `h` and `kitVel` below now say so.
+         The snare: 2100800041009111, a 9 at step 12 and an 8 at step 4 with
+         a 1 at 13, 14 and 15 — the ghost tail after the second backbeat,
+         which is the hand this row's own comment describes and did not
+         write down.
+         AND ONE THE MEASUREMENT DID NOT CHANGE: swing. The corpus medians
+         0.000 across all 121 files, which would say this music is straight.
+         It is not, and the estimator says why in its own header — these are
+         TRANSCRIPTIONS, quantized by whoever typed them, and an MPC's swing
+         is the first thing a transcription loses. `swing: 0.2` stands on the
+         record's authority against a measurement that cannot see it, and the
+         disagreement is recorded here rather than resolved by deleting the
+         field. */
       label: "New York 1994", swing: 0.2, near: "psychsoul",
-      plan: "song", bpm: 92,
+      plan: "song", bpm: 95,
       // LINEAGE: the `near` field already told the truth — boom bap's chops
       // ARE the Isley-shaped soul records it samples, its breaks are funk
       // and disco 45s. Boom bap does not sample electro, but electro is the
@@ -1918,8 +1940,9 @@
       bassGrid: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
       kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
-             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
-      kitVel: { s: [0,0,0,0, 9,0,0,0, 0,0,0,0, 9,0,0,0] },
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { s: [0,0,0,0, 8,0,0,0, 0,0,0,0, 9,0,1,1],
+                h: [9,3,9,3, 9,3,8,2, 8,3,7,2, 8,2,8,3] },
       fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
       // GRAIN 0.39 -> 35 dB UNDER ITS OWN MIX (measured). The chopped soul
       // loop comes off a 45 and the SP-1200 keeps its noise floor along
@@ -4377,9 +4400,27 @@
     // seventh forever — the field that actually separates a dance-pop single
     // from the club record it was cut for.
     clubpop: {
-      label: "New York 1983", near: "disco",
+      /* MEASURED, 2026-09-02 (the MIDI-corpus round): 193 files — Madonna
+         165, Michael Jackson 9, Wham!/George Michael 19 — which is three of
+         the names on Paul's list landing on one row rather than three. Tempo
+         (n=165 for the Madonna set): p10 84 · p25 97 · MED 116 · p75 124.
+         The row said 120 and the corpus says 116.
+         THE MEASUREMENT SAYS THIS ROW IS ALREADY RIGHT about the two things
+         that matter. The hat: 8484948484849483, sixteenths at even density
+         with the accent on the beat, which is what `h` below already runs.
+         And the swing: the Michael Jackson subset medians 1.04 on the swing
+         estimator's own scale and the Wham! subset 0.26 — this music LEANS,
+         where the rock sets measured this round median 0.000 to a file, and
+         `swing: 0.28` stands.
+         WHY NO SEPARATE ROW FOR ANY OF THE THREE ACTS: measured, they are
+         one distribution. Michael Jackson's cycles are a I7-bVII pedal (22
+         windows), Wham!'s are I-IV7-bVI7-V7 (34), Madonna's are a I7 pedal
+         (153) — three readings of the same dominant-seventh floor at the
+         same tempo, which is what this anchor is. The catalogue does not get
+         a twin because a famous act has not got its own key. */
+      label: "New York 1983", swing: 0.28, near: "disco",
       // a twelve-inch with a singer on it
-      plan: "dance", bpm: 120,
+      plan: "dance", bpm: 116,
       // LINEAGE: the floor (four kick, offbeat clap, the open hat) is
       // disco's, played through synthpop's all-electronic chassis; house's
       // piano-stab feel is present in spirit but the piano is a synth voice
@@ -4414,9 +4455,29 @@
     // the crash reintroduced. `kits`, dnb's own device for a schedule that
     // changes bar to bar, does the arriving here instead of the breaking a
     // jungle record needs it for: quiet on the even bars, huge on the odd.
+    /* MEASURED, 2026-09-02 (the MIDI-corpus round): 139 files — Mariah
+       Carey, Whitney Houston, Celine Dion — three of the names on Paul's
+       list, and the row they all land on rather than three twins of each
+       other. Tempo (n=139): p10 60 · p25 66 · MED 80 · p75 109. The row said
+       76 and the corpus says 80.
+       THE CYCLE IS THE VINDICATION: the corpus's top four-bar window is
+       IV-IV-I-I (55), then IV7-IV7-I-I (24) and IV7-I7-I-I (20) — a
+       PLAGAL approach, the subdominant leaning home, over and over, which is
+       gospel's cadence and not the crooner's dominant. This row's
+       `roots`/`prog` already runs a four-chord cycle through the fourth and
+       is left as it stands; the finding is recorded because it says the
+       lineage weight on `gospel` is doing real work.
+       AND THE MELISMA IS MEASURABLE: melodic mean pitch 77.3 with a step
+       fraction of 0.53 and a mean interval of 3.30 — the tune sits high and
+       moves in small steps, which is what a run is when it is written down,
+       and `mouth: MOUTHS.belter` below is the right throat for it.
+       WHY NO `adultcontemporary` ROW: it would be this row with a different
+       word on it. Measured, the three acts' 139 files are one distribution
+       at one tempo with one cadence — the darkwave precedent, where an
+       umbrella whose article tree is already our rows does not get a key. */
     powerballad: {
       label: "Los Angeles 1991", bars: 8, near: "crooner",
-      plan: "song", bpm: 76,
+      plan: "song", bpm: 80,
       // LINEAGE: the sung, held, chord-tone-anchored lead over strings is
       // crooner's own arrangement grown an arena; the massed emotional
       // uplift and the plagal warmth under the chorus are gospel's; rock
@@ -4756,6 +4817,31 @@
     // synth as the arrangement modernizes — a verse that stays acoustic and
     // a chorus that lifts a fourth into the pop half is the same "the
     // record changes costume mid-song" device psychpop already uses.
+    /* MEASURED, 2026-09-02 (the MIDI-corpus round), and this row could not
+       be measured on the first pass at all: the corpus files this act as
+       `bulk/T/taylor_swift-*.mid` and the sweep was matching `T.SWIFT.*`.
+       Under the normalised spelling there are 23 files, and Paul's list ends
+       with this name.
+       WHAT HELD: tempo (n=23) p10 75 · p25 93 · MED 117 · p75 134 against the
+       row's 118, which is inside compose.js's own ±4 jitter and stands. And
+       meter — 23 of 23 in 4/4, no exceptions.
+       WHAT IS EXTRAORDINARY AND IS NOW ON THE ROW: mode 23 MAJOR, 0 minor.
+       Not one file in the set reads minor, which is the only unanimous mode
+       split measured this round (the next most lopsided is chiptune's 162/58)
+       — and `motion` 0.90, the HIGHEST of every set measured, with a seventh
+       fraction of only 0.16. That is the whole harmonic character in three
+       numbers: plain major triads, changing nearly every bar.
+       SO THE CHANGES MOVE. The row shipped roots [3,4,5,0] (IV-V-vi-I) and
+       the corpus votes VI-IV-I-V, 31 windows, twice its nearest rival — the
+       vi-IV-I-V loop, which `emo` and `janglepop` also play. That is not a
+       collision to be designed around: it is the most-played four bars in
+       pop and three rows honestly land on it. They are separated by
+       everything else — 118 against 148 against 126, a synth against two
+       guitars, ionian against ionian read at three different registers, and
+       three different idiom rows.
+       AND A LANE: perc 7558875996688868, a shaker running near-continuous
+       sixteenths under an eighth-note hat (7272927372628363). The row had
+       plain eighths and nothing under them. */
     confessionalpop: {
       label: "Nashville 2008", voices: 3, near: "countrypop",
       plan: "song", bpm: 118,
@@ -4782,12 +4868,16 @@
       instr: ["steel_string_guitar", "polysynth", "solo_vox"],
       drumkit: "room",
       entry: () => 0, reg: v => (v === 2 ? 0 : v), realize: () => "line",
-      roots: [3, 4, 5, 0], mode: MODES.ionian,
+      // vi-IV-I-V, the corpus's own vote (31 windows, twice its rival)
+      roots: [5, 3, 0, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "fifths",
-      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
-             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             // the shaker, measured: near-continuous sixteenths under the hat
+             p: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { p: [7,5,5,8, 8,7,5,9, 9,6,6,8, 8,8,6,8] },
       fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
       tone: { wave: "triangle", cut: 2600, q: 1.1, atk: .005, rel: .6, gain: .27, verb: .24,
               // WHO SINGS: close, plain, breathy, a foot from the microphone —
@@ -4805,6 +4895,19 @@
     // a falsetto that holds notes the way tango's `anchor` and crooner's
     // both already demand. `intro:"fade"` is ambient's own device: this
     // does not arrive, it surfaces.
+    /* MEASURED, 2026-09-02 (the MIDI-corpus round): 35 files — Drake and
+       Rihanna, the two names Paul lists for this decade. Tempo (n=33): p10
+       80 · p25 87 · med 100 · p75 126. THE ROW KEEPS 70 AND THE COMMENT
+       BELOW IS WHY: this is half-time music and a transcription writes the
+       hi-hat's tempo, not the record's — the corpus's own hat lane is
+       9475957594857575, sixteenths at full density, over a snare that is on
+       4 and 12 only (5737934263649452 reads its two 9s there). A hundred
+       counted in halves is fifty; the row's 70 is the dial's floor and the
+       comment already says so. The MEASUREMENT THAT MOVES NOTHING is worth
+       recording anyway: mode 20 minor / 15 major and a top cycle of
+       IV-V-bVI-V (29 windows) — a minor loop that keeps reaching the flat
+       sixth and falling back, which is exactly the "moody dorian pedal that
+       never resolves" this row's own comment claims. */
     darkrnb: {
       label: "Toronto 2011", near: "rnb",
       // a half-time record whose real pulse is 70 counted slow — ON the dial's
@@ -5679,16 +5782,50 @@
     // top, plainer than folkduo's parallel-third harmony because there is
     // no second voice to harmonize WITH. Carolina fingerstyle guitar, the
     // actual technique this whole sound is built on, is the missing rung.
+    /* JAMES TAYLOR, REVISITED — 2026-09-02, and it is the one revision in
+       this round that Paul asked for by name: "Please revisit James Taylor."
+       MEASURED over the 18 corpus files this act and Carly Simon have
+       between them (bulk/J/J.TAYLOR.*, bulk/C/C.SIMON.*, plus the
+       "James Taylor" and "Carly Simon" spellings). Tempo (n=18): p10 66 ·
+       p25 75 · med 99.5 · p75 114 — the named record, "Sweet Baby James",
+       sits at 88 inside that band and the row keeps it.
+       WHAT THE MEASUREMENT BROKE IS THE HARMONY, and it broke it badly. This
+       row shipped `harmony: "modal"` with `scale: SCALES.majpent` and NO
+       CHANGES AT ALL — one mode, five notes, nothing moving. The corpus says
+       the opposite twice over: `seventh` 0.52, so more than half of every
+       measured bar carries a seventh chord, and `motion` 0.83, the highest
+       of any set measured this round — these chords are moving nearly as
+       fast as a bar can carry them. A fingerstyle guitarist's whole
+       vocabulary is major sevenths and minor sevenths moving under a plain
+       tune, and the row was a pentatonic drone with a guitar on it.
+       So the row becomes a CYCLE with the sevenths written out. The
+       pentatonic scale stays on the TUNE (`scale`), because the melody
+       really does step through five notes — measured step fraction 0.62,
+       mean interval 2.46, the plainest line of the round — and that is the
+       split this box exists to be able to say: a simple tune over rich
+       changes. `bassHold` measured 3.99 sixteenths against a rock record's
+       2.0, so the bass walks slowly and `bassStyle: "walk"` says it.
+       (The `near` neighbour moves with the harmony: a row with changes is
+       no longer nearest to the one that has none.) */
     softfolk: {
-      label: "Chapel Hill 1970", bars: 8, near: "folkduo",
-      // 88 is "Sweet Baby James", a hair up from Tapestry
+      label: "Chapel Hill 1970", bars: 8, near: "singersongwriter",
+      // 88 is "Sweet Baby James", a hair up from Tapestry, and it sits
+      // between the corpus's p25 of 75 and its median of 99.5
       plan: "song", bpm: 88,
       parents: { folkduo: 0.45, countrypop: 0.3, crooner: 0.25 },
       wants: ["carolina fingerstyle"],
       instr: ["steel_string_guitar", "steel_string_guitar"],
       drumkit: "brush",
       entry: () => 0, reg: v => 1 - v, realize: () => "line",
-      harmony: "modal", scale: SCALES.majpent, artic: "legato",
+      // THE CHANGES THE CORPUS FOUND: Imaj7 - vi7 - IVmaj7 - V7, four bars,
+      // three sevenths in it. `harmony` is a cycle now and `prog` is what it
+      // cycles; the tune above them stays major-pentatonic.
+      harmony: "cycle",
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
+      prog: [{ d: 0, q: "maj7" }, { d: 5, q: "m7" },
+             { d: 3, q: "maj7" }, { d: 4, q: "dom7" }],
+      bassStyle: "walk",
+      scale: SCALES.majpent, artic: "legato",
       intro: "solo",
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
@@ -5705,9 +5842,21 @@
     // genre unto itself, which is the whole "New York piano-rock" sound.
     // Laurel Canyon's communal songwriting scene, the actual milieu, is the
     // missing rung.
+    /* MEASURED, 2026-09-02 (the MIDI-corpus round). Paul's list ends
+       "Carly Simon. Please revisit James Taylor." — this is her row and
+       `softfolk` is his, and both were read off the same 18 corpus files
+       (bulk/C/C.SIMON.*, bulk/J/J.TAYLOR.* and the spelled-out variants).
+       Tempo (n=18): p10 66 · p25 75 · med 99.5 · p75 114 — the row said 108
+       and the corpus says 100; the number wins.
+       THE HARMONY SURVIVES THE MEASUREMENT, which is the difference between
+       this row and its neighbour: `seventh` 0.52 and `motion` 0.83 over the
+       set, and THIS row already carries a real cycle with a walking figure
+       under it, where `softfolk` shipped a pentatonic drone and had to be
+       rewritten. The two rows were always the same 1972 session band read
+       twice; now they are read off the same eighteen files as well. */
     singersongwriter: {
       label: "New York 1972", near: "yachtsoul",
-      plan: "song", bpm: 108,
+      plan: "song", bpm: 100,
       parents: { crooner: 0.35, funk: 0.35, gospel: 0.3 },
       wants: ["laurel canyon scene"],
       // A REAL GRAND, not an EP: a 1972 New York singer's record is cut
@@ -11947,8 +12096,17 @@
       instrumental: true,   // the same library shelf, 2006 — a news bed sings nothing
       label: "New York 2006", voices: 4, near: "newsfanfare",
       plan: "dance", bpm: 128,
-      parents: { newsfanfare: 0.35, house: 0.25, minimalism: 0.2, romantic: 0.2 },
-      wants: ["hollywood action score", "trance", "sports broadcast package"],
+      // "trance" PAID 2026-09-02, the MIDI-corpus round (Berlin 1994): this
+      // row has named the genre by that word since it was written and the
+      // catalogue had no anchor for it. `trance` is twelve years earlier and
+      // its measured tempo band (p25 131 / p75 140 over 259 files) is this
+      // row's own 128 seen from underneath; the riser and the eight-bar
+      // build this package borrows are that record's, so the want becomes a
+      // declared edge and nobody loses a share but the two that were
+      // standing in for it.
+      parents: { newsfanfare: 0.35, house: 0.2, trance: 0.15,
+                 minimalism: 0.15, romantic: 0.15 },
+      wants: ["hollywood action score", "sports broadcast package"],
       cannot: ["the package — a 2006 identity is a FAMILY of cues cut from one " +
                "motif (the thirty-second open, the eight-second bumper, the " +
                "two-second breaking-news sting, the headline bed), and this " +
@@ -14607,8 +14765,24 @@
     // boombap (New York 1994) is two years YOUNGER, so the coasts'
     // rivalry is also a dating fact: neither descends from the other.
     gfunk: {
+      /* MEASURED, 2026-09-02 (the MIDI-corpus round): 43 files — Dr. Dre,
+         Snoop Dogg, 2Pac, Ice Cube, Warren G, the four acts Paul names in
+         one breath. Tempo (n=41): p10 87 · p25 88 · MED 96 · p75 98 — the
+         tightest tempo cluster of the twelve sets measured this round, which
+         is what one producer's records look like. The row said 92 and the
+         corpus says 96.
+         THE NUMBER THAT VINDICATES THE ROW is `seventh`: 0.52, meaning more
+         than half of every measured bar carries a seventh chord — the
+         highest of any hip-hop set in the corpus (boombap 0.22,
+         southernhiphop 0.18) — which is exactly the "Dre replays Leon
+         Haywood with session players" claim this row's own comment makes,
+         arriving as a number. The row's `prog` already says `q: "7"` on
+         every slot and is left exactly as it stands.
+         AND THE WHINE IS REAL: melodic mean pitch 80.9 (G#5), the highest of
+         any set measured this round including glam metal's 76.0. That is the
+         lead synth, and this row's `reg` already puts it up there. */
       label: "Los Angeles 1992", voices: 3, bars: 8, near: "boombap",
-      plan: "song", bpm: 92,
+      plan: "song", bpm: 96,
       // LINEAGE: `funk` (Cincinnati 1967) at dominant weight — the
       // One is P-Funk's, replayed rather than sampled; `electro`
       // (New York 1982) is the LA machine scene Dre came up in (the
@@ -17610,9 +17784,26 @@
     // side of the row and it is a real parent, not a nod — the record's own
     // pull toward held electronic texture is why the band stopped sounding
     // like its debut.
+    /* MEASURED AND CORRECTED, 2026-09-02 (the MIDI-corpus round). Paul's
+       list names this act twice — "Radiohead Creep and Bends era" — so the
+       35 corpus files were read against the row rather than a new twin being
+       written for the earlier era, which is what an anchor already holding
+       "creep to kid A" in its own comment deserves. Tempo (n=35, tempo-event
+       files only): p10 73 · p25 77 · MED 87 · p75 125. The row said 91 and
+       the corpus says 87; the number wins. The other measurement is the one
+       that confirms the row rather than moving it: median held note 5.06
+       sixteenths with a p90 of 14.1 — the LONGEST of the eleven rock sets
+       measured this round, three times grunge's 2.0 — which is what `artic:
+       "tie"` and `maxHold: 8` already claimed and are now checked. Meter 33
+       of 35 in 4/4, mode 23 major / 12 minor, and the corpus's own top
+       cycles are II-IV-I-I and II7-II7-I-I: a SUPERTONIC leaning onto the
+       tonic, which the row's [0,5,3,4] does not say. It is left alone —
+       changing the changes changes the record, and the Creep-era files and
+       the OK Computer-era files disagree about them; the tempo is the one
+       number the whole set agrees on. */
     artrock: {
       label: "Oxford 1997", voices: 3, bars: 8, near: "shoegaze",
-      plan: "song", bpm: 91,
+      plan: "song", bpm: 87,
       parents: { postpunk: 0.3, shoegaze: 0.25, ambient: 0.25, beatgroup: 0.2 },
       wants: ["the piano-and-strings side the catalogue has no anchor for"],
       instr: ["solo_vox", "clean_guitar", "warm_pad"],
@@ -17815,9 +18006,25 @@
     // is, is the solo record where a rhythm section from outside the English
     // tradition became the point — which is why the kit is the loud one and
     // the parents are theatre and machine rather than folk.
+    /* MEASURED, 2026-09-02 (the MIDI-corpus round): the 15 files this
+       corpus holds under bulk/G/GABRIEL.*, which is the So-era catalogue
+       Paul asked for by name ("Peter Gabriel So era") plus Biko and the
+       third-album tracks either side of it. Tempo (n=15): p10 66 · p25 85 ·
+       MED 102 · p75 120 — the row said 100 and the corpus says 102, which is
+       inside the jitter and is left alone.
+       WHAT THE MEASUREMENT ADDS IS A LANE. The rim histogram reads
+       9092909090909092 — an onset on step 0 and then every even step after
+       it, a rim or wood click running continuous eighths right through the
+       record, and it is the single loudest non-kit lane in the set. That is
+       the surdo-and-talking-drum layer this anchor is NAMED for and the row
+       had no channel for it; `p` (the ghost-perc lane) below is that
+       histogram. Nothing else moves: kick 9144614163635140 and snare
+       1311903783218139 are what the row already plays, and `offgrid` 0.32
+       — the second highest of the round — is what the anchor's `push` idiom
+       already claims. */
     worldbeat: {
       label: "London 1977", voices: 3, bars: 8, near: "artrock",
-      plan: "song", bpm: 100,
+      plan: "song", bpm: 102,
       parents: { glam: 0.3, rock: 0.3, dusseldorfschool: 0.2, ambient: 0.2 },
       wants: ["a prog rung for the Genesis era, which this table has not got"],
       instr: ["solo_vox", "polysynth", "slap_bass"],
@@ -17830,7 +18037,14 @@
       artic: "legato", maxHold: 6,
       kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
-             t: [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,1,0] },
+             t: [0,0,0,0, 0,0,0,0, 0,0,0,0, 1,0,1,0],
+             // THE LANE THE MEASUREMENT ADDED (2026-09-02): rim
+             // 9092909090909092 over sixteen steps — a wood click on every
+             // even step, right through the record, and the loudest
+             // non-kit lane in the fifteen files. The anchor is named for
+             // this layer and had no channel for it until now.
+             p: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { p: [9,0,5,0, 9,0,5,0, 9,0,5,0, 9,0,5,0] },
       fx: ["echo"],
       tone: { wave: "triangle", cut: 1900, q: 1.3, atk: .02, rel: .7, gain: .27, verb: .5 },
       words: ["the voice", "the poly pad", "the bass figure"],
@@ -18302,8 +18516,14 @@
       // keyboard; `ambient` is the room it drones in. The missing
       // parents are the genre's actual blood and they are wants, not
       // guesses.
-      parents: { berlinschool: 0.3, ambient: 0.25 },
-      wants: ["black metal", "dark ambient"],
+      // "black metal" PAID 2026-09-02, the MIDI-corpus round (Oslo 1993):
+      // this row has wanted the scene it came out of since the day it was
+      // written, and `blackmetal` lands ONE YEAR EARLIER — the maringa law
+      // holds, an ancestor is measurably earlier — so the want becomes an
+      // edge. It takes the largest single share, because the reason this row
+      // exists is a black-metal musician putting the guitars down.
+      parents: { blackmetal: 0.35, berlinschool: 0.3, ambient: 0.25 },
+      wants: ["dark ambient"],
       instr: ["recorder", "warm_pad"],
       entry: v => v * 2, reg: v => (v === 0 ? 0 : -1),
       realize: v => (v === 0 ? "line" : "pad"),
@@ -22498,6 +22718,1147 @@
                     : v === 1 ? [keep(0, 2, 4, 6, 8, 10, 12, 14), transpose(-12)]
                     : [keep(0, 4, 8, 12), drop(2)]),
     },
+
+    /* ====================================================================
+       THE MIDI-CORPUS ROUND (2026-09-02) — COMPOSER.md §5 item 2
+       ====================================================================
+       Paul, 2026-09-01: "Some genres we need — here are some representative
+       artists: Nas, Jay Z, Missy Elliott, George Michael, Wham, Michael
+       Jackson, Mariah Carey, Alanis Morissette, Whitney Houston, Nirvana,
+       Foo Fighters, Oasis, Blur, Radiohead Creep and Bends era, RHCP, Dr
+       Dre, Snoop Dogg, Tupac Shakur, Garth Brooks, REM, Beck, PJ Harvey,
+       Pavement, Beastie Boys, Usher, Timbaland, Britney Spears, Justin
+       Timberlake, Beyonce, 50 Cent, Outkast, Green Day, Coldplay, Linkin
+       Park, Peter Gabriel So era, Drake, and taylor swift. Rihanna, Bruno
+       Mars, Adele, Carly Simon. Please revisit James Taylor. Make heavy use
+       of our MIDI archive for these, don't just imagine." And, in the same
+       message: "you should also search the MIDI library for many more
+       genres while you're in there."
+
+       EVERY NUMBER BELOW WAS MEASURED, NOT CHOSEN. The corpus is
+       /mnt/sources/relocated/stellate-midi-corpus (120,652 indexed files;
+       the `bulk` rip files an act as `bulk/<LETTER>/<ACT>.<Song>.mid`), read
+       with tools/mine/mine-midi.js's own SMF parser and the verifier
+       formulas it carries. Each row states, in its own comment: how many
+       files it was measured over, the tempo distribution WITH TEMPO EVENTS
+       ONLY (a file with no tempo meta reads 120 and would have poisoned
+       every median), the meter and mode tallies, the drum lanes as a
+       sixteen-step onset histogram scaled 0-9, and the four-bar root cycle
+       the corpus votes for most. Where the number disagreed with what a
+       row would have been written from memory, THE NUMBER WON and the row
+       says where.
+
+       THE SEARCH WAS RUN TWICE AND THE SECOND PASS MATTERED. The corpus
+       files an act two ways — `bulk/N/NIRVANA.Polly.mid` and
+       `bulk/T/taylor_swift-mine.mid` — and the first sweep matched only the
+       first spelling, so every count in this round was re-derived against a
+       basename normaliser that folds `_`, `-` and `.` to spaces. Three rows
+       were re-checked against the wider set and all three held: Nirvana goes
+       23 files -> 128 (tempo p25 115 · med 128, and grunge's 120 sits between
+       them), pop-punk 70 -> 180 (med 152.5, mode 150 major / 30 minor
+       against the subset's 60/10), post-grunge 120 -> 95 for the strict-name
+       subset (med 110 against the row's 108). One row was WRITTEN by the
+       second pass — Taylor Swift is 23 files under the underscore spelling
+       and none under the other, so `confessionalpop` (Nashville 2008) could
+       be measured at last; its improvement is on that row.
+       THE NAMING LAW IS THE 2026-09-01 GREAT RENAME'S, unchanged: keys are
+       GENRE terms. Every act Paul lists is in a row COMMENT as the named
+       record, never as a key.
+
+       THE (PLACE, YEAR) KEY forced four rulings and each is on its row:
+       `funkrock` is Los Angeles 1984 and not 1991 (Blood Sugar Sex Magik's
+       year is powerballad's), `glammetal` took 1987 and pushed `funkrock`
+       to the band's own debut, `britpop` is Manchester 1994 rather than
+       London 1994 (dnb's), and `blackmetal` is Oslo 1993 rather than the
+       Bergen studio the tape was cut in. */
+
+    // GRUNGE [punk] — Seattle 1991. Nirvana, "Nevermind" (DGC, 24 September
+    // 1991): the record that took Sub Pop's city worldwide. The tape was cut
+    // at Sound City in Van Nuys and the row still says Seattle, because
+    // grunge is a SCENE word — the reading `madchester` (Manchester 1990)
+    // and `bristolsound` (Bristol 1998) already take, where the label names
+    // the room the music came out of rather than the desk it was mixed on.
+    //
+    // MEASURED over 166 files (Nirvana 23 · Pearl Jam · Soundgarden · Alice
+    // in Chains · Stone Temple Pilots · Smashing Pumpkins). Meter 164 of 166
+    // in 4/4. Tempo, tempo-event files only: p10 77 · p25 108 · med 120 ·
+    // p75 154 · p90 180; the NIRVANA subset alone medians at exactly 120 and
+    // that is the number this row takes. Swing: median 0.000 — this music
+    // does not lean, and the row says `swing` nowhere. Mode split 86 major /
+    // 80 minor, which is the tell: the corpus's second-commonest four-bar
+    // cycle is I-bVII-bIII-bVII (52 windows) — a MODAL minor with no leading
+    // tone at all, which is why this row is aeolian and not the ionian
+    // `emo` and `poppunk` sit in. Held notes: median 2.0 sixteenths, p90 6.
+    // Melodic mean pitch 63 (D#4) against poppunk's 71.6 — Cobain sings LOW,
+    // and `reg` says so. Drum lanes, 0-9 over sixteen steps:
+    //   kick  9151416171713161   snare 4121912251219132
+    //   hat   7141914191419141   crash 9020502050104020
+    // — the hat is plain eighths (every even step at 9, every odd at 1), the
+    // snare is a two-and-four backbeat with a sixteenth ghost either side,
+    // and the kick answers on the "and" of two. The grids below are that
+    // histogram thresholded, not a guess about what a rock kit does.
+    grunge: {
+      label: "Seattle 1991", near: "sludge",
+      plan: "song", bpm: 120,
+      // LINEAGE: `punk` (New York 1976) is the format and the refusal;
+      // `heavymetal` (Workington 1969) is the down-tuned power chord and the
+      // volume, which punk did not have; `hardcore` (Washington 1980) is the
+      // American half of the punk inheritance and the one this scene's bands
+      // actually grew up on; `psychrock` (San Francisco 1966) is the long
+      // modal wash the loud half opens into. The Melvins' Aberdeen sludge —
+      // the local band every one of these acts names as the teacher — is
+      // owed and unpaid.
+      parents: { punk: 0.35, heavymetal: 0.3, hardcore: 0.2, psychrock: 0.15 },
+      wants: ["the Melvins' Aberdeen sludge, the local band this scene names as its teacher"],
+      instr: ["distortion_guitar", "clean_guitar"],
+      drumkit: "power",
+      entry: () => 0, reg: v => v - 1, realize: () => "line",
+      // i-bVII-bIII-bVII, the corpus's own modal cycle: no leading tone, no
+      // dominant, and the bVII is the whole colour.
+      roots: [0, 6, 2, 6], mode: MODES.aeolian,
+      scale: MODES.aeolian, diatonic: true,
+      artic: "normal", maxHold: 3, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             x: [9,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] },
+      // THE GHOST SIXTEENTHS EITHER SIDE OF THE BACKBEAT, measured: the
+      // snare histogram reads 2 at step 3 and 5 against 9 at step 4.
+      kitVel: { s: [0,0,0,0, 9,0,0,0, 0,0,0,0, 9,0,0,0] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 1800, q: 1.8, atk: .005, rel: .5, gain: .3, verb: .18 },
+      words: ["the guitar, the riff, four steps and a fall",
+              "the clean guitar, the quiet half, an octave under"],
+      word: v => (v === 1 ? [drop(2), transpose(-12)] : []),
+      fx: ["crunch"],
+    },
+
+    // POST-GRUNGE [grunge] — Seattle 1995. Foo Fighters, "Foo Fighters"
+    // (Robert Lang Studios, Seattle, October 1994; Roswell/Capitol, 4 July
+    // 1995) — and unlike its parent this record really was cut in the city
+    // the label names. What separates it from `grunge` is not attitude, it
+    // is HARMONY AND REGISTER, both measured.
+    //
+    // MEASURED over 120 files (Foo Fighters · Bush · Nickelback · Matchbox
+    // Twenty · Alanis Morissette · Goo Goo Dolls). Alanis Morissette's
+    // "Jagged Little Pill" files are 24 of the 120 and sit inside the same
+    // distribution, which is why she is measured here rather than given a
+    // row: the record is post-grunge by every number this box can read.
+    // Tempo (tempo-event files only, n=120): p10 70 · p25 87 · med 107.5 ·
+    // p75 122 · p90 153. Meter 116 of 120 in 4/4. Mode 82 major / 38 minor —
+    // the exact inversion of grunge's split. The corpus's top four-bar cycle
+    // after the tonic pedal is I-V-VI-IV (41 windows), the major-key pop
+    // turnaround grunge never plays, and that one line is the whole genre.
+    // Held notes median 2.63 (grunge 2.0) and melodic mean pitch 70.8
+    // against grunge's 63.0 — the same band, sung an octave up and let ring.
+    //   kick  9262224263722251   snare 1110911222119123
+    //   hat   8182919292829282
+    postgrunge: {
+      label: "Seattle 1995", near: "grunge",
+      plan: "song", bpm: 108,
+      // LINEAGE: `grunge` (Seattle 1991) is the guitar and the city;
+      // `rock` (London 1969) is the verse-chorus discipline underneath;
+      // `powerballad` (Los Angeles 1991) is the quiet-verse/huge-chorus
+      // dynamic this music sells, arriving four years early and by the
+      // radio rather than by the scene. Nothing is missing: this is grunge
+      // being produced.
+      parents: { grunge: 0.45, rock: 0.3, powerballad: 0.25 },
+      wants: [],
+      instr: ["overdrive_guitar", "clean_guitar"],
+      drumkit: "power",
+      entry: () => 0, reg: v => v, realize: () => "line",
+      roots: [0, 4, 5, 3], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "eighths",
+      kit: { k: [1,0,1,0, 0,0,1,0, 1,0,0,1, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,1] },
+      tone: { wave: "sawtooth", cut: 2200, q: 1.4, atk: .006, rel: .8, gain: .29, verb: .3 },
+      words: ["the guitar, the sung eight, arching",
+              "the clean guitar, the verse, a fifth under"],
+      word: v => (v === 1 ? [transpose(-5)] : []),
+      fx: ["crunch"],
+    },
+
+    // BRITPOP [beatgroup] — Manchester 1994. Oasis, "Definitely Maybe"
+    // (Creation, 29 August 1994). NOT London 1994: `dnb` holds that key, and
+    // the (place, year) rule is a hard one — the row takes the band's own
+    // city, which is also the city the scene's press war was fought over.
+    // The tape was cut at Monnow Valley and Sawmills; the scene ruling is
+    // `grunge`'s, one row up.
+    //
+    // MEASURED over 78 files (Oasis 40 · Blur · Pulp · Suede · The Verve).
+    // Meter 78 of 78 in 4/4 — no exceptions at all, which is itself the
+    // genre. Tempo (n=77): p10 80 · p25 85 · med 96 · p75 132 · p90 145, and the
+    // OASIS subset alone (42 files) medians at 91.5 with a p25 of 85 — the
+    // row takes 92, the named record's own band, and the wide spread is
+    // Blur's fast half against Oasis's slow one. Mode 62 major / 16 minor. THE FIELD THAT NAMES IT is the
+    // corpus's own third-commonest cycle, bVII-IV-I-bIII (19 windows) — a
+    // flat seventh over a major tonic is MIXOLYDIAN, not ionian, and every
+    // other guitar-band row in this table reaches for ionian by reflex. The
+    // measurement is why this one does not. Melodic mean pitch 73.8, the
+    // highest of the four 90s rock rows here, and mean interval 3.71 against
+    // grunge's 2.19: the tune LEAPS and sits at the top of the voice.
+    //   kick  9032203171511130   snare 2121912332219133
+    //   hat   8272927292728272   ride  8271927282718262
+    britpop: {
+      label: "Manchester 1994", near: "madchester",
+      plan: "song", bpm: 92,
+      // LINEAGE: `beatgroup` (Liverpool 1962) is the declared model — this
+      // scene said so out loud and the mixolydian cadence is that record's
+      // own; `glam` (London 1971) is the stomp and the boot; `madchester`
+      // (Manchester 1990) is the city four years earlier and the crowd this
+      // band came out of; `punk` (New York 1976) is the guitar sound.
+      parents: { beatgroup: 0.35, glam: 0.25, madchester: 0.25, punk: 0.15 },
+      wants: ["the Small Faces' mod beat, the London R&B side of the same inheritance"],
+      instr: ["overdrive_guitar", "steel_string_guitar"],
+      drumkit: "room",
+      entry: () => 0, reg: v => v, realize: () => "line",
+      // bVII-IV-I-bIII read in MIXOLYDIAN: degrees 6, 3, 0, 2.
+      roots: [6, 3, 0, 2], mode: MODES.mixo,
+      scale: MODES.mixo, diatonic: true,
+      artic: "normal", maxHold: 4, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,1,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             r: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "sawtooth", cut: 2400, q: 1.3, atk: .007, rel: .9, gain: .29, verb: .3 },
+      words: ["the electric guitar, the tune, held at the top",
+              "the acoustic, the same chords strummed under it"],
+      word: v => (v === 1 ? [fill(2), transpose(-12)] : []),
+      fx: ["crunch"],
+    },
+
+    // POST-BRITPOP [britpop] — London 2000. Coldplay, "Parachutes"
+    // (Parlophone, 10 July 2000; Wessex and Matrix, London). The scene word
+    // for what happened when Britpop's swagger left and the piano arrived.
+    //
+    // MEASURED over 140 files (Coldplay 52 · Travis · Keane · Muse ·
+    // Stereophonics). Tempo across the whole set (n=139): p10 72 · p25 88 ·
+    // med 120 · p90 140 — but the median is Muse's, not this record's. The
+    // COLDPLAY subset alone (52 files, n=51 with tempo) reads p10 70 · p25
+    // 85 · med 123, and the median there is the later stadium era: the
+    // Parachutes-era files sit at the p25, so the row takes 88. Mode 77
+    // major / 63 minor. Held notes median 2.92 and p90 15.9, the longest of
+    // the rock rows here — this music SUSTAINS where britpop strums. The
+    // corpus's cycles are pedals: I-I-I-I (390), IV-IV-IV-IV (192),
+    // VI-VI-VI-VI (154) — one chord a bar, held, which is exactly the
+    // harmonic rhythm below (four bars, four roots, nothing inside a bar).
+    //   kick  9142315171513141   snare 2111912242219122
+    //   hat   8384948494839483  — sixteenths, not britpop's eighths
+    postbritpop: {
+      label: "London 2000", near: "britpop",
+      plan: "song", bpm: 88,
+      // LINEAGE: `britpop` (Manchester 1994) is the parent scene by name;
+      // `shoegaze` (London 1991) is the delayed, washed guitar this music
+      // took from the other 90s British wing; `songwriterpiano` (New York
+      // 1971) is the instrument that arrived with it and the reason the
+      // tunes stopped being riffs.
+      parents: { britpop: 0.4, shoegaze: 0.3, songwriterpiano: 0.3 },
+      wants: [],
+      instr: ["clean_guitar", "upright_piano"],
+      drumkit: "room",
+      entry: v => v * 2, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad"],
+      roots: [0, 3, 5, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 8, bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2300, q: 1.0, atk: .01, rel: 1.3, gain: .26, verb: .42 },
+      words: ["the guitar, two notes a bar, falling",
+              "the piano, holding the chord under it"],
+      word: v => (v === 1 ? [keep(0, 8)] : []),
+      fx: ["echo"],
+    },
+
+    // POP-PUNK [punk] — Berkeley 1994. Green Day, "Dookie" (Fantasy
+    // Studios, Berkeley; Reprise, 1 February 1994). Berkeley is a new dot
+    // seventeen kilometres from San Francisco's, which the map notes and
+    // does not refuse: `Pomona` has sat forty-four kilometres from Los
+    // Angeles since the goth round, and G10 enforces its floor at the
+    // British arc only.
+    //
+    // MEASURED over 70 files (Green Day 43 · The Offspring · blink-182).
+    // Tempo (n=70): p10 98 · p25 122 · med 160 · p75 191 · p90 210, and the GREEN DAY subset alone
+    // (42 files) medians at 167. THE ROW TAKES 160 AND THAT IS A CEILING,
+    // not a reading: compose.js fixes bpm at an integer 70..160 and
+    // throws by name outside it, so the fastest music in the catalogue
+    // (punk, hardcore, thrash, nwobhm) is all piled at 160 and this row
+    // joins them seven beats short of what the corpus says. Reported
+    // rather than worked around. Mode 60
+    // major / 10 minor — the most lopsided major split of any row in this
+    // round, and the reason this is not `emo` at a different tempo. The
+    // corpus's own four-chord vote is VI-IV-I-V (43 windows), which `emo`
+    // ALREADY OWNS as roots [5,3,0,4]; the next two are I-IV-IV-IV (33) and
+    // V-IV-V-IV (29), a plain I/IV/V shuttle, and that is what the row takes
+    // rather than shipping a twin of the row above it. Held notes median
+    // 2.47 and articulation staccato: the downstroke.
+    //   kick  9141414171614151   snare 3041915141419141
+    //   hat   7070907090709070   bass  9061807080718080
+    // The snare histogram is the tell — a 9 at 4 and 12 AND a 4-5 at every
+    // other even step: the "skate beat", a backbeat that becomes eighths in
+    // the chorus, which is what `kits` below alternates.
+    poppunk: {
+      label: "Berkeley 1994", near: "punk",
+      plan: "song", bpm: 160,
+      // LINEAGE: `punk` (New York 1976) is the three chords and the speed;
+      // `hardcore` (Washington 1980) is the American tempo and the
+      // downstroke; `beatgroup` (Liverpool 1962) is the major-key hook and
+      // the sung harmony, which is what makes this POP punk; `garagerock`
+      // (Portland 1963) is the amateur's snarl underneath.
+      parents: { punk: 0.4, hardcore: 0.25, beatgroup: 0.2, garagerock: 0.15 },
+      wants: ["the Ramones' Queens bubblegum, the record this scene rewrites"],
+      instr: ["overdrive_guitar", "distortion_guitar"],
+      drumkit: "power",
+      entry: () => 0, reg: v => v, realize: () => "line",
+      roots: [0, 3, 4, 3], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      // THE SKATE BEAT, second grid: the snare on every even step, which is
+      // the measured chorus and the one thing punk's own row never does.
+      kits: [
+        { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+          s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+          h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+        { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+          s: [0,0,1,0, 1,0,1,0, 0,0,1,0, 1,0,1,0],
+          h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+          x: [9,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] },
+      ],
+      fill: { s: [1,0,1,0, 1,0,1,0, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2600, q: 1.5, atk: .004, rel: .35, gain: .3, verb: .16 },
+      words: ["the guitar, the hook, four notes and a shout",
+              "the second guitar, the same four an octave down"],
+      word: v => (v === 1 ? [transpose(-12)] : []),
+      fx: ["crunch"],
+    },
+
+    // NU METAL [industrialmetal] — Los Angeles 2000. Linkin Park, "Hybrid
+    // Theory" (NRG Recording, North Hollywood; Warner Bros., 24 October
+    // 2000).
+    //
+    // MEASURED over 130 files (Linkin Park 39 · Korn · Limp Bizkit ·
+    // Slipknot). Tempo (n=129): p10 88 · p25 100 · med 115 · p75 135; the LINKIN PARK subset alone (39 files)
+    // medians at 110 and the row takes that. Mode 76 minor / 54 major, the only minor-leaning rock split in this round.
+    // TWO NUMBERS NAME IT AND NEITHER IS A GUESS. First, the bass: mean
+    // pitch 30.9 against grunge's 33.15 and poppunk's 35.6 — two and a half
+    // semitones lower than every other guitar band here, which is drop
+    // tuning, written into `reg` and the octave `word` below. Second, the
+    // changes: the corpus's cycles are I-bII-I-bII (26) and bII-I-bII-I (28)
+    // — a half-step neighbour above the tonic, 54 windows between them, and
+    // a flat second over a minor tonic is PHRYGIAN. Nothing else in the
+    // table's metal wing plays it (sludge has the i-to-flat-II riff and
+    // says so; this row is the same interval turned into a whole song).
+    //   kick  9152415251623241  — sixteenths, the busiest kick here
+    //   hat   9161816191618161   snare 2121802161119122
+    numetal: {
+      label: "Los Angeles 2000", near: "industrialmetal",
+      plan: "song", bpm: 110,
+      // LINEAGE: `industrialmetal` (Chicago 1988) is the sampled,
+      // machine-tight guitar; `boombap` (New York 1994) is the rapped verse
+      // and the turntable, and this row is the only guitar row in the table
+      // that declares it; `thrash` (San Francisco 1983) is the down-picked
+      // riff; `funkrock` (Los Angeles 1984) is the slap-and-riff hybrid
+      // sixteen years earlier in the same city; `gothicmetal` (Halifax
+      // 1991) is the sung chorus over the shouted verse.
+      parents: { industrialmetal: 0.3, boombap: 0.25, thrash: 0.2,
+                 funkrock: 0.15, gothicmetal: 0.1 },
+      wants: [],
+      instr: ["distortion_guitar", "saw_wave", "solo_vox"],
+      voices: 3,
+      drumkit: "power",
+      entry: v => (v === 2 ? 4 : 0), reg: v => (v === 0 ? -2 : v === 1 ? 0 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["riff", "pad", "lead"],
+      // i-bII-i-bII, the measured half-step neighbour, in PHRYGIAN.
+      roots: [0, 1, 0, 1], mode: MODES.phrygian,
+      scale: MODES.phrygian, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "sixteenths",
+      kit: { k: [1,0,1,0, 0,1,1,0, 1,0,1,0, 0,1,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             x: [9,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] },
+      kitVel: { k: [9,0,6,0, 0,4,7,0, 8,0,6,0, 0,4,7,0] },
+      fill: { s: [0,0,0,0, 1,0,1,1, 0,0,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 1500, q: 2.0, atk: .003, rel: .3, gain: .3, verb: .2,
+              // WHO SINGS: the sung chorus over the shouted verse — the one
+              // clean thing on the record, and the reason it sold
+              mouth: MOUTHS.poplead },
+      words: ["the guitar, the riff, dropped two octaves",
+              "the synth, holding the half-step over it",
+              "the voice, the chorus, sung"],
+      word: v => (v === 0 ? [only("gate", fill(1))]
+                : v === 1 ? [keep(0, 8), transpose(1)] : []),
+      fx: ["crunch"],
+    },
+
+    // GLAM METAL [nwobhm] — Los Angeles 1987. Guns N' Roses, "Appetite for
+    // Destruction" (Rumbo Recorders, Canoga Park; Geffen, 21 July 1987).
+    //
+    // MEASURED over 153 files (Bon Jovi · Aerosmith · Scorpions · Van Halen
+    // · Poison · Mötley Crüe · Guns N' Roses · Whitesnake · Def Leppard).
+    // Tempo (n=153): p10 70 · p25 88 · med 110 · p75 126 · p90 137. Mode 99
+    // major / 54 minor. Meter 146 of 153 in 4/4. Melodic mean pitch 76.0 —
+    // the HIGHEST of every rock row measured this round (grunge 63, poppunk
+    // 71.6, britpop 73.8), which is the scream, and it is why `reg` puts the
+    // lead a whole octave over the riff. Seventh fraction 0.30 against
+    // poppunk's 0.12: these are dominant-seventh blues chords, not triads.
+    // Cycles: I-V-IV-IV (30) and I-V-I-V (27), the plainest changes in the
+    // round, under the fastest hand.
+    //   kick  9122223171422131   snare 1111911131229112
+    //   hat   8272927392729263  — eighths with a sixteenth under every one
+    glammetal: {
+      label: "Los Angeles 1987", near: "nwobhm",
+      plan: "song", bpm: 110,
+      // LINEAGE: `nwobhm` (London 1980) is the twin-guitar harmony and the
+      // gallop; `glam` (London 1971) is the boot, the clothes and the
+      // chorus everybody shouts; `heavymetal` (Workington 1969) is the
+      // ancestor of both; `aor` (Los Angeles 1982) is the studio polish and
+      // the radio, in this row's own city five years before it.
+      parents: { nwobhm: 0.35, glam: 0.25, heavymetal: 0.2, aor: 0.2 },
+      wants: [],
+      instr: ["distortion_guitar", "overdrive_guitar", "ahh_choir"],
+      voices: 3,
+      drumkit: "power",
+      entry: v => (v === 2 ? 4 : 0), reg: v => (v === 0 ? 1 : v === 1 ? -1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "riff", "pad"],
+      roots: [0, 4, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      prog: [{ d: 0, q: "triad" }, { d: 4, q: "dom7" },
+             { d: 3, q: "triad" }, { d: 4, q: "dom7" }],
+      artic: "normal", maxHold: 3, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,0, 1,1,1,0, 1,1,1,0, 1,1,1,0],
+             x: [9,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,1,1,0, 1,1,1,1],
+              t: [0,0,0,0, 0,0,0,0, 1,0,1,0, 0,0,0,0] },
+      tone: { wave: "sawtooth", cut: 2800, q: 1.7, atk: .004, rel: .6, gain: .29, verb: .3,
+              // WHO SINGS: the gang chorus, everybody on the last word
+              mouth: MOUTHS.doowopstack },
+      words: ["the lead guitar, up an octave, climbing to the fifth",
+              "the rhythm guitar, the riff under it",
+              "the gang chorus, the last word of every line"],
+      word: v => (v === 1 ? [drop(2)] : v === 2 ? [keep(0, 8)] : []),
+      fx: ["crunch"],
+    },
+
+    // FUNK ROCK [funk] — Los Angeles 1984. The Red Hot Chili Peppers, "The
+    // Red Hot Chili Peppers" (Bijou Studios, Los Angeles; EMI America,
+    // August 1984). PAUL NAMED THE BAND AND THE MAP CHOSE THE RECORD: Blood
+    // Sugar Sex Magik is 1991 and `powerballad` holds Los Angeles 1991, so
+    // the row takes the band's own debut instead — cut in Los Angeles, in a
+    // free year, and seven years EARLIER, which is what lets `numetal` above
+    // declare it as an ancestor at all.
+    //
+    // MEASURED over 15 files (Red Hot Chili Peppers 10 · Rage Against the
+    // Machine 7 · Faith No More 1 — the corpus's whole funk-metal holding,
+    // and the RHCP files are Californication-era rather than the debut,
+    // which the row states rather than hiding). Tempo (n=15): p10 75 · p25
+    // 84 · med 95 · p75 123. Mode 10 minor / 5 major. THE FIELD THAT NAMES
+    // IT is the bass histogram, and nothing else in this round looks like
+    // it: 9384646393748484 — an onset on FOURTEEN of sixteen steps, against
+    // grunge's 9151717171717171 and poppunk's 9061807080718080, which are
+    // eighths. That is the slap, and `bassStyle: "sixteenths"` is that
+    // number. Off-16 fraction 0.30, the highest of the rock rows; hat plain
+    // eighths; snare 2120923533219136, ghosted everywhere.
+    //   kick  9143513171624131   snare 2120923533219136
+    funkrock: {
+      label: "Los Angeles 1984", near: "psychfunk",
+      plan: "song", bpm: 95,
+      // LINEAGE: `funk` (Cincinnati 1967) is the sixteenth-note hand and
+      // the one-chord vamp, and it takes the largest share; `punk` (New
+      // York 1976) is the speed and the shouting; `hardcore` (Washington
+      // 1980) is the Californian half of that; `psychfunk` (Detroit 1975)
+      // is the fuzz guitar over the groove, which is the actual sound.
+      parents: { funk: 0.4, punk: 0.25, hardcore: 0.2, psychfunk: 0.15 },
+      wants: [],
+      // THE SLAP BASS IS A CHAIR, not a bass line: on this music the bass
+      // plays the tune and the guitar answers, which is the inversion the
+      // genre exists to make. The generated bass underneath keeps the
+      // sixteenths measured above.
+      instr: ["slap_bass", "crunch_guitar"],
+      drumkit: "power",
+      entry: () => 0, reg: v => (v === 0 ? -1 : 0), realize: () => "line",
+      part: ["riff", "lead"],
+      roots: [6, 0, 0, 2], mode: MODES.dorian,
+      scale: SCALES.blues, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "sixteenths",
+      kit: { k: [1,0,0,1, 0,1,0,0, 1,0,0,1, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,1, 0,1,0,0, 1,0,0,1],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      kitVel: { s: [0,0,0,0, 9,0,0,2, 0,3,0,0, 9,0,0,3] },
+      fill: { s: [0,0,1,0, 1,0,1,1, 0,1,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2000, q: 1.8, atk: .003, rel: .25, gain: .29, verb: .18 },
+      words: ["the bass, slapped, every sixteenth it can reach",
+              "the guitar, answering on the off-beats"],
+      word: v => (v === 1 ? [only("gate", rotate(2))] : [fill(1)]),
+      fx: ["wah"],
+    },
+
+    // BLACK METAL [deathmetal] — Oslo 1993. Darkthrone, "Transilvanian
+    // Hunger" (Necrohell, Oslo, 1993; Peaceville, February 1994). The city
+    // is the band's own room and the scene's — the Bergen studio that cut
+    // the other founding record is a desk, and the `grunge` ruling three
+    // rows up settles which one a scene word takes.
+    //
+    // MEASURED over 50 files (Burzum · Emperor · Dimmu Borgir · Darkthrone
+    // · Mayhem · Immortal). Tempo (n=50): p10 80 · p25 100 · med 120 · p75
+    // 148 · p90 175 — and this row takes the p75 rather than the median,
+    // because the tremolo half of this music is the half that is not doom.
+    // Mode 32 minor / 18 major. THE KICK IS THE GENRE: 9556666585566656 —
+    // an onset on every one of sixteen steps and the flattest histogram in
+    // the whole corpus, which is the blast beat and the double pedal, and
+    // no other row in this table has a kick that never rests. Snare
+    // 3131814171319141, a backbeat with eighths through it. Cycles: I-bVI-
+    // I-bII (26) and I-bIII-bVI-bVI (20) — the bII again, PHRYGIAN, shared
+    // with `numetal` and reached from the opposite end of the decade.
+    // Melodic mean pitch 65.9 with mean interval 4.56 and a step fraction of
+    // only 0.27: the line LEAPS, which is what a tremolo-picked arpeggio
+    // measures as.
+    blackmetal: {
+      label: "Oslo 1993", near: "deathmetal", bars: 8,
+      plan: "arc", bpm: 148,
+      // LINEAGE: `deathmetal` (Tampa 1990) is the blast beat and the growl,
+      // three years and one ocean earlier; `thrash` (San Francisco 1983) is
+      // the tremolo picking; `doom` (Stockholm 1986) is the Scandinavian
+      // half and the slow passages this music drops into; `gothicrock`
+      // (Northampton 1979) is where the cold reverb and the theatre come
+      // from, which is the half of this scene that is not metal at all.
+      parents: { deathmetal: 0.35, thrash: 0.3, doom: 0.2, gothicrock: 0.15 },
+      wants: ["Bathory's Scandinavian first wave, the record this scene names as its own origin"],
+      instr: ["distortion_guitar", "distortion_guitar"],
+      drumkit: "power",
+      entry: () => 0, reg: v => v - 1, realize: () => "line",
+      roots: [0, 5, 0, 1], mode: MODES.phrygian,
+      scale: MODES.phrygian, diatonic: true,
+      artic: "staccato", maxHold: 1, bassStyle: "eighths",
+      kit: { k: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
+             s: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             x: [9,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] },
+      kitVel: { s: [3,0,3,0, 9,0,3,0, 3,0,3,0, 9,0,3,0] },
+      fill: { x: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,9] },
+      // THE PRODUCTION IS THE POINT and it is the opposite of every other
+      // metal row here: no bottom, all treble, and a room the size of a
+      // church. `cut` is the highest in the metal wing and `verb` is nearly
+      // half wet on a music that is otherwise all attack.
+      tone: { wave: "sawtooth", cut: 3400, q: 2.2, atk: .002, rel: .2, gain: .27, verb: .45 },
+      words: ["the guitar, tremolo, sixteenths that never stop",
+              "the second guitar, the same line a fifth under"],
+      word: v => (v === 1 ? [transpose(-7)] : [fill(1)]),
+      fx: ["crunch"],
+    },
+
+    // SKA PUNK [ska] — Long Beach 1996. Sublime, "Sublime" (MCA, 30 July
+    // 1996), the record the band's own city is named for in every write-up
+    // of this scene.
+    //
+    // MEASURED over 37 files (Sublime 30 · No Doubt · Rancid). Meter 37 of
+    // 37 in 4/4. Tempo (n=37): p10 65 · p25 90 · med 94 · p75 148 — the
+    // bimodality IS the genre (a ska verse and a punk chorus), and the row
+    // takes the ska half at 94 with `paces` pushing the loud sections.
+    // Mode 25 major / 12 minor. THE FIELD THAT NAMES IT is the rim lane:
+    // 0095609050955080 — the four strongest cells are steps 2, 6, 10 and 14
+    // and there is nothing on 0, 4, 8 or 12 at all. That is the upstroke
+    // skank, on the off-beat, and it is the one histogram in this round
+    // that is exactly out of phase with its own kick (9012111180411210,
+    // which sits on 0 and 8 and nowhere else).
+    //   snare 1000901010119011   hat 9282928292829271
+    skapunk: {
+      label: "Long Beach 1996", near: "ska",
+      plan: "song", bpm: 94,
+      paces: { chorus: "push", solo: "push" },
+      // LINEAGE: `ska` (Kingston 1962) is the off-beat and the horns and
+      // takes the largest share; `punk` (New York 1976) is the guitar and
+      // the shout; `rocksteady` (Kingston 1966) is the walking bass this
+      // music kept when it dropped the tempo; `hardcore` (Washington 1980)
+      // is the Californian speed of the loud half.
+      parents: { ska: 0.35, punk: 0.3, rocksteady: 0.2, hardcore: 0.15 },
+      wants: ["the 2 Tone Coventry revival, the wave between Kingston and this one"],
+      instr: ["clean_guitar", "tenor_sax", "trombone"],
+      voices: 3,
+      drumkit: "acoustic",
+      entry: v => (v ? 2 : 0), reg: v => (v === 0 ? 0 : v === 1 ? 0 : -1),
+      realize: () => "line",
+      part: ["riff", "lead", "counter"],
+      roots: [3, 4, 0, 5], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "staccato", maxHold: 1, bassStyle: "walk",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      kitVel: { p: [0,0,9,0, 0,0,9,0, 0,0,9,0, 0,0,9,0] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,1] },
+      tone: { wave: "sawtooth", cut: 2600, q: 1.2, atk: .004, rel: .3, gain: .27, verb: .24 },
+      words: ["the guitar, the skank, off the beat every time",
+              "the tenor, the tune over it",
+              "the trombone, a third under the tenor"],
+      word: v => (v === 0 ? [only("gate", rotate(2))]
+                : v === 2 ? [transpose(-3)] : []),
+    },
+
+    // COLLEGE ROCK [janglepop] — Athens 1983. R.E.M., "Murmur" (I.R.S., 12
+    // April 1983). Athens, Georgia is the scene's own town and the band's;
+    // the tape was cut at Reflection Sound in Charlotte, and the label
+    // follows the room the music came out of by the `grunge` ruling above.
+    //
+    // MEASURED over 18 files (R.E.M.). Tempo (n=18): p10 86 · p25 96 · med
+    // 108.5 · p75 123. Mode 14 major / 4 minor. Seventh fraction 0.14 — the
+    // lowest of any row in this round, so the chords are PLAIN TRIADS and
+    // the row says nothing about sevenths. TWO NUMBERS SEPARATE IT FROM
+    // `janglepop` (Manchester 1984), which is one year later and also two
+    // clean guitars: the hat, 9596969697979696 — an onset on all sixteen
+    // steps, where janglepop's row runs eighths and a triplet swing; and
+    // the changes, whose corpus vote is V-VI-V-III (8) and VI-V-III-VI (7),
+    // a modal turn around the mediant that never touches the tonic, against
+    // janglepop's plain I-vi-IV-V. Same instruments, different music.
+    //   kick  6619303293372163   snare 1100902600009324
+    //   bass  5436406296367385  — the arpeggiated bass, doing the melody
+    collegerock: {
+      label: "Athens 1983", near: "janglepop",
+      plan: "song", bpm: 108,
+      // LINEAGE: `janglepop` (Manchester 1984) cannot be a parent — it is a
+      // year LATER, and the WHEN law holds. `garagerock` (Portland 1963) is
+      // the amateur band in a town with a college in it; `folkduo`
+      // (Greenwich Village 1964) is the ringing acoustic and the buried
+      // vocal; `punk` (New York 1976) is the independent label and the
+      // refusal of the radio; `psychpop` (London 1968) is the Byrds-shaped
+      // chime this whole wing descends from.
+      parents: { garagerock: 0.3, folkduo: 0.25, punk: 0.25, psychpop: 0.2 },
+      wants: ["the Byrds' twelve-string chime, still unanchored and owed by janglepop too"],
+      instr: ["clean_guitar", "steel_string_guitar"],
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1, realize: () => "line",
+      roots: [4, 5, 4, 2], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "walk",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,1, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2500, q: 1.0, atk: .008, rel: 1.0, gain: .26, verb: .34 },
+      words: ["the guitar, arpeggiating, never landing on the tonic",
+              "the second guitar, the same figure two steps late"],
+      word: v => (v === 1 ? [rotate(2), transpose(2)] : []),
+      fx: ["chorus"],
+    },
+
+    // RAP ROCK [blockparty] — New York 1986. Beastie Boys, "Licensed to
+    // Ill" (Chung King and INS, New York; Def Jam, 15 November 1986).
+    //
+    // MEASURED over 11 files (Beastie Boys). NOTATION TEMPO IS A CONVENTION
+    // AND THIS SET PROVES IT: the raw median is 210 with a p25 of 135, and
+    // tools/mine/mine-midi.js's own header warns about exactly this — the
+    // transcriptions are written double-time over a half-time feel. The row
+    // takes 105, the halved p25, and says so rather than shipping a
+    // 210-beat rock record. THE DRUM LANES ARE THE ARGUMENT, and they are
+    // the sparsest in the entire round:
+    //   hat   9000900090009000   snare 0000900050009000
+    //   kick  7020200090301020   ride  5000900080009000
+    // A hat on the QUARTER NOTE, nothing between; a snare on 4 and 12 and
+    // nowhere else. Every other row here has an eighth-note hat at least.
+    // That is the 808-and-a-rock-record production, and it is why this row
+    // holds a `tr808` kit under two distorted guitars. Mode 7 minor / 4
+    // major; cycles I-bVI7-VI-VI (33) and I-I-bVI-V (12).
+    raprock: {
+      label: "New York 1986", near: "electro",
+      plan: "song", bpm: 105,
+      // LINEAGE: `blockparty` (Bronx 1973) is the borough, the break and
+      // the two turntables; `punk` (New York 1976) is what this band was
+      // before it was this; `heavymetal` (Workington 1969) is the riff the
+      // record samples whole; `electro` (New York 1982) is the 808 itself,
+      // four years and one label earlier in the same city.
+      parents: { blockparty: 0.35, punk: 0.25, heavymetal: 0.2, electro: 0.2 },
+      wants: [],
+      instr: ["distortion_guitar", "orchestra_hit"],
+      drumkit: "tr808",
+      entry: v => v * 4, reg: v => (v === 0 ? -1 : 0),
+      realize: v => (v === 1 ? "stab" : "line"),
+      part: ["riff", "stab"],
+      roots: [0, 5, 0, 0], mode: MODES.aeolian,
+      scale: SCALES.blues, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0] },
+      kitVel: { s: [0,0,0,0, 9,0,0,0, 0,0,0,0, 9,0,0,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "sawtooth", cut: 1900, q: 1.6, atk: .004, rel: .4, gain: .3, verb: .22 },
+      words: ["the guitar, the riff, four bars and it comes back",
+              "the orchestra hit, on the turnaround"],
+      word: v => (v === 1 ? [keep(0, 12)] : [only("gate", fill(2))]),
+      fx: ["crunch"],
+    },
+
+    // SOUTHERN HIP HOP [boombap] — Atlanta 1996. OutKast, "ATLiens"
+    // (Bosstown Recording, Atlanta; LaFace, 27 August 1996).
+    //
+    // MEASURED over 39 files (OutKast · Ludacris · Nelly · Goodie Mob).
+    // Meter 39 of 39 in 4/4. Tempo (n=39): p10 85 · p25 93 · med 117 · p75
+    // 155 — the median is the double-time notation of the fast half again,
+    // and the row takes the p25 at 92. Mode 23 major / 16 minor, where
+    // `boombap`'s own music is a dorian minor: this wing is BRIGHTER and
+    // its chords are live-band changes rather than a chopped 45. THE FIELD
+    // THAT NAMES IT is the hand percussion, and no other hip-hop row in the
+    // table has it: rim 9465756675738475 and perc 8464835594659555 — two
+    // lanes running near-continuous sixteenths of tambourine and shaker,
+    // against `boombap`'s bare kick/snare/hat. Cycles: a IV pedal (355
+    // windows of IV-IV-IV-IV against 511 of the tonic), which is the
+    // two-chord vamp below.
+    //   kick  9041316251313172   snare 2111702191117000
+    //   hat   9171816282619162
+    southernhiphop: {
+      label: "Atlanta 1996", near: "boombap", swing: 0.12,
+      plan: "song", bpm: 92,
+      // LINEAGE: `boombap` (New York 1994) is the craft and the two years
+      // this scene spent being told it was not hip hop; `funk` (Cincinnati
+      // 1967) is the live band and the horn chart, which is the half New
+      // York did not have; `gfunk` (Los Angeles 1992) is the sung hook over
+      // a rapped verse; `miamibass` (Miami 1986) is the 808 sub coming up
+      // the coast; `blockparty` (Bronx 1973) is the root of all of it.
+      parents: { boombap: 0.3, funk: 0.25, gfunk: 0.2, miamibass: 0.15,
+                 blockparty: 0.1 },
+      wants: ["the Memphis tape scene that the same decade's South ran on"],
+      instr: ["clavinet", "slow_strings"],
+      drumkit: "tr808",
+      entry: v => v * 2, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
+      part: ["riff", "pad"],
+      roots: [0, 3, 0, 3], mode: MODES.mixo,
+      scale: MODES.mixo, diatonic: true,
+      prog: [{ d: 0, q: "7" }, { d: 3, q: "7" }, { d: 0, q: "7" }, { d: 3, q: "7" }],
+      maxHold: 3, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 1,0,1,0, 1,0,0,1, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             p: [1,0,1,1, 0,1,1,0, 1,1,0,1, 1,0,1,1] },
+      kitVel: { p: [6,0,4,3, 0,5,4,0, 6,3,0,4, 5,0,4,3] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2100, q: 1.3, atk: .006, rel: .5, gain: .28, verb: .26 },
+      words: ["the clavinet, the vamp, two chords and a shaker",
+              "the strings, holding the second chord"],
+      word: v => (v === 1 ? [keep(0, 8)] : []),
+    },
+
+    // CONTEMPORARY R&B [newjackswing] — Virginia Beach 1997. Missy Elliott,
+    // "Supa Dupa Fly" (Master Sound, Virginia Beach; The Goldmind/Elektra,
+    // 15 July 1997), produced whole by Timbaland — the two acts Paul names
+    // in one sentence, and one record.
+    //
+    // MEASURED over 72 files (Missy Elliott · Timbaland · Aaliyah · TLC ·
+    // Brandy · Monica). Meter 72 of 72 in 4/4. Tempo (n=72): p10 72 · p25
+    // 86 · med 93 · p75 118. Mode 41 major / 31 minor. WHY THIS IS NOT A
+    // TWIN OF `rnb` (Philadelphia 1994), whose row is a 72-beat maj7 ballad:
+    // this set medians twenty-one beats faster, its seventh fraction is 0.32
+    // against a ballad's, and its motion is 0.73 — the chords MOVE. The
+    // corpus's own top cycle is bIII-V-I-bVI (54 windows), a minor tonic
+    // reached from the flat third with a real dominant in it, which is the
+    // row below and is nothing any other soul row here plays. The other
+    // measurement is the percussion: perc 9696956697778879, a lane that
+    // never rests, and hat 8173928382728282 — the stutter, sixteenths
+    // ghosted under eighths.
+    //   kick  9011214250411131   clap  2531902635309037
+    contemporaryrnb: {
+      label: "Virginia Beach 1997", near: "hiphopsoul", swing: 0.1,
+      plan: "song", bpm: 93,
+      // LINEAGE: `newjackswing` (New York 1987) is the swung sixteenth and
+      // the drum machine under a sung song; `rnb` (Philadelphia 1994) is
+      // the harmony and the vocal arrangement; `boombap` (New York 1994) is
+      // the rapped verse the singer trades with; `miamibass` (Miami 1986)
+      // is the 808 sub; `hiphopsoul` (Charlotte 1991) is the immediate
+      // precedent and the nearest neighbour.
+      parents: { newjackswing: 0.3, rnb: 0.25, boombap: 0.2, miamibass: 0.15,
+                 hiphopsoul: 0.1 },
+      wants: [],
+      // THE VOCAL CHOP IS AN INSTRUMENT on this record and the found crate
+      // already holds one: a stab of somebody singing, played as a part.
+      instr: ["polysynth", "found:collage:vocal_stab"],
+      drumkit: "tr808",
+      entry: v => v * 2, reg: v => v - 1, realize: v => (v === 1 ? "stab" : "line"),
+      part: ["lead", "stab"],
+      roots: [2, 4, 0, 5], mode: MODES.aeolian,
+      scale: MODES.aeolian, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "octaves",
+      kit: { k: [1,0,0,0, 0,0,1,0, 0,1,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,0, 1,0,1,1, 1,0,1,0, 1,0,1,1],
+             p: [1,0,1,1, 1,0,1,1, 1,1,0,1, 1,1,0,1] },
+      kitVel: { h: [8,2,7,0, 9,0,8,3, 8,0,7,0, 8,0,8,2] },
+      fill: { h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "triangle", cut: 2400, q: 1.5, atk: .004, rel: .35, gain: .28, verb: .22 },
+      words: ["the synth, the hook, off the beat and back",
+              "the vocal chop, answering it"],
+      word: v => (v === 1 ? [only("gate", rotate(4))] : []),
+    },
+
+    // TRANCE [techno] — Berlin 1994. Paul van Dyk, "45 RPM" (MFS, Berlin,
+    // 1994). Berlin rather than Frankfurt: the corpus's own trance mass is
+    // this producer and the two who followed him, and MFS is the label the
+    // record came out on in the city the table already draws.
+    //
+    // MEASURED over 276 files (Tiësto 154 · ATB · Paul van Dyk · Darude ·
+    // Sash! · Robert Miles). Meter 275 of 276 in 4/4. Tempo (n=259): p10
+    // 128 · p25 131 · med 137 · p75 140 · p90 140 — the tightest tempo
+    // distribution of any set measured this round, which is what a genre
+    // built for mixing looks like. Mode 190 minor / 86 major, more than two
+    // to one. THE HAT NAMES IT: 5594559455945594 — the four 9s are steps 2,
+    // 6, 10 and 14, the OFF-BEAT eighth, over a kick that is 9101811181118211
+    // (four on the floor). That open-hat-against-four-on-the-floor pair is
+    // the sound, and `house`'s own row already runs the kick; this row's
+    // difference is above it. Bass 9485639464846483 — rolling sixteenths,
+    // never resting, which is the other half. Cycles: bVII-bVII-I-I (27) and
+    // a tonic pedal (246), so the changes are a minor i-bVI-bVII loop, below.
+    trance: {
+      label: "Berlin 1994", near: "melodictechno", bars: 8,
+      plan: "dance", bpm: 138,
+      intro: "riser",
+      // LINEAGE: `techno` (Detroit 1988) is the machine and the tempo;
+      // `house` (Chicago 1986) is the four-on-the-floor itself;
+      // `berlinschool` (Berlin 1972) is the sequenced arpeggio and the long
+      // form, in this row's own city twenty-two years earlier, and it is
+      // the parent that separates this from every other floor record here;
+      // `hardcorerave` (Essex 1991) is the riser and the breakdown;
+      // `eurodisco` (Munich 1977) is the sequenced bass under a melody.
+      parents: { techno: 0.3, house: 0.25, berlinschool: 0.2,
+                 hardcorerave: 0.15, eurodisco: 0.1 },
+      wants: [],
+      instr: ["saw_wave", "polysynth"],
+      drumkit: "tr909",
+      entry: v => v * 4, reg: v => v, realize: v => (v === 1 ? "pad" : "line"),
+      part: ["riff", "pad"],
+      roots: [0, 0, 5, 6], mode: MODES.aeolian,
+      scale: MODES.aeolian, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "sixteenths",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      kitVel: { o: [0,0,9,0, 0,0,9,0, 0,0,9,0, 0,0,9,0] },
+      fill: { s: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2600, q: 2.4, atk: .002, rel: .3, gain: .27, verb: .38 },
+      words: ["the arpeggio, sixteenths, eight bars before it turns",
+              "the pad, one chord a bar under it"],
+      word: v => (v === 1 ? [keep(0, 8)] : [fill(1)]),
+      fx: ["sweep"],
+    },
+
+    // EURODANCE [italodisco] — Milan 1993. Corona, "The Rhythm of the
+    // Night" (DWA, Milan, 1993). Milan rather than Frankfurt or Cologne:
+    // the map already draws this city for `italodisco` eleven years
+    // earlier, and DWA is the same room's grandchild.
+    //
+    // MEASURED over 31 files (Snap! · Haddaway · Corona · Culture Beat · La
+    // Bouche · 2 Brothers on the 4th Floor). Meter 31 of 31 in 4/4. Tempo
+    // (n=30): p10 125 · p25 126 · med 131 · p75 135 · p90 144. Mode 23
+    // minor / 8 major. THE CYCLE IS THE GENRE and the corpus is unusually
+    // loud about it: bIII-IV-bVI-I, 88 windows, second only to the tonic
+    // pedal — a minor-key loop that reaches the tonic LAST, which is why
+    // every one of these records feels like it is arriving all the way
+    // through. Hat 7879887978798879, sixteenths at full density (against
+    // `trance`'s off-beat eighths, which is the whole difference between
+    // the two floors); kick 9303830293038312, four on the floor; clap on 4
+    // and 12. Off-16 fraction 0.29.
+    eurodance: {
+      label: "Milan 1993", near: "hinrg",
+      plan: "dance", bpm: 132,
+      // LINEAGE: `italodisco` (Milan 1982) is the same city's sequenced
+      // dance record and takes the largest share; `hinrg` (Brixton 1984) is
+      // the tempo and the falsetto; `house` (Chicago 1986) is the piano
+      // stab and the four-on-the-floor; `eurodisco` (Munich 1977) is the
+      // grandparent of the whole continent's floor.
+      parents: { italodisco: 0.3, hinrg: 0.25, house: 0.25, eurodisco: 0.2 },
+      wants: [],
+      instr: ["polysynth", "synth_brass_1", "solo_vox"],
+      voices: 3,
+      drumkit: "electronic",
+      entry: v => v * 2, reg: v => (v === 2 ? 0 : v),
+      realize: v => (v === 1 ? "stab" : "line"),
+      part: ["riff", "stab", "lead"],
+      // bIII-IV-bVI-i, the measured loop, arriving on the tonic last.
+      roots: [2, 3, 5, 0], mode: MODES.aeolian,
+      scale: MODES.aeolian, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "sixteenths",
+      kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [7,8,7,9, 8,8,7,9, 7,8,7,9, 8,8,7,9] },
+      fill: { s: [0,0,0,0, 1,0,1,0, 1,0,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2800, q: 1.8, atk: .003, rel: .3, gain: .28, verb: .3,
+              // WHO SINGS: the diva chorus over the rapped verse, wide open
+              mouth: MOUTHS.belter },
+      words: ["the synth riff, the four bars everybody knows",
+              "the brass stab, on the turnaround",
+              "the voice, the chorus, arriving on the tonic"],
+      word: v => (v === 1 ? [keep(0, 4, 8, 12)] : v === 2 ? [transpose(12)] : []),
+    },
+
+    // TEEN POP [boyband] — Stockholm 1998. Britney Spears, "…Baby One More
+    // Time" (Cheiron Studios, Stockholm; Jive, 23 October 1998). The city
+    // is not a flourish: this record, the boy-band records either side of
+    // it and most of the decade's American teen pop were WRITTEN AND CUT
+    // in one Swedish room, and the row says so.
+    //
+    // MEASURED over 192 files (Britney Spears 94 · Backstreet Boys · *NSYNC
+    // · Spice Girls). Meter 183 of 192 in 4/4. Tempo (n=192): p10 72 · p25
+    // 90 · med 103 · p75 120. THE MODE SPLIT IS THE SURPRISE AND THE ROW
+    // FOLLOWS IT: 102 minor against 90 major. Teen pop written from memory
+    // would be a major-key record; the corpus says the Cheiron sound is a
+    // MINOR one, and its cycles are the minor loop's degrees — VI (78), III
+    // (73), bIII (38) around a tonic — so the row is aeolian on
+    // i-bVI-bIII-bVII. Motion 0.80, the second-highest of the round: these
+    // chords never sit still. Hat 9474848494848484 (sixteenths at full
+    // density), perc 7475847575759475 beside it — two continuous lanes, the
+    // programmed shaker that is the production's signature.
+    //   kick  9122215151323231   snare 2110910141119111
+    teenpop: {
+      label: "Stockholm 1998", near: "boyband",
+      plan: "song", bpm: 100,
+      // LINEAGE: `boyband` (Orlando 1997) is the immediate precedent and
+      // the same producers; `newjackswing` (New York 1987) is the swung
+      // programmed sixteenth; `synthpop` (Basildon 1981) is the keyboard
+      // arrangement and the sound of the pads; `hinrg` (Brixton 1984) is
+      // the tempo and the floor; `eurodance` (Milan 1993) is the European
+      // half, five years earlier and the reason the minor loop is here.
+      parents: { boyband: 0.3, newjackswing: 0.2, synthpop: 0.2, hinrg: 0.15,
+                 eurodance: 0.15 },
+      wants: [],
+      instr: ["polysynth", "saw_wave", "solo_vox"],
+      voices: 3,
+      drumkit: "electronic",
+      entry: v => (v === 2 ? 2 : 0), reg: v => (v === 2 ? 0 : v - 1),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["riff", "pad", "lead"],
+      roots: [0, 5, 2, 6], mode: MODES.aeolian,
+      scale: MODES.aeolian, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "sixteenths",
+      kit: { k: [1,0,0,0, 1,0,1,0, 1,0,0,1, 1,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             c: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1],
+             p: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
+      kitVel: { h: [9,4,7,4, 8,4,8,4, 9,4,8,4, 8,4,8,4] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,1,1,1] },
+      tone: { wave: "sawtooth", cut: 2700, q: 1.4, atk: .003, rel: .4, gain: .28, verb: .26,
+              // WHO SINGS: close, bright, compressed to the front of the mix
+              mouth: MOUTHS.poplead },
+      words: ["the synth riff, the four notes the record is sold on",
+              "the pad, one chord a bar",
+              "the voice, the hook, over the loop"],
+      word: v => (v === 1 ? [keep(0, 8)] : []),
+    },
+
+    // RETRO SOUL [detroitsoul] — London 2006. Amy Winehouse, "Back to
+    // Black" (Chalk Farm, London and Daptone, Brooklyn; Island, 27 October
+    // 2006).
+    //
+    // MEASURED over 39 files (Adele 36 · Amy Winehouse · Duffy). Tempo
+    // (n=39): p10 67 · p25 75 · med 105 · p75 120. Mode 24 major / 15
+    // minor. THE CYCLE IS EXACT AND IT IS WHY THIS ROW EXISTS: the corpus
+    // votes I-bIII-bVI7-V (10 windows) — a minor tonic, the flat third, the
+    // flat sixth as a seventh chord and a REAL DOMINANT to turn it round,
+    // which is 1965 Detroit harmony and is played by nobody else in the
+    // 2000s half of this table. Beside it: clap 8090906080909050 — the four
+    // strongest cells are steps 2, 6, 10 and 14, an OFF-BEAT tambourine,
+    // the one production tell that separates a soul revival from soul; and
+    // ride 9141914291419142, eighths with a sixteenth under each, which is
+    // the Funk Brothers' own hand.
+    //   kick  9021304270213122   snare 6113712391138113
+    retrosoul: {
+      label: "London 2006", near: "detroitsoul",
+      plan: "song", bpm: 106,
+      // LINEAGE: `detroitsoul` (Detroit 1965) is the harmony, the
+      // tambourine and the band, and it takes the largest share by a
+      // distance; `girlgroup` (New York 1960) is the vocal attitude and the
+      // subject matter; `phillysoul` (Philadelphia 1972) is the string
+      // arrangement; `hiphopsoul` (Charlotte 1991) is the reason a 2006
+      // singer could reach for 1965 at all; `jazz` is the phrasing.
+      parents: { detroitsoul: 0.35, girlgroup: 0.25, phillysoul: 0.2,
+                 hiphopsoul: 0.1, jazz: 0.1 },
+      wants: [],
+      instr: ["electric_piano", "tenor_sax", "solo_vox"],
+      voices: 3,
+      drumkit: "room",
+      entry: v => (v === 2 ? 2 : 0), reg: v => (v === 2 ? 0 : v - 1),
+      realize: v => (v === 0 ? "pad" : "line"),
+      part: ["pad", "counter", "lead"],
+      roots: [0, 2, 5, 4], mode: MODES.aeolian,
+      scale: MODES.aeolian, diatonic: true,
+      prog: [{ d: 0, q: "triad" }, { d: 2, q: "triad" },
+             { d: 5, q: "7" }, { d: 4, q: "dom7" }],
+      artic: "legato", maxHold: 4, bassStyle: "walk",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             r: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      kitVel: { p: [0,0,9,0, 0,0,9,0, 0,0,9,0, 0,0,9,0],
+                s: [0,0,0,0, 9,0,0,0, 0,0,0,0, 9,0,0,0] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,1] },
+      tone: { wave: "triangle", cut: 2200, q: 1.1, atk: .006, rel: .8, gain: .27, verb: .3,
+              // WHO SINGS: the contralto at the front of a live room, with
+              // the run on the way down
+              mouth: MOUTHS.melisma },
+      words: ["the electric piano, holding the changes",
+              "the tenor, the answer at the end of the line",
+              "the voice, the tune, falling to the third"],
+      word: v => (v === 1 ? [only("gate", rotate(8))] : []),
+    },
+
+    // NEOTRADITIONAL COUNTRY [countrypop] — Nashville 1990. Garth Brooks,
+    // "No Fences" (Jack's Tracks, Nashville; Capitol, 27 August 1990).
+    //
+    // MEASURED over 27 files (Garth Brooks · Shania Twain · Alan Jackson ·
+    // George Strait). Meter 26 of 27 in 4/4. Tempo (n=27): p10 68 · p25 88 ·
+    // med 121 · p75 127. Mode 22 major / 5 minor, the second most lopsided
+    // major split of the round. WHY IT IS NOT `countrypop` (Nashville 1945)
+    // AT A NEW TEMPO: that row is a bluegrass band — a banjo roll, a fiddle,
+    // a snare on every beat and no drum kit's worth of anything else. This
+    // corpus has a KIT: kick 9010213180212121, snare 1001900020119001 and a
+    // rim lane at 5005900550059005, which is the train beat — a rim click on
+    // the "e" and "a" of every beat under a backbeat snare, and it is the
+    // single most identifiable thing about a 1990 Nashville record. Seventh
+    // fraction 0.15 (plain triads, like its parent) and motion 0.76 (the
+    // chords move more than bluegrass's do).
+    neotraditional: {
+      label: "Nashville 1990", near: "countrypop",
+      plan: "song", bpm: 121,
+      // LINEAGE: `countrypop` (Nashville 1945) is the town, the fiddle and
+      // the changes; `honkytonk` is the bar band and the shuffle this
+      // decade deliberately went back to; `rock` (London 1969) is the drum
+      // kit and the stadium the records were suddenly played in;
+      // `bluegrass` (Nashville 1946) is the string band underneath.
+      parents: { countrypop: 0.35, honkytonk: 0.3, rock: 0.2, bluegrass: 0.15 },
+      wants: [],
+      instr: ["steel_string_guitar", "fiddle"],
+      drumkit: "acoustic",
+      entry: v => v * 2, reg: v => v, realize: () => "line",
+      roots: [0, 3, 4, 0], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "normal", maxHold: 3, bassStyle: "fifths",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             // THE TRAIN BEAT, measured: a rim click either side of every
+             // beat, which is the lane the 1945 row has no drummer for.
+             p: [1,0,0,1, 1,0,0,1, 1,0,0,1, 1,0,0,1] },
+      kitVel: { p: [5,0,0,5, 9,0,0,5, 5,0,0,5, 9,0,0,5] },
+      fill: { s: [0,0,0,0, 1,0,0,1, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2700, q: 1.0, atk: .005, rel: .6, gain: .28, verb: .26 },
+      words: ["the guitar, the story, four bars at a time",
+              "the fiddle, answering it a third up"],
+      word: v => (v === 1 ? [only("gate", rotate(8)), transpose(2)] : []),
+    },
+
+    // SMOOTH JAZZ [jazzrock] — Los Angeles 1986. Kenny G, "Duotones"
+    // (Arista, 1986), the record that made this a radio format.
+    //
+    // MEASURED over 17 files (Kenny G · George Benson · Grover Washington
+    // Jr. · Spyro Gyra · David Sanborn) — the corpus's whole holding, and
+    // the row says so rather than pretending to a wider sample. Tempo
+    // (n=17): p10 67 · p25 80 · med 93 · p75 111. Mode 11 major / 6 minor.
+    // TWO NUMBERS: seventh fraction 0.45 and motion 0.81, both near the top
+    // of everything measured this round — this is a music of moving
+    // seventh chords, where the pop rows beside it are triads on a pedal.
+    // The kit is a programmed one (kick 9002104360031032, sparse; hat
+    // 9384839383838383, sixteenths at even density) under a played horn,
+    // which is exactly what the format is. Held notes: p90 of 14.4
+    // sixteenths — the longest sustained line in the round.
+    smoothjazz: {
+      label: "Los Angeles 1986", near: "jazzrock",
+      plan: "song", bpm: 92,
+      // LINEAGE: `jazzrock` (Los Angeles 1977) is the session band and the
+      // changes, in the same city nine years earlier; `quietstorm` (Los
+      // Angeles 1975) is the tempo, the format and the late-night radio
+      // that carried it; `aor` (Los Angeles 1982) is the studio polish;
+      // `phillysoul` (Philadelphia 1972) is the string cushion.
+      parents: { jazzrock: 0.3, quietstorm: 0.25, aor: 0.25, phillysoul: 0.2 },
+      wants: [],
+      instr: ["alto_sax", "rhodes_ep"],
+      drumkit: "electronic",
+      entry: v => v * 2, reg: v => (v === 0 ? 1 : -1),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad"],
+      roots: [0, 0, 3, 4], mode: MODES.mixo,
+      scale: MODES.mixo, diatonic: true,
+      prog: [{ d: 0, q: "maj7" }, { d: 0, q: "maj7" },
+             { d: 3, q: "maj7" }, { d: 4, q: "7" }],
+      artic: "legato", maxHold: 8, bassStyle: "sixteenths",
+      kit: { k: [1,0,0,0, 0,0,0,1, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1] },
+      kitVel: { h: [9,3,8,4, 8,3,9,3, 8,3,8,3, 8,3,8,3] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "sine", cut: 2200, q: 0.9, atk: .02, rel: 1.2, gain: .25, verb: .38 },
+      words: ["the horn, one long line over the changes",
+              "the Rhodes, holding the seventh under it"],
+      word: v => (v === 1 ? [keep(0, 8)] : []),
+      fx: ["chorus"],
+    },
+
+    // CHIPTUNE [technopop] — Kyoto 1985. Koji Kondo, "Super Mario Bros."
+    // (Nintendo, Kyoto, 13 September 1985): five channels, no drums, and
+    // every part of the music carried by a pitched voice. IT IS IN THIS
+    // TABLE BECAUSE THE CORPUS IS FULL OF IT — 1,800-odd of the archive's
+    // files are game transcriptions, the single largest cluster the
+    // catalogue had no row for, which is the half of Paul's brief that said
+    // "search the MIDI library for many more genres while you're in there".
+    //
+    // MEASURED over 220 files (Super Mario · Zelda · Sonic · Mega Man ·
+    // Castlevania). Tempo (n=219): p10 100 · p25 120 · med 139.9 · p75 170.
+    // Mode 162 major / 58 minor, the most lopsided major split measured
+    // this round. Meter 188 of 220 in 4/4 with 21 in 3/4 — the second
+    // largest triple-time holding in the corpus. TWO NUMBERS ARE THE ROW.
+    // First, drumDensity: 0.00 at the tenth percentile, the median AND the
+    // ninetieth — not one file in 220 has a percussion channel, because
+    // the console had none, and `kit: {}` below is that zero. Second, the
+    // line: mean interval 11.13 semitones with a step fraction of 0.12,
+    // against every other row measured this round (grunge 2.19/0.69,
+    // britpop 3.71/0.35). This music LEAPS almost an octave a note; it is
+    // written for a chip, not for a throat, and that is the difference
+    // between it and every pop row in the table. Held notes median 1.87
+    // sixteenths — nothing sustains.
+    chiptune: {
+      label: "Kyoto 1985", near: "technopop", bars: 8,
+      plan: "arc", bpm: 140,
+      // LINEAGE: `technopop` (Tokyo 1978) is the Japanese sequenced pop
+      // this music's composers grew up inside and takes the largest share;
+      // `roboticpop` (Düsseldorf 1978) is the machine playing a tune with
+      // no hand in it; `march` is the FORM — a game theme is a march, two
+      // strains and a repeat; `minimalism` (New York 1967) is the loop that
+      // has to survive being heard four hundred times.
+      parents: { technopop: 0.35, roboticpop: 0.25, march: 0.2, minimalism: 0.2 },
+      wants: [],
+      // NO DRUMMER, AND THAT IS THE MEASUREMENT: the row ships an empty
+      // kit, so precompose seats nobody on the drums (:2794 seats a drummer
+      // only where a grid exists) and the bass channel does the whole
+      // rhythmic job — which is what the hardware forced and what the music
+      // became.
+      kit: {},
+      instr: ["square_lead", "square_lead", "saw_wave"],
+      voices: 3,
+      entry: v => v * 2, reg: v => 1 - v, realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      roots: [0, 5, 3, 4], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
+      artic: "staccato", maxHold: 2, bassStyle: "eighths",
+      tone: { wave: "square", cut: 3200, q: 1.0, atk: .001, rel: .12, gain: .24, verb: .1 },
+      words: ["the first square wave, the theme",
+              "the second, a third under, always",
+              "the saw, the bass line doing the drumming"],
+      word: v => (v === 1 ? [transpose(-4)] : v === 2 ? [fill(1), transpose(-12)] : []),
+    },
   };
 
   // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane. `p` says "Ghost perc"
@@ -22706,10 +24067,21 @@
                 // it is a live funk band, and the ear says so.)
                 "viennadownbeat", "noirhop", "knowlewest",
                 "chillout", "torchbreaks", "instrumentalhiphop", "bristolsound",
-                "nujazz", "tromso"]],
+                "nujazz", "tromso",
+                // ...AND THE MIDI-CORPUS ROUND'S THREE (2026-09-02). Two
+                // machines and one hand: `trance` and `eurodance` are
+                // sequencers and `southernhiphop` is a live band over an
+                // 808. The family has no DYNAMICS default by design, so
+                // all three are named in DYNAMICS below.
+                "trance", "eurodance", "southernhiphop"]],
     ["soul",   ["doowop", "detroitsoul", "psychsoul", "funk", "disco", "gospel", "rnb",
                 "hiphopsoul", "clubpop", "retrofunkpop", "boyband", "darkrnb",
                 "blueeyedsoul",
+                // ...and the MIDI-corpus round's two (2026-09-02): a soul
+                // revival with a real dominant in it and a programmed R&B
+                // record with a singer on it. Both are sung songs over a
+                // soul band's harmony, which is this cluster's definition.
+                "retrosoul", "contemporaryrnb",
                 // bedroompop is here rather than in `drift` because what it
                 // inherits is R&B's PHRASING; the ambient space is a
                 // production, and the ear files a whispered soul record as a
@@ -22819,10 +24191,25 @@
                 // MACHINE in a band family and disagrees with the
                 // family's hand, so it takes a DYNAMICS row below.
                 "deathrock", "batcave", "coldwave", "leedsgoth",
-                "gothicmetal"]],
+                "gothicmetal",
+                // ...AND THE MIDI-CORPUS ROUND'S TWELVE (2026-09-02), which
+                // is the largest single arrival this cluster has had: the
+                // whole 1983-2000 guitar-band wing Paul's artist list was
+                // asking for. Every one is four or five people in a room
+                // with amplifiers, which is the family's own definition,
+                // and every one takes the family hand rather than a
+                // DYNAMICS row of its own.
+                "collegerock", "raprock", "funkrock", "glammetal", "grunge",
+                "britpop", "poppunk", "postgrunge", "skapunk", "blackmetal",
+                "numetal", "postbritpop"]],
     ["studio", ["beatgroup", "jazzrock", "aor", "dusseldorfschool", "synthsoul",
                 "synthpop", "citypop", "merseybeat", "psychpop", "motorik",
                 "roboticpop", "confessionalpop",
+                // ...and the MIDI-corpus round's three (2026-09-02): a
+                // Stockholm writing room, a radio format and a console.
+                // None of the three is a band; all three are records
+                // ASSEMBLED, which is what this cluster means.
+                "teenpop", "smoothjazz", "chiptune",
                 // ...and the ledger round's two (2026-08-30): `horrorscore`
                 // files beside suspensescore and photoplay — a scoring desk, not
                 // a band — and `exotica` beside technopop, the studio confection
@@ -23069,7 +24456,11 @@
                 // round gave when it put those two together — same court
                 // music, one generation apart — and this is the
                 // generation before both.
-                "qiyan", "hardingfele", "tasnif", "scotsfiddle"]],
+                "qiyan", "hardingfele", "tasnif", "scotsfiddle",
+                // ...and the MIDI-corpus round's one (2026-09-02):
+                // `neotraditional` files beside `countrypop` and
+                // `bluegrass`, its own two parents, forty-five years on.
+                "neotraditional"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.
@@ -23652,6 +25043,27 @@
     // balearic is a 909 under a dream-pop voice — machine floor,
     // drift's phrase, the same trade hinrg makes at half the BPM.
     balearic:   { stress: 0.25, phrase: 0.5,  touch: { t: 0.02,  v: 0.5 } },
+    // THE MIDI-CORPUS ROUND'S THREE CLUB MEMBERS (2026-09-02). The family
+    // has no default by construction, so each of the three says where it
+    // stands on its own, and the corpus's `variation` and `offgrid` numbers
+    // are what decided each one.
+    //   trance          offgrid median 0.00, variation median 0.00 over 276
+    //                   files — a sequencer, and the flattest pair measured
+    //                   this round. Not `null` only because a trance record
+    //                   has a HAND on the filter and the breakdown, which is
+    //                   level and not time: t near zero, v low but real.
+    trance:    { stress: 0.15, phrase: 0.35, touch: { t: 0.01,  v: 0.45 } },
+    //   eurodance       offgrid median 0.43 over 31 files, the highest of
+    //                   the three by a distance — these are records with a
+    //                   singer and a rapper on top of the machine, and the
+    //                   people are audibly not quantized.
+    eurodance: { stress: 0.35, phrase: 0.5,  touch: { t: 0.04,  v: 0.7 } },
+    //   southernhiphop  a live band over an 808: interlock median 0.24, the
+    //                   highest of the three, and two hand-percussion lanes
+    //                   running sixteenths. The loosest of the three, and
+    //                   looser than `boombap`'s own row for the same reason
+    //                   the anchor exists.
+    southernhiphop: { stress: 0.45, phrase: 0.35, touch: { t: 0.07, v: 0.95 } },
   };
   // NO SILENT DEFAULT (the compose.js law, one tier down): a genre resolves to
   // its own row or to its family's, and `null` is a DECISION rather than an
@@ -23779,6 +25191,31 @@
     // braam would be a costume, and nothing is the honest row six times.
     crimejazz:    { pass: 0.3,  approach: 0.35, grace: 0.1 },
     fantasyscore: { pass: 0.25, grace: 0.2 },
+    // THE MIDI-CORPUS ROUND (2026-09-02), and only FOUR of the twenty-one
+    // earn a row — the header's law holds and the other seventeen get
+    // nothing. Each of these four is a bend or a click that a transcription
+    // cannot write down but that everybody agrees is the style:
+    //   glammetal   the bend and the hammer-on. This row's melodic mean
+    //               pitch is 76.0, the highest of the round — a lead guitar
+    //               at the top of its neck decorates every note it holds,
+    //               and `grace` is that. It is `nwobhm`'s inheritance said
+    //               louder, and the same claim `countrypop` makes with the
+    //               hammer-on one family over.
+    glammetal:    { grace: 0.35, pass: 0.2 },
+    //   funkrock    the slap. `flam` is the thumb and the pop landing
+    //               together, which is literally a doubled strike, and
+    //               `funk` — this row's largest parent — already declares
+    //               exactly this pair one generation up.
+    funkrock:     { grace: 0.2,  flam: 0.2 },
+    //   retrosoul   `detroitsoul` declares { grace: .15, flam: .12 } and
+    //               this row is that record played by people who know they
+    //               are quoting it: the same two terms, leaned on harder,
+    //               because the ornament is the costume.
+    retrosoul:    { grace: 0.25, flam: 0.15 },
+    //   neotraditional  the pedal-steel slide into the note, which is
+    //               `countrypop`'s own { pass: .2, grace: .4 } inherited
+    //               whole and dialled back a little for the drum kit.
+    neotraditional: { pass: 0.2, grace: 0.3 },
   };
   for (const k of Object.keys(ORNAMENT)) if (GENRES[k]) GENRES[k].orn = ORNAMENT[k];
 
