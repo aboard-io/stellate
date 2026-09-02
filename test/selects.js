@@ -33,6 +33,25 @@
  * no silent grey, and the whole thing still a readable fieldset with
  * `document.styleSheets[0].disabled = true`.
  *
+ * ...AND SINCE 2026-09-02 A MENU ON THIS PAGE IS A COMBO BOX, WHICH IS WHY
+ * EVERY QUERY BELOW READS `[data-sel]` AND NOT `select[data-sel]`. Paul, after
+ * using the composer on staging: *"The combo boxes just don't work and are
+ * confusing. I was expecting more of onfocus show custom dropdown then filter
+ * based on input — one line instead of two."* ui/selects.js draws one control
+ * now — an `<input role=combobox>` carrying the word, with a `<ul
+ * role=listbox>` under it IN THE FLOW — and the reversal is argued in full at
+ * `buildCombo` there.
+ *
+ * WHAT THIS FILE ASSERTS IS UNCHANGED, WORD FOR WORD, and that is the test of
+ * whether the reversal was clean: "is a settled parameter drawn with the widget
+ * it was decided to have", no silent grey, the reason in the option's own
+ * words, the standing answer offered, one gesture moving the record. Only the
+ * ELEMENT the assertions are read off has moved — `data-sel`, `data-k` and
+ * `data-v` are byte-identical, an option is an `<li role=option>` where it was
+ * an `<option>`, and `optionEls()` below is the one place that difference is
+ * written down. `MENUS` is still the list of controls Paul named; what counts
+ * as "a menu" is now `role=combobox`.
+ *
  * THIS GATE IS THE OTHER HALF OF test/sheets.js AND MUST BE RUN WITH IT. That
  * one proves the development words are lit sheets that grey with a reason; this
  * one proves the settled parameters are menus — and both directions are checked
@@ -308,7 +327,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      run. Naming the fixture is the honest half of the change: what this file
      asserts about "the record" is now a claim about a record it chose. */
   await p.goto(PAGE + CHANT, { waitUntil: "networkidle" });
-  await p.waitForFunction(() => document.querySelectorAll("#app select, #app .nu-sheet").length > 0,
+  await p.waitForFunction(() => document.querySelectorAll("#app [role=combobox], #app select, #app .nu-sheet").length > 0,
     null, { timeout: 20000 }).catch(() => {});
   await p.evaluate(() => { window.__D = window.__eightDoc || window.__doc; });
   await p.evaluate((v) => { window.__menus = v; }, MENUS);
@@ -327,21 +346,57 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
       const l = s.closest("label");
       return l ? l.textContent.trim() : "";
     };
+    /* AN OPTION IS AN `<li role=option>` ON A COMBO AND AN `<option>` ON THE
+       ONE `<select multiple>` LEFT, AND THIS IS THE ONLY PLACE THAT
+       DIFFERENCE IS WRITTEN DOWN (2026-09-02). Everything downstream reads
+       `{ t, v, off, why }` and cannot tell which shape it came off, which is
+       what let the twenty assertions below survive the reversal untouched.
+       The listbox is ALWAYS in the DOM (`hidden` until the field is focused —
+       ui/selects.js's own note says why: "every gate that reads the shape of
+       the possible off the rendered artifact can still read it without opening
+       forty controls"), so this is a query and never a gesture. */
+    const isCombo = (s) => s.getAttribute("role") === "combobox";
+    const optionEls = (s) => {
+      if (!isCombo(s)) return [...s.querySelectorAll("option")].map((o) => ({
+        t: o.textContent, v: o.value, off: o.disabled,
+        why: o.dataset.why || "", ph: o.hasAttribute("data-placeholder") }));
+      const box = s.closest(".nu-combo") || s.parentElement;
+      const list = box && box.querySelector("ul.nu-combolist");
+      return list ? [...list.querySelectorAll("li[role=option]")].map((o) => ({
+        t: o.textContent, v: o.dataset.v == null ? "" : o.dataset.v,
+        off: o.getAttribute("aria-disabled") === "true",
+        why: o.dataset.why || "", ph: o.hasAttribute("data-placeholder") })) : [];
+    };
     return {
-      sel: q("#app select[data-sel]").map((s) => ({
+      sel: q("#app [data-sel]").map((s) => ({
         key: s.dataset.sel, k: bare(s.dataset.sel), name: nameOf(s),
-        value: s.value,
+        combo: isCombo(s),
+        // THE WORD A COMBO IS STANDING ON IS ITS `data-v` — its `.value` is the
+        // LABEL a reader sees (and, while it is open, whatever is being typed
+        // into it). `data-v` is the address the record answers to and it did
+        // not move.
+        value: isCombo(s) ? (s.dataset.v == null ? "" : s.dataset.v) : s.value,
+        // THE COMBO BOX, READ OFF THE ARTIFACT. A menu on this page is a
+        // `role=combobox` that owns a `role=listbox`, and the three are asked
+        // for separately so "it says it is one" and "it has one" cannot pass
+        // for each other.
+        role: s.getAttribute("role") || s.tagName.toLowerCase(),
+        expanded: s.getAttribute("aria-expanded"),
+        controls: (() => { const id = s.getAttribute("aria-controls");
+          const t = id && document.getElementById(id);
+          return t ? t.getAttribute("role") : null; })(),
         // THE STANDARD MULTISELECT, READ OFF THE ARTIFACT. `.multiple` is the
         // property the browser resolved and `[multiple]` is the attribute in
         // the markup; both are recorded because a gate that trusted only the
         // property could be satisfied by a script setting it after the fact.
-        multi: s.multiple, multiAttr: s.hasAttribute("multiple"), size: s.size,
+        multi: !!s.multiple, multiAttr: s.hasAttribute("multiple"),
+        size: isCombo(s) ? 0 : s.size,
         inSheet: !!s.closest("fieldset.nu-sheet[data-multi]"),
-        // ANSWERS, not <option> elements: selects.js prefixes a placeholder to
+        // ANSWERS, not option elements: selects.js prefixes a placeholder to
         // a control whose value is not in its own table ("choose one"), and
         // that is a state of the page, not a choice on offer.
-        n: s.querySelectorAll("option:not([data-placeholder])").length,
-        inCell: !!s.closest("td"), disabled: s.disabled,
+        n: optionEls(s).filter((o) => !o.ph).length,
+        inCell: !!s.closest("td"), disabled: !!s.disabled,
         why: s.dataset.why || "",
         /* ...AND WHETHER THE REASON IS ON THE SCREEN *HERE*, 2026-08-28. The
            check below used to read `document.body.innerText` ONCE, at the end
@@ -355,9 +410,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
            can answer — the view is gone by the time the assertions run. */
         saidWhy: !s.dataset.why ||
           document.body.innerText.includes(s.dataset.why),
-        opts: q("#app select[data-sel]").length ? [...s.querySelectorAll("option")]
-          .map((o) => ({ t: o.textContent, v: o.value, off: o.disabled,
-                         why: o.dataset.why || "" })) : [],
+        opts: optionEls(s),
       })),
       // a select that is NOT one of ours (the board's own, outside #app) is not
       // this gate's business; the query above is #app-scoped for that reason.
@@ -509,12 +562,13 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   const selKeys = new Set(sel.map((s) => s.k));
   const sheetKeys = new Set(sheets.map((s) => s.k));
   notes.push("     " + (tabs.length ? "tabs walked: " + tabs.join(" ") : "no tab strip") +
-    "  ·  " + sel.length + " selects, " + sheets.length + " sheets");
+    "  ·  " + sel.length + " menus (" + sel.filter((s) => s.combo).length +
+    " combo boxes), " + sheets.length + " sheets");
 
   /* ---- 1 EVERY NAMED CONTROL IS A <select>, AND IS NO LONGER A SHEET ---- */
   const missing = Object.keys(MENUS).filter((k) => !selKeys.has(k));
   const stillLit = Object.keys(MENUS).filter((k) => sheetKeys.has(k));
-  check(!missing.length, "every control Paul named is a <select> " +
+  check(!missing.length, "every control Paul named is a combo box " +
     JSON.stringify(missing.map((k) => MENUS[k])));
   check(!stillLit.length, "...and none of them is still a sheet " + JSON.stringify(stillLit));
 
@@ -628,7 +682,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     return Object.keys(out).map((k) => k + " x" + out[k]);
   });
   check(!litSingles.length,
-    "every single-choice control in #app is a <select> — still drawn as a lit " +
+    "every single-choice control in #app is a combo box — still drawn as a lit " +
     "sheet: " + JSON.stringify(litSingles));
   check(!radios.length,
     "...and the only radio groups left are the circle of fifths and the step " +
@@ -662,7 +716,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     if (o.off && !o.why) { greyNoWhy.push(s.key + " / " + o.v); continue; }
     if (o.why && !o.t.endsWith(", " + o.why)) greyNotSaid.push(s.key + " / " + o.v);
   }
-  check(!greyNoWhy.length, "NO SILENT GREY — every disabled <option> carries a reason " +
+  check(!greyNoWhy.length, "NO SILENT GREY — every refused option carries a reason " +
     JSON.stringify(greyNoWhy.slice(0, 5)));
   check(!greyNotSaid.length, "...and the reason is IN THE WORDS THE OPTION SAYS " +
     JSON.stringify(greyNotSaid.slice(0, 5)));
@@ -673,7 +727,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   // because a quality menu lives in a <td> and its reason is printed once
   // under the table.
   const offNoWhy = sel.filter((s) => s.disabled && !s.why).map((s) => s.key);
-  check(!offNoWhy.length, "NO SILENT GREY — every disabled <select> carries data-why " +
+  check(!offNoWhy.length, "NO SILENT GREY — every refused menu carries data-why " +
     JSON.stringify(offNoWhy));
   /* REWRITTEN 2026-08-28 — same claim, asked where it can be true. It read:
      `const said = await p.evaluate((whys) => { const t =
@@ -705,15 +759,24 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      holds the sheet to, now on a <select> in a <td> where there is no fieldset
      to carry it. ---- */
   const dark = await p.evaluate(async () => {
-    const h = document.querySelector('#app select[data-sel="alphabet.harmony"]');
+    const h = document.querySelector('#app [data-sel="alphabet.harmony"]');
     if (!h) return "no harmony menu";
-    const os = [...h.options].filter((x) => !x.disabled && x.value !== "cycle");
-    const o = os.find((x) => x.value === "modal") || os[0];
+    /* THE SAME GESTURE, ON THE COMBO BOX (2026-09-02): write the option's own
+       VALUE into the control and fire `change`. ui/selects.js answers a
+       synthetic `change` on a shut combo exactly the way a `<select>` did, and
+       says so in its own comment ("A SYNTHETIC `change` IS A COMMIT"), so this
+       driver is unchanged in everything but where it reads the options from. */
+    const words = [...(h.closest(".nu-combo") || h.parentElement)
+      .querySelectorAll("li[role=option]")]
+      .filter((x) => x.getAttribute("aria-disabled") !== "true" &&
+                     !x.hasAttribute("data-placeholder"));
+    const os = words.filter((x) => x.dataset.v !== "cycle");
+    const o = os.find((x) => x.dataset.v === "modal") || os[0];
     if (!o) return "no non-cycle harmony";
-    h.value = o.value; h.dispatchEvent(new Event("change", { bubbles: true }));
+    h.value = o.dataset.v; h.dispatchEvent(new Event("change", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 300));
-    const q = [...document.querySelectorAll('#app select[data-sel^="alphabet.quality"]')];
-    return { said: o.value, n: q.length, off: q.filter((x) => x.disabled).length,
+    const q = [...document.querySelectorAll('#app [data-sel^="alphabet.quality"]')];
+    return { said: o.dataset.v, n: q.length, off: q.filter((x) => x.disabled).length,
              why: q.length ? q[0].dataset.why || "" : "",
              onPage: q.length ? document.body.innerText.includes(q[0].dataset.why || "\u0000") : false };
   });
@@ -786,7 +849,14 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
         ? [getComputedStyle(face, "::before").pointerEvents,
            getComputedStyle(face, "::after").pointerEvents]
         : null,
-      stillAMenu: !!document.querySelector('#app select[data-sel^="alphabet.key"]'),
+      /* `stillAMenu` READS BOTH SHAPES (2026-09-02). It asked for a
+         `<select>`, which after the combo-box reversal could only ever be
+         false — an excuse that cannot fail is the thing this file's own note
+         about deleted exemptions objects to. The key coming back as a MENU is
+         what must not happen, whichever element a menu is made of today. */
+      stillAMenu: !!document.querySelector(
+        '#app [data-sel^="alphabet.key"][role=combobox], ' +
+        '#app select[data-sel^="alphabet.key"]'),
     };
   });
   // ON BOTH PAGES, WITH NO RESERVATION. This block carried one for a day —
@@ -803,7 +873,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   if (!circ) {
     notes.push("     (the rest of check 7 needs the circle and there is none)");
   } else {
-  check(!circ.stillAMenu, "...and it is NOT also still a <select>");
+  check(!circ.stillAMenu, "...and it is NOT also still a menu");
   check(circ.legend.trim() === "key",
     "the circle is a fieldset that says what it is " + JSON.stringify(circ.legend.trim()));
 
@@ -941,7 +1011,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      that was already checked, so tapping Am while the record is already in a
      minor would prove nothing at all. */
   await p.evaluate(async () => {
-    const m = document.querySelector('#app select[data-sel="alphabet.mode"]');
+    const m = document.querySelector('#app [data-sel="alphabet.mode"]');
     m.value = "ionian"; m.dispatchEvent(new Event("change", { bubbles: true }));
   });
   await p.waitForTimeout(350);
@@ -977,7 +1047,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
       .filter((i) => i.checked).map((i) => i.value),
     ki: [...document.querySelectorAll('#app .nu-circ .nu-ki input')]
       .filter((i) => i.checked).map((i) => i.value),
-    menu: document.querySelector('#app select[data-sel="alphabet.mode"]').value,
+    menu: document.querySelector('#app [data-sel="alphabet.mode"]').dataset.v,
     y: window.scrollY }));
   check(two.key === "-3" && two.mode === "aeolian",
     "tapping Am answers TWO questions — the key of A, and minor " +
@@ -1001,7 +1071,7 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      why `minorish` asks the interval table for a minor third instead of asking
      for the word "aeolian". */
   await p.evaluate(() => {
-    const m = document.querySelector('#app select[data-sel="alphabet.mode"]');
+    const m = document.querySelector('#app [data-sel="alphabet.mode"]');
     m.value = "dorian"; m.dispatchEvent(new Event("change", { bubbles: true }));
   });
   await p.waitForTimeout(400);
@@ -1056,6 +1126,123 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   });
   }
 
+  /* ---- 7L THE MENU IS A COMBO BOX, AND IT IS ONE CONTROL ---------------
+     (Paul, 2026-09-02: "The combo boxes just don't work and are confusing. I
+     was expecting more of onfocus show custom dropdown then filter based on
+     input — one line instead of two.")
+
+     FOUR CLAIMS, ALL OFF THE ARTIFACT, and the fourth is the one that says
+     "one line instead of two": every menu in `#app` is a `role=combobox` that
+     OWNS a `role=listbox` through `aria-controls`, shut (`aria-expanded` is
+     false until a hand asks), and there is no second box above it — the
+     `.nu-combo-filter` the wrapper round drew is gone from the page, not just
+     from the source. */
+  const notCombo = sel.filter((s) => !s.multi && s.role !== "combobox")
+    .map((s) => s.key + " is a " + s.role);
+  check(!notCombo.length, "every menu in #app is an <input role=combobox> — " +
+    "also found: " + JSON.stringify(notCombo.slice(0, 6)));
+  const noList = sel.filter((s) => s.combo && s.controls !== "listbox")
+    .map((s) => s.key);
+  check(!noList.length, "...and each owns a role=listbox through aria-controls " +
+    JSON.stringify(noList));
+  const gaping = sel.filter((s) => s.combo && s.expanded !== "false").map((s) => s.key);
+  check(!gaping.length, "...shut until a hand asks for it (aria-expanded=false) " +
+    JSON.stringify(gaping));
+  const twoBoxes = await p.evaluate(() =>
+    document.querySelectorAll(".nu-combo-filter").length);
+  check(twoBoxes === 0, "...and the second box is GONE — \"one line instead of " +
+    "two\" (" + twoBoxes + " .nu-combo-filter on the page)");
+
+  /* ---- 7M IT OPENS ON A TAP, FILTERS ON A KEY, AND MOVES THE RECORD ----
+     The whole of Paul's sentence, driven as a thumb and a keyboard: tap the
+     field, the list is under it IN THE FLOW and does not scroll inside itself;
+     type three letters and the list is the words that match; Enter writes the
+     record. Then the half he did not have to ask for: after the redraw the
+     page puts the thumb back on the same control (`data-k`) and the list stays
+     SHUT — the 2026-08-25 bug ("When I select something the box just pops up
+     again") must not come back wearing a new element. */
+  await openTop("Key");
+  const wasMode = await p.evaluate(() => window.__D().alphabet.mode);
+  await p.click('#app [data-sel="alphabet.mode"]');
+  await p.waitForTimeout(250);
+  const opened = await p.evaluate(() => {
+    const f = document.querySelector('#app [data-sel="alphabet.mode"]');
+    const ul = (f.closest(".nu-combo") || f.parentElement).querySelector("ul.nu-combolist");
+    const fr = f.getBoundingClientRect(), ur = ul.getBoundingClientRect();
+    const cs = getComputedStyle(ul);
+    return { expanded: f.getAttribute("aria-expanded"), hidden: ul.hidden,
+             rows: [...ul.querySelectorAll("li[role=option]")].filter((l) => !l.hidden).length,
+             // IN THE FLOW: the list is under the field, it is not positioned
+             // out of the document, and it has no scroller of its own.
+             below: ur.top >= fr.bottom - 1, tall: ur.height > 0,
+             pos: cs.position, ownScroll: ul.scrollHeight > ul.clientHeight + 1,
+             sideways: document.documentElement.scrollWidth -
+                       document.documentElement.clientWidth };
+  });
+  check(opened.expanded === "true" && !opened.hidden && opened.rows > 1,
+    "a tap opens the list under the field " + JSON.stringify(
+      { expanded: opened.expanded, rows: opened.rows }));
+  check(opened.below && opened.tall && opened.pos === "static" &&
+        !opened.ownScroll && opened.sideways === 0,
+    "...IN THE FLOW: under the field, not positioned out of the page, and it " +
+    "never scrolls inside itself " + JSON.stringify(opened));
+  /* THE LETTERS ARE TAKEN OFF THE PAGE AND NOT TYPED INTO THIS FILE, because
+     the thing being proved is that the FILTER works and not that a mode is
+     spelled a particular way. A mode's WORD is not its value (`aeolian` is
+     labelled "natural minor", measured 2026-09-02), and a gate that had typed
+     a value would have proved the filter broken when it was the gate that was
+     wrong. So: three letters out of the middle of a word this control is
+     actually offering, and every word left standing must contain them. */
+  const seed = await p.evaluate(() => {
+    const f = document.querySelector('#app [data-sel="alphabet.mode"]');
+    const ul = (f.closest(".nu-combo") || f.parentElement).querySelector("ul.nu-combolist");
+    const other = [...ul.querySelectorAll("li[role=option]")]
+      .find((l) => l.getAttribute("aria-disabled") !== "true" &&
+                   !l.hasAttribute("data-placeholder") && l.dataset.v !== f.dataset.v &&
+                   l.textContent.trim().length >= 4);
+    return other ? { v: other.dataset.v, word: other.textContent.trim() } : null;
+  });
+  const letters = seed ? seed.word.slice(1, 4) : "";
+  await p.keyboard.type(letters);
+  await p.waitForTimeout(200);
+  const typed = await p.evaluate(() => {
+    const f = document.querySelector('#app [data-sel="alphabet.mode"]');
+    const ul = (f.closest(".nu-combo") || f.parentElement).querySelector("ul.nu-combolist");
+    return { typed: f.value,
+             shown: [...ul.querySelectorAll("li[role=option]")]
+               .filter((l) => !l.hidden).map((l) => l.textContent.trim()),
+             active: f.getAttribute("aria-activedescendant") };
+  });
+  const want = new RegExp(letters.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+  check(!!seed && typed.shown.length > 0 && typed.shown.length < 12 &&
+        typed.shown.every((w) => want.test(w)) && !!typed.active,
+    "typing " + JSON.stringify(letters) + " filters the list to the words that " +
+    "carry it, and the first match is active " + JSON.stringify(typed));
+  await p.keyboard.press("Enter");
+  await p.waitForTimeout(450);
+  const committed = await p.evaluate(() => {
+    const f = document.querySelector('#app [data-sel="alphabet.mode"]');
+    const ul = (f.closest(".nu-combo") || f.parentElement).querySelector("ul.nu-combolist");
+    return { mode: window.__D().alphabet.mode, word: f.value, v: f.dataset.v,
+             expanded: f.getAttribute("aria-expanded"), hidden: ul.hidden,
+             focus: document.activeElement === f,
+             // and every word is back on the page: a filter that outlived its
+             // own list would hide options from every gate that reads them
+             rows: [...ul.querySelectorAll("li[role=option]")].filter((l) => !l.hidden).length,
+             all: ul.querySelectorAll("li[role=option]").length };
+  });
+  check(!!seed && committed.mode !== wasMode && committed.v === committed.mode &&
+        want.test(committed.word),
+    "Enter writes the record and the field says the word " +
+    JSON.stringify({ was: wasMode, now: committed.mode, word: committed.word }));
+  check(committed.focus && committed.expanded === "false" && committed.hidden,
+    "...and after the redraw the thumb is back on the control with the list " +
+    "SHUT — the box does not pop up again " + JSON.stringify(
+      { focus: committed.focus, expanded: committed.expanded }));
+  check(committed.rows === committed.all,
+    "...and the filter did not outlive its list: all " + committed.all +
+    " words are back on the page");
+
   /* ---- 8 EVERY MENU SAYS WHAT IT IS ---- */
   const unnamed = sel.filter((s) => !s.name).map((s) => s.key);
   check(!unnamed.length, "every menu has an accessible name " + JSON.stringify(unnamed));
@@ -1063,13 +1250,16 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   /* ---- 9 CHOOSING ONE MOVES THE RECORD — driven, not asked ---- */
   const before = await p.evaluate(() => window.__D().alphabet.mode);
   const moved = await p.evaluate(() => {
-    const s = document.querySelector('#app select[data-sel="alphabet.mode"]');
+    const s = document.querySelector('#app [data-sel="alphabet.mode"]');
     if (!s) return null;
-    const o = [...s.options].find((x) => !x.disabled && x.value !== s.value);
+    const o = [...(s.closest(".nu-combo") || s.parentElement)
+      .querySelectorAll("li[role=option]")]
+      .find((x) => x.getAttribute("aria-disabled") !== "true" &&
+                   !x.hasAttribute("data-placeholder") && x.dataset.v !== s.dataset.v);
     if (!o) return null;
-    s.value = o.value;
+    s.value = o.dataset.v;
     s.dispatchEvent(new Event("change", { bubbles: true }));
-    return o.value;
+    return o.dataset.v;
   });
   await p.waitForTimeout(300);
   const after = await p.evaluate(() => window.__D().alphabet.mode);
@@ -1077,8 +1267,10 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     "choosing a mode moved the document " + before + " -> " + after +
     " (asked for " + moved + ")");
   const held = await p.evaluate(() => {
-    const s = document.querySelector('#app select[data-sel="alphabet.mode"]');
-    return s ? s.value : null;
+    const s = document.querySelector('#app [data-sel="alphabet.mode"]');
+    // `data-v` is what a combo box is standing on; `.value` is the word it
+    // prints, which is the same fact spelled for a reader.
+    return s ? s.dataset.v : null;
   });
   check(held === after, "...and the redrawn menu shows it " + JSON.stringify(held));
 
@@ -1127,11 +1319,17 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   if (REAL) {
     const three = await p.evaluate(async () => {
       const tap = (k, v) => {
-        const s2 = document.querySelector('select[data-sel="' + k + '"]');
+        const s2 = document.querySelector('[data-sel="' + k + '"]');
         if (s2) {
-          const o = [...s2.options].find((x) => x.dataset.v === v);
-          if (!o || o.disabled) return false;
-          s2.value = o.value;
+          // a combo box's words are its <li role=option>s; a <select>'s are
+          // its <option>s. Both carry `data-v`, which is the option's own word
+          // and is what this walk has always addressed.
+          const box = s2.closest(".nu-combo") || s2.parentElement;
+          const o = [...box.querySelectorAll("li[role=option]"),
+                     ...s2.querySelectorAll("option")]
+            .find((x) => x.dataset.v === v);
+          if (!o || o.disabled || o.getAttribute("aria-disabled") === "true") return false;
+          s2.value = o.dataset.v;
           s2.dispatchEvent(new Event("change", { bubbles: true }));
           return true;
         }
@@ -1172,12 +1370,13 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
       await new Promise((r) => setTimeout(r, 250));
       const scope = chip.dataset.k.slice(5);
       const lit = document.querySelector('.nu-sheet[data-sheet="prod.bare"]');
-      const men = document.querySelector('select[data-sel="prod.bare"]');
+      const men = document.querySelector('[data-sel="prod.bare"]');
       const btn = document.querySelector('[data-k="prod.bare"]');
       return { scope, lit: !!lit,
                litN: lit ? lit.querySelectorAll(".nu-opt").length : 0,
                menu: !!men,
-               menuN: men ? men.querySelectorAll("option:not([data-placeholder])").length : 0,
+               menuN: men ? (men.closest(".nu-combo") || men)
+                 .querySelectorAll("li[role=option]:not([data-placeholder]),option:not([data-placeholder])").length : 0,
                button: !!btn && btn.tagName === "BUTTON",
                word: btn ? btn.textContent.trim() : null };
     });

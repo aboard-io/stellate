@@ -280,6 +280,58 @@ const J = (x) => JSON.parse(JSON.stringify(x));
          test/selects.js already took for `+ drums`. */
       const top = async (n) => { await p.evaluate((x) => window.__eightTab(x), n);
         await p.waitForTimeout(500); };
+
+      /* ---- SAY A WORD TO A COMBO BOX (2026-09-02) ----------------------
+         Paul, after using the composer: *"The combo boxes just don't work and
+         are confusing. I was expecting more of onfocus show custom dropdown
+         then filter based on input — one line instead of two."* Every menu
+         ui/selects.js draws is one control now: an `<input role=combobox>`
+         with a `<ul role=listbox>` under it, in the flow, opened by a hand.
+
+         SO THE GATE MAKES THE GESTURE A HAND MAKES, which is the whole of
+         test-the-artifact and is stronger than what it replaces: this file
+         used to write `select.value = "o"` and fire `change`, which proved the
+         page's LISTENER worked and nothing about whether the control could be
+         used. Tap it, type until the word is the only one left, press Enter.
+         ONE helper, used by every combo tap in this file, because two copies
+         of a driver drift and then one of them is quietly testing a widget
+         that is not on the page any more.
+
+         THE WORD, NOT THE VALUE. A combo filters on the label a reader sees
+         (`natural minor`, not `aeolian`), so the word is read OFF THE PAGE
+         from the option carrying the value asked for, and the arrows finish
+         the job when the typed letters leave more than one word standing. */
+      const sayCombo = async (sel, value) => {
+        const word = await p.evaluate(([q, v]) => {
+          const f = document.querySelector(q);
+          if (!f) return null;
+          const li = [...(f.closest(".nu-combo") || f.parentElement)
+            .querySelectorAll("li[role=option]")].find((l) => l.dataset.v === v);
+          return li ? li.textContent.trim() : null;
+        }, [sel, String(value)]);
+        if (word == null) return false;
+        await p.click(sel);
+        await p.waitForTimeout(140);
+        if (word) await p.keyboard.type(word);
+        await p.waitForTimeout(140);
+        // the typed word may leave several standing ("o" is inside "o" alone,
+        // but "at the fifth" is inside "below, at the fifth" too), so walk to
+        // the one that was asked for rather than trusting the first match
+        for (let i = 0; i < 40; i++) {
+          const on = await p.evaluate(([q, v]) => {
+            const f = document.querySelector(q);
+            const id = f && f.getAttribute("aria-activedescendant");
+            const li = id && document.getElementById(id);
+            return li ? li.dataset.v === v : null;
+          }, [sel, String(value)]);
+          if (on === null || on === true) break;
+          await p.keyboard.press("ArrowDown");
+          await p.waitForTimeout(40);
+        }
+        await p.keyboard.press("Enter");
+        await p.waitForTimeout(500);
+        return true;
+      };
       const band = async () => { await top("Band"); };
       /* ...AND `performance` IS INSIDE `Structure` SINCE 2026-09-02. Paul:
          *"Sections/Structure has the same challenges. … Bring performance into
@@ -313,6 +365,9 @@ const J = (x) => JSON.parse(JSON.stringify(x));
         await seat(dsp);
         const r = await p.evaluate(() => {
           const t = document.querySelector("table.nu-knobs");
+          /* A REFUSED COMBO BOX IS A DISABLED `<input>` (2026-09-02), so this
+             query needed no third selector: the field ui/selects.js draws
+             carries the same `data-why` the `<select>` did. */
           const off = t ? [...t.querySelectorAll("input:disabled,select:disabled")] : [];
           const h3 = [...document.querySelectorAll("#app h3")].map((x) => x.textContent);
           return { has: !!t, silent: off.filter((c) => !c.dataset.why).length,
@@ -386,17 +441,27 @@ const J = (x) => JSON.parse(JSON.stringify(x));
         return true;
       });
       await p.waitForTimeout(600);
-      const vow2 = await p.evaluate(() => {
-        const sels = [...document.querySelectorAll('select[data-sel^="vow"]')];
-        if (sels.length > 1) { sels[1].value = "o";
-          sels[1].dispatchEvent(new Event("change", { bubbles: true })); }
-        return sels.length;
-      });
+      /* THE SECOND SYLLABLE IS SAID THROUGH ITS OWN CONTROL. It read
+         `sels[1].value = "o"` + a synthetic `change`, which the combo box
+         still answers (ui/selects.js says so at its own listener) — but this
+         gate is one of the two that has to prove the WIDGET works, so it makes
+         the gesture instead. `data-sel` did not move: the second syllable is
+         still `vow1|<voice>`, addressed by its key rather than by its
+         position, because an address does not move. */
+      const vowKeys = await p.evaluate(() =>
+        [...document.querySelectorAll('[data-sel^="vow"]')].map((s) => s.dataset.sel));
+      const vow2 = vowKeys.length;
+      if (vowKeys.length > 1)
+        await sayCombo('[data-sel="' + vowKeys[1] + '"]', "o");
       await p.waitForTimeout(600);
       const vow3 = await p.evaluate(() => {
         const v = window.__eightDoc().voices.find((x) => x.kind === "line");
         return { word: v.set && v.set.vowels,
-                 sels: [...document.querySelectorAll('select[data-sel^="vow"]')].map((s) => s.value) };
+                 // `data-v` is what a combo box is standing on; `.value` is the
+                 // word it prints for a reader. Here they are the same letter,
+                 // and the address is the honest one to read.
+                 sels: [...document.querySelectorAll('[data-sel^="vow"]')]
+                   .map((s) => s.dataset.v) };
       });
       /* 6f IS A CHECK ABOUT THE SCORE, so it looks at the score. `.nu-syll` is
          drawn by the deck (`#scoredeck`), which is the Score tab; read on the

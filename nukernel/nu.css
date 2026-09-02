@@ -6492,3 +6492,137 @@ table.nu-trims{ color: var(--ink); }
    inherits no gap from anything. One declaration, and the same `--s2` step
    every other label/control pair on the page uses. */
 .nu-motifname{ margin-inline-start: var(--s2); }
+
+/* ======================================================================
+   WAVE 4B — THE COMBOBOX (2026-09-02)
+   ======================================================================
+   Paul, after using the composer on staging: *"The combo boxes just don't work
+   and are confusing. I was expecting more of onfocus show custom dropdown then
+   filter based on input — one line instead of two."*
+
+   THE BLOCK THIS AMENDS IS `.nu-combo`, ABOVE, AND IT IS LEFT WHERE IT STANDS.
+   Its argument — the page's own arrow instead of six platform arrows, the
+   detent colours, a filter over a long list — is unchanged and is exactly what
+   is drawn here. What its declarations assumed is gone: there is no `<select>`
+   inside `.nu-combo` any more and no `<input type=search>` above one, so every
+   rule up there that names `> select` or `.nu-combo-filter` now matches
+   nothing. They are not deleted (this wave appends; the parent merges) — they
+   are SUPERSEDED here, name for name, and the two-line block they dressed is
+   one line now:
+
+       .nu-combo  >  input.nu-combofield[role=combobox]
+                     ul.nu-combolist[role=listbox][hidden]
+
+   THE LIST IS IN THE FLOW. No `position: absolute`, no `max-block-size`, no
+   `overflow` anywhere in this block, and that is the load-bearing absence: a
+   menu on this page may not scroll inside itself, so an open list GROWS THE
+   BOX and the page grows with it. 108 instruments make a long page, which is
+   the one thing this surface is allowed to be.
+
+   WHAT SIZES THE BOX. The field is the box: `.nu-combo` is capped at the same
+   `min(100%, 30ch)` the `<select>` was (its own paragraph above carries the
+   measurement — "a menu stretched across a 1400px desktop is a 1345px control
+   holding one word"), and the field fills it. The cap is stated as
+   `inline-size` and not only as a maximum so the width does not JUMP when the
+   list opens: a shut list is `display:none` and contributes nothing to the
+   grid's track, so a wrapper sized to its content would be one width closed and
+   another open, under the finger that just opened it. */
+
+/* ---- the field ------------------------------------------------------- */
+/* THE PLATE IS THE `<select>`'s PLATE, declaration for declaration (nu.css's
+   `select{…}` rule near the top of this file), because it is the same control
+   wearing a different element and it may not read as a different species. What
+   it does NOT take from `input[type=text]` is the "a cut, not a plate" face:
+   you do not write into this one, you choose in it. */
+.nu-combofield{
+  inline-size: 100%; min-inline-size: 0;
+  font-size: var(--t3);              /* 16px: the iOS floor, never a --t under it */
+  font-weight: var(--btn-fw);
+  background: var(--panel);
+  border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  min-block-size: var(--tap); block-size: var(--tap);
+  /* room for the triangle on the end side, the same reserve the select had */
+  padding-inline: var(--s3) calc(var(--s3) + 1.1em);
+  text-overflow: ellipsis; cursor: pointer; }
+/* READONLY IS THE SHUT STATE AND IT LOOKS LIKE ONE. ui/selects.js clears
+   `readonly` at the moment the list opens, which is the moment typing starts
+   meaning something, so the caret appears exactly when it can be used. */
+.nu-combofield:not(:read-only){ cursor: text; }
+.nu-combofield:hover{ background: var(--flag-tint); }
+.nu-combofield:disabled{ color: var(--faint); background: var(--well);
+  border-color: var(--faint); cursor: default; }
+
+/* ---- the detent, on the field --------------------------------------- */
+/* `.nu-combo.is-seated > select` / `.nu-combo.is-said > select` are superseded:
+   the classes are on the FIELD now (ui/selects.js `paintDetent`), because the
+   field is the element that carries the word. Same two colours, same argument:
+   dim for the default the record dealt, the hand for a value you said. */
+.nu-combofield.is-seated{ color: var(--dim); }
+.nu-combofield.is-said{ color: var(--hand); font-weight: var(--fw-label); }
+.nu-combo:has(> .nu-combofield.is-said)::after{ color: var(--hand); }
+.nu-combo:has(> .nu-combofield:disabled)::after{ color: var(--faint); }
+
+/* ---- the arrow rides the FIELD's row, not the box's foot ------------- */
+/* `.nu-combo::after` above is `inset-block-end: 0`, which was the bottom of a
+   box that held only the menu. The box grows downward now, so the same
+   declaration would walk the triangle to the bottom of a 108-row list. It is
+   re-anchored to the top — the field is always the first row — and it turns
+   over when the list is open, which is the one thing on the page that says
+   "this is open" without a word. */
+.nu-combo::after{ inset-block-start: 0; inset-block-end: auto; }
+.nu-combo.is-open::after{ transform: scaleY(-1); }
+
+/* ---- the box -------------------------------------------------------- */
+.nu-combo{ gap: 0; }
+.nu-sel > label > .nu-combo{ flex: 0 1 auto;
+  inline-size: min(100%, 30ch); max-inline-size: min(100%, 30ch); }
+
+/* ---- the list ------------------------------------------------------- */
+/* One plate under the field, square-shouldered at the top so the two read as
+   one control rather than as two stacked plates. No scroller: see the header. */
+.nu-combolist{ list-style: none; margin: 0; padding: 0;
+  background: var(--panel);
+  border: var(--bw) solid var(--ink);
+  border-start-start-radius: 0; border-start-end-radius: 0;
+  border-end-start-radius: var(--r1); border-end-end-radius: var(--r1);
+  border-block-start: 0; }
+.nu-comboopt{ display: flex; align-items: center;
+  min-block-size: var(--tap); padding: var(--s2) var(--s3);
+  line-height: 1.25; cursor: pointer; }
+.nu-comboopt + .nu-comboopt{ border-block-start: var(--bw) solid var(--well); }
+.nu-comboopt:hover{ background: var(--flag-tint); }
+/* THE WORD YOU ARE STANDING ON WEARS THE HAND CAP, which is what `.is-on`
+   means everywhere else on this page (`.nu-opt`, an open tab, a pressed mark);
+   the keyboard's own position is the flag, which is what hover is, so the two
+   never claim the same thing. */
+.nu-comboopt.is-on{ background: var(--hand); color: var(--panel); }
+.nu-comboopt.is-active{ background: var(--flag-tint); }
+.nu-comboopt.is-on.is-active{ background: var(--hand); color: var(--panel);
+  outline: var(--bw-hard) solid var(--flag); outline-offset: calc(-1 * var(--bw-hard)); }
+/* GREYED, NOT HIDDEN — the global `.is-off{ opacity: .45 }` and `.is-quiet`
+   dress these for free, exactly as they dressed `option:disabled`. All this
+   adds is that a refused word does not pretend to be tappable. */
+.nu-comboopt.is-off{ cursor: default; }
+.nu-comboopt.is-off:hover, .nu-comboopt.is-quiet:hover{ background: transparent; }
+/* THE GROUP HEADING — what `<optgroup>` drew, in the page's own machine label
+   (`ideal/design-system.html:60-63`, ".lab — 11px mono 700 caps, dim"). */
+.nu-combogrp{ padding: var(--s3) var(--s3) var(--s1);
+  font: 700 var(--t1)/1.2 var(--mono); letter-spacing: .08em;
+  text-transform: uppercase; color: var(--dim); }
+.nu-combonone{ padding: var(--s2) var(--s3); }
+
+/* ---- the compact form, which is the same widget in a cell ------------ */
+/* `selectEl` returns `.nu-combo.is-compact`, so the four places a BARE menu
+   used to sit keep their measurements — the cell's 9em cap and its whole
+   argument are in `td > select`'s own block above, and are restated here on
+   the element that now stands there. */
+td > .nu-combo{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
+.nu-slotrow .nu-combo{ flex: 1 1 auto; min-inline-size: 0; max-inline-size: 100%; }
+.nu-vow .nu-combo{ min-inline-size: 4.5em; }
+.nu-sgrid td > .nu-combo{ min-inline-size: 7em; }
+/* dim is derived, bright is set — `gridCell` puts `.is-derived` on the widget
+   it is handed, which is the wrapper now and was the `<select>` before */
+.nu-sgrid td > .nu-combo.is-derived > .nu-combofield{
+  font-weight: var(--fw-body); opacity: .78; }
+.nu-sgrid tbody tr:has(mark) > td > .nu-combo > .nu-combofield{
+  border-color: var(--clock); }
