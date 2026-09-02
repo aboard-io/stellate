@@ -52,6 +52,14 @@
     isNode ? require("./ideas-kit.js") : root.NuIdeas,
     isNode ? require("./kernel.js")    : root.NuKernel,
     isNode ? require("./askable.js")   : root.NuAskable,
+    // INSTRUMENTS, FOR THE ONE PREDICATE THIS FILE CANNOT DERIVE (2026-09-02).
+    // `instruments.js sampledId` is the page's one owner of "is this id a
+    // RECORDING", and its complement is "the engine models it" — see the
+    // `instrOpts` note below for the measurement that says so. It is a UMD
+    // file loaded at index.html:487, forty-three lines before this one, so
+    // `root.NuInstruments` is there at factory time on the page and `require`
+    // answers in node.
+    isNode ? require("./instruments.js") : root.NuInstruments,
     // PRECOMPOSE IS REACHED LAZILY, AND THAT IS THE WHOLE REASON THIS IS A
     // FUNCTION. `precompose.js` requires THIS file (genreToDocument takes a
     // rules list and resolves it through `applyRules`), so a load-time require
@@ -62,7 +70,7 @@
   if (isNode) module.exports = api;
   else root.NuRules = api;
 })(typeof self !== "undefined" ? self : this,
-   function (NG, NF, NC, Id, K, NuAskable, PRE) {
+   function (NG, NF, NC, Id, K, NuAskable, NI, PRE) {
   "use strict";
 
   const { GENRES, MODES, SCALES, MODELABEL, SCALELABEL, PROGS, HARMONYLABEL } = NG;
@@ -110,6 +118,50 @@
      would be a fourth thing to keep in step. */
   const opts = (table, label) => Object.keys(table)
     .map((k) => ({ value: k, label: (label && label[k]) || String(table[k]) }));
+
+  /* ---------- WHAT A CHAIR MAY HOLD, NATIVE FIRST (2026-09-02) -----------
+     Paul, wave 4 §10: *"When you define a genre you seem to only allow the
+     sample instrument not the faust instrument like on high nrg… that's the
+     opposite those should be chosen after native"*.
+
+     He is right about the reading and the menu was right about the ids: every
+     one of `hinrg`'s three (`solo_vox`, `polysynth`, `saw_wave`) IS a Faust
+     voice — `polysynth` is the Juno-60, `saw_wave` is the supersaw, `solo_vox`
+     is the modelled throat — and `NF.INSTRCHOICES` prints all 119 in one flat
+     alphabet with nothing to say which. A menu that cannot tell a model from a
+     recording is a menu that offers only recordings, because that is what 86
+     of the 119 are and what the eye finds first.
+
+     ONE OWNER FOR "IS THIS ID NATIVE", AND IT IS NOT A LIST TYPED HERE.
+     `instruments.js sampledId` is the page's predicate for "this id is a
+     recording the sampler plays", and its own header records the gate that
+     pins it to the engine: "over every INSTRCHOICES id, sampledId(id) ===
+     (recipeFor's source starts `sampler:`)". So NATIVE is its complement, and
+     it cannot drift from `audio/to-engine.js` without that gate going red.
+     MEASURED here 2026-09-02, over all 119 ids, `!sampledId(id)` against
+     `recipeFor("line", {instr: id}, {}, un)` routing to a model with nothing
+     unrouted: 33 native, 86 sampled, ZERO disagreements. Every id in both
+     groups is an id `precompose.test.js` G11a already walks against the
+     bridge, which is why the menu can be reordered without widening what it
+     promises — nothing is added and nothing is taken away.
+
+     THE FLEET'S OWN DSP NAMES ARE NOT IN HERE, and that is the same
+     measurement from the other side. `to-engine.js SYNTH_NAMES()` lists 28
+     models (`juno60`, `tb303`, `modeld` …), and as an `instr` value 27 of the
+     28 come back `unrouted` from `recipeFor` — they are what a chair's
+     `synth` block names, not what its `instr` names, and `document.js
+     nativeOf` reaches them only when a caller passes the fleet. Offering one
+     here would be offering a genre row a word that composes on the page and
+     silences the chair anywhere else, which is this box's characteristic bug.
+     (`erhu` is the single id that is spelled both ways; it is in INSTRCHOICES
+     and arrives through the native half below like any other model.) */
+  const instrOpts = () => {
+    const ids = Object.keys(NF.INSTRCHOICES);
+    const say = (g) => (id) => ({ value: id, label: NF.INSTRCHOICES[id], group: g });
+    const sampled = (id) => !!(NI && NI.sampledId) && NI.sampledId(id);
+    return [...ids.filter((id) => !sampled(id)).map(say("native")),
+            ...ids.filter(sampled).map(say("sampled"))];
+  };
   /* a value's own word, read back out of the table that owns it */
   const wordIn = (table, label, v) => (label && label[v]) ||
     (table && table[v] != null ? String(table[v]) : String(v));
@@ -451,8 +503,10 @@
           ? [w("they hold "), val(i.map((x) => NF.INSTRCHOICES[x] || x).join(", "), i.slice())]
           : [w("they hold "), val("nothing — nobody is seated", null)]; },
       read: (g) => g.instr,
+      // NATIVE FIRST, THEN THE RECORDINGS — `instrOpts` above carries the
+      // sentence of Paul's that put them in that order and the measurement.
       edit: { kind: "list", of: "enum", count: (g) => Math.max(1, g.voices || 1),
-        values: () => opts(NF.INSTRCHOICES, NF.INSTRCHOICES) },
+        values: () => instrOpts() },
       // instruments.js:39 THROWS on a row with no instr, so the write never
       // empties it: it writes the array or leaves what stood.
       write: (r, v) => { if (Array.isArray(v) && v.length) writeAt(r, "instr", v.slice());

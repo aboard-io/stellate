@@ -46,11 +46,45 @@
 // A row with nothing but a slot ("the record may be sung") has no words to
 // elide, so it falls back to the rule's own `head`.
 //
+// ---- ...AND THE ELISION IS REVERSED, 2026-09-02 (wave 4 §4) ----------------
+// THE PARAGRAPH ABOVE STANDS AS WRITTEN and everything it says about the diet
+// is still true — which is why the fix below keeps its one load-bearing move
+// (the sentence lives inside a `<label>`, where the diet does not count it and
+// a reader hears it as the control's name) and reverses only the elision.
+//
+// Paul, after using the deployed page: *"The genre editor is great. It can be
+// a lot tighter though — it has text all over the place. Look at it from the
+// point of view of a user just seeing it for the first time."*
+//
+// Measured on the rendered panel at 390 before this round: 27 rows, 4117px of
+// deck, row heights from 33 to 478px, and every editable row three stacked
+// things — a bold question line, a control line under it, and (on twelve of
+// them) a tier line under that. The hole was the whole problem: a sentence
+// with a `…` in it is a sentence you read twice, once for the words and once
+// for the answer sitting somewhere below them.
+//
+// SO THE CONTROL SITS IN THE SENTENCE. `r.parts` was always the right shape
+// for this — `{w}` is a word and `{w, v, slot}` is the value — and the drawing
+// now walks it in order, printing the words and putting the widget AT the slot
+// instead of a `…`. One line, one sentence, one row. What else left the row:
+//   · the TIER WORD is not printed at all any more, per row or per axis. It
+//     rides as `data-tier` (data, which every gate reads and which costs no
+//     words) and as `data-say`, the hold/hover explainer `ui/glyph.js wireSay`
+//     already runs for the whole page. The 2026-09-02 move that put it once
+//     per axis instead of once per row was right and did not go far enough.
+//   · a REFUSED said-only row is the row greyed, with `data-why` on it, and
+//     no second line spelling the reason out — the reason is in `data-why`
+//     (where a gate reads it) and in `data-say` (where a thumb does).
+//   · the seven MOTIF lines collapse into ONE row, "the motifs are written in
+//     the tracker", with the read-only list behind `data-say`.
+//   · the palette is one compact `+` menu at the block's foot.
+//
 // ---- FOUR SHAPES OF ROW, AND THE SHAPE IS READ OFF `edit`, NEVER OFF A NAME -
-//   number / enum / flag / pair  ONE label, the elided sentence, one or two
-//                                controls on line two.
-//   map                          a heading and one control per KEY the row's
-//                                own plan owns (`edit.keys`).
+//   number / enum / flag / pair  ONE label, the sentence, one control standing
+//                                in each of the sentence's own slots.
+//   map                          one control per KEY the row's own plan owns
+//                                (`edit.keys`), all of them at the one slot,
+//                                each wearing its key as a small word.
 //   list with a `count`          POSITIONAL — one menu per chair, because
 //                                `part` and `instr` are indexed by voice and a
 //                                row of checkboxes cannot say "voice 0 holds a
@@ -69,9 +103,12 @@
 // through `ctx.setDocument` (restarting the transport if it was running),
 // `render` writes the list and calls `ctx.changed()` (`document.js toGenre`
 // spreads the resolved row under the document on the next frame), `row` moves
-// nothing that plays. The tier's own WORD is printed on every row before you
-// press it, which is the whole of what "it's a code-editing experience" has to
-// mean on a page that is playing while you edit.
+// nothing that plays. The tier rides every row as `data-tier` and is the first
+// half of its `data-say`, so what an edit will do to a record that is playing
+// is one hold away — which is the whole of what "it's a code-editing
+// experience" has to mean on a page that is playing while you edit.
+// (IT USED TO BE PRINTED ON EVERY ROW, then once per axis, and now on none:
+// Paul, wave 4 §4, *"it has text all over the place"*.)
 //
 // GENRES IS NEVER MUTATED. `applyRules` copies (rules.js §5), so share links
 // and `test/precompose.test.js` G6a's purity sweep both stand; the gate
@@ -85,19 +122,18 @@ import { el, kinOf } from "./xtab.js";
 /* ---------- the three-liner every view in this directory carries ---------- */
 const txt = (s) => document.createTextNode(String(s));
 
-/* THE SENTENCE AS A LABEL. The value is elided to a `…` so the words read as a
-   sentence with a hole in it and the control under them fills it. A row whose
-   sentence is ENTIRELY its value has no hole to leave, so it takes the rule's
-   own head — the two or three words `nukernel/rules.js` already keeps for
-   exactly this (`head: "singing"`, `head: "the chips"`). */
-const HOLE = "…";
-function sayLabel(r) {
-  const s = r.parts.map((p) => (p.slot ? HOLE : p.w)).join("")
-    .replace(/\s+/g, " ").trim();
-  return /[a-z0-9]/i.test(s.split(HOLE).join("")) ? s : r.head;
-}
-/* the whole sentence with its values IN, for the rows that are said and not
-   edited — a refusal prints what it is refusing */
+/* THE HOLE IS GONE (2026-09-02, wave 4 §4). This file kept a `sayLabel` that
+   replaced the value with a `…` so the words could read as a sentence with a
+   gap in it and the control under them could fill it. The control is IN the
+   sentence now — `sentenceInto` walks the parts and builds at the slot — so
+   there is no gap to spell and no second reading of the same line. What the
+   elided form was also doing, and what has NOT gone, is naming the control:
+   `sayFlat(r)` (the sentence with its values in) is what every widget on a
+   rule row takes as its `aria-label`, so a reader still hears the whole
+   sentence and not the field's short head.
+
+   the whole sentence with its values IN, for the rows that are said and not
+   edited — and for every control's accessible name */
 const sayFlat = (r) => r.parts.map((p) => p.w).join("").replace(/\s+/g, " ").trim();
 
 const slotsOf = (r) => r.parts.filter((p) => p.slot);
@@ -144,9 +180,17 @@ export function mountRules(host, ctx) {
      in one spelling and the label in another). And the sub is dropped when it
      would only say the word again. ui/eight.js nameRecord carries the same
      rule for the foot plate; the two must agree. */
+  /* ONE LINE, AND THEN THE LINEAGE UNDER IT (2026-09-02, wave 4 §4: *"the name
+     plate is one line"*). It was a wrapping flex row, so at 390 the name, the
+     place-and-year and the lineage came out as three ragged lines of ink. The
+     name and its place-year are now one nowrap line that ellipsises rather
+     than wraps, and the lineage is the dim line under it — the same two facts,
+     in the two lines the plate is for. */
   const word = wiki ? String(wiki.title).replace(/_/g, " ") : (base.label || gk);
-  plate.append(el("b", word));
-  if (base.label && base.label !== word) plate.append(el("small", " · " + base.label));
+  const line1 = el("span", null, "nu-ruleline");
+  line1.append(el("b", word));
+  if (base.label && base.label !== word) line1.append(el("small", " · " + base.label));
+  plate.append(line1);
   const kin = kinOf(gk, base);
   const kinWords = [];
   if (kin.parents.length)
@@ -154,8 +198,16 @@ export function mountRules(host, ctx) {
   if (kin.kids.length)
     kinWords.push("into " + kin.kids.slice(0, 4).map((p) => p[0]).join(", ") +
       (kin.kids.length > 4 ? " +" + (kin.kids.length - 4) : ""));
-  if (kinWords.length)
-    plate.append(el("small", kinWords.join(" · "), "nu-rulekin"));
+  if (kinWords.length) {
+    /* ONE LINE, AND THE REST BEHIND A HOLD. The lineage is a nowrap line that
+       ellipsises (a plate whose height depends on how many children a genre
+       had is a plate that is a different height on every record), so the whole
+       of it rides `data-say` — ui/glyph.js's page-wide hover/hold popover,
+       which is where this panel now puts every word it does not print. */
+    const k = el("small", kinWords.join(" · "), "nu-rulekin");
+    k.dataset.say = kinWords.join(" · ");
+    plate.append(k);
+  }
   ax.append(plate);
 
   /* ================= WHERE AN EDIT LANDS ==================================
@@ -245,11 +297,28 @@ export function mountRules(host, ctx) {
   /* ONE MENU, drawn by ui/selects.js and by nothing else — `.nu-combo`, the
      seated/said detent, the >24-option filter and the NO SILENT GREY throw all
      come with it. `spec.why` is what refuses the whole control and prints the
-     reason where a sighted reader and a gate can both have it. */
-  const menu = (parent, key, label, options, value, set, why) =>
-    selectField(parent, { key, label, options, value,
-                          why: why || null, ungated: true,
-                          set: (v) => set(v) });
+     reason where a sighted reader and a gate can both have it.
+
+     IT IS BUILT INTO A BIN AND MOVED (2026-09-02). `selectField` appends a
+     `<p class="nu-sel">` carrying its own question on line one and the menu on
+     line two, which is exactly the two-line field this round is taking out of
+     the panel: the question is the SENTENCE now and the menu stands in it. So
+     the widget is built where it always was — one builder, one look, one
+     throw — and only the `.nu-combo` (with any `.nu-why` it grew) is lifted
+     out and dropped at the slot. The bin is detached, so `selectField`'s own
+     `document.querySelector` duplicate-key check still sees the live page and
+     nothing half-built is ever in it. */
+  function menu(parent, key, label, options, value, set, why) {
+    const bin = document.createElement("div");
+    const p = selectField(bin, { key, label, options, value,
+                                 why: why || null, ungated: true,
+                                 set: (v) => set(v) });
+    const inner = p.querySelector("label");
+    const combo = inner && inner.querySelector(".nu-combo");
+    if (combo) parent.append(combo);
+    for (const wn of p.querySelectorAll(".nu-why")) parent.append(wn);
+    return combo;
+  }
 
   /* ---------- the option lists, all four of them off `edit` --------------- */
   const enumOpts = (r) => (r.edit.values ? r.edit.values(row, gk) : [])
@@ -327,100 +396,152 @@ export function mountRules(host, ctx) {
     return null;
   }
 
-  /* ================= ONE ROW ============================================== */
-  function ruleRow(parent, r, major) {
+  /* ================= ONE ROW =============================================
+     ONE SENTENCE, WITH THE CONTROLS STANDING IN IT (2026-09-02, wave 4 §4 —
+     Paul: *"It can be a lot tighter though — it has text all over the place.
+     Look at it from the point of view of a user just seeing it for the first
+     time."*). The row is a single `<label>`: the rule's own `parts`, in order,
+     words as `<span class="nu-w">` and the widget where the slot is. Nothing
+     else goes on the row — not the tier, not the refusal's sentence, not a
+     heading over a group of controls — because everything else the row has to
+     say is either DATA a gate reads (`data-tier`, `data-why`) or an explainer
+     a hold opens (`data-say`, ui/glyph.js's page-wide popover).
+
+     STILL INSIDE A `<label>`, and that is the one thing the old drawing had
+     right and this must not lose: `test/text-diet.test.js`'s SKIP list holds
+     `label`, so thirty-eight sentences cost the diet nothing, and a screen
+     reader announces the sentence as the first control's name. A `<p>` here
+     would put about a thousand characters of prose on a page whose whole
+     budget is 1,169. */
+  function ruleRow(parent, r) {
     const div = el("div", null, "nu-rule");
     div.dataset.rule = r.field;
-    /* THE TIER IS ON EVERY ROW AS DATA AND ON ALMOST NONE AS WORDS
-       (2026-09-02) — see `tierInto` for the measurement that moved it. */
     div.dataset.tier = r.rederive;
     const e = r.edit;
     const why = r.why || null;
+    /* WHAT A HOLD SAYS: the refusal first where there is one, then the tier —
+       which is the whole of what the two removed lines used to print, in the
+       one place a first-time reader can ask for it instead of having it
+       pushed at them thirty-eight times. */
+    div.dataset.say = (why ? why + " — " : "") + r.tier;
+    if (why) { div.dataset.why = why; div.classList.add("is-off"); }
 
-    /* SAID, NOT EDITED — and the refusal prints the sentence it is refusing,
-       joined with its reason, in ONE `.nu-why`. That is a refusal-with-a-
-       reason, which is one of the three kinds of word the diet allows, and it
-       is also the only honest shape for a fact a musician should be able to
-       READ (the figure arches, the chairs come in at bar 4) that has no row
-       for a write to land on. */
+    /* SAID, NOT EDITED — one line, the sentence, and the row greyed. The
+       reason is NOT a second line any more: it is `data-why` (which is where
+       `test/text-diet.test.js` T3 and the no-silent-grey law both look) and
+       `data-say` (which is where a thumb looks). `.nu-why` because that is
+       what it is — a refusal — and because the diet skips it. */
     if (!e || e.kind === "changes") {
-      const said = sayFlat(r) + (why ? " — " + why : e && e.kind === "changes"
-        ? " — the chord grid is the Key panel's, one bar at a time"
-        : "");
-      div.append(el("p", said, "nu-why"));
+      div.append(el("p", sayFlat(r), "nu-why"));
+      if (!why && e && e.kind === "changes") {
+        const w2 = "the chord grid is the Key panel's, one bar at a time";
+        div.dataset.why = w2;
+        div.dataset.say = w2 + " — " + r.tier;
+        div.classList.add("is-off");
+      }
       if (declared(r.field)) resetInto(div, r);
       parent.append(div);
       return;
     }
 
-    if (e.kind === "map" || e.kind === "list") {
-      /* A HEADING AND THEN ONE CONTROL PER KEY. The sentence is an `<h4>`
-         because it names the group of controls under it — and because a
-         heading is a label, which is what keeps it out of the diet's count
-         the same way every other heading on this page is. */
-      div.append(el("h4", sayFlat(r), "nu-rulehead"));
-      (e.kind === "map" ? mapFields : listFields)(div, r);
-    } else {
-      const lab = el("label");
-      lab.append(el("span", sayLabel(r), "nu-w"));
-      simpleControl(lab, r);
-      /* BOTH CLASS NAMES, AND NEITHER IS DECORATION. nu.css states the even
-         88px row as `.nu-sel > label, .nu-field > label` — one recipe, two
-         names, because a menu field and a slider field were built by different
-         callers — and the `.nu-combo` width cap is written for `.nu-sel` only.
-         A row here can hold either widget, so it answers to both selectors
-         rather than growing a third rule that says what those two already say. */
-      const f = el("div", null, "nu-field nu-sel");
-      /* AND THE WHOLE ROW GOES FAINT WITH ITS CONTROL. `selectField` puts
-         `is-off` on the wrapper it builds and `unwrap` throws that wrapper
-         away, so the class is put back on the row that survived — a refused
-         control that still looked live would be the silent grey's opposite
-         and just as misleading. */
-      if (why) f.classList.add("is-off");
-      f.append(lab);
-      div.append(f);
+    /* THE SHAPE, AS DATA, AND ONLY ON A ROW THAT HAS A CONTROL. nu.css gives
+       a sentence with several answers in it (a positional `list`, a numeric
+       `map`) a narrower cap per answer, and it reads the shape off here rather
+       than off a field name — one owner: this is `edit.kind`, the same fact
+       `controlAt` reads to pick the widget. A said-only row carries none, and
+       that is the honest spelling: `changes` is an `edit.kind` that draws
+       nothing, so a row wearing it would claim a widget it does not have. */
+    div.dataset.shape = e.kind;
+
+    /* A CHIP SET IS A FIELDSET, NOT A LABEL, AND THE REASON IS THE ONE
+       CONTROL THAT WOULD OTHERWISE STOP WORKING. `fx` is the one rule on this
+       page that may hold more than one answer, and its chip is a
+       `<label class="nu-opt">` around a visually-clipped checkbox — the LABEL
+       is the 24px target, so a chip that is not a label is a chip a thumb
+       cannot press. Nesting one label inside the row's own is not a shape a
+       browser is asked to make sense of. So the multi-answer row wears the
+       markup a group of checkboxes has always wanted: a `<fieldset>` with the
+       sentence as its `<legend>` — which the text diet skips exactly as it
+       skips a `<label>`, and which ui/sheets.js already uses for every multi
+       sheet on this page. One line either way; the chips are still chips. */
+    if (e.kind === "list" && !e.count) {
+      const fs = document.createElement("fieldset");
+      fs.className = "nu-said";
+      if (why) fs.classList.add("is-off");
+      const lg = document.createElement("legend");
+      lg.className = "nu-w";
+      lg.textContent = sayFlat(r);
+      fs.append(lg);
+      listFields(fs, r);
+      div.append(fs);
+      if (declared(r.field)) resetInto(div, r);
+      parent.append(div);
+      return;
     }
-    if (r.rederive !== major) tierInto(div, r);
+
+    const lab = el("label", null, "nu-said");
+    if (why) lab.classList.add("is-off");
+    sentenceInto(lab, r);
+    div.append(lab);
     if (declared(r.field)) resetInto(div, r);
     parent.append(div);
   }
 
-  /* number · enum · flag · pair — one label, the controls on its second line */
-  function simpleControl(lab, r) {
-    const e = r.edit, why = r.why || null, slots = slotsOf(r);
+  /* THE WALK. Words print; the slot builds. A rule with more than one slot
+     (`touch` — "loose by … steps and … in level") builds one control per slot,
+     in slot order, which is why the index is counted rather than assumed. A
+     rule whose sentence is ENTIRELY its value ("the record may be sung") has
+     no words at all, and the control is the whole line — the rule's own `head`
+     is put on it as the accessible name, which is what the `<label>` used to
+     print and no longer needs to. */
+  function sentenceInto(lab, r) {
+    let i = 0, built = false;
+    for (const p of r.parts) {
+      if (!p.slot) { if (p.w) lab.append(el("span", p.w, "nu-w")); continue; }
+      const n = i++;
+      if (controlAt(lab, r, n, p)) built = true;
+    }
+    if (!built && !i) lab.append(el("span", sayFlat(r), "nu-w"));
+  }
+
+  /* ONE SLOT, ONE WIDGET — and the widget's shape is read off `edit.kind`,
+     never off the field's name. `map` and `list` put ALL of their controls at
+     the first slot, because the sentence has one hole and the rule has one per
+     chair or per role: "they hold [organ] [bass] [drums]" is one sentence with
+     three answers in it, which is the true shape of a positional list. */
+  function controlAt(lab, r, i, part) {
+    const e = r.edit, why = r.why || null;
     if (e.kind === "number") {
-      const s = slots[0];
-      const v = typeof s?.v === "number" && isFinite(s.v) ? s.v
-        : (isFinite(Number(s && s.w)) ? Number(s.w) : e.min);
-      rangeInto(lab, K(r.field), sayLabel(r), v, e, (n) => land(r.field, n), why);
-      return;
+      const v = typeof part.v === "number" && isFinite(part.v) ? part.v
+        : (isFinite(Number(part.w)) ? Number(part.w) : e.min);
+      rangeInto(lab, K(r.field), sayFlat(r), v, e, (n) => land(r.field, n), why);
+      return true;
     }
     if (e.kind === "pair") {
       /* TWO NUMBERS, ONE FACT. `touch` is `{t, v}` — how loose the hand is in
          time and in level — and splitting it into two rules would make two
-         sentences out of one thing a player does. Each range carries its own
+         sentences out of one thing a player does. The sentence has a slot for
+         each, so each range lands in its own hole; each carries its own
          accessible name because a `<label>` names its first control only. */
+      const k = e.keys[i];
+      if (k == null) return false;
       const cur = r.value || {};
-      const write = (k, n) => land(r.field, { ...cur, [k]: n });
-      for (const k of e.keys) {
-        const v = typeof cur[k] === "number" ? cur[k] : e.min;
-        rangeInto(lab, K(r.field, k), r.head + " " + k, v, e,
-          (n) => write(k, n), why);
-      }
-      return;
+      const v = typeof cur[k] === "number" ? cur[k] : e.min;
+      rangeInto(lab, K(r.field, k), r.head + " " + k, v, e,
+        (n) => land(r.field, { ...cur, [k]: n }), why);
+      return true;
     }
+    if (e.kind === "map") { if (i === 0) mapFields(lab, r); return true; }
+    /* only the POSITIONAL list arrives here; a chip set is a fieldset row and
+       never walks the sentence (see `ruleRow`) */
+    if (e.kind === "list") { if (i === 0) listFields(lab, r); return true; }
     const opts = e.kind === "flag" ? flagOpts(r) : enumOpts(r);
     const cur = e.kind === "flag" ? (r.value ? "1" : "")
-      : (slots[0] && slots[0].v != null ? slots[0].v : "");
-    const sel = selectField(lab, { key: SEL(r.field), label: sayLabel(r),
-      options: opts, value: cur, why: why || null, ungated: true,
-      set: (v) => land(r.field, e.kind === "flag" ? v === "1"
-        : (v === "" ? null : coerce(opts, v))) });
-    /* selectField appends a `<p class="nu-sel">` of its own; inside a
-       `.nu-field > label` the label is already the even row, so the wrapper's
-       chrome is dropped and its `<label>` is unwrapped into this one. ONE
-       widget, ONE builder — the alternative was a second copy of the combo. */
-    unwrap(lab, sel);
+      : (part.v != null ? part.v : "");
+    menu(lab, SEL(r.field), sayFlat(r), opts, cur,
+      (v) => land(r.field, e.kind === "flag" ? v === "1"
+        : (v === "" ? null : coerce(opts, v))), why);
+    return true;
   }
 
   /* a `<select>`'s value is a STRING and the tables hold numbers (`rate: 0.5`)
@@ -430,25 +551,17 @@ export function mountRules(host, ctx) {
     return hit ? hit.value : v;
   };
 
-  /* selectField's `<p class="nu-sel">` carries a `<label>` and, when the whole
-     control is refused, a `.nu-why`. Both are moved into the row's own label so
-     the even-row geometry is the page's one recipe and not two. */
-  function unwrap(lab, p) {
-    const inner = p.querySelector("label");
-    const combo = inner && inner.querySelector(".nu-combo");
-    if (combo) lab.append(combo);
-    for (const w of p.querySelectorAll(".nu-why")) lab.append(w);
-    p.remove();
-  }
-
-  /* ---------- map: one control per role the row's own plan owns ----------- */
-  function mapFields(div, r) {
+  /* ---------- map: one control per key the row's own plan owns -----------
+     IN THE SENTENCE, NOT UNDER A HEADING. The `<h4>` this used to print over
+     the group is gone with every other second line: a map is a sentence with
+     several answers ("the sections run [half] [steady] [push]"), and each
+     answer wears its key as a small word rather than a full field label. */
+  function mapFields(lab, r) {
     const e = r.edit, why = r.why || null;
     const keys = e.keys ? e.keys(row, gk) : [];
     const cur = r.value || {};
     if (!keys.length) {
-      div.append(el("p", "this record's arrangement has no sections to " +
-        "answer for", "nu-why"));
+      lab.append(el("span", "— nothing to answer for", "nu-w"));
       return;
     }
     const write = (k, v) => {
@@ -457,47 +570,46 @@ export function mountRules(host, ctx) {
       land(r.field, next);
     };
     for (const k of keys) {
+      const box = el("span", null, "nu-cell");
+      box.append(el("i", k, "nu-k"));
       if (e.values) {
-        const opts = [{ value: "", label: "—" },
+        const os = [{ value: "", label: "—" },
           ...e.values(row, gk).map((o) => ({ value: o.value, label: o.label }))];
-        menu(div, SEL(r.field, k), k, opts, cur[k] == null ? "" : cur[k],
-          (v) => write(k, v === "" ? null : coerce(opts, v)), why);
+        menu(box, SEL(r.field, k), r.head + " " + k, os, cur[k] == null ? "" : cur[k],
+          (v) => write(k, v === "" ? null : coerce(os, v)), why);
       } else {
         /* a numeric map (`orn`) — one slider per decoration, and ABSENT IS
            THE DEFAULT, so the floor of the range deletes the key */
-        const f = el("div", null, "nu-field");
-        const lab = el("label");
-        lab.append(el("span", k, "nu-w"));
         const v = typeof cur[k] === "number" ? cur[k] : e.min;
-        rangeInto(lab, K(r.field, k), r.head + " " + k, v, e,
+        rangeInto(box, K(r.field, k), r.head + " " + k, v, e,
           (n) => write(k, n === e.min ? null : n), why);
-        f.append(lab); div.append(f);
       }
+      lab.append(box);
     }
   }
 
   /* ---------- list: positional when it has a `count`, a set when a `max` --- */
-  function listFields(div, r) {
+  function listFields(lab, r) {
     const e = r.edit, why = r.why || null;
     const opts = e.values ? e.values(row, gk) : [];
     if (e.count) {
       const n = e.count(row, gk) || 1;
       const cur = asList(r.value);
-      for (let i = 0; i < n; i++) {
-        menu(div, SEL(r.field, i), r.head + " " + (i + 1), opts, atIndex(cur, i),
+      for (let i = 0; i < n; i++)
+        menu(lab, SEL(r.field, i), r.head + " " + (i + 1), opts, atIndex(cur, i),
           (v) => land(r.field, Array.from({ length: n },
             (_, j) => (j === i ? coerce(opts, v) : atIndex(cur, j)))), why);
-      }
       return;
     }
     /* A SET, and the one control on this page that may hold more than one
        answer (test/selects.js names `fx` as its own exception). Each box is
        inside a `.nu-opt` label, which is the page's chip and is what makes the
-       24px target `test/shell.js` A3 measures — the input itself is clipped. */
+       24px target `test/shell.js` A3 measures — the input itself is clipped.
+       The row that holds them is a `<fieldset>` and not a `<label>` for
+       exactly that reason (see `ruleRow`): the chip has to stay a label. */
     const cur = asList(r.value);
-    const chips = el("div", null, "nu-chips");
     for (const o of opts) {
-      const lab = el("label", null, "nu-opt");
+      const chip = el("label", null, "nu-opt");
       const c = document.createElement("input");
       c.type = "checkbox";
       c.checked = cur.indexOf(o.value) >= 0;
@@ -509,43 +621,19 @@ export function mountRules(host, ctx) {
         if (c.checked) next.push(o.value);
         land(r.field, e.max ? next.slice(0, e.max) : next);
       });
-      lab.append(c, el("span", o.label, "nu-w"));
-      chips.append(lab);
+      chip.append(c, el("span", o.label, "nu-w"));
+      lab.append(chip);
     }
-    div.append(chips);
-    if (why) div.append(el("p", why, "nu-why"));
   }
 
-  /* ---------- the tier, and the way back ---------------------------------- */
-  /* WHICH EDITS RESTART THE RECORD, SAID BEFORE YOU PRESS — ONCE PER AXIS.
-     The words are `rules.js TIERS`'s and the sentence is still a `.nu-why`,
-     because it is the same KIND of word as a refusal: a sentence about what
-     the control will and will not do.
-     WHERE IT SITS CHANGED (2026-09-02). It used to be appended to EVERY row,
-     and the probe of the composer round measured what that reads like: *"'the
-     record is written again at this seed' printed under EVERY compose-tier row
-     in Rules (~12x). Say it once per axis (or once per panel)."* So the block
-     says its COMMON tier once, at its foot, and only a row that DEPARTS from
-     it carries the sentence itself — which is the whole of the information and
-     none of the repetition. Measured on `reggae` after the tier audit: Time,
-     Alphabet, Form, Cast, Development and Sound are one tier each (one
-     sentence apiece), and Performance says its common tier once with two rows
-     — the line's breath and decoration — carrying "the band plays it from the
-     next bar" of their own. Every row still declares its tier as DATA
-     (`data-tier`), which is what the gates read and what costs nothing. */
-  const tierInto = (div, r) => div.append(el("small", r.tier, "nu-why"));
-  /* the block's common tier: the one the most editable rows in it land in */
-  function majorTier(rows) {
-    const n = {};
-    for (const r of rows) if (r.edit && r.edit.kind !== "changes")
-      n[r.rederive] = (n[r.rederive] || 0) + 1;
-    return Object.keys(n).sort((a, b) => n[b] - n[a])[0] || null;
-  }
-  const tierFoot = (sec, major) => { if (!major) return;
-    const p2 = el("small", NuRules.TIERS[major], "nu-why nu-axtier");
-    p2.dataset.tier = major;
-    sec.append(p2); };
-
+  /* ---------- the way back ------------------------------------------------
+     THE TIER IS NOT PRINTED, ANYWHERE (2026-09-02, wave 4 §4). The old drawing
+     appended `r.tier` to every row; the fix round of the same morning moved it
+     to one sentence per axis foot plus the departures. Paul's answer to the
+     result — *"it has text all over the place"* — is why there is now no
+     printed tier at all: `data-tier` on every row is what the gates read, and
+     `data-say` is what a hold or a hover opens. Nothing about WHICH tier a
+     rule is in changed; only whether the panel says it before it is asked. */
   function resetInto(div, r) {
     const b = el("button", "reset");
     b.type = "button";
@@ -578,11 +666,22 @@ export function mountRules(host, ctx) {
       why: o.why || (o.edit.kind === "changes"
         ? "the chord grid is the Key panel's, one bar at a time" : null),
     }))];
-    menu(parent, "rule-add|" + axis, "add a rule", opts, "", (f) => {
+    /* ONE COMPACT `+` AT THE BLOCK'S FOOT (2026-09-02, wave 4 §4: *"the
+       palette is ONE compact '+ add' combo per axis at the block's foot"*). It
+       was a full `.nu-sel` field — a 44px line reading "add a rule" over a
+       44px menu whose first option said "+ add a rule" again — which is the
+       same question printed twice and 88px of it under every one of the eight
+       blocks. The VISIBLE label is gone; the accessible one is not (the menu's
+       `aria-label` is still "add a rule to <axis>", which is what selectEl
+       writes onto the control), and the offer is still the first option's own
+       words, where a reader who can see it already reads it. */
+    const p = el("p", null, "nu-pal");
+    menu(p, "rule-add|" + axis, "add a rule to " + axis, opts, "", (f) => {
       if (!f) return;
       const r = NuRules.say(row, gk).find((x) => x.field === f);
       if (r) land(f, startAt(r));
     }, rows.length ? null : "every rule this axis has is already on the record");
+    parent.append(p);
   }
 
   /* ================= THE EIGHT AXES ======================================= */
@@ -617,19 +716,28 @@ export function mountRules(host, ctx) {
        `rules.js AXES` is the one list of the eight. An `<h3>`, because that is
        what it is: the name of the block under it. */
     sec.append(el("h3", axis, "nu-axword"));
-    const major = majorTier(mine);
-    for (const r of mine) ruleRow(sec, r, major);
+    for (const r of mine) ruleRow(sec, r);
     /* THE MOTIFS ARE READ AND NOT EDITED — Paul, in the same message: *"The
        motifs don't need to be editable. Just the structural rules."*
        `askable.js:16-22` owns the law and `rules.js MOTIF` carries the reason
-       per row; this prints it. */
-    for (const r of mine2) {
-      const div = el("div", null, "nu-rule");
-      div.dataset.rule = r.field;
-      div.append(el("p", sayFlat(r) + " — " + r.why, "nu-why"));
+       per row.
+       ...AND THEY ARE ONE ROW, NOT SEVEN (2026-09-02, wave 4 §4). Seven
+       read-only lines — the drum grid, the section grids, the velocities, the
+       chances, the fill, the bass grid, the ghost notes — each with its step
+       count and its reason, is 400 characters of the Material block saying one
+       thing seven times, and it is the first block a first-time reader
+       reaches. It says the one thing once, in the words that answer the
+       question a reader actually has ("can I edit these? where?"), and the
+       seven lines are the hold explainer behind it. No fact is lost and none
+       of them was ever editable here. */
+    if (mine2.length) {
+      const div = el("div", null, "nu-rule nu-motifs");
+      div.dataset.rule = "motifs";
+      div.dataset.tier = "row";
+      div.dataset.say = mine2.map((r) => sayFlat(r) + " — " + r.why).join(" · ");
+      div.append(el("p", "the motifs are written in the tracker", "nu-why"));
       sec.append(div);
     }
-    tierFoot(sec, major);
     paletteInto(sec, axis, offers);
     ax.append(sec);
   }
