@@ -412,7 +412,21 @@ function main() {
           const machine = impliesSynth(g);
           const organicDsp = (g.dsps || "").split(" ")
             .filter((x) => /voice_lead|voice_choir|tract_voice|choir|stk_|gtr_amp|erhu|mallet|bell|organ/.test(x));
-          if (g.n_native === 0) {
+          /* A ROW THAT SAYS `organic: true` IS ANSWERING THIS CHECK, not
+             failing it (2026-09-02, the catalogue round). Twelve rows seat
+             zero native chairs and every one of them was read: there is no
+             Faust model of a pipe organ, a harpsichord, a baroque string band,
+             a guqin, a shō or a tape splice, and there should not be. The
+             recording IS the instrument on those rows, they now declare it in
+             genres.js (and say it in `rules.js`), and scoring an honest
+             recording as a hole was this column telling twelve rows to become
+             something they are not. It is a DECLARED FACT and not a mute: the
+             sentence is still printed, so a reader sees what the row seats. */
+          if (g.n_native === 0 && g.organic) {
+            w.push("every seat is a recording, and the row DECLARES it " +
+                   "(`organic: true`) — there is no model of these instruments " +
+                   "in the fleet and the recording is the instrument");
+          } else if (g.n_native === 0) {
             s -= machine ? 0.5 : 0.3;
             w.push("ZERO native chairs — every seat is a recording" +
                    (machine ? ", on a row whose own sound is a machine" : "; the engine may model some of these better than the sampler plays them"));

@@ -249,14 +249,23 @@ ok("L6 the vocal stab arrives on footwork and is refused on nujazz", () => {
 
 /* ---- L7  the crate arrives, and an SFX/texture unit is not a voice ------
    The three casts of the sampling round are tripwired by name — hardcorerave's
-   orchestra hit IN THE STAB CHAIR, dnb's atmosphere, vaporwave's sea_shore as
+   orchestra hit IN THE STAB CHAIR, dnb's wash, vaporwave's sea_shore as
    a pad — and the generic half holds for every sampled non-voice recording on
    every record: `sampledId` claims it (it plays through the sampler, which is
    what makes the loop strip honest) and its chair never wears the caption
-   "voice". */
+   "voice".
+
+   DNB'S ENTRY IS `halo_pad` AND NOT `atmosphere` (2026-09-02, the catalogue
+   round). The chair is unchanged and so is this gate's question — it is still
+   "the texture is seated where the row casts it" — but the row now names a
+   MODEL for that chair rather than a recording of one (Goldie, "Inner City
+   Life", FFRR 1994: the pad is a wavetable, and `halo_pad` resolves to `ppg`
+   through instruments.js PATCH_SYNTH where GM 100 `atmosphere` was a sampled
+   preset). The tripwire follows the row; the sampled-texture half of the
+   check still runs over every record, hardcorerave and vaporwave included. */
 ok("L7 stabs/texture/sfx are seated where cast and never read as a voice", () => {
   const want = { hardcorerave: ["orchestra_hit", "stab"],
-                 dnb: ["atmosphere", null], vaporwave: ["sea_shore", "pad"] };
+                 dnb: ["halo_pad", null], vaporwave: ["sea_shore", "pad"] };
   for (const { gk, seed, doc } of docs) {
     const w = want[gk];
     if (w) {

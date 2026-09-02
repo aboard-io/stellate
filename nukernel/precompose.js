@@ -3027,7 +3027,44 @@
       const development = {};
       R.song.forEach((b, i) => { development[sid(i)] = b.bassop || ""; });
       voices.push({ name: nameFor("bass"), kind: "bass",
-                    cast: { style: G.bassStyle || "eighths" }, development });
+                    cast: { style: G.bassStyle || "eighths" }, development,
+                    /* ...AND THE ANCHOR NAMES ITS OWN BASS INSTRUMENT AT LAST
+                       (2026-09-02, the catalogue round). This was the GRAMMAR
+                       LIMIT the QA report found: `audio/plan.js castOf` seats
+                       the bass at `bRow.bassInstr || POOL.bass || BASS_INSTR`
+                       and on the DAW path `bRow` is the per-section
+                       `lab.eight.N` row `document.js boxesOf` builds — whose
+                       `bassInstr` comes from the DOCUMENT's bass voice, which
+                       this function never wrote. So no anchor could name its
+                       bass, and every record in the catalogue without a
+                       signature `synth` block played the SAMPLED RECORDED
+                       UPRIGHT under it, chiptune's row included until the day
+                       it declared a signature. acid's bass is a 303 and
+                       roboticpop's a Model D only because those two rows
+                       happen to declare a synth; a row that wants a Precision
+                       and not a double bass had no word at all.
+
+                       ONE LINE, AND IT IS THE SAME LINE slice 2c wrote for the
+                       hand: the bass VOICE carries an `instrument` like every
+                       other chair, `document.js toGenre` spreads it as
+                       `bassInstr`, and `plan.js castOf` reads it. This end
+                       writes it from the ANCHOR; that end already read it.
+
+                       ABSENT IS TODAY, BYTE FOR BYTE. A spread and not an
+                       assignment: a row that declares no `bassInstr` pushes
+                       the object this function pushed yesterday, with no
+                       `instrument` key at all, so `toGenre` spreads nothing,
+                       `castOf` falls through to `POOL.bass || BASS_INSTR`, and
+                       every anchor that has not been re-argued composes
+                       unchanged. The vocabulary is `fields.js BASSCHOICES` —
+                       the bass rack's own eleven, not INSTRCHOICES' ninety,
+                       for the reason that list's header gives ("a word that
+                       casts a glockenspiel into the bass chair is a word that
+                       lies") — and `precompose.test.js` G12g walks every
+                       declaring row against it and against the compiled
+                       recipe, so a row cannot name a bass the engine will not
+                       seat. */
+                    ...(G.bassInstr ? { instrument: G.bassInstr } : {}) });
     }
     // THE DRUMMER. Present when the anchor has a grid (97 of 122); its word
     // per section is compose()'s `kit`, already a KITLABEL key.

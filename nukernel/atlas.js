@@ -563,7 +563,7 @@
     dusseldorfschool: { place: "Düsseldorf", year: 1977 },
     electro:        { place: "New York", year: 1982 },
     hymn:           { place: "Boston", year: 1831 },
-    crooner:        { place: "Los Angeles", year: 1953 },
+    crooner:        { place: "Los Angeles", year: 1931 },
     yuletide:       { place: "New York", year: 1942 },
     merseybeat:     { place: "Liverpool", year: 1963 },
     psychpop:       { place: "London", year: 1968 },

@@ -41,7 +41,7 @@ CREATE TABLE genres(
   label TEXT, family TEXT, plan TEXT, bpm REAL, jitter REAL,
   voices INT, bars INT, rate REAL, harmony TEXT, near TEXT,
   artic TEXT, max_hold REAL, bass_style TEXT, swing REAL, drumkit TEXT,
-  nobass INT, silent INT, instrumental INT, diatonic INT, intro TEXT,
+  nobass INT, silent INT, instrumental INT, organic INT, diatonic INT, intro TEXT,
   prog_len INT, prog_quals TEXT, roots TEXT, fx TEXT, cannot TEXT,
   has_synth INT, synth_dsp TEXT,
   kit_lanes TEXT, kit_hits INT, kit_steps INT, kit_density REAL,
@@ -99,7 +99,7 @@ CREATE INDEX checks_name ON checks(name);
 GENRE_COLS = [
     "gk", "label", "family", "plan", "bpm", "jitter", "voices", "bars", "rate",
     "harmony", "near", "artic", "max_hold", "bass_style", "swing", "drumkit",
-    "nobass", "silent", "instrumental", "diatonic", "intro", "prog_len",
+    "nobass", "silent", "instrumental", "organic", "diatonic", "intro", "prog_len",
     "prog_quals", "roots", "fx", "cannot", "has_synth", "synth_dsp",
     "kit_lanes", "kit_hits", "kit_steps", "kit_density", "words", "src_line",
     "comment", "comment_lines", "cited_n", "cited_artists", "place", "year",

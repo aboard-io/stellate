@@ -1730,6 +1730,100 @@ function sectionEvents(doc, i) {
        "parts, and every one of them is one the kernel holds", () => {
       for (const p of Object.keys(PADPART)) assert.ok(K.PARTS[p], p);
     });
+
+    /* G12g — AN ANCHOR NAMES ITS OWN BASS, AND THE NAME REACHES THE ENGINE.
+       The grammar limit the 2026-09-02 QA report found: `plan.js castOf` seats
+       the bass at `bRow.bassInstr || POOL.bass || BASS_INSTR`, `document.js
+       toGenre` spreads `bassInstr` off the bass VOICE's `instrument`, and
+       precompose wrote no such instrument — so the wire existed end to end
+       with nothing feeding it and every anchor without a signature `synth`
+       played the sampled upright.
+
+       THREE ASSERTS, because there are three ways this comes undone and none
+       of them catches another:
+         · the row's word must be a word the BASS RACK owns (BASSCHOICES, not
+           INSTRCHOICES — fields.js's header measures why);
+         · the composed record's bass CHAIR must carry it, and `toGenre` must
+           hand it back as `bassInstr` — the document is the thing that is
+           saved and reopened, so the anchor's word has to survive the trip;
+         · and the compiled recipe must ROUTE it, asked of `to-engine.js`
+           itself, because "declared, costed and reaching no sound" is this
+           box's characteristic bug and a bass id nothing seats is exactly it.
+
+       IT CANNOT PASS VACUOUSLY. The last block applies the field to an anchor
+       that does NOT declare one and walks the same three steps, so the day the
+       catalogue declares zero `bassInstr` rows this gate still measures the
+       mechanism — and the same block is the ABSENT-IS-TODAY proof: the row
+       without the field composes a bass voice with no `instrument` key at all
+       and `toGenre` spreads no `bassInstr`. */
+    ok("G12g an anchor that declares `bassInstr` composes a bass chair with " +
+       "that id, carries it through `toGenre`, and the compiled recipe " +
+       "routes it", () => {
+      const bassOf = (doc) => doc.voices.find((v) => v.kind === "bass") || null;
+      /* "THE ENGINE CAN MAKE THIS SOUND" IS G11a's LAW, ASKED AGAIN — a zone
+         on disk or a compiled model the bridge routes to. It has to be BOTH
+         halves here for the reason G11a widened: `recipeFor` is handed `{}`
+         for the library on purpose, so a SAMPLED id falls through the empty
+         lib and reports `unrouted` even though its zones exist. Ten of the
+         eleven BASSCHOICES ids are recordings — `bass_lead` is the only model
+         — so asking only the bridge would have refused every honest hand on
+         the list. (Measured 2026-09-02: picked_bass, finger_bass,
+         acoustic_bass, slap_bass all answer `unrouted` from a bare recipeFor
+         and all four have SAMPLERS rows.) */
+      const REG2 = require(path.join(__dirname, "..", "engine", "registry-data.js"));
+      const SAMPLED_ON_DISK = new Set(Object.keys(REG2.SAMPLERS));
+      const routes = (id) => {
+        if (SAMPLED_ON_DISK.has(id)) return true;
+        const un = [];
+        const r = TE.recipeFor("bass", { chair: "bass", instr: id }, {}, un);
+        const kind = String((r && r.source) || "?").split(":")[0];
+        return !un.length && kind !== "unrouted" && kind !== "?";
+      };
+      const DECLARED = ANCHORS.filter((k) => GENRES[k] && GENRES[k].bassInstr);
+      for (const gk of DECLARED) {
+        const id = GENRES[gk].bassInstr;
+        assert.ok(Object.prototype.hasOwnProperty.call(NF.BASSCHOICES, id),
+          gk + " names bass `" + id + "`, which the bass rack does not hold");
+        assert.ok(!GENRES[gk].nobass,
+          gk + " names a bass instrument and also declares `nobass`");
+        const doc = P.genreToDocument(gk, 1);
+        const b = bassOf(doc);
+        assert.ok(b, gk + " declares a bass instrument and seats no bass");
+        assert.strictEqual(b.instrument, id,
+          gk + " composed a bass holding " + b.instrument + ", not " + id);
+        assert.strictEqual(Doc.toGenre(doc, 0, GENRES).bassInstr, id,
+          gk + "'s bass instrument does not survive toGenre");
+        assert.ok(routes(id), gk + " names bass `" + id +
+          "`, which to-engine.js does not route — declared and silent");
+      }
+      console.log("       " + DECLARED.length + " anchors name their own bass" +
+        (DECLARED.length ? ": " + DECLARED.slice(0, 8).join(" ") : ""));
+
+      // THE MECHANISM, PROVED ON A ROW THAT DECLARES NOTHING — and the
+      // absent-is-today half in the same breath.
+      const plain = ANCHORS.find((k) => GENRES[k] && !GENRES[k].bassInstr &&
+                                        !GENRES[k].nobass);
+      assert.ok(plain, "every anchor declares a bass instrument — pick another proof");
+      const before = bassOf(P.genreToDocument(plain, 1));
+      assert.ok(before && !("instrument" in before),
+        plain + " composes a bass with an instrument key and declares none");
+      assert.strictEqual(Doc.toGenre(P.genreToDocument(plain, 1), 0, GENRES).bassInstr,
+        undefined, plain + " hands toGenre a bassInstr from nowhere");
+      const row = GENRES[plain];
+      const PROOF = "bass_lead";       // the one MODEL in the eleven
+      try {
+        row.bassInstr = PROOF;
+        const after = bassOf(P.genreToDocument(plain, 1));
+        assert.strictEqual(after.instrument, PROOF,
+          "the field does not reach the composed bass chair");
+        assert.strictEqual(
+          Doc.toGenre(P.genreToDocument(plain, 1), 0, GENRES).bassInstr, PROOF,
+          "the field does not survive toGenre");
+        assert.ok(routes(PROOF), PROOF + " does not route");
+      } finally { delete row.bassInstr; }
+      assert.ok(!("instrument" in bassOf(P.genreToDocument(plain, 1))),
+        "the catalogue did not come back unmodified");
+    });
     CENSUS = { census, sigSeen, cost, nChair, nNative, SIGNED,
                BUDGET: SEng.BUDGET };
   }

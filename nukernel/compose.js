@@ -1342,10 +1342,32 @@
   // LAYER ABOVE this one in the graph — fields.js:1367 declines the same
   // import for the same reason — and the gate holds the two in step.
   const SUNG = /choir|voices|vox|voice/;
+  // ...AND THE BASS COUNTS AS A CLAIM (2026-09-02, the catalogue round). The
+  // floor is "when does the CATALOG first name this id", and until this round
+  // the only place a row could name an instrument was `instr` — the pitched
+  // cast. `bassInstr` is a second place (precompose.js writes it onto the bass
+  // voice; `fields.js BASSCHOICES` is its vocabulary), and reading only the
+  // first half made the floor say things that are not true: `bass_lead` was
+  // floored at 1985 because a London 1985 row happened to hold one in its
+  // CAST, and Düsseldorf 1977's Minimoog bass — Kraftwerk, "Trans-Europa
+  // Express" — then read as an anachronism. The union is the honest floor and
+  // it moves three ids DOWN, each to a row that names the record: bass_lead
+  // 1985 -> 1977, picked_bass 1990 -> 1966 (the Kinks, "Sunny Afternoon"),
+  // finger_bass 1990 -> 1971 (Neu!, "Hallogallo").
+  //
+  // IT IS ONLY THE FLOOR AND NOT `instrOf`. The waiver clause below asks
+  // `kindsOf(gk)` — "does this record's own cast already hold that KIND of
+  // instrument" — and a bass is not a licence to hire a guest who plays
+  // something else with the same head noun. So the bass id widens what the
+  // catalog admits it has heard, and widens nothing about who may visit.
+  const bassInstrOf = gk2 => {
+    const b = (GENRES[gk2] || {}).bassInstr;
+    return b && !(GENRES[gk2] || {}).nobass ? [b] : [];
+  };
   const INSTR_YEAR = {};
   for (const k of Object.keys(GENRES)) {
     const y = genreYear(k); if (y == null) continue;
-    for (const id of instrOf(k))
+    for (const id of [...instrOf(k), ...bassInstrOf(k)])
       if (!SUNG.test(id) && (INSTR_YEAR[id] == null || y < INSTR_YEAR[id]))
         INSTR_YEAR[id] = y;
   }

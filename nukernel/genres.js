@@ -654,6 +654,22 @@
     // lookup. (Known limit: it reads the ENTRY word, so the roots freeze once
     // all voices are in. Expositions genuinely work that way; episodes don't.)
     fugue: {
+      /* THE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP
+         (2026-09-02, the catalogue round). The QA report's `instrumentation`
+         column counts a chair as NATIVE when `audio/to-engine.js
+         patchForInstr()` names a Faust module for its id, and this row seats
+         ZERO of them — one of twelve in the table. Twelve rows were read one
+         by one and every one of them came back the same way: there is no
+         model in the fleet of the instrument this music is played on, and
+         there should not be. `organic: true` is that answer said out loud, so
+         the report can stop scoring an honest recording as a failure and can
+         start telling the twelve apart from the machine genres that were
+         seating a sampled upright by accident.
+         THIS ROW: J. S. Bach, "Contrapunctus I" from *Die Kunst der Fuge* (BWV
+         1080, Leipzig, published 1751). A pipe organ is a rank of pipes, and
+         `instruments.js PATCH_MODEL`'s own header refuses to model one — "the
+         organs, whose sound is a rank of pipes and not an excitation". */
+      organic: true,
       // named "Leipzig 1725" — the subject/answer-at-the-fifth machinery is
       // Bach's, Thomaskantor at Leipzig by then.
       label: "Leipzig 1725", voices: 4,
@@ -709,6 +725,32 @@
     // the one with no fugal equivalent (cyclic, not reflective). Modal: the 303
     // line is simultaneously melody, bass and the entire harmony.
     acid: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Phuture, "Acid Tracks" (Trax, Chicago 1987): one TB-303 is the melody,
+         the harmony and the bass at once — which is what this id resolves to. */
+      bassInstr: "bass_lead",
+      /* NOBODY SINGS ON THIS RECORD (2026-09-02, the catalogue round). The
+         QA report's `instrumentation` column found this row seating a
+         MODELLED THROAT it never asked for: compose.js books a singer and a
+         choir off the family lean, and until a row says otherwise it gets
+         them. `chiptune` set the precedent — `instrumental: true` is the door
+         precompose.js already holds ("DOOR 1 — AN INSTRUMENTAL RECORD STAYS
+         INSTRUMENTAL") and it bars the singer and the choir and nothing else.
+         It is a FACT ABOUT THE MUSIC and not a preference, which is why only
+         six of the forty flagged rows take it and the sung machine genres
+         (synthpop, house, kpop, garage, rnb…) do not.
+         THE RECORD: Phuture, "Acid Tracks" (Trax Records, Chicago 1987) — twelve
+         minutes of one TB-303 with no throat anywhere on the A-side. */
+      instrumental: true,
       // ITS OWN ARPEGGIO (2026-08-31): a 303 leaps — the fifth and the ninth, not the next note up.
       seqArp: "arpwide",
       // named "Chicago 1987" — Phuture's Acid Tracks: the 303 squelch this
@@ -784,6 +826,14 @@
     // thing in one key, which is what separates a pop record from a mode.
     // I - V - vi - IV, and the second voice answers a bar late and thinned.
     newwave: {
+      /* WHO THE BASS IS, AND HERE IT IS A PAIR OF HANDS (2026-09-02, the
+         catalogue round). The new `bassInstr` field is not only for machines:
+         this row was playing the sampled upright by default, which is the
+         wrong RECORDING as much as the wrong lane, and naming the right one is
+         the honest edit even though it moves no `instrumentation` score.
+         The Buggles, "Video Killed the Radio Star" (Island, London, September
+         1979): Trevor Horn played it, with a plectrum. */
+      bassInstr: "picked_bass",
       // named "London 1979" for the Buggles (the comment's first reference and
       // the CR-78 preset-box year); Boston 1978 would have honoured the Cars.
       label: "London 1979",
@@ -802,8 +852,20 @@
       wants: [],
       instr: ["clean_guitar", "synth_strings_1"],
       entry: v => v, reg: v => v - 1, realize: () => "line",
+      /* I V vi IV, AND NOW IT IS ACTUALLY THAT (2026-09-02, the
+         Chordonomicon round). The comment on this line has said "I V vi IV"
+         since the row was written and `MODES.mixo` made the second chord a
+         MINOR v — mixolydian's fifth degree stacks 7/10/14, which is 0-3-7.
+         Measured against the 8,926 new-wave-labelled songs in Chordonomicon,
+         rotation-collapsed: `I v vi IV` is rank 1,479 with SIX songs, and `I V
+         vi IV` is rank 13 with 476. The row was declaring one cycle, costing
+         it, and sounding another — the box's characteristic bug, in the
+         Alphabet axis. Ionian is also what the header above argues for
+         ("bright and clipped"): a minor dominant is the one chord that is
+         neither. Corpus silent (no MIDI files matched this row), so the
+         change stands on the dataset plus the row's own stated intention. */
       roots: [0, 4, 5, 3],     // I V vi IV
-      mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
+      mode: MODES.ionian, scale: MODES.ionian, diatonic: true,
       artic: "staccato",                         // no sustain anywhere
       drumkit: "cr78",             // 1979's preset box — the machine of the era
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
@@ -823,6 +885,15 @@
     // move. Restatement rate is ~1 like acid; what separates them is rate,
     // realization and lossiness, which is why the dial is four numbers not one.
     vaporwave: {
+      /* WHO THE BASS IS, AND HERE IT IS A PAIR OF HANDS (2026-09-02, the
+         catalogue round). The new `bassInstr` field is not only for machines:
+         this row was playing the sampled upright by default, which is the
+         wrong RECORDING as much as the wrong lane, and naming the right one is
+         the honest edit even though it moves no `instrumentation` score.
+         Macintosh Plus, *Floral Shoppe* (Beer on the Rug, Portland, December
+         2011): the bass is the slowed source record's own electric bass — a
+         recording of a hand, which is the point of the genre. */
+      bassInstr: "finger_bass",
       // named "Portland 2011" — Vektroid's Floral Shoppe: the slowed record
       // with the DX7 E.PIANO 1 this anchor literally loads.
       label: "Portland 2011", rate: .5,
@@ -1173,11 +1244,22 @@
       // premiered in the Arundel/Nonsuch orbit around 1570.
       label: "London 1570", rate: 0.5, bars: 8, voices: 8,
       plan: "arc", bpm: 80,
-      // LINEAGE: Tudor polyphony is species counterpoint at architectural
-      // scale over chant-shaped lines. The label years invert — Fux's 1725
-      // textbook CODIFIES the Palestrina-era practice Tallis worked in — so
-      // the practice precedes its anchor, which the comment law allows.
-      parents: { counterpoint: 0.55, gregorian: 0.45 },
+      // LINEAGE: Tudor polyphony is imitative polyphony at architectural
+      // scale over chant-shaped lines.
+      //
+      // AND THE INVERSION IS OVER (2026-09-02, the catalogue round). This
+      // said `counterpoint: 0.55` and then apologised for it — "the label
+      // years invert — Fux's 1725 textbook CODIFIES the Palestrina-era
+      // practice Tallis worked in" — which is a row admitting it named the
+      // wrong ancestor and asking to be forgiven. *Spem in alium* (Tallis,
+      // the Nonsuch/Arundel orbit, c.1570) is Josquin's imitative technique
+      // built up into architecture, and Josquin IS in this table:
+      // `francoflemish`, Venice 1502, the Petrucci presses. That row is
+      // sixty-eight years OLDER than this one and is the practice itself,
+      // where Fux's *Gradus ad Parnassum* (Vienna 1725) is a textbook
+      // describing it a century and a half later. The claim does not change;
+      // it now points at something that had already happened.
+      parents: { francoflemish: 0.55, gregorian: 0.45 },
       wants: [],
       instr: "ahh_choir",
       entry: v => v, reg: v => (v % 4) - 1, realize: () => "line",
@@ -1247,6 +1329,21 @@
     // row descending from Paris 1200 — and that, rather than any change of
     // date, is what stops "counterpoint · 1725" reading as an origin story.
     counterpoint: {
+      /* THE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP
+         (2026-09-02, the catalogue round). The QA report's `instrumentation`
+         column counts a chair as NATIVE when `audio/to-engine.js
+         patchForInstr()` names a Faust module for its id, and this row seats
+         ZERO of them — one of twelve in the table. Twelve rows were read one
+         by one and every one of them came back the same way: there is no
+         model in the fleet of the instrument this music is played on, and
+         there should not be. `organic: true` is that answer said out loud, so
+         the report can stop scoring an honest recording as a failure and can
+         start telling the twelve apart from the machine genres that were
+         seating a sampled upright by accident.
+         THIS ROW: J. J. Fux, *Gradus ad Parnassum* (Vienna, 1725), the book this
+         row implements species by species. A harpsichord is a plucked body
+         and there is no plucked-keyboard model in the fleet. */
+      organic: true,
       // named "Vienna 1725" — Fux's Gradus ad Parnassum, published in Vienna
       // that year. THE LABEL DATES THE BOOK, NOT THE PRACTICE, exactly as
       // `nuba`'s "Tetouan 1790" dates al-Ha'ik's songbook and not the nuba.
@@ -1520,6 +1617,19 @@
     // octaves under it. Analog, from the Model D, because a sample cannot be a
     // monosynth any more than it can be a 303.
     synthsoul: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Eurythmics, "Sweet Dreams (Are Made of This)" (RCA, London, January
+         1983): a sequencer, a drum machine and nothing else in the room. */
+      bassInstr: "bass_lead",
       // named "London 1983" — Sweet Dreams: the two-chord i-VI vamp, the
       // sequencer that never varies, the drum machine and nothing else.
       label: "London 1983",
@@ -1695,6 +1805,18 @@
     // holding the chord while a Rhodes plays around it. Slow; the tempo is the
     // point, and the composer knows it.
     hiphopsoul: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Jodeci, "Forever My Lady" (Uptown/MCA, 1991): a keyboard bass over an 808. */
+      bassInstr: "bass_lead",
       // named "Charlotte 1991" — Forever My Lady's year, and the choir-over-808
       // anchor is the Hailey brothers' Charlotte church sound; the new jack
       // swing TECHNIQUE itself would be Harlem 1987 (Teddy Riley).
@@ -1763,8 +1885,18 @@
       // detroitsoul and countrypop each step back and counterpoint — the one claim
       // a rhythm figure and a harmony stack cannot explain, and the one the
       // fit keeps using — barely moves. Nothing is left on the list.
+      // ...AND THE MOTOWN SHARE IS THE BRILL BUILDING'S (2026-09-02, the
+      // catalogue round). This said `detroitsoul: 0.1` and detroitsoul is
+      // Detroit 1965 — THREE YEARS AFTER "Love Me Do" (Parlophone, EMI
+      // Studios, 5 October 1962) — so the row descended from a record that
+      // had not been made. What was actually in the Cavern setlists and on
+      // the first two albums is the New York girl group: "Chains" (the
+      // Cookies, Dimension 1002, 1962), "Boys" and "Baby It's You" (the
+      // Shirelles, Scepter). `girlgroup` is New York 1960, two years BEFORE
+      // this row, and it is the same 0.1 share pointed at the records the
+      // band was covering rather than at the label it would cover later.
       parents: { skiffle: 0.18, rocknroll: 0.15, doowop: 0.12, hambone: 0.1,
-                 blues: 0.12, detroitsoul: 0.1, countrypop: 0.08, counterpoint: 0.15 },
+                 blues: 0.12, girlgroup: 0.1, countrypop: 0.08, counterpoint: 0.15 },
       wants: [],
       instr: ["steel_string_guitar", "ohh_voices"],
       drumkit: "acoustic",
@@ -1970,6 +2102,16 @@
     // bell up top where the tremolo guitar was. The hats carry the hand
     // (kitVel) and the 808 ties.
     trap: {
+      /* WHO THE BASS IS, AND IT IS A MACHINE WITH A LONG TAIL (2026-09-02,
+         the catalogue round). T.I., *Trap Muzik* (Grand Hustle/Atlantic,
+         Atlanta, August 2003): the bass is a TUNED 808 — a sine that rings
+         for most of a bar — so this row takes the modelled bass AND shapes
+         it, which is what `bassTone` (audio/plan.js seatFor) is for and what
+         no row in the catalogue had used until now. Absent, `bassTone` is
+         to-engine's defaults (cutoff 1400, decay 0.4); 420 Hz and a 1.6 s
+         release is the 808's own decay curve, said in the two numbers the
+         seat reads. */
+      bassInstr: "bass_lead", bassTone: { cut: 420, rel: 1.6 },
       // named "Atlanta 2003" — T.I.'s Trap Muzik named the thing: 808 ties,
       // half-time snare, the bell up top.
       label: "Atlanta 2003", near: "deathmetal",
@@ -2024,6 +2166,19 @@
     // major key, a stab part on the phrase's own rhythm, and the open hat on
     // the offbeat doing the work acid's sixteenth hats did.
     house: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Marshall Jefferson, "Move Your Body" (Trax, Chicago, June 1986): piano
+         house's bass is a keyboard line, played by the same hands as the piano. */
+      bassInstr: "bass_lead",
       // ITS OWN ARPEGGIO (2026-08-31): the Chicago line lifts; it is dance music that goes up.
       seqArp: "arpup",
       // named "Chicago 1986" not 1985 — the anchor's identity is the PIANO
@@ -2105,6 +2260,19 @@
     // the swing is huge, and the two-bar shuffle is a PERIOD — the sixth type
     // saying what house's straight grid cannot.
     garage: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Shanks & Bigfoot, "Sweet like Chocolate" (Pepper, rec. Soul II Soul
+         Studio, London, May 1999): the two-step sub is a keyboard. */
+      bassInstr: "bass_lead",
       // named "London 1999" — the 2-step year (Re-Rewind): displaced second
       // snare, chopped vocal, the shuffle edited rather than played.
       label: "London 1999", swing: 0.28, near: "house",
@@ -2144,6 +2312,19 @@
     // a different bar of drums on the even and odd bars, ghost layer armed,
     // over a tied reese-register line and a pedal sub that refuses to move.
     dnb: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Goldie, "Inner City Life" (FFRR, London, 21 November 1994): the sub is
+         synthesised. There is no double bass on a jungle plate. */
+      bassInstr: "bass_lead",
       // named "London 1994" — the year jungle became drum & bass: the two-bar
       // break schedule over a reese and a pedal sub.
       label: "London 1994", near: "house",
@@ -2182,7 +2363,14 @@
       // strip on it. (A VOCAL bed is refused here on purpose: dnb is in
       // compose's INSTRUMENTAL table, and the sampling round's door treats a
       // recording of people as people — see precompose door 1.)
-      instr: ["saw_wave", "atmosphere"],
+      /* THE WASH IS A SYNTH, NOT A RECORDING OF ONE (2026-09-02, the
+         catalogue round). Goldie, "Inner City Life" (FFRR, London, 21
+         November 1994): the pad is a wavetable held open. GM 100
+         `atmosphere` is a SAMPLED preset — `sampledId` says so — while
+         `halo_pad` is in `instruments.js PATCH_SYNTH` and resolves to `ppg`,
+         a wavetable model. Same chair, same part, and the engine models it
+         instead of playing a photograph of it. */
+      instr: ["saw_wave", "halo_pad"],
       drumkit: "electronic",
       entry: v => v, reg: v => v - 2, realize: () => "line",
       harmony: "modal",
@@ -2355,6 +2543,19 @@
     // EXTENDED chords, Imaj7–iii7–vi7–IVmaj7, a rim on 3, an EP that holds,
     // and backing vocals that are a harmonize PIPE, chord-locked sixths.
     rnb: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Boyz II Men, "I'll Make Love to You" (Motown, 1994): a keyboard bass under
+         a rim shot on three. */
+      bassInstr: "bass_lead",
       // named "Philadelphia 1994" — the straight-time maj7 ballad with a rim
       // on 3 and stacked thirds is Boyz II Men's Philadelphia.
       label: "Philadelphia 1994", near: "hiphopsoul",
@@ -2433,7 +2634,19 @@
       // formula was the spiritual's fervour on the blues's changes, and
       // the weight comes off blues, which had been carrying both halves
       // of the church's share since the row was written.
-      parents: { blues: 0.5, spirituals: 0.3, hymn: 0.2 },
+      //
+      // ...AND THE BLUES SHARE MOVED TO THE BLUES THAT EXISTED (2026-09-02,
+      // the catalogue round). The comment above says "the label years invert
+      // and the claim survives it", which was true on the day it was written
+      // and stopped being true when `deltablues` landed. Thomas A. Dorsey
+      // published "Take My Hand, Precious Lord" out of his own Chicago shop
+      // in 1932; the blues hand he carried into church is Georgia Tom's —
+      // Ma Rainey's pianist, "It's Tight Like That" cut for Vocalion in 1928
+      // — which is PRE-WAR blues, and pre-war blues is in this table as
+      // `deltablues` (Clarksdale 1929, Charley Patton's "Pony Blues").
+      // `blues` is Chess's electric Chicago of 1952, twenty years AFTER this
+      // record, and a row cannot descend from its own grandchild.
+      parents: { deltablues: 0.5, spirituals: 0.3, hymn: 0.2 },
       wants: [],
       // THE B-3, AND IT HAS SIX ZONES. `drawbarorgan` is a SINGLE sample
       // rooted at MIDI 96 — measured on the shipped registry — so the organ
@@ -2479,7 +2692,11 @@
     },
 
     // REGGAE [dub]. The pair share the one-drop; what separates THIS one is
-    // that the harmony still moves (i–i–IV–v) while the kick refuses beat 1 —
+    // that the harmony still moves (i–i–iv–v, and the fourth is MINOR: this
+    // row is aeolian, and Chordonomicon's minor-key subset for the reggae
+    // label puts `i iv` first at 614 songs against the major `I IV`'s 104,
+    // so the little-letter spelling is the correction — 2026-09-02) while
+    // the kick refuses beat 1 —
     // no kick on the one is the whole drama of the kit. The skank is the
     // PARTS proof: a stab on an absolute offbeat gate, which was unsayable
     // while a chord could only fire once a bar.
@@ -2751,7 +2968,14 @@
       // other song in the canon.
       // "appalachian fiddle" PAID 2026-08-30, the folk-floor round:
       // `oldtime` (Galax 1935) is the fiddle convention itself.
-      parents: { gospel: 0.4, blues: 0.4, ballad: 0.2, oldtime: 0.2 },
+      // ...AND THE BLUES SHARE POINTS BACKWARDS NOW (2026-09-02, the
+      // catalogue round): `blues` is Chicago 1952, SEVEN YEARS AFTER
+      // Scruggs's roll at the Ryman, and the blue thirds in a Nashville
+      // record of 1945 came from Jimmie Rodgers's blue yodels and the
+      // pre-war country blues this table anchors at `deltablues`
+      // (Clarksdale 1929, Charley Patton's "Pony Blues"). Same weight, and
+      // the edge no longer runs forwards in time.
+      parents: { gospel: 0.4, deltablues: 0.4, ballad: 0.2, oldtime: 0.2 },
       wants: [],
       instr: ["banjo", "fiddle"],
       drumkit: "acoustic",
@@ -2774,6 +2998,19 @@
     // half the eighties) with a STAB where the second sequence was, a huge
     // gated snare and — the tell — no hats at all.
     synthpop: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Depeche Mode, "Just Can't Get Enough" (Mute, Basildon, September 1981):
+         every sound on the record including the bass is a synthesiser. */
+      bassInstr: "bass_lead",
       // named "Basildon 1981" — early Depeche Mode: all-synth staccato stabs
       // on the CR-era box, the aeolian anthem loop.
       label: "Basildon 1981", near: "synthsoul",
@@ -3007,6 +3244,33 @@
     // open hat, a staccato stab over a metal pad, and the section's own
     // filter sweep doing what the 303's envelope did.
     techno: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Rhythim Is Rhythim, "Strings of Life" (Transmat, Detroit 1987): there is
+         no acoustic instrument anywhere on it. */
+      bassInstr: "bass_lead",
+      /* NOBODY SINGS ON THIS RECORD (2026-09-02, the catalogue round). The
+         QA report's `instrumentation` column found this row seating a
+         MODELLED THROAT it never asked for: compose.js books a singer and a
+         choir off the family lean, and until a row says otherwise it gets
+         them. `chiptune` set the precedent — `instrumental: true` is the door
+         precompose.js already holds ("DOOR 1 — AN INSTRUMENTAL RECORD STAYS
+         INSTRUMENTAL") and it bars the singer and the choir and nothing else.
+         It is a FACT ABOUT THE MUSIC and not a preference, which is why only
+         six of the forty flagged rows take it and the sung machine genres
+         (synthpop, house, kpop, garage, rnb…) do not.
+         THE RECORD: Rhythim Is Rhythim, "Strings of Life" (Transmat, Detroit
+         1987) — a piano figure, a string stab and a machine; nobody sings on
+         it, and the row already seats only one non-native chair. */
+      instrumental: true,
       // named "Detroit 1988" — the Belleville Three's comp that named the
       // sound: the 909 kick and open hat, everything else stripped.
       label: "Detroit 1988", bars: 8, near: "acid",
@@ -3133,7 +3397,19 @@
       // Oliver front line arranged for sections, and the weight comes off
       // swing, which carried the debt on this row's behalf until the
       // ancestor had its own anchor.
-      parents: { swing: 0.35, neworleans: 0.2, blues: 0.2,
+      // ...AND THE BLUES SHARE IS THE BLUES THAT HAD HAPPENED (2026-09-02,
+      // the catalogue round). This declared `blues: 0.2` and the label
+      // comment above admitted it — "the label years invert against `blues`
+      // below, the way Tallis's do against Fux's" — but Tallis's inversion
+      // has been fixed too, and for the same reason: the table now holds the
+      // older row. The twelve bars with a dominant seventh on every chord
+      // that "Billie's Bounce" and "Now's the Time" (Savoy, New York, 26
+      // November 1945) are readings OF is the rent-party blues of the
+      // twenties — `boogiewoogie`, Chicago 1928 — seventeen years before
+      // these sessions, where `blues` is Chess's Chicago of 1952, seven
+      // years after them. `jumpblues` pays the same rung for the same left
+      // hand.
+      parents: { swing: 0.35, neworleans: 0.2, boogiewoogie: 0.2,
                  tinpanalley: 0.15, ragtime: 0.1 },
       wants: [],
       // MEASURED, and it is the declared parent — which is what a well-behaved
@@ -3803,6 +4079,19 @@
     // — industrial folk music, which describes this anchor better than this
     // comment does.
     dusseldorfschool: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Kraftwerk, "Trans-Europa Express" (Kling Klang, Düsseldorf, March 1977):
+         the bass IS the sequencer. */
+      bassInstr: "bass_lead",
       // named "Düsseldorf 1977" — Trans-Europe Express, the record every one
       // of the four children actually heard: Bowie carried it to Berlin,
       // Bambaataa cut it up in the Bronx, Detroit built a genre on it.
@@ -3954,6 +4243,14 @@
     // DEGREES when the root moves, which is what a keyboard player transposing
     // a pattern does and what keeps a seven-note line in one key.
     electro: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Afrika Bambaataa
+         & the Soul Sonic Force, "Planet Rock" (Tommy Boy, New York 1982): the
+         808 IS the bottom of that record — its own article says so — and this
+         row was playing a recorded upright under a Kraftwerk quotation.
+         `bass_lead` is the one modelled bass in `fields.js BASSCHOICES`;
+         `bassTone.cut` at 500 keeps it under the square lead rather than
+         beside it. */
+      bassInstr: "bass_lead", bassTone: { cut: 500 },
       // ITS OWN ARPEGGIO (2026-08-31): the same leaping habit as acid, over an 808 instead of a 909.
       seqArp: "arpwide",
       // named "New York 1982" — Planet Rock's city and year. Detroit's own
@@ -4166,18 +4463,45 @@
     // does the SAME job here it does in tango: a note the voice sits on has
     // to be a chord tone, and everything shorter is just diction.
     crooner: {
-      label: "Los Angeles 1953", rate: 0.5, bars: 8, swing: 0.15, near: "jazz",
+      /* LOS ANGELES 1931, AND THE OLD LABEL WAS A FAMOUS RECORD RATHER THAN
+         THE FIRST ONE (2026-09-02, the catalogue round). "Los Angeles 1953"
+         is Sinatra's Capitol comeback, and the QA report put it thirty-three
+         years after its own article's origin clause — the longest such gap on
+         any anchor in the roots family. It was also the reason THREE of this
+         row's four parents pointed forwards in time: `doowop` is Harlem 1955,
+         two years AFTER the label, which is a date the graph cannot hold.
+
+         THE FIRST RECORD IS BING CROSBY'S, AND IT IS DATABLE TO THE MONTH.
+         "I Surrender, Dear" — Brunswick 6055, cut in Los Angeles on 19
+         January 1931, his first solo hit after leaving the Rhythm Boys, and
+         the record that got him the CBS network show that autumn. It is the
+         whole thing this row is: one voice close on an electrical microphone,
+         held over a dance-orchestra's changes, singing at conversational
+         volume because the microphone made that pay. Sinatra is the best user
+         of this row's technique and Crosby is where it starts, which is
+         `chorale`'s own sentence about Bach and Osiander, applied again.
+
+         SO THE PARENTS ARE RE-ARGUED, ALL FOUR:
+           `neworleans` 0.4  (New Orleans 1923) takes bebop's share. Crosby
+                             said all his life that Louis Armstrong was "the
+                             beginning and the end of music in America"; the
+                             behind-the-beat phrasing IS Armstrong's, and in
+                             1931 bebop is fourteen years away.
+           `tinpanalley` 0.3 (New York 1924) unchanged in kind and larger in
+                             share — the songs came first and the microphone
+                             came second, which the old comment already said.
+           `barbershop` 0.2  (New York 1910) is the close-harmony trio he
+                             actually sang in: the Rhythm Boys, with Whiteman,
+                             1927-1930. It replaces `doowop`, which is what
+                             was standing in for "a vocal group" and which
+                             this row PRECEDES by twenty-four years.
+           `gospel` 0.1      is dropped. It is Chicago 1932 — one year after
+                             this record — and the held, unhurried breath it
+                             was credited for is the concert-trained
+                             dance-band singer's, not the church's. */
+      label: "Los Angeles 1931", rate: 0.5, bars: 8, swing: 0.15, near: "jazz",
       plan: "song", bpm: 88,
-      // LINEAGE: the changes and the walking rhythm section are bebop's own
-      // vocabulary played straighter and slower for a singer to sit on; the
-      // vocal-group blend behind the lead is doo-wop's, one voice standing
-      // out front of it instead of three trading it; gospel supplies the
-      // trained, held, unhurried breath. Tin Pan Alley's standard songbook
-      // — the actual repertoire a crooner sings — WAS uncredited until
-      // 2026-08-29, and `tinpanalley` (New York 1924) is now the second
-      // largest share of this row, which is right: the songs came first and
-      // the microphone came second.
-      parents: { jazz: 0.45, tinpanalley: 0.25, doowop: 0.2, gospel: 0.1 },
+      parents: { neworleans: 0.4, tinpanalley: 0.3, barbershop: 0.2 },
       wants: [],
       instr: ["solo_vox", "slow_strings"],
       drumkit: "brush",
@@ -4322,6 +4646,19 @@
     // the KICK ITSELF: broken and syncopated where techno's is a plain four,
     // because a breakbeat under a machine floor is the entire joke.
     bigbeat: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         The Prodigy, "Firestarter" (XL, Essex, March 1996): a sequenced synth
+         under a sampled break. */
+      bassInstr: "bass_lead",
       label: "Essex 1997", voices: 3, near: "techno",
       // floor music with a breakdown where a bridge would be
       plan: "dance", bpm: 132,
@@ -4368,6 +4705,19 @@
     // attempts, written as `kitProb` rather than a fixed subdivision because
     // a drill hat roll's whole character is that you cannot see it coming.
     drill: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Chief Keef featuring Lil Reese, "I Don't Like" (prod. Young Chop, Glory
+         Boyz/Interscope, Chicago, 6 March 2012). */
+      bassInstr: "bass_lead",
       label: "Chicago 2012", near: "trap",
       // trap's half-time grandchild
       plan: "dance", bpm: 142,
@@ -4380,7 +4730,12 @@
       parents: { trap: 0.5, boombap: 0.3, dnb: 0.2 },
       wants: ["chicago drill", "uk drill"],
       instr: ["felt_piano", "warm_pad"],
-      drumkit: "electronic",
+      /* THE KIT IS THE 808 ITSELF (2026-09-02, the catalogue round). Chief
+         Keef featuring Lil Reese, "I Don't Like" (prod. Young Chop, Chicago,
+         6 March 2012): the drums are the 808's own kick, clap and hat, voiced
+         per hit by the engine, and `electronic` is a sampled kit standing in
+         for exactly that machine. */
+      drumkit: "tr808",
       entry: () => 0, reg: v => -v, realize: () => "line",
       harmony: "modal", mode: MODES.harmonic, scale: MODES.harmonic,
       artic: "tie", bassStyle: "pedal",
@@ -4426,7 +4781,15 @@
       // piano-stab feel is present in spirit but the piano is a synth voice
       // here — the actual downtown-club scene the record came out of is
       // still missing.
-      parents: { disco: 0.45, synthpop: 0.3, house: 0.25 },
+      // ...AND THE STAB IS ITALO'S, NOT CHICAGO'S (2026-09-02, the catalogue
+      // round). This said `house: 0.25` while the comment above admitted
+      // "house's piano-stab feel is present in spirit" — and `house` is
+      // Chicago 1986, THREE YEARS AFTER "Holiday" and "Everybody" (Sire, New
+      // York, 1983). Nothing in a 1983 New York club came from a record made
+      // in 1986. What was in those rooms is the Italo import: `italodisco`
+      // (Milan 1982), one year before this row, whose synth-bass-and-stab
+      // floor is the one the Danceteria DJs were actually playing.
+      parents: { disco: 0.45, synthpop: 0.3, italodisco: 0.25 },
       wants: ["danceteria"],
       // a 1983 dance-pop single is a JUNO and a string machine, not a choir
       // patch: the chord chair takes GM 91 (-> juno60, the chorus is the
@@ -4651,6 +5014,18 @@
     // own honest description: it is a production METHOD, assembling
     // whichever record the section needs, more than it is one groove.
     kpop: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         PSY, "Gangnam Style" (YG, Seoul, July 2012). */
+      bassInstr: "bass_lead",
       label: "Seoul 2012", near: "synthpop",
       // a SONG, and the one to argue with: it has the biggest dance break of
       // anything in its batch, but everything around the break is
@@ -4786,8 +5161,20 @@
       // is `hardcore` (Washington 1980, Bad Brains) — the uncredited rung
       // has a name, and punk's share moves to it, since hardcore is where
       // this row's punk actually arrived from.
-      parents: { emo: 0.5, hardcore: 0.25, deathmetal: 0.25 },
-      wants: [],
+      // AND THE `emo` PARENT WAS FIVE YEARS YOUNGER THAN THE RECORD
+      // (2026-09-02, the catalogue round). `emo` is Chicago 1999 — the
+      // Midwest second wave — and this row is San Diego 1994: Heroin's self
+      // titled LP and Antioch Arrow's *In Love with Jetts*, both on Gravity
+      // Records, San Diego, 1993-94. The emo those bands came out of is the
+      // 1985 D.C. one — Rites of Spring, Dischord 22 — which this catalogue
+      // has not got, and naming a 1999 row for it was a five-year-forward
+      // edge standing in for a missing ancestor. `hardcore` (Washington
+      // 1980) takes the weight, which is the scene both rows actually grew
+      // out of and which this row's own LINEAGE note already called "the one
+      // uncredited rung"; the missing rung is now named as a want instead of
+      // impersonated by a parent.
+      parents: { hardcore: 0.6, deathmetal: 0.25 },
+      wants: ["emocore — Rites of Spring, Washington 1985"],
       instr: ["distortion_guitar", "distortion_guitar"],
       drumkit: "power",
       entry: () => 0, reg: v => -v, realize: () => "line",
@@ -4952,6 +5339,19 @@
     // (the full four-on-the-floor plus the open hat) — house's stab chord
     // and techno's kick-and-open-hat kit, aimed at a festival main stage.
     bigroom: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Swedish House Mafia, "Don't You Worry Child" (Virgin, 2012): a festival
+         bass is the supersaw's own octave. */
+      bassInstr: "bass_lead",
       label: "Las Vegas 2012", bars: 8, near: "techno",
       // a genre named after its drop
       plan: "dance", bpm: 128,
@@ -5181,7 +5581,19 @@
       drumkit: "room",
       entry: () => 0, reg: v => -v, realize: () => "line",
       mode: MODES.dorian, scale: MODES.dorian, diatonic: true,
-      roots: [0, 3, 4, 0, 0, 3, 4, 5],
+      /* THE EIGHTH CHORD WAS A DIMINISHED TRIAD NOBODY ORDERED (2026-09-02,
+         the Chordonomicon round). Degree 5 in dorian is the NATURAL sixth,
+         and a triad stacked in scale steps off it (9, 12, 15 -> 0, 3, 6) is
+         DIMINISHED — an unprepared #vi(dim) at the end of the cycle, which no
+         sentence in this row claims and which Steely Dan's jazz-schooled
+         changes do not contain. Chordonomicon, 1,366 sophisti-pop songs: the
+         eight-chord cycle as written ranks 1,357 of 1,537 (one song), while
+         the row's tonic-subdominant spine `i iv` is rank 3 (x120) at W=2, so
+         only the last chord is wrong. Degree 1 is the SUPERTONIC — the ii a
+         ii-V education actually reaches for — and every other degree stands.
+         Prefab Sprout, "Appetite"/*Steve McQueen* (Kitchenware, prod. Thomas
+         Dolby, London, June 1985). Corpus silent. */
+      roots: [0, 3, 4, 0, 0, 3, 4, 1],
       artic: "legato", maxHold: 3, bassStyle: "walk",
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
@@ -5199,6 +5611,29 @@
     // sixteenths that never let up. NO FILL, ever, and that absence is the
     // whole discipline: the beat does not vary bar to bar, on principle.
     motorik: {
+      /* WHO THE BASS IS, AND HERE IT IS A PAIR OF HANDS (2026-09-02, the
+         catalogue round). The new `bassInstr` field is not only for machines:
+         this row was playing the sampled upright by default, which is the
+         wrong RECORDING as much as the wrong lane, and naming the right one is
+         the honest edit even though it moves no `instrumentation` score.
+         Neu!, "Hallogallo" (*Neu!*, Brain, rec. Hamburg, December 1971): Rother
+         and Dinger played it. */
+      bassInstr: "finger_bass",
+      /* NOBODY SINGS ON THIS RECORD (2026-09-02, the catalogue round). The
+         QA report's `instrumentation` column found this row seating a
+         MODELLED THROAT it never asked for: compose.js books a singer and a
+         choir off the family lean, and until a row says otherwise it gets
+         them. `chiptune` set the precedent — `instrumental: true` is the door
+         precompose.js already holds ("DOOR 1 — AN INSTRUMENTAL RECORD STAYS
+         INSTRUMENTAL") and it bars the singer and the choir and nothing else.
+         It is a FACT ABOUT THE MUSIC and not a preference, which is why only
+         six of the forty flagged rows take it and the sung machine genres
+         (synthpop, house, kpop, garage, rnb…) do not.
+         THE RECORD: Neu!, "Hallogallo" (Brain, rec. Star Studio, Hamburg,
+         December 1971) — ten minutes and not one word. This row's own sibling
+         `roboticpop` already calls it "that anchor's motorik sibling's
+         wordless process piece"; the row was still being handed a tenor. */
+      instrumental: true,
       label: "Düsseldorf 1974", bars: 8, near: "dusseldorfschool",
       // one pulse held for eight minutes while things arrive on top of it (its
       // parent minimalism is an arc for the same reason, and like minimalism it
@@ -5248,15 +5683,39 @@
     // by a vocoder rather than motorik's wordless process piece, which is
     // the field that separates the two Kraftwerk children.
     roboticpop: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Kraftwerk, "Die Roboter" (*Die Mensch-Maschine*, Kling Klang, Düsseldorf,
+         May 1978). */
+      bassInstr: "bass_lead",
       label: "Düsseldorf 1978", near: "synthpop",
       // ITS OWN ARPEGGIO (2026-08-31): Kraftwerk's most quoted lines descend (the Model, Computer Love); a lean.
       seqArp: "arpdown",
       plan: "song", bpm: 120,
       // LINEAGE: the vocoder-and-sequencer chassis and the deadpan machine
-      // delivery are dusseldorfschool's own; synthpop supplies the actual pop-song
-      // form (a real changing progression, a hook) that anchor's motorik
-      // sibling refuses to have.
-      parents: { dusseldorfschool: 0.55, synthpop: 0.45 },
+      // delivery are dusseldorfschool's own; the second parent supplies the
+      // actual pop-song form (a real changing progression, a hook) that
+      // anchor's motorik sibling refuses to have.
+      //
+      // ...AND THAT SECOND PARENT IS NO LONGER A ROW FROM THREE YEARS LATER
+      // (2026-09-02, the catalogue round). It said `synthpop: 0.45` and
+      // synthpop is Basildon 1981 — Depeche Mode — where "Das Model" is on
+      // *Die Mensch-Maschine*, Kling Klang, Düsseldorf, May 1978. Basildon
+      // learned this from Düsseldorf and not the other way round; the edge
+      // was upside down. The machine-pop SONG that was already on the shelf
+      // in 1978 is Munich's: `eurodisco` (Munich 1977), Moroder and Summer's
+      // "I Feel Love", where a sequencer carries the whole rhythm section and
+      // there is still a verse and a chorus over it. One year before this
+      // record, and the same claim.
+      parents: { dusseldorfschool: 0.55, eurodisco: 0.45 },
       wants: [],
       // DÜSSELDORF 1978 IS A FORMANT SPEECH SYNTHESISER, not a metaphor for one:
       // the deadpan machine at the front of those records is a Votrax, a Speak &
@@ -5352,6 +5811,19 @@
     // — which is why, the article says, they "got pigeonholed as an industrial
     // act"). All four children are 1988 or later, so every edge runs forward.
     industrialdance: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Ministry, "Cold Life" (Wax Trax!, Chicago 1981) — the record this row's
+         own comment is dated on. */
+      bassInstr: "bass_lead",
       label: "Chicago 1981", near: "synthpop",
       // a 12-inch single with a verse and a chorus that happened to chart on
       // a disco list. 122 lands in the one gap its own family leaves —
@@ -5417,6 +5889,19 @@
     // playing to a sequencer from a band playing itself, which is exactly
     // what Kraftwerk's own inheritance argues.
     industrialmetal: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Ministry, "Stigmata" (*The Land of Rape and Honey*, Sire, Chicago 1988):
+         the bass doubles the sequencer. */
+      bassInstr: "bass_lead",
       label: "Chicago 1988", bars: 8, near: "deathmetal",
       plan: "song", bpm: 126,
       // LINEAGE: the chromatic riff wall and the ♭5-is-home locrian colour
@@ -5443,7 +5928,19 @@
       // US". Land of Rape and Honey is what that apartment record became
       // after seven years, so the edge is the largest single share here: the
       // riff wall is death metal's, but the ROOM is Chicago 1981's.
-      parents: { industrialdance: 0.35, deathmetal: 0.3, dusseldorfschool: 0.2, punk: 0.15 },
+      // ...AND THE METAL PARENT BROKE THIS ROW'S OWN LAW (2026-09-02, the
+      // catalogue round). Eight lines above, this row refuses `ebm` because
+      // it is "a year AFTER this row's own label" and "a parent edge pointing
+      // at a younger anchor would be a date the graph cannot hold" — and then
+      // declared `deathmetal`, Tampa 1990, TWO years after *The Land of Rape
+      // and Honey* (Sire 25799, Chicago, October 1988). The guitar wall on
+      // that record is thrash — Slayer's *Reign in Blood*, Def Jam, 1986 —
+      // and the catalogue has no thrash row, so the share goes to the metal
+      // row that does exist and is older, `heavymetal` (Workington 1969), and
+      // the exact rung is named on the `wants` list instead of being smuggled
+      // in through a row from the wrong year. The locrian scale cited in the
+      // header is a scale, not an edge; it stays.
+      parents: { industrialdance: 0.35, heavymetal: 0.3, dusseldorfschool: 0.2, punk: 0.15 },
       wants: [],
       instr: ["distortion_guitar", "metal_pad"],
       drumkit: "electronic",
@@ -5469,6 +5966,19 @@
     // the chant on the offbeats, then a straight run answered by the
     // sequence stabbing back), the club's version of a call and response.
     ebm: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Front 242, "Headhunter" (*Front by Front*, Wax Trax! Chicago pressing,
+         1988): the bassline is the sequence. */
+      bassInstr: "bass_lead",
       label: "Chicago 1989", near: "techno",
       // ITS OWN ARPEGGIO (2026-08-31): Front 242's figures push DOWN into the floor; a lean, not a claim about every record.
       seqArp: "arpdown",
@@ -5538,6 +6048,19 @@
     // disco floor rather than a clipped anthem chord, which is the field
     // that turns a synth-pop record into a dance-floor one.
     synthduo: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Pet Shop Boys, "West End Girls" (Parlophone, rec. Advision, London,
+         October 1985). */
+      bassInstr: "bass_lead",
       label: "London 1985", near: "synthpop",
       plan: "song", bpm: 122,
       // LINEAGE: the all-synth chassis and the anthem changes are synthpop's
@@ -5595,12 +6118,29 @@
     // tradition itself — the songs Ray Davies was actually parodying — has no
     // anchor here yet.
     musichallrock: {
+      /* WHO THE BASS IS, AND HERE IT IS A PAIR OF HANDS (2026-09-02, the
+         catalogue round). The new `bassInstr` field is not only for machines:
+         this row was playing the sampled upright by default, which is the
+         wrong RECORDING as much as the wrong lane, and naming the right one is
+         the honest edit even though it moves no `instrumentation` score.
+         The Kinks, "Sunny Afternoon" (Pye, London, June 1966): Pete Quaife's
+         descending line IS the hook, and it is a plectrum on an electric bass. */
+      bassInstr: "picked_bass",
       label: "Muswell Hill 1966",
       plan: "song", bpm: 118,
       // PAID 2026-08-29, the debts round: "music hall" is
       // `musichall` (London 1892) — the Kinks row is that stage wearing
       // an amplifier, its own comment's claim since the day it landed.
-      parents: { rock: 0.45, skiffle: 0.3, doowop: 0.25, musichall: 0.2 },
+      // THE ROCK PARENT WAS THREE YEARS YOUNGER THAN THE ROW (2026-09-02,
+      // the catalogue round): `rock` is London 1969 and "Dead End Street"
+      // (Pye 7N 17222, London, November 1966) and "Sunny Afternoon" (Pye,
+      // June 1966) are 1966 records. The band that cut them was a BEAT GROUP
+      // — "You Really Got Me" (Pye, 1964) is the beat single that put the
+      // power chord on the radio — so the share goes to `beatgroup`
+      // (Liverpool 1962), four years before this row instead of three years
+      // after it. Same weight, and the loud-guitar claim survives it: the
+      // guitar this row is famous for is the one on that 1964 single.
+      parents: { beatgroup: 0.45, skiffle: 0.3, doowop: 0.25, musichall: 0.2 },
       wants: [],
       instr: ["upright_piano", "clean_guitar"],
       drumkit: "room",
@@ -5676,8 +6216,17 @@
       instr: ["clean_guitar", "fiddle"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: () => "line",
-      roots: [0,0, 3,3, 4,4, 0,0], mode: MODES.mixo,
-      scale: MODES.mixo, diatonic: true,
+      /* IONIAN AND NOT MIXOLYDIAN (2026-09-02, the Chordonomicon round).
+         These roots touch degrees 0, 3 and 4 only — they never reach degree
+         6, which is the flat seventh mixolydian EXISTS for — so the mode's
+         only audible effect on this row was turning the V into a minor v.
+         Chordonomicon, 4,724 alt-country songs, rotation-collapsed: `I IV v`
+         is rank 49 (x74) and `I IV V` is rank 2 (x1,617), behind only `IV I
+         V` (x1,964). Corpus silent. Wilco, "Misunderstood"/*Being There*,
+         Reprise, Chicago, 29 October 1996: the twang is bright and the
+         dominant is major. */
+      roots: [0,0, 3,3, 4,4, 0,0], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "walk",
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
@@ -5726,7 +6275,15 @@
     yachtrock: {
       label: "Austin 1979", near: "aor",
       plan: "song", bpm: 100,
-      parents: { aor: 0.4, jazzrock: 0.3, detroitsoul: 0.3 },
+      // THE AOR PARENT WAS THREE YEARS YOUNGER (2026-09-02, the catalogue
+      // round). Christopher Cross's debut (Warner Bros. BSK 3383, cut in Los
+      // Angeles, released December 1979) is the record this row is named
+      // for; `aor` is Los Angeles 1982, which is the radio FORMAT built
+      // around records like it, not the thing it came out of. The session
+      // craftsmanship it actually descends from is the Bay Area's —
+      // `coastrock` (Sausalito 1977), the Record Plant, Rumours — two years
+      // before this record rather than three years after it.
+      parents: { coastrock: 0.4, jazzrock: 0.3, detroitsoul: 0.3 },
       wants: ["blue-eyed AOR"],
       instr: ["electric_piano", "clean_guitar"],
       drumkit: "room",
@@ -5991,6 +6548,18 @@
     // supplies the melodicism neither of those alone would grant. Named for
     // the Hartnoll brothers' M25-orbital motorway, not a record.
     melodictechno: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Orbital, "Belfast" (*Orbital*, ffrr, Kent 1991). */
+      bassInstr: "bass_lead",
       label: "Kent 1991", bars: 8, near: "techno",
       // a machine floor — no bridge, a drop
       plan: "dance", bpm: 130,
@@ -6028,6 +6597,34 @@
     // pulse. Sheffield's Warp/bleep scene, the genre's own real birthplace,
     // is the missing rung — Manchester's 808 State crossed over into it.
     bleeptechno: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         808 State, "Pacific State" (ZTT, Manchester, November 1989). This row's
+         own words already say "the sub bass an octave-and-a-half under it" and
+         the chair was still a recorded upright. */
+      bassInstr: "bass_lead",
+      /* NOBODY SINGS ON THIS RECORD (2026-09-02, the catalogue round). The
+         QA report's `instrumentation` column found this row seating a
+         MODELLED THROAT it never asked for: compose.js books a singer and a
+         choir off the family lean, and until a row says otherwise it gets
+         them. `chiptune` set the precedent — `instrumental: true` is the door
+         precompose.js already holds ("DOOR 1 — AN INSTRUMENTAL RECORD STAYS
+         INSTRUMENTAL") and it bars the singer and the choir and nothing else.
+         It is a FACT ABOUT THE MUSIC and not a preference, which is why only
+         six of the forty flagged rows take it and the sung machine genres
+         (synthpop, house, kpop, garage, rnb…) do not.
+         THE RECORD: 808 State, "Pacific State" (ZTT/Creed, Manchester, released
+         21 November 1989) — a saxophone hook and birdsong over a 303. There is
+         no singer on the record to book. */
+      instrumental: true,
       label: "Manchester 1989", near: "acid",
       // ITS OWN ARPEGGIO (2026-08-31): the Sheffield bleep is a long figure, not a four-note loop.
       seqArp: "arpturn",
@@ -6100,6 +6697,36 @@
     // "phaser"]))`) and the dance plan has a breakdown, which is a sweep as
     // an EVENT — what this music actually does with one — instead of a wash.
     industrialbreaks: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Meat Beat Manifesto, "Radio Babylon" (*Storm the Studio*, Sweatbox,
+         Swindon 1989). */
+      bassInstr: "bass_lead",
+      /* NOBODY SINGS ON THIS RECORD (2026-09-02, the catalogue round). The
+         QA report's `instrumentation` column found this row seating a
+         MODELLED THROAT it never asked for: compose.js books a singer and a
+         choir off the family lean, and until a row says otherwise it gets
+         them. `chiptune` set the precedent — `instrumental: true` is the door
+         precompose.js already holds ("DOOR 1 — AN INSTRUMENTAL RECORD STAYS
+         INSTRUMENTAL") and it bars the singer and the choir and nothing else.
+         It is a FACT ABOUT THE MUSIC and not a preference, which is why only
+         six of the forty flagged rows take it and the sung machine genres
+         (synthpop, house, kpop, garage, rnb…) do not.
+         THE RECORD: Meat Beat Manifesto, "Radio Babylon" (*Storm the Studio*,
+         Sweatbox, Swindon 1989) — every voice on it is a sample off the crate,
+         which is exactly why this row already seats a `found:` vocal stab. The
+         crate is untouched: door 1 reads the PATCHES/SAMPLED_VOICES tables, not
+         `found:` addresses, so the sampled shout stays and the modelled tenor
+         goes. */
+      instrumental: true,
       label: "Swindon 1989", voices: 3, near: "bigbeat",
       // a machine floor; 134 is its breakbeat's own meeting point with the
       // "Blue Monday" pulse next door
@@ -6267,6 +6894,19 @@
     // the neighbouring room. Smearing the two albums into one row is what
     // produced the contradiction this comment is undoing.
     industrialrock: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Nine Inch Nails, "Head Like a Hole" (*Pretty Hate Machine*, TVT,
+         Cleveland 1989). */
+      bassInstr: "bass_lead",
       // Cleveland is the article's own: "While working nights as a handyman
       // and engineer at the Right Track Studio in Cleveland, Ohio, Reznor
       // used studio 'down-time' to record and develop his own music", and
@@ -6400,6 +7040,18 @@
     // four-on-the-floor gives it a dance floor to live on. New romantic
     // synth-pop, the wider scene this record broke out of, is missing.
     analogsynthpop: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Depeche Mode, "New Life" (Mute, Basildon, June 1981). */
+      bassInstr: "bass_lead",
       // ITS OWN ARPEGGIO (2026-08-31): the early Basildon machine runs up under the song.
       seqArp: "arpup",
       // "Basildon 1980" — the year the band itself formed (as Composition of
@@ -6411,7 +7063,21 @@
       // dance on purpose — that IS the early-90s crossover the three argue
       // about from different rooms
       plan: "song", bpm: 124,
-      parents: { synthpop: 0.5, dusseldorfschool: 0.3, disco: 0.2 },
+      /* THE PARENT WAS THE SAME BAND, ONE YEAR LATER (2026-09-02, the
+         catalogue round). `synthpop` is "Basildon 1981 — early Depeche Mode"
+         and this row is "Basildon 1980 — Depeche Mode, Speak & Spell era":
+         one band, one town, and an edge running FORWARDS in time from a row
+         to its own next year. What Vince Clarke was actually writing from is
+         Düsseldorf's verse-chorus machine pop — `roboticpop` (Düsseldorf
+         1978, "Das Model") — two years before this row, and it takes the
+         share whole.
+         THE LABEL YEAR STAYS 1980 AND IS DELIBERATE: this row's record is
+         *Speak & Spell* (Mute STUMM 5, 5 October 1981, and "Dreaming of Me",
+         Mute MUTE013, February 1981 before it), and 1981 is already
+         `synthpop`'s label for the same town. 1980 is the year the band
+         became Depeche Mode; the label comment above says so, and moving it
+         onto 1981 would put two anchors on one dot for no gain. */
+      parents: { roboticpop: 0.5, dusseldorfschool: 0.3, disco: 0.2 },
       wants: ["new romantic synth pop"],
       // "unmistakably one monosynth rather than a band" — so a thin square
       // sequence out front and a poly behind it, and not a choir patch. The
@@ -6442,6 +7108,20 @@
     // huge plate is the tone.verb number, not an effect list. Gothic rock's
     // guitar-forward gloom is the missing rung this record actually leans on.
     gothsynth: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         Depeche Mode, "Enjoy the Silence" (*Violator*, Mute, Basildon, February
+         1990) — and this row's own comment already asks for "an analog synth
+         BASS with a real ladder", which is what this id is. */
+      bassInstr: "bass_lead",
       label: "Basildon 1990",
       // a verse-chorus record played on a different synthesizer is still a
       // verse-chorus record — the synth is a fact about the INSTRUMENT, not
@@ -6501,7 +7181,14 @@
       // "gothic rock" PAID 2026-08-29 (London 1979): Bela Lugosi's Dead
       // is the permission slip this row's whole palette was signed on —
       // the weight comes off rock, which was covering the gap generically.
-      parents: { gothicrock: 0.35, rock: 0.25, shoegaze: 0.2, synthpop: 0.2 },
+      // THE WALL OF REVERBED GUITAR IS `dreampop`'s AND IT CAME FIRST
+      // (2026-09-02, the catalogue round). `shoegaze` is London 1991, FOUR
+      // YEARS AFTER "Just Like Heaven" (*Kiss Me, Kiss Me, Kiss Me*, Fiction
+      // FIXH 13, 1987) — this row is upstream of shoegaze, not downstream of
+      // it, and the header above had the arrow backwards. The chorused,
+      // reverb-washed guitar both rows share is the Cocteau Twins':
+      // `dreampop` (London 1984), three years BEFORE this record.
+      parents: { gothicrock: 0.35, rock: 0.25, dreampop: 0.2, synthpop: 0.2 },
       wants: [],
       instr: ["clean_guitar", "synth_strings_1"],
       drumkit: "room",
@@ -6560,6 +7247,19 @@
     // becoming a sequencer act. Everything the record needs is already a
     // parent; nothing here is missing.
     dancepostpunk: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         New Order, "Blue Monday" (Factory FAC 73, Manchester, 7 March 1983): a
+         Moog Source sequence, not a bass guitar. */
+      bassInstr: "bass_lead",
       label: "Manchester 1983", near: "postpunk",
       // ITS OWN ARPEGGIO (2026-08-31): Blue Monday's sequencer drives upward under the whole record.
       seqArp: "arpup",
@@ -6592,6 +7292,14 @@
     // rows. The Hacienda's own DJ culture, the actual room this scene
     // happened in, is the missing rung.
     madchester: {
+      /* WHO THE BASS IS, AND HERE IT IS A PAIR OF HANDS (2026-09-02, the
+         catalogue round). The new `bassInstr` field is not only for machines:
+         this row was playing the sampled upright by default, which is the
+         wrong RECORDING as much as the wrong lane, and naming the right one is
+         the honest edit even though it moves no `instrumentation` score.
+         Happy Mondays, "Step On" (Factory, Manchester, March 1990): Paul Ryder's
+         bass guitar, fingers. */
+      bassInstr: "finger_bass",
       label: "Manchester 1990", swing: 0.12, near: "house",
       // baggy: a band ON the machine floor — no bridge, a drop; 122 is the
       // baggy/dance cluster's shared home
@@ -6605,7 +7313,17 @@
       instr: ["clean_guitar", "percussive_organ"],
       drumkit: "power",
       entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
-      roots: [0, 3, 4, 0], mode: MODES.mixo,
+      /* THE MODE NOW ARRIVES (2026-09-02, the Chordonomicon round). The
+         header above declares mixolydian "for the bright, baggy sway" and the
+         old roots — 0 3 4 0 — never touched degree 6, so the flat seventh
+         that IS mixolydian never sounded; all the mode did was make the V a
+         minor v, which is the opposite of bright. Chordonomicon, 1,039
+         madchester songs, rotation-collapsed: `I IV v` rank 82 (x16), `I IV
+         V` rank 3 (x204), and `I bVII IV` rank 12 (x63). The second chord
+         moves to the flat seventh the row was always claiming — Happy
+         Mondays, "Step On" (Factory FAC 272, Manchester, March 1990), whose
+         sway is exactly that. Corpus silent. */
+      roots: [0, 6, 3, 0], mode: MODES.mixo,
       scale: MODES.mixo, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "sixteenths",
       kit: { k: [1,0,0,1, 0,0,1,0, 1,0,0,0, 0,1,0,0],
@@ -6656,6 +7374,14 @@
     // underneath. Nothing named here is missing; the crossover itself IS
     // the genre.
     indiedance: {
+      /* WHO THE BASS IS, AND HERE IT IS A PAIR OF HANDS (2026-09-02, the
+         catalogue round). The new `bassInstr` field is not only for machines:
+         this row was playing the sampled upright by default, which is the
+         wrong RECORDING as much as the wrong lane, and naming the right one is
+         the honest edit even though it moves no `instrumentation` score.
+         The Soup Dragons, "I'm Free" (Raw TV Products, Glasgow 1990) — and this
+         row's `bassStyle: "walk"` is a hand, not a sequencer. */
+      bassInstr: "finger_bass",
       label: "Glasgow 1990", near: "madchester",
       // a band ON the machine floor, like madchester — no bridge, a drop; 124
       // keeps it inside two bpm of the cluster on purpose
@@ -6665,8 +7391,18 @@
       instr: ["clean_guitar", "synth_strings_1"],
       drumkit: "power",
       entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
-      roots: [0, 3, 4, 0], mode: MODES.mixo,
-      scale: MODES.mixo, diatonic: true,
+      /* IONIAN, AND UNLIKE ITS PARENT (2026-09-02, the Chordonomicon round).
+         This inherited madchester's declared mixolydian with roots that never
+         reach degree 6, so the mode only ever turned the V into a minor v.
+         Chordonomicon, 1,028 indie-dance songs, rotation-collapsed: `I IV v`
+         rank 115 (x12), `I IV V` rank 2 (x124) — and `I bVII IV`, the repair
+         madchester takes, is only rank 53 here. The child does NOT get the
+         flat seventh from the data, so it gets the plain major three chords
+         instead: The Soup Dragons, "I'm Free" (Raw TV Products, Glasgow,
+         1990), house discipline under an ordinary major rock song. Corpus
+         silent. */
+      roots: [0, 3, 4, 0], mode: MODES.ionian,
+      scale: MODES.ionian, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "walk",
       kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
              o: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
@@ -7014,6 +7750,22 @@
     // open and close endings — the same line, ROTATED at the section turn,
     // which is what an ouvert/clos pair is before notation can say so.
     estampie: {
+      /* THE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP
+         (2026-09-02, the catalogue round). The QA report's `instrumentation`
+         column counts a chair as NATIVE when `audio/to-engine.js
+         patchForInstr()` names a Faust module for its id, and this row seats
+         ZERO of them — one of twelve in the table. Twelve rows were read one
+         by one and every one of them came back the same way: there is no
+         model in the fleet of the instrument this music is played on, and
+         there should not be. `organic: true` is that answer said out loud, so
+         the report can stop scoring an honest recording as a failure and can
+         start telling the twelve apart from the machine genres that were
+         seating a sampled upright by accident.
+         THIS ROW: the eight *Estampies royales* of the Chansonnier du Roi (BnF
+         fr. 844, Paris, c. 1300). A recorder is a blown tube and a hammered
+         dulcimer a struck box; the fleet's only struck model is `mallet`, a
+         bar, which is a different instrument. */
+      organic: true,
       label: "Paris 1300",
       // `arc`, NOT `dance`, on the plan policy's own words (compose.js): the
       // dance plan is the build-and-drop floor grammar, and a floor record
@@ -7077,7 +7829,17 @@
       // and a consort has none — a processional danced through is one shape
       // end to end, tango's own plan.
       plan: "arc", bpm: 76,
-      parents: { estampie: 0.4, polychoral: 0.35, troubadour: 0.25 }, wants: ["galliard"],
+      /* THE POLYPHONY PARENT IS NOW THE ONE THAT CAME FIRST (2026-09-02, the
+         catalogue round). This said `polychoral: 0.35` and polychoral is
+         London 1570 — NINETEEN YEARS AFTER Susato printed the Danserye
+         (Tielman Susato, *Het derde musyck boexken … alderhande danserye*,
+         Antwerp 1551), so the row descended from a record that did not exist
+         yet. The idiom the pavane's three lines actually are is the
+         Franco-Flemish consort texture the Petrucci presses had been selling
+         since 1501, which this table anchors at `francoflemish` (Venice
+         1502) — half a century BEFORE this row, where Tallis is two decades
+         after it. Same claim, right direction. */
+      parents: { estampie: 0.4, francoflemish: 0.35, troubadour: 0.25 }, wants: ["galliard"],
       near: "polychoral",
       instr: ["nylon_string_guitar", "recorder", "viola"],   // lute, pipe, viol
       drumkit: "room",
@@ -7132,6 +7894,22 @@
     // episode grammar. The walking continuo IS driving eighths on the
     // violone.
     concerto: {
+      /* THE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP
+         (2026-09-02, the catalogue round). The QA report's `instrumentation`
+         column counts a chair as NATIVE when `audio/to-engine.js
+         patchForInstr()` names a Faust module for its id, and this row seats
+         ZERO of them — one of twelve in the table. Twelve rows were read one
+         by one and every one of them came back the same way: there is no
+         model in the fleet of the instrument this music is played on, and
+         there should not be. `organic: true` is that answer said out loud, so
+         the report can stop scoring an honest recording as a failure and can
+         start telling the twelve apart from the machine genres that were
+         seating a sampled upright by accident.
+         THIS ROW: Vivaldi, *Le quattro stagioni* (Op. 8, written Venice, printed
+         Amsterdam 1725). A string band is people, and the one bowed model in
+         the fleet is `erhu` — a spike fiddle with a snakeskin membrane, which
+         is not a baroque violin and must not stand in for one. */
+      organic: true,
       label: "Venice 1725", voices: 3, bars: 8,
       plan: "arc", bpm: 120,
       parents: { continuo: 0.4, counterpoint: 0.35, pavane: 0.25 }, wants: [],
@@ -7453,6 +8231,18 @@
     // minimalism at 3400). All three of those ARE the genre, not production
     // choices laid over it.
     hyperpop: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         A. G. Cook, *Apple* (PC Music, London, September 2020). */
+      bassInstr: "bass_lead",
       label: "London 2021", near: "synthpop",
       plan: "song", bpm: 160,
       // LINEAGE: the all-synthetic chassis and the verse-chorus discipline
@@ -7493,6 +8283,19 @@
     // The record on top is a chopped vocal and one synth stab, no changes at
     // all, which is why `harmony: "modal"`.
     bailefunk: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         MC Fioti, "Bum Bum Tam Tam" (GR6, Rio de Janeiro 2017): the tamborzão's
+         bottom is the 808. */
+      bassInstr: "bass_lead",
       label: "Rio de Janeiro 2022", near: "electro",
       plan: "dance", bpm: 130,
       // LINEAGE: the 808 kit and the sub that IS the bassline are electro's,
@@ -10516,7 +11319,18 @@
       entry: v => v, reg: v => (v === 1 ? 1 : v === 2 ? 0 : 0),
       realize: () => "line",
       part: ["lead", "counter", "riff"],
-      roots: [0, 3, 4, 0], mode: MODES.aeolian, scale: DIATONIC, diatonic: true,
+      /* HARMONIC MINOR, WHICH IS ONE CHORD'S QUALITY (2026-09-02, the
+         Chordonomicon round). Aeolian made the fifth degree a MINOR v; the
+         dataset says this music raises it. Chordonomicon's minor-key subset
+         for the dangdut label (n=376), rotation-collapsed: `i iv v` rank 61
+         (x12), `i iv V` rank 1 (x134) — an eleven-fold margin on the SAME
+         three roots. Rhoma Irama's Soneta records (Yukawi/Indra, Jakarta,
+         from "Begadang", 1973) take their melody from the Hindi film song,
+         and this row's own `near: "filmi"` points at a row that is already
+         `MODES.harmonic` — as is `latinpop`, which sits at rank 1 for its
+         own label under it. The catalogue already knew the move; this row
+         had missed it. Corpus effectively silent (1 file). */
+      roots: [0, 3, 4, 0], mode: MODES.harmonic, scale: MODES.harmonic, diatonic: true,
       artic: "legato", maxHold: 3, bassStyle: "octaves",
       orn: { grace: 0.3, approach: 0.25 },
       kit: { k: [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,1,0],
@@ -11621,21 +12435,28 @@
     swing: {
       label: "Kansas City 1938", voices: 3, bars: 8, near: "jazz",
       plan: "song", bpm: 148,
-      // LINEAGE: `blues` is Chicago 1952 — FOURTEEN YEARS AFTER this label
-      // — and it is named anyway, on the precedent this file already set
-      // three times over (gospel 1932, countrypop 1945 and jazz 1945 all
-      // declare it): the anchor's own entry says its year is a Chess date on
-      // a form that is decades older, and a Kansas City riff band is built
-      // out of blues choruses whatever year the catalog happens to have
-      // photographed the blues in.
+      // LINEAGE, AND THE FOURTEEN-YEAR INVERSION IS GONE (2026-09-02, the
+      // catalogue round). This declared `blues: 0.35` and spent six lines
+      // arguing that naming a 1952 row as a 1938 row's parent was allowed
+      // because "the anchor's own entry says its year is a Chess date on a
+      // form that is decades older". The form decades older is IN THE TABLE.
+      // A Kansas City riff band is blues choruses at a dance tempo, and the
+      // blues that was in that town in 1938 was the boogie left hand — Pine
+      // Top Smith, "Pine Top's Boogie Woogie", Vocalion, Chicago, 29
+      // December 1928, and Pete Johnson and Big Joe Turner working the KC
+      // clubs the same decade. `boogiewoogie` (Chicago 1928) is ten years
+      // BEFORE this row and is what Basie's own left hand plays; `blues`
+      // (Chicago 1952) is fourteen years after it. The share is unchanged
+      // and now points backwards in time, which is the only direction a
+      // parent edge is allowed to point.
       // "new orleans jazz" PAID 2026-08-29 (New Orleans 1923): a Basie
       // head is the Oliver ensemble chorus written down and riffed, and
       // the rhythm section's two-beat ancestry is that band's directly.
       // PAID 2026-08-29, the debts round: "territory bands" is
       // `territoryband` (Kansas City 1932) — Moten's book became Basie's
       // and Basie's became this row's.
-      parents: { blues: 0.35, neworleans: 0.25, tinpanalley: 0.15, ragtime: 0.15,
-                 territoryband: 0.25 },
+      parents: { boogiewoogie: 0.35, neworleans: 0.25, tinpanalley: 0.15,
+                 ragtime: 0.15, territoryband: 0.25 },
       wants: [],
       instr: ["tenor_sax", "brass_section", "jazz_guitar"],
       drumkit: "jazz",
@@ -11696,7 +12517,13 @@
       // Monroe's own repertory keeps a dozen Child ballads.
       // "appalachian old-time" PAID 2026-08-30, the folk-floor round:
       // `oldtime` (Galax 1935) — Monroe sped up exactly this.
-      parents: { countrypop: 0.45, blues: 0.2, ballad: 0.2, oldtime: 0.3 },
+      // THE BLUES SHARE IS PRE-WAR (2026-09-02, the catalogue round):
+      // `blues` is Chicago 1952, six years after the Columbia sessions this
+      // row is dated at, and the blues Monroe played is the one he named —
+      // Arnold Shultz, the black fiddler and guitarist he heard around
+      // Rosine, Kentucky in the 1920s. That is `deltablues` (Clarksdale
+      // 1929), seventeen years BEFORE this record.
+      parents: { countrypop: 0.45, deltablues: 0.2, ballad: 0.2, oldtime: 0.3 },
       wants: ["shape-note singing"],
       instr: ["banjo", "fiddle", "steel_string_guitar"],
       entry: v => v * 2, reg: v => (v === 0 ? 1 : v === 1 ? 1 : 0),
@@ -12271,7 +13098,15 @@
       // PAID 2026-08-29, the debts round: "territory band riffs" is
       // `territoryband` (Kansas City 1932) — the riff chorus at shouting
       // tempo is that circuit's own trick.
-      parents: { swing: 0.5, blues: 0.35, boogiewoogie: 0.15,
+      // AND THE FORM IT PLAYS IS OLDER THAN THE ROW THAT WAS NAMED FOR IT
+      // (2026-09-02, the catalogue round). `blues: 0.35` pointed at Chicago
+      // 1952 — SIX YEARS AFTER "Choo Choo Ch'Boogie" was cut for Decca in
+      // Los Angeles in January 1946, and this row's own header says jump
+      // blues is "what `blues` grew a backbeat from". The twelve bars Louis
+      // Jordan is playing were fixed on record by the pre-war blues, which
+      // this table anchors at `deltablues` (Clarksdale 1929). The weight
+      // does not move; the edge does.
+      parents: { swing: 0.5, deltablues: 0.35, boogiewoogie: 0.15,
                  territoryband: 0.2 },
       // "boogie-woogie" spelled the way `blues` and `rocknroll` already
       // spell it, so the three of them aggregate into one hole rather than
@@ -12407,12 +13242,23 @@
       plan: "song", bpm: 72,
       // LINEAGE: half the chorale melodies ARE plainsong with German words
       // on them (Luther set Veni redemptor gentium himself), and the
-      // note-against-note technique is species counterpoint's. The label
-      // years run backwards here — 1586 with a 1725 parent — and that is
-      // the counterpoint row's own admission, not an error: its label is a
-      // publication date sitting on a practice seven centuries older. The
-      // table already carries the same inversion at `polychoral` 1570.
-      parents: { gregorian: 0.5, counterpoint: 0.5 },
+      // four-part vocal writing Osiander harmonised the tune in is the
+      // Franco-Flemish choirbook's.
+      //
+      // THE BACKWARDS EDGE IS GONE (2026-09-02, the catalogue round). This
+      // declared `counterpoint: 0.5` — Vienna 1725, a HUNDRED AND
+      // THIRTY-NINE YEARS after Osiander's *Fünfftzig geistliche Lieder und
+      // Psalmen* (Nuremberg 1586) — and then explained that the inversion
+      // was forgivable because Fux's label is a publication date on an older
+      // practice. That was the only reading available before `francoflemish`
+      // (Venice 1502) existed; it exists now, and it is the practice itself
+      // rather than a book about it. AND IT IS THE MORE EXACT CLAIM: what
+      // Osiander did was take the four-part texture the Josquin generation
+      // wrote and STRIP THE IMITATION OUT of it, so the congregation could
+      // find the tune on top — a subtraction from a thing that has to be
+      // there first. `polychoral` (1570), which came the same way, was
+      // re-pointed at the same row on the same day.
+      parents: { gregorian: 0.5, francoflemish: 0.5 },
       wants: ["the lutheran hymnal", "the meistersinger's bar form"],
       cannot: ["the fermata at the end of every line — a chorale BREATHES " +
                "between phrases and the pause is not in the metre; this " +
@@ -12869,6 +13715,22 @@
     // its comment. It is the closest call of the twelve and a reviewer
     // who disagrees should delete the row, not soften it.
     guqin: {
+      /* THE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP
+         (2026-09-02, the catalogue round). The QA report's `instrumentation`
+         column counts a chair as NATIVE when `audio/to-engine.js
+         patchForInstr()` names a Faust module for its id, and this row seats
+         ZERO of them — one of twelve in the table. Twelve rows were read one
+         by one and every one of them came back the same way: there is no
+         model in the fleet of the instrument this music is played on, and
+         there should not be. `organic: true` is that answer said out loud, so
+         the report can stop scoring an honest recording as a failure and can
+         start telling the twelve apart from the machine genres that were
+         seating a sampled upright by accident.
+         THIS ROW: Guan Pinghu's "Liu Shui" (Flowing Water), recorded Beijing
+         1956 — the take carried on the Voyager Golden Record. There is no
+         Faust model of a qin, and instruments.js's own erhu note already says
+         GM has no qin, pipa, dizi or sheng either. */
+      organic: true,
       instrumental: true,   // the qin alone; the row's one id is the koto stand-in
       label: "Beijing 1956", voices: 2, rate: 0.5, near: "gregorian",
       plan: "arc", bpm: 70,
@@ -13446,6 +14308,21 @@
     // gagaku's pulse is enormous and breathing, said here as half rate
     // and long holds rather than pretended to be a metre.
     gagaku: {
+      /* THE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP
+         (2026-09-02, the catalogue round). The QA report's `instrumentation`
+         column counts a chair as NATIVE when `audio/to-engine.js
+         patchForInstr()` names a Faust module for its id, and this row seats
+         ZERO of them — one of twelve in the table. Twelve rows were read one
+         by one and every one of them came back the same way: there is no
+         model in the fleet of the instrument this music is played on, and
+         there should not be. `organic: true` is that answer said out loud, so
+         the report can stop scoring an honest recording as a failure and can
+         start telling the twelve apart from the machine genres that were
+         seating a sampled upright by accident.
+         THIS ROW: the Tōdai-ji eye-opening ceremony, Nara, 752 — the occasion
+         this row is dated at. A shō is a free-reed mouth organ and a ryūteki
+         a transverse flute; the fleet models neither. */
+      organic: true,
       instrumental: true,   // the Nara court ensemble is winds and strings; no singer to book
       label: "Nara 752", voices: 3, rate: 0.5, near: "drone",
       plan: "arc", bpm: 72,
@@ -14296,8 +15173,18 @@
       reg: v => (v === 1 ? 1 : 0),
       realize: v => (v === 1 ? "pad" : "line"),
       part: ["riff", "pad", "counter"],
+      /* IONIAN, AND THE BLUES SCALE STAYS (2026-09-02, the Chordonomicon
+         round). These roots reach degrees 0, 3 and 4 and never degree 6, so
+         mixolydian's flat seventh never sounds and its ONLY effect here was a
+         minor v where "Get It On" (T. Rex, Fly BUG 10, cut at Trident and
+         Wally Heider's, July 1971) plays a Chuck Berry strut. Chordonomicon,
+         3,410 glam-labelled songs, rotation-collapsed: `I IV I v IV` is rank
+         140 (x18 of 10,580 classes) and `I IV I V IV` is rank 1 (x388).
+         Corpus silent. `SCALES.blues` is untouched — the tune's flat third
+         and flat fifth are this row's actual colour and they come from the
+         SCALE, not from the mode. */
       roots: [0, 0, 3, 0, 0, 0, 4, 3],
-      mode: MODES.mixo, scale: SCALES.blues, harmony: "cycle",
+      mode: MODES.ionian, scale: SCALES.blues, harmony: "cycle",
       swing: 0.15, artic: "staccato", maxHold: 2, bassStyle: "eighths",
       kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
@@ -14717,6 +15604,32 @@
     // music with the break given the whole foreground — and it takes
     // it as a parent at dominant weight today.
     hardcorerave: {
+      /* WHO THE BASS IS (2026-09-02, the catalogue round). Until this line
+         every record in this table without a signature `synth` block played
+         the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because
+         no anchor could name its own bass. `bassInstr` is the field that
+         closes that grammar hole (precompose.js writes it onto the bass
+         voice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and
+         `bass_lead` is the ONE MODELLED bass in the eleven — measured
+         2026-09-02, `patchForInstr("bass_lead")` answers `tb303` and
+         `sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of
+         synth basses.
+         The Prodigy, "Charly" (XL, Braintree, August 1991): the low end is the
+         hoover patch's own oscillator. */
+      bassInstr: "bass_lead",
+      /* NOBODY SINGS ON THIS RECORD (2026-09-02, the catalogue round). The
+         QA report's `instrumentation` column found this row seating a
+         MODELLED THROAT it never asked for: compose.js books a singer and a
+         choir off the family lean, and until a row says otherwise it gets
+         them. `chiptune` set the precedent — `instrumental: true` is the door
+         precompose.js already holds ("DOOR 1 — AN INSTRUMENTAL RECORD STAYS
+         INSTRUMENTAL") and it bars the singer and the choir and nothing else.
+         It is a FACT ABOUT THE MUSIC and not a preference, which is why only
+         six of the forty flagged rows take it and the sung machine genres
+         (synthpop, house, kpop, garage, rnb…) do not.
+         THE RECORD: The Prodigy, "Charly" (XL, Braintree, August 1991) — the only
+         voice on it is a sampled public-information cartoon, not a singer. */
+      instrumental: true,
       label: "Essex 1991", voices: 2, bars: 8, near: "bigbeat",
       plan: "dance", bpm: 138,
       // LINEAGE: `acid` (Chicago 1987) via the second summer of love
@@ -15953,7 +16866,17 @@
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,0,0],
              r: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
-      harmony: "cycle", roots: [0, 0, 6, 4, 0, 5, 6, 4],
+      /* THE SAME DORIAN DIMINISHED, IN THE SIXTH SLOT (2026-09-02, the
+         Chordonomicon round). Degree 5 in dorian is the natural sixth and its
+         scale-step triad is 0-3-6, diminished; the row's declared identity is
+         the modal `i bVII` spine (Chordonomicon minor subset, W=2, rank 3,
+         x284) and there is no instance of the eight-chord cycle as written at
+         W=6. Degree 3 is dorian's MAJOR IV, which is the one chord the mode
+         is declared for and the one its `i bVII` neighbours want. Emerson,
+         Lake & Palmer at the Isle of Wight, 29 August 1970 — this row's own
+         label — closes on that IV, not on a diminished sixth. Corpus
+         silent. */
+      harmony: "cycle", roots: [0, 0, 6, 4, 0, 3, 6, 4],
       mode: MODES.dorian, scale: SCALES.major, artic: "staccato", maxHold: 3,
       bassStyle: "eighths",
       tone: { wave: "sawtooth", cut: 2600, q: 1.2, atk: .006, rel: .5, gain: .25, verb: .35 },
@@ -16664,6 +17587,21 @@
     // that is not a convention. Landesmuseum Württemberg holds the
     // Geißenklösterle flutes; the Hohle Fels flute is shown at Blaubeuren.
     hohlefels: {
+      /* THE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP
+         (2026-09-02, the catalogue round). The QA report's `instrumentation`
+         column counts a chair as NATIVE when `audio/to-engine.js
+         patchForInstr()` names a Faust module for its id, and this row seats
+         ZERO of them — one of twelve in the table. Twelve rows were read one
+         by one and every one of them came back the same way: there is no
+         model in the fleet of the instrument this music is played on, and
+         there should not be. `organic: true` is that answer said out loud, so
+         the report can stop scoring an honest recording as a failure and can
+         start telling the twelve apart from the machine genres that were
+         seating a sampled upright by accident.
+         THIS ROW: the Hohle Fels vulture-bone flute (Schelklingen, Swabian Jura,
+         excavated 2008, c. 35,000 BC). The fleet has no flute model at all, so
+         a recording of a blown tube is the only honest instrument here. */
+      organic: true,
       // THE ROW DECLARES ITS INSTRUMENTAL IDENTITY (2026-08-30, Paul: "make
       // sure … vocals aren't there when they're supposed to be
       // instrumentals"). Measured over 308 anchors x seeds 1..3: this record
@@ -16721,6 +17659,20 @@
     // Henan; settled c. 7000 BC, flooded and abandoned c. 5700 BC — the
     // label takes the span's own centre, the highlife rule).
     jiahu: {
+      /* THE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP
+         (2026-09-02, the catalogue round). The QA report's `instrumentation`
+         column counts a chair as NATIVE when `audio/to-engine.js
+         patchForInstr()` names a Faust module for its id, and this row seats
+         ZERO of them — one of twelve in the table. Twelve rows were read one
+         by one and every one of them came back the same way: there is no
+         model in the fleet of the instrument this music is played on, and
+         there should not be. `organic: true` is that answer said out loud, so
+         the report can stop scoring an honest recording as a failure and can
+         start telling the twelve apart from the machine genres that were
+         seating a sampled upright by accident.
+         THIS ROW: the Jiahu gudi crane-bone flutes (Jiahu, Henan, excavated
+         1986-87, c. 6000 BC). Same fact and the same reason as the row above. */
+      organic: true,
       instrumental: true,   // "the gudi line" alone — same admission as hohlefels
       label: "Jiahu 6000 BC", voices: 1, rate: 0.5, near: "gagaku",
       plan: "arc", bpm: 76,   // same contract; the gudi line breathes through rate .5, not the clock
@@ -17088,9 +18040,25 @@
       label: "Fort Worth 1941", voices: 2, near: "countrypop",
       plan: "song", bpm: 96,
       // LINEAGE: hillbilly song plus the blues' flat grief, electrified
-      // for a room full of noise. Both parents are the table's own
-      // generics and the residue is the barroom itself.
-      parents: { countrypop: 0.55, blues: 0.25 },
+      // for a room full of noise; the residue is the barroom itself.
+      //
+      // BOTH PARENTS WERE YOUNGER THAN THIS RECORD (2026-09-02, the
+      // catalogue round) — `countrypop` is Nashville 1945 and `blues` is
+      // Chicago 1952, four and eleven years AFTER Ernest Tubb cut "Walking
+      // the Floor Over You" for Decca in Fort Worth in April 1941. Both are
+      // now the rows that were actually there:
+      //   `oldtime` (Galax 1935)      the hillbilly string band Tubb sang
+      //                               out of, and what `countrypop` was
+      //                               standing in for
+      //   `westernswing` (Tulsa 1940) the Texas dance hall and the
+      //                               amplification, one year older and one
+      //                               room over — Wills's band is why a
+      //                               guitar in that state was loud in 1941
+      //   `deltablues` (Clarksdale 1929) the flat grief. Tubb was Jimmie
+      //                               Rodgers's disciple — Rodgers's widow
+      //                               lent him the guitar — and the blue
+      //                               yodel is pre-war blues, not Chess's.
+      parents: { oldtime: 0.3, westernswing: 0.25, deltablues: 0.25 },
       wants: [],
       instr: ["clean_guitar", "steel_string_guitar"],
       drumkit: "brush",
@@ -17121,7 +18089,15 @@
       // LINEAGE: a string band playing a swing band's book — the two
       // halves are the name, and mariachi's borderland fiddle thirds are
       // real but a different row's claim. The residue is the dance hall.
-      parents: { countrypop: 0.35, swing: 0.4 },
+      //
+      // THE STRING-BAND HALF IS `oldtime` AND NOT `countrypop` (2026-09-02,
+      // the catalogue round). "New San Antonio Rose" was cut for Okeh in
+      // Dallas in April 1940; `countrypop` is Nashville 1945 — Earl Scruggs's
+      // roll at the Ryman, FIVE YEARS AFTER this record — so this row was
+      // declared a child of its own descendant. The string band Wills
+      // actually led is the fiddle-convention band his father played in, and
+      // that is `oldtime` (Galax 1935), five years the other way.
+      parents: { oldtime: 0.35, swing: 0.4 },
       wants: [],
       instr: ["fiddle", "jazz_guitar", "trumpet"],
       drumkit: "jazz",
@@ -18022,10 +18998,33 @@
        1311903783218139 are what the row already plays, and `offgrid` 0.32
        — the second highest of the round — is what the anchor's `push` idiom
        already claims. */
+    /* WORLDBEAT — THE PAD PARENT WAS A YEAR YOUNGER THAN THE ROW
+       (2026-09-02, the catalogue round). This declared `ambient: 0.2` and
+       `ambient` is London 1978 — Eno's *Music for Airports* — where this row
+       is London 1977, Peter Gabriel's first solo album (Charisma CDS 4006,
+       February 1977). The polysynth weather the share was paying for was
+       already on the shelf and it is Berlin's: `berlinschool` (Berlin 1972),
+       Tangerine Dream's sequenced pad from *Zeit* onward, five years BEFORE
+       this record — and it is the citation the personnel makes for me, since
+       the synthesiser on all four early Gabriel albums is Larry Fast's, a
+       Moog-and-sequencer man out of exactly that lineage.
+
+       AND THE YEAR IS LEFT ALONE, WHICH IS A DECISION AND NOT AN OVERSIGHT.
+       The `p` lane the 2026-09-02 corpus measurement added below (a rim click
+       on every even step, the loudest non-kit lane in fifteen files) is the
+       THIRD album's kit — Peter Gabriel (*Melt*), Charisma, 30 May 1980, the
+       record with the gated cymbal-less drums and "Biko" on it — and that is
+       the record this row really describes. Moving the label there is
+       blocked: `atlas.gate.js` holds (place, year) as a KEY and London 1980
+       is `nwobhm`'s dot. Re-placing it (Bath, where WOMAD was founded that
+       year) means a new PLACES row 15 km from Bristol, which is the
+       Workington/York crowding refusal again. Left for a round that can weigh
+       the map against the label; the parent edge, which is the defect the
+       report actually found, is fixed here. */
     worldbeat: {
       label: "London 1977", voices: 3, bars: 8, near: "artrock",
       plan: "song", bpm: 102,
-      parents: { glam: 0.3, rock: 0.3, dusseldorfschool: 0.2, ambient: 0.2 },
+      parents: { glam: 0.3, rock: 0.3, dusseldorfschool: 0.2, berlinschool: 0.2 },
       wants: ["a prog rung for the Genesis era, which this table has not got"],
       instr: ["solo_vox", "polysynth", "slap_bass"],
       drumkit: "power",
@@ -20449,6 +21448,21 @@
     // parents say the sentence: romantic Vienna plus the operetta stage
     // plus the photoplay cue book it professionalized.
     goldenagescore: {
+      /* THE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP
+         (2026-09-02, the catalogue round). The QA report's `instrumentation`
+         column counts a chair as NATIVE when `audio/to-engine.js
+         patchForInstr()` names a Faust module for its id, and this row seats
+         ZERO of them — one of twelve in the table. Twelve rows were read one
+         by one and every one of them came back the same way: there is no
+         model in the fleet of the instrument this music is played on, and
+         there should not be. `organic: true` is that answer said out loud, so
+         the report can stop scoring an honest recording as a failure and can
+         start telling the twelve apart from the machine genres that were
+         seating a sampled upright by accident.
+         THIS ROW: Korngold, *The Adventures of Robin Hood* (Warner Bros., Los
+         Angeles, 1938). A studio orchestra is eighty people in a room and
+         there is no model of a room full of people. */
+      organic: true,
       instrumental: true,   // a picture score — the dialogue is the singer
       label: "Los Angeles 1938", voices: 4, bars: 8, near: "romantic",
       plan: "arc", bpm: 112,
@@ -20486,6 +21500,21 @@
     // stab chair is `part: "stab"` — breakingnews's own word, and
     // Herrmann is where the picture business learned it.
     suspensescore: {
+      /* THE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP
+         (2026-09-02, the catalogue round). The QA report's `instrumentation`
+         column counts a chair as NATIVE when `audio/to-engine.js
+         patchForInstr()` names a Faust module for its id, and this row seats
+         ZERO of them — one of twelve in the table. Twelve rows were read one
+         by one and every one of them came back the same way: there is no
+         model in the fleet of the instrument this music is played on, and
+         there should not be. `organic: true` is that answer said out loud, so
+         the report can stop scoring an honest recording as a failure and can
+         start telling the twelve apart from the machine genres that were
+         seating a sampled upright by accident.
+         THIS ROW: Herrmann, *Psycho* (Paramount, Los Angeles, 1960) — this row's
+         own "forty strings and no one else in the room". Forty players are
+         forty recordings. */
+      organic: true,
       instrumental: true,   // forty strings and no one else in the room
       label: "Los Angeles 1960", voices: 4, bars: 8, near: "goldenagescore",
       plan: "arc", bpm: 120,
@@ -21707,6 +22736,21 @@
     // fragment re-said at new pitches, which per-note sampler rate does
     // literally: variable speed quantized to the note.
     tapemusic: {
+      /* THE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP
+         (2026-09-02, the catalogue round). The QA report's `instrumentation`
+         column counts a chair as NATIVE when `audio/to-engine.js
+         patchForInstr()` names a Faust module for its id, and this row seats
+         ZERO of them — one of twelve in the table. Twelve rows were read one
+         by one and every one of them came back the same way: there is no
+         model in the fleet of the instrument this music is played on, and
+         there should not be. `organic: true` is that answer said out loud, so
+         the report can stop scoring an honest recording as a failure and can
+         start telling the twelve apart from the machine genres that were
+         seating a sampled upright by accident.
+         THIS ROW: Pierre Schaeffer, "Étude aux chemins de fer" (RTF, Paris, 5
+         October 1948). Musique concrète IS the recording, definitionally; the
+         `found:` crate is not a fallback on this row, it is the instrument. */
+      organic: true,
       instrumental: true,   // there are no players; there is a bench
       label: "Paris 1948", voices: 3, bars: 8, near: "cologneschool",
       plan: "arc", bpm: 88,
@@ -21981,6 +23025,20 @@
     // orchestra (Bernard was Britten's copyist) and the picture-house
     // cue craft photoplay anchored.
     horrorscore: {
+      /* THE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP
+         (2026-09-02, the catalogue round). The QA report's `instrumentation`
+         column counts a chair as NATIVE when `audio/to-engine.js
+         patchForInstr()` names a Faust module for its id, and this row seats
+         ZERO of them — one of twelve in the table. Twelve rows were read one
+         by one and every one of them came back the same way: there is no
+         model in the fleet of the instrument this music is played on, and
+         there should not be. `organic: true` is that answer said out loud, so
+         the report can stop scoring an honest recording as a failure and can
+         start telling the twelve apart from the machine genres that were
+         seating a sampled upright by accident.
+         THIS ROW: James Bernard, *Dracula* (Hammer, Bray Studios, 1958) — a brass
+         section and a tubular bell struck by a hand. */
+      organic: true,
       instrumental: true,
       label: "Bray 1958", voices: 3, bars: 8, near: "suspensescore",
       plan: "arc", bpm: 76,
@@ -22897,7 +23955,10 @@
     // corpus's own third-commonest cycle, bVII-IV-I-bIII (19 windows) — a
     // flat seventh over a major tonic is MIXOLYDIAN, not ionian, and every
     // other guitar-band row in this table reaches for ionian by reflex. The
-    // measurement is why this one does not. Melodic mean pitch 73.8, the
+    // measurement is why this one does not. (The bIII stayed a claim and
+    // never became a chord — see the note on `roots` below, 2026-09-02 — so
+    // the row now plays this corpus's FIRST cycle, I-IV, off the same flat
+    // seventh. The mixolydian finding survives; only the fourth chord moved.) Melodic mean pitch 73.8, the
     // highest of the four 90s rock rows here, and mean interval 3.71 against
     // grunge's 2.19: the tune LEAPS and sits at the top of the voice.
     //   kick  9032203171511130   snare 2121912332219133
@@ -22915,8 +23976,28 @@
       instr: ["overdrive_guitar", "steel_string_guitar"],
       drumkit: "room",
       entry: () => 0, reg: v => v, realize: () => "line",
-      // bVII-IV-I-bIII read in MIXOLYDIAN: degrees 6, 3, 0, 2.
-      roots: [6, 3, 0, 2], mode: MODES.mixo,
+      /* bVII-IV-I-IV read in MIXOLYDIAN: degrees 6, 3, 0, 3.
+         THE FOURTH CHORD WAS bIII ON PAPER AND A DIMINISHED TRIAD IN THE AIR
+         (2026-09-02, the Chordonomicon round). `roots` degree 2 in mixolydian
+         is the NATURAL third, and `chordsOf` stacks a triad in SCALE steps
+         (kernel.js QSTEPS.triad = [0,2,4]) — so degrees 2/4/6 of mixo are
+         4/7/10 semitones, which is 0-3-6: a diminished chord, not the flat
+         third the comment above measured. Mixolydian has no bIII in its
+         alphabet at all, `borrow: -1` moves the whole stack (bIII-bV-bVI,
+         diminished again), and QFIX offers only maj7/m7/dom7 — there is no
+         way to say "a major triad on the flat third" in this grammar. So the
+         row has been claiming a chord it could not play since it was written.
+         WHAT REPLACES IT IS WHAT BOTH CENSUSES PUT FIRST. Chordonomicon, 4,156
+         britpop-labelled songs, rotation-collapsed: `bVII IV I bIII` does not
+         occur in any of 6,068 classes, while `I IV` heads the list (`I IV I
+         IV` x521). This row's OWN 78 corpus files agree — `I IV I IV` x20 and
+         `I IV I V` x20 at the top, with the bIII cycle third at 19 windows —
+         and the cycle it does support, `bVII IV I IV`, ranks 48 in the
+         dataset (x49): present, not average, which is where an anchored
+         record belongs. The mixolydian claim the measurement above is proud
+         of is UNTOUCHED: the flat seventh is degree 6 and it opens the
+         cycle. */
+      roots: [6, 3, 0, 3], mode: MODES.mixo,
       scale: MODES.mixo, diatonic: true,
       artic: "normal", maxHold: 4, bassStyle: "eighths",
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,1,0, 0,0,0,0],

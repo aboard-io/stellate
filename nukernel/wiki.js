@@ -83,7 +83,7 @@
     "minimalism": {"title":"Minimal_music","kind":"genre","why":"New York 1967 is Reich and Riley. NOT Minimalism, which is the visual-art movement — the single easiest wrong link in this table."},
     "electro": {"title":"Electro_(music)","kind":"genre","why":"New York 1982 is Planet Rock. The bare `Electro` is a disambiguation page."},
     "hymn": {"title":"Hymn","kind":"genre","why":"Boston 1831 is Lowell Mason; the article covers the sung hymn, and `Hymn tune` is the narrower melody-only article this row's four voices exceed."},
-    "crooner": {"title":"Crooner","kind":"genre","why":"Los Angeles 1953; the article is about the singing style, which is what this row's rate and `anchor` rule implement."},
+    "crooner": {"title":"Crooner","kind":"genre","why":"Los Angeles 1931 (re-dated 2026-09-02 off Crosby's 'I Surrender, Dear', Brunswick, January 1931); the article is about the singing style, which is what this row's rate and `anchor` rule implement, and its own lead dates the style to the 1920s."},
     "yuletide": {"title":"Christmas_music","kind":"genre","why":"New York 1942 is White Christmas. There is no article for the big-band Christmas standard as a genre; this is the genre article that contains it."},
     "merseybeat": {"title":"Beat_music","kind":"genre","why":"Liverpool 1963; the word redirects to Beat music, which is where Wikipedia files it, and the run follows that."},
     "psychpop": {"title":"Psychedelic_pop","kind":"genre","why":"London 1968; NOT Psychedelic rock, which is jamband's and khmerrock's neighbourhood — this row is a pop song with a choir on it."},

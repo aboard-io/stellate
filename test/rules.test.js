@@ -134,6 +134,10 @@ ok("R2 every option a rule offers exists in the table that owns it", () => {
     part: () => new Set(Object.keys(NF.PARTCHOICES)),
     instr: () => new Set(Object.keys(NF.INSTRCHOICES)),
     bassStyle: () => new Set(Object.keys(NF.BASSOPS)),
+    // the bass chair's own eleven, and NOT INSTRCHOICES — fields.js keeps the
+    // narrower list because "a word that casts a glockenspiel into the bass
+    // chair is a word that lies", and this line is what holds the menu to it.
+    bassInstr: () => new Set([null, ...Object.keys(NF.BASSCHOICES)]),
     artic: () => new Set(Object.keys(NF.ARTICS)),
     drumkit: () => new Set(Object.keys(NF.DRUMKITS)),
     fx: () => new Set(Object.keys(NF.FX)),

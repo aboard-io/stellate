@@ -172,6 +172,17 @@
     return [...ids.filter((id) => !sampled(id)).map(say("native")),
             ...ids.filter(sampled).map(say("sampled"))];
   };
+  /* ...AND THE SAME QUESTION ASKED OF THE BASS RACK. One expression and not a
+     second copy of the sort: the only difference is the TABLE, because the
+     bass chair's vocabulary is eleven ids and not ninety (fields.js
+     BASSCHOICES). `sampledId` is still the one owner of "is this a model". */
+  const bassOpts = () => {
+    const ids = Object.keys(NF.BASSCHOICES || {});
+    const say = (g) => (id) => ({ value: id, label: NF.BASSCHOICES[id], group: g });
+    const sampled = (id) => !!(NI && NI.sampledId) && NI.sampledId(id);
+    return [...ids.filter((id) => !sampled(id)).map(say("native")),
+            ...ids.filter(sampled).map(say("sampled"))];
+  };
   /* a value's own word, read back out of the table that owns it */
   const wordIn = (table, label, v) => (label && label[v]) ||
     (table && table[v] != null ? String(table[v]) : String(v));
@@ -529,6 +540,30 @@
       edit: { kind: "flag" },
       write: (r, v) => writeAt(r, "instrumental", v ? true : null) },
 
+    /* THE RECORDING IS THE INSTRUMENT (2026-09-02, the catalogue round). The
+       QA report's `instrumentation` column scores a chair NATIVE when the
+       engine models it, and twelve rows in the catalogue seat none — fugue's
+       pipe organ, concerto's string band, guqin's qin, tapemusic's tape.
+       Reading twelve rows one at a time said the same thing twelve times:
+       there is no model of those instruments in the fleet and there should
+       not be, so the recording is not a fallback, it is the sound. `organic`
+       is that fact declared, and it is here — in the registry a hand edits
+       and `NR.say` prints — rather than only in a comment, because a fact
+       that only an offline report can read is a fact this box cannot show.
+       ABSENT IS TODAY: nothing in the engine branches on it; it is a claim
+       about the record, said in one sentence, the way `instrumental` is. */
+    { field: "organic", axis: "Cast", head: "modelled or recorded",
+      // "render": MEASURED, not claimed — nothing in compose() branches on
+      // this, which is the whole design (see above). test/rules.test.js R6
+      // walks every rule's tier against what changing it actually moves.
+      rederive: "render",
+      say: (g) => [val(g.organic
+        ? "the recording IS the instrument — the engine models none of this"
+        : "the engine models this record where it can", !!g.organic)],
+      read: (g) => g.organic,
+      edit: { kind: "flag" },
+      write: (r, v) => writeAt(r, "organic", v ? true : null) },
+
     { field: "nobass", axis: "Cast", head: "bass", rederive: "compose",
       say: (g) => [val(g.nobass ? "there is no bass" : "a bass plays under it", !!g.nobass)],
       read: (g) => g.nobass,
@@ -543,6 +578,40 @@
       write: (r, v) => writeAt(r, "bassStyle", v && NF.BASSOPS[v] ? v : null),
       // precompose.js:2786 seats no bass at all on a `nobass` row.
       why: (g) => g.nobass ? "this record has no bass to give a figure to" : null },
+
+    /* WHO THE BASS IS (2026-09-02, the catalogue round). The row above says
+       what the bass PLAYS and there was no row for what it plays it ON: the
+       bass was the one chair a genre could not cast, so every anchor without a
+       signature `synth` block seated the sampled recorded upright. precompose
+       writes `bassInstr` onto the bass voice's `instrument` now and
+       `audio/plan.js castOf` reads it through `document.js toGenre`; this is
+       the sentence a hand edits it with.
+
+       THE VOCABULARY IS `NF.BASSCHOICES` AND NOT `NF.INSTRCHOICES`, which is
+       the whole reason fields.js keeps a second list — its header measures it:
+       "a word that casts a glockenspiel into the bass chair is a word that
+       lies". Eleven ids, the bass rack's own, in the rack's own order.
+
+       NATIVE FIRST, like `instr` above and for Paul's same sentence, and asked
+       of the same one owner (`instruments.js sampledId`) rather than a list
+       typed here. Measured 2026-09-02 over the eleven: `bass_lead` is the one
+       MODEL and the other ten are recordings — which is itself the finding
+       that a machine genre wanting a modelled bottom end declares a signature
+       `synth` (recipeBase asks it before the patch table, so it reaches the
+       bass) rather than reaching for a synth-bass id that is a sample of one.
+       The group label says which is which on the menu; nothing is added and
+       nothing is taken away. */
+    { field: "bassInstr", axis: "Cast", head: "the bass instrument",
+      rederive: "compose",
+      say: (g) => [w("the bass is "),
+        val(NF.BASSCHOICES[g.bassInstr] || "the record's own — a double bass",
+            g.bassInstr || null)],
+      read: (g) => g.bassInstr,
+      edit: { kind: "enum", values: () => bassOpts() },
+      write: (r, v) => writeAt(r, "bassInstr",
+        v && Object.prototype.hasOwnProperty.call(NF.BASSCHOICES, v) ? v : null),
+      // precompose.js seats no bass at all on a `nobass` row.
+      why: (g) => g.nobass ? "this record has no bass to give an instrument to" : null },
 
     /* THE TWO CLOSURES THAT ARE SAID AND NOT EDITED. song.js:484-491 is the
        owner of the reason and it is quoted, not restated. Each has an editable

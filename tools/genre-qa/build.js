@@ -188,6 +188,29 @@ async function laneTable() {
         const st = (voice.cast && voice.cast.style) || G.bassStyle || "root";
         if (st === "reese" || st === "wobble")
           return { lane: "native", dsp: NI.BASSSYNTH[st].dsp, why: "bassStyle " + st + " is a modelled bass" };
+        /* ...AND THE ROW MAY NAME ITS OWN BASS NOW (2026-09-02, the catalogue
+           round). This returned "the default acoustic_bass" for every record
+           in the table, which was true right up until `bassInstr` existed:
+           precompose writes the anchor's word onto the bass VOICE's
+           `instrument` and `audio/plan.js castOf` seats it. Reading the chair
+           the same way a line chair is read — through `patchForInstr` and
+           `sampledId`, one owner for "is this a model" — is the only way this
+           column can report the fix; without it thirty-seven re-argued rows
+           would still read "sampled" here. Absent is still the recorded
+           upright, and it still says so. */
+        const bid = voice.instrument || null;
+        if (bid) {
+          let p = null;
+          try { p = TE.patchForInstr(bid, G.tone || {}, false); } catch (e) { p = null; }
+          if (p && p.dsp)
+            return { lane: "native", dsp: p.dsp,
+                     why: "the row's own bassInstr " + bid + " -> " + p.dsp };
+          if (NI.sampledId(bid))
+            return { lane: "sampled", dsp: null,
+                     why: "the row's own bassInstr " + bid + ", a recording" };
+          return { lane: "unknown", dsp: null,
+                   why: 'bassInstr "' + bid + '" is in no patch table and no sampler' };
+        }
         return { lane: "sampled", dsp: null, why: "the default " + NI.BASS_INSTR };
       }
       const id = voice.instrument;
@@ -335,6 +358,10 @@ async function main() {
       bass_style: G.bassStyle || null, swing: G.swing == null ? null : G.swing,
       drumkit: G.drumkit || null, nobass: G.nobass ? 1 : 0, silent: G.silent ? 1 : 0,
       instrumental: G.instrumental ? 1 : 0, diatonic: G.diatonic ? 1 : 0,
+      // the row's own declared answer to the instrumentation column: "there is
+      // no model of these instruments and the recording IS the instrument"
+      // (2026-09-02, the catalogue round; twelve rows say it)
+      organic: G.organic ? 1 : 0,
       intro: G.intro || null,
       prog_len: (G.prog || []).length,
       prog_quals: (G.prog || []).map((p) => p.q).join(" ") || null,
