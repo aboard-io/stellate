@@ -59,7 +59,10 @@
   // sheet below — the subject's alphabet, which the document has always carried
   const { GENRES, MODES, MODELABEL, SCALES, SCALELABEL } = NG;
   const { KEYS, KEYLABEL, METERLABEL, RATES, RATELABEL, SWINGLABEL, GROOVELABEL,
-          ROLES, BASSOPS, KITLABEL, DRUMKITS, INSTRCHOICES } = NF;
+          ROLES, BASSOPS, KITLABEL, DRUMKITS, INSTRCHOICES,
+          // BASSCHOICES joined this line 2026-09-02 with `sound.bassinstrument`
+          // below — the narrower list the bass chair may be handed.
+          BASSCHOICES } = NF;
   const { WORDS, WORDGROUP } = NuSongs;
   const J = (v) => { try { return JSON.stringify(v === undefined ? null : v); }
                      catch (e) { return "?"; } };
@@ -681,27 +684,56 @@
       set: (doc, s, v) => { V(doc, s).cast.style = v || null; } },
 
     /* ---- 7 SOUND (one voice) ---- */
-    /* THERE IS NO `sound.bassinstrument` ROW HERE, AND THAT IS THE BASS'S
-       WHOLE PROBLEM — written down so the next round does not rediscover it.
-       (Paul, 2026-08-28: *"I've lost all ability to select or customize the
-       bass."*)
+    /* ===== THE BASS NAMES ITS OWN INSTRUMENT, 2026-09-02 (slice 2c) ======
+       Paul, 2026-08-28: *"I've lost all ability to select or customize the
+       bass."* A TOMBSTONE STOOD HERE and it was right about everything except
+       how long it would last, so it is kept verbatim above its own answer:
 
-       Every sheet in this table reads and writes the DOCUMENT. A line voice
-       carries `instrument` and so does a drummer, and document.js hands both
-       to the compiler — a line through the `chairs` seam, a kit through
-       `drumkit`. The BASS VOICE CARRIES NO `instrument` AT ALL: precompose.js
-       builds it as `{ name, kind: "bass", cast: { style }, development }`, and
-       audio/plan.js seats a bass event at `(POOL && POOL.bass) || BASS_INSTR`
-       — the song's INSTRUMENT POOL, which is not in the document and so is
-       not addressable from this file.
+         "THERE IS NO `sound.bassinstrument` ROW HERE, AND THAT IS THE BASS'S
+          WHOLE PROBLEM… Every sheet in this table reads and writes the
+          DOCUMENT. A line voice carries `instrument` and so does a drummer,
+          and document.js hands both to the compiler — a line through the
+          `chairs` seam, a kit through `drumkit`. The BASS VOICE CARRIES NO
+          `instrument` AT ALL: precompose.js builds it as `{ name, kind:
+          "bass", cast: { style }, development }`, and audio/plan.js seats a
+          bass event at `(POOL && POOL.bass) || BASS_INSTR` — the song's
+          INSTRUMENT POOL, which is not in the document and so is not
+          addressable from this file. So a row added here would be the box's
+          characteristic bug: a control that is declared, drawn, costed and
+          reaches no sound… the row belongs here the day the bass voice carries
+          its own `instrument` and document.js carries it across — three lines,
+          named in the round notes."
 
-       So a row added here would be the box's characteristic bug: a control
-       that is declared, drawn, costed and reaches no sound. The bass's
-       instrument is hired through ui/state.js `hirePoolChair("bass", id)`
-       against fields.js BASSCHOICES today (measured 2026-08-28: one pick moves
-       audio/plan.js `seats()` from `acoustic_bass` to `slap_bass`), and the
-       row belongs here the day the bass voice carries its own `instrument` and
-       document.js carries it across — three lines, named in the round notes. */
+       THE THREE LINES ARE WRITTEN. `document.js toGenre` spreads the bass
+       voice's `instrument` as `bassInstr`; `audio/plan.js castOf` seats the
+       bass at `bRow.bassInstr || (POOL && POOL.bass) || BASS_INSTR`; and this
+       is the row. The wire is measured rather than assumed — test/band.browser.js
+       B6 sets this menu and reads the unit the engine was handed back off
+       `window.__nuMix()`.
+
+       `BASSCHOICES` AND NOT `INSTRCHOICES`, because the bass chair's list is
+       narrower and fields.js already owns the narrowing (`poolTakes` refuses a
+       glockenspiel in the bass chair, and has since 2026-08-28). One table,
+       read from both ends — a menu that offered 108 throats to a bass would be
+       offering 97 of them a refusal.
+
+       THE POOL IS NOT RETIRED AND IS NOT A SECOND OWNER. `hirePoolChair("bass",
+       id)` still exists, still works and is still what test/pool.browser.js
+       drives; what changed is the ORDER — the document wins where it speaks —
+       and there is exactly ONE control on the page, this one. Absent is today:
+       a record whose bass says nothing reaches `POOL.bass` exactly as before.
+
+       `""` IS THE EMPTY DETENT and it is spelled "default", which is this
+       page's word for a record-wide "the record's own" (2026-08-26, Paul:
+       *"'the record's own' -- make that 'default'"*) — the same word
+       `cast.bassStyle` two rows up already wears. */
+    "sound.bassinstrument": { label: "instrument", scope: "voice", chair: "bass",
+      absent: "",
+      values: () => [{ value: "", label: "default" },
+                     ...opts(Object.keys(BASSCHOICES), BASSCHOICES)],
+      get: (doc, s) => V(doc, s).instrument || "",
+      set: (doc, s, v) => { const x = V(doc, s);
+        if (v) x.instrument = v; else delete x.instrument; } },
     "sound.instrument": { label: "instrument", scope: "voice", chair: "line",
       values: (doc, s, env) => instrOptions(doc, env),
       get: (doc, s) => V(doc, s).instrument,

@@ -237,6 +237,22 @@
                         realize: (v) => lines[v].cast.part,
                         bassStyle: bass ? bass.cast.style : undefined,
                         nobass: !bass,
+                        /* ...AND THE BASS NAMES ITS OWN INSTRUMENT AT LAST
+                           (2026-09-02, slice 2c). Paul, 2026-08-28: *"I've
+                           lost all ability to select or customize the bass."*
+                           The tombstone at avail.js's `sound.bassinstrument`
+                           named the fix in three lines and this is the middle
+                           one: the bass VOICE carries an `instrument` like any
+                           other chair, and it reaches audio/plan.js `castOf`,
+                           which seated every bass in the catalogue at `(POOL &&
+                           POOL.bass) || BASS_INSTR` and had nothing else to
+                           read. A SPREAD and not an assignment, so a record
+                           whose bass says nothing hands the kernel the object
+                           it handed it yesterday, byte for byte — absent is
+                           today, and every one of the 358 anchors composes
+                           unchanged (precompose writes no bass instrument). */
+                        ...(bass && bass.instrument
+                          ? { bassInstr: bass.instrument } : {}),
       /* DEVELOPMENT */ word: (v) => opsOf(wordAt(doc, lines[v], si)),
       /* SOUND */       ...(synth ? { synth } : {}),
                         instr: lines.map((c) => c.instrument === "synth"
@@ -504,6 +520,49 @@
     stockhausen: "cologneschool", ziryab: "andalusi", cemilbey: "ottoman",
     brill: "girlgroup",
   };
+  /* ===== A MOTIF'S NAME IS THE COMPOSER'S, AND RENAMING IT IS ONE DOOR ====
+     (2026-09-02, slice 2c. Paul, B8: *"Motifs are editable using our existing
+     interface … It should be easy to make new motifs"*, and the map's own
+     finding: *"names are auto (`motif`, `motif2`, `beat`); there is NO rename
+     control for a cell anywhere in the tree."*)
+
+     A CELL'S NAME IS AN ADDRESS THAT FOUR THINGS POINT AT: the bank's own key,
+     every `voice.material` that is a STRING, every VALUE in a `voice.material`
+     map, and (on the page, not in the record) `motifTab` / `cellSel`. Renaming
+     is therefore a WALK, not an assignment — and the 2026-09-01 genre-only
+     rename law says a walk like this gets ONE door and never a second copy of
+     the map. This is that door; the page moves its own two page-facts beside
+     the call and stores nothing.
+
+     IT REFUSES RATHER THAN MERGES. A name the bank already holds would make
+     `cellOf` answer for whichever came first and would silently overwrite a
+     tune (the same sentence `addCell` makes about minting), so the answer is
+     `false` and the caller says why. An empty name, an unchanged name and a
+     name for a cell that is not in the bank are the same refusal.
+
+     THE BANK KEEPS ITS ORDER, which is why this rebuilds the object rather
+     than doing `cells[to] = cells[from]; delete cells[from]`. `Object.keys`
+     order IS the bank's order — the motif marks' ordinals are read off it and
+     `cellNames()[0]` is what `cellOf` falls through to — so a rename that
+     moved a cell to the end of the list would renumber every mark in the
+     gutter for a change of spelling. */
+  function renameCell(doc, from, to) {
+    const cells = doc && doc.material && doc.material.cells;
+    if (!cells || !Object.prototype.hasOwnProperty.call(cells, from)) return false;
+    const name = String(to == null ? "" : to).trim();
+    if (!name || name === from) return false;
+    if (Object.prototype.hasOwnProperty.call(cells, name)) return false;
+    const next = {};
+    for (const k of Object.keys(cells)) next[k === from ? name : k] = cells[k];
+    doc.material.cells = next;
+    for (const v of (doc.voices || [])) {
+      if (v.material === from) { v.material = name; continue; }
+      if (v.material && typeof v.material === "object")
+        for (const k of Object.keys(v.material))
+          if (v.material[k] === from) v.material[k] = name;
+    }
+    return true;
+  }
   function normalize(doc) {
     if (doc && doc.basis && OLDKEYS[doc.basis]) doc.basis = OLDKEYS[doc.basis];
     /* ---- THE SENTENCES THIS READING WAS COMPOSED WITH (2026-09-01) --------
@@ -638,6 +697,8 @@
   }
 
   return { toGenre, toPhrase, materialAt, barsOf, boxesOf, normalize, scoreOf,
+           // THE ONE RENAME DOOR (2026-09-02, slice 2c) — see its own block.
+           renameCell,
            // THE RENAME'S ALIAS MAP, EXPORTED (2026-09-01): song.js migrate()
            // folds saved catalog keys through the same one map at ITS door —
            // two doors, one owner. See the OLDKEYS block above for the law.

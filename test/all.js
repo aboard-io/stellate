@@ -620,6 +620,26 @@ const GATES = [
     argv: ["test/rules-view.browser.js"], need: ["test/rules-view.browser.js"],
     covers: ["test/rules-view.browser.js", "nukernel/ui/rules.js",
              "nukernel/rules.js", "nukernel/ui/eight.js", "nukernel/ui/xtab.js"] },
+  /* BUILD THE BAND, DRIVEN (2026-09-02, the composer round, slice 2c).
+     Paul, B10: "List all the band members as separate boxes. I need an obvious
+     way to assign multiple motifs to band members. Maybe a tray of motifs that
+     pops up, but it should also give me the option to make a new motif and jump
+     back the motif editor." Nothing existing could reach any of it: `sheets`
+     and `selects` survey the CONTROLS a voice's facets draw, `bench` drives the
+     motif editor, and none of them presses a chip, hires a player from the
+     panel, renames a cell or asks what the ENGINE was handed for the bass.
+     This drives the whole gesture — roster → hire → assign → mint → rename →
+     the bass's instrument — and reads the answer back off the document, off
+     the stripe and off `__nuMix()`.
+     `covers` names the four files an edit to any of them has to re-run this on:
+     the page, the offer table (the tray writes through `cast.material` and
+     `material.cell`), the record's own rename door and its `toGenre` bass wire,
+     and the plan that seats the bass. */
+  { name: "band",       wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/band.browser.js"], need: ["test/band.browser.js"],
+    covers: ["test/band.browser.js", "nukernel/ui/eight.js",
+             "nukernel/avail.js", "nukernel/document.js",
+             "nukernel/ui/preview.js", "nukernel/audio/plan.js"] },
   // THE SLOWEST GATE IN THE HOUSE, AND IT HAS TO BE. It presses play and waits
   // for two real section boundaries at two viewports, because a boundary is
   // the thing that used to rebuild the page and a fixed sleep would be a coin

@@ -9,7 +9,7 @@
   "scopes": 3,
   "sample": 16,
   "seed": 20260824,
-  "compiles": 52816
+  "compiles": 53548
  },
  "sheets": {
   "time.meter": {
@@ -219,6 +219,20 @@
      "cast.hasBass"
     ]
    }
+  },
+  "sound.bassinstrument": {
+   "scope": "voice",
+   "chair": "bass",
+   "regenerates": true,
+   "options": {},
+   "census": {
+    "rows": 39,
+    "alive": 0,
+    "writes": [
+     "voice.instrument"
+    ]
+   },
+   "blind": true
   },
   "sound.instrument": {
    "scope": "voice",

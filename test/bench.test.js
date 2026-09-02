@@ -207,8 +207,19 @@ async function openMotif(pg) {
   // into nothing)
   const spot = await page.evaluate(() => {
     const doc = window.__eightDoc();
-    const name = document.querySelector(".nu-motif") ?
-      document.querySelector(".nu-motif").textContent.split(" — ")[0] :
+    /* WHICH CELL IS OPEN, OFF THE PANEL'S OWN NAME FIELD (2026-09-02, slice
+       2c). This read `.nu-motif`'s textContent and split it on " — ", because
+       the name line was the sentence `psalm — read by cantor, schola`. It is a
+       RENAME FIELD now (Paul, B8: motifs are editable, and the motif map's own
+       finding was that there was no rename control anywhere in the tree), so
+       the paragraph has no text in it and the split answered "". Same fact,
+       same panel, off the control that now states it — and the two old
+       readings are kept behind it, because a harness page that draws the old
+       line must still be measurable. */
+    const nameEl = document.querySelector('[data-k^="motif-name|"]');
+    const name = (nameEl && nameEl.value) ||
+      (document.querySelector(".nu-motif") &&
+       document.querySelector(".nu-motif").textContent.split(" — ")[0]) ||
       Object.keys(doc.material.cells)[0];
     const H = doc.material.cells[name];
     const i = H.play.findIndex((p) => p === "n");

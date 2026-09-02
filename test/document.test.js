@@ -233,6 +233,81 @@ const ok = (name, fn) => { try { fn(); pass++; console.log("  ok   " + name); }
     assert.strictEqual(un.basis, before, "an unmapped basis moved at the door");
   });
 
+  /* ---- G11 · THE ONE RENAME DOOR (2026-09-02, slice 2c) ----------------
+     Paul, B8: *"Motifs are editable using our existing interface … It should be
+     easy to make new motifs."* A cell's name is an ADDRESS that four things
+     point at — the bank's key, a `voice.material` STRING, every VALUE in a
+     `voice.material` map, and the page's own `motifTab`/`cellSel` — so a
+     rename is a WALK, and the 2026-09-01 genre-only-rename law says a walk
+     like this gets ONE door. This is that door's gate: what moves, what does
+     NOT move (the bank's order, which the gutter's ordinals are read off), and
+     what is refused. */
+  ok("G11 renameCell walks the bank, the string form and the map form", () => {
+    const P2 = require(R + "/nukernel/precompose.js");
+    const d = Doc.normalize(P2.genreToDocument("reggae", 3));
+    const names = Object.keys(d.material.cells);
+    const from = names[0], at = names.indexOf(from);
+    // who pointed at it before
+    const holds = (v, c) => { const m = v.material;
+      return m === c || (m && typeof m === "object" &&
+        Object.keys(m).some((k) => m[k] === c)); };
+    const before = d.voices.filter((v) => holds(v, from)).map((v) => v.name);
+    assert.ok(before.length, "the fixture has nobody reading " + from);
+    assert.strictEqual(Doc.renameCell(d, from, "ostinato"), true);
+    assert.ok(!Object.prototype.hasOwnProperty.call(d.material.cells, from),
+      "the old key survived");
+    assert.ok(d.material.cells.ostinato, "the new key is not in the bank");
+    assert.deepStrictEqual(d.voices.filter((v) => holds(v, "ostinato"))
+      .map((v) => v.name), before, "a reader was left pointing at a dead name");
+    assert.strictEqual(d.voices.filter((v) => holds(v, from)).length, 0,
+      "a reader still names the old cell");
+    // THE BANK KEEPS ITS ORDER. The gutter's ordinals and `cellNames()[0]` are
+    // read off `Object.keys`, so a rename that moved a cell to the end would
+    // renumber every mark in the stripe for a change of spelling.
+    assert.strictEqual(Object.keys(d.material.cells).indexOf("ostinato"), at,
+      "the renamed cell moved place in the bank");
+    // AND IT REFUSES RATHER THAN MERGES — a name in use would make `cellOf`
+    // answer for whichever came first and would overwrite a tune.
+    const other = Object.keys(d.material.cells).find((n) => n !== "ostinato");
+    assert.strictEqual(Doc.renameCell(d, "ostinato", other), false);
+    assert.strictEqual(Doc.renameCell(d, "ostinato", "  "), false);
+    assert.strictEqual(Doc.renameCell(d, "ostinato", "ostinato"), false);
+    assert.strictEqual(Doc.renameCell(d, "nosuchcell", "x"), false);
+    assert.ok(d.material.cells.ostinato && d.material.cells[other],
+      "a refused rename still moved something");
+  });
+
+  /* ---- G12 · THE BASS NAMES ITS OWN INSTRUMENT (2026-09-02, slice 2c) ---
+     Paul, 2026-08-28: *"I've lost all ability to select or customize the
+     bass."* avail.js's `sound.bassinstrument` tombstone named the fix in three
+     lines and this is the one that lives in this file: `toGenre` carries the
+     bass voice's `instrument` as `bassInstr`, and audio/plan.js `castOf` seats
+     the bass at `bassInstr || POOL.bass || BASS_INSTR`.
+     ABSENT IS TODAY, AND THAT IS THE HALF WORTH ASSERTING: precompose writes no
+     bass instrument, so every record composed before this line existed hands
+     the kernel the object it handed it yesterday — the key is not written at
+     all rather than written as null. (The other end of the wire — the ENGINE's
+     bass unit actually moving — is test/band.browser.js B6c, which reads it off
+     `__nuMix()` on the rendered page.) */
+  ok("G12 toGenre carries the bass's instrument, and absent is today", () => {
+    const P2 = require(R + "/nukernel/precompose.js");
+    const d = Doc.normalize(P2.genreToDocument("reggae", 3));
+    const bass = d.voices.find((v) => v.kind === "bass");
+    assert.ok(bass, "the fixture has no bass to ask about");
+    const g0 = Doc.toGenre(d, 0, GENRES, FLEET);
+    assert.ok(!("bassInstr" in g0),
+      "a record whose bass says nothing still wrote a key");
+    bass.instrument = "slap_bass";
+    const g1 = Doc.toGenre(d, 0, GENRES, FLEET);
+    assert.strictEqual(g1.bassInstr, "slap_bass");
+    // ...and it is the BASS's own field, not a line's: a record with no bass
+    // says nothing whatever its lines carry.
+    const nob = Doc.normalize(P2.genreToDocument("gregorian", 1));
+    if (!nob.voices.some((v) => v.kind === "bass"))
+      assert.ok(!("bassInstr" in Doc.toGenre(nob, 0, GENRES, FLEET)),
+        "a record with no bass wrote a bass instrument");
+  });
+
   console.log("\n" + pass + " passed, " + fail + " failed");
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

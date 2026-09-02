@@ -262,8 +262,25 @@ export const poolSay = () => {
   return b.length ? "the band hired for this record: " +
     b.map(c => c.chairLabel + " \u2014 " + c.label).join(", ") : null;
 };
-// ...and what the bass chair may be handed, which is the one chair whose
-// instrument the document cannot carry (fields.js BASSCHOICES says why)
+/* ...and what the bass chair may be handed.
+   THE SENTENCE THIS CARRIED IS NO LONGER TRUE AND IS KEPT ABOVE ITS ANSWER
+   (2026-09-02, slice 2c). It read: *"the one chair whose instrument the
+   document CANNOT carry (fields.js BASSCHOICES says why)."* The bass voice
+   carries an `instrument` now — `avail.js sound.bassinstrument` is the menu,
+   `document.js toGenre` spreads it as `bassInstr`, and `audio/plan.js castOf`
+   seats the bass at `bassInstr || POOL.bass || BASS_INSTR`. Both halves of the
+   old sentence stay useful: BASSCHOICES is still the narrower list (the menu
+   reads the same table this does, so a live edit and a loaded file cannot
+   disagree — `poolTakes` is the one law), and the POOL is still the SESSION's
+   answer for a record that names none.
+   THE ORDER IS THE DECISION, and it is the same one a line's chair makes: the
+   DOCUMENT wins where it speaks, because the document is what is saved, shared
+   and reopened, and a pool is a fact about this sitting. `hirePoolChair("bass",
+   id)` is not retired — it still works, it is still what test/pool.browser.js
+   drives, and it is still the only answer for every record composed before
+   today, because precompose writes no bass instrument and absent is the only
+   spelling of a default. There is exactly ONE control on the page, and it is
+   the menu. */
 export const bassChoices = () => ({ ...BASSCHOICES });
 export function hirePoolChair(chair, id) { setPoolChair(chair, id); commit("pool"); }
 export function firePoolChair(chair) { setPoolChair(chair, null); commit("pool"); }

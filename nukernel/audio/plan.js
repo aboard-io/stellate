@@ -366,8 +366,22 @@ function castOf(bars) {
         // `voxAll(sec, null)` — a bass line belongs to the box, not to one
         // layer's stack entry), and a sampled upright simply owns none of the
         // five and is untouched.
-        e._seat = seatFor("bass", (POOL && POOL.bass) || BASS_INSTR, bs,
-                          (GENRES[e.layer || gid(sec)] || {}).bassTone || null, e.vox || null);
+        /* WHO THE BASS IS, AND THE RECORD GETS THE FIRST WORD (2026-09-02,
+           slice 2c). This read `(POOL && POOL.bass) || BASS_INSTR` and the
+           bass was the one chair on the page with no control at all — the
+           tombstone at avail.js `sound.bassinstrument` carried the whole
+           argument and named this line as the third of its three. The bass
+           VOICE now carries an `instrument` and document.js `toGenre` spreads
+           it here as `bassInstr`, so the DOCUMENT outranks the session's pool
+           hire for exactly the reason a line's `chairs[v].instr` does: the
+           record is the thing that is saved, shared and reopened, and the pool
+           is a fact about this sitting. Absent is today twice over — no
+           document names one until a hand says so (precompose writes none), so
+           `POOL.bass` is still what every existing record and every
+           `hirePoolChair("bass", …)` reaches. */
+        const bRow = GENRES[e.layer || gid(sec)] || {};
+        e._seat = seatFor("bass", bRow.bassInstr || (POOL && POOL.bass) || BASS_INSTR, bs,
+                          bRow.bassTone || null, e.vox || null);
         e._syn = !!bs;
         A["v" + e._seat] = "bass";
       }

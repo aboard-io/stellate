@@ -3879,12 +3879,17 @@ table.nu-trims{ color: var(--ink); }
    page: 11px square, ink-bordered on all four sides, with the voice's own NAME
    in the text node beside it. See the CATEGORY family at the top of this file
    — rule 1 is exactly this chip.
-   THE SEAM, NAMED (2026-09-02): `voicePaint` still returns the FOUR PAINTS
-   (ink for drums, meter for bass, hand/flag alternating for the melodic
-   lanes), which is why the roll currently draws two players in the same
-   cobalt. Pointing it at `--v0..--v3/--vb/--drum` is one function in
-   `ui/eight.js` and it is that file's agent's edit, not this one's; the tokens
-   and `.nu-vpaint` are here and waiting. */
+   THE SEAM IS CLOSED (2026-09-02, slice 2c). It read: *"`voicePaint` still
+   returns the FOUR PAINTS (ink for drums, meter for bass, hand/flag
+   alternating for the melodic lanes), which is why the roll currently draws
+   two players in the same cobalt. Pointing it at `--v0..--v3/--vb/--drum` is
+   one function in `ui/eight.js` and it is that file's agent's edit, not this
+   one's; the tokens and `.nu-vpaint` are here and waiting."* It is that one
+   function: `ui/eight.js paints()` reads all six tokens and `voicePaint(vi)`
+   answers `cat[vpaintOf(vi)]`, off the SAME slot table the `[data-vi]` rules
+   below use — so the roll's blocks, the legend's chips, the score's caps, the
+   roster's boxes and the motif panel's reader chips are one colour per player
+   on five surfaces. */
 #scoredeck .nu-legv > i{ inline-size: 11px; block-size: 11px; border-radius: var(--r2);
   border: var(--bw) solid var(--ink); display: inline-block; }
 /* THE MOTIF NAMES, UNDER EACH PART (2026-08-27, Paul: "The names of the
@@ -3920,15 +3925,17 @@ table.nu-trims{ color: var(--ink); }
    of the same fact and nothing is lost if a reader cannot tell violet from
    magenta at 9px.
 
-   HOW IT ARRIVES, AND WHAT IS STILL OWED. The cap reads `var(--vpaint, …)`
-   with the old `--hand` as its fallback, so the moment an ancestor (or the cap
-   itself) carries `data-vi`, the score is coloured by player and this file
-   needs no further edit. `ui/eight.js motifLabels` writes `b.dataset.v =
-   v.name` today and not the INDEX; adding `b.dataset.vi = vi` on the same line
-   is the one edit that turns this on, and it belongs to that file's agent.
-   Until it lands every cap is hand-blue, exactly as it was — which is written
-   here rather than left to be discovered, because a token that is declared,
-   costed and reaching no pixel is this box's characteristic bug. */
+   HOW IT ARRIVES, AND IT HAS ARRIVED (2026-09-02, slice 2c). The paragraph
+   here read: *"The cap reads `var(--vpaint, …)` with the old `--hand` as its
+   fallback, so the moment an ancestor (or the cap itself) carries `data-vi`,
+   the score is coloured by player and this file needs no further edit.
+   `ui/eight.js motifLabels` writes `b.dataset.v = v.name` today and not the
+   INDEX; adding `b.dataset.vi = vi` on the same line is the one edit that
+   turns this on… Until it lands every cap is hand-blue."* `motifLabels` writes
+   it now, on that same line, and what it writes is the SLOT (`vpaintOf`) and
+   not the raw index — so the kit is graphite here and graphite in the roster.
+   The fallback stays, because a cap drawn before a record has voices still has
+   to have an ink. */
 #scoredeck .nu-mots{ position: absolute; inset-block-start: 0;
   inset-inline-start: 0; pointer-events: none; }
 #scoredeck .nu-mot{ position: absolute; block-size: 12px;
@@ -5700,3 +5707,147 @@ table.nu-trims{ color: var(--ink); }
 .nu-rulekin{ flex: 1 0 100%; margin-block-start: var(--s1);
   font-size: var(--t1); font-weight: 500; letter-spacing: 0;
   text-transform: none; opacity: .72; }
+
+/* ========================================================================
+   BUILD THE BAND — THE ROSTER, THE TRAYS AND THE READERS (2026-09-02, 2c)
+   ========================================================================
+   Paul, B10: *"List all the band members as separate boxes. I need an obvious
+   way to assign multiple motifs to band members. Maybe a tray of motifs that
+   pops up"*; B8: *"the motif editor should show me previews of the instruments
+   using the motif"*; B14: *"lots of previews, small widgets"*.
+
+   FIVE SURFACES, ONE IDIOM: a box with a CATEGORY edge, a glyph, a name, a dim
+   second line, and — wherever the thing has a shape — its `.nu-preview`. The
+   idiom is the gutter's own member row said at panel width, which is the
+   point: a hand that has learned one has learned all five.
+
+   WHAT THIS BLOCK DOES NOT RESTATE. The colour is `.nu-vpaint` + `[data-vi]`
+   (the CATEGORY family at the top of this file), the thumbnail is
+   `.nu-preview`, the even row is `.nu-field` / `.nu-sel`, the refusal is
+   `.nu-why` and the tap floor is `button { min-block-size: var(--tap) }`. Every
+   rule below is layout and nothing else; where one of them sets a colour it is
+   `var(--vpaint)` or a token, never a literal.
+
+   THE CATEGORY SLOTS ARE ASSIGNED BY KIND, not by raw voice index — the
+   `[data-vi]` table's own note says "the voice's own index in DOC.voices", and
+   `ui/eight.js vpaintOf` is what actually writes the attribute: the kit takes
+   slot 5 (`--drum`) and the bass slot 4 (`--vb`) on every record, so one
+   instrument is one hue across the roster, the score's caps and the roll. The
+   melodic lanes take 0..3 and wrap, which is the table's own arithmetic. */
+
+/* ---- the roster: the band as boxes ---------------------------------- */
+/* A GRID AND NOT A ROW, so three players are three boxes at 320px and four
+   across at 1280 without a media query: `auto-fill` with a 13em floor is the
+   one line that says "as many as fit, all the same width". */
+/* `min(13em, 100%)` AND NOT `13em`: a bare minmax floor is a track that does
+   not shrink, so at 320px — where the panel is ~217px wide inside the gutter
+   and its own inset — a 208px floor plus a single long name is a page that
+   scrolls sideways, which shell A6b and gutter T8 both forbid. The `min()`
+   makes the floor "13em, or all of it, whichever is less". */
+.nu-roster{ display: grid; gap: var(--s3); margin-block: var(--s3);
+  grid-template-columns: repeat(auto-fill, minmax(min(13em, 100%), 1fr)); }
+.nu-member{ padding: var(--s3); background: var(--paper);
+  border-block-end: var(--bw) solid var(--well); }
+/* THE WHOLE HEAD IS THE BUTTON — the name, the glyph and the instrument line
+   are inside it, which makes the box a target and (see ui/eight.js `rosterBlock`)
+   keeps the instrument out of the text diet's count, because a control's own
+   words are its label. Left-aligned and full width: it is a row of a list, not
+   a pill. */
+/* IT GIVES UP THE BUTTON CHASSIS, which is the same trade the table-cell rule
+   above already makes and for the same measured reason: the MEMBER BOX is the
+   frame (its own ground, its rule and its category edge), so a plate, a border
+   and a hard shadow inside it is a second frame 3px in from the first, and at
+   430px the shadow painted over the box's own trailing edge. What it keeps is
+   everything a button IS — the 44px floor, the cursor, the focus ring, and the
+   whole head as one tap target. */
+.nu-memopen{ display: grid; inline-size: 100%; max-inline-size: 100%;
+  min-inline-size: 0; text-align: start;
+  grid-template-columns: auto minmax(0, 1fr); column-gap: var(--s2);
+  align-items: baseline; padding: 0; background: transparent;
+  border: 0; border-radius: var(--r0); box-shadow: none;
+  overflow-wrap: anywhere; }
+.nu-memopen:hover{ background: var(--flag-tint); }
+.nu-memglyph{ grid-row: 1 / span 2; font-size: var(--t4); align-self: center; }
+.nu-memname{ font-size: var(--t4); font-weight: var(--fw-block);
+  line-height: 1.15; }
+.nu-meminstr{ grid-column: 2; font-size: var(--t1); color: var(--dim);
+  line-height: 1.2; overflow-wrap: anywhere; }
+/* WHAT THEY READ: a picture and a word, wrapped, and each one is a DOOR into
+   that motif's editor (ui/eight.js `rosterBlock` carries the argument). It is
+   a button, so it takes the page's own 44px tap floor from `button` and needs
+   no size of its own; what it declines is the button CHASSIS — no plate, no
+   border — because a row of six framed pills inside a member's box reads as a
+   toolbar rather than as a list of what somebody plays. */
+.nu-memreads{ display: flex; flex-wrap: wrap; gap: var(--s2);
+  margin-block: var(--s2) 0; }
+.nu-memchip{ display: inline-flex; align-items: center; gap: var(--s1);
+  max-inline-size: 100%; min-inline-size: 0; overflow-wrap: anywhere;
+  font-size: var(--t1); color: var(--dim); background: transparent;
+  border: 0; border-radius: var(--r0); box-shadow: none;
+  padding: 0 var(--s1) 0 0; }
+.nu-memchip:hover{ background: var(--flag-tint); }
+.nu-memchip > i{ font-style: normal; }
+.nu-memchip .nu-preview{ inline-size: 2.6em; flex: 0 0 auto; }
+.nu-memfoot{ margin-block: var(--s2) 0; }
+.nu-memadd{ display: flex; flex-wrap: wrap; gap: var(--s2);
+  margin-block: var(--s3); }
+
+/* ---- the motif tray: chips that carry their own picture -------------- */
+/* PRESSED IS THE PAGE'S OWN PRESSED — `button[aria-pressed="true"]`'s hand
+   plate, the same face every tab and every segment button on this page wears.
+   It was drawn as an outline first and that was a mistake worth recording: the
+   global cap sets `background: var(--hand); color: #FFFFFF`, so an override
+   that painted the WORD `var(--hand)` too put blue text on a blue plate and
+   the chip came out as a solid rectangle with nothing in it (measured at 430px
+   on Kingston 1969). One face for "pressed", declared once, at line 727.
+
+   TWO MARKS BECAUSE THERE ARE TWO FACTS (ui/eight.js `motifTray` carries the
+   argument): `aria-pressed` is "this player reads it somewhere", which several
+   chips can say at once, and `[data-default]` is the ONE the `""` key names —
+   a thicker ink edge, which is the page's existing spelling for "and this one
+   in particular" and costs no colour. */
+.nu-tray-chips{ display: flex; flex-wrap: wrap; gap: var(--s2);
+  margin-block: var(--s2); }
+.nu-traychip{ display: inline-flex; align-items: center; gap: var(--s2);
+  padding-inline: var(--s2); max-inline-size: 100%; min-inline-size: 0;
+  overflow-wrap: anywhere; }
+.nu-traychip .nu-preview{ inline-size: 3.2em; }
+/* THE THUMBNAIL ON THE PLATE, AND IT HAS TO BE SAID TWICE. `.nu-preview` sets
+   its OWN `color` — `var(--vpaint, var(--hand))`, which is the point of it
+   beside a member box — so the cap's `color: #FFFFFF` never reaches the rects,
+   and a hand-blue thumbnail on a hand-blue plate is a chip with nothing in it
+   (measured at 430px on Kingston 1969, which is how this was found). Both the
+   bars and the rests are re-stated here, on the plate, and nowhere else. */
+.nu-traychip[aria-pressed="true"] .nu-preview{ color: #FFFFFF; }
+.nu-traychip[aria-pressed="true"] .nu-preview .nu-preview-rest{
+  fill: rgba(255, 255, 255, .45); }
+.nu-traychip[data-default="true"]{ border-width: var(--bw-hard); }
+.nu-traychip[data-default="true"] .nu-chipw{ font-weight: var(--fw-block); }
+
+/* ---- the readers of a motif, as players ------------------------------ */
+/* THE ONE PLACE ON THIS PAGE WHERE A CATEGORY HUE IS A FILL rather than an
+   edge: these chips are a list of PLAYERS and nothing else is on the line, so
+   the hue is the whole of what tells them apart at a glance. `.nu-vpaint`
+   already pays for that with an ink border and white text (its own note has
+   the contrast measurement); this only lays the three lines out. */
+.nu-readby{ display: flex; flex-wrap: wrap; gap: var(--s2);
+  margin-block: var(--s3); }
+.nu-readchip{ display: inline-grid; grid-template-columns: auto 1fr;
+  column-gap: var(--s2); align-items: center; text-align: start;
+  padding: var(--s2) var(--s3); max-inline-size: 100%; min-inline-size: 0;
+  overflow-wrap: anywhere; }
+.nu-readglyph{ grid-row: 1 / span 3; font-size: var(--t3); }
+.nu-readname{ font-weight: var(--fw-label); }
+.nu-readinstr, .nu-readsecs{ grid-column: 2; font-size: var(--t1);
+  font-style: normal; opacity: .85; }
+
+/* ---- a motif's name, as a field -------------------------------------- */
+/* IT IS `.nu-motif`'s ONE CHILD NOW, so the block's own name line is a
+   control. The width is `ch`-based rather than a percentage because a cell
+   name is a WORD (`psalm`, `neume`) and a field the width of the panel reads
+   as a place to write a sentence. 16px is the iOS floor for any text input and
+   is the one number in this rule that is not a token. */
+.nu-motifname{ inline-size: 12ch; max-inline-size: 100%; font-size: 16px;
+  font-weight: var(--fw-label); }
+.nu-motif > span{ display: inline-flex; align-items: baseline; gap: var(--s2);
+  flex-wrap: wrap; }

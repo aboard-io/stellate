@@ -118,7 +118,37 @@ const MENUS = {
   "alphabet.quality": "chord quality, inside the changes table",
   "form.role":        "the band > form",
   "cast.part":        "voices > plays",
-  "cast.material":    "voices > material",
+  /* `"cast.material": "voices > material"` STOOD HERE AND IS A DATED REVERSAL
+   * (2026-09-02, the composer round, slice 2c) — kept as this line rather than
+   * deleted, because the sentence that put it here is Paul's and the sentence
+   * that takes it out is Paul's, and both are still true of the same fact.
+   *
+   * WHAT PUT IT HERE, 2026-08-24 evening: *"in voices -- plays, material,
+   * instrument -- dropdowns/selects."* A voice's default cell is a settled
+   * parameter — one value, decided once, not shopped — which is this file's own
+   * test for a menu, and it was a menu.
+   *
+   * WHAT TAKES IT OUT, 2026-09-01 (B10): *"I need an obvious way to assign
+   * multiple motifs to band members. Maybe a tray of motifs that pops up"*, and
+   * (B8) *"the motif editor should show me previews."* The fact has not moved
+   * and has not lost its owner — `avail.js cast.material` is still the one
+   * setter, and ui/eight.js `motifTray` still writes through it — it has
+   * changed DRAWING, to a chip per motif carrying that motif's `.nu-preview`.
+   * An `<option>` cannot carry a picture.
+   *
+   * THIS IS THE SAME REVERSAL THE CIRCLE OF FIFTHS IS, argued the same way one
+   * table down: *"the key has a shape, the oldest one in the trade, and drawn
+   * as that shape twelve values … say something a list cannot."* A motif has a
+   * shape too — sixteen bars of velocity — and it is the thing that tells two
+   * of them apart before either name is read. So the tray joins the circle as
+   * a NAMED exception to the single-choice-is-a-menu rule (see check 3's own
+   * list, where it is written down with its reason), and test/band.browser.js
+   * B3 is the gate that drives it: press a chip, and the record's default cell
+   * moves.
+   *
+   * THE PER-SECTION HALF IS UNTOUCHED: `material.cell` below is still a menu,
+   * because "which of these does this player read HERE" is asked thirteen times
+   * down a column and a column of pictures is a wall. */
   "sound.instrument": "voices > instrument",
   /* ...and `material.cell` is "voices > material" ONE SCOPE DOWN, added by the
    * integrator on the same evening and from the same two sentences. The band's
@@ -573,7 +603,15 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
          in there for key selection, it was nice") and a ring shows which keys
          are next door. Check 7 below is its gate.
        · a single boolean (mute, solo, diatonic, drums) is a checkbox, which is
-         not a choice among options either.
+         not a choice among options either;
+       · THE MOTIF TRAY (2026-09-02) — one choice (a member's default cell),
+         deliberately not a menu, for the circle's exact reason: Paul asked for
+         *"a tray of motifs"* and for *"previews"*, and an `<option>` cannot
+         carry a picture. It is a row of `aria-pressed` buttons, each holding
+         that cell's `.nu-preview`, and it is not a lit SHEET (no `data-sheet`,
+         no radio group), so neither reading below sees it. test/band.browser.js
+         B3 is its gate. The MENUS note for `cast.material` carries the whole
+         argument.
 
      MENUS is kept and check 1 still runs it, because "every control Paul named
      by name is a menu" is a real and independent claim; what is gone is its
