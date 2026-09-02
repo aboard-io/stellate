@@ -12,6 +12,43 @@
  * meter #0B9B4E (the engine measured it), flag #FFC61A (armed/hover). A thing
  * is coloured for one of those four reasons or it is ink on the chassis.
  *
+ * ...AND SINCE 2026-09-02 THERE ARE TWO MORE FAMILIES, WHICH SAY A DIFFERENT
+ * KIND OF THING. Paul, 2026-09-01: *"The design system is not consistent. It
+ * uses very little color, and things are uneven based on how text wraps."*
+ * The audit that sentence produced counted the four paints in use and found
+ * three of them nearly inert — `--clock` five times, `--meter` four,
+ * `--meter-tint` zero — while `--hand` did thirty-eight jobs, because all four
+ * paints are STATES and the page kept needing to say something that is not a
+ * state. Two things, in fact:
+ *
+ *   CATEGORY — WHICH PLAYER. `--v0 --v1 --v2 --v3 --vb --drum`. Six hues, one
+ *   per voice of the band, so one player reads as one colour on every surface
+ *   it appears on (the score's motif caps, the roll legend, a nav member box,
+ *   a strip head). This is an IDENTITY: it never changes when you press
+ *   something.
+ *   LEVEL — HOW MUCH. `--q1..--q4`, four steps of one hue, for a velocity, a
+ *   weight, a step's loudness. This is a QUANTITY: it changes when the number
+ *   does and never when the page does.
+ *
+ * WHY NEITHER CAN BE MISTAKEN FOR THE FOUR, and it is a rule about SHAPE and
+ * not about hue, because hue alone would not carry it (`--v0` is a sky blue
+ * beside the hand's cobalt and `--v1` a mid green beside the meter's — near
+ * neighbours, named here rather than pretended away):
+ *   1. A CATEGORY HUE ALWAYS HAS A WORD BESIDE IT — a legend chip beside the
+ *      voice's name, a cap with the motif's name typed in it, a strip head
+ *      over the player's name. The four paints never carry a word; they are
+ *      states, and a state is read off the control's own face. A hue with a
+ *      name beside it is a WHO; a hue on a bare control is a WHAT.
+ *   2. A LEVEL HUE IS ALWAYS A FRACTION OF A BOX — a fill whose WIDTH is the
+ *      value, inside an ink-bordered well. Nothing on this page paints a
+ *      partial box with a state.
+ *   3. Neither family ever paints a border, a focus ring, a cap, a hover or a
+ *      `<mark>`. Those five belong to the four paints exclusively, which is
+ *      what makes the division checkable in review.
+ * Both families fall to neutral under `prefers-contrast: more` and
+ * `forced-colors: active`, by the same one-property mechanism the section wash
+ * uses — see `--wash`.
+ *
  * NINE TABS, 2026-08-27 (Paul: "Why don't we make tabs at the top level and
  * let go of the idea of scrolling everything?"). The page is nine panels, one
  * on screen at a time, and the two sticky bands below are the TRANSPORT and
@@ -223,6 +260,65 @@
   --clock-tint: #FFD9CE;
   --meter-tint: #CFEFDC;
   --flag-tint:  #FFEFC2;
+  /* ---- CATEGORY: WHICH PLAYER (2026-09-02) --------------------------------
+     LIFTED FROM `nukernel/hw.css:89-90`, verbatim, which is the honest way to
+     add a palette to this page: it is already written, already argued and
+     already contrast-checked in a file on this disk, and inventing a seventh
+     colour at a call site is exactly what hw.css's own comment says the set
+     exists to prevent — "a six-lane palette with two lanes missing is how a
+     seventh colour gets invented at the call site."
+
+     THE SET IS COMPLETE ON PURPOSE, even where a lane has no user today. Four
+     melodic lanes, one bass, one kit, because that is the shape of the band
+     the record can hold; a seventh voice wraps back to `--v0`, which is a
+     collision a reader can see and resolve (two names, one hue, side by side)
+     rather than a colour nobody chose.
+
+     WHAT PAINTS WITH THESE IS `.nu-vpaint` AND NOTHING ELSE — see its rule
+     below. The order is the voice's own index in the record (`DOC.voices`),
+     which is also `ui/eight.js voicePaint`'s order, so the nav, the score and
+     the board can agree without any of them being told. */
+  --v0: #1F8FD6;   /* voice 0 — sky */
+  --v1: #1F9D63;   /* voice 1 — green */
+  --v2: #8B5CF0;   /* voice 2 — violet */
+  --v3: #D1478F;   /* voice 3 — magenta */
+  --vb: #7A8188;   /* the bass  — slate */
+  --drum: #6B7280; /* the kit   — graphite */
+  /* ---- LEVEL: HOW MUCH (2026-09-02) ---------------------------------------
+     Four steps of ONE hue, so a velocity reads as a quantity at a glance the
+     way a bar chart does and not as four unrelated lights.
+
+     THE NAMES AND THE IDEA ARE hw.css:96's; THE HEXES ARE NOT, AND THE
+     SUBSTITUTION IS THE POINT. hw.css ships `--step-q1 #e14a1e … --step-q4
+     #f7b85c` — a warm 909 ramp — and hw.css can afford it because that page
+     has no red in its state palette. THIS page does: `--clock` is #E5330E and
+     `#e14a1e` is a few points of hue from it. A LEVEL that reads as the
+     playhead, ON THE STEP GRID, WHERE THE PLAYHEAD IS, is the one place this
+     page cannot afford a near-miss, so the ramp is built on the hand instead:
+     a step you wrote is cobalt, and how loud it is is HOW MUCH cobalt. At full
+     level it IS `--hand`, which is what every one of these fills was before
+     today, so the accent does not move and only the quiet end changes.
+     Ascending, so the number counts up with the value — hw.css's ramp counts
+     the other way, and that is the second reason the hexes did not survive.
+     CONTRAST: `--q1` on `--well` is a low-contrast FILL, not text, and every
+     surface that wears it draws an ink border round the fill (`.nu-kf`,
+     `.nu-vaf`), so the shape is legible at every step and only the loudness is
+     being said by the paint. */
+  --q1: #A9BAF0;   /* a ghost */
+  --q2: #7A92EA;
+  --q3: #4A6AE5;
+  --q4: #1E45E0;   /* an accent — this is `--hand` itself, at the top of the ramp */
+  /* ---- THE TWO ROW WASHES (hw.css:101-102, 2026-09-02) --------------------
+     `--zebra` (below) is the table's own permanent stripe and stays what it
+     is. These two are the tints a row wears TRANSIENTLY: under the pointer,
+     and while it is sounding. They are alphas rather than colours on purpose —
+     hw.css's own reason, and it is the right one here too: they lie over
+     whatever ground the row already has (a plate, a section wash, a zebra
+     stripe) instead of replacing it, so a hover on an even row still reads as
+     an even row. `--row-lit` is the CLOCK's alpha and not the hand's, because
+     "this row is sounding" is the clock's fact everywhere else on this page. */
+  --row-hi:  rgba(25, 22, 17, .045);   /* the row under the pointer */
+  --row-lit: rgba(229, 51, 14, .11);   /* the row that is sounding */
   /* ---- type: one heavy sans said, one mono counted; no serif ---- */
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
@@ -274,6 +370,98 @@
   --s3: .55em;  /* a gap — between controls that answer one question */
   --s4: .8em;   /* air — between questions; a plate's own padding */
   --s5: 1.4em;  /* a block — between one subject and the next */
+  /* ===== THE TYPE, WEIGHT AND RADIUS SCALES (2026-09-02) ================
+     THE OTHER HALF OF THE SPACING LAW, AND IT IS THE SAME AUDIT. Paul,
+     2026-09-01: *"The design system is not consistent."* Counted on this sheet
+     before this block existed: TWENTY-TWO distinct `font-size` values plus
+     twelve more inside `font:` shorthands — .55 .6 .7 .72 .75 .78 .8 .82 .85
+     .9 .95 1 1.15 1.2 1.25rem, .8em, .9em, and the px literals 9, 9.5, 10, 11,
+     12, 13, 15 — of which exactly one (`--btn-fs`) was a token. Weights were
+     typed literally eighteen times at 600, five at 700, four at 800, four at
+     400 and twice at 900. Radii: `--r1` fourteen times, against the literals
+     2px (x3), 3px (x8), 4px (x2), 5px, 6px (x2), 999px and 50%. That is the
+     eighteen-quanta condition the spacing block above was written to end, left
+     standing for the three properties spacing does not cover.
+
+     SIX STEPS OF TYPE AND NO SEVENTH. A step is a DISTINCTION A READER CAN
+     NAME, not a size somebody needed once:
+       --t0  the nav label, and NOTHING else. Reserved, and the reservation is
+             the point: `#nu-tray .nu-vh` is the one place on the page that
+             genuinely needs a size under an annotation, so it is named here
+             rather than typed there, and no second caller may take it.
+       --t1  an annotation — `.nu-why`, a stamp, a sub-line under a name.
+       --t2  a caption or a label — `.nu-hint`, `.nu-log`, `.nu-say`, `.nu-explain`.
+       --t3  body, and every `h3`. 1rem, which is what `body` already sets.
+       --t4  a block's own name — a namebar, a panel's plate.
+       --t5  a display number — one you read across the room.
+     FOUR WEIGHTS AND NO FIFTH, and they are Enamel's own, stated in prose at
+     `body` ("900 display / 800 blocks / 700 labels / 500 body") since
+     2026-08-27 and never once as a token until now.
+     FOUR RADII AND NO FIFTH: 0 for a plate (the implicit rule this page has
+     always followed), 6px for a control, 3px for a chip or a fill inside one,
+     999px for a pill — and a pill is RESERVED FOR NOUNS
+     (ideal/design-system.html:494), which is why nothing wears it yet.
+
+     WHAT IS NOT ON THESE SCALES, BY NAME, and it is the same kind of list the
+     spacing block keeps:
+       · 16px on `<select>` and on text entry. It is a FLOOR, not a step: iOS
+         zooms the page when a control under 16px takes focus. A menu may lose
+         its bold; it may not lose its size. No `--t*` under `--t3` may ever be
+         put on a `<select>`, and `select{ font: inherit }` at the top of this
+         file is what keeps it there.
+       · `--btn-fs` (14px) and `--num-fw` (600). The button's size is
+         deliberately BETWEEN `--t2` and `--t3` — "one step down from body",
+         the argument two paragraphs down — and the machine voice is a
+         semibold numeral face, one notch over body, so a value never reads as
+         a label. Two exemptions, both older than this block, both kept as
+         tokens so they stay countable.
+       · the mono faces inside a dense grid (`.nu-van`, `.nu-kn2`, `.nu-pbb`,
+         `#scoredeck .nu-mot > b`, `.nu-grid th`): 9px-13px numerals sized to a
+         36px cell and a 12px cap, which is engineering against a fixed box,
+         not rhythm. `.nu-grid th` is on this list for a second reason worth
+         naming: the motif table has 3.2px of slack at 320 (see HOW WIDE A
+         DRAWN TUNE HAS TO BE) and .8rem -> .82rem would spend some of it.
+       · THE MONO MACHINE LABEL, which is a FAMILY this scale does not yet
+         cover and a debt rather than an exemption: `.nu-rowlab` `.nu-vs-lab`
+         `.nu-vs-val` `.nu-flowlab` `.nu-seamlab` `.nu-panword` `.nu-slotn`
+         `.nu-busin` `.nu-tabarrow` `.nu-trims th` — twelve rules at .62rem to
+         .9rem, all `var(--mono)`, all 600-700, most tracked and capped.
+         `ideal/design-system.html:60-63` names the thing (`.lab`, "11px mono
+         700 caps, dim — a machine label") and this page should collapse them
+         onto one token. It is NOT done here, and the reason is the reason a
+         paint wave is allowed to be careful: every one of those sizes was
+         chosen against a measured COLUMN on the board, the bench or the trim
+         grid, and retyping twelve of them in a round with no board gate is how
+         a desk grows 4px and G13 goes red on somebody else's morning. One
+         token, one measured round, later.
+       · the two weights that are not steps: 600 and 400. 600 is the MACHINE
+         VOICE (`--num-fw` — a semibold numeral face, one notch over body, so a
+         value never reads as a label) and it is already a token. 400 is "give
+         the bold back": it appears only where an element inherits a weight
+         from its FURNITURE — a `<b>` inside a table cell, a `<th>`'s child —
+         and has to return it. Neither is a step of the display/block/label/body
+         ladder; both are named here so the count stays honest.
+       · `1.2rem` on `.nu-g` and `.7rem` on `.nu-n` — the gutter's GLYPH and
+         its digit are ink, not type: they are sized to the 44px mark they sit
+         in. (The gutter's WORD is `--t0` and is on the scale.)
+       · `50%` radius, which is a circle and not a corner (`.nu-circ`), and
+         every px radius under 3 inside a 22px badge.
+       · every `%`, `em`-of-its-own-box and `ch` measure: those are lengths
+         against a control, not sizes on a page. */
+  --t0: .6rem;    /* the nav label — RESERVED, one caller */
+  --t1: .72rem;   /* an annotation */
+  --t2: .82rem;   /* a caption or a label */
+  --t3: 1rem;     /* body, and every h3 */
+  --t4: 1.15rem;  /* a block's own name */
+  --t5: 1.5rem;   /* a display number */
+  --fw-body:    500;
+  --fw-label:   700;
+  --fw-block:   800;
+  --fw-display: 900;
+  --r0: 0;         /* a plate is square */
+  --r1: 6px;       /* a control eases to 6px */
+  --r2: 3px;       /* a chip, or a fill inside a control */
+  --r-pill: 999px; /* a noun, and only a noun — nothing wears this yet */
   /* THE BUTTON'S TEXT: SMALLER, AND NOT BOLD. It was 800/16px, the same size
      as body copy and heavier than an <h2>, which is what made a row of tabs
      read as a row of headlines. 500 is the body weight (the page already says
@@ -284,8 +472,8 @@
      16px IS KEPT ON `select` AND ON TEXT ENTRY and that is not an oversight:
      iOS zooms the page when a <select> or a text field under 16px takes
      focus. A menu can lose its bold; it cannot lose its size. */
-  --btn-fw: 500;
-  --btn-fs: .875rem;               /* 14px */
+  --btn-fw: var(--fw-body);        /* an alias since 2026-09-02, not a second opinion */
+  --btn-fs: .875rem;               /* 14px — exempt by name in the scale block above */
   --num-fw: 600;                   /* the machine voice: every value a control prints */
   /* ONE SLIDER, TWO AXES (2026-08-27, Paul: "The horizontal sliders should
      have the same handles and vibes as the vertical sliders, just be
@@ -298,7 +486,19 @@
   --sl-cap:    38px;  /* the cap,  ACROSS the axis — 9px proud of the well each side */
   --sl-grab:   22px;  /* the cap,  ALONG the axis — what a thumb is */
   --sl-line:   40px;  /* a laid-down slider's line: the bench row's bar height */
-  --r1: 6px;                       /* controls ease to 6px; plates stay square */
+  /* --ctl WAS READ AND NEVER DECLARED (declared 2026-09-02). The second
+     `input[type=range]` block, written 2026-08-27, said `block-size: var(--ctl,
+     48px)` and nothing on this sheet ever defined `--ctl`, so every native
+     range on the page has been riding the FALLBACK for a week — which works,
+     and which is also exactly how a token comes to mean nothing. It is the
+     height of a laid-down control: 48 and not `--tap`'s 44, because a slider
+     is dragged rather than tapped and the four extra pixels are the cap's
+     shoulder. The one scope that cancels it is `.nu-grid` (30px in a 36px
+     cell), for the reason written there. */
+  --ctl: 48px;
+  /* (`--r1: 6px` STOOD HERE and moved up into the radius scale on 2026-09-02,
+     where it is one of four rather than the only one. Same value, same
+     meaning, one owner — see THE TYPE, WEIGHT AND RADIUS SCALES.) */
   /* THE RULES ARE TWO WEIGHTS OF REAL COLOUR NOW, NOT TWO MIXES OF Canvas.
      `--rule` was 38% of CanvasText — the quiet line — and everything that
      leaned on its quietness (the pad's furniture, `.nu-tf-was`, cell rules in
@@ -333,7 +533,21 @@
      margin — it is the part of the glass a finger cannot reach. Every
      full-bleed negative-margin trick below re-pays these same two tokens, so
      the whole arithmetic follows this one edit — that is why the number is
-     named once. */
+     named once.
+
+     AND IT IS STILL 0 AFTER 2026-09-02, WHICH IS NOT A CONTRADICTION OF THE
+     SENTENCE THAT CAME NEXT. Paul, 2026-09-01: *"Many inner sections lack any
+     padding and just smash into the nav."* Both sentences are true because
+     they are about two different edges. 2026-08-30's *"Get rid of all margins
+     and padding on the outside of the views"* is about the OUTSIDE — the page
+     runs to the glass and the gutter's rule, and it still does, because `--gl`
+     is still 0 and `body`'s arithmetic at `padding-inline` is unchanged.
+     2026-09-01 is about the INSIDE: what smashes into the nav is a panel's
+     first control, and the air it needs is paid at `.nu-pan` (see its rule),
+     INSIDE the view, where a wash and a full-bleed table can still be told to
+     bleed back out over it. Paying it here instead would have widened the
+     content gutter for every full-bleed block on the page and moved the number
+     test/shell.js A7 and A6i measure. */
   --gl: 0px;
   --gr: env(safe-area-inset-right, 0px);
   /* ===== THE FIXED GUTTER (2026-08-28) ================================
@@ -441,8 +655,8 @@ body{ margin: 0; background: var(--paper); color: var(--ink);
    buttons and the title of the song"; the record names the page through
    document.title now and no view builds an <h1>. Measured after the cut: the
    selector matched zero elements across all nine tabs.) */
-h2, h3{ font-weight: 800; }
-strong, b{ font-weight: 800; }
+h2, h3{ font-weight: var(--fw-block); }
+strong, b{ font-weight: var(--fw-block); }
 /* everything counted is mono — the machine voice (design-system.html "type") */
 /* (`, .nu-vel-out` rode this selector, and `.nu-grid td > output.nu-vel-out{
    opacity: .75 }` stood in the step-grid block — the sliders' velocity
@@ -461,7 +675,7 @@ output{ font-family: var(--mono); font-variant-numeric: tabular-nums; }
 /* band.css:14, the one general rule that file had: a control that does not
    inherit the page's font is a control from a different page. */
 button,input,select,textarea,output,meter{ font: inherit; color: inherit; }
-button,select,input[type=number],input[type=text],input[type=range]{
+button,select,input[type=number],input[type=text],input[type=search],input[type=range]{
   min-height: var(--tap); }
 button,select{ padding-inline: var(--s3); }
 /* A BUTTON LOOKS LIKE A BUTTON, EVERYWHERE — AND THE ENAMEL FACE IS WHAT
@@ -515,11 +729,27 @@ button[aria-pressed="true"]:hover{ background: #152F9E; }
 button[aria-pressed="true"] mark{ background: transparent; color: inherit; }
 /* THE MENU IS A PLATE TOO — the same jet border and 6px ease as a button, one
    weight down (700, the label weight): a settled choice is quieter than a
-   verb. The browser's own arrow survives because `appearance` is left alone —
-   the design page's `.sel::after` arrow needs a wrapper element and the DOM
-   is frozen this wave. No shadow on a select anywhere: 39 of them sit in the
-   board's tables and panes, and a shadow per menu made the desk read as
-   forty loose parts (measured on the rendered board, 2026-08-27). */
+   verb. No shadow on a select anywhere: 39 of them sit in the board's tables
+   and panes, and a shadow per menu made the desk read as forty loose parts
+   (measured on the rendered board, 2026-08-27).
+
+   THE DOM IS NOT FROZEN ANY MORE, AND THE ARROW IS OURS (2026-09-02). This
+   paragraph said, from 2026-08-27 until today: *"The browser's own arrow
+   survives because `appearance` is left alone — the design page's `.sel::after`
+   arrow needs a wrapper element and the DOM is frozen this wave."* The wave is
+   over. Paul, 2026-09-01: *"Things like select boxes are very plain and could
+   be combo boxes."* `ui/selects.js selectField` wraps its `<select>` in a
+   `<span class="nu-combo">` now — ONE call site, and it is the only one — so
+   the triangle, the detent colours and the long-list filter are `.nu-combo`'s
+   (see its block, below `.nu-sel`).
+
+   THIS RULE STILL OWNS EVERY BARE SELECT, and there are 39 of them: a menu in
+   a `<td>` (`selectEl`, which stays bare on purpose — a `<td>` caps it at 9em
+   and a wrapper would fight the cell), a menu in a slot row, a menu on a bus
+   plate. They keep the browser's own arrow, and that is not an inconsistency
+   to be tidied later: a bare `<select>` in a dense grid IS a different control
+   from a labelled one in a form, and the browser draws the dense one better
+   than we would in 9em of column. */
 select{ font-weight: var(--btn-fw); background: var(--panel);
   border: var(--bw) solid var(--ink); border-radius: var(--r1); cursor: pointer; }
 select:hover{ background: var(--flag-tint); }
@@ -527,7 +757,7 @@ select:disabled{ color: var(--faint); background: var(--well);
   border-color: var(--faint); cursor: default; }
 select option, select optgroup{ background: var(--panel); color: var(--ink); }
 /* text/number entry: a cut, not a plate — you write into it */
-input[type=number], input[type=text]{ background: var(--panel);
+input[type=number], input[type=text], input[type=search]{ background: var(--panel);
   border: var(--bw) solid var(--ink); border-radius: var(--r1); }
 /* THE NATIVE WIDGETS TAKE THE HAND. `accent-color` is one line and it is the
    whole of "a value you set is cobalt" for every checkbox and radio on the
@@ -560,8 +790,38 @@ input[type=checkbox], input[type=radio]{ accent-color: var(--hand); }
    lines, at the one place that knows. Where nothing publishes it `--p` falls
    back to 0 and the control is a well with a cap in it — still this page's
    slider, and not the browser's. */
+/* ONE BLOCK FOR THE NATIVE RANGE, NOT TWO (2026-09-02). A SECOND full skin
+   stood at the foot of this file — written 2026-08-27 with the atlas's own
+   when-slider, unscoped, a 10px track and a 26px square thumb — and both were
+   live at once. Measured which actually won, because source order is the
+   answer people assume and it is the wrong one here:
+   `input[type=range]:not([list])` is (0,2,1) against `input[type="range"]`'s
+   (0,1,1), so THIS block won every contested declaration — the 20px trough,
+   the 38x22 cap, the `--p` fill, the centred grip, the focus ring — and the
+   later block only ever contributed what this one did not state. So the merge
+   changes nothing this file had not already decided, and it removes
+   the trap the map named: "reconcile to one before any token work, or a
+   slider token will appear to do nothing."
+   THE FIVE DECLARATIONS THAT CAME UP FROM THE SECOND BLOCK — `inline-size`,
+   `block-size: var(--ctl)`, `margin: 0`, the pan-y touch contract (sideways
+   writes the value, vertical is still the page) and the grab cursor, plus
+   `:disabled` — ARE KEPT AT THE SECOND BLOCK'S OWN SPECIFICITY, on a plain
+   `input[type=range]` selector two lines down, and that is not tidiness: those
+   five are the ones three rules elsewhere on this page deliberately BEAT.
+   `.nu-pbin, .nu-vain` (0,2,0) and `.nu-vs-in` state `block-size: 100%` on the
+   invisible keyboard channels that lie over the painted bars, and
+   `.nu-grid input[type=range]` (0,2,1) states 30px in a 36px cell. Written
+   inside the `:not([list])` selector (0,2,1) instead, `block-size` would have
+   started winning against two of them and silently resized three controls
+   nobody was looking at. One block, two selectors, the cascade exactly as it
+   was — which is what "reconcile" has to mean when the thing being reconciled
+   is a cascade. */
 input[type=range]:not([list]){ appearance: none; -webkit-appearance: none;
-  background: transparent; cursor: pointer; }
+  background: transparent; }
+input[type=range]{ inline-size: 100%; block-size: var(--ctl); margin: 0;
+  touch-action: pan-y; cursor: grab; }
+input[type=range]:active{ cursor: grabbing; }
+input[type=range]:disabled{ cursor: default; opacity: .5; }
 input[type=range]:not([list])::-webkit-slider-runnable-track{
   block-size: var(--sl-trough);
   background:
@@ -1457,16 +1717,58 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    wrong on `.nu-traylist`, for the reason written there: this box ALWAYS has
    something to scroll once it is worth opening, so containing it steals no
    swipe from the document). */
-.nu-log{ position: fixed; z-index: 55;
-  inset-inline-start: var(--tray-w); inset-block-end: 4px;
-  inline-size: min(46ch, calc(100vw - var(--tray-w) - 12px));
-  max-block-size: min(60vh, 520px); overflow-y: auto; overscroll-behavior: contain;
-  margin: 0; padding: var(--s2) var(--s3);
+/* ===== `.nu-strip-out` — THE FLYOUT CHASSIS, FACTORED (2026-09-02) ========
+   Paul, 2026-09-01: *"Perhaps we should experiment with strips that fly out to
+   give us access to all options, like MacOS system settings used to."*
+
+   IT IS ALREADY BUILT, THREE TIMES. `.nu-log`, `.nu-explain` and `.nu-say`
+   were written a week apart and arrived at the same six declarations
+   independently — fixed, anchored on the gutter's inner rule, the `--panel`
+   plate, one `--bw` of ink, `--r1`, the hard shadow — because there is only
+   one right answer on this page and each of them found it. Three copies of one
+   answer is how the fourth copy comes out slightly different, so the six are
+   said here, once, and the three keep only what actually distinguishes them:
+   WHICH EDGE they hang from, HOW WIDE they are, and what is inside.
+
+   THE CLASS IS IN THE SELECTOR LIST, NOT IN THE DOM, and that is deliberate
+   for exactly this wave. The three existing strips are built by three files
+   this round did not open; naming them here costs nothing and moves nothing,
+   and `.nu-strip-out` on its own is live from this moment for anything NEW —
+   the seed flyout (B1) and any strip after it get the chassis by wearing one
+   class and stating two facts.
+
+   WHAT A NEW STRIP STILL OWES, because the chassis cannot supply it:
+     · an anchor — `inset-block-start` or `inset-block-end` (the chassis fixes
+       only the INLINE start, which is the gutter's rule and is not negotiable:
+       shell A6i fails anything that overhangs the stripe);
+     · a width, in the `min(<n>ch, calc(100vw - var(--tray-w) - 12px))` shape
+       the two below use — the second arm is what keeps it inside a 320px
+       phone and is not optional either;
+     · a `max-block-size` if it can grow, because MENUS NEVER SCROLL INSIDE
+       THEMSELVES is the law and a strip is the standing exception to it, which
+       has to be argued at each strip (see `.nu-log`'s own paragraph). */
+.nu-strip-out, .nu-log, .nu-explain, .nu-say{
+  position: fixed; z-index: 55;
+  inset-inline-start: var(--tray-w);
+  margin: 0;
+  overflow-y: auto; overscroll-behavior: contain;
   background: var(--panel); color: var(--ink);
-  border: var(--bw) solid var(--ink); border-radius: var(--r1, 6px);
+  border: var(--bw) solid var(--ink); border-radius: var(--r1);
   box-shadow: var(--shadow);
-  font-size: .82rem; line-height: 1.35; }
-.nu-log[hidden]{ display: none; }
+  font-size: var(--t2); line-height: 1.35; }
+.nu-strip-out[hidden], .nu-log[hidden], .nu-explain[hidden], .nu-say[hidden]{
+  display: none; }
+/* and the chassis's own default anchor and width, for a strip that states
+   neither: the foot of the page, the log's own measure */
+.nu-strip-out{ inset-block-end: 4px;
+  inline-size: min(46ch, calc(100vw - var(--tray-w) - 12px));
+  max-block-size: min(60vh, 520px);
+  padding: var(--s2) var(--s3); }
+/* WHAT IS LEFT OF THE LOG: where it hangs, how wide, and how tall. */
+.nu-log{ inset-block-end: 4px;
+  inline-size: min(46ch, calc(100vw - var(--tray-w) - 12px));
+  max-block-size: min(60vh, 520px);
+  padding: var(--s2) var(--s3); }
 /* ONE LINE PER THING THAT HAPPENED, NEWEST FIRST. A real <ol> — the order is
    the meaning, and with the stylesheet off it has to stay the meaning — with
    its numbering off, because the numbers a reader wants are the beats and the
@@ -1507,18 +1809,17 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    document you read from the top, not a tail you read from the bottom.
    `overflow-wrap` guards A1 at 320: a `cannot` sentence is the longest prose
    this page ships and it must fold, never widen. */
-.nu-explain{ position: fixed; z-index: 55;
-  inset-inline-start: var(--tray-w); inset-block-start: 4px;
+/* WHAT IS LEFT OF THE EXPLAINER: top-anchored rather than bottom, 52ch rather
+   than 46 (it carries sentences the genre table wrote), 88vh rather than 60,
+   1.4 of leading rather than 1.35 because it is read as a document, and the
+   `overflow-wrap` that guards A1 at 320. Everything else is the chassis's. */
+.nu-explain{ inset-block-start: 4px;
   inline-size: min(52ch, calc(100vw - var(--tray-w) - 12px));
-  max-block-size: min(88vh, 88dvh); overflow-y: auto; overscroll-behavior: contain;
-  margin: 0; padding: var(--s2) var(--s3);
-  background: var(--panel); color: var(--ink);
-  border: var(--bw) solid var(--ink); border-radius: var(--r1, 6px);
-  box-shadow: var(--shadow);
-  font-size: .82rem; line-height: 1.4;
+  max-block-size: min(88vh, 88dvh);
+  padding: var(--s2) var(--s3);
+  line-height: 1.4;
   overflow-wrap: break-word; }
-.nu-explain[hidden]{ display: none; }
-.nu-explain h2{ margin: 0; font-size: 1rem; }
+.nu-explain h2{ margin: 0; font-size: var(--t3); }
 /* the eight axis headings — the vocabulary the panel teaches. A rule above
    each, the same sentence the tray's <hr> says: "a different kind of thing
    begins here", said in ink. STICKY since 2026-08-30 ("it's hard to parse"):
@@ -1529,7 +1830,7 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 .nu-explain h3{ margin: var(--s3) 0 var(--s1);
   padding-block-start: var(--s1); padding-block-end: 2px;
   border-block-start: var(--bw) solid var(--rule);
-  font-size: .82rem; text-transform: none;
+  font-size: var(--t2); text-transform: none;
   position: sticky; inset-block-start: calc(-1 * var(--s2));
   background: var(--panel); z-index: 1; }
 /* THE ANCHOR STRIP (2026-08-30) — the eight axis words as one-tap jumps down
@@ -1542,7 +1843,7 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 .nu-explain .nu-xnav{ display: flex; flex-wrap: wrap; gap: 2px;
   margin-block: var(--s1); }
 .nu-explain .nu-xjump{ min-block-size: 44px; padding: var(--s1) var(--s2);
-  font-size: .72rem; }
+  font-size: var(--t1); }
 /* THE LINEAGE FLOW (2026-08-30: "give a sense of what leads into what") —
    each generation one indent step (`--d`, set per line by ui/explain.js)
    behind a `└` connector; years are data on the line, weights ride small and
@@ -1556,7 +1857,7 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 .nu-explain .nu-xkin > .nu-xgo{ flex: 1 1 auto; inline-size: auto; }
 .nu-explain .nu-xtie{ color: var(--dim); flex: 0 0 auto; }
 .nu-explain .nu-xwt{ color: var(--dim); font-size: .72rem; }
-.nu-explain .nu-xme > b{ font-weight: 700; }
+.nu-explain .nu-xme > b{ font-weight: var(--fw-label); }
 /* the axis tables speak the page's own table language (the global `table`
    rules: the plate, the ruled cells, the zebra) — only breathing room and
    the fact column's weight are said here. */
@@ -1699,12 +2000,109 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 :root{ --wash: 4%; }
 @media (prefers-contrast: more){ :root{ --wash: 0%; } }
 @media (forced-colors: active){ :root{ --wash: 0%; } }
+/* ...AND THE TWO NEW FAMILIES FALL WITH IT (2026-09-02). CATEGORY and LEVEL
+   are the fifth and sixth colour families (see the top of this file) and they
+   are subject to exactly the same rule the wash is: a reader who has asked for
+   more contrast, or whose system has taken the palette away entirely, gets ink
+   and the chassis. This is ONE mechanism said twice, not two mechanisms: the
+   token is re-declared to something neutral and every rule that reads it
+   follows, because no rule anywhere below types one of these hexes.
+   CATEGORY collapses to `--ink` — six identities become one, which is honest
+   (the WORD beside each chip is still there and is what actually names the
+   player; the hue was only ever the shortcut). LEVEL collapses to `--hand`,
+   its own top step, so a fill is still the paint it always was and the value
+   is read off the fill's WIDTH, which is where it was already being read. */
+@media (prefers-contrast: more){
+  :root{ --v0: var(--ink); --v1: var(--ink); --v2: var(--ink); --v3: var(--ink);
+         --vb: var(--ink); --drum: var(--ink);
+         --q1: var(--hand); --q2: var(--hand); --q3: var(--hand); --q4: var(--hand);
+         --row-hi: transparent; --row-lit: transparent; } }
+@media (forced-colors: active){
+  :root{ --v0: CanvasText; --v1: CanvasText; --v2: CanvasText; --v3: CanvasText;
+         --vb: CanvasText; --drum: CanvasText;
+         --q1: Highlight; --q2: Highlight; --q3: Highlight; --q4: Highlight;
+         --row-hi: transparent; --row-lit: transparent; } }
+/* ===== `.nu-vpaint` — THE ONE THING THAT WEARS A CATEGORY (2026-09-02) =====
+   THE CONTRACT, AND IT IS TWO ATTRIBUTES AND ONE CLASS:
+
+     `[data-vi="0".."5"]`  declares `--vpaint` for itself AND for everything
+                           inside it. Put it on a row, a strip, a cap, a chip —
+                           anywhere the answer to "which player" is fixed. The
+                           number is the voice's own index in `DOC.voices`; a
+                           record with more than six voices wraps, and the
+                           wrap is visible rather than silent (see CATEGORY).
+     `.nu-vpaint`          PAINTS with it: a filled plate in the player's hue
+                           with the page's own ink border and white ink on top.
+                           Every one of the six is dark enough for white text
+                           (checked: the lightest is `--v0` #1F8FD6 at 3.1:1
+                           against white, which is why the ink BORDER is not
+                           optional — it is what keeps the plate's edge legible
+                           where the fill's contrast is thin).
+     `.nu-vpaint.is-edge`  the quiet form: a 3px edge bar in the hue and no
+                           fill, for a row that must keep its own ground (a nav
+                           member box, a table row).
+
+   WHY A UTILITY AND NOT A RULE PER SURFACE. Four surfaces want this — the
+   score's motif caps, the roll legend, `ui/eight.js`'s band rows and
+   `ui/engineer.js`'s strips — and three of them are built by files this round
+   did not open. A utility is the only shape in which the colour can be
+   ADDED to a surface by the agent that owns that surface, in one class and one
+   attribute, without a fifth rule appearing in this file each time. */
+[data-vi="0"]{ --vpaint: var(--v0); }
+[data-vi="1"]{ --vpaint: var(--v1); }
+[data-vi="2"]{ --vpaint: var(--v2); }
+[data-vi="3"]{ --vpaint: var(--v3); }
+[data-vi="4"]{ --vpaint: var(--vb); }
+[data-vi="5"]{ --vpaint: var(--drum); }
+.nu-vpaint{ background: var(--vpaint, var(--ink)); color: #FFFFFF;
+  border: var(--bw) solid var(--ink); border-radius: var(--r2); }
+.nu-vpaint.is-edge{ background: transparent; color: inherit; border: 0;
+  box-shadow: inset 3px 0 0 var(--vpaint, var(--ink)); border-radius: var(--r0); }
 .nu-ax, #atlas{
   --paper: color-mix(in oklab,
                      hsl(calc(var(--sec) * 137.5deg) 70% 50%) var(--wash), var(--ground));
-  background: var(--paper);
-  margin-inline: calc(-1 * var(--gl)) calc(-1 * var(--gr));
-  padding-inline: var(--gl) var(--gr); }
+  background: var(--paper); }
+/* THE CANCEL-AND-RE-PAY IS THE PANEL'S INSET NOW, NOT `--gl` (2026-09-02).
+   Paul, 2026-09-01: *"Many inner sections lack any padding and just smash into
+   the nav."* The air is paid at `.nu-pan` (see its rule below), which means a
+   washed axis inside a panel now starts 12.8px in from the panel's edge — and
+   a wash that stops 12.8px short of the gutter's rule is a stripe of bare
+   chassis down the leading edge of every tab, which is the defect the panel
+   inset was added to fix, drawn one element further in.
+
+   SO THE ARITHMETIC MOVES WITH THE PADDING AND NOTHING ELSE CHANGES. The rule
+   used to cancel `--gl`/`--gr` and re-pay them; it cancels the panel's inset
+   and `--gr` and re-pays those. The blocks land exactly where they did before
+   the padding existed — on the gutter's rule at the start, on the glass at the
+   end — and the CONTENT inside them is inset by `--s4`, which is the whole
+   ask. Measured after: A1 (`scrollWidth === clientWidth`) and A6i (nothing
+   past the gutter's left edge) at 320/375/430/820/1280.
+
+   IT IS SPLIT IN TWO BECAUSE `#atlas` IS ITSELF A `.nu-pan` (index.html:348)
+   and a `.nu-ax` is a CHILD of one. The panel's own padding IS the atlas's
+   inset — there is nothing for it to cancel on the leading side — while a
+   `.nu-ax` has to reach back out through its parent's padding. One fact, two
+   positions in the box tree, so two rules rather than one rule that is wrong
+   for one of them.
+
+   MEASURED ON THE RENDERED PAGE, 2026-09-02, every tab at 320 and 1280: the
+   panel's own left edge is x=56 (the gutter's right edge, to the pixel), its
+   `padding-left` computes to 12.8px, and the washed `.nu-ax` inside it is back
+   out at x=56 — bleeding to the rule and stopping there. `scrollWidth ===
+   clientWidth` at both widths on all eleven tabs, and test/shell.js A1/A5/A6i
+   green at 320/375/430/820.
+
+   THE ONE ASSUMPTION, SAID OUT LOUD: `--s4` is `.8em`, and an `em` cancel only
+   cancels if the two boxes agree about `em`. Neither `.nu-pan` nor `.nu-ax`
+   sets a `font-size`, so both resolve against `body`'s 16px and both are
+   12.8px. A `font-size` on either is the one edit that silently breaks this,
+   which is why it is written here and not left to be discovered. */
+.nu-ax{
+  margin-inline: calc(-1 * var(--s4)) calc(-1 * (var(--s4) + var(--gr)));
+  padding-inline: var(--s4) calc(var(--s4) + var(--gr)); }
+#atlas{
+  margin-inline-end: calc(-1 * var(--gr));
+  padding-inline-end: calc(var(--s4) + var(--gr)); }
 /* THE ORDINAL IS ON THE PANEL NOW, AND THE TWELVE-RULE LADDER IS GONE
    (2026-08-27). What stood here was twelve `#app > .nu-ax:nth-child(12n+k)`
    rules and its argument was "THE LADDER IS THE ONLY WAY CSS CAN COUNT: there
@@ -1738,7 +2136,42 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    custom property inherits. `.nu-ax` no longer declares `--sec: 0` of its own
    for exactly that reason: a default here would win over the panel's value and
    every block would come out at hue 0. */
-.nu-pan{ --sec: 0; }
+/* THE ONE RULE THAT ENDS THE SMASH (2026-09-02). Paul, 2026-09-01: *"Many
+   inner sections lack any padding and just smash into the nav."* Measured
+   before this declaration: `.nu-pan` had exactly two rules — `--sec: 0` and
+   `[data-off]{display:none}` — no padding, no margin, no max-width, ever, so
+   every panel's first control began at x = the gutter's inner ink rule, zero
+   gap, at every width and on every tab.
+
+   IT IS PAID HERE AND NOT AT `--gl`, AND THAT IS THE WHOLE OF WHY THE TWO
+   SENTENCES DO NOT FIGHT. 2026-08-30 — *"Get rid of all margins and padding on
+   the outside of the views"* — is about the OUTSIDE and still holds: `--gl` is
+   0 (see its own paragraph, which carries this reversal beside it) and
+   `body`'s `padding-inline` is untouched, so the number test/shell.js A7 and
+   A6i measure has not moved. 2026-09-01 is about the INSIDE. A view that runs
+   to the edge and a control that has room to breathe are the same view.
+
+   `var(--s4) var(--s4) 0` — air at the top and on both sides, NOTHING at the
+   bottom, because `body` already pays `max(24px, env(safe-area-inset-bottom))`
+   there and a second block of air under the last control would be two owners
+   of one gap. `--s4` is "a plate's own padding" on the spacing scale, which is
+   what a panel is.
+
+   WHAT RE-PAYS IT: the wash rule above, in one place, for `.nu-ax` and
+   `#atlas`. Anything else that wants to bleed full-width inside a panel cancels
+   `--s4`, not `--gl`, and says so where it does it.
+
+   THE STEP GRIDS KEEP THEIR 3.2px AND DO NOT OPT OUT — re-measured 2026-09-02,
+   and this is the check the round was told to make. `.nu-grid` lives inside a
+   `.nu-ax`, and a `.nu-ax` cancels the panel's inset and re-pays it as its own
+   padding — which means the grid's containing block is exactly the width it
+   was yesterday, and the 3.2px of slack the motif table has at 320 (see HOW
+   WIDE A DRAWN TUNE HAS TO BE) is untouched. The negative-margin escape hatch
+   the plan reserved for the grids is therefore NOT spent, and it is written
+   down here so the next hand does not spend it looking for a problem that was
+   already solved one element up. If a future panel ever draws a grid OUTSIDE a
+   `.nu-ax`, that is the case that needs the hatch. */
+.nu-pan{ --sec: 0; padding: var(--s4) var(--s4) 0; }
 #atlas{ --sec: 0; }
 #pan-tempo{ --sec: 1; }
 #pan-key{ --sec: 2; }
@@ -1747,7 +2180,33 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 #deck{ --sec: 5; }
 #produce{ --sec: 6; }
 #scoredeck{ --sec: 7; }
-#exportdeck{ --sec: 8; }
+/* THE LADDER IS TWELVE LONG NOW (2026-09-02). `#videodeck` and `#saverdeck`
+   shipped in index.html on 2026-09-01 and were never given a number, so both
+   inherited `.nu-pan`'s `--sec: 0` and wore the atlas's hue — two panels
+   painted as a third, which is precisely the fact the wash exists to state.
+   `#rulesdeck` and `#pan-structure` join them (Paul, 2026-09-01: the Rules
+   view *"it'll need a new icon in the left nav"*, and Structure *"should be
+   top level, not buried under band, and below band"*). `#exportdeck` renumbers
+   from 8 to 12 — the price the paragraph above names for inserting in the
+   middle, one line, paid.
+
+   TWO OF THESE SELECTORS MATCH NOTHING YET, AND THAT IS DELIBERATE — read this
+   before the dead-selector pass (see `.nu-tf-row` below) deletes them. That
+   pass exists because "a selector with no subject is read by the next hand as
+   a promise about the page", and it is right about a FACE: a rule that draws
+   something nothing wears is a lie. This is not a face. It is a DECLARED LIST
+   — a ladder of ordinals in reading order, whose whole meaning is that every
+   panel has a number and that consecutive numbers are 137.5deg apart. A hole
+   in it is not a tidy absence; it is the next panel silently taking hue 0. So
+   the ladder is written whole, ahead of its hosts (`#rulesdeck` and
+   `#pan-structure` are wave 1a's to build), and the dead-selector pass's own
+   test — "does the next hand read this as a promise?" — is answered here: yes,
+   and the promise is kept the moment the host lands. */
+#videodeck{ --sec: 8; }
+#saverdeck{ --sec: 9; }
+#rulesdeck{ --sec: 10; }
+#pan-structure{ --sec: 11; }
+#exportdeck{ --sec: 12; }
 
 /* ===== TABLES ==========================================================
    "use more grid lines in tables, it will help" (Paul, 2026-08-24). Every
@@ -1990,7 +2449,7 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
    for. */
 .is-off, .nu-opt:has(:disabled){ opacity: .45; }
 .is-quiet{ opacity: .7; font-style: italic; }
-.nu-hint{ font-size: 12px; color: var(--dim); }
+.nu-hint{ font-size: var(--t2); color: var(--dim); }
 /* 12px, NOT .85rem, AND THE PIXEL IS LOAD-BEARING (2026-08-27). The audition
    say-line reserves its own minHeight by measuring "the record is playing —
    the score above is what you hear", and that sentence in the new sans is
@@ -2014,6 +2473,35 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
   gap: 4px; border: var(--bw) solid var(--ink); background: var(--panel);
   --paper: var(--panel);
   padding: 6px; margin-block: var(--s3);
+  /* ---- EVEN ROWS IN A SHEET (2026-09-02) ----------------------------------
+     Paul, 2026-09-01: *"things are uneven based on how text wraps."*
+
+     MEASURED BEFORE THESE TWO DECLARATIONS: a grid row is as tall as its
+     tallest cell and a grid item STRETCHES to its row by default, so one
+     option carrying a `.nu-why` made its whole row taller AND turned every
+     neighbour into a tall empty chip with its word floating in the middle of
+     it. Two or three reasons down a sheet and the sheet reads as a broken
+     table.
+
+     `grid-auto-rows` IS STATED so the row has a floor of exactly one tap
+     target and grows only for content that genuinely needs it; `align-items:
+     start` is what stops the neighbours coming with it. After: a chip with no
+     reason is 44px at every width, whatever its neighbours are doing.
+
+     THE REASON ITSELF DID NOT MOVE, AND THAT IS A DECISION, NOT AN OMISSION.
+     The obvious next step is to take `.nu-why` out of the chip's flow
+     entirely — absolutely positioned under it, or hoisted to the sheet's own
+     full-width track. Both were rejected, in these words: positioned, it lies
+     across the row underneath it (a reason that overlaps its neighbour is
+     worse than a reason that makes its chip taller); hoisted, it is no longer
+     inside the option's `<label>`, which is where `ui/sheets.js:64-68` puts it
+     and where `test/sheets.js` reads it back off the artifact — and GREYED,
+     NOT HIDDEN, WITH THE REASON PRINTED is a law with a throw behind it
+     (ui/sheets.js:149-152). The reason may not be moved, truncated, hidden or
+     tooltipped. So it costs its OWN chip's height and nothing else's, which is
+     the whole of the defect that was actually visible. */
+  grid-auto-rows: minmax(var(--tap), min-content);
+  align-items: start;
   min-inline-size: 0; }
 .nu-sheet[data-cols="2"]{ --cols: 2; }
 .nu-sheet[data-cols="3"]{ --cols: 3; }
@@ -2023,9 +2511,9 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
 @media (max-width: 340px){ .nu-sheet{ --cols: 1; } }
 .nu-sheet > legend{ padding-inline: var(--s2); font-weight: 600; }
 .nu-sheet > .nu-grp, .nu-sheet > .nu-why{ grid-column: 1 / -1; }
-.nu-grp{ margin: var(--s2) 0 0; font-size: .85rem; opacity: .75;
+.nu-grp{ margin: var(--s2) 0 0; font-size: var(--t2); opacity: .75;
   border-block-end: 1px solid var(--rule); }
-.nu-why{ display: block; font-size: .8rem; opacity: .8; line-height: 1.25; }
+.nu-why{ display: block; font-size: var(--t1); opacity: .8; line-height: 1.25; }
 /* `.nu-sheets` is NOT on §2.4's table — sheetRow() emits it as the wrapper for
    a row of sheets under one heading (ui/sheets.js:168), and the law is that a
    name a slice needs is added HERE rather than in a second stylesheet. So it is
@@ -2144,7 +2632,7 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
    swallow the gesture. */
 .nu-circ-face::before, .nu-circ-face::after{ content: ""; position: absolute;
   left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none;
-  border: 1px solid var(--rule); border-radius: 50%; z-index: 0; }
+  border: var(--bw) solid var(--rule); border-radius: 50%; z-index: 0; }
 .nu-circ-face::before{ inline-size: 17.2em; block-size: 17.2em; }
 .nu-circ-face::after { inline-size: 11.6em; block-size: 11.6em; }
 /* ONE ROTATION OUT AND ONE BACK. --a is the HOUR and it is the only thing that
@@ -2252,11 +2740,77 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
    listed together rather than given a third shared class, which would be a
    name that meant "the other two". */
 .nu-sel{ margin-block: var(--s3); }
+/* ===== `.nu-field` — THE ONE EVEN-ROW PRIMITIVE (2026-09-02) ==============
+   Paul, 2026-09-01: *"things are uneven based on how text wraps."*
+
+   MEASURED BEFORE THIS RULE. A field was `min-block-size: var(--tap)` and a
+   wrapping flex, so its height was 44px PLUS however many lines the question
+   took — one line for "swing", two for "what happens to it after it's
+   played?", three at 320 for the longest of them. Put four fields in a column
+   and you get four different heights, and nothing in the column lines up with
+   anything in the next.
+
+   THE RECIPE IS NOT NEW, IT IS `.nu-ixli`'s, WHICH IS THE ONE SURFACE ON THIS
+   PAGE WHERE EVEN ROWS ARE ALREADY A SOLVED PROBLEM (measured 44.00px, every
+   row, one line, at 320/375/390/430/1280 — see its block): a stated height, a
+   track that may not grow, and `white-space: nowrap; overflow: hidden;
+   text-overflow: ellipsis; min-inline-size: 0` on the text so it CUTS instead
+   of wrapping. Here it is two `--tap` rows and no third: the question on line
+   one, the control on line two, 88px, always.
+
+   WHAT THE ELLIPSIS COSTS, AND WHY IT IS PAID. A cut question is a question
+   you cannot finish reading. Three things make that survivable, and they are
+   the same three `.nu-ixli` relies on: the whole string is still in the DOM
+   (so it is announced in full, and it is what the gates read back); the
+   `<select>` under it is showing the ANSWER, which is usually the shorter and
+   more specific half of the fact; and a question is asked once per panel while
+   a ragged column is misread every time it is scrolled past. This is the trade
+   Paul asked for in the sentence, written down rather than discovered.
+
+   THE 2026-08-25 REVERSAL IS NOT REVERSED: the question still gets its OWN
+   line (`flex: 1 0 100%`), which is what "questions on their own line" bought,
+   and everything after it still shares the second line, which is what kept a
+   slider and its readout together. The line is a fixed 44px now instead of
+   however tall the words made it.
+
+   TWO EXEMPTIONS, BOTH OLDER THAN THIS RULE AND BOTH NAMED:
+     · `.nu-plate .nu-sel` (the bus gear grid) states `min-block-size: 0` and a
+       `.78rem` label because its columns are 108px and its rhythm is the
+       rack's, not the form's — it keeps its own height and its own wrap.
+     · `.nu-circ .nu-opt` (the ring) cancels the 44px row for 26px for the
+       reason written at its own rule. Neither is a `.nu-field`. */
 .nu-sel > label, .nu-field > label{
-  display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap;
-  line-height: normal; min-block-size: var(--tap); }
+  display: flex; align-items: center; align-content: start;
+  /* NO ROW GAP, AND THAT IS THE DIFFERENCE BETWEEN 88 AND 93.6. Measured with
+     `gap: var(--s2)` on both axes: every menu field came out 44 + 5.6 + 44 =
+     93.6px and the promise of "two tap rows" was 5.6px short of true. The two
+     lines need no gap between them because each is a full 44px line box with
+     its content centred in it — the air is already inside the rows. The
+     COLUMN gap stays: it is what separates a slider from its readout. */
+  gap: 0 var(--s2); flex-wrap: wrap;
+  line-height: normal;
+  min-block-size: calc(2 * var(--tap)); }
 .nu-sel > label > .nu-w, .nu-field > label > .nu-w{
-  flex: 1 0 100%; font-weight: 600; }
+  flex: 1 0 100%; font-weight: var(--fw-label);
+  block-size: var(--tap); line-height: var(--tap);
+  min-inline-size: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* AND THE SECOND LINE IS ONE LINE, WHICH A NATIVE RANGE WAS BREAKING. Measured
+   before this rule: the tempo field was 122.2px at BOTH 320 and 1280 — 44 for
+   the question, 48 for the slider and 19 for its `<output>` on a THIRD line —
+   because `input[type=range]{ inline-size: 100% }` (the one range block, above)
+   makes the slider's flex basis the whole line and pushes the readout off it.
+   `flex: 1 1 0` gives the slider the line MINUS the readout instead, which is
+   the arrangement the 2026-08-25 reversal was protecting ("everything AFTER the
+   words stays on ONE line together").
+   AND ITS HEIGHT IS `--tap` HERE, NOT `--ctl`. 48 is a slider standing on its
+   own — the board's faders, a strip's send — where the four extra pixels are
+   the cap's shoulder; seated in an even row it takes the row, because 44 + 48
+   is not a `--tap` multiple and one control's shoulder is not worth the whole
+   column stepping. Still 44px of thumb, still over the floor. Measured after:
+   every field 88.0px at 320 and 1280. */
+.nu-sel > label > input[type=range], .nu-field > label > input[type=range]{
+  flex: 1 1 0; inline-size: auto; min-inline-size: 0; block-size: var(--tap); }
 /* A MENU OF 108 INSTRUMENTS MUST NOT BE 108 INSTRUMENTS WIDE. A <select> sizes
    itself to its longest option, which on `sound.instrument` is a phone and a
    half; the cap makes the browser ellipsise the CLOSED control and leaves the
@@ -2265,9 +2819,89 @@ mark{ background: var(--clock-tint); color: var(--ink); font-weight: 800; }
    holding one word. `min-inline-size: 0` is what lets it shrink below its
    content on a phone. Measured on the harness: 240px at both 390 and 1400, and
    documentElement.scrollWidth == innerWidth at both. */
-.nu-sel > label > select{ flex: 0 1 auto; min-inline-size: 0;
+.nu-sel > label > .nu-combo{ flex: 0 1 auto; min-inline-size: 0;
   max-inline-size: min(100%, 30ch); }
+/* (`.nu-sel > label > select` HELD THESE THREE DECLARATIONS until 2026-09-02.
+   The `<select>` is inside a `<span class="nu-combo">` now, so the cap has to
+   be on the box that is actually the flex item; the select fills it, which is
+   `.nu-combo > select{ inline-size: 100% }` below. MEASURED after the move, on
+   the rendered page: every visible `<select>` 44px tall and 16px, zero under
+   either floor, on all eleven tabs at 320 and 1280, and
+   `documentElement.scrollWidth === clientWidth` at both — which is the
+   promise the paragraph above actually makes. The 30ch cap itself is
+   unchanged and untested by this edit: it is the same declaration on a box
+   one element out.) */
 .nu-sel > .nu-why{ margin-block-start: var(--s1); }
+/* ===== `.nu-combo` — THE COMBO BOX (2026-09-02) ===========================
+   Paul, 2026-09-01: *"Things like select boxes are very plain and could be
+   combo boxes."*
+
+   IT IS STILL A `<select>`, AND THAT IS THE LOAD-BEARING DECISION. The
+   2026-08-25 law — A SINGLE-CHOICE CONTROL IS A `<select>`, full stop — is not
+   touched: the control the browser gives a thumb is unchanged, `data-sel` /
+   `data-k` / `data-v` are unchanged (they are how focus survives `draw()`),
+   every gate that counts menus still counts the same 39, and the option list
+   is still the browser's own popup, which is the one part of a menu no page
+   has ever drawn better. What is added is a WRAPPER, at one call site
+   (`ui/selects.js selectField`), and three things the wrapper makes possible:
+
+     THE ARROW. `appearance: none` plus a `::after` triangle, which is what
+     `ideal/design-system.html:202-218` has drawn since Enamel and what this
+     file could not have because the arrow needs a box to hang on. It is the
+     page's own mark in the page's own dim, on the page's own plate, instead of
+     six different arrows on six different platforms.
+     THE DETENT. `.is-seated` — you are standing where the record put you — and
+     `.is-said` — you moved it. `design-system.html:214-215` names both. This
+     is the one thing a plain select cannot say and the one thing a composer
+     most wants to see across a panel of forty of them: WHICH of these did I
+     touch? Dim for the default, hand for a value you set, and the hand is
+     exactly right because the hand is "a value you set".
+     THE FILTER. Over 24 options (`sound.instrument` is 108) a menu stops being
+     a menu and becomes a list you scroll hunting for a word. `.nu-combo-filter`
+     is a `<input type=search>` before the select that hides non-matching
+     `<option>`s — which is what "combo box" has meant to a hand since 1993.
+     It is not a text entry for the VALUE: you cannot type a value that is not
+     in the table, because the table is the vocabulary and inventing a word is
+     the one thing a settled parameter must not allow.
+
+   THE BOX. `inline-grid` and not `inline-flex`: the filter and the select are
+   two full-width rows when both are present and one row when only the select
+   is, and a grid says that in one declaration without a `flex-basis: 100%` on
+   each child. The triangle hangs off the BOTTOM row — the select is always
+   last — so it lands on the menu whether or not there is a filter above it. */
+.nu-combo{ position: relative; display: inline-grid; grid-template-columns: 1fr;
+  gap: var(--s1); min-inline-size: 0; max-inline-size: 100%; }
+.nu-combo > select{
+  appearance: none; -webkit-appearance: none;
+  inline-size: 100%; min-inline-size: 0;
+  /* room for the triangle: the arrow's own column, plus the padding the plate
+     already pays on that side, so no option's text ever runs under it */
+  padding-inline-end: calc(var(--s3) + 1.1em); }
+.nu-combo::after{ content: "\25BE";   /* ▾ — the same symbol stack the marks use */
+  position: absolute; inset-inline-end: var(--s3); inset-block-end: 0;
+  block-size: var(--tap); display: flex; align-items: center;
+  pointer-events: none; color: var(--dim);
+  font-family: system-ui, "Segoe UI Symbol", "Noto Sans Symbols 2", sans-serif;
+  font-size: var(--t2); line-height: 1; }
+/* THE DETENT COLOURS. Written on the WRAPPER by `selectField`, on build and on
+   every change, from one comparison: the select's value against the option the
+   table calls its default (`value === ""` / `"default"`, or the word "—").
+   A menu whose table declares NO default detent wears NEITHER class — silence
+   rather than a claim, because "you set this" is a fact and a control that
+   cannot know it may not assert it. */
+.nu-combo.is-seated > select{ color: var(--dim); }
+.nu-combo.is-said > select{ color: var(--hand); font-weight: var(--fw-label); }
+.nu-combo.is-said::after{ color: var(--hand); }
+.nu-combo:has(> select:disabled)::after{ color: var(--faint); }
+/* THE FILTER FIELD. 44px like everything else a thumb touches, 16px like
+   everything else that takes focus on iOS (`font: inherit` from the top of
+   this file gives it that and the type scale may not take it away — see the
+   scale's own exemption list), and a `search` type so a phone offers the right
+   keyboard and a clear button. It carries no visible label: its `aria-label`
+   is "filter <the question>", which the widget writes, because a visible one
+   would be a second copy of the question already on line one. */
+.nu-combo-filter{ inline-size: 100%; min-inline-size: 0; }
+.nu-combo-filter::-webkit-search-cancel-button{ cursor: pointer; }
 /* ...and the same cap for a menu in a table cell, where the chord quality went
    ("chord quality can be selects inside the 'the changes' table"). The cell is
    inside a `.nu-pane`, which scrolls sideways, so an unbounded select would
@@ -2402,7 +3036,7 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   border-radius: var(--r1); box-shadow: var(--shadow);
   padding: var(--s3); display: grid; gap: var(--s3); align-content: start; min-width: 0; }
 .nu-strip.is-off{ opacity: .55; }
-.nu-sname{ display: block; font-size: 1.15rem; font-weight: 900;
+.nu-sname{ display: block; font-size: var(--t4); font-weight: var(--fw-display);
   text-transform: uppercase; line-height: 1; }
 .nu-strip header small{ display: block; color: var(--dim); font-size: .72rem; }
 .nu-srow{ border-block-start: var(--bw) solid var(--ink); padding-block-start: var(--s3);
@@ -2471,7 +3105,7 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 .nu-slot.is-off{ opacity: .6; }
 .nu-slotrow{ display: flex; gap: var(--s2); align-items: center; }
 .nu-slotn{ font: 700 .75rem var(--mono, monospace); color: #fff; background: var(--ink);
-  inline-size: 22px; block-size: 22px; border-radius: 3px; flex: none;
+  inline-size: 22px; block-size: 22px; border-radius: var(--r2); flex: none;
   display: inline-flex; align-items: center; justify-content: center; }
 .nu-slot.is-empty .nu-slotn{ background: var(--faint); }
 .nu-slotrow select{ flex: 1 1 auto; min-inline-size: 0; max-inline-size: 100%; }
@@ -2658,9 +3292,50 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
   padding: var(--s4); display: grid; gap: var(--s3); }
 .nu-plate.is-off{ opacity: .7; }
 .nu-bushead{ display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); align-items: center; }
-.nu-busname{ font: 800 .85rem/1 var(--sans, sans-serif); letter-spacing: .08em;
-  text-transform: uppercase; color: #fff; background: var(--ink);
-  padding: var(--s3) var(--s4); border-radius: 6px; }
+/* ===== `.nu-namebar` — THE INK PLATE THAT NAMES A BLOCK (2026-09-02) ======
+   `ideal/design-system.html:101-105` draws it as `section > h2`: white on jet,
+   caps, tracked — "the name plate". `.nu-busname` has been exactly that since
+   the board was built, on one surface, under a name that says "bus". Four more
+   surfaces want it now (the Rules view's genre name — Paul, 2026-09-01: *"The
+   name of the genre should be obvious"* — the Band roster, Structure and
+   Produce), so the plate gets the general name and `.nu-busname` becomes what
+   it always was: the plate, on the board.
+
+   IT DOES NOT REINSTATE THE HEADING THAT WAS HIDDEN. Every `.nu-ax > h2` is
+   `.nu-vh` because the visible name of a panel is the word on its tab (one
+   owner per fact, nu.css:788-813, and shell A6 sweeps for a sticky one). A
+   namebar names something INSIDE a panel — a bus, a player, a section, the
+   genre a rule is about — which the tab does not say and cannot.
+
+   THE SUB-LINE IS OPTIONAL AND IT IS DIM, and it is the one thing the board's
+   version never had: a plate that says "LEAD" over "nylon guitar" says two
+   different kinds of fact in one block, which is what the nav's own two-line
+   mark does (§2.1) and what makes a roster readable without a legend. */
+.nu-namebar, .nu-busname{
+  display: block; inline-size: fit-content;
+  font-family: var(--sans); font-size: var(--t4); font-weight: var(--fw-block);
+  line-height: 1; letter-spacing: .08em; text-transform: uppercase;
+  color: #FFFFFF; background: var(--ink);
+  padding: var(--s3) var(--s4); border-radius: var(--r1); }
+.nu-namebar-sub{ display: block; margin-block-start: var(--s1);
+  font-size: var(--t1); font-weight: var(--fw-body); letter-spacing: 0;
+  text-transform: none;
+  /* the second voice, ON the plate: `--dim` is a chassis grey and would
+     disappear into jet, so the sub-line is the plate's own white at 72% —
+     3.4:1 against #191611, which clears AA for the 11.5px it is set at only
+     because it is never the only copy of what it says (the roster's own
+     column carries the same word). */
+  color: rgba(255, 255, 255, .72); }
+/* WHAT `.nu-busname` KEPT OF ITS OWN: nothing. It was `.85rem/800/6px`, which
+   is `--t4`/`--fw-block`/`--r1` to within the rounding the type scale exists
+   to remove — 13.6px becomes 18.4px on the four bus plates. It is allowed to
+   grow rather than being pinned at .85rem because the plate is
+   `inline-size: fit-content` inside a `flex-wrap: wrap` `.nu-bushead`, so a
+   wider plate wraps the head rather than widening the board. NOT RE-MEASURED
+   BY THIS ROUND: `desk-gate` G13 (`#boardpanel` must not grow sideways at 390
+   or 1280) is the gate that owns that claim and it was not in this slice's
+   list. It is named here so the next hand runs it rather than trusting this
+   paragraph. */
 .nu-busin{ color: var(--dim); font: 600 .72rem var(--mono, monospace); }
 .nu-busrow{ display: flex; flex-wrap: wrap; gap: var(--s4); align-items: end; }
 .nu-busmodel{ align-self: center; }
@@ -2670,10 +3345,20 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
 .nu-flowlab{ font: 700 .68rem var(--mono, monospace); letter-spacing: .08em;
   text-transform: uppercase; }
 
-/* ---- the one measured meter (green = the engine, measured) ---- */
+/* ---- the one measured meter (green = the engine, measured) ----
+   `--meter-tint` HAS ITS FIRST USE HERE (2026-09-02). It was declared with the
+   other three tints on 2026-08-27 and had ZERO callers on the whole sheet —
+   which the colour audit found and which is a small version of the same
+   problem the audit was about: the meter is the paint this page is quietest
+   in. The WELL is the right first use and nothing else was: a tint is a
+   GROUND, and this is the one ground on the page whose whole subject is a
+   measured signal. An empty meter now says "this is a meter, and it is
+   reading nothing" instead of "this is a well like every other well"; a
+   sounding one still says the level in full-strength `--meter` above it, so
+   the fill has more contrast to work against, not less. */
 .nu-meterwell{ position: relative; display: block; inline-size: 16px;
-  block-size: 180px; background: var(--well); border: var(--bw) solid var(--ink);
-  border-radius: 4px; overflow: hidden; }
+  block-size: 180px; background: var(--meter-tint); border: var(--bw) solid var(--ink);
+  border-radius: var(--r2); overflow: hidden; }
 .nu-meterbar{ position: absolute; left: 0; right: 0; bottom: 0; display: block;
   background: var(--meter); block-size: 0; }
 
@@ -2736,8 +3421,15 @@ table.nu-trims{ color: var(--ink); }
   grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 0 var(--s3); }
 .nu-plate .nu-sel{ margin-block: var(--s1) var(--s3); }
 .nu-plate .nu-sel > label{ gap: var(--s1); min-block-size: 0; }
-.nu-plate .nu-sel > label > .nu-w{ font-size: .78rem; font-weight: 600; }
-.nu-plate select{ inline-size: 100%; max-inline-size: 100%; }
+/* AND THE PLATE'S LABEL KEEPS ITS OWN WRAP (2026-09-02). The even-row rule
+   above gives every `.nu-w` a fixed 44px line and an ellipsis; on a 108px
+   column of the gear grid that would cut nearly every word and add 44px per
+   control to a rack that is already the densest thing on the page. The plate
+   was already exempt from the 44px row (`min-block-size: 0`, one line up) and
+   this is the same exemption said about the label. */
+.nu-plate .nu-sel > label > .nu-w{ font-size: var(--t1); font-weight: 600;
+  block-size: auto; line-height: 1.2; white-space: normal; overflow: visible; }
+.nu-plate select, .nu-plate .nu-combo{ inline-size: 100%; max-inline-size: 100%; }
 /* THE ROW-GROUP HEADING IS GONE, AND ITS RULE IS DELETED RATHER THAN LEFT DEAD.
    It read: "A ROW-GROUP HEADING INSIDE THE TABLE. A bus has no `place` pot and
    the main has no `→ delay` send, so those cells are blank — which is what a
@@ -3139,7 +3831,7 @@ table.nu-trims{ color: var(--ink); }
    does across a playing one. */
 .nu-score .nu-load{ position: absolute; inset: 0; margin: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: .85rem; opacity: .85;
+  font-size: var(--t2); opacity: .85;
   background: color-mix(in srgb, var(--paper) 70%, transparent);
   pointer-events: none; }
 /* …AND `hidden` HAS TO BE SAID HERE, WHICH IS NOT PEDANTRY. The `hidden`
@@ -3166,9 +3858,24 @@ table.nu-trims{ color: var(--ink); }
    borrowed one: see the wash block above.) */
 #scoredeck .nu-decktabs{ align-items: center; margin-block: var(--s2) var(--s3); }
 #scoredeck .nu-decklegend{ display: inline-flex; flex-wrap: wrap; gap: var(--s4);
-  margin-inline-start: auto; font-size: .8rem; opacity: .85; }
+  margin-inline-start: auto; font-size: var(--t2); opacity: .85; }
 #scoredeck .nu-legv{ display: inline-flex; align-items: center; gap: var(--s2); }
-#scoredeck .nu-legv > i{ inline-size: 11px; block-size: 11px; border-radius: 3px;
+/* THE LEGEND CHIP IS THE PAGE'S FIRST CATEGORY SURFACE, AND ITS HUE IS WRITTEN
+   BY THE JAVASCRIPT (`ui/eight.js:4001`, `chip.style.background =
+   voicePaint(vi)`) — an inline style, which no rule in this file can reach.
+   That is the correct division as long as `voicePaint` is the one owner of
+   "which player is which colour", and it is; what this rule owns is the chip's
+   SHAPE, and the shape is what makes an arbitrary hue safe to put on this
+   page: 11px square, ink-bordered on all four sides, with the voice's own NAME
+   in the text node beside it. See the CATEGORY family at the top of this file
+   — rule 1 is exactly this chip.
+   THE SEAM, NAMED (2026-09-02): `voicePaint` still returns the FOUR PAINTS
+   (ink for drums, meter for bass, hand/flag alternating for the melodic
+   lanes), which is why the roll currently draws two players in the same
+   cobalt. Pointing it at `--v0..--v3/--vb/--drum` is one function in
+   `ui/eight.js` and it is that file's agent's edit, not this one's; the tokens
+   and `.nu-vpaint` are here and waiting. */
+#scoredeck .nu-legv > i{ inline-size: 11px; block-size: 11px; border-radius: var(--r2);
   border: var(--bw) solid var(--ink); display: inline-block; }
 /* THE MOTIF NAMES, UNDER EACH PART (2026-08-27, Paul: "The names of the
    motifs should appear in the score below the parts when they are used as
@@ -3182,22 +3889,49 @@ table.nu-trims{ color: var(--ink); }
    abcjs's own staff geometry) rather than over the system; and the mark is
    lighter — a 2px rule with the cap hanging under it, 15px in all, which is
    what fits between two staves and what SCORE_MOT_H reserves under the last
-   one. ONE PAINT for every part, deliberately: the label hangs 2px under its
-   own staff and some 34px above the next one, so position already says whose
-   it is, and the voice paints do not all take white text (--flag is a yellow;
-   the roll's legend chips can wear it because they carry ink borders). */
+   one.
+
+   ONE PAINT FOR EVERY PART — REVERSED 2026-09-02. What stood here: *"ONE PAINT
+   for every part, deliberately: the label hangs 2px under its own staff and
+   some 34px above the next one, so position already says whose it is, and the
+   voice paints do not all take white text (--flag is a yellow; the roll's
+   legend chips can wear it because they carry ink borders)."*
+
+   BOTH HALVES OF THAT ARGUMENT WERE TRUE AND THE SECOND ONE IS WHY IT IS
+   REVERSABLE NOW. Paul, 2026-09-01: *"The design system is not consistent. It
+   uses very little color."* The reason the score could not colour its caps by
+   voice was that the only palette available was the FOUR PAINTS, and `--flag`
+   is a yellow that white text disappears into — a real measurement, and it is
+   what kept five surfaces monochrome. There is a CATEGORY family now (see the
+   top of this file): six hues chosen for exactly this job, every one of them
+   dark enough to take white ink, none of them a state. The second half of the
+   old argument stands unchanged and is why the cap can afford a hue at all:
+   position already says whose the label is, so the colour is a SECOND reading
+   of the same fact and nothing is lost if a reader cannot tell violet from
+   magenta at 9px.
+
+   HOW IT ARRIVES, AND WHAT IS STILL OWED. The cap reads `var(--vpaint, …)`
+   with the old `--hand` as its fallback, so the moment an ancestor (or the cap
+   itself) carries `data-vi`, the score is coloured by player and this file
+   needs no further edit. `ui/eight.js motifLabels` writes `b.dataset.v =
+   v.name` today and not the INDEX; adding `b.dataset.vi = vi` on the same line
+   is the one edit that turns this on, and it belongs to that file's agent.
+   Until it lands every cap is hand-blue, exactly as it was — which is written
+   here rather than left to be discovered, because a token that is declared,
+   costed and reaching no pixel is this box's characteristic bug. */
 #scoredeck .nu-mots{ position: absolute; inset-block-start: 0;
   inset-inline-start: 0; pointer-events: none; }
 #scoredeck .nu-mot{ position: absolute; block-size: 12px;
-  border-block-start: var(--bw-hard) solid var(--hand);
-  border-inline-start: var(--bw-hard) solid var(--hand);
-  border-inline-end: var(--bw-hard) solid var(--hand); }
+  border-block-start: var(--bw-hard) solid var(--vpaint, var(--hand));
+  border-inline-start: var(--bw-hard) solid var(--vpaint, var(--hand));
+  border-inline-end: var(--bw-hard) solid var(--vpaint, var(--hand)); }
 /* the cap's `left` is written per cap by ui/eight.js (the name is repeated
    every screenful along the rule), so nothing here may state one */
 #scoredeck .nu-mot > b{ position: absolute; inset-block-start: 1px;
   white-space: nowrap;
-  font: 700 9px/1.4 monospace; letter-spacing: .04em;
-  background: var(--hand); color: #FFFFFF; padding: 0 4px; border-radius: 3px; }
+  font: var(--fw-label) 9px/1.4 var(--mono); letter-spacing: .04em;
+  background: var(--vpaint, var(--hand)); color: #FFFFFF;
+  padding: 0 4px; border-radius: var(--r2); }
 /* …and the last cap on a rule hangs from the section's END rather than its
    start, so it cannot collide with the next section's first cap. A translate
    and not a measurement: how wide a word is set is the browser's fact. */
@@ -3251,11 +3985,11 @@ table.nu-trims{ color: var(--ink); }
   background: var(--panel); padding: var(--s3) var(--s4); display: flex;
   flex-direction: column; gap: var(--s2); }
 #exportdeck .nu-exp-head{ display: flex; align-items: center; gap: var(--s3);
-  font-weight: 700; }
+  font-weight: var(--fw-label); }
 #exportdeck .nu-glyph{ display: inline-flex; align-items: center;
   justify-content: center; inline-size: 44px; block-size: 32px;
-  border: var(--bw) solid var(--ink); border-radius: 5px;
-  font: 800 11px/1 monospace; flex: none;
+  border: var(--bw) solid var(--ink); border-radius: var(--r1);
+  font: var(--fw-block) 11px/1 var(--mono); flex: none;
   background: var(--ink); color: #FFFFFF; }
 #exportdeck .nu-exp > button{ margin-block-start: auto; }
 
@@ -3435,7 +4169,7 @@ table.nu-trims{ color: var(--ink); }
    colour ("keep it black and white"): the place is the mark's own name and
    does not move while you look at it, the genre under it is what the SLIDER is
    currently answering, and the lighter face is the one that changes. */
-#atlasMap text.gname{ font-weight: 500; }
+#atlasMap text.gname{ font-weight: var(--fw-body); }
 
 /* ---------- THE INDEX: EVERY GENRE, OLDEST FIRST ------------------------
    Paul, 2026-08-28: *"Let me click to see a big list of all the genres in
@@ -3597,7 +4331,7 @@ table.nu-trims{ color: var(--ink); }
 .nu-ixrow{ grid-column: 1 / -1; grid-row: 1;
   display: grid; grid-template-columns: subgrid;
   align-items: center; inline-size: 100%; text-align: start;
-  border: 0; border-radius: 0;
+  border: 0; border-radius: var(--r0);
   box-shadow: none; background: transparent;
   padding-inline: 0; padding-block: var(--s2); }
 .nu-ixrow:active{ transform: none; }
@@ -3903,7 +4637,7 @@ table.nu-trims{ color: var(--ink); }
   dominant-baseline: middle; paint-order: stroke;
   stroke: var(--paper); stroke-width: 3px; stroke-linejoin: round; }
 .nu-pad .nu-pad-vlab{ fill: var(--rule-strong); font-size: 13px; opacity: 1; }
-.nu-pad .nu-pad-vlab.is-said{ fill: currentColor; font-weight: 700; font-size: 15px; }
+.nu-pad .nu-pad-vlab.is-said{ fill: currentColor; font-weight: var(--fw-label); font-size: 15px; }
 /* the two ends of each axis, which is how a diagram says what a sentence in
    the table below says in words */
 .nu-pad .nu-pad-edge{ font-size: 9.5px; fill: var(--rule-strong); opacity: 1;
@@ -3967,7 +4701,7 @@ table.nu-trims{ color: var(--ink); }
 .nu-seg{ display: inline-flex; vertical-align: middle;
   border: var(--bw) solid var(--rule-strong); border-radius: var(--r1);
   overflow: hidden; background: var(--panel); }
-.nu-segb{ inline-size: 36px; block-size: 40px; border: 0; border-radius: 0;
+.nu-segb{ inline-size: 36px; block-size: 40px; border: 0; border-radius: var(--r0);
   border-inline-start: var(--bw) solid var(--rule-strong);
   background: var(--panel); color: var(--ink); cursor: pointer;
   font: var(--btn-fw) 15px/1 var(--sans); padding: 0; min-height: 0;
@@ -4037,13 +4771,41 @@ table.nu-trims{ color: var(--ink); }
   block-size: 100%; margin: 0; opacity: 0; pointer-events: none;
   min-height: 0; min-block-size: 0; }
 .nu-pit:focus-within, .nu-velA:focus-within{ outline: var(--bw-hard) solid var(--hand);
-  outline-offset: 2px; border-radius: 2px; }
+  outline-offset: 2px; border-radius: var(--r2); }
 /* THE WEIGHT BAR — 0..7; width is the level; tap cycles ghost(1)/hit(4)/
-   accent(7) and never lands on 0 (ui/eight.js benchVel) */
+   accent(7) and never lands on 0 (ui/eight.js benchVel)
+
+   AND THE FILL IS ON THE LEVEL RAMP NOW (2026-09-02). It was three states in
+   three unrelated paints — `--faint` for a ghost, `--hand` for everything from
+   2 to 6, a `--flag` inset edge for an accent — so a bar at 2 and a bar at 6
+   were the same colour and the only difference a reader could see was 4/7ths
+   of a 67px box. The ramp is `--q1..--q4` (see LEVEL in `:root`): four steps
+   of one hue, ascending, ending on `--hand` itself, so the loudest bar is the
+   colour every bar used to be and nothing at the top of the range moved.
+
+   THE WIDTH IS STILL THE VALUE and the paint is a SECOND reading of the same
+   number, which is the only honest way to add a colour to a control that
+   already says the thing — a reader who cannot tell #7A92EA from #4A6AE5
+   still has the bar. `data-v` (0..7) is `ui/eight.js benchVel`'s own
+   attribute, already published for the cap's `--f` below, so the ramp arrives
+   through a hook that exists rather than through a new coupling.
+
+   THE ACCENT KEEPS ITS FLAG EDGE. `--flag` is "armed, about to matter", which
+   is what an accent is, and it is an EDGE rather than a fill — the one place
+   the four paints and the level ramp sit on the same control, doing two
+   different jobs a step apart. */
 .nu-vaf{ position: absolute; inset-inline-start: 0; inset-block: 0;
-  background: var(--hand); border-inline-end: var(--bw) solid var(--rule-strong);
+  background: var(--q4); border-inline-end: var(--bw) solid var(--rule-strong);
   display: block; }
-.nu-velA.gh .nu-vaf{ background: var(--faint); }
+.nu-velA[data-v="1"] .nu-vaf, .nu-velA[data-v="2"] .nu-vaf{ background: var(--q1); }
+.nu-velA[data-v="3"] .nu-vaf, .nu-velA[data-v="4"] .nu-vaf{ background: var(--q2); }
+.nu-velA[data-v="5"] .nu-vaf, .nu-velA[data-v="6"] .nu-vaf{ background: var(--q3); }
+.nu-velA[data-v="7"] .nu-vaf{ background: var(--q4); }
+/* (`.nu-velA.gh .nu-vaf{ background: var(--faint) }` STOOD HERE and is gone
+   with the ramp: `--faint` is "refused, and only refused" everywhere else in
+   this file, and a ghost note is not refused — it is quiet. That was the
+   clearest single case of a paint being spent on the wrong kind of fact, and
+   `--q1` is what it meant.) */
 .nu-velA.acc .nu-vaf{ box-shadow: inset -6px 0 0 var(--flag); }
 /* THE WEIGHT BAR'S CAP, AND WHY IT IS DRAWN AND NOT WRITTEN. The pitch bar
    had a badge to promote; this bar has only a number that ui/eight.js parks
@@ -4138,7 +4900,7 @@ table.nu-trims{ color: var(--ink); }
 .nu-lpin{ position: absolute; inset: 0; inline-size: 100%; block-size: 100%;
   margin: 0; opacity: 0; pointer-events: none; min-height: 0; min-block-size: 0; }
 .nu-lps:focus-within{ outline: var(--bw-hard) solid var(--hand);
-  outline-offset: 2px; border-radius: 2px; }
+  outline-offset: 2px; border-radius: var(--r2); }
 .nu-lpon, .nu-lpr{ flex: none; font: var(--num-fw, 500) .75rem var(--mono); }
 /* the way back is VISIBILITY-hidden, never display-none: hiding it with
    display re-lays the flex row and the strip changes width — which it did,
@@ -4245,10 +5007,25 @@ table.nu-trims{ color: var(--ink); }
   background: var(--well); cursor: pointer; padding: 0;
   touch-action: pan-y; }
 .nu-kc:hover{ background: color-mix(in srgb, var(--flag-tint) 60%, var(--well)); }
+/* THE KIT CELL'S FILL TAKES THE SAME RAMP (2026-09-02) — same argument as the
+   weight bar one block up, same `data-v` (0..7, written by `paintKc`), same
+   four steps, and the same `--flag` edge left on the accent. Sixteen steps of
+   a lane side by side is where a ramp earns its keep: the shape of a groove is
+   readable down the column now instead of being one blue against one grey. */
 .nu-kf{ position: absolute; inset-inline-start: 3px; inset-block: 6px;
-  border-radius: 3px; background: var(--hand);
+  border-radius: var(--r2); background: var(--q4);
   border: var(--bw) solid var(--rule-strong); pointer-events: none; display: block; }
-.nu-kf.gh{ background: var(--faint); border-color: var(--dim); }
+.nu-kc[data-v="1"] .nu-kf, .nu-kc[data-v="2"] .nu-kf{ background: var(--q1); }
+.nu-kc[data-v="3"] .nu-kf, .nu-kc[data-v="4"] .nu-kf{ background: var(--q2); }
+.nu-kc[data-v="5"] .nu-kf, .nu-kc[data-v="6"] .nu-kf{ background: var(--q3); }
+.nu-kc[data-v="7"] .nu-kf{ background: var(--q4); }
+/* (`.nu-kf.gh{ background: var(--faint); border-color: var(--dim) }` stood here
+   and went with the ramp — see the weight bar's tombstone for why `--faint`
+   was the wrong paint for a quiet note. The ghost keeps its own class, which
+   `paintKc` still writes and which nothing now reads; it is left on the
+   element because writing it is `ui/eight.js paintKc`'s line, not this file's,
+   and a stylesheet does not get to delete a class it merely stopped reading.
+   Checked before writing this: no gate in test/ reads `.gh`.) */
 .nu-kf.acc{ box-shadow: inset -5px 0 0 var(--flag); }
 .nu-kn2{ position: absolute; inset-inline-end: 3px; inset-block-start: 50%;
   transform: translateY(-50%); font: 700 10px var(--mono); color: var(--ink);
@@ -4275,40 +5052,17 @@ table.nu-trims{ color: var(--ink); }
    what says "you may drag this", which is exactly what was missing. Same
    panel face, same ink border, same hard offset, same centre line as
    `.nu-vs-thumb::after`. */
-input[type="range"]{
-  -webkit-appearance: none; appearance: none;
-  inline-size: 100%; block-size: var(--ctl, 48px);
-  background: transparent; margin: 0; touch-action: pan-y; cursor: grab;
-}
-input[type="range"]:active{ cursor: grabbing; }
-input[type="range"]::-webkit-slider-runnable-track{
-  block-size: 10px; border-radius: var(--r1, 6px);
-  background: var(--well); border: var(--bw, 1px) solid var(--ink);
-}
-input[type="range"]::-moz-range-track{
-  block-size: 10px; border-radius: var(--r1, 6px);
-  background: var(--well); border: var(--bw, 1px) solid var(--ink);
-}
-input[type="range"]::-webkit-slider-thumb{
-  -webkit-appearance: none; appearance: none;
-  inline-size: 26px; block-size: 26px; margin-block-start: -9px;
-  border-radius: var(--r1, 6px); background: var(--panel);
-  border: var(--bw, 1px) solid var(--ink); box-shadow: var(--shadow);
-  background-image: linear-gradient(var(--ink), var(--ink));
-  background-size: 2px 12px; background-position: center; background-repeat: no-repeat;
-}
-input[type="range"]::-moz-range-thumb{
-  inline-size: 26px; block-size: 26px; border-radius: var(--r1, 6px);
-  background: var(--panel); border: var(--bw, 1px) solid var(--ink);
-  box-shadow: var(--shadow);
-  background-image: linear-gradient(var(--ink), var(--ink));
-  background-size: 2px 12px; background-position: center; background-repeat: no-repeat;
-}
-input[type="range"]:focus-visible::-webkit-slider-thumb{
-  outline: 2px solid var(--hand); outline-offset: 2px; }
-input[type="range"]:focus-visible::-moz-range-thumb{
-  outline: 2px solid var(--hand); outline-offset: 2px; }
-input[type="range"]:disabled{ cursor: default; opacity: .5; }
+/* (THE SECOND `input[type="range"]` SKIN STOOD HERE — twelve rules, written
+   2026-08-27 beside the when-slider, and DELETED 2026-09-02 when the two were
+   reconciled to one. It is not a loss: measured on specificity, the
+   `:not([list])` block at the top of this file (0,2,1) beat this one (0,1,1)
+   on every declaration the two disagreed about, so this block's 10px track and
+   26px square thumb were never on the page — the trough was 20px and the cap
+   38x22 the whole time. The five declarations it DID own — `inline-size:
+   100%`, `block-size: var(--ctl, 48px)`, `margin: 0`, `touch-action: pan-y`,
+   the grab cursor — and its `:disabled` opacity moved up into that block
+   verbatim, and `--ctl` is a declared token now instead of a fallback nobody
+   had written. See ONE BLOCK FOR THE NATIVE RANGE.) */
 
 /* (`#atlasWhen #atlasYear` AND ITS FOUR PSEUDO-ELEMENT RULES STOOD HERE and
    went with the control on 2026-08-29 — Paul: *"Get rid of the time slider."*
@@ -4398,7 +5152,7 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
    number 2." Smaller than the mark and bolder than the page, so it reads as an
    index on a picture rather than as a word beside one. Tabular figures because
    a strip of ten voices may not shuffle sideways at voice 10. */
-.nu-n{ font-size: .78rem; font-weight: 700; line-height: 1;
+.nu-n{ font-size: .78rem; font-weight: var(--fw-label); line-height: 1;
   font-variant-numeric: tabular-nums; }
 /* THE OPEN TAB OF THE NINE KEPT ITS WORD, AND IN THE STRIPE IT CANNOT
    (2026-08-28). What stood here was `#toptabs > button[aria-pressed="true"]
@@ -4469,42 +5223,98 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
    IT IS NOT A CONTROL AND IT DOES NOT TAKE A PRESS: `pointer-events: none`, so
    the press that would close it reaches whatever is underneath and the popover
    can never swallow a tap on the row it is explaining. */
-.nu-say{ position: fixed; z-index: 60; pointer-events: none;
-  /* …and it may not be wider than the column it is clamped into: the gutter
-     is 56px of the viewport since 2026-08-28 and a 30ch box that could not fit
-     beside it would be clamped to a negative left. ui/glyph.js `place` does
-     the clamping; this is the same arithmetic said to the box. */
+/* WHAT IS LEFT OF THE POPOVER (the rest is `.nu-strip-out`'s, 2026-09-02):
+   it is the one strip that is NOT a control — `pointer-events: none`, so the
+   press that would close it reaches whatever is underneath — it rides one
+   layer over the other two because it explains them, and `ui/glyph.js place()`
+   writes its `inset-block-start`/`inset-inline-start` per opening, which is why
+   it states no anchor here (and why it is the one strip that needs no edit if
+   the gutter ever moves: it MEASURES the tray).
+   …and it may not be wider than the column it is clamped into: the gutter is
+   56px of the viewport since 2026-08-28 and a 30ch box that could not fit
+   beside it would be clamped to a negative left. `place()` does the clamping;
+   this is the same arithmetic said to the box. */
+.nu-say{ z-index: 60; pointer-events: none;
   max-inline-size: min(30ch, calc(100vw - var(--tray-w) - 12px));
-  padding: var(--s3) var(--s3);
-  background: var(--panel); color: var(--ink);
-  border: var(--bw) solid var(--ink); border-radius: var(--r1, 6px);
-  box-shadow: var(--shadow);
-  font-size: .82rem; line-height: 1.35; }
-.nu-say[hidden]{ display: none; }
+  padding: var(--s3); }
+
+/* ===== `.nu-preview` — A PICTURE OF THE THING (2026-09-02) ================
+   Paul, 2026-09-01, on the aesthetic: *"classic-era System 8/9 MacOS — lots of
+   previews, small widgets, dynamic nav/menus, and flyouts"*; and on the motif
+   editor: *"the motif editor should show me previews of the instruments using
+   the motif."*
+
+   IT IS THE SMALLEST HONEST PICTURE OF A PHRASE: sixteen bars in a 4ch x 1.2em
+   box, one per step, height = velocity. Not an icon (an icon says WHICH KIND
+   of thing), not a label (a label says its NAME) — a THUMBNAIL, which says
+   what this particular phrase looks like, so two motifs in a list are told
+   apart by shape before either name is read. The precedents on this page are
+   `#scoredeck .nu-legv > i` and `ideal/composer.html:295`'s `.legend i`; the
+   precedent for the SIZE is the tray's mark, which is why it is `em`-sized and
+   sits on a text baseline instead of being a block.
+
+   THREE MARKS AND NO FOURTH, because at 4ch there is room for three:
+     · a STEP that sounds — a rect whose height is its velocity, 1..7 of 8;
+     · a REST — a 1px floor, `--faint`, so the grid's rhythm is still visible
+       (sixteen columns with holes in them is unreadable at this size);
+     · a HOLD — the continuation of the step before it, at .45 opacity, so a
+       long note reads as one shape rather than as two hits.
+   No pitch. A 1.2em box has ~9 usable pixels of height and it is spending all
+   of them on loudness; a contour drawn in the same 9px is a smudge, which is
+   the lesson `.nu-tf`'s deleted SVG faces already paid for.
+
+   COLOUR: `--hand`, the paint of a thing you set — or the PLAYER's hue if the
+   preview sits inside a `[data-vi]` element, which is the whole point of
+   putting a preview beside a member box. `fill: currentColor` is what makes
+   that one declaration instead of one per rect.
+
+   THE BUILDER IS `nukernel/ui/preview.js` and it has no caller yet; the tray,
+   the roster and the motif editor are wave 2's. */
+.nu-preview{ display: inline-block; vertical-align: -.2em;
+  inline-size: 4ch; block-size: 1.2em;
+  color: var(--vpaint, var(--hand)); overflow: visible; }
+.nu-preview rect{ fill: currentColor; }
+.nu-preview .nu-preview-rest{ fill: var(--faint); }
+.nu-preview .nu-preview-hold{ opacity: .45; }
 
 /* ---- THE VIDEO DECK (2026-09-01) --------------------------------------
    A film cut to the record's own form, over a strip that says what section
    is on screen. Deliberately plain: the picture is the loud thing here and
    chrome around it would compete with the one element that is doing the
-   work. Same tokens as every other deck, no new colours. */
-.nu-video { display: flex; flex-direction: column; gap: .6rem; }
+   work. Same tokens as every other deck, no new colours.
+
+   ...AND IT IS ON THE TOKENS NOW, WHICH IT WAS NOT (2026-09-02). Written on
+   2026-09-01, this block was the newest code on the sheet and the most
+   off-system: `.6rem` / `.25rem` / `.1rem` / `.2rem .45rem` / `.4rem` /
+   `.78rem` typed against a five-step spacing scale and a six-step type scale
+   that already existed, and `1px solid var(--rule)` where every other frame on
+   the page says `var(--bw)`. Nothing here CHANGED its mind; it just never got
+   pointed at the tokens. Substituted, one for one:
+     .6rem -> --s3 · .25rem -> --s2 · .1rem -> --s1 · .2rem .45rem -> --s1 --s3
+     · .4rem -> --s2 · .78rem -> --t1 · 1px -> --bw · 600 -> --fw-label
+     · 3px/6px radii -> --r2/--r1.
+   `#000` and `#0c0a1a` STAY, and they are the exemption this block is allowed:
+   they are inside the two STAGES, where a black picture ground is the subject
+   rather than a decision about the chassis. */
+.nu-video { display: flex; flex-direction: column; gap: var(--s3); }
 .nu-video-canvas {
   inline-size: 100%; block-size: auto; aspect-ratio: 4 / 3;
-  background: #000; display: block; border: 1px solid var(--rule);
+  background: #000; display: block; border: var(--bw) solid var(--rule);
 }
 .nu-video-form {
-  display: flex; flex-wrap: wrap; gap: .25rem;
+  display: flex; flex-wrap: wrap; gap: var(--s2);
   list-style: none; margin: 0; padding: 0;
 }
 .nu-video-sec {
-  display: flex; flex-direction: column; gap: .1rem;
-  padding: .2rem .45rem; border: 1px solid var(--rule);
-  font-size: .78rem; line-height: 1.15; opacity: .55;
+  display: flex; flex-direction: column; gap: var(--s1);
+  padding: var(--s1) var(--s3); border: var(--bw) solid var(--rule);
+  border-radius: var(--r2);
+  font-size: var(--t1); line-height: 1.15; opacity: .55;
 }
-.nu-video-sec b { font-weight: 600; }
+.nu-video-sec b { font-weight: var(--fw-label); }
 .nu-video-sec span { font-variant-numeric: tabular-nums; opacity: .75; }
 .nu-video-sec.on { opacity: 1; border-color: currentColor; }
-.nu-video-cap { margin: 0; font-size: .78rem; opacity: .7; }
+.nu-video-cap { margin: 0; font-size: var(--t1); opacity: .7; }
 
 /* the stage is what goes fullscreen, so the controls stay reachable inside it */
 .nu-video-stage { position: relative; background: #000; line-height: 0; }
@@ -4535,11 +5345,15 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
    is. The `background:#0c0a1a` on the canvas is now the colour a reader sees
    for the fraction of a second before the renderer's first frame (and the
    colour of the refusal, if a browser hands back no context), so it stays. */
-.nu-saver { display: flex; flex-direction: column; gap: .6rem; }
+/* (TOKEN SUBSTITUTION ONLY, 2026-09-02: `.6rem` -> `--s3` and `1px` -> `--bw`.
+   Nothing else in the screensaver block moved — it is wave 0d's as it stands
+   and its two fullscreen spellings, its `16/9` and its `#0c0a1a` are all
+   decisions this round has no quarrel with.) */
+.nu-saver { display: flex; flex-direction: column; gap: var(--s3); }
 .nu-saver-stage { position: relative; background: #0c0a1a; line-height: 0; }
 .nu-saver-canvas {
   inline-size: 100%; aspect-ratio: 16 / 9; display: block;
-  background: #0c0a1a; border: 1px solid var(--rule);
+  background: #0c0a1a; border: var(--bw) solid var(--rule);
 }
 /* both spellings, separate rules — the video stage's own warning: a selector
    list with one unknown pseudo-class drops the WHOLE rule */
@@ -4558,8 +5372,7 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
 }
 .nu-video-controls button:hover { border-color: currentColor; }
 
-/* ======================================================================
-   WAVE 1a — THE TREE, THE FOOT, THE SEED (2026-09-02)
+/* ===============================================================   WAVE 1a — THE TREE, THE FOOT, THE SEED (2026-09-02)
    ======================================================================
    Everything below is NEW in this wave. It is appended rather than woven in
    because a second agent is rewriting the token, colour and combo rules of
@@ -4713,3 +5526,16 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
   font-size: var(--t4, 1.15rem); font-weight: 800; }
 .nu-namebar small{ font-size: var(--t2, .82rem); font-weight: 600;
   opacity: .75; }
+=======
+/* THE CONTROL BAR GETS THE ENAMEL PLATE BACK (2026-09-02). It read
+   `background: transparent; color: inherit; border: 1px solid var(--rule);
+   cursor: pointer` — three declarations that OVERRODE the button face at the
+   top of this file (white plate, jet border, `--r1`, the hard shadow) and one
+   that restated it. So the film's own two buttons were the only buttons on the
+   page that were not buttons, on the newest deck, which is how a design system
+   comes apart: not by decision, but by a block being written before anybody
+   read the base rule. All four are gone; `--btn-fs` is what the size was
+   reaching for. Only the layout stays here, which is all this bar ever owed.
+   (`:hover{ border-color: currentColor }` went with them — the base rule's
+   `--flag-tint` hover is the page's one answer to "about to matter".) */
+.nu-video-controls { display: flex; gap: var(--s2); flex-wrap: wrap; }
