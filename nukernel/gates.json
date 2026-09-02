@@ -9,7 +9,7 @@
   "scopes": 3,
   "sample": 16,
   "seed": 20260824,
-  "compiles": 49347
+  "compiles": 53273
  },
  "sheets": {
   "time.meter": {
@@ -51,6 +51,16 @@
     ]
    }
   },
+  "time.groove": {
+   "scope": "song",
+   "regenerates": true,
+   "options": {},
+   "census": {
+    "rows": 55,
+    "alive": 0
+   },
+   "blind": true
+  },
   "alphabet.key": {
    "scope": "song",
    "regenerates": true,
@@ -73,6 +83,22 @@
     "writes": [
      "alphabet.mode"
     ]
+   }
+  },
+  "alphabet.scale": {
+   "scope": "song",
+   "regenerates": true,
+   "options": {
+    "": {
+     "inert": {
+      "rule": "always"
+     }
+    }
+   },
+   "census": {
+    "rows": 55,
+    "alive": 53,
+    "overOffered": 3
    }
   },
   "alphabet.harmony": {
@@ -207,6 +233,20 @@
      "cast.hasBass"
     ]
    }
+  },
+  "sound.bassinstrument": {
+   "scope": "voice",
+   "chair": "bass",
+   "regenerates": true,
+   "options": {},
+   "census": {
+    "rows": 39,
+    "alive": 0,
+    "writes": [
+     "voice.instrument"
+    ]
+   },
+   "blind": true
   },
   "sound.instrument": {
    "scope": "voice",
@@ -508,6 +548,16 @@
    },
    "blind": true
   },
+  "form.pace": {
+   "scope": "section",
+   "regenerates": true,
+   "options": {},
+   "census": {
+    "rows": 165,
+    "alive": 0
+   },
+   "blind": true
+  },
   "development.period": {
    "scope": "section",
    "regenerates": true,
@@ -595,8 +645,8 @@
   }
  },
  "proof": {
-  "rows": 17740,
-  "identical": 17675,
+  "rows": 18588,
+  "identical": 18523,
   "moved": 0,
   "overOffered": 65,
   "bad": {
@@ -623,10 +673,10 @@
   }
  },
  "proofHeld": {
-  "rows": 10926,
-  "identical": 10855,
+  "rows": 11422,
+  "identical": 11348,
   "moved": 0,
-  "overOffered": 71,
+  "overOffered": 74,
   "bad": {
    "alphabet.quality": {
     "options": [],
@@ -639,6 +689,10 @@
    "development.pipe": {
     "options": [],
     "over": 12
+   },
+   "alphabet.scale": {
+    "options": [],
+    "over": 3
    },
    "dev.kit": {
     "options": [],
