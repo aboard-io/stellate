@@ -1085,7 +1085,24 @@ export function songBars(song, slots, songGroove, songSwing, loopOnly, opts) {
     // of which three had no phrase — one bar of music followed by three bars of
     // silence, for ever. A box with no events is skipped the way an empty one
     // used to be.
-    if (!ev.length) continue;
+    /* ...EXCEPT THE BLANK STATE, WHICH IS A BOX OF RESTS ON PURPOSE
+       (2026-09-02). Paul: *"Add a 'silence' genre at the top of the genre
+       list. This is a blank state."* — and the whole point of a blank state is
+       that the transport WORKS on it: you press play, the box goes round, and
+       you build the band into a record that is already running ("I can hear
+       the song evolve as I add and take things away").
+       THE RULE ABOVE IS UNCHANGED FOR EVERY OTHER RECORD and its reason is
+       still exactly right: a box with no phrase is an accident, and four boxes
+       of which three were empty was one bar of music followed by three bars of
+       silence for ever. A `silent` genre is not that accident — silence is
+       what it declares, in `genres.js`, by name — so it is exempted BY THE
+       DECLARATION rather than by a count, which is the same shape every other
+       opt-out in this box takes (the STEADY opt-out, precompose's `silent`
+       skips, the instrumentation gate's no-chairs skip). Without this line the
+       blank state compiles to zero bars, `audio/live.js startAt` answers
+       "nothing to play — click a genre to fill a box first", and the one
+       record the box opens on is the one record it cannot play. */
+    if (!ev.length && !(g && g.silent)) continue;
     const barSteps = stepsIn(g) / g.rate;
     // ONE PASS into per-bar buckets. The old per-bar filter over the whole event
     // list was O(bars × events) per box — ~6M comparisons per compile on a

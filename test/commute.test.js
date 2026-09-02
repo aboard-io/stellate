@@ -38,6 +38,7 @@
 // pulled, worker fetches included) against what Playwright reported, and prints
 // the shortfall. A non-empty shortfall would mean the later zero-failures
 // assertions are blind, and the run says so.
+const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 "use strict";
 const http = require("http"), fs = require("fs"), path = require("path");
 const ROOT = path.resolve(__dirname, "..");
@@ -250,7 +251,15 @@ async function listen(page, { secs, label, during }) {
   // BOOT AND HOLD, on the wire. Returns the ledger the tunnel will live on.
   async function bootAndHold(S, phase, label) {
     PHASE = phase;
-    await S.page.goto(URL0, { waitUntil: "load", timeout: 120000 });
+    /* THE BOX BOOTS ON THE BLANK STATE (2026-09-02). Paul, the composer round:
+       *"Add a 'silence' genre at the top of the genre list. This is a blank
+       state."* — one eight-bar section, ZERO voices, one cell of rests. This gate
+       is about a record with a band in it, so it names one in the address, the way
+       a link does: the shipped chant, at seed 1 because the boot draws a seed now
+       (*"Boot up every new session with a new seed unless there's a seed in the
+       URL"*) and a gate that re-rolled its own subject would measure a different
+       record every run. */
+    await S.page.goto(URL0 + CHANT, { waitUntil: "load", timeout: 120000 });
     await S.page.waitForSelector("#play", { state: "attached", timeout: 60000 });
     await sleep(9000);
     return await waitHeld(S.page, HOLDWAIT, label);

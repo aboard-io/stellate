@@ -105,7 +105,13 @@ function v1Bars(abc, steps, secAt) {
     const pg = await b.newPage({ viewport: { width: 1280, height: 900 } });
     const errs = [];
     pg.on("pageerror", (e) => errs.push(String(e)));
-    await pg.goto(PAGE + "#at=London&y=1969", { waitUntil: "networkidle" });
+    /* `&s=1` SINCE 2026-09-02. Paul: *"Boot up every new session with a new seed
+       unless there's a seed in the URL."* An absent `s` used to mean 1 (the atlas
+       clamped anything unreadable to it); it means A FRESH DRAW now, so a cold
+       load with no seed is a different record every run and every byte-level
+       claim below would be measuring the dice. The seed is named in the address,
+       which is the door the sentence itself points at. */
+    await pg.goto(PAGE + "#at=London&y=1969&s=1", { waitUntil: "networkidle" });
     await pg.evaluate(() => window.__eightTab && window.__eightTab("Score"));
     await pg.waitForTimeout(2500);
     const r = await readScore(pg);

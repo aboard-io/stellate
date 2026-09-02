@@ -357,7 +357,42 @@
      and the fling live on that edge on a desktop, and the swipe-back gesture
      owns it on a phone — a fixed stripe there is a thumb trap. The safe-area
      inset it reserves follows it, so a notch on the left is still cleared. */
-  --tray-w: calc(56px + env(safe-area-inset-left, 0px));
+  /* ===== BIGGER, AND IT IS A CLAMP NOW (2026-09-02) ===================
+     Paul: *"The left nav is very good. I think it should be bigger with bigger
+     type and we should really work hard on nesting options inside the left
+     nav."*
+
+     THIS REVERSES THE 56px ABOVE, and the arithmetic that argued for it is
+     kept because it is still the FLOOR: 1px of rule + 4 + 44 (`--tap`) + 4 is
+     53, so nothing may be narrower than that and 56 gave the mark 47px of
+     column. What changes is that 47px is not a column a WORD fits in — it is a
+     column a glyph fits in with a word broken across three lines under it —
+     and Paul has asked for the word, the instrument under the word, and
+     several levels of them at once.
+       clamp(72px, 24vw, 136px)
+       · 72px is the floor this file already named as "the sanctioned way to
+         buy room" when it measured the labels (THE MARKS WEAR THEIR WORDS,
+         below): 63px of column, which is where a two-line word at --t1 stops
+         breaking mid-syllable;
+       · 24vw is the middle, so the stripe is a proportion of the glass rather
+         than a constant that is generous on a phone and mean on a laptop:
+         76.8px at 320, 90 at 375, 103.2 at 430, 136 (clamped) from 567 up;
+       · 136px is the ceiling, which is where the mark becomes a ROW — glyph at
+         the left, the word and its dim second line to the right (see #nu-tray
+         .nu-ic, WAVE 1a at the foot of this file) — and past which a gutter is
+         a sidebar and the content column starts paying for it.
+     THE 96px HINGE is not in this token: it is a media query at 400px, which
+     is exactly where 24vw reaches 96 and where two text lines beside a 1.2rem
+     glyph stop being narrower than the glyph itself. Below it the mark stays a
+     column, which is what 47px has always been.
+     EVERYTHING STILL FOLLOWS THIS ONE EDIT: `body { padding-inline }` narrows
+     the content column, `.nu-log` and the new `.nu-strip-out` anchor their
+     near edge at it, and ui/glyph.js `place()` MEASURES the gutter rather than
+     being told — which is why none of the three had to change.
+     THE SAFE AREA IS STILL INSIDE THE STRIPE (the paragraph above): the inset
+     is added outside the clamp, so the column the marks stand in is the
+     clamp's number and the notch is paid on top of it. */
+  --tray-w: calc(clamp(72px, 24vw, 136px) + env(safe-area-inset-left, 0px));
 }
 *,*::before,*::after{ box-sizing: border-box; }
 html{ -webkit-text-size-adjust: 100%; }
@@ -947,9 +982,20 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    are real <hr>s, so the sentence survives with no CSS at all.
    AT THE ROOT the up box is empty and collapses to nothing (an empty flex
    child with no padding is 0px), so the root reads play, a rule, the nine. */
-.nu-trayhead{ flex: 0 0 auto; display: flex; flex-direction: column;
-  align-items: stretch; }
-.nu-trayup{ display: flex; flex-direction: column; align-items: stretch; }
+/* ===== THE HEAD IS DELETED, 2026-09-02 ================================
+   `.nu-trayhead` and `.nu-trayup` stood here and both are gone with what they
+   held. Paul: *"Move the play/stop button to the bottom, along with opts and
+   where"* took `#play` and `#playops` to the foot, and *"We should never need
+   the 'up' icon because we can expand multiple levels of interface option"*
+   took the ↑ and its box. The two paragraphs above are kept whole because
+   every one of their arguments is still the reason for something that is
+   still here: the RULES between kinds are still real `<hr class="nu-traycut">`
+   elements so the column reads with the stylesheet off; the foot is still
+   pinned by being LAST and by nothing else; and "no repaint may destroy the
+   play button" is still structural — `paintTray` empties `.nu-traylist` and
+   nothing else, and the foot is built once at boot.
+   Reading the gutter with no CSS now: the tree, a rule, the countdown, the
+   record's name, the seed, the ?, the log, the play options, opts, play. */
 .nu-traycut{ flex: 0 0 auto;
   margin: var(--s2) 0; border: 0; border-block-start: var(--bw) solid var(--ink); }
 /* THE LIST, AND IT IS THE ONLY THING IN HERE THAT SCROLLS. `overflow-y: auto`
@@ -993,9 +1039,33 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    margin pushed the mark to 52px in a 47px stripe and A6b caught the sideways
    scroll — the gutter is a glyph column and has no pixels to give). The gray
    bar on the leading edge says "child of the row above" at zero width cost. */
-.nu-traylist .nu-sub{ color: var(--dim);
+/* ...AND IT IS A DEPTH NOW, NOT A BOOLEAN, AND THE INDENT REFUSAL IS
+   RE-MEASURED (2026-09-02). Paul: *"we should really work hard on nesting
+   options inside the left nav … We should never need the 'up' icon because we
+   can expand multiple levels of interface option."*
+
+   THE REFUSAL ABOVE WAS RIGHT ABOUT A 47px COLUMN AND ABOUT A MARGIN, and both
+   halves of that sentence are what changed. It was a 10px MARGIN — which moves
+   the BUTTON's own box, so the stripe had two distinct button lefts and
+   shell A6b caught the sideways scroll in an hour. What lands here is
+   `padding-inline-start` INSIDE a button whose box still spans the full
+   column: every mark in the stripe still shares one rounded `left`, A6b is
+   satisfied by construction rather than by luck, and the indent is spent on
+   the CONTENT, which is what an indent is for. And the column is 63px at the
+   narrowest width now rather than 47, so `--s3` a level is affordable: two
+   levels of tree is 2 × --s3 of the 63, and the label's `min-inline-size: 0`
+   plus `overflow-wrap: anywhere` do the rest.
+   THE EDGE BAR STAYS AND IS THE PRIMARY CUE, because a bar reads at a glance
+   and 8px of padding does not; the shade and the dim ink stay with it. They
+   are keyed off `[data-depth]` — present only on a child row — so a root row
+   is untouched and pays nothing. */
+.nu-traylist [data-depth]{ color: var(--dim);
   border-inline-start: 3px solid var(--dim);
+  padding-inline-start: calc(var(--depth, 1) * var(--s3));
   background: color-mix(in srgb, var(--ink) 7%, var(--paper)); }
+/* a marked child keeps the hand's white ink — the shade is about DEPTH and the
+   mark is about where you are, and the second must win */
+.nu-traylist [data-depth][aria-pressed="true"]{ color: #FFFFFF; }
 /* ===== THE ROOM FADER, STANDING IN THE GUTTER (2026-08-29) =============
    Paul: *"The volume slider is now vertical."*
 
@@ -1102,6 +1172,44 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    width at all (performance, instrument, backwards; see `min-inline-size`
    below).
 
+   ===== RE-MEASURED 2026-09-02, AND THE SHAPE IT MEASURES IS GONE ========
+   The table below is a table of LEVELS — one row per set of siblings, because
+   exactly one set was ever on the screen. The gutter is a TREE (Paul: *"we
+   should really work hard on nesting options inside the left nav … We should
+   never need the 'up' icon because we can expand multiple levels of interface
+   option"*), so what a level cost is now what a BRANCH costs, and several may
+   be open at once. Measured on the rendered page the day it landed, on the
+   record `#at=Kingston&y=1969&s=1`, with `--tray-w` at its clamp and the words
+   at `--t1`; `want/have` is `.nu-traylist` scrollHeight over clientHeight:
+
+     390x844   list 553   (foot 291: the countdown, the name plate, the seed,
+                           the ?, the log, opts and play)
+       twelve tabs, nothing open        590 / 553   over by  37
+       + Motif's bank and its 14 ops    748 / 553   over by 195
+       + the band and one member        738 / 553   over by 185
+       + the thirteen sections          748 / 553   over by 195
+       + Mix's five                     843 / 553   over by 290
+     320x568   list 277
+       twelve tabs, nothing open        595 / 277   ·  Motif 753  ·  Band 744
+       Structure 759  ·  Mix 849  ·  Score 700
+
+   NOTHING FITS, NOTHING EVER DID, AND THE TAP FLOOR IS STILL WHY. Twelve 44px
+   targets are 528px before a single gap; the foot is seven marks because Paul
+   asked for the transport, the options, the name and the seed to be at the
+   bottom. So the honest claim is the one `.nu-traylist` has always made and
+   test/gutter.js T10 now asserts at both phones instead of one: the list
+   SCROLLS, and every mark is reachable after scrolling, with nothing clipped
+   in silence. "Nothing scrolls" was never a law.
+   WHAT COULD GIVE, if the scroll is too much, in the order it costs least: the
+   foot's ? and log are both readouts and could share one door; a branch could
+   fold its siblings when it opens (this wave deliberately does not — "other
+   branches are left as they were" is the ask); or the words could go at the
+   narrowest width, which is the one thing Paul explicitly asked for and so is
+   last. None of them is done here.
+
+   THE PARAGRAPH BELOW IS THE 2026-08-30 MEASUREMENT AND IS KEPT WHOLE, because
+   it is the arithmetic that says the labels were never the expensive part:
+
    THE WHOLE COLUMN, MEASURED ON THE RENDERED PAGE, BEFORE AND AFTER, ON THE
    SAME RECORD (the boot gregorian) at 320x568 — head 100.2 at the root and
    156.4 under a `↑`, foot 144.2:
@@ -1175,11 +1283,20 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    min-content at a character, the label wraps inside its 47px, and words that
    fit — all ten others, Produce at 40px the widest — still never break,
    because `anywhere` only breaks what overflows. */
+/* ...AND THE WORD IS `--t1` NOW, 2026-09-02 (Paul: *"it should be bigger with
+   bigger type"*). .55rem was a size chosen for a 47px column and it read as an
+   annotation on a picture; the column is 63px at its narrowest and 128 at its
+   widest, so the word can be a word. `--t1` is the type scale's own label size
+   (.72rem) with a literal fallback for the hour before the scale lands beside
+   it — the token is 1b's and this rule may not wait on it. Everything else
+   here is unchanged and every argument above still applies: `min-inline-size:
+   0` is still what lets the label be narrower than its longest word, and
+   `overflow-wrap: anywhere` is still what breaks it inside the column. */
 #nu-tray .nu-vh{ position: static; inline-size: auto; block-size: auto;
   margin: 0; overflow: visible; clip-path: none;
   white-space: normal; overflow-wrap: anywhere; hyphens: auto;
   min-inline-size: 0;
-  font-size: .55rem; line-height: 1.05; font-weight: 600;
+  font-size: var(--t1, .72rem); line-height: 1.15; font-weight: 600;
   letter-spacing: -.01em; text-align: center; }
 /* THE ROOM'S LABEL SITS UNDER ITS READOUT, not under the trough: the fader is
    track + <output> + word, in that order, so the column reads 100% then room.
@@ -1194,7 +1311,13 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
    OWED and it wants a row in ui/glyph.js `GLYPH.act`, which this round's
    fence does not open; said here so the next hand finds the debt where the
    symptom is. */
-#playops{ font-size: .7rem; font-weight: 600; }
+/* ...AND THE DEBT IS PAID, 2026-09-02. `GLYPH.act.opts` is the row this
+   paragraph asked for (⚙), so `#playops` is spelled like every other mark in
+   the column — a picture over its word — and needs no rule of its own. The
+   two declarations that stood here (`.7rem`, weight 600) were sizing a WORD
+   drawn as a face; there is no such word any more.
+   THE ONE THING IT STILL NEEDS is the door's own state, which is a fold in the
+   foot rather than a level of the stripe: see `.nu-trayopts` in WAVE 1a. */
 /* THE DIE STACKS TIGHT, AND THIS IS WHY IT NEEDS A RULE THE OTHER MARKS DO
    NOT (2026-08-30). `#rewrite` is the one button in the gutter with a child
    OUTSIDE its `.nu-ic` — `<b id="reading">`, with a literal space before it,
@@ -4434,3 +4557,159 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
   border: 1px solid var(--rule); cursor: pointer;
 }
 .nu-video-controls button:hover { border-color: currentColor; }
+
+/* ======================================================================
+   WAVE 1a — THE TREE, THE FOOT, THE SEED (2026-09-02)
+   ======================================================================
+   Everything below is NEW in this wave. It is appended rather than woven in
+   because a second agent is rewriting the token, colour and combo rules of
+   this file in a worktree at the same hour, and a rule that lands at the end
+   is a rule a merge can see. The in-place edits this wave DID make are the
+   four the tree could not live without and they are dated where they stand:
+   `--tray-w` (the clamp), the deleted head, the depth cue that replaced
+   `.nu-sub`, and the label's type size.
+
+   NOTHING HERE INVENTS A TOKEN. `--t1` and `--r1` are read with literal
+   fallbacks so this block is correct on the hour it lands and correct again
+   the hour the scales arrive beside it. */
+
+/* ---- THE MARK IS A COLUMN, AND FROM 400px IT IS A ROW ------------------
+   Paul: *"On the nav I need to know what they're playing as instruments."*
+   A member's row says two things — the name and the instrument — and two text
+   lines under a glyph in a 63px column is four lines of type. So above the
+   hinge the glyph steps to the LEFT and the two lines stand beside it.
+
+   THE HINGE IS 400px AND IT IS ARITHMETIC, NOT TASTE: `--tray-w` is `24vw`
+   between its stops, so it reaches 96px at exactly 400px of glass, and 96 is
+   the first width at which a 1.2rem glyph (19.2px) plus its gap leaves more
+   room for a word than the word needs to break. Below it the mark is what it
+   has always been: glyph over word, centred, in a narrow column.
+   A MEDIA QUERY AND NOT A CONTAINER QUERY, deliberately: `--tray-w` is a
+   function of the VIEWPORT, so the viewport is the honest thing to ask. A
+   container query on `#nu-tray` would ask the same question one indirection
+   later and would be wrong the day the token stops being viewport-relative. */
+@media (min-width: 400px) {
+  #nu-tray .nu-ic{ flex-direction: row; align-items: center;
+                   gap: var(--s2); text-align: start; }
+  #nu-tray .nu-g{ flex: 0 0 auto; }
+  #nu-tray .nu-vh{ text-align: start; overflow-wrap: normal;
+                   white-space: nowrap; overflow: hidden;
+                   text-overflow: ellipsis; }
+  /* THE TWO LINES ARE ONE FLEX ITEM, so the glyph does not sit beside the word
+     and above the sub. `.nu-vh` and `.nu-sub2` are siblings inside a row, so
+     the row is turned into a two-column grid: the picture, then a stack. */
+  #nu-tray .nu-ic{ display: grid; grid-template-columns: auto minmax(0, 1fr);
+                   justify-items: start; }
+  #nu-tray .nu-n{ grid-column: 1; }
+  #nu-tray .nu-vh, #nu-tray .nu-sub2{ grid-column: 2; min-inline-size: 0;
+                                      inline-size: 100%; }
+  /* the digit and the glyph share the first column, stacked, so a numbered row
+     ("♪ 2 · cantor") reads as one mark rather than as three */
+  #nu-tray .nu-g{ grid-column: 1; grid-row: 1; }
+  #nu-tray .nu-n{ grid-row: 2; }
+}
+/* THE SECOND LINE. Dim, one line, ellipsised — it is a DESCRIPTION of the row
+   above it and must never be the reason a mark grows a third line, which is
+   what would put the column over the tap floor on a phone. Hidden below the
+   hinge, where there is no room for it and where the word itself is already
+   wrapping: nothing is clipped in silence, the fact is simply not drawn at a
+   width that cannot hold it, and it is still in the DOM for a reader with the
+   stylesheet off. */
+#nu-tray .nu-sub2{ display: none; }
+@media (min-width: 400px) {
+  #nu-tray .nu-sub2{ display: block; color: var(--dim);
+    font-size: var(--t0, .6rem); line-height: 1.1; font-weight: 500;
+    letter-spacing: -.01em;
+    inline-size: 100%; min-inline-size: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* a marked row's second line rides the hand's white with the rest of it */
+  #nu-tray button[aria-pressed="true"] .nu-sub2{ color: #FFFFFF; opacity: .8; }
+}
+
+/* ---- SOUNDING: THE PLAYHEAD'S OWN RED, ON A BAND MEMBER ---------------
+   Paul: *"I need you to light them up when playing them actively in the nav."*
+
+   IT IS `--clock` AND NEVER `--meter`, and that distinction is this page's
+   oldest colour law: green means MEASURED (a number came back from the
+   engine) and red means the PLAYHEAD (this is where the record is). What
+   lights a row here is `audio/live.js soundingChans()` — the bar's schedule
+   after the desk, so automation and mutes are already folded in — which is a
+   claim about what was SENT, not about what was heard. A green bar here would
+   be the fake measurement `METER_WHY` has refused since August.
+   IT IS AN EDGE BAR AND NOT A GROUND, because a row may be marked and
+   sounding at the same time and the mark owns the ground. It also may not
+   move the box: no border on the other three sides, no padding change, no
+   font change — a lamp that resized its row would make the whole list jump
+   four times a beat. */
+.nu-tray .is-sounding{ box-shadow: inset 3px 0 0 var(--clock); }
+.nu-traylist [data-depth].is-sounding{ border-inline-start-color: var(--clock); }
+
+/* ---- THE FOOT'S PLAY OPTIONS, AS A FOLD ------------------------------
+   Paul: *"Move the play/stop button to the bottom, along with opts and
+   where."* The four controls unfold ABOVE their own door, inside the foot, and
+   the list above gives up the pixels — which it can, because `.nu-traylist` is
+   the only `flex: 1 1 auto` in the stripe and has been the only scroller since
+   the gutter landed. `[hidden]` is the whole of the closed state: a box that
+   is not laid out is measured by nothing (shell's own `shown()` filter says
+   so), so a folded fader costs no tap-floor check and no width. */
+.nu-trayopts{ display: flex; flex-direction: column; align-items: stretch;
+  gap: var(--s2); padding-block: var(--s1); }
+.nu-trayopts[hidden]{ display: none; }
+
+/* ---- THE FLYOUT CHASSIS ----------------------------------------------
+   Paul: *"Perhaps we should experiment with strips that fly out to give us
+   access to all options, like MacOS system settings used to."*
+
+   THIS IS `.nu-log`'S SIX DECLARATIONS, FACTORED — fixed, anchored at the
+   gutter's inner edge, the panel plate, `--bw` of ink, the hard shadow, its
+   own scroll, and `[hidden]`. It is written here as `.nu-strip-out` because
+   that is the name the design round gives it and the seed flyout is its first
+   user; the second agent is factoring `.nu-log`, `.nu-explain` and `.nu-say`
+   onto the same class in the same week, at which point this rule is the one
+   they land on. NOTHING MAY OVERHANG THE GUTTER (shell A6i): the near edge IS
+   `--tray-w`, so the strip grows away from the stripe, which is the only
+   direction there is room in. */
+.nu-strip-out{ position: fixed; z-index: 55;
+  inset-inline-start: var(--tray-w); inset-block-end: 4px;
+  inline-size: min(24ch, calc(100vw - var(--tray-w) - 12px));
+  max-block-size: min(70vh, 560px); overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0; padding: var(--s3);
+  background: var(--panel); color: var(--ink);
+  border: var(--bw) solid var(--ink); border-radius: var(--r1, 6px);
+  box-shadow: var(--shadow); }
+.nu-strip-out[hidden]{ display: none; }
+
+/* ---- THE SEED FLYOUT --------------------------------------------------
+   Paul: *"When I click seed pop up a vertical slider from zero to 2^16."*
+   The number is typed at the top and roamed on the fader under it — 65,536
+   values over 180px is ~364 a pixel, so the fader is for finding a
+   neighbourhood and the field is for landing on a house. `roll` and `next` are
+   the two gestures that need no number at all. */
+.nu-seedout{ display: flex; flex-direction: column; align-items: center;
+  gap: var(--s2); }
+.nu-seedout input[type="number"]{ inline-size: 100%; min-block-size: var(--tap);
+  font-family: var(--mono); font-variant-numeric: tabular-nums;
+  /* 16px is the iOS zoom floor and a control this page asks a reader to TYPE
+     in may never be under it */
+  font-size: 16px; text-align: center; }
+.nu-seedvs{ align-self: center; }
+.nu-seedout .nu-row{ display: flex; gap: var(--s2); margin: 0; }
+.nu-seedout .nu-seedbtn{ flex: 1 1 auto; min-block-size: var(--tap);
+  min-inline-size: var(--tap); }
+.nu-seedout .nu-why{ margin: 0; text-align: center; }
+
+/* ---- THE NAME PLATE ---------------------------------------------------
+   Paul: *"The name of the genre should be obvious."* One ink plate, used by
+   the foot's Where mark (through `.nu-vh`/`.nu-sub2`, which need no rule of
+   their own) and by the Rules panel's heading. It is `.nu-busname`'s look,
+   named for every surface that prints a name; the second agent factors the
+   board's own plate onto it in the same week. */
+.nu-namebar{ display: flex; align-items: baseline; gap: var(--s2);
+  margin: 0 0 var(--s3);
+  padding: var(--s2) var(--s3);
+  background: var(--ink); color: var(--paper);
+  border-radius: var(--r2, 3px);
+  font-size: var(--t4, 1.15rem); font-weight: 800; }
+.nu-namebar small{ font-size: var(--t2, .82rem); font-weight: 600;
+  opacity: .75; }

@@ -370,6 +370,16 @@
   <div id="pan-key" class="nu-pan"></div>
   <div id="pan-motif" class="nu-pan"></div>
   <div id="pan-band" class="nu-pan"></div>
+  <!-- #pan-structure (2026-09-02). Paul: "Sections/Structure has the same
+       challenges. … It should be top level, not buried under band, and below
+       band. Bring performance into structure." So the host stands directly
+       after the band's, which is where the tab stands in `TABS` and therefore
+       where it reads in the gutter: DOM order is reading order is tab order.
+       It is inside #app with the other four axes because it IS one — the form
+       is the record's own structure and `formTable`, `sectionDetail` and
+       `performanceTab` are the three functions that drew it inside the band
+       panel until today. Its <h2> is the builder's, like the four above it. -->
+  <div id="pan-structure" class="nu-pan"></div>
 </div>
 
 <!-- 6 · MIX — THE BOARD, and NOT inside #app (Paul, 2026-08-24: "an actual
@@ -418,6 +428,17 @@
      #exportdeck IS NEW (2026-08-27). The export row was the last block of the
      score deck; Paul named Export as its own tab, so it has its own host and
      its own section. -->
+<!-- #rulesdeck (2026-09-02). Paul: "I click the genre, it starts to play, and
+     there's a new view: A genre editor appears. This is the 'Rules' section;
+     it'll need a new icon in the left nav." It is a DECK and not an axis: the
+     eight axes are the document's own vocabulary and the rules are the
+     GENRE's — the table the document was written from — so it sits with the
+     other panels that are a view of something rather than a slice of the
+     record. `TABS` puts it second, right after Where, because it is what a
+     genre IS; its host's position in this file is reading order and nothing
+     else reads it. Its <h2> is the builder's (the deck note below says why a
+     heading shipped here would be wiped on first open). -->
+<div id="rulesdeck" class="nu-pan"></div>
 <div id="produce" class="nu-pan"></div>
 <div id="scoredeck" class="nu-pan"></div>
 <div id="videodeck" class="nu-pan"></div>

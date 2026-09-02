@@ -20,6 +20,7 @@
  * build 1200, which is not installed on this machine.
  */
 "use strict";
+const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 const { chromium } = require("playwright");
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const i = argv.indexOf(n); return i < 0 ? d : argv[i + 1]; };
@@ -133,7 +134,21 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   p.on("console", (m) => { if (m.type() === "error" && !/favicon/.test(m.text()))
     errs.push("console: " + m.text()); });
   await p.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
-  await p.goto(PAGE, { waitUntil: "networkidle" });
+  /* ===== THE BOX BOOTS ON THE BLANK STATE NOW (2026-09-02) ================
+     Paul, the composer round: *"Add a 'silence' genre at the top of the genre
+     list. This is a blank state."* The box opens on `silence` — one eight-bar
+     section, ZERO voices, one cell of rests — instead of on a copy of the
+     shipped chant, because a box that opened playing somebody else's record was
+     answering a question nobody had asked yet.
+     THIS GATE IS ABOUT A RECORD WITH A BAND IN IT, so it asks for one, in the
+     address, the way a link does: `#at=Rome&y=600&s=1` is the shipped chant —
+     the very `songs.js TERMS` this file used to inherit from the boot — named
+     rather than assumed. `s=1` because the boot draws a seed now (Paul: *"Boot
+     up every new session with a new seed unless there's a seed in the URL"*) and
+     a gate that re-rolled its own subject would measure a different record every
+     run. Naming the fixture is the honest half of the change: what this file
+     asserts about "the record" is now a claim about a record it chose. */
+  await p.goto(PAGE + CHANT, { waitUntil: "networkidle" });
   await p.waitForFunction(() => document.querySelectorAll(".nu-sheet").length > 0,
     null, { timeout: 20000 }).catch(() => {});
 
@@ -200,12 +215,33 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   const TOPS = REAL
     ? await p.evaluate(() => window.__eightTabs ? window.__eightTabs() : [])
     : [];
+  /* ...AND IT FOLDS THE TREE FIRST, 2026-09-02. Paul: *"we should really work
+     hard on nesting options inside the left nav … We should never need the
+     'up' icon because we can expand multiple levels of interface option."*
+     Branches STAY OPEN now, and a mark is a TOGGLE — tapping the member you
+     are already inside folds it. This walk taps the same member row several
+     times (once per facet), so without a known starting shape the second tap
+     would close what the first opened and every facet after the first would
+     find no button. `__eightUp()` is "fold everything", which is the gesture a
+     hand makes to get back to the tabs, and it makes each view's route
+     deterministic: fold, open the tab, open the member, open the facet. */
   const openTop = async (t) => {
-    await p.evaluate((tt) => window.__eightTab(tt), t);
+    await p.evaluate((tt) => { if (window.__eightUp) window.__eightUp();
+                               window.__eightTab(tt); }, t);
     await p.waitForTimeout(t === "Score" ? 1200 : 300);
   };
   const views = REAL ? [] : [null];
   if (REAL) for (const t of TOPS) {
+    /* ...AND `Structure` IS THE OTHER TAB WITH A LEVEL IN IT (2026-09-02).
+       Paul: *"Sections/Structure … should be top level, not buried under band
+       … Every section I can tweak every instrument."* A section's own
+       questions — the `form.*` menus and the per-member `dev.*` words — are
+       one tap further in, exactly as a voice's facets are, and a survey that
+       stopped at the section LIST would see the form and none of the words.
+       This is `if (t === "tabform")`'s second tap, moved to the tab that owns
+       the sections. */
+    if (t === "Structure") { views.push({ top: t, k: null }, { top: t, sec: 1 });
+                             continue; }
     if (t !== "Band") { views.push({ top: t, k: null }); continue; }
     await openTop(t);
     /* THE BAND'S VOICE KEYS, OFF THE STRIPE (2026-08-28). This read
@@ -248,10 +284,19 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     for (const v of views) {
       if (v) {
         await openTop(v.top);
+        if (v.sec) await p.evaluate(async () => {
+          const s2 = document.querySelector('.nu-traylist [data-k^="secnav"]');
+          if (s2) { s2.click(); await new Promise((r) => setTimeout(r, 300)); }
+        });
+        if (v.sec) await p.waitForTimeout(350);
         if (v.k) {
           await tapK(v.k);
           if (v.f) await tapK(v.f);
-          if (v.k === "tabform") await tapK("sec" + SEC1);
+          /* `tabform` LEFT THE BAND LEVEL (2026-09-02, Structure): the
+             sections are a tab of their own, so no view in this walk is "the
+             form" any more and this line has nothing to open. The per-section
+             controls are reached by `openDoes()` above, where they are
+             needed. */
         }
       }
       out.push({ view: v ? (v.top + (v.k ? "/" + v.k : "")) : null,
@@ -571,6 +616,36 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       if (n2) n2.click(); }, f);
     await p.waitForTimeout(250);
   };
+  /* ===== THE PER-SECTION WORDS ARE A SECTION'S QUESTION NOW (2026-09-02) ==
+     Paul: *"Make a section automation interface for the manipulation of the
+     motifs and put it under structure/sections … Every section I can tweak
+     every instrument."*
+
+     `await facet("facet-sec")` STOOD AT FIVE PLACES IN THIS FILE and it was
+     the voice's fourth facet — the per-section table, one player at a time,
+     inside the Band panel. That facet is deleted: the question "what does the
+     kit DO in this section" is asked OF THE SECTION now, of every member at
+     once, which is what a section automation interface is. The sheet KEYS did
+     not move (`dev.kit|kit|<secId>` is the same address it always was), so
+     every assertion below is untouched; only the door is. This opens the
+     Structure tab and the record's first section, which is where those
+     controls are drawn.
+     IT IS A NO-OP ON THE HARNESS PAGE, exactly as `facet` is — the tier
+     fixture has no gutter and no sections, and `tapK`/`facet` have always been
+     written so this file can drive both pages. */
+  const openDoes = async () => {
+    const went = await p.evaluate(async () => {
+      if (!window.__eightTab) return false;
+      window.__eightTab("Structure");
+      await new Promise((r) => setTimeout(r, 300));
+      const s2 = document.querySelector('.nu-traylist [data-k^="secnav"]');
+      if (!s2) return false;
+      s2.click();
+      return true;
+    });
+    await p.waitForTimeout(400);
+    return went;
+  };
   /* THE KIT'S DEVELOPMENT WORDS MOVED WIDGET, THE LAW DID NOT — the same
      rewrite gate 5 below already carries for `alphabet.quality`, and the same
      sentence: Paul, *"There are still many boxes that should be selects"*.
@@ -584,7 +659,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (t) t.click();
   });
   await p.waitForTimeout(250);
-  await facet("facet-sec");
+  await openDoes();
   const kitLive = await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="dev.kit"]');
     if (f) return { as: "sheet", live: !f.disabled };
@@ -601,7 +676,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (d) { d.cast.on = false; (window.__draw || (() => {}))(); }
   });
   await p.waitForTimeout(200);
-  await facet("facet-sec");               // ...and the words it greys do not
+  await openDoes();               // ...and the words it greys do not
   // ...AND IT IS READ BACK THROUGH WHICHEVER WIDGET IT IS, for the reason
   // above. A disabled <select> keeps its <option>s in the list exactly as a
   // disabled fieldset keeps its `.nu-opt` rows: greyed, not hidden, which is
@@ -690,29 +765,40 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   // page broken while the page was right. Click the first line voice's tab,
   // the way a thumb would, and the sheets this section is about exist.
   if (REAL) await openTop("Band");
-  await p.evaluate(() => {
+  const PADV = await p.evaluate(() => {
     const v = window.__D().voices.find((x) => x.kind === "line");
     const t = v && document.querySelector('[data-k="tab' + v.name + '"]');
     if (t) t.click();
+    return v ? v.name : null;
   });
   await p.waitForTimeout(200);
   // ...AND ON ITS PER-SECTION FACET, 2026-08-28, for the same reason gate 4
   // above names one: `dev.line` is a per-SECTION word and a voice draws one
   // facet at a time now. `cast.part` — the word this gate SAYS — is on the
   // `plays` facet, so the three reads below each stand where their control is.
-  await facet("facet-sec");
+  await openDoes();
   // ...AND READ THE WORDS BEFORE ANYTHING IS SAID, so "8 greyed" is evidence
   // about the pad rather than about the record it happened to be measured on.
-  const padWas = (await p.evaluate(() => {
+  /* ...AND IT IS THAT VOICE'S ROW AND NOT THE FIRST ONE ON THE PAGE
+     (2026-09-02). The per-section words were drawn one voice at a time — the
+     voice's own `sec` facet — so "the first `dev.line` control on the page"
+     WAS this voice's. They are asked of the SECTION now, of every member at
+     once (Paul: *"Every section I can tweak every instrument"*), so the page
+     holds one `dev.line|<name>|<sec>` per line voice and the first of them is
+     whoever the roster puts first. The pad is a fact about ONE player, so the
+     reading is scoped to that player's key. */
+  const padWas = (await p.evaluate((vn) => {
     const rows = [];
-    for (const f of document.querySelectorAll('.nu-sheet[data-sheet^="dev.line"]'))
-      { for (const l of f.querySelectorAll(".nu-opt")) rows.push({ v: l.dataset.v,
-          off: l.querySelector("input").disabled }); break; }
-    if (rows.length) return rows;
-    for (const s2 of document.querySelectorAll('select[data-sel^="dev.line"]'))
-      { for (const o of s2.options) rows.push({ v: o.dataset.v, off: o.disabled }); break; }
+    const pick = (sel) => [...document.querySelectorAll(sel)]
+      .find((n2) => (n2.dataset.sheet || n2.dataset.sel || "").split("|")[1] === vn)
+      || document.querySelector(sel);
+    const f = pick('.nu-sheet[data-sheet^="dev.line"]');
+    if (f) { for (const l of f.querySelectorAll(".nu-opt")) rows.push({ v: l.dataset.v,
+      off: l.querySelector("input").disabled }); return rows; }
+    const s2 = pick('select[data-sel^="dev.line"]');
+    if (s2) for (const o of s2.options) rows.push({ v: o.dataset.v, off: o.disabled });
     return rows;
-  })).filter((r) => r.off);
+  }, PADV)).filter((r) => r.off);
   // SAY "PAD" THROUGH WHICHEVER WIDGET `cast.part` IS. It was a sheet all
   // morning and it is a <select> again this evening (Paul: "in voices -- plays,
   // material, instrument -- dropdowns/selects"), and what this gate is about is
@@ -720,6 +806,22 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   // the voice is a pad. Reaching for the sheet alone made this gate read
   // `undefined` and call the page broken while the page was right, which is the
   // same mistake its own comment above records having made once already.
+  /* AND THE WORD IS SAID WHERE ITS CONTROL IS DRAWN (2026-09-02). `cast.part`
+     is on the voice's `plays` facet, and the two questions this block asks now
+     live on TWO TABS: what a player IS is the band's, what it DOES here is the
+     section's (Paul: *"Every section I can tweak every instrument"*). A panel
+     that is not the open one keeps its old DOM and is not rebuilt, so tapping
+     the facet from the Structure tab left the Band panel showing whichever
+     facet it was last drawn with — and `cast.part` was simply not on the page
+     to be said. So the walk goes back to the band, opens the voice, opens its
+     `plays` facet, says the word, and only then returns to the section to read
+     what greyed. That is also exactly the gesture a hand makes. */
+  if (REAL) {
+    await openTop("Band");
+    await p.evaluate((vn) => { const t = vn &&
+      document.querySelector('[data-k="tab' + vn + '"]'); if (t) t.click(); }, PADV);
+    await p.waitForTimeout(250);
+  }
   await facet("facet-plays");             // `cast.part` is what it PLAYS
   await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="cast.part"]');
@@ -729,7 +831,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (s) { s.value = "pad"; s.dispatchEvent(new Event("change", { bubbles: true })); }
   });
   await p.waitForTimeout(200);
-  await facet("facet-sec");               // ...and the words it greys are per-section
+  await openDoes();               // ...and the words it greys are per-section
   /* READ THE LAW OFF THE PAGE, NOT ONE WORD OFF A TABLE THAT IS DERIVED.
      WAS: `a pad's \`at the fifth\` is disabled and \`out\` is not`. That was
      true when it was written and it is stale for a reason worth keeping: the
@@ -748,24 +850,39 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      filled in · down a degree · in wider steps · at the fourth · below, at the
      fifth · the rhythm, moved) and `out` stays live. */
   const PADWHY = "a pad voices the chord, it does not follow a line";
-  const padRead = () => p.evaluate(() => {
+  const padRead = () => p.evaluate((vn) => {
     const rows = [];
-    for (const f of document.querySelectorAll('.nu-sheet[data-sheet^="dev.line"]'))
-      { for (const l of f.querySelectorAll(".nu-opt")) rows.push({ v: l.dataset.v,
-          off: l.querySelector("input").disabled,
-          why: (l.querySelector(".nu-why") || {}).textContent || "" }); break; }
-    if (rows.length) return rows;
-    for (const s2 of document.querySelectorAll('select[data-sel^="dev.line"]'))
-      { for (const o of s2.options) rows.push({ v: o.dataset.v, off: o.disabled,
-          why: o.dataset.why || "" }); break; }
+    const pick = (sel) => [...document.querySelectorAll(sel)]
+      .find((n2) => (n2.dataset.sheet || n2.dataset.sel || "").split("|")[1] === vn)
+      || document.querySelector(sel);
+    const f = pick('.nu-sheet[data-sheet^="dev.line"]');
+    if (f) { for (const l of f.querySelectorAll(".nu-opt")) rows.push({ v: l.dataset.v,
+      off: l.querySelector("input").disabled,
+      why: (l.querySelector(".nu-why") || {}).textContent || "" }); return rows; }
+    const s2 = pick('select[data-sel^="dev.line"]');
+    if (s2) for (const o of s2.options) rows.push({ v: o.dataset.v, off: o.disabled,
+      why: o.dataset.why || "" });
     return rows;
-  });
+  }, PADV);
   const padOn = await padRead();
   const padGrey = padOn.filter((r) => r.off);
+  /* EVERY GREY SAYS *A* MEASURED REASON, AND AT LEAST ONE SAYS THE PAD'S
+     (2026-09-02). `padSays.length === padGrey.length` demanded that the pad's
+     own sentence be the reason for ALL of them, which was exact while the
+     control was drawn on the voice's own facet: the only fact in scope was the
+     part. The same key is drawn in the SECTION now, where the record's harmony
+     is in scope too — measured on the shipped chant, `modal harmony has no
+     changes` greys four of the same words — so requiring one sentence would be
+     asserting that a control may only ever have one reason to be unreachable.
+     What the law actually says is NO SILENT GREY: every greyed option carries
+     a measured reason in its own text. That is what is asserted, plus the half
+     this check is really about — the pad greys words that were live before it,
+     and its own sentence is on them. */
   const padSays = padGrey.filter((r) => r.why.includes(PADWHY));
+  const padMute = padGrey.filter((r) => !r.why.trim());
   const padOut = padOn.find((r) => r.v === "out");
   check(padWas.length === 0 && padGrey.length > 0 &&
-        padSays.length === padGrey.length,
+        padSays.length > 0 && padMute.length === 0,
     "a pad greys " + padGrey.length + " development words (0 before the tap) " +
     "and every one of them says why in its own text: " +
     JSON.stringify(padGrey.map((r) => r.v)));
@@ -792,7 +909,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (window.__draw) window.__draw();
   });
   await p.waitForTimeout(200);
-  await facet("facet-sec");
+  await openDoes();
   // ...THROUGH WHICHEVER WIDGET, for the reason gate 5 gives. WAS: the sheet
   // branch alone, which found nothing on the shipped page and read `null` —
   // "the standing answer is gone" — while the answer was sitting selected in a
@@ -958,7 +1075,19 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   /* ---- 9 with the stylesheet off it still reads as the same document ---- */
   const off = await p.evaluate(() => {
     for (const s of document.styleSheets) try { s.disabled = true; } catch (e) {}
-    const whys = [...document.querySelectorAll(".nu-why")].map((w) => w.textContent.trim());
+    /* ON THE PAGE, OR NOT COUNTED (2026-09-02). The seed flyout is a
+       `.nu-strip-out` that ships `hidden` until a hand opens it (Paul: *"When
+       I click seed pop up a vertical slider from zero to 2^16"*), and its own
+       refusal — "0 and 1: as written" — is a `.nu-why` inside it. `hidden` is
+       the UA stylesheet's `display:none`, so disabling the AUTHOR sheet does
+       not reveal it, and a reason inside a closed popover is not a silent grey:
+       it is a reason on a control nobody is looking at. What this check has
+       always been about is what a reader MEETS with the stylesheet off, so it
+       reads the reasons that are laid out — the same `shown()` rule
+       test/shell.js applies to every measurement it makes. */
+    const whys = [...document.querySelectorAll(".nu-why")]
+      .filter((w) => w.getClientRects().length)
+      .map((w) => w.textContent.trim());
     const t = document.body.innerText;
     return { n: whys.length, missing: whys.filter((w) => w && !t.includes(w)).slice(0, 3) };
   });

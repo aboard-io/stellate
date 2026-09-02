@@ -146,6 +146,20 @@ const spread = (ev) => {
      asserts anything. Measured 2026-08-25 on the page as shipped: boot 0 ·
      after tapping section 2 → 8 · the performance tab → 3. Nothing went
      missing; the count was taken in the wrong room. */
+  /* ===== THE FIXTURE IS NAMED NOW (2026-09-02) =========================
+     This gate's checks 2 and 5 are about a box with NOTHING SAID into it —
+     "ABSENT IS TODAY" — and until today that record arrived for free, because
+     the page booted on a deep copy of `songs.js TERMS`, the hand-authored
+     chant whose boxes carry no dealt words. The box boots on the BLANK STATE
+     now (Paul: *"Add a 'silence' genre at the top of the genre list. This is a
+     blank state."*), and the chant that the address lands is a COMPOSED
+     anchor, which deals `env`, `pipe` and the rest — so "absent" would be a
+     claim about the dice rather than about the recipe.
+     So the fixture is asked for by name, through the page's own document door
+     (`CTX.setDocument`, the same one a link uses). This is the inherited
+     assumption made explicit; nothing about what is asserted changed. */
+  await p.evaluate(() => window.__eightShipped && window.__eightShipped());
+  await p.waitForTimeout(900);
   const S2 = (await p.evaluate(() =>
     window.__eightDoc().form.sections.map((s) => s.id)))[1];
   /* ...AND THE BAND TAB IS OPENED FIRST, 2026-08-28. `tabform` was a button in
@@ -161,13 +175,30 @@ const spread = (ev) => {
      `__eightTab` is the page's own door and is what a thumb does — the same
      one-line repair test/sheets.js, test/selects.js and test/knobs.js each
      already took for their own `+ drums`. */
+  /* ...AND THE FORM IS `Structure`'s TAB SINCE 2026-09-02. Paul: *"Sections/
+     Structure has the same challenges. … It should be top level, not buried
+     under band, and below band. Bring performance into structure."* So the
+     door is one tab instead of a tab and a mark: `tabform` was the mark that
+     opened the sections INSIDE the band level and it does not exist, because
+     the thing it addressed is a tab of its own. `sec<id>` is unchanged — it is
+     the heading `sectionDetail` answers to and it is still what a thumb lands
+     on — and so is every claim below it. */
   const openBand = async () => {
     await p.evaluate(() => window.__eightTab("Band"));
     await p.waitForTimeout(300);
   };
+  const openStructure = async () => {
+    await p.evaluate(() => window.__eightTab("Structure"));
+    await p.waitForTimeout(300);
+  };
   const openSection = async (id) => {
-    await openBand();
-    await tap("tabform");
+    await openStructure();
+    /* THE SECTION'S OWN ROW IN THE GUTTER IS THE DOOR, and it is the same
+       gesture the numbered button in the form table makes (`openSection` is
+       one function with two spellings, ui/eight.js). `secnav<id>` is the
+       stripe's key for it; `sec<id>` is the heading it lands on, which is what
+       the tap below confirms arrived. */
+    await tap("secnav" + id);
     return tap("sec" + id);
   };
   await openSection(S2);
@@ -320,9 +351,17 @@ const spread = (ev) => {
      the whole journey is now two. Both keys are the page's own — `facet-sec`
      is ui/glyph.js `GLYPH.facet.sec` in the gutter — and `say` still returns
      false if the control is not there, so this cannot paper over a real loss. */
-  await openBand();
-  await tap("tabcantor");
-  await tap("facet-sec");
+  /* ...AND THE PER-SECTION FACET IS GONE, 2026-09-02. Paul: *"Make a section
+     automation interface for the manipulation of the motifs and put it under
+     structure/sections … Every section I can tweak every instrument."* The
+     voice's fourth facet (`facet-sec`, the per-section table one player at a
+     time) is a COLUMN of the Structure grids now, so the question "what does
+     the cantor do in section 2" is asked of the section rather than of the
+     player. `dev.line|cantor|<sec>` is the SAME KEY — the grids emit exactly
+     the addresses that table emitted, which is why the table had to go rather
+     than stand beside them — and it is drawn today in the section's own
+     detail, which `openSection` opens. */
+  await openSection(S2);
   const moved = await say("dev.line|cantor|" + S2, "the rhythm, moved");
   const ev1 = await events(1);
   check(moved, "the development sheet offers `the rhythm, moved` (songs.js, new)");
@@ -378,7 +417,12 @@ const spread = (ev) => {
   // ...AND THE BAND TAB FIRST, 2026-08-28: gate 3 above left the stripe INSIDE
   // the cantor (the `voice` level, three facets), where `tabperformance` is one
   // `↑` away and therefore not on the page. Same door, same one line.
-  await openBand();
+  /* ...AND PERFORMANCE IS INSIDE STRUCTURE SINCE 2026-09-02. Paul: *"Bring
+     performance into structure."* It is the LAST block of that panel rather
+     than a tab of the band, and `tabperformance` is the row in the stripe that
+     scrolls you to it — the key did not move, because an address does not move
+     when a row does. */
+  await openStructure();
   await tap("tabperformance");
   const flatOk = await say("performance.phrase", "flat");
   const sTentOff = spread(await events(1));

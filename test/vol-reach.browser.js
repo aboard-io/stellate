@@ -66,6 +66,7 @@
  *       (stands up its own COOP/COEP server, serve.sh's handler, like gutter)
  */
 "use strict";
+const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 const { chromium } = require("playwright");
 const path = require("path");
 const { spawn } = require("child_process");
@@ -117,7 +118,23 @@ function standUpServer() {
   const p = await (await b.newContext({ viewport: { width: 390, height: 844 },
     hasTouch: true })).newPage();
   p.on("pageerror", (e) => console.log("  pageerror: " + e.message));
+  /* THE BOX BOOTS ON THE BLANK STATE NOW (2026-09-02, Paul: *"Add a 'silence'
+     genre at the top of the genre list. This is a blank state."*) — zero
+     voices, so there is no strip to drag and no chair to reach. This gate is
+     about a record with a band in it, so it names one in the address: the
+     shipped chant, at seed 1 because the boot draws a seed now. */
   await p.goto(PAGE, { waitUntil: "domcontentloaded" });
+  /* ...AND THE FIXTURE IS THE SHIPPED CHANT ITSELF, BY NAME (2026-09-02).
+     This gate's checks NAME the chant's own players (`cantor`, `schola`),
+     and a COMPOSED anchor at Rome 600 names its players `voice`, `voice2`,
+     `vocal` — so the address lands the right PLACE and the wrong ROSTER.
+     `__eightShipped()` is `CTX.setDocument(a deep copy of songs.js TERMS)`,
+     the same document door a link uses; it is the record this file
+     inherited from the boot until the box began booting on the blank state
+     (Paul: *"Add a 'silence' genre at the top of the genre list. This is a
+     blank state."*), asked for by name instead of assumed. */
+  await p.evaluate(() => window.__eightShipped && window.__eightShipped());
+  await p.waitForTimeout(1200);
   await p.waitForTimeout(3000);
   await p.evaluate(() => document.getElementById("play").click());
   await p.waitForTimeout(9000);
@@ -179,9 +196,21 @@ function standUpServer() {
   }, k); await p.waitForTimeout(500); };
   const openVoice = async (n) => { await p.evaluate(async (name) => {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    /* FOLD FIRST, THEN OPEN (2026-09-02). The gutter is a tree and a mark is a
+       TOGGLE — this helper is called once per voice, and without a known
+       starting shape the second call would tap a member that is already open
+       and CLOSE it, taking `facet-mix` off the page. `__eightUp()` is "fold
+       everything", the gesture a hand makes to get back to the tabs. */
+    if (window.__eightUp) window.__eightUp();
     window.__eightTab("Band"); await wait(300);
     let btn = document.querySelector('[data-k="tab' + name + '"]');
-    if (!btn) { const u = document.querySelector('[data-k="trayup"]'); if (u) { u.click(); await wait(250); }
+    /* `[data-k="trayup"]` STOOD HERE AND THERE IS NO ↑ (2026-09-02). Paul:
+       *"We should never need the 'up' icon because we can expand multiple
+       levels of interface option."* What this fallback meant is "put the
+       stripe back where the tabs are", which on a tree is FOLD EVERYTHING —
+       `window.__eightUp()` is that gesture and is the shim the nine callers of
+       the old walk keep working through. */
+    if (!btn) { if (window.__eightUp) { window.__eightUp(); await wait(250); }
       btn = document.querySelector('[data-k="tab' + name + '"]'); }
     if (btn) btn.click(); await wait(300);
     const f = document.querySelector('[data-k="facet-mix"]'); if (f) f.click();
@@ -327,7 +356,19 @@ function standUpServer() {
     const si = await p.evaluate(() => window.__nuMix().si);
     const secId = await p.evaluate((i) => window.__eightDoc().form.sections[i].id, si);
     const first = voiceNames.find((x) => x.unit) || voiceNames[0];
+    /* ...AND THE AUTOMATION GRID IS A PLATE NOW (2026-09-02). Paul:
+       *"Instead of having four icons on top and section automation that should
+       have been five subicons under the 'Mix' icon. One of them is section
+       automation."* The grid used to be appended to the board's HOST — always
+       on screen under whichever bus plate was open, and not a tab at all — so
+       reaching the Mix tab was enough to find a `t|voice|section` cell. It is
+       `PLATES.auto`, the fifth plate, so the plate has to be OPENED, which is
+       one press of its own mark in the gutter (the nav drives the board through
+       `showBoard`, and `#boardtabs` mirrors it until wave 2e). */
     await p.evaluate(() => window.__eightTab("Mix"));
+    await p.waitForTimeout(500);
+    await p.evaluate(() => { const a =
+      document.querySelector('[data-k="boardtab|auto|auto"]'); if (a) a.click(); });
     await p.waitForTimeout(500);
     const set = await p.evaluate(({ name, sid }) => {
       const btn = document.querySelector('button[data-k="t|' + name + '|' + sid + '"]');
@@ -380,7 +421,7 @@ function standUpServer() {
       Object.defineProperty(HTMLMediaElement.prototype, "volume", {
         configurable: true, get() { return 1; }, set() {} });
     });
-    await p2.goto(PAGE, { waitUntil: "domcontentloaded" });
+    await p2.goto(PAGE + CHANT, { waitUntil: "domcontentloaded" });
     await p2.waitForTimeout(3000);
     await p2.evaluate(() => document.getElementById("play").click());
     await p2.waitForTimeout(14000);

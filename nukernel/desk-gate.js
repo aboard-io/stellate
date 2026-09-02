@@ -14,6 +14,7 @@
 // http://localhost:8777/nukernel/index.html — and the question to ask there is
 // the one G6 cannot: does it sound like a stone room?
 "use strict";
+const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 const path = require("path");
 const R = (p) => path.join(__dirname, p);
 
@@ -856,7 +857,32 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   page.on("console", (m) => { if (m.type() === "error" && !/favicon/.test(m.text()))
     errs.push("console: " + m.text()); });
   await page.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
+  /* ===== THE BOX BOOTS ON THE BLANK STATE NOW (2026-09-02) ================
+     Paul, the composer round: *"Add a 'silence' genre at the top of the genre
+     list. This is a blank state."* The box opens on `silence` — one eight-bar
+     section, ZERO voices, one cell of rests — instead of on a copy of the
+     shipped chant, because a box that opened playing somebody else's record was
+     answering a question nobody had asked yet.
+     THIS GATE IS ABOUT A RECORD WITH A BAND IN IT, so it asks for one, in the
+     address, the way a link does: `#at=Rome&y=600&s=1` is the shipped chant —
+     the very `songs.js TERMS` this file used to inherit from the boot — named
+     rather than assumed. `s=1` because the boot draws a seed now (Paul: *"Boot
+     up every new session with a new seed unless there's a seed in the URL"*) and
+     a gate that re-rolled its own subject would measure a different record every
+     run. Naming the fixture is the honest half of the change: what this file
+     asserts about "the record" is now a claim about a record it chose. */
   await page.goto(PAGE, { waitUntil: "networkidle" });
+  /* ...AND THE FIXTURE IS THE SHIPPED CHANT ITSELF, BY NAME (2026-09-02).
+     This gate's checks NAME the chant's own players (`cantor`, `schola`),
+     and a COMPOSED anchor at Rome 600 names its players `voice`, `voice2`,
+     `vocal` — so the address lands the right PLACE and the wrong ROSTER.
+     `__eightShipped()` is `CTX.setDocument(a deep copy of songs.js TERMS)`,
+     the same document door a link uses; it is the record this file
+     inherited from the boot until the box began booting on the blank state
+     (Paul: *"Add a 'silence' genre at the top of the genre list. This is a
+     blank state."*), asked for by name instead of assumed. */
+  await page.evaluate(() => window.__eightShipped && window.__eightShipped());
+  await page.waitForTimeout(1200);
   /* AND THE BOARD IS THE `Mix` TAB SINCE 2026-08-27. Paul: *"Why don't we make
      tabs at the top level and let go of the idea of scrolling everything? The
      tabs are: Where / Tempo / Key / Motif / Band / Mix / Produce / Score /
@@ -955,8 +981,13 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       let b = document.querySelector('[data-k="tab' + n + '"]');
       if (!b) {
-        const u = document.querySelector('[data-k="trayup"]');
-        if (u) { u.click(); await wait(250); }
+        /* `[data-k="trayup"]` STOOD HERE AND THERE IS NO ↑ (2026-09-02).
+           Paul: *"We should never need the 'up' icon because we can expand
+           multiple levels of interface option."* The gutter is a tree: a
+           member's row exists whenever its own tab's branch is open, and
+           `__eightUp()` — fold everything — is what puts the stripe back where
+           the tabs are so the tab press above can open it again. */
+        if (window.__eightUp) { window.__eightUp(); await wait(250); }
         b = document.querySelector('[data-k="tab' + n + '"]');
       }
       if (b) b.click();
@@ -2365,8 +2396,17 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       return { name, secId: doc2().form.sections[1].id,
                seated, wet, face, after, cleared };
     });
-    // ...AND THE GRID, ON THE BOARD, where it stayed.
+    /* ...AND THE GRID, WHICH IS THE BOARD'S FIFTH PLATE SINCE 2026-09-02.
+       Paul: *"Instead of having four icons on top and section automation that
+       should have been five subicons under the 'Mix' icon. One of them is
+       section automation."* It was appended to the board's HOST — under
+       whichever bus plate was open, and not a tab — so reaching the Mix tab
+       was enough to find a `t|voice|section` cell; it is `PLATES.auto` now and
+       its own mark has to be pressed. The key did not move. */
     await topTab("Mix");
+    await page.evaluate(() => { const a =
+      document.querySelector('[data-k="boardtab|auto|auto"]'); if (a) a.click(); });
+    await page.waitForTimeout(500);
     Object.assign(slotTrip, await page.evaluate(async () => {
       const wait = () => new Promise((r) => setTimeout(r, 500));
       const doc2 = () => window.__eightDoc();

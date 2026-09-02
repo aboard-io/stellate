@@ -381,9 +381,21 @@ const BANDS = async () => {
     // (A6b). The list is the scroller; the <nav> is the frame.
     rowScroll: (() => { const l = document.querySelector(".nu-traylist");
       return [l.scrollWidth, l.clientWidth]; })(),
+    /* ON THE PAGE, OR NOT COUNTED (2026-09-02) — this file's own `shown()`
+       rule, which every other measurement here already obeys and which this
+       one did not need until today. The play options are seated in the foot
+       permanently and FOLDED when the door is shut (Paul: *"Move the play/stop
+       button to the bottom, along with opts and where"*), so three buttons are
+       in the DOM at every moment and laid out only when a hand opens them — a
+       `display: none` button reports left 0, which is a second distinct left
+       and a "two column" stripe that no eye could ever see. The claim is
+       unchanged and is about what a reader meets: every mark that is ON the
+       page shares one left. */
     rowCols: (() => { const lefts = new Set();
-      for (const b of row.querySelectorAll("button"))
+      for (const b of row.querySelectorAll("button")) {
+        if (!b.getClientRects().length) continue;
         lefts.add(Math.round(b.getBoundingClientRect().left));
+      }
       return lefts.size; })(),
     /* READ OFF `aria-label` AND NOT OFF THE TEXT, 2026-08-28. The ten tabs
        are glyphs now (Paul: "Please make all the tabs and top buttons into
@@ -405,8 +417,17 @@ const BANDS = async () => {
        sub-level the stripe is showing that level's own siblings and the marked
        one is the item that level has open, which `__eightTray` reports off the
        same call the buttons make. `↑` is never marked. */
+    /* `if (T.level === "root") return window.__eightTabNow()` STOOD HERE and
+       it was exact while the root level was the tab row: the marked mark WAS
+       the open tab and its name WAS the tab's word. Neither is true now
+       (2026-09-02): the open tab may be `Where`, whose mark is the foot's name
+       plate and whose word is the RECORD's name; and with several branches
+       open the marked row is the deepest open thing inside the open tab, not
+       the tab row. `__eightTray().on` is the one answer to "which mark is the
+       marked one", it is what `paintTray` paints from, and reading it here is
+       what makes this a comparison of two readings of one fact rather than a
+       gate reciting the page back to itself. */
     now: (() => { const T = window.__eightTray();
-      if (T.level === "root") return window.__eightTabNow();
       const b = T.on && document.querySelector('[data-k="' + T.on + '"]');
       return b ? (b.getAttribute("aria-label") || "").trim() : null; })(),
     level: window.__eightTray().level,
@@ -420,8 +441,12 @@ const BANDS = async () => {
        where you are at such a level is the HEAD, so the head's own accessible
        name is read here and asserted to name the thing you are inside. */
     acts: window.__eightTray().acts,
-    headSays: (() => { const u = document.querySelector('[data-k="trayup"]');
-      return u ? (u.dataset.say || "").trim() : null; })(),
+    /* (`headSays` STOOD HERE — the ↑'s own `data-say`, "up — out of psalm,
+       back to the motifs", which was A6c's answer to "what says where you are
+       on a level that marks nothing". There is no ↑ and there is no level; the
+       marked ancestor row is the answer now, and it is on the screen the whole
+       time, which is what the 2026-08-28 refusal of a disabled ↑ said the
+       marked mark would be.) */
     rowH: +row.getBoundingClientRect().height.toFixed(1),
     rowLines: 1,
   };
@@ -481,8 +506,30 @@ const LANE = async () => {
    Video, in the looked-at family between Score and Export — and, like Video's
    line above, it is a new sentence added to the list, not an edit of any old
    one. */
-const PAULS_TABS = ["Where", "Tempo", "Key", "Motif", "Band",
-                    "Mix", "Produce", "Score", "Video", "Screensaver", "Export"];
+/* ...AND A TWELFTH AND A THIRTEENTH, 2026-09-02, both from the composer
+   round and both NEW SENTENCES rather than edits of the ten above:
+     · *"I click the genre, it starts to play, and there's a new view: A genre
+       editor appears. This is the 'Rules' section; it'll need a new icon in
+       the left nav."* — `Rules`, straight after `Where`, because it is what a
+       genre IS and every other tab is a view of what its rules dealt.
+     · *"Sections/Structure has the same challenges. … It should be top level,
+       not buried under band, and below band. Bring performance into
+       structure."* — `Structure`, directly after `Band`, exactly where he put
+       it, in his own words.
+   AND ONE OF THE THIRTEEN IS NOT IN THE LIST, which is the first time the tab
+   ORDER and the SCREEN POSITION have diverged on this page. Paul, the same
+   round: *"Move the play/stop button to the bottom, along with opts and
+   where."* So `Where` is a permanent name plate in the FOOT — the answer to
+   *"The name of the genre should be obvious"* — and the stripe's scrolling
+   list holds the other twelve. The quotation stays whole and stays THE
+   quotation: `NAV_ROWS` is derived from it by dropping the one row Paul moved,
+   so a tab added to his list is added to the walk by existing, and the fact
+   that `Where` left the list is asserted separately, below, where it can be
+   read as the claim it is. */
+const PAULS_TABS = ["Where", "Rules", "Tempo", "Key", "Motif", "Band",
+                    "Structure", "Mix", "Produce", "Score", "Video",
+                    "Screensaver", "Export"];
+const NAV_ROWS = PAULS_TABS.filter((t) => t !== "Where");
 // how long a tab is given to settle after it is opened. The Score engraves a
 // whole record on a promise the first time it is asked; everything else is
 // synchronous and the wait is only for layout.
@@ -527,20 +574,43 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
        — `__eightUp()` is the `↑` button pressed, the same call the button
        makes — and then reads the nine off the list. It skips `↑` by construction
        (there is none at the root) and skips nothing else. */
+    /* `__eightUp()` IS "FOLD EVERYTHING" NOW (2026-09-02). It was the ↑
+       pressed until there was no ↑ left; there is no ↑ (Paul: *"We should
+       never need the 'up' icon because we can expand multiple levels of
+       interface option"*), and what the nine callers of it have always meant
+       is "put the stripe back where the tabs are". On a tree that is folding
+       every open branch, which leaves exactly the twelve rows this reads. */
     await page.evaluate(() => window.__eightUp());
     const rowNames = await page.evaluate(() =>
       [...document.querySelectorAll(".nu-traylist button")]
         .map((b) => (b.getAttribute("aria-label") || "").trim()));
-    is(JSON.stringify(rowNames) === JSON.stringify(PAULS_TABS),
-      "A6d " + width + " · nine tabs, Paul's words, Paul's order — "
+    is(JSON.stringify(rowNames) === JSON.stringify(NAV_ROWS),
+      "A6d " + width + " · twelve rows, Paul's words, Paul's order — "
       + JSON.stringify(rowNames));
     const rowWords = await page.evaluate(() =>
       [...document.querySelectorAll(".nu-traylist button")]
         .map((b) => { const v = b.querySelector(".nu-vh, mark .nu-vh");
                       return v ? v.textContent.trim() : null; }));
-    is(JSON.stringify(rowWords) === JSON.stringify(PAULS_TABS),
+    is(JSON.stringify(rowWords) === JSON.stringify(NAV_ROWS),
       "A6g " + width + " · and every word is still IN the button, so the row "
       + "reads with the stylesheet off — " + JSON.stringify(rowWords));
+    /* ...AND THE THIRTEENTH IS IN THE FOOT, WEARING THE RECORD'S NAME. Paul:
+       *"Move the play/stop button to the bottom, along with opts and where"*
+       and *"The name of the genre should be obvious."* The plate keeps the
+       tab's own address (`toptab-Where`) because an address does not move when
+       a row does, and its WORD is the record's human name rather than the word
+       "Where" — which is the whole point of moving it. */
+    const plate = await page.evaluate(() => {
+      const b = document.querySelector('.nu-trayfoot [data-k="toptab-Where"]');
+      if (!b) return null;
+      const v = b.querySelector(".nu-vh"), s2 = b.querySelector(".nu-sub2");
+      return { word: v ? v.textContent.trim() : null,
+               sub: s2 ? s2.textContent.trim() : null,
+               inList: !!document.querySelector('.nu-traylist [data-k="toptab-Where"]') };
+    });
+    is(!!plate && !plate.inList && !!plate.word,
+      "A6d " + width + " · …and Where is a name plate in the foot, not a row "
+      + "in the list — " + JSON.stringify(plate));
     // A6h — every glyph on the page is decoration beside a name: a mark with
     // no `aria-label` on its button is the one failure an icon row can hide.
     const nakedGlyphs = await page.evaluate(() =>
@@ -579,136 +649,139 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
        yesterday.) A drum pattern has no transforms, so a record whose open
        cell is a beat lands on the bank instead — both are accepted below, and
        which one you get is `trayNow`'s arithmetic, not a branch here. */
-    const levels = [];
-    const now = () => page.evaluate(() => window.__eightTray());
+    /* ===== A6j / A6k / A6l — THE WALK IS AN EXPAND/COLLAPSE NOW ==========
+       REWRITTEN 2026-09-02. Paul: *"we should really work hard on nesting
+       options inside the left nav … We should never need the 'up' icon because
+       we can expand multiple levels of interface option."*
+
+       WHAT THE THREE OF THEM ASSERTED, and every one of these claims survives
+       in a form a tree can make:
+         · A6j drove `[data-k="toptab-<word>"]` and then `[data-k="trayup"]` up
+           to four times, asserting the exact chain of LEVELS a tab descends
+           into and climbs out of, plus "there is no ↑ at the root — it is
+           absent, not a dead button". The chain is gone with the levels; the
+           ABSENCE of ↑ is now a claim about the whole page rather than about
+           the root, and it is stronger for it.
+         · A6k drove a mark one level FURTHER in (`tabform` → a section →
+           `secup/secdown/secdrop`) and climbed back. Descending is expanding
+           and climbing is folding, and both are the SAME mark pressed twice —
+           which is the sentence Paul's instruction is made of.
+         · A6l (2026-09-01, and the newest of the three) opened a voice and
+           asserted the four facets arrived as `.nu-sub` rows at the band level,
+           the voice wearing `aria-expanded`, one <mark> still on the page. That
+           is exactly this wave's claim with `subs === 4` and `.nu-sub` swapped
+           for a DEPTH — which is what "the 'ghosted' sections are doubling UX
+           elements" replaced them with. */
+    const nowT = () => page.evaluate(() => window.__eightTree());
+    /* THE BOX BOOTS ON THE BLANK STATE NOW (2026-09-02, Paul: *"Add a
+       'silence' genre at the top of the genre list. This is a blank state."*)
+       and a blank state has NO PLAYERS — which is the point of it. The three
+       walks below are about what a MEMBER row does, so the gate hires one, the
+       way a reader would: the `+ line` mark in the Band branch. Said out loud
+       rather than done quietly, because "there is a voice to open" was an
+       assumption this file made for free until today. */
     await page.evaluate(() => window.__eightUp());
-    levels.push(["root", await now(), await page.$('[data-k="trayup"]')]);
-    /* ...AND `Tempo` JOINED THE TABLE, 2026-08-28. Paul: *"When I'm in tempo,
-       move the tempo nav to the right nav."* The eight tempo operations are a
-       level of the stripe now (ui/eight.js `tempoTrayItems`) and `Tempo` lands
-       on them, so it is a fourth tab with something inside it and the arrival
-       table has to say so or this gate would go on proving a claim about a
-       page that no longer exists. */
-    for (const [word, want] of [["Band", ["band"]],
-                                ["Tempo", ["tempo"]],
-                                ["Motif", ["motifops", "motif"]],
-                                ["Score", ["score"]]]) {
+    await page.waitForTimeout(100);
+    await page.click('[data-k="toptab-Band"]');
+    await page.waitForTimeout(TAB_SETTLE("Band"));
+    if (!(await page.$('[data-k="tabvoice2"]')) &&
+        !(await nowT()).rows.some((r) => r.depth === 1 && /^tab/.test(r.key))) {
+      const add = await page.$('[data-k="addvoice"]');
+      if (add) { await add.click(); await page.waitForTimeout(900); }
+    }
+    const anyUp = await page.$('[data-k="trayup"]');
+    is(!anyUp, "A6j " + width + " · there is no ↑ anywhere on the page — it is "
+      + "absent, not a dead button, and not at any depth");
+
+    /* A6j — A TAB EXPANDS, AND PRESSING IT AGAIN FOLDS. Five tabs have
+       children and the arrival opens them; the sixth press folds them back.
+       Driven through the BUTTONS, exactly as the ↑ walk was, because a gate
+       that expanded with `__eightExpand` would be proving the probe agrees
+       with itself. */
+    const walk = [];
+    for (const word of ["Band", "Structure", "Motif", "Score", "Mix"]) {
+      await page.evaluate(() => window.__eightUp());
+      await page.waitForTimeout(120);
       await page.click('[data-k="toptab-' + word + '"]');
       await page.waitForTimeout(TAB_SETTLE(word));
-      const into = await now();
-      const chain = [into.level];
-      for (let i = 0; i < 4; i++) {
-        const up = await page.$('[data-k="trayup"]');
-        if (!up) break;
-        await up.click();
-        await page.waitForTimeout(150);
-        chain.push((await now()).level);
-      }
-      levels.push([word, into, want.concat(["root"]), chain]);
+      const open = await nowT();
+      await page.click('[data-k="toptab-' + word + '"]');
+      await page.waitForTimeout(300);
+      const shut = await nowT();
+      walk.push({ word,
+        kids: open.rows.filter((r) => r.depth === 1).length,
+        exp: open.expanded.indexOf("toptab-" + word) >= 0,
+        folded: shut.rows.filter((r) => r.depth > 0).length,
+        marks: open.rows.filter((r) => r.on).length });
     }
-    const rootUp = levels[0][2];
-    is(!rootUp, "A6j " + width + " · no ↑ at the root level — it is absent, "
-      + "not a dead button");
-    const badLevel = levels.slice(1).filter(
-      (L) => L[3].join(">") !== L[2].join(">") || !L[1].items.length);
-    is(badLevel.length === 0,
-      "A6j " + width + " · every level is reachable and ↑ climbs one at a "
-      + "time to the root — "
-      + levels.slice(1).map((L) => L[0] + ": " + L[3].join(" ↑ ") + " (" +
-          L[1].items.length + " marks)").join(", "));
+    const badWalk = walk.filter((w) =>
+      !w.exp || w.kids < 1 || w.folded !== 0 || w.marks !== 1);
+    is(badWalk.length === 0,
+      "A6j " + width + " · every tab with children unfolds them on arrival and "
+      + "folds them on the next press, with one mark throughout — "
+      + walk.map((w) => w.word + ":" + w.kids).join(", ")
+      + (badWalk.length ? " — BAD " + JSON.stringify(badWalk) : ""));
 
-    /* A6k — THE LEVELS YOU REACH BY TAPPING A MARK, NOT BY OPENING A TAB
-       (2026-08-28). The walk above proves that every tab's ARRIVAL level is
-       reachable and climbs home; it says nothing about the levels that are one
-       tap FURTHER in, and since tonight there are four of those. Paul, in one
-       batch: *"Make the sections into nav items with the ability to add them
-       and remove them and recharacterize and move them up and down"* and
-       *"Make a new voice section for all voices."* So the band's `sections`
-       mark opens the sections, a section's mark opens that section's three
-       operations, and a voice's mark opens that voice's facets — four depths
-       under one tab, and `↑` must climb them one at a time. (It said "three
-       facets" until 2026-08-28 evening, when Paul asked for a fourth: *"add it
-       in a new nav element called mix that is per voice."* The COUNT was never
-       what this walk asserts — it asserts that a mark DESCENDS and that `↑`
-       climbs back one level at a time — so the number is written here as
-       description and nothing below reads it.)
+    /* A6k — TWO BRANCHES OPEN AT ONCE, WHICH IS THE WHOLE ASK. Open Band, open
+       Structure, and both stand: two rows wear `aria-expanded="true"`, the
+       rows of both are on the stripe at depth 1, and there is still exactly
+       ONE <mark> — the deepest open thing inside the tab you are standing in
+       (shell A6c's law, met by a tree). */
+    await page.evaluate(() => window.__eightUp());
+    await page.waitForTimeout(120);
+    await page.click('[data-k="toptab-Band"]');
+    await page.waitForTimeout(TAB_SETTLE("Band"));
+    await page.click('[data-k="toptab-Structure"]');
+    await page.waitForTimeout(TAB_SETTLE("Structure"));
+    const both = await page.evaluate(() => {
+      const T = window.__eightTree();
+      return { exp: T.expanded,
+        expandedRows: [...document.querySelectorAll('#nu-tray [aria-expanded="true"]')]
+          .map((b) => b.dataset.k || b.id).filter((k) => k !== "playops"),
+        marks: document.querySelectorAll("#nu-tray mark").length,
+        band: T.rows.some((r) => r.depth === 1 && /^tab/.test(r.key)),
+        secs: T.rows.some((r) => r.depth === 1 && /^secnav/.test(r.key)) };
+    });
+    is(both.expandedRows.length === 2 && both.marks === 1 &&
+       both.band && both.secs,
+      "A6k " + width + " · Band and Structure stand open together — two "
+      + "expanded ancestors, both their rows on the stripe, one <mark> — "
+      + JSON.stringify(both));
 
-       IT DRIVES THE MARKS, exactly as the walk above drives the tab buttons: a
-       gate that descended with `__eightTray` would be proving that the probe
-       agrees with itself. The section mark's key is read off the level rather
-       than typed, because a section's id is the RECORD's (`c1`, `s0`, whatever
-       precompose dealt it) and a gate that typed one would be asserting about
-       one shipped record instead of about the stripe. */
-    /* ...MINUS THE VOICE DESCENT, 2026-09-01. Paul: "In the nav only have
-       two levels but pop up a second shaded under-level. So it goes CLICK
-       BAND / CLICK 1 LEAD / INSTRUMENT MIX WHAT IT PLAYS AND PER-SECTION
-       APPEAR IN GRAY UNDER 1 LEAD." Tapping a voice no longer descends —
-       the stripe stays at `band` and the four facets arrive as shaded
-       `.nu-sub` rows under the voice's own mark. So the voice walk asserts
-       the NEW law: after the tap the level is still band, the facet rows
-       are ON the stripe (A6l below), and one ↑ goes home. The sections
-       descent is untouched — sections are a list a level deep by design. */
-    const deep = [];
-    for (const [start, marks, want] of [
-      ["Band", ["tabform", 0], ["section", "sections", "band", "root"]],
-      ["Band", ["voice"], ["band", "root"]],
-    ]) {
-      await page.evaluate((t) => window.__eightTab(t), start);
-      await page.waitForTimeout(TAB_SETTLE(start));
-      let ok2 = true;
-      for (const m of marks) {
-        const L = await now();
-        // a NUMBER is an index into the level that is showing; "voice" is the
-        // first mark that is neither of the two song-level pair nor an add
-        const k = typeof m === "number" ? L.items[m]
-          : m === "voice" ? L.items.find((x) => x.startsWith("tab") &&
-              x !== "tabform" && x !== "tabperformance")
-          : m;
-        if (!k) { ok2 = false; break; }
-        await page.click('[data-k="' + k + '"]');
-        await page.waitForTimeout(250);
-      }
-      if (!ok2) { deep.push([start, marks.join(">"), ["(no such mark)"]]); continue; }
-      const chain = [(await now()).level];
-      for (let i = 0; i < 5; i++) {
-        const up = await page.$('[data-k="trayup"]');
-        if (!up) break;
-        await up.click();
-        await page.waitForTimeout(200);
-        chain.push((await now()).level);
-      }
-      deep.push([start, marks.join(">"), chain, want]);
-    }
-    const badDeep = deep.filter((D) => !D[3] || D[2].join(">") !== D[3].join(">"));
-    is(badDeep.length === 0,
-      "A6k " + width + " · a mark descends and ↑ climbs back one level at a "
-      + "time — " + deep.map((D) => D[1] + ": " + D[2].join(" ↑ ")).join(", "));
-    /* A6l — THE SHADED UNDER-LEVEL IS REALLY THERE (2026-09-01, the walk the
-       A6k rewrite above promises): open a voice, and the four facet rows sit
-       on the band-level stripe as `.nu-sub`, the voice's own mark wears
-       aria-expanded, and exactly one <mark> still names the open thing. */
+    /* A6l — A MEMBER'S FOUR CHILDREN ARE REAL ROWS AT DEPTH 2. It read
+       `r.subs === 4` off `.nu-traylist .nu-sub` — one shaded depth, a boolean
+       — and the four were `inst · mix · plays · per-section`. The fourth is
+       Structure's now (the per-section grids), and `remove` took its place as
+       an ACT with its own refusal, so it is still four and the COUNT is still
+       not what this asserts: what it asserts is that a mark DESCENDS, that its
+       children are rows of the stripe at a real depth, and that exactly one
+       thing is marked. */
     {
-      await page.evaluate((t) => window.__eightTab(t), "Band");
+      await page.evaluate(() => window.__eightUp());
+      await page.waitForTimeout(120);
+      await page.click('[data-k="toptab-Band"]');
       await page.waitForTimeout(TAB_SETTLE("Band"));
-      const L0 = await now();
-      const vk = L0.items.find((x) => x.startsWith("tab") &&
-        x !== "tabform" && x !== "tabperformance");
+      const L0 = await nowT();
+      const vk = (L0.rows.find((r) => r.depth === 1 && /^tab/.test(r.key)) || {}).key;
       if (vk) {
         await page.click('[data-k="' + vk + '"]');
         await page.waitForTimeout(300);
-        const r = await page.evaluate((key) => ({
-          level: (window.__eightTray() || {}).level,
-          subs: [...document.querySelectorAll(".nu-traylist .nu-sub")].length,
-          exp: (document.querySelector('[data-k="' + key + '"]') || {})
-                 .getAttribute ? document.querySelector('[data-k="' + key + '"]')
-                 .getAttribute("aria-expanded") : null,
-          marks: document.querySelectorAll("#nu-tray mark, .nu-tray mark").length,
-        }), vk);
-        is(r.level === "band" && r.subs === 4 && r.exp === "true",
-          "A6l " + width + " · the four facets shade in under the open voice "
-          + "at the band level (level=" + r.level + " subs=" + r.subs
-          + " expanded=" + r.exp + ")");
-      } else skip(width + " · no voice mark for A6l");
+        const r = await page.evaluate((key) => {
+          const T = window.__eightTree();
+          const b = document.querySelector('[data-k="' + key + '"]');
+          return { deep: T.rows.filter((x) => x.depth === 2).map((x) => x.key),
+                   exp: b ? b.getAttribute("aria-expanded") : null,
+                   pressedOnParent: b ? b.getAttribute("aria-pressed") : null,
+                   marks: document.querySelectorAll("#nu-tray mark").length,
+                   depthAttr: [...document.querySelectorAll(".nu-traylist [data-depth]")]
+                     .length };
+        }, vk);
+        is(r.deep.length === 4 && r.exp === "true" &&
+           r.pressedOnParent === "false" && r.marks === 1 && r.depthAttr > 0,
+          "A6l " + width + " · the open member's four children are real rows at "
+          + "depth 2, the member wears a DOOR and not a state, and one <mark> "
+          + "still names the open thing — " + JSON.stringify(r));
+      } else skip(width + " · no member row for A6l");
     }
 
     // THE KIT GRID IS THE WIDEST THING THIS PAGE DRAWS and the default record
@@ -815,13 +888,24 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
          exist) and the HEAD carries "you are here" by naming the motif. Paul:
          *"When I'm in a motif, the motif operations should be the right nav
          elements on the view."* */
-      if (b.acts)
-        is(b.marks.length === 0 && b.pressed.length === 0 &&
-           /^up — out of \S/.test(b.headSays || ""),
-          "A6c " + at + " · a level of ACTIONS marks nothing and the head says "
-          + "where you are: " + JSON.stringify(b.headSays) + " (marks "
-          + JSON.stringify(b.marks) + ", pressed " + JSON.stringify(b.pressed) + ")");
-      else is(b.marks.length === 1 && b.marks[0] === b.now &&
+      /* THE ACTS CASE IS REWRITTEN, 2026-09-02, AND ITS OLD FORM IS QUOTED
+         ABOVE. It read: `b.marks.length === 0 && b.pressed.length === 0 &&
+         /^up — out of \S/.test(b.headSays)` — nothing marked, and the HEAD's
+         ↑ sentence naming the thing you were inside. Two things reverse it,
+         both Paul's: *"We should never need the 'up' icon"* deletes the head
+         and its sentence, and *"we should really work hard on nesting options
+         inside the left nav"* means the stripe is never one level, so "this
+         level is a level of ACTIONS" is no longer a fact about the stripe at
+         all — it is a fact about a BRANCH, and the branch itself is the open
+         thing and wears the mark.
+         THE LAW IS UNCHANGED AND IS THE ONE BELOW: exactly one <mark> and one
+         `aria-pressed="true"` in the stripe, on the deepest open thing. What
+         the acts declaration still buys is that none of a branch's ACTION rows
+         may be marked — fourteen `aria-pressed="false"` transforms would tell a
+         screen reader there is a state to be in — and that is asserted on the
+         rendered page by test/nav-tree.js, where the branch can be opened on
+         purpose rather than caught wherever this sweep happens to land. */
+      is(b.marks.length === 1 && b.marks[0] === b.now &&
          b.pressed.length === 1 && b.pressed[0] === b.now,
         "A6c " + at + " · one <mark>, one aria-pressed, and both say \"" + b.now
         + "\" (marks " + JSON.stringify(b.marks) + ", pressed "

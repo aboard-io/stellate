@@ -23,6 +23,7 @@
  * shell build 1200, which is not installed on this machine.
  */
 "use strict";
+const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 const path = require("path");
 const { execFileSync } = require("child_process");
 const R = path.resolve(__dirname, "..");
@@ -226,8 +227,33 @@ const J = (x) => JSON.parse(JSON.stringify(x));
       const p = await ctx.newPage();
       p.on("pageerror", (e) => errs.push(W + ": pageerror " + e.message));
       p.on("console", (m) => { if (m.type() === "error") errs.push(W + ": console " + m.text()); });
+      /* ===== THE BOX BOOTS ON THE BLANK STATE NOW (2026-09-02) ================
+         Paul, the composer round: *"Add a 'silence' genre at the top of the genre
+         list. This is a blank state."* The box opens on `silence` — one eight-bar
+         section, ZERO voices, one cell of rests — instead of on a copy of the
+         shipped chant, because a box that opened playing somebody else's record was
+         answering a question nobody had asked yet.
+         THIS GATE IS ABOUT A RECORD WITH A BAND IN IT, so it asks for one, in the
+         address, the way a link does: `#at=Rome&y=600&s=1` is the shipped chant —
+         the very `songs.js TERMS` this file used to inherit from the boot — named
+         rather than assumed. `s=1` because the boot draws a seed now (Paul: *"Boot
+         up every new session with a new seed unless there's a seed in the URL"*) and
+         a gate that re-rolled its own subject would measure a different record every
+         run. Naming the fixture is the honest half of the change: what this file
+         asserts about "the record" is now a claim about a record it chose. */
       await p.goto(PAGE, { waitUntil: "networkidle" });
       await p.waitForTimeout(2200);
+      /* ...AND THE FIXTURE IS THE SHIPPED CHANT ITSELF, BY NAME (2026-09-02).
+         The paragraph above is right that this gate needs a record with a band
+         in it; what it needs is THE SHIPPED ONE — its checks name `cantor` and
+         read `T1.voices.find(v => v.name === "cantor")` off `songs.js TERMS`,
+         and a COMPOSED anchor at Rome 600 names its players `voice`, `voice2`,
+         `vocal`. So the record is asked for through the page's own document
+         door rather than through the address: `__eightShipped()` is
+         `CTX.setDocument(a deep copy of TERMS)`, the same call a link makes,
+         and it is the inherited boot record made explicit. */
+      await p.evaluate(() => window.__eightShipped && window.__eightShipped());
+      await p.waitForTimeout(1200);
       const tag = " @" + W;
 
       /* THE VOICE TABS ARE THE STRIPE'S `band` LEVEL SINCE 2026-08-28 (Paul:
@@ -255,7 +281,22 @@ const J = (x) => JSON.parse(JSON.stringify(x));
       const top = async (n) => { await p.evaluate((x) => window.__eightTab(x), n);
         await p.waitForTimeout(500); };
       const band = async () => { await top("Band"); };
-      const tab = async (name) => { await band(); await p.evaluate((n) => {
+      /* ...AND `performance` IS INSIDE `Structure` SINCE 2026-09-02. Paul:
+         *"Sections/Structure has the same challenges. … Bring performance into
+         structure."* It is the last block of that panel and `tabperformance`
+         is the row in the stripe that opens it — the KEY did not move, because
+         an address does not move when a row does; the branch it hangs under
+         did. Every other name this helper is called with is a voice, and
+         voices are still the Band's. */
+      const tab = async (name) => {
+        if (name === "performance" || name === "form") {
+          await top("Structure");
+          await p.evaluate(() => { const t =
+            document.querySelector('[data-k="tabperformance"]'); if (t) t.click(); });
+          await p.waitForTimeout(450);
+          return;
+        }
+        await band(); await p.evaluate((n) => {
         const t = [...document.querySelectorAll('#nu-tray [data-k^="tab"]')]
           .find((x) => (x.getAttribute("aria-label") || "").trim() === n);
         if (t) t.click(); }, name);

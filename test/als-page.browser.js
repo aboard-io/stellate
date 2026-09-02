@@ -67,6 +67,7 @@
  * the executable path is EXPLICIT — chromium.launch() with no path resolves
  * shell build 1200, which is not installed on this machine.
  */
+const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 "use strict";
 const { chromium } = require("playwright");
 const { spawn, execFileSync } = require("child_process");
@@ -161,7 +162,15 @@ const node = (args) => execFileSync(process.execPath, args, { cwd: ROOT, encodin
   p.on("request", (r) => asked.push(r.url()));
 
   await p.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
-  await p.goto(PAGE, { waitUntil: "networkidle" });
+  /* THE BOX BOOTS ON THE BLANK STATE (2026-09-02). Paul, the composer round:
+     *"Add a 'silence' genre at the top of the genre list. This is a blank
+     state."* — one eight-bar section, ZERO voices, one cell of rests. This gate
+     is about a record with a band in it, so it names one in the address, the way
+     a link does: the shipped chant, at seed 1 because the boot draws a seed now
+     (*"Boot up every new session with a new seed unless there's a seed in the
+     URL"*) and a gate that re-rolled its own subject would measure a different
+     record every run. */
+  await p.goto(PAGE + CHANT, { waitUntil: "networkidle" });
   await p.waitForFunction(() => typeof window.__deckState === "function", null, { timeout: 30000 });
 
   /* ---- 1. the card is live, and says nothing about a command line ------- */

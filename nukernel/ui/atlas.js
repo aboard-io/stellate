@@ -266,6 +266,32 @@ const NS = "http://www.w3.org/2000/svg";
 const S = (t, a) => { const n = document.createElementNS(NS, t);
   for (const k in a) n.setAttribute(k, a[k]); return n; };
 
+/* THE SEED'S DOMAIN, AND IT IS 2^16 BECAUSE PAUL SAID SO (2026-09-02): *"pop
+   up a vertical slider from zero to 2^16."* It was 1..9999 from a URL and
+   1..unbounded by gesture, which is two domains for one number. `SEEDMAX` is
+   the ceiling everything clamps to; `SEEDMIN` is 0 because the slider starts
+   there and 0 is a legal reading (it sounds like 1 — the idiom as written —
+   and the flyout says so on the artifact). */
+const SEEDMAX = 65536;
+const clampSeed = (n) => {
+  const v = Math.round(Number(n));
+  return Number.isFinite(v) ? Math.max(0, Math.min(SEEDMAX, v)) : 1;
+};
+/* THE DRAW. 1..65535 — never 0 and never the ceiling, for the reason written
+   at `let seed` above: 0 and 1 are one record, so a random session that landed
+   on either would be a session that was not new. */
+const drawSeed = () => {
+  try {
+    const C = (typeof crypto !== "undefined") ? crypto : null;
+    if (C && C.getRandomValues) {
+      const a = new Uint32Array(1);
+      C.getRandomValues(a);
+      return 1 + (a[0] % (SEEDMAX - 1));
+    }
+  } catch (e) {}
+  return 1 + Math.floor(Math.random() * (SEEDMAX - 1));
+};
+
 export function mount(parent, ctx) {
   if (!parent) return undefined;
 
@@ -280,7 +306,29 @@ export function mount(parent, ctx) {
   /* ---------- state: two angles, a zoom, a year and a seed -------------- */
   let yi = 0;                 // an index into YEARS, never a year
   let here = null;            // the gk the page is playing, or null
-  let seed = 1;               // the atlas's own; the bar's "rewrite" bumps it
+  /* ===== A NEW SEED EVERY SESSION, 2026-09-02 ==========================
+     Paul: *"Boot up every new session with a new seed unless there's a seed in
+     the URL."*
+
+     IT READ `let seed = 1` and it was a decision with its own dated law
+     (2026-08-27, "READING 1 IS TODAY, BYTE FOR BYTE — the atlas opens every
+     anchor at seed 1, so the record a hand lands on is the record it has
+     always been; only pressing REWRITE moves"). That law is REVERSED here, in
+     place, by the sentence above: a hand-landed record is at the SHOWN seed,
+     and the shown seed is drawn fresh unless the address named one.
+       · The DRAW is 1..65535 — `crypto.getRandomValues` where there is one,
+         `Math.random` where there is not. It never draws 0, and it never draws
+         the top of the domain: `precompose` returns null from both of its
+         seed-gated blocks at `seed <= 1`, so 0 and 1 are the SAME record (the
+         idiom as written) and drawing either would mean "a new session"
+         sometimes meant "the written idiom".
+       · The URL WINS, and it wins even with no place: `ctx.seedFromLink()` is
+         ui/eight.js's `readLink()` answer, handed in rather than parsed here,
+         because the fragment is that file's fact and the seed is this one's.
+     THE ONE-OWNER LAW IS UNTOUCHED. This is still the only store; the bar
+     still reads it through `reading()`, still moves it through `reseed()`, and
+     now also through `setReading()` at the foot of this file. */
+  let seed = bootSeed();
   /* ONE OWNER FOR "WHICH READING OF THIS ANCHOR IS ON THE PAGE", and it is
      this `seed` — still here on 2026-08-27, when the BUTTON left. The
      control moved to the .nu-bar (Paul: "I'd like a button next to play that
@@ -301,6 +349,20 @@ export function mount(parent, ctx) {
      ctx that has never heard of a fragment, and a missing hook is a page that
      simply does not have an address to keep. */
   const moved = () => { try { if (ctx && ctx.moved) ctx.moved(); } catch (e) {} };
+  /* THE BOOT'S OWN READING — the address if it named one, a fresh draw if it
+     did not. It is a FUNCTION and not an expression at the declaration because
+     `ctx` is this closure's and the answer must be asked for once, at mount,
+     in the same statement the counter is created in. `ctx.seedFromLink` is
+     optional exactly as `ctx.moved` and `ctx.play` are: this file mounts in
+     gates and in the daw with a ctx that has never heard of a fragment, and a
+     missing hook is a box that simply draws. */
+  function bootSeed() {
+    try {
+      const n = ctx && ctx.seedFromLink ? ctx.seedFromLink() : null;
+      if (n != null && String(n).trim() !== "") return clampSeed(n);
+    } catch (e) {}
+    return drawSeed();
+  }
 
   /* ---------- the DOM, in reading order --------------------------------
      h2 (shipped by index.html) · the sentence · THE SLIDER · the globe · the
@@ -559,6 +621,21 @@ export function mount(parent, ctx) {
      grey this page legislates against; a dash with a reason on it is the page
      saying what it knows. */
   const ROLES = Object.keys(EXCLUDE).sort();
+  /* ===== THE BLANK STATE IS PINNED FIRST (2026-09-02) ===================
+     Paul: *"Add a 'silence' genre at the top of the genre list. This is a
+     blank state."*
+
+     `silence` IS AN `EXCLUDE` ROW — it has no place on the map, which is why
+     wave 0 declared it there with its own reason ("the blank state has no
+     place — nothing has been chosen yet"). But it is NOT a role: a role is a
+     job the catalogue does (`simple`, `parts`), and this is where the box
+     starts. So it comes OUT of the six that close the list and goes to the top
+     of it, with "the blank state" where a role prints "a role".
+     `ROLES` KEEPS ALL SEVEN so the list's own accessible name still counts
+     every row it draws without arithmetic; `LISTROLES` is what the closing
+     loop walks. One number, one derivation, no `+ 1` anywhere. */
+  const PINNED = "silence";
+  const LISTROLES = ROLES.filter((k) => k !== PINNED);
   const idx = el("div", { id: "atlasIndex" });
   const idxRows = el("ol", { id: "atlasIndexRows", className: "nu-ix" });
   /* THE COUNT IS DERIVED, NOT TYPED, for the same reason every other number on
@@ -809,8 +886,16 @@ export function mount(parent, ctx) {
        <li>'s data-year attribute two lines up stays the SIGNED number,
        because sweep() computes on it; print and compute are two jobs and
        atlas.js yearWord is the one owner of the print half. */
+    /* THE PIN, ABOVE `ALL` (2026-09-02 — see PINNED above). Its year cell is
+       the em dash a role's is, and it carries NO `data-place` and no
+       `data-year`, so `sweep()` skips it exactly as it skips a role: the row
+       moves no year and lights no mark, which is what a blank state has to do
+       at the top of a chronology. Its plate PLAYS through `openRow`'s role
+       branch, which already calls `pick(gk, playNow)` for a placeless key —
+       no new door. */
+    f.append(idxRow("—", PINNED, "the blank state", PINNED, EXCLUDE[PINNED]));
     for (const r of ALL) f.append(idxRow(yearWord(r.year), r.gk, r.place, r.gk, null));
-    for (const gk of ROLES) f.append(idxRow("—", gk, "a role", gk, EXCLUDE[gk]));
+    for (const gk of LISTROLES) f.append(idxRow("—", gk, "a role", gk, EXCLUDE[gk]));
     idxRows.append(f);
     idxMs = ((typeof performance !== "undefined") ? performance.now() : 0) - t0;
     /* THE COST IS DECLARED ON THE ARTIFACT, not promised in this comment.
@@ -1774,13 +1859,25 @@ export function mount(parent, ctx) {
      `here` is null for one and the bar would be refused for a record it can
      perfectly well rewrite. Returns false when there is nothing to rewrite,
      and says why. */
+  /* ...AND IT ROLLS RATHER THAN COUNTS, 2026-09-02. Paul, of the die: *"pop up
+     a vertical slider from zero to 2^16"* — a seed is a POSITION in a domain
+     now, not a counter, and `seed++` walked off the top of the slider after
+     65,537 presses and had no wrap. A roll is also what the picture has always
+     said this button does (glyph.js: "REWRITE IS THE THROW … a number you
+     cannot predict decides what the record IS"), so the die finally throws.
+     IT NEVER ROLLS THE NUMBER IT IS ON, and that is arithmetic rather than a
+     retry loop being clever: `album` mode watches `#reading` MOVE to know the
+     gesture was taken (test/gutter.js T11), and a roll that landed on the same
+     face would be a press that did nothing and looked like a defect. */
   function reseed(gk, done) {
     const target = gk || here;
     if (!target) {
       say.textContent = "pick a place first, then this writes it again.";
       return false;
     }
-    seed++;
+    let n = drawSeed();
+    if (n === seed) n = (n % (SEEDMAX - 1)) + 1;
+    seed = n;
     pick(target, done);
     return true;
   }
@@ -1798,7 +1895,23 @@ export function mount(parent, ctx) {
      Optional, like `ctx.moved`: the atlas mounts in gates and in the daw with
      a ctx that has never heard of a transport, and a missing hook is a map
      that composes without sounding, exactly as it did yesterday. */
-  const playNow = () => { try { if (ctx && ctx.play) ctx.play(); } catch (e) {} };
+  /* ===== PICKING A GENRE LANDS ON ITS RULES (2026-09-02) ================
+     Paul: *"I click the genre, it starts to play, and there's a new view: A
+     genre editor appears. This is the 'Rules' section."*
+
+     ONE GESTURE, THREE EFFECTS, AND THE THIRD IS A TAB. Composing and playing
+     were already this callback's job (2026-08-29, *"When I tap a place start
+     playing"*); what is added is the VIEW, and it is added HERE rather than in
+     `pick` because it is a fact about a HAND choosing a genre — the boot, a
+     refused link and `showing()` all reach `pick` too, and none of them should
+     move the tab under a reader. It is `ctx.showTab`, a hook, for the reason
+     `ctx.play` is one: this file owns the globe and must not learn what a tab
+     is. Optional, like the other three hooks — a ctx without it is a map that
+     composes and sounds and does not navigate, which is the daw's case. */
+  const playNow = () => {
+    try { if (ctx && ctx.play) ctx.play(); } catch (e) {}
+    try { if (ctx && ctx.showTab) ctx.showTab("Rules"); } catch (e) {}
+  };
 
   function choose(name) {
     /* THE YEAR'S OWN MAP, NOT recordAt() — one owner for what is here. A mark
@@ -1807,7 +1920,11 @@ export function mount(parent, ctx) {
        fact rather than an assumption. */
     const r = shown.get(name);
     if (!r) { say.textContent = name + " — no record here at " + YEARS[yi] + "."; return; }
-    if (here === r.gk) seed++;
+    // …AND THE SECOND TAP ROLLS RATHER THAN COUNTS (2026-09-02), for the
+    // reason `reseed` gives: a seed is a position in a domain, and `seed++`
+    // had no ceiling and no wrap.
+    if (here === r.gk) { let n = drawSeed(); if (n === seed) n = (n % (SEEDMAX - 1)) + 1;
+                         seed = n; }
     /* AND THE CAMERA ARRIVES RATHER THAN TURNING (2026-08-29). Paul: *"When I
        tap a place start playing and zoom in the map on that place."*
 
@@ -2419,12 +2536,45 @@ export function mount(parent, ctx) {
        takes it straight to the dice. 1 is the reading every record opens on
        (ui/eight.js prints it at boot), so 1 is what anything unreadable
        becomes. */
-    const n = Math.round(Number(want.s));
-    seed = Number.isFinite(n) && n >= 1 ? Math.min(n, 9999) : 1;
+    /* THE CLAMP IS 0..65536 SINCE 2026-09-02 (Paul: *"a vertical slider from
+       zero to 2^16"*). It was `n >= 1 ? Math.min(n, 9999) : 1`, and the
+       sentence above it — "1 is the reading every record opens on … so 1 is
+       what anything unreadable becomes" — is half reversed: no record opens on
+       1 by default any more (the boot draws), but 1 is still what an
+       UNREADABLE `s=` becomes, because a stranger's string that means nothing
+       should land on the idiom as written rather than on a die roll nobody
+       asked for. `clampSeed` is the one owner of both halves. */
+    seed = clampSeed(want.s);
     setYear(indexOf(r.year));
     pick(r.gk, done);
     return true;
   }
 
-  return { showing, reseed, reading, link, open, note };
+  /* ===== THE SETTER (2026-09-02) =======================================
+     Paul: *"When I click seed pop up a vertical slider from zero to 2^16."*
+
+     THE SLIDER HAD NO DOOR. Every reader of the seed went through `reading()`
+     and every writer was a gesture inside this file (`reseed`, `choose`,
+     `open`) — so a control in ui/eight.js that wanted to SAY a number had only
+     two options, both forbidden by this file's own note at `let seed`: keep a
+     second copy, or reach in. This is the third: one clamp, one assignment,
+     one compose, and the number stays here.
+     IT COMPOSES THE RECORD THE PAGE IS ON, which is `here` — the anchor a hand
+     landed — and falls back to the BASIS the box is holding when nothing has
+     been landed yet (the blank state at boot). A record that cannot be named
+     is not composed and the setter says false rather than throwing: a slider
+     on a box that has picked nothing moves the number and nothing else, which
+     is honest and is what the readout then shows.
+     `done` IS `startNow` OR NOTHING, and the caller decides which — the same
+     rule `pick` states: the record lands on the second frame, so a caller that
+     started the engine on its own line would start it on the document it was
+     about to replace. */
+  function setReading(n, done) {
+    seed = clampSeed(n);
+    const target = here || (ctx && ctx.doc && ctx.doc() ? ctx.doc().basis : null);
+    if (!target) { moved(); return false; }
+    pick(target, done);
+    return true;
+  }
+  return { showing, reseed, reading, setReading, link, open, note };
 }

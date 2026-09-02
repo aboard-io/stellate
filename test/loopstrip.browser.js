@@ -35,6 +35,7 @@
  * RUN:  NODE_PATH=/home/ford/ftrain-2025/node_modules node test/loopstrip.browser.js
  */
 "use strict";
+const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 const { chromium } = require("playwright");
 const path = require("path");
 const { spawn } = require("child_process");
@@ -88,7 +89,21 @@ function standUpServer() {
     const errs = [];
     p.on("pageerror", (e) => errs.push("pageerror: " + e.message));
     p.on("console", (m) => { if (m.type() === "error") errs.push("console: " + m.text()); });
-    await p.goto(PAGE, { waitUntil: "load" });
+    /* ===== THE BOX BOOTS ON THE BLANK STATE NOW (2026-09-02) ================
+       Paul, the composer round: *"Add a 'silence' genre at the top of the genre
+       list. This is a blank state."* The box opens on `silence` — one eight-bar
+       section, ZERO voices, one cell of rests — instead of on a copy of the
+       shipped chant, because a box that opened playing somebody else's record was
+       answering a question nobody had asked yet.
+       THIS GATE IS ABOUT A RECORD WITH A BAND IN IT, so it asks for one, in the
+       address, the way a link does: `#at=Rome&y=600&s=1` is the shipped chant —
+       the very `songs.js TERMS` this file used to inherit from the boot — named
+       rather than assumed. `s=1` because the boot draws a seed now (Paul: *"Boot
+       up every new session with a new seed unless there's a seed in the URL"*) and
+       a gate that re-rolled its own subject would measure a different record every
+       run. Naming the fixture is the honest half of the change: what this file
+       asserts about "the record" is now a claim about a record it chose. */
+    await p.goto(PAGE + CHANT, { waitUntil: "load" });
     await p.waitForTimeout(2500);
 
     /* ---- stand on the first line voice's inst facet -------------------- */

@@ -41,6 +41,7 @@
 //     proved to actually say something (FUTURE's "nothing greys silently").
 //
 // Run:  NODE_PATH=/home/ford/ftrain-2025/node_modules node test/mp3.test.js
+const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 "use strict";
 const http = require("http"), fs = require("fs"), path = require("path"), os = require("os");
 const ROOT = path.resolve(__dirname, "..");
@@ -113,7 +114,15 @@ function firstFrame(buf) {
   const page = await ctx.newPage();
   page.on("pageerror", (e) => errors.push(String(e).slice(0, 200)));
   page.on("console", (m) => { if (m.type() === "error") errors.push("console: " + m.text().slice(0, 200)); });
-  await page.goto(URL_, { waitUntil: "load", timeout: 60000 });
+  /* THE BOX BOOTS ON THE BLANK STATE (2026-09-02). Paul, the composer round:
+     *"Add a 'silence' genre at the top of the genre list. This is a blank
+     state."* — one eight-bar section, ZERO voices, one cell of rests. This gate
+     is about a record with a band in it, so it names one in the address, the way
+     a link does: the shipped chant, at seed 1 because the boot draws a seed now
+     (*"Boot up every new session with a new seed unless there's a seed in the
+     URL"*) and a gate that re-rolled its own subject would measure a different
+     record every run. */
+  await page.goto(URL_ + CHANT, { waitUntil: "load", timeout: 60000 });
   /* A PANEL IS NOT BUILT UNTIL IT IS FIRST OPENED (mount on demand), and
      `__eightScore()` reads the SCORE panel — test/deck.test.js records the
      same 30-second hang against a Score tab that had never been built. So

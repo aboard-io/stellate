@@ -123,7 +123,13 @@ const report = () => {
   // the bass is the one chair whose instrument the document cannot carry, so
   // this is the whole of its control surface and it has to be measured at the
   // seat, not at the store.
-  await cold("#at=Kingston&y=1969");
+  /* `&s=1` SINCE 2026-09-02. Paul: *"Boot up every new session with a new seed
+     unless there's a seed in the URL."* An absent `s` used to mean 1 (the atlas
+     clamped anything unreadable to it); it means A FRESH DRAW now, so a cold
+     load with no seed is a different record every run and every byte-level
+     claim below would be measuring the dice. The seed is named in the address,
+     which is the door the sentence itself points at. */
+  await cold("#at=Kingston&y=1969&s=1");
   const seat0 = (await seats()).filter((s) => s.slice(0, 5) === "bass=");
   await S((M) => M.hirePoolChair("bass", "fretless_bass"));
   await p.waitForTimeout(500);
@@ -162,7 +168,7 @@ const report = () => {
   await p.waitForTimeout(300);
   await p.evaluate(() => { try { localStorage.setItem("nukernel.pool.probe", "1"); }
     catch (e) {} });
-  await cold("#at=Faisalabad&y=1988&t=where");
+  await cold("#at=Faisalabad&y=1988&s=1&t=where");
   check(/Faisalabad/.test(await name()),
     "5 · a cold load of the link lands the record: " + JSON.stringify(await name()));
   check((await pool()) === null,

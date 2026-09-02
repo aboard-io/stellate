@@ -126,9 +126,27 @@ export const GLYPH = {
                   written music", and the deck's own two views take the ruled
                   paper (▤) and the roll (▥) below it, so the clef is free.
        Export  ⇩  out of the box and onto your disk */
+  /* THREE ROWS ADDED 2026-09-02, AND ONE DEBT PAID (the composer round).
+     Paul: *"I click the genre, it starts to play, and there's a new view: A
+     genre editor appears. This is the 'Rules' section; it'll need a new icon
+     in the left nav."* and *"Sections/Structure has the same challenges …
+     It should be top level, not buried under band, and below band."*
+       Rules      §  the section mark — a rule of law is a §, and these are
+                     the record's own rules read as sentences. Nothing else in
+                     this table uses it.
+       Structure  ▦  the same ▦ `GLYPH.song.form` and `GLYPH.sec.list` already
+                     wear, because it is the same fact one scope up ("the same
+                     fact wears the same mark"): the sections ARE the structure.
+       Video      ▣  the debt this table named on 2026-09-01 ("Video is not in
+                     this table and draws the '•' fallback"), paid. A framed
+                     square is a screen; ▦ is spent on the form, and ▣ is its
+                     filled-centre sibling — a picture inside a frame rather
+                     than a grid. */
   tab: {
     Where:   { g: "⊕", w: "Where",
                s: "the globe and the when-slider — where and when the record comes from" },
+    Rules:   { g: "§", w: "Rules",
+               s: "the genre as sentences — the rules this record was written from" },
     Tempo:   { g: "♩", w: "Tempo",
                s: "how fast it counts, how a bar is divided, and how it swings" },
     Key:     { g: "♯", w: "Key",
@@ -143,6 +161,8 @@ export const GLYPH = {
        put them as nav items in the voices themselves"), so what this tab holds
        is the series and the automation grid. The MARK does not move: it is the
        voice's `mix` facet's mark too, one scope down. */
+    Structure: { g: "▦", w: "Structure",
+               s: "the sections, the grids, and how the record is performed" },
     Mix:     { g: "⇅", w: "Mix",
                s: "the bus series — genre fx, delay, reverb, main — and the " +
                   "section automation grid" },
@@ -150,6 +170,8 @@ export const GLYPH = {
                s: "the producer — a step through genre space, and what it moved" },
     Score:   { g: "𝄞", w: "Score",
                s: "the record as notation and as a piano roll" },
+    Video:   { g: "▣", w: "Video",
+               s: "the record as a film — the deck's own picture" },
     /* Screensaver (2026-09-01, "Bring back the screensaver from stellate as a
        new view like the video view"): ✷ is a star with rays — the old star
        map's whole subject — and ✦ was already spent on Produce. (Video is not
@@ -214,6 +236,22 @@ export const GLYPH = {
                s: "write the record again from the same place, on a new seed" },
     take:    { g: "↻", w: "take",
                s: "the same record, played again — a new roll of the hand's dice" },
+    /* THREE MORE, 2026-09-02 (the composer round). `opts` pays the debt
+       nu.css named at `#playops` ("A PICTURE FOR IT IS OWED and it wants a row
+       in ui/glyph.js `GLYPH.act`"): ⚙ is the gear every platform spells
+       settings with, and #playops was the one mark in the gutter that was a
+       word because it had no picture. `seed` is the SAME ⚅ the rewrite
+       gesture wears, under the word the foot now prints on it — one node, one
+       id, two names: the GESTURE's ("rewrite 5", what a screen reader is told
+       and what eleven gates call it) and the SUBJECT's ("seed", what an eye
+       reads under the die). `tap` is the tap-tempo mark the Tempo panel takes
+       in the next wave. */
+    opts:    { g: "⚙", w: "opts",
+               s: "play options — the mode, the take, the voices and the room" },
+    seed:    { g: "⚄", w: "seed",
+               s: "the reading this record was written at — tap for the slider" },
+    tap:     { g: "⏱", w: "tap",
+               s: "tap a tempo and the record counts what you tapped" },
   },
 
   /* THE BUS SERIES, IN THE ENGINE'S OWN ORDER. The board numbers these 1..4 —
@@ -240,6 +278,17 @@ export const GLYPH = {
      is the confusion this glyph is chosen to avoid. It is the same arrow
      `.nu-tf` already sets in the same hand (system-ui, Segoe UI Symbol, Noto
      Sans Symbols 2) so the two never read as two different arrows. */
+  /* ===== TOMBSTONE: THE ↑ HAS NO CALLERS, 2026-09-02 ====================
+     REVERSED by Paul, the composer round: *"We should never need the 'up'
+     icon because we can expand multiple levels of interface option."* The
+     gutter is a TREE now — several branches stand open at once and the way
+     back out of one is folding it, which is the same mark you opened it with.
+     `trayUpBox`, the head signature and every construction of this row are
+     deleted from ui/eight.js; `sayUp()` below has no callers either.
+     THE ROW STAYS, EMPTY OF CALLERS, because the paragraph above it is the
+     argument for ↑ over ← and is worth keeping where the picture is: if a
+     future stripe ever needs a non-sibling move, this is the mark and this is
+     why it is not an arrow pointing left. Nothing on the page draws it. */
   nav: {
     up: { g: "\u2191", w: "up" },
   },
@@ -488,8 +537,24 @@ export function paintIcon(b, opts) {
   // attributes above are written on every call either way — this guards only
   // the DOM rebuild — but the signature must still move, or `.nu-ic` would
   // never repaint for a state change that is genuinely visible.)
+  /* ...AND THE SECOND LINE, 2026-09-02 (the composer round). Paul: *"On the
+     nav I need to know what they're playing as instruments."* A tree row says
+     two things now — WHO ("cantor") and WHAT ("church organ", "8 bars ·
+     drive", "Kingston 1969") — and the second is a `sub` line under the word,
+     dim, one line, ellipsised. It is a THIRD member of the face signature
+     rather than a fourth channel: the sub is drawn from the same table the
+     word comes from, it is never a second copy of anything, and a row whose
+     instrument changed under a repaint-in-place must rebuild or the line goes
+     stale (which is exactly the bug the signature exists to prevent).
+     IT IS NOT IN THE ACCESSIBLE NAME. `aria-label` stays the WORD (plus a
+     refusal's reason), because "cantor, church organ" read out on every arrow
+     key is a name that grew a description — and the description is already in
+     `data-say`, which the hold explainer speaks. The three-part body
+     (glyph · number · word) is untouched, so A6h and gutter T10 still find the
+     `.nu-vh` word they read. */
+  const sub = opts.sub == null ? "" : String(opts.sub).trim();
   const sig = opts.glyph + "|" + (opts.num == null ? "" : opts.num) + "|" +
-              word + "|" + (why ? "no" : "");
+              word + "|" + (why ? "no" : "") + "|" + sub;
   if (had && had.tagName === want && b.dataset.face === sig) return b;
   b.dataset.face = sig;
   b.textContent = "";
@@ -499,6 +564,7 @@ export function paintIcon(b, opts) {
   box.append(g);
   if (opts.num != null) box.append(el("span", String(opts.num), "nu-n"));
   box.append(el("span", word, "nu-vh"));
+  if (sub) box.append(el("span", sub, "nu-sub2"));
   b.append(box);
   return b;
 }

@@ -38,6 +38,7 @@
 //   H5  the honest negative: with the wire cut, a genre never visited REFUSES
 //       IN WRITING — the engine sentence names what would not come and never
 //       claims "held".
+const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 "use strict";
 const http = require("http"), fs = require("fs"), path = require("path");
 const ROOT = path.resolve(__dirname, "..");
@@ -223,7 +224,15 @@ async function listen(page, { secs, until, label }) {
   // ── the first visit installs the worker; the second is the one under test.
   // A worker takes control AFTER the page that installed it has already
   // fetched itself, so visit one can never be the offline case.
-  await page.goto(URL0, { waitUntil: "load", timeout: 120000 });
+  /* THE BOX BOOTS ON THE BLANK STATE (2026-09-02). Paul, the composer round:
+     *"Add a 'silence' genre at the top of the genre list. This is a blank
+     state."* — one eight-bar section, ZERO voices, one cell of rests. This gate
+     is about a record with a band in it, so it names one in the address, the way
+     a link does: the shipped chant, at seed 1 because the boot draws a seed now
+     (*"Boot up every new session with a new seed unless there's a seed in the
+     URL"*) and a gate that re-rolled its own subject would measure a different
+     record every run. */
+  await page.goto(URL0 + CHANT, { waitUntil: "load", timeout: 120000 });
   await sleep(8000);
   PHASE = "visit2";
   await page.goto(URL0, { waitUntil: "load", timeout: 120000 });

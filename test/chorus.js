@@ -37,6 +37,7 @@
  *
  * RUN:  NODE_PATH=/home/ford/ftrain-2025/node_modules node test/chorus.js
  */
+const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 "use strict";
 const { chromium } = require("playwright");
 const path = require("path");
@@ -172,7 +173,15 @@ async function run(PAGE, { patch, jobs, ui }) {
     await route.fulfill({ response: res, body: body +
       "\nwindow.__satPut = (d) => CTX.setDocument(d);\n" });
   });
-  await p.goto(PAGE, { waitUntil: "load" });
+  /* THE BOX BOOTS ON THE BLANK STATE (2026-09-02). Paul, the composer round:
+     *"Add a 'silence' genre at the top of the genre list. This is a blank
+     state."* — one eight-bar section, ZERO voices, one cell of rests. This gate
+     is about a record with a band in it, so it names one in the address, the way
+     a link does: the shipped chant, at seed 1 because the boot draws a seed now
+     (*"Boot up every new session with a new seed unless there's a seed in the
+     URL"*) and a gate that re-rolled its own subject would measure a different
+     record every run. */
+  await p.goto(PAGE + CHANT, { waitUntil: "load" });
   await p.waitForTimeout(2500);
   await p.waitForFunction(() => typeof window.__satPut === "function", null,
     { timeout: 30000 });

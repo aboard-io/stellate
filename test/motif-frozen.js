@@ -94,6 +94,7 @@
 // so the executable is explicit and checked before use; and the page needs
 // cross-origin isolation for SharedArrayBuffer, which is what serve.sh gives.
 
+const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 const fs = require("fs");
 const path = require("path");
 
@@ -179,7 +180,15 @@ function firstDiff(a, b) {
     const page = await browser.newPage({ viewport: { width, height: HEIGHT } });
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
-    await page.goto(URL, { waitUntil: "load" });
+    /* THE BOX BOOTS ON THE BLANK STATE (2026-09-02). Paul, the composer round:
+       *"Add a 'silence' genre at the top of the genre list. This is a blank
+       state."* — one eight-bar section, ZERO voices, one cell of rests. This gate
+       is about a record with a band in it, so it names one in the address, the way
+       a link does: the shipped chant, at seed 1 because the boot draws a seed now
+       (*"Boot up every new session with a new seed unless there's a seed in the
+       URL"*) and a gate that re-rolled its own subject would measure a different
+       record every run. */
+    await page.goto(URL + CHANT, { waitUntil: "load" });
     await page.waitForTimeout(SETTLE);
     /* ---- WARM EVERY TAB, THEN STAND ON `Motif` (2026-08-27) --------------
        Paul: *"Why don't we make tabs at the top level and let go of the idea

@@ -108,7 +108,27 @@ async function openMotif(pg) {
     viewport: { width: 390, height: 844 }, hasTouch: true });
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  /* THE BOX BOOTS ON THE BLANK STATE NOW (2026-09-02, Paul: *"Add a 'silence'
+     genre at the top of the genre list. This is a blank state."*) — one cell of
+     rests and no players. This gate is about the Bench on a record with motifs
+     and a band in it, so it names one in the address: the shipped chant, at
+     seed 1 because the boot draws a seed now. */
   await page.goto(URL_, { waitUntil: "load" });
+  /* ...AND THE FIXTURE IS THE SHIPPED CHANT ITSELF, BY NAME (2026-09-02). The
+     paragraph above is right that this gate needs a record with motifs in it;
+     what it needs is THE SHIPPED ONE. B2 asserts that eight taps on a velocity
+     cell land on the three WORDS (ghost 1 · hit 4 · accent 7) — a claim about
+     the cycle, which starts wherever the cell's own velocity already is — and a
+     COMPOSED anchor deals velocities off the dice: measured at Rome 600 seed 1,
+     the cycle starts at a doc velocity of 8, which the bench draws as 6 and is
+     not one of the three. `__eightShipped()` is `CTX.setDocument(a deep copy of
+     songs.js TERMS)`, the same document door a link uses, and it is the record
+     this file inherited from the boot until the box began booting on the blank
+     state. (That a composed cell can hold a velocity between the words is a
+     real question about `precompose`, and it is not this gate's — said here so
+     the next reader finds it named rather than hidden by a fixture.) */
+  await page.evaluate(() => window.__eightShipped && window.__eightShipped());
+  await page.waitForTimeout(1200);
   await page.waitForTimeout(4000);
   /* THE BENCH IS THE `Motif` TAB (2026-08-27). Paul: *"Why don't we make tabs
      at the top level and let go of the idea of scrolling everything? The tabs
@@ -324,10 +344,14 @@ async function openMotif(pg) {
      with its two add buttons, is what `↑` goes to. This presses the `↑` the
      gutter is showing rather than calling `__eightUp()`, which climbs all the
      way to the root: one press, the same one a thumb makes. */
-  await page.evaluate(() => {
-    const u = document.querySelector('[data-k="trayup"]');
-    if (u) u.click();
-  });
+  /* ...AND SINCE 2026-09-02 THERE IS NOTHING TO PRESS. Paul: *"We should never
+     need the 'up' icon because we can expand multiple levels of interface
+     option."* The gutter is a tree: the bank's cells and its two add buttons
+     are SIBLINGS at one depth, and the open cell's fourteen transforms are a
+     level under it — so `+ drum pattern` is on the stripe the whole time the
+     Motif branch is open, and the ↑ this block used to press has nothing left
+     to do. The paragraph above is kept because it is the history of the mark
+     it names. */
   await page.waitForTimeout(300);
   await page.evaluate(() => {
     const b = document.querySelector('[data-k="adddrumcell"]');
@@ -444,6 +468,9 @@ async function openMotif(pg) {
   const werrs = [];
   wide.on("pageerror", (e) => werrs.push(e.message));
   await wide.goto(URL_, { waitUntil: "load" });
+  await wide.waitForTimeout(1500);
+  await wide.evaluate(() => window.__eightShipped && window.__eightShipped());
+  await wide.waitForTimeout(1000);
   await wide.waitForTimeout(4000);
   await openMotif(wide);
   const over1280 = await wide.evaluate(() =>

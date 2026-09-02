@@ -101,8 +101,25 @@ const HARD = 1200;
 // check failed against every tree since the deck landed — independent of
 // either round's own changes. Both carry near-zero static prose, which is
 // exactly what this gate is for.
-const TABS = ["Where", "Tempo", "Key", "Motif", "Band",
-              "Mix", "Produce", "Score", "Video", "Screensaver", "Export"];
+// …and to thirteen (2026-09-02, the composer round), by two more of Paul's
+// own sentences appended rather than edited into the ten above:
+//   "I click the genre, it starts to play, and there's a new view: A genre
+//    editor appears. This is the 'Rules' section; it'll need a new icon in the
+//    left nav."                                              -> Rules, after Where
+//   "Sections/Structure has the same challenges. … It should be top level, not
+//    buried under band, and below band. Bring performance into structure."
+//                                                            -> Structure, after Band
+// AND ONE OF THE THIRTEEN IS NOT A ROW IN THE STRIPE. "Move the play/stop
+// button to the bottom, along with opts and where" put `Where` in the foot as
+// the record's permanent NAME PLATE, so its visible word is the genre's name
+// and not the word "Where". T2's claim — "the page names its sections, in
+// Paul's words, in Paul's order" — is about the LIST, so the list is measured
+// against the list's own twelve, DERIVED from his thirteen by dropping the one
+// he moved. Nothing here is typed twice.
+const TABS = ["Where", "Rules", "Tempo", "Key", "Motif", "Band",
+              "Structure", "Mix", "Produce", "Score", "Video",
+              "Screensaver", "Export"];
+const NAV_ROWS = TABS.filter((t) => t !== "Where");
 
 /* …AND THE VOCABULARY'S OWN NAMES, WHICH ARE STILL IN THE DOCUMENT AND ARE NO
    LONGER ON THE SCREEN. This was T2's whole fact and it read: "the §5 table's
@@ -116,8 +133,14 @@ const TABS = ["Where", "Tempo", "Key", "Motif", "Band",
    names — one owner per fact. So the list is asserted where it now lives:
    one `<h2>` per panel, in tab order, still saying the vocabulary's words.
    `Export` joins it because Paul made the export row a tab of its own. */
-const HEADINGS = ["Where & when", "Time", "Harmony", "Motifs",
-                  "The band", "The board", "The producer", "The score",
+// …and two more, 2026-09-02, in the two slots Paul's own sentences put them
+// in: "The rules" for the genre editor (the panel's <h2>; the genre's NAME is
+// an <h3> name plate inside it, which this diet skips the way it skips every
+// other heading and label) and "The structure" for the form, the grids and the
+// performance controls he asked to be brought in with them.
+const HEADINGS = ["Where & when", "The rules", "Time", "Harmony", "Motifs",
+                  "The band", "The structure",
+                  "The board", "The producer", "The score",
                   // the two decks (2026-09-01): the film and the sky —
                   // vocabulary words, not the tab glyph names
                   //
@@ -284,9 +307,9 @@ const MEASURE = () => {
     check(m.total < HARD,
       "T1 " + width + " · …and under the plan's own hard line " + HARD +
       " (FUTURE.md Phase 1)");
-    check(JSON.stringify(m.tabNames) === JSON.stringify(TABS),
-      "T2 " + width + " · the nine tabs are Paul's words in Paul's order — " +
-      JSON.stringify(m.tabNames));
+    check(JSON.stringify(m.tabNames) === JSON.stringify(NAV_ROWS),
+      "T2 " + width + " · the twelve rows are Paul's words in Paul's order, " +
+      "with Where in the foot — " + JSON.stringify(m.tabNames));
     /* T2 · …AND NO CONTROL IS NAKED, which is the half of this gate's claim
        that a row of pictures can newly get wrong (2026-08-28). A glyph button
        must carry its full word twice — as `aria-label`, so a screen reader

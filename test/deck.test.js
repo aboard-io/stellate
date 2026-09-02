@@ -52,6 +52,7 @@
 //
 // Run:  NODE_PATH=/home/ford/ftrain-2025/node_modules node test/deck.test.js
 
+const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 const fs = require("fs");
 const path = require("path");
 const { pathToFileURL } = require("url");
@@ -150,7 +151,15 @@ const readable = (r) => !!r && r.inside && r.text.length > 0;
     viewport: { width: 1280, height: 900 } })).newPage();
   page.on("pageerror", (e) => errors.push(String(e).slice(0, 200)));
   page.on("console", (m) => { if (m.type() === "error") errors.push("console: " + m.text().slice(0, 200)); });
-  await page.goto(URL_, { waitUntil: "load", timeout: 60000 });
+  /* THE BOX BOOTS ON THE BLANK STATE (2026-09-02). Paul, the composer round:
+     *"Add a 'silence' genre at the top of the genre list. This is a blank
+     state."* — one eight-bar section, ZERO voices, one cell of rests. This gate
+     is about a record with a band in it, so it names one in the address, the way
+     a link does: the shipped chant, at seed 1 because the boot draws a seed now
+     (*"Boot up every new session with a new seed unless there's a seed in the
+     URL"*) and a gate that re-rolled its own subject would measure a different
+     record every run. */
+  await page.goto(URL_ + CHANT, { waitUntil: "load", timeout: 60000 });
   /* THE DECK IS TWO TABS NOW (2026-08-27). Paul: *"Why don't we make tabs at
      the top level … The tabs are: Where / Tempo / Key / Motif / Band / Mix /
      Produce / Score / Export."* The notation and the roll are `Score`; the
@@ -465,7 +474,7 @@ const readable = (r) => !!r && r.inside && r.text.length > 0;
   const p390 = await (await browser.newContext({
     viewport: { width: 390, height: 844 } })).newPage();
   p390.on("pageerror", (e) => errors.push("390: " + String(e).slice(0, 160)));
-  await p390.goto(URL_, { waitUntil: "load", timeout: 60000 });
+  await p390.goto(URL_ + CHANT, { waitUntil: "load", timeout: 60000 });
   await openTabs(p390, ["Export", "Score"]);
   await p390.waitForFunction(() => window.__deckState && window.__eightScore &&
     window.__eightScore().steps > 0, null, { timeout: 30000 });

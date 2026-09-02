@@ -387,8 +387,22 @@ function g18() {
     const d = document.getElementById("atlasMap").dataset;
     return { arc: +d.arc, lat: +d.lat, lon: +d.lon };
   });
-  const bring = () => p.evaluate(() =>
-    document.getElementById("atlasMap").scrollIntoView({ block: "center" }));
+  /* ...AND "BRING THE GLOBE INTO VIEW" NOW INCLUDES OPENING ITS TAB
+     (2026-09-02). Paul: *"I click the genre, it starts to play, and there's a
+     new view: A genre editor appears. This is the 'Rules' section."* Choosing
+     a record — from the list, from the globe, from a link — LANDS you on its
+     rules, which is the whole point of the sentence. A panel that is not open
+     is `display: none`, so a globe measured after a pick is a globe of zeros,
+     and every check in this file that taps a record and then reads the map has
+     to come back the way a reader does: press Where. `__eightTab` is that
+     press (a gate is a hand), and it is put HERE, in the one helper every one
+     of those checks already calls, rather than sprinkled through twenty of
+     them. `scrollIntoView` still does what it always did. */
+  const bring = () => p.evaluate(() => {
+    if (window.__eightTabNow && window.__eightTabNow() !== "Where"
+        && window.__eightTab) window.__eightTab("Where");
+    document.getElementById("atlasMap").scrollIntoView({ block: "center" });
+  });
   const markXY = (name) => p.evaluate((n) => {
     const g = [...document.querySelectorAll("#atlasMarks .place")]
       .find((x) => x.dataset.place === n);
@@ -434,6 +448,17 @@ function g18() {
        another browser gate. Waiting for the thing rather than for a duration
        is the fix, and it is the same discipline `waitForFunction` already
        gives the rest of this file. */
+    /* ...AND THE PANEL HAS TO BE OPEN BEFORE "VISIBLE" CAN MEAN ANYTHING
+       (2026-09-02). Paul: *"I click the genre, it starts to play, and there's
+       a new view: A genre editor appears. This is the 'Rules' section."* A
+       pick LANDS you on the rules, so the Where panel is `display: none` and
+       every one of the 389 rows resolves and none of them is visible — which
+       playwright reports as a timeout on a selector that matched. The list is
+       the time instrument and this helper drives it, so it presses Where
+       first, exactly as a reader would. */
+    await p.evaluate(() => { if (window.__eightTabNow &&
+      window.__eightTabNow() !== "Where" && window.__eightTab)
+      window.__eightTab("Where"); });
     await p.waitForSelector("#atlasIndexRows li[data-year]", { timeout: 10000 });
     await p.evaluate((y) => {
       const idx = document.getElementById("atlasIndex");
@@ -513,10 +538,19 @@ function g18() {
      the record is never started at all — which the old comment already said
      was irrelevant here ("Nothing about which record gets written depends on
      the transport running"). Same destination, one fewer side effect. */
+  /* ...AND THE DIE OPENS A FLYOUT NOW, 2026-09-02. Paul: *"When I click seed
+     pop up a vertical slider from zero to 2^16."* So the walk is one press of
+     the die and one of `roll` inside it — the roll calls `rewriteNow`, which
+     is still the one reseed path this box has. `#playops` is no longer on the
+     way (the die left that group on 2026-08-30 and the group is a fold in the
+     foot now), so the press it used to need is gone. */
   const pressRewrite = async () => {
-    await p.evaluate(() => document.getElementById("playops").click());
-    await p.waitForTimeout(250);
     await p.evaluate(() => document.getElementById("rewrite").click());
+    await p.waitForTimeout(250);
+    await p.evaluate(() => {
+      const b = document.querySelector('[data-k="seed-roll"]');
+      if (b) b.click();
+    });
   };
 
   /* ---- G7 THE PICTURE ------------------------------------------------- */
@@ -745,12 +779,26 @@ function g18() {
      replacement for the deleted panel's re-roll — so determinism is asserted
      the way a reader would actually reach the same record twice: leave and come
      back. showing() is the door §2.2 names and it must be byte-stable. */
-  const d1 = await p.evaluate(async () => {
-    const doc = window.NuPrecompose.genreToDocument("reggae", 1);
+  /* `genreToDocument("reggae", 1)` STOOD HERE AND THE 1 WAS THE PAGE'S OWN
+     DEFAULT (2026-08-27: "READING 1 IS TODAY, BYTE FOR BYTE — the atlas opens
+     every anchor at seed 1, so the record a hand lands on is the record it has
+     always been"). REVERSED 2026-09-02 by Paul: *"Boot up every new session
+     with a new seed unless there's a seed in the URL."* A hand-landed record
+     is at the SHOWN seed, and the shown seed is whatever this session drew.
+     THE CLAIM IS UNWEAKENED AND IS THE SAME ONE: the tap wrote exactly
+     `genreToDocument(gk, the reading on the page)`, byte for byte, with
+     NOTHING else in it. What moved is where the 1 comes from — `#reading`,
+     which is the page's own readout of the atlas's own counter, and is the
+     number a reader can see while the record is on the screen. */
+  const seedNow = await p.evaluate(() =>
+    +(document.getElementById("reading") || {}).textContent);
+  const d1 = await p.evaluate(async (s2) => {
+    const doc = window.NuPrecompose.genreToDocument("reggae", s2);
     return JSON.stringify(doc);
-  });
+  }, seedNow);
   const d2 = await p.evaluate(async () => JSON.stringify(window.__eightDoc()));
-  check(d1 === d2, "G9 · the tap wrote exactly genreToDocument(\"reggae\", 1) — " +
+  check(d1 === d2, "G9 · the tap wrote exactly genreToDocument(\"reggae\", " +
+    seedNow + ") — the reading on the page — " +
     d1.length + " vs " + d2.length + " chars");
   const dTwice = await p.evaluate(async () => {
     const a = JSON.stringify(window.NuPrecompose.genreToDocument("reggae", 1));
@@ -780,9 +828,22 @@ function g18() {
   await p.waitForTimeout(1400);
   const d3 = await p.evaluate(() => JSON.stringify(window.__eightDoc()));
   check(d3 !== d2, "G9 · \"rewrite\" writes a DIFFERENT record (" + d3.length + " chars)");
+  /* `/reading 2/` STOOD HERE and the 2 was `seed++` on a boot seed of exactly
+     1. The die ROLLS now rather than counts (2026-09-02 — a seed is a position
+     in a 0..65536 domain, which is what the slider makes it, and `seed++` had
+     no ceiling and no wrap), so the number is unpredictable BY DESIGN and a
+     literal would be asserting the old arithmetic. The claim is the one it
+     always was — the sentence under the globe says which reading is on the
+     page — and it is asserted against the page's OTHER readout of the same
+     one fact, `#reading`, which is what makes it a join and not a recital. */
   const sayAgain = await p.evaluate(() =>
     (document.getElementById("atlasSay") || {}).textContent);
-  check(/reading 2/.test(sayAgain), "G9 · …and says so: " + JSON.stringify(sayAgain.slice(-40)));
+  const readAgain = await p.evaluate(() =>
+    (document.getElementById("reading") || {}).textContent);
+  check(readAgain !== String(seedNow) &&
+        sayAgain.indexOf("reading " + readAgain) >= 0,
+    "G9 · …and says so: the reading went " + seedNow + " -> " + readAgain +
+    " and the sentence agrees — " + JSON.stringify(sayAgain.slice(-40)));
 
   /* ---- G11 THE GLOBE IS THE KEYBOARD PATH ---------------------------- */
   /* THE HEADLINE OF THIS ROUND. There is no listbox to be a second door. The
@@ -815,12 +876,19 @@ function g18() {
   check(viaKey.active, "G11 · focus() lands ON the mark (document.activeElement is the <g>)");
   await p.keyboard.press("Enter");
   await p.waitForTimeout(2200);
-  const kbDoc = await p.evaluate(() => ({
-    doc: JSON.stringify(window.__eightDoc()),
-    want: JSON.stringify(window.NuPrecompose.genreToDocument("reggae", 1)),
-    title: window.__nuName() }));
+  /* `genreToDocument("reggae", 1)` — THE 1 IS THE SHOWN READING NOW
+     (2026-09-02, see G9's own note): a hand-landed record is at the reading on
+     the page, and the boot draws one. The claim is untouched and is the whole
+     of G11: the KEYBOARD path writes byte-identically to the pointer path,
+     because there is one code path and no hidden twin. */
+  const kbDoc = await p.evaluate(() => {
+    const s2 = +document.getElementById("reading").textContent;
+    return { doc: JSON.stringify(window.__eightDoc()),
+             want: JSON.stringify(window.NuPrecompose.genreToDocument("reggae", s2)),
+             seed: s2, title: window.__nuName() }; });
   check(kbDoc.doc === kbDoc.want,
-    "G11 · Enter on the mark writes exactly genreToDocument(\"reggae\", 1) — byte-identical " +
+    "G11 · Enter on the mark writes exactly genreToDocument(\"reggae\", " +
+    kbDoc.seed + ") — the reading on the page — byte-identical " +
     "to the pointer path, one code path and no hidden twin (" + kbDoc.doc.length + " chars)");
   check(/Kingston/.test(kbDoc.title || ""),
     "G11 · …and the page says so: #title is " + JSON.stringify(kbDoc.title));
@@ -1329,11 +1397,26 @@ function g18() {
   });
   note("G19 · the tightest pair of in-window marks on a 390px phone is " +
     pile.a + "/" + pile.b + " at " + pile.d.toFixed(1) + " CSS px");
+  const seed19 = await p.evaluate(() =>
+    +document.getElementById("reading").textContent);
   await p.mouse.move(pile.x, pile.y); await p.mouse.down(); await p.mouse.up();
   await p.waitForTimeout(2000);
   const one = await p.evaluate(() => ({ title: window.__nuName(),
     doc: JSON.stringify(window.__eightDoc()) }));
-  await fresh();
+  /* AND THE SECOND TAP IS AT THE SAME READING (2026-09-02). `fresh()` reloads
+     onto a page with no address, and a page with no address DRAWS A SEED now
+     (Paul: *"Boot up every new session with a new seed unless there's a seed in
+     the URL"*) — so "the same tap twice writes the same bytes" would be asking
+     two different sessions to agree about the dice. The seed is carried over in
+     the address, which is the mechanism the sentence itself names and which
+     test/seed.js S2 proves is honoured on its own. What is asserted is
+     untouched: one tap into a pile of marks resolves to ONE record, and the
+     same tap on the same record twice is byte-identical. */
+  await p.evaluate((n) => {
+    try { history.replaceState(null, "",
+      location.pathname + location.search + "#s=" + n); } catch (e) {}
+  }, seed19);
+  await p.reload({ waitUntil: "networkidle" });
   await p.waitForTimeout(900);
   await setYear(1969);
   await bring();
@@ -1405,6 +1488,13 @@ function g18() {
   for (const w of [320, 375, 390, 430, 760, 1280]) {
     await p.setViewportSize({ width: w, height: 844 });
     await p.waitForTimeout(350);
+    /* THE PANEL HAS TO BE OPEN TO BE MEASURED (2026-09-02). Picking a genre
+       lands on its Rules (Paul: *"I click the genre, it starts to play, and
+       there's a new view: A genre editor appears"*), and this walk picks; a
+       `display: none` panel measures 0 and would report the list as having no
+       width at all. `bring()` is the press back to Where — see its own note. */
+    await bring();
+    await p.waitForTimeout(200);
     const fit = await p.evaluate(() => ({
       wrap: document.getElementById("atlasWrap").scrollWidth
           - document.getElementById("atlasWrap").clientWidth,

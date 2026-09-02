@@ -545,12 +545,38 @@ const GATES = [
   { name: "series-bus", wave: 2, kind: "node",
     argv: ["test/series-bus.test.js"], need: ["test/series-bus.test.js"],
     covers: ["test/series-bus.test.js"] },
-  { name: "bench",      wave: 2, kind: "node",
+  /* `kind: "node"` STOOD ON BOTH OF THESE ROWS AND IT WAS WRONG (fixed
+     2026-09-02). Both files `require("playwright")` and launch chromium, and
+     the runner only injects `NODE_PATH=/home/ford/ftrain-2025/node_modules`
+     for a row that says `browser` — so both exited non-zero with "Cannot find
+     module 'playwright'" from the day they were registered, on every run,
+     independent of anything either gate asserts. That is the "a gate nobody
+     runs is not a gate" audit's own failure mode, one level down: they were
+     registered and still never ran. `browser` is also the honest BUDGET
+     (2 slots against 1) for a row that spawns a chromium. */
+  { name: "bench",      wave: 2, kind: "browser",
     argv: ["test/bench.test.js"], need: ["test/bench.test.js"],
     covers: ["test/bench.test.js"] },
-  { name: "text-diet",  wave: 2, kind: "node",
+  { name: "text-diet",  wave: 2, kind: "browser",
     argv: ["test/text-diet.test.js"], need: ["test/text-diet.test.js"],
     covers: ["test/text-diet.test.js"] },
+  /* ===== THREE NEW GATES, 2026-09-02 (the composer round, wave 1a) ========
+     The gutter became a TREE, the boot draws a SEED, and the catalogue gained
+     a BLANK STATE. Each of those is a claim about the rendered page that no
+     existing gate could make, and each is the artifact-proof of one of Paul's
+     sentences — so each gets a gate rather than a clause bolted onto one that
+     is about something else. All three stand up their own COOP/COEP server
+     (test/gutter.js's header documents the pattern) and also honour an
+     injected `--page`, so they run under the runner and by hand. */
+  { name: "nav-tree",   wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/nav-tree.js"], need: ["test/nav-tree.js"],
+    covers: ["test/nav-tree.js", "nukernel/ui/glyph.js"] },
+  { name: "seed",       wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/seed.js"], need: ["test/seed.js"],
+    covers: ["test/seed.js", "nukernel/ui/atlas.js"] },
+  { name: "silence",    wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/silence.js"], need: ["test/silence.js"],
+    covers: ["test/silence.js", "nukernel/genres.js", "nukernel/precompose.js"] },
   { name: "producer-ui", wave: 3, kind: "browser", url: { flag: "--page" },
     argv: ["test/producer.browser.js"], need: ["test/producer.browser.js"],
     covers: ["test/producer.browser.js"] },

@@ -1408,6 +1408,23 @@ export function mount(parent, ctx) {
     BOARDTAB = TABS[0] ? { kind: TABS[0].kind, key: TABS[0].key }
                        : { kind: "bus", key: null };
 
+  /* ===== THIS ROW IS A TEMPORARY SECOND OWNER, 2026-09-02 ===============
+     Paul: *"Instead of having four icons on top and section automation that
+     should have been five subicons under the 'Mix' icon."* The five are in the
+     GUTTER as of this wave (eight.js `mixTrayItems`), and this row is still
+     here — which is, on its face, exactly the two-owners-of-one-gesture bug
+     this page legislates against everywhere else.
+     IT IS FENCED AND DATED RATHER THAN LEFT AMBIGUOUS. Both surfaces call the
+     same `showBoardHere` — the nav through the exported `showBoard`, this row
+     through its own listener — so they cannot disagree about which plate is
+     open or how it got there; and `markTabs` repaints this row from `BOARDTAB`
+     on every change, wherever the change came from. What it costs is a row of
+     four marks inside a panel whose tab already has them in the column beside
+     it, and it buys the wave: nukernel/desk-gate.js drives its whole board
+     walk by `[data-k="boardtab|…"]` on THIS row (G11's plate-per-tab check,
+     G12's marked-tab check, G13's width check), and rewriting those three is
+     wave 2e's, in the commit that deletes this row. Do not delete it before
+     they move. */
   const tabsBar = el("p", null, "nu-row");
   tabsBar.id = "boardtabs";
   tabsBar.setAttribute("role", "group");
@@ -1450,8 +1467,31 @@ export function mount(parent, ctx) {
     rack.id = "rack";
     const make = PLATES[BOARDTAB.key];
     if (make) rack.append(make());
-    rack.setAttribute("aria-label", busLabel(BOARDTAB.key) + " plate");
+    // the fifth plate is not a bus and has no BUSROWS label (2026-09-02); it
+    // is the one word this file spells beside `main`, for the same reason.
+    rack.setAttribute("aria-label",
+      (BOARDTAB.kind === "auto" ? "section automation" : busLabel(BOARDTAB.key))
+      + " plate");
     panel.append(rack);
+  };
+  /* ===== THE TWO DOORS THE GUTTER DRIVES THIS ROW BY (2026-09-02) ========
+     `showPanel` and `markTabs` are closures inside `mount()` and stay that
+     way — nothing outside this file may reach into the board's furniture. What
+     leaves is a pair of FUNCTIONS on the module handle, in the shape
+     `paintBoard` already takes: one that opens a plate the way a tab press
+     does (mark the row, swap the rack, repaint the model readouts — three
+     calls, in that order, exactly as the listener makes them) and one that
+     says which is open. eight.js `mixTrayItems` is the caller.
+     A KIND THIS FILE DOES NOT DRAW IS REFUSED SILENTLY rather than left
+     half-applied: `BOARDTAB` is the board's own state and a plate that does
+     not exist would empty the rack. */
+  const showBoardHere = (kind, key) => {
+    if (!PLATES[key]) return false;
+    BOARDTAB = { kind: kind || "bus", key };
+    markTabs();
+    showPanel();
+    paint();
+    return true;
   };
   const tabBtn = (t) => {
     // KEYED `boardtab|<kind>|<name>`, 2026-08-27 (it was `boardtab-<name>`
@@ -1489,8 +1529,12 @@ export function mount(parent, ctx) {
   });
   tabsBar.append(series);
   markTabs();
-  host.append(tabsBar, panel);
-  showPanel();
+  /* THE ROW IS BUILT AND SEATED BELOW, AFTER `PLATES.auto` EXISTS (2026-09-02).
+     `host.append(tabsBar, panel); showPanel();` stood on these two lines, and
+     `showPanel()` reads `PLATES[BOARDTAB.key]` at call time — so opening a
+     board whose last tab was the automation plate would have found no builder
+     and drawn an empty rack. The DOM order is unchanged (the tabs, then the
+     panel, then the routing pointer); only the statement moved. */
 
   /* ================= SECTION AUTOMATION · THE WORD GRID ================= */
   // one-board §III, binding: "The grid is where you set — six words per voice
@@ -1505,7 +1549,23 @@ export function mount(parent, ctx) {
   // here would be a second owner of the vocabulary.
   const CYCLE = ["", ...Object.keys(NuFields.TRIMS)];
   const WSHOW = (w) => (w === "" ? "—" : (NuFields.TRIMLABEL[w] || w));
-  {
+  /* ===== IT IS THE FIFTH PLATE NOW, 2026-09-02 ==========================
+     Paul: *"Instead of having four icons on top and section automation that
+     should have been five subicons under the 'Mix' icon. One of them is
+     section automation."*
+
+     THIS BLOCK WAS `{ … host.append(wrap); }` — built once, appended to the
+     HOST rather than to the panel, so it stood under whichever plate was open
+     and was not a tab at all (this file's own note said so: "a cross-voice
+     table that is not per-bus"). That was the right shape while the board had
+     four bus plates and one grid; it is the wrong one now that the grid is a
+     sibling of the four in the gutter. Not a line inside it changed: the same
+     `wrap`, the same `#trimgrid`, the same `data-pane="trimgrid"` scroll key,
+     the same cells and the same `paint()` (which finds the table with
+     `host.querySelector("#trimgrid")` and therefore does not care which box it
+     is in). What changed is that it is RETURNED instead of appended, and
+     `showPanel` seats it in `#rack` like every other plate. */
+  PLATES.auto = () => {
     const wrap = el("div", null, "nu-autopanel");
     // compressed 2026-08-27 (text diet): the grid draws sections running down
     // and a tap teaches itself; what the label must say is what a word IS.
@@ -1684,8 +1744,10 @@ export function mount(parent, ctx) {
     // its `aria-label` say what its own word is worth in dB, what "as mixed"
     // means, and where a dim number came from. The list of six was a second
     // owner of TRIMS anyway; the cycle already spells them one tap at a time.
-    host.append(wrap);
-  }
+    return wrap;
+  };
+  host.append(tabsBar, panel);
+  showPanel();
 
   /* ---- the routing pointer, once, under the rack ------------------------ */
   // A GROUP HAS NO PLATE ANY MORE, and the sentence saying so is the reversal
@@ -1769,13 +1831,23 @@ export function mount(parent, ctx) {
     }
   };
   paint();
-  const handle = { paint };
+  const handle = { paint, show: showBoardHere };
   CURRENT = handle;
   return handle;
 }
 
 // the free function the page's on("pos") handler calls.
 export const paintBoard = () => { if (CURRENT) CURRENT.paint(); };
+/* ...AND THE TWO THE GUTTER CALLS (2026-09-02). Same shape and same reason as
+   `paintBoard`: the mount stores its closures in `CURRENT` and these are the
+   whole of what the rest of the page may reach. `boardTabNow()` answers with a
+   COPY, because `BOARDTAB` is this file's state and a caller that could write
+   it would be the second owner of which plate is open. Before the board has
+   ever been built there is no open plate and the honest answer is the state
+   the module is holding, which is what the nav marks its row from. */
+export const showBoard = (kind, key) =>
+  (CURRENT && CURRENT.show ? CURRENT.show(kind, key) : false);
+export const boardTabNow = () => ({ kind: BOARDTAB.kind, key: BOARDTAB.key });
 
 /* ---------- the strip's own beat, wherever the strip is -------------------
    THE ONE ARITHMETIC, WRITTEN ONCE. `liveGain` is the MODEL — desk.js's

@@ -46,6 +46,7 @@
  * build 1200, which is not installed on this machine.
  */
 "use strict";
+const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 const { chromium } = require("playwright");
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const i = argv.indexOf(n); return i < 0 ? d : argv[i + 1]; };
@@ -235,7 +236,21 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   p.on("console", (m) => { if (m.type() === "error" && !/favicon/.test(m.text()))
     errs.push("console: " + m.text()); });
   await p.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
-  await p.goto(PAGE, { waitUntil: "networkidle" });
+  /* ===== THE BOX BOOTS ON THE BLANK STATE NOW (2026-09-02) ================
+     Paul, the composer round: *"Add a 'silence' genre at the top of the genre
+     list. This is a blank state."* The box opens on `silence` — one eight-bar
+     section, ZERO voices, one cell of rests — instead of on a copy of the
+     shipped chant, because a box that opened playing somebody else's record was
+     answering a question nobody had asked yet.
+     THIS GATE IS ABOUT A RECORD WITH A BAND IN IT, so it asks for one, in the
+     address, the way a link does: `#at=Rome&y=600&s=1` is the shipped chant —
+     the very `songs.js TERMS` this file used to inherit from the boot — named
+     rather than assumed. `s=1` because the boot draws a seed now (Paul: *"Boot
+     up every new session with a new seed unless there's a seed in the URL"*) and
+     a gate that re-rolled its own subject would measure a different record every
+     run. Naming the fixture is the honest half of the change: what this file
+     asserts about "the record" is now a claim about a record it chose. */
+  await p.goto(PAGE + CHANT, { waitUntil: "networkidle" });
   await p.waitForFunction(() => document.querySelectorAll("#app select, #app .nu-sheet").length > 0,
     null, { timeout: 20000 }).catch(() => {});
   await p.evaluate(() => { window.__D = window.__eightDoc || window.__doc; });
@@ -329,9 +344,15 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
    * are where the strip itself is measured. */
   const TOPS = await p.evaluate(() =>
     window.__eightTabs ? window.__eightTabs() : []);
+  /* ...AND IT FOLDS THE TREE FIRST, 2026-09-02 — see the loop below and
+     test/sheets.js's own note: branches stay open now and a mark is a TOGGLE,
+     so a walk needs a known starting shape or the second tap on a row closes
+     what the first opened. `__eightUp()` is "fold everything", the gesture a
+     hand makes to get back to the tabs. */
   const openTop = async (t) => {
     if (!TOPS.length) return;
-    await p.evaluate((tt) => window.__eightTab(tt), t);
+    await p.evaluate((tt) => { if (window.__eightUp) window.__eightUp();
+                               window.__eightTab(tt); }, t);
     await p.waitForTimeout(t === "Score" ? 1200 : 250);
   };
 
@@ -389,6 +410,13 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      per section`, which had not gone anywhere: the survey had. The facet keys
      are read off the stripe rather than typed, for the same reason the tab
      keys are — `#nu-tray [data-k^="facet-"]` is whatever the level offers. */
+  /* ...AND THE TREE IS FOLDED BEFORE EACH ONE, 2026-09-02. Paul: *"we should
+     really work hard on nesting options inside the left nav."* Branches stay
+     open and a mark is a TOGGLE, so tapping the member you are already inside
+     folds it and every facet after the first would find no button. `openTop`
+     folds first (see its own note); this loop taps a DIFFERENT member each
+     time, and the fold is what keeps the previous one's facets from standing
+     on the stripe while this one's are read. */
   for (const t of tabs) {
     await openTop("Band");
     await p.click('[data-k="' + t + '"]'); await p.waitForTimeout(150);
@@ -399,15 +427,28 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
       await p.click('[data-k="' + f + '"]'); await p.waitForTimeout(200);
       eat(await survey());
     }
-    if (t === "tabform") {
-      const opened = await p.evaluate((id) => {
-        const n2 = document.querySelector('[data-k="sec' + id + '"]');
-        if (!n2) return false;
-        n2.click(); return true;
-      }, SEC1);
-      if (opened) { await p.waitForTimeout(200); eat(await survey()); }
-    }
   }
+  /* ===== AND THE SECTION'S OWN QUESTIONS, WHICH ARE A TAB NOW (2026-09-02) ==
+     Paul: *"Sections/Structure has the same challenges. … It should be top
+     level, not buried under band, and below band."*
+
+     `if (t === "tabform")` STOOD INSIDE THE VOICE WALK ABOVE — the form was a
+     mark in the band level, and opening a section from it put
+     `sectionDetail`'s menus on the page for the survey to eat. There is no
+     `tabform`: the sections are `Structure`, and their questions are that
+     panel's. The survey has to visit them or every `form.*` and per-section
+     `dev.*` menu drops out of this file's census and the checks below start
+     passing for want of a control rather than because it is a menu. */
+  await openTop("Structure");
+  eat(await survey());
+  const openedSec = await p.evaluate(async () => {
+    const s2 = document.querySelector('.nu-traylist [data-k^="secnav"]');
+    if (!s2) return false;
+    s2.click();
+    await new Promise((r) => setTimeout(r, 300));
+    return true;
+  });
+  if (openedSec) { await p.waitForTimeout(300); eat(await survey()); }
   const selKeys = new Set(sel.map((s) => s.k));
   const sheetKeys = new Set(sheets.map((s) => s.k));
   notes.push("     " + (tabs.length ? "tabs walked: " + tabs.join(" ") : "no tab strip") +
