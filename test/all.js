@@ -650,6 +650,23 @@ const GATES = [
     argv: ["test/structure.browser.js"], need: ["test/structure.browser.js"],
     covers: ["test/structure.browser.js", "nukernel/ui/eight.js",
              "nukernel/avail.js", "nukernel/fields.js"] },
+  /* THE MIX PLATE'S HEADS (2026-09-02, slice 2e). Paul, B11: "the columns
+     should list the instrument and when I click on the column head let me edit
+     the instrument! Light up which instrument is playing, make a little volume
+     meter INSIDE the heading. … I need to be able to jump to a section
+     somehow, by clicking on them when in automation."
+     It presses PLAY, because three of its six checks are about what happens
+     while the record sounds — a lit head, a measured bar, a queued jump that
+     lands. `covers` names the two files that can break it without touching
+     the view: the board (`engineer.js`, which draws the heads and paints them)
+     and the transport (`audio/live.js`, which owns `voiceLevels`,
+     `soundingChans` and the jump's own countdown). nukernel/desk-gate.js holds
+     the STRUCTURE of the same plate and test/meter-reach.browser.js holds the
+     NUMBER; this one holds the join. */
+  { name: "mix-heads", wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/mix-heads.browser.js"], need: ["test/mix-heads.browser.js"],
+    covers: ["test/mix-heads.browser.js", "nukernel/ui/engineer.js",
+             "nukernel/audio/live.js"] },
   // THE SLOWEST GATE IN THE HOUSE, AND IT HAS TO BE. It presses play and waits
   // for two real section boundaries at two viewports, because a boundary is
   // the thing that used to rebuild the page and a fixed sleep would be a coin

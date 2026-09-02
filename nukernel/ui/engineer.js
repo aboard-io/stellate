@@ -101,7 +101,17 @@ const FXLABEL = NuFields.FXLABEL;
 import { SONG, MASTER, BUSES, vol, setVol, commit } from "./state.js";
 import { deskChannelBase, deskLevelAt, derivedPartTone, derivedTrim,
          masterState, deskBusFeed, MAIN_TO_BUS1, FIXED_EDGES } from "../audio/desk.js";
-import { playing, playingSec, getPosition, passAt, rmsNow } from "../audio/live.js";
+/* ...AND THE TWO READERS THE PER-VOICE METER NEEDS (2026-09-02, slice 2e).
+   `soundingChans()` is the SCHEDULE after the desk (barPlan has already
+   dropped every event a mute or an automation word silenced), so it is a
+   PLAYHEAD — clock red, never green. `voiceLevels()` is the MEASUREMENT —
+   `{ chairKey: rms }`, and a chair with no tap and no audit is ABSENT from it
+   rather than reported as 0, because 0 is a claim of silence about a voice
+   nobody measured. Both are pure readers on nukernel/audio/live.js and this
+   file calls them from inside the page's own `on("pos")` beat: a view never
+   installs a clock of its own. */
+import { playing, playingSec, getPosition, passAt, rmsNow,
+         soundingChans, voiceLevels } from "../audio/live.js";
 // WHAT THE ENGINE WILL DO WITH A CHANNEL — audio/plan.js channelFacts, and no
 // table of this file's own, so the board's refusals and the renderer's are the
 // same refusal. `stereo` is the one fact the insert slots ask for: the
@@ -131,9 +141,12 @@ import { selectEl } from "./selects.js";
 // `kindGlyph` AND `sayVoice` CAME OFF THIS LINE 2026-08-28, with the voice
 // tabs (Paul: "remove the voices from the mixing board"). ui/glyph.js still
 // exports both and ui/eight.js's gutter still calls them — one owner, still
-// reachable; what ended is this file's need for them. `GLYPH` stays for the
-// four bus marks and `icon`/`paintIcon` for the row that wears them.
-import { GLYPH, icon, paintIcon } from "./glyph.js";
+// reachable; what ended is this file's need for them.
+// ...AND `GLYPH`, `icon` AND `paintIcon` CAME OFF IT 2026-09-02, with the tab
+// ROW (Paul: "five subicons under the 'Mix' icon"). The five marks are drawn
+// by the gutter now, off the same `GLYPH.bus` table, so this file spells no
+// character at all — which is the strongest form of the one-owner rule the
+// paragraph above spent 2026-08-28 arguing its way back to.
 
 const el = (tag, text, cls) => { const n = document.createElement(tag);
   if (text != null) n.textContent = text; if (cls) n.className = cls; return n; };
@@ -237,10 +250,32 @@ const MAINSEND_WHY = "the dry path to the main is the fader below — one owner 
 // literal, byte-identical at the default on two pressed records), rev_bleed
 // mirrors it for colored rooms, and buses.echo.bleed (fields.js EBLEEDS) is
 // the hand — masterState -> state.bleed -> fxParams.
-const METER_WHY = "one master tap — the engine sums every voice into shared " +
-  "buses (render-core.js), so there is no per-channel signal to measure; the " +
-  "dim number beside the fader is the MODEL's gain, and a green bar here " +
-  "would be a fake measurement";
+/* METER_WHY IS RETIRED, 2026-09-02 (slice 2e), THE WAY THE BLEED ABOVE WAS.
+   It read: "one master tap — the engine sums every voice into shared buses
+   (render-core.js), so there is no per-channel signal to measure; the dim
+   number beside the fader is the MODEL's gain, and a green bar here would be
+   a fake measurement." It was drawn on every strip by `vrefused(null, …, "no
+   tap", METER_WHY, true)`.
+
+   IT WAS A FACT ABOUT THE WIRING AND NOT ABOUT THE WORLD, and the wiring
+   changed. Paul, B11: *"Light up which instrument is playing, make a little
+   volume meter INSIDE the heading."* Slice 0b took the engine work the
+   refusal's own words implied: engine/faust/live/live.js `samplerOf` gives
+   every unit key its own gain → AnalyserNode on the way to the shared dry bus
+   and exposes `handle.voiceRms(key)`; the Faust lane, which is rendered in a
+   worker and owns no node, is measured instead by the bar audit's own rms
+   (`auditFor(serial).voices[unit].rms`); and nukernel/audio/live.js
+   `voiceLevels()` joins both to CHAIR keys through the newly exported
+   `plan.js addrOf(si)`. test/meter-reach.browser.js proves rms > 0 on a chair
+   that is sounding, on the rendered page, with the engine actually running.
+
+   SO THE REFUSAL IS DELETED RATHER THAN SOFTENED — "a refusal that has been
+   kept is not a refusal" (the file's own law, MASTER_WHY's tombstone). What
+   replaces it is the SAME well the main plate draws, fed from the per-voice
+   measurement, and what it must go on being honest about is the GRAIN: a
+   sampled chair is measured per frame, a Faust chair per bar, the well says
+   which in its title, and a chair with neither number draws an EMPTY well
+   saying "not yet measured — plays first". Absent is still not zero. */
 const STEREO_WHY = "this voice is stereo — the parent's insert path is mono " +
   "and a chain would fold its width to one channel (audio/desk.js widthKept), " +
   "so the seats are refused rather than silently stripped";
@@ -688,9 +723,27 @@ export function channelStrip(ctx, c, env) {
     aria: voice.name + " fader", tall: true, fmt: (v) => fmtDb(v),
     set: (v) => setDesk(ctx, voice, "fader", v) });
   fw.append(col("level", fader));
-  // THE METER WELL, REFUSED — never fake a measurement (the header's law).
-  fw.append(col("meter", vrefused(null, voice.name + " meter",
-    "no tap", METER_WHY, true)));
+  /* THE METER WELL, MEASURED — 2026-09-02. It was `vrefused(null, …, "no tap",
+     METER_WHY, true)` for as long as the engine had one tap; METER_WHY's
+     tombstone at the head of this file carries the whole reversal. The well is
+     the main plate's own markup, stood tall in the strip's trough, and it is
+     fed by `paintVoiceMix` off `voiceLevels()` — the same map and the same
+     honesty rule the automation plate's column heads use, so a voice's own
+     strip and its column in the grid cannot disagree about how loud it is. */
+  {
+    const wellWrap = el("span", null, "nu-vs nu-vs-tall");
+    const well = el("span", null, "nu-meterwell");
+    well.dataset.live = "meter";       // the clock writes it, so it says so
+    const wbar = el("i", null, "nu-meterbar");
+    well.append(wbar);
+    const wout = el("output", "", "nu-vs-val");
+    wout.dataset.live = "meter";
+    wellWrap.append(well, wout);
+    fw.append(col("meter", wellWrap));
+    (env.meters = env.meters || []).push({ chan: key, well, bar: wbar, out: wout,
+      said: null,
+      grain: (env.facts[key] || {}).sampled ? "per frame" : "per bar" });
+  }
   const duo = el("div", null, "nu-duo");
   // mute/solo WEAR THEIR OWN NAMES since 2026-08-27 (FUTURE.md §5: "cut"
   // collided with EQ cut three rows up; the desk keys were always mute/solo,
@@ -781,7 +834,11 @@ export function voiceMix(parent, ctx, voiceName) {
   }
   const env = { anySolo: chans.some((x) => deskOf(x.voice).solo),
                 sec: atBox(), shut: returnShut(), facts: factsNow(),
-                drives: [] };
+                // `meters` JOINED `drives` 2026-09-02: the strip now carries a
+                // MEASURED well beside its model readout (METER_WHY's
+                // tombstone at the head of this file), and both are written
+                // once a beat by `paintVoiceMix` off the page's own on("pos").
+                drives: [], meters: [] };
   // `.nu-strips` AND NOT `#strips`. The class is the skin (nu.css, the grid
   // and the 100% width Paul asked every table and grid for on 2026-08-28);
   // the ID belonged to the board's panel and stays there, because two nodes
@@ -804,8 +861,9 @@ export function voiceMix(parent, ctx, voiceName) {
   // the model readout under the fader is written once a beat by the page's own
   // `on("pos")` feed — see `paintVoiceMix`, and the [data-live] law on the
   // `.nu-drive` element itself.
-  MIX = { drives: env.drives, host };
+  MIX = { drives: env.drives, meters: env.meters || [], host };
   sayDrives(env.drives);            // the first reading, before the first beat
+  sayMeters(MIX.meters);            // ...and the first well, empty and captioned
 }
 
 /* WHICH VOICE STRIP IS ON THE PAGE, if any. A page fact, never a document one,
@@ -863,7 +921,15 @@ export function mount(parent, ctx) {
   // that is on the page NOW, not the ones that were there when mount() ran,
   // and showPanel() resets them.
   let busSays = [];             // { el, bus } — model in/out lines per plate
-  let masterMeter = null;       // the ONE measured meter, on the main plate
+  let masterMeter = null;       // the master's measured meter, on the main plate
+  /* ...AND ONE PER COLUMN HEAD ON THE AUTOMATION PLATE (2026-09-02, slice 2e).
+     Same shape as `busSays` and `masterMeter` and reset in the same line of
+     `showPanel`: a plate's handles belong to the plate that is open, and a
+     handle left over from the last one would be a beat's worth of writes into
+     a detached node. Each entry is `{ chan, th, well, bar, said }` — `said` is
+     the last title written, so the honest/measured swap costs a string compare
+     per beat rather than a DOM write. */
+  let headMeters = [];
 
   // COMPRESSED 2026-08-27 (the text diet, FUTURE.md §2: "signal flow is drawn
   // as arrows, not narrated"). It read 230 chars narrating the strip order the
@@ -1279,7 +1345,40 @@ export function mount(parent, ctx) {
     return p;
   };
 
-  /* ---- THE TAB ROW: the series, and only the series ----------------------
+  /* ---- THE TAB ROW IS DELETED, 2026-09-02 (slice 2e) ---------------------
+     Paul, the composer round, B11: *"Instead of having four icons on top and
+     section automation that should have been five subicons under the 'Mix'
+     icon. One of them is section automation."*
+
+     THE FIVE ARE IN THE GUTTER (ui/eight.js `mixTrayItems`) and this row is
+     gone with the marks it wore. Its own fence, written one wave ago when the
+     row stood as a dated MIRROR of the nav, named the condition: "it comes out
+     in wave 2e together with the desk-gate checks that drive it
+     (G11/G12/G13)." They came out in the same commit — nukernel/desk-gate.js
+     drives the board through `#nu-tray [data-k="boardtab|…"]` now, and the
+     ADDRESSES DID NOT MOVE, which is the whole reason those three gates could
+     follow a row that no longer exists.
+
+     WHAT WENT WITH IT, said so that a reader of the gates knows what stopped
+     being on the page rather than what stopped being asserted: `#boardtabs`,
+     the `.nu-busgroup` role="group" ("the bus series"), the `.nu-seamlab`
+     reading "the voices feed", the three `.nu-tabarrow` `→` glyphs and the
+     stage numbers `.nu-n`. THE SEAM SENTENCE IS NOT RE-HOMED. It was proposed
+     as the automation plate's caption and refused by the text diet
+     (test/text-diet.test.js: the ceiling is re-earned, not raised, and a
+     sentence naming furniture that is one panel away is exactly the prose that
+     comes off); the FACT it carried — every voice's four sends land in this
+     series — is still drawn by each plate's own `in ←` header and its footer
+     connector, which is where the paragraph below already said the second
+     owner of that picture was.
+
+     THE ARGUMENT THAT BUILT THE ROW IS KEPT BELOW, UNEDITED, because two of
+     its three claims outlived it: the series is still legible (the gutter
+     draws the five in signal order, and desk-gate G12 asserts the order off
+     the NAV's own rows now), and a plate still says for itself who feeds it
+     and what it feeds. Only the third — that a `<p class="nu-row">` inside the
+     panel is where the marks go — is reversed. ==========================
+
      Paul, 2026-08-27: *"Put the effects buses and mains into special tabs
      after the voices -- now the board is one tabbed space that is consistent
      and easy to understand."* One row, one panel — and since 2026-08-28 there
@@ -1393,75 +1492,52 @@ export function mount(parent, ctx) {
      label and this file still spells only `main` — "a renamed row is renamed
      on the tab by existing" — and the label is the button's `aria-label` and
      its `.nu-vh` text rather than its visible face below 700px. */
-  const TABS = busKeys.map((k, i) => ({ kind: "bus", key: k, label: busLabel(k),
-      glyph: (GLYPH.bus[k] || {}).g || "•", num: i + 1,
-      say: (GLYPH.bus[k] || {}).s || busLabel(k) }))
-    .concat([{ kind: "bus", key: "main", label: "main",
-      glyph: GLYPH.bus.main.g, num: busKeys.length + 1,
-      say: GLYPH.bus.main.s }]);
-  const busTabs = TABS;
+  /* THE FACE FIELDS CAME OFF THIS LIST 2026-09-02, WITH THE ROW THAT WORE
+     THEM. It carried `glyph`, `num` and `say` per stage — the mark, the stage
+     number and the sentence — and the gutter draws all three now off the same
+     `GLYPH.bus` table (ui/eight.js `mixTrayItems`), so keeping a second copy
+     here would be the drift this file's own import comment warns about. What
+     the list is FOR is unchanged and is why it survives the row: it is the
+     registry's answer to "which stages exist, in series order", which is what
+     validates `BOARDTAB` below and what `busLabel` names a rack after. */
+  const TABS = busKeys.map((k) => ({ kind: "bus", key: k, label: busLabel(k) }))
+    .concat([{ kind: "bus", key: "main", label: "main" }]);
   // the open tab survives a redraw; a stage the registry stopped declaring
   // does not. (It read "a voice that left the bank does not" while the voices
   // were tabs — same line, same law, and now the only thing that can leave the
   // row is an engine bus.)
-  if (!TABS.some((t) => t.kind === BOARDTAB.kind && t.key === BOARDTAB.key))
-    BOARDTAB = TABS[0] ? { kind: TABS[0].kind, key: TABS[0].key }
-                       : { kind: "bus", key: null };
+  /* ...AND THE FIFTH CHILD IS IN THE LIST THIS CHECKS AGAINST, 2026-09-02.
+     THIS WAS A REAL BUG AND THE GATE CAUGHT IT, which is worth writing down
+     rather than fixing quietly. `TABS` is the four BUS stages; the automation
+     grid is `{ kind: "auto", key: "auto" }`, so the line above answered "that
+     is not a stage the registry declares" and reset the open plate to `genre`
+     — on EVERY rebuild, which means on every `ctx.changed()`, which means on
+     every tap of a trim cell. The grid could be opened and could not be
+     WORKED: one cell tap and the board threw you back to the genre plate.
+     It did not happen while the grid was appended to the host (it stood under
+     whichever plate was open and belonged to no tab), so it arrived with the
+     fifth plate and was invisible to every check that opened a plate without
+     then editing on it — nukernel/desk-gate.js G15, which taps a cell six
+     times, is the one that found it.
+     THE LIST IS THEREFORE "WHICH CHILDREN THIS BOARD DRAWS" and not "which
+     stages the registry declares"; the two were the same thing until the grid
+     joined them. The law it enforces is unchanged and is why it exists: an
+     open plate survives a redraw, and a stage the registry stopped declaring
+     does not. */
+  const CHILDREN = TABS.concat([{ kind: "auto", key: "auto",
+                                  label: "section automation" }]);
+  if (!CHILDREN.some((t) => t.kind === BOARDTAB.kind && t.key === BOARDTAB.key))
+    BOARDTAB = CHILDREN[0] ? { kind: CHILDREN[0].kind, key: CHILDREN[0].key }
+                           : { kind: "bus", key: null };
 
-  /* ===== THIS ROW IS A TEMPORARY SECOND OWNER, 2026-09-02 ===============
-     Paul: *"Instead of having four icons on top and section automation that
-     should have been five subicons under the 'Mix' icon."* The five are in the
-     GUTTER as of this wave (eight.js `mixTrayItems`), and this row is still
-     here — which is, on its face, exactly the two-owners-of-one-gesture bug
-     this page legislates against everywhere else.
-     IT IS FENCED AND DATED RATHER THAN LEFT AMBIGUOUS. Both surfaces call the
-     same `showBoardHere` — the nav through the exported `showBoard`, this row
-     through its own listener — so they cannot disagree about which plate is
-     open or how it got there; and `markTabs` repaints this row from `BOARDTAB`
-     on every change, wherever the change came from. What it costs is a row of
-     four marks inside a panel whose tab already has them in the column beside
-     it, and it buys the wave: nukernel/desk-gate.js drives its whole board
-     walk by `[data-k="boardtab|…"]` on THIS row (G11's plate-per-tab check,
-     G12's marked-tab check, G13's width check), and rewriting those three is
-     wave 2e's, in the commit that deletes this row. Do not delete it before
-     they move. */
-  const tabsBar = el("p", null, "nu-row");
-  tabsBar.id = "boardtabs";
-  tabsBar.setAttribute("role", "group");
-  tabsBar.setAttribute("aria-label", "which part of the board is open");
-  const tabBtns = [];
-  const markTabs = () => {
-    for (const t2 of tabBtns) {
-      const on = t2.tab.kind === BOARDTAB.kind && t2.tab.key === BOARDTAB.key;
-      paintIcon(t2.b, { glyph: t2.tab.glyph, num: t2.tab.num,
-                        word: t2.tab.label, say: t2.tab.say, on });
-    }
-  };
-  // REBUILDS THE PANEL AND NOTHING ELSE — which is what makes "switching tabs
-  // does not move the page" true BY CONSTRUCTION rather than by correction.
-  // Everything above `#boardpanel` (the heading, the legend, the tab row
-  // itself) is untouched, so no pixel above the thumb changes and scrollY has
-  // nothing to be corrected against — ui/eight.js's `anchorWant` machinery is
-  // not called and does not need to be. It is also why this is NOT
-  // `ctx.changed()` or a board-wide remount: a full redraw would rebuild the
-  // word grid, and the grid is a `.nu-pane` whose sideways scroll only
-  // draw()'s keepPanes puts back.
-  /* THE `#strips` BRANCH IS DELETED, 2026-08-28. It read:
-       } else {
-         const strips = el("div", null, "nu-strips");
-         strips.id = "strips";
-         const c = chans.find((x) => x.voice.name === BOARDTAB.key);
-         if (c) strips.append(stripOf(c));
-         strips.setAttribute("aria-label", (BOARDTAB.key || "no") + " strip");
-         panel.append(strips);
-       }
-     — and `#strips` does not exist anywhere on this board now. The `.nu-strips`
-     CLASS is alive and unchanged: `voiceMix` above wears it, because the skin
-     is the skin wherever the strip is drawn. The ID stayed here as long as the
-     board owned the furniture and went with it, rather than being claimed by a
-     second node, which is the bug a gate cannot see round. */
+  /* (`const tabsBar = el("p", null, "nu-row"); tabsBar.id = "boardtabs";` AND
+     ITS WHOLE ROW STOOD HERE — the `markTabs` repainter, the `tabBtn` factory
+     that minted `boardtab|<kind>|<key>`, the `.nu-busgroup` with its
+     `.nu-seamlab` and its `→` arrows. Deleted 2026-09-02; the argument and the
+     inventory are in THE TAB ROW IS DELETED above, and the five buttons that
+     carry those keys are ui/eight.js `mixTrayItems`.) */
   const showPanel = () => {
-    busSays = []; masterMeter = null;
+    busSays = []; masterMeter = null; headMeters = [];
     panel.textContent = "";
     const rack = el("div", null, "nu-rack");
     rack.id = "rack";
@@ -1474,68 +1550,27 @@ export function mount(parent, ctx) {
       + " plate");
     panel.append(rack);
   };
-  /* ===== THE TWO DOORS THE GUTTER DRIVES THIS ROW BY (2026-09-02) ========
-     `showPanel` and `markTabs` are closures inside `mount()` and stay that
-     way — nothing outside this file may reach into the board's furniture. What
-     leaves is a pair of FUNCTIONS on the module handle, in the shape
-     `paintBoard` already takes: one that opens a plate the way a tab press
-     does (mark the row, swap the rack, repaint the model readouts — three
-     calls, in that order, exactly as the listener makes them) and one that
-     says which is open. eight.js `mixTrayItems` is the caller.
+  /* ===== THE DOOR THE GUTTER DRIVES THIS BOARD BY (2026-09-02) ==========
+     `showPanel` is a closure inside `mount()` and stays that way — nothing
+     outside this file may reach into the board's furniture. What leaves is a
+     pair of FUNCTIONS on the module handle, in the shape `paintBoard` already
+     takes: one that opens a plate (swap the rack, repaint the model readouts)
+     and one that says which is open. eight.js `mixTrayItems` is the caller,
+     and it is the ONLY caller now — `markTabs()` stood between these two lines
+     and repainted an in-panel row of marks that this wave deleted. The GUTTER
+     wears the mark instead, and it wears it without being told: `mixTrayItems`
+     reads `boardTabNow()` when the stripe is painted, and the stripe is
+     painted by the `draw()` the nav's own act already runs.
      A KIND THIS FILE DOES NOT DRAW IS REFUSED SILENTLY rather than left
      half-applied: `BOARDTAB` is the board's own state and a plate that does
      not exist would empty the rack. */
   const showBoardHere = (kind, key) => {
     if (!PLATES[key]) return false;
     BOARDTAB = { kind: kind || "bus", key };
-    markTabs();
     showPanel();
     paint();
     return true;
   };
-  const tabBtn = (t) => {
-    // KEYED `boardtab|<kind>|<name>`, 2026-08-27 (it was `boardtab-<name>`
-    // while only voices had tabs). The page's own scoping convention — the
-    // strips key `b|rev|cantor` the same way — and it is what keeps a voice
-    // called `main` from claiming the main plate's tab. THE KEY DID NOT MOVE
-    // WHEN THE FACE DID (2026-08-28): nukernel/desk-gate.js drives this whole
-    // row by `[data-k="boardtab|…"]` and always did, which is exactly what
-    // those attributes are for.
-    const b = icon({ k: "boardtab|" + t.kind + "|" + t.key,
-      glyph: t.glyph, num: t.num, word: t.label, say: t.say,
-      on: t.kind === BOARDTAB.kind && t.key === BOARDTAB.key });
-    b.addEventListener("click", () => {
-      if (t.kind === BOARDTAB.kind && t.key === BOARDTAB.key) return;
-      BOARDTAB = { kind: t.kind, key: t.key };
-      markTabs();
-      showPanel();
-      paint();                           // the new panel's model readouts, now
-    });
-    tabBtns.push({ b, tab: t });
-    return b;
-  };
-  /* (`for (const t of TABS.filter((x) => x.kind === "voice"))
-        tabsBar.append(tabBtn(t), document.createTextNode(" "));`
-     STOOD HERE — 2026-08-28, and it is the whole of "remove the voices from
-     the mixing board". The literal " " between two tabs is still spelled, one
-     block down, inside the series group: with the stylesheet off it is what
-     keeps two marks from reading as one word.) */
-  const series = el("span", null, "nu-busgroup");
-  series.setAttribute("role", "group");
-  series.setAttribute("aria-label", "the bus series");
-  series.append(el("span", "the voices feed", "nu-seamlab"));
-  busTabs.forEach((t) => {
-    series.append(el("span", "→", "nu-tabarrow"), " ", tabBtn(t), " ");
-  });
-  tabsBar.append(series);
-  markTabs();
-  /* THE ROW IS BUILT AND SEATED BELOW, AFTER `PLATES.auto` EXISTS (2026-09-02).
-     `host.append(tabsBar, panel); showPanel();` stood on these two lines, and
-     `showPanel()` reads `PLATES[BOARDTAB.key]` at call time — so opening a
-     board whose last tab was the automation plate would have found no builder
-     and drawn an empty rack. The DOM order is unchanged (the tabs, then the
-     panel, then the routing pointer); only the statement moved. */
-
   /* ================= SECTION AUTOMATION · THE WORD GRID ================= */
   // one-board §III, binding: "The grid is where you set — six words per voice
   // per section, saved with the song. Sections run DOWN; the row in clock red
@@ -1566,7 +1601,16 @@ export function mount(parent, ctx) {
      is in). What changed is that it is RETURNED instead of appended, and
      `showPanel` seats it in `#rack` like every other plate. */
   PLATES.auto = () => {
-    const wrap = el("div", null, "nu-autopanel");
+    /* IT IS A `.nu-plate` NOW, 2026-09-02 (slice 2e). It was a bare
+       `.nu-autopanel` while it was the one thing on the board that was not a
+       tab; it is the fifth child of the Mix icon, seated in `#rack` beside the
+       four bus plates, and nukernel/desk-gate.js G11 asks the same question of
+       all five ("one panel holds exactly one plate at a time"). A `data-bus`
+       of `auto` is the address that answers it — the grid is not a bus and
+       says so by spelling a word no BUSROWS row holds, exactly as the rack's
+       own aria-label does two blocks up. */
+    const wrap = el("div", null, "nu-autopanel nu-plate");
+    wrap.dataset.bus = "auto";
     // compressed 2026-08-27 (text diet): the grid draws sections running down
     // and a tap teaches itself; what the label must say is what a word IS.
     wrap.append(el("p", "section automation · a trim on the fader, per section",
@@ -1641,15 +1685,124 @@ export function mount(parent, ctx) {
     // transport feed is free to write, but a surface the clock writes on
     // declares itself rather than relying on where it happens to be mounted.
     t.dataset.live = "trimrow";
+    /* ===== THE COLUMN HEADS, 2026-09-02 (slice 2e) =======================
+       Paul, B11: *"the columns should list the instrument and when I click on
+       the column head let me edit the instrument! Light up which instrument is
+       playing, make a little volume meter INSIDE the heading."*
+
+       IT READ `for (const c of chans) hr.append(el("th", c.voice.name));` —
+       a plain `<th>` of the voice's NAME, no button, no instrument, no colour,
+       no meter and no click, which is three of Paul's four sentences missing
+       from one line.
+
+       WHAT A HEAD IS NOW, in the order the sentence asks for it: the
+       INSTRUMENT first and loud (`--fw-block`), the player's name under it and
+       dim, both inside ONE button keyed `col|<voice.name>` whose tap opens
+       that player's `instrument` facet; the head wears the player's CATEGORY
+       colour (`data-vi`), so one player is one hue on the roster, in the
+       stripe, on the roll and here; and a small horizontal meter well sits
+       beside them.
+
+       THE NAME IS KEPT AND IS NOT DECORATION: `voice.name` is the address
+       every cell under this column already uses (`t|<voice.name>|<secId>`), so
+       a head that named only the instrument would leave the column's own key
+       unreadable on the page. Two Rhodes players are two columns.
+
+       THE THREE FACTS THIS FILE DOES NOT OWN ARE ASKED FOR (`ctx.voiceFace`,
+       `ctx.openVoice`, `ctx.secName`). The instrument LINE is the registry's
+       word through ui/eight.js `playsWhat` — which is the only reader that
+       gets a kit naming itself through its cast and a bass hired from the pool
+       right — the colour SLOT is `vpaintOf`, and opening a player is four
+       writes into ui/eight.js's own page state. Copying any of the three here
+       would be the drift this file spent 2026-08-28 extracting its way out of.
+
+       THE METER IS NOT THE MASTER'S RMS REPRINTED, which is the thing
+       METER_WHY was defending and which would have been the easy fake. It is
+       `voiceLevels()[chair]` — the engine's own per-unit tap (sampled chairs)
+       or the bar audit's rms (Faust chairs) — and a chair that answers with
+       neither shows an EMPTY well saying so. See `paint()` below. */
     const thead = el("thead"), hr = el("tr");
     hr.append(el("th", "section"));
-    for (const c of chans) hr.append(el("th", c.voice.name));
+    const facts0 = factsNow();
+    for (const c of chans) {
+      const th = el("th", null, "nu-colhead");
+      const b = el("button", null, "nu-colbtn nu-vpaint");
+      b.type = "button";
+      b.dataset.k = "col|" + c.voice.name;
+      const face = (ctx.voiceFace && ctx.voiceFace(c.voice.name)) || {};
+      const line = face.line || c.voice.instrument || c.voice.kind || "";
+      if (face.slot >= 0) b.dataset.vi = String(face.slot);
+      b.append(el("b", line, "nu-colinstr"),
+               el("span", c.voice.name, "nu-colname"));
+      b.setAttribute("aria-label", c.voice.name +
+        (line ? " on " + line : "") + " — open this player's instrument");
+      b.title = "open " + c.voice.name + "'s instrument";
+      b.addEventListener("click", () => {
+        if (ctx.openVoice) ctx.openVoice(c.voice.name, "inst");
+      });
+      /* THE WELL IS A SIBLING OF THE BUTTON, NOT A CHILD OF IT. A control
+         inside a surface the clock writes is the shape test/motif-frozen A1
+         forbids, and the rule is the page's discipline rather than this
+         board's geometry (the board is outside `#app`, where the clock is free
+         — which is exactly why it must declare itself by hand). */
+      const well = el("span", null, "nu-meterwell nu-meterh");
+      well.dataset.live = "meter";
+      well.setAttribute("aria-hidden", "true");
+      const bar = el("i", null, "nu-meterbar");
+      well.append(bar);
+      th.append(b, well);
+      hr.append(th);
+      headMeters.push({ chan: c.key, th, well, bar, said: null,
+                        // WHICH LANE THIS CHAIR IS MEASURED ON, so the title
+                        // can say what the number IS: a sampled chair has a
+                        // live AnalyserNode on its own unit (per frame), a
+                        // Faust chair is rendered in a worker and owns no node,
+                        // so its only honest number is the bar audit's own rms
+                        // (per bar). audio/plan.js channelFacts is the owner of
+                        // that fact and this file asks it rather than guessing.
+                        grain: (facts0[c.key] || {}).sampled ? "per frame" : "per bar" });
+    }
     thead.append(hr); t.append(thead);
     const tbody = el("tbody");
     doc.form.sections.forEach((s2, si) => {
       const tr = el("tr");
       tr.dataset.sec = String(si);
-      const th = el("th", s2.id);
+      /* ===== THE ROW HEAD IS A JUMP, AND IT IS NAMED, 2026-09-02 =========
+         Paul, B11: *"I need to be able to jump to a section somehow, by
+         clicking on them when in automation."* And 2026-08-28: *"The sections
+         are named so name them."*
+
+         IT READ `const th = el("th", s2.id);` — the raw id, `s0`, which the
+         2026-08-28 naming law has forbidden since the day it was written and
+         which this file's own map wrote down as an outstanding contradiction
+         ("the trim grid's row heads still print s2.id, which predates and
+         contradicts this law"). Two sentences, one line: the head is a BUTTON
+         carrying `secName(i)` — `verse 2` — and a tap on it puts the ear
+         there.
+
+         THE ID IS STILL THE ADDRESS AND ONLY THE ADDRESS: `row|<secId>`, the
+         same `s2.id` every cell in the row already keys by. A name is not an
+         address and an address is nobody's name for anything.
+
+         THE JUMP IS `ctx.playFrom(si)` AND NEVER AN IMPORT. ui/eight.js's
+         standing argument: a view "cannot import startAt without becoming a
+         second door into the engine — so the page hands it the door it already
+         has." Cold it seeks; playing it queues on the next bar line, and the
+         wait now has a countdown — audio/live.js `announceJump`, added the
+         same day for the same gesture, because a queued jump that says nothing
+         for a whole box is a gesture nobody can tell landed. */
+      const th = el("th", null, "nu-srowh");
+      {
+        const name = ctx.secName ? ctx.secName(si) : (s2.role || s2.id);
+        const jb = el("button", name, "nu-rowjump");
+        jb.type = "button";
+        jb.dataset.k = "row|" + s2.id;
+        jb.setAttribute("aria-label", "play from " + name);
+        jb.title = "put the ear here — while the record plays the jump lands " +
+          "on the next bar line, and the countdown says when";
+        jb.addEventListener("click", () => { if (ctx.playFrom) ctx.playFrom(si); });
+        th.append(jb);
+      }
       // WHERE THE DIM NUMBERS COME FROM, on the row that causes them: the
       // section's own dealt words. `shade` reads lvl and env, so a reader
       // who wonders why a column of cells woke up can see the cause in the
@@ -1760,7 +1913,13 @@ export function mount(parent, ctx) {
     // owner of TRIMS anyway; the cycle already spells them one tap at a time.
     return wrap;
   };
-  host.append(tabsBar, panel);
+  /* THE PANEL IS SEATED HERE, AFTER `PLATES.auto` EXISTS (2026-09-02).
+     `showPanel()` reads `PLATES[BOARDTAB.key]` at call time — so opening a
+     board whose last plate was the automation grid would have found no builder
+     and drawn an empty rack. (It read `host.append(tabsBar, panel)` until the
+     row above was deleted the same day; the DOM order is what is left of it —
+     the panel, then the routing pointer.) */
+  host.append(panel);
   showPanel();
 
   /* ---- the routing pointer, once, under the rack ------------------------ */
@@ -1843,6 +2002,47 @@ export function mount(parent, ctx) {
       for (const tr of grid.querySelectorAll("tbody tr"))
         tr.classList.toggle("now", +tr.dataset.sec === now);
     }
+    /* ===== THE COLUMN HEADS' TWO LIVE FACTS, 2026-09-02 (slice 2e) =======
+       Paul, B11: *"Light up which instrument is playing, make a little volume
+       meter INSIDE the heading."* TWO facts, two feeds, two paints, and the
+       page's own law is why they are not one:
+
+         WHICH IS PLAYING — `soundingChans()`, the schedule after the desk. It
+         is a PLAYHEAD (clock red, `is-sounding`, the same class and the same
+         ink the gutter's band rows wear), never green, because green on this
+         page means MEASURED and a schedule is not a measurement.
+
+         HOW LOUD — `voiceLevels()`, the engine's own per-voice number, in the
+         green well. A chair ABSENT from that map has no tap and no audit: the
+         well is drawn EMPTY and says "not yet measured — plays first" rather
+         than filling to zero, because 0 is a claim of silence about a voice
+         nobody measured, and a fake measurement is the one thing this board
+         has refused in writing since METER_WHY was written.
+
+       BOTH ARE GUARDED. The readers are pure but they reach a compiled plan
+       and a live handle; before compile, mid-swap or on a route that answers
+       null they must not take the board's beat down with them. Same shape as
+       `factsNow`'s try/catch above.
+
+       THE TITLE IS WRITTEN ONLY WHEN IT CHANGES (`said`), so a head costs one
+       string compare per beat rather than a DOM write. */
+    if (headMeters.length) {
+      let hot = [], lv = {};
+      try { hot = soundingChans() || []; } catch (e) { hot = []; }
+      try { lv = voiceLevels() || {}; } catch (e) { lv = {}; }
+      for (const h of headMeters) {
+        h.th.classList.toggle("is-sounding", hot.indexOf(h.chan) >= 0);
+        const r = lv[h.chan];
+        const measured = typeof r === "number" && isFinite(r);
+        h.bar.style.width = measured
+          ? Math.round(Math.max(0, Math.min(1, gainToF(r * 4))) * 100) + "%" : "0%";
+        h.well.classList.toggle("is-unmeasured", !measured);
+        const say = measured
+          ? "measured: " + h.chan + "'s rms — " + h.grain
+          : "not yet measured — plays first";
+        if (h.said !== say) { h.well.title = say; h.said = say; }
+      }
+    }
   };
   paint();
   const handle = { paint, show: showBoardHere };
@@ -1888,9 +2088,35 @@ const sayDrives = (drives) => {
     x.el.textContent = "model " + fmtDb(20 * Math.log10(Math.max(1e-4, g))) + " dB";
   }
 };
+/* THE MEASURED HALF OF THE STRIP, 2026-09-02 — the same arithmetic and the
+   same honesty as the automation plate's column heads, written once and read
+   by both callers. What is drawn is `voiceLevels()[chair]`, the engine's own
+   per-voice number; a chair ABSENT from that map is drawn EMPTY and says so,
+   because 0 is a claim of silence about a voice nobody measured.
+   THE WELL EXISTS WHILE THE RECORD IS STOPPED and is empty then, which is
+   test/motif-frozen A2's rule said about a meter: a surface that only appears
+   once playing is the editing interface changing on play. */
+const sayMeters = (meters) => {
+  if (!meters || !meters.length) return;
+  let lv = {};
+  try { lv = voiceLevels() || {}; } catch (e) { lv = {}; }
+  for (const m of meters) {
+    const r = lv[m.chan];
+    const measured = typeof r === "number" && isFinite(r);
+    m.bar.style.height = measured
+      ? Math.round(Math.max(0, Math.min(1, gainToF(r * 4))) * 100) + "%" : "0%";
+    m.well.classList.toggle("is-unmeasured", !measured);
+    m.out.textContent = measured ? (r > 0 ? "live" : "…")
+      : (playing ? "…" : "stopped");
+    const say = measured ? "measured: " + m.chan + "'s rms — " + m.grain
+                         : "not yet measured — plays first";
+    if (m.said !== say) { m.well.title = say; m.said = say; }
+  }
+};
 export const paintVoiceMix = () => {
   if (!MIX || !MIX.host.isConnected) return;
   sayDrives(MIX.drives);
+  sayMeters(MIX.meters);
 };
 
 /* ---------- the listening level, on the main strip ------------------------ */

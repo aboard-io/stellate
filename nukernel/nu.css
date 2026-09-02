@@ -5949,3 +5949,80 @@ table.nu-trims{ color: var(--ink); }
    and holds no address. Centred with the column head above it. */
 .nu-sgsay{ text-align: center; color: var(--dim); font-size: var(--t1);
   padding: var(--s2); }
+
+/* ======================================================================
+   SLICE 2e · MIX — THE COLUMN HEADS, THE ROW JUMPS, AND AN HONEST METER
+   (2026-09-02)
+
+   Paul, B11: *"Instead of having four icons on top and section automation
+   that should have been five subicons under the 'Mix' icon. One of them is
+   section automation. … the columns should list the instrument and when I
+   click on the column head let me edit the instrument! Light up which
+   instrument is playing, make a little volume meter INSIDE the heading. … I
+   need to be able to jump to a section somehow, by clicking on them when in
+   automation."*
+
+   FOUR THINGS LAND HERE, and the two paint families do exactly what the
+   design system says they mean and nothing else:
+     · CATEGORY (`[data-vi]` + `.nu-vpaint`) on a column head — which PLAYER.
+     · `--meter` green in the well — MEASURED, and only where a number
+       arrived; an unmeasured well draws no bar at all.
+     · `--clock` red on a sounding head (`is-sounding`) — a PLAYHEAD, the same
+       ink and the same class the gutter's band rows already wear. It is a
+       schedule, not a measurement, which is why it is red and not green.
+   `#boardtabs` AND ITS `.nu-busgroup` / `.nu-seamlab` / `.nu-tabarrow` RULES
+   ARE NOW DEAD (the row is deleted, ui/engineer.js) and are left standing
+   rather than pulled out from under the argued blocks they sit inside; they
+   are named here so the next reader of this file knows they paint nothing.
+   ---------------------------------------------------------------------- */
+
+/* THE COLUMN HEAD. `.nu-trims thead th` above is a dim uppercase word, which
+   is what a head was when it held one; this head holds a button and a meter
+   and has to stop being type-styling. The instrument LEADS (it is the answer
+   to "what is this column") and the player's name is the dim second line —
+   the same two-line face `paintIcon` gives a nav row and `scolHead` gives a
+   Structure grid, so the three column heads on this page read alike. */
+.nu-trims thead th.nu-colhead{ text-transform: none; letter-spacing: 0;
+  padding: 2px; vertical-align: bottom; }
+.nu-colbtn{ display: flex; flex-direction: column; align-items: stretch;
+  gap: 1px; inline-size: 100%; min-inline-size: 56px; min-block-size: var(--ctl);
+  padding: var(--s1) var(--s2); cursor: pointer; text-align: start; }
+.nu-colinstr{ display: block; font: var(--fw-block) var(--t1)/1.15 var(--sans, inherit);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nu-colname{ display: block; font: var(--fw-body) var(--t0)/1.2 var(--mono, monospace);
+  opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* the head keeps its own hue under the pointer — the same argument
+   `.nu-trimbtn.w-*:hover` makes four hundred lines up: a plate that already
+   says which player it is must not answer the pointer in the flag's yellow. */
+.nu-colbtn:hover{ background: var(--vpaint, var(--ink)); }
+
+/* THE LITTLE METER, INSIDE THE HEADING. The tall well above is 16×180 in a
+   fader trough; this is the same well laid on its side under the words, and
+   the bar grows from the leading edge instead of from the floor. */
+.nu-meterwell.nu-meterh{ inline-size: auto; block-size: 6px;
+  margin-block-start: 2px; }
+.nu-meterwell.nu-meterh .nu-meterbar{ inset: 0 auto 0 0; inline-size: 0;
+  block-size: auto; }
+/* NOT YET MEASURED IS NOT ZERO. A chair with no tap and no audit draws an
+   EMPTY well — no fill, and the well's own ground goes to the page's dim so
+   it cannot be read as "measured, and silent". The title says which
+   (ui/engineer.js writes it), and green never appears without a number. */
+.nu-meterwell.is-unmeasured{ background: var(--panel); border-style: dashed; }
+
+/* LIT UP WHILE IT IS PLAYING. `--clock`, and an edge bar rather than a fill,
+   for the reason `.nu-vpaint.is-edge` gives: the head already wears the
+   player's own colour and a second fill would fight it. */
+.nu-trims thead th.nu-colhead.is-sounding{
+  box-shadow: inset 0 -3px 0 var(--clock); }
+
+/* THE ROW HEAD IS A JUMP. It was the section's raw id in dim uppercase type;
+   it is a named button now (`verse 2`) with the bars-and-words line under it,
+   and the `<small>` rule above still draws that line. Left-aligned and full
+   width so a column of section names reads as a column. */
+.nu-trims tbody th.nu-srowh{ padding-inline: 0; }
+.nu-rowjump{ display: block; inline-size: 100%; min-block-size: var(--ctl);
+  padding: var(--s1) var(--s2); text-align: start; cursor: pointer;
+  font: var(--fw-label) var(--t1)/1.2 var(--sans, inherit);
+  text-transform: none; letter-spacing: 0;
+  border: var(--bw) solid transparent; border-radius: var(--r2); }
+.nu-rowjump:hover{ border-color: var(--ink); }

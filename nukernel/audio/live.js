@@ -655,13 +655,13 @@ async function prerender() {
 export async function startAt(boxIndex) {
   gestureUnlock();
   for (const fn of gestureFns) { try { fn(); } catch (e) {} }
-  if (playing) { setPendingStart(boxIndex); return; }
+  if (playing) { setPendingStart(boxIndex); announceJump(boxIndex); return; }
   // ...AND A SECOND PRESS WHILE THE FIRST IS STILL OPENING IS NOT A SECOND
   // ENGINE. `playing` only goes true after the compile, so two quick taps used to
   // race two exploreLive calls into the same page — two rings, two contexts, and
   // a `tries` count that walked straight past its own ceiling. The opening press
   // owns the gesture; the second one queues a jump like any other.
-  if (st.state === "starting") { setPendingStart(boxIndex); return; }
+  if (st.state === "starting") { setPendingStart(boxIndex); announceJump(boxIndex); return; }
   st.state = "starting"; st.capped = null; st.lastError = null;
   st.startedAt = Date.now();
   // A START BEGINS ITS OWN PASS (2026-08-30). `stop()` clears this too; it is
@@ -1095,6 +1095,46 @@ export function announceChange(label, si, info) {
                         who: (info && info.who) || label,
                         role: (info && info.role) || null,
                         si: si != null ? si : null, round });
+  tickPos();                       // say it now, not a tick later
+}
+
+/* WHEN A JUMP LANDS (2026-09-02, slice 2e). Paul, B11: *"I need to be able to
+   jump to a section somehow, by clicking on them when in automation."*
+
+   A QUEUED JUMP HAD NO COUNTDOWN, which made it the quietest gesture on the
+   page: `startAt(si)` while playing calls `setPendingStart` and returns, the
+   walk is a runway ahead of the ear, and nothing at all happens for up to a
+   whole box. That is this repo's characteristic bug wearing a transport — a
+   gesture that is costed, queued and correct, and reaches no reader — and it
+   was already true of the Structure form's section number before a board
+   column ever asked for it, which is why the fix is HERE and not in a view.
+
+   THE ARITHMETIC IS THE LANDING RULE'S OWN, NOT announceChange's. An EDIT
+   lands when its section next comes round (announceChange walks the timeline
+   to `si`); a JUMP lands on the next bar-line of ANY box, because that is
+   literally what `onBar` does with `pendingStart` above — "if (pendingStart !=
+   null && bar.first)". Announcing it with the edit rule would have counted a
+   whole record's worth of beats for a wait of four. So this walks forward to
+   the next `first` bar and says that, and the same `onBar` line that applies
+   the jump is the one that clears the countdown (a countdown that landed is
+   over, whatever the arithmetic said).
+
+   ONE LABEL, so a second tap replaces the first rather than stacking: two
+   queued jumps are not two waits, they are one wait with a new destination —
+   which is exactly what `pendingStart` itself is. */
+export function announceJump(si) {
+  if (!playing || !curBar) return;
+  const n = barCount();
+  if (!n) return;
+  const TL = timeline();
+  let lands = curBar.serial + 1;
+  for (let k = 0; k < n * 2; k++) {
+    const b = TL[barOfSerial(lands + k)];
+    if (b && b.first) { lands += k; break; }
+  }
+  pendings.set("jump", { label: "jump", landsSerial: lands,
+                         landsBar: barOfSerial(lands), lastLeft: null,
+                         who: "the jump", role: null, si, round: false });
   tickPos();                       // say it now, not a tick later
 }
 

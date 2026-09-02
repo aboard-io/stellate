@@ -946,11 +946,33 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // address is the address: this walk still reads it out of the key rather
   // than assuming, so a voice tab that came BACK to this row would be seen
   // rather than silently counted as a bus.
-  const allTabs = () => page.evaluate(() =>
-    [...document.querySelectorAll("#boardtabs button")].map((b) => {
+  /* THE ROW IS THE GUTTER NOW, 2026-09-02 (slice 2e). It read
+     `document.querySelectorAll("#boardtabs button")` and this file's own map
+     named the hazard of that line before the row moved: "if the row moves to
+     #nu-tray, allTabs() returns [] and every downstream perBus walk silently
+     measures nothing — precisely the 'a gate faithful to a scope that does not
+     contain the thing' hazard this gate names."
+     Paul, B11: *"Instead of having four icons on top and section automation
+     that should have been five subicons under the 'Mix' icon."* So the scope
+     moves with the thing, and the ADDRESS does not move at all: the five
+     buttons are `#nu-tray [data-k="boardtab|<kind>|<key>"]`, which is the same
+     key the deleted row wore and the same key `openBus` has always clicked.
+     Read off `#nu-tray` and not off the document, so a stray `boardtab|…`
+     anywhere else would be a miss rather than a silent pass. */
+  const allTabs = async () => {
+    /* THE FIVE ARE CHILDREN OF A BRANCH, SO THE BRANCH IS OPENED FIRST. The
+       gutter is a tree (2026-09-02): `showTab("Mix")` expands `toptab-Mix` and
+       the five rows appear under it, and `__eightUp()` — which `openVoice`
+       below calls to get back to the tabs — folds every branch on the page.
+       A read taken after that would find no rows and report an empty row,
+       which is this block's own named hazard rather than a finding. */
+    await topTab("Mix");
+    return page.evaluate(() =>
+    [...document.querySelectorAll('#nu-tray [data-k^="boardtab|"]')].map((b) => {
       const m = /^boardtab\|([^|]+)\|(.+)$/.exec(b.dataset.k || "");
       return m ? { kind: m[1], key: m[2] } : { kind: "?", key: b.dataset.k };
     }));
+  };
   const busTabs = () => allTabs()
     .then((t) => t.filter((x) => x.kind === "bus").map((x) => x.key));
   /* THE VOICES ARE NOT A TAB ROW ANY MORE, so the list of them is read off the
@@ -1011,6 +1033,13 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   // says which, rather than relying on where the check before it happened to
   // leave the page. That reliance is precisely this block's own named hazard
   // ("a gate faithful to a scope that does not contain the thing").
+  /* THE TAP IS THE NAV'S NOW, 2026-09-02, AND THE SELECTOR DID NOT CHANGE.
+     `[data-k="boardtab|bus|<k>"]` was the in-panel row's key and is the
+     gutter row's key — "an address does not move when a row moves" — so this
+     opener is word for word what it was, with the branch opened first (see
+     `allTabs`). What DID change is that a tap now runs ui/eight.js's own
+     `draw()` as well as ui/engineer.js's `showBoard`, which is why the wait is
+     still on the PLATE rather than on the button's mark. */
   const openBus = async (key) => {
     await topTab("Mix");
     await page.evaluate((k) => {
@@ -1021,6 +1050,24 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       const p = document.querySelector("#boardpanel #rack .nu-plate");
       return p && p.dataset.bus === k;
     }, key, { timeout: 5000 });
+  };
+  /* ...AND THE FIFTH CHILD, WHICH IS NOT A BUS. Paul, B11: *"One of them is
+     section automation."* The grid is `PLATES.auto` now — a plate in the same
+     `#rack`, keyed `boardtab|auto|auto` and answering to `data-bus="auto"` (a
+     word no BUSROWS row holds, which is how a reader tells the grid from a
+     stage). Everything below that walks the SERIES still walks `busTabs()`;
+     this opener exists so the checks that are about the FIVE can reach the one
+     that is not a bus. */
+  const openAuto = async () => {
+    await topTab("Mix");
+    await page.evaluate(() => {
+      const b = document.querySelector('[data-k="boardtab|auto|auto"]');
+      if (b) b.click();
+    });
+    await page.waitForFunction(() => {
+      const p = document.querySelector("#boardpanel #rack .nu-plate");
+      return p && p.dataset.bus === "auto";
+    }, null, { timeout: 5000 });
   };
   // run `fn` with each voice's strip open in turn, and leave the first open
   const perTab = async (fn) => {
@@ -1091,41 +1138,84 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     const engineBuses = F.BUSES.filter((b) => b.engine).map((b) => b.bus);
     const missingBus = engineBuses.filter((b) => !buses.includes(b));
     const groupTab = buses.filter((b) => F.BUSES.some((x) => x.bus === b && !x.engine));
+    /* REWRITTEN 2026-09-02 (slice 2e) — the fifth child. It read `…&&
+       tabs.slice(names.length).every((t) => t.kind === "bus")` and its
+       sentence was "the FOUR STAGES OF THE SERIES follow them, in signal
+       order — one tab per engine bus the registry declares plus the main, and
+       no tab for a group". Both halves of that are kept and still asserted;
+       what is added is Paul's own count. B11: *"Instead of having four icons
+       on top and section automation that should have been five subicons under
+       the 'Mix' icon. One of them is section automation."* The row is FIVE, it
+       is the four stages then the grid, and the grid is deliberately NOT a bus
+       — `boardtab|auto|auto`, a kind no BUSROWS row holds — which is the
+       distinction the tagged pair was built for and is what keeps the walks
+       below (`busTabs`, the registry want-list) asking about stages only. */
+    const kinds = tabs.map((t) => t.kind);
     ok(eq(buses, ["genre", "echo", "rev", "main"]) && !missingBus.length &&
-       !groupTab.length && tabs.slice(names.length).every((t) => t.kind === "bus"),
-       "…and the FOUR STAGES OF THE SERIES follow them, in signal order — " +
-       JSON.stringify(buses) + " — one tab per engine bus the registry " +
-       "declares plus the main, and no tab for a group",
-       JSON.stringify({ buses, engineBuses, missingBus, groupTab }));
+       !groupTab.length && eq(kinds, ["bus", "bus", "bus", "bus", "auto"]),
+       "…and the FIVE CHILDREN OF THE MIX ICON are the four stages of the " +
+       "series in signal order — " + JSON.stringify(buses) + ", one per engine " +
+       "bus the registry declares plus the main and no row for a group — then " +
+       "the section-automation grid, which is not a bus and says so",
+       JSON.stringify({ buses, kinds, engineBuses, missingBus, groupTab }));
     // ...AND THE PANEL STILL HOLDS EXACTLY ONE THING, which is what "one
     // tabbed space" has meant since 2026-08-27. What changed on 2026-08-28 is
     // WHICH one: it was a strip at boot (the first tab was a voice) and it is
     // a PLATE now, with `#strips` absent from the whole document.
     await openBus("genre");
+    /* `marked` IS READ OFF THE GUTTER, 2026-09-02 (slice 2e). It read
+       `#boardtabs button[aria-pressed="true"]` and there is no `#boardtabs`;
+       the mark is the STRIPE's now, and the stripe's own law is stronger than
+       the row's was — test/shell.js A6c: exactly ONE `<mark>` and one
+       `aria-pressed="true"` in `#nu-tray`, and it is the deepest OPEN thing.
+       So the question this line asks becomes "is the open plate the marked row
+       in the nav", which is the same claim about a better-fenced surface. */
     const one = await page.evaluate(() => ({
       panels: document.querySelectorAll("#boardpanel > *").length,
       strips: document.querySelectorAll("#boardpanel .nu-strip").length,
       anyStripsId: document.querySelectorAll("#strips").length,
       plates: document.querySelectorAll("#boardpanel #rack .nu-plate").length,
-      marked: document.querySelectorAll('#boardtabs button[aria-pressed="true"]').length,
+      oldRow: document.querySelectorAll("#boardtabs").length,
+      marked: [...document.querySelectorAll('#nu-tray [aria-pressed="true"]')]
+        .map((b) => b.dataset.k),
       shown: (document.querySelector("#boardpanel .nu-busname") || {}).textContent }));
     ok(one.panels === 1 && one.plates === 1 && one.strips === 0 &&
-       one.anyStripsId === 0 && one.marked === 1,
-       "…and ONE PANEL HOLDS EXACTLY ONE PLATE at a time — the marked tab's " +
-       "(" + one.shown + "), with no strip on the board beside it and no " +
-       "`#strips` node anywhere on the page", JSON.stringify(one));
-    const openedPlates = await perBus(() => page.evaluate(() => ({
+       one.anyStripsId === 0 && one.oldRow === 0 &&
+       one.marked.length === 1 && one.marked[0] === "boardtab|bus|genre",
+       "…and ONE PANEL HOLDS EXACTLY ONE PLATE at a time — the marked row's " +
+       "(" + one.shown + "), with no strip on the board beside it, no " +
+       "`#strips` node anywhere on the page, and no in-panel tab row left " +
+       "(Paul, B11: \"five subicons under the 'Mix' icon\")", JSON.stringify(one));
+    /* ...AND IT IS FIVE NOW, NOT FOUR. Paul, B11: *"Instead of having four
+       icons on top and section automation that should have been five subicons
+       under the 'Mix' icon. One of them is section automation."* The walk was
+       `perBus` — the four stages — and the automation grid was not a tab at
+       all: it was appended to the board's HOST and stood under whichever plate
+       was open. It is `PLATES.auto` now, so the claim covers all five children
+       the nav offers, the auto plate included, and the marked row is checked
+       against the child's own key rather than against `boardtab|bus|…` (the
+       fifth is `boardtab|auto|auto`, which is what made the pair a tagged one
+       in the first place). */
+    const readOpen = () => page.evaluate(() => ({
       plates: [...document.querySelectorAll("#boardpanel #rack .nu-plate")]
         .map((p) => p.dataset.bus),
       strips: document.querySelectorAll("#boardpanel .nu-strip").length,
-      marked: [...document.querySelectorAll('#boardtabs button[aria-pressed="true"]')]
-        .map((b) => b.dataset.k) })));
-    const badPlate = openedPlates.filter(([k, m]) =>
+      marked: [...document.querySelectorAll('#nu-tray [aria-pressed="true"]')]
+        .map((b) => b.dataset.k) }));
+    const openedPlates = [];
+    for (const t of await allTabs()) {
+      if (t.kind === "auto") await openAuto(); else await openBus(t.key);
+      openedPlates.push([t.key, await readOpen(),
+                         "boardtab|" + t.kind + "|" + t.key]);
+    }
+    await openBus("genre");
+    const badPlate = openedPlates.filter(([k, m, want]) =>
       m.plates.length !== 1 || m.plates[0] !== k || m.strips !== 0 ||
-      m.marked.length !== 1 || m.marked[0] !== "boardtab|bus|" + k);
-    ok(!badPlate.length,
-       "…and each of the four bus tabs opens ITS OWN plate into the same " +
-       "panel, alone and marked — which is what \"one tabbed space\" means",
+      m.marked.length !== 1 || m.marked[0] !== want);
+    ok(openedPlates.length === 5 && !badPlate.length,
+       "…and each of the FIVE children of the Mix icon opens ITS OWN plate " +
+       "into the same panel, alone and marked in the stripe — the four stages " +
+       "of the series and the section-automation grid",
        JSON.stringify(badPlate));
   }
 
@@ -1502,10 +1592,22 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       const drive = s.querySelector(".nu-drive");
       const fadeIn = s.querySelector('input[data-k^="b|fader|"]');
       const fadeOut = fadeIn && fadeIn.closest(".nu-vs").querySelector("output");
-      const well = s.querySelector(".nu-vs.is-off input[aria-label$='meter (refused)']");
+      /* THE STRIP'S METER WELL IS MEASURED, 2026-09-02 (slice 2e). It read
+         `.nu-vs.is-off input[aria-label$='meter (refused)']` and asserted the
+         refusal was drawn and sentenced — METER_WHY, "one master tap … a green
+         bar here would be a fake measurement". The engine grew the tap the
+         refusal's own words implied (engine/faust/live/live.js `samplerOf` →
+         `voiceRms`, and the bar audit for the Faust lane), so the well is a
+         real one now: a `.nu-meterwell[data-live="meter"]` with a
+         `.nu-meterbar` in it, captioned with what the number IS. The refusal
+         is DELETED rather than kept — "a refusal that has been kept is not a
+         refusal" — and this line asks the opposite question. */
+      const well = s.querySelector('.nu-meterwell[data-live="meter"]');
       out[s.dataset.ch] = { drive: drive && drive.textContent,
         off: fadeOut && fadeOut.textContent,
-        meterRefused: !!(well && well.disabled && well.dataset.why) };
+        stillRefused: !!s.querySelector("input[aria-label$='meter (refused)']"),
+        meterMeasured: !!(well && well.querySelector(".nu-meterbar") &&
+                          /rms|not yet measured/.test(well.title || "")) };
     }
     return out;
   }))).map(([, o]) => o));
@@ -1517,7 +1619,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     if (drawn[key].drive !== "model " + wantDb + " dB")
       wrongDrive.push(key + ": drew \"" + drawn[key].drive + "\", desk says " + wantDb);
     if (drawn[key].off !== "0.0") wrongOff.push(key + ": " + drawn[key].off);
-    if (!drawn[key].meterRefused) fakeMeter.push(key);
+    if (!drawn[key].meterMeasured || drawn[key].stillRefused) fakeMeter.push(key);
   }
   ok(Object.keys(drawn).length === chansOnPage.length,
      "every strip draws the model readout and the offset",
@@ -1527,46 +1629,102 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
      wrongDrive.join("; "));
   ok(!wrongOff.length, "…and the number beside the fader is the stored offset, " +
      "0.0 dB on a record whose voices carry no desk", wrongOff.join("; "));
-  ok(!fakeMeter.length, "…and every strip's meter well is REFUSED with its " +
-     "reason — no green bar without a measurement behind it", fakeMeter.join(", "));
-  // THE MAIN TAB IS OPENED FIRST, 2026-08-27 (the board tabs): the one green
-  // meter lives on the main plate, and a plate is on the page only while its
-  // tab is marked. The claim is unchanged — ONE measured meter on the whole
-  // page — and it is asked with the main open (where the meter must be) and
-  // again with a VOICE'S MIX FACET open (where nothing may grow one). The
-  // second half is a stronger question than it was: the strip is on a
-  // different top-level tab now, so `greenElsewhere` is counted with the whole
-  // Band panel laid out and the board's own panel shut.
+  /* REVERSED 2026-09-02 (slice 2e). It read: "…and every strip's meter well is
+     REFUSED with its reason — no green bar without a measurement behind it",
+     and the second clause is the law, unchanged and still enforced. What
+     changed is that there IS a measurement behind it. Paul, B11: *"Light up
+     which instrument is playing, make a little volume meter INSIDE the
+     heading."* The well is measured now, on the strip and in every column head
+     of the automation plate, off nukernel/audio/live.js `voiceLevels()` — and
+     the honesty rule moved INTO the well rather than being dropped: a chair
+     with no tap and no audit draws NO BAR and says "not yet measured — plays
+     first", because 0 is a claim of silence about a voice nobody measured.
+     test/meter-reach.browser.js proves the number itself on rendered sound;
+     this asks that the strip is wired to it and that the old refusal is gone
+     rather than left standing beside its own replacement. */
+  ok(!fakeMeter.length, "…and every strip's meter well is MEASURED and " +
+     "captioned with what the number is — the per-voice tap the engine grew " +
+     "(voiceRms / the bar audit), with the refusal it replaces deleted rather " +
+     "than kept beside it", fakeMeter.join(", "));
+  /* ===== ONE METER, THEN MANY — REWRITTEN 2026-09-02 (slice 2e) ==========
+     WHAT STOOD HERE, and both halves are kept because both were true of the
+     board they measured:
+
+       2026-08-27: "THE MAIN TAB IS OPENED FIRST: the one green meter lives on
+       the main plate, and a plate is on the page only while its tab is
+       marked. The claim is unchanged — ONE measured meter on the whole page —
+       and it is asked with the main open (where the meter must be) and again
+       with a VOICE'S MIX FACET open (where nothing may grow one)."
+       2026-08-28: "SO IT IS ASKED OF THE STRIP ITSELF: no measured meter
+       inside `#voicemix`, which is the claim the old count was reaching for
+       ('never fake a measurement' — the engine has ONE tap and a per-channel
+       bar would be a green bar with nothing behind it)."
+     The assertion was `greenMeters.main === 1 && greenMeters.all === 1 &&
+     greenNow.all === 1 && greenNow.onStrip === 0 && greenNow.refusedWells === 1`.
+
+     THE COUNT WAS NEVER THE CLAIM — the ENGINE'S ONE TAP WAS, and the engine
+     has more than one now. Paul, B11: *"Light up which instrument is playing,
+     make a little volume meter INSIDE the heading."* Slice 0b gave every
+     sampled unit its own AnalyserNode and read the bar audit for the Faust
+     lane; `voiceLevels()` joins both to chair keys. So "exactly one
+     `.nu-meterbar`" becomes ONE PER COLUMN HEAD PLUS THE MASTER, EACH
+     MEASURED — and the durable half of the old line is kept and made explicit:
+     every bar on the page must be somewhere a real number reaches it, which
+     is now three places and not one. A bar anywhere else is still the fake
+     measurement the 2026-08-27 sentence forbade. */
   await openBus("main");
   const greenMeters = await page.evaluate(() => ({
     main: document.querySelectorAll("#rack .nu-plate[data-bus='main'] .nu-meterbar").length,
-    all: document.querySelectorAll(".nu-meterbar").length,
   }));
+  await openAuto();
+  const chansForHeads = await voiceNames();
+  const heads = await page.evaluate(() => {
+    const th = [...document.querySelectorAll("#trimgrid thead th")];
+    const w = [...document.querySelectorAll("#trimgrid thead th .nu-meterbar")];
+    return { cols: th.length - 1, bars: w.length,
+             declared: [...document.querySelectorAll("#trimgrid thead th .nu-meterwell")]
+               .filter((n) => n.dataset.live === "meter").length,
+             captioned: [...document.querySelectorAll("#trimgrid thead th .nu-meterwell")]
+               .filter((n) => /rms|not yet measured/.test(n.title || "")).length,
+             named: th.slice(1).map((h) => {
+               const b = h.querySelector("button[data-k^='col|']");
+               return b ? { k: b.dataset.k,
+                            instr: (b.querySelector(".nu-colinstr") || {}).textContent,
+                            name: (b.querySelector(".nu-colname") || {}).textContent }
+                        : null; }) };
+  });
+  ok(heads.cols === chansForHeads.length && heads.bars === heads.cols &&
+     heads.declared === heads.cols && heads.captioned === heads.cols,
+     "ONE MEASURED METER PER COLUMN HEAD on the automation plate — " +
+     heads.bars + " bars for " + heads.cols + " channels, each in a " +
+     "`.nu-meterwell[data-live=\"meter\"]` that says what its number is " +
+     "(Paul: \"make a little volume meter INSIDE the heading\")",
+     JSON.stringify(heads));
+  const unnamed = heads.named.filter((h) => !h || !h.name || !h.instr);
+  ok(!unnamed.length,
+     "…and every column head NAMES AN INSTRUMENT AND A PLAYER, in a button " +
+     "that opens that player (Paul: \"the columns should list the instrument " +
+     "and when I click on the column head let me edit the instrument!\"): " +
+     JSON.stringify(heads.named.map((h) => h && (h.instr + " / " + h.name))),
+     JSON.stringify(unnamed));
   await openVoice((await voiceNames())[0]);
-  /* REWRITTEN 2026-08-28, AND THE SECOND HALF IS ASKED WHERE IT CAN STILL BE
-     TRUE. It read `greenElsewhere === 0` — the count of `.nu-meterbar` on the
-     whole page with a VOICE TAB open — and that was a real question while the
-     board's panel swapped a plate for a strip: opening a voice took the main
-     plate off the page, so any bar left had grown on a strip. The strips are
-     on the Band tab now and ui/eight.js keeps a shut panel's DOM (it is
-     `display: none` + `inert`, never emptied — the tab law), so the main
-     plate's one bar is still counted while a voice is open and the old line
-     reports 1 for a page that is exactly right.
-     SO IT IS ASKED OF THE STRIP ITSELF: no measured meter inside `#voicemix`,
-     which is the claim the old count was reaching for ("never fake a
-     measurement" — the engine has ONE tap and a per-channel bar would be a
-     green bar with nothing behind it). The page-wide count stays as the FIRST
-     half, unchanged: exactly one bar exists, and it is the main plate's. */
-  const greenNow = await page.evaluate(() => ({
-    all: document.querySelectorAll(".nu-meterbar").length,
-    onStrip: document.querySelectorAll("#voicemix .nu-meterbar").length,
-    refusedWells: document.querySelectorAll(
-      "#voicemix .nu-vs.is-off input[aria-label$='meter (refused)']").length }));
-  ok(greenMeters.main === 1 && greenMeters.all === 1 &&
-     greenNow.all === 1 && greenNow.onStrip === 0 && greenNow.refusedWells === 1,
-     "…and exactly ONE measured meter exists, on the main plate, fed from the " +
-     "engine's master tap (rmsNow) — the voice's strip grows none, and its " +
-     "own meter well is the refusal instead",
+  const greenNow = await page.evaluate(() => {
+    const bars = [...document.querySelectorAll(".nu-meterbar")];
+    const home = (n) => n.closest("#voicemix") ? "strip"
+      : n.closest(".nu-plate[data-bus='main']") ? "master"
+      : n.closest("#trimgrid thead") ? "head" : "STRAY";
+    return { all: bars.length, onStrip: document.querySelectorAll("#voicemix .nu-meterbar").length,
+             refusedWells: document.querySelectorAll(
+               "#voicemix .nu-vs.is-off input[aria-label$='meter (refused)']").length,
+             strays: bars.map(home).filter((h) => h === "STRAY").length,
+             where: bars.map(home) };
+  });
+  ok(greenMeters.main === 1 && greenNow.onStrip === 1 &&
+     greenNow.refusedWells === 0 && greenNow.strays === 0,
+     "…and EVERY measured bar on the page is somewhere a real number reaches " +
+     "it — the master's on the main plate, one per column head, one on the " +
+     "open voice's own strip — and nowhere else; the strip's refused well is " +
+     "gone rather than standing beside its replacement",
      JSON.stringify({ ...greenMeters, ...greenNow }));
 
   /* ---- 5 · the knob writes the document's own word, and unwrites it ---- */
@@ -1703,53 +1861,61 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // carries the connector that used to stand between the plates (`into the
     // delay bus`, `into the reverb bus`, `into main — the record`), so a hand
     // riding one bus can tell what it feeds without reading the row.
+    /* ===== THE SERIES IS DRAWN IN THE GUTTER NOW, 2026-09-02 (slice 2e) ==
+       Paul, B11: *"Instead of having four icons on top and section automation
+       that should have been five subicons under the 'Mix' icon."*
+
+       WHAT STOOD HERE read `#boardtabs .nu-busgroup` and asserted six things
+       about it — `role="group"`, four `.nu-tabarrow` glyphs, the chain
+       `genre fx → delay → reverb → main` joined from the buttons'
+       `aria-label`s, `stages === "1234"` off the `.nu-n` badges, the
+       `.nu-seamlab` reading "the voices feed", and `openKind === "rack"`. Its
+       own sentence was: "THE SERIES IS DRAWN IN THE TAB ROW, in order and
+       numbered, from every tab, under a label that names who feeds it." Every
+       one of those six was true of a row that no longer exists.
+
+       THE PROPERTY SURVIVES THE FURNITURE, WHICH IS WHY THIS CHECK IS
+       REWRITTEN AND NOT DELETED. What it has always been for is the thing tabs
+       put at risk: "hiding a chain behind tabs is how a desk becomes four
+       unrelated boxes." The chain is still drawn, one level down in the
+       stripe, and it is drawn BETTER — the five children stand in a column in
+       signal order under the Mix icon, so the order is the reading order and
+       needs no arrows to say so.
+
+       SO THE ORDER IS ASSERTED OFF THE NAV'S OWN ROWS, in the order the nav
+       paints them, with the WORDS coming off `aria-label` exactly as they did
+       before (one string per row from one table — and the four bus words are
+       now the fields.js registry's own labels, read by ui/eight.js
+       `mixTrayItems`, which is the same law the deleted row obeyed: "a renamed
+       row is renamed on the tab by existing"). The AUTOMATION child is last,
+       which is where a grid belongs relative to the signal it trims.
+
+       WHAT IS NOT RE-HOMED, said so the loss is on the record rather than
+       quietly absorbed: the `.nu-seamlab` sentence "the voices feed". It was
+       proposed as the automation plate's caption and refused by the text diet
+       (test/text-diet.test.js — the ceiling is re-earned, not raised). The
+       FACT it carried is unchanged and is still drawn twice: each plate's
+       `in ←` header names who feeds it and its footer names what it feeds,
+       which is the second half of this same check, immediately below. */
     const seriesRow = await page.evaluate(() => {
-      const g = document.querySelector("#boardtabs .nu-busgroup");
-      if (!g) return null;
-      return { text: g.innerText.replace(/\s+/g, " ").trim(),
-               arrows: g.querySelectorAll(".nu-tabarrow").length,
-               /* THE CHAIN, READ OFF THE NAMES AND NOT OFF THE FACES
-                  (2026-08-28). The bus tabs are marks and stage numbers now —
-                  Paul: "make all the tabs and top buttons into sensible icons
-                  to save space" — so `innerText` reads "✳ 1 genre fx → ⋯ 2
-                  delay → …" and a regex over four contiguous words cannot
-                  match it. The claim was never about which characters are
-                  painted; it is "the series is drawn in the row, in order,
-                  from every tab". So the order comes off the buttons'
-                  `aria-label`s, which is one string per tab from one table,
-                  and the STAGE NUMBERS come off `.nu-n` — which makes this a
-                  stronger check than the regex it replaces: it now proves the
-                  row numbers the chain 1-2-3-4 as well as ordering it. */
-               chain: [...g.querySelectorAll("button")]
-                 .map((b) => (b.getAttribute("aria-label") || "").trim())
-                 .join(" → "),
-               stages: [...g.querySelectorAll("button .nu-n")]
-                 .map((n) => n.textContent.trim()).join(""),
-               role: g.getAttribute("role"),
-               label: g.getAttribute("aria-label"),
-               seam: (g.querySelector(".nu-seamlab") || {}).textContent,
+      const rows = [...document.querySelectorAll('#nu-tray [data-k^="boardtab|"]')];
+      return { keys: rows.map((b) => b.dataset.k),
+               chain: rows.map((b) => (b.getAttribute("aria-label") || "").trim())
+                 .join(" \u2192 "),
+               words: rows.map((b) => ((b.querySelector(".nu-vh") || {}).textContent || "").trim()),
+               oldRow: document.querySelectorAll("#boardtabs").length,
                openKind: (document.querySelector("#boardpanel > *") || {}).id };
     });
-    /* `openKind` FLIPPED FROM "strips" TO "rack", 2026-08-28, and the SEAM
-       LABEL joined this check. The old line asserted the chain was readable
-       "from every tab including a voice's" and proved it by measuring the row
-       while a STRIP was open; there is no voice tab to be standing on now, so
-       what it proves instead is that the chain is readable from a bus tab —
-       which is the only kind there is. The seam label is asserted because it
-       is the one sentence the voices' departure made false: it said "the
-       strips feed", naming furniture that is no longer on this board, and it
-       says "the voices feed" now. The FACT is unchanged (every voice's four
-       sends land in this series); only the address a reader is sent to moved,
-       and a gate that did not read the words would have let the old ones
-       stand. */
-    ok(seriesRow && seriesRow.role === "group" && seriesRow.arrows === 4 &&
-       seriesRow.chain === "genre fx → delay → reverb → main" &&
-       seriesRow.stages === "1234" &&
-       seriesRow.seam === "the voices feed" &&
+    ok(seriesRow && seriesRow.oldRow === 0 &&
+       eq(seriesRow.keys, ["boardtab|bus|genre", "boardtab|bus|echo",
+                           "boardtab|bus|rev", "boardtab|bus|main",
+                           "boardtab|auto|auto"]) &&
+       seriesRow.chain === "genre fx \u2192 delay \u2192 reverb \u2192 main \u2192 automation" &&
        seriesRow.openKind === "rack",
-       "THE SERIES IS DRAWN IN THE TAB ROW, in order and numbered, from every " +
-       "tab, under a label that names who feeds it: " + JSON.stringify(seriesRow &&
-         (seriesRow.seam + " → " + seriesRow.chain + "  [" + seriesRow.stages + "]")),
+       "THE SERIES IS DRAWN IN THE GUTTER, in signal order, as the five " +
+       "children of the Mix icon — genre fx \u2192 delay \u2192 reverb \u2192 main, " +
+       "then the automation grid that trims them (Paul, B11: \"five subicons " +
+       "under the 'Mix' icon\"): " + JSON.stringify(seriesRow && seriesRow.chain),
        JSON.stringify(seriesRow));
     const saysWhereItGoes = await perBus(() => page.evaluate(() => {
       const p = document.querySelector("#boardpanel #rack .nu-plate");
@@ -2403,10 +2569,13 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        whichever bus plate was open, and not a tab — so reaching the Mix tab
        was enough to find a `t|voice|section` cell; it is `PLATES.auto` now and
        its own mark has to be pressed. The key did not move. */
-    await topTab("Mix");
-    await page.evaluate(() => { const a =
-      document.querySelector('[data-k="boardtab|auto|auto"]'); if (a) a.click(); });
-    await page.waitForTimeout(500);
+    /* THROUGH `openAuto`, 2026-09-02, AND NOT THROUGH A BARE `if (a) a.click()`.
+       The inline version swallowed a missing button and left the walk reading
+       a plate that was never opened — the silent-skip shape this gate's own
+       header calls "a gate faithful to a scope that does not contain the
+       thing". `openAuto` WAITS for the plate and fails by name if it does not
+       arrive. */
+    await openAuto();
     Object.assign(slotTrip, await page.evaluate(async () => {
       const wait = () => new Promise((r) => setTimeout(r, 500));
       const doc2 = () => window.__eightDoc();
@@ -2557,10 +2726,22 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
                  h: body ? Math.round(body.getBoundingClientRect().height) : 0,
                  bw: body ? Math.round(body.getBoundingClientRect().width) : 0 };
       });
-      for (const k of busKeys) {
-        await openBus(k);
-        per["bus|" + k] = await page.evaluate(() => {
-          const bar = document.getElementById("boardtabs");
+      /* THE PANEL READING NO LONGER MEASURES A TAB ROW, 2026-09-02 (slice
+         2e): `barScroll`/`barClient` were `#boardtabs`'s and there is no
+         `#boardtabs`. The two readings that were ever load-bearing are the
+         DOCUMENT and the PANEL, and both are untouched. The row's own "does
+         it wrap rather than scroll" question moved to the stripe, which is
+         test/nav-tree.js's (it measures every width for sideways scroll).
+         ...AND THE FIFTH CHILD IS MEASURED WITH THE FOUR. The automation grid
+         is the widest thing on this board by construction — one column per
+         voice, and each column head now holds a button and a meter — so it is
+         exactly the plate most likely to push the document sideways, which is
+         the whole question this loop asks. It was never measured here at all
+         while it was appended to the host. */
+      for (const t of ["bus|genre", "bus|echo", "bus|rev", "bus|main", "auto|auto"]
+             .filter((k) => k === "auto|auto" || busKeys.includes(k.slice(4)))) {
+        if (t === "auto|auto") await openAuto(); else await openBus(t.slice(4));
+        per[t] = await page.evaluate(() => {
           const panel = document.getElementById("boardpanel");
           const open = panel.firstElementChild;
           const body = open && open.querySelector(".nu-plate");
@@ -2568,36 +2749,34 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
                    win: document.documentElement.clientWidth,
                    kind: open ? open.id : "(empty)",
                    panelScroll: panel.scrollWidth, panelClient: panel.clientWidth,
-                   barScroll: bar.scrollWidth, barClient: bar.clientWidth,
+                   barScroll: 0, barClient: 0,
                    h: body ? Math.round(body.getBoundingClientRect().height) : 0,
                    bw: body ? Math.round(body.getBoundingClientRect().width) : 0 };
         });
       }
       await openBus(busKeys[0]);
+      /* THE ROW'S GEOMETRY IS THE STRIPE'S GEOMETRY NOW. It read `tabs`,
+         `tabLines`, `voiceLines`, `seriesLines` and `seamFirst` off
+         `#boardtabs`; what is asked instead is the claim those five were
+         serving — the five children of the Mix icon are a COLUMN in the
+         stripe, one row each, in one order, at both widths — plus the panel's
+         width, which the wide-check below still uses. */
       const m = await page.evaluate(() => {
-        const bar = document.getElementById("boardtabs");
-        const btns = [...bar.querySelectorAll("button")];
-        const series = bar.querySelector(".nu-busgroup");
+        const rows = [...document.querySelectorAll('#nu-tray [data-k^="boardtab|"]')];
         const lineOf = (n) => Math.round(n.getBoundingClientRect().top);
-        return { tabs: btns.length,
-                 tabLines: [...new Set(btns.map(lineOf))].length,
-                 voiceLines: [...new Set(btns.filter((b) => /\|voice\|/.test(b.dataset.k))
-                   .map(lineOf))].length,
-                 seriesLines: [...new Set(btns.filter((b) => /\|bus\|/.test(b.dataset.k))
-                   .map(lineOf))].length,
-                 seamFirst: series ? lineOf(series) <= lineOf(btns[0]) : false,
+        return { tabs: rows.length,
+                 tabLines: [...new Set(rows.map(lineOf))].length,
+                 keys: rows.map((b) => b.dataset.k),
+                 oldRow: document.querySelectorAll("#boardtabs").length,
                  panelW: Math.round(document.getElementById("boardpanel")
                    .getBoundingClientRect().width) };
       });
       shape[w] = { ...m, per };
-      console.log("  note at " + w + "px: " + m.tabs + " tabs on " + m.tabLines +
-        " line(s) (voices " + m.voiceLines + ", series " + m.seriesLines +
-        "), panel " + m.panelW + "px, bodies " +
+      console.log("  note at " + w + "px: " + m.tabs + " Mix children on " +
+        m.tabLines + " line(s) in the stripe, panel " + m.panelW + "px, bodies " +
         Object.entries(per).map(([k, v]) => k + " " + v.bw + "x" + v.h).join(" · "));
       for (const [k, v] of Object.entries(per)) {
         if (v.doc > v.win) wide.push("document " + w + " on " + k + ": " + v.doc + " > " + v.win);
-        if (v.barScroll > v.barClient)
-          wide.push("tab row " + w + " on " + k + ": " + v.barScroll + " > " + v.barClient);
         if (v.panelScroll > v.panelClient)
           wide.push("panel " + w + " on " + k + ": " + v.panelScroll + " > " + v.panelClient);
       }
@@ -2621,10 +2800,10 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        "\"a new nav element called mix that is per voice\")",
        JSON.stringify(onePer));
     ok(!wide.length,
-       "NO SIDEWAYS GROWTH at 390 or at 1280, on EITHER surface — not the " +
-       "document, not the board's tab row (it WRAPS: " + shape[390].tabLines +
-       " line(s) at 390, " + shape[1280].tabLines + " at 1280), not the panel " +
-       "a strip or a plate sits in", wide.join("; "));
+       "NO SIDEWAYS GROWTH at 390 or at 1280, on EITHER surface and on all " +
+       "FIVE of the Mix icon's children — not the document, not the panel a " +
+       "strip or a plate sits in, the section-automation grid (a button and a " +
+       "meter in every column head) included", wide.join("; "));
     /* THE SEAM, REWRITTEN 2026-08-28 — the property survives the thing it was
        cutting between. It read: "THE SEAM HOLDS: the bus tabs begin their own
        line UNDER THE VOICES at both widths", measured through `seriesBreaks`
@@ -2634,21 +2813,35 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        everything is greater than it. That is exactly the shape of a check that
        goes quietly green while measuring nothing, which this file has been
        caught by before.
-       WHAT IS ASSERTED INSTEAD is what the group is FOR now that it separates
-       nothing: it is the row's own first item (its `.nu-seamlab` label leads
-       the line), it names its four buttons as one thing for a screen reader,
-       and the whole series is ONE LINE at 1280 — which is the smallest a
-       four-stage chain can be drawn in and the number the voices' departure
-       bought (the row was two lines with them in it, three before the tabs
-       became marks). */
-    ok(shape[390].seamFirst && shape[1280].seamFirst &&
-       shape[1280].seriesLines === 1 && !shape[390].voiceLines &&
-       !shape[1280].voiceLines,
-       "THE SEAM HOLDS, AND IT IS THE ROW NOW: no voice button at either " +
-       "width, the bus group leads the row, and the four stages are one line " +
-       "at 1280 (390: series " + shape[390].seriesLines + " line(s); 1280: " +
-       shape[1280].seriesLines + ")",
-       JSON.stringify({ 390: shape[390], 1280: shape[1280] }));
+       WHAT WAS ASSERTED INSTEAD, 2026-08-28, was what the group was FOR now
+       that it separated nothing: "it is the row's own first item (its
+       `.nu-seamlab` label leads the line), it names its four buttons as one
+       thing for a screen reader, and the whole series is ONE LINE at 1280 —
+       which is the smallest a four-stage chain can be drawn in."
+
+       REWRITTEN AGAIN 2026-09-02 (slice 2e), AND THE ROW IS GONE. Paul, B11:
+       *"Instead of having four icons on top and section automation that should
+       have been five subicons under the 'Mix' icon."* There is no
+       `.nu-busgroup`, no `.nu-seamlab` and no in-panel line to lead, so all
+       three clauses above are claims about furniture rather than about the
+       board. What is left of the property — and it is the durable half — is
+       that the five are ONE PER LINE in the stripe, in one order, at both
+       widths: a column of five rows is the shape the gutter promises, and a
+       row that wrapped or a child that vanished at 390 would be the same
+       defect the old line was watching for one screen over. */
+    ok(shape[390].oldRow === 0 && shape[1280].oldRow === 0 &&
+       shape[390].tabs === 5 && shape[1280].tabs === 5 &&
+       shape[390].tabLines === 5 && shape[1280].tabLines === 5 &&
+       eq(shape[390].keys, shape[1280].keys),
+       "THE SERIES IS A COLUMN IN THE STRIPE AT BOTH WIDTHS — five children, " +
+       "one per line, same order at 390 and at 1280, and no in-panel tab row " +
+       "left on the page (390: " + shape[390].tabs + " on " +
+       shape[390].tabLines + " line(s); 1280: " + shape[1280].tabs + " on " +
+       shape[1280].tabLines + ")",
+       JSON.stringify({ 390: { tabs: shape[390].tabs, lines: shape[390].tabLines,
+                               keys: shape[390].keys, oldRow: shape[390].oldRow },
+                        1280: { tabs: shape[1280].tabs, lines: shape[1280].tabLines,
+                                keys: shape[1280].keys, oldRow: shape[1280].oldRow } }));
     /* THE SENTENCE, REWRITTEN 2026-08-28 — NOT THE PROPERTY. It read
        "…and a strip and a plate take THE SAME width at 1280 (Npx against
        Npx) RATHER THAN THE WHOLE WINDOW", and the last clause named a cap
@@ -2677,7 +2870,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       const s = document.querySelector("#voicemix .nu-strip");
       return [...s.querySelectorAll("[data-k]")].map((n) => n.dataset.k);
     }));
-    const busReach = await perBus(() => page.evaluate(() => {
+    const readPlate = () => page.evaluate(() => {
       const p = document.querySelector("#boardpanel #rack .nu-plate");
       // `data-sel` FIRST: ui/selects.js stamps a menu with BOTH — `data-sel`
       // is the registry key (`master|space`) and `data-k` is the widget's own
@@ -2685,7 +2878,21 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       // is checking reachability of.
       return [...p.querySelectorAll("[data-k],[data-sel]")]
         .map((n) => n.dataset.sel || n.dataset.k);
-    }));
+    });
+    const busReach = await perBus(readPlate);
+    /* ...AND THE FIFTH PLATE'S KEYS JOIN THE WALK, 2026-09-02 (slice 2e). The
+       automation grid was never in this list — it was appended to the board's
+       HOST and stood under every plate, so its keys belonged to no tab and the
+       `dupes` walk below could not see them. It is `PLATES.auto` now and it
+       brings THREE namespaces of its own: the cells' `t|<voice>|<secId>` (old,
+       unmoved), and two this wave minted — `col|<voice.name>` on a column head
+       (Paul, B11: "when I click on the column head let me edit the
+       instrument!") and `row|<secId>` on a section's own jump ("I need to be
+       able to jump to a section somehow, by clicking on them"). None of the
+       three may collide with a strip's `b|…`/`ins|…` or a plate's `bus|…`, and
+       `dupes` is the check that says so. */
+    await openAuto();
+    const autoReach = [["auto", await readPlate()]];
     const chansOrder = await page.evaluate(() =>
       window.NuDeskDoc.channelVoicesOf(window.__eightDoc(), window.NuGenres.GENRES)
         .map((c) => c.voice.name));
@@ -2709,7 +2916,7 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     // plate in the move fails here by being unreachable rather than by being
     // noticed.
     const busKeysDrawn = {};
-    for (const [k, keys] of busReach) for (const key of keys)
+    for (const [k, keys] of busReach.concat(autoReach)) for (const key of keys)
       (busKeysDrawn[key] = busKeysDrawn[key] || []).push(k);
     const wantBus = [];
     for (const b of F.BUSES) { if (!b.engine) continue;
@@ -2718,13 +2925,31 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
     wantBus.push("level");                        // the record gain, on the main
     const unreachable = wantBus.filter((k) => !busKeysDrawn[k]);
     const twice = Object.entries(busKeysDrawn).filter(([, v]) => v.length > 1);
+    /* THE AUTOMATION PLATE'S OWN THREE, asserted BY NAME rather than left to
+       the registry walk: the registry does not declare a column head or a row
+       jump, so `unreachable` cannot notice either one going missing. One
+       `col|` per channel, one `row|` per section, and the cells unchanged. */
+    const autoKeys = autoReach[0][1];
+    const wantCols = chansOrder.map((n) => "col|" + n);
+    const wantRows = await page.evaluate(() =>
+      window.__eightDoc().form.sections.map((s2) => "row|" + s2.id));
+    const missCol = wantCols.filter((k) => autoKeys.indexOf(k) < 0);
+    const missRow = wantRows.filter((k) => autoKeys.indexOf(k) < 0);
     ok(!unreachable.length && !twice.length,
        "…and all " + wantBus.length + " bus and master controls the registry " +
        "declares are reachable, each on EXACTLY ONE tab — the plates moved " +
        "line for line, nothing was left behind and nothing is drawn twice",
        JSON.stringify({ unreachable, twice }));
+    ok(wantCols.length > 0 && wantRows.length > 0 &&
+       !missCol.length && !missRow.length,
+       "…AND THE AUTOMATION PLATE OFFERS ONE `col|<voice>` PER CHANNEL AND " +
+       "ONE `row|<section>` PER SECTION — " + wantCols.length + " column " +
+       "heads that open a player's instrument and " + wantRows.length + " row " +
+       "heads that put the ear there (Paul, B11: \"when I click on the column " +
+       "head let me edit the instrument\" / \"I need to be able to jump to a " +
+       "section somehow\")", JSON.stringify({ missCol, missRow }));
     const dupes = (() => { const seen = new Set(), d = [];
-      for (const [, keys] of reach.concat(busReach)) for (const k of keys) {
+      for (const [, keys] of reach.concat(busReach).concat(autoReach)) for (const k of keys) {
         if (seen.has(k)) d.push(k); seen.add(k); }
       return d; })();
     ok(!dupes.length,
@@ -2776,37 +3001,49 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
        JSON.stringify(naked));
 
     /* AND THE PAGE DOES NOT MOVE WHEN YOU CHANGE TABS (the anchor law:
-       — asked of the BOARD's row, which is the one tabbed row this file owns;
-       the gutter's own levels are test/shell.js's, unchanged by this round.
-
        ui/eight.js's whole `anchorWant` machinery exists because Paul's page
        used to scroll itself under a still thumb). Nothing above `#boardpanel`
-       is rebuilt on a tab tap, so this should be zero BY CONSTRUCTION — which
-       is exactly the kind of claim that is worth measuring rather than
-       reasoning about, and MORE worth it now that a tap can swap a 1,007px
-       strip for a 471px plate and shorten the document under the thumb. */
+       is rebuilt on a tap, so this should be zero BY CONSTRUCTION — which is
+       exactly the kind of claim that is worth measuring rather than reasoning
+       about, and MORE worth it now that a tap can swap a 1,007px strip for a
+       471px plate and shorten the document under the thumb.
+
+       IT IS DRIVEN FROM THE GUTTER NOW, 2026-09-02 (slice 2e), and the change
+       makes it a STRONGER question rather than a rewritten one. It read
+       `document.getElementById("boardtabs")` and clicked every button in that
+       row; this file's own map named the hazard of leaving it there — "driving
+       the five from the gutter instead makes this loop iterate zero buttons
+       and pass vacuously, the same silent-green shape this file was already
+       caught by." So it clicks the five children in `#nu-tray` and measures
+       two things that used to be one: `scrollY`, and the position of the
+       PANEL, which is now the top thing on the board (there is no row above it
+       to hold still). A tap that scrolls the page or moves the panel under the
+       thumb fails here at either width. */
     for (const w of [390, 1280]) {
       await page.setViewportSize({ width: w, height: w === 390 ? 844 : 900 });
       await page.waitForTimeout(150);
+      await topTab("Mix");
       const moved = await page.evaluate(async () => {
-        const bar = document.getElementById("boardtabs");
-        scrollTo(0, Math.max(0, bar.getBoundingClientRect().top + scrollY - 120));
+        const panel = document.getElementById("boardpanel");
+        const rows = [...document.querySelectorAll('#nu-tray [data-k^="boardtab|"]')];
+        scrollTo(0, Math.max(0, panel.getBoundingClientRect().top + scrollY - 120));
         await new Promise((r) => setTimeout(r, 200));
         const out = [];
-        for (const b of [...bar.querySelectorAll("button")]) {
-          const y = scrollY, top = Math.round(bar.getBoundingClientRect().top);
+        for (const b of rows) {
+          const y = scrollY, top = Math.round(panel.getBoundingClientRect().top);
           b.click();
-          await new Promise((r) => setTimeout(r, 220));
+          await new Promise((r) => setTimeout(r, 260));
           out.push({ tab: b.dataset.k, dY: scrollY - y,
-                     dRow: Math.round(bar.getBoundingClientRect().top) - top });
+                     dRow: Math.round(panel.getBoundingClientRect().top) - top });
         }
         return out;
       });
       const jumped = moved.filter((m) => m.dY !== 0 || m.dRow !== 0);
-      ok(!jumped.length,
-         "at " + w + ": tapping each of the " + moved.length + " tabs — the " +
-         "four stages of the series — moves neither scrollY nor the tab row " +
-         "itself — the page does not move under the thumb (dY " +
+      ok(moved.length === 5 && !jumped.length,
+         "at " + w + ": tapping each of the " + moved.length + " children of " +
+         "the Mix icon — the four stages of the series and the automation " +
+         "grid — moves neither scrollY nor the board's panel itself — the " +
+         "page does not move under the thumb (dY " +
          JSON.stringify(moved.map((m) => m.dY)) + ")",
          JSON.stringify(jumped));
     }

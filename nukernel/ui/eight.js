@@ -1187,6 +1187,41 @@ const CTX = {
      rather than an import for the two files that will want it (the Structure
      form and the board's row heads), so there is one spelling of "jump". */
   playFrom: (si) => { startAt(si); say(true); },
+  /* ...AND A COLUMN HEAD IS A PLAYER (2026-09-02, slice 2e). Paul, B11: *"the
+     columns should list the instrument and when I click on the column head let
+     me edit the instrument!"* Same shape and same reason as `playFrom`: the
+     four writes that open a player are this file's page state (`tab`,
+     `voiceFacet`, the stripe's `expanded` set, `openTab`) and ui/engineer.js
+     may not reach any of them, so the page hands over the door it already has
+     — `openVoice`, which is the ONE spelling three surfaces in this file
+     already share. */
+  openVoice: (name, facet) => openVoice(name, facet),
+  /* THE SECTION'S NAME, FOR A VIEW THAT DRAWS A ROW OF THEM. `secName` is
+     `role + ordinal` ("verse 2") and its one owner is this file — Paul,
+     2026-08-28: *"The sections are named so name them."* The board's
+     automation grid printed `s2.id` ("s0") from the day it was drawn, which
+     that sentence has forbidden since; it prints the name now and it asks for
+     it rather than re-deriving it, because a second copy of `role + " " + (i+1)`
+     is a second owner of what a section is called. */
+  secName: (i) => secName(i),
+  /* HOW TO DRAW A PLAYER YOU DO NOT OWN — `{ slot, line }`, by name, and it is
+     ONE hook because it is one question. A column head, a roster box and a
+     nav row all need exactly these two facts and nothing else:
+       slot · which of the six CATEGORY colours this player wears (`vpaintOf`,
+              slice 2c's one arithmetic), so `data-vi` on a board column and
+              `voicePaint` on the roll cannot disagree about which hue means
+              which player — 2c's own warning was "a Mix column head that
+              assigns its own index will disagree with the roster and the
+              score". -1 for a player this record does not have, which paints
+              nothing.
+       line · what they PLAY, in the instrument registry's own words
+              (`playsWhat`) — including the two cases a caller reading
+              `voice.instrument` would get wrong, a kit that names itself
+              through its cast and a bass whose chair was hired from the pool.
+              null when nothing is settled, which draws no second line. */
+  voiceFace: (name) => { const i = DOC.voices.findIndex((v) => v.name === name);
+                         return i < 0 ? { slot: -1, line: null }
+                           : { slot: vpaintOf(i), line: playsWhat(DOC.voices[i]) }; },
   /* WHAT THE ADDRESS ASKED FOR, HANDED TO THE ONE OWNER OF THE SEED. The
      fragment is this file's fact (readLink) and the seed is ui/atlas.js's; a
      boot that wants "a new seed unless there is one in the URL" needs the two
@@ -5478,11 +5513,8 @@ function readBy(parent, cell) {
       (r.follows ? ", which follows the first line's motif" : "") +
       (r.secs.length ? " — " + r.secs.join(", ") : "") +
       " — open what " + r.v.name + " plays");
-    b.addEventListener("click", () => {
-      tab = r.v.name; voiceFacet = "plays"; formSec = null;
-      expand("tab" + r.v.name, true);
-      showTab("Band"); draw(); markLink();
-    });
+    b.addEventListener("click", () => { formSec = null;
+                                        openVoice(r.v.name, "plays"); });
     strip.append(b);
   }
   parent.append(strip);
@@ -10210,10 +10242,7 @@ function scolHead(gid, v, vi) {
            el("span", line || "", "nu-scolinstr"));
   b.setAttribute("aria-label", v.name + (line ? " — " + line : "") +
     " — open this player's instrument");
-  b.addEventListener("click", () => {
-    tab = v.name; voiceFacet = "inst"; expand("tab" + v.name, true);
-    showTab("Band"); draw(); markLink();
-  });
+  b.addEventListener("click", () => openVoice(v.name, "inst"));
   th.append(b);
   bandLamps.push({ name: v.name, node: lamp });
   return th;
@@ -12071,6 +12100,30 @@ function secOpsTrayItems() {
    the record, and it carries its own refusal — see `voiceTrayItems`. */
 const FACETS = ["inst", "mix", "plays"];
 let voiceFacet = "inst";
+
+/* OPENING A PLAYER, WRITTEN ONCE (2026-09-02, slice 2e). Paul, B11: *"the
+   columns should list the instrument and when I click on the column head let
+   me edit the instrument!"*
+
+   THREE SURFACES ALREADY MADE THIS GESTURE BY HAND — the motif panel's "read
+   by" chips (`readBy`), the Structure grids' column heads (`scolHead`) and,
+   now, the Mix automation plate's — and each spelled the same four writes in
+   its own listener: which player is open, which of its facets, unfold its row
+   in the stripe, land on Band. A fourth copy in ui/engineer.js would have been
+   a fourth chance for one of them to drift, and engineer.js may not reach this
+   file's page state at all, so the gesture is a function here and a CTX hook
+   for the board. `markLink()` is part of it: the open player is in the address
+   (`readLink`/`writeLink`), so a gesture that opened one without writing the
+   link would leave a share link pointing at the player you left. */
+function openVoice(name, facet) {
+  tab = name;
+  voiceFacet = FACETS.includes(facet) ? facet : "inst";
+  expand("tab" + name, true);
+  showTab("Band");
+  draw();
+  markLink();
+}
+
 function voiceTrayItems() {
   const v = SONGTABS.includes(tab) ? null : VOICE(tab);
   if (!v) return [];
@@ -12113,19 +12166,27 @@ function voiceTrayItems() {
    `boardTabNow()` says which is open. eight.js does not learn what a plate is
    and engineer.js does not learn what the gutter is.
 
-   THE IN-PANEL `#boardtabs` ROW IS STILL THERE THIS WAVE and it is a SECOND
-   OWNER of this gesture, which is normally the one thing this page refuses.
-   It is deliberate, dated and fenced: the row is a MIRROR — both surfaces call
-   `showBoard`, so they cannot disagree — and it comes out in wave 2e together
-   with the desk-gate checks that drive it (G11/G12/G13). Said here and at
-   engineer.js's own tab row so that neither reader thinks the other is the
-   accident. */
+   THE IN-PANEL `#boardtabs` ROW IS DELETED, 2026-09-02 (slice 2e). It stood
+   for one wave as a fenced MIRROR of this level — both surfaces called
+   `showBoard`, so they could not disagree — and the fence said what would end
+   it: "it comes out in wave 2e together with the desk-gate checks that drive
+   it (G11/G12/G13)." They moved in the same commit; these five rows are the
+   only place the gesture lives, and `boardtab|…` is still the address, on
+   these buttons.
+
+   THE WORDS ARE THE REGISTRY'S, not this function's. `NuFields.BUSES` carries
+   each bus's own label — "a renamed row is renamed on the tab by existing",
+   ui/engineer.js's law for the row this replaces — so the two words spelled
+   here are the two the registry does not hold: `main`, which is where the
+   series ENDS rather than a BUSROWS row, and `automation`, which is a grid and
+   not a bus at all. Those are the same two exceptions engineer.js names. */
 function mixTrayItems() {
   const at = boardTabNow() || {};
   const rows = [["bus", "genre"], ["bus", "echo"], ["bus", "rev"],
                 ["bus", "main"], ["auto", "auto"]];
-  const WORD = { genre: "genre fx", echo: "delay", rev: "reverb",
-                 main: "main", auto: "automation" };
+  const busWord = (k) => ((NuFields.BUSES || []).find((b) => b.bus === k) || {}).label || k;
+  const WORD = { genre: busWord("genre"), echo: busWord("echo"),
+                 rev: busWord("rev"), main: "main", auto: "automation" };
   return rows.map(([kind, key]) => {
     const g = kind === "auto" ? GLYPH.sec.one : (GLYPH.bus[key] || {});
     return { key: "boardtab|" + kind + "|" + key,
