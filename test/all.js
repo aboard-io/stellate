@@ -602,6 +602,24 @@ const GATES = [
   { name: "producer-ui", wave: 3, kind: "browser", url: { flag: "--page" },
     argv: ["test/producer.browser.js"], need: ["test/producer.browser.js"],
     covers: ["test/producer.browser.js"] },
+  /* THE GENRE EDITOR, DRIVEN (2026-09-02, the composer round, slice 2b).
+     Paul, B6: "The genre data is expressed as logical sentences and rules
+     derived from the data in the genre… You can edit them, add new rules from
+     a palette, and set thresholds." The `rules` gate above holds the DATA half
+     — thirty-eight rules over every anchor — and cannot reach the half Paul
+     asked for: a hand moving a sentence on a rendered page and the record
+     changing under it. This drives the panel through the three tiers (a
+     compose-tier threshold recomposes at the address's reading, a render-tier
+     rule reaches the COMPILED genre with no new record, a reset puts the
+     anchor back), the palette and its greying, and re-reads the whole
+     catalogue afterwards to prove `applyRules` copied.
+     `covers` names the four files an edit to any of them has to re-run this
+     on: the view, the data table, the page that mounts it, and the read half
+     the name plate's lineage comes out of. */
+  { name: "rules-view", wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/rules-view.browser.js"], need: ["test/rules-view.browser.js"],
+    covers: ["test/rules-view.browser.js", "nukernel/ui/rules.js",
+             "nukernel/rules.js", "nukernel/ui/eight.js", "nukernel/ui/xtab.js"] },
   // THE SLOWEST GATE IN THE HOUSE, AND IT HAS TO BE. It presses play and waits
   // for two real section boundaries at two viewports, because a boundary is
   // the thing that used to rebuild the page and a fixed sleep would be a coin

@@ -220,6 +220,14 @@ ctx = {
   heading(parent, text),      // -> <h3>, appended
   setDocument(next),          // replace the WHOLE record: stop(), DOC = next,
                               //   normalize(), push(true), draw()
+  reading(),                  // THE SEED (2026-09-02). ui/atlas.js `reading()`
+                              //   is its one owner; a view that has to COMPOSE
+                              //   (the Rules panel's compose-tier edits, which
+                              //   re-run genreToDocument(basis, reading, rules))
+                              //   must land on the record you are looking at
+                              //   and not on reading 1. A hook, never an
+                              //   import, for the reason `play` and `showTab`
+                              //   are hooks: a view may not reach the atlas.
   onPos(fn) -> off()          // the beat tick (the existing on("pos") handler,
                               //   eight.js:1104). A module NEVER installs its own
                               //   rAF loop, and audio NEVER calls a view.

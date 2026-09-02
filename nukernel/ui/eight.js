@@ -326,6 +326,16 @@ import { GLYPH, kindGlyph, sayVoice, sayUp, sayLog, icon, paintIcon,
 // (DOC and ATLAS, read at press time), and a seat in the tray's foot.
 import { makeExplain } from "./explain.js";
 
+/* THE RULES PANEL (2026-09-02, slice 2b). Paul, B6: *"The genre data is
+   expressed as logical sentences and rules derived from the data in the
+   genre."* It is the ? panel's read half with its values replaced by controls,
+   which is why the two share `ui/xtab.js` rather than each holding a copy of
+   `row`/`pair`/`tableOf`/`lineage`. It takes `CTX` and returns a `stop()`, the
+   same handle the film and the dance floor take, so the tab can be torn down
+   the day it grows a listener outside its own DOM. */
+import { mountRules } from "./rules.js";
+let rulesStop = null;
+
 // THE ONE GLOBAL LEFT IN THIS FILE, and it is deliberate rather than an
 // oversight: `design()` calls `K[name](...)` with a name out of the DESIGNS
 // table, so it wants the whole kernel module and not a list of destructured
@@ -1175,6 +1185,16 @@ const CTX = {
      joined exactly once, and this is the join. Null means the URL said
      nothing, which is what makes the draw random. */
   seedFromLink: () => (LINK && LINK.s != null ? LINK.s : null),
+  /* THE SEED, FOR A VIEW THAT HAS TO COMPOSE (2026-09-02). `ui/atlas.js` is
+     its one owner (`reading()`), and this is the same hook shape `play`,
+     `moved` and `showTab` take: the page hands over the door it already has
+     rather than letting a view import the atlas. The Rules panel needs it
+     because a `compose`-tier edit re-runs `genreToDocument(basis, reading,
+     rules)` and a panel that guessed 1 would silently move the record you are
+     listening to onto a different reading. `ATLAS` is `let` and null until the
+     boot block mounts it, so this answers 1 — precompose's own "no reading at
+     all is reading 1" — for the handful of frames before that. */
+  reading: () => (ATLAS ? ATLAS.reading() : 1),
   // on() returns nothing today, so this returns undefined rather than an off().
   // Nothing mounted in W2 calls it — the board is painted from the page's own
   // on("pos") handler below — but a W3 module that wants to unsubscribe has to
@@ -9308,6 +9328,17 @@ function bandBlock(parent) {
    in the list composes it, starts it, and lands here. The sentences are wave
    2b's, off nukernel/rules.js (which landed in wave 0, is a data-tier table of
    one row per structural field, and is the one owner of what a rule IS).
+   THE SENTENCES ARRIVED LATER THE SAME DAY (2026-09-02, slice 2b), and the
+   sentence above stands as written because every clause of it is still true:
+   the host, the heading, the tab, the address and the arrival are still this
+   file's, and they are the only part of the Rules tab that is. What the panel
+   DRAWS is `ui/rules.js mountRules(host, ctx)` — the eight axes, a control in
+   every sentence, the palette, the tier word — and the name plate this
+   paragraph argues for moved into it whole. The paragraph is kept HERE rather
+   than moved with the code because what it argues about (an <h3> is a name, a
+   name is not prose, the diet skips it) is a claim about THIS FILE's tab
+   contract, and the next hand to wonder why a genre's name is a heading will
+   grep for `rulesdeck` and land on this.
    THE NAME PLATE IS A HEADING AND NOT PROSE, which is why it is an <h3>: a
    genre's name is a NAME, the same kind of word as a control's label and a
    panel's heading, and the text diet's SKIP list has always exempted those
@@ -9316,17 +9347,13 @@ function bandBlock(parent) {
    Both facts are read off their owning tables — the wiki title and
    `GENRES[gk].label` — exactly as the foot's plate reads them, and neither is
    typed here. */
-function rulesPanel(host) {
-  const ax = axis(host, "ax-rules", "The rules");
-  const gk = DOC.basis;
-  const g = GENRES[gk] || {};
-  const row = NuWiki && NuWiki.WIKI ? NuWiki.WIKI[gk] : null;
-  const h = el("h3", null, "nu-namebar");
-  h.dataset.k = "rules.name";
-  h.append(el("b", row ? String(row.title).replace(/_/g, " ") : gk));
-  if (g.label) h.append(el("small", " · " + g.label));
-  ax.append(h);
-}
+/* (`rulesPanel(host)` STOOD HERE and is `ui/rules.js mountRules` now,
+   2026-09-02, slice 2b. It drew the axis, the `<h2>` and the `.nu-namebar`
+   plate — the genre's name off `NuWiki.WIKI`, its place-and-year off the row's
+   own `label` — and every line of that moved into the view unchanged, with the
+   lineage line the plate always wanted appended to it. It is not kept here as
+   a fallback: two builders for one panel is two name plates to keep in step,
+   and `BUILD.Rules` names its one owner.) */
 
 /* ===== THE STRUCTURE PANEL (2026-09-02) ================================
    Paul: *"Sections/Structure has the same challenges. Things should fly out
@@ -9930,14 +9957,19 @@ let tabMs = 0;
    is not rebuilt by draw() and never has been. */
 const BUILD = {
   Where: null,
-  /* THE RULES PANEL IS A PLACEHOLDER IN THIS WAVE and says so on itself
-     rather than in a comment: the name plate is real (it is the answer to
-     *"The name of the genre should be obvious"*), and the sentences the genre
-     is made of are wave 2b's, off nukernel/rules.js, which landed in wave 0.
-     A host with a heading and a name is not a stub — it is the half of the
-     tab that the nav, the address and the arrival from the genre list all
-     need to exist before anything can be drawn into it. */
-  Rules: (host) => rulesPanel(host),
+  /* THE RULES PANEL IS REAL SINCE 2026-09-02 (slice 2b). It read
+     `Rules: (host) => rulesPanel(host)` and the paragraph here said the panel
+     was "a placeholder in this wave … the sentences the genre is made of are
+     wave 2b's, off nukernel/rules.js, which landed in wave 0". They are, and
+     this is that wave: `ui/rules.js` draws the eight axes, every sentence's
+     value as a control, the palette of addable rules and the tier word that
+     says which edits restart the record. The name plate the placeholder drew
+     moved into it whole, lineage line and all.
+     THE STOP HANDLE, for the reason the film and the floor take one: a tab
+     rebuilt while the last mount still held something would stack two. It
+     holds nothing today and says so at its own `return`. */
+  Rules: (host) => { if (rulesStop) rulesStop();
+                     rulesStop = mountRules(host, CTX); },
   Structure: (host) => structurePanel(host),
   Tempo: timeAxis,
   Key: alphaAxis,
@@ -13343,6 +13375,14 @@ window.__eightGenres = () => { const out = {};
   for (const [k, g] of Object.entries(GENRES)) {
     if (!g || !k.startsWith(GK)) continue;
     out[k] = { kitSeed: g.kitSeed, bpm: g.bpm, rate: g.rate,
+               /* THE LONGEST NOTE, on the COMPILED row (2026-09-02). It is the
+                  cheapest true test of the RENDER tier: `maxHold` is one of
+                  the fields `document.js toGenre` spreads under the document,
+                  so an edit to it must reach the kernel on the next frame with
+                  no recompose at all — and a gate that read `doc.rules` would
+                  prove only that the page can store a list.
+                  (`test/rules-view.browser.js` R4.) */
+               maxHold: g.maxHold,
                // HOW MANY BARS THE CYCLE IS, on the COMPILED row (2026-09-02).
                // `+ bar` / `- bar` in the changes grid writes `DOC.alphabet
                // .prog`, and a gate that read the document would prove only

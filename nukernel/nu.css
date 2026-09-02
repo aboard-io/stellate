@@ -5624,3 +5624,79 @@ table.nu-trims{ color: var(--ink); }
    subject at all — which is why it costs the text diet nothing. */
 .nu-cap{ display: block; margin: calc(var(--s1) * -1) 0 var(--s2);
   font-size: var(--t1); color: var(--rule); }
+
+/* ===== THE RULES PANEL (2026-09-02, the composer round, slice 2b) =========
+   Paul, B6: *"The genre data is expressed as logical sentences and rules
+   derived from the data in the genre. They should be readable to a musician.
+   You can edit them, add new rules from a palette, and set thresholds. It's a
+   code-editing experience but it feels like simple sentences."*
+
+   SIX RULES, AND NOT ONE OF THEM IS A NEW WIDGET. Every control in the panel
+   is already drawn by something on this page — a `.nu-field` even row, a
+   `.nu-combo`, a `.nu-opt` chip, a `.nu-why` refusal, the `.nu-namebar` plate
+   — because a genre editor built out of its own vocabulary would be a second
+   design system inside the first. What is left for this block is the four
+   things nothing else on the page has had to say: what an AXIS BLOCK looks
+   like, what one RULE ROW looks like between its neighbours, where the reset
+   mark sits, and how the plate carries a third line.
+
+   THE TRAY BLOCK IS NOT TOUCHED, and nothing above this banner is edited. */
+
+/* An axis is a stack of rules with the vocabulary's own word over it. The word
+   is a control label and not prose (AXES.md is the one owner of the eight), so
+   it is an `<h3>` — which is also what keeps it out of the text diet's count,
+   the same way every other heading on this page is out of it. Small, tracked
+   and quiet: it is a divider you read once, not a title you read every time. */
+.nu-rulax{ margin-block-end: var(--s4); }
+.nu-axword{ margin: var(--s4) 0 var(--s2);
+  font-family: var(--sans); font-size: var(--t1); font-weight: var(--fw-block);
+  letter-spacing: .12em; text-transform: uppercase; color: var(--rule);
+  border-block-end: var(--bw) solid var(--rule); padding-block-end: var(--s1); }
+
+/* ONE RULE, WITH A HAIRLINE UNDER IT. A rule is a sentence, a control, a tier
+   word and sometimes a reset, and at 390px those wrap into a block that has to
+   be told where it ends — thirty-eight of them in a column with no rule
+   between them is the "uneven" Paul named, one level up from the fields. The
+   `.nu-why` under it is the tier ("the record is written again at this seed"),
+   which is the same quiet ink every other refusal on the page wears. */
+.nu-rule{ padding-block-end: var(--s2);
+  border-block-end: var(--bw) solid var(--well); }
+.nu-rule:last-child{ border-block-end: 0; }
+.nu-rule > .nu-why{ display: block; margin-block-start: calc(var(--s1) * -1); }
+/* the sentence over a group of per-key controls (a `paces` map, a `part`
+   list). An `<h4>` for the reason the axis word is an `<h3>`: it NAMES the
+   controls under it, and a name is a label. */
+.nu-rulehead{ margin: var(--s2) 0 0; font-size: var(--t2);
+  font-weight: var(--fw-label); }
+/* the way back to what the genre says. It sits after the row's own words, at
+   the page's tap floor like every other mark, and it is only ever drawn on a
+   rule a hand has actually moved. */
+.nu-rule > button[data-k^="rule-reset"]{ min-block-size: var(--tap);
+  margin-block-start: var(--s1); font-size: var(--t1); }
+/* A REFUSED CONTROL'S REASON, ON THE THIRD LINE OF ITS OWN FIELD. `unwrap`
+   moves the `<small class="nu-why">` ui/selects.js built into the row's one
+   `<label>`, where it would otherwise sit beside the menu on line two and
+   squeeze it; a full basis puts it under, which is where every other refusal
+   on this page sits. (`.nu-opt .nu-why` says the same thing for a chip.) */
+.nu-rule .nu-field > label > .nu-why{ flex: 1 0 100%; }
+/* the fx chips, wrapped: `.nu-opt` already draws the chip and the checked
+   state, so this is the row and nothing else */
+.nu-chips{ display: flex; flex-wrap: wrap; gap: var(--s2);
+  margin-block: var(--s2); }
+/* THE THIRD LINE ON THE NAME PLATE — the lineage, in one line. `.nu-namebar`
+   is a baseline flex row with `inline-size: fit-content` and NO wrap, so a
+   third item is a third thing on one line; `.nu-ruleplate` is the one plate
+   that wants two lines, and it says so on itself rather than by editing the
+   shared rule. MEASURED, and this is why the class exists at all: without the
+   wrap the `flex: 1 0 100%` line below demanded a full viewport IN ADDITION to
+   the name, and `documentElement.scrollWidth - clientWidth` came out 134 at
+   320px, 119 at 375/390/430 and 0 at 1280 — a page that scrolls sideways,
+   which shell A6i and test/gutter.js T8 both forbid. Measured after: 0 at all
+   five. The ink is the plate's own paper at the same 72% `.nu-namebar-sub`
+   uses, for the same reason (it is never the only copy of what it says — the ?
+   panel draws the whole flow). */
+.nu-ruleplate{ flex-wrap: wrap; max-inline-size: 100%;
+  overflow-wrap: anywhere; }
+.nu-rulekin{ flex: 1 0 100%; margin-block-start: var(--s1);
+  font-size: var(--t1); font-weight: 500; letter-spacing: 0;
+  text-transform: none; opacity: .72; }

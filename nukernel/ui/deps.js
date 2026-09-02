@@ -114,6 +114,14 @@ export const Prod = window.NuProducer;
 // offers the composer a section of the record they are already looking at.
 export const NuPrecompose = window.NuPrecompose;
 
+// ---- the genre as sentences (rules.js, 2026-09-01) ----
+// THE WHOLE MODULE, for the reason NuPrecompose takes one: `ui/rules.js` walks
+// `RULES` and `AXES`, calls `say`, `motifs`, `offerable` and `applyRules`, and
+// the next slice that touches the panel will want a different four. It is a
+// classic script (index.html:520, above precompose) and this file is still the
+// only reader of `window.*`.
+export const NuRules = window.NuRules;
+
 // ---- where and when the records are (atlas.js, atlas-land.js, D6) ----
 // Whole modules under their own names, for the reason NuPrecompose takes one:
 // atlas.js exports twenty names and the view wants a different four each time

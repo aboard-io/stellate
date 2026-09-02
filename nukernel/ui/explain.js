@@ -91,113 +91,23 @@
 // glyph owner to take in. No second table is created: it is one literal
 // passed to glyph.js's own icon().)
 
+/* (`ROMAN` came off this line 2026-09-02 with `progWord`, its only reader
+   here. kernel.js's numeral table is imported by ui/xtab.js now.) */
 import { GENRES, DRUMNAME, MODES, MODELABEL, SCALES, SCALELABEL,
-         KEYLABEL, ROMAN, NuAtlas, NuWiki } from "./deps.js";
+         KEYLABEL, NuAtlas, NuWiki } from "./deps.js";
 import { icon } from "./glyph.js";
 
-/* ---------- the local kit (glyph.js's own three-liner) ------------------ */
-const el = (tag, text, cls) => { const n = document.createElement(tag);
-  if (text != null) n.textContent = text;
-  if (cls) n.className = cls;
-  return n; };
-
-/* THE EIGHT, BY NAME, IN THE EVALUATION ORDER. AXES.md is a document and not
-   a module — no table exports these eight words — so they are stated once
-   here, quoting their owner: "Time · Alphabet · Material · Form · Development
-   · Cast · Sound · Performance" (AXES.md, THE SEQUENCE IS AN EVALUATION
-   ORDER). The order is the reader's: written this way the eight can be read
-   in one pass with no forward references, which is what makes this panel a
-   document and not a list of topics. */
-const AXES = ["Time", "Alphabet", "Material", "Form",
-              "Development", "Cast", "Sound", "Performance"];
-
-/* name an array back to its table key — the genre row carries `mode` and
-   `scale` as ARRAYS (the kernel reads them; names are for people), and the
-   tables that own the names are MODES/SCALES themselves. Reverse-matched, not
-   copied: a renamed mode renames here by existing. */
-const nameOf = (table, arr) => {
-  if (!Array.isArray(arr)) return null;
-  const s = JSON.stringify(arr);
-  for (const k of Object.keys(table))
-    if (JSON.stringify(table[k]) === s) return k;
-  return null;
-};
-
-/* a table value that is itself a table (an orn map, a stress shape) is
-   printed as its own JSON — verbatim data, never a prose paraphrase and
-   never "[object Object]" */
-const word = (v) => typeof v === "object" ? JSON.stringify(v) : String(v);
-
-/* ---------- the row model (2026-08-30: "It should be in tables.") --------
-   one fact = one row. `row` is a single-owner fact; `pair` is a fact BOTH the
-   genre row and the record's document have a say on — one row, two value
-   columns, and the row only splits when the values differ (equal values are
-   ONE fact and print once, owned by both — printing them twice was the
-   repetition being reversed). A null/empty value is a fact the tables do not
-   carry for this record, and it is DROPPED rather than printed as a blank or
-   a dash: a table of dashes is noise, and a silent empty cell is the grey
-   this page's laws forbid. */
-const row = (name, value, own) => {
-  if (value == null || value === "") return null;
-  return { name, val: word(value), own };
-};
-const pair = (name, gval, dval, gown, down) => {
-  if (gval == null || gval === "")
-    return row(name, dval, down);
-  if (dval == null || dval === "")
-    return row(name, gval, gown);
-  if (word(gval) === word(dval))
-    return { name, val: word(gval), own: gown + " = " + down };
-  return { name, gval: word(gval), dval: word(dval),
-           own: gown + " | " + down, dual: true };
-};
-
-/* one axis = one <table> in the page's own table language: nu.css already
-   rules every cell, plates the table, zebras the body — no new bones. Rows
-   are appended straight to the <table> (no <tbody>), the way every other
-   table on this page is built ("table > tr is a real selector"). The owner
-   is stamped on the <tr>. A header row (`fact | genre | this record`) exists
-   ONLY when some row actually splits; single-value rows under it span the
-   two value columns. */
-const tableOf = (head, rows) => {
-  rows = rows.filter(Boolean);
-  if (!rows.length) return null;
-  const s = el("section", null, "nu-xax");
-  s.append(el("h3", head));
-  const t = el("table", null, "nu-xtab");
-  const dual = rows.some((r) => r.dual);
-  if (dual) {
-    const tr = el("tr");
-    tr.append(el("th", "fact"), el("th", "genre"), el("th", "this record"));
-    t.append(tr);
-  }
-  for (const r of rows) {
-    const tr = el("tr");
-    tr.dataset.own = r.own;
-    const name = el("td");
-    name.append(el("b", r.name));
-    tr.append(name);
-    if (r.dual) tr.append(el("td", r.gval), el("td", r.dval));
-    else {
-      const td = el("td", r.val);
-      if (dual) td.colSpan = 2;
-      tr.append(td);
-    }
-    t.append(tr);
-  }
-  s.append(t);
-  return s;
-};
-
-/* the record's changes, said in the numerals the Key panel already speaks —
-   ROMAN is kernel.js's own table, imported, never copied. */
-const progWord = (prog) => {
-  if (!Array.isArray(prog) || !prog.length) return null;
-  return prog.map((p) => {
-    const r = (ROMAN && ROMAN[((p.d % 7) + 7) % 7]) || String(p.d);
-    return p.q && p.q !== "triad" ? r + " " + p.q : r;
-  }).join(" – ");
-};
+/* ---------- THE READ HALF LIVES IN ui/xtab.js NOW (2026-09-02) ----------
+   `el`, `word`, `AXES`, `nameOf`, `row`, `pair`, `tableOf` and `progWord`
+   stood here — one hundred and three lines of them — and they are `ui/xtab.js`
+   verbatim, arguments and all. NOTHING WAS REWRITTEN AND NOTHING WAS RENAMED;
+   what moved is where they are declared, because the Rules view (`ui/rules.js`,
+   the composer round's slice 2b) is this panel's read half with its values
+   replaced by controls and needs the same eight words. Two copies of `row`'s
+   "an empty fact is an OMITTED row" rule is two places for it to stop being
+   true. The arguments for each one are in xtab.js beside the code. */
+import { el, word, AXES, nameOf, row, pair, tableOf, progWord,
+         lineage } from "./xtab.js";
 
 /* ---------- the eight sections, each an extraction, each a table --------- */
 
@@ -373,127 +283,12 @@ function axisPerformance(g, doc) {
     row("stress", g.stress != null ? g.stress : null, "genres.js stress"),
   ]);
 }
-
-/* ---------- the lineage, DRAWN AS A FLOW — the panel's hero --------------
-   2026-08-30: "give a sense of what leads into what." Ancestors ABOVE — the
-   parents table walked recursively up to THREE generations, deduped (a key
-   met in a nearer generation does not print again farther up), each
-   generation ordered by atlas year — then THIS RECORD as the bold middle
-   line, then the children BELOW, also by year. Each line steps one indent
-   further down the page behind a `└` connector: marks, not SVG, and the eye
-   walks oldest → this record → what it fed. Weights ride small on every
-   line. Sibling wants are ONE line at the flow's foot.
-
-   Children are not a field anywhere and must not become one: they are DERIVED
-   here by scanning every row's own `parents` table — extraction, so a new
-   anchor declaring `blues: .5` appears under blues by existing. A parent that
-   is a ROLE (atlas.js EXCLUDE) or that has no atlas row is a NAME and not a
-   door: a role says so in TWO WORDS here ("a role") — EXCLUDE's full
-   sentence prints verbatim only for an OPEN record that is a role (the
-   article section), because printing it once per role parent was the
-   repetition being reversed (2026-08-30) — and nothing pretends a record it
-   cannot open is tappable. */
-function lineage(gk, g, go) {
-  const kids = [];
-  for (const k of Object.keys(GENRES)) {
-    const p = GENRES[k].parents;
-    if (p && p[gk] != null) kids.push([k, p[gk]]);
-  }
-  const yearOf = (k) => NuAtlas.WHEN[k] ? NuAtlas.WHEN[k].year : Infinity;
-  kids.sort((a, b) => yearOf(a[0]) - yearOf(b[0]) || (a[0] < b[0] ? -1 : 1));
-
-  /* the generations up: gens[0] = parents, gens[1] = grandparents, … */
-  const gens = [];
-  const seen = new Set([gk]);
-  let cur = Object.keys(g.parents || {}).map((k) => [k, g.parents[k]]);
-  for (let d = 0; d < 3 && cur.length; d++) {
-    const best = {};   /* two paths to one ancestor keep the heavier edge */
-    for (const [k, w] of cur)
-      if (!seen.has(k) && (best[k] == null || w > best[k])) best[k] = w;
-    const gen = Object.keys(best).map((k) => [k, best[k]])
-      .sort((a, b) => yearOf(a[0]) - yearOf(b[0]) || (a[0] < b[0] ? -1 : 1));
-    if (!gen.length) break;
-    const next = [];
-    for (const [k] of gen) {
-      seen.add(k);
-      const pp = GENRES[k] && GENRES[k].parents;
-      if (pp) for (const q of Object.keys(pp)) next.push([q, pp[q]]);
-    }
-    gens.push(gen);
-    cur = next;
-  }
-
-  /* one line of the flow. depth 0 is the oldest generation shown; each
-     generation nearer the record steps one indent right (`--d`, spent by
-     nu.css), behind a `└`. The year rides on the line as data (`data-year`,
-     the gate reads the ordering off the artifact) and in INK only when the
-     label does not already say it — most anchors are named "Place Year" and
-     printing the year twice per line is the repetition being reversed. */
-  const flowLine = (k, w, depth, dir) => {
-    const rowEl = el("div", null, "nu-xf nu-xkin");
-    rowEl.dataset.own = dir === "up" ? "genres.js parents"
-      : "derived: GENRES[*].parents";
-    rowEl.dataset.dir = dir;
-    rowEl.style.setProperty("--d", depth);
-    const when = NuAtlas.WHEN[k];
-    if (when != null) rowEl.dataset.year = when.year;
-    if (depth > 0) rowEl.append(el("span", "└ ", "nu-xtie"));
-    const label = (GENRES[k] && GENRES[k].label) || k;
-    const y = when && String(when.year);
-    const yearInk = y && label.indexOf(y) < 0 ? y + " · " : "";
-    if (NuAtlas.EXCLUDE && NuAtlas.EXCLUDE[k]) {
-      rowEl.append(el("span", label), el("span", " ·" + w + " — a role",
-        "nu-xwt"));
-      return rowEl;
-    }
-    if (!when) {
-      rowEl.append(el("span", yearInk + label), el("span", " ·" + w, "nu-xwt"));
-      return rowEl;
-    }
-    const b = el("button", null, "nu-xgo");
-    b.type = "button"; b.dataset.gk = k;
-    b.append(el("span", yearInk + label), el("span", " ·" + w, "nu-xwt"));
-    b.addEventListener("click", () => go(k));
-    rowEl.append(b);
-    return rowEl;
-  };
-
-  const s = el("section", null, "nu-xax nu-xflow");
-  s.append(el("h3", "Lineage"));
-  const rows = [];
-  if (gens.length) {
-    /* oldest generation first: gens[last] at depth 0, parents just above
-       the record, the record at gens.length, children one step further */
-    for (let i = gens.length - 1; i >= 0; i--) {
-      const depth = gens.length - 1 - i;
-      for (const [k, w] of gens[i]) rows.push(flowLine(k, w, depth, "up"));
-    }
-  } else {
-    const none = el("div", null, "nu-xf");
-    none.dataset.own = "genres.js parents";
-    none.append(el("b", "parents"), document.createTextNode(
-      " none declared — a root (genres.js parents: {})"));
-    rows.push(none);
-  }
-  const meDepth = gens.length;
-  const me = el("div", null, "nu-xf nu-xkin nu-xme");
-  me.dataset.own = "the open record";
-  me.style.setProperty("--d", meDepth);
-  const meWhen = NuAtlas.WHEN[gk];
-  if (meWhen != null) me.dataset.year = meWhen.year;
-  if (meDepth > 0) me.append(el("span", "└ ", "nu-xtie"));
-  me.append(el("b", (g.label || gk) + " — this record"));
-  rows.push(me);
-  for (const [k, w] of kids) rows.push(flowLine(k, w, meDepth + 1, "down"));
-  if (Array.isArray(g.wants) && g.wants.length) {
-    const owed = el("p", "still owed: " + g.wants.join(", ") +
-      " — the missing rungs this row names as debts", "nu-xnote");
-    owed.dataset.own = "genres.js wants";
-    rows.push(owed);
-  }
-  s.append(...rows);
-  return s;
-}
+/* (`lineage` STOOD HERE and is `ui/xtab.js`'s now — see the note above the
+   import at the top of this file. Its own paragraph moved with it, including
+   the sentence that matters most: children are not a field anywhere and must
+   not become one, they are DERIVED by scanning every row's `parents`. The
+   Rules panel's name plate prints ONE line of that derivation, off the same
+   `kinOf` this function now uses, rather than deriving it a second time.) */
 
 /* ---------- what the box cannot say — the row's own admission, verbatim - */
 function cannotOf(g) {
