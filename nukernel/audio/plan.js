@@ -486,7 +486,9 @@ export function warmSources() {
  * cabaletta, the nuba's acceleration and vilambit-to-drut are records whose
  * FORM is a tempo shape, and that sentence refused all four at the door. The
  * reversal keeps the sentence's TRUTH: the record still has ONE bpm (the
- * 70..160 fence per record, engine spb = 60/bpm on both paths — live.js:259
+ * fence per record — fields.js BPM_LO/BPM_HI, which read 70..160 when this
+ * was written and read 40..220 since 2026-09-02 — engine spb = 60/bpm on
+ * both paths — live.js:259
  * and export/wav.js:185) and the engine never learns a second one. A paced
  * section stretches its bars in BEATS, which is the rail the tempo map
  * already rides: the parent walk asks `barBeats` per bar and the press bakes
@@ -499,7 +501,7 @@ export function warmSources() {
  * multiplier, proportional the way the mensural signs were (dupla,
  * sesquialtera): a `half` verse plays at half the record's bpm, so its bars
  * take twice the seconds — vilambit is half the record's own base, drut is
- * double, and the base still fences 70..160.
+ * double, and the base still fences (fields.js BPM_LO..BPM_HI).
  *
  * WHY HERE AND NOT IN warpBars: the tempo map (ui/derive.js) is the record
  * BREATHING — ±1.2% role leans, seam gestures, drift — and it must keep

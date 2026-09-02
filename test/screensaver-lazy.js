@@ -156,7 +156,23 @@ const ok = (cond, what, saw) => {
 
   console.log("\nS3 — the transport arrives at the floor, and the troupe is the band");
   const d1 = await page.evaluate(() => window.__saverDrift);
-  await page.waitForTimeout(2500);
+  /* IT WAITS FOR THE NUMBER TO MOVE RATHER THAN SLEEPING AND HOPING
+     (2026-09-02). This was `waitForTimeout(2500)` and it went red under
+     `test/all.js` while passing every time this file was run on its own —
+     measured 2026-09-02: standalone PASS with `0 -> 0.87`, and `saw: 0 -> 0`
+     inside the runner at load 13. The difference is not the page, it is the
+     COMPOSITOR: three.js is on swiftshader here, the runner has three other
+     browsers on four cores, and drift advances once per ANIMATION FRAME — so a
+     fixed 2.5s window can contain no frames at all and the gate reports a dead
+     transport that is running perfectly.
+     A poll until the value moves measures the same claim without measuring the
+     machine: it still fails when the drift genuinely never grows (that is the
+     "declared but never arriving" bug this check exists for), and it costs a
+     loaded box time instead of a false red. 30 s because `__saverReady` above
+     already spent up to 90 on the same rasteriser. */
+  await page.waitForFunction((was) =>
+    typeof window.__saverDrift === "number" && window.__saverDrift > was,
+    d1, { timeout: 30000, polling: 250 }).catch(() => {});
   const d2 = await page.evaluate(() => window.__saverDrift);
   /* the old sentence was "the field drifted while the record played" and it
      read the star field's eased pixel offset. __saverDrift is the TROUPE'S

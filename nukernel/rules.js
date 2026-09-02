@@ -204,8 +204,13 @@
     { field: "bpm", axis: "Time", head: "tempo", rederive: "compose",
       say: (g) => [w("the tempo is "), val(g.bpm, g.bpm), w(" beats a minute")],
       read: (g) => g.bpm,
-      edit: { kind: "number", min: 70, max: 160, step: 1 },
-      write: (r, v) => writeAt(r, "bpm", Math.max(70, Math.min(160, Math.round(v)))) },
+      /* THE FENCE IS fields.js's (2026-09-02) — one owner for "what is a
+         tempo", read at CALL time so this row cannot be the copy that drifts.
+         It read 70..160, the number compose.js threw on, while the page's own
+         tempo slider and tap tempo allowed 40..220; both are 40..220 now. */
+      edit: { kind: "number", min: NF.BPM_LO, max: NF.BPM_HI, step: 1 },
+      write: (r, v) => writeAt(r, "bpm",
+        Math.max(NF.BPM_LO, Math.min(NF.BPM_HI, Math.round(v)))) },
 
     /* THE THRESHOLD ROW (2026-09-01). `scratch/maps-2026-09-01/rules.md` §255
        — "THE RANGE PROBLEM" — says the truth: a row states ONE tempo and
@@ -275,7 +280,15 @@
          control is the ratio, and the five words are where it clicks. */
       edit: { kind: "number", min: 0, max: 0.5, step: 0.01,
         detents: () => Object.keys(NF.SWINGS)
-          .map((k) => ({ value: NF.SWINGS[k], label: NF.SWINGLABEL[k] })) },
+          .map((k) => ({ value: NF.SWINGS[k], label: NF.SWINGLABEL[k] })),
+        /* WHAT THE ROW ALREADY SWINGS AT (2026-09-02) — see `start` in §5. 338
+           of 417 anchors declare no ratio and `compose.js` deals a SWINGS key
+           for a third of records anyway (`swingOf` :1060), so the record on
+           the page can be shuffling while the row says nothing. Reading the
+           document's own word back through the table is the only way this
+           control opens on the number a hand can hear. */
+        start: (g, gk, doc) => { const wd = doc && doc.time && doc.time.swing;
+          return wd && NF.SWINGS[wd] != null ? NF.SWINGS[wd] : (g.swing || 0); } },
       write: (r, v) => writeAt(r, "swing", v == null ? null : Math.max(0, Math.min(0.5, +v))) },
 
     /* PER-SECTION, AND ONLY ONTO ROLES THE PLAN OWNS — compose.js:562's fence,
@@ -387,7 +400,23 @@
         ...opts(NF.INLABEL, NF.INLABEL)] },
       write: (r, v) => writeAt(r, "intro", v && NF.INLABEL[v] ? v : null) },
 
-    { field: "bars", axis: "Form", head: "the loop", rederive: "render",
+    /* THE TIER WAS A LIE, AND THE PROBE MEASURED IT (2026-09-02). This row
+       said `rederive: "render"` — "the band plays it from the next bar" — on
+       the theory that `toGenre` spreads `bars` out of the basis. The probe of
+       the composer round found the other half: *"'the loop is N bars'
+       (rules.js:390-395, rederive "render") reaches nothing: g.bars is only
+       read at COMPOSE time (document.js:674 `Math.max(1, s2.bars || g.bars)`,
+       :687). Measured: rules [{bars:16}] + a real recompose → sections still
+       4,4,8,4,8,8,8,8,4."* Both readers are real — `ui/derive.js:477,515` reads
+       `g.bars` at render AND `compose.js:679` builds every section length out
+       of it — and when a field has both readers the honest tier is the
+       STRONGER one, because a render-only edit leaves the composed half
+       (`form.sections[].bars`, and the cell bar count under it) saying the old
+       number while the kernel is handed the new one. Measured 2026-09-02 over
+       twelve anchors: an edit here moves the composed document (gregorian,
+       bars 8: nine section lengths change), so it is a compose. R6 asserts
+       every tier in this table BY MEASUREMENT now, so this cannot drift back. */
+    { field: "bars", axis: "Form", head: "the loop", rederive: "compose",
       say: (g) => { const b = g.bars == null ? 4 : g.bars;
         return [w("the loop is "), val(b, g.bars), w(b === 1 ? " bar" : " bars")]; },
       read: (g) => g.bars,
@@ -489,7 +518,13 @@
         "it is edited where a genre is invented (the session recipe, song.js:478)" },
 
     /* ------------------------- DEVELOPMENT ------------------------------ */
-    { field: "artic", axis: "Development", head: "articulation", rederive: "render",
+    /* COMPOSE, NOT RENDER (2026-09-02, the same measurement as `bars`).
+       `capOf` (:571) reads the articulation while precompose is writing each
+       cell's `play` row, so an edit here changes the DOCUMENT — measured on
+       reggae, artic "staccato": one held step becomes a rest. A render tier
+       would have handed the kernel the new word over cells still written with
+       the old holds. */
+    { field: "artic", axis: "Development", head: "articulation", rederive: "compose",
       say: (g) => [w("the notes are "), val(NF.ARTICS[g.artic || "normal"] || "normal", g.artic || null)],
       read: (g) => g.artic,
       edit: { kind: "enum", values: () => opts(NF.ARTICS, NF.ARTICS) },
@@ -498,12 +533,24 @@
       why: (g) => g.maxHold == null ? null
         : "the row caps its holds at " + g.maxHold + " steps, and that cap wins (capOf)" },
 
-    { field: "maxHold", axis: "Development", head: "longest note", rederive: "render",
+    /* COMPOSE (2026-09-02). Same seam as `artic` and louder: `capOf` reads
+       maxHold FIRST, so an edit here rewrites the `play` row of every cell —
+       measured on reggae, maxHold 2: 182 steps of the document move. */
+    { field: "maxHold", axis: "Development", head: "longest note", rederive: "compose",
       say: (g) => g.maxHold == null
         ? [w("the notes hold "), val("as long as the articulation lets them", null)]
         : [w("no note holds longer than "), val(g.maxHold, g.maxHold), w(" steps")],
       read: (g) => g.maxHold,
-      edit: { kind: "number", min: 1, max: 12, step: 1 },
+      edit: { kind: "number", min: 1, max: 12, step: 1,
+        /* THE CAP THIS ROW ALREADY PLAYS UNDER (2026-09-02) — `precompose.js
+           capOf` (:679), which is `HOLDCAP[artic]` when the row states no
+           maxHold: 4 normal, 8 legato, 1 staccato, 12 tie. 45 anchors declare
+           none, and the palette used to open all 45 at the RANGE'S FLOOR — a
+           legato record whose notes hold eight steps offered "no note holds
+           longer than 1 step" as its starting sentence, which is a control
+           that rewrites the record the instant it is added. */
+        start: (g) => { const P2 = PRE();
+          return P2 && P2.capOf ? P2.capOf(g) : (g.maxHold == null ? 4 : g.maxHold); } },
       write: (r, v) => writeAt(r, "maxHold", v == null ? null : Math.max(1, Math.min(12, Math.round(v)))) },
 
     /* THE FIGURE ITSELF — precompose.js's IDIOM row for this anchor, said and
@@ -557,7 +604,12 @@
       edit: { kind: "number", min: 0, max: 1, step: 0.01 },
       write: (r, v) => writeAt(r, "tone.verb", v == null ? null : Math.max(0, Math.min(1, +v))) },
 
-    { field: "fx", axis: "Sound", head: "the chips", rederive: "render",
+    /* COMPOSE (2026-09-02). `deskThe` deals the record's chips onto every
+       CHAIR while the record is written (`voices[].desk.fx`), and the 2026-08-27
+       fold at document.js normalize retired the record-wide key — so the chips
+       live in the document, not in the basis spread, and an edit here has to be
+       composed again. Measured on reggae, fx ["chorus"]: six chairs move. */
+    { field: "fx", axis: "Sound", head: "the chips", rederive: "compose",
       say: (g) => { const f = list(g.fx);
         return f.length ? [val(f.map((k) => (NF.FX[k] || {}).label || k).join(", "), f.slice()),
                            w(" sits on it")]
@@ -579,8 +631,16 @@
       edit: { kind: "number", min: 0, max: 1, step: 0.01, detents: () => askOpts("stress") },
       write: (r, v) => writeAt(r, "stress", v == null ? null : Math.max(0, Math.min(1, +v))) },
 
+    /* RENDER, AND THAT IS A DEMOTION (2026-09-02). This claimed `compose` —
+       "the record is written again at this seed" — beside `stress`, which
+       earns it (`grooveOf` reads stress and can move `time.groove`). Nothing in
+       precompose reads `phrase`: measured over twelve anchors x five values,
+       not one byte of the composed document moves, and `toGenre` spreads it to
+       the kernel's arch (kernel.js:1337-1348). So the honest sentence is the
+       cheaper one, and a hand that moves the breath no longer restarts the
+       band. */
     { field: "phrase", axis: "Performance", head: "the line's breath",
-      rederive: "compose",
+      rederive: "render",
       say: (g) => [w("the line breathes "), val(numWord(g.phrase), g.phrase),
                    w(" — " + nearWord("phrase", g.phrase))],
       read: (g) => g.phrase,

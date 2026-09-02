@@ -2289,6 +2289,22 @@
        record, and the flyout says so under the slider. */
     const s = seed == null || seed <= 1 ? 1 : seed;
     const G = rules && rules.length ? applyRules(GENRES[gk], rules) : GENRES[gk];
+    /* THE RESOLVED ROW NAMES ITS OWN INSTRUMENTS (2026-09-02, the composer
+       fix round). `instruments.js instrOf` takes a KEY and reads `GENRES[gk]`
+       — the CATALOGUE's row — which meant the `instr` rule was declared,
+       costed and silent: measured 2026-09-02, `genreToDocument("reggae", 2,
+       [{f:"instr", v:["piano"]}])` moved not one byte of the document, and the
+       only reason a Rules edit sounded at all was `document.js basisRow`
+       re-applying the same list at render. That is the box's characteristic
+       bug ("declared but never arriving") in the newest table in the file.
+       So every read of THIS anchor's own instruments goes through here, off
+       the resolved row; a GUEST's key (`instrOf(lk, 0)` below) still reads the
+       catalogue, because a guest brings its own row and none of this record's
+       sentences were written onto it. Identical to instrOf's own three lines
+       when no rule is in play, so all 358 anchors compose byte-for-byte. */
+    const ownInstr = (v) => { const e = G.instr;
+      if (!e) throw new Error(`precompose: anchor "${gk}" declares no instr`);
+      return Array.isArray(e) ? (e[Math.min(v || 0, e.length - 1)] || e[0]) : e; };
     /* THE BLANK STATE (2026-09-01). Paul: "Add a 'silence' genre at the top of
        the genre list. This is a blank state." `silent` is a NAMED opt-out on
        the row — the shape compose.js STEADY uses (`compose.js:275`), a written
@@ -2496,7 +2512,7 @@
     const VOCAL = (id) => MOUTHY(id) ||
       !!(NI.SAMPLED_VOICES && NI.SAMPLED_VOICES[id]);
     const ownVoice = !!(G.tone && G.tone.mouth) ||
-      Array.from({ length: G.voices || 1 }, (_, v) => instrOf(gk, v)).some(MOUTHY);
+      Array.from({ length: G.voices || 1 }, (_, v) => ownInstr(v)).some(MOUTHY);
     const voiceBarred = !ownVoice && !!(NC.INSTRUMENTAL[gk] || G.instrumental);
     const hostYear = NC.genreYear(gk);
     const ancestry = (k, N) => { const seen = new Map([[k, 0]]); let front = [k];
@@ -2773,7 +2789,7 @@
        non-synth one, are untouched. */
     {
       const arpV = basePart.findIndex((p, v) =>
-        p === "riff" && !!(NI.PATCHES.synth || {})[instrOf(gk, v)]);
+        p === "riff" && !!(NI.PATCHES.synth || {})[ownInstr(v)]);
       /* `arpAlways` IS A GUARANTEE, NOT A LEAN (2026-09-01). Paul, after many
          rounds of me tuning something that was sometimes not there at all: "I
          expect one four note arpeggiated phrase to play in line with the chord
@@ -2847,7 +2863,7 @@
          THE TEST IS `VOCAL`, not MOUTHY — the same door the instrumentation
          law uses, so a SAMPLED choir counts as people too. One owner for
          "this id is a person". */
-      const kinds = VOCAL(instrOf(gk, v))
+      const kinds = VOCAL(ownInstr(v))
         ? baseKinds[v].map((k) => (k === "seq" ? "topline" : k))
         : baseKinds[v];
       const home = dflt(kinds);
@@ -2884,7 +2900,7 @@
         development[sid(i)] = nm ? (isSeq ? "as written" : sayOps(R.song[i].ops, nm)) : "out";
       });
       const part = basePart[v];
-      const instrument = signed(part, instrOf(gk, v)) ? "synth" : instrOf(gk, v);
+      const instrument = signed(part, ownInstr(v)) ? "synth" : ownInstr(v);
       voices.push({
         name: nameFor(captionOf(part, instrument)),   // the honest word — see captionOf
         kind: "line",

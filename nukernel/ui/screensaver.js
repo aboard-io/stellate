@@ -430,23 +430,59 @@ export function mountScreensaver(host, CTX) {
      the troupe filled 49% of the width and 12% of the height). Re-run after
      every creature walks on, so the floor is legible at one dancer and at
      eleven. */
-  const PERROW = 4;
+  /* ===== IT IS A RING NOW, WHICH IS WHAT THE PARAGRAPH ABOVE ALWAYS SAID
+     (2026-09-02) ==========================================================
+     The header of this block has read *"a ring of dancers, not the ship's
+     flight path"* since the day it was written, and what stood under it was
+     `PERROW = 4` and three rows stepped back. The probe of 2026-09-02 measured
+     what that looks like: *"Screensaver: the 11 aliens stand on nearly one
+     spot (a blob)."* Rows put two thirds of the troupe BEHIND the front three,
+     the camera frames the whole box, and a dancer eleven twelfths of the way
+     back is a dancer you cannot see — which is the same complaint Paul made
+     about the stars ("it should be the little aliens dancing").
+
+     A RING PUTS EVERY DANCER ON ONE CURVE and nobody behind anybody. The
+     arithmetic is two numbers and no magic: neighbours stand `w` apart along
+     the arc (the same measured spacing the rows used — 0.80 of the widest
+     creature's box, and that 0.80 keeps its own paragraph above), and the arc
+     is at most ARC radians so the ring never closes into a circle whose far
+     side has its back to you. RADIUS FOLLOWS FROM THOSE TWO — `R = n·w / ARC`,
+     floored at `w` so a solo dancer is not standing on a pinhead — which means
+     a bigger band draws a bigger ring rather than a tighter one.
+     THE CENTRE OF THE ARC IS AT THE ORIGIN AND THE ENDS CURVE AWAY from the
+     camera (`z = R − R·cos θ`), so the middle of the troupe is nearest and the
+     ends turn in: a stage, read from the front row of the stalls.
+     EACH TURNS ALONG THE RADIUS by half its own angle — full rotation would
+     show the ends in profile, none would make the ring look like a straight
+     line with a bend in it.
+
+     AND THE FLOOR IS PUBLISHED (`window.__saverFloor`), which is the only
+     honest way to make a claim about geometry testable: three.js needs a real
+     GL context and the machine this was written on has none (the canvas falls
+     back to "no 3D here"), so the numbers go on the artifact where a machine
+     that HAS one can read them back. It is the same discipline `__saverDrift`
+     and `__saverFrames` already follow. */
+  const ARC = Math.PI * 1.15;          // ~207° — a stage, never a closed circle
   function layout() {
     if (!RIG || !built.length) return;
     const box = new THREE.Box3(), size = new THREE.Vector3();
     const widthOf = (b) => { box.setFromObject(b.al.group); box.getSize(size);
                              return Math.max(0.5, size.x); };
     const order = built.filter((b) => !b.extra).concat(built.filter((b) => b.extra));
+    const n = order.length;
     const w = Math.max.apply(null, order.map(widthOf)) * 0.80;
-    const rows = [];
-    for (let i = 0; i < order.length; i += PERROW) rows.push(order.slice(i, i + PERROW));
-    rows.forEach((row, ri) => {
-      row.forEach((b, i) => {
-        const k = i - (row.length - 1) / 2 + (ri % 2 ? 0.5 : 0);
-        b.al.group.position.set(k * w, 0, -ri * w * 1.25);
-        b.al.group.rotation.y = -k * 0.13;      // each turns a little outward
-      });
+    const R = Math.max(w, (n * w) / ARC);
+    const step = w / R;                          // the angle one place subtends
+    const floor = [];
+    order.forEach((b, i) => {
+      const th = (i - (n - 1) / 2) * step;
+      const x = R * Math.sin(th), z = R - R * Math.cos(th);
+      b.al.group.position.set(x, 0, -z);
+      b.al.group.rotation.y = -th * 0.5;
+      floor.push({ x: +x.toFixed(3), z: +(-z).toFixed(3),
+                   extra: !!b.extra });
     });
+    window.__saverFloor = { n, w: +w.toFixed(3), r: +R.toFixed(3), at: floor };
     frameCamera();
   }
 

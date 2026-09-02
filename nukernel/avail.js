@@ -422,6 +422,18 @@
   const QUALITIES = () => [
     ...opts(Object.keys(K.QSTEPS), null, "out of the scale"),
     ...opts(Object.keys(K.QFIX), null, "fixed intervals")];
+  /* WHO IS IN THE BASS CHAIR, SAID IN ONE PLACE (2026-09-02). `ui/derive.js
+     bassInstrOf` is the one owner of the ANSWER — `(pool && pool.bass) ||
+     BASS_INSTR` — and it is an ES module this UMD file cannot require, so the
+     expression is read off `env.pool` here in the same three tokens and named
+     as the borrowing rather than left to look like a second policy. If the two
+     ever disagree the bass menu will say one instrument and the engine will
+     play another, which is what `test/band.browser.js` B6 measures. */
+  const bassChairName = (env) => {
+    const id = ((env || {}).pool || {}).bass || NI.BASS_INSTR;
+    return BASSCHOICES[id] || INSTRCHOICES[id] || String(id);
+  };
+
   // INSTRUMENTS, GROUPED BY FAMILY (instruments.js familyOf). Pre-sorted, and
   // stable per key: sheets.js never reorders, because reordering moves a
   // data-k under a live finger and the focus restore is keyed on it.
@@ -571,9 +583,17 @@
        ABSENT IS THE MODE. `null` means "the subject sings the mode itself",
        which is exactly what document.js's third fallback does, so the option
        says that rather than "default" — the word for saying nothing is the
-       thing that then happens (the `four` / `straight` idiom two rows up). */
+       thing that then happens (the `four` / `straight` idiom two rows up).
+       AND IT IS TWO WORDS, NOT FOUR (2026-09-02). The probe of the composer
+       round read the closed combo at 390px: *"the scale combo's default option
+       is a sentence and clips ('the mode itself, it would sound th')."* Half of
+       that length was the reason bolted on after the label (`optText` joins
+       them, and a `<option>` can hold nothing but text — see the tautology fix
+       at the standing-answer clause below); this is the other half. "the mode"
+       is the whole of what the fallback does and it is what `document.js:172`
+       calls it. */
     "alphabet.scale": { label: "scale", scope: "song",
-      values: () => [{ value: "", label: "the mode itself" },
+      values: () => [{ value: "", label: "the mode" },
                      ...opts(Object.keys(SCALES), SCALELABEL, "alphabets"),
                      ...opts(Object.keys(MODES), MODELABEL, "modes")],
       get: (doc) => doc.alphabet.scale || "",
@@ -723,13 +743,34 @@
        and there is exactly ONE control on the page, this one. Absent is today:
        a record whose bass says nothing reaches `POOL.bass` exactly as before.
 
-       `""` IS THE EMPTY DETENT and it is spelled "default", which is this
+       `""` IS THE EMPTY DETENT and it was spelled "default", which is this
        page's word for a record-wide "the record's own" (2026-08-26, Paul:
        *"'the record's own' -- make that 'default'"*) — the same word
-       `cast.bassStyle` two rows up already wears. */
+       `cast.bassStyle` two rows up already wears.
+
+       REVERSED 2026-09-02, ON THIS ROW ONLY, and the sentence above is kept
+       because it is right about every OTHER empty detent on the page. The
+       probe of the composer round: *"Nothing ever says what the bass is
+       playing: tabbass has no sub; sel|sound.bassinstrument|bass sits on "" =
+       'default' with no word. Seat the hired chair's name as the default
+       detent and the nav sub."* "default" is the right word where the thing
+       it defers to is ALSO on the page and named — a bus, a section, the
+       record's own tone. The bass's default defers to a fact that is NOT in
+       the document at all (the session's instrument pool, ui/state.js POOL)
+       and has no other readout, so "default" here is a control refusing to
+       say what is sounding. So this detent wears the CHAIR'S OWN NAME, which
+       is `ui/derive.js bassInstrOf`'s answer said in `BASSCHOICES`'s words —
+       the same derivation `ui/eight.js playsWhat` prints in the gutter, and
+       `audio/plan.js seats()` plays. Two readouts, one derivation, and the
+       word for saying nothing is again the thing that then happens (`four` /
+       `straight` / `steady`).
+
+       THE POOL ARRIVES IN `env`, the way the fleet does for `sound.instrument`
+       eight lines down; a caller that hands none gets `BASS_INSTR`, which is
+       what `bassInstrOf(null)` returns and what the engine seats. */
     "sound.bassinstrument": { label: "instrument", scope: "voice", chair: "bass",
       absent: "",
-      values: () => [{ value: "", label: "default" },
+      values: (doc, s, env) => [{ value: "", label: bassChairName(env) },
                      ...opts(Object.keys(BASSCHOICES), BASSCHOICES)],
       get: (doc, s) => V(doc, s).instrument || "",
       set: (doc, s, v) => { const x = V(doc, s);
@@ -962,9 +1003,23 @@
       // un-editable at exactly the moment it matters. The reason SURVIVES —
       // the word is still a strange thing to be saying here and the page keeps
       // saying so — it just stops being a refusal.
+      //
+      // EXCEPT WHEN THE REASON IS THE TAUTOLOGY (2026-09-02, the fix round).
+      // "The reason SURVIVES" is right about a REFUSAL — a disabled option
+      // says something a composer can act on — and wrong about an INERT one on
+      // the very value the record is currently saying: "it would sound the
+      // same here" is true of that option because it IS what is sounding, and
+      // the extractor marks it inert for exactly that reason (it diffs
+      // renders, and the answer you are on renders identically to itself). So
+      // the option read "the mode, it would sound the same here, and it is
+      // what the record says" — 76 characters in a 270px combo, measured on
+      // the rendered page at 390 — where the last clause is the whole of the
+      // information. The refusal half keeps its reason; the tautology drops.
       if (String(cur) === value && (out.disabled || out.quiet)) {
+        const tauto = out.quiet && !out.disabled;
         out.disabled = false; out.quiet = false;
-        out.why = (out.why || "") + ", and it is what the record says";
+        out.why = tauto ? "it is what the record says"
+          : (out.why || "") + ", and it is what the record says";
       }
       return out;
     });

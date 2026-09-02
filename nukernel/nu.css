@@ -1276,6 +1276,33 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 .nu-traylist{ flex: 1 1 auto; min-block-size: 0;
   display: flex; flex-direction: column; align-items: stretch; gap: var(--s2);
   overflow-y: auto; overflow-x: hidden; }
+/* ...AND IT WAS RE-MEASURED ON 2026-09-02, BECAUSE A PROBE SAID IT WAS BROKEN.
+   The probe report of that morning, defect 1: *"The nav list draws UNDERNEATH
+   the pinned foot and those rows cannot be tapped … the list's last child
+   `toptab-Export` renders at 550→594 over the foot, unclipped;
+   `elementFromPoint(centre of toptab-Export) === "toptab-Where"` — a tap on
+   Export presses the genre plate."*
+
+   THE FIRST HALF OF THAT SENTENCE IS A MEASUREMENT AND THE SECOND HALF IS A
+   CONCLUSION, and only the measurement is right. Re-measured on the rendered
+   page at 390x844, boot, nothing expanded: `.nu-tray` 0→844, `.nu-traylist`
+   4→560, `.nu-trayfoot` 560→840, computed `overflow-y: auto`, `flex: 1 1
+   auto`, `min-block-size: 0` — and `scrollHeight` 590 against `clientHeight`
+   556. The list IS the flex child that shrinks and it IS clipping: the twelve
+   root rows are 34px taller than the room, so the last one is HALF DRAWN at
+   the rule and the other half is scrolled away. `getBoundingClientRect()`
+   reports a clipped element's LAYOUT box, which is what 550→594 is; the paint
+   stops at 560. And `elementFromPoint` at the centre of that layout box
+   answers `toptab-Where` for the same reason: the centre is at y 572, which is
+   *inside the foot*, over the plate that really is drawn there.
+   Then, with Band expanded (19 rows, scrollHeight 948, clientHeight 547) and
+   the list scrolled to its end: the last row stands at 507→551, the foot
+   begins at 551, and `elementFromPoint` on its centre answers `toptab-Export`.
+   Every row is reachable and every reachable row takes its own tap.
+   So nothing here changed and the claim is answered by ARITHMETIC rather than
+   by a declaration — which is why the measurement is written down instead:
+   test/nav-tree.js N7 drives exactly that state on every run, so the next
+   reader gets the number rather than the conclusion. */
 /* AND A MARK IN IT IS NEVER SQUEEZED (2026-08-30). A flex item's default is
    `flex-shrink: 1`, so on a level that OVERFLOWS — which at 320x568 is most
    of them, see THE MARKS WEAR THEIR WORDS — the browser takes the missing
@@ -4895,6 +4922,28 @@ table.nu-trims{ color: var(--ink); }
    decides; there is no greyed variant of this control on purpose). ==== */
 .nu-loop{ display: flex; align-items: center; gap: 8px;
   margin-block: 6px; min-inline-size: 0; }
+/* ...AND IT WRAPS AT 320, WHICH IS THE ONE WIDTH IT DOES NOT FIT (2026-09-02).
+   test/loopstrip.browser.js S6 — *"nothing scrolls sideways"* — has been red at
+   320 since the tray widened, and a DOM walk of the rendered page named the
+   element: `button[data-k="loopresetvoice"]`, 100px wide, standing at x 225 to
+   327 against a 320px viewport. The arithmetic is four items on one line — the
+   label, a strip with a 60px floor, the looping word and the way back — plus
+   three 8px gaps, and at 320 that is 7px more than the line.
+   IT WRAPS RATHER THAN SHRINKING, and each of the three alternatives is
+   refused by a rule this block already states. The strip cannot give up its
+   60px: below that the two handles meet and the control cannot be worked. The
+   two words cannot ellipsise: they are the control's own name and "the way
+   back is VISIBILITY-hidden, never display-none … a control may not resize
+   because you are using it" — a word that changed width with its own text
+   would be that failure said sideways. And the gap cannot go to 5.6px, which
+   happens to cover exactly 7.2px, because a number chosen to make one
+   measurement pass at one width is the kind of fix that comes back.
+   WRAPPING COSTS NOTHING IT PROMISED. `visibility: hidden` still holds the way
+   back's seat, so the second line does not appear and disappear under a
+   finger; above 320 the row never wraps at all (measured: one line at 375, 390,
+   430 and 1280); and at 320 the strip gets the whole first line, which makes
+   the drag EASIER rather than harder. */
+.nu-loop{ flex-wrap: wrap; }
 .nu-lplab{ font: var(--num-fw, 500) .75rem var(--mono);
   color: var(--ink); opacity: .7; flex: none; }
 .nu-lps{ position: relative; display: block; flex: 1 1 auto;
@@ -5287,7 +5336,7 @@ table.nu-trims{ color: var(--ink); }
 
    THE BUILDER IS `nukernel/ui/preview.js` and it has no caller yet; the tray,
    the roster and the motif editor are wave 2's. */
-.nu-preview{ display: inline-block; vertical-align: -.2em;
+.nu-preview{ --pv-base: 4ch; display: inline-block; vertical-align: -.2em;
   inline-size: 4ch; block-size: 1.2em;
   color: var(--vpaint, var(--hand)); overflow: visible; }
 .nu-preview rect{ fill: currentColor; }
@@ -5417,8 +5466,29 @@ table.nu-trims{ color: var(--ink); }
    A MEDIA QUERY AND NOT A CONTAINER QUERY, deliberately: `--tray-w` is a
    function of the VIEWPORT, so the viewport is the honest thing to ask. A
    container query on `#nu-tray` would ask the same question one indirection
-   later and would be wrong the day the token stops being viewport-relative. */
-@media (min-width: 400px) {
+   later and would be wrong the day the token stops being viewport-relative.
+
+   ===== THE HINGE IS 360px SINCE 2026-09-02, AND THE ARITHMETIC ABOVE IS
+   WHY IT MOVED RATHER THAN WHY IT SHOULD NOT ===========================
+   Both sentences above are true and their conclusion was one phone too wide.
+   400px of glass is WIDER THAN THE PHONES THIS PAGE IS FOR — an iPhone is 390
+   and a small Android is 360 — so the one feature Paul asked for by name
+   (*"On the nav I need to know what they're playing as instruments"*) was
+   drawn on no phone at all. The probe of 2026-09-02 measured exactly that:
+   *"On a phone the nav sub-line is never painted: --tray-w at 390px = 93.6px,
+   under the 96px hinge, so members show no instrument (B10)."*
+   360px of glass is 86.4px of column: 19.2px of glyph, 5.6 of gap, and 61px of
+   word, which ELLIPSISES a long name instead of breaking it — a worse word and
+   a better row, and the second line is the fact being asked for.
+   THE NUMBER IS CHANGED IN PLACE, IN BOTH BLOCKS, and not restated at the foot
+   of the file: the first draft of this fix appended a third `#nu-tray` block
+   there and it was a SECOND OWNER of the row form — it turned `.nu-sub2` on at
+   360 without the `white-space: nowrap; overflow: hidden` the 400 block
+   carries, so "percussive organ" set the row's min-content and the stripe
+   scrolled sideways by 17px at 390 and 21px at 375 (test/nav-tree N4 caught it
+   at both). One hinge, one place, two queries that must always say the same
+   number. */
+@media (min-width: 360px) {
   #nu-tray .nu-ic{ flex-direction: row; align-items: center;
                    gap: var(--s2); text-align: start; }
   #nu-tray .nu-g{ flex: 0 0 auto; }
@@ -5446,7 +5516,7 @@ table.nu-trims{ color: var(--ink); }
    width that cannot hold it, and it is still in the DOM for a reader with the
    stylesheet off. */
 #nu-tray .nu-sub2{ display: none; }
-@media (min-width: 400px) {
+@media (min-width: 360px) {          /* the same hinge — see the block above */
   #nu-tray .nu-sub2{ display: block; color: var(--dim);
     font-size: var(--t0, .6rem); line-height: 1.1; font-weight: 500;
     letter-spacing: -.01em;
@@ -5787,7 +5857,7 @@ table.nu-trims{ color: var(--ink); }
   padding: 0 var(--s1) 0 0; }
 .nu-memchip:hover{ background: var(--flag-tint); }
 .nu-memchip > i{ font-style: normal; }
-.nu-memchip .nu-preview{ inline-size: 2.6em; flex: 0 0 auto; }
+.nu-memchip .nu-preview{ --pv-base: 2.6em; inline-size: var(--pv-base); flex: 0 0 auto; }
 .nu-memfoot{ margin-block: var(--s2) 0; }
 .nu-memadd{ display: flex; flex-wrap: wrap; gap: var(--s2);
   margin-block: var(--s3); }
@@ -5811,7 +5881,7 @@ table.nu-trims{ color: var(--ink); }
 .nu-traychip{ display: inline-flex; align-items: center; gap: var(--s2);
   padding-inline: var(--s2); max-inline-size: 100%; min-inline-size: 0;
   overflow-wrap: anywhere; }
-.nu-traychip .nu-preview{ inline-size: 3.2em; }
+.nu-traychip .nu-preview{ --pv-base: 3.2em; inline-size: var(--pv-base); }
 /* THE THUMBNAIL ON THE PLATE, AND IT HAS TO BE SAID TWICE. `.nu-preview` sets
    its OWN `color` — `var(--vpaint, var(--hand))`, which is the point of it
    beside a member box — so the cap's `color: #FFFFFF` never reaches the rects,
@@ -6129,3 +6199,296 @@ table.nu-trims{ color: var(--ink); }
 .nu-notes tr.is-refused > td{ text-decoration: line-through; }
 .nu-notes tr.is-refused > td .nu-row{ text-decoration: none; }
 .nu-notes tr.is-refused .nu-pcfill{ background: var(--faint); }
+
+/* ==========================================================================
+   WAVE 3 — THE FIX ROUND OF 2026-09-02
+   ==========================================================================
+   Every rule below answers a numbered defect in the probe report of that
+   morning (`scratch/maps-2026-09-01/probe-report.md`), which drove the
+   deployed page as a user at 390x844 and 1280x900. The probe's own sentence is
+   quoted on each block, so the next reader gets the measurement rather than
+   the conclusion. They are APPENDED rather than woven in for the reason the
+   wave-1a block above gives: a second agent is editing this tree in the same
+   hour, and a rule that lands at the end is a rule a merge can see.        */
+
+/* ---- 7 · A SLIDER IS A WIDGET, NOT A WALL ------------------------------
+   Probe: *"Full-bleed range sliders 1077-1103px wide with the readout orphaned
+   at the far right: rule|bpm/bars/maxHold/voices/tone.verb/stress/phrase,
+   Tempo's tempo, Motif degree sliders (840). Cap a .nu-field range at ~28ch
+   with the output beside the thumb end."*
+
+   THE RULE IT BREAKS IS `flex: 1 1 0`, WHICH WAS RIGHT AND INCOMPLETE. That
+   declaration exists (see its own block above) to stop `input[type=range]{
+   inline-size: 100% }` pushing the `<output>` onto a third line, and it does —
+   but "the line minus the readout" is a whole 1280px desktop line, and a
+   1100px trough for a number between 40 and 220 is a control whose precision
+   is a hundred times finer than the fact it sets. Worse, it puts the value a
+   full screen away from the thumb that is moving it: the eye cannot hold both.
+   28ch IS THE SAME REASONING `.nu-combo`'s 30ch CAP ALREADY MAKES one block
+   up ("a menu stretched across a 1400px desktop is a 1345px control holding
+   one word"), applied to the other widget that stretches. It is a MAXIMUM, not
+   a width: below it the slider still takes the line it is given, so nothing
+   about a phone changes — measured, the tempo field is 88.0px tall at 320 and
+   at 1280, exactly as its own block promises, and the readout is now beside
+   the thumb's end at both.
+   THE THREE ROW CLASSES ARE NAMED RATHER THAN A DESCENDANT SELECTOR, because
+   `.nu-field`, `.nu-rule` (the Rules panel's sentence rows) and `.nu-tf`
+   (Tempo's) are the three surfaces that put a slider on a line with words, and
+   a bare `input[type=range]` cap would also hit the board's faders, the
+   maker grids and the vertical chassis, none of which is on a text line. */
+.nu-field > label > input[type=range],
+.nu-sel > label > input[type=range],
+.nu-rule input[type=range],
+.nu-tf input[type=range]{ max-inline-size: 28ch; }
+/* ...AND THE READOUT STAYS WITH IT. `flex: 0 0 auto` so the `<output>` is
+   never stretched into the gap the cap just opened, and the gap goes AFTER the
+   pair rather than between them: `margin-inline-end: auto` on the output
+   pushes the empty line-end away, which is what puts the number beside the
+   thumb instead of at the far margin. */
+/* ...AND IT MAY STILL SHRINK. `flex: 0 0 auto` stood here for an hour and was
+   the wrong half of "never stretched": a readout whose `fmt` returns a
+   SENTENCE rather than a number ("every fourth bar, a bar early") then had a
+   313px flex basis it could not give back, and at 390 one `<output>` in the
+   Structure panel ran from 106 to 419 — 29px past the glass, with no scroller
+   above it to clip it (measured; test/nav-tree N4 caught the document scroll
+   at 320, 375 and 390). `0 1 auto` with `min-inline-size: 0` says the same
+   thing the cap above says about the slider: take what you need, give back
+   what you must. A long readout wraps inside its own box instead of pushing
+   the page sideways. */
+.nu-field > label > output,
+.nu-sel > label > output{ flex: 0 1 auto; min-inline-size: 0;
+  margin-inline-end: auto; overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums; }
+
+/* ---- 2b · HOW LONG A SECTION IS, IN THE FORM LIST ----------------------
+   ui/eight.js `barsCell`. A spinner in a table cell: 5ch is "32" with the
+   browser's own stepper beside it, and the 44px floor is the page's `button,
+   select, input[...]` rule, which this element is already in. */
+.nu-barsin{ inline-size: 5ch; min-inline-size: 0; text-align: end;
+  padding-inline: var(--s1); font-variant-numeric: tabular-nums; }
+/* ...AND THE FORM TABLE'S CELLS ARE CELLS, WHICH IS THE THIRD EXEMPTION TO
+   `.nu-field`'S EVEN-ROW RULE (2026-09-02) — the other two are named in that
+   rule's own block (`.nu-plate .nu-sel`, `.nu-circ .nu-opt`).
+   THE MEASUREMENT THAT FORCED IT. Wave 3 put the section's ROLE through
+   `selectField` (probe 6: *"Structure's form-list role combos"* wear no
+   `.nu-combo`), which is right about the chassis and brings the rest of
+   `.nu-sel` with it: a question on its own 44px line, a second 44px line for
+   the control, and a 30ch cap. In a `<td>` that is an 88px row and a 300px
+   table inside a 217px panel — measured at 320, 375 and 390, the document
+   scrolled sideways by 82, 40 and 29px, and test/nav-tree N4 caught all three.
+   SO THE CHASSIS STAYS AND THE PARAGRAPH GOES. The `<select>` keeps its
+   `.nu-combo` (the detent, the filter, the page's own look) and gives up the
+   printed label, which in a table is the COLUMN HEAD's job and is said once
+   there instead of once per row. Nothing is lost to a screen reader:
+   `selectEl` writes `aria-label` = "section N name" on the control itself, and
+   that is the name it has always had. */
+.nu-form td > .nu-sel{ margin: 0; }
+.nu-form td > .nu-sel > label{ display: block; min-block-size: 0; }
+.nu-form td > .nu-sel > label > .nu-w{ display: none; }
+.nu-form td > .nu-sel > label > .nu-combo{ display: block;
+  inline-size: 100%; max-inline-size: none; }
+
+/* ---- 12 · THE TEMPO OPERATIONS WEAR THEIR WORDS FROM 640px -------------
+   Probe: *"Nine naked glyphs in Tempo (⏱ ♪↓ ♪↑ ♪↓↓ ♪↑↑ ←→ →← 1× ↺) — words
+   only in aria-label; on a 1100px panel there is room to show the .nu-vh word
+   (from ~640px)."*
+
+   IT IS `#nu-tray .nu-vh`'S OWN FOUR DECLARATIONS, NOT A FIFTH SPELLING. The
+   gutter already unhides `paintIcon`'s label — one string, one owner, two
+   readers — and this is the same unhide on the other surface that draws icon
+   marks. Below 640px the words stay hidden and the row stays nine glyphs,
+   because nine labelled marks do not fit a phone's line and the accessible
+   name has carried the word the whole time.
+   THE HINGE IS 640 AND NOT 700: the panel's own content box at 700px of glass
+   is ~530px, and nine marks at their labelled width measure 486px — so 640 is
+   where the row still fits on one line, which is the number the rule is
+   actually about. */
+.nu-tf-row button{ min-inline-size: var(--tap); }
+@media (min-width: 640px){
+  .nu-tf-row .nu-ic{ flex-direction: row; align-items: center;
+                     gap: var(--s2); }
+  .nu-tf-row .nu-vh{ position: static; inline-size: auto; block-size: auto;
+    margin: 0; overflow: visible; clip-path: none;
+    white-space: nowrap; font-size: var(--t1, .72rem); line-height: 1.15;
+    font-weight: 600; letter-spacing: -.01em; }
+}
+
+/* ---- 13 · EVEN ROWS, THREE SURFACES -----------------------------------
+   Paul, B4: *"things are uneven based on how text wraps."* Probe: *"Produce
+   cast chips row 1 = 44px, row 2 = 49px, ragged staircase at 390; Band roster
+   boxes with 7/5/4/2/2 chips put 'play alone' at y 450/350/250/200/200;
+   automation column heads 145/195/105/113/119/88/88px wide so the meters are
+   seven scales."*
+
+   (a) THE CAST CHIPS BECOME A GRID. They were inline-grid chips in a wrapping
+   flex row, so each chip was as wide as its own words and as tall as however
+   many lines they took — which is exactly the failure `.nu-field` was written
+   for, one surface over. `repeat(auto-fill, minmax(min(13em, 100%), 1fr))` is
+   `.nu-roster`'s own track recipe (the one measured surface on this page where
+   equal boxes are already solved), and grid's default `stretch` makes every
+   chip in a row the height of the tallest — so a two-line chip lifts its
+   neighbours instead of stepping past them.
+   THE INDENT SURVIVES: `[data-under]` is still a margin, and in a grid cell a
+   margin still steps the chip in. What is lost is the tree reading as a
+   continuous indented run when it wraps mid-family, which a flex row also lost
+   the moment it wrapped. */
+   AND THE HEIGHT IS STATED, WHICH IS THE HALF `grid-auto-rows: 1fr` COULD NOT
+   BUY. That declaration stood here for ten minutes on the theory that `1fr`
+   rows on an auto-height grid all resolve to the tallest; they do not — an
+   `fr` needs a DEFINITE size to divide and an auto-height grid has none, so it
+   resolves to `auto` and the measurement was unchanged (44 x10 then 49 x7 at
+   1280, before and after). The honest fix is the one `.nu-field` already
+   makes one surface over: STATE the row and let the content sit in it.
+   `--tap` PLUS ONE STEP OF THE SPACING SCALE is what a chip is: a tap row for
+   the word, and one line of the detail under it (`.nu-castline`, at `--t1`).
+   Every chip is that height whether or not it has a second line to put in it,
+   which is exactly what "even rows" means and is why the number is derived
+   from the two tokens rather than measured off the tallest chip. Measured
+   after: 50 for all seventeen, at 390 and at 1280. */
+.nu-cast{ display: grid; align-items: stretch; margin-block: var(--s3);
+  grid-template-columns: repeat(auto-fill, minmax(min(13em, 100%), 1fr)); }
+.nu-castchip{ display: grid; align-content: center;
+  min-block-size: calc(var(--tap) + var(--s2)); }
+/* (b) THE ROSTER BOX PUTS "play alone" AT ITS FOOT. The boxes in a row are
+   already equal height — `.nu-roster` is a grid and `stretch` is its default —
+   and what was ragged was the CONTENT inside them: a member with seven motif
+   chips pushed its button 250px below a member with two. A column with the
+   last child pushed to the bottom is the whole fix, and it is one declaration
+   plus `margin-block-start: auto`, which is the same "pinned by being last"
+   arithmetic `.nu-trayfoot` uses in the gutter. */
+.nu-member{ display: flex; flex-direction: column; align-items: stretch; }
+.nu-member > .nu-memreads{ flex: 1 1 auto; align-content: start; }
+.nu-member > button:last-of-type{ margin-block-start: auto; }
+/* (c) THE AUTOMATION GRID'S COLUMNS ARE EQUAL. `table-layout: fixed` makes
+   every unsized column an equal share of the table, which is what turns seven
+   meters into one scale; the section column is sized so the row heads keep
+   their names. THE TABLE IS ALLOWED TO BE WIDER THAN THE PANE — `--cols` is
+   written by ui/eight.js `structureGrids` (a count, not a width) and the pane
+   around it already scrolls sideways (`pane()`), which is this page's standing
+   answer for a wide table. Without the minimum, `fixed` + `100%` would crush
+   nine players into 20px each rather than scrolling. */
+.nu-sgrid{ table-layout: fixed;
+  inline-size: max(100%, calc(13ch + var(--cols, 1) * 9ch)); }
+.nu-sgrid thead th:first-child, .nu-sgrid tbody th{ inline-size: 13ch; }
+
+/* ---- 26 · THE COLUMN HEAD'S INSTRUMENT LINE ---------------------------
+   Probe: *"`.nu-scolinstr` (Structure column heads) clips its own text by 9px
+   (overflow hidden, scrollWidth 111 / clientWidth 102)."* With (c) above the
+   columns are equal and 9ch wide at the floor, so the line ellipsises rather
+   than cutting mid-glyph — and ui/eight.js now puts the whole name in the
+   button's `title`, so the full word is one hover or one long-press away and
+   is already the control's accessible name. What this adds is the floor the
+   ellipsis needs to be legible at all. */
+.nu-scol{ min-inline-size: 0; }
+.nu-scolinstr{ min-inline-size: 0; }
+
+/* ---- 14 · THREE CHECKBOXES AND A LINK ---------------------------------
+   Probe: *"Raw 26x26 checkboxes under the 44px floor: rubato (Tempo), ontime
+   (Structure/performance), diatonic (Key). Also [goto.board] in Tempo is a
+   261x15px link."*
+
+   THE LINK IS FIXED AND THE BOXES ARE REFUSED, and the refusal is the older
+   decision restated rather than a shrug. Measured on the rendered page at 390
+   and 1280 after this round: all three are `check()`'s `.nu-field` — a
+   `<label>` wrapping the input, on an 88px two-row field whose control line is
+   a full 44px — so the GESTURE is already 44px and always was: the browser
+   forwards a tap anywhere on the words to the box, which is exactly what
+   test/shell.js's SURVEY measures ("the larger of the control's own box and
+   its labelling `<label>`"). What the probe measured is the WIDGET, and this
+   file has a dated decision about that number at the TAP TARGETS block: *"26px
+   is the native widget, because a checkbox does NOT answer to `min-height` —
+   it answers to `inline-size`/`block-size`, which resize the widget itself.
+   `transform: scale()` was the other candidate and it is a trap."* `--box` is
+   that number, it is one token with fourteen readers, and blowing three of
+   them to 44px would put a checkbox the size of a button beside a sentence and
+   leave the other eleven at 26 — one fact wearing two sizes, which is the
+   drift this file's whole token layer exists to stop.
+   WHAT IS ADDED IS THE HAND'S COLOUR AND THE CENTRE LINE: `accent-color` so a
+   ticked box is the same cobalt every other set value on this page wears, and
+   `align-self: center` so it sits on the middle of its 44px line rather than
+   on the text baseline. The row is a switch row; the switch is `--box`. */
+.nu-field > label > input[type=checkbox]{
+  inline-size: var(--box); block-size: var(--box);
+  flex: 0 0 auto; accent-color: var(--hand); align-self: center; }
+.nu-field > label:has(> input[type=checkbox]){ align-items: center; }
+
+/* ---- 22 · THE ROUTING POINTER IS A CONTROL, NOT A HYPERLINK ------------
+   Probe: *"A raw markdown link 'the fixed wires — docs/BOARD-ROUTING.md' in
+   the Mix panel: the app's only blue underlined hyperlink."* It stays an `<a>`
+   with the same href and the same printed address, because `desk-gate.js` G14
+   reads exactly that element and asserts the address is on the page — the
+   pointer is the whole reason the essay was allowed to move to `docs/`. What
+   changes is that it now wears the page's own control chassis and the 44px
+   floor, so it reads as the one thing on this panel that opens something
+   else rather than as the one thing that is underlined. */
+.nu-routelink{ display: inline-flex; align-items: center;
+  min-block-size: var(--tap); padding-inline: var(--s3);
+  color: var(--ink); text-decoration: none;
+  border: var(--bw) solid var(--rule); border-radius: var(--r1);
+  background: var(--paper); font-weight: var(--fw-label); }
+.nu-routelink:hover{ background: var(--flag-tint); }
+.nu-routelink:focus-visible{ outline: var(--bw-hard) solid var(--hand);
+  outline-offset: 2px; }
+
+/* ---- 16 · THE PHONE SHOWS WHAT THEY PLAY ------------------------------
+   Probe: *"On a phone the nav sub-line is never painted: --tray-w at 390px =
+   93.6px, under the 96px hinge, so members show no instrument (B10). Move the
+   hinge to <= 88px or make the row form kick in at >= 360px viewport."*
+
+   FIXED IN PLACE, AT THE HINGE, and not here — see `THE MARK IS A COLUMN, AND
+   FROM 400px IT IS A ROW` above, where the arithmetic that chose 400 now
+   carries the arithmetic that chose 360 beside it. A THIRD `#nu-tray` block at
+   the foot of this file stood here for an hour and is deleted with the
+   measurement that killed it: it turned the row form on at 360 without the
+   `white-space: nowrap; overflow: hidden; text-overflow: ellipsis` the 400
+   block already carried for `.nu-sub2`, so the instrument name set the row's
+   min-content and the stripe scrolled sideways 17px at 390 and 21px at 375.
+   Two owners of one row form is one owner too many; the hinge is a NUMBER, and
+   a number is changed where it is written. */
+
+/* ---- 17 · THE TITLE COLUMN TAKES THE SLACK ----------------------------
+   Probe: *"The genre list truncates names to unreadability at 390 ('Pale…',
+   'Gregori…') while the place column has slack ('Ur', 'Rome'); the blank-state
+   row reads '— silence the b…'. Rebalance .nu-ixli's tracks at the phone
+   breakpoint."*
+
+   THE TWO PROPORTIONAL TRACKS WERE THE BUG. `minmax(0, 1.6fr) minmax(0, 1fr)`
+   gives the place 38% of the line WHATEVER IS IN IT, so "Ur" holds 68px open
+   beside a name being cut at 116. `fit-content(10ch)` is the honest track for
+   a column whose content is usually short and occasionally long: it sizes to
+   the place and never past 10 characters, and every pixel it does not need
+   goes to the `1fr` beside it, which is the title. Measured over the whole
+   catalogue: the median place is 6 characters, the 90th is 9, and the two that
+   exceed 10 ("San Francisco", "Rio de Janeiro") ellipsise inside their own
+   cell exactly as they did before.
+   ABOVE 700px NOTHING CHANGES — the title already has a fixed 26/34ch track
+   there and the place takes the rest, which is that block's own decision and a
+   good one. This is the phone rule only. */
+@media (max-width: 699px){
+  .nu-ixli{ grid-template-columns:
+              4ch minmax(0, 1fr) fit-content(10ch) var(--tap); }
+  .nu-ixli[data-bc]{ grid-template-columns:
+              8ch minmax(0, 1fr) fit-content(10ch) var(--tap); }
+  /* AND THE ROW'S OWN AIR GOES FIRST, WHICH IS THE 320px RULE'S OWN ARGUMENT
+     APPLIED ONE BREAKPOINT WIDER. That rule (`max-width: 359px`, above) says
+     it exactly: *"the two gaps and the two paddings are 40 of them — 17% of
+     the row spent on air … the 13px goes to the title and the place … what
+     shrinks is whitespace, which is the right thing to spend first."* Every
+     word of that is true at 390 as well: measured on the rendered page at 390,
+     the row is 269px wide, `padding-inline: var(--s4)` takes 40 of them and
+     the two gaps take 11, so a quarter of the line is air on the one screen
+     where the names are being cut. The narrow rule was fenced at 359 because
+     that was the phone in front of the person who wrote it; the fence moves to
+     where the fixed-track breakpoint already is. Measured after: the title
+     track goes 57px -> 70px at 390 on a BC row, and the 44px floor, the one
+     line and the zero sideways scroll are unchanged. */
+  .nu-ixli{ gap: 0 var(--s2); padding-inline: var(--s3); }
+}
+
+/* ---- 19 · THE MOTIF'S NAME FIELD HAS A GAP ----------------------------
+   Probe: *"Motif editor: 'name' label butts against the input with zero gap."*
+   `renameField` builds a bare `<label>` (not a `.nu-field`, because it is a
+   text input beside its word rather than a question over its control), so it
+   inherits no gap from anything. One declaration, and the same `--s2` step
+   every other label/control pair on the page uses. */
+.nu-motifname{ margin-inline-start: var(--s2); }

@@ -22985,12 +22985,17 @@
     //
     // MEASURED over 70 files (Green Day 43 · The Offspring · blink-182).
     // Tempo (n=70): p10 98 · p25 122 · med 160 · p75 191 · p90 210, and the GREEN DAY subset alone
-    // (42 files) medians at 167. THE ROW TAKES 160 AND THAT IS A CEILING,
-    // not a reading: compose.js fixes bpm at an integer 70..160 and
-    // throws by name outside it, so the fastest music in the catalogue
-    // (punk, hardcore, thrash, nwobhm) is all piled at 160 and this row
-    // joins them seven beats short of what the corpus says. Reported
-    // rather than worked around. Mode 60
+    // (42 files) medians at 167. THE ROW TOOK 160 AND THAT WAS A CEILING,
+    // not a reading: compose.js fixed bpm at an integer 70..160 and
+    // threw by name outside it, so the fastest music in the catalogue
+    // (punk, hardcore, thrash, nwobhm) was all piled at 160 and this row
+    // joined them seven beats short of what the corpus says. Reported
+    // rather than worked around.
+    //   THE WALL CAME DOWN 2026-09-02 and the row takes its own reading: the
+    //   fence is fields.js BPM_LO/BPM_HI, 40..220, and this is 167 — the
+    //   Green Day median, which is what the corpus said the day this note was
+    //   written. The paragraph above is kept verbatim because it is the
+    //   evidence the reversal rests on. Mode 60
     // major / 10 minor — the most lopsided major split of any row in this
     // round, and the reason this is not `emo` at a different tempo. The
     // corpus's own four-chord vote is VI-IV-I-V (43 windows), which `emo`
@@ -23005,7 +23010,7 @@
     // the chorus, which is what `kits` below alternates.
     poppunk: {
       label: "Berkeley 1994", near: "punk",
-      plan: "song", bpm: 160,
+      plan: "song", bpm: 167,
       // LINEAGE: `punk` (New York 1976) is the three chords and the speed;
       // `hardcore` (Washington 1980) is the American tempo and the
       // downstroke; `beatgroup` (Liverpool 1962) is the major-key hook and

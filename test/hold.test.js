@@ -126,20 +126,60 @@ const choose = (page, name) => page.evaluate((n) => {
   g.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
   return "ok";
 }, name);
-const setYear = (page, rank) => page.evaluate((r) => {
-  // #atlasWhen is a DIV WRAPPING the input; setting .value on it is a silent
-  // no-op (the harness note in [[nukernel-deploy-and-probe]]). #atlasYear is
-  // the input, and it needs the native setter to fire ui/atlas.js's listener.
-  const i = document.getElementById("atlasYear");
-  if (!i) return "no #atlasYear";
-  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(i, String(r));
-  i.dispatchEvent(new Event("input", { bubbles: true }));
-  return i.value;
-}, rank);
+/* STANDING AT A YEAR, THROUGH THE INSTRUMENT THAT IS ACTUALLY THERE
+   (rewritten 2026-09-02). What stood here:
+
+     "#atlasWhen is a DIV WRAPPING the input; setting .value on it is a silent
+      no-op (the harness note in [[nukernel-deploy-and-probe]]). #atlasYear is
+      the input, and it needs the native setter to fire ui/atlas.js's listener."
+
+   Every word of that was true of a control ui/atlas.js DELETED on 2026-08-29 —
+   Paul: *"Get rid of the time slider. Make the genre list permanent and always
+   expanded. As I slide it light up the map with places."* The tombstone in
+   atlas.js is explicit that the FACT survived and only the control went: "`yi`
+   is still the state … What moves the year now, and there is nothing else: THE
+   LIST, AS YOU SCROLL IT (`sweep()`) … a row you press … `showing()`". So this
+   gate had been waiting sixty seconds for `#atlasYear` and dying of a timeout
+   before its first check, which is a gate testing a page that no longer exists.
+
+   The list IS the instrument, so the gate scrolls the list — `sweep()` reads
+   the row nearest the middle of `#atlasIndex` and hands it to the same
+   `setYear()` the slider used to call, so this drives exactly one door further
+   out than the old helper did. It lands NEAR the year asked for rather than ON
+   it (the middle of a 410-row list is a band of years, not a stop), so the
+   caller reads the year back off `#atlasSay` instead of assuming it — which is
+   what the gate wanted anyway: three records standing at one year. */
+const standAt = (page, year) => page.evaluate((y) => {
+  const box = document.getElementById("atlasIndex");
+  const rows = [...document.querySelectorAll("#atlasIndexRows li[data-year]")]
+    .filter((n) => +n.dataset.year === y);
+  if (!box || !rows.length) return "no row at " + y;
+  const mid = rows[Math.floor(rows.length / 2)];
+  box.scrollTop = mid.offsetTop - box.clientHeight / 2 + mid.offsetHeight / 2;
+  box.dispatchEvent(new Event("scroll", { bubbles: true }));
+  return box.scrollTop;
+}, year);
 const holdOf = (page) => page.evaluate(() => (window.__nuHold ? window.__nuHold() : null));
 const lineOf = (page) => page.evaluate(() => (window.__nuEngineLine ? window.__nuEngineLine() : null));
 const mixOf = (page) => page.evaluate(() => { try { return window.__nuMix ? window.__nuMix() : null; } catch (e) { return null; } });
-const playLabel = (page) => page.evaluate(() => (document.getElementById("play") || {}).textContent || "");
+/* THE WORD ON THE TRANSPORT, NOT THE GLYPH BESIDE IT (rewritten 2026-09-02).
+   This took the button's whole `textContent` and the three call sites compared
+   it to "play". Wave 1a moved the transport into the foot and gave it a FACE —
+   `paintIcon` writes the glyph and then the `.nu-vh` word into the same button
+   — so the text is "▶play" and never equalled "play" again: every one of the
+   three sites took its other branch, and the two that press twice to reach
+   "playing" were pressing play and then STOP. Measured 2026-09-02: `#play`
+   textContent "▶play", aria-label "play", `.nu-vh` "play". The word is read
+   where the word is; the glyph is aria-hidden and is not the answer to "what
+   will this button do". (The same repair, on the same day, is in
+   test/commute.test.js, which had the same helper.) */
+const playLabel = (page) => page.evaluate(() => {
+  const e = document.getElementById("play");
+  if (!e) return "";
+  const vh = e.querySelector(".nu-vh");
+  return String((vh && vh.textContent) || e.getAttribute("aria-label") ||
+                e.textContent || "");
+});
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let fails = 0, checks = 0;
@@ -243,17 +283,23 @@ async function listen(page, { secs, until, label }) {
   // seconds — a gate that sets .value on a null is a gate that tests nothing.
   // state "attached", not "visible": the axis may be scrolled away or folded,
   // and the gate drives the control rather than looking at it.
-  await page.waitForSelector("#atlasYear", { state: "attached", timeout: 60000 });
+  /* THE WHERE TAB HAS TO BE OPEN. A shut panel is `[data-off]` and `inert`, so
+     its rows have a zero rect and `#atlasIndex` has no scroll to drive — the
+     probe of 2026-09-02 measured exactly that ("li[data-gk] has a zero rect off
+     the Where tab (correct)"). `__eightTab` is the same call the stripe's own
+     button makes. */
+  await page.evaluate(() => { if (window.__eightTab) window.__eightTab("Where"); });
+  await page.waitForSelector("#atlasIndexRows li[data-year]", { state: "attached", timeout: 60000 });
   await page.waitForSelector(".place", { state: "attached", timeout: 60000 });
-  const years = await page.evaluate(() => [...document.querySelectorAll("#atlasTicks option")].map((o) => o.label));
-  const rank = Math.max(0, years.indexOf("1985"));
-  await setYear(page, rank);
-  await sleep(1200);
+  console.log("  stand at 1985: " + JSON.stringify(await standAt(page, 1985)));
+  // the sweep settles at 120 ms and then paints; 1.5 s is two of those
+  await sleep(1500);
   const say = await page.evaluate(() => document.getElementById("atlasSay").textContent);
   const names = say.split("·").pop().split(",").map((x) => x.trim()).filter((x) => x && !/more$/.test(x));
+  const at = (say.split("·")[0] || "").trim();
   console.log("\n" + say);
   const A = names[0], B = names[1], C = names[2];
-  ok(!!(A && B && C), "three records to work with at " + years[rank], say);
+  ok(!!(A && B && C), "three records to work with at " + at, say);
 
   console.log("\nH1 — the hold");
   PHASE = "holdA";
@@ -294,7 +340,22 @@ async function listen(page, { secs, until, label }) {
     .filter((u) => u !== "/sw.js" && !cachedNow.has(u));   // sw.js is the browser's own update check
   ok(onlineNew.length === 0, "nothing outside the cache went to the network at press-play",
     JSON.stringify(onlineNew).slice(0, 500));
-  const domLine = await page.evaluate(() => (document.getElementById("engine") || {}).textContent || "");
+  /* THE PAINTED SENTENCE, WHERE IT IS PAINTED (rewritten 2026-09-02). This read
+     `#engine`, an element index.html DELETED on 2026-08-28 — Paul: *"Get rid of
+     the media (mediaEl) held plays offline etc section on the top; move that
+     info to the logger."* Its tombstone is explicit that every clause of the
+     old contract survived the move ("the sentence still has exactly one owner —
+     `engineLine()` in audio/live.js … It is still outside #app"), so the claim
+     is unchanged and only its ADDRESS moved: `#nu-log`, written by ui/eight.js
+     `logEngine`. The log is PAINTED only while it is open (`addRow` returns
+     early otherwise, which is the frozen-page discipline working), so the gate
+     opens it through the page's own door — `__nuLogOpen` is the call the ¶
+     button makes — and asks a reader's question with a reader's gesture.
+     (test/commute.test.js carries the same repair, made the same day.) */
+  const domLine = await page.evaluate(() => {
+    try { if (window.__nuLogOpen) window.__nuLogOpen(true); } catch (e) {}
+    return (document.getElementById("nu-log") || {}).textContent || "";
+  });
   ok(/held — plays offline/.test(domLine), "the painted sentence carries the hold", domLine);
 
   // ── SETTLE THE PAIR, and hold both. Choosing a mark moves the atlas year TO

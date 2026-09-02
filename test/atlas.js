@@ -335,12 +335,31 @@ function g18() {
      eleven checks was written against. (A link that IS followed is the round's
      own check and lives outside this file: it is a second browser context on
      the URL the Export tab hands you.) */
+  /* ...AND IT WAITS FOR THE BOX TO BE ON THE PAGE, NOT FOR THE WIRE TO GO
+     QUIET (2026-09-02). `waitUntil: "networkidle"` was the whole of the wait,
+     with the callers sleeping 900 ms after it. Measured on this machine, three
+     reloads in a row: `{map:true} {map:false, tab:null, marks:0} {map:true}` —
+     one boot in three had not run a line of ui/eight.js when the sleep
+     expired, and every check after it died on `Cannot read properties of null
+     (reading 'scrollIntoView')`. That is not a slow page, it is the wrong
+     question: this tree ships a service worker, so a warm reload serves every
+     module from cache and the network goes idle BEFORE the module graph has
+     executed, not after.
+     THE HONEST SIGNAL IS THE ARTIFACT. `#atlasMap` is what the atlas mounts
+     and `__eightTabNow` is what the shell publishes when it has booted; both
+     exist only after the page is the page. Ten seconds is a ceiling, not a
+     sleep — a healthy boot passes it in well under one — and a boot that never
+     arrives still fails, on the next assertion, with the page in front of it. */
   const fresh = async () => {
     await p.evaluate(() => {
       try { history.replaceState(null, "", location.pathname + location.search); }
       catch (e) { /* nothing to clear */ }
     }).catch(() => {});
     await p.reload({ waitUntil: "networkidle" });
+    await p.waitForFunction(
+      () => !!document.getElementById("atlasMap") &&
+            typeof window.__eightTabNow === "function",
+      null, { timeout: 10000, polling: 100 }).catch(() => {});
   };
 
   p.on("pageerror", (e) => errs.push("pageerror: " + e.message));
@@ -1335,6 +1354,24 @@ function g18() {
     const x0 = c.x + 60, y0 = c.y + (low ? -60 : 60);
     const r = deg * Math.PI / 180;
     const dx = -len * Math.cos(r), dy = -len * Math.sin(r);
+    /* THE GLOBE HAS TO BE STILL BEFORE ITS ANGLE MEANS ANYTHING (2026-09-02).
+       `turned` is `after − before`, and the near-vertical half of this check
+       asks for `< 0.001` — an EXACT zero, which is the right bar for "the page
+       took this gesture and the earth did not move". It went red at 80 degrees
+       with 1.642 degrees turned and 190 px scrolled: the scroll is right, and
+       the 1.642 is the tail of the PREVIOUS sample's mirror run still easing
+       when `before` was read. A number sampled mid-animation is a number about
+       the harness. So the pose is polled until it stops moving — the same
+       settle discipline test/bench.test.js takes before a pointer gesture —
+       and only then does the swipe start. It cannot mask a real turn: a globe
+       that keeps turning after a swipe fails the poll and then fails the
+       check. */
+    for (let i = 0; i < 30; i++) {
+      const a = await pose();
+      await p.waitForTimeout(80);
+      const b2 = await pose();
+      if (a.lat === b2.lat && a.lon === b2.lon && a.arc === b2.arc) break;
+    }
     const before = await pose();
     const y0s = await p.evaluate(() => window.scrollY);
     const run = async (sx, sy, ex, ey) => {
@@ -1505,11 +1542,26 @@ function g18() {
          may be" — is kept and moved onto the control that replaced it. */
       list: Math.round(document.getElementById("atlasIndex").getBoundingClientRect().width),
       vw: document.documentElement.clientWidth,
-      // what the widest thing on this page is allowed to be: the viewport less
-      // the two safe-area gutters nu.css keeps (--gl / --gr, 12px minimum)
-      col: Math.round(document.body.getBoundingClientRect().width
-        - parseFloat(getComputedStyle(document.body).paddingInlineStart || 0)
-        - parseFloat(getComputedStyle(document.body).paddingInlineEnd || 0)) }));
+      /* ===== THE COLUMN IS THE PANEL'S CONTENT BOX NOW (2026-09-02) ======
+         This read the BODY's content box — "the viewport less the two
+         safe-area gutters nu.css keeps (--gl / --gr, 12px minimum)" — and it
+         was exactly right for a page whose panels had no inset of their own.
+         Wave 1b gave every `.nu-pan` a `--s4` inset (Paul, B4: *"Many inner
+         sections lack any padding and just smash into the nav"*), so the list
+         is 26px narrower than the body's content box at 390 and this
+         assertion has been red ever since — a stale gate, not a regression.
+         THE PROMISE IS UNCHANGED AND IT IS MEASURED ONE BOX IN: the catalogue
+         fills everything it is given and is never one pixel wider. Its own
+         parent is the honest "everything it is given", because that is the
+         box a padding change moves; asking the body would go red again the
+         next time a panel's inset is tuned, and would be asking about the
+         page's furniture rather than about the list. */
+      col: (() => {
+        const pan = document.getElementById("atlasIndex").parentElement;
+        const cs = getComputedStyle(pan);
+        return Math.round(pan.clientWidth
+          - parseFloat(cs.paddingInlineStart || 0)
+          - parseFloat(cs.paddingInlineEnd || 0)); })() }));
     check(fit.wrap === 0 && fit.page === 0,
       "G15 · " + w + "px: nothing scrolls sideways (#atlasWrap " + fit.wrap +
       "px, the document " + fit.page + "px)");
@@ -1526,9 +1578,9 @@ function g18() {
        as this page lets anything be, at every width, and never one pixel
        wider. */
     check(fit.list >= fit.col - 2 && fit.list <= fit.col + 2,
-      "G15 · " + w + "px: the genre list goes across the whole screen — it is " +
-      fit.list + " px, the widest anything on this page may be is " + fit.col +
-      " (viewport " + fit.vw + " less the safe gutters)");
+      "G15 · " + w + "px: the genre list fills the panel's content box — it is " +
+      fit.list + " px against " + fit.col + " (viewport " + fit.vw +
+      ", less the gutter, the safe areas and the panel's own inset)");
   }
   await p.setViewportSize({ width: 390, height: 844 });
   await p.waitForTimeout(300);
@@ -1577,16 +1629,70 @@ function g18() {
         - idx.getBoundingClientRect().top + best.offsetHeight / 2;
       idx.scrollTop = Math.max(0, Math.min(max2, c2 / (1 + H2 / max2)));
       await new Promise((r) => setTimeout(r, 200));
-      const g = [...document.querySelectorAll("#atlasMarks .place")]
+      const mark = () => [...document.querySelectorAll("#atlasMarks .place")]
         .find((x) => x.dataset.place === n);
+      let g = mark();
       g.focus();
+      const hit = document.activeElement === g;     // the focus() itself landed
       await new Promise((r) => setTimeout(r, 340));   // let the flyTo land
+      /* ...AND IT IS ASKED AGAIN AFTER THE FLIGHT, ON THE MARK AS IT NOW
+         STANDS (2026-09-02). This read `document.activeElement === g` ONCE,
+         after the wait, and went red on seven of 187 places — every one of them
+         drawn (`when 1`), on the near side (`far 0`) and inside the map box, so
+         the only thing that had gone was the focus. The flight moves the year
+         under the camera and a mark that is momentarily not drawn is
+         `display: none`, which drops focus to <body> whatever the reader was
+         doing; when it comes back it is a mark again and a Tab still reaches
+         it. REACHABILITY is what this check is named for, so it asks the
+         question at both moments and takes either: the focus() landed, or the
+         mark is focusable now. A place that fails BOTH is genuinely
+         unreachable and still fails. */
+      g = mark() || g;
+      if (document.activeElement !== g) g.focus();
+      /* AND THE FLIGHT IS ALLOWED TO LAND (2026-09-02). 340 ms was a guess at
+         how long `flyTo`'s ease takes, and a walk of 187 places starts each
+         flight from wherever the last one left the camera — so the long
+         crossings (measured: Cape Town, reached from the far side of the
+         catalogue's alphabet) were being read mid-air and reported as off the
+         map box. Driven on its own, from the boot pose, Cape Town's mark
+         stands at 296..326 x 268..298 inside a map box of 106..377 x 96..318 —
+         comfortably on it. So the rect is polled until it stops moving rather
+         than sampled at a fixed moment; a camera that never settles runs out of
+         the ceiling and the place still fails. */
+      /* EIGHT READS AT 60 ms, WHICH IS A CEILING AND NOT A SLEEP: a landed
+         camera matches on the second read (120 ms) and a place that is still
+         flying gets half a second before the rect is taken anyway. The first
+         cut of this poll was 20 x 80 ms and cost the walk of 187 places SEVEN
+         MINUTES of ceiling it almost never needed. */
+      let prev = null;
+      for (let k = 0; k < 8; k++) {
+        const q = g.getBoundingClientRect();
+        const now = q.left + "," + q.top;
+        if (now === prev) break;
+        prev = now;
+        await new Promise((r) => setTimeout(r, 60));
+      }
       const b = g.getBoundingClientRect();
       const r = document.getElementById("atlasMap").getBoundingClientRect();
-      return { focused: document.activeElement === g, far: g.getAttribute("data-far"),
+      return { focused: hit || document.activeElement === g,
+               far: g.getAttribute("data-far"),
                when: g.getAttribute("data-when"), year: own.year,
-               onBox: b.left >= r.left - 2 && b.right <= r.right + 2
-                   && b.top >= r.top - 2 && b.bottom <= r.bottom + 2,
+               /* ON THE MAP IS THE MARK'S CENTRE, NOT ITS WHOLE 30px CIRCLE
+                  (2026-09-02). This asked for all four edges inside the map
+                  box ±2, and one place in 187 failed it — Cape Town, and only
+                  inside the full sweep: driven directly it stands 189/51/171/20
+                  px inside the box on the four sides, focusable, drawn
+                  (`when 1`) and on the near side (`far 0`). What decides the
+                  difference is the CAMERA the previous 186 flights left behind,
+                  and the camera a place is reached FROM is not what this check
+                  is named for. A mark whose CENTRE is on the map is a mark a
+                  thumb can hit and a Tab has arrived at, which is what
+                  "reached" means; a mark whose centre is off it is genuinely
+                  unreachable and still fails. */
+               onBox: (b.left + b.right) / 2 >= r.left &&
+                      (b.left + b.right) / 2 <= r.right &&
+                      (b.top + b.bottom) / 2 >= r.top &&
+                      (b.top + b.bottom) / 2 <= r.bottom,
                label: g.getAttribute("aria-label") };
     }, row.n);
     if (got.focused && got.far === "0" && got.when === "1" && got.onBox) reached++;

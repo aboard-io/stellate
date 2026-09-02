@@ -130,7 +130,19 @@ import { gid } from "./derive.js";
 // three insert slots, which are `selectEl` menus. ui/selects.js still exports
 // `sheet` and ui/produce.js still calls it, so the widget lives; what ended is
 // this file's need for it.
-import { selectEl } from "./selects.js";
+/* ...AND `selectField` BESIDE IT SINCE 2026-09-02. The bus and master plates
+   built their own `<p class="nu-sel"><label>` by hand (`labelled` below), which
+   meant every menu in the rack was a BARE `<select>` — no `.nu-combo` chassis,
+   no default detent, no filter on a long list. The probe of that morning
+   counted them: *"Raw `<select>`s bypass `.nu-combo` on: Mix genre fx (sel|bus
+   |genre|name fx1 fx2 fx3), delay (name time fb tone), reverb (name color),
+   main (drive glue tape space width tilt ceiling)."* `selectField` is the one
+   owner of that chassis and it takes the same spec `selectEl` does, so this is
+   the wrapper being asked for rather than being re-drawn.
+   THE GRID CELLS ARE NOT CONVERTED and that is by design: a `<td>` has no room
+   for a label paragraph, and ui/selects.js's own header says the bare form
+   exists "for a table cell". */
+import { selectEl, selectField } from "./selects.js";
 // THE MARKS ON THE TABS (2026-08-28). THIS FILE REFUSED THE GLYPHS ONCE AND
 // SAID SO — see THE TAB ROW below: "THE GLYPHS STAY IN eight.js … copying
 // three characters here would be that drift again, so a board tab wears the
@@ -935,8 +947,31 @@ export function mount(parent, ctx) {
   // as arrows, not narrated"). It read 230 chars narrating the strip order the
   // strip's own row labels and footer arrows already draw; what stays is the
   // three-word legend no control carries.
-  const note = el("p", "dim is derived · bright is set · green is measured",
-    "nu-hint");
+  /* ...AND THE THIRD CLAUSE IS ONLY TRUE ON TWO OF THE FIVE PLATES
+     (2026-09-02). The line was fixed prose, written once, above whichever
+     plate happened to be open — and the probe of that morning caught what that
+     claims: *"'green is measured' legend on Mix, but genre fx / delay / reverb
+     plates carry NO meter well and the genre-fx fader fill is blue. Either a
+     measured bus well (if the engine can measure a bus return) or drop the
+     legend clause from those plates."*
+     THE ENGINE CANNOT MEASURE A BUS RETURN — `voiceLevels()` is a per-CHAIR
+     tap and `rmsNow()` is the master's, and this board has refused a fake
+     measurement in writing since METER_WHY was written ("0 is a claim of
+     silence about a voice nobody measured") — so the clause comes off the
+     plates that have no well rather than a well being invented for them.
+     Two plates have one: `main` (the master meter) and `auto` (a well per
+     column head). The other three are words and faders.
+     IT IS REPAINTED BY `showPanel`, which is a HAND (a tap on the gutter's
+     plate row), never the clock. */
+  const note = el("p", "", "nu-hint");
+  note.dataset.k = "board.legend";
+  const WELLED = { main: true, auto: true };
+  const sayLegend = () => {
+    const t = "dim is derived · bright is set" +
+      (WELLED[BOARDTAB.key] || BOARDTAB.kind === "auto"
+        ? " · green is measured" : "");
+    if (note.textContent !== t) note.textContent = t;
+  };
   host.append(note);
 
   /* ============= THE VOICES LEFT THE BOARD (2026-08-28) =================
@@ -1037,12 +1072,23 @@ export function mount(parent, ctx) {
   };
   const bv = (bus, k) => (doc.sound && doc.sound.buses && doc.sound.buses[bus]
     && doc.sound.buses[bus][k]) || "";
-  const busSel = (busKey, spec) => selectEl({
-    key: "bus|" + busKey + "|" + spec.key, label: spec.label,
+  /* ONE MENU IN THE RACK, WITH THE CHASSIS ON IT (2026-09-02). `word` is the
+     LABEL A HAND READS and it is now also the control's accessible name: the
+     two used to disagree on three of these menus ("called" on the page,
+     "name" in the tree; "reverb type" against "color"), which is one fact
+     wearing two names for no reason anybody could state. The registry's own
+     `spec.label` is the fallback, so a knob whose visible word is its
+     registry word passes nothing extra. */
+  const busSel = (g, busKey, spec, word) => selectField(g, {
+    key: "bus|" + busKey + "|" + spec.key, label: word || spec.label,
     options: optionsFor(spec.table, spec.labels, bv(busKey, spec.key), null, "default"),
     value: bv(busKey, spec.key),
     set: (v) => { DD().writeBus(doc, busKey, spec.key, v); ctx.changed(); },
   });
+  /* `labelled` STILL EXISTS AND IS STILL THE HAND-BUILT ROW, for the controls
+     in this rack that are NOT menus (the faders and the wells build their own
+     chassis). Every `<select>` it used to wrap goes through `selectField`
+     now. */
   const labelled = (g, label, control) => {
     const p = el("p", null, "nu-sel");
     const lab = el("label");
@@ -1073,10 +1119,10 @@ export function mount(parent, ctx) {
       "nu-busin"));
     p.append(h);
     const g = el("div", null, "nu-gear");
-    labelled(g, "called", busSel("genre", knobOf("genre", "name")));
-    labelled(g, "chip 1", busSel("genre", knobOf("genre", "fx1")));
-    labelled(g, "chip 2", busSel("genre", knobOf("genre", "fx2")));
-    labelled(g, "chip 3", busSel("genre", knobOf("genre", "fx3")));
+    busSel(g, "genre", knobOf("genre", "name"), "called");
+    busSel(g, "genre", knobOf("genre", "fx1"), "chip 1");
+    busSel(g, "genre", knobOf("genre", "fx2"), "chip 2");
+    busSel(g, "genre", knobOf("genre", "fx3"), "chip 3");
     p.append(g);
     const r = el("div", null, "nu-busrow");
     const spec = knobOf("genre", "level");
@@ -1099,10 +1145,10 @@ export function mount(parent, ctx) {
     h.append(el("small", "in ← " + busName("echo") + " sends", "nu-busin"));
     p.append(h);
     const g = el("div", null, "nu-gear");
-    labelled(g, "called", busSel("echo", knobOf("echo", "name")));
-    labelled(g, "time", busSel("echo", knobOf("echo", "time")));
-    labelled(g, "repeats", busSel("echo", knobOf("echo", "fb")));
-    labelled(g, "tone", busSel("echo", knobOf("echo", "tone")));
+    busSel(g, "echo", knobOf("echo", "name"), "called");
+    busSel(g, "echo", knobOf("echo", "time"), "time");
+    busSel(g, "echo", knobOf("echo", "fb"), "repeats");
+    busSel(g, "echo", knobOf("echo", "tone"), "tone");
     p.append(g);
     const r = el("div", null, "nu-busrow");
     const spec = knobOf("echo", "ret");
@@ -1141,8 +1187,8 @@ export function mount(parent, ctx) {
       " sends + the delay's bleed", "nu-busin"));
     p.append(h);
     const g = el("div", null, "nu-gear");
-    labelled(g, "called", busSel("rev", knobOf("rev", "name")));
-    labelled(g, "reverb type", busSel("rev", knobOf("rev", "color")));
+    busSel(g, "rev", knobOf("rev", "name"), "called");
+    busSel(g, "rev", knobOf("rev", "color"), "reverb type");
     p.append(g);
     const r = el("div", null, "nu-busrow");
     const spec = knobOf("rev", "ret");
@@ -1189,13 +1235,12 @@ export function mount(parent, ctx) {
     p.append(h);
     const g = el("div", null, "nu-gear");
     for (const f of MASTER_FIELDS) {
-      const s = selectEl({
+      selectField(g, {
         key: "master|" + f.key, label: f.label,
         options: optionsFor(f.table, f.labels, mv(f.key), null, "default"),
         value: mv(f.key),
         set: (v) => { DD().writeMaster(doc, f.key, v); ctx.changed(); },
       });
-      labelled(g, f.label, s);
     }
     p.append(g);
     /* THE ONE-TOUCH BYPASS (2026-08-28). Paul: *"Turning that stuff down
@@ -1549,6 +1594,8 @@ export function mount(parent, ctx) {
       (BOARDTAB.kind === "auto" ? "section automation" : busLabel(BOARDTAB.key))
       + " plate");
     panel.append(rack);
+    // the legend says what THIS plate can say — see its own block above
+    sayLegend();
   };
   /* ===== THE DOOR THE GUTTER DRIVES THIS BOARD BY (2026-09-02) ==========
      `showPanel` is a closure inside `mount()` and stays that way — nothing
@@ -1941,8 +1988,22 @@ export function mount(parent, ctx) {
   // own words, so the edges can neither vanish nor drift. What stays on the
   // page is drawn: each edge is an arrow the rack already makes.
   const edges = el("p", null, "nu-hint");
+  /* ...AND IT IS DRESSED AS A CONTROL SINCE 2026-09-02. The probe of that
+     morning: *"A raw markdown link 'the fixed wires — docs/BOARD-ROUTING.md'
+     in the Mix panel: the app's only blue underlined hyperlink; serves raw
+     .md."* Both halves are fair — it was the one hypertext on a page made
+     entirely of controls, and it hands a reader a markdown file.
+     IT STAYS AN `<a>` AND KEEPS ITS TEXT, because `desk-gate.js` G14 reads
+     exactly this element by `href` and asserts the printed ADDRESS ("an edge
+     nobody knows about is the same as no edge" — the essay moved and the page
+     must still say where). Deleting it would be deleting the pointer that
+     claim rests on, and desk-gate is not this file's to rewrite. What changes
+     is what it LOOKS like: `.nu-routelink` in nu.css gives it the page's own
+     button chassis and the 44px floor every other target keeps, so it reads as
+     the control it functionally is rather than as the page's only underline. */
   { const a2 = document.createElement("a");
     a2.href = "docs/BOARD-ROUTING.md";
+    a2.className = "nu-routelink";
     a2.textContent = "the fixed wires — docs/BOARD-ROUTING.md";
     edges.append(a2); }
   host.append(edges);

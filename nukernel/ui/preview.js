@@ -6,11 +6,26 @@
  * the motif."*
  *
  * ONE EXPORT, ONE JOB. `preview(cell)` returns an inline `<svg
- * class="nu-preview">` — sixteen rects in a 16x8 viewBox, one per step, height
- * = velocity — that a caller drops beside a motif's name so two motifs in a
- * list are told apart by SHAPE before either name is read. The face is
+ * class="nu-preview">` — one rect per step of THE CELL, in an N x 8 viewBox,
+ * height = velocity — that a caller drops beside a motif's name so two motifs
+ * in a list are told apart by SHAPE before either name is read. The face is
  * `nu.css`'s (`.nu-preview`, and there is no second stylesheet); this file
  * decides only what the bars ARE.
+ *
+ * N, AND NOT SIXTEEN (2026-09-02, the fix round). This drew a fixed sixteen
+ * steps and wave 2c said what that meant: *"ui/preview.js draws 16 steps only
+ * — two-bar cells show bar one; preview should draw cell.deg.length steps."*
+ * A phrase has been 1..128 steps long since it grew a length, `document.js
+ * toPhrase` already reads `H.deg.length` ("a two-measure cell compiled its
+ * first bar and dropped the second"), and a picture that silently shows half a
+ * motif is worse than no picture — two motifs that differ only in bar two drew
+ * as the same shape. So the step count is the CELL's, the viewBox grows with
+ * it, and the box grows with it too: the width is set in the same unit
+ * `nu.css` states (`--pv-base`, defaulting to the 4ch it already uses)
+ * multiplied by the cell's bar count, so a two-bar motif is twice as wide as a
+ * one-bar motif in the same list and the steps stay the same size. A one-bar
+ * cell sets no width at all and every call site keeps the size its own rule
+ * gives it, byte for byte.
  *
  * THREE MARKS AND NO FOURTH, because at 4ch x 1.2em there is room for three:
  *   · a STEP that sounds — a rect whose height is its velocity, 1..7 of 8;
@@ -42,7 +57,8 @@
  */
 
 const NS = "http://www.w3.org/2000/svg";
-const STEPS = 16;      // the picture is always sixteen wide, whatever the cell is
+const BAR = 16;        // one bar of the grid, which is what a cell is measured in
+const MAXSTEPS = 128;  // song.js's own ceiling on a phrase's length
 const TOP = 8;         // the viewBox's own height: eight units for eight levels
 const W = 0.8;         // a bar's width, leaving .2 of a unit as the gap
 const FLOOR = 0.6;     // a rest's 1px floor, in viewBox units
@@ -62,18 +78,46 @@ const arr = (a) => (Array.isArray(a) ? a : null);
 function drumLanes(cell) {
   if (!cell || cell.kind !== "drum") return null;
   const lanes = [];
-  for (const k of Object.keys(cell)) {
-    if (k === "kind" || k === "swing") continue;
-    const a = arr(cell[k]);
+  /* TWO SPELLINGS OF ONE THING, AND BOTH ARE REAL (2026-09-02). `song.js
+     blankDrum()` puts each lane at the TOP of the object (`{kind, swing, k:[…]}`)
+     and that is what the tracker edits; `precompose.js` writes the record's own
+     beat cell as `{kind:"drum", lanes:{k:[…]}}` and that is what is in every
+     document on this page (measured: `genreToDocument("reggae",2)
+     .material.cells.beat` has exactly the keys `kind` and `lanes`). This read
+     the first shape only, so the record's OWN drum cell found no lanes, fell
+     through to the melodic branch, found no `deg` either and drew sixteen
+     rests — a picture of an empty bar over a beat that is playing. */
+  const nest = cell.lanes && typeof cell.lanes === "object" ? cell.lanes : null;
+  for (const k of Object.keys(nest || cell)) {
+    if (!nest && (k === "kind" || k === "swing")) continue;
+    const a = arr((nest || cell)[k]);
     if (a) lanes.push(a);
   }
   return lanes.length ? lanes : null;
 }
 
+/* HOW MANY STEPS THIS CELL IS, ASKED OF THE CELL AND NEVER ASSUMED. A melodic
+   phrase's length is `deg.length` (document.js toPhrase's own reading); a drum
+   phrase's is its LONGEST lane, because a kit whose kick vector is 32 and whose
+   hat vector is 16 is a two-bar pattern with a one-bar hat and drawing sixteen
+   would drop the kick's second bar. Anything unreadable is one bar of rests,
+   which looks like the empty thing it is. Rounded UP to a whole bar so the
+   grid stays a grid, and fenced at song.js's own 128. */
+function stepsOf(cell) {
+  if (!cell || typeof cell !== "object") return BAR;
+  const lanes = drumLanes(cell);
+  let n = 0;
+  if (lanes) for (const l of lanes) n = Math.max(n, l.length);
+  else for (const a of [arr(cell.deg), arr(cell.play), arr(cell.gate), arr(cell.vel)])
+    if (a) n = Math.max(n, a.length);
+  if (!n) return BAR;
+  return Math.max(BAR, Math.min(MAXSTEPS, Math.ceil(n / BAR) * BAR));
+}
+
 /** Read a cell into two parallel vectors of length STEPS:
  *  `lv` — 0..7, the level of the step (0 = nothing sounds here)
  *  `hold` — true when this step is the CONTINUATION of the one before it. */
-function readCell(cell) {
+function readCell(cell, STEPS) {
   const lv = new Array(STEPS).fill(0);
   const hold = new Array(STEPS).fill(false);
   if (!cell || typeof cell !== "object") return { lv, hold };
@@ -98,20 +142,38 @@ function readCell(cell) {
   const play = arr(cell.play) || arr(cell.gate);
   const deg = arr(cell.deg);
   const tie = arr(cell.sld) || arr(cell.hold) || arr(cell.tie);
+  /* `play` IS THREE WORDS, NOT A BOOLEAN (2026-09-02). A record's cell spells
+     its play row `"n"` (a note starts here), `"h"` (it is still sounding) and
+     `"r"` (silence) — document.js toPhrase reads exactly those three letters —
+     and a `gate` vector spells the same fact as 1/0. This asked `!!play[i]`,
+     which is TRUE of the string "r": every rest in every motif on the page drew
+     as a hit, and no hold ever drew as a hold, so a preview of a syncopated
+     figure and a preview of sixteen straight notes were the same picture.
+     Measured on reggae's `hook`: 20 of its first 20 steps drew lit, over a play
+     row that is `r r r r n n n h n h h h h h r r r r r r`. */
+  const WORD = (x) => (typeof x === "string" ? x : null);
   for (let i = 0; i < STEPS; i++) {
-    const sounds = play ? !!play[i] : (deg ? num(deg[i]) !== 0 : false);
+    const w = play ? WORD(play[i]) : null;
+    const sounds = play ? (w ? w !== "r" : !!play[i])
+                        : (deg ? num(deg[i]) !== 0 : false);
     if (!sounds) continue;
     /* a step that sounds and states no velocity is a MID hit (4 of 7), not a
        silent one — the same "never lands on 0" rule benchVel's tap cycle has */
     const v = vel ? Math.round(num(vel[i])) : 4;
     lv[i] = Math.max(1, Math.min(V_MAX, v || 4));
-    if (tie && tie[i]) hold[i] = true;
+    // the word says it outright; a slide vector says it about the step BEFORE
+    if (w === "h") hold[i] = "self";
+    else if (tie && tie[i]) hold[i] = true;
   }
   /* a slide/tie marks the step it LEAVES, so the continuation is the step
      after it — and only if that step is sounding, because a tie into silence
-     is a fault in the record and not a picture this file may invent */
+     is a fault in the record and not a picture this file may invent. A play
+     row's `"h"` marks ITSELF and needs no shift. */
   const out = new Array(STEPS).fill(false);
-  for (let i = 1; i < STEPS; i++) if (hold[i - 1] && lv[i]) out[i] = true;
+  for (let i = 0; i < STEPS; i++) {
+    if (hold[i] === "self") out[i] = true;
+    else if (i && hold[i - 1] === true && lv[i]) out[i] = true;
+  }
   return { lv, hold: out };
 }
 
@@ -139,10 +201,21 @@ function rect(x, y, w, h, cls) {
  */
 export function preview(cell, opts) {
   const o = opts || {};
-  const { lv, hold } = readCell(cell);
+  const STEPS = stepsOf(cell), bars = STEPS / BAR;
+  const { lv, hold } = readCell(cell, STEPS);
   const svg = document.createElementNS(NS, "svg");
   svg.setAttribute("class", "nu-preview");
   svg.setAttribute("viewBox", "0 0 " + STEPS + " " + TOP);
+  /* THE BAR COUNT AS DATA, ALWAYS — a gate reads it off the artifact and a
+     stylesheet may one day want it; it paints nothing on its own. */
+  svg.dataset.bars = String(bars);
+  /* ...AND AS WIDTH, ONLY WHEN THERE IS MORE THAN ONE BAR. `--pv-base` is
+     nu.css's own size for this element (4ch on the plain rule, 2.6em in a
+     member chip, 3.2em in a tray chip); multiplying it is the whole of the
+     geometry this file owns, and leaving a one-bar preview alone is what keeps
+     every existing call site byte-identical. */
+  if (bars > 1)
+    svg.style.inlineSize = "calc(var(--pv-base, 4ch) * " + bars + ")";
   svg.setAttribute("preserveAspectRatio", "none");
   svg.setAttribute("focusable", "false");
   if (o.label) {

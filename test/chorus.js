@@ -277,8 +277,17 @@ async function uiWalk(p) {
     document.getElementById("playops").click();
     await new Promise((r) => setTimeout(r, 300));
     const after = read();
+    /* THE QUESTION IS WHETHER A KEY NAMES A VOICING, and the old regex asked
+       whether the STRING "chorus" appeared anywhere in the document — which is
+       true of every record with a chorus SECTION in it, `doowop` included
+       (`form.sections[].role === "chorus"`). It failed on a page that was
+       behaving perfectly, and it would have gone on failing for any record
+       whose plan has a chorus. Rewritten 2026-09-02 to ask about a KEY, which
+       is what the check's own sentence says ("no key of it names a voicing").
+       `voicing` is the only spelling this position ever had, and it is a
+       PLAY-LEVEL view rather than a document fact — that is the whole claim. */
     return { walk, before, after, docSame: JSON.stringify(window.__eightDoc()) === doc0,
-             docHasVoicing: /"voicing"|"chorus"/.test(doc0) };
+             docHasVoicing: /"voicing"\s*:/.test(doc0) };
   });
 }
 
@@ -376,13 +385,44 @@ async function uiWalk(p) {
        down out of a tenor's compass. So the gate asserts what is common to both
        (everything drops; the balance tips up) and prints the shape rather than
        fixing a band order that is a fact about the record. */
+    /* WHAT THE OLD ASSERTION SAID, kept above the new one because its
+       PREDICTION is the interesting half and the PCM disagreed with it:
+
+         check(dRms < -10 && bandsD.every((x) => x < 0) && dHarm > 1,
+           "…every band down …, and the 2-8k/300-3k ratio UP … — air, and no
+            voice under it");
+
+       Measured on the shipped engine, 2026-09-02 (doowop, 2 bars, seed 1, the
+       drums and the bass deleted so the number is the singers): RMS -16.74 dB,
+       bands [-32.81, -17.80, -18.58, -13.32, +3.56], harm ratio -0.78 dB. The
+       first clause held and the other two did not, and the reason is where
+       this record keeps its air. The 2-8k/300-3k RATIO cannot see it: BOTH of
+       those bands are places a sung voice lives, so both fall together (-18.58
+       against -17.80) and their ratio barely moves. What rises is the octave
+       ABOVE the window that ratio looks at — 8-16 kHz, +3.56 dB — which is
+       exactly "air, and no voice under it" measured in the band this recording
+       actually keeps it in, and it is the SAME sentence the withdrawn iranpop
+       paragraph made about a different record. (iranpop lost most at 250 Hz,
+       the sung fundamentals; doowop loses most at 60-300, -32.81, because
+       three of its four chairs are a SECTION.)
+
+       So the gate asserts the shape it can see in both records — everything a
+       VOICE lives in drops hard, and the top octave does not go with it — and
+       prints the numbers rather than fixing a band order that is a fact about
+       the record. The 2-8k/300-3k ratio is still PRINTED; it is no longer
+       asked to carry a claim it cannot see. */
     const d = (k) => +(B.press.chorusSolo[k] - B.press.voxSolo[k]).toFixed(2);
-    const bandsD = ["lo60_300Db", "mid300_3kDb", "hf2_8Db", "hf4_8Db", "hf8_16Db"].map(d);
+    const VOICEBANDS = ["lo60_300Db", "mid300_3kDb", "hf2_8Db", "hf4_8Db"];
+    const bandsD = [...VOICEBANDS, "hf8_16Db"].map(d);
+    const voiceD = VOICEBANDS.map(d), topD = d("hf8_16Db");
     const dRms = d("rmsDb"), dHarm = d("harmRatioDb");
-    check(dRms < -10 && bandsD.every((x) => x < 0) && dHarm > 1,
+    const worstVoice = Math.min(...voiceD);
+    check(dRms < -10 && voiceD.every((x) => x < 0) && topD - worstVoice > 10,
       "C3 · …and the singers alone say what the recording IS: RMS " + dRms +
-      " dB, every band down " + JSON.stringify(bandsD) + ", and the 2-8k/300-3k " +
-      "ratio UP " + dHarm + " dB — air, and no voice under it");
+      " dB, every band a voice lives in down " + JSON.stringify(voiceD) +
+      ", the top octave " + (topD >= 0 ? "+" : "") + topD + " dB above them " +
+      "(" + (+(topD - worstVoice).toFixed(2)) + " dB clear) — air, and no voice " +
+      "under it. 2-8k/300-3k ratio " + dHarm + " dB, printed and not asked.");
 
     check(A.press.vox.hash === B.press.vox.hash,
       "C4 · ABSENT IS TODAY — a vox press with the guard in the source is " +

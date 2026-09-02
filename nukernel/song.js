@@ -919,7 +919,16 @@
 
     // tempo and volume ride along; out-of-range means "keep what you had",
     // not "refuse the song" — same policy applyState always had
-    s.bpm = Number.isFinite(s.bpm) && s.bpm >= 70 && s.bpm <= 160 ? s.bpm : null;
+    /* THE FENCE IS fields.js's, AND IT WIDENED (2026-09-02). This read the
+       literal `70` and `160`, which is the number compose.js threw on and the
+       number rules.js's slider stopped at — three copies of one fact, against
+       a page whose tempo slider and tap tempo have both allowed 40..220 since
+       they were built. So a hand could tap 175, watch the readout take it, and
+       then reopen its own share link at 160. `NF.BPM_LO`/`NF.BPM_HI` is the
+       one owner and it is 40..220; the POLICY on this line is untouched —
+       out of range still means "keep what you had". */
+    s.bpm = Number.isFinite(s.bpm) && s.bpm >= NF.BPM_LO && s.bpm <= NF.BPM_HI
+      ? s.bpm : null;
     s.vol = Number.isFinite(s.vol) && s.vol >= 0 && s.vol <= 100 ? s.vol : null;
 
     return { ok: !errors.length, song: errors.length ? null : s, errors, notes };

@@ -66,5 +66,21 @@ rsync -a \
   --exclude '*.mp3' \
   nukernel engine vendor sw.js "$DEST"
 
+#   4 · THE ROOT IS THE FRONT DOOR (added 2026-09-02, after the first deploy of
+#       the composer round refreshed only /nukernel/ and Paul, opening
+#       test.stellate.app/, saw the previous evening's build: "I don't think you
+#       ever deployed to test"). Since 2026-08-29 the nukernel page is served at
+#       the ROOT of test.stellate.app as a flat copy of nukernel/* (kernel.js,
+#       ui/, audio/ beside app/ and docs/), and its `../engine/` references
+#       resolve to /engine there. So the tree's CONTENTS go to the root too —
+#       the trailing slash is the whole difference — with no --delete, for the
+#       same reason as above.
+rsync -a \
+  --exclude '.git' \
+  --exclude 'node_modules' \
+  --exclude '*.wav' \
+  --exclude '*.mp3' \
+  nukernel/ "$DEST"
+
 echo "done. https://test.stellate.app/nukernel/index.html"
 echo "(a deploy lands one reload later: the service worker swaps on the next load.)"

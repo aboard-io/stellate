@@ -139,8 +139,14 @@ export function mountRules(host, ctx) {
   const wiki = NuWiki && NuWiki.WIKI ? NuWiki.WIKI[gk] : null;
   const plate = el("h3", null, "nu-namebar nu-ruleplate");
   plate.dataset.k = "rules.name";
-  plate.append(el("b", wiki ? String(wiki.title).replace(/_/g, " ") : gk));
-  if (base.label) plate.append(el("small", " · " + base.label));
+  /* THE WORD IS THE ARTICLE'S TITLE, ELSE THE ROW'S OWN LABEL, ELSE THE KEY
+     (2026-09-02, the probe: the blank state read "silence · Silence" — the key
+     in one spelling and the label in another). And the sub is dropped when it
+     would only say the word again. ui/eight.js nameRecord carries the same
+     rule for the foot plate; the two must agree. */
+  const word = wiki ? String(wiki.title).replace(/_/g, " ") : (base.label || gk);
+  plate.append(el("b", word));
+  if (base.label && base.label !== word) plate.append(el("small", " · " + base.label));
   const kin = kinOf(gk, base);
   const kinWords = [];
   if (kin.parents.length)
@@ -279,6 +285,22 @@ export function mountRules(host, ctx) {
   }
   function startAt(r) {
     const e = r.edit, s = slotsOf(r)[0];
+    /* THE ROW'S OWN DERIVED VALUE FIRST (2026-09-02, the fix round). A rule
+       added from the palette used to open at `e.min` whenever the sentence had
+       no number in it, and wave 2 measured what that meant: "maxHold 1, swing
+       0" — a legato record whose notes already hold eight steps offering "no
+       note holds longer than 1 step", which is a control that rewrites the
+       record the instant it is added and the opposite of avail.js:15's law
+       that you can always see the value you are on. Where the code DERIVES a
+       value for an absent field, `nukernel/rules.js` says so on the row
+       (`edit.start(g, gk, doc)` — `capOf` for maxHold, the document's own
+       swing word read back through SWINGS) and this asks it. One owner: the
+       derivation is the data tier's, never this file's. */
+    if (typeof e.start === "function") {
+      try { const v = e.start(row, gk, ctx.doc());
+            if (v != null && !(typeof v === "number" && !isFinite(v))) return v; }
+      catch (err) { /* a derivation that throws falls through to the sentence */ }
+    }
     if (e.kind === "number") {
       if (typeof s?.v === "number" && isFinite(s.v)) return s.v;
       const n = s ? Number(s.w) : NaN;      /* "give or take 4" says its default */
@@ -306,9 +328,12 @@ export function mountRules(host, ctx) {
   }
 
   /* ================= ONE ROW ============================================== */
-  function ruleRow(parent, r) {
+  function ruleRow(parent, r, major) {
     const div = el("div", null, "nu-rule");
     div.dataset.rule = r.field;
+    /* THE TIER IS ON EVERY ROW AS DATA AND ON ALMOST NONE AS WORDS
+       (2026-09-02) — see `tierInto` for the measurement that moved it. */
+    div.dataset.tier = r.rederive;
     const e = r.edit;
     const why = r.why || null;
 
@@ -355,7 +380,7 @@ export function mountRules(host, ctx) {
       f.append(lab);
       div.append(f);
     }
-    tierInto(div, r);
+    if (r.rederive !== major) tierInto(div, r);
     if (declared(r.field)) resetInto(div, r);
     parent.append(div);
   }
@@ -492,11 +517,34 @@ export function mountRules(host, ctx) {
   }
 
   /* ---------- the tier, and the way back ---------------------------------- */
-  /* WHICH EDITS RESTART THE RECORD, SAID BEFORE YOU PRESS. It is a `.nu-why`
-     because it is the same KIND of word as a refusal — a sentence about what
-     the control will and will not do — and because that is what keeps a
-     thirty-eight-row panel inside the diet. The words are `rules.js TIERS`'s. */
+  /* WHICH EDITS RESTART THE RECORD, SAID BEFORE YOU PRESS — ONCE PER AXIS.
+     The words are `rules.js TIERS`'s and the sentence is still a `.nu-why`,
+     because it is the same KIND of word as a refusal: a sentence about what
+     the control will and will not do.
+     WHERE IT SITS CHANGED (2026-09-02). It used to be appended to EVERY row,
+     and the probe of the composer round measured what that reads like: *"'the
+     record is written again at this seed' printed under EVERY compose-tier row
+     in Rules (~12x). Say it once per axis (or once per panel)."* So the block
+     says its COMMON tier once, at its foot, and only a row that DEPARTS from
+     it carries the sentence itself — which is the whole of the information and
+     none of the repetition. Measured on `reggae` after the tier audit: Time,
+     Alphabet, Form, Cast, Development and Sound are one tier each (one
+     sentence apiece), and Performance says its common tier once with two rows
+     — the line's breath and decoration — carrying "the band plays it from the
+     next bar" of their own. Every row still declares its tier as DATA
+     (`data-tier`), which is what the gates read and what costs nothing. */
   const tierInto = (div, r) => div.append(el("small", r.tier, "nu-why"));
+  /* the block's common tier: the one the most editable rows in it land in */
+  function majorTier(rows) {
+    const n = {};
+    for (const r of rows) if (r.edit && r.edit.kind !== "changes")
+      n[r.rederive] = (n[r.rederive] || 0) + 1;
+    return Object.keys(n).sort((a, b) => n[b] - n[a])[0] || null;
+  }
+  const tierFoot = (sec, major) => { if (!major) return;
+    const p2 = el("small", NuRules.TIERS[major], "nu-why nu-axtier");
+    p2.dataset.tier = major;
+    sec.append(p2); };
 
   function resetInto(div, r) {
     const b = el("button", "reset");
@@ -569,7 +617,8 @@ export function mountRules(host, ctx) {
        `rules.js AXES` is the one list of the eight. An `<h3>`, because that is
        what it is: the name of the block under it. */
     sec.append(el("h3", axis, "nu-axword"));
-    for (const r of mine) ruleRow(sec, r);
+    const major = majorTier(mine);
+    for (const r of mine) ruleRow(sec, r, major);
     /* THE MOTIFS ARE READ AND NOT EDITED — Paul, in the same message: *"The
        motifs don't need to be editable. Just the structural rules."*
        `askable.js:16-22` owns the law and `rules.js MOTIF` carries the reason
@@ -580,6 +629,7 @@ export function mountRules(host, ctx) {
       div.append(el("p", sayFlat(r) + " — " + r.why, "nu-why"));
       sec.append(div);
     }
+    tierFoot(sec, major);
     paletteInto(sec, axis, offers);
     ax.append(sec);
   }

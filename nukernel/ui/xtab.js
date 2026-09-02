@@ -32,7 +32,7 @@
 // `--vh`, `--d`, `.nu-xax`, `.nu-xtab`, `.nu-xf` and the rest of the classes
 // are nu.css's, unchanged and un-renamed: this is a MOVE and not a redesign.
 
-import { GENRES, ROMAN, NuAtlas } from "./deps.js";
+import { GENRES, ROMAN, NuAtlas, NuRules } from "./deps.js";
 
 /* ---------- the local kit (glyph.js's own three-liner) ------------------ */
 const el = (tag, text, cls) => { const n = document.createElement(tag);
@@ -47,8 +47,13 @@ const el = (tag, text, cls) => { const n = document.createElement(tag);
    ORDER). The order is the reader's: written this way the eight can be read
    in one pass with no forward references, which is what makes this panel a
    document and not a list of topics. */
-const AXES = ["Time", "Alphabet", "Material", "Form",
-              "Development", "Cast", "Sound", "Performance"];
+/* ONE TABLE, 2026-09-02. The literal that stood here —
+     ["Time","Alphabet","Material","Form","Development","Cast","Sound","Performance"]
+   — was the second copy of the eight words (nukernel/rules.js AXES is the
+   first, and it throws by name at load on a row claiming a ninth axis), and
+   two copies of a list is how they drift. The comment above still says "no
+   table exports these eight words"; a table does now, and this reads it. */
+const AXES = NuRules.AXES;
 
 /* name an array back to its table key — the genre row carries `mode` and
    `scale` as ARRAYS (the kernel reads them; names are for people), and the

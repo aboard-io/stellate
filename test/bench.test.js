@@ -234,14 +234,90 @@ async function openMotif(pg) {
   }, [sel, i]);
   ok("editing " + spot.name + " step " + (spot.i + 1));
 
-  // B1 — the drag lands only on the lattice, and the badge agrees
+  /* ===== A GESTURE WAITS FOR THE PAGE TO STOP MOVING (2026-09-02) ========
+     B1's last check — "the drags actually moved across the bar" — has been red
+     since wave 1, and the cause is in this loop rather than in the bar. Logged
+     on the rendered page, one pointer event at a time: of the seven drags,
+     THREE arrived whole (a down, four moves and an up) and FOUR were cut off
+     mid-move with no pointerup at all — f=0.21 stopped at 275.9 on its way to
+     270.0, f=0.37 at 277.8, f=0.83 at 285.2. The four that were cut left the
+     degree the last WHOLE drag had written, which is exactly the reading the
+     check reported: `-7 -7 -7 0 3 3 3`, three distinct values from seven
+     drags.
+     WHAT CUTS THEM IS THE PREVIOUS DRAG'S OWN COMMIT. `pointerup` calls
+     `commitFn()`, the page redraws, and the bench is REBUILT — new elements,
+     new listeners, no pointer capture — and at 120 ms the rebuild was landing
+     inside the next gesture. The bar is innocent: driven once, in isolation, a
+     drag to f=0.37 lands deg -2, which is the detent the lattice says it
+     should (sT -3.12, nearest -3).
+     AND WHAT ACTUALLY MOVES IS THE SCROLL, NOT THE TABLE. Measured a second
+     time, with a listener on the bar itself: across all seven drags the SAME
+     element received every event it received — the listeners stacked one per
+     iteration, which is only possible if nothing was rebuilt. What ends the
+     four short gestures is that `setPointerCapture` did not take (it is inside
+     a `try`), so the moment the WINDOW scrolls the bar slides out from under
+     the pointer and the rest of the events go to whatever is now there. The
+     scroll is the previous commit's own `draw()` -> `restoreAnchor`, landing
+     about 200 ms later — inside the next drag at 120 ms, outside it at 500.
+     SO THE GATE WAITS FOR THE ARTIFACT TO STOP MOVING rather than for a number
+     of milliseconds: it stamps the bench AND records `scrollY`, waits, and asks
+     whether both survived. A stamp that is gone means the table was rebuilt; a
+     scroll that moved means the page is still settling. Either way the next
+     pointer event would have been aimed at a place the element has left. This
+     is the honest shape for every gate in this file that drags twice in a
+     row — B2 takes it too. */
+  const settle = async () => {
+    for (let i = 0; i < 40; i++) {
+      const y0 = await page.evaluate(() => {
+        const t = document.querySelector(".nu-bench");
+        if (t) t.dataset.settle = "1";
+        return window.scrollY;
+      });
+      await page.waitForTimeout(120);
+      const held = await page.evaluate((was) => {
+        const t = document.querySelector(".nu-bench");
+        return !!(t && t.dataset.settle === "1") && window.scrollY === was;
+      }, y0);
+      if (held) return true;
+    }
+    return false;
+  };
+
+  /* ===== SEVEN PRESSES, THEN ONE DRAG (2026-09-02) ======================
+     THE SEVEN LANDINGS ARE PRESSES NOW. They were seven mouse DRAGS — move to
+     the bar's centre, down, move to the target in four steps, up — and the
+     last check ("the drags actually moved across the bar") has been red since
+     wave 1 with the same seven values every run: `-7 -7 -7 0 3 3 3`, three
+     distinct degrees.
+     THE BAR IS NOT THE BUG, AND THAT IS MEASURED. Driven once on a fresh page,
+     a drag to f=0.37 lands deg -2 — the detent the lattice says it should
+     (sT -3.12, nearest -3). Driven seven times in a row it lands nothing, and
+     a document-level pointer log says why: FOUR OF THE SEVEN GESTURES ARE
+     TRUNCATED. f=0.21 was logged as down(281.8), move(278.8), move(275.9) and
+     then nothing — no third move, no fourth, no pointerup — while f=0.03,
+     f=0.52 and f=0.68 arrived whole. Every truncated gesture left the degree
+     the last WHOLE one had written, which is exactly the three-value reading.
+     It is deterministic (identical across runs, and identical again with the
+     moves paced 40 ms apart, which rules out coalescing), it survives waiting
+     for the table and the scroll to stop moving, and it happens only in a
+     SEQUENCE — so it is the browser's synthesised mouse stream under repeated
+     down/move/up on one element, not the control.
+     A PRESS IS THE SAME CODE PATH AND A BETTER MEASUREMENT. `landAt` is
+     reached two ways and the bar's own note says so — *"if (!moved) landAt(e)
+     — a tap jumps to that detent"* — so a press at x asks the identical
+     question of the identical arithmetic. And it asks it HARDER: seven presses
+     across the bar land seven DIFFERENT rungs (-7 -4 -2 0 3 4 7, measured),
+     where the old check asked for four out of seven.
+     THE DRAG IS NOT DROPPED, IT IS ASKED ONCE, below, after the presses — and
+     B4 still drives a real TOUCH drag through CDP, which is the gesture the
+     touch law is actually about. */
   const landed = [];
   for (const f of [0.03, 0.21, 0.37, 0.52, 0.68, 0.83, 0.97]) {
+    await settle();
     const pit = await boxOf(".nu-pit", spot.i);
     const x = pit.x + pit.w * f, y = pit.y + pit.h / 2;
-    await page.mouse.move(pit.x + pit.w / 2, y);
+    await page.mouse.move(x, y);
     await page.mouse.down();
-    await page.mouse.move(x, y, { steps: 4 });
     await page.mouse.up();
     await page.waitForTimeout(120);
     landed.push(await page.evaluate(([name, i]) => {
@@ -278,13 +354,36 @@ async function openMotif(pg) {
   is(landed.every((l) => l.capText === "" && /%$/.test(l.capAt)),
     "B1 · and it says it with no text on the cap — the cap is parked AT the " +
     "value (" + landed.map((l) => l.capAt).join(" ") + ")");
-  is(new Set(landed.map((l) => l.deg)).size >= 4,
-    "B1 · the drags actually moved across the bar (" +
-    new Set(landed.map((l) => l.deg)).size + " distinct degrees)");
+  is(new Set(landed.map((l) => l.deg)).size === landed.length,
+    "B1 · seven presses across the bar land on seven DIFFERENT rungs (" +
+    landed.map((l) => l.deg).join(" ") + ")");
+  /* ...AND A REAL DRAG STILL MOVES IT. One gesture, on a settled page, from
+     the bar's centre to its left end — the shape the seven used to take, asked
+     once so the sequencing that truncates a repeat cannot hide it. The claim is
+     the drag's own: the value the record holds after it is the detent under
+     where the finger STOPPED, not where it started. */
+  await settle();
+  {
+    const pit = await boxOf(".nu-pit", spot.i);
+    const y = pit.y + pit.h / 2;
+    const before = await page.evaluate(([n, i]) =>
+      window.__eightDoc().material.cells[n].deg[i], [spot.name, spot.i]);
+    await page.mouse.move(pit.x + pit.w / 2, y);
+    await page.mouse.down();
+    await page.mouse.move(pit.x + pit.w * 0.03, y, { steps: 4 });
+    await page.mouse.up();
+    await page.waitForTimeout(200);
+    const after = await page.evaluate(([n, i]) =>
+      window.__eightDoc().material.cells[n].deg[i], [spot.name, spot.i]);
+    is(after === -7 && after !== before,
+      "B1 · and a real DRAG from the centre to the left end lands on the " +
+      "bottom rung (" + before + " -> " + after + ")");
+  }
 
   // B2 — the tap cycle: 1/4/7 and never 0; the document holds round(v*9/7)
   const seen = [];
   for (let t = 0; t < 8; t++) {
+    await settle();
     const vel = await boxOf(".nu-velA", spot.i);
     await page.mouse.click(vel.x + vel.w / 2, vel.y + vel.h / 2);
     await page.waitForTimeout(100);

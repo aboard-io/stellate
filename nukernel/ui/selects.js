@@ -309,11 +309,20 @@ function comboFilter(sel, label) {
   const inp = document.createElement("input");
   inp.type = "search";
   inp.className = "nu-combo-filter";
-  /* NO VISIBLE LABEL. The question is already on line one of the field
-     (`.nu-w`), and a second copy of it under the question is the "say it once"
-     law failing in the smallest possible way. The accessible name says what
-     this particular box does TO that question. */
-  inp.setAttribute("aria-label", "filter " + label);
+  /* NO VISIBLE LABEL, BUT A PLACEHOLDER (2026-09-02). The question is already
+     on line one of the field (`.nu-w`), and a second copy of it under the
+     question is the "say it once" law failing in the smallest possible way —
+     so the accessible name says what this particular box does TO that
+     question, and it always has. What it did NOT have was anything a SIGHTED
+     reader could see, and the probe of the composer round measured that:
+     *"`.nu-combo-filter` has no placeholder and no label — on Produce two
+     empty white boxes float over two 'choose one' combos."* A placeholder is
+     the one word that names a search box without repeating the question, and
+     it is a control's own affordance rather than prose (the diet counts text
+     NODES, and a placeholder is an attribute). */
+  inp.placeholder = "filter\u2026";
+  /* a caller with no label of its own still gets a name that says the verb */
+  inp.setAttribute("aria-label", label ? "filter " + label : "filter the list");
   inp.autocomplete = "off";
   inp.addEventListener("input", () => {
     const q = inp.value.trim().toLowerCase();
@@ -493,6 +502,10 @@ export function keyCircle(parent, spec, ring) {
   // wrapper would have been a second element per position to buy one space.
   const put = (node) => { face.append(node, doc.createTextNode(" ")); };
 
+  // "C♯/D♭" -> ["C♯/", "D♭"]; anything with no slash is left alone
+  const stackSlash = (t) => (t.indexOf("/") > 0 && t.indexOf("/") < t.length - 1
+    ? [t.slice(0, t.indexOf("/") + 1), t.slice(t.indexOf("/") + 1)] : t);
+
   /* ---- the outer ring: the key itself, one of twelve, always exactly one ---- */
   hours.forEach((value, hour) => {
     const o = byValue.get(String(value));
@@ -500,7 +513,10 @@ export function keyCircle(parent, spec, ring) {
     put(at(optLabel({
       cls: "nu-ko", name: "circ:" + key, value: String(o.value),
       k: "opt|" + key + "|" + o.value,
-      word: o.label == null ? String(o.value) : String(o.label),
+      /* AN ENHARMONIC STACKS (2026-09-02) — see `optLabel`. Split AFTER the
+         slash so the two lines still spell the label exactly, and only where
+         there is a slash to split on: "F" is one line and stays one line. */
+      word: stackSlash(o.label == null ? String(o.value) : String(o.label)),
       on, disabled: !!o.disabled, quiet: !!o.quiet, why: o.why,
       take: () => { if (typeof spec.set === "function") spec.set(String(o.value)); },
     }), hour));
@@ -551,7 +567,30 @@ function optLabel(o) {
   // ONE OWNER FOR RECOMPILE, and it is not this file: `take` calls the caller's
   // `set`, and ui/eight.js's `changed()` redraws. Same as both siblings.
   r.addEventListener("change", () => { if (r.checked) o.take(); });
-  lab.append(r, el("span", o.word, "nu-w"));
+  /* THE WORD, AND IT MAY BE TWO LINES (2026-09-02). `.nu-circ .nu-opt .nu-w`
+     is `white-space: nowrap` — a position on a ring must not wrap where the
+     text happens to run out — so a label that is genuinely two spellings of
+     one pitch ("C♯/D♭") drew as ONE long box, and the probe measured what
+     that costs: *"the circle of fifths' relative-minor ring overlaps the
+     major ring at both widths ('Am' over 'C'/'Dm'; 'C♯/D♭' over 'F♯/G♭')."*
+     A `<br>` breaks under nowrap, which is exactly the lever: an enharmonic
+     stacks its two spellings the way a printed wheel does and the box goes
+     back to being one word wide. The TEXT is unchanged, character for
+     character — the slash stays at the end of the first line — so the
+     accessible name, `textContent` and every gate that reads the ring's words
+     see what they saw before. */
+  const w = el("span", null, "nu-w");
+  const lines = Array.isArray(o.word) ? o.word : [o.word];
+  /* AND THE TWO LINES SIT TIGHT. The stacking is this function's own
+     invention, so the leading it needs is this function's to state: at 320 the
+     stacked box came out 32.5px tall against a single line's 26 and the last
+     1.3px of overlap survived the fix. Set to 1 it clears at both widths
+     (measured 2026-09-02, 320 and 1280, rendered rects: zero overlapping
+     pairs). It is written where the second line is made and nowhere else. */
+  if (lines.length > 1) w.style.lineHeight = "1";
+  lines.forEach((t, i) => { if (i) w.append(document.createElement("br"));
+                            w.append(document.createTextNode(String(t))); });
+  lab.append(r, w);
   // A SPACE BEFORE THE HIDDEN HALF, and it is not a nicety: adjacent inline
   // boxes with no whitespace between them are announced as one word, so the
   // ring said "F♯mF♯/G♭ minor" until this text node was put in.

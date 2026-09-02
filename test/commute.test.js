@@ -125,8 +125,47 @@ const ok = (cond, what, detail) => {
 
 const holdOf = (page) => page.evaluate(() => { try { return window.__nuHold ? window.__nuHold() : null; } catch (e) { return null; } });
 const lineOf = (page) => page.evaluate(() => { try { return window.__nuEngineLine ? window.__nuEngineLine() : null; } catch (e) { return null; } });
-const domLine = (page) => page.evaluate(() => (document.getElementById("engine") || {}).textContent || "");
-const playLabel = (page) => page.evaluate(() => ((document.getElementById("play") || {}).textContent || "").trim());
+/* THE PAINTED SENTENCE, WHERE IT IS PAINTED (rewritten 2026-09-02). This read
+   `#engine`, which is an element index.html deleted on 2026-08-28 — Paul: *"Get
+   rid of the media (mediaEl) held plays offline etc section on the top; move
+   that info to the logger."* The tombstone in index.html is explicit that every
+   clause of the old contract survived the move ("the sentence still has exactly
+   one owner — `engineLine()` in audio/live.js … It is still outside #app"), so
+   what this check wants is unchanged and only its ADDRESS moved: `#nu-log`,
+   written by ui/eight.js `logEngine`, one line a second and only when the
+   sentence actually changes. Reading the whole log rather than one node is
+   correct AND stricter — the claim is "a reader can see it", and the log keeps
+   its predecessors, which the deleted paragraph never could. */
+const domLine = (page) => page.evaluate(() => {
+  /* THE LOG IS PAINTED WHEN IT IS OPEN, and only then: `addRow` returns early
+     unless `logOpen`, which is the frozen-page discipline working (a shut
+     panel is not a surface the clock writes into). `__nuLogOpen` is the page's
+     own door onto the ¶ button — the same call the button makes — so this asks
+     a reader's question ("can somebody SEE the sentence") through a reader's
+     gesture rather than by reaching into `logs`. */
+  try { if (window.__nuLogOpen) window.__nuLogOpen(true); } catch (e) {}
+  return (document.getElementById("nu-log") || {}).textContent || "";
+});
+/* THE WORD ON THE TRANSPORT, NOT THE GLYPH BESIDE IT (rewritten 2026-09-02).
+   This took the button's whole `textContent` and compared it to "play" — and
+   the transport moved into the foot with a FACE on it (wave 1a: `paintIcon`
+   writes the glyph and then the `.nu-vh` word into the same button), so the
+   text is now "▶play" and never equalled "play" again. `press()` therefore took
+   its ELSE branch on every single call: click (the record starts), 400 ms,
+   click (the record STOPS) — and then listened to sixty seconds of silence and
+   reported "sound arrives with the wire cut: no sound in 60s" on a page that
+   was playing perfectly. Measured 2026-09-02: `#play` textContent "▶play",
+   aria-label "play", `.nu-vh` "play".
+   So the word is read where the word IS: the `.nu-vh` span if there is one,
+   else the aria-label, else the raw text — the glyph is aria-hidden and is not
+   the answer to "what will this button do". */
+const playLabel = (page) => page.evaluate(() => {
+  const e = document.getElementById("play");
+  if (!e) return "";
+  const vh = e.querySelector(".nu-vh");
+  return String((vh && vh.textContent) || e.getAttribute("aria-label") ||
+                e.textContent || "").trim();
+});
 
 // WAIT FOR A LEDGER THAT HAS STOPPED MOVING, not for one that is momentarily
 // idle. `queued 0, running 0` is true in the gap before holdModules' manifest

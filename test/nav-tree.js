@@ -28,6 +28,15 @@
  * N6  a band member LIGHTS UP while it sounds and goes dark when the record
  *     stops — a class on the button, never a <mark>, and it is the playhead's
  *     red and not the meter's green
+ * N7  the list is the ONE thing that shrinks: with Band expanded at 390x844 the
+ *     stripe overflows, `.nu-traylist` clips it (scrollHeight > clientHeight),
+ *     and once it is scrolled to its end the LAST row stands clear of the foot
+ *     and `elementFromPoint` on its centre answers that row and not the foot's
+ *     genre plate. Written 2026-09-02 against the probe report's defect 1 —
+ *     *"The nav list draws UNDERNEATH the pinned foot and those rows cannot be
+ *     tapped"* — which measured the last row's layout box while it was scrolled
+ *     out of view and read a clipped row as an unclipped one. nu.css carries
+ *     the whole re-measurement beside `.nu-traylist`.
  *
  * RUN:  NODE_PATH=/home/ford/ftrain-2025/node_modules node test/nav-tree.js
  */
@@ -334,6 +343,56 @@ const RECORD = "#at=Kingston&y=1969&s=1";
     null, { timeout: 6000 }).then(() => true).catch(() => false);
   check(dark,
     "N6 · …and every lamp goes out when the record stops");
+
+  /* ---- N7 THE LIST SHRINKS, THE FOOT DOES NOT ------------------------ */
+  /* The foot is `flex: 0 0 auto` and LAST; the list is the only `flex: 1 1
+     auto` in the stripe and carries `min-block-size: 0` so it may shrink below
+     its content. Those three facts together are what makes a tall tree ONE
+     stripe instead of a column of rows drawn over the transport. This asserts
+     them the only way that means anything — by driving the stripe into a state
+     that overflows and then reaching for the row at the bottom of it. */
+  await p.setViewportSize({ width: 390, height: 844 });
+  await p.evaluate(() => window.__eightUp());
+  await p.waitForTimeout(150);
+  await p.click('[data-k="toptab-Band"]');
+  await p.waitForTimeout(700);
+  const shrink = await p.evaluate(() => {
+    const list = document.querySelector(".nu-traylist");
+    const foot = document.querySelector(".nu-trayfoot");
+    const cs = getComputedStyle(list), fs = getComputedStyle(foot);
+    const before = { over: list.scrollHeight - list.clientHeight,
+                     rows: list.children.length,
+                     grow: cs.flexGrow, shrink: cs.flexShrink,
+                     min: cs.minBlockSize, ovf: cs.overflowY,
+                     footGrow: fs.flexGrow, footShrink: fs.flexShrink,
+                     footLast: document.querySelector("#nu-tray")
+                       .lastElementChild === foot };
+    list.scrollTop = list.scrollHeight;         // a thumb-swipe to the end
+    const last = list.lastElementChild;
+    const r = last.getBoundingClientRect();
+    const f = foot.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2,
+                                          r.top + r.height / 2);
+    return { ...before, lastK: last.dataset.k,
+             clear: +(f.top - r.bottom).toFixed(1),
+             hit: hit ? (hit.dataset.k || hit.id || hit.className) : null };
+  });
+  check(shrink.over > 0 && shrink.shrink !== "0" && shrink.min === "0px" &&
+        shrink.ovf === "auto" && shrink.footGrow === "0" &&
+        shrink.footShrink === "0" && shrink.footLast,
+    "N7 · with Band open the stripe overflows by " + shrink.over + "px over " +
+    shrink.rows + " rows and the LIST is the child that shrinks (the foot is " +
+    "0 0 auto and last) — " + JSON.stringify(shrink));
+  /* `>= -1` AND NOT `>= 0`: the list's own bottom edge and the foot's top edge
+     are the same line, and a rect read back off a fractional layout lands a
+     tenth of a pixel either side of it (measured: -0.1). The claim is that the
+     row is not UNDER the foot, and a tenth of a pixel is not under anything —
+     `elementFromPoint` on the row's own centre is the assertion that matters
+     and it is the one beside this. */
+  check(shrink.clear >= -1 && shrink.hit === shrink.lastK,
+    "N7 · …and scrolled to its end the last row (" + shrink.lastK + ") stands " +
+    shrink.clear + "px clear of the foot and takes its own tap: " +
+    "elementFromPoint says " + JSON.stringify(shrink.hit));
 
   check(!errs.length, "N· zero pageerrors / console errors " +
     JSON.stringify(errs.slice(0, 4)));

@@ -140,7 +140,17 @@ function sectionEvents(doc, i) {
     if (doc.basis !== gk) say("basis is " + doc.basis);
 
     const T = doc.time;
-    if (!Number.isFinite(T.bpm) || T.bpm < 60 || T.bpm > 200) say("bpm " + T.bpm);
+    /* THE FENCE IS THE CODE'S, NOT A NUMBER TYPED HERE (rewritten 2026-09-02).
+       This read `60 .. 200`, which was a THIRD fence: compose.js threw outside
+       70..160, song.js's save door dropped anything outside 70..160, and this
+       gate allowed a band neither of them did — so a widening or a narrowing
+       could land without one of the three noticing. `fields.js BPM_LO/BPM_HI`
+       is the one owner now (40..220 since the walls-down round of 2026-09-02,
+       which let `poppunk` take the 167 its own corpus note had measured and
+       could not spend), and the gate reads it, so the day the fence moves this
+       line moves with it and the day the three disagree this goes red. */
+    if (!Number.isFinite(T.bpm) || T.bpm < NF.BPM_LO || T.bpm > NF.BPM_HI)
+      say("bpm " + T.bpm + " (fence " + NF.BPM_LO + ".." + NF.BPM_HI + ")");
     if (!Number.isFinite(T.rate) || T.rate <= 0) say("rate " + T.rate);
     if (T.meter != null && !NF.METERLABEL[T.meter]) say("meter " + T.meter);
     if (T.swing != null && !NF.SWINGS[T.swing]) say("swing " + T.swing);

@@ -1809,7 +1809,25 @@ export function mount(parent, ctx) {
      the swap and after the sentence, on the record that is actually on the
      page. A refusal never calls it: nothing was written, so nothing plays, and
      #atlasSay carries the one measured line. */
-  function pick(gk, done) {
+  /* ===== AND THE SENTENCES, AS A THIRD INPUT (2026-09-02) ===============
+     `genreToDocument` grew a `rules` argument on 2026-09-01 and this file's
+     one compose path did not, so every door through here — a link, the die,
+     the seed slider — recomposed the anchor AS WRITTEN. The probe of
+     2026-09-02 measured it from the outside: *"The share link loses every
+     edit; only the anchor round-trips."*
+     WHO HANDS IT IN, AND WHO DOES NOT. `open()` hands the list the FRAGMENT
+     carried. `reseed()` and `setReading()` hand the list the RECORD ON THE
+     PAGE is already carrying, and only when the anchor is the same one —
+     because a reseed is this record at another reading and the sentences you
+     wrote are part of what this record IS, while a different anchor is a
+     different record and none of your sentences were written about it.
+     A tap on a mark or a row hands NOTHING, for that second reason: choosing
+     Kingston 1969 is asking for Kingston 1969, not for Kingston 1969 wearing
+     the tempo you set on a Gregorian chant.
+     ABSENT IS BYTE-IDENTICAL: precompose hands back the catalogue's own row by
+     identity when the list is empty or missing, so every record composed
+     without one is exactly the record it was. */
+  function pick(gk, done, rules) {
     const w = WHEN[gk];
     const where = w ? w.place + " " + yearWord(w.year) : gk;
     /* WHAT IT SAYS WHILE IT WORKS. genreToDocument is fast table work, but
@@ -1819,9 +1837,28 @@ export function mount(parent, ctx) {
        browser renders is the finished one and the box looks frozen for half a
        second with no explanation. */
     say.textContent = where + " — writing the record…";
-    requestAnimationFrame(() => requestAnimationFrame(() => {
+    /* ===== AND A TIMER BESIDE THE TWO FRAMES (2026-09-02) ================
+       The deferral is two `requestAnimationFrame`s so the sentence above is
+       PAINTED before the work starts — the reason is in the paragraph above
+       and it has not changed. What has changed is what happens when the second
+       frame never comes: the probe of 2026-09-02 found it — *"Compose is
+       deferred behind rAF(rAF(…)); under a starved compositor 'writing the
+       record…' never times out or says anything else."* A background tab, a
+       machine under load, a `prefers-reduced-motion` engine that throttles: any
+       of them leaves the box holding a sentence that is a promise nothing will
+       keep.
+       SO WHICHEVER ARRIVES FIRST WINS, AND ONLY ONE OF THEM RUNS. `fired` is
+       the latch; 600 ms is about ten frames at 60 Hz and well past any paint
+       this sentence is waiting for, so on a healthy page the timer never fires
+       and the two frames are exactly what they were. A timer is not a second
+       compose path — it is the same closure, called once. */
+    let fired = false;
+    const go = () => { if (fired) return; fired = true; work(); };
+    setTimeout(go, 600);
+    requestAnimationFrame(() => requestAnimationFrame(go));
+    function work() {
       let doc;
-      try { doc = NuPrecompose.genreToDocument(gk, seed); }
+      try { doc = NuPrecompose.genreToDocument(gk, seed, rules || null); }
       catch (e) {
         // NAMED, NOT SWALLOWED. The page keeps the record it had; the sentence
         // says which genre this box cannot write yet and why.
@@ -1846,7 +1883,7 @@ export function mount(parent, ctx) {
          actually changed the record says so itself. */
       moved();
       if (done) done();
-    }));
+    }
   }
 
   /* ---------- reseed(gk, done): the bar's "rewrite", from here ----------
@@ -1878,8 +1915,18 @@ export function mount(parent, ctx) {
     let n = drawSeed();
     if (n === seed) n = (n % (SEEDMAX - 1)) + 1;
     seed = n;
-    pick(target, done);
+    pick(target, done, rulesFor(target));
     return true;
+  }
+  /* THE SENTENCES THIS RECORD IS CARRYING, when the anchor has not moved — see
+     the block over `pick`. Read off `ctx.doc()` because this file keeps no copy
+     of the record; null for a different anchor, and null for a ctx that has
+     never heard of a document (the gates and the /daw mount one). */
+  function rulesFor(gk) {
+    let d = null;
+    try { d = ctx && ctx.doc ? ctx.doc() : null; } catch (e) { d = null; }
+    return (d && d.basis === gk && Array.isArray(d.rules) && d.rules.length)
+      ? d.rules : null;
   }
 
   /* ONE TAP, ONE RECORD — consequence C, at the point of use. The place plus the
@@ -2513,7 +2560,7 @@ export function mount(parent, ctx) {
   const note = (text) => { say.textContent = String(text); };
   const refuse = (why) => { note(why); return why; };
 
-  function open(want, done) {
+  function open(want, done, rules) {
     const asked = String((want && want.at) || "").trim();
     const name = canon(asked);
     if (!asked || !PLACES[name]) {
@@ -2546,7 +2593,13 @@ export function mount(parent, ctx) {
        asked for. `clampSeed` is the one owner of both halves. */
     seed = clampSeed(want.s);
     setYear(indexOf(r.year));
-    pick(r.gk, done);
+    /* THE FRAGMENT'S OWN SENTENCES, PREFERRED, AND THE ARGUMENT AS THE
+       FALLBACK — one door, two spellings, so a caller that has already parsed
+       `r=` (ui/eight.js `readLink`) does not have to re-encode it and a caller
+       that hands the whole `want` object gets the same answer. */
+    pick(r.gk, done, (rules && rules.length ? rules : null) ||
+                     (Array.isArray(want.rules) && want.rules.length
+                       ? want.rules : null));
     return true;
   }
 
@@ -2573,7 +2626,10 @@ export function mount(parent, ctx) {
     seed = clampSeed(n);
     const target = here || (ctx && ctx.doc && ctx.doc() ? ctx.doc().basis : null);
     if (!target) { moved(); return false; }
-    pick(target, done);
+    /* AND IT KEEPS THE SENTENCES (2026-09-02) — see the block over `pick`. A
+       slider that quietly threw away every rule you had written would be the
+       share link's own bug with a thumb on it. */
+    pick(target, done, rulesFor(target));
     return true;
   }
   return { showing, reseed, reading, setReading, link, open, note };

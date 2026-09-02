@@ -176,13 +176,19 @@ import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing,
          // setting with its own localStorage key — never adopted from a song —
          // and until today nothing on this page could reach it. The Tempo
          // panel is where a tempo map's on/off belongs (COMPOSER.md §2.5).
-         RUBATO, setRubato } from "./state.js";
+         RUBATO, setRubato,
+         // the session's instrument pool, read live by ENV's getter (2026-09-02)
+         POOL } from "./state.js";
 // THE RENDERED EVENT STREAM, for the console hooks at the foot of this file
 // only. D7's gate has to read what the band actually plays — velocities after
 // the envelope, the intro and the outro have had their say — and that stream
 // exists nowhere else (nukernel/document.js scoreOf is the PURE half and
 // applies no envelope by design). Drawing never calls it.
-import { sectionRender } from "./derive.js";
+/* `bassInstrOf` JOINS `sectionRender` HERE (2026-09-02). ui/derive.js is the
+   one owner of "what the bass chair plays" — `(pool && pool.bass) || BASS_INSTR`
+   — and `audio/plan.js seats()` reads it through the same export, so the word
+   on the roster and the instrument in the sound cannot disagree. */
+import { sectionRender, bassInstrOf } from "./derive.js";
 import { startAt, stop, playing, warmup, getPosition, passAt,
          engineLine,
          /* WHO IS SOUNDING RIGHT NOW (2026-09-02). Paul: *"I need you to light
@@ -1341,7 +1347,11 @@ const CTX = {
    the second one drawn would silently uncheck the first — the same class of
    bug this page has already shipped once (`hookCells`, the shared header array
    in the hook maker). */
-const ENV = { fleet: NATIVE };
+/* …AND THE SESSION'S INSTRUMENT POOL, AS A GETTER SO IT STAYS LIVE
+   (2026-09-02): avail.js's `sound.bassinstrument` empty detent names the
+   chair a hand actually hired (`env.pool.bass`), and without the pool here it
+   could only name the engine's own default. */
+const ENV = { fleet: NATIVE, get pool() { return POOL; } };
 const shKey = (key, scope) => [key, scope.voice, scope.section,
     scope.bar == null ? null : "bar" + scope.bar]
   .filter((x) => x != null).join("|");
@@ -4120,6 +4130,9 @@ function exportRow(parent) {
   // THE LINK — LIVE, AND FIRST, because it is the one export that always
   // works and the one Paul asked for three times (see THE ADDRESS).
   shareCard(grid);
+  // THE RECORD ITSELF — SECOND, beside the link, because the two are one
+  // question asked twice (see the songCard block).
+  songCard(grid);
   // WAV — LIVE. The press path exists (engine/faust/press + the stream
   // worker's PCM sink); export/wav.js is that machinery pointed at a file.
   exportCard(grid, "WAV", "the render",
@@ -5248,33 +5261,57 @@ function loopButton(parent, name) {
      measurement and the shape that replaces it — refuse at the PRESS and say
      so in the log. The same move is available here and is a round of its own,
      because `loopButton` also owns the `[data-live]` sentence beside it and
-     the two have to move together. */
-  if (playing) {
-    const why = "the record is playing — stop it to hear one motif alone";
-    b.disabled = true; b.setAttribute("aria-disabled", "true");
-    b.dataset.why = why;
-    b.setAttribute("aria-label", "play " + name + ", " + why);
-  } else {
-    b.addEventListener("click", () => {
-      /* AND IT CAN STILL BE PRESSED AFTER THE RECORD STARTED, because the
-         transport may not rewrite a control (that is the whole frozen-DOM
-         law): this button was drawn while the record was stopped and it is
-         still on the page, live, when somebody presses play. So the refusal is
-         made HERE as well as at draw time, and the live sentence beside the
-         button — which the clock IS allowed to write — is what says why. */
-      if (playing) { auditionSay(); return; }
-      const want = PLAY_NEXT[playAt(name)];
-      motifOnce = want === "once" ? name : null;
-      motifLoop = want === "loop" ? name : null;
-      if (want === "off") auditionOff();
-      else auditionMotif(name, want === "loop");
-      // THE BUTTON REDRAWS ITSELF AND NOTHING ELSE. `drawMaterial()` would
-      // rebuild every staff in the axis — three abcjs engravings on the chant
-      // — for a word and an attribute, and the recipe's own law is that the
-      // page does not reshape under a thumb.
-      paint();
-    });
-  }
+     the two have to move together.
+
+     ===== AND THAT ROUND IS THIS ONE, 2026-09-02 =========================
+     The branch is DELETED. What stood here was:
+
+         if (playing) {
+           const why = "the record is playing — stop it to hear one motif alone";
+           b.disabled = true; b.setAttribute("aria-disabled", "true");
+           b.dataset.why = why;
+           b.setAttribute("aria-label", "play " + name + ", " + why);
+         } else { …the listener… }
+
+     — a control greying itself on the transport's state at DRAW time, which is
+     exactly what A2 and Paul's 2026-08-24 sentence forbid, and which was
+     already written up here as borrowed time.
+
+     THE REPLACEMENT IS `soloButton`'S, WHICH IS THE HONEST GESTURE: one press
+     means "let me hear this motif", the box has one engine, so it takes the
+     record down and puts the motif up. `stop()` + `say(false)` is #play's own
+     pair, and the log carries the second half of what happened. The button is
+     never disabled, never re-attributed by the clock, and its face still says
+     the next tap — so the frozen half of `#app` is byte-identical across a
+     start and a stop, which is the measurement A9 takes.
+     THE `[data-live]` SENTENCE BESIDE IT MOVES WITH IT AND SAYS LESS: it no
+     longer has to carry "— stop it to hear one motif alone", because nothing
+     has to be stopped by hand any more (see `auditionSay`). */
+  b.addEventListener("click", () => {
+    /* THE RECORD COMES DOWN FIRST, AND ONLY ON THE PRESS THAT ASKS FOR SOUND.
+       `off` is the only state whose next tap starts something; the other two
+       are cycling toward silence and have no reason to touch the transport.
+       `paintPlay` AND NOT `say`, which is its one-line alias: this function
+       declares a local `const say` for the `[data-live]` sentence forty lines
+       down, and a function-scoped const shadows the module's for the WHOLE
+       function including this closure. Calling the writer by its own name is
+       the fix that cannot be undone by a rename. */
+    if (playing && playAt(name) === "off") {
+      stop(); paintPlay(false);
+      logPut("act", "play " + name,
+             "the record stopped so one motif could be heard");
+    }
+    const want = PLAY_NEXT[playAt(name)];
+    motifOnce = want === "once" ? name : null;
+    motifLoop = want === "loop" ? name : null;
+    if (want === "off") auditionOff();
+    else auditionMotif(name, want === "loop");
+    // THE BUTTON REDRAWS ITSELF AND NOTHING ELSE. `drawMaterial()` would
+    // rebuild every staff in the axis — three abcjs engravings on the chant
+    // — for a word and an attribute, and the recipe's own law is that the
+    // page does not reshape under a thumb.
+    paint();
+  });
   p.append(b, document.createTextNode(" "));
   parent.append(p);
   /* THE LIVE SENTENCE IS THE BUTTON'S SIBLING, never a class on the button —
@@ -5306,7 +5343,14 @@ function loopButton(parent, name) {
   if (h) say.style.minHeight = h + "px";
   say.textContent = "";
   auditionSay();
-  if (b.disabled) P(parent, el("span", b.dataset.why, "nu-why"));
+  /* (`if (b.disabled) P(parent, el("span", b.dataset.why, "nu-why"))` STOOD
+     HERE and went with the disabled branch. It was the SECOND sentence the
+     probe of 2026-09-02 counted under this button — *"two stacked sentences
+     say the same thing ('the record is playing — the score at the foot…' and
+     '— stop it to hear one motif alone')"* — and it was the one that had
+     stopped being true: nothing has to be stopped by hand any more. The
+     `[data-live]` line above is the one sentence left, and it says what is
+     happening rather than what you have to do about it.) */
 }
 
 /* ===== THE BANK'S STRIP LEFT THIS AXIS, 2026-08-28 ======================
@@ -5590,8 +5634,19 @@ function motifs(parent, deck, si) {
 
     // THE CELL AS WRITTEN, AND NOW IT IS THE ONLY STAFF IN THE BLOCK. Its label
     // is a constant: this staff says one thing and says it always.
+    /* ...AND IT IS DRESSED AS A LABEL RATHER THAN AS A HINT (2026-09-02). The
+       probe of that morning, reading the Motif panel: *"a bare 'as written'
+       floats with no label."* It IS a label — the caption of the staff under
+       it, which is what `.nu-rowlab` is this page's name for (the grids'
+       `<caption>`s and the board's row words wear it) — and it was wearing
+       `.nu-hint`, which is the class for a SENTENCE ABOUT something. Two words
+       in the voice of a paragraph read as a fragment somebody forgot to
+       finish; the same two words in the voice of a caption read as the name of
+       the picture below them. It is also what takes it out of the text diet's
+       count, where a caption belongs: test/text-diet.test.js already names
+       `.nu-rowlab` as one of "the page's own label classes". */
     const wl = el("p", "as written");
-    wl.className = "nu-hint";
+    wl.className = "nu-rowlab";
     parent.append(wl);
     // …and this cell's own staff, findable by name, so that changing a note can
     // re-engrave THIS and rebuild nothing (see `written`, `edited`)
@@ -7203,9 +7258,39 @@ const DRUMGRID = { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
 // answer to one name and VOICE() found whichever came first
 const freeName = (base) => { let n = base, i = 1;
   while (VOICE(n)) n = base + (++i); return n; };
+/* ===== WHAT A NEW MEMBER IS CALLED (2026-09-02) =========================
+   The probe of that morning: *"New members are named `voice8` and that machine
+   name shows everywhere. Name by kind + ordinal in the record's own words
+   ('line 3')."* It was right about both halves — the name was `"voice" +
+   DOC.voices.length + 1`, so hiring a third line onto a seven-piece band made
+   a "voice8" that appeared in the gutter, on the roster box, on five grid
+   column heads, in every per-section address and in the share link.
+
+   THE RULE IS THE ONE THE SECTIONS ALREADY KEEP: `secName` is `role + ordinal`
+   ("verse 2"), read through the table that owns the role word, and the ordinal
+   counts the sections of THAT ROLE rather than all of them. This is that
+   sentence about a player — the KIND is the word ("line", "bass", "drums") and
+   the ordinal counts the members of that kind — so the second line on a record
+   is "line 2" whatever else is in the band.
+
+   THE FIRST OF A KIND TAKES THE BARE WORD, which is `freeName`'s own behaviour
+   and is why the ordinal is not spelled in here: `freeName("bass")` is "bass"
+   on a record with no bass and "bass2" on one that has one, and the composed
+   records already call their single bass "bass". A LINE is the one kind that
+   counts out loud, because a record has several and "line" alone would say
+   nothing about which — so its base carries the ordinal and `freeName` then
+   guarantees uniqueness on top of it.
+   THE SPACE IS DELIBERATE and it is `secName`'s precedent: these are words a
+   person reads, not identifiers. Every address that carries a name builds it
+   into a quoted attribute (`[data-k="tab..."]`) or encodes it
+   (`encodeURIComponent` in `linkFrag`), so a space costs nothing and a
+   machine-shaped name costs the reader every time they look at the gutter. */
+const kindName = (kind) => kind === "line"
+  ? freeName("line " + (LINES().length + 1))
+  : freeName(kind);
 function addVoice(kind) {
   if (kind === "bass") {
-    const name = freeName("bass");
+    const name = kindName("bass");
     DOC.voices.push({ name, kind: "bass",
       cast: { style: "eighths" }, development: {} });
     tab = name; return;
@@ -7215,7 +7300,11 @@ function addVoice(kind) {
     if (!cell) { cell = "beat";
       DOC.material.cells[cell] = { kind: "drum",
         lanes: JSON.parse(JSON.stringify(DRUMGRID)) }; }
-    const name = freeName("kit");
+    /* "drums" AND NOT "kit" (2026-09-02) — see `kindName`. `kit` was this
+       file's own word for the thing; `drums` is the KIND, which is the word
+       the gutter's glyph row, the roster's category edge, `devSheetFor` and
+       every one of Paul's own sentences ("+ drums") already use. */
+    const name = kindName("drums");
     DOC.voices.push({ name, kind: "drums", cast: { on: true },
       material: cell, instrument: "tr909", development: {} });
     // ...AND THE BEAT IT WILL READ IS THE MOTIF THAT COMES UP. Since 2026-08-25
@@ -7229,7 +7318,7 @@ function addVoice(kind) {
     motifTab = cell;
     tab = name; return;
   }
-  const name = freeName("voice" + (DOC.voices.length + 1));
+  const name = kindName("line");
   // a new line is a COUNTERSUBJECT by default: its own part, entering a bar
   // after the last one, answering at the fifth — the shape a canon wants
   const lines = LINES(), last = lines[lines.length - 1];
@@ -7369,8 +7458,63 @@ function secNumber(sid, label, here, on) {
    extracted — so it gets the same `material.cell` menu a line gets, offered
    among the DRUM cells (avail.js `cellsFor`). The bass gets a sentence instead
    of a menu; see `bassReadsWhy` for the measurement that forced that. */
+/* ---------- HOW LONG A SECTION IS, IN THE FORM LIST ---------------------
+   ONE ADDRESS, TWO SPELLINGS, AND NEVER BOTH ON THE PAGE — which is exactly
+   the licence `form.role` takes four lines below and for exactly the same
+   reason: `structurePanel` DISPATCHES between the list and the open section's
+   questions, so a key drawn in both is a key drawn once.
+
+   IT IS A SPINNER HERE AND A SLIDER THERE, and that is the one place the two
+   spellings differ. `sectionDetail` gets `number()` — the question on its own
+   line above the control — because it has a column to itself; a `.nu-field`
+   with a range in it inside a `<td>` at 320px is the control this file already
+   refused in writing one screen down ("a slider in a `<td>` at 320px is a
+   control you cannot work"). An `<input type="number">` is 5ch, takes the
+   arrow keys, takes a typed number, and is the same 44px tap floor everything
+   else in the table already keeps.
+
+   THE FENCE IS 1..32 AND IT IS THE SLIDER'S OWN, so the two spellings cannot
+   disagree about what a legal length is: the browser clamps the spinner, and
+   the write clamps again, because a typed "0" reaches `change` before the
+   browser has anything to say about it and a section of nought bars is a
+   section `scoreOf` compiles to nothing.
+   `changed()` AND NOT A RECOMPOSE: the bar count is read at RENDER
+   (`document.js barsOf`, `scoreOf`, `audio/plan.js`), so this is the render
+   tier — the record keeps every note you wrote and the section gets longer. */
+const BARSKEY = (s2) => "form.bars|" + s2.id;
+const BARSMIN = 1, BARSMAX = 32;
+function barsCell(s2, i) {
+  const td = el("td");
+  const inp = document.createElement("input");
+  inp.type = "number";
+  inp.min = String(BARSMIN); inp.max = String(BARSMAX); inp.step = "1";
+  inp.value = String(s2.bars);
+  inp.className = "nu-barsin";
+  inp.dataset.k = BARSKEY(s2);
+  inp.setAttribute("aria-label",
+    "how many bars in section " + (i + 1) + ", " + (ROLES[s2.role] || s2.role));
+  inp.addEventListener("change", () => {
+    const v = Math.max(BARSMIN, Math.min(BARSMAX, Math.round(+inp.value || 0)));
+    inp.value = String(v);
+    if (v === s2.bars) return;
+    s2.bars = v;
+    push();
+    changed();
+  });
+  /* NO UNIT BESIDE IT: the column head is the word "bars" and saying it again
+     in every cell is the same label printed once per section. */
+  td.append(inp);
+  return td;
+}
+
 function formTable(parent, voice, editable, picks) {
   const g = el("table");
+  /* A NAME FOR THE ONE TABLE ON THIS PAGE THAT HOLDS FULL CONTROLS (2026-09-02).
+     Its cells are not grid cells — the role is a combo with a chassis and the
+     bars is a spinner — and nu.css has to be able to say so: a `.nu-sel` inside
+     a `<td>` here must give up the stacked-label row it wears everywhere else
+     or the column is 88px tall and 30ch wide. `.nu-form` is that address. */
+  g.className = "nu-form";
   const gh = el("tr");
   const kind = voice ? voice.kind : null;
   /* ONE TABLE, AND `reads` IS IN IT FOR EVERY VOICE (Paul, 2026-08-26: "In the
@@ -7459,11 +7603,31 @@ function formTable(parent, voice, editable, picks) {
       // spec that stood in a row of its own under the table until today: same
       // key, same availability table, same greys, one fewer list to keep in
       // step with the rows above it.
+      /* ...AND IT WEARS THE COMBO CHASSIS SINCE 2026-09-02. It was a bare
+         `selectEl` in the cell, and the probe of that morning listed it with
+         the rack's menus: *"Structure's form-list role combos … (Bare selectEl
+         in a `<td>` is by design for grid CELLS; the bus plates and the form
+         role are not cells.)"* That distinction is the right one and it is the
+         reason this ONE column converts while the five automation grids do
+         not: a grid cell is one of sixty answers to one question and has no
+         room for a label; this cell is the section's NAME, one per row, and it
+         is the control a hand reaches for most often in the whole panel.
+         `selectField` appends its own `<p class="nu-sel">`, so the cell is the
+         parent rather than the thing appended. */
       const tn = el("td");
-      tn.append(selectEl(shSpec("form.role", { section: s2.id },
-        "section " + (i + 1) + " name")));
+      selectField(tn, shSpec("form.role", { section: s2.id },
+        "section " + (i + 1) + " name"));
       tr.append(tn);
-      tr.append(el("td", s2.bars + " bars"));
+      /* HOW LONG IT IS, AS A CONTROL AND NOT AS A SENTENCE (2026-09-02). This
+         cell read `el("td", s2.bars + " bars")` and the probe of that morning
+         found what that cost: *"the Structure form list's bars column is
+         static text (`TD «4 bars»`), no `[data-k*=bars]` control anywhere:
+         there is no working way in the whole box to change how long a section
+         is."* The second half of that sentence is not quite true — the OPEN
+         section's questions have carried a bars slider since 2026-08-25 — but
+         the first half is exactly right, and the list is the state you are in
+         while you are reading the form as a form. */
+      tr.append(barsCell(s2, i));
     } else {
       const th = countCell(String(i + 1));
       formCell[i] = th;
@@ -7587,6 +7751,58 @@ function addSection() {
   formSec = s2.id;
   setViewSec(secs.indexOf(s2));
   return s2.id;
+}
+/* ...AND DUPLICATING ONE IS ADDING ONE THAT ALREADY KNOWS EVERYTHING (2026-09-02).
+   COMPOSER.md §2.1 named four operations under an open section — *"up · down ·
+   duplicate · remove"* — and the probe of 2026-09-02 found three: *"The section
+   `duplicate` act was never built: expanding secnavs2 yields only secup /
+   secdown / secdrop."*
+
+   WHAT A DUPLICATE HAS TO COPY IS EVERY MAP KEYED BY THE ID, and there are
+   four of them, which is exactly why `addSection` (which copies the
+   neighbour's ROLE and BARS and nothing else) is not this. A section id is an
+   address, and `document.js normalize` names the four things addressed by it:
+     · the section object itself — its role, its bars and its eight nudge words
+       (`env`, `intro`, `outro`, `period`, `pipe`, `breath`, `lvl`, `pace`),
+       which is why this is a deep copy of the row rather than a re-typed pair;
+     · every voice's `development[id]` — what that player DOES here;
+     · every voice's `material[id]`, when the voice carries the map form — what
+       that player READS here;
+     · every voice's `desk.trim[id]` — the desk word this section deals it.
+   Copy three of four and the new section is a lie: it looks like the one above
+   it in the form table and sounds like the anchor as written.
+
+   THE NEW ID IS MINTED, NEVER DERIVED. `secMint()` is the one owner of "an id
+   nothing else is using", and a `s3-copy` spelling would be a second one.
+   `structuredClone` is not used: the four values are JSON — words, numbers and
+   small maps — and `JSON.parse(JSON.stringify(...))` is what every other copy
+   on this page already spells (`song.js validateSong`, `ui/state.js`), so the
+   deep-copy idiom stays one idiom.
+   IT LANDS YOU ON THE COPY, which is `addSection`'s own sentence for the same
+   reason: you asked for another one of these, and here it is with its
+   questions open. */
+function dupSection(id) {
+  const secs = DOC.form.sections;
+  const i = secs.findIndex((s2) => s2.id === id);
+  if (i < 0) return null;
+  const copy = JSON.parse(JSON.stringify(secs[i]));
+  copy.id = secMint();
+  secs.splice(i + 1, 0, copy);
+  for (const v of DOC.voices) {
+    if (v.development && v.development[id] != null)
+      v.development[copy.id] = v.development[id];
+    const m = v.material;
+    if (m && typeof m === "object" && !Array.isArray(m) && m[id] != null)
+      m[copy.id] = m[id];
+    const t = v.desk && v.desk.trim;
+    if (t && typeof t === "object" && t[id] != null) t[copy.id] = t[id];
+  }
+  // the record is legal the instant the splice lands — addSection's own line,
+  // and the one that fills a word for any map the copy did not carry
+  normalize();
+  formSec = copy.id;
+  setViewSec(secs.indexOf(copy));
+  return copy.id;
 }
 /* MOVING ONE IS A SWAP AND NOT A SPLICE-AND-INSERT, because a swap is what the
    two buttons say ("this section trades places with the one before it") and
@@ -7760,7 +7976,15 @@ function sectionDetail(parent, s2) {
   // it is a number on a line like every other, and it gets the question above
   // the control for free — 2026-08-25, "Put interactive elements on new lines
   // below the titles or questions.")
-  number("bars" + s2.id, "bars", s2.bars, (v) => s2.bars = v, parent, 1, 32, 1);
+  /* ...AND ITS KEY IS THE LIST'S KEY SINCE 2026-09-02. It was `bars<id>`, and
+     that was fine while this was the only bars control in the box; the form
+     list has one now (`barsCell`) and two addresses for one fact is two
+     addresses to keep in step. `form.bars|<id>` is `form.role|<id>`'s own
+     shape and takes `form.role`'s own licence, said one paragraph up: the list
+     and the detail are NEVER on the page together, so one key on two spellings
+     of one control is one owner, and `restoreFocus` puts your thumb back on
+     whichever of them is drawn. No gate called the old spelling by name. */
+  number(BARSKEY(s2), "bars", s2.bars, (v) => s2.bars = v, parent, 1, 32, 1);
   /* ===== EVERY WORD-NUDGE LEFT THIS PANEL FOR THE GRIDS (2026-09-02, 2d) ==
      Paul, B9: *"Make a section automation interface for the manipulation of
      the motifs and put it under structure/sections … Every section I can tweak
@@ -9383,8 +9607,37 @@ function soloButton(parent, v) {
      it is SAID, in the LOG, which is the page's own surface for "what did the
      box do about that" (2026-08-28, Paul: *"Add a logger… Log actions"*) and
      is outside `#app` where the clock is allowed to write. Nothing is silent
-     and nothing greys. */
-  const why = "the record is playing — stop it to hear one player alone";
+     and nothing greys.
+
+     ===== AND IT IS NOT A REFUSAL ANY MORE, 2026-09-02 ====================
+     The probe of that morning drove it: *"'▶ play alone' while the record is
+     playing refuses silently (eight.js:9399 logs to the closed log only);
+     nothing on screen changes. When stopped it works. Either stop the record
+     and audition, or put the refusal on the button."*
+
+     BOTH HALVES OF THAT ARE FAIR AND THE FIRST ONE IS THE HONEST GESTURE. The
+     log IS the page saying it — but the log is a sheet you have to have opened,
+     and a badge going from 3 to 4 in a 94px column is not an answer to a press
+     on a button that says "play alone". More to the point, the refusal was
+     never the thing a hand wanted: "hear the cantor by themselves" is a
+     complete instruction, and this box has one engine, so the way to obey it is
+     to take the record down and put the cantor up. That is `stop()` — #play's
+     own door and the one every other path uses — and then the audition, in the
+     same press, with the log saying both halves of what happened.
+
+     WHY THIS DOES NOT REOPEN A9. The rule A9 enforces is about the page's
+     PICTURE being conditional on the transport (a button that greys itself when
+     the record starts); this reads `playing` inside a CLICK HANDLER, which is a
+     hand, and writes nothing at draw time. The button's face still says the
+     next tap and still never says the state — `paintSolos` runs from the press
+     and from `playAudition`'s own callback, never from the clock — so the
+     frozen half of `#app` is byte-identical across a start and a stop, which is
+     the measurement A9 actually takes.
+     (`const why = "the record is playing — stop it to hear one player alone"`
+     stood here and is deleted with the refusal it was the words for. The one
+     refusal left on this button is the one that is TRUE at draw time and
+     cannot change under the clock: a player with no motif has nothing to
+     sound, whatever the transport is doing.) */
   if (!soloCell(v)) {
     const w2 = v.name + " has no motif to sound yet";
     b.disabled = true; b.setAttribute("aria-disabled", "true");
@@ -9397,8 +9650,18 @@ function soloButton(parent, v) {
       // row reads "play stab alone — the record is playing…", which is the
       // sentence a greyed button would have carried, said where the clock is
       // allowed to write.
-      if (playing) { logPut("act", "play " + v.name + " alone", why); return; }
-      if (soloOn(v)) auditionOff(); else auditionMember(v);
+      if (soloOn(v)) { auditionOff(); paintSolos(); return; }
+      /* THE RECORD COMES DOWN FIRST, and the log says so — one press, two
+         things, both named. `say(false)` is the transport's own word-painter
+         (#play's listener calls the identical pair), so the gutter's mark and
+         the engine agree the instant this returns and `auditionMember`'s own
+         `if (playing) return false` is satisfied by the time it is asked. */
+      if (playing) {
+        stop(); paintPlay(false);
+        logPut("act", "play " + v.name + " alone",
+               "the record stopped so one player could be heard");
+      }
+      auditionMember(v);
       paintSolos();
     });
   }
@@ -10168,6 +10431,22 @@ const restKeys = () =>
     .map((r) => (r.axis === "form" ? "form." : "development.") + r.key)
     .filter((k) => !GRIDDED[k]);
 
+/* ===== AND THEY DO LIGHT — RE-MEASURED 2026-09-02 ======================
+   The probe report of that morning, defect 5: *"The Structure grids never mark
+   the sounding row or column (everything is `is-derived` while playing; the
+   nav's secnav rows light; Mix's grid does both)."* Driven again on the
+   rendered page, Kingston 1969 at seed 1, 1280x900, Structure open, #play
+   pressed, sampled every two seconds: at t+0 and t+2 nothing (the engine's
+   runway, which audio/live.js owns and which the probe's own harness notes
+   calls "the first ~6 s after a pick"); from t+4 onward FIVE `<mark>`s — one
+   per grid — and the column lamps coming and going with the bar (two of
+   fourteen lit at t+4, none at t+8, which is the honest answer for a bar those
+   two players are not in).
+   SO NOTHING HERE CHANGED, and the measurement is written down instead —
+   `is-derived` is a fact about a MENU that has not been set (see `gridCell`
+   below) and is orthogonal to the playhead, which is why a grid full of
+   `is-derived` cells with a red row is exactly what a playing record should
+   look like. What the probe found is the runway, sampled once. */
 /* THE GRIDS' PLAYHEAD CELLS AND THEIR COLUMN LAMPS. One array per grid, each
    indexed by SECTION, exactly like `formCell` — which is what lets `mark()`
    light them with the same call, the same labels and the same `-1` from stop.
@@ -10242,6 +10521,12 @@ function scolHead(gid, v, vi) {
            el("span", line || "", "nu-scolinstr"));
   b.setAttribute("aria-label", v.name + (line ? " — " + line : "") +
     " — open this player's instrument");
+  /* AND THE WHOLE NAME IS ONE HOVER AWAY. `.nu-scolinstr` ellipsises inside a
+     9ch column (nu.css); a `title` is the browser's own way to hand back what
+     an ellipsis took, and it costs the text diet nothing because it is an
+     attribute rather than a word on the page. Probe, 2026-09-02:
+     *"`.nu-scolinstr` clips its own text by 9px."* */
+  if (line) b.title = v.name + " — " + line;
   b.addEventListener("click", () => openVoice(v.name, "inst"));
   th.append(b);
   bandLamps.push({ name: v.name, node: lamp });
@@ -10295,6 +10580,16 @@ function structureGrids(parent) {
   const grid = (gid, cap, heads, cell) => {
     const t = el("table");
     t.className = "nu-sgrid";
+    /* HOW MANY COLUMNS, AS A NUMBER THE STYLESHEET CAN DO ARITHMETIC ON
+       (2026-09-02). nu.css gives this table `table-layout: fixed` so the
+       column heads are EQUAL — the probe of that morning measured what they
+       were without it: *"automation column heads 145/195/105/113/119/88/88px
+       wide so the meters are seven scales"* — and a fixed table at 100% would
+       then crush nine players into 20px each. The minimum width is `13ch + n ·
+       9ch` and CSS cannot count `<th>`s, so the COUNT is handed over as a
+       custom property. It is a count and not a width: the sheet decides what a
+       column is worth, this only says how many there are. */
+    t.style.setProperty("--cols", String(heads.length));
     /* THE CAPTION IS THE TABLE'S OWN NAME AND NOTHING ELSE. A `<caption>` is
        what a table is CALLED (it is the accessible name of the grid), so this
        is a control label rather than prose — which is also why it wears
@@ -11737,8 +12032,62 @@ const expanded = new Set();
    this says which tabs are branches at all, and the children themselves come
    from the builders that already existed. Six tabs have none, and that is the
    same six that stood at the root before. */
+/* ===== THE EIGHT AXES ARE THE RULES BRANCH (2026-09-02) =================
+   COMPOSER.md §2.1: *"Rules → the eight axes (jump chips into the Rules
+   panel)."* The reds of that morning: *"2b undone: TABKIDS.Rules is null — the
+   eight axes as nav children … not built."*
+
+   THEY ARE READ OFF THE RENDERED PANEL AND NOT OFF A LIST. `rules.js AXES` is
+   the one owner of the eight words, and `ui/rules.js` draws a
+   `section.nu-rulax[data-axis]` for each axis THAT HAS ANY ROWS — a genre
+   declaring nothing on an axis gets no block, which is the same rule the tree
+   already keeps ("a level with nothing in it is not a level"). A branch built
+   from the eight words would therefore offer rows that scroll to nothing on
+   the blank state, which is the "declared but never arriving" bug spelled as
+   navigation. Reading the panel makes the branch exactly as long as the panel
+   is, on every record, with no second list.
+   BEFORE THE PANEL IS BUILT THERE IS NO BRANCH, and that is honest rather than
+   awkward: `showTab` builds the panel and then repaints the stripe, so the
+   first tap on Rules arrives, builds, and unfolds its axes in one gesture.
+
+   THEY ARE ACTIONS AND MARK NOTHING (`acts: true`), because none of them is a
+   thing you are IN. There is no "open axis" state — the panel draws all eight
+   blocks down one column and this scrolls you to one — so eight
+   `aria-pressed="false"` buttons would tell a screen reader there is a state to
+   be in, which is the 2026-08-28 law the motif transforms already keep.
+   THE MARK IS `§` FOR ALL OF THEM WITH THE DIGIT SAYING WHICH, which is the
+   gutter's one idiom (the picture says the KIND, the digit says WHICH, the word
+   says who) and is exactly how the sections' rows are drawn. */
+const rulesAxisRows = () => {
+  const host = $("rulesdeck");
+  if (!host) return [];
+  const secs = [...host.querySelectorAll("section.nu-rulax")];
+  return secs.map((sec, i) => {
+    const axis = sec.dataset.axis;
+    const n = sec.querySelectorAll(".nu-rule").length;
+    return {
+      key: "rulax-" + axis, glyph: GLYPH.tab.Rules.g, num: i + 1, word: axis,
+      sub: n ? n + " rule" + (n === 1 ? "" : "s") : null,
+      say: axis + " — " + (n ? n + " of this genre's sentences" : "its palette"),
+      acts: true,
+      act: () => {
+        showTab("Rules");
+        /* AFTER THE PANEL IS ON THE PAGE, WHICH IS THE FRAME AFTER THIS ONE.
+           `showTab` may have just built `#rulesdeck` from nothing, and a
+           `scrollIntoView` on a box that has not been laid out lands on 0.
+           One frame, no timer: the layout is done by the time rAF runs, and
+           `restoreAnchor` has already had its say inside `showTab`. */
+        requestAnimationFrame(() => {
+          const el2 = $("rulesdeck");
+          const s2 = el2 && el2.querySelector(
+            'section.nu-rulax[data-axis="' + axis + '"]');
+          if (s2) s2.scrollIntoView({ block: "start", behavior: "auto" });
+        });
+      } };
+  });
+};
 const TABKIDS = {
-  Rules: null, Tempo: null, Key: null,
+  Rules: () => rulesAxisRows(), Tempo: null, Key: null,
   Motif: () => motifTrayItems(),
   Band: () => bandTrayItems(),
   Structure: () => sectionTrayItems(),
@@ -11762,6 +12111,34 @@ let trayBtn = new Map();
    the foot's permanent GENRE NAME PLATE — and it is filtered out HERE rather
    than removed from the table, so `hostIdOf`, `showTab`, `tabToWire` and every
    `t=where` link go on working with nothing to learn. */
+/* ===== WHAT A ROOT ROW'S SECOND LINE SAYS (2026-09-02) ==================
+   A member's row says its instrument, a section's says its length, a motif's
+   says who reads it — the tree's own promise that a row tells you what is in
+   it before you open it. A TAB row said nothing, and on Band that cost the
+   stripe a whole extra row: `bandroster` had to carry "the band · 7 players"
+   as a CHILD, and the reds of 2026-09-02 caught how it reads — *"the 'Band'
+   root row + 'the band · 7 players' child read as two rows for one thing."*
+
+   THE COUNT BELONGS TO THE BRANCH, so it goes on the branch's own row. This is
+   a table and not a field on every node because only some branches have a
+   number worth printing and a `sub: null` on nine of twelve rows would be nine
+   lines of nothing. `TABS` is still the one owner of the words and the order;
+   this adds a second line to two of them and reads it off the record.
+   THE CHILD ROW STAYS, and that is the half of the reds' suggestion that is
+   REFUSED with a measurement. It offered "make the roster the Band tab's own
+   panel state (no child plate row)", and the roster then has no door: the
+   member row cannot take one (a second tap on a member is a gesture two gates
+   make on purpose — test/knobs.js `seat`, test/sheets.js's drum-kit walk — and
+   the note at `bandTrayItems` records that it was tried and reverted), and the
+   TAB row cannot take one either (test/shell.js A6j went red at all four
+   widths the hour it did). So the door keeps its row and its address; what it
+   gives up is the count and the word "band", which are the parent's. */
+const TABSUB = {
+  Band: () => { const n = DOC.voices.length;
+    return n ? n + " player" + (n === 1 ? "" : "s") : null; },
+  Structure: () => { const n = DOC.form.sections.length;
+    return n ? n + " section" + (n === 1 ? "" : "s") : null; },
+};
 const rootTrayItems = () => TABS.filter(([name]) => name !== "Where")
   .map(([name]) => {
   const t = GLYPH.tab[name] || {};
@@ -11775,6 +12152,7 @@ const rootTrayItems = () => TABS.filter(([name]) => name !== "Where")
      keep its hands off. */
   const key = "toptab-" + name;
   return { key, glyph: t.g || "•", word: name, say: t.s,
+           sub: TABSUB[name] ? TABSUB[name]() : null,
            on: name === openTab, kids: TABKIDS[name] || null,
            selfExpand: true,
            /* (A `Band` SPECIAL CASE STOOD HERE FOR AN HOUR ON 2026-09-02 and
@@ -11845,10 +12223,18 @@ function bandTrayItems() {
      three gates read the members off `#nu-tray [data-k^="tab"]`
      (test/sheets.js's survey, test/knobs.js's `seat`, test/vol-reach's walk)
      and a row that is not a player must not answer to that query. */
-  const out = [{ key: "bandroster", glyph: GLYPH.tab.Band.g, word: "the band",
-    sub: vTotal ? vTotal + " player" + (vTotal === 1 ? "" : "s") : null,
-    say: vTotal ? "the band — all " + vTotal + " players as boxes"
-                : "the band — nobody hired yet",
+  /* ...AND ITS WORDS ARE NOT THE PARENT'S ANY MORE (2026-09-02). It said
+     "the band · 7 players" one row under a row that says "Band", which the
+     reds of that morning read as two rows for one thing. Both halves of that
+     doubling moved UP: the count is the Band row's own second line now
+     (`TABSUB`) and the word "band" was never this row's to say. What is left
+     is what this row alone means — the panel state where you see EVERYONE at
+     once, rather than one of them — and it keeps its address, its mark and its
+     place as the first child, because it is still the only door back. */
+  const out = [{ key: "bandroster", glyph: GLYPH.tab.Band.g, word: "everyone",
+    sub: null,
+    say: vTotal ? "everyone — all " + vTotal + " players as boxes"
+                : "everyone — nobody hired yet",
     on: tab == null,
     act: () => { tab = null; formSec = null; draw(); markLink(); } }];
   out.push(...tabs.map((name) => {
@@ -11924,8 +12310,27 @@ function playsWhat(v) {
          answer the Band panel's own bass menu draws from. Nothing hired means
          nothing said: the bass is playing the record's own chair, and absent
          is the only spelling of a default. */
+      /* ...AND WHEN NOBODY IS HIRED IT SAYS THE CHAIR'S OWN (2026-09-02). This
+         read `hired ? hired.label : null`, with the sentence "nothing hired
+         means nothing said: the bass is playing the record's own chair, and
+         absent is the only spelling of a default." The first half is still
+         true; the second half was the wrong law for this fact, and the probe
+         of 2026-09-02 measured what it cost: *"Nothing ever says what the bass
+         is playing … sel|sound.bassinstrument|bass sits on "" = 'default' with
+         no word."* "Absent is the only spelling of a default" is a rule about
+         what a RECORD may store — a document must not write down a value it
+         did not choose — and this is a READOUT, whose whole job is to say what
+         is sounding. Every other member's line names an instrument; the bass's
+         named nothing, on a page whose gutter promises *"On the nav I need to
+         know what they're playing as instruments."*
+         `bassInstrOf` IS THE ONE OWNER of that answer and `audio/plan.js
+         seats()` reads it through the same export, so this line and the sound
+         cannot drift: with no pool it is `acoustic_bass`, with one it is the
+         chair that was hired, and `poolBand()`'s own label is preferred when
+         there is one because it is the word the Band panel's menu shows. */
       const hired = poolBand().find((c) => c.chair === "bass");
-      return NAME(v.instrument) || (hired ? hired.label : null);
+      return NAME(v.instrument) || (hired ? hired.label : null) ||
+             NAME(bassInstrOf(null));
     }
     return NAME(v.instrument);
   } catch (e) { return null; }
@@ -12055,6 +12460,23 @@ function secOpsTrayItems() {
       say: GLYPH.sec.down.s,
       why: i < n - 1 ? null : here + " is already the last section",
       act: () => { moveSection(at(), 1); push(); draw(); } },
+    /* DUPLICATE SITS BETWEEN THE MOVES AND THE REMOVAL, which is COMPOSER.md
+       §2.1's own order ("up · down · duplicate · remove") and is also the
+       order of consequence: two that rearrange, one that grows, one that
+       destroys. IT WEARS `+\u25a6` — `GLYPH.sec.add`'s picture, because what it
+       does IS adding a section and the gutter's one idiom is that the picture
+       says the KIND — and its own WORD, because "another one of these, with
+       everything it knows" is not "+ section". Two words, one picture, and
+       ui/glyph.js keeps a single row.
+       AND IT IS REFUSED BY NOTHING, said out loud so the next reader does not
+       go looking for the missing `why`: the sections list has no ceiling
+       anywhere in the document tier (band-kit's MAXSECS is the /band page's
+       fence and this record is not one of its songs), so there is no measured
+       sentence to print and a coined one would be furniture. */
+    { key: "secdup", glyph: GLYPH.sec.add.g, word: "duplicate",
+      say: "another " + here + ", after this one — the same bars, the same " +
+           "words, and the same thing every player reads and does here",
+      act: () => { dupSection(formSec); push(); draw(); } },
     { key: "secdrop", glyph: GLYPH.sec.drop.g, word: GLYPH.sec.drop.w,
       say: GLYPH.sec.drop.s,
       why: n > 1 ? null
@@ -12689,13 +13111,26 @@ const whereBtn = icon({ k: "toptab-Where", glyph: GLYPH.tab.Where.g,
                         word: GLYPH.tab.Where.w, say: GLYPH.tab.Where.s,
                         on: true });
 whereBtn.addEventListener("click", () => showTab("Where"));
+/* ...AND THE ROW'S OWN `label` STANDS BETWEEN THE ARTICLE AND THE KEY
+   (2026-09-02). The rule was "the wiki title, else the key", and the probe of
+   that morning found where it breaks: *"The blank state's plate says the key:
+   word 'silence' (key), sub 'Silence' (label) — GENRES.silence.label is
+   'Silence'; the name-plate rule (wiki title else key) never consults
+   `label`."* A key is an ADDRESS and no row's name for anything; the catalogue
+   already carries a human word for every row it has, and the plate was
+   stepping over it to print the address.
+   THE SUB LINE THEN HAS TO NOT SAY IT TWICE. `label` is "Kingston 1969" for an
+   anchored record and "Silence" for the blank state — one field, two jobs,
+   because a row with no place has no place to print — so the second line is
+   drawn only when it is a DIFFERENT string from the first. One fact, said
+   once, and no plate that reads "Silence · Silence". */
 function nameRecord() {
   const gk = DOC.basis;
   const g = GENRES[gk] || {};
   const row = NuWiki && NuWiki.WIKI ? NuWiki.WIKI[gk] : null;
-  const word = row ? String(row.title).replace(/_/g, " ") : gk;
-  paintIcon(whereBtn, { glyph: GLYPH.tab.Where.g, word,
-                        sub: g.label || null,
+  const word = row ? String(row.title).replace(/_/g, " ") : (g.label || gk);
+  const sub = g.label && g.label !== word ? g.label : null;
+  paintIcon(whereBtn, { glyph: GLYPH.tab.Where.g, word, sub,
                         say: GLYPH.tab.Where.s, on: openTab === "Where" });
 }
 
@@ -13027,9 +13462,18 @@ function timeAxis(box) {
      after the pace strip rather than after the meter/swing row: the panel grew
      seven controls under it and the pointer stayed LAST, which is the whole
      claim. */
+  /* ...AND IT IS DRESSED AS A CONTROL SINCE 2026-09-02, for the same reason
+     the board's routing pointer is (ui/engineer.js). Probe of that morning:
+     *"[goto.board] in Tempo is a 261x15px link."* Fifteen pixels of underlined
+     text is not a target on a page whose every other door is 44px, and this
+     one is a door — its click handler opens the Mix tab. `.nu-routelink` is the
+     one owner of that chassis; the `href`, the words and the key are
+     untouched, so the no-JavaScript path and every gate that reads it by name
+     still find what they ask for. */
   const gainPtr = (() => { const pt = el("p", null, "nu-hint");
     const a = document.createElement("a");
     a.href = "#board"; a.textContent = "record gain — on the board's main strip";
+    a.className = "nu-routelink";
     a.dataset.k = "goto.board";
     a.addEventListener("click", (e) => { e.preventDefault(); showTab("Mix"); });
     pt.append(a);
@@ -13077,8 +13521,18 @@ function timeAxis(box) {
      second GESTURE for one fact and not a second owner of it. The slider and
      the big readout are moved to agree before the rebuild lands, so the panel
      never shows two numbers for one tempo even for a frame. */
+  /* ONE ROW FOR ALL NINE (2026-09-02). The tap and the eight operations were
+     two `<p class="nu-row">`s, one under the other, and the probe of that
+     morning read the result: *"Nine naked glyphs in Tempo (⏱ ♪↓ ♪↑ ♪↓↓ ♪↑↑ ←→
+     →← 1× ↺) … Tap tempo sits alone on its own row."* They are nine marks that
+     do ONE thing — move the tempo — and a row of eight with a ninth stranded
+     above it is two rows saying one thing. The tap goes FIRST because it is the
+     only one of the nine that measures rather than computes: you give it a
+     pulse, the other eight take the number it left. */
+  let tfRow = null;
   {
-    const row = el("p", null, "nu-row nu-taprow");
+    const row = el("p", null, "nu-row nu-tf-row nu-taprow");
+    tfRow = row;
     const G = GLYPH.act.tap;
     const out = el("output", tapLive()
       ? tapAt.length + (tapAt.length === 1 ? " tap" : " taps") : "");
@@ -13128,7 +13582,9 @@ function timeAxis(box) {
      and the pace strip are all Paul's same sentence and none of them is this
      wave's. */
   {
-    const row = el("p", null, "nu-row nu-tf-row");
+    // ...AND THE EIGHT JOIN THE TAP'S ROW rather than opening a second one —
+    // see the paragraph over `tfRow`. Same table, same keys, same refusals.
+    const row = tfRow;
     const now = () => ({ bpm: DOC.time.bpm,
                          rate: DOC.time.rate == null ? null : DOC.time.rate });
     for (const d of TEMPOS) {
@@ -13146,7 +13602,6 @@ function timeAxis(box) {
                                           DOC.time.rate = v.rate; changed(); });
       row.append(b, document.createTextNode(" "));
     }
-    axTime.append(row);
   }
   // THE THREE-WAY RATE MAPPING LIVES IN THE DATA TIER, AND STAYED THERE THROUGH
   // BOTH REVERSALS. "as written" is rate 1 and has no key in fields.js RATES, so
@@ -13364,11 +13819,40 @@ function exportBlock(parent) {
      t   the TAB, lower-cased (`#t=mix` opens on the board) — and, since
          2026-08-28, the item its own level has open, after a slash:
          `#t=band/bass`, `#t=motif/psalm`, `#t=score/roll`.
-   Three of those four are the whole input to the compose path
-   (`recordAt(place, year)` -> gk, then `genreToDocument(gk, seed)`), which is
-   why the SONG is never in here. A link is a recipe, not a recording: it is
-   ~40 characters, it survives a change to a genre's own recipe, and it cannot
-   go stale into a shape `song.js` would have to migrate.
+     r   the RULES, since 2026-09-02 — `doc.rules` as compact JSON, url-encoded
+         (`r=%5B%7B%22f%22%3A%22bpm%22%2C%22v%22%3A157%7D%5D`). Absent when the
+         record states none, which is every record composed straight off its
+         anchor.
+   Those five are the whole input to the compose path (`recordAt(place, year)`
+   -> gk, then `genreToDocument(gk, seed, rules)`), which is why the SONG is
+   never in here.
+
+   A LINK IS A RECIPE, NOT A RECORDING — AND THE RECIPE HAS FOUR INGREDIENTS,
+   NOT THREE (2026-09-02). This paragraph read: *"Three of those four are the
+   whole input to the compose path (`recordAt(place, year)` -> gk, then
+   `genreToDocument(gk, seed)`) … it is ~40 characters, it survives a change to
+   a genre's own recipe, and it cannot go stale."* Every clause of that is
+   still true of what the fragment carries; what was FALSE was the claim that
+   the three inputs were all of them. `genreToDocument` grew a third argument
+   on 2026-09-01 (the Rules round) and the fragment did not, so the probe of
+   2026-09-02 measured the consequence: *"The share link loses every edit; only
+   the anchor round-trips. Edited: bpm 155, rules [{bpm:157}], voices 8 →
+   reopened: bpm 74, rules [], voices 7 … The band you built cannot leave the
+   tab."* A recipe that drops a third of itself is not a recipe.
+   SO `r=` IS IN, AND IT IS STILL A RECIPE. `doc.rules` is a list of `{f, v}` —
+   a field this build has a rule for and a JSON value — validated at the door
+   by `song.js validateRules` and clamped on the way into the row by
+   `rules.js applyRules`, so a stranger's `r=` is refused field by field rather
+   than trusted. It is SENTENCES, not notes: a record whose anchor is improved
+   tomorrow replays with the improvement and keeps your tempo, which is what
+   "recipe" was always claiming.
+   AND THE RECORDING IS THE OTHER DOOR. What a link still cannot carry is a
+   record you built by hand — a hired member, a renamed motif, a section you
+   duplicated — because none of those is an input to the compose path; they are
+   the OUTPUT, edited. That is the `song` card in the Export tab (`songCard`
+   below), which hands the whole document over as `<basis>.song.json` and takes
+   one back. Two exports, two meanings, and the tab says which is which: the
+   link is the recipe, the file is the recording.
 
    THE CLOCK NEVER WRITES THE ADDRESS. Nothing in this block subscribes to
    "pos" or to "transport:state". The three things that move it are the atlas
@@ -13465,6 +13949,22 @@ function linkFrag() {
   const sub = subNow();
   p.push("t=" + encodeURIComponent(tabToWire(openTab)) +
          (sub ? "/" + encodeURIComponent(sub) : ""));
+  /* THE SENTENCES, LAST AND ONLY WHEN THERE ARE ANY. Compact JSON, because
+     `{f,v}` is the shape `song.js validateRules` already refuses at the door
+     and inventing a second, shorter spelling of it here would be a second
+     owner of what a rule IS. `encodeURIComponent` because the value may be a
+     string, an array or an object and every one of those can hold a `&`.
+     A THROW IS A LINK WITHOUT RULES, never a link that fails to be built:
+     `JSON.stringify` can throw on a cycle, and the address bar is not worth
+     taking the page down for (the same swallow `writeLink` makes about
+     `replaceState`). */
+  const rl = DOC && Array.isArray(DOC.rules) ? DOC.rules : null;
+  if (rl && rl.length) {
+    try {
+      p.push("r=" + encodeURIComponent(JSON.stringify(
+        rl.map((e) => ({ f: e.f, v: e.v })))));
+    } catch (e) { /* an unwritable value is a link without it */ }
+  }
   return "#" + p.join("&");
 }
 /* ...AND THE WHOLE URL, which is what a person pastes into a message. Built
@@ -13525,12 +14025,27 @@ function readLink() {
   let q;
   try { q = new URLSearchParams(h); } catch (e) { return null; }
   const at = q.get("at"), y = q.get("y"), s = q.get("s"), t = q.get("t");
-  if (at == null && y == null && s == null && t == null) return null;
+  const r = q.get("r");
+  if (at == null && y == null && s == null && t == null && r == null) return null;
+  /* THE SENTENCES, PARSED HERE AND VALIDATED ELSEWHERE (2026-09-02). This
+     turns a string into a list or into null, and it does no more than that on
+     purpose: WHICH fields a rule may name and WHAT each may hold are
+     `song.js validateRules` and `rules.js applyRules`, both of which every
+     record already passes through — `genreToDocument` resolves the row and
+     `document.js normalize` refuses the leftovers. A second copy of those
+     bounds in the URL parser would be a second copy to drift.
+     UNREADABLE IS ABSENT, and silently: a fragment is a string a stranger
+     typed, and the record it names is still worth opening. */
+  let rules = null;
+  if (r != null) {
+    try { const v = JSON.parse(r); if (Array.isArray(v) && v.length) rules = v; }
+    catch (e) { rules = null; }
+  }
   /* THE FIRST SLASH AND ONLY THE FIRST. See the note over `subNow`: the tab is
      one of Paul's nine words and holds no slash, so everything after the first
      one is the item, whole, however many slashes are in its name. */
   const cut = t == null ? -1 : String(t).indexOf("/");
-  return { at, y, s,
+  return { at, y, s, rules,
            t: cut < 0 ? t : String(t).slice(0, cut),
            sub: cut < 0 ? null : String(t).slice(cut + 1) };
 }
@@ -13578,6 +14093,107 @@ function shareCard(grid) {
       else hand();
     });
     card.append(f, b);
+  });
+}
+
+/* ---------- and the other door: the record as a file --------------------
+   Paul, the composer round: *"I want to BUILD THE BAND … I can hear the song
+   evolve as I add and take things away."* The band you build IS the
+   deliverable, and until today it could not leave the tab: the link carries
+   the RECIPE (an anchor, a reading, a list of sentences) and there is no
+   recipe for "I hired a fretless bass, renamed the second motif and duplicated
+   the chorus". Those are edits to the OUTPUT, and the only honest way to hand
+   the output over is to hand the output over.
+
+   SO THIS CARD IS THE RECORDING AND THE ONE ABOVE IT IS THE RECIPE, and the
+   two sit side by side so the difference is a thing you read rather than a
+   thing you discover. The file is `<basis>.song.json` — `deckFile()`'s own
+   name, the same stem the .wav, the .mid and the .als already take, so a
+   folder of exports of one record sorts together.
+
+   IT IS THE DOCUMENT, PRETTY-PRINTED, AND NOTHING ELSE. No wrapper object, no
+   "exportedAt", no version of its own: `DOC` already carries `basis`, `rules`,
+   `time`, `alphabet`, `material`, `form`, `voices` and `performance`, and a
+   second envelope around it would be a second shape for `document.js
+   normalize` to learn. What comes back in goes through the door every record
+   on this page enters through — `CTX.setDocument`, which calls `normalize()`,
+   which is where `song.js validateRules` refuses a rule this build has no name
+   for and where every retired key is folded. A file this build cannot read
+   therefore fails LOUDLY, at the door, with the reason on the page.
+
+   THE REFUSAL IS A SENTENCE AND NOT A THROW. Three things can be wrong with a
+   file somebody hands you and each of them gets its own line: it is not JSON,
+   it is JSON but not a record (the four fields every document has), or it is a
+   record `normalize` cannot make legal. The document on the page is never
+   touched until the new one has survived all three — the parse and the shape
+   check happen on a COPY, and `setDocument` is reached only after them.
+
+   AND `<input type="file">` IS THE WHOLE OF THE OPEN GESTURE. No drag zone, no
+   picker of our own: the browser's file dialog is the one control every person
+   already knows, it is a real form control so it takes a tab stop and a
+   screen reader announces it, and it is the only path that works identically
+   on a phone and off `file://`. The input is styled by nu.css beside the other
+   export controls and its accessible name says what it takes. */
+function songCard(grid) {
+  exportCard(grid, "JSON", "the record",
+    "the band you built — every player, motif, section and sentence", (card) => {
+    const say = el("p", "", "nu-hint");
+    say.setAttribute("role", "status");
+    const b = el("button", "save .song.json");
+    b.type = "button"; b.dataset.k = "deck.exp.song";
+    b.addEventListener("click", () => {
+      try {
+        const bytes = JSON.stringify(DOC, null, 1);
+        handOff(deckFile() + ".song.json", bytes, "application/json");
+        say.textContent = "saved — " + DOC.voices.length + " player" +
+          (DOC.voices.length === 1 ? "" : "s") + ", " +
+          DOC.form.sections.length + " section" +
+          (DOC.form.sections.length === 1 ? "" : "s") + ", " +
+          (bytes.length / 1024).toFixed(0) + " KB";
+      } catch (e) { say.textContent = "this record cannot be written down — " +
+                                      ((e && e.message) || e); }
+    });
+    const f = el("input");
+    f.type = "file";
+    f.accept = ".json,application/json";
+    f.dataset.k = "deck.exp.songopen";
+    f.setAttribute("aria-label", "open a .song.json record");
+    f.addEventListener("change", () => {
+      const file = f.files && f.files[0];
+      if (!file) return;
+      say.textContent = "reading " + file.name + "…";
+      file.text().then((text) => {
+        let next;
+        try { next = JSON.parse(text); }
+        catch (e) { say.textContent = file.name + " is not JSON — " +
+                      ((e && e.message) || e); return; }
+        /* THE FOUR FIELDS EVERY RECORD ON THIS PAGE HAS. Not a schema — the
+           shapes are `document.js`'s and `song.js`'s to refuse — but the
+           difference between "a record this build can try to open" and "some
+           other JSON somebody had lying around", which is a question the
+           reader deserves answered by name rather than by a stack trace. */
+        const missing = ["basis", "material", "form", "voices"]
+          .filter((k) => !next || typeof next !== "object" || next[k] == null);
+        if (missing.length) {
+          say.textContent = file.name + " is JSON but not a record — it has no "
+            + missing.join(", ") + ".";
+          return;
+        }
+        try { NuDocument.normalize(next); }
+        catch (e) { say.textContent = file.name +
+          " is a record this build cannot make legal — " + ((e && e.message) || e);
+          return; }
+        CTX.setDocument(next);
+        markLink();
+        say.textContent = "opened " + file.name + " — " + next.voices.length +
+          " player" + (next.voices.length === 1 ? "" : "s") + ", " +
+          next.form.sections.length + " section" +
+          (next.form.sections.length === 1 ? "" : "s");
+      }, (e) => { say.textContent = file.name + " could not be read — " +
+                                    ((e && e.message) || e); });
+      f.value = "";      // the same file twice in a row is two gestures
+    });
+    card.append(b, f, say);
   });
 }
 
@@ -14657,7 +15273,11 @@ ATLAS = mountAtlas($("atlas"), CTX);
    different document in a different file), so this `if` is the whole of the
    precedence rule. */
 if (ATLAS) {
-  const why = LINK && LINK.at ? ATLAS.open(LINK) : false;
+  /* ...AND THE SENTENCES IT CARRIES GO WITH IT (2026-09-02). `LINK.rules` is
+     `readLink`'s parsed `r=`; `ATLAS.open` hands it to `genreToDocument` as
+     the third input, so the record the recipient composes is the record the
+     sender was listening to and not the anchor as written. */
+  const why = LINK && LINK.at ? ATLAS.open(LINK, undefined, LINK.rules) : false;
   if (why !== true) {
     ATLAS.showing(DOC.basis);
     // …AND THE REASON IS PRINTED AFTER THE FALLBACK, NOT BEFORE IT. `showing()`

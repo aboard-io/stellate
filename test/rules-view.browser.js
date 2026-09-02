@@ -24,9 +24,17 @@
  *       at the reading in the address — `doc.time.bpm` within the row's own
  *       jitter of 100, and `doc.rules` holds `{f:"bpm", v:100}`.
  *   R3  reset removes the entry and the tempo goes back to the anchor's.
- *   R4  a RENDER-tier rule (`maxHold`) reaches the COMPILED genre with no
+ *   R4  a RENDER-tier rule (`phrase`) reaches the COMPILED genre with no
  *       recompose at all: `__eightGenres()` moves, and the document object is
  *       the same one it was (a sentinel set from here survives).
+ *       (It read `maxHold` until 2026-09-02. The tier audit of that day
+ *       measured `maxHold` as a COMPOSE rule — `precompose.js capOf` writes
+ *       the cap into every cell's `play` row, 182 steps of the document on
+ *       reggae — so this check now drives `phrase`, which nothing in
+ *       precompose reads and `toGenre` spreads straight to kernel.js's arch.)
+ *   R8  the tier sentence is said ONCE PER AXIS, not once per row. The probe
+ *       of 2026-09-02: "'the record is written again at this seed' printed
+ *       under EVERY compose-tier row in Rules (~12x)."
  *   R5  the palette adds a rule the row does not declare, the row appears with
  *       its control, and every greyed option in the palette carries a reason.
  *   R6  `GENRES` is byte-unchanged after all of it — `applyRules` copies, so
@@ -164,6 +172,12 @@ function standUpServer() {
       kin: (q(".nu-rulekin")[0] || {}).textContent || null,
       palettes: q('select[data-sel^="rule-add|"]').length,
       tiers: q(".nu-rule > .nu-why").length,
+      /* R8: how many tier sentences the panel prints, and how many rows there
+         are to print them under. A row's tier is DATA on every row; the
+         SENTENCE is one per axis block plus the rows that depart from it. */
+      axtiers: q(".nu-axtier").length,
+      rowtiers: q(".nu-rule[data-tier]").length,
+      rowsaid: q(".nu-rule > small.nu-why:not(.nu-axtier)").length,
     };
   });
   const EIGHT = ["Time", "Alphabet", "Material", "Form",
@@ -183,6 +197,23 @@ function standUpServer() {
   check(shape.rows > 10 && shape.palettes >= 6,
     "R1c the record's own rules have rows and the axes have palettes " +
     JSON.stringify({ rows: shape.rows, palettes: shape.palettes }));
+
+  /* ================= R8 · THE TIER IS SAID ONCE PER AXIS ================= */
+  /* Every row still DECLARES its tier — `data-tier`, which is what a gate and
+     a stylesheet read and what costs no words at all — and the sentence is
+     printed once at the foot of its axis block, plus once on any row that
+     departs from that block's common tier. So the count of spoken tiers is at
+     most the eight blocks plus the handful of departures, and nowhere near the
+     one-per-row the probe measured. */
+  check(shape.axtiers >= 6 && shape.axtiers <= 8,
+    "R8 each axis block says its common tier once — " + shape.axtiers +
+    " sentences over " + shape.axes.length + " blocks");
+  check(shape.rowtiers >= shape.rows - 8,
+    "…while every editable row still declares its tier as data — " +
+    shape.rowtiers + " of " + shape.rows + " rows carry data-tier");
+  check(shape.rowsaid <= 4,
+    "…and only a row that DEPARTS from its block's tier spells it out — " +
+    shape.rowsaid + " such rows (was one per row, ~12x, before 2026-09-02)");
 
   /* ================= R2 · A THRESHOLD, AND A RECOMPOSE =================== */
   /* `bpm` is a COMPOSE-tier rule: the record is written again at the reading in
@@ -220,32 +251,55 @@ function standUpServer() {
   check(!gone, "…and the reset mark goes with it");
 
   /* ================= R4 · THE RENDER TIER, WITHOUT A RECOMPOSE ==========
-     `maxHold` is one of the fields `document.js toGenre` spreads UNDER the
-     document, so it reaches the kernel on the next frame with no new record at
-     all. The proof that no record was written is a sentinel put on the document
-     object from here: `ctx.setDocument` replaces `DOC` wholesale, so a
-     surviving sentinel is the same object. */
-  const hold0 = await p.evaluate(() => {
-    window.__eightDoc().__ruleProbe = "kept";
-    const g = window.__eightGenres();
-    const k = Object.keys(g)[0];
-    return { maxHold: g[k].maxHold, k }; });
-  await drag("rule|maxHold", 2);
-  const hold1 = await p.evaluate(() => {
-    const g = window.__eightGenres();
-    const k = Object.keys(g)[0];
-    return { maxHold: g[k].maxHold,
-             kept: window.__eightDoc().__ruleProbe === "kept",
-             rules: window.__eightDoc().rules }; });
-  check(hold1.maxHold === 2 && hold0.maxHold !== 2,
-    "R4 a render-tier rule reaches the COMPILED genre " +
-    JSON.stringify({ was: hold0.maxHold, now: hold1.maxHold }));
+     `phrase` is one of the two fields `document.js toGenre` spreads UNDER the
+     document with nothing in precompose reading it, so it reaches the kernel on
+     the next frame with no new record at all. The proof that no record was
+     written is a sentinel put on the document object from here:
+     `ctx.setDocument` replaces `DOC` wholesale, so a surviving sentinel is the
+     same object.
+
+     IT WAS `maxHold` UNTIL 2026-09-02, and the tier audit of that day is why it
+     is not any more: `precompose.js capOf` (:679) reads `maxHold` FIRST while
+     it writes each cell's `play` row, so an edit there moves 182 steps of the
+     reggae document and a render tier would have handed the kernel a new cap
+     over cells still written with the old one. `maxHold` is a compose rule now
+     and `phrase` — measured over twelve anchors x five values, not one byte of
+     the composed document — is the honest render one. */
+  /* READ OFF THE EVENT STREAM AND NOT OFF A FIELD LIST. `__eightGenres()`
+     publishes a HAND-PICKED set of compiled fields (kitSeed, bpm, rate,
+     maxHold, prog, pipes) and `phrase` is not among them — adding it there is
+     ui/eight.js's to do. It does not need to be: `__eightEvents(si)` is
+     `ui/derive.js sectionRender`, the stream the band actually plays, and
+     `phrase` IS the arch on it (kernel.js:1337-1348 — the phrase tent plus the
+     agogic peak, which lands on the velocities). So this asks the strongest
+     form of the question the tier makes: the SOUND of section 0 changed, and
+     no new record was written. */
+  /* EVERY SECTION, NOT THE FIRST. Measured in node before this was written:
+     an arch has to have a phrase to arch, so `reggae`'s two-bar `bass` and
+     `groove` BEDS do not move at all under `phrase` and the eleven sections
+     with a line in them do (39 events in the first verse, 41 in the first
+     chorus). A check that read section 0 would have been a false red about a
+     record behaving correctly. */
+  const velsOf = () => p.evaluate(() => {
+    const n = (window.__eightDoc().form.sections || []).length, out = [];
+    for (let i = 0; i < n; i++)
+      out.push((window.__eightEvents(i) || []).map((e) => e.vel).join(","));
+    return out.join("|"); });
+  await p.evaluate(() => { window.__eightDoc().__ruleProbe = "kept"; });
+  const hold0 = { vel: await velsOf() };
+  await drag("rule|phrase", 0.9);
+  const hold1 = { vel: await velsOf(), ...(await p.evaluate(() => ({
+    kept: window.__eightDoc().__ruleProbe === "kept",
+    rules: window.__eightDoc().rules }))) };
+  const moved = hold0.vel.split("|").filter((v, i) => v !== hold1.vel.split("|")[i]).length;
+  check(!!hold0.vel && hold1.vel !== hold0.vel,
+    "R4 a render-tier rule reaches THE BAND — the velocities move in " +
+    moved + " of the record's sections, with no new record written");
   check(hold1.kept, "…without writing a new record — the document is the same " +
     "object it was (no recompose on the render tier)");
-  check(JSON.stringify((hold1.rules || []).find((r) => r.f === "maxHold")) ===
-    JSON.stringify({ f: "maxHold", v: 2 }),
+  check(Math.abs(((hold1.rules || []).find((r) => r.f === "phrase") || {}).v - 0.9) < 0.001,
     "…and the sentence is on the record " + JSON.stringify(hold1.rules));
-  await press("rule-reset|maxHold");
+  await press("rule-reset|phrase");
 
   /* ================= R5 · THE PALETTE ==================================== */
   /* `reggae` states no `swing` — its eighths are straight — so the Time

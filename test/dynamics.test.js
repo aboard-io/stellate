@@ -277,12 +277,63 @@ function v1Bars(abc, steps, secAt) {
     const pg = await b.newPage({ viewport: { width: 1280, height: 900 } });
     const errs = [];
     pg.on("pageerror", (e) => errs.push(String(e)));
-    await pg.goto(PAGE, { waitUntil: "networkidle" });
+    /* THE CHANT IS NAMED IN THE ADDRESS NOW (2026-09-02). This was a bare
+       `goto(PAGE)` and the sentences below all say "the 4/4 chant", because the
+       chant WAS what a bare boot opened on. It is not any more: Paul, B3 —
+       *"Add a 'silence' genre at the top of the genre list. This is a blank
+       state"* — and COMPOSER.md §2.3 spells the consequence for exactly this
+       kind of gate: *"the shipped chant fixture stays the document gates'
+       subject by loading it explicitly."*
+       WHAT THE BARE BOOT MEASURED INSTEAD, and why both halves of C1 went red
+       on a page that is behaving: `silence` is one section of sixteen rests, so
+       it deals no `lvl` and no `env` (C0 passed, and passed for the wrong
+       reason), its abc IS its bare fold (the byte-identity half passed, on a
+       record with nothing in it), and it names NO CHANGES — which is what took
+       *"its CHANGES are still named"* down. A blank state is not a wordless
+       record, it is an empty one, and this gate is about the difference.
+       `s=1` because the boot draws a seed now and a gate that re-rolls its own
+       subject measures a different record every run. */
+    await pg.goto(PAGE + "#at=Rome&y=600&s=1", { waitUntil: "networkidle" });
     await pg.evaluate(() => window.__eightTab && window.__eightTab("Score"));
     await pg.waitForTimeout(2500);
+    /* ...AND THE WORDS ARE TAKEN OFF BY HAND, BECAUSE NO RECORD IS BORN
+       WITHOUT THEM ANY MORE (2026-09-02). C0 read "the premise holds: the
+       chant's sections deal no lvl/env word", and it held for as long as a bare
+       boot handed this gate a document that had never been through
+       `genreToDocument`. Every record now is: measured over the whole
+       catalogue on 2026-09-02, `genreToDocument(gk, 1)` deals a `lvl` or an
+       `env` to at least one section of EVERY anchor but one, and the exception
+       is `silence` — one section of sixteen rests, no voices, no changes to
+       name. A blank state cannot carry this claim: "a record with no words
+       gains no ink" is only worth asserting about a record that has notes.
+       SO THE PREMISE IS MADE RATHER THAN FOUND, through the page's own
+       controls: the section-automation grids in Structure own `form.lvl|<id>`
+       and `form.env|<id>`, and setting each to its absent detent ("") is what
+       a hand does to say "this section deals no word". That is a GESTURE, not
+       a reach into private state — the same `change` event a thumb fires — and
+       it leaves a record with all its notes, all its chords and none of its
+       dynamics, which is exactly the subject C1 needs. */
+    const stripped = await pg.evaluate(async () => {
+      window.__eightTab("Structure");
+      await new Promise((r) => setTimeout(r, 600));
+      let n = 0;
+      for (const sel of document.querySelectorAll(
+             'select[data-sel^="form.lvl|"], select[data-sel^="form.env|"]')) {
+        if (sel.disabled || sel.value === "") continue;
+        if (![...sel.options].some((o) => o.value === "" && !o.disabled)) continue;
+        sel.value = "";
+        sel.dispatchEvent(new Event("change", { bubbles: true }));
+        n++;
+        await new Promise((r) => setTimeout(r, 30));
+      }
+      window.__eightTab("Score");
+      await new Promise((r) => setTimeout(r, 1200));
+      return n;
+    });
     const r = await readScore(pg);
     is(r.nudges.every((n) => !n.env && !n.lvl),
-       "C0 · the premise holds: the chant's sections deal no lvl/env word");
+       "C0 · the premise is MADE: " + stripped + " lvl/env menus put back to " +
+       "their absent detent through the grids, and no section deals a word");
     /* THE CLAIM SPLIT WHEN THE SECOND INK ARRIVED (2026-08-31). This used to
        be one sentence — "no words dealt, so the abc IS the bare fold" — and it
        was true while dynamics were the only thing added. Chord labels are NOT

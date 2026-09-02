@@ -6,7 +6,9 @@
 // about the SONG." Reversed 2026-08-30 (audio/plan.js paceTL carries the dated
 // reversal): `pace` is a section WORD (compose.js PACES, dealt by dealPaces
 // off an anchor's own `paces:` row), a multiplier on the record's ONE bpm
-// (the 70..160 fence is untouched; engine spb stays 60/bpm on both paths).
+// (the fence on it is untouched — fields.js BPM_LO/BPM_HI, which read 70..160
+// when this was written and read 40..220 since 2026-09-02; engine spb stays
+// 60/bpm on both paths).
 // The word rides the rail the tempo map already rides — barBeats per bar —
 // so the live walk and the press cannot disagree.
 //
@@ -91,22 +93,39 @@ const PLAN = await import(R("nukernel/audio/plan.js"));
      prechorus named so a bar of written tempo cannot sit inside the
      strathspey). That is the same kind of claim jingju's banshi and khyal's
      vilambit-to-drut make, which is what this list is for. */
-  const PACED = ["jingju", "khyal", "scotsfiddle"];
+  /* THE ROSTER IS READ, NOT TYPED (rewritten 2026-09-02, the composer fix
+     round). This held a literal `PACED = ["jingju", "khyal", "scotsfiddle"]`
+     against `Object.keys(GENRES).filter(g => g.paces)` — a list of three names
+     in the gate beside the same list in the catalogue — and the corpus round
+     shipped a FOURTH exemplar (`skapunk`, Long Beach 1996: "the bimodality IS
+     the genre (a ska verse and a punk chorus), and the row takes the ska half
+     at 94 with `paces` pushing the loud sections"). The gate went red for a
+     row that was doing exactly what the gate exists to permit, which is a gate
+     testing its own copy of the catalogue.
+
+     WHAT THE CHECK IS ABOUT SURVIVES WHOLE, and it is the interesting half:
+     ABSENT IS TODAY AT THE DEAL. `dealPaces` may put a word on a section ONLY
+     where the anchor declared one — no anchor outside the declared set may
+     compose a worded section, at any seed — so a pace can never appear on a
+     record nobody asked to bend. The roster is printed on every run, so a new
+     exemplar is VISIBLE in the log rather than asserted in two places. */
   const anchors = P.anchors();
   const declared = anchors.filter((gk) => GENRES[gk] && GENRES[gk].paces);
-  let worded = 0, outside = 0;
+  const PACED = new Set(declared);
+  let worded = 0, outside = [];
   for (const gk of anchors) {
     const Rr = NC.compose(gk, 2);
     for (const b of Rr.song) if (b.pace) {
       worded++;
-      if (PACED.indexOf(gk) < 0) outside++;
+      if (!PACED.has(gk)) outside.push(gk + "/" + b.pace);
     }
   }
-  ok(declared.slice().sort().join(",") === PACED.slice().sort().join(",") &&
-     outside === 0 && worded > 0,
-     "A1 · the paced set is exactly the declared exemplars (jingju, khyal); " +
-     "every other anchor composes wordless (" + anchors.length + " anchors, seed 2)",
-     "declared=" + declared.join(",") + " worded=" + worded + " outside=" + outside);
+  ok(declared.length > 0 && !outside.length && worded > 0,
+     "A1 · only the anchors that DECLARE `paces` compose a worded section — " +
+     declared.length + " exemplars (" + declared.join(", ") + "), " +
+     worded + " worded sections over " + anchors.length + " anchors at seed 2",
+     "declared=" + declared.join(",") + " worded=" + worded +
+     " outside=" + JSON.stringify(outside.slice(0, 5)));
 }
 
 /* ---- A2 · the deal: verbatim at seed 1, the anchor's own vocabulary at

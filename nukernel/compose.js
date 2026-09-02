@@ -537,7 +537,9 @@
   // the door by exactly that sentence: the jingju banshi ladder, the bel canto
   // cavatina/cabaletta pair, the nuba's staged acceleration, and vilambit-to-
   // drut — records whose FORM is a tempo shape. The record still keeps its ONE
-  // bpm and the 70..160 fence on it is untouched; `pace` is a section WORD, a
+  // bpm and the fence on it is untouched (that fence read 70..160 when this
+  // was written and reads BPM_LO..BPM_HI — 40..220 — since 2026-09-02);
+  // `pace` is a section WORD, a
   // multiplier on that base, so vilambit reads as half the record's own bpm
   // and the bpm still fences.
   //
@@ -616,11 +618,27 @@
   //   - The FUNCTION genres arrange as arcs, every one of them: a part on
   //     its own has no verse and no chorus — there is nothing for it to be
   //     the chorus OF — so what is left is one shape with a peak.
-  //   - Tempo: the dial bottoms at 70 and tops at 160, and a composer that
+  //   - Tempo: the dial bottomed at 70 and topped at 160, and a composer that
   //     leaves everything at 126 has not arranged anything — half of what
   //     "sounds like sludge" means is the tempo. The genres at the ends
-  //     (dnb, punk, darkrnb, spacerock, grebo) sit ON the fence rather than
-  //     past it. One 2026-08-17 note did not survive the move because it
+  //     (dnb, punk, darkrnb, spacerock, grebo) sat ON the fence rather than
+  //     past it.
+  //     THE FENCE MOVED TO 40..220 ON 2026-09-02, and the sentence above is
+  //     kept because the POLICY in it still stands (a tempo is a decision, and
+  //     the ends of the range are where a repertoire's own decision lives).
+  //     What changed is where the ends ARE. `poppunk`'s own row said it in the
+  //     corpus round: "MEASURED over 70 files … the GREEN DAY subset alone (42
+  //     files) medians at 167. THE ROW TAKES 160 AND THAT IS A CEILING, not a
+  //     reading: compose.js fixes bpm at an integer 70..160 and throws by name
+  //     outside it, so the fastest music in the catalogue (punk, hardcore,
+  //     thrash, nwobhm) is all piled at 160 and this row joins them seven
+  //     beats short of what the corpus says." A wall that piles four
+  //     repertoires onto one number is a wall this box takes down (the
+  //     standing walls-down law — cents, period, meter and pace all came down
+  //     before it); the SLIDER and the tap tempo have allowed 40..220 the
+  //     whole time, so this is the model catching up with the control rather
+  //     than a new freedom. 40 is a funeral march and 220 is a gabber kick;
+  //     outside that the number stops being a tempo and starts being a rate. One 2026-08-17 note did not survive the move because it
   //     matches no row: "148 is Joy Division's own rush, the same number
   //     skiffle already sits at" — postpunk's row is 138, and the only 148
   //     in that batch is grebo's. Recorded here rather than invented onto an
@@ -636,6 +654,14 @@
   // without the fields, and its plan and tempo land here, winning by
   // Object.assign order. The BPM landmark keeps its sixteen-space indent —
   // the splicer anchors on the exact text, indent included.
+  /* THE ONE FENCE, AND IT IS NOT THIS FILE'S (2026-09-02). It was the literal
+     `70` and `160` in four places — the throw, the clamp, song.js's door and
+     rules.js's slider — and four literals is how two of them come to disagree.
+     `fields.js BPM_LO/BPM_HI` owns the pair now, because song.js sits BELOW
+     this file in the layer graph and cannot require it; it is re-exported
+     below so a caller holding compose can still ask. */
+  const { BPM_LO, BPM_HI } = NF;
+
   const PLAN_OF = {};
   for (const k of Object.keys(GENRES)) PLAN_OF[k] = GENRES[k].plan;
   Object.assign(PLAN_OF, {
@@ -2522,9 +2548,9 @@
       throw new Error(`compose: genre "${gk}" declares no plan ` +
                       `(plan: "dance"|"song"|"arc" on its GENRES row)`);
     const bpm0 = G.bpm;
-    if (!Number.isInteger(bpm0) || bpm0 < 70 || bpm0 > 160)
+    if (!Number.isInteger(bpm0) || bpm0 < BPM_LO || bpm0 > BPM_HI)
       throw new Error(`compose: genre "${gk}" declares no bpm ` +
-                      `(bpm: an integer 70..160 on its GENRES row)`);
+                      `(bpm: an integer ${BPM_LO}..${BPM_HI} on its GENRES row)`);
     // ...and how far it is allowed to wander. UNLIKE `bpm` this one IS
     // defaulted, and deliberately: 4 is what every record has always done, so
     // absence is not an omission here, it is the standing answer. Clamped the
@@ -2716,12 +2742,15 @@
                 Every one of the 395 standing anchors composes the identical
                 byte (G6a/G6g hold it); a row that states a jitter of 0 gets
                 the tempo it asked for, exactly, every reading. */
-             bpm: Math.max(70, Math.min(160,
+             bpm: Math.max(BPM_LO, Math.min(BPM_HI,
                bpm0 + Math.floor(r() * (2 * jitter0 + 1)) - jitter0)),
              vol: 80 };
   }
 
   const api = { compose, ROLES, BEDS, PLANS, PLAN_OF, BPM, ALIAS, arcOf, dynOf, rng, phrase,
+                // the tempo fence, RE-exported (fields.js owns it) so a
+                // caller already holding compose need not reach past it
+                BPM_LO, BPM_HI,
                 // THE FORM DEAL and its table, exported on the same law every
                 // other ballot in this file is: a policy the suite cannot read
                 // is a policy the suite can only measure indirectly.

@@ -66,9 +66,16 @@ const report = () => {
   const pool = () => S((M) => (M.POOL ? JSON.parse(JSON.stringify(M.POOL)) : null));
   const say = () => S((M) => M.poolSay());
   const band = () => S((M) => M.poolBand());
-  const name = () => p.evaluate(() => {
-    const t = document.getElementById("title");
-    return t ? t.textContent.trim() : "(no #title)"; });
+  /* THE RECORD'S NAME IS `document.title` (2026-09-02). This read
+     `#title`.textContent, and the <h1> it named was deleted on 2026-08-29 with
+     the when-slider — test/atlas.js G8 already carries the same correction
+     ("the when-slider and the <h1> were both deleted … the two facts moved
+     rather than went"). Every check below that asks which record arrived has
+     been reading "(no #title)" ever since, which is a stale gate and not a
+     regression: ui/eight.js `draw()` is the one writer of the page's own name
+     and it writes it where a browser tab shows it. */
+  const name = () => p.evaluate(() =>
+    String(document.title || "").trim() || "(no name)");
   /* THE CAST, OFF audio/plan.js ITSELF. `compile()` walks the song and fills
      the seat table; asked too early — inside the first frames after a cold
      load, before the record has been pushed across the seam — it answers with
@@ -140,23 +147,38 @@ const report = () => {
     "3b · hiring a bass MOVES THE ENGINE'S SEAT: " + JSON.stringify(seat1));
 
   /* ---- 4 AN ATLAS LOAD FIRES THE BAND ---------------------------------- */
-  // in session first: Enter on the mark is the same door a tap is
+  // in session first: pressing a record is the same door a tap is
   // (ui/atlas.js -> CTX.setDocument -> push(true) -> adoptSong).
+  /* ===== THE DOOR IS THE LIST ROW NOW, 2026-09-02 =======================
+     WHAT STOOD HERE drove `#atlasYear` — "r.value = NuAtlas.indexOf(1988)",
+     an `input` event, then Enter on the globe's Faisalabad mark. That control
+     was DELETED on 2026-08-29 (Paul: *"Get rid of the time slider. Make the
+     genre list permanent and always expanded"*; ui/atlas.js carries the
+     tombstone and names its three replacements), so this step has been
+     throwing `Cannot set properties of null (setting 'value')` ever since and
+     taking the four checks after it down with it.
+     THE REPLACEMENT IS THE GESTURE THAT REPLACED IT: the row in the permanent
+     index, pressed. `openRow(gk)` is what that button runs and it lands on the
+     record's own year by itself, so the year no longer has to be set first —
+     which is exactly the sentence the tombstone makes about the list being
+     the time instrument. `__eightTab("Where")` first because a row in a shut
+     panel has a zero rect and cannot be pressed; the tab is a HAND's door
+     (ui/eight.js `__eightTab` is the button's own listener), not a reach into
+     private state. */
   const before = await pool();
-  const focused = await p.evaluate(() => {
-    const g = [...document.querySelectorAll("#atlasMarks .place")]
-      .find((x) => x.dataset.place === "Faisalabad");
-    if (!g) return false; g.focus(); return document.activeElement === g; });
-  await p.evaluate(() => { const r = document.getElementById("atlasYear");
-    r.value = String(window.NuAtlas.indexOf(1988));
-    r.dispatchEvent(new Event("input", { bubbles: true })); });
+  await p.evaluate(() => window.__eightTab("Where"));
   await p.waitForTimeout(400);
-  const focused2 = await p.evaluate(() => {
-    const g = [...document.querySelectorAll("#atlasMarks .place")]
-      .find((x) => x.dataset.place === "Faisalabad");
-    if (!g) return false; g.focus(); return document.activeElement === g; });
-  if (focused || focused2) await p.keyboard.press("Enter");
-  await p.waitForTimeout(2200);
+  const pressed = await p.evaluate(() => {
+    const li = [...document.querySelectorAll("#atlasIndexRows .nu-ixli")]
+      .find((x) => x.dataset.place === "Faisalabad" && x.dataset.year === "1988");
+    const b = li && li.querySelector(".nu-ixrow");
+    if (!b) return null;
+    b.click();
+    return b.dataset.gk || true;
+  });
+  check(!!pressed, "4a · the index has a Faisalabad 1988 row to press: " +
+    JSON.stringify(pressed));
+  await p.waitForTimeout(2500);
   check(/Faisalabad/.test(await name()),
     "4 · the record swapped in session: #title is " + JSON.stringify(await name()));
   check((await pool()) === null,

@@ -29,11 +29,25 @@
  *   R5  SEED 0 AND SEED 1 ARE THE SAME RECORD. The seed slider runs 0..2^16
  *       and its first two rungs are the idiom as written; precompose says so
  *       and this measures it.
- *   R6  THE TIERS ARE HONEST. A `render`-tier edit has to reach the kernel
- *       through `document.js toGenre` (there is no document slot for it); a
- *       `compose`-tier edit has to change the composed record. A tier that
- *       lies is a panel that tells a hand the record will not restart and then
- *       restarts it — or, worse, says it will and then nothing happens.
+ *   R6  THE TIERS ARE HONEST, AND THE TIER IS MEASURED AND NOT READ.
+ *       Rewritten 2026-09-02 (the composer fix round) after the probe found
+ *       the first lie: *"'the loop is N bars' (rules.js:390-395, rederive
+ *       "render") reaches nothing: g.bars is only read at COMPOSE time."* The
+ *       old R6 asserted three hand-picked fields in each direction, which is
+ *       an example and not a law, and five rows were lying under it.
+ *
+ *       So the tier of EVERY editable rule is now MEASURED, over a fixed set
+ *       of anchors and a sweep of each rule's own legal values, by the only
+ *       two questions the three tiers are made of:
+ *         does an edit move the COMPOSED DOCUMENT?     -> "compose"
+ *         else, does it move `toGenre`'s output?       -> "render"
+ *         else it reaches nothing at all, which is the box's characteristic
+ *         bug (docs: "declared but never arriving") and fails here by name.
+ *       A field with BOTH readers is a `compose`: a render-only edit would
+ *       leave the composed half of the record saying the old number while the
+ *       kernel is handed the new one. The declared `rederive` must equal the
+ *       measurement, so a tier cannot drift from the code again without this
+ *       going red.
  */
 "use strict";
 const assert = require("assert");
@@ -342,39 +356,109 @@ ok("R5b absent jitter is ±4 and byte-identical — every anchor composes the " 
 });
 
 /* ================================================================== R6 */
-ok("R6 a compose-tier edit changes the composed record", () => {
-  const base = P.genreToDocument("reggae", 2);
-  const cases = [
-    [{ f: "bpm", v: 150 }, (d) => d.time.bpm],
-    [{ f: "plan", v: "dance" }, (d) => d.form.sections.map((s) => s.role).join(",")],
-    [{ f: "mode", v: "lydian" }, (d) => d.alphabet.mode],
-    [{ f: "harmony", v: "modal" }, (d) => d.alphabet.harmony],
-    [{ f: "nobass", v: true }, (d) => d.voices.filter((v) => v.kind === "bass").length],
-    [{ f: "drumkit", v: "tr808" }, (d) => (d.voices.find((v) => v.kind === "drums") || {}).instrument],
-    [{ f: "tone.verb", v: 0.9 }, (d) => JSON.stringify(d.sound.buses)],
-  ];
-  for (const [e, get] of cases) {
-    const d = P.genreToDocument("reggae", 2, [e]);
-    assert.notStrictEqual(String(get(d)), String(get(base)),
-      JSON.stringify(e) + " reached nothing — declared, costed and silent");
+/* THE MEASUREMENT. Two portraits of a record and one sweep of values.
+
+   `docOf` is the composed document with `rules` itself stripped — the list of
+   sentences is stored ON the document, so comparing it would make every edit
+   look like it moved the record.
+   `genOf` is what `document.js toGenre` hands the kernel for every section of
+   an UNCHANGED document that merely carries the sentence: that is exactly the
+   render path (`ctx.changed()` and no new record), and functions are stamped
+   rather than serialised because a closure does not cross JSON. */
+const TIERANCH = ["reggae", "boombap", "gregorian", "techno", "silence",
+                  "punk", "waltz", "dub", "acid", "ambient"]
+  .filter((k) => GENRES[k]);
+const stripRules = (d) => { const c = JSON.parse(JSON.stringify(d));
+  delete c.rules; return c; };
+const docOf = (d) => JSON.stringify(stripRules(d));
+const genOf = (d) => d.form.sections.map((_, i) =>
+  JSON.stringify(Doc.toGenre(d, i, GENRES),
+    (k, v) => (typeof v === "function" ? "fn" : (k === "__v" ? 0 : v)))).join("|");
+
+/* EVERY LEGAL VALUE THE ROW ITSELF OFFERS — the sweep is derived off `edit`,
+   never typed, so a rule added tomorrow is swept the day it is added. */
+function sweep(r, G, gk) {
+  const e = r.edit;
+  if (!e) return [];
+  const cur = r.read ? r.read(G, gk) : undefined;
+  const diff = (v) => String(v) !== String(cur);
+  if (e.kind === "number") {
+    const out = [];
+    for (let i = 0; i <= 4; i++) {
+      const v = +(e.min + (e.max - e.min) * i / 4).toFixed(4);
+      if (diff(v)) out.push(v);
+    }
+    return out;
   }
+  if (e.kind === "enum") return (e.values(G, gk) || []).map((o) => o.value).filter(diff);
+  if (e.kind === "flag") return [true, false].filter((v) => v !== cur);
+  if (e.kind === "list") {
+    const vs = (e.values(G, gk) || []).map((o) => o.value);
+    return [[vs[0]], [vs[1] || vs[0]], vs.slice(0, 2)].filter((a) => a[0] != null);
+  }
+  if (e.kind === "map") {
+    const ks = (e.keys ? e.keys(G, gk) : []) || [];
+    const vs = (e.values ? e.values(G, gk) : []) || [];
+    if (!ks.length) return [];
+    const mk = (v) => { const o = {}; ks.forEach((k) => { o[k] = v; }); return o; };
+    return vs.length ? vs.slice(0, 3).map((o) => mk(o.value)) : [0, 0.5, 1].map(mk);
+  }
+  if (e.kind === "pair") return [{ t: 0, v: 0 }, { t: 0.5, v: 0.5 }, { t: 1, v: 1 }];
+  if (e.kind === "changes") return [[{ d: 0, q: "triad" }, { d: 4, q: "7" }],
+                                    [{ d: 5, q: "triad" }]];
+  return [];
+}
+
+function measureTier(r) {
+  let doc = null, gen = false, n = 0;
+  for (const gk of TIERANCH) {
+    const G = GENRES[gk];
+    const base = P.genreToDocument(gk, 2);
+    const b0 = docOf(base), g0 = genOf(base);
+    for (const v of sweep(r, G, gk)) {
+      let d1;
+      try { d1 = P.genreToDocument(gk, 2, [{ f: r.field, v }]); }
+      catch (err) { continue; }       // a value this row refuses is not a tier
+      n++;
+      if (docOf(d1) !== b0) { doc = doc || (gk + " " + JSON.stringify(v)); }
+      if (!gen) {
+        const asIs = JSON.parse(b0); asIs.rules = [{ f: r.field, v }];
+        try { if (genOf(asIs) !== g0) gen = true; } catch (err) { /* ignore */ }
+      }
+      if (doc && gen) break;
+    }
+    if (doc && gen) break;
+  }
+  return { tier: doc ? "compose" : (gen ? "render" : null), n, where: doc };
+}
+
+ok("R6 every editable rule's tier is what the code MEASURES it to be", () => {
+  const bad = [];
+  for (const r of NU.RULES) {
+    if (!r.edit) continue;
+    const m = measureTier(r);
+    if (!m.n) { bad.push(r.field + ": no legal value to sweep"); continue; }
+    if (!m.tier) {
+      bad.push(r.field + ' claims "' + r.rederive + '" and reaches NOTHING — ' +
+        "declared, costed and silent (" + m.n + " values swept)");
+      continue;
+    }
+    if (m.tier !== r.rederive)
+      bad.push(r.field + ' claims "' + r.rederive + '", measures "' + m.tier +
+        '"' + (m.where ? " (" + m.where + ")" : ""));
+  }
+  assert.strictEqual(bad.length, 0, "\n       " + bad.join("\n       "));
 });
 
-ok("R6b a render-tier edit reaches the kernel through toGenre, with no " +
-   "document slot of its own", () => {
-  const d0 = P.genreToDocument("reggae", 2);
-  const g0 = Doc.toGenre(d0, 0, GENRES);
-  const cases = [
-    [{ f: "maxHold", v: 2 }, (g) => g.maxHold],
-    [{ f: "artic", v: "staccato" }, (g) => g.artic],
-    [{ f: "bars", v: 8 }, (g) => g.bars],
-    [{ f: "fx", v: ["phaser"] }, (g) => JSON.stringify(g.fx)],
-  ];
-  for (const [e, get] of cases) {
-    const d = P.genreToDocument("reggae", 2, [e]);
-    const g = Doc.toGenre(d, 0, GENRES);
-    assert.notStrictEqual(String(get(g)), String(get(g0)),
-      JSON.stringify(e) + " never reached the kernel");
+ok("R6b a said-only rule is said on every anchor and writes nowhere", () => {
+  for (const r of NU.RULES.concat(NU.MOTIF)) {
+    if (r.edit) continue;
+    assert.ok(typeof r.why === "function", r.field + " is refused with no reason");
+    for (const gk of TIERANCH)
+      assert.ok(String(r.why(GENRES[gk], gk) || "").trim(),
+        r.field + " refuses silently on " + gk);
+    assert.throws(() => NU.applyRules(GENRES.reggae, [{ f: r.field, v: 1 }]),
+      r.field + " accepted a write it has no row for");
   }
 });
 

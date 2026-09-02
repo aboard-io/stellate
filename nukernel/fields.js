@@ -52,6 +52,29 @@
   // slots.length, on the song itself).
   const NSLOTS = 16, MAX_LEN = 64, MAX_NUDGE = 31, MAX_FX = 3;
 
+  /* ---------- THE TEMPO FENCE (2026-09-02) ------------------------------
+     ONE OWNER FOR "WHAT IS A TEMPO". It was the literal pair `70` and `160`
+     in four places — compose.js's throw, compose.js's post-jitter clamp,
+     song.js's save door and rules.js's slider — plus a SLIDER and a TAP
+     TEMPO on the page that had allowed 40..220 the whole time. Four literals
+     is how two of them come to disagree, and they already did: a hand could
+     tap 175, watch the readout take it, and then reopen the share link at
+     the fence.
+
+     THE NUMBERS MOVED, AND THAT IS A DATED REVERSAL of compose.js's own
+     sentence ("the dial bottoms at 70 and tops at 160"), written in place
+     beside it. `poppunk`'s row measured the cost: "the GREEN DAY subset
+     alone (42 files) medians at 167 … the fastest music in the catalogue
+     (punk, hardcore, thrash, nwobhm) is all piled at 160 and this row joins
+     them seven beats short of what the corpus says." 40 is a funeral march
+     and 220 is a gabber kick; outside that a tempo stops being a tempo.
+
+     IT LIVES HERE because fields.js is the registry BOTH sides can see:
+     compose.js requires this file, and song.js sits below compose in the
+     layer graph and may not require it (the header's own ordering, "kernel
+     -> genres -> fields -> song -> instruments -> compose"). */
+  const BPM_LO = 40, BPM_HI = 220;
+
   /* ---------- pattern operators ---------- */
   // FOUR LIST FAMILIES, 1..4 each. repeat and delete change the SEQUENCE —
   // repeat stretches every element, delete removes every nth and CLOSES the
@@ -2714,9 +2737,23 @@
        edit in avail.js, none in the view — interview.js's law, one layer down.
        `tab: "song"` beside `len` and `nudge`, because in the daw's palette the
        pace is a fact about the section's shape and not about its sound. */
+    /* AND THE EMPTY DETENT SAYS THE DERIVED WORD (2026-09-02, the fix round).
+       It said "—" for one day, on the section-scope idiom ("this section says
+       nothing and the standing answer stands", avail.js material.cell), and
+       the probe measured what that reads like: *"The pace strip never says
+       what the pace is: all nine sel|form.pace|sN read "" and display "—",
+       while Structure/Mix row heads print the dealt word … meter seats its
+       derived word ("four") for the same "" value."* The dash was wrong here
+       because pace has no standing answer to inherit: `audio/plan.js paceTL`
+       skips a bar whose section says no word AND a bar that says `steady`
+       ("no word, or the word for 1" — PACE_RATE.steady is 1), so absent and
+       `steady` are the same sound to the byte. Saying so is `time.swing`'s
+       own shape one row up in avail.js, where the empty detent is labelled
+       `straight` and `straight` is also a rung of SWINGLABEL — the word for
+       saying nothing is the thing that then happens. */
     { key: "pace",    scope: "box",   table: PACELABEL, labels: PACELABEL,
       tab: "song",   group: "pace",                      default: null,
-      axis: "form", ask: "how fast does it go here?", none: "—" },
+      axis: "form", ask: "how fast does it go here?", none: "steady" },
   ];
   const FIELD = {};
   for (const f of FIELDS) FIELD[f.key] = f;
@@ -2815,7 +2852,7 @@
     return out;
   }
 
-  const api = { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
+  const api = { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX, BPM_LO, BPM_HI,
                 OPS, OPLABEL, ENVLABEL, MOTLABEL, INLABEL, OUTLABEL,
                 RATES, RATELABEL, SWINGS, SWINGLABEL, GROOVELABEL, METERLABEL,
                 // the pace ladder, moved down from compose.js's closure so the UI
