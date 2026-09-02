@@ -5851,3 +5851,101 @@ table.nu-trims{ color: var(--ink); }
   font-weight: var(--fw-label); }
 .nu-motif > span{ display: inline-flex; align-items: baseline; gap: var(--s2);
   flex-wrap: wrap; }
+
+/* ======================================================================
+   WAVE 2d · STRUCTURE — THE SECTION AUTOMATION GRIDS
+   Paul, B9: "Make a section automation interface for the manipulation of the
+   motifs and put it under structure/sections … Every section I can tweak every
+   instrument. … for each question you add per section, you could have a WHOLE
+   section automation grid."
+
+   THE ANCESTOR IS `.nu-trims` (section automation on the board, five hundred
+   lines up) AND THIS IS NOT A COPY OF IT. What is shared is the geometry — a
+   table, sections running down, a scroll pane round it, one 44px target per
+   cell — and it is shared by writing the parts that differ and inheriting the
+   rest: the row heads and the cells here are ordinary buttons and `<select>`s,
+   which this file already dresses, so what follows is the head row, the two
+   marks and the dim-is-derived reading, and nothing else.
+
+   THE TWO MARKS ARE THE TWO FACTS A GRID HAS TO SAY AT ONCE, and they are
+   already distinguished everywhere else on this page: `.nu-here` is a HAND-BLUE
+   rule down the row you are WRITING (the rule above it explains why a rule and
+   not a tint), and the playhead is CLOCK-RED and is the browser's own `<mark>`
+   inside the row head. They land in the same cell on purpose and they are never
+   confusable, which is the distinction 2026-08-24 spent a day undoing. */
+.nu-sgrid{ border-collapse: separate; border-spacing: 3px; inline-size: 100%; }
+/* THE CAPTION IS THE TABLE'S NAME. `<caption>` is the accessible name of a
+   grid, so this is a control label — which is what lets it be one word: the
+   heads say the rest. Same well as the board's `.nu-rowlab`, which is the class
+   it wears and the one test/text-diet.test.js already excludes. */
+.nu-sgrid > caption{ text-align: start; padding-block-end: var(--s2); }
+.nu-sgrid thead th{ font: var(--fw-label) var(--t1)/1.3 var(--mono, monospace);
+  letter-spacing: .06em; text-transform: uppercase; color: var(--dim);
+  text-align: center; vertical-align: end; padding: 0; }
+.nu-sgrid tbody th{ text-align: start; padding: 0; }
+.nu-sgrid td{ padding: 0; }
+/* A ROW HEAD IS A BUTTON AND IT IS THE JUMP. Two lines inside one target: the
+   number (which the clock marks) and the section's own name. `start` because a
+   column of names read from a centre line is a column you cannot scan. */
+.nu-sgrid tbody th > button{ inline-size: 100%; min-block-size: var(--ctl);
+  display: flex; align-items: baseline; gap: var(--s2); text-align: start;
+  font: var(--fw-label) var(--t2)/1.3 inherit; padding-inline: var(--s2); }
+.nu-srowname{ font-weight: var(--fw-body); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+/* THE SOUNDING ROW, PAINTED OFF THE MARK THE CLOCK ALREADY WROTE. `:has()` and
+   not a second class: the clock may not write outside `[data-live]` inside
+   #app, so the row's tint has to be a CONSEQUENCE of the one write it is
+   allowed to make (the `<mark>` in the row head's live span) rather than a
+   write of its own. Nothing here appears or disappears; only the paint moves. */
+.nu-sgrid tbody tr:has(mark) > th{ background: var(--clock-tint);
+  border-radius: var(--r2); }
+.nu-sgrid tbody tr:has(mark) > td > select{ border-color: var(--clock); }
+/* THE COLUMN HEAD IS THE PLAYER, AND THE PLAYER IS A COLOUR. `.nu-vpaint` is
+   the utility's filled form (white ink on the player's hue, the page's own ink
+   border); everything below is the two text lines inside it. */
+.nu-scol{ inline-size: 100%; min-block-size: var(--ctl); min-inline-size: 7ch;
+  display: grid; row-gap: 1px; justify-items: center; padding: var(--s2);
+  font: var(--fw-label) var(--t2)/1.2 inherit; text-transform: none;
+  letter-spacing: 0; }
+.nu-scolname{ font-weight: var(--fw-block); }
+/* `--t1` AND NOT `--t0`: the smallest step is RESERVED for the gutter's label
+   at the narrowest width and has one caller by design (see the scale). A
+   second line inside a plate is a second line, not a nav label. */
+/* THE LINE TAKES THE COLUMN AND ELLIPSES INSIDE IT. `max-inline-size: 12ch`
+   stood here and was wrong in the one way a centred box can be: the head is
+   `justify-items: center`, so a 12ch box inside a 9ch column overhangs BOTH
+   sides and `overflow: hidden` clips the first letter as well as the last
+   ("clean guitar" read "ean guita"). Measured at 430px on Kingston. */
+.nu-scolinstr{ font-weight: var(--fw-body); font-size: var(--t1); opacity: .9;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  inline-size: 100%; text-align: center; }
+/* THE LAMP: a bar that comes and goes inside a [data-live] span while that
+   player has an event in the sounding bar. It holds the row whether it is lit
+   or not — a head that grew a line on play would be the editing interface
+   changing while the record runs (test/motif-frozen A2) — so the WELL is
+   always there and only its child moves. Clock red, because this is the
+   playhead and not a measurement: `--meter` stays reserved for a number that
+   came back from the engine. */
+.nu-scollamp{ display: block; block-size: 4px; inline-size: 60%; }
+.nu-scollamp > i{ display: block; block-size: 4px; inline-size: 100%;
+  background: var(--clock); border-radius: var(--r2); }
+/* DIM IS DERIVED, BRIGHT IS SET (2026-08-28), on a menu. An untouched cell is
+   at the table's own absent detent — "—", "as written" — and it must read as a
+   READING rather than as a setting, the same way `.nu-trimbtn.is-derived` does
+   four hundred lines up: no weight of its own, and the ground it sits on
+   unchanged. The moment a word is said the class comes off. */
+/* A CELL WIDE ENOUGH TO READ ITS OWN WORD. `td > select` (the chord table's
+   rule, five hundred lines up) is `inline-size: 100%; min-inline-size: 0`, and
+   a table at `inline-size: 100%` then squeezes six columns into the pane until
+   every menu is an arrow with nothing beside it — measured at 430px, where
+   `intro`/`outro`/`mot` showed no word at all. A floor turns the squeeze into
+   an OVERFLOW, which is what the pane is for and what `.nu-trims` gets for
+   free from its buttons' own `min-inline-size`. The 9em cap above still wins
+   at the top end, so a wide window changes nothing. */
+.nu-sgrid td > select{ min-inline-size: 7em; }
+.nu-sgrid td > select.is-derived{ font-weight: var(--fw-body); opacity: .78; }
+/* AND A CELL THAT IS NOT A CONTROL — one possible answer, or a key another
+   open tab owns this second. Text, in the cell, so the grid keeps its shape
+   and holds no address. Centred with the column head above it. */
+.nu-sgsay{ text-align: center; color: var(--dim); font-size: var(--t1);
+  padding: var(--s2); }

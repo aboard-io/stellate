@@ -640,6 +640,16 @@ const GATES = [
     covers: ["test/band.browser.js", "nukernel/ui/eight.js",
              "nukernel/avail.js", "nukernel/document.js",
              "nukernel/ui/preview.js", "nukernel/audio/plan.js"] },
+  /* THE SECTION AUTOMATION GRIDS (2026-09-02, slice 2d). Paul, B9: "Make a
+     section automation interface for the manipulation of the motifs and put it
+     under structure/sections … Every section I can tweak every instrument."
+     It covers `avail.js` and `fields.js` as well as the view, because the grid
+     draws whatever `nudgesFor` names and whatever `SHEETS` offers — a row added
+     to either is a column added here with no edit in eight.js. */
+  { name: "structure",  wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/structure.browser.js"], need: ["test/structure.browser.js"],
+    covers: ["test/structure.browser.js", "nukernel/ui/eight.js",
+             "nukernel/avail.js", "nukernel/fields.js"] },
   // THE SLOWEST GATE IN THE HOUSE, AND IT HAS TO BE. It presses play and waits
   // for two real section boundaries at two viewports, because a boundary is
   // the thing that used to rebuild the page and a fixed sleep would be a coin

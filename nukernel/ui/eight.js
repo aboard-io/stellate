@@ -7707,9 +7707,17 @@ function sectionDetail(parent, s2) {
      second owner of where you are, which is what deleting `#secs` was about in
      the first place. So the hint names the LEVEL you are on rather than a
      gesture the gutter already carries. */
+  /* ...AND THE `↑` IS NOT IN THE SENTENCE ANY MORE (2026-09-02). It read
+     "the marks beside this heading move this section, remove it, or add
+     another; its name is the role menu below, and ↑ goes back to the
+     sections", and the last clause named a button that no longer exists:
+     Paul, B5 — *"We should never need the 'up' icon because we can expand
+     multiple levels of interface option."* The gutter is a TREE, so the way
+     back is the section's own row, still open, one line up in the stripe.
+     The clause is deleted rather than reworded, because the tree needs no
+     sentence to say what folding a row does. */
   parent.append(el("p", "the marks beside this heading move this section, " +
-    "remove it, or add another; its name is the role menu below, and " +
-    "↑ goes back to the sections", "nu-hint"));
+    "remove it, or add another; its name is the role menu below", "nu-hint"));
   // THE NAME AGAIN, AND NOT A SECOND OWNER: the list and the detail are two
   // states of one element and never on the page together, so the same
   // `form.role` spec draws once either way and `data-k` stays unique.
@@ -7721,104 +7729,73 @@ function sectionDetail(parent, s2) {
   // the control for free — 2026-08-25, "Put interactive elements on new lines
   // below the titles or questions.")
   number("bars" + s2.id, "bars", s2.bars, (v) => s2.bars = v, parent, 1, 32, 1);
-  /* EVERY FORM AND DEVELOPMENT NUDGE THE REGISTRY NAMES — EXCEPT THE PACE
-     (2026-09-02). `form.pace` arrived in the registry today (fields.js, Paul's
-     B7) and it is drawn ONE tab over, as the Tempo panel's pace strip. It is
-     excluded here rather than there because the pace is the record's TEMPO
-     said section by section, and because two tabs' panels coexist in the DOM:
-     a `form.pace|<section>` control in both places is one `data-k` on two
-     elements, which ui/selects.js console.errors about and suffixes, and which
-     puts a thumb back on the wrong menu after every redraw. ONE OWNER PER
-     FACT, applied to a surface rather than to a writer.
-     BY NAME AND NOT BY A REGEX: the next row to grow an `axis` must appear
-     here with no edit (that is the whole point of `nudgesFor`), so the
-     exception is a single key and the rule underneath it is untouched. */
-  const ELSEWHERE = { "form.pace": "the Tempo panel's pace strip" };
-  const nudges = [...NuFields.nudgesFor("form"), ...NuFields.nudgesFor("development")]
-    .filter((r) => r.options)
-    .map((r) => (r.axis === "form" ? "form." : "development.") + r.key)
-    .filter((k) => !ELSEWHERE[k]);
-  selectRow(parent, null, nudges.map((k) => shSpec(k, { section: s2.id })));
+  /* ===== EVERY WORD-NUDGE LEFT THIS PANEL FOR THE GRIDS (2026-09-02, 2d) ==
+     Paul, B9: *"Make a section automation interface for the manipulation of
+     the motifs and put it under structure/sections … Every section I can tweak
+     every instrument. … for each question you add per section, you could have
+     a WHOLE section automation grid."*
+
+     WHAT STOOD HERE, and its argument is kept because half of it survives:
+
+       "EVERY FORM AND DEVELOPMENT NUDGE THE REGISTRY NAMES — EXCEPT THE PACE
+        (2026-09-02). `form.pace` arrived in the registry today (fields.js,
+        Paul's B7) and it is drawn ONE tab over, as the Tempo panel's pace
+        strip. It is excluded here rather than there because the pace is the
+        record's TEMPO said section by section, and because two tabs' panels
+        coexist in the DOM: a `form.pace|<section>` control in both places is
+        one `data-k` on two elements, which ui/selects.js console.errors about
+        and suffixes … ONE OWNER PER FACT, applied to a surface rather than to
+        a writer. BY NAME AND NOT BY A REGEX: the next row to grow an `axis`
+        must appear here with no edit."
+
+     — a row of eight `<select>`s, one per word-nudge, for THIS section. The
+     ELSEWHERE table and its by-name rule moved WITH the controls, into
+     `structureGrids` (`GRIDDED`), where it still names `form.pace` and where
+     the two questions that got a grid of their own name themselves too. The
+     one-owner sentence is unchanged and is now enforced against a THIRD
+     surface as well as the Tempo panel's.
+
+     WHY THE GRID AND NOT THIS ROW. Both are true pictures of the same eight
+     keys; the difference is what you can SEE. Asked here you read one
+     section's shape and have to remember the last one to compare; asked as a
+     grid you read a COLUMN — where the record sits, section by section, down
+     the whole form — which is what "section automation" means and is the
+     thing this panel could not show. Nothing about the addresses moved:
+     `form.lvl|<section>` and its seven siblings are the same `data-k` the row
+     emitted, which is exactly why the row had to go rather than stand beside
+     the grid (ui/selects.js `duplicate select key`).
+
+     WHAT DID NOT GO: the two facts that are not words. `form.role` above is
+     the section's NAME and belongs to the thing being named; `nudge` below is
+     a NUMBER, and the grid family is a table of words for the reason the trim
+     grid already gives — "a column of words has a shape a column of decimals
+     does not" (ui/engineer.js). A slider in a `<td>` at 320px is a control you
+     cannot work. */
   // ...and the one nudge that is a number on a line, not a word from a list:
   // how many bars into the tune this section starts (derive.js:396), which is
   // how a chorus comes in on the second half of the phrase.
   const nr = NuFields.FIELD.nudge;
   number("nudge" + s2.id, nr.ask, s2.nudge | 0, (v) => { s2.nudge = v | 0; },
     parent, nr.min, nr.max, 1);
-  /* ===== WHAT EACH PLAYER DOES HERE (2026-09-02) =======================
-     Paul: *"Every section I can tweak every instrument. … for each question
-     you add per section, you could have a WHOLE section automation grid."*
+  /* ===== WHAT EACH PLAYER DOES HERE IS THE GRIDS' NOW (2026-09-02, 2d) ===
+     Paul, B9: *"Every section I can tweak every instrument."*
 
-     THIS IS ONE COLUMN OF THAT GRID — this section, every member — and it is
-     here because the question had nowhere else to be asked. `dev.<kind>|
-     <voice>|<section>` was drawn by `formTable`'s `picks` variant, one voice
-     at a time, inside the band's per-section facet; both are deleted in this
-     wave (the facet went to Structure, and the variant went so that the grids
-     wave 2d draws would not be the SECOND owner of these keys). Without this
-     block the question "what does the cantor do in verse 2" has no control on
-     the page at all, which is the "declared but never arriving" bug from the
-     other end — the word reaches the kernel and no hand can say it.
-     THE KEYS ARE THE GRID'S OWN, unchanged: `NuAvail.devSheetFor(kind)` picks
-     the sheet by kind exactly as the deleted column did, so wave 2d replaces
-     this block with the grid and no address moves.
-     GROUPED BY SECTION, WHICH IS THIS PANEL'S WHOLE ARGUMENT: "asked section
-     by section it reads as a description of the record; question by question
-     it reads as a spreadsheet". */
-  {
-    /* READS BEFORE DOES, WHICH IS PAUL'S OWN ORDER (2026-08-26: *"In the band
-       you have a table of sections and bars. Then what vocal reads, section by
-       section … then what vocal does, section by section"*) and is also the
-       evaluation order — Material before Development (AXES.md). You pick the
-       tune before you pick what happens to it.
-       A `reads` MENU IS ONLY DRAWN WHERE THERE IS SOMETHING TO CHOOSE, which
-       is the `> 1` half of the deleted column's own rule and the half that was
-       right: "thirteen menus that can only say what they already say are worse
-       than no column". The bass is asked nothing at all — `cellsFor` answers
-       with one cell for it, because a bass follows the first phrase and cannot
-       be told otherwise (`bassReadsWhy` carries the measurement). */
-    /* ...AND THE `reads` HALF IS DRAWN ONLY WHILE THIS TAB IS THE OPEN ONE
-       (2026-09-02, slice 2c). `material.cell|<voice>|<section>` is ONE ADDRESS
-       and there are now two panels that want it — this column, and the Band
-       tab's motif tray, which is where a member's per-section strip belongs
-       when you are standing on that member (Paul, B10: *"a tray of motifs …
-       I need an obvious way to assign multiple motifs to band members"*). Two
-       panels coexist in the DOM the moment both have been built, so drawing it
-       on both is ui/selects.js's `duplicate select key material.cell|cantor|c2`
-       and a thumb that comes back on the wrong menu after every redraw.
-       THE RULE IS THE OPEN TAB AND NOTHING CLEVERER: whoever you are looking
-       at owns the key. `showTab` rebuilds the departing panel when it is one of
-       these two, so the keys are given up before they are taken — enforced
-       there, said here and at `motifTray`.
-       `dev.*` IS NOT SHARED and is drawn unconditionally: the Band panel asks
-       no member what it DOES section by section, so there is one owner already
-       and no guard to make. */
-    const rows = [];
-    const mine = openTab === "Structure";
-    for (const v of DOC.voices) {
-      const where = v.name + " · " + (ROLES[s2.role] || s2.role) + " " + (i + 1);
-      /* ...AND NEVER TO A BASS, WHICH IS A DEFECT FOUND RATHER THAN A RULE
-         ADDED (2026-09-02, slice 2c). `cellsFor(doc, kind)` answers with the
-         LINE cells for anything that is not a drummer — its own header says
-         "THE BASS IS NOT HERE AND THAT IS THE POINT" and then the code returns
-         `lineCells(doc)` for it — so the guard `cellsFor(...).length > 1` was
-         true for the bass and this column drew it a menu. Measured on
-         `#at=Kingston&y=1969`: `material.cell|bass|s0` was on the page, wrote
-         `voice.material[s0]` when moved, and reached NOTHING — both compilers
-         hand `K.bass` the first line's phrase (document.js scoreOf,
-         ui/derive.js sectionEvents) and `toGenre` gives the bass no material at
-         all. A control that is declared, drawn, costed and reaches no sound is
-         this box's characteristic bug, and the honest answer is the one
-         `bassReadsWhy` has made since 2026-08-25. The GRID (wave 2d) renders
-         that refusal per cell; until it does, the bass is not asked. */
-      if (mine && v.kind !== "bass" && NuAvail.cellsFor(DOC, v.kind).length > 1)
-        rows.push(shSpec("material.cell", { voice: v.name, section: s2.id },
-                         v.name + " reads · " + (ROLES[s2.role] || s2.role) +
-                         " " + (i + 1)));
-      rows.push(shSpec(NuAvail.devSheetFor(v.kind),
-                       { voice: v.name, section: s2.id }, where));
-    }
-    if (rows.length) selectRow(parent, null, rows);
-  }
+     A COLUMN OF THAT GRID STOOD HERE — this section, every member, `reads`
+     then `does` — and it said so in its own words: "THIS IS ONE COLUMN OF
+     THAT GRID … it is here because the question had nowhere else to be asked
+     … THE KEYS ARE THE GRID'S OWN, unchanged … so wave 2d replaces this block
+     with the grid and no address moves." This is that wave and that is what
+     happened. `material.cell|<voice>|<section>` and `dev.line|dev.bass|dev.kit
+     |<voice>|<section>` are emitted by `structureGrids` below the form, with
+     MEMBERS ACROSS instead of down, so "what does the cantor read in verse 3"
+     is a cell you can see against every other player's answer.
+
+     THE TWO GUARDS IT CARRIED MOVED WITH IT AND ARE NOT REPEATED HERE: the
+     `openTab === "Structure"` rule that keeps the Band tab's motif tray from
+     being a second owner of `material.cell` (said at both sites, enforced in
+     `showTab`), and the bass's refusal, which the grid draws as a REFUSED CELL
+     with `bassReadsWhy`'s own measurement in `data-why` rather than by leaving
+     a hole in a row. */
 }
 
 /* ---------- 8 · PERFORMANCE, AS A TAB ----------------------------------
@@ -10084,6 +10061,304 @@ function bandBlock(parent) {
    those keys, and a voice's default cell (`cast.material`) is the only way to
    say what somebody reads. Written here so the gap is a decision and not a
    discovery. */
+/* ---------- 7c · THE SECTION AUTOMATION GRIDS --------------------------
+   Paul, B9: *"Make a section automation interface for the manipulation of the
+   motifs and put it under structure/sections … Every section I can tweak every
+   instrument. … for each question you add per section, you could have a WHOLE
+   section automation grid."*
+
+   ONE GRID PER QUESTION, SECTIONS DOWN, THE THING BEING ASKED ACROSS. Two of
+   them ask the BAND (`reads`, `does`) and their columns are the players; the
+   rest ask the SECTION and their columns are the questions. Both are the same
+   widget, which is the whole reason there is one builder: a grid is a table of
+   words with a live row and a tap in every cell, and this page has shipped that
+   table once already — `ui/engineer.js`'s trim grid (`.nu-trims`, sections
+   down, voices across, dim-is-derived, the sounding row in clock red). It is
+   copied rather than reinvented, and every place this one differs from it is a
+   law of the room it is standing in rather than a preference:
+
+     · THE PLAYHEAD IS A `<mark>` AND NOT A `tr.now`. The board is outside
+       `#app` and the clock may write on it freely. This panel is INSIDE #app,
+       where "the clock writes only inside [data-live]" (2026-08-24) and
+       `window.__eightFrozen` empties the CHILDREN of a `[data-live]` element
+       and keeps its attributes — so a class toggled on a `<tr>` here would be
+       the frozen half of the page moving, and test/motif-frozen A3 would catch
+       it. The row head therefore carries `secNumber`'s own inversion: a
+       `<span data-live="count">` INSIDE the button, holding nothing but the
+       section's number, which `mark()` wraps. The button, its listener and its
+       `aria-pressed` sit outside that span and survive every beat (A1 forbids a
+       control INSIDE a [data-live], not around one). nu.css tints the row off
+       `tr:has(mark)` — a paint the clock does not have to make.
+     · THE COLUMN LAMP IS A CHILD, NOT A CLASS, for exactly the same reason:
+       `.is-sounding` in the gutter is legal because the gutter is outside #app.
+       Here the sounding member's head holds a `<span data-live="lamp">` whose
+       one child the clock adds and removes.
+     · A CELL IS A BARE `selectEl`, which is what puts it in a `<td>` at all
+       (nu.css caps `td > select` at 9em, and ui/selects.js's own header says
+       the bare form exists "for a table cell"). The words are avail.js's, the
+       greys are gates.json's, and a greyed option still carries its reason —
+       `selectEl` THROWS on a silent grey, which is the law that makes a grid of
+       sixty menus safe to draw.
+
+   ONE OWNER PER FACT, THREE TIMES OVER, and the addresses are all older than
+   this function: `material.cell|<voice>|<section>` is the Band tab's motif tray
+   the moment that tab is open (the guard is at both sites and is enforced in
+   `showTab`); `dev.line|dev.bass|dev.kit|<voice>|<section>` were the deleted
+   `formTable` picks column's and are nobody else's; the section's own word
+   nudges were `sectionDetail`'s row until today. Nothing here mints a key. */
+
+/* THE QUESTIONS THAT ARE ASKED SOMEWHERE ELSE — the `ELSEWHERE` table that
+   stood in `sectionDetail`, moved here with the controls and grown by two.
+   BY NAME AND NOT BY A REGEX, which is that table's own rule: a row that grows
+   an `axis` in fields.js must arrive in `the rest` with no edit here, so an
+   exception is a single key with the surface that owns it written beside it.
+     `form.lvl` / `form.env` — a grid each, below, because they are the two
+   words the desk reads to deal every voice's own trim (audio/desk.js `shade`),
+   which makes them the two a hand most often wants to read down a column.
+     `form.pace` — the Tempo panel's pace strip, and this is the one that is a
+   JUDGEMENT rather than an arrangement. COMPOSER.md §2.6 lists a pace grid
+   here and §2.5 puts the same key one tab over; they cannot both draw it (two
+   tabs' panels coexist in the DOM and share one `data-k`). It stays on Tempo,
+   on Paul's own sentence for that panel — B7: *"the tempo editor does not
+   reflect the richness of our tempo options"* — because the pace IS one of
+   those options and it is the one that moves the clock: test/tempo-key T3b
+   measures `audio/plan.js`'s bar SECONDS shrinking when it is set. So this
+   family is five grids and not six, and the sixth is named here rather than
+   silently absent. */
+const GRIDDED = {
+  "form.lvl": "the level grid",
+  "form.env": "the shape grid",
+  "form.pace": "the Tempo panel's pace strip",
+};
+const restKeys = () =>
+  [...NuFields.nudgesFor("form"), ...NuFields.nudgesFor("development")]
+    .filter((r) => r.options)
+    .map((r) => (r.axis === "form" ? "form." : "development.") + r.key)
+    .filter((k) => !GRIDDED[k]);
+
+/* THE GRIDS' PLAYHEAD CELLS AND THEIR COLUMN LAMPS. One array per grid, each
+   indexed by SECTION, exactly like `formCell` — which is what lets `mark()`
+   light them with the same call, the same labels and the same `-1` from stop.
+   Registered where they are built and reset there; a shut panel keeps its
+   nodes and lighting them costs one comparison. */
+let structCells = [], bandLamps = [];
+
+/* A ROW HEAD IS THE JUMP, and it is `formTable`'s number said with a name.
+   Paul: *"I need to be able to jump to a section somehow, by clicking on
+   them when in automation."* Three writes, one gesture, in `openSection`'s
+   own order — open the questions, make it the section you are WRITING, then
+   put the ear on it (`CTX.playFrom`, the one play door: cold it seeks, playing
+   it QUEUES on the next box line and the gutter's countdown says how far).
+   `srow|<grid>|<id>` and NOT `sec<id>`: an address does not move, and `sec<id>`
+   belongs to the form table's number and to `sectionDetail`'s heading — two
+   elements answering to one key is the bug `restoreFocus` cannot see round,
+   and five grids on the page would have made it five. */
+function srowHead(gid, s2, i) {
+  const th = el("th");
+  const b = document.createElement("button");
+  b.type = "button";
+  b.dataset.k = "srow|" + gid + "|" + s2.id;
+  b.setAttribute("aria-pressed", String(i === editSec()));
+  const live = el("span");
+  live.dataset.live = "count";          // the playhead's, and nothing else's
+  live.append(el("span", String(i + 1)));
+  /* THE NUMBER AND THE ROLE, WHICH IS THE FORM ROW'S OWN TWO FACTS IN ONE
+     BUTTON — `secNumber` plus the `form.role` menu beside it, said as a label
+     because this is a head and not the place that names a section. It is NOT
+     `secName(i)`: that word is `role + ordinal` ("intro 3") and the ordinal is
+     already the live cell to its left, so the pair read "3 intro 3". `ROLES` is
+     the one owner of what a role is CALLED and both spellings read it. */
+  b.append(live, el("span", " " + (ROLES[s2.role] || s2.role), "nu-srowname"));
+  b.setAttribute("aria-label", secName(i) + ", " + s2.bars + " bars — open its " +
+    "questions and put the ear on it");
+  b.addEventListener("click", () => { openSection(s2.id); CTX.playFrom(i); });
+  th.append(b);
+  return { th, live };
+}
+
+/* A COLUMN HEAD IS THE PLAYER, AND IT IS A DOOR (Paul, B11, of the automation
+   grid: *"the columns should list the instrument and when I click on the column
+   head let me edit the instrument!"*). Name, instrument line beneath, the
+   member's CATEGORY slot on the cell so one player is one colour on every
+   surface (`vpaintOf` — the roster, the score's caps and the roll's blocks read
+   the same slot table), and a lamp the clock lights while that player has an
+   event in the sounding bar. The tap lands on that member's INSTRUMENT facet,
+   which is Paul's own sentence for what the head is for. */
+function scolHead(gid, v, vi) {
+  const th = el("th");
+  /* THE ATTRIBUTE ON THE CELL, THE PAINT ON THE BUTTON — which is `.nu-vpaint`'s
+     own contract said in the one shape a table head allows. `[data-vi]` declares
+     `--vpaint` for everything inside it; the plate has to be the BUTTON, because
+     a `<button>` carries its own background from this page's global button rule
+     and a colour on the `<th>` behind it would never be seen. */
+  th.dataset.vi = String(vpaintOf(vi));
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "nu-scol nu-vpaint";
+  b.dataset.k = "scol|" + gid + "|" + v.name;
+  const line = playsWhat(v);
+  /* THE LAMP IS A CHILD OF A [data-live] SPAN — see this block's header. It
+     EXISTS while the record is stopped and is empty then, because "a surface
+     that only appears once playing is the editing interface changing on play"
+     (test/motif-frozen A2). Hidden from the accessibility tree: the button
+     already says who this is, and a lamp that announced itself four times a
+     beat would be a screen reader reading the playhead aloud. */
+  const lamp = el("span", null, "nu-scollamp");
+  lamp.dataset.live = "lamp";
+  lamp.setAttribute("aria-hidden", "true");
+  b.append(lamp, el("b", v.name, "nu-scolname"),
+           el("span", line || "", "nu-scolinstr"));
+  b.setAttribute("aria-label", v.name + (line ? " — " + line : "") +
+    " — open this player's instrument");
+  b.addEventListener("click", () => {
+    tab = v.name; voiceFacet = "inst"; expand("tab" + v.name, true);
+    showTab("Band"); draw(); markLink();
+  });
+  th.append(b);
+  bandLamps.push({ name: v.name, node: lamp });
+  return th;
+}
+
+/* DIM IS DERIVED, BRIGHT IS SET, on a menu instead of on a word button. The
+   trim grid draws the record's own dealt dB in a dim cell; a `<select>` cannot
+   show one word and write another without becoming a second owner of the
+   vocabulary, so what it says is the table's own absent detent ("—", "as
+   written") and what the CLASS says is that nothing has been said here. Same
+   law, same reading, one class instead of a second word. */
+function gridCell(spec) {
+  const s = selectEl(spec);
+  if (!spec.why && (spec.value == null || spec.value === ""))
+    s.classList.add("is-derived");
+  const td = el("td");
+  td.append(s);
+  return td;
+}
+
+/* WHAT A CELL SAYS WHEN IT IS NOT A CONTROL — the two cases, both honest:
+   a question with ONE possible answer (the `> 1` half of the deleted picks
+   column's rule, and the half that was right: "thirteen menus that can only
+   say what they already say are worse than no column"), and a key this panel
+   does not own while another tab is open. Text, in the cell, so the grid keeps
+   its shape and holds no address. */
+function gridSay(word) {
+  const td = el("td", null, "nu-sgsay");
+  td.append(el("span", word == null ? "—" : String(word)));
+  return td;
+}
+
+function structureGrids(parent) {
+  structCells = [];
+  bandLamps = [];
+  const secs = DOC.form.sections;
+  if (!secs.length) return;
+  /* WHOEVER YOU ARE LOOKING AT OWNS THE KEY. `material.cell|<voice>|<section>`
+     is drawn by this grid and by the Band tab's motif tray, and two panels
+     coexist in the DOM the moment both have been built (ui/selects.js
+     console.errors "duplicate select key material.cell|cantor|c2" and suffixes
+     the second, and a thumb comes back on the wrong menu after every redraw).
+     `showTab` rebuilds the departing panel with `openTab` already the tab you
+     asked for, so the keys are given up before they are taken. */
+  const mine = openTab === "Structure";
+
+  /* ONE TABLE. `heads` are the <th>s across the top after the section column;
+     `cell(s2, i, h, hi)` draws one <td>. Everything else — the caption, the
+     row heads, the playhead registry and the pane — is the same in all five. */
+  const grid = (gid, cap, heads, cell) => {
+    const t = el("table");
+    t.className = "nu-sgrid";
+    /* THE CAPTION IS THE TABLE'S OWN NAME AND NOTHING ELSE. A `<caption>` is
+       what a table is CALLED (it is the accessible name of the grid), so this
+       is a control label rather than prose — which is also why it wears
+       `.nu-rowlab`, the class test/text-diet.test.js already excludes as one of
+       "the page's own label classes". One word where the trim grid needed a
+       sentence, because the column heads say the rest. */
+    t.append(el("caption", cap, "nu-rowlab"));
+    const thead = el("thead"), hr = el("tr");
+    hr.append(el("th", "section"));
+    for (const h of heads) hr.append(h);
+    thead.append(hr);
+    t.append(thead);
+    const tbody = el("tbody");
+    const live = [];
+    secs.forEach((s2, i) => {
+      const tr = el("tr");
+      if (i === editSec()) tr.className = "nu-here";
+      const n = srowHead(gid, s2, i);
+      live[i] = n.live;
+      tr.append(n.th);
+      heads.forEach((h, hi) => tr.append(cell(s2, i, hi)));
+      tbody.append(tr);
+    });
+    t.append(tbody);
+    structCells.push(live);
+    pane(parent, t);
+  };
+
+  /* ===== 1 · READS — the motif assignment, member by member ============ */
+  const voices = DOC.voices;
+  if (voices.length) {
+    const heads = voices.map((v, vi) => scolHead("reads", v, vi));
+    grid("reads", "reads", heads, (s2, i, vi) => {
+      const v = voices[vi];
+      /* THE BASS IS TOLD RATHER THAN ASKED, AND THE GRID SAYS SO IN THE CELL.
+         `bassReadsWhy` carries the measurement — both compilers hand `K.bass`
+         the FIRST LINE'S phrase and take its accents off it (document.js
+         scoreOf, ui/derive.js sectionEvents), so a bass that named a cell would
+         name it into nothing. A hole in the row would have been a grid that
+         forgot the bass; a refusal is the page saying what it can and cannot
+         do, with the reason on the control where a gate can read it back. */
+      if (v.kind === "bass") {
+        const l = LINES()[0], c = l ? cellAt(l, i) : null;
+        return gridCell({ key: shKey("material.cell", { voice: v.name, section: s2.id }),
+          label: v.name + " reads · " + secName(i), options: [], value: null,
+          set: () => {},
+          why: c ? "the bass reads " + c + " — the first line's motif, because " +
+                   "it takes its accents from the tune"
+                 : "the bass has no motif to read: this record has no line " +
+                   "voice for it to take its accents from" });
+      }
+      const cells = NuAvail.cellsFor(DOC, v.kind);
+      if (cells.length <= 1) return gridSay(cellAt(v, i) || cells[0] || null);
+      if (!mine) return gridSay(cellAt(v, i) || null);
+      return gridCell(shSpec("material.cell", { voice: v.name, section: s2.id },
+        v.name + " reads · " + secName(i)));
+    });
+  }
+
+  /* ===== 2 · DOES — the development word, member by member ============= */
+  if (voices.length) {
+    const heads = voices.map((v, vi) => scolHead("does", v, vi));
+    grid("does", "does", heads, (s2, i, vi) => {
+      const v = voices[vi];
+      return gridCell(shSpec(NuAvail.devSheetFor(v.kind),
+        { voice: v.name, section: s2.id }, v.name + " does · " + secName(i)));
+    });
+  }
+
+  /* ===== 3-5 · THE SECTION'S OWN WORDS ================================= */
+  /* Columns are QUESTIONS here rather than players, and the head is the
+     registry's own key (`intro`, `outro`, `mot`, `period`, `breath`, `pipe`) —
+     the only short name any of these rows has. avail.js's `label` is the
+     QUESTION ("how do we get into it?") and it is where a question belongs: on
+     the control, as its accessible name, which is what `selectEl` writes and
+     what a long-press reads back. A six-word question repeated across a header
+     row is a paragraph pretending to be a table. */
+  const qGrid = (gid, cap, keys) => {
+    const heads = keys.map((k) => {
+      const th = el("th", k.split(".")[1]);
+      th.title = (NuAvail.SHEETS[k] || {}).label || k;
+      return th;
+    });
+    grid(gid, cap, heads, (s2, i, hi) => gridCell(shSpec(keys[hi],
+      { section: s2.id },
+      ((NuAvail.SHEETS[keys[hi]] || {}).label || keys[hi]) + " · " + secName(i))));
+  };
+  qGrid("lvl", "level", ["form.lvl"]);
+  qGrid("env", "shape", ["form.env"]);
+  const rest = restKeys();
+  if (rest.length) qGrid("rest", "the rest", rest);
+}
+
 function structurePanel(host) {
   normalize();
   const ax = axis(host, "ax-structure", "The structure");
@@ -10105,6 +10380,17 @@ function structurePanel(host) {
      select key form.role|s7"). One owner per fact, said by a dispatch. */
   if (secOpen) sectionDetail(ax, secOpen);
   else formTable(ax, null, true, false);
+  /* ...AND THE GRIDS UNDER IT IN BOTH STATES (2026-09-02, 2d). COMPOSER.md
+     §2.6's order is the form, the grids, then performance, and the form is the
+     two-state element it has been since 2026-08-25 — so the grids stand under
+     whichever state is showing rather than under one of them. That is not a
+     layout preference, it is where the one-owner law lands: every per-section
+     WORD is the grid's address now, in both states, so there is no state in
+     which two controls could share one `data-k` and none in which the question
+     has no control at all. What the open section adds is its own two facts
+     that the grids do not ask — its NAME and its LENGTH — plus the row you
+     opened, marked `.nu-here` down every grid. */
+  structureGrids(ax);
   performanceTab(ax);
 }
 
@@ -10172,6 +10458,19 @@ let hookCells = [];                      // [{ cells, len }] — one per maker
 // marking an empty list ever since. Deleted 2026-08-24: the form column IS the
 // development column, and lighting it once is the whole of what was wanted.
 let chordCell = [], formCell = [];   // the bar of the loop, and the section
+/* WHICH SECTION IS SOUNDING, ON EVERY SURFACE THAT COUNTS SECTIONS (2026-09-02).
+   The form column has been `formCell` since the table got numbers; the Structure
+   grids each carry a column of the same cells (`structCells`, one array per
+   grid, indexed by section) because a grid whose sounding row you cannot see is
+   a spreadsheet. ONE CALL so the two can never disagree about where the ear is,
+   and one `-1` from stop clears them all. The labels are built once here rather
+   than at each call site, which is also how the stop handler lost its own copy
+   of the arithmetic. */
+const markForm = (si) => {
+  const labels = DOC.form.sections.map((x, i) => String(i + 1));
+  mark(formCell, si, labels);
+  for (const cells of structCells) mark(cells, si, labels);
+};
 function lightStep(abs) {
   atStep = abs;
   // …modulo the record's own bar (2026-08-30, with scoreSPB(): `% 16` walked
@@ -10252,7 +10551,14 @@ function lightSections(si) {
   }
 }
 function lightBand(abs) {
-  if (!trayBtn || !trayBtn.size) return;
+  if (!trayBtn) return;
+  /* THE SET IS OF VOICE NAMES NOW AND NOT OF TRAY KEYS (2026-09-02, 2d): two
+     surfaces read it — the gutter's `tab<name>` row and the Structure grids'
+     column heads — and a set spelled in one surface's addresses would have to
+     be un-spelled for the other. The join is unchanged and is still
+     `channelVoicesOf`, the desk's own table, which is why the lamp in the
+     gutter, the lamp in the grid head and the column on the board can never
+     disagree about who this is. */
   let want = new Set();
   if (abs >= 0) {
     try {
@@ -10260,7 +10566,7 @@ function lightBand(abs) {
       if (chans.length) {
         const map = NuDeskDoc.channelVoicesOf(DOC, GENRES);
         for (const c of map)
-          if (c.voice && chans.indexOf(c.key) >= 0) want.add("tab" + c.voice.name);
+          if (c.voice && chans.indexOf(c.key) >= 0) want.add(c.voice.name);
       }
     } catch (e) { want = new Set(); }
   }
@@ -10269,7 +10575,20 @@ function lightBand(abs) {
   bandLit = sig;
   for (const [k, b] of trayBtn) {
     if (!b || k.slice(0, 3) !== "tab") continue;
-    b.classList.toggle("is-sounding", want.has(k));
+    b.classList.toggle("is-sounding", want.has(k.slice(3)));
+  }
+  /* ...AND IN THE GRID HEADS, WHERE IT IS A CHILD RATHER THAN A CLASS. The
+     gutter is outside #app and a class there is legal; `#pan-structure` is
+     inside it, where the clock writes only inside `[data-live]` and
+     `__eightFrozen` keeps a live element's ATTRIBUTES and empties its
+     CHILDREN. So the lamp is one `<i>` that comes and goes, and the frozen
+     half of the page is byte-identical across a section boundary. */
+  for (const L of bandLamps) {
+    if (!L.node) continue;
+    const on = want.has(L.name);
+    if (!!L.node.firstChild === on) continue;
+    L.node.textContent = "";
+    if (on) L.node.append(el("i"));
   }
 }
 let stepTimers = [];
@@ -10306,8 +10625,7 @@ on("pos", (d) => {
   try { inBox = Math.max(0, (passAt(getPosition().now).bar || 1) - 1); } catch (e) {}
   mark(chordCell, inBox % Math.max(1, DOC.alphabet.prog.length),
        DOC.alphabet.prog.map((c, i) => String(i + 1)));
-  const secLabels = DOC.form.sections.map((x, i) => String(i + 1));
-  mark(formCell, d.si == null ? -1 : d.si, secLabels);
+  markForm(d.si == null ? -1 : d.si);
   // ...AND THE SECTION'S ROW IN THE NAV LIGHTS WITH ITS NUMBER IN THE FORM
   // (2026-09-02). Same fact, same feed, same paint (`--clock`), two surfaces —
   // read off `d.si`, which is the box the ear is in, and never off `editSec()`,
@@ -10422,8 +10740,7 @@ on("transport:state", () => {
   clearStepTimers();
   lightStep(-1);
   mark(chordCell, -1, DOC.alphabet.prog.map((c, i) => String(i + 1)));
-  const secLabels = DOC.form.sections.map((x, i) => String(i + 1));
-  mark(formCell, -1, secLabels);
+  markForm(-1);
   lightSections(-1);
 });
 
