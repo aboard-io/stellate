@@ -872,6 +872,15 @@
      a reason each, so that a 123rd genre arriving with no atlas row FAILS gate
      G1 by name instead of vanishing quietly off the map. */
   const EXCLUDE = {
+    /* ...AND THE BLANK STATE, WHICH IS THE SEVENTH AND IS NOT A ROLE
+       (2026-09-01). Paul: "Add a 'silence' genre at the top of the genre list.
+       This is a blank state." The six above are FUNCTIONS — a job, not a
+       history. `silence` is a seventh kind of not-a-place: it is where the box
+       starts before a hand has chosen anything, and there is no city and no
+       year at which nothing was played. The gate's assertion is rewritten in
+       place — "six roles" becomes "six roles and the blank state" — rather
+       than loosened, because the number is still the point. */
+    silence: "the blank state has no place — nothing has been chosen yet",
     simple:  "a role, not a record — the plain default, with no history",
     solo:    "a role: whoever is taking it, wherever the record is from",
     vocal:   "a role: the voice out front, in any city",

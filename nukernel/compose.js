@@ -2358,9 +2358,21 @@
   }
 
   // ---- the whole song ------------------------------------------------------
-  function compose(gk, seed) {
+  /* THE RESOLVED ROW MAY BE HANDED IN (2026-09-01, the Rules round). Paul:
+     "The genre data is expressed as logical sentences and rules derived from
+     the data in the genre… You can edit them." A Rules edit resolves the
+     anchor's row into a COPY (`rules.js applyRules`, which never touches
+     `GENRES`) and the copy has to reach the arranger, because half the
+     editable surface — plan, bpm, swing, paces, voices, the cast — is consumed
+     HERE and not downstream. So `row` is a third, optional input: absent, this
+     is the catalogue's own row read the way it always was, and every record
+     composed without one is byte-identical. `gk` still names the record for
+     everything that is an IDENTITY rather than a setting (the seed salts, the
+     year, the lineage), which is why it is still the first argument and not
+     replaced by the row. */
+  function compose(gk, seed, row) {
     if (!GENRES[gk]) gk = "simple";
-    const r = rng(seed == null ? 1 : seed), G = GENRES[gk];
+    const r = rng(seed == null ? 1 : seed), G = row || GENRES[gk];
     const kit = Object.keys(G.kit || {}).length > 0;
     // eight kinds of material, and every one of them is USED — a song that
     // fills three slots and leaves five blank has not composed anything, it
@@ -2503,6 +2515,13 @@
     if (!Number.isInteger(bpm0) || bpm0 < 70 || bpm0 > 160)
       throw new Error(`compose: genre "${gk}" declares no bpm ` +
                       `(bpm: an integer 70..160 on its GENRES row)`);
+    // ...and how far it is allowed to wander. UNLIKE `bpm` this one IS
+    // defaulted, and deliberately: 4 is what every record has always done, so
+    // absence is not an omission here, it is the standing answer. Clamped the
+    // way the tempo itself is, because a jitter wider than the fence would
+    // spend most of its draws on the clamp.
+    const jitter0 = Number.isInteger(G.jitter) && G.jitter >= 0
+      ? Math.min(45, G.jitter) : 4;
     // ...AND THIS READING'S SHAPE. The plan is the genre's kind of record; the
     // FORM is this reading of it (the form deal, :58). Everything below reads
     // `form` and nothing reads `plan` again — the arc, the ordinals, the peak
@@ -2675,7 +2694,20 @@
              // the record, drawn once up with the cast, written HERE rather
              // than stamped on every box.
              swing: S.swing,
-             bpm: Math.max(70, Math.min(160, bpm0 + Math.floor(r() * 9) - 4)),
+             /* THE TEMPO, GIVE OR TAKE (2026-09-01, the Rules round). This
+                line read `bpm0 + Math.floor(r() * 9) - 4` under the standing
+                fact that a record's tempo wanders ±4 beats around what its row
+                declares. `scratch/maps-2026-09-01/rules.md` §255 names that as
+                the one threshold the sentence grammar could not say: "the
+                tempo is 125, give or take 4" has two numbers in it and the row
+                only carried one. It carries both now — `jitter`, optional, and
+                ABSENT IS 4, so the arithmetic below is the same arithmetic and
+                the same single draw from the same position in this stream.
+                Every one of the 395 standing anchors composes the identical
+                byte (G6a/G6g hold it); a row that states a jitter of 0 gets
+                the tempo it asked for, exactly, every reading. */
+             bpm: Math.max(70, Math.min(160,
+               bpm0 + Math.floor(r() * (2 * jitter0 + 1)) - jitter0)),
              vol: 80 };
   }
 

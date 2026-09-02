@@ -584,6 +584,50 @@
   // record and the argument are the point of a comment — but every KEY and
   // every rendered surface is genre-only.
   const GENRES = {
+    /* SILENCE — THE BLANK STATE, AND IT IS A ROW LIKE ANY OTHER (2026-09-01).
+       Paul: "Add a 'silence' genre at the top of the genre list. This is a
+       blank state." So it is not a mode, not a null basis and not a branch in
+       the page: it is a GENRE, which means every door the catalog already has
+       opens onto it — the atlas, the rules editor, the transport, the band
+       page. What arrives is one eight-bar head section, one line cell of
+       sixteen rests, and nobody playing it: a bar of nothing, looping, with
+       the transport running and the band waiting to be built into it.
+
+       `silent: true` IS THE OPT-OUT WORD, and it is spelled the way compose.js
+       STEADY is (`compose.js:275`) — a NAMED exemption with a written reason,
+       never a shrug. precompose.js reads it in exactly three places (the guest
+       stack, the "a record with no kinds is given a hook" repair, and the form
+       + material it builds instead), and the three gates that would convict a
+       silent record of being silent name it by that field rather than by this
+       key, so a second blank state tomorrow needs no new list.
+
+       WHY THE FIELDS ARE THE ONES THEY ARE. `plan` and `bpm` are the two the
+       compose.js contract refuses to default (`compose.js:2499`/`:2503`);
+       `instr` is instruments.js:39's throw (an empty ARRAY, because nobody is
+       seated — a string here would be a claim about an instrument no chair
+       holds); `entry`/`reg`/`realize`/`word` are the four closures every row
+       carries. `voices: 0` seats no chair, `kit: {}` seats no drummer,
+       `nobass: true` seats no bass — three separate doors, all three shut, and
+       the row states each of them rather than relying on the branch. `tone` is
+       here for its `verb` alone: G9a holds every record's reverb send to a
+       non-zero return, and a blank state in a dry room is still a room. */
+    silence: {
+      label: "Silence", silent: true,
+      // ...AND THE TEMPO DOES NOT WANDER. `jitter` is the threshold this round
+      // put on the row (compose.js's ±4, made sayable — "the tempo is 125,
+      // give or take 4"); a blank state is the one record where the answer is
+      // zero, because there is nothing to loosen. It is also the catalogue's
+      // first declaration of the field, which is how a new field stops being
+      // theoretical.
+      plan: "song", bpm: 100, jitter: 0, voices: 0,
+      instr: [], kit: {}, nobass: true, harmony: "modal",
+      family: "kernel",
+      entry: () => 0, reg: () => 0, realize: () => "line",
+      tone: { wave: "sine", cut: 2400, q: 0.7, atk: .01, rel: .6, gain: .25, verb: .2 },
+      words: ["nothing yet — build the band"],
+      word: () => [],
+    },
+
     // SIMPLE — the phrase and nothing else. One voice, one bar, no kit, no bass,
     // no harmonic motion, no operator word: the sixteen steps played as written
     // and looped. It is the zero of the genre table, and the useful kind of zero

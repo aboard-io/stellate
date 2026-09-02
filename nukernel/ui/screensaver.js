@@ -1,45 +1,74 @@
-// nukernel/ui/screensaver.js — THE STAR MAP, BACK AS A SCREENSAVER.
+// nukernel/ui/screensaver.js — THE LITTLE ALIENS, DANCING.
 //
-// Paul, 2026-09-01: "Bring back the screensaver from stellate as a new view
-// like the video view."
+// Paul, 2026-09-01: *"screensaver is just a bunch of stars. It should be the
+// little aliens dancing, not the infinite wandering."* And, later the same
+// evening, on the plan that proposed redrawing them as 2D silhouettes on the
+// existing canvas: *"Why not three js? It's fine. Don't reinvent."*
 //
-// WHAT CAME BACK, AND WHAT STAYED IN THE GRAVE. The source is the old
-// explorer at `daw-first:screensaver.html` ("the daw is the front door; the
-// star map becomes the screensaver", f4bc7bf) and its chart in
-// `daw-first:app/map/draw.js`. What this file ports is the DRAWING — the dark
-// #0c0a1a field, stars with soft region-colored halos, a dashed cyan
-// constellation line over a #45e0ff under-glow, the pink breathing traveler,
-// the watermark-faint territory label, genre names beside the bright stars.
-// What it does NOT port is everything that made the explorer an app: the POS
-// layout, ZOOM, gestures, waypoint editing, the demoscene backdrop, the 48 KB
-// starcruise. A screensaver is a picture that moves; the record is the only
-// input it takes.
+// SO THE REAL ALIENS CAME BACK. Not a picture of them: the creatures
+// themselves, `f0f9d89:app/starcruise/alien.js` + `traits.js` + `geom.js`,
+// ported into ./starcruise/ byte-for-byte (one import path in alien.js is the
+// only edit, and ./starcruise/from-doc.js is the only new code). three.js r160
+// is re-vendored at /vendor/three/ from the same commit.
 //
-// A VIEW READS THE POSITION, IT NEVER KEEPS A CLOCK (the video deck's law,
-// ui/eight.js CTX.transport). The traveler's progress and the field's drift
-// are arithmetic on `atStep`/`spb` — a bar advanced is a leg walked and a few
-// pixels drifted — eased on screen because atStep announces in ~60ms jumps
-// (video.js: "good for knowing which bar it is, visibly steppy for anything
-// that moves every frame"). Only the twinkle and the breath run on the wall
-// clock, and neither is a position: stopped means HELD — the field freezes
-// where the record stopped and only shimmers, exactly as the old chart's
-// pulse idled when the traveler parked (draw.js `traveling()`).
+// ---- WHAT THIS REVERSES, WRITTEN BESIDE WHAT IT REVERSED ------------------
 //
-// LAZY IS LAW, AND LEAVING MEANS STOPPING. Nothing here runs until
-// mountScreensaver is called — which ui/eight.js only does when the tab
-// opens — and the rAF does not survive the tab closing: a MutationObserver
-// watches the host's `data-off` (the attribute showTab writes) and parks the
-// loop the frame the panel goes dark, then revives it when the tab reopens.
-// That is one honest step past the video deck, whose loop idles by returning
-// early; a screensaver that kept 60 rAF ticks under a shut panel would be the
-// page paying for a picture nobody can see. test/screensaver-lazy.js measures
-// both edges off `window.__saverFrames`.
+// 2026-09-01 stood here and still stands as the reason the star chart existed:
+//   "WHAT CAME BACK, AND WHAT STAYED IN THE GRAVE. The source is the old
+//   explorer at `daw-first:screensaver.html` ... What it does NOT port is
+//   everything that made the explorer an app: the POS layout, ZOOM, gestures,
+//   waypoint editing, the demoscene backdrop, the 48 KB starcruise. A
+//   screensaver is a picture that moves; the record is the only input it
+//   takes."
+// REVERSED IN PART, 2026-09-02, by the sentence at the top of this file. The
+// half that stays true is the last one — the record is still the only input
+// this view takes, and there is still no layout, no zoom, no gesture and no
+// waypoint editing. What comes back is the CREATURES and nothing else around
+// them: no ship, no flight, no camera rig, no planets, no post-fx chain, no
+// backdrop city. 2026-08-20's "the band, alone" (4a4d730) said the star cruise
+// was retired deliberately; Paul's word above is the word it said it needed.
 //
-// OFFLINE LAW: no fetch, no image, no font file — every star is arithmetic
-// and fillText. GENRES comes from ./deps.js, which ui/eight.js already
-// imported: zero new requests, ever.
+// 2026-09-01 OFFLINE LAW stood here as: "no fetch, no image, no font file —
+// every star is arithmetic and fillText ... zero new requests, ever." AMENDED
+// 2026-09-02, not deleted: the law was always about THE WIRE. Nothing here
+// reaches the network; three.js and the creature modules are files on the same
+// disk the page was served from, `import()`ed lazily so a reader who never
+// opens this tab never pays for them. test/screensaver-lazy.js S6 no longer
+// filters for media — it counts EVERY request the tab makes and names those
+// local modules as the sanctioned exception, so a genuinely foreign fetch
+// (which the old media-only regex would have waved through) now fails it.
+//
+// ---- THE CONTRACT THIS FILE STILL KEEPS ----------------------------------
+//
+// A VIEW READS THE POSITION, IT NEVER KEEPS A CLOCK. `CTX.transport()` is the
+// only position: `playing` and `atStep` decide whether and how far the troupe's
+// musical clock advances, and `CTX.onPos` (the same feed, one announcement a
+// beat) names WHICH BAR of the record is sounding so a member's alien can be
+// handed its own notes. The wall clock does exactly one job, the sanctioned
+// one: it interpolates BETWEEN those announcements (atStep arrives in ~60 ms
+// jumps) and it drives the stars' twinkle. STOPPED MEANS HELD: with `playing`
+// false the musical delta is zero, `alien.update(0, …)` freezes every creature
+// mid-pose, and only the shimmer keeps moving.
+//
+// LAZY IS LAW, AND LEAVING MEANS STOPPING. `mountScreensaver` is SYNCHRONOUS
+// and returns its stop() immediately (ui/eight.js:9454 calls the handle on the
+// next rebuild, so a Promise here would throw). The rAF starts on that same
+// tick and counts frames from the first one; the three.js import is fired off
+// beside it and the rig is built a creature per frame as it lands, so the loop
+// never blocks and never waits. stop() cancels a pending import, disposes the
+// renderer and every geometry/material the troupe owns. The `data-off`
+// MutationObserver parks the loop the frame the panel goes dark, exactly as
+// before — parking stops the loop, it does not dispose the context, because
+// coming back has to be instant.
+//
+// THE RECORD'S OWN HASH DEALS THE TROUPE: "a different record is a different
+// sky, and the same record is the same sky forever" — the same FNV salt over
+// `doc.basis` now seeds the star field AND every creature, so one record is one
+// cast of aliens, forever.
 
 import { GENRES } from "./deps.js";
+import { songBars } from "./derive.js";
+import { SONG, SLOTS, GROOVE, SWING, RUBATO } from "./state.js";
 
 /* the same FNV the video deck salts its cuts with — a different record is a
    different sky, and the same record is the same sky forever */
@@ -52,14 +81,41 @@ const mulberry = (a) => () => {
   t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 
-/* the old map's paint, verbatim: layout.js's ten region colors, draw.js's
-   star/halo/traveler/waypoint hexes, index.html's #0c0a1a theme-color */
-const BG = "#0c0a1a";
-const REGION = ["#6a5cff", "#22c1dc", "#34d17a", "#ffd23f", "#ff7233",
-                "#ff5c8a", "#b06bff", "#9bd93a", "#ff9e3d", "#ff3d5a"];
-const STAR = "#e6e0ff", HOT = "#ffd7ee", PINK = "#ff6ec7", RING = "#ff8fd6";
-const LINE = "#8ef2ff", UNDER = "#45e0ff", WP = "#ffd86b";
-const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, monospace'; // nu.css --mono
+const BG = 0x0c0a1a;                       // the old chart's field, kept
+/* CATEGORY COLOUR = WHICH PLAYER. Six hues, mirroring hw.css --v0..--v3 / --vb
+   / --drum, which COMPOSER.md §2.10 lifts into nu.css as tokens in wave 1b.
+   Read from the document element first so this file inherits that lift the day
+   it lands; the literals below are the fallback until then, and they are
+   hw.css:89-90's own numbers, not a second opinion. */
+const VFALL = ["#1f8fd6", "#1f9d63", "#8b5cf0", "#d1478f"];
+const BASSFALL = "#7a8188", DRUMFALL = "#6b7280";
+function categoryPaint() {
+  let cs = null;
+  try { cs = getComputedStyle(document.documentElement); } catch (e) { cs = null; }
+  const v = (k, fb) => { const s = cs ? (cs.getPropertyValue(k) || "").trim() : ""; return s || fb; };
+  return { line: VFALL.map((fb, i) => v("--v" + i, fb)),
+           bass: v("--vb", BASSFALL), drums: v("--drum", DRUMFALL) };
+}
+/* which of the six a member wears: its KIND first, then its index among the
+   line voices — the same order desk-doc.js channelVoicesOf draws the board in */
+function paintForVoice(P, voices, i) {
+  const v = voices[i] || {};
+  if (v.kind === "drums") return P.drums;
+  if (v.kind === "bass") return P.bass;
+  let li = 0;
+  for (let j = 0; j < i; j++) { const k = (voices[j] || {}).kind;
+    if (k !== "drums" && k !== "bass") li++; }
+  return P.line[li % P.line.length];
+}
+/* WHICH STARCRUISE ROLE A DOCUMENT VOICE IS. alien.js switches on these seven
+   words (its ROLE_VOICE table); the document's own `kind` and `cast.part` are
+   the owners of the answer and nothing is invented here. */
+function roleOfVoice(v) {
+  if (!v) return "perc";
+  if (v.kind === "drums") return "drum";
+  if (v.kind === "bass") return "bass";
+  return (v.cast && v.cast.part) === "pad" ? "pad" : "lead";
+}
 
 export function mountScreensaver(host, CTX) {
   host.textContent = "";
@@ -72,7 +128,7 @@ export function mountScreensaver(host, CTX) {
   // video.js's block of the same date (buildTab clears the host, so the
   // builder owns the heading the way every axis does)
   const vh = document.createElement("h2");
-  vh.className = "nu-vh"; vh.textContent = "The sky";
+  vh.className = "nu-vh"; vh.textContent = "The floor";
   host.appendChild(vh);
   const wrap = document.createElement("div");
   wrap.className = "nu-saver";
@@ -114,193 +170,433 @@ export function mountScreensaver(host, CTX) {
   });
   const cap = document.createElement("p");
   cap.className = "nu-video-cap";
-  cap.textContent = "the sky over " + label;
+  cap.textContent = "the band of " + label;
   wrap.appendChild(cap);
 
-  const ctx2 = canvas.getContext("2d");
-  if (!ctx2) { cap.textContent = "no 2d canvas here"; return () => {}; }
+  /* ==== THE PROBES, SET SYNCHRONOUSLY ==================================
+     S1 of test/screensaver-lazy.js proves these do not exist before the tab
+     is opened, and S2/S3 read them 1200 ms after it is — so they are written
+     on the mount tick, never inside the import's `then`. */
+  let raf = 0, dead = false, parked = false, killed = false;
+  if (typeof window.__saverFrames !== "number") window.__saverFrames = 0;
+  window.__saverDrift = 0;
+  window.__saverTroupe = [];
+  /* ...AND ONE MORE, WHICH IS A COST AND NOT A CONTRACT. `__saverReady` goes
+     true when the rig stands and the last creature has walked on. It exists
+     because `new WebGLRenderer()` is a synchronous call whose cost is the
+     BROWSER'S, not this file's: measured 2026-09-02 on a real machine it is
+     milliseconds, and in the headless chromium the gates run — no GPU, ANGLE
+     falling back to swiftshader — it is TWELVE SECONDS of frozen main thread
+     before it returns. Nothing here can make that faster, and a gate that
+     sampled the frame counter across it would be measuring the CI box's
+     rasteriser and calling it the screensaver. So the flag is published and
+     test/screensaver-lazy.js waits on it before it starts counting. */
+  window.__saverReady = false;
 
-  /* ==== THE SKY, DEALT ONCE FROM THE RECORD'S OWN HASH ==================
-     Normalized coordinates in [0,1); the frame scales them to whatever box
-     the stage has, so fullscreen is the same sky bigger, not a new deal. */
-  const rnd = mulberry(ihash(JSON.stringify((doc && doc.basis) || basis)));
-  const tint = REGION[(ihash(String(basis)) >>> 4) % REGION.length];
-  /* three parallax layers — the old chart's galaxy-zoom feel, flattened into
-     depth: far stars drift at 0.15x of the near field */
-  const LAYERS = [
-    { sp: 0.15, stars: [] }, { sp: 0.45, stars: [] }, { sp: 1.0, stars: [] },
-  ];
-  LAYERS.forEach((L, li) => {
-    const n = [110, 60, 26][li];
-    for (let i = 0; i < n; i++) L.stars.push({
-      x: rnd(), y: rnd(),
-      r: [0.9, 1.4, 2.2][li] * (0.6 + rnd()),
-      halo: li === 2 || rnd() < 0.12,             // the old inactive halo, r 8
-      c: REGION[(rnd() * REGION.length) | 0],
-      tw: rnd() * Math.PI * 2,                     // twinkle phase
-      rate: 0.6 + rnd() * 1.8,
-    });
-  });
-  /* a few named stars: real vocabulary off the shelf, the way the chart drew
-     every genre's LABEL and never its id. Section keys eight.js plants in
-     GENRES have labels too, so filter to strings and dedupe. */
-  const names = [...new Set(Object.values(GENRES)
-    .map((g) => g && g.label).filter((l) => typeof l === "string"))];
-  const near = LAYERS[2].stars;
-  for (let i = 0; i < Math.min(14, near.length, names.length); i++)
-    near[i].name = names[(rnd() * names.length) | 0];
-  /* five planets on the near layer — soft-shaded discs in region colors, the
-     one indulgence the flat chart never had and a screensaver wants */
-  const planets = [];
-  for (let i = 0; i < 5; i++) planets.push({
-    x: rnd(), y: rnd(), r: 8 + rnd() * 16,
-    c: REGION[(rnd() * REGION.length) | 0],
-    moon: rnd() < 0.6, ph: rnd() * Math.PI * 2, sp: 0.2 + rnd() * 0.5,
-  });
-  /* the constellation: seven waypoints, closed loop (draw.js: "repeat
-     waypoint[0] at the end so the line draws the closing leg") */
-  const wps = [];
-  for (let i = 0; i < 7; i++)
-    wps.push({ x: 0.12 + rnd() * 0.76, y: 0.14 + rnd() * 0.72, flare: 0 });
+  /* ==== THE RECORD, READ ONCE ==========================================
+     The bar list is the SAME walk audio/plan.js:524 makes — songBars over the
+     live state, rubato and all — so the aliens and the engine are reading one
+     score. It is re-derived when CTX.doc() stops being the object we planned
+     from, which is what setDocument hands the page. */
+  let plannedDoc = null, PLAN = null, TRAITS = null, dealtBasis = null;
+  const rebuildPlan = (d) => {
+    plannedDoc = d;
+    let bars = [];
+    try { bars = songBars(SONG, SLOTS, GROOVE, SWING, null, { rubato: RUBATO }) || []; }
+    catch (e) { bars = []; }
+    try { PLAN = FROMDOC ? FROMDOC.planFromDoc(d, bars) : null; } catch (e) { PLAN = null; }
+  };
 
-  /* ==== THE CLOCK IT READS =============================================== */
+  /* ==== THE CLOCK IT READS ============================================== */
   const readT = () => (CTX && CTX.transport ? CTX.transport()
                                             : { playing: false, atStep: -1, spb: 16 });
-  let raf = 0, dead = false, parked = false;
-  let drift = 0, walk = 0, lastBar = -1;   // eased screen positions
-  if (typeof window.__saverFrames !== "number") window.__saverFrames = 0;
+  /* ...AND THE BAR IT IS ON. `atStep` counts inside the BOX (eight.js's
+     `inBox`), so it cannot say which bar of the RECORD is sounding; the "pos"
+     announcement can, and it is the same clock — `d.bar` IS `curBar.n`, the
+     index audio/plan.js barPlan() takes. One announcement a beat is plenty for
+     picking a bucket of notes; the smooth part still comes off atStep.
+     There is no unsubscribe on CTX.onPos (eight.js:1093, "on() returns nothing
+     today"), so the handler checks `dead` and returns — a stopped saver's
+     closure costs one comparison a beat and writes nothing. */
+  let posBar = 0, posBpm = 0;
+  if (CTX && CTX.onPos) try {
+    CTX.onPos((d) => { if (dead || !d) return;
+      if (d.bar != null) posBar = d.bar | 0;
+      if (d.bpm) posBpm = +d.bpm; });
+  } catch (e) { /* a CTX without the feed still animates off transport() */ }
 
+  /* declared BEFORE fit(), which reads RIG: a ResizeObserver callback is async
+     so it could not have fired inside the temporal dead zone, but a reader
+     should not have to know that to believe the file. */
+  let THREE = null, FROMDOC = null, makeAlien = null, RIG = null;
+  let queue = [], built = [];
+
+  /* THE BOX IS STILL THE CSS'S. `setSize(w, h, false)` writes the drawing
+     buffer and leaves the style alone, so nu.css's `inline-size:100%;
+     aspect-ratio:16/9` (and the two fullscreen spellings) keep deciding how big
+     the picture is, exactly as they did when this was a 2D canvas. */
   const dpr = Math.min(2, window.devicePixelRatio || 1);
-  const fit = () => { const r = stage.getBoundingClientRect();
-    const w = Math.max(1, Math.round(r.width * dpr));
-    const h = Math.max(1, Math.round(r.height * dpr));
-    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; } };
+  let W = 1, H = 1;
+  const fit = () => {
+    const r = canvas.getBoundingClientRect();
+    W = Math.max(1, Math.round(r.width || 320));
+    H = Math.max(1, Math.round(r.height || W * 9 / 16));
+    if (RIG) { RIG.renderer.setSize(W, H, false);
+               RIG.camera.aspect = W / H; RIG.camera.updateProjectionMatrix();
+               frameCamera(); } };
   const ro = new ResizeObserver(fit);
   ro.observe(stage);
 
+  /* ==== THE LAZY IMPORT ================================================
+     `starcruise-load.js`'s single-flight pattern: one import, a cancel flag,
+     and a synchronous handle that has already been returned by the time this
+     resolves. three.js is 670 KB of local file — a reader who never opens this
+     tab never asks for it. */
+  Promise.all([
+    import("../../vendor/three/three.module.min.js"),
+    import("./starcruise/from-doc.js"),
+    import("./starcruise/alien.js"),
+  ]).then(([three, fd, al]) => {
+    if (dead) return;
+    THREE = (three && three.WebGLRenderer) ? three : (three && three.default) || three;
+    FROMDOC = fd; makeAlien = al.makeAlien;
+    startRig();
+  }).catch((e) => {
+    if (dead) return;
+    /* NO SILENT GREY: a refusal says why, in the caption the deck already has. */
+    cap.textContent = "no dancers here — " + String((e && e.message) || e).slice(0, 80);
+  });
+
+  /* ==== THE RIG ========================================================
+     The minimum stage the old dancer gate stood the creatures on
+     (f0f9d89:test/starcruise/alien-dancer.test.js:45-56): an ambient light, one
+     directional key, a perspective camera. No ship, no flight, no post-fx. */
+  function startRig() {
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
+    } catch (e) { renderer = null; }
+    if (!renderer || !renderer.getContext || !renderer.getContext()) {
+      cap.textContent = "no 3D here — this browser gave no WebGL context";
+      return;
+    }
+    renderer.setPixelRatio(dpr);
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(BG);
+    scene.add(new THREE.AmbientLight(0x8899aa, 0.7));
+    const key = new THREE.DirectionalLight(0xffeedd, 0.9);
+    key.position.set(3, 6, 4); scene.add(key);
+    const camera = new THREE.PerspectiveCamera(52, 16 / 9, 0.1, 400);
+    RIG = { renderer, scene, camera, key, owned: [] };
+    fit();
+
+    const rnd = mulberry(ihash(JSON.stringify(basis)));
+
+    /* THE STARS STAY, FAINT, BEHIND — the one thing the old sky keeps. Points
+       on a far shell, dealt from the record's own stream, so the same record
+       still has the same sky. */
+    const N = 420, pos = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) {
+      const th = rnd() * Math.PI * 2, ph = Math.acos(2 * rnd() - 1), r = 120 + rnd() * 60;
+      pos[i * 3] = r * Math.sin(ph) * Math.cos(th);
+      pos[i * 3 + 1] = Math.abs(r * Math.cos(ph)) * 0.7 - 10;
+      pos[i * 3 + 2] = r * Math.sin(ph) * Math.sin(th);
+    }
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    const sm = new THREE.PointsMaterial({ color: 0xe6e0ff, size: 1.6,
+      sizeAttenuation: false, transparent: true, opacity: 0.5 });
+    const stars = new THREE.Points(sg, sm);
+    scene.add(stars); RIG.stars = stars; RIG.owned.push(sg, sm);
+
+    /* the floor, so a hop reads as a hop: one dark disc, no grid, no city */
+    const fgeo = new THREE.CircleGeometry(14, 40);
+    const fmat = new THREE.MeshStandardMaterial({ color: 0x161233, roughness: 0.95, metalness: 0 });
+    const floor = new THREE.Mesh(fgeo, fmat);
+    floor.rotation.x = -Math.PI / 2; floor.position.y = -0.01;
+    scene.add(floor); RIG.owned.push(fgeo, fmat);
+
+    dealTroupe((CTX && CTX.doc) ? CTX.doc() : doc);
+  }
+
+  /* ==== THE TROUPE, DEALT FROM THE RECORD ==============================
+     One alien per band member, in DOC.voices order, wearing that member's
+     category colour; then 0..4 extras — the old traits.js:611-620 energy gate,
+     capped at four, and refused outright by a record whose own bars measure
+     silent. The hash is `doc.basis`'s, so the same record deals the same cast
+     for ever and a different record deals a different one; that is the star
+     chart's own contract, kept.
+
+     THIS RUNS AGAIN WHEN THE RECORD CHANGES UNDER THE PANEL. It has to: a
+     saver left open while a hand picks another genre would otherwise keep the
+     old band standing there, holding instruments nobody hired, with `mi`
+     indices pointing into a voices array that no longer has those seats. */
+  function dealTroupe(d) {
+    if (!RIG) return;
+    dealtBasis = (d && d.basis) || basis;
+    const brow = GENRES[dealtBasis] || row;
+    rebuildPlan(d);
+    try { TRAITS = FROMDOC.traitsFromDoc(d, brow, (ihash(String(dealtBasis)) & 0xffff) || 1); }
+    catch (e) { TRAITS = null; }
+    const voices = (d && d.voices) || [];
+    const P = categoryPaint();
+    const band = (TRAITS && TRAITS.band) || [];
+    const instFor = (role) => {
+      const hit = band.find((b) => b.role === role) || band.find((b) => b.role === "lead") || band[0];
+      return hit ? hit.instrument : null;
+    };
+    queue = [];
+    voices.forEach((v, i) => {
+      const role = roleOfVoice(v);
+      queue.push({ member: { role, voice: "m" + i,
+                             instrument: instFor(role) || undefined },
+                   seed: (ihash(String(dealtBasis) + "/" + i) & 0x7fffffff) || 1,
+                   mi: i, extra: false, paint: paintForVoice(P, voices, i) });
+    });
+    const quiet = !PLAN || PLAN.meanLoud < 0.06;
+    const nExtra = quiet ? 0 : Math.min(4, (TRAITS && TRAITS.dancers) || 0);
+    for (let e = 0; e < nExtra; e++)
+      queue.push({ member: { role: "dancer" },
+                   seed: (ihash(String(dealtBasis) + "/x" + e) & 0x7fffffff) || 1,
+                   mi: -1, extra: true, paint: null });
+    /* the probe, and the answer the dancers gate reads: one entry per alien,
+       members first in DOC.voices order, then the extras */
+    window.__saverTroupe = queue.map((q) => ({
+      role: q.member.role, extra: q.extra, mi: q.mi,
+      voice: q.mi >= 0 ? ((voices[q.mi] || {}).name || null) : null,
+      paint: q.paint }));
+    cap.textContent = "the band of " + ((brow && brow.label) || String(dealtBasis));
+    /* the blank state (`silence`) has no voices and earns no extras, so nobody
+       ever walks on and buildOne never runs: an empty floor is READY the
+       moment the rig stands. */
+    window.__saverReady = !queue.length;
+  }
+
+  /* everything the troupe owns leaves the scene with it — the dispose walk
+     f0f9d89:app/starcruise/scene.js:955-961 made, used here and in stop() */
+  function dropTroupe() {
+    if (!RIG) { built = []; queue = []; return; }
+    for (const b of built) {
+      try { RIG.scene.remove(b.al.group);
+            b.al.group.traverse((o) => {
+              if (o.geometry) o.geometry.dispose();
+              const m = o.material;
+              if (Array.isArray(m)) m.forEach((x) => x && x.dispose && x.dispose());
+              else if (m && m.dispose) m.dispose();
+            }); } catch (e) { /* already gone */ }
+    }
+    built = []; queue = [];
+  }
+
+  /* ONE CREATURE A FRAME. makeAlien bakes a marching-cubes body core at build
+     time — cheap enough once, too slow to do eight of in a single tick — so the
+     troupe walks onto the floor one dancer per frame while the loop keeps
+     running. The frame counter is already advancing by then, which is what S2
+     measures. */
+  function buildOne() {
+    const q = queue.shift();
+    if (!q) return;
+    let al = null;
+    try { al = makeAlien(THREE, TRAITS || {}, q.member, q.seed); } catch (e) { al = null; }
+    if (!al) return;
+    if (q.paint) {                       // the member's category colour, worn
+      try {
+        const c = new THREE.Color(q.paint);
+        for (const m of (al.materials || [])) {
+          if (!m || !m.color) continue;
+          if (m === al.materials[1] || m === al.materials[3]) m.color.copy(c);
+        }
+      } catch (e) { /* a material that will not take a colour keeps its own */ }
+    }
+    RIG.scene.add(al.group);
+    built.push({ al, mi: q.mi, extra: q.extra });
+    layout();
+    if (!queue.length) window.__saverReady = true;
+  }
+
+  /* THE FLOOR PLAN (f0f9d89:app/starcruise/scene.js:726-750, in spirit — a ring
+     of dancers, not the ship's flight path). The band first, in DOC.voices
+     order, then the extras behind them, in ROWS OF FOUR: a single line of
+     eleven creatures is a frieze, and framing it puts every dancer at a
+     twelfth of the picture. Rows step back and half a place sideways so nobody
+     stands directly behind anybody.
+
+     THE SPACING IS MEASURED, NOT GUESSED, and it is measured at 0.80 of the
+     widest creature's BOX on purpose: a starcruise alien's bounding box is its
+     tentacle and light-ball reach, wider than the body a viewer reads as the
+     dancer, so a full-box gap leaves them standing in separate rooms. The
+     first pass at this used the full box on ONE row and the floor came out as
+     eleven ants across the middle of an empty picture (measured 2026-09-02:
+     the troupe filled 49% of the width and 12% of the height). Re-run after
+     every creature walks on, so the floor is legible at one dancer and at
+     eleven. */
+  const PERROW = 4;
+  function layout() {
+    if (!RIG || !built.length) return;
+    const box = new THREE.Box3(), size = new THREE.Vector3();
+    const widthOf = (b) => { box.setFromObject(b.al.group); box.getSize(size);
+                             return Math.max(0.5, size.x); };
+    const order = built.filter((b) => !b.extra).concat(built.filter((b) => b.extra));
+    const w = Math.max.apply(null, order.map(widthOf)) * 0.80;
+    const rows = [];
+    for (let i = 0; i < order.length; i += PERROW) rows.push(order.slice(i, i + PERROW));
+    rows.forEach((row, ri) => {
+      row.forEach((b, i) => {
+        const k = i - (row.length - 1) / 2 + (ri % 2 ? 0.5 : 0);
+        b.al.group.position.set(k * w, 0, -ri * w * 1.25);
+        b.al.group.rotation.y = -k * 0.13;      // each turns a little outward
+      });
+    });
+    frameCamera();
+  }
+
+  /* THE CAMERA FRAMES WHATEVER IS ON THE FLOOR — no rig, no flight, no gesture,
+     no auto-cut. It solves the distance BOTH ways: the vertical field is the
+     camera's own fov, the horizontal one is that fov widened by the aspect, and
+     the troupe has to fit inside both or a wide floor is cropped on a phone. */
+  function frameCamera() {
+    if (!RIG) return;
+    if (!built.length) { RIG.camera.position.set(0, 1.6, 7); RIG.camera.lookAt(0, 1, 0); return; }
+    const box = new THREE.Box3();
+    for (const b of built) box.expandByObject(b.al.group);
+    const size = new THREE.Vector3(), mid = new THREE.Vector3();
+    box.getSize(size); box.getCenter(mid);
+    const pad = 1.06;                                   // a hand's breadth of air
+    const vFov = (RIG.camera.fov * Math.PI) / 180;
+    const asp = Math.max(0.3, RIG.camera.aspect || 16 / 9);
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * asp);
+    const distV = (size.y * pad * 0.5) / Math.tan(vFov / 2);
+    const distH = (size.x * pad * 0.5) / Math.tan(hFov / 2);
+    /* KEEP IT CHARMING AND SMALL, BUT NOT DISTANT. The far clamp is the one
+       compositional rule this view states: a dancer is about an eighth of the
+       stage, so the camera never backs further off than eight creature-heights
+       even if that crops the ends of a very wide floor. A screensaver of ants
+       is not the little aliens dancing. */
+    const dist = Math.min(Math.max(2.2, distV, distH), Math.max(6, size.y * 7)) + size.z * 0.5;
+    /* a little above the heads, looking a little down: the rows behind the band
+       are only visible from above the front row's shoulders. */
+    RIG.camera.position.set(0, mid.y + size.y * 0.46, box.max.z + dist);
+    RIG.camera.lookAt(0, mid.y * 0.88, mid.z);
+  }
+
+  /* ==== THE FRAME ======================================================= */
   let lastNow = performance.now();
+  let lastBarsPos = null, phase = 0;
+  const SHARED = 1.9;          // alien.js:2044's shared groove rate, verbatim
   const frame = () => {
     if (dead || parked) return;
     raf = requestAnimationFrame(frame);
     window.__saverFrames++;
-    const now = performance.now(), dt = Math.min(0.1, (now - lastNow) / 1000);
+    const now = performance.now();
+    const dtWall = Math.min(0.1, (now - lastNow) / 1000);
     lastNow = now;
-    const W = canvas.width, H = canvas.height;
-    if (!W || !H) return;
+
     const T = readT();
     const spb = T.spb || 16;
-    const bars = T.atStep >= 0 ? T.atStep / spb : 0;   // the record's own ruler
-    /* ease toward the record's position; hold it when stopped. The targets
-       are pure functions of atStep, so a stopped transport is a fixed sky. */
-    const ease = Math.min(1, dt * 4);
-    drift += (bars * 26 - drift) * ease;               // px per bar, near layer
-    window.__saverDrift = drift;   // headless probe: proves the transport ARRIVES at the field (declared-but-never-arriving is this box's characteristic bug)
-    walk += (bars / 2 - walk) * ease;                  // one leg per two bars
-    const absBar = Math.floor(bars);
-    if (T.playing && absBar !== lastBar) {             // a barline: flare the waypoint just reached
-      lastBar = absBar;
-      wps[Math.floor(absBar / 2) % wps.length].flare = 1;
+    const playing = !!T.playing && T.atStep >= 0;
+    const barsPos = T.atStep >= 0 ? T.atStep / spb : 0;   // bars INSIDE the box
+    const bpm = posBpm || (plannedDoc && plannedDoc.time && plannedDoc.time.bpm) || 120;
+
+    /* HOW FAR THE RECORD MOVED SINCE THE LAST FRAME, in bars. atStep restarts
+       at every box, so a negative or absurd delta is a box boundary and not a
+       rewind: on those frames the wall clock supplies the same bar's worth of
+       time it would have supplied anyway (the sanctioned exception — this is
+       interpolation between the transport's announcements, never a position of
+       its own). With the transport stopped the delta is zero and every creature
+       holds mid-pose. */
+    let dBars = 0;
+    if (playing) {
+      const beatsPerBar = spb / 4;
+      const nominal = dtWall * (bpm / 60) / Math.max(1, beatsPerBar);
+      dBars = lastBarsPos == null ? nominal : barsPos - lastBarsPos;
+      if (!(dBars >= 0) || dBars > 2) dBars = nominal;
+    }
+    lastBarsPos = playing ? barsPos : null;
+    /* THE ARRIVAL PROOF. `__saverDrift` is the troupe's accumulated beat phase
+       — the number alien.js's dancer branch calls `beat` when the floor is
+       locked (clock × 1.9). It grows only while the transport says the record
+       is moving, so a field that never hears the transport can never grow it.
+       ("declared but never arriving" is this box's characteristic bug; this
+        line is the only reason the value is published at all.) */
+    const dtMus = dBars * (60 / Math.max(30, bpm)) * (spb / 4);
+    phase += dtMus * SHARED;
+    window.__saverDrift = phase;
+
+    if (!RIG) return;                    // still importing: the loop counts on
+
+    /* THE RECORD CAN BE SWAPPED UNDER THE PANEL — one identity check a frame.
+       A new document with the same basis is an edit (a motif changed, a member
+       joined): the bar plan is re-derived and the cast stands. A new BASIS is a
+       different record, and a different record is a different band. */
+    const nowDoc = (CTX && CTX.doc) ? CTX.doc() : plannedDoc;
+    if (nowDoc !== plannedDoc) {
+      if (nowDoc && nowDoc.basis !== dealtBasis) { dropTroupe(); dealTroupe(nowDoc); }
+      else rebuildPlan(nowDoc);
     }
 
-    ctx2.fillStyle = BG; ctx2.fillRect(0, 0, W, H);
-    const S = Math.min(W, H) / 700;                    // one scale for all geometry
+    if (queue.length && makeAlien) buildOne();
 
-    /* the territory watermark — the old region label, wearing this record's
-       word ("watermark-faint ... never fights the UI") */
-    ctx2.save();
-    ctx2.font = "700 " + Math.max(24, 52 * S) + "px " + MONO;
-    ctx2.fillStyle = tint; ctx2.globalAlpha = 0.09;
-    ctx2.textAlign = "center";
-    ctx2.fillText(label, W / 2, H * 0.5);
-    ctx2.restore();
+    /* SHIMMER — the one thing that keeps moving when the record is stopped.
+       Not a position: a twinkle. */
+    const shim = 0.5 + 0.14 * Math.sin(now / 1400);
+    if (RIG.stars) RIG.stars.material.opacity = shim;
+    RIG.key.intensity = 0.9 + 0.05 * Math.sin(now / 2100);
 
-    for (const [li, L] of LAYERS.entries()) {
-      const off = drift * L.sp * S;
-      for (const st of L.stars) {
-        const x = ((st.x * W - off) % W + W) % W;
-        const y = st.y * H;
-        const tw = 0.72 + 0.28 * Math.sin(now / 1000 * st.rate + st.tw);
-        if (st.halo) { ctx2.globalAlpha = 0.10 * tw;
-          ctx2.fillStyle = st.c;
-          ctx2.beginPath(); ctx2.arc(x, y, 8 * S * (li === 2 ? 1 : 0.6), 0, 7); ctx2.fill(); }
-        ctx2.globalAlpha = (li === 2 ? 0.95 : 0.75) * tw;
-        ctx2.fillStyle = STAR;
-        ctx2.beginPath(); ctx2.arc(x, y, st.r * S, 0, 7); ctx2.fill();
-        if (st.name) { ctx2.globalAlpha = 0.5 * tw;
-          ctx2.font = Math.max(9, 12 * S) + "px " + MONO;
-          ctx2.textAlign = "left";
-          ctx2.fillText(st.name, x + 9 * S, y + 4 * S); }
-      }
+    /* WHICH BAR, AND WHERE IN IT. The bar is the record's (the "pos" feed);
+       the phase inside it is atStep's, which advances four times a beat. */
+    const nb = PLAN && PLAN.numBars ? PLAN.numBars : 1;
+    const bi = ((posBar % nb) + nb) % nb;
+    const bar = PLAN && PLAN.bars ? PLAN.bars[bi] : null;
+    const barPhase = barsPos - Math.floor(barsPos);
+    const loud = bar ? bar.loud : 0;
+
+    for (const b of built) {
+      const slot = bar && b.mi >= 0 ? bar.byMember[b.mi] : null;
+      const ctx = b.extra
+        /* an EXTRA is a dancer: no notes, the whole room's level. Quiet and it
+           keeps its own phase; loud and it locks with the rest — alien.js:2038,
+           unchanged. */
+        ? { barPhase, playing, level: loud, notes: [], loudness: loud }
+        /* a MEMBER plays ITS part: contact on its own onsets in this bar, and
+           when its part is silent alien.js rests it — "it lowers the
+           instrument, idles and sways, and does NOT fake-strike" (its header). */
+        : { barPhase, playing: playing && !!(slot && slot.playing),
+            level: slot ? slot.level : 0, notes: slot ? slot.notes : [],
+            loudness: loud };
+      try { b.al.update(dtMus, ctx); } catch (e) { /* one bad creature is not the floor */ }
     }
-    ctx2.globalAlpha = 1;
 
-    for (const p of planets) {
-      const x = ((p.x * W - drift * 1.25 * S) % W + W) % W, y = p.y * H, r = p.r * S;
-      const g = ctx2.createRadialGradient(x - r * 0.35, y - r * 0.35, r * 0.15, x, y, r);
-      g.addColorStop(0, "#ffffff"); g.addColorStop(0.25, p.c); g.addColorStop(1, "#0a0818");
-      ctx2.globalAlpha = 0.12; ctx2.fillStyle = p.c;
-      ctx2.beginPath(); ctx2.arc(x, y, r * 1.8, 0, 7); ctx2.fill();   // halo
-      ctx2.globalAlpha = 0.9; ctx2.fillStyle = g;
-      ctx2.beginPath(); ctx2.arc(x, y, r, 0, 7); ctx2.fill();
-      if (p.moon) { const a = p.ph + now / 1000 * p.sp;
-        ctx2.globalAlpha = 0.8; ctx2.fillStyle = STAR;
-        ctx2.beginPath();
-        ctx2.arc(x + Math.cos(a) * r * 2.3, y + Math.sin(a) * r * 0.7, Math.max(1.2, r * 0.14), 0, 7);
-        ctx2.fill(); }
-    }
-    ctx2.globalAlpha = 1;
-
-    /* the constellation, in the chart's two strokes: wide #45e0ff under-glow,
-       thin dashed #8ef2ff over it */
-    const P = wps.map((w) => [w.x * W, w.y * H]);
-    const loop = P.concat([P[0]]);
-    ctx2.lineJoin = "round";
-    ctx2.strokeStyle = UNDER; ctx2.lineWidth = 4 * S; ctx2.globalAlpha = 0.18;
-    ctx2.beginPath(); loop.forEach(([x, y], i) => i ? ctx2.lineTo(x, y) : ctx2.moveTo(x, y)); ctx2.stroke();
-    ctx2.strokeStyle = LINE; ctx2.lineWidth = Math.max(1, 1.2 * S);
-    ctx2.setLineDash([4 * S, 5 * S]); ctx2.globalAlpha = 0.85;
-    ctx2.beginPath(); loop.forEach(([x, y], i) => i ? ctx2.lineTo(x, y) : ctx2.moveTo(x, y)); ctx2.stroke();
-    ctx2.setLineDash([]);
-    wps.forEach((w, i) => { const [x, y] = P[i];
-      if (w.flare > 0.01) { ctx2.globalAlpha = 0.5 * w.flare; ctx2.fillStyle = WP;
-        ctx2.beginPath(); ctx2.arc(x, y, (10 + 26 * (1 - w.flare)) * S, 0, 7); ctx2.fill();
-        w.flare *= Math.pow(0.25, dt); }
-      ctx2.globalAlpha = 0.9; ctx2.fillStyle = WP;
-      ctx2.beginPath(); ctx2.arc(x, y, 3.5 * S, 0, 7); ctx2.fill(); });
-
-    /* the traveler: reticle + core straight out of draw.js, gliding the loop;
-       the breath only breathes while the record plays (its old rule) */
-    const seg = Math.floor(walk) % wps.length, f = walk - Math.floor(walk);
-    const a = P[seg], b = P[(seg + 1) % wps.length];
-    const cx = a[0] + (b[0] - a[0]) * f, cy = a[1] + (b[1] - a[1]) * f;
-    if (T.playing) { const ph = (Math.sin(now / 1000 * 2.2) + 1) / 2;  // the 1.4s breath
-      ctx2.globalAlpha = 0.10 + ph * 0.13; ctx2.fillStyle = PINK;
-      ctx2.beginPath(); ctx2.arc(cx, cy, (30 + ph * 10) * S, 0, 7); ctx2.fill(); }
-    ctx2.globalAlpha = 0.5; ctx2.strokeStyle = PINK; ctx2.lineWidth = 1.4 * S;
-    ctx2.beginPath(); ctx2.arc(cx, cy, 24 * S, 0, 7); ctx2.stroke();
-    ctx2.globalAlpha = 1; ctx2.strokeStyle = RING; ctx2.lineWidth = 2.6 * S;
-    ctx2.beginPath(); ctx2.arc(cx, cy, 16 * S, 0, 7); ctx2.stroke();
-    ctx2.fillStyle = PINK;
-    ctx2.beginPath(); ctx2.arc(cx, cy, 4.5 * S, 0, 7); ctx2.fill();
-    ctx2.globalAlpha = 0.9; ctx2.fillStyle = HOT;
-    ctx2.font = Math.max(10, 13 * S) + "px " + MONO; ctx2.textAlign = "left";
-    ctx2.fillText(label, cx + 30 * S, cy + 4 * S);
-    ctx2.globalAlpha = 1;
+    try { RIG.renderer.render(RIG.scene, RIG.camera); } catch (e) { /* context lost */ }
   };
 
   /* THE TAB CLOSING IS THE OFF SWITCH. showTab writes `data-off` on every
      panel but the open one; this observer is the only listener cheap enough
-     to leave armed — it fires on that one attribute and nothing else. */
+     to leave armed — it fires on that one attribute and nothing else. Parking
+     STOPS THE LOOP and nothing else: the renderer keeps its context so coming
+     back is one frame, which is what S5 measures. Disposal is stop()'s job. */
   const mo = new MutationObserver(() => {
     const off = host.hasAttribute("data-off");
     if (off && !parked) { parked = true; cancelAnimationFrame(raf); raf = 0; }
     else if (!off && parked && !dead) { parked = false; lastNow = performance.now();
-      fit(); raf = requestAnimationFrame(frame); }
+      lastBarsPos = null; fit(); raf = requestAnimationFrame(frame); }
   });
   mo.observe(host, { attributes: true, attributeFilter: ["data-off"] });
 
   fit();
   raf = requestAnimationFrame(frame);
-  return () => { dead = true; cancelAnimationFrame(raf); raf = 0;
-                 mo.disconnect(); ro.disconnect(); };
+  return () => {
+    if (killed) return; killed = true;
+    dead = true; cancelAnimationFrame(raf); raf = 0;
+    window.__saverReady = false;
+    mo.disconnect(); ro.disconnect();
+    /* the troupe's geometries and materials go with it, or the GPU keeps them
+       for the life of the page (dropTroupe, above); then the stars, the floor
+       and the renderer itself. */
+    dropTroupe();
+    if (RIG) {
+      for (const o of RIG.owned) { try { o.dispose(); } catch (e) {} }
+      try { RIG.renderer.dispose(); } catch (e) {}
+      RIG = null;
+    }
+  };
 }

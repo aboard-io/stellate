@@ -998,6 +998,14 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      So the scope is chosen through whichever widget is there, exactly as
      `tap()` already was, and the assertion underneath is untouched.
 
+     ...AND `prod.verb` IS GONE, 2026-09-01 (Paul: "The only verb is 'make'
+     from now on. Make X Y."). The measurement above stands as the day's
+     record; today the walk is two taps, not three, and `prod.bare` is still
+     the one sheet on the page with a single option — it is a target of `make`
+     now, because the retired `add` verb's bare option and its lane anchors
+     were folded into `make`'s target list. The assertion underneath is STILL
+     untouched: the law being proved is the widget, not the verb.
+
      Note also `tap()`'s own bug, fixed here while its caller was: it set
      `select.value = v` with the OPTION'S OWN `data-v`, and ui/selects.js writes
      the machine value into `option.value`. Setting `.value` to a string that
@@ -1022,10 +1030,15 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
         l.dispatchEvent(new Event("change", { bubbles: true }));
         return true;
       };
-      if (!tap("prod.verb", "add")) return "no verb";
-      await new Promise((r) => setTimeout(r, 250));
-      // WHO "add" MAY BE SAID ABOUT, off whichever widget offers it. A voice
-      // scope is `v:<name>`; `record` and `mix` are greyed under this verb.
+      // THE VERB TAP STOOD HERE and is deleted, 2026-09-01: it read
+      // `if (!tap("prod.verb", "add")) return "no verb";` and `add` was the
+      // verb whose target list holds the one-option sheet. Paul: "The only
+      // verb is 'make' from now on. Make X Y." — so tap one IS the scope, and
+      // "just add it" is a target of `make` (producer.js targets(), where the
+      // retired verb's own bare option and its lane anchors were folded in).
+      // WHO IT MAY BE SAID ABOUT, off whichever widget offers it. A voice
+      // scope is `v:<name>`; the bare tap is offered for a chair that is out
+      // or a lane the record has never had.
       const scMenu = document.querySelector('select[data-sel="prod.scope"]');
       const scope = scMenu
         ? ([...scMenu.options].find((o) => !o.disabled && /^v:/.test(o.dataset.v || "")) || {}).dataset

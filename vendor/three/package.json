@@ -1,0 +1,4 @@
+{
+  "type": "module",
+  "//": "Same marker, same reason as vendor/espeak-ng/package.json: three.module.min.js and MarchingCubes.js are ES modules, and node resolves a bare .js against the repo root package.json, which is type=commonjs. app/starcruise/planet.js imports three, so without this the pure-node proof test/unit/planet.test.mjs cannot even parse its dependency. The browser never reads this file."
+}

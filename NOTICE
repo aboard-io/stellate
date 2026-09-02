@@ -135,6 +135,15 @@ long convention, noted here rather than claimed as a formal grant. The raw
 © 2010-2023 three.js authors, MIT license (`vendor/three/LICENSE`). Used by
 the star-cruise 3D video mode (`app/starcruise/`).
 
+2026-09-02 — RE-VENDORED. `app/starcruise/` was deleted with the rest of the
+app tree by 4a4d730 (2026-08-20) and these files went with it. Paul, of the
+screensaver: "It should be the little aliens dancing, not the infinite
+wandering", and of the plan that proposed redrawing them without three.js:
+"Why not three js? It's fine. Don't reinvent." The same r160 build is back at
+the same path, restored from commit f0f9d89, and is used by the nukernel
+screensaver (`nukernel/ui/screensaver.js` + `nukernel/ui/starcruise/`), which
+`import()`s it lazily when that tab is first opened.
+
 ## simplex-noise — vendored (MIT)
 
 `vendor/simplex-noise/` contains **simplex-noise 4.0.3** by Jonas Wagner,

@@ -649,6 +649,13 @@ const ASK = {
  * page shows the title with no link at all.
  * ------------------------------------------------------------------------ */
 const NOLINK = {
+  /* THE BLANK STATE (2026-09-01). Paul: "Add a 'silence' genre at the top of
+     the genre list. This is a blank state." It is a real GENRES row so this
+     table has to answer for it, and the honest answer is that there is nothing
+     to link: `Silence` in this ZIM is the absence of sound (and a disambiguation
+     page beside it), not a music this row is a reading of. The row is a state
+     of the box, not a style anybody played. A wrong link is worse than none. */
+  silence: "the blank state — nothing has been chosen yet. `Silence` here is the absence of sound, not a genre; there is no article for an empty page, and pointing this row at one would be claiming a music it does not play. A wrong link is worse than none.",
   dusseldorfschool: "Düsseldorf 1977 — the great rename (2026-09-01): the school word parallels berlinschool, but this ZIM has no article for it (`Düsseldorf school` redirects to the painters; Kling Klang Studio is the band's own room, the brand claim Paul ruled out). A wrong link is worse than none.",
   ambientpop: "Sutton Courtenay 1993 — the great rename (2026-09-01): Ambient pop is the established term but this ZIM files it as a SECTION of Ambient music, and a line in an article is not this row's article (berlinschool's own rule); the band's article went with the band's name. A wrong link is worse than none.",
   instrumentalhiphop: "San Francisco 1996 — the great rename (2026-09-01): Instrumental hip hop is the established name but this ZIM files it as a SECTION of Hip-hop production, and a section is not an article; the DJ's article went with his stage name. A wrong link is worse than none.",

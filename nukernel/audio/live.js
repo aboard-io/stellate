@@ -31,7 +31,7 @@ import { SONG, MASTER, BUSES, bpm, vol, on, emit, pendingStart, setPendingStart 
 import { GENRES } from "../ui/deps.js";
 import { stackOf } from "../ui/derive.js";
 import { compile, timeline, barCount, barBeatsAt, barPlan, parentState,
-         stepDur, songDurSec, warmEngine, firstBarOfBox,
+         stepDur, songDurSec, warmEngine, firstBarOfBox, addrOf,
          unrouted, warmSources } from "./plan.js";
 import { FONT, setFont } from "./fonts.js";
 import { masterState } from "./desk.js";
@@ -160,6 +160,13 @@ W.__nuEngine = () => ({ route: st.route, state: st.state,
   ...health() });
 // the readout's own sentence, so a gate can read it before ui/eight.js paints it
 W.__nuEngineLine = () => engineLine();
+// WHO IS SOUNDING AND HOW LOUD, for the gate — the same two readers the views
+// use, hung on the window in the __nu* family so test/meter-reach.browser.js
+// can read the ARTIFACT rather than a copy of the arithmetic. (Defined here,
+// beside the other probes, rather than at the readers below, so the whole
+// reportable surface of this module is in one place.)
+W.__nuSounding = () => soundingChans();
+W.__nuVoiceLevels = () => voiceLevels();
 
 function settle(stage, why, extra) {
   clearTimeout(deadlineTimer); deadlineTimer = null;
@@ -883,6 +890,104 @@ export function passAt(now) {
     acc += d;
   }
   return { f: tot > 0 ? Math.max(0, Math.min(1, e / tot)) : 0, bar: i + 1, bars };
+}
+
+/* ---------- WHO IS SOUNDING, AND HOW LOUD (2026-09-01) ----------------------
+   Paul, of the Mix deck: *"Light up which instrument is playing, make a little
+   volume meter INSIDE the heading."* And of the nav: *"I need you to light them
+   up when playing them actively."*
+
+   THESE ARE PURE READERS. They subscribe to nothing, install no clock and emit
+   nothing — a view calls them from inside the one playhead it already rides
+   ("a view never installs its own rAF/clock; it reads the position feed").
+   They are HERE and not in a view because both answers are about the engine's
+   own sounding bar, and `curBar`, `barBase` and the handle are this file's.
+
+   NEITHER OF THEM DECIDES ANYTHING. `soundingChans` is the SCHEDULE after the
+   desk — barPlan has already dropped every event whose automation or mute
+   gain is 0 (plan.js: "so 'has an event in this bar' already means 'will be
+   heard'") — so it is a playhead, `--clock`, never a measurement.
+   `voiceLevels` is the MEASUREMENT and nothing else: a chair with no tap and
+   no audit is ABSENT from the map rather than reported as 0, because 0 is a
+   claim of silence about a voice nobody measured. */
+
+// The sounding bar's plan, so a reader never has to recompute `barOfSerial`
+// (module-private) or duplicate `barBase`. null while stopped.
+export const barPlanNow = () => (curBar ? barPlan(curBar.n) : null);
+
+/* THE SAMPLING GRAIN. A reader looks at this four times a beat (lightStep's
+   own cadence). An event shorter than that grain — a 1/32 grace note, a closed
+   hat with dur 0.06 — would fall between two looks and light NOTHING, on every
+   look, for ever: a lit lamp that can never be seen is the "declared but never
+   arriving" bug in its smallest form. So an event is counted as covering the
+   grain it starts in. This is a fact about the SAMPLING, not a claim about
+   decay: nothing here says a hat rings for a sixteenth. */
+const GRAIN = 0.25;                // beats — one sixteenth
+
+// where the ear is inside the sounding bar, in that bar's own beats
+function barBeatNow() {
+  if (!curBar) return -1;
+  return Math.max(0, Math.min(curBar.beats, (nowSec() - curBar.when) / curBar.spb));
+}
+
+/* WHICH CHAIRS HAVE AN EVENT COVERING THIS INSTANT — chair keys ("lead",
+   "schola", "bass", "drums"), the same spelling the board's columns and the
+   nav's band rows use, joined through plan.js addrOf. */
+export function soundingChans() {
+  if (!playing || !curBar) return [];
+  const p = barPlan(curBar.n);
+  if (!p) return [];
+  const A = addrOf(playingSec);
+  const t = barBeatNow();
+  const out = new Set();
+  const covers = (e) => e.beat <= t && t < e.beat + Math.max(+e.dur || 0, GRAIN);
+  for (const e of p.ev.pitched) { if (covers(e)) { const c = A[e.voice]; if (c) out.add(c); } }
+  for (const e of p.ev.drums) { if (covers(e)) out.add(A.drums || "drums"); }
+  return [...out];
+}
+
+/* HOW LOUD EACH CHAIR ACTUALLY IS — `{ chairKey: rms }`, measured, in two
+   lanes because the engine has two:
+     · NATIVE (sampled/found chairs, the default sound): the live per-unit tap
+       engine/faust/live/live.js samplerOf builds, read through
+       `handle.voiceRms(unit)`. Per frame.
+     · STREAM (Faust-modelled chairs): those units are rendered in a worker and
+       own no node, so their only honest number is the bar audit's own rms,
+       `handle.auditFor(serial).voices[unit].rms` — measured at the instant the
+       bar was heard, and therefore PER BAR. A view showing both must say so.
+   A chair present in neither is ABSENT from the returned map. Guarded the way
+   health()'s `g` is guarded: a handle route that lacks the method, throws, or
+   answers null must not take a readout down. */
+export function voiceLevels() {
+  if (!handle || !curBar) return {};
+  const g = (f, a) => {
+    try { const v = handle[f] && handle[f](a); return v == null ? null : v; }
+    catch (e) { return null; }
+  };
+  const p = barPlan(curBar.n);
+  const units = (p && p.units) || {};
+  const A = addrOf(playingSec);
+  const audit = g("auditFor", curBar.serial);
+  const voices = (audit && audit.voices) || null;
+  const out = {};
+  for (const [unit, u] of Object.entries(units)) {
+    if (!u || unit.slice(0, 2) === "__") continue;
+    // THE ADDRESS RULE IS THE DESK'S, read the same way here: audio/desk.js
+    // deskUnits — `const chan = addr[key] || (isDrum ? "drums" : "")`. A unit
+    // with no seat and no drum flag answers to no channel and is skipped.
+    const isDrum = !!u.drum || !!(u.__meta && u.__meta.drum);
+    const chan = A[unit] || (isDrum ? "drums" : "");
+    if (!chan) continue;
+    let r = g("voiceRms", unit);
+    if (r == null && voices && voices[unit]) r = voices[unit].rms;
+    if (r == null) continue;                    // no tap and no audit = no measurement
+    // several units can answer to one chair (a kit's nine lanes are all
+    // "drums"; a chair that changes instrument mid-song seats twice) — the
+    // channel's level is the loudest thing on it, not their sum, because the
+    // sum of two dry taps is not a measurement of anything.
+    out[chan] = Math.max(out[chan] || 0, +r || 0);
+  }
+  return out;
 }
 
 /* ---------- the position feed ---------- */

@@ -492,6 +492,11 @@
      zero off-host requests, byte-identical to the same call under node. -->
 <script src="chair.js"></script>
 <script src="ideas-kit.js"></script>
+<!-- THE RULES TABLE (2026-09-01) — after ideas-kit (it reads LENGTHS/CONTOURS/
+     LANDINGS) and before precompose, which requires it for `applyRules`.
+     rules.js reaches BACK into precompose lazily, at call time, so the two can
+     be loaded in this order without a cycle. -->
+<script src="rules.js"></script>
 <script src="precompose.js"></script>
 <!-- THE PRODUCER (D4). "We've lost the producer entirely" (Paul, 2026-08-24) —
      and what was lost was its cast, its seam and its page, never its engine:

@@ -153,9 +153,17 @@ export const GLYPH = {
     /* Screensaver (2026-09-01, "Bring back the screensaver from stellate as a
        new view like the video view"): ✷ is a star with rays — the old star
        map's whole subject — and ✦ was already spent on Produce. (Video is not
-       in this table and draws the "•" fallback; that is its own open ask.) */
+       in this table and draws the "•" fallback; that is its own open ask.)
+
+       2026-09-02 — THE SUBJECT CHANGED AND THE GLYPH DID NOT. Paul:
+       "screensaver is just a bunch of stars. It should be the little aliens
+       dancing, not the infinite wandering." The sentence below is rewritten
+       because it is user-visible prose that had gone false; ✷ stays, because
+       the stars stay (faint, behind the floor) and because a reader finds this
+       tab by its mark. The old sentence, for the record: "the star map as a
+       screensaver — the record's sky, drifting with the bars". */
     Screensaver: { g: "✷", w: "Screensaver",
-               s: "the star map as a screensaver — the record's sky, drifting with the bars" },
+               s: "the little aliens dancing — one per player, hopping on its own notes" },
     Export:  { g: "⇩", w: "Export",
                s: "a link, a .wav, a .mid — the record out of the box" },
   },

@@ -9,14 +9,22 @@
 //
 // THE GRAMMAR IS ONE SENTENCE SHAPE, BUILT BY TAPPING:
 //
-//     [VERB]  [SUBJECT]  [DESCRIPTOR]
+//     make  [SUBJECT]  [DESCRIPTOR]
 //
-// six verbs, a subject tree that goes all the way down (the record, a chair,
-// a chair's own components, the mix), and a descriptor that is either one of
-// the catalog's 122 anchors or one of its honest adjectives. Two of the six
-// verbs take no descriptor at all, so a two-tap sentence has to read as
-// English too — "less the crash" does not, "less crash" does, and the
-// SUBJECT's word is spelled per verb for exactly that reason (SUBJ.bare).
+// ONE VERB (2026-09-01 — Paul, COMPOSER.md §1 B12: "The only verb is 'make'
+// from now on. Make X Y."), a subject tree that goes all the way down (the
+// record, a chair, a chair's own components, the mix), and a descriptor that
+// is either one of the catalog's anchors or one of its honest adjectives.
+//
+// THE PARAGRAPH THAT STOOD HERE UNTIL 2026-09-01, kept because the reason it
+// gives is still the reason SUBJ.bare exists: "six verbs, a subject tree that
+// goes all the way down (the record, a chair, a chair's own components, the
+// mix), and a descriptor that is either one of the catalog's 122 anchors or
+// one of its honest adjectives. Two of the six verbs take no descriptor at
+// all, so a two-tap sentence has to read as English too — 'less the crash'
+// does not, 'less crash' does, and the SUBJECT's word is spelled per verb for
+// exactly that reason (SUBJ.bare)." There is no two-tap sentence any more, so
+// `bare` survives only in speak's failure prose and in `wordOf`.
 //
 // THE MECHANISM is a deterministic VECTOR STEP in genre space, scoped to a
 // subsystem. No model call, no parser, instant, offline, and the same taps
@@ -111,26 +119,76 @@
                         return v < 0.005 ? 0 : v; };
   const pct  = (w) => Math.round(w * 100);
 
-  /* ================= THE VERBS ===========================================
-     Six, and every one is a word a person says in a room. `d` says whether
-     the verb takes a descriptor: "need" (make), "may" (add), "no" (the
-     rest). A verb that takes none is a two-tap sentence and must still read
-     as English, which is what SUBJ.bare is for. */
+  /* ================= THE VERB ============================================
+     ONE, and it is `make`. Paul, 2026-09-01 (COMPOSER.md §1 B12): *"The only
+     verb is 'make' from now on. Make X Y. The implementation is good but the
+     design is confusing and feels unconsidered."*
+
+     THE SIX-VERB TABLE STOOD HERE AND IS RETIRED THE SAME DAY. It read, and
+     the `says` lines are kept because four of them are now a quality's job:
+
+       { id: "make",  w: "make",      d: "need",
+         says: "change what it IS — toward a record, or toward a word" },
+       { id: "more",  w: "more",      d: "no",
+         says: "more of it: louder, and more of what it already plays" },
+       { id: "less",  w: "less",      d: "no",
+         says: "less of it — quieter, thinner, but still there" },
+       { id: "add",   w: "add",       d: "may",
+         says: "bring in something that is not playing" },
+       { id: "away",  w: "take away", d: "no",
+         says: "out. All the way out, if you keep pressing" },
+       { id: "only",  w: "keep only", d: "no",
+         says: "everything else steps back, and you hear what the record is about" },
+
+     NOT ONE OF THE FIVE BEHAVIOURS IS LOST. Each became a QUALITY — a word in
+     ADJ with a mechanism hook — and that is the whole gain of the collapse: a
+     quality can be pushed, pulled back, greyed with its reason and read in a
+     sentence, none of which a verb could do.
+
+       more      -> `louder`   the ±7 dB fader path and dens +1 (the five rows
+                    at the foot of ADJ; applyAdj's own hooks are marked :GONE)
+       less      -> `quieter`  the same, sign flipped
+       take away -> `gone`     silence(), behind the same livesIn guard
+       add       -> `back in`  bringIn(), for a player who is OUT ...and the
+                    BARE tap (`d === null`, "just add it") for a LANE the
+                    record has never had. The verb carried both halves at
+                    once; each half has one owner now.
+       keep only -> `alone`    the complementary scope (ADJ `scope: "others"`)
+
+     `d` stays on the row and stays "need": every sentence has a descriptor
+     slot, and the bare tap is a descriptor that spells itself null. */
   const VERBS = [
     { id: "make",  w: "make",      d: "need",
       says: "change what it IS — toward a record, or toward a word" },
-    { id: "more",  w: "more",      d: "no",
-      says: "more of it: louder, and more of what it already plays" },
-    { id: "less",  w: "less",      d: "no",
-      says: "less of it — quieter, thinner, but still there" },
-    { id: "add",   w: "add",       d: "may",
-      says: "bring in something that is not playing" },
-    { id: "away",  w: "take away", d: "no",
-      says: "out. All the way out, if you keep pressing" },
-    { id: "only",  w: "keep only", d: "no",
-      says: "everything else steps back, and you hear what the record is about" },
   ];
   const VERB = {}; for (const v of VERBS) VERB[v.id] = v;
+
+  /* ================= THE ONE ALIAS DOOR (2026-09-01) =====================
+     A saved record from before today carries `{v:"more"|"less"|"add"|"away"|
+     "only"}` in `doc.produce`, and every one of them still has a sentence in
+     the new grammar. They are FOLDED ON READ, at this one door, and written
+     back folded the first time the stack is touched — the genre-only rename's
+     own precedent (nukernel/document.js OLDKEYS, nukernel/song.js migrate):
+     TWO DOORS AT MOST, never a third copy of the map. This is door one;
+     ui/produce.js reads its notes through `Prod.run`/`Prod.notesOf` and so
+     needs none of its own.
+
+     `add` keeps its descriptor: "add the crash, punk" becomes "make the drums
+     punk" (the anchor is the same anchor), and a bare `add` stays bare. */
+  const OLDVERB = { more: "louder", less: "quieter", away: "gone", only: "alone" };
+  const foldNote = (n) => {
+    if (!n || VERB[n.v]) return n;
+    const q = OLDVERB[n.v];
+    if (q) return { ...n, v: "make", d: q };
+    if (n.v === "add") return { ...n, v: "make" };   // d stays; null is the bare tap
+    return n;                                        // a verb from nowhere: left alone
+  };
+  // ...and the list keeps its IDENTITY when there is nothing to fold, because
+  // the offering memoizes on `sig(model, secs)` and `run` returns `secs0` BY
+  // REFERENCE when the stack is empty. A fresh array per read is several
+  // hundred stack runs per redraw (the STANDING law at :299).
+  const foldNotes = (list) =>
+    (list.some((n) => n && !VERB[n.v]) ? list.map(foldNote) : list);
 
   /* ================= THE SUBJECTS ========================================
      THE WHOLE TREE. The record, each chair, each chair's own components, and
@@ -173,23 +231,29 @@
       chan: [], master: true, kind: "mix" },
   ];
   const SUB = {}; for (const s of SUBJ) SUB[s.id] = s;
-  // ...and which of them a verb may take. "keep only" over the whole sound
-  // says nothing (keep only everything), and "add"/"take away" over the mix
-  // is not a sentence — the mix is a treatment, not a thing that plays.
-  // WHICH VERBS A SUBJECT TAKES, declared rather than inferred (askable.js's
-  // philosophy: a row, with the reason in it). Absent = all six.
-  //   the sound / the mix   are not things you add or remove or keep only —
-  //                         "keep only the sound" is keep only everything
-  //   the bass sound, the amp   take `make` alone: an amp is a CHARACTER,
-  //                         not an amount, and "more the amp" is not English
-  //   the bass line         is what the bass plays, not a thing that can be
-  //                         added or taken away — that is `the bass`
-  const VERBSOF = { record: ["make", "more", "less"],
-                    mix:    ["make", "more", "less"],
-                    bamp:   ["make"], amp: ["make"],
-                    line:   ["make", "more", "less"] };
-  const takes = (verb, sid) =>
-    (VERBSOF[sid] ? VERBSOF[sid].includes(verb) : true);
+  /* WHICH VERBS A SUBJECT TAKES — RETIRED 2026-09-01 with the five verbs, and
+     the table is kept here because its four reasons are not retired at all.
+     It read:
+
+       const VERBSOF = { record: ["make", "more", "less"],
+                         mix:    ["make", "more", "less"],
+                         bamp:   ["make"], amp: ["make"],
+                         line:   ["make", "more", "less"] };
+
+     A verb×subject matrix with one verb says nothing. THE SAME FACTS ARE NOW
+     QUALITY×SUBJECT, which is what `ADJ.on` has always been — one table
+     instead of two — and they are EXTRACTED into `A_LEVEL` and `A_INOUT`
+     beside the adjectives rather than retyped:
+       the sound / the mix   are not things you add, remove or keep only —
+                             "keep only the sound" is keep only everything
+       the bass sound, the amp   have no LEVEL: an amp is a CHARACTER, not an
+                             amount, and there is no fader of its own to move
+       the bass line         is what the bass plays, not a thing that can be
+                             added or taken away — that is `the bass`
+     `takes` stays exported (ui/produce.js:571, test/producer-eight.test.js
+     :242 both ask it) and now answers the only question left: is this a verb
+     this box says, about a subject this record has? */
+  const takes = (verb, sid) => !!(VERB[verb] && SUB[sid]);
 
   /* ================= THE FIELD LAW =======================================
      One row per kernel field the producer may touch, saying HOW it moves.
@@ -394,6 +458,15 @@
                  "bass","line","bamp","keys","guitar","amp","voice","tune","mix"];
   const A_KIT = ["drums","kick","snare","hats","toms","cymbals","perc","record"];
   const A_PITCH = ["bass","line","bamp","keys","guitar","amp","voice","tune","record"];
+  /* ...AND THE TWO LISTS THE RETIRED VERBS LEFT BEHIND (2026-09-01), DERIVED
+     from A_ALL rather than retyped, each carrying one of VERBSOF's own reasons
+     (:157). A_LEVEL is everything with a level to move — the amp and the bass
+     sound have none, they are a character. A_INOUT is everything that PLAYS —
+     the sound and the mix are treatments, and the bass line is what the bass
+     plays rather than a thing you bring in or take out. */
+  const A_LEVEL = A_ALL.filter((id) => id !== "bamp" && id !== "amp");
+  const A_INOUT = A_ALL.filter((id) =>
+    !["record", "mix", "bamp", "amp", "line"].includes(id));
   const ADJ = [
     { id: "brighter", w: "brighter", on: A_ALL, said: "opened the top up",
       mix: (w) => ({ eq: { hi: +6 * w, lo: -1 * w } }),
@@ -478,6 +551,32 @@
       master: (w) => ({ tape: +0.5 * w }), },
     { id: "pumping",  w: "pumping",  on: ["record","mix"], said: "squeezed it",
       master: (w) => ({ glue: +0.6 * w }) },
+    /* ---- THE FIVE QUALITIES THE FIVE RETIRED VERBS BECAME (2026-09-01) ----
+       Paul: "The only verb is 'make' from now on. Make X Y." Each row carries
+       the verb's mechanism UNCHANGED, behind a hook applyAdj reads (the three
+       structural ones are marked :GONE there) — the arithmetic did not move,
+       only the word it hangs off. Three of them are structure rather than
+       colour, and each keeps the guard its verb carried: you cannot take out,
+       or keep only, or bring back, a thing this record does not have. */
+    { id: "louder",  w: "louder",  on: A_LEVEL, said: "brought it up",
+      mix: (w) => ({ fader: +7 * w }), master: (w) => ({ glue: +0.2 * w }),
+      dens: +1 },
+    { id: "quieter", w: "quieter", on: A_LEVEL, said: "pulled it down",
+      mix: (w) => ({ fader: -7 * w }), master: (w) => ({ glue: -0.2 * w }),
+      dens: -1 },
+    { id: "gone",    w: "gone",    on: A_INOUT, said: "took it out",
+      gone: true },
+    // ...and `back in` is an ordinary word in the word sheet, greyed with its
+    // reason on a record where nothing is out — which is where it belongs, and
+    // not in the bare sheet beside "just add it". A vocabulary you can SEE
+    // greyed is a vocabulary you learn (the no-silent-grey law's other half);
+    // a word that only appears once the record is in a particular state is one
+    // nobody ever finds. It shares `bringIn` with the bare tap the way `gone`
+    // and `alone` share `silence()`: one function, two doors.
+    { id: "back",    w: "back in", on: A_INOUT, said: "brought it back in",
+      bring: true },
+    { id: "alone",   w: "alone",   on: A_INOUT, said: "everything else stepped back",
+      scope: "others" },
   ];
   const ADJOF = {}; for (const a of ADJ) ADJOF[a.id] = a;
   // WHICH ADJECTIVE FAMILY A SUBJECT INHERITS. Every `on` list above names
@@ -833,28 +932,33 @@
     // ["guitar","amp"] — was never offered and put a punk record's guitar on a
     // palm-muted patch anyway (measured 2026-08-24). One table, both readers.
     if (verb === "make" && adj && adj.on.includes(asOf(S.id)))
-      applyAdj(model, secs, S, adj, w, held, d, addMix, addMaster, grids, noKit);
+      applyAdj(model, secs, S, adj, w, held, d, addMix, addMaster, grids, noKit,
+               live, sounds);
 
-    /* ---- MORE / LESS: the amount of it ------------------------------- */
-    if (verb === "more" || verb === "less") {
-      const sign = verb === "more" ? 1 : -1;
-      if (S.chan.length) addMix(S.chan, { fader: sign * 7 * w });
-      if (S.master) addMaster({ glue: sign * 0.2 * w, space: 0 });
-      // ...and more of what it PLAYS, not only more of its level
-      if (S.lane && grids) densLane(secs, S, sign, w, d, noKit);
-      else if (S.id === "bass" || S.id === "line") densBass(secs, sign, w, d, held);
-      else if (S.id === "record" && grids) densLane(secs, SUB.drums, sign, w, d, noKit);
-    }
-
-    /* ---- ADD: bring in what is not playing --------------------------- */
-    if (verb === "add") {
+    /* ---- THE BARE TAP: a lane the record has never had ----------------- */
+    // "just add it". This is the half of the retired `add` verb that is about
+    // a LANE — the record's own idiom for the drum that is missing (ADDPAT) —
+    // and it is the whole of the bare sentence now: the other half (a player
+    // who is OUT) is the quality `back in`, so bringIn has one caller and
+    // addOrder has one caller instead of one verb having both.
+    //
+    // THE MECHANISM IS THE VERB'S, MOVED AND NOT REWRITTEN — the lane walk,
+    // `bringIn`, the live-channel registration and the +2 dB, in that order,
+    // exactly as `add` ran them. `bringIn` is now also the quality `back in`'s
+    // mechanism (:GONE), which is the same arrangement `silence()` has had
+    // since `take away` and `keep only` both called it: ONE FUNCTION, two
+    // doors. What that costs is one redundancy on the offering — a player who
+    // is out can be brought back by the word or by the bare tap — and the
+    // producer page's own redesign (COMPOSER.md §2.9, wave 2f) is where the
+    // two are drawn as one gesture.
+    if (verb === "make" && !note.d) {
       if (S.lane && grids && !noKit) {
         for (const sec of secs) {
           touchKit(sec); const g = sec.genre;
           for (const bar of [g.kit, ...(g.kits || [])]) {
             if (!bar) continue;
             for (const lane of S.lane) {
-              const plan = addOrder(bar, lane, A);
+              const plan = addOrder(bar, lane, null);
               if (!plan || !plan.order.length) continue;
               const { pat, cur, order } = plan;
               const budget = Math.max(1, Math.round(w * order.length));
@@ -872,42 +976,6 @@
       if (d.brought.length || d.lanes.some((x) => x.add))
         for (const c of S.chan) live.add(c);
       if (S.chan.length) addMix(S.chan, { fader: +2 * w });
-    }
-
-    /* ---- TAKE AWAY: the Rubin verb ---------------------------------- */
-    // ...AND YOU CANNOT TAKE AWAY WHAT IS NOT THERE. The same guard `keep
-    // only` has carried since the live-channel law, applied to the verb one
-    // door over, because the fault it prevents is Paul's original complaint
-    // wearing a different noun: on a house record "take away the keys" was
-    // OFFERED, pressed three times, and reported `moved:false, said:["the
-    // keys is not playing on this record"], mix:{}` every time. The chair has
-    // a seat, an instrument and a `part`, and K.render of its phrase is zero
-    // notes long — so `silence` nulling that part counted as a move, and
-    // subjectsFor (which asks the mover, pressed to the top of its ladder)
-    // agreed with itself all the way down. PREFER NOT OFFERING WHAT CANNOT
-    // WORK over flagging it refused afterwards.
-    if (verb === "away" && livesIn(live, secs, S, sounds)) {
-      if (S.chan.length) addMix(S.chan, w >= DELETE_TH
-        ? { mute: true, fader: -36 * w } : { fader: -36 * w });
-      if (w >= DELETE_TH) silence(secs, S, d, grids);
-      else if (S.lane && grids) densLane(secs, S, -1, w, d, noKit);
-    }
-
-    /* ---- KEEP ONLY: everything else steps back ----------------------- */
-    // ...and you cannot keep only a thing that is not there. Without this the
-    // verb passes the honesty test by moving everything EXCEPT its subject —
-    // "keep only the cymbals" on a record with no cymbals is a record with
-    // nothing in it, which is not what anybody meant by the sentence.
-    if (verb === "only" && livesIn(live, secs, S, sounds)) {
-      const others = SUBJ.filter((x) => x.kind && x.id !== S.id && x.id !== "record" &&
-                                        x.id !== "mix" && x.id !== S.under &&
-                                        x.under !== S.id);
-      for (const o of others) {
-        if (o.chan.length) addMix(o.chan, w >= DELETE_TH
-          ? { mute: true, fader: -30 * w } : { fader: -30 * w });
-        if (w >= DELETE_TH) silence(secs, o, d, grids);
-      }
-      if (S.chan.length) addMix(S.chan, { fader: +3 * w });
     }
 
     out.push({ note, d });
@@ -1142,7 +1210,8 @@
   }
 
   /* ---- the adjectives, applied --------------------------------------- */
-  function applyAdj(model, secs, S, adj, w, held, d, addMix, addMaster, grids, noKit) {
+  function applyAdj(model, secs, S, adj, w, held, d, addMix, addMaster, grids, noKit,
+                    live, sounds) {
     if (adj.mix && S.chan.length) addMix(S.chan, adj.mix(w));
     if (adj.mix && !S.chan.length && S.master) addMix(["drums","bass"], adj.mix(w));
     if (adj.master && (S.master || S.id === "record")) addMaster(adj.master(w));
@@ -1156,6 +1225,40 @@
       else if (S.id === "record" && grids) densLane(secs, SUB.drums, adj.dens, w, d, noKit);
       if (S.id === "bass" || S.id === "line" || S.id === "record")
         densBass(secs, adj.dens, w, d, held);
+    }
+    /* :GONE — THE THREE QUALITIES THAT ARE STRUCTURE AND NOT COLOUR, and each
+       one is the retired verb's own body, moved and not rewritten: `take away`
+       (:889 as it stood), `add`'s resurrection half (:870), and `keep only`
+       (:901), guards included. `livesIn` is why they need `live` and `sounds`:
+       you cannot take out — or keep only — a thing that is not there, which is
+       Paul's 2026-08-22 fault wearing a different noun. */
+    if (adj.gone && livesIn(live, secs, S, sounds)) {
+      if (S.chan.length) addMix(S.chan, w >= DELETE_TH
+        ? { mute: true, fader: -36 * w } : { fader: -36 * w });
+      if (w >= DELETE_TH) silence(secs, S, d, grids);
+      else if (S.lane && grids) densLane(secs, S, -1, w, d, noKit);
+    }
+    if (adj.bring) {
+      bringIn(secs, S, w, d);
+      if (d.brought.length) {
+        for (const c of S.chan) live.add(c);
+        if (S.chan.length) addMix(S.chan, { fader: +2 * w });
+      }
+    }
+    // ...THE ONLY CODE PATH IN THIS FILE THAT WRITES TO SUBJECTS OTHER THAN
+    // THE NOTE'S. `scope: "others"` is the declaration that lets it: applyAdj
+    // is scoped to S and S.chan everywhere else, and a quality that means
+    // "alone" has to walk SUBJ the way `keep only` did.
+    if (adj.scope === "others" && livesIn(live, secs, S, sounds)) {
+      const others = SUBJ.filter((x) => x.kind && x.id !== S.id && x.id !== "record" &&
+                                        x.id !== "mix" && x.id !== S.under &&
+                                        x.under !== S.id);
+      for (const o of others) {
+        if (o.chan.length) addMix(o.chan, w >= DELETE_TH
+          ? { mute: true, fader: -30 * w } : { fader: -30 * w });
+        if (w >= DELETE_TH) silence(secs, o, d, grids);
+      }
+      if (S.chan.length) addMix(S.chan, { fader: +3 * w });
     }
     for (const sec of secs) {
       if (adj.g) for (const [f, spec] of Object.entries(adj.g(w))) {
@@ -1557,18 +1660,27 @@
     : dsc && ADJOF[dsc] ? ADJOF[dsc].w : SUB[sid] ? SUB[sid].bare : String(dsc));
 
   /* ================= THE SENTENCE ========================================
-     Assembled by the taps, never read from them. Two of the six verbs take
-     no descriptor, and their subject is spelled BARE so a two-tap sentence
-     is real English: "more kick", not "more the kick". */
-  function sentence(n) {
+     Assembled by the taps, never read from them.
+
+     ONE SHAPE SINCE 2026-09-01: "make <the thing> <the word>". The paragraph
+     that stood here said: "Two of the six verbs take no descriptor, and their
+     subject is spelled BARE so a two-tap sentence is real English: 'more
+     kick', not 'more the kick'." There is no two-tap sentence any more, so
+     four of the five branches went with the four verbs, and `bare` survives in
+     `wordOf` and in speak's failure prose only.
+
+     THE TRAILING SPACE IS THE BARE TAP'S. A sentence whose descriptor is null
+     is "make the drums" — "just add it" is a TAP, not a word, and what it
+     means is the lane the record's own idiom puts in.
+
+     An old note is FOLDED before it is spelled, so a saved record's `more
+     drums` reads back as "make the drums louder" rather than as nothing. */
+  function sentence(n0) {
+    const n = foldNote(n0) || {};
     const V = VERB[n.v], S = SUB[n.s];
     if (!V || !S) return "";
-    const dsc = n.d ? (GENRES[n.d] ? n.d : (ADJOF[n.d] ? ADJOF[n.d].w : n.d)) : null;
-    if (n.v === "more" || n.v === "less") return V.w + " " + S.bare;
-    if (n.v === "away") return "take away " + S.w;
-    if (n.v === "only") return "keep only " + S.w;
-    if (n.v === "add") return "add " + S.w + (dsc ? ", " + dsc : "");
-    return "make " + S.w + " " + (dsc || "");
+    const dsc = n.d ? (GENRES[n.d] ? n.d : (ADJOF[n.d] ? ADJOF[n.d].w : n.d)) : "";
+    return "make " + S.w + (dsc ? " " + dsc : "");
   }
 
   /* ================= WHAT MAY BE SAID ====================================
@@ -1671,7 +1783,7 @@
       // sentence that has to be refused after the fact is a sentence that
       // should not have been on the page (the law, both halves).
       if (isDrum(SUB[s.id]) && kitless(secs)) return false;
-      // A VERB THAT TAKES A DESCRIPTOR IS OFFERED ONLY WHERE IT HAS ONE.
+      // A SUBJECT IS OFFERED ONLY WHERE IT HAS SOMETHING TO SAY.
       // This used to say `return true` — its descriptors decide — and that
       // is exactly half a rule: the DESCRIPTOR list is computed against the
       // record, so a subject whose list comes back empty was a noun you
@@ -1679,11 +1791,15 @@
       // record: "add" offered `the keys`, and targetsFor answered with zero
       // targets. Withholding a subject whose target list is empty removes
       // exactly zero sayable sentences, by construction.
-      if (VERB[verb].d !== "no") return targetsFor(model, secs0, verb, s.id).length > 0;
-      // ...and a verb that takes none is a two-tap sentence, so the
-      // record-dependent test has to happen HERE or never.
-      try { const r = run({ song: model.song, prod: [{ v: verb, s: s.id, w: 0.95 }] }, secs);
-            return !!(r.said[0] && r.said[0].moved); } catch (e) { return false; }
+      //
+      // THE TWO-TAP PROBE THAT STOOD BESIDE IT WENT WITH THE FIVE VERBS
+      // (2026-09-01). It read: `if (VERB[verb].d !== "no") return targetsFor(
+      // ...).length > 0;` and then, for a verb that took no descriptor, ran
+      // the whole stack once at 0.95 to ask whether the two-tap sentence moved
+      // anything. Every sentence has a descriptor now, so the first half is
+      // the whole rule. `wouldVerb` itself STAYS: speak still asks it about a
+      // BARE sentence ("not yet — push it further").
+      return targetsFor(model, secs0, verb, s.id).length > 0;
     }));
   }
 
@@ -1691,7 +1807,6 @@
   // a page redraws on every tap
   function targetsFor(model, secs0, verb, sid) {
     if (!VERB[verb] || !SUB[sid]) return [];
-    if (VERB[verb].d === "no") return [];
     const secs = standing(model, secs0);
     if (isDrum(SUB[sid]) && kitless(secs)) return [];      // the kitless fence
     const model2 = { song: model.song };          // the stack is IN `secs` now
@@ -1699,42 +1814,46 @@
   }
   function targets(model2, secs, verb, sid) {
     const out = [];
-    if (verb === "make") {
-      for (const gid of GENRE_KEYS)
-        if (firstStep(model2, secs, sid, gid) >= EPS_STEPS)
-          out.push({ id: gid, w: gid, label: GENRES[gid].label, kind: "genre" });
-      // AN ADJECTIVE IS ASKED THE SAME QUESTION, AND ANSWERS IT BY DOING IT.
-      // A genre's first step is cheap to predict (firstStep walks its own
-      // field rows), an adjective's is not — "sparser" on a record with no
-      // hats and "let it ring" on a bass are both perfectly good words and
-      // both move nothing HERE. There are two dozen of them, so the honest
-      // test is the cheap one: make the move and see. Same epsilon law,
-      // same reason.
-      for (const a of ADJ) if (a.on.includes(asOf(sid)) && wouldMove(model2, secs, sid, a.id))
+    if (verb !== "make") return out;
+    const S = SUB[sid];
+    const g0 = secs[0] && secs[0].genre;
+    const grids = !(g0 && g0.meter && g0.meter.steps !== 16);
+    /* ONE WALK OF THE CATALOG, IN THE ATLAS'S OWN ORDER, AND TWO REASONS TO BE
+       ON IT (the second folded in 2026-09-01 from the retired `add` verb):
+         · the first press would move this record by at least epsilon, or
+         · this record has never had a lane this anchor's kit plays — "add the
+           crash, punk" was its own sentence and is "make the drums punk" now,
+           the same anchor either way.
+       One walk rather than two lists concatenated, because a genre's rank is
+       the where/when list's rank (:68) and two sorted lists joined end to end
+       is not one sorted list. `canAdd` is asked only where the epsilon test
+       already said no, so the cost is unchanged on the anchors that pass. */
+    for (const gid of GENRE_KEYS)
+      if (firstStep(model2, secs, sid, gid) >= EPS_STEPS ||
+          (S && S.lane && canAdd(secs, S, GENRES[gid], grids, true)))
+        out.push({ id: gid, w: gid, label: GENRES[gid].label, kind: "genre" });
+    // AN ADJECTIVE IS ASKED THE SAME QUESTION, AND ANSWERS IT BY DOING IT.
+    // A genre's first step is cheap to predict (firstStep walks its own
+    // field rows), an adjective's is not — "sparser" on a record with no
+    // hats and "let it ring" on a bass are both perfectly good words and
+    // both move nothing HERE. There are two dozen of them, so the honest
+    // test is the cheap one: make the move and see. Same epsilon law,
+    // same reason.
+    for (const a of ADJ)
+      if (a.on.includes(asOf(sid)) && wouldMove(model2, secs, sid, a.id))
         out.push({ id: a.id, w: a.w, kind: "adj" });
-    } else if (verb === "add") {
-      // "just add it" is only offered where the record's own idiom has
-      // something to put in (ADDPAT, or a chair that is actually out)
-      if (wouldAdd(model2, secs, sid)) out.push({ id: null, w: "just add it", kind: "bare" });
-      // "add the crash, punk" — which record's crash. THE TEST IS AGAINST
-      // THIS RECORD, not against the anchor: it used to offer every anchor
-      // with anything in the lane, which on a record that does not count in
-      // sixteen (where the grid is refused whole) was a hundred sentences
-      // that could only ever answer "this one counts in three". Same law as
-      // everywhere else — offer it if it would put a step in.
-      const S = SUB[sid];
-      const g0 = secs[0] && secs[0].genre;
-      const grids = !(g0 && g0.meter && g0.meter.steps !== 16);
-      if (S.lane) for (const gid of GENRE_KEYS)
-        if (canAdd(secs, S, GENRES[gid], grids, true))
-          out.push({ id: gid, w: gid, label: GENRES[gid].label, kind: "genre" });
-    }
+    // "just add it" is only offered where the record's own idiom has something
+    // to put in (ADDPAT, or a chair that is actually out)
+    if (wouldAdd(model2, secs, sid)) out.push({ id: null, w: "just add it", kind: "bare" });
     return out;
   }
   // ...pressed to the top of its ladder, because the thresholds are
   // staggered and a first press can honestly be below all of them
+  // ...and the BARE sentence is asked the same way: a note with no descriptor
+  // at all, pressed to the top of its ladder. It said `v: "add"` until
+  // 2026-09-01; the branch it probes is the same branch, under the one verb.
   const wouldAdd = (model, secs, sid) => {
-    try { const r = run({ ...model, prod: [{ v: "add", s: sid, w: 0.95 }] }, secs);
+    try { const r = run({ ...model, prod: [{ v: "make", s: sid, w: 0.95 }] }, secs);
           return !!(r.said[0] && r.said[0].moved); } catch (e) { return false; }
   };
   // the same question a two-tap sentence has to ask: does this verb move
@@ -1767,15 +1886,23 @@
      A statement is not fire-and-forget. It is a LINE the record remembers,
      with a plus and a minus and a percentage, and the record IS the base
      plus the visible stack. Undo is removing a line. */
-  const notesOf = (m) => (Array.isArray(m && m.prod) ? m.prod : []);
+  // ...AND EVERY READER COMES THROUGH HERE, which is what makes the alias
+  // door (`foldNote`, under THE VERB above) ONE door: `run`, `sig`, `addNote` and ui/produce.js's own
+  // `produced()` all read the stack through this function, so an old note is
+  // folded once and written back folded the first time the stack is touched.
+  const notesOf = (m) => foldNotes(Array.isArray(m && m.prod) ? m.prod : []);
   const withNotes = (m, list) => ({ ...m, prod: list });
   function addNote(m, verb, sid, dsc) {
     const list = notesOf(m);
+    // THE SAME DOOR ON THE WAY IN. A caller saying an old verb (a share link,
+    // a console, a gate written before 2026-09-01) lands the note it MEANT,
+    // and the dedupe below then compares like with like.
+    const n0 = foldNote({ v: verb, s: sid, ...(dsc ? { d: dsc } : {}), w: START });
     // SAYING IT AGAIN IS NOT A SEVENTH NOTE, IT IS A PUSH — checked before
     // the ceiling, because "make the drums punk" said twice must go further
     // even when the stack is full.
-    const at = list.findIndex((n) => n.v === verb && n.s === sid &&
-                                     (n.d || null) === (dsc || null));
+    const at = list.findIndex((n) => n.v === n0.v && n.s === n0.s &&
+                                     (n.d || null) === (n0.d || null));
     if (at >= 0) return bump(m, at, +1);
     // TEN, and this trailing comment said "five or six things" until
     // 2026-08-26 — the number MAXNOTES was RAISED FROM, left standing beside
@@ -1785,8 +1912,7 @@
     // take away is wrong by four. Paul: "the producer is supposed to be able
     // to say ten things not just one."
     if (list.length >= MAXNOTES) return m;
-    return withNotes(m, [...list, { v: verb, s: sid,
-      ...(dsc ? { d: dsc } : {}), w: START }]);
+    return withNotes(m, [...list, n0]);
   }
   function bump(m, i, dir) {
     const list = notesOf(m); const n = list[i]; if (!n) return m;

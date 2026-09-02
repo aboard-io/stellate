@@ -117,7 +117,21 @@ const reach = (a, b, N) => { const A = up(a, N), B = up(b, N); let best = null;
 const GENERATIONS = 6;   // measured ceiling — see the header
 
 /* ---- one walk over the whole catalogue ---------------------------------- */
-const anchors = NP.anchors().filter((k) => (GENRES[k] || {}).family !== "parts");
+/* ...AND THE ROWS WITH NO CHAIRS ARE SKIPPED (2026-09-01). Paul: "Add a
+   'silence' genre at the top of the genre list. This is a blank state." Every
+   law in this file is a law about WHO IS IN THE ROOM — is the singer allowed
+   here, does the guest reach the host's lineage, does the caption tell the
+   truth about the instrument in the chair. A record with no chairs answers
+   none of them: there is no singer to refuse, no guest to place and no caption
+   to check, so it is skipped BY THE MEASUREMENT (the row seats nobody) rather
+   than by its key. The `parts` filter one clause up is the same move, made in
+   2026-08-30 for the six function genres. A row that seats chairs and hides
+   them still walks every law. */
+const seatsNobody = (k) => { const G = GENRES[k] || {};
+  return (G.voices || 0) === 0 && !!G.nobass && !Object.keys(G.kit || {}).length; };
+const anchors = NP.anchors()
+  .filter((k) => (GENRES[k] || {}).family !== "parts")
+  .filter((k) => !seatsNobody(k));
 const docs = [];   // { gk, seed, doc, guests: [gk2...] (real genres off the stack) }
 for (const gk of anchors) for (const seed of SEEDS) {
   const Rc = NC.compose(gk, seed);

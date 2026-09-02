@@ -925,6 +925,62 @@
     return { ok: !errors.length, song: errors.length ? null : s, errors, notes };
   }
 
+  /* ---- THE RULES A HAND REWROTE (2026-09-01, the Rules round) -------------
+     Paul: "The genre data is expressed as logical sentences and rules derived
+     from the data in the genre… You can edit them, add new rules from a
+     palette, and set thresholds." A record therefore carries `doc.rules` — the
+     sentences this reading was composed with — and it has to survive the door,
+     because a share link or a saved session that dropped them would reopen as
+     a DIFFERENT record while claiming to be the same one.
+
+     THE SHAPE IS ALL THIS VALIDATES, and that is on purpose: an array of
+     `{ f: <a field rules.js RULES names>, v: <any JSON value> }`. The VALUE is
+     not checked here — `rules.js` owns what each field may hold and clamps it
+     on the way in (`applyRules` -> the row's own `write`), so a second copy of
+     those bounds beside them is a second copy to drift. What IS refused is a
+     field this build has no rule for: the same policy every other enum on this
+     page takes ("an unknown level means the file is from a build this one
+     cannot honestly play"), dropped rather than carried as a lie the composer
+     would silently ignore.
+
+     THE ROSTER IS READ LAZILY, at call time, for the same reason `migrate`
+     reads document.js's OLDKEYS lazily two hundred lines up: this file sits
+     BELOW rules.js in both graphs (index.html loads song.js at :455 and
+     rules.js after ideas-kit), and rules.js reaches compose.js which reaches
+     here. One owner, no cycle, no second list. */
+  function ruleFields() {
+    const R = (typeof module !== "undefined" && module.exports)
+      ? (function () { try { return require("./rules.js"); } catch (e) { return null; } })()
+      : root.NuRules;
+    return (R && R.byField) || null;
+  }
+  // validateRules(raw) -> { rules, dropped } — `rules` is null when the record
+  // states none (absent is the only spelling of "this record was composed the
+  // way its anchor is written"), and `dropped` names what did not survive so a
+  // caller can say it out loud rather than shrugging.
+  function validateRules(raw) {
+    if (raw == null) return { rules: null, dropped: [] };
+    if (!Array.isArray(raw)) return { rules: null, dropped: ["rules is not a list"] };
+    const known = ruleFields();
+    const out = [], dropped = [];
+    for (const e of raw) {
+      if (!e || typeof e !== "object" || Array.isArray(e) || typeof e.f !== "string") {
+        dropped.push(JSON.stringify(e)); continue;
+      }
+      if (known && !Object.prototype.hasOwnProperty.call(known, e.f)) {
+        dropped.push(e.f + " — this build has no rule by that name"); continue;
+      }
+      // JSON-SAFE OR NOTHING. A value that cannot be written down cannot be
+      // reopened, and a rule that reopens as `undefined` is the "declared but
+      // never arriving" bug with a save button on it.
+      let v;
+      try { v = JSON.parse(JSON.stringify(e.v === undefined ? null : e.v)); }
+      catch (x) { dropped.push(e.f + " — its value is not JSON"); continue; }
+      out.push({ f: e.f, v });
+    }
+    return { rules: out.length ? out : null, dropped };
+  }
+
   // the whole path in one call: any version in, {ok, song, errors, notes} out —
   // errors are refusals, notes are what it CHOSE (a session genre it could not
   // rebuild, played as `simple`), and a song can load with notes on it
@@ -934,7 +990,11 @@
                 PHRASE_MIN, PHRASE_MAX,
                 blankDrum, isDrumPhrase, okDrumPhrase,
                 SESSION_NS, isSessionKey, sessionKey, MAX_PARENTS, FALLBACK_GENRE,
-                migrate, validateSong, load };
+                migrate, validateSong, load,
+                // the eight-axes document's own one field this file validates
+                // (the Rules round, 2026-09-01) — document.js normalize is its
+                // one caller, which is the door every record enters through
+                validateRules };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NuSong = api;
 })(typeof window !== "undefined" ? window : globalThis);

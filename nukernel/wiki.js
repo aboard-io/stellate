@@ -397,6 +397,7 @@
     "scotsfiddle": {"title":"Scottish_fiddling","kind":"genre","why":"Edinburgh 1796 is Nathaniel Gow's publishing firm at 41 North Bridge (his article's own sentence), but the anchor is the TRADITION, not the man — the appalachia precedent, where Sharp's collecting year labels a row that links Appalachian music. The article is the playing style itself, 'distinguished from other folk fiddling styles by its particular precision of execution', and it names both Gows in its own body. Not Niel Gow, the father whose collections this ZIM cannot date; not Strathspey, which is a disambiguation page here (a Highland district and a shinty team are on it)."}
   };
   const MISSES = [
+    {"key":"silence","label":"Silence","why":"the blank state — nothing has been chosen yet. `Silence` here is the absence of sound, not a genre; there is no article for an empty page, and pointing this row at one would be claiming a music it does not play. A wrong link is worse than none."},
     {"key":"synthsoul","label":"London 1983","why":"London 1983 — the great rename (2026-09-01, Paul: \"ONLY genre\") took the act's article with the act's key: the row is a soul voice over a Model D two-chord vamp, synthpop and blueeyedsoul are taken, so the key is the flagged coinage synthsoul — and a coinage has no article by design. A wrong link is worse than none."},
     {"key":"detroitsoul","label":"Detroit 1965","why":"Detroit 1965 — the great rename (2026-09-01): `Motown` is a company's article (the label first, the Sound second) and this row stopped claiming the trademark; Detroit soul has no article of its own in this ZIM. A wrong link is worse than none."},
     {"key":"dusseldorfschool","label":"Düsseldorf 1977","why":"Düsseldorf 1977 — the great rename (2026-09-01): the school word parallels berlinschool, but this ZIM has no article for it (`Düsseldorf school` redirects to the painters; Kling Klang Studio is the band's own room, the brand claim Paul ruled out). A wrong link is worse than none."},
@@ -439,7 +440,7 @@
     "built": "2026-09-01",
     "from": "nukernel/wiki-extract.js",
     "book": BOOK,
-    "counts": { "links": 362, "misses": 27, "roles": 6, "anchors": 395 },
+    "counts": { "links": 362, "misses": 28, "roles": 6, "anchors": 396 },
     WIKI, MISSES, url,
   };
 });

@@ -2,8 +2,9 @@
 //
 // (Paul, 2026-08-24: "we've lost the producer entirely.")
 //
-// The engine was never lost. `nukernel/producer.js` is 1,700 lines of vector
-// step in genre space — six verbs, a subject tree that goes all the way down,
+// The engine was never lost. `nukernel/producer.js` is 1,800 lines of vector
+// step in genre space — ONE VERB since 2026-09-01 (Paul: "The only verb is
+// 'make' from now on. Make X Y."), a subject tree that goes all the way down,
 // 122 anchors and 30 adjectives as descriptors, an asymptotic ladder whose
 // MINUS is the exact algebraic inverse of its PLUS. What went missing was its
 // CAST, its SEAM and its PAGE. This file is all three, and it adds no
@@ -32,7 +33,8 @@
 // compiler and handed to producer.js through the `S.out` seam (H4).
 //
 // TAPPED, NEVER TYPED. There is no text box and no parser anywhere in this
-// file. The sentence is ASSEMBLED by three taps — verb, scope, target — so
+// file. The sentence is ASSEMBLED by two taps — scope, target (it was three
+// until 2026-09-01, when the verb tap became the constant `make`) — so
 // every sentence the page offers is one producer.js can actually make, and an
 // unsayable one is never offered rather than guessed at.
 import { GENRES, render, NuDocument, NuDeskDoc, Prod } from "./deps.js";
@@ -97,7 +99,26 @@ const HELD = [
   { field: "voices",   control: "the cast — one line voice, one voice" },
 ];
 const KNOBS = {}; for (const r of HELD) KNOBS[r.field] = r.control;
-const modelOf = (doc) => ({ song: { bpm: doc.time.bpm, knobs: KNOBS } });
+/* ...AND THE MODEL CARRIES THE STACK, 2026-09-01. It read
+   `({ song: { bpm: doc.time.bpm, knobs: KNOBS } })` — no `prod` — and
+   producer.js's `standing()` (`:1646`) says plainly what that cost:
+
+     "THE RECORD THE OFFERING IS ABOUT IS THE ONE PLAYING, notes and all. The
+      page hands the offering the BASE sections; the stack on top of them is
+      what you are listening to, and a subject the stack has already taken away
+      (or brought in) must be offered accordingly."
+
+   `standing()` returns its argument untouched when `notesOf(model)` is empty,
+   so with no `prod` on the model the offering was ALWAYS computed against the
+   base and that paragraph was never true on the page. It went unnoticed while
+   the five verbs stood, because `add` moved a fader whether or not it brought
+   anything in; the moment `back in` became a quality with `bringIn` as its
+   whole mechanism, the word could never be offered — a control declared and
+   never arriving, which is this box's characteristic bug. `produced()` still
+   passes its own filtered `prod:` explicitly, so the compile path is
+   unchanged; this is the OFFERING's model. */
+const modelOf = (doc) => ({ song: { bpm: doc.time.bpm, knobs: KNOBS },
+                            prod: notes(doc) });
 /** The held set, so a gate can assert the hand wins without retyping it. */
 export const held = () => ({ ...KNOBS });
 
@@ -534,10 +555,15 @@ const WHY = {
   nothing:  "there is no ",
   spent:    (w) => "it's as " + w + " as it's going to get",
   nomove:   (S) => "nothing here would move " + S.w + " on this record",
-  notverb:  (V) => "there is nothing on this record to " + V.w,
+  // `notverb` STOOD HERE and went with the verb sheet, 2026-09-01: it read
+  // `(V) => "there is nothing on this record to " + V.w` and its only reader
+  // was tap one, which is gone (there is one verb, so there is nothing to
+  // choose and nothing to grey).
   // producer.js VERBSOF's own reasons, one level up: "keep only the sound" is
   // keep only everything, an amp is a CHARACTER and not an amount, and the bass
-  // line is what the bass plays rather than a thing you add.
+  // line is what the bass plays rather than a thing you add. They are ADJ.on
+  // entries now (producer.js A_LEVEL / A_INOUT) and this row is the last
+  // reader of `takes()`, which one verb can no longer make false.
   notsaid:  (V, S) => "\u201c" + V.w + " " + S.w + "\u201d is not a sentence",
   dishonest:(S) => "that is not an honest word about " + S.w,
   ceiling:  (n) => "that is " + n + " things — take one off before you say another",
@@ -546,19 +572,14 @@ const WHY = {
 const offeredSubjects = (st, doc, verb) => new Set(
   Prod.subjectsFor(modelOf(doc), probeOf(st, doc), verb).map((x) => x.id));
 
-/** The six verbs, each with whether this record has anything to say it about. */
-export function verbs(doc, genreFor) {
-  const st = state(doc, genreFor);
-  install(st.cast);
-  return Prod.VERBS.map((v) => {
-    const on = offeredSubjects(st, doc, v.id).size > 0;
-    return { id: v.id, w: v.w, says: v.says, on,
-             why: on ? null : WHY.notverb(v) };
-  });
-}
+/* `verbs(doc, genreFor)` STOOD HERE and is deleted, 2026-09-01 (Paul: "The
+   only verb is 'make' from now on"). It answered "the six verbs, each with
+   whether this record has anything to say it about" and its only caller was
+   `tapVerb`. One verb is not a question, so it is not a sheet, and a sheet
+   nobody can answer wrongly is a row of chrome. */
 
 /** The WHOLE subject tree, each row with `on` and, when off, `why`. */
-export function subjects(doc, genreFor, verb) {
+export function subjects(doc, genreFor, verb = VERB1) {
   const st = state(doc, genreFor);
   install(st.cast);
   const offered = offeredSubjects(st, doc, verb);
@@ -607,9 +628,21 @@ export function targets(doc, genreFor, verb, sid) {
    axis: the eight determine the SCORE, and this is a session fact — somebody
    with taste saying a few things about the record the eight describe
    (AXES.md:113, PROGRAM.md §2.1). */
-let pverb = null, psubj = null;
-const PASK = { make: "make what?", more: "more of what?", less: "less of what?",
-               add: "add what?", away: "take away what?", only: "keep only what?" };
+/* THE STATE MACHINE IS TWO LEVELS NOW, 2026-09-01. It read:
+
+     let pverb = null, psubj = null;
+     const PASK = { make: "make what?", more: "more of what?",
+                    less: "less of what?", add: "add what?",
+                    away: "take away what?", only: "keep only what?" };
+
+   Paul: "The only verb is 'make' from now on. Make X Y." A verb that cannot be
+   chosen is not page state, so `pverb` is a CONSTANT and `PASK` is one string.
+   (The page this leaves is the shipped one minus its first tap; the producer's
+   own redesign — the cast as chips, the two target sheets, the live preview —
+   is COMPOSER.md §2.9's second half and wave 2f's, not this slice's.) */
+const VERB1 = "make";
+const PASK1 = "make what?";
+let psubj = null;
 
 /** PROGRAM.md §2.2. Draws the producer into `parent`; returns a handle. */
 export function mount(parent, ctx) {
@@ -630,7 +663,7 @@ export function mount(parent, ctx) {
   const R = produced(doc);
   // A LANDING clears the sentence being built, recompiles and redraws — the one
   // owner for recompile, exactly as `changed()` is for every sheet on the page.
-  const land = () => { pverb = null; psubj = null; ctx.changed(); };
+  const land = () => { psubj = null; ctx.changed(); };
 
   if (R.orphans && R.orphans.length) sec.append(el("p",
     R.orphans.map((n) => n.s.replace(/^v:/, "") + " is gone — that note went " +
@@ -645,12 +678,14 @@ export function mount(parent, ctx) {
 
   const asked = el("div");
   sec.append(asked);
-  if (notes(doc).length >= Prod.MAXNOTES && !pverb) {
+  // THE CEILING IS ASKED AT TAP ONE, and tap one is the SCOPE now (it keyed on
+  // `!pverb` until 2026-09-01). Mid-sentence the hint would replace the sheet
+  // you are looking at, which is the one moment it is not useful.
+  if (notes(doc).length >= Prod.MAXNOTES && !psubj) {
     asked.append(el("p", WHY.ceiling(Prod.MAXNOTES), "nu-hint"));
     return;
   }
-  if (!pverb) tapVerb(asked, doc, ctx);
-  else if (!psubj) tapSubject(asked, doc, ctx, land);
+  if (!psubj) tapSubject(asked, doc, ctx, land);
   else tapTarget(asked, doc, ctx, land);
 }
 
@@ -754,56 +789,57 @@ function stackStrip(parent, doc, ctx) {
   parent.append(p);
 }
 
-/* ---- TAP ONE: THE VERB. Six, and the MINUS half is as strong as the plus —
-   less, thinner, drier, gone — because subtraction is the half of production
-   that has no knob on a desk. */
-function tapVerb(parent, doc, ctx) {
-  // "notes", 2026-08-27 — FUTURE.md §5: "six verb chips + a stack; the
-  // heading is the noun". It read "what do you want to say?".
-  sheet(parent, { key: "prod.verb", label: "notes",
-    value: "", ungated: true,
-    options: verbs(doc).map((v) => ({ value: v.id, label: v.w,
-      disabled: !v.on, why: v.on ? null : v.why })),
-    set: (v) => { pverb = v; psubj = null; ctx.redraw(); } });
-}
+/* ---- TAP ONE WAS THE VERB, AND IT IS DELETED (2026-09-01) --------------
+   It drew the `prod.verb` sheet:
 
-/* ---- TAP TWO: THE SCOPE, AND IT GOES ALL THE WAY DOWN. The record, each
+     sheet(parent, { key: "prod.verb", label: "notes", value: "",
+       ungated: true, options: verbs(doc).map(...), set: (v) => { pverb = v; ... } });
+
+   with the label "notes" (2026-08-27, FUTURE.md §5: "six verb chips + a stack;
+   the heading is the noun" — it had read "what do you want to say?"). Paul,
+   2026-09-01: "The only verb is 'make' from now on. Make X Y." A menu of one
+   is not a choice, so the sheet is gone and its VIEW_SHEETS row went with it
+   in the same commit (test/sheets.js) — a declared sheet nobody draws is a
+   registry that stops describing the page.
+
+   ---- TAP ONE: THE SCOPE, AND IT GOES ALL THE WAY DOWN. The record, each
    player, each player's own components, the mix. "More drums" and "more kick"
    are the same sentence at two depths, and the depth is the sheet's own group
    heading. The word is `bare` for more/less and `w` otherwise, so a two-tap
    sentence is English: "more cantor", "take away the cantor". */
 function tapSubject(parent, doc, ctx, land) {
-  const rows = subjects(doc, null, pverb);
-  const V = Prod.VERB[pverb];
-  sheet(parent, { key: "prod.scope", label: PASK[pverb] || "what?",
+  const rows = subjects(doc, null, VERB1);
+  sheet(parent, { key: "prod.scope", label: PASK1,
     value: "", ungated: true,
+    // ...and the word is `w` for every row now ("the drums"). It was `bare`
+    // under `more`/`less` so that "more drums" read as English; there is no
+    // two-tap sentence to spell, and "make the drums louder" wants the
+    // article.
     options: rows.map(({ row, on, why }) => ({
       value: row.id,
-      label: (pverb === "more" || pverb === "less") ? row.bare : row.w,
+      label: row.w,
       group: row.under ? (Prod.SUB[row.under] || {}).w : null,
       disabled: !on, why: on ? null : why })),
-    set: (sid) => {
-      // A VERB THAT TAKES NO DESCRIPTOR LANDS THE NOTE ON THIS TAP.
-      if (V.d === "no") { say(doc, pverb, sid, null); land(); return; }
-      psubj = sid; ctx.redraw(); } });
-  back(parent, ctx, "start again", () => { pverb = null; psubj = null; });
+    // EVERY SENTENCE NEEDS A TARGET NOW. The early land that stood here —
+    // `if (V.d === "no") { say(doc, pverb, sid, null); land(); return; }` —
+    // went with the two verbs that took no descriptor (2026-09-01).
+    set: (sid) => { psubj = sid; ctx.redraw(); } });
 }
 
 /* ---- TAP THREE: THE TARGET — a word, or a record. */
 function tapTarget(parent, doc, ctx, land) {
   const S = Prod.SUB[psubj] || { w: psubj };
-  const t = targets(doc, null, pverb, psubj);
-  const legend = (pverb === "add" ? "add " + S.w + " — like what?"
-                                  : "make " + S.w + " — what?");
+  const t = targets(doc, null, VERB1, psubj);
+  const legend = "make " + S.w + " — what?";
   if (t.bare.length) sheet(parent, { key: "prod.bare", label: legend, value: "",
     ungated: true,
     options: t.bare.map((o) => ({ value: "@bare", label: o.w })),
-    set: () => { say(doc, pverb, psubj, null); land(); } });
+    set: () => { say(doc, VERB1, psubj, null); land(); } });
   if (t.adj.length) sheet(parent, { key: "prod.word",
     label: t.bare.length ? "in a word" : legend, value: "", ungated: true,
     options: t.adj.map((a) => ({ value: a.id, label: a.w,
       disabled: !a.on, why: a.on ? null : a.why })),
-    set: (id) => { say(doc, pverb, psubj, id); land(); } });
+    set: (id) => { say(doc, VERB1, psubj, id); land(); } });
   if (t.gen.length) {
     sheet(parent, { key: "prod.record",
       label: (t.adj.length || t.bare.length) ? "or like a record" : legend,
@@ -814,7 +850,7 @@ function tapTarget(parent, doc, ctx, land) {
       // really read (sheets.js says the same thing about `why`).
       options: t.gen.map((g) => ({ value: g.id,
         label: g.label ? g.w + " · " + g.label : g.w })),
-      set: (id) => { say(doc, pverb, psubj, id); land(); } });
+      set: (id) => { say(doc, VERB1, psubj, id); land(); } });
     if (t.hidden > 0) parent.append(el("p",
       "…and " + t.hidden + " other records this would not move.", "nu-hint"));
   }
@@ -835,4 +871,4 @@ function back(parent, ctx, word, fn) {
 // the sentence being built, for a gate and for a console. It is VIEW state —
 // which tap you are on is not something the record says — so it lives here and
 // not in the document.
-export const asking = () => ({ verb: pverb, subject: psubj });
+export const asking = () => ({ verb: VERB1, subject: psubj });

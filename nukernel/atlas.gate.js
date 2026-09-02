@@ -131,7 +131,14 @@ ok("every anchor is placed or excluded", true,
      Object.keys(A.WHEN).length + Object.keys(A.EXCLUDE).length === keys.length,
      Object.keys(A.WHEN).length + " + " + Object.keys(A.EXCLUDE).length
      + " vs " + keys.length);
-  ok("EXCLUDE is the six roles", Object.keys(A.EXCLUDE).length === 6, Object.keys(A.EXCLUDE).join(" "));
+  /* "EXCLUDE is the six roles" stood here until 2026-09-01 and the sentence is
+     kept above its successor rather than edited, because what it was holding —
+     that the off-map table is a SHORT, NAMED list and not a bin — is unchanged.
+     What changed is that there are seven things that are not places now. Paul,
+     2026-09-01: "Add a 'silence' genre at the top of the genre list. This is a
+     blank state." A blank state has no city and no year, and it is not a role
+     either, so it is named beside them and counted with them. */
+  ok("EXCLUDE is the six roles and the blank state", Object.keys(A.EXCLUDE).length === 7, Object.keys(A.EXCLUDE).join(" "));
   ok("no genre in both", both.length === 0, both.join(" ") || "none");
   ok("no genre in neither", neither.length === 0,
      neither.length ? neither.join(" ") + "  <- give it a \"City Year\" label or an EXCLUDE reason"

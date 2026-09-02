@@ -1,0 +1,35 @@
+three.js — vendored for the star-cruise 3D video mode (app/starcruise/*).
+
+version:  r160 (npm three@0.160.0)
+build:    three.module.min.js  (ESM, minified — the ONLY file the app loads)
+license:  MIT (see ./LICENSE) — Copyright 2010-2023 three.js authors
+source:   `npm pack three@0.160.0`, extracted package/build/three.module.min.js
+date:     2026-07-11
+
+LOAD RULE: this is NOT in index.html's initial <script> load. It is lazy
+`import()`-ed by app/starcruise.js ONLY when the 🛸 star-cruise mode is first
+activated, so the zero-dependency initial page weight is untouched until tapped.
+
+2026-09-02 — SAME RULE, NEW CALLER. app/ is gone (4a4d730). The one importer is
+now nukernel/ui/screensaver.js, which `import()`s this file from inside
+mountScreensaver — i.e. only once the Screensaver TAB is opened, never at
+module scope. test/screensaver-lazy.js S1 measures that nothing runs before the
+tab and S6 counts every request the tab makes, naming these three local files
+(three.module.min.js, MarchingCubes.js and the ui/starcruise modules) as the
+sanctioned exception to the saver's offline law: local disk, never the wire.
+
+To re-vendor a new version:
+  npm pack three@<ver>
+  tar xzf three-<ver>.tgz
+  cp package/build/three.module.min.js vendor/three/three.module.min.js
+  cp package/LICENSE vendor/three/LICENSE
+  # update this file's version/date
+
+DEPLOY WARNING, 2026-09-02 — `vendor/` IS NOT IN THE STAGING RSYNC. COMPOSER.md
+§3's deploy line syncs `nukernel engine sw.js` and nothing else, so these files
+(and vendor/abcjs, which has the same problem) never reach test.stellate.app
+and the Screensaver tab 404s there while working perfectly from the working
+tree. The fix is one word in tools/deploy/deploy-nukernel-staging.sh (wave 1a):
+    rsync -a ... nukernel engine vendor sw.js root@stellate.app:/srv/stellate-test/
+Written here rather than in the deploy script because the script does not exist
+yet and this file is the one a reader lands on when the 404 happens.

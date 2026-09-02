@@ -4400,7 +4400,18 @@ input[type="range"]:disabled{ cursor: default; opacity: .5; }
    as the video deck — stage, canvas, the video deck's own control bar reused —
    but the canvas is 16/9 and in fullscreen it FILLS the screen instead of
    letterboxing: a screensaver with black bars is a window, not a sky. The
-   background is the old chart's #0c0a1a, not #000. */
+   background is the old chart's #0c0a1a, not #000.
+
+   2026-09-02 — THE CANVAS IS WEBGL NOW, AND NOT ONE RULE HERE CHANGED. Paul:
+   "It should be the little aliens dancing, not the infinite wandering", and
+   "Why not three js? It's fine. Don't reinvent." The block below was written
+   for a 2D context; it holds for a WebGLRenderer because ui/screensaver.js
+   calls `setSize(w, h, false)`, which writes the drawing buffer and leaves the
+   style alone — so `inline-size:100%` + `aspect-ratio:16/9` and the two
+   fullscreen spellings are still the only things deciding how big the picture
+   is. The `background:#0c0a1a` on the canvas is now the colour a reader sees
+   for the fraction of a second before the renderer's first frame (and the
+   colour of the refusal, if a browser hands back no context), so it stays. */
 .nu-saver { display: flex; flex-direction: column; gap: .6rem; }
 .nu-saver-stage { position: relative; background: #0c0a1a; line-height: 0; }
 .nu-saver-canvas {

@@ -138,8 +138,45 @@
       ? { pipes: anchor.pipes.map((op, k) => ({ ...op, seed: ks + k })) } : {};
     return { kitSeed: ks, ...pipes };
   }
+  /* THE RULES REACH THE KERNEL TOO (2026-09-01, the Rules round) ------------
+     The spread below starts at `GENRES[doc.basis]`, and for every field the
+     document itself states — bpm, mode, prog, the cast — the document wins, so
+     a COMPOSE-tier rule is already in the record by the time this runs. The
+     RENDER tier is the half that is not: `artic maxHold bars fx tone orn
+     period anchor incMode incClamp` have no document slot at all (that is
+     exactly what makes them render-tier — they reach the kernel through this
+     spread on the next frame), so a hand that shortened the longest note would
+     have watched it re-lengthen the moment the record was drawn. MEASURED
+     before this line existed, on `reggae` with `maxHold: 2`: the composed
+     cells honoured it and `toGenre` handed the kernel the catalogue's 6.
+
+     So the basis is RESOLVED here, through the same one door precompose uses
+     — `rules.js applyRules`, which copies the row and never touches `GENRES`.
+     A record with no rules takes the catalogue's own object BY IDENTITY, so
+     the shipped chant compiles to the frozen genre byte for byte (G7a).
+
+     RULES IS REACHED LAZILY for the load-order reason song.js:209 gives for
+     OLDKEYS, upside down: index.html loads this file at :467 and rules.js
+     after ideas-kit, because rules.js reads compose.js and ideas-kit.js. The
+     lookup happens when a record is drawn, by which time both exist. */
+  const RULESMOD = () => {
+    if (typeof module !== "undefined" && module.exports) {
+      try { return require("./rules.js"); } catch (e) { return null; }
+    }
+    const g = typeof self !== "undefined" ? self : globalThis;
+    return g.NuRules || null;
+  };
+  function basisRow(doc, GENRES) {
+    const row = GENRES[doc.basis];
+    if (!row || !doc.rules || !doc.rules.length) return row;
+    const R = RULESMOD();
+    if (!R || !R.applyRules) return row;
+    try { return R.applyRules(row, doc.rules); } catch (e) { return row; }
+  }
+
   function toGenre(doc, si, GENRES, fleet) {
     const A = doc.alphabet, T = doc.time, P = doc.performance;
+    const BASIS = basisRow(doc, GENRES);
     const NATIVE = fleet || [];
     const mode = MODES[A.mode] || MODES.aeolian;
     const lines = LINES(doc), drums = DRUMV(doc), bass = BASSV(doc);
@@ -158,8 +195,8 @@
                     kitVel: null, drumkit: undefined };
     const synth = synthOf(doc, GENRES);
     return {
-      ...GENRES[doc.basis],
-      label: (GENRES[doc.basis] || {}).label || doc.basis,
+      ...BASIS,
+      label: (BASIS || {}).label || doc.basis,
       /* TIME */        bpm: T.bpm, swing: T.swing == null ? 0 : SWINGS[T.swing],
                         ...(T.rate ? { rate: T.rate } : {}),
                         ...(T.meter && METERS[T.meter] ? { meter: METERS[T.meter] } : {}),
@@ -203,7 +240,7 @@
       /* DEVELOPMENT */ word: (v) => opsOf(wordAt(doc, lines[v], si)),
       /* SOUND */       ...(synth ? { synth } : {}),
                         instr: lines.map((c) => c.instrument === "synth"
-                          ? ((GENRES[doc.basis] || {}).instr || ["polysynth"])[0]
+                          ? ((BASIS || {}).instr || ["polysynth"])[0]
                           : c.instrument),
                         // A VOICE MAY ALWAYS CHANGE ITS INSTRUMENT (Paul: "let
                         // me change the instrument always"). The `chairs` seam
@@ -274,13 +311,13 @@
          value, so this branch is not even entered by an untouched record. */
                         ...((doc.sound &&
                              (doc.sound.level != null || doc.sound.grain != null) &&
-                             (GENRES[doc.basis] || {}).tone)
+                             (BASIS || {}).tone)
                           // clamped at 1: the engine caps a tone's gain there,
                           // so level 3 and level 4 measured the same RMS to the
                           // millivolt and the slider was lying above the cap
-                          ? { tone: { ...GENRES[doc.basis].tone,
+                          ? { tone: { ...BASIS.tone,
                               ...(doc.sound.level != null ? {
-                                gain: +Math.min(1, GENRES[doc.basis].tone.gain *
+                                gain: +Math.min(1, BASIS.tone.gain *
                                                    doc.sound.level).toFixed(3) } : {}),
                               ...(doc.sound.grain != null ? {
                                 grain: +Math.max(0, Math.min(1, doc.sound.grain)).toFixed(3) } : {}) } }
@@ -316,7 +353,7 @@
          hold by construction: a take cannot move a DECISION, because no
          decision is downstream of it. Absent — or 0, or 1 — is take one and
          every record before this renders byte-identical. */
-                        ...takeOf(P.take, si, GENRES[doc.basis]),
+                        ...takeOf(P.take, si, BASIS),
                         ...(P.stress != null ? { stress: P.stress } : {}),
                         ...(P.phrase != null ? { phrase: P.phrase } : {}),
                         ...(P.touch ? { touch: P.touch } : {}),
@@ -469,6 +506,23 @@
   };
   function normalize(doc) {
     if (doc && doc.basis && OLDKEYS[doc.basis]) doc.basis = OLDKEYS[doc.basis];
+    /* ---- THE SENTENCES THIS READING WAS COMPOSED WITH (2026-09-01) --------
+       Paul: "You can edit them, add new rules from a palette, and set
+       thresholds." `doc.rules` is the list of those edits — `[{f, v}]`,
+       `precompose.genreToDocument`'s third input — and it has to SURVIVE this
+       door or a saved session and a share link would reopen as the anchor as
+       written while claiming to be the record somebody built.
+
+       ONE OWNER FOR WHAT A RULE MAY BE: `song.js validateRules`, beside every
+       other shape this page refuses at the door. Absent stays absent — a
+       record composed straight off its anchor states nothing, which is the
+       only spelling of that default — and a list that validates to nothing
+       deletes itself rather than sitting there as an empty array meaning the
+       same thing twice. */
+    if (doc && "rules" in doc) {
+      const v = NuSong.validateRules(doc.rules);
+      if (v.rules) doc.rules = v.rules; else delete doc.rules;
+    }
     const ids = doc.form.sections.map((s2) => s2.id);
     /* ---- THE RETIRED RECORD-WIDE CHIP, RESOLVED ON READ (2026-08-27) -------
        Paul: *"We can get rid of Character right? We don't really use it any

@@ -1,5 +1,5 @@
 {
- "built": "2026-09-01",
+ "built": "2026-09-02",
  "from": "nukernel/gates-extract.js",
  "corpus": {
   "records": 55,
@@ -9,7 +9,7 @@
   "scopes": 3,
   "sample": 16,
   "seed": 20260824,
-  "compiles": 49628
+  "compiles": 49643
  },
  "sheets": {
   "time.meter": {
@@ -69,7 +69,7 @@
    "options": {},
    "census": {
     "rows": 55,
-    "alive": 52,
+    "alive": 54,
     "writes": [
      "alphabet.mode"
     ]
@@ -81,7 +81,7 @@
    "options": {},
    "census": {
     "rows": 55,
-    "alive": 52,
+    "alive": 54,
     "writes": [
      "alphabet.harmony",
      "alphabet.harmony.cycle",
@@ -93,38 +93,14 @@
   "alphabet.quality": {
    "scope": "song.bar",
    "regenerates": true,
-   "options": {
-    "7": {
-     "rule": {
-      "rule": "when",
-      "is": "cast.hasChord"
-     }
-    },
-    "nine": {
-     "rule": {
-      "rule": "when",
-      "is": "cast.hasChord"
-     }
-    },
-    "sus4": {
-     "rule": {
-      "rule": "unless",
-      "a": {
-       "not": "cast.hasPad"
-      },
-      "b": {
-       "is": "basis.nobass"
-      }
-     }
-    }
-   },
+   "options": {},
    "census": {
-    "rows": 139,
-    "alive": 31,
+    "rows": 145,
+    "alive": 33,
     "writes": [
      "bar.quality"
     ],
-    "overOffered": 27
+    "overOffered": 20
    },
    "rule": {
     "rule": "when",
@@ -191,7 +167,7 @@
    "options": {},
    "census": {
     "rows": 122,
-    "alive": 119,
+    "alive": 118,
     "writes": [
      "voice.cell"
     ]
@@ -204,7 +180,7 @@
    "options": {},
    "census": {
     "rows": 165,
-    "alive": 142,
+    "alive": 144,
     "writes": [
      "voice.cell"
     ]
@@ -247,11 +223,18 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 48,
-    "alive": 38,
+    "rows": 47,
+    "alive": 37,
     "writes": [
      "voice.instrument"
-    ]
+    ],
+    "openOptions": [
+     "cr78",
+     "electronic",
+     "tr606",
+     "tr808"
+    ],
+    "overOffered": 15
    },
    "rule": {
     "rule": "when",
@@ -405,8 +388,11 @@
    },
    "census": {
     "rows": 165,
-    "alive": 163,
-    "overOffered": 29
+    "alive": 164,
+    "openOptions": [
+     "at the octave"
+    ],
+    "overOffered": 62
    }
   },
   "dev.bass": {
@@ -438,12 +424,8 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 144,
-    "alive": 114,
-    "openOptions": [
-     "swap"
-    ],
-    "overOffered": 8
+    "rows": 141,
+    "alive": 111
    },
    "rule": {
     "rule": "when",
@@ -509,7 +491,11 @@
    "options": {},
    "census": {
     "rows": 165,
-    "alive": 154
+    "alive": 156,
+    "openOptions": [
+     "1bar"
+    ],
+    "overOffered": 26
    }
   },
   "development.breath": {
@@ -518,7 +504,7 @@
    "options": {},
    "census": {
     "rows": 165,
-    "alive": 14,
+    "alive": 19,
     "openOptions": [
      "none"
     ],
@@ -543,8 +529,8 @@
    },
    "census": {
     "rows": 165,
-    "alive": 164,
-    "overOffered": 12
+    "alive": 163,
+    "overOffered": 4
    }
   },
   "performance.stress": {
@@ -582,42 +568,26 @@
   }
  },
  "proof": {
-  "rows": 18038,
-  "identical": 17966,
+  "rows": 18093,
+  "identical": 17914,
   "moved": 0,
-  "overOffered": 72,
+  "overOffered": 179,
   "bad": {
-   "dev.kit": {
+   "sound.drumkit": {
     "options": [],
-    "over": 11
+    "over": 38
+   },
+   "development.period": {
+    "options": [],
+    "over": 48
    },
    "alphabet.quality": {
     "options": [],
-    "over": 20
-   },
-   "development.pipe": {
-    "options": [],
-    "over": 10
-   },
-   "dev.line": {
-    "options": [],
-    "over": 30
+    "over": 25
    },
    "development.breath": {
     "options": [],
-    "over": 1
-   }
-  }
- },
- "proofHeld": {
-  "rows": 10766,
-  "identical": 10698,
-  "moved": 0,
-  "overOffered": 68,
-  "bad": {
-   "alphabet.quality": {
-    "options": [],
-    "over": 27
+    "over": 2
    },
    "development.pipe": {
     "options": [],
@@ -625,7 +595,27 @@
    },
    "dev.line": {
     "options": [],
-    "over": 29
+    "over": 54
+   }
+  }
+ },
+ "proofHeld": {
+  "rows": 10816,
+  "identical": 10764,
+  "moved": 0,
+  "overOffered": 52,
+  "bad": {
+   "alphabet.quality": {
+    "options": [],
+    "over": 20
+   },
+   "development.pipe": {
+    "options": [],
+    "over": 4
+   },
+   "dev.line": {
+    "options": [],
+    "over": 28
    }
   }
  }

@@ -821,13 +821,34 @@ export function channelFacts(si) {
   for (const [unitKey, chan] of Object.entries(A)) {
     const u = units[unitKey];
     if (!u) continue;
-    out[chan] = { stereo: !!u.stereo,
+    out[chan] = { // WHICH ENGINE UNIT THIS CHAIR IS (2026-09-01). The other four
+                  // fields say what the engine will DO with the channel; this
+                  // says which unit key it is, so a reader holding a chair can
+                  // ask the handle for that unit's own measurement
+                  // (voiceRms) or find it in the bar audit's `voices` table.
+                  // Without it every caller re-walked ADDR by hand.
+                  unit: unitKey,
+                  stereo: !!u.stereo,
                   sampled: !!u.sampler,
                   module: u.module || null,
                   instr: (u.sampler && (u.sampler.id || u.sampler.instr)) || null };
   }
   return out;
 }
+/* WHO ANSWERS TO WHICH CHAIR, FOR ONE BOX (2026-09-01).
+   `ADDR` — unit key ("v0", "v3", "bass", and the seeded "drums") -> the desk
+   address that unit answers to ("lead", "pad2", "bass", "drums") — has been
+   module-private since castOf built it, and `channelFacts` above was its only
+   reader, which INVERTED it and threw the unit key away. That left the page
+   with no way to ask "is the schola sounding" or "how loud is the schola":
+   the schedule names voices ("v3") and every surface a hand touches names
+   chairs ("schola"), and nothing joined the two.
+
+   THE JOIN IS THE MAP ITSELF, so it is exported rather than re-derived. A COPY
+   is handed out: ADDR is the compile's own record and a reader that mutated it
+   would move a chair in the mix. `{}` before compile() has run — the same
+   fail-open channelFacts documents above. */
+export const addrOf = (si) => Object.assign({}, ADDR.get(si));
 export const firstBarOfBox = (si) => TL.findIndex((b) => b.si === si && b.first);
 // where the box this bar belongs to STARTED, in song beats — the automation
 // lanes are written in box beats and the tempo map has already moved them

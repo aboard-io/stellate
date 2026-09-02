@@ -3125,6 +3125,15 @@
                 seatNote, tempoWarp, prng,
                 PARTS, partOf, partLean, regOf, periodOps, OPKEYS, pipes, PIPES,
                 ORN, ORNNAME, ORNPARTS, ornament,
+                // ...AND THE FIVE KINDS A GENRE'S OWN `orn` POLICY MAY NAME
+                // (2026-09-01, the Rules round). `ORNSALT`'s keys ARE that
+                // vocabulary — `pass approach grace flam roll`, the five this
+                // file salts a die for — and `nukernel/rules.js` has to offer
+                // exactly them when it asks a musician how much decoration a
+                // line takes. Exported rather than retyped there, on the law
+                // every other table in this box is exported under: a second
+                // copy is the one that goes stale.
+                ORNSALT,
                 DRUM_LANES, DMARK, DRUM_SWING,
                 harm, render, drums, bass };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

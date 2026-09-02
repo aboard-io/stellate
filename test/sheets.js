@@ -44,8 +44,10 @@ const REAL = /nukernel\/index\.html/.test(PAGE);
  * avail row nor on this list — so a slice that quietly invents a sheet outside
  * the vocabulary still turns this gate red.
  *
- * `prod.verb` and the two after it are also the only sheets on the page with
- * NOTHING checked, and that is what they mean: no verb has been said yet.
+ * `prod.scope` and the ones after it are also the only sheets on the page with
+ * NOTHING checked, and that is what they mean: nothing has been said yet.
+ * (It read "`prod.verb` and the two after it" until 2026-09-01, when the verb
+ * sheet was deleted — Paul: "The only verb is 'make' from now on. Make X Y.")
  *
  * `master` and `bus` joined them 2026-08-24, when the board's fifteen master
  * dropdowns became fifteen sheets (STATE.md item 20 — twenty-three `<select>`s
@@ -59,7 +61,12 @@ const REAL = /nukernel\/index\.html/.test(PAGE);
  * `bus|rev|ret`. If they are ever taught to avail.js, delete these two lines
  * and the count check below starts holding them too. */
 const VIEW_SHEETS = {
-  "prod.verb":   "ui/produce.js — which of the six verbs is being said (page state)",
+  /* `prod.verb` — "which of the six verbs is being said (page state)" — is
+     DELETED, 2026-09-01, in the same commit as the sheet itself (Paul: "The
+     only verb is 'make' from now on. Make X Y."). A declared sheet nobody
+     draws is a registry that has stopped describing the page, so the row and
+     the sheet go together; the `undeclared` check below is what would have
+     caught the other order. */
   "prod.scope":  "ui/produce.js — who it is being said about (page state)",
   "prod.word":   "ui/produce.js — the adjective, drawn from producer.js's own table",
   "prod.record": "ui/produce.js — the same tap aimed at the whole record",

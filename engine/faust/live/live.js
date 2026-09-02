@@ -993,6 +993,12 @@
       // insert chain already gets — both call sites of this function are
       // places the player itself is being dropped.
       if (ent.player && ent.player.teardownStrips) { try { ent.player.teardownStrips(); } catch (e) {} }
+      // ...and the per-voice METER TAP (2026-09-01, see samplerOf below). It is
+      // freed HERE, above the chainless return, because EVERY sampled unit owns
+      // one and only the chained ones own a chain — a meter freed inside the
+      // `if (ent.chain)` half would leak two nodes per unrouted voice per
+      // record change, which is the ring-buffer leak's shape at a smaller size.
+      if (ent.meter) { try { ent.meter.an.disconnect(); } catch (e) {} try { ent.meter.g.disconnect(); } catch (e) {} ent.meter = null; }
       if (!ent.chain) return;
       for (const o of ent.chain.ch.oscs) { try { o.stop(); } catch (e) {} }
       for (const n of ent.chain.ch.nodes) { try { n.disconnect(); } catch (e) {} }
@@ -1024,21 +1030,63 @@
         }
       }
       if (!ent) {
-        let dests = foundDests, chain = null;
+        let dests = foundDests, chain = null, meter = null;
+        /* ── THE PER-VOICE METER TAP (2026-09-01) ──────────────────────────
+           Paul, of the Mix deck: *"Light up which instrument is playing, make
+           a little volume meter INSIDE the heading."*
+
+           Until today the ONLY measured signal on this handle was the master
+           analyser (rms()), and the page said so in writing: engineer.js
+           METER_WHY, "the engine sums every voice into shared buses, so there
+           is no per-channel signal to measure ... a green bar here would be a
+           fake measurement". That was true of the graph as it stood — every
+           unrouted sampled voice was handed the SHARED foundDests and had no
+           node of its own. It is a fact about the wiring, not about the world,
+           so the wiring changes: each unit key gets its own gain -> analyser
+           on the way to the shared dry bus, which is exactly the shape the
+           CHAINED branch below has always had (ch.output -> dryG -> dry).
+
+           WHAT IS MEASURED IS THE DRY SEND, post-strip and post-insert — the
+           same quantity the stream lane's own audit measures per unit
+           (stream-renderer.js auditVoice: "the post-insert-chain dry energy"),
+           so the two lanes report the same kind of number and a reader can put
+           them side by side. The rev/del sends keep the shared buses: they are
+           the unit's signal again, scaled, and taping them would double-count.
+
+           COST: two nodes per sampled unit (a unity gain and a 1024-point
+           analyser), created lazily with the player and torn down with it in
+           teardownSamplerChain above. The gain is unity and the analyser is
+           spec'd as a passthrough, so the audio is bit-identical to before. */
+        const tapInto = (to) => {
+          try {
+            const g = ctx.createGain(); g.gain.value = 1;
+            const an = ctx.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0;
+            g.connect(an); an.connect(to);
+            meter = { g, an, buf: new Float32Array(an.fftSize) };
+            return g;
+          } catch (e) { meter = null; return to; }   // no tap is honest; a fake one is not
+        };
         if (ins && SP.buildInsertNodes) {
           try {
             const ch = SP.buildInsertNodes(ctx, ins, 4 * (spb || 0.5));
             const dryG = ctx.createGain(); dryG.gain.value = u.dry != null ? u.dry : 1;
             const revG = ctx.createGain(); revG.gain.value = u.rev || 0;
             const delG = ctx.createGain(); delG.gain.value = u.del || 0;
-            ch.output.connect(dryG); dryG.connect(foundDests.dry);
+            ch.output.connect(dryG); dryG.connect(tapInto(foundDests.dry));
             ch.output.connect(revG); revG.connect(foundDests.rev);
             ch.output.connect(delG); delG.connect(foundDests.del);
             chain = { ch, sends: [dryG, revG, delG], types: ins.map((i) => i.type) };
             dests = { dry: ch.input, rev: ch.input, del: ch.input };
-          } catch (e) { errors.push("samplerChain " + key + ": " + (e && e.message || e)); chain = null; dests = foundDests; }
+          } catch (e) {
+            errors.push("samplerChain " + key + ": " + (e && e.message || e)); chain = null; dests = foundDests;
+            if (meter) { try { meter.an.disconnect(); } catch (e2) {} try { meter.g.disconnect(); } catch (e2) {} meter = null; }
+          }
         }
-        ent = { sig, player: SP.SamplerLive(ctx, dests), chain };
+        // the unchained voice — the one this tap exists for — is handed the
+        // shared buses with ONLY its dry re-pointed through its own meter.
+        if (!chain) dests = { dry: tapInto(foundDests.dry), rev: foundDests.rev,
+                              del: foundDests.del, pp: foundDests.pp };
+        ent = { sig, player: SP.SamplerLive(ctx, dests), chain, meter };
         samplerPlayers.set(key, ent);
       }
       return ent;
@@ -2373,6 +2421,16 @@
         wantSig: bgWantSig, readySig: bgReadySig }),
       // REAL mixer view — but a baked full-mix can't be de-mixed live: gain/mute/solo
       // are no-ops (buried feature), rms/active are coarse (overall meter + last bar).
+      // ── 2026-09-01, NARROWED (not deleted). Paul: *"Light up which instrument is
+      // playing, make a little volume meter INSIDE the heading."* The sentence above
+      // stands for THIS method and for the STREAM half of the engine — a mix baked in
+      // the worker still cannot be de-mixed here, so `layers()` is still ten fixed ids
+      // gating the OVERALL meter, and it is still a fake per-layer meter by
+      // construction. What is no longer true is the general claim it was read as
+      // ("there is no per-channel signal to measure"): the NATIVE lane's units are
+      // main-thread nodes, and `samplerOf` now gives each unit key its own gain ->
+      // AnalyserNode, read by `voiceRms(key)` below. Per-voice truth lives THERE and
+      // in `auditFor(serial).voices`, never here; nothing new was hung on layers().
       layers() {
         const rms = analyserRms();
         return LAYER_DEFS.map(([id, label]) => {
@@ -2543,6 +2601,21 @@
       __held: () => ({ held, holdReady }),
       readCursor: () => read53(),
       rms() { return analyserRms(); },
+      // ── PER-VOICE RMS (2026-09-01) — the native (sampled/found) lane's own
+      // measurement, off the per-unit tap samplerOf builds. NULL, never 0, when
+      // this key has no tap: a Faust-modelled unit is rendered in the worker and
+      // owns no node here at all, and its only honest meter is the bar audit
+      // (auditFor(serial).voices[key].rms). 0 would be a claim of silence about
+      // a voice nobody measured, which is the fake measurement METER_WHY
+      // refused to draw. `null` says "ask the audit".
+      voiceRms(key) {
+        const ent = samplerPlayers.get(key);
+        if (!ent || !ent.meter) return null;
+        const m = ent.meter;
+        try { m.an.getFloatTimeDomainData(m.buf); } catch (e) { return null; }
+        let s = 0; for (let i = 0; i < m.buf.length; i++) s += m.buf[i] * m.buf[i];
+        return Math.sqrt(s / m.buf.length);
+      },
       balance() {
         if (!this._balTap) {
           const sp = ctx.createChannelSplitter(2);
@@ -3997,6 +4070,12 @@
       runwaySec: () => aheadSec(),
       readCursor: () => { const e = useMp3 ? mp3El : curEl; return e ? Math.floor((e.currentTime || 0) * SR) : 0; },
       balance() { const r = this.rms(); return { l: r, r: r }; },
+      // PER-VOICE RMS on the media route: null, always. This route plays a plain
+      // <audio> element of PRE-RENDERED segments and builds no WebAudio graph at
+      // all (the same reason vapor had to be baked in and setTop is a no-op), so
+      // there is no node to tap. Declared so callers can ask unconditionally;
+      // the bar audit above (auditFor) is the per-voice truth on this route.
+      voiceRms() { return null; },
       // gen-cutover telemetry: prove a gen change never leaves zero playable audio.
       segStats: () => {
         if (useMp3) {

@@ -121,6 +121,17 @@ function sectionEvents(doc, i) {
     nRecords++;
     const where = gk + "/" + seed;
     const say = (m) => bad.shape.push(where + ": " + m);
+    /* THE BLANK STATE IS EXEMPT, BY THE FIELD AND NOT BY THE KEY (2026-09-01).
+       Paul: "Add a 'silence' genre at the top of the genre list. This is a
+       blank state." Four of the claims below are claims that a record MAKES
+       SOUND, and they are right for every record — a record that type-checks
+       and is silent is exactly the failure this file exists to catch. A blank
+       state is the one row where silence is the answer rather than the bug, so
+       it is named here ONCE, off `genres.js`'s own `silent: true`, and each
+       exemption is written beside the claim it lifts. A second blank state
+       tomorrow needs no new list, and any OTHER row that went quiet still
+       fails every one of them. */
+    const SILENT = !!GENRES[gk].silent;
 
     /* --- G1 SHAPE, against every vocabulary table --------------------- */
     for (const k of ["basis", "time", "alphabet", "material", "form",
@@ -161,7 +172,10 @@ function sectionEvents(doc, i) {
         if (!Array.isArray(c[f]) || c[f].length !== c.deg.length)
           say("cell " + n + "." + f + " is not " + c.deg.length + " long");
       for (const p of c.play) if (!["n", "h", "r"].includes(p)) say("play word " + p);
-      if (!c.play.includes("n")) say("cell " + n + " has no onset");
+      // EXEMPT ON A SILENT ROW: the blank state's one cell is sixteen rests,
+      // which is the empty staff a hand writes onto — the only legally silent
+      // cell in the catalogue, and it is silent BY DECLARATION.
+      if (!SILENT && !c.play.includes("n")) say("cell " + n + " has no onset");
     }
 
     const secIds = doc.form.sections.map((x) => x.id);
@@ -224,7 +238,9 @@ function sectionEvents(doc, i) {
         }
       } else say("voice kind " + v.kind);
     }
-    if (!lines) say("no line voices");
+    // EXEMPT ON A SILENT ROW: `voices: 0` is the declaration, and the whole
+    // point of the blank state is that the band is built INTO it.
+    if (!lines && !SILENT) say("no line voices");
     if (bassv > 1 || drumv > 1) say("more than one rhythm-section voice");
     if (!GENRES[gk].nobass && !bassv) say("anchor has a bass and the record has none");
 
@@ -342,7 +358,9 @@ function sectionEvents(doc, i) {
       if (bx.length !== doc.form.sections.length) say("boxesOf lost a section");
       bx.forEach((b, i) => {
         if (b.len !== doc.form.sections[i].bars) say("box " + i + " len " + b.len);
-        if (!b.stack[0].slots.length) say("box " + i + " has no slots");
+        // EXEMPT ON A SILENT ROW: a box with no slots is a section nobody
+        // plays, which is what a blank state IS. Everywhere else it is a bug.
+        if (!SILENT && !b.stack[0].slots.length) say("box " + i + " has no slots");
       });
     }
 
@@ -364,13 +382,19 @@ function sectionEvents(doc, i) {
     const shapes = new Set(names.filter((n) => doc.material.cells[n].kind !== "drum")
       .map((n) => doc.material.cells[n].deg.join(",") + "|" +
                   doc.material.cells[n].play.join("")));
-    if (shapes.size < 3) bad.same.push(where + ": only " + shapes.size + " distinct cells");
+    // EXEMPT ON A SILENT ROW: three distinct figures is a claim about a record
+    // that has figures. The blank state has exactly one, and it is empty.
+    if (shapes.size < 3 && !SILENT) bad.same.push(where + ": only " + shapes.size + " distinct cells");
 
     /* --- G4 NON-SILENCE, PER SECTION --------------------------------- */
     doc.form.sections.forEach((s, i) => {
       const ev = sectionEvents(doc, i);
       nEvents += ev.length;
-      if (!ev.length) bad.silent.push(where + " section " + i + " (" + s.role + ")");
+      // EXEMPT ON A SILENT ROW, and this is the exemption that matters: G4
+      // renders the ARTIFACT and asserts that every section sounds. On the
+      // blank state the artifact is a bar of rests looping — the transport
+      // runs, the countdown counts, and nothing plays. That is the feature.
+      if (!ev.length && !SILENT) bad.silent.push(where + " section " + i + " (" + s.role + ")");
     });
   }
 
@@ -652,8 +676,15 @@ function sectionEvents(doc, i) {
      2010 stays legal), and one label was refused by the MAP (spaceopera's
      Denham measured 4.0 px from Bray — the Reading ruling; the row's own
      comment carries the whole story). */
-  ok("G0 the catalog is 395 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 395,
+  /* 395 -> 396, 2026-09-01, the Rules round: Paul, "Add a 'silence' genre at
+     the top of the genre list. This is a blank state." ONE row — `silence`,
+     the blank state the box boots into: one eight-bar head section, one line
+     cell of sixteen rests, nobody seated. It is a genre and not a mode so that
+     every door the catalogue already has opens onto it, and it is counted here
+     like every other anchor. The literal stays a literal for the reason :649
+     gives — a count derived from GENRES would pass while both drifted. */
+  ok("G0 the catalog is 396 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 396,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
@@ -761,10 +792,18 @@ function sectionEvents(doc, i) {
       assert.ok(hookMoved.length / ANCHORS.length >= 0.9,
         hookMoved.length + " of " + ANCHORS.length + " moved a hook; frozen: " +
         ANCHORS.filter((g) => !hookMoved.includes(g)).slice(0, 8).join(" ")));
-    ok("G6f …and every anchor moves SOME cell, so no genre in the catalog has " +
-       "one tune and one only", () =>
-      assert.strictEqual(ANCHORS.length - anyMoved.length, 0,
-        ANCHORS.filter((g) => !anyMoved.includes(g)).slice(0, 8).join(" ")));
+    /* EXEMPT ON A SILENT ROW (2026-09-01). "No genre in the catalog has one
+       tune and one only" is a claim about a genre that has a TUNE. Paul: "Add
+       a 'silence' genre at the top of the genre list. This is a blank state."
+       Its one cell is sixteen rests and it is the SAME sixteen rests at every
+       reading, on purpose — a blank page that came back different each time
+       you opened it would be a blank page with an opinion. Named off the row's
+       own `silent`, like every other exemption in this file. */
+    const TUNED = ANCHORS.filter((g) => !GENRES[g].silent);
+    ok("G6f …and every anchor with a tune moves SOME cell, so no genre in the " +
+       "catalog has one tune and one only", () =>
+      assert.strictEqual(TUNED.length - anyMoved.filter((g) => !GENRES[g].silent).length, 0,
+        TUNED.filter((g) => !anyMoved.includes(g)).slice(0, 8).join(" ")));
   }
   /* G6g READING 1 IS TODAY. The atlas opens every anchor at seed 1, so the
      record a hand LANDS on may not move when the reading machinery lands —
@@ -775,7 +814,17 @@ function sectionEvents(doc, i) {
      "all — absent is today, on every anchor", () => {
     const bad = [];
     for (const gk of ANCHORS) {
-      const { row: row0 } = P.idiomOf(gk), G = GENRES[gk];
+      const G = GENRES[gk];
+      /* EXEMPT ON A SILENT ROW (2026-09-01): this mirror re-derives every cell
+         through `cellOf`, and the blank state's `motif` is not a cellOf
+         product at all — it is written directly, sixteen rests, by the third
+         of precompose's three named `silent` exemptions. Re-deriving it here
+         would be asking the idiom engine to answer for a cell it did not
+         write. The claim it is exempt from — "reading 1 is today" — is held
+         for the blank state instead by R4 in test/rules.test.js, which pins
+         the cell exactly. */
+      if (G.silent) continue;
+      const { row: row0 } = P.idiomOf(gk);
       // THE ANCHOR'S OWN COUNT (2026-08-30, the walls-down round): this
       // call read `P.cellOf(row, k, 1, G, 16)` while no anchor declared a
       // meter; `waltz` and `musette` count in three now, and the door

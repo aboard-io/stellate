@@ -120,7 +120,17 @@ const HEADINGS = ["Where & when", "Time", "Harmony", "Motifs",
                   "The band", "The board", "The producer", "The score",
                   // the two decks (2026-09-01): the film and the sky —
                   // vocabulary words, not the tab glyph names
-                  "The film", "The sky", "Export"];
+                  //
+                  // 2026-09-02 — "The sky" became "The floor". THE OLD LINE
+                  // STANDS ABOVE THIS ONE and it read:
+                  //     "The film", "The sky", "Export"
+                  // It moved on Paul's own sentence, which is the only thing
+                  // that moves a typed quotation in this file: "screensaver is
+                  // just a bunch of stars. It should be the little aliens
+                  // dancing, not the infinite wandering." The panel is a dance
+                  // floor now (the stars are still behind it), so the
+                  // vocabulary word for what the panel IS changed with it.
+                  "The film", "The floor", "Export"];
 
 function executable() {
   const p = path.join(os.homedir(),

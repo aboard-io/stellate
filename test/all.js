@@ -186,6 +186,19 @@ const GATES = [
      anchor x seeds 1..3, all derived from tables the tree already owns —
      the day it landed it convicted a lead singer on a Paleolithic bone
      flute and 582 chairs captioned "voice" while holding a guitar. */
+  /* THE GENRE AS SENTENCES (2026-09-01). Paul: "The genre data is expressed
+     as logical sentences and rules derived from the data in the genre. They
+     should be readable to a musician." Wave 1 and `kind: "node"` because it is
+     the data tier and nothing else: 38 rules x 396 anchors, every sentence
+     non-empty, every option word walked back to the table that owns it, and
+     the two properties every edit stands on — it re-derives deterministically
+     and `GENRES` is byte-unchanged after. `covers` names the three files an
+     edit to any of them has to re-run this on. */
+  { name: "rules", wave: 1, kind: "node",
+    argv: ["test/rules.test.js"],
+    need: ["test/rules.test.js"],
+    covers: ["test/rules.test.js", "nukernel/rules.js", "nukernel/precompose.js",
+             "nukernel/genres.js"] },
   { name: "instrumentation", wave: 1, kind: "node",
     argv: ["test/instrumentation.test.js"],
     need: ["test/instrumentation.test.js"], covers: ["test/instrumentation.test.js"] },
@@ -225,10 +238,22 @@ const GATES = [
   /* THE SAME LAW FOR THE SKY (2026-09-01, "Bring back the screensaver"):
      zero rAF and zero bytes until the Screensaver tab opens; the counter
      freezes when you leave and revives when you return. Currency is FRAMES
-     where video-lazy's is requests, because the saver owns no media. */
+     where video-lazy's is requests, because the saver owns no media.
+
+     2026-09-02 — AND THE SAVER OWNS 860 KB OF MODULE NOW. Paul: "It should be
+     the little aliens dancing, not the infinite wandering", and "Why not three
+     js? It's fine. Don't reinvent." The star field became the starcruise
+     creatures, so the currency is frames AND requests: the gate counts every
+     request the tab makes and sanctions only the local module files. The
+     `covers` list grows with them, because test/impacted.js selects by this
+     closure and a creature module that is not named here would change with
+     nobody watching. */
   { name: "screensaver-lazy", wave: 3, kind: "browser", url: { flag: "--page" },
     argv: ["test/screensaver-lazy.js"], need: ["test/screensaver-lazy.js"],
-    covers: ["test/screensaver-lazy.js", "nukernel/ui/screensaver.js"] },
+    covers: ["test/screensaver-lazy.js", "nukernel/ui/screensaver.js",
+             "nukernel/ui/starcruise/alien.js", "nukernel/ui/starcruise/traits.js",
+             "nukernel/ui/starcruise/geom.js", "nukernel/ui/starcruise/from-doc.js",
+             "vendor/three/three.module.min.js", "vendor/three/MarchingCubes.js"] },
   /* THE HAND PROBE (2026-08-30, "shouldn't more genres be humanized"): who is
      humanized, who is exempt, proven at the rendered events. Holds genres.js
      §39 (every anchor resolves a DYNAMICS row or a dated null), the machine
@@ -446,6 +471,21 @@ const GATES = [
     argv: ["test/nudges.js"], need: ["test/nudges.js"], covers: ["test/nudges.js"] },
   { name: "atlas",      wave: 3, kind: "browser", url: { flag: "--page" },
     argv: ["test/atlas.js"],  need: ["test/atlas.js"], covers: ["test/atlas.js"] },
+  /* THE PER-VOICE METER AND THE SOUNDING FEED (2026-09-01, the composer
+     round). Paul, of the Mix deck: "Light up which instrument is playing,
+     make a little volume meter INSIDE the heading." The page had REFUSED that
+     meter in writing (engineer.js METER_WHY, "a green bar here would be a
+     fake measurement") because no per-voice signal existed; this round gave
+     samplerOf a per-unit AnalyserNode and the transport two pure readers
+     (soundingChans / voiceLevels) joined through plan.js addrOf. Both halves
+     are WebAudio under a running transport, so no node assertion can reach
+     them — this reads the two __nu* probes off the live page with the record
+     actually sounding. It stands up its own COOP/COEP server and also honours
+     an injected --page. */
+  { name: "meter-reach", wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/meter-reach.browser.js"], need: ["test/meter-reach.browser.js"],
+    covers: ["test/meter-reach.browser.js", "engine/faust/live/live.js",
+             "nukernel/audio/live.js", "nukernel/audio/plan.js"] },
 
   /* ===== THE FOURTEEN THAT WERE NEVER REGISTERED (2026-08-30) ==============
      Audited after a day that added ~25 commits: fourteen gate files existed

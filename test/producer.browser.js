@@ -66,8 +66,38 @@ const report = () => {
     errs.push("console: " + m.text()); });
   await p.route("**/favicon.ico", (r) => r.fulfill({ status: 200, body: "" }));
   await p.goto(PAGE, { waitUntil: "networkidle" });
-  await p.waitForFunction(() => document.querySelectorAll(".nu-sheet").length > 0,
+  /* WALK TO THE SUBJECT. THE GATE HAD STOPPED DOING IT, AND WAS RED ON HEAD.
+     (Measured 2026-09-01 against a clean checkout of HEAD, before a line of the
+     one-verb collapse: 14 of 16 checks failed, every one of them downstream of
+     `P0 · the ninth block is on the page (#ax-produce)`.)
+
+     It read:
+
+       await p.waitForFunction(() => document.querySelectorAll(".nu-sheet").length > 0,
+         null, { timeout: 20000 }).catch(() => {});
+
+     and then surveyed the DOM. Two things had moved under it. `#app` became a
+     set of TABS built lazily — `buildTab` (ui/eight.js:9459) builds a panel the
+     first time its tab is SHOWN, and the page boots on `Where`, whose panel is
+     the atlas — so `#produce` was an empty div for the whole run and every
+     producer assertion was measuring a panel nobody had opened. And the wait
+     itself could never end: the producer's taps are all `<select>`s since the
+     2026-08-24 settled-parameters conversion, so `.nu-sheet` is not what this
+     page draws; the wait spent its whole 20 s timeout and then swallowed it.
+
+     A gate that cannot reach its own control is the GATE failing, not the page
+     (test/selects.js check 10 says the same thing about its own walk). So the
+     tab is opened the way a thumb opens it, and the wait is for the artifact
+     the panel actually builds. */
+  await p.waitForFunction(() => !!document.querySelector('[data-k="toptab-Produce"]'),
     null, { timeout: 20000 }).catch(() => {});
+  const opened = await p.evaluate(() => {
+    const n = document.querySelector('[data-k="toptab-Produce"]');
+    if (!n) return false; n.click(); return true; });
+  await p.waitForFunction(() => !!document.getElementById("ax-produce"),
+    null, { timeout: 20000 }).catch(() => {});
+  check(opened, "P0 · the Produce tab is in the stripe and opens it " +
+    "(data-k=\"toptab-Produce\")");
 
   /* An <input> inside a .nu-opt is hidden BY CLIP and focusable, so playwright's
      actionability checks call it invisible. .click() on the element itself is
@@ -99,6 +129,9 @@ const report = () => {
 
      Measured 2026-08-25 on the shipped page: `prod.verb` is a <select> of 6,
      `prod.scope` of 4 (record / cantor / schola / mix), `prod.record` of 130+.
+     `prod.verb` IS GONE, 2026-09-01 (Paul: "The only verb is 'make' from now
+     on. Make X Y.") — the sentence is two taps, scope then target, and this
+     helper drives the two that are left exactly as it drove the three.
      A <select> is driven the way a person drives one — pick the option, fire
      `change`, which is the only listener ui/selects.js installs, exactly as
      the radio's was. The `data-v` is the WORD; `option.value` is the machine
@@ -143,26 +176,44 @@ const report = () => {
   const seen = await p.evaluate(() => ({
     sec: !!document.getElementById("ax-produce"),
     tbl: !!document.querySelector(".nu-notes"),
-    // THE SIX VERBS, off whichever widget draws them (see `say` above).
-    verbs: (() => {
-      const s = document.querySelector('select[data-sel="prod.verb"]');
+    // THE VERB SHEET, WHICH MUST NOT BE THERE AT ALL (2026-09-01).
+    verbAny: document.querySelector('select[data-sel="prod.verb"]') ? "menu"
+      : (document.querySelector('.nu-sheet[data-sheet="prod.verb"]') ? "sheet" : "absent"),
+    // ...and TAP ONE IS THE SCOPE, off whichever widget draws it (see `say`).
+    scopes: (() => {
+      const s = document.querySelector('select[data-sel="prod.scope"]');
       if (s) return [...s.querySelectorAll("option:not([data-placeholder])")]
         .map((o) => o.dataset.v);
-      return [...document.querySelectorAll('.nu-sheet[data-sheet="prod.verb"] input')]
+      return [...document.querySelectorAll('.nu-sheet[data-sheet="prod.scope"] input')]
         .map((i) => i.value);
     })(),
-    verbsAs: document.querySelector('select[data-sel="prod.verb"]') ? "menu"
-      : (document.querySelector('.nu-sheet[data-sheet="prod.verb"]') ? "sheet" : "absent"),
+    scopesAs: document.querySelector('select[data-sel="prod.scope"]') ? "menu"
+      : (document.querySelector('.nu-sheet[data-sheet="prod.scope"]') ? "sheet" : "absent"),
   }));
   check(seen.sec, "P0 · the ninth block is on the page (#ax-produce)");
-  check(seen.verbsAs === "menu", "P0 · …and the verbs are a <select> — a single " +
-    "choice is a menu now (drawn as: " + seen.verbsAs + ")");
+  /* THE SIX VERBS STOOD HERE AND ARE ONE, 2026-09-01. The two assertions this
+     replaces read:
+       check(seen.verbsAs === "menu", "P0 · …and the verbs are a <select> — a
+             single choice is a menu now");
+       check(seen.verbs.length === 6, "P0 · six verbs, and the minus half is
+             there: " + seen.verbs.join(" "));
+     Paul, COMPOSER.md §1 B12: "The only verb is 'make' from now on. Make X Y."
+     A menu of one is not a choice, so the sheet is not drawn at all and its
+     ABSENCE is what is asserted — the minus half of the vocabulary is not lost
+     with it, it moved to the words (louder / quieter / gone / back in /
+     alone), which P5 says at the artifact. */
+  check(seen.verbAny === "absent", "P0 · there is no verb sheet — the only verb " +
+    "is `make` (drawn as: " + seen.verbAny + ")");
+  check(seen.scopesAs === "menu", "P0 · …and tap one is the SCOPE, a <select> — " +
+    "a single choice is a menu (drawn as: " + seen.scopesAs + ")");
   check(!seen.tbl, "P0 · …and there is no note table until something is said");
-  check(seen.verbs.length === 6,
-    "P0 · six verbs, and the minus half is there: " + seen.verbs.join(" "));
+  check(seen.scopes.length > 1,
+    "P0 · the cast is on it: " + seen.scopes.join(" "));
 
-  /* ---- 1 THREE REAL TAPS ---------------------------------------------- */
-  const t1 = await say("prod.verb", "make");
+  /* ---- 1 TWO REAL TAPS ------------------------------------------------- */
+  // THREE UNTIL 2026-09-01: `const t1 = await say("prod.verb", "make");` stood
+  // above the scope tap and is deleted with the verb sheet. The sentence the
+  // page assembles is "make the sound punk" either way.
   const t2 = await say("prod.scope", "record");
   // ...and how many records tap three offered, off whichever widget drew it.
   const scope = await p.evaluate(() => {
@@ -171,8 +222,8 @@ const report = () => {
     return document.querySelectorAll('.nu-sheet[data-sheet="prod.record"] input').length;
   });
   const t3 = await say("prod.record", "punk");
-  check(t1 && t2 && t3, "P1 · three taps landed — make / the sound / punk " +
-    "(tap three offered " + scope + " records)");
+  check(t2 && t3, "P1 · two taps landed — the sound / punk, and the verb is " +
+    "`make` without being asked (tap two offered " + scope + " records)");
 
   const hot = await shot();
   const line = hot.prod.said[0] || {};
@@ -251,16 +302,28 @@ const report = () => {
   check(gone, "P4 · …and the note table is gone from the page");
 
   /* ---- 5 A NOTE THAT MOVES THE DESK, NOT THE TEMPO -------------------- */
-  // The other half of the seam: R.mix -> setMixOffset. "less the cantor" is a
-  // fader, and a fader that never reaches audio/desk.js is a producer that
-  // only pretends. Offsets ADD (desk.js:593), which is why they are cleared
-  // and rewritten whole on every push.
-  // ...through the menus, for the reason `say` gives: `opt|prod.verb|less` is a
-  // lit sheet's option key and there is no lit sheet here any more.
-  await say("prod.verb", "less");
-  const l2 = await say("prod.scope", "v:cantor");
+  // The other half of the seam: R.mix -> setMixOffset. "make the cantor
+  // quieter" is a fader, and a fader that never reaches audio/desk.js is a
+  // producer that only pretends. Offsets ADD (desk.js:593), which is why they
+  // are cleared and rewritten whole on every push.
+  //
+  // THE ASSERTION THAT STOOD HERE WAS THE TWO-TAP VERB LAW ITSELF, and it is
+  // rewritten rather than deleted because the FACT it was protecting — that
+  // the minus half of production reaches the desk — is the same fact. It read:
+  //     await say("prod.verb", "less");
+  //     const l2 = await say("prod.scope", "v:cantor");
+  //     check(l2, 'P5 · "less" takes no descriptor — the note lands on tap TWO');
+  // Paul, 2026-09-01: "The only verb is 'make' from now on. Make X Y." `less`
+  // is the quality `quieter` now (producer.js ADJ, the ±7 dB fader path the
+  // verb carried), so the sentence is three words and lands on tap TWO of two.
+  const l1 = await say("prod.scope", "v:cantor");
+  const l2 = await say("prod.word", "quieter");
   const quiet = await shot();
-  check(l2, "P5 · \"less\" takes no descriptor — the note lands on tap TWO");
+  check(l1 && l2, "P5 · \"make the cantor quieter\" — the level is a WORD now, " +
+    "and it lands on the last tap: " +
+    JSON.stringify((quiet.prod.notes[0] || {})));
+  check((quiet.prod.notes[0] || {}).d === "quieter",
+    "P5 · …and the note carries the quality, not a verb");
   const mixKeys = Object.keys(quiet.prod.mix);
   check(mixKeys.length > 0, "P5 · it writes a mix offset the desk will add: " +
     JSON.stringify(quiet.prod.mix));

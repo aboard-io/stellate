@@ -1,0 +1,22 @@
+MarchingCubes.js — VENDORED for the star-cruise 3D mode (app/starcruise/alien.js).
+
+source:   three.js r160 — npm three@0.160.0, examples/jsm/objects/MarchingCubes.js
+          (fetched from https://unpkg.com/three@0.160.0/examples/jsm/objects/MarchingCubes.js)
+license:  MIT (see ./LICENSE) — Copyright 2010-2023 three.js authors
+date:     2026-07-12
+
+WHY:      alien.js bakes a fused organic BODY CORE (a metaball/isosurface) ONCE at
+          makeAlien() time from this class, then keeps the resulting static
+          BufferGeometry. Marching cubes is NEVER run per frame.
+
+ONLY EDIT vs upstream:
+          the module's import specifier was changed from the bare package
+              import { ... } from 'three';
+          to our vendored core
+              import { ... } from './three.module.min.js';
+          so it resolves OFFLINE (no CDN, no import-map) at runtime.
+
+To re-vendor:
+          curl -sSL https://unpkg.com/three@<ver>/examples/jsm/objects/MarchingCubes.js \
+            -o vendor/three/MarchingCubes.js
+          # then re-point its top import to ./three.module.min.js

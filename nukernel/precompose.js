@@ -65,10 +65,16 @@
     isNode ? require("./kernel.js")      : root.NuKernel,
     isNode ? require("./instruments.js") : root.NuInstruments,
     isNode ? require("./songs.js")       : root.NuSongs,
-    isNode ? require("./song.js")        : root.NuSong);
+    isNode ? require("./song.js")        : root.NuSong,
+    // THE RULES TABLE (2026-09-01). `genreToDocument` takes a third argument
+    // now — the list of sentences a hand has rewritten — and `applyRules` is
+    // the one door that turns it into a resolved row. rules.js reaches BACK
+    // into this file lazily (for `idiomOf`) precisely so this require can be
+    // an ordinary load-time one.
+    isNode ? require("./rules.js")       : root.NuRules);
   if (isNode) module.exports = api;
   else root.NuPrecompose = api;
-})(typeof self !== "undefined" ? self : this, function (NG, NC, Id, NF, K, NI, NuSongs, NuSong) {
+})(typeof self !== "undefined" ? self : this, function (NG, NC, Id, NF, K, NI, NuSongs, NuSong, NuRules) {
   "use strict";
 
   const { GENRES, MODES, SCALES } = NG;
@@ -76,6 +82,7 @@
   const { LENGTHS, REG } = Id;
   const { stepsIn } = K;
   const { instrOf, isSection } = NI;
+  const { applyRules } = NuRules;
 
   /* ======================================================================
      1 · IDIOM — the record's own tune, in ideas-kit's six words
@@ -2147,15 +2154,60 @@
   /* ======================================================================
      8 · genreToDocument — the whole record
      ====================================================================== */
-  function genreToDocument(gk, seed) {
+  /* THE THIRD INPUT (2026-09-01, the Rules round). This function took
+     `(gk, seed)` and nothing else, and `ui/atlas.js:2360` says so out loud:
+     "pick() above is genreToDocument(gk, seed) and nothing else". That
+     sentence is REWRITTEN rather than deleted, because the property it was
+     protecting is still the one that matters: the record is a PURE function of
+     its inputs, and a share link that carries them replays it exactly. There
+     are three inputs now — the anchor, the reading, and the SENTENCES a hand
+     has rewritten (`doc.rules`, an array of `{f, v}` validated in song.js and
+     carried through normalize).
+
+     `GENRES` IS STILL NEVER TOUCHED. `applyRules` copies the row and writes
+     into the copy (rules.js §5), so `test/precompose.test.js` G6a — "a second
+     call is deep-equal" — and the share-link law (ui/atlas.js:2358, "a link
+     stays good when a genre's recipe is improved") both stand exactly where
+     they stood. An absent or empty list hands back the catalogue's own row,
+     by identity, so every record composed without one is byte-identical. */
+  function genreToDocument(gk, seed, rules) {
     // THROW BY NAME. compose.js:1767 silently rewrites an unknown key to
     // "simple", which is exactly the rot this project has legislated against
     // (compose.js:1846's own law, two hundred lines below the fallback): a
     // caller that asks for a genre that is not there gets told which one.
     if (!GENRES[gk]) throw new Error(`precompose: no anchor "${gk}"`);
-    const s = seed == null ? 1 : seed;
-    const G = GENRES[gk];
-    const R = compose(gk, s);                     // ONCE. Everything else reads R.
+    /* READING 1 IS THE IDIOM AS WRITTEN, AND SO IS READING 0 (2026-09-01, the
+       seed round). This read `seed == null ? 1 : seed` and G6b holds the half
+       of it that was true: no reading at all is reading 1. What was NOT true
+       is the sentence the rest of the file already says — `reading()` (:1233)
+       and `formOf` both open with `seed <= 1`, so seed 0 already took the
+       cells and the form as written, and then compose()'s own `rng(0)` drew a
+       DIFFERENT tempo and a different key underneath them. Measured on
+       `reggae`: seed 0 and seed 1 came out different records while every
+       policy in the box said they were the same reading. The seed slider Paul
+       asked for runs 0..2^16, so its first two rungs are now honestly the same
+       record, and the flyout says so under the slider. */
+    const s = seed == null || seed <= 1 ? 1 : seed;
+    const G = rules && rules.length ? applyRules(GENRES[gk], rules) : GENRES[gk];
+    /* THE BLANK STATE (2026-09-01). Paul: "Add a 'silence' genre at the top of
+       the genre list. This is a blank state." `silent` is a NAMED opt-out on
+       the row — the shape compose.js STEADY uses (`compose.js:275`), a written
+       exemption rather than a shrug — and it is read in exactly THREE places
+       below, each marked "exemption N of 3":
+         1  the guest stack seats nobody (`seated`),
+         2  the "a record with no kinds is given a hook" repair does not fire,
+         3  the form is ONE eight-bar head and the material is ONE line cell of
+            sixteen rests.
+       Everything else — the alphabet, the tempo, the buses, the desk — is the
+       row's own, composed by the same path as every other anchor, because a
+       blank state that took a different road would be a blank state nothing
+       else in the box could reason about. */
+    const silent = !!G.silent;
+    // ONCE. Everything else reads R — and the arranger reads the RESOLVED row
+    // (compose.js's third argument, this round), so a rewritten sentence
+    // reaches the form, the cast and the tempo and not only the fields this
+    // file copies out afterwards.
+    const R = compose(gk, s, G);
     const { row: row0 } = idiomOf(gk);
     const scale = scaleName(gk, G);                // throws by name if unnameable
 
@@ -2201,9 +2253,11 @@
       if (want >= 2)
         for (const b of R.song) if (b.len % 2) b.len += 1;
     }
-    const cb = cellBarsOf(gk, R.song.map((b) => b.len));
+    // ...and the blank state's cell is ONE bar, because its one section is the
+    // only thing that has to divide it (exemption 3 of 3, part one).
+    const cb = silent ? 1 : cellBarsOf(gk, R.song.map((b) => b.len));
     const sid = (i) => "s" + i;
-    const NSEC = R.song.length;
+    const NSEC = silent ? 1 : R.song.length;
 
     /* ---- FORM. `bars` counts CELL bars, per PROGRAM.md §2.1, and `cb`
        divides every section's musical length by construction (cellBarsOf).
@@ -2236,7 +2290,14 @@
     // line starts honouring it the day it lands.
     const PLANCUE = { prechorus: 1, build: 1 };
     const roleName = (b) => (PLANCUE[b.cue] && NF.ROLES[b.cue] ? b.cue : b.role);
-    const sections = R.song.map((b, i) => ({
+    /* EXEMPTION 3 of 3, part two — ONE HEAD SECTION OF EIGHT BARS. A blank
+       state has no arrangement to state: `head` is fields.js ROLES' own word
+       for a section that is simply the tune, eight bars is the loop a hand can
+       hear go round, and compose()'s eleven-section song plan is dealt and
+       then not used. The draw still HAPPENS (compose ran above, once, on its
+       own streams) so the seed discipline is untouched and every other record
+       is byte-identical. */
+    const sections = silent ? [{ id: sid(0), role: "head", bars: 8 }] : R.song.map((b, i) => ({
       id: sid(i), role: roleName(b), bars: b.len / cb,
       // the within-section sentence — compose decides it (the sixteen-bar
       // law, :1920) and the kernel reads g.period per bar (kernel.js:1202)
@@ -2347,7 +2408,16 @@
     const GENERATIONS = 6;
     const kin = (lk) => { const A = ancestry(gk, GENERATIONS), B = ancestry(lk, GENERATIONS);
       for (const k of A.keys()) if (B.has(k)) return true; return false; };
-    const seated = (lk) => { const L = GENRES[lk]; if (!L) return false;
+    /* EXEMPTION 1 of 3 — THE BLANK STATE SEATS NO GUEST. compose()'s layer
+       stack books players off the family lean and the two doors below filter
+       them; neither door asks "is anybody home". Measured 2026-09-01 on this
+       row before the exemption: `voices: 0` still composed THREE chairs (riff,
+       vocal, counterpoint) and two cells, because a guest arrives from the
+       stack and not from `voices`. A blank state with three uninvited players
+       in it is not a blank state, so the door is shut here, at the one place
+       every layer already passes through. */
+    const seated = (lk) => { if (silent) return false;
+      const L = GENRES[lk]; if (!L) return false;
       if (voiceBarred && VOCAL(instrOf(lk, 0))) return false;                // door 1 (VOCAL: sampled voices too, 2026-08-30)
       if (hostYear != null && NC.genreYear(lk) != null && !kin(lk)) return false; // door 2
       return true; };
@@ -2372,7 +2442,13 @@
       for (const e of R.song[i].stack.slice(1))
         if (seated(e.g) && (e.slots || []).length) sounds(KIND_OF[e.slots[0]], i);
     }
-    if (!usedKinds.size) { usedKinds.add("hook"); kindAt.hook = new Set([0]); }
+    /* EXEMPTION 2 of 3 — a blank state is not repaired into a record. The
+       line below is the "a record with no kinds is given a hook" repair, and
+       it is right for every anchor whose form happens to deal no slots: a
+       record that plays nothing is a bug there. Here it is the ANSWER, so the
+       repair does not fire and the material is written a few lines down
+       instead. */
+    if (!usedKinds.size && !silent) { usedKinds.add("hook"); kindAt.hook = new Set([0]); }
     const cells = {};
     const phraseOf = {};
     // THIS READING'S OWN WORDS (§6b). Drawn once, here, from the stream §6
@@ -2415,6 +2491,16 @@
       if (cells[name]) devName[key] = name;
     }
     for (const n of Object.keys(cells)) if (!cells[n]) delete cells[n];
+    /* EXEMPTION 3 of 3, part three — ONE LINE CELL OF SIXTEEN RESTS, `motif`.
+       It is named `motif` and not `hook` because it is not a hook: it is the
+       empty staff a hand writes onto, and the Motif editor opens on it. Every
+       vector is the sixteen the document's own shape demands (deg/play/vel/acc
+       all one length, `barsOf` reads 16/16 = one bar) and every step is `r`,
+       which is the ONE cell in the catalogue that is legally silent — the G1
+       onset check names `silent` rows for exactly this reason. */
+    if (silent) cells.motif = { kind: "line",
+      deg: new Array(steps).fill(0), play: new Array(steps).fill("r"),
+      vel: new Array(steps).fill(6), acc: new Array(steps).fill(0) };
     // what this part plays in this section: its development if the deal
     // reached one, and the statement otherwise
     const cellAt = (k, i) => devName[k + "@" + i] || k;
@@ -2813,6 +2899,16 @@
     /* ---- the record ----------------------------------------------------- */
     return {
       basis: gk,
+      /* THE SENTENCES THIS READING WAS COMPOSED WITH, carried on the record
+         (2026-09-01). A record is a pure function of `(gk, seed, rules)` and
+         the first two already travel in the address; the third has to travel
+         in the document or a share link reopens the anchor as written while
+         claiming to be the record somebody built. Present-only — a record
+         composed straight off its anchor states nothing, which is the only
+         spelling of that default — and validated at the door by
+         `song.js validateRules` through `document.js normalize`. */
+      ...(rules && rules.length
+        ? { rules: rules.map((e) => ({ f: e.f, v: e.v })) } : {}),
       time: {
         bpm: R.bpm, rate: G.rate == null ? 1 : G.rate,
         // the WORD, never the numbers (song.js:846's own law) — and only when

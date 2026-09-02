@@ -228,8 +228,24 @@ const FROZEN_RHYTHM = ["ambient", "arabesk", "artrock", "beiruttarab",
                        "furnituremusic", "gagaku", "gothicrock", "gqom",
                        "hohlefels", "hurrian", "knowlewest", "modaljazz",
                        "nordicjazz", "nordicscore", "ottoman", "psychrock",
-                       "seannos", "torchbreaks", "triphop", "viennadownbeat",
+                       "seannos",
+                       // ...AND THE BLANK STATE (2026-09-01). Paul: "Add a
+                       // 'silence' genre at the top of the genre list. This is
+                       // a blank state." Its one cell is sixteen rests, by
+                       // declaration (`silent: true`, precompose's third named
+                       // exemption), so its rhythm is frozen for the same
+                       // reason its degrees are: a blank page that came back
+                       // different at every reading would be a blank page with
+                       // an opinion. It joins the transcript rather than being
+                       // filtered out of the sweep, because the list is a
+                       // record of decisions and this is one.
+                       "silence",
+                       "torchbreaks", "triphop", "viennadownbeat",
                        "witchhouse"];
+/* THE ONE ROW WHOSE DEGREES ARE FROZEN TOO, and it is the same row: the
+   assertion below reads "hook degrees frozen at N anchors" and that is right
+   for every record with a tune. Named off the field, not the key. */
+const NO_TUNE = ANCHORS.filter((g) => GENRES[g].silent);
 ok("catalog: hook rhythm and degrees vary at nearly every anchor", () => {
   let rv = 0, dv = 0, kv = 0; const frozen = [];
   for (const g of ANCHORS) {
@@ -252,7 +268,9 @@ ok("catalog: hook rhythm and degrees vary at nearly every anchor", () => {
   assert(rv === n - FROZEN_RHYTHM.length, "hook rhythm varies at " + rv +
          " of " + n + " anchors; expected all but the " + FROZEN_RHYTHM.length +
          " decided long-cell rows");
-  assert(dv === n, "hook degrees frozen at " + (n - dv) + " anchors");
+  assert(dv === n - NO_TUNE.length, "hook degrees frozen at " + (n - dv) +
+         " anchors, expected only the " + NO_TUNE.length + " with no tune (" +
+         NO_TUNE.join(" ") + ")");
   assert(kv === n, "key frozen at " + (n - kv) + " anchors");
   assert.deepStrictEqual(frozen.slice().sort(), FROZEN_RHYTHM,
     "the rhythm-frozen list is a DECISION and it changed: " + frozen.join(" "));
