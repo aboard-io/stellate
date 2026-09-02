@@ -172,6 +172,53 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   // gate that could not run until somebody else's serial pass had landed.
   await p.evaluate(() => { window.__D = window.__eightDoc || window.__doc; });
 
+  /* ---- THE GATE'S OWN READER FOR A COMBO BOX (2026-09-02) ---------------
+     Paul, after using the composer: *"The combo boxes just don't work and are
+     confusing. I was expecting more of onfocus show custom dropdown then
+     filter based on input — one line instead of two."* Every single-choice
+     control ui/selects.js draws is one widget now — an `<input role=combobox>`
+     carrying `data-sel`/`data-k`/`data-v`, with a `<ul role=listbox>` beside it
+     that is ALWAYS in the DOM and `hidden` until a hand opens it.
+
+     THIS FILE'S SHAPE IS UNCHANGED AND THAT IS THE POINT. Every check below
+     already read its subject "through whichever widget it is" — a lit sheet or
+     a menu — because this file has survived that reversal twice. A combo box
+     is the third widget and it needs the same two verbs the other two needed:
+     WHAT WORDS DOES IT OFFER, and SAY ONE. They are installed on the page once,
+     here, as the GATE's helper and not the page's: nothing in nukernel/ reads
+     `window.__combo`, and putting it here rather than repeating six copies of
+     the same three lines inside six `evaluate` bodies is the one-owner law
+     applied to a test.
+
+     `say()` writes the option's VALUE into the control and fires `change`,
+     which is the same gesture this file made at a `<select>` — ui/selects.js
+     answers it deliberately and says so at its own listener ("A SYNTHETIC
+     `change` IS A COMMIT"). */
+  await p.evaluate(() => {
+    const box = (n2) => n2 && (n2.closest(".nu-combo") || n2.parentElement);
+    window.__combo = {
+      is: (n2) => !!n2 && n2.getAttribute("role") === "combobox",
+      /* one row per offered word, in the shape this file's checks already
+         read: `{ v, off, why, on }`, whichever element it came off */
+      words: (n2) => {
+        if (!n2) return [];
+        if (n2.getAttribute("role") !== "combobox")
+          return [...n2.querySelectorAll("option")].map((o) => ({
+            v: o.dataset.v == null ? o.value : o.dataset.v, off: o.disabled,
+            why: o.dataset.why || "", on: o.selected }));
+        const b = box(n2);
+        return b ? [...b.querySelectorAll("li[role=option]")].map((o) => ({
+          v: o.dataset.v == null ? "" : o.dataset.v,
+          off: o.getAttribute("aria-disabled") === "true",
+          why: o.dataset.why || "",
+          on: o.getAttribute("aria-selected") === "true" })) : [];
+      },
+      say: (n2, v) => { if (!n2) return false;
+        n2.value = v; n2.dispatchEvent(new Event("change", { bubbles: true }));
+        return true; },
+    };
+  });
+
   /* ---- WALK EVERY VIEW, BECAUSE `#app` IS TABS NOW -----------------------
      THIS IS THE HOLE THAT LET THE THREE SURVEY GATES BELOW PASS ON NOTHING.
      `#app` used to be one long scroll with every control on it, so one
@@ -394,7 +441,14 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     // the fallback name carries WHERE it was found as well as WHAT it is, so
     // the seat exemption above can be by key shape AND container together
     // rather than by key alone (2026-08-28)
-    menus: [...document.querySelectorAll("#app select")]
+    /* A MENU IS A COMBO BOX OR A `<select multiple>` (2026-09-02). The query
+       read `#app select`, which after the reversal finds only the strips'
+       insert seats and the one multiselect — so `devMenu` came back empty and
+       this gate would have reported "the development words are gone" about a
+       page where every one of them is drawn. `rogue` is unchanged in what it
+       refuses: an anonymous menu with no `data-sel`, whichever element it is
+       made of. */
+    menus: [...document.querySelectorAll("#app select, #app [role=combobox]")]
       .map((s) => s.dataset.sel || "(no data-sel: " +
         (s.dataset.k || s.outerHTML.slice(0, 40)) +
         (s.closest(".nu-strip") ? " IN A STRIP" : "") + ")"),
@@ -494,6 +548,40 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       " menus, " + devCell.length + " word-grid cells, and " +
       devSheet.length + " still drawn as a sheet " + JSON.stringify(devSheet));
   else notes.push("     (which widget a development word gets is ui/selects.js's " +
+    "router, which this harness does not import — index.html only)");
+
+  /* ---- 1b A SINGLE-CHOICE ROW IS A COMBO BOX, NOT A `<select>` ---------
+     (Paul, 2026-09-02: "The combo boxes just don't work and are confusing. I
+     was expecting more of onfocus show custom dropdown then filter based on
+     input — one line instead of two.")
+
+     THE OTHER HALF OF GATE 1, AND THE ONE A HALF-APPLIED REVERSAL WOULD LEAVE
+     BEHIND. Gate 1 says every menu in `#app` is one ui/selects.js drew; this
+     says what ui/selects.js draws is the widget that was decided on. A
+     `<select>` inside `#app` is now exactly two things and both are named: the
+     one `<select multiple>` a multi sheet owns (`data-multi`, gate 8b's
+     subject) and the channel strips' insert seats (`ins|…`, desk-gate
+     G11/G14/G15's). Anything else means a control did not convert — which is
+     the shape this file's own note calls "the hole a half-finished conversion
+     falls into". */
+  const stragglers = await eachView(() => ({
+    left: [...document.querySelectorAll("#app select")]
+      .filter((s2) => !s2.multiple && !/^ins\|/.test(s2.dataset.k || ""))
+      .map((s2) => s2.dataset.sel || s2.dataset.k || s2.outerHTML.slice(0, 40)),
+    combos: [...document.querySelectorAll("#app [role=combobox][data-sel]")]
+      .map((s2) => s2.dataset.sel),
+  }));
+  const left = union(stragglers, "left");
+  const combos = union(stragglers, "combos");
+  check(!left.length, "every single-choice control ui/selects.js draws is a " +
+    "combo box — " + combos.length + " of them; <select>s still standing " +
+    "outside a multi sheet and the strips' insert seats: " +
+    JSON.stringify(left.slice(0, 5)));
+  if (REAL)
+    check(combos.length > 0, "…and there are some (" + combos.length +
+      " combo boxes across the walk), so the line above is not passing on an " +
+      "empty page");
+  else notes.push("     (which widget a single choice gets is ui/selects.js's " +
     "router, which this harness does not import — index.html only)");
 
   /* ---- 2 every sheet has a legend, and its options are avail.js's own ---- */
@@ -719,7 +807,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   const kitLive = await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="dev.kit"]');
     if (f) return { as: "sheet", live: !f.disabled };
-    const s2 = document.querySelector('select[data-sel^="dev.kit"]');
+    const s2 = document.querySelector('[data-sel^="dev.kit"]');
     if (s2) return { as: "menu", live: !s2.disabled };
     const c = document.querySelector('.nu-wcell[data-k^="dev.kit"]');
     return c ? { as: "cell", live: !c.disabled &&
@@ -757,9 +845,9 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (f) { const w = [...f.children].find((c) => c.classList.contains("nu-why"));
       return { as: "sheet", off: f.disabled, why: w ? w.textContent : null,
                visible: f.querySelectorAll(".nu-opt").length }; }
-    const s2 = document.querySelector('select[data-sel^="dev.kit"]');
+    const s2 = document.querySelector('[data-sel^="dev.kit"]');
     if (s2) return { as: "menu", off: s2.disabled, why: s2.dataset.why || null,
-                     visible: s2.options.length };
+                     visible: window.__combo.words(s2).length };
     const c = document.querySelector('.nu-wcell[data-k^="dev.kit"]');
     if (!c) return null;
     const off = !!c.disabled || c.getAttribute("aria-disabled") === "true";
@@ -801,10 +889,10 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   await facet("facet-inst");              // the machine is what the kit IS
   const dk = await p.evaluate(() => {
     const f = document.querySelector('.nu-sheet[data-sheet^="sound.drumkit"]');
-    const s2 = document.querySelector('select[data-sel^="sound.drumkit"]');
+    const s2 = document.querySelector('[data-sel^="sound.drumkit"]');
     return { sheet: !!f, sheetMulti: f ? f.hasAttribute("data-multi") : null,
-             menu: !!s2, multiple: s2 ? s2.multiple : null,
-             n: s2 ? s2.options.length : 0,
+             menu: !!s2, multiple: s2 ? !!s2.multiple : null,
+             n: s2 ? window.__combo.words(s2).length : 0,
              name: s2 ? s2.getAttribute("aria-label") : null };
   });
   // NOT A MULTISELECT, ANYWHERE. This half is the rule and it holds on every
@@ -817,7 +905,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   // control. So "it is a <select>" is index.html's claim to answer.
   if (REAL)
     check(dk.menu && !dk.sheet, "...and on the shipped page it is a single " +
-      "<select>, not a sheet " + JSON.stringify(dk));
+      "menu, not a sheet " + JSON.stringify(dk));
   else notes.push("     (the drum kit's WIDGET is ui/selects.js's router, which " +
     "this harness does not import — index.html only)");
 
@@ -836,7 +924,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     const f = document.querySelector('.nu-sheet[data-sheet^="alphabet.quality"]');
     if (f) { const w = [...f.children].find((c) => c.classList.contains("nu-why"));
              return { as: "sheet", off: f.disabled, why: w ? w.textContent : null }; }
-    const s = document.querySelector('select[data-sel^="alphabet.quality"]');
+    const s = document.querySelector('[data-sel^="alphabet.quality"]');
     return s ? { as: "menu", off: s.disabled, why: s.dataset.why || null } : null;
   });
   check(!!qual && qual.off && /modal harmony has no changes/.test(qual.why || ""),
@@ -882,8 +970,8 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     const f = pick('.nu-sheet[data-sheet^="dev.line"]');
     if (f) { for (const l of f.querySelectorAll(".nu-opt")) rows.push({ v: l.dataset.v,
       off: l.querySelector("input").disabled }); return rows; }
-    const s2 = pick('select[data-sel^="dev.line"]');
-    if (s2) { for (const o of s2.options) rows.push({ v: o.dataset.v, off: o.disabled });
+    const s2 = pick('[data-sel^="dev.line"]');
+    if (s2) { for (const o of window.__combo.words(s2)) rows.push({ v: o.v, off: o.off });
       return rows; }
     /* ...AND A THIRD WIDGET (2026-09-02): the word grid's cell, whose words
        are in the strip it opens. Read the way a reader reads them — open the
@@ -929,8 +1017,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     const f = document.querySelector('.nu-sheet[data-sheet^="cast.part"]');
     const i = f && f.querySelector('.nu-opt[data-v="pad"] input');
     if (i) { i.checked = true; i.dispatchEvent(new Event("change", { bubbles: true })); return; }
-    const s = document.querySelector('select[data-sel^="cast.part"]');
-    if (s) { s.value = "pad"; s.dispatchEvent(new Event("change", { bubbles: true })); }
+    window.__combo.say(document.querySelector('[data-sel^="cast.part"]'), "pad");
   });
   await p.waitForTimeout(200);
   await openDoes();               // ...and the words it greys are per-section
@@ -961,9 +1048,9 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     if (f) { for (const l of f.querySelectorAll(".nu-opt")) rows.push({ v: l.dataset.v,
       off: l.querySelector("input").disabled,
       why: (l.querySelector(".nu-why") || {}).textContent || "" }); return rows; }
-    const s2 = pick('select[data-sel^="dev.line"]');
-    if (s2) { for (const o of s2.options) rows.push({ v: o.dataset.v, off: o.disabled,
-      why: o.dataset.why || "" }); return rows; }
+    const s2 = pick('[data-sel^="dev.line"]');
+    if (s2) { for (const o of window.__combo.words(s2))
+      rows.push({ v: o.v, off: o.off, why: o.why }); return rows; }
     // ...and the word grid's cell, read off the strip it opens (2026-09-02)
     const c = pick('.nu-wcell[data-k^="dev.line"]');
     if (c && !c.disabled) {
@@ -1022,7 +1109,7 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   await p.evaluate(() => {
     const i = document.querySelector('.nu-sheet[data-sheet^="cast.part"] .nu-opt[data-v="pad"] input');
     if (i) { i.dispatchEvent(new Event("change", { bubbles: true })); return; }
-    const s = document.querySelector('select[data-sel^="cast.part"]');
+    const s = document.querySelector('[data-sel^="cast.part"]');
     if (s) { s.dispatchEvent(new Event("change", { bubbles: true })); return; }
     if (window.__draw) window.__draw();
   });
@@ -1040,10 +1127,10 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
       if (i.checked) return { as: "sheet", off: i.disabled,
         why: (l.querySelector(".nu-why") || {}).textContent || null };
     }
-    for (const s2 of document.querySelectorAll('select[data-sel^="dev.line"]')) {
-      const o = [...s2.options].find((x) => x.dataset.v === "at the fifth");
-      if (!o || !o.selected) continue;
-      return { as: "menu", off: o.disabled || s2.disabled, why: o.dataset.why || null };
+    for (const s2 of document.querySelectorAll('[data-sel^="dev.line"]')) {
+      const o = window.__combo.words(s2).find((x) => x.v === "at the fifth");
+      if (!o || !o.on) continue;
+      return { as: "menu", off: o.off || s2.disabled, why: o.why || null };
     }
     /* ...AND A THIRD WIDGET (2026-09-02, wave 4). On a word grid the standing
        answer is TWO things and both are read: the word the CELL is printing —
@@ -1083,7 +1170,9 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
      and `activeElement.dataset.k` moves with it. */
   /* ...AND THEN THE DEVELOPMENT WORDS BECAME MENUS TOO, WHICH TOOK THE LAST
      RADIO-GROUP SHEET OFF THE SHIPPED PAGE. See gate 1: a single-choice
-     control is a `<select>` now, and `alphabet.mode` was only the first of
+     control is a menu now (a COMBO BOX since 2026-09-02, whose ArrowDown is
+     this page's own and is driven by test/selects.js 7M), and `alphabet.mode`
+     was only the first of
      them. Measured 2026-08-25 on nukernel/index.html, walking every tab: the
      ONLY `.nu-sheet` left anywhere is the engineer's `eng.fx|<voice>` chips,
      which is a `<select multiple>` and has no radio in it. (That one sheet
@@ -1123,7 +1212,8 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
   if (!devKey) {
     check(REAL && !radioSheets.length,
       "no radio-group sheet is left to traverse — every single-choice control " +
-      "is a <select>, whose ArrowDown is the browser's own. Still drawn as " +
+      "is a combo box, whose ArrowDown is its own (test/selects.js 7M). Still " +
+      "drawn as " +
       "single-choice sheets: " + JSON.stringify(radioSheets) +
       "  (the traversal claim is asserted on the sheets harness — test/all.js " +
       "`sheets-tier`)");

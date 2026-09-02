@@ -3,6 +3,19 @@
 // at the foot of this file). The title is not amended past that: fifty-two
 // controls on the page are menus and one is a diagram.
 //
+// ...AND ON 2026-09-02 THE MENU STOPPED BEING A `<select>`. The line above is
+// kept: fifty-two controls on the page are still menus, one is still a diagram,
+// and what changed is the element a menu is made of. Paul, after using the
+// composer on staging: *"The combo boxes just don't work and are confusing. I
+// was expecting more of onfocus show custom dropdown then filter based on input
+// — one line instead of two."* The whole of that reversal — what moved, what
+// did not, and why every `data-sel` / `data-k` / `data-v` address is
+// byte-identical across it — is at `buildCombo` below, and the law it amends
+// is amended IN PLACE at `shouldSelect`. Everything in this header about what a
+// closed control can and cannot say is unchanged and still true of the shut
+// combo: the paragraphs below say `<select>` because that is the element they
+// were written about, and the reasoning survives the swap intact.
+//
 // TWO INSTRUCTIONS, BOTH RIGHT, AND THIS FILE IS WHERE THEY MEET. They were
 // said sixteen hours apart and neither one is a correction of the other:
 //
@@ -100,30 +113,129 @@ export function optionText(o) {
   return why ? label + ", " + why : label;
 }
 
-/** The bare <select>, with no label and no wrapper — for a table cell, which
- *  is where Paul asked the chord quality to go ("chord quality can be selects
- *  inside the 'the changes' table"). `selectField` below wraps this one; there
- *  is no second copy of the option-building loop.
+/* ---------- THE COMBO BOX IS THE CONTROL (2026-09-02) ----------------------
+   Paul, 2026-09-02, having used the composer on staging: *"The combo boxes
+   just don't work and are confusing. I was expecting more of onfocus show
+   custom dropdown then filter based on input — one line instead of two."*
+
+   THE OLD SENTENCE, KEPT ABOVE THE NEW ONE, because it is the law this
+   replaces and it was right for as long as it stood:
+
+     "IT IS STILL A `<select>`, AND THAT IS THE LOAD-BEARING DECISION. The
+      2026-08-25 law — A SINGLE-CHOICE CONTROL IS A `<select>`, full stop
+      (`shouldSelect` below) — is untouched; `data-sel`, `data-k` and `data-v`
+      are untouched, which is what puts focus back after every `draw()`; every
+      gate that counts menus counts the same menus. What is added is a WRAPPER
+      around the select, HERE and at no other call site, and three things it
+      makes possible that a bare `<select>` cannot do: the page's own arrow
+      (nu.css `.nu-combo::after` over `appearance: none`), the DETENT colours,
+      and — for a list too long to be a menu — a filter."
+
+   AND THE NEW ONE: A SINGLE-CHOICE CONTROL IS A COMBO BOX. Not a wrapper
+   around a menu with a second box above it — ONE widget, one line: a text
+   field showing the word this record is standing on, and, under it, the list.
+
+   WHAT PAUL MEASURED AND WHAT IT COST. The wrapper round was two controls
+   stacked in one box — an `<input type=search>` that filtered and a `<select>`
+   that answered — which is exactly "two lines instead of one", and the probe of
+   the same page found the other half of it: *"`.nu-combo-filter` has no
+   placeholder and no label — on Produce two empty white boxes float over two
+   'choose one' combos."* A placeholder was added to the filter and the shape
+   was still two controls for one question. `comboFilter` is deleted here rather
+   than fixed: the field IS the filter now, which is the whole of what a combo
+   box has meant since 1993.
+
+   WHAT DOES NOT MOVE, AND MUST NOT. `data-sel`, `data-k` (`sel|` + key) and
+   `data-v` ride on the FIELD, which is the element that takes focus — so
+   ui/eight.js's `restoreFocus` puts the thumb back on exactly the address it
+   always did, and every gate that spells a control `[data-sel="alphabet.mode"]`
+   still finds one element. The refusal law does not move either: a refused
+   option is greyed WITH ITS REASON JOINED TO ITS WORDS (`optionText`, above)
+   and stamped `data-why`, and a refused CONTROL is a disabled field carrying
+   `data-why` with the sentence printed beside it.
+
+   THE LIST IS IN THE FLOW AND IT IS ALWAYS IN THE DOM. Two decisions, one
+   argument each:
+     · IN FLOW. It is inserted directly after the field, inside the same box,
+       so opening it GROWS THE PAGE. Nothing floats over anything and nothing
+       scrolls inside itself — the page's own law ("menus never scroll inside
+       themselves"), which a `position: fixed` popover with a `max-height`
+       would break the first time an instrument list of 108 opened on a phone.
+       A long list makes a long page, and a page is the one thing on this
+       surface that is allowed to be long.
+     · ALWAYS IN THE DOM, `hidden` until it opens. A `<select>` carried all
+       108 of its `<option>`s in the document at all times; this carries the
+       same 108 `<li>`s, so the DOM weight is what it was — and every gate that
+       reads the shape of the possible off the rendered artifact (no silent
+       grey, the option census, the greyed-with-a-reason walk) can still read
+       it without opening forty controls. `hidden` keeps them out of the
+       accessibility tree and out of the text diet, which is what a closed
+       listbox is supposed to be.
+
+   IT DOES NOT RE-OPEN ITSELF AFTER A REDRAW, and this is the same bug the
+   `<select>` had and the same measurement that named it (ui/eight.js's
+   `opensAPicker`: *"When I select something the box just pops up again"* —
+   the page re-focused a brand-new control 272ms after the gesture and the
+   platform re-presented its popup). A combo box opens on FOCUS, so it would
+   have inherited the bug whole. `gestures` below is the discriminator and it
+   is exact rather than a timeout: the module counts the user's own pointer and
+   key gestures on the document, each field remembers the count it was BORN at,
+   and a `focus` arriving with no new gesture since then is the page putting the
+   thumb back — never a hand reaching for the control. Tab in and it opens (the
+   Tab keydown is a gesture); be handed focus by `draw()` and it does not.
+
+   TYPING IS A FILTER AND NEVER A VALUE. Unchanged from the wrapper round and
+   for the same reason: you cannot type a word that is not in the table,
+   because the table IS the vocabulary and inventing one is the thing a settled
+   parameter must not allow. The field is `readonly` until it is focused, so a
+   closed combo cannot be edited at all, and Escape or a blur puts the current
+   word back whatever was typed over it.
+
+   ---- THE DETENT, WHICH MOVES ONTO THE FIELD --------------------------------
+   `.is-seated` — you are standing where the record put you — and `.is-said` —
+   you moved it. It was written on the wrapper because the wrapper was the only
+   element the page owned; the field is the page's own element now, so the
+   colour goes on the thing that carries the word. A MENU WHOSE TABLE DECLARES
+   NO DEFAULT WEARS NEITHER CLASS: silence rather than a claim, because "you
+   set this" is a fact and a control that cannot know it may not assert it. */
+
+/* HOW MANY GESTURES THIS DOCUMENT HAS SEEN. See the paragraph above: it is the
+   whole of "a hand asked for this list" versus "the page put my thumb back".
+   Capture phase, so it has counted before any field's own handler runs. */
+let gestures = 0;
+if (typeof document !== "undefined" && document.addEventListener)
+  for (const ev of ["pointerdown", "touchstart", "keydown"])
+    document.addEventListener(ev, () => { gestures++; },
+      { capture: true, passive: true });
+
+let comboN = 0;
+
+/** The words an option is filtered ON — its label, and not the reason joined
+ *  to it. You shop for "clarinet", never for "no drummer". */
+const filterWord = (o) => String(o.label == null ? o.value : o.label);
+
+/** ONE WIDGET, BUILT ONCE, USED BOTH WAYS. `selectEl` returns it bare (for a
+ *  table cell, a slot row, a bus plate) and `selectField` puts it under a
+ *  printed question; `compact` is the only difference and it is a class, so
+ *  the two forms cannot drift apart in anything but their paint.
  *
  *  spec = { key, label, options, value, set, why?, ungated? } — PROGRAM.md §2.3 */
-export function selectEl(spec) {
+function buildCombo(spec, compact) {
   const options = spec.options || [];
-  // A SILENT GREY IS THE BUG BOTH WIDGETS EXIST TO PREVENT, so it is the same
-  // throw, in the same words, and not a console warning. ui/sheets.js:70.
+  // A SILENT GREY IS THE BUG ALL THREE WIDGETS EXIST TO PREVENT, so it is the
+  // same throw, in the same words, and not a console warning. ui/sheets.js:70.
   for (const o of options)
     if ((o.disabled || o.quiet) && !(o.why && String(o.why).trim()))
       throw new Error('selects: "' + spec.key + '" / "' + o.value +
         '" is ' + (o.disabled ? "disabled" : "quiet") + " with no `why`");
 
   const doc = document;
-  const s = doc.createElement("select");
-  // TWO CONTROLS SHARING A KEY DO NOT FIGHT HERE THE WAY TWO SHEETS DO — a
-  // <select> has no `name` to collide over — but they still share a `data-k`,
-  // and `data-k` is how focus is put back after every redraw (ui/eight.js:1156,
-  // `box.querySelector('[data-k=…]')`, which takes the FIRST). So a duplicate
-  // key means your finger lands on the wrong menu, and it also means two
-  // callers genuinely disagree about who owns a fact. Said out loud, and
-  // suffixed, exactly as ui/sheets.js:79 does it.
+  // TWO CONTROLS SHARING A KEY DO NOT FIGHT OVER A `name` HERE, but they still
+  // share a `data-k`, and `data-k` is how focus is put back after every redraw
+  // (ui/eight.js:1156, `box.querySelector('[data-k=…]')`, which takes the
+  // FIRST). So a duplicate key means your finger lands on the wrong control,
+  // and it also means two callers genuinely disagree about who owns a fact.
+  // Said out loud, and suffixed, exactly as ui/sheets.js:79 does it.
   let key = String(spec.key);
   if (doc.querySelector('[data-sel="' + esc(key) + '"]')) {
     console.error("selects: duplicate select key " + key +
@@ -132,241 +244,404 @@ export function selectEl(spec) {
     while (doc.querySelector('[data-sel="' + esc(key + "#" + n) + '"]')) n++;
     key = key + "#" + n;
   }
-  s.dataset.sel = key;
-  // FOCUS SURVIVES THE REDRAW BY THIS KEY. `draw()` rebuilds the whole page on
-  // every gesture and puts focus back on `[data-k=...]` (ui/eight.js:1156), so
-  // a select that did not carry one would drop the caret every time you used
-  // it. `sel|` and not `opt|`, because the sheet's key names an option and
-  // this one names the control.
-  s.dataset.k = "sel|" + key;
-  if (spec.ungated) s.dataset.ungated = "true";
-  // A WHOLE CONTROL OFF, AND THE REASON RIDING ON THE CONTROL ITSELF. This was
-  // `selectField`'s job alone until the chord quality went into a table cell,
-  // where there is no wrapper to hang a `<p class="nu-why">` on — and a bare
-  // `selectEl` in a <td> that greyed with the reason held one level up would
-  // have been the silent grey this file's throw exists to stop, just at a scope
-  // the throw cannot see. So the refusal and its reason are made HERE: the
+
+  const wrap = el("span", null, "nu-combo" + (compact ? " is-compact" : ""));
+  wrap.dataset.combo = key;
+
+  const f = doc.createElement("input");
+  f.type = "text";
+  f.className = "nu-combofield";
+  f.setAttribute("role", "combobox");
+  f.setAttribute("aria-autocomplete", "list");
+  f.setAttribute("aria-expanded", "false");
+  f.autocomplete = "off";
+  f.spellcheck = false;
+  // READONLY UNTIL FOCUS. A closed combo is a word, not a text entry: nothing
+  // can be typed into it, no caret appears in it, and no phone offers a
+  // keyboard for it until it is actually opened.
+  f.readOnly = true;
+  f.dataset.sel = key;
+  // FOCUS SURVIVES THE REDRAW BY THIS KEY, unchanged since the <select>:
+  // `sel|` and not `opt|`, because the sheet's key names an option and this
+  // one names the control.
+  f.dataset.k = "sel|" + key;
+  if (spec.ungated) f.dataset.ungated = "true";
+
+  const list = doc.createElement("ul");
+  list.className = "nu-combolist";
+  list.id = "nu-combolist-" + (++comboN);
+  list.setAttribute("role", "listbox");
+  list.hidden = true;
+  f.setAttribute("aria-controls", list.id);
+
+  const label = spec.label == null ? key : String(spec.label);
+  list.setAttribute("aria-label", label);
+  // A WHOLE CONTROL OFF, AND THE REASON RIDING ON THE CONTROL ITSELF — the
   // browser's own `disabled`, the reason in `data-why` where a gate can read it
   // back off the artifact, and the reason spoken as part of the control's name,
   // because a screen reader announcing "quality, dimmed" and nothing else is
-  // the same silence. The VISIBLE copy is still the caller's to place —
+  // the same silence. The VISIBLE copy is still the caller's to place:
   // `selectField` puts it under the label, and a table puts it once under the
   // table rather than eight times down a column.
-  const label = spec.label == null ? key : String(spec.label);
   const off = spec.why && String(spec.why).trim();
-  if (off) { s.disabled = true; s.setAttribute("aria-disabled", "true");
-             s.dataset.why = off; }
-  s.setAttribute("aria-label", off ? label + ", " + off : label);
+  if (off) {
+    f.disabled = true; f.setAttribute("aria-disabled", "true");
+    f.dataset.why = off; wrap.classList.add("is-off");
+  }
+  f.setAttribute("aria-label", off ? label + ", " + off : label);
 
   if (!options.length) {
-    // NEVER AN EMPTY SELECT, which is a bug that looks like a design — the
+    // NEVER AN EMPTY CONTROL, which is a bug that looks like a design — the
     // same refusal ui/sheets.js:114 makes with its "nothing to choose here".
-    const o = el("option", "nothing to choose here");
-    o.disabled = true; o.selected = true;
-    s.append(o);
-    // and the refusal says why, the same as every other refusal here — an
-    // empty menu that is merely dim is the silent grey again.
-    s.disabled = true;
-    s.dataset.why = off || "nothing to choose here";
-    return s;
+    const li = el("li", "nothing to choose here", "nu-comboopt is-quiet");
+    li.setAttribute("role", "option");
+    li.setAttribute("aria-disabled", "true");
+    li.dataset.placeholder = "true";
+    li.dataset.why = "nothing to choose here";
+    list.append(li);
+    f.value = "nothing to choose here";
+    f.dataset.v = "";
+    f.disabled = true;
+    f.dataset.why = off || "nothing to choose here";
+    wrap.classList.add("is-off");
+    wrap.append(f, list);
+    return wrap;
   }
 
   const now = String(spec.value == null ? "" : spec.value);
-  let group = null, host = s, matched = false;
+  const rows = [];
+  let group = null, matched = null;
   for (const o of options) {
     const value = String(o.value);
-    // CONSECUTIVE OPTIONS SHARING A GROUP SIT UNDER ONE <optgroup>, and the
-    // list arrives PRE-SORTED — this file never reorders, exactly as
-    // ui/sheets.js never does, because a reorder moves a control under a live
-    // finger.
-    if (o.group && o.group !== group) { group = o.group;
-      host = el("optgroup"); host.label = String(o.group); s.append(host); }
-    if (!o.group) { group = null; host = s; }
-    const opt = doc.createElement("option");
-    opt.value = value;
-    opt.textContent = optionText(o);
-    opt.dataset.v = value;
-    if (o.disabled) { opt.disabled = true; opt.className = "is-off"; }
-    if (o.quiet) opt.className = ((opt.className ? opt.className + " " : "") + "is-quiet");
+    // CONSECUTIVE OPTIONS SHARING A GROUP SIT UNDER ONE HEADING — what
+    // `<optgroup>` was — and the list arrives PRE-SORTED: this file never
+    // reorders, exactly as ui/sheets.js never does, because a reorder moves a
+    // control under a live finger.
+    if (o.group && o.group !== group) {
+      group = o.group;
+      const h = el("li", String(o.group), "nu-combogrp");
+      h.setAttribute("role", "presentation");
+      h.dataset.grp = String(o.group);
+      list.append(h);
+    }
+    if (!o.group) group = null;
+    const li = el("li", optionText(o), "nu-comboopt");
+    li.id = list.id + "-o" + rows.length;
+    li.setAttribute("role", "option");
+    li.dataset.v = value;
+    if (o.disabled) { li.classList.add("is-off"); li.setAttribute("aria-disabled", "true"); }
+    if (o.quiet) li.classList.add("is-quiet");
     // THE REASON, ALSO AS DATA. It is already in the words the option says —
     // that is the part a person hears — but `optionText` joins it with a comma
     // and some labels have commas of their own ("at the fifth, a beat later"),
     // so a gate reading the page back cannot tell the join from the label by
     // looking. `data-why` is what makes NO SILENT GREY mechanically checkable
-    // on the rendered artifact: test/selects.js asserts every disabled option
-    // has one AND that the text ends with it.
-    if (o.why) opt.dataset.why = String(o.why);
-    if (value === now) { opt.selected = true; matched = true; }
-    host.append(opt);
+    // on the rendered artifact.
+    if (o.why) li.dataset.why = String(o.why);
+    const on = value === now;
+    li.setAttribute("aria-selected", on ? "true" : "false");
+    if (on) li.classList.add("is-on");
+    list.append(li);
+    const r = { li, o, value, word: filterWord(o) };
+    rows.push(r);
+    if (on && !matched) matched = r;
   }
-  // THE STANDING ANSWER IS ALWAYS OFFERED (band-kit.js:3956), and avail.js
+
+  // THE STANDING ANSWER IS ALWAYS OFFERED (band-kit.js:3956) and avail.js
   // guarantees it is in the list — but a document loaded from JSON can still
-  // carry a value no table has, and a <select> answers that by silently
-  // selecting its first option, which would then be pushed into the record by
-  // the next unrelated gesture. So the unknown value is shown, said to be
-  // unknown, and left selected. A page that quietly rewrites the record is the
-  // one failure a settled parameter must not have.
+  // carry a value no table has, and a control that quietly showed its first
+  // option would push that option into the record on the next unrelated
+  // gesture. So the unknown value is SHOWN, said to be unknown, and left
+  // standing. A page that quietly rewrites the record is the one failure a
+  // settled parameter must not have.
   if (!matched) {
     // TWO DIFFERENT SILENCES, SAID DIFFERENTLY. `value: ""` on a control whose
-    // table has no "" is the producer's own shape — "the only sheets on the
-    // page with NOTHING checked, and that is what they mean: no verb has been
-    // said yet" (test/sheets.js). A radio group can genuinely have nothing
-    // checked; a <select> cannot, so the placeholder is what the empty sheet
-    // looked like, in the one widget that must always be showing something.
-    // A value that is NOT empty and not in the table is the other case, and it
-    // is a fault in the record rather than a state of the page, so it says so.
-    const o = el("option", now === "" ? "choose one" : now + ", not in this table");
-    o.value = now; o.selected = true; o.dataset.v = now; o.className = "is-quiet";
-    // NOT AN OPTION FOR COUNTING PURPOSES. The one-option law is about how many
-    // ANSWERS a control offers, and this is not one of them; a gate that
-    // counted it would see two where the page offers one.
-    o.dataset.placeholder = "true";
-    s.insertBefore(o, s.firstChild);
+    // table has no "" is the producer's own shape — "no verb has been said
+    // yet". A value that is NOT empty and not in the table is a fault in the
+    // record rather than a state of the page, so it says so.
+    const word = now === "" ? "choose one" : now + ", not in this table";
+    const li = el("li", word, "nu-comboopt is-quiet");
+    li.id = list.id + "-onow";
+    li.setAttribute("role", "option");
+    li.setAttribute("aria-selected", "true");
+    li.classList.add("is-on");
+    li.dataset.v = now;
+    // NOT AN OPTION FOR COUNTING PURPOSES. The census is about how many
+    // ANSWERS a control offers, and this is not one of them.
+    li.dataset.placeholder = "true";
+    list.insertBefore(li, list.firstChild);
+    matched = { li, o: { value: now, label: word }, value: now, word };
+    rows.unshift(matched);
   }
 
-  // ONE OWNER FOR RECOMPILE. `set` fires on `change` and this file never
-  // redraws — ui/eight.js's `changed()` owns that, exactly as it does for the
-  // sheets and exactly as it did for the <select>s that stood here in June.
-  s.addEventListener("change", () => {
-    if (typeof spec.set === "function") spec.set(s.value);
+  wrap.append(f, list);
+
+  /* ---- the state, and the gestures that move it ------------------------- */
+  const bornAt = gestures;
+  const detent = defaultDetent(options);
+  const rowOf = (v) => rows.find((r) => r.value === String(v)) || matched;
+  let cur = matched.value;
+  // `typed` — WHETHER THE TEXT IN THE FIELD WAS PUT THERE BY A HAND. It is the
+  // whole of what tells the two kinds of `change` apart at the listener below,
+  // and it is a fact only the `input` event can establish: assigning `.value`
+  // fires no `input`, so a value written into the control leaves this false.
+  let open = false, active = -1, firing = false, typed = false;
+
+  f.value = rowOf(cur).word;
+  f.dataset.v = cur;
+  paintDetent(f, cur, detent);
+
+  // AND "NOTHING MATCHES" IS SAID, because an empty list under a field you are
+  // typing into reads as a broken control. `.nu-why` so the text diet counts it
+  // as the refusal it is.
+  const none = el("li", "no word here matches", "nu-why nu-combonone");
+  none.setAttribute("role", "presentation");
+  none.hidden = true;
+  list.append(none);
+
+  /* A GROUP HEADING NEVER STANDS OVER NOTHING. The filter's own old rule. */
+  const showGroups = () => {
+    let head = null, any = false;
+    for (const n of list.children) {
+      if (n.classList.contains("nu-combogrp")) {
+        if (head) head.hidden = !any;
+        head = n; any = false;
+      } else if (!n.hidden && n.getAttribute("role") === "option") any = true;
+    }
+    if (head) head.hidden = !any;
+  };
+
+  const visible = () => rows.filter((r) => !r.li.hidden && !(r.o && r.o.disabled));
+
+  const setActive = (i) => {
+    if (active >= 0 && rows[active]) rows[active].li.classList.remove("is-active");
+    active = i;
+    if (i >= 0 && rows[i]) {
+      rows[i].li.classList.add("is-active");
+      f.setAttribute("aria-activedescendant", rows[i].li.id);
+      // `block: "nearest"` — the PAGE moves only if the word is off it, which
+      // is what "the list is in the flow" buys: there is nothing to scroll
+      // inside.
+      try { rows[i].li.scrollIntoView({ block: "nearest" }); } catch (e) {}
+    } else f.removeAttribute("aria-activedescendant");
+  };
+
+  const openList = (selectAll) => {
+    if (f.disabled || open) return;
+    open = true; typed = false;
+    for (const r of rows) r.li.hidden = false;
+    none.hidden = true;
+    showGroups();
+    list.hidden = false;
+    f.setAttribute("aria-expanded", "true");
+    wrap.classList.add("is-open");
+    f.readOnly = false;
+    setActive(rows.indexOf(rowOf(cur)));
+    if (selectAll !== false) { try { f.select(); } catch (e) {} }
+  };
+
+  const closeList = (restore) => {
+    open = false; typed = false;
+    // EVERY OPTION GOES BACK ON THE PAGE WHEN THE LIST SHUTS. A filter that
+    // outlived its own list would leave `hidden` words in the DOM, and the
+    // shape of the possible is read off this DOM by every gate there is.
+    for (const r of rows) r.li.hidden = false;
+    none.hidden = true;
+    showGroups();
+    list.hidden = true;
+    f.setAttribute("aria-expanded", "false");
+    wrap.classList.remove("is-open");
+    setActive(-1);
+    f.readOnly = true;
+    if (restore !== false) f.value = rowOf(cur).word;
+  };
+
+  const filter = (q0) => {
+    const q = String(q0 == null ? "" : q0).trim().toLowerCase();
+    for (const r of rows)
+      r.li.hidden = !!q && r.word.toLowerCase().indexOf(q) < 0;
+    showGroups();
+    const vis = visible();
+    setActive(vis.length ? rows.indexOf(vis[0]) : -1);
+    none.hidden = vis.length > 0;
+  };
+
+  /* ONE OWNER FOR RECOMPILE. `set` is called from here and this file never
+     redraws — ui/eight.js's `changed()` owns that, exactly as it did for the
+     <select> this replaces. */
+  const commit = (value) => {
+    const r = rows.find((x) => x.value === String(value));
+    if (!r || (r.o && r.o.disabled)) return false;
+    if (r.value === cur) { closeList(true); return true; }   // a menu fires nothing here either
+    cur = r.value;
+    f.dataset.v = cur;
+    f.value = r.word;
+    for (const x of rows) {
+      x.li.setAttribute("aria-selected", x === r ? "true" : "false");
+      x.li.classList.toggle("is-on", x === r);
+    }
+    paintDetent(f, cur, detent);
+    closeList(false);
+    // THE CHANGE EVENT IS A NOTIFICATION AND NOT THE OWNER — it is fired so
+    // anything watching the page hears what a <select> used to say, and the
+    // record is written by the call under it.
+    firing = true;
+    try { f.dispatchEvent(new Event("change", { bubbles: true })); } finally { firing = false; }
+    if (typeof spec.set === "function") spec.set(cur);
+    return true;
+  };
+
+  f.addEventListener("pointerdown", (e) => {
+    if (f.disabled) return;
+    if (open) { closeList(true); f.blur(); return; }   // a second tap shuts it
+    // the field takes focus BY THIS HANDLER, so the word stays selected and
+    // the browser does not drop a caret into the middle of it
+    e.preventDefault();
+    f.focus();
   });
-  return s;
+  f.addEventListener("focus", () => {
+    if (f.disabled || open) return;
+    // see `gestures`: no new gesture since this field was built means the page
+    // put the thumb back after a redraw, and that is never a request to open.
+    if (gestures <= bornAt) return;
+    openList(true);
+  });
+  f.addEventListener("blur", () => { if (open) closeList(true); });
+  f.addEventListener("input", () => {
+    typed = true;
+    if (!open) openList(false);
+    typed = true;                       // openList clears it; a hand did this
+    filter(f.value);
+  });
+  f.addEventListener("keydown", (e) => {
+    const k = e.key;
+    if (k === "Escape") { if (open) { e.preventDefault(); closeList(true); } return; }
+    if (k === "ArrowDown" || k === "ArrowUp") {
+      e.preventDefault();
+      if (!open) { openList(true); return; }
+      const vis = visible();
+      if (!vis.length) return;
+      const d = k === "ArrowDown" ? 1 : -1;
+      let i = vis.indexOf(rows[active]);
+      i = i < 0 ? (d > 0 ? 0 : vis.length - 1) : (i + d + vis.length) % vis.length;
+      setActive(rows.indexOf(vis[i]));
+      return;
+    }
+    if (k === "Enter") {
+      if (!open) return;
+      e.preventDefault();
+      const vis = visible();
+      const on = active >= 0 ? rows[active] : null;
+      const r = on && vis.indexOf(on) >= 0 ? on : (vis.length === 1 ? vis[0] : null);
+      if (r) commit(r.value);
+      return;
+    }
+    if (k === "Tab") { if (open) closeList(true); return; }
+    if (!open && k.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) openList(true);
+  });
+  /* A SYNTHETIC `change` IS A COMMIT, THE WAY IT WAS ON THE `<select>`, and it
+     is written down rather than left to be discovered. Anything driving this
+     page that writes a value into the control and fires `change` is making the
+     gesture it always made; the field answers to the option's VALUE first and
+     to its word second. It applies only while the list is SHUT — a `change`
+     fired while it is open is the browser's own end-of-edit event on text
+     somebody typed, and typing is a filter and never a value, so that one puts
+     the current word back. */
+  f.addEventListener("change", () => {
+    if (firing) return;
+    // TYPED TEXT IS NOT A VALUE, AND THAT IS THE ONLY LINE THIS TURNS ON. The
+    // browser fires `change` on a text field that lost focus after an edit, so
+    // "aeo" left in the box and clicked away from would otherwise arrive here
+    // looking exactly like a driver's assignment. `typed` is set by `input`
+    // and `input` is not fired by `.value = …`, so the two are told apart by
+    // which one a hand actually made. (It read `if (open)`, which was the same
+    // rule guessed from the list's state — and wrong: a control still open
+    // because a Tab put focus in it refused a perfectly good assignment, and
+    // test/selects.js checks 7i and 9 went red on it, 2026-09-02.)
+    if (typed) { f.value = rowOf(cur).word; return; }
+    const want = String(f.value);
+    const r = rows.find((x) => x.value === want) ||
+              rows.find((x) => x.word === want) ||
+              rows.find((x) => x.li.textContent === want);
+    if (r && !(r.o && r.o.disabled)) commit(r.value);
+    else f.value = rowOf(cur).word;
+  });
+  /* THE LIST TAKES THE TAP ON `pointerdown`, so the field's own blur cannot
+     shut the list out from under the finger, and on `click` as well because a
+     synthetic `li.click()` fires no pointer events. `commit` is a no-op on the
+     word already standing, so the two paths cannot double-write. */
+  const takeTap = (e) => {
+    const li = e.target && e.target.closest && e.target.closest("li[role=option]");
+    if (!li || !list.contains(li)) return;
+    e.preventDefault(); e.stopPropagation();
+    if (li.getAttribute("aria-disabled") === "true") return;
+    const r = rows.find((x) => x.li === li);
+    if (r) commit(r.value);
+  };
+  list.addEventListener("pointerdown", takeTap);
+  list.addEventListener("click", takeTap);
+
+  return wrap;
 }
 
-/* ---------- THE COMBO BOX (2026-09-02) -------------------------------------
-   Paul, 2026-09-01: *"Things like select boxes are very plain and could be
-   combo boxes."*
+/** The bare widget, with no printed question — for a table cell, which is
+ *  where Paul asked the chord quality to go ("chord quality can be selects
+ *  inside the 'the changes' table"), for a slot row and for a bus plate. It is
+ *  the SAME widget `selectField` wraps, in its compact form: one class, no
+ *  second copy of the option-building loop, so the two cannot drift.
+ *
+ *  spec = { key, label, options, value, set, why?, ungated? } — PROGRAM.md §2.3 */
+export function selectEl(spec) {
+  return buildCombo(spec, true);
+}
 
-   IT IS STILL A `<select>`, AND THAT IS THE LOAD-BEARING DECISION. The
-   2026-08-25 law — A SINGLE-CHOICE CONTROL IS A `<select>`, full stop
-   (`shouldSelect` below) — is untouched; `data-sel`, `data-k` and `data-v` are
-   untouched, which is what puts focus back after every `draw()`; every gate
-   that counts menus counts the same menus. What is added is a WRAPPER around
-   the select, HERE and at no other call site, and three things it makes
-   possible that a bare `<select>` cannot do: the page's own arrow (nu.css
-   `.nu-combo::after` over `appearance: none`), the DETENT colours, and — for a
-   list too long to be a menu — a filter.
-
-   `selectEl` STAYS BARE. It goes into a `<td>` (eight.js:1526, :6895, :6907,
-   :6913) where `td > select` caps it at 9em, into a slot row and onto a bus
-   plate; a wrapper there would fight the cell for the column. A menu in a
-   dense grid genuinely is a different control from a labelled one in a form.
-
-   ---- THE DETENT ----------------------------------------------------------
-   `.is-seated` — you are standing where the record put you — and `.is-said` —
-   you moved it. This is the one thing a plain menu cannot say and the thing a
-   composer looking at a panel of forty of them most wants: WHICH of these did
-   I touch? It is written on the WRAPPER (never on the select, which is the
-   browser's and must keep the classes `selectEl` puts on its options), on
-   build and on every `change`.
-
-   A MENU WHOSE TABLE DECLARES NO DEFAULT WEARS NEITHER CLASS. Silence rather
-   than a claim: "you set this" is a fact, and a control that cannot know it
-   may not assert it. `defaultDetent` is the whole of what "knowing" means
-   here, and it is deliberately literal — the option whose VALUE is the empty
-   string or the word "default", or whose word is an em dash. Guessing wider
-   than that (the first option? the one the record was born with?) would put a
-   hand-blue on menus nobody has touched, which is worse than saying nothing.
-
-   ---- THE FILTER ----------------------------------------------------------
-   Over LONG (24) options a menu stops being a menu and becomes a list you
-   scroll hunting for a word: `sound.instrument` offers 108. The filter is an
-   `<input type=search>` BEFORE the select that hides non-matching `<option>`s
-   with the `hidden` property (and hides an `<optgroup>` once every option
-   under it is hidden, so a group label never stands over nothing).
-
-   IT IS NOT A TEXT ENTRY FOR THE VALUE, and that is the line between a combo
-   box and a bug: you cannot type a value that is not in the table, because the
-   table IS the vocabulary and inventing a word is the one thing a settled
-   parameter must not allow (the same reason `selectEl` shows an unknown value
-   and says it is unknown rather than silently rewriting the record).
-
-   IT NEVER HIDES THE SELECTED OPTION. A filter that can hide the thing the
-   control is currently showing would make the closed menu's word disappear
-   from its own list, which reads as data loss. */
-const LONG = 24;             // over this many options, a menu wants a filter
+/* (`const LONG = 24` and `comboFilter()` stood here — the second box, an
+   `<input type=search>` that hid non-matching `<option>`s once a list ran past
+   twenty-four. Both are DELETED, by the sentence at the top of this block:
+   *"one line instead of two."* The field filters now, at every length, because
+   a control that behaves one way at 23 options and another way at 25 is two
+   controls wearing one name. Its two rules — never leave a group heading
+   standing over nothing, never let a filter outlive its list — survive in
+   `showGroups()` and `closeList()` above. The third, "it never hides the
+   selected option", is retired with it: the field IS the selected option now,
+   so it cannot be filtered off its own control.) */
 
 function defaultDetent(options) {
   for (const o of options || []) {
     const v = String(o.value == null ? "" : o.value);
     const w = String(o.label == null ? "" : o.label).trim();
-    if (v === "" || v === "default" || w === "\u2014" || w.toLowerCase() === "default")
+    if (v === "" || v === "default" || w === "—" || w.toLowerCase() === "default")
       return v;
   }
   return null;
 }
 
-/** `.is-seated` / `.is-said` on the wrapper, from the select's value against
- *  the table's own default detent. Neither class when there is no detent. */
-function paintDetent(combo, sel, detent) {
+/** `.is-seated` / `.is-said` ON THE FIELD (2026-09-02; it was on the wrapper
+ *  while the wrapper was the only element this page owned), from the value
+ *  standing against the table's own default detent. Neither class when there
+ *  is no detent. */
+function paintDetent(field, value, detent) {
   if (detent == null) return;
-  const said = String(sel.value) !== String(detent);
-  combo.classList.toggle("is-said", said);
-  combo.classList.toggle("is-seated", !said);
-}
-
-function comboFilter(sel, label) {
-  const inp = document.createElement("input");
-  inp.type = "search";
-  inp.className = "nu-combo-filter";
-  /* NO VISIBLE LABEL, BUT A PLACEHOLDER (2026-09-02). The question is already
-     on line one of the field (`.nu-w`), and a second copy of it under the
-     question is the "say it once" law failing in the smallest possible way —
-     so the accessible name says what this particular box does TO that
-     question, and it always has. What it did NOT have was anything a SIGHTED
-     reader could see, and the probe of the composer round measured that:
-     *"`.nu-combo-filter` has no placeholder and no label — on Produce two
-     empty white boxes float over two 'choose one' combos."* A placeholder is
-     the one word that names a search box without repeating the question, and
-     it is a control's own affordance rather than prose (the diet counts text
-     NODES, and a placeholder is an attribute). */
-  inp.placeholder = "filter\u2026";
-  /* a caller with no label of its own still gets a name that says the verb */
-  inp.setAttribute("aria-label", label ? "filter " + label : "filter the list");
-  inp.autocomplete = "off";
-  inp.addEventListener("input", () => {
-    const q = inp.value.trim().toLowerCase();
-    for (const g of sel.querySelectorAll("optgroup")) g.hidden = false;
-    for (const o of sel.options) {
-      // the option you are ON never hides — see THE FILTER, above
-      o.hidden = !!q && !o.selected && o.textContent.toLowerCase().indexOf(q) < 0;
-    }
-    for (const g of sel.querySelectorAll("optgroup")) {
-      let any = false;
-      for (const o of g.children) if (!o.hidden) { any = true; break; }
-      g.hidden = !any;
-    }
-  });
-  return inp;
+  const said = String(value) !== String(detent);
+  field.classList.toggle("is-said", said);
+  field.classList.toggle("is-seated", !said);
 }
 
 /** One labelled control: `<p class="nu-sel"><label>…<span class="nu-combo">
- *  <select></span></label></p>`, plus the reason when the whole thing is
- *  unavailable. Returns the <p>. */
+ *  <input role=combobox><ul role=listbox></span></label></p>`, plus the reason
+ *  when the whole thing is unavailable. Returns the <p>. */
 export function selectField(parent, spec) {
   const p = el("p", null, "nu-sel");
   const lab = el("label");
   const label = spec.label == null ? String(spec.key) : String(spec.label);
   lab.append(el("span", label + " ", "nu-w"));
-  const s = selectEl(spec);
-  const combo = el("span", null, "nu-combo");
-  const options = spec.options || [];
-  if (options.length > LONG) combo.append(comboFilter(s, label));
-  combo.append(s);
-  const detent = defaultDetent(options);
-  paintDetent(combo, s, detent);
-  /* A SECOND LISTENER AND NOT A SECOND OWNER: `selectEl` owns the `change`
-     that reaches the record (`spec.set`); this one only repaints the wrapper
-     it built. Two listeners on one event is fine; two writers of one fact is
-     not, and this writes no fact. */
-  s.addEventListener("change", () => paintDetent(combo, s, detent));
-  lab.append(combo);
+  lab.append(buildCombo(spec, false));
   p.append(lab);
-  // ...AND THE VISIBLE COPY OF THE REASON. `selectEl` has already refused and
+  // ...AND THE VISIBLE COPY OF THE REASON. `buildCombo` has already refused and
   // said why to the accessibility tree; what a wrapper adds is the sentence a
-  // sighted reader can see without opening anything. The sheet keeps its
-  // options visible and greys them; a collapsed select has nowhere to show
-  // them, so all it can do is refuse and say why — which it must, both ways.
+  // sighted reader can see without opening anything. The list keeps its options
+  // visible and greys them; a shut combo has nowhere to show them, so all it
+  // can do is refuse and say why — which it must, both ways.
   if (spec.why) {
     p.classList.add("is-off");
     p.append(el("small", String(spec.why), "nu-why"));
@@ -374,7 +649,6 @@ export function selectField(parent, spec) {
   parent.append(p);
   return p;
 }
-
 /* ---------- ...AND ONE SETTLED PARAMETER THAT IS A PICTURE ------------------
    (Paul, 2026-08-24: "Maybe put the circle of fifths back in there for key
    selection, it was nice.")
@@ -696,6 +970,24 @@ export function selectRow(parent, heading, specs) {
    applies is now the plain one:
 
        A SINGLE-CHOICE CONTROL IS A <select>.
+
+   ...AND ON 2026-09-02 IT STOPPED BEING A `<select>` AND STAYED ONE CONTROL.
+   The sentence above is kept where it stands because everything it decided is
+   still decided — one widget for one answer, no lit grid of one, `multi` is
+   somebody else's — and only its ELEMENT moved. Paul, after using the
+   composer: *"The combo boxes just don't work and are confusing. I was
+   expecting more of onfocus show custom dropdown then filter based on input —
+   one line instead of two."* So the router's rule reads, unchanged in every
+   clause but the noun:
+
+       A SINGLE-CHOICE CONTROL IS A COMBO BOX.
+
+   `shouldSelect` keeps its name and its one line: what it answers is "does
+   this spec get the single-choice widget", which is the question it has always
+   answered, and renaming a router because its widget changed element would put
+   a rename through fifteen call sites to say nothing new. The widget itself is
+   `buildCombo` at the top of this file and the reversal is argued in full
+   there.
 
    WHAT THE OLD THRESHOLD SAID, KEPT BECAUSE IT WAS A GOOD ARGUMENT AND IT LOST
    ANYWAY: "ONE OPTION IS A SELECT AND TWO OPTIONS ARE STILL A SHEET. The

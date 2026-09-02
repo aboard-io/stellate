@@ -228,7 +228,14 @@ const MEASURE = () => {
                      !b.querySelector(".nu-vh").textContent.trim())
       .map((b) => b.dataset.k || b.id || "?"),
     openTab: window.__eightTabNow ? window.__eightTabNow() : null,
-    rateSel: document.querySelectorAll('select[data-sel^="time.rate"]').length,
+    /* REGARDLESS OF ELEMENT (2026-09-02). It asked for a `select`, and every
+       menu on this page is an `<input role=combobox>` now — Paul: *"The combo
+       boxes just don't work and are confusing … one line instead of two."* The
+       claim T2 makes is "the `reading speed` MENU stays deleted, because the
+       tempo glyphs own `time.rate`", and a query pinned to the element a menu
+       used to be made of would have gone green on a menu coming back wearing
+       the new one. `data-sel` is the address and the address did not move. */
+    rateSel: document.querySelectorAll('[data-sel^="time.rate"]').length,
     /* T3 — every visible disabled control and where its reason lives. A
        reason is data-why on the control itself, or a .nu-why with text in the
        control's own row/slot/card (the mp3 button's sentence sits beside it).
@@ -237,6 +244,9 @@ const MEASURE = () => {
        bars of a rest or a held row, and a hold segment with nothing to hold —
        take the FIRST path now and carry `data-why` themselves (ui/eight.js
        `sync`), which is the same idiom `tempoRow` and ui/selects.js use. */
+    /* (`input[disabled]` covers a refused COMBO BOX since 2026-09-02 — the
+       field is an `<input>` and carries the same `data-why` the `<select>`
+       did, so this query needed no third selector to keep seeing them.) */
     naked: [...document.querySelectorAll(
       "button[disabled],input[disabled],select[disabled]")]
       .filter((c) => !hidden(c))
