@@ -37,6 +37,18 @@
 "use strict";
 const CHANT = "#at=Rome&y=600&s=1";   // the shipped chant, named (2026-09-02)
 const { chromium } = require("playwright");
+/* THE MENU IS A COMBO BOX NOW, AND THE DRIVER IS SHARED (2026-09-02, wave 4).
+   ui/selects.js draws every single-choice control as an `<input role=combobox>`
+   with a `<ul role=listbox>` beside it; the ADDRESSES did not move, but this
+   file asked for `select[data-k="sel|sound.instrument|<voice>"]`, and a
+   `querySelector` on a tag that left the page returns null. So `seat()` wrote
+   nothing, no strip was ever drawn, and `document.querySelector(".nu-lpb")`
+   was null inside a promise that then never resolved — which playwright
+   reports as "Execution context was destroyed, most likely because of a
+   navigation", a sentence with nothing in it about the real fault. Nothing
+   navigated. test/lib-combo.js is the one driver, and its own header names
+   this exact species of failure. */
+const { INSTALL } = require("./lib-combo.js");
 const path = require("path");
 const { spawn } = require("child_process");
 const argv = process.argv.slice(2);
@@ -104,6 +116,7 @@ function standUpServer() {
        run. Naming the fixture is the honest half of the change: what this file
        asserts about "the record" is now a claim about a record it chose. */
     await p.goto(PAGE + CHANT, { waitUntil: "load" });
+    await p.evaluate(INSTALL);
     await p.waitForTimeout(2500);
 
     /* ---- stand on the first line voice's inst facet -------------------- */
@@ -120,10 +133,10 @@ function standUpServer() {
     check(who.tab, W + " · the band level offers a tab for voice " + JSON.stringify(who.name));
     const V = who.name;
     const seat = async (id) => p.evaluate(async ({ V, id }) => {
-      const sel = document.querySelector('select[data-k="sel|sound.instrument|' + V + '"]');
+      const sel = document.querySelector('[data-k="sel|sound.instrument|' + V + '"]');
       if (!sel) return { sel: false };
-      const has = [...sel.options].some((o) => o.value === id);
-      if (has) { sel.value = id; sel.dispatchEvent(new Event("change", { bubbles: true })); }
+      const has = window.__combo.words(sel).some((o) => o.v === id);
+      if (has) window.__combo.say(sel, id);
       await new Promise((r) => setTimeout(r, 350));
       return { sel: true, has,
                strips: document.querySelectorAll(".nu-loop").length,
@@ -153,14 +166,24 @@ function standUpServer() {
       const over = document.documentElement.scrollHeight - window.innerHeight;
       window.scrollTo(0, Math.min(160, Math.max(0, over)));
       return new Promise((res) => setTimeout(() => {
-        const bar = document.querySelector(".nu-lpb").getBoundingClientRect();
-        res({ over, y: window.scrollY,
+        /* AND A MISSING BAR IS REPORTED, NOT THROWN (2026-09-02). `.getBounding
+           ClientRect()` on a null was an exception inside a `setTimeout`, so
+           this promise never settled and the gate died with playwright's
+           "execution context was destroyed" — a sentence about a navigation
+           that never happened, over a strip that simply was not there. */
+        const side = document.documentElement.scrollWidth -
+                     document.documentElement.clientWidth;
+        const el = document.querySelector(".nu-lpb");
+        if (!el) return res({ over, y: window.scrollY, bar: false, side,
+                             x0: 0, x1: 0, ym: 0, w: 0 });
+        const bar = el.getBoundingClientRect();
+        res({ over, y: window.scrollY, bar: true, side,
               x0: bar.x + bar.width * 0.9, x1: bar.x + bar.width * 0.5,
-              ym: bar.y + bar.height / 2, w: bar.width,
-              side: document.documentElement.scrollWidth - document.documentElement.clientWidth });
+              ym: bar.y + bar.height / 2, w: bar.width });
       }, 150));
     });
     check(pre.side === 0, W + " · S6 nothing scrolls sideways (" + pre.side + " px)");
+    if (!pre.bar) { check(false, W + " · S3 the loop bar is on the page to drag"); }
     const cdp = await p.context().newCDPSession(p);
     const touch = (type, x, y) => cdp.send("Input.dispatchTouchEvent", {
       type, touchPoints: type === "touchEnd" ? []

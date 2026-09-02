@@ -312,22 +312,47 @@ function v1Bars(abc, steps, secAt) {
        a hand does to say "this section deals no word". That is a GESTURE, not
        a reach into private state — the same `change` event a thumb fires — and
        it leaves a record with all its notes, all its chords and none of its
-       dynamics, which is exactly the subject C1 needs. */
+       dynamics, which is exactly the subject C1 needs.
+       ...AND THE GRIDS ARE WORD GRIDS NOW (2026-09-02, wave 4). This driver
+       read `select[data-sel^="form.lvl|"]` and that tag is not on the page any
+       more: ui/wordgrid.js draws every Structure cell as a `<button data-k>`
+       that OPENS a strip of chips (`data-k = <cell key>|<value>`), and a
+       thumb's gesture is two taps — the cell, then the word. `querySelector`
+       on a tag that left returns nothing, so the loop ran zero times, `stripped`
+       said 0 and both halves of C1 measured the record UNTOUCHED — the exact
+       failure test/lib-combo.js's own header names one widget along. Measured
+       on the chant: eight `form.env` cells carry words (`in soft arch drop big
+       arch dim out`) and eight `form.lvl` cells are already absent.
+       THE STRIP IS RE-QUERIED EVERY TIME, because tapping a chip ends in
+       `changed()` and the whole grid is thrown away and rebuilt — a list of
+       nodes gathered once would be a list of nodes nobody is looking at. A cell
+       that cannot be cleared (no absent chip, or a refused one) is remembered
+       by KEY and skipped, so the walk always ends. */
     const stripped = await pg.evaluate(async () => {
+      const nap = (ms) => new Promise((r) => setTimeout(r, ms));
       window.__eightTab("Structure");
-      await new Promise((r) => setTimeout(r, 600));
+      await nap(600);
+      const skip = new Set();
       let n = 0;
-      for (const sel of document.querySelectorAll(
-             'select[data-sel^="form.lvl|"], select[data-sel^="form.env|"]')) {
-        if (sel.disabled || sel.value === "") continue;
-        if (![...sel.options].some((o) => o.value === "" && !o.disabled)) continue;
-        sel.value = "";
-        sel.dispatchEvent(new Event("change", { bubbles: true }));
+      for (let guard = 0; guard < 200; guard++) {
+        const cell = [...document.querySelectorAll(
+            'button[data-k^="form.lvl|"], button[data-k^="form.env|"]')]
+          .find((b) => !b.disabled && !skip.has(b.dataset.k) &&
+                       !b.classList.contains("is-derived"));
+        if (!cell) break;
+        const key = cell.dataset.k;
+        skip.add(key);                       // one attempt per cell, either way
+        cell.click();                        // tap the cell: the strip unfolds
+        await nap(60);
+        const chip = document.querySelector(
+          'button.nu-wchip[data-k="' + CSS.escape(key) + '|"]');
+        if (!chip || chip.disabled) continue;
+        chip.click();                        // tap the absent word
         n++;
-        await new Promise((r) => setTimeout(r, 30));
+        await nap(200);                      // the rebuild `changed()` causes
       }
       window.__eightTab("Score");
-      await new Promise((r) => setTimeout(r, 1200));
+      await nap(1200);
       return n;
     });
     const r = await readScore(pg);

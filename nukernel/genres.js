@@ -23835,6 +23835,72 @@
     // between it and every pop row in the table. Held notes median 1.87
     // sixteenths — nothing sustains.
     chiptune: {
+      /* ---- IT WAS AN ORCHESTRA IN A CARTRIDGE SLOT (2026-09-02) ---------
+         Paul, listening to the row as shipped: *"Chiptune sounds very
+         organic! Instead of like a SID chip!"* He is right, and MEASURED at
+         seed 1 the record was six chairs, only three of which this row had
+         ever asked for:
+
+           lead     square_lead  -> supersaw   the row's own
+           counter  square_lead  -> supersaw   the row's own
+           riff     saw_wave     -> supersaw   the row's own
+           vocal    solo_vox     -> singer     A FORMANT THROAT
+           backing  ahh_choir    -> chorale    FOUR PEOPLE SINGING "AAH"
+           pad      warm_pad     -> oberheim   AN SEM PROPHET UNDER IT
+           bass     acoustic_bass-> the sampler   A RECORDED UPRIGHT BASS
+
+         So the three ids the row states were already native — the organic
+         sound was the FOUR CHAIRS THE ROW NEVER STATED. Three of them are
+         guests compose() books off the family lean, and the fourth is the
+         bass, which no anchor had ever been able to name.
+
+         TWO LINES FIX IT, and both are the catalogue's own words:
+
+         `instrumental: true` — the door precompose.js already holds (its
+         "DOOR 1 — AN INSTRUMENTAL RECORD STAYS INSTRUMENTAL"). The 2A03 has
+         two pulse channels, one triangle, one noise and one DPCM line: there
+         is NO VOCAL CHANNEL, which is a fact about the hardware in the same
+         way `kit: {}` below is. 62 rows already declare it; this is the 63rd,
+         and it is the only one whose reason is a chip's pinout rather than a
+         band's habit. It bars the singer and the choir and nothing else.
+
+         `synth` — the signature block, which `to-engine.js recipeBase` asks
+         BEFORE the GM patch table, so it reaches EVERY chair including the
+         one this file cannot otherwise name: the bass. That is the whole
+         reason the block is here and not a longer `instr` list. `plan.js
+         castOf` seats the bass at `bRow.bassInstr || POOL.bass ||
+         BASS_INSTR`, and on the DAW path `bRow` is the per-section
+         `lab.eight.N` row `document.js boxesOf` builds — whose `bassInstr`
+         comes from the DOCUMENT's bass voice, which precompose never writes.
+         So an anchor CANNOT name its own bass instrument, and every record in
+         this catalogue that does not declare a signature synth plays a
+         recorded upright under it. acid's bass is a 303 and roboticpop's is a
+         Model D for exactly this reason; chiptune's is now the chip. */
+      instrumental: true,
+      /* THE 2A03, WRITTEN OUT. supersaw is the parent's oscillator stack and
+         every number below turns a feature OFF until what is left is one
+         channel of a game console:
+           voices 1   ONE oscillator. The stack's whole point is the other
+                      six; a chip has none, and this is the difference
+                      between "a square wave" and "a square-wave PATCH".
+           detune 0   a chip cannot detune. There is one counter per channel.
+           octave 0   the sine-octave sheen is the module's bell gloss; a
+                      2A03 has no second oscillator to make it with.
+           wave 2     square (the parent's WAVES alphabet: 0 sine 1 saw
+                      2 square 3 pulse). 3 is the 22% duty the NES also has
+                      and the row can move to; 2 is the 50% the tune sits on.
+           cutoff     12 kHz with res 0.05: the ladder held OPEN, because the
+                      console has no filter at all and the nearest honest
+                      thing to "no filter" is one that is not doing anything.
+                      (`fenv` is left absent — 0 is its bit-exact bypass.)
+           attack/    2 ms on, 30 ms off, sustain flat: an NES envelope is a
+           release    4-bit constant volume that stops. Nothing swells and
+                      nothing rings, which is the `artic: "staccato"` and the
+                      1.87-sixteenth median hold below, said in the voice. */
+      synth: { dsp: "supersaw", root: "supersaw", level: 0.8,
+               set: { voices: 1, wave: 2, detune: 0, octave: 0,
+                      cutoff: 12000, res: 0.05,
+                      attack: 0.002, sustain: 0.95, release: 0.03 } },
       label: "Kyoto 1985", near: "technopop", bars: 8,
       plan: "arc", bpm: 140,
       // LINEAGE: `technopop` (Tokyo 1978) is the Japanese sequenced pop
@@ -23858,10 +23924,18 @@
       roots: [0, 5, 3, 4], mode: MODES.ionian,
       scale: MODES.ionian, diatonic: true,
       artic: "staccato", maxHold: 2, bassStyle: "eighths",
-      tone: { wave: "square", cut: 3200, q: 1.0, atk: .001, rel: .12, gain: .24, verb: .1 },
-      words: ["the first square wave, the theme",
-              "the second, a third under, always",
-              "the saw, the bass line doing the drumming"],
+      // VERB .1 -> .05 (2026-09-02, the same listening). A cartridge has no
+      // room in it. The tape's send is the one thing on this row that was
+      // putting AIR around a square wave, and air is most of what "organic"
+      // means; .06 was the catalogue's floor and this is the one row under
+      // it, so the chip sits ON the speaker rather than in a hall behind it. The
+      // rest of the block is untouched — it is the fallback the patch table
+      // reads if a hand clears the signature synth above, and it already
+      // said square.
+      tone: { wave: "square", cut: 3200, q: 1.0, atk: .001, rel: .12, gain: .24, verb: .05 },
+      words: ["pulse 1, the theme",
+              "pulse 2, a third under, always",
+              "the third channel, an octave down — the bass line doing the drumming"],
       word: v => (v === 1 ? [transpose(-4)] : v === 2 ? [fill(1), transpose(-12)] : []),
     },
   };

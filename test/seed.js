@@ -113,8 +113,22 @@ function standUpServer() {
      still worth copying the moment somebody has moved something (`markLink`
      is guarded by `booted`, not deleted). */
   await p1.evaluate(() => window.__eightTab("Motif"));
-  await p1.waitForTimeout(600);
-  const h1b = await p1.evaluate(() => location.hash);
+  /* AND THE ADDRESS IS WAITED FOR, NOT SLEPT THROUGH (2026-09-02). This was
+     `waitForTimeout(600)` and it went red in the full suite while passing
+     alone: the write is DEBOUNCED (`markLink` arms a 250 ms timer and every
+     further `markLink` re-arms it — ui/eight.js LINKMS), so 600 ms is a bet
+     about how long the Motif panel's own draw takes to stop moving, and eight
+     browser gates sharing a machine lose that bet. Measured on an idle box the
+     hash was written well inside 1.2 s; measured in the suite it was not
+     written at 600 ms and the check read `""` off a page that was about to be
+     right. A poll is the honest shape for a debounced write: what is asserted
+     is that the gesture writes an address, never how many milliseconds the
+     debounce takes. */
+  const h1b = await p1.waitForFunction(
+    () => (/t=motif/.test(location.hash) ? location.hash : false),
+    null, { timeout: 8000, polling: 100 })
+    .then((h) => h.jsonValue())
+    .catch(() => p1.evaluate(() => location.hash));
   check(/t=motif/.test(h1b),
     "S1 · …but the first gesture writes one: " + JSON.stringify(h1b));
   await p2.close();

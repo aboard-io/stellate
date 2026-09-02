@@ -137,7 +137,7 @@ function standUpServer() {
   await p.waitForTimeout(1200);
   await p.waitForTimeout(3000);
   await p.evaluate(() => document.getElementById("play").click());
-  await p.waitForTimeout(9000);
+  await p.waitForTimeout(1500);
   const cdp = await p.context().newCDPSession(p);
 
   /* the two meters: the analyser (the ear on the ring/direct route) and the
@@ -228,6 +228,28 @@ function standUpServer() {
                      unit: lines.indexOf(c.voice.name) >= 0
                        ? "v" + lines.indexOf(c.voice.name) : null }));
   });
+
+  /* ---- AND THE RECORD IS WAITED FOR, NOT SLEPT THROUGH (2026-09-02) -----
+     `await p.waitForTimeout(9000)` stood after the play press and every check
+     below it opens by measuring a BASE it needs to be above 0.01. Nine seconds
+     is a bet about how long this machine takes to warm a rack, compile a cast
+     and get a stream running, and under the full suite the bet loses: measured,
+     V1 read `base 0.0000` and V2 `0.0071` in a run where every drag it went on
+     to make worked perfectly (V3-V7 all green off the same page). The chant's
+     first section also carries `env: "in"` — it fades in — so even a started
+     record is quiet for a few seconds by design.
+     SO THE GATE ASKS THE EAR WHEN THE RECORD IS UP. `0.02` is twice the premise
+     every check states, so a base measured after this poll is a real reading
+     and not a threshold the wait manufactured; the settle after it lets the
+     fade finish. If the sound never comes the poll ends anyway and V1 fails
+     with `base 0.0000`, which is the honest report of a box that did not play. */
+  let upAt = null;
+  for (let i = 0; i < 100 && upAt == null; i++) {
+    if (await rms1() > 0.02) upAt = (i * 0.25).toFixed(2);
+    else await p.waitForTimeout(250);
+  }
+  await p.waitForTimeout(1500);
+  console.log("  note the ring came up at " + upAt + "s after the play press");
 
   /* ---- V1 #vol, the tray room fader ------------------------------------ */
   {
@@ -370,19 +392,33 @@ function standUpServer() {
     await p.evaluate(() => { const a =
       document.querySelector('[data-k="boardtab|auto|auto"]'); if (a) a.click(); });
     await p.waitForTimeout(500);
-    const set = await p.evaluate(({ name, sid }) => {
-      const btn = document.querySelector('button[data-k="t|' + name + '|' + sid + '"]');
-      if (!btn) return "no cell";
-      for (let i = 0; i < 8; i++) {
-        btn.click();
-        const d = window.__eightDoc();
-        const c = window.NuDeskDoc.channelVoicesOf(d, window.NuGenres.GENRES)
-          .find((x) => x.voice.name === name);
-        const t = c.voice.desk && c.voice.desk.trim && c.voice.desk.trim[sid];
-        if (t === "out") return "out";
-      }
-      return "never cycled to out";
-    }, { name: first.name, sid: secId });
+    /* ...AND THE CELL IS A WORD GRID NOW (2026-09-02, wave 4). This clicked
+       the plate up to eight times because the trim cell used to CYCLE its word
+       on every tap. ui/wordgrid.js — the component that generalised this very
+       grid — made the gesture two taps instead: the cell opens a strip of
+       chips (`data-k = <cell key>|<word>`) and the chip is the write. Eight
+       clicks on a cell now open and fold the same strip four times and touch
+       the record not at all, which is why V6 went red on a board that works.
+       ONE READ OF THE RECORD, AFTER THE TAP, because a chip's `set` runs
+       `setDesk` and the answer is either in the document or the gesture did
+       not land — there is nothing to loop over any more. */
+    const say = ({ name, sid, word }) => {
+      const cell = document.querySelector(
+        'button[data-k="t|' + name + '|' + sid + '"]');
+      if (!cell) return "no cell";
+      cell.click();                                   // the strip unfolds
+      const chip = document.querySelector(
+        'button.nu-wchip[data-k="t|' + name + '|' + sid + '|' + word + '"]');
+      if (!chip) return "no chip";
+      if (chip.disabled) return "refused";
+      chip.click();
+      const d = window.__eightDoc();
+      const c = window.NuDeskDoc.channelVoicesOf(d, window.NuGenres.GENRES)
+        .find((x) => x.voice.name === name);
+      const t = c.voice.desk && c.voice.desk.trim && c.voice.desk.trim[sid];
+      return t || "";
+    };
+    const set = await p.evaluate(say, { name: first.name, sid: secId, word: "out" });
     let zero = false, stillHere = true;
     for (let i = 0; i < 20 && !zero; i++) {
       await p.waitForTimeout(1000);
@@ -395,18 +431,9 @@ function standUpServer() {
     check(set === "out" && (zero || !stillHere),
       "V6 trim 'out' on " + first.name + "@" + secId + ": unit lvl -> 0 while the " +
       "section sounds" + (stillHere ? "" : " (section ended first — boundary honest, not re-armed)"));
-    /* put the word back to absent */
-    await p.evaluate(({ name, sid }) => {
-      const btn = document.querySelector('button[data-k="t|' + name + '|' + sid + '"]');
-      for (let i = 0; i < 8 && btn; i++) {
-        const d = window.__eightDoc();
-        const c = window.NuDeskDoc.channelVoicesOf(d, window.NuGenres.GENRES)
-          .find((x) => x.voice.name === name);
-        const t = c.voice.desk && c.voice.desk.trim && c.voice.desk.trim[sid];
-        if (!t) break;
-        btn.click();
-      }
-    }, { name: first.name, sid: secId });
+    /* put the word back to absent — the empty chip, the one the grid prints a
+       dash for because this section says nothing */
+    await p.evaluate(say, { name: first.name, sid: secId, word: "" });
   }
   await p.context().close();
 
@@ -424,8 +451,30 @@ function standUpServer() {
     await p2.goto(PAGE + CHANT, { waitUntil: "domcontentloaded" });
     await p2.waitForTimeout(3000);
     await p2.evaluate(() => document.getElementById("play").click());
-    await p2.waitForTimeout(14000);
+    /* WAIT FOR THE RECORD TO ARRIVE, AND THEN FOR IT TO COME UP — two waits,
+       because they are two different unknowns (2026-09-02).
+       This was one `waitForTimeout(14000)` and the base it measured went red in
+       the full suite while passing alone: 0.0093, under the 0.01 the premise
+       asks for. Measured on the media route, second by second, on this exact
+       fixture: silence until 5s (the segment queue filling), then 0.0097,
+       0.0108, 0.0428, 0.0497 … 0.07 from 24s on. The chant's first section
+       carries `env: "in"` — it FADES IN — so a fixed clock is measuring two
+       things at once, and the one that moves under load is the first: eight
+       gates sharing a machine push the first segment out past 14s and the
+       average lands inside the fade.
+       SO THE START IS MEASURED AND THE FADE IS WAITED OUT. The poll below asks
+       the engine when it is making sound at all, and the record is given a
+       further 12 s from THERE to come up — which is the fade's own length,
+       read off the measurement above. The premise is still a real assertion:
+       a record whose fade never finished, or a route that never came up, still
+       fails it. */
     const eng2 = () => p2.evaluate(() => { const e = window.__nuEngine(); return { route: e.route, rms: +e.rms }; });
+    let started = 0;
+    for (let i = 0; i < 60 && !started; i++) {
+      await p2.waitForTimeout(500);
+      if ((await eng2()).rms > 0.002) started = i * 0.5;
+    }
+    await p2.waitForTimeout(12000);
     const e0 = await eng2();
     const media = /^(mms|mse|segAB|media)/.test(e0.route || "");
     let base2 = 0; for (let i = 0; i < 8; i++) { base2 += (await eng2()).rms / 8; await p2.waitForTimeout(400); }
@@ -453,7 +502,8 @@ function standUpServer() {
     }
     check(media && base2 > 0.01 && g && elvol === 1 && silent != null,
       "V7 the phone's fader: media route (" + e0.route + "), element.volume dead at 1, " +
-      "real drag -> baked envelope silent in " + silent + "s (base " + base2.toFixed(4) + ")");
+      "real drag -> baked envelope silent in " + silent + "s (base " + base2.toFixed(4) +
+      ", sound at " + started + "s)");
     await ctx2.close();
   }
 
