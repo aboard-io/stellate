@@ -575,7 +575,7 @@ function main() {
   function closureCensus() {
     /* THE CLOSURE CENSUS — the sticking point in "should the rows become
        data?". `entry`, `reg`, `realize` and `word` are FUNCTIONS on every one
-       of the 417 rows, and a function does not survive JSON. The question is
+       of the 421 rows, and a function does not survive JSON. The question is
        how many DISTINCT SHAPES there really are: if a dozen shapes cover four
        hundred rows, the closures are a small enumerable vocabulary with
        arguments and the rows can be data. The shapes below are computed by

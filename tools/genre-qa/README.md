@@ -1,6 +1,6 @@
 # genre-qa — the catalogue in a database, and the questions as queries
 
-`nukernel/genres.js` is 25,000 lines and 417 rows, and half of every row is
+`nukernel/genres.js` is 26,000 lines and 421 rows, and half of every row is
 closures and an argued comment. That is why it stays the **source of truth** and
 why this is only a **mirror**: nothing in this directory edits a genre.
 

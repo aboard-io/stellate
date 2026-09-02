@@ -354,8 +354,8 @@
       edit: { kind: "number", min: 0, max: 0.5, step: 0.01,
         detents: () => Object.keys(NF.SWINGS)
           .map((k) => ({ value: NF.SWINGS[k], label: NF.SWINGLABEL[k] })),
-        /* WHAT THE ROW ALREADY SWINGS AT (2026-09-02) — see `start` in §5. 338
-           of 417 anchors declare no ratio and `compose.js` deals a SWINGS key
+        /* WHAT THE ROW ALREADY SWINGS AT (2026-09-02) — see `start` in §5. 342
+           of 421 anchors declare no ratio and `compose.js` deals a SWINGS key
            for a third of records anyway (`swingOf` :1060), so the record on
            the page can be shuffling while the row says nothing. Reading the
            document's own word back through the table is the only way this

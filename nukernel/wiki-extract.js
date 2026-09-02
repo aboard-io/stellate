@@ -251,25 +251,50 @@ const ASK = {
   industrialmetal: { q: "Industrial metal", why: "Chicago 1988 is Ministry's Land of Rape and Honey." },
   ebm:        { q: "Electronic body music", why: "Chicago 1989; the anchor's comment spells the acronym out." },
   musichallrock: { q: "The Kinks", why: "Muswell Hill 1966 is this band's own postcode and Face to Face's year. There is no article for a rock band playing music-hall changes, and `Music hall` is the Edwardian stage tradition the anchor's own comment says is a MISSING rung here — linking it would name the ancestor as the thing.", kind: "artist" },
-  orchpsych:  { q: "The Flaming Lips", why: "Oklahoma City 1999 is The Soft Bulletin. `Chamber pop` is the arranging tradition the anchor's comment explicitly calls its missing rung, so it is the wrong link; the band is the subject.", kind: "artist" },
+  // REASON REWRITTEN 2026-09-02 (the Chordonomicon gaps): the old sentence
+  // RESERVED `Chamber pop` for the missing rung it named, and the rung arrived
+  // — `chamberpop` (Boston 1994) now holds that article and this row declares
+  // it as a parent at 0.30. The link is unchanged and the reservation is spent.
+  orchpsych:  { q: "The Flaming Lips", why: "Oklahoma City 1999 is The Soft Bulletin. `Chamber pop` was reserved by this row's own reason as the arranging tradition its comment calls the missing rung, and since 2026-09-02 that rung is `chamberpop` (Boston 1994), which holds the article and which this row now takes as a parent — so it is still the wrong link here, and now for a reason with a row behind it. The band is the subject.", kind: "artist" },
   altcountry: { q: "Alternative country", why: "Chicago 1996 is Wilco's Being There, and this article's scene." },
   yachtsoul:  { q: "Boz Scaggs", why: "San Francisco 1976 is Silk Degrees. Yacht rock is taken by the row named for it and this row is explicitly the SOUL half — Isley's Rhodes under Motown polish — so the artist the comment names is the honest subject.", kind: "artist" },
   yachtrock:  { q: "Yacht rock", why: "Austin 1979 is Christopher Cross; the article is about exactly this studio-craft radio sound." },
   songwriterpiano: { q: "Carole King", why: "New York 1971 is Tapestry. There is no genre article for Brill-Building changes sung from the piano bench, and the anchor's comment names her.", kind: "artist" },
   softfolk:   { q: "James Taylor", why: "Chapel Hill 1970 is Sweet Baby James and his own town; the comment names him and the Carolina fingerstyle it is built on has no article of its own.", kind: "artist" },
   singersongwriter: { q: "Singer-songwriter", why: "New York 1972. The comment names Carly Simon, but unlike the four rows above it this one has a real genre article under its own key, and the article is about exactly this figure." },
-  coastrock:  { q: "Fleetwood Mac", why: "Sausalito 1977 is Rumours, recorded at the Record Plant in that town. The California folk-rock crossover this row is named for has no anchor and no single article; the band's is the honest one.", kind: "artist" },
+  // REASON REWRITTEN 2026-09-02 (the Chordonomicon gaps). The old sentence
+  // said the California folk-rock crossover "has no anchor and no single
+  // article", and BOTH HALVES became false in the same pass: `folkrock` (Los
+  // Angeles 1965) is the anchor, this row now declares it as a parent at 0.25,
+  // and `Folk rock` is the article. The LINK does not move — Rumours is still
+  // this row's record and folk rock is its ancestor, not its subject — but a
+  // reason that rests on a fact the table has since contradicted is exactly
+  // what makes a table stop being checkable.
+  coastrock:  { q: "Fleetwood Mac", why: "Sausalito 1977 is Rumours, recorded at the Record Plant in that town. The genre this row plays has no article of its own — `Soft rock` and `Yacht rock` are both taken by their own anchors, `California sound` is the early-sixties Beach Boys, and `West Coast sound` redirects into yacht rock — and its folk-rock ancestor is a separate, earlier anchor (`folkrock`, Los Angeles 1965) rather than this row's subject. The band's article is the honest one.", kind: "artist" },
   spacerock:  { q: "Space rock", why: "London 1973 is The Dark Side of the Moon; the genre article exists and names Pink Floyd, so the band link is unnecessary." },
   grebo:      { q: "Grebo (music)", why: "Stourbridge 1990. The bare `Grebo` is not the music; the parenthetical article is, and it names the Stourbridge scene this row's two-bass joke comes from." },
   melodictechno: { q: "Orbital (band)", why: "Kent 1991 is the Hartnolls' own county and Orbital's year, and `Melodic techno` in this ZIM is not an article — it is a meta-refresh into Styles_of_house_music#M, one line in a list. The duo the comment names has a real article.", kind: "artist" },
   bleeptechno: { q: "Bleep techno", why: "Manchester 1989 is 808 State, and the article covers the Yorkshire scene the anchor's comment calls its missing rung — the genre is right even though the city in the label is the crossover rather than the source." },
-  industrialbreaks: { q: "Meat Beat Manifesto", why: "Swindon 1989 is this act's own town and year — the article's own first sentence ('formed in 1987 in Swindon') and Storm the Studio, the 1989 LP that Wax Trax! licensed for the US and that, the article says, is why they 'got pigeonholed as an industrial act'. `Industrial breaks` is not an article and the sample-collage tradition the comment names has none either. The row is named for a style and linked to an act, which is the `amenbreak` shape and the standing argument for renaming the key itself.", kind: "artist" },
+  // REPOINTED 2026-09-02 (the catalogue round, shift 2). The old row ended
+  // "the standing argument for renaming the key itself" — the key WAS renamed
+  // on 2026-09-01 and the link never followed it. `Industrial breaks` still
+  // 404s, but `Industrial hip hop` is a live article that NAMES THIS ACT in its
+  // own history and is exactly the fusion the row's parents declare
+  // (blockparty 0.2 + electro 0.25 + industrialdance 0.15). It is wider than
+  // the row — this anchor is the instrumental sample-collage half and the
+  // article covers the rapped half too — so it is marked broader, not genre.
+  industrialbreaks: { q: "Industrial hip hop", why: "Swindon 1989 is Storm the Studio, and the article is the music it is: 'Industrial hip hop is a fusion genre of industrial music and hip hop. Originally emerging in the mid-1980s, the genre incorporates the production elements of industrial music…' — and its own history says 'Meat Beat Manifesto from the UK are also early representatives of the style'. Wider than this row, which is `instrumental: true` and is the sample-collage half without the rapping, so it is marked broader rather than genre.", kind: "broader" },
   industrialrock: { q: "Pretty Hate Machine", why: "REPOINTED 2026-08-30, off `Industrial rock` and onto the RECORD. Cleveland 1989 is one album made by one man in one studio's down-time, and the genre article cannot check this row's fields — the album article can, and it contradicted them on nearly every axis until this round: 'a heavily synthesizer-driven electronic sound', the four synthesizers by name, 'samples from his record collection for all the drum sounds', and the mix law the row is now built on ('Rough and first takes of vocals and guitar were used to contrast the quantized drums and bass'). The `polychoral`/`amenbreak` reading — the anchor is an ERA of one act and the record IS the era.", kind: "work" },
   analogsynthpop: { q: "Speak & Spell (album)", why: "Basildon 1980 and the comment says '[Depeche Mode, Speak & Spell era]'. The ERA is the anchor — bright filter, low resonance, one monosynth — and linking the band would make this row and `gothsynth` the same link for two deliberately different records.", kind: "work" },
   gothsynth:  { q: "Violator (album)", why: "Basildon 1990 and the comment says '[Depeche Mode, Violator era]' — the same band nine years on, dark and resonant. See `analogsynthpop`: the two albums say what one band link would erase.", kind: "work" },
   gothicpop:  { q: "The Cure", why: "Crawley 1987 is this band's own town and Kiss Me, Kiss Me, Kiss Me. `Gothic rock` is what the comment calls this row's MISSING rung, so it is the wrong link.", kind: "artist" },
   postpunk:   { q: "Post-punk", why: "Manchester 1979 is Unknown Pleasures; the genre article exists and covers it." },
-  dancepostpunk: { q: "New Order (band)", why: "Manchester 1983 is Blue Monday — the exact turn the comment describes. The bare `New Order` is a disambiguation page of political movements, and `Dance-punk` is a different, later genre.", kind: "artist" },
+  // REPOINTED 2026-09-02 (the catalogue round, shift 2). The old row rejected
+  // `Dance-punk` and stopped there; it never tried `Dance-rock`, whose own
+  // definition IS this anchor's comment and whose history names the act in its
+  // first line. A genre article beats a band article under the 2026-09-01 law
+  // whenever one honestly exists, and this one does.
+  dancepostpunk: { q: "Dance-rock", why: "Manchester 1983 is Blue Monday, and the article is the genre it made: 'Dance-rock is a dance-infused genre of rock music. It is a post-disco genre connected with pop rock and new wave' — the post-punk/post-disco fusion this row is written as. Its history section opens 'The first wave of artists arrived with New Order…' and its listed derivatives are alternative dance and grebo, which are `indiedance` and `grebo` here, so the lineage agrees with ours. Not `Dance-punk`, a different and later genre; not the band, which the great rename took off the key." },
   madchester: { q: "Madchester", why: "Manchester 1990; the article is the scene, which is what this row is." },
   janglepop:  { q: "Jangle pop", why: "Manchester 1984 is The Smiths' debut; the genre article covers the chiming-guitar idiom the row implements as swing on a straight grid." },
   indiedance: { q: "Indie dance", why: "Glasgow 1990. The word redirects to Alternative dance, which is where Wikipedia files this crossover, and the run follows the redirect." },
@@ -564,7 +589,14 @@ const ASK = {
   oldtime:    { q: "Old-time music", why: "Galax 1935 is the first Old Fiddlers' Convention, which the article's own genre this row is; NOT Country music, which is `countrypop`'s link and this row's child." },
   klezmer:    { q: "Klezmer", why: "New York 1923 is Naftule Brandwein's Victor sides; the article is the tradition those records carried onto shellac. Unambiguous." },
   georgian:   { q: "Chakrulo", why: "the anchor is argued from one recording — the Radio Tbilisi Chakrulo of 1966, the cut NASA sealed onto the Voyager Golden Record — and the article is that song, the polychoral one-piece precedent. Music of Georgia (country) is a survey, the bulgarian row's own rejection.", kind: "work" },
-  nordicfolk: { q: "Ludvig Mathias Lindeman", why: "Oslo 1853 is the first volume of Lindeman's Ældre og nyere norske Fjeldmelodier, and the article is its collector — 'most noted for compiling Norwegian folk music', its own lead. There is no article for the Norwegian medieval ballad as a genre in this ZIM.", kind: "artist" },
+  // REPOINTED 2026-09-02 (the catalogue round, shift 2). Lindeman is the
+  // COLLECTOR, which is precisely the figure `scotsfiddle` refused ("the anchor
+  // is the TRADITION, not the man"), and this table already cites the genre
+  // article by name in `nordicjazz`'s own reason. `Norwegian folk music` is a
+  // meta-refresh into Music_of_Norway#Traditional_and_folk_music — a section,
+  // not an article — so the honest landing is the regional genre article, wider
+  // than the row and marked as such.
+  nordicfolk: { q: "Nordic folk music", why: "Oslo 1853 is the first volume of Lindeman's Ældre og nyere norske Fjeldmelodier, and the article is the music he was writing down: 'Nordic folk music includes a number of traditions of Nordic countries, especially Scandinavian.' Wider than one collector's Norwegian volume, and that is why it is marked broader — but it is the tradition, and `nordicjazz`'s own reason already names this article as its stated origin.", kind: "broader" },
   chanson:    { q: "Chanson réaliste", why: "Paris 1936 is Piaf's first Polydor sides and the article is the street-song style they belong to. NOT Chanson, which covers eight centuries and would make the row an umbrella." },
   taraf:      { q: "Lăutari", why: "Clejani 1986 is the village taraf on the Ocora tapes; the article is the musician class whose trade the row is — the Crooner precedent, a music filed under its performers. Taraf de Haïdouks is the same players five years later under a Belgian label's name, and linking the band would date the row wrong.", kind: "genre" },
   flamenco:   { q: "Flamenco", why: "Granada 1922 is the Concurso de Cante Jondo; the genre article, not Cante jondo (a subset) and not the Concurso article (an event this row is dated by, not the music itself)." },
@@ -584,8 +616,16 @@ const ASK = {
   // paragraph, which says "repertory" where the guard knows "repertoire" —
   // errs closed, stays closed. The composer the row already names is the
   // honest subject, and his lead says "photoplay music" in quotation marks.
-  photoplay:  { q: "J. S. Zamecnik", why: "Cleveland 1913 is Zamecnik's Sam Fox Moving Picture Music vol. 1, and the article is its composer — 'best known for the photoplay music he composed for use during silent films', the lead's own words. `Photoplay music` exists but fails this file's own lead-paragraph guard; the artist link is the Kinks precedent.", kind: "artist" },
-  sitcom:     { q: "Where Everybody Knows Your Name", why: "Los Angeles 1983 IS this record — the Cheers main title, Portnoy/Hart Angelo — and the article is that song, the one-work precedent. Theme music is a two-line generality and Sitcom is television, not music.", kind: "work" },
+  photoplay:  { q: "J. S. Zamecnik", why: "Cleveland 1913 is Zamecnik's Sam Fox Moving Picture Music vol. 1, and the article is its composer — 'best known for the photoplay music he composed for use during silent films', the lead's own words. `Photoplay music` exists but fails this file's own lead-paragraph guard, and 2026-09-02 established EXACTLY HOW, because the old wording implied the article was at fault and it is not: its real lead — 'Photoplay music is incidental music, soundtrack music, and themes written specifically for the accompaniment of silent films' — is a perfect genre sentence and is 127 characters, under firstPara()'s 140-character floor, so the run skips it and reads the NEXT paragraph, which says 'classical and popular repertory' where MUSICAL knows only `repertoire`. The rule as written refuses the link and the link stays refused; the honest record is that this is the one row in the table where a threshold, not the encyclopaedia, is in the way.", kind: "artist" },
+  // REPOINTED 2026-09-02 (the catalogue round, shift 2). The old reason
+  // rested on a FACTUAL ERROR — "Theme music is a two-line generality" — and it
+  // is not: it is a long article with Purpose, Television, Remixes, Radio and
+  // Video game sections. Correcting the fact settles the row, because the two
+  // anchors at the other end of the broadcast day (`newsfanfare`, `breakingnews`)
+  // both already take the broad category article rather than their own cue, and
+  // this row's own comment invokes that law by name. The Cheers main title keeps
+  // the row's comment; the LINK is the commission.
+  sitcom:     { q: "Theme music", why: "Los Angeles 1983 is the Cheers main title (Portnoy/Hart Angelo), and the article is the commission it is one of: 'Theme music is a musical composition which is often written specifically for radio programming, television shows, video games, or films and is usually played during the title sequence.' Wider than one main title and marked broader for it — the same shape `newsfanfare` and `breakingnews` take at the other end of the broadcast day, which this row's own comment already cites. Not `Sitcom`, which is television, not music.", kind: "broader" },
 
   /* ---- THE WALLS-DOWN ROUND (2026-08-30) — eight exemplars for the five
      felled walls; every target below was probed against this ZIM before
@@ -624,7 +664,14 @@ const ASK = {
   muwashshah: { q: "Muwashshah", why: "Cairo 1200 is Ibn Sanā' al-Mulk's Dār aṭ-ṭirāz — his article calls it 'the most complete contemporary description of the genre' — and the form's own article carries the Andalusi origin and the fact the row stands on: 'it was sung and performed musically.' Not Ibn Sanā' al-Mulk, the anthologist where this row is the form." },
   zajal:      { q: "Zajal", why: "Córdoba 1150 is Ibn Quzman's dīwān — the Zajal article's own first dated fact ('the earliest recorded zajal poet was Ibn Quzman of al-Andalus who lived from 1078 to 1160') — and the article is the strophic vernacular form itself. Not Ibn Quzman, the poet where this row is the song." },
   soundsystem: { q: "Sound system (Jamaican)", why: "Kingston 1950 is Tom the Great Sebastian — the sound system article's own culture, and Tom's article dates Tom Wong's system to 1950 and calls it 'the all-time giant of sound systems'. The article is the practice: the stacks, the exclusives, the deejay — which is what the anchor claims, on the blockparty precedent." },
-  jubilee:    { q: "Fisk Jubilee Singers", why: "Nashville 1909 is the group's own recording of Swing Low, Sweet Chariot — the article's first paragraph carries the National Recording Registry honour and the date — and no separate article for the jubilee-quartet school exists in this ZIM; the group IS the school's founding institution.", kind: "artist" },
+  // REPOINTED 2026-09-02 (the catalogue round, shift 2). The old row said "no
+  // separate article for the jubilee-quartet school exists in this ZIM" and
+  // that was FALSE — `Jubilee quartet` is a live article under the exact phrase
+  // `doowop` and `barbershop` both reach for. The sibling `spirituals` row had
+  // already written the argument against linking the ensemble ("Not Fisk
+  // Jubilee Singers, which is the choir where the row is the music"), and the
+  // 2026-09-01 genre-only law says the same thing from the other side.
+  jubilee:    { q: "Jubilee quartet", why: "Nashville 1909 is the Fisk Jubilee Singers' own Swing Low, Sweet Chariot, and the SCHOOL that record founded has its own article: 'Jubilee quartets were popular African-American religious musical groups in the first half of the 20th century. The name derives from the Fisk Jubilee Singers…' — the four-part close harmony this row actually plays. The ensemble stays in the comment; `spirituals` already ruled that the choir is not the music." },
   rumba:      { q: "Cuban rumba", why: "Matanzas 1956 is Los Muñequitos de Matanzas' first LP on Puchito (their article's own dates: founded 1952 as Conjunto Guaguancó Matancero, first LP 1956), and the genre article is the street form itself — voices, tumbadoras, claves. Not Guaguancó, one of the three styles; not the band, where this row is the music." },
   lautari:    { q: "Lăutari", why: "Bucharest 1906 is Grigoraș Dinicu's Hora staccato — his article dates the showpiece and files him under 'Lăutărească music', born in Scaune, 'the neighborhood of the lăutari' — and the Lăutari article is the hereditary guild itself, which is what the anchor claims. Not Dinicu, the guild's most famous son." },
   doina:      { q: "Doina", why: "Maramureș 1912 is Bartók's collecting year — the article's own sentence: 'Béla Bartók discovered the doina in Northern Transylvania in 1912' — and the article is the form: free-rhythm, melismatic, compared by the article itself to the taksim, which is the row's own near." },
@@ -634,8 +681,16 @@ const ASK = {
      target was probed HERE before its anchor was written, the same order
      the gamelan/jingju method set. Two of the four link a PERSON where
      the obvious genre title fails a test this extractor already runs. */
-  qiyan:      { q: "Azza al-Mayla", why: "Medina 705 is her own death year and her own city — 'Azza al-Mayla (7th-century - d. 705) was a Medinan Qiyan musician, composer, singer, poet and teacher', the whole label in one clause. NOT `Qiyan`, and the reason is this extractor's own MUSICAL test: that article is filed under forced labour and slavery and its lead is 'a social class of women, trained as entertainers' — the institution, correct and not about music, where this anchor is a singer and a repertory. The named woman IS how this tradition survives being named.", kind: "artist" },
-  hardingfele: { q: "Myllarguten", why: "Oslo 1849 is Ole Bull's Christiania concert with him — his article dates it to February 1849 and counts the 1500 in the hall — and the man is the honest subject the way `nordicfolk` links Lindeman rather than a genre. NOT `Hardanger fiddle`, which is an INSTRUMENT article (bridges, understrings, twenty tunings) where this row is a repertory; NOT `Slått`, which 404s, nor `Slatt`, which is an empty stub in this ZIM — a title with no body.", kind: "artist" },
+  qiyan:      { q: "Azza al-Mayla", why: "Medina 705 is her own death year and her own city — 'Azza al-Mayla (7th-century - d. 705) was a Medinan Qiyan musician, composer, singer, poet and teacher', the whole label in one clause. NOT `Qiyan`, and the reason was MIS-STATED here until 2026-09-02: it is NOT this extractor's MUSICAL test, which that article in fact PASSES (it matches on `sing` inside 'singular qayna' well inside the 600-character window). The refusal is a HUMAN judgement and now says so — the article is filed under forced labour and slavery and its lead is 'a social class of women, trained as entertainers', which is the institution, where this anchor is a singer and a repertory. A guard that never fires is not an argument, and citing one is how a table stops being checkable. The named woman IS how this tradition survives being named.", kind: "artist" },
+  // REPOINTED 2026-09-02 (the catalogue round, shift 2). The old row refused
+  // `Hardanger fiddle` for being an INSTRUMENT article — but the KEY IS THAT
+  // ARTICLE'S OWN FIRST-LINE WORD, the row's sound was written out of that
+  // article's text, and an instrument article marked broader is already this
+  // file's settled shape for `jiahu` (Gudi) and `hohlefels` (Paleolithic
+  // flute). Meanwhile `nordicfolk`, the precedent the old reason leaned on,
+  // moved off its collector in the same pass, so the reason no longer had
+  // anything to stand on.
+  hardingfele: { q: "Hardingfele", why: "Oslo 1849 is Ole Bull's Christiania concert with Myllarguten, and the key is this article's own opening word: 'A hardanger fiddle (Norwegian: hardingfele) is a traditional stringed instrument considered the national instrument of Norway.' The row's bowing is quoted out of it ('The player usually bows on two of the upper strings at a time'). Wider than the slått repertory the row plays and marked broader for it; the man stays in the comment, where `scotsfiddle` says a tradition's players belong.", kind: "broader" },
   tasnif:     { q: "Tasnif", why: "Tehran 1924 is Qamar singing Morq-e sahar at a Tehran hotel (that song's article dates the performance), and the form's own article is the subject: 'one of the several forms of Persian music... a composed song in a slow metre', with the constitutional-era wave this label sits inside named in its own third paragraph. Not Morq-e sahar, one song where this row is the form; not Dastgah, which is the row next door's link and a different music." },
   scotsfiddle: { q: "Scottish fiddling", why: "Edinburgh 1796 is Nathaniel Gow's publishing firm at 41 North Bridge (his article's own sentence), but the anchor is the TRADITION, not the man — the appalachia precedent, where Sharp's collecting year labels a row that links Appalachian music. The article is the playing style itself, 'distinguished from other folk fiddling styles by its particular precision of execution', and it names both Gows in its own body. Not Niel Gow, the father whose collections this ZIM cannot date; not Strathspey, which is a disambiguation page here (a Highland district and a shinty team are on it)." },
 
@@ -659,6 +714,21 @@ const ASK = {
   blackmetal:   { q: "Black metal", why: "Oslo 1993 is Transilvanian Hunger and the article's second wave is this scene, named and dated. Not `Death metal` (Tampa 1990, its own anchor and this row's largest parent) and not `Norwegian black metal`, which is a section rather than an article here." },
   skapunk:      { q: "Ska punk", why: "Long Beach 1996 is Sublime's self-titled record; the article is the fusion itself and names the third wave this row measures. Not `Third wave of ska`, which is the scene's history rather than the music's description, and not `Ska` (Kingston 1962), which is the parent anchor." },
   collegerock:  { q: "College rock", why: "Athens 1983 is Murmur, and this article's own lead names Athens, Georgia as one of its three scenes. Not `Alternative rock`, which is the umbrella this table refuses on the darkwave precedent — its article tree IS our rows — and not `Jangle pop`, which is `janglepop` (Manchester 1984), one year later and its own anchor." },
+
+  /* ---- THE FOUR CHORDONOMICON GAPS (2026-09-02) ------------------------
+   * Four rows added where a census of 666,000 chord progressions found
+   * thousands of songs under a label this table had no row for. All four
+   * genre articles simply exist in this ZIM and resolve on the first ask,
+   * which is itself part of the evidence they were real gaps: the five
+   * labels DECLINED in the same round failed here first — "Album rock"
+   * 302s into Album-oriented_rock (`aor` has it), "Permanent wave" 302s
+   * into Perm_(hairstyle), and "Contemporary country" 404s in all three
+   * spellings. A genre nobody wrote an article about is usually a shelf.
+   * ------------------------------------------------------------------- */
+  folkrock:     { q: "Folk rock", why: "Los Angeles 1965 is Mr. Tambourine Man, cut at Columbia's Hollywood studios, and this article's own lead dates the coinage to that record — \"the term 'folk rock' was initially used in the U.S. music press in June 1965 to describe the Byrds' music\". Not `British folk rock`, which the hatnote sends elsewhere and which is Fairport's Britain, not the Byrds' Hollywood." },
+  countryrock:  { q: "Country rock", why: "Nashville 1968 is Sweetheart of the Rodeo, cut at Columbia Studio A in that town 9-15 March 1968, and this article dates the term to Richard Goldstein's Village Voice piece of 6 June 1968, written in anticipation of exactly that record. Not `Country rock (geology)`, which the hatnote sends elsewhere." },
+  heartlandrock: { q: "Heartland rock", why: "Asbury Park 1975 is Born to Run, and this article names Springsteen the genre's most successful act and then lists this row's parents in one sentence — 'American country, folk, 1960s garage rock, the Rolling Stones, Bob Dylan, and folk rock acts such as … the Byrds'. The label follows the Jersey Shore scene rather than the Blauvelt desk, by the grunge ruling." },
+  chamberpop:   { q: "Chamber pop", why: "Boston 1994 is Cardinal's debut, which this article's own text calls 'the grunge era's answer to Pet Sounds' and whose Eric Matthews it names 'a leading figure in ork-pop'. NOT `Baroque pop`, which is `baroquepop` (Los Angeles 1966) and a SEPARATE article in this ZIM — that lead is harpsichords and Baroque compositional style in the mid-sixties, this one is mid-nineties indie musicians who 'opposed the distorted guitars, lo-fi aesthetic, and simple arrangements' of their own decade. This article's lead does say chamber pop is 'also called baroque pop', which is the sentence a reader should weigh; the two articles' bodies are the answer to it." },
   raprock:      { q: "Rap rock", why: "New York 1986 is Licensed to Ill and the article names the record. Not `Rap metal` or `Nu metal`, both of which are later and one of which is its own anchor in this round." },
   southernhiphop: { q: "Southern hip hop", why: "Atlanta 1996 is ATLiens and the article's own account of the region runs through this label and this act. Not `Trap music` (Atlanta 2003, its own anchor seven years later) and not `Crunk` (Memphis 1997), which is also already here." },
   contemporaryrnb: { q: "Contemporary R&B", why: "Virginia Beach 1997 is Supa Dupa Fly. The article is the shelf this production belongs to and its own subgenre box lists `Hip-hop soul` — which is `hiphopsoul` (Charlotte 1991), a separate anchor and this row's declared near neighbour. `rnb` (Philadelphia 1994) links Rhythm and blues, the older and wider word; these are two articles and two rows, and the row comments say what the measurement found between them." },

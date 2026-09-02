@@ -588,6 +588,33 @@
     // TÜRKÜ played on a fuzz guitar — a melody, where `band`'s row is a shout
     sacredharp:{ cell: "three",  contour: "arch",   sent: "aabb",  len: "four" },
     anadolurock: { cell: "three", contour: "fall",  sent: "vary",  len: "four" },
+    /* THE FOUR CHORDONOMICON GAPS (2026-09-02). Four new anchors, and without
+       a row here all four would resolve to their family default — `three`,
+       g16(0, 2, 4), the "do do dooo" figure Paul reported as being "back
+       everywhere" the last time a round shipped named rows with no idiom. The
+       rule that fix set is that a row added by hand gets a hook by hand.
+       Each of these is the record's own gesture, not a taste:
+         · folkrock — the twelve-string does not stop and does not resolve
+           upward; `even` is continuous eighths and `zig` is the jangle, the
+           same pair `baggy` and `collegerock` take, but landing on the FIFTH
+           over a mixolydian vamp instead of the third, because a Byrds chorus
+           hangs there rather than settling.
+         · countryrock — the whole row is a turnaround, so the hook has to
+           ARRIVE: `pickup` puts it before the bar the way a country line
+           starts, `arch` goes up and comes back, and `third` is the warm note
+           the pedal steel would bend into.
+         · heartlandrock — a shouted line, syllable-dense: `call` is a phrase
+           somebody answers, `rise` goes up and stays up, and `two` keeps it
+           short enough to shout. Measured at the corpus's shortest hold in
+           this family (p90 5.13 sixteenths), which is what that means.
+         · chamberpop — an ARRANGED line, which is the row's whole argument:
+           `long` is two notes a bar, this box's sparsest cell, `fall` is the
+           written descent, and `hold` is what an arrangement does with a note
+           that a band would have filled. */
+    folkrock:      { cell: "even",   contour: "zig",    land: "fifth", len: "four" },
+    countryrock:   { cell: "pickup", contour: "arch",   land: "third", len: "eight" },
+    heartlandrock: { cell: "call",   contour: "rise",   land: "root",  len: "two" },
+    chamberpop:    { cell: "long",   contour: "fall",   land: "third", sent: "hold" },
   };
 
   /* ======================================================================
@@ -2544,8 +2571,33 @@
        singers are refused. test/instrumentation.test.js L6 holds this. */
     const VOCAL = (id) => MOUTHY(id) ||
       !!(NI.SAMPLED_VOICES && NI.SAMPLED_VOICES[id]);
+    /* A VOCODER IS A MACHINE, NOT A THROAT (2026-09-02, the catalogue
+       round, shift 2). `ownVoice` is the question "does this record sing with
+       its own instr" and its only job is to WAIVE door 1 — a row that sings
+       for itself may of course seat a singing guest. It was asked through
+       MOUTHY, which is PATCHES.voice OR PATCHES.mouth, and PATCHES.mouth holds
+       exactly one id: `synth_voice`, whose dsp is `tract_voice` — a formant
+       speech synthesiser. genres.js's own roboticpop comment says what that id
+       means in as many words: "Düsseldorf 1978 IS A FORMANT SPEECH
+       SYNTHESISER, not a metaphor for one … a Votrax, a Speak & Spell".
+       A Votrax is not a person, and "the vocoder is on this record" is not an
+       answer to "does anybody sing on it". Seven anchors seat that id and
+       nothing else vocal — dusseldorfschool, electro, roboticpop,
+       industrialdance, ebm, dancepostpunk, versailles — and every one of them
+       silently answered YES here, which means no Kraftwerk-lineage row could
+       ever be declared `instrumental: true` and have it bite: the waiver fired
+       before the door did. So the waiver reads THROAT (PATCHES.voice: the
+       three modelled/recorded throats, solo_vox / ahh_choir / ohh_voices) plus
+       the row's own stated `tone.mouth`, which is a SINGING timbre a human
+       author chose.
+       DOOR 1 ITSELF IS UNCHANGED and still reads VOCAL, which still contains
+       MOUTHY: a guest whose whole instrument is a mouth is still refused from
+       an instrumental record. The asymmetry is the point — a machine mouth
+       cannot BUY a singer, and it cannot walk on as one either.
+       test/precompose.test.js G14 holds this. */
+    const THROAT = (id) => !!NI.PATCHES.voice[id];
     const ownVoice = !!(G.tone && G.tone.mouth) ||
-      Array.from({ length: G.voices || 1 }, (_, v) => ownInstr(v)).some(MOUTHY);
+      Array.from({ length: G.voices || 1 }, (_, v) => ownInstr(v)).some(THROAT);
     const voiceBarred = !ownVoice && !!(NC.INSTRUMENTAL[gk] || G.instrumental);
     const hostYear = NC.genreYear(gk);
     const ancestry = (k, N) => { const seen = new Map([[k, 0]]); let front = [k];

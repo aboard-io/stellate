@@ -127,6 +127,35 @@
                       aeolian: "natural minor", hijaz: "hijaz",
                       shur: "shur", rast: "rast", slendro: "slendro" };
 
+  // A MODE MUST BE SOUNDABLE, OR IT IS DECORATION (2026-09-02, the catalogue
+  // round, shift 2). `mode` is read in exactly three places — kernel.js
+  // harm(), chordsOf() and bass() — and all three of them need CHORD ROOTS.
+  // A `harmony: "modal"` row has none, so its mode colours nothing and every
+  // note it plays comes out of `scale`; a `cycle` row whose roots never reach
+  // the degree the mode exists for (mixolydian's flat seventh at degree 6,
+  // dorian's natural sixth at degree 5) is in exactly the same position. Such
+  // a row DECLARES a colour it cannot sound, which is a claim about the record
+  // that the record cannot keep.
+  //
+  // THE LAW, and test/precompose.test.js G14b is the standing measurement that
+  // enforces it: swap a declared mixo for ionian, or a declared dorian for
+  // aeolian, re-render every section of seeds 1-3, and compare the NOTES. If
+  // not one note moves, the row must do one of three things, argued in its own
+  // comment with a named record, place and year:
+  //   1. make the mode AUDIBLE — `scale: MODES.<the mode>` — where the record
+  //      really is in that mode and the alphabet was simply the wrong one
+  //      (gregorian, gagaku, seannos, hardingfele and eight others here);
+  //   2. NAME WHAT IT PLAYS — ionian if the sounding third is major, aeolian
+  //      if it is minor — where the mode was a word over a different music
+  //      (a twelve-bar blues has no bVII chord; SCALES.blues has no sixth at
+  //      all; SCALES.majpent has a major third and cannot be dorian);
+  //   3. give it a ROOT that uses the degree — but only where the idiom really
+  //      plays one. Inventing a chord to justify a label is the failure this
+  //      check exists to catch, not a way to pass it.
+  // A row whose `scale` IS its mode is exempt: there the colour arrives
+  // through the alphabet and the mode field is a redundant copy, not a silent
+  // one. 49 rows failed the day the check was written and none do now.
+
   // A ROW MAY SAY ITS OWN OCTAVE (2026-08-30, the pitch wall). Scale values
   // are float semitones — [0, 1.5, 4, 5, 7, 8.5, 10] is shur, the quarter-flat
   // second said as a number — and a row whose alphabet does not repeat at the
@@ -463,6 +492,18 @@
   // and the ramp actually voice. A prog without a genre is inert data — that
   // is the point, it is a vocabulary the arranger quotes by name.
   const PROGS = {
+    /* COUNTRY ROCK'S TURNAROUND (2026-09-02). The census's own fingerprint
+       for the label: major II — V of V — at 1.37x lift with `II V I IV` on 346
+       songs, `I VI II V` rising to 6.75x in the chorus, and vi suppressed at
+       0.63x. A `roots` degree takes its quality from the MODE, so degrees 5
+       and 1 would render as vi and ii in ionian and the row's distinguishing
+       fact would silently vanish; `dom7` is an ABSOLUTE [0,4,7,10] stack on
+       the degree's root, which is what makes VI7 and II7 sayable at all. The
+       eight bars read I I IV I | VI7 II7 V I. */
+    countryrockT: [
+      { d: 0 }, { d: 0 }, { d: 3 }, { d: 0 },
+      { d: 5, q: "dom7" }, { d: 1, q: "dom7" }, { d: 4 }, { d: 0 },
+    ],
     // the real twelve bars: every chord a dominant seventh, which is the
     // whole difference between a blues and a minor mode loop. Same skeleton
     // as the old roots line, so nothing about the FORM moved.
@@ -1184,7 +1225,15 @@
       entry: () => 0, reg: v => -v, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal",
       intro: "solo",                 // chant begins as one voice, always
-      mode: MODES.dorian, scale: DIATONIC,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         A `harmony: "modal"` row has no chord roots, so `mode` reaches nothing and
+         every note comes out of `scale` — MEASURED: dorian -> aeolian moved not one
+         rendered note across seeds 1-3. This row IS the first mode of the tonary:
+         the Hartker Antiphoner (St Gallen, Stiftsbibliothek Cod. Sang. 390-391,
+         c. 1000) files protus authentic first and largest, D final with a NATURAL
+         sixth, and DIATONIC flattens exactly that sixth. So the alphabet is the mode. */
+      mode: MODES.dorian, scale: MODES.dorian,
       artic: "legato", incClamp: 2,
       tone: { wave: "triangle", cut: 2100, q: 0.7, atk: .09, rel: 2.2, gain: .26, verb: .78,
               // WHO SINGS: a hall of monks on one line: no vibrato at all, which is what makes it
@@ -1467,7 +1516,15 @@
       wants: [],
       instr: "slow_strings",
       entry: () => 0, reg: v => v - 2, realize: v => (v === 0 ? "pad" : "line"),
-      kit: {}, harmony: "modal", mode: MODES.dorian, scale: DIATONIC,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         La Monte Young, New York 1964 — the row's own anchor, and a drone has no
+         mode: the whole refusal this row is built on is a pedal that never leaves
+         the tonic (`harmony: "modal"`, no kit, a bass that does not move). Nothing
+         in the record can state a sixth, so nothing in it can be dorian rather than
+         natural minor. The field now names the default alphabet it was always
+         playing — MEASURED, dorian -> aeolian moved not one rendered note. */
+      kit: {}, harmony: "modal", mode: MODES.aeolian, scale: DIATONIC,
       intro: "padin",                // the drone IS the pad; it goes first
       artic: "tie", incClamp: 3, incMode: "reverse",
       bassStyle: "pedal", bassGrid: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
@@ -3552,7 +3609,15 @@
       // Mixolydian for the chord (a major third over a ♭7 — the E7 the guitar
       // bangs) and the blues scale for the tune, which stacks a minor third and
       // a ♭5 on top of that major third and never resolves either.
-      harmony: "modal", mode: MODES.mixo, scale: BLUES,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Bo Diddley, Chicago 1955 — this row's own record, and the row's own comment
+         is the argument: "there is no progression here AT ALL. One chord, held for
+         the length of the record." So mixolydian had no chord to be the seventh of.
+         And BLUES [0,3,5,6,7,10] has a MINOR third, which a mixolydian is not. The
+         blue seventh sounds from the scale, as it always did; the mode field stops
+         claiming a major third the record never plays. */
+      harmony: "modal", mode: MODES.aeolian, scale: BLUES,
       maxHold: 2,                 // a figure, not a melody: it stops to be answered
       // the low end states the THREE-side and leaves the two to the drums (and,
       // as everywhere, a phrase with accents of its own outranks this grid)
@@ -6183,8 +6248,16 @@
       // (This is the one weight in the 2026-08-25 slate I would call
       // contestable rather than settled — 0.6 is a large plurality, and a
       // reader who wants it split further has a case.)
-      parents: { psychpop: 0.6, beatgroup: 0.4 },
-      wants: ["chamber pop"],
+      /* "chamber pop" PAID 2026-09-02 (the Chordonomicon gaps). This row's
+         own comment called that rung "the actual missing rung between the
+         three" and its wiki reason RESERVED the article rather than take it;
+         `chamberpop` (Boston 1994, Cardinal) is now the row and the ZIM
+         article goes with it. The share comes out of `psychpop`, whose 0.6 the
+         comment already called "contestable rather than settled" — half of
+         what was standing in for the arranging tradition was the arranging
+         tradition. */
+      parents: { psychpop: 0.3, beatgroup: 0.4, chamberpop: 0.3 },
+      wants: [],
       instr: ["slow_strings", "clean_guitar", "halo_pad"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: v => (v === 0 ? "pad" : "line"),
@@ -6211,7 +6284,17 @@
     altcountry: {
       label: "Chicago 1996", bars: 8, near: "countrypop",
       plan: "song", bpm: 116,
-      parents: { countrypop: 0.4, rock: 0.35, blues: 0.25 },
+      /* COUNTRY ROCK ARRIVES 2026-09-02 (the Chordonomicon gaps): the row
+         this one has always been the 1990s reading of is `countryrock`
+         (Nashville 1968, Sweetheart of the Rodeo), and the share comes out of
+         `countrypop`, which was carrying the rock-band half it does not have.
+         THE WANT STAYS OPEN, deliberately: Gram Parsons coined "Cosmic
+         American Music" for the Burritos and GP, 1969-73, and the new row is
+         anchored on the Byrds album a year EARLIER. The edge is honest and the
+         want is a different, later object, so paying one does not close the
+         other — the maringa rule, which refuses an ancestor younger than the
+         thing it is meant to explain. */
+      parents: { countrypop: 0.15, rock: 0.35, blues: 0.25, countryrock: 0.25 },
       wants: ["cosmic american music"],
       instr: ["clean_guitar", "fiddle"],
       drumkit: "room",
@@ -6445,8 +6528,14 @@
       // actually tracked; "Los Angeles 1977" was already jazzrock's own label.
       label: "Sausalito 1977", near: "rock",
       plan: "song", bpm: 122,
-      parents: { rock: 0.35, detroitsoul: 0.3, countrypop: 0.35 },
-      wants: ["california folk rock"],
+      /* "california folk rock" PAID 2026-09-02 (the Chordonomicon gaps).
+         The want named a row that did not exist and now does: `folkrock`
+         (Los Angeles 1965, Mr. Tambourine Man). The share comes OUT OF
+         `countrypop`, which was carrying it — 0.35 of a Sausalito 1977 record
+         was never really Nashville 1945, it was the Byrds' twelve-string in
+         Buckingham's hands. The three that remain still sum the way they did. */
+      parents: { rock: 0.35, detroitsoul: 0.3, countrypop: 0.1, folkrock: 0.25 },
+      wants: [],
       instr: ["clean_guitar", "electric_piano"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
@@ -6463,6 +6552,352 @@
       words: ["the guitar, fingerpicked, the hook", "the piano, holding the changes"],
       word: v => (v === 0 ? [] : [drop(2)]),
     },
+    /* ===================================================================
+       THE FOUR CHORDONOMICON GAPS (2026-09-02, the catalogue round, shift 2).
+
+       The 666,000-progression Chordonomicon census was crossed against this
+       table and nine labels came back with thousands of songs each and no row
+       of ours. FIVE OF THE NINE WERE DECLINED, each because the catalogue
+       already holds the music under a truer word, and the declining is as much
+       of this round's work as the adding:
+
+         · ALBUM ROCK (9,855 songs) — a TWIN of `aor` (Los Angeles 1982). Not a
+           music, the 1970s FM-radio programming shelf, and the encyclopaedia
+           files it by REDIRECTING "Album rock" to "Album-oriented rock",
+           which is the article `aor` has linked since the great rename. 94% of its songs
+           also carry plain "rock" or "classic rock".
+         · PERMANENT WAVE (9,399) — DECLINED as a machine label. The local ZIM
+           redirects the phrase to "Perm (hairstyle)", so there is no article
+           for an ASK row to name, and its co-occurring tags run from new
+           romantic to alternative metal by way of three other coinages no
+           human uses (lilith, melancholia, mellow gold). That is what a
+           clustering artifact looks like from the inside.
+         · INDIE ROCK (8,478) — a TWIN of `collegerock` (Athens 1983) and
+           `janglepop` (Manchester 1984), which its own article's lead names as
+           its origin in those words. `collegerock`'s ASK row already ruled on
+           the umbrella above it ("its article tree IS our rows"), and indie
+           rock's one distinctive habit — mediant vamping, `iii I IV iii` at
+           5.3x lift — is the turn `collegerock`'s comment measured off its own
+           corpus files.
+         · CONTEMPORARY COUNTRY (8,982) — a TWIN of `countrypop` (Nashville
+           1945). No article at all (three spellings, three 404s); 8,982 of
+           8,982 songs also carry plain "country"; and its single harmonic fact,
+           the I-V-vi-IV axis loop in every rotation at 2.7-2.9x lift, is
+           literally `countrypop`'s declared `roots: [0,4,5,3]`. Its 2014 median
+           year is `confessionalpop` (Nashville 2008).
+         · HARD ROCK (7,572) — a TWIN of `rock` (London 1969) and five others.
+           Its article's history IS our rows in order: Cream and Hendrix
+           (`acidrock`), Zeppelin and Purple (`rock`), Sabbath (`heavymetal`),
+           Alice Cooper (`glam`), Thin Lizzy (`nwobhm`), Mötley Crüe
+           (`glammetal`), the post-grunge bands (`postgrunge`). Its sharpest
+           measured fact — the bIII/bVII/bVI power-chord cell at up to 10.2x
+           lift in the chorus — is exactly what `rock`'s own
+           `roots: [0,0,6,6,3,3,0,0]` in natural minor already plays, and 137
+           of its 544 corpus files are Led Zeppelin, `rock`'s named record.
+
+       THE FOUR BELOW ARE REAL and three of them were already owed: `coastrock`
+       wanted "california folk rock", `collegerock` and `janglepop` both wanted
+       the Byrds' twelve-string, `altcountry` wanted "cosmic american music",
+       and `orchpsych` wanted "chamber pop" and its own comment called that rung
+       "the actual missing rung between the three". Five wants close below.
+
+       WHAT WAS MEASURED AND WHAT WAS CHOSEN, because the two are not the same
+       and a row that hides the difference is worse than one that measured
+       nothing. Each row's own comment says which of its numbers came off
+       /mnt/sources/relocated/stellate-midi-corpus and which came off a
+       neighbour. Two standing caveats hold for all four: the corpus matcher
+       reaches these labels only through an ARTIST ROSTER (the literal terms
+       "folk rock", "country rock", "heartland rock", "chamber pop" return
+       zero or near-zero files), and 14.3% of the whole corpus sits at exactly
+       120 bpm because that is the MIDI default. No drum lane below was read
+       off the corpus; every kit grid is designed from the neighbours and the
+       record, and no comment here claims otherwise.
+       =================================================================== */
+
+    /* FOLK ROCK — Los Angeles 1965. The Byrds, "Mr. Tambourine Man", cut at
+       Columbia Studios, Hollywood on 20 January 1965 with McGuinn's
+       Rickenbacker 360/12 over the Wrecking Crew; the album followed 8 March
+       to 22 April and the single on 12 April. The coinage is the record's own:
+       "the term 'folk rock' was initially used in the U.S. music press in June
+       1965 to describe the Byrds' music". A Dylan song, a beat group's line-up
+       and a twelve-string, which is exactly what the three parents are.
+
+       THE HARMONY IS MEASURED. Over 9,018 Chordonomicon songs the distinctive
+       four-chord window is `I I IV bVII` at 3.57x lift on 44 songs, and the
+       chorus sharpens it (`bVII IV I bVII` 3.22x, `I bVII IV I` 2.93x). The
+       flat seventh runs 1.64x over the rock/pop/country baseline and the
+       SUBMEDIANT is suppressed at 0.77x — this is a modal music that avoids
+       vi, which is the exact opposite of the country-radio axis loop declined
+       above. So the roots are I-I-IV-bVII and THE MIXOLYDIAN IS EARNED: degree
+       6 is a root here, which is the one thing the 2026-09-02 mode law asks
+       for. Degree 4 is deliberately absent — in mixo it renders a minor v under
+       an 82.5%-major label — which is `aor`'s and `britpop`'s own ruling.
+
+       THE NUMBERS THAT ARE MEASURED: bpm 115 is the median of 143 corpus files
+       matched by roster (Dylan 41, Simon & Garfunkel 56, CSN 21, Cat Stevens 8,
+       Donovan 7, the Byrds 4); 94.4% of them are 4/4 and 87.4% major, which
+       agrees with Chordonomicon's 82.5%; maxHold 4 comes off a 90th-percentile
+       hold of 6.06 sixteenths over 130 files, the same reading `grunge` took.
+       NO `swing`: it was not measured, and `grunge`'s rule is that a row says
+       swing only where a lean was measured.
+
+       THE CAST IS THREE MODELLED VOICES. `clean_guitar` is the article's own
+       description of the Rickenbacker — "relatively clean, jangly sound,
+       without distortion" — `steel_string_guitar` is the acoustic the folk half
+       brought, and `ohh_voices` is the three-part harmony, which is half the
+       record and the field that separates this row from `collegerock`'s two
+       bare guitars. `picked_bass` is Chris Hillman with a pick. The rim on
+       every off-eighth is the TAMBOURINE the record is named after, which a
+       twelve-lane kit can only say that way. */
+    folkrock: {
+      label: "Los Angeles 1965", near: "beatgroup",
+      plan: "song", bpm: 115, bars: 8, voices: 3,
+      parents: { folkduo: 0.45, beatgroup: 0.35, rocknroll: 0.2 },
+      wants: [],
+      instr: ["clean_guitar", "steel_string_guitar", "ohh_voices"],
+      bassInstr: "picked_bass",
+      drumkit: "room",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 2 ? "pad" : "line"),
+      roots: [0,0, 3,6], mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "eighths",
+      pipes: [{ id: "strum", spread: 0.04 }],
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2600, q: 0.9, atk: .006, rel: 1.2, gain: .26, verb: .3 },
+      words: ["the twelve-string, ringing, the hook",
+              "the acoustic, strummed under it",
+              "the three-part harmony, entering late"],
+      word: v => (v === 0 ? [] : [drop(2)]),
+    },
+
+    /* COUNTRY ROCK — Nashville 1968. The Byrds again, three years and one
+       Gram Parsons later: SWEETHEART OF THE RODEO, whose defining sessions ran
+       at Columbia Studio A, Nashville, 9-15 March 1968 with Lloyd Green on
+       pedal steel, John Hartford and Roy Huskey Jr. The coinage precedes the
+       record — Richard Goldstein, "Country Rock: Can Y'All Dig It?", THE
+       VILLAGE VOICE, 6 June 1968, written in anticipation of this album. THE
+       LABEL SAYS NASHVILLE AND NOT HOLLYWOOD, which is the point of the row: a
+       Los Angeles folk-rock band went to the Columbia A-team, and `grunge`'s
+       ruling is that the label names the room the music came out of.
+
+       THE SECONDARY DOMINANT IS THE WHOLE ROW, and this is the one field a
+       `roots` array cannot say. Over 9,318 songs the fingerprint is major II —
+       V of V — at 1.37x lift, with `II V I IV` at 3.56x on 346 songs and
+       `I VI II V` at 4.53x rising to 6.75x in the chorus, while vi is
+       SUPPRESSED at 0.63x. That is the ragtime turnaround with both secondary
+       dominants, and it is exactly what separates this row from the country
+       radio umbrella declined above: contemporary country resolves through vi,
+       country rock resolves through II, and the two labels share one per cent
+       of their songs.
+       A `roots` degree renders its quality out of the MODE, so degree 1 in
+       ionian is a minor ii and degree 5 a minor vi — the row's entire
+       distinguishing fact, silently gone. `prog` is the field that can say it:
+       kernel.js QFIX.dom7 is an ABSOLUTE [0,4,7,10] on the degree's root, and
+       its own comment at :718 calls dom7 "the one deliberate exit" from the
+       mode, which is what a secondary dominant is. So PROGS.countryrockT is
+       declared above and the `roots` line below is only its fallback shape.
+
+       THE NUMBERS THAT ARE MEASURED: bpm 116 is the median of 190 corpus files
+       (Eagles 86, Creedence 57, Ronstadt 13, Allman 12, Doobies 12), 95.8% of
+       them 4/4; maxHold 4 comes off a p90 hold of 5.75 sixteenths over 188
+       files. AND THE ROSTER'S OWN BIAS IS REPORTED: Gram Parsons, the Flying
+       Burrito Brothers, Poco and the Nitty Gritty Dirt Band return ZERO files,
+       so the corpus set leans southern and swamp (CCR + Allman + Skynyrd are 74
+       of 190) and its 73.7% major reading sits below Chordonomicon's 88.6%.
+       The tempo ties `altcountry` (Chicago 1996) — harmless, the two rows share
+       no other field — but this one is measured and that one was chosen, so if
+       either has to move it is not this one.
+
+       `bassInstr` IS DELIBERATELY UNDECLARED and that is an argument, not an
+       omission: Roy Huskey Jr. played an UPRIGHT on the March 1968 sessions,
+       and the default this row falls through to is `acoustic_bass`. This is the
+       one place in the family where the default is the right recording rather
+       than the lazy one, and `musichallrock` is the precedent for saying so
+       either way. THE PEDAL STEEL HAS NO ID in the whole instrument table and
+       the article calls it the genre's "most characteristic" instrument, so it
+       is a want, not a shrug. */
+    countryrock: {
+      label: "Nashville 1968", near: "countrypop",
+      plan: "song", bpm: 116, bars: 8, voices: 3,
+      parents: { folkrock: 0.35, countrypop: 0.3, honkytonk: 0.2, bluegrass: 0.15 },
+      wants: ["the pedal steel guitar, which the instrument table has no id for"],
+      instr: ["clean_guitar", "steel_string_guitar", "upright_piano"],
+      drumkit: "acoustic",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 2 ? "pad" : "line"),
+      prog: PROGS.countryrockT,
+      roots: [0,0, 3,0, 5,1, 4,0],
+      mode: MODES.ionian, scale: MODES.ionian, diatonic: true,
+      artic: "normal", maxHold: 4, bassStyle: "fifths",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,1,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2700, q: 1.0, atk: .005, rel: .9, gain: .27, verb: .24 },
+      words: ["the telecaster, answering the line",
+              "the acoustic, holding the changes",
+              "the piano, the session hand's fills"],
+      word: v => (v === 0 ? [] : [drop(2)]),
+    },
+
+    /* HEARTLAND ROCK — Asbury Park 1975. Bruce Springsteen, BORN TO RUN,
+       tracked at 914 Sound Studios in Blauvelt and the Record Plant in New
+       York between January 1974 and July 1975, released 25 August 1975. THE
+       LABEL NAMES THE JERSEY SHORE AND NOT THE DESK, which is `grunge`'s
+       ruling word for word — Nevermind was cut at Sound City in Van Nuys and
+       that row says Seattle — and the E Street Band is the shore bar circuit's
+       band, whose first album is titled GREETINGS FROM ASBURY PARK, N.J.
+
+       THE PARENTS ARE THE ARTICLE'S OWN SENTENCE: "most strongly influenced by
+       American country, folk, 1960s garage rock, the Rolling Stones, Bob Dylan,
+       and folk rock acts such as … the Byrds" — `folkrock` (Los Angeles 1965)
+       and `garagerock` (Portland 1963) named outright — plus `girlgroup` (New
+       York 1960), because Born to Run is an avowed Spector record and this
+       table keeps that bench there, and `detroitsoul` (Detroit 1965) for the
+       article's own line-up, "drums, keyboards and occasional horn section
+       instruments like a saxophone", which is Bittan and Clemons.
+
+       THE HARMONY IS FLAT AND THE ROW SAYS SO. Over 7,432 songs nothing
+       exceeds 3.6x lift; this label is harmonically a diluted folk rock,
+       sitting between it and country rock and owning no degree outright. What
+       it does own is STASIS PLUS THE FLAT SEVENTH, and it shows up in the
+       chorus: `I I I I` at 3.46x on 292 occurrences, `IV IV IV IV` at 4.69x,
+       `V IV I bVII` at 4.45x. So the cycle is four bars of I, two of IV and two
+       of bVII — the two highest-SUPPORT facts rather than the two highest-lift
+       ones. Degree 6 is a root, so mixolydian is earned; degree 4 is excluded
+       on `aor`'s ruling, a minor v being wrong under an 83.6%-major label.
+       (One correction is recorded here because it nearly shipped: a first pass
+       reported a bII lean on this label. It was an artifact — the census's
+       chord parser reads `Fsus4` as F-sharp — and there is no Neapolitan in
+       this music. The row does not have one.)
+
+       THE NUMBERS THAT ARE MEASURED: bpm 120 is the median of 102 corpus files
+       (Springsteen 39, Petty 35, Seger 12, Mellencamp 11), the tightest spread
+       of the whole census; 98.0% of them are 4/4, the highest reading in it;
+       maxHold 3 comes off a p90 hold of 5.13 sixteenths over 94 files — the
+       shortest in this family, which is the shouted, syllable-dense vocal, and
+       it is the measured difference between a chime and a shout.
+
+       THE SAXOPHONE IS A SAMPLE AND THAT IS THE EXCEPTION, STATED. Two of the
+       three chairs are modelled (`crunch_guitar` is a Telecaster into a cranked
+       amp, not distortion; `yamaha_grand_piano` is Roy Bittan, and Born to Run
+       is a piano record before it is a guitar record). The engine has no wind
+       model, the article names the saxophone as the genre's own instrument, and
+       a third guitar would erase the E Street Band — so `tenor_sax` is seated
+       as a recording on purpose. `verb: .38` is the highest in this batch
+       because the wall of sound IS the reverb, which is where the `girlgroup`
+       parent is audible or nowhere.
+
+       AND IT IS A LEAF: no row later than 1975 names this music in a want or a
+       comment. Nothing downstream is repointed. */
+    heartlandrock: {
+      label: "Asbury Park 1975", near: "rock",
+      plan: "song", bpm: 120, bars: 8, voices: 3,
+      parents: { folkrock: 0.35, girlgroup: 0.25, garagerock: 0.2, detroitsoul: 0.2 },
+      wants: [],
+      instr: ["crunch_guitar", "yamaha_grand_piano", "tenor_sax"],
+      bassInstr: "finger_bass",
+      drumkit: "power",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 2 ? "pad" : "line"),
+      roots: [0,0, 0,0, 3,3, 6,6], mode: MODES.mixo, scale: MODES.mixo, diatonic: true,
+      artic: "normal", maxHold: 3, bassStyle: "eighths",
+      kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0],
+             x: [9,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 1,0,1,0, 1,0,1,0] },
+      tone: { wave: "sawtooth", cut: 2200, q: 1.2, atk: .005, rel: .8, gain: .28, verb: .38 },
+      words: ["the telecaster, one chord held open",
+              "the piano, the whole arrangement",
+              "the tenor, entering for the last chorus"],
+      word: v => (v === 0 ? [] : [drop(2)]),
+    },
+
+    /* CHAMBER POP — Boston 1994. Cardinal, CARDINAL (Flydaddy) — Richard
+       Davies and Eric Matthews, a duo formed in Boston in 1992, recorded March
+       1994 and released that November. The genre's own article names Matthews
+       "a leading figure in ork-pop" and quotes the record's reputation as "the
+       grunge era's answer to Pet Sounds", which is the whole row in a clause:
+       a trained trumpeter writing arrangements against everything 1994 sounded
+       like. The article's own definition of the genre is opposition — musicians
+       who "opposed the distorted guitars, lo-fi aesthetic, and simple
+       arrangements common to the alternative or 'modern rock' groups of that
+       era" — so the soft kit under a string line is not a taste, it is the
+       argument.
+
+       WHY NOT THE HIGH LLAMAS, whose GIDEON GAYE (Target, 1994) has an equal
+       claim and is named in the same article: the band is London, and "London
+       1994" is already `dnb`'s label — the same collision that sent `britpop`
+       to Manchester. Cardinal is the American record, its city is free, and it
+       sits five years upstream of `orchpsych` where the debt is owed.
+       AND WHY IT IS NOT `baroquepop` (Los Angeles 1966), which is the sentence
+       a reader should be made to weigh, because this article's own lead says
+       chamber pop is "also called baroque pop": the two are SEPARATE ARTICLES
+       in this ZIM and they argue different things. Baroque pop's lead is about
+       harpsichords and Baroque compositional style in the mid-sixties; this
+       one is about mid-nineties indie musicians refusing their own decade.
+       Twenty-eight years and two different arguments apart, and this row takes
+       0.40 of itself from that one, which is the honest way to say they are
+       related and not the same.
+
+       THE HARMONY IS MEASURED AND ITS PROVENANCE IS DECLARED. Over 7,802 songs
+       the fingerprint is the MEDIANT and the SUPERTONIC — the highest raw ii
+       (30.2%) and iii (20.1%) in the whole census, with `I IV vi iii` at 4.28x
+       and eleven of the top twelve windows containing one or the other — and,
+       alone among the nine labels, NO chromatic lean at all (bVII 0.93x, bIII
+       0.92x, bVI 0.97x, II 0.99x). It is the one music here that borrows
+       nothing, which is why the mode is ionian: declaring mixo or dorian on a
+       row with no flat degree is exactly the decoration the 2026-09-02 law
+       forbids. BUT: that census centroid is 2011, not 1994 — the Arcade Fire
+       and Fleet Foxes wave the article itself flags as an inconsistent later
+       use of the word — so these numbers describe the label, not this record,
+       and the row says so rather than passing them off. The same measurement
+       also shows the mediant writing COLLAPSING in choruses (best chorus lift
+       2.52x), which is where a verse-and-chorus form should flatten toward I.
+
+       AND THE CORPUS IS SILENT, which is reported rather than papered over.
+       "chamber pop", "chamber_pop" and "chamberpop" return zero files; bare
+       "chamber" returns a Vivaldi concerto, Zelda's Triforce Chamber and Coal
+       Chamber. A roster reaches fourteen files from three 1960s acts, which is
+       a coincidence and not a genre, and NONE of its numbers are used here.
+       SO `bpm: 108` IS A CHOICE, taken from `baroquepop`, the parent this row
+       draws 0.40 from — the one number in these four rows that no measurement
+       stands behind, said out loud so nobody later mistakes it for one.
+
+       THE CAST. `felt_piano` is MODELLED and is the close, damped keyboard an
+       intimate arranged record is built around, used by no other row in this
+       family. `strings` rather than `slow_strings` is deliberate and is the
+       field that keeps this row clear of `orchpsych` five years downstream:
+       chamber pop's strings play ARRANGED LINES, not held pads. `trumpet` is
+       Eric Matthews's own instrument and the article's definition names
+       "strings, horns, piano, and vocal harmonies" — this cast is three of the
+       four. `bassStyle: "pedal"` is a held bass under moving inner voices,
+       which is what an arrangement does. */
+    chamberpop: {
+      label: "Boston 1994", near: "baroquepop",
+      plan: "song", bpm: 108, bars: 8, voices: 3,
+      parents: { baroquepop: 0.4, collegerock: 0.25, psychpop: 0.2, jazzrock: 0.15 },
+      wants: [],
+      instr: ["felt_piano", "strings", "trumpet"],
+      bassInstr: "finger_bass",
+      drumkit: "brush",
+      entry: v => v, reg: v => v - 1, realize: v => (v === 1 ? "pad" : "line"),
+      roots: [0,0, 3,3, 5,5, 2,2], mode: MODES.ionian, scale: MODES.ionian, diatonic: true,
+      artic: "legato", maxHold: 4, bassStyle: "pedal",
+      kit: { k: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
+             s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
+             p: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
+      fill: { s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,1,0] },
+      tone: { wave: "triangle", cut: 2000, q: 0.8, atk: .015, rel: 1.4, gain: .23, verb: .48 },
+      words: ["the felt piano, the whole arrangement",
+              "the strings, an arranged line and not a pad",
+              "the trumpet, one phrase, late"],
+      word: v => (v === 0 ? [] : [drop(2)]),
+    },
+
 
     // SPACE ROCK [Pink Floyd]. An arc, not a song — one held drone under a
     // slow, blues-schooled guitar line, argued through jazz's loose,
@@ -7344,8 +7779,14 @@
     janglepop: {
       label: "Manchester 1984", swing: 1/3, near: "rock",
       plan: "song", bpm: 126,
-      parents: { rock: 0.4, detroitsoul: 0.35, folkduo: 0.25 },
-      wants: ["byrds jangle"],
+      /* "byrds jangle" PAID 2026-09-02 (the Chordonomicon gaps): `folkrock`
+         (Los Angeles 1965) is the row, and this is the most literal want in
+         the file — the jangle IS a Rickenbacker 360/12 on Mr. Tambourine Man.
+         The share comes out of `rock` (London 1969), which is four years
+         LATER than the sound this row is named for and was standing in for it
+         only because nothing earlier existed to point at. */
+      parents: { rock: 0.15, detroitsoul: 0.35, folkduo: 0.25, folkrock: 0.25 },
+      wants: [],
       instr: ["clean_guitar", "clean_guitar"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: () => "line",
@@ -7691,7 +8132,15 @@
       entry: v => (v === 2 ? 4 : 0), reg: v => (v === 0 ? -1 : 0),
       realize: v => (v === 0 ? "pad" : "line"),
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
-      mode: MODES.dorian, scale: DIATONIC,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Organum does not choose a mode, it HOLDS the chant's: the Magnus liber
+         organi of Leonin and Perotin (Notre-Dame de Paris, c. 1200; the surviving
+         copy W1, Wolfenbuettel Cod. Guelf. 628 Helmst.) sets mode-I plainsong and
+         sustains its final under the duplum. `gregorian` above is now dorian in the
+         scale as well as the label, and this row is that chant with a voice on top,
+         so it takes the same alphabet — measured decorative before this change. */
+      mode: MODES.dorian, scale: MODES.dorian,
       artic: "tie", incClamp: 2,
       tone: { wave: "triangle", cut: 2000, q: 0.7, atk: .12, rel: 2.8, gain: .24, verb: .85,
               // WHO SINGS: the same monks as gregorian — no vibrato at all
@@ -7727,7 +8176,14 @@
       entry: () => 0, reg: v => (v === 0 ? 0 : -1),
       realize: v => (v === 0 ? "line" : "pad"),
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
-      mode: MODES.dorian, scale: DIATONIC,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Bernart de Ventadorn, "Can vei la lauzeta mover", copied with its melody in
+         the Chansonnier du Roi (Paris, BnF fr. 844, c. 1250) — one of the very few
+         troubadour songs that survive with notation at all, and a D-final tune in
+         the church tonary the scribes used. The row declared that mode and sang the
+         natural minor, whose flat sixth is the one degree the mode is named for. */
+      mode: MODES.dorian, scale: MODES.dorian,
       // THE RHYTHMIC MODES ARE TRIPLE. A 1210 melody moves in the long-short
       // trochee of modal rhythm, not in even eighths — swing 1/3 is the
       // kernel's own triplet reading of exactly that — and it is also what
@@ -7779,7 +8235,14 @@
       instr: ["recorder", "dulcimer"],
       drumkit: "room",
       entry: () => 0, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
-      harmony: "modal", mode: MODES.dorian, scale: DIATONIC,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         The eight estampies royales in the same manuscript as the row above (Paris,
+         BnF fr. 844, c. 1300) are the earliest notated instrumental dances in
+         Europe, and "La prime estampie roial" is D-final. A dance has no chords —
+         `harmony: "modal"` — so the tune was the whole record and the tune was in
+         the wrong mode. */
+      harmony: "modal", mode: MODES.dorian, scale: MODES.dorian,
       bassStyle: "pedal",
       bassGrid: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0],
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,0,0],   // the tabor: dum, dum-dum
@@ -8821,8 +9284,23 @@
       // `parlor`'s "ragtime" did: `kwela` is Johannesburg 1955, twenty years
       // after this row and in the same city, and it is marabi's CHILD. A
       // root that wants its own descendant is a shopping list nobody read.
-      parents: {},
-      wants: ["american 78s", "sotho-zulu vocal cycle"],
+      /* AN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue
+         round, shift 2).
+         The want "american 78s" is `ragtime` (Sedalia 1899), and a second ancestor
+         was sitting unasked-for in the row's own harmony.
+         `hymn` (Boston 1831): marabi's identifying cycle is I-IV-I6/4-V, which is the
+         mission hymnal's cadence note for note, and every account of the music names
+         mission church harmony among its sources. THE TABLE ALREADY MAKES THIS EXACT
+         EDGE IN THIS EXACT CITY: `mbube` (Johannesburg 1939) declares `hymn: 1`.
+         `ragtime` (Sedalia 1899): Scott Joplin's Sedalia publications and the ragtime
+         and stride 78s that reached the Johannesburg shebeens — the "american 78s"
+         the row was already asking for, by name. `swing` (Kansas City 1938) is LATER
+         than this row and so cannot be the American ancestor here, which is also why
+         `kwela` and `tsabatsaba` take marabi AND swing one generation down.
+         The Sotho-Zulu vocal cycle stays wanted: it is not the `vocal` function row,
+         and no anchor holds it. */
+      parents: { hymn: 0.3, ragtime: 0.3 },
+      wants: ["sotho-zulu vocal cycle"],
       // THE CAST IS UNUSUALLY EXACT. The marabi instrument was the PEDAL
       // ORGAN and `reed_organ` is one (six zones, every file on disk —
       // confirmed at genres.js:5713 when punjabipop's harmonium wanted it).
@@ -8976,7 +9454,17 @@
       entry: v => v * 2, reg: v => (v === 1 ? -1 : v === 2 ? -1 : 0),
       realize: v => (v === 1 ? "pad" : "line"),
       part: ["lead", "pad", "counter"],
-      harmony: "modal", mode: MODES.mixo, scale: SCALES.majpent,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         The row's own comment holds two claims that cannot both be true — "one
+         mixolydian vamp" and "tizita is an anhemitonic major pentatonic — 1 2 3 5 6
+         — which is SCALES.majpent EXACTLY". The second is the SOURCED one, and
+         majpent [0,2,4,7,9] contains no seventh of any kind, so the flat seventh
+         mixolydian exists for cannot sound on Mulatu Astatke's "Yegelle Tezeta"
+         (Amha Records AE 108, Addis Ababa, 1969). Its third and its sixth are both
+         major: that is ionian. The vamp keeps its name in the comment; the FIELD now
+         says what the record plays. */
+      harmony: "modal", mode: MODES.ionian, scale: SCALES.majpent,
       artic: "legato", maxHold: 4,
       // A LATIN-LEANING BAND. The bell figure is the rim, the congas are the
       // toms — a real struck membrane by family, wrong drum and right physics
@@ -9688,7 +10176,16 @@
       entry: v => v, reg: v => (v === 1 ? -1 : v === 2 ? 1 : 0),
       realize: () => "line",
       part: ["riff", "counter", "lead"],
-      harmony: "modal", mode: MODES.mixo, scale: SCALES.major, diatonic: true,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Perez Prado's RCA sessions, Mexico City 1949-50 — this row's own records.
+         The row is `harmony: "modal"`, so there is no chord for a flat seventh to
+         live in, and SCALES.major carries the NATURAL seventh: mixolydian was a word
+         with nothing under it. What the saxes and brass actually trade in those
+         two-bar blocks is a major-key riff, and ionian is that. (SCALES.major and
+         MODES.ionian are the same seven numbers, so the field is now a true
+         restatement of the alphabet rather than a contradiction of it.) */
+      harmony: "modal", mode: MODES.ionian, scale: SCALES.major, diatonic: true,
       artic: "staccato", maxHold: 1, bassStyle: "octaves",
       // THE TIMBALES ARE THE TOMS, and this is the batch's other standing
       // compromise said once: the cáscara on the shell goes to `p`, the
@@ -9947,8 +10444,20 @@
       // splits between the sentimental line (modinha), the syncope
       // (lundu) and the dance-hall practice (maxixe), with parlor keeping
       // the salon-piano claim it always had.
-      parents: { parlor: 0.2, modinha: 0.2, maxixe: 0.2, lundu: 0.15 },
-      wants: ["polka brasileira"],
+      /* AN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue
+         round, shift 2).
+         FOUND OUTSIDE THE PARENTLESS SWEEP: this row wanted "polka brasileira" and
+         `polka` (Prague 1837) is a row, sixty-three years earlier.
+         THE ARGUMENT is the row's own comment — 1900 is "the moment choro is a
+         written repertory rather than a way of playing POLKAS". The Bohemian couple
+         dance reached Rio in 1845 and the choroes were the men who played it wrong
+         on purpose; the polca-lundu of Chiquinha Gonzaga's "Atraente" (Rio, 1877) is
+         the hybrid caught in its own title. 0.15, the smallest declared share: what
+         arrived from Prague is the METRE and the two-strain form, not the
+         counterpoint the row is written for. */
+      parents: { parlor: 0.2, modinha: 0.2, maxixe: 0.2, lundu: 0.15,
+                 polka: 0.15 },
+      wants: [],
       instr: ["flute", "steel_string_guitar", "nylon_string_guitar"],
       entry: v => v, reg: v => (v === 0 ? 1 : v === 1 ? 0 : -1),
       realize: () => "line",
@@ -9998,7 +10507,22 @@
       entry: v => v, reg: v => (v === 1 ? -2 : 0),
       realize: v => (v === 1 ? "pad" : "line"),
       part: ["lead", "pad"],
-      harmony: "modal", mode: MODES.mixo, scale: SCALES.major, diatonic: true,
+      /* THE FLAT SEVEN ARRIVES (2026-09-02, the catalogue round, shift 2).
+         The comment above says it in as many words — "`harmony: "modal"` and
+         mixolydian, because the flattened seventh over a stationary bass is
+         the sound" — and then the row sang SCALES.major, which is the natural
+         seventh. A modal row has no chord cycle, so `mode` reaches nothing:
+         every note this record plays came out of `scale`, and the one interval
+         the comment says IS the sound was the one interval missing from it.
+         MEASURED: swapping mode mixo -> ionian changed not a single rendered
+         note across seeds 1-3, which is the definition of a decorative mode
+         (test/precompose.test.js G14b). Luiz Gonzaga and Humberto Teixeira,
+         "Baiao" (RCA Victor, Rio, 1946) and "Asa Branca" (RCA Victor, Rio,
+         1947): the baiao's whole melodic signature is that seventh a semitone
+         under the octave, over a zabumba that never moves. So the SCALE is now
+         the mode; `diatonic` goes with it, because a diatonic row builds its
+         chords out of the scale and this row has no chords at all. */
+      harmony: "modal", mode: MODES.mixo, scale: MODES.mixo,
       artic: "staccato", maxHold: 2, bassStyle: "eighths",
       // THE ZABUMBA IS ONE PLAYER WITH TWO STICKS AND IT IS WRITTEN AS TWO
       // LANES: the mallet's deep stroke on the kick, the bacalhau's dry tap
@@ -10036,8 +10560,22 @@
       // batch and the four bpm are also four bpm of separation from Nairobi
       // 1972, which the measurement below the benga entry explains.
       plan: "dance", bpm: 148,
-      parents: {},
-      wants: ["merengue típico cibaeño", "danza"],
+      /* AN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue
+         round, shift 2).
+         The want "danza" is `contradanza` (Havana 1803) under the word the
+         nineteenth century actually used for it in Santo Domingo.
+         THE ARGUMENT: "San Pascual Bailon" (anonymous, printed Havana, 1803) is the
+         parent row's own record; the transmission artefact is the polemic "Contra el
+         merengue" in EL OASIS, Santo Domingo, 14 January 1855, which attacks the new
+         dance for DISPLACING the tumba — a contemporary complaint that names both
+         the ancestor and the year of the succession. 0.4: the Cibao accordion trio
+         is the other half and stays wanted by its own name.
+         BOTH DIRECTIONS CHECKED: `bachata` (Santo Domingo 1992) already descends
+         from this row. `danzon` (Matanzas 1879) and `habanera` (Havana 1860) were
+         weighed and declined — both are Cuban cousins off the same contradanza root,
+         siblings of this row rather than ancestors of it. */
+      parents: { contradanza: 0.4 },
+      wants: ["merengue típico cibaeño"],
       instr: ["alto_sax", "trumpet", "accordion"],
       drumkit: "acoustic",
       entry: v => v, reg: v => (v === 2 ? -1 : 0), realize: () => "line",
@@ -10210,6 +10748,21 @@
     mento: {
       label: "Kingston 1952", voices: 3, near: "calypso",
       plan: "song", bpm: 108,
+      /* DECLINED, AND THE REASON (2026-09-02, the catalogue round, shift 2). This
+         row was examined in the parentless sweep and keeps `parents: {}`: every real
+         parent is missing, and the three nearest in-table candidates were each
+         refused on a named ground.
+         `hymn` (Boston 1831) is the one that nearly landed, on the strength of the
+         "revival hymn" want and the `mbube` precedent (`hymn: 1`, Johannesburg 1939).
+         It is refused because the Jamaican object is the SANKEYS — Ira D. Sankey's
+         SACRED SONGS AND SOLOS, London 1873 — and the `hymn` row is dotted at Lowell
+         Mason's Boston 1831, a different book in a different revival. Grounding a
+         Kingston row on the nearest hymnal in the table would be the conscription
+         this round exists to stop, so the want stays open under its own words.
+         `contradanza` (Havana 1803) and `habanera` (Havana 1860) are refused too: the
+         Jamaican quadrille and the Cuban contradanza are SIBLINGS off the shared
+         French and English contredanse — which is `contradanza`'s own missing want —
+         and mento's identity is the accent on beat four, not the habanera cell. */
       parents: {},
       wants: ["jonkanoo", "quadrille", "revival hymn"],
       cannot: ["the rhumba box — a box lamellophone the player sits on, " +
@@ -10476,7 +11029,23 @@
     banda: {
       label: "Mazatlán 1938", voices: 3, near: "nortena",
       plan: "dance", bpm: 128,
-      parents: {},
+      /* AN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue
+         round, shift 2).
+         Two rows, both earlier, both named in this row's own subject matter.
+         `polka` (Prague 1837): the Bohemian couple dance carried into northern
+         Mexico by the German and Czech settlement of the 1880s — the SAME import
+         `nortena` (Monterrey 1955) already declares at `polka: 0.3`. Banda and
+         norteña are the two Mexican children of one European dance, which is exactly
+         why `corridotumbado` (Guadalajara 2023) takes both of them.
+         `march` (Washington 1889): Sousa's "The Washington Post", 15 June 1889 — the
+         concert-march form Sinaloan municipal bands read off imported parts. The
+         bands form in the 1880s, so this dot is the form at its height rather than
+         the moment of transfer, which is the same shape of claim `holler` makes.
+         THE WANTS BOTH STAY, and the second one is a trap worth writing down: "son
+         sinaloense" is NOT the `son` key (Havana 1928). Cuban son and Mexican son
+         share a Spanish word and nothing else, and converting that want would be the
+         worst edge in the file. */
+      parents: { polka: 0.35, march: 0.25 },
       wants: ["german military band", "son sinaloense"],
       instr: ["clarinet", "brass_section", "tuba"],
       drumkit: "acoustic",
@@ -11733,7 +12302,15 @@
       entry: v => v, reg: v => (v === 1 ? -1 : v === 2 ? 1 : 0),
       realize: v => (v === 1 ? "pad" : "line"),
       part: ["lead", "pad", "counter"],
-      harmony: "modal", mode: MODES.mixo, scale: SCALES.majpent,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         The Punjabi LP era at Jalandhar, 1972 — this row's own place and year, the
+         harvest repertory recorded commercially for the first time. The row plays
+         SCALES.majpent, which has a major third and a major sixth and NO seventh at
+         all; boliyan shouted over a dhol have no chord cycle either (`harmony:
+         "modal"`). Mixolydian is named for a seventh this row cannot reach, so the
+         field now says the third and sixth it can. */
+      harmony: "modal", mode: MODES.ionian, scale: SCALES.majpent,
       artic: "staccato", maxHold: 2, bassStyle: "pedal",
       orn: { grace: 0.4 },
       // THE DHOL IS TWO STICKS ON TWO HEADS AND IT GETS TWO LANES: the
@@ -11814,8 +12391,25 @@
       // those is Tier 2 above. Nothing in this catalog is upstream of it, and
       // naming `disco` because Cairo 1978 had a rhythm section would be the
       // conscription this round exists to stop.
-      parents: {},
-      wants: ["tarab", "mawwal", "baladi"],
+      /* AN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue
+         round, shift 2).
+         This row declared `parents: {}` and then named `tarab` — a KEY IN THIS
+         TABLE, Cairo 1934 — as the first string of its own shopping list. That is
+         not a genuine root and it is not "every parent is missing": it is an edge
+         somebody wrote down in the wrong field.
+         THE ARGUMENT: Umm Kulthum on the Egyptian Radio inaugural broadcast (Cairo,
+         1934) is the takht's vocal grammar — the mawwal, the re-said line, the
+         qafla — and Ahmed Adaweyah's cassettes (Cairo, from 1972) sing that grammar
+         roughly and loudly over an accordion and an organ. Same city, forty-four
+         years, one voice-and-takht lineage. 0.45 rather than 1: the wedding band and
+         the cassette trade are the other half, and neither is a row.
+         BOTH DIRECTIONS CHECKED: `aljil` (Cairo 1988) and `mahraganat` (Cairo 2021)
+         already descend from this row, so the Cairo chain was connected at both ends
+         and broken only here. `firqa` (Cairo 1964) was weighed and declined — shaabi
+         is a break from the film-radio orchestra's decorum, not a descent from it.
+         "mawwal" and "baladi" stay wanted: both are genuinely absent. */
+      parents: { tarab: 0.45 },
+      wants: ["mawwal", "baladi"],
       cannot: ["the quarter tone — rast and bayati put a ~50-cent note on the " +
                "degree that names the maqam, and this anchor claims only the " +
                "12-TET half of the repertory"],
@@ -12329,8 +12923,28 @@
     balkanbrass: {
       label: "Guča 1985", voices: 3, near: "banda",
       plan: "dance", bpm: 152,
-      parents: {},
-      wants: ["ottoman military band", "romani kolo", "čoček"],
+      /* AN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue
+         round, shift 2).
+         The row wanted "ottoman military band" and `ottoman` (Istanbul 1910) is a
+         row — but the want and the key are NOT the same object, so this is a partial
+         payment and the want is narrowed rather than struck.
+         WHAT IS PAID: Tanburi Cemil Bey's Orfeon 78s in makam Hicaz (Istanbul, c.
+         1910-14) — the `ottoman` row's own dot. This row's comment already says its
+         melodies are "a harmonic minor with an augmented second", which is hicaz and
+         nikriz by another name, and the cocek repertory is that makam language put
+         into 2/4. The makam is the ancestor; 0.45 is its share.
+         WHAT IS NOT: the MEHTER, the janissary band, is a different thing from the
+         court art music `ottoman` names, and the actual instrument transfer into
+         Serbia has its own dated event — Josif Slezinger's Knjazevsko-srpska banda,
+         Kragujevac 1831 — which is now wanted by name. `march` (Washington 1889) was
+         weighed and DECLINED: Sousa postdates Kragujevac by fifty-eight years and
+         Guca plays no marches. `lautari` (Bucharest 1906) declined too — the
+         Romanian Romani guild is a sibling tradition, different country, different
+         instruments, no named transmission. */
+      parents: { ottoman: 0.45 },
+      wants: ["the mehter, the janissary band itself",
+              "šlezinger's knjaževsko-srpska banda (kragujevac 1831)",
+              "romani kolo", "čoček"],
       cannot: ["the aksak repertory the same bands play — the 7/8 and 9/8 " +
                "kolos, which is the wall `bulgarian` has been standing in " +
                "front of since it was written"],
@@ -12627,7 +13241,19 @@
       drumkit: "acoustic",
       entry: v => v, reg: v => (v === 2 ? -1 : 0), realize: () => "line",
       part: ["lead", "counter", "riff"],
-      roots: [0, 0, 0, 0, 3, 3, 0, 0, 4, 3, 0, 4], mode: MODES.mixo,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Clifton Chenier's first sides, 1954-55 — this row's own record, and the
+         moment la-la becomes twelve-bar blues in French. The roots above are that
+         twelve bars exactly: degrees 0, 3 and 4, I-IV-V, and NEVER degree 6. A blues
+         has no bVII chord, so mixolydian's flat seventh was never going to arrive as
+         a root — MEASURED, mixo -> ionian moves not one rendered note. The flat
+         seventh this music genuinely has is MELODIC and the row already plays it,
+         from SCALES.blues on the line above. Chords ionian, tune blue: that is the
+         whole harmonic fact of a blues, and now both halves are said in the right
+         field. The same ruling is applied at neworleans, boogiewoogie, deltablues
+         and territoryband below. */
+      roots: [0, 0, 0, 0, 3, 3, 0, 0, 4, 3, 0, 4], mode: MODES.ionian,
       scale: SCALES.blues,
       artic: "staccato", maxHold: 2, bassStyle: "eighths",
       kit: { k: [1,0,0,0, 0,0,1,0, 1,0,0,0, 0,0,1,0],
@@ -13656,7 +14282,16 @@
       realize: v => (v === 3 ? "pad" : "line"),
       part: ["lead", "counter", "counter", "pad"],
       roots: [0, 0, 3, 3, 4, 4, 0, 0],
-      mode: MODES.dorian, scale: DIATONIC, harmony: "modal", intro: "solo",
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Muhammad al-Ha'ik's KUNNASH, compiled at Tetouan at the end of the
+         eighteenth century — this row's own book, place and (dated-by-the-book)
+         year. The eleven surviving nubat are in the Maghribi TUBU', which this box
+         cannot spell: the row is `harmony: "modal"` and the mode reached nothing.
+         Rather than leave a Greek mode-name standing in for a tab' nobody here has
+         measured, the field names the plain alphabet the row actually plays. The
+         tubu' stay in the row's `cannot`, where an unplayable fact belongs. */
+      mode: MODES.aeolian, scale: DIATONIC, harmony: "modal", intro: "solo",
       artic: "legato", maxHold: 3, nobass: true,
       orn: { grace: 0.25, pass: 0.2 },
       // the tar and darbuka's basic cycle, voiced on what there is: a
@@ -14354,7 +14989,14 @@
       realize: v => (v === 1 ? "pad" : "line"),
       part: ["lead", "pad", "counter"],
       kit: {}, nobass: true, harmony: "modal", intro: "padin",
-      mode: MODES.dorian, scale: DIATONIC, artic: "tie", maxHold: 6,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         The strongest case in the whole sweep: the RITSU scale of the togaku
+         repertory — D E F G A B C — is the dorian octave note for note, minor third
+         and natural sixth. The row's year is the Todai-ji Great Buddha eye-opening
+         ceremony (Nara, 752), the dated performance the anchor is written from. The
+         row named ritsu and then sang a flat sixth ritsu does not have. */
+      mode: MODES.dorian, scale: MODES.dorian, artic: "tie", maxHold: 6,
       tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .06, rel: 2.2, gain: .22, verb: .55 },
       words: ["the hichiriki, carrying the melody",
               "the sho, the cluster held over everything",
@@ -14535,7 +15177,15 @@
       instr: "solo_vox",
       entry: () => 0, reg: () => 0, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
-      mode: MODES.dorian, scale: DIATONIC, artic: "legato", maxHold: 3,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         "Barbara Allen", which Pepys heard Mrs Knipp sing in London on 2 January
+         1666 — this row's own record. The tune families collected under that title
+         (Rimbault; Sharp, ENGLISH FOLK SONGS FROM THE SOUTHERN APPALACHIANS, 1917)
+         are gapped D-final tunes with the natural sixth, which is what makes a
+         ballad tune sound older than the words. `appalachia` below is this row two
+         centuries on and takes its own ruling separately. */
+      mode: MODES.dorian, scale: MODES.dorian, artic: "legato", maxHold: 3,
       orn: { grace: 0.2 },
       tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .02, rel: 1.0, gain: .26, verb: .3,
               // WHO SINGS: trobar — the solo narrative tenor, which is
@@ -14613,8 +15263,25 @@
       plan: "song", bpm: 84,
       // LINEAGE: a declared root — the Italian aria the salon imitated
       // and the Brazilian song it grew from are named, not claimed.
-      parents: {},
-      wants: ["the italian aria, as lisbon heard it", "the sung lundum"],
+      /* AN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue
+         round, shift 2).
+         The want "the italian aria, as lisbon heard it" IS a row: `operaseria`
+         (London 1724), and the transmission has a date and a building.
+         THE ARGUMENT: David Perez's ALESSANDRO NELL'INDIE, on Metastasio, opened the
+         Opera do Tejo in Lisbon on 31 March 1755 — three Metastasio opera serias in
+         seven months, twenty years before this row's dot. The modinha is described
+         in its own literature as a sentimental song of ARIA CANTABILE character
+         carrying fashionable Italian vocal ornamentation; that ornamentation walked
+         up the Tagus. 0.45: the other half is the sung lundum, which stays wanted
+         and MUST stay wanted — the in-table `lundu` is Lisbon 1798, twenty-three
+         years LATER than this row, so that key can never pay this want.
+         BOTH DIRECTIONS CHECKED: `choro` (Rio 1900) and `fado` (Lisbon 1955) already
+         descend from this row; `operaseria` descends from `continuo`, so no cycle.
+         `lundu` as a PARENT was weighed and refuted: this row's own comment calls
+         the two the sentimental and the danced halves of one songbook, which makes
+         them siblings, and the lundu is the older African-derived layer besides. */
+      parents: { operaseria: 0.45 },
+      wants: ["the sung lundum"],
       instr: ["solo_vox", "nylon_string_guitar"],
       entry: v => v, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
       part: ["lead", "counter"],
@@ -14919,7 +15586,26 @@
       // LINEAGE: a declared root — the Ottoman court fasıl and the
       // Mevlevi lodge practice behind Cemil Bey are named, not claimed:
       // neither has a named dated record to anchor.
-      parents: {},
+      /* AN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue
+         round, shift 2).
+         Not a want in the wrong field this time, but the same shape of miss: a row
+         that declared no ancestors while its own theory is a Baghdad import with a
+         dated book at each end of the carriage.
+         THE ARGUMENT: Safi al-Din al-Urmawi's KITAB AL-ADWAR (Baghdad, c. 1252) is
+         the Systematist treatise, and Abdulkadir Meragi's MAQASID AL-ALHAN, dedicated
+         to Sultan Murad II in 1415 and turned into Turkish at the Ottoman court, is
+         the book that carried it there — modern Turkish makam theory is the
+         rediscovery of exactly that line. `abbasid` (Baghdad 800) is this table's
+         row for that house. 0.35 and not more: the fasil suite and the Mevlevi ayin
+         are the Ottoman court's own inventions and neither is a row, so both stay
+         wanted.
+         BOTH DIRECTIONS CHECKED: `taqsim` (Cairo 1932) already declares BOTH
+         `ottoman` and `abbasid` as parents, which is the precedent for this pair;
+         `rebetiko` (Piraeus 1935) already descends from this row. `sticheron`
+         (Constantinople 843) was weighed and declined: Marmarinos's EISAGOGI
+         (Constantinople, 1749) documents shared 18th-century practice between the
+         two, which is exchange and not descent. */
+      parents: { abbasid: 0.35 },
       wants: ["the ottoman court fasil", "the mevlevi ayin"],
       cannot: ["the comma system — Ottoman theory divides the tone into " +
                "nine commas and the segah and ussak degrees sit off this " +
@@ -14989,7 +15675,14 @@
       part: ["lead", "counter", "counter"],
       roots: [0, 0, 3, 0, 4, 3, 0, 4],
       prog: PROGS.blues12,
-      mode: MODES.mixo, scale: SCALES.blues, harmony: "cycle",
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         King Oliver's Creole Jazz Band, "Dipper Mouth Blues", cut 6 April 1923 —
+         this row's own record. Its roots are the blues I-IV-V (degrees 0, 3, 4) and
+         never degree 6, so mixolydian reached nothing; see the ruling written out in
+         full at `zydeco`. SCALES.blues on this same line is where the flat seventh
+         actually sounds, and it is untouched. */
+      mode: MODES.ionian, scale: SCALES.blues, harmony: "cycle",
       swing: 0.45, artic: "staccato", maxHold: 2, bassStyle: "walk",
       // two-beat: the bass drum on 1 and 3, the snare's press on 2 and
       // 4, the ride's woodblock chatter on the p lane.
@@ -15038,7 +15731,14 @@
       part: ["lead", "riff"],
       roots: [0, 0, 0, 0, 3, 3, 0, 4],
       prog: PROGS.blues12,
-      mode: MODES.mixo, scale: SCALES.blues, harmony: "cycle",
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Clarence "Pine Top" Smith, "Pine Top's Boogie Woogie" (Vocalion, Chicago,
+         December 1928) — this row's own record, the one that named the music. The
+         eight-to-the-bar left hand walks a major-key twelve bars; the roots above
+         are degrees 0, 3 and 4 and never 6. See `zydeco` for the full ruling; the
+         blue seventh stays where it lives, in SCALES.blues on this line. */
+      mode: MODES.ionian, scale: SCALES.blues, harmony: "cycle",
       swing: 0.33, artic: "staccato", maxHold: 2, bassStyle: "eighths",
       kit: {},
       orn: { grace: 0.3, roll: 0.15 },
@@ -15088,7 +15788,14 @@
       entry: v => v, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
       part: ["lead", "counter"],
       roots: [0, 0, 0, 0, 3, 3, 0, 0],
-      mode: MODES.mixo, scale: SCALES.blues, harmony: "cycle",
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Charley Patton, "Pony Blues", cut 14 June 1929 — this row's own record.
+         The thumb keeps a tonic drone and the changes, when they come, are I and IV:
+         degrees 0 and 3, never 6. Mixolydian named a chord this music does not play;
+         the flat seventh the slide answers with comes from SCALES.blues, unchanged.
+         Full ruling at `zydeco`. */
+      mode: MODES.ionian, scale: SCALES.blues, harmony: "cycle",
       swing: 0.4, artic: "staccato", maxHold: 3, nobass: true, kit: {},
       orn: { grace: 0.35 },
       tone: { wave: "triangle", cut: 2400, q: 1.0, atk: .006, rel: .7, gain: .27, verb: .18,
@@ -15233,7 +15940,15 @@
       entry: v => (v === 0 ? 1 : 0), reg: v => (v === 0 ? 0 : v === 1 ? -1 : 1),
       realize: () => "line",
       part: ["lead", "riff"],
-      harmony: "modal", mode: MODES.dorian, scale: SCALES.majpent,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Can, "Halleluhwah" on TAGO MAGO (Schloss Noervenich, released February 1971)
+         — this row's own record: eighteen minutes on ONE chord, which is why the row
+         is `harmony: "modal"` and why `mode` had nothing to colour. Worse than
+         silent, it was wrong: SCALES.majpent has a MAJOR third and dorian is a minor
+         mode, so the field contradicted the alphabet on the same line. Ionian is the
+         mode majpent is five notes of. */
+      harmony: "modal", mode: MODES.ionian, scale: SCALES.majpent,
       artic: "staccato", maxHold: 2, bassStyle: "eighths",
       kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
@@ -15925,7 +16640,15 @@
       instr: ["solo_vox", "nylon_string_guitar"],
       entry: v => v * 2, reg: v => -v, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
-      mode: MODES.dorian, scale: DIATONIC, artic: "legato", maxHold: 4,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         The Kitab al-Aghani's Mawsili court, Baghdad 800 — this row's own
+         documentary anchor, and NO NOTATION SURVIVES, which the row's comment already
+         says in as many words. A dorian claim on a repertory with no surviving tunes
+         is a fact the box does not have; and the row is `harmony: "modal"`, so it was
+         not even audible. Its own parent `qiyan` (Medina 705) takes the identical
+         ruling on the identical grounds, three lines of argument up the same chain. */
+      mode: MODES.aeolian, scale: DIATONIC, artic: "legato", maxHold: 4,
       orn: { grace: 0.3 },
       tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .03, rel: 1.2, gain: .24, verb: .4,
               // WHO SINGS: andalusi's own melisma — the student carried
@@ -15994,7 +16717,14 @@
       instr: "ahh_choir",
       entry: () => 0, reg: () => 0, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
-      mode: MODES.dorian, scale: DIATONIC, artic: "legato", maxHold: 3,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Notker Balbulus, LIBER YMNORUM, dedicated to Bishop Liutward of Vercelli and
+         written at the Abbey of St Gallen in 884 (Cod. Sang. 381) — this row's own
+         book, year and place. A sequence melody is a chant melody in the same
+         eight-mode tonary `gregorian` is filed by, so it takes the same fix and for
+         the same measured reason. */
+      mode: MODES.dorian, scale: MODES.dorian, artic: "legato", maxHold: 3,
       tone: { wave: "triangle", cut: 2200, q: 0.8, atk: .04, rel: 1.4, gain: .23, verb: .5,
               mouth: MOUTHS.plainchant },
       words: ["the sequence, each phrase said twice, aa bb cc"],
@@ -16053,7 +16783,14 @@
       instr: "ahh_choir",
       entry: () => 0, reg: () => 0, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
-      mode: MODES.dorian, scale: DIATONIC, artic: "legato", maxHold: 5,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Hildegard of Bingen, SYMPHONIA ARMONIE CELESTIUM REVELATIONUM (Rupertsberg,
+         c. 1151; Dendermonde, St-Pieters & Paulusabdij Cod. 9). Her D-final
+         antiphons — "O virtus Sapientiae", "O quam mirabilis" — are mode I with the
+         ambitus stretched, not a different mode; the row already said so and then
+         sang the flat sixth. */
+      mode: MODES.dorian, scale: MODES.dorian, artic: "legato", maxHold: 5,
       orn: { grace: 0.2 },
       tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .04, rel: 1.8, gain: .24, verb: .6,
               // WHO SINGS: soprano leaps where plainchant steps — the
@@ -16250,7 +16987,17 @@
       instr: "solo_vox",
       entry: () => 0, reg: () => 0, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
-      mode: MODES.dorian, scale: SCALES.blues, artic: "legato", maxHold: 4,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         The field holler as Frederick Law Olmsted heard it on the Carolina
+         seaboard in 1853 and wrote it down in A JOURNEY IN THE SEABOARD SLAVE STATES
+         (New York, 1856) — this row's own place and year. One unaccompanied voice:
+         no chords at all (`harmony: "modal"`), so the mode coloured nothing. And
+         SCALES.blues [0,3,5,6,7,10] HAS NO SIXTH OF ANY KIND, which is the single
+         degree dorian exists for. Aeolian is the honest minor-side name for what the
+         row plays. The same reading settles blockparty, psychfunk, chopped, footwork,
+         acidjazz, chillout, nujazz, hambone and sitcomsting below. */
+      mode: MODES.aeolian, scale: SCALES.blues, artic: "legato", maxHold: 4,
       orn: { grace: 0.35 },
       tone: { wave: "triangle", cut: 2400, q: 0.9, atk: .02, rel: 1.2, gain: .27, verb: .45,
               // WHO SINGS: the melisma mouth — the break into falsetto
@@ -16462,7 +17209,14 @@
              r: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
       harmony: "cycle", prog: PROGS.blues12,
       roots: [0, 0, 0, 0, 3, 3, 0, 0],
-      mode: MODES.mixo, scale: SCALES.blues, artic: "staccato", maxHold: 2,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         "Moten Swing", Bennie Moten's Kansas City Orchestra, cut for Victor 13
+         December 1932 — this row's own record. A head arrangement trades riffs over
+         a major-key blues: the roots are degrees 0, 3 and 4, never 6, so mixolydian
+         was a word about a chord the band never played. Full ruling at `zydeco`; the
+         flat seventh in the riffs comes from SCALES.blues, untouched. */
+      mode: MODES.ionian, scale: SCALES.blues, artic: "staccato", maxHold: 2,
       swing: 0.45, bassStyle: "walk",
       tone: { wave: "square", cut: 2600, q: 1.0, atk: .008, rel: .4, gain: .25, verb: .3 },
       words: ["the brass riff, stated and restated",
@@ -16548,7 +17302,20 @@
              r: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1],
              f: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
       harmony: "modal", swing: 0.5, bassStyle: "walk",
-      mode: MODES.dorian, scale: SCALES.majpent, artic: "legato", maxHold: 4,
+      /* THE DORIAN ARRIVES (2026-09-02, the catalogue round, shift 2). The
+         comment above is the claim — "So What is two dorian chords for sixteen
+         and eight bars" — and the row then handed the soloist a MAJOR
+         PENTATONIC, which has neither the minor third nor the natural sixth
+         that make a dorian a dorian. `harmony: "modal"` means there is no
+         chord cycle for `mode` to colour, so the mode reached nothing at all:
+         MEASURED, swapping dorian -> aeolian changed not one rendered note
+         across seeds 1-3 (test/precompose.test.js G14b). Miles Davis, "So
+         What", *Kind of Blue*, Columbia 30th Street Studio, New York, 2 March
+         1959: the head is D dorian for sixteen bars and E-flat dorian for
+         eight, and the whole point of that session was that the band was
+         handed a SCALE instead of changes. This row IS that scale, so it is
+         the one thing the row has to actually play. */
+      mode: MODES.dorian, scale: MODES.dorian, artic: "legato", maxHold: 4,
       tone: { wave: "triangle", cut: 2300, q: 0.8, atk: .01, rel: .8, gain: .24, verb: .35 },
       words: ["the trumpet, space between every phrase",
               "the tenor answers, longer lines",
@@ -16703,7 +17470,14 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [1,0,1,1, 1,0,1,0, 1,0,1,1, 1,0,1,0] },
       harmony: "modal",
-      mode: MODES.dorian, scale: SCALES.majpent, artic: "legato", maxHold: 3,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         The Trips Festival, Longshoremen's Hall, San Francisco, 21-23 January 1966 —
+         this row's own dated performance. The row is modal (a one-chord jam is the
+         point), so the mode reached nothing; and SCALES.majpent has a MAJOR third,
+         which dorian, a minor mode, cannot be a name for. Ionian is the mode that
+         pentatonic is five notes of. */
+      mode: MODES.ionian, scale: SCALES.majpent, artic: "legato", maxHold: 3,
       fx: ["echo", "tremolo"], bassStyle: "eighths",
       tone: { wave: "sawtooth", cut: 2200, q: 1.3, atk: .01, rel: .8, gain: .25, verb: .45,
               mouth: MOUTHS.poplead },
@@ -16741,7 +17515,13 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              p: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
       harmony: "modal",
-      mode: MODES.mixo, scale: SCALES.majpent, artic: "staccato", maxHold: 3,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         The Velvet Underground, New York 1966 — this row's own act and year. Modal,
+         so `mode` coloured nothing, and SCALES.majpent has no seventh at all: the
+         flat seventh mixolydian is named for is not in this row's alphabet. Third
+         and sixth both major, which is ionian. */
+      mode: MODES.ionian, scale: SCALES.majpent, artic: "staccato", maxHold: 3,
       fx: ["crunch"],
       tone: { wave: "sawtooth", cut: 2100, q: 1.1, atk: .008, rel: .6, gain: .25, verb: .3,
               // WHO SINGS: deadpan — the confessional mouth with the
@@ -16993,7 +17773,13 @@
              s: [0,0,0,0, 1,0,0,1, 0,1,0,0, 1,0,0,1],
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,1,1,0] },
       harmony: "modal",
-      mode: MODES.dorian, scale: SCALES.blues, artic: "staccato", maxHold: 2,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Kool Herc in the rec room at 1520 Sedgwick Avenue, the Bronx, 1973 — this
+         row's own dated event. Modal, so no root for the mode to colour, and
+         SCALES.blues has no sixth of any kind, which is the one degree dorian is
+         named for. Full ruling at `holler`. */
+      mode: MODES.aeolian, scale: SCALES.blues, artic: "staccato", maxHold: 2,
       swing: 0.1, bassStyle: "eighths",
       // GRAIN 0.14 — this row's two `words` are "the record on the left
       // deck" and "the record on the right", which is the table saying the
@@ -17054,7 +17840,12 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1] },
       harmony: "modal",
-      mode: MODES.dorian, scale: SCALES.blues, artic: "staccato", maxHold: 3,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Detroit 1975 — this row's own place and year. Modal over a one-chord vamp,
+         and SCALES.blues has no sixth: dorian named a degree the row cannot play.
+         Full ruling at `holler`. */
+      mode: MODES.aeolian, scale: SCALES.blues, artic: "staccato", maxHold: 3,
       swing: 0.18, bassStyle: "sixteenths", fx: ["wah"],
       tone: { wave: "sawtooth", cut: 2000, q: 1.3, atk: .01, rel: .5, gain: .26, verb: .35,
               // WHO SINGS: the gospel choir aboard the mothership.
@@ -17278,7 +18069,12 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
              h: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,1,0,0] },
       harmony: "modal",
-      mode: MODES.dorian, scale: SCALES.blues, artic: "tie", maxHold: 4,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         DJ Screw's grey tapes, Houston 1995 — this row's own record. Slowing a
+         record does not give it a sixth: the row is modal and SCALES.blues has none,
+         so dorian was a name with nothing under it. Full ruling at `holler`. */
+      mode: MODES.aeolian, scale: SCALES.blues, artic: "tie", maxHold: 4,
       swing: 0.2, bassStyle: "pedal", fx: ["echo"],
       // GRAIN 0.45 — and it is HISS, not groove. Screw's records left the
       // house on dubbed cassettes, tape to tape, and what that adds is a
@@ -17379,7 +18175,12 @@
              h: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
       kitVel: { t: [0,5,7,0, 0,5,0,7, 0,5,7,0, 7,0,5,7] },
       harmony: "modal",
-      mode: MODES.dorian, scale: SCALES.blues, artic: "staccato", maxHold: 1,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Chicago 2013 — this row's own place and year. A 160-bpm modal loop with no
+         chord cycle, over SCALES.blues, which has no sixth. Dorian was decoration.
+         Full ruling at `holler`. */
+      mode: MODES.aeolian, scale: SCALES.blues, artic: "staccato", maxHold: 1,
       bassStyle: "pedal",
       tone: { wave: "square", cut: 2600, q: 1.2, atk: .002, rel: .15, gain: .26, verb: .25 },
       words: ["the syllable, stuttered until it is a drum",
@@ -17835,7 +18636,18 @@
       realize: () => "line",
       part: ["lead", "counter"],
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
-      mode: MODES.dorian, scale: DIATONIC,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         The two Delphic paeans on the Athenian Treasury wall, Delphi 128 BC — this
+         row's own inscriptions, by Athenaeus son of Athenaeus and Limenios son of
+         Thoinos. The word "Dorian" is a TRAP here and that is the reason for this
+         edit rather than the measurement alone: the Greek Dorian octave species runs
+         E to E, which is this table's `phrygian`, and the hymns themselves are read
+         in the Phrygian tonos with chromatic passages. Naming a modern dorian on an
+         ancient Greek row asserts the one thing the source does not say — and the
+         row is `harmony: "modal"`, so it did not even sound it. The field now names
+         the alphabet the row plays and claims nothing about the tonos. */
+      mode: MODES.aeolian, scale: DIATONIC,
       artic: "legato", maxHold: 4, incClamp: 2,
       tone: { wave: "triangle", cut: 2200, q: 0.9, atk: .04, rel: 1.6, gain: .24, verb: .6,
               mouth: MOUTHS.plainchant },
@@ -17895,7 +18707,16 @@
       // own antiphony arithmetic on a Roman occasion
       entry: v => v * 2, reg: v => -v, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
-      mode: MODES.dorian, scale: DIATONIC,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Horace's CARMEN SAECULARE, sung on the Palatine and the Capitol at the Ludi
+         Saeculares of June 17 BC, with the acta of the games (CIL VI 32323) naming
+         the twenty-seven boys and girls and the poet — this row's own record. The
+         row's comment states the split it lives by: "words, forces, occasion and
+         metre real, tune NOT". A mode is a fact about the tune. Declaring dorian on
+         a lost melody claimed the one thing the stone does not carry; the field now
+         names the plain alphabet the row plays and asserts nothing. */
+      mode: MODES.aeolian, scale: DIATONIC,
       artic: "legato", maxHold: 4, incClamp: 2,
       tone: { wave: "triangle", cut: 2100, q: 0.8, atk: .06, rel: 2.0, gain: .25, verb: .65,
               // straight-toned trained children; the bank has no children's
@@ -17972,7 +18793,20 @@
       instr: "ahh_choir",
       entry: () => 0, reg: () => 0, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
-      mode: MODES.mixo, scale: DIATONIC,
+      /* NOTE FOR NOTE, AND NOW ACTUALLY (2026-09-02, the catalogue round,
+         shift 2). The comment above says the papyrus is "entirely diatonic, an
+         exact octave F to F with the final on G — which on this table's grid
+         is the mixolydian row, note for note", and then the row sang
+         `DIATONIC`, which is [0,2,3,5,7,8,10] — the NATURAL MINOR, a flat
+         third and a flat sixth away from the octave species just claimed. A
+         `harmony: "modal"` row has no chords, so `mode` colours nothing and
+         the melody is drawn from `scale` alone: MEASURED, swapping mixo ->
+         ionian changed not one rendered note across seeds 1-3
+         (test/precompose.test.js G14b). P.Oxy. XV 1786 (Oxyrhynchus, c. 300;
+         Papyrology Rooms, Sackler Library, Oxford) is the only artifact this
+         row has, its pitches are legible, and "note for note" has to mean the
+         notes. */
+      mode: MODES.mixo, scale: MODES.mixo,
       artic: "legato", maxHold: 4, incClamp: 2,
       tone: { wave: "triangle", cut: 2100, q: 0.8, atk: .05, rel: 1.8, gain: .24, verb: .6,
               mouth: MOUTHS.plainchant },
@@ -19665,7 +20499,15 @@
       entry: v => v, reg: v => (v === 1 ? -1 : v === 2 ? 0 : 1),
       realize: () => "line",
       part: ["lead", "riff", "counter"],
-      harmony: "modal", mode: MODES.mixo, scale: SCALES.major,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         "Manteca" — Gillespie, Pozo and Fuller, cut December 1947 — this row's own
+         record. The A section is a one-chord tumbao, which is why the row is
+         `harmony: "modal"`: there is no chord for a flat seventh to sit in, and
+         SCALES.major carries the natural seventh. Mixolydian described the vamp's
+         FEEL and reached not one note; the field now restates the alphabet the row
+         actually plays. */
+      harmony: "modal", mode: MODES.ionian, scale: SCALES.major,
       artic: "staccato", maxHold: 2,
       // the tumbao is the bassGrid — "Manteca" is the bass riff — and
       // the congas live on the toms, the ethiojazz precedent.
@@ -19912,7 +20754,15 @@
       entry: v => v * 2, reg: v => (v === 0 ? 0 : -1),
       realize: v => (v === 1 ? "pad" : "line"),
       part: ["lead", "pad"],
-      harmony: "modal", mode: MODES.dorian, scale: DIATONIC,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Jan Garbarek, AFRIC PEPPERBIRD (ECM 1007, Arne Bendiksen Studio, Oslo,
+         September 1970) — this row's own city and year. Nordic jazz is Kind of
+         Blue's modal grammar carried north: one scale instead of changes, which is
+         exactly why `harmony: "modal"` is right here and exactly why the scale had
+         to BE the mode. `modaljazz` (New York 1959) took this same repair earlier in
+         this shift; the child now plays its parent's alphabet. */
+      harmony: "modal", mode: MODES.dorian, scale: MODES.dorian,
       artic: "tie", maxHold: 5, bassStyle: "pedal",
       kit: { k: [1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0],
              r: [1,0,0,0, 0,0,1,0, 0,0,0,0, 1,0,0,0],
@@ -20062,7 +20912,11 @@
       realize: () => "line",
       part: ["lead", "riff", "riff"],
       harmony: "modal",
-      mode: MODES.dorian, scale: SCALES.blues, artic: "staccato", maxHold: 2,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         London 1988 — this row's own place and year. Modal, and SCALES.blues has no
+         sixth for dorian to be named after. Full ruling at `holler`. */
+      mode: MODES.aeolian, scale: SCALES.blues, artic: "staccato", maxHold: 2,
       swing: 0.15, bassStyle: "sixteenths",
       kit: { k: [1,0,0,0, 0,0,1,0, 0,1,0,0, 0,0,1,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
@@ -20103,7 +20957,14 @@
       realize: v => (v === 1 ? "pad" : "line"),
       part: ["lead", "pad"],
       harmony: "modal",
-      mode: MODES.dorian, scale: DIATONIC, artic: "legato", maxHold: 4,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Kruder & Dorfmeister, G-STONED (G-Stone, recorded September-October 1993 at
+         G-Stone Studio, Vienna) — this row's own record. Four tracks of dub bass on
+         a tonic pedal with a muted trumpet over it: `harmony: "modal"`, no cycle, so
+         the mode never reached a root and the natural sixth never sounded. The field
+         now names the alphabet the row plays. */
+      mode: MODES.aeolian, scale: DIATONIC, artic: "legato", maxHold: 4,
       swing: 0.25, bassStyle: "pedal", fx: ["echo"],
       tone: { wave: "triangle", cut: 1500, q: 0.9, atk: .025, rel: 1.4, gain: .24, verb: .5 },
       words: ["the trumpet, muted, in no hurry, in smoke",
@@ -20319,7 +21180,11 @@
       realize: v => (v === 2 ? "pad" : "line"),
       part: ["lead", "counter", "pad"],
       harmony: "modal",
-      mode: MODES.dorian, scale: SCALES.blues, artic: "legato", maxHold: 4,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         London 1996 — this row's own place and year. Modal over SCALES.blues, which
+         has no sixth. Full ruling at `holler`. */
+      mode: MODES.aeolian, scale: SCALES.blues, artic: "legato", maxHold: 4,
       swing: 0.2, bassStyle: "pedal",
       kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
@@ -20510,7 +21375,13 @@
       realize: v => (v === 2 ? "pad" : "line"),
       part: ["lead", "counter", "pad"],
       harmony: "modal",
-      mode: MODES.dorian, scale: DIATONIC, artic: "legato", maxHold: 4,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Thievery Corporation, SOUNDS FROM THE THIEVERY HI-FI (ESL Music, Washington,
+         1996) — this row's own record. Sitar and Rhodes over a dub bass that sits on
+         the tonic: `harmony: "modal"`, no chord cycle, so dorian's natural sixth had
+         no root to arrive on. MEASURED decorative; the field now names what plays. */
+      mode: MODES.aeolian, scale: DIATONIC, artic: "legato", maxHold: 4,
       swing: 0.2, bassStyle: "pedal",
       kit: { k: [1,0,0,0, 0,0,1,0, 0,1,0,0, 0,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
@@ -20670,7 +21541,11 @@
       realize: () => "line",
       part: ["lead", "counter"],
       harmony: "modal",
-      mode: MODES.dorian, scale: SCALES.blues, artic: "legato", maxHold: 3,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Paris 2000 — this row's own place and year. Modal over SCALES.blues, which
+         has no sixth of any kind. Full ruling at `holler`. */
+      mode: MODES.aeolian, scale: SCALES.blues, artic: "legato", maxHold: 3,
       swing: 0.1, bassStyle: "octaves",
       kit: { k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
@@ -20861,7 +21736,14 @@
       instr: ["solo_vox", "ahh_choir"],
       entry: () => 0, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
-      mode: MODES.dorian, scale: DIATONIC, artic: "legato", maxHold: 3,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Stan Hugill, SHANTIES FROM THE SEVEN SEAS (Routledge & Kegan Paul, London,
+         1961) — this row's own book, city and year, and the last working shantyman's
+         own collection. The halyard shanties he prints ("Shallow Brown", "Haul Away
+         Joe") are the D-final gapped tunes the row was written for; sung unaccompanied
+         over a pull, the tune is the entire record. */
+      mode: MODES.dorian, scale: MODES.dorian, artic: "legato", maxHold: 3,
       tone: { wave: "triangle", cut: 2200, q: 0.8, atk: .02, rel: .8, gain: .26, verb: .3,
               // WHO SINGS: the skiffler throat — rough, forward, unschooled,
               // which is what a watch of sailors is.
@@ -20894,7 +21776,16 @@
       instr: "solo_vox",
       entry: () => 0, reg: () => 1, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
-      mode: MODES.dorian, scale: SCALES.majpent, artic: "legato", maxHold: 3,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Cecil Sharp and Maud Karpeles in Jane Hicks Gentry's kitchen, Hot Springs,
+         North Carolina, August 1916 — this row's own collecting trip, seventy songs
+         from one singer. The row's comment says "pentatonic-leaning" and the row
+         plays SCALES.majpent, whose third is MAJOR: dorian is a minor mode and could
+         not have been a name for it. Its parent `ballad` (London 1666) genuinely is
+         dorian and now sings it — this row is the gapped pentatonic descendant and
+         says so instead of borrowing the parent's word. */
+      mode: MODES.ionian, scale: SCALES.majpent, artic: "legato", maxHold: 3,
       orn: { grace: 0.3 },
       tone: { wave: "triangle", cut: 2600, q: 0.8, atk: .02, rel: .9, gain: .26, verb: .26,
               mouth: MOUTHS.trobar },
@@ -20963,8 +21854,21 @@
       // Bucharest record would be the two-spellings conscription the
       // want was written to prevent; the lautari row now carries the
       // same want, so the ledger counts one debt owed by two rows.
-      parents: { chazzanut: 0.3 },
-      wants: ["the moldavian lautari repertory"],
+      /* AN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue
+         round, shift 2).
+         FOUND OUTSIDE THE PARENTLESS SWEEP and fixed with it, because it is the same
+         mistake: this row wanted "the moldavian lautari repertory" and BOTH halves of
+         that phrase are rows, and both are earlier.
+         `lautari` (Bucharest 1906): Grigoras Dinicu's "Hora staccato", Bucharest
+         1906 — the professional Romani guild whose dance repertory the klezmorim
+         played beside and out of across Bessarabia and Moldavia.
+         `doina` (Maramures 1912): Bartok's Maramures cylinders, 1912 — the free-rhythm
+         lament the klezmer DOYNE is named after and is note-for-note built on.
+         THE PRECEDENT IS ALREADY IN THE TABLE: `taraf` (Clejani 1986) declares
+         `lautari: 0.35, doina: 0.2` — the same pair, the same weighting shape.
+         Chazzanut keeps 0.3 and the want closes. */
+      parents: { chazzanut: 0.3, lautari: 0.25, doina: 0.15 },
+      wants: [],
       cannot: ["the krekhts — the sobbing catch between notes, a glottal " +
                "break the clarinet copies from the cantor's throat; the " +
                "grace table can lean INTO a note but cannot crack it open"],
@@ -21323,7 +22227,15 @@
       kit: { h: [1,1,0,1, 1,1,0,1, 1,1,0,1, 1,1,0,1],
              k: [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0] },
       harmony: "modal",
-      mode: MODES.dorian, scale: DIATONIC, artic: "staccato", maxHold: 2,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Diego Carpitella and Ernesto de Martino's field recordings of the
+         pizzica-tarantata at Galatina, June 1959, published in LA TERRA DEL RIMORSO
+         (Il Saggiatore, Milan, 1961) — this row's own place, month and year. The
+         tarantata cell is a two-chord i-bVII oscillation, a NATURAL-MINOR figure:
+         the raised sixth that would make it dorian is not the pizzica's note, and
+         the row is modal, so it never sounded one either way. */
+      mode: MODES.aeolian, scale: DIATONIC, artic: "staccato", maxHold: 2,
       bassStyle: "pedal",
       tone: { wave: "triangle", cut: 2700, q: 1.0, atk: .006, rel: .3, gain: .27, verb: .3 },
       words: ["the fiddle, circling the one figure that works",
@@ -21350,7 +22262,15 @@
       instr: "solo_vox",
       entry: () => 0, reg: () => 0, realize: () => "line",
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
-      mode: MODES.mixo, scale: DIATONIC, artic: "legato", maxHold: 4,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Joe Heaney (Seosamh O hEanai), first Gael-Linn sides, 1957, from Carna in
+         Connemara — this row's own singer, place and year. Sean-nos is sung
+         unaccompanied, so the tune is the whole record and the row's alphabet is the
+         only thing it has. The repertory's commonest colour is the flat seventh under
+         a MAJOR third; the row declared exactly that and then sang the natural minor,
+         whose flat third the tradition does not have. */
+      mode: MODES.mixo, scale: MODES.mixo, artic: "legato", maxHold: 4,
       orn: { grace: 0.45, pass: 0.2 },
       tone: { wave: "triangle", cut: 2400, q: 0.8, atk: .025, rel: 1.1, gain: .26, verb: .3,
               // WHO SINGS: the monody throat — one ornamented solo line,
@@ -21762,7 +22682,13 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              h: [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0] },
       harmony: "modal",
-      mode: MODES.mixo, scale: BLUES, artic: "staccato", maxHold: 1,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Jonathan Wolff's slap-bass sting, Los Angeles 1989 — this row's own record.
+         A sting has no progression to be the seventh of (`harmony: "modal"`), and
+         BLUES [0,3,5,6,7,10] has a MINOR third, which mixolydian is not. Full ruling
+         at `holler`. */
+      mode: MODES.aeolian, scale: BLUES, artic: "staccato", maxHold: 1,
       nobass: true,
       tone: { wave: "square", cut: 2200, q: 1.2, atk: .004, rel: .25, gain: .27, verb: .18 },
       words: ["the slap bass, talking over the applause",
@@ -22006,7 +22932,15 @@
              s: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0],
              r: [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0] },
       harmony: "modal",
-      mode: MODES.dorian, scale: SCALES.chromatic,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Elmer Bernstein, THE MAN WITH THE GOLDEN ARM main title, Los Angeles 1955 —
+         this row's own record, the year the big band walked into the pictures.
+         SCALES.chromatic contains all twelve degrees, so it has every mode's notes
+         and states none of them; the row is modal on top of that, so `mode` reached
+         nothing twice over. The field now names the minor side the row actually
+         sounds, and the chromatic alphabet is untouched. */
+      mode: MODES.aeolian, scale: SCALES.chromatic,
       artic: "staccato", maxHold: 2, bassStyle: "walk",
       tone: { wave: "sawtooth", cut: 2300, q: 1.1, atk: .006, rel: .5, gain: .26, verb: .33 },
       words: ["the muted trumpet, the tail under the streetlight",
@@ -23357,7 +24291,13 @@
       kit: { k: [1,0,0,0, 0,0,1,0, 0,0,1,0, 0,0,0,0],
              p: [1,0,0,1, 0,0,1,0, 0,1,0,0, 1,0,0,0],
              h: [0,0,1,0, 1,0,0,1, 0,0,1,0, 1,0,0,1] },
-      nobass: true, harmony: "modal", mode: MODES.mixo, scale: SCALES.majpent,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Los Munequitos de Matanzas, first LP for Puchito, 1956 — this row's own
+         record. Voices and drums and nothing else: no bass (`nobass: true`), no
+         chords (`harmony: "modal"`), so `mode` had neither a root nor a bass line to
+         colour. SCALES.majpent has a major third and no seventh; ionian is its mode. */
+      nobass: true, harmony: "modal", mode: MODES.ionian, scale: SCALES.majpent,
       artic: "staccato", maxHold: 2,
       tone: { wave: "triangle", cut: 2300, q: 1.0, atk: .008, rel: .4, gain: .27, verb: .3,
               mouth: MOUTHS.melisma },
@@ -23559,7 +24499,16 @@
       entry: v => v, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
       part: ["lead", "counter"],
       kit: {}, nobass: true, harmony: "modal", intro: "solo",
-      mode: MODES.dorian, scale: DIATONIC, artic: "legato", maxHold: 4,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Azza al-Mayla of Medina, d. 705 — this row's own named singer and year. The
+         row's comment already rules on exactly this question: "ALPHABET IS
+         DELIBERATELY NOT HIJAZ AND NOT RAST … this ZIM dates no mode to Umayyad
+         Medina … this row plays the plain diatonic its own child abbasid plays and
+         claims nothing it cannot cite." A dorian declaration was that same
+         unciteable claim, smuggled into the field the comment was guarding. The
+         field now agrees with the comment. */
+      mode: MODES.aeolian, scale: DIATONIC, artic: "legato", maxHold: 4,
       orn: { grace: 0.35 },
       tone: { wave: "triangle", cut: 2250, q: 0.85, atk: .025, rel: 1.3, gain: .24, verb: .42,
               // WHO SINGS: melisma — the ornamented line both descendants
@@ -23625,7 +24574,15 @@
       entry: () => 0, reg: v => (v === 0 ? 0 : -1), realize: () => "line",
       part: ["lead", "riff"],
       kit: {}, nobass: true, harmony: "modal",
-      mode: MODES.mixo, scale: DIATONIC, artic: "staccato", maxHold: 2,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Ole Bull's Christiania concert with Myllarguten, 15 January 1849 — this
+         row's own place and year. The Hardanger fiddle plays over four or five
+         ringing sympathetic strings tuned to the open drone, and the slaatter
+         repertory's signature is the flat seventh against a major third with the
+         drone underneath. The row named mixolydian and then sang the natural minor,
+         whose flat third the sympathetic drones contradict on every stroke. */
+      mode: MODES.mixo, scale: MODES.mixo, artic: "staccato", maxHold: 2,
       orn: { grace: 0.4, pass: 0.15 },
       tone: { wave: "sawtooth", cut: 2700, q: 1.0, atk: .008, rel: .35, gain: .26, verb: .3 },
       words: ["the fiddle, the slått turning on itself",
@@ -24276,7 +25233,19 @@
       drumkit: "power",
       entry: () => 0, reg: v => (v === 0 ? -1 : 0), realize: () => "line",
       part: ["riff", "lead"],
-      roots: [6, 0, 0, 2], mode: MODES.dorian,
+      /* THE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,
+         shift 2; test/precompose.test.js G14b).
+         Red Hot Chili Peppers, Los Angeles 1984 — this row's own act and year. The
+         roots above are bVII-i-i-III: degrees 6, 0 and 2. Degree 6 IS used, which is
+         why this row looks different from the others in the sweep — but the degree
+         DORIAN exists for is 5, the natural sixth, and it is never reached, so mixo
+         and dorian and aeolian all map {6,0,2} to the same three pitch classes.
+         MEASURED: dorian -> aeolian moved not one rendered note. A flat-seven root
+         over a minor third is a natural-minor cell and the field now says so. A vi
+         chord was NOT bolted on to rescue the word: funk rock does not play one, and
+         inventing a root to justify a label is the failure this check exists to
+         catch, not a way to pass it. */
+      roots: [6, 0, 0, 2], mode: MODES.aeolian,
       scale: SCALES.blues, diatonic: true,
       artic: "staccato", maxHold: 2, bassStyle: "sixteenths",
       kit: { k: [1,0,0,1, 0,1,0,0, 1,0,0,1, 0,0,1,0],
@@ -24421,8 +25390,14 @@
       // vocal; `punk` (New York 1976) is the independent label and the
       // refusal of the radio; `psychpop` (London 1968) is the Byrds-shaped
       // chime this whole wing descends from.
-      parents: { garagerock: 0.3, folkduo: 0.25, punk: 0.25, psychpop: 0.2 },
-      wants: ["the Byrds' twelve-string chime, still unanchored and owed by janglepop too"],
+      /* THE BYRDS' TWELVE-STRING, ANCHORED 2026-09-02 (the Chordonomicon
+         gaps). This want said the chime was "still unanchored and owed by
+         janglepop too", and both debts are paid at once: `folkrock` (Los
+         Angeles 1965) is that chime's row, and `janglepop` takes the same edge
+         at its own line. The share comes out of `psychpop`, which was the
+         nearest thing in the table to a jangle and is not one. */
+      parents: { garagerock: 0.3, folkduo: 0.25, punk: 0.25, folkrock: 0.2 },
+      wants: [],
       instr: ["clean_guitar", "steel_string_guitar"],
       drumkit: "room",
       entry: v => v, reg: v => v - 1, realize: () => "line",

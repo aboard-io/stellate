@@ -203,7 +203,21 @@ ok("iranpop: 10 rewrites, >= 8 distinct hooks and >= 5 distinct rhythms", () => 
    the property this list records. Measured the way the gate measures: eight
    seeds each, the document's own `play` string, and only these two changed.
    Nothing fell OUT of the list, which is the other half of the check. */
+/* ...AND THE CHORDONOMICON GAPS ADD EXACTLY ONE (2026-09-02): `chamberpop`
+   (Boston 1994, Cardinal). Three of that round's four new rows are BANDS and
+   none of them is here — folkrock's twelve-string is `even` (continuous
+   eighths), countryrock's turnaround is `pickup`, heartlandrock's shout is
+   `call` — and the fourth is the one whose whole argument is that it is NOT a
+   band: an arranged line, written down, against everything 1994 sounded like.
+   Its idiom is `long` (two onsets a bar, this box's sparsest cell) with
+   `sent: "hold"`, which is the same pair `artrock`, `nordicscore` and
+   `epichybrid` already stand on, and the freeze is what that pair MEANS — the
+   rhythm is the arrangement's and the DEGREES still move at every reading,
+   which the sweep below confirms (hook degrees vary at every anchor with a
+   tune). A chamber-pop line whose rhythm re-rolled per seed would be a band
+   improvising, which is the one thing the row exists to refuse. */
 const FROZEN_RHYTHM = ["ambient", "arabesk", "artrock", "beiruttarab",
+                       "chamberpop",
                        // ...and the soundtrack round's two (2026-09-01), each
                        // frozen BY ITS OWN CLAIM: `epichybrid`'s braam is
                        // "one note, most of a bar" (IDIOM_ANCHOR cell `long`

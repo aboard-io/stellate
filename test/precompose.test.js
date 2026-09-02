@@ -715,8 +715,26 @@ function sectionEvents(doc, i) {
      Berkeley, Long Beach, Athens, Virginia Beach, Kyoto) and the
      (place, year) key forced four rulings, each on its own row. The literal
      stays a literal for the reason :649 gives. */
-  ok("G0 the catalog is 417 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 417,
+  /* 417 -> 421, 2026-09-02, THE CHORDONOMICON GAPS (the catalogue round,
+     shift 2). A census of the 666,000-progression Chordonomicon against this
+     table returned nine labels with thousands of songs each and no row of
+     ours. FIVE WERE DECLINED as twins or as machine labels and the declining
+     is argued at the block in genres.js: album rock is `aor` (the ZIM even
+     redirects the phrase to Album-oriented_rock), permanent wave redirects to
+     Perm_(hairstyle) and is an EchoNest cluster tag, indie rock is
+     `collegerock` + `janglepop` by its own article's lead, contemporary
+     country is `countrypop`'s literal `roots: [0,4,5,3]` with 8,982 of 8,982
+     songs also tagged plain "country", and hard rock is `rock`'s own
+     `roots: [0,0,6,6,3,3,0,0]` with 137 of its 544 corpus files by `rock`'s
+     named band. FOUR WERE REAL and three of them were already owed by a
+     `wants` string: folkrock (Los Angeles 1965, Mr. Tambourine Man),
+     countryrock (Nashville 1968, Sweetheart of the Rodeo), heartlandrock
+     (Asbury Park 1975, Born to Run) and chamberpop (Boston 1994, Cardinal).
+     Five wants closed, five downstream rows re-weighted in the other
+     direction, one place joined the map. The literal stays a literal for the
+     reason :649 gives. */
+  ok("G0 the catalog is 421 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 421,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
@@ -1826,6 +1844,197 @@ function sectionEvents(doc, i) {
     });
     CENSUS = { census, sigSeen, cost, nChair, nNative, SIGNED,
                BUDGET: SEng.BUDGET };
+  }
+
+  /* ================================================================== G14
+     A VOCODER IS A MACHINE, NOT A THROAT.
+
+     precompose.js door 1 refuses a singing GUEST on a record that is declared
+     instrumental — unless the record already sings for itself, which is the
+     `ownVoice` waiver. That waiver was asked through MOUTHY, which is
+     PATCHES.voice OR PATCHES.mouth, and PATCHES.mouth holds exactly one id:
+     `synth_voice`, whose dsp is `tract_voice`, a formant speech synthesiser.
+     genres.js's own roboticpop row says what that id means — "Düsseldorf 1978
+     IS A FORMANT SPEECH SYNTHESISER, not a metaphor for one … a Votrax, a
+     Speak & Spell" — and a Votrax is not a person. Seven anchors seat that id
+     and no throat: dusseldorfschool, electro, roboticpop, industrialdance,
+     ebm, dancepostpunk, versailles. Every one of them silently answered YES to
+     "does this record sing", so no Kraftwerk-lineage row could ever be
+     declared `instrumental: true` and have the declaration bite — the waiver
+     fired before the door did.
+     The waiver now reads THROAT (PATCHES.voice: solo_vox, ahh_choir,
+     ohh_voices) plus the row's own stated `tone.mouth`. DOOR 1 IS UNCHANGED
+     and still reads VOCAL, which still contains the machine mouth: a machine
+     cannot BUY a singer and cannot walk on as one either, and that asymmetry
+     is the rule. Proved on a live row rather than asserted: the vocoder rows
+     are handed `instrumental: true` here, one at a time, and must refuse a
+     singing guest. */
+  {
+    const THROATS = Object.keys(NI.PATCHES.voice);
+    const MOUTHS_ = Object.keys(NI.PATCHES.mouth);
+    ok("G14a the machine mouth and the modelled throats are still two " +
+       "different tables — the rule has something to stand on", () => {
+      assert.ok(MOUTHS_.length && THROATS.length,
+        "PATCHES.voice or PATCHES.mouth is empty; the rule has no subject");
+      assert.deepStrictEqual(MOUTHS_.filter((id) => NI.PATCHES.voice[id]), [],
+        "an id is in BOTH tables — 'a vocoder is not a throat' cannot be asked");
+      assert.ok(MOUTHS_.includes("synth_voice"),
+        "PATCHES.mouth no longer holds synth_voice — re-read this rule");
+    });
+    const instrList = (G) => (Array.isArray(G.instr) ? G.instr : G.instr ? [G.instr] : []);
+    const VOCODED = ANCHORS.filter((k) => {
+      const G = GENRES[k]; if (!G) return false;
+      const l = instrList(G);
+      return l.some((i) => NI.PATCHES.mouth[i]) &&
+             !l.some((i) => NI.PATCHES.voice[i]) && !(G.tone && G.tone.mouth);
+    });
+    ok("G14 a record whose only voice is a vocoder does NOT count as singing " +
+       "— " + VOCODED.length + " anchors (" + VOCODED.join(" ") + "), each of " +
+       "which waived door 1 before this round", () => {
+      assert.ok(VOCODED.length, "no anchor seats a machine mouth and no throat " +
+        "— the rule has no subject left; delete it or re-read the catalogue");
+      const sings = (gk) => {
+        const doc = P.genreToDocument(gk, 1);
+        return doc.voices.some((v) => v.instrument &&
+          (NI.PATCHES.voice[v.instrument] ||
+           (NI.SAMPLED_VOICES && NI.SAMPLED_VOICES[v.instrument])));
+      };
+      for (const gk of VOCODED) {
+        const row = GENRES[gk];
+        const had = Object.prototype.hasOwnProperty.call(row, "instrumental");
+        const was = row.instrumental;
+        try {
+          row.instrumental = true;
+          assert.ok(!sings(gk), gk + " (" + row.label + ") is declared " +
+            "instrumental and its own voice is a VOCODER, and it still seats a " +
+            "singer: the ownVoice waiver is reading the machine mouth again");
+        } finally { if (had) row.instrumental = was; else delete row.instrumental; }
+      }
+      // …AND THE WAIVER STILL WORKS FOR A REAL THROAT, or the fix is just a
+      // wider ban. A row that sings with its own instr keeps its guests.
+      const singer = ANCHORS.find((k) => {
+        const G = GENRES[k];
+        return G && !G.instrumental && instrList(G).some((i) => NI.PATCHES.voice[i]);
+      });
+      assert.ok(singer, "no anchor sings with its own instr — check PATCHES.voice");
+      const row = GENRES[singer];
+      try {
+        row.instrumental = true;
+        assert.ok(sings(singer), singer + " sings with " +
+          instrList(row).find((i) => NI.PATCHES.voice[i]) +
+          " and the waiver no longer covers it — the fix banned real throats too");
+      } finally { delete row.instrumental; }
+    });
+
+  /* ================================================================== G14b
+     A DECORATIVE MODE — a row that names mixolydian or dorian and cannot
+     sound it.
+
+     `mode` is read in exactly three places (kernel.js harm(), chordsOf() and
+     bass()) and all three need CHORD ROOTS. A `harmony: "modal"` row has none,
+     so its mode colours nothing and every note comes out of `scale`; a `cycle`
+     row whose roots never reach the degree the mode exists for (mixolydian's
+     flat seventh, dorian's natural sixth) is in the same position. The glam
+     row already found this by hand on 2026-09-02 ("These roots reach degrees
+     0, 3 and 4 and never degree 6, so mixolydian's flat seventh never sounds")
+     — this is that finding turned into a standing measurement.
+
+     TEST THE ARTIFACT: the question is not asked of the roots array, it is
+     asked of the RENDERED NOTES. Swap the declared mode for its plain
+     neighbour (mixo -> ionian, dorian -> aeolian, the one-degree neighbours),
+     re-render every section of seeds 1-3, and compare. Not one note moved
+     means the mode is decoration. A row whose `scale` IS its mode is exempt:
+     there the colour arrives through the scale and the mode field is a
+     redundant copy, not a silent one.
+
+     49 ROWS FAILED THE DAY THIS CHECK WAS WRITTEN AND NONE DO NOW, so the
+     ceiling is ZERO and the number may only stay there. The first three came
+     off because the row's own comment claimed the mode in words and the record
+     played something else: `forro` ("the flattened seventh … IS the sound",
+     singing SCALES.major), `modaljazz` ("So What is two dorian chords", handed
+     a major pentatonic) and `oxyrhynchus` ("the mixolydian row, note for note",
+     singing the natural minor). The other 47 were ruled on one at a time in
+     the same shift, each argued in its own row comment with a named record,
+     place and year, and each landing on one of the three answers the law at
+     nukernel/genres.js MODES sets out:
+
+       · TWELVE made the mode audible (`scale: MODES.<mode>`) because the
+         record really is in it — gregorian (mode I of the Hartker tonary),
+         organum, sequence, antiphon, troubadour, estampie, ballad, gagaku
+         (the ritsu scale IS the dorian octave), shanty, nordicjazz, seannos
+         and hardingfele. These twelve are the only rows in the sweep whose
+         RENDERED NOTES changed.
+       · FOURTEEN were renamed ionian, because the sounding third is major:
+         the five twelve-bar rows whose roots are I-IV-V and never bVII
+         (zydeco, neworleans, boogiewoogie, deltablues, territoryband — a
+         blues has no flat-seven CHORD; its flat seven is melodic and comes
+         from SCALES.blues, which they already play), the four on
+         SCALES.majpent (ethiojazz, bhangra, protopunk, rumba — no seventh at
+         all), the three where dorian contradicted a MAJOR third on the same
+         line (krautrock, psychrock, appalachia), and mambo and latinjazz.
+       · TWENTY-ONE were renamed aeolian, because the sounding third is minor
+         or there is no evidence at all: the nine on SCALES.blues or BLUES,
+         which has NO SIXTH — the one degree dorian exists for (holler,
+         blockparty, psychfunk, chopped, footwork, acidjazz, chillout, nujazz,
+         hambone) — plus sitcomsting, crimejazz (chromatic states every mode
+         and so states none), funkrock (its roots DO reach degree 6 and still
+         never degree 5), tarantella, and the rows whose tune is lost or was
+         never notated: carmen (the acta name the singers, not the melody),
+         delphic (where the Greek "Dorian" tonos is this table's PHRYGIAN),
+         qiyan, abbasid, nuba, drone, viennadownbeat and downtempo.
+
+     A row may come back onto this list only by earning it: a genre added
+     tomorrow that declares mixo or dorian has to sound the degree it is named
+     for. */
+    const PLAIN = { mixo: "ionian", dorian: "aeolian" };
+    const modeName = (a) => Array.isArray(a) &&
+      Object.keys(MODES).find((k) => MODES[k].join() === a.join());
+    const notesOf = (gk) => {
+      const out = [];
+      for (const seed of SEEDS) {
+        let d; try { d = P.genreToDocument(gk, seed); } catch (e) { return null; }
+        for (let i = 0; i < d.form.sections.length; i++) {
+          let evs; try { evs = sectionEvents(d, i); } catch (e) { continue; }
+          for (const e of evs) if (e.kind !== "hit")
+            out.push(e.kind + ":" + e.t + ":" + (e.p != null ? e.p : e.n));
+          const g = Doc.toGenre(d, i, GENRES);
+          const lines = d.voices.filter((v) => v.kind === "line");
+          const lead = lines.length &&
+            Doc.toPhrase(d, Doc.materialAt(lines[0], d.form.sections[i].id));
+          if (lead) for (let b = 0; b < 8; b++) {
+            let cs; try { cs = K.chordsOf(lead, g, b); } catch (e) { cs = []; }
+            for (const c of cs || []) out.push("chord:" + b + ":" + (c.pcs || []).join("+"));
+          }
+        }
+      }
+      return out.join("|");
+    };
+    const decorative = [];
+    for (const gk of ANCHORS) {
+      const G = GENRES[gk]; if (!G) continue;
+      const mn = modeName(G.mode); if (!PLAIN[mn]) continue;
+      if (Array.isArray(G.scale) && G.scale.join() === G.mode.join()) continue;
+      const before = notesOf(gk); if (before == null) continue;
+      const keep = G.mode;
+      let after;
+      try { G.mode = MODES[PLAIN[mn]]; after = notesOf(gk); }
+      finally { G.mode = keep; }
+      if (before === after) decorative.push(gk + " (" + mn + ", " + G.label + ")");
+    }
+    const DECOR_MAX = 0;
+    ok("G14b " + decorative.length + " anchors name a mode the record cannot " +
+       "sound — swapping mixo->ionian / dorian->aeolian moves not one rendered " +
+       "note (was 49 when the check was written; the ceiling is now ZERO)", () => {
+      assert.ok(decorative.length <= DECOR_MAX, decorative.length +
+        " decorative mode(s), and the ceiling is " + DECOR_MAX + " — a row " +
+        "declares mixolydian or dorian and cannot sound the degree it is " +
+        "named for. Fix it the way the law at genres.js MODES says (make the " +
+        "scale the mode, or name what it plays, or give it a root that uses " +
+        "the degree) and argue it in the row. Offenders:\n      " +
+        decorative.join("\n      "));
+    });
+    console.log("       decorative modes (" + decorative.length + "): " +
+      decorative.map((s2) => s2.split(" ")[0]).join(" "));
   }
 
   /* ================================================================== G10

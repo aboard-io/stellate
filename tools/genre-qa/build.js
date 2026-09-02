@@ -8,7 +8,7 @@
  *   node tools/genre-qa/build.js --no-chordonomicon   skip the 666k-progression load
  *   node tools/genre-qa/report.js                 the checks, worst-first, into scratch/genre-qa/REPORT.md
  *
- * WHY THIS EXISTS. genres.js is 25,000 lines and 417 rows, and half of every
+ * WHY THIS EXISTS. genres.js is 26,000 lines and 421 rows, and half of every
  * row is closures and an argued comment — which is exactly why that file stays
  * the source of truth and this is only a MIRROR. Nothing here edits a genre. It
  * reads the catalogue, composes every row at seed 1, measures the MIDI corpus

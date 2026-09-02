@@ -9,7 +9,7 @@
   "scopes": 3,
   "sample": 16,
   "seed": 20260824,
-  "compiles": 53273
+  "compiles": 52117
  },
  "sheets": {
   "time.meter": {
@@ -18,7 +18,7 @@
    "options": {},
    "census": {
     "rows": 55,
-    "alive": 55,
+    "alive": 54,
     "writes": [
      "time.meter",
      "time.meter.four",
@@ -33,7 +33,7 @@
    "options": {},
    "census": {
     "rows": 55,
-    "alive": 55,
+    "alive": 54,
     "writes": [
      "time.rate"
     ]
@@ -67,7 +67,7 @@
    "options": {},
    "census": {
     "rows": 55,
-    "alive": 55,
+    "alive": 54,
     "writes": [
      "alphabet.key"
     ]
@@ -79,7 +79,7 @@
    "options": {},
    "census": {
     "rows": 55,
-    "alive": 54,
+    "alive": 49,
     "writes": [
      "alphabet.mode"
     ]
@@ -88,17 +88,14 @@
   "alphabet.scale": {
    "scope": "song",
    "regenerates": true,
-   "options": {
-    "": {
-     "inert": {
-      "rule": "always"
-     }
-    }
-   },
+   "options": {},
    "census": {
     "rows": 55,
-    "alive": 53,
-    "overOffered": 3
+    "alive": 52,
+    "openOptions": [
+     ""
+    ],
+    "overOffered": 6
    }
   },
   "alphabet.harmony": {
@@ -107,7 +104,7 @@
    "options": {},
    "census": {
     "rows": 55,
-    "alive": 52,
+    "alive": 49,
     "writes": [
      "alphabet.harmony",
      "alphabet.harmony.cycle",
@@ -119,21 +116,14 @@
   "alphabet.quality": {
    "scope": "song.bar",
    "regenerates": true,
-   "options": {
-    "triad": {
-     "rule": {
-      "rule": "when",
-      "is": "cast.hasChord"
-     }
-    }
-   },
+   "options": {},
    "census": {
-    "rows": 141,
-    "alive": 27,
+    "rows": 135,
+    "alive": 26,
     "writes": [
      "bar.quality"
     ],
-    "overOffered": 17
+    "overOffered": 11
    },
    "rule": {
     "rule": "when",
@@ -145,7 +135,7 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 165,
+    "rows": 163,
     "alive": 0,
     "writes": [
      "form.roles",
@@ -175,8 +165,8 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 122,
-    "alive": 122,
+    "rows": 119,
+    "alive": 119,
     "writes": [
      "cast.hasChord",
      "cast.hasPad",
@@ -199,8 +189,8 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 122,
-    "alive": 117,
+    "rows": 119,
+    "alive": 114,
     "writes": [
      "voice.cell"
     ]
@@ -212,8 +202,8 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 165,
-    "alive": 139,
+    "rows": 162,
+    "alive": 137,
     "writes": [
      "voice.cell"
     ]
@@ -226,8 +216,8 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 39,
-    "alive": 39,
+    "rows": 35,
+    "alive": 35,
     "writes": [
      "cast.bassStyle",
      "cast.hasBass"
@@ -240,7 +230,7 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 39,
+    "rows": 35,
     "alive": 0,
     "writes": [
      "voice.instrument"
@@ -254,7 +244,7 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 122,
+    "rows": 119,
     "alive": 0,
     "writes": [
      "voice.instrument",
@@ -270,8 +260,8 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 45,
-    "alive": 35,
+    "rows": 44,
+    "alive": 34,
     "writes": [
      "voice.instrument"
     ]
@@ -287,7 +277,7 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 122,
+    "rows": 119,
     "alive": 0
    },
    "blind": true
@@ -298,7 +288,7 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 122,
+    "rows": 119,
     "alive": 0
    },
    "blind": true
@@ -309,7 +299,7 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 122,
+    "rows": 119,
     "alive": 0
    },
    "blind": true
@@ -320,7 +310,7 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 122,
+    "rows": 119,
     "alive": 0
    },
    "blind": true
@@ -331,7 +321,7 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 122,
+    "rows": 119,
     "alive": 0
    },
    "blind": true
@@ -342,7 +332,7 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 122,
+    "rows": 119,
     "alive": 0
    },
    "blind": true
@@ -445,9 +435,12 @@
     }
    },
    "census": {
-    "rows": 165,
-    "alive": 162,
-    "overOffered": 40
+    "rows": 162,
+    "alive": 159,
+    "openOptions": [
+     "at the fifth, a beat later"
+    ],
+    "overOffered": 34
    }
   },
   "dev.bass": {
@@ -468,8 +461,8 @@
     }
    },
    "census": {
-    "rows": 117,
-    "alive": 117
+    "rows": 105,
+    "alive": 105
    }
   },
   "dev.kit": {
@@ -477,18 +470,15 @@
    "chair": "drums",
    "kind": "hit",
    "regenerates": true,
-   "options": {
-    "ride": {
-     "rule": {
-      "rule": "when",
-      "is": "alphabet.harmony.cycle"
-     }
-    }
-   },
+   "options": {},
    "census": {
-    "rows": 135,
-    "alive": 105,
-    "overOffered": 2
+    "rows": 132,
+    "alive": 102,
+    "openOptions": [
+     "backbeat",
+     "swap"
+    ],
+    "overOffered": 7
    },
    "rule": {
     "rule": "when",
@@ -500,7 +490,7 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 165,
+    "rows": 163,
     "alive": 0
    },
    "blind": true
@@ -516,8 +506,8 @@
     }
    },
    "census": {
-    "rows": 165,
-    "alive": 165
+    "rows": 163,
+    "alive": 163
    }
   },
   "form.outro": {
@@ -525,8 +515,8 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 165,
-    "alive": 165
+    "rows": 163,
+    "alive": 163
    }
   },
   "form.env": {
@@ -534,8 +524,8 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 165,
-    "alive": 165
+    "rows": 163,
+    "alive": 162
    }
   },
   "form.mot": {
@@ -543,7 +533,7 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 165,
+    "rows": 163,
     "alive": 0
    },
    "blind": true
@@ -553,7 +543,7 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 165,
+    "rows": 163,
     "alive": 0
    },
    "blind": true
@@ -563,29 +553,17 @@
    "regenerates": true,
    "options": {},
    "census": {
-    "rows": 165,
-    "alive": 156
+    "rows": 163,
+    "alive": 151
    }
   },
   "development.breath": {
    "scope": "section",
    "regenerates": true,
-   "options": {
-    "none": {
-     "rule": {
-      "rule": "unless",
-      "a": {
-       "not": "time.swing"
-      },
-      "b": {
-       "not": "alphabet.harmony.cycle"
-      }
-     }
-    }
-   },
+   "options": {},
    "census": {
-    "rows": 165,
-    "alive": 15
+    "rows": 163,
+    "alive": 18
    }
   },
   "development.pipe": {
@@ -605,9 +583,9 @@
     }
    },
    "census": {
-    "rows": 165,
-    "alive": 165,
-    "overOffered": 12
+    "rows": 163,
+    "alive": 161,
+    "overOffered": 6
    }
   },
   "performance.stress": {
@@ -616,7 +594,7 @@
    "options": {},
    "census": {
     "rows": 55,
-    "alive": 55
+    "alive": 54
    }
   },
   "performance.phrase": {
@@ -625,7 +603,7 @@
    "options": {},
    "census": {
     "rows": 55,
-    "alive": 46
+    "alive": 45
    }
   },
   "performance.orn": {
@@ -640,63 +618,55 @@
    },
    "census": {
     "rows": 55,
-    "alive": 54
+    "alive": 53
    }
   }
  },
  "proof": {
-  "rows": 18588,
-  "identical": 18523,
+  "rows": 18024,
+  "identical": 17948,
   "moved": 0,
-  "overOffered": 65,
+  "overOffered": 76,
   "bad": {
-   "alphabet.quality": {
-    "options": [],
-    "over": 25
-   },
    "dev.kit": {
     "options": [],
-    "over": 3
+    "over": 18
    },
-   "development.breath": {
-    "options": [],
-    "over": 1
-   },
-   "dev.line": {
-    "options": [],
-    "over": 29
-   },
-   "development.pipe": {
-    "options": [],
-    "over": 7
-   }
-  }
- },
- "proofHeld": {
-  "rows": 11422,
-  "identical": 11348,
-  "moved": 0,
-  "overOffered": 74,
-  "bad": {
    "alphabet.quality": {
     "options": [],
     "over": 17
    },
    "dev.line": {
     "options": [],
-    "over": 40
-   },
-   "development.pipe": {
-    "options": [],
-    "over": 12
+    "over": 36
    },
    "alphabet.scale": {
     "options": [],
-    "over": 3
+    "over": 1
    },
-   "dev.kit": {
+   "development.pipe": {
     "options": [],
-    "over": 2
+    "over": 4
+   }
+  }
+ },
+ "proofHeld": {
+  "rows": 11136,
+  "identical": 11088,
+  "moved": 0,
+  "overOffered": 48,
+  "bad": {
+   "development.pipe": {
+    "options": [],
+    "over": 6
+   },
+   "alphabet.quality": {
+    "options": [],
+    "over": 11
+   },
+   "dev.line": {
+    "options": [],
+    "over": 31
    }
   }
  }

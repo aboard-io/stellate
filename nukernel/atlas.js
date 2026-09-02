@@ -301,6 +301,19 @@
     "Miami": [25.76, -80.19], "Milan": [45.46, 9.19],
     "Monterrey": [25.67, -100.32],
     "Mumbai": [19.08, 72.88], "Munich": [48.14, 11.58], "Muswell Hill": [51.59, -0.14],
+    /* ASBURY PARK joined 2026-09-02 with `heartlandrock` (Born to Run), and
+       the crowding is MEASURED and declared rather than discovered later: at
+       the North America arc it lands 3.0 CSS px from New York and 5.7 px from
+       Philadelphia, both under the 8.5 px floor G10 enforces — but G10 applies
+       that law to BRITAIN only (25 places at an 11-degree arc), so the gate
+       stays green. The precedent is already in this table and is closer still:
+       "Teaneck" (psychsoul 1973) sits 1.1 px from New York as its own plain
+       dot, with no ALIAS and no WITHIN, and Sausalito, Greenwich Village,
+       Harlem, Muswell Hill and Brixton are the same pattern. No WITHIN row was
+       added: Monmouth County is not the Versailles/Paris relation that door
+       exists for, and Asbury Park is the shore town the E Street Band is from,
+       not a district of New York. */
+    "Asbury Park": [40.22, -74.01],
     "Nairobi": [-1.29, 36.82], "Nara": [34.69, 135.80], "Nashville": [36.16, -86.78],
     "New Orleans": [29.95, -90.07], "New York": [40.71, -74.01],
     "Northampton": [52.24, -0.90], "Nuremberg": [49.45, 11.08],
@@ -601,6 +614,10 @@
     softfolk:       { place: "Chapel Hill", year: 1970 },
     singersongwriter: { place: "New York", year: 1972 },
     coastrock:      { place: "Sausalito", year: 1977 },
+    folkrock:       { place: "Los Angeles", year: 1965 },
+    countryrock:    { place: "Nashville", year: 1968 },
+    heartlandrock:  { place: "Asbury Park", year: 1975 },
+    chamberpop:     { place: "Boston", year: 1994 },
     spacerock:      { place: "London", year: 1973 },
     grebo:          { place: "Stourbridge", year: 1990 },
     melodictechno:  { place: "Kent", year: 1991 },
@@ -1059,6 +1076,10 @@
                       "San Francisco",
                       "Sausalito", "Sedalia", "St. Louis", "Tampa", "Teaneck",
                       "Toronto",
+                      // ...and the Chordonomicon-gaps round's one (2026-09-02):
+                      // Asbury Park, for `heartlandrock` — PLACES says what it
+                      // measured about the crowding and why it is a plain dot.
+                      "Asbury Park",
                       // ...and the MIDI-corpus round's five (2026-09-02):
                       // Seattle, Berkeley, Long Beach, Athens and
                       // Virginia Beach — plain North American geography,
