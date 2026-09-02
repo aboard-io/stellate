@@ -245,6 +245,106 @@
     // the gallop IS the genre — jazz's `gallop` cell at a canter, arching
     // over the 3-3-2 and coming home
     frontierscore: { cell: "gallop", contour: "arch",   land: "root",  len: "four" },
+    /* THE MIDI-CORPUS ROUND'S TWENTY-ONE, 2026-09-02 — written WITH the
+       anchors, for the reason the soundtrack round's paragraph gives eight
+       rows up and the "do do dooo" tombstone gives above that: ship an
+       anchor with no idiom row and it plays the family default, and twelve
+       of these twenty-one are in ONE family (`band`, whose default is
+       `call`/`insist`), so shipping them bare would have been twelve
+       different acts playing one figure. Every row below is a measurement
+       off the corpus rather than a taste claim — the two that decide most of
+       them are the melodic MEAN INTERVAL (does the tune step or leap?) and
+       the MEDIAN HELD NOTE in sixteenths (does it sustain or chop?), both
+       printed in each anchor's own comment in genres.js. */
+    // grunge: mean interval 2.19, step fraction 0.69, held median 2.0 — a
+    // short riff that falls and does not travel. `riff` over the family's
+    // `call` because the corpus's hook is four notes, not a phrase.
+    grunge:        { cell: "riff",   contour: "fall",   land: "root",  len: "two" },
+    // post-grunge: held median 2.63 and mean pitch 70.8, an octave over its
+    // parent — this one is SUNG, so it takes a pickup into the bar and warms
+    // on the third, which is what separates it from the row above.
+    postgrunge:    { cell: "pickup", contour: "arch",   land: "third", len: "four" },
+    // britpop: mean interval 3.71 against grunge's 2.19 and the highest
+    // melodic mean of the three (73.8) — the tune LEAPS UP and stays up.
+    // `hang` is one long note and then a run, which is the Oasis top line.
+    britpop:       { cell: "hang",   contour: "rise",   land: "fifth", len: "four" },
+    // post-britpop: held p90 of 15.9 sixteenths, the longest of the rock
+    // rows. `long` is two notes a bar, this box's sparsest cell, and `fall`
+    // is what makes it melancholy rather than merely slow — the same pair
+    // `artrock` takes, and separated from it by length and landing.
+    postbritpop:   { cell: "long",   contour: "fall",   land: "third",
+                     sent: "hold",   len: "eight" },
+    // pop-punk: step fraction 0.62 and mean interval 2.40 — the hook walks.
+    // `even` rather than `call` for the reason punk's own row gives: a
+    // one-bar `call` has three onsets and comes out a monotone at speed.
+    poppunk:       { cell: "even",   contour: "arch",   land: "root",  len: "two" },
+    // nu metal: bass mean pitch 30.9, two and a half semitones under every
+    // other guitar band measured — `reg: "low"` is that number, and `insist`
+    // is the half-step neighbour said again and again.
+    numetal:       { cell: "riff",   contour: "insist", land: "root",
+                     reg: "low",     len: "two" },
+    // glam metal: melodic mean 76.0, the highest of the round. The lead
+    // climbs to the fifth and screams there.
+    glammetal:     { cell: "call",   contour: "rise",   land: "fifth",
+                     reg: "high",    len: "four" },
+    // funk rock: off-16 fraction 0.30, the highest of the rock rows, and a
+    // bass histogram with an onset on fourteen of sixteen steps. `push` puts
+    // every onset off the beat, which is what that measures as.
+    funkrock:      { cell: "push",   contour: "insist", land: "root",
+                     reg: "low",     len: "two" },
+    // black metal: mean interval 4.56 with a step fraction of 0.27 — the
+    // line leaps, which is what tremolo-picked arpeggios measure as, and
+    // `sixteenths` is the picking hand itself.
+    blackmetal:    { cell: "sixteenths", contour: "hover", land: "root", len: "four" },
+    // ska punk: the rim lane sits on steps 2/6/10/14 and nowhere else.
+    // `push` is that displacement written into the tune as well as the kit.
+    skapunk:       { cell: "push",   contour: "arch",   land: "third", len: "four" },
+    // college rock: hat on all sixteen steps, bass arpeggiated, and a
+    // change every bar that never touches the tonic. `zig` is the jangle,
+    // `third` the note it comes to rest on.
+    collegerock:   { cell: "even",   contour: "zig",    land: "third", len: "four" },
+    // rap rock: a hat on the quarter note and nothing between it. The
+    // sparsest kit of the round wants the sparsest figure — one call, said
+    // again, going nowhere.
+    raprock:       { cell: "call",   contour: "insist", land: "root",  len: "two" },
+    // southern hip hop: two hand-percussion lanes running sixteenths under a
+    // two-chord vamp. The tune hovers over it and warms on the third — the
+    // sung hook this wing had and New York's did not.
+    southernhiphop:{ cell: "pickup", contour: "hover",  land: "third", len: "four" },
+    // contemporary R&B: the stutter. `push` for the off-beat placement,
+    // `zig` because Timbaland's figures never travel in one direction for
+    // two notes together.
+    contemporaryrnb:{ cell: "push",  contour: "zig",    land: "root",  len: "two" },
+    // trance: an eight-bar arpeggio is the entire genre, and `arpup` is the
+    // one contour in ideas-kit that says so. The length is the build.
+    trance:        { cell: "sixteenths", contour: "arpup", land: "fifth", len: "eight" },
+    // eurodance: the measured loop arrives on the tonic LAST, so the figure
+    // climbs to the fifth and waits there for it.
+    eurodance:     { cell: "even",   contour: "rise",   land: "fifth", len: "four" },
+    // teen pop: motion 0.80, the second-highest of the round — the chords
+    // move under a hook that falls into each one. A pickup into the bar is
+    // the Cheiron top line.
+    teenpop:       { cell: "pickup", contour: "fall",   land: "root",  len: "four" },
+    // retro soul: `soul`'s own family row is already right about this music
+    // (pickup, fall, third) and the row exists only to say the LENGTH — a
+    // 1965 verse is four bars and this record quotes it exactly.
+    retrosoul:     { cell: "pickup", contour: "fall",   land: "third", len: "four" },
+    // neotraditional country: step fraction 0.23 and mean interval 4.61 —
+    // this tune leaps, which is the fiddle answering rather than the singer
+    // stepping. `aabb` is `roots`' own strophic sentence, kept.
+    neotraditional:{ cell: "three",  contour: "arch",   land: "root",
+                     sent: "aabb",   len: "four" },
+    // smooth jazz: held p90 of 14.4 sixteenths, the longest sustained line
+    // measured this round, over the round's highest seventh fraction. One
+    // long note over the changes, landing on the seventh.
+    smoothjazz:    { cell: "long",   contour: "arch",   land: "seventh",
+                     sent: "hold",   len: "eight" },
+    // chiptune: mean interval 11.13 semitones with a step fraction of 0.12 —
+    // almost an octave a note. Nothing else in this table comes close, and
+    // `hang` (one long note, then a run) plus `rise` is the closest this
+    // vocabulary gets to a chip arpeggio that covers the whole keyboard.
+    chiptune:      { cell: "hang",   contour: "rise",   land: "fifth",
+                     reg: "high",    len: "eight" },
     punk:      { cell: "even",   contour: "insist", land: "root",    len: "two" },
     // a sung line that warms on the third, entering before the bar
     bossa:     { cell: "pickup", contour: "fall",   land: "third",   sent: "hold" },

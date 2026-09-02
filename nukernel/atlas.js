@@ -314,6 +314,42 @@
     "Rome": [41.90, 12.50], "San Diego": [32.72, -117.16],
     "San Francisco": [37.77, -122.42], "San Juan": [18.47, -66.11],
     "Santo Domingo": [18.47, -69.90], "São Paulo": [-23.55, -46.63], "Jalandhar": [31.33, 75.58],
+    /* THE MIDI-CORPUS ROUND'S SIX NEW DOTS (2026-09-02). Four are plain
+       geography and two need their sentence.
+         Seattle       `grunge` 1991 and `postgrunge` 1995 — Sub Pop's city
+                       and the scene word's own. Nevermind's tape was cut at
+                       Sound City in Van Nuys and the row still says Seattle,
+                       for the reason `madchester` and `bristolsound`
+                       already give: a scene word takes the room the music
+                       came out of, not the desk it was mixed on.
+         Berkeley      `poppunk` 1994 — Fantasy Studios, where Dookie was
+                       cut. It sits seventeen kilometres from San Francisco
+                       and G10 lists the pair as a NOTE rather than a
+                       failure: the 8.5 px floor is enforced at the BRITISH
+                       arc only, and `Pomona` has sat forty-four kilometres
+                       from Los Angeles since the goth round on exactly that
+                       reading. This note is here so nobody re-derives it.
+         Long Beach    `skapunk` 1996 — Sublime's city, ~30 km from Los
+                       Angeles, the Pomona ruling again.
+         Virginia Beach  `contemporaryrnb` 1997 — Master Sound, where Supa
+                       Dupa Fly was cut, and the city both Missy Elliott and
+                       Timbaland are from. The first dot in Virginia.
+       ATHENS IS THIS TABLE'S GEORGIA, not Greece's, and the collision is
+       declared here rather than left to be discovered: `collegerock` is
+       R.E.M.'s college town at 33.96N, and the Greek capital's music is on
+       this map already as `Piraeus` (rebetiko, its port). A future Greek row
+       reuses Piraeus or picks a key that is not this one — PLACES is keyed
+       by the NAME and two cities cannot share it. The Murmur tape was cut at
+       Reflection Sound in Charlotte, which is already here for `hiphopsoul`;
+       the Seattle ruling above decides between the two.
+       KYOTO is the Constantinople rule run once more: Tokyo is on this map
+       for four rows of Japanese popular music, and `chiptune` (Kyoto 1985)
+       answers to a games company three hundred and seventy kilometres down
+       the country rather than to Shibuya. Two Japanese cities, two musics,
+       and the geography follows the record both times. */
+    "Athens": [33.96, -83.38], "Berkeley": [37.87, -122.27],
+    "Kyoto": [35.01, 135.77], "Long Beach": [33.77, -118.19],
+    "Seattle": [47.61, -122.33], "Virginia Beach": [36.85, -75.98],
     "Sausalito": [37.86, -122.49], "Sedalia": [38.70, -93.23],
     "Seoul": [37.57, 126.98], "Shanghai": [31.23, 121.47],
     "Sofia": [42.70, 23.32], "South Carolina": [34.00, -81.03],
@@ -863,6 +899,27 @@
     hardingfele:    { place: "Oslo", year: 1849 },
     tasnif:         { place: "Tehran", year: 1924 },
     scotsfiddle:    { place: "Edinburgh", year: 1796 },
+    grunge:         { place: "Seattle", year: 1991 },
+    postgrunge:     { place: "Seattle", year: 1995 },
+    britpop:        { place: "Manchester", year: 1994 },
+    postbritpop:    { place: "London", year: 2000 },
+    poppunk:        { place: "Berkeley", year: 1994 },
+    numetal:        { place: "Los Angeles", year: 2000 },
+    glammetal:      { place: "Los Angeles", year: 1987 },
+    funkrock:       { place: "Los Angeles", year: 1984 },
+    blackmetal:     { place: "Oslo", year: 1993 },
+    skapunk:        { place: "Long Beach", year: 1996 },
+    collegerock:    { place: "Athens", year: 1983 },
+    raprock:        { place: "New York", year: 1986 },
+    southernhiphop: { place: "Atlanta", year: 1996 },
+    contemporaryrnb: { place: "Virginia Beach", year: 1997 },
+    trance:         { place: "Berlin", year: 1994 },
+    eurodance:      { place: "Milan", year: 1993 },
+    teenpop:        { place: "Stockholm", year: 1998 },
+    retrosoul:      { place: "London", year: 2006 },
+    neotraditional: { place: "Nashville", year: 1990 },
+    smoothjazz:     { place: "Los Angeles", year: 1986 },
+    chiptune:       { place: "Kyoto", year: 1985 },
   };
   /* WHEN:END */
 
@@ -1002,6 +1059,13 @@
                       "San Francisco",
                       "Sausalito", "Sedalia", "St. Louis", "Tampa", "Teaneck",
                       "Toronto",
+                      // ...and the MIDI-corpus round's five (2026-09-02):
+                      // Seattle, Berkeley, Long Beach, Athens and
+                      // Virginia Beach — plain North American geography,
+                      // the 1983-2000 guitar-band and R&B wing's towns.
+                      // Athens is Georgia's, and PLACES says why.
+                      "Athens", "Berkeley", "Long Beach", "Seattle",
+                      "Virginia Beach",
                       // ...and the debts round's four (2026-08-29): Washington
                       // (a march and a B-side eighty years apart), the Bronx,
                       // Houston, and SOUTH CAROLINA — a state standing where a
@@ -1052,7 +1116,11 @@
     // a Neolithic site on the Huai River plain, Garland's East Asia volume
     // opens with exactly these flutes.
     "East Asia": ["Beijing", "Hong Kong", "Jiahu", "Nara", "Seoul", "Shanghai",
-                  "Taipei", "Tokyo"],
+                  "Taipei", "Tokyo",
+                  // ...and the MIDI-corpus round's one (2026-09-02):
+                  // Kyoto, `chiptune`'s own city — plain Japanese
+                  // geography, and Nara is already here to prove it.
+                  "Kyoto"],
     // Surakarta (2026-08-30, the walls-down round's own dot): `gamelan`
     // landed at Lokananta's city the same morning this row was last read,
     // and the region gate (G11d) caught the dot with no region within the

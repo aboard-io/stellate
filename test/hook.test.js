@@ -227,8 +227,8 @@ const FROZEN_RHYTHM = ["ambient", "arabesk", "artrock", "beiruttarab",
                        "dub", "dubstep", "enka", "epichybrid",
                        "furnituremusic", "gagaku", "gothicrock", "gqom",
                        "hohlefels", "hurrian", "knowlewest", "modaljazz",
-                       "nordicjazz", "nordicscore", "ottoman", "psychrock",
-                       "seannos",
+                       "nordicjazz", "nordicscore", "ottoman", "postbritpop",
+                       "psychrock", "seannos",
                        // ...AND THE BLANK STATE (2026-09-01). Paul: "Add a
                        // 'silence' genre at the top of the genre list. This is
                        // a blank state." Its one cell is sixteen rests, by
@@ -239,7 +239,22 @@ const FROZEN_RHYTHM = ["ambient", "arabesk", "artrock", "beiruttarab",
                        // an opinion. It joins the transcript rather than being
                        // filtered out of the sweep, because the list is a
                        // record of decisions and this is one.
-                       "silence",
+                       "silence", "smoothjazz",
+                       // ...AND THE MIDI-CORPUS ROUND'S TWO (2026-09-02), and
+                       // they are both the SAME decision the list already
+                       // holds for artrock, nordicscore and epichybrid: a
+                       // `long` cell (two onsets a bar, this box's sparsest)
+                       // with `sent: "hold"` over an eight-bar phrase has one
+                       // rhythm and varies its DEGREES, which both of these
+                       // do at every reading. Each was measured into that
+                       // shape rather than chosen — postbritpop's corpus
+                       // holds notes to a p90 of 15.9 sixteenths and
+                       // smoothjazz's to 14.4, the two longest sustains of
+                       // the round — so freezing the rhythm is what the
+                       // measurement asked for and this is the transcript
+                       // saying so. (Both sit in SORT ORDER below, not
+                       // here — the assertion is a deepStrictEqual against
+                       // the sorted sweep.)
                        "torchbreaks", "triphop", "viennadownbeat",
                        "witchhouse"];
 /* THE ONE ROW WHOSE DEGREES ARE FROZEN TOO, and it is the same row: the

@@ -683,8 +683,30 @@ function sectionEvents(doc, i) {
      every door the catalogue already has opens onto it, and it is counted here
      like every other anchor. The literal stays a literal for the reason :649
      gives — a count derived from GENRES would pass while both drifted. */
-  ok("G0 the catalog is 396 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 396,
+  /* 396 -> 417, 2026-09-02, THE MIDI-CORPUS ROUND (COMPOSER.md §5 item 2).
+     Paul, 2026-09-01: a list of ~45 representative artists and "Make heavy
+     use of our MIDI archive for these, don't just imagine", plus "you should
+     also search the MIDI library for many more genres while you're in
+     there." TWENTY-ONE rows, every structural number read off
+     /mnt/sources/relocated/stellate-midi-corpus with tools/mine/mine-midi.js
+     and printed in each row's own comment (file count, tempo distribution
+     with tempo-event files only, meter and mode tallies, the drum lanes as a
+     sixteen-step histogram, the four-bar cycle the corpus votes for):
+     grunge, postgrunge, britpop, postbritpop, poppunk, numetal, glammetal,
+     funkrock, blackmetal, skapunk, collegerock, raprock, southernhiphop,
+     contemporaryrnb, trance, eurodance, teenpop, retrosoul, neotraditional,
+     smoothjazz, chiptune. Keys are GENRE terms per the 2026-09-01 rename
+     law; every act Paul named is in a row comment as the named record.
+     Nine standing anchors were IMPROVED rather than twinned (artrock,
+     boombap, gfunk, clubpop, powerballad, worldbeat, softfolk,
+     singersongwriter, darkrnb) — the brief's own instruction where a genre
+     already exists — and eight tempi moved because the corpus disagreed with
+     what the row had been written from. Six places joined the map (Seattle,
+     Berkeley, Long Beach, Athens, Virginia Beach, Kyoto) and the
+     (place, year) key forced four rulings, each on its own row. The literal
+     stays a literal for the reason :649 gives. */
+  ok("G0 the catalog is 417 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 417,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
