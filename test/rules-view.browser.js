@@ -32,9 +32,26 @@
  *       the cap into every cell's `play` row, 182 steps of the document on
  *       reggae — so this check now drives `phrase`, which nothing in
  *       precompose reads and `toGenre` spreads straight to kernel.js's arch.)
- *   R8  the tier sentence is said ONCE PER AXIS, not once per row. The probe
- *       of 2026-09-02: "'the record is written again at this seed' printed
- *       under EVERY compose-tier row in Rules (~12x)."
+ *   R8  THE TIER IS NOT PRINTED AT ALL. The line above stood until 2026-09-02
+ *       and it read: "R8 the tier sentence is said ONCE PER AXIS, not once per
+ *       row. The probe of 2026-09-02: '\"the record is written again at this
+ *       seed\" printed under EVERY compose-tier row in Rules (~12x)'." That
+ *       move was right and did not go far enough. Paul, wave 4 §4, after
+ *       using the deployed page: *"The genre editor is great. It can be a lot
+ *       tighter though — it has text all over the place. Look at it from the
+ *       point of view of a user just seeing it for the first time."* So the
+ *       tier rides `data-tier` (data) and `data-say` (the hold explainer
+ *       ui/glyph.js runs for the whole page), and this check counts the
+ *       printed ones and requires ZERO.
+ *   R9  ONE SENTENCE PER ROW, AND THE CONTROL IS IN IT. Every rule row is one
+ *       `<label class="nu-said">`, no row is under the 44px tap floor, and a
+ *       single-answer row (number / enum / flag) is at most the two tap rows
+ *       every other question on this page gets. Measured before this round on
+ *       the same record: heights of 33 · 46 · 76 · 103 · 228 · 322 · 478.
+ *   R10 THE INSTRUMENT MENU IS NATIVE FIRST, on the rendered page. Paul, wave
+ *       4 §10: *"When you define a genre you seem to only allow the sample
+ *       instrument not the faust instrument like on high nrg… that's the
+ *       opposite those should be chosen after native"*.
  *   R5  the palette adds a rule the row does not declare, the row appears with
  *       its control, and every greyed option in the palette carries a reason.
  *   R6  `GENRES` is byte-unchanged after all of it — `applyRules` copies, so
@@ -135,10 +152,27 @@ function standUpServer() {
       el.dispatchEvent(new Event("input", { bubbles: true }));
       el.dispatchEvent(new Event("change", { bubbles: true })); }, [k, v]);
     await p.waitForTimeout(700); };
+  /* A MENU IS ANSWERED BY ITS ADDRESS AND NOT BY ITS TAG. `data-sel` is the
+     address ui/selects.js stamps and focus-restore reads, and it survives the
+     widget: if the `<select>` becomes an `<input role="combobox">` with a
+     listbox under it (the 2026-09-02 combo round), the same address still
+     names the control. So the query is tag-free and the write takes whichever
+     shape it finds — a native select takes `value` + `change`, a combobox
+     takes the input and then the option the list offers. */
   const say = async (sel, v) => { await p.evaluate(([s, val]) => {
-      const el = document.querySelector('select[data-sel="' + s + '"]');
-      if (!el) return; el.value = val;
-      el.dispatchEvent(new Event("change", { bubbles: true })); }, [sel, v]);
+      const el = document.querySelector('[data-sel="' + s + '"]');
+      if (!el) return;
+      if (el.tagName === "SELECT") { el.value = val;
+        el.dispatchEvent(new Event("change", { bubbles: true })); return; }
+      el.focus();
+      el.value = val;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      const list = el.getAttribute("aria-controls") &&
+        document.getElementById(el.getAttribute("aria-controls"));
+      const opt = list && [...list.querySelectorAll('[role="option"]')]
+        .find((o) => (o.dataset.v || o.dataset.value) === String(val));
+      if (opt) opt.click();
+      else el.dispatchEvent(new Event("change", { bubbles: true })); }, [sel, v]);
     await p.waitForTimeout(700); };
   const press = async (k) => { const hit = await p.evaluate((key) => {
       const el = document.querySelector('[data-k="' + key + '"]');
@@ -170,14 +204,39 @@ function standUpServer() {
       rows: q(".nu-rule").length,
       plate: plate ? plate.textContent : null,
       kin: (q(".nu-rulekin")[0] || {}).textContent || null,
-      palettes: q('select[data-sel^="rule-add|"]').length,
+      palettes: q('[data-sel^="rule-add|"]').length,
       tiers: q(".nu-rule > .nu-why").length,
-      /* R8: how many tier sentences the panel prints, and how many rows there
-         are to print them under. A row's tier is DATA on every row; the
-         SENTENCE is one per axis block plus the rows that depart from it. */
+      /* R8: how many tier sentences the panel PRINTS — the axis-foot ones and
+         the per-row departures both — against how many rows carry the tier as
+         data and as the hold explainer. The answer the law wants is zero, all,
+         all. */
       axtiers: q(".nu-axtier").length,
       rowtiers: q(".nu-rule[data-tier]").length,
-      rowsaid: q(".nu-rule > small.nu-why:not(.nu-axtier)").length,
+      rowsaid: q(".nu-rule > small.nu-why").length,
+      rowsay: q(".nu-rule[data-say]").length,
+      /* R9: the row's own shape on the glass. `said` is the one sentence
+         label; `stacked` is any row that grew a second block-level thing
+         beside it (a heading over a group of controls, a tier line, a second
+         paragraph) — the "text all over the place" this round took out. */
+      geom: q(".nu-rule").map((d) => ({
+        f: d.dataset.rule, shape: d.dataset.shape || "said",
+        h: Math.round(d.getBoundingClientRect().height),
+        said: d.querySelectorAll(":scope > label.nu-said").length,
+        stacked: d.querySelectorAll(":scope > h4, :scope > p:not(.nu-why), " +
+          ":scope > small").length,
+      })),
+      motifs: q(".nu-rule[data-rule='motifs']").map((d) =>
+        ({ text: d.textContent.trim(), say: (d.dataset.say || "").length })),
+      /* R10: the instrument menu's own group order, read off the rendered
+         control. `<optgroup>` labels in document order — ui/selects.js never
+         reorders, so this is the order `nukernel/rules.js` handed it. */
+      instr: (() => {
+        const m = document.querySelector('#rulesdeck [data-sel="rule.instr.0"]');
+        if (!m) return null;
+        const groups = [...m.querySelectorAll("optgroup")].map((g) => g.label);
+        const first = m.querySelector("optgroup option");
+        return { groups, first: first && first.value, n: m.options.length };
+      })(),
     };
   });
   const EIGHT = ["Time", "Alphabet", "Material", "Form",
@@ -198,22 +257,82 @@ function standUpServer() {
     "R1c the record's own rules have rows and the axes have palettes " +
     JSON.stringify({ rows: shape.rows, palettes: shape.palettes }));
 
-  /* ================= R8 · THE TIER IS SAID ONCE PER AXIS ================= */
-  /* Every row still DECLARES its tier — `data-tier`, which is what a gate and
-     a stylesheet read and what costs no words at all — and the sentence is
-     printed once at the foot of its axis block, plus once on any row that
-     departs from that block's common tier. So the count of spoken tiers is at
-     most the eight blocks plus the handful of departures, and nowhere near the
-     one-per-row the probe measured. */
-  check(shape.axtiers >= 6 && shape.axtiers <= 8,
-    "R8 each axis block says its common tier once — " + shape.axtiers +
-    " sentences over " + shape.axes.length + " blocks");
-  check(shape.rowtiers >= shape.rows - 8,
-    "…while every editable row still declares its tier as data — " +
+  /* ================= R8 · THE TIER IS NOT PRINTED ========================
+     THE PARAGRAPH THIS REPLACES STOOD FOR HALF A DAY and it read: "Every row
+     still DECLARES its tier — `data-tier` … — and the sentence is printed once
+     at the foot of its axis block, plus once on any row that departs from that
+     block's common tier. So the count of spoken tiers is at most the eight
+     blocks plus the handful of departures, and nowhere near the one-per-row
+     the probe measured." Every clause of that is still true of the DATA. What
+     changed is the printing, on Paul's own sentence (wave 4 §4): *"It can be a
+     lot tighter though — it has text all over the place."* Eight tier
+     sentences under eight blocks is eight sentences a first-time reader did
+     not ask for, so the panel prints none and carries all of them on
+     `data-say`, which ui/glyph.js opens on a hover or a hold. */
+  check(shape.axtiers === 0 && shape.rowsaid === 0,
+    "R8 the panel prints no tier sentence at all — " + shape.axtiers +
+    " axis feet, " + shape.rowsaid + " row lines (was 8 + departures this " +
+    "morning, ~12 one-per-row before that)");
+  check(shape.rowtiers >= shape.rows - 1,
+    "…while every rule row still declares its tier as data — " +
     shape.rowtiers + " of " + shape.rows + " rows carry data-tier");
-  check(shape.rowsaid <= 4,
-    "…and only a row that DEPARTS from its block's tier spells it out — " +
-    shape.rowsaid + " such rows (was one per row, ~12x, before 2026-09-02)");
+  check(shape.rowsay === shape.rows,
+    "…and every row carries the explainer a hold opens — " + shape.rowsay +
+    " of " + shape.rows + " carry data-say");
+  const sayText = await p.evaluate(() =>
+    window.__nuSay('#rulesdeck .nu-rule[data-rule="bpm"]'));
+  await p.evaluate(() => window.__nuSayOff && window.__nuSayOff());
+  check(/written again at this seed/.test(String(sayText)),
+    "…and holding the tempo row opens the tier it used to print " +
+    JSON.stringify(sayText));
+
+  /* ================= R9 · ONE SENTENCE PER ROW ==========================
+     Paul: *"Look at it from the point of view of a user just seeing it for the
+     first time."* A row is ONE `<label class="nu-said">` with the control
+     standing in the sentence, and nothing else is stacked beside it — no `<h4>`
+     over a group of controls, no tier line, no second paragraph. */
+  const geom = shape.geom || [];
+  const noLabel = geom.filter((g) => g.shape !== "said" && g.said !== 1);
+  const stacked = geom.filter((g) => g.stacked > 0);
+  const under = geom.filter((g) => g.h < 44);
+  /* THE 88px CEILING IS ASKED OF THE SINGLE-ANSWER ROWS ONLY, and the reason
+     is arithmetic rather than indulgence: a positional `list` is one menu PER
+     CHAIR and a numeric `map` is one slider PER DECORATION, so `instr` on a
+     three-chair record is three controls and cannot be two tap rows at 390 by
+     any drawing that does not hide one of them. The multi-answer rows are
+     printed every run instead, which is what makes a regression visible. */
+  const SIMPLE = ["number", "enum", "flag", "said"];
+  const tall = geom.filter((g) => SIMPLE.indexOf(g.shape) >= 0 && g.h > 88);
+  check(!noLabel.length, "R9 every editable row is ONE sentence label " +
+    JSON.stringify(noLabel.slice(0, 3)));
+  check(!stacked.length, "…with nothing stacked beside it — no heading, no " +
+    "tier line, no second paragraph " + JSON.stringify(stacked.slice(0, 3)));
+  check(!under.length, "…and no row under the 44px tap floor " +
+    JSON.stringify(under.slice(0, 3)));
+  check(!tall.length, "…and every single-answer row inside the two tap rows " +
+    "every other question gets " + JSON.stringify(tall.slice(0, 3)));
+  console.log("       multi-answer rows (one control per chair/role): " +
+    JSON.stringify(geom.filter((g) => SIMPLE.indexOf(g.shape) < 0)
+      .map((g) => g.f + " " + g.shape + " " + g.h + "px")));
+
+  /* the seven motif lines are one row now, with the list behind the hold */
+  check(shape.motifs.length === 1 &&
+    /the motifs are written in the tracker/.test(shape.motifs[0].text) &&
+    shape.motifs[0].say > 40,
+    "R9a the motifs are ONE read-only row with the list behind data-say " +
+    JSON.stringify(shape.motifs));
+
+  /* ================= R10 · NATIVE INSTRUMENTS FIRST =====================
+     Paul, wave 4 §10: *"When you define a genre you seem to only allow the
+     sample instrument not the faust instrument like on high nrg… that's the
+     opposite those should be chosen after native"*. `nukernel/rules.js`
+     groups the menu off `instruments.js sampledId` (one owner, gated against
+     `to-engine.js recipeFor`) and ui/selects.js never reorders, so the order
+     on the glass is the order the data tier asked for. */
+  check(!!shape.instr &&
+    JSON.stringify(shape.instr.groups) === JSON.stringify(["native", "sampled"]),
+    "R10 the instrument menu is two groups, native first — " +
+    JSON.stringify(shape.instr));
 
   /* ================= R2 · A THRESHOLD, AND A RECOMPOSE =================== */
   /* `bpm` is a COMPOSE-tier rule: the record is written again at the reading in
@@ -305,7 +424,7 @@ function standUpServer() {
   /* `reggae` states no `swing` — its eighths are straight — so the Time
      palette is the way in, which is the whole of what a palette is for. */
   const pal = await p.evaluate(() => {
-    const s = document.querySelector('select[data-sel="rule-add|Time"]');
+    const s = document.querySelector('[data-sel="rule-add|Time"]');
     if (!s) return null;
     /* THE GREY IS COLLECTED OFF EVERY PALETTE, not off this one. A vacuous
        pass is the failure mode this check has — `reggae` greys nothing in
@@ -314,13 +433,28 @@ function standUpServer() {
        record it is: `artic` is capped by a `maxHold` the row states, and the
        changes are the Key panel's. */
     const grey = [];
-    for (const q of document.querySelectorAll('select[data-sel^="rule-add|"]'))
-      for (const o of q.options)
+    /* tag-free, for the same reason `say()` above is: `data-sel` is the
+       address and it survives the widget. A native menu answers `.options`; a
+       combobox's list answers `[role=option]` under the element its
+       `aria-controls` names. */
+    const optionsOf = (q) => q.options ? [...q.options]
+      : (q.getAttribute("aria-controls") &&
+         document.getElementById(q.getAttribute("aria-controls"))
+        ? [...document.getElementById(q.getAttribute("aria-controls"))
+            .querySelectorAll('[role="option"]')].map((o) => ({
+              value: o.dataset.v || o.dataset.value || o.textContent,
+              textContent: o.textContent,
+              disabled: o.getAttribute("aria-disabled") === "true",
+              dataset: o.dataset }))
+        : []);
+    for (const q of document.querySelectorAll('[data-sel^="rule-add|"]'))
+      for (const o of optionsOf(q))
         if (o.disabled) grey.push({ sel: q.dataset.sel, v: o.value,
                                     why: o.dataset.why || "",
                                     said: o.textContent.endsWith(o.dataset.why || "\u0000") });
-    return { first: s.options[0] && s.options[0].textContent,
-             has: [...s.options].map((o) => o.value), grey };
+    const own = optionsOf(s);
+    return { first: own[0] && own[0].textContent,
+             has: own.map((o) => o.value), grey };
   });
   check(!!pal && /add a rule/.test(pal.first || ""),
     "R5 each axis ends in a palette whose first word is the offer " +
@@ -335,8 +469,8 @@ function standUpServer() {
     rules: window.__eightDoc().rules,
     swing: window.__eightDoc().time.swing,
     control: !!document.querySelector('#rulesdeck [data-k="rule|swing"]'),
-    still: [...(document.querySelector('select[data-sel="rule-add|Time"]') || { options: [] })
-      .options].map((o) => o.value),
+    still: [...((document.querySelector('[data-sel="rule-add|Time"]') || {})
+      .options || [])].map((o) => o.value),
   }));
   check((added.rules || []).some((r) => r.f === "swing"),
     "…and choosing one writes it onto the record " + JSON.stringify(added.rules));

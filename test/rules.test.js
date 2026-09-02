@@ -483,5 +483,113 @@ ok("R7 the palette is exactly the editable rules the row does not declare", () =
   }
 });
 
-console.log("\n" + pass + " passed, " + fail + " failed");
-process.exit(fail ? 1 : 0);
+/* ================================================================== R2d
+   NATIVE INSTRUMENTS FIRST, AND EVERY ONE OF THEM REACHES A SOUND.
+
+   Paul, wave 4 §10: *"When you define a genre you seem to only allow the
+   sample instrument not the faust instrument like on high nrg… that's the
+   opposite those should be chosen after native"*.
+
+   `hinrg` is the record he was looking at and all three of its instruments are
+   Faust voices — `polysynth` is the Juno-60, `saw_wave` the supersaw,
+   `solo_vox` the modelled throat — so the ids were never the problem: the menu
+   printed all 119 of `NF.INSTRCHOICES` in one flat alphabet with nothing to
+   say which of them the engine MODELS and which it plays back off disk, and 86
+   of the 119 are recordings.
+
+   THREE CLAIMS, AND THE THIRD IS THE ONE THAT MATTERS. That the menu is two
+   groups with `native` first; that the group split is `instruments.js
+   sampledId` and not a list typed into `rules.js` (asserted by comparing every
+   id's group against that predicate, and then against the BRIDGE itself); and
+   that a native id written into an `instr` rule REACHES THE RECORD AND THE
+   ENGINE — `voice.instrument` on the composed cast, the chair `document.js`
+   compiles, and a recipe out of `audio/to-engine.js recipeFor` whose source is
+   a model and not a sampler read. The bridge is an ES module, so it is reached
+   the way `test/precompose.test.js` G11a reaches it: `await import`, which is
+   why the summary below sits inside this function. */
+(async () => {
+  const TE = await import(path.join(__dirname, "..",
+    "nukernel", "audio", "to-engine.js"));
+  const NI = R("instruments.js");
+
+  ok("R2d the instrument menu is native first, then the recordings, and the " +
+     "split is instruments.js sampledId and not a list typed here", () => {
+    const r = NU.RULES.find((x) => x.field === "instr");
+    const os = r.edit.values(GENRES.hinrg, "hinrg");
+    assert.strictEqual(os.length, Object.keys(NF.INSTRCHOICES).length,
+      "the menu offers every id it always did");
+    const groups = [...new Set(os.map((o) => o.group))];
+    assert.deepStrictEqual(groups, ["native", "sampled"],
+      "two groups, native first — got " + JSON.stringify(groups));
+    // ...and CONTIGUOUS, because ui/selects.js opens a new <optgroup> every
+    // time the group word changes: an interleaved list would draw two
+    // "native" headings with a "sampled" one between them.
+    const flip = os.findIndex((o) => o.group === "sampled");
+    assert.ok(os.slice(0, flip).every((o) => o.group === "native") &&
+              os.slice(flip).every((o) => o.group === "sampled"),
+      "the groups are contiguous");
+    const wrong = os.filter((o) =>
+      (o.group === "sampled") !== !!NI.sampledId(o.value));
+    assert.strictEqual(wrong.length, 0, "the group is sampledId's answer: " +
+      wrong.slice(0, 5).map((o) => o.value + " -> " + o.group).join(", "));
+    console.log("       " + flip + " native, " + (os.length - flip) +
+      " sampled; hinrg holds " + JSON.stringify(GENRES.hinrg.instr));
+  });
+
+  ok("R2d/b every id the menu calls native IS one the bridge models, and " +
+     "every id it calls sampled is one the bridge samples", () => {
+    const modelled = (id) => {
+      const un = [];
+      const rec = TE.recipeFor("line", { instr: id, tone: null, synth: null }, {}, un);
+      return !un.length && String(rec.source || "").split(":")[0] !== "unrouted" &&
+             !!(rec.m && rec.m.model);
+    };
+    const r = NU.RULES.find((x) => x.field === "instr");
+    const bad = r.edit.values(GENRES.hinrg, "hinrg")
+      .filter((o) => (o.group === "native") !== modelled(o.value))
+      .map((o) => o.value + " is offered as " + o.group);
+    assert.strictEqual(bad.length, 0, bad.slice(0, 8).join(", "));
+  });
+
+  ok("R2d/c a native id written into an `instr` rule reaches the record's " +
+     "cast AND the compiled recipe", () => {
+    const ID = "polysynth";                 // hinrg's own Juno-60, by its GM name
+    assert.ok(!NI.sampledId(ID), "the subject is a modelled id");
+    // reggae holds sampled instruments; the rule is what changes that.
+    const d0 = P.genreToDocument("reggae", 3);
+    const d1 = P.genreToDocument("reggae", 3, [{ f: "instr", v: [ID] }]);
+    const line = (d) => d.voices.filter((v) => v.kind === "line");
+    /* THE ANCHOR'S OWN CHAIRS, WHICH IS `G.voices` OF THEM AND NOT THE WHOLE
+       ROOM. precompose seats the base cast first and then compose's GUESTS,
+       and a guest brings its OWN genre's instrument (`instrOf(lk, 0)`,
+       precompose:2964 — "a guest brings its line, not its instrument"). So a
+       rule on THIS row moves this row's chairs; measured on reggae at reading
+       3, that is two of the six line chairs and the other four are the choir,
+       the singer and two guitars that came with the layers. */
+    const nBase = GENRES.reggae.voices;
+    assert.ok(line(d0).length >= nBase, "reggae seats chairs to move");
+    assert.ok(line(d1).slice(0, nBase).every((v) => v.instrument === ID),
+      "every chair of the anchor's own cast holds it — " +
+      JSON.stringify(line(d1).map((v) => v.instrument)));
+    assert.notStrictEqual(line(d0)[0].instrument, ID,
+      "…and it is not what the anchor already said");
+    // ...and the chair the document hands the engine carries it, and the
+    // engine builds a MODEL for it. `toGenre` with the empty fleet, which is
+    // the honest reading for a GM id: the fleet argument names the dsps a
+    // chair may hold as a `synth` block, and this id is not one of those — it
+    // is an instrument the patch tables photograph, which is the half of
+    // "native" a genre row is allowed to say.
+    const g = Doc.toGenre(d1, 0, GENRES, []);
+    const chair = (g.chairs || []).find((c) => c.instr === ID);
+    assert.ok(chair, "the compiled genre seats it — " + JSON.stringify(g.chairs));
+    const un = [];
+    const rec = TE.recipeFor("line", { instr: ID, tone: null, synth: null }, {}, un);
+    assert.strictEqual(un.length, 0, "nothing unrouted: " + JSON.stringify(un));
+    assert.ok(String(rec.source).startsWith("patch:"),
+      "the recipe is a model, not a sampler read — " + rec.source);
+    console.log("       " + ID + " -> " + rec.source + " (" + rec.m.model + ")");
+  });
+
+  console.log("\n" + pass + " passed, " + fail + " failed");
+  process.exit(fail ? 1 : 0);
+})().catch((e) => { console.error(e && e.stack || e); process.exit(1); });

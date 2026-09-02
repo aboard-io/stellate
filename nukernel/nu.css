@@ -6637,8 +6637,7 @@ table.nu-trims{ color: var(--ink); }
    every other label/control pair on the page uses. */
 .nu-motifname{ margin-inline-start: var(--s2); }
 
-/* ======================================================================
-   WAVE 4 — THE WORD GRID, AND THE NAV'S ALIGNMENT (2026-09-02)
+/* ===============================================================   WAVE 4 — THE WORD GRID, AND THE NAV'S ALIGNMENT (2026-09-02)
    ======================================================================
    Paul, after using the composer on staging: *"When we go into structure make
    those tables of dropdowns full of tappable grids that change options rather
@@ -6770,3 +6769,132 @@ table.nu-trims{ color: var(--ink); }
    on one line, at a width where it does. That is the price of the panel never
    moving, and the panel never moving is the thing a hand can feel. */
 [data-k="board.legend"]{ min-block-size: 2.9em; min-block-size: 2lh; }
+=======
+/* ========================================================================
+   WAVE 4D — THE GENRE EDITOR, TIGHTER (2026-09-02)
+   ========================================================================
+   Paul, after using the deployed page: *"The genre editor is great. It can be
+   a lot tighter though — it has text all over the place. Look at it from the
+   point of view of a user just seeing it for the first time."*
+
+   MEASURED BEFORE, on the rendered panel at 390 and 1280: 27 rows, a 4117px
+   deck, and row heights running 33 · 46 · 76 · 103 · 228 · 322 · 478 — because
+   every editable rule was three stacked things (a bold question line, a
+   control line under it, a tier line under that) and a positional list was one
+   full field per chair. Paul's "text all over the place" is exactly what a
+   column of that reads like.
+
+   THE BLOCK ABOVE STANDS AND IS NOT EDITED — the six rules it states are still
+   the panel's, and what follows overrides only the geometry those rules asked
+   for when the sentence and its answer were on two lines. ui/rules.js now
+   walks the rule's own sentence PARTS and builds the widget where the value
+   is, so a rule row is one line of words with the control standing in it.
+   Everything here serves that one sentence: it may wrap, it may not stack. */
+
+/* THE PLATE IS ONE LINE, AND THE LINEAGE IS THE LINE UNDER IT. `.nu-namebar`
+   is a baseline flex row and `.nu-ruleplate` let it wrap, so at 390 the name,
+   the place-year and the kin came out as three ragged lines of ink. Two block
+   lines instead, each ellipsised: a plate that grows with the length of a
+   genre's name is a plate that is a different height on every record. */
+.nu-ruleplate{ display: block; }
+.nu-ruleline{ display: block; min-inline-size: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nu-rulekin{ display: block; margin-block-start: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* the axis word, one step quieter and one step closer to its block: it is a
+   divider you read once. (Small caps by the rule above; this only tightens
+   the air around it, which is what makes eight blocks fit on a phone.) */
+.nu-axword{ margin: var(--s3) 0 0; }
+.nu-rulax{ margin-block-end: var(--s3); }
+
+/* ONE ROW IS ONE LINE. A flex row so the reset mark sits at the end of the
+   sentence rather than under it, and the sentence itself takes the rest. */
+.nu-rule{ display: flex; align-items: center; gap: var(--s2);
+  padding-block-end: 0; }
+/* THE SENTENCE. It is a `<label>` — the text diet skips `label`, which is what
+   lets thirty-eight sentences cost the page nothing, and a reader hears the
+   whole sentence as the first control's name. `line-height: normal` cancels
+   the global `label{ line-height: var(--tap) }`, which would put 44px of
+   leading between two wrapped lines of one sentence. */
+.nu-rule > .nu-said{ flex: 1 1 auto; min-inline-size: 0;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s2);
+  min-block-size: var(--tap); line-height: normal;
+  padding-block: var(--s1); }
+/* A WORD IN THE SENTENCE IS A WORD, NOT A LINE. `.nu-sel > label > .nu-w` (the
+   even-field recipe) gives it `flex: 1 0 100%` and a 44px line box, which is
+   right for a question ABOVE its control and is the whole of what this round
+   is undoing. Here it flows.
+   ...AND IT IS NOT SHOUTED. A question standing over its control earns 700
+   weight at body size — it is the only thing on its line. A sentence with the
+   answer inside it does not: at `--t3`/700 the tempo rule wrapped onto two
+   lines at 390 with a slider in the middle of it, which is the "text all over
+   the place" again in a smaller font. `--t2` at 500 is the page's caption
+   voice, the same one `.nu-namebar small` and every value caption uses, and it
+   puts the emphasis where the emphasis belongs: on the CONTROL, which is the
+   only part of the sentence a hand can move. */
+.nu-rule .nu-w{ flex: 0 1 auto; inline-size: auto; block-size: auto;
+  line-height: normal; font-size: var(--t2); font-weight: 500;
+  white-space: normal; overflow: visible; }
+/* the controls, sized to sit in a line of type rather than to own one */
+.nu-rule .nu-combo{ flex: 0 1 auto; min-inline-size: 0;
+  max-inline-size: min(100%, 22ch); }
+.nu-rule .nu-combo > select{ block-size: var(--tap); }
+.nu-rule input[type=range]{ flex: 0 1 130px; inline-size: auto;
+  min-inline-size: 80px; block-size: var(--tap); }
+.nu-rule output{ flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+/* a map's per-key answer: the key as a small word, then its control, the two
+   kept together on one wrap */
+.nu-cell{ display: inline-flex; align-items: center; gap: var(--s1);
+  min-inline-size: 0; }
+.nu-cell > .nu-k{ font-style: normal; font-size: var(--t1);
+  font-weight: var(--fw-label); color: var(--rule); }
+/* A SENTENCE WITH SEVERAL ANSWERS IN IT GIVES EACH ONE LESS ROOM, and the
+   shape is read off `data-shape` (which is `edit.kind`, the same fact
+   ui/rules.js reads to pick the widget) rather than off a field's name. A
+   positional `instr` list is one menu per chair and a numeric `orn` map is one
+   slider per decoration: at the single-answer cap of 22ch, three instrument
+   menus were 205px of column at 390. Measured after: 100px. Nothing is
+   hidden — a `<select>` ellipsises its CLOSED word and opens at full width,
+   which is the same trade `.nu-sel > label > .nu-combo`'s own 30ch cap makes
+   and states. */
+.nu-rule[data-shape="list"] .nu-combo,
+.nu-rule[data-shape="map"] .nu-combo{ max-inline-size: min(100%, 13ch); }
+.nu-rule[data-shape="map"] input[type=range],
+.nu-rule[data-shape="pair"] input[type=range]{ flex: 0 1 76px;
+  min-inline-size: 56px; }
+/* an `fx` chip inside the sentence — the same `.nu-opt` chip, in line. Its
+   row is a `<fieldset>` with the sentence as its `<legend>`, because a chip
+   IS a `<label>` (that is what makes the 24px target test/shell.js A3
+   measures) and a label inside a label is not a shape a browser is asked to
+   make sense of. The fieldset carries no frame of its own: the chips are the
+   drawing and the legend is the sentence, in the same line box as every other
+   rule row. */
+.nu-rule > fieldset.nu-said{ border: 0; margin: 0; padding: 0;
+  min-inline-size: 0; }
+.nu-rule > fieldset.nu-said > legend{ padding: 0; float: left;
+  margin-inline-end: var(--s2); }
+.nu-rule .nu-opt{ display: inline-flex; flex-wrap: nowrap;
+  margin-block: var(--s1); margin-inline-end: var(--s2);
+  min-block-size: var(--tap); }
+
+/* A SAID-ONLY ROW IS ONE LINE TOO, and a REFUSED one is that line greyed with
+   its reason in `data-why` (where the diet's T3 and the no-silent-grey law
+   both look) and in `data-say` (where a hold looks). It used to print the
+   sentence, an em dash and the reason; the reason is the answer to a question
+   a first-time reader has not asked yet. */
+.nu-rule > .nu-why{ flex: 1 1 auto; min-inline-size: 0; display: flex;
+  align-items: center; min-block-size: var(--tap); margin: 0; }
+.nu-rule[data-why]{ opacity: .55; }
+.nu-rule[data-why] .nu-said{ pointer-events: none; }
+
+/* the way back, at the end of the sentence and not under it */
+.nu-rule > button[data-k^="rule-reset"]{ flex: 0 0 auto; margin-block-start: 0; }
+
+/* THE PALETTE IS A `+`, NOT A FIELD. One compact menu at the block's foot: it
+   was a 44px "add a rule" label over a 44px menu whose first option said the
+   same words again, under every one of the eight blocks. The visible label is
+   gone and the accessible one is not. */
+.nu-pal{ margin: var(--s1) 0 0; }
+.nu-pal .nu-combo{ max-inline-size: min(100%, 15ch); }
+.nu-pal .nu-combo > select{ block-size: var(--tap); }
