@@ -280,6 +280,40 @@
   // reason there is no `groove` one. The NUMBERS live in kernel.js METERS —
   // one place, because they are algebra — and this is the vocabulary.
   const METERLABEL = { three: "in three", six: "in six-eight" };
+  /* ...AND THE PACE, WHICH IS THE FOURTH OF THIS FAMILY AND THE ONLY ONE THAT
+     IS A BOX FIELD (2026-09-02, the composer round). Paul, B7: *"Tap tempo,
+     the tempo editor appears, same for key. The tempo editor does not reflect
+     the richness of our tempo options."*
+
+     WHY IT SITS BESIDE THREE TABLES THAT ARE EXPLICITLY NOT BOX FIELDS, and
+     what makes it different from them. Swing, groove and meter are the SONG's
+     — "a swing that changed per section would be the drummer changing hands
+     mid-song" — and that argument was made in full above, twice, and it still
+     stands for all three. The pace is not the same kind of fact: it is the
+     mensural sign, a section-sized STEP the ear is meant to hear AS a step
+     (audio/plan.js: "banshi is a ladder, not a lean"), and the 2026-08-30
+     five-walls round already landed it per box — `paces: {role: word}` on the
+     anchor, dealt by compose.js dealPaces, carried to the box by document.js
+     and multiplied into bar seconds by audio/plan.js PACE_RATE. The record has
+     been playing these words for two days with no control anywhere: it was
+     display-only text in the engineer's trim grid, which is the
+     "declared but never arriving" bug read from the other end.
+
+     THE WORDS MOVE DOWN HERE RATHER THAN BEING COPIED. compose.js declared
+     them inside `dealPaces`'s closure; the UI may not read a musical table
+     from above this file (the layer graph at the top of this file), so a
+     tempo editor that offered them would have had to retype the five words —
+     a second list, which is the thing this file exists to abolish. compose.js
+     now reads `NF.PACES` and still exports `PACES` under its own name, so
+     nukernel/rules.js and every other reader is untouched.
+
+     THE NUMBERS ARE STILL NOT HERE. audio/plan.js PACE_RATE is what each word
+     is WORTH — the words/numbers split this repo made twice (lvl/LEVELS,
+     PACES/PACE_RATE) — and putting a multiplier beside a word here would be
+     the third copy of a fact that already has one owner. */
+  const PACES = ["half", "slow", "steady", "push", "double"];
+  const PACELABEL = { half: "half", slow: "slow", steady: "steady",
+                      push: "push", double: "double" };
   // EVERY KIT OPERATOR kernel.js has — which is now sixty-eight rather than
   // thirteen, because the kit grew from six lanes to twelve and a vocabulary
   // that cannot say "ride instead of hats" or "tom fill" is not a vocabulary.
@@ -2664,6 +2698,25 @@
     // moving a row to read better renumbers everything under it.
     { key: "aux",     scope: "box",   table: SENDS,    labels: SENDLABEL,
       tab: "fx",     group: "bus 4",                     default: null },
+    /* ---- the pace — appended, never reordered (2026-09-02) --------------
+       THE ONE DEALT WORD WITH NO CONTROL, and the whole of the fix. compose.js
+       dealPaces has written `b.pace` since 2026-08-30, document.js:456 carries
+       it from the section to the box, audio/plan.js paceTL multiplies it into
+       bar seconds, and ui/engineer.js printed it as TEXT in a row header with a
+       note saying a control "would need the deal to read a hand back, and that
+       is not asked". It is asked now (Paul, B7), and the deal does not have to
+       read anything back: this is the same absent-is-today enum every other
+       box word is, and `dealPaces` only ever writes onto a box the arrangement
+       just built.
+       `axis: "form"` is what makes it ARRIVE: avail.js's generated sheets loop
+       mints `form.pace` from this row, `nudgesFor("form")` puts it in the
+       nudge census, and ui/eight.js's pace strip draws it. One row here, no
+       edit in avail.js, none in the view — interview.js's law, one layer down.
+       `tab: "song"` beside `len` and `nudge`, because in the daw's palette the
+       pace is a fact about the section's shape and not about its sound. */
+    { key: "pace",    scope: "box",   table: PACELABEL, labels: PACELABEL,
+      tab: "song",   group: "pace",                      default: null,
+      axis: "form", ask: "how fast does it go here?", none: "—" },
   ];
   const FIELD = {};
   for (const f of FIELDS) FIELD[f.key] = f;
@@ -2765,6 +2818,9 @@
   const api = { NSLOTS, MAX_LEN, MAX_NUDGE, MAX_FX,
                 OPS, OPLABEL, ENVLABEL, MOTLABEL, INLABEL, OUTLABEL,
                 RATES, RATELABEL, SWINGS, SWINGLABEL, GROOVELABEL, METERLABEL,
+                // the pace ladder, moved down from compose.js's closure so the UI
+                // may read it (2026-09-02) — compose.js re-exports it unchanged
+                PACES, PACELABEL,
                 KITLABEL, KITNAME, VERBLABEL, DRUMKITS, DRUMLANES, BASSOPS,
                 FX, FXLABEL, fxChain, FXSEND, fxMix, fxSendable,
                 FXWETS, FXWETLABEL, FXPOTS, FXPOTLABEL, FXFACE,

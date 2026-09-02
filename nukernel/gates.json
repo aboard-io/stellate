@@ -9,7 +9,7 @@
   "scopes": 3,
   "sample": 16,
   "seed": 20260824,
-  "compiles": 49643
+  "compiles": 52816
  },
  "sheets": {
   "time.meter": {
@@ -51,6 +51,16 @@
     ]
    }
   },
+  "time.groove": {
+   "scope": "song",
+   "regenerates": true,
+   "options": {},
+   "census": {
+    "rows": 55,
+    "alive": 0
+   },
+   "blind": true
+  },
   "alphabet.key": {
    "scope": "song",
    "regenerates": true,
@@ -73,6 +83,15 @@
     "writes": [
      "alphabet.mode"
     ]
+   }
+  },
+  "alphabet.scale": {
+   "scope": "song",
+   "regenerates": true,
+   "options": {},
+   "census": {
+    "rows": 55,
+    "alive": 53
    }
   },
   "alphabet.harmony": {
@@ -485,6 +504,16 @@
    },
    "blind": true
   },
+  "form.pace": {
+   "scope": "section",
+   "regenerates": true,
+   "options": {},
+   "census": {
+    "rows": 165,
+    "alive": 0
+   },
+   "blind": true
+  },
   "development.period": {
    "scope": "section",
    "regenerates": true,
@@ -568,8 +597,8 @@
   }
  },
  "proof": {
-  "rows": 18093,
-  "identical": 17914,
+  "rows": 18941,
+  "identical": 18762,
   "moved": 0,
   "overOffered": 179,
   "bad": {
@@ -600,8 +629,8 @@
   }
  },
  "proofHeld": {
-  "rows": 10816,
-  "identical": 10764,
+  "rows": 11296,
+  "identical": 11244,
   "moved": 0,
   "overOffered": 52,
   "bad": {

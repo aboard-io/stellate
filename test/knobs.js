@@ -584,9 +584,22 @@ const J = (x) => JSON.parse(JSON.stringify(x));
       const t0 = await p.evaluate(() => ({ bpm: window.__eightDoc().time.bpm,
         rate: window.__eightDoc().time.rate,
         n: document.querySelectorAll('[data-k^="tempo-"]').length,
+        tap: document.querySelectorAll('[data-k="tempo-tap"]').length,
         silent: [...document.querySelectorAll('[data-k^="tempo-"]')]
           .filter((x) => x.disabled && !x.dataset.why).length }));
-      check(t0.n === 8, "8 eight tempo icons" + tag);
+      /* THIS READ `t0.n === 8`, "8 eight tempo icons", and it was right about
+         the eight. Rewritten rather than loosened, 2026-09-02, because a NINTH
+         mark joined them on the same keyspace and by Paul's own sentence:
+         *"Tap tempo, the tempo editor appears."* (B7). `tempo-tap` wears the
+         same plate and moves the same fact — `time.bpm`, through the slider's
+         own key — so a census of "what moves the tempo here" must find it, and
+         a count that excluded it would be a gate measuring yesterday's panel.
+         Still an EXACT count and still the point: the eight operations drawn
+         ONCE (they were drawn twice for one afternoon in August, panel and
+         gutter both) plus the one tap, and no tenth. */
+      check(t0.n === 9, "8 the eight tempo icons and the tap, drawn once " +
+        "(" + t0.n + ")" + tag);
+      check(t0.tap === 1, "8a …and exactly one of them is tap tempo" + tag);
       check(t0.silent === 0, "8b …and a refused one prints its reason" + tag);
       const press = async (w) => { await p.evaluate((k) => {
           const b2 = document.querySelector('[data-k="tempo-' + k + '"]');

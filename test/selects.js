@@ -76,6 +76,18 @@ const MENUS = {
    * SHEETS["time.rate"] keeps the three-way mapping in the data tier;
    * test/text-diet.test.js pins the Time axis at exactly two selects. */
   "time.swing":       "swing",
+  /* ...AND `time.groove` JOINED THE LIST, 2026-09-02. It is not a name Paul
+   * typed on the evening of 2026-08-24 — nothing could have been, because the
+   * control did not exist — but it is the same sentence's subject: *"We can
+   * return some things to select menus: meter / reading speed / swing"*, and
+   * the groove is the fourth member of exactly that family (fields.js says so
+   * itself: swing, groove and meter are the three SONG facts with no FIELDS
+   * row, "nothing in a section tells time"). It arrives by B7 — *"The tempo
+   * editor does not reflect the richness of our tempo options"* — as a fact
+   * that already reached the sound through ui/state.js `setGroove` and had no
+   * control at all. One value for the whole record, decided once: a menu,
+   * beside the two it belongs with. */
+  "time.groove":      "groove",
   /* ...AND `alphabet.key` IS NOT ON THIS LIST ANY MORE. It was, from the evening
    * of 2026-08-24 until the morning of 2026-08-25, and the line that carried it
    * is rewritten here rather than deleted because the reason it was here has not
@@ -91,6 +103,15 @@ const MENUS = {
    * rather than fewer, and check 3 still refuses to let it quietly become a menu
    * again. The MODE stays here, beside it, exactly as it was. */
   "alphabet.mode":    "mode",
+  /* ...and `alphabet.scale`, 2026-09-02, on the same terms and by the same
+   * sentence one clause along: Paul, B7, *"Key may not either"* — the key
+   * editor does not reflect the richness of the options. The SUBJECT's
+   * alphabet has been in the document since PROGRAM.md §2.1 named it and
+   * document.js:172 has always resolved it; there was no sheet and no control,
+   * so the one fact that decides how wide a phrase sings could only be changed
+   * by editing JSON. A settled parameter of the mode's own kind — one value,
+   * decided once — so it is the menu beside it and never a lit sheet. */
+  "alphabet.scale":   "scale",
   // labelled "harmony" since 2026-08-27 (FUTURE.md §5: "two controls, one
   // heading" — the table alone keeps "the changes"); the KEY never moved.
   "alphabet.harmony": "harmony",
@@ -178,7 +199,13 @@ const MULTI = {};
  * -- return to dropdowns/select" (everything in that tab) rather than a name he
  * typed, and a reading that turns out wrong should be revertible by deleting a
  * block rather than by unpicking a list. */
-const FORM_NUDGE = /^(form|development)\.(env|intro|outro|mot|lvl|period|breath|pipe)$/;
+/* (`pace` joined this list 2026-09-02 — fields.js grew a `form.pace` row for
+ * the mensural word compose.js has dealt onto every box since 2026-08-30, and
+ * Paul asked for the tempo editor to reflect the richness of the options. It
+ * is drawn on the TEMPO tab rather than in `sectionDetail`, which is why the
+ * survey below finds it there and not under a section; the regex names the
+ * KEY, and a key does not move when a row moves.) */
+const FORM_NUDGE = /^(form|development)\.(env|intro|outro|mot|lvl|period|breath|pipe|pace)$/;
 /* THE THREE DEVELOPMENT KEYS, AND WHAT THIS LIST IS FOR NOW.
  * It was called THE SHEETS THAT MUST SURVIVE, and the sentence under that name
  * is kept because it is the argument that lost: "the development words are what
@@ -1197,8 +1224,19 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      again would mean the second spelling came back.
 
      `eng|…` is the older ghost, from the read-only engineer mirror that was
-     deleted the same night; it is kept for the same reason. */
-  const BOOLEANS = /^(drums|diatonic|ontime|(eng|b|v)\|(mute|solo)\|\*|\(no key\))$/;
+     deleted the same night; it is kept for the same reason.
+
+     `rubato` JOINED THEM 2026-09-02 (the composer round, slice 2a). Paul, B7:
+     *"The tempo editor does not reflect the richness of our tempo options."*
+     The tempo map's on/off has lived in ui/state.js since the map was written
+     — its own localStorage key, its own note ("a DEVICE setting like the
+     volume … somebody working against a grid turns the breathing off for
+     their machine, not for the record") — and nothing on the page could reach
+     it. It is exactly what this list is for: ONE fact that is true or false,
+     so it is a checkbox and not a menu, and it is named here rather than
+     matched by a pattern for the same reason every other name on this line is.
+     */
+  const BOOLEANS = /^(drums|diatonic|ontime|rubato|(eng|b|v)\|(mute|solo)\|\*|\(no key\))$/;
   const oddBox = boxes.loose.filter((k) => !BOOLEANS.test(k));
   check(!oddBox.length, "every checkbox left on the page is a single boolean " +
     JSON.stringify(oddBox.length ? oddBox : boxes.loose));

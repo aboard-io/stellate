@@ -55,8 +55,10 @@
 })(typeof self !== "undefined" ? self : this, function (K, NG, NF, NuSongs, NI, ND) {
   "use strict";
 
-  const { GENRES, MODES, MODELABEL } = NG;
-  const { KEYS, KEYLABEL, METERLABEL, RATES, RATELABEL, SWINGLABEL,
+  // SCALES/SCALELABEL joined this line 2026-09-02 with the `alphabet.scale`
+  // sheet below — the subject's alphabet, which the document has always carried
+  const { GENRES, MODES, MODELABEL, SCALES, SCALELABEL } = NG;
+  const { KEYS, KEYLABEL, METERLABEL, RATES, RATELABEL, SWINGLABEL, GROOVELABEL,
           ROLES, BASSOPS, KITLABEL, DRUMKITS, INSTRCHOICES } = NF;
   const { WORDS, WORDGROUP } = NuSongs;
   const J = (v) => { try { return JSON.stringify(v === undefined ? null : v); }
@@ -524,6 +526,24 @@
       values: () => [{ value: "", label: "straight" }, ...opts(Object.keys(SWINGLABEL), SWINGLABEL)],
       get: (doc) => doc.time.swing || "",
       set: (doc, s, v) => { doc.time.swing = v || null; } },
+    /* THE GROOVE, WHICH REACHED THE SOUND BEFORE IT HAD A SHEET (2026-09-02).
+       Paul, B7: *"The tempo editor does not reflect the richness of our tempo
+       options."* Every wire for this fact was already live — precompose deals
+       `time.groove` on every record it composes, ui/eight.js calls
+       `setGroove(DOC.time.groove)`, ui/state.js normalises it against
+       GROOVELABEL and ui/derive.js hands it to the kernel as an argument — and
+       there was no row here, so no control on the page could say it. The
+       fourth line of THE DECLARED-BUT-NEVER-ARRIVING bug, read from the UI
+       end: the fact arrived, and no hand could move it.
+       "the grid" IS ui/state.js's OWN WORD for null and not a new one: "any-
+       thing GROOVELABEL does not name is the grid, spelled null". It is the
+       absent option and therefore the default detent, which is what makes the
+       combo say whether the record's groove is the composer's or yours. */
+    "time.groove": { label: "groove", scope: "song",
+      values: () => [{ value: "", label: "the grid" },
+                     ...opts(Object.keys(GROOVELABEL), GROOVELABEL)],
+      get: (doc) => doc.time.groove || "",
+      set: (doc, s, v) => { doc.time.groove = v || null; } },
 
     /* ---- 2 ALPHABET (song, and one bar of the cycle) ---- */
     "alphabet.key": { label: "key", scope: "song",
@@ -534,6 +554,27 @@
       values: () => opts(Object.keys(MODES), MODELABEL),
       get: (doc) => doc.alphabet.mode,
       set: (doc, s, v) => { doc.alphabet.mode = v; } },
+    /* THE SUBJECT'S OWN ALPHABET (2026-09-02). `alphabet.scale` has been in
+       the document since PROGRAM.md §2.1 named it, precompose writes it on 99
+       of the anchors, and document.js:172 resolves it — `SCALES[A.scale] ||
+       MODES[A.scale] || mode` — so it decides the chromatic width of every
+       phrase the record sings. It had no row here and no control anywhere.
+       THE LIST IS TWO TABLES BECAUSE THE FACT IS RESOLVED AGAINST TWO, and
+       that resolution is document.js's, not a convenience invented here: the
+       shipped chant says `scale: "aeolian"`, which is a MODES key, and a menu
+       that offered only SCALES would have shown a composer an unknown value
+       for a word the record legally holds. Two `<optgroup>`s, in the order
+       document.js tries them.
+       ABSENT IS THE MODE. `null` means "the subject sings the mode itself",
+       which is exactly what document.js's third fallback does, so the option
+       says that rather than "default" — the word for saying nothing is the
+       thing that then happens (the `four` / `straight` idiom two rows up). */
+    "alphabet.scale": { label: "scale", scope: "song",
+      values: () => [{ value: "", label: "the mode itself" },
+                     ...opts(Object.keys(SCALES), SCALELABEL, "alphabets"),
+                     ...opts(Object.keys(MODES), MODELABEL, "modes")],
+      get: (doc) => doc.alphabet.scale || "",
+      set: (doc, s, v) => { doc.alphabet.scale = v || null; } },
     // "harmony", 2026-08-27 — FUTURE.md §5: "the changes" headed TWO controls
     // (this select and the chord table); the table alone keeps the name, and
     // the style select takes the axis's own word. The KEY stays

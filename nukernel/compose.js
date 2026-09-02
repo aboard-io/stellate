@@ -560,7 +560,17 @@
   //                                        outro: "double" }
   // keyed by the role words the anchor's own plan owns (PLANCUE applies: a
   // stored build is addressed as "build", a stored prechorus as "prechorus").
-  const PACES = ["half", "slow", "steady", "push", "double"];
+  /* THE LADDER MOVED DOWN TO fields.js, 2026-09-02, AND IS STILL EXPORTED
+     FROM HERE. It was a literal on this line — five words inside dealPaces's
+     closure — and the composer round needed a CONTROL for it (Paul, B7: "The
+     tempo editor does not reflect the richness of our tempo options"). The UI
+     may not read a musical table from above fields.js (that file's own layer
+     graph), so offering the five words meant either a second copy of them in
+     the registry or one copy in the registry read from here. This is the
+     second. Nothing about the deal changed, `PACES` is still exported under
+     this file's name (nukernel/rules.js reads `NC.PACES`), and the NUMBERS are
+     still audio/plan.js PACE_RATE's — the words/numbers split, untouched. */
+  const PACES = NF.PACES;
   function dealPaces(song, G, gk, f, seed) {
     const P = G.paces;
     if (!P) return;                                 // no row, no word, no draw

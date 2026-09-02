@@ -167,6 +167,22 @@ W.__nuEngineLine = () => engineLine();
 // reportable surface of this module is in one place.)
 W.__nuSounding = () => soundingChans();
 W.__nuVoiceLevels = () => voiceLevels();
+/* HOW LONG EACH BAR IS, IN SECONDS, OFF THE PLAN (2026-09-02, slice 2a).
+   Paul, B7: *"The tempo editor does not reflect the richness of our tempo
+   options."* The richest of them is the per-section PACE, and until today
+   there was no way to read what it did without rendering audio — which this
+   box's own law forbids a gate from doing unless the render is the subject.
+   `compile()` is the plan's one entry and it is pure over the adopted song, so
+   this asks for the timeline the transport would play and reports the two
+   numbers a pace moves: which section each bar belongs to, and how many
+   seconds it takes. `paceTL` has already multiplied `barSteps` by 1/rate by
+   the time `timeline()` answers, so a `push` section's bars really are shorter
+   here — at the plan, before a sample is asked for.
+   IT IS SAFE TO CALL WHILE PLAYING: `compile()` is idempotent on an unchanged
+   document (see its second caller below, which says so) and writes only this
+   module's own tables. */
+W.__nuBarSecs = () => { compile(); const d = stepDur();
+  return timeline().map((b) => ({ si: b.si, sec: b.barSteps * d })); };
 
 function settle(stage, why, extra) {
   clearTimeout(deadlineTimer); deadlineTimer = null;

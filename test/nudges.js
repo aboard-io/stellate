@@ -231,8 +231,22 @@ const spread = (ev) => {
     askable: !!window.NuAskable,
     words: window.NuSongs ? Object.keys(window.NuSongs.WORDS).length : 0,
   }));
-  check(wired.keys === 11, "fields.js names eleven nudge sheets — 5 on the form " +
-    "axis, 3 on development, 3 on performance (" + wired.keys + ")");
+  /* THIS READ `wired.keys === 11`, "fields.js names eleven nudge sheets — 5 on
+     the form axis, 3 on development, 3 on performance". The count moved on
+     2026-09-02 and the sentence is kept above the new one because the SHAPE of
+     the claim is what matters: the census is derived from the registry, so the
+     number here is the only place a new axis row has to be acknowledged.
+     Paul, the composer round, B7: *"Tap tempo, the tempo editor appears, same
+     for key. The tempo editor does not reflect the richness of our tempo
+     options."* `form.pace` is the sixth form row — the mensural word compose.js
+     has dealt onto every box since 2026-08-30 with no control anywhere — and
+     it is drawn as the Tempo panel's pace strip rather than in `sectionDetail`
+     (one owner per fact: two tabs' panels coexist in the DOM). Which is why
+     `wired.sheets` below is still "> 0" and not a count: this gate opens a
+     SECTION, and one of the twelve is answered one tab over. */
+  check(wired.keys === 12, "fields.js names twelve nudge sheets — 6 on the form " +
+    "axis (pace joined 2026-09-02), 3 on development, 3 on performance (" +
+    wired.keys + ")");
   check(wired.words === 26, "songs.js WORDS carries the five new rows (" +
     wired.words + " words)");
   check(wired.askable, "askable.js is in the page (recipe R1) — without it the " +

@@ -171,7 +171,12 @@ import { adoptSong, SONG, SLOTS, putPhrase, on, commit, setBpm, setSwing,
          // why) — `poolBand()` is that fact's one owner and its own readout.
          poolBand,
          // the two song facts sectionRender needs and cannot see from a box
-         GROOVE, SWING } from "./state.js";
+         GROOVE, SWING,
+         // THE BREATHING, AND ITS SWITCH (2026-09-02). `RUBATO` is a DEVICE
+         // setting with its own localStorage key — never adopted from a song —
+         // and until today nothing on this page could reach it. The Tempo
+         // panel is where a tempo map's on/off belongs (COMPOSER.md §2.5).
+         RUBATO, setRubato } from "./state.js";
 // THE RENDERED EVENT STREAM, for the console hooks at the foot of this file
 // only. D7's gate has to read what the band actually plays — velocities after
 // the envelope, the intro and the outro have had their say — and that stream
@@ -237,7 +242,11 @@ import { SYNTH_NAMES, voiceUnit } from "../audio/to-engine.js";
 // for every other. So this line, and not seven call sites, is where the
 // one-option law is adopted. `selectRow` and `selectEl` are the controls Paul
 // named by hand — a labelled row of them, and a bare one for a table cell.
-import { selectRow, selectEl, sheetRow, keyCircle } from "./selects.js";
+// `selectField` joined this line 2026-09-02: the Tempo panel draws its
+// settled parameters one even row at a time rather than in `selectRow`'s
+// wrapper, so every row on that panel is the one `.nu-field` height.
+import { selectRow, selectField, selectEl, sheetRow,
+         keyCircle } from "./selects.js";
 // THE ENGINEER (inside a voice's own sheet) and THE BOARD (at the foot of the
 // page). Two surfaces because they are two things: `engineer` is per-voice
 // sound, `mount` is the console. `paintBoard` repaints the automation meters
@@ -1312,6 +1321,23 @@ function shSpec(key, scope, label) {
    A harmonic minor keep the Am position checked: you said minor with the
    circle and then said WHICH minor with the menu, and the page must not act
    like it forgot where you are standing. */
+/** Is this alphabet the twelve equal semitones? — no stretched period, no
+ *  fractional step. genres.js `tuned()` rides `period` on the array; a
+ *  quarter-tone is a `.5` in the numbers. (2026-09-02) */
+const tet12 = (md) => Array.isArray(md) &&
+  (md.period == null || md.period === 12) && md.every((n) => Number.isInteger(n));
+/** What a NON-12-TET alphabet is, in the fewest true words — the caption under
+ *  the mode menu. Null on every ordinary row, so twelve of the fifteen modes
+ *  print nothing at all and the panel says nothing it does not have to.
+ *  Derived from the MODES row itself (the pitch-wall law: the row carries its
+ *  own period and its own fractional steps), never from a table of names. */
+function tuningSay(name) {
+  const md = MODES[name];
+  if (!md || tet12(md)) return null;
+  if (md.period != null && md.period !== 12) return "period " + md.period;
+  return md.every((n) => Number.isInteger(n * 2))
+    ? "a quarter-tone step" : "steps off the twelve";
+}
 function fifthsRing() {
   const F = NuFields;
   return {
@@ -1338,7 +1364,32 @@ function fifthsRing() {
         // really is sounding one, and the ring says where it is standing.
         on: String(DOC.alphabet.key) === String(tonic) &&
             F.minorish(DOC.alphabet.mode),
-        set: () => { DOC.alphabet.key = tonic; DOC.alphabet.mode = "aeolian";
+        /* ...AND IT NO LONGER CLOBBERS A TUNING, 2026-09-02. This line read
+           `DOC.alphabet.mode = "aeolian"` unconditionally, and every word
+           above it was written about a page whose modes were the seven
+           diatonic rotations plus harmonic and melodic minor. The pitch wall
+           came down on 2026-08-30 and the table now holds `shur`, `rast` and
+           `slendro` — alphabets with quarter-tone steps and, in slendro's
+           case, a 12.08-semitone period — so tapping a relative minor on a
+           gamelan record silently retuned the whole instrument to twelve equal
+           semitones, and nothing on the page said it had happened. That is the
+           silent-grey bug in its other form: a control answering a question
+           nobody asked it.
+           SO IT SETS THE MINOR ONLY WHERE "MINOR" IS A THING THE ALPHABET CAN
+           BE. On a 12-TET row the gesture is unchanged and still answers two
+           questions at once (test/selects.js 7i); on a tuned row it answers
+           the one it was asked — the TONIC moves and the alphabet stays,
+           which is what a hand tapping a key on a slendro record means. The
+           mode menu beside the circle is still how you say which mode, and on
+           a tuned row it is now the ONLY way, which is honest.
+           `tet12` IS A FACT ABOUT THE ROW AND IT IS ASKED OF THE ROW, not a
+           list of the three names — genres.js `tuned()` marks a stretched
+           period on the array itself and a fractional step is visible in the
+           numbers, so a fourth microtonal alphabet is covered the day it
+           lands with no edit here. */
+        set: () => { DOC.alphabet.key = tonic;
+                     if (tet12(MODES[DOC.alphabet.mode] || MODES.aeolian))
+                       DOC.alphabet.mode = "aeolian";
                      changed(); },
       };
     }),
@@ -1585,7 +1636,15 @@ function chordGrid(parent) {
     // THE DEGREE IS A SLIDER because it is a NUMBER on a line — I, II, III…
     // up the scale — and dragging it walks the changes up and down. The
     // quality stays a menu: a triad and a maj7 are not two ends of anything.
-    const d = range("prog" + i + "d", c.d, (v) => c.d = v, 0, 6, 1,
+    /* THE RUNGS ARE THE ALPHABET'S OWN, 2026-09-02. This was `0, 6` — seven
+       rungs, hard-coded, from a page whose every mode had seven degrees. The
+       pitch wall (2026-08-30) landed `slendro`, which has FIVE, and `numeral`
+       wraps mod `NUM.length`: rungs 5 and 6 both printed `i` and `ii`, so a
+       gamelan record's chord chart had two pairs of duplicate positions and
+       dragging past the end of the alphabet silently wrapped to its start.
+       `NUM.length - 1` is the same arithmetic `numeral` already does, said
+       once at the control instead of after it. */
+    const d = range("prog" + i + "d", c.d, (v) => c.d = v, 0, NUM.length - 1, 1,
       "chord " + (i + 1) + " degree", false, numeral, "84px");
     const td = el("td"); td.append(d.r); tr.append(td);
     const to = el("td"); to.append(d.out); tr.append(to);
@@ -1616,6 +1675,54 @@ function chordGrid(parent) {
     t.append(tr);
   });
   pane(parent, t);                  // six columns, not sixteen: not a .nu-grid
+  /* ===== HOW LONG THE CYCLE IS (2026-09-02) ============================
+     Paul, B7: *"Tap tempo, the tempo editor appears, same for key. … Key may
+     not either"* — the key editor does not reflect the richness of the
+     options.
+
+     `DOC.alphabet.prog` HAD NO WRITER FOR ITS LENGTH. Every field of every
+     chord was editable — degree, quality, inversion — and the one thing a
+     composer changes first, "make it four bars instead of two", could only be
+     done by editing JSON. `at(g.prog, bar)` in the kernel wraps whatever it is
+     given, so the cycle length is a real musical fact and it was unsayable.
+     THE NEW BAR IS A COPY OF THE LAST ONE, not a `{d:0}` root. A cycle grown
+     by a bar of tonic is a different cycle; a cycle grown by repeating its
+     last bar is the same music one bar longer, which is what "+ bar" means to
+     anyone who has done it on paper. Change the copy and you have said the
+     new thing.
+     THE FENCE IS 1..8 AND BOTH ENDS SAY WHY. One bar is a cycle — a modal
+     record's `prog` is exactly that, `[{d:0,q:"triad"}]` — and zero bars is
+     not a record; eight is as long a chart as this grid draws inside a phone
+     without the pane scrolling. Both refusals ride as `data-why` on the mark,
+     the way every other refused mark on this page does: NO SILENT GREY.
+     `changed()` AND NOT A LOCAL REDRAW: the length of the cycle is a fact the
+     compiled genre carries (`__eightGenres().prog`), the playhead marks bars
+     off it (`chordCell`), and the score reads it — so this is the whole-page
+     rebuild, which rebuilds `chordCell` from the new table on the way. */
+  {
+    const row = el("p", null, "nu-row nu-progops");
+    const add = P2.length >= 8
+      ? "eight bars is as long as this chart draws" : null;
+    const cut = P2.length <= 1 ? "a cycle is at least one bar" : null;
+    /* TWO MARKS, TWO NAMES. The glyphs are `+` and `−` and the WORD under each
+       is the whole gesture — not "bar" twice, which is what a screen reader
+       would have been read and what the page would say with the stylesheet
+       off: two controls with one name is the duplicate-address bug in the
+       accessibility tree. */
+    const bAdd = icon({ k: "prog-add", glyph: "+", word: "add a bar",
+      say: add || "add a bar to the cycle, the same chord as the last",
+      why: add });
+    const bCut = icon({ k: "prog-cut", glyph: "−", word: "take a bar off",
+      say: cut || "take the last bar off the cycle", why: cut });
+    bAdd.addEventListener("click", () => { const P3 = DOC.alphabet.prog;
+      if (P3.length >= 8) return;
+      P3.push({ ...P3[P3.length - 1] }); changed(); });
+    bCut.addEventListener("click", () => { const P3 = DOC.alphabet.prog;
+      if (P3.length <= 1) return;
+      P3.pop(); changed(); });
+    row.append(bAdd, document.createTextNode(" "), bCut);
+    parent.append(row);
+  }
   // ...and the whole loop on one line, which is how anybody would say it
   parent.append(el("p", P2.map(chordName).join("  –  ")));
   // ONE REASON UNDER THE TABLE, NOT EIGHT DOWN A COLUMN. `alphabet.quality` is
@@ -7320,9 +7427,23 @@ function sectionDetail(parent, s2) {
   // the control for free — 2026-08-25, "Put interactive elements on new lines
   // below the titles or questions.")
   number("bars" + s2.id, "bars", s2.bars, (v) => s2.bars = v, parent, 1, 32, 1);
+  /* EVERY FORM AND DEVELOPMENT NUDGE THE REGISTRY NAMES — EXCEPT THE PACE
+     (2026-09-02). `form.pace` arrived in the registry today (fields.js, Paul's
+     B7) and it is drawn ONE tab over, as the Tempo panel's pace strip. It is
+     excluded here rather than there because the pace is the record's TEMPO
+     said section by section, and because two tabs' panels coexist in the DOM:
+     a `form.pace|<section>` control in both places is one `data-k` on two
+     elements, which ui/selects.js console.errors about and suffixes, and which
+     puts a thumb back on the wrong menu after every redraw. ONE OWNER PER
+     FACT, applied to a surface rather than to a writer.
+     BY NAME AND NOT BY A REGEX: the next row to grow an `axis` must appear
+     here with no edit (that is the whole point of `nudgesFor`), so the
+     exception is a single key and the rule underneath it is untouched. */
+  const ELSEWHERE = { "form.pace": "the Tempo panel's pace strip" };
   const nudges = [...NuFields.nudgesFor("form"), ...NuFields.nudgesFor("development")]
     .filter((r) => r.options)
-    .map((r) => (r.axis === "form" ? "form." : "development.") + r.key);
+    .map((r) => (r.axis === "form" ? "form." : "development.") + r.key)
+    .filter((k) => !ELSEWHERE[k]);
   selectRow(parent, null, nudges.map((k) => shSpec(k, { section: s2.id })));
   // ...and the one nudge that is a number on a line, not a word from a list:
   // how many bars into the tune this section starts (derive.js:396), which is
@@ -11579,6 +11700,64 @@ function showTab(name) {
    count that paragraph kept correcting ("FOUR sections for eight axes", after
    "five", after "4-7") is now the tab table above, where nine names are
    written once. */
+/* ---------- TAP TEMPO --------------------------------------------------
+   Paul, B7 (2026-09-02): *"Tap tempo, the tempo editor appears, same for key.
+   The tempo editor does not reflect the richness of our tempo options."*
+
+   THERE WAS NO TAP TEMPO ANYWHERE IN THIS REPO. `grep -rniE "tap.?tempo"` over
+   the whole tree returned zero before today — every "tap" in the codebase is
+   prose about a finger press — so this is the one greenfield mechanism in the
+   slice, and it is fifteen lines because a tap tempo is fifteen lines.
+
+   THE STATE IS AT MODULE SCOPE AND NOT IN THE PANEL, which is the whole trick.
+   Every tap writes `time.bpm` and calls `changed()`, `changed()` rebuilds the
+   open panel, and a buffer that lived inside `timeAxis` would therefore be
+   thrown away between the first tap and the second — the run could never reach
+   two taps and the control could never work at all. It is exactly the shape
+   the score's `chordCell` registry takes for the same reason.
+
+   THE MEDIAN OF THE LAST FOUR INTERVALS, and not the mean of all of them. A
+   hand landing on a tempo is late on one tap in five and the mean carries that
+   late tap forever; the median throws it away, and four intervals is the
+   shortest window that HAS a median worth taking (two middle values averaged).
+   Five timestamps, four gaps.
+
+   TWO SECONDS OF SILENCE ENDS A RUN. Without it the first tap of the second
+   attempt is measured against the last tap of the first, which is a gap of
+   however long you spent thinking — one absurd bpm, clamped to 40, and a
+   record that suddenly crawls. The window is the same order as the longest
+   honest gap this box can be tapped at (40 a minute is 1.5 s).
+
+   THE CLAMP IS THE SLIDER'S OWN, `BPM_LO`..`BPM_HI`, because the tap writes
+   `time.bpm` through the same key the slider does — one owner per fact, and a
+   tap that could write 300 would put the record somewhere the slider cannot
+   bring it back from. (The 70..160 fences in song.js and compose.js are the
+   COMPOSER's and the SAVE's, not this control's; that mismatch is named in
+   the map and is not this slice's to move.) */
+const TAP_GAP = 2000;            // ms of silence that ends a run
+const TAP_KEEP = 5;              // five timestamps = four intervals
+let tapAt = [];
+/** One tap, at `now` (performance.now()). -> { n, bpm } — `bpm` is null while
+ *  the run has only one tap in it and there is nothing yet to measure. */
+function tapTempo(now) {
+  if (tapAt.length && now - tapAt[tapAt.length - 1] > TAP_GAP) tapAt = [];
+  tapAt.push(now);
+  if (tapAt.length > TAP_KEEP) tapAt = tapAt.slice(-TAP_KEEP);
+  const gaps = [];
+  for (let i = 1; i < tapAt.length; i++) gaps.push(tapAt[i] - tapAt[i - 1]);
+  if (!gaps.length) return { n: tapAt.length, bpm: null };
+  const g = gaps.slice().sort((a, b) => a - b), m = g.length >> 1;
+  const med = g.length % 2 ? g[m] : (g[m - 1] + g[m]) / 2;
+  const bpm = Math.round(60000 / med);
+  return { n: tapAt.length,
+           bpm: Math.max(BPM_LO, Math.min(BPM_HI, bpm)) };
+}
+/** Is the run still open? — what the count beside the button says after a
+ *  rebuild, so a panel redrawn under a tapping thumb does not forget the run
+ *  it is in the middle of. */
+const tapLive = () => !!tapAt.length &&
+  performance.now() - tapAt[tapAt.length - 1] <= TAP_GAP;
+
 function timeAxis(box) {
   const D = DOC;
   /* TIME — THE ORDINALS CAME OFF EVERY HEADING, 2026-08-27 (FUTURE.md §5:
@@ -11610,7 +11789,10 @@ function timeAxis(box) {
      tempo, and a cross-reference is back matter, the way the atlas puts its
      catalogue after its globe and the deck puts its export note under its
      cards. The pointer is unchanged — same words, same key, same click — and
-     is appended after the meter/swing row at the end of this function. */
+     is appended at the very end of this function, which since 2026-09-02 is
+     after the pace strip rather than after the meter/swing row: the panel grew
+     seven controls under it and the pointer stayed LAST, which is the whole
+     claim. */
   const gainPtr = (() => { const pt = el("p", null, "nu-hint");
     const a = document.createElement("a");
     a.href = "#board"; a.textContent = "record gain — on the board's main strip";
@@ -11618,7 +11800,70 @@ function timeAxis(box) {
     a.addEventListener("click", (e) => { e.preventDefault(); showTab("Mix"); });
     pt.append(a);
     return pt; })();
-  number("bpm", "tempo", D.time.bpm, (v) => D.time.bpm = v, axTime, 40, 220);
+  /* ===== THE TEMPO, BIG, AT THE TOP (2026-09-02) =======================
+     Paul, B7: *"The tempo editor does not reflect the richness of our tempo
+     options."* The first thing a tempo editor owes is the tempo, and this
+     panel's first line was a 129px slider with a three-character `<output>`
+     hanging off its end. `--t5` is the display step of the type scale — "a
+     number you read across the room" (nu.css) — and `--fw-display` its
+     weight; both landed in wave 1b and this is the first surface to spend
+     them.
+     IT IS AN `<output>` AND IT IS `aria-hidden`, and both halves are the
+     no-second-owner law. The slider below is the CONTROL: it carries the
+     `data-k`, it is what a screen reader is told, and its own `<output>` is
+     already the accessible readout. This is the same number drawn large for an
+     eye, so it must not be announced twice — and `<output>` is what the page
+     already means by "a number the box computed" (`range`'s own readout is
+     one), which is also why the text diet does not charge for it.
+     IT IS NOT `[data-live]`. The clock may only write inside `[data-live]`
+     (MOTIF.md, test/motif-frozen A1) and this is not the clock: it moves when
+     a HAND moves the tempo — on the slider's `input` as your finger drags, on
+     a tap, and on the rebuild every `changed()` performs. A tempo readout wired
+     to the transport would be a metronome, which is the one thing this page's
+     own law forbids. */
+  const big = el("output", String(D.time.bpm), "nu-bpmbig");
+  big.setAttribute("aria-hidden", "true");
+  axTime.append(big);
+  // `input` and not `change`: the big number follows the finger, exactly as
+  // the slider's own small readout does (`range`, above — "the two events do
+  // different jobs"), and the recompile still waits for `change`.
+  const bpmR = number("bpm", "tempo", D.time.bpm, (v) => D.time.bpm = v,
+                      axTime, BPM_LO, BPM_HI);
+  bpmR.addEventListener("input", () => { big.textContent = bpmR.value; });
+  /* ===== TAP TEMPO ======================================================
+     Paul, B7: *"Tap tempo, the tempo editor appears."*
+     `tempo-tap` IS ON THE TEMPO OPERATIONS' OWN KEYSPACE ON PURPOSE. It is a
+     ninth mark that moves the tempo, it wears the same face and the same 48px
+     plate as the eight below it, and a gate that asks the page "what moves the
+     tempo here" (`[data-k^="tempo-"]`, test/knobs.js gate 8) must find it. The
+     count is exactly the eight ops plus this one, and that literal moved in
+     the same commit with this sentence beside it.
+     IT WRITES THROUGH THE SLIDER'S OWN KEY. `DOC.time.bpm` and then
+     `changed()` — the same two lines the slider's `change` runs — so this is a
+     second GESTURE for one fact and not a second owner of it. The slider and
+     the big readout are moved to agree before the rebuild lands, so the panel
+     never shows two numbers for one tempo even for a frame. */
+  {
+    const row = el("p", null, "nu-row nu-taprow");
+    const G = GLYPH.act.tap;
+    const out = el("output", tapLive()
+      ? tapAt.length + (tapAt.length === 1 ? " tap" : " taps") : "");
+    // (NO CLASS ON THE BUTTON. Its plate is `.nu-taprow button` in nu.css —
+    //  the row names its own marks, the way `.nu-tf-row button` does. A class
+    //  with no rule is the mirror of the dead selector that block tombstones.)
+    const b = icon({ k: "tempo-tap", glyph: G.g, word: G.w, say: G.s });
+    b.addEventListener("click", () => {
+      const t = tapTempo(performance.now());
+      out.textContent = t.n + (t.n === 1 ? " tap" : " taps");
+      if (t.bpm == null) return;          // one tap measures nothing
+      big.textContent = String(t.bpm);
+      bpmR.value = String(t.bpm);
+      DOC.time.bpm = t.bpm;
+      changed();
+    });
+    row.append(b, document.createTextNode(" "), out);
+    axTime.append(row);
+  }
   /* ===== AND THE EIGHT CAME BACK, 2026-09-02 ===========================
      Paul: *"The tempo editor does not reflect the richness of our tempo
      options. … The left nav elements for tweaking tempo should be brought
@@ -11689,7 +11934,75 @@ function timeAxis(box) {
   // writable owner of one fact. avail.js SHEETS["time.rate"] stays: it is the
   // data tier's three-way mapping, and the buttons read the same cases.
   // test/selects.js MENUS dropped the row in the same commit.
-  selectRow(axTime, null, [shSpec("time.meter", {}), shSpec("time.swing", {})]);
+  /* THE SETTLED PARAMETERS, ONE EVEN ROW EACH (2026-09-02). This was one
+     `selectRow` of two — a `.nu-sels` wrapper holding meter and swing side by
+     side. `selectField` direct onto the axis is the same widget with the same
+     spec and no wrapper, which is what makes every row on this panel the same
+     88px `.nu-field` as the tempo slider above it and the rubato box below it:
+     Paul, B4, *"things are uneven based on how text wraps"*. Nothing about
+     either control changed; the `data-sel` keys are the ones test/selects.js
+     MENUS names.
+     ...AND THE GROOVE JOINS THEM, which is the fact this panel was missing.
+     `time.groove` reached the sound through ui/eight.js `setGroove` and
+     ui/state.js and could not be said by any hand (avail.js's new row carries
+     the whole finding). It is a settled parameter of exactly meter and swing's
+     kind — ONE fingerprint for the whole record, 2026-08-16's "nothing in a
+     section tells time" — so it is a menu beside them and not a lit sheet.
+     THE READING SPEED IS STILL NOT HERE and that is still 2026-08-27's
+     decision, not an omission: the four rate operations in the row above own
+     `time.rate`, one fact and one control, and test/text-diet.test.js asserts
+     zero `select[data-sel^="time.rate"]` on this page. */
+  selectField(axTime, shSpec("time.meter", {}));
+  selectField(axTime, shSpec("time.swing", {}));
+  selectField(axTime, shSpec("time.groove", {}));
+  /* RUBATO — THE BREATHING, WITH A SWITCH AT LAST (2026-09-02). ui/state.js
+     has carried `RUBATO` and `setRubato` since the tempo map was written, with
+     its own localStorage key and this note: "somebody working against a grid
+     (or a gate reading the unbreathed timeline) turns the breathing off for
+     their machine, not for the record". It had no control on this page —
+     `export/als-page.js:110` was the only thing in the box that could touch
+     it — so the escape hatch existed and nobody could reach it.
+     IT IS A DEVICE SETTING AND SAYS SO BY BEING STICKY: `setRubato` writes the
+     preference, no document changes, and a share link carries nothing. That is
+     why it is a checkbox in the tempo panel rather than a rule about the
+     record — the record always breathes; this is whether YOUR box plays it
+     that way. `check()` calls `changed()` after the write, which is what makes
+     audio/plan.js recompile the timeline with (or without) `warpBars`. */
+  check("rubato", "the record breathes", RUBATO, (v) => setRubato(v), axTime);
+  /* ===== THE PACE STRIP — ONE ROW PER SECTION (2026-09-02) ==============
+     Paul, B7: *"The tempo editor does not reflect the richness of our tempo
+     options."* This is the richest of them and it had no control anywhere.
+
+     WHY IT IS ON THE TEMPO TAB AND NOT IN THE STRUCTURE GRID. `form.pace` is
+     a per-section fact and could honestly be drawn in either place — but not
+     in BOTH, because two tabs' panels coexist in the DOM and a second control
+     on one key is a duplicate `data-k` (ui/selects.js says so out loud and
+     suffixes it, and focus after a redraw lands on whichever came first). The
+     pace is the record's TEMPO said section by section — a mensural sign, half
+     and double and the three rungs between — so it is filed with the tempo,
+     and `sectionDetail` skips it for that reason with the same note.
+
+     ...AND IT REVERSES ui/engineer.js's "DISPLAY ONLY" SENTENCE, dated and
+     written in place there: "a pace CONTROL would need the deal to read a hand
+     back, and that is not asked". It is asked now, and the premise was wrong
+     anyway — `dealPaces` only ever writes onto a song the arrangement has just
+     built, so a hand-set pace is the same absent-is-today enum every other box
+     word is.
+
+     `secName(i)` IS THE QUESTION because that is what you are answering: not
+     "how fast", but "how fast in the chorus". The five words and the "—" come
+     from the one table (fields.js PACES, moved down from compose.js for this),
+     through the sheet avail.js generates off the FIELDS row's `axis`. */
+  /* ONE HEADING OVER THE STRIP, which is the whole of the prose this panel
+     spends. Without it the strip reads as eight section names with a menu
+     under each and no word anywhere saying what is being answered — the
+     question is `secName(i)`, and the SUBJECT has to be said once. `heading()`
+     is the page's own `<h3>` and it is exactly what the Key panel spends on
+     "the changes"; the text diet does not charge for a heading (it is a name,
+     not prose) and this panel spends nothing else. */
+  heading(axTime, "pace");
+  D.form.sections.forEach((s2, i) =>
+    selectField(axTime, shSpec("form.pace", { section: s2.id }, secName(i))));
   // the pointer to the board, LAST — back matter (see its note above)
   axTime.append(gainPtr);
 }
@@ -11735,8 +12048,44 @@ function alphaAxis(box) {
   // mixolydian, major, lydian, melodic minor and natural minor — longer than
   // major-and-minor, and seven rings would be a worse object than the one
   // musicians actually keep in their heads.
-  selectRow(axAlpha, null, [shSpec("alphabet.mode", {}),
-                            shSpec("alphabet.harmony", {})]);
+  //
+  // ...AND THE LIST IS TWELVE, NOT EIGHT — THE COMMENT WAS STALE (2026-09-02).
+  // The paragraph above names "dorian, phrygian, harmonic minor, mixolydian,
+  // major, lydian, melodic minor and natural minor". genres.js MODES has held
+  // twelve since the pitch wall came down on 2026-08-30: `hijaz` and, with
+  // fractional semitones and a period of their own, `shur`, `rast` and
+  // `slendro`. The menu has been offering all twelve the whole time (avail.js
+  // reads `Object.keys(MODES)`); what was missing was any word on this page
+  // saying that four of them are not the twelve equal semitones. The argument
+  // above is untouched — it is about a RING versus a MENU and twelve is still
+  // not a ring — and the count is corrected rather than the sentence deleted.
+  //
+  // THE CAPTION IS DRAWN ONLY WHERE THERE IS SOMETHING TO SAY. `tuningSay`
+  // answers null on nine of the twelve rows, so a record in dorian prints
+  // nothing at all: the panel does not carry a line about microtonality for
+  // the records that are not microtonal, which is nearly all of them. Where it
+  // does
+  // answer, it says the measured fact off the MODES row itself — "period
+  // 12.08" for slendro, "a quarter-tone step" for shur and rast — because a
+  // mode with its own octave is a thing a composer has to be told, and the
+  // page said nothing.
+  const modeP = selectField(axAlpha, shSpec("alphabet.mode", {}));
+  {
+    const cap = tuningSay(D.alphabet.mode);
+    if (cap) modeP.append(el("small", cap, "nu-cap"));
+  }
+  /* THE SUBJECT'S OWN ALPHABET, WHICH THE DOCUMENT HAS ALWAYS CARRIED
+     (2026-09-02). `alphabet.scale` decides the chromatic width of every phrase
+     the record sings — document.js:172 resolves it, precompose writes it on 99
+     anchors — and it had no sheet and no control: "declared but never
+     arriving", from the UI end. Its list is two `<optgroup>`s because
+     document.js resolves the word against two tables in that order (SCALES,
+     then MODES); avail.js's new row carries the whole argument.
+     IT IS BELOW THE MODE, NOT BESIDE IT, because it is the harder of the two
+     and it depends on it: the mode is the chords' alphabet, the scale is the
+     tune's, and absent means "the tune sings the mode itself". Read down. */
+  selectField(axAlpha, shSpec("alphabet.scale", {}));
+  selectField(axAlpha, shSpec("alphabet.harmony", {}));
   check("diatonic", "the line stays in the key", D.alphabet.diatonic,
     (v) => D.alphabet.diatonic = v, axAlpha);
   heading(axAlpha, "the changes");
@@ -12970,6 +13319,20 @@ window.__eightCaptions = () => (scoreCap ? [scoreCap.textContent] : []);
 window.__eightCells = () => hookCells.map((h) => h.cells.length).join(",");
 window.__eightPhraseOf = (n) => phrase(n);   // a gate reads the COMPILED hook
 window.__eightSong = () => SONG.map((b) => ({ g: b.stack[0].g, len: b.len, role: b.role }));
+/* THE THREE SONG FACTS THAT ARE NOT IN THE DOCUMENT (2026-09-02, slice 2a).
+   The groove, the swing and the breathing do not travel on `DOC` alone: the
+   groove and the swing are the SONG's — ui/state.js carries them beside the
+   boxes and normalises them against their own tables on the way in — and the
+   rubato is a DEVICE setting with its own localStorage key that no record ever
+   states. So a gate that read `__eightDoc().time.groove` would prove only that
+   the page can store a word; this is the same word after ui/state.js has had
+   it, which is the value ui/derive.js is actually handed. `bpm` rides along
+   because `setBpm` is the same door and the tap tempo is measured through it.
+   (The characteristic bug this closes from the other end: `setGroove` had
+   existed for weeks and had NEVER BEEN CALLED — declared, and never arriving.
+   The one way to be sure it still is, is to read it back.) */
+window.__eightTime = () => ({ bpm: DOC.time.bpm, groove: GROOVE, swing: SWING,
+                              rubato: RUBATO });
 // WHAT THE RECORD COMPILED TO, per section, for the one claim that cannot be
 // read off DOC: a TAKE is spent in `document.js toGenre` (`takeOf`) and lands on
 // `kitSeed` and the pipes' seeds, which are facts about the compiled GENRE and
@@ -12980,6 +13343,12 @@ window.__eightGenres = () => { const out = {};
   for (const [k, g] of Object.entries(GENRES)) {
     if (!g || !k.startsWith(GK)) continue;
     out[k] = { kitSeed: g.kitSeed, bpm: g.bpm, rate: g.rate,
+               // HOW MANY BARS THE CYCLE IS, on the COMPILED row (2026-09-02).
+               // `+ bar` / `- bar` in the changes grid writes `DOC.alphabet
+               // .prog`, and a gate that read the document would prove only
+               // that the page can store an array — this is the genre the
+               // kernel is actually handed, one compile stage later.
+               prog: Array.isArray(g.prog) ? g.prog.length : 0,
                pipes: g.pipes ? g.pipes.map((o) => o.seed) : null };
   }
   return out; };

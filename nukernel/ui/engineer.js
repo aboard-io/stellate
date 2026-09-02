@@ -1661,6 +1661,20 @@ export function mount(parent, ctx) {
       // shape this page legislates against. DISPLAY ONLY, extracted off the
       // box like lvl/env; a pace CONTROL would need the deal to read a hand
       // back, and that is not asked.
+      //   REVERSED 2026-09-02, and the sentence above is kept because its
+      //   PREMISE is the interesting half and it was wrong. Paul, the composer
+      //   round, B7: *"Tap tempo, the tempo editor appears, same for key. The
+      //   tempo editor does not reflect the richness of our tempo options."*
+      //   The pace is the richest of them, so it has a control now — one
+      //   `.nu-field` row per section on the Tempo panel (ui/eight.js
+      //   `timeAxis`, the pace strip), through the `form.pace` sheet avail.js
+      //   generates off the new fields.js FIELDS row. And the deal never had
+      //   to read a hand back: `dealPaces` only ever writes onto a song the
+      //   arrangement has just built, so a hand-set pace is the same
+      //   absent-is-today enum every other box word already is.
+      //   WHAT DOES NOT CHANGE IS THIS LINE. The row header still PRINTS the
+      //   word and still owns no control — one owner per fact, and the owner
+      //   is one tab over.
       const dealt = [(SONG[si] || {}).lvl, (SONG[si] || {}).env,
                      (SONG[si] || {}).pace]
         .filter(Boolean).join(" · ");

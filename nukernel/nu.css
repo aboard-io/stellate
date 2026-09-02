@@ -3645,7 +3645,17 @@ table.nu-trims{ color: var(--ink); }
    its arithmetic, which is exactly what happened for half an hour today.
    `.nu-tf`, `.nu-tf-was` and `.nu-tf-is` below are ALIVE — the glyph faces
    ride inside the gutter's own marks (ui/eight.js `face()`) — so the face
-   rules stay and only the row's geometry dies with the row. */
+   rules stay and only the row's geometry dies with the row.
+   ...AND ONE OF THE TWO ROWS CAME BACK, 2026-09-02, SO THE GEOMETRY DOES TOO.
+   Paul, B7: *"The left nav elements for tweaking tempo should be brought
+   inside tempo."* The eight tempo operations are a `<p class="nu-row
+   nu-tf-row">` in the Tempo panel again (ui/eight.js `timeAxis`), so this
+   selector has a subject once more and the audit that found it empty would now
+   find eight marks. The rules are NOT restored here — they are written at the
+   foot of this file under the slice-2a banner, beside the tap button they
+   share a row shape with — and the arithmetic above is re-measured there for
+   a panel column rather than for the motif editor's 366px. The `motifops`
+   half of the tombstone stands: that row is still a gutter level. */
 /* WHERE THE TUNE WAS, AND WHERE THIS BUTTON PUTS IT — the one idea worth
    keeping out of the drawing. A face may be a PAIR (`∧∨`, `■□ → □■`, `♪↑`),
    and the first half is the quiet ink and the second the full one, so the pair
@@ -5526,7 +5536,13 @@ table.nu-trims{ color: var(--ink); }
   font-size: var(--t4, 1.15rem); font-weight: 800; }
 .nu-namebar small{ font-size: var(--t2, .82rem); font-weight: 600;
   opacity: .75; }
-=======
+/* (A BARE `=======` STOOD ON THE NEXT LINE UNTIL 2026-09-02 — a conflict
+   marker left in the tree by the wave-1a/1b merge. It is not harmless in a
+   stylesheet: an unexpected token at the top level makes the parser discard
+   everything up to and including the next block, so `.nu-video-controls`
+   below it was DEAD on the shipped page and the film's two buttons had no
+   layout. Found by the slice that appends after it; deleted, and named here
+   so nobody re-argues where it went.) */
 /* THE CONTROL BAR GETS THE ENAMEL PLATE BACK (2026-09-02). It read
    `background: transparent; color: inherit; border: 1px solid var(--rule);
    cursor: pointer` — three declarations that OVERRODE the button face at the
@@ -5539,3 +5555,72 @@ table.nu-trims{ color: var(--ink); }
    (`:hover{ border-color: currentColor }` went with them — the base rule's
    `--flag-tint` hover is the page's one answer to "about to matter".) */
 .nu-video-controls { display: flex; gap: var(--s2); flex-wrap: wrap; }
+
+/* ==========================================================================
+   SLICE 2a — TEMPO AND KEY (2026-09-02)
+   Paul, B7: *"Tap tempo, the tempo editor appears, same for key. The tempo
+   editor does not reflect the richness of our tempo options. Key may not
+   either. … The left nav elements for tweaking tempo should be brought inside
+   tempo."*
+
+   Six rules. Everything else the two panels draw is already a `.nu-field`, a
+   `.nu-row` or a `.nu-combo` from wave 1b — which is the point of a design
+   system, and the reason a slice that adds nine controls adds six rules.
+   ========================================================================== */
+
+/* THE TEMPO, BIG. `--t5` is the display step ("a number you read across the
+   room") and `--fw-display` its weight; this is the first surface on the page
+   to spend either. `tabular-nums` because it changes under a dragging finger
+   and a proportional `1` would make the number JUMP sideways between 111 and
+   188 — the same reason the countdown and the clock use it. It sits tight
+   under the heading and tight over its own slider: the readout and the control
+   are one object, so the air goes round the pair and not between them. */
+.nu-bpmbig{ display: block; margin: 0 0 calc(var(--s1) * -1);
+  font-size: var(--t5); font-weight: var(--fw-display);
+  line-height: 1; font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em; }
+
+/* THE EIGHT OPERATIONS, AS A PANEL ROW — the geometry the 2026-08-29 audit
+   deleted when the row was a gutter level, re-measured for the column it is in
+   now, and MEASURED on the rendered page at six widths rather than argued.
+   The row is the panel's width less wave 1b's `--s4` inset — 218px inside a
+   243px panel at a 320px window, 1118 inside 1144 at 1280 — and the marks are
+   the `icon()` plate at `--ctl` square with `.nu-row`'s `--s2` gaps. Eight of
+   them take THREE lines at 320, TWO from 390 to 560, and ONE from 640 up.
+   Wrapping is the RIGHT answer here where it was the wrong one in a 366px
+   motif editor: nothing under this row is pushed off a screen by a second
+   line, and squeezing eight marks onto one phone line would put every one of
+   them under the 44px tap floor. So the row keeps `.nu-row`'s own wrap and
+   gap and spends its rule on the marks and on the air around itself.
+   (The tap is NOT in this row — it is `.nu-taprow`, its own line above the
+   eight, because it is a gesture and they are operations. It shares the plate
+   rule below because it is the same object.) */
+.nu-tf-row{ margin-block: var(--s3); }
+.nu-tf-row button, .nu-taprow button{
+  min-inline-size: var(--ctl); min-block-size: var(--ctl); }
+
+/* TAP TEMPO — the ninth mark, and the count beside it. Same plate as the eight
+   (above), because it is the same kind of thing: a mark that moves the tempo.
+   The `<output>` is the run — "3 taps" — and it is quiet ink: it reports, it
+   does not ask. `min-inline-size` on it so the row does not reflow every time
+   the count goes from one digit to two under a tapping thumb. */
+.nu-taprow{ margin-block: var(--s3); }
+.nu-taprow output{ font-size: var(--t2); color: var(--rule);
+  min-inline-size: 6ch; font-variant-numeric: tabular-nums; }
+
+/* `+ bar` / `− bar`, under the changes table. A `.nu-row` of two marks; the
+   only thing it owes beyond that is the same tap floor every other mark on
+   this page has, and air between the table and the sentence under it. */
+.nu-progops{ margin-block: var(--s3); }
+.nu-progops button{ min-inline-size: var(--ctl); min-block-size: var(--ctl); }
+
+/* THE CAPTION UNDER A FIELD — one measured fact about the value you are
+   standing on ("period 12.08"), where the value alone would not tell you. It
+   is NOT a `.nu-why`: a refusal says why a control cannot be used, and this
+   says what the chosen word MEANS. Same quiet ink, same block placement under
+   the label, so the two read as one family and never as one thing. It is drawn
+   only where there is something to say (ui/eight.js `tuningSay` answers null
+   on nine of the twelve modes), so on almost every record this rule has no
+   subject at all — which is why it costs the text diet nothing. */
+.nu-cap{ display: block; margin: calc(var(--s1) * -1) 0 var(--s2);
+  font-size: var(--t1); color: var(--rule); }

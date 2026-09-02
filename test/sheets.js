@@ -436,10 +436,25 @@ const check = (ok, what) => { (ok ? notes : fails).push((ok ? "ok   " : "FAIL ")
     "an insert SEAT on a channel strip (" + seats.length + " of those — " +
     "ui/engineer.js `seatSelect`, named and driven by desk-gate G11/G14/G15) " +
     JSON.stringify(rogue.slice(0, 3)));
-  check(seats.length > 0, "…and the strip that carries them is on the page at " +
-    "all: the voices' `mix` facet is one of the views this survey walks, so a " +
-    "strip that stopped being drawn fails here rather than passing quietly " +
-    JSON.stringify(seats.slice(0, 3)));
+  /* SCOPED TO THE SHIPPED PAGE, 2026-09-02. This ran on both entry points and
+     was RED on the harness from the day it was written: the sentence it makes
+     — "the voices' `mix` facet is one of the views this survey walks" — is
+     only true of nukernel/index.html, and this file's own header says what to
+     do about that ("a harness that cannot draw them must say 'not here'
+     rather than 'broken'"). test/fixtures/sheets-harness.html loads nine data
+     files and no view module; its own comment at :69 says so in as many
+     words: "the engineer is not in this harness". So the claim is unchanged
+     and unweakened where it can be made, and the harness says not-here — the
+     `REAL` branch three lines down is the same idiom for the same reason.
+     (Found by slice 2a, which changed avail.js and had to know whether it had
+     caused this; measured red on HEAD before the slice, at 29 of 30.) */
+  if (REAL)
+    check(seats.length > 0, "…and the strip that carries them is on the page at " +
+      "all: the voices' `mix` facet is one of the views this survey walks, so a " +
+      "strip that stopped being drawn fails here rather than passing quietly " +
+      JSON.stringify(seats.slice(0, 3)));
+  else notes.push("     (no channel strips here — the engineer is not in this " +
+    "harness, so the insert seats are index.html's claim, above)");
   check(!bothWays.length, "no key is drawn as a sheet AND as a menu " +
     JSON.stringify(bothWays));
   if (REAL)

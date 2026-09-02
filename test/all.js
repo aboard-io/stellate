@@ -467,6 +467,22 @@ const GATES = [
     covers: ["test/knobs.js", "nukernel/knobs.js", "nukernel/knobs-extract.js"] },
   { name: "selects",    wave: 2, kind: "browser", url: { flag: "--page" },
     argv: ["test/selects.js"], need: ["test/selects.js"], covers: ["test/selects.js"] },
+  /* THE TEMPO AND KEY EDITORS (2026-09-02, the composer round, slice 2a).
+     Paul, B7: "Tap tempo, the tempo editor appears, same for key. The tempo
+     editor does not reflect the richness of our tempo options. Key may not
+     either." Five facts that reached the sound and had no control — the
+     groove, the per-section pace, the length of the chord cycle, a tap tempo
+     that did not exist anywhere in the tree, and a circle of fifths that
+     silently retuned a microtonal record — driven on the rendered page.
+     `covers` names the three files the round changed to land them, so
+     test/impacted.js selects this gate when any of them moves: the panels
+     (ui/eight.js), the two new sheets (avail.js) and the `form.pace` registry
+     row that generates the third (fields.js). It stands up its own COOP/COEP
+     server and also honours an injected --page. */
+  { name: "tempo-key",  wave: 2, kind: "browser", url: { flag: "--page" },
+    argv: ["test/tempo-key.browser.js"], need: ["test/tempo-key.browser.js"],
+    covers: ["test/tempo-key.browser.js", "nukernel/ui/eight.js",
+             "nukernel/avail.js", "nukernel/fields.js"] },
   { name: "nudges",     wave: 3, kind: "browser", url: { flag: "--page" },
     argv: ["test/nudges.js"], need: ["test/nudges.js"], covers: ["test/nudges.js"] },
   { name: "atlas",      wave: 3, kind: "browser", url: { flag: "--page" },
