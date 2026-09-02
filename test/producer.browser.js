@@ -205,15 +205,24 @@ const report = () => {
     // THE VERB SHEET, WHICH MUST NOT BE THERE AT ALL (2026-09-01).
     verbAny: document.querySelector('select[data-sel="prod.verb"]') ? "menu"
       : (document.querySelector('.nu-sheet[data-sheet="prod.verb"]') ? "sheet" : "absent"),
-    // ...and TAP ONE IS THE SCOPE, off whichever widget draws it (see `say`).
-    scopes: (() => {
-      const s = document.querySelector('select[data-sel="prod.scope"]');
-      if (s) return [...s.querySelectorAll("option:not([data-placeholder])")]
-        .map((o) => o.dataset.v);
-      return [...document.querySelectorAll('.nu-sheet[data-sheet="prod.scope"] input')]
-        .map((i) => i.value);
-    })(),
-    scopesAs: document.querySelector('select[data-sel="prod.scope"]') ? "menu"
+    // ...and TAP ONE IS THE CAST, A ROW OF CHIPS (2026-09-02). One button per
+    // cast row, keyed `cast|<id>`, one of them pressed once a subject is
+    // chosen. The `scopes` list is read off the chips' own keys.
+    scopes: [...document.querySelectorAll('[data-k^="cast|"]')]
+      .map((b) => b.dataset.k.slice(5)),
+    chipsAre: [...document.querySelectorAll('[data-k^="cast|"]')]
+      .map((b) => b.tagName).filter((t, i, a) => a.indexOf(t) === i).join("+") ||
+      "absent",
+    // a refused chip must SAY WHY — the same law the greyed option obeys
+    naked: [...document.querySelectorAll('[data-k^="cast|"]')]
+      .filter((b) => b.disabled && !(b.dataset.why || "").trim())
+      .map((b) => b.dataset.k),
+    plate: (() => { const n = document.querySelector('[data-k="prod.name"]');
+      return n ? n.textContent.replace(/\s+/g, " ").trim() : null; })(),
+    // ...and the SCOPE MENU MUST NOT BE THERE AT ALL, the same way the verb's
+    // must not: a chip row and a <select> saying the same thing would be two
+    // owners of which subject is being spoken about.
+    scopeAny: document.querySelector('select[data-sel="prod.scope"]') ? "menu"
       : (document.querySelector('.nu-sheet[data-sheet="prod.scope"]') ? "sheet" : "absent"),
   }));
   check(seen.sec, "P0 · the ninth block is on the page (#ax-produce)");
@@ -230,17 +239,51 @@ const report = () => {
      alone), which P5 says at the artifact. */
   check(seen.verbAny === "absent", "P0 · there is no verb sheet — the only verb " +
     "is `make` (drawn as: " + seen.verbAny + ")");
-  check(seen.scopesAs === "menu", "P0 · …and tap one is the SCOPE, a <select> — " +
-    "a single choice is a menu (drawn as: " + seen.scopesAs + ")");
+  /* THE SCOPE MENU STOOD HERE AND IS A ROW OF CHIPS, 2026-09-02. It read:
+       check(seen.scopesAs === "menu", "P0 · …and tap one is the SCOPE, a
+             <select> — a single choice is a menu (drawn as: …)");
+     Paul, COMPOSER.md §1 B12: *"The implementation is good but the design is
+     confusing and feels unconsidered. Design a good producer interface."* The
+     cast is the record's own roster and it stays on the page while you speak
+     about it — a level of siblings with one pressed, which is the shape the
+     nav and the Band roster already use for the same players. So the claim
+     turns over: the menu must be GONE, and the chips must be there instead.
+     The one-answer-is-a-menu law is untouched — it is about a CHOICE among
+     alternatives, and it still holds the two target sheets below. */
+  check(seen.scopeAny === "absent", "P0 · …and there is no scope menu either — " +
+    "the cast is a row of chips (drawn as: " + seen.scopeAny + ")");
+  check(seen.chipsAre === "BUTTON", "P0 · …and every cast chip is a <button> (" +
+    seen.chipsAre + ")");
   check(!seen.tbl, "P0 · …and there is no note table until something is said");
   check(seen.scopes.length > 1,
     "P0 · the cast is on it: " + seen.scopes.join(" "));
+  check(!seen.naked.length, "P0 · no refused chip is silently grey — every " +
+    "greyed one carries its reason " + JSON.stringify(seen.naked));
+  check(!!seen.plate && /producer/i.test(seen.plate) && /of 10/.test(seen.plate),
+    "P0 · the plate names the producer and counts what has been said: " +
+    JSON.stringify(seen.plate));
 
   /* ---- 1 TWO REAL TAPS ------------------------------------------------- */
   // THREE UNTIL 2026-09-01: `const t1 = await say("prod.verb", "make");` stood
   // above the scope tap and is deleted with the verb sheet. The sentence the
   // page assembles is "make the sound punk" either way.
-  const t2 = await say("prod.scope", "record");
+  //
+  // AND TAP ONE IS A CHIP SINCE 2026-09-02: `await say("prod.scope", "record")`
+  // drove a `<select>`; the same subject is now a button in the cast row, so
+  // it is PRESSED. `tap()` — which clicks a `[data-k]` node and is what every
+  // other gesture in this file already used — is the driver, unchanged.
+  // The TARGET stays `punk` rather than moving to a quality word: P2 below
+  // measures the produced tempo and the audio/plan.js timeline against
+  // numbers calibrated on this anchor (58 -> 63 bpm, 149.13 -> 137.29 s), and
+  // a gate that changed its own subject in the same edit as its widget would
+  // be measuring two things at once. The quality half of the vocabulary is
+  // driven at P5.
+  const t2 = await tap("cast|record");
+  const pressed = await p.evaluate(() => {
+    const b = document.querySelector('[data-k="cast|record"]');
+    return b ? b.getAttribute("aria-pressed") : null; });
+  check(pressed === "true",
+    "P1 · the pressed chip says so (aria-pressed=" + JSON.stringify(pressed) + ")");
   // ...and how many records tap three offered, off whichever widget drew it.
   const scope = await p.evaluate(() => {
     const s = document.querySelector('select[data-sel="prod.record"]');
@@ -248,8 +291,9 @@ const report = () => {
     return document.querySelectorAll('.nu-sheet[data-sheet="prod.record"] input').length;
   });
   const t3 = await say("prod.record", "punk");
-  check(t2 && t3, "P1 · two taps landed — the sound / punk, and the verb is " +
-    "`make` without being asked (tap two offered " + scope + " records)");
+  check(t2 && t3, "P1 · two taps landed — a chip for the sound, then punk from " +
+    "the records sheet, and the verb is `make` without being asked (tap two " +
+    "offered " + scope + " records)");
 
   const hot = await shot();
   const line = hot.prod.said[0] || {};
@@ -342,7 +386,12 @@ const report = () => {
   // Paul, 2026-09-01: "The only verb is 'make' from now on. Make X Y." `less`
   // is the quality `quieter` now (producer.js ADJ, the ±7 dB fader path the
   // verb carried), so the sentence is three words and lands on tap TWO of two.
-  const l1 = await say("prod.scope", "v:cantor");
+  // ...and tap one is the cantor's CHIP since 2026-09-02 (see P1): it read
+  // `const l1 = await say("prod.scope", "v:cantor");`. This is the check that
+  // proves a MEMBER can be spoken about from the cast row — the chips carry
+  // `v:<name>` ids and a `[data-vi]` category slot — and the desk seam under
+  // it is untouched.
+  const l1 = await tap("cast|v:cantor");
   const l2 = await say("prod.word", "quieter");
   const quiet = await shot();
   check(l1 && l2, "P5 · \"make the cantor quieter\" — the level is a WORD now, " +

@@ -637,11 +637,15 @@ export function targets(doc, genreFor, verb, sid) {
 
    Paul: "The only verb is 'make' from now on. Make X Y." A verb that cannot be
    chosen is not page state, so `pverb` is a CONSTANT and `PASK` is one string.
-   (The page this leaves is the shipped one minus its first tap; the producer's
-   own redesign — the cast as chips, the two target sheets, the live preview —
-   is COMPOSER.md §2.9's second half and wave 2f's, not this slice's.) */
+
+   ...AND `PASK1` WENT WITH THE SCOPE SHEET, 2026-09-02. It read
+   `const PASK1 = "make what?"` and it was that sheet's LABEL. There is no
+   scope sheet to label — the cast is a row of chips, a level of siblings with
+   one pressed (COMPOSER.md §2.9) — and the question it asked is now answered
+   in the plate, where the sentence under construction is printed as you build
+   it ("make the drums …"). One string, one place, and it is the sentence
+   itself rather than a stand-in for it. */
 const VERB1 = "make";
-const PASK1 = "make what?";
 let psubj = null;
 
 /** PROGRAM.md §2.2. Draws the producer into `parent`; returns a handle. */
@@ -665,6 +669,8 @@ export function mount(parent, ctx) {
   // owner for recompile, exactly as `changed()` is for every sheet on the page.
   const land = () => { psubj = null; ctx.changed(); };
 
+  plate(sec, R);
+
   if (R.orphans && R.orphans.length) sec.append(el("p",
     R.orphans.map((n) => n.s.replace(/^v:/, "") + " is gone — that note went " +
       "with it.").join(" "), "nu-hint"));
@@ -678,15 +684,52 @@ export function mount(parent, ctx) {
 
   const asked = el("div");
   sec.append(asked);
-  // THE CEILING IS ASKED AT TAP ONE, and tap one is the SCOPE now (it keyed on
-  // `!pverb` until 2026-09-01). Mid-sentence the hint would replace the sheet
-  // you are looking at, which is the one moment it is not useful.
+  // THE CEILING IS ASKED AT TAP ONE, and tap one is the CAST now (it keyed on
+  // `!pverb` until 2026-09-01 and on the scope sheet until 2026-09-02).
+  // Mid-sentence the hint would replace the sheets you are looking at, which
+  // is the one moment it is not useful — so it is asked with no subject
+  // pressed, where it stands in for the row of chips it is refusing.
   if (notes(doc).length >= Prod.MAXNOTES && !psubj) {
     asked.append(el("p", WHY.ceiling(Prod.MAXNOTES), "nu-hint"));
     return;
   }
-  if (!psubj) tapSubject(asked, doc, ctx, land);
-  else tapTarget(asked, doc, ctx, land);
+  /* THE CAST IS ALWAYS ON THE PAGE NOW, 2026-09-02 (COMPOSER.md §2.9: "the
+     cast as a wrapped row of chips … pressed = the subject you are speaking
+     about"). It used to be one of two mutually exclusive screens — tap the
+     scope, the scope sheet was replaced by the target sheet, and a `back`
+     button was the only way to the other one. A row of siblings with one
+     pressed does not need a back button, because the row never left: pressing
+     another chip moves the subject, pressing the pressed one puts it down. */
+  castRow(asked, doc, ctx);
+  if (psubj) tapTarget(asked, doc, ctx, land);
+}
+
+/* ---- THE PLATE — who is speaking, how much has been said, and what is being
+   said RIGHT NOW. `.nu-namebar` is the page's ink name plate (nu.css) and this
+   is the fourth surface to wear it, after the board's bus, the Rules view's
+   genre and the Band roster.
+
+   IT IS AN `<h3>`, so the text diet skips it the way it skips every other
+   heading — and that is not an accounting trick: every word on it is a NAME
+   or a VALUE (the count, the sentence), which are two of the diet's three
+   permitted kinds. The count moved here FROM the note table's caption, where
+   it was printed since 2026-08-26 (Paul: "the producer is supposed to be able
+   to say ten things not just one") — the caption could only say it once there
+   was a table, which is exactly the state in which nobody needed telling. */
+function plate(parent, R) {
+  const p = el("h3", null, "nu-namebar nu-prodplate");
+  p.dataset.k = "prod.name";
+  p.append(el("b", "the producer"));
+  p.append(el("small", R.said.length + " of " + Prod.MAXNOTES + " said",
+    "nu-namebar-sub"));
+  // THE SENTENCE UNDER CONSTRUCTION, and it is producer.js's own assembler
+  // with the descriptor still missing — never a second spelling of "make X".
+  if (psubj) {
+    const S = Prod.SUB[psubj] || { w: psubj };
+    p.append(el("small", "make " + S.w + " \u2026",
+      "nu-namebar-sub nu-prodsay"));
+  }
+  parent.append(p);
 }
 
 /* ---- WHAT HAS BEEN SAID, and what it did. THE NOTES ARE THE INTERFACE:
@@ -697,19 +740,33 @@ export function mount(parent, ctx) {
 function notesTable(parent, R, ctx) {
   const doc = ctx.doc();
   const t = el("table"); t.className = "nu-notes";
-  // THE CAPTION COUNTS, AND THAT IS THE FIX FOR "not just one". A list that
-  // never says how long it may get reads as a slot; this one says how many
-  // lines are on it, how many the record will take, and that they are applied
-  // in the order they were said — which is exactly the claim PLAN.md makes for
-  // the stack and the page was not making.
-  t.append(el("caption", "what has been said \u00b7 " + R.said.length + " of " +
-    Prod.MAXNOTES + ", in order"));
+  /* THE CAPTION COUNTED, AND THE PLATE COUNTS NOW (2026-09-02). It read:
+
+       "what has been said · " + R.said.length + " of " + Prod.MAXNOTES +
+       ", in order"
+
+     and the paragraph that argued for it is right and is unchanged in its
+     reasoning: "A list that never says how long it may get reads as a slot".
+     What moved is WHERE the claim is made. The plate above says "3 of 10
+     said" whether or not there is a table, which is the state the argument
+     was actually about — a producer who has said NOTHING is the one who needs
+     telling that ten are available. Printing it twice on the same screen is
+     one fact with two owners, so the caption keeps only what the plate cannot
+     say: that the lines are applied in the order they are read. */
+  t.append(el("caption", "in the order they were said"));
   const head = el("tr");
   for (const h of ["the note", "how far", "what it did", "change it"]) {
     const th = el("th", h); th.scope = "col"; head.append(th); }
   t.append(head);
   R.said.forEach((line, i) => {
     const tr = el("tr");
+    // A REFUSED LINE IS STRUCK WHOLE (2026-09-02, COMPOSER.md §2.9: "the
+    // refused rows struck"). The `<s>` on the percentage below stood alone
+    // until today and it is kept — it is the semantic element for a fact that
+    // is no longer accurate, and it is what a stylesheet-less reader sees —
+    // but a strike on one cell of four reads as a note about the NUMBER
+    // rather than about the line, which is what it is about.
+    if (line.refused) tr.className = "is-refused";
     const th = el("th"); th.scope = "row";
     const again = el("button", line.sentence);
     again.type = "button";
@@ -720,8 +777,21 @@ function notesTable(parent, R, ctx) {
     // A REFUSED NOTE SAYS SO IN THE PERCENTAGE. `refused` is producer.js's own
     // flag (:1248) — read rather than matched on prose.
     const td1 = el("td");
-    const pc = Prod.pct(line.note.w) + "%";
-    td1.append(line.refused ? el("s", pc) : document.createTextNode(pc));
+    /* ...AND HOW FAR IS A LENGTH AS WELL AS A NUMBER (2026-09-02). `--q1..--q4`
+       is the page's LEVEL ramp (nu.css: "how much"), the same four steps the
+       step grid's velocities wear, so a stack of notes reads as a bar chart of
+       how hard each one was pushed without anybody having to compare five
+       two-digit numbers. The rungs are .40 .64 .784 .8704 .92224
+       (producer.js's ladder), so a first press is already at `--q2` and the
+       ramp's quiet end belongs to a note that has been pulled back. */
+    const w = line.note.w;
+    const well = el("span", null, "nu-pcbar");
+    well.dataset.q = String(Math.min(4, Math.max(1, Math.ceil(w * 4))));
+    const fill = el("i", null, "nu-pcfill");
+    fill.style.inlineSize = Math.round(w * 100) + "%";
+    well.append(fill);
+    const pc = Prod.pct(w) + "%";
+    td1.append(well, line.refused ? el("s", pc) : document.createTextNode(pc));
     tr.append(td1);
     tr.append(el("td", line.said.join(", ")));
     const td3 = el("td");
@@ -802,71 +872,183 @@ function stackStrip(parent, doc, ctx) {
    in the same commit (test/sheets.js) — a declared sheet nobody draws is a
    registry that stops describing the page.
 
-   ---- TAP ONE: THE SCOPE, AND IT GOES ALL THE WAY DOWN. The record, each
-   player, each player's own components, the mix. "More drums" and "more kick"
-   are the same sentence at two depths, and the depth is the sheet's own group
-   heading. The word is `bare` for more/less and `w` otherwise, so a two-tap
-   sentence is English: "more cantor", "take away the cantor". */
-function tapSubject(parent, doc, ctx, land) {
+   ---- TAP ONE IS THE CAST, AND IT IS A ROW OF CHIPS (2026-09-02) --------
+   `tapSubject` STOOD HERE and drew a `<select data-sel="prod.scope">` of every
+   cast row, greyed ones included, under the label "make what?":
+
+     function tapSubject(parent, doc, ctx, land) {
+       const rows = subjects(doc, null, VERB1);
+       sheet(parent, { key: "prod.scope", label: PASK1, value: "",
+         ungated: true,
+         options: rows.map(({ row, on, why }) => ({ value: row.id,
+           label: row.w, group: row.under ? (Prod.SUB[row.under] || {}).w : null,
+           disabled: !on, why: on ? null : why })),
+         set: (sid) => { psubj = sid; ctx.redraw(); } });
+     }
+
+   Paul, COMPOSER.md §1 B12: *"The implementation is good but the design is
+   confusing and feels unconsidered. Design a good producer interface."* A
+   collapsed menu is the wrong widget for THIS question and the right one for
+   the two below it, and the difference is what the answer is FOR: a target is
+   one answer picked out of four hundred and then forgotten, while the subject
+   is the thing you are looking at while you pick — it stays pressed, it names
+   what the plate is saying, and the whole cast beside it is the record's own
+   roster. A row of siblings with one pressed is the shape the nav uses for
+   exactly this (§2.1) and the shape the Band roster uses for the same players.
+
+   AND THE `prod.scope` SHEET KEY GOES WITH THE SHEET, the way `prod.verb`'s
+   did. The other choice was to hang `data-sheet="prod.scope"` on the chip row
+   so test/sheets.js's VIEW_SHEETS registry would keep finding it; it is
+   refused, and the reason is what that registry is FOR. VIEW_SHEETS declares
+   the LIT SHEETS (`.nu-sheet` fieldsets) whose vocabulary avail.js does not
+   own — it is read by a walk over `.nu-sheet` elements — so a key on a `<div
+   class="nu-row">` of buttons would make the registry describe a widget that
+   is not on the page, which is the exact staleness the `prod.verb` deletion
+   was about. The chips are addressed the way every other row of buttons on
+   this page is addressed: one `data-k` each, `cast|<id>`, and the row is
+   `prod.cast`. */
+function castRow(parent, doc, ctx) {
   const rows = subjects(doc, null, VERB1);
-  sheet(parent, { key: "prod.scope", label: PASK1,
-    value: "", ungated: true,
-    // ...and the word is `w` for every row now ("the drums"). It was `bare`
-    // under `more`/`less` so that "more drums" read as English; there is no
-    // two-tap sentence to spell, and "make the drums louder" wants the
-    // article.
-    options: rows.map(({ row, on, why }) => ({
-      value: row.id,
-      label: row.w,
-      group: row.under ? (Prod.SUB[row.under] || {}).w : null,
-      disabled: !on, why: on ? null : why })),
-    // EVERY SENTENCE NEEDS A TARGET NOW. The early land that stood here —
-    // `if (V.d === "no") { say(doc, pverb, sid, null); land(); return; }` —
-    // went with the two verbs that took no descriptor (2026-09-01).
-    set: (sid) => { psubj = sid; ctx.redraw(); } });
+  const row = el("div", null, "nu-row nu-cast");
+  row.dataset.k = "prod.cast";
+  for (const r of rows) {
+    const b = el("button", null, "nu-castchip");
+    b.type = "button";
+    b.dataset.k = "cast|" + r.row.id;
+    // THE WORD IS THE TABLE'S ("the drums", "the cantor", "the sound"), because
+    // it is the word the sentence is about to use. `bare` is not an option
+    // here: the record's own row spells it "of everything".
+    b.append(el("span", r.row.w, "nu-castw"));
+    // ...and the tree survives as a MARK rather than as a level: kick / snare /
+    // hats sit under drums in producer.js's own `under`, and a wrapped row is
+    // flat by construction. The child chips are set in the parent's word and
+    // the group reads as a group.
+    if (r.row.under) b.dataset.under = r.row.under;
+    /* CATEGORY = WHICH PLAYER, and the slot is the page's one arithmetic:
+       `ctx.voiceFace(name).slot` is `vpaintOf`'s index (slice 2c) through the
+       hook slice 2e added, so a chip here, a column head on the board, a box
+       in the roster and a row in the nav cannot disagree about which hue means
+       which player.
+
+       THE HUE IS ON A SWATCH INSIDE THE CHIP, NOT ON THE CHIP. nu.css's
+       contract is `[data-vi]` DECLARES `--vpaint` and `.nu-vpaint` is the only
+       thing that PAINTS with it, in two forms: a filled plate, or `.is-edge`,
+       "the quiet form … for a row that must keep its own ground". Neither
+       fits a chip. The filled plate would take the fill that
+       `button[aria-pressed="true"]` already owns — and pressed is the whole
+       state of this row — while `.is-edge` zeroes the border and the ground,
+       which is the button's own face. So the chip declares the slot and a 10px
+       `.nu-vpaint` swatch inside it does the painting: the utility used
+       exactly as written, on the one element in the chip that is nothing but
+       colour. It is `aria-hidden` because the player's name is beside it. */
+    if (/^v:/.test(r.row.id) && ctx.voiceFace) {
+      const face = ctx.voiceFace(r.row.id.slice(2));
+      if (face.slot >= 0) {
+        b.dataset.vi = String(face.slot);
+        const dot = el("i", null, "nu-vpaint nu-castdot");
+        dot.setAttribute("aria-hidden", "true");
+        b.prepend(dot);
+      }
+      if (face.line) b.append(el("small", face.line, "nu-castline"));
+    }
+    if (!r.on) {
+      // NO SILENT GREY. The reason is on the control (`data-why`, which is what
+      // test/text-diet T3 reads), in its title, and in its own accessible name
+      // — a greyed chip that only whispers its reason to a mouse is a wall to
+      // a thumb. Every string is one of `speak`'s own sentences (the WHY table).
+      b.disabled = true;
+      b.dataset.why = r.why;
+      b.title = r.why;
+      b.append(el("span", " \u2014 " + r.why, "nu-vh"));
+    } else {
+      b.setAttribute("aria-pressed", psubj === r.row.id ? "true" : "false");
+      b.addEventListener("click", () => {
+        psubj = (psubj === r.row.id) ? null : r.row.id; ctx.redraw(); });
+    }
+    row.append(b);
+  }
+  parent.append(row);
 }
 
-/* ---- TAP THREE: THE TARGET — a word, or a record. */
+/* ---- TAP TWO: THE TARGET — a quality, or a record. TWO SHEETS SIDE BY SIDE
+   (COMPOSER.md §2.9: "the targets for that subject as two sheets side by side
+   on wide screens, stacked on phones"). They were three stacked sheets with
+   three different labels assembled out of each other's presence ("make the
+   drums — what?" / "in a word" / "or like a record"); the labels are the two
+   NOUNS now — `qualities` and `records` — because the sentence they belong to
+   is printed on the plate above and does not need saying a second time on
+   every sheet that could finish it. */
 function tapTarget(parent, doc, ctx, land) {
   const S = Prod.SUB[psubj] || { w: psubj };
   const t = targets(doc, null, VERB1, psubj);
-  const legend = "make " + S.w + " — what?";
-  if (t.bare.length) sheet(parent, { key: "prod.bare", label: legend, value: "",
-    ungated: true,
-    options: t.bare.map((o) => ({ value: "@bare", label: o.w })),
-    set: () => { say(doc, VERB1, psubj, null); land(); } });
-  if (t.adj.length) sheet(parent, { key: "prod.word",
-    label: t.bare.length ? "in a word" : legend, value: "", ungated: true,
+
+  /* "JUST ADD IT" AND "BACK IN" ARE ONE GESTURE, 2026-09-02, and the
+     redundancy was named at the seam that made it (producer.js:GONE, the bare
+     tap: "a player who is out can be brought back by the word or by the bare
+     tap … the producer page's own redesign is where the two are drawn as one
+     gesture"). Both call `bringIn`. So when the WORD is offered — which is
+     whenever the player is actually out — the word is the whole of the offer,
+     because it lives in the vocabulary sheet where it can be seen greyed on
+     every other record and therefore learned. The bare tap is drawn alone,
+     and then it means the other half of its own mechanism: a LANE the record
+     has never had, put in with the record's own idiom (ADDPAT). */
+  const bring = t.adj.some((a) => a.id === "back" && a.on);
+  if (t.bare.length && !bring) {
+    /* ...AND IT IS A BUTTON, NOT A MENU OF ONE (2026-09-02). The 2026-08-24
+       law it is measured against — Paul: "in general where there is ONE option
+       a dropdown is preferred" — is about a CHOICE with one answer left in it,
+       and it stands everywhere it was pointed: a `<select>` beats a lit grid of
+       one radio. This is not a choice at all. There is nothing to pick between
+       and nothing to compare; there is one thing to do, and the widget for
+       doing one thing is a button. Drawn as a menu it cost two gestures (open,
+       pick) to say what one press says, on the page's most direct sentence. */
+    const p = el("p", null, "nu-row");
+    const b = el("button", t.bare[0].w);
+    b.type = "button"; b.dataset.k = "prod.bare";
+    b.title = "make " + S.w + " — the record's own idiom for what is missing";
+    b.addEventListener("click", () => { say(doc, VERB1, psubj, null); land(); });
+    p.append(b); parent.append(p);
+  }
+
+  const grid = el("div", null, "nu-ptargets");
+  if (t.adj.length) sheet(grid, { key: "prod.word", label: "qualities",
+    value: "", ungated: true,
     options: t.adj.map((a) => ({ value: a.id, label: a.w,
       disabled: !a.on, why: a.on ? null : a.why })),
     set: (id) => { say(doc, VERB1, psubj, id); land(); } });
   if (t.gen.length) {
-    sheet(parent, { key: "prod.record",
-      label: (t.adj.length || t.bare.length) ? "or like a record" : legend,
+    const field = sheet(grid, { key: "prod.record", label: "records",
       value: "", ungated: true,
       // THE ANCHOR'S OWN LABEL IS WHAT THE WORD MEANS — "punk" is New York
       // 1976 — and it belongs ON the option. The old page put it in a `title`,
       // which is invisible on a phone, and that is the only place this page is
       // really read (sheets.js says the same thing about `why`).
       options: t.gen.map((g) => ({ value: g.id,
-        label: g.label ? g.w + " · " + g.label : g.w })),
+        label: g.label ? g.w + " \u00b7 " + g.label : g.w })),
       set: (id) => { say(doc, VERB1, psubj, id); land(); } });
-    if (t.hidden > 0) parent.append(el("p",
-      "…and " + t.hidden + " other records this would not move.", "nu-hint"));
+    /* THE HIDDEN COUNT IS THE FIELD'S OWN REFUSAL NOW (2026-09-02). It was a
+       `.nu-hint` paragraph under the sheet — prose, and the text diet counted
+       it whole. It is not prose: it is the reason four hundred records are not
+       on a list of forty, which is the same fact every greyed option on this
+       page prints in a `.nu-why`, and the epsilon law (producer.js:1573) is
+       what computes it. Same words, on the control they are about. */
+    if (t.hidden > 0 && field) field.append(el("small",
+      "\u2026and " + t.hidden + " other records this would not move.", "nu-why"));
   }
+  if (grid.childNodes.length) parent.append(grid);
+
   if (!t.bare.length && !t.adj.length && !t.gen.length)
-    parent.append(el("p", "nothing here would move " + S.w +
-      " on this record. Try another one.", "nu-hint"));
-  back(parent, ctx, "back", () => { psubj = null; });
+    // ...and this is a refusal with its reason, in the page's own class for
+    // one, rather than a hint. `WHY.nomove` is `speak`'s own sentence.
+    parent.append(el("p", WHY.nomove(S) + ".", "nu-why"));
 }
 
-function back(parent, ctx, word, fn) {
-  const p = el("p", null, "nu-row");   // a strip of buttons — nu.css
-  const b = el("button", word);
-  b.type = "button"; b.dataset.k = "pback|" + word;
-  b.addEventListener("click", () => { fn(); ctx.redraw(); });
-  p.append(b); parent.append(p);
-}
+/* `back(parent, ctx, word, fn)` STOOD HERE and is deleted, 2026-09-02. It drew
+   the `pback|back` strip that returned tap two to tap one. The cast never
+   leaves the page now (see `mount`), so a button whose whole job was to bring
+   it back is the doubling UX element Paul named on the motif editor —
+   *"the 'ghosted' sections are doubling UX elements"* — with a `data-k` on it.
+   No gate reads `pback`; measured before deleting. */
 
 // the sentence being built, for a gate and for a console. It is VIEW state —
 // which tap you are on is not something the record says — so it lives here and

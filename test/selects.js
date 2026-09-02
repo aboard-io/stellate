@@ -1112,6 +1112,12 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
      were folded into `make`'s target list. The assertion underneath is STILL
      untouched: the law being proved is the widget, not the verb.
 
+     ...AND THAT LAST SENTENCE IS THE ONE THAT MOVED, 2026-09-02. `prod.bare`
+     is not a sheet at all any more — it is a button, one press, and this check
+     now proves that the page has NO one-option menu and NO lit grid of one
+     where its single offer is. The argument is written out in full at the
+     assertion itself, beside the line it replaces.
+
      Note also `tap()`'s own bug, fixed here while its caller was: it set
      `select.value = v` with the OPTION'S OWN `data-v`, and ui/selects.js writes
      the machine value into `option.value`. Setting `.value` to a string that
@@ -1142,27 +1148,67 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
       // verb is 'make' from now on. Make X Y." — so tap one IS the scope, and
       // "just add it" is a target of `make` (producer.js targets(), where the
       // retired verb's own bare option and its lane anchors were folded in).
-      // WHO IT MAY BE SAID ABOUT, off whichever widget offers it. A voice
-      // scope is `v:<name>`; the bare tap is offered for a chair that is out
-      // or a lane the record has never had.
-      const scMenu = document.querySelector('select[data-sel="prod.scope"]');
-      const scope = scMenu
-        ? ([...scMenu.options].find((o) => !o.disabled && /^v:/.test(o.dataset.v || "")) || {}).dataset
-        : ([...document.querySelectorAll('.nu-sheet[data-sheet="prod.scope"] .nu-opt')]
-            .find((l) => !l.querySelector("input").disabled && /^v:/.test(l.dataset.v)) || {}).dataset;
-      if (!scope || !scope.v) return "no voice scope";
-      if (!tap("prod.scope", scope.v)) return "scope tap failed";
+      //
+      // ...AND THE SCOPE MENU IS A ROW OF CHIPS, 2026-09-02. It read:
+      //   const scMenu = document.querySelector('select[data-sel="prod.scope"]');
+      //   const scope = scMenu
+      //     ? ([...scMenu.options].find((o) => !o.disabled &&
+      //         /^v:/.test(o.dataset.v || "")) || {}).dataset
+      //     : ([...document.querySelectorAll(
+      //         '.nu-sheet[data-sheet="prod.scope"] .nu-opt')]
+      //         .find((l) => !l.querySelector("input").disabled &&
+      //           /^v:/.test(l.dataset.v)) || {}).dataset;
+      //   if (!scope || !scope.v) return "no voice scope";
+      //   if (!tap("prod.scope", scope.v)) return "scope tap failed";
+      // Paul, COMPOSER.md §1 B12: "Design a good producer interface." The cast
+      // is a wrapped row of `<button data-k="cast|<id>">`, one pressed. A gate
+      // that cannot walk to its own subject is the GATE failing (this file's
+      // own sentence, three checks up), so the walk moves and the assertion
+      // underneath does not.
+      const chip = [...document.querySelectorAll('[data-k^="cast|v:"]')]
+        .find((b) => !b.disabled);
+      if (!chip) return "no voice scope";
+      chip.click();
       await new Promise((r) => setTimeout(r, 250));
+      const scope = chip.dataset.k.slice(5);
       const lit = document.querySelector('.nu-sheet[data-sheet="prod.bare"]');
       const men = document.querySelector('select[data-sel="prod.bare"]');
-      return { scope: scope.v, lit: !!lit,
+      const btn = document.querySelector('[data-k="prod.bare"]');
+      return { scope, lit: !!lit,
                litN: lit ? lit.querySelectorAll(".nu-opt").length : 0,
                menu: !!men,
-               menuN: men ? men.querySelectorAll("option:not([data-placeholder])").length : 0 };
+               menuN: men ? men.querySelectorAll("option:not([data-placeholder])").length : 0,
+               button: !!btn && btn.tagName === "BUTTON",
+               word: btn ? btn.textContent.trim() : null };
     });
-    check(three && three.menu === true && three.lit === false,
-      "the producer's one-option tap is a menu, not a lit grid of one " +
-      JSON.stringify(three));
+    /* THE ASSERTION THAT STOOD HERE, AND WHY IT IS REWRITTEN RATHER THAN
+       DELETED (2026-09-02). It read:
+
+         check(three && three.menu === true && three.lit === false,
+           "the producer's one-option tap is a menu, not a lit grid of one " +
+           JSON.stringify(three));
+
+       The law behind it is Paul, 2026-08-24: *"in general where there is ONE
+       option a dropdown is preferred"*, and it STANDS, unchanged, everywhere
+       it was pointed — check 6 above holds it on the harness for every spec
+       that is a CHOICE, and nothing on the shipped page draws a lit grid of
+       one word.
+
+       What moved is that `prod.bare` stopped being a choice. "just add it" is
+       the only thing on its list and always was; the sheet existed because the
+       page had no other way to say a target. The producer's redesign gives it
+       one — the sentence is finished by a press — so a menu you must open to
+       pick the only thing in it is two gestures for a one-gesture fact. A
+       button is not "a dropdown of one" losing to a lit grid of one; it is the
+       widget for doing a thing rather than for choosing between things.
+
+       So this check now holds BOTH halves at the artifact, which the old one
+       could not: the lone offer is a button, and there is no one-option menu
+       or lit grid left of it. */
+    check(three && three.button === true && three.menu === false &&
+          three.lit === false,
+      "the producer's lone offer is a BUTTON — one press, no menu to open and " +
+      "no lit grid of one " + JSON.stringify(three));
   } else {
     notes.push("     (check 10 — the producer's live path — is index.html only)");
   }

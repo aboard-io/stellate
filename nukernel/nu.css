@@ -6026,3 +6026,106 @@ table.nu-trims{ color: var(--ink); }
   text-transform: none; letter-spacing: 0;
   border: var(--bw) solid transparent; border-radius: var(--r2); }
 .nu-rowjump:hover{ border-color: var(--ink); }
+
+/* ======================================================================
+   SLICE 2f — THE PRODUCER PAGE (COMPOSER.md §2.9, 2026-09-02)
+   Paul, B12: *"The only verb is 'make' from now on. Make X Y. The
+   implementation is good but the design is confusing and feels unconsidered.
+   Design a good producer interface."*
+
+   Four surfaces, and three of them are shapes this stylesheet already owns
+   (the ink name plate, a wrapped strip of buttons, a two-column field row).
+   What is new here is a chip that carries a player's colour, and a LEVEL bar
+   small enough to sit in a table cell.
+   ====================================================================== */
+
+/* ---- THE PLATE. `.nu-namebar` is the page's name plate and the producer is
+   its fourth wearer. Two things it needs that a bus name does not: it wraps
+   (three parts, and the third is a whole sentence), and the sentence under
+   construction is not a dim caption — it is the loudest thing on the plate
+   after the name, because it is what the next tap will finish. */
+.nu-prodplate{ flex-wrap: wrap; }
+/* `.nu-namebar small` (the plate's dim second voice, .75) and `.nu-prodsay`
+   are the same specificity and the dim one is written later in the file, so
+   the sentence has to be said INSIDE the plate to win it back. It is not a
+   caption: it is the thing the next tap finishes. */
+.nu-namebar .nu-prodsay{ font-weight: var(--fw-label); opacity: 1; }
+
+/* ---- THE CAST: A LEVEL OF SIBLINGS, ONE PRESSED ----------------------
+   A wrapped `.nu-row` of buttons, which is this file's one name for a strip
+   of them. Nothing here restates the button face, the pressed plate or the
+   44px floor — all three are the base rules at the top of the file, and that
+   is the point of a chip row: it is buttons.
+
+   THE PLAYER'S COLOUR IS A SWATCH INSIDE THE CHIP. `[data-vi]` on the chip
+   declares `--vpaint`; `.nu-vpaint` on a 10px square inside it does the
+   painting, in the utility's own filled form. The chip itself may not wear the
+   fill (`aria-pressed` owns it) and may not wear `.is-edge` (it zeroes the
+   border and the ground, which is the button's face) — so the colour goes on
+   the one element in the chip that is nothing but colour. See `.nu-vpaint`'s
+   own contract for why this is the utility used rather than a fifth rule. */
+.nu-cast{ align-items: stretch; margin-block: var(--s3); }
+.nu-castchip{ display: inline-grid; grid-template-columns: auto 1fr;
+  column-gap: var(--s2); align-items: center; text-align: start;
+  padding: var(--s2) var(--s3); max-inline-size: 100%; min-inline-size: 0;
+  overflow-wrap: anywhere; }
+.nu-castdot{ grid-row: 1 / span 2; inline-size: 10px; block-size: 10px;
+  border-radius: var(--r2); }
+.nu-castw{ grid-column: 2; font-weight: var(--fw-label); }
+.nu-castline{ grid-column: 2; font-size: var(--t1); font-weight: var(--fw-body);
+  font-style: normal; opacity: .85; }
+/* THE TREE SURVIVES AS AN INDENT AND NOT AS A LEVEL. producer.js's subject
+   table is two deep — kick / snare / hats / toms / cymbals / percussion under
+   the drums, the bass line and the bass sound under the bass — and a wrapped
+   row is flat by construction. The child chips are set in one step of the
+   spacing scale and read as a group under the parent word that precedes them.
+   (The nav's own tree pays for depth in `--s3` per level for the same reason;
+   this is one level, so it is one step.) */
+.nu-castchip[data-under]{ margin-inline-start: var(--s3); }
+
+/* ---- THE TARGETS: TWO SHEETS SIDE BY SIDE ----------------------------
+   (COMPOSER.md §2.9: "two sheets side by side on wide screens, stacked on
+   phones".) 800px is the width at which two `.nu-field` rows still hold their
+   own word without the value ellipsing — measured against the longest label
+   pair the page can draw, `qualities` over `chugging` and `records` over an
+   anchor's full "punk · New York 1976". Below it they stack, which is the
+   grid's own default and needs no rule. */
+.nu-ptargets{ display: grid; gap: var(--s3); align-items: start; }
+@media (min-width: 800px){
+  .nu-ptargets{ grid-template-columns: 1fr 1fr; column-gap: var(--s4); }
+}
+.nu-ptargets > .nu-sel{ margin-block: 0; }
+
+/* ---- HOW FAR, AS A LENGTH ---------------------------------------------
+   The LEVEL ramp (`--q1..--q4`, "how much") in a table cell. It is the same
+   four steps the step grid's velocities wear and it is drawn the same way:
+   an ink-bordered well, a fill inside it, the step chosen by the value. The
+   well keeps its border at every step so the SHAPE is legible even where the
+   quiet end of the ramp is a low-contrast fill — the argument `--q1`'s own
+   note makes, applied to the third surface that uses it. */
+.nu-pcbar{ display: block; inline-size: 100%; min-inline-size: 42px;
+  /* A WIDGET, NOT A STRETCH. `inline-size: 100%` alone made the bar as wide as
+     the column, which at 1280 is a 480px trough holding a 40% fill — the eye
+     reads the TROUGH's length as the quantity before it finds the fill. Capped,
+     the five bars in a stack of five are the same length and only their fills
+     differ, which is the comparison the ramp is for. */
+  max-inline-size: 120px;
+  block-size: 8px; margin-block-end: 2px; background: var(--well);
+  border: var(--bw) solid var(--rule); border-radius: var(--r2);
+  overflow: hidden; }
+.nu-pcfill{ display: block; block-size: 100%; background: var(--q4);
+  border-inline-end: var(--bw) solid var(--rule-strong); }
+.nu-pcbar[data-q="1"] > .nu-pcfill{ background: var(--q1); }
+.nu-pcbar[data-q="2"] > .nu-pcfill{ background: var(--q2); }
+.nu-pcbar[data-q="3"] > .nu-pcfill{ background: var(--q3); }
+.nu-pcbar[data-q="4"] > .nu-pcfill{ background: var(--q4); }
+/* A REFUSED LINE, STRUCK WHOLE. The `<s>` on the percentage is the semantic
+   element and stays; this is the other three cells, so the strike reads as a
+   fact about the LINE. The row's own buttons are not struck — "more" and
+   "take it off" still work on a note that moved nothing, and a struck control
+   would read as a dead one. */
+.nu-notes tr.is-refused > th,
+.nu-notes tr.is-refused > td{ opacity: .7; }
+.nu-notes tr.is-refused > td{ text-decoration: line-through; }
+.nu-notes tr.is-refused > td .nu-row{ text-decoration: none; }
+.nu-notes tr.is-refused .nu-pcfill{ background: var(--faint); }

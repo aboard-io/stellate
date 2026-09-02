@@ -510,13 +510,20 @@ data-tier work runs beside it. Agents do not commit; the parent commits at
 the end of each wave with the gates named in §4 green. Every agent reads
 `scratch/maps-2026-09-01/<slice>.md` first, and this file.
 
-| wave | slot A (UI, sequential) | slot B (data / engine, parallel) |
-|---|---|---|
-| **0** | — | **0a** `rules.js` + `genreToDocument(gk, seed, rules)` + `jitter` + the `silence` row + its gate exemptions (§2.3, §2.4 data half) · **0b** per-voice meter in the engine + `voiceLevels`/`soundingChans`/`addrOf`/`barPlanNow` (§2.8 feeds) · **0c** producer collapse to `make` + alias door + producer gates (§2.9 data half) · **0d** the screensaver dancers (§2.12) |
-| **1** | **1a** the nav tree, the foot, the width and type, the tabs `Rules`/`Structure` (hosts, glyphs, h2s, empty builders), Mix's five children driving `showBoard`, the seed flyout + `setReading` + boot-without-composing + `silence` at boot and pinned in the list; every nav/transport/tab gate rewritten (§2.1–2.3, 2.13) | **1b** the design tokens, `.nu-pan` padding, `.nu-field`, `.nu-combo` (+ `selectField` wrapper), `.nu-strip-out`, `.nu-preview`, `.nu-namebar`, category/level colour, the video/saver block, range-skin reconciliation, PROGRAM.md §2.4 (§2.10) — **in a worktree**, merged by the parent after 1a (nu.css conflicts are the parent's to resolve) |
-| **2** | **2a** Tempo + Key (§2.5) → **2b** Rules view (§2.4 UI half) → **2c** Band roster/facets/motif tray + member lighting + motif previews/rename/new (§2.7, §2.11) → **2d** Structure tab + grids + performance (§2.6) → **2e** Mix plate `auto`, column heads, jump (§2.8 UI half) → **2f** Produce page (§2.9 UI half) | — (slot B idle or running §5 data work) |
-| **3** | **3a** a PROBE agent drives the deployed staging page as a user through the whole story (blank state → seed → pick a genre → Rules → build a band → structure grid → mix → produce → screensaver), forbidden to fix, reports defects with evidence | — |
-| **3** | **3b** the fix round from 3a's report; deploy | — |
+| wave | slot A (UI, sequential) | slot B (data / engine, parallel) | status |
+|---|---|---|---|
+| **0** | — | **0a** `rules.js` + `genreToDocument(gk, seed, rules)` + `jitter` + the `silence` row + its gate exemptions (§2.3, §2.4 data half) · **0b** per-voice meter in the engine + `voiceLevels`/`soundingChans`/`addrOf`/`barPlanNow` (§2.8 feeds) · **0c** producer collapse to `make` + alias door + producer gates (§2.9 data half) · **0d** the screensaver dancers (§2.12) | **SHIPPED** — all four in `a675c2f` (0d's three.js re-vendor in `9879597`) |
+| **1** | **1a** the nav tree, the foot, the width and type, the tabs `Rules`/`Structure` (hosts, glyphs, h2s, empty builders), Mix's five children driving `showBoard`, the seed flyout + `setReading` + boot-without-composing + `silence` at boot and pinned in the list; every nav/transport/tab gate rewritten (§2.1–2.3, 2.13) | **1b** the design tokens, `.nu-pan` padding, `.nu-field`, `.nu-combo` (+ `selectField` wrapper), `.nu-strip-out`, `.nu-preview`, `.nu-namebar`, category/level colour, the video/saver block, range-skin reconciliation, PROGRAM.md §2.4 (§2.10) — **in a worktree**, merged by the parent after 1a (nu.css conflicts are the parent's to resolve) | **SHIPPED** — 1a `32d1197`, 1b `50a0828`, merged `fd0ca2c` |
+| **2** | **2a** Tempo + Key (§2.5) → **2b** Rules view (§2.4 UI half) → **2c** Band roster/facets/motif tray + member lighting + motif previews/rename/new (§2.7, §2.11) → **2d** Structure tab + grids + performance (§2.6) → **2e** Mix plate `auto`, column heads, jump (§2.8 UI half) → **2f** Produce page (§2.9 UI half) | — (slot B idle or running §5 data work) | **SHIPPED** — 2a `ade9145`, 2b `59a2f33`, 2c `00ef6f5`, 2d `e065524`, 2e `af580c4`; **2f SHIPPED-UNCOMMITTED** (the parent commits after each slice, and 2f is the last) |
+| **3** | **3a** a PROBE agent drives the deployed staging page as a user through the whole story (blank state → seed → pick a genre → Rules → build a band → structure grid → mix → produce → screensaver), forbidden to fix, reports defects with evidence | — | not started |
+| **3** | **3b** the fix round from 3a's report; deploy | — | not started |
+
+**ONE DEBT EVERY SLICE OF WAVE 2 RECORDED AND NONE OF THEM PAID.** 2a, 2b, 2c,
+2d, 2e and 2f each ran the gates their brief named, once each, plus the ones
+their own edits reached; not one of them ran `node test/all.js --impacted` end
+to end, and each said so in its handoff. §4's first line asks for one such run
+PER WAVE. It is the parent's, it is owed for the whole of wave 2, and it is the
+last thing between here and 3a.
 
 Deploy = bump `sw.js VERSION`, then from a clean worktree of HEAD:
 `rsync -a --exclude '.git' --exclude 'node_modules' --exclude '*.wav'
@@ -552,6 +559,33 @@ carrying exactly that lands in wave 1a so it stops being an incantation.
   and 0 while it is muted); a produce gate (only `make`, old notes fold);
   and a dancers gate (`__saverDrift` grows, N aliens = members + extras).
   Registered in `test/all.js` with `covers` so `--impacted` selects them.
+
+**WHAT WAS REGISTERED, AND WHERE EACH OF THE EIGHT LANDED** (written 2026-09-02,
+at the end of wave 2f, off `git diff c5fd274..HEAD -- test/`). Eleven gates are
+new in `test/all.js` this round; the eight asked for above are all present, two
+of them inside gates that already existed rather than as files of their own.
+
+| asked for | landed as | `test/all.js` name |
+|---|---|---|
+| nav-tree | `test/nav-tree.js` (349 lines) | `nav-tree` |
+| seed | `test/seed.js` (227) | `seed` |
+| silence | `test/silence.js` (206) | `silence` |
+| rules | `test/rules.test.js` (403, node) **and** `test/rules-view.browser.js` (307) | `rules`, `rules-view` |
+| structure-grid | `test/structure.browser.js` (375) | `structure` |
+| meter | `test/meter-reach.browser.js` (213) | `meter-reach` |
+| produce | **no new file** — the two producer gates were rewritten in place instead (`test/producer-eight.test.js` +146, `test/producer.browser.js` +137): "only `make`" is P0's `verbAny === "absent"` and G-plan's one-verb walk, "old notes fold" is the alias door's own node check | `producer`, `producer-ui` |
+| dancers | **no new file** — `test/screensaver-lazy.js` +120, where S6's offline regex and S7's swiftshader launch already lived | `screensaver-lazy` |
+
+…and three the plan did not name, each registered by the wave-2 slice that
+needed it: `tempo-key` (`test/tempo-key.browser.js`, 358 — 2a), `band`
+(`test/band.browser.js`, 428 — 2c), `mix-heads` (`test/mix-heads.browser.js`,
+352 — 2e). Every one of the eleven carries `covers`, so `--impacted` selects it.
+
+Two of the eight are gates inside gates, and that is a decision rather than a
+shortfall: a "produce gate" separate from the two that already drive the
+producer would be a third file walking the same taps, and the dancers are the
+screensaver's, whose gate is the one that knows how to launch a GPU-less
+chromium. Both are named here so the count in the line above stays honest.
 - The text diet's ceiling is re-earned, not raised: a Rules panel is
   controls, values and refusals; if T1 goes red the fix is fewer words.
 

@@ -45,10 +45,12 @@ const REAL = /nukernel\/index\.html/.test(PAGE);
  * avail row nor on this list — so a slice that quietly invents a sheet outside
  * the vocabulary still turns this gate red.
  *
- * `prod.scope` and the ones after it are also the only sheets on the page with
+ * `prod.word` and `prod.record` are also the only sheets on the page with
  * NOTHING checked, and that is what they mean: nothing has been said yet.
  * (It read "`prod.verb` and the two after it" until 2026-09-01, when the verb
- * sheet was deleted — Paul: "The only verb is 'make' from now on. Make X Y.")
+ * sheet was deleted — Paul: "The only verb is 'make' from now on. Make X Y." —
+ * and "`prod.scope` and the ones after it" until 2026-09-02, when the scope
+ * became the cast's chip row and left this registry with it.)
  *
  * `master` and `bus` joined them 2026-08-24, when the board's fifteen master
  * dropdowns became fifteen sheets (STATE.md item 20 — twenty-three `<select>`s
@@ -68,7 +70,18 @@ const VIEW_SHEETS = {
      draws is a registry that has stopped describing the page, so the row and
      the sheet go together; the `undeclared` check below is what would have
      caught the other order. */
-  "prod.scope":  "ui/produce.js — who it is being said about (page state)",
+  /* `prod.scope` — "who it is being said about (page state)" — is DELETED,
+     2026-09-02, in the same commit as the widget, exactly as `prod.verb` was
+     the day before it (Paul, COMPOSER.md §1 B12: "The implementation is good
+     but the design is confusing and feels unconsidered. Design a good producer
+     interface."). The producer's cast is a wrapped ROW OF CHIPS now — one
+     `<button data-k="cast|<id>">` per cast row, one pressed — and this
+     registry declares LIT SHEETS: it is read by a walk over `.nu-sheet`
+     elements, so a key hung on a `<div class="nu-row">` of buttons would make
+     it describe a widget that is not on the page. The chips are addressed the
+     way every other strip of buttons on this page is, and are held by
+     test/producer.browser.js P0 (they exist, they carry the cast) and by
+     test/text-diet T3 (a greyed one carries its reason). */
   "prod.word":   "ui/produce.js — the adjective, drawn from producer.js's own table",
   "prod.record": "ui/produce.js — the same tap aimed at the whole record",
   "prod.section":"ui/produce.js — the same tap aimed at one section",
