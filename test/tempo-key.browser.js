@@ -50,6 +50,11 @@
  *       `push`, and audio/plan.js's bar SECONDS for that section shrink.
  *   T4  `+ bar` grows the cycle to five and the fifth chord reaches the
  *       COMPILED genre (`__eightGenres().prog`); `− bar` puts it back.
+ *   T4e on a record whose harmony is NOT a cycle the quality controls in the
+ *       changes table are LIT (Paul: *"I can't change chord quality, it's
+ *       grayed"*), the grid says "editing the changes makes the harmony a
+ *       cycle", and one pick writes the chord, the harmony AND the compiled
+ *       genre's own prog (`__eightGenres().progQ`).
  *   T5  on a shur record, tapping a relative minor moves the KEY and leaves
  *       the alphabet alone — and on a 12-TET record it still answers both;
  *       on slendro the degree slider has FIVE degrees' worth of rungs, not
@@ -318,6 +323,102 @@ function standUpServer() {
   check(!!rungs && rungs.max === rungs.n - 1,
     "T4d the degree slider has one rung per degree of the record's own " +
     "alphabet " + JSON.stringify(rungs));
+
+  /* ================= T4e · THE QUALITY IS NOT GREY ===================== */
+  /* Paul, on the deployed composer (wave 4): *"I can't change chord quality,
+     it's grayed."*
+
+     WHY IT WAS, AND WHY THAT WAS A DEAD END. `kernel.js chordsOf` reads a
+     chord's `q` only under `harmony === "cycle"` — on a modal or emergent
+     record the whole chart is thrown away and one triad on the mode's root is
+     played — so gates.json refuses `alphabet.quality` with `when
+     alphabet.harmony.cycle` and the grid greyed eight menus with an accurate
+     reason. Accurate and unusable: the grid where you say "this record has
+     changes" was the one control locked by the record not having any.
+     WHAT IS ASSERTED. On a record whose harmony is NOT a cycle: no quality
+     control in the changes table is disabled, the page says in words what
+     editing them will do, and one pick moves three things at once — the
+     document's own chord, `alphabet.harmony` to "cycle", and the COMPILED
+     genre's prog (`__eightGenres().progQ`), which is the only one of the three
+     that proves the quality reaches the kernel rather than the page's memory.
+     THE HARMONY IS DRIVEN THERE FIRST, through the harmony control a thumb
+     uses, because the chant may already be a cycle and a gate that measured
+     whatever the shipped record happened to be would measure nothing. */
+  {
+    /* ONE HELPER FOR EITHER WIDGET. Wave 4 is turning single-choice controls
+       into comboboxes (Paul: *"The combo boxes just don't work … onfocus show
+       custom dropdown then filter based on input"*) and the ADDRESS is what
+       survives that — `data-sel` — so this reaches the control by address and
+       then asks what kind of thing it found. */
+    const setSel = async (selKey, val) => {
+      const hit = await p.evaluate(([sk, v]) => {
+        const el2 = document.querySelector('#app [data-sel="' + sk + '"]');
+        if (!el2 || el2.disabled) return { ok: false, why: "no control " + sk };
+        if (el2.tagName === "SELECT") {
+          const o = [...el2.options].find((x) => x.value === v);
+          if (!o || o.disabled) return { ok: false, why: "no option " + v };
+          el2.value = v;
+          el2.dispatchEvent(new Event("change", { bubbles: true }));
+          return { ok: true };
+        }
+        el2.focus(); el2.click();
+        const own = el2.getAttribute("aria-controls");
+        const list = (own && document.getElementById(own)) || el2.parentElement;
+        const opt = list && list.querySelector('[data-v="' + v + '"]');
+        if (!opt || opt.disabled) return { ok: false, why: "no option " + v };
+        opt.click();
+        return { ok: true };
+      }, [selKey, val]);
+      await p.waitForTimeout(700); return hit;
+    };
+    const words = (selKey) => p.evaluate((sk) => {
+      const el2 = document.querySelector('#app [data-sel="' + sk + '"]');
+      if (!el2) return null;
+      const os = el2.tagName === "SELECT"
+        ? [...el2.options].map((o) => ({ v: o.value, off: o.disabled }))
+        : [...document.querySelectorAll('[data-v]')]
+            .filter((o) => (o.dataset.sel || sk) === sk)
+            .map((o) => ({ v: o.dataset.v, off: !!o.disabled }));
+      return { off: !!el2.disabled, why: el2.dataset.why || "", opts: os };
+    }, selKey);
+
+    const went = await setSel("alphabet.harmony", "modal");
+    const before = await p.evaluate(() => {
+      const q = [...document.querySelectorAll('#pan-key [data-sel^="alphabet.quality"]')];
+      return { harmony: window.__eightDoc().alphabet.harmony,
+               n: q.length, off: q.filter((x) => x.disabled).length,
+               whys: q.filter((x) => (x.dataset.why || "").trim()).length,
+               said: document.body.innerText
+                 .includes("editing the changes makes the harmony a cycle") };
+    });
+    check(went.ok && before.harmony !== "cycle" && before.n > 0 &&
+          before.off === 0 && before.whys === 0,
+      "T4e on a record with no changes the quality controls are LIT, not " +
+      "greyed " + JSON.stringify(before));
+    check(before.said,
+      "T4e-i …and the grid says what editing them will do — \"editing the " +
+      "changes makes the harmony a cycle\" is printed under the table");
+
+    const q0 = await words("alphabet.quality|bar0");
+    const now0 = (await doc()).alphabet.prog[0].q || "triad";
+    const want = q0 && (q0.opts.find((o) => !o.off && o.v === "maj7") ||
+                        q0.opts.find((o) => !o.off && o.v !== now0) || {}).v;
+    if (!want) check(false, "T4e-ii no second quality to choose " +
+                            JSON.stringify(q0));
+    else {
+      const set = await setSel("alphabet.quality|bar0", want);
+      const after = await p.evaluate(() => {
+        const G = window.__eightGenres(), k = Object.keys(G)[0];
+        const D = window.__eightDoc();
+        return { q: D.alphabet.prog[0].q, harmony: D.alphabet.harmony,
+                 compiled: k ? (G[k].progQ || [])[0] : null };
+      });
+      check(set.ok && after.q === want && after.harmony === "cycle" &&
+            after.compiled === want,
+        "T4e-ii choosing " + want + " writes the chord, makes the harmony a " +
+        "cycle, and the COMPILED genre carries it " + JSON.stringify(after));
+    }
+  }
 
   /* ================= T5 · THE CIRCLE AND A TUNING ===================== */
   /* A 12-TET RECORD FIRST, so the reversal is proved to be a NARROWING and not

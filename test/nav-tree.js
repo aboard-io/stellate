@@ -16,8 +16,10 @@
  * state on purpose, which is what this file does.
  *
  * N1  no ↑ anywhere, at any depth, on any tab — it is ABSENT, not disabled
- * N2  two branches stand open together: two `aria-expanded="true"` ancestors,
- *     both their children on the stripe at depth 1, and exactly ONE <mark>
+ * N2  ONE PATH: opening Structure folds Band — one `aria-expanded="true"`
+ *     ancestor, only its children on the stripe, and exactly ONE <mark>
+ *     (rewritten in place 2026-09-02; the old claim and Paul's reversal of it
+ *     are at the check itself)
  * N3  a branch of ACTIONS marks nothing — its rows carry no aria-pressed at
  *     all (the 2026-08-28 law: fourteen `aria-pressed="false"` buttons would
  *     tell a screen reader there is a state to be in)
@@ -129,10 +131,22 @@ const RECORD = "#at=Kingston&y=1969&s=1";
     "N1 · there is no ↑ on any tab — it is absent, not a dead button " +
     JSON.stringify(upFound));
 
-  /* ---- N2 TWO BRANCHES OPEN AT ONCE ---------------------------------- */
-  /* THE WHOLE ASK, IN ONE STATE: open Band, open Structure, and both stand.
-     Driven through the BUTTONS a thumb presses — a walk that expanded through
-     `__eightExpand` would be proving the probe agrees with itself. */
+  /* ---- N2 ONE PATH, AND ARRIVING SOMEWHERE FOLDS WHERE YOU WERE ------- */
+  /* REWRITTEN IN PLACE 2026-09-02 (wave 4). Paul: *"Only allow one expansion
+     (or nested expansion) of the left nav at one time."*
+
+     WHAT IT SAID: *"THE WHOLE ASK, IN ONE STATE: open Band, open Structure,
+     and both stand."* That was his 2026-08-28 sentence — *"we can expand
+     multiple levels of interface option"* — read as a forest, and the plural
+     he has now withdrawn is BRANCHES, not LEVELS: root → child → grandchild
+     still stand together (N3 and the shell's A6l both drive three deep), but
+     one chain of them. The same two taps are made and the assertion is
+     inverted, which is what "rewritten in place" means for a gate: opening
+     Structure takes Band's branch with it.
+     STILL DRIVEN THROUGH THE BUTTONS a thumb presses — a walk that expanded
+     through `__eightExpand` would be proving the probe agrees with itself —
+     and `T.expanded` is read as the PATH, root first, because that is what
+     ui/eight.js `setChain` now guarantees it is. */
   await p.evaluate(() => window.__eightUp());
   await p.waitForTimeout(150);
   await p.click('[data-k="toptab-Band"]');
@@ -143,18 +157,27 @@ const RECORD = "#at=Kingston&y=1969&s=1";
     const T = window.__eightTree();
     const doors = [...document.querySelectorAll('#nu-tray [aria-expanded="true"]')]
       .map((x) => x.dataset.k || x.id).filter((k) => k !== "playops");
-    return { doors,
-      band: T.rows.filter((r) => r.depth === 1 && /^tab/.test(r.key)).length,
+    /* `tabperformance` IS A CHILD OF STRUCTURE and its key starts with `tab`
+       — the address it wore at the band level, kept because an address does
+       not move when a row moves (ui/eight.js sectionTrayItems says so). So
+       "how many BAND members are on the stripe" cannot be `/^tab/` alone; it
+       was harmless while both branches stood and it counts one row too many
+       the moment the claim is that Band is folded. */
+    return { doors, exp: T.expanded,
+      band: T.rows.filter((r) => r.depth === 1 && /^tab/.test(r.key) &&
+                                 r.key !== "tabperformance").length,
       secs: T.rows.filter((r) => r.depth === 1 && /^secnav/.test(r.key)).length,
       marks: document.querySelectorAll("#nu-tray mark").length,
       pressed: [...document.querySelectorAll('#nu-tray [aria-pressed="true"]')]
         .map((x) => x.dataset.k || x.id),
       on: T.mark };
   });
-  check(two.doors.length === 2 && two.band > 0 && two.secs > 0,
-    "N2 · Band and Structure stand open together — " + two.doors.length +
-    " expanded ancestors (" + JSON.stringify(two.doors) + "), " + two.band +
-    " member rows and " + two.secs + " section rows on the stripe at once");
+  check(two.doors.length === 1 && two.band === 0 && two.secs > 0 &&
+        two.exp.length === 1 && two.exp[0] === "toptab-Structure",
+    "N2 · opening Structure folds Band; one path — " + two.doors.length +
+    " expanded ancestor (" + JSON.stringify(two.doors) + "), " + two.band +
+    " member rows and " + two.secs + " section rows on the stripe, the open " +
+    "path " + JSON.stringify(two.exp));
   check(two.marks === 1 && two.pressed.length === 1 &&
         two.pressed[0] === two.on,
     "N2 · …and exactly ONE <mark> and one aria-pressed, on the deepest open " +
@@ -201,10 +224,14 @@ const RECORD = "#at=Kingston&y=1969&s=1";
   /* ---- N4 EVERY MARK IS A THUMB AND THE STRIPE IS ONE COLUMN --------- */
   /* At the four widths `--tray-w`'s clamp bends at: 320 and 375 below the
      96px hinge (the mark is a column), 430 above it (the mark is a row), and
-     1280 at the ceiling. Measured with two branches OPEN, because that is the
+     1280 at the ceiling. Measured with a branch OPEN, because that is the
      state a bigger column and a deeper indent could newly break — an indent
      that moved a button's own left would make the stripe two columns, which is
-     the bug nu.css's 2026-09-01 refusal of a 10px MARGIN was written about. */
+     the bug nu.css's 2026-09-01 refusal of a 10px MARGIN was written about.
+     (It said "with two branches OPEN" and made two clicks to get them; since
+     2026-09-02 the second click FOLDS the first — one path — so the two clicks
+     are kept, because what they build is still the deepest state the widths
+     have to hold, and the sentence is the one that changed.) */
   const widths = [];
   for (const w of WIDTHS) {
     await p.setViewportSize({ width: w, height: 844 });
@@ -238,7 +265,7 @@ const RECORD = "#at=Kingston&y=1969&s=1";
   const badW = widths.filter((r) => r.cols !== 1 || r.minTap < 44 ||
                                     r.listSide !== 0 || r.page !== 0);
   check(badW.length === 0,
-    "N4 · with two branches open the stripe is ONE column, every mark is 44+, " +
+    "N4 · with a branch open the stripe is ONE column, every mark is 44+, " +
     "and nothing scrolls sideways at 320/375/430/1280 — " +
     JSON.stringify(widths) + (badW.length ? " · BAD " + JSON.stringify(badW) : ""));
   await p.setViewportSize({ width: 390, height: 844 });

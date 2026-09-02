@@ -699,11 +699,28 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
   check(!said.length, "...and every one of those reasons is printed on the page " +
     JSON.stringify(said));
 
-  /* ---- 5b DRIVE IT DARK. Modal harmony has no changes (kernel.js:671 throws
+  /* ---- 5b DRIVE IT DARK — AND IT DOES NOT GO DARK ANY MORE.
+     REWRITTEN IN PLACE 2026-09-02 (wave 4). Paul, on the deployed composer:
+     *"I can't change chord quality, it's grayed."*
+
+     WHAT THIS ASSERTED: *"Modal harmony has no changes (kernel.js:671 throws
      the progression away), so choosing a modal harmony must refuse every
-     quality menu IN THE TABLE and say why — the same law test/sheets.js gate 5
-     holds the sheet to, now on a <select> in a <td> where there is no fieldset
-     to carry it. ---- */
+     quality menu IN THE TABLE and say why."* Every word of the mechanism is
+     still true — `chordsOf` reads `c.q` only under `harmony === "cycle"`, and
+     gates.json's `when alphabet.harmony.cycle` is an honest measurement of a
+     record as it stands. What was wrong was the CONCLUSION: the grid whose
+     menus were greyed is the one place a composer says "this record has
+     changes", so the refusal was a door locked from the inside.
+     THE GRID SETS THE HARMONY ITSELF NOW (ui/eight.js chordGrid `asCycle`),
+     which turns a refusal into a stated side effect — so what is asserted here
+     is the pair: NOT ONE quality menu in the table is disabled on a modal
+     record, and the sentence "editing the changes makes the harmony a cycle"
+     is printed under the table where the reason used to be. NO SILENT GREY's
+     other half: nothing changes a second axis quietly either.
+     THE SHEET-LEVEL CLAIM IS NOT ABANDONED, it moved to where it is still
+     true: test/sheets.js gate 5 drives the same modal record through the
+     `avail.js` harness, which this wave did not touch — avail.js goes on
+     measuring, and only this grid routes around what it measured. ---- */
   const dark = await p.evaluate(async () => {
     const h = document.querySelector('#app select[data-sel="alphabet.harmony"]');
     if (!h) return "no harmony menu";
@@ -712,14 +729,15 @@ const bare = (k) => String(k).split("|")[0].replace(/#\d+$/, "");
     if (!o) return "no non-cycle harmony";
     h.value = o.value; h.dispatchEvent(new Event("change", { bubbles: true }));
     await new Promise((r) => setTimeout(r, 300));
-    const q = [...document.querySelectorAll('#app select[data-sel^="alphabet.quality"]')];
-    return { said: o.value, n: q.length, off: q.filter((x) => x.disabled).length,
-             why: q.length ? q[0].dataset.why || "" : "",
-             onPage: q.length ? document.body.innerText.includes(q[0].dataset.why || "\u0000") : false };
+    const q = [...document.querySelectorAll('#app [data-sel^="alphabet.quality"]')];
+    return { said: o.value, harmony: window.__D().alphabet.harmony,
+             n: q.length, off: q.filter((x) => x.disabled).length,
+             said2: document.body.innerText
+               .includes("editing the changes makes the harmony a cycle") };
   });
-  check(dark && dark.n > 0 && dark.off === dark.n && !!(dark.why || "").trim() &&
-    dark.onPage, "a harmony with no changes refuses every quality menu, with the " +
-    "reason on the page " + JSON.stringify(dark));
+  check(dark && dark.n > 0 && dark.off === 0 && dark.said2,
+    "a harmony with no changes leaves every quality menu LIT and says what " +
+    "editing them will do " + JSON.stringify(dark));
 
   /* ---- 6 A SHEET OF ONE OPTION IS A LABEL PRETENDING TO BE A CHOICE ---- */
   const lonely = sheets.filter((s) => s.n <= 1).map((s) => s.key + " n=" + s.n);

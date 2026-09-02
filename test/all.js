@@ -544,7 +544,11 @@ const GATES = [
              "nukernel/export/score.js", "engine/faust/live/stream-renderer.js"] },
   { name: "gutter",     wave: 3, kind: "browser",
     argv: ["test/gutter.js"], need: ["test/gutter.js"],
-    covers: ["test/gutter.js", "nukernel/ui/explain.js"] },
+    /* (`nukernel/ui/explain.js` STOOD IN THIS LIST until 2026-09-02. Paul,
+       wave 4: *"Get rid of explain — that's the genre editor's work now."* The
+       file is deleted, and a `covers` naming a path that does not exist makes
+       `test/impacted.js` select nothing when the gutter's own code moves.) */
+    covers: ["test/gutter.js"] },
   { name: "chorus",     wave: 3, kind: "browser",
     argv: ["test/chorus.js"], need: ["test/chorus.js"],
     covers: ["test/chorus.js", "nukernel/instruments.js"] },

@@ -1724,6 +1724,44 @@ function chordGrid(parent) {
   const chordName = (c) => numeral(c.d) + (c.inv
     ? (SEVENTH[c.q] ? INVFIG7 : INVFIG)[c.inv] || ""
     : (QMARK[c.q] == null ? c.q : QMARK[c.q]));
+  /* ===== EDITING THE CHANGES MAKES THE HARMONY A CYCLE (2026-09-02) =====
+     Paul, on the deployed composer: *"I can't change chord quality, it's
+     grayed."*
+
+     WHY IT WAS GREY AND WHY THE REASON WAS TRUE. `kernel.js chordsOf` reads
+     `g.prog` only under `g.harmony === "cycle"` — a modal or emergent record
+     gets one triad on the mode's own root and the whole chart is thrown away —
+     so gates.json's `alphabet.quality` rule (`when alphabet.harmony.cycle`) is
+     an accurate measurement and the sheet refused every menu in this table
+     with it. The grid was HONEST and it was a dead end: a composer who wants a
+     major seventh in bar 3 is told, correctly, that this record has no
+     changes, and the control that would give it changes is a different axis on
+     a different part of the panel.
+
+     SO THE GRID SETS THE HARMONY ITSELF — one write, with the side effect
+     STATED. Every writer in this table goes through `asCycle()` first: the
+     quality menus, both sliders, and `+ bar` / `− bar`. It is one gesture that
+     does two things, which is the shape this page normally refuses; what earns
+     it here is that the second thing is what makes the first thing audible,
+     and it is said in words under the table while it is still going to happen
+     (`nu-why`, below), not announced after the fact.
+
+     IT IS WRITTEN THROUGH THE SHEET AND NOT ONTO THE DOCUMENT.
+     `SHEETS["alphabet.harmony"].set` is the one owner of what that word does
+     to a record, and it is the same setter the harmony menu three rows up
+     calls — so a hand that reaches this table and a hand that reaches that
+     menu leave the document in exactly one state. No `changed()` here: every
+     caller below already recompiles, and two rebuilds for one gesture is the
+     bug `shSpec` was given a single `set` to prevent.
+
+     WHAT IS *NOT* ROUTED AROUND. The per-OPTION refusals stay exactly as
+     `optionsFor` computed them — `triad` is gated on `cast.hasChord`, and a
+     record with nobody to play a chord is a quality that is truly unreachable,
+     which is the refusal item 11 keeps. Only the SHEET-level "there are no
+     changes on this record" is answered, because this grid is the answer. */
+  const cycle = DOC.alphabet.harmony === "cycle";
+  const asCycle = () => { if (DOC.alphabet.harmony === "cycle") return;
+    NuAvail.SHEETS["alphabet.harmony"].set(DOC, {}, "cycle", ENV); };
   const t = el("table");
   const head = el("tr");
   for (const h of ["bar", "degree", "", "quality", "inversion", ""])
@@ -1748,7 +1786,8 @@ function chordGrid(parent) {
        dragging past the end of the alphabet silently wrapped to its start.
        `NUM.length - 1` is the same arithmetic `numeral` already does, said
        once at the control instead of after it. */
-    const d = range("prog" + i + "d", c.d, (v) => c.d = v, 0, NUM.length - 1, 1,
+    const d = range("prog" + i + "d", c.d, (v) => { asCycle(); c.d = v; },
+      0, NUM.length - 1, 1,
       "chord " + (i + 1) + " degree", false, numeral, "84px");
     const td = el("td"); td.append(d.r); tr.append(td);
     const to = el("td"); to.append(d.out); tr.append(to);
@@ -1765,14 +1804,25 @@ function chordGrid(parent) {
     // which is what the read-only cell was for.
     const qs = shSpec("alphabet.quality", { bar: i },
                       "bar " + (i + 1) + " quality");
-    qWhy = qs.why || qWhy;
+    /* THE SHEET-LEVEL REFUSAL IS CLEARED HERE AND NOWHERE ELSE (2026-09-02).
+       `avail.js` is untouched: its measurement is right about a record as it
+       STANDS, and the thing that makes it wrong is a write this grid is about
+       to make. So the spec that reaches the widget is the one that will be
+       true a millisecond later — the refusal is dropped and the `set` carries
+       the write that drops it, which keeps the two halves of the claim in one
+       expression. `qWhy` is only collected while the record IS a cycle, so the
+       sentence under the table is never two reasons at once. */
+    if (!cycle) { qs.why = null;
+      const put = qs.set; qs.set = (v) => { asCycle(); put(v); }; }
+    else qWhy = qs.why || qWhy;
     const tq = el("td"); tq.append(selectEl(qs)); tr.append(tq);
     // INVERSION: which note of the chord is in the bass. The kernel has
     // carried it all along — chordsOf reads `inv` and takes the bass pitch as
     // pcs[inv % pcs.length] — so this is another field that only needed
     // somewhere to be said. A slider because the inversions are a LADDER
     // through the chord, and it names its rungs rather than counting them.
-    const iv = range("prog" + i + "i", c.inv || 0, (v) => c.inv = v, 0, 3, 1,
+    const iv = range("prog" + i + "i", c.inv || 0,
+      (v) => { asCycle(); c.inv = v; }, 0, 3, 1,
       "chord " + (i + 1) + " inversion", false, INVNAME, "84px");
     const ti = el("td"); ti.append(iv.r); tr.append(ti);
     const tn = el("td"); tn.append(iv.out); tr.append(tn);
@@ -1820,23 +1870,35 @@ function chordGrid(parent) {
       say: cut || "take the last bar off the cycle", why: cut });
     bAdd.addEventListener("click", () => { const P3 = DOC.alphabet.prog;
       if (P3.length >= 8) return;
-      P3.push({ ...P3[P3.length - 1] }); changed(); });
+      asCycle(); P3.push({ ...P3[P3.length - 1] }); changed(); });
     bCut.addEventListener("click", () => { const P3 = DOC.alphabet.prog;
       if (P3.length <= 1) return;
-      P3.pop(); changed(); });
+      asCycle(); P3.pop(); changed(); });
     row.append(bAdd, document.createTextNode(" "), bCut);
     parent.append(row);
   }
   // ...and the whole loop on one line, which is how anybody would say it
   parent.append(el("p", P2.map(chordName).join("  –  ")));
-  // ONE REASON UNDER THE TABLE, NOT EIGHT DOWN A COLUMN. `alphabet.quality` is
-  // gated at SONG level — kernel.js:671 throws the whole progression away
-  // unless the harmony is a cycle — so every row is refused for the same
-  // sentence. selects.js has already refused each control and put the reason on
-  // it (`data-why`, and spoken as part of its name); this is the visible copy,
-  // said once. NO SILENT GREY is the law both widgets share, and in a table it
-  // is the only shape it can take.
-  if (qWhy) parent.append(el("p", qWhy, "nu-why"));
+  /* ONE SENTENCE UNDER THE TABLE, NOT EIGHT DOWN A COLUMN — and since
+     2026-09-02 it is a WARNING and not a refusal on a non-cycle record.
+
+     WHAT IT SAID AND WHY IT STOPPED: *"`alphabet.quality` is gated at SONG
+     level — kernel.js:671 throws the whole progression away unless the harmony
+     is a cycle — so every row is refused for the same sentence."* True, and
+     the thing it explained is gone: nothing in this grid is refused for that
+     reason any more (see the block at the head of this function). What is left
+     to say is what the next tap is going to DO, which is the other half of NO
+     SILENT GREY — a control that quietly changed a second axis would be worse
+     than a greyed one.
+
+     IT IS PRINTED ONLY WHILE THE HARMONY IS NOT A CYCLE, because on a cycle
+     record it is not true of anything. On a cycle record the line carries
+     whatever refusal `optionsFor` still has (there is none today, and there is
+     one the day a mode has no such chord), which is the visible copy of the
+     `data-why` every widget already wears. */
+  if (!cycle) parent.append(el("p",
+    "editing the changes makes the harmony a cycle", "nu-why"));
+  else if (qWhy) parent.append(el("p", qWhy, "nu-why"));
 }
 
 /* ---------- THE SCORE — THE WHOLE BAND, ON ONE MOVING RIBBON ----------
@@ -5522,8 +5584,13 @@ function renameField(cell) {
       return say(JSON.stringify(want) + " is not a name a motif can take");
     if (motifTab === cell) motifTab = want;
     if (cellSel === cell) cellSel = want;
-    if (expanded.has("motiftab-" + cell)) {
-      expanded.delete("motiftab-" + cell); expanded.add("motiftab-" + want); }
+    /* THE OPEN PATH FOLLOWS THE NAME, IN PLACE (2026-09-02). This was a
+       `delete` and an `add`, which on a Set was the rename and on the PATH
+       would move the cell to the end of the chain — its own children would
+       then stand above it. One `map`, so the row keeps its depth. */
+    if (expanded.has("motiftab-" + cell))
+      setChain(chain.map((k) => (k === "motiftab-" + cell
+        ? "motiftab-" + want : k)));
     push(); draw();
   });
   lab.append(el("span", "name", "nu-w"), inp);
@@ -11645,10 +11712,17 @@ function setLog(open) {
    than one edit is in flight, because that is the one a hand is waiting on.
    THE ARITHMETIC IS NOT HERE AND MUST NOT COME HERE. audio/live.js owns where
    an edit lands — the serial rule (the walk runs a runway ahead of the ear, so
-   a change first sounds at `lastAsked + 1`), the section-scoped advance to the
-   box's next pass, the onBar clamp that ends a countdown the crossfade path
-   brought in early, and the ticker's refusal to ever count UP by one. This
-   reads `beatsLeft` off the feed and draws it. */
+   a change first sounds at `lastAsked + 1`), the onBar clamp that ends a
+   countdown the crossfade path brought in early, and the ticker's refusal to
+   ever count UP by one. This reads `beatsLeft` off the feed and draws it.
+   (AMENDED IN PLACE 2026-09-02, wave 4. This list named a third rule — *"the
+   section-scoped advance to the box's next pass"* — and audio/live.js reversed
+   it in place the same day on Paul's *"When I change a setting it's often
+   telling me I'm 100 beats out from a change."* A change lands at the NEXT BAR
+   LINE now; whether the box it was scoped to has come round is kept as a WORD
+   on the feed (`round`) and never as the number this function prints. The
+   countdown is the runway — measured at 12 beats, 5.1 to 8.2 s, on every
+   record in the catalogue — and this comment named a rule that is gone.) */
 const pend = new Map();          // label -> beats left
 function paintCount(landed) {
   if (!logCountEl) return;
@@ -12085,7 +12159,9 @@ window.__nuPending = () => ({ beats: (logCountEl && logCountEl.textContent) || "
        because the stripe is no longer one level.
      · `depth` is written by the walk, never by a builder.
 
-   WHAT `expanded` IS AND IS NOT. A Set of node keys — a fact about the STRIPE,
+   WHAT `expanded` IS AND IS NOT. A Set of node keys (ONE PATH's worth of
+   them since 2026-09-02 — see the block at its declaration) — a fact about
+   the STRIPE,
    exactly as `trayLevel` was and `tabScroll` is: it never reaches the record,
    it is never written by the clock, `push()` is not called from this block,
    and it is deliberately kept OUT of the share link (see THE ADDRESS).
@@ -12103,13 +12179,81 @@ window.__nuPending = () => ({ beats: (logCountEl && logCountEl.textContent) || "
    TAPPING A NODE OPENS ITS PANEL AND TOGGLES ITS BRANCH, both, because they
    are one gesture — the same sentence "descend by arriving" made about a tree.
    Other branches are left exactly as they were.
+   (REVERSED 2026-09-02, Paul: *"Only allow one expansion (or nested expansion)
+   of the left nav at one time."* The gesture is unchanged — a tap opens the
+   panel and toggles the branch — and the last sentence is now its opposite:
+   every other branch is CLOSED by it. The full argument is beside `expanded`
+   below, where the mechanism is.)
 
    THE CLOCK MAY STILL NOT REACH ANY OF THIS. Every function below is called
    from a button's `click`, from `showTab`, from `draw`/`drawMaterial`, from
    `lightStep` (which writes ONE class on a button and nothing else — see
    `lightBand`), or from a `window.__eight*` probe. The <nav> is outside `#app`
    and outside every `[data-live]` subtree. */
+/* ===== ...AND IT IS ONE PATH, NOT A FOREST (2026-09-02) =================
+   Paul, after using the composer on staging: *"Only allow one expansion (or
+   nested expansion) of the left nav at one time."*
+
+   THE SENTENCE ABOVE IS REVERSED IN PLACE AND IS KEPT WORD FOR WORD, because
+   the tree is still exactly the tree it argues for and only its ARITY changed.
+   It read: *"TAPPING A NODE OPENS ITS PANEL AND TOGGLES ITS BRANCH … Other
+   branches are left exactly as they were"*, and the note at `showTab` said
+   *"arriving somewhere does not CLOSE anywhere else, which is Paul's own
+   ask."* It was his ask on 2026-08-28 (*"we can expand multiple levels of
+   interface option"*) and the sentence at the head of this line is the same
+   hand withdrawing the plural: MULTIPLE LEVELS, yes — root → child →
+   grandchild, all three rows on the stripe at once, which is the whole of what
+   the ↑ was deleted for — but ONE CHAIN of them, not two branches side by
+   side. Both halves of his instruction survive; what dies is the forest.
+
+   SO `expanded` IS A PATH AND `chain` IS THE ORDER OF IT. The Set stays
+   because eleven readers ask it `has()`, and the ARRAY is what makes "cut
+   everything below this node" a slice instead of a search: a Set has insertion
+   order and insertion order is not depth order the moment a branch is reopened
+   from a panel handler. `setChain` is the ONE writer of both, so the two can
+   never disagree, and `__eightTree().expanded` is the path root-first.
+
+   THE THREE GESTURES, AND THEY ARE ALL ONE RULE ("the open path ends here"):
+     · expanding a ROOT collapses every other root's branch — `treePath`
+       answers `["toptab-Band"]` and that is the whole chain;
+     · expanding a CHILD collapses its siblings' sub-branches — its path names
+       its own parent and itself, and nothing else can be in it;
+     · tapping an open node folds it AND its descendants — the slice up to it.
+   `showTab` is the fourth caller and it is the same rule: it opens its own
+   tab's node and, when you have arrived from another root, drops that root's
+   whole chain. Arriving BACK at the tab you were already inside keeps the
+   chain you left there, which is what makes `Motif` still land two deep and
+   what makes a probe's `__eightTab` reach the same state a thumb reaches.
+
+   WHERE THE PARENT COMES FROM: `treePath` WALKS THE TREE, it does not consult
+   a table of key prefixes. A second table saying "`secnav*` hangs under
+   Structure" would be a second owner of the shape the builders already own,
+   and it would go stale the first time a branch moved (three of them moved
+   this week). The walk is cheap for the same reason `trayNow`'s is: a child's
+   `kids()` answers `[]` unless it is the OPEN one, so only one grandchild list
+   is ever built. */
 const expanded = new Set();
+let chain = [];                    // root → child → grandchild: the ONE open path
+const setChain = (keys) => {
+  chain = keys ? keys.slice() : [];
+  expanded.clear();
+  for (const k of chain) expanded.add(k);
+};
+/* THE PATH TO A NODE, read off the builders and nowhere else. Null when the
+   key names nothing on the tree — a caller asking for a row the record has
+   just deleted, which must not silently become a one-node chain that orphans
+   its own root. */
+const treePath = (key) => {
+  const step = (nodes, trail) => {
+    for (const n of nodes) {
+      const here = [...trail, n.key];
+      if (n.key === key) return here;
+      if (n.kids) { const got = step(n.kids() || [], here); if (got) return got; }
+    }
+    return null;
+  };
+  return step(rootTrayItems(), []);
+};
 /* WHICH TAB'S NODE HAS CHILDREN. `TRAYSUB` said which level a tab LANDED on;
    this says which tabs are branches at all, and the children themselves come
    from the builders that already existed. Six tabs have none, and that is the
@@ -12176,10 +12320,19 @@ const TABKIDS = {
   Mix: () => mixTrayItems(),
   Score: () => scoreTrayItems(),
 };
+/* OPEN THIS NODE'S PATH, OR CUT THE PATH AT IT (2026-09-02, "only allow one
+   expansion … at one time"). Closing is a SLICE and not a `delete`, because a
+   node's descendants stand below it in the chain and a `delete` would leave
+   them expanded with nothing above them — a grandchild whose parent is folded
+   is a row the walk never reaches and a key `expanded.has()` still answers
+   yes to. */
 const expand = (key, want) => {
-  if (want == null) { if (expanded.has(key)) expanded.delete(key);
-                      else expanded.add(key); return; }
-  if (want) expanded.add(key); else expanded.delete(key);
+  const open = expanded.has(key);
+  if (want == null) want = !open;
+  if (!want) { if (open) setChain(chain.slice(0, chain.indexOf(key))); return; }
+  if (open) return;                       // already the tip, or on the way to it
+  const path = treePath(key);
+  if (path) setChain(path);
 };
 let trayList = null, trayFoot = null, traySig = "";
 let trayBtn = new Map();
@@ -12250,9 +12403,13 @@ const rootTrayItems = () => TABS.filter(([name]) => name !== "Where")
               does. The way back to the roster is a SIBLING of the members —
               `bandroster`, the first row in the Band branch — which is what a
               tree does with a thing that has a mark of its own.) */
+           /* (`expanded.delete(key)` STOOD IN THE LAST LINE and is `expand(key,
+              false)` since 2026-09-02: folding a root has to take its whole
+              chain with it, and a bare delete left a member or a section
+              expanded under a tab that is shut — see the note at `expand`.) */
            act: () => { const wasOpen = openTab === name && expanded.has(key);
                         showTab(name);
-                        if (wasOpen) expanded.delete(key); } };
+                        if (wasOpen) expand(key, false); } };
 });
 
 /* ONE ROW PER MEMBER, AND THE ROW SAYS WHAT THEY PLAY (2026-09-02). Paul: *"On
@@ -13394,7 +13551,23 @@ function showTab(name) {
      the bank unfolds, the open cell is the one that says `on`, and if that
      cell is a drum pattern its `kids()` is empty and the tree simply stops at
      the bank (2026-08-28's rule, unchanged, made once in the walk). */
-  if (TABKIDS[name]) expanded.add("toptab-" + name);
+  /* ...AND IT COLLAPSES EVERY OTHER ROOT, 2026-09-02. Paul: *"Only allow one
+     expansion (or nested expansion) of the left nav at one time."* This line
+     was `expanded.add("toptab-" + name)` and the paragraph above it said
+     "arriving somewhere does not CLOSE anywhere else" — which is the half of
+     his 2026-08-28 sentence he has now withdrawn (the reversal is written out
+     in full beside `expanded`). Arriving at a tab still OPENS it; what is new
+     is that the branch you were in goes with you.
+     ARRIVING BACK INSIDE THE TAB YOU ARE ALREADY IN CHANGES NOTHING, which is
+     what keeps `Motif` landing two deep and what makes the tab row's own
+     "tap it again to fold" possible: the row's listener has already toggled by
+     the time this runs, so this may not re-add what it just took away.
+     A TAB WITH NO CHILDREN FOLDS THE PAGE FLAT rather than leaving somebody
+     else's branch standing: six of the twelve roots are leaves, and "one open
+     branch" has to mean nothing is open when you are standing on one of them,
+     or the stripe would show an unfolded Band while the panel says Tempo. */
+  if (chain[0] !== "toptab-" + name)
+    setChain(TABKIDS[name] ? ["toptab-" + name] : []);
   /* ===== THE PANEL YOU LEAVE GIVES UP THE KEYS IT SHARES (2026-09-02, 2c) ==
      `material.cell|<voice>|<section>` is drawn by TWO panels — the Band tab's
      motif tray and the Structure tab's section detail — and each draws it only
@@ -14264,24 +14437,39 @@ function shareCard(grid) {
    screen reader announces it, and it is the only path that works identically
    on a phone and off `file://`. The input is styled by nu.css beside the other
    export controls and its accessible name says what it takes. */
+/* ONE STATUS LINE IN THIS DECK, AND IT IS THE DECK'S (2026-09-02, wave 4).
+   This card carried a `<p role="status">` of its own, INSIDE the card and
+   second in the grid, while every other card in the deck says what it did
+   through `expSay` → `deckSay`, the one line appended after the grid. Two
+   status lines in one region is the duplicate-address bug in the accessibility
+   tree — a screen reader has two live regions to watch for one deck — and it
+   had already faked two bug reports: `#exportdeck [role=status]` returned THIS
+   paragraph, which only ever speaks when somebody saves a .song.json, so
+   test/mp3.test.js M6 read "0 sentences … a frozen main thread" and
+   test/als-page.browser.js read an empty refusal (both files carry the note).
+   Those two gates now filter to the line outside a card; with one line there
+   is nothing to filter.
+   AND IT SURVIVES `setDocument`, which the card's own line did not: opening a
+   record redraws the page, which rebuilds this whole deck, so "opened
+   x.song.json — 7 players" was written onto a paragraph that had just been
+   detached. `expSay` reads the module-level `deckSay` at call time, so the
+   sentence lands on the line that is on the page. */
 function songCard(grid) {
   exportCard(grid, "JSON", "the record",
     "the band you built — every player, motif, section and sentence", (card) => {
-    const say = el("p", "", "nu-hint");
-    say.setAttribute("role", "status");
     const b = el("button", "save .song.json");
     b.type = "button"; b.dataset.k = "deck.exp.song";
     b.addEventListener("click", () => {
       try {
         const bytes = JSON.stringify(DOC, null, 1);
         handOff(deckFile() + ".song.json", bytes, "application/json");
-        say.textContent = "saved — " + DOC.voices.length + " player" +
+        expSay("saved — " + DOC.voices.length + " player" +
           (DOC.voices.length === 1 ? "" : "s") + ", " +
           DOC.form.sections.length + " section" +
           (DOC.form.sections.length === 1 ? "" : "s") + ", " +
-          (bytes.length / 1024).toFixed(0) + " KB";
-      } catch (e) { say.textContent = "this record cannot be written down — " +
-                                      ((e && e.message) || e); }
+          (bytes.length / 1024).toFixed(0) + " KB");
+      } catch (e) { expSay("this record cannot be written down — " +
+                            ((e && e.message) || e)); }
     });
     const f = el("input");
     f.type = "file";
@@ -14291,12 +14479,12 @@ function songCard(grid) {
     f.addEventListener("change", () => {
       const file = f.files && f.files[0];
       if (!file) return;
-      say.textContent = "reading " + file.name + "…";
+      expSay("reading " + file.name + "…");
       file.text().then((text) => {
         let next;
         try { next = JSON.parse(text); }
-        catch (e) { say.textContent = file.name + " is not JSON — " +
-                      ((e && e.message) || e); return; }
+        catch (e) { expSay(file.name + " is not JSON — " +
+                      ((e && e.message) || e)); return; }
         /* THE FOUR FIELDS EVERY RECORD ON THIS PAGE HAS. Not a schema — the
            shapes are `document.js`'s and `song.js`'s to refuse — but the
            difference between "a record this build can try to open" and "some
@@ -14305,25 +14493,25 @@ function songCard(grid) {
         const missing = ["basis", "material", "form", "voices"]
           .filter((k) => !next || typeof next !== "object" || next[k] == null);
         if (missing.length) {
-          say.textContent = file.name + " is JSON but not a record — it has no "
-            + missing.join(", ") + ".";
+          expSay(file.name + " is JSON but not a record — it has no "
+            + missing.join(", ") + ".");
           return;
         }
         try { NuDocument.normalize(next); }
-        catch (e) { say.textContent = file.name +
-          " is a record this build cannot make legal — " + ((e && e.message) || e);
+        catch (e) { expSay(file.name +
+          " is a record this build cannot make legal — " + ((e && e.message) || e));
           return; }
         CTX.setDocument(next);
         markLink();
-        say.textContent = "opened " + file.name + " — " + next.voices.length +
+        expSay("opened " + file.name + " — " + next.voices.length +
           " player" + (next.voices.length === 1 ? "" : "s") + ", " +
           next.form.sections.length + " section" +
-          (next.form.sections.length === 1 ? "" : "s");
-      }, (e) => { say.textContent = file.name + " could not be read — " +
-                                    ((e && e.message) || e); });
+          (next.form.sections.length === 1 ? "" : "s"));
+      }, (e) => { expSay(file.name + " could not be read — " +
+                          ((e && e.message) || e)); });
       f.value = "";      // the same file twice in a row is two gestures
     });
-    card.append(b, f, say);
+    card.append(b, f);
   });
 }
 
@@ -15093,6 +15281,10 @@ window.__eightTray = () => { const L = trayNow();
    another. `__eightExpand(key)` is the row PRESSED: it runs the node's own act
    and toggles its own branch, exactly as the listener does, which is what "a
    gate is a hand" means for a tree. */
+/* `expanded` IS THE PATH, ROOT FIRST (2026-09-02) — one chain, root → child →
+   grandchild, never two branches. `setChain` is its one writer and it rebuilds
+   the Set from the array, so the order a gate reads here is the DEPTH order
+   and not an insertion order that a panel handler could scramble. */
 window.__eightTree = () => { const L = trayNow();
   return { openTab, mark: L.mark, expanded: [...expanded],
            rows: L.rows.map((i) => ({ key: i.key, depth: i.depth,
@@ -15123,7 +15315,7 @@ window.__eightPlayMode = (m) => (m == null ? playMode : setPlayMode(m));
    compares against. The callers are rewritten as they are touched; the shim is
    what keeps the nine from having to be touched in one commit. */
 window.__eightUp = () => {
-  expanded.clear();
+  setChain([]);
   paintTray();
   return "root";
 };
@@ -15355,6 +15547,16 @@ window.__eightGenres = () => { const out = {};
                // that the page can store an array — this is the genre the
                // kernel is actually handed, one compile stage later.
                prog: Array.isArray(g.prog) ? g.prog.length : 0,
+               /* ...AND WHAT EACH BAR OF IT IS (2026-09-02). The LENGTH proved
+                  `+ bar` reaches the kernel; the quality of bar 1 is the other
+                  half of the same claim, and it is the one Paul asked for — *"I
+                  can't change chord quality, it's grayed."* `kernel.js
+                  chordsOf` reads `c.q` only under `harmony === "cycle"`, so a
+                  gate that read `DOC.alphabet.prog[0].q` would prove the page
+                  can store a word the engine throws away. */
+               progQ: Array.isArray(g.prog)
+                 ? g.prog.map((c) => (c && c.q) || "triad") : null,
+               harmony: g.harmony,
                pipes: g.pipes ? g.pipes.map((o) => o.seed) : null };
   }
   return out; };

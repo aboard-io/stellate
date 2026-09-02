@@ -32,7 +32,7 @@ Paul, 2026-09-01, quoted:
 | **B3** | the blank state | *"Add a 'silence' genre at the top of the genre list. This is a blank state."* |
 | **B4** | the design system | *"The design system is not consistent. It uses very little color, and things are uneven based on how text wraps. Things like select boxes are very plain and could be combo boxes. Lots of niceties have been skipped."* … *"Many inner sections lack any padding and just smash into the nav."* |
 | **B5** | the nav is the spine | *"The left nav is very good. I think it should be bigger with bigger type and we should really work hard on nesting options inside the left nav … keeping everything vertically scrollable and usable. We should never need the 'up' icon because we can expand multiple levels of interface option."* … *"We should focus on the simplest UX and keep like with like."* |
-| **B6** | Rules | *"I click the genre, it starts to play, and there's a new view: A genre editor appears. This is the 'Rules' section; it'll need a new icon in the left nav. The genre data is expressed as logical sentences and rules derived from the data in the genre. They should be readable to a musician. You can edit them, add new rules from a palette, and set thresholds. It's a code-editing experience but it feels like simple sentences. The motifs don't need to be editable. Just the structural rules. The name of the genre should be obvious."* |
+| **B6** | Rules | *"I click the genre, it starts to play, and there's a new view: A genre editor appears. This is the 'Rules' section; it'll need a new icon in the left nav. The genre data is expressed as logical sentences and rules derived from the data in the genre. They should be readable to a musician. You can edit them, add new rules from a palette, and set thresholds. It's a code-editing experience but it feels like simple sentences. The motifs don't need to be editable. Just the structural rules. The name of the genre should be obvious."* **Beside it, 2026-09-02 (wave 4):** *"I was wrong to have you switch to the genre panel. Add a genre editor nav element and stay on the globe and list."* The editor is still the view B6 asks for; what is withdrawn is "a genre editor appears" — it does not appear, you go to it, and picking a genre leaves you on Where. |
 | **B7** | Tempo and Key | *"Tap tempo, the tempo editor appears, same for key. The tempo editor does not reflect the richness of our tempo options. Key may not either. … The left nav elements for tweaking tempo should be brought inside tempo."* |
 | **B8** | Motifs | *"Motifs are editable using our existing interface, but note that the 'ghosted' sections are doubling UX elements. It should be easy to make new motifs, and you'll need an icon strategy … the motif editor should show me previews of the instruments using the motif."* |
 | **B9** | Structure | *"Sections/Structure has the same challenges. Things should fly out under the nav item for each structure element. It should be top level, not buried under band, and below band. Bring performance into structure."* … *"Make a section automation interface for the manipulation of the motifs and put it under structure/sections … Every section I can tweak every instrument. … for each question you add per section, you could have a WHOLE section automation grid."* |
@@ -246,6 +246,13 @@ the grounded grammar; the summary:
 - **Arrival.** Tapping a genre in the list (and a mark on the globe) composes,
   starts playing (already true), and `showTab("Rules")`. A genre chosen from
   the blank state therefore lands on its rules with the band already playing.
+  **REVERSED IN PLACE 2026-09-02 (wave 4), Paul:** *"I was wrong to have you
+  switch to the genre panel. Add a genre editor nav element and stay on the
+  globe and list."* Picking a genre composes and plays and does NOT
+  `showTab("Rules")` — you stay on Where, with the globe and the list under
+  your thumb, and `Rules` is a nav item you tap when you want it (it already
+  is one). The sentence above is kept because everything else in it still
+  holds; only its last clause is withdrawn.
 
 ### 2.5 Tempo and Key
 

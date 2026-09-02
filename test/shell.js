@@ -722,11 +722,24 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
       + walk.map((w) => w.word + ":" + w.kids).join(", ")
       + (badWalk.length ? " — BAD " + JSON.stringify(badWalk) : ""));
 
-    /* A6k — TWO BRANCHES OPEN AT ONCE, WHICH IS THE WHOLE ASK. Open Band, open
+    /* A6k — OPENING STRUCTURE FOLDS BAND: ONE PATH.
+       REWRITTEN IN PLACE 2026-09-02 (wave 4). Paul: *"Only allow one expansion
+       (or nested expansion) of the left nav at one time."*
+
+       WHAT IT ASSERTED AND WHY IT IS THE OPPOSITE NOW. It read *"A6k — TWO
+       BRANCHES OPEN AT ONCE, WHICH IS THE WHOLE ASK. Open Band, open
        Structure, and both stand: two rows wear `aria-expanded="true"`, the
-       rows of both are on the stripe at depth 1, and there is still exactly
-       ONE <mark> — the deepest open thing inside the tab you are standing in
-       (shell A6c's law, met by a tree). */
+       rows of both are on the stripe at depth 1"* — Paul's 2026-08-28 sentence
+       (*"we can expand multiple levels of interface option"*) read as a
+       FOREST. He has withdrawn the plural and kept the depth: multiple LEVELS
+       still stand at once (root → child → grandchild, which is what A6l
+       measures and what the ↑ was deleted for), but only ONE CHAIN of them.
+       So the same gesture is driven and the assertion is inverted: after
+       opening Structure, Band's branch is gone, Structure's rows are on the
+       stripe, exactly one row wears `aria-expanded="true"`, and there is still
+       exactly ONE <mark> — shell A6c's law, unchanged, met by a path.
+       `__eightTree().expanded` IS THE PATH, root first, so it is asserted as a
+       chain and not as a set. */
     await page.evaluate(() => window.__eightUp());
     await page.waitForTimeout(120);
     await page.click('[data-k="toptab-Band"]');
@@ -739,13 +752,20 @@ const TAB_SETTLE = (t) => (t === "Score" || t === "Video" ? 1800 : 600);
         expandedRows: [...document.querySelectorAll('#nu-tray [aria-expanded="true"]')]
           .map((b) => b.dataset.k || b.id).filter((k) => k !== "playops"),
         marks: document.querySelectorAll("#nu-tray mark").length,
-        band: T.rows.some((r) => r.depth === 1 && /^tab/.test(r.key)),
+        /* NOT `/^tab/` ALONE: `tabperformance` is a CHILD of Structure and
+           keeps the address it wore at the band level (ui/eight.js
+           sectionTrayItems), so the loose test counts a Structure row as a
+           band member — harmless while both branches stood, wrong the moment
+           the claim is that Band is folded. */
+        band: T.rows.some((r) => r.depth === 1 && /^tab/.test(r.key) &&
+                                 r.key !== "tabperformance"),
         secs: T.rows.some((r) => r.depth === 1 && /^secnav/.test(r.key)) };
     });
-    is(both.expandedRows.length === 2 && both.marks === 1 &&
-       both.band && both.secs,
-      "A6k " + width + " · Band and Structure stand open together — two "
-      + "expanded ancestors, both their rows on the stripe, one <mark> — "
+    is(both.expandedRows.length === 1 && both.marks === 1 &&
+       !both.band && both.secs &&
+       both.exp.length === 1 && both.exp[0] === "toptab-Structure",
+      "A6k " + width + " · opening Structure folds Band; one path — one "
+      + "expanded ancestor, only its rows on the stripe, one <mark> — "
       + JSON.stringify(both));
 
     /* A6l — A MEMBER'S FOUR CHILDREN ARE REAL ROWS AT DEPTH 2. It read
