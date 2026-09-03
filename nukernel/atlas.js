@@ -373,7 +373,7 @@
        this map already as `Piraeus` (rebetiko, its port). A future Greek row
        reuses Piraeus or picks a key that is not this one — PLACES is keyed
        by the NAME and two cities cannot share it. The Murmur tape was cut at
-       Reflection Sound in Charlotte, which is already here for `hiphopsoul`;
+       Reflection Sound in Charlotte, which is already here for `newjackswing2`;
        the Seattle ruling above decides between the two.
        KYOTO is the Constantinople rule run once more: Tokyo is on this map
        for four rows of Japanese popular music, and `chiptune` (Kyoto 1985)
@@ -545,6 +545,36 @@
     "Lucknow": [26.85, 80.95], "Thanjavur": [10.79, 79.14],
     "Suzhou": [31.30, 120.59], "Wuxi": [31.49, 120.31],
     "Xi'an": [34.34, 108.94], "Suizhou": [31.69, 113.38],
+    /* GWALIOR, 2026-09-04, AND IT IS A RE-DATING RATHER THAN A NEW ANCHOR —
+       the first dot this table has added for a row it already had. Paul:
+       "Move dhrupad back in time." `dhrupad` was Delhi 1955, the Dagar
+       brothers at All India Radio, and that label was costing the catalogue
+       three real edges: `badakhyal` (Delhi 1740), `tappa` (Lucknow 1780) and
+       `thumri` (Lucknow 1856) each argued in its own note that it could not
+       declare the ancestor everybody knows it has, because no parent may be
+       later than its child. The row is GWALIOR 1501 now — the centre of
+       "Man Singh Tomar (fl. 1486-1516) of Gwalior", the Dhrupad article's own
+       parenthesis — and the three children declare it. The geography follows
+       the catalogue, as always, and the dot was MEASURED BEFORE IT WAS
+       WRITTEN, in G10's own arithmetic on a 390x844 phone at the arcFor()
+       the map actually flies to (180 degrees; India has no view rectangle
+       of its own):
+         7.1 px from DELHI   (282 km) — the sultanate Man Singh paid tribute
+                                        to and fought off for thirty years
+         7.1 px from LUCKNOW (284 km) — `tappa` and `thumri`, two of the
+                                        three rows this move unblocks
+        13.0 px from Chandigarh, 15.6 from Jalandhar, 24.1 from Mumbai.
+       7.1 IS NOT A NEW LOW AND IT IS NOT EVEN A NEW NUMBER: Thanjavur/Chennai
+       is 7.1 px, declared and kept in the entry directly above this one the
+       night before, and eighteen pairs in this table are tighter than the
+       tightest of that batch (Wuxi/Suzhou 0.85, Nara/Kyoto 0.90, New
+       York/Teaneck 0.95). It sits under MIN_PX (8.45) and therefore PRINTS
+       in G10's under-26 list, which is what §5 asks for outside Britain;
+       G10 asserts at the British arc only and Gwalior is not in Britain.
+       No ALIAS and no WITHIN: Gwalior is not a district of Delhi or of
+       Lucknow, it is a fort city 280 km from each, and the three-way spacing
+       is the widest any Indian addition has had. */
+    "Gwalior": [26.22, 78.18],
     "St. Louis": [38.63, -90.20], "Stourbridge": [52.46, -2.15],
     "Swindon": [51.56, -1.78], "Taipei": [25.03, 121.57],
     /* SYDNEY joined 2026-09-03 with `worship` (Hillsong, "Shout to the
@@ -775,8 +805,8 @@
     psychsoul:      { place: "Teaneck", year: 1973 },
     psychsoul2:     { place: "Detroit", year: 1968 },
     aor:            { place: "Los Angeles", year: 1982 },
-    hiphopsoul:     { place: "Charlotte", year: 1991 },
-    hiphopsoul2:    { place: "New York", year: 1992 },
+    newjackswing2:  { place: "Charlotte", year: 1991 },
+    hiphopsoul:     { place: "New York", year: 1992 },
     beatgroup:      { place: "Liverpool", year: 1962 },
     jazzrock:       { place: "Los Angeles", year: 1977 },
     postrock:       { place: "Austin", year: 2003 },
@@ -895,6 +925,7 @@
     romantic:       { place: "Vienna", year: 1876 },
     variations:     { place: "Vienna", year: 1873 },
     symphonicpoem:  { place: "Weimar", year: 1854 },
+    grandopera:     { place: "Paris", year: 1831 },
     musicdrama:     { place: "Munich", year: 1865 },
     nationalism:    { place: "Prague", year: 1874 },
     ballet:         { place: "Moscow", year: 1877 },
@@ -998,10 +1029,10 @@
     guqin:          { place: "Beijing", year: 1956 },
     pipaqu:         { place: "Wuxi", year: 1819 },
     sizhu:          { place: "Shanghai", year: 1920 },
+    dhrupad:        { place: "Gwalior", year: 1501 },
     badakhyal:      { place: "Delhi", year: 1740 },
     tappa:          { place: "Lucknow", year: 1780 },
     thumri:         { place: "Lucknow", year: 1856 },
-    dhrupad:        { place: "Delhi", year: 1955 },
     kriti:          { place: "Thanjavur", year: 1810 },
     varnam:         { place: "Thanjavur", year: 1830 },
     carnatic:       { place: "Chennai", year: 1935 },
@@ -1514,7 +1545,17 @@
                    // Lucknow, 440 km east of Delhi, and Thanjavur, 330 km
                    // south of Chennai — the two courts this table's Indian
                    // rows were made in and had no dots for.
-                   "Lucknow", "Thanjavur"],
+                   "Lucknow", "Thanjavur",
+                   // ...and the dhrupad re-dating's one (2026-09-04):
+                   // GWALIOR, 282 km south of Delhi and 284 km west of
+                   // Lucknow — Man Singh Tomar's fort city, and the third
+                   // point of a triangle whose other two corners were
+                   // already here. It is the only dot in this row that
+                   // arrived for a genre the table ALREADY HAD: `dhrupad`
+                   // moved from Delhi 1955 to Gwalior 1501 so that three
+                   // eighteenth- and nineteenth-century rows could declare
+                   // it a parent. The PLACES ledger above has the run.
+                   "Gwalior"],
     // Turkey and Iran sit here rather than in Europe or in Central Asia, and
     // Istanbul is the case that forces the decision: the city is on two
     // continents and the MUSIC — makam, usul, the arabesk string orchestra —

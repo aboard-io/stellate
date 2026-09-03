@@ -2337,6 +2337,24 @@ function g18() {
      green while the thumb lost the square. `cutT`/`cutP` print the ellipsis
      bill (titles/places cut) at each width — the icon track is paid for out
      of the place column, and the price is written down, not discovered. */
+  /* AND "ONE LINE" IS NOW A WIDE-SCREEN LAW ONLY (2026-09-04). Paul, on a
+     phone: *"On mobile put the names of genres above the location because many
+     of them cut off now."* Measured before the change, on the rendered page:
+     476 of 478 names ellipsised at 320, 407 at 375, 245 at 430 — the one-line
+     row had spent its whole line on the year, the place and the mark and left
+     the NAME four characters. So below 700px the row is two lines by design
+     (nu.css §17), and this check asks the two halves of that separately:
+       · NARROW (320/375/390/430) — the name is ABOVE the place, not beside it
+         (`stack`: every row where the name's bottom is at or above the place's
+         top, counted against the rows that have both cells), and NOT ONE NAME
+         IS CUT (`cutT === 0`). The 44px floor still holds; the 46px ceiling is
+         deliberately gone, because a wrapped name is the point.
+       · WIDE (1280) — nothing moved: 44 <= h <= 46 and the name still sits
+         BESIDE the place (`beside`), which is the half of the old law this
+         round did not touch and could have broken by accident.
+     Asserting the stack by GEOMETRY and not by a class or a media query is the
+     same discipline the height assertion above already had: the claim is about
+     where the words are on the glass. */
   const lines = [];
   for (const w of [320, 375, 390, 430, 1280]) {
     await p.setViewportSize({ width: w, height: 844 });
@@ -2350,7 +2368,16 @@ function g18() {
         .map((n) => n.getBoundingClientRect());
       const cut = (q) => li.filter((n) => { const c = n.querySelector(q);
         return c && c.scrollWidth > c.clientWidth; }).length;
+      // WHERE THE NAME IS RELATIVE TO THE PLACE, in rects: `pairs` is the rows
+      // that have both cells, `stack` the ones whose name sits wholly above
+      // the place, `beside` the ones whose name ends before the place begins.
+      const pair = li.map((n) => [n.querySelector(".nu-ixw"), n.querySelector(".nu-ixp")])
+        .filter(([a, c]) => a && c)
+        .map(([a, c]) => [a.getBoundingClientRect(), c.getBoundingClientRect()]);
       return { w, li: [+Math.min(...h).toFixed(1), +Math.max(...h).toFixed(1)],
+               pairs: pair.length,
+               stack: pair.filter(([a, c]) => a.bottom <= c.top + 0.5).length,
+               beside: pair.filter(([a, c]) => a.right <= c.left + 0.5).length,
                btn: +Math.min(...b).toFixed(1),
                go: [+Math.min(...go.map((r) => r.width)).toFixed(1),
                     +Math.min(...go.map((r) => r.height)).toFixed(1)],
@@ -2361,12 +2388,16 @@ function g18() {
                      - document.documentElement.clientWidth };
     }, w));
   }
-  const wide = lines.filter((r) => r.li[0] < 44 || r.li[1] > 46 || r.btn < 44
-                              || r.go[0] < 44 || r.go[1] < 44 || r.list || r.page);
-  check(!wide.length,
-    "G23 · …and EVERY row is one line at 320/375/390/430/1280 — 44 <= <li> " +
-    "<= 46, the plate and the ↗ mark both thumbs (mark in BOTH axes), zero " +
-    "sideways scroll: " + JSON.stringify(lines));
+  const bad = lines.filter((r) => r.li[0] < 44 || r.btn < 44
+                              || r.go[0] < 44 || r.go[1] < 44 || r.list || r.page
+                              || (r.w < 700 ? (r.stack !== r.pairs || r.cutT)
+                                            : (r.li[1] > 46 || r.beside !== r.pairs)));
+  check(!bad.length,
+    "G23 · …and the row is TWO LINES ON A PHONE with the name above the place " +
+    "and none of the " + (lines[0] || {}).pairs + " cut (320/375/390/430), ONE " +
+    "line beside it at 1280 (44 <= <li> <= 46) — 44px floor, the plate and the " +
+    "↗ mark both thumbs (mark in BOTH axes), zero sideways scroll everywhere: " +
+    JSON.stringify(lines));
   await p.setViewportSize({ width: 390, height: 844 });
   await p.waitForTimeout(300);
 

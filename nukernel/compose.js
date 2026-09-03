@@ -1048,7 +1048,7 @@
       // ...BUT ONLY WHERE THERE IS A VOICE TO SPARE, and the measurement that
       // forced the condition is worth keeping: a PAD voice takes its pitches
       // from the chord and only its rhythm from the phrase, so on a genre that
-      // comps (aor, citypop, hiphopsoul — `realize(0) === "pad"`, with one line
+      // comps (aor, citypop, newjackswing2 — `realize(0) === "pad"`, with one line
       // voice playing from bar 1) handing the second voice a companion left
       // the quoted MELODY nowhere at all. Twenty-five genre/seed pairs stopped
       // quoting. The doubling was never those genres' problem anyway: it comes

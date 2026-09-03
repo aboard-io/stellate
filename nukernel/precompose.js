@@ -648,23 +648,28 @@
          · althiphop — four voices interrupting each other: `push` anticipates
            the beat, `zig` is the shape of an interruption, `vary` says no two
            bars alike, and `third` is the warm note a jazz loop hands it.
-         · hiphopsoul2 — the family's own `pickup` cell (a singer comes in
+         · hiphopsoul — the family's own `pickup` cell (a singer comes in
            before the bar) with `sent: "vary"` where the family says `hold`,
            which is the one axis that had to move: MEASURED with `long` here
            first, test/hook.test.js froze this row's hook rhythm across eight
            seeds — a two-onset bar has one rhythm — and a frozen rhythm is
            right for an arrangement and wrong for a singer. Blige phrases the
            same line differently every take, so the sentence varies and the
-           rhythm varies with it. It lands on the third where `hiphopsoul`
+           rhythm varies with it. It lands on the third where `newjackswing2`
            takes the family default, because her lines resolve and Jodeci's
-           stack holds. */
+           stack holds.
+           (THE SWAP, 2026-09-04 — Paul: "Do the swap." This row was keyed
+           `hiphopsoul2` and the Jodeci record was `hiphopsoul`; the Blige
+           record holds the Hip-hop soul article outright now and Jodeci's
+           is `newjackswing2`. The hook is unchanged in every field — only
+           the two names moved.) */
     northernsoul:    { cell: "call",   contour: "rise",   land: "fifth",   len: "two" },
     progressivesoul: { cell: "long",   contour: "hover",  sent: "long",    len: "eight" },
     psychsoul2:      { cell: "riff",   contour: "insist", land: "root",    len: "two" },
     politicalhiphop: { cell: "riff",   contour: "insist", land: "root",    reg: "low", len: "two" },
     jazzrap:         { cell: "hang",   contour: "fall",   land: "seventh", len: "four" },
     althiphop:       { cell: "push",   contour: "zig",    land: "third",   sent: "vary", len: "four" },
-    hiphopsoul2:     { cell: "pickup", contour: "fall",   land: "third",   sent: "vary", len: "four" },
+    hiphopsoul:      { cell: "pickup", contour: "fall",   land: "third",   sent: "vary", len: "four" },
     /* SHIFT 4's BATCH C (2026-09-03) — beyond the Anglosphere and the metal
        wing. Seven anchors, seven rows, by the rule the last round set: a row
        added by hand gets a hook by hand, or all seven resolve to their family
@@ -1038,7 +1043,7 @@
            the CELL and not to the sentence — two onsets a bar have one
            rhythm whatever sentence is dealt over them — which this round
            measured and is worth writing down, because the note beside
-           `hiphopsoul2` reads as though the sentence were the lever. So this
+           `hiphopsoul` reads as though the sentence were the lever. So this
            row joins FROZEN_RHYTHM with `characterpiece`, `symphonicpoem` and
            `impressionism`, and for all four that is RIGHT: they are written
            scores. `verismo`, the one row of the five with a person singing on
@@ -1065,7 +1070,7 @@
            the same, over the longest sentence this table has. It is the
            singer's row and it is `belcanto`'s opposite on every axis but the
            last. `long` WAS WRITTEN HERE FIRST AND WAS WRONG for the reason
-           `hiphopsoul2` found four batches earlier this same shift: a
+           `hiphopsoul` found four batches earlier this same shift: a
            two-onset bar has one rhythm, test/hook.test.js froze this row
            across eight seeds, and a frozen rhythm is right for an arrangement
            and wrong for a singer. A verismo soprano phrases the same line
@@ -1074,7 +1079,20 @@
            place rather than a step, and a line that circles inside it. The
            corpus agrees where it can (|interval| p50 4.0, step fraction
            0.400 over 65 files) and the sentence is an argument: nothing in
-           this music says a measure twice. */
+           this music says a measure twice.
+         · grandopera (2026-09-04, the row the batch above declined) — a
+           CROWD'S tune, and every axis is that word. `three` is three notes
+           and a rest, the largest figure eighty people can be relied on to
+           sing together; `arch` goes up and comes back, because a chorus
+           phrase has to end where a breath does; `aabb` is the family's own
+           strophe KEPT, for the reason `nationalism` kept it — a tune a
+           crowd sings really is said twice; and it lands on the ROOT, not
+           the family's third, because a tableau closes. `four` against
+           `musicdrama`'s and `verismo`'s `eight`: those two rows are one
+           person's paragraph and this one is a company's chorus, which is
+           short enough to be shouted in a hall at 130. This is the one row
+           of the operatic four whose cell is a DENSITY and not a gesture,
+           and that is the difference between a line and a mass. */
     symphony:        { cell: "pickup", contour: "arch",  land: "root",  sent: "vary", len: "eight" },
     stringquartet:   { cell: "three",  contour: "zig",   land: "root",  sent: "vary", len: "four" },
     pianosonata:     { cell: "sixteenths", contour: "arpup", land: "root", sent: "vary", len: "four" },
@@ -1089,6 +1107,7 @@
     ballet:          { cell: "three",  contour: "arch",  land: "root",  sent: "aabb", len: "two" },
     verismo:         { cell: "hang",   contour: "rise",  land: "fifth", sent: "vary", len: "eight" },
     impressionism:   { cell: "long",   contour: "hover", land: "root",  sent: "vary", len: "four" },
+    grandopera:      { cell: "three",  contour: "arch",  land: "root",  sent: "aabb", len: "four" },
   };
 
   /* ======================================================================

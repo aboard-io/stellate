@@ -6613,12 +6613,107 @@ table.nu-trims{ color: var(--ink); }
    cell exactly as they did before.
    ABOVE 700px NOTHING CHANGES — the title already has a fixed 26/34ch track
    there and the place takes the rest, which is that block's own decision and a
-   good one. This is the phone rule only. */
+   good one. This is the phone rule only.
+
+   AND THE REBALANCE WAS NOT ENOUGH — THE NAME TAKES ITS OWN LINE NOW
+   (2026-09-04). Paul, reading the list on a phone: *"On mobile put the names
+   of genres above the location because many of them cut off now."* He is
+   describing a measurement, and the measurement agrees with him: on the
+   rendered page, of 478 rows, **476 names were ellipsised at 320px, 407 at
+   375px and 245 at 430px** — the name track was 7.7–48.2px wide at 320, which
+   is four characters of a title. The three-cells-one-line shape had run out of
+   line: 224px of row at 320 minus a 44px mark, a 4/8ch year, a 10ch place and
+   the air between them leaves the ONE fact a reader is looking for less room
+   than any of the facts around it.
+
+   SO THE ROW IS TWO LINES BELOW 700px, WHICH IS A REVERSAL OF THE ONE-LINE LAW
+   AT PHONE WIDTHS ONLY, and it is Paul's own reversal: "everything is on one
+   line" (2026-08-29) was said about a row that printed the genre TWICE, and
+   the cure was deleting the second copy, not squeezing the first. What was
+   worth one line then was the row's three facts; what is worth two lines now
+   is the same three facts with none of them cut. The stack:
+
+       ┌──────────────────────────────────────────┬────┐
+       │ Paleolithic flute music · the broader    │    │   ← the NAME, wrapped
+       ├──────┬───────────────────────────────────┤ ↗  │
+       │ 40000 BC │ Africa                        │    │   ← the year, the place
+       └──────┴───────────────────────────────────┴────┘
+
+     · the name spans the year and place tracks (columns 1–2) and WRAPS —
+       `white-space: normal`, `overflow-wrap: break-word` for the one word
+       longer than the line. Wrapping a long name is the cost; cutting one is
+       the bug. It does NOT span the mark's track: the ↗ is a real link lying
+       over the plate, and text under a link is text a thumb cannot reach.
+     · the year keeps its own 4ch/8ch track on line two, so the chronology
+       still reads as a column down the list — the thing the list IS.
+     · the ↗ mark spans BOTH rows (`grid-row: 1 / -1`, `align-self: center`)
+       and keeps its 44px square: one row, one mark, centred on it.
+     · the plate button spans both rows through `grid-template-rows: subgrid`,
+       so the whole two-line row is one tap target and every cell stays placed
+       rather than flowed (nu.css's own law, one screen up).
+     · the 3rd track goes: `fit-content(10ch)` was the place's, and on line two
+       the place has the whole line after the year and needs no cap.
+
+   MEASURED AFTER, on the rendered page, over all 478 rows the catalogue held
+   at the hour (the gate counts them again on every run, so this table ages
+   into a record rather than into a lie):
+
+                              320px    375px    430px    820px   1280px
+     names that ellipsise        0        0        0       10        1
+       (before)                476      407      245       10        1
+     places that ellipsise      82        0        0        0        0
+       (before)                112       10       10        0        0
+     row height             51–92    51–92    51–72    44–45    44–45
+
+   The 44px floor and the zero sideways scroll are unchanged; the CEILING is
+   deliberately gone below 700px, which is the one-line law being spent where
+   Paul asked for it to be spent. Above 700px not a pixel moves — the wide row
+   is still the year, the name and the place read as one phrase, which is that
+   block's own decision and a good one.
+   AND THE ELLIPSIS BILL DID NOT VANISH, IT MOVED AND SHRANK: at 320 the place
+   column is 83px and 82 places still cut ("Hohle Fels", "Rio de Janeiro").
+   That is the place column doing on the narrowest phone what it has always
+   done inside its own cell, to 30 fewer rows than before — and the fact a
+   reader came for, the name, is now whole on every one of the 478. */
 @media (max-width: 699px){
-  .nu-ixli{ grid-template-columns:
-              4ch minmax(0, 1fr) fit-content(10ch) var(--tap); }
-  .nu-ixli[data-bc]{ grid-template-columns:
-              8ch minmax(0, 1fr) fit-content(10ch) var(--tap); }
+  .nu-ixli{ grid-template-columns: 4ch minmax(0, 1fr) var(--tap);
+            grid-template-rows: auto auto; }
+  .nu-ixli[data-bc]{ grid-template-columns: 8ch minmax(0, 1fr) var(--tap); }
+  .nu-ixrow{ grid-column: 1 / -1; grid-row: 1 / -1;
+             grid-template-columns: subgrid; grid-template-rows: subgrid; }
+  /* THE NAME, LINE ONE. Everything the base rule does to keep a title on one
+     line is undone here and nowhere else: no nowrap, no clip, no ellipsis. */
+  .nu-ixw{ grid-column: 1 / 3; grid-row: 1;
+           white-space: normal; overflow: visible; text-overflow: clip;
+           overflow-wrap: break-word; padding-inline-end: 0; }
+  /* AND THE KIND BREAKS WITH IT, which is a bug this round found by measuring
+     rather than by reading (three rows, 320px). `.nu-kind` is `nowrap` — it
+     was a two-word footnote riding the end of a one-line title — and there is
+     no break opportunity between the title's last word and the span, because
+     the leading space is INSIDE the span. So "improvisation · the broader" was
+     ONE unbreakable 217px run in a 129px column: a `justify-self: start` item
+     takes its min-content width when min-content exceeds the area, and the
+     name overhung its own row by 30px and scrolled the list sideways. The
+     `nowrap` earns nothing on a line that is allowed to wrap.
+     IT KEEPS THE NOWRAP AND TAKES A BREAK POINT INSTEAD (measured both):
+     `white-space: normal` fixed the overflow and split the footnote badly —
+     "Neolithic flute music ·" / "the broader", a dangling separator at the end
+     of a line. `display: inline-block` is the same fix with the footnote kept
+     whole: an inline-block is a break OPPORTUNITY at its own edge, so the kind
+     drops to the next line entire, and its min-content is its own width
+     (~70px) instead of the unbreakable run it was welded to. */
+  .nu-ixw .nu-kind{ display: inline-block; }
+  /* A REFUSED ROW'S WORD IS STILL THE OVERLAY THE EXPLAINER ANSWERS, so it
+     keeps a thumb's height — but `block-size: var(--tap)` with
+     `line-height: var(--tap)` was a ONE-LINE recipe (44px per line), and this
+     word may wrap now like any other. A floor and a real line-height instead,
+     centred by a flex box it is safe to be inside because nothing here
+     ellipsises any more. */
+  .nu-ixw-no{ block-size: auto; min-block-size: var(--tap);
+              line-height: 1.3; display: flex; align-items: center; }
+  .nu-ixy{ grid-column: 1; grid-row: 2; }
+  .nu-ixp{ grid-column: 2; grid-row: 2; }
+  .nu-ixgo{ grid-column: 3; grid-row: 1 / -1; align-self: center; }
   /* AND THE ROW'S OWN AIR GOES FIRST, WHICH IS THE 320px RULE'S OWN ARGUMENT
      APPLIED ONE BREAKPOINT WIDER. That rule (`max-width: 359px`, above) says
      it exactly: *"the two gaps and the two paddings are 40 of them — 17% of

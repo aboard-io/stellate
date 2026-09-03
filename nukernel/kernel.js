@@ -1699,7 +1699,7 @@
                 // chords move smoothly and over enough bars it can walk
                 // downhill: found at MIDI 21 on a random record, two octaves
                 // under where the chair sits. Five genres in the catalog
-                // (hiphopsoul, gospel, bossa…) voice wider than two octaves on
+                // (newjackswing2, gospel, bossa…) voice wider than two octaves on
                 // purpose, so this is `padRoom` rather than a law.
                 // (asymmetric on purpose: two octaves of floor below the
                 // chair, one octave of ceiling above it)
@@ -3002,7 +3002,7 @@
     // so the lowest lane is by construction the one holding the material the
     // section is ABOUT. The obvious alternative — keep whichever lane is
     // busiest in the bar — was written first and measured wrong: on a genre
-    // whose voice 0 comps (aor, citypop, hiphopsoul — `realize(0) === "pad"`) a
+    // whose voice 0 comps (aor, citypop, newjackswing2 — `realize(0) === "pad"`) a
     // two-note companion out-counts a held chord, and the opening states the
     // companion while the quoted hook never sounds. Thirty genre/seed pairs
     // failed the quote gate that way. Choosing by lane index cannot do that.

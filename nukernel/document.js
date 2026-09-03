@@ -493,7 +493,7 @@
      no branch and comes out byte-identical. */
   const OLDKEYS = {
     spem: "polychoral", eurythmics: "synthsoul", isley: "psychsoul",
-    toto: "aor", jodeci: "hiphopsoul", beatles: "beatgroup",
+    toto: "aor", jodeci: "newjackswing2", beatles: "beatgroup",
     steely: "jazzrock", motown: "detroitsoul", bodiddley: "hambone",
     chuckberry: "rocknroll", kraftwerk: "dusseldorfschool",
     waxtrax: "industrialdance", hendrix: "acidrock", moroder: "eurodisco",
@@ -519,6 +519,49 @@
     schutz: "sacredconcerto", satie: "furnituremusic",
     stockhausen: "cologneschool", ziryab: "andalusi", cemilbey: "ottoman",
     brill: "girlgroup",
+    /* THE HIP-HOP SOUL SWAP'S RETIRED HALF (2026-09-04). Paul: "Do the
+       swap." `hiphopsoul2` (New York 1992, Mary J. Blige) took the bare
+       `hiphopsoul` key and the Hip-hop soul article outright, so the
+       numbered key is RETIRED and belongs here with the other sixty-nine:
+       nothing answers to it any more, and a save naming it means exactly
+       one row. Its old partner is the other half and it is NOT here —
+       see MOVEDKEYS. */
+    hiphopsoul2: "hiphopsoul",
+  };
+  /* ===== MOVEDKEYS — A KEY THAT WAS REUSED, NOT RETIRED (2026-09-04) =====
+     Paul: "Do the swap." The two Uptown rows exchanged keys: the Jodeci
+     record (Charlotte 1991) became `newjackswing2`, and the Mary J. Blige
+     record (New York 1992) took the bare `hiphopsoul` off it. So for the
+     first time in this table's history a key did not RETIRE, it MOVED —
+     `hiphopsoul` names a real, live, different row today — and that is a
+     different fact from every entry in OLDKEYS above.
+
+     IT COULD NOT GO IN OLDKEYS, and the reason is one line of arithmetic:
+     `normalize()` applies OLDKEYS to EVERY document that reaches it,
+     including one `precompose.genreToDocument("hiphopsoul", …)` composed a
+     millisecond ago, and there is nothing in a document that says how old
+     it is. A live key sitting in that map would therefore fold every NEW
+     Blige record into the Jodeci row, forever, silently — the exact class
+     of degrade the OLDKEYS block above exists to prevent, pointed the
+     other way. Measured before this block was written: with
+     `hiphopsoul: "newjackswing2"` in OLDKEYS, a fresh Blige document comes
+     back out of `normalize()` as `newjackswing2`.
+
+     SO IT IS THE SAVE'S DOOR THAT READS IT, because a save is the one
+     thing that carries a version: `song.js migrate()` folds these ONLY for
+     a save written before `NuSong.VERSION` 3, which is the version this
+     swap bumped and the only clock the box has. Documents do not fold —
+     nothing persists a `doc.basis` (the store holds phrases, boxes and
+     session genres; a share link carries a PLACE and a YEAR, and Charlotte
+     1991 still resolves, now to `newjackswing2`), so there is no old
+     document to fold and no live one to break.
+
+     STILL ONE MAP PER FACT AND ONE OWNER — the 2026-09-01 law's actual
+     sentence is "never a third copy of the map", and this is not a copy of
+     OLDKEYS, it is the other kind of rename with its own door and its own
+     precondition. Gate: test/document.test.js G10b. */
+  const MOVEDKEYS = {
+    hiphopsoul: "newjackswing2",
   };
   /* ===== A MOTIF'S NAME IS THE COMPOSER'S, AND RENAMING IT IS ONE DOOR ====
      (2026-09-02, slice 2c. Paul, B8: *"Motifs are editable using our existing
@@ -702,5 +745,9 @@
            // THE RENAME'S ALIAS MAP, EXPORTED (2026-09-01): song.js migrate()
            // folds saved catalog keys through the same one map at ITS door —
            // two doors, one owner. See the OLDKEYS block above for the law.
-           OLDKEYS };
+           // ...AND THE REUSED-KEY MAP BESIDE IT (2026-09-04), which ONLY the
+           // save door may read, and only for a save older than song.js
+           // VERSION 3 — the MOVEDKEYS block above says why normalize() must
+           // not touch it.
+           OLDKEYS, MOVEDKEYS };
 });

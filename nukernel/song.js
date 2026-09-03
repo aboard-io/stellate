@@ -80,7 +80,22 @@
   //     build names a subset of that table, so it loads byte-identically;
   //     one naming a role this build does not have still errors by key, with
   //     the typed message the loader has always raised (`err(...)`).
-  const VERSION = 2;
+  // ...AND v:3 IS THE ONE BUMP THAT IS NOT ABOUT A SHAPE (2026-09-04, the
+  // hip-hop soul swap. Paul: "Do the swap."). The rule above — "a version
+  // bump is for a shape that MOVED, not one that grew" — is kept by its
+  // reason rather than by its letter: what a version is FOR is telling a save
+  // written under one set of meanings from a save written under another. The
+  // catalogue reused a key. `hiphopsoul` named Jodeci's Forever My Lady
+  // (Charlotte 1991) up to this bump and names Mary J. Blige's What's the
+  // 411? (New York 1992) after it, the Jodeci row having taken
+  // `newjackswing2` — so a v:2 save and a v:3 save carrying the identical
+  // byte `"hiphopsoul"` mean two different records, and NOTHING ELSE IN THE
+  // FILE CAN TELL THEM APART. That is precisely a version's job, and it is
+  // the only clock this box has. A v:2 save folds through
+  // `document.js MOVEDKEYS` at the door below; a v:3 save does not, which is
+  // what keeps the live key alive. Everything else about the shape is
+  // untouched: every writer writes `NuSong.VERSION`, so nothing else moved.
+  const VERSION = 3;
 
   // THE FILTER RULE, written down at last: `ops` and `fx` are FILTERED on
   // load, everything else is REJECTED. The operator and effect tables change
@@ -222,6 +237,41 @@
       const doc = (typeof module !== "undefined" && module.exports)
         ? (function () { try { return require("./document.js"); } catch (e) { return null; } })()
         : root.NuDocument;
+      /* THE THIRD DOOR IS THE SAME DOOR, WITH A PRECONDITION (2026-09-04,
+         the hip-hop soul swap). `document.js MOVEDKEYS` holds the keys that
+         were REUSED rather than retired — today exactly one, `hiphopsoul`,
+         which named the Jodeci record until this version and names the Mary
+         J. Blige record from it — and its own block says why `normalize()`
+         may not read it: a live key folded unconditionally would rewrite
+         every NEW record under that key, forever. HERE it is safe, because
+         here there is a VERSION. A save written before v:3 said Jodeci when
+         it said `hiphopsoul`, so it folds to `newjackswing2`; a save written
+         at v:3 or later meant what it said and is left alone. A save with no
+         `v` at all is older than every version and folds.
+         Read off `raw`, not off `r`: `r.v` is stamped to VERSION at the foot
+         of this function, and reading the stamped copy would fold nothing,
+         ever. Same two walks as the OLDKEYS fold below — the boxes'
+         `stack[].g` and a session recipe's `parents` — because a moved key
+         can sit in either.
+         AND IT RUNS FIRST, WHICH IS LOAD-BEARING AND WAS MEASURED. The
+         retired key `hiphopsoul2` folds to `hiphopsoul` — the very spelling
+         this map moves — so with OLDKEYS first a pre-swap Blige box folded
+         twice and came out as the Jodeci row (test/document.test.js G10c
+         caught it exactly that way). Each map is applied to the save as the
+         save was WRITTEN, so the one that reads the older spelling goes
+         first and neither sees the other's output. */
+      const MOVED = (doc && doc.MOVEDKEYS) || null;
+      const wroteBefore = !(Number(raw.v) >= 3);
+      if (MOVED && wroteBefore) {
+        for (const b of Array.isArray(r.song) ? r.song : [])
+          for (const e of (b && Array.isArray(b.stack)) ? b.stack : [])
+            if (e && MOVED[e.g]) e.g = MOVED[e.g];
+        if (r.genres && typeof r.genres === "object")
+          for (const rec of Object.values(r.genres))
+            if (rec && rec.parents && typeof rec.parents === "object")
+              for (const pk of Object.keys(rec.parents))
+                if (MOVED[pk]) { rec.parents[MOVED[pk]] = rec.parents[pk]; delete rec.parents[pk]; }
+      }
       const OLD = (doc && doc.OLDKEYS) || null;
       if (OLD) {
         for (const b of Array.isArray(r.song) ? r.song : [])

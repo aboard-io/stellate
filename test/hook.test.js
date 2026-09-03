@@ -235,7 +235,7 @@ const FROZEN_RHYTHM = ["ambient", "arabesk", "artrock", "beiruttarab",
                           AND THE FIFTH ROW OF THAT BATCH IS DELIBERATELY NOT
                           HERE: `verismo` was drafted with the same `long` cell,
                           this sweep froze it, and it took `hang` instead —
-                          hiphopsoul2's ruling one batch earlier, applied to
+                          hiphopsoul's ruling one batch earlier, applied to
                           the one row of the five with a person singing on it.
                           (It also settled which field owns the freeze: the
                           CELL, not the sentence. musicdrama was written with
@@ -284,7 +284,7 @@ const FROZEN_RHYTHM = ["ambient", "arabesk", "artrock", "beiruttarab",
                        // line whose rhythm re-rolled per seed would be the
                        // band improvising, which is the thing this record
                        // stopped doing. THE ROUND'S OTHER SIX ARE NOT HERE
-                       // and one of them was, briefly: `hiphopsoul2` was
+                       // and one of them was, briefly: `hiphopsoul` was
                        // drafted with the same `long` cell and this sweep
                        // froze it, which is right for an arrangement and
                        // WRONG FOR A SINGER — Blige phrases the line

@@ -1,73 +1,109 @@
 {
-  "note": "JODECI. New jack swing, which is one idea: play sixteenths and SWING them,\nhard, on a drum machine that cannot swing on its own. Under it, dorian —\ngospel's minor, the one with the bright sixth — and a stack of voices\nholding the chord while a Rhodes plays around it. Slow; the tempo is the\npoint, and the composer knows it.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nJodeci, \"Forever My Lady\" (Uptown/MCA, 1991): a keyboard bass over an 808.\n\nnamed \"Charlotte 1991\" — Forever My Lady's year, and the choir-over-808\nanchor is the Hailey brothers' Charlotte church sound; the new jack\nswing TECHNIQUE itself would be Harlem 1987 (Teddy Riley).\n\nLINEAGE: gospel melisma from the Haileys' church over funk's pocket\nquantized into a drum machine, with Motown's songcraft underneath;\nthe swung-sixteenth TECHNIQUE is Teddy Riley's new jack swing, and\nthe hip-hop drum programming it rode in on is missing too.\n\"new jack swing\" PAID 2026-08-29 (New York 1987): DeVante named\nhimself after Riley's genre and Forever My Lady is church stacks\nover swung machines — the row's own formula, four years earlier.\nThe second want folds into the first: the hip-hop drum\nprogramming this row asked for separately IS what the SP-1200\nbrought, and two names for one debt is the taqsim hole.\n\n\"a drum machine that cannot swing on its own\" — the 808; the swing is\nours, exactly as new jack applied it\n\ni IV i v — dorian's bright IV\nthe same cycle, sevenths said out loud\nmelisma is phrases WITH ENDS\n\nWHO SINGS: the bed of voices under the Rhodes, barely articulated",
-  "bassInstr": "bass_lead",
-  "label": "Charlotte 1991",
+  "note": "HIP-HOP SOUL — New York 1992. Mary J. Blige, What's the 411?\n(Uptown/MCA, 28 July 1992; Sean \"Puffy\" Combs executive-producing, Dave\nHall and DeVante Swing on the tracks): one woman, gospel-schooled, singing\nover somebody else's break. THE ROW PAUL ASKED FOR BY NAME (2026-09-03:\n\"Mary J. Blige\"); the key is the genre term and the singer is in this\nsentence.\n\nTHE SWAP, PERFORMED (2026-09-04). Paul: \"Do the swap.\" This row was\n`hiphopsoul2` and carried `as: \"Hip-hop soul #2\"` under an article held by\nanother row; it is `hiphopsoul` now and holds the Hip-hop soul article\noutright, with no `as`, because the article is about THIS record. Its\nHistory section: \"The term 'hip-hop soul' is attributed to record producer\nand later rapper Sean 'Puffy' Combs, who came up with the term during the\npromotion of What's the 411?, the 1992 debut album of Uptown Records artist\nMary J. Blige\" — the words were coined for the record this row is written\nfrom. And of the other row's act, the same article says the opposite way\nround: \"Diary of a Mad Band (1993) ... featured the four-man male vocal\ngroup moving away from its NEW JACK SWING ORIGINS into hip-hop soul\nrecordings\", which puts Forever My Lady (1991) on the new-jack side. That\nrow is `newjackswing2` now (Charlotte 1991, `as: \"New jack swing #2\"`), a\nsecond reading of `newjackswing` (New York 1987) — its own first line\nalways said \"New jack swing, which is one idea\" — and the New jack swing\narticle names the record in its 1991 paragraph. The row grammar did not\nmove: not one field of either record changed, only the two keys and the\ntwo plates, so both records render note for note as they did.\n\nTHE FIELD THAT SEPARATES THE TWO ROWS IS THE MACHINE UNDER THE SINGER, and\nit is three fields deep:\n  · SWING. newjackswing2 is `swing: 0.28` — swung sixteenths on a drum machine\n    that cannot swing, which is new jack swing's entire technique. This row\n    is `swing: 0.10`: What's the 411? is built on STRAIGHT looped breaks\n    (Audio Two, MC Lyte, the Uptown crate), and a lifted break does not\n    swing because the drummer who played it did not.\n  · THE KIT. newjackswing2 is `drumkit: \"tr808\"`, a programmed machine. This\n    is `drumkit: \"room\"` — a sampled acoustic kit off a record, which is\n    what \"soul singing over hip-hop grooves\" (the article's own quotation\n    from The Encyclopedia of African American Music) actually means.\n  · THE MODE. newjackswing2 is DORIAN — gospel's minor with the bright sixth,\n    which is a choir's colour and belongs to a four-man vocal group. This\n    row is AEOLIAN: plain minor, no lift, one voice.\nAnd the singer: `ahh_choir` there, `solo_vox` here. The whole difference\nbetween the two records is a stack against a person.\n\nTHE BASS IS THE DEFAULT, ON PURPOSE. `newjackswing2` and `rnb` both declare\n`bassInstr: \"bass_lead\"` because a keyboard bass is what a 1991 machine\nrecord has. This row declares nothing and takes `plan.js castOf`'s\nBASS_INSTR — the sampled recorded upright — because the low end on \"Real\nLove\" is not played, it is LIFTED: the track is built on the drums of\nAudio Two's \"Top Billin'\", so what holds the bottom arrives inside\nsomebody else's recording. A recorded bass standing in for a recorded bass is the honest\nseat.\n\nMEASURED, the MIDI corpus: TWO FILES, and the honest count is worth more\nthan the flattering one. Seven paths match \"mary j\"/\"blige\"/\"maryj\" and\nfive are false — three are Tom Petty's \"Mary Jane's Last Dance\" and two\nare the Beatles' \"What's the New Mary Jane\". The two real files are\n\"M.J.BLIGE.Family affair\" (95 bpm, 4/4, MINOR) and\n\"george_michael-as_feat_mary_j_blige\" (93 bpm, 4/4, MINOR). Both minor,\nboth in a four-bpm band, and `bpm: 94` sits between them.\n\nMEASURED, Chordonomicon: the label \"hip hop soul\" returns ZERO songs —\nthe dataset has no such tag. The nearest shelf it does carry is \"hip pop\"\n(572 songs; 61 pre-2000, 32 major to 29 minor, commonest windows I IV I IV\nand I V vi IV at three each, and the top MINOR window iv i iv i at two).\nThis row takes that minor window rotated onto the tonic: [0, 3] twice,\ni7 and iv7 in aeolian.\n\nTHE INVENTION (the residue, 0.15). The parents supply the church, the\nmachine, the songcraft and the break. What none of them supplies is a\nSOLO singer treated like a rapper — same posture, same crate, same\ntempo — which is the thing the article says the genre did to R&B.\n\nLINEAGE: `newjackswing2` (Charlotte 1991) is a year older and the same\nlabel's house sound, and DeVante Swing produced on both records;\n`gospel` (Chicago 1932) is where the voice was trained; `newjackswing`\n(New York 1987) is the technique this record walked away from — the\narticle's own account of the sequence; `blockparty` (Bronx 1973) is where\nthe loops come from, taken direct because `boombap` (New York 1994) is\nTWO YEARS YOUNGER than this record and cannot be its parent, the same\ndating fact `gfunk` writes down about the same row.\n\nWHO SINGS: one alto, holding a vowel across the bar — the gospel run,\nwhich is the one thing on this record that is not somebody else's tape.",
+  "label": "New York 1992",
+  "voices": 2,
+  "bars": 8,
+  "near": "newjackswing2",
   "plan": "song",
-  "bpm": 74,
-  "swing": 0.28,
+  "bpm": 94,
   "parents": {
-    "newjackswing": 0.35,
-    "gospel": 0.35,
-    "funk": 0.2,
-    "detroitsoul": 0.1
+    "newjackswing2": 0.3,
+    "gospel": 0.25,
+    "newjackswing": 0.15,
+    "blockparty": 0.15
   },
-  "wants": [],
+  "wants": [
+    "the guest rapper's verse (the duet with a rapper as a form)"
+  ],
   "instr": [
-    "ahh_choir",
+    "solo_vox",
     "rhodes_ep"
   ],
-  "drumkit": "tr808",
+  "drumkit": "room",
   "entry": {
-    "kind": "const",
-    "n": 0
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
   },
   "reg": {
-    "kind": "minus",
-    "n": 1
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
   },
   "realize": {
     "kind": "cases",
     "cases": [
       {
-        "at": 0,
+        "at": 1,
         "then": "pad"
       }
     ],
     "else": "line"
   },
-  "mode": {
-    "$src": "MODES.dorian"
-  },
-  "scale": {
-    "$src": "MODES.dorian"
-  },
-  "diatonic": true,
+  "part": [
+    "lead",
+    "pad"
+  ],
   "roots": [
     0,
     3,
     0,
-    4
+    3
   ],
-  "prog": {
-    "$src": "PROGS.jack7"
+  "mode": {
+    "$src": "MODES.aeolian"
   },
-  "maxHold": 3,
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    },
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    }
+  ],
+  "harmony": "cycle",
+  "swing": 0.1,
   "artic": "legato",
+  "maxHold": 4,
   "bassGrid": [
     1,
     0,
     0,
-    1,
-    0,
-    0,
-    1,
-    0,
-    1,
-    0,
     0,
     0,
     0,
     1,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
     0,
     0
   ],
@@ -76,7 +112,7 @@
       1,
       0,
       0,
-      1,
+      0,
       0,
       0,
       1,
@@ -108,41 +144,61 @@
       0,
       0
     ],
-    "c": [
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "s": [
       0,
       0,
       0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
       0,
       1,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0,
-      0,
       1
     ],
     "h": [
-      1,
-      0,
-      1,
-      1,
-      1,
-      0,
-      1,
-      1,
-      1,
-      0,
-      1,
-      1,
-      1,
-      0,
-      1,
-      1
+      8,
+      3,
+      7,
+      3,
+      8,
+      3,
+      6,
+      2,
+      8,
+      3,
+      7,
+      2,
+      8,
+      2,
+      7,
+      3
     ]
   },
   "fill": {
@@ -160,34 +216,39 @@
       1,
       0,
       1,
-      1,
+      0,
       1,
       0
     ]
   },
   "tone": {
     "wave": "triangle",
-    "cut": 2400,
+    "cut": 2200,
     "q": 1.1,
-    "atk": 0.01,
-    "rel": 1,
+    "atk": 0.012,
+    "rel": 1.0,
     "gain": 0.26,
-    "verb": 0.42,
+    "verb": 0.36,
     "mouth": {
-      "$src": "MOUTHS.dreamchoir"
+      "$src": "MOUTHS.melisma"
     }
   },
   "words": [
-    "the vocal stack, one chord a bar",
-    "the Rhodes, playing around it"
+    "the voice, alone, the run across the bar",
+    "the Rhodes, two chords under the loop"
   ],
   "word": {
-    "kind": "const",
-    "n": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(8)]"
+        }
+      }
+    ],
+    "else": {
       "$src": "[]"
     }
-  },
-  "fx": [
-    "chorus"
-  ]
+  }
 }

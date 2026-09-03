@@ -570,7 +570,7 @@
       { d: 0, q: "7" }, { d: 0, q: "7" }, { d: 3, q: "7" }, { d: 3, q: "7" },
       { d: 0, q: "7" }, { d: 0, q: "7" }, { d: 4, q: "7" }, { d: 4, q: "7" },
     ],
-    // new jack: the hiphopsoul cycle with its sevenths said out loud
+    // new jack: the newjackswing2 cycle with its sevenths said out loud
     jack7: [{ d: 0, q: "7" }, { d: 3, q: "7" }, { d: 0, q: "7" }, { d: 4, q: "7" }],
     // the beatgroup verse as written, and a chorus that finally goes to V —
     // the pair exists so a composed song can have two different harmonies
@@ -727,7 +727,7 @@
   // cannot land in two families, and the stamp below writes `family` onto the
   // anchor so everything downstream reads it like any other genre field (the
   // unit gate holds every anchor to exactly one). The clusters follow the
-  // MUSIC, not the machinery — hiphopsoul and synthsoul are both drum machines,
+  // MUSIC, not the machinery — newjackswing2 and synthsoul are both drum machines,
   // but one is soul and the other is a studio record, and the ear files them
   // that way. `kernel` is simple alone, on purpose: it is the zero of the
   // table and belongs to no tradition.
@@ -939,7 +939,7 @@
                 // four rows are SUNG and sit in `soul`.
                 "politicalhiphop", "jazzrap", "althiphop"]],
     ["soul",   ["doowop", "detroitsoul", "psychsoul", "funk", "disco", "gospel", "rnb",
-                "hiphopsoul", "clubpop", "retrofunkpop", "boyband", "darkrnb",
+                "newjackswing2", "clubpop", "retrofunkpop", "boyband", "darkrnb",
                 "blueeyedsoul",
                 // ...and the MIDI-corpus round's two (2026-09-02): a soul
                 // revival with a real dominant in it and a programmed R&B
@@ -992,10 +992,10 @@
                 // rhythm section with a singer over it, and all four take the
                 // family's own dynamics row unchanged (stress .5, phrase .45,
                 // touch t .07 / v 1) — a live hand, even where the loop under
-                // `hiphopsoul2` is somebody else's tape, because the thing
+                // `hiphopsoul` is somebody else's tape, because the thing
                 // being humanised is the SINGER. test/hand.test.js §1 is why
                 // this list is edited at all.
-                "northernsoul", "progressivesoul", "psychsoul2", "hiphopsoul2"]],
+                "northernsoul", "progressivesoul", "psychsoul2", "hiphopsoul"]],
     // ...and the two 2020s newcomers that are grooves and not floors: both are
     // a hand layer over a rhythm section, which is what this cluster is, and
     // both take the family's own dynamics row unchanged.
@@ -1322,6 +1322,20 @@
                 "characterpiece", "concertoverture", "variations",
                 "symphonicpoem", "musicdrama", "nationalism", "ballet",
                 "verismo", "impressionism",
+                // ...AND A FOURTEENTH ON 2026-09-04. `grandopera` (Paris 1831)
+                // was DECLINED by the batch above on a filename search that
+                // found no Meyerbeer; the composer is in the MIDI text events,
+                // six files carry him, and the row is built. It files here
+                // rather than in `vox` for the reason its four operatic
+                // siblings do — `operaseria`, `belcanto`, `musicdrama` and
+                // `verismo` are all in this cluster — even though it is the
+                // only one of the five seating a chorus: vox's own definition,
+                // repeated down that list, is people singing with nothing
+                // under them, and the whole point of this row is the eighty
+                // voices and the orchestra that never stops. It takes an
+                // IDIOM_ANCHOR row in precompose.js like eleven of the
+                // thirteen above it.
+                "grandopera",
                 // ...and one record from 2023, which looks wrong in "the
                 // pre-rock traditions" until you hear it: a sung story, an
                 // acoustic ensemble and no drum kit is what this cluster IS,
@@ -1708,7 +1722,11 @@
     jumpblues: { stress: 0.5,  phrase: 0.45, touch: { t: 0.075, v: 1.05 } },
     // drum machines with singers over them: the machine is the floor, the
     // performance is on top, so metre stays modest and the level moves
-    hiphopsoul:    { stress: 0.3,  phrase: 0.5,  touch: { t: 0.04,  v: 0.8 } },
+    // (THE SWAP, 2026-09-04 — Paul: "Do the swap." This row's numbers are
+    // the JODECI record's, which is keyed `newjackswing2` now; the Mary J.
+    // Blige record took the bare `hiphopsoul` key and takes the `soul`
+    // family's own dynamics row, exactly as it did under its old key.)
+    newjackswing2: { stress: 0.3,  phrase: 0.5,  touch: { t: 0.04,  v: 0.8 } },
     rnb:       { stress: 0.35, phrase: 0.55, touch: { t: 0.05,  v: 0.85 } },
     // KRAFTWERK is not `null` like the five club machines, and the difference
     // matters: this music was PLAYED — Flür hit metal with sticks, the tunes

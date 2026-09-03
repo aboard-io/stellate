@@ -557,7 +557,7 @@
       { d: 0, q: "7" }, { d: 0, q: "7" }, { d: 3, q: "7" }, { d: 3, q: "7" },
       { d: 0, q: "7" }, { d: 0, q: "7" }, { d: 4, q: "7" }, { d: 4, q: "7" },
     ],
-    // new jack: the hiphopsoul cycle with its sevenths said out loud
+    // new jack: the newjackswing2 cycle with its sevenths said out loud
     jack7: [{ d: 0, q: "7" }, { d: 3, q: "7" }, { d: 0, q: "7" }, { d: 4, q: "7" }],
     // the beatgroup verse as written, and a chorus that finally goes to V —
     // the pair exists so a composed song can have two different harmonies
@@ -2528,7 +2528,8 @@
       fx: ["chorus"],
     },
 
-    // JODECI. New jack swing, which is one idea: play sixteenths and SWING them,
+    // NEW JACK SWING #2 — Charlotte 1991. JODECI. New jack swing,
+    // which is one idea: play sixteenths and SWING them,
     // hard, on a drum machine that cannot swing on its own. Under it, dorian —
     // gospel's minor, the one with the bright sixth — and a stack of voices
     // holding the chord while a Rhodes plays around it. Slow; the tempo is the
@@ -2568,8 +2569,53 @@
     // the same cycle, sevenths said out loud
     // melisma is phrases WITH ENDS
     //
+    // THE SWAP (2026-09-04). Paul: "Do the swap." This row was keyed
+    // `hiphopsoul` and held the Hip-hop soul article. It is `newjackswing2` now
+    // and holds New jack swing, because both articles say so and because this
+    // row's own first line said so before either was read — "New jack swing,
+    // which is one idea". The Hip-hop soul article's History section: "The term
+    // 'hip-hop soul' is attributed to record producer and later rapper Sean
+    // 'Puffy' Combs, who came up with the term during the promotion of What's
+    // the 411?, the 1992 debut album of Uptown Records artist Mary J. Blige" —
+    // the words were coined for somebody else's record — and of this row's act
+    // the same article says "Diary of a Mad Band (1993) ... featured the
+    // four-man male vocal group moving away from its NEW JACK SWING ORIGINS
+    // into hip-hop soul recordings", which puts Forever My Lady (1991) on the
+    // new-jack side of the line. The New jack swing article's own 1991
+    // paragraph agrees in one sentence: "Jodeci's debut album Forever My Lady
+    // garnered three number 1 R&B Hits in the fall of 1991." `hiphopsoul` is
+    // the Blige row now (New York 1992); it takes the article outright and
+    // drops its `as`.
+    //
+    // WHY `newjackswing2` AND NOT A THIRD WORD. Two alternatives were read in
+    // the article and declined. `swingbeat` is its own "Other names" line —
+    // "New jack swing, new jack, or swingbeat" — but it is the SAME article
+    // under a second spelling, so it would buy a distinct-looking plate at the
+    // price of the list claiming two genres where the encyclopaedia files one,
+    // which is the exact thing Paul's repeat flag exists to prevent. "New jack
+    // ballad" occurs in the article ("their New Jack ballad 'Cry No More'") and
+    // is not a genre with an article at all. So this is `newjackswing` (New
+    // York 1987, Teddy Riley) said a second time, four years and one city
+    // later, with `as: "New jack swing #2"` — the psychsoul/psychsoul2
+    // spelling. The two rows are one technique and two records, and the fields
+    // say which is which: 108 bpm, ionian, synth stacks, staccato there; 74
+    // bpm, dorian, a choir over an 808, legato here. Riley invented the
+    // shuffle; the Haileys took it to church and slowed it down.
+    //
+    // THE OLD KEY MOVES THROUGH THE DOORS (the 2026-09-01 law: two doors, one
+    // map, never a third copy). `jodeci` was already folded here and still is.
+    // The old `hiphopsoul` is the first key in this table's history to be
+    // REUSED rather than retired, so it could NOT go into `document.js
+    // OLDKEYS`: that map is applied to every document at every `normalize()`,
+    // including a freshly composed one, so a live key sitting in it would fold
+    // every new Blige record into this row forever — measured before the
+    // second door existed. It goes into `MOVEDKEYS` beside it, which only the
+    // SAVE door reads (`song.js migrate`) and only for a save written before
+    // `song.js` VERSION 3. The argument is written at both doors and the gate
+    // is document.test.js G10b.
+    //
     // WHO SINGS: the bed of voices under the Rhodes, barely articulated
-    hiphopsoul: {
+    newjackswing2: {
       bassInstr: "bass_lead",
       label: "Charlotte 1991",
       plan: "song",
@@ -2612,49 +2658,50 @@
       fx: ["chorus"],
     },
 
-    // HIP HOP SOUL #2 — New York 1992. Mary J. Blige, What's the 411?
+    // HIP-HOP SOUL — New York 1992. Mary J. Blige, What's the 411?
     // (Uptown/MCA, 28 July 1992; Sean "Puffy" Combs executive-producing, Dave
     // Hall and DeVante Swing on the tracks): one woman, gospel-schooled, singing
     // over somebody else's break. THE ROW PAUL ASKED FOR BY NAME (2026-09-03:
     // "Mary J. Blige"); the key is the genre term and the singer is in this
     // sentence.
     //
-    // THE PLATE SAYS "Hip hop soul #2" AND THE LINK IS THE ARTICLE'S, which
-    // `hiphopsoul` (Charlotte 1991, Jodeci) holds. THE ARTICLE DOES NOT AGREE
-    // WITH THAT ARRANGEMENT AND THE DISAGREEMENT IS RECORDED HERE RATHER THAN
-    // ACTED ON. Its History section: "The term 'hip-hop soul' is attributed to
-    // record producer and later rapper Sean 'Puffy' Combs, who came up with the
-    // term during the promotion of What's the 411?, the 1992 debut album of
-    // Uptown Records artist Mary J. Blige" — i.e. THIS record is the record the
-    // words were invented for — and of Jodeci it says the opposite way round:
-    // "Diary of a Mad Band (1993) ... featured the four-man male vocal group
-    // moving away from its NEW JACK SWING ORIGINS into hip-hop soul recordings".
-    // Forever My Lady (1991), which `hiphopsoul` anchors, is on the new-jack
-    // side of that sentence by the article's own account. The proposal — NOT
-    // performed here, because one agent does not re-key another row mid-shift —
-    // is that `hiphopsoul` becomes the new jack swing row it already describes
-    // itself as ("New jack swing, which is one idea", its first line) and this
-    // record takes the Hip-hop soul article outright. Until somebody rules on
-    // it, the link stays where it is and this row carries the `as`.
+    // THE SWAP, PERFORMED (2026-09-04). Paul: "Do the swap." This row was
+    // `hiphopsoul2` and carried `as: "Hip-hop soul #2"` under an article held by
+    // another row; it is `hiphopsoul` now and holds the Hip-hop soul article
+    // outright, with no `as`, because the article is about THIS record. Its
+    // History section: "The term 'hip-hop soul' is attributed to record producer
+    // and later rapper Sean 'Puffy' Combs, who came up with the term during the
+    // promotion of What's the 411?, the 1992 debut album of Uptown Records artist
+    // Mary J. Blige" — the words were coined for the record this row is written
+    // from. And of the other row's act, the same article says the opposite way
+    // round: "Diary of a Mad Band (1993) ... featured the four-man male vocal
+    // group moving away from its NEW JACK SWING ORIGINS into hip-hop soul
+    // recordings", which puts Forever My Lady (1991) on the new-jack side. That
+    // row is `newjackswing2` now (Charlotte 1991, `as: "New jack swing #2"`), a
+    // second reading of `newjackswing` (New York 1987) — its own first line
+    // always said "New jack swing, which is one idea" — and the New jack swing
+    // article names the record in its 1991 paragraph. The row grammar did not
+    // move: not one field of either record changed, only the two keys and the
+    // two plates, so both records render note for note as they did.
     //
     // THE FIELD THAT SEPARATES THE TWO ROWS IS THE MACHINE UNDER THE SINGER, and
     // it is three fields deep:
-    //   · SWING. hiphopsoul is `swing: 0.28` — swung sixteenths on a drum machine
+    //   · SWING. newjackswing2 is `swing: 0.28` — swung sixteenths on a drum machine
     //     that cannot swing, which is new jack swing's entire technique. This row
     //     is `swing: 0.10`: What's the 411? is built on STRAIGHT looped breaks
     //     (Audio Two, MC Lyte, the Uptown crate), and a lifted break does not
     //     swing because the drummer who played it did not.
-    //   · THE KIT. hiphopsoul is `drumkit: "tr808"`, a programmed machine. This
+    //   · THE KIT. newjackswing2 is `drumkit: "tr808"`, a programmed machine. This
     //     is `drumkit: "room"` — a sampled acoustic kit off a record, which is
     //     what "soul singing over hip-hop grooves" (the article's own quotation
     //     from The Encyclopedia of African American Music) actually means.
-    //   · THE MODE. hiphopsoul is DORIAN — gospel's minor with the bright sixth,
+    //   · THE MODE. newjackswing2 is DORIAN — gospel's minor with the bright sixth,
     //     which is a choir's colour and belongs to a four-man vocal group. This
     //     row is AEOLIAN: plain minor, no lift, one voice.
     // And the singer: `ahh_choir` there, `solo_vox` here. The whole difference
     // between the two records is a stack against a person.
     //
-    // THE BASS IS THE DEFAULT, ON PURPOSE. `hiphopsoul` and `rnb` both declare
+    // THE BASS IS THE DEFAULT, ON PURPOSE. `newjackswing2` and `rnb` both declare
     // `bassInstr: "bass_lead"` because a keyboard bass is what a 1991 machine
     // record has. This row declares nothing and takes `plan.js castOf`'s
     // BASS_INSTR — the sampled recorded upright — because the low end on "Real
@@ -2683,7 +2730,7 @@
     // SOLO singer treated like a rapper — same posture, same crate, same
     // tempo — which is the thing the article says the genre did to R&B.
     //
-    // LINEAGE: `hiphopsoul` (Charlotte 1991) is a year older and the same
+    // LINEAGE: `newjackswing2` (Charlotte 1991) is a year older and the same
     // label's house sound, and DeVante Swing produced on both records;
     // `gospel` (Chicago 1932) is where the voice was trained; `newjackswing`
     // (New York 1987) is the technique this record walked away from — the
@@ -2694,14 +2741,14 @@
     //
     // WHO SINGS: one alto, holding a vowel across the bar — the gospel run,
     // which is the one thing on this record that is not somebody else's tape.
-    hiphopsoul2: {
+    hiphopsoul: {
       label: "New York 1992",
       voices: 2,
       bars: 8,
-      near: "hiphopsoul",
+      near: "newjackswing2",
       plan: "song",
       bpm: 94,
-      parents: { hiphopsoul: 0.3, gospel: 0.25, newjackswing: 0.15, blockparty: 0.15 },
+      parents: { newjackswing2: 0.3, gospel: 0.25, newjackswing: 0.15, blockparty: 0.15 },
       wants: ["the guest rapper's verse (the duet with a rapper as a form)"],
       instr: ["solo_vox", "rhodes_ep"],
       drumkit: "room",
@@ -4258,7 +4305,7 @@
                     : [[], [fill(1)], [rotate(4)]][s % 3]),
     },
 
-    // R&B [hiphopsoul]. Jodeci is new jack — swung, triadic, a drum machine
+    // R&B [newjackswing2]. Jodeci is new jack — swung, triadic, a drum machine
     // playing sixteenths. This is the other nineties: STRAIGHT time and
     // EXTENDED chords, Imaj7–iii7–vi7–IVmaj7, a rim on 3, an EP that holds,
     // and backing vocals that are a harmonize PIPE, chord-locked sixths.
@@ -4281,7 +4328,7 @@
     //
     // LINEAGE: Boyz II Men is the doo-wop revival sung with gospel
     // technique over Motown songcraft, arriving through new jack's door
-    // (the hiphopsoul share); doo-wop itself is an anchor now and the parent
+    // (the newjackswing2 share); doo-wop itself is an anchor now and the parent
     // this comment already named is real. What the revival kept is the FORM
     // — four voices and the a-cappella tag — and none of the measurable
     // surface (straight time, electronic kit, maj7s), which is why the
@@ -4301,18 +4348,29 @@
     // without its EP is not an improvement, so the EP holds the sevenths
     // exactly as before and the voice takes the line chair it already had.
     //
+    // THE SWAP (2026-09-04). Paul: "Do the swap." The parent this row named
+    // `hiphopsoul` is the JODECI record and this note has always said so in its
+    // own first sentence — "Jodeci is new jack — swung, triadic, a drum machine
+    // playing sixteenths" — so when that row took the key `newjackswing2`, the
+    // 0.25 followed it. It could not do otherwise: the share is paid for the
+    // swung sixteenth Boyz II Men arrived through, and the row now keyed
+    // `hiphopsoul` is a 1992 Mary J. Blige record built on straight looped
+    // breaks, which is the opposite of the thing this sentence credits. The
+    // `near` follows for the same reason — the neighbour a reader of this row
+    // wants is the record it is answering.
+    //
     // WHO SINGS: one vowel held over many notes — that IS a melisma,
     // and it is the one thing the recording of an "aah" could fake
     // and the one thing the sung word could not
     rnb: {
       bassInstr: "bass_lead",
       label: "Philadelphia 1994",
-      near: "hiphopsoul",
+      near: "newjackswing2",
       plan: "song",
       bpm: 72,
       parents: {
         gospel: 0.3,
-        hiphopsoul: 0.25,
+        newjackswing2: 0.25,
         quietstorm: 0.2,
         detroitsoul: 0.15,
         doowop: 0.1
@@ -14044,6 +14102,213 @@
            [transpose(-12)], [rotate(2)], [], [spread(2), drop(3)]][s % 8]),
     },
 
+    // GRAND OPERA — Paris 1831. Meyerbeer, ROBERT LE DIABLE, first performed at
+    // the Opera (salle Le Peletier) on 21 November 1831, libretto by Scribe and
+    // Delavigne, produced by Louis-Desire Veron in his first season as the
+    // privatised house's director — five acts, a chorus, a ballet of the ghosts
+    // of debauched nuns in act 3, Cicerian sets and the gas light that had been
+    // in the building since 1823. The article's own lead image is the Degas of
+    // that ballet, captioned "one of the earliest sensations of grand opera".
+    //
+    // THIS ROW WAS DECLINED ON 2026-09-03 AND THE REASON WAS A SEARCH BUG. The
+    // classical batch wrote "Grand opera declined: Meyerbeer returns zero files
+    // anywhere" and paid the debt into `verismo`'s wants instead. That search
+    // read FILE PATHS. Nineteenth-century MIDI transcriptions put the composer
+    // in the file's TEXT EVENTS and the arranger or the tune in the filename,
+    // so grepping the bytes finds what grepping the paths cannot. Four files in
+    // the archive carry the name MEYERBEER inside them:
+    // `classical_greats/Grand March.mid` ("By Jacob Meyerbeer"),
+    // `classical_greats/L'Africaine Selection.mid` ("By G.Meyerbeer"),
+    // `folk/scf51m.mid` ("Ah! mon fils", the Le prophete aria, "Words by
+    // Augustin-Eugene Scribe. Music by Giacomo Meyerbeer, 1791-1864. (1851)")
+    // and `folk/jhh38tnbq.mid`, the New Brighton Quadrilles of 1838 whose first
+    // two numbers are Meyerbeer's. Two more carry his operas under the
+    // arranger's name: `classical_guitar/Mertz_Part_Diable.mid` — Robert le
+    // diable, THIS ROW'S OWN RECORD — and
+    // `classical_guitar/Mertz_Divertissement_Der_Prophet_Op32.mid`. The bulk
+    // rip's 103,548 files carry not one, checked the same way. Six Meyerbeer
+    // files, not zero, and one of them is the founding record. The lesson is
+    // worth more than the row: a filename census over a transcription archive
+    // under-reports art music by exactly the amount that arrangers renamed it.
+    //
+    // WHY PARIS 1831 AND NOT PARIS 1828 OR PARIS 1829, both of which are free
+    // on the map. The article is explicit against this row: "The first opera of
+    // the grand opera canon is, by common consent, Daniel Auber's La muette de
+    // Portici (1828)", with Rossini's Guillaume Tell following in 1829. Both
+    // are in the archive — Carcassi's Op. 33 fantasia on La muette, and eight
+    // separate files of Guillaume Tell. The row still dates to 1831, on this
+    // table's own standing rule that a genre is dated by the record where the
+    // LANGUAGE arrives rather than by the first instance (`musicdrama`'s Munich
+    // 1865 over Bayreuth 1876; `symphonicpoem`'s Les preludes over the earlier
+    // drafts). Muette and Tell are two operas; Robert le diable is the moment
+    // the thing became a FORMULA — Veron's privatised Opera, Scribe writing to
+    // a specification, and, in the article's own account, the ballet at the top
+    // of act 2 that becomes obligatory only "as it developed in Paris through
+    // the 1830s", demanded by subscribers who did not want their dinner
+    // disturbed. Halevy's La Juive (1835) and Meyerbeer's Les Huguenots (1836)
+    // are made to that specification. Neither of the 1828-29 records is.
+    //
+    // AND THE ARCHIVE'S LOUDEST WITNESS IS NOT EVIDENCE, which argues the other
+    // way and is recorded anyway. Guillaume Tell is eight files, more than any
+    // other work here — and all eight are the OVERTURE, the galop a hundred and
+    // fifty years of cartoons made famous, which is the one number of that opera
+    // nobody thinks of as grand opera. `musicdrama`'s finding from the same
+    // batch, arriving a second time: count the archive, then ask what it holds.
+    //
+    // MEASURED, OVER 29 FILES AND 134,878 NOTES — the largest measured set any
+    // row in the classical block has. The twenty-one PARIS OPERA files (the six
+    // Meyerbeer, Auber's Muette, Halevy's "Quand de la nuit" from L'Eclair, the
+    // eight Tells, three of Verdi's Vepres siciliennes of 1855 and the Faust
+    // waltz and march) read bpm p50 130.0 (min 59, max 190), 4/4 in 14 of 21
+    // (66.7%) against 3/4 and 2/4 at three each, MAJOR IN 19 OF 21 (90.5%) at a
+    // median key confidence of 0.92, and median seventh-content 0.33. The eight
+    // Aida files (Cairo 1871, the Italian branch the article's own "broader
+    // application" names) move nothing: 4/4 21 of 29, major 25 of 29, p50 120.
+    // `bpm: 130` IS DOUBLY ANCHORED and that is why it is the number: it is the
+    // measured tempo of `Grand March.mid`, the one file in the archive that
+    // carries Meyerbeer's signature and is a chorus-scene march, AND it is the
+    // median of the whole twenty-one-file Paris set to one decimal place. The
+    // mode follows the 90.5%: ionian, and no declared meter, because 66.7% 4/4
+    // is what the default already is and `nationalism` proved this same batch
+    // that a declared meter destabilises the hook.
+    //
+    // THE KIT IS TWO CYMBALS AND THE MEASUREMENT SAYS WHY. Six of the 29 files
+    // carry a percussion channel. Four of them are Guillaume Tell — drum
+    // density 0.07 to 0.74, HAT 0.00 AND SNARE 0.00 in every one, which is a
+    // struck accent and not a kit. The two that do carry a hat (2.00, 2.78) and
+    // a snare (0.57, 0.52) are both General MIDI arrangements of the Aida
+    // triumphal march, where the transcriber added a drum set that no pit has.
+    // So the row takes the Opera's own crash on beats 1 and 3 and nothing else
+    // — the march step a crowd crosses a stage on. `ballet` (Moscow 1877) took
+    // one crash on beat 1 alone from the same kind of reading; a swan is not
+    // marching and this chorus is.
+    //
+    // WHAT THE ROW IS, AND IT IS THE ONE THING NO OTHER OPERA ROW HERE HAS: A
+    // CHORUS. `operaseria` (London 1724), `belcanto` (Milan 1831), `verismo`
+    // (Rome 1890) and `musicdrama` (Munich 1865) all seat exactly one
+    // `solo_vox` and then instruments. Grand opera is the row where a CROWD is
+    // on the stage and is a character in the drama — the Huguenot mob, the
+    // skaters and anabaptists of Le prophete, the nuns. So chair 2 is
+    // `ahh_choir`, and it is seated at chair 2 ON PURPOSE. compose deals at
+    // most two phrase slots to a section and chair v takes slot v % nP, so
+    // chairs 0 and 2 share material and chairs 1 and 3 share material — the
+    // finding `verismo` made two rows ago by reading the composed document.
+    // Written the obvious way (the chorus second) the crowd would have sung the
+    // horns' fanfare. Seated third it sings THE PRINCIPAL'S OWN LINE, an octave
+    // under him, note for note, which is what a grand-opera unison chorus does
+    // and is the whole texture the genre was built to sell. The octave is
+    // `transpose(-7)` and not `transpose(-12)`, for `verismo`'s reason: in a
+    // seven-note ladder twelve DEGREES lands nearer two octaves.
+    //
+    // `oratorio` (Dublin 1742) is the other row seating a soloist and a choir,
+    // and the difference is the dramaturgy: its chorus enters at bar 3 with a
+    // line of its own and COMMENTS on an action nobody is staging, where this
+    // one sings the principal's line because it is IN the action. Same two
+    // chairs, opposite jobs — which is why oratorio is a parent below rather
+    // than a row displaced.
+    //
+    // THE BORROWED bVI IS THE TABLEAU. Bar 5 is `{ d: 5, borrow: -1 }` — the
+    // flat submediant, the coup de theatre chord, the one place in eight bars
+    // where the key gives way and the stage picture changes. It is the only
+    // chromatic event in the row and every other bar is I - IV - V7 - I twice
+    // over, because the harmony of a crowd scene is deliberately plain: the
+    // spectacle is in the room, not in the chords, and the measured 0.92 median
+    // key confidence over the set says the transcribers heard it that way too.
+    //
+    // LINEAGE. `belcanto` (Milan 1831) 0.25 — SAME YEAR AND LEGAL (GENRES.md
+    // section 2: nine same-year edges, the law is "not later"), and Robert le
+    // diable premiered on 21 November where Norma opened on 26 December, so
+    // this row is five weeks the elder of its own parent. It is still the
+    // parent: Meyerbeer came to Paris as an Italian bel canto composer and the
+    // article names Il crociato in Egitto (Venice 1824) among grand opera's
+    // direct forerunners; the voice on this stage is that voice, and the row
+    // takes `MOUTHS.belter` from it unchanged. `operaseria` (London 1724) 0.25
+    // — the sung stage drama at five acts on a noble historical subject, which
+    // Jouy's 1826 essay is restating almost verbatim when it specifies the
+    // form. `classical` (Vienna 1785) 0.15 — the orchestra and the square
+    // eight-bar period; `romantic` (Vienna 1876) would be the better orchestra
+    // and is forty-five years too late to be anything. `oratorio` (Dublin 1742)
+    // 0.1 — the FORCES and not the dramaturgy: a chorus of that size singing
+    // homophonically at full weight against a band is a machine the eighteenth
+    // century built for the concert room, and this genre put it on a stage.
+    // 0.75 declared. THE RESIDUE IS 0.25 AND IT IS THE STAGE ITSELF: five acts,
+    // four hours, the ballet at the top of act 2, Cicerian dioramas, gas light,
+    // a volcano, a shipwreck, and a chorus of eighty who act. Every one of
+    // those is a fact about a building, and this box has no building.
+    grandopera: {
+      label: "Paris 1831",
+      near: "belcanto",
+      plan: "arc",
+      bpm: 130,
+      bars: 8,
+      voices: 4,
+      parents: { belcanto: 0.25, operaseria: 0.25, classical: 0.15, oratorio: 0.1 },
+      wants: [
+        "the tragedie lyrique and the Paris Opera's own two centuries of chorused, danced " +
+        "theatre — Lully to Spontini, the house this genre was built inside, which this table " +
+        "has no row for",
+        "opera comique, the spoken-dialogue house across town that grand opera defined itself " +
+        "against: Castil-Blaze's contemporary definition is a work sung throughout, at the " +
+        "Opera, on a noble subject, and two of those three clauses are only about the other " +
+        "place"
+      ],
+      cannot: [
+        "five acts and four hours — this record is eight bars, and the form's own librettist " +
+        "specified the five acts in writing (Jouy, 1826) because the subject needed 'frequent " +
+        "scene changes'",
+        "the ballet at the top of act 2, which is a SECOND TEMPO inside the same evening; one " +
+        "record has one tempo (WORLD.md section 5.2), the same wall `belcanto` hits at the " +
+        "cavatina-and-cabaletta",
+        "the spectacle, and contemporaries said the eye was half of it: Cicerian dioramas, the " +
+        "gas light, a volcano, a shipwreck, a cathedral, a coronation",
+        "the crowd's SIZE — four chairs is four, and Les Huguenots was called 'the night of " +
+        "the seven stars' because it needed seven principals over a chorus of eighty"
+      ],
+      instr: ["solo_vox", "french_horns", "ahh_choir", "strings"],
+      part: ["lead", "riff", "counter", "pad"],
+      entry: v => [1, 0, 3, 0][v],
+      reg: v => [1, 0, 0, -1][v],
+      realize: v => (v === 3 ? "pad" : "line"),
+      roots: [0, 3, 4, 0, 5, 3, 4, 0],
+      prog: [
+        { d: 0 },
+        { d: 3 },
+        { d: 4, q: "dom7" },
+        { d: 0 },
+        { d: 5, borrow: -1 },
+        { d: 3 },
+        { d: 4, q: "dom7" },
+        { d: 0 }
+      ],
+      mode: MODES.ionian,
+      scale: DIATONIC,
+      artic: "legato",
+      maxHold: 4,
+      bassInstr: "contrabass",
+      bassStyle: "octaves",
+      drumkit: "acoustic",
+      kit: { x: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0] },
+      intro: "swell",
+      tone: {
+        wave: "sawtooth",
+        cut: 2500,
+        q: 0.9,
+        atk: 0.03,
+        rel: 1.4,
+        gain: 0.25,
+        verb: 0.68,
+        mouth: MOUTHS.belter
+      },
+      words: [
+        "the principal, on the stage, in front of everybody",
+        "the horns, the banda sul palco, fanfaring on the beats",
+        "THE CHORUS, singing the principal's own line an octave under him — the crowd, and it " +
+        "is a character",
+        "the pit, holding"
+      ],
+      word: v => (v === 1 ? [keep(0, 4, 8, 12), transpose(-7)] : v === 2 ? [transpose(-7)] : []),
+    },
+
     // MUSIC DRAMA — Munich 1865. Wagner, TRISTAN UND ISOLDE, first performed
     // at the Konigliches Hof- und Nationaltheater on 10 June 1865 under Hans
     // von Bulow, after seventy-seven rehearsals and a first cast who were told
@@ -14434,7 +14699,16 @@
     // the orchestral weight, which is what got added; `nationalism` (Prague
     // 1874) 0.1 — the deliberate use of a village's own music as material,
     // which is exactly what the Siciliana and the Easter hymn are doing here.
-    // 0.8 declared. THE RESIDUE IS 0.2 AND IT IS THE SUBJECT MATTER: ordinary
+    // "french grand opera" PAID 2026-09-04 (Paris 1831) 0.1: the want below
+    // named Meyerbeer's Robert le diable and said "the archive holds not one
+    // Meyerbeer file and the table has no row". BOTH HALVES WERE WRONG — the
+    // file search read paths and not the MIDI text events, six Meyerbeer files
+    // are in the archive, and `grandopera` is now a row. A thing this style is
+    // the "small loud opposite" of is still an ancestor: the Italian houses
+    // played Meyerbeer and Halevy all century, Verdi wrote three operas for the
+    // Paris Opera, and the crowd-and-orchestra weight verismo takes from
+    // `romantic` reached it through that stage. 0.9 declared. THE RESIDUE IS
+    // 0.1 AND IT IS THE SUBJECT MATTER: ordinary
     // people, in the present day, killing each other over ordinary things. That
     // is a literary decision imported from Verga and Zola, it is what the word
     // means, and no engine has a field for it.
@@ -14445,11 +14719,14 @@
       bpm: 76,
       bars: 8,
       voices: 3,
-      parents: { belcanto: 0.35, romantic: 0.2, operaseria: 0.15, nationalism: 0.1 },
+      parents: {
+        belcanto: 0.35,
+        romantic: 0.2,
+        operaseria: 0.15,
+        nationalism: 0.1,
+        grandopera: 0.1
+      },
       wants: [
-        "French grand opera — Meyerbeer's Robert le diable and Les Huguenots, Paris 1831, the " +
-        "five-act machine with the crowd on stage that this style is the small loud opposite " +
-        "of; the archive holds not one Meyerbeer file and the table has no row",
         "the Italian literary verismo of Verga and Capuana, which is where the word and the " +
         "subject came from"
       ],
@@ -22756,8 +23033,7 @@
     // which looks backwards until you read what each label dates: gagaku's is a
     // PERFORMANCE (the Todai-ji eye-opening ceremony) and this one is an
     // EXCAVATED SET OF INSTRUMENTS from thirteen centuries before it. The table
-    // dates records, not origins, and the same asymmetry already sits between
-    // `dhrupad` (1955) and the eighteenth-century rows that could not declare it.
+    // dates records, not origins.
     // No parent edge is drawn in either direction, because gagaku's own `wants`
     // names togaku — Tang BANQUET music, yanyue, the entertainment repertory —
     // and that is the other half of the Chinese court, not this one.
@@ -22772,6 +23048,20 @@
     // `organic: true`: all three chairs are recordings, and there is no model in
     // the fleet of a bronze bell chime, a stone chime or a paixiao — and there
     // should not be one.
+    //
+    // THE EXAMPLE THIS NOTE USED TO CITE WAS REPAIRED, 2026-09-04. Paul:
+    // "Move dhrupad back in time." The lineage paragraph above ended with a
+    // second instance of its own asymmetry — "the same asymmetry already sits
+    // between `dhrupad` (1955) and the eighteenth-century rows that could not
+    // declare it" — and that is no longer true: `dhrupad` is Gwalior 1501, its
+    // label dates Man Singh Tomar's court rather than a 1955 broadcast, and
+    // `badakhyal`, `tappa` and `thumri` declare it a parent. The sentence was
+    // struck rather than re-pointed, because the pairing it named has been
+    // fixed and a gate-relevant example that no longer holds is worse than no
+    // example. THE RULING ABOVE IS UNTOUCHED: no edge is drawn between this row
+    // and `gagaku` in either direction, and the reason is still what each label
+    // dates — a performance against an excavated set of instruments — not a
+    // comparison with any Indian row.
     yayue: {
       organic: true,
       instrumental: true,
@@ -23671,6 +23961,233 @@
       word: v => (v === 0 ? [fill(2), rotate(1)] : v === 1 ? [drop(2)] : v === 2 ? [fill(1)] : [keep(0, 2, 4, 6, 8, 10, 12, 14)]),
     },
 
+    // ---- INDIAN: TWO ROWS, AND THE RAGA IS ADMITTED --------------------
+    // Tuning is NOT the wall here and that is measured: WORLD.md §2 puts
+    // Hindustani shruti at 14 cents from equal temperament and Carnatic
+    // just intonation at 16, both at or inside the JND. The walls are
+    // METRE (an anchor in this table cannot declare one, so a 12-beat
+    // chautal and a 10-beat jhaptal are unsayable and only 8- and
+    // 16-matra talas fit the sixteen-step bar), TEMPO (vilambit lay runs
+    // one matra every two seconds, and compose.js refuses any anchor
+    // outside 70..160 bpm),
+    // and gamak/meend, which WORLD.md §5.3 says has no channel.
+    //
+    // AND THE BIG ONE, which both rows carry: a RAGA IS NOT A SCALE. The
+    // ascent and the descent are different lines, one of them missing a
+    // note the other has; a vadi is emphasised and a phrase — the pakad —
+    // identifies the raga to a listener in four notes. This table has one
+    // `scale` array read the same way in both directions, and an anchor
+    // cannot declare material. WORLD.md §4's primary-fact rule names
+    // exactly this as Hindustani's primary fact, which makes both rows
+    // below a JUDGEMENT and not a routine addition: what they ship
+    // honestly is the DRONE, the modal stasis, the register-by-register
+    // unfolding and the tala; what they admit is the raga. A reviewer who
+    // reads the rule strictly should delete them and leave the traditions
+    // declared empty, and this paragraph is here so that is a decision
+    // somebody makes rather than something that slid through.
+    //
+    // DHRUPAD — Gwalior 1501. Raja Man Singh Tomar's court, and the label
+    // is a PRACTICE rather than a record, on `kriti`'s own precedent. The
+    // oldest surviving form of Hindustani art music and the austere one:
+    // no ornament for its own sake, no tabla, two voices in the low
+    // register.
+    // THE SOUND THIS ROW WAS MEASURED FROM IS STILL THE DAGAR BROTHERS'
+    // and it now sits where it belongs, in the note rather than in the
+    // label: Ustad Nasir Moinuddin and Ustad Nasir Aminuddin Dagar — the
+    // senior Dagar brothers — singing at All India Radio in 1955, an alap
+    // of forty minutes on the syllables of a mantra with nothing under it
+    // but two tanpuras, and then a composition in the twelve-beat chautal
+    // with a pakhawaj. Every number below came off that performance and
+    // not one of them moved when the date did. A 1955 tape is the best
+    // evidence anybody has of what a dhrupad SOUNDS like; it was never
+    // evidence of when dhrupad IS.
+    // THE AXES. Time and Development carry it: the alap has NO metre and
+    // unfolds register by register — mandra, then madhya, then tara — and
+    // then a pulse arrives (jor) and accelerates (jhala). The register
+    // ladder is `reg` and the section schedule below; the acceleration is
+    // not available. Alphabet is one raga with no changes for the whole
+    // performance, which `harmony: "modal"` says exactly right.
+    //
+    // LINEAGE: a declared ROOT. Dhrupad's own line runs back through the
+    // haveli temple singing and the prabandha forms to the Gwalior court
+    // this row is now dated by, and nothing in this catalog is
+    // upstream of it. `filmi` and `qawwali` are downstream cousins, not
+    // parents, and neither is claimed.
+    //
+    // WHO SINGS: `zemachant` — bass, no wobble at all, pressed
+    // rather than floated, two beats a syllable. It was written
+    // for an Ethiopian dabtara and it is the nearest measured
+    // tract in this table to a dhrupad singer, for the same
+    // reasons in the same order.
+    //
+    // THE DATE MOVES BACK FOUR AND A HALF CENTURIES, 2026-09-04. Paul:
+    // "Move dhrupad back in time." He is right, and what the old label cost
+    // was measurable rather than aesthetic: THREE rows — `badakhyal` (Delhi
+    // 1740), `tappa` (Lucknow 1780) and `thumri` (Lucknow 1856) — each
+    // argued in its own note that it could not declare the ancestor
+    // everybody knows it has, because GENRES.md's law is that no parent may
+    // be later than its child and a 1740 court form cannot descend from a
+    // 1955 tape. This row's own `wants` had been asking for the repair by
+    // name since it was written: "the gwalior court of man singh".
+    //
+    // GWALIOR 1501, AND THE ARTICLE SAYS IT IN ONE SENTENCE. Dhrupad:
+    // "Extensive works attribute much of the material to musicians in the
+    // court of Man Singh Tomar (fl. 1486–1516) of Gwalior. In these
+    // accounts from the Mughal court Dhrupad is portrayed as a musical form
+    // which is relatively new; and according to Sanyal, most sources agree
+    // that Drupad owes its origin to the court of Man Singh Tomar." 1501 is
+    // the CENTRE of the article's own parenthesis — (1486 + 1516) / 2 — and
+    // the label is therefore a practice and not a record, which is the
+    // `kriti`/`soundsystem`/`blockparty` exception and the same arithmetic
+    // `kriti` ran the night before ("1810 is the CENTRE of the three
+    // composing lives rather than the year of anything"). Nothing here can
+    // be dated tighter and the row says so: not one dhrupad composition of
+    // Man Singh's court carries a date, and the earliest source that names
+    // the genre AT ALL is Abu'l-Fazl's Ain-i-Akbari of 1593 — a book about
+    // the music, ninety years downstream, and `counterpoint`'s ruling
+    // (Vienna 1725 "dates FUX'S BOOK and not the practice") is the reason
+    // that is a worse label rather than a safer one.
+    //
+    // THE TWO OTHER CANDIDATES WERE WEIGHED AND BOTH POINT BACK HERE, which
+    // is the strongest part of the argument and not an aside.
+    //   · TANSEN, and his own article rules him out in its third sentence:
+    //     "Born into a Hindu Gaur Brahmin family in Gwalior... He got his
+    //     first break as musician and composer in the court of Raja Man
+    //     Singh Tomar of Gwalior", born c. 1493, at Rewa for most of his
+    //     adult life, and at Akbar's court from 1562 "at about the age of
+    //     60". Dating this row by Tansen dates it by its DIFFUSION — the
+    //     form arriving at the Mughal court, where the Dhrupad article says
+    //     it was "portrayed as a musical form which is relatively new" —
+    //     and it would put the label at Agra sixty years downstream of the
+    //     court that made the thing. Refused on `crooner`'s ruling: the
+    //     best-known user of a technique is not where the technique starts.
+    //   · SWAMI HARIDAS, and his own article's second sentence is the same
+    //     sentence: "He was a Court musician of Raja Man Singh Tomar of
+    //     Gwalior." The Vrindavan half is real — Nidhiban, the Kelimal, the
+    //     Braj bhakti line — and it is a STRAND rather than the origin;
+    //     more to the point the article cannot date the man ("Modern
+    //     scholars state that he lived in the 1500s") and reports two
+    //     sects contradicting each other about his birthplace, his father
+    //     and whether he was ever married. A label cannot come out of a
+    //     biography its own article says is disputed in every particular.
+    //     Refused; the Braj line stays exactly where it already was, in
+    //     `wants` as "haveli sangit".
+    // So the two men a reader would reach for are, in their own articles,
+    // both Man Singh's court musicians. Gwalior is not one of three
+    // options — it is where the other two begin.
+    //
+    // PARENTS: NOTHING WAS DROPPED, BECAUSE THERE WAS NOTHING TO DROP. This
+    // row declared `parents: {}` before the move and declares `parents: {}`
+    // after it: a declared ROOT, residue 1.00, the whole record its own
+    // invention. The question the new date forces is the opposite one —
+    // whether anything in this table is now EARLIER than 1501 and can
+    // honestly be claimed — and the answer is still no.
+    //   · `gregorian` is this row's `near` and that is the right field for
+    //     it, not `parents`. Monophonic, modal, unmetered, one line at a
+    //     time: a measured RESEMBLANCE, which is what `near` means. There
+    //     is no contact between a Frankish scriptorium and a Tomar court,
+    //     and a weight is a share of THIS record that the ancestor
+    //     explains — not a distance, which is precisely the thing `near`
+    //     already says.
+    //   · `antiphon` and the table's ancient rows fail the same test at
+    //     greater length. `yayue` (Suizhou 433 BC) is Chinese ritual court
+    //     music; `hurrian` (Ugarit 1400 BC), `urlyre`, `delphic` and
+    //     `skolion` are Mediterranean and Mesopotamian.
+    //     Drawing an edge to any of them would be a claim about world
+    //     history that nothing in this file is in a position to make, and
+    //     the residue is a more honest thing to publish than a flattering
+    //     ancestor.
+    //   · The two ancestors that ARE real — the prabandha forms and the
+    //     haveli temple singing — still have no rows, and stay in `wants`,
+    //     which is exactly what `wants` is for.
+    //
+    // THE GWALIOR WANT IS PAID BY THIS ROW ITSELF and comes off the list.
+    // "the gwalior court of man singh" is no longer an ancestor of this
+    // record; it IS this record, which is the only way a want may be
+    // retired (GENRES.md §2: a want is paid by a row only when the row is
+    // the thing the want names).
+    //
+    // WHAT THE MOVE COSTS DOWNSTREAM — all of it legal, none of it
+    // accidental. `khyal` (Mumbai 1965, dhrupad 0.35), `drone` (New York
+    // 1964, 0.35) and `indojazz` (London 1966, 0.30) already declared this
+    // row a parent; every one of those edges was legal before and is legal
+    // now, and each gains four and a half centuries of daylight where it
+    // had ten years or less. `badakhyal` 0.45, `tappa` 0.15 and `thumri`
+    // 0.15 declare it tonight, each with its share argued in its own note.
+    // `carnatic` (Chennai 1935) is untouched and stays a declared root: the
+    // two systems part company before either of them has a row in this
+    // table, and moving one label does not move that.
+    //
+    // THE GEOGRAPHY FOLLOWED THE CATALOGUE, as always, and was measured
+    // before it was written: Gwalior [26.22, 78.18], 7.1 CSS px from Delhi
+    // and 7.1 from Lucknow in G10's own arithmetic at the world arc — the
+    // same number to a decimal place as Thanjavur/Chennai, which this table
+    // declared and kept the night before. The atlas PLACES ledger carries
+    // the full run.
+    dhrupad: {
+      label: "Gwalior 1501",
+      voices: 3,
+      rate: 0.5,
+      near: "gregorian",
+      plan: "arc",
+      bpm: 70,
+      parents: {},
+      wants: ["prabandha", "haveli sangit"],
+      cannot: [
+        "a raga is not a scale — the ascent and the descent are different lines and the pakad " +
+        "that identifies it is a PHRASE; this row declares one symmetrical alphabet and no " +
+        "material, which is the tradition's own primary fact admitted rather than faked " +
+        "(WORLD.md §4)",
+        "chautal — the composition is in twelve beats and an anchor in this table cannot " +
+        "declare a metre at all; the bar below is sixteen steps, which is not a tala",
+        "vilambit lay — a real alap moves at a matra every second or two, and compose.js " +
+        "refuses an anchor under 70 bpm, so what plays is madhya lay with the holds stretched " +
+        "as far as `maxHold` goes",
+        "gamak and meend — the shaken note and the slide between two notes are how the raga is " +
+        "IDENTIFIED, and there is no pitch-trajectory channel (WORLD.md §5.3). Reporting zero " +
+        "ornament here would be correct output; the small `grace` below is a crude proxy and " +
+        "is described as crude",
+        "the tanpura — the drone is four plucked strings tuned to Pa-Sa-Sa-Sa with a buzzing " +
+        "bridge that generates the overtones the singer tunes against. `sitar` below is the " +
+        "nearest plucked thing with sympathetic strings in the registry and it is a different " +
+        "instrument doing a different job"
+      ],
+      instr: ["solo_vox", "solo_vox", "sitar"],
+      entry: v => (v === 1 ? 2 : 0),
+      reg: v => (v === 2 ? -2 : v),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      kit: {},
+      nobass: true,
+      harmony: "modal",
+      intro: "padin",
+      mode: MODES.harmonic,
+      scale: DIATONIC,
+      artic: "tie",
+      maxHold: 8,
+      incClamp: 2,
+      orn: { grace: 0.3 },
+      tone: {
+        wave: "triangle",
+        cut: 2000,
+        q: 0.7,
+        atk: 0.05,
+        rel: 2.4,
+        gain: 0.22,
+        verb: 0.45,
+        mouth: MOUTHS.zemachant
+      },
+      words: [
+        "the alap, climbing a register each time",
+        "the second Dagar, answering",
+        "the tanpura, four strings, never changing"
+      ],
+      word: (v, s) => (v === 0
+          ? [[drop(4)], [drop(2)], [fill(2)], [fill(2), rotate(2)]][s % 4]
+        : v === 1 ? [drop(4), transpose(-3)]
+        : [drop(12)]),
+    },
+
     // BADA KHYAL — Delhi 1740. Not a recording; there could not be one. The
     // record is a MAN AND A TITLE: Niyamat Khan, court musician to the Mughal
     // emperor Muhammad Shah, "who was adept in both dhrupad and veena, won the
@@ -23716,14 +24233,16 @@
     //     the drone, and one substitution said once is better than the same
     //     substitution said twice.
     //
-    // LINEAGE: A DECLARED ROOT, AND THE REASON IS A DEFECT IN THE TABLE'S DATES
-    // RATHER THAN A CLAIM ABOUT THE MUSIC. Everybody knows what this row descends
-    // from: dhrupad, which is what Sadarang was trained in and what the article
-    // says he made khyal weigh like. But `dhrupad`'s label is DELHI 1955 — it is
-    // dated by the Dagar brothers at All India Radio — and GENRES.md's law is
-    // that no parent may be later than its child. A 1740 record cannot descend
-    // from a 1955 one. So the ancestor is named in `wants`, in its own words,
-    // where an unanchored ancestor belongs, and the residue is the whole row.
+    // LINEAGE AS IT STOOD ON 2026-09-03, KEPT AS THE RECORD OF A DEFECT IN THE
+    // TABLE'S DATES RATHER THAN A CLAIM ABOUT THE MUSIC — and repaired the
+    // following night, in the block at the foot of this note. It read: a declared
+    // ROOT. Everybody knows what this row descends from: dhrupad, which is what
+    // Sadarang was trained in and what the article says he made khyal weigh like.
+    // But `dhrupad`'s label was DELHI 1955 — it was dated by the Dagar brothers at
+    // All India Radio — and GENRES.md's law is that no parent may be later than
+    // its child. A 1740 record cannot descend from a 1955 one. So the ancestor was
+    // named in `wants`, in its own words, where an unanchored ancestor belongs,
+    // and the residue was the whole row.
     //
     // THE CORPUS IS SILENT AND THE SILENCE IS MEASURED. "khyal", "khayal",
     // "tilwada", "bandish", "sadarang", "vilambit", "hindustani" and "tappa"
@@ -23746,6 +24265,38 @@
     // of the clap, audible as a hole a quarter of the way into every bar. The
     // ghost lane is the tirakita, the little four-finger scatter at steps 1 and
     // 9 that is what tells a tilwada from a tintal by ear.
+    //
+    // THE DEFECT IS REPAIRED AND THE PARENT IS DECLARED, 2026-09-04. Paul: "Move
+    // dhrupad back in time." `dhrupad` is GWALIOR 1501 now — Man Singh Tomar's
+    // court, the practice rather than the Dagar brothers' tape — so the wall that
+    // put this row's own ancestor in `wants` is gone, two hundred and thirty-nine
+    // years of daylight where there were minus two hundred and fifteen. The want
+    // "dhrupad as a practice rather than as a 1955 recording" was written asking
+    // for exactly this and is the first want in this file ever paid by a
+    // RE-DATING rather than by a new row. It comes off the list.
+    //
+    // `dhrupad: 0.45`, AND THE NUMBER IS ARGUED FROM THE ARTICLE'S OWN VERB. The
+    // Khyal article says Sadarang "was adept in both dhrupad and veena" and that
+    // he "created the elegant classical form of khyal in a majestic and colourful
+    // slow tempo (vilambita laya) LIKE DHRUPAD" — like, which is a comparison and
+    // not an identity. What this row takes from the elder form is its WEIGHT and
+    // its two big structural facts, and they are the fields a reader can check:
+    // `rate: 0.5` and `maxHold: 8` are dhrupad's own pair, `bpm: 76` is dhrupad's
+    // 70 moved up six, `harmony` is modal in both, and both refuse a drum kit for
+    // a barrel drum. That is a little under half of what is declared here and 0.45
+    // says so. THE RESIDUE IS 0.55 AND IT HAS A NAME: the khyal itself — the
+    // bandish over a vilambit tala, the badhat that expands it, the taan, the
+    // ornament for its own sake that dhrupad's own note calls the thing dhrupad
+    // does NOT do, and the tilwada geography written out above, which is not
+    // dhrupad's chautal in any respect. Fifty-five per cent invented is a large
+    // claim and it is the right one: Niyamat Khan is credited with creating a
+    // form, not with playing an old one slower.
+    //
+    // WHAT DOES NOT CHANGE. `khyal` (Mumbai 1965) keeps `badakhyal: 0.4` beside
+    // `dhrupad: 0.35` and both edges stay legal — the elder row is now 464 years
+    // its senior instead of ten. This row still declares no parent for the two
+    // remaining wants (the been, and the qawwal bachche), because neither has a
+    // row and neither is a thing the table can point at.
     badakhyal: {
       label: "Delhi 1740",
       voices: 2,
@@ -23753,10 +24304,8 @@
       near: "dhrupad",
       plan: "arc",
       bpm: 76,
-      parents: {},
+      parents: { dhrupad: 0.45 },
       wants: [
-        "dhrupad as a practice rather than as a 1955 recording — the form Sadarang was trained " +
-        "in and made khyal weigh like",
         "the been (rudra veena), the court's own melodic instrument",
         "the qawwal bachche of Delhi, the singing lineage the form was handed to"
       ],
@@ -23873,14 +24422,47 @@
     // like it is leaning forward and a tintal does not, and it is the one thing
     // in this row that is rhythm rather than speed.
     //
-    // LINEAGE: a declared ROOT. The ancestors are in `wants`: the Punjabi
-    // camel-drivers' song the article names as the source, and the Awadh durbar's
-    // own light-classical repertory. Neither has an anchor. `dhrupad` and
-    // `khyal` are both dated by twentieth-century recordings in this table and
-    // so cannot be parents of a 1780 record; `badakhyal` (Delhi 1740) COULD be
-    // and is deliberately not — a camel-driver's song refined by a Punjabi singer
-    // in Lucknow did not come out of Sadarang's vilambit, it arrived beside it and
-    // went the other way.
+    // LINEAGE AS IT STOOD ON 2026-09-03, kept as the record: a declared ROOT. The
+    // ancestors are in `wants`: the Punjabi camel-drivers' song the article names
+    // as the source, and the Awadh durbar's own light-classical repertory. Neither
+    // has an anchor. `dhrupad` and `khyal` were both dated by twentieth-century
+    // recordings in this table and so could not be parents of a 1780 record;
+    // `badakhyal` (Delhi 1740) COULD be and is deliberately not — a camel-driver's
+    // song refined by a Punjabi singer in Lucknow did not come out of Sadarang's
+    // vilambit, it arrived beside it and went the other way. THE FIRST HALF OF
+    // THAT PARAGRAPH EXPIRED ON 2026-09-04 AND THE SECOND HALF DID NOT; the block
+    // at the foot of this note is the difference.
+    //
+    // ONE PARENT ARRIVES AND THE BADAKHYAL REFUSAL STANDS, 2026-09-04. Paul: "Move
+    // dhrupad back in time." `dhrupad` is GWALIOR 1501 now — Man Singh Tomar's
+    // court rather than the 1955 Dagar tape — so the date wall this row named is
+    // gone. THAT DOES NOT AUTOMATICALLY BUY AN EDGE, and this row is the one of
+    // the three where the answer had to be re-derived rather than released,
+    // because this row had never asked for it: `dhrupad` was not in this row's
+    // `wants` and is not being moved out of it. What was in the note was a
+    // REFUSAL with two halves, and only one half was about dates.
+    //
+    // THE HALF THAT WAS ABOUT DATES IS PAID AT `dhrupad: 0.15`. A tappa is not a
+    // folk song — it is a folk song that was "refined and introduced to the
+    // imperial court", the article's own verb, and what does the refining is the
+    // art-music discipline that was in that court, which at 1780 in northern India
+    // is the dhrupad-and-khyal tradition and nothing else. Three declared fields
+    // here are that discipline rather than Punjab: the row is MODAL with one
+    // alphabet for the whole piece, it sits on a sixteen-matra cycle counted as a
+    // tala, and it seats a tanpura drone (`sitar`, the same substitution the whole
+    // Indian block makes). A camel-driver in the Salt Range had none of the three.
+    // 0.15 is small on purpose and it is the same shape of claim `thumri` makes
+    // about this row at 0.2 — CONTACT and a frame, not material.
+    //
+    // THE HALF THAT WAS NOT ABOUT DATES IS UNTOUCHED. `badakhyal` (Delhi 1740)
+    // remains deliberately unclaimed, for the musical reason the paragraph above
+    // gives and not for a calendar reason: Shori Mian's zamzama is the opposite
+    // motion from Sadarang's vilambit badhat — `artic: "staccato"` and
+    // `maxHold: 1` against `rate: 0.5` and `maxHold: 8` — and a row does not
+    // inherit from the sibling it contradicts in its two loudest fields. So this
+    // row now declares 0.15 and invents 0.85, which is the largest residue in the
+    // Indian block and is exactly what "a camel-driver's song taken into a durbar"
+    // should measure.
     tappa: {
       label: "Lucknow 1780",
       voices: 3,
@@ -23888,7 +24470,7 @@
       near: "khyal",
       plan: "song",
       bpm: 116,
-      parents: {},
+      parents: { dhrupad: 0.15 },
       wants: [
         "the camel-drivers' songs of Punjab, which the article names as the source",
         "the Awadh durbar's light-classical repertory, and the baigees who sang it",
@@ -23985,7 +24567,8 @@
     //     trajectory, because it is the row whose whole art is the way a note is
     //     reached.
     //
-    // LINEAGE. `tappa` (Lucknow 1780) at 0.2, and the weight is small on purpose
+    // LINEAGE (2026-09-03; a second parent joined it the next night, at the foot
+    // of this note). `tappa` (Lucknow 1780) at 0.2, and the weight is small on purpose
     // because the claim is CONTACT, not descent: the same city, the same durbar
     // culture, seventy-six years apart, and the tappa ang — the knotted zamzama
     // cluster borrowed into a thumri line — is a named thing in this repertory. A
@@ -24017,6 +24600,30 @@
     // label at all; its five "hindustani classical" rows are 2010s and 2020s
     // fusion and ghazal sides. `bpm: 78` is a choice — slower than `filmi`'s 92,
     // faster than `dhrupad`'s 70 — and is marked as one.
+    //
+    // THE SECOND PARENT, AND THE ARTICLE ARGUES BOTH WAYS ABOUT IT, 2026-09-04.
+    // Paul: "Move dhrupad back in time." `dhrupad` is GWALIOR 1501 now, so the
+    // elder Hindustani form is available to an 1856 row for the first time. It is
+    // declared here at 0.15, and the small number is the honest one because THE
+    // ARTICLE ITSELF SETS THIS ROW AGAINST IT: "It is distinct from folk music and
+    // the more masculine dhrupad and khayal styles." That sentence is a contrast,
+    // which is the reason the weight is not large — and it is a contrast WITHIN
+    // ONE TRADITION, which is the reason the weight is not zero. A thumri is sung
+    // in a raga, unfolded register by register, over a tala, against a tanpura, by
+    // a singer trained in the same system; every one of those is a fact this row
+    // declares in a field (`harmony: "modal"`, the `reg` ladder, the sixteen-step
+    // cycle, `sitar`) and every one of them reaches this row through the art-music
+    // line whose root in this table is `dhrupad`. What is NOT dhrupad's is the
+    // whole of what this row's own note calls the invention — the mixolydian
+    // Khamaj, the `tone.slide: 0.16` bol banao, the sensuality the article names
+    // three times — and dhrupad's note is the one that says the elder form takes
+    // "no ornament for its own sake". You cannot inherit much from a music defined
+    // by the absence of the thing you are made of.
+    //
+    // SO THE ARITHMETIC MOVES: `tappa` 0.2 + `dhrupad` 0.15 = 0.35 declared, and
+    // the residue drops from 0.80 to 0.65. The two wants that carried the rest —
+    // the Awadh and Braj folk repertory, and kathak — are unchanged and still have
+    // no anchors, and 0.65 invented is still the larger half of this record.
     thumri: {
       label: "Lucknow 1856",
       voices: 3,
@@ -24024,7 +24631,7 @@
       near: "filmi",
       plan: "song",
       bpm: 78,
-      parents: { tappa: 0.2 },
+      parents: { tappa: 0.2, dhrupad: 0.15 },
       wants: [
         "the folk repertory of Awadh and Braj — the chaiti, kajari and hori the article names " +
         "as the same family",
@@ -24084,120 +24691,6 @@
       word: (v, s) => (v === 0
           ? [[], [drop(2), rotate(2)], [fill(2)], [fill(2), rotate(6)]][s % 4]
         : v === 1 ? [drop(4), transpose(-5)]
-        : [drop(12)]),
-    },
-
-    // ---- INDIAN: TWO ROWS, AND THE RAGA IS ADMITTED --------------------
-    // Tuning is NOT the wall here and that is measured: WORLD.md §2 puts
-    // Hindustani shruti at 14 cents from equal temperament and Carnatic
-    // just intonation at 16, both at or inside the JND. The walls are
-    // METRE (an anchor in this table cannot declare one, so a 12-beat
-    // chautal and a 10-beat jhaptal are unsayable and only 8- and
-    // 16-matra talas fit the sixteen-step bar), TEMPO (vilambit lay runs
-    // one matra every two seconds, and compose.js refuses any anchor
-    // outside 70..160 bpm),
-    // and gamak/meend, which WORLD.md §5.3 says has no channel.
-    //
-    // AND THE BIG ONE, which both rows carry: a RAGA IS NOT A SCALE. The
-    // ascent and the descent are different lines, one of them missing a
-    // note the other has; a vadi is emphasised and a phrase — the pakad —
-    // identifies the raga to a listener in four notes. This table has one
-    // `scale` array read the same way in both directions, and an anchor
-    // cannot declare material. WORLD.md §4's primary-fact rule names
-    // exactly this as Hindustani's primary fact, which makes both rows
-    // below a JUDGEMENT and not a routine addition: what they ship
-    // honestly is the DRONE, the modal stasis, the register-by-register
-    // unfolding and the tala; what they admit is the raga. A reviewer who
-    // reads the rule strictly should delete them and leave the traditions
-    // declared empty, and this paragraph is here so that is a decision
-    // somebody makes rather than something that slid through.
-    //
-    // DHRUPAD — Delhi 1955. Ustad Nasir Moinuddin and Ustad Nasir
-    // Aminuddin Dagar — the senior Dagar brothers — singing at All India
-    // Radio: an alap of forty minutes on the syllables of a mantra with
-    // nothing under it but two tanpuras, and then a composition in the
-    // twelve-beat chautal with a pakhawaj. The oldest surviving form of
-    // Hindustani art music and the austere one: no ornament for its own
-    // sake, no tabla, two voices in the low register.
-    // THE AXES. Time and Development carry it: the alap has NO metre and
-    // unfolds register by register — mandra, then madhya, then tara — and
-    // then a pulse arrives (jor) and accelerates (jhala). The register
-    // ladder is `reg` and the section schedule below; the acceleration is
-    // not available. Alphabet is one raga with no changes for the whole
-    // performance, which `harmony: "modal"` says exactly right.
-    //
-    // LINEAGE: a declared ROOT. Dhrupad's own line runs back through the
-    // haveli temple singing and the prabandha forms to a court at
-    // Gwalior in the fifteenth century, and nothing in this catalog is
-    // upstream of it. `filmi` and `qawwali` are downstream cousins, not
-    // parents, and neither is claimed.
-    //
-    // WHO SINGS: `zemachant` — bass, no wobble at all, pressed
-    // rather than floated, two beats a syllable. It was written
-    // for an Ethiopian dabtara and it is the nearest measured
-    // tract in this table to a dhrupad singer, for the same
-    // reasons in the same order.
-    dhrupad: {
-      label: "Delhi 1955",
-      voices: 3,
-      rate: 0.5,
-      near: "gregorian",
-      plan: "arc",
-      bpm: 70,
-      parents: {},
-      wants: ["prabandha", "haveli sangit", "the gwalior court of man singh"],
-      cannot: [
-        "a raga is not a scale — the ascent and the descent are different lines and the pakad " +
-        "that identifies it is a PHRASE; this row declares one symmetrical alphabet and no " +
-        "material, which is the tradition's own primary fact admitted rather than faked " +
-        "(WORLD.md §4)",
-        "chautal — the composition is in twelve beats and an anchor in this table cannot " +
-        "declare a metre at all; the bar below is sixteen steps, which is not a tala",
-        "vilambit lay — a real alap moves at a matra every second or two, and compose.js " +
-        "refuses an anchor under 70 bpm, so what plays is madhya lay with the holds stretched " +
-        "as far as `maxHold` goes",
-        "gamak and meend — the shaken note and the slide between two notes are how the raga is " +
-        "IDENTIFIED, and there is no pitch-trajectory channel (WORLD.md §5.3). Reporting zero " +
-        "ornament here would be correct output; the small `grace` below is a crude proxy and " +
-        "is described as crude",
-        "the tanpura — the drone is four plucked strings tuned to Pa-Sa-Sa-Sa with a buzzing " +
-        "bridge that generates the overtones the singer tunes against. `sitar` below is the " +
-        "nearest plucked thing with sympathetic strings in the registry and it is a different " +
-        "instrument doing a different job"
-      ],
-      instr: ["solo_vox", "solo_vox", "sitar"],
-      entry: v => (v === 1 ? 2 : 0),
-      reg: v => (v === 2 ? -2 : v),
-      realize: v => (v === 2 ? "pad" : "line"),
-      part: ["lead", "counter", "pad"],
-      kit: {},
-      nobass: true,
-      harmony: "modal",
-      intro: "padin",
-      mode: MODES.harmonic,
-      scale: DIATONIC,
-      artic: "tie",
-      maxHold: 8,
-      incClamp: 2,
-      orn: { grace: 0.3 },
-      tone: {
-        wave: "triangle",
-        cut: 2000,
-        q: 0.7,
-        atk: 0.05,
-        rel: 2.4,
-        gain: 0.22,
-        verb: 0.45,
-        mouth: MOUTHS.zemachant
-      },
-      words: [
-        "the alap, climbing a register each time",
-        "the second Dagar, answering",
-        "the tanpura, four strings, never changing"
-      ],
-      word: (v, s) => (v === 0
-          ? [[drop(4)], [drop(2)], [fill(2)], [fill(2), rotate(2)]][s % 4]
-        : v === 1 ? [drop(4), transpose(-3)]
         : [drop(12)]),
     },
 
@@ -26982,7 +27475,7 @@
     // debut inside the following year): the SP-1200's swung sixteenth
     // shuffle under gospel-stacked synth chords — R&B's drums handed
     // to hip-hop's machines, which is the whole genre in one clause.
-    // `hiphopsoul` (Charlotte 1991) has wanted "new jack swing" by name
+    // `newjackswing2` (Charlotte 1991) has wanted "new jack swing" by name
     // since its lineage was written — Devante Swing's name is a
     // homage — and takes it as a parent today.
     //
@@ -26990,11 +27483,24 @@
     // SP-1200 sits in; `gospel` the chord stacks and the melisma;
     // `detroitsoul` the pop discipline Riley kept while the drums
     // hardened.
+    //
+    // THE SWAP (2026-09-04). Paul: "Do the swap." The child named above was keyed
+    // `hiphopsoul` and held the Hip-hop soul article; both articles put Forever My
+    // Lady on THIS side of the line — Hip-hop soul says Jodeci were "moving away
+    // from its new jack swing origins" only with Diary of a Mad Band (1993), and
+    // this row's own article lists "Jodeci's debut album Forever My Lady" in its
+    // 1991 paragraph — so it is `newjackswing2` now and shares this article under
+    // Paul's repeat flag (`as: "New jack swing #2"`). THE TWO ROWS ARE NOT A
+    // DUPLICATE AND THE FIELDS SAY SO: New York 1987 is 108 bpm, ionian, a
+    // staccato synth stack over an electronic kit; Charlotte 1991 is 74 bpm,
+    // dorian, a legato choir over a TR-808. One is the technique being invented,
+    // the other is the technique taken to church and slowed down. The `near`
+    // follows the key.
     newjackswing: {
       label: "New York 1987",
       voices: 3,
       bars: 8,
-      near: "hiphopsoul",
+      near: "newjackswing2",
       plan: "song",
       bpm: 108,
       parents: { electro: 0.35, gospel: 0.3, detroitsoul: 0.2 },
@@ -34573,8 +35079,17 @@
     // the double quintet — two traditions, neither of them a singer
     //
     // LINEAGE: `jazz` is Harriott's half of the bandstand;
-    // `dhrupad` (Delhi 1955) is the catalog's Hindustani anchor and
+    // `dhrupad` (Gwalior 1501) is the catalog's Hindustani anchor and
     // Mayer's half — the raga discipline, the drone, the long line.
+    //
+    // THE PARENT'S LABEL MOVED, NOT THE EDGE, 2026-09-04. Paul: "Move
+    // dhrupad back in time." `dhrupad` is Gwalior 1501 now — Man Singh
+    // Tomar's court instead of the Dagar brothers' 1955 broadcast — so the
+    // line above was re-pointed and nothing else here changed. `dhrupad`
+    // at 0.3 was legal at ten years' distance and is legal at four hundred
+    // and sixty-five; the raga discipline, the drone and the long line
+    // Mayer brought to Harriott's bandstand are the elder form's whether
+    // its label dates a court or a tape.
     indojazz: {
       instrumental: true,
       label: "London 1966",
@@ -38915,9 +39430,12 @@
     // the wave of the hand instead of the clap, audible as a hole where
     // the others have a floor.
     //
-    // LINEAGE: `dhrupad` (Delhi 1955) is the elder form khyal displaced
-    // and descends from — ten years earlier ON THE LABELS, centuries
-    // earlier in fact, and the edge is honest both ways for once.
+    // LINEAGE: `dhrupad` (Gwalior 1501) is the elder form khyal
+    // displaced and descends from. This line used to read "Delhi 1955
+    // — ten years earlier ON THE LABELS, centuries earlier in fact,
+    // and the edge is honest both ways for once", which was the best
+    // that could be said while the elder row was dated by a tape; the
+    // centuries are on the labels now.
     //
     // the theka as a four-bar schedule: dha dhin dhin dha / dha dhin
     // dhin dha / dha tin tin ta (khali — no bass stroke) / ta dhin
@@ -38935,6 +39453,18 @@
     // nineteenth- and twentieth-century teaching lineages that made Amir Khan's
     // khyal a different object from Sadarang's, and which is the one thing still in
     // this row's `wants`.
+    //
+    // THE ELDER PARENT MOVES AND THIS ROW'S TWO WEIGHTS DO NOT, 2026-09-04.
+    // Paul: "Move dhrupad back in time." `dhrupad` is Gwalior 1501 —
+    // Man Singh Tomar's court, the practice rather than the Dagar brothers'
+    // All India Radio tape — and every edge into this row stays exactly as
+    // it was: `badakhyal: 0.4` (Delhi 1740) and `dhrupad: 0.35` (Gwalior
+    // 1501), 0.75 declared, 0.25 left to the gharanas, both parents not
+    // later than their child by a wider margin than before. What changed is
+    // that the ORDER of those two weights now has a date behind it as well
+    // as an argument: this record is mostly the Delhi court form, and what
+    // it inherits THROUGH that form is a gravity that is four and a half
+    // centuries older than the paragraph above could say.
     khyal: {
       label: "Mumbai 1965",
       voices: 3,
@@ -41615,8 +42145,30 @@
     // the drum machine under a sung song; `rnb` (Philadelphia 1994) is
     // the harmony and the vocal arrangement; `boombap` (New York 1994) is
     // the rapped verse the singer trades with; `miamibass` (Miami 1986)
-    // is the 808 sub; `hiphopsoul` (Charlotte 1991) is the immediate
+    // is the 808 sub; `hiphopsoul` (New York 1992) is the immediate
     // precedent and the nearest neighbour.
+    //
+    // THE SWAP, AND WHY THIS ROW DID NOT FOLLOW THE OTHER CHILDREN (2026-09-04).
+    // Paul: "Do the swap." The two Uptown rows exchanged keys: the Jodeci record
+    // is `newjackswing2` (Charlotte 1991) and the Mary J. Blige record is
+    // `hiphopsoul` (New York 1992), which now holds the Hip-hop soul article
+    // outright. `rnb` (Philadelphia 1994) followed its 0.25 over to
+    // `newjackswing2`, because its own first sentence credits Jodeci's swung
+    // sixteenth by name. THIS ROW STAYS ON `hiphopsoul` AND THE 0.1 DOES NOT
+    // MOVE, and the reason is that the two shares were never paying for the same
+    // thing. This row ALREADY pays the new-jack side, at 0.3 and under its own
+    // name — the note's first LINEAGE clause is `newjackswing` (New York 1987),
+    // "the swung sixteenth and the drum machine under a sung song" — so sending
+    // the 0.1 to `newjackswing2` as well would credit one technique twice and
+    // say nothing new. What the 0.1 buys is the GENRE the article describes: an
+    // R&B singer over somebody else's sample-heavy track, which is what Supa
+    // Dupa Fly is and what the Hip-hop soul article says hip-hop soul did to
+    // R&B ("having R&B singers sing directly over the types of sample-heavy
+    // backing tracks typically found in contemporary hip-hop recordings like
+    // boom bap"). That is the Blige record, five years earlier, and 1992 is not
+    // later than 1997, so the not-later law is satisfied. The Contemporary R&B
+    // article's own subgenre box lists `Hip-hop soul` beside this row, which is
+    // the shelf relation the `near` states.
     //
     // THE VOCAL CHOP IS AN INSTRUMENT on this record and the found crate
     // already holds one: a stab of somebody singing, played as a part.
@@ -41943,8 +42495,21 @@
     // tambourine and the band, and it takes the largest share by a
     // distance; `girlgroup` (New York 1960) is the vocal attitude and the
     // subject matter; `phillysoul` (Philadelphia 1972) is the string
-    // arrangement; `hiphopsoul` (Charlotte 1991) is the reason a 2006
+    // arrangement; `hiphopsoul` (New York 1992) is the reason a 2006
     // singer could reach for 1965 at all; `jazz` is the phrasing.
+    //
+    // THE SWAP (2026-09-04). Paul: "Do the swap." `hiphopsoul` is the Mary J.
+    // Blige record now (New York 1992, What's the 411?) and the Jodeci record it
+    // used to name is `newjackswing2` (Charlotte 1991). THE 0.1 STAYS WHERE THE
+    // KEY IS rather than following the record, and the LINEAGE clause above says
+    // why in its own words: what this row credits is "the reason a 2006 singer
+    // could reach for 1965 at all", which is a GENRE and not a technique — soul
+    // singing carried into the sampling era over somebody else's tape, the thing
+    // the Hip-hop soul article calls "quite literally soul singing over hip-hop
+    // grooves". A swung new-jack sixteenth is on nothing this row plays: Back to
+    // Black is a live Daptone band at 105 bpm with a tambourine on the offbeat.
+    // 1992 is not later than 2006, so the not-later law is satisfied, and the
+    // only edit the swap costs this note is the date in the sentence above.
     //
     // WHO SINGS: the contralto at the front of a live room, with
     // the run on the way down
@@ -43131,7 +43696,7 @@
   // cannot land in two families, and the stamp below writes `family` onto the
   // anchor so everything downstream reads it like any other genre field (the
   // unit gate holds every anchor to exactly one). The clusters follow the
-  // MUSIC, not the machinery — hiphopsoul and synthsoul are both drum machines,
+  // MUSIC, not the machinery — newjackswing2 and synthsoul are both drum machines,
   // but one is soul and the other is a studio record, and the ear files them
   // that way. `kernel` is simple alone, on purpose: it is the zero of the
   // table and belongs to no tradition.
@@ -43343,7 +43908,7 @@
                 // four rows are SUNG and sit in `soul`.
                 "politicalhiphop", "jazzrap", "althiphop"]],
     ["soul",   ["doowop", "detroitsoul", "psychsoul", "funk", "disco", "gospel", "rnb",
-                "hiphopsoul", "clubpop", "retrofunkpop", "boyband", "darkrnb",
+                "newjackswing2", "clubpop", "retrofunkpop", "boyband", "darkrnb",
                 "blueeyedsoul",
                 // ...and the MIDI-corpus round's two (2026-09-02): a soul
                 // revival with a real dominant in it and a programmed R&B
@@ -43396,10 +43961,10 @@
                 // rhythm section with a singer over it, and all four take the
                 // family's own dynamics row unchanged (stress .5, phrase .45,
                 // touch t .07 / v 1) — a live hand, even where the loop under
-                // `hiphopsoul2` is somebody else's tape, because the thing
+                // `hiphopsoul` is somebody else's tape, because the thing
                 // being humanised is the SINGER. test/hand.test.js §1 is why
                 // this list is edited at all.
-                "northernsoul", "progressivesoul", "psychsoul2", "hiphopsoul2"]],
+                "northernsoul", "progressivesoul", "psychsoul2", "hiphopsoul"]],
     // ...and the two 2020s newcomers that are grooves and not floors: both are
     // a hand layer over a rhythm section, which is what this cluster is, and
     // both take the family's own dynamics row unchanged.
@@ -43726,6 +44291,20 @@
                 "characterpiece", "concertoverture", "variations",
                 "symphonicpoem", "musicdrama", "nationalism", "ballet",
                 "verismo", "impressionism",
+                // ...AND A FOURTEENTH ON 2026-09-04. `grandopera` (Paris 1831)
+                // was DECLINED by the batch above on a filename search that
+                // found no Meyerbeer; the composer is in the MIDI text events,
+                // six files carry him, and the row is built. It files here
+                // rather than in `vox` for the reason its four operatic
+                // siblings do — `operaseria`, `belcanto`, `musicdrama` and
+                // `verismo` are all in this cluster — even though it is the
+                // only one of the five seating a chorus: vox's own definition,
+                // repeated down that list, is people singing with nothing
+                // under them, and the whole point of this row is the eighty
+                // voices and the orchestra that never stops. It takes an
+                // IDIOM_ANCHOR row in precompose.js like eleven of the
+                // thirteen above it.
+                "grandopera",
                 // ...and one record from 2023, which looks wrong in "the
                 // pre-rock traditions" until you hear it: a sung story, an
                 // acoustic ensemble and no drum kit is what this cluster IS,
@@ -44112,7 +44691,11 @@
     jumpblues: { stress: 0.5,  phrase: 0.45, touch: { t: 0.075, v: 1.05 } },
     // drum machines with singers over them: the machine is the floor, the
     // performance is on top, so metre stays modest and the level moves
-    hiphopsoul:    { stress: 0.3,  phrase: 0.5,  touch: { t: 0.04,  v: 0.8 } },
+    // (THE SWAP, 2026-09-04 — Paul: "Do the swap." This row's numbers are
+    // the JODECI record's, which is keyed `newjackswing2` now; the Mary J.
+    // Blige record took the bare `hiphopsoul` key and takes the `soul`
+    // family's own dynamics row, exactly as it did under its old key.)
+    newjackswing2: { stress: 0.3,  phrase: 0.5,  touch: { t: 0.04,  v: 0.8 } },
     rnb:       { stress: 0.35, phrase: 0.55, touch: { t: 0.05,  v: 0.85 } },
     // KRAFTWERK is not `null` like the five club machines, and the difference
     // matters: this music was PLAYED — Flür hit metal with sticks, the tunes

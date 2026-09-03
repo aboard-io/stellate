@@ -827,8 +827,12 @@ function sectionEvents(doc, i) {
      the article held by psychsoul), politicalhiphop (Long Island 1988,
      It Takes a Nation of Millions), jazzrap (Brooklyn 1993, Reachin'),
      althiphop (South Central 1992, Bizarre Ride II the Pharcyde) and
-     hiphopsoul2 (New York 1992, What's the 411? — `as: "Hip hop soul #2"`,
-     the article held by hiphopsoul). THREE LABELS ARE ARGUED AGAINST THE
+     hiphopsoul (New York 1992, What's the 411? — it carried
+     `as: "Hip-hop soul #2"` under the key `hiphopsoul2` until THE SWAP,
+     2026-09-04, when Paul ruled on the disagreement this batch recorded:
+     the article coins the term for this record, so it took the bare key
+     and the article outright and the Jodeci row it displaced became
+     `newjackswing2`, `as: "New jack swing #2"`). THREE LABELS ARE ARGUED AGAINST THE
      ONE THAT WAS PROPOSED, each on a measurement: "Wigan 1973" was
      REFUSED BY THE MAP (7.1 CSS px from Manchester, 7.3 from Liverpool,
      both under G10's 8.5 floor at the Britain arc, and neither pair
@@ -840,12 +844,12 @@ function sectionEvents(doc, i) {
      York 1988" by the Seattle ruling, the room over the desk. THREE ROWS
      REPORT NO CORPUS FILES AT ALL (politicalhiphop, jazzrap, althiphop —
      the one path matching "public enemy" is a wrestling theme) and
-     hiphopsoul2 reports TWO after naming the five false positives; the
+     hiphopsoul reports TWO after naming the five false positives; the
      Motown rows are measured instead on what the scene played (41
      Motown-catalogue files over 115 bpm; 9 Whitfield-era Temptations; 19
      Stevie Wonder and Marvin Gaye), and each note says which numbers are
      readings and which are choices. Chordonomicon carried all seven
-     labels but one: "hip hop soul" returns ZERO songs and hiphopsoul2
+     labels but one: "hip hop soul" returns ZERO songs and hiphopsoul
      says so before falling back to "hip pop".
      ...AND +6, 2026-09-03, SHIFT 4's BATCH D1 — "way more funk" (Paul:
      "DEFINITELY James Brown, we need way more funk"). deepfunk (Cincinnati
@@ -890,8 +894,13 @@ function sectionEvents(doc, i) {
      brief of the night ("we really need to fill in India and China in the
      classical period... we should have lots of representative classical
      genres"). The literal stays a literal for the reason :649 gives. */
-  ok("G0 the catalog is 478 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 478,
+  /* 478 -> 479, 2026-09-04: `grandopera` (Paris 1831). Batch E DECLINED it
+     on "Meyerbeer returns zero files anywhere"; that census read file PATHS
+     and the composer is in the MIDI TEXT EVENTS, where a byte grep finds six
+     of him. Paul: "Figure out what happened to grand opera."
+     The literal stays a literal for the reason :649 gives. */
+  ok("G0 the catalog is 479 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 479,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));

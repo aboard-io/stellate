@@ -233,6 +233,75 @@ const ok = (name, fn) => { try { fn(); pass++; console.log("  ok   " + name); }
     assert.strictEqual(un.basis, before, "an unmapped basis moved at the door");
   });
 
+  /* G10b — THE HIP-HOP SOUL SWAP: A RETIRED KEY AND A REUSED ONE (2026-09-04).
+     Paul: "Do the swap." The two Uptown rows exchanged keys — the Jodeci
+     record (Charlotte 1991) took `newjackswing2` and the Mary J. Blige record
+     (New York 1992) took the bare `hiphopsoul` off it — so this table now has
+     BOTH kinds of rename in it, and they are not the same fact and do not use
+     the same door:
+       · `hiphopsoul2` and `jodeci` are RETIRED. Nothing answers to them, so
+         they fold in `document.js OLDKEYS` at every door, exactly like the 68.
+       · `hiphopsoul` MOVED. It names a live row today, so folding it at
+         `normalize()` would rewrite every FRESH Blige record into the Jodeci
+         row forever — which is why it lives in MOVEDKEYS, which only
+         `song.js migrate()` reads and only for a save older than VERSION 3.
+     TEST THE ARTIFACT, the same as G10: the renders, not the maps. */
+  ok("G10b the retired half folds and renders byte-identically, the reused key does not move", () => {
+    const P2 = require(R + "/nukernel/precompose.js");
+    for (const [oldk, newk] of [["hiphopsoul2", "hiphopsoul"],
+                                ["jodeci", "newjackswing2"]]) {
+      const fresh = Doc.normalize(P2.genreToDocument(newk, 1));
+      const legacy = J(fresh); legacy.basis = oldk;
+      Doc.normalize(legacy);
+      assert.strictEqual(legacy.basis, newk, oldk + " did not fold to " + newk);
+      assert.deepStrictEqual(J(Doc.scoreOf(legacy, GENRES, FLEET).events),
+                             J(Doc.scoreOf(fresh, GENRES, FLEET).events),
+                             oldk + " renders a different score than " + newk);
+    }
+    // ...AND THE REUSED KEY SURVIVES THE DOOR. This is the assertion the
+    // MOVEDKEYS block exists for: a Blige record composed a millisecond ago
+    // must come back out of normalize() as itself.
+    const blige = Doc.normalize(P2.genreToDocument("hiphopsoul", 1));
+    assert.strictEqual(blige.basis, "hiphopsoul", "the live key folded at the door");
+    Doc.normalize(blige);
+    assert.strictEqual(blige.basis, "hiphopsoul", "the live key folded on a second pass");
+    assert.strictEqual(Doc.OLDKEYS.hiphopsoul, undefined,
+      "a LIVE key is in OLDKEYS — every fresh record under it will be rewritten");
+    assert.strictEqual(Doc.MOVEDKEYS.hiphopsoul, "newjackswing2");
+  });
+
+  /* G10c — THE SAVE DOOR IS THE ONE WITH A CLOCK (2026-09-04). A song saved
+     before the swap said Jodeci when it said `hiphopsoul`; a song saved after
+     it says Blige. Nothing in the bytes tells them apart except `v`, which is
+     what `song.js` bumped to 3 for exactly this. Both walks are checked — a
+     box's `stack[].g` and a session recipe's `parents` — because a moved key
+     can sit in either, and the retired keys keep folding at any version. */
+  ok("G10c migrate folds a moved key for a v:2 save and leaves a v:3 save alone", () => {
+    const NuSong = require(R + "/nukernel/song.js");
+    const save = (v) => ({ v, bpm: 92, slots: [], genres: {
+                             "lab.x": { label: "Nowhere 1999",
+                                        parents: { hiphopsoul: 0.5, jodeci: 0.25 } } },
+                           song: [{ stack: [{ g: "hiphopsoul", slots: [0] }] },
+                                  { stack: [{ g: "hiphopsoul2", slots: [0] }] }] });
+    const old = NuSong.migrate(save(2));
+    assert.strictEqual(old.song[0].stack[0].g, "newjackswing2",
+      "a pre-swap save's hiphopsoul box did not fold to the Jodeci row");
+    assert.strictEqual(old.song[1].stack[0].g, "hiphopsoul",
+      "a pre-swap save's hiphopsoul2 box did not fold to the Blige row");
+    assert.deepStrictEqual(Object.keys(old.genres["lab.x"].parents).sort(),
+                           ["newjackswing2"],
+      "an invention's parents did not fold (jodeci and hiphopsoul are one row)");
+    const now = NuSong.migrate(save(NuSong.VERSION));
+    assert.strictEqual(now.song[0].stack[0].g, "hiphopsoul",
+      "a post-swap save's hiphopsoul box was rewritten into the Jodeci row");
+    assert.strictEqual(now.song[1].stack[0].g, "hiphopsoul",
+      "a retired key stopped folding at the current version");
+    // a save with no version at all is older than every version
+    const none = NuSong.migrate({ ...save(2), v: undefined });
+    assert.strictEqual(none.song[0].stack[0].g, "newjackswing2",
+      "an unversioned save did not fold the moved key");
+  });
+
   /* ---- G11 · THE ONE RENAME DOOR (2026-09-02, slice 2c) ----------------
      Paul, B8: *"Motifs are editable using our existing interface … It should be
      easy to make new motifs."* A cell's name is an ADDRESS that four things
