@@ -135,17 +135,19 @@ const node = (args) => execFileSync(process.execPath, args, { cwd: ROOT, encodin
     check(false, "donor-extract --check FAILED: " +
       String((e.stderr || "") + (e.stdout || "")).trim());
   }
-  /* ...AND SO ARE THE OTHER THREE PHOTOGRAPHS. The page carries four pieces of
+  /* ...AND SO ARE THE OTHER FOUR PHOTOGRAPHS. The page carries five pieces of
      donor in its module graph now — the whole splice base (donor.js), the drum
-     rack (drumrack.js), the six audio devices Paul put in the second donor that
-     the first one has not got (fxrack.js), and — since the Answers round —
-     the three MASTER-CHAIN devices only the third donor has (masterrack.js:
-     Saturator, Glue Compressor, Limiter, which the record's `master` words
-     land on). Each has a generator and a `--check`, and each is a file that
-     can silently go stale against the committed `.als`; checking three of the
-     four and trusting the fourth is exactly the gap this test exists to
-     close. */
-  for (const gen of ["drumrack-extract.js", "fxrack-extract.js", "masterrack-extract.js"]) {
+     rack (drumrack.js), the seven audio devices Paul put in the second donor
+     that the first one has not got (fxrack.js), the three MASTER-CHAIN devices
+     only the third donor has (masterrack.js: Saturator, Glue Compressor,
+     Limiter, which the record's `master` words land on), and — since the
+     Answers2 round — the three the FOURTH donor brought (fxrack2.js: PhaserNew,
+     Cabinet, Amp, which the `phaser` and `crunch` chips land on). Each has a
+     generator and a `--check`, and each is a file that can silently go stale
+     against the committed `.als`; checking four of the five and trusting the
+     fifth is exactly the gap this test exists to close. */
+  for (const gen of ["drumrack-extract.js", "fxrack-extract.js", "masterrack-extract.js",
+                     "fxrack2-extract.js"]) {
     try {
       const out = node(["nukernel/export/" + gen, "--check"]).trim();
       check(/matches/.test(out), gen + " --check — " + out);

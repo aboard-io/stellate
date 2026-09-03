@@ -1,10 +1,13 @@
-# The donors — `Generic.als`, `Ableton2.als` and `Answers.als`
+# The donors — `Generic.als`, `Ableton2.als`, `Answers.als` and `Answers2.als`
 
 Paul, 2026-08-24: *"you promised to make Ableton export work if I gave you a
 generic Ableton file; there's one at ~/Ableton.zip"*. Paul, 2026-08-28:
 *"I added a new Ableton sample file at ~/Ableton2 Project.zip for you to work
 with"*. Paul, 2026-09-03: *"I put it in ~/answers.zip and answered all your
-questions."* All three are here, committed unchanged.
+questions."* Paul, 2026-09-03, hours later and with the Delay open on screen:
+*"So the Ableton number for delay is 'delay time in 16th notes,' so it should be
+2. I added a zip with all the missing effects and many more."* All four are
+here, committed unchanged.
 
 They are committed as **source**, not as media. `main:docs/ABLETON-EXPORT.md`
 said why a week before the first one arrived: *"An `.als` is gzipped XML,
@@ -44,6 +47,17 @@ neither earlier donor had a single device of) and the two undecoded enums. Its
 `Filter_Type`, and its `Delay` decodes the sync switches. Gate 2's corpus is
 now `Generic ∪ Ableton2 ∪ Answers`. Same rule as before: a donor joins the
 corpus when the exporter splices out of it, and not one round earlier.
+
+**AND A FOURTH, THE SAME DAY.** `Answers2.als` is the file that settled the
+sixteenth index — the one thing donor 3 left half open — and brought the two
+devices two of the box's chips had been going without. Its `1-DS Drum Rack` is a
+twenty-eight device chain; three of them travel, extracted to
+`nukernel/export/fxrack2.js` (2,357 gzip bytes): **PhaserNew** for the `phaser`
+chip, which had NO device at all in the first three donors, and **Amp +
+Cabinet** for `crunch`, which had a Roar that could only say two of its nine
+knobs. Gate 2's corpus is now `Generic ∪ Ableton2 ∪ Answers ∪ Answers2`, by the
+same rule as the other three: a donor joins the moment the exporter splices out
+of it.
 
 *Every number in this file was read out of the file, not remembered.*
 
@@ -285,12 +299,295 @@ gate G**. Absent is the donor's own MainTrack: a record with no `master`, and a
 word that says `none`, build no device at all — which at this end is exactly
 right, because the donor's Main track is empty.
 
-**And four master words still have no device anywhere**: `tape`, `space`,
+~~**And four master words still have no device anywhere**: `tape`, `space`,
 `width` and `tilt`. `main:docs/ABLETON-EXPORT.md` suggests a Utility for
 `width`, an EQ Eight tilt on the Main and a send-to-Return-A trim for `space`;
 there is no Utility in any of the three donors, no Eq8 on any MainTrack, and no
 master send. They come out on the CLI's receipt as unmapped, the same answer
-the `phaser` chip gets.
+the `phaser` chip gets.~~
+
+**TWO OF THE FOUR WERE WRONG WHEN THIS WAS WRITTEN, 2026-09-03** — and the
+correction took no new donor, only opening the devices instead of searching for
+their names. Live's **Utility is the `<StereoGain>` tag** and all four donors
+have one; the Eq8 the exporter already splices onto every track carries a low
+shelf on band 0 and a high shelf on band 3. `width` and `tilt` ship. `tape` and
+`space` are still homeless and still say why. The full argument, with the
+ranges, is under **Donor 4 → The master words** below; this paragraph is kept
+struck through because this repo does not delete a claim it reverses.
+
+
+---
+
+## Donor 4 — `Answers2.als`
+
+133,454 bytes gzipped · 1,638,800 bytes of XML · 43,980 lines.
+
+```
+<Ableton MajorVersion="5" MinorVersion="12.0_12402" SchemaChangeCount="5"
+         Creator="Ableton Live 12.4.5">
+```
+
+**The stamp is identical to all three others** — four saves, two application
+versions, one schema. The splice strategy's core bet has now held four times.
+
+It is `Answers` with the sixteenths button moved on the Delay and **twenty-four
+more devices piled onto track 1**:
+
+| Track | XML `Id` | Instrument / devices | what is new |
+|---|---|---|---|
+| `1-DS Drum Rack` | MidiTrack 13 | **DrumGroupDevice** (16 pads) then 27 audio devices — see the inventory below | **the whole answer** |
+| `2-Drift` | MidiTrack 15 | Drift | — |
+| `3-Operator` | MidiTrack 12 | Operator | — |
+| `4-Wavetable` | MidiTrack 16 | InstrumentVector | — |
+| `A-Delay \| Convolution Reverb Pro` | ReturnTrack 2 | Delay + **MxDeviceAudioEffect** | the second, UNTOUCHED Delay — the control |
+| `Main` | MainTrack | Saturator, GlueCompressor, Limiter | unchanged from donor 3 |
+| `0-Main` | PreHearTrack | — | — |
+
+- **Tempo 120**, one `<Tempo>` element, unmoved. **8 scenes**, **5 `MidiClip`s**,
+  the four track clips **empty — 0 notes each**. This donor is for DEVICES;
+  nothing about material can be read out of it.
+- **5 `TrackSendHolder`**, `NextPointeeId` **25615**. **0 `SampleRef`, 0
+  `MultiSampler`, 0 `AudioClip`, 0 `<Locator>`, 10 `ArrangerAutomation` and
+  every one of them `<Events />`.** So it answers none of steps 1, 2 or 4 of
+  the ask below, exactly like donor 3.
+- **18 distinct `<Path>` values, four of them absolute** and all four naming
+  `/Users/ford/Music/Ableton/Factory Packs/…` — Convolution Reverb Pro, Color
+  Limiter, Gated Delay, Surround Panner, i.e. **the four Max for Live devices**.
+  Nothing this exporter splices out of this file names a user folder; see the
+  path note under the extraction below.
+
+### The inventory, verified by reading rather than by tag-grepping
+
+Track 1's chain in order, with what it is:
+
+```
+DrumGroupDevice   PhaserNew*   AutoFilter2   Gate*   Erosion2*   Tube*
+DrumBuss*   Compressor2*   MxDeviceAudioEffect   Cabinet*   AutoShift
+AutoPan2   Delay   Amp*   Tube*   Echo*   Pedal*   Overdrive*
+MultibandDynamics*   Redux2*   MxDeviceAudioEffect   MultibandDynamics*
+Saturator   MxDeviceAudioEffect   Shifter   MxDeviceAudioEffect
+StereoGain   Vinyl*   Vocoder
+```
+
+`*` = a tag that appears in **no earlier donor**: PhaserNew, Gate, Erosion2,
+Tube ×2, DrumBuss, Compressor2, Cabinet, Amp, Echo, Pedal, Overdrive,
+MultibandDynamics ×2, Redux2, Vinyl — fourteen distinct tags.
+
+**Two corrections to an inventory-by-tag-name**, both found by opening the
+elements:
+
+- **`Gate` here IS a device** — Live's noise gate, with `Threshold`, `Attack`,
+  `Hold`, `Release`, `Return`, `LookAhead` and a sidechain EQ. That is the
+  opposite of donor 3, where `<Gate Value="1" />` was the arpeggiator's gate
+  length and this file said so. Both readings were needed; both are recorded.
+- **`Saturator`, `Shifter`, `AutoFilter2`, `AutoPan2`, `AutoShift`, `Delay`,
+  `StereoGain` and `Vocoder` on this track are NOT new** — every one of them is
+  already in the library out of Generic or Ableton2, and taking a second copy
+  would be weight for nothing. The four `MxDeviceAudioEffect`s are Max for Live:
+  a `<Path>` to an `.amxd` and no parameter this file could set.
+
+### What it splices — `nukernel/export/fxrack2.js`
+
+`nukernel/export/fxrack2-extract.js` photographs **three** of the fourteen —
+**PhaserNew, Cabinet, Amp**, 26,850 bytes of XML, **2,357 gzipped**, sha256
+`29087ec8…` — with the same generator / `--check` / DO-NOT-EDIT pattern as
+`donor.js`, `drumrack.js`, `fxrack.js` and `masterrack.js`;
+`test/als-page.browser.js` runs all **five** checks now. The other eleven are
+refused device by device in that extractor's header, with the reason next to
+each, because a device in `fxrack2.js` is bytes in every page load whether or
+not a chip can reach it.
+
+| device | what nukernel does with it |
+|---|---|
+| **PhaserNew** | the `phaser` chip. **It had no device at all** — "neither donor carries a Phaser" came out on every receipt from the day the chips landed. |
+| **Amp** | the `crunch` chip, moved off Roar. |
+| **Cabinet** | the fixed 4×12 in the same chip's DSP; spliced at Live's own patch with nothing written into it. |
+| Echo | **nobody.** Paul's is the preset `Hiss Tape Mode`: noise ON at 0.797, wobble ON, a 0.39 reverb, a gate at −16.9 dB, feedback INVERTED, +6.35 dB of input gain. **No untouched Echo exists in any of the four donors**, so splicing `echo` out of this one would mean writing twenty parameters to turn a tape emulation OFF — inventing a factory patch nobody sent us. The `echo` chip stays on Delay, which says all four of its knobs and now says its time right. |
+| DrumBuss | **nobody, and this one is about the box and not the file.** There is no drum-bus word anywhere in `fields.js`: the kit gets the section's chips and a mixer strip, and no drive / crunch / boom / transient vocabulary exists for a DrumBuss to say. |
+| Vinyl | **nobody. Vinyl is not tape.** Its `CracleDensity`/`CracleVolume` are surface noise and its `Drive` is a fixed-curve tracing distortion; the master's `tape` word is `{wob, sat}` — wow-and-flutter and saturation — and Vinyl has neither half. |
+| Overdrive / Pedal / Tube | **nobody.** Each is ONE stage of the five `insert_higain.dsp` has (a band-limited pedal with `MidFreq`/`BandWidth`; a three-knob stompbox; a valve stage with `PreDrive`/`PostDrive`/`Bias` and a single ±1 `Tone`). Amp is the device that has the three-band tone stack AND the presence. |
+| Compressor2 / MultibandDynamics / Gate | **nobody.** No box word. The record's dynamics are the master's `glue` (already on GlueCompressor) and the desk's own faders; a compressor spliced from nothing would be a device at its default doing something the record never asked for. |
+| Redux2 / Erosion2 | **nobody.** No bitcrush chip, no erosion word. |
+| 4 × MxDeviceAudioEffect | **nobody.** Max for Live. |
+
+**What travels with them, said out loud because gate 3 prints it every run:**
+the PhaserNew carries **three `<Path>` elements**, all the same string —
+`/Applications/Ableton Live 12 Suite.app/…/Audio Effects/Phaser-Flanger`, its
+own `LastPresetRef`. That is the drum rack's hazard class, not the
+`/Users/nsh/` one: a factory device **inside the application bundle**, and an
+unresolved `LastPresetRef` costs a preset NAME in the title bar, never the
+device. The Amp and the Cabinet carry two `<Path>` elements each and **both are
+empty strings**. Gate 3 now prints a `note` line counting the Suite paths
+alongside the `WARN` it already printed for the user-folder one.
+
+### The two chips, knob by knob
+
+Every range below is the donor's own `MidiControllerRange`; every box value is
+`fields.js` `FX`, held to it by gate F; and every Faust range is
+`engine/faust/dist/insert_*-meta.json`.
+
+**`phaser` → PhaserNew.** `insert_phaser.dsp` is "a hand-rolled 4-stage
+first-order allpass phaser … with feedback, LFO'd exponentially between 180 Hz
+and 3.2 kHz".
+
+| box | value | Live knob | donor range | what is written |
+|---|---|---|---|---|
+| `rate` | 0.35 | `Modulation_Frequency` | 0.01 … 40 Hz | 0.35 Hz, straight through — both are Hz |
+| `depth` | 0.8 | `Modulation_Amount` | 0 … 1 | 0.8 |
+| `mix` | 0.7 | `DryWet` | 0 … 1 | 0.7 |
+| — | `seq(i, 4, ap)` | `Notches` | 1 … 42 | **2** — four first-order allpasses are two notches |
+| — | `fb = 0.5` | `Feedback` | 0 … 0.99 | **0.5**, the DSP's own constant |
+| — | `fmin 180`, `fmax 3200` | `CenterFrequency` | 70 … 18500 | **√(180×3200) = 759 Hz**, the geometric centre the DSP sweeps about |
+| — | — | `Modulation_Sync` | switch | **false** — free-running Hz, so the 0…21 synced-rate enum stays undecoded and unused |
+| — | — | `Modulation_EnvelopeEnabled` | switch | **false** — Paul's preset has the envelope follower on at amount 0; off is the honest resting state for a modulation the chip never asked for |
+| — | — | `Mode` | 0 … 2 | **not written.** The donor's own byte is 0, and reading 0 as *Phaser* is an INFERENCE from the parameter order (`Mode`, `Notches`, `FlangerDelayTime`, `DoublerDelayTime` = Live's Phaser / Flanger / Doubler), the same shape of argument `Shifter/Global_ShifterMode` makes. |
+
+**`crunch` → Amp + Cabinet.** `insert_higain.dsp` opens by saying what it is:
+*"insert_distort is one waveshaper; this is the amp."* Five stages — a
+tightness gate, a staged drive, a **three-band tone stack**, a **presence**
+peak, a **fixed 4×12 cab**.
+
+| box | value | Live knob | donor range | what is written |
+|---|---|---|---|---|
+| `drive` | 0.35 | `Gain` | 0 … 10 | 3.5 |
+| `low` | 0.55 | `Bass` | 0 … 10 | 5.5 |
+| `mid` | 0.4 | `Middle` | 0 … 10 | 4 |
+| `high` | 0.5 | `Treble` | 0 … 10 | 5 |
+| `presence` | 0.5 | `Presence` | 0 … 10 | 5 |
+| `level` | 0.6 | `Volume` | 0 … 10 | 6 |
+| `mix` | 0.55 | `DryWet` | 0 … 1 | 0.55 |
+| — | step 4 of the DSP | a `Cabinet` behind it | — | nothing — a FIXED cab has no knob to translate |
+| `gate` | 0.2 | — | — | **no Amp control.** At 0.2 the DSP's expander threshold is −60 dB, transparent for any real signal, so what is lost is nothing the record can hear. |
+| `stages` | 1 | — | — | **no Amp control.** `stages` crossfades three loudness-normalised taps of ONE cascade — not Roar's three independent stages and not Live's `AmpType`. The chip always sends 1, the tap the DSP itself calls "crunch", so no morph is being asked for. |
+| — | — | `AmpType` | 0 … 6 | **not written** — an enum with no names printed; the donor's own byte stands. |
+
+**Why this is a bug fix and not a preference.** Roar took `drive` and `mix` and
+nothing else: `low`, `mid`, `high`, `presence` and `level` — **five of the
+chip's nine knobs — were declared, costed, documented and reaching no sound**,
+which is this codebase's characteristic defect written down in
+`declared-but-never-arriving`. And `stages` was going to `Stage2_On`/`Stage3_On`,
+which is not what `stages` means. Amp says six of the nine on one scale.
+
+### ANSWERED, 2026-09-03 — the sixteenth index, and it was a table all along
+
+> Paul: *"So the Ableton number for delay is 'delay time in 16th notes,' so it
+> should be 2."*
+
+He set the button to **2** and saved. The file reads:
+
+```
+answers2.xml:22520   DelayLine_SyncedSixteenthL   <Manual Value="1" />   (range 0…7)
+answers2.xml:22531   DelayLine_SyncedSixteenthR   <Manual Value="3" />
+answers2.xml:22392   DelayLine_Link               <Manual Value="true" />
+```
+
+**Live's Delay has eight sixteenth buttons and they are not 1…8**: they are
+**1, 2, 3, 4, 5, 6, 8, 16**, and `DelayLine_SyncedSixteenth` is the **POSITION
+IN THAT LIST**. That is why its range is 0…7 while the times it can spell run
+to sixteen. Paul's "2" is position **1**. ✓
+
+**On the right side, which the screenshot and the file appear to disagree
+about and do not.** The screenshot shows `2` lit on **both** halves; the file's
+`SyncedSixteenthR` is **3**, the factory value it also carries in Ableton2 and
+in Answers. `DelayLine_Link` is `true` on that device, and a linked Delay
+**draws the left value on both halves while leaving the right parameter where
+it was**. So the screen says 2 and 2, the file says 1 and 3, and both are
+correct. (This exporter writes the same index into both sides and turns Link
+on, so nothing downstream depends on which one Live reads.)
+
+**Every witness in the four donors, and they all agree:**
+
+| donor | device | index | button | how we know |
+|---|---|---|---|---|
+| `Answers2` | `1-DS Drum Rack`, Delay #1 | **1** | **2** | **Paul set it and said so** |
+| `Answers2` | return A, Delay #2 | 2 | 3 | untouched — the control beside the one he moved |
+| `Answers` | `1-DS Drum Rack`, Delay | **6** | **8** | **Paul clicked it** |
+| `Ableton2` | `6-MIDI`, Delay | 2 | 3 | untouched, and its own free `DelayLine_TimeL` of **0.3749999404 s at 120 bpm = 3 sixteenths** |
+| `Generic` | return B, Delay | 2 | 3 | untouched |
+
+**`Answers`' index 6 is the one that settles it, and it was never a
+discrepancy.** The struck-through section above called it *"a synced 1/8 that
+came back at 6"* and filed it as an unresolved conflict between two readings.
+What actually happened is that Paul clicked the **button labelled 8** —
+position 6 — and the shipped arithmetic (`index = sixteenths − 1`) misread it
+as 7/16. There was never a conflict; there was a wrong table. The two readings
+agree on the first six buttons and part company only at the last two, which is
+exactly why three donors could not tell them apart:
+
+```
+sixteenths     1  2  3  4  5  6   8   16
+POSITION       0  1  2  3  4  5   6    7      <- the table, shipped
+sixteenths-1   0  1  2  3  4  5   7   15      <- 15 is off the end of 0…7
+```
+
+**A third corroboration, needing no click at all.** `Answers2` also carries an
+**Echo** — Live's modern delay — and its equivalent parameter prints its own
+range:
+
+```
+answers2.xml   Echo/Delay_SyncedSixteenthL   <Manual Value="3" />
+                 <MidiControllerRange><Min Value="1" /><Max Value="16" /></…>
+```
+
+**1…16.** The modern device stores the sixteenth **count** and needs sixteen
+values to do it. The old Delay has **eight**. Eight values cannot be a count
+that runs to sixteen, so the old one is a **position** — the file says so
+without anybody having to look at a screen.
+
+**What changed in the output: nothing, for every record that exists.** The
+box's echo chip is `timeBars: 0.1875`, and 0.1875 bars × 16 = 3 sixteenths =
+the button "3" at position 2 under **both** readings, which is the byte the
+donor's own device already carries. The table only ever differs if somebody
+asks for eight or sixteen sixteenths — and the arithmetic would have written 7
+for the first (a half-bar delay arriving a whole bar long) and nothing at all
+for the second. `als-gate.js` **gate S** now asserts the table against all five
+donor Delays, both of Paul's switches, the 0.375 s arithmetic witness, the
+Echo's 1…16 range and the refusals (7, 9…15 and 17 sixteenths have no button
+and must go down the seconds path). **The `CONFIRM IN LIVE` clause that used to
+end gate S is gone**, and the one-click ask that pointed at it is retired.
+
+### The master words: two of the four found a home, and no donor was needed
+
+`main:docs/ABLETON-EXPORT.md` named a **Utility** for `width` and an **EQ
+Eight** tilt on the Main. Donor 3's section above answered *"there is no Utility
+in any of the three donors, no Eq8 on any MainTrack"*. **Both halves of that
+were wrong, and reading a parameter list rather than a tag name is what showed
+it.**
+
+- **`width` → Utility, which is the `<StereoGain>` tag.** "There is no Utility"
+  was a search for a word that is not in the schema. All four donors carry one,
+  and `Generic`'s has been in the splice library since August. Its
+  `StereoWidth` prints **0 … 4 with the identity at 1**; `fields.js` `WIDTHS`
+  are `{none: 1, mono: 0, narrow: 0.5, wide: 1.5, huge: 2.2}` — the **same
+  unit** (a side-channel gain), the same identity point, every value inside the
+  printed range. `fx_bus` calls its own stage `mswidth`, *"a mid/side trim …
+  side ×0 is mono, ×2.2 is as wide as a two-voice box can be pushed"*. One
+  parameter, no curve, no enum. The device's `Gain` stays exactly as refused
+  before: unity in the donor, written by nothing, because the seat dB is
+  already on Live's own mixer `Volume`.
+- **`tilt` → EQ Eight.** *"No Eq8 on any MainTrack"* is true and is not the
+  test: the law is that the exporter emits nothing a donor has not **written**,
+  and `Generic`'s `1-MIDI` Eq8 is the same device `als.js` has spliced onto
+  every authored track since 2026-08-31. Read off the file, its **band 0 is a
+  LOW SHELF and its band 3 is a HIGH SHELF** (`Mode` 2 and 5, against `Mode` 3
+  — bell — on the five bands between them). `fields.js` describes tilt as *"A
+  SHELF PAIR … the low shelf takes −t and the high shelf +t, so one number rocks
+  the spectrum about its middle"* and then ships a cheaper first-order split at
+  1 kHz that *"rocks the same spectrum about the same middle"*. So the shelf
+  pair is the word's own canonical description: **both shelves to 1000 Hz, band
+  0 to −t dB, band 3 to +t dB, both `ParameterA` and `ParameterB`, and `Mode`
+  never written** — the same refusal `setEqBands` has always made.
+
+The Main chain is therefore `Saturator → Glue Compressor → Utility → EQ Eight →
+Limiter`, which is `fields.js` `MASTER`'s own order with the two homeless words
+left out.
+
+**And two words still have no device, reported and never faked:**
+
+| word | why | what would close it |
+|---|---|---|
+| `tape` | `{wob, sat}` — wow-and-flutter **and** saturation. Nothing in four donors modulates playback speed on a whole mix. Donor 4's **Vinyl** is the one that looks like an answer and is not (crackle + tracing distortion). The **Echo**'s `Wobble_Amount` wobbles the DELAY LINE, not the dry signal. Splicing a second Saturator for the `sat` half alone would ship `wow` sounding exactly like `warm` — half a word is a lie by omission. | a donor with a device that modulates playback speed on the Main |
+| `space` | `{mix, size}` — a room the whole mix bleeds into. `Generic`'s Reverb is already spoken for (the desk's per-unit `rev` sends land on it) and a second one on the Main would be the same room said twice at two levels. And it is not that room: `fields.js` is explicit that the box's is *"live.js's vapor wash (pre-delay + three damped combs), NOT a convolver"*, and its `size` scales comb times, so 0.55/0.8/1.2/1.8 → a Live Reverb's `DecayTime` would be an invented curve. | a **master send**. No donor has one — `TrackSendHolder` exists on tracks, never on the MainTrack — so the honest shape (Main → Return A at `SPACES.mix`) cannot be written out of anything Live has given us. |
 
 ---
 
@@ -560,12 +857,12 @@ taking them twice would be weight for nothing:
 | device | in Generic | in Ableton2 | who splices it, and from where |
 |---|---|---|---|
 | `AutoFilter2` | `1-MIDI` | `6-MIDI` | **Generic** — the `wah` / `sweep` / `fenv` chips, and the composed `cutoff` motion filter |
-| `Roar` | `1-MIDI` | — | **Generic** — the `crunch` chip |
+| `Roar` | `1-MIDI` | — | ~~**Generic** — the `crunch` chip~~ **nobody, since 2026-09-03.** `crunch` is the box's `higain` insert, which is an AMP with a tone stack and a cab; Roar could say two of its nine knobs. It moved to donor 4's Amp + Cabinet — see Donor 4 → The two chips. |
 | `Delay` | return B | `6-MIDI` | **Ableton2** — the `echo` chip. Generic HAS one and we take the other one on purpose: Generic's is the return-B device carrying `/Users/nsh/…/Dotted Eighth Note.adv` in its `LastPresetRef`, and splicing the echo out of it would put a stranger's home directory on every track instead of on one return. Ableton2's has **zero** `<Path>` elements. |
 | `Reverb` | return A | `6-MIDI` | **Generic** — the return the desk's `rev` send lands on |
 | `Eq8` | `1-MIDI` | `6-MIDI` + 15 Cabasa pads | **Generic** — als.js `CHAIR_EQ`, since 2026-08-31 |
 | `Vocoder` | `1-MIDI` | `6-MIDI` | nobody — needs a modulator ROUTED IN, which `CarrierSource` is (a routing id, not a knob) |
-| `StereoGain` | `1-MIDI` | `6-MIDI` | nobody — the gain is already on Live's own mixer Volume |
+| `StereoGain` | `1-MIDI` | `6-MIDI` | ~~nobody — the gain is already on Live's own mixer Volume~~ **the master `width` word, since 2026-09-03.** The gain half is still refused for exactly that reason; `StereoGain` is Live's **Utility** and its `StereoWidth` (0…4, identity 1) is the same side-channel gain `fx_bus` calls `mswidth`. See Donor 4 → The master words. |
 | `Chorus2` | — | `6-MIDI` | **Ableton2**, via `nukernel/export/fxrack.js` — the `chorus` chip, and `flanger` as the nearest honest device |
 | `AutoPan2` | — | `6-MIDI` | **Ableton2** — `tremolo` (LFO phase 0) and `leslie` (phase 180) |
 | `Shifter` | — | `6-MIDI` | **Ableton2** — the `ringmod` chip |
@@ -692,7 +989,15 @@ are ordinary Live switches — `MidiCCOnOffThresholds` 64…127, no range — an
 Paul's are `true`. "Make the echo follow Live's tempo" needs no enum at all,
 only those two booleans.
 
-*The index is not.* Two readings survive the file and **they disagree**:
+*The index is not.* ~~Two readings survive the file and **they disagree**:~~
+**SUPERSEDED THE SAME DAY — see Donor 4 → ANSWERED: the sixteenth index.** The
+paragraphs below are kept because this repo does not delete a claim it reverses,
+and because the mistake in them is instructive: BOTH readings were wrong about
+the shape of the enum. The eight values are neither 1…8 sixteenths nor a free
+count; they are **positions in the button list [1, 2, 3, 4, 5, 6, 8, 16]**, and
+Paul's index 6 is the button labelled **8**, not "a synced 1/8 that came back
+wrong". There was never a disagreement between two readings of one file — there
+was one wrong table, and one more click settled it.
 
 - **(a) the arithmetic one, which is what shipped.** The name says SIXTEENTH,
   the range is 0…7 = eight values, and one sixteenth is the smallest thing a
@@ -708,9 +1013,10 @@ only those two booleans.
   index 1. Only the LEFT value moved (the right is still the factory 3, and
   `DelayLine_Link` is `true`, so the right is not used).
 
-Nothing in the file settles which is right, so the exporter does not pretend:
+~~Nothing in the file settles which is right, so the exporter does not pretend:
 it implements (a), records (b) here, and `als-gate.js` **gate S** prints the
-discrepancy with a CONFIRM IN LIVE on every run.
+discrepancy with a CONFIRM IN LIVE on every run.~~ **The table shipped instead,
+2026-09-03, and gate S's CONFIRM IN LIVE clause is gone.**
 
 **Shipping (a) is safe anyway, and that was measured rather than hoped.** The
 box's echo chip is `timeBars: 0.1875` (fields.js `FX`), and 0.1875 bars × 16 =
@@ -728,11 +1034,16 @@ written either way — the seconds into `DelayLine_Time`, the index into
 `DelayLine_SyncedSixteenth` — so the device says the same delay in whichever
 mode a hand later switches it to.
 
-### The one click that would close the index
+### ~~The one click that would close the index~~ — DONE, 2026-09-03
 
-> In Live 12, open `Answers`, look at the **Delay on `1-DS Drum Rack`** and say
+> ~~In Live 12, open `Answers`, look at the **Delay on `1-DS Drum Rack`** and say
 > what its time control reads — **1/8** or **7/16**. (Or set it to a dotted
-> eighth, save, and send it back: index 2 confirmed from the other end.)
+> eighth, save, and send it back: index 2 confirmed from the other end.)~~
+
+Paul did better than answer it: *"So the Ableton number for delay is 'delay time
+in 16th notes,' so it should be 2. I added a zip with all the missing effects and
+many more."* `Answers2.als` is that click, and the answer is the button table.
+**Donor 4 → ANSWERED: the sixteenth index** has it in full.
 
 *(The ask this section replaces — "put an Auto Filter on any track and switch
 its filter to highpass; put a Delay beside it and set its left and right times
@@ -740,35 +1051,41 @@ to a synced 1/8" — is otherwise ANSWERED and retired.)*
 
 ---
 
-## What is still missing, from ALL THREE donors
+## What is still missing, from ALL FOUR donors
 
-| absent | Generic | Ableton2 | Answers | what it blocks |
-|---|---|---|---|---|
-| `<Locator>` | 0 | 0 | **0** (`<Locators><Locators /></Locators>`) | locator export. **Gate 2 refuses it, on purpose,** and still does. |
-| a clip in `<ArrangerAutomation><Events>` | 0 | 0 | **0** — 10 `ArrangerAutomation`, every one `<Events />` | the arrangement clip's `CurrentStart` convention is still inferred, not observed |
-| a tempo envelope with more than its sentinel | 1 event | 1 event | **1 event** | the double-point STEP spelling in a paced record's tempo map is still inferred (`als-gate.js` gate T says CONFIRM IN LIVE) |
-| a set-wide `TimeSignature Manual` that is not 201 | 201 | 201 | **201** | that enum stays undecoded; the exporter says the meter on each clip's `RemoteableTimeSignature` instead, which is explicit in every donor |
-| ~~`Saturator` / `GlueCompressor` / `Limiter`~~ | 0 | 0 | **ALL THREE, on the MainTrack** | **nothing any more.** Answered 2026-09-03: the master chain ships (`nukernel/export/masterrack.js`, `als.js spliceMaster`, gate B) |
-| a Utility / a MainTrack EQ / a master send | 0 | 0 | 0 | the master words `width`, `tilt` and `space` — reported as unmapped, never faked |
-| a Phaser | 0 | 0 | 0 | the `phaser` chip, still reported rather than substituted (the P3 table above says so and Answers did not change it) |
-| `UserSample` | 0 | 0 | 0 | nothing — `SampleRef` covers what P2 needs |
-| `Simpler` / `OriginalSimpler` | 0 | 0 | 0 | nothing — `MultiSampler` is the modern spelling and is now present |
+| absent | Generic | Ableton2 | Answers | Answers2 | what it blocks |
+|---|---|---|---|---|---|
+| `<Locator>` | 0 | 0 | 0 | **0** (`<Locators><Locators /></Locators>`) | locator export. **Gate 2 refuses it, on purpose,** and still does. |
+| a clip in `<ArrangerAutomation><Events>` | 0 | 0 | 0 | **0** — 10 `ArrangerAutomation`, every one `<Events />` | the arrangement clip's `CurrentStart` convention is still inferred, not observed |
+| a tempo envelope with more than its sentinel | 1 event | 1 event | 1 event | **1 event** | the double-point STEP spelling in a paced record's tempo map is still inferred (`als-gate.js` gate T says CONFIRM IN LIVE) |
+| a set-wide `TimeSignature Manual` that is not 201 | 201 | 201 | 201 | **201** | that enum stays undecoded; the exporter says the meter on each clip's `RemoteableTimeSignature` instead, which is explicit in every donor |
+| ~~`Saturator` / `GlueCompressor` / `Limiter`~~ | 0 | 0 | **ALL THREE** | ALL THREE | **nothing any more.** Answered 2026-09-03: the master chain ships (`nukernel/export/masterrack.js`, `als.js spliceMaster`, gate B) |
+| ~~a Utility / a MainTrack EQ~~ | **1 each** | 1 each | 1 each | 1 each | **nothing any more, and no donor was needed.** `<StereoGain>` IS the Utility and the Eq8 was always there; `width` and `tilt` ship (2026-09-03) |
+| a **master send** | 0 | 0 | 0 | 0 | the master word `space` — `TrackSendHolder` exists on tracks, never on the MainTrack, so a Main → Return A bleed cannot be written out of anything Live has given us |
+| a device that modulates playback SPEED | 0 | 0 | 0 | 0 | the master word `tape` (`{wob, sat}`). Donor 4's Vinyl is crackle and tracing distortion; the Echo's wobble is on the delay line, not the dry |
+| ~~a Phaser~~ | 0 | 0 | 0 | **PhaserNew, on `1-DS Drum Rack`** | **nothing any more.** Answered 2026-09-03: the `phaser` chip ships (`nukernel/export/fxrack2.js`) |
+| ~~an amp with a tone stack~~ | 0 | 0 | 0 | **Amp + Cabinet** | **nothing any more.** `crunch` moved off Roar, which could say two of its nine knobs |
+| an untouched **Echo** | 0 | 0 | 0 | **0** — the one in donor 4 is the `Hiss Tape Mode` PRESET | nothing today. The `echo` chip is honest on Delay; an untouched Echo would let it say tempo-synced feedback, filter and modulation in one device |
+| `UserSample` | 0 | 0 | 0 | 0 | nothing — `SampleRef` covers what P2 needs |
+| `Simpler` / `OriginalSimpler` | 0 | 0 | 0 | 0 | nothing — `MultiSampler` is the modern spelling and is now present |
 
 Ableton2 added a Session clip on a track, which is what closed P0. **Answers
 added the master chain and both enum answers, and it added nothing else**: it
 is Ableton2 with tracks removed, four devices added, and every probe clip
-emptied. In particular it did **not** do steps 1, 2 or 4 of the ask below — no
-Arrangement clip, no locator, no tempo automation, still 4/4 — so those three
-remain exactly as open as they were, and the exporter still refuses a locator
-and still flags the tempo step as inferred.
+emptied. **Answers2 added twenty-four more devices and one moved button**, and
+it added nothing else either. In particular NEITHER did steps 1, 2 or 4 of the
+ask below — no Arrangement clip, no locator, no tempo automation, still 4/4 —
+so those three remain exactly as open as they were, and the exporter still
+refuses a locator and still flags the tempo step as inferred.
 
 ## Ask — 30 seconds, and step 3 of it is DONE
 
 *(This replaces the old Ask #1, which Ableton2 answered in part, and retires the
 old Ask #2, which Ableton2 answered in full. **Step 3 is struck through:
-`Answers.als` did it on 2026-09-03 and the master chain now ships.** Steps 1, 2
-and 4 are untouched by that save and are still the whole remaining ask — the
-one-click delay question at the end of the enum section above is the fifth.)*
+`Answers.als` did it on 2026-09-03 and the master chain now ships.** The fifth
+ask — the one-click delay question — **is also done: `Answers2.als` settled it
+the same afternoon.** Steps 1, 2 and 4 are untouched by both saves and are the
+whole remaining ask.)*
 
 > In Live 12, open `Ableton2`, and:
 > 1. drag the clip out of **`3-Drift`'s first Session slot into the Arrangement at bar 1**;

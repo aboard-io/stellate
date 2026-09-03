@@ -204,20 +204,30 @@ export function deviceOf(xml, tag, from = 0) {
  *
  * `donorXml` is Generic (the splice base, in the module graph via donor.js),
  * `fxRackXml` is the seven devices Ableton2 has that Generic does not
- * (fxrack.js, extracted by fxrack-extract.js), and `masterRackXml` is the
- * three MASTER-CHAIN devices only Answers.als has — Saturator, GlueCompressor,
- * Limiter, which BOTH earlier donors' MainTracks carry zero of
- * (masterrack.js, extracted by masterrack-extract.js). All three racks are
- * optional: a caller with no fx rack gets the Generic five and every chip that
- * needs one of the other seven is reported as unmapped instead of faked, and a
- * caller with no master rack exports the donor's own MainTrack untouched.
+ * (fxrack.js), `masterRackXml` is the three MASTER-CHAIN devices only
+ * Answers.als has — Saturator, GlueCompressor, Limiter, which BOTH earlier
+ * donors' MainTracks carry zero of (masterrack.js) — and `fxRack2Xml` is the
+ * three only Answers2.als has: PhaserNew, Cabinet, Amp (fxrack2.js), which the
+ * `phaser` and `crunch` chips land on. Each has its own extractor and its own
+ * `--check`.
+ *
+ * ALL FOUR RACKS ARE OPTIONAL and the failure mode is a REPORT, never a
+ * substitution: a caller with no fx rack gets the Generic handful and every
+ * chip that needs one of the others is reported as unmapped; a caller with no
+ * master rack exports the donor's own MainTrack untouched; a caller with no fx
+ * rack 2 gets `phaser` reported the way it was reported for a fortnight and
+ * `crunch` reporting a missing Amp rather than falling back to a Roar that
+ * could only say two of its nine knobs.
  */
-export function deviceLibrary(donorXml, fxRackXml = "", masterRackXml = "") {
+export function deviceLibrary(donorXml, fxRackXml = "", masterRackXml = "", fxRack2Xml = "") {
   const lib = {};
   // Generic's `1-MIDI` carries AutoFilter2, Eq8, Roar, StereoGain, Vocoder;
   // its returns carry Reverb and Delay. Taken from the whole document because
   // there is exactly one of each and Live wrote them all.
-  for (const tag of ["AutoFilter2", "Roar", "StereoGain", "Vocoder", "Reverb", "Delay"]) {
+  // Eq8 and StereoGain joined this list on 2026-09-03, when the master's `tilt`
+  // and `width` words found their homes in devices donor 1 had all along; als.js
+  // reaches its own per-chair Eq8 through eqTemplate() and is unaffected.
+  for (const tag of ["AutoFilter2", "Roar", "StereoGain", "Vocoder", "Reverb", "Delay", "Eq8"]) {
     const d = deviceOf(donorXml, tag);
     if (d) lib[tag] = d;
   }
@@ -251,6 +261,10 @@ export function deviceLibrary(donorXml, fxRackXml = "", masterRackXml = "") {
      Ableton2 — so the assignment order does not matter and is not load-bearing
      the way the Delay's is. */
   split(masterRackXml);
+  /* ...and the FOURTH rack, out of the fourth donor: PhaserNew, Cabinet, Amp
+     (fxrack2.js). Nothing here collides with the three above — no earlier donor
+     carries any of the three tags — so the assignment order does not matter. */
+  split(fxRack2Xml);
   return lib;
 }
 
@@ -435,10 +449,24 @@ export function instrumentTagOf(trackXml) {
                              — the NEAREST HONEST DEVICE: neither donor has a
                              Flanger, and a chorus with feedback and a short
                              delay IS the comb a flanger is. Named, not faked.
-     phaser    —             NEITHER DONOR HAS A PHASER. Reported, never
-                             substituted: an all-pass cascade is not any of the
-                             twelve devices in Ableton2 and picking the closest
-                             would be the kind of quiet lie gate 2 exists for.
+     phaser    PhaserNew     rate  0.01…8 Hz -> Modulation_Frequency 0.01…40
+                             depth 0…1       -> Modulation_Amount 0…1
+                             mix   0…1       -> DryWet 0…1
+                             AND three numbers that are the DSP's own constants
+                             rather than the chip's knobs, because the chip has
+                             no words for them and the Faust file does:
+                             `chain = seq(i, 4, ap)` — four first-order allpasses
+                             = TWO notches -> Notches 2 (range 1…42); `fb = 0.5`
+                             -> Feedback 0…0.99; and the sweep, which the DSP
+                             centres geometrically between `fmin = 180` and
+                             `fmax = 3200`, -> CenterFrequency √(180×3200) =
+                             759 Hz (range 70…18500). Modulation_Sync goes OFF
+                             so the rate is free-running Hz and no synced-rate
+                             enum has to be decoded.
+                             ARRIVED 2026-09-03 with donor 4. This row read
+                             "NEITHER DONOR HAS A PHASER. Reported, never
+                             substituted" from the day the chips landed until
+                             Paul sent the file with one in it.
      tremolo   AutoPan2      rate 0.5…12 Hz -> Modulation_Frequency 0.1…60
                              depth 0…1      -> Modulation_Amount 0…1
                              AND Modulation_Phase = 0, which is what makes an
@@ -463,20 +491,57 @@ export function instrumentTagOf(trackXml) {
                              amount ±4      -> Envelope_Amount ±1  (÷4 exactly)
                              decay 0.02…2 s -> Envelope_Release 0…3 s
                              attack 0.001…0.5 -> Envelope_Attack 0…0.1
-     echo      Delay         timeBars × barSeconds -> DelayLine_TimeL/R 0.001…5 s,
-                             with DelayLine_SyncL/R turned OFF. Live's sync uses
-                             `DelayLine_SyncedSixteenth` 0…7, another undecoded
-                             enum; seconds at the record's bpm is the SAME time
-                             and needs no enum at all. Named because it means a
-                             tempo change in Live will not drag the echo with it.
+     echo      Delay         timeBars × barSeconds -> DelayLine_TimeL/R 0.001…5 s
+                             AND, when that time is one of the eight the device
+                             can spell, DelayLine_SyncL/R ON with
+                             DelayLine_SyncedSixteenth at the button's POSITION
+                             (see ENUM 2 below — the table, settled by donor 4).
                              feedback 0…0.9 -> Feedback 0…0.95
                              tone 300…12000 -> Filter_Frequency 50…18000
-     crunch    Roar          drive 0…1 -> Stage1_Shaper_Amount 0…1
-                             mix   0…1 -> Output_DryWet 0…1
-                             stages 1…3 -> Stage2_On / Stage3_On, which is the
-                             one thing that actually made crunch "WAYYYY TOO
-                             MUCH" in the parent: Roar defaults to three stages
-                             and the chip asks for one.
+                             NOT Echo, though donor 4 has one: Paul's is the
+                             preset `Hiss Tape Mode` with noise, wobble, reverb,
+                             a gate and inverted feedback all engaged, and no
+                             untouched Echo exists in any donor — so building an
+                             honest `echo` out of it would mean writing twenty
+                             parameters to turn a tape emulation off, i.e.
+                             inventing a factory patch nobody sent us. Delay
+                             says all four of the chip's knobs and now says the
+                             time right.
+     crunch    Amp           drive 0…1 -> Gain 0…10          (×10, exactly)
+               + Cabinet     low   0…1 -> Bass 0…10
+                             mid   0…1 -> Middle 0…10
+                             high  0…1 -> Treble 0…10
+                             presence 0…1 -> Presence 0…10
+                             level 0…1 -> Volume 0…10
+                             mix   0…1 -> DryWet 0…1
+                             ...and a Cabinet behind it, at the patch Live
+                             saved, writing nothing.
+                             MOVED OFF Roar 2026-09-03, and the reason is this
+                             file's characteristic bug rather than taste. The
+                             box's chip is `higain`, and engine/faust/dsp/
+                             insert_higain.dsp says what that is in its own
+                             first line: "insert_distort is one waveshaper; this
+                             is the amp". Five stages — a tightness gate, a
+                             staged drive, a THREE-BAND TONE STACK, a PRESENCE
+                             peak, a fixed 4×12 CAB. Roar has a shaper amount
+                             and a dry/wet, so low / mid / high / presence /
+                             level — five of the chip's nine knobs — were
+                             declared, costed and arriving NOWHERE. Live's Amp
+                             carries all five on one printed 0…10 scale and the
+                             Cabinet is the fifth stage.
+                             TWO KNOBS STILL DO NOT ARRIVE and they are named
+                             here rather than fudged: `gate` (the DSP's downward
+                             expander) has no Amp control at all — at the chip's
+                             own 0.2 its threshold is −60 dB, which is
+                             transparent for any real signal, so what is lost is
+                             nothing the record can hear; and `stages` (1…3)
+                             crossfades three loudness-normalised taps of ONE
+                             cascade, which is not Roar's three independent
+                             stages and is not Live's AmpType either. The chip
+                             always sends stages 1 — the mildest tap, the one
+                             the DSP calls "crunch" — so no morph is being asked
+                             for. AmpType is left at the donor's own byte: a
+                             0…6 enum with no names printed.
      ringmod   Shifter       freq 20…4000 -> ModBasedShifting_RingMod_Coarse 1…10000
                              mix  0…1     -> Global_DryWet 0…1
                              AND Global_ShifterMode = 2. THIS IS THE SECOND
@@ -486,6 +551,19 @@ export function instrumentTagOf(trackXml) {
                              `ModBasedShifting_RingMod_*` in that order, which
                              is also Live's own Pitch / Frequency / Ring Mod
                              order in the device UI. CONFIRM IN LIVE.
+
+   WHAT DONOR 4 ADDED AND WHAT IT DID NOT, in one place: `Answers2.als` puts
+   TWENTY-EIGHT devices on one track and fourteen of their tags appear in no
+   earlier donor. Three of them are spliced (PhaserNew, Amp, Cabinet — see
+   fxrack2.js); the other eleven are refused device by device in
+   fxrack2-extract.js's header, with the reason written next to each. The three
+   worth repeating here because a reader will reach for them first: the Echo is
+   a tape PRESET and not a delay (see the `echo` row), the DrumBuss has no
+   drum-bus word to splice from — the box's kit gets the section's chips and a
+   mixer strip, and there is no drive/boom/transient vocabulary anywhere in
+   fields.js — and the Vinyl is tracing distortion plus crackle, which is not
+   the master's `tape` word (wow-and-flutter plus saturation) however much the
+   name suggests it.
 
    WHAT ELSE IS IN PAUL'S CHAIN AND HAS NO CHIP TO ANSWER IT, said out loud:
      · Vocoder — needs a MODULATOR routed in from another track (`CarrierSource`
@@ -499,7 +577,16 @@ export function instrumentTagOf(trackXml) {
        → StereoGain"), and it was MEASURED before it was refused. The gain
        half is already on Live's own mixer Volume, so a StereoGain would be
        the same intent counted twice — the exact mistake als.js's CHAIR_LEVEL
-       comment argues against. The EQ half is emptier than that: the desk's
+       comment argues against.
+       ...THAT IS STILL TRUE OF THE PER-CHAIR GAIN AND IT WAS NEVER TRUE OF
+       THE DEVICE, 2026-09-03. `StereoGain` is the XML tag of Live's UTILITY,
+       and its parameter list — read, not remembered — is `ChannelMode`,
+       `StereoWidth` (0…4, identity 1), `MidSideBalance`, `Mono`, `BassMono`,
+       `Balance`, `Gain`. The master word `width` had been reported homeless
+       since the master chain shipped, on the sentence "there is no Utility in
+       any of the three donors"; there is one in ALL FOUR, it has been the
+       device the spec asked for the whole time, and nobody had opened it. See
+       masterDevices below. The EQ half is emptier than that: the desk's
        per-unit EQ is `u.strip.eq`, and on a shipped record it is NULL —
        probed through plan.barPlan(0) on preset 2 ("Motown 45"), all twenty
        units answered `eq: null`, because that EQ only exists once a hand has
@@ -554,7 +641,8 @@ export const kitTakes = (chip) => !KIT_FILTER[chip];
 /** Which knob is this device's WET — what an "is this chip on?" envelope rides. */
 export function wetPathOf(deviceTag) {
   switch (deviceTag) {
-    case "Chorus2": case "AutoFilter2": case "Delay": return "DryWet";
+    case "Chorus2": case "AutoFilter2": case "Delay":
+    case "PhaserNew": case "Amp": return "DryWet";
     case "Roar": return "Output_DryWet";
     case "Shifter": return "Global_DryWet";
     // AutoPan2 has no dry/wet at all — measured, its parameter list ends at
@@ -588,75 +676,133 @@ export function wetPathOf(deviceTag) {
    undecoded and unused, because no lane in the box asks for a notch or a
    morph. `mot: "rise"` stops being reported as homeless (als.js).
 
-   ENUM 2 — Delay/DelayLine_SyncedSixteenth, and it is HALF closed, which is
-   said out loud rather than rounded up.
+   ENUM 2 — Delay/DelayLine_SyncedSixteenth, AND IT IS CLOSED NOW TOO. It was
+   half closed for one afternoon, on a reading this file has since been shown
+   to be wrong, and the correction is the whole reason donor 4 exists.
 
-       Answers.xml:19191-19212  DelayLine_SyncL/SyncR  <Manual Value="true" />
-       Answers.xml:19297-19318  DelayLine_SyncedSixteenthL  6   (0..7)
-                                DelayLine_SyncedSixteenthR  3   (0..7)
-       Ableton2.xml:84744-84765 the same pair, UNTOUCHED:    2 and 3
-       Generic.xml:21245-21266  the same pair, UNTOUCHED:    2 and 2
+   PAUL, 2026-09-03, with a screenshot of the device open in Live: "So the
+   Ableton number for delay is 'delay time in 16th notes,' so it should be 2."
+   He set the sixteenths button to 2 and saved.
 
-   THE SWITCH IS GROUND TRUTH AND THAT IS THE HALF THAT MATTERS. SyncL and
-   SyncR are ordinary Live switches (`MidiCCOnOffThresholds` 64..127, no
-   range), and Paul's are `true` — so "make the echo follow Live's tempo"
-   needs no enum at all, only the two booleans.
+   THE DEVICE HAS EIGHT BUTTONS AND THEY ARE NOT 1..8. Live's Delay offers
+   1, 2, 3, 4, 5, 6, 8 and 16 sixteenths — eight buttons, and the last two skip.
+   `DelayLine_SyncedSixteenth` is the POSITION IN THAT LIST, which is why its
+   range is 0..7 while the times it can spell run to 16. Every witness in the
+   four donors agrees, and two of them are the ones that broke the old reading:
 
-   THE INDEX IS NOT. Two readings of the 0..7 survive the file:
+     donor         device                        index   button   how we know
+     Answers2      1-DS Drum Rack, Delay #1        1       "2"    PAUL SET IT
+     Answers2      return A, Delay #2 (untouched)  2       "3"    the control
+     Answers       1-DS Drum Rack, Delay           6       "8"    PAUL SET IT
+     Ableton2      6-MIDI, Delay (untouched)       2       "3"    0.375 s @120
+     Generic       return B, Delay (untouched)     2       "3"    the control
 
-     (a) the arithmetic one, and it is the one implemented below. The name says
-         SIXTEENTH, the range is 0..7 = eight values, and one sixteenth is the
-         smallest thing a delay lets you say — so the eight values are 1..8
-         sixteenths and the index is `sixteenths - 1`. It is corroborated
-         INSIDE the file: Ableton2's untouched Delay sits at index 2 with a
-         free-running `DelayLine_TimeL` of 0.3749999404 SECONDS (its range,
-         0.001..5, prints the unit), and 0.375 s at that donor's own 120 bpm
-         in 4/4 is exactly 3/16 of a bar = 3 sixteenths = index 2. Two
-         parameters of one untouched device agreeing is evidence; one
-         remembered device UI is not.
-     (b) Paul's own click. He was asked for "a synced 1/8" and the file came
-         back with index 6, which reading (a) calls 7/16. Under (a) a 1/8 is
-         index 1. THE TWO CANNOT BOTH BE TRUE and neither can be checked from
-         here, so this file does not pretend: it implements (a), records (b),
-         and hands the discrepancy to donor/README.md as the one-click ask
-         that settles it.
+   ...and the RIGHT side of the pair, which the screenshot and the file appear
+   to disagree about and do not. Paul's screenshot shows "2" lit on BOTH sides;
+   Answers2's `DelayLine_SyncedSixteenthR` reads 3, the factory value it has in
+   every other donor too. `DelayLine_Link` is `true` on that device, and a
+   linked Delay DRAWS the left value on both halves while leaving the right
+   parameter wherever it was — so the screen says 2 and 2, the file says 1 and
+   3, and both are correct. This exporter writes the SAME index into both sides
+   and turns Link on, so nothing depends on which one Live reads.
 
-   WHY SHIPPING (a) IS SAFE ANYWAY, measured rather than hoped: the box's echo
-   chip is `timeBars: 0.1875` (fields.js FX, copied into FX_PARAMS above), and
-   0.1875 bars x 16 = 3 sixteenths = index 2 — WHICH IS THE VALUE THE DONOR'S
-   DEVICE ALREADY CARRIES. So for every record this exporter can write today,
-   the synced path flips two booleans and writes back the byte Live itself
-   wrote; the arithmetic only ever fires if somebody gives an echo a different
-   time. A wrong reading of (a) cannot reach a record that exists.
+   The two readings that were in play — POSITION (this one) and SIXTEENTHS-1
+   (what shipped for one afternoon) — agree on the first six buttons and part
+   company at the last two, which is exactly why the first three donors could
+   not tell them apart:
 
-   THE RULE, stated once: an echo whose time is a WHOLE NUMBER of sixteenths of
-   the record's own bar (1..8 of them) goes in SYNCED, so it follows the tempo
-   in Live; anything else keeps the seconds path this exporter has always
-   written, at the record's own bpm, which is the same time and needs no enum.
-   Both are written either way — the seconds into DelayLine_Time, the index
-   into DelayLine_SyncedSixteenth — so the device says the same delay in
-   whichever mode a hand later switches it to. */
+       sixteenths    1  2  3  4  5  6   8   16
+       POSITION      0  1  2  3  4  5   6    7
+       sixteenths-1  0  1  2  3  4  5   7   15   <- 15 is off the end of 0..7
+
+   ANSWERS' INDEX 6 IS THE ONE THAT SETTLES IT. The old note called that "a
+   synced 1/8 that came back at 6" and filed it as an unresolved conflict; what
+   actually happened is that Paul clicked the BUTTON LABELLED 8 — position 6 —
+   and the arithmetic reading misread it as 7/16. There was never a conflict,
+   only a wrong table. Answers2 then set the button labelled 2 and got position
+   1, which both readings agree on, and it is a second signed witness.
+
+   A THIRD, INDEPENDENT CORROBORATION, out of the same file and needing no
+   click at all: Answers2 also carries an ECHO device, Live's modern delay, and
+   ITS equivalent parameter prints its own range —
+
+       answers2.xml   Echo/Delay_SyncedSixteenthL   <Manual Value="3" />
+                        <MidiControllerRange><Min 1 /><Max 16 /></...>
+
+   1..16. The modern device stores the SIXTEENTH COUNT and needs sixteen values
+   to do it. The old Delay has eight. Eight values cannot be a count that runs
+   to sixteen, so the old one is a position — the file says so without anybody
+   having to look at a screen.
+
+   THE SWITCH was ground truth the whole time and still is: SyncL and SyncR are
+   ordinary Live switches (`MidiCCOnOffThresholds` 64..127, no range), and every
+   Delay Paul has saved has them `true`.
+
+   WHAT CHANGED IN THE OUTPUT, measured: nothing, for every record that exists.
+   The box's echo chip is `timeBars: 0.1875` (fields.js FX, copied into
+   FX_PARAMS above), and 0.1875 bars x 16 = 3 sixteenths, which is the BUTTON
+   "3" at position 2 under both readings and is the byte the donor's own device
+   already carries. The table only ever differs from the arithmetic if somebody
+   asks for eight or sixteen sixteenths — and the arithmetic would have written
+   7 for the first (a half-bar delay arriving a whole bar long) and nothing at
+   all for the second.
+
+   THE RULE, stated once: an echo whose time is ONE OF THE EIGHT TIMES THE
+   DEVICE CAN SPELL, in sixteenths of the record's own bar, goes in SYNCED so
+   it follows the tempo in Live; anything else — including a clean sixteenth
+   count like 7 or 12 that simply has no button — keeps the seconds path this
+   exporter has always written, at the record's own bpm, which is the same time
+   and needs no enum. Both are written either way — the seconds into
+   DelayLine_Time, the index into DelayLine_SyncedSixteenth — so the device says
+   the same delay in whichever mode a hand later switches it to. */
 
 /** AutoFilter2/Filter_Type: the value every untouched donor carries. */
 export const AF_LOWPASS = 0;
 /** AutoFilter2/Filter_Type: Answers.als:18536, the one Paul switched. */
 export const AF_HIGHPASS = 1;
-/** Delay/DelayLine_SyncedSixteenth as Paul saved it, for the record. */
-export const DELAY_SYNC_PAULS_VALUE = 6;
 /** How many values the enum has, read off its own MidiControllerRange (0..7). */
 export const DELAY_SYNC_MAX = 7;
+/**
+ * THE EIGHT BUTTONS, in device order: `DelayLine_SyncedSixteenth` i means
+ * DELAY_SYNC_BUTTONS[i] sixteenth notes. This table replaced the `sixteenths -
+ * 1` arithmetic on 2026-09-03, when Paul's fourth donor settled the enum.
+ */
+export const DELAY_SYNC_BUTTONS = [1, 2, 3, 4, 5, 6, 8, 16];
+/**
+ * Every Delay in the four donors, with what its index means and who put it
+ * there. Gate S asserts the table against all of them on every run, so the day
+ * a re-save moves one, the reading goes red instead of the export quietly
+ * writing the wrong echo time.
+ */
+export const DELAY_SYNC_WITNESSES = [
+  { donor: "Answers2", where: "1-DS Drum Rack, Delay #1", index: 1, hand: true,
+    note: 'Paul set the button "2" and said so' },
+  { donor: "Answers2", where: "return A, Delay #2", index: 2, hand: false,
+    note: "untouched — the control beside the one he moved" },
+  { donor: "Answers", where: "1-DS Drum Rack, Delay", index: 6, hand: true,
+    note: 'Paul clicked the button "8"; the old arithmetic called it 7/16' },
+  { donor: "Ableton2", where: "6-MIDI, Delay", index: 2, hand: false,
+    note: "untouched, and its own free time 0.375 s at 120 bpm = 3 sixteenths" },
+  { donor: "Generic", where: "return B, Delay", index: 2, hand: false,
+    note: "untouched" },
+];
 
 /**
  * `DelayLine_SyncedSixteenth` for a delay of `n` sixteenth notes, or null when
- * this file cannot say — which is every non-integer and everything past the
- * eight the enum holds. Reading (a) above: index = sixteenths - 1.
+ * the device cannot spell that time — which is every non-integer and every
+ * whole number that is not one of the eight buttons (7, 9..15, anything over
+ * 16). A null sends the caller down the seconds path, which is exact.
  */
 export function delaySyncIndex(n) {
   if (!isFinite(n)) return null;
   const r = Math.round(n);
   if (Math.abs(n - r) > 1e-6) return null;            // not a clean sixteenth
-  if (r < 1 || r > DELAY_SYNC_MAX + 1) return null;   // outside the eight it holds
-  return r - 1;
+  const i = DELAY_SYNC_BUTTONS.indexOf(r);
+  return i < 0 ? null : i;                            // no button, no sync
+}
+/** How many sixteenths index `i` means, or null — DELAY_SYNC_BUTTONS backwards. */
+export function delaySixteenthsAt(i) {
+  return DELAY_SYNC_BUTTONS[i] == null ? null : DELAY_SYNC_BUTTONS[i];
 }
 
 /** AutoFilter2's own ceiling, read off the donor: 19999.9961 Hz = no filter. */
@@ -679,7 +825,23 @@ export function fxDeviceFor(chip, params, ctx = {}) {
       // donor sits at 3, which is chorus territory
       ChorusDelayTime: 0.8 },
       flags: { InvertFeedback: g("feedback", 0.6) < 0 } };
-    case "phaser": return { unmapped: "neither donor carries a Phaser" };
+    /* THE PHASER, arrived 2026-09-03 on donor 4. The three constants are the
+       Faust file's own (`chain = seq(i, 4, ap)` = 2 notches; `fb = 0.5`;
+       fmin 180 / fmax 3200, swept geometrically, so the centre is their
+       geometric mean) — the chip carries no words for them, and the DSP does,
+       so they are quoted rather than invented. Mode is NOT written: it is a
+       0…2 enum with no printed names and the donor's own byte is 0, which the
+       parameter order (Mode, Notches, FlangerDelayTime, DoublerDelayTime)
+       reads as Live's Phaser / Flanger / Doubler — the same shape of argument
+       Shifter's mode makes, and flagged the same way. */
+    case "phaser": return { device: "PhaserNew", params: {
+      Modulation_Frequency: g("rate", 0.35), Modulation_Amount: g("depth", 0.8),
+      DryWet: g("mix", 0.7), Notches: 2, Feedback: 0.5,
+      CenterFrequency: Math.sqrt(180 * 3200) },
+      // free-running Hz, so no synced-rate enum has to be decoded; and the
+      // donor's preset has its envelope follower enabled at amount 0 — off is
+      // the honest resting state for a modulation the chip never asked for
+      flags: { Modulation_Sync: false, Modulation_EnvelopeEnabled: false } };
     case "tremolo": return { device: "AutoPan2", params: {
       Modulation_Frequency: g("rate", 5), Modulation_Amount: g("depth", 0.8),
       Modulation_Phase: 0 } };
@@ -729,12 +891,21 @@ export function fxDeviceFor(chip, params, ctx = {}) {
                  DelayLine_Link: true, Filter_On: true },
         synced: idx };
     }
-    case "crunch": case "higain": {
-      const stages = Math.round(g("stages", 1));
-      return { device: "Roar", params: {
-        Stage1_Shaper_Amount: g("drive", 0.35), Output_DryWet: g("mix", 0.55) },
-        flags: { Stage2_On: stages >= 2, Stage3_On: stages >= 3 } };
-    }
+    /* THE AMP, and the speaker behind it. Every one of the seven writes below
+       is `chip 0…1 × the device's own printed maximum`, which for six of them
+       is Live's 0…10 amp scale and for the seventh is a 0…1 dry/wet — there is
+       no curve here to get wrong. `also: ["Cabinet"]` is the DSP's fixed 4×12,
+       spliced at the patch Live saved with nothing written into it, because a
+       fixed cab has no knob to translate. */
+    case "crunch": case "higain":
+      return { device: "Amp", also: ["Cabinet"], params: {
+        Gain: clamp(g("drive", 0.35), 0, 1) * 10,
+        Bass: clamp(g("low", 0.55), 0, 1) * 10,
+        Middle: clamp(g("mid", 0.4), 0, 1) * 10,
+        Treble: clamp(g("high", 0.5), 0, 1) * 10,
+        Presence: clamp(g("presence", 0.5), 0, 1) * 10,
+        Volume: clamp(g("level", 0.6), 0, 1) * 10,
+        DryWet: g("mix", 0.55) } };
     case "ringmod": return { device: "Shifter", params: {
       Global_ShifterMode: 2, ModBasedShifting_RingMod_Coarse: g("freq", 180),
       Global_DryWet: g("mix", 0.4) } };
@@ -746,6 +917,13 @@ export function fxDeviceFor(chip, params, ctx = {}) {
  * Build one chip's device, ready to splice. Returns
  * `{xml, device, set}` or `{unmapped}`; `missing` means the mapping exists but
  * the caller's library does not carry that device (no fx rack handed in).
+ *
+ * `also` is the ONE case where a chip is more than one Live device — `crunch`
+ * is an Amp and the speaker behind it — and those come back in `extra` as
+ * `[{device, xml}]`, in chain order, with NOTHING written into them: a device
+ * in `also` is there because the box's DSP has a stage that is FIXED and
+ * carries no knob to translate. A caller that ignores `extra` still gets a
+ * working chip, one stage short.
  */
 export function buildFx(lib, chip, params, ctx) {
   const spec = fxDeviceFor(chip, params, ctx);
@@ -759,7 +937,12 @@ export function buildFx(lib, chip, params, ctx) {
     const next = setFlag(xml, path, on);
     if (next !== xml) { xml = next; set++; }
   }
-  return { xml, device: spec.device, set, nearest: spec.nearest || null,
+  const extra = [];
+  for (const tag of spec.also || []) {
+    if (!lib[tag]) return { missing: tag };
+    extra.push({ device: tag, xml: lib[tag] });
+  }
+  return { xml, device: spec.device, set, extra, nearest: spec.nearest || null,
            synced: spec.synced == null ? null : spec.synced };
 }
 
@@ -774,7 +957,14 @@ export function buildFx(lib, chip, params, ctx) {
        nukernel word     Live device        knobs written here
        master drive      Saturator          BaseDrive (dB), DryWet
        master glue       Glue Compressor    Threshold (dB), Ratio, Makeup (dB)
+       master width      Utility/StereoGain StereoWidth (side gain, 0..4)
+       master tilt       EQ Eight           Bands 0 and 3, Freq + Gain (dB)
        master ceiling    Limiter            Ceiling (dB), Gain (dB)
+
+   ...IN THE RECORD'S OWN ORDER, which is fields.js MASTER's order: drive,
+   glue, tape, space, width, tilt, ceiling. The two new rows land between the
+   compressor and the limiter, which is where a mastering chain puts a stereo
+   trim and a tone control anyway.
 
    EVERY RANGE IS READ OFF THE DONOR'S OWN MidiControllerRange AND CLAMPED
    THERE — setParam does that for every write in this file, and the tables
@@ -795,14 +985,70 @@ export function buildFx(lib, chip, params, ctx) {
    IS a master with no drive. Only a word that asks for something builds
    something.
 
-   AND FOUR WORDS STILL HAVE NO DEVICE, reported and never faked. `tape`,
+   ~~AND FOUR WORDS STILL HAVE NO DEVICE, reported and never faked. `tape`,
    `space`, `width` and `tilt` are in every record's vocabulary and no donor
    carries an honest home for any of them: the spec's own suggestions are a
    Utility (stereo width) and an EQ Eight (two shelves about the middle) on the
    Main, plus a send-to-Return-A trim for `space` — and there is no Utility in
-   any of the three donors, no Eq8 on any MainTrack, and no master send. So
-   they come out on the receipt as unmapped, which is the same answer this
-   exporter gives the `phaser` chip. */
+   any of the three donors, no Eq8 on any MainTrack, and no master send.~~
+
+   TWO OF THE FOUR ARE WRONG AND WERE WRONG WHEN THEY WERE WRITTEN, 2026-09-03.
+   The paragraph is kept struck through because this repo does not delete a
+   claim it reverses, and the reversal is not a new donor — it is reading the
+   parameter lists of two devices donor 1 has carried since August.
+
+     `width` -> Utility. Live's Utility IS the `<StereoGain>` tag, and Generic,
+       Ableton2, Answers and Answers2 all carry one. "There is no Utility in any
+       of the three donors" was a search for a word that is not in the schema.
+       Its `StereoWidth` prints 0..4 with the identity at 1, and fields.js's
+       WIDTHS are {none: 1, mono: 0, narrow: 0.5, wide: 1.5, huge: 2.2} — the
+       SAME UNIT (a side-channel gain), the same identity point, every value
+       inside the printed range. fx_bus calls its stage `mswidth`, "a mid/side
+       trim … side x0 is mono, x2.2 is as wide as a two-voice box can be
+       pushed"; Live's Width is a mid/side trim with the side scaled. One
+       parameter, no curve, no enum. The GAIN half of the device stays exactly
+       as refused above — it is unity in the donor and nothing writes it,
+       because the seat dB is already on Live's own mixer Volume.
+
+     `tilt` -> EQ Eight. "No Eq8 on any MainTrack" is true and is not the test:
+       the law is that the exporter emits nothing a donor has not WRITTEN, and
+       Generic's `1-MIDI` Eq8 is the same device als.js has spliced onto every
+       authored track since 2026-08-31 (CHAIR_EQ). Its band 0 is a LOW SHELF and
+       its band 3 is a HIGH SHELF — read off the file, `Mode` 2 and 5 against
+       `Mode` 3 (bell) on the five bands between them, which is also exactly
+       what CHAIR_EQ's own header says of them. fields.js describes tilt as
+       "A SHELF PAIR … the low shelf takes -t and the high shelf +t, so one
+       number rocks the spectrum about its middle", and then says the engine
+       ships a cheaper first-order split that "rocks the same spectrum about the
+       same middle" at 1 kHz. So the shelf pair is the canonical description of
+       the word and Live has it: both shelves to 1000 Hz, band 0 to -t dB, band
+       3 to +t dB, both channels (`ParameterA` and `ParameterB`), and `Mode` is
+       never written — the same refusal setEqBands has always made.
+
+   AND TWO OF THE FOUR STILL HAVE NO DEVICE, reported and never faked:
+
+     `tape` is {wob, sat} — wow-and-flutter and saturation. Nothing in four
+       donors does wow and flutter to a whole mix. Donor 4's Vinyl is the one
+       that LOOKS like an answer and is not: its CracleDensity/CracleVolume are
+       surface noise and its Drive is a fixed-curve tracing distortion, so it
+       has neither half of the word. The Echo's `Wobble_Amount` wobbles the
+       DELAY LINE and not the dry signal. And splicing a second Saturator for
+       the `sat` half alone would ship `wow` sounding exactly like `warm` —
+       half a word is a lie by omission. WHAT WOULD CLOSE IT: any donor with a
+       device that modulates playback speed (a Max for Live tape emulation
+       saved to the Main, or Live's own Hybrid Reverb/Roar chain is not it).
+
+     `space` is {mix, size} and it needs a ROOM the whole mix bleeds into.
+       Generic's Reverb is already spoken for — als.js lands the desk's per-unit
+       `rev` sends on it — and a second Reverb on the Main would be the same
+       room said twice at two levels. Worse, the box's room is not that room:
+       fields.js is explicit that it is "live.js's vapor wash (pre-delay + three
+       damped combs), NOT a convolver", and its `size` scales comb times, so
+       mapping 0.55/0.8/1.2/1.8 onto a Live Reverb's DecayTime would be an
+       invented curve of exactly the kind this file refuses. WHAT WOULD CLOSE
+       IT: a master SEND. No donor has one — `TrackSendHolder` exists on tracks,
+       never on the MainTrack — so the honest shape (Main -> Return A at
+       SPACES.mix) cannot be written out of anything Live has given us. */
 export const MASTER_DRIVES = { none: 0, hair: 0.06, warm: 0.16, dirt: 0.32, crush: 0.62 };
 export const MASTER_GLUES = {
   none:   { thr: 0,   knee: 0,  ratio: 1,   atk: 0.030, rel: 0.25, makeup: 1 },
@@ -819,8 +1065,28 @@ export const MASTER_CEILINGS = {
   loud:   { thr: -3,   push: 1.7, clip: 0.95 },
   louder: { thr: -3,   push: 2.6, clip: 0.95 },
 };
-/** The four master words with no device in any donor, in fields.js MASTER order. */
-export const MASTER_HOMELESS = ["tape", "space", "width", "tilt"];
+/** The master words with no device in any donor, in fields.js MASTER order. */
+export const MASTER_HOMELESS = ["tape", "space"];
+/** Why each of them is homeless, printed on the receipt instead of a shrug. */
+export const MASTER_HOMELESS_WHY = {
+  tape: "wow-and-flutter plus saturation; no donor device modulates playback " +
+        "speed, and donor 4's Vinyl is crackle and tracing distortion, not tape",
+  space: "a room the whole mix bleeds into; Generic's Reverb already carries " +
+         "the desk's own rev sends, and no donor MainTrack has a send to add one",
+};
+/** WIDTHS -> Utility/StereoWidth: the same unit, so the table is the identity. */
+export const MASTER_WIDTHS = { none: 1, mono: 0, narrow: 0.5, wide: 1.5, huge: 2.2 };
+/** TILTS -> Eq8: dB, the low shelf takes -t and the high shelf +t. */
+export const MASTER_TILTS = { none: 0, dark: -4, warm: -2, clear: 2, bright: 4 };
+/** Where the tilt's two shelves meet — fx_bus's own split frequency. */
+export const MASTER_TILT_HZ = 1000;
+/** Eq8 band 0 is the LOW SHELF and band 3 the HIGH SHELF, read off the donor. */
+export const TILT_BANDS = { low: 0, high: 3 };
+/** The four paths one Eq8 band's Freq/Gain live at — both channels move together. */
+export const tiltPaths = (band) => [
+  "Bands." + band + "/ParameterA/Freq", "Bands." + band + "/ParameterA/Gain",
+  "Bands." + band + "/ParameterB/Freq", "Bands." + band + "/ParameterB/Gain",
+];
 
 const dbOfGain = (g) => 20 * Math.log10(Math.max(1e-6, g));
 /* THE DRIVE IN dB IS THE ENGINE'S OWN ARITHMETIC, quoted from fields.js's
@@ -891,6 +1157,38 @@ export function masterDevices(lib, master) {
         dbOfGain(g.makeup).toFixed(2) + " dB" });
   }
 
+  /* WIDTH — one parameter, and the table above is the identity because Live's
+     Width and fx_bus's `mswidth` are the same number: a gain on the side
+     channel with 1 = untouched. `none` (side x1) writes no device at all, by
+     the same law `drive: none` does — a Utility at unity IS a master with no
+     width word on it. */
+  const ww = word("width");
+  const wv = ww && MASTER_WIDTHS[ww];
+  if (ww && wv != null && wv !== 1) {
+    add("StereoGain", { StereoWidth: wv },
+      { word: "width", text: "width " + ww + " -> Utility StereoWidth " + wv +
+        " (side gain; 1 = untouched)" });
+  }
+
+  /* TILT — a shelf pair on the Eq8, band 0 down and band 3 up, both meeting at
+     1 kHz. `Mode` is never written: the bands are already a low shelf and a
+     high shelf in the donor and that is what makes this honest. */
+  const tw = word("tilt");
+  const tv = tw && MASTER_TILTS[tw];
+  if (tw && tv != null && tv !== 0) {
+    const table = {};
+    for (const [half, band] of Object.entries(TILT_BANDS)) {
+      const g2 = half === "low" ? -tv : tv;
+      const [fa, ga, fb, gb] = tiltPaths(band);
+      table[fa] = MASTER_TILT_HZ; table[ga] = g2;
+      table[fb] = MASTER_TILT_HZ; table[gb] = g2;
+    }
+    add("Eq8", table,
+      { word: "tilt", text: "tilt " + tw + " -> EQ Eight shelves at " +
+        MASTER_TILT_HZ + " Hz, low " + (-tv) + " dB / high " + (tv > 0 ? "+" : "") +
+        tv + " dB" });
+  }
+
   const cw = word("ceiling");
   const c = cw && MASTER_CEILINGS[cw];
   if (c && c.thr < 0) {
@@ -909,9 +1207,7 @@ export function masterDevices(lib, master) {
   for (const k of MASTER_HOMELESS) {
     const w = word(k);
     if (w && w !== "none")
-      out.unmapped.push("master " + k + " (" + w + ") — no donor carries a device for it " +
-        "(the spec names Utility for width and an EQ Eight tilt on the Main; neither is in " +
-        "any donor, and there is no master send for `space`)");
+      out.unmapped.push("master " + k + " (" + w + ") — " + MASTER_HOMELESS_WHY[k]);
   }
   return out;
 }

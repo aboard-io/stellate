@@ -20,13 +20,24 @@
 //   Gate Q  live-devices.js resOfQ vs audio/to-engine.js toneRecipe
 // ...and the three the ANSWERS round added on 2026-09-03, when Paul's third
 // donor closed the master-chain row and one of the two refused enums:
-//   Gate S  the two enums, asserted against donor/Answers.als ITSELF — the
-//           highpass Paul switched, the sync switches he turned on, and the
-//           sixteenth arithmetic the synced echo is written with
+//   Gate S  the two enums, asserted against the donors THEMSELVES — the
+//           highpass Paul switched, the sync switches he turned on, and (since
+//           donor 4) the sixteenth BUTTON TABLE the synced echo is written
+//           with, against every Delay in all four files
 //   Gate G  live-devices.js MASTER_DRIVES/GLUES/CEILINGS vs fields.js
 //   Gate B  the master BUS in the file: a record with a `master` carries the
-//           three devices with every knob inside the range the donor prints,
-//           and a record without one leaves the donor's MainTrack untouched
+//           devices its words ask for with every knob inside the range the
+//           donor prints, and a record without one leaves the donor's MainTrack
+//           untouched — plus a SYNTHETIC full master, because almost no record
+//           has one and `width` and `tilt` would otherwise never be read back
+// ...and the one the ANSWERS2 round added on 2026-09-03, when Paul's fourth
+// donor settled the sixteenth table and brought the two devices two chips had
+// been going without:
+//   Gate D  donor 4's devices — `phaser` on a PhaserNew (it had NO device at
+//           all) and `crunch` on an Amp + Cabinet (Roar could say two of its
+//           nine knobs), built against the real library, every knob inside the
+//           donor's printed range, and read back out of the file when the
+//           record names one
 //
 // WHY GATE 1 RE-DERIVES THE SCORE. "TEST THE ARTIFACT: gates must read the
 // RENDERED output; three features shipped broken while every check passed."
@@ -70,10 +81,12 @@ import { readFileSync } from "node:fs";
 import { balancedAt, elementAfter, pointeeIds, paceView,
          columnNames, clipNameOf, CHAIR_LEVEL, LEVEL_GAIN } from "../../nukernel/export/als.js";
 import { instrumentTagOf, deviceOf, instrumentParams, paramRange, getParam,
-         resOfQ, FX_PARAMS, KIT_FILTER, deviceLibrary, masterDevices,
-         delaySyncIndex, AF_LOWPASS, AF_HIGHPASS, DELAY_SYNC_MAX,
-         DELAY_SYNC_PAULS_VALUE, MASTER_DRIVES, MASTER_GLUES,
-         MASTER_CEILINGS } from "../../nukernel/export/live-devices.js";
+         resOfQ, FX_PARAMS, KIT_FILTER, deviceLibrary, masterDevices, buildFx,
+         chipParams, delaySyncIndex, delaySixteenthsAt, AF_LOWPASS, AF_HIGHPASS,
+         DELAY_SYNC_MAX, DELAY_SYNC_BUTTONS, DELAY_SYNC_WITNESSES,
+         MASTER_DRIVES, MASTER_GLUES, MASTER_CEILINGS, MASTER_WIDTHS,
+         MASTER_TILTS, MASTER_TILT_HZ, TILT_BANDS, tiltPaths,
+         MASTER_HOMELESS } from "../../nukernel/export/live-devices.js";
 import { MOT_LANES } from "../../nukernel/export/score.js";
 import { createRequire } from "node:module";
 import { loadScore } from "./score-node.mjs";
@@ -86,8 +99,13 @@ import { loadScore } from "./score-node.mjs";
 const PARAMS_OF = {
   Saturator: ["BaseDrive", "DryWet"],
   GlueCompressor: ["Threshold", "Ratio", "Makeup"],
+  StereoGain: ["StereoWidth"],
+  Eq8: [...tiltPaths(TILT_BANDS.low), ...tiltPaths(TILT_BANDS.high)],
   Limiter: ["Ceiling", "Gain"],
 };
+/* The master chain in the order masterDevices builds it, which is fields.js
+   MASTER's own order with the two words that have no device left out. */
+const MASTER_TAGS = ["Saturator", "GlueCompressor", "StereoGain", "Eq8", "Limiter"];
 
 const TOKEN = /<(\/?)([A-Za-z0-9._]+)((?:"[^"]*"|[^>"])*?)(\/?)>/g;
 const attrsOf = (s) => (s.match(/([A-Za-z0-9._]+)\s*=\s*"/g) || [])
@@ -194,6 +212,9 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
   const rackXml = gunzipSync(readFileSync(new URL("./donor/Ableton2.als", import.meta.url))).toString("utf8");
   // ...and the third, which the master chain and both decoded enums come from
   const answersXml = gunzipSync(readFileSync(new URL("./donor/Answers.als", import.meta.url))).toString("utf8");
+  // ...and the fourth, which settled the sixteenth table and brought the
+  // Phaser, the Amp and the Cabinet (nukernel/export/fxrack2.js)
+  const answers2Xml = gunzipSync(readFileSync(new URL("./donor/Answers2.als", import.meta.url))).toString("utf8");
   const fail = (g, msg) => { console.error("  FAIL  " + g + " — " + msg); return false; };
   const pass = (g, msg) => { console.log("  pass  " + g + " — " + msg); return true; };
   let ok = true;
@@ -296,7 +317,8 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
      measurable: Answers is Ableton2 with tracks removed plus four devices, so
      the shapes it adds are the three master devices' parameters and nothing
      else — it has no sampler, no SampleRef and no AudioClip of its own. */
-  const donorShapes = new Set([...shapes(donorXml), ...shapes(rackXml), ...shapes(answersXml)]);
+  const donorShapes = new Set([...shapes(donorXml), ...shapes(rackXml),
+                               ...shapes(answersXml), ...shapes(answers2Xml)]);
   const novel = [...shapes(xml)].filter((s) => !donorShapes.has(s));
   if (novel.length) ok = fail("gate 2", novel.length + " element shape(s) the donor never wrote: " +
     novel.slice(0, 6).join("  ") + " — Live 12.4.3 wrote every other byte of this file; " +
@@ -589,24 +611,30 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
         div + ", clamped " + lo + ".." + hi);
     } catch (e) { ok = fail("gate Q", "cannot read toneRecipe: " + e.message); }
 
-    /* ---- Gate S — THE TWO ENUMS, ASSERTED AGAINST THE FILE THAT DECODED
-       THEM. donor/README.md carried this ask from 2026-08-31 to 2026-09-03:
-       "put an Auto Filter on any track and switch its filter to HIGHPASS; put
-       a Delay beside it and set its left and right times to a synced 1/8."
-       Answers.als is the answer, and everything live-devices.js believes about
-       those two enums is re-read out of it here on every run — so the day a
-       re-save moves a value, this goes red rather than the export quietly
-       writing the wrong filter. */
+    /* ---- Gate S — THE TWO ENUMS, ASSERTED AGAINST THE FILES THAT DECODED
+       THEM. donor/README.md carried the first ask from 2026-08-31 to
+       2026-09-03 ("put an Auto Filter on any track and switch its filter to
+       HIGHPASS; put a Delay beside it and set its left and right times to a
+       synced 1/8") and Answers.als answered it. The SIXTEENTH INDEX took a
+       second file and a sentence: Paul, hours later, with the device on screen
+       — "So the Ableton number for delay is 'delay time in 16th notes,' so it
+       should be 2." Answers2.als is that click, and this gate now asserts the
+       BUTTON TABLE — sixteenths -> position in [1,2,3,4,5,6,8,16] — against
+       every Delay in all four donors, so the day a re-save moves a value the
+       reading goes red rather than the export quietly writing a wrong echo.
+
+       THE "CONFIRM IN LIVE" CLAUSE THAT USED TO END THIS GATE IS GONE, and
+       that is the point of the round: the discrepancy it printed was never a
+       discrepancy. Paul's index 6 was the button labelled 8 — position 6 —
+       and the arithmetic reading was simply wrong about the last two buttons. */
     {
       const af = deviceOf(answersXml, "AutoFilter2");
       const afG = deviceOf(donorXml, "AutoFilter2");
       const afA = deviceOf(rackXml, "AutoFilter2");
-      const dl = deviceOf(answersXml, "Delay");          // Paul's, on 1-DS Drum Rack
       const g = (x, path) => (x ? getParam(x, path) : null);
       const r = af && paramRange(af, "Filter_Type");
-      const rs = dl && paramRange(dl, "DelayLine_SyncedSixteenthL");
       let bad = null;
-      if (!af || !dl) bad = "donor/Answers.als has no AutoFilter2 and/or no Delay";
+      if (!af) bad = "donor/Answers.als has no AutoFilter2";
       else if (+g(af, "Filter_Type") !== AF_HIGHPASS)
         bad = "Answers' AutoFilter2 reads Filter_Type " + g(af, "Filter_Type") +
               ", live-devices.js says highpass is " + AF_HIGHPASS;
@@ -615,26 +643,61 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
               " (Generic " + g(afG, "Filter_Type") + ", Ableton2 " + g(afA, "Filter_Type") + ")";
       else if (!r || r.min !== 0 || r.max !== 9)
         bad = "Filter_Type's range is no longer 0..9";
-      else if (g(dl, "DelayLine_SyncL") !== "true" || g(dl, "DelayLine_SyncR") !== "true")
-        bad = "Answers' Delay is not synced (SyncL " + g(dl, "DelayLine_SyncL") +
-              ", SyncR " + g(dl, "DelayLine_SyncR") + ")";
-      else if (+g(dl, "DelayLine_SyncedSixteenthL") !== DELAY_SYNC_PAULS_VALUE)
-        bad = "Answers' Delay reads SyncedSixteenthL " + g(dl, "DelayLine_SyncedSixteenthL") +
-              ", live-devices.js records " + DELAY_SYNC_PAULS_VALUE;
-      else if (!rs || rs.min !== 0 || rs.max !== DELAY_SYNC_MAX)
-        bad = "DelayLine_SyncedSixteenth's range is no longer 0.." + DELAY_SYNC_MAX;
-      /* THE ARITHMETIC, AND ITS ONE PIECE OF IN-FILE CORROBORATION. Reading
-         (a) in live-devices.js says index = sixteenths - 1. The untouched
-         Delay in Ableton2 sits at index 2 AND at a free-running
-         DelayLine_TimeL of 0.375 SECONDS (its own range prints the unit), and
-         at that donor's own tempo 0.375 s is exactly 3 sixteenths — so the
-         two halves of one untouched device agree with the reading. This
-         computes it rather than quoting it: if a re-save moves either number,
-         the corroboration is gone and the gate says so. */
+
+      /* ---- THE SIXTEENTH TABLE, AGAINST ALL FIVE WITNESSES.
+         Every Delay any donor carries, in document order, with the index
+         live-devices.js DELAY_SYNC_WITNESSES says it holds. Two of them are
+         Paul's own clicks and three are untouched controls; the table has to
+         explain all five or it is not the table. */
+      const DONORS = { Generic: donorXml, Ableton2: rackXml,
+                       Answers: answersXml, Answers2: answers2Xml };
+      const delaysOf = (xml) => {
+        const out = [];
+        for (let i = xml.indexOf("<Delay Id="); i >= 0; i = xml.indexOf("<Delay Id=", i + 1)) {
+          const [a, b] = balancedAt(xml, i);
+          out.push(xml.slice(a, b));
+        }
+        return out;
+      };
+      const nth = { Generic: 0, Ableton2: 0, Answers: 0, Answers2: 0 };
+      const seenIdx = [];
+      if (!bad) for (const w of DELAY_SYNC_WITNESSES) {
+        const all = delaysOf(DONORS[w.donor]);
+        const d = all[nth[w.donor]++];
+        if (!d) { bad = w.donor + " has no Delay #" + nth[w.donor]; break; }
+        const idx = +getParam(d, "DelayLine_SyncedSixteenthL");
+        const rr = paramRange(d, "DelayLine_SyncedSixteenthL");
+        if (idx !== w.index) {
+          bad = w.donor + " " + w.where + " reads SyncedSixteenthL " + idx +
+                ", live-devices.js records " + w.index + " (" + w.note + ")";
+          break;
+        }
+        if (!rr || rr.min !== 0 || rr.max !== DELAY_SYNC_MAX) {
+          bad = w.donor + "'s DelayLine_SyncedSixteenth range is no longer 0.." + DELAY_SYNC_MAX;
+          break;
+        }
+        if (delaySixteenthsAt(idx) == null) {
+          bad = "index " + idx + " is off the end of DELAY_SYNC_BUTTONS";
+          break;
+        }
+        seenIdx.push(w.donor + " " + idx + '="' + delaySixteenthsAt(idx) + '"');
+      }
+      // ...and the switches Paul turned on, on both of the devices he touched.
+      if (!bad) for (const w of DELAY_SYNC_WITNESSES.filter((x) => x.hand)) {
+        const d = delaysOf(DONORS[w.donor])[0];
+        if (getParam(d, "DelayLine_SyncL") !== "true" || getParam(d, "DelayLine_SyncR") !== "true")
+          bad = w.donor + "'s Delay is not synced (SyncL " + getParam(d, "DelayLine_SyncL") +
+                ", SyncR " + getParam(d, "DelayLine_SyncR") + ")";
+      }
+      /* THE ARITHMETIC WITNESS, computed rather than quoted: Ableton2's
+         untouched Delay sits at index 2 AND at a free-running DelayLine_TimeL
+         of 0.375 SECONDS (its own range prints the unit), and at that donor's
+         own tempo 0.375 s is exactly 3 sixteenths — so DELAY_SYNC_BUTTONS[2]
+         has to be 3, which is the one place the table and the old arithmetic
+         agreed and still do. */
+      let corr = null;
       if (!bad) {
-        const d2 = deviceOf(rackXml, "Delay");
-        // that donor's OWN tempo, off its one <Tempo> element — the arithmetic
-        // below is only true at the tempo the file was saved at
+        const d2 = delaysOf(rackXml)[0];
         const tempo = (() => { const t = elementAfter(rackXml, "Tempo"); return t ? +val(t.text, "Manual") : 120; })();
         const secs = +getParam(d2, "DelayLine_TimeL");
         const sixteenths = secs * (tempo / 60) * 4;
@@ -645,14 +708,43 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
         else if (delaySyncIndex(sixteenths) !== idx)
           bad = "delaySyncIndex(" + sixteenths + ") = " + delaySyncIndex(sixteenths) +
                 ", but that device's own index is " + idx;
-        else if (delaySyncIndex(2.5) !== null || delaySyncIndex(0) !== null ||
-                 delaySyncIndex(DELAY_SYNC_MAX + 2) !== null)
-          bad = "delaySyncIndex accepts a time it cannot spell";
+        else corr = secs.toFixed(3) + " s at " + tempo + " bpm = 3/16 at index " + idx;
+      }
+      /* THE THIRD CORROBORATION, and it needed no click at all. Answers2 also
+         carries an ECHO — Live's modern delay — and ITS equivalent parameter
+         prints a range of 1..16, the sixteenth COUNT. Eight values cannot be a
+         count that runs to sixteen, so the old Delay's 0..7 is a POSITION. The
+         file says so on its own. */
+      let echoSays = null;
+      if (!bad) {
+        const ec = deviceOf(answers2Xml, "Echo");
+        const er = ec && paramRange(ec, "Delay_SyncedSixteenthL");
+        if (!ec) bad = "donor/Answers2.als has no Echo — the count-vs-position corroboration is gone";
+        else if (!er || er.min !== 1 || er.max !== DELAY_SYNC_BUTTONS[DELAY_SYNC_BUTTONS.length - 1])
+          bad = "Echo/Delay_SyncedSixteenth's range is " + (er ? er.min + ".." + er.max : "absent") +
+                ", not the 1..16 that makes it a COUNT beside the Delay's POSITION";
+        else echoSays = "Echo/Delay_SyncedSixteenth is 1.." + er.max + " (a COUNT) beside " +
+                        "Delay's 0.." + DELAY_SYNC_MAX + " (a POSITION)";
+      }
+      /* AND THE REFUSALS, which is the half of the table the arithmetic got
+         wrong in both directions: 7 sixteenths has no button and must go down
+         the seconds path; 8 and 16 have one and the arithmetic could not spell
+         either (it wrote 7 for the eight and nothing at all for the sixteen). */
+      if (!bad) {
+        const wantNull = [0, 2.5, 7, 9, 12, 15, 17];
+        for (const n of wantNull)
+          if (delaySyncIndex(n) !== null) { bad = "delaySyncIndex(" + n + ") = " +
+            delaySyncIndex(n) + ", but no button spells " + n + " sixteenths"; break; }
+        if (!bad) for (let i = 0; i < DELAY_SYNC_BUTTONS.length; i++)
+          if (delaySyncIndex(DELAY_SYNC_BUTTONS[i]) !== i) {
+            bad = "delaySyncIndex(" + DELAY_SYNC_BUTTONS[i] + ") = " +
+                  delaySyncIndex(DELAY_SYNC_BUTTONS[i]) + ", want " + i; break;
+          }
       }
       /* ...AND THE ARTIFACT. If this record has an echo chip, the Delay in the
          FILE must be synced to the index the chip's own time asks for —
          "gates must read the RENDERED output", which is the whole reason the
-         two above are not enough. */
+         checks above are not enough. */
       let seen = null;
       if (!bad) {
         const wantsEcho = score.boxes.some((b) => (b.fx || []).some((k) => k === "echo" || k === "delay"));
@@ -674,19 +766,144 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
                 " for " + FX_PARAMS.echo.timeBars + " bars");
           }
           if (!found) bad = bad || "the record names an echo chip and no authored track carries a Delay";
-          seen = found + " echo Delay(s) synced at index " + want +
-                 " = " + (want + 1) + "/16 of the bar";
+          seen = found + ' echo Delay(s) at index ' + want + ' = the button "' +
+                 delaySixteenthsAt(want) + '" = ' + delaySixteenthsAt(want) + "/16 of the bar";
         }
       }
       if (bad) ok = fail("gate S", bad);
-      else pass("gate S", "the two enums read out of donor/Answers.als itself: " +
+      else pass("gate S", "both enums read out of the donors themselves: " +
         "AutoFilter2 Filter_Type " + AF_HIGHPASS + " = HIGHPASS (untouched donors " +
-        AF_LOWPASS + " = lowpass) · Delay SyncL/R true, SyncedSixteenth 0.." + DELAY_SYNC_MAX +
-        " with index = sixteenths - 1, corroborated by the untouched Delay's own 0.375 s" +
-        (seen ? " · " + seen : "") +
-        " — Paul's saved index is " + DELAY_SYNC_PAULS_VALUE + " for what the ask called a " +
-        "synced 1/8, which that arithmetic calls " + (DELAY_SYNC_PAULS_VALUE + 1) +
-        "/16: CONFIRM IN LIVE (donor/README.md)");
+        AF_LOWPASS + " = lowpass) · DelayLine_SyncedSixteenth is a POSITION in [" +
+        DELAY_SYNC_BUTTONS.join(",") + "], asserted against all " +
+        DELAY_SYNC_WITNESSES.length + " donor Delays (" + seenIdx.join(", ") + ")" +
+        (corr ? " · " + corr : "") + (echoSays ? " · " + echoSays : "") +
+        (seen ? " · " + seen : ""));
+    }
+
+    /* ---- Gate D — DONOR 4'S DEVICES, IN THE FILE AND IN THE MAPPING.
+       Paul, 2026-09-03: "I added a zip with all the missing effects and many
+       more." Two chips changed hands with that file and both of them are the
+       kind of change this repo has a memory note about:
+
+         `phaser` had NO DEVICE AT ALL. From the day the chips landed it came
+           out on the receipt as "neither donor carries a Phaser" — a word the
+           box can say, costed and drawn, arriving as nothing.
+         `crunch` had a device that could only say TWO of its nine knobs. Roar
+           took `drive` and `mix`; low / mid / high / presence / level went
+           nowhere, which is [[declared-but-never-arriving]] exactly. Live's Amp
+           has all six on one printed 0..10 scale, and the Cabinet is the DSP's
+           own fixed cab.
+
+       So this gate does two things, and the first one runs on EVERY record
+       whether or not it names either chip — because almost none of them do,
+       and a gate that only fires on a record with a phaser is a gate that will
+       not fire. It builds both chips against the real four-rack library and
+       asserts every knob landed, at the value the chip asks for, inside the
+       range the donor prints. Then, if the record DOES name one, it reads the
+       device back out of the rendered XML. */
+    {
+      const { FXRACK_GZIP_B64 } = await import("../../nukernel/export/fxrack.js");
+      const { FXRACK2_GZIP_B64 } = await import("../../nukernel/export/fxrack2.js");
+      const { MASTERRACK_GZIP_B64: MR } = await import("../../nukernel/export/masterrack.js");
+      const un = (b) => gunzipSync(Buffer.from(b, "base64")).toString("utf8");
+      const lib = deviceLibrary(donorXml, un(FXRACK_GZIP_B64), un(MR), un(FXRACK2_GZIP_B64));
+      let bad = null;
+      /* WHAT EACH CHIP MUST LAND, as {path: value} — the same arithmetic
+         live-devices.js does, written a second time here on purpose. A copy of
+         the mapping in the gate is what makes the gate an independent reader
+         rather than a mirror; gate F does the same for FX_PARAMS. */
+      const P = FX_PARAMS.phaser, C = FX_PARAMS.crunch;
+      const EXPECT = {
+        phaser: { device: "PhaserNew", extra: [], knobs: {
+          Modulation_Frequency: P.rate, Modulation_Amount: P.depth, DryWet: P.mix,
+          Notches: 2, Feedback: 0.5, CenterFrequency: Math.sqrt(180 * 3200) },
+          flags: { Modulation_Sync: "false" } },
+        crunch: { device: "Amp", extra: ["Cabinet"], knobs: {
+          Gain: C.drive * 10, Bass: C.low * 10, Middle: C.mid * 10,
+          Treble: C.high * 10, Presence: C.presence * 10, Volume: C.level * 10,
+          DryWet: C.mix }, flags: {} },
+      };
+      const near = (a, b) => Math.abs(a - b) < 1e-3;
+      for (const [chip, want] of Object.entries(EXPECT)) {
+        if (bad) break;
+        const built = buildFx(lib, chip, chipParams(chip), { bpm: 120, beatsPerBar: 4 });
+        if (built.unmapped || built.missing) {
+          bad = chip + " builds nothing: " + (built.unmapped || ("no " + built.missing +
+            " in the four-rack library")); break;
+        }
+        if (built.device !== want.device) {
+          bad = chip + " -> " + built.device + ", want " + want.device; break;
+        }
+        if ((built.extra || []).map((e) => e.device).join("/") !== want.extra.join("/")) {
+          bad = chip + " brings [" + (built.extra || []).map((e) => e.device).join(",") +
+            "], want [" + want.extra.join(",") + "]"; break;
+        }
+        for (const [path, v] of Object.entries(want.knobs)) {
+          const got = +getParam(built.xml, path);
+          const r = paramRange(built.xml, path);
+          if (!near(got, v)) { bad = chip + " -> " + want.device + "/" + path + " = " + got +
+            ", want " + v; break; }
+          if (r && (got < r.min || got > r.max)) { bad = chip + " -> " + path + " = " + got +
+            " is outside the donor's own " + r.min + ".." + r.max; break; }
+        }
+        if (bad) break;
+        for (const [path, v] of Object.entries(want.flags))
+          if (getParam(built.xml, path) !== v) { bad = chip + " -> " + path + " is " +
+            getParam(built.xml, path) + ", want " + v; break; }
+        if (bad) break;
+        /* NOT A COUNT. `set` is how many bytes CHANGED, not how many knobs were
+           written — the phaser asks for Notches 2 and Modulation_Sync false and
+           the donor already carries both, so a correct build reports 6 where
+           the mapping names 8. Measured, and it is why this line is a floor and
+           not an equality: what proves a path is real is the value read back
+           above, which is NaN for a path that matched nothing and fails `near`
+           before it gets here. */
+        if (!(built.set > 0))
+          bad = chip + " -> " + want.device + " changed nothing at all";
+      }
+      /* THE PROBE: ask for a chip whose device the library does NOT carry and
+         assert the exporter reports it rather than substituting. This is the
+         behaviour the `phaser` row itself relied on for a fortnight, and it has
+         to keep working now that the phaser has somewhere to go. */
+      if (!bad) {
+        const thin = deviceLibrary(donorXml, "", "", "");
+        const b2 = buildFx(thin, "phaser", chipParams("phaser"), {});
+        if (!b2.missing) bad = "a library with no fx rack 2 still built a phaser — " +
+          "the missing-device report is broken";
+      }
+      /* ...AND THE ARTIFACT, when this record actually names one of the two. */
+      let seen = [];
+      if (!bad) {
+        const mine = tracksOf(xml).filter((t) => !donorNames.has(t.name));
+        for (const chip of ["phaser", "crunch"]) {
+          const asked = score.boxes.some((b) => (b.fx || []).some((k) =>
+            k === chip || (chip === "crunch" && k === "higain")));
+          if (!asked) continue;
+          const want = EXPECT[chip];
+          let found = 0;
+          for (const t of mine) {
+            const d = deviceOf(t.text, want.device);
+            if (!d) continue;
+            found++;
+            for (const [path, v] of Object.entries(want.knobs))
+              if (!near(+getParam(d, path), v))
+                bad = bad || (want.device + " on " + t.name + " has " + path + " = " +
+                  getParam(d, path) + ", want " + v);
+            for (const tag of want.extra)
+              if (!t.text.includes("<" + tag + " Id="))
+                bad = bad || (t.name + " carries a " + want.device + " and no " + tag);
+          }
+          if (!found) bad = bad || ("the record names a " + chip + " chip and no authored " +
+            "track carries a " + want.device);
+          seen.push(found + " " + want.device + "(s) for " + chip);
+        }
+      }
+      if (bad) ok = fail("gate D", bad);
+      else pass("gate D", "donor 4's devices, every knob read back: phaser -> PhaserNew " +
+        "(rate/depth/mix from the chip, notches/feedback/centre from the DSP's own " +
+        "constants), crunch -> Amp + Cabinet (six knobs on Live's 0..10 amp scale, " +
+        "where Roar could say two) · missing-rack probe reports instead of substituting" +
+        (seen.length ? " · " + seen.join(", ") : " · this record names neither chip"));
     }
 
     /* ---- Gate G — the master vocabulary has not drifted from fields.js.
@@ -696,8 +913,10 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
     {
       const req = createRequire(import.meta.url);
       const NF = req("../../nukernel/fields.js");
-      const real = { drive: NF.DRIVES, glue: NF.GLUES, ceiling: NF.CEILINGS };
-      const mine = { drive: MASTER_DRIVES, glue: MASTER_GLUES, ceiling: MASTER_CEILINGS };
+      const real = { drive: NF.DRIVES, glue: NF.GLUES, ceiling: NF.CEILINGS,
+                     width: NF.WIDTHS, tilt: NF.TILTS };
+      const mine = { drive: MASTER_DRIVES, glue: MASTER_GLUES, ceiling: MASTER_CEILINGS,
+                     width: MASTER_WIDTHS, tilt: MASTER_TILTS };
       let bad = null;
       for (const k of Object.keys(mine)) {
         if (!real[k]) { bad = bad || ("fields.js exports no table for " + k); continue; }
@@ -707,7 +926,11 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
       if (bad) ok = fail("gate G", "live-devices.js has drifted from fields.js MASTER: " + bad);
       else pass("gate G", "the master vocabulary matches fields.js exactly · " +
         Object.keys(MASTER_DRIVES).length + " drives, " + Object.keys(MASTER_GLUES).length +
-        " glues, " + Object.keys(MASTER_CEILINGS).length + " ceilings");
+        " glues, " + Object.keys(MASTER_WIDTHS).length + " widths, " +
+        Object.keys(MASTER_TILTS).length + " tilts, " +
+        Object.keys(MASTER_CEILINGS).length + " ceilings · " +
+        MASTER_HOMELESS.length + " word(s) still with no device (" +
+        MASTER_HOMELESS.join(", ") + ")");
     }
 
     /* ---- Gate B — THE MASTER BUS, READ BACK OUT OF THE FILE.
@@ -722,12 +945,17 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
       const mrack = gunzipSync(Buffer.from(MASTERRACK_GZIP_B64, "base64")).toString("utf8");
       const lib = deviceLibrary(donorXml, "", mrack);
       const want = masterDevices(lib, score.master);
-      const TAGS = ["Saturator", "GlueCompressor", "Limiter"];
+      const TAGS = MASTER_TAGS;
       // what the OUTPUT's MainTrack actually holds, in its own order
       const check = (x) => {
         const mt = elementAfter(x, "MainTrack");
         if (!mt) return "no MainTrack in the output";
-        const have = TAGS.filter((t) => mt.text.includes("<" + t + " Id="));
+        /* IN THE DOCUMENT'S OWN ORDER, not in the table's. A `filter` over
+           MASTER_TAGS answers the table back at itself and would pass a file
+           whose Limiter sat first — which is a different master chain. Read
+           the tags off the MainTrack in the order Live will run them. */
+        const have = [...mt.text.matchAll(/<([A-Za-z0-9]+) Id="\d+"/g)]
+          .map((m) => m[1]).filter((t) => TAGS.includes(t));
         const wantTags = want.devices.map((d) => d.tag);
         if (have.join("/") !== wantTags.join("/"))
           return "the Main track carries " + (have.join("/") || "no master device") +
@@ -758,7 +986,14 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
         /* THE PROBE, same idea as gate 0's and gate E's: move one knob on a
            copy and assert this check goes red. A gate nobody has seen fail is
            a gate nobody has tested. */
-        const d0 = want.devices[0], p0 = PARAMS_OF[d0.tag][0];
+        // A device whose knob is a plain leaf, because the probe below rewrites
+        // the Manual by regex: the Eq8's tilt paths are nested three deep
+        // (`Bands.0/ParameterA/Gain`) and there is always a leaf device beside
+        // it — a record with a tilt and nothing else is the one case there is
+        // not, and it falls through to the first device rather than to nothing.
+        const flat = want.devices.find((d) => PARAMS_OF[d.tag].every((x) => !x.includes("/")));
+        const d0 = flat || want.devices[0];
+        const p0 = PARAMS_OF[d0.tag].find((x) => !x.includes("/")) || PARAMS_OF[d0.tag][0];
         const at = xml.indexOf("<" + d0.tag + " Id=", xml.indexOf("<MainTrack "));
         const [a, b] = balancedAt(xml, at);
         const moved = xml.slice(0, a) +
@@ -770,6 +1005,78 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
           "knob equal to what the record's words ask for and inside the donor's own range · " +
           want.devices.map((d) => d.tag).join(" -> ") + " · moved-knob probe caught" +
           (want.unmapped.length ? " · " + want.unmapped.length + " word(s) with no device anywhere" : ""));
+      }
+
+      /* ---- THE SYNTHETIC MASTER, because almost no record has one.
+         `master` is PRESENT-ONLY (score.js: "a record that never touched the
+         master exports as it always did"), so on every preset in the repo the
+         branch above is the absent branch and the two words that landed on
+         2026-09-03 — `width` on the Utility, `tilt` on the EQ Eight — would
+         never once be read back. This builds a full master out of the
+         vocabulary itself and asserts the chain, the order and every knob,
+         against the ranges the DONOR prints. It is a unit test living in the
+         gate because the alternative is a feature nobody's machine ever ran. */
+      {
+        const full = { drive: "warm", glue: "glue", tape: "tape", space: "hall",
+                       width: "huge", tilt: "bright", ceiling: "safe" };
+        const syn = masterDevices(lib, full);
+        let sbad = null;
+        if (syn.devices.map((d) => d.tag).join("/") !== MASTER_TAGS.join("/"))
+          sbad = "a full master builds " + syn.devices.map((d) => d.tag).join("/") +
+                 ", want " + MASTER_TAGS.join("/") + " in fields.js MASTER order";
+        else if (syn.unmapped.length !== MASTER_HOMELESS.length)
+          sbad = syn.unmapped.length + " homeless word(s), want " + MASTER_HOMELESS.length +
+                 " (" + MASTER_HOMELESS.join(", ") + ")";
+        if (!sbad) {
+          const sg = syn.devices.find((d) => d.tag === "StereoGain");
+          const w = +getParam(sg.xml, "StereoWidth");
+          const rw = paramRange(sg.xml, "StereoWidth");
+          if (w !== MASTER_WIDTHS.huge)
+            sbad = "width huge -> StereoWidth " + w + ", want " + MASTER_WIDTHS.huge;
+          else if (!rw || w < rw.min || w > rw.max)
+            sbad = "StereoWidth " + w + " is outside the donor's own " +
+                   (rw ? rw.min + ".." + rw.max : "absent range");
+        }
+        if (!sbad) {
+          const eq = syn.devices.find((d) => d.tag === "Eq8");
+          const t = MASTER_TILTS.bright;
+          for (const [half, band] of Object.entries(TILT_BANDS)) {
+            const wantG = half === "low" ? -t : t;
+            for (const path of tiltPaths(band)) {
+              const v = +getParam(eq.xml, path);
+              const wantV = path.endsWith("Freq") ? MASTER_TILT_HZ : wantG;
+              if (Math.abs(v - wantV) > 1e-6) { sbad = "tilt bright -> " + path + " = " + v +
+                ", want " + wantV; break; }
+              const rr = paramRange(eq.xml, path);
+              if (rr && (v < rr.min || v > rr.max)) { sbad = path + " = " + v +
+                " is outside the donor's own " + rr.min + ".." + rr.max; break; }
+            }
+            if (sbad) break;
+          }
+          /* ...AND THE MODE IS NEVER WRITTEN, which is the whole reason the
+             two shelves are honest: band 0 is a LOW SHELF and band 3 a HIGH
+             SHELF because Live saved them that way, not because this exporter
+             decided so. Read the donor's own Modes back and refuse to ship if
+             they have moved (bells all read 3). */
+          if (!sbad) {
+            const modeOf = (b) => getParam(lib.Eq8, "Bands." + b + "/ParameterA/Mode");
+            const lo = modeOf(TILT_BANDS.low), hi = modeOf(TILT_BANDS.high);
+            const bell = modeOf(1);
+            if (lo === bell || hi === bell || lo === hi)
+              sbad = "Eq8 bands " + TILT_BANDS.low + "/" + TILT_BANDS.high + " read Mode " +
+                     lo + "/" + hi + " against the bell's " + bell +
+                     " — they are no longer a shelf PAIR and the tilt is not a tilt";
+            else if (getParam(eq.xml, "Bands." + TILT_BANDS.low + "/ParameterA/Mode") !== lo)
+              sbad = "the tilt wrote Eq8 Bands." + TILT_BANDS.low + " Mode, which it must never do";
+          }
+        }
+        if (sbad) ok = fail("gate B", "the synthetic full master: " + sbad);
+        else pass("gate B (synthetic)", "a record with all seven master words builds " +
+          MASTER_TAGS.join(" -> ") + " in fields.js MASTER order · width huge -> " +
+          "Utility StereoWidth " + MASTER_WIDTHS.huge + " · tilt bright -> EQ Eight shelves at " +
+          MASTER_TILT_HZ + " Hz, " + (-MASTER_TILTS.bright) + "/+" + MASTER_TILTS.bright +
+          " dB with Mode untouched · " + MASTER_HOMELESS.join(" and ") +
+          " still have no device and say why");
       }
     }
   }
@@ -784,7 +1091,13 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
   const after = count(xml, sampleRe);
   const paths = [...xml.matchAll(/<Path Value="([^"]+)"/g)].map((m) => m[1]);
   const donorPaths = new Set([...donorXml.matchAll(/<Path Value="([^"]+)"/g)].map((m) => m[1])
-    .concat([...rackXml.matchAll(/<Path Value="([^"]+)"/g)].map((m) => m[1])));
+    .concat([...rackXml.matchAll(/<Path Value="([^"]+)"/g)].map((m) => m[1]))
+    // ...and donor 4's, because the PhaserNew we splice carries three of its
+    // own: `/Applications/Ableton Live 12 Suite.app/…/Phaser-Flanger`, the
+    // device's `LastPresetRef`. Same class as the drum rack's ten Suite paths —
+    // a factory device inside the application bundle, never a user folder — and
+    // an unresolved LastPresetRef costs a preset NAME, never the device.
+    .concat([...answers2Xml.matchAll(/<Path Value="([^"]+)"/g)].map((m) => m[1])));
   const newAbs = paths.filter((p) => !donorPaths.has(p) && /^(\/|[A-Za-z]:\\)/.test(p));
   if (after > before) ok = fail("gate 3", "the export introduced " + (after - before) +
     " sample reference(s); P0-P1 ship no samples");
@@ -798,6 +1111,20 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
   for (const p of abs)
     console.log("  WARN  gate 3 — an absolute macOS path the DONOR brought with it travels " +
       "with every export: " + p);
+  /* ...AND THE SUITE PATHS, counted rather than listed, because they are a
+     different hazard with a different cost. `/Applications/Ableton Live 12
+     Suite.app/…` is a factory device inside the APPLICATION bundle, not a file
+     on anybody's disk: the drum rack's ten pads need theirs to make a sound
+     (Suite-only, README.md says so), and donor 4's PhaserNew carries three that
+     are only its `LastPresetRef` — an unresolved one costs a preset NAME in the
+     title bar and never the device. Printed every run so the day one of these
+     turns into a `/Users/` path somebody sees it. */
+  const suite = [...new Set(paths.filter((p) => /^\/Applications\//.test(p)))];
+  if (suite.length)
+    console.log("  note  gate 3 — " + suite.length + " distinct path(s) into the Live Suite " +
+      "application bundle travel with this export (the drum rack's pads need theirs to make " +
+      "a sound; the PhaserNew's one, repeated three times per device, is a LastPresetRef " +
+      "and costs only a preset name)");
 
   /* ---- Gate T — the tempo map and the meter (2026-08-30) ---------------- */
   // A paced record must carry its map in the MainTrack's tempo envelope and

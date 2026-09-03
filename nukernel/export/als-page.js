@@ -122,6 +122,28 @@ export async function masterRackXml() {
 }
 
 /**
+ * The three devices out of the FOURTH donor that no earlier one carries and a
+ * chip can reach — PhaserNew, Cabinet, Amp. Same door as the other three racks,
+ * same extractor pattern, 2 KB gzipped. A caller that hands nothing still
+ * exports: `phaser` goes back to being reported as having no device, and
+ * `crunch` reports a missing Amp rather than falling back to a Roar that could
+ * only say two of its nine knobs.
+ */
+export async function fxRack2Xml() {
+  if (!canGzip()) throw new Error(NO_GZIP);
+  const { FXRACK2_GZIP_B64, FXRACK2_GZIP_BYTES, FXRACK2_SOURCE, FXRACK2_TRACK } =
+    await import("./fxrack2.js");
+  const bin = atob(FXRACK2_GZIP_B64);
+  const gz = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) gz[i] = bin.charCodeAt(i);
+  if (gz.length !== FXRACK2_GZIP_BYTES)
+    throw new Error("the embedded fx rack 2 is " + gz.length + " bytes, not the " +
+      FXRACK2_GZIP_BYTES + " of " + FXRACK2_TRACK + " in " + FXRACK2_SOURCE +
+      " — run node nukernel/export/fxrack2-extract.js");
+  return new TextDecoder().decode(await through(gz, new DecompressionStream("gzip")));
+}
+
+/**
  * THE RECORD ON SCREEN, FOLDED FOR THE EXPORTER.
  *
  * NOT a genre key re-derived, and not a second fold either: this is the very
@@ -217,7 +239,8 @@ export async function pressAls(say = () => {}, opts = {}) {
   const donor = await donorXml();
   const res = alsFromScore(donor, score, { all, drumRack: await drumRackXml(),
                                            fxRack: await fxRackXml(),
-                                           masterRack: await masterRackXml() });
+                                           masterRack: await masterRackXml(),
+                                           fxRack2: await fxRack2Xml() });
   say("gzipping…");
   const bytes = await through(new TextEncoder().encode(res.xml), new CompressionStream("gzip"));
   // WHAT WENT IN, COUNTED THE WAY als-gate.js COUNTS IT: every note is written

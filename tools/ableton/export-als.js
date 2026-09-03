@@ -69,7 +69,13 @@ export async function main(argv) {
   // other two donors has anywhere. Same door again, same extractor pattern.
   const { MASTERRACK_GZIP_B64 } = await import("../../nukernel/export/masterrack.js");
   const masterRack = gunzipSync(Buffer.from(MASTERRACK_GZIP_B64, "base64")).toString("utf8");
-  const res = alsFromScore(donorXml, score, { all: a.all, drumRack: rack, fxRack, masterRack });
+  // ...and the three out of the FOURTH donor (Answers2.als, fxrack2.js):
+  // PhaserNew for the `phaser` chip, which was reported unmapped on every run
+  // until Paul sent a file with one in it, and Amp + Cabinet for `crunch`.
+  const { FXRACK2_GZIP_B64 } = await import("../../nukernel/export/fxrack2.js");
+  const fxRack2 = gunzipSync(Buffer.from(FXRACK2_GZIP_B64, "base64")).toString("utf8");
+  const res = alsFromScore(donorXml, score,
+    { all: a.all, drumRack: rack, fxRack, masterRack, fxRack2 });
   writeFileSync(a.out, gzipSync(Buffer.from(res.xml, "utf8")));
 
   console.log("nukernel -> Ableton  ·  " + (a.all ? "P1 (all lanes)" : "P0 (one lane)"));

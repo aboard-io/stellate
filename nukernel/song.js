@@ -400,7 +400,18 @@
         if (b && Array.isArray(b.stack))
           for (const e of b.stack) if (e) delete e.instr;
     }
-    if (r.v !== 1) return r;             // v:2 passes through; junk fails validate
+    /* A v:2 SAVE IS A v:3 SAVE THAT HAS BEEN THROUGH THE FOLD ABOVE (2026-09-03,
+       found the hour v:3 shipped). VERSION went 2 -> 3 for the hip-hop soul
+       swap, and this line used to read "v:2 passes through" — which was true
+       while 2 WAS the version: the stamp at the foot only ran for v:1. With
+       VERSION at 3 a v:2 save came back from migrate still saying 2, and
+       validate's `v` check refused every preset and every saved session on the
+       box ("v: got 2, want 3 (run migrate first)"). The v:2 -> v:3 migration is
+       exactly the MOVEDKEYS fold that already ran above, so a v:2 save is
+       stamped here and returned; v:1 takes the shape rewrite below and the
+       same stamp; anything else still passes through for validate to refuse. */
+    if (r.v === 2) { r.v = VERSION; return r; }
+    if (r.v !== 1) return r;             // junk fails validate
     // genre -> genres -> stack: they shared one slot list before layers
     // carried their own phrases
     for (const b of Array.isArray(r.song) ? r.song : []) {

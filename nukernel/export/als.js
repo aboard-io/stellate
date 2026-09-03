@@ -71,7 +71,7 @@
 import { deviceLibrary, deviceOf, instrumentTagOf, setInstrument, buildFx,
          chipParams, kitTakes, wetPathOf, targetIdOf, getParam, automationEnvelope,
          stitchEnvelope, putEnvelopes, setParam, paramRange, FILTER_OPEN,
-         AF_HIGHPASS, masterDevices } from "./live-devices.js";
+         AF_HIGHPASS, masterDevices, delaySixteenthsAt } from "./live-devices.js";
 
 /* ---------- the balanced-tag scanner ---------- */
 // Regexes over XML are a bad idea in general and a fine idea here: the file was
@@ -808,7 +808,8 @@ export function alsFromScore(donorXml, score, opts = {}) {
      none of these branches and comes out byte-identical to the last release.
      The gate proves it: gate E reports zeroes for such a record instead of
      failing it. */
-  const lib = deviceLibrary(donorXml, opts.fxRack || "", opts.masterRack || "");
+  const lib = deviceLibrary(donorXml, opts.fxRack || "", opts.masterRack || "",
+                           opts.fxRack2 || "");
   const beatsPerBar = sig ? (sig[0] * 4) / sig[1] : 4;
   const fxCtx = { bpm: Math.max(1, +score.bpm || 120), beatsPerBar };
   const laneFor = (box, param) => ((box.auto || []).find((a) => a.param === param) || null);
@@ -946,6 +947,21 @@ export function alsFromScore(donorXml, score, opts = {}) {
       t = addDevice(t, dev);
       sound.devices++;
       if (targetId != null) fxWet.push({ chip, wetPath, targetId, dev });
+      /* ...AND THE STAGES THAT CARRY NO KNOB. `crunch` is an Amp AND the
+         speaker behind it: engine/faust/dsp/insert_higain.dsp's step 4 is a
+         FIXED 4x12 cab with nothing the chip can say to it, so the Cabinet is
+         spliced at the patch Live saved and nothing is written into it. It
+         rides no wet envelope of its own — the Amp's DryWet is the chip's mix,
+         and a cabinet behind a bypassed amp is a bypassed cabinet. */
+      for (const ex of built.extra || []) {
+        t = addDevice(t, renumber(ex.xml, next));
+        sound.devices++;
+        if (!sawUnmapped.has(chip + "+")) {
+          sawUnmapped.add(chip + "+");
+          sound.notes.push(chip + " -> " + built.device + " + " + ex.device +
+            " (the DSP's own fixed stage; nothing written into it)");
+        }
+      }
       if (built.nearest && !sawUnmapped.has(chip + "~")) {
         sawUnmapped.add(chip + "~");
         sound.notes.push(chip + " -> " + built.device + " (" + built.nearest + ")");
@@ -953,7 +969,8 @@ export function alsFromScore(donorXml, score, opts = {}) {
       if (built.synced != null && !sawUnmapped.has(chip + "#")) {
         sawUnmapped.add(chip + "#");
         sound.notes.push(chip + " -> " + built.device + " SYNCED (DelayLine_Sync on, " +
-          "SyncedSixteenth " + built.synced + " = " + (built.synced + 1) +
+          "SyncedSixteenth " + built.synced + " = the button \"" +
+          delaySixteenthsAt(built.synced) + "\" = " + delaySixteenthsAt(built.synced) +
           "/16 of the bar) — it follows Live's tempo");
       }
     }
@@ -1168,11 +1185,14 @@ export function alsFromScore(donorXml, score, opts = {}) {
   /* ---- THE MASTER CHAIN ONTO THE MAIN TRACK (2026-09-03, the Answers round)
      Last, and after the donor tracks are gone, so the ids it takes are above
      everything the clones took and `NextPointeeId` below still covers them.
-     The three devices come out of the THIRD donor (masterrack.js, Paul's
+     Three of the devices come out of the THIRD donor (masterrack.js, Paul's
      Answers.als) because neither of the first two had a single device on its
      MainTrack — which is why `main:docs/ABLETON-EXPORT.md`'s master row has
-     shipped as nothing since the spec was written. Renumbered like every other
-     spliced device, for gate 0's reason. */
+     shipped as nothing since the spec was written. The other two are out of
+     GENERIC and always were: `width` on Live's Utility (the `<StereoGain>` tag,
+     0..4 side gain) and `tilt` on an Eq8 shelf pair, both reported homeless for
+     a fortnight on a claim that turned out to be a search for the wrong word.
+     Renumbered like every other spliced device, for gate 0's reason. */
   const mstr = masterDevices(lib, score.master);
   if (mstr.devices.length) {
     out = spliceMaster(out, mstr.devices.map((d) => renumber(d.xml, next)));
