@@ -73,7 +73,7 @@ const ST = await import(R("nukernel/ui/state.js"));
 const PLAN = await import(R("nukernel/audio/plan.js"));
 const { scoreOf } = await import(R("nukernel/export/score.js"));
 const { smfFromScore, parseSmf } = await import(R("nukernel/export/smf.js"));
-const { alsFromScore, paceView } = await import(R("nukernel/export/als.js"));
+const { alsFromScore, paceView, elementAfter, balancedAt } = await import(R("nukernel/export/als.js"));
 const { gunzipSync } = require("node:zlib");
 const { readFileSync } = require("node:fs");
 
@@ -269,9 +269,29 @@ const fold = () => { PLAN.compile();
   const b = alsFromScore(donorXml, pscore, { all: true }).xml;
   ok(a === b, "T4 · the unpaced .als XML is deterministic" +
      " (the v199-vs-now byte pin ran at land time: beatgroup --genre --all, XML byte-identical)");
-  ok(!/<IsTempoEnabled Value="true" \/>/.test(a) &&
-     (a.match(/<FloatEvent /g) || []).length === (donorXml.match(/<FloatEvent /g) || []).length,
-     "T4 · ...and its tempo surfaces are the donor's own, untouched");
+  /* THE TEMPO SURFACES, AND ONLY THEM (narrowed 2026-09-03, the P3 round).
+     This used to count EVERY `<FloatEvent>` in the document against the
+     donor's, which was a true statement about a file whose only automation
+     was the tempo's — and it stopped being one the day the exporter started
+     writing volume, pan, send and filter envelopes for the sections the
+     record composes. `rock` composes a `lvl` shade, so the count moved and
+     the assertion went red on a file whose TEMPO is untouched, which is what
+     it was written to protect. So it now looks where als-gate.js gate T
+     looks: the envelope whose PointeeId is the `<Tempo>` element's own
+     AutomationTarget, and nowhere else. */
+  const tEl = elementAfter(a, "Tempo");
+  const targ = tEl && /<AutomationTarget Id="(\d+)"/.exec(tEl.text);
+  let tempoEvents = null;
+  if (targ) for (const m of a.matchAll(/<AutomationEnvelope Id="\d+">/g)) {
+    const [ea, eb] = balancedAt(a, m.index);
+    const one = a.slice(ea, eb);
+    if (one.includes('<PointeeId Value="' + targ[1] + '" />')) {
+      tempoEvents = (one.match(/<FloatEvent /g) || []).length; break;
+    }
+  }
+  ok(!/<IsTempoEnabled Value="true" \/>/.test(a) && tempoEvents === 1,
+     "T4 · ...and its tempo surfaces are the donor's own, untouched (" +
+     tempoEvents + " FloatEvent in the tempo envelope, 0 scenes enabled)");
 }
 
 console.log("\n" + (fails ? fails + " failed of " + checks : "all " + checks + " checks pass"));

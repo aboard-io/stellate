@@ -51,6 +51,27 @@
 // exposing the pre-desk bar out of plan.js (`export const rawBar = (n) =>
 // BARS[n]`). Written here because a comment in the gate would be read too late.
 
+// 2026-09-03 — P3 LANDED AND THE PARAGRAPH ABOVE IS ITS OWN ANSWER. Paul:
+// "the midi shifts aren't showing up in ableton, like the envelope settings
+// that would tweak the sound and filters and so forth … it makes the mix so
+// unexpressive." The migration this file has warned about since P0 turns out
+// to need NO migration: the velocities here are still plan.timeline()'s
+// written 0..9 and always were, so the volume envelope nukernel/export/
+// live-devices.js now writes is the FIRST desk gain in the file and is not a
+// double count. The instrument parameters, the automation envelopes and the
+// effect devices all live in that file; this one calls it. The warning above
+// is kept because it is what made the check cheap.
+
+// P3's own half is nukernel/export/live-devices.js, imported here and nowhere
+// else. The two modules import each other — this one for the balanced-tag
+// scanner below, that one for the parameter grammar — which is legal and safe
+// in ES modules because every binding either side uses is a HOISTED function
+// declaration or is read at call time, never during evaluation. Said out loud
+// because a cycle that is fine is still a cycle somebody will worry about.
+import { deviceLibrary, deviceOf, instrumentTagOf, setInstrument, buildFx,
+         chipParams, kitTakes, wetPathOf, targetIdOf, getParam, automationEnvelope,
+         stitchEnvelope, putEnvelopes, setParam, FILTER_OPEN } from "./live-devices.js";
+
 /* ---------- the balanced-tag scanner ---------- */
 // Regexes over XML are a bad idea in general and a fine idea here: the file was
 // written by one program with one formatter, and the two things we must not do
@@ -745,6 +766,54 @@ export function alsFromScore(donorXml, score, opts = {}) {
   }
   const eqTpl = eqTemplate(donor);
 
+  /* ================== P3: THE SOUND ==================================
+     Everything from here to `putEnvelopes` below is 2026-09-03's answer to
+     "it makes the mix so unexpressive": the chair's tone onto the donor
+     instrument, the section's composed ride as real automation envelopes, and
+     the box's `fx` chips as Live devices out of the donors' own chains. The
+     translation tables and the parameter grammar are
+     nukernel/export/live-devices.js — this is the wiring.
+
+     ABSENT IS TODAY, AND IT IS THE DEFAULT ON EVERY CLAUSE. A Score with no
+     `tone` (an unwarmed `--no-engine` run), no `auto` and no `fx` — which is
+     every Score folded before today and every `--score` file on disk — takes
+     none of these branches and comes out byte-identical to the last release.
+     The gate proves it: gate E reports zeroes for such a record instead of
+     failing it. */
+  const lib = deviceLibrary(donorXml, opts.fxRack || "");
+  const beatsPerBar = sig ? (sig[0] * 4) / sig[1] : 4;
+  const fxCtx = { bpm: Math.max(1, +score.bpm || 120), beatsPerBar };
+  const laneFor = (box, param) => ((box.auto || []).find((a) => a.param === param) || null);
+  /* THE CHIPS ARE THE UNION OVER THE SONG, IN FIRST-SEEN ORDER, and the wet
+     knob rides an envelope. nukernel's chips are per SECTION and Live's
+     devices are per TRACK — the same shape mismatch plan.js stripOf describes
+     for the fader ("these are per-bar in the engine and one value on a Live
+     track") — but where the strip had to pick box 0 and drop the ride, this
+     does not have to: the device is spliced once and its DryWet is automated
+     to 0 through every box that did not ask for it. So a record whose last
+     two sections add a chorus gets a chorus that arrives in the last two
+     sections, which is the thing itself and not a compromise. */
+  const chips = [];
+  for (const b of boxes) for (const k of (b.fx || [])) if (!chips.includes(k)) chips.push(k);
+  const anyCut = boxes.some((b) => laneFor(b, "cutoff"));
+  const anyLevel = boxes.some((b) => laneFor(b, "level") || b.lvl);
+  // what the run did to the SOUND, printed by the CLI beside the clip list
+  const sound = { params: 0, envelopes: 0, devices: 0, unmapped: [], notes: [] };
+  const sawUnmapped = new Set();
+  /* AND THE ONE LANE THAT STILL HAS NO HOME, reported rather than faked.
+     `mot: "rise"` compiles to a HIGHPASS sweep (20 Hz -> 1.4 kHz). audio/desk.js
+     already says it renders to nothing — "the parent's master stage has a
+     lowpass ceiling and no floor" — so the export is not losing anything the
+     record has. Live's AutoFilter DOES have a highpass, which makes this the
+     one place the file could say more than the engine does; getting there
+     needs `Filter_Type`, whose 0..9 the donor prints no names for, and a wrong
+     enum turns a rising sweep into a closing one. So it is named on every run
+     that has one, which is what turns "should we decode that enum?" from a
+     judgement call into a trigger. The lane is in the Score for whoever does. */
+  if (boxes.some((b) => laneFor(b, "hpf")))
+    sound.unmapped.push('the "rise" highpass sweep — Live\'s AutoFilter has one, ' +
+      "but choosing it needs the Filter_Type enum (0..9) and the donor prints no names for it");
+
   const trackXml = laneNames.map((laneName) => {
     const info = laneInfoOf(boxes, laneName);
     const isDrums = laneName === "drums";
@@ -790,6 +859,88 @@ export function alsFromScore(donorXml, score, opts = {}) {
       notes.push(clipName + ": " + lane.notes.length + " notes over " + v.beats + " beats");
     });
     t = putArrangementClips(t, arrangement);
+
+    /* ---- P3a: THE CHAIR'S TONE ONTO THE DONOR INSTRUMENT ---------------
+       Paul, 2026-08-31, of the round before this one: "you're choosing
+       instruments but just giving them default settings." donorFor() answered
+       the first half a fortnight ago — four machines picked by synthesis
+       method — and this is the second half. The instrument is found by TAG
+       inside this track (not by which donor track it came from), so the drum
+       rack falls through with an empty table rather than needing a special
+       case, and a later change to donorFor cannot desynchronise the two. */
+    if (!isDrums && (info.tone || info.syn)) {
+      const tag = instrumentTagOf(t);
+      const dev = tag ? deviceOf(t, tag) : null;
+      if (dev) {
+        const r = setInstrument(dev, tag, info.tone, info.syn);
+        if (r.set) {
+          const at = t.indexOf(dev);
+          t = t.slice(0, at) + r.xml + t.slice(at + dev.length);
+          sound.params += r.set;
+          sound.notes.push(colName[laneName] + ": " + r.set + " " + tag + " params");
+        }
+      }
+    }
+
+    /* ---- P3c: THE BOX'S EFFECTS AS DEVICES ----------------------------
+       The chips go on AFTER the instrument and BEFORE the motion filter and
+       the EQ, which is the order a person builds a channel in: the character,
+       then the movement, then the corrective EQ last. Every device is
+       renumbered on the way in for the reason the EQ already is — five tracks
+       carrying one donor device would be five copies of the same pointee ids,
+       which is what gate 0 exists to catch.
+
+       THE DRUMS TAKE ALL OF THEM BUT THREE, and that is the engine's own rule
+       rather than taste: audio/desk.js hands a drum unit `kitless(asked)`,
+       which drops `wah`, `fenv` and the filter sweep and passes everything
+       else through. Paul wrote that rule this morning — "the reason the funk
+       drums are low is the auto-wah is on them" — and a chorus or a tape echo
+       across a kit is a real section treatment, so the export quotes the
+       filter rather than inventing a stricter one of its own. */
+    const fxWet = [];                       // [{ chip, wetPath, targetId }]
+    for (const chip of chips) {
+      if (isDrums && !kitTakes(chip)) continue;
+      const built = buildFx(lib, chip, chipParams(chip), fxCtx);
+      if (built.unmapped || built.missing) {
+        const why = built.unmapped || ("the donor library has no " + built.missing);
+        if (!sawUnmapped.has(chip)) { sawUnmapped.add(chip); sound.unmapped.push(chip + " — " + why); }
+        continue;
+      }
+      const dev = renumber(built.xml, next);
+      const wetPath = wetPathOf(built.device);
+      const targetId = wetPath ? targetIdOf(dev, wetPath) : null;
+      t = addDevice(t, dev);
+      sound.devices++;
+      if (targetId != null) fxWet.push({ chip, wetPath, targetId, dev });
+      if (built.nearest && !sawUnmapped.has(chip + "~")) {
+        sawUnmapped.add(chip + "~");
+        sound.notes.push(chip + " -> " + built.device + " (" + built.nearest + ")");
+      }
+    }
+
+    /* ---- P3b's carrier: ONE AutoFilter2 FOR THE COMPOSED FILTER MOTION --
+       A `mot: open` / `mot: close` box and any hand-drawn `cutoff` lane is a
+       lowpass walking across the section — in the engine it is the MASTER
+       sweep (audio/desk.js deskSweeps), and per track the honest Live home is
+       an AutoFilter of its own. It is deliberately NOT the instrument's own
+       filter: that one is carrying the chair's tone.cut, and an envelope on a
+       parameter overrides its manual value rather than multiplying it, so the
+       two would fight and the tone would lose. Two knobs, two jobs.
+       Only spliced when some box actually draws the lane. */
+    let motionTarget = null;
+    if (!isDrums && anyCut && lib.AutoFilter2) {
+      /* IT ARRIVES WIDE OPEN. The donor's AutoFilter2 sits at 9,999 Hz, which
+         is a real lowpass and would dull every track the envelope did not
+         reach — and "the envelope did not reach it" is one flat-lane guard
+         away at all times. So the Manual is opened to the device's own
+         ceiling first and the envelope moves it from there: if the automation
+         vanished tomorrow this device would be inaudible rather than wrong,
+         which is the only safe resting state for a filter nobody asked for. */
+      const dev = renumber(setParam(lib.AutoFilter2, "Filter_Frequency", FILTER_OPEN), next);
+      motionTarget = targetIdOf(dev, "Filter_Frequency");
+      t = addDevice(t, dev);
+      sound.devices++;
+    }
     /* THE EQ GOES ON AFTER THE INSTRUMENT and is renumbered like any other
        clone — five tracks carrying one donor device would otherwise be five
        copies of the same pointee ids, which is precisely what gate 0 exists to
@@ -799,8 +950,104 @@ export function alsFromScore(donorXml, score, opts = {}) {
     if (eqTpl)
       t = addDevice(t, renumber(setEqBands(eqTpl, CHAIR_EQ[chair] || CHAIR_EQ[""]), next));
     // ...and the desk, last, so nothing above can overwrite it
-    t = setStrip(t, (boxes[0].lanes.find((l) => l.name === laneName) || {}).strip,
-                 chairGain(chair, chairNth[laneName] || 0));
+    const vol = chairGain(chair, chairNth[laneName] || 0);
+    t = setStrip(t, (boxes[0].lanes.find((l) => l.name === laneName) || {}).strip, vol);
+
+    /* ---- P3b: THE ENVELOPES, WRITTEN LAST ------------------------------
+       Last because every PointeeId here has to name an AutomationTarget that
+       EXISTS IN THIS TRACK AS IT WILL SHIP. The ids inside a device were
+       rewritten by `renumber` on the way in, so the id read off the renumbered
+       device string above IS the final one; the mixer's own ids were rewritten
+       when the track was cloned. als-gate.js gate P proves the whole class:
+       every PointeeId in the finished document resolves, and a probe that
+       breaks one is caught.
+
+       Three envelopes, each present only when the record has something to say
+       with it:
+         · TRACK VOLUME — the section's `lvl` shade and any composed `level`
+           lane (which is what `mot: pump` compiles to), multiplied onto the
+           static gain the desk just wrote. The header's double-count law is
+           satisfied by construction: the velocities in this file are the
+           WRITTEN 0..9 and carry no desk gain at all.
+         · THE MOTION FILTER — the `cutoff` lane, in Hz, straight through.
+           A box that draws nothing holds the filter WIDE OPEN rather than
+           wherever the last box left it; audio/desk.js makes exactly this
+           argument about the same parameter and it is the same bug either
+           way ("a `close` box … would leave every box after it dark").
+         · EACH EFFECT'S WET — 0 through the boxes that did not ask for that
+           chip, its own mix through the boxes that did. */
+    const envs = [];
+    let envId = 0;
+    const strip = (boxes[0].lanes.find((l) => l.name === laneName) || {}).strip || {};
+    const mix = elementAfter(t, "Mixer");
+    const mixTarget = (path) => (mix ? targetIdOf(mix.text, path) : null);
+    const sendTarget = (n) => {
+      if (!mix) return null;
+      const i = mix.text.indexOf('<TrackSendHolder Id="' + n + '">');
+      if (i < 0) return null;
+      const [a, b] = balancedAt(mix.text, i);
+      return targetIdOf(mix.text.slice(a, b), "Send");
+    };
+    /**
+     * One envelope, from one lane name, across every box.
+     * `hold` and `map` are asked PER BOX, because the level lane's multiplier
+     * (the section's own `lvl` shade) is a per-box number and nothing else in
+     * the record is allowed to be a special case just for it.
+     */
+    const ride = (target, param, hold, map) => {
+      if (target == null) return;
+      const evs = stitchEnvelope(views.map((v) => ({
+        beat0: v.beat0, beats: v.beats, lane: laneFor(v.box, param),
+        hold: hold(v.box), map: map(v.box) })));
+      /* A FLAT ENVELOPE IS NOT AN ENVELOPE — it is the Manual value with extra
+         steps, and it is worse than nothing: Live shows the lane as automated,
+         greys the knob, and a person who moves the fader finds it snapping
+         back. So an envelope whose every event carries the same number is not
+         written at all, which is also what keeps a record that draws no lanes
+         byte-identical to yesterday's export. */
+      if (new Set(evs.map((e) => e.value)).size < 2) return;
+      envs.push(automationEnvelope(envId++, target, evs));
+      sound.envelopes++;
+    };
+    if (!isDrums && anyLevel)
+      ride(mixTarget("Volume"), "level", () => 1, (box) => {
+        const g = vol * (LEVEL_GAIN[box.lvl] == null ? 1 : LEVEL_GAIN[box.lvl]);
+        return (x) => clamp(g * x, SEND_FLOOR, 1.99526238);
+      });
+    /* THE OTHER THREE LANES A BOX CAN DRAW, and they land on Live's own mixer
+       because that is where they land in the engine too: audio/desk.js routes
+       `pan` / `send.rev` / `send.echo` to "per-BAR values on the unit". Every
+       range lines up without a conversion — fields.js AUTOPARAMS says pan is
+       ±0.8 against Live's ±1, and both sends are 0.001..0.7 against Live's
+       0..1 — so these are the most exact three translations in the whole
+       round. A box that draws none holds the static strip value the desk just
+       wrote, which is what "absent is unity" means one layer up. */
+    if (!isDrums) {
+      const panHold = strip.pan == null ? 0 : strip.pan;
+      const revHold = strip.rev == null ? SEND_FLOOR : clamp(strip.rev, SEND_FLOOR, 1);
+      const delHold = strip.del == null ? SEND_FLOOR : clamp(strip.del, SEND_FLOOR, 1);
+      const toPan = () => (x) => clamp(x, -1, 1);
+      const toSend = () => (x) => clamp(x, SEND_FLOOR, 1);
+      ride(mixTarget("Pan"), "pan", () => panHold, toPan);
+      ride(sendTarget(0), "send.rev", () => revHold, toSend);
+      ride(sendTarget(1), "send.echo", () => delHold, toSend);
+    }
+    if (motionTarget != null)
+      ride(motionTarget, "cutoff", () => FILTER_OPEN, () => (x) => clamp(x, 20, FILTER_OPEN));
+    for (const w of fxWet) {
+      // a chip every box asks for is a constant, and a constant is the Manual
+      // value the device already carries — `ride`'s flat-envelope guard would
+      // drop it anyway; this reads the wet off the device rather than the table
+      const wet = +getParam(w.dev, w.wetPath);
+      if (!isFinite(wet)) continue;
+      const evs = stitchEnvelope(views.map((v) => ({
+        beat0: v.beat0, beats: v.beats, lane: null,
+        hold: (v.box.fx || []).includes(w.chip) ? wet : 0 })));
+      if (new Set(evs.map((e) => e.value)).size < 2) continue;
+      envs.push(automationEnvelope(envId++, w.targetId, evs));
+      sound.envelopes++;
+    }
+    t = putEnvelopes(t, envs);
     return t;
   });
 
@@ -854,13 +1101,20 @@ export function alsFromScore(donorXml, score, opts = {}) {
   out = out.slice(0, at) + trackXml.join("") + out.slice(at);
   out = dropDonorTracks(out);
   out = out.replace(/<NextPointeeId Value="\d+" \/>/, '<NextPointeeId Value="' + nextId + '" />');
-  return { xml: out, tracks: laneNames.length, clips: clipId - 1, notes };
+  // `sound` is P3's own printout: how many instrument knobs were set, how many
+  // automation envelopes were written and how many devices were spliced, plus
+  // every chip that had no honest device to land on. A run that reports zeroes
+  // is telling you the record composed no automation, which is different from
+  // a run that reports nothing at all — and it is what als-gate.js gate E
+  // checks its own counts against.
+  return { xml: out, tracks: laneNames.length, clips: clipId - 1, notes, sound };
 }
 
 const laneInfoOf = (boxes, laneName) => {
   for (const b of boxes) for (const l of b.lanes)
-    if (l.name === laneName) return { chair: l.chair || "", instr: l.instr || "" };
-  return { chair: "", instr: "" };
+    if (l.name === laneName) return { chair: l.chair || "", instr: l.instr || "",
+                                      tone: l.tone || null, syn: l.syn || null };
+  return { chair: "", instr: "", tone: null, syn: null };
 };
 
 /** The one `<Tempo>` element in the document (Generic.xml:21819). */

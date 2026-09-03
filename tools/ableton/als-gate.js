@@ -7,6 +7,17 @@
 //   Gate 2  donor conformance — and it REFUSES <Locator>, on purpose
 //   Gate 3  sample audit, plus the donor's own absolute-path hazard
 //   Gate 4  Live. Paul's machine. Printed by the CLI, never by a machine here.
+//   Gate O  the ORDER Live insists on: no regular track after a return
+//   Gate M  the mix tables have not drifted from their owners
+//   Gate T  the tempo map and the meter
+// ...and the five the P3 round added on 2026-09-03, when the export started
+// writing the SOUND and not only the notes:
+//   Gate P  every PointeeId resolves to an AutomationTarget that exists
+//   Gate E  the tone the chair asked for is IN THE FILE, read back out of it,
+//           and a record that composed automation carries some
+//   Gate A  export/score.js MOT_LANES vs audio/desk.js compileAuto
+//   Gate F  live-devices.js FX_PARAMS vs fields.js FX
+//   Gate Q  live-devices.js resOfQ vs audio/to-engine.js toneRecipe
 //
 // WHY GATE 1 RE-DERIVES THE SCORE. "TEST THE ARTIFACT: gates must read the
 // RENDERED output; three features shipped broken while every check passed."
@@ -49,6 +60,9 @@ import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
 import { balancedAt, elementAfter, pointeeIds, paceView,
          columnNames, clipNameOf, CHAIR_LEVEL, LEVEL_GAIN } from "../../nukernel/export/als.js";
+import { instrumentTagOf, deviceOf, instrumentParams, paramRange, getParam,
+         resOfQ, FX_PARAMS, KIT_FILTER } from "../../nukernel/export/live-devices.js";
+import { MOT_LANES } from "../../nukernel/export/score.js";
 import { createRequire } from "node:module";
 import { loadScore } from "./score-node.mjs";
 
@@ -332,6 +346,214 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
       else pass("gate M", "the mix tables match their owners · chairs " +
         Object.keys(CHAIR_LEVEL).join("/") + " · second lead sits at norm");
     }
+  }
+
+  /* ---- Gate P: every PointeeId resolves (2026-09-03, the P3 round) -------
+     Gate 0 proves no two things claim the same pointee id. This proves the
+     other direction, which only became reachable today: an ENVELOPE names an
+     id, and an id that names nothing is the silent failure als.js's own
+     pointee comment describes — "Live still opens the set: it just points an
+     automation lane at somebody else's knob". Before P3 the only PointeeIds in
+     the file were the donor's own two on the MainTrack, so there was nothing
+     to get wrong; there are now up to eight per track, every one of them read
+     off a device AFTER `renumber` rewrote it, and that read is exactly the
+     kind of thing that works until an ordering changes. */
+  {
+    const have = new Set(pointeeIds(xml).map((p) => p.id));
+    const refs = [...xml.matchAll(/<PointeeId Value="(\d+)" \/>/g)].map((m) => +m[1]);
+    const dangling = refs.filter((r) => !have.has(r));
+    if (dangling.length) ok = fail("gate P", dangling.length + " of " + refs.length +
+      " PointeeId(s) name an AutomationTarget that is not in this file, first " +
+      dangling[0] + " — Live opens the set and the envelope moves nothing");
+    else {
+      // the probe, same idea as gate 0's: break one on a copy and assert red
+      const broken = xml.replace(/<PointeeId Value="\d+" \/>/, '<PointeeId Value="999999999" />');
+      const bRefs = [...broken.matchAll(/<PointeeId Value="(\d+)" \/>/g)].map((m) => +m[1]);
+      if (bRefs.every((r) => have.has(r)))
+        ok = fail("gate P", "the dangling-pointee probe was NOT caught");
+      else pass("gate P", refs.length + " PointeeId reference(s), every one resolving to a " +
+        "real AutomationTarget · dangling probe caught");
+    }
+  }
+
+  /* ---- Gate E: the SOUND arrived (2026-09-03, the P3 round) --------------
+     Paul: "the midi shifts aren't showing up in ableton, like the envelope
+     settings that would tweak the sound and filters and so forth." The whole
+     class of bug behind that sentence is this repo's most familiar one —
+     memory calls it "declared but never arriving" — and the only gate that
+     catches it is one that READS THE RENDERED FILE for the value, which is
+     the other standing law ("gates must read the RENDERED output; three
+     features shipped broken while every check passed").
+
+     So this asks the exporter's own table what each chair's instrument should
+     be set to (the same move gate 1 makes when it asks als.js for a clip name
+     rather than rebuilding it) and then goes and finds those numbers in the
+     XML. A path typo, a wrong nesting, a clamp that ate the value: all red.
+     And it counts what a record composed against what the file carries, so a
+     record with automation that produced none fails and a record with none
+     passes at zero. */
+  {
+    const mine = tracksOf(xml).filter((t) => !donorNames.has(t.name));
+    const cols = (() => {
+      const laneNames = [];
+      for (const b of boxes) for (const l of (all ? b.lanes : b.lanes.slice(0, 1)))
+        if (!laneNames.includes(l.name)) laneNames.push(l.name);
+      return { laneNames, names: columnNames(boxes, laneNames) };
+    })();
+    const laneOf = (name) => {
+      for (const b of boxes) for (const l of b.lanes) if (l.name === name) return l;
+      return null;
+    };
+    /** Read the instrument device out of an authored track. */
+    const instrOfTrack = (text) => {
+      const tag = instrumentTagOf(text);
+      return tag ? { tag, xml: deviceOf(text, tag) } : null;
+    };
+    let checked = 0, envN = 0, devN = 0, err = null, probeAt = null;
+    for (const name of cols.laneNames) {
+      if (name === "drums") continue;
+      const lane = laneOf(name);
+      const col = cols.names[name];
+      const t = mine.find((x) => x.name === col);
+      if (!t) { err = err || ('gate E cannot find the track named "' + col + '"'); continue; }
+      envN += (t.text.match(/<AutomationEnvelope Id="\d+">/g) || []).length;
+      devN += (t.text.match(/<(AutoFilter2|Chorus2|AutoPan2|Roar|Delay|Shifter) Id="\d+"/g) || []).length;
+      if (!lane || !lane.tone) continue;
+      const dev = instrOfTrack(t.text);
+      if (!dev || !dev.xml) { err = err || ('track "' + col + '" carries no instrument device'); continue; }
+      const want = instrumentParams(dev.tag, lane.tone, lane.syn || null);
+      for (const [path, v] of Object.entries(want)) {
+        if (v == null || !isFinite(v)) continue;
+        const r = paramRange(dev.xml, path);
+        if (!r) continue;                         // a knob with no printed range
+        const target = Math.min(Math.max(v, r.min), r.max);
+        const got = +getParam(dev.xml, path);
+        checked++;
+        if (!probeAt) probeAt = { track: t.text, tag: dev.tag, path, target, col };
+        if (!(Math.abs(got - target) < 1e-6))
+          err = err || ('track "' + col + '" ' + dev.tag + " " + path + " is " + got +
+            ", the chair asks for " + target);
+      }
+    }
+    // what the record COMPOSED, asked of the score and not of the file
+    const wantsAuto = boxes.some((b) => (b.auto || []).some((a) => a.param !== "hpf") || b.lvl);
+    const wantsFx = boxes.some((b) => (b.fx || []).length);
+    if (err) ok = fail("gate E", err);
+    else if (wantsAuto && !envN) ok = fail("gate E", "the record composes automation (" +
+      boxes.filter((b) => (b.auto || []).length || b.lvl).length +
+      " box(es) with a lane or a level shade) and the file carries NO automation envelope");
+    else if (wantsFx && !devN) ok = fail("gate E", "the record names effect chips (" +
+      [...new Set(boxes.flatMap((b) => b.fx || []))].join(", ") +
+      ") and the file carries NO effect device");
+    else if (checked && probeAt) {
+      /* THE PROBE, because a check nobody has seen fail is a check nobody has
+         tested. It moves ONE knob that this gate actually checked — the first
+         one, on a real authored track — inside a copy of that track's own XML,
+         and then re-reads it exactly the way the loop above does: find the
+         instrument by tag, lift the device, read the Manual at the path. If
+         that comes back unchanged, the reader is looking somewhere other than
+         at the bytes, and every "pass" above it was meaningless. */
+      const bad = probeAt.track.replace(
+        new RegExp("(<" + probeAt.path.split("/").pop().replace(/\./g, "\\.") +
+          ">\\s*<LomId Value=\"0\" />\\s*)<Manual Value=\"[^\"]*\" />"),
+        '$1<Manual Value="7654.321" />');
+      const dev2 = deviceOf(bad, probeAt.tag);
+      const caught = bad !== probeAt.track && dev2 &&
+        Math.abs(+getParam(dev2, probeAt.path) - probeAt.target) >= 1e-6;
+      if (!caught) ok = fail("gate E", "the moved-knob probe was NOT caught on " +
+        probeAt.col + " " + probeAt.tag + " " + probeAt.path +
+        " — the instrument check is reading something other than the file");
+      else pass("gate E", checked + " instrument parameter(s) in the file equal what the " +
+        "chair's tone asks for · " + envN + " automation envelope(s) · " + devN +
+        " effect device(s) · moved-knob probe caught");
+    } else pass("gate E", "this record has no tone, no lanes and no chips — " +
+      envN + " envelopes, " + devN + " devices, as it should be");
+  }
+
+  /* ---- Gates A / F / Q: the three tables P3 copied, held to their owners --
+     Same shape as gate M and the same argument: export/ is browser-safe and
+     cannot import the UMD data tier or the engine bridge, so it carries copies
+     of three tables — and a copied table is a drift risk unless something
+     reads the ORIGINAL every run and fails on disagreement. Duplicate the
+     value if you must, never duplicate the authority.
+       A  export/score.js MOT_LANES   vs  audio/desk.js compileAuto
+       F  export/live-devices.js FX_PARAMS  vs  fields.js FX
+       Q  live-devices.js resOfQ       vs  audio/to-engine.js toneRecipe */
+  {
+    const src = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
+    // A — the four `mot` words, read out of compileAuto's own body
+    try {
+      const desk = src("../../nukernel/audio/desk.js");
+      const body = /function compileAuto\([\s\S]*?\n}/.exec(desk);
+      if (!body) throw new Error("could not find compileAuto in audio/desk.js");
+      const nums = (re) => { const m = re.exec(body[0]); return m ? m.slice(1).map(Number) : null; };
+      const real = {
+        open: nums(/sec\.mot === "open"\)\s*\n?\s*out\.push\(\{ param: "cutoff", curve: "exp", points: \[\[0, (\d+)\], \[beats, (\d+)\]\] \}\)/),
+        close: nums(/sec\.mot === "close"\)\s*\n?\s*out\.push\(\{ param: "cutoff", curve: "exp", points: \[\[0, (\d+)\], \[beats, (\d+)\]\] \}\)/),
+        rise: nums(/sec\.mot === "rise"\)\s*\n?\s*out\.push\(\{ param: "hpf", curve: "exp", points: \[\[0, (\d+)\], \[beats, (\d+)\]\] \}\)/),
+        pump: nums(/pts\.push\(\[b, ([\d.]+)\], \[b \+ ([\d.]+), (\d+)\]\)/),
+      };
+      const mineL = { open: MOT_LANES.open(8).points, close: MOT_LANES.close(8).points,
+                      rise: MOT_LANES.rise(8).points, pump: MOT_LANES.pump(2).points };
+      const bad = ["open", "close", "rise"].find((k) =>
+        !real[k] || mineL[k][0][1] !== real[k][0] || mineL[k][1][1] !== real[k][1]);
+      const pumpBad = !real.pump || mineL.pump[0][1] !== real.pump[0] ||
+        mineL.pump[1][0] !== real.pump[1] || mineL.pump[1][1] !== real.pump[2];
+      if (bad) ok = fail("gate A", "export/score.js MOT_LANES." + bad + " " +
+        JSON.stringify(mineL[bad]) + " has drifted from audio/desk.js compileAuto " +
+        JSON.stringify(real[bad]));
+      else if (pumpBad) ok = fail("gate A", "export/score.js MOT_LANES.pump has drifted from " +
+        "audio/desk.js compileAuto " + JSON.stringify(real.pump));
+      // ...and the three chips a kit does not take, out of desk.js KIT_FILTER
+      const kf = /const KIT_FILTER = \{([^}]*)\}/.exec(desk);
+      const realKit = kf ? kf[1].split(",").map((s) => s.split(":")[0].trim()).filter(Boolean) : null;
+      if (!realKit) ok = fail("gate A", "could not find KIT_FILTER in audio/desk.js");
+      // `sweep` is the SURFACE word and `filtersweep` is the chip's `type`;
+      // desk.js filters on type and this file is keyed on the word, so the
+      // export's table is desk.js's plus the alias. Anything else has drifted.
+      else if (realKit.some((k) => !KIT_FILTER[k]) ||
+               Object.keys(KIT_FILTER).some((k) => !realKit.includes(k) && k !== "sweep"))
+        ok = fail("gate A", "live-devices.js KIT_FILTER " + Object.keys(KIT_FILTER).join("/") +
+          " has drifted from audio/desk.js KIT_FILTER " + realKit.join("/"));
+      else if (bad || pumpBad) { /* already reported above */ }
+      else pass("gate A", "the four `mot` lanes match audio/desk.js compileAuto · " +
+        "open 320→16000 · close 16000→320 · rise 20→1400 (hpf) · pump 0.32→1 per beat · " +
+        "the kit refuses " + realKit.join("/") + ", same as desk.js");
+    } catch (e) { ok = fail("gate A", "cannot read compileAuto: " + e.message); }
+    // F — the eleven chips' declared knobs
+    {
+      const req = createRequire(import.meta.url);
+      const NF = req("../../nukernel/fields.js");
+      const realFX = NF.FX || (NF.NuFields && NF.NuFields.FX);
+      if (!realFX) ok = fail("gate F", "fields.js exports no FX");
+      else {
+        const mineK = Object.keys(FX_PARAMS).sort(), realK = Object.keys(realFX).sort();
+        let bad = null;
+        if (mineK.join() !== realK.join())
+          bad = "chip list " + mineK.join("/") + " vs fields.js " + realK.join("/");
+        else for (const k of mineK)
+          if (JSON.stringify(FX_PARAMS[k]) !== JSON.stringify(realFX[k].params))
+            bad = bad || (k + " " + JSON.stringify(FX_PARAMS[k]) + " vs fields.js " +
+              JSON.stringify(realFX[k].params));
+        if (bad) ok = fail("gate F", "live-devices.js FX_PARAMS has drifted from fields.js FX: " + bad);
+        else pass("gate F", mineK.length + " chip parameter set(s) match fields.js FX exactly");
+      }
+    }
+    // Q — the one arithmetic live-devices.js shares with the engine bridge
+    try {
+      const te = src("../../nukernel/audio/to-engine.js");
+      const m = /tone\.q != null\) out\.res = clamp\(\(tone\.q - ([\d.]+)\) \/ (\d+), (\d+), ([\d.]+)\)/.exec(te);
+      if (!m) throw new Error("could not find toneRecipe's `res` line in audio/to-engine.js");
+      const [, off, div, lo, hi] = m.map(Number);
+      const same = [0.7, 3, 11, 20].every((q) => {
+        const want = Math.min(Math.max((q - off) / div, lo), hi);
+        return Math.abs(resOfQ(q) - want) < 1e-12;
+      });
+      if (!same) ok = fail("gate Q", "live-devices.js resOfQ has drifted from to-engine.js " +
+        "toneRecipe `(q - " + off + ") / " + div + "` clamped to " + lo + ".." + hi);
+      else pass("gate Q", "resOfQ quotes to-engine.js toneRecipe: (q - " + off + ") / " +
+        div + ", clamped " + lo + ".." + hi);
+    } catch (e) { ok = fail("gate Q", "cannot read toneRecipe: " + e.message); }
   }
 
   /* ---- Gate 3 ---------------------------------------------------------- */

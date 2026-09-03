@@ -78,6 +78,28 @@ export async function drumRackXml() {
 }
 
 /**
+ * The six audio devices Paul put in the second donor that the first one has
+ * not got — Shifter, Chorus2, AutoShift, AutoPan2, FilterDelay, FilterEQ3.
+ * Same door as the drum rack, same extractor pattern, 5 KB gzipped. P3's
+ * effect chips land on them (nukernel/export/live-devices.js), and a caller
+ * that hands nothing still exports: every chip that needs one of these six is
+ * REPORTED as having no device rather than faked onto the nearest thing.
+ */
+export async function fxRackXml() {
+  if (!canGzip()) throw new Error(NO_GZIP);
+  const { FXRACK_GZIP_B64, FXRACK_GZIP_BYTES, FXRACK_SOURCE, FXRACK_TRACK } =
+    await import("./fxrack.js");
+  const bin = atob(FXRACK_GZIP_B64);
+  const gz = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) gz[i] = bin.charCodeAt(i);
+  if (gz.length !== FXRACK_GZIP_BYTES)
+    throw new Error("the embedded fx rack is " + gz.length + " bytes, not the " +
+      FXRACK_GZIP_BYTES + " of " + FXRACK_TRACK + " in " + FXRACK_SOURCE +
+      " — run node nukernel/export/fxrack-extract.js");
+  return new TextDecoder().decode(await through(gz, new DecompressionStream("gzip")));
+}
+
+/**
  * THE RECORD ON SCREEN, FOLDED FOR THE EXPORTER.
  *
  * NOT a genre key re-derived, and not a second fold either: this is the very
@@ -123,7 +145,12 @@ export async function pageScore({ grid = true, engine = true, say = () => {} } =
   try {
     if (grid && wasRubato) state.setRubato(false);
     plan.compile();
+    // `seats` and `sections` joined this call in the P3 round, and the CLI's
+    // own loadScore passes exactly the same two — the tone and the signature
+    // synth per chair, and the sections the `mot`/`auto` lanes and the `fx`
+    // chips live on. See export/score.js for why cast() cannot answer either.
     return scoreOf({ timeline: plan.timeline(), cast: engine ? plan.cast() : [],
+                     seats: engine ? plan.seats() : null, sections: state.SONG,
                      drums: engine ? plan.drumStrip() : null,
                      bpm: state.bpm, grid, engine, title: "the record" });
   } finally {
@@ -166,7 +193,8 @@ export async function pressAls(say = () => {}, opts = {}) {
   const score = await pageScore({ grid, engine, say });
   say("splicing the donor…");
   const donor = await donorXml();
-  const res = alsFromScore(donor, score, { all, drumRack: await drumRackXml() });
+  const res = alsFromScore(donor, score, { all, drumRack: await drumRackXml(),
+                                           fxRack: await fxRackXml() });
   say("gzipping…");
   const bytes = await through(new TextEncoder().encode(res.xml), new CompressionStream("gzip"));
   // WHAT WENT IN, COUNTED THE WAY als-gate.js COUNTS IT: every note is written
@@ -181,5 +209,8 @@ export async function pressAls(say = () => {}, opts = {}) {
   return { bytes, xml: res.xml, tracks: res.tracks, clips: res.clips,
            notes: written, clipNotes: res.notes, score, all, grid, engine,
            bpm: score.bpm, boxes: used.length,
+           // P3's own receipt — how many instrument knobs, envelopes and
+           // effect devices went in. The card can say it the way the CLI does.
+           sound: res.sound,
            folded: score.folded, skipped: score.skipped };
 }

@@ -174,7 +174,13 @@ export async function loadScore({ songPath = null, genre = null, scorePath = nul
   if (grid) state.setRubato(false);
 
   plan.compile();
+  // `seats` and `sections` joined this call in the P3 round (the tone, the
+  // signature synth, the composed automation lanes and the fx chips — see
+  // export/score.js). They are the SAME two objects the page hands
+  // export/als-page.js, so the byte-identity test/als-page.browser.js holds
+  // the two ends to still holds.
   const score = scoreOf({ timeline: plan.timeline(), cast: engine ? plan.cast() : [],
+                          seats: engine ? plan.seats() : null, sections: state.SONG,
                           drums: engine ? plan.drumStrip() : null,
                           bpm: state.bpm, grid, engine,
                           title: (genre || songPath || "nukernel") });

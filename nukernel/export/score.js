@@ -65,6 +65,34 @@ const stripOf = (key, cast) => {
   const seat = cast.find((c) => c.v === key);
   return (seat && seat.strip) || null;
 };
+/* ...AND THE TONE THAT CHAIR IS PLAYING WITH (2026-09-03, the P3 round).
+   Paul: "the midi shifts aren't showing up in ableton, like the envelope
+   settings that would tweak the sound and filters and so forth … it makes the
+   mix so unexpressive."
+
+   `tone` is the genre's five dials — cut, q, atk, rel, gain, verb — and
+   plan.js cast() has handed them out beside the instrument since the strip
+   round; nothing read them. That is this repo's most familiar bug and the
+   memory note names it: "declared but never arriving". 421 of 421 genres
+   carry a tone block, so this is not a rare path.
+
+   `syn` is the SIGNATURE SYNTH the genre declares (`{dsp, root, level, set}`),
+   which sixteen genres have and which is what actually plays those chairs —
+   to-engine.js recipeFor tries it first and falls back to the patch. It is on
+   plan.js seats() and NOT on cast(), because cast() flattens it to a boolean;
+   rather than widen cast (audio/ is not this slice's to edit this round) the
+   caller hands the seat list in beside it and the two are indexed the same
+   way — cast() is literally `SEATS.map((s, i) => …"v" + i…)`, so seats[i] IS
+   cast[i]'s chair. `seats` absent = every existing Score, byte for byte. */
+const toneOf = (key, cast) => {
+  const seat = cast.find((c) => c.v === key);
+  return (seat && seat.tone) || null;
+};
+const synOf = (key, seats) => {
+  const m = /^v(\d+)$/.exec(key);
+  const s = m && seats ? seats[+m[1]] : null;
+  return (s && s.synth) || null;
+};
 
 /* THE BOX IS NAMED BY WHAT IT DOES, NOT BY WHERE THE GENRE IS FROM.
    Paul, of the exported set: "You named all the track rows and clips the same
@@ -119,18 +147,79 @@ function fitMidi(lane) {
   return moved;
 }
 
+/* ================== THE SECTION'S RIDE, FOLDED FOR A WRITER =============
+   A box's automation is TWO things and only one of them needs any arithmetic:
+
+   · `sec.auto` — a list the composer and the hand both write, and its entries
+     ALREADY carry `{param, shape, curve, points}` in full, because that is
+     what fields.js autoShape returns and what the section stores. So they are
+     copied VERBATIM. There is no second implementation of a shape here and
+     there cannot be one.
+
+   · `sec.mot` — one word, compiled to a lane by audio/desk.js compileAuto.
+     THAT one is a copied table, four rows of it, and this repo's answer to a
+     copied table is not "don't" but "prove it": als-gate.js gate A reads
+     compileAuto out of audio/desk.js and fails the moment these numbers and
+     those disagree. Same shape as gate M, which does it for CHAIR_LEVEL.
+     (Why copy at all: desk.js is browser-and-node module code this file
+     cannot import — export/score.js is pure over its arguments, with no DOM,
+     no state and no ui/deps.js, precisely so the CLI and the page can share
+     it. Importing desk.js would drag ui/state.js into the exporter.)
+
+   THE LANE SPANS THE BOX. compileAuto sizes its lanes off the section's
+   NOMINAL beats ((sec.len || g.bars) * 4 / rate); this sizes them off the
+   box's PLAYED beats, which the fold above has just measured. For every
+   unpaced record those are the same number, and where they differ the played
+   one is the honest answer — a lane means "across this section" and the
+   section is as long as it sounds. It also means `pump`'s per-beat points
+   land on real beats without anybody converting anything.
+
+   `hpf` IS CARRIED AND SAID TO BE HOMELESS, exactly as desk.js carries it:
+   "the mot 'rise' compiles to a HIGHPASS sweep, and the parent's master stage
+   has a lowpass ceiling and no floor." Live's AutoFilter HAS a highpass, so
+   this is one of the rare places where the export can say something the
+   engine cannot — but saying it needs the `Filter_Type` enum, whose 0..9 the
+   donor does not decode, so the writer refuses it and reports it. The lane is
+   in the Score either way, for whoever decodes that enum. */
+export const MOT_LANES = {
+  open:  (beats) => ({ param: "cutoff", curve: "exp", points: [[0, 320], [beats, 16000]] }),
+  close: (beats) => ({ param: "cutoff", curve: "exp", points: [[0, 16000], [beats, 320]] }),
+  rise:  (beats) => ({ param: "hpf", curve: "exp", points: [[0, 20], [beats, 1400]] }),
+  pump:  (beats) => {
+    const pts = [];
+    for (let b = 0; b < Math.max(1, Math.round(beats)); b++) pts.push([b, 0.32], [b + 0.85, 1]);
+    return { param: "level", curve: "exp", points: pts };
+  },
+};
+/** Every lane this box draws: its `mot` word first, then its own `auto` list. */
+export function autoOf(sec, beats) {
+  if (!sec) return [];
+  const out = [];
+  const mot = sec.mot && MOT_LANES[sec.mot];
+  if (mot) out.push(mot(beats));
+  for (const a of (sec.auto || []))
+    if (a && typeof a === "object" && a.param && Array.isArray(a.points) && a.points.length)
+      out.push({ param: a.param, curve: a.curve === "exp" ? "exp" : "lin", points: a.points });
+  return out;
+}
+
 /**
  * Fold a COMPILED nukernel timeline into a Score.
  *
  * @param {object} o
  * @param {Array}  o.timeline  plan.timeline() — the bar list compile() built
  * @param {Array}  o.cast      plan.cast(), or [] when the engine was not warmed
+ * @param {Array}  o.seats     plan.seats(), for the chairs' signature `synth`
+ *                             blocks — cast() flattens those to a boolean
+ * @param {Array}  o.sections  ui/state.js SONG, indexed by the box's own `si`:
+ *                             where `mot`, `auto` and the `fx` chips live
  * @param {number} o.bpm       state.bpm
  * @param {boolean} o.grid     whether rubato was OFF when this was compiled
  * @param {boolean} o.engine   whether the engine was warmed (cast + register home)
  * @param {string} o.title     what to call the song in the CLI's own printout
  */
-export function scoreOf({ timeline, cast = [], bpm, grid = true, engine = true,
+export function scoreOf({ timeline, cast = [], seats = null, sections = null,
+                          bpm, grid = true, engine = true,
                           drums = null, title = "nukernel" }) {
   if (!timeline || !timeline.length) throw new Error("compile() produced no bars");
   const boxes = [];
@@ -173,6 +262,11 @@ export function scoreOf({ timeline, cast = [], bpm, grid = true, engine = true,
       if (!lane) lanes.set(key, lane = { name: key, chair, instr: instrOf(key, cast),
                                         strip: key === "drums" ? (drums || null)
                                                                : stripOf(key, cast),
+                                        // present-only: a lane with no seat
+                                        // (the unseated bass, the drums) and
+                                        // an unwarmed export write neither key
+                                        ...(toneOf(key, cast) ? { tone: toneOf(key, cast) } : {}),
+                                        ...(synOf(key, seats) ? { syn: synOf(key, seats) } : {}),
                                         notes: [] });
       lane.notes.push(note);
     };
@@ -227,6 +321,20 @@ export function scoreOf({ timeline, cast = [], bpm, grid = true, engine = true,
     // warp is under ±2% — a one-bar box under rubato must not grow a tempo
     // event out of its own wobble.
     box.k = k != null && k > 0 && Math.abs(k - 1) > 0.05 ? k : 1;
+    /* THE SECTION'S OWN RIDE AND ITS OWN EFFECTS (2026-09-03, the P3 round).
+       Both are PRESENT-ONLY: a box that draws no lane writes no `auto` key and
+       a box with no chips writes no `fx` key, so every Score that has ever
+       been folded is the same object it was. A caller that hands no
+       `sections` (an unwarmed CLI run, a `--score` file) gets neither, which
+       is also what it got yesterday. */
+    const sec = sections ? sections[box.si] : null;
+    const auto = autoOf(sec, box.beats);
+    if (auto.length) box.auto = auto;
+    // the section's Character chips, filtered to the ones fields.js FX knows —
+    // audio/desk.js does the same filter on the same list and for the same
+    // reason: a stale word in a saved song must not reach a builder
+    const fx = (sec && Array.isArray(sec.fx) ? sec.fx : []).filter((k) => typeof k === "string");
+    if (fx.length) box.fx = fx;
     delete box.bars;
   }
   /* THE RECORD'S DECLARED METER RIDES THE SCORE (2026-08-30, the five-walls

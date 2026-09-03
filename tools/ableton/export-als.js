@@ -59,7 +59,12 @@ export async function main(argv) {
   const donorXml = gunzipSync(readFileSync(DONOR)).toString("utf8");
   const { RACK_GZIP_B64 } = await import("../../nukernel/export/drumrack.js");
   const rack = gunzipSync(Buffer.from(RACK_GZIP_B64, "base64")).toString("utf8");
-  const res = alsFromScore(donorXml, score, { all: a.all, drumRack: rack });
+  // ...and the six audio devices Paul put in the second donor that the first
+  // one does not have (fxrack.js). Same door as the drum rack, same extractor
+  // pattern, and P3's effect chips land on them.
+  const { FXRACK_GZIP_B64 } = await import("../../nukernel/export/fxrack.js");
+  const fxRack = gunzipSync(Buffer.from(FXRACK_GZIP_B64, "base64")).toString("utf8");
+  const res = alsFromScore(donorXml, score, { all: a.all, drumRack: rack, fxRack });
   writeFileSync(a.out, gzipSync(Buffer.from(res.xml, "utf8")));
 
   console.log("nukernel -> Ableton  ·  " + (a.all ? "P1 (all lanes)" : "P0 (one lane)"));
@@ -79,6 +84,14 @@ export async function main(argv) {
   if (score.folded) console.log("  folded   " + score.folded + " octave shift(s) to bring lanes inside MIDI 0..127");
   if (score.skipped) console.log("  skipped  " + score.skipped + " events with no pitch and no drum lane");
   for (const n of res.notes) console.log("  clip     " + n);
+  // P3, printed every run: a set whose instruments are all at their factory
+  // patch is what "the mix is so unexpressive" was describing, so the numbers
+  // that say otherwise are on the receipt rather than inside a gate.
+  const S = res.sound || { params: 0, envelopes: 0, devices: 0, unmapped: [], notes: [] };
+  console.log("  sound    " + S.params + " instrument params · " + S.envelopes +
+              " automation envelope(s) · " + S.devices + " effect device(s)");
+  for (const n of S.notes) console.log("           " + n);
+  for (const u of S.unmapped) console.log("  WARN     no Live device for " + u);
   console.log("  wrote    " + a.out + "  (" + res.tracks + " track" +
               (res.tracks === 1 ? "" : "s") + ", " + res.clips + " clips, " +
               readFileSync(a.out).length + " bytes)");

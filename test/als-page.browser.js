@@ -135,6 +135,22 @@ const node = (args) => execFileSync(process.execPath, args, { cwd: ROOT, encodin
     check(false, "donor-extract --check FAILED: " +
       String((e.stderr || "") + (e.stdout || "")).trim());
   }
+  /* ...AND SO ARE THE OTHER TWO PHOTOGRAPHS. The page carries three pieces of
+     donor in its module graph now — the whole splice base (donor.js), the drum
+     rack (drumrack.js) and, since the P3 round, the six audio devices Paul put
+     in the second donor that the first one has not got (fxrack.js). Each has a
+     generator and a `--check`, and each is a file that can silently go stale
+     against the committed `.als`; checking one of the three and trusting the
+     other two is exactly the gap this test exists to close. */
+  for (const gen of ["drumrack-extract.js", "fxrack-extract.js"]) {
+    try {
+      const out = node(["nukernel/export/" + gen, "--check"]).trim();
+      check(/matches/.test(out), gen + " --check — " + out);
+    } catch (e) {
+      check(false, gen + " --check FAILED: " +
+        String((e.stderr || "") + (e.stdout || "")).trim());
+    }
+  }
 
   let server = null, PAGE = PAGE_ARG;
   if (!PAGE) {

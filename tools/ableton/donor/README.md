@@ -438,6 +438,122 @@ pitch; leave `SendingNote 60` and `RootKey 60` alone; write one
 
 ---
 
+---
+
+## What P3 takes out of these two files (2026-09-03)
+
+Paul: *"the midi shifts aren't showing up in ableton, like the envelope
+settings that would tweak the sound and filters and so forth … think about
+adding in more effects too i added plenty in the donor file."*
+
+He did, and this is the accounting of which of them travel. `Ableton2`'s
+`6-MIDI` is a twelve-device chain; **six of the twelve already exist in
+Generic**, which is the splice base and is already carried into the page, so
+taking them twice would be weight for nothing:
+
+| device | in Generic | in Ableton2 | who splices it, and from where |
+|---|---|---|---|
+| `AutoFilter2` | `1-MIDI` | `6-MIDI` | **Generic** — the `wah` / `sweep` / `fenv` chips, and the composed `cutoff` motion filter |
+| `Roar` | `1-MIDI` | — | **Generic** — the `crunch` chip |
+| `Delay` | return B | `6-MIDI` | **Ableton2** — the `echo` chip. Generic HAS one and we take the other one on purpose: Generic's is the return-B device carrying `/Users/nsh/…/Dotted Eighth Note.adv` in its `LastPresetRef`, and splicing the echo out of it would put a stranger's home directory on every track instead of on one return. Ableton2's has **zero** `<Path>` elements. |
+| `Reverb` | return A | `6-MIDI` | **Generic** — the return the desk's `rev` send lands on |
+| `Eq8` | `1-MIDI` | `6-MIDI` + 15 Cabasa pads | **Generic** — als.js `CHAIR_EQ`, since 2026-08-31 |
+| `Vocoder` | `1-MIDI` | `6-MIDI` | nobody — needs a modulator ROUTED IN, which `CarrierSource` is (a routing id, not a knob) |
+| `StereoGain` | `1-MIDI` | `6-MIDI` | nobody — the gain is already on Live's own mixer Volume |
+| `Chorus2` | — | `6-MIDI` | **Ableton2**, via `nukernel/export/fxrack.js` — the `chorus` chip, and `flanger` as the nearest honest device |
+| `AutoPan2` | — | `6-MIDI` | **Ableton2** — `tremolo` (LFO phase 0) and `leslie` (phase 180) |
+| `Shifter` | — | `6-MIDI` | **Ableton2** — the `ringmod` chip |
+| `FilterDelay` | — | `6-MIDI` | nobody — three bands where `echo` is one |
+| `FilterEQ3` | — | `6-MIDI` | nobody — see below |
+| `AutoShift` | — | `6-MIDI` | nobody — no chip shifts pitch |
+
+`nukernel/export/fxrack-extract.js` photographs the six Generic has not got —
+Shifter, Chorus2, AutoShift, AutoPan2, FilterDelay, FilterEQ3 — **plus the
+clean `Delay`** into `nukernel/export/fxrack.js`: 96,502 bytes of XML,
+**6,017 gzipped**, the same generator/`--check` pattern as `donor.js` and
+`drumrack.js`, and test/als-page.browser.js runs all three checks now instead
+of one. Measured on a twelve-track export with an `echo` chip: 13 Delay devices
+in the file and the `/Users/nsh/` path still appears exactly **twice**, which is
+the donor's own return B and nothing else.
+
+**`FilterEQ3` was measured before it was refused**, because the P3 brief asked
+for it by name (*"the desk's EQ/shade/gain … → Eq8 or FilterEQ3 bands"*). The
+desk's per-unit EQ is `u.strip.eq`; probed through `plan.barPlan(0)` on preset
+2 (*Motown 45*), **all twenty units answered `eq: null`** — that EQ only exists
+once a hand has moved the board's EQ row. A FilterEQ3 spliced from it would
+carry three unity gains on every track. What would change it: a record saved
+off the board with EQ words on it, read from `u.strip.eq` onto
+`GainLo`/`GainMid`/`GainHi` (0.0003…1.995, a linear gain).
+
+### The parameter grammar, and the two enums that are NOT decoded
+
+Every Live parameter prints its own range:
+
+```xml
+<Filter_Frequency>
+  <Manual Value="19999.9961" />
+  <MidiControllerRange><Min Value="19.9999981" /><Max Value="19999.9961" /></MidiControllerRange>
+  <AutomationTarget Id="22194"><LockEnvelope Value="0" /></AutomationTarget>
+  <ModulationTarget Id="22195"><LockEnvelope Value="0" /></ModulationTarget>
+</Filter_Frequency>
+```
+
+so `nukernel/export/live-devices.js` **reads** `MidiControllerRange` and clamps
+to it rather than trusting a table. A SWITCH is the same element with
+`<MidiCCOnOffThresholds><Min Value="64"/><Max Value="127"/></MidiCCOnOffThresholds>`
+in place of the range and `true`/`false` in the Manual — measured, not assumed,
+and it is why a switch can be automated.
+
+Units differ per device and the file says so, which is why there are four
+instrument tables and not one:
+
+| device | filter frequency | envelope times | resonance |
+|---|---|---|---|
+| `Drift` | **Hz** 20 … 20000 | **seconds** 0 … 60 | 0 … 1.01 |
+| `Operator` | **Hz** 30 … 18500 | **milliseconds** 0.1 … 20000 | 0 … 1.25 |
+| `InstrumentMeld` | **Hz** 20 … 20480 | **seconds** 0 … 40 | macros only |
+| `StringStudio` | **normalised 0 … 1** | normalised 0 … 1 | 0 … 1 |
+
+**Three things in the whole round are inferred**, flagged here the way
+`ReceivingNote`'s constant is, and all three are for Paul to confirm in Live:
+
+1. **StringStudio's `FilterCutoffFrequency` is 0…1 with no printed unit.** A
+   log map from 60 Hz–18 kHz onto 0…1 is the obvious reading and it is still a
+   reading; it is floored at 0.4 so a wrong curve is "a little darker" and not
+   a muted guitar.
+2. **`Shifter/Global_ShifterMode = 2` for ring modulation.** The range is 0…2
+   with no names, but the parameter groups are `Pitch_*`,
+   `ModBasedShifting_FShift_*`, `ModBasedShifting_RingMod_*` in that order,
+   which is Live's own Pitch / Frequency / Ring Mod order in the device UI.
+3. **The step encoding in an automation envelope** — two `FloatEvent`s on the
+   same `Time`, the outgoing value then the incoming one. Already flagged for
+   the tempo map; the same spelling now carries every section boundary.
+
+And **two enums are deliberately NOT decoded**, which is why two things the box
+can say do not arrive:
+
+- `AutoFilter2 / Filter_Type` (0…9) — so `mot: "rise"`, which compiles to a
+  HIGHPASS sweep, is reported on every run that has one rather than written as
+  a lowpass that would sound like the opposite gesture. (`audio/desk.js` already
+  renders it to nothing, so nothing is lost against the record — this is the one
+  place the file could say MORE than the engine does.)
+- `Delay / DelayLine_SyncedSixteenth` (0…7) — so the `echo` chip goes in as
+  free-running **seconds** at the record's own bpm, which is the same time and
+  needs no enum. The cost is named: change the tempo in Live and the echo does
+  not follow.
+
+### The ask that would retire the two enums
+
+> In Live 12, open `Ableton2`, put an **Auto Filter** on any track and switch
+> its filter to **highpass**; put a **Delay** beside it and set its left and
+> right times to a **synced 1/8** — then save and send the file back.
+>
+> Two devices, four clicks. `Filter_Type` and `DelayLine_SyncedSixteenth`
+> become ground truth, the `rise` sweep stops being reported as homeless, and
+> the exported echo starts following Live's tempo.
+
+---
+
 ## What is still missing, from BOTH donors
 
 | absent | count in Generic | count in Ableton2 | what it blocks |
