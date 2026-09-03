@@ -377,6 +377,37 @@ const ok = (name, fn) => { try { fn(); pass++; console.log("  ok   " + name); }
         "a record with no bass wrote a bass instrument");
   });
 
+  /* G13 EVERY SHIPPED PRESET, AND A SAVE OF EVERY PAST VERSION, MIGRATES TO
+     NuSong.VERSION AND VALIDATES (2026-09-03). The hour VERSION went 2 -> 3
+     for the hip-hop soul swap, migrate() stamped only v:1 saves, so every
+     v:2 preset and every saved session came back still saying 2 and
+     validateSong refused it ("v: got 2, want 3 (run migrate first)") — and
+     G10's alias-door tests were green the whole time, because they built
+     their fixtures without a `v`. This is the check that was missing: the
+     presets as shipped, plus a synthetic save at each version the box has
+     ever written, through the same two calls adoptSong makes. A future
+     VERSION bump that forgets a step fails here before it reaches a page. */
+  ok("G13 every shipped preset and every past save version migrate and validate", () => {
+    const NuSong = require(R + "/nukernel/song.js");
+    const P = require(R + "/nukernel/presets.js");
+    const list = P.PRESETS || P.presets || P.default || P;
+    const arr = Array.isArray(list) ? list : Object.values(list);
+    assert.ok(arr.length >= 5, "the preset table is missing");
+    for (const p of arr) {
+      const d = JSON.parse(JSON.stringify(p.data || p));
+      const m = NuSong.migrate(d);
+      assert.strictEqual(m.v, NuSong.VERSION, (p.name || "?") + " migrated to v " + m.v);
+      const r = NuSong.validateSong(m);
+      assert.ok(r.ok, (p.name || "?") + ": " + JSON.stringify(r.ok ? null : r.errors[0]));
+    }
+    const base = JSON.parse(JSON.stringify((arr[0].data || arr[0])));
+    for (let v = 1; v < NuSong.VERSION; v++) {
+      const d = JSON.parse(JSON.stringify(base)); d.v = v;
+      const m = NuSong.migrate(d);
+      assert.strictEqual(m.v, NuSong.VERSION, "a v:" + v + " save migrated to v " + m.v);
+      assert.ok(NuSong.validateSong(m).ok, "a v:" + v + " save does not validate after migrate");
+    }
+  });
   console.log("\n" + pass + " passed, " + fail + " failed");
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
