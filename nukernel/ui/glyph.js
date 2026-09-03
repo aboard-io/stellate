@@ -435,6 +435,33 @@ export const GLYPH = {
              s: "its part, its register, when it comes in, and the motif it reads by default" },
     sec:   { g: "\u25a6", w: "per-section",
              s: "what this voice reads and does, section by section" },
+    /* THE FIFTH MARK, AND IT IS A WAVEFORM (2026-09-03). Paul, 2026-09-01:
+       *"I can't really access or organize samples used in, say, San Francisco
+       1996. They aren't accessible to the app in any way."*
+
+       `\u223f` IS THE ONLY MARK IN COMMON TYPE THAT MEANS A RECORDING. Every
+       other candidate was a fifth box of rules in a table that already spends
+       four marks on boxes (\u25a4 the staff, \u25a5 the roll, \u25a6 the
+       sections, \u25a3 the film) — "four pictures nobody could tell apart",
+       which is the drift the paragraph at `sec` above exists to stop. A sample
+       is not a box of anything; it is one waveform, and U+223F SINE WAVE draws
+       exactly that.
+       IT IS NOT \u224b, AND THE DIFFERENCE IS THE SUBJECT. `\u224b` is the
+       reverb bus — three tildes, a room's reflections, many. This is ONE
+       continuous wave: one recording, played once.
+       RENDERED BEFORE IT WAS CHOSEN, which is this table's own rule
+       (2026-09-03, this page's font stack in headless chromium: 33.5px against
+       the 24.0px tofu box, so it is a real glyph and not a fallback square).
+
+       ONE ROW, TWO SCOPES, which is this table's standing idiom said at `mix`:
+       *"the same fact wears the same mark, whether you meet it as a
+       record-level tab or inside one player."* ui/eight.js draws it as a child
+       of Band (the whole record's crate, `bandsamples`) and as a facet of one
+       member (that player's own files, `facet-samples`) — one picture, one
+       word, two depths. */
+    samples: { g: "\u223f", w: "samples",
+               s: "every recording this plays \u2014 the file, the loop points, " +
+                  "and a way to put another in its place" },
   },
 
   /* THE DECK'S TWO VIEWS, DELIBERATELY A PAIR: one box of rules laid the way

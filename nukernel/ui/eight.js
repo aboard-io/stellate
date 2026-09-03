@@ -376,6 +376,20 @@ import { GLYPH, kindGlyph, sayVoice, sayUp, sayLog, icon, paintIcon,
 import { mountRules } from "./rules.js";
 let rulesStop = null;
 
+/* ===== THE SAMPLE CRATE (2026-09-03) ===================================
+   Paul, 2026-09-01: *"I can't really access or organize samples used in, say,
+   San Francisco 1996. They aren't accessible to the app in any way."*
+
+   `ui/samples.js` is the READER (every file the record reaches, extracted from
+   the registries that already own each one) and the VIEW. What this file
+   contributes is what only it can: the Band panel's third state, the two
+   places in the gutter the crate is reached from, and the four hooks the view
+   needs to write through the page's own owners — `shSpec` for the swap (so the
+   write is avail.js's `set` and the recompile is `changed()`), `loopStrip` for
+   the loop points, `vpaintOf` for the player's colour and `playsWhat` for what
+   the chair is on. Not one of those four facts is re-derived over there. */
+import { samplesOf, mountSamples, stopSample } from "./samples.js";
+
 // THE ONE GLOBAL LEFT IN THIS FILE, and it is deliberate rather than an
 // oversight: `design()` calls `K[name](...)` with a name out of the DESIGNS
 // table, so it wants the whole kernel module and not a list of destructured
@@ -5292,6 +5306,13 @@ function auditionOff() {
   motifLoop = null;
   motifOnce = null;
   stopAudition();
+  /* ...AND THE CRATE'S OWN FILE (2026-09-03). ui/samples.js holds the second
+     player on this page (its header says why, and what would delete it) and
+     the two are made mutually exclusive from both ends: it calls
+     `stopAudition` before it sounds, and "stopping is one verb" has to mean
+     one verb — a record that starts, a tab that moves, a loop turned off, all
+     end whatever is sounding, not merely the half of it this file made. */
+  stopSample();
   auditionSay();
 }
 
@@ -9808,6 +9829,79 @@ function soloButton(parent, v) {
    `member|<name>` AND NOT `tab<name>`: an address does not move and `tab<name>`
    is the gutter's. Two elements answering to one `data-k` is the bug
    `restoreFocus` cannot see round. */
+/* ===== THE BAND PANEL'S THIRD STATE (2026-09-03) ========================
+   Paul, 2026-09-01: *"I can't really access or organize samples used in, say,
+   San Francisco 1996."*
+
+   The Band tab has had two states since slice 2c — one member open (`tab` is a
+   name) or the ROSTER (`tab` is null) — and the crate is the third: `tab` is
+   null and this is true. It is a PAGE FACT beside `tab` and `voiceFacet`,
+   because it is a place you are standing, and the gutter's `bandsamples` row
+   wears its `<mark>` from it. Nothing else reads it; `bandroster`'s own `on`
+   is the complement, which is what keeps two rows in one branch from both
+   claiming to be where you are. */
+let bandCrate = false;
+
+/* THE FOUR HOOKS ui/samples.js IS HANDED, and every one of them is a fact this
+   file already owns and that file must not learn:
+     slotOf   the CATEGORY colour, off `vpaintOf` — the same arithmetic the
+              roster's boxes, the board's columns and the roll all read, so one
+              player is one hue on every surface (slice 2c's own warning).
+     wordFor  what a chair is on, in the registry's words — `INSTRCHOICES` /
+              `KITLABEL`, which is `playsWhat`'s own lookup.
+     sheet    the SHEET that owns this chair's instrument, resolved by `shSpec`
+              against this record. The crate's swap narrows the OFFER and hands
+              back the sheet's own `set`, so `voice.instrument` keeps exactly
+              one writer.
+     loop     the loop strip, on the chairs avail.js says have one, and NOTHING
+              on the chairs it says do not (no dead editor on a synth).
+   `only` is which member's files to draw — a name on the facet, null in the
+   whole-record crate. */
+/* WHAT THE BASS IS ACTUALLY ON, handed to `samplesOf` because the document
+   cannot answer for that one chair (ui/samples.js `instrOfVoice` carries the
+   measurement). It is `playsWhat`'s own resolution said as an id rather than
+   as a word — the hired chair first, `bassInstrOf(null)` behind it — so the
+   crate, the gutter's second line and `audio/plan.js seats()` name one
+   instrument. Every other kind answers null and takes the document's own. */
+const crateSeat = (v) => (v && v.kind === "bass"
+  ? (v.instrument || bassInstrOf(ENV.pool)) : null);
+const CRATE = () => samplesOf(DOC, crateSeat);
+
+function crateBlock(parent, only) {
+  mountSamples(parent, {
+    doc: () => DOC,
+    rows: () => CRATE(),
+    only: only || null,
+    playing: () => playing,
+    slotOf: (name) => { const i = DOC.voices.findIndex((v) => v.name === name);
+                        return i < 0 ? -1 : vpaintOf(i); },
+    wordFor: (id) => (id
+      ? ((NuFields.INSTRCHOICES && NuFields.INSTRCHOICES[id]) ||
+         (NuFields.KITLABEL && NuFields.KITLABEL[id]) || String(id))
+      : ""),
+    /* WHICH OF THE THREE SHEETS THIS CHAIR ANSWERS TO — the same split
+       `bandBlock` draws its instrument control by, said once for both. A kind
+       with no sheet (there is none today) returns null and the crate draws no
+       swap rather than a dead one. */
+    sheet: (name) => { const v = VOICE(name);
+      if (!v) return null;
+      const key = v.kind === "drums" ? "sound.drumkit"
+                : v.kind === "bass" ? "sound.bassinstrument"
+                : "sound.instrument";
+      try { return shSpec(key, { voice: name }); } catch (e) { return null; } },
+    loop: (name) => { const v = VOICE(name);
+      return (v && v.kind === "line" &&
+              NuAvail.sampledVoice(DOC, { voice: name }, ENV))
+        ? loopStrip(v) : null; },
+    /* THE WIDGET, FROM THE ONE FILE THAT DRAWS EVERY MENU ON THIS PAGE. It is
+       handed over rather than imported over there for the reason the sheet is:
+       ui/samples.js decides WHAT the offer is and this file decides what a
+       control looks like, which is the split ui/selects.js's own header
+       states ("it is handed fully-resolved options and it calls back"). */
+    field: (host, spec) => selectField(host, spec),
+  });
+}
+
 function rosterBlock(parent) {
   const box = el("div", null, "nu-roster");
   DOC.voices.forEach((v, vi) => {
@@ -10076,7 +10170,11 @@ function bandBlock(parent) {
      what it shows. It returns rather than falling through the twelve dead
      guards, because a reader who has found the roster should not have to read
      twelve conditions to learn that none of them fires. */
-  if (!voice) { rosterBlock(parent); return; }
+  /* ...AND THE CRATE IS THE THIRD (2026-09-03). Same argument as the roster's
+     own `return`: a reader who has found the samples should not have to read
+     twelve dead guards to learn that none of them fires. */
+  if (!voice) { if (bandCrate) crateBlock(parent, null); else rosterBlock(parent);
+                return; }
 
   /* the voice's own facts: CAST, then MATERIAL, then SOUND. Down the page
      rather than across it — four controls in one row came to 478px against a
@@ -10119,12 +10217,24 @@ function bandBlock(parent) {
      the form's own level is the sections and performance has no siblings at
      all. `SONGTABS` is still what keeps a voice CALLED "form" out of that
      branch, and `settleVoiceTab` is still what decides `tab`. */
-  const fInst  = !voice || voiceFacet === "inst";
+  /* ===== FOUR FACETS AGAIN SINCE 2026-09-03, AND THE FOURTH IS CONDITIONAL
+     Paul: *"I can't really access or organize samples used in … They aren't
+     accessible to the app in any way."* `samples` is offered only where
+     `samplesOf` finds this member a file (see `voiceTrayItems`), so unlike the
+     other three it can be UNREACHABLE on a given player — and `voiceFacet`
+     survives a change of voice on purpose (see its own block), so moving from
+     a sampled member to a modelled one with the crate open would otherwise
+     draw a panel with nothing in it. `settledFacet` is that one arithmetic,
+     asked here and by the stripe, so the panel and the mark cannot disagree
+     about which question is open. */
+  const vFacet = settledFacet(voice);
+  const fSamples = !!voice && vFacet === "samples";
+  const fInst  = !voice || vFacet === "inst";
   // ...AND A FOURTH, 2026-08-28 (Paul: "add it in a new nav element called mix
   // that is per voice"). `mix` is the voice's channel strip, drawn by
   // ui/engineer.js's own `channelStrip` — see the call below.
-  const fMix   = !voice || voiceFacet === "mix";
-  const fPlays = !voice || voiceFacet === "plays";
+  const fMix   = !voice || vFacet === "mix";
+  const fPlays = !voice || vFacet === "plays";
   /* AND THE FOURTH FACET IS GONE, 2026-09-02 (Paul: the per-section grids
      belong to Structure). `const fSec = !voice || voiceFacet === "sec"` stood
      here and gated two blocks — the `picks` form table and `bassReadsWhy` —
@@ -10308,6 +10418,12 @@ function bandBlock(parent) {
      like anybody else. A voice with no channel — an unhired kit — gets the
      refusal sentence instead of an empty console, printed by `voiceMix`. */
   if (!onForm && voice && fMix) voiceMix(panel, CTX, voice.name);
+  /* ...AND THE MEMBER'S OWN CRATE (2026-09-03). The same view the Band-level
+     `bandsamples` row draws, filtered to one player — `only`. It is the LAST
+     of the facet's blocks in the source for the reason the file's own header
+     gives ("whatever the page draws Nth is defined Nth"): nothing else draws
+     on this facet, so it is the only thing between here and the form. */
+  if (!onForm && voice && fSamples) crateBlock(panel, voice.name);
   /* (`engineer(panel, CTX, voice.name)` STOOD HERE — 2026-08-28. Paul: *"get
      rid of the engineer table and simply move the sound controls out of the
      mixer and into this section."*
@@ -12491,8 +12607,47 @@ function bandTrayItems() {
     sub: null,
     say: vTotal ? "everyone — all " + vTotal + " players as boxes"
                 : "everyone — nobody hired yet",
-    on: tab == null,
-    act: () => { tab = null; formSec = null; draw(); markLink(); } }];
+    /* `on` GAINED ITS SECOND HALF ON 2026-09-03. `tab == null` was the whole
+       of "you are looking at the band" while the panel had two states; the
+       crate is a third one that is also `tab == null`, and two rows in one
+       branch both wearing a `<mark>` is a stripe that cannot say where you
+       are. The complement is written on this row rather than a flag on the
+       other, because the roster is the state you FALL into (a record swap,
+       firing somebody) and the crate is the one you walk to. */
+    on: tab == null && !bandCrate,
+    act: () => { tab = null; bandCrate = false; formSec = null;
+                 draw(); markLink(); } }];
+  /* ===== THE CRATE IS A SIBLING OF THE MEMBERS (2026-09-03) =============
+     Paul, 2026-09-01: *"I can't really access or organize samples used in,
+     say, San Francisco 1996. They aren't accessible to the app in any way."*
+
+     THE WHOLE RECORD'S FILES, IN ONE PLACE, which is what "organize" asks for
+     and what a per-member facet alone cannot give: San Francisco 1996 seats an
+     electric piano, a string section and twelve breaks, and the question "what
+     is this record made of" is about the three of them together.
+
+     IT IS THE SECOND ROW, AFTER `everyone`, because both are states of the
+     band rather than of a player and `everyone` is still the door back. The
+     COUNT rides the say-clause rather than the `sub` line: `sub` on this level
+     is what a player PLAYS (see `playsWhat`), and a number in that column
+     would read as an instrument.
+     `bandsamples` IS A NEW ADDRESS AND IT DELIBERATELY DOES NOT BEGIN `tab` —
+     the same sentence `bandroster` makes: three gates read the members off
+     `#nu-tray [data-k^="tab"]` (test/sheets.js's survey, test/knobs.js's
+     `seat`, test/vol-reach's walk) and a row that is not a player must not
+     answer to that query. */
+  {
+    const n = CRATE().length;
+    out.push({ key: "bandsamples", glyph: GLYPH.facet.samples.g, word: "samples",
+      sub: null,
+      say: n ? "samples — the " + n + " recording" + (n === 1 ? "" : "s") +
+               " this record is made of, with the loop points and a way to " +
+               "put another in the place of one"
+             : "samples — nothing on this record is played by a recording",
+      on: tab == null && bandCrate,
+      act: () => { tab = null; bandCrate = true; formSec = null;
+                   draw(); markLink(); } });
+  }
   out.push(...tabs.map((name) => {
     const v = VOICE(name);
     const vi = v ? DOC.voices.indexOf(v) + 1 : null;
@@ -12516,7 +12671,13 @@ function bandTrayItems() {
                 expand multiple levels of interface option"* used rather than
                 worked around: tap `Band` while you are standing in a member
                 and the panel comes back to the band (see `rootTrayItems`). */
-             act: () => { tab = name; formSec = null; draw(); markLink(); },
+             /* `bandCrate = false` JOINED THIS WRITE ON 2026-09-03: the
+                Band panel's third state is only reachable by tapping its own
+                row, so walking into a player and back out by any other door
+                (firing somebody, a record swap, `settleVoiceTab`) lands on the
+                roster rather than on a crate nobody asked for. */
+             act: () => { tab = name; bandCrate = false; formSec = null;
+                          draw(); markLink(); },
              kids: () => (name === tab ? voiceTrayItems() : []) };
   }));
   const offer = [["line", "+ line"]];
@@ -12777,6 +12938,26 @@ function secOpsTrayItems() {
    `remove` JOINS THEM AS AN ACT, not as a facet: it draws no panel, it writes
    the record, and it carries its own refusal — see `voiceTrayItems`. */
 const FACETS = ["inst", "mix", "plays"];
+/* ...AND A FOURTH THAT IS EARNED RATHER THAN GIVEN (2026-09-03). Paul,
+   2026-09-01: *"I can't really access or organize samples used in, say, San
+   Francisco 1996. They aren't accessible to the app in any way."* A member's
+   crate is offered only where the member HAS one — `samplesOf` finds this
+   player a file — which is the same law the loop strip is drawn under and the
+   same one avail.js `sampledVoice` states: a control that cannot exist is
+   absent, never a grey one. It is therefore NOT in `FACETS`, because `FACETS`
+   is the list every member gets. */
+const hasSamples = (name) => CRATE().some((r) => r.voice === name);
+/* WHICH QUESTION IS ACTUALLY OPEN ON THIS MEMBER, asked in one place because
+   `voiceFacet` survives a change of voice on purpose and `samples` is the one
+   facet a member may not have: walking from a sampled player to a modelled one
+   with the crate open would otherwise draw an empty panel and leave a `<mark>`
+   on a row that is not there. Both the panel (`bandBlock`) and the stripe
+   (`voiceTrayItems`) read this, so they cannot disagree. */
+function settledFacet(voice) {
+  if (!voice) return voiceFacet;
+  if (voiceFacet === "samples" && !hasSamples(voice.name)) return "inst";
+  return voiceFacet;
+}
 let voiceFacet = "inst";
 
 /* OPENING A PLAYER, WRITTEN ONCE (2026-09-02, slice 2e). Paul, B11: *"the
@@ -12795,7 +12976,12 @@ let voiceFacet = "inst";
    link would leave a share link pointing at the player you left. */
 function openVoice(name, facet) {
   tab = name;
-  voiceFacet = FACETS.includes(facet) ? facet : "inst";
+  bandCrate = false;                       // see the member row's own note
+  /* `samples` IS SAYABLE HERE (2026-09-03) and `FACETS` is not the list any
+     more — a caller may legitimately ask for a player's crate, and whether the
+     player HAS one is `settledFacet`'s answer at paint time rather than this
+     line's. An unknown word still falls to `inst`. */
+  voiceFacet = (FACETS.includes(facet) || facet === "samples") ? facet : "inst";
   expand("tab" + name, true);
   showTab("Band");
   draw();
@@ -12805,10 +12991,19 @@ function openVoice(name, facet) {
 function voiceTrayItems() {
   const v = SONGTABS.includes(tab) ? null : VOICE(tab);
   if (!v) return [];
-  const out = FACETS.map((f) => {
+  /* THE FOURTH IS APPENDED AND NOT IN `FACETS` (2026-09-03) — see
+     `hasSamples`. It sits AFTER `plays` because the three above it are the
+     signal path Paul named (what the voice IS, what is done to it, what it
+     plays) and this is one level under the first of them: which recordings
+     that instrument actually is. `settledFacet` and not `voiceFacet` decides
+     the mark, so a player with no crate never draws a `<mark>` on a row it
+     does not have. */
+  const shown = settledFacet(v);
+  const list = FACETS.concat(hasSamples(v.name) ? ["samples"] : []);
+  const out = list.map((f) => {
     const g = GLYPH.facet[f];
     return { key: "facet-" + f, glyph: g.g, word: g.w,
-             say: v.name + " — " + g.s, on: voiceFacet === f,
+             say: v.name + " — " + g.s, on: shown === f,
              act: () => { voiceFacet = f; draw(); } };
   });
   /* ...AND THE FOURTH CHILD IS `remove`, WHICH IS AN ACT AND NOT A FACET
@@ -15309,6 +15504,15 @@ window.__eightTree = () => { const L = trayNow();
                                       on: !!i.on, exp: i.exp === true,
                                       acts: !!i.acts, why: i.why || null })) }; };
 window.__eightExpand = (key) => { tapNode(key); return [...expanded]; };
+/* THE CRATE, FOR A GATE THAT HAS TO HOLD IT AGAINST THE ENGINE (2026-09-03).
+   `__nuSamples()` is ui/samples.js `samplesOf` over the record on the page —
+   the same call the view is drawn from, not a copy of the arithmetic — so
+   test/samples.browser.js can hold every row's `unit` against
+   `__nuMix().units[*].sampler` (what the engine was actually handed) and every
+   row's `href` against a fetch. It is in the `__nu*` family and not the
+   `__eight*` one because what it reports is a fact about the RECORD's sound,
+   which is where audio/live.js's probes live. */
+window.__nuSamples = () => CRATE();
 /* `__eightUp()` IS THE `↑` BUTTON PRESSED UNTIL THERE IS NO `↑` LEFT (rewritten
    2026-08-28, when the gutter grew a third depth). It assigned `"root"` in one
    line, which was the same thing while every level's parent WAS the root. Two
