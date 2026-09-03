@@ -597,10 +597,60 @@ export function setEqBands(eq, bands) {
   }
   return out;
 }
+/**
+ * The `Id="…"` of every DIRECT child of a list element's text.
+ *
+ * Direct, with a depth counter, because a drum track's `<Devices>` contains a
+ * DrumGroupDevice which contains more `<Devices>` — and a rack's inner chain is
+ * its own list with its own key space, so an id in there is not a neighbour.
+ */
+export function listIds(text) {
+  const ids = [];
+  TOKEN.lastIndex = 0;
+  let m, depth = 0;
+  while ((m = TOKEN.exec(text))) {
+    const close = m[1] === "/", self = m[4] === "/";
+    if (close) { depth--; continue; }
+    if (depth === 1) {
+      const id = /(?:^|\s)Id="(\d+)"/.exec(m[3]);
+      if (id) ids.push(+id[1]);
+    }
+    if (!self) depth++;
+  }
+  return ids;
+}
+
+/**
+ * THE ID ON A DEVICE IS THE KEY IN ITS CHAIN'S LIST, and Live refuses a set
+ * whose list has two of the same one: "Non-unique list ids." (Paul, 2026-09-03,
+ * on a v261 export.) Every device in this file is a PHOTOGRAPH of a device that
+ * sat at some position in some donor's chain, and it arrives carrying THAT
+ * chain's key — Generic's Eq8 is `Id="3"`, Answers' Limiter is `Id="3"`,
+ * Answers2's PhaserNew is `Id="3"` — so as soon as two of them land in one
+ * chain the file is a Live error and not a set. `renumber` never touched this:
+ * it rewrites POINTEE_TAGS (AutomationTarget / Pointee / *ModulationTarget),
+ * which is the automation key space, a different one.
+ *
+ * Measured on the six records this bug was reported against: two
+ * `<AutoFilter2 Id="1">` in one chain (the `mot: rise` highpass cloned from the
+ * lowpass template), `<PhaserNew Id="3">` beside `<Eq8 Id="3">` on a chip
+ * track, and `<Eq8 Id="3">` beside `<Limiter Id="3">` on every master.
+ *
+ * The rule is UNIQUE, not sequential — Live's own files prove it: Answers'
+ * MainTrack reads Saturator#4, GlueCompressor#0, Limiter#3 and Generic's return
+ * B holds a lone Delay#7. So this takes the next id above the chain's highest
+ * and leaves every device already in the list alone.
+ */
+function withListId(device, id) {
+  return device.replace(/^<([A-Za-z0-9._]+) Id="\d+"/, '<$1 Id="' + id + '"');
+}
+
 /** Put a device at the END of a track's own device chain (after the instrument). */
 export function addDevice(track, device) {
   const d = elementAfter(track, "Devices");
   if (!d) return track;
+  const ids = listIds(d.text);
+  device = withListId(device, ids.length ? Math.max(...ids) + 1 : 0);
   /* AND THE EMPTY CHAIN IS A DIFFERENT ELEMENT, which cost nothing here only
      because it was measured before it was written: every MIDI track in the
      donor holds `<Devices>…</Devices>` with an instrument in it, but the

@@ -3,6 +3,9 @@
 // Zero dependencies. Exit non-zero and name the first failure.
 //
 //   Gate 0  well-formed, every pointee id unique, NextPointeeId above them all
+//   Gate U  every Id unique inside its OWN parent's list — the other key space,
+//           and the sentence Live refused a v261 export with ("Non-unique list
+//           ids"); the four donors are the control and are scanned every run
 //   Gate 1  round-trip, ASKING THE SONG AND NOT THE XML
 //   Gate 2  donor conformance — and it REFUSES <Locator>, on purpose
 //   Gate 3  sample audit, plus the donor's own absolute-path hazard
@@ -78,7 +81,7 @@ import { gunzipSync } from "node:zlib";
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
-import { balancedAt, elementAfter, pointeeIds, paceView,
+import { balancedAt, elementAfter, pointeeIds, paceView, addDevice,
          columnNames, clipNameOf, CHAIR_LEVEL, LEVEL_GAIN } from "../../nukernel/export/als.js";
 import { instrumentTagOf, deviceOf, instrumentParams, paramRange, getParam,
          resOfQ, FX_PARAMS, KIT_FILTER, deviceLibrary, masterDevices, buildFx,
@@ -149,6 +152,87 @@ function wellFormed(xml) {
     } else if (m[4] !== "/") stack.push(m[2]);
   }
   return stack.length ? "unclosed <" + stack[stack.length - 1] + ">" : null;
+}
+
+/**
+ * GATE U'S SCANNER — every parent element whose direct children repeat an Id.
+ *
+ * WHAT LIVE MEANS BY "Non-unique list ids" (Paul, 2026-09-03, on a v261 export
+ * Live 12 refused to open). An `Id="…"` in this schema is the KEY OF A CHILD IN
+ * ITS PARENT'S LIST — the Devices of a chain, the ClipSlots of a track, the
+ * AutomationEnvelopes of a track, the Scenes of a set, the KeyTracks of a clip
+ * — and two siblings may not share one. The key space is the PARENT'S, so the
+ * check is per-parent and NOT document-wide (`Id="0"` appears thousands of
+ * times in a legal set, once per list), and it is keyed by the ID ALONE and NOT
+ * by (tag, id): the tags in one list differ and the ids still must not collide.
+ * That reading is not a guess — all four donors, files Live itself wrote, are
+ * clean under it, which is the control this gate re-runs on every single run so
+ * that a false positive shows up as a donor failure rather than as a bug report.
+ *
+ * Distinct from gate 0, which owns the OTHER key space: pointee ids, which are
+ * document-wide and are what `als.js renumber` rewrites. A file can be perfect
+ * by gate 0 and refused by Live, and on 2026-09-03 every one of them was.
+ */
+function listDupes(xml) {
+  const out = [];
+  const stack = [{ tag: "#doc", path: "", kids: new Map() }];
+  const finish = (f) => {
+    for (const [id, hits] of f.kids) {
+      if (hits.length < 2) continue;
+      out.push({ path: f.path || "#doc", id, count: hits.length,
+                 tags: [...new Set(hits.map((h) => h.tag))].join("+"),
+                 lines: hits.map((h) => lineAt(xml, h.at)) });
+    }
+  };
+  TOKEN.lastIndex = 0;
+  let m;
+  while ((m = TOKEN.exec(xml))) {
+    if (m[2].startsWith("?") || m[3].startsWith("?")) continue;
+    if (m[1] === "/") { const f = stack.pop(); if (f) finish(f); continue; }
+    const parent = stack[stack.length - 1];
+    const id = /(?:^|\s)Id="([^"]*)"/.exec(m[3]);
+    if (id && parent) {
+      if (!parent.kids.has(id[1])) parent.kids.set(id[1], []);
+      parent.kids.get(id[1]).push({ tag: m[2], at: m.index });
+    }
+    if (m[4] !== "/") stack.push({ tag: m[2], path: (parent ? parent.path : "") + "/" + m[2],
+                                   kids: new Map() });
+  }
+  while (stack.length) finish(stack.pop());
+  return out;
+}
+/** 1-based line number of a character offset — only ever called on a failure. */
+function lineAt(xml, at) {
+  let n = 1;
+  for (let i = 0; i < at; i++) if (xml.charCodeAt(i) === 10) n++;
+  return n;
+}
+/**
+ * A DELIBERATELY DUPLICATED FIXTURE, built out of the document itself so the
+ * probe cannot go stale: find the first parent that has two Id-bearing children
+ * and give the second one the first one's id. A scanner that does not go red on
+ * this is not scanning.
+ */
+function dupFixture(xml) {
+  const stack = [{ kids: [] }];
+  TOKEN.lastIndex = 0;
+  let m;
+  while ((m = TOKEN.exec(xml))) {
+    if (m[2].startsWith("?") || m[3].startsWith("?")) continue;
+    if (m[1] === "/") { stack.pop(); continue; }
+    const parent = stack[stack.length - 1];
+    const id = /(?:^|\s)Id="([^"]*)"/.exec(m[3]);
+    if (id && parent) {
+      // the offset of the id VALUE inside the whole document (id[0] is
+      // ` Id="…"`, so the value starts one quote back from its end)
+      const at = m.index + m[0].indexOf(id[0]) + id[0].length - id[1].length - 1;
+      if (parent.kids.length && parent.kids[0].id !== id[1])
+        return xml.slice(0, at) + parent.kids[0].id + xml.slice(at + id[1].length);
+      parent.kids.push({ id: id[1] });
+    }
+    if (m[4] !== "/") stack.push({ kids: [] });
+  }
+  return null;
 }
 
 /** The tracks of a LiveSet, by EffectiveName, with their text. */
@@ -243,6 +327,66 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
     if (!probe.err) ok = fail("gate 0", "the duplicate-id probe was NOT caught — the id check is broken");
     else pass("gate 0", "well-formed · " + g0.n + " pointee ids, 0 duplicated · NextPointeeId " +
       g0.next + " > " + g0.max + " · duplicate probe caught");
+  }
+
+  /* ---- Gate U — "Non-unique list ids", the sentence Live refused with ---
+     2026-09-03. Paul: "Ableton can't load: Non-unique list ids." Gate 0 was
+     green on that file and so was every other gate: gate 0 owns the POINTEE
+     key space, and the id Live was complaining about is a different one — the
+     key of a child in its parent's list. Three collisions were in the shipped
+     sets, all of them devices, all of them the same cause: every device in this
+     exporter is a photograph of a device that sat somewhere in a donor's chain
+     and it arrives carrying THAT chain's key. `als.js addDevice` gives each one
+     the next free id in the chain it lands in; this is the gate that says so.
+
+     THE DONORS ARE THE CONTROL AND THEY ARE RE-RUN EVERY TIME, not once at
+     development time: four files Live itself wrote, scanned by the same
+     function, and if any of them ever goes red the scanner is wrong and not the
+     export. That is the whole difference between a check and a superstition. */
+  {
+    const gU = listDupes(xml);
+    const donors = [["Generic", donorXml], ["Ableton2", rackXml],
+                    ["Answers", answersXml], ["Answers2", answers2Xml]];
+    const dirtyDonor = donors.map(([n, x]) => [n, listDupes(x)]).find(([, d]) => d.length);
+    if (gU.length) {
+      const c = gU[0];
+      ok = fail("gate U", gU.length + " list(s) with a repeated Id — Live refuses this file " +
+        'with "Non-unique list ids". First: ' + c.path + ' holds ' + c.count + " <" + c.tags +
+        ' Id="' + c.id + '"> children, at lines ' + c.lines.join(", ") +
+        (gU.length > 1 ? " (and " + (gU.length - 1) + " more)" : ""));
+    } else if (dirtyDonor) {
+      ok = fail("gate U", "the scan flags donor " + dirtyDonor[0] + ", a file LIVE wrote — " +
+        dirtyDonor[1][0].path + ' Id="' + dirtyDonor[1][0].id + '". The scanner is wrong, ' +
+        "not the export; fix listDupes before trusting a failure above.");
+    } else {
+      const fixture = dupFixture(xml);
+      if (!fixture) ok = fail("gate U", "no two Id-bearing siblings anywhere in the document — " +
+        "the probe cannot be built, so this gate proved nothing");
+      else if (!listDupes(fixture).length)
+        ok = fail("gate U", "the duplicated-id fixture was NOT caught — the per-list scan is blind");
+      else {
+        /* ...AND THE EXACT REGRESSION, PINNED WHERE THE RECORD CANNOT HIDE IT.
+           The scan above only sees what THIS record happened to build, and a
+           `boombap` with no `mot: rise` and no master words builds neither of
+           the two chains that were broken. So the splice itself is asserted:
+           the same donor device, photographed once and added twice, is what
+           `mot: rise` does (one AutoFilter2 template, a lowpass and a highpass)
+           and what a master chain does (Generic's Eq8 at Id 3 beside Answers'
+           Limiter at Id 3), and both must land on different keys. */
+        const one = '<AutoFilter2 Id="1"><Name Value="x" /></AutoFilter2>';
+        const chain = addDevice(addDevice(addDevice(
+          '<MidiTrack Id="0"><Devices /></MidiTrack>', one), one),
+          '<Eq8 Id="1"><Name Value="y" /></Eq8>');
+        const keys = [...chain.matchAll(/<(?:AutoFilter2|Eq8) Id="(\d+)"/g)].map((k) => k[1]);
+        if (keys.length !== 3 || new Set(keys).size !== 3)
+          ok = fail("gate U", "als.js addDevice put one donor device into a chain three times " +
+            "and gave it the keys " + keys.join(",") + " — two of them collide, which is the " +
+            "v261 bug itself");
+        else pass("gate U", "every Id is unique inside its own parent's list · all four donors " +
+          "scan clean by the same function · duplicate-sibling fixture caught · one donor device " +
+          "added three times keys as " + keys.join(",") + ", never twice the same");
+      }
+    }
   }
 
   /* ---- Gate 1 ---------------------------------------------------------- */

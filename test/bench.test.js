@@ -48,6 +48,15 @@
 //     16px, and while the record plays exactly one row is painted dark — read
 //     off `getComputedStyle`, not off a class this gate hopes is there.
 //
+// B9  ONE HANDLE PER ROW, IN EVERY STATE (2026-09-03). Paul, with a screenshot
+//     of this grid: *"Doubling like this in the motif editor."* A rest row and
+//     a hold row each drew TWO caps and two number plates — the painted cap and
+//     the browser's own on the hidden keyboard channel, which
+//     `input[type=range]:disabled` (0,2,1) had faded up from `opacity: 0` to
+//     `.5` over `.nu-pbin`'s (0,1,0) as soon as `sync()` refused the step. So
+//     every step row is asked, IN THE REFUSED STATE the defect lives in, for
+//     one `.nu-pbb`, one `.nu-van`, and a channel that computes to exactly 0.
+//
 // Run:  NODE_PATH=/home/ford/ftrain-2025/node_modules node test/bench.test.js
 
 const fs = require("fs");
@@ -445,6 +454,66 @@ async function openMotif(pg) {
     "B4 · the touch drag reached the document (deg " + degBefore + " → " + degAfter + ")");
   is(scr0[0] === scr1[0] && scr0[1] === scr1[1],
     "B4 · and the page did not scroll under it (" + scr0 + " → " + scr1 + ")");
+
+  /* B9 — ONE HANDLE PER ROW, IN EVERY STATE (2026-09-03). Paul, with a
+     screenshot of this grid: *"Doubling like this in the motif editor."* Every
+     rest and every hold row was drawing two caps and two number plates: the
+     bar's painted cap, and the browser's own skinned range cap on the hidden
+     keyboard channel underneath it, which `input[type=range]:disabled`
+     (0,2,1) had faded UP from `opacity: 0` to `.5` over `.nu-pbin`'s (0,1,0)
+     the instant `sync()` refused the step.
+
+     IT IS MEASURED IN THE REFUSED STATE ON PURPOSE — the state the defect
+     lives in is the one no check had ever looked at, so this sweeps all
+     sixteen rows as they stand and then FORCES the row under the finger to
+     rest and to hold and asks again. What it asks is what the eye asks: how
+     many things in this cell are visible? One painted cap, one number, and a
+     keyboard channel that computes to exactly 0 — read off getComputedStyle
+     on the rendered page, never off nu.css. */
+  const handles = () => page.evaluate(() => {
+    const rows = [...document.querySelectorAll(".nu-bench tr")];
+    return rows.map((tr) => {
+      const seen = { kind: tr.className || "note" };
+      const chan = [...tr.querySelectorAll("input[type=range]")];
+      seen.caps = tr.querySelectorAll(".nu-pbb").length;
+      seen.nums = tr.querySelectorAll(".nu-van").length;
+      seen.pit = tr.querySelectorAll(".nu-pit").length;
+      seen.vel = tr.querySelectorAll(".nu-velA").length;
+      seen.chan = chan.length;
+      seen.lit = chan.filter((c) => getComputedStyle(c).opacity !== "0")
+                     .map((c) => c.dataset.k + "@" + getComputedStyle(c).opacity);
+      return seen;
+    });
+  });
+  const oneEach = (rows, when) => {
+    const bad = rows.filter((r) => !(r.caps === 1 && r.nums === 1 && r.pit === 1 &&
+                                     r.vel === 1 && r.chan === 2 && !r.lit.length));
+    is(bad.length === 0 && rows.length >= 16,
+      "B9 · " + when + ": one cap, one number and no visible keyboard channel on " +
+      "each of " + rows.length + " rows" +
+      (bad.length ? " — " + bad.length + " doubled, e.g. " + JSON.stringify(bad[0]) : ""));
+  };
+  oneEach(await handles(), "as the record stands");
+  await segSel("r"); await page.waitForTimeout(150);
+  const rested = await handles();
+  is(rested[spot.i].kind.indexOf("is-rest") >= 0,
+    "B9 · the row under the finger really is refused (" + rested[spot.i].kind + ")");
+  oneEach(rested, "with a step set to rest");
+  // ...and a HOLD, which is the other refused kind — the one Paul's screenshot
+  // was on (its cap and its number print the SOUNDING step's values)
+  await segSel("n"); await page.waitForTimeout(120);
+  const holdRow = Math.min(spot.i + 1, 15);
+  await page.evaluate((i) => {
+    const rows = [...document.querySelectorAll(".nu-bench tr")];
+    const b = [...rows[i].querySelectorAll(".nu-segb")].find((x) => x.dataset.k.endsWith("h"));
+    if (b && !b.disabled) b.click();
+  }, holdRow);
+  await page.waitForTimeout(150);
+  const heldRows = await handles();
+  is(heldRows[holdRow].kind.indexOf("is-hold") >= 0,
+    "B9 · and a hold row was made to ask it of (" + heldRows[holdRow].kind + ")");
+  oneEach(heldRows, "with a step held");
+  await segSel("n"); await page.waitForTimeout(120);
 
   /* B5 — the kit: a fresh drum cell, the tap cycle in the LANES' own words.
      `+ drum pattern` IS ONE LEVEL UP SINCE 2026-08-28. Paul: *"When I'm in a

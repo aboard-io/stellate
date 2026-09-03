@@ -853,7 +853,9 @@ input[type=checkbox], input[type=radio]{ accent-color: var(--hand); }
    `:disabled` — ARE KEPT AT THE SECOND BLOCK'S OWN SPECIFICITY, on a plain
    `input[type=range]` selector two lines down, and that is not tidiness: those
    five are the ones three rules elsewhere on this page deliberately BEAT.
-   `.nu-pbin, .nu-vain` (0,2,0) and `.nu-vs-in` state `block-size: 100%` on the
+   `.nu-pbin, .nu-vain` (0,1,0 EACH — a comma is a list, not a sum; the 2026-09-03
+   doubling below is what reading that pair as (0,2,0) cost) and `.nu-vs-in`
+   state `block-size: 100%` on the
    invisible keyboard channels that lie over the painted bars, and
    `.nu-grid input[type=range]` (0,2,1) states 30px in a 36px cell. Written
    inside the `:not([list])` selector (0,2,1) instead, `block-size` would have
@@ -867,6 +869,41 @@ input[type=range]{ inline-size: 100%; block-size: var(--ctl); margin: 0;
   touch-action: pan-y; cursor: grab; }
 input[type=range]:active{ cursor: grabbing; }
 input[type=range]:disabled{ cursor: default; opacity: .5; }
+/* ...AND A HIDDEN CHANNEL STAYS HIDDEN WHEN IT IS REFUSED (2026-09-03).
+   Paul, on a screenshot of the motif editor: *"Doubling like this in the
+   motif editor."* Every rest and every hold row drew TWO handles — the
+   painted cap and, a few pixels behind it, this block's own 38x22 cap on the
+   native <input> — and the weight cell drew its number's plate twice.
+
+   THE ARITHMETIC, WHICH IS THE WHOLE BUG. The three hidden keyboard channels
+   say `opacity: 0` on a single class each — `.nu-pbin` / `.nu-vain`
+   (nu.css §THE TWO LAID-DOWN SLIDERS) and `.nu-vs-in` — which is (0,1,0).
+   `input[type=range]:disabled` one line up is (0,2,1): an element, an
+   ATTRIBUTE selector (`[type=range]` counts in the class column, which is the
+   half everybody drops) and a pseudo-class. It BEATS the channels, so the
+   instant ui/eight.js `sync()` disables a step's channel ("don't let me set
+   degree on held or rest notes") the channel faded UP from 0 to .5 and the
+   browser's skinned range appeared on top of the bar it is meant to be
+   invisible under. Measured on the rendered page before this rule: 32 of 34
+   hidden channels at `opacity: .5`, all of them in the motif bench, all of
+   them disabled; every other slider on the page (the board's faders, the
+   chair sheets, the transport) at 0, because nothing else disables a channel.
+   The comment at the head of this block called `.nu-pbin, .nu-vain` (0,2,0) —
+   that is the two selectors of a LIST added together, not the specificity of
+   either, and that miscount is why the collision was not seen when the two
+   range blocks were merged on 2026-09-02. It reads (0,1,0) now.
+
+   SO THE EXCEPTION IS STATED WHERE THE TRAP IS SET, not next to the channels:
+   a reader of `:disabled` has to be able to see that the invisible channels
+   are out of it. It is written as the SAME SHAPE as the rule it must beat
+   plus the channel's own class — (0,3,1) against (0,2,1) — so it wins by
+   construction and not by source order; a first attempt at
+   `.nu-pbin:disabled` (0,2,0) LOST to the attribute selector and was measured
+   losing on the rendered page. The `cursor` is left alone: these three are
+   `pointer-events: none` and no cursor of theirs was ever on screen. */
+input[type=range].nu-pbin:disabled,
+input[type=range].nu-vain:disabled,
+input[type=range].nu-vs-in:disabled{ opacity: 0; }
 input[type=range]:not([list])::-webkit-slider-runnable-track{
   block-size: var(--sl-trough);
   background:
@@ -4894,6 +4931,12 @@ table.nu-trims{ color: var(--ink); }
    itself keeps every declaration above, because the cap is the HANDLE — an
    empty plate parked at the value is still the thing your thumb is on, and
    `aria-valuetext` still says the degree and the semitones to a reader.) */
+/* THE KEYBOARD CHANNEL, INVISIBLE — and `opacity: 0` here is (0,1,0), which
+   is NOT enough on its own: `input[type=range]:disabled` (0,1,1) beat it and
+   drew the native cap over the painted one on every rest and hold row (Paul,
+   2026-09-03: "Doubling like this in the motif editor"). The rule that keeps
+   a refused channel at 0 lives beside `:disabled` itself, at the head of this
+   file's one range block, where the collision is. Do not restate it here. */
 .nu-pbin, .nu-vain{ position: absolute; inset: 0; inline-size: 100%;
   block-size: 100%; margin: 0; opacity: 0; pointer-events: none;
   min-height: 0; min-block-size: 0; }

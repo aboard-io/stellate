@@ -448,7 +448,14 @@ const GATES = [
       ["tools/ableton/export-als.js", "--genre", "boombap", "--out", "@TMP@/n.als"],
       ["tools/ableton/als-gate.js", "@TMP@/n.als", "--genre", "boombap"]],
     need: ["tools/ableton/export-als.js", "tools/ableton/als-gate.js"],
+    /* `nukernel/export/als.js` JOINED THIS LIST ON 2026-09-03, and the reason
+       is the bug of that morning: Live refused a v261 export with "Non-unique
+       list ids", the splice that caused it lives in als.js addDevice, and als.js
+       was covered ONLY by the wave-3 browser row. A node row that runs in
+       seconds should select on the file it exercises — gate U's splice pin
+       (one donor device added three times, three different keys) runs here. */
     covers: ["tools/ableton/export-als.js", "tools/ableton/als-gate.js",
+             "nukernel/export/als.js",
              "nukernel/export/live-devices.js", "nukernel/export/masterrack.js",
              "nukernel/export/fxrack2.js", "nukernel/export/score.js"] },
   /* THE PRODUCER, SAMPLED BY DEFAULT AND WHOLE ON --complete, and it is G3 and
