@@ -259,9 +259,13 @@ function standUpServer() {
      the 2026-08-29 split ("It's too weird when those are together") that was
      always the real one.
      WHAT IS ASSERTED IS THE SAME THREE THINGS, about a fold instead of a
-     level: the door opens it, the four controls are IN it, and it is inside
+     level: the door opens it, the controls are IN it, and it is inside
      `.nu-trayfoot` — so nothing about reaching the transport depends on where
-     the tree happens to be standing. */
+     the tree happens to be standing.
+     THREE CONTROLS, NOT FOUR, SINCE 2026-09-03 (Paul: *"Move the 'sung/all
+     analog' etc spinner button to the main area right above play/stop and out
+     of opts."*). The voicing left the fold and stands under it; T3c holds
+     where, and holds that it is still the same five-position spinner. */
   await p.evaluate(() => document.getElementById("playops").click());
   await p.waitForTimeout(300);
   const t3 = await p.evaluate(() => {
@@ -290,9 +294,67 @@ function standUpServer() {
     "T3 · pressing #playops unfolds the play options inside the foot and the " +
     "door says so (" + JSON.stringify({ open: t3.open, expanded: t3.expanded,
                                         inFoot: t3.inFoot }) + ")");
-  check(["playmode", "take", "voicing"].every((id) =>
-          t3.opts.some((c) => c === id || /nu-vs/.test(c))),
-    "T3 · …and the four controls are IN the fold: " + JSON.stringify(t3.opts));
+  /* THREE IN THE FOLD SINCE 2026-09-03, AND THE FOURTH IS ASSERTED OUT OF IT.
+     Paul: *"Move the 'sung/all analog' etc spinner button to the main area
+     right above play/stop and out of opts."* — so the fold holds the mode, the
+     take and the fader, and `#voicing` being absent from it is half the ask.
+     The other half is T3c below: where it stands instead. */
+  check(["playmode", "take"].every((id) =>
+          t3.opts.some((c) => c === id || /nu-vs/.test(c))) &&
+        !t3.opts.includes("voicing"),
+    "T3 · …and the three controls are IN the fold, the voicing OUT of it: " +
+    JSON.stringify(t3.opts));
+  /* T3c — THE VOICING STANDS DIRECTLY ABOVE PLAY/STOP, on the artifact and in
+     two ways that cannot both be a coincidence: DOM order (it is #play's
+     immediately preceding sibling, in the same foot) and GEOMETRY (its bottom
+     edge is the play mark's top edge). Both, because the first is what a
+     screen reader walks and the second is what a thumb reaches — this gutter
+     has been rearranged five times and the thing that keeps breaking is one
+     of those two agreeing with the ask while the other does not.
+     AND IT IS STILL THE SPINNER. Five positions cycled with a real pointer
+     press at the mark's OWN RECT (never `page.click`, which scrolls its target
+     into view and manufactures jumps — the harness law), reading the word the
+     control paints on itself, and it must come back round to where it began:
+     a control that moved house and lost a mode would pass every check above. */
+  const t3c = await p.evaluate(() => {
+    const v = document.getElementById("voicing"), pl = document.getElementById("play");
+    const box = document.querySelector(".nu-trayopts");
+    if (!v || !pl) return { missing: true };
+    const vr = v.getBoundingClientRect(), pr = pl.getBoundingClientRect();
+    return { inFoot: !!v.closest(".nu-trayfoot"),
+             inFold: !!(box && box.contains(v)),
+             nextIsPlay: v.nextElementSibling === pl,
+             sameParent: v.parentElement === pl.parentElement,
+             abuts: Math.abs(vr.bottom - pr.top) <= 1,
+             above: vr.bottom <= pr.top + 1,
+             tall: +vr.height.toFixed(1),
+             word: (v.querySelector(".nu-vh") || {}).textContent,
+             aria: v.getAttribute("aria-label") };
+  });
+  check(t3c.inFoot && !t3c.inFold && t3c.nextIsPlay && t3c.sameParent &&
+        t3c.above && t3c.abuts,
+    "T3c · #voicing is out of the fold and stands directly above #play — the " +
+    "next sibling in the same foot, its bottom edge on the play mark's top " +
+    "(" + JSON.stringify(t3c) + ")");
+  const t3cModes = await (async () => {
+    const seen = [];
+    for (let i = 0; i < 6; i++) {
+      const r = await p.evaluate(() => {
+        const v = document.getElementById("voicing"), b = v.getBoundingClientRect();
+        return { x: b.x + b.width / 2, y: b.y + b.height / 2,
+                 word: (v.querySelector(".nu-vh") || {}).textContent };
+      });
+      seen.push(r.word);
+      await p.mouse.click(r.x, r.y);      // the mark's own rect, not page.click
+      await p.waitForTimeout(200);
+    }
+    return seen;
+  })();
+  check(new Set(t3cModes.slice(0, 5)).size === 5 &&
+        t3cModes[5] === t3cModes[0],
+    "T3c · …and it is still the five-position spinner where it now stands: " +
+    JSON.stringify(t3cModes) + " — pressed at its own rect, every mode " +
+    "distinct, and the sixth press comes back round");
   /* AND THE SPLIT ITSELF, ASSERTED — the thing Paul asked for, which is that
      these two marks do ONE JOB EACH. A stop must not move the stripe, and the
      door must not touch the record. Without this the two could quietly fuse

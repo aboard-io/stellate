@@ -487,12 +487,84 @@ function col(label, control, cls) {
 /* ================== THE INSERT SLOTS (2026-08-27) ==========================
    "Add per voice effects, up to three. Each has a wet dry mix and its own
    settings." The seats write `voice.desk.fx` (the list, MAX_FX, the exact
-   shape song.js's loader has always validated); the wet is the chip's OWN mix
+   shape song.js's loader has always validated); the wet is the effect's OWN mix
    param surfaced (fields.js FXWETS -> params.mix, clamped by the parent's own
    insertChain), and the one-or-two settings are the module's own face params
-   (FXFACE, ranges read off engine/faust/dist insert_*-meta.json). A chip
+   (FXFACE, ranges read off engine/faust/dist insert_*-meta.json). An effect
    changed in a seat RESETS that seat's knobs — a fraction of another module's
-   range is not a value, it is a coincidence. */
+   range is not a value, it is a coincidence.
+
+   ...AND THE GENRE BUS TAKES THE SAME DRAWING, 2026-09-03. Paul: *"The 'genre
+   bus' doesn't really make a lot of sense. I was expecting it to just be three
+   effects I could set normally. It has this concept of chips. We don't need all
+   that, just a set of chained effects that can be fed."* The bus had three bare
+   `<select>`s of effect NAMES ("chip 1..3") while this file, forty lines down,
+   was already drawing the honest thing on every voice strip: a seat, its wet,
+   its own one or two settings. So there is ONE drawing and two OWNERS of it —
+   the second drawing is exactly the mistake `channelStrip`'s own note is about
+   ("two drawings of one fact, and the ugly one was where Paul was standing").
+
+   AN OWNER ANSWERS FOUR QUESTIONS and nothing else: what a slot's controls are
+   KEYED (`seatK`/`knobK` — the `data-k` a gate drives), what they are CALLED
+   (`seatAria`/`knobAria`/`faceAria`), what the slots ARE right now (`read`),
+   and how a change is WRITTEN (`write` for a whole re-seat, `setKnob` for one
+   pot). A voice writes `voice.desk` through NuDeskDoc.writeDesk and numbers its
+   knobs by LIST POSITION; a bus writes `doc.sound.buses.<bus>` through
+   writeBus and numbers them by SLOT. That difference is the whole of what an
+   owner is for, and it is the same difference fields.js `fxChainFor` and
+   `busFxChain` carry on the audio side. */
+function voiceSlotOwner(ctx, voice) {
+  return {
+    seatK: (n) => "ins|" + voice.name + "|" + n,
+    knobK: (kind, n) => "b|" + kind + n + "|" + voice.name,
+    seatAria: (n) => voice.name + " insert " + n,
+    knobAria: (n, word) => voice.name + " insert " + n + " " + word,
+    faceAria: (n, k, label) => voice.name + " " + k + " " + label,
+    read: () => slotsOf(voice),
+    write: (slots) => writeSlots(ctx, voice, slots),
+    setKnob: (n, kind, v) => setDesk(ctx, voice, kind + n, v),
+  };
+}
+/* THE BUS OWNER. `fx<n>`/`fxw<n>`/`fxa<n>`/`fxb<n>` are the row's own keys
+   (fields.js BUSROWS, genre) — `fx1..3` unchanged from the day the bus was
+   built, which is why every saved session opens onto these slots with the same
+   three effects rather than being migrated or dropped. A HOLE COMPACTS on
+   read, the same way a voice's list has always compacted: a save with slot 1
+   empty and slot 2 seated draws one effect in seat 1 and writes itself back
+   that way on the next touch. Order is slot order either way — fields.js
+   busFxChain walks 1..3 and skips what is not there. */
+function busSlotOwner(ctx, doc, bus, name) {
+  const row = () => (doc.sound && doc.sound.buses && doc.sound.buses[bus]) || {};
+  return {
+    seatK: (n) => "bus|" + bus + "|fx" + n,
+    knobK: (kind, n) => "bus|" + bus + "|" + kind + n,
+    seatAria: (n) => name + " effect " + n,
+    knobAria: (n, word) => name + " effect " + n + " " + word,
+    faceAria: (n, k, label) => name + " " + k + " " + label,
+    read: () => {
+      const e = row(), out = [];
+      for (let n = 1; n <= MAX_FX; n++) {
+        const k = e["fx" + n];
+        if (!k || !FX[k]) continue;
+        out.push({ k, w: e["fxw" + n] || null, a: e["fxa" + n] || null,
+                   b: e["fxb" + n] || null });
+      }
+      return out;
+    },
+    write: (slots) => {
+      const D = DD();
+      for (let n = 1; n <= MAX_FX; n++) {
+        const s = slots[n - 1] || {};
+        D.writeBus(doc, bus, "fx" + n, s.k || null);
+        D.writeBus(doc, bus, "fxw" + n, s.w || null);
+        D.writeBus(doc, bus, "fxa" + n, s.a || null);
+        D.writeBus(doc, bus, "fxb" + n, s.b || null);
+      }
+      ctx.changed();
+    },
+    setKnob: (n, kind, v) => { DD().writeBus(doc, bus, kind + n, v); ctx.changed(); },
+  };
+}
 function slotsOf(voice) {
   const d = deskOf(voice);
   const keys = (d.fx || []).filter((k) => FX[k]).slice(0, MAX_FX);
@@ -512,11 +584,12 @@ function writeSlots(ctx, voice, slots) {
   }
   ctx.changed();
 }
-// one seat's <select>: default "—" + the FX vocabulary. Keyed `ins|voice|n`.
-function seatSelect(ctx, voice, slots, i, why) {
+// one seat's <select>: default "—" + the FX vocabulary. Keyed by the owner
+// (`ins|voice|n` on a strip, `bus|genre|fx<n>` on the bus).
+function seatSelect(ctx, own, slots, i, why) {
   const sel = document.createElement("select");
-  sel.dataset.k = "ins|" + voice.name + "|" + (i + 1);
-  sel.setAttribute("aria-label", voice.name + " insert " + (i + 1));
+  sel.dataset.k = own.seatK(i + 1);
+  sel.setAttribute("aria-label", own.seatAria(i + 1));
   const cur = slots[i] ? slots[i].k : null;
   const og0 = document.createElement("optgroup"); og0.label = "default";
   const o0 = document.createElement("option");
@@ -528,7 +601,7 @@ function seatSelect(ctx, voice, slots, i, why) {
     const o = document.createElement("option");
     o.value = k; o.textContent = FXLABEL[k] || k;
     if (k === cur) o.selected = true;
-    // A CHIP SEATS ONCE PER STRIP: the list is a chain and the same pedal
+    // AN EFFECT SEATS ONCE PER CHAIN: the slots are a chain and the same pedal
     // twice in it is the same pedal once, louder about it.
     if (taken.includes(k)) { o.disabled = true;
       o.dataset.why = "already seated in another slot"; }
@@ -544,17 +617,17 @@ function seatSelect(ctx, voice, slots, i, why) {
     if (!word) { if (i < next.length) next.splice(i, 1); }
     else if (i < next.length) next[i] = { k: word, w: null, a: null, b: null };
     else next.push({ k: word, w: null, a: null, b: null });
-    writeSlots(ctx, voice, next);
+    own.write(next);
   });
   return { sel, whyEl };
 }
-// one whole slot: seat + wet + the chip's own one-or-two settings
-function slotEl(ctx, voice, slots, i, stereoWhy) {
+// one whole slot: seat + wet + the effect's own one-or-two settings
+function slotEl(ctx, own, slots, i, stereoWhy) {
   const box = el("div", null, "nu-slot" + (slots[i] ? "" : " is-empty"));
   box.dataset.slot = String(i + 1);
   const row = el("div", null, "nu-slotrow");
   row.append(el("b", String(i + 1), "nu-slotn"));
-  const { sel, whyEl } = seatSelect(ctx, voice, slots, i, stereoWhy);
+  const { sel, whyEl } = seatSelect(ctx, own, slots, i, stereoWhy);
   row.append(sel);
   box.append(row);
   if (whyEl) { box.append(whyEl); box.classList.add("is-off"); return box; }
@@ -565,23 +638,23 @@ function slotEl(ctx, voice, slots, i, stereoWhy) {
   if (!s) return box;
   const body = el("div", null, "nu-slotbody");
   const n = i + 1;
-  // THE WET IS THE CHIP'S OWN MIX PARAM, SURFACED — or refused where the
+  // THE WET IS THE EFFECT'S OWN MIX PARAM, SURFACED — or refused where the
   // module has none (fields.js fxHasMix: only `sweep`, whose sentence is on
   // the control itself — `title`, `data-why` and the short word beside it —
   // since the page-foot digest was deleted 2026-08-28).
   if (NuFields.fxHasMix(s.k)) {
     const dfltMix = NuFields.fxMix(s.k);
-    body.append(col("wet", vknob("b|fxw" + n + "|" + voice.name, null,
+    body.append(col("wet", vknob(own.knobK("fxw", n), null,
       NuFields.FXWETS, NuFields.FXWETLABEL, s.w,
-      voice.name + " insert " + n + " wet",
-      (v) => setDesk(ctx, voice, "fxw" + n, v), "default", dfltMix)));
+      own.knobAria(n, "wet"),
+      (v) => own.setKnob(n, "fxw", v), "default", dfltMix)));
   } else {
-    body.append(col("wet", vrefused(null, voice.name + " insert " + n + " wet",
+    body.append(col("wet", vrefused(null, own.knobAria(n, "wet"),
       "serial", SWEEP_WET_WHY)));
   }
   // ...AND ITS OWN SETTINGS: the module's declared face params, in the
   // module's own units (fields.js FXFACE, off the dist manifests), as
-  // fractions of their own span so one detent table serves every chip.
+  // fractions of their own span so one detent table serves every effect.
   const face = NuFields.FXFACE[s.k] || [];
   const dfltFrac = (spec) => {
     const dv = FX[s.k].params[spec.key];
@@ -589,13 +662,13 @@ function slotEl(ctx, voice, slots, i, stereoWhy) {
     return Math.max(0, Math.min(1, (dv - spec.min) / (spec.max - spec.min)));
   };
   if (face[0]) body.append(col(face[0].label,
-    vknob("b|fxa" + n + "|" + voice.name, null, NuFields.FXPOTS,
-      NuFields.FXPOTLABEL, s.a, voice.name + " " + s.k + " " + face[0].label,
-      (v) => setDesk(ctx, voice, "fxa" + n, v), "default", dfltFrac(face[0]))));
+    vknob(own.knobK("fxa", n), null, NuFields.FXPOTS,
+      NuFields.FXPOTLABEL, s.a, own.faceAria(n, s.k, face[0].label),
+      (v) => own.setKnob(n, "fxa", v), "default", dfltFrac(face[0]))));
   if (face[1]) body.append(col(face[1].label,
-    vknob("b|fxb" + n + "|" + voice.name, null, NuFields.FXPOTS,
-      NuFields.FXPOTLABEL, s.b, voice.name + " " + s.k + " " + face[1].label,
-      (v) => setDesk(ctx, voice, "fxb" + n, v), "default", dfltFrac(face[1]))));
+    vknob(own.knobK("fxb", n), null, NuFields.FXPOTS,
+      NuFields.FXPOTLABEL, s.b, own.faceAria(n, s.k, face[1].label),
+      (v) => own.setKnob(n, "fxb", v), "default", dfltFrac(face[1]))));
   box.append(body);
   return box;
 }
@@ -655,9 +728,10 @@ export function channelStrip(ctx, c, env) {
   const srow1 = el("div", null, "nu-srow nu-srow-ins");
   srow1.append(el("p", "inserts · up to three · in order", "nu-rowlab"));
   const stereoWhy = env.facts[key] && env.facts[key].stereo ? STEREO_WHY : null;
-  const slots = slotsOf(voice);
+  const own = voiceSlotOwner(ctx, voice);
+  const slots = own.read();
   for (let i = 0; i < MAX_FX; i++)
-    srow1.append(slotEl(ctx, voice, slots, i, stereoWhy));
+    srow1.append(slotEl(ctx, own, slots, i, stereoWhy));
   strip.append(srow1);
 
   // ---- sends: four, post-insert --------------------------------------
@@ -1122,24 +1196,44 @@ export function mount(parent, ctx) {
   // work happened and it is a registry row now (fields.js BUSES bus `genre`):
   // the strips' genre sends feed a fifth accumulator in both renderers, the
   // chain below runs over it, and `level → delay` scales the summed return as
-  // it lands on the delay bus — series into everything downstream. The chips
-  // are the box FX vocabulary; a genre deals its own at compose time and this
-  // rack is where a hand re-deals them.
+  // it lands on the delay bus — series into everything downstream.
+  //
+  // THREE CHAINED EFFECTS, SET NORMALLY, 2026-09-03. Paul: *"The 'genre bus'
+  // doesn't really make a lot of sense. I was expecting it to just be three
+  // effects I could set normally. It has this concept of chips. We don't need
+  // all that, just a set of chained effects that can be fed."* What stood here
+  // were three `busSel` menus of effect NAMES, labelled "chip 1..3" — a word
+  // for a decision, out of the era when this surface's law was "chips are
+  // decisions, sliders are fiddles" — and nothing else: no wet, no settings,
+  // while the voice strips six hundred lines up have carried all three per seat
+  // since 2026-08-27. So the bus takes THE STRIP'S OWN SLOT DRAWING (`slotEl`,
+  // one drawing and two owners) through `busSlotOwner`, the word "chip" leaves
+  // the page, and every knob a slot draws is a value fields.js `busFxChain`
+  // reads and hands the engine. Nothing about the FEED changed and it is the
+  // point of the bus: the per-voice `genre` sends already on every strip.
   PLATES.genre = () => {
     const p = el("div", null, "nu-plate");
     p.dataset.bus = "genre";
     p.setAttribute("aria-label", "genre fx bus");
     const h = el("div", null, "nu-bushead");
     h.append(el("b", busTitle("genre", "genre fx bus"), "nu-busname"));
-    h.append(el("small", "in ← genre sends · dealt by the genre, edited here",
+    h.append(el("small", "in ← genre sends · three effects, in order",
       "nu-busin"));
     p.append(h);
     const g = el("div", null, "nu-gear");
     busSel(g, "genre", knobOf("genre", "name"), "called");
-    busSel(g, "genre", knobOf("genre", "fx1"), "chip 1");
-    busSel(g, "genre", knobOf("genre", "fx2"), "chip 2");
-    busSel(g, "genre", knobOf("genre", "fx3"), "chip 3");
     p.append(g);
+    // THE CHAIN. Same slot the strips draw, in slot order, keyed
+    // `bus|genre|fx<n>` at the seat and `bus|genre|fxw<n>`/`fxa<n>`/`fxb<n>`
+    // at its three knobs — the row's own keys, so a saved session's `fx1..3`
+    // opens onto these seats unchanged and untouched knobs sound exactly as
+    // they always did.
+    const ins = el("div", null, "nu-srow nu-srow-ins");
+    ins.append(el("p", "in order · fed by the strips’ genre sends", "nu-rowlab"));
+    const own = busSlotOwner(ctx, doc, "genre", "genre bus");
+    const slots = own.read();
+    for (let i = 0; i < MAX_FX; i++) ins.append(slotEl(ctx, own, slots, i, null));
+    p.append(ins);
     const r = el("div", null, "nu-busrow");
     const spec = knobOf("genre", "level");
     r.append(col("level → delay", vknob("bus|genre|level", "level", spec.table,

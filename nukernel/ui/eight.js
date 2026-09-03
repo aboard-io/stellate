@@ -2541,23 +2541,63 @@ function recordParts() {
      · A SECTION'S dB IS ITS lvl RUNG PLUS ITS env's CONSTANT, and "constant"
        is MEASURED off kernel SHAPES itself — a word whose curve is flat IS a
        level (soft 0.68, big 1.14), never a second table typed here.
-     · A WORD WHOSE CURVE TRAVELS IS A HAIRPIN, direction read off the
-       curve's own ends: in/cresc/lift rise and open a crescendo, out/dim
-       fall and open a diminuendo, and arch/swell/duck — curves that end
-       where they began — mark nothing, because a hairpin that returns to
-       its own level is not a hairpin.
+     · A WORD WHOSE CURVE TRAVELS IS A MARKING, direction read off the
+       curve's own ends: in/cresc/lift rise and say `cresc.`, out/dim
+       fall and say `dim.`, and arch/swell/duck — curves that end
+       where they began — mark nothing, because a swell that returns to
+       its own level is not a crescendo. (These were HAIRPINS until
+       2026-09-03 and are abbreviations now; the argument, with the
+       measurement, is at DYNCRESC below.)
 
    THE INK RULES. Marks land on V1 — the desk moves the WHOLE section
    (audio/desk.js sectionOf), so one line speaks for the system, the way a
    short score says it. A dynamic is written ONCE, at a section boundary
    WHERE IT CHANGES — a mark restated every bar is the repetition disease on
-   paper. A hairpin opens on its section's first token and closes on the
-   last beam group of its last bar. Verified against the vendored abcjs
-   (chromium, 2026-08-30): all eight marks !ppp!..!fff! draw, both hairpin
-   pairs draw (one .abcjs-decoration per pair), a mark on a REST draws, and
-   the .abcjs-note count is untouched either way — so the glyph map and the
-   playhead's lighting cannot shift under the ink. */
+   paper. A travelling word is written ONCE, on its section's first
+   token, for the same reason. Verified against the vendored abcjs
+   (chromium, 2026-08-30): all eight marks !ppp!..!fff! draw, a mark on a REST
+   draws, and the .abcjs-note count is untouched either way — so the glyph map
+   and the playhead's lighting cannot shift under the ink. (2026-08-30 also
+   verified both hairpin PAIRS drawing, one .abcjs-decoration each; the pairs
+   are gone — see DYNCRESC — and `cresc.`/`dim.` are re-measured on the
+   rendered SVG as `.abcjs-annotation` text by test/dynamics.test.js.) */
 const DYNMARKS = ["ppp", "pp", "p", "mp", "mf", "f", "ff", "fff"]; // abc's own words
+/* THE TRAVELLING WORDS ARE ABBREVIATIONS, NOT HAIRPINS (2026-09-03).
+   Paul: *"You don't need to show the whole crescendo. You can use abbrevs like
+   'cresc' and so forth in the notation to avoid long weird lines."*
+
+   WHAT THE RENDERER ACTUALLY DREW, measured before changing anything (chromium,
+   the vendored abcjs, a four-bar `!crescendo(!`…`!crescendo)!` over one system):
+   ONE `g.abcjs-decoration` holding a two-path wedge stretched the WHOLE WIDTH of
+   the system — at a hairpin's few px of opening over ~800px of run it draws as a
+   long, nearly-flat rule under the staff, which is exactly the "long weird
+   line" in the sentence. Not a word: a line. `!<(!` / `!<)!` are abcjs's own
+   SYNONYMS for these two decorations and draw the identical wedge, so the
+   hairpin spelling is not an escape from it.
+
+   A SECTION IS THE SPAN, AND THAT IS WHY THE WEDGE IS ALWAYS LONG HERE. The
+   dynamic belongs to the whole section (audio/desk.js sectionOf moves all of
+   it), so every hairpin this file could write runs from a section's first bar
+   to its last — eight bars of nearly-horizontal wedge on ten staves. The
+   abbreviation says the same fact in five characters, which is what a short
+   score does with a long dynamic and what Paul asked for.
+
+   `_` PUTS IT UNDER THE STAFF — an ABC annotation's own placement character,
+   where the wedge was and where a dynamic belongs. It is drawn as a <text>
+   element (`.abcjs-annotation`), so a gate can read the abbreviation itself off
+   the SVG rather than counting decorations. NO CLOSING MARK: an abbreviation
+   has one end, which also retires the one-bar refusal that stood in
+   `inkOneStaff` ("a hairpin needs two ends: a one-bar section that is one beam
+   group has nowhere to close") — a one-bar crescendo is sayable now and says
+   `cresc.`
+
+   THEY ARE THE ONLY SPELLED-OUT MARKINGS THIS SCORE WRITES. Grepped the whole
+   engraving path before writing this: the ink is DYNMARKS (glyphs), chord
+   symbols (`inkChords`) and these two. There is no rit./accel./rall./sfz to
+   abbreviate because nothing here deals one — the record has no tempo-shape or
+   accent vocabulary that reaches the paper — and inventing marks the desk
+   cannot play is what the ppp/fff note above already refuses. */
+const DYNCRESC = '"_cresc."', DYNDIM = '"_dim."';
 // one dynamic step in dB, derived from the vocabulary itself: the mean gap
 // between fields.js LEVELS' adjacent rungs (3.5 dB today) — never a typed
 // constant, so retuning `back` retunes the staff
@@ -2732,17 +2772,8 @@ function inkOneStaff(line, dyn, secBar, totalBars) {
     const d = dyn[si];
     let open = "";
     if (d.mark !== prev) { open += "!" + d.mark + "!"; prev = d.mark; }
-    let pin = d.pin;
-    // a hairpin needs two ends: a one-bar section that is one beam group
-    // has nowhere to close, and keeps its mark alone
-    if (pin && b1 === b0 && bits[2 * b0].indexOf(" ") < 0) pin = 0;
-    if (pin) open += pin > 0 ? "!crescendo(!" : "!diminuendo(!";
+    if (d.pin) open += d.pin > 0 ? DYNCRESC : DYNDIM;
     if (open) bits[2 * b0] = open + bits[2 * b0];
-    if (pin) {
-      const bar = bits[2 * b1], sp = bar.lastIndexOf(" ");
-      const deco = pin > 0 ? "!crescendo)!" : "!diminuendo)!";
-      bits[2 * b1] = sp < 0 ? deco + bar : bar.slice(0, sp + 1) + deco + bar.slice(sp + 1);
-    }
   }
   return bits.join("") + close;
 }
@@ -2779,9 +2810,11 @@ function buildScore() {
   // THE DYNAMICS RIDE THE STRING, LAST (the block above buildScore). toScore's
   // own abc is kept as `scoreBare` — the identical record without its marks —
   // because the claim is per-record EQUIVALENCE OF NOTES with marks added:
-  // strip the !…! ink and the bare string must return byte for byte, and a
-  // record whose sections deal no word inks nothing so the two strings are
-  // one string (test/dynamics.test.js holds both).
+  // strip the ink — the !…! marks AND the two `"_cresc."`/`"_dim."`
+  // annotations, which are ink of the same kind since 2026-09-03 — and the
+  // bare string must return byte for byte; a record whose sections deal no
+  // word inks nothing so the two strings are one string
+  // (test/dynamics.test.js holds both).
   scoreBare = sc.abc;
   const dyn = scoreDyn();
   let abc = dyn
@@ -13306,7 +13339,8 @@ const scoreTrayItems = () => [
    controls are the same five nodes ui/eight.js built at the head of the
    transport section.
 
-   FOUR ITEMS HERE AND FIVE CONTROLS ON THE SCREEN. #play is not in this list
+   (THREE ITEMS SINCE 2026-09-03 — the voicing left, see the note below the
+   list.) FOUR ITEMS HERE AND FIVE CONTROLS ON THE SCREEN. #play is not in this list
    because it is in the HEAD, where it is on the screen at every level —
    Paul's "permanent play button at the top of the nav" — and the head sits
    directly above the list in the same 56px column, so what a reader sees at
@@ -13329,7 +13363,8 @@ const scoreTrayItems = () => [
    is a setting whose own mark is its state, so there is no single "you are
    here" to mark and the page SAYS so rather than leaving a gate to infer it
    from an absence. */
-/* FOUR ITEMS, AND THE DIE IS NOT ONE OF THEM ANY MORE (2026-08-30). Paul:
+/* FOUR ITEMS (THREE SINCE 2026-09-03), AND THE DIE IS NOT ONE OF THEM ANY
+   MORE (2026-08-30). Paul:
    *"Move the die icon to right above the question mark so it's always
    there."* `{ key: "tp.rewrite", node: rewriteBtn }` stood first in this list
    and `trayRow` seats that same node in the FOOT now, above the ?. A mark
@@ -13346,9 +13381,21 @@ const scoreTrayItems = () => [
 const playTrayItems = () => [
   { key: "tp.mode", node: modeBtn },
   { key: "tp.take", node: takeBtn },
-  { key: "tp.voicing", node: voicingBtn },
   { key: "tp.vol", node: volWrap },
 ];
+/* THREE ITEMS SINCE 2026-09-03, AND THE VOICING IS THE ONE THAT LEFT. Paul:
+   *"Move the 'sung/all analog' etc spinner button to the main area right above
+   play/stop and out of opts."* `{ key: "tp.voicing", node: voicingBtn }` stood
+   third in this list; `trayRow` seats that same node in the FOOT now, directly
+   above #play. Nothing about the control changed — same id, same five
+   positions, same one owner of the value (audio/plan.js `voicing`), same
+   `paintVoicing` reading fields.js VOICINGS — only where it stands.
+   AND IT IS THE RIGHT KIND OF THING TO STAND THERE. The fold's argument
+   ("these four are not siblings you stand among") is about a set of WRITES you
+   open when you want them; a voicing is the one of the four that decides what
+   the next press of ▶ will SOUND like, which is a fact you want to read
+   without opening anything — the same reason the mode was moved INTO the
+   transport's own group and the same reason #play is permanent. */
 
 /* WHAT IS ON THE STRIPE, AS A FLAT LIST OF ROWS WITH DEPTHS.
 
@@ -13507,7 +13554,10 @@ function trayNow() {
        LEVEL of the stripe and a level is a set of siblings you stand among.
        These four are not siblings and never were — a mode, a take, a voicing
        and a fader — so they are a fold in the foot, the door still wears
-       `aria-expanded`, and the list above gives up the pixels;
+       `aria-expanded`, and the list above gives up the pixels. (THREE, since
+       2026-09-03: the VOICING came out of the fold and stands under it, above
+       #play, on Paul's own instruction — see `playTrayItems`.);
+     · the VOICING — `#voicing`, permanent, its mark its own state;
      · `#playops` itself, and then `#play`, LAST, at the floor, under a thumb.
 
    THE SEED FLYOUT IS NOT IN HERE and that is the one thing about it worth
@@ -13542,7 +13592,8 @@ function trayRow() {
   logBtn.setAttribute("aria-controls", "nu-log");
   logBtn.addEventListener("click", () => setLog(!logOpen));
   foot.append(logBtn);
-  /* THE FOUR PLAY OPTIONS, SEATED ONCE, IN A BOX THAT IS HIDDEN RATHER THAN
+  /* THE PLAY OPTIONS (FOUR UNTIL 2026-09-03, THREE SINCE — the voicing stands
+     under this box now), SEATED ONCE, IN A BOX THAT IS HIDDEN RATHER THAN
      EMPTIED. They are the same four nodes `playTrayItems` handed to the level
      — one carries a readout, one is a five-position setting, one is a fader
      with a pointer law — and the whole reason the level took NODES instead of
@@ -13555,7 +13606,18 @@ function trayRow() {
     playOpsBox.append(it.node, document.createTextNode(" "));
   foot.append(playOpsBox);
   playOpsBtn.setAttribute("aria-expanded", "false");
-  foot.append(playOpsBtn, playBtn);
+  /* THE VOICING STANDS BETWEEN THE DOOR AND THE FLOOR (2026-09-03). Paul:
+     *"Move the 'sung/all analog' etc spinner button to the main area right
+     above play/stop and out of opts."* — so it is the LAST node before #play
+     and the two are neighbours a thumb never has to open anything to reach.
+     It is the same node `playTrayItems` used to hand the fold (see the note
+     there), seated once, permanently, exactly like #rewrite above: a control
+     that is never rebuilt keeps its listener, its focus and its painted face
+     across every repaint. Its mark is its STATE and not the next tap
+     (`paintVoicing`), which is what makes it readable standing here — the
+     column says, from the floor up, ▶ / the voicing you are in / the door to
+     the rest. */
+  foot.append(playOpsBtn, voicingBtn, playBtn);
   nav.append(foot);
   logPanel = $("nu-log");
   seedOut = buildSeedOut();
@@ -13568,8 +13630,9 @@ function trayRow() {
 /* ===== THE GENRE'S NAME, ON THE SCREEN AT EVERY DEPTH ==================
    Paul, 2026-09-02: *"The name of the genre should be obvious."*
 
-   ONE PLATE, ONE WRITER, AND NOTHING TYPED. The word is `NuWiki.WIKI[gk].title`
-   with its underscores spent — the same string the genre list draws in its
+   ONE PLATE, ONE WRITER, AND NOTHING TYPED. The word is `NuWiki.name(gk)`
+   (`NuWiki.WIKI[gk].title` until 2026-09-03 — see the plate note below the
+   button) — the same string the genre list draws in its
    `.nu-ixw` cell — and the second line is `GENRES[gk].label`, which is the
    place and the year ("Kingston 1969"). A record whose anchor has no article
    falls back to its own key, which is what the list does one column over. This
@@ -13595,11 +13658,22 @@ whereBtn.addEventListener("click", () => showTab("Where"));
    because a row with no place has no place to print — so the second line is
    drawn only when it is a DIFFERENT string from the first. One fact, said
    once, and no plate that reads "Silence · Silence". */
+/* ...AND THE WORD IS `NuWiki.name(gk)`, NOT THE ARTICLE'S TITLE (2026-09-03).
+   Paul: *"look for names in genre list, you still have people and bands in
+   there. If something doesn't have a natural genre just pick a good mix. If
+   it's a repeat then flag it: Synthwave #2, etc."* He was reading the genre
+   list, and this plate reads the same fact, so it moved the same day: 33 rows'
+   articles are an ACT or a WORK because that is the honest evidence for the
+   row (Hans Zimmer, Pretty Hate Machine, Carmen Saeculare), and the name a
+   reader sees now comes off `as` where the table declares one. The rule lives
+   in wiki.js's own `name()` — `as` else `title`, underscores spent — because
+   three views draw this word and one of them may not be the second owner of
+   the rule. Everything below is unchanged: the label still stands between the
+   table and the key, and is still dropped when it would say the word twice. */
 function nameRecord() {
   const gk = DOC.basis;
   const g = GENRES[gk] || {};
-  const row = NuWiki && NuWiki.WIKI ? NuWiki.WIKI[gk] : null;
-  const word = row ? String(row.title).replace(/_/g, " ") : (g.label || gk);
+  const word = (NuWiki && NuWiki.name ? NuWiki.name(gk) : null) || g.label || gk;
   const sub = g.label && g.label !== word ? g.label : null;
   paintIcon(whereBtn, { glyph: GLYPH.tab.Where.g, word, sub,
                         say: GLYPH.tab.Where.s, on: openTab === "Where" });
@@ -15367,14 +15441,53 @@ function buildSeedOut() {
   return box;
 }
 /* ONE WRITE, ONE DOOR. The clamp is the atlas's (0..65536) and it is asked
-   rather than repeated; `startNow` is handed as the `done` callback only when
-   the record was already sounding, which is the same rule `pick` states: a
-   caller that started the engine on its own line would start it on the
-   document it was about to replace. */
+   rather than repeated; `startNow` is handed as the `done` callback, which is
+   the rule `pick` states — a caller that started the engine on its own line
+   would start it on the document it was about to replace.
+
+   ---------- A SEED CHANGE PLAYS, 2026-09-03 ----------------------------
+   Paul: *"When I change the seed start playing."*
+
+   IT WAS `wasPlaying ? startNow : null`, and that read the transport to decide
+   whether a gesture had an effect. On a fresh box the transport is stopped, so
+   typing a number, dragging the fader or pressing `next` moved the digit, wrote
+   a whole new record — and made no sound. That is this box's characteristic
+   bug wearing a condition for a hat: DECLARED BUT NEVER ARRIVING, a control
+   that composes something nobody can hear. A seed is the one number on this
+   page whose only readout is the RECORD; a reader who says 4242 is asking to
+   hear 4242, not to be told about it.
+
+   IT IS THE LANDING AND NOT THE CALLERS, which is the whole point of writing
+   it here. Four spellings say a seed in the flyout — the typed number, the
+   fader, `roll` and `next` — and all four already ended in this one function,
+   so the autoplay is one argument in one place and there is no fifth path to
+   forget. The other two seed gestures in the box already play and did not need
+   a line: `rewriteNow` hands `reseed` the same `startNow` (the die, and
+   `album` at the end of a record), and a tap on a mark reaches `ctx.play`,
+   which IS `startNow` (ui/atlas.js `playNow`). One start path, three landings,
+   no caller deciding.
+
+   AND `startNow` IS #play's OWN DOOR, so this is not a second way into the
+   engine: `startAt(0)` plus `say(true)`, the same call the foot's button makes
+   — the tape wave's adoption, the gesture unlock and the pending-start queue
+   are all reached the way they already were. Playing, `startAt(0)` QUEUES on
+   the next box line rather than restarting under the ear, which is what the
+   die has always done and is why no `playing` test is wanted here either.
+
+   THE AUTOPLAY RULE IS SATISFIED BY THE GESTURE, not by a policy flag: a
+   change on an input, a pointer on the fader and a press on a button are all
+   user activation, and activation is STICKY, so the AudioContext still resumes
+   when `done` runs a frame later (the record lands on the second frame — see
+   `pick`). Measured on a fresh page with a default-policy browser, first
+   interaction = a seed change: test/seed.js S6.
+
+   AND NOTHING ELSE STARTS. This function is reached only from the four
+   flyout controls; the boot does not call it, `readLink` hands `ATLAS.open`
+   an undefined `done`, and a restored session never touches it — so a reload
+   is silent, which is the other half of what was asked (test/seed.js S6d). */
 function writeSeed(n) {
   if (!ATLAS || !ATLAS.setReading) return;
-  const wasPlaying = playing;
-  ATLAS.setReading(n, wasPlaying ? startNow : null);
+  ATLAS.setReading(n, startNow);
   printReading();
   syncSeedOut();
 }

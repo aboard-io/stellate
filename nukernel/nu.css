@@ -3152,8 +3152,14 @@ td > select{ inline-size: 100%; min-inline-size: 0; max-inline-size: 9em; }
    from 710 — the paragraph above says 720 for the third, measured on the
    capped strip; the one step is the difference and it is recorded rather than
    silently overwritten. */
+/* ...AND THE 218px FLOOR IS CAPPED AT THE ROW'S OWN WIDTH (2026-09-03). The
+   genre bus took this row the day its three chips became three slots, and the
+   bus plate sits ~20px further right than a strip does, so at 320 the floor
+   alone (218) pushed the slot to x=341 — test/shell.js A1 read 341 vs 320 on
+   the Mix tab. `min(218px, 100%)` is the floor a row can actually afford: at
+   every width >= 218 it is the same 218 as before, byte for byte. */
 .nu-srow-ins{ grid-template-columns:
-  repeat(auto-fit, minmax(max(218px, calc((100% - .8em) / 3)), 1fr)); }
+  repeat(auto-fit, minmax(max(min(218px, 100%), calc((100% - .8em) / 3)), 1fr)); }
 .nu-srow-ins > .nu-rowlab{ grid-column: 1 / -1; }
 .nu-rowlab{ font: 700 .68rem/1 var(--mono, monospace); letter-spacing: .1em;
   text-transform: uppercase; margin: 0; }

@@ -292,8 +292,8 @@ console.log("\nS2 — live/press parity (whole-song stream walk vs assemble)");
 const gbDoor = masterState(null, { genre: { fx1: "crunch" } }, SE) || {};
 ok(gbDoor.genreBus && gbDoor.genreBus.chain && gbDoor.genreBus.chain.length === 1
    && gbDoor.genreBus.chain[0].module === "insert_higain",
-   "the rack's chip word resolves through masterState + insertChain to a real " +
-   "module (crunch -> insert_higain)", JSON.stringify(gbDoor));
+   "the rack's effect word resolves through masterState + insertChain to a " +
+   "real module (crunch -> insert_higain)", JSON.stringify(gbDoor));
 // the S2/S3/S4 record turns the stage UP so the spectrum claim is measured
 // against a contribution the ear would notice: the chair AND the kit send at
 // 0.9 (SENDS `drown`), the chain is a ring mod (a spectral MOVE, not a tone
@@ -405,6 +405,88 @@ console.log("\nS5 — the bleed, on a delay-heavy feed through the real fx_bus")
      "the board's `soaked` renders a wetter room than the default — drive " +
      "the control, hear the change (tail " + db(rms(rSoak, t0, T)).toFixed(1) +
      " dB vs default " + db(tailD).toFixed(1) + " dB)");
+}
+
+/* ---- S8 · THE THREE SLOTS, SET NORMALLY (2026-09-03) ------------------
+   Paul: *"The 'genre bus' doesn't really make a lot of sense. I was expecting
+   it to just be three effects I could set normally. It has this concept of
+   chips. We don't need all that, just a set of chained effects that can be
+   fed."* The bus offered three bare effect NAMES; it offers the strip's own
+   slot now — the effect, its wet, its one or two settings (fields.js
+   busFxChain, the sibling of the `fxChainFor` a voice strip has taken since
+   2026-08-27). Six claims, five of them on rendered samples:
+
+     · the chain IS the slots, in SLOT ORDER, one module each;
+     · a HOLE does not reorder what is left;
+     · a slot naming only its effect is BYTE-IDENTICAL to what the old
+       three-name bus rendered — the migration claim, which is why the keys
+       `fx1..3` did not move;
+     · a slot's WET reaches the sound (dry vs full, on a send);
+     · a slot's FACE knob reaches the sound (ringmod freq at either end);
+     · ORDER IS AUDIBLE — crunch→chorus is not chorus→crunch — which is what
+       makes "chained" a claim and not a word. */
+console.log("\nS8 — the genre bus's three slots, set normally");
+{
+  const chainOf = (g) => ((masterState(null, { genre: g }, SE) || {}).genreBus || {}).chain || [];
+  const three = chainOf({ fx1: "crunch", fx2: "chorus", fx3: "echo" });
+  ok(three.length === 3 && three.map((c) => c.module).join(",") ===
+       "insert_higain,insert_chorus,insert_delay",
+     "the three slots ARE the chain, in slot order, one module apiece",
+     JSON.stringify(three.map((c) => c.module)));
+  const hole = chainOf({ fx2: "chorus" });
+  ok(hole.length === 1 && hole[0].module === "insert_chorus",
+     "…and a hole does not reorder what is left: slot 2 alone is a one-effect " +
+     "chain", JSON.stringify(hole.map((c) => c.module)));
+  // THE MIGRATION, MEASURED: a saved session names only fx1..3 (no wet, no
+  // face), and its chain must be what the pre-round bus built from the same
+  // three words — fields.js fxChain at the module's declared defaults, through
+  // the same insertChain door.
+  const wordsOnly = chainOf({ fx1: "crunch", fx2: "chorus" });
+  const asBefore = (() => {
+    const raw = F.fxChain(["crunch", "chorus"]);
+    return (masterState(null, { genre: { fx1: "crunch", fx2: "chorus" } }, SE)
+             .genreBus.chain).map((c, i) => JSON.stringify(c) === JSON.stringify(wordsOnly[i]))
+           && raw.length === 2;
+  })();
+  ok(asBefore && JSON.stringify(wordsOnly.map((c) => c.params.mix)) ===
+       JSON.stringify([F.FX.crunch.params.mix, F.FX.chorus.params.mix]),
+     "…and a save that names only its effects resolves to the modules' OWN " +
+     "declared params — the same chain the three-name bus built, which is why " +
+     "`fx1..3` kept their keys", JSON.stringify(wordsOnly.map((c) => c.params.mix)));
+
+  // ---- and now the sound. Same loud recipe S3 used: sends 0.9 on the chair
+  // and the kit, so the bus's contribution is one the ear would notice.
+  const gs = { v0: { genre: 0.9 }, kick: { genre: 0.9 },
+               snare: { genre: 0.9 }, hat: { genre: 0.9 } };
+  const st = (g) => masterState(null, { genre: { level: "blown", ...g } }, SE) || {};
+  const render = async (g) => pressRender(await record(st(g), gs));
+  const moved = (a, c) => BANDS.map((f) =>
+    +(bandDb(c.L, f, SR) - bandDb(a.L, f, SR)).toFixed(2));
+
+  const wetDry = await render({ fx1: "ringmod", fxw1: "dry" });
+  const wetFull = await render({ fx1: "ringmod", fxw1: "full" });
+  const dWet = moved(wetDry, wetFull);
+  console.log("       wet dry→full, dB per band: " +
+    BANDS.map((f, i) => f + "Hz " + (dWet[i] > 0 ? "+" : "") + dWet[i]).join(" · "));
+  ok(firstDiff(wetDry.L, wetFull.L) >= 0 && dWet.some((d) => Math.abs(d) > 1),
+     "A SLOT'S WET REACHES THE SOUND: dry vs all-wet on slot 1 renders a " +
+     "different tape and moves a band by more than 1 dB", JSON.stringify(dWet));
+
+  const faceLo = await render({ fx1: "ringmod", fxa1: "least" });
+  const faceHi = await render({ fx1: "ringmod", fxa1: "most" });
+  const dFace = moved(faceLo, faceHi);
+  console.log("       ringmod freq least→most, dB per band: " +
+    BANDS.map((f, i) => f + "Hz " + (dFace[i] > 0 ? "+" : "") + dFace[i]).join(" · "));
+  ok(firstDiff(faceLo.L, faceHi.L) >= 0 && dFace.some((d) => Math.abs(d) > 1),
+     "A SLOT'S OWN SETTING REACHES THE SOUND: the ring mod's freq at either " +
+     "end of its declared span (FXFACE 40..2000 Hz) is two different tapes",
+     JSON.stringify(dFace));
+
+  const ab = await render({ fx1: "crunch", fx2: "chorus" });
+  const ba = await render({ fx1: "chorus", fx2: "crunch" });
+  ok(firstDiff(ab.L, ba.L) >= 0,
+     "ORDER IS SLOT ORDER AND IT IS AUDIBLE: crunch→chorus and chorus→crunch " +
+     "are different tapes (maxΔ " + maxDiff(ab.L, ba.L).toExponential(2) + ")");
 }
 
 console.log("\n" + (fails ? "FAIL" : "ok") + " — " + checks + " checks, " + fails + " failures");

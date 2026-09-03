@@ -33,6 +33,23 @@ function ok(cond, what, detail) {
   return false;
 }
 const near = (a, b, tol) => Math.abs(a - b) <= (tol == null ? 1e-9 : tol);
+/* A BUS SLOT'S KNOBS ARE CONDITIONAL ON ITS SEAT (2026-09-03), and three
+   registry walks in this file have to know it. Paul: *"I was expecting it to
+   just be three effects I could set normally."* The genre bus row now declares
+   twelve slot keys — `fx<n>` (the seat) plus `fxw<n>`/`fxa<n>`/`fxb<n>` (its
+   wet and the module's own one or two settings) — and ui/engineer.js `slotEl`
+   draws the three knobs ONLY when a seat is filled, exactly as a voice strip's
+   insert slot has since 2026-08-27: a wet on an empty seat is a pot for an
+   effect that is not there, and which two face knobs exist depends on WHICH
+   module is seated (fields.js FXFACE: ringmod declares one, chorus two, sweep
+   two of its own).
+   SO THE THREE "is every registry row drawn?" WALKS SKIP THEM, and this is a
+   pointer rather than a hole: G15b DRIVES all four keys of slot 1 on the
+   rendered plate — seat it, move its wet, move its face knob, read the words
+   back off the document, unseat it and watch the row vanish. The seats
+   themselves are unconditional and are asserted present by G3. */
+const SLOTKNOB = (key) => /^fx[wab]?[123]$/.test(String(key));
+const BUSSEAT = (k) => /^bus\|[a-z]+\|fx[123]$/.test(String(k || ""));
 
 (async () => {
 
@@ -1342,7 +1359,15 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       .filter((s) => !s.closest("#app"))
       .map((s) => ({ k: s.dataset.k || s.id || s.getAttribute("aria-label") || "?",
                      sel: s.dataset.sel || null,
-                     seat: /^ins\|/.test(s.dataset.k || ""),
+                     /* A SEAT, EITHER SPELLING (2026-09-03). `ins|<voice>|<n>`
+                        is a strip's; `bus|<bus>|fx<n>` is the genre bus's, and
+                        it is the SAME control drawn by the same function for
+                        the same reason — ui/engineer.js `slotEl` with a second
+                        owner. It is a raw <select> like its twin rather than a
+                        ui/selects.js combo, which is what this filter has to be
+                        told. */
+                     seat: /^ins\|/.test(s.dataset.k || "") ||
+                           /^bus\|[a-z]+\|fx[123]$/.test(s.dataset.k || ""),
                      strip: !!s.closest(".nu-strip"),
                      produce: !!s.closest("#produce") })));
   const sel = (await sweepSelects())
@@ -1549,8 +1574,10 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   for (const f of F.MASTER) want.push(["master|" + f.key, f.table, f.labels]);
   for (const b of F.BUSES) {
     if (!b.engine) continue;               // a group draws no plate — see above
-    for (const k of b.knobs)
+    for (const k of b.knobs) {
+      if (SLOTKNOB(k.key)) continue;       // conditional on its seat — SLOTKNOB
       want.push(["bus|" + b.bus + "|" + k.key, k.table, k.labels]);
+    }
   }
   const gone = [], short = [];
   for (const [key, table, labels] of want) {
@@ -1569,6 +1596,29 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
   ok(!gone.length, "all " + want.length + " master and engine-bus controls are " +
      "drawn on their own plate, behind their own tab — one each for the whole " +
      "record, not one per channel", gone.join(", "));
+  /* THE SEATS THE WALK ABOVE SKIPPED, ASSERTED BY NAME (2026-09-03). SLOTKNOB
+     takes the genre bus's twelve slot keys out of `want` because nine of them
+     exist only once a seat is filled; the three SEATS do not, and a hole in a
+     registry walk is only honest if what it leaves out is claimed somewhere.
+     Here is where: every `fx<n>` a bus row declares is a menu on that bus's
+     plate. (What the seat DOES — the wet and the face knobs it grows, the
+     document it writes — is G15b, driven.) */
+  {
+    const wantSeats = [];
+    for (const b of F.BUSES) { if (!b.engine) continue;
+      for (const kn of b.knobs) if (/^fx[123]$/.test(kn.key))
+        wantSeats.push("bus|" + b.bus + "|" + kn.key); }
+    const seatsDrawn = [].concat(...(await perBus(() => page.evaluate(() =>
+      [...document.querySelectorAll("#rack select[data-k]")]
+        .map((n2) => n2.dataset.k)
+        .filter((k) => /^bus\|[a-z]+\|fx[123]$/.test(k || ""))))).map(([, v]) => v));
+    const missSeat = wantSeats.filter((k) => seatsDrawn.indexOf(k) < 0);
+    ok(wantSeats.length > 0 && !missSeat.length,
+       "…and every effect SEAT the registry declares is a menu on its bus's " +
+       "plate (" + wantSeats.length + " of them) — the three slot knobs behind " +
+       "each are conditional on it and are G15b's, driven",
+       JSON.stringify(missSeat));
+  }
   const wantKeys = new Set(want.map((w) => w[0]));
   const inReg = drawnRack.filter((k) => wantKeys.has(k));
   const extra = drawnRack.filter((k) => !wantKeys.has(k));
@@ -2698,6 +2748,93 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
          "untouched — the word grid is score-level data on the fader's own " +
          "proven wire", JSON.stringify({ g0, g1 }));
     }
+
+    /* ===== G15b · THE GENRE BUS IS THREE EFFECTS, SET NORMALLY (2026-09-03)
+       Paul: *"The 'genre bus' doesn't really make a lot of sense. I was
+       expecting it to just be three effects I could set normally. It has this
+       concept of chips. We don't need all that, just a set of chained effects
+       that can be fed."* The plate drew three bare `<select>`s of effect names
+       labelled "chip 1..3" and nothing else. It draws the STRIP'S OWN SLOT now
+       — ui/engineer.js `slotEl`, one drawing and two owners — so this is G15's
+       trip made against the bus's own keys, plus the two claims that are
+       specifically about the ask: no "chip" word anywhere on the plate, and
+       the FEED still named in the header (the sends are the point of a bus).
+
+       WHY IT IS DRIVEN AND NOT READ. The slots' knobs only EXIST once a seat
+       is filled — `slotEl` returns the empty box before it builds a body — so
+       a structural read of the shipped plate would find three seats and no
+       pots and could not tell "set normally" from "named only". */
+    await openBus("genre");
+    const busTrip = await page.evaluate(async () => {
+      const wait = () => new Promise((r) => setTimeout(r, 400));
+      const doc2 = () => window.__eightDoc();
+      const row = () => JSON.parse(JSON.stringify(
+        ((doc2().sound || {}).buses || {}).genre || null));
+      const plate = () => document.querySelector(
+        '#boardpanel #rack .nu-plate[data-bus="genre"]');
+      const drive = (k, word) => {
+        const el2 = document.querySelector('input[data-k="' + k + '"]');
+        if (!el2) return false;
+        for (let i = +el2.min; i <= +el2.max; i++) {
+          el2.value = String(i);
+          el2.dispatchEvent(new Event("input", { bubbles: true }));
+          if (el2.getAttribute("aria-valuetext") === word) {
+            el2.dispatchEvent(new Event("change", { bubbles: true })); return true; }
+        }
+        return false;
+      };
+      const seat = (n, v) => {
+        const sel = document.querySelector(
+          'select[data-k="bus|genre|fx' + n + '"]');
+        if (!sel) return false;
+        sel.value = v; sel.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+      };
+      const before = { seats: [1, 2, 3].map((n) => !!document.querySelector(
+                         'select[data-k="bus|genre|fx' + n + '"]')),
+                       pots: !!document.querySelector(
+                         'input[data-k="bus|genre|fxw1"]'),
+                       chip: /chip/i.test((plate() || {}).textContent || ""),
+                       head: ((plate() || {}).querySelector
+                         ? (plate().querySelector(".nu-busin") || {}).textContent
+                         : null) };
+      seat(1, "ringmod"); await wait();
+      const seated = row();
+      const wet = drive("bus|genre|fxw1", "half"); await wait();
+      const face = drive("bus|genre|fxa1", "most"); await wait();
+      seat(2, "chorus"); await wait();
+      const after = row();
+      const chained = [1, 2, 3].map((n) => {
+        const sel = document.querySelector('select[data-k="bus|genre|fx' + n + '"]');
+        return sel ? sel.value : null;
+      });
+      seat(1, ""); await wait();
+      seat(1, ""); await wait();          // the compaction moved chorus into 1
+      const cleared = row();
+      return { before, seated, wet, face, after, chained, cleared };
+    });
+    ok(busTrip.before.seats.every(Boolean) && !busTrip.before.chip,
+       "the genre bus draws THREE effect seats (bus|genre|fx1..3) and the word " +
+       "\"chip\" is nowhere on the plate", JSON.stringify(busTrip.before));
+    ok(/^in ←/.test(busTrip.before.head || ""),
+       "…and it still says what FEEDS it — the strips' genre sends are the " +
+       "point of the bus: " + JSON.stringify(busTrip.before.head));
+    ok(busTrip.seated && busTrip.seated.fx1 === "ringmod",
+       "seating `ring mod` in slot 1 writes sound.buses.genre.fx1 — the row's " +
+       "OWN key, unmoved, so a saved session opens onto these seats",
+       JSON.stringify(busTrip.seated));
+    ok(busTrip.wet && busTrip.face && busTrip.after &&
+       busTrip.after.fxw1 === "half" && busTrip.after.fxa1 === "most",
+       "…and the slot's WET and its own SETTING are live pots that write the " +
+       "registry's words (fxw1 `half`, fxa1 `most`) — set normally, like " +
+       "every other effect on the board", JSON.stringify(busTrip.after));
+    ok(eq(busTrip.chained, ["ringmod", "chorus", ""]),
+       "…and a second effect chains after it, in slot order",
+       JSON.stringify(busTrip.chained));
+    ok(busTrip.cleared === null,
+       "…and unseating them deletes the row, knobs included — absent is the " +
+       "only spelling of a default", JSON.stringify(busTrip.cleared));
+    await openBus((await busTabs())[0]);
   }
 
   /* G13 REWRITTEN 2026-08-27 (THIRD TIME THAT DAY), and every reversal is
@@ -2969,7 +3106,9 @@ console.log("\n" + "G11 the board, as the browser actually draws it");
       (busKeysDrawn[key] = busKeysDrawn[key] || []).push(k);
     const wantBus = [];
     for (const b of F.BUSES) { if (!b.engine) continue;
-      for (const kn of b.knobs) wantBus.push("bus|" + b.bus + "|" + kn.key); }
+      for (const kn of b.knobs) {
+        if (SLOTKNOB(kn.key)) continue;    // conditional on its seat — SLOTKNOB
+        wantBus.push("bus|" + b.bus + "|" + kn.key); } }
     for (const f of F.MASTER) wantBus.push("master|" + f.key);
     wantBus.push("level");                        // the record gain, on the main
     const unreachable = wantBus.filter((k) => !busKeysDrawn[k]);

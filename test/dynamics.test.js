@@ -22,7 +22,7 @@
  *     string byte for byte — the notes never moved, the marks were added.
  *
  * NO SECOND COPY OF THE MAPPING. Where this gate predicts (which sections
- * hairpin, which way; which lvl word is louder) it reads the OWNERS off the
+ * marks and which way; which lvl word is louder) it reads the OWNERS off the
  * page — kernel SHAPES' own curve ends for the travel, fields LEVELS' own
  * gains for the order — never a table retyped here. The mark SCALE itself
  * (dB → ppp..fff) is deliberately not re-derived: its claims are structural
@@ -45,7 +45,21 @@ const fail = (m) => { CHECKS++; FAILS++; console.log("  FAIL " + m); };
 const is = (cond, m) => (cond ? ok(m) : fail(m));
 
 const MARK_RE = /!(?:ppp|pp|p|mp|mf|f|ff|fff)!/g;
-const INK_RE = /!(?:ppp|pp|p|mp|mf|f|ff|fff)!|!(?:crescendo|diminuendo)[()]!/g;
+/* THE TRAVELLING INK IS AN ABBREVIATION SINCE 2026-09-03, NOT A HAIRPIN.
+   Paul: *"You don't need to show the whole crescendo. You can use abbrevs like
+   'cresc' and so forth in the notation to avoid long weird lines."* Measured on
+   the rendered SVG before the change: a section-long `!crescendo(!`…`!crescendo)!`
+   draws ONE `g.abcjs-decoration` whose wedge is the full width of the system —
+   a long, nearly-flat rule under the staff, which is the line in the sentence.
+   The page writes `"_cresc."` / `"_dim."` — ABC annotations, placed under the
+   staff, drawn as `.abcjs-annotation` <text> — so this file's ink regex gains
+   them and R3/R5 below read the WORDS off the paper instead of counting
+   decoration pairs. The old spelling is still matched here on purpose: a build
+   that regressed to hairpins would strip clean and pass R1 while failing R3,
+   which is the honest split between "the notes did not move" and "the marking
+   is the one Paul asked for". */
+const PIN_RE = /"_(?:cresc|dim)\."/g;
+const INK_RE = /!(?:ppp|pp|p|mp|mf|f|ff|fff)!|!(?:crescendo|diminuendo)[()]!|"_(?:cresc|dim)\."/g;
 /* THE SECOND INK, 2026-08-31 — chord symbols. Paul asked for them in the same
    breath as the dynamics ("...or chords being labeled") and they ride the same
    string by the same surgery, so the byte-identity claim below now covers BOTH:
@@ -76,7 +90,17 @@ async function readScore(pg) {
              nudges: window.__eightNudges().map((n) => ({ env: n.env, lvl: n.lvl })),
              travel, levels: NF.LEVELS,
              deco: count(".abcjs-decoration"), dyn: count(".abcjs-dynamics"),
-             notes: count(".abcjs-note") };
+             notes: count(".abcjs-note"),
+             /* THE WORDS, AND THE WIDEST MARK ON THE PAGE (2026-09-03). The
+                annotation texts prove the abbreviation reached the paper (abcjs
+                drops what it cannot draw, silently); the widest decoration
+                proves the long wedge is gone — every mark this score writes is
+                a glyph a few dozen pixels wide, and a hairpin was the width of
+                a system. Both read off the drawn SVG, never off the string. */
+             ann: svg ? [...svg.querySelectorAll(".abcjs-annotation")]
+                          .map((t) => t.textContent) : [],
+             widestDeco: svg ? [...svg.querySelectorAll("g.abcjs-decoration")]
+                 .reduce((w, g) => Math.max(w, Math.round(g.getBBox().width)), 0) : -1 };
   });
 }
 
@@ -171,29 +195,35 @@ function v1Bars(abc, steps, secAt) {
     is(repeats === 0, "R2 · consecutive marks always differ — a mark is written " +
        "only at a CHANGE (" + emitted.join(" ") + ")");
 
-    // R3 — hairpins: predicted per section off kernel SHAPES' own curve ends
+    /* R3 — the travelling word: predicted per section off kernel SHAPES' own
+       curve ends. IT WAS A HAIRPIN PAIR UNTIL 2026-09-03 (open on the first
+       bar, close in the last) and it is ONE ABBREVIATION on the first bar now:
+       `"_cresc."` where the curve rises, `"_dim."` where it falls, nothing at
+       all where it returns to where it began. The prediction is unchanged —
+       same owner, same ends, same sections — only the ink is shorter, so this
+       check also asserts the hairpins are GONE rather than merely unasserted:
+       a build that wrote both would draw both. */
     const NS = r.nudges.length;
-    let pinsRight = true, pairPer = true, said = [];
+    let pinsRight = true, noPins = true, said = [];
     for (let si = 0; si < NS; si++) {
       const b0 = secBar[si], b1 = (si + 1 < NS ? secBar[si + 1] : bars.length) - 1;
       const span = bars.slice(b0, b1 + 1).join(" ");
       const want = r.travel[r.nudges[si].env] || 0;
-      const co = (span.match(/!crescendo\(!/g) || []).length,
-            cc = (span.match(/!crescendo\)!/g) || []).length,
-            po = (span.match(/!diminuendo\(!/g) || []).length,
-            pc = (span.match(/!diminuendo\)!/g) || []).length;
-      if (co !== cc || po !== pc) pairPer = false;
+      const co = (span.match(/"_cresc\."/g) || []).length,
+            po = (span.match(/"_dim\."/g) || []).length;
+      if (/!(?:crescendo|diminuendo)[()]!/.test(span)) noPins = false;
       const one = want > 0 ? co === 1 && po === 0 : want < 0 ? po === 1 && co === 0
                 : co === 0 && po === 0;
       if (!one) { pinsRight = false; said.push(si + ":" + (r.nudges[si].env || "·") + "→" + co + "/" + po); }
-      // …and the open sits on the section's first bar, the close on its last
-      if (want > 0 && !(bars[b0].includes("!crescendo(!") && bars[b1].includes("!crescendo)!"))) pinsRight = false;
-      if (want < 0 && !(bars[b0].includes("!diminuendo(!") && bars[b1].includes("!diminuendo)!"))) pinsRight = false;
+      // …and it sits on the section's FIRST bar, where a reader meets the section
+      if (want > 0 && !bars[b0].includes('"_cresc."')) pinsRight = false;
+      if (want < 0 && !bars[b0].includes('"_dim."')) pinsRight = false;
     }
-    is(pinsRight && pairPer, "R3 · each section whose env CURVE travels (kernel " +
-       "SHAPES' own ends) carries exactly one hairpin pair spanning it — open on " +
-       "its first bar, close in its last — and a flat or returning curve carries " +
-       "none" + (said.length ? " [" + said.join(" ") + "]" : ""));
+    is(pinsRight && noPins, "R3 · each section whose env CURVE travels (kernel " +
+       "SHAPES' own ends) carries exactly one ABBREVIATION on its first bar — " +
+       "`cresc.` rising, `dim.` falling — a flat or returning curve carries " +
+       "none, and no !crescendo(! hairpin is written anywhere" +
+       (said.length ? " [" + said.join(" ") + "]" : ""));
 
     // R4 — a louder lvl word is a louder mark (order read off fields LEVELS)
     const order = MARK_RE.source; // not used; order below is DYNMARKS order
@@ -220,10 +250,24 @@ function v1Bars(abc, steps, secAt) {
     // R5 — the paper: abcjs drew every token (it drops unknown decorations
     // silently, so the SVG is the only witness)
     const nMarks = (r.abc.match(MARK_RE) || []).length;
-    const nPairs = (r.abc.match(/!crescendo\(!/g) || []).length +
-                   (r.abc.match(/!diminuendo\(!/g) || []).length;
-    is(r.dyn === nMarks + nPairs, "R5 · the SVG holds one .abcjs-dynamics element " +
-       "per mark and per hairpin pair (" + r.dyn + " = " + nMarks + " + " + nPairs + ")");
+    is(r.dyn === nMarks, "R5 · the SVG holds one .abcjs-dynamics element per " +
+       "ppp..fff mark and nothing else (" + r.dyn + " = " + nMarks + ") — the " +
+       "hairpin pairs it used to count are gone");
+    /* R5b — THE ABBREVIATION IS ON THE PAPER, AND THE LONG LINE IS NOT. Two
+       readings off the drawn SVG, because this is the whole of Paul's ask and
+       neither half is visible in the string: the words abcjs actually engraved
+       (it drops what it cannot draw, silently), and the width of the widest
+       mark it drew. A section-long hairpin measured the full width of a system
+       before this round; every mark this score writes now is a glyph. */
+    const wantPins = (r.abc.match(PIN_RE) || []).length;
+    const drawnPins = r.ann.filter((t) => /^(cresc|dim)\.$/.test(t)).length;
+    is(wantPins > 0 && drawnPins === wantPins,
+       "R5b · every `cresc.`/`dim.` in the abc is DRAWN as an .abcjs-annotation " +
+       "on the paper (" + drawnPins + " of " + wantPins + ")");
+    is(r.widestDeco >= 0 && r.widestDeco < 60,
+       "R5b · …and no decoration on the page is wider than a glyph (" +
+       r.widestDeco + "px) — the system-wide wedge Paul called a \"long weird " +
+       "line\" is gone");
     // …and the ink moved no notehead: render the bare string beside it
     const bareNotes = await pg.evaluate((bare) => {
       const host = document.createElement("div");

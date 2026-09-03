@@ -696,6 +696,62 @@ function stripWith(strip, eq) {
 // desk-gate G8 asserts it there rather than inferring it from a unit table.
 export const __test = { stripWith };
 
+/* NO FILTER ON THE KIT (2026-09-03).
+ *
+ * Paul, listening: *"Funk rock drums are super low."* Then, having found it
+ * before the probe did: *"the reason the funk drums are low is the auto-wah is
+ * on them."* He is right, and the mechanism is the 2026-08-27 dealing law doing
+ * exactly what it says on the tin — a record's character chip goes "ON EVERY
+ * CHAIR, INCLUDING THE BASS AND THE DRUMS" (precompose.js deskThe), the chair's
+ * chips arrive here as `p.fxc`, and the unit they are built onto may be a kick
+ * drum. An auto-wah is a resonant BANDPASS parked at 320 Hz with a mix of 0.9
+ * (fields.js FX.wah): nine tenths of a kick is the fundamental it removes.
+ *
+ * MEASURED at the ring (test/_bandtap.cjs's press — mute-complement, upstream
+ * of the master make-up rider, for the reason that file's header gives), seed 1
+ * over 8 bars, the record's chip taken off the DRUM units only:
+ *
+ *   funkrock   drums solo -31.01 -> -25.45 dB (+5.56); kit contribution to the
+ *              record 1.44 -> 3.82 dB; kick solo -40.24 -> -28.42 (+11.82),
+ *              hat -48.84 -> -37.44 (+11.40), snare -32.34 -> -30.46 (+1.88)
+ *   psychfunk  drums solo -33.35 -> -28.25 (+5.10); contribution 1.66 -> 4.02
+ *   acidjazz   drums solo -32.48 -> -27.68 (+4.80); contribution 0.52 -> 1.43
+ *   acidrock   drums solo -34.95 -> -32.31 (+2.64); contribution 0.26 -> 0.45
+ *   techno     drums solo -29.05 -> -28.31 (+0.74); contribution 2.35 -> 2.63,
+ *              and the kit stops PULSING: its active duty 0.199 -> 0.45, i.e.
+ *              the sweep had the kit under the corner four fifths of the time
+ *   spacerock  drums solo -32.75 -> -31.95 (+0.80); contribution 2.19 -> 2.52
+ *
+ * That was the whole of funk rock's complaint: with the wah off its kit the row
+ * measures 3.82 dB of kit contribution against `funk`'s 3.74 and `punk`'s 2.68
+ * at the same seed — its own two parents, neither of which carries a chip.
+ *
+ * THREE TYPES, AND ONLY THE ONES THAT ARE A FILTER: `wah`, `fenv` (squelch) and
+ * `filtersweep`. NOT `crunch`, measured the same way and left alone on purpose
+ * — it is a saturation stage rather than a filter, a drum bus is the classic
+ * place for one, and it costs a kit almost nothing (grunge -0.02 dB, heavymetal
+ * -0.99). Not the modulation chips (chorus/phaser/flanger/tremolo/leslie/
+ * ringmod) either: they are what they are on a kit too.
+ *
+ * THE REFUSAL IS PER UNIT AND NOT PER OWNER, the way widthKept below is. A
+ * record's chip, a section's treatment and the board's own offset all arrive at
+ * this one door as recipes and none can be told from the others afterwards, so
+ * the law has to be about the KIT: a bandpass sweeping across a kick and a hat
+ * is the wrong instrument for that sound whoever asked for it, and a hand that
+ * wants the kit shaped has the strip's own EQ, which this file already carries
+ * to a drum unit.
+ *
+ * WHO MOVES: 19 rows of 421 name a filter chip in their own `fx` and so had
+ * their kits filtered — `wah` on acidjazz, acidrock, funkrock, psychfunk;
+ * `sweep` on ambient, anadolurock, berlinschool, drone, epichybrid,
+ * melodictechno, nordicscore, orchpsych, spacerock, techno, trailerscore,
+ * trance, tromso, tropicalia, zodiak. No row names `fenv`. Every other record
+ * in the catalogue renders byte-identically: the filter never reached its kit
+ * because it was never asked for.
+ */
+const KIT_FILTER = { wah: 1, fenv: 1, filtersweep: 1 };
+const kitless = (chips) => chips.filter((c) => !(c && KIT_FILTER[c.type]));
+
 /**
  * A CHIP NAMES ITS MODULE; THE PARENT'S CHAIN IS WHAT FINISHES IT.
  *
@@ -1086,9 +1142,12 @@ export function deskUnits(units, addr, sec, boxBeatOf, SE) {
     // still carries the band page's section treatment and no longer carries
     // the record's Character chain, because nothing writes that onto a box any
     // more — see sectionOf above.
-    const chips = seated && !u.stereo
-      ? insertsFor(SE, u, [...(p ? p.fxc : []),
-                           ...fxChain([...S.fx, ...((o && o.fx) || [])])]) : [];
+    // ...MINUS A FILTER, WHEN THE UNIT IS A DRUM (2026-09-03, `kitless` above,
+    // Paul: "the reason the funk drums are low is the auto-wah is on them").
+    const asked = seated && !u.stereo
+      ? [...(p ? p.fxc : []), ...fxChain([...S.fx, ...((o && o.fx) || [])])] : [];
+    const chips = asked.length
+      ? insertsFor(SE, u, isDrum ? kitless(asked) : asked) : [];
     if (chips.length) v.inserts = [...(u.inserts || []), ...chips];
     // the parent's placement pass already carved this voice's stereo seat; the
     // box's pan chip and a part's place RIDE ON it rather than replacing it.
@@ -1490,20 +1549,32 @@ export function masterState(MASTER, BUSES, SEV) {
   }
   // THE GENRE BUS (series-bus round, 2026-08-27): the rack's one genuinely new
   // stage, resolved off the record like every other bus fact. Its chain is the
-  // box FX vocabulary (fields.js GXCHIPS -> fxChain, the same twelve chips a
-  // voice slot takes), finished through state-engine insertChain when the
-  // caller hands `SEV` (the same insertsFor door every section chip goes
-  // through, so a chip and a bus chip end up the same clamped shape); its
+  // box FX vocabulary (fields.js GXCHIPS -> busFxChain, the same three-knob
+  // slot a voice strip's insert takes), finished through state-engine
+  // insertChain when the caller hands `SEV` (the same insertsFor door every
+  // section effect goes through, so a strip's and a bus's end up the same
+  // clamped shape); its
   // `level` is the gain on the summed return as it lands on the delay bus.
   // The engine reads `state.genreBus` in BOTH renderers (stream-renderer /
   // press) — chain over the genre accumulator, times level, SUMMED INTO DEL
   // before fx_bus: genre -> delay -> reverb -> main, the series. Absent = no
   // key = the stage never runs = byte-identical.
   if (B && B.genre) {
-    const chips = [B.genre.fx1, B.genre.fx2, B.genre.fx3].filter(Boolean);
     const gb = {};
     if (B.genre.level != null) gb.level = B.genre.level;
-    if (chips.length) gb.chain = insertsFor(SEV, {}, fxChain(chips));
+    // THE SLOTS ARE SET NORMALLY NOW (2026-09-03). This read the three effect
+    // words alone — `[fx1, fx2, fx3].filter(Boolean)` through `fxChain`, which
+    // knows only a name and hands back the module's declared defaults. Paul:
+    // *"I was expecting it to just be three effects I could set normally. It
+    // has this concept of chips. We don't need all that, just a set of chained
+    // effects that can be fed."* `busFxChain` is the same walk with the seat's
+    // own wet and face knobs applied (fields.js, beside `fxChainFor`, which is
+    // what a voice strip's slots have always taken), so a bus effect and a
+    // voice effect are finished the same way and through the same insertChain
+    // door below. A save that names only `fx1..3` resolves byte-identically:
+    // absent wet and absent face = the module's own declared params.
+    const chain = NuFields.busFxChain(B.genre);
+    if (chain.length) gb.chain = insertsFor(SEV, {}, chain);
     if (Object.keys(gb).length) out.genreBus = gb;
   }
   // THE MIX-OFFSET LAYER's master channel: deltas over the resolved value —
