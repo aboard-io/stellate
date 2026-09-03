@@ -40,7 +40,7 @@
 // nukernel/audio/offline.js's hold work at all: what the PAGE warms is what the
 // WORKER's own fetch finds, and no request has to be routed or proxied.
 
-const VERSION = "v261";                       // bump every deploy that must reach users
+const VERSION = "v262";                       // bump every deploy that must reach users
 const APP_PREFIX = "stellate-app-";
 const APP_CACHE = APP_PREFIX + VERSION;
 const MEDIA_CACHE = "stellate-media-v1";     // NOT tied to VERSION — see above
