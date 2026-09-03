@@ -1451,9 +1451,67 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
        second grid column), so the WORD steps in and the picture does not.
    The glyph column is fixed and shared by every row at every depth, which is
    the whole of the alignment being asked for. */
-.nu-traylist [data-depth]{ color: var(--dim);
-  border-inline-start-color: var(--dim);
-  background: color-mix(in srgb, var(--ink) 7%, var(--paper)); }
+/* ===== A LEVEL HAS A COLOUR OF ITS OWN, 2026-09-03 =====================
+   Paul: *"Indent nav items according to hierarchy level, just enough to be
+   obviously visible, and change color by levels of hierarchy."*
+
+   WHAT WAS HERE ANSWERED HALF OF IT AND MEASURED BADLY. One declaration —
+   `--dim` on a 7% ink wash — painted EVERY child row, so a grandchild and a
+   child were the same colour on the same ground and the only thing separating
+   them was 4.6px of indent; and `--dim` on that wash measures 4.42:1 on the
+   rendered page at 390 and 1280, which is UNDER the 4.5 floor this file keeps
+   everywhere else. A depth cue that is one colour is not a depth cue.
+
+   THREE LEVELS, ONE AXIS, AND THE AXIS IS THE PAGE'S OWN INK. The palette has
+   no free hue to spend: the four paints are semantic (`--hand` you set it,
+   `--clock` the record is here, `--meter` a number came back, `--flag` armed),
+   `--v0…--drum` say WHICH PLAYER and `--l0…` say HOW MUCH, and `--faint` is
+   "refused, and only refused". Inventing a seventh colour at a call site is
+   exactly what those sets exist to prevent. So depth is spent on the one axis
+   that is free and that already MEANS recession here — ink toward paper — with
+   the ground stepping down beside it so the branch reads as a block:
+     · depth 0 (a tab)          `--ink` on the stripe's own panel   18.04:1
+     · depth 1 (its children)   half ink, half dim, on a 5% wash     8.33:1
+     · depth 2 (grandchildren)  dim toward ink, on a 10% wash        4.80:1
+   Measured on the artifact at 390 and 1280 by test/nav-tree.js N8, which reads
+   the RENDERED colour off each row and computes the ratio against the ground
+   it is actually standing on — never off these declarations.
+   MONOTONIC, AND THAT IS THE READING: the deeper the row, the quieter the ink
+   and the deeper the ground, so a stripe three deep reads as a thing inside a
+   thing rather than as three unrelated lights.
+
+   IT IS A VARIABLE PER LEVEL AND NOT A RULE PER LEVEL, so the row's ink, its
+   second line and its edge bar are one decision made once — and so that
+   `.nu-tray .is-sounding` (0,2,0, further down this file) still wins the
+   border colour when the record is playing. A `:not([data-depth="1"])` would
+   have been the tidy spelling and it is REFUSED for exactly that: `:not()`
+   carries its argument's specificity, so it would have out-ranked the lamp and
+   the playhead's red would have gone out on every child row. */
+.nu-traylist [data-depth]{ --nu-lvl: color-mix(in srgb, var(--ink) 50%, var(--dim));
+  --nu-lvl-bg: color-mix(in srgb, var(--ink) 5%, var(--paper)); }
+/* depth 2 AND DEEPER share the third step: the tree is three levels today
+   (tab → cell → transform) and a fourth would be a level with no colour, which
+   is worse than a level that borrows the one above it. Same specificity as the
+   rule above and it stands after it, which is the whole of why it wins. */
+.nu-traylist [data-depth="2"], .nu-traylist [data-depth="3"],
+.nu-traylist [data-depth="4"]{
+  --nu-lvl: color-mix(in srgb, var(--dim) 88%, var(--ink));
+  --nu-lvl-bg: color-mix(in srgb, var(--ink) 10%, var(--paper)); }
+.nu-traylist [data-depth]{ color: var(--nu-lvl);
+  border-inline-start-color: var(--nu-lvl);
+  background: var(--nu-lvl-bg); }
+/* THE SECOND LINE TAKES THE LEVEL'S INK TOO, and this is a contrast fix as
+   much as a colour one: `#nu-tray .nu-sub2` is `--dim` for the whole stripe
+   (1,1,0 — it wins over the row), and `--dim` on the 10% wash a grandchild
+   stands on measures 4.06:1. The word and its line under it are one row and
+   one level; what keeps the line quieter is what always kept it quieter — it
+   is smaller (`--t1` against `--t2`) and it is one line.
+   AND IT MUST NOT OUT-RANK THE MARK: this selector is (1,2,0) on purpose —
+   `#nu-tray button[aria-pressed="true"] .nu-sub2` is (1,2,1) and still paints
+   the marked row's line white, exactly as `[data-depth][aria-pressed="true"]`
+   does for the word. Adding `.nu-traylist` in front would have made it (1,3,0)
+   and a marked child row would have worn its level ink on cobalt. */
+#nu-tray [data-depth] .nu-sub2{ color: var(--nu-lvl); }
 /* EVERY ROW RESERVES THE BAR, so nothing moves when it lights. The same trick
    the countdown and the badge use — geometry reserved at creation — applied to
    3px of ink instead of to a line of type. */
@@ -1461,8 +1519,30 @@ a{ color: var(--hand); }  /* 2026-08-27: a link is hand-blue, underline kept */
 /* the hanging indent, on the WORD column alone. `--s2` a level and not `--s3`:
    the column is 87px at the narrowest now and the word has to keep most of it,
    and the bar is the primary cue at every depth anyway. */
+/* ...AND THE STEP IS A MEASURED ONE SINCE 2026-09-03 (Paul: *"Indent nav items
+   according to hierarchy level, just enough to be obviously visible"*). It was
+   `--s2`, .35em, which renders 4.6px against a 9.13px `ch` at 390 and 5.6px
+   against 11.14px at 1280 — HALF a character, which is a nudge rather than a
+   hierarchy. 7px is 0.77ch in the 109px column a 390px phone gives the stripe:
+   the smallest step that reads as an indent at a glance in a column this narrow.
+   IT IS A px TOKEN AND NOT `ch`, deliberately: the word is `--t2` and its
+   second line is `--t1`, so a `ch` step would indent the two lines of ONE row
+   by two different amounts and the row would lean. One number, both cells.
+   AND IT IS ONE NUMBER AT EVERY WIDTH, WHICH IS A REFUSAL WITH A MEASUREMENT
+   BEHIND IT. A bigger step at the 176px ceiling was drawn first (11px, 0.99ch
+   against the desk's larger `--t3` word) and it was REFUSED by the count it
+   costs: sweeping the token at 1280 over 0/4/6/7/8/9/10/11/12/14px, the number
+   of clipped labels holds at 4 through 7px and becomes 5 at 8px — *"twice as
+   busy"*, a transform's sentence, goes into an ellipsis it did not have. An
+   indent that reads better and says less is a bad trade in a column whose whole
+   job is to name things, and the depth is already carried three other ways here
+   (the ink, the ground and the edge bar). So the desk keeps the phone's step —
+   0.63ch of a wider character — and the stripe gains no ellipsis at either
+   width: 17 → 17 clipped at 390, 4 → 4 at 1280, measured before and after on
+   the rendered page and asserted by test/nav-tree.js N8. */
+#nu-tray{ --nu-indent: 7px; }
 #nu-tray [data-depth] .nu-vh, #nu-tray [data-depth] .nu-sub2{
-  padding-inline-start: calc(var(--depth, 1) * var(--s2)); }
+  padding-inline-start: calc(var(--depth, 1) * var(--nu-indent)); }
 /* a marked child keeps the hand's white ink — the shade is about DEPTH and the
    mark is about where you are, and the second must win */
 .nu-traylist [data-depth][aria-pressed="true"]{ color: #FFFFFF; }
@@ -2418,6 +2498,21 @@ tr.nu-here > th:first-child, tr.nu-here > td:first-child{
    inside the 296px one a 320px phone leaves, so
    neither takes a `.nu-pane` at all — see ui/eight.js `stepGrid`, and the note
    there about test/shell.js.
+
+   AND THE SECOND OF THOSE TWO NUMBERS IS WRONG — 2026-09-03, re-measured on
+   the rendered page rather than reasoned from the viewport. The deck a step
+   grid actually sits in is 224px at 320 and 255px at 390, not 296 and 366:
+   the gutter takes a fixed column out of the left of every width. So jazz's
+   seven lanes (272px) ALREADY spilled a 320px phone sideways before anything
+   in this round, and the drum editor's lane offer — which can put all twelve
+   lanes on one cell, 454px — spills every phone. `drumGrid` therefore asks the
+   browser whether the table is wider than the box it is in and takes a pane
+   when it is, which is what A5 asks of every other table on the page; A5c was
+   narrowed the same day to ban only the pane the argument above was ever
+   about, one around a grid that CANNOT scroll. The numbers in the paragraph
+   above are left standing because the conclusion they support is still the
+   right one for a grid that fits, and a corrected number with no record of the
+   wrong one teaches nobody where it came from.
 
    THE PARENT REACHED THE OLD ANSWER TOO and it is worth keeping the pointer:
    main:app/daw.css:732-742 — "a 32-step phrase at 390px would give 9px columns,
@@ -5225,6 +5320,38 @@ table.nu-trims{ color: var(--ink); }
   background: color-mix(in srgb, var(--panel) 80%, transparent);
   border-radius: 2px; padding: 0 2px; }
 
+/* ---- THE LANE SAYS ITS DRUM'S NAME, DOWN THE COLUMN — 2026-09-03 ---------
+   Paul: *"in the drum editor, fully label the names of the parts of the
+   kits."* The header was one letter with the word in a `title`, which on a
+   touch surface is no label at all.
+
+   VERTICAL IS ARITHMETIC HERE, NOT TASTE. Steps run DOWN this grid (the
+   rotation of 2026-08-25), so a lane is a `--cell`-wide COLUMN: 36px. "closed
+   hat" is 10 characters — about 68px at the 0.8rem `.nu-grid th` size — so set
+   ACROSS the column it is either clipped or it doubles the table's width, and
+   a twelve-lane kit is already 20 + 12 x 36 = 452px against the 296px a 320px
+   phone leaves. Set DOWN it costs the header its height and the table nothing,
+   and the longest word in the table fits at every viewport with no ellipsis.
+   `vertical-rl` + `rotate(180deg)` is the pair every browser this page names
+   supports; `sideways-lr` says it in one declaration and Chrome only learned
+   it in 130, so it is not used.
+   `vertical-align: bottom` sits the words on the grid's first rule, so twelve
+   names of different lengths are aligned where they meet the drums and ragged
+   at the top, which is how a column header reads. */
+.nu-grid th.nu-lanehead{ vertical-align: bottom; padding-block: 6px 4px; }
+.nu-grid th.nu-lanehead > span{ display: inline-block; white-space: nowrap;
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  text-align: start; }
+
+/* ---- ...AND THE REST OF THE KIT, OFFERED UNDER IT ------------------------
+   `+ kick / + snare / + ride` under the grid. It is `.nu-memadd`'s rule
+   verbatim — the band pane's own "hire another player" row — because it is the
+   same gesture on a different roster, and ui/eight.js `laneAdd` says so at
+   more length. Written as its own selector rather than added to that one so
+   the two can part company the day either has a reason to. */
+.nu-laneadd{ display: flex; flex-wrap: wrap; gap: var(--s2);
+  margin-block: var(--s3); }
+
 /* ==========================================================================
    THE HORIZONTAL SLIDER IS THE VERTICAL ONE, LAID DOWN — 2026-08-27.
 
@@ -5759,24 +5886,89 @@ table.nu-trims{ color: var(--ink); }
   box-shadow: var(--shadow); }
 .nu-strip-out[hidden]{ display: none; }
 
-/* ---- THE SEED FLYOUT --------------------------------------------------
-   Paul: *"When I click seed pop up a vertical slider from zero to 2^16."*
-   The number is typed at the top and roamed on the fader under it — 65,536
-   values over 180px is ~364 a pixel, so the fader is for finding a
-   neighbourhood and the field is for landing on a house. `roll` and `next` are
-   the two gestures that need no number at all. */
-.nu-seedout{ display: flex; flex-direction: column; align-items: center;
-  gap: var(--s2); }
-.nu-seedout input[type="number"]{ inline-size: 100%; min-block-size: var(--tap);
+/* ---- THE SEED: A DIE AND A NUMBER (2026-09-03) -------------------------
+   Paul: *"Instead of a popup for seed, just get rid of the word seed and put
+   the number. I tap the die and there's a new number. I tap the number and I
+   can enter a new number by hand. Instead of stopping the music compose the
+   new song then show a countdown until the new version plays."*
+
+   THIS BLOCK WAS `.nu-seedout`, THE FLYOUT'S COLUMN — a `type=number` field,
+   a 0..65536 vertical fader, and two 44px actions under it. Its argument
+   ("65,536 values over 180px is ~364 a pixel, so the fader is for finding a
+   neighbourhood and the field is for landing on a house") was answered by
+   Paul the next day: the die IS the roaming, and the field is the landing, so
+   the panel had one control that could not be reached faster from the foot.
+   ui/eight.js's own note accounts for every part of it.
+
+   THE ROW WRAPS AND NOTHING SHRINKS. `--tray-w` is `clamp(96px, 28vw, 176px)`,
+   so the stripe is 109.2px at 390 (101.2 inside its 4px padding) and 176 at
+   1280 — measured — and two tap targets fit on one line at every width the
+   clamp allows: die 44, number 53 at 390 and 119.8 at 1280. `flex-wrap` is
+   there for the floor rather than for the phone: at 96px the number drops
+   under the die instead of either target going below 44. `justify-content:
+   center` because the seed is the only mark in the foot that shares its
+   line. */
+.nu-seedrow{ display: flex; flex-wrap: wrap; align-items: center;
+  justify-content: center; gap: var(--s1); }
+.nu-seedrow > #rewrite{ flex: 0 0 auto; }
+/* THE DIE'S WORD IS HIDDEN AND NOT DELETED — `.nu-vh`'s ORIGINAL four
+   declarations (:2603), put back for the one mark in the gutter that gives its
+   second column to something else. Paul: *"just get rid of the word seed and
+   put the number."* The number IS the word's position, made pressable; the
+   span stays in the DOM because this page's own rule is that it reads as
+   itself with the stylesheet off, and test/shell.js A6g/A6h is where that is
+   asserted. Out of flow, so the mark's grid column 2 is empty and the button
+   is its 44px and no wider. */
+.nu-seedrow > #rewrite .nu-vh{ position: absolute; inline-size: 1px;
+  block-size: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%);
+  white-space: nowrap; }
+/* THE NUMBER IS A CONTROL AND WEARS THE PILL IT ALREADY WORE. `.nu-rd` (the
+   `.nu-trayfoot` block above) is the tint, the tabular figures and the weight;
+   what is added here is the BOX around it — a real target, at the tap floor in
+   both axes, growing into whatever the row has left. It steps up from the
+   badge's .7rem to a label's size because it is not an annotation on a
+   picture any more: it is the name of the record. */
+/* IT STARTS WHERE EVERY OTHER MARK'S WORD STARTS. `#nu-tray .nu-ic` is a
+   two-column grid — the picture, then the text, hard against the picture —
+   and the number is that second column made pressable, so it is `flex-start`
+   and not centred: measured at 1280, a centred pill floated 60px away from
+   the die it belongs to and read as a second control on its own. The padding
+   is `--s1` rather than the button default `--s3`, because five digits and a
+   pill want the width more than the button wants a margin. */
+.nu-seedrow > #seedval{ flex: 1 1 auto; min-block-size: var(--tap);
+  display: flex; align-items: center; justify-content: flex-start;
+  padding-inline: var(--s1); }
+/* AND `display` BEATS `[hidden]`, WHICH IS A UA RULE — measured on the
+   rendered page: the number stayed on the row beside the field it had just
+   become, so the row read "⚄ 4113" over a box saying 4113. Any author rule
+   that sets `display` on a node the page hides must say this; the field below
+   needs no twin because it sets no display of its own. */
+.nu-seedrow > #seedval[hidden]{ display: none; }
+/* ...AND `margin-inline: auto` COMES OFF IT. `.nu-trayfoot .nu-rd` centres
+   the pill in its own column, which is right for a badge under a mark and
+   wrong for a word beside one: measured at 1280, the auto margins put the
+   number 60px from the die inside a button that was already left-aligned. */
+.nu-seedrow > #seedval .nu-rd{ font-size: var(--t2, .82rem);
+  margin-inline: 0; }
+/* THE FIELD STANDS EXACTLY WHERE THE NUMBER STOOD, so committing a number
+   does not move the row under the thumb that typed it. 16px is the iOS zoom
+   floor and a control this page asks a reader to TYPE in may never be under
+   it. */
+.nu-seedrow > #seedin{ flex: 1 1 auto; min-inline-size: var(--tap);
+  min-block-size: var(--tap); inline-size: 0;
   font-family: var(--mono); font-variant-numeric: tabular-nums;
-  /* 16px is the iOS zoom floor and a control this page asks a reader to TYPE
-     in may never be under it */
   font-size: 16px; text-align: center; }
-.nu-seedvs{ align-self: center; }
-.nu-seedout .nu-row{ display: flex; gap: var(--s2); margin: 0; }
-.nu-seedout .nu-seedbtn{ flex: 1 1 auto; min-block-size: var(--tap);
-  min-inline-size: var(--tap); }
-.nu-seedout .nu-why{ margin: 0; text-align: center; }
+/* THE WAIT — the clock's one square inch of this row, on its own line so the
+   two targets above it never move when it arrives or goes. Same green, same
+   machine face and same `:empty` rule as `.nu-count`, because it is the same
+   measurement from the same feed said in the place the gesture was made. */
+.nu-seedwait{ flex: 1 0 100%; display: flex; align-items: baseline;
+  justify-content: center; gap: .25em;
+  font-family: var(--mono); color: var(--meter); line-height: 1.05; }
+.nu-seedwait:empty{ display: none; }
+.nu-seedwait b{ font-weight: var(--num-fw); font-size: .8rem;
+  font-variant-numeric: tabular-nums; }
+.nu-seedwait small{ font-size: .6rem; font-weight: 600; }
 
 /* ---- THE NAME PLATE ---------------------------------------------------
    Paul: *"The name of the genre should be obvious."* One ink plate, used by
@@ -6960,10 +7152,48 @@ table.nu-trims{ color: var(--ink); }
    whole sentence as the first control's name. `line-height: normal` cancels
    the global `label{ line-height: var(--tap) }`, which would put 44px of
    leading between two wrapped lines of one sentence. */
+/* ---- AND IT IS TWO LINES, 2026-09-03 -----------------------------------
+   WHAT STOOD IN THE DECLARATION BELOW: `display: flex; flex-wrap: wrap;
+   align-items: center; gap: 0 var(--s2)` — one wrapping line of words with
+   the widgets flowing among them, which is the drawing the block above
+   describes and defends.
+   Paul, after using the deployed composer: *"Arrange things so the slider and
+   function descriptions are on a line with the slider after that line, not
+   bunched together."*
+   MEASURED at 390 before this change: ten of the twenty-five rows wrapped
+   INSIDE the sentence, so `the tempo is [====slider====] 76` put `beats a
+   minute` on a line below the control and the question could not be read in
+   one pass. It is a COLUMN now — the sentence (with its value printed in it)
+   on line one, the control alone on line two — and every claim the block
+   above makes about the `<label>`, the diet and the accessible name is
+   untouched, because the two lines are inside it. */
 .nu-rule > .nu-said{ flex: 1 1 auto; min-inline-size: 0;
-  display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--s2);
+  display: flex; flex-direction: column; align-items: stretch;
+  gap: var(--s1);
   min-block-size: var(--tap); line-height: normal;
   padding-block: var(--s1); }
+/* LINE ONE — the sentence, and it is ordinary inline text. The words carry
+   their own spaces (`nukernel/rules.js` says "the tempo is " with the space
+   in it), so there is no gap to set and nothing to align: a `<b class="nu-v">`
+   or an `<output class="nu-v">` stands where the answer stands and the line
+   wraps like prose when it is long. */
+.nu-wline{ display: block; min-inline-size: 0; }
+/* LINE TWO — the control, and nothing else on it. A flex row because a
+   sentence with several answers (a positional `instr`, a numeric `orn`) has
+   several controls and they wrap; a single-answer row has one and it takes
+   the width. */
+.nu-ctl{ display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--s1) var(--s2); min-inline-size: 0; }
+/* A REFUSAL THAT `menu()` LIFTED OUT OF ui/selects.js's field goes UNDER the
+   control it refuses, never beside it — the same `flex: 1 0 100%` the field's
+   own rule (and `.nu-opt .nu-why`) uses, said again for the control line
+   because the line it used to sit on is not this one. */
+.nu-ctl > .nu-why{ flex: 1 0 100%; min-inline-size: 0; }
+/* THE ANSWER, INSIDE THE SENTENCE. It is the one word on the line that a hand
+   can move, so it is the one word that is not the caption weight — and a
+   number is tabular, so a live drag does not shuffle the words after it. */
+.nu-rv{ font-weight: var(--fw-label); font-variant-numeric: tabular-nums; }
+output.nu-rv{ display: inline; }
 /* A WORD IN THE SENTENCE IS A WORD, NOT A LINE. `.nu-sel > label > .nu-w` (the
    even-field recipe) gives it `flex: 1 0 100%` and a 44px line box, which is
    right for a question ABOVE its control and is the whole of what this round
@@ -6992,13 +7222,32 @@ table.nu-trims{ color: var(--ink); }
    the field to its longest word, the way the element it replaced did) and not
    here, because the number in this rule was never wrong: nothing in a sentence
    may be wider than 22ch, and most menus are far narrower than that. */
-.nu-rule .nu-combo{ flex: 0 1 auto; min-inline-size: 0;
-  max-inline-size: min(100%, 22ch); }
+/* (THE 22ch CAP IS NOW A FLOOR-AND-CAP ON ITS OWN LINE, 2026-09-03. The
+   paragraph above stands as the reason the cap exists; what changed is that
+   the menu no longer shares a line with the words, so the number that matters
+   is the one every other menu on this page uses when it stands under its own
+   question — `.nu-sel > label > .nu-combo`'s 30ch.) */
+.nu-rule .nu-combo{ flex: 1 1 auto; min-inline-size: 0;
+  max-inline-size: min(100%, 30ch); }
 /* (`.nu-rule .nu-combo > select{ block-size: var(--tap) }` stood here and
    matches nothing since 2026-09-02: the field is the box's only child now and
    `.nu-combofield` carries `block-size: var(--tap)` itself.) */
-.nu-rule input[type=range]{ flex: 0 1 130px; inline-size: auto;
-  min-inline-size: 80px; block-size: var(--tap); }
+/* THE SLIDER TAKES THE LINE (2026-09-03). It read `flex: 0 1 130px` — a
+   130px stub sized to sit inside a line of type, which is what the sentence
+   drawing needed and what Paul's *"the slider after that line"* replaces. On
+   its own line it is the whole width, which is also the widest a thumb can be
+   given for free. */
+.nu-rule input[type=range]{ flex: 1 1 100%; inline-size: 100%;
+  min-inline-size: 0; block-size: var(--tap); }
+/* ...AND THE 28ch CAP DOES NOT APPLY TO IT. That cap (`.nu-field > label >
+   input[type=range]` and the three row classes beside it, ~500 lines up) says
+   in its own words what it is for: "the three surfaces that put a slider on a
+   line with words". A Rules slider is not on a line with words any more — it
+   IS the line — so the cap would leave it at 240px in a 900px column at 1280,
+   which is the one measurable cost of the old drawing carried into the new
+   one. Only the sliders that OWN the line are freed: a `map`'s per-key slider
+   lives in a `.nu-cell` and still shares its line, so it keeps the cap. */
+.nu-rule > .nu-said > .nu-ctl > input[type=range]{ max-inline-size: 100%; }
 .nu-rule output{ flex: 0 0 auto; font-variant-numeric: tabular-nums; }
 /* a map's per-key answer: the key as a small word, then its control, the two
    kept together on one wrap */
@@ -7016,10 +7265,18 @@ table.nu-trims{ color: var(--ink); }
    which is the same trade `.nu-sel > label > .nu-combo`'s own 30ch cap makes
    and states. */
 .nu-rule[data-shape="list"] .nu-combo,
-.nu-rule[data-shape="map"] .nu-combo{ max-inline-size: min(100%, 13ch); }
+.nu-rule[data-shape="map"] .nu-combo{ flex: 0 1 auto;
+  max-inline-size: min(100%, 13ch); }
+/* A MULTI-ANSWER ROW SHARES ITS CONTROL LINE, which is the same arithmetic
+   this block has always made and it is now made on line two instead of inside
+   the sentence: `orn` is one slider per decoration and `touch` is two, so a
+   full-width slider each would be five and two stacked 44px rows. They take
+   half the line and wrap. */
 .nu-rule[data-shape="map"] input[type=range],
-.nu-rule[data-shape="pair"] input[type=range]{ flex: 0 1 76px;
-  min-inline-size: 56px; }
+.nu-rule[data-shape="pair"] input[type=range]{ flex: 1 1 40%;
+  inline-size: auto; min-inline-size: 56px; }
+.nu-rule[data-shape="map"] .nu-cell,
+.nu-rule[data-shape="pair"] .nu-cell{ flex: 1 1 min(100%, 6em); }
 /* an `fx` chip inside the sentence — the same `.nu-opt` chip, in line. Its
    row is a `<fieldset>` with the sentence as its `<legend>`, because a chip
    IS a `<label>` (that is what makes the 24px target test/shell.js A3
@@ -7029,8 +7286,13 @@ table.nu-trims{ color: var(--ink); }
    rule row. */
 .nu-rule > fieldset.nu-said{ border: 0; margin: 0; padding: 0;
   min-inline-size: 0; }
-.nu-rule > fieldset.nu-said > legend{ padding: 0; float: left;
-  margin-inline-end: var(--s2); }
+/* (IT WAS `float: left` UNTIL 2026-09-03 — the legend beside the chips, which
+   is the bunching Paul's two-line row takes out. The legend is line one and
+   the `.nu-ctl` under it is line two, the same shape every other rule row
+   has; a `<legend>` is not a flex item of its own fieldset, so the column
+   above cannot lay it out and `display: block` is what puts it on its line.) */
+.nu-rule > fieldset.nu-said > legend{ padding: 0; float: none;
+  display: block; margin-inline-end: 0; }
 .nu-rule .nu-opt{ display: inline-flex; flex-wrap: nowrap;
   margin-block: var(--s1); margin-inline-end: var(--s2);
   min-block-size: var(--tap); }

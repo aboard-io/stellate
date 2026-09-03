@@ -571,19 +571,17 @@ function g18() {
      the record is never started at all — which the old comment already said
      was irrelevant here ("Nothing about which record gets written depends on
      the transport running"). Same destination, one fewer side effect. */
-  /* ...AND THE DIE OPENS A FLYOUT NOW, 2026-09-02. Paul: *"When I click seed
-     pop up a vertical slider from zero to 2^16."* So the walk is one press of
-     the die and one of `roll` inside it — the roll calls `rewriteNow`, which
-     is still the one reseed path this box has. `#playops` is no longer on the
-     way (the die left that group on 2026-08-30 and the group is a fold in the
-     foot now), so the press it used to need is gone. */
+  /* ...AND THE DIE IS ONE PRESS AGAIN, 2026-09-03. Paul: *"Instead of a popup
+     for seed, just get rid of the word seed and put the number. I tap the die
+     and there's a new number."* It opened a flyout for one day (2026-09-02,
+     the vertical slider) and this walk pressed `roll` inside it; the panel is
+     deleted and the die calls `rewriteNow` directly — which is what it did
+     before the flyout and is still the one reseed path this box has.
+     `#playops` is not on the way either (the die left that group on
+     2026-08-30 and the group is a fold in the foot now). */
   const pressRewrite = async () => {
     await p.evaluate(() => document.getElementById("rewrite").click());
     await p.waitForTimeout(250);
-    await p.evaluate(() => {
-      const b = document.querySelector('[data-k="seed-roll"]');
-      if (b) b.click();
-    });
   };
 
   /* ---- G7 THE PICTURE ------------------------------------------------- */

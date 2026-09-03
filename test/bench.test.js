@@ -57,6 +57,34 @@
 //     every step row is asked, IN THE REFUSED STATE the defect lives in, for
 //     one `.nu-pbb`, one `.nu-van`, and a channel that computes to exactly 0.
 //
+// B10 CLEAR EMPTIES A MOTIF INTO THE BOX'S OWN BLANK (2026-09-03). Paul: *"I
+//     need a clear button for motifs."* One control per motif on the block's
+//     name line; pressed WHILE THE RECORD RUNS it leaves sixteen rest rows on
+//     the page and, in the document, exactly `NuSong.blank(n)` — vel fives and
+//     all, compared against the constructor in the page rather than a literal
+//     here — with the cell's name, its length and every player reading it
+//     untouched, and the transport still walking.
+//
+// B11 EVERY LANE SAYS ITS DRUM'S NAME (2026-09-03). Paul: *"in the drum editor,
+//     fully label the names of the parts of the kits."* Each column head of the
+//     kit grid is a WORD, its LETTER is the `data-lane` key the cells address
+//     it by, and nothing is clipped — asked of the rendered span, which on a
+//     rotated header is a vertical measurement.
+//
+// B12 THE REST OF THE KIT IS OFFERED, AND A LANE ADDED ARRIVES (2026-09-03).
+//     Paul, the same message: *"give me some more appropriate options, we seem
+//     to have only four elements in most of our kits, or three."* A record's
+//     beat cell is its genre's authored kit — two, three or four lanes — and
+//     every kit in the box can play twelve. So: the rest are offered, one a kit
+//     cannot play is refused WITH ITS REASON, and adding the ride writes the
+//     record, draws the column, arrives PLAYING, reaches the SCORE
+//     (`__eightEvents`, which carries the lane letter since this round) and is
+//     handed to the ENGINE (`__nuHits`, audio/live.js's reader of the parent's
+//     own drum list). The last two are the point: a lane declared, drawn and
+//     never reaching the sound is this repo's characteristic bug.
+//     ON ITS OWN PAGE AND ITS OWN RECORD — the shipped chant has no drummer, so
+//     nothing would read the cell and the arrival could not be asked.
+//
 // Run:  NODE_PATH=/home/ford/ftrain-2025/node_modules node test/bench.test.js
 
 const fs = require("fs");
@@ -636,6 +664,123 @@ async function openMotif(pg) {
   await page.click("#play");
   await page.waitForTimeout(600);
 
+  /* ===== B10 — CLEAR EMPTIES A MOTIF INTO THE BOX'S OWN BLANK (2026-09-03)
+     Paul: *"I need a clear button for motifs."* (ui/eight.js `clearButton`,
+     on the block's name line.)
+
+     WHAT IS MEASURED IS THE ARTIFACT AND THE RECORD TOGETHER, because the
+     claim has a half on each side: the page must draw sixteen rest rows AND
+     the document must hold what `NuSong.blank()` says an empty phrase is —
+     `vel` FIVES, not zeros, which is the one value a hand-written blank would
+     have got wrong. The comparison is made against `NuSong.blank` IN THE PAGE
+     rather than against a literal here, so this gate cannot drift from the
+     constructor the box itself uses; `bar`/`pulse` are allowed as extras
+     because document.js stamps them on any record with a declared meter.
+
+     AND IT IS PRESSED WHILE THE RECORD RUNS, which is the law this control
+     inherits from every other edit on the page: an edit lands at the next bar
+     (`push` -> `logEdit` -> audio/live.js announceChange), it does not stop the
+     transport. So the transport is started first, the mark is tapped AT ITS OWN
+     RECT (page.click scrolls its target into view and manufactures jumps —
+     the harness's first way of lying), and the clock is asked afterwards
+     whether it is still walking.
+
+     THE NAME AND THE CAST ARE ASSERTED UNCHANGED. Clear is the notes: a
+     cleared `psalm` is still `psalm`, still read by the same players on the
+     same instruments, or the button would be a delete wearing a smaller word. */
+  const clearBefore = await page.evaluate(() => {
+    const doc = window.__eightDoc();
+    const nameEl = document.querySelector('[data-k^="motif-name|"]');
+    const name = nameEl && nameEl.value;
+    const H = doc.material.cells[name];
+    const btns = [...document.querySelectorAll('[data-k^="motifclear-"]')];
+    const b = btns[0];
+    const r = b && b.getBoundingClientRect();
+    const readers = doc.voices
+      .filter((v) => (typeof v.material === "string" ? v.material === name
+        : !!v.material && Object.values(v.material).indexOf(name) >= 0))
+      .map((v) => v.name + "/" + (v.instrument || "-"));
+    return { name, n: btns.length, k: b && b.dataset.k,
+             aria: b ? b.getAttribute("aria-label") : "",
+             h: r ? Math.round(r.height) : 0,
+             notes: H.play.filter((p) => p === "n").length,
+             len: H.deg.length, readers };
+  });
+  is(clearBefore.n === 1 && clearBefore.k === "motifclear-" + clearBefore.name,
+    "B10 · one clear per motif, addressed by the cell it empties (" +
+    clearBefore.n + " on the page, " + clearBefore.k + ")");
+  is(clearBefore.h >= 44 && /clear /.test(clearBefore.aria) &&
+     clearBefore.aria.indexOf(clearBefore.name) > 0,
+    "B10 · it is a 44px target and it says which motif it empties (" +
+    clearBefore.h + "px, " + JSON.stringify(clearBefore.aria) + ")");
+  is(clearBefore.notes > 0,
+    "B10 · and there is a tune to take away (" + clearBefore.notes +
+    " sounding steps in " + clearBefore.name + ")");
+
+  const errAt = errors.length;
+  await page.click("#play");
+  await page.waitForFunction(() =>
+    document.getElementById("play").getAttribute("aria-label") === "stop", null,
+    { timeout: 15000 }).catch(() => {});
+  await page.waitForFunction(() => window.__eightStep() >= 0, null,
+    { timeout: 20000 }).catch(() => {});
+  const runBefore = await page.evaluate(() => window.__eightStep());
+  const cbox = await page.evaluate(() => {
+    const b = document.querySelector('[data-k^="motifclear-"]');
+    b.scrollIntoView({ block: "center" });
+    const q = b.getBoundingClientRect();
+    return { x: q.x + q.width / 2, y: q.y + q.height / 2 };
+  });
+  await page.mouse.click(cbox.x, cbox.y);
+  await page.waitForTimeout(1500);
+
+  const cleared = await page.evaluate((name) => {
+    const doc = window.__eightDoc();
+    const H = doc.material.cells[name];
+    if (!H) return { gone: true };
+    const ph = window.NuDocument.toPhrase(doc, name);
+    const B = window.NuSong.blank(H.deg.length);
+    const off = Object.keys(B).filter((k) =>
+      JSON.stringify(ph[k]) !== JSON.stringify(B[k]));
+    const rows = [...document.querySelectorAll(".nu-bench tr")];
+    return { gone: false, len: H.deg.length,
+      notes: H.play.filter((p) => p === "n").length,
+      off, extra: Object.keys(ph).filter((k) => !(k in B)),
+      rows: rows.length,
+      rests: rows.filter((r) => r.className.indexOf("is-rest") >= 0).length,
+      readers: doc.voices
+        .filter((v) => (typeof v.material === "string" ? v.material === name
+          : !!v.material && Object.values(v.material).indexOf(name) >= 0))
+        .map((v) => v.name + "/" + (v.instrument || "-")),
+      lab: document.getElementById("play").getAttribute("aria-label"),
+      step: window.__eightStep() };
+  }, clearBefore.name);
+  is(!cleared.gone && cleared.notes === 0 && cleared.len === clearBefore.len,
+    "B10 · the cell is still in the bank, at its own length, with nothing " +
+    "sounding (" + cleared.notes + " notes over " + cleared.len + " steps)");
+  is(cleared.off && cleared.off.length === 0 &&
+     cleared.extra.every((k) => k === "bar" || k === "pulse"),
+    "B10 · and what it compiles to IS song.js's blank — vel fives and all — (" +
+    (cleared.off || []).join(",") + " differ; extras " +
+    JSON.stringify(cleared.extra) + ")");
+  is(cleared.rows >= 16 && cleared.rests === cleared.rows,
+    "B10 · the artifact says so too: " + cleared.rests + " of " + cleared.rows +
+    " bench rows are rests");
+  is(cleared.readers.join(" ") === clearBefore.readers.join(" "),
+    "B10 · clear is the NOTES — the name and every player on it are untouched (" +
+    JSON.stringify(cleared.readers) + ")");
+  await page.waitForTimeout(2500);
+  const runAfter = await page.evaluate(() =>
+    ({ lab: document.getElementById("play").getAttribute("aria-label"),
+       step: window.__eightStep() }));
+  is(runAfter.lab === "stop" && runAfter.step > runBefore,
+    "B10 · and the record kept playing through it (step " + runBefore + " → " +
+    runAfter.step + ", transport " + runAfter.lab + ")");
+  is(errors.length === errAt,
+    "B10 · no page error from the press (" + errors.slice(errAt).join(" | ") + ")");
+  await page.click("#play");
+  await page.waitForTimeout(600);
+
   // B7 — clean at both widths
   const over390 = await page.evaluate(() =>
     document.documentElement.scrollWidth - window.innerWidth);
@@ -657,6 +802,161 @@ async function openMotif(pg) {
   is(over1280 <= 0, "B7 · no horizontal overflow at 1280 (" + over1280 + "px)");
   is(werrs.length === 0, "B7 · no page errors at 1280");
   await wide.close();
+
+  /* ===== THE DRUM EDITOR'S LANES (2026-09-03) — ON A RECORD WITH A DRUMMER ==
+     Paul: *"in the drum editor, fully label the names of the parts of the
+     kits. give me some more appropriate options, we seem to have only four
+     elements in most of our kits, or three."*
+
+     ITS OWN PAGE, AND ON ITS OWN RECORD, for one reason that is the whole
+     point of the second half: B12 asks whether a lane a hand adds ARRIVES —
+     in the score and then in the engine — and a cell nobody plays cannot
+     answer that. The shipped chant this file's other blocks are about has no
+     drummer (the kitless law), so this names a record that has one, the way a
+     fixture is named rather than inherited: the address is the same door a
+     shared link uses, and Kingston 1975 is a three-lane kit (`k p h`) on the
+     sampled `room` kit — which is exactly the "three or four elements" Paul
+     was looking at. */
+  const kitPage = await browser.newPage({
+    viewport: { width: 390, height: 900 }, hasTouch: true });
+  const kerrs = [];
+  kitPage.on("pageerror", (e) => kerrs.push(e.message));
+  await kitPage.goto(URL_ + "#at=Kingston&y=1975&s=1", { waitUntil: "load" });
+  await kitPage.waitForTimeout(4000);
+  await openMotif(kitPage);
+  await kitPage.evaluate(() => {
+    const d = window.__eightDoc();
+    const n = Object.keys(d.material.cells).find((k) => d.material.cells[k].kind === "drum");
+    const b = n && document.querySelector('[data-k="motiftab-' + n + '"]');
+    if (b) b.click();
+  });
+  await kitPage.waitForTimeout(1000);
+  /* B11 · EVERY LANE SAYS ITS DRUM'S NAME, IN FULL (2026-09-03). Paul: *"in
+     the drum editor, fully label the names of the parts of the kits."* The
+     column head was one letter with the word hidden in a `title`. Three claims,
+     all read off the RENDERED table: the head is a WORD and not a letter, the
+     letter is still there as the data key a gate and the cells address the lane
+     by, and nothing is clipped — `scrollWidth/scrollHeight` against the client
+     box, which is the browser's own answer to "is this ellipsised", asked of
+     the rotated span where the clipping would be vertical. */
+  const heads = await kitPage.evaluate(() =>
+    [...document.querySelectorAll("table.nu-grid th.nu-lanehead")].map((h) => {
+      const s2 = h.querySelector("span");
+      return { lane: h.dataset.lane || "", word: h.textContent,
+               clipped: !!s2 && (s2.scrollWidth > s2.clientWidth + 1 ||
+                                 s2.scrollHeight > s2.clientHeight + 1) };
+    }));
+  is(heads.length >= 3 && heads.every((h) => h.word.length > 1 && h.lane.length === 1),
+    "B11 · every lane column is a WORD with its letter as the key (" +
+    heads.map((h) => h.lane + "=" + h.word).join(", ") + ")");
+  is(heads.every((h) => !h.clipped),
+    "B11 · and no lane name is clipped" +
+    (heads.filter((h) => h.clipped).length
+      ? " — " + heads.filter((h) => h.clipped).map((h) => h.word).join(", ") : ""));
+
+  /* B12 · THE REST OF THE KIT IS OFFERED, AND A LANE ADDED ARRIVES. Paul, the
+     same message: *"give me some more appropriate options, we seem to have only
+     four elements in most of our kits, or three."* A drum cell drew
+     `Object.keys(cell.lanes)` and a fresh one is DRUMGRID's three, while every
+     kit in the box can play twelve.
+
+     THE SECOND HALF IS THE ONE THAT MATTERS and it is this repo's own law: a
+     lane declared, drawn and never reaching the sound is the characteristic bug
+     here (six found in one week). So this does not stop at the document. It
+     reads the letter back off `__eightEvents` — the SCORE, where a lane the
+     kernel dropped would simply be missing — and then off `__nuHits`, the
+     parent's own drum list for a bar, where a lane the engine could not route
+     would be missing again. The ride is the probe because it is unambiguous at
+     both depths: `drum: "ride"` is its own parent unit, so it cannot be
+     confused with a hat the way `o` and `f` can. */
+  const kitOf2 = await kitPage.evaluate(() => { const v =
+    window.__eightDoc().voices.find((x) => x.kind === "drums");
+    return v ? (v.instrument || "") : ""; });
+  const offer = await kitPage.evaluate(() =>
+    [...document.querySelectorAll(".nu-laneadd button")]
+      .map((b) => ({ k: b.dataset.k, lane: b.dataset.lane, dis: !!b.disabled,
+                     why: b.dataset.why || "" })));
+  is(offer.length >= 6,
+    "B12 · the rest of the kit is offered under the grid (" + offer.length +
+    " lanes on a " + (kitOf2 || "kitless") + " cell: " +
+    offer.map((o) => o.lane).join(" ") + ")");
+  is(offer.every((o) => !o.dis || o.why),
+    "B12 · and a lane a kit cannot play is refused WITH ITS REASON" +
+    (offer.filter((o) => o.dis).length
+      ? " — " + offer.filter((o) => o.dis).map((o) => o.lane + ": " + o.why).join("; ")
+      : " (nothing refused on this kit)"));
+  const rideOffered = offer.some((o) => o.lane === "r" && !o.dis);
+  is(rideOffered, "B12 · the ride is one of them");
+  if (rideOffered) {
+    const laneCount = async () => kitPage.evaluate(() => {
+      const d = window.__eightDoc();
+      const n = Object.keys(d.material.cells)
+        .filter((k) => d.material.cells[k].kind === "drum").pop();
+      return Object.keys(d.material.cells[n].lanes).length;
+    });
+    const n0 = await laneCount();
+    await kitPage.evaluate(() => {
+      const b = document.querySelector('.nu-laneadd [data-k="addlane-r"]');
+      if (b) b.click();
+    });
+    await kitPage.waitForTimeout(900);
+    const n1 = await laneCount();
+    const drawn = await kitPage.evaluate(() =>
+      !!document.querySelector('table.nu-grid th.nu-lanehead[data-lane="r"]') &&
+      !!document.querySelector('button.nu-kc[data-k^="kitr"]'));
+    is(n1 === n0 + 1 && drawn,
+      "B12 · adding it writes the record and draws the column (" + n0 +
+      " lanes → " + n1 + ", column drawn: " + drawn + ")");
+    /* AND IT IS NOT SILENT. A lane that arrives as sixteen zeros is the bug
+       volunteered: the seed (ui/eight.js LANESEED) is drums-kit.js's own `give`
+       vector, so the drum you asked for is playing before you tap anything —
+       and the levels are the document's own words, never the deferring 1. */
+    const seeded = await kitPage.evaluate(() => {
+      const d = window.__eightDoc();
+      const n = Object.keys(d.material.cells)
+        .filter((k) => d.material.cells[k].kind === "drum").pop();
+      return (d.material.cells[n].lanes.r || []).filter(Boolean);
+    });
+    is(seeded.length >= 4 && seeded.every((v) => v > 1),
+      "B12 · and it arrives playing, in the document's own levels (" +
+      seeded.join(",") + ")");
+    /* THE SCORE. `__eightEvents` carries the lane letter since this round; a
+       ride the kernel dropped on the way to the schedule would not be here. */
+    const scored = await kitPage.evaluate(() => {
+      const secs = window.__eightSong().length;
+      let n = 0;
+      for (let i = 0; i < secs; i++)
+        for (const e of (window.__eightEvents(i) || []))
+          if (e.kind === "hit" && e.d === "r") n++;
+      return n;
+    });
+    is(scored > 0, "B12 · the ride reaches the SCORE (" + scored + " hits)");
+    /* THE ENGINE. `__nuHits(bar)` is audio/live.js's own reader of the parent's
+       drum list for a bar — the artifact, not a copy of the arithmetic — and a
+       ride that reached the score and not this would be exactly the defect. */
+    const rung = await kitPage.evaluate(() => {
+      const out = { hits: 0, amp: 0, unrouted: -1 };
+      try { out.unrouted = window.__nuBounce().unrouted; } catch (e) {}
+      for (let b = 0; b < 24; b++) {
+        const h = (window.__nuHits && window.__nuHits(b)) || [];
+        for (const d of h) if (d.drum === "ride") {
+          out.hits++; out.amp = Math.max(out.amp, d.amp || 0); }
+      }
+      return out;
+    });
+    is(rung.hits > 0 && rung.amp > 0.02 && rung.unrouted === 0,
+      "B12 · …and the ENGINE was handed it (" + rung.hits +
+      " ride hits, loudest amp " + rung.amp + ", " + rung.unrouted + " unrouted)");
+  }
+
+  const overKit = await kitPage.evaluate(() =>
+    document.documentElement.scrollWidth - window.innerWidth);
+  is(overKit <= 0,
+    "B12 · and a widened kit still does not scroll the page sideways at 390 (" +
+    overKit + "px)");
+  is(kerrs.length === 0,
+    "B12 · no page errors on the kit page (" + kerrs.slice(0, 3).join(" | ") + ")");
+  await kitPage.close();
 
   await browser.close();
   console.log(FAILS ? "\n" + FAILS + " failed" : "\nall checks pass");

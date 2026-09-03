@@ -282,8 +282,18 @@ export const GLYPH = {
        in the next wave. */
     opts:    { g: "⚙", w: "opts",
                s: "play options — the mode, the take, the voices and the room" },
+    /* ...AND THE WORD IS NO LONGER ON THE FACE, 2026-09-03. Paul: *"just get
+       rid of the word seed and put the number."* The number stands where the
+       word stood (`#seedval`, its own target, beside the die), so ui/eight.js
+       still builds the `.nu-vh` span out of `w` — the page reads as itself
+       with the stylesheet off, test/shell.js A6g/A6h — and nu.css hides it for
+       this one mark. `w` therefore stays what it always was, the subject's
+       name, in the table where the page's names live; the sentence is the
+       explainer the die carries as `data-say`, and it named a slider that no
+       longer exists. */
     seed:    { g: "⚄", w: "seed",
-               s: "the reading this record was written at — tap for the slider" },
+               s: "tap for another reading of this record — a new number, " +
+                  "the same place" },
     tap:     { g: "⏱", w: "tap",
                s: "tap a tempo and the record counts what you tapped" },
   },

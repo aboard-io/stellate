@@ -43654,12 +43654,27 @@
     },
   };
 
-  // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane. `p` says "Ghost perc"
-  // rather than "Rim" because the ghost layer writes to it and that is what a
-  // person sees in the column; the other eleven say what they are.
-  const DRUMNAME = { k: "Kick", s: "Snare", c: "Clap", o: "Open hat",
-                     h: "Hat", p: "Ghost perc", f: "Pedal hat", r: "Ride",
-                     x: "Crash", t: "High tom", m: "Mid tom", l: "Low tom" };
+  // THE ARRANGEMENT'S COLUMN HEADINGS, one per lane — and since 2026-09-03
+  // they are what the DRUM EDITOR prints on its own columns (Paul: *"in the
+  // drum editor, fully label the names of the parts of the kits"*), so every
+  // one of the twelve is the full name of a drum and none is an abbreviation.
+  //
+  // TWO OF THEM CHANGED WITH THAT, and both were names for something other
+  // than the drum you hear:
+  //   `p` said "Ghost perc" — the ghost layer writes to this lane
+  //     (kernel.js:2510 pushes `d: "p"`) and the column was named after the
+  //     writer. What SOUNDS there is the rim: audio/to-engine.js LANE gives
+  //     `p` unit `rim`, a sampled kit plays `rim.wav` (audio/audition.js
+  //     KITFILE, genre-kernel DRUMKITS) and a machine plays `snare_crack`.
+  //     A lane is named for its drum; the ghost layer is still what fills it.
+  //   `h` said "Hat" beside "Open hat" and "Pedal hat", which named the family
+  //     and not the member. It is the CLOSED hat — `hatClosed.wav`, and
+  //     `open: false` in the same LANE table.
+  // Lower case: these are printed in the page's own voice, beside `+ line`
+  // and `read by nobody`, and they are read aloud as `closed hat step 4`.
+  const DRUMNAME = { k: "kick", s: "snare", c: "clap", o: "open hat",
+                     h: "closed hat", p: "rim", f: "pedal hat", r: "ride",
+                     x: "crash", t: "high tom", m: "mid tom", l: "low tom" };
 
   // ---- DEFAULTS — the table's dominant values, said once -------------------
   // (Below DRUMNAME rather than hard against the GENRES close: promote-genre.js

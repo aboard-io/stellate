@@ -198,6 +198,59 @@ export const MACHINE_KIT = {
 // Exported because the loaders ask it: a machine has nothing to fetch.
 export const isMachine = (kit) => !!MACHINE_KIT[kit];
 
+/* ---- WHICH LANES A KIT CAN PLAY, AND IN WHAT ORDER -------------------------
+   Added 2026-09-03 for the drum editor's lane offer (Paul: *"give me some more
+   appropriate options, we seem to have only four elements in most of our kits,
+   or three"*). It lives HERE, beside the two tables that decide it, because a
+   surface that offers a drum has to be able to ask whether the drum will
+   ARRIVE, and a third copy of that answer in a view is the copy that goes
+   stale. `LANE` above is the whole kit; this says how to lay it out and where
+   it is not honest.
+
+   THE ORDER IS A DRUM KIT, not the alphabet: the two drums under the hands
+   first, then the three hats, then the two things you clap and click, then the
+   toms high to low, then the two cymbals. It is the order the LANE table would
+   have been written in if letters had not come first. */
+export const LANE_ORDER = ["k", "s", "h", "o", "f", "c", "p", "t", "m", "l", "r", "x"];
+
+/**
+ * Why `kit` cannot sound `lane` — a sentence a surface can print — or null when
+ * it can.
+ *
+ * THERE IS EXACTLY ONE REFUSAL IN THE WHOLE TABLE and it is the one the `f` row
+ * in LANE already states in prose: a drum MACHINE has no pedal hat, the `pedal`
+ * flag is inert without a sampler to select the zone, and `f` on a 909 is that
+ * machine's closed hat played twice — which is what a 909 is. Everything else
+ * resolves: `drumVoice` answers every lane for every kit, sampled or
+ * synthesised, and it is written never to answer with a quiet substitute.
+ */
+export function laneRefusal(kit, lane) {
+  const L = LANE[lane];
+  if (!L) return "there is no such lane";
+  if (L.pedal && MACHINE_KIT[kit])
+    return "a drum machine has no pedal hat — on a " + kit +
+           " this lane would be the closed hat over again";
+  return null;
+}
+
+/**
+ * What is TRUE about `lane` on `kit` that is not a refusal — the honest
+ * footnote a lane that sounds may still need — or null.
+ *
+ * One entry, and it is measured rather than guessed: genre-kernel's DRUMKITS
+ * says in its own comment that the electronic kit's three GM tom notes are the
+ * same recording byte for byte (`tomMid.wav` three times, `st: 0`), and
+ * `drumKitSpec` therefore builds three zones of one file at one root. So that
+ * kit's high and low tom lanes SOUND — they are simply the mid tom again. A
+ * machine kit's toms are a repitched module and really are three pitches.
+ */
+export function laneCaveat(kit, lane) {
+  const L = LANE[lane];
+  if (kit === "electronic" && L && L.unit === "tom" && lane !== "m")
+    return "the electronic kit has one tom recording — this sounds the mid tom again";
+  return null;
+}
+
 // ---- a lane, as a parent MODULE --------------------------------------------
 // state-engine voiceUnits' own three model maps and its four fixed perc voices,
 // mirrored here and nowhere else, so the page and the tape name the same drum

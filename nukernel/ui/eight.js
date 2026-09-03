@@ -233,7 +233,14 @@ let saverStop = null;
 import { playAudition, stopAudition, auditioning, auditioningKey,
          auditionVoice, auditionKit, zoneFilesFor,
          kitFilesFor } from "../audio/audition.js";
-import { SYNTH_NAMES, voiceUnit } from "../audio/to-engine.js";
+/* …AND WHAT A KIT CAN PLAY (2026-09-03). `LANE_ORDER` is the twelve lanes laid
+   out as a drum kit and `laneRefusal`/`laneCaveat` are the two sentences the
+   lane offer needs, all three from the one file that owns the drum system —
+   audio/to-engine.js's own header: "THIS TABLE IS THE WHOLE DRUM SYSTEM AND
+   THERE IS NO OTHER". The editor may not decide for itself which drum a 909
+   has. */
+import { SYNTH_NAMES, voiceUnit, LANE_ORDER, laneRefusal, laneCaveat }
+  from "../audio/to-engine.js";
 // ONE NAME, NOT TWO. `sheet` came with `sheetRow` and had no call site here —
 // every question this page asks it asks two or three at a time, which is what
 // `sheetRow` is for (see the `sh` note in THE MENU ERA below). It stays
@@ -1132,6 +1139,30 @@ const edited = (cellName) => {
 // reads whatever is here when it is CALLED.
 let ATLAS = null;
 
+/* ===== THE SEED'S OWN LANDING DOOR (2026-09-03) =========================
+   Paul: *"Instead of stopping the music compose the new song then show a
+   countdown until the new version plays."*
+
+   ONE GESTURE ARMS ONE LANDING, AND THE ARMING IS A COUNT. The seed's owner is
+   ui/atlas.js and its one compose path is `pick`, which ends in
+   `ctx.setDocument` — so a seed change had exactly one door and that door's
+   first word is `stop()`. The atlas may not learn what a transport is (its
+   own note: it "owns the globe and knows nothing about a transport"), so the
+   choice of door is made HERE, where `playing` already lives, and it is
+   `armSeed`'s own count rather than a test inside `setDocument` — because a
+   globe tap to another anchor is a DIFFERENT record and must still stop.
+   IT COUNTS RATHER THAN LATCHES, and the case that made it count is real: the
+   field commits on blur, so tapping the DIE while the field is open is two
+   seed gestures inside one frame — the typed number, then the roll. A boolean
+   would have been spent by the first record and the second would have taken
+   `stop()` under the ear, which is the exact thing this round deletes.
+   It is ui/rules.js's own two lines (`if (ctx.transport().playing &&
+   ctx.evolve) ctx.evolve(nd); else ctx.setDocument(nd)`) said across an
+   asynchronous compose: the panel composes its document itself and can pick
+   the door on the spot; the seed's document is composed two frames later
+   inside the atlas, so the choice has to wait at the door for it. */
+let seedSwaps = 0;
+
 const CTX = {
   doc: () => DOC,
   /* THE POSITION FEED, HANDED TO A VIEW AS A READING (2026-09-01). Paul:
@@ -1159,7 +1190,46 @@ const CTX = {
   // window down to where the previous record's tab strip used to be. The
   // correction exists for a page that grew under a still thumb mid-edit, and
   // this is not that.
-  setDocument: (next) => { stop(); auditionOff(); DOC = next; normalize(); push(true);
+  setDocument: (next) => {
+                           /* A SEED CHANGE UNDER A RUNNING TRANSPORT TAKES
+                              THE OTHER DOOR (2026-09-03) — see `seedSwaps`
+                              above and `armSeed` in the seed section. The
+                              arming is spent HERE, on the first record that
+                              arrives after the gesture, whether or not this
+                              branch is the one taken: a seed change made on a
+                              stopped box is an ordinary landing and wants
+                              every line below (a stop that is a no-op, the
+                              scroll clearing, the name plate, the record's own
+                              log line). Playing, none of those is true — the
+                              anchor has not moved and the transport is the
+                              thing being preserved — so it is `evolve`, and
+                              the countdown `push()` starts is what the number
+                              in the foot then draws. */
+                           if (seedSwaps > 0) { seedSwaps--;
+                             if (playing) { seedWaiting = true;
+                                            CTX.evolve(next);
+                                            /* ...AND THE GLOBE STILL FOLLOWS
+                                               THE RECORD, which is the ONE
+                                               line `evolve` drops that a SEED
+                                               change still wants. A rule edit
+                                               cannot move the year (its note
+                                               says so and is right); a new
+                                               reading is a whole record
+                                               landing, and the ring, the
+                                               year and the camera have
+                                               followed one since the atlas
+                                               shipped. MEASURED: without this
+                                               line, test/atlas.js G22 went
+                                               red — the reader was at 600,
+                                               pressed the die, and the earth
+                                               stayed at 600 while the page
+                                               played Kingston 1969.
+                                               `showing` never composes, so
+                                               this cannot loop back here. */
+                                            if (ATLAS) ATLAS.showing(DOC.basis);
+                                            seedAnnounce();
+                                            return; } }
+                           stop(); auditionOff(); DOC = next; normalize(); push(true);
                            anchorOff = true;                 // see ANCHOR_MAX
                            paneScroll.clear();      // a new record is a new page
                            staffBox.clear();        // …and so are its staves
@@ -1199,6 +1269,50 @@ const CTX = {
                               repainting the stripe. */
                            nameRecord();
                            logRecord(); },
+  /* ================= EVOLVE — THE SAME RECORD, WRITTEN AGAIN ============
+     (2026-09-03.) Paul, after using the deployed composer: *"When I change
+     things in the 'Rules' section, evolve the song, don't just restart it."*
+
+     `setDocument` above is the door a NEW RECORD arrives through, and its
+     first word is `stop()` — which is right for what it is for (a globe tap,
+     a seed roll, a share link: a different record, so the transport that was
+     playing the old one has nothing left to play). It was also the only door
+     a recomposed document had, so a compose-tier rule edit took it and the
+     record you were listening to stopped, re-opened the engine and came back
+     at bar 0. MEASURED on the rendered page before this line existed, reggae
+     at reading 3, one drag of the tempo rule while playing: two
+     `transport:state` events (false, then true 361 ms later), the position
+     feed's serial back to 0 from 1, a new document object, and the whole
+     eight-second ring prefill paid again.
+
+     THIS IS THE OTHER DOOR AND IT IS ONE LINE OF DIFFERENCE: the record is
+     REPLACED and the transport is not touched. `changed()` — reviseProd,
+     push, draw — is what every other live edit on this page already calls,
+     and `push()` ends at `commit("box")`, which audio/live.js's changed-law
+     recompiles into the plan the walk reads on the next bar it asks for. So
+     the new material lands through the ONE next-bar door (audio/live.js
+     `announceChange`, whose countdown `logEdit` starts at the foot of
+     `push`), and nothing here schedules a second swap of its own.
+
+     WHAT IT DELIBERATELY DOES NOT DO, AND WHY, ONE BY ONE — every line of
+     `setDocument` this drops is dropped because it answers "a different
+     record arrived", which is false here:
+       `stop()`            the transport is the thing being preserved
+       `auditionOff()`     an audition is a preview of a motif of THIS record
+       `paneScroll/staffBox.clear()`  a new record is a new page; this is the
+                           same page, and clearing them would move the panel
+                           under the thumb that just made the edit
+       `ATLAS.showing`     `basis` cannot change here (a rule edits the row,
+                           never which anchor it is)
+       `logRecord()`       no record arrived; `push()` logs the EDIT instead
+     `normalize()` stays, because a composed document goes through it at every
+     other door and a rule row may add a field this one has never held.
+
+     THE CALLER SAYS WHICH DOOR, AND THE PAGE DOES NOT GUESS. ui/rules.js asks
+     for this one only while the transport is running; a stopped box takes
+     `setDocument`, where there is no position to keep and the old door's
+     `stop()` is a no-op. */
+  evolve: (next) => { DOC = next; normalize(); changed(); },
   /* THE ATLAS MOVED, SO THE ADDRESS DOES (see THE ADDRESS). It is a hook and
      not a subscription because the seed and the year live in ui/atlas.js and
      no event on ui/state.js's bus is fired for either — "box" is one call per
@@ -5653,6 +5767,97 @@ function renameField(cell) {
   return wrap;
 }
 
+/* ===== ...AND A MOTIF CAN BE EMPTIED (2026-09-03) =======================
+   Paul: *"I need a clear button for motifs."*
+
+   IT IS ON THE HEADER LINE, BESIDE THE NAME. `.nu-motif` is the block's own
+   line and it already carries the one other statement about the cell AS A CELL
+   — its name (`renameField`, above). The fourteen TRANSFORMS are not on this
+   panel at all any more (they are the gutter's `motifops` level; hookGrid's
+   tombstone has the move), and they are a different sentence anyway: every one
+   of them is a rewrite you can press again, and this is the one that takes the
+   tune away. It sits on the name line because that is the line that says WHICH
+   motif you are about to empty.
+   NO CSS. `button{ min-height: var(--tap) }` (nu.css) is already the 44px floor
+   for every button on the page, and the gap is the space `loopButton` uses for
+   the same job one line down — nothing here needs a rule of its own.
+
+   WHAT IT WRITES IS `song.js`'s OWN BLANK, NEVER A ZERO ARRAY. `NuSong.blank(n)`
+   is what an empty phrase IS in this box — `deg`/`acc` zeros and `vel` FIVES,
+   the kernel's own mezzo, which is exactly the value a hand-written "all
+   zeros" would have got wrong — and `play` is read back off that blank's own
+   `gate`, the exact inverse of document.js `toPhrase`'s
+   `gate = play.map(p => p === "n" ? 1 : 0)`. So the cell this leaves compiles
+   to `NuSong.blank(n)` step for step and the two can never disagree.
+   THE LENGTH IS THE CELL'S OWN: emptying a two-measure motif leaves two
+   measures of rest, because "every line cell in one document is the same
+   length" (newMotif, above) is not suspended by clearing one.
+   A BEAT IS A MOTIF TOO (see motifs(): "don't just drop drum pattern in below;
+   make it part of motifs"), so the button is on a drum cell as well, and the
+   blank for a lane grid is song.js's other one — `blankDrum`, which is every
+   lane all zeros. Said over the lanes THIS cell has and in place, so a lane's
+   own length and any sidecar lane survive being emptied.
+
+   THE NAME AND THE INSTRUMENT ARE NOT TOUCHED, and that is a decision and not
+   an omission: CLEAR IS THE NOTES. A cleared `psalm` is still `psalm` — the
+   cantor and the schola still read it, every `voice.material` string still
+   points at it, and the next thing you write goes into a tune that is already
+   cast. Emptying the name is `renameCell`'s door and emptying the cast is the
+   Band axis's; a button that did all three would be "delete this motif", which
+   is a different gesture with a different blast radius and is not what was
+   asked for.
+
+   THERE IS NO UNDO ON THIS PANEL AND THIS DOES NOT INVENT ONE. The page's only
+   undo is the PRODUCER's (ui/produce.js `undoable`/`undo`, which takes back one
+   producer note); a clear stands until you write over it, exactly as the
+   fourteen transforms do. What it leaves instead is a LINE IN THE LOG, which is
+   the record of a gesture this page does keep. (A confirm step was considered
+   and not built: nothing on this page asks twice, and inventing that idiom on
+   one button would make it behave unlike every other one.) */
+function clearCell(H) {
+  if (H.kind === "drum") {
+    const L = H.lanes || {};
+    for (const k of Object.keys(L)) if (Array.isArray(L[k])) L[k].fill(0);
+    return;
+  }
+  const B = NuSong.blank(H.deg.length);
+  H.deg = B.deg; H.vel = B.vel; H.acc = B.acc;
+  H.play = B.gate.map((g) => (g ? "n" : "r"));   // a blank gates nothing
+}
+function clearButton(parent, cell, isDrum) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.dataset.k = "motifclear-" + cell;
+  b.append(el("span", "clear"));
+  b.setAttribute("aria-label", "clear " + cell + " — " +
+    (isDrum ? "every lane goes silent" : "every step becomes a rest") +
+    "; the name and who plays it are kept");
+  /* THE CELL IS LOOKED UP AT PRESS TIME and never captured at build time —
+     the same law `motifOpsTrayItems` states for the fourteen transforms, and
+     the same reason: a rename moves the key this button was drawn with. */
+  b.addEventListener("click", () => {
+    const H = DOC.material.cells[cell];
+    if (!H) return;
+    clearCell(H);
+    logPut("act", "clear " + cell,
+           isDrum ? "every lane is silent" : "every step is a rest");
+    /* `changed()` AND NOT `edited()`, which is the one choice here that is not
+       obvious. `edited` is the narrow path for a control that moved ONE number
+       and must not tear the page down under a finger: it repaints the staves
+       and leaves the sixteen bench rows standing. This rewrote every step, and
+       those rows are built once and only stated by `hookGrid`'s own `sync()` —
+       leaving them up would be this repo's characteristic bug, a button that
+       changes the record and not the picture. `changed()` is
+       `reviseProd(); push(); draw()`, the one owner of recompile, and `push()`
+       is the one phrase door (putPhrase per voice per section, then commit) —
+       which is also what makes the silence land at the NEXT BAR rather than
+       under the ear: `logEdit()` at the foot of `push` tells audio/live.js the
+       record moved and the walk runs a runway ahead of the clock. */
+    changed();
+  });
+  parent.append(document.createTextNode(" "), b);
+}
+
 /* ===== WHO READS THIS ONE, AS PLAYERS (2026-09-02, slice 2c) ============
    Paul, B8: *"the motif editor should show me previews of the instruments
    using the motif."*
@@ -5750,6 +5955,8 @@ function motifs(parent, deck, si) {
     label.className = "nu-motif" + (firstBlock ? " nu-first" : "");
     firstBlock = false;
     label.append(renameField(name));
+    // …and the one thing you can do to the whole tune from this panel
+    clearButton(label, name, isDrum);
     parent.append(label);
     // …AND THE WAY TO HEAR IT. The button is a control and sits outside the
     // live sentence beside it; the STAND-IN admission, when there is one, is a
@@ -7189,13 +7396,30 @@ function drumGrid(parent, cellName) {
   // control for a ninth of a step; round-tripped exactly. (It used to be a whole
   // ROW that was skipped; it is a whole COLUMN now, and the test is the same
   // one character.)
+  /* THE COLUMN SAYS THE DRUM'S NAME (2026-09-03). Paul: *"in the drum editor,
+     fully label the names of the parts of the kits."* It said `k`, `s`, `h`
+     with the word hidden in a `title` — which is a legend you have to hover to
+     read, on a page whose own law is that a cell's value names it, and on a
+     touch surface where there is no hover at all. The word is the face now and
+     THE LETTER IS THE KEY: `data-lane` carries it for a gate and for the
+     `data-k` every cell in the column already spells with it.
+
+     IT RUNS DOWN THE COLUMN because the grid is rotated (Paul, 2026-08-25:
+     *"Rotate the drum kits and motif editors to be vertical"*) and a lane is a
+     36px COLUMN. "closed hat" set across one is either three characters and an
+     ellipsis or a column three times as wide, and a twelve-lane kit at 320px
+     has no room for either — measured on the rendered page: 34 + 12 x 36 =
+     454px against the 224px deck a 320px phone leaves. Set vertically it costs
+     the header row its height (86px for a word, 132px for a sidecar's phrase,
+     both measured) and the table not one pixel of width, and nothing is
+     abbreviated at any viewport from 320 to 1280. (nu.css `.nu-lanehead`.) */
   const head = el("tr");
   head.append(el("th", ""));
   for (const lane of laneKeys) {
-    const lh = el("th");                  // the letter; its title says which
-    lh.title = laneName(lane);
-    if (SIDECAR[lane[0]]) lh.className = "nu-hint";
-    lh.append(el("span", lane));
+    const lh = el("th");                  // the WORD; `data-lane` is the letter
+    lh.dataset.lane = lane;
+    lh.className = "nu-lanehead" + (SIDECAR[lane[0]] ? " nu-hint" : "");
+    lh.append(el("span", laneName(lane)));
     head.append(lh);
   }
   t.append(head);
@@ -7290,6 +7514,155 @@ function drumGrid(parent, cellName) {
     t.append(tr);
   }
   stepGrid(parent, t);              // sixteen ROWS: no pane, and nothing to swipe
+  /* ...UNLESS THE KIT REALLY IS WIDER THAN THE COLUMN (2026-09-03, and it is a
+     MEASUREMENT and not a lane count).
+
+     `stepGrid`'s own argument for taking no pane is that the rotated grid
+     cannot overflow — "the widest kit the catalog can draw is 272px, inside
+     the 366px column" — and half of that arithmetic was wrong before this
+     round and is wrong in nu.css too: MEASURED at 320x844 on the deployed
+     page, the deck a step grid sits in is 224px, not 296. So jazz's seven
+     columns (286px) already spilled the page sideways on a small phone, and
+     a twelve-lane kit is 454px, which spills it on every phone.
+
+     A5c bans a pane around a grid that FITS, because that is the container
+     Paul reported catching his gestures ("it snaps left even though I'm not
+     done editing"). It does not ban one around a grid that genuinely cannot
+     fit — A5 asks for exactly that of every other table on the page — so the
+     rule this draws by is the one both assertions share: a pane if and only if
+     the table is wider than the box it is in. Asked of the browser, after the
+     table is on the page and full, which is the only way to know.
+     (`pane()` MOVES the table into the scroller `stepGrid` already appended —
+     the bench does the same two calls in the same order.) */
+  const host = t.parentElement;
+  if (host && host.clientWidth && t.scrollWidth > host.clientWidth + 1)
+    pane(parent, t);
+  laneAdd(parent, cellName, lanes);
+}
+
+/* ---------- ...AND THE REST OF THE KIT, OFFERED ------------------------
+   Paul, 2026-09-03: *"give me some more appropriate options, we seem to have
+   only four elements in most of our kits, or three."*
+
+   HE IS DESCRIBING THE MEASUREMENT EXACTLY. The grid draws `Object.keys(cell
+   .lanes)` and nothing else, and a record's beat cell is a verbatim copy of
+   its genre's authored `kit` (precompose.js:3247) — measured on the deployed
+   box: Detroit 1988 is TWO lanes (`k o`), Kingston 1975 is three (`k p h`),
+   New York 1977 is four (`k c o h`), and a hand-made cell is `DRUMGRID`'s
+   three. Meanwhile every kit in the box, sampled or synthesised, can play
+   TWELVE — found/samples/drums/<kit>/ has shipped twelve one-shots per kit
+   since the day it was extracted and audio/to-engine.js `drumVoice` answers
+   all twelve for all ten kits. So the editor was not showing a small kit; it
+   was showing a small SUBSET of a full one, with no way to say so.
+
+   THE OFFER IS THE BAND PANE'S, DELIBERATELY (`.nu-memadd`, "+ line / + bass /
+   + drums"): a row of `+ <word>` buttons under the thing they grow, one act
+   per button, the new thing opened where you are already looking. A drum kit
+   and a band are the same gesture — hire the drum you are missing — so they
+   are the same control, and the class is a sibling name rather than a second
+   idiom.
+
+   WHAT THE BUTTON WRITES, AND WHY IT IS NOT SILENT. A lane added as sixteen
+   zeros is this repo's characteristic bug volunteered on purpose: a lane
+   declared, drawn, costed and reaching no sound until somebody guesses that it
+   needs tapping. So a lane ARRIVES PLAYING — `LANESEED`, which is drums-kit.js
+   `give`'s own vectors for the nine lanes that vocabulary names, and the same
+   idea for the three it does not — and the first thing you hear after the tap
+   is the drum you asked for. Everything after that is the cell's own tap
+   cycle; `clear` empties it and the column is still there to write into.
+
+   THE WRITE IS THE EDITOR'S OWN DOOR AND THERE IS NO SECOND ONE. A cell writes
+   `H.lanes[lane][i]` in place and calls `edited`; this writes `H.lanes[lane]`
+   in place and calls `changed()` — the same pair `clearButton` uses and for
+   its stated reason: `edited` is the narrow path for one number under a
+   finger, and a new COLUMN is a table that has to be drawn again. `changed()`
+   is `reviseProd(); push(); draw()`, and `push()` is what tells audio/live.js
+   the record moved, which is how the new drum lands at the next bar instead of
+   under the ear.
+
+   AND A LANE IS NOT OFFERED WHERE THE KIT HAS NO SUCH DRUM. There is exactly
+   one such case in the whole table and audio/to-engine.js owns the sentence
+   (`laneRefusal`): a drum machine has no pedal hat. It is drawn REFUSED with
+   its reason in `data-why` — this page's refusal idiom — and never hidden,
+   because a control that vanishes teaches nothing about the kit you chose. */
+const LANESEED = {
+  k: [0, 8], s: [4, 12], h: [0, 2, 4, 6, 8, 10, 12, 14], o: [2, 6, 10, 14],
+  f: [2, 6, 10, 14], c: [4, 12], p: [2, 7, 10, 14],
+  t: [6, 14], m: [10], l: [12], r: [0, 2, 4, 6, 8, 10, 12, 14], x: [0],
+};
+/* WHOSE KIT IT IS, ASKED THE WAY THE RECORD ANSWERS IT. The chain is
+   ui/derive.js `kitOf`'s own, shortened to the two links a document can move:
+   the drums chair's INSTRUMENT first (document.js:316 writes it out as
+   `drumkit: drums.instrument`, and it is what the Band panel's `sound.drumkit`
+   sheet sets), then the BASIS genre's own `drumkit`, and failing both the
+   acoustic kit — which is precisely what `kitOf` seats for a record that has
+   lanes and names no kit ("it needs a real kit rather than the oscillator
+   fallback, so it gets the plain acoustic one"). A record with no drummer at
+   all still has a beat cell you can write, and it is written for whatever kit
+   would play it. */
+const drumkitOf = () => { const v = DRUMV();
+  return (v && v.instrument) ||
+         ((GENRES[DOC.basis] || {}).drumkit) || "acoustic"; };
+function laneAdd(parent, cellName, lanes) {
+  const kit = drumkitOf();
+  // THE CELL'S OWN LENGTH, off a lane it already has — never the constant 16.
+  // Every kit in the shipped catalog is sixteen long (the grid's own note says
+  // so, measured over 341 lanes), and a hand-written record need not be. Read
+  // at PRESS time, out of the cell that is there then, for `clearButton`'s
+  // reason: nothing about the cell may be captured when the button is drawn.
+  const lenOf = (H) => Object.keys(H.lanes || {})
+    .map((k) => (Array.isArray(H.lanes[k]) ? H.lanes[k].length : 0))
+    .filter(Boolean)[0] || 16;
+  const row = el("p", null, "nu-laneadd");
+  for (const lane of LANE_ORDER) {
+    if (lanes[lane]) continue;                 // already a column on the grid
+    const word = laneName(lane);
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.k = "addlane-" + lane;
+    b.dataset.lane = lane;
+    b.append(el("span", "+ " + word));
+    const why = laneRefusal(kit, lane);
+    if (why) {
+      b.disabled = true; b.setAttribute("aria-disabled", "true");
+      b.dataset.why = why; b.title = why;
+      b.setAttribute("aria-label", "+ " + word + " — " + why);
+    } else {
+      // …and the footnote that is not a refusal rides on the control it is
+      // about, in the same place, so a lane that sounds THE SAME AS ANOTHER
+      // says so before you spend a tap on it.
+      const note = laneCaveat(kit, lane);
+      // "an open hat", not "a open hat" — the sentence is read aloud.
+      const say = "+ " + word + " — " + (/^[aeiou]/.test(word) ? "an " : "a ") +
+                  word + " lane on " + cellName +
+                  ", playing on the " + kit + " kit" + (note ? "; " + note : "");
+      if (note) { b.dataset.why = note; b.title = note; }
+      b.setAttribute("aria-label", say);
+      /* THE CELL IS LOOKED UP AT PRESS TIME, never captured at build time —
+         `clearButton`'s own law, and the same reason: a rename moves the key
+         this button was drawn with. */
+      b.addEventListener("click", () => {
+        const H = DOC.material.cells[cellName];
+        if (!H || H.kind !== "drum") return;
+        H.lanes = H.lanes || {};
+        if (H.lanes[lane]) return;             // twice is once
+        const len = lenOf(H);
+        const v = new Array(len).fill(0);
+        // A HIT IS A 5 and never the deferring 1 — laneV9(4), the one mapping
+        // this surface states (V7/V9), which is what the tap cycle writes.
+        for (const i of LANESEED[lane] || []) if (i < len) v[i] = laneV9(4);
+        H.lanes[lane] = v;
+        logPut("act", "+ " + word,
+               (/^[aeiou]/.test(word) ? "an " : "a ") + word + " lane on " +
+               cellName + ", on the " + kit + " kit");
+        changed();
+      });
+    }
+    row.append(b, document.createTextNode(" "));
+  }
+  // NOTHING TO SAY WHEN THE KIT IS WHOLE — a twelve-lane cell gets no row at
+  // all rather than an empty one with a rule under it.
+  if (row.querySelector("button")) parent.append(row);
 }
 
 /* ---------- THE BAND: FORM x VOICES ------------------------------------
@@ -11145,7 +11518,13 @@ function lightStep(abs) {
      that maps one to the other, and it is the same table the board's columns
      are built from — so the lamp in the gutter and the column on the board can
      never disagree about who this is. */
-  lightBand(abs);
+  /* ...AND SO DOES THE MOTIF THAT IS SOUNDING (2026-09-03). Paul: *"When
+     motifs are open, light them up in the left nav when playing."* The set of
+     players is HANDED OVER rather than asked for twice — `soundingChans()` is
+     one read a beat and both lamps are drawn from it, which is also what makes
+     it impossible for the gutter to say a player is silent and their cell is
+     sounding in the same frame. */
+  lightMotifs(lightBand(abs));
   // (A LOOP OVER `played` STOOD HERE — the red notehead on every composed
   //  staff in the Material axis. It went on 2026-08-25 with the staves
   //  themselves. `lightScore` above is the whole playhead on notation now, and
@@ -11159,6 +11538,30 @@ function lightStep(abs) {
    reads a beat over a roster of ten is forty `classList.toggle`s a beat, and a
    toggle that changes nothing still invalidates style for the element. */
 let bandLit = "", secLit = -2;
+/* WHAT "LIT" IS, IN ONE PLACE AND IN TWO CHANNELS (2026-09-03). Paul: *"When
+   motifs are open, light them up in the left nav when playing."* — the third
+   surface to ask for the lamp the band and the sections already wear, which is
+   the hour a `classList.toggle` typed three times becomes one function.
+     · `is-sounding` IS THE PAINT — `--clock`'s red down the row's own reserved
+       edge bar (nu.css), and it is deliberately NOT a <mark>: the mark and the
+       `aria-pressed` mean THE OPEN THING (shell A6c: exactly one of each in the
+       stripe), and three sounding cells would be three marks and a lie about
+       where you are.
+     · `aria-current="true"` IS THE READER'S CHANNEL, AND THE GATE'S. It is the
+       same word ui/atlas.js `syncIndex` writes on the genre list's own row for
+       the same kind of fact ("this is the one, now"), so the page has one
+       spelling of it and not two. It is REMOVED rather than written "false",
+       because a row that is not sounding is not a current-anything and an
+       absence is the honest spelling of a state that is not there — the same
+       discipline `aria-pressed` keeps on a branch of actions.
+   NEITHER CHANNEL MOVES THE BOX: no weight change, no padding, no border on
+   the other three sides. A lamp that resized its row would make the whole
+   stripe jump four times a beat. */
+const setSounding = (b, on) => {
+  b.classList.toggle("is-sounding", on);
+  if (on) b.setAttribute("aria-current", "true");
+  else b.removeAttribute("aria-current");
+};
 /* THE SOUNDING SECTION'S OWN ROW. `secnav<id>` is the address the section list
    has used since the sections became marks, so this is a lookup and not a
    search; `-1` is "nothing is sounding", which is what stop writes. */
@@ -11169,7 +11572,7 @@ function lightSections(si) {
     ? "secnav" + DOC.form.sections[si].id : null;
   for (const [k, b] of trayBtn) {
     if (!b || k.slice(0, 6) !== "secnav") continue;
-    b.classList.toggle("is-sounding", k === want);
+    setSounding(b, k === want);
   }
 }
 function lightBand(abs) {
@@ -11192,25 +11595,84 @@ function lightBand(abs) {
       }
     } catch (e) { want = new Set(); }
   }
+  /* AND IT HANDS THE SET BACK (2026-09-03), because the MOTIF lamp one branch
+     over is this same fact seen through the record: WHO is sounding, joined to
+     WHICH CELL they read in the sounding section. Returning it is what keeps
+     `soundingChans()` — a walk of the bar's schedule after the desk — at one
+     call a beat instead of two, and what makes it impossible for the two lamps
+     to disagree. The early return is now a guard around the WRITE and not
+     around the reading, for the same reason: a repaint may have thrown the
+     classes away while the set itself never moved (see `paintTray`). */
   const sig = [...want].sort().join(",");
-  if (sig === bandLit) return;
-  bandLit = sig;
-  for (const [k, b] of trayBtn) {
-    if (!b || k.slice(0, 3) !== "tab") continue;
-    b.classList.toggle("is-sounding", want.has(k.slice(3)));
-  }
+  if (sig !== bandLit) {
+    bandLit = sig;
+    for (const [k, b] of trayBtn) {
+      if (!b || k.slice(0, 3) !== "tab") continue;
+      setSounding(b, want.has(k.slice(3)));
+    }
   /* ...AND IN THE GRID HEADS, WHERE IT IS A CHILD RATHER THAN A CLASS. The
      gutter is outside #app and a class there is legal; `#pan-structure` is
      inside it, where the clock writes only inside `[data-live]` and
      `__eightFrozen` keeps a live element's ATTRIBUTES and empties its
      CHILDREN. So the lamp is one `<i>` that comes and goes, and the frozen
      half of the page is byte-identical across a section boundary. */
-  for (const L of bandLamps) {
-    if (!L.node) continue;
-    const on = want.has(L.name);
-    if (!!L.node.firstChild === on) continue;
-    L.node.textContent = "";
-    if (on) L.node.append(el("i"));
+    for (const L of bandLamps) {
+      if (!L.node) continue;
+      const on = want.has(L.name);
+      if (!!L.node.firstChild === on) continue;
+      L.node.textContent = "";
+      if (on) L.node.append(el("i"));
+    }
+  }
+  return want;
+}
+/* WHICH MOTIF IS SOUNDING — READ OFF THE SCORE'S OWN JOIN, NEVER OFF A CLOCK
+   OF ITS OWN (2026-09-03). Paul: *"When motifs are open, light them up in the
+   left nav when playing."*
+
+   THE FACT IS ALREADY DRAWN, AND THIS IS A THIRD SURFACE RATHER THAN A THIRD
+   OWNER. `motifLabels` hangs a `.nu-mot` cap under each staff and the name in
+   that cap is `cellAt(voice, si)` — the record's own answer to "which cell does
+   this part read in this section" — with the BASS's one exception (it follows
+   the first line: document.js `scoreOf`, and `motifSub` says the same thing in
+   the column) stated where it lives and borrowed here. So the lamp in the
+   gutter and the cap on the paper are the same string from the same function,
+   and neither of them is time arithmetic done a second time.
+
+   THE SECTION IS `atSec`, WHICH IS THE "pos" FEED'S OWN `d.si` — the box the
+   EAR is in, never `editSec()`, which is the box you are WRITING (audio/live.js
+   :277, and the distinction `lightSections` makes one function up).
+   WHO IS SOUNDING IS `lightBand`'S SET, handed over: `soundingChans()` is the
+   bar's schedule AFTER the desk, so a muted player's cell stays dark, and a
+   cell nobody is reading in this section stays dark — which is the whole claim,
+   because the bank holds ten cells and a section uses two or three of them.
+   IT IS A SCHEDULE AND NOT A MEASUREMENT, the same honesty `lightBand` states:
+   `--clock` red for "this is where the record is", never `--meter` green.
+
+   IT LIGHTS ONLY WHAT IS ON THE STRIPE. `trayBtn` holds the rows that are
+   PAINTED, so this writes nothing at all unless the Motif branch is open —
+   *"when motifs are open"* is true by construction and needs no condition of
+   its own. */
+let motifLit = "";
+function lightMotifs(voices) {
+  if (!trayBtn) return;
+  const want = new Set();
+  if (voices && voices.size) {
+    const lead = LINES()[0];
+    const si = Math.max(0, atSec | 0);
+    for (const v of DOC.voices) {
+      if (!voices.has(v.name)) continue;
+      const src = v.kind === "bass" ? lead : v;
+      const name = src ? cellAt(src, si) : null;
+      if (name) want.add(name);
+    }
+  }
+  const sig = [...want].sort().join(",");
+  if (sig === motifLit) return;
+  motifLit = sig;
+  for (const [k, b] of trayBtn) {
+    if (!b || k.slice(0, 9) !== "motiftab-") continue;
+    setSounding(b, want.has(k.slice(9)));
   }
 }
 let stepTimers = [];
@@ -11878,11 +12340,22 @@ function paintCount(landed) {
   if (logZero) { clearTimeout(logZero); logZero = 0; }
   let least = null;
   for (const n of pend.values()) if (least == null || n < least) least = n;
-  if (least != null) {
+  /* ...AND A WAIT IS SAID ONCE, WHERE THE GESTURE WAS MADE (2026-09-03). A
+     seed change draws its own countdown ON the number three rows below this
+     one (Paul: *"show a countdown until the new version plays"*), and two
+     copies of one number in one 100px column read as a defect rather than as
+     an emphasis. So this box stands down for exactly as long as the seed's
+     own wait is up — `seedWaiting`, which is armed at the landing that evolves
+     and cleared when it arrives — and says everything else it always said.
+     The ARITHMETIC is not duplicated either way: both readers take `least`
+     from the same `pend` map, which audio/live.js's feed is the one writer
+     of. */
+  if (least != null && !seedWaiting) {
     logCountEl.replaceChildren(el("b", String(least)),
                                el("small", least === 1 ? "beat" : "beats"));
     return;
   }
+  if (least != null) { logCountEl.replaceChildren(); return; }
   /* AND ZERO IS SHOWN BEFORE IT IS CLEARED. A countdown that vanished at 1
      would never be seen to arrive, and arriving is the whole thing it is
      reporting — "it is in the sound NOW" is the answer Paul asked the question
@@ -11899,6 +12372,14 @@ on("pending", (d) => {
   if (d.beatsLeft > 0) pend.set(d.label, d.beatsLeft);
   else pend.delete(d.label);
   paintCount(d.beatsLeft === 0);
+  /* ...AND THE SEED SAYS ITS OWN WAIT ON ITS OWN NUMBER (2026-09-03). Paul:
+     *"Instead of stopping the music compose the new song then show a
+     countdown until the new version plays."* TWO READERS, ONE FEED, ONE
+     ARITHMETIC — `paintSeedWait` reads the same `pend` map this handler keeps
+     and draws it in the foot's seed row, so the number a reader is looking at
+     when they change it is the number that tells them when they will hear it.
+     A second subscription would have been a second clock. */
+  paintSeedWait(d.beatsLeft === 0);
 });
 
 /* ===== READING THE HAND =================================================
@@ -13580,8 +14061,14 @@ function trayRow() {
   nameRecord();
   /* THE DIE IS THE SEED MARK NOW (2026-09-02) — see the order above. Its own
      2026-08-30 note is kept where it was written, at `playTrayItems`, because
-     it is still the reason this button is not in the play group. */
-  foot.append(rewriteBtn);
+     it is still the reason this button is not in the play group.
+     ...AND IT IS A ROW OF TWO SINCE 2026-09-03 (Paul: *"I tap the die and
+     there's a new number. I tap the number and I can enter a new number by
+     hand."*) — `.nu-seedrow` holds `#rewrite`, `#seedval`, the field it
+     becomes and the wait it draws. The foot's ORDER is unchanged: the row
+     stands exactly where the die stood, and `.nu-trayfoot #rewrite` is still
+     the selector three gates walk the levels with. */
+  foot.append(seedRowEl);
   // (`foot.append(EXPLAIN.btn)` stood here — retired 2026-09-02 with the
   // module: *"Get rid of explain — that's the genre editor's work now."*)
   // the face says "log" and the NAME says how many — see `paintBadge`, which
@@ -13620,7 +14107,6 @@ function trayRow() {
   foot.append(playOpsBtn, voicingBtn, playBtn);
   nav.append(foot);
   logPanel = $("nu-log");
-  seedOut = buildSeedOut();
   traySig = "";
   trayBtn.clear();
   paintTray();
@@ -13698,6 +14184,17 @@ function paintTray() {
     traySig = sig;
     trayList.textContent = "";
     trayBtn.clear();
+    /* AND THE THREE LAMPS FORGET WHAT THEY LIT (2026-09-03). `bandLit`,
+       `secLit` and `motifLit` exist so the clock writes only when the set
+       MOVES — four reads a beat over a roster of ten is forty toggles a beat —
+       and a rebuild throws every class away while those three still say the
+       lamps are on. The bug it fixes is the one you see: open the Motif branch
+       WHILE the record is playing (which is a rebuild, the shape moved) and the
+       cell that is sounding stays dark until the section changes under you.
+       Sentinels, not writes: nothing is painted here, the next tick of the
+       "pos" feed repaints from the record, and a stripe rebuilt while STOPPED
+       is already dark because its buttons are new. */
+    bandLit = "\u0000"; secLit = -2; motifLit = "\u0000";
     for (const it of L.rows) {
       /* `why` SINCE 2026-08-28 — a refused mark, spelled by ui/glyph.js (the
          one owner of what a gutter button is). The listener is bound on a
@@ -14840,14 +15337,71 @@ const playBtn = mkBtn("play"), rewriteBtn = mkBtn("rewrite"),
          It is built here with the rest of them for the reason this paragraph
          gives about all six: the gutter's contents are this file's. */
       modeBtn = mkBtn("playmode");
-/* #reading SHIPS INSIDE #rewrite, exactly as index.html shipped it, WITH THE
-   LITERAL SPACE BEFORE IT — measured through CDP on 2026-08-27 and written up
-   in that file's own note: `<button>rewrite<b>5</b></button>` computes its
-   accessible name as "rewrite5", because an inline element joins without one.
-   The space is a real text node here for the same reason it was there. */
+/* ===== THE DIE AND THE NUMBER (2026-09-03) =============================
+   Paul: *"Instead of a popup for seed, just get rid of the word seed and put
+   the number. I tap the die and there's a new number. I tap the number and I
+   can enter a new number by hand."*
+
+   TWO GESTURES ON ONE SUBJECT ARE TWO TARGETS, which is why the digit comes
+   OUT of the die. `#reading` shipped inside `#rewrite` from the day the bar
+   was drawn, with a literal space before it — measured through CDP on
+   2026-08-27, because `<button>rewrite<b>5</b></button>` computes its
+   accessible name as "rewrite5" — and that arrangement was right while the
+   mark had ONE gesture. It has two now, and a button inside a button is not a
+   thing the DOM has: so the row is a `.nu-seedrow` holding the die, the
+   number, the field the number becomes, and the wait the number carries.
+   THE WORD IS WHAT THE NUMBER REPLACES. Every other mark in the gutter is a
+   picture over a word (2026-08-30: *"Label all the icons with tiny short
+   labels underneath"*); this one is a picture beside a NUMBER, because the
+   number is the name of the record and the word is the thing Paul asked to be
+   rid of. The die keeps its accessible name — `"rewrite " + n`, what a
+   screen reader is told the press will DO, and what eleven gates call this
+   control by — and the number carries its own.
+   IT WRAPS RATHER THAN SHRINKING, AND IT DOES NOT HAVE TO. Measured on the
+   rendered page: `--tray-w` is `clamp(96px, 28vw, 176px)`, so the stripe is
+   109.2px at 390 (101.2 inside its padding) and 176 at 1280 — the die takes
+   its 44 and the number takes the rest (53px at 390, 119.8 at 1280), side by
+   side, on ONE line, and the foot is exactly as tall as it was with the word
+   there (276.2px, both). The row is `flex-wrap` anyway, so at the 96px floor
+   the number drops UNDER the die rather than either target going below 44:
+   nothing in this stripe is ever narrower than a thumb, and the row spends a
+   line if it must. */
+// the domain, once, for the field's own name and for everything below that
+// asks what a seed may be (ui/atlas.js `clampSeed` is the CLAMP; this is only
+// what the page SAYS the domain is)
+const SEEDMAX = 65536;
 const readingEl = el("b", "1", "nu-rd");
 readingEl.id = "reading";
-rewriteBtn.append(document.createTextNode(" "), readingEl);
+const seedValBtn = mkBtn("seedval");
+seedValBtn.append(readingEl);
+/* THE FIELD THE NUMBER BECOMES. It is a SIBLING that is hidden, not a widget
+   built on the press: a control created under a thumb is a control with no
+   listener yet and no place in the tab order, and this one has to take focus
+   in the same task as the tap to raise a phone's keyboard at all.
+   `inputmode="numeric"` (and the `pattern` beside it, which is what iOS reads)
+   is the digits-only keypad Paul asked for by asking to type on a phone; it is
+   type="text" and not type="number" because a number field's spinners are two
+   more targets in a column that has no room for them, and because a stepper is
+   the "next" button this row just deleted. */
+const seedInEl = document.createElement("input");
+seedInEl.id = "seedin";
+seedInEl.type = "text";
+seedInEl.inputMode = "numeric";
+seedInEl.autocomplete = "off";
+seedInEl.setAttribute("pattern", "[0-9]*");
+seedInEl.dataset.k = "seed-in";
+seedInEl.hidden = true;
+seedInEl.setAttribute("aria-label",
+  "the seed — type a number from 0 to " + SEEDMAX + ", then Enter");
+/* AND THE WAIT, WHICH IS THE CLOCK'S ONE SQUARE INCH OF THIS ROW. Same
+   declaration the foot's other countdown carries (`data-live="pending"`), same
+   feed (audio/live.js `pending`), same arithmetic — which is NOT here and must
+   not come here. Empty is not drawn (nu.css `.nu-seedwait:empty`), so there is
+   one state to keep honest instead of two. */
+const seedWaitEl = el("div", null, "nu-seedwait");
+seedWaitEl.dataset.live = "pending";
+const seedRowEl = el("div", null, "nu-seedrow");
+seedRowEl.append(rewriteBtn, seedValBtn, seedInEl, seedWaitEl);
 /* THE ROOM, STOOD UP (Paul: *"The volume slider is now vertical"*). The
    <input> is the same control it always was — same id, same 0..100 domain,
    same `aria-label`, same store — and what changed is the CHASSIS around it:
@@ -14940,6 +15494,21 @@ say();
    exactly this reason, written at the check.
    THE GLYPH DOES NOT MOVE. `GLYPH.act.seed.g` is the same ⚄ `GLYPH.act.rewrite`
    wears — one picture, because it is one gesture on one subject. */
+/* ...AND THE WORD CAME OFF ITS FACE, 2026-09-03 — OFF THE FACE AND NOT OUT
+   OF THE DOM. Paul: *"just get rid of the word seed and put the number."* The
+   `.nu-vh` span says "seed" and it is the word he named; what stands beside
+   the picture now is `#seedval`, the number, which is its own target (see THE
+   DIE AND THE NUMBER above). So the span is still built and still says
+   "seed", and nu.css puts it back under `.nu-vh`'s ORIGINAL declarations for
+   this one mark — visually hidden, in the DOM, taking no room in the grid's
+   second column because it is out of flow. That is this page's own standing
+   rule and not a dodge: "the word is still in the DOM as `.nu-vh`, and with
+   this stylesheet turned off the page reads as itself" (test/shell.js A6g and
+   A6h, the check that would go red if the span were deleted). The mark is
+   therefore the ONE in the gutter with no VISIBLE word, and its accessible
+   name — `"rewrite " + n`, written by `printReading` — is what a screen
+   reader hears; test/gutter.js T10 names the exemption at the check rather
+   than skipping it. */
 (() => {
   const a = GLYPH.act.seed;
   const box = el("span", null, "nu-ic");
@@ -15127,6 +15696,23 @@ volWrap.append(vchassis(volEl, () => (+volEl.value) / 100).track, volOut,
    and did NOT change: it lives in `DOC.performance.take` and its readout is
    the Performance slider's own <output>. */
 const startNow = () => { startAt(0); say(true); };
+/* ...AND THE SEED ASKS FOR IT AT THE LANDING, NOT AT THE GESTURE (2026-09-03).
+   Paul: *"Instead of stopping the music compose the new song then show a
+   countdown until the new version plays."*
+
+   ONE START PATH, STILL, AND ONE QUESTION ASKED OF IT. 2026-09-03's own law
+   is that a seed change on a STOPPED box starts the record (test/seed.js S6:
+   *"When I change the seed start playing"*), and its note warns off exactly
+   the shape that broke it — `wasPlaying ? startNow : null`, a caller reading
+   the transport to decide whether the gesture has an effect. This is not that
+   test and it is not made by a caller: it is asked at the LANDING, by the one
+   `done` every seed door hands the atlas, and it asks whether there is
+   anything to start. Stopped, that is `startNow` — #play's own door, the
+   whole gesture, unchanged. Playing, the record is already sounding and the
+   new one is landing at the next bar through `evolve`; `startAt(0)` there
+   would queue a jump to the top of the record, which is the restart this
+   round exists to delete. */
+const startIfDown = () => { if (!playing) startNow(); };
 
 /* THE READING, PRINTED ON #rewrite. `on("box")` covers every path that can
    move the seed — this button (through `reseed`) and a tap on a mark the
@@ -15144,6 +15730,13 @@ const printReading = () => {
   // the name a screen reader hears, and it is the same number: see the
   // hand-painted face above for why this is written rather than inherited.
   rewriteBtn.setAttribute("aria-label", GLYPH.act.rewrite.w + " " + n);
+  /* ...AND THE NUMBER IS A CONTROL NOW, SO IT HAS A NAME OF ITS OWN
+     (2026-09-03). One writer, three places: the digit an eye reads, the die's
+     name (the gesture), and the number's name (the subject and what a press
+     on it will do). A screen reader must not be told "4242" and left to guess
+     that it is pressable. */
+  seedValBtn.setAttribute("aria-label",
+    "the seed, " + n + " — tap to type another");
 };
 on("box", printReading);
 
@@ -15343,180 +15936,222 @@ function rewriteNow() {
   // the digit moves with the gesture, not two frames later when the record
   // lands: a press that has been taken is a press you can see was taken. A
   // refusal never gets here — `reseed` returns false without bumping.
-  if (!ATLAS.reseed(DOC.basis, startNow)) return false;
+  /* ...AND IT GOES THROUGH `armSeed` SINCE 2026-09-03, which is the whole of
+     what "don't stop the music" cost this function: the gesture is unchanged,
+     the owner is unchanged, and the DOOR the record arrives through is chosen
+     by the latch rather than by this line. `startIfDown` is the `done` — see
+     its note; `album` reaches this function from the end of a record with the
+     transport running, so the gap between two album tracks ("songs with a gap
+     between them, like a turntable arm", the 2026-08-30 note) closes with it. */
+  if (!armSeed(() => ATLAS.reseed(DOC.basis, startIfDown))) return false;
   printReading();
   return true;
 }
-/* ...AND THE DIE OPENS THE SLIDER NOW, 2026-09-02 (Paul: *"When I click seed
-   pop up a vertical slider from zero to 2^16."*). It was `rewriteNow` — one
-   press, one roll — and the roll is still one press, inside the flyout, under
-   the word "roll". `rewriteNow` is UNCHANGED and is still the one reseed path
-   this box has: the flyout's roll button calls the FUNCTION, exactly as
-   `album` does, never `rewriteBtn.click()`. */
-rewriteBtn.addEventListener("click", () => showSeedOut());
+/* ...AND THE DIE IS A DIE AGAIN, 2026-09-03 (Paul: *"Instead of a popup for
+   seed, just get rid of the word seed and put the number. I tap the die and
+   there's a new number."*). It was `rewriteNow` until 2026-09-02, then one
+   press to open a flyout and a second on the word "roll" inside it; it is
+   `rewriteNow` again, which is still the ONE reseed path this box has and is
+   still the same function `album` takes at the end of a record. */
+rewriteBtn.addEventListener("click", () => rewriteNow());
 
-/* ===== THE SEED FLYOUT (2026-09-02) ====================================
-   Paul: *"Boot up every new session with a new seed unless there's a seed in
-   the URL. When I click seed pop up a vertical slider from zero to 2^16."*
+/* ===== THE SEED IS TWO CONTROLS AND NO PANEL (2026-09-03) ===============
+   Paul: *"Instead of a popup for seed, just get rid of the word seed and put
+   the number. I tap the die and there's a new number. I tap the number and I
+   can enter a new number by hand. Instead of stopping the music compose the
+   new song then show a countdown until the new version plays."*
 
-   FOUR WAYS TO SAY A NUMBER, AND ALL FOUR GO THROUGH ONE DOOR. The typed
-   number, the fader, `roll` and `next` all end in `ATLAS.setReading(n, done)`
-   — the setter ui/atlas.js grew for this — because the seed's one owner is
-   that file and a slider that kept its own copy would be the second store its
-   own note has forbidden since 2026-08-27. The readout is `#reading`, which
-   `printReading` has always been the only writer of.
+   WHAT WAS HERE AND WHERE EVERY PART OF IT WENT. `buildSeedOut` drew a
+   `.nu-strip-out` flyout with four ways to say a number, and this block was
+   its argument (2026-09-02, *"When I click seed pop up a vertical slider from
+   zero to 2^16"*). Nothing it offered is lost:
+     the NUMBER FIELD  is `#seedin`, in the foot, one tap from the digit
+                       instead of two — and it raises a numeric keypad, which
+                       a `type=number` in a flyout never reliably did;
+     `roll`            is the DIE itself, one press, where the picture always
+                       said it was ("REWRITE IS THE THROW", ui/glyph.js);
+     `next` (+1)       is the field: a stepper is a second way to say a number
+                       you can now simply type, and it cost a 44px target in a
+                       column that has 101px of them;
+     the FADER         is deleted outright and is the one thing that is. Paul
+                       asked for it on 2026-09-02 and asked for it gone the
+                       next day; 65,536 values over 180px is ~364 a pixel, so
+                       what it was actually for — ROAMING, landing somewhere
+                       you did not choose — is the die, exactly, and better;
+     "0 and 1: as written"  is the number's own explainer (`data-say`, the
+                       hold-and-hover the whole gutter already speaks), so the
+                       fact stays ON the artifact rather than in a comment —
+                       which is what its own 2026-09-02 note demanded of it.
+   AND THE PANEL'S MACHINERY GOES WITH IT: `syncSeedOut`, `showSeedOut`, the
+   Escape listener, the tap-outside listener, and `aria-expanded` on the die
+   (a control that opens nothing may not claim it does).
 
-   THE FADER IS `vchassis`, IMPORTED AND NOT COPIED — the same chassis the room
-   fader in this foot uses and the same one the board's strips use, so the
-   pointer law (capture on the TRACK, the value off the track's own rect,
-   `touch-action: none` on the control and only the control) is stated once on
-   this page. 65,536 values over ~180px of travel is ~364 values a pixel, which
-   is why the typed number is above it rather than beside it: the fader is for
-   ROAMING and the field is for LANDING.
+   ONE OWNER, UNCHANGED, AND IT IS STILL NOT THIS FILE. Both gestures end in
+   ui/atlas.js — `reseed` for the die (through `rewriteNow`) and `setReading`
+   for a typed number — and `#reading` is still written only by
+   `printReading`, which reads `ATLAS.reading()`. This section holds no copy
+   of the seed; `#seedin.value` is a string a hand is in the middle of typing
+   and is thrown away on Escape. */
+seedValBtn.dataset.say = "the seed — the number this record was written "
+  + "from. Tap the die for a new one, or tap the number to type one from 0 to "
+  + SEEDMAX + ". And 0 and 1 are the same record: the idiom as written.";
 
-   `0` AND `1` SOUND THE SAME and the panel says so under the slider rather
-   than hiding it: precompose's two seed-gated blocks return null at `seed <= 1`
-   ("the idiom as written"), so the domain has two positions that are one
-   record. A refusal with a reason on the artifact, in the sentence the page's
-   own law asks for.
-
-   IT IS A `.nu-strip-out` — the flyout chassis Paul asked for (*"strips that
-   fly out to give us access to all options, like MacOS system settings used
-   to"*), anchored at `inset-inline-start: var(--tray-w)` so nothing it draws
-   is ever over the marks it was opened from (shell A6i). Escape and a tap
-   outside close it; it is appended to <body>, outside `#app`, because a fixed
-   panel inside a 136px column would be a panel inside a column. */
-let seedOut = null, seedNum = null, seedRange = null;
-const SEEDMAX = 65536;
-function buildSeedOut() {
-  const box = el("div", null, "nu-seedout nu-strip-out");
-  box.id = "nu-seedout";
-  box.hidden = true;
-  box.setAttribute("role", "group");
-  box.setAttribute("aria-label", "the seed");
-  seedNum = document.createElement("input");
-  seedNum.type = "number"; seedNum.min = "0"; seedNum.max = String(SEEDMAX);
-  seedNum.step = "1"; seedNum.dataset.k = "seed-num";
-  seedNum.setAttribute("aria-label", "seed");
-  seedNum.addEventListener("change", () => writeSeed(+seedNum.value));
-  seedRange = document.createElement("input");
-  seedRange.type = "range"; seedRange.min = "0"; seedRange.max = String(SEEDMAX);
-  seedRange.step = "1"; seedRange.className = "nu-vs-in";
-  seedRange.dataset.k = "seed-slide";
-  seedRange.setAttribute("aria-label", "seed slider");
-  seedRange.addEventListener("change", () => writeSeed(+seedRange.value));
-  const wrap = el("span", null, "nu-vs nu-vs-tall nu-seedvs");
-  wrap.append(vchassis(seedRange, () => (+seedRange.value) / SEEDMAX).track);
-  const roll = el("button", "roll", "nu-seedbtn");
-  roll.type = "button"; roll.dataset.k = "seed-roll";
-  roll.setAttribute("aria-label", "roll a new seed");
-  /* ...AND `roll` SHUTS THE STRIP BEHIND IT, 2026-09-02. Paul: *"When I 'roll'
-     with the seed modal dismiss it."*
-
-     ROLL IS THE ONE GESTURE IN HERE THAT IS FINISHED WHEN IT LANDS. The
-     number, the fader and `next` are all AIMING — you type, you roam, you step
-     — and a panel that closed under each of them would be a panel you had to
-     re-open to make your second move. `roll` asks for a record you have not
-     chosen and hands you one: there is nothing left to aim, the record is
-     already sounding, and what a reader wants next is the map they rolled it
-     from. So the strip goes, and `next`/the field/the fader are deliberately
-     NOT given the same line.
-     THE ORDER IS ROLL, SYNC, THEN CLOSE, and the sync is not redundant: the
-     panel keeps its nodes (it is `[hidden]`, not rebuilt), so the number and
-     the fader must be left saying the seed that is playing for the next
-     opening to be true. `showSeedOut(false)` also puts `aria-expanded` back on
-     the die, which is the door's own state and the only thing on the screen
-     that said the strip was open. */
-  roll.addEventListener("click", () => {
-    rewriteNow(); syncSeedOut(); showSeedOut(false); });
-  const next = el("button", "next", "nu-seedbtn");
-  next.type = "button"; next.dataset.k = "seed-next";
-  next.setAttribute("aria-label", "the next seed");
-  next.addEventListener("click", () => writeSeed((+seedNum.value || 0) + 1));
-  const row = el("p", null, "nu-row");
-  row.append(roll, document.createTextNode(" "), next);
-  box.append(seedNum, wrap, row,
-             el("p", "0 and 1: as written", "nu-why"));
-  document.body.appendChild(box);
-  return box;
+/* ---------- armSeed: which door the record comes back through ----------
+   THE COUNT IS RAISED BEFORE THE COMPOSE AND SPENT BY THE LANDING (see
+   `seedSwaps` at the head of this file). It cannot be a test inside
+   `CTX.setDocument` — a globe tap to another anchor is a different record and
+   must still stop — and it cannot be a decision the atlas makes, because the
+   atlas may not know what a transport is.
+   A REFUSAL PUTS IT BACK, and so does a compose that never lands: `reseed`
+   returns false without writing when there is no anchor, and `pick`'s own
+   `work()` returns early when `genreToDocument` throws, in which case no
+   record arrives at all. The timer is that second case's answer — three
+   seconds is far past `pick`'s 600 ms fallback — because a latch left armed
+   would send the NEXT record (a globe tap, a share link) through the wrong
+   door, and that is a bug you would hear as a record refusing to stop. */
+let seedSwapOff = 0;
+function armSeed(run) {
+  seedSwaps++;
+  if (seedSwapOff) clearTimeout(seedSwapOff);
+  seedSwapOff = setTimeout(() => { seedSwapOff = 0; seedSwaps = 0; }, 3000);
+  let ok = false;
+  try { ok = run() !== false; } finally { if (!ok) seedSwaps = Math.max(0, seedSwaps - 1); }
+  return ok;
 }
-/* ONE WRITE, ONE DOOR. The clamp is the atlas's (0..65536) and it is asked
-   rather than repeated; `startNow` is handed as the `done` callback, which is
-   the rule `pick` states — a caller that started the engine on its own line
-   would start it on the document it was about to replace.
+
+/* ---------- writeSeed(n): the typed number, through the one door -------
+   THE CLAMP IS THE ATLAS'S (0..65536) and it is asked rather than repeated;
+   `startIfDown` is the `done` callback, which is the rule `pick` states — a
+   caller that started the engine on its own line would start it on the
+   document it was about to replace.
 
    ---------- A SEED CHANGE PLAYS, 2026-09-03 ----------------------------
-   Paul: *"When I change the seed start playing."*
-
-   IT WAS `wasPlaying ? startNow : null`, and that read the transport to decide
-   whether a gesture had an effect. On a fresh box the transport is stopped, so
-   typing a number, dragging the fader or pressing `next` moved the digit, wrote
-   a whole new record — and made no sound. That is this box's characteristic
-   bug wearing a condition for a hat: DECLARED BUT NEVER ARRIVING, a control
-   that composes something nobody can hear. A seed is the one number on this
-   page whose only readout is the RECORD; a reader who says 4242 is asking to
-   hear 4242, not to be told about it.
-
-   IT IS THE LANDING AND NOT THE CALLERS, which is the whole point of writing
-   it here. Four spellings say a seed in the flyout — the typed number, the
-   fader, `roll` and `next` — and all four already ended in this one function,
-   so the autoplay is one argument in one place and there is no fifth path to
-   forget. The other two seed gestures in the box already play and did not need
-   a line: `rewriteNow` hands `reseed` the same `startNow` (the die, and
-   `album` at the end of a record), and a tap on a mark reaches `ctx.play`,
-   which IS `startNow` (ui/atlas.js `playNow`). One start path, three landings,
-   no caller deciding.
-
-   AND `startNow` IS #play's OWN DOOR, so this is not a second way into the
-   engine: `startAt(0)` plus `say(true)`, the same call the foot's button makes
-   — the tape wave's adoption, the gesture unlock and the pending-start queue
-   are all reached the way they already were. Playing, `startAt(0)` QUEUES on
-   the next box line rather than restarting under the ear, which is what the
-   die has always done and is why no `playing` test is wanted here either.
+   Paul: *"When I change the seed start playing."* It was `wasPlaying ?
+   startNow : null` before that, and that read the transport to decide whether
+   a gesture had an effect: on a stopped box, typing a number moved the digit,
+   wrote a whole new record, and made no sound — this box's characteristic bug
+   wearing a condition for a hat. The autoplay is one argument at ONE landing
+   and there is no caller deciding; what 2026-09-03's second sentence adds is
+   that the landing asks whether there is anything to start (`startIfDown`),
+   which is a different question from "did the caller think it was playing".
 
    THE AUTOPLAY RULE IS SATISFIED BY THE GESTURE, not by a policy flag: a
-   change on an input, a pointer on the fader and a press on a button are all
-   user activation, and activation is STICKY, so the AudioContext still resumes
-   when `done` runs a frame later (the record lands on the second frame — see
-   `pick`). Measured on a fresh page with a default-policy browser, first
-   interaction = a seed change: test/seed.js S6.
+   press, a pointer and an Enter key are all user activation, and activation
+   is STICKY, so the AudioContext still resumes when `done` runs a frame later
+   (the record lands on the second frame — see `pick`). Measured on a fresh
+   page with a default-policy browser, first interaction = a seed change:
+   test/seed.js S6.
 
-   AND NOTHING ELSE STARTS. This function is reached only from the four
-   flyout controls; the boot does not call it, `readLink` hands `ATLAS.open`
-   an undefined `done`, and a restored session never touches it — so a reload
-   is silent, which is the other half of what was asked (test/seed.js S6d). */
+   AND NOTHING ELSE STARTS. This function is reached only from the field; the
+   boot does not call it, `readLink` hands `ATLAS.open` an undefined `done`,
+   and a restored session never touches it — so a reload is silent, which is
+   the other half of what was asked (test/seed.js S6g). */
 function writeSeed(n) {
-  if (!ATLAS || !ATLAS.setReading) return;
-  ATLAS.setReading(n, startNow);
+  if (!ATLAS || !ATLAS.setReading) return false;
+  const ok = armSeed(() => ATLAS.setReading(n, startIfDown));
+  // the digit follows the gesture either way: the atlas moved the number even
+  // when it had no anchor to compose from, and the readout may not disagree
+  // with the fact (`setReading` says false and still counts).
   printReading();
-  syncSeedOut();
+  return ok;
 }
-function syncSeedOut() {
-  if (!seedOut || !ATLAS) return;
-  const n = String(ATLAS.reading());
-  seedNum.value = n;
-  seedRange.value = n;
-  seedRange.dispatchEvent(new Event("input", { bubbles: false }));
+
+/* ---------- the number becomes a field, and comes back ------------------
+   THE FIELD IS SHOWN, NOT BUILT, and the button is hidden rather than
+   removed: `#reading` is the page's one readout of the seed and eight gates
+   read it by id, so it stays in the DOM through the edit, saying the number
+   the record is still on until a new one is committed.
+   ENTER AND BLUR COMMIT, ESCAPE CANCELS, which is the shape every field on
+   this page has. `seedEditing` is what makes them one door and not three: the
+   Enter path hides the input, which fires `blur`, which would otherwise
+   commit the same number twice (two records, two landings, one gesture). */
+let seedEditing = false;
+function openSeedEdit() {
+  if (!seedInEl || seedEditing) return;
+  seedEditing = true;
+  seedInEl.value = String(ATLAS ? ATLAS.reading() : readingEl.textContent);
+  seedValBtn.hidden = true;
+  seedInEl.hidden = false;
+  seedInEl.focus();
+  seedInEl.select();
 }
-function showSeedOut(want) {
-  if (!seedOut) return;
-  const open = want == null ? seedOut.hidden : !!want;
-  seedOut.hidden = !open;
-  rewriteBtn.setAttribute("aria-expanded", open ? "true" : "false");
-  if (open) { syncSeedOut(); seedNum.focus(); }
+function closeSeedEdit(commitIt) {
+  if (!seedEditing) return;
+  seedEditing = false;
+  const raw = String(seedInEl.value || "").trim();
+  seedInEl.hidden = true;
+  seedValBtn.hidden = false;
+  // A NUMBER OR NOTHING. An empty field or a typo is a gesture abandoned, and
+  // abandoning is what Escape means — it may not roll a record on the way out.
+  if (!commitIt || !/^[0-9]+$/.test(raw)) return;
+  /* ...AND THE SAME NUMBER IS NOTHING TOO. `blur` commits, so opening the
+     field and touching anything else commits whatever was in it — which is
+     the reading it was opened with. `genreToDocument` is pure in (basis,
+     reading, rules), so writing it again composes the identical record and
+     the only thing a reader would see is a countdown to a change that isn't
+     one. The DIE is the control for "again": it never lands on the face it is
+     already on (ui/atlas.js `reseed`). */
+  if (ATLAS && +raw === +ATLAS.reading()) return;
+  writeSeed(+raw);
 }
-/* ESCAPE SHUTS IT, AND SO DOES A PRESS ANYWHERE ELSE — which is right for a
-   popover that is covering nothing and is opened from one mark: it is a menu,
-   not a sheet you work beside (the log is the other case and its own note
-   says why it does NOT close on the next press). */
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && seedOut && !seedOut.hidden) showSeedOut(false);
+seedValBtn.addEventListener("click", () => openSeedEdit());
+seedInEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); e.stopPropagation();
+                           closeSeedEdit(true); }
+  else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation();
+                                 closeSeedEdit(false); }
 });
-document.addEventListener("pointerdown", (e) => {
-  if (!seedOut || seedOut.hidden) return;
-  if (seedOut.contains(e.target) || rewriteBtn.contains(e.target)) return;
-  showSeedOut(false);
-}, true);
+seedInEl.addEventListener("blur", () => closeSeedEdit(true));
+
+/* ---------- the wait, drawn on the number ------------------------------
+   Paul: *"Instead of stopping the music compose the new song then show a
+   countdown until the new version plays."*
+
+   THE ARITHMETIC IS NOT HERE AND MUST NOT COME HERE — the same sentence the
+   log's countdown carries, for the same reason. audio/live.js owns where a
+   change lands (the serial rule: the walk runs a runway ahead of the ear, so
+   a change first sounds at `lastAsked + 1`), the `onBar` clamp that ends a
+   countdown the crossfade path brought in early, and the refusal to ever
+   count UP by one. This reads `beatsLeft` off that feed and draws it, on the
+   walk's own beat tick and on no clock of its own.
+   IT IS ARMED AT THE LANDING AND NOT AT THE GESTURE (`CTX.setDocument` sets
+   `seedWaiting` on the branch that evolves), so a seed change on a stopped
+   box — which starts the record rather than evolving it — draws no countdown
+   at all: there was nothing to wait through.
+   AND A STOP CLEARS IT. `stopPosFeed` empties the pendings without announcing
+   them, so a countdown that was waiting for a transport that has gone would
+   otherwise stand for ever. */
+/* IT COUNTS ITS OWN LANDING AND NOT THE SOONEST ONE, and that is a
+   measurement and not a preference. This read the least of every pending, the
+   way the log's countdown does, and on a page that had been driven for a
+   while the number bounced — 14, 13, 16, 15, 14, 10, 9 — because `pendings`
+   is keyed by LABEL and every one of this row's gestures announces a
+   different one (`logEdit` names the control, and the die's own accessible
+   name carries the reading, so "rewrite 4113" and "rewrite 777" are two
+   keys). A pending whose landing serial the walk steps over on the crossfade
+   path then sits in that map with nothing to clear it. So the seed announces
+   ONE MORE pending under a name of its own — the same door, `announceChange`,
+   the same arithmetic, one stable key — and reads back exactly that one. A
+   second gesture replaces it rather than stacking on it, which is what a
+   reader means by "how long until the version I just asked for". */
+const SEEDPEND = "the seed";
+let seedWaiting = false;
+function seedAnnounce() {
+  announceChange(SEEDPEND, null, { who: SEEDPEND });
+  paintSeedWait(false);
+}
+function paintSeedWait(landed) {
+  if (!seedWaitEl) return;
+  const left = pend.get(SEEDPEND);
+  if (!seedWaiting || left == null || !playing) {
+    seedWaitEl.replaceChildren();
+    if (landed || !playing) seedWaiting = false;
+    return;
+  }
+  seedWaitEl.replaceChildren(el("b", String(left)),
+                             el("small", left === 1 ? "beat" : "beats"));
+}
+on("transport:state", () => { if (!playing) paintSeedWait(true); });
 
 /* ---------- boot ---------- */
 window.__eightDoc = () => DOC;          // the raw document, for a console
@@ -15907,8 +16542,15 @@ window.__eightNudges = () => SONG.map((b) => ({ env: b.env, intro: b.intro,
 window.__eightEvents = (si) => {
   const b = SONG[si];
   if (!b) return [];
+  /* `d` RIDES ALONG SINCE 2026-09-03, and it is the one field that makes this
+     probe able to answer the question the drum editor's gate has to ask: WHICH
+     DRUM sounded. A hit's lane letter is what the kit grid writes and what
+     audio/to-engine.js LANE routes, so a lane added on the page and never seen
+     here is this repo's characteristic bug — declared and never arriving —
+     and without the letter no gate could tell. Undefined on every other kind,
+     so nothing that reads this probe today sees a changed object. */
   return sectionRender(b, SLOTS, GROOVE, SWING).ev
-    .map((e) => ({ t: e.t, vel: e.vel, kind: e.kind, lv: e.lv }));
+    .map((e) => ({ t: e.t, vel: e.vel, kind: e.kind, lv: e.lv, d: e.d }));
 };
 // WHAT THE PRODUCER DID, for the artifact gate (test/producer.browser.js) — the
 // same probe ui/band.js:2642 had. The notes, the tempo and the desk offsets it

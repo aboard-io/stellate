@@ -79,6 +79,25 @@
 //     the tracker", with the read-only list behind `data-say`.
 //   · the palette is one compact `+` menu at the block's foot.
 //
+// ---- ...AND THE ROW BECOMES TWO LINES, 2026-09-03 --------------------------
+// THE BLOCK ABOVE STANDS: the hole does not come back, the tier is still not
+// printed, the motifs are still one row. What is reversed is the ONE geometry
+// sentence in it — "One line, one sentence, one row".
+//
+// Paul, after using the deployed composer: *"Arrange things so the slider and
+// function descriptions are on a line with the slider after that line, not
+// bunched together."*
+//
+// Measured at 390 before the change: ten of the twenty-five rows wrapped
+// INSIDE the sentence, so the tempo row read `the tempo is [==slider==] 76`
+// and put `beats a minute` on a second line under the control. So the row is
+// a COLUMN of two: the sentence with its value printed in it (an `<output
+// class="nu-rv">` for a number, which the slider moves live; the menu's own
+// word only where the grammar needs it — see `sentenceInto`), and under it
+// the control alone at full width. Both lines are inside the row's one
+// `<label>`, so every claim the block above makes about the text diet and the
+// accessible name is untouched.
+//
 // ---- FOUR SHAPES OF ROW, AND THE SHAPE IS READ OFF `edit`, NEVER OFF A NAME -
 //   number / enum / flag / pair  ONE label, the sentence, one control standing
 //                                in each of the sentence's own slots.
@@ -100,8 +119,12 @@
 // ---- WHERE AN EDIT LANDS ---------------------------------------------------
 // `doc.rules = [{f, v}]` and then the tier the ROW declares — never a switch
 // here. `compose` re-runs `genreToDocument(basis, reading, rules)` and lands it
-// through `ctx.setDocument` (restarting the transport if it was running),
-// `render` writes the list and calls `ctx.changed()` (`document.js toGenre`
+// through `ctx.evolve` while the transport is running — the same record,
+// written again at the same seed, swapped in place and heard at the next bar
+// (2026-09-03; it was `ctx.setDocument`, which stops, and the sentence here
+// read "restarting the transport if it was running") — and through
+// `ctx.setDocument` on a box that is stopped, where there is no position to
+// keep. `render` writes the list and calls `ctx.changed()` (`document.js toGenre`
 // spreads the resolved row under the document on the next frame), `row` moves
 // nothing that plays. The tier rides every row as `data-tier` and is the first
 // half of its `data-say`, so what an edit will do to a record that is playing
@@ -235,15 +258,51 @@ export function mountRules(host, ctx) {
       /* THE RECORD IS WRITTEN AGAIN AT THIS SEED. `ctx.reading()` is
          ui/atlas.js's `reading()` — the one owner of the seed — so an edit
          lands on the record you are looking at rather than on reading 1.
-         The transport is restarted only if it was RUNNING: `setDocument`
-         stops it (it is the one door and it always has), and a panel that
-         started the music on a record that was silent would be a control with
-         a side effect nobody asked for. */
-      const was = ctx.transport().playing;
+
+         ---- AND IT EVOLVES RATHER THAN RESTARTING, 2026-09-03 -------------
+         WHAT STOOD HERE: *"The transport is restarted only if it was RUNNING:
+         `setDocument` stops it (it is the one door and it always has), and a
+         panel that started the music on a record that was silent would be a
+         control with a side effect nobody asked for."* The second half of
+         that is still the law and is still obeyed by the `else` below. The
+         first half was the bug.
+         Paul, after using the deployed composer: *"When I change things in
+         the 'Rules' section, evolve the song, don't just restart it."*
+
+         MEASURED BEFORE, on the rendered page, reggae at reading 3, playing,
+         one drag of the tempo rule: `transport:state` fired false and then
+         true 361 ms later, the position feed's serial went 1 -> 0, the
+         document was a new object, and the engine paid its whole eight-second
+         ring prefill again — a stop, an open and a start from the top of the
+         record, for a number.
+
+         WHAT MAKES THE EVOLVE HONEST IS THE SEED AND NOTHING CLEVERER.
+         `genreToDocument` is pure in (basis, reading, rules), so composing
+         again at the SAME reading with one more sentence returns the same
+         record with that sentence's own consequence in it — measured on this
+         page rather than assumed: the whole document diffs at `.time.bpm` and
+         `.rules` and nowhere else, so the slots, the section plan and the cast
+         are byte-identical. There is nothing to preserve by hand.
+
+         AND THE SWAP GOES THROUGH THE DOOR THAT ALREADY EXISTS. `ctx.evolve`
+         is `changed()` with the document replaced first — push() -> commit
+         ("box") -> audio/live.js's changed law -> the plan the walk reads on
+         the next bar it asks for (58dda6c: *"a change lands at the next
+         bar"*). This file schedules nothing and knows no bar numbers; a
+         second swap path is exactly the duplicate owner this panel's laws
+         exist to stop.
+
+         EVERY COMPOSE RULE EVOLVES — there is no row that still restarts, and
+         the reason is structural rather than lucky: `push()` re-derives the
+         boxes, the phrases, the desk and the tempo from the whole document
+         every time, and it is already the path a hand takes when it adds a
+         section (ui/eight.js:12849 `addSection(); push(); draw();`), changes
+         a chair's instrument, or drags the Time panel's own tempo. A rule can
+         say nothing those cannot. */
       const nd = NuPrecompose.genreToDocument(d.basis, ctx.reading(),
         next.length ? next : null);
-      ctx.setDocument(nd);
-      if (was) ctx.play();
+      if (ctx.transport().playing && ctx.evolve) ctx.evolve(nd);
+      else ctx.setDocument(nd);
       return;
     }
     if (next.length) d.rules = next.map((e) => ({ f: e.f, v: e.v }));
@@ -293,7 +352,14 @@ export function mountRules(host, ctx) {
      (ui/eight.js `range()` is the same eight lines and is module-private to a
      13,000-line file; ui/engineer.js builds its own for the same reason. What
      may NOT be duplicated is a fact — this duplicates a widget.) */
-  function rangeInto(lab, key, aria, value, edit, set, why) {
+  /* `readout` IS THE ONE ARGUMENT THE TWO-LINE ROW ADDED (2026-09-03). The
+     number a slider is on belongs in the SENTENCE, which is now the line
+     above — so a caller that has already put an `<output>` up there hands it
+     over and the slider goes down alone; a caller with no line of its own (a
+     map's per-key cell) passes nothing and gets the readout beside the
+     control, exactly as before. One widget, two placements, no second copy of
+     the two-event discipline. */
+  function rangeInto(lab, key, aria, value, edit, set, why, readout) {
     const r = document.createElement("input");
     r.type = "range";
     r.min = String(edit.min); r.max = String(edit.max);
@@ -301,12 +367,12 @@ export function mountRules(host, ctx) {
     r.value = String(value);
     r.dataset.k = key;
     r.setAttribute("aria-label", why ? aria + ", " + why : aria);
-    const out = el("output", String(value));
+    const out = readout || el("output", String(value));
     if (why) { r.disabled = true; r.setAttribute("aria-disabled", "true");
                r.dataset.why = why; }
     r.addEventListener("input", () => { out.textContent = r.value; });
     r.addEventListener("change", () => set(+r.value));
-    lab.append(r, txt(" "), out);
+    if (readout) lab.append(r); else lab.append(r, txt(" "), out);
     return r;
   }
 
@@ -490,7 +556,14 @@ export function mountRules(host, ctx) {
       lg.className = "nu-w";
       lg.textContent = sayFlat(r);
       fs.append(lg);
-      listFields(fs, r);
+      /* THE CHIPS GO ON THE LINE UNDER THE LEGEND (2026-09-03, Paul's
+         two-line row): the legend was floated left and the chips flowed
+         around it, which is the same bunching the sentence rows had. Same
+         `.nu-ctl` the sentence rows use, so the chip line and the control
+         line are one shape and not two. */
+      const ct = el("span", null, "nu-ctl");
+      listFields(ct, r);
+      fs.append(ct);
       div.append(fs);
       if (declared(r.field)) resetInto(div, r);
       parent.append(div);
@@ -511,29 +584,92 @@ export function mountRules(host, ctx) {
      rule whose sentence is ENTIRELY its value ("the record may be sung") has
      no words at all, and the control is the whole line — the rule's own `head`
      is put on it as the accessible name, which is what the `<label>` used to
-     print and no longer needs to. */
+     print and no longer needs to.
+
+     ---- AND THE WALK BUILDS TWO LINES, 2026-09-03 -------------------------
+     Paul, after using the deployed composer: *"Arrange things so the slider
+     and function descriptions are on a line with the slider after that line,
+     not bunched together."*
+
+     WHAT THIS REVERSES, AND WHAT IT KEEPS. The wave-4 §4 drawing put the
+     widget AT the slot, inside the sentence, to close the `…` hole the
+     elided form left. It closed it and it bunched: MEASURED on the rendered
+     panel at 390 before this change, the tempo row read `the tempo is
+     [======slider======] 76` and then wrapped `beats a minute` onto a second
+     line UNDER the slider, so the sentence was read in two pieces with a
+     control between them — 66px of row for a question you have to reassemble.
+     Ten of the twenty-five rows wrapped that way at 390.
+
+     THE HOLE STILL DOES NOT COME BACK, and that is the part of wave 4 §4 this
+     keeps: the sentence on line one is COMPLETE, with its value printed in it
+     as an `<output class="nu-rv">` — "the tempo is 76 beats a minute" — and
+     the slider under it moves that number live on `input`. You read one
+     sentence; you move one control; neither is inside the other. Both lines
+     are inside the row's own `<label>`, which is what keeps thirty-eight
+     sentences out of `test/text-diet.test.js`'s 1,169-character budget and
+     what makes a screen reader announce the whole sentence as the control's
+     name. */
   function sentenceInto(lab, r) {
+    const wl = el("span", null, "nu-wline");   // line 1: the sentence, values in
+    const ct = el("span", null, "nu-ctl");     // line 2: the controls, alone
+    const parts = r.parts.filter((p) => !p.aside);   // the aside rides data-say
+    /* WHERE THE SENTENCE'S LAST WORD IS, and it decides ONE thing: whether a
+       menu's answer is printed on line one as well as shown on the menu.
+       MEASURED on the first drawing of this round, at 390: `the mode is
+       **natural minor**` over a menu reading `natural minor`, and the same
+       doubling on rate, scale, harmony, plan, part and instr — six rows
+       saying their answer twice, which is the "text all over the place" this
+       panel spent wave 4 §4 removing. A menu SHOWS its own value; a slider
+       does not. So a slot whose sentence ENDS there hands the answer to the
+       control under it, and a slot with words after it keeps the answer where
+       the grammar needs it ("the drums are a **room** kit"). A number always
+       prints: its `<output>` is the only readout a range has. */
+    let lastWord = -1;
+    parts.forEach((p, j) => { if (!p.slot && p.w && String(p.w).trim()) lastWord = j; });
     let i = 0, built = false;
-    for (const p of r.parts) {
-      if (p.aside) continue;              // it rides `data-say` — see `asideOf`
-      if (!p.slot) { if (p.w) lab.append(el("span", p.w, "nu-w")); continue; }
+    for (let j = 0; j < parts.length; j++) {
+      const p = parts[j];
+      if (!p.slot) { if (p.w) wl.append(el("span", p.w, "nu-w")); continue; }
       const n = i++;
-      if (controlAt(lab, r, n, p)) built = true;
+      if (controlAt(wl, ct, r, n, p, j < lastWord)) built = true;
     }
-    if (!built && !i) lab.append(el("span", sayFlat(r), "nu-w"));
+    /* A LINE WITH NO WORDS ON IT IS NOT A LINE. Two rows reach this: the one
+       whose sentence is entirely its value, and the one whose `say` is all
+       slot ("the record may be sung"). The rule's own `head` names it — which
+       is exactly what the elided drawing used to print and what the control
+       still carries as its accessible name. */
+    if (!wl.textContent.trim()) wl.append(el("span", built ? r.head : sayFlat(r), "nu-w"));
+    lab.append(wl, ct);
   }
+  /* THE ANSWER, PRINTED IN THE SENTENCE. A menu's current word and a map's
+     summary are already the slot part's own `w` — the table said them — so
+     this places them and never re-derives them. */
+  const valInto = (wl, part) => {
+    if (part && part.w != null && String(part.w).trim())
+      wl.append(el("b", String(part.w), "nu-rv"));
+  };
 
   /* ONE SLOT, ONE WIDGET — and the widget's shape is read off `edit.kind`,
      never off the field's name. `map` and `list` put ALL of their controls at
      the first slot, because the sentence has one hole and the rule has one per
      chair or per role: "they hold [organ] [bass] [drums]" is one sentence with
      three answers in it, which is the true shape of a positional list. */
-  function controlAt(lab, r, i, part) {
+  /* TWO PARENTS SINCE 2026-09-03 (see `sentenceInto`): `wl` is the sentence's
+     own line and takes the ANSWER as words; `ct` is the line under it and
+     takes the control. A widget is built once and it is not built twice. */
+  function controlAt(wl, ct, r, i, part, tail) {
     const e = r.edit, why = r.why || null;
+    const lab = ct;
     if (e.kind === "number") {
       const v = typeof part.v === "number" && isFinite(part.v) ? part.v
         : (isFinite(Number(part.w)) ? Number(part.w) : e.min);
-      rangeInto(lab, K(r.field), sayFlat(r), v, e, (n) => land(r.field, n), why);
+      /* THE NUMBER IS THE SENTENCE'S WORD AND THE SLIDER'S READOUT AT ONCE —
+         one `<output>`, standing where the value stands in the sentence, and
+         handed to `rangeInto` so a live drag moves it there. */
+      const out = el("output", String(v), "nu-rv");
+      wl.append(out);
+      rangeInto(lab, K(r.field), sayFlat(r), v, e, (n) => land(r.field, n),
+        why, out);
       return true;
     }
     if (e.kind === "pair") {
@@ -546,17 +682,24 @@ export function mountRules(host, ctx) {
       if (k == null) return false;
       const cur = r.value || {};
       const v = typeof cur[k] === "number" ? cur[k] : e.min;
+      const out = el("output", String(v), "nu-rv");
+      wl.append(out);
       rangeInto(lab, K(r.field, k), r.head + " " + k, v, e,
-        (n) => land(r.field, { ...cur, [k]: n }), why);
+        (n) => land(r.field, { ...cur, [k]: n }), why, out);
       return true;
     }
-    if (e.kind === "map") { if (i === 0) mapFields(lab, r); return true; }
+    if (e.kind === "map") { if (i === 0) { if (tail) valInto(wl, part);
+                                           mapFields(lab, r); }
+                            return true; }
     /* only the POSITIONAL list arrives here; a chip set is a fieldset row and
        never walks the sentence (see `ruleRow`) */
-    if (e.kind === "list") { if (i === 0) listFields(lab, r); return true; }
+    if (e.kind === "list") { if (i === 0) { if (tail) valInto(wl, part);
+                                            listFields(lab, r); }
+                             return true; }
     const opts = e.kind === "flag" ? flagOpts(r) : enumOpts(r);
     const cur = e.kind === "flag" ? (r.value ? "1" : "")
       : (part.v != null ? part.v : "");
+    if (tail) valInto(wl, part);
     menu(lab, SEL(r.field), sayFlat(r), opts, cur,
       (v) => land(r.field, e.kind === "flag" ? v === "1"
         : (v === "" ? null : coerce(opts, v))), why);

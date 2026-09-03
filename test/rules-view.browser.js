@@ -45,13 +45,23 @@
  *       printed ones and requires ZERO.
  *   R9  ONE SENTENCE PER ROW, AND THE CONTROL IS IN IT. Every rule row is one
  *       `<label class="nu-said">`, no row is under the 44px tap floor, and a
- *       single-answer row (number / enum / flag) is at most the two tap rows
- *       every other question on this page gets. Measured before this round on
- *       the same record: heights of 33 · 46 · 76 · 103 · 228 · 322 · 478.
+ *       single-answer row (number / enum / flag) is at most a sentence line
+ *       plus a control line. Measured before wave 4 §4 on the same record:
+ *       heights of 33 · 46 · 76 · 103 · 228 · 322 · 478.
+ *   R9b …AND THE ROW IS TWO LINES (2026-09-03). Paul: *"Arrange things so the
+ *       slider and function descriptions are on a line with the slider after
+ *       that line, not bunched together."* The control line is BELOW the
+ *       sentence line on the glass (never beside it) and a single answer has
+ *       the whole width of it.
  *   R10 THE INSTRUMENT MENU IS NATIVE FIRST, on the rendered page. Paul, wave
  *       4 §10: *"When you define a genre you seem to only allow the sample
  *       instrument not the faust instrument like on high nrg… that's the
  *       opposite those should be chosen after native"*.
+ *   R11 A CHANGE EVOLVES THE RECORD, DRIVEN WHILE IT PLAYS (2026-09-03).
+ *       Paul: *"When I change things in the 'Rules' section, evolve the song,
+ *       don't just restart it."* The transport keeps running, the seed stays,
+ *       the walk's bar serial stays monotone, the engine keeps sounding, and
+ *       the document differs only where the rule reaches.
  *   R5  the palette adds a rule the row does not declare, the row appears with
  *       its control, and every greyed option in the palette carries a reason.
  *   R6  `GENRES` is byte-unchanged after all of it — `applyRules` copies, so
@@ -301,16 +311,52 @@ function standUpServer() {
      three-chair record is three controls and cannot be two tap rows at 390 by
      any drawing that does not hide one of them. The multi-answer rows are
      printed every run instead, which is what makes a regression visible. */
+  /* THE CEILING IS 96px AND NOT 88px SINCE 2026-09-03, and the number moved
+     because Paul moved the row. *"Arrange things so the slider and function
+     descriptions are on a line with the slider after that line, not bunched
+     together."* A row is a sentence line plus a control line now, by his
+     instruction, so "two tap rows" is no longer the arithmetic: MEASURED on
+     the rendered panel at 390 after the change, every single-answer row is
+     74px (an 18px sentence, a 44px control, the row's own padding) and the
+     one row whose sentence wraps to two lines — `stress`, "the band leans on
+     the beat 0.42 — a little" — is 93. 96 is that, and it still catches the
+     regression the 88 was written for: a row that grows a THIRD block. */
   const SIMPLE = ["number", "enum", "flag", "said"];
-  const tall = geom.filter((g) => SIMPLE.indexOf(g.shape) >= 0 && g.h > 88);
+  const tall = geom.filter((g) => SIMPLE.indexOf(g.shape) >= 0 && g.h > 96);
   check(!noLabel.length, "R9 every editable row is ONE sentence label " +
     JSON.stringify(noLabel.slice(0, 3)));
   check(!stacked.length, "…with nothing stacked beside it — no heading, no " +
     "tier line, no second paragraph " + JSON.stringify(stacked.slice(0, 3)));
   check(!under.length, "…and no row under the 44px tap floor " +
     JSON.stringify(under.slice(0, 3)));
-  check(!tall.length, "…and every single-answer row inside the two tap rows " +
-    "every other question gets " + JSON.stringify(tall.slice(0, 3)));
+  check(!tall.length, "…and every single-answer row inside a sentence line " +
+    "plus a control line " + JSON.stringify(tall.slice(0, 3)));
+  /* R9b · THE TWO LINES, READ OFF THE GLASS. Paul's own sentence, asserted as
+     geometry and not as markup: the words are ABOVE the control, they do not
+     share a line with it, and the control is the width of the row. */
+  const two = await p.evaluate(() => {
+    const out = [];
+    for (const d of document.querySelectorAll("#rulesdeck .nu-rule[data-shape]")) {
+      const wl = d.querySelector(".nu-wline"), ct = d.querySelector(".nu-ctl");
+      if (!wl || !ct) { out.push({ f: d.dataset.rule, missing: true }); continue; }
+      const a = wl.getBoundingClientRect(), b2 = ct.getBoundingClientRect();
+      const one = d.dataset.shape === "number" || d.dataset.shape === "enum" ||
+                  d.dataset.shape === "flag";
+      out.push({ f: d.dataset.rule, shape: d.dataset.shape,
+        below: Math.round(b2.top - a.bottom),
+        overlap: b2.top < a.bottom - 1,
+        fill: one ? Math.round(100 * b2.width /
+          d.querySelector("label.nu-said, fieldset.nu-said").getBoundingClientRect().width) : null });
+    }
+    return out;
+  });
+  check(two.length > 10 && two.every((t) => !t.missing && !t.overlap),
+    "R9b every editable row is TWO lines — the sentence, and the control on " +
+    "the line under it, never beside it " +
+    JSON.stringify(two.filter((t) => t.missing || t.overlap).slice(0, 3)));
+  const narrow = two.filter((t) => t.fill != null && t.fill < 95);
+  check(!narrow.length, "…and a single-answer control has the whole of that " +
+    "line " + JSON.stringify(narrow.slice(0, 3)));
   console.log("       multi-answer rows (one control per chair/role): " +
     JSON.stringify(geom.filter((g) => SIMPLE.indexOf(g.shape) < 0)
       .map((g) => g.f + " " + g.shape + " " + g.h + "px")));
@@ -470,6 +516,118 @@ function standUpServer() {
   check(added.still.indexOf("swing") < 0,
     "…and the palette stops offering what the record now says " +
     JSON.stringify(added.still));
+
+  /* ================= R11 · A CHANGE EVOLVES THE RECORD ====================
+     (2026-09-03.) Paul, after using the deployed composer: *"When I change
+     things in the 'Rules' section, evolve the song, don't just restart it."*
+
+     WHAT THIS MEASURED BEFORE THE FIX, on this very page and this very
+     record: a drag of the tempo rule while playing fired `transport:state`
+     false and then true 361 ms later, took the position feed's serial from 1
+     back to 0, replaced the document object and paid the engine's whole
+     eight-second ring prefill again. The record stopped and started from the
+     top, for a number.
+
+     THE FOUR CLAIMS, and they are asked of the RUNNING page rather than of a
+     field: the transport never stops (`transport:state` is silent), the seed
+     is the one in the address, the bar counter only ever goes up (the walk's
+     own serial off the `pos` feed, which is what "the position is kept"
+     means when the record's length itself may change), and the document
+     differs ONLY where the rule reaches — everything the rule does not
+     govern, which is the slots, the section plan and the cast, is
+     byte-identical because `genreToDocument` is composed again at the SAME
+     reading.
+
+     THE FEED IS THE PAGE'S OWN. `ui/state.js` is an ES module the page has
+     already loaded, so importing it by the same URL hands back the same
+     instance and the same bus the transport publishes on — no probe added to
+     the shipped source for a gate's convenience. */
+  const diff = (a2, b2) => {
+    const out = [];
+    const walk = (x, y, at2) => {
+      if (out.length > 80 || x === y) return;
+      const tx = Object.prototype.toString.call(x);
+      if (tx !== Object.prototype.toString.call(y)) {
+        out.push(at2 + ": " + JSON.stringify(x) + " -> " + JSON.stringify(y)); return; }
+      if (tx === "[object Object]") {
+        for (const k of new Set([...Object.keys(x), ...Object.keys(y)]))
+          walk(x[k], y[k], at2 + "." + k);
+        return; }
+      if (tx === "[object Array]") {
+        if (x.length !== y.length) out.push(at2 + ".length: " + x.length + " -> " + y.length);
+        for (let i = 0; i < Math.max(x.length, y.length); i++) walk(x[i], y[i], at2 + "[" + i + "]");
+        return; }
+      out.push(at2 + ": " + JSON.stringify(x) + " -> " + JSON.stringify(y));
+    };
+    walk(a2, b2, "");
+    return out;
+  };
+  await p.evaluate(async () => {
+    const S = await import("./ui/state.js");
+    window.__posLog = []; window.__stateLog = [];
+    S.on("pos", (d) => window.__posLog.push(d.serial));
+    S.on("transport:state", (d) => window.__stateLog.push(d.playing));
+  });
+  /* PRESSED AT ITS OWN RECT, never `page.click` — which scrolls its target
+     into view first and has faked bug reports on this box. It is also the
+     gesture that resumes the AudioContext under the default autoplay policy,
+     which is why this browser needs no flag. */
+  const playAt = await p.evaluate(() => {
+    const r = document.getElementById("play").getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+  await p.mouse.click(playAt.x, playAt.y);
+  let sounded = -1;
+  for (const t0 = Date.now(); Date.now() - t0 < 60000;) {
+    if ((await p.evaluate(() => window.__posLog.length)) >= 3) { sounded = Date.now() - t0; break; }
+    await p.waitForTimeout(400);
+  }
+  check(sounded >= 0, "R11 the record plays, and the walk is announcing bars " +
+    "— " + sounded + " ms to the third bar");
+  const live = () => p.evaluate(() => ({
+    playing: window.__nuBounce().playing, rms: window.__nuEngine().rms,
+    pos: window.__posLog.slice(), st: window.__stateLog.slice(),
+    seed: (document.getElementById("reading") || {}).textContent,
+    doc: JSON.parse(JSON.stringify(window.__eightDoc())) }));
+  const mono = (xs) => xs.every((v, i) => !i || v >= xs[i - 1]);
+
+  /* the RENDER tier first: it never wrote a record and must still not */
+  const L0 = await live();
+  await drag("rule|phrase", 0.7);
+  await p.waitForTimeout(4000);
+  const L1 = await live();
+  check(L1.playing && L1.st.length === L0.st.length,
+    "R11a a RENDER-tier change keeps the transport running and says nothing " +
+    "to it " + JSON.stringify({ playing: L1.playing, events: L1.st }));
+
+  /* ...and the COMPOSE tier, which is the one that used to stop */
+  const L2 = await live();
+  await drag("rule|bpm", 120);
+  await p.waitForTimeout(6000);
+  const L3 = await live();
+  const dEv = L3.st.length - L2.st.length;
+  const grew = L3.pos.length - L2.pos.length;
+  const dDoc = diff(L2.doc, L3.doc);
+  const OWNED = /^(\.time\.bpm|\.rules)/;
+  const strays = dDoc.filter((d2) => !OWNED.test(d2));
+  check(L3.playing && dEv === 0,
+    "R11b a COMPOSE-tier change EVOLVES the record: the transport never " +
+    "stopped — " + dEv + " transport:state events across the edit (it was " +
+    "two, false then true, before 2026-09-03)");
+  check(L3.seed === "3" && L2.seed === "3",
+    "R11c …at the same seed " + JSON.stringify([L2.seed, L3.seed]));
+  check(mono(L3.pos) && grew > 0,
+    "R11d …with the bar counter monotone and still counting — " + grew +
+    " new bars announced, serials " + JSON.stringify(L3.pos.slice(-6)) +
+    " (the restart took it back to 0)");
+  check(!strays.length && dDoc.length > 0,
+    "R11e …and the document differs ONLY where the rule reaches — " +
+    JSON.stringify(dDoc.slice(0, 6)) +
+    (strays.length ? " STRAYS " + JSON.stringify(strays.slice(0, 6)) : ""));
+  check(L3.rms > 0, "R11f …and the engine is still making sound through it — " +
+    "rms " + L3.rms.toFixed(5));
+  await press("rule-reset|bpm");
+  await p.mouse.click(playAt.x, playAt.y);          // put it down again
+  await p.waitForTimeout(1200);
 
   /* ================= R6 · GENRES IS UNTOUCHED ============================ */
   const cat1 = await catalogue();

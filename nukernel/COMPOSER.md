@@ -232,6 +232,17 @@ the grounded grammar; the summary:
   (restarting playback if it was playing); `"render"` rules go through
   `changed()`; `"row"` rules change nothing that plays. The view says which,
   on the row, before you press.
+  **AMENDED 2026-09-03, by Paul, after using it:** *"When I change things in
+  the 'Rules' section, evolve the song, don't just restart it."* So a
+  compose-tier rule lands through `CTX.evolve` while the transport is running
+  — the same record written again at the same seed, swapped in place, heard at
+  the next bar — and through `CTX.setDocument` only on a box that is stopped.
+  The parenthesis above ("restarting playback if it was playing") is what he
+  was reading, and it is withdrawn. Measured before: two `transport:state`
+  events, the bar serial back to 0, and the engine's eight-second prefill paid
+  again, for a tempo. No rule needs the restart: `push()` re-derives the boxes,
+  the phrases, the desk and the tempo from the whole document, which is already
+  what adding a section or changing a chair's instrument does while playing.
 - **The view** is built the way `ui/explain.js` builds its tables (`row`/
   `pair`/`tableOf`/`nameOf`/`progWord`/`lineage` are REUSED, not restated):
   a name plate at the top (the genre's name, place+year, the lineage line),

@@ -30,6 +30,13 @@
  * N6  a band member LIGHTS UP while it sounds and goes dark when the record
  *     stops — a class on the button, never a <mark>, and it is the playhead's
  *     red and not the meter's green
+ * N8  A LEVEL LOOKS LIKE ONE: three depths on the stripe wear three inks on
+ *     three grounds, monotonically quieter and deeper, each clearing 4.5:1 for
+ *     the word AND its second line; the indent is depth x a step of at least
+ *     0.7ch, and it is measured NOT to be what clipped any label
+ * N9  the MOTIF that is sounding lights up while the record plays and goes
+ *     dark on stop — a class plus `aria-current`, never a mark, and a join and
+ *     not a floodlight (a cell nobody reads in this section stays dark)
  * N7  the list is the ONE thing that shrinks: with Band expanded at 390x844 the
  *     stripe overflows, `.nu-traylist` clips it (scrollHeight > clientHeight),
  *     and once it is scrolled to its end the LAST row stands clear of the foot
@@ -252,7 +259,14 @@ const RECORD = "#at=Kingston&y=1969&s=1";
       for (const b of document.querySelectorAll("#nu-tray button")) {
         if (!b.getClientRects().length) continue;
         const r = b.getBoundingClientRect();
-        lefts.add(Math.round(r.left));
+        /* THE SEED ROW IS ONE MARK OF TWO TARGETS (2026-09-03, Paul: "get rid
+           of the word seed and put the number. I tap the die and there's a
+           new number. I tap the number and I can enter a new number by
+           hand"). The die and the number sit side by side in `.nu-seedrow`;
+           their shared row's left is the stripe's, so the row is what is
+           counted — test/shell.js A6b's own reading. */
+        const box = b.closest(".nu-seedrow") || b;
+        lefts.add(Math.round(box.getBoundingClientRect().left));
         minTap = Math.min(minTap, r.height);
       }
       return { w: w2, cols: lefts.size, minTap: +minTap.toFixed(1),
@@ -287,7 +301,10 @@ const RECORD = "#at=Kingston&y=1969&s=1";
          — that's the genre editor's work now."*). It is an ORDER and not an
          index arithmetic, so the retirement is one word deleted; the rest of
          the foot is asserted to be exactly where it was. */
-      const want = ["toptab-Where", "rewrite", "logger",
+      /* AND `rewrite` BECAME `nu-seedrow` 2026-09-03: the die and the number
+         share one foot child (the row), so the foot's order is read at the
+         row. The die is still the row's first button (test/seed.js S1). */
+      const want = ["toptab-Where", "nu-seedrow", "logger",
                     "playops", "play"];
       const at = want.map((k) => kids.indexOf(k));
       const ok = at.every((n, i) => n >= 0 && (i === 0 || n > at[i - 1])) &&
@@ -309,7 +326,7 @@ const RECORD = "#at=Kingston&y=1969&s=1";
     return { seen: seen.length, bad };
   });
   check(feet.bad.length === 0,
-    "N5 · the foot reads where · seed · log · opts · play and #play is its " +
+    "N5 · the foot reads where · die+number · log · opts · play and #play is its " +
     "last child, in all " + feet.seen + " states — " + JSON.stringify(feet.bad));
 
   /* ---- N6 A BAND MEMBER LIGHTS UP WHILE IT SOUNDS -------------------- */
@@ -434,6 +451,211 @@ const RECORD = "#at=Kingston&y=1969&s=1";
     "N7 · …and scrolled to its end the last row (" + shrink.lastK + ") stands " +
     shrink.clear + "px clear of the foot and takes its own tap: " +
     "elementFromPoint says " + JSON.stringify(shrink.hit));
+
+  /* ---- N8 A LEVEL IS INDENTED, AND IT HAS A COLOUR OF ITS OWN --------- */
+  /* Paul, 2026-09-03: *"Indent nav items according to hierarchy level, just
+     enough to be obviously visible, and change color by levels of hierarchy."*
+
+     WHAT THIS CAN CATCH THAT A STYLESHEET READING CANNOT. The rules are three
+     `color-mix()`es and a token, and every one of them resolves against a
+     ground that is decided by the CASCADE — the marked row is cobalt, the
+     stripe's own panel is white, and a `:not()` in the wrong place silently
+     out-ranks the playhead's lamp. So this reads the RENDERED colour off each
+     row, resolves the ground it is actually standing on by walking up until
+     something is opaque, and computes the contrast itself. Nothing here is
+     read off nu.css.
+
+     THE FOUR CLAIMS:
+       · three depths are on the stripe at once and each wears a DISTINCT ink
+         on a DISTINCT ground (a depth cue that is one colour is not a depth
+         cue — which is exactly what shipped before this round: `--dim` on one
+         wash for every child row at every depth);
+       · MONOTONIC — the deeper the row the quieter the ink and the deeper the
+         ground, so three levels read as a thing inside a thing;
+       · every level clears 4.5:1, THE WORD AND ITS SECOND LINE BOTH (the old
+         pair measured 4.42 and 4.06, which is how a contrast floor gets lost:
+         nobody measured the row, only the token);
+       · the indent is exactly `depth × step`, the step is at least 0.7ch of
+         the word's own font at the phone width, and IT IS NOT WHAT CLIPPED
+         ANYTHING — the set of ellipsised labels at the shipped step is the
+         same set as one pixel below it, measured in place at both widths. */
+  const REND = () => {
+    const cvs = document.createElement("canvas"); cvs.width = cvs.height = 1;
+    const c2 = cvs.getContext("2d", { willReadFrequently: true });
+    /* every colour through a canvas: a `color-mix()` computes to
+       `color(srgb …)` and a contrast formula needs bytes. */
+    const bytes = (v) => { c2.clearRect(0, 0, 1, 1); c2.fillStyle = "#000";
+      c2.fillStyle = v; c2.fillRect(0, 0, 1, 1);
+      const d = c2.getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2]]; };
+    const lum = (v) => { const f = (x) => { x /= 255;
+        return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); };
+      const [r, g, b] = bytes(v);
+      return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+    const ratio = (a, b) => { const x = lum(a), y = lum(b);
+      return +(((Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)).toFixed(2)); };
+    const ground = (el) => { let n = el;
+      while (n) { const bg = getComputedStyle(n).backgroundColor;
+        if (bg && !/rgba\(0, 0, 0, 0\)/.test(bg) && bg !== "transparent") return bg;
+        n = n.parentElement; }
+      return "rgb(255, 255, 255)"; };
+    const tray = document.getElementById("nu-tray");
+    const list = document.querySelector(".nu-traylist");
+    const rows = [...list.querySelectorAll("button")];
+    const clipped = () => rows.filter((b) => { const vh = b.querySelector(".nu-vh");
+      return vh && vh.scrollWidth > vh.clientWidth + 1; }).map((b) => b.dataset.k);
+    const step = parseFloat(getComputedStyle(tray).getPropertyValue("--nu-indent"));
+    const now = clipped();
+    tray.style.setProperty("--nu-indent", (step - 1) + "px");
+    void list.offsetHeight;
+    const under = clipped();
+    tray.style.removeProperty("--nu-indent");
+    const ch = (() => { const vh = list.querySelector(".nu-vh");
+      const s = document.createElement("span");
+      s.style.cssText = "position:absolute;visibility:hidden;white-space:pre";
+      s.style.font = getComputedStyle(vh).font; s.textContent = "0";
+      document.body.append(s);
+      const w = s.getBoundingClientRect().width; s.remove(); return +w.toFixed(2); })();
+    const byDepth = {};
+    for (const b of rows) {
+      /* the MARKED row is skipped: it is cobalt because it is where you are,
+         which is a different fact from what level it is on, and the mark's own
+         white-on-`--hand` is measured by nu.css's own note (7.10:1). */
+      if (b.getAttribute("aria-pressed") === "true") continue;
+      const d = b.dataset.depth ? +b.dataset.depth : 0;
+      if (byDepth[d]) continue;
+      const vh = b.querySelector(".nu-vh"), sub = b.querySelector(".nu-sub2");
+      const bg = ground(b);
+      byDepth[d] = { k: b.dataset.k,
+        ink: getComputedStyle(vh).color, bg,
+        ratio: ratio(getComputedStyle(vh).color, bg),
+        subRatio: sub ? ratio(getComputedStyle(sub).color, bg) : null,
+        subInk: sub ? getComputedStyle(sub).color : null,
+        inkL: +lum(getComputedStyle(vh).color).toFixed(4),
+        bgL: +lum(bg).toFixed(4),
+        pad: +parseFloat(getComputedStyle(vh).paddingInlineStart).toFixed(1) };
+    }
+    return { byDepth, step, ch, now, under,
+             lefts: [...new Set(rows.filter((b) => b.getClientRects().length)
+               .map((b) => Math.round(b.getBoundingClientRect().left)))].length };
+  };
+  const levels = {};
+  for (const w of [390, 1280]) {
+    await p.setViewportSize({ width: w, height: 900 });
+    await p.waitForTimeout(350);
+    await p.evaluate(() => window.__eightUp());
+    await p.waitForTimeout(150);
+    await p.click('[data-k="toptab-Motif"]');
+    await p.waitForTimeout(600);
+    const cell = await p.evaluate(() => (window.__eightTree().rows
+      .find((r) => /^motiftab-/.test(r.key)) || {}).key || null);
+    if (cell) { await p.click('[data-k="' + cell + '"]'); await p.waitForTimeout(500); }
+    levels[w] = await p.evaluate(REND);
+  }
+  for (const w of [390, 1280]) {
+    const L = levels[w], d = L.byDepth;
+    const three = d[0] && d[1] && d[2];
+    const inks = three ? new Set([d[0].ink, d[1].ink, d[2].ink]) : new Set();
+    const bgs = three ? new Set([d[0].bg, d[1].bg, d[2].bg]) : new Set();
+    check(three && inks.size === 3 && bgs.size === 3,
+      "N8 " + w + " · three depths, three inks, three grounds — " +
+      JSON.stringify(three ? { 0: [d[0].ink, d[0].bg], 1: [d[1].ink, d[1].bg],
+                               2: [d[2].ink, d[2].bg] } : d));
+    check(three && d[0].inkL < d[1].inkL && d[1].inkL < d[2].inkL &&
+          d[0].bgL > d[1].bgL && d[1].bgL > d[2].bgL,
+      "N8 " + w + " · …and it is MONOTONIC: the ink quietens and the ground " +
+      "deepens with every level — ink " + (three ? [d[0].inkL, d[1].inkL, d[2].inkL] : "?") +
+      ", ground " + (three ? [d[0].bgL, d[1].bgL, d[2].bgL] : "?"));
+    const ratios = three ? [d[0].ratio, d[1].ratio, d[2].ratio] : [];
+    const subs = three ? [d[0].subRatio, d[1].subRatio, d[2].subRatio]
+      .filter((x) => x != null) : [];
+    check(three && ratios.every((r) => r >= 4.5) && subs.every((r) => r >= 4.5),
+      "N8 " + w + " · …and every level clears 4.5:1, the word (" +
+      JSON.stringify(ratios) + ") and its second line (" + JSON.stringify(subs) +
+      ") on the ground each actually stands on");
+    check(three && L.step >= 6 && d[0].pad === 0 &&
+          Math.abs(d[1].pad - L.step) < 0.6 &&
+          Math.abs(d[2].pad - 2 * L.step) < 0.6 &&
+          (w > 400 || L.step >= 0.7 * L.ch) && L.lefts === 1,
+      "N8 " + w + " · …and the indent is depth × " + L.step + "px (" +
+      (L.step / L.ch).toFixed(2) + "ch) on the WORD, " +
+      JSON.stringify(three ? [d[0].pad, d[1].pad, d[2].pad] : []) +
+      ", with every button still on one left edge (" + L.lefts + ")");
+    check(L.now.length === L.under.length &&
+          L.now.every((k) => L.under.indexOf(k) >= 0),
+      "N8 " + w + " · …and the indent is not what clipped anything: " +
+      L.now.length + " ellipsised labels at " + L.step + "px and the same " +
+      L.under.length + " at " + (L.step - 1) + "px " +
+      JSON.stringify(L.now.filter((k) => L.under.indexOf(k) < 0)));
+  }
+
+  /* ---- N9 THE MOTIF THAT IS SOUNDING LIGHTS UP ----------------------- */
+  /* Paul, 2026-09-03: *"When motifs are open, light them up in the left nav
+     when playing."* — N6's lamp, one branch over, and it is a HARDER claim
+     than N6's: a player either sounds or does not, but a CELL is sounding only
+     in the sections that read it, so a lamp that lit the whole bank would look
+     exactly as alive and mean nothing. Hence the two halves below: something
+     lights, and NOT EVERYTHING does.
+     WHERE THE FACT COMES FROM (ui/eight.js `lightMotifs`): the sounding
+     section's own `cellAt(voice, si)` — the same call `motifLabels` hangs the
+     score's `.nu-mot` caps from — joined to `lightBand`'s sounding players. So
+     a lit row is a cell that somebody who is sounding is reading right now,
+     and a row nobody reads cannot light: every lit row's second line says
+     "read by …", which is asserted here because it is the cheap proof that the
+     lamp went through the record rather than through a timer. */
+  await p.setViewportSize({ width: 390, height: 844 });
+  await p.waitForTimeout(300);
+  await p.evaluate(() => window.__eightUp());
+  await p.waitForTimeout(150);
+  await p.click('[data-k="toptab-Motif"]');
+  await p.waitForTimeout(600);
+  const bank = await p.evaluate(() => window.__eightTree().rows
+    .filter((r) => /^motiftab-/.test(r.key))
+    .map((r) => ({ key: r.key, sub: r.sub })));
+  await p.evaluate(() => document.getElementById("play").click());
+  const motLit = await p.waitForFunction(
+    () => document.querySelectorAll('#nu-tray [data-k^="motiftab-"].is-sounding')
+      .length > 0, null, { timeout: 15000 }).then(() => true).catch(() => false);
+  const mot = await p.evaluate(() => {
+    const lit = [...document.querySelectorAll("#nu-tray .is-sounding")];
+    return { lit: lit.map((b) => b.dataset.k),
+             current: [...document.querySelectorAll('#nu-tray [aria-current="true"]')]
+               .map((b) => b.dataset.k),
+             marks: document.querySelectorAll("#nu-tray mark").length,
+             pressed: document.querySelectorAll('#nu-tray [aria-pressed="true"]').length,
+             bar: lit.length ? getComputedStyle(lit[0]).borderInlineStartColor : null,
+             clock: getComputedStyle(document.documentElement)
+               .getPropertyValue("--clock").trim(),
+             meter: getComputedStyle(document.documentElement)
+               .getPropertyValue("--meter").trim() };
+  });
+  const motRows = mot.lit.filter((k) => /^motiftab-/.test(k));
+  check(motLit && motRows.length > 0 &&
+        mot.lit.every((k) => /^motiftab-/.test(k)),
+    "N9 · a motif lights up within 15 s of #play: " + JSON.stringify(mot.lit) +
+    " of the bank's " + bank.length + " cells");
+  check(motRows.length < bank.length &&
+        motRows.every((k) => { const r = bank.find((x) => x.key === k);
+          return r && /read by/.test(r.sub || ""); }),
+    "N9 · …and it is a JOIN and not a floodlight: " + motRows.length + " of " +
+    bank.length + " cells lit, every one of them a cell somebody reads (" +
+    JSON.stringify(motRows.map((k) => (bank.find((x) => x.key === k) || {}).sub)) + ")");
+  check(mot.marks === 1 && mot.pressed === 1 &&
+        mot.current.length === mot.lit.length &&
+        mot.lit.every((k) => mot.current.indexOf(k) >= 0),
+    "N9 · …and lit is a CLASS plus `aria-current`, never a mark: still one " +
+    "<mark> and one aria-pressed in the stripe, and aria-current is on " +
+    "exactly the lit rows (" + JSON.stringify(mot.current) + ")");
+  check(!!mot.bar && (!rgb(mot.clock) || mot.bar.indexOf(rgb(mot.clock)) >= 0) &&
+        (!rgb(mot.meter) || mot.bar.indexOf(rgb(mot.meter)) < 0),
+    "N9 · …and the lamp is the playhead's red (--clock " + mot.clock +
+    ") and never the measured green: " + JSON.stringify(mot.bar));
+  await p.evaluate(() => document.getElementById("play").click());
+  const motDark = await p.waitForFunction(
+    () => document.querySelectorAll("#nu-tray .is-sounding").length === 0 &&
+          document.querySelectorAll('#nu-tray [aria-current="true"]').length === 0,
+    null, { timeout: 8000 }).then(() => true).catch(() => false);
+  check(motDark,
+    "N9 · …and on stop every motif goes dark and gives up its aria-current");
 
   check(!errs.length, "N· zero pageerrors / console errors " +
     JSON.stringify(errs.slice(0, 4)));

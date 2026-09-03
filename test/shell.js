@@ -48,8 +48,14 @@
 //       not neutral: it is the one Paul reported as "when I scroll right to
 //       edit motifs and tap something it snaps left even though I'm not done
 //       editing". So A5 asserts the thing the pane was ever FOR.)
-//   A5c no `.nu-pane` wraps a rotated step grid (`table.nu-grid`) — the exact
-//       unnecessary scroll container named above, kept out by name.
+//   A5c no `.nu-pane` wraps a rotated step grid (`table.nu-grid`) THAT FITS —
+//       the exact unnecessary scroll container named above, kept out by name.
+//       (WAS "no `.nu-pane` wraps a rotated step grid" full stop, until
+//       2026-09-03: the drum editor offers the whole twelve-lane kit now and a
+//       twelve-lane grid is 454px against a 224px deck at 320px. A grid that
+//       genuinely spills takes the same pane A5 demands of every other table;
+//       what stays banned is a scroller around a grid that cannot scroll,
+//       which is the one Paul reported catching his gestures.)
 //   A6  THERE IS NO STICKY BAND LEFT, AND THE NAVIGATION IS A FIXED GUTTER
 //       (rewritten 2026-08-29). This check has been rewritten three times and
 //       every rewrite was forced by Paul moving the navigation, so all of them
@@ -291,10 +297,24 @@ const SURVEY = () => {
         !host.classList.contains("nu-pane"))
       .map(({ t, host }) => name(t) + " " + t.scrollWidth + "px in " +
         host.clientWidth + "px (" + (t.rows[0] ? t.rows[0].cells.length : 0) + " cols)"),
-    // A5c — the rotated step grids take no pane. ui/eight.js `stepGrid`:
-    // "an `overflow-x: auto` box around a table that cannot overflow is a
-    // scroll container that exists only to catch gestures. It caught them."
+    /* A5c — a rotated step grid takes no pane IT DOES NOT NEED. ui/eight.js
+       `stepGrid`: "an `overflow-x: auto` box around a table that CANNOT
+       overflow is a scroll container that exists only to catch gestures. It
+       caught them."
+       THE CLAUSE THAT MOVED, 2026-09-03, and it is the four words the
+       original argument already turned on: *that cannot overflow*. This read
+       `.nu-pane table.nu-grid` — any pane at all — and the drum editor can now
+       be twelve lanes wide (Paul: *"give me some more appropriate options, we
+       seem to have only four elements in most of our kits"*), which is 454px
+       against the 224px deck a 320px phone leaves — MEASURED, and it is also
+       what jazz's seven-column kit was already doing before any of this.
+       A5 demands a pane of every other table that spills; forbidding one here
+       would have left the page scrolling sideways instead, which is the
+       defect, not the fix. So this flags the pane the argument was about: one
+       around a grid that FITS. */
     panedGrids: all(".nu-pane table.nu-grid")
+      .filter((t) => t.parentElement &&
+        t.scrollWidth <= t.parentElement.clientWidth + 1)
       .map((t) => name(t) + " (" + (t.rows[0] ? t.rows[0].cells.length : 0) + " cols)"),
     // A5b — a pane holding more than one table is a nested-scroll bug waiting
     crowdedPanes: all(".nu-pane")
@@ -391,10 +411,22 @@ const BANDS = async () => {
        and a "two column" stripe that no eye could ever see. The claim is
        unchanged and is about what a reader meets: every mark that is ON the
        page shares one left. */
+    /* ...AND ONE MARK MADE OF TWO TARGETS IS NOT A SECOND COLUMN
+       (2026-09-03). Paul: *"Instead of a popup for seed, just get rid of the
+       word seed and put the number. I tap the die and there's a new number. I
+       tap the number and I can enter a new number by hand."* The seed's word
+       stood in column 2 of the mark's own grid (`.nu-ic` is glyph + word) and
+       the number stands exactly where it stood — the difference is that it is
+       now pressable, which the DOM cannot express inside another button. What
+       A6b is FOR is Paul's "one vertical stripe max": a second COLUMN OF MARKS
+       is a second stripe. `.nu-seedrow`'s two targets are one mark and are
+       counted as one — the die's left, which is the stripe's — and the row is
+       asserted to stay inside the gutter by A6i like everything else. */
     rowCols: (() => { const lefts = new Set();
       for (const b of row.querySelectorAll("button")) {
         if (!b.getClientRects().length) continue;
-        lefts.add(Math.round(b.getBoundingClientRect().left));
+        const box = b.closest(".nu-seedrow") || b;
+        lefts.add(Math.round(box.getBoundingClientRect().left));
       }
       return lefts.size; })(),
     /* READ OFF `aria-label` AND NOT OFF THE TEXT, 2026-08-28. The ten tabs

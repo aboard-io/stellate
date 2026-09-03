@@ -444,9 +444,20 @@ const GATES = [
              "nukernel/export/masterrack.js", "nukernel/export/masterrack-extract.js",
              "nukernel/export/fxrack2.js", "nukernel/export/fxrack2-extract.js",
              "nukernel/export/live-devices.js"] },
+  /* ...AND A SECOND RECORD, BECAUSE ONE RECORD ONLY EXERCISES ONE BRANCH
+     (2026-09-03, the groove round). boombap is P0: one box, ONE lane, one
+     track — so gate C's "no two adjacent tracks share a colour unless the
+     families do" and gate R's machine branch ("this record is played dead on
+     the grid and the file is too") had nothing to run on in the registered
+     suite. techno --all is the other half of both: four tracks in four
+     families, and the one kind of record whose exactness IS its identity, so a
+     day when the exporter starts inventing a feel fails here in seconds rather
+     than in Live. The pair costs one more export. */
   { name: "ableton",    wave: 2, kind: "node", steps: [
       ["tools/ableton/export-als.js", "--genre", "boombap", "--out", "@TMP@/n.als"],
-      ["tools/ableton/als-gate.js", "@TMP@/n.als", "--genre", "boombap"]],
+      ["tools/ableton/als-gate.js", "@TMP@/n.als", "--genre", "boombap"],
+      ["tools/ableton/export-als.js", "--genre", "techno", "--all", "--out", "@TMP@/m.als"],
+      ["tools/ableton/als-gate.js", "@TMP@/m.als", "--genre", "techno", "--all"]],
     need: ["tools/ableton/export-als.js", "tools/ableton/als-gate.js"],
     /* `nukernel/export/als.js` JOINED THIS LIST ON 2026-09-03, and the reason
        is the bug of that morning: Live refused a v261 export with "Non-unique
@@ -819,6 +830,28 @@ const GATES = [
   { name: "commute", wave: 3, kind: "browser", solo: true, url: { env: "COMMUTE_URL" },
     argv: ["test/commute.test.js"], need: ["test/commute.test.js"],
     covers: ["test/commute.test.js"] },
+  /* DOES ONE HOLE COST THE WHOLE SESSION? (2026-09-03). Paul, on Safari
+     desktop: "after five minutes a little static creeps in. i think when you
+     restart a song you should basically flush everything and start again. it
+     happens on loop." The soak next door waits for a busy box to provide a
+     hole; this asks what the engine DOES with one it has already had, and it
+     does not need a busy box because the engine carries the stall as a hook
+     (`handle.__starve`). MEASURED before the fix, on a quiet box: one forced
+     hole left the ring deficit at 8.11 s FOR EVER, the honest runway pinned at
+     0.0-0.6 s instead of 8 (so the first hole guaranteed the next), the
+     producer's backlog stuck at 9 s, and the native lane's anchor at +549 ms —
+     every sampled note of a bar clumped at `now`. A restart cleared all four,
+     which is what Paul found by ear.
+     REGISTERED AS `--quick` — phase A, the deterministic ~2 minutes. The
+     3-minute loop-drift half (node census + the noise floor off an analyser on
+     the output at minute 1 vs minute 3) is `node test/loop-flush.browser.js
+     --mins 3` and is a soak, which this suite does not run (Paul, 2026-08-25:
+     "Don't do the soak"). It stands up its own COOP/COEP server. */
+  { name: "loop-flush", wave: 3, kind: "browser", solo: true,
+    argv: ["test/loop-flush.browser.js", "--quick"],
+    need: ["test/loop-flush.browser.js"],
+    covers: ["test/loop-flush.browser.js", "engine/faust/live/live.js",
+             "engine/faust/live/ring-player.js", "nukernel/audio/live.js"] },
 ];
 /* WHAT A BROWSER GATE REALLY COVERS. Every one of them drives this page, so a
    change to anything the page loads is inside all of their closures. That is

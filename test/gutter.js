@@ -587,22 +587,32 @@ function standUpServer() {
     const kids = [...foot.children].map((n) =>
       n.id || n.dataset.k || n.className || n.tagName.toLowerCase());
     const at = (k) => kids.indexOf(k);
-    const order = ["toptab-Where", "rewrite", "logger",
+    /* THE SEED IS A ROW OF TWO SINCE 2026-09-03, so the foot's third child is
+       `.nu-seedrow` and the die is inside it. Paul: *"Instead of a popup for
+       seed, just get rid of the word seed and put the number. I tap the die
+       and there's a new number. I tap the number and I can enter a new number
+       by hand."* — two gestures on one subject are two targets, and a button
+       inside a button is not a thing the DOM has. The ORDER is unchanged: the
+       row stands exactly where the die stood. */
+    const order = ["toptab-Where", "nu-seedrow", "logger",
                    "nu-trayopts", "playops", "play"].map(at);
     return { kids, order, gone: kids.indexOf("explain"),
-             die: at("rewrite"), log: at("logger"),
+             die: at("nu-seedrow"), log: at("logger"),
              inList: !!document.querySelector(".nu-traylist #rewrite"),
              tap: +document.getElementById("rewrite")
                     .getBoundingClientRect().height.toFixed(1),
-             reading: !!document.querySelector("#rewrite #reading") };
+             num: +document.getElementById("seedval")
+                    .getBoundingClientRect().height.toFixed(1),
+             reading: !!document.querySelector(".nu-seedrow #seedval #reading") };
   });
   check(t9.order.every((n, i) => n >= 0 && (i === 0 || n > t9.order[i - 1]))
         && !t9.inList && t9.gone < 0,
     "T9 · the foot reads where · seed · log · [opts] · opts · play, in " +
     "that order, with no ? anywhere in it, and the die is not in the list — " +
     JSON.stringify(t9.kids));
-  check(t9.tap >= 44 && t9.reading,
-    "T9 · …still a thumb (" + t9.tap + " px) and still carrying #reading");
+  check(t9.tap >= 44 && t9.num >= 44 && t9.reading,
+    "T9 · …still a thumb (die " + t9.tap + " px, number " + t9.num +
+    " px) and still carrying #reading, which is the number's own target now");
   /* AT EVERY LEVEL. The same walk T2 makes for #play — the nine tabs pressed,
      which is what puts the stripe on each of its sub-levels — plus the play
      level, which no tab reaches. */
@@ -642,21 +652,20 @@ function standUpServer() {
      digit on the button moves with it (Paul, 2026-08-27: "I clicked rewrite
      multiple times and never saw a different seed"), and the record starts,
      because #rewrite has gone through `startNow` since the day it landed. */
-  /* AND THE PRESS IS TWO PRESSES NOW (2026-09-02). Paul: *"When I click seed
-     pop up a vertical slider from zero to 2^16."* The die OPENS the flyout;
-     the roll is inside it, under the word "roll", and it calls `rewriteNow` —
-     the same function `album` calls, which is still the one reseed path this
-     box has. Everything this check asserts is unchanged: the seed moves, the
-     digit on the mark moves with it, the accessible name carries the number,
-     and the record starts (#rewrite has gone through `startNow` since the day
-     it landed). */
+  /* AND THE PRESS IS ONE PRESS AGAIN (2026-09-03). It was one until
+     2026-09-02, then two (the die opened a flyout and `roll` inside it
+     rolled); Paul, the next day: *"Instead of a popup for seed, just get rid
+     of the word seed and put the number. I tap the die and there's a new
+     number."* `rewriteNow` never moved — it is still the one reseed path this
+     box has and still the function `album` calls — so everything this check
+     asserts is what it always asserted: the seed moves, the digit moves with
+     it, the accessible name carries the number, and the record starts
+     (#rewrite has gone through `startNow` since the day it landed). */
   const t9c = await p.evaluate(async () => {
     const rd = () => document.getElementById("reading").textContent;
     const was = rd();
-    document.getElementById("rewrite").click();       // the flyout
-    await new Promise((r) => setTimeout(r, 200));
-    document.querySelector('[data-k="seed-roll"]').click();
-    await new Promise((r) => setTimeout(r, 700));
+    document.getElementById("rewrite").click();       // one press, one roll
+    await new Promise((r) => setTimeout(r, 900));
     const now = rd();
     const name = document.getElementById("rewrite").getAttribute("aria-label");
     return { was, now, name, playing: window.__nuBounce().playing };
@@ -667,7 +676,7 @@ function standUpServer() {
   // this one would have inherited.
   await quiet();
   check(t9c.now !== t9c.was && t9c.name === "rewrite " + t9c.now,
-    "T9 · …and it still reseeds through the flyout's roll: reading " +
+    "T9 · …and it still reseeds in one press: reading " +
     t9c.was + " -> " + t9c.now + ", and the name says it too (" +
     JSON.stringify(t9c.name) + ")");
 
@@ -712,19 +721,35 @@ function standUpServer() {
            not any more (2026-09-02): `GLYPH.act.opts` gave it the ⚙ nu.css had
            been carrying the debt for, so it is spelled like every other mark
            and is measured like one. The exemption is gone rather than kept. */
-        if (!v) { bad.push([k, "no label"]); continue; }
-        const r = v.getBoundingClientRect(), br = b.getBoundingClientRect();
-        const name = (b.getAttribute("aria-label") || "").trim();
-        if (!r.width || !r.height) bad.push([k, "label not drawn"]);
-        /* ...AND `#rewrite` IS THE ONE MARK WHOSE WORD IS NOT ITS NAME, BY
-           DESIGN AND WITH A REASON (2026-09-02). Paul asked for a seed slider
-           on this button; its SUBJECT is the seed and the word an eye reads
-           under the die is "seed", while its accessible NAME stays
-           `"rewrite " + n` — which is what a screen reader is told the press
-           will do, carries the number, and is what eleven gates and
-           test/motif-frozen.js call this control by (T9c below asserts exactly
-           that string). One node, two honest names. Every OTHER mark in the
+        /* ...AND THE SEED ROW IS THE ONE MARK WITH NO WORD AT ALL
+           (2026-09-03), which is a named exemption and not a hole. Paul:
+           *"Instead of a popup for seed, just get rid of the word seed and put
+           the number."* The word under the die WAS "seed" and it is the word
+           he named; what stands beside the picture now is `#seedval`, the
+           number, which is its own target. So these two are measured for
+           everything else this sweep measures — the 44px floor in both axes,
+           an accessible NAME, and nothing clipped — and are not asked for a
+           `.nu-vh` they deliberately do not have. Every OTHER mark in the
            gutter is still an extraction and is still checked as one. */
+        const br = b.getBoundingClientRect();
+        const name = (b.getAttribute("aria-label") || "").trim();
+        if (b.closest(".nu-seedrow")) {
+          if (!name) bad.push([k, "no accessible name"]);
+          if (br.height < 44 || br.width < 44)
+            small.push([k, +br.height.toFixed(1), +br.width.toFixed(1)]);
+          continue;
+        }
+        if (!v) { bad.push([k, "no label"]); continue; }
+        const r = v.getBoundingClientRect();
+        if (!r.width || !r.height) bad.push([k, "label not drawn"]);
+        /* `#rewrite` WAS THE ONE MARK WHOSE WORD WAS NOT ITS NAME (2026-09-02:
+           the word under the die said "seed" while its accessible name said
+           `"rewrite " + n`), and that exemption is RETIRED rather than kept:
+           the die has no word at all since 2026-09-03 and is answered by the
+           `.nu-seedrow` branch above, which asks it for the name and the tap
+           floor instead. The `b.id !== "rewrite"` clause stays here only
+           because a mark that grew a word back would want the old reason, and
+           the old reason is one line up. */
         // the name may carry a number or a refusal's reason; the WORD is its head
         else if (b.id !== "rewrite" && name !== v.textContent.trim() &&
                  name.indexOf(v.textContent.trim()) !== 0)
