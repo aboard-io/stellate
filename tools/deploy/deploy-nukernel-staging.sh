@@ -64,8 +64,12 @@ rsync -a \
   --exclude 'node_modules' \
   --exclude '*.wav' \
   --exclude '*.mp3' \
+  --exclude 'nukernel/genres/' \
   nukernel engine vendor sw.js "$DEST"
 
+#   5 · nukernel/genres/ (the 2.5 MB of JSON rows genres.js is built from,
+#       2026-09-03) is source, not shipped: the browser loads the generated
+#       genres.js. Excluded from both rsyncs.
 #   4 · THE ROOT IS THE FRONT DOOR (added 2026-09-02, after the first deploy of
 #       the composer round refreshed only /nukernel/ and Paul, opening
 #       test.stellate.app/, saw the previous evening's build: "I don't think you
@@ -80,6 +84,7 @@ rsync -a \
   --exclude 'node_modules' \
   --exclude '*.wav' \
   --exclude '*.mp3' \
+  --exclude 'genres/' \
   nukernel/ "$DEST"
 
 echo "done. https://test.stellate.app/nukernel/index.html"
