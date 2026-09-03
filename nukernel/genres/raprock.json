@@ -1,0 +1,189 @@
+{
+  "note": "RAP ROCK [blockparty] — New York 1986. Beastie Boys, \"Licensed to\nIll\" (Chung King and INS, New York; Def Jam, 15 November 1986).\nMEASURED over 11 files (Beastie Boys). NOTATION TEMPO IS A CONVENTION\nAND THIS SET PROVES IT: the raw median is 210 with a p25 of 135, and\ntools/mine/mine-midi.js's own header warns about exactly this — the\ntranscriptions are written double-time over a half-time feel. The row\ntakes 105, the halved p25, and says so rather than shipping a\n210-beat rock record. THE DRUM LANES ARE THE ARGUMENT, and they are\nthe sparsest in the entire round:\n  hat   9000900090009000   snare 0000900050009000\n  kick  7020200090301020   ride  5000900080009000\nA hat on the QUARTER NOTE, nothing between; a snare on 4 and 12 and\nnowhere else. Every other row here has an eighth-note hat at least.\nThat is the 808-and-a-rock-record production, and it is why this row\nholds a `tr808` kit under two distorted guitars. Mode 7 minor / 4\nmajor; cycles I-bVI7-VI-VI (33) and I-I-bVI-V (12).\n\nLINEAGE: `blockparty` (Bronx 1973) is the borough, the break and\nthe two turntables; `punk` (New York 1976) is what this band was\nbefore it was this; `heavymetal` (Workington 1969) is the riff the\nrecord samples whole; `electro` (New York 1982) is the 808 itself,\nfour years and one label earlier in the same city.",
+  "label": "New York 1986",
+  "near": "electro",
+  "plan": "song",
+  "bpm": 105,
+  "parents": {
+    "blockparty": 0.35,
+    "punk": 0.25,
+    "heavymetal": 0.2,
+    "electro": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "distortion_guitar",
+    "orchestra_hit"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "scale",
+    "n": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "stab"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "stab"
+  ],
+  "roots": [
+    0,
+    5,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1900,
+    "q": 1.6,
+    "atk": 0.004,
+    "rel": 0.4,
+    "gain": 0.3,
+    "verb": 0.22
+  },
+  "words": [
+    "the guitar, the riff, four bars and it comes back",
+    "the orchestra hit, on the turnaround"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[keep(0, 12)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[only(\"gate\", fill(2))]"
+    }
+  },
+  "fx": [
+    "crunch"
+  ]
+}

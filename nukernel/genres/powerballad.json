@@ -1,0 +1,251 @@
+{
+  "note": "POWER BALLAD [crooner]. A ballad that WAITS — the verse a crooner's\narrangement, brushes and strings; the chorus rock's full backbeat with\nthe crash reintroduced. `kits`, dnb's own device for a schedule that\nchanges bar to bar, does the arriving here instead of the breaking a\njungle record needs it for: quiet on the even bars, huge on the odd.\nMEASURED, 2026-09-02 (the MIDI-corpus round): 139 files — Mariah\nCarey, Whitney Houston, Celine Dion — three of the names on Paul's\nlist, and the row they all land on rather than three twins of each\nother. Tempo (n=139): p10 60 · p25 66 · MED 80 · p75 109. The row said\n76 and the corpus says 80.\nTHE CYCLE IS THE VINDICATION: the corpus's top four-bar window is\nIV-IV-I-I (55), then IV7-IV7-I-I (24) and IV7-I7-I-I (20) — a\nPLAGAL approach, the subdominant leaning home, over and over, which is\ngospel's cadence and not the crooner's dominant. This row's\n`roots`/`prog` already runs a four-chord cycle through the fourth and\nis left as it stands; the finding is recorded because it says the\nlineage weight on `gospel` is doing real work.\nAND THE MELISMA IS MEASURABLE: melodic mean pitch 77.3 with a step\nfraction of 0.53 and a mean interval of 3.30 — the tune sits high and\nmoves in small steps, which is what a run is when it is written down,\nand `mouth: MOUTHS.belter` below is the right throat for it.\nWHY NO `adultcontemporary` ROW: it would be this row with a different\nword on it. Measured, the three acts' 139 files are one distribution\nat one tempo with one cadence — the darkwave precedent, where an\numbrella whose article tree is already our rows does not get a key.\n\nLINEAGE: the sung, held, chord-tone-anchored lead over strings is\ncrooner's own arrangement grown an arena; the massed emotional\nuplift and the plagal warmth under the chorus are gospel's; rock\nsupplies the drums that finally arrive. Broadway's belted theatrical\nvocal, the actual training this style is sung with, is missing.\nPAID 2026-08-29, the debts round: \"broadway\" is `broadway`\n(New York 1927) — the key-change-and-belt machinery is that\nstage's, said at this row since the day it landed.\n\nWHO SINGS: the key change is coming and this is the voice that survives it",
+  "label": "Los Angeles 1991",
+  "bars": 8,
+  "near": "crooner",
+  "plan": "song",
+  "bpm": 80,
+  "parents": {
+    "gospel": 0.4,
+    "crooner": 0.35,
+    "rock": 0.25,
+    "broadway": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "slow_strings"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    5,
+    3,
+    4,
+    0,
+    5,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "anchor": 2,
+  "maxHold": 4,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "kits": [
+    {
+      "k": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "p": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "k": [
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "s": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "x": [
+        9,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        8,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1.4,
+    "gain": 0.26,
+    "verb": 0.5,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the voice, soaring over the changes",
+    "the strings and the band, quiet then huge"
+  ],
+  "word": {
+    "kind": "const",
+    "n": {
+      "$src": "[]"
+    }
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "note": "THE PRESTIGE-DRAMA UNDERSCORE — Los Angeles 1999, the suburban-\ninteriors school: mallets, felt piano and air under a picture about\nlawns and what they cost. The parents are the honest surprise —\nminimalism at 0.4 (the looped cell IS the cue), ambient's air,\nfurnituremusic's furniture-music refusal to insist (Paris 1888, the\ngreat-grandparent every mallet cue of this school quotes without\nknowing it), exotica's mallet timbre as studio confection. NO kick,\nNO snare: lane p alone, rim ticks — percussion toys, not a kit.\n\nthe score asks questions the dialogue avoids\n\nminimalism's looped cell",
+  "instrumental": true,
+  "label": "Los Angeles 1999",
+  "voices": 3,
+  "bars": 8,
+  "near": "minimalism",
+  "plan": "arc",
+  "bpm": 100,
+  "parents": {
+    "minimalism": 0.4,
+    "ambient": 0.2,
+    "furnituremusic": 0.15,
+    "exotica": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "marimba",
+    "felt_piano",
+    "warm_pad"
+  ],
+  "part": [
+    "riff",
+    "lead",
+    "pad"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      0,
+      2,
+      4
+    ]
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "drumkit": "brush",
+  "kit": {
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "pedal",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2800,
+    "q": 0.8,
+    "atk": 0.004,
+    "rel": 0.9,
+    "gain": 0.26,
+    "verb": 0.45
+  },
+  "words": [
+    "the marimba, the question asked politely",
+    "the felt piano, the answer withheld",
+    "the pad, the lawn at dusk"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[excerpt(0, 4), fill(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2), rotate(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(9)]"
+    }
+  }
+}

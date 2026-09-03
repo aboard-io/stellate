@@ -1,0 +1,206 @@
+{
+  "note": "IRANPOP — Tehran 1974. Pre-revolutionary Iranian pop: a Persian melody\nand a Persian poem over a Western orchestra with a rhythm section,\nstrings and a horn line. Googoosh, Dariush, Ebi.\nTHE YEAR is Googoosh's peak and the last full decade of the Tehran\nrecord industry.\nWHAT IT CLAIMS AND WHAT IT DOES NOT. The Persian classical dastgah\nsystem has KORON — a note lowered by roughly a quarter tone — and\nshur, the most common dastgah, has one on its second degree. That is\nthe bayati wall exactly, and this anchor does not claim it: it claims\nthe pop repertory, which sits in the 12-TET dastgahs (mahur is a major\nscale, bayat-e esfahan is close to a harmonic minor) and was arranged\nfor an orchestra tuned to a piano. `harmonic` is the named alphabet\nand the augmented second is the identifying interval it carries.\n\nLINEAGE: Mumbai 1960 is the arrangement and the debt is documented\n— Hindi films played in Tehran cinemas through the fifties and\nsixties — and Vienna 1876 is the string writing the Golha orchestra\nwas trained on. (`disco` is New York 1977, three years AFTER this\nlabel, so it is not named however much a 1974 Tehran rhythm section\nsounds like one; `crooner` carries that weight instead.)\n\"dastgah\" PAID 2026-08-30, the walls-down round: `dastgah`\n(Tehran 1925) — the classical line every Golha arranger was\ntrained inside, forty-nine years earlier on the labels.\n\"tasnif\" PAID 2026-08-30, the unlocking round: `tasnif` (Tehran\n1924) is at the foot of this file, and the Tasnif article draws\nthis exact line itself — \"in the post-World War II period... the\nmusic of the tasnif has been affected by western popular songs.\nThis more 'modern' type of tasnif is generally called tarane.\"\nThe tarane IS this row's repertory, so the edge is the article's\nown sentence and the weight is the fifth this row's residue had.",
+  "label": "Tehran 1974",
+  "voices": 3,
+  "near": "filmi",
+  "plan": "song",
+  "bpm": 100,
+  "parents": {
+    "filmi": 0.3,
+    "romantic": 0.2,
+    "crooner": 0.2,
+    "dastgah": 0.2,
+    "tasnif": 0.15
+  },
+  "wants": [
+    "golha radio orchestra"
+  ],
+  "cannot": [
+    "the koron — the quarter-flat second that defines dastgah-e shur, which is the same fifty cents that keeps tarab out"
+  ],
+  "instr": [
+    "solo_vox",
+    "strings",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "octaves",
+  "orn": {
+    "grace": 0.45,
+    "approach": 0.3
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 1,
+    "atk": 0.015,
+    "rel": 1.1,
+    "gain": 0.26,
+    "verb": 0.5,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the singer",
+    "the strings, underneath",
+    "the guitar, answering the phrase"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(8), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

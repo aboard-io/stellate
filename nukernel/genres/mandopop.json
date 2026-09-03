@@ -1,0 +1,203 @@
+{
+  "note": "MANDOPOP — Taipei 2003. The Jay Chou moment: R&B phrasing and a hip-hop\nkit under a Mandarin ballad, with a \"Chinese style\" pentatonic hook\nplayed on something that is meant to sound like a guzheng.\nAND THAT LAST CLAUSE IS THE ANCHOR'S OWN ADMISSION. There is no\nguzheng, no pipa and no erhu in the registry — China is the emptiest\ninstrument slot on the map after the maqam countries. `koto` is the\nSIXTH id this round unlocks by name and it is a JAPANESE zither: a\nlong half-tube board zither with movable bridges, plucked, which is the\nsame INSTRUMENT FAMILY as the guzheng and a different country's\ninstrument with a different tuning convention. It is cast here with the\nloss written down rather than left for a listener to notice, and it is\nthe only cast in this round that borrows an instrument across a border.\n\n[RE-DATED 2026-08-30, the registry lane. It read: \"the guzheng, the\npipa and the erhu — China has no id in the registry, and the `koto`\ncast below is a Japanese zither standing in for a Chinese one, which\nis a borrowed country and not only a borrowed instrument\". The erhu\nleaves that list — there is one now (engine/faust/dsp/erhu.dsp) and\njiangnan sizhu plays it — and the clause is NOT thereby answered,\nbecause this row's hook is a ZITHER and an erhu is not one. The\nguzheng and the pipa are exactly as absent as they were, and the\nborrowed-country half is untouched.]",
+  "label": "Taipei 2003",
+  "voices": 3,
+  "near": "darkrnb",
+  "plan": "song",
+  "bpm": 88,
+  "parents": {
+    "cantopop": 0.4,
+    "rnb": 0.35,
+    "boombap": 0.25
+  },
+  "wants": [],
+  "cannot": [
+    "the guzheng and the pipa — neither has an id, and the `koto` cast below is a Japanese zither standing in for a Chinese one, which is a borrowed country and not only a borrowed instrument (the erhu came OUT of this clause on 2026-08-30 because the registry grew one; it is not what this row's hook wants)"
+  ],
+  "instr": [
+    "solo_vox",
+    "koto",
+    "rhodes_ep"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      8,
+      0,
+      4,
+      5,
+      7,
+      0,
+      4,
+      5,
+      8,
+      0,
+      4,
+      5,
+      7,
+      0,
+      4,
+      6
+    ]
+  },
+  "fill": {
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 1,
+    "atk": 0.015,
+    "rel": 1,
+    "gain": 0.26,
+    "verb": 0.48,
+    "mouth": {
+      "$src": "MOUTHS.falsetto"
+    }
+  },
+  "words": [
+    "the singer",
+    "the zither hook",
+    "the electric piano, under the verse"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(12), drop(3)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "note": "SPACE ROCK [Pink Floyd]. An arc, not a song — one held drone under a\nslow, blues-schooled guitar line, argued through jazz's loose,\nunhurried sense of time rather than a fixed form. `fx:[\"echo\",\"sweep\"]`\nis the identity itself: a long automated filter opening across the\nsection is the \"tape-speed drift\" this style is built from, and the\necho send is the air around it. Berlin-school electronic minimalism,\nthe other half of this sound, is the missing rung.\n\npostrock's own shape, not drone's — a slow line that DOES go somewhere,\nthe same guitar-solo climb postrock already arcs into, so it stays off\ncompose.js STEADY (that list is for the genres that refuse to arrive\nanywhere at all); 70 sits ON the dial's floor, because a Floyd side\nbreathes slower than the floor wants to admit\n\n\"berlin school electronics\" PAID 2026-08-29 (Berlin 1972):\nIrrlicht predates this label by a year and the traffic was real\nand mutual — Hawkwind and the Berlin players shared bills and\ngear lists — so the edge runs the way the dates allow.",
+  "label": "London 1973",
+  "rate": 0.5,
+  "bars": 8,
+  "near": "drone",
+  "plan": "arc",
+  "bpm": 70,
+  "parents": {
+    "drone": 0.3,
+    "berlinschool": 0.25,
+    "blues": 0.25,
+    "jazz": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "warm_pad",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    0,
+    5,
+    5,
+    3,
+    3,
+    4,
+    4
+  ],
+  "artic": "legato",
+  "incClamp": 4,
+  "incMode": "reverse",
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1200,
+    "q": 1.4,
+    "atk": 0.1,
+    "rel": 2.5,
+    "gain": 0.2,
+    "verb": 0.75
+  },
+  "words": [
+    "the pad, holding the chord for bars at a time",
+    "the guitar, a slow line that surfaces and recedes"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "echo",
+    "sweep"
+  ]
+}

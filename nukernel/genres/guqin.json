@@ -1,0 +1,68 @@
+{
+  "note": "---- CHINESE: TWO ROWS, TWO REFUSALS -------------------------------\nWORLD.md's own verdict on China is the harshest in that document:\n*\"China is entirely empty, no guzheng, pipa, erhu, dizi, suona\"* —\nand for jingju it adds the banshi wall on top. So the two rows here\nare the two whose IDENTITY IS STRUCTURAL rather than timbral, and\njingju and guoyue are declared empty at the foot of this block with\nthe reason. Tuning is NOT the wall for China: sanfen sunyi is 10\ncents from equal temperament at its worst, inside the JND, and that\nis measured in WORLD.md §2 rather than assumed here.\n\nGUQIN — Beijing 1956. The Music Research Institute's nationwide qin\nsurvey, which found and recorded something under a hundred living\nplayers; Guan Pinghu's \"Liu Shui\" (Flowing Water) comes out of that\nwork and is the take NASA put on the Voyager Golden Record. A\nseven-string zither played alone in a room, with no audience\nassumed.\nTHE AXES: TIME is free — the piece is paced by breath and by the\nplayer's hand, and takes the chant compromise. ALPHABET is a\npentatonic and, unusually for this block, is not an approximation:\nthe qin's own tuning is measured at 10 cents from equal temperament\nat its worst. SOUND is a very quiet instrument in a dry room, which\nis `gain` and `verb` doing real work rather than decoration.\nAND THE PRIMARY-FACT RULE IS TIGHT HERE, so it is said rather than\nhidden: a qin's music lives in the LEFT HAND — the slides, the\nvibratos, the pull-offs into silence — and that is in `cannot`\nbelow. WORLD.md §4 says an anchor does not ship when its tradition's\nprimary fact is in its own `cannot`. This row is a judgement that\nthe qin's primary fact is the solo, unmetered, gestural line and\nthat the left hand is its ORNAMENT — the same judgement the table\nalready makes for `gregorian`, which ships with \"no metre at all\" in\nits comment. It is the closest call of the twelve and a reviewer\nwho disagrees should delete the row, not soften it.\n\nTHE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP\n(2026-09-02, the catalogue round). The QA report's `instrumentation`\ncolumn counts a chair as NATIVE when `audio/to-engine.js\npatchForInstr()` names a Faust module for its id, and this row seats\nZERO of them — one of twelve in the table. Twelve rows were read one\nby one and every one of them came back the same way: there is no\nmodel in the fleet of the instrument this music is played on, and\nthere should not be. `organic: true` is that answer said out loud, so\nthe report can stop scoring an honest recording as a failure and can\nstart telling the twelve apart from the machine genres that were\nseating a sampled upright by accident.\nTHIS ROW: Guan Pinghu's \"Liu Shui\" (Flowing Water), recorded Beijing\n1956 — the take carried on the Voyager Golden Record. There is no\nFaust model of a qin, and instruments.js's own erhu note already says\nGM has no qin, pipa, dizi or sheng either.\n\nthe qin alone; the row's one id is the koto stand-in\n\nLINEAGE: a declared ROOT. The qin repertory is its own line back\nto the Han and there is nothing in this table that is upstream of\nit — the nearest anchors by SOUND are European chant and a drone,\nand naming either as a parent would be the conscription WORLD.md\n§4 caught `worldfolk` in.",
+  "organic": true,
+  "instrumental": true,
+  "label": "Beijing 1956",
+  "voices": 2,
+  "rate": 0.5,
+  "near": "gregorian",
+  "plan": "arc",
+  "bpm": 70,
+  "parents": {},
+  "wants": [
+    "the shen qi mi pu repertory",
+    "literati song (qin ge)"
+  ],
+  "cannot": [
+    "huayin — the left hand's slides, the vibrato that arrives after the note and the pull into silence are what a qin piece IS made of, and `sld` is a binary flag on a step with no pitch trajectory behind it (WORLD.md §5.3)",
+    "jianzipu — the qin's own notation prescribes a STRING, a finger and a stopping position, not a pitch and a duration; a piece is a sequence of gestures and this box is a grid of notes and gates",
+    "free time — half speed and long holds again, and a qin player's pulse is slower and more elastic than a monk's",
+    "the instrument — there is no qin, no guzheng and no pipa in the registry. `koto` below is a long plucked zither with a wooden body, which is the mechanism; it has thirteen strings on movable bridges and is played with a plectrum, where a qin has seven strings, no bridges at all and bare fingers, and it is Japanese"
+  ],
+  "instr": "koto",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "tie",
+  "maxHold": 8,
+  "incClamp": 1,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 0.6,
+    "atk": 0.006,
+    "rel": 2.2,
+    "gain": 0.18,
+    "verb": 0.25
+  },
+  "words": [
+    "the stopped tones, one gesture at a time",
+    "the harmonics, answering an octave up"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n        ? [[drop(2)], [drop(2), rotate(3)], [drop(4)], [drop(2), reverse()]][s % 4]\n        : [drop(8), transpose(7)])"
+  }
+}

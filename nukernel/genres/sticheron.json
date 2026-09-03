@@ -1,0 +1,65 @@
+{
+  "note": "KASSIA — Constantinople 843. The Hymn of Kassiani, sung at\nmatins of Holy Wednesday in the Orthodox church to this day: a\nnamed composer — the earliest woman whose music survives under\nher own name — a named city, and the year the Triumph of\nOrthodoxy ended iconoclasm and she founded the monastery where\nher sticheron was sung. `bulgarian` (Sofia 1975) has wanted\n\"orthodox chant\" since its lineage was written — the diaphony's\nheld second is village practice OVER this chant — and takes it\nas a parent today.\n\nLINEAGE: a declared root, deliberately NOT `gregorian` — the\nByzantine and Roman chants are sibling liturgies, not parent\nand child, and an edge between them would invent a descent\nneither tradition claims.\n...THE ROOT GREW A ROOT 2026-08-30, the deep-time round: what\nByzantine hymnody descends from is GREEK-LANGUAGE CHRISTIAN\nHYMNODY, and the catalog now holds its one notated witness —\n`oxyrhynchus` (Oxyrhynchus 300), a Greek hymn to the Trinity in\nclassical vocal notation. That is this row's own language, its\nown church's east, and the strongest downstream edge the papyrus\nhas; the sibling-liturgies refusal above stands untouched.",
+  "label": "Constantinople 843",
+  "voices": 1,
+  "bars": 8,
+  "near": "gregorian",
+  "plan": "arc",
+  "bpm": 72,
+  "parents": {
+    "oxyrhynchus": 0.3
+  },
+  "wants": [
+    "romanos the melodist's kontakia"
+  ],
+  "cannot": [
+    "the ison — the drone under the line is later Byzantine practice, centuries after this row's date, and singing it here would stamp the wrong century's sound on a ninth-century hymn; the row is one unaccompanied line"
+  ],
+  "instr": "ahh_choir",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "orn": {
+    "grace": 0.15
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2100,
+    "q": 0.8,
+    "atk": 0.05,
+    "rel": 1.6,
+    "gain": 0.23,
+    "verb": 0.55,
+    "mouth": {
+      "$src": "MOUTHS.plainchant"
+    }
+  },
+  "words": [
+    "the sticheron, one line, melismatic at the cadence"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => [[], [fill(2)], [transpose(-1)], [fill(2), transpose(1)]][s % 4]"
+  }
+}

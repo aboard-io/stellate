@@ -1,0 +1,137 @@
+{
+  "note": "BARBERSHOP — New York 1910. The American Quartet's PLAY THAT\nBARBER SHOP CHORD (Victor, 1910): the named, dated record the\ndebts round said it could not find, found — the year the ringing\nchord got its own hit. The debts-round decline is therefore\nOVERTURNED on its own terms, not argued around. Four unaccompanied\nvoices, the lead inside the stack, every chord bent toward a\ndominant seventh; the historians' half of the story (Abbott 1992:\nthe practice is African-American recreational singing before it is\nanything else) is carried by the `spirituals` parent.\n\n\"jubilee quartets\" PAID 2026-08-30 (Nashville 1909) — one year\nthis row's senior, so the edge points backward as the maringa\nrule requires; Abbott 1992's half of the story (the practice is\nAfrican-American recreational singing first) now has an anchor\nto stand on instead of only the spirituals edge.\n\nWHO SINGS: the doowop stack's own blend, forty-five years\nearlier — the corner the corner learned from.",
+  "label": "New York 1910",
+  "voices": 4,
+  "bars": 8,
+  "near": "doowop",
+  "plan": "song",
+  "bpm": 88,
+  "parents": {
+    "parlor": 0.3,
+    "spirituals": 0.3,
+    "jubilee": 0.2
+  },
+  "wants": [
+    "the pitch pipe and the woodshed"
+  ],
+  "instr": [
+    "solo_vox",
+    "ahh_choir",
+    "ahh_choir",
+    "ahh_choir"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      1,
+      -1,
+      -2
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "cycle",
+  "roots": [
+    0,
+    0,
+    5,
+    1,
+    4,
+    4,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0
+    },
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 5,
+      "q": "dom7"
+    },
+    {
+      "d": 1,
+      "q": "dom7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 0
+    },
+    {
+      "d": 0
+    }
+  ],
+  "artic": "legato",
+  "maxHold": 4,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 0.8,
+    "atk": 0.03,
+    "rel": 1,
+    "gain": 0.26,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.doowopstack"
+    }
+  },
+  "words": [
+    "the lead, second voice from the top",
+    "the tenor, ringing over it",
+    "the baritone, finding the note nobody else wanted",
+    "the bass, walking the sevenths home"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(2), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(-3), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[spread(0), keep(0, 4, 8, 12), drop(2)]"
+    }
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "note": "GLAM — London 1971. T. Rex's \"Get It On\", Trident Studios, July\n1971: Chuck Berry's riff slowed to a strut, a string section\nover a handclap backbeat, and the whole point on the OUTSIDE of\nthe record — Bolan in glitter on Top of the Pops that December\nis the founding broadcast of a genre that was always half\ntelevision. `newwave` (London 1979) has wanted \"glam rock\" by\nname since its lineage was written — the art-school half of\npunk's cohort learned staging from exactly this — and\n`gothicrock` below takes it as a parent the same day it lands.\n\nLINEAGE: `rocknroll` is the riff, said almost without\nalteration; `musichallrock` (Muswell Hill 1966) is the English\ntheatricality the strut is wearing; `rock` (London 1969) is\nthe amplifier stack it stands on.\n\nIONIAN, AND THE BLUES SCALE STAYS (2026-09-02, the Chordonomicon\nround). These roots reach degrees 0, 3 and 4 and never degree 6, so\nmixolydian's flat seventh never sounds and its ONLY effect here was a\nminor v where \"Get It On\" (T. Rex, Fly BUG 10, cut at Trident and\nWally Heider's, July 1971) plays a Chuck Berry strut. Chordonomicon,\n3,410 glam-labelled songs, rotation-collapsed: `I IV I v IV` is rank\n140 (x18 of 10,580 classes) and `I IV I V IV` is rank 1 (x388).\nCorpus silent. `SCALES.blues` is untouched — the tune's flat third\nand flat fifth are this row's actual colour and they come from the\nSCALE, not from the mode.",
+  "label": "London 1971",
+  "voices": 3,
+  "bars": 8,
+  "near": "rock",
+  "plan": "song",
+  "bpm": 100,
+  "parents": {
+    "rocknroll": 0.4,
+    "musichallrock": 0.3,
+    "rock": 0.3
+  },
+  "wants": [
+    "the ziggy stardust stagecraft"
+  ],
+  "cannot": [
+    "the television — half of glam is COSTUME, and a record has no body in it, the lundu's own admission two centuries earlier"
+  ],
+  "instr": [
+    "crunch_guitar",
+    "strings",
+    "yamaha_grand_piano"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 1
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "pad",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    0,
+    0,
+    0,
+    4,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "harmony": "cycle",
+  "swing": 0.15,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ]
+  },
+  "fx": [
+    "crunch"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2500,
+    "q": 1.2,
+    "atk": 0.005,
+    "rel": 0.6,
+    "gain": 0.27,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.poplead"
+    }
+  },
+  "words": [
+    "the riff, strutting",
+    "the strings, camp over it",
+    "the piano, pumping eighths"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(4)], [fill(2)]][s % 3]\n                    : v === 1 ? [drop(8)]\n                    : [transpose(-3), keep(0, 2, 4, 6, 8, 10, 12, 14)])"
+  }
+}

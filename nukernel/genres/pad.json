@@ -1,0 +1,47 @@
+{
+  "note": "PAD. A wash, and the reason it is worth a genre of its own is the one\nthing the pad path already does for free: it voices THE SOUNDING CHORD,\nwhatever the host's progression is, one voicing a bar, voice-led. Stacked\nunder anything with a prog it is a string section reading the chart. On\nits own it is eight bars of one chord, which is honest — a pad alone is\nnot a piece of music, it is a pad.\n\nan arc, like every FUNCTION genre; 74 because a pad has nowhere to be\n\nNO `intro` ANCHOR, deliberately, and it is the one place in the table\nwhere leaving the field off is the decision rather than the default.\n\"The pad fades up\" is the `parts` family's own lean and every other\nfamily that owns a wash says it too — declaring it here as well means\nthe anchor coin (compose.js introSections, 0.55) is being asked to\nchoose between padin and padin. Measured: `pad` opened identically at\nall eight seeds, which is precisely the failure the intro vocabulary\nwas rewritten to end.",
+  "label": "Pad",
+  "rate": 0.5,
+  "bars": 8,
+  "voices": 1,
+  "plan": "arc",
+  "bpm": 74,
+  "instr": "warm_pad",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "pad"
+  },
+  "part": [
+    "pad"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "artic": "tie",
+  "tone": {
+    "wave": "triangle",
+    "cut": 1600,
+    "q": 0.7,
+    "atk": 0.4,
+    "rel": 2.6,
+    "gain": 0.22,
+    "verb": 0.78
+  },
+  "words": [
+    "the chord, held, one voicing a bar"
+  ],
+  "word": {
+    "kind": "const",
+    "n": {
+      "$src": "[]"
+    }
+  }
+}

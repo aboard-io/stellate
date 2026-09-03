@@ -1,0 +1,100 @@
+{
+  "note": "---- THE FOUR THAT DID NOT SHIP, AND WHY ---------------------------\nWORLD.md §4's stopping rule: *\"a cell is filled or declared empty\nwith a reason\"*, and §7's phase-6 acceptance: *\"no anchor ships\nwhose primary fact is in its own `cannot`\"*. These four were\ndrafted and withdrawn. They are written down so nobody re-derives\nthem and, more to the point, so nobody quietly writes the easy\nversion of them next month.\n\n[2026-08-30, THE WALLS-DOWN ROUND: three of the four ship at the\nfoot of this file — the walls their withdrawals cited (per-section\npace, cents, the non-2:1 period) fell in the engine that morning —\nand each paragraph below carries its own dated note saying which\nclause expired and which stands. GUOYUE alone stays empty, and its\nparagraph is re-argued rather than merely kept, because its wall\n(timbre) is the one the round did NOT take down.]\n\nJINGJU (Peking opera, Beijing 1930, Mei Lanfang). Its primary fact\nis BANSHI — the aria moves manban to yuanban to kuaiban to sanban,\nslow to metred to fast to free, and that SEQUENCE is the dramatic\nstructure rather than a tempo marking on top of one. Paul reversed\nthe no-time-in-a-section law on 2026-08-25 precisely to make it\nsayable; per-section `pace` is WORLD.md phase 2 and has not landed,\nand an anchor here cannot declare a metre or a pace at all. Second\nwall: the whole instrumentarium is absent — jinghu, yueqin, the\nguban, the daluo whose gong FALLS in pitch as it rings. Third: the\nrole registers (sheng, dan, jing, chou) are timbre as the genre,\nWORLD.md §5.5. A jingju row today is a violin and a snare drum in\n4/4, which is the caricature that document caught running.\n[SHIPPED 2026-08-30, the walls-down round, on the FIRST wall's\nexpiry alone: \"per-section `pace` is WORLD.md phase 2 and has not\nlanded\" stopped being true that morning, and `jingju` (Beijing\n1918, at the foot of this file) writes banshi as a `paces` row —\nthe primary fact moved out of the cannot, which is the whole test.\nThe second and third walls did NOT expire: the instrumentarium and\nthe role registers are the row's cannot, at full length, and the\nlabel moved from Mei's fame to the ZIM-dated performance (the\nHegemon-King premiere, 1918).]\n\nGUOYUE (the modern Chinese orchestra, Beijing 1953). Refused for\nthe opposite reason to sizhu's admission. Sizhu's identity is\nTEXTURE and FORM, which this kernel holds; guoyue's identity is\nTIMBRE and ORCHESTRATION — sections of erhu, pipa, ruan, dizi and\nsheng, conducted, harmonised. Strip the instruments and there is\nnothing left that a Western string orchestra is not already doing,\nand there are no Chinese instruments in the registry. WORLD.md's\nown sentence: *\"an erhu playing 12-TET in 4/4 at one tempo is a\nChinese-sounding timbre on a Western record\"* — and this box does\nnot even have the erhu.\n[RE-ARGUED AND KEPT EMPTY, 2026-08-30, the walls-down round — the\none cell of the four that the round could NOT fill, and the\ndecision is argued rather than inherited. The round took down\npitch, period, meter and pace; it grew NO instrument, and guoyue\nis the one row here whose refusal never rested on any of the four\nthat fell — reread the paragraph above: no tuning clause, no\nmetre clause, no pace clause. The firqa/erhu-less precedent\n(stand-ins named with what is wrong) was weighed and does not\nreach: firqa's massed strings ARE violins standing in for\nviolins, and jingju's one fiddle is one admitted cognate — but a\nguoyue of `strings`, `violin` and `cello` sections would be a\nWESTERN STRING ORCHESTRA not standing in for anything, playing\nrepertoire arranged to sound Chinese, which is the caricature\nWORLD.md caught running, produced deliberately. Three stand-ins\nin one cast is the taarab refusal; a whole cast of them with the\nidentity stripped is not even a costume — it is a different\nensemble wearing the name. EMPTY until the registry holds an\nerhu, a dizi, a pipa or a sheng, and the day it holds ONE of\nthem the honest first row is jiangnan sizhu's own upgrade, not\nthis orchestra.]\n[THE CONDITION WAS MET AND THE CELL WAS RE-DECIDED, 2026-08-30\n(the evening of the same day, the registry lane). The refusal\nabove named its own price and the price was PAID: the registry\nholds an erhu — engine/faust/dsp/erhu.dsp, a bowed waveguide on a\ncircular membrane whose six mode ratios test/erhu.test.js E1\nrecomputes from the Bessel zeros and holds to 1e-5. And the\nrefusal's own next sentence was honoured before this paragraph was\nreopened: \"the honest first row is jiangnan sizhu's own upgrade,\nnot this orchestra\" — sizhu took it, one seat, `fiddle` out and\n`erhu` in, measured on that row.\nSO THE CELL IS RE-ARGUED FROM A NEW CENSUS, AND IT STAYS EMPTY. The\nverdict kept its answer and changed its REASON, which is the only\nkind of re-decision worth writing down.\n  WHAT FELL. \"there are no Chinese instruments in the registry\" is\n  simply false now. And so is the sentence under it: \"a guoyue of\n  `strings`, `violin` and `cello` sections would be a WESTERN\n  STRING ORCHESTRA not standing in for anything\". A guoyue built\n  this evening would be cast `erhu`, `dulcimer`, `flute`,\n  `nylon_string_guitar` — one REAL instrument (the erhu), one\n  HONEST id (a yangqin IS a hammered dulcimer), one BORROWED\n  (a concert flute for a dizi, and no dimo) and one GUESS (a\n  nylon-string lute for a pipa). That is not a Western string\n  orchestra and the old sentence cannot be used against it.\n  WHAT STANDS, AND IT IS THE HALF THE OLD PARAGRAPH ONLY GESTURED\n  AT: \"guoyue's identity is TIMBRE and ORCHESTRATION — SECTIONS of\n  erhu, pipa, ruan, dizi and sheng\". The TIMBRE half moved one\n  fifth. The ORCHESTRATION half did not move at all, and this round\n  can finally say why with numbers instead of an adjective.\n  MEASURED, this evening, through the shipped tables:\n    · erhu.dsp exposes thirteen params — bowPos force freq gain gate\n      glide level pad release skin speed vibRate vibrato — and not\n      one of them is `detune`, `spread`, `unison` or `voices`.\n    · two chairs seated on `erhu` in one record build BYTE-IDENTICAL\n      unit params, at one seed and across seeds. So N erhu chairs in\n      unison are one erhu N times over, perfectly correlated: a\n      louder soloist, not a section.\n    · and the box is NOT generally mute about sections, which is what\n      makes this a real wall rather than a general complaint.\n      `strings`, `slow_strings`, `brass_section` and `violin` all\n      route `sampler:` — RECORDINGS of sections, fifteen players\n      already inside the take. `ahh_choir` routes\n      `patch:ahh_choir>voice_choir`, a section MODEL, and that module\n      carries exactly the three knobs a section needs and the erhu\n      has none of: `spread`, `drift`, `width`.\n  So the wall is not \"no Chinese instrument\" any more. The wall is\n  that this box has exactly TWO ways to say the word SECTION — a\n  recording of one, and a model built to be one — and for the erhu\n  nobody made the recording and nobody built the model. erhu.dsp\n  models ONE PLAYER, on purpose and correctly, because that is what\n  a sizhu club has and sizhu is the row it was built for.\n  AND THE PRIMARY-FACT RULE DECIDES IT, on this file's own §4 test\n  (\"if a tradition's PRIMARY fact is in its own `cannot`, it does\n  not ship under that name\"). Guoyue's primary fact IS the\n  orchestration: the whole 1953 project was the conversion of a\n  teahouse ensemble into conducted, harmonised sections. A row\n  shipped tonight would have to write \"the sections — every erhu,\n  pipa and dizi line here is one player\" into its own `cannot`, and\n  that is the primary fact, not an ornament. jingju shipped this\n  morning because banshi — ITS primary fact — moved OUT of its\n  cannot and only the role registers stayed in. Nothing moved out of\n  guoyue's.\n  AND A SECOND REASON, INDEPENDENT OF THE FIRST, which is the one\n  this round actually found: the guoyue that IS buildable tonight\n  has jiangnan sizhu's cast, id for id. Two anchors, one cast, with\n  the NAME carrying the whole difference — which is the \"different\n  ensemble wearing the name\" the morning's refusal caught, arriving\n  from the other side. Then the cast was Western and the name was\n  Chinese; now the cast is right and it is somebody else's.\n  THE NEW CONDITION, replacing the old one word for word so the next\n  re-argument is not another essay: guoyue is re-decidable the day\n  this box can say SECTION about an instrument it MODELS — an\n  `erhu_section` module (voice_choir is voice_lead plus `spread`,\n  `drift` and `width`, and the erhu's string is already built and\n  measured, so this is the cheapest thing on the whole Chinese\n  backlog), or any other mechanism that makes N players out of one.\n  NOT the dizi, not the pipa, not the sheng: those three would take\n  the cast from one-real-two-borrowed to four-real, which is worth\n  having and is NOT this cell's wall. The axis guoyue IS is the one\n  the erhu did not move.]\n\nKHYAL (Hindustani vocal, Mumbai 1965, Amir Khan). The dominant\nform of North Indian classical music and the biggest single hole\nleft after this block — `filmi` has wanted it by name since the\nlineage field existed and still does. Two strikes: its primary\nfact is the VILAMBIT unfolding, one matra every two seconds over a\nsixteen-beat tintal, and compose.js's floor is 70 bpm with no metre\ndeclarable; and the raga admission `dhrupad` and `carnatic` carry\nis at its worst here, because khyal's whole art is the badhat, the\ngradual raga exposition, which is material and phrase rather than\nalphabet. Dhrupad ships in its place because its alap takes the\nchant's own free-time compromise honestly. `filmi`'s want stays\nopen, on purpose, which is what a `wants` entry is for.\n[SHIPPED 2026-08-30, the walls-down round, on the FIRST strike's\nexpiry: `paces` landed and `khyal` (Mumbai 1965, at the foot of\nthis file) runs verse-at-half into solo-at-double — vilambit into\ndrut on one bpm. THE SECOND STRIKE STANDS, verbatim, as the first\nline of the row's cannot: the badhat is material and phrase, not\nalphabet, and shipping did not shrink that admission by a word.\n`filmi`'s want STILL stays open — 1965 is five years the film\nlabel's junior and the maringa rule forbids the backwards edge.]\n\nGAMELAN. Not attempted, and WORLD.md §5.4 is the reason: slendro\nand pelog are non-2:1 period systems, `degPitch` hardcodes\n`12*Math.floor(d/len)` and `foldInto` steps by 12, so cents would\nbuy unequal steps inside an octave and nothing else. That document\nsays to *\"say gamelan is out of reach, out loud, rather than claim\nit\"*, and this paragraph is that sentence.\n[SHIPPED 2026-08-30, the walls-down round: the pitch lane deleted\nboth hardcodes that morning — degPitch reads `(a.period || 12)`\nand the register folds move by the scale's own octave — so\n`gamelan` (Surakarta 1956, at the foot of this file) plays slendro\non a 12.08-semitone period, the Gadjah Mada measurements spelled\nas a row. The refusal's OTHER sentence — \"no two ensembles are\ntuned alike, so there is no target to be correct about\" — did not\nexpire and lives on inside the row's cannot: an average is\nnobody's gamelan, and the row says whose average it plays.]\n\n---- THE GENEALOGY ROUND (2026-08-29) --------------------------------\nPaul: \"how can we add lots more related genres quickly across time\n(then do it)\". RELATED and ACROSS TIME, so the round grew the\ncatalog by paying ITS OWN DEBTS rather than inventing a wishlist:\nthe `wants` census (278 distinct strings, 23 wanted by two or more\nrows) and the decade histogram (nothing between Rome 600 and Paris\n1200; nothing at all in the 1400s, the 1600s, the 1770s-1790s, the\n1810s, the 1850s-60s, the 1910s) were measured first, and every row\nbelow either pays a want at least two anchors had on the books or\nbridges a decade the chronological list jumped over — most do both.\nThirty-two rows, Nara 752 to London 2005. Every one argues from a\nNAMED record, performance or publication with its place and year;\nevery `parents` edge was checked against the label years in both\ndirections; and the ones that could NOT be argued are declared at\nthe foot of the block with their reasons, per WORLD.md §4.\n\nTHE BACKWARDS-WANTS RULE, applied twice on the way in: a `wants`\nentry names a missing ANCESTOR, and two rows were found asking for\ntheir own descendants — `hymn` (Boston 1831) wanting \"spirituals\"\n(first documentable 1867) and `continuo` (Florence 1602) wanting\n\"opera seria\" (Naples/London, 1720s). Both rewritten in place at\nthe row, dated, quoting what they said, per the parlor/ragtime\nprecedent of 2026-08-29.\n\nGAGAKU — Nara 752. The eye-opening of the Great Buddha at Tōdai-ji,\nthe ninth of April 752: the Shoku Nihongi records the ceremony and\nthe court musicians who played it, and the Shōsōin repository still\nHOLDS instruments from that orchestra — it is the only row in this\ntable whose instruments physically survive from the label year.\n`drone` (New York 1964) has wanted this row by name since its\nlineage was written: La Monte Young said out loud that the shō's\nheld cluster was one of the sounds he was after.\nTHE AXES: SOUND is the identity — the shō's five-note cluster held\nthrough everything is the earliest organized VERTICAL sonority in\nthe catalog, five centuries before organum stacks its fifth. TIME\nis the compromise, taken the way `taqsim` and `gregorian` take it:\ngagaku's pulse is enormous and breathing, said here as half rate\nand long holds rather than pretended to be a metre.\n\nTHE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP\n(2026-09-02, the catalogue round). The QA report's `instrumentation`\ncolumn counts a chair as NATIVE when `audio/to-engine.js\npatchForInstr()` names a Faust module for its id, and this row seats\nZERO of them — one of twelve in the table. Twelve rows were read one\nby one and every one of them came back the same way: there is no\nmodel in the fleet of the instrument this music is played on, and\nthere should not be. `organic: true` is that answer said out loud, so\nthe report can stop scoring an honest recording as a failure and can\nstart telling the twelve apart from the machine genres that were\nseating a sampled upright by accident.\nTHIS ROW: the Tōdai-ji eye-opening ceremony, Nara, 752 — the occasion\nthis row is dated at. A shō is a free-reed mouth organ and a ryūteki\na transverse flute; the fleet models neither.\n\nthe Nara court ensemble is winds and strings; no singer to book\n\nLINEAGE: a declared root. Its true parents — Tang banquet music\n(tōgaku), the Korean court line (komagaku) — are named below,\nnot invented: neither can be dated to a surviving record.\n\nthe hichiriki is a double reed (shenai is the registry's one\ndouble reed); the shō IS a free-reed mouth organ — reed_organ is\nnot a stand-in, it is the same family, which entered Europe FROM\nthe East Asian sheng/shō line; the gakusō is a koto by name.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nThe strongest case in the whole sweep: the RITSU scale of the togaku\nrepertory — D E F G A B C — is the dorian octave note for note, minor third\nand natural sixth. The row's year is the Todai-ji Great Buddha eye-opening\nceremony (Nara, 752), the dated performance the anchor is written from. The\nrow named ritsu and then sang a flat sixth ritsu does not have.",
+  "organic": true,
+  "instrumental": true,
+  "label": "Nara 752",
+  "voices": 3,
+  "rate": 0.5,
+  "near": "drone",
+  "plan": "arc",
+  "bpm": 72,
+  "parents": {},
+  "wants": [
+    "tang court banquet music (togaku)",
+    "komagaku",
+    "the shomyo chant of the temples"
+  ],
+  "cannot": [
+    "the netori — a gagaku piece opens in FREE TIME, each instrument entering out of tempo until the beat condenses, and this grid has no way to say 'no pulse yet'; the arc plan's quiet opening is a proxy and is described as one",
+    "the hichiriki's embai — the pitch BENDS between scale degrees are the instrument's whole rhetoric, and deg is an integer into a 12-TET alphabet",
+    "the kakko and taiko punctuation — the drum strokes mark phrase geography, not a beat, and a kit lane that fires per-bar would turn punctuation into a groove; the empty kit is the honest reading"
+  ],
+  "instr": [
+    "shenai",
+    "reed_organ",
+    "koto"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      },
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 3
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "padin",
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "artic": "tie",
+  "maxHold": 6,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.9,
+    "atk": 0.06,
+    "rel": 2.2,
+    "gain": 0.22,
+    "verb": 0.55
+  },
+  "words": [
+    "the hichiriki, carrying the melody",
+    "the sho, the cluster held over everything",
+    "the koto, marking the phrase"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n          ? [[], [fill(2)], [transpose(1), fill(2)]][s % 3]\n        : v === 1 ? [drop(12)]\n        : [keep(0, 8), transpose(-2)])"
+  }
+}

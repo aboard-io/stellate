@@ -1,0 +1,212 @@
+{
+  "note": "MARABI — Johannesburg 1935. The shebeen keyboard music of the\nslumyards: a pedal organ over one four-bar chord cycle that never ends,\na tin of pebbles keeping time, and a pennywhistle on top.\nTHE YEAR NEEDS CARE AND THE COMMENT IS WHERE IT GOES. The music is\n1920s and it was ALMOST NEVER RECORDED — it was played in yards nobody\nbrought a machine to. It reaches a disc through the mid-1930s African\ndance bands (the Jazz Maniacs, the Merry Blackbirds), and 1935 is that\nmoment. The music is 1920s; the recording is 1935; the label names the\nrecording, and a reader is entitled to know which.\nTHE HIGHEST STRUCTURAL VALUE ON THIS PAGE, because marabi IS a harmonic\nobject rather than a percussion one, and this box computes harmony far\nbetter than it computes hands. The identity is the endlessly repeating\nI–IV–I⁶₄–V, and that six-four is the FIRST use of `inv` anywhere in the\ncatalog: 124 anchors, not one inversion between them until this line.\n`inv: 2` puts the fifth in the bass (kernel.js:2574 — \"an inversion puts\nthe third under the band\"), which is exactly what makes a marabi cycle\nlean forward into its V instead of sitting down on its I.\n\na floor: the cycle is the form, and it does not go anywhere\n\nLINEAGE: a root under protest, and the protest is the whole history —\nmarabi is Sotho and Zulu vocal cycles, American 78s heard through a\nshebeen door, and kwela's own street ancestry, none of which is here.\n\"kwela\" came off `wants` 2026-08-29 unpaid and backwards, the way\n`parlor`'s \"ragtime\" did: `kwela` is Johannesburg 1955, twenty years\nafter this row and in the same city, and it is marabi's CHILD. A\nroot that wants its own descendant is a shopping list nobody read.\nAN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue\nround, shift 2).\nThe want \"american 78s\" is `ragtime` (Sedalia 1899), and a second ancestor\nwas sitting unasked-for in the row's own harmony.\n`hymn` (Boston 1831): marabi's identifying cycle is I-IV-I6/4-V, which is the\nmission hymnal's cadence note for note, and every account of the music names\nmission church harmony among its sources. THE TABLE ALREADY MAKES THIS EXACT\nEDGE IN THIS EXACT CITY: `mbube` (Johannesburg 1939) declares `hymn: 1`.\n`ragtime` (Sedalia 1899): Scott Joplin's Sedalia publications and the ragtime\nand stride 78s that reached the Johannesburg shebeens — the \"american 78s\"\nthe row was already asking for, by name. `swing` (Kansas City 1938) is LATER\nthan this row and so cannot be the American ancestor here, which is also why\n`kwela` and `tsabatsaba` take marabi AND swing one generation down.\nThe Sotho-Zulu vocal cycle stays wanted: it is not the `vocal` function row,\nand no anchor holds it.\n\nTHE CAST IS UNUSUALLY EXACT. The marabi instrument was the PEDAL\nORGAN and `reed_organ` is one (six zones, every file on disk —\nconfirmed at genres.js:5713 when punjabipop's harmonium wanted it).\nThe upright is an upright. The one STAND-IN is `recorder` for the\npennywhistle: right family — both are fipple flutes, which is why not\n`whistle`, GM's recording of a person whistling — and what is lost is\nthe pennywhistle's shrill overblown top and its bent notes, which is\nmost of what a kwela player does with it.\n\nTHE BASS IS AN ARGUMENT ABOUT WHICH YEAR THIS IS. In a 1920s yard the\nbass is the organist's left hand and there is no bass player; on the\n1935 disc it is a dance band and there is one. The label names the\nrecording, so the record gets its upright.\n\nTHE DRUMS ARE NOT THE IDENTITY, and the kit says so: the thinnest\nhand in this batch, brushes, and the tin of pebbles on the hat lane\n(the same compromise as the maracas above, one country south).",
+  "label": "Johannesburg 1935",
+  "voices": 3,
+  "near": "gospel",
+  "plan": "dance",
+  "bpm": 104,
+  "parents": {
+    "hymn": 0.3,
+    "ragtime": 0.3
+  },
+  "wants": [
+    "sotho-zulu vocal cycle"
+  ],
+  "instr": [
+    "reed_organ",
+    "upright_piano",
+    "recorder"
+  ],
+  "drumkit": "brush",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      }
+    ],
+    "else": {
+      "$src": "v - 1"
+    }
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "pad",
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    3,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0
+    },
+    {
+      "d": 3
+    },
+    {
+      "d": 0,
+      "inv": 2
+    },
+    {
+      "d": 4
+    }
+  ],
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "h": [
+      8,
+      4,
+      6,
+      4,
+      8,
+      4,
+      6,
+      4,
+      8,
+      4,
+      6,
+      4,
+      8,
+      4,
+      6,
+      5
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1.1,
+    "gain": 0.26,
+    "verb": 0.34
+  },
+  "words": [
+    "the pedal organ, holding the cycle",
+    "the upright, the vamp on top of it",
+    "the pennywhistle, an octave up and late"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(7), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

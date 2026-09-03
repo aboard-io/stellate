@@ -1,0 +1,209 @@
+{
+  "note": "BACHATA — Santo Domingo 1992. The same island forty years later and a\ncompletely different room: a requinto guitar arpeggiating between the\nsung lines, a segunda guitar answering it, a bongó and a güira, and\nfour bars of i-iv-V that go round forever.\nTHE YEAR is Juan Luis Guerra's \"Bachata Rosa\" and the moment the music\nstopped being called amargue and stopped being disreputable — a\ndocumented record, which is the strongest kind of year this file has.\nWHAT SEPARATES IT FROM BOLERO, which is its declared parent and which\nit sounds like at half attention: the bachata guitar is ELECTRIC and\narpeggiated in continuous eighths (`bassStyle: \"eighths\"`, `artic`\nstaccato, `maxHold` 2) where the bolero's requinto plays filigree in\nthe gaps and holds. And the tempo is nearly double.\n\nLINEAGE: bolero is the song and the guitar trio, whole; merengue is\nthe same island's rhythm section and the güira comes straight off it.",
+  "label": "Santo Domingo 1992",
+  "voices": 3,
+  "near": "bolero",
+  "plan": "song",
+  "bpm": 128,
+  "parents": {
+    "bolero": 0.6,
+    "merengue": 0.4
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "steel_string_guitar",
+    "solo_vox"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      7,
+      5,
+      7,
+      5,
+      7,
+      5,
+      7,
+      5,
+      7,
+      5,
+      7,
+      5,
+      7,
+      5,
+      7,
+      6
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2700,
+    "q": 1.1,
+    "atk": 0.004,
+    "rel": 0.45,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the requinto, between the lines",
+    "the segunda, answering it",
+    "the singer"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(4), transpose(-5)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

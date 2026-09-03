@@ -1,0 +1,141 @@
+{
+  "note": "DREAM POP — London 1984: Cocteau Twins, Treasure, on 4AD — the\nguitar as weather, the voice as an instrument singing syllables\nthat are not words, seven years before shoegaze put a wall of fuzz\nin front of exactly this. `shoegaze` has wanted \"dream pop\" by\nname since its lineage was written; it takes this row as a parent\ntoday.\n\nLINEAGE: 4AD's post-goth atmosphere with ambient's room, sung\ninstead of droned. The residue is Fraser's voice, which no\nparent supplies.\n\nTHE VOICE ARRIVES (2026-08-30 instrumentation round). This row's own\n`words` have always said it — \"the voice, syllables not words\" for\nthe lead, \"the guitar, as weather\" for the wash — and its lineage\nnote says the residue IS Fraser's voice; but `instr` handed the lead\na clean_guitar and the wash a warm_pad, so the declared\nMOUTHS.dreamchoir below reached no chair at seed 1 (measured: the\none L3 violation in the catalogue — a tone.mouth declared and never\narriving, the box's characteristic bug). The ids now match the\nwords: the lead sings, the guitar is the weather (chorus + echo +\nverb .8 on a pad chair is exactly that).",
+  "label": "London 1984",
+  "voices": 2,
+  "bars": 8,
+  "near": "shoegaze",
+  "plan": "song",
+  "bpm": 92,
+  "parents": {
+    "gothicrock": 0.35,
+    "ambient": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "clean_guitar"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "tie",
+  "maxHold": 5,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "chorus",
+    "echo"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 1800,
+    "q": 1.1,
+    "atk": 0.03,
+    "rel": 2.2,
+    "gain": 0.25,
+    "verb": 0.8,
+    "mouth": {
+      "$src": "MOUTHS.dreamchoir"
+    }
+  },
+  "words": [
+    "the voice, syllables not words",
+    "the guitar, as weather"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(2)], [fill(2)], [transpose(-1)]][s % 4]\n                    : [drop(10)])"
+  }
+}

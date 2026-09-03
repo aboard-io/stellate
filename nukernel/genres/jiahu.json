@@ -1,0 +1,62 @@
+{
+  "note": "THE JIAHU GUDI — Jiahu 6000 BC, and of the two bone flutes this is\nthe STRONGER anchor, which is why both ship and this one carries the\nscale argument: the Jiahu flutes (33 pieces, red-crowned-crane wing\nbones, five to eight holes) are PLAYABLE and were PLAYED — Zhang,\nHarbottle, Wang & Kong, \"Oldest playable musical instruments found\nat Jiahu\", Nature 401 (Sept 1999), sounded the best-preserved\nseven-hole flute and measured its tone row. A real artifact, a real\nblowing test, a real place (the site is 22 km north of Wuyang,\nHenan; settled c. 7000 BC, flooded and abandoned c. 5700 BC — the\nlabel takes the span's own centre, the highlife rule).\n\nTHE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP\n(2026-09-02, the catalogue round). The QA report's `instrumentation`\ncolumn counts a chair as NATIVE when `audio/to-engine.js\npatchForInstr()` names a Faust module for its id, and this row seats\nZERO of them — one of twelve in the table. Twelve rows were read one\nby one and every one of them came back the same way: there is no\nmodel in the fleet of the instrument this music is played on, and\nthere should not be. `organic: true` is that answer said out loud, so\nthe report can stop scoring an honest recording as a failure and can\nstart telling the twelve apart from the machine genres that were\nseating a sampled upright by accident.\nTHIS ROW: the Jiahu gudi crane-bone flutes (Jiahu, Henan, excavated\n1986-87, c. 6000 BC). Same fact and the same reason as the row above.\n\n\"the gudi line\" alone — same admission as hohlefels\n\nsame contract; the gudi line breathes through rate .5, not the clock\nLINEAGE: a root, and — per the round header — a root nothing\ndownstream declares: gagaku (Nara 752) is the oldest East Asian\nrow and it reaches Tang court music, not a Neolithic village\nseven millennia before it. The arrow is not drawable and the\nrefusal is the honesty.",
+  "organic": true,
+  "instrumental": true,
+  "label": "Jiahu 6000 BC",
+  "voices": 1,
+  "rate": 0.5,
+  "near": "gagaku",
+  "plan": "arc",
+  "bpm": 76,
+  "parents": {},
+  "wants": [],
+  "cannot": [
+    "the measured tone row itself — the 1999 blowing test's intervals are, in the linked article's own words, 'a function of culture… a larger set compared to that now familiar in the West', and they do not sit on this table's integer semitones; the pentatonic below is the nearest reusable alphabet, claimed as NEAR, never as the measurement (WORLD.md §2's wall, forty centuries early)",
+    "the crane bone's voice — same admission as hohlefels: the shakuhachi is the registry's one end-blown flute and geometry is the whole of the claim"
+  ],
+  "instr": "shakuhachi",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "incClamp": 2,
+  "orn": {
+    "grace": 0.2
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 1900,
+    "q": 0.8,
+    "atk": 0.05,
+    "rel": 1.8,
+    "gain": 0.25,
+    "verb": 0.5
+  },
+  "words": [
+    "the gudi line, small steps and a held note"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => [[], [transpose(2)], [fill(2)], [rotate(2)]][s % 4]"
+  }
+}

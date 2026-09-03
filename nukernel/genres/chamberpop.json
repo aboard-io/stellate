@@ -1,0 +1,164 @@
+{
+  "note": "CHAMBER POP — Boston 1994. Cardinal, CARDINAL (Flydaddy) — Richard\nDavies and Eric Matthews, a duo formed in Boston in 1992, recorded March\n1994 and released that November. The genre's own article names Matthews\n\"a leading figure in ork-pop\" and quotes the record's reputation as \"the\ngrunge era's answer to Pet Sounds\", which is the whole row in a clause:\na trained trumpeter writing arrangements against everything 1994 sounded\nlike. The article's own definition of the genre is opposition — musicians\nwho \"opposed the distorted guitars, lo-fi aesthetic, and simple\narrangements common to the alternative or 'modern rock' groups of that\nera\" — so the soft kit under a string line is not a taste, it is the\nargument.\n\nWHY NOT THE HIGH LLAMAS, whose GIDEON GAYE (Target, 1994) has an equal\nclaim and is named in the same article: the band is London, and \"London\n1994\" is already `dnb`'s label — the same collision that sent `britpop`\nto Manchester. Cardinal is the American record, its city is free, and it\nsits five years upstream of `orchpsych` where the debt is owed.\nAND WHY IT IS NOT `baroquepop` (Los Angeles 1966), which is the sentence\na reader should be made to weigh, because this article's own lead says\nchamber pop is \"also called baroque pop\": the two are SEPARATE ARTICLES\nin this ZIM and they argue different things. Baroque pop's lead is about\nharpsichords and Baroque compositional style in the mid-sixties; this\none is about mid-nineties indie musicians refusing their own decade.\nTwenty-eight years and two different arguments apart, and this row takes\n0.40 of itself from that one, which is the honest way to say they are\nrelated and not the same.\n\nTHE HARMONY IS MEASURED AND ITS PROVENANCE IS DECLARED. Over 7,802 songs\nthe fingerprint is the MEDIANT and the SUPERTONIC — the highest raw ii\n(30.2%) and iii (20.1%) in the whole census, with `I IV vi iii` at 4.28x\nand eleven of the top twelve windows containing one or the other — and,\nalone among the nine labels, NO chromatic lean at all (bVII 0.93x, bIII\n0.92x, bVI 0.97x, II 0.99x). It is the one music here that borrows\nnothing, which is why the mode is ionian: declaring mixo or dorian on a\nrow with no flat degree is exactly the decoration the 2026-09-02 law\nforbids. BUT: that census centroid is 2011, not 1994 — the Arcade Fire\nand Fleet Foxes wave the article itself flags as an inconsistent later\nuse of the word — so these numbers describe the label, not this record,\nand the row says so rather than passing them off. The same measurement\nalso shows the mediant writing COLLAPSING in choruses (best chorus lift\n2.52x), which is where a verse-and-chorus form should flatten toward I.\n\nAND THE CORPUS IS SILENT, which is reported rather than papered over.\n\"chamber pop\", \"chamber_pop\" and \"chamberpop\" return zero files; bare\n\"chamber\" returns a Vivaldi concerto, Zelda's Triforce Chamber and Coal\nChamber. A roster reaches fourteen files from three 1960s acts, which is\na coincidence and not a genre, and NONE of its numbers are used here.\nSO `bpm: 108` IS A CHOICE, taken from `baroquepop`, the parent this row\ndraws 0.40 from — the one number in these four rows that no measurement\nstands behind, said out loud so nobody later mistakes it for one.\n\nTHE CAST. `felt_piano` is MODELLED and is the close, damped keyboard an\nintimate arranged record is built around, used by no other row in this\nfamily. `strings` rather than `slow_strings` is deliberate and is the\nfield that keeps this row clear of `orchpsych` five years downstream:\nchamber pop's strings play ARRANGED LINES, not held pads. `trumpet` is\nEric Matthews's own instrument and the article's definition names\n\"strings, horns, piano, and vocal harmonies\" — this cast is three of the\nfour. `bassStyle: \"pedal\"` is a held bass under moving inner voices,\nwhich is what an arrangement does.",
+  "label": "Boston 1994",
+  "near": "baroquepop",
+  "plan": "song",
+  "bpm": 108,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "baroquepop": 0.4,
+    "collegerock": 0.25,
+    "psychpop": 0.2,
+    "jazzrock": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "felt_piano",
+    "strings",
+    "trumpet"
+  ],
+  "bassInstr": "finger_bass",
+  "drumkit": "brush",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    0,
+    3,
+    3,
+    5,
+    5,
+    2,
+    2
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 0.8,
+    "atk": 0.015,
+    "rel": 1.4,
+    "gain": 0.23,
+    "verb": 0.48
+  },
+  "words": [
+    "the felt piano, the whole arrangement",
+    "the strings, an arranged line and not a pad",
+    "the trumpet, one phrase, late"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(2)]"
+    }
+  }
+}

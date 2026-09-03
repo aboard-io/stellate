@@ -1,0 +1,175 @@
+{
+  "note": "THE SOUND SYSTEM — Kingston 1950. Tom the Great Sebastian, \"the\nall-time giant of sound systems\" (the ZIM's own quote), started\nby Tom Wong in 1950: American rhythm and blues on exclusive\nshellac, played to downtown Kingston over speaker stacks built\nfor bass, Count Matchuki talking over the intros as the first\ndeejay. TWO rows want \"jamaican sound system\" by name — boombap,\nwhose comment has carried \"the sound-system culture that taught\nthem to loop is still owed\" since its lineage was written, and\nblockparty, whose own Kool Herc brought exactly this practice to\nthe Bronx. The `blockparty` precedent is the whole argument that\na playback culture can anchor: the music IS the records plus the\nsystem — the bass stack, the exclusive, the voice over the top.\n\nLINEAGE: the records on the decks were jump blues and R&B\nexclusives — retitled, label scratched off, so no rival could\nbuy the tune out from under you.",
+  "label": "Kingston 1950",
+  "voices": 2,
+  "bars": 8,
+  "near": "jumpblues",
+  "plan": "dance",
+  "bpm": 92,
+  "parents": {
+    "jumpblues": 0.5
+  },
+  "wants": [
+    "mento (the yard the system played in)",
+    "the exclusive acetate era (coxsone and reid, 1957)"
+  ],
+  "cannot": [
+    "the exclusive itself — the identity of a sound was WHICH record it alone owned, and a catalog whose every record is public cannot keep a secret"
+  ],
+  "instr": [
+    "tenor_sax",
+    "solo_vox"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "swing": 0.2,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    0,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    },
+    {
+      "d": 4,
+      "q": "7"
+    }
+  ],
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "pedal",
+  "tone": {
+    "wave": "square",
+    "cut": 1700,
+    "q": 1.2,
+    "atk": 0.006,
+    "rel": 0.4,
+    "gain": 0.28,
+    "verb": 0.3
+  },
+  "words": [
+    "the record on the deck — a honking Memphis tenor",
+    "Count Matchuki, talking the tune in"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(4)], [excerpt(0, 8)], [rotate(2)]][s % 4]\n                    : [keep(0, 3, 6), drop(3)])"
+  }
+}

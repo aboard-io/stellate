@@ -1,0 +1,151 @@
+{
+  "note": "EURYTHMICS. A sequencer and a drum machine and nothing else in the room.\nWhat makes it that and not acid is where the interest lives: acid's\nsequence never varies and the FILTER moves, so it is one instrument\nbreathing; this has a hook that never varies and a HARMONY that does — the\ntwo-chord vamp, i to VI, which is the entire song. The bass pulses in\noctaves under it. Analog, from the Model D, because a sample cannot be a\nmonosynth any more than it can be a 303.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nEurythmics, \"Sweet Dreams (Are Made of This)\" (RCA, London, January\n1983): a sequencer, a drum machine and nothing else in the room.\n\nnamed \"London 1983\" — Sweet Dreams: the two-chord i-VI vamp, the\nsequencer that never varies, the drum machine and nothing else.\n\na song by birthright but a DANCE record first — \"Sweet Dreams\" has a\ndrop where a bridge would be; and 126 is not a guess: it is the tempo\nof \"Sweet Dreams\"\n\nLINEAGE: Basildon's machines with a soul singer over them — Lennox\nis Motown phrasing on a synthpop chassis, and the bass pulse is\nfunk's octave engine sequenced; the machine aesthetic itself is\nKraftwerk's, and synthpop was carrying it as a proxy — so synthpop\ngives the most back. Motown gives a nudge too: Lennox's phrasing is\nHitsville, but \"a sequencer and a drum machine and nothing else in\nthe room\" is a description of Kling Klang's floor plan. `wants` empties\n— Düsseldorf was the whole of this anchor's shopping list.\n\n\"nothing else in the room\" — so not a string ensemble. The riff is a\nmonosynth (the modeld below plays it) and the answer is a poly; both\nids route to real analog modules, which is what the sentence above\nthis entry has always claimed the room contains.\n\n\"a drum machine and nothing else in the room\" — the CR-era box, not a\nsampled kit pretending to be one\n\nthe gated backbeat",
+  "bassInstr": "bass_lead",
+  "label": "London 1983",
+  "plan": "dance",
+  "bpm": 126,
+  "parents": {
+    "synthpop": 0.4,
+    "detroitsoul": 0.25,
+    "dusseldorfschool": 0.2,
+    "funk": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "saw_wave",
+    "polysynth"
+  ],
+  "drumkit": "cr78",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    0,
+    5,
+    5
+  ],
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "bassStyle": "octaves",
+  "synth": {
+    "dsp": "modeld",
+    "root": "modeld",
+    "level": 0.8,
+    "set": {
+      "cutoff": 2600,
+      "res": 0.24,
+      "envAmount": 1.2,
+      "envAttack": 0.004,
+      "envDecay": 0.32,
+      "envSustain": 0.5,
+      "oscMix": 0.35,
+      "drive": 0.22,
+      "glide": 0,
+      "drift": 4
+    }
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 2,
+    "atk": 0.004,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.22
+  },
+  "words": [
+    "the sequence, unchanged all the way through",
+    "the answer, a bar late and off the beat"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [] : [only(\"gate\", rotate(6))])"
+  }
+}

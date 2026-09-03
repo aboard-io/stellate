@@ -1,0 +1,130 @@
+{
+  "note": "LIED — Vienna 1814. Schubert, seventeen years old, sets Goethe's\n\"Gretchen am Spinnrade\" on the 19th of October 1814 — the dated\nautograph survives — and the German art song arrives whole: the\npiano is the spinning wheel, not an accompaniment, and the song\nis through-composed against the strophic poem. Fills a decade the\ncatalog jumped (nothing between Vienna 1785 and Boston 1831), and\nit is the missing step in the salon lineage this table already\ncarries — `nocturne` (Paris 1835) is this music with the voice\nfolded into the right hand.\nTHE AXES: CAST is the whole claim — TWO equal players, the voice\nand the piano figure, and the figure never stops (Gretchen's\nwheel turns for the entire song). Development is the figure's\nconstancy against the voice's escalation.\n\nLINEAGE: `classical` (Vienna 1785) is the harmonic language and\nthe city; `ballad` (London 1666) is the strophic narrative song\nthe lied is the art-music answer to — Schubert's own ballads\n(Erlkönig, a year later) descend from Zumsteeg's, which descend\nfrom exactly this stock.\n\nWHO SINGS: confessional — the intimate, close voice; a\nlied is sung to a room, not a hall, and the modern\nsinger-songwriter mouth is its direct heir.",
+  "label": "Vienna 1814",
+  "voices": 2,
+  "bars": 8,
+  "near": "nocturne",
+  "plan": "arc",
+  "bpm": 80,
+  "parents": {
+    "classical": 0.6,
+    "ballad": 0.2
+  },
+  "wants": [
+    "zumsteeg's ballads",
+    "the berlin lied school"
+  ],
+  "cannot": [
+    "the poem — which syllable of Goethe falls where IS the composition (WORLD.md §5.7); the mouth below sets a vowel and a rate and is the crude proxy it says it is"
+  ],
+  "instr": [
+    "solo_vox",
+    "yamaha_grand_piano"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff"
+  ],
+  "roots": [
+    0,
+    0,
+    5,
+    3,
+    0,
+    1,
+    4,
+    0
+  ],
+  "prog": [
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 5,
+      "q": "m7"
+    },
+    {
+      "d": 3,
+      "q": "triad"
+    },
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 1,
+      "q": "m7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "triad"
+    }
+  ],
+  "mode": {
+    "$src": "MODES.melodic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 3,
+  "nobass": true,
+  "kit": {},
+  "orn": {
+    "pass": 0.2
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.8,
+    "atk": 0.02,
+    "rel": 1.2,
+    "gain": 0.24,
+    "verb": 0.4,
+    "mouth": {
+      "$src": "MOUTHS.confessional"
+    }
+  },
+  "words": [
+    "the song, rising each strophe",
+    "the piano figure, the wheel that never stops"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(1)], [transpose(2), fill(2)], [transpose(1)]][s % 4]\n                    : [keep(0, 2, 4, 6, 8, 10, 12, 14)])"
+  }
+}

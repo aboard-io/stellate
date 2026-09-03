@@ -1,0 +1,140 @@
+{
+  "note": "WESTERN SWING — Tulsa 1940: Bob Wills and His Texas Playboys,\nresident at Cain's Ballroom, record \"New San Antonio Rose\" in 1940\n— the fiddle band that hired a horn section and swung like Basie,\nbecause that is who the dancers were listening to on the radio.\n\nLINEAGE: a string band playing a swing band's book — the two\nhalves are the name, and mariachi's borderland fiddle thirds are\nreal but a different row's claim. The residue is the dance hall.\nTHE STRING-BAND HALF IS `oldtime` AND NOT `countrypop` (2026-09-02,\nthe catalogue round). \"New San Antonio Rose\" was cut for Okeh in\nDallas in April 1940; `countrypop` is Nashville 1945 — Earl Scruggs's\nroll at the Ryman, FIVE YEARS AFTER this record — so this row was\ndeclared a child of its own descendant. The string band Wills\nactually led is the fiddle-convention band his father played in, and\nthat is `oldtime` (Galax 1935), five years the other way.",
+  "label": "Tulsa 1940",
+  "voices": 3,
+  "near": "swing",
+  "plan": "song",
+  "bpm": 116,
+  "parents": {
+    "oldtime": 0.35,
+    "swing": 0.4
+  },
+  "wants": [],
+  "instr": [
+    "fiddle",
+    "jazz_guitar",
+    "trumpet"
+  ],
+  "drumkit": "jazz",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "swing": 0.25,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "orn": {
+    "pass": 0.25,
+    "grace": 0.3
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.01,
+    "rel": 0.6,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the fiddle, swinging the tune",
+    "the guitar comping fours",
+    "the horn, a riff behind the beat"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [reverse()]][s % 4]\n                    : v === 1 ? [keep(0, 4, 8, 12)]\n                    : [drop(8), transpose(-2)])"
+  }
+}

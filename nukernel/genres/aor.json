@@ -1,0 +1,313 @@
+{
+  "note": "---- THE STUDIO ------------------------------------------------------\nFive records made by people who could play, and the interesting thing is\nthat what separates them is almost never the notes. It is which MODE the\nbrightness comes from, where the shuffle sits, and who is playing what.\n\nTOTO. The reference is \"Africa\" — the lope, not the shuffle. Toto has\ntwo famous feels, and the OTHER one, the Rosanna half-time shuffle, is\ndeliberately not this anchor: it wore that groove for a while (swing a\nfull triplet third, shuffled hats) and read as the wrong song. Africa\nsits nearly straight — a hair of swing at most — with the time in\nsteady sixteenth hats and the PULSE carried by a rolling tom figure, a\ndotted cross-rhythm percolating under everything the way the record's\npercussion loop does; the backbeat lands a ninth of a step behind the\ngrid, laid back but never swung. The rim taps `ghost` scatters between\nthe melody's accents stay — built for the shuffle era's notes-between-\nthe-notes, the lope hears them as more percussion. Over that,\nunchanged: mixolydian, major with a ♭VII, so I-vi-IV-♭VII turns over\nwithout ever leaving the key. A marimba carries the kalimba-ish hook, a\nguitar answers it from bar 5, and a synth pad holds the chords, which\nis three instruments and was one until INSTR learned to take a list.\n\nnamed \"Los Angeles 1982\" — Toto IV: the Africa lope this comment\ndescribes, cut by LA session players.\n\nLINEAGE: session players raised on Steely Dan's studio craft playing\na rock band's form over funk's pocket; the rolling tom lope is the\nAfrican percussion loop the record borrows and the catalog lacks.\n\"yacht rock\" CAME OFF `wants` 2026-08-29 WITHOUT BEING PAID, and the\nreason is worth the four lines. `yachtrock` has been Austin 1979\nsince the world round, so this was a stale entry either way — but it\ncannot become a parent, because `yachtrock` already declares THIS row\nas one of its own, and the edge would close a cycle. It is the same\nshape as `blues` and `jumpblues` four screens up: the retronym was\ncoined in 2005 to describe records like Toto IV, so the genre and one\nof its exemplars each have a fair claim to being upstream, and a\ndirected graph has to pick. The graph picks the one already written.\n\nI vi IV ♭VII\n\nthe relaxed backbeat\nsteady sixteenths\nthe rolling figure:\ndotted cross-rhythm\nrim taps: more percussion\nTHE HAT HAND. Even now the dynamics are the drummer's own, not the\ntune's — a gentle lean on the eighth pulse, the between-notes tucked\nunder, a lope rather than the old shuffle's hard beats. Only the hats:\nkick, snare and toms still ride the phrase like every other genre.\n\nBAR 8: the backbeat lands once, then the hand rolls down the toms —\nt, m, l, gathering speed as it falls — while the sixteenth hats keep\ngoing underneath, because on this record the time never stops for\nthe fill.",
+  "label": "Los Angeles 1982",
+  "bars": 8,
+  "voices": 3,
+  "swing": 0.08,
+  "plan": "song",
+  "bpm": 92,
+  "parents": {
+    "jazzrock": 0.45,
+    "rock": 0.3,
+    "funk": 0.25
+  },
+  "wants": [
+    "african percussion"
+  ],
+  "instr": [
+    "synth_strings_1",
+    "marimba",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 4
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": {
+      "$src": "v - 1"
+    }
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "diatonic": true,
+  "roots": [
+    0,
+    0,
+    5,
+    5,
+    3,
+    3,
+    6,
+    6
+  ],
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "~s": [
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "t": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "l": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "ghost": [
+    {
+      "$src": "only(\"acc\", rotate(2))"
+    }
+  ],
+  "kitVel": {
+    "h": [
+      7,
+      4,
+      5,
+      4,
+      6,
+      4,
+      5,
+      4,
+      7,
+      4,
+      5,
+      4,
+      6,
+      4,
+      5,
+      4
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "t": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "m": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "l": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2800,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.8,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the pad, one chord a bar",
+    "the marimba hook",
+    "the guitar, answering from bar 5"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(2), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "chorus"
+  ]
+}

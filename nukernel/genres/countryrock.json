@@ -1,0 +1,186 @@
+{
+  "note": "COUNTRY ROCK — Nashville 1968. The Byrds again, three years and one\nGram Parsons later: SWEETHEART OF THE RODEO, whose defining sessions ran\nat Columbia Studio A, Nashville, 9-15 March 1968 with Lloyd Green on\npedal steel, John Hartford and Roy Huskey Jr. The coinage precedes the\nrecord — Richard Goldstein, \"Country Rock: Can Y'All Dig It?\", THE\nVILLAGE VOICE, 6 June 1968, written in anticipation of this album. THE\nLABEL SAYS NASHVILLE AND NOT HOLLYWOOD, which is the point of the row: a\nLos Angeles folk-rock band went to the Columbia A-team, and `grunge`'s\nruling is that the label names the room the music came out of.\n\nTHE SECONDARY DOMINANT IS THE WHOLE ROW, and this is the one field a\n`roots` array cannot say. Over 9,318 songs the fingerprint is major II —\nV of V — at 1.37x lift, with `II V I IV` at 3.56x on 346 songs and\n`I VI II V` at 4.53x rising to 6.75x in the chorus, while vi is\nSUPPRESSED at 0.63x. That is the ragtime turnaround with both secondary\ndominants, and it is exactly what separates this row from the country\nradio umbrella declined above: contemporary country resolves through vi,\ncountry rock resolves through II, and the two labels share one per cent\nof their songs.\nA `roots` degree renders its quality out of the MODE, so degree 1 in\nionian is a minor ii and degree 5 a minor vi — the row's entire\ndistinguishing fact, silently gone. `prog` is the field that can say it:\nkernel.js QFIX.dom7 is an ABSOLUTE [0,4,7,10] on the degree's root, and\nits own comment at :718 calls dom7 \"the one deliberate exit\" from the\nmode, which is what a secondary dominant is. So PROGS.countryrockT is\ndeclared above and the `roots` line below is only its fallback shape.\n\nTHE NUMBERS THAT ARE MEASURED: bpm 116 is the median of 190 corpus files\n(Eagles 86, Creedence 57, Ronstadt 13, Allman 12, Doobies 12), 95.8% of\nthem 4/4; maxHold 4 comes off a p90 hold of 5.75 sixteenths over 188\nfiles. AND THE ROSTER'S OWN BIAS IS REPORTED: Gram Parsons, the Flying\nBurrito Brothers, Poco and the Nitty Gritty Dirt Band return ZERO files,\nso the corpus set leans southern and swamp (CCR + Allman + Skynyrd are 74\nof 190) and its 73.7% major reading sits below Chordonomicon's 88.6%.\nThe tempo ties `altcountry` (Chicago 1996) — harmless, the two rows share\nno other field — but this one is measured and that one was chosen, so if\neither has to move it is not this one.\n\n`bassInstr` IS DELIBERATELY UNDECLARED and that is an argument, not an\nomission: Roy Huskey Jr. played an UPRIGHT on the March 1968 sessions,\nand the default this row falls through to is `acoustic_bass`. This is the\none place in the family where the default is the right recording rather\nthan the lazy one, and `musichallrock` is the precedent for saying so\neither way. THE PEDAL STEEL HAS NO ID in the whole instrument table and\nthe article calls it the genre's \"most characteristic\" instrument, so it\nis a want, not a shrug.",
+  "label": "Nashville 1968",
+  "near": "countrypop",
+  "plan": "song",
+  "bpm": 116,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "folkrock": 0.35,
+    "countrypop": 0.3,
+    "honkytonk": 0.2,
+    "bluegrass": 0.15
+  },
+  "wants": [
+    "the pedal steel guitar, which the instrument table has no id for"
+  ],
+  "instr": [
+    "clean_guitar",
+    "steel_string_guitar",
+    "upright_piano"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "prog": {
+    "$src": "PROGS.countryrockT"
+  },
+  "roots": [
+    0,
+    0,
+    3,
+    0,
+    5,
+    1,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "normal",
+  "maxHold": 4,
+  "bassStyle": "fifths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2700,
+    "q": 1,
+    "atk": 0.005,
+    "rel": 0.9,
+    "gain": 0.27,
+    "verb": 0.24
+  },
+  "words": [
+    "the telecaster, answering the line",
+    "the acoustic, holding the changes",
+    "the piano, the session hand's fills"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(2)]"
+    }
+  }
+}

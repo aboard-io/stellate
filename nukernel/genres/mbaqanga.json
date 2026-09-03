@@ -1,0 +1,219 @@
+{
+  "note": "MBAQANGA — Johannesburg 1964, and it is the rung TWO anchors have been\nwaiting for: `worldfolk` wants it and `kwaito` wants it. The Mavuthela\nstudio band's music — an electric guitar playing a cycling figure, a\nsaxophone, a groaning bass voice underneath, and a beat the labels\ncalled \"the sound of the city\".\nTHE YEAR is Gallo's Mavuthela sessions under Rupert Bopape, the moment\nthe studio band, the groaner and the female chorus become one house\nstyle. The Makgona Tsohle Band is the ensemble the name attaches to.\nWHAT SEPARATES IT FROM ITS TWO NEIGHBOURS: kwela (1955) is a\npennywhistle and a swing feel at 138; this is an electric guitar and a\nstraight four at 116 with a bass playing sixteenths. And where marabi's\ncycle is I-IV-I⁶₄-V, mbaqanga's is three chords that never resolve —\nit just keeps going round, which is why `harmony` stays `cycle` and the\nroots line has no dominant in it.\n\nthe female chorus behind the groaner: a room, not a section",
+  "label": "Johannesburg 1964",
+  "voices": 3,
+  "near": "kwela",
+  "plan": "dance",
+  "bpm": 116,
+  "parents": {
+    "kwela": 0.45,
+    "marabi": 0.3,
+    "mbube": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "tenor_sax",
+    "ahh_choir"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "lead",
+    "pad"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      8,
+      0,
+      5,
+      0,
+      7,
+      0,
+      5,
+      0,
+      8,
+      0,
+      5,
+      0,
+      7,
+      0,
+      5,
+      5
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 1.2,
+    "atk": 0.005,
+    "rel": 0.45,
+    "gain": 0.27,
+    "verb": 0.28,
+    "mouth": {
+      "$src": "MOUTHS.mbubestack"
+    }
+  },
+  "words": [
+    "the lead guitar, the cycling figure",
+    "the sax, answering it",
+    "the chorus behind the groaner"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(8), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

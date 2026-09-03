@@ -1,0 +1,86 @@
+{
+  "note": "THE ZODIAK — Berlin 1968. The Zodiak Free Arts Lab, opened at\nthe Hallesches Ufer in spring 1968 by Conrad Schnitzler and\nHans-Joachim Roedelius: the all-night room where Tangerine\nDream and Kluster assembled — Electronic Meditation, taped in a\nrented Berlin factory loft the following year, is this room's\nhouse sound on record. TWO rows have wanted \"the zodiak free\narts lab\" by name since their lineages were written —\n`krautrock` (Cologne 1971) and `berlinschool` (Berlin 1972,\nwhose founders were the house bands) — and both take the parent\ntoday.\n\nLINEAGE: `drone` (New York 1964) is the doctrine — Schnitzler\nstudied under Beuys and points at Fluxus, which is drone's\nown downtown; `psychrock` (San Francisco 1966) the rock\npermission the room ran on.",
+  "label": "Berlin 1968",
+  "voices": 2,
+  "bars": 8,
+  "near": "berlinschool",
+  "plan": "arc",
+  "bpm": 84,
+  "parents": {
+    "drone": 0.4,
+    "psychrock": 0.3
+  },
+  "wants": [
+    "fluxus and beuys' düsseldorf class"
+  ],
+  "cannot": [
+    "the all-nightness — a Zodiak set was hours of collective improvisation with the door open, and this table's records are minutes with a form; the arc plan is the shape at the wrong scale, berlinschool's own admission"
+  ],
+  "instr": [
+    "saw_wave",
+    "cello"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "pad"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "emergent",
+  "intro": "fade",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "SCALES.chromatic"
+  },
+  "artic": "tie",
+  "maxHold": 6,
+  "fx": [
+    "echo",
+    "sweep"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1500,
+    "q": 1.4,
+    "atk": 0.3,
+    "rel": 2.6,
+    "gain": 0.23,
+    "verb": 0.65
+  },
+  "words": [
+    "the machines, searching for a pitch",
+    "the cello, sawing under (Schnitzler's own instrument)"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [spread(3)], [reverse()], [invert(2)]][s % 4]\n                    : [keep(0, 8), transpose(-4)])"
+  }
+}

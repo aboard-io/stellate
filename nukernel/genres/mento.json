@@ -1,0 +1,212 @@
+{
+  "note": "MENTO — Kingston 1952. Jamaica's own country music, and the rung\nunderneath everything else the catalog holds from that island: banjo,\nguitar, a bamboo fife or a hand-cut saxophone, a hand drum, and a\nRHUMBA BOX — a big thumb piano you sit on, which plays the bass line\nand is the reason a mento band needs no bass player.\nTHE YEAR is the Stanley Motta 78s in Kingston, the first commercial\nrecordings of Jamaican music of any kind. Documented, and the earliest\nJamaican year the catalog can hold.\nTHE ACCENT IS ON THE FOURTH BEAT. That is the fact everything else in\nthis file gets wrong by default — a backbeat lands on 2 and 4 and a\nmento lands hardest on 4 alone — and the `kitVel` line below is where\nit is said, because there is no word for it anywhere else.\n`ska` DECLARED `wants: [\"mento\", \"calypso\"]` AND NOW HAS BOTH. Its\nparents line is rewritten below.\n\nDECLINED, AND THE REASON (2026-09-02, the catalogue round, shift 2). This\nrow was examined in the parentless sweep and keeps `parents: {}`: every real\nparent is missing, and the three nearest in-table candidates were each\nrefused on a named ground.\n`hymn` (Boston 1831) is the one that nearly landed, on the strength of the\n\"revival hymn\" want and the `mbube` precedent (`hymn: 1`, Johannesburg 1939).\nIt is refused because the Jamaican object is the SANKEYS — Ira D. Sankey's\nSACRED SONGS AND SOLOS, London 1873 — and the `hymn` row is dotted at Lowell\nMason's Boston 1831, a different book in a different revival. Grounding a\nKingston row on the nearest hymnal in the table would be the conscription\nthis round exists to stop, so the want stays open under its own words.\n`contradanza` (Havana 1803) and `habanera` (Havana 1860) are refused too: the\nJamaican quadrille and the Cuban contradanza are SIBLINGS off the shared\nFrench and English contredanse — which is `contradanza`'s own missing want —\nand mento's identity is the accent on beat four, not the habanera cell.",
+  "label": "Kingston 1952",
+  "voices": 3,
+  "near": "calypso",
+  "plan": "song",
+  "bpm": 108,
+  "parents": {},
+  "wants": [
+    "jonkanoo",
+    "quadrille",
+    "revival hymn"
+  ],
+  "cannot": [
+    "the rhumba box — a box lamellophone the player sits on, which is a bass instrument the registry has no id for; the bass chair takes an upright instead and plays the same notes"
+  ],
+  "instr": [
+    "banjo",
+    "nylon_string_guitar",
+    "solo_vox"
+  ],
+  "drumkit": "brush",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "counter",
+    "lead"
+  ],
+  "roots": [
+    0,
+    0,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "kit": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      5,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.9,
+    "atk": 0.004,
+    "rel": 0.5,
+    "gain": 0.26,
+    "verb": 0.32
+  },
+  "words": [
+    "the banjo, picking the tune",
+    "the guitar, under it",
+    "the singer, telling the story"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2), transpose(-5)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

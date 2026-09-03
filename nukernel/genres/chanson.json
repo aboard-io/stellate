@@ -1,0 +1,126 @@
+{
+  "note": "CHANSON RÉALISTE — Paris 1936. Piaf's first Polydor sides (cut\nDecember 1935, on sale 1936): the street-corner story-song of the\nfaubourgs, one voice pushed all the way forward, the accordion\nwhere the musette dance floor left it. The valse half of that floor\ncounts in three and stays refused (the round header); what this row\nkeeps is the SINGER — which is the half nhacvang's Saigon\nsongwriters actually learned from, and that debt is paid here.\n\"bal-musette\" PAID 2026-08-30, hours after the refusal above (the\nwalls-down round): `musette` is Paris 1880 at the foot of this\nfile, and the accordion on THIS record walked over from that\nfloor, which is what the edge now says.\n\nWHO SINGS: the belter — the voice that carried a story\nover a room with no microphone worth trusting.",
+  "label": "Paris 1936",
+  "voices": 2,
+  "bars": 8,
+  "near": "musichall",
+  "plan": "song",
+  "bpm": 84,
+  "parents": {
+    "musette": 0.2
+  },
+  "wants": [
+    "the cafe-concert stage"
+  ],
+  "instr": [
+    "solo_vox",
+    "accordion"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "kit": {},
+  "harmony": "cycle",
+  "roots": [
+    0,
+    4,
+    0,
+    4,
+    5,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0
+    },
+    {
+      "d": 4
+    },
+    {
+      "d": 0
+    },
+    {
+      "d": 4
+    },
+    {
+      "d": 5
+    },
+    {
+      "d": 3
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 0
+    }
+  ],
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 0.9,
+    "gain": 0.26,
+    "verb": 0.32,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the singer, the whole story pushed to the front",
+    "the accordion, the street the story happens on"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(9)]"
+    }
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "note": "OLD-TIME STRING BAND — Galax 1935. The first Old Fiddlers'\nConvention at Galax, Virginia, 1935 — still running, still the\ntradition's own courthouse. Fiddle carries the tune, clawhammer\nbanjo rolls constant eighths under it, the guitar is the drummer\n(boom-chick on the keep() mask, la pompe's own trick one row over\nin Paris 1934). Pays THREE standing debts by name: bluegrass's\n\"appalachian old-time\", countrypop's \"appalachian fiddle\", and it\ngives the Bristol-sessions generation the parent it never had.\n\na fiddle convention — the singing tradition is `appalachia`, one row up\n\n\"the scots-irish fiddle at the crossing\" PAID 2026-08-30, the\nunlocking round: `scotsfiddle` (Edinburgh 1796). The Strathspey\narticle draws the edge in its own words — \"in the New World, the\nCape Breton strathspey differs from its Scottish cousins in that\nthe 'snaps' can come at any point in the measure\" — a New World\nfiddle style described as a variant of this one. The crossing is\nstill a migration and not a music; what crossed was a repertory,\nand Edinburgh 1796 is where that repertory got printed.",
+  "instrumental": true,
+  "label": "Galax 1935",
+  "voices": 3,
+  "bars": 8,
+  "near": "bluegrass",
+  "plan": "song",
+  "bpm": 126,
+  "parents": {
+    "appalachia": 0.4,
+    "scotsfiddle": 0.25
+  },
+  "wants": [
+    "the minstrel banjo (briggs' instructor, 1855)"
+  ],
+  "instr": [
+    "fiddle",
+    "banjo",
+    "steel_string_guitar"
+  ],
+  "swing": 0.12,
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "riff"
+  ],
+  "kit": {},
+  "harmony": "cycle",
+  "roots": [
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "fifths",
+  "orn": {
+    "grace": 0.3,
+    "pass": 0.15
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2800,
+    "q": 0.9,
+    "atk": 0.006,
+    "rel": 0.3,
+    "gain": 0.27,
+    "verb": 0.22
+  },
+  "words": [
+    "the fiddle, sawing the tune",
+    "the banjo, rolling under it — the clawhammer",
+    "the guitar, boom-chick — the drummer this band does not have"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[fill(1), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[keep(0, 4, 8, 12), drop(2)]"
+    }
+  }
+}

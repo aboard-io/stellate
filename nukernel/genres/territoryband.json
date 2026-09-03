@@ -1,0 +1,152 @@
+{
+  "note": "THE TERRITORY BAND — Kansas City 1932. \"Moten Swing\", Bennie\nMoten's Kansas City Orchestra, cut for Victor on the 13th of\nDecember 1932 (the session was in Camden; the BAND and the\ncircuit were Kansas City's, and the label follows the music the\nway `blues`'s label follows the sound): the riff-trading,\nhead-arranged dance band of the southwest circuit — VFW halls,\none-nighters, eight to twelve men. TWO rows have wanted it by\nname since their lineages were written — `swing` (Kansas City\n1938: \"territory bands\") and `jumpblues` (Los Angeles 1946:\n\"territory band riffs\") — and the Moten band is the case both\nmean: Basie at the piano, the riffs that became One O'Clock\nJump six years later. Both take the parent today.\n\nLINEAGE: `neworleans` (New Orleans 1923) is the ensemble\nlanguage the circuit spread inland; `ragtime` (Sedalia 1899)\nthe southwest's own keyboard floor under it.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\n\"Moten Swing\", Bennie Moten's Kansas City Orchestra, cut for Victor 13\nDecember 1932 — this row's own record. A head arrangement trades riffs over\na major-key blues: the roots are degrees 0, 3 and 4, never 6, so mixolydian\nwas a word about a chord the band never played. Full ruling at `zydeco`; the\nflat seventh in the riffs comes from SCALES.blues, untouched.\n\nHEAD ARRANGEMENT: the riff repeats and RISES, the answer\nvaries — a band remembering together, nobody reading.",
+  "label": "Kansas City 1932",
+  "voices": 3,
+  "bars": 8,
+  "near": "swing",
+  "plan": "song",
+  "bpm": 132,
+  "parents": {
+    "neworleans": 0.4,
+    "ragtime": 0.25
+  },
+  "wants": [
+    "the pendergast machine's all-night kansas city"
+  ],
+  "instr": [
+    "brass_section",
+    "tenor_sax",
+    "bright_yamaha_grand"
+  ],
+  "drumkit": "jazz",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 1
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "harmony": "cycle",
+  "prog": {
+    "$src": "PROGS.blues12"
+  },
+  "roots": [
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "swing": 0.45,
+  "bassStyle": "walk",
+  "tone": {
+    "wave": "square",
+    "cut": 2600,
+    "q": 1,
+    "atk": 0.008,
+    "rel": 0.4,
+    "gain": 0.25,
+    "verb": 0.3
+  },
+  "words": [
+    "the brass riff, stated and restated",
+    "the tenor answers, two bars each",
+    "the piano comps the holes"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [], [transpose(2)], [transpose(2)]][s % 4]\n                    : v === 1 ? [[rotate(4)], [rotate(4), transpose(2)], [fill(2)]][s % 3]\n                    : [keep(0, 4, 8, 12), transpose(-3)])"
+  }
+}

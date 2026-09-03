@@ -1,0 +1,162 @@
+{
+  "note": "JAM BAND [blues]. A twin-guitar band that never stops soloing over the\nsame twelve bars blues already wrote — `PROGS.blues12` cited whole,\nbecause a jam band's entire repertoire IS the blues form, played\nlonger and looser. Where blues' answer voice is one fixed rotate(8),\nthis rotates a DIFFERENT amount every time the form comes back round —\nthe sound of a solo that keeps discovering new material over the same\nchanges rather than repeating one lick.\n\na jam band's record is one crescendo with the solos inside it, which is\nexactly what the arc plan is\n\nLINEAGE: the twelve-bar form and the electric-band instrumentation\nare blues' own, taken whole; rock supplies the extended-form,\ntwo-guitar-interplay format; jazz supplies the walking bass and the\nidea that a chorus is a launching point rather than a fixed part.\nPsychedelic rock's studio-born extended-jam ethos, the actual scene\nthis style grew out of, is the missing rung.\nPAID 2026-08-29, the debts round: \"psychedelic rock\" is\n`psychrock` (San Francisco 1966) — same city, same bands, six\nyears earlier.",
+  "label": "San Francisco 1972",
+  "bars": 12,
+  "swing": 0.15,
+  "near": "blues",
+  "plan": "arc",
+  "bpm": 108,
+  "parents": {
+    "blues": 0.4,
+    "rock": 0.35,
+    "jazz": 0.25,
+    "psychrock": 0.3
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "bassStyle": "walk",
+  "roots": [
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    4,
+    3,
+    0,
+    4
+  ],
+  "prog": {
+    "$src": "PROGS.blues12"
+  },
+  "maxHold": 5,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1600,
+    "q": 1.6,
+    "atk": 0.006,
+    "rel": 1,
+    "gain": 0.28,
+    "verb": 0.24
+  },
+  "words": [
+    "the lead guitar, exploring the changes",
+    "the second guitar, answering — rotated a different amount every chorus"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [] : [rotate((s % 4) + 2)])"
+  }
+}

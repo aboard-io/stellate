@@ -1,0 +1,172 @@
+{
+  "note": "PUNJABI POP — Chandigarh 2022. THE FIRST DOT THIS MAP HAS EVER HAD IN\nSOUTH ASIA: measured against the 62 coordinates the atlas carried before\nthis round, the nearest one is SEOUL, 4,627 km away. Whether this is the\nright South Asian\nrecord to put there is a judgement and it is mine — the argument is\nthat Chandigarh is where the industry actually is, and that the music\nis a POINT rather than a category: one vamp, no changes (`harmony:\n\"modal\"`, the same word plainchant uses and for the same reason), a\nflat-seventh mode, and the DHOL — a two-headed drum whose low hand and\nhigh hand are written below as separate lanes, because this table has\nno other way to say that one player is playing both.\n\nLINEAGE: the modal folk tune and the acoustic ensemble it came out of\nare worldfolk's; the doubled-time hat and the modern low end are\ntrap's; the one-riddim floor with a sung hook over it is reggaeton's\nshared method. Bhangra — the Punjabi harvest-dance tradition that IS the\ndhol pattern below, and its own 1990s British diaspora recording\nhistory — is the missing rung, and it is the direct parent.\nLINEAGE, REPAIRED 2026-08-26, AND THIS IS THE EDGE WORLD.md §4\nCAUGHT RUNNING. It read `worldfolk: 0.40` — Johannesburg 1986 as the\nLARGEST declared ancestor of a Punjabi record — with\n`wants: [\"bhangra\"]` written underneath it. Nobody typed that as a\nlie: the genealogy law demanded a parent, the true parent was\nabsent, and the nearest anchor was conscripted. `worldfolk` had two\nchildren and neither was African. Bhangra (Southall 1986) is built\nand takes the weight; `worldfolk` is not reduced, it is REMOVED,\nbecause the resemblance it was standing for was never a resemblance\nto Johannesburg at all.\n\nTHE SHEHNAI, the double-reed that answers the singer at every wedding\nthis music is played at — six zones in the registry, cast zero times\nbefore now — and behind it the HARMONIUM, which is what `reed_organ`\nis. Three entries for the same reason the corrido above has three: the\nlast one covers every remaining chair, and five shehnais is a noise\nnobody has ever made. Like the tuba, `shenai` carries no\ninstruments.js RANGES row and degrades to its zone window; the row is\nfiled as a recipe. Measured over three seeds its one chair sits at\nMIDI 67..76, which is the piercing register the instrument is for.\n\nTHE DHOL'S TWO HANDS. `k` is the bass head (the \"dha\"), `p` is the\nstick on the treble head running ahead of it — the chaal. They are\none drummer and one instrument, and splitting them into two lanes is\nthe only way this table can say so.",
+  "label": "Chandigarh 2022",
+  "near": "worldfolk",
+  "plan": "dance",
+  "bpm": 100,
+  "parents": {
+    "bhangra": 0.45,
+    "trap": 0.35,
+    "reggaeton": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "shenai",
+    "reed_organ"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1.6,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.24
+  },
+  "words": [
+    "the vocal, on the one vamp",
+    "the shehnai, answering it an octave up"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(12), only(\"gate\", rotate(4))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

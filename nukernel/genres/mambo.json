@@ -1,0 +1,222 @@
+{
+  "note": "MAMBO — Mexico City 1950. Pérez Prado's RCA sessions: a big band with\nthe saxes and the brass thrown at each other in two-bar blocks, a\nrhythm section straight off the son, and a tempo nothing else in this\nbatch comes near.\nTHE CITY IS MEXICO CITY AND THAT IS NOT AN ERROR. The mambo is Cuban\n— Cachao and Arcaño in Havana in the late thirties, Prado arranging at\nthe Casino de la Playa — but Prado could not get the records made in\nHavana and did get them made in Mexico City from 1949, and the mambo\nthe world heard is on RCA Mexico. The label names where the tape is.\nWHAT SEPARATES IT FROM `salsa`, which is the same rhythm section\ntwenty-three years later: mambo is a BRASS SECTION playing riffs in\nblock harmony over a vamp that does not modulate, at 132 — and salsa\nis trombones and a piano montuno in dorian over an eight-bar cycle at\n100. The two anchors share a clave and disagree about everything else.\n\nthe row's own words: \"a BRASS SECTION playing riffs in block harmony\"\n\nLINEAGE: son is the rhythm section, whole and undisguised. The other\nhalf is the danzón's final section — where the mambo takes its name\n— and the AMERICAN SWING BAND, which this catalog now holds (Kansas\nCity 1938, below), and Prado's block scoring is unmistakably that.\n\"danzón\" PAID 2026-08-29 (Matanzas 1879), and here the claim is\nLITERAL: Orestes López's 1938 \"Mambo\" was a danzón's final\nstrain, and Pérez Prado led a charanga before the big band.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nPerez Prado's RCA sessions, Mexico City 1949-50 — this row's own records.\nThe row is `harmony: \"modal\"`, so there is no chord for a flat seventh to\nlive in, and SCALES.major carries the NATURAL seventh: mixolydian was a word\nwith nothing under it. What the saxes and brass actually trade in those\ntwo-bar blocks is a major-key riff, and ionian is that. (SCALES.major and\nMODES.ionian are the same seven numbers, so the field is now a true\nrestatement of the alphabet rather than a contradiction of it.)\n\nTHE TIMBALES ARE THE TOMS, and this is the batch's other standing\ncompromise said once: the cáscara on the shell goes to `p`, the\nabanico and the bell-driven mambo section go to the high and mid\ntoms, and what is lost is that a timbalero is playing METAL — the\nshell and the cha-cha bell — where a tom is a head.",
+  "instrumental": true,
+  "label": "Mexico City 1950",
+  "voices": 3,
+  "near": "son",
+  "plan": "dance",
+  "bpm": 132,
+  "parents": {
+    "son": 0.45,
+    "danzon": 0.25,
+    "swing": 0.3
+  },
+  "wants": [],
+  "instr": [
+    "brass_section",
+    "tenor_sax",
+    "trumpet"
+  ],
+  "drumkit": "jazz",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      },
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "counter",
+    "lead"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+    ],
+    "t": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "m": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "t": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 3000,
+    "q": 1.2,
+    "atk": 0.004,
+    "rel": 0.35,
+    "gain": 0.28,
+    "verb": 0.2
+  },
+  "words": [
+    "the brass, in blocks",
+    "the saxes, answering underneath",
+    "the trumpet, screaming over the top"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(8), transpose(-5)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(12), drop(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

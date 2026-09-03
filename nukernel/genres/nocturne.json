@@ -1,0 +1,92 @@
+{
+  "note": "NOCTURNE — Paris 1835, Chopin: a bel-canto line (monody's thread, kept\nin the lineage) over a widespread left hand. This is the romantic piano\nminiature `neoclassical` has wanted since its own anchor was written —\nthe debt is paid here and neoclassical's `wants` can empty the day its\ncomment is next touched. Melodic minor because it is the minor that can\nstill make a real dominant AND sing a major sixth on the way up, which\nis what a nocturne's fioritura does.\n\n...and \"bel canto opera\" was PAID 2026-08-29 by `belcanto` (Milan\n1831), four years before this row's label. Chopin said outright that\nhe was writing Bellini for the piano, which makes this the least\narguable parent edge added that day.",
+  "label": "Paris 1835",
+  "rate": 0.5,
+  "bars": 8,
+  "plan": "arc",
+  "bpm": 72,
+  "parents": {
+    "belcanto": 0.4,
+    "classical": 0.35,
+    "continuo": 0.25
+  },
+  "wants": [],
+  "near": "neoclassical",
+  "instr": "yamaha_grand_piano",
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "pad"
+  },
+  "kit": {},
+  "nobass": true,
+  "roots": [
+    0,
+    5,
+    3,
+    4,
+    0,
+    5,
+    1,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.melodic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 6,
+  "incClamp": 2,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.8,
+    "atk": 0.01,
+    "rel": 2,
+    "gain": 0.26,
+    "verb": 0.5
+  },
+  "words": [
+    "the song, up high, taking its time",
+    "the left hand, wide and low"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

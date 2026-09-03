@@ -1,0 +1,159 @@
+{
+  "note": "FOOTWORK — Chicago 2013. DJ Rashad's Double Cup, Hyperdub,\nreleased the 22nd of October 2013: the Teklife circle's 160\nBPM battle music — triplet toms against a half-time 808, one\nvocal syllable looped until it is a drum — made for dancers\nwhose feet argue with the beat at a hundred and sixty.\n`house` (Chicago 1986) is the grandparent two miles south;\nbetween them sits the ghetto house of Dance Mania, real,\nrecord-dated, and not yet a row — named below, not invented.\n\nTHE `cannot` IS PAID, 2026-08-30 (the sampling round), and its text\nis kept because it named the debt exactly: \"a footwork track's lead\nis one SAMPLED syllable re-triggered as percussion, and the registry\nholds instruments, not recordings; the square lead below stutters\nthe shape without the mouth.\" The registry offers the recording now:\n`space_voice` is people singing, on the sampler (the one vox-family\nid the patch tables leave to it — instruments.js SAMPLED_VOICES),\nand at maxHold 1 / staccato it IS the syllable re-triggered until it\nis a drum. The square lead hands the chair back to the mouth it was\nstanding in for. (This is also why the row is the catalog's vocal\nstab exemplar: not instrumental, so the door that refuses a sampled\nvoice on an instrumental record — precompose door 1 — does not bar\nit, and the same seat on `nujazz` is refused. L6 holds both.)\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nChicago 2013 — this row's own place and year. A 160-bpm modal loop with no\nchord cycle, over SCALES.blues, which has no sixth. Dorian was decoration.\nFull ruling at `holler`.",
+  "label": "Chicago 2013",
+  "voices": 2,
+  "bars": 4,
+  "near": "dnb",
+  "plan": "dance",
+  "bpm": 160,
+  "parents": {
+    "house": 0.45
+  },
+  "wants": [
+    "ghetto house (dance mania)"
+  ],
+  "instr": [
+    "space_voice",
+    "saw_wave"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "t": [
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "t": [
+      0,
+      5,
+      7,
+      0,
+      0,
+      5,
+      0,
+      7,
+      0,
+      5,
+      7,
+      0,
+      7,
+      0,
+      5,
+      7
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "pedal",
+  "tone": {
+    "wave": "square",
+    "cut": 2600,
+    "q": 1.2,
+    "atk": 0.002,
+    "rel": 0.15,
+    "gain": 0.26,
+    "verb": 0.25
+  },
+  "words": [
+    "the syllable, stuttered until it is a drum",
+    "the sub, holding one note against the toms"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(1)], [fill(1)], [rotate(3)]][s % 4]\n                    : [keep(0, 8)])"
+  }
+}

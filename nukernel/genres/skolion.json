@@ -1,0 +1,64 @@
+{
+  "note": "THE SEIKILOS EPITAPH — Tralles 100. A marble stele from Tralles in\nAsia Minor (found 1883 in the Ottoman Railway works at Aydın, now\nin the National Museum of Denmark), carrying a complete song in\nGreek vocal notation with its rhythm signs: the OLDEST COMPLETE\nSURVIVING MUSICAL COMPOSITION anywhere — twelve bars, words and\ntune and durations, \"hoson zēs phainou\": while you live, shine.\nDated 1st-2nd century CE on the letter forms; the label takes the\ncentury boundary the sources argue across. Everything hurrian\ncannot claim, this row CAN: the melody is secure, the rhythm is\nsecure, and it is the only pre-medieval row in the catalog whose\nmaterial is simply readable off the artifact.\n\nLINEAGE: the same Greek vocal notation as the Delphic paeans,\ntwo-and-a-half centuries downstream — the notation IS the edge.\nThe residue is the genre gulf: a drinking-song-sized epitaph for\none voice is not a processional paean for a trained choir.",
+  "label": "Tralles 100",
+  "voices": 1,
+  "near": "delphic",
+  "plan": "song",
+  "bpm": 96,
+  "parents": {
+    "delphic": 0.35
+  },
+  "wants": [],
+  "cannot": [
+    "the tonos argument — the song is 'either in the Phrygian octave species or the Ionian (Iastian) tonos' (the linked article's own either); the dorian mode below IS the Phrygian species note for note on this table's grid, and the row claims the notes, not the ancient name"
+  ],
+  "instr": "solo_vox",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "swing": 0.2,
+  "artic": "legato",
+  "maxHold": 3,
+  "incClamp": 2,
+  "orn": {
+    "grace": 0.15
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1.2,
+    "gain": 0.25,
+    "verb": 0.4,
+    "mouth": {
+      "$src": "MOUTHS.monody"
+    }
+  },
+  "words": [
+    "one voice: while you live, shine"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => [[], [transpose(2)], [fill(2)], [transpose(-1)]][s % 4]"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "note": "THE OXYRHYNCHUS HYMN — Oxyrhynchus 300. Papyrus Oxyrhynchus XV\n1786, found 1918 at Oxyrhynchus in Egypt, published 1922, now in\nthe Bodleian's papyrology collection: the oldest notated CHRISTIAN\nmusic — a Greek hymn to the Trinity from the end of the 3rd\ncentury, in the SAME Greek vocal notation as the Seikilos stele,\nwhich is the whole genealogical point: erudite Christian Greeks\nkeeping their classical predecessors' notation. It also closes the\ncatalog's 100 -> 540 gap. The music is entirely diatonic, an exact\noctave F to F with the final on G — which on this table's grid is\nthe mixolydian row, note for note — set syllabically with a few\nshort melismas, in an essentially anapaestic metre.\n\nLINEAGE: `skolion` at half weight — the notation system, the\nlanguage and the diatonic practice are Greek song's, inherited\nwhole. The residue is the new thing itself: a congregation's hymn\nto the Trinity is not an epitaph, and what fills the other half\n— synagogue psalmody, the unnotated first Christian centuries —\nhas no artifact to anchor.\n\nNOTE FOR NOTE, AND NOW ACTUALLY (2026-09-02, the catalogue round,\nshift 2). The comment above says the papyrus is \"entirely diatonic, an\nexact octave F to F with the final on G — which on this table's grid\nis the mixolydian row, note for note\", and then the row sang\n`DIATONIC`, which is [0,2,3,5,7,8,10] — the NATURAL MINOR, a flat\nthird and a flat sixth away from the octave species just claimed. A\n`harmony: \"modal\"` row has no chords, so `mode` colours nothing and\nthe melody is drawn from `scale` alone: MEASURED, swapping mixo ->\nionian changed not one rendered note across seeds 1-3\n(test/precompose.test.js G14b). P.Oxy. XV 1786 (Oxyrhynchus, c. 300;\nPapyrology Rooms, Sackler Library, Oxford) is the only artifact this\nrow has, its pitches are legible, and \"note for note\" has to mean the\nnotes.",
+  "label": "Oxyrhynchus 300",
+  "voices": 1,
+  "rate": 0.5,
+  "near": "sticheron",
+  "plan": "arc",
+  "bpm": 76,
+  "parents": {
+    "skolion": 0.5
+  },
+  "wants": [
+    "the psalmody of the unnotated christian centuries"
+  ],
+  "cannot": [
+    "its own rhythm signs at full fidelity — the papyrus carries diseme, stigme, hyphen and colon, a duration vocabulary richer than this table's held-or-not, and the row keeps the syllabic surface without claiming the sign-level readings"
+  ],
+  "instr": "ahh_choir",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "incClamp": 2,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2100,
+    "q": 0.8,
+    "atk": 0.05,
+    "rel": 1.8,
+    "gain": 0.24,
+    "verb": 0.6,
+    "mouth": {
+      "$src": "MOUTHS.plainchant"
+    }
+  },
+  "words": [
+    "the hymn, syllabic, an octave's compass"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4]"
+  }
+}

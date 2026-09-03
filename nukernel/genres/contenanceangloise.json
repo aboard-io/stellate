@@ -1,0 +1,63 @@
+{
+  "note": "DUNSTAPLE — London 1420: the Old Hall Manuscript, compiled for the\nroyal household chapel around 1420 — the first big surviving\nEnglish polyphonic collection, and the book the contenance\nangloise lived in before the continent had a name for it: full\ntriads, thirds and sixths sung as CONSONANCE while Paris still\nfiled them as spice. Named for Dunstaple because the continent\nnamed the sound for him (Martin le Franc's poem is the citation\nisorhythm's own row has carried as a want since it was written; isorhythm\ntakes this row as a parent today).\n\nLINEAGE: organum is the held-tenor practice every Old Hall mass\nmovement still stands on; the English discant that filled it\nwith thirds has no earlier datable anchor and is the residue.\n\nIONIAN ON PURPOSE, and it is the whole claim: the contenance\nangloise is the major third sung sweet, and this is the oldest\nrow in the catalog whose alphabet is the modern major.",
+  "label": "London 1420",
+  "voices": 3,
+  "rate": 0.5,
+  "near": "isorhythm",
+  "plan": "arc",
+  "bpm": 80,
+  "parents": {
+    "organum": 0.4
+  },
+  "wants": [],
+  "instr": "ahh_choir",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "from",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "emergent",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "incClamp": 2,
+  "orn": {
+    "pass": 0.25
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.8,
+    "atk": 0.05,
+    "rel": 1.8,
+    "gain": 0.24,
+    "verb": 0.6,
+    "mouth": {
+      "$src": "MOUTHS.motet"
+    }
+  },
+  "words": [
+    "the triplum",
+    "the mean, a third under",
+    "the tenor, holding"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v < 2 ? [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4]\n                    : [drop(12)])"
+  }
+}

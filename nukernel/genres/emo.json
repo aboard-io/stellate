@@ -1,0 +1,282 @@
+{
+  "note": "EMO [punk]. Punk's downstroked directness with the dynamics power\nballad already proved: `kits` alternates a quiet, arpeggiated verse\nagainst a loud, crashing chorus — the field that actually separates\nthis from punk, which refuses to develop AT ALL. Confessional means\nlegato where punk is staccato: a chord let ring instead of chopped.\n\n148: rushes the way punk and skiffle already do\n\nLINEAGE: the format (guitar/bass/drums, verse-chorus, three minutes)\nand the raw energy are punk's; the major-key-read vi-IV-I-V loop and\nthe song discipline underneath are rock's; the wash the loud chorus\nopens into is shoegaze's blur, thinned to a backbeat. Midwest emo's\nown tapped-arpeggio guitar language is still uncredited.",
+  "label": "Chicago 1999",
+  "near": "punk",
+  "plan": "song",
+  "bpm": 148,
+  "parents": {
+    "punk": 0.45,
+    "rock": 0.3,
+    "shoegaze": 0.25
+  },
+  "wants": [
+    "midwest emo"
+  ],
+  "instr": [
+    "clean_guitar",
+    "overdrive_guitar"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    5,
+    3,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kits": [
+    {
+      "k": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "s": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "h": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "k": [
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "s": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "h": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "x": [
+        9,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        8,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 1.6,
+    "atk": 0.006,
+    "rel": 0.6,
+    "gain": 0.29,
+    "verb": 0.22
+  },
+  "words": [
+    "the guitar, arpeggiating the changes",
+    "the second guitar, an octave under, doubling in the loud half"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "note": "MUSIC HALL — London 1892. Marie Lloyd singing \"Oh! Mr Porter\" —\na named star, a named song written for her that year, and the\nhalls themselves: a chairman, a chorus the house already knows,\nand a wink that does the work the censor won't allow.\n`musichallrock` (Muswell Hill 1966) has wanted \"music hall\" by\nname since its lineage was written — the Kinks row is this music\nwearing an amplifier — and takes the parent today.\n\nLINEAGE: `ballad` (London 1666) is the strophic tune-and-tale\nthe halls industrialized; the song-and-supper rooms between\nthem are a venue trade with no anchorable record, named below.",
+  "label": "London 1892",
+  "voices": 2,
+  "bars": 8,
+  "near": "musichallrock",
+  "plan": "song",
+  "bpm": 112,
+  "parents": {
+    "ballad": 0.35
+  },
+  "wants": [
+    "the song and supper rooms (evans's, the coal hole)"
+  ],
+  "instr": [
+    "solo_vox",
+    "upright_piano"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "harmony": "cycle",
+  "roots": [
+    0,
+    0,
+    4,
+    4,
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "swing": 0.12,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.9,
+    "atk": 0.01,
+    "rel": 0.4,
+    "gain": 0.26,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the turn, verse to the room, chorus WITH it",
+    "the piano, oom-pah and fills"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(1)], [], [fill(1), transpose(2)]][s % 4]\n                    : [keep(0, 4, 8, 12), transpose(-3)])"
+  }
+}

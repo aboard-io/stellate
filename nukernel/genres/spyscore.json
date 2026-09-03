@@ -1,0 +1,152 @@
+{
+  "note": "THE BARRY SPY SCORE — London 1962. THE JAMES BOND THEME, CTS\nStudios, 21 June 1962: Monty Norman's tune in John Barry's\narrangement, Vic Flick's guitar through an amp on the edge of\nbreakup, big-band brass punched over it. The commission is the\ngenre (the news pair's law): music written to BRAND a franchise.\nPAYS noirhop's want by name — the Bristol records were sampling\nexactly this shelf, and the edge now says so.\n\na title theme — the picture's name is the lyric",
+  "instrumental": true,
+  "label": "London 1962",
+  "voices": 3,
+  "bars": 8,
+  "near": "newsfanfare",
+  "plan": "arc",
+  "bpm": 136,
+  "parents": {
+    "swing": 0.3,
+    "jazz": 0.2,
+    "goldenagescore": 0.15
+  },
+  "wants": [
+    "the stan kenton brass book"
+  ],
+  "instr": [
+    "clean_guitar",
+    "brass_section",
+    "strings"
+  ],
+  "swing": 0.15,
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "stab",
+    "counter"
+  ],
+  "drumkit": "jazz",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.melodic"
+  },
+  "scale": {
+    "$src": "SCALES.chromatic"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "walk",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2500,
+    "q": 1.1,
+    "atk": 0.006,
+    "rel": 0.4,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the guitar, the riff with the raincoat on",
+    "the brass, hitting the chord like a door kicked in",
+    "the strings, the chromatic slink between"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[excerpt(0, 4), fill(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[fill(4), rotate(3), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(2), transpose(-2)]"
+    }
+  }
+}

@@ -1,0 +1,212 @@
+{
+  "note": "BANDA — Mazatlán 1938. A Sinaloan brass band: clarinets on the tune,\ntrumpets and trombones answering, a TUBA playing the bass line on its\nfeet, and a tambora — a big two-headed drum — with a tarola beside it.\nNo strings, no electricity, and it has been the loudest music in\nnorthwest Mexico for a century.\nTHE YEAR is Banda El Recodo's founding in Mazatlán, 1938 — which is\ndocumented and is also, deliberately, the same year as Kansas City\nbelow: two brass bands on two continents in one year is a correlation\nworth being able to see on the slider.\nTWO IDS AND A FLOOR. `tuba` was cast exactly once in 139 anchors — by\na record from 2023 — so the catalog's floor for it was 2023 and a\n1938 brass band could not have hired one. Extraction is a FLOOR OVER\nTHE CATALOG'S OWN CLAIMS and it moves when the catalog learns\nsomething: a tuba in 1938 is not a claim anyone need argue with, and\n`clarinet` (first cast by Barranquilla 1960 above) drops to 1938 with\nit for the same reason.\n\nAN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue\nround, shift 2).\nTwo rows, both earlier, both named in this row's own subject matter.\n`polka` (Prague 1837): the Bohemian couple dance carried into northern\nMexico by the German and Czech settlement of the 1880s — the SAME import\n`nortena` (Monterrey 1955) already declares at `polka: 0.3`. Banda and\nnorteña are the two Mexican children of one European dance, which is exactly\nwhy `corridotumbado` (Guadalajara 2023) takes both of them.\n`march` (Washington 1889): Sousa's \"The Washington Post\", 15 June 1889 — the\nconcert-march form Sinaloan municipal bands read off imported parts. The\nbands form in the 1880s, so this dot is the form at its height rather than\nthe moment of transfer, which is the same shape of claim `holler` makes.\nTHE WANTS BOTH STAY, and the second one is a trap worth writing down: \"son\nsinaloense\" is NOT the `son` key (Havana 1928). Cuban son and Mexican son\nshare a Spanish word and nothing else, and converting that want would be the\nworst edge in the file.\n\nTHE TAMBORA IS A KICK AND A LOW TOM AT ONCE — one drum, two heads,\none player hitting both — and the tarola's press roll is the snare.",
+  "label": "Mazatlán 1938",
+  "voices": 3,
+  "near": "nortena",
+  "plan": "dance",
+  "bpm": 128,
+  "parents": {
+    "polka": 0.35,
+    "march": 0.25
+  },
+  "wants": [
+    "german military band",
+    "son sinaloense"
+  ],
+  "instr": [
+    "clarinet",
+    "brass_section",
+    "tuba"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -2
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "counter"
+  ],
+  "roots": [
+    0,
+    4,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "fifths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "l": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "s": [
+      4,
+      0,
+      4,
+      0,
+      8,
+      0,
+      4,
+      0,
+      4,
+      0,
+      4,
+      0,
+      8,
+      0,
+      5,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2800,
+    "q": 1.1,
+    "atk": 0.01,
+    "rel": 0.6,
+    "gain": 0.28,
+    "verb": 0.36
+  },
+  "words": [
+    "the clarinets, the tune",
+    "the brass, answering in blocks",
+    "the tuba, on its feet"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(8), transpose(-5)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(4), transpose(-12)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

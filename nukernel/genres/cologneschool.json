@@ -1,0 +1,78 @@
+{
+  "note": "STOCKHAUSEN — Cologne 1956. Gesang der Jünglinge, premiered in\nthe WDR's Grosser Sendesaal on the 30th of May 1956: a boy's\nvoice from the Book of Daniel dissolved into sine tones and\nreassembled, the Cologne studio's proof that timbre itself\ncould be composed. THREE rows have wanted \"cologneschool\" by name\nsince their lineages were written — `krautrock` (Cologne 1971:\nCzukay and Schmidt were literally his students), `berlinschool`\n(Berlin 1972) and `dusseldorfschool` (Düsseldorf 1977, down the Rhine\nfrom the studio) — and all three take the parent today.\n\nLINEAGE: `serial` (Vienna 1923) is the school — Webern's\npointillism is what the sine tones are doing. Schaeffer's\nParis studio, where he apprenticed in 1952, stays a want: the\ngenealogy round declined tape music because its material is\nnot notes, and that reason holds; THIS row is electronic\nsynthesis, whose material is exactly notes — the box is a\nsynthesizer, which is why elektronische Musik is sayable\nwhere musique concrète is not.\n\"schaeffer's club d'essai\" PAID 2026-08-30, the walls-down round:\n`tapemusic` (Paris 1948) — the studio he apprenticed in, 1952,\nan edge instead of a want at last. The distinction this row's\ncomment argues (synthesis vs recording) stays true and stays\nwritten; the sampling round simply made the OTHER half sayable.",
+  "label": "Cologne 1956",
+  "voices": 2,
+  "bars": 8,
+  "near": "serial",
+  "plan": "arc",
+  "bpm": 88,
+  "parents": {
+    "serial": 0.5,
+    "tapemusic": 0.3
+  },
+  "wants": [],
+  "cannot": [
+    "the tape itself — the boy's recorded voice cut and scattered is concrète material, and the registry holds instruments, not recordings; the row says the sine choirs and the pointillist attacks, not the voice",
+    "the five loudspeaker groups — space was a composed dimension in the Sendesaal and a mix has no aisles"
+  ],
+  "instr": [
+    "square_lead",
+    "bowed_glass"
+  ],
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "pad"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "emergent",
+  "intro": "cold",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "SCALES.chromatic"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 3200,
+    "q": 0.7,
+    "atk": 0.002,
+    "rel": 0.8,
+    "gain": 0.22,
+    "verb": 0.5
+  },
+  "words": [
+    "the sine points, scattered, registers apart",
+    "the tone clouds, swelling under"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [invert(4)], [spread(3)], [reverse()]][s % 4]\n                    : [drop(10)])"
+  }
+}

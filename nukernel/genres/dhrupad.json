@@ -1,0 +1,101 @@
+{
+  "note": "---- INDIAN: TWO ROWS, AND THE RAGA IS ADMITTED --------------------\nTuning is NOT the wall here and that is measured: WORLD.md §2 puts\nHindustani shruti at 14 cents from equal temperament and Carnatic\njust intonation at 16, both at or inside the JND. The walls are\nMETRE (an anchor in this table cannot declare one, so a 12-beat\nchautal and a 10-beat jhaptal are unsayable and only 8- and\n16-matra talas fit the sixteen-step bar), TEMPO (vilambit lay runs\none matra every two seconds, and compose.js refuses any anchor\noutside 70..160 bpm),\nand gamak/meend, which WORLD.md §5.3 says has no channel.\n\nAND THE BIG ONE, which both rows carry: a RAGA IS NOT A SCALE. The\nascent and the descent are different lines, one of them missing a\nnote the other has; a vadi is emphasised and a phrase — the pakad —\nidentifies the raga to a listener in four notes. This table has one\n`scale` array read the same way in both directions, and an anchor\ncannot declare material. WORLD.md §4's primary-fact rule names\nexactly this as Hindustani's primary fact, which makes both rows\nbelow a JUDGEMENT and not a routine addition: what they ship\nhonestly is the DRONE, the modal stasis, the register-by-register\nunfolding and the tala; what they admit is the raga. A reviewer who\nreads the rule strictly should delete them and leave the traditions\ndeclared empty, and this paragraph is here so that is a decision\nsomebody makes rather than something that slid through.\n\nDHRUPAD — Delhi 1955. Ustad Nasir Moinuddin and Ustad Nasir\nAminuddin Dagar — the senior Dagar brothers — singing at All India\nRadio: an alap of forty minutes on the syllables of a mantra with\nnothing under it but two tanpuras, and then a composition in the\ntwelve-beat chautal with a pakhawaj. The oldest surviving form of\nHindustani art music and the austere one: no ornament for its own\nsake, no tabla, two voices in the low register.\nTHE AXES. Time and Development carry it: the alap has NO metre and\nunfolds register by register — mandra, then madhya, then tara — and\nthen a pulse arrives (jor) and accelerates (jhala). The register\nladder is `reg` and the section schedule below; the acceleration is\nnot available. Alphabet is one raga with no changes for the whole\nperformance, which `harmony: \"modal\"` says exactly right.\n\nLINEAGE: a declared ROOT. Dhrupad's own line runs back through the\nhaveli temple singing and the prabandha forms to a court at\nGwalior in the fifteenth century, and nothing in this catalog is\nupstream of it. `filmi` and `qawwali` are downstream cousins, not\nparents, and neither is claimed.\n\nWHO SINGS: `zemachant` — bass, no wobble at all, pressed\nrather than floated, two beats a syllable. It was written\nfor an Ethiopian dabtara and it is the nearest measured\ntract in this table to a dhrupad singer, for the same\nreasons in the same order.",
+  "label": "Delhi 1955",
+  "voices": 3,
+  "rate": 0.5,
+  "near": "gregorian",
+  "plan": "arc",
+  "bpm": 70,
+  "parents": {},
+  "wants": [
+    "prabandha",
+    "haveli sangit",
+    "the gwalior court of man singh"
+  ],
+  "cannot": [
+    "a raga is not a scale — the ascent and the descent are different lines and the pakad that identifies it is a PHRASE; this row declares one symmetrical alphabet and no material, which is the tradition's own primary fact admitted rather than faked (WORLD.md §4)",
+    "chautal — the composition is in twelve beats and an anchor in this table cannot declare a metre at all; the bar below is sixteen steps, which is not a tala",
+    "vilambit lay — a real alap moves at a matra every second or two, and compose.js refuses an anchor under 70 bpm, so what plays is madhya lay with the holds stretched as far as `maxHold` goes",
+    "gamak and meend — the shaken note and the slide between two notes are how the raga is IDENTIFIED, and there is no pitch-trajectory channel (WORLD.md §5.3). Reporting zero ornament here would be correct output; the small `grace` below is a crude proxy and is described as crude",
+    "the tanpura — the drone is four plucked strings tuned to Pa-Sa-Sa-Sa with a buzzing bridge that generates the overtones the singer tunes against. `sitar` below is the nearest plucked thing with sympathetic strings in the registry and it is a different instrument doing a different job"
+  ],
+  "instr": [
+    "solo_vox",
+    "solo_vox",
+    "sitar"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -2
+      }
+    ],
+    "else": {
+      "$v": true
+    }
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "padin",
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "tie",
+  "maxHold": 8,
+  "incClamp": 2,
+  "orn": {
+    "grace": 0.3
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 0.7,
+    "atk": 0.05,
+    "rel": 2.4,
+    "gain": 0.22,
+    "verb": 0.45,
+    "mouth": {
+      "$src": "MOUTHS.zemachant"
+    }
+  },
+  "words": [
+    "the alap, climbing a register each time",
+    "the second Dagar, answering",
+    "the tanpura, four strings, never changing"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n          ? [[drop(4)], [drop(2)], [fill(2)], [fill(2), rotate(2)]][s % 4]\n        : v === 1 ? [drop(4), transpose(-3)]\n        : [drop(12)])"
+  }
+}

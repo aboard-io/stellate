@@ -1,0 +1,201 @@
+{
+  "note": "CONFESSIONAL POP [countrypop]. Country's fifths bass and storytelling\nguitar kept whole, the banjo traded out one section at a time for a\nsynth as the arrangement modernizes — a verse that stays acoustic and\na chorus that lifts a fourth into the pop half is the same \"the\nrecord changes costume mid-song\" device psychpop already uses.\nMEASURED, 2026-09-02 (the MIDI-corpus round), and this row could not\nbe measured on the first pass at all: the corpus files this act as\n`bulk/T/taylor_swift-*.mid` and the sweep was matching `T.SWIFT.*`.\nUnder the normalised spelling there are 23 files, and Paul's list ends\nwith this name.\nWHAT HELD: tempo (n=23) p10 75 · p25 93 · MED 117 · p75 134 against the\nrow's 118, which is inside compose.js's own ±4 jitter and stands. And\nmeter — 23 of 23 in 4/4, no exceptions.\nWHAT IS EXTRAORDINARY AND IS NOW ON THE ROW: mode 23 MAJOR, 0 minor.\nNot one file in the set reads minor, which is the only unanimous mode\nsplit measured this round (the next most lopsided is chiptune's 162/58)\n— and `motion` 0.90, the HIGHEST of every set measured, with a seventh\nfraction of only 0.16. That is the whole harmonic character in three\nnumbers: plain major triads, changing nearly every bar.\nSO THE CHANGES MOVE. The row shipped roots [3,4,5,0] (IV-V-vi-I) and\nthe corpus votes VI-IV-I-V, 31 windows, twice its nearest rival — the\nvi-IV-I-V loop, which `emo` and `janglepop` also play. That is not a\ncollision to be designed around: it is the most-played four bars in\npop and three rows honestly land on it. They are separated by\neverything else — 118 against 148 against 126, a synth against two\nguitars, ionian against ionian read at three different registers, and\nthree different idiom rows.\nAND A LANE: perc 7558875996688868, a shaker running near-continuous\nsixteenths under an eighth-note hat (7272927372628363). The row had\nplain eighths and nothing under them.\n\nLINEAGE: the fifths bass, the storytelling verse and the acoustic\nguitar are countrypop's, kept whole; rock supplies the full-band\narrangement a country radio ballad graduates into; synthpop supplies\nthe polished electronic chorus lift. Nothing about this reads as a\nmissing ancestor — it is countrypop modernizing itself in real time.\n\nTHE ONE GENRE HERE THAT GAINS A CHAIR RATHER THAN SWAPPING ONE. The\nother three singers this round arrived by correcting a cast — a\nsection standing in for a soloist, a string machine standing in for a\nthroat — but a confessional record's problem was simpler: both of its\ninstruments are its identity (the acoustic guitar countrypop hands it\nwhole, and the synth that IS the turn from acoustic to pop), so there\nwas nothing a voice could take without taking the record with it.\nSo the singer SITS BESIDE, in unison with the guitar: voice 2 is\nwritten at voice 0's register with voice 0's word, which is one line\nplayed and sung at once — the oldest arrangement there is, and the\nonly one that costs the guitar nothing. `reg` says that explicitly\nrather than letting `v` run on to a third octave, where no throat is.\n\nvi-IV-I-V, the corpus's own vote (31 windows, twice its rival)\n\nthe shaker, measured: near-continuous sixteenths under the hat\n\nWHO SINGS: close, plain, breathy, a foot from the microphone —\nthe wobble arrives late and never gets wide, because a voice\ntelling you something does not perform the note",
+  "label": "Nashville 2008",
+  "voices": 3,
+  "near": "countrypop",
+  "plan": "song",
+  "bpm": 118,
+  "parents": {
+    "countrypop": 0.4,
+    "rock": 0.3,
+    "synthpop": 0.3
+  },
+  "wants": [],
+  "instr": [
+    "steel_string_guitar",
+    "polysynth",
+    "solo_vox"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": {
+      "$v": true
+    }
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    5,
+    3,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "fifths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "p": [
+      7,
+      5,
+      5,
+      8,
+      8,
+      7,
+      5,
+      9,
+      9,
+      6,
+      6,
+      8,
+      8,
+      8,
+      6,
+      8
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 1.1,
+    "atk": 0.005,
+    "rel": 0.6,
+    "gain": 0.27,
+    "verb": 0.24,
+    "mouth": {
+      "$src": "MOUTHS.confessional"
+    }
+  },
+  "words": [
+    "the guitar, telling the story",
+    "the synth, answering a fourth up — the turn from acoustic to pop",
+    "the voice, singing the story with the guitar"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

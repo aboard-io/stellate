@@ -1,0 +1,170 @@
+{
+  "note": "SOFT FOLK [James Taylor]. A folk duo's two-voice discipline thinned to\none guitar and one singer, in the major pentatonic a folk melody\nactually sings in — countrypop's warm, bright optimism colours the\ntop, plainer than folkduo's parallel-third harmony because there is\nno second voice to harmonize WITH. Carolina fingerstyle guitar, the\nactual technique this whole sound is built on, is the missing rung.\nJAMES TAYLOR, REVISITED — 2026-09-02, and it is the one revision in\nthis round that Paul asked for by name: \"Please revisit James Taylor.\"\nMEASURED over the 18 corpus files this act and Carly Simon have\nbetween them (bulk/J/J.TAYLOR.*, bulk/C/C.SIMON.*, plus the\n\"James Taylor\" and \"Carly Simon\" spellings). Tempo (n=18): p10 66 ·\np25 75 · med 99.5 · p75 114 — the named record, \"Sweet Baby James\",\nsits at 88 inside that band and the row keeps it.\nWHAT THE MEASUREMENT BROKE IS THE HARMONY, and it broke it badly. This\nrow shipped `harmony: \"modal\"` with `scale: SCALES.majpent` and NO\nCHANGES AT ALL — one mode, five notes, nothing moving. The corpus says\nthe opposite twice over: `seventh` 0.52, so more than half of every\nmeasured bar carries a seventh chord, and `motion` 0.83, the highest\nof any set measured this round — these chords are moving nearly as\nfast as a bar can carry them. A fingerstyle guitarist's whole\nvocabulary is major sevenths and minor sevenths moving under a plain\ntune, and the row was a pentatonic drone with a guitar on it.\nSo the row becomes a CYCLE with the sevenths written out. The\npentatonic scale stays on the TUNE (`scale`), because the melody\nreally does step through five notes — measured step fraction 0.62,\nmean interval 2.46, the plainest line of the round — and that is the\nsplit this box exists to be able to say: a simple tune over rich\nchanges. `bassHold` measured 3.99 sixteenths against a rock record's\n2.0, so the bass walks slowly and `bassStyle: \"walk\"` says it.\n(The `near` neighbour moves with the harmony: a row with changes is\nno longer nearest to the one that has none.)\n\n88 is \"Sweet Baby James\", a hair up from Tapestry, and it sits\nbetween the corpus's p25 of 75 and its median of 99.5\n\nTHE CHANGES THE CORPUS FOUND: Imaj7 - vi7 - IVmaj7 - V7, four bars,\nthree sevenths in it. `harmony` is a cycle now and `prog` is what it\ncycles; the tune above them stays major-pentatonic.",
+  "label": "Chapel Hill 1970",
+  "bars": 8,
+  "near": "singersongwriter",
+  "plan": "song",
+  "bpm": 88,
+  "parents": {
+    "folkduo": 0.45,
+    "countrypop": 0.3,
+    "crooner": 0.25
+  },
+  "wants": [
+    "carolina fingerstyle"
+  ],
+  "instr": [
+    "steel_string_guitar",
+    "steel_string_guitar"
+  ],
+  "drumkit": "brush",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "from",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "prog": [
+    {
+      "d": 0,
+      "q": "maj7"
+    },
+    {
+      "d": 5,
+      "q": "m7"
+    },
+    {
+      "d": 3,
+      "q": "maj7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    }
+  ],
+  "bassStyle": "walk",
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "legato",
+  "intro": "solo",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 0.8,
+    "atk": 0.01,
+    "rel": 1,
+    "gain": 0.22,
+    "verb": 0.32
+  },
+  "words": [
+    "the guitar, fingerpicked, the tune",
+    "the second guitar, a third under"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(-4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

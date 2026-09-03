@@ -1,0 +1,93 @@
+{
+  "note": "DRONE. The genre that is a refusal: rate 0.25, so one loop of the phrase\ntakes four bars, `tie` so consecutive same-pitch notes fuse into one long\none, a pedal bass that never leaves the tonic, and a reverb you could lose\na coat in. The line is there — thinned to half its notes — precisely so\nthat it is not a pad-only genre: something has to move or there is nothing\nto listen TO, and the ramp (clamped, reversing) is what moves it.\n\nnamed \"New York 1964\" — La Monte Young's Theatre of Eternal Music:\nstrings holding tones over a pedal that never moves.\n\nLINEAGE: NO LONGER A ROOT (2026-08-29). This comment used to end\n\"none of which the catalog holds\", and two of the three have been\nheld for a while: `organum` landed 2026-08-21 and this row went on\nasking for it, which is what a stale `wants` looks like. Both are\npaid now. Organum's sustained fifths are the claim Young made\nhimself (he named Perotin), and `dhrupad` is the Hindustani half —\nwith one caveat kept rather than tidied away: he began studying\nunder Pran Nath in 1970, six years after this row's label, so the\ntanpura reached the Theatre of Eternal Music through records and\nthrough Riley before it reached it through a teacher. Gagaku is\nstill owed.\n\"gagaku\" PAID 2026-08-29 (Nara 752): Young named the shō's held\ncluster among his sources out loud, and the weight comes off\nboth older claims evenly — the drone's three ancestries are now\nall in the table, which no other row this old can say.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nLa Monte Young, New York 1964 — the row's own anchor, and a drone has no\nmode: the whole refusal this row is built on is a pedal that never leaves\nthe tonic (`harmony: \"modal\"`, no kit, a bass that does not move). Nothing\nin the record can state a sixth, so nothing in it can be dorian rather than\nnatural minor. The field now names the default alphabet it was always\nplaying — MEASURED, dorian -> aeolian moved not one rendered note.\n\nthe drone IS the pad; it goes first",
+  "label": "New York 1964",
+  "rate": 0.25,
+  "plan": "arc",
+  "bpm": 70,
+  "parents": {
+    "organum": 0.4,
+    "dhrupad": 0.35,
+    "gagaku": 0.25
+  },
+  "wants": [],
+  "instr": "slow_strings",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 2
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {},
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "intro": "padin",
+  "artic": "tie",
+  "incClamp": 3,
+  "incMode": "reverse",
+  "bassStyle": "pedal",
+  "bassGrid": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 900,
+    "q": 1.8,
+    "atk": 0.35,
+    "rel": 3.2,
+    "gain": 0.22,
+    "verb": 0.9
+  },
+  "words": [
+    "the drone",
+    "a line that barely moves"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "sweep"
+  ]
+}

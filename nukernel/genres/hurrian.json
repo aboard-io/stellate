@@ -1,0 +1,79 @@
+{
+  "note": "THE HURRIAN HYMN TO NIKKAL — Ugarit 1400 BC. Tablet h.6, excavated\nat Ras Shamra, now in the National Museum of Damascus: the oldest\nsurviving SUBSTANTIALLY COMPLETE notated music in the world —\nHurrian words to the goddess of orchards over Akkadian musical\ninstructions for a singer with a nine-stringed sammûm lyre, signed\nby the scribe Ammurabi. The colophon names the tuning: nitkibli,\nthe nid qabli cycle of the Babylonian tuning texts — which is a\nDIATONIC seven-note species, so the alphabet below is the tablet's\nown claim, not a Western convenience.\n\nLINEAGE: `urlyre` and honestly so — the notation names string\npairs of the Mesopotamian lyre, the tuning procedure survives on\na tablet from Ur, and the instrument in the colophon is the same\nfamily Woolley lifted out of the cemetery a millennium earlier.\nThe residue is Ugarit's own: a Hurrian cult song is not a Sumerian\nburial, and the weight says so.",
+  "label": "Ugarit 1400 BC",
+  "voices": 2,
+  "rate": 0.5,
+  "near": "urlyre",
+  "plan": "arc",
+  "bpm": 72,
+  "parents": {
+    "urlyre": 0.5
+  },
+  "wants": [],
+  "cannot": [
+    "the melody as ONE melody — the reading is CONTESTED: at least five rival transcriptions of h.6 exist (Kilmer, Duchesne-Guillemin, Wulstan, West, Dumbrill among them), 'each yielding entirely different results' in the linked article's own words, so this row sings the tuning and the forces and claims NO transcription as the tune",
+    "the sammûm itself — same stand-in admission as urlyre, one row up"
+  ],
+  "instr": [
+    "solo_vox",
+    "harp"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 5,
+  "incClamp": 2,
+  "orn": {
+    "grace": 0.25
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2100,
+    "q": 0.9,
+    "atk": 0.03,
+    "rel": 1.5,
+    "gain": 0.24,
+    "verb": 0.5,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the singer, the zaluzi prayer",
+    "the sammûm, in nid qabli"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n        ? [[], [fill(2)], [transpose(2), fill(2)], [transpose(-1)]][s % 4]\n        : [keep(0, 4, 8, 12), transpose(-2)])"
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "note": "HOUSE [acid]. Acid is modal with a 303 and no chords; house is a SEVENTH\nLOOP with piano stabs — the prog is the genre. ii7–V7–Imaj7–vi7 in a real\nmajor key, a stab part on the phrase's own rhythm, and the open hat on\nthe offbeat doing the work acid's sixteenth hats did.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nMarshall Jefferson, \"Move Your Body\" (Trax, Chicago, June 1986): piano\nhouse's bass is a keyboard line, played by the same hands as the piano.\n\nITS OWN ARPEGGIO (2026-08-31): the Chicago line lifts; it is dance music that goes up.\n\nnamed \"Chicago 1986\" not 1985 — the anchor's identity is the PIANO\nSTAB over the four, and that is Move Your Body's year.\n\nLINEAGE: house is disco's revenge — Knuckles re-editing disco\nrecords for the Warehouse until the edit became the genre — with\ngospel's piano hands (the stab IS a church chord) and funk's\nsyncopation in the machines; Italo disco supplied the drum machine\nhalf and is missing.\n\"italo disco\" PAID 2026-08-29 (Milan 1982): Knuckles played\nDirty Talk at the Warehouse and Chicago's record pools imported\nitalo by the crate when disco's American supply dried up — the\nweight comes off disco's near-monopoly, which was covering for\nthe missing Italian step.\n\nTHE JUNO HOLDS THE CHORD AND THE PIANO PLAYS THE RIFF, which is the\nway round a Chicago record is made: voice 0 is the one that voices\nthe chord, and a house stab is a poly (GM 91 -> the parent's juno60, chorus\nand all), with the piano — still the sound of \"Move Your Body\" —\nriding on top of it as the line. It was the other way round, so a\ngrand piano was the first thing you heard and the synth was buried.\n\nChicago's four on the floor is a 909's\n\nTHE CHORD SITS ABOVE THE BASS, NOT UNDER IT (2026-08-28, Paul:\n\"Chicago house is a mess. Hyperlow bass. Melody in piano.\"). Read\nsymbolically, `v => v - 1` centred voice 0 — the STAB, the chord that\nIS this genre — at MIDI 36, so the poly voiced E1..D2 UNDERNEATH a\nbass that lives at A1..F#2. Nothing was hyperlow except the chord; the\nbass was simply buried by four notes of juno sitting on top of it. The\nstab comes up two octaves to ctr 60 (C3..D4, where a Chicago piano\nchord is actually played) and the piano lead stays at ctr 72 above it,\nwhich is the octave of separation the comment above always claimed.\nA RAMP WOULD HAVE THROWN THE REST AT THE CEILING — the same arithmetic\ntechno was fixed with the same day — so this is CAPPED: nothing above\nreg 1, and every voice past the second sits centred at 0.\n\nTHE ANCHOR NAMES THE TWO CHAIRS IT OWNS, and that is the whole of it\n(2026-08-28; this read [\"stab\",\"lead\",\"counter\",\"counter\",\"counter\"]\nfor three days). The three trailing `counter`s were padding against a\nfault that is now fixed at its source: `partOf` read this table MODULO\nits length, so two entries dealt stab/lead/stab/lead/stab across the\nsinger and the two guests a precomposed record adds — the backing\nchoir landed in chordLock beside the poly, and PARTS.lead's +12 on top\nof a layer's own +1 register sent the guest riff to E5..F#6, screaming\nan octave over the piano. Lengthening the array bought house alone out\nof it while rock's guest still read as a `riff` and cumbia's voices\n3-5 still wrapped onto 0-2. kernel.js partOf now REFUSES to wrap and\ndocument.js hands the kernel each chair's own `cast.part`, so a guest\nis cast by the anchor it came from and these three entries address\nnobody: house seats two chairs and `G.voices` says two. Byte-identical\nto the padded form — the entries past the second were unreachable the\nmoment the wrap went.\n\n...AND THE WORDS NAME THE RIGHT CHAIR NOW. Voice 0 is the POLY and\nvoice 1 is the grand, so \"the piano stabs\" was written over the juno\nand the piano was called \"the lead\" — the box was describing a record\nit does not play.",
+  "bassInstr": "bass_lead",
+  "seqArp": "arpup",
+  "label": "Chicago 1986",
+  "near": "acid",
+  "plan": "dance",
+  "bpm": 122,
+  "parents": {
+    "disco": 0.55,
+    "italodisco": 0.15,
+    "gospel": 0.15,
+    "funk": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "polysynth",
+    "bright_yamaha_grand"
+  ],
+  "drumkit": "tr909",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "formula",
+    "src": "v => Math.max(0, 1 - v)"
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "lead"
+  ],
+  "roots": [
+    1,
+    4,
+    0,
+    5
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 1,
+      "q": "7"
+    },
+    {
+      "d": 4,
+      "q": "7"
+    },
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 5,
+      "q": "7"
+    }
+  ],
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1.6,
+    "atk": 0.004,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.18
+  },
+  "words": [
+    "the juno holds the seventh, on the tune's own rhythm",
+    "the piano riff over the loop"
+  ],
+  "word": {
+    "kind": "const",
+    "n": {
+      "$src": "[]"
+    }
+  }
+}

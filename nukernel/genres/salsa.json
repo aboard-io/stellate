@@ -1,0 +1,256 @@
+{
+  "note": "SALSA — New York 1973, and the label says New York because that is\nwhere the tape is: Fania's sessions, made by Puerto Rican and Cuban\nmusicians in Manhattan, and the map should not pretend otherwise. This\nis the round's one anchor whose city and whose music point at\ndifferent continents, and saying so is cheaper than moving the dot.\nTHE YEAR is the Fania All-Stars at the Cheetah on tape and Willie\nColón and Héctor Lavoe at their peak — the moment the word \"salsa\"\nstops being a marketing term and starts naming a sound.\nWHAT IT IS, IN FIELDS: a piano MONTUNO (a two-bar arpeggiated figure\nthat never stops), trombones instead of trumpets, and a minor-side\nharmony — which is the audible difference between this and mambo,\nwhich is a brass band in major sitting on one chord.\n\nLINEAGE: son is the skeleton and mambo is the horn writing; the\nthird parent is the New York end of it — boogaloo and the R&B the\nNuyorican bands grew up on, which `funk` is the nearest anchor to\nand is named at a small weight BECAUSE it is a resemblance and not a\ndescent. `latinpop` (Miami 2001) is this anchor's CHILD and its\nparents line is corrected below.\n\nTHE BELL IS THE HAT LANE — the campana's quarter notes with the\nand-strokes between them, which is what a salsa record is counted by\n— and the congas take the toms. Same compromise as the mambo above,\none lane over.",
+  "label": "New York 1973",
+  "voices": 3,
+  "bars": 8,
+  "near": "mambo",
+  "plan": "song",
+  "bpm": 100,
+  "parents": {
+    "son": 0.4,
+    "mambo": 0.35,
+    "funk": 0.25
+  },
+  "wants": [
+    "boogaloo",
+    "plena",
+    "bomba"
+  ],
+  "instr": [
+    "bright_yamaha_grand",
+    "trombone",
+    "trumpet"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    0,
+    0,
+    3,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "m": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1
+    ],
+    "l": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      9,
+      0,
+      5,
+      0,
+      8,
+      0,
+      5,
+      5,
+      9,
+      0,
+      5,
+      0,
+      8,
+      0,
+      5,
+      6
+    ]
+  },
+  "fill": {
+    "m": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2800,
+    "q": 1.2,
+    "atk": 0.005,
+    "rel": 0.45,
+    "gain": 0.28,
+    "verb": 0.22
+  },
+  "words": [
+    "the piano montuno",
+    "the trombones, in the holes",
+    "the trumpet, on top of them"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(4), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(7), drop(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

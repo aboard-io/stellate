@@ -1,0 +1,146 @@
+{
+  "note": "P-FUNK — Detroit 1975. Mothership Connection, cut at United\nSound Systems in Detroit, March to October 1975: Parliament\nwith Bootsy's space bass and the Horny Horns, gospel chants\nabout a chrome spaceship — funk grown into a mythology with its\nown cosmology and stage crew. `gfunk` (Los Angeles 1992) has\nwanted \"p-funk by name\" since its lineage was written — Dre's\nwhole harmonic book is this band's — and takes the parent\ntoday.\n\nLINEAGE: `funk` (Cincinnati 1967) is the chassis; `psychrock`\n(San Francisco 1966) is Funkadelic's acid half; `acidrock`\n(London 1967) is where Eddie Hazel's guitar goes to church.\n\nthe chant is a LINE, not a pad — a congregation hook is sung in\nunison, and the pad reading priced the record at 43.05 against\nG12d's ceiling of 43 (measured; the unison is also the truer fact).\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nDetroit 1975 — this row's own place and year. Modal over a one-chord vamp,\nand SCALES.blues has no sixth: dorian named a degree the row cannot play.\nFull ruling at `holler`.\n\nWHO SINGS: the gospel choir aboard the mothership.",
+  "label": "Detroit 1975",
+  "voices": 3,
+  "bars": 8,
+  "near": "funk",
+  "plan": "song",
+  "bpm": 100,
+  "parents": {
+    "funk": 0.4,
+    "psychrock": 0.2,
+    "acidrock": 0.2
+  },
+  "wants": [
+    "sun ra's arkestra, the costume's own teacher"
+  ],
+  "instr": [
+    "polysynth",
+    "brass_section",
+    "ohh_voices"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "artic": "staccato",
+  "maxHold": 3,
+  "swing": 0.18,
+  "bassStyle": "sixteenths",
+  "fx": [
+    "wah"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 1.3,
+    "atk": 0.01,
+    "rel": 0.5,
+    "gain": 0.26,
+    "verb": 0.35,
+    "mouth": {
+      "$src": "MOUTHS.gospelchoir"
+    }
+  },
+  "words": [
+    "the moog bass, the low end as a lead",
+    "the horns, punctuation from the horny section",
+    "the chant — the hook is a congregation"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [rotate(2)]][s % 4]\n                    : v === 1 ? [[drop(4)], [fill(2)]][s % 2]\n                    : [keep(0, 8), transpose(2)])"
+  }
+}

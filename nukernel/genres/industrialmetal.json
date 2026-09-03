@@ -1,0 +1,180 @@
+{
+  "note": "INDUSTRIAL METAL [deathmetal]. Death metal's chromatic riff wall and\nlocrian ♭5-is-home scale, cited whole, played to a QUANTIZED machine\nkick instead of a drummer's blast — the field that separates a band\nplaying to a sequencer from a band playing itself, which is exactly\nwhat Kraftwerk's own inheritance argues.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nMinistry, \"Stigmata\" (*The Land of Rape and Honey*, Sire, Chicago 1988):\nthe bass doubles the sequencer.\n\nLINEAGE: the chromatic riff wall and the ♭5-is-home locrian colour\nare death metal's own, cited whole; dusseldorfschool supplies the machine-\nsequenced, unwavering kick underneath in place of a drummer; punk\nsupplies the raw, unsubtle directness. EBM's own club-industrial\nhalf is the missing rung — this anchor is the metal side of that\nsame argument.\n\"EBM\" CAME OFF THIS LIST UNPAID 2026-08-29, which needs a sentence\nbecause `ebm` IS an anchor. It is Chicago 1989, a year AFTER this\nrow's own label, and the music this row wants is the 1980 Belgian\nand German one — DAF, Front 242 — which the Wax Trax row is a later\nAmerican reading of. A parent edge pointing at a younger anchor\nwould be a date the graph cannot hold, so the debt goes here.\n...AND THE WAX TRAX ROW ARRIVED 2026-08-30, which settles it from the\nother end. That sentence above was written when \"the Wax Trax row\"\nwas a figure of speech; `industrialdance` is now Chicago 1981, an anchor,\nSEVEN YEARS OLDER than this one, and it is not a later reading of\nanything — it is this band's own label and this band's own first\nrecord. Ministry (band): Jim Nash \"suggested Jourgensen record a\nsingle and form a touring band, which Jourgensen decided to call\nMinistry\", and Cold Life came out \"in late 1981 on Wax Trax! in the\nUS\". Land of Rape and Honey is what that apartment record became\nafter seven years, so the edge is the largest single share here: the\nriff wall is death metal's, but the ROOM is Chicago 1981's.\n...AND THE METAL PARENT BROKE THIS ROW'S OWN LAW (2026-09-02, the\ncatalogue round). Eight lines above, this row refuses `ebm` because\nit is \"a year AFTER this row's own label\" and \"a parent edge pointing\nat a younger anchor would be a date the graph cannot hold\" — and then\ndeclared `deathmetal`, Tampa 1990, TWO years after *The Land of Rape\nand Honey* (Sire 25799, Chicago, October 1988). The guitar wall on\nthat record is thrash — Slayer's *Reign in Blood*, Def Jam, 1986 —\nand the catalogue has no thrash row, so the share goes to the metal\nrow that does exist and is older, `heavymetal` (Workington 1969), and\nthe exact rung is named on the `wants` list instead of being smuggled\nin through a row from the wrong year. The locrian scale cited in the\nheader is a scale, not an edge; it stays.",
+  "bassInstr": "bass_lead",
+  "label": "Chicago 1988",
+  "bars": 8,
+  "near": "deathmetal",
+  "plan": "song",
+  "bpm": 126,
+  "parents": {
+    "industrialdance": 0.35,
+    "heavymetal": 0.3,
+    "dusseldorfschool": 0.2,
+    "punk": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "distortion_guitar",
+    "metal_pad"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": [
+    0,
+    1,
+    3,
+    5,
+    6,
+    8,
+    10
+  ],
+  "roots": [
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    4,
+    4
+  ],
+  "artic": "staccato",
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 1400,
+    "q": 2.8,
+    "atk": 0.002,
+    "rel": 0.3,
+    "gain": 0.3,
+    "verb": 0.14
+  },
+  "words": [
+    "the riff, chromatic, on the machine's grid",
+    "the bass synth, doubling an octave under"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[only(\"gate\", fill(1))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[transpose(-7)]"
+    }
+  },
+  "fx": [
+    "crunch"
+  ]
+}

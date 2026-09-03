@@ -1,0 +1,232 @@
+{
+  "note": "SOCA — Port of Spain 1979. Lord Shorty's \"soul of calypso\": the same\nisland's carnival music with the tempo up, a kick on every beat and a\nhorn section written like a funk band's. It is where calypso goes when\nit meets a rhythm section that has heard disco.\nTHE YEAR is the turn of the decade when the word stuck and the form\nstopped being one man's experiment.\nWHAT SEPARATES IT FROM CALYPSO IN FIELDS: the kick. Calypso above has\nthree kicks in sixteen steps and soca has FOUR ON THE FLOOR, plus a\ntempo twelve bpm faster and a synthesiser where the pan was.",
+  "label": "Port of Spain 1979",
+  "voices": 3,
+  "near": "disco",
+  "plan": "dance",
+  "bpm": 132,
+  "parents": {
+    "calypso": 0.55,
+    "disco": 0.25,
+    "funk": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "brass_section",
+    "clean_guitar",
+    "polysynth"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "counter",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    "o": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 3000,
+    "q": 1.3,
+    "atk": 0.005,
+    "rel": 0.35,
+    "gain": 0.28,
+    "verb": 0.22
+  },
+  "words": [
+    "the horns, in stabs",
+    "the guitar, chopping between them",
+    "the synth, holding the pad"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"acc\", rotate(2))]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

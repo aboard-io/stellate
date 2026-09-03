@@ -1,0 +1,156 @@
+{
+  "note": "YACHT ROCK [Christopher Cross]. Toto and Steely's session-band\ncraftsmanship folded into a plainer, more Motown-major-key song than\neither — the smooth-radio middle where studio chops meet a soul\nchanges-sense. The Doobie Brothers/Michael McDonald crossover this\nsound is actually named for has no anchor of its own yet.\n\nTHE AOR PARENT WAS THREE YEARS YOUNGER (2026-09-02, the catalogue\nround). Christopher Cross's debut (Warner Bros. BSK 3383, cut in Los\nAngeles, released December 1979) is the record this row is named\nfor; `aor` is Los Angeles 1982, which is the radio FORMAT built\naround records like it, not the thing it came out of. The session\ncraftsmanship it actually descends from is the Bay Area's —\n`coastrock` (Sausalito 1977), the Record Plant, Rumours — two years\nbefore this record rather than three years after it.",
+  "label": "Austin 1979",
+  "near": "aor",
+  "plan": "song",
+  "bpm": 100,
+  "parents": {
+    "coastrock": 0.4,
+    "jazzrock": 0.3,
+    "detroitsoul": 0.3
+  },
+  "wants": [
+    "blue-eyed AOR"
+  ],
+  "instr": [
+    "electric_piano",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 1,
+    "atk": 0.01,
+    "rel": 0.9,
+    "gain": 0.25,
+    "verb": 0.3
+  },
+  "words": [
+    "the EP, comping",
+    "the guitar, the hook, an octave up"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(12), drop(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

@@ -1,0 +1,297 @@
+{
+  "note": "======================================================================\nTHE NEWS THEME — added 2026-08-28\n======================================================================\nPaul: \"I want you to add 1970s news theme and 2000s news theme as\ngenres.\"\nThey are genres, and the catalogue's own definition is why. Every other\nanchor here is a music somebody chose to listen to. These two are a\nmusic nobody chose and everybody in a country heard at the same minute\nevery night for a decade — which makes the idiom harder, not softer:\na cue that has to be recognised in two seconds through a wall, by\npeople who are not listening, has less room for invention than a pop\nsingle and therefore a much more fixed grammar. That grammar is the\nthing being written down twice below, thirty-six years apart, doing the\nsame job with the technology of two different decades.\n\nNEWS FANFARE — London 1970, and the year is a broadcast identity rather\nthan a decade's midpoint, which is this file's standing rule for a\nlabel. On 14 September 1970 the BBC's Nine O'Clock News went on the air\nas the corporation's flagship bulletin; by then ITN's News at Ten had\nbeen opening every night for three years with Johnny Pearson's \"The\nAwakening\" — timpani, then brass, over the Big Ben strike — written for\nKPM, a LIBRARY. That last word is the fact about this music: nobody's\nband, an arranger's score, session players hired for the morning, a\nstopwatch, and a cue whose only job is to be identified instantly from\nthe next room. 1970 is the year the sound stops belonging to one\nprogramme and becomes the schedule's — the same brass-and-timpani\ngrammar is on ITN, on the BBC, on the Tagesschau, on the American\nevening bulletins, everywhere at once, because everyone is buying from\nthe same handful of London and Munich library houses.\nTHE IDIOM, SAID AS FOUR CHAIRS: a fanfare that CLIMBS and lands, a\nstring ostinato that refuses to develop, a timpani hammering the root\nof the bar, and the held chord the climb lands on. Every one of those\nfour is an OPERATOR in this file rather than an adjective about it,\nwhich is the whole reason the anchor is writable at all:\n  the fanfare   `fill(8), rotate(7)` — a fanfare ANNOUNCES, so it has\n                to be on the downbeat, and the subject this box writes\n                usually is not (MEASURED over eight seeds: its first\n                gate lands on step 0, 2 or 7). fill(8) guarantees a\n                gate on step 7 and 15, rotate(7) drags those onto beats\n                1 and 3, and the figure that follows is whatever the\n                subject's own first move was — announced.\n  the ostinato  `spread(0.5), fill(2)` — an ostinato is NARROW and it\n                is CONSTANT. Halving every interval means the cell\n                cannot grow into a tune — MEASURED over eight seeds the\n                strings' widest move inside a bar is six semitones and\n                is usually two, where the brass reach eleven — and\n                filling the gate means it is simply always there: ten\n                to twelve of the sixteen steps, every bar, for the\n                length of the cue.\n                `excerpt(0, 4)` was the first draft of this line and\n                the reason the note is here: an excerpt IS the honest\n                spelling of \"a cell repeated\", and it rendered a SILENT\n                CHAIR, because the subject is sparse and its first four\n                steps are four rests. The gate said so immediately,\n                which is the argument for reading the notes.\n  the timpani   `spread(0), fill(4), rotate(3)` — flatten every degree\n                to the pivot and the line is a MONOTONE, which harm()\n                then moves to the root of each bar; fill(4) puts a gate\n                on the last sixteenth of every beat and rotate(3) drags\n                all four onto the beats themselves, so the hammer is\n                there whatever subject walked in. That is a timpanist\n                exactly: two drums, the floor of the harmony, nothing\n                else. MEASURED over eight seeds, chair 2's widest move\n                inside a bar is ZERO semitones and its distinct-pitch\n                count over the whole cue is exactly FIVE — one per\n                chord in the progression — on every one of them.\n  the climb     `period`, argued at the bottom of the entry where it is\n                written, because it is the one claim in the label that\n                a reader can check against a number.\nAND THIS IS WHERE THE TIMPANI FINALLY GETS PLAYED. romantic (Vienna\n1876) says in its own comment that timpani \"exist in the registry but\nthe kit has twelve fixed lanes and no timpani file; casting one as a\npitched voice would make it melodic, so it waits for a PERC lane rather\nthan being faked.\" That reasoning is right about a symphony and wrong\nabout a news theme, and the difference is the point: here the timpani IS\nsupposed to be pitched — it plays the tonic and the fifth, it is the\nreason the cue sounds like news and not like light music — and spread(0)\nis the operator that makes a pitched chair play one note. Vienna 1876\nstill wants its perc lane. London 1970 does not need it.\nTWO STRING PATCHES, ON PURPOSE. `strings` plays the ostinato and\n`slow_strings` holds the landing chord, and casting one patch for both\nwould be wrong twice over: the fast ensemble sample would swell where it\nshould chatter, and the slow one would chatter where it should swell.\nThose two patches ARE the two things a string section does in this\nmusic, and the section really did play both parts on the same date.\nHARMONIC MINOR, and it is load-bearing rather than atmospheric: the\nraised seventh is what makes the climb LAND. Natural minor rises to a\nflat seventh and drifts; harmonic minor rises to a leading tone and\narrives, which is the difference between a bed and a fanfare.\nLINEAGE. The orchestra itself — brass over timpani over strings, built\nto a swell — is `romantic`'s, one war and one recording industry later.\nThe BRASS WRITING is `swing`'s: library composers of this generation\nwere dance-band arrangers, and a section punching a chord in unison on\nthe beat is Kansas City's invention, not Vienna's. What makes it 1970\nrather than 1935 is `funk` — there is a rhythm section under the\norchestra, a backbeat and a driving bass, and that combination is\nexactly what library music sold. And `concerto` for the FORM: the cue\nreturns to its opening material unchanged the way a ritornello does,\nbecause a viewer has to recognise it, which is the one formal demand a\nBaroque tutti and a news theme genuinely share.\n\na library cue — an orchestra over a rhythm section, no singer\n\nPAID 2026-08-29, the debts round: \"military march\" is\n`march` (Washington 1889) — the fanfare's spine in a blazer.\n\"library music\" PAID 2026-08-30, the folk-floor round:\n`photoplay` (Cleveland 1913) — the cue book KPM's shelf\ndescends from; the tradition finally predates its own peak.\n\n\"crime jazz\" PAID 2026-09-01, the soundtrack round: `crimejazz`\n(Los Angeles 1955) — the big band walking into the pictures,\nfifteen years before this cue borrowed its brass punch. The want\nstring stays in place per house style at other PAID sites.\n\ni i VI vii° | i iv V i — the fanfare's own eight bars, and degree 6 in\nHARMONIC minor is the raised seventh, so bar 4 is the leading-tone\nchord and not a flat-VII: it leans back onto the tonic instead of\nsliding away from it, which is the whole reason this anchor is not in\naeolian. The second half is the cadence the first half exists to set\nup, and the V is the only chord in the row that is not a triad —\n`dom7` is what makes bar 8 sound like an ending rather than a stop.\n\nTHE DRIVE. Kick on 1 and the and-of-2, backbeat on 2 and 4, eighths on\nthe hat, and the low tom doubling the timpani on the two downbeats so\nthe pitched drum has a struck drum agreeing with it. The fill bar is\nthe roll into the landing — the snare closes to sixteenths and the\ncrash lands on the bar 8 downbeat, which is where the cue arrives.\n\nTHE CLIMB, WRITTEN AGAINST THE CHORDS RATHER THAN WITH THEM, and it\ntouches only the brass: the ostinato's whole job is to be the thing\nthat does not change while everything above it does.\n`diatonic` makes a line follow the progression by DEGREES, folded to\nthe nearer direction — kernel.js, \"up 3 or down 3, never up 6\" — so\nthe melody's contour IS the progression's contour, and i-i-VI-VII-i\nmakes a tune sag in exactly the four bars a fanfare is supposed to\nclimb. This vector is the correction: each entry is the degree that\nputs bar b one step above bar b-1 after the near-fold has had its say.\nMEASURED, chair 0's top note per bar over the first six bars:\n  seed 1  70 72 74 75 77 80      seed 4  77 79 80 82 84 87\n  seed 3  67 68 70 72 74 77      seed 7  68 70 72 74 75 79\n— strictly rising on all eight seeds tried, ten or eleven semitones\nof climb, which is the thing the label claims and the notes now say.\nBAR 7 CANNOT BE THE PEAK, and this is a fact about the box rather\nthan a compromise about the music: the near-fold sends a degree-4\nroot DOWN a third, so the highest note this schedule can reach over\nthe dominant (74) is below the LOWEST it can reach over the\nsubdominant (75) — there is no entry in [-3..+2] that climbs through\nit, and +3 folds the whole line an octave. It is also what a brass\nsection does with a leading tone, so the line falls to the cadence\nand bar 8 lands. `spread(0)` flattens it onto the tonic and `drop(2)`\nleaves the two long notes underneath the pad's held chord.\n`s` is bars-since-entry and unbounded, so it is read modulo the cue's\nown length — a schedule that trusts a raw bar counter walks the\nfanfare out of the room on the second pass.",
+  "instrumental": true,
+  "label": "London 1970",
+  "voices": 4,
+  "bars": 8,
+  "near": "romantic",
+  "plan": "arc",
+  "bpm": 132,
+  "parents": {
+    "romantic": 0.4,
+    "swing": 0.25,
+    "funk": 0.2,
+    "concerto": 0.15,
+    "march": 0.15,
+    "photoplay": 0.15
+  },
+  "wants": [
+    "crime jazz"
+  ],
+  "cannot": [
+    "the stopwatch — a news cue is written to a DURATION (a thirty-second open with four seconds of tail under the announcer), and a section in this box is counted in bars at a tempo, so the one constraint the whole idiom is composed against cannot be stated",
+    "the teleprinter and the bongs — the chatter under the cue and the Big Ben strike over it are the sound of the thing being a NEWS theme, and an anchor casts instruments and drum lanes with no way to say 'and a machine runs underneath all of it'"
+  ],
+  "instr": [
+    "brass_section",
+    "strings",
+    "timpani",
+    "slow_strings"
+  ],
+  "drumkit": "room",
+  "part": [
+    "lead",
+    "riff",
+    "riff",
+    "pad"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": 4
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      -1,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    0,
+    5,
+    6,
+    0,
+    3,
+    4,
+    0
+  ],
+  "prog": [
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 5,
+      "q": "triad"
+    },
+    {
+      "d": 6,
+      "q": "triad"
+    },
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 3,
+      "q": "triad"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "triad"
+    }
+  ],
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "l": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "h": [
+      8,
+      0,
+      5,
+      0,
+      7,
+      0,
+      5,
+      0,
+      8,
+      0,
+      5,
+      0,
+      7,
+      0,
+      5,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "x": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1,
+    "atk": 0.008,
+    "rel": 0.6,
+    "gain": 0.27,
+    "verb": 0.34
+  },
+  "words": [
+    "the fanfare, climbing to the landing",
+    "the strings, narrowed and constant — the drive",
+    "the timpani, hammering the root of the bar",
+    "the chord it lands on"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(8), rotate(7)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[spread(0.5), fill(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[spread(0), fill(4), rotate(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(2)]"
+    }
+  },
+  "period": {
+    "$src": "(v, s) => {\n        if (v !== 0) return [];\n        const b = s % 8;\n        return b === 7 ? [spread(0), drop(2)]\n                       : [transpose([-3, -2, 1, 1, 1, 0, 2][b])];\n      }"
+  }
+}

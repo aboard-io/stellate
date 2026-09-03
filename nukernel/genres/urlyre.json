@@ -1,0 +1,76 @@
+{
+  "note": "THE LYRES OF UR — Ur 2500 BC. Four instruments (three lyres and a\nharp) excavated by Woolley from the Royal Cemetery at Ur from 1922\non, Early Dynastic III, 2550-2450 BC — the label is the range's own\ncentre — and the world's oldest surviving stringed instruments, in\nreal museums by name: the Golden Lyre in the Iraq Museum, the\nQueen's Lyre and Silver Lyre in the British Museum, the Bull-Headed\nLyre in the Penn Museum. Eleven strings each. The CAST below is the\nStandard of Ur's own \"Peace\" panel, excavated from the same site: a\nlyrist, and a singer beside the lyre.\nTHE LUTE, ASKED FOR BY NAME AND NOT SHIPPED AS A ROW: the\nlong-necked lute enters the record on Akkadian seals ~2300 BC, two\ncenturies after these graves and a few hundred km upriver — a\nlineage fact with no named piece attached, so it is a WANT here and\non `abbasid` (Baghdad 800), whose oud is where the plucked-lute\nline next carries a name this catalog can verify. The genealogy gap\nandalusi's oud implied — nothing upstream because nothing upstream\nexisted — now has its deep end.\n\nLINEAGE: a root. What stands upstream — whatever the third\nmillennium's temples sang before these graves — has no artifact\nand no name.",
+  "label": "Ur 2500 BC",
+  "voices": 2,
+  "rate": 0.5,
+  "near": "abbasid",
+  "plan": "arc",
+  "bpm": 76,
+  "parents": {},
+  "wants": [
+    "the long-necked lute of the akkadian seals"
+  ],
+  "cannot": [
+    "any melody of Ur — no note from 2500 BC survives; what survives is instruments, and the DIATONIC claim below leans on the Old Babylonian tuning tablet from Ur itself (UET VII 74), which is the same tradition and THREE HUNDRED YEARS LATER, an anachronism this row states rather than hides",
+    "the bull lyre's own voice — eleven gut strings over a bull-hide soundbox, and reconstructions that buzz; the concert harp below is plucked strings and nothing else, the begena refusal half-applying and said out loud"
+  ],
+  "instr": [
+    "solo_vox",
+    "harp"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "incClamp": 2,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 0.8,
+    "atk": 0.03,
+    "rel": 1.6,
+    "gain": 0.24,
+    "verb": 0.55,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the singer of the Peace panel",
+    "the eleven-string lyre under her"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n        ? [[], [fill(2)], [transpose(2)], [reverse()]][s % 4]\n        : [keep(0, 4, 8, 12), transpose(-2)])"
+  }
+}

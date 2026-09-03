@@ -1,0 +1,196 @@
+{
+  "note": "DESCARGA — Havana 1957. Cachao's Panart jam sessions — the\narticle names 1957's \"Chanchullo\", composed by Israel \"Cachao\"\nLópez, WHO ORGANIZED THE SESSION, which is the genre in one\nclause: the descarga is the Cuban jam session as a form, son\nmontuno's vamp held open all night so the soloists can talk.\n\na Havana jam session — Cachao's descargas are blown, not sung\n\nLINEAGE: the article's own origins are son cubano, filin,\nrumba and mambo — `son` and `mambo` are anchors, `danzon` is\nCachao's first trade (he and Orestes wrote thousands), and\nthe two missing are owed by name, rumba's spelling matched\nwith latinjazz's.\n\"the afro-cuban rumba\" PAID 2026-08-30 (`rumba`, Matanzas 1956,\none year this row's senior — the Muñequitos' first LP): the\nhand-drum conversation a descarga is trying to have with a\nrhythm section.",
+  "instrumental": true,
+  "label": "Havana 1957",
+  "voices": 3,
+  "bars": 8,
+  "near": "latinjazz",
+  "plan": "arc",
+  "bpm": 120,
+  "parents": {
+    "son": 0.35,
+    "mambo": 0.25,
+    "danzon": 0.15,
+    "rumba": 0.15
+  },
+  "wants": [
+    "filin"
+  ],
+  "instr": [
+    "upright_piano",
+    "trumpet",
+    "tenor_sax"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    4,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "harmony": "cycle",
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassGrid": [
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "m": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the piano, the montuno that never closes",
+    "the trumpet, taking a chorus",
+    "the tenor, waiting its turn"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [keep(0, 3, 6, 10)]\n                    : v === 1 ? [[], [fill(2)], [rotate(3)], [transpose(2)]][s % 4]\n                    : [drop(6), transpose(-3)])"
+  }
+}

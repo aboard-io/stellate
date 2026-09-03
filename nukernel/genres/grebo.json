@@ -1,0 +1,191 @@
+{
+  "note": "GREBO [Ned's Atomic Dustbin]. THE JOKE IS LITERAL: two bass voices,\nnot one doubled — `voices:3` puts a fuzzed guitar riff over TWO\nindependent basslines a fifth apart in register, one pulsing the root\nand the other answering with its own contour, which is the entire\nStourbridge-scene gimmick made into an arrangement rather than a\ncaption. Punk's directness and rock's band format argue the rest;\nfunk supplies the syncopated pocket two basses need to not collide.\n\n148 sits ON the dial's fence: a Stourbridge grebo record is punk's own\ntop speed\n\nTWO BASSISTS, TWO BASSES. The joke is that there are two of them, and\nit only lands if they are different players: one PICKED, pulsing the\nroot, one FINGERED, answering with its own contour. Both voices were\nan upright double bass, which is a jazz instrument standing where a\nStourbridge band's two Rickenbackers go.",
+  "label": "Stourbridge 1990",
+  "voices": 3,
+  "near": "punk",
+  "plan": "song",
+  "bpm": 148,
+  "parents": {
+    "punk": 0.4,
+    "rock": 0.35,
+    "funk": 0.25
+  },
+  "wants": [
+    "stourbridge scene"
+  ],
+  "instr": [
+    "distortion_guitar",
+    "picked_bass",
+    "finger_bass"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": {
+      "$v": true
+    }
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": -2
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    3,
+    0,
+    4
+  ],
+  "artic": "staccato",
+  "maxHold": 2,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1600,
+    "q": 2,
+    "atk": 0.003,
+    "rel": 0.4,
+    "gain": 0.3,
+    "verb": 0.16
+  },
+  "words": [
+    "the guitar, the riff",
+    "the first bass, pulsing the root",
+    "the second bass, its own line, a fifth under and answering"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"gate\", rotate(2))]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[invert(0), rotate(5)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "crunch"
+  ]
+}

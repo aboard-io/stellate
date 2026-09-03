@@ -1,0 +1,127 @@
+{
+  "note": "FLAMENCO — Granada 1922. The Concurso de Cante Jondo, Alhambra,\nJune 1922: Falla and Lorca staging the deep song to save it from\nthe cafés, which is the tradition's own most datable act of\nself-definition. Cante over guitar; phrygian on its own terms (the\nandalusian cadence below is iv-III-II-I read downward). PAYS\nrumbacatalana's \"gitano palo\" by name.\n\n\"moorish andalusi song\" PAID 2026-08-30 (`zajal`, Córdoba 1150):\nthe vernacular strophic song of al-Andalus, wanted since this\nrow was a root with no parent at all; the juerga stays owed.\n\nWHO SINGS: the melisma throat — the line bent around one\nvowel until the vowel gives, which is what cante jondo is.",
+  "label": "Granada 1922",
+  "voices": 2,
+  "bars": 8,
+  "near": "fado",
+  "plan": "arc",
+  "bpm": 96,
+  "parents": {
+    "zajal": 0.2
+  },
+  "wants": [
+    "the gitano juerga before the cafes"
+  ],
+  "cannot": [
+    "the compas — bulerias counts twelve with accents on 3, 6, 8, 10 and 12, and a twelve-count with internal accents is not sayable on sixteen places (the triple-meter wall, at its hardest angle)"
+  ],
+  "instr": [
+    "solo_vox",
+    "nylon_string_guitar"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff"
+  ],
+  "kit": {},
+  "harmony": "cycle",
+  "intro": "solo",
+  "roots": [
+    3,
+    3,
+    2,
+    2,
+    1,
+    1,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 3
+    },
+    {
+      "d": 3
+    },
+    {
+      "d": 2
+    },
+    {
+      "d": 2
+    },
+    {
+      "d": 1
+    },
+    {
+      "d": 1
+    },
+    {
+      "d": 0
+    },
+    {
+      "d": 0
+    }
+  ],
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "pedal",
+  "orn": {
+    "grace": 0.4,
+    "pass": 0.2
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 0.9,
+    "atk": 0.015,
+    "rel": 0.8,
+    "gain": 0.26,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the cante, tearing the line open a note at a time",
+    "the guitar, falling down the andalusian steps"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[fill(2), drop(2)]"
+    }
+  }
+}

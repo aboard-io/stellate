@@ -1,0 +1,98 @@
+{
+  "note": "---- THE OLD WORLD (2026-08-21) --------------------------------------\nTwelve anchors, Rome 600 → New York 1892, filling the thirteen\ncenturies the catalog skipped between `gregorian` and its 1930s front\nedge. Three standing `wants` debts are paid here by name — organum\n(owed by counterpoint AND drone), the romantic piano miniature (owed by\nneoclassical, → nocturne), and hymnody's parlor descendant — and every\ninstrument is the nearest REAL recording the registry has, said plainly\n(lute = nylon_string_guitar, viol = viola/cello, violone =\nacoustic_bass, fortepiano = yamaha_grand_piano) rather than pretended\naway. The Viennese waltz was BLOCKED here on purpose, and the reason\nhas since half-expired: the kernel grew a meter on 2026-08-20\n(kernel.js METERS — a twelve-step bar and the pulse that tells 3/4\nfrom 6/8), and the BAND PAGE reaches a waltz through the front door\ntoday (band-kit `waltz`, the eighteen-hundreds in a Vienna ballroom).\nWhat is still owed HERE is a catalog job, not a kernel one: every\npattern, cell and phrase in this file is written on sixteen places, so\nan anchor that counts in three needs twelve-step ones of its own plus\nits rows in compose.js PLAN_OF and BPM. Until somebody writes those\nthe salon slot stays a barcarolle — which is honest, because a\nbarcarolle IS 6/8 — and `wants` keeps the debt on the books.\nPAID 2026-08-30, the walls-down round: the time lane landed\n`meter: \"three\"` and the whole extraction counts in it, so the\ncatalog job shrank to writing the anchor — `waltz` (Vienna 1867) at\nthe foot of this file, on twelve-step bars end to end. (No PLAN_OF\nor BPM table rows were owed after all: both tables moved onto the\nanchors on 2026-08-20, which this comment predates.)\n\nORGANUM — the first debt paid. Notre Dame, Léonin/Pérotin: a voice\nADDED to the chant. The tenor HOLDS the chant below (a pad, because a\nheld cantus is a chord with one note in it), the vox organalis moves a\nfifth above, and the third voice arrives at bar 5 a fourth up — the\nstaggered entry IS the history: that arrival is the moment Western\npolyphony happens. Transpose in DEGREE space: +4 is the fifth, +3 the\nfourth, hymn's own law (the scale is seven long).\n\nEDGE CLOSED 2026-08-29, the debts round: Notre-Dame did not invent\nsinging in parts — the Winchester Troper (Winchester 1000) holds a\nhundred and fifty two-voice organa two centuries older, so the\npractice has a documented parent now and `gregorian: 1` was a\nsimplification, not a fact.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nOrganum does not choose a mode, it HOLDS the chant's: the Magnus liber\norgani of Leonin and Perotin (Notre-Dame de Paris, c. 1200; the surviving\ncopy W1, Wolfenbuettel Cod. Guelf. 628 Helmst.) sets mode-I plainsong and\nsustains its final under the duplum. `gregorian` above is now dorian in the\nscale as well as the label, and this row is that chant with a voice on top,\nso it takes the same alphabet — measured decorative before this change.\n\nWHO SINGS: the same monks as gregorian — no vibrato at all",
+  "label": "Paris 1200",
+  "rate": 0.5,
+  "voices": 3,
+  "plan": "arc",
+  "bpm": 76,
+  "parents": {
+    "gregorian": 0.6,
+    "winchester": 0.4
+  },
+  "wants": [],
+  "near": "gregorian",
+  "instr": [
+    "ahh_choir",
+    "ahh_choir",
+    "solo_vox"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 4
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "artic": "tie",
+  "incClamp": 2,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 0.7,
+    "atk": 0.12,
+    "rel": 2.8,
+    "gain": 0.24,
+    "verb": 0.85,
+    "mouth": {
+      "$src": "MOUTHS.plainchant"
+    }
+  },
+  "words": [
+    "the tenor, held under everything",
+    "a fifth above, moving with it",
+    "the third voice, a fourth up, from bar 5"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[transpose(3)]"
+    }
+  }
+}

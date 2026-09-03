@@ -1,0 +1,71 @@
+{
+  "note": "ARS NOVA — Machaut: organum's tenor made RHYTHMIC, the trouvère line on\ntop. The talea is genuinely rotate() — the same material re-entering\nagainst itself one notch further round each section, cyclic rather than\nreflective, which is exactly the operator the fugue's mirror grammar\nnever uses. This is the kernel expressing the history, not\napproximating it.\n\ntenor / motetus / triplum\n\nNOT legato: hocket — the ars nova's signature articulation is the\nnote CUT so the other voice can strike between, which is the\ndefault (detached) reading, not a tied line\n\nWHO SINGS: the motet mouth — polychoral's own, two centuries early",
+  "label": "Reims 1360",
+  "voices": 3,
+  "bars": 8,
+  "plan": "arc",
+  "bpm": 104,
+  "parents": {
+    "organum": 0.6,
+    "troubadour": 0.4
+  },
+  "wants": [],
+  "near": "polychoral",
+  "instr": [
+    "ahh_choir",
+    "solo_vox",
+    "recorder"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      0,
+      2,
+      4
+    ]
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "emergent",
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 0.8,
+    "atk": 0.06,
+    "rel": 2,
+    "gain": 0.2,
+    "verb": 0.7,
+    "mouth": {
+      "$src": "MOUTHS.motet"
+    }
+  },
+  "words": [
+    "the tenor: the talea, turning",
+    "the motetus",
+    "the triplum, high and quick"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [rotate(3 * s), drop(2)]\n                    : v === 1 ? [transpose(2)]\n                    : [transpose(4), rotate(5 * s)])"
+  }
+}

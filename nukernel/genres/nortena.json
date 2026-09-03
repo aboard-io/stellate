@@ -1,0 +1,190 @@
+{
+  "note": "NORTEÑA — Monterrey 1955. A conjunto norteño is two men: a diatonic\nbutton accordion and a BAJO SEXTO, a twelve-string bass guitar that\nplays the chords and the bass at once. The repertory is corridos and\nrancheras over a polka the German and Czech settlers of the border\nleft behind, which is why the rhythm below is a polka and says so.\nTHE YEAR is Los Alegres de Terán's Falcon and RCA sides, when the\naccordion-and-bajo duet becomes the border's standard record.\n`corridotumbado` DECLARED `wants: [\"banda\", \"norteño\"]` AND NOW HAS\nBOTH — its parents line, which named `worldfolk` (Johannesburg 1986)\nat 0.30 because nothing nearer existed, is rewritten below. That edge\nis one of the two WORLD.md §4 caught running.\n\n\"bohemian polka\" PAID 2026-08-30, the folk-floor round:\n`polka` (Prague 1837) is the ballroom the conjunto's oom-pah\nwalked out of.\n\nA POLKA, WRITTEN AS ONE: kick on the beat, snare on the off-beat,\nnothing clever. The tololoche's oom-pah is in `bassStyle: \"fifths\"`\none line up, which is the only place in this catalog that word\nmeans what it means in a brass band.",
+  "label": "Monterrey 1955",
+  "voices": 3,
+  "near": "vallenato",
+  "plan": "song",
+  "bpm": 132,
+  "parents": {
+    "polka": 0.3
+  },
+  "wants": [
+    "corrido fronterizo",
+    "redova"
+  ],
+  "cannot": [
+    "the diatonic accordion's push-pull, the same fact vallenato declares one continent south"
+  ],
+  "instr": [
+    "accordion",
+    "steel_string_guitar",
+    "solo_vox"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "counter"
+  ],
+  "roots": [
+    0,
+    4,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "fifths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1.2,
+    "atk": 0.008,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.24
+  },
+  "words": [
+    "the accordion",
+    "the bajo sexto, chords and bass at once",
+    "the second voice, a third under the first"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(3), transpose(-12)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(-3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

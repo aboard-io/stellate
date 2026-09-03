@@ -1,0 +1,174 @@
+{
+  "note": "THE MANN/HAMMER MOOD SYNTH — Miami 1984. Jan Hammer scoring MIAMI\nVICE from the pilot on (and \"Crockett's Theme\", 1986, the one\neverybody hums): a cue a week, played alone into a Fairlight and a\nMemorymoog, WRITTEN TO SET A MOOD under neon and water. The dot is\nMiami on the news pair's law — the commission is the genre and the\ncommission was the city — said plainly: Hammer's own studio was a\nfarmhouse in upstate New York. THIS IS NOT SYNTHWAVE: Paris 2010\nis the 2010s MEMORY of this, and synthwave's parents now carry\nthat as a dated edge instead of an implication. Fusion hands\n(Mahavishnu was his band) on sequencer time is the whole sound —\nthe phrase leans while the grid does not.\n\nan incidental cue — the dialogue sits where the singer would",
+  "instrumental": true,
+  "label": "Miami 1984",
+  "voices": 3,
+  "bars": 8,
+  "near": "synthwave",
+  "plan": "arc",
+  "bpm": 100,
+  "parents": {
+    "horrorsynth": 0.25,
+    "eurodisco": 0.25,
+    "synthpop": 0.2,
+    "jazz": 0.1
+  },
+  "wants": [
+    "the mahavishnu orchestra's fusion",
+    "the linndrum session-pop of 1983"
+  ],
+  "instr": [
+    "polysynth",
+    "fantasia",
+    "warm_pad"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      1,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    0,
+    5,
+    5,
+    3,
+    3,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "fx": [
+    "chorus",
+    "echo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 1,
+    "atk": 0.012,
+    "rel": 1,
+    "gain": 0.25,
+    "verb": 0.48
+  },
+  "words": [
+    "the lead, a fusion hand on a synthesizer — the phrase leans",
+    "the bells, headlights on the causeway",
+    "the pad, the ocean at 3 a.m."
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2), rotate(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(9)]"
+    }
+  }
+}

@@ -1,0 +1,246 @@
+{
+  "note": "GLAM METAL [nwobhm] — Los Angeles 1987. Guns N' Roses, \"Appetite for\nDestruction\" (Rumbo Recorders, Canoga Park; Geffen, 21 July 1987).\nMEASURED over 153 files (Bon Jovi · Aerosmith · Scorpions · Van Halen\n· Poison · Mötley Crüe · Guns N' Roses · Whitesnake · Def Leppard).\nTempo (n=153): p10 70 · p25 88 · med 110 · p75 126 · p90 137. Mode 99\nmajor / 54 minor. Meter 146 of 153 in 4/4. Melodic mean pitch 76.0 —\nthe HIGHEST of every rock row measured this round (grunge 63, poppunk\n71.6, britpop 73.8), which is the scream, and it is why `reg` puts the\nlead a whole octave over the riff. Seventh fraction 0.30 against\npoppunk's 0.12: these are dominant-seventh blues chords, not triads.\nCycles: I-V-IV-IV (30) and I-V-I-V (27), the plainest changes in the\nround, under the fastest hand.\n  kick  9122223171422131   snare 1111911131229112\n  hat   8272927392729263  — eighths with a sixteenth under every one\n\nLINEAGE: `nwobhm` (London 1980) is the twin-guitar harmony and the\ngallop; `glam` (London 1971) is the boot, the clothes and the\nchorus everybody shouts; `heavymetal` (Workington 1969) is the\nancestor of both; `aor` (Los Angeles 1982) is the studio polish and\nthe radio, in this row's own city five years before it.\n\nWHO SINGS: the gang chorus, everybody on the last word",
+  "label": "Los Angeles 1987",
+  "near": "nwobhm",
+  "plan": "song",
+  "bpm": 110,
+  "parents": {
+    "nwobhm": 0.35,
+    "glam": 0.25,
+    "heavymetal": 0.2,
+    "aor": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "distortion_guitar",
+    "overdrive_guitar",
+    "ahh_choir"
+  ],
+  "voices": 3,
+  "drumkit": "power",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 4
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "pad"
+  ],
+  "roots": [
+    0,
+    4,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 3,
+      "q": "triad"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    }
+  ],
+  "artic": "normal",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ],
+    "x": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    "t": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2800,
+    "q": 1.7,
+    "atk": 0.004,
+    "rel": 0.6,
+    "gain": 0.29,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.doowopstack"
+    }
+  },
+  "words": [
+    "the lead guitar, up an octave, climbing to the fifth",
+    "the rhythm guitar, the riff under it",
+    "the gang chorus, the last word of every line"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[keep(0, 8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "crunch"
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "note": "TRAD JAZZ — London 1954. The Chris Barber Band, New Orleans\nJoys (Decca): the British trad revival's breakthrough record —\nBarber's band formed that year when Ken Colyer moved on, and\nthe album included \"Rock Island Line\", performed by Lonnie\nDonegan, WHICH IS THE SKIFFLE INTERVAL ITSELF: `skiffle`\n(London 1956) has wanted \"trad jazz revival\" by name since its\nlineage was written, and it takes this row as a parent today —\nthe debt was always this specific band, this specific record.\n\nthe Barber band's front line — trumpet, clarinet, trombone\n\nLINEAGE: `neworleans` (New Orleans 1923) at dominant weight —\nthe revival is that record shelf replayed note-for-loving-\nnote; `musichall` is the British room it was replayed in.",
+  "instrumental": true,
+  "label": "London 1954",
+  "voices": 3,
+  "bars": 8,
+  "near": "skiffle",
+  "plan": "song",
+  "bpm": 132,
+  "parents": {
+    "neworleans": 0.55,
+    "musichall": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "trumpet",
+    "clarinet",
+    "trombone"
+  ],
+  "drumkit": "acoustic",
+  "swing": 0.28,
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    0,
+    4,
+    4,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  "orn": {
+    "pass": 0.25,
+    "grace": 0.2
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the trumpet, the lead of the front line",
+    "the clarinet, weaving over it",
+    "the trombone, tailgating under"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [reverse()]][s % 4]\n                    : v === 1 ? [fill(1), transpose(5)]\n                    : [drop(4), transpose(-7)])"
+  }
+}

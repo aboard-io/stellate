@@ -1,0 +1,120 @@
+{
+  "note": "BULGARIAN. Le Mystère des Voix Bulgares, and the two things that make it\nunmistakable are both cheap to say here. The first is the SECOND: the\nupper voice sings a step above the melody and stays there — a dissonance\nheld as if it were a consonance, which is the sound. The second is the\nLIMP: a kick on 1, 8 and 15 divides sixteen steps as 7+7+2, so the bar\nnever sits down where you expect. Underneath both, a pedal — the ison,\nthe drone the whole tradition is built over.\n\nnamed \"Sofia 1975\" — Le Mystère des Voix Bulgares (the comment's own\nreference) is the Sofia state radio choir, first issued 1975.\n\nLINEAGE: a root under protest — the radio choir ARRANGED a village\ndiaphony older than notation; the ison under it is Orthodox chant's,\nand neither parent is in the catalog. Gregorian is chant, but the\nwrong church: claiming it would be tidier than it is true.\nPAID 2026-08-29, the debts round: \"orthodox chant\" is `sticheron`\n(Constantinople 843) — the diaphony's held second is village\npractice over exactly this liturgy's line.\n\nWHO SINGS: the open-throated straight tone, packed tight enough that the seconds grind",
+  "label": "Sofia 1975",
+  "plan": "arc",
+  "bpm": 96,
+  "parents": {
+    "sticheron": 0.25
+  },
+  "wants": [
+    "village diaphony"
+  ],
+  "instr": "ohh_voices",
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "bassStyle": "pedal",
+  "bassGrid": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  "artic": "legato",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1.4,
+    "atk": 0.03,
+    "rel": 1.1,
+    "gain": 0.26,
+    "verb": 0.5,
+    "mouth": {
+      "$src": "MOUTHS.bulgar"
+    }
+  },
+  "words": [
+    "the melody",
+    "a second above it, and staying there"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[transpose(1)]"
+    }
+  }
+}

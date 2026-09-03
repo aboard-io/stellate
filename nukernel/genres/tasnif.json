@@ -1,0 +1,79 @@
+{
+  "note": "TASNIF — Tehran 1924. \"The first recording artist to sing Morqe\nSahar was Qamar-ol-Moluk Vaziri who sang it in 1924 at a Tehran\nhotel during her first formal vocal performance\" — this ZIM's own\nsentence, in its Morq-e sahar article. A named singer, a named song,\na named city, a stated year, one year BEFORE the sides that anchor\n`dastgah`. The song is the form's most famous example, \"written by\nMohammad-Taqi Bahar and composed by Morteza Neidavoud in the early\n20th century under the wake of Iranian constitutional revolution\",\nand the Tasnif article names the same wave: \"A large number of\ntasnifs were composed during the first two decades of the twentieth\ncentury. Many of them are based on patriotic themes reflecting the\nspirit of the constitutional movement of that period.\"\nTHE REFUSAL'S NAMED ASK WAS NOT MET, AND THE ROW SAYS SO. The ledger\nround narrowed the want to \"the pre-Qamar Gramophone Company Tehran\nsessions\"; this ZIM's Gramophone Company article does not contain\nthe words Tehran, Iran or Persia, and that ask stays unanswerable\nhere. What fell instead is the refusal's OTHER clause — \"a record\npays one debt\". `dastgah`'s dot is the 1925 HMV BOX. This is a\nconcert in a hotel a year earlier, a different artifact of a\ndifferent music (a composed metrical song against a free-rhythm\navaz), so the one-debt rule is satisfied in its letter and in the\nreason it exists. The comment names the tension rather than hiding\nthat the two dots are one singer twelve months apart.\nTHE AXES: TIME is the entire difference from `dastgah` one row over.\nAn avaz has no bar and takes half speed with everything tied; a\ntasnif is \"a composed song in a slow metre\", the article's words,\nand this row COUNTS. Same alphabet, opposite clock.\n\nLINEAGE: a declared ROOT under protest. `dastgah` is NOT a parent\n— Tehran 1925 is this row's junior by a year and the maringa rule\nforbids the edge — though the radif is plainly the mode stock both\ndraw on, and the catalog holds nothing older that says so.",
+  "label": "Tehran 1924",
+  "voices": 2,
+  "bars": 8,
+  "near": "dastgah",
+  "plan": "song",
+  "bpm": 78,
+  "parents": {},
+  "wants": [
+    "the qajar court song the tasnif was metred out of",
+    "aref qazvini's constitutional songs"
+  ],
+  "cannot": [
+    "the metre itself, named honestly — the article says 'a slow metre' and stops. Persian tasnif cycles have names this ZIM does not attach to this song, so what ships is a bar of four and the row does not invent a cycle it cannot cite",
+    "the second stanza — the fact this ZIM keeps about this song is that Reza Shah 'banned' its political half 'from 1925 until his forced abdication in 1941' while the first stanza 'was often sung publicly'. A form whose sections carried DIFFERENT RISKS in different rooms has a shape no arrangement can hold; every section here plays to the same room"
+  ],
+  "instr": [
+    "solo_vox",
+    "nylon_string_guitar"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.shur"
+  },
+  "scale": {
+    "$src": "MODES.shur"
+  },
+  "artic": "legato",
+  "maxHold": 3,
+  "orn": {
+    "grace": 0.4,
+    "pass": 0.15
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2250,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1,
+    "gain": 0.25,
+    "verb": 0.4,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the singer, the strophe returning, ornamented at the turn",
+    "the tar, answering inside the bar this time"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [fill(2), rotate(2)]][s % 4]\n                    : [transpose(-5), drop(4)])"
+  }
+}

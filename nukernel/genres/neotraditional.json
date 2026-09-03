@@ -1,0 +1,187 @@
+{
+  "note": "NEOTRADITIONAL COUNTRY [countrypop] — Nashville 1990. Garth Brooks,\n\"No Fences\" (Jack's Tracks, Nashville; Capitol, 27 August 1990).\nMEASURED over 27 files (Garth Brooks · Shania Twain · Alan Jackson ·\nGeorge Strait). Meter 26 of 27 in 4/4. Tempo (n=27): p10 68 · p25 88 ·\nmed 121 · p75 127. Mode 22 major / 5 minor, the second most lopsided\nmajor split of the round. WHY IT IS NOT `countrypop` (Nashville 1945)\nAT A NEW TEMPO: that row is a bluegrass band — a banjo roll, a fiddle,\na snare on every beat and no drum kit's worth of anything else. This\ncorpus has a KIT: kick 9010213180212121, snare 1001900020119001 and a\nrim lane at 5005900550059005, which is the train beat — a rim click on\nthe \"e\" and \"a\" of every beat under a backbeat snare, and it is the\nsingle most identifiable thing about a 1990 Nashville record. Seventh\nfraction 0.15 (plain triads, like its parent) and motion 0.76 (the\nchords move more than bluegrass's do).\n\nLINEAGE: `countrypop` (Nashville 1945) is the town, the fiddle and\nthe changes; `honkytonk` is the bar band and the shuffle this\ndecade deliberately went back to; `rock` (London 1969) is the drum\nkit and the stadium the records were suddenly played in;\n`bluegrass` (Nashville 1946) is the string band underneath.\n\nTHE TRAIN BEAT, measured: a rim click either side of every\nbeat, which is the lane the 1945 row has no drummer for.",
+  "label": "Nashville 1990",
+  "near": "countrypop",
+  "plan": "song",
+  "bpm": 121,
+  "parents": {
+    "countrypop": 0.35,
+    "honkytonk": 0.3,
+    "rock": 0.2,
+    "bluegrass": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "steel_string_guitar",
+    "fiddle"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "normal",
+  "maxHold": 3,
+  "bassStyle": "fifths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  "kitVel": {
+    "p": [
+      5,
+      0,
+      0,
+      5,
+      9,
+      0,
+      0,
+      5,
+      5,
+      0,
+      0,
+      5,
+      9,
+      0,
+      0,
+      5
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2700,
+    "q": 1,
+    "atk": 0.005,
+    "rel": 0.6,
+    "gain": 0.28,
+    "verb": 0.26
+  },
+  "words": [
+    "the guitar, the story, four bars at a time",
+    "the fiddle, answering it a third up"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"gate\", rotate(8)), transpose(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

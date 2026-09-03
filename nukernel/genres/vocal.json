@@ -1,0 +1,60 @@
+{
+  "note": "VOCAL. A sung topline, and the whole of what makes it one is WHERE IT\nSTOPS. Three things no instrumental line does, and all three are measured\non the rendered stream in §40 rather than asserted here:\n  it BREATHES  — an absolute window in the bar, twice, whatever rhythm it\n                 was handed (`breath`). Measured over the composer's own\n                 toplines as the share of the section spent in a silence\n                 of at least a beat: 15%, against ZERO for the solo, zero\n                 for `simple` and zero for a band playing the same phrase.\n                 Nothing else in the table stops.\n  it does not LEAP — spread(0.5) halves every degree's distance from the\n                 centre without moving a note off the alphabet, so the\n                 contour it was handed survives and the reach does not.\n                 Mean interval 3.8 semitones against the solo's 5.1 and\n                 the Beatles' 11.3; 29% of its moves are leaps wider than\n                 a third, against the solo's 45% and the band's 73%.\n  it HOLDS     — legato, capped at three steps, so the cap makes a REST\n                 rather than a longer note. The `breathe` pipe is the belt\n                 to that brace: the last note of every bar stops short of\n                 the bar line even where the phrase gated straight through.\nHOW CONVINCING THIS IS: it is a melody with a voice on it and the\nphrasing of a singer, which is a real thing. It is not a SUNG melody —\nthere are no words, no consonants and no vibrato, and the sampled choir\ndoes not slur between pitches the way a voice does. Read the report.\n\nRATE 0.5 — a sung phrase is TWO BARS of the band's time, not one. It is\nthe plainest difference between a topline and an instrumental line and\nit costs nothing where the genre actually lives, because a layer takes\nthe authority's rate (the layer law): this is the tempo of a vocal\nstanding on its own. Measured, it is also most of what separates the\nsinger from `simple` on the confusion metric — 0.032 to 0.051.\n\nan arc, like every FUNCTION genre; 96 because a singer is slower than\nthe band behind them\n\na singer's range is two rungs, not seven\n\nWHO SINGS: the layer you stack on anything, so it is the plain modern lead",
+  "label": "Vocal",
+  "rate": 0.5,
+  "bars": 8,
+  "voices": 1,
+  "plan": "arc",
+  "bpm": 96,
+  "instr": "solo_vox",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "artic": "legato",
+  "maxHold": 3,
+  "anchor": 2,
+  "incClamp": 2,
+  "incMode": "reverse",
+  "intro": "solo",
+  "pipes": [
+    {
+      "id": "breathe"
+    }
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.03,
+    "rel": 1.1,
+    "gain": 0.28,
+    "verb": 0.4,
+    "mouth": {
+      "$src": "MOUTHS.poplead"
+    }
+  },
+  "words": [
+    "the topline: two phrases and two breaths"
+  ],
+  "word": {
+    "kind": "const",
+    "n": {
+      "$src": "[spread(0.5), breath(SUNG)]"
+    }
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "note": "CONCERTO — Venice 1725, the high-Baroque BAND (fugue already owns the\norgan loft): counterpoint's engine driving a dance pulse over a\ncontinuo. The ritornello alternation is the form the classical style\ninherits, and THE BAROQUE SEQUENCE is the word: the solo restates one\nstep lower each section — transpose(-1) per section is Vivaldi's whole\nepisode grammar. The walking continuo IS driving eighths on the\nviolone.\n\nTHE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP\n(2026-09-02, the catalogue round). The QA report's `instrumentation`\ncolumn counts a chair as NATIVE when `audio/to-engine.js\npatchForInstr()` names a Faust module for its id, and this row seats\nZERO of them — one of twelve in the table. Twelve rows were read one\nby one and every one of them came back the same way: there is no\nmodel in the fleet of the instrument this music is played on, and\nthere should not be. `organic: true` is that answer said out loud, so\nthe report can stop scoring an honest recording as a failure and can\nstart telling the twelve apart from the machine genres that were\nseating a sampled upright by accident.\nTHIS ROW: Vivaldi, *Le quattro stagioni* (Op. 8, written Venice, printed\nAmsterdam 1725). A string band is people, and the one bowed model in\nthe fleet is `erhu` — a spike fiddle with a snakeskin membrane, which\nis not a baroque violin and must not stand in for one.\n\ntutti / solo / continuo",
+  "organic": true,
+  "label": "Venice 1725",
+  "voices": 3,
+  "bars": 8,
+  "plan": "arc",
+  "bpm": 120,
+  "parents": {
+    "continuo": 0.4,
+    "counterpoint": 0.35,
+    "pavane": 0.25
+  },
+  "wants": [],
+  "near": "fugue",
+  "instr": [
+    "strings",
+    "violin",
+    "harpsichord"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 4
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {},
+  "roots": [
+    0,
+    3,
+    4,
+    0,
+    5,
+    1,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "bassStyle": "eighths",
+  "maxHold": 2,
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1,
+    "atk": 0.01,
+    "rel": 0.6,
+    "gain": 0.24,
+    "verb": 0.35
+  },
+  "words": [
+    "the ritornello, tutti",
+    "the solo, sequencing away from it",
+    "the continuo"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 1 ? [transpose(-(s % 3)), ...(s % 2 ? [rotate(2)] : [])] : [])"
+  }
+}

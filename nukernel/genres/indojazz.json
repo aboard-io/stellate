@@ -1,0 +1,136 @@
+{
+  "note": "INDO JAZZ — London 1966. The Joe Harriott-John Mayer double\nquintet, Indo-Jazz Suite (Atlantic, 1966): five jazz musicians\nand five Indian classical musicians playing Mayer's raga forms\nat once — the article on Harriott calls it an early attempt at\nbuilding on music from diverse traditions, and the genre has\nits own article (Indo jazz, mid-1950s origins). The Jamaican-\nborn altoist's London band over sitar, tabla and tambura: a\nmodal jazz whose mode is a raga.\n\nthe double quintet — two traditions, neither of them a singer\n\nLINEAGE: `jazz` is Harriott's half of the bandstand;\n`dhrupad` (Delhi 1955) is the catalog's Hindustani anchor and\nMayer's half — the raga discipline, the drone, the long line.",
+  "instrumental": true,
+  "label": "London 1966",
+  "voices": 3,
+  "bars": 8,
+  "near": "modaljazz",
+  "plan": "arc",
+  "bpm": 116,
+  "parents": {
+    "jazz": 0.35,
+    "dhrupad": 0.3
+  },
+  "wants": [],
+  "instr": [
+    "alto_sax",
+    "sitar",
+    "flute"
+  ],
+  "drumkit": "jazz",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      },
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "counter"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  "orn": {
+    "grace": 0.3,
+    "pass": 0.2
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 1.1,
+    "atk": 0.01,
+    "rel": 0.9,
+    "gain": 0.26,
+    "verb": 0.4
+  },
+  "words": [
+    "the alto, bebop phrasing over the drone",
+    "the sitar, the raga answering",
+    "the flute, floating between the two camps"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [rotate(3)], [transpose(2)]][s % 4]\n                    : v === 1 ? [[drop(2)], [drop(2), rotate(4)]][s % 2]\n                    : [drop(8)])"
+  }
+}

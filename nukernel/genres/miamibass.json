@@ -1,0 +1,167 @@
+{
+  "note": "MIAMI BASS — Miami 1986. 2 Live Crew's \"Throw the D\" (Luke\nSkyywalker Records): the 808's sub oscillator tuned into a\nBASSLINE, the hats doubled to sixteenths, the tempo pushed past\nelectro's — the car-trunk genre, engineered for a specific\nloudspeaker. TWO rows have wanted \"miami bass\" since their\nlineages were written — `trap` (Atlanta 2003) and `bailefunk`\n(Rio 2022, whose tamborzão grew directly out of imported Miami\ninstrumentals) — and both take it as a parent today.\n\nLINEAGE: `electro` (New York 1982) at dominant weight — this\nIS electro with the sub brought forward and the party brought\nback — and `dancehall`'s deejay half is real: Luke's chants\nare sound-system practice via the Caribbean city Miami is.",
+  "label": "Miami 1986",
+  "voices": 2,
+  "bars": 8,
+  "near": "electro",
+  "plan": "dance",
+  "bpm": 126,
+  "parents": {
+    "electro": 0.6,
+    "dancehall": 0.2
+  },
+  "wants": [
+    "the ghetto style dj crews",
+    "freestyle's sung half"
+  ],
+  "cannot": [
+    "the 808 sub GLIDE between roots — the tuned kick sliding a fourth is the genre's signature and a kick lane has steps, not pitch; the octave bass below is the sayable half (the `declared but never arriving' law: measure, never trust a slider)"
+  ],
+  "instr": [
+    "square_lead",
+    "polysynth"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      7,
+      4,
+      5,
+      4,
+      7,
+      4,
+      5,
+      4,
+      7,
+      4,
+      5,
+      4,
+      7,
+      4,
+      5,
+      6
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 2600,
+    "q": 1.3,
+    "atk": 0.003,
+    "rel": 0.3,
+    "gain": 0.28,
+    "verb": 0.15
+  },
+  "words": [
+    "the hook, chanted",
+    "the stab over the sub"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(4)], [transpose(2)]][s % 3]\n                    : [transpose(-3), keep(0, 3, 6, 8, 11, 14)])"
+  }
+}

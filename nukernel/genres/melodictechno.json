@@ -1,0 +1,193 @@
+{
+  "note": "MELODIC TECHNO [Orbital]. THE FILTER IS THE MELODY: one analog pad\nsynth (`pad_saw`, a real Faust ladder) covers both the chord voice and\nthe lead voice, and `fx:[\"sweep\"]` automates its cutoff across the\nsection — a static tone.cut cannot say \"the line rises,\" a moving\nfilter can. House and techno's floor argue the rhythm; ambient\nsupplies the melodicism neither of those alone would grant. Named for\nthe Hartnoll brothers' M25-orbital motorway, not a record.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nOrbital, \"Belfast\" (*Orbital*, ffrr, Kent 1991).\n\na machine floor — no bridge, a drop\n\n\"berlin school electronics\" PAID 2026-08-29 (Berlin 1972): the\narpeggiated minor-key sequence under a melodic techno record is\nthe Schulze/Tangerine Dream machine with a kick under it, which\nthis row's own comment always said in prose.",
+  "bassInstr": "bass_lead",
+  "label": "Kent 1991",
+  "bars": 8,
+  "near": "techno",
+  "plan": "dance",
+  "bpm": 130,
+  "parents": {
+    "house": 0.3,
+    "techno": 0.3,
+    "ambient": 0.2,
+    "berlinschool": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "warm_pad",
+    "polysynth"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    5,
+    3,
+    4,
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "eighths",
+  "synth": {
+    "dsp": "pad_saw",
+    "root": "pad_saw",
+    "level": 0.75,
+    "set": {
+      "cutoff": 900,
+      "res": 0.32,
+      "detune": 0.15,
+      "attack": 0.06
+    }
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "o": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 900,
+    "q": 1.6,
+    "atk": 0.06,
+    "rel": 1.4,
+    "gain": 0.22,
+    "verb": 0.4
+  },
+  "words": [
+    "the pad, the chord, opening across the section",
+    "the line, riding above it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "sweep"
+  ]
+}

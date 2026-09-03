@@ -1,0 +1,76 @@
+{
+  "note": "SATIE — Paris 1888. The Trois Gymnopédies, completed in Paris\nin 1888: three pages that refuse every ambition their century\nprized — no development, no climax, a modal tune circling over\ntwo chords at walking pace. `ambient` (London 1978) has wanted\n\"furnituremusic\" by name since its lineage was written — Eno's sleeve\nnotes cite the furniture-music idea outright — and takes the\nparent today.\n\nthree pages for piano alone — the Gymnopédies have no singer\n\nbpm 70 is the table's floor (compose's 70..160); Lent et douloureux\nsits under it, and 70 is the closest the grid can walk.\n\nLINEAGE: `nocturne` (Paris 1835) is the salon piano the piece\nsubverts; `gregorian` the flat modal calm he took from the\nchant he heard and imitated in the Ogives.\n\nDevelopment is nearly zero ON PURPOSE — the piece's whole\ndoctrine; one rotation is all the tune ever concedes.",
+  "instrumental": true,
+  "label": "Paris 1888",
+  "voices": 2,
+  "bars": 8,
+  "near": "nocturne",
+  "plan": "arc",
+  "bpm": 70,
+  "parents": {
+    "nocturne": 0.35,
+    "gregorian": 0.25
+  },
+  "wants": [
+    "the chat noir cabaret, where he paid his rent"
+  ],
+  "instr": [
+    "yamaha_grand_piano",
+    "yamaha_grand_piano"
+  ],
+  "entry": {
+    "kind": "scale",
+    "n": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "harmony": "cycle",
+  "roots": [
+    0,
+    3,
+    0,
+    3,
+    0,
+    3,
+    4,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.lydian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "artic": "legato",
+  "maxHold": 6,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 0.7,
+    "atk": 0.02,
+    "rel": 2.2,
+    "gain": 0.23,
+    "verb": 0.5
+  },
+  "words": [
+    "the tune, unhurried, refusing to develop",
+    "the left hand, two chords, a slow pendulum"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [], [rotate(2)], []][s % 4]\n                    : [keep(0, 8), transpose(-3)])"
+  }
+}

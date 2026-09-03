@@ -1,0 +1,125 @@
+{
+  "note": "CAJUN — New Orleans 1928. Joe Falcon and Cléoma Breaux cut ALLONS\nÀ LAFAYETTE for Columbia, 27 April 1928 — the first Cajun record;\nthe dot is the session (the tsabatsaba a-record-is-the-honest-row\nruling; Rayne, their own town, measures inside Lafayette's dot).\nAccordion and fiddle in unison heterophony, a voice pitched to cut\nthrough a dance hall with no PA, the triangle keeping eighths.\nPAYS zydeco's \"cajun two-step\" by name — the two Lafayette musics\nnow hold hands across the 1955 row.",
+  "label": "New Orleans 1928",
+  "voices": 3,
+  "bars": 8,
+  "near": "zydeco",
+  "plan": "song",
+  "bpm": 120,
+  "parents": {},
+  "wants": [
+    "the acadian ballad stock the exile carried",
+    "the home dance (bal de maison)"
+  ],
+  "instr": [
+    "solo_vox",
+    "accordion",
+    "fiddle"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "drumkit": "acoustic",
+  "kit": {
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "fifths",
+  "orn": {
+    "grace": 0.25
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 2500,
+    "q": 0.9,
+    "atk": 0.01,
+    "rel": 0.35,
+    "gain": 0.26,
+    "verb": 0.24
+  },
+  "words": [
+    "the voice, thrown hard over the hall",
+    "the accordion, the tune with the bellows leaning on it",
+    "the fiddle, doubling rough — the triangle keeps the eighths"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[fill(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[fill(2), drop(2)]"
+    }
+  }
+}

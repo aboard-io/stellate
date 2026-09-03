@@ -1,0 +1,156 @@
+{
+  "note": "ALT-COUNTRY [Wilco]. Country-pop's bright twang and rock's distorted\nband format, argued out by blues' loose, unhurried backbeat — a\nsongwriter's record that happens to be played by a rock band rather\nthan a Nashville session. Gram Parsons' \"cosmic American\" fusion, the\nscene this style actually grew out of, is the missing rung.\n\nCOUNTRY ROCK ARRIVES 2026-09-02 (the Chordonomicon gaps): the row\nthis one has always been the 1990s reading of is `countryrock`\n(Nashville 1968, Sweetheart of the Rodeo), and the share comes out of\n`countrypop`, which was carrying the rock-band half it does not have.\nTHE WANT STAYS OPEN, deliberately: Gram Parsons coined \"Cosmic\nAmerican Music\" for the Burritos and GP, 1969-73, and the new row is\nanchored on the Byrds album a year EARLIER. The edge is honest and the\nwant is a different, later object, so paying one does not close the\nother — the maringa rule, which refuses an ancestor younger than the\nthing it is meant to explain.\n\nIONIAN AND NOT MIXOLYDIAN (2026-09-02, the Chordonomicon round).\nThese roots touch degrees 0, 3 and 4 only — they never reach degree\n6, which is the flat seventh mixolydian EXISTS for — so the mode's\nonly audible effect on this row was turning the V into a minor v.\nChordonomicon, 4,724 alt-country songs, rotation-collapsed: `I IV v`\nis rank 49 (x74) and `I IV V` is rank 2 (x1,617), behind only `IV I\nV` (x1,964). Corpus silent. Wilco, \"Misunderstood\"/*Being There*,\nReprise, Chicago, 29 October 1996: the twang is bright and the\ndominant is major.",
+  "label": "Chicago 1996",
+  "bars": 8,
+  "near": "countrypop",
+  "plan": "song",
+  "bpm": 116,
+  "parents": {
+    "countrypop": 0.15,
+    "rock": 0.35,
+    "blues": 0.25,
+    "countryrock": 0.25
+  },
+  "wants": [
+    "cosmic american music"
+  ],
+  "instr": [
+    "clean_guitar",
+    "fiddle"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    0,
+    3,
+    3,
+    4,
+    4,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1800,
+    "q": 1.4,
+    "atk": 0.01,
+    "rel": 0.8,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the guitar, the song",
+    "the fiddle, the twang, an octave over"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(2), drop(2), transpose(12)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

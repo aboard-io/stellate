@@ -1,0 +1,204 @@
+{
+  "note": "THE ISLEY BROTHERS. The arrangement IS the group: a Rhodes laying down\nextended chords, Ernie's fuzz guitar singing a whole octave above it, and\na third part filling underneath — which is why this is the genre that\nneeded a per-voice instrument table, because playing that lead on the\nkeyboard is not a small loss, it is the entire record. Dorian, for the\nbright sixth that separates soul from a minor blues; a light sixteenth\nshuffle, because nothing here lands exactly on the grid; and a bass that\nsyncopates rather than marches.\n\nnamed \"Teaneck 1973\" — T-Neck Records IS Teaneck NJ, the Isleys' label\nand home; the Rhodes-plus-fuzz-lead anchor is 3+3.\n\nLINEAGE: church-trained voices (the brothers began in gospel), funk's\ngroove under the Rhodes, and the fuzz lead is rock's gift returned —\nHendrix was literally their sideman in 1964. The doo-wop they\nactually started as is an anchor now and takes a tenth and a half,\nmostly out of funk — the 3+3 groove was carrying both the pocket and\nthe vocal-group blend. (The fit asks for nearly twice that; 0.15 is\nwhat the history claims, and the gap is the finding.)\n\"acidrock\" PAID 2026-08-29 (London 1967), and the history is\nfamily history: Jimmy played in the brothers' band in 1964 and\nErnie's fuzz line on this label's own record is that\napprenticeship handed back. The weight comes off rock, which was\nstanding in for one specific guitarist the whole time.\n\ndorian, as the subject too\nEXTENDED CHORDS ARE THE RHODES. A soul pad playing bare triads is a\nrehearsal; the i7 and the bright IV7 are the record. Voice-led, so\nconsecutive chords move by steps the way a keyboard player's hand does\n— and the chords ROLL: a strummed pad is what fingers on a Rhodes do.\n\nthe guitar sings, and singers breathe\n\nsyncopated, never on 3",
+  "label": "Teaneck 1973",
+  "bars": 8,
+  "voices": 3,
+  "swing": 0.16,
+  "plan": "song",
+  "bpm": 96,
+  "parents": {
+    "gospel": 0.3,
+    "funk": 0.25,
+    "acidrock": 0.2,
+    "rock": 0.1,
+    "doowop": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "rhodes_ep",
+    "overdrive_guitar",
+    "rhodes_ep"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": {
+      "$src": "v - 1"
+    }
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": [
+    0,
+    2,
+    3,
+    5,
+    7,
+    9,
+    10
+  ],
+  "diatonic": true,
+  "prog": {
+    "$src": "PROGS.soul7"
+  },
+  "pipes": [
+    {
+      "id": "strum",
+      "spread": 0.06
+    }
+  ],
+  "maxHold": 4,
+  "artic": "legato",
+  "bassGrid": [
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 1.2,
+    "atk": 0.008,
+    "rel": 0.9,
+    "gain": 0.26,
+    "verb": 0.34
+  },
+  "words": [
+    "the Rhodes, one chord a bar",
+    "the guitar, an octave up, from bar 3",
+    "the low part, underneath"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 2 ? [drop(2), transpose(-2)] : [])"
+  },
+  "fx": [
+    "chorus"
+  ]
+}

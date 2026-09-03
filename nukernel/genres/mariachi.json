@@ -1,0 +1,104 @@
+{
+  "note": "MARIACHI — Guadalajara 1950. The trumpet-era mariachi: two trumpets in\nthirds, a section of violins, a vihuela chopping, a guitarrón walking\nthe bass in octaves, and a ranchera on top of it.\nTHE YEAR is Mariachi Vargas at its RCA peak and the ranchera's film\ndecade — the moment the trumpet is standard, which it was not before\nthe 1930s. That instrument, not the ensemble, is what dates this.\nTHE PRIMARY FACT IS THE ENSEMBLE, AND SO IT SHIPS. The sesquiáltera —\nthe son jalisciense's 6/8 crossed against 3/4, two players counting\ndifferently in the same bar — is in `cannot` below and is NOT the\nprimary fact: a mariachi is a mariachi playing a ranchera in four, and\nthe metre it cannot say belongs to one corner of the repertory. That\nis the primary-fact rule applied in the direction it is meant to go.\nNO DRUM KIT AT ALL. A mariachi has no percussion — the vihuela's\nchop and the guitarrón are the rhythm section — so `kit: {}` here is\nthe same kind of truest-line-in-the-entry that zema's is, and for the\nsame reason: the absence IS the ensemble.\n\nTHE GUITARRÓN WALKS IN OCTAVES, which is literally what it does —\nsix strings tuned so the player fingers one note and sounds two an\noctave apart. `octaves` is not an approximation here, it is the\ninstrument's description.",
+  "label": "Guadalajara 1950",
+  "voices": 3,
+  "bars": 8,
+  "near": "nortena",
+  "plan": "song",
+  "bpm": 96,
+  "parents": {},
+  "wants": [
+    "son jalisciense",
+    "canción ranchera",
+    "spanish romance"
+  ],
+  "cannot": [
+    "the sesquiáltera — six-eight against three-four inside one bar, which needs two metres at once and this file writes one"
+  ],
+  "instr": [
+    "trumpet",
+    "violin",
+    "nylon_string_guitar"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "roots": [
+    0,
+    0,
+    4,
+    4,
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "kit": {},
+  "bassStyle": "octaves",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2700,
+    "q": 1,
+    "atk": 0.01,
+    "rel": 0.8,
+    "gain": 0.27,
+    "verb": 0.4
+  },
+  "words": [
+    "the first trumpet",
+    "the violins, a third above",
+    "the vihuela, chopping the chord"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(4)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[split(2), drop(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

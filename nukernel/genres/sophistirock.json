@@ -1,0 +1,155 @@
+{
+  "note": "SOPHISTI-ROCK [jazzrock]. Steely's jazz-schooled changes and walking\nbass, played on a Hammond instead of a Rhodes and a real backbeat\ninstead of a laid-back shuffle — a rock band with a jazz education\nrather than a studio band with a rock format, which is the field\nthat separates the two.\n\nLINEAGE: the band format and the muscular backbeat are rock's own;\nfunk's syncopated hand colours the groove underneath; jazz supplies\nthe dorian changes and the walking bass, the same vocabulary jazzrock\ndraws on but played harder. Progressive rock's extended-arrangement\nambition, the format this style actually grew up inside, is the\nmissing rung.\nPAID 2026-08-29, the debts round: \"progressive rock\" is\n`progrock` (Isle of Wight 1970) — the ambition this row spent\nthe eighties tailoring.\n\nTHE EIGHTH CHORD WAS A DIMINISHED TRIAD NOBODY ORDERED (2026-09-02,\nthe Chordonomicon round). Degree 5 in dorian is the NATURAL sixth,\nand a triad stacked in scale steps off it (9, 12, 15 -> 0, 3, 6) is\nDIMINISHED — an unprepared #vi(dim) at the end of the cycle, which no\nsentence in this row claims and which Steely Dan's jazz-schooled\nchanges do not contain. Chordonomicon, 1,366 sophisti-pop songs: the\neight-chord cycle as written ranks 1,357 of 1,537 (one song), while\nthe row's tonic-subdominant spine `i iv` is rank 3 (x120) at W=2, so\nonly the last chord is wrong. Degree 1 is the SUPERTONIC — the ii a\nii-V education actually reaches for — and every other degree stands.\nPrefab Sprout, \"Appetite\"/*Steve McQueen* (Kitchenware, prod. Thomas\nDolby, London, June 1985). Corpus silent.",
+  "label": "London 1986",
+  "bars": 8,
+  "swing": 0.15,
+  "near": "jazzrock",
+  "plan": "song",
+  "bpm": 104,
+  "parents": {
+    "rock": 0.35,
+    "funk": 0.3,
+    "jazz": 0.35,
+    "progrock": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "rock_organ",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "roots": [
+    0,
+    3,
+    4,
+    0,
+    0,
+    3,
+    4,
+    1
+  ],
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 2000,
+    "q": 1.4,
+    "atk": 0.008,
+    "rel": 0.8,
+    "gain": 0.28,
+    "verb": 0.26
+  },
+  "words": [
+    "the organ, swirling through the changes",
+    "the guitar, doubling low"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2), transpose(-7)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

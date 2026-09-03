@@ -1,0 +1,207 @@
+{
+  "note": "SMOOTH JAZZ [jazzrock] — Los Angeles 1986. Kenny G, \"Duotones\"\n(Arista, 1986), the record that made this a radio format.\nMEASURED over 17 files (Kenny G · George Benson · Grover Washington\nJr. · Spyro Gyra · David Sanborn) — the corpus's whole holding, and\nthe row says so rather than pretending to a wider sample. Tempo\n(n=17): p10 67 · p25 80 · med 93 · p75 111. Mode 11 major / 6 minor.\nTWO NUMBERS: seventh fraction 0.45 and motion 0.81, both near the top\nof everything measured this round — this is a music of moving\nseventh chords, where the pop rows beside it are triads on a pedal.\nThe kit is a programmed one (kick 9002104360031032, sparse; hat\n9384839383838383, sixteenths at even density) under a played horn,\nwhich is exactly what the format is. Held notes: p90 of 14.4\nsixteenths — the longest sustained line in the round.\n\nLINEAGE: `jazzrock` (Los Angeles 1977) is the session band and the\nchanges, in the same city nine years earlier; `quietstorm` (Los\nAngeles 1975) is the tempo, the format and the late-night radio\nthat carried it; `aor` (Los Angeles 1982) is the studio polish;\n`phillysoul` (Philadelphia 1972) is the string cushion.",
+  "label": "Los Angeles 1986",
+  "near": "jazzrock",
+  "plan": "song",
+  "bpm": 92,
+  "parents": {
+    "jazzrock": 0.3,
+    "quietstorm": 0.25,
+    "aor": 0.25,
+    "phillysoul": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "alto_sax",
+    "rhodes_ep"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "maj7"
+    },
+    {
+      "d": 0,
+      "q": "maj7"
+    },
+    {
+      "d": 3,
+      "q": "maj7"
+    },
+    {
+      "d": 4,
+      "q": "7"
+    }
+  ],
+  "artic": "legato",
+  "maxHold": 8,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      9,
+      3,
+      8,
+      4,
+      8,
+      3,
+      9,
+      3,
+      8,
+      3,
+      8,
+      3,
+      8,
+      3,
+      8,
+      3
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sine",
+    "cut": 2200,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1.2,
+    "gain": 0.25,
+    "verb": 0.38
+  },
+  "words": [
+    "the horn, one long line over the changes",
+    "the Rhodes, holding the seventh under it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[keep(0, 8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "chorus"
+  ]
+}

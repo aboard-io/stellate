@@ -1,0 +1,148 @@
+{
+  "note": "RÖYKSOPP — Tromsø 2001. Melody A.M. (Wall of Sound, 13\nSeptember 2001): Berge and Brundtland, childhood friends from\nTromsø — the ZIM's own filing — who grew up in the town's\nimprobable electronica school (Biosphere, Bel Canto, three\nhundred kilometres inside the Arctic Circle) and cut the\nrecord during the Bergen Wave; the dot is the Kinks/Pomona\nrule, the band's own town, and it is the NORTHERNMOST POINT ON\nTHE MAP — sixty-nine degrees, past Reykjavík by five. Analogue\nsynth melodies with frost on them over an unhurried house\nfloor: the melancholy is written into the tune, not played\ninto the time, which is what the DYNAMICS null below means.\n\nLINEAGE: `house` (Chicago 1986) is the floor; `ambient`\n(London 1978) the patience — Biosphere is this row's want\nbecause the Tromsø school deserves its own record; `synthpop`\n(Basildon 1981) the tune discipline on top.",
+  "label": "Tromsø 2001",
+  "voices": 2,
+  "bars": 8,
+  "near": "versailles",
+  "plan": "dance",
+  "bpm": 104,
+  "parents": {
+    "house": 0.3,
+    "ambient": 0.25,
+    "synthpop": 0.2
+  },
+  "wants": [
+    "the tromsø school itself (biosphere's substrata)"
+  ],
+  "instr": [
+    "polysynth",
+    "warm_pad"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "harmony": "cycle",
+  "roots": [
+    0,
+    5,
+    3,
+    6
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "sweep"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1800,
+    "q": 1,
+    "atk": 0.02,
+    "rel": 1.2,
+    "gain": 0.25,
+    "verb": 0.45
+  },
+  "words": [
+    "the synth, a tune you could hum in mittens",
+    "the pad, the sun not coming up"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(2)], [rotate(4)], [transpose(-2)]][s % 4]\n                    : [drop(8)])"
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "note": "POST-PUNK [Joy Division]. Punk's raw directness under dusseldorfschool's\nmachine-pulse discipline — kick and snare landing TOGETHER, the\nmotorik trick, but sung as a real song instead of held as one process\n— with a synth line running its own countermelody a tenth below the\nguitar rather than doubling it. Martin Hannett's spacious, dub-echoed\nproduction, the actual missing rung, is `fx:[\"echo\"]` made explicit\nand still lacks its own anchor.\n\n`wants: [\"cold wave\"]` STOOD HERE until 2026-08-30, and it\npointed FORWARD: cold wave is Manchester 1979's French child,\nnot its ancestor (the hymn-asking-for-spirituals shape). The\ndebt is settled by ARRIVAL rather than by a parent edge —\n`coldwave` (Rennes 1979) lands in the goth-and-globe round and\ndeclares THIS row its dominant parent.",
+  "label": "Manchester 1979",
+  "near": "dusseldorfschool",
+  "plan": "song",
+  "bpm": 138,
+  "parents": {
+    "punk": 0.4,
+    "dusseldorfschool": 0.3,
+    "rock": 0.3
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "synth_strings_1"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 2
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    3,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1600,
+    "q": 1.8,
+    "atk": 0.005,
+    "rel": 0.4,
+    "gain": 0.28,
+    "verb": 0.42
+  },
+  "words": [
+    "the guitar, the line",
+    "the synth, a tenth under, its own countermelody"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(5), transpose(-9)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "echo"
+  ]
+}

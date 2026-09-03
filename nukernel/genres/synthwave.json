@@ -1,0 +1,148 @@
+{
+  "note": "SYNTHWAVE — Paris 2010. Kavinsky's \"Nightcall\", produced with\nGuy-Manuel de Homem-Christo for Record Makers, 2010, on the\nDrive title sequence the following year: the 1980s remembered\nas a neon car at night — Moroder's arpeggio and the DX pads\nreconstructed by people who were children when they were new.\nThe 2010s held seven rows against the 1970s' forty-six, and\nthe decade's own retro current had prior art in the table\n(`vaporwave` Portland 2011, `retrofunkpop` Los Angeles 2013)\nbut not its founding lane.\n\nITS OWN ARPEGGIO (2026-08-31): the genre's whole gesture is a rising synth figure.\n\nLINEAGE: `eurodisco` (Munich 1977) is the arpeggiated engine\nbeing remembered; `italodisco` (Milan 1982) the melodic\nchrome. John Carpenter's own scores are the missing third,\nnamed below.\n\"horrorsynth's film scores\" PAID 2026-08-30, the folk-floor\nround — and the OTHER remembered thing landed the same day:\n`copshowsynth` (Miami 1984), the mood synth this genre spends its\nwhole life quoting. Both edges dated, the organum precedent.",
+  "label": "Paris 2010",
+  "voices": 2,
+  "bars": 8,
+  "near": "italodisco",
+  "seqArp": "arpup",
+  "plan": "dance",
+  "bpm": 92,
+  "parents": {
+    "eurodisco": 0.35,
+    "italodisco": 0.25,
+    "horrorsynth": 0.2,
+    "copshowsynth": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "saw_wave",
+    "warm_pad"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    0,
+    5,
+    5,
+    3,
+    3,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "staccato",
+  "maxHold": 3,
+  "fx": [
+    "chorus",
+    "echo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1800,
+    "q": 1.2,
+    "atk": 0.01,
+    "rel": 0.8,
+    "gain": 0.25,
+    "verb": 0.45
+  },
+  "words": [
+    "the arpeggio, headlights on wet asphalt",
+    "the pad, the city sliding past"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [transpose(-2)], [rotate(2)]][s % 4]\n                    : [drop(9)])"
+  }
+}

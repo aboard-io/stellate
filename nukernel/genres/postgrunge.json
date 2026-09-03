@@ -1,0 +1,151 @@
+{
+  "note": "POST-GRUNGE [grunge] — Seattle 1995. Foo Fighters, \"Foo Fighters\"\n(Robert Lang Studios, Seattle, October 1994; Roswell/Capitol, 4 July\n1995) — and unlike its parent this record really was cut in the city\nthe label names. What separates it from `grunge` is not attitude, it\nis HARMONY AND REGISTER, both measured.\nMEASURED over 120 files (Foo Fighters · Bush · Nickelback · Matchbox\nTwenty · Alanis Morissette · Goo Goo Dolls). Alanis Morissette's\n\"Jagged Little Pill\" files are 24 of the 120 and sit inside the same\ndistribution, which is why she is measured here rather than given a\nrow: the record is post-grunge by every number this box can read.\nTempo (tempo-event files only, n=120): p10 70 · p25 87 · med 107.5 ·\np75 122 · p90 153. Meter 116 of 120 in 4/4. Mode 82 major / 38 minor —\nthe exact inversion of grunge's split. The corpus's top four-bar cycle\nafter the tonic pedal is I-V-VI-IV (41 windows), the major-key pop\nturnaround grunge never plays, and that one line is the whole genre.\nHeld notes median 2.63 (grunge 2.0) and melodic mean pitch 70.8\nagainst grunge's 63.0 — the same band, sung an octave up and let ring.\n  kick  9262224263722251   snare 1110911222119123\n  hat   8182919292829282\n\nLINEAGE: `grunge` (Seattle 1991) is the guitar and the city;\n`rock` (London 1969) is the verse-chorus discipline underneath;\n`powerballad` (Los Angeles 1991) is the quiet-verse/huge-chorus\ndynamic this music sells, arriving four years early and by the\nradio rather than by the scene. Nothing is missing: this is grunge\nbeing produced.",
+  "label": "Seattle 1995",
+  "near": "grunge",
+  "plan": "song",
+  "bpm": 108,
+  "parents": {
+    "grunge": 0.45,
+    "rock": 0.3,
+    "powerballad": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "overdrive_guitar",
+    "clean_guitar"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    4,
+    5,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2200,
+    "q": 1.4,
+    "atk": 0.006,
+    "rel": 0.8,
+    "gain": 0.29,
+    "verb": 0.3
+  },
+  "words": [
+    "the guitar, the sung eight, arching",
+    "the clean guitar, the verse, a fifth under"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(-5)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "crunch"
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "note": "DRILL [trap]. Trap's half-time snare and tied 808 kept, the major\ntriads thrown out for harmonic minor's raised seventh (the eerie lift\nthat reads as menace rather than menace-lite), and the hats given a\nROLL — a fast unpredictable run that trap's steady sixteenth never\nattempts, written as `kitProb` rather than a fixed subdivision because\na drill hat roll's whole character is that you cannot see it coming.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nChief Keef featuring Lil Reese, \"I Don't Like\" (prod. Young Chop, Glory\nBoyz/Interscope, Chicago, 6 March 2012).\n\ntrap's half-time grandchild\n\nLINEAGE: the 808 slide and the half-time snare are trap's own\nvocabulary, inherited whole; the chopped, minor-key sample loop\nunderneath is boom bap's technique aimed at a darker crate; the\nsub-bass glide under everything is jungle's pedal, sped down. The\nscene's own regional rap traditions (Chicago drill, UK drill) are\nboth missing — this anchor is the shared technique, not either city.\n\nTHE KIT IS THE 808 ITSELF (2026-09-02, the catalogue round). Chief\nKeef featuring Lil Reese, \"I Don't Like\" (prod. Young Chop, Chicago,\n6 March 2012): the drums are the 808's own kick, clap and hat, voiced\nper hit by the engine, and `electronic` is a sampled kit standing in\nfor exactly that machine.",
+  "bassInstr": "bass_lead",
+  "label": "Chicago 2012",
+  "near": "trap",
+  "plan": "dance",
+  "bpm": 142,
+  "parents": {
+    "trap": 0.5,
+    "boombap": 0.3,
+    "dnb": 0.2
+  },
+  "wants": [
+    "chicago drill",
+    "uk drill"
+  ],
+  "instr": [
+    "felt_piano",
+    "warm_pad"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "MODES.harmonic"
+  },
+  "artic": "tie",
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitProb": {
+    "h": [
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      6,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      4,
+      9
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 1800,
+    "q": 2,
+    "atk": 0.003,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.25
+  },
+  "words": [
+    "the piano loop, dark and minor",
+    "the sub, sliding under it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[only(\"gate\", rotate(5))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(3)]"
+    }
+  }
+}

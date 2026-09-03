@@ -1,0 +1,142 @@
+{
+  "note": "YELLOW MAGIC ORCHESTRA — Tokyo 1978. Yellow Magic Orchestra\n(Alfa, November 1978), opening with \"Computer Game\" and a\ncover of Martin Denny's \"Firecracker\" played on a Roland\nMC-8: Hosono, Sakamoto and Takahashi answering Kraftwerk from\nthe other end of Eurasia with chords the machines hadn't been\ntaught yet. `electro` (New York 1982) has wanted \"yellow magic\norchestra\" by name since its lineage was written — Bambaataa\nsampled the yellow records alongside the German ones — and\ntakes the parent today.\n\nLINEAGE: `dusseldorfschool` (Düsseldorf 1977) is the dare being\nanswered; `disco` (New York 1977) the floor the answer aims\nat. Martin Denny's exotica — the record they covered to make\nthe point — is real and unanchored; named below.\n(Two voices, not the trio's three: a third chair priced the\nrecord at 43.36 against G12d's ceiling of 43 — measured, not\nguessed — and the counter-line was the one the MC-8 could\nspare. The sevenths live in the keys chair that remains.)\n\"exotica (martin denny's quiet village)\" PAID 2026-08-30\n(Honolulu 1957, the coastline re-bake that let the dot stand\non Oahu): Firecracker is a Denny cover and the edge says so.",
+  "label": "Tokyo 1978",
+  "voices": 2,
+  "bars": 8,
+  "near": "dusseldorfschool",
+  "plan": "song",
+  "bpm": 120,
+  "parents": {
+    "dusseldorfschool": 0.4,
+    "disco": 0.25,
+    "exotica": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "square_lead",
+    "electric_piano"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "prog": {
+    "$src": "PROGS.soul7"
+  },
+  "roots": [
+    0,
+    5,
+    3,
+    4,
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "fx": [
+    "chorus"
+  ],
+  "tone": {
+    "wave": "square",
+    "cut": 2800,
+    "q": 1,
+    "atk": 0.004,
+    "rel": 0.3,
+    "gain": 0.25,
+    "verb": 0.3
+  },
+  "words": [
+    "the melody, sequenced, grinning",
+    "the keys, sevenths the machines were denied"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(2)], [rotate(2)], [transpose(2)]][s % 4]\n                    : [keep(0, 4, 8, 12)])"
+  }
+}

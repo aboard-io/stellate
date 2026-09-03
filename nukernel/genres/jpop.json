@@ -1,0 +1,137 @@
+{
+  "note": "J-POP — Tokyo 1999: Utada Hikaru, First Love — the best-selling\nJapanese album there has ever been, and the record where J-pop's\n1990s (the term is J-WAVE radio's, coined for exactly this\ndomestic-international pop) meets American R&B production sung in\nJapanese with English hooks. `citypop` (Tokyo 1984) is fifteen\nyears upstream on the same dot; the year separates them, the\nRome/Cairo rule again.\n\nLINEAGE: city pop's session polish is the domestic inheritance,\ncontemporary R&B the production language First Love actually\nspeaks. kpop (one seat over) took this row's own formula and\nindustrialized it a decade later.",
+  "label": "Tokyo 1999",
+  "voices": 2,
+  "bars": 8,
+  "near": "kpop",
+  "plan": "song",
+  "bpm": 104,
+  "parents": {
+    "citypop": 0.35,
+    "rnb": 0.4
+  },
+  "wants": [],
+  "instr": [
+    "rhodes_ep",
+    "synth_strings_1"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "roots": [
+    5,
+    3,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.01,
+    "rel": 0.8,
+    "gain": 0.26,
+    "verb": 0.35,
+    "mouth": {
+      "$src": "MOUTHS.poplead"
+    }
+  },
+  "words": [
+    "the melody, R&B melisma in Japanese",
+    "the pad, ninths under it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4]\n                    : [drop(10)])"
+  }
+}

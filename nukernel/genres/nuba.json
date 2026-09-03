@@ -1,0 +1,188 @@
+{
+  "note": "NUBA — Tetouan 1790. Muhammad al-Ha'ik's *kunnash*, the songbook\ncompiled in Tetouan at the end of the eighteenth century that wrote\ndown the eleven surviving Andalusi nubat and is the reason there are\neleven rather than none. Twenty-four were counted in the medieval\nsources; the other thirteen were already lost when he wrote.\nIT IS THE SAME KIND OF ROW AS `counterpoint`: a codification, dated\nby the book, sitting on a practice that runs back through the\nMaghribi courts to Ziryab's Cordoba in the ninth century — and this\nblock dates it by the book on purpose, with the comment saying so,\nwhich is the repair `counterpoint` needed.\nWHAT IT DOES NOT PAY. `troubadour` wants \"andalusi song\" and `fado`\nwants \"moorish andalusi song\", and this row is NOT either of them:\nboth want the twelfth-century music of al-Andalus itself, and this\nis its North African survival codified six hundred years later. Both\nwants stay open. Paying them with this would be the conscription\nWORLD.md §4 names.\nTHE AXES: FORM is the identity and it is the one this box cannot\nhold. A nuba is five movements in five different metres, each\nstarting slow and accelerating into the next. What ships is one\nmovement of it, said plainly in the row's `cannot`.\n\nLINEAGE: a declared ROOT for the same reason `taqsim` is one —\nthe ancestor is Andalusi court music and there is no anchor for\nit, and there will not be one until somebody can name a place, a\nyear and a source for it that is not this book.\n\"andalusi's cordoban court music\" PAID 2026-08-29 (Córdoba 822):\nal-Ha'ik's Tetouan songbook is that school's repertory written\ndown after the expulsions carried it to the Maghreb — the\ntradition's own account of itself, now sayable as an edge.\n\"muwashshah\" stays on the books: the strophic form's identity is\nits aksak metres and no named dated source predates its\ndependents (the genealogy round's declined list).\n\"muwashshah\" PAID 2026-08-30 (Cairo 1200) — the comment below\nsaid it stayed on the books because \"no named dated source\npredates its dependents\"; Dar at-Tiraz predates this row by six\ncenturies and the sentence is defeated, not argued around. The\nnuba's own repertory IS muwashshah texts by the hundred.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nMuhammad al-Ha'ik's KUNNASH, compiled at Tetouan at the end of the\neighteenth century — this row's own book, place and (dated-by-the-book)\nyear. The eleven surviving nubat are in the Maghribi TUBU', which this box\ncannot spell: the row is `harmony: \"modal\"` and the mode reached nothing.\nRather than leave a Greek mode-name standing in for a tab' nobody here has\nmeasured, the field names the plain alphabet the row actually plays. The\ntubu' stay in the row's `cannot`, where an unplayable fact belongs.\n\nthe tar and darbuka's basic cycle, voiced on what there is: a\nframe-drum stroke on the beat and the tar's rattle between.\n\nWHO SINGS: `trobar` — a chant-trained tenor, open vowels,\nmore breath than a church allows, one syllable a beat.\nThe row was written for Provence 1210 and the joke is that\nit is right here for a reason: that is the direction the\nborrowing actually ran.",
+  "label": "Tetouan 1790",
+  "voices": 4,
+  "bars": 8,
+  "near": "troubadour",
+  "plan": "arc",
+  "bpm": 84,
+  "parents": {
+    "andalusi": 0.5,
+    "muwashshah": 0.2
+  },
+  "wants": [
+    "the algerian sanaa"
+  ],
+  "cannot": [
+    "the five mayazin — a nuba runs basit, qaim wa nisf, btayhi, darj, insiraf and quddam, in 6/4, 8/4, 4/4, 5/8 and 6/8, each accelerating to a khalas; an anchor cannot declare a metre at all in this table and one record has one tempo (WORLD.md §2 walls 1 and 2, neither landed)",
+    "the orchestra — no oud, no rabab, no qanun, no tar. The fiddle below is a violin played on the knee in the real thing, which is at least the same instrument; the rest are cognates and the harp is a guess at a qanun"
+  ],
+  "instr": [
+    "ahh_choir",
+    "fiddle",
+    "nylon_string_guitar",
+    "harp"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      -1,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "counter",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    3,
+    4,
+    4,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "harmony": "modal",
+  "intro": "solo",
+  "artic": "legato",
+  "maxHold": 3,
+  "nobass": true,
+  "orn": {
+    "grace": 0.25,
+    "pass": 0.2
+  },
+  "kit": {
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ],
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      8,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      4,
+      8,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      5
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1.2,
+    "gain": 0.24,
+    "verb": 0.55,
+    "mouth": {
+      "$src": "MOUTHS.trobar"
+    }
+  },
+  "words": [
+    "the chorus, singing the sana'a in unison",
+    "the violin, on the same line",
+    "the oud, filling under it",
+    "the qanun, holding the mode"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(7)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[fill(2), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(8)]"
+    }
+  }
+}

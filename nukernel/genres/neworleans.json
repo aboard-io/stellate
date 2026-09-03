@@ -1,0 +1,205 @@
+{
+  "note": "NEW ORLEANS — New Orleans 1923. King Oliver's Creole Jazz Band —\nOliver and the young Louis Armstrong on cornets, Johnny Dodds's\nclarinet, Honoré Dutrey's trombone — cutting \"Dipper Mouth Blues\"\nin 1923: the collectively-improvising New Orleans front line, on\nrecord, at full strength. THE SIDES WERE CUT IN RICHMOND, INDIANA\nAND CHICAGO — the band had gone north with the Great Migration —\nand the label says New Orleans anyway because the MUSIC is the\ncity's, the Kinshasa/Léopoldville rule applied in reverse: one\ncity per music, the recording trip in the comment. `jazz` (New\nYork 1945) and `swing` (Kansas City 1938) have both wanted \"new\norleans jazz\" since their lineages were written — bebop's whole\nharmonic engine and the riff band's ensemble shout both walk out\nof this polyphony — and both take it as a parent today.\nTHE AXES: CAST and DEVELOPMENT are one fact here — THREE lines at\nonce, each with its own job (lead states, clarinet weaves above,\ntrombone tailgates below), which is counterpoint reinvented by\near in a dance hall. The word schedule below is those jobs.\n\nthe row's own cast: \"THREE lines at once\" — lead, clarinet, trombone\n\nLINEAGE: `ragtime` (Sedalia 1899) is the repertory and the\nsyncopation the horns played off; `spirituals` (Nashville 1871)\nis the church half of the city's ear. The brass band funerals\nand the pre-electric blues are named below — the blues anchor\nthis table has is Chicago 1952, a CHILD of this music, and an\nedge may not run backwards (the jumpblues/blues cycle rule).\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nKing Oliver's Creole Jazz Band, \"Dipper Mouth Blues\", cut 6 April 1923 —\nthis row's own record. Its roots are the blues I-IV-V (degrees 0, 3, 4) and\nnever degree 6, so mixolydian reached nothing; see the ruling written out in\nfull at `zydeco`. SCALES.blues on this same line is where the flat seventh\nactually sounds, and it is untouched.\n\ntwo-beat: the bass drum on 1 and 3, the snare's press on 2 and\n4, the ride's woodblock chatter on the p lane.",
+  "instrumental": true,
+  "label": "New Orleans 1923",
+  "voices": 3,
+  "bars": 8,
+  "near": "swing",
+  "plan": "song",
+  "bpm": 104,
+  "parents": {
+    "ragtime": 0.5,
+    "spirituals": 0.2
+  },
+  "wants": [
+    "the brass band funeral",
+    "storyville's professors",
+    "the blues before electricity"
+  ],
+  "cannot": [
+    "collective improvisation itself — three players making it up AT ONCE, listening to each other; the word schedule below fixes each voice's job per section, which is the texture with the conversation composed out (the fugue's own limit, a century over)"
+  ],
+  "instr": [
+    "trumpet",
+    "clarinet",
+    "trombone"
+  ],
+  "drumkit": "jazz",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": {
+      "$v": true
+    }
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    0,
+    4,
+    3,
+    0,
+    4
+  ],
+  "prog": {
+    "$src": "PROGS.blues12"
+  },
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "harmony": "cycle",
+  "swing": 0.45,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      7,
+      0,
+      4,
+      5,
+      0,
+      6,
+      4,
+      0,
+      7,
+      0,
+      4,
+      5,
+      0,
+      6,
+      4,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "orn": {
+    "grace": 0.25,
+    "flam": 0.15
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2900,
+    "q": 1,
+    "atk": 0.008,
+    "rel": 0.6,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the lead cornet, stating it plain",
+    "the clarinet, weaving above",
+    "the trombone, tailgating below"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)]][s % 3]\n                    : v === 1 ? [transpose(3), fill(2), rotate(4)]\n                    : [transpose(-4), keep(0, 3, 6, 8, 11, 14)])"
+  }
+}

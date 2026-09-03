@@ -1,0 +1,101 @@
+{
+  "note": "SCHÜTZ — Dresden 1636. The Musikalische Exequien, published in\nDresden in the middle of the Thirty Years' War: a German\nfuneral mass for a named patron (Heinrich Posthumus of Reuss,\nwho chose his own burial texts), Monteverdi's concerted style\ncarried over the Alps and set on the chorale's own tongue. With\n`secondapratica` above it closes the 1610-1660 gap from the German\nside — the bridge on which Lutheran music walks from `chorale`\n(Nuremberg 1586) to `fugue` (Leipzig 1725).\n\nLINEAGE: he studied with Giovanni Gabrieli in Venice and\nvisited Monteverdi in 1628; the chorale is the congregation\nhe wrote for. Gabrieli is the missing teacher, named below.",
+  "label": "Dresden 1636",
+  "voices": 3,
+  "bars": 8,
+  "near": "chorale",
+  "plan": "arc",
+  "bpm": 72,
+  "parents": {
+    "chorale": 0.45,
+    "secondapratica": 0.35
+  },
+  "wants": [
+    "giovanni gabrieli, his teacher"
+  ],
+  "instr": [
+    "solo_vox",
+    "ahh_choir",
+    "church_organ"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {},
+  "harmony": "cycle",
+  "intro": "solo",
+  "roots": [
+    0,
+    3,
+    0,
+    4,
+    0,
+    5,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.8,
+    "atk": 0.05,
+    "rel": 1.6,
+    "gain": 0.22,
+    "verb": 0.6,
+    "mouth": {
+      "$src": "MOUTHS.motet"
+    }
+  },
+  "words": [
+    "the concertists, declaiming the text",
+    "the chapel choir, answering in chorale blocks",
+    "the organ, the ground under both"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)]][s % 3]\n                    : v === 1 ? [keep(0, 4, 8, 12)]\n                    : [keep(0, 8), transpose(-3)])"
+  }
+}

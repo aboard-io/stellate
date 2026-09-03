@@ -1,0 +1,163 @@
+{
+  "note": "EXOTICA — Honolulu 1957. Martin Denny's EXOTICA (Liberty,\nrecorded December 1956, released 1957 — the ZIM dates both), cut\nby the combo Denny formed in 1955 \"performing under contract at\nthe Shell Bar in the Hawaiian Village on Oahu\": Les Baxter's\n\"Quiet Village\" rescored for vibes, piano and birdcalls, the\nrecord the whole genre was then NAMED after by Liberty's own\nchairman. Pays `technopop`'s want by name (\"exotica (martin denny's\nquiet village)\" — the record they covered to make Firecracker).\nTHE DOT IS THE POINT: this is the catalog's first Pacific place.\nThe wall was never musical — atlas.js held Honolulu back because\nthe coastline bake had no Pacific islands — and the same day this\nrow landed, the bake was re-run with Honolulu in PLACES, whose\nPKEEP rule keeps Oahu's ring. \"One re-bake of the coastline\nunblocks the Pacific half of this row,\" the empty-region note\nsaid. Re-baked, unblocked, paid.\n\nthe voices are frogs and macaws, not words\n\nLINEAGE: mambo for the Afro-Cuban percussion vocabulary the\narrangements borrow, romantic for the Hollywood scoring craft\nDenny trained in (Los Angeles Conservatory, per the ZIM).",
+  "instrumental": true,
+  "label": "Honolulu 1957",
+  "voices": 3,
+  "bars": 8,
+  "near": "latinjazz",
+  "plan": "song",
+  "bpm": 92,
+  "parents": {
+    "mambo": 0.3,
+    "romantic": 0.2
+  },
+  "wants": [
+    "les baxter's ritual of the savage (1951)",
+    "hapa-haole (honolulu 1915)"
+  ],
+  "cannot": [
+    "the birdcalls — Augie Colon's frogs and macaws are the record's signature and its actual hook, and no registry voice says them; the room plays the notes and owes the jungle"
+  ],
+  "instr": [
+    "vibraphone",
+    "yamaha_grand_piano",
+    "warm_pad"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "h": [
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  "swing": 0.1,
+  "harmony": "cycle",
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "maj7"
+    },
+    {
+      "d": 3,
+      "q": "maj7"
+    },
+    {
+      "d": 4,
+      "q": "7"
+    },
+    {
+      "d": 0,
+      "q": "maj7"
+    }
+  ],
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "pedal",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 0.9,
+    "atk": 0.008,
+    "rel": 1.2,
+    "gain": 0.25,
+    "verb": 0.5
+  },
+  "words": [
+    "the vibes, the quiet village at dusk",
+    "the piano, answering across the lagoon",
+    "the pad, the tropical ersatz itself"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [transpose(2)], [spread(2)]][s % 4]\n                    : v === 1 ? [rotate(8), drop(2)]\n                    : [drop(10)])"
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "note": "===================================================================\nTHE FOUR CHORDONOMICON GAPS (2026-09-02, the catalogue round, shift 2).\n\nThe 666,000-progression Chordonomicon census was crossed against this\ntable and nine labels came back with thousands of songs each and no row\nof ours. FIVE OF THE NINE WERE DECLINED, each because the catalogue\nalready holds the music under a truer word, and the declining is as much\nof this round's work as the adding:\n\n  · ALBUM ROCK (9,855 songs) — a TWIN of `aor` (Los Angeles 1982). Not a\n    music, the 1970s FM-radio programming shelf, and the encyclopaedia\n    files it by REDIRECTING \"Album rock\" to \"Album-oriented rock\",\n    which is the article `aor` has linked since the great rename. 94% of its songs\n    also carry plain \"rock\" or \"classic rock\".\n  · PERMANENT WAVE (9,399) — DECLINED as a machine label. The local ZIM\n    redirects the phrase to \"Perm (hairstyle)\", so there is no article\n    for an ASK row to name, and its co-occurring tags run from new\n    romantic to alternative metal by way of three other coinages no\n    human uses (lilith, melancholia, mellow gold). That is what a\n    clustering artifact looks like from the inside.\n  · INDIE ROCK (8,478) — a TWIN of `collegerock` (Athens 1983) and\n    `janglepop` (Manchester 1984), which its own article's lead names as\n    its origin in those words. `collegerock`'s ASK row already ruled on\n    the umbrella above it (\"its article tree IS our rows\"), and indie\n    rock's one distinctive habit — mediant vamping, `iii I IV iii` at\n    5.3x lift — is the turn `collegerock`'s comment measured off its own\n    corpus files.\n  · CONTEMPORARY COUNTRY (8,982) — a TWIN of `countrypop` (Nashville\n    1945). No article at all (three spellings, three 404s); 8,982 of\n    8,982 songs also carry plain \"country\"; and its single harmonic fact,\n    the I-V-vi-IV axis loop in every rotation at 2.7-2.9x lift, is\n    literally `countrypop`'s declared `roots: [0,4,5,3]`. Its 2014 median\n    year is `confessionalpop` (Nashville 2008).\n  · HARD ROCK (7,572) — a TWIN of `rock` (London 1969) and five others.\n    Its article's history IS our rows in order: Cream and Hendrix\n    (`acidrock`), Zeppelin and Purple (`rock`), Sabbath (`heavymetal`),\n    Alice Cooper (`glam`), Thin Lizzy (`nwobhm`), Mötley Crüe\n    (`glammetal`), the post-grunge bands (`postgrunge`). Its sharpest\n    measured fact — the bIII/bVII/bVI power-chord cell at up to 10.2x\n    lift in the chorus — is exactly what `rock`'s own\n    `roots: [0,0,6,6,3,3,0,0]` in natural minor already plays, and 137\n    of its 544 corpus files are Led Zeppelin, `rock`'s named record.\n\nTHE FOUR BELOW ARE REAL and three of them were already owed: `coastrock`\nwanted \"california folk rock\", `collegerock` and `janglepop` both wanted\nthe Byrds' twelve-string, `altcountry` wanted \"cosmic american music\",\nand `orchpsych` wanted \"chamber pop\" and its own comment called that rung\n\"the actual missing rung between the three\". Five wants close below.\n\nWHAT WAS MEASURED AND WHAT WAS CHOSEN, because the two are not the same\nand a row that hides the difference is worse than one that measured\nnothing. Each row's own comment says which of its numbers came off\n/mnt/sources/relocated/stellate-midi-corpus and which came off a\nneighbour. Two standing caveats hold for all four: the corpus matcher\nreaches these labels only through an ARTIST ROSTER (the literal terms\n\"folk rock\", \"country rock\", \"heartland rock\", \"chamber pop\" return\nzero or near-zero files), and 14.3% of the whole corpus sits at exactly\n120 bpm because that is the MIDI default. No drum lane below was read\noff the corpus; every kit grid is designed from the neighbours and the\nrecord, and no comment here claims otherwise.\n===================================================================\n\nFOLK ROCK — Los Angeles 1965. The Byrds, \"Mr. Tambourine Man\", cut at\nColumbia Studios, Hollywood on 20 January 1965 with McGuinn's\nRickenbacker 360/12 over the Wrecking Crew; the album followed 8 March\nto 22 April and the single on 12 April. The coinage is the record's own:\n\"the term 'folk rock' was initially used in the U.S. music press in June\n1965 to describe the Byrds' music\". A Dylan song, a beat group's line-up\nand a twelve-string, which is exactly what the three parents are.\n\nTHE HARMONY IS MEASURED. Over 9,018 Chordonomicon songs the distinctive\nfour-chord window is `I I IV bVII` at 3.57x lift on 44 songs, and the\nchorus sharpens it (`bVII IV I bVII` 3.22x, `I bVII IV I` 2.93x). The\nflat seventh runs 1.64x over the rock/pop/country baseline and the\nSUBMEDIANT is suppressed at 0.77x — this is a modal music that avoids\nvi, which is the exact opposite of the country-radio axis loop declined\nabove. So the roots are I-I-IV-bVII and THE MIXOLYDIAN IS EARNED: degree\n6 is a root here, which is the one thing the 2026-09-02 mode law asks\nfor. Degree 4 is deliberately absent — in mixo it renders a minor v under\nan 82.5%-major label — which is `aor`'s and `britpop`'s own ruling.\n\nTHE NUMBERS THAT ARE MEASURED: bpm 115 is the median of 143 corpus files\nmatched by roster (Dylan 41, Simon & Garfunkel 56, CSN 21, Cat Stevens 8,\nDonovan 7, the Byrds 4); 94.4% of them are 4/4 and 87.4% major, which\nagrees with Chordonomicon's 82.5%; maxHold 4 comes off a 90th-percentile\nhold of 6.06 sixteenths over 130 files, the same reading `grunge` took.\nNO `swing`: it was not measured, and `grunge`'s rule is that a row says\nswing only where a lean was measured.\n\nTHE CAST IS THREE MODELLED VOICES. `clean_guitar` is the article's own\ndescription of the Rickenbacker — \"relatively clean, jangly sound,\nwithout distortion\" — `steel_string_guitar` is the acoustic the folk half\nbrought, and `ohh_voices` is the three-part harmony, which is half the\nrecord and the field that separates this row from `collegerock`'s two\nbare guitars. `picked_bass` is Chris Hillman with a pick. The rim on\nevery off-eighth is the TAMBOURINE the record is named after, which a\ntwelve-lane kit can only say that way.",
+  "label": "Los Angeles 1965",
+  "near": "beatgroup",
+  "plan": "song",
+  "bpm": 115,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "folkduo": 0.45,
+    "beatgroup": 0.35,
+    "rocknroll": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "steel_string_guitar",
+    "ohh_voices"
+  ],
+  "bassInstr": "picked_bass",
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    0,
+    3,
+    6
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "eighths",
+  "pipes": [
+    {
+      "id": "strum",
+      "spread": 0.04
+    }
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.9,
+    "atk": 0.006,
+    "rel": 1.2,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the twelve-string, ringing, the hook",
+    "the acoustic, strummed under it",
+    "the three-part harmony, entering late"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(2)]"
+    }
+  }
+}

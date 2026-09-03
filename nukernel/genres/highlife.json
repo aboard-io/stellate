@@ -1,0 +1,216 @@
+{
+  "note": "HIGHLIFE — Accra 1957, and it pays three debts this file had already\nbooked. Dance-band highlife is a West African brass-and-guitar orchestra\nplaying over a Cuban timeline: E.T. Mensah & the Tempos, horns in\nparallel, a guitar picking thirds, and a hand-percussion layer that\nnever stops.\nTHE YEAR is Ghana's independence in March 1957 and the peak of the\nTempos' reach across the coast — a decade's centre with a real event in\nit, NOT a single record. (Louis Armstrong sat in with the Tempos in\nAccra, but that was May 1956; the year here is not hanging on him.)\nWHAT SEPARATES IT FROM LAGOS 1971 — its own child — is the HARMONY and\nthe CLOCK. Afrobeat is `harmony: \"modal\"`, one dorian chord you stay\ninside for eight bars at 108. Highlife MOVES: I–IV–V–I every four bars\nin ionian at 120, because it is dance-band music for couples and a\ndance band plays changes. The guitar in parallel thirds is the other\ntell, and it puts this anchor in a small and specific company: the only\nother records here that lock two voices at ONE fixed diatonic interval\nfor the whole song are the Beatles' thirds, Chuck Berry's fourths and\nthe hymnal's four parallel parts — every other pair in the table is\nrotated, masked or thinned against each other rather than glued.\n\nLINEAGE: the catalog's first African ROOT, and honestly so. Dance-band\nhighlife is coastal adaha brass, palm-wine guitar, the Afro-Cuban 78s\nthat circulated in West Africa, and the SWING big band — and not one\nof those four is here. `jazz` is New York 1945, which is bebop: the\nwrong music twelve years early, and its own `wants` admits it is\nmissing swing. Reaching for it in the bossa style would be reaching\nfor the nearest anchor rather than the right one.\nLINEAGE, REWRITTEN 2026-08-26 — and the paragraph above is kept\nrather than deleted, because it was right on the day it was written\nand it is the reason this repair was possible. It said: \"the\ncatalog's first African ROOT, and honestly so. Dance-band highlife\nis coastal adaha brass, palm-wine guitar, the Afro-Cuban 78s that\ncirculated in West Africa, and the SWING big band — and not one of\nthose four is here.\" THREE OF THE FOUR ARE NOW HERE. `wants` was a\nspecification and the world round built to it: palmwine (Freetown\n1950), son (Havana 1928) and swing (Kansas City 1938). Accra 1957\nstops being a root, and the one thing still missing — the adaha\nbrass band of the coastal towns — stays named.\n\nA HOLLOW-BODY, not a solid one: `jazz_guitar` is closer to a 1950s\nWest African dance band than `clean_guitar`'s bright electric, and the\ntwo horns are the Tempos' own front line.\n\nTHE TIMELINE IS THE RIM, and it is the most interesting fact about\nthis anchor: the figure on `p` is the clave family, and dance-band\nhighlife took it from the Cuban 78s the Tempos were covering — which\nhad taken it from West Africa in the first place. It is written as\nONE bar here (the three-side in the first eight steps, the two-side in\nthe second), where Kinshasa 1960 below spends two bars on the same\nidea; that difference is real and it is the two anchors' clearest\nseparation in the kit.\nAND THE MARACAS ARE THE HAT LANE AGAIN — hambone's compromise, said\nout loud a second time: there is no shaker among the twelve extracted\ndrums, so sixteen closed hats carry it and `kitVel` carries the hand.\nThe claps are not a stand-in at all; they are handclaps.",
+  "label": "Accra 1957",
+  "voices": 3,
+  "near": "afrobeat",
+  "plan": "song",
+  "bpm": 120,
+  "parents": {
+    "palmwine": 0.4,
+    "son": 0.3,
+    "swing": 0.3
+  },
+  "wants": [
+    "adaha brass band"
+  ],
+  "instr": [
+    "jazz_guitar",
+    "trumpet",
+    "tenor_sax"
+  ],
+  "drumkit": "jazz",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      9,
+      4,
+      6,
+      4,
+      8,
+      4,
+      6,
+      4,
+      9,
+      4,
+      6,
+      4,
+      8,
+      4,
+      6,
+      5
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.6,
+    "gain": 0.27,
+    "verb": 0.28
+  },
+  "words": [
+    "the guitar, picking the tune",
+    "the trumpet, a third above it",
+    "the tenor, answering late"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(4), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

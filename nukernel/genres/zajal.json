@@ -1,0 +1,103 @@
+{
+  "note": "ZAJAL — Córdoba 1150. The dīwān of Ibn Quzman (1087-1160), \"the\nsingle most famous poet in the history of Al-Andalus\" — the ZIM's\nwords, and its Zajal article opens with him: \"the earliest\nrecorded zajal poet was Ibn Quzman of al-Andalus\". Strophic song\nentirely in the vernacular, sung in the street where the\nmuwashshah was sung in the salon, by a poet who lived (the ZIM\nagain) \"a lifestyle similar to that of troubadours\". THIS is the\ntwelfth-century music of al-Andalus that `fado` and `flamenco`\nwant as \"moorish andalusi song\" and `troubadour` as \"andalusi\nsong\" — three wants, one form, and the nuba row's own comment\nalways said `nuba` (its eighteenth-century Maghribi codification)\nwas NOT it. The dot is the city he was born and died in.\n\nWHO SINGS: the trobar throat, and the shared mouth IS the\nscholarly question — whether the troubadours learned the\nstrophe-and-refrain from exactly this music is the oldest\nopen argument in the field, and the cast states the kinship\nwithout ruling on the direction.",
+  "label": "Córdoba 1150",
+  "voices": 2,
+  "bars": 8,
+  "near": "troubadour",
+  "plan": "song",
+  "bpm": 100,
+  "parents": {
+    "andalusi": 0.45
+  },
+  "wants": [
+    "the kharja corpus in romance"
+  ],
+  "cannot": [
+    "the crowd — a zajal is call and refrain with the street answering, and two chairs are not a street"
+  ],
+  "instr": [
+    "solo_vox",
+    "nylon_string_guitar"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff"
+  ],
+  "kit": {
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "pedal",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 1,
+    "atk": 0.01,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.trobar"
+    }
+  },
+  "words": [
+    "the zajal, vernacular and licentious, verse then refrain",
+    "the strings, the wheel the refrain turns on"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(4)], [transpose(-2)], [rotate(2), fill(2)]][s % 4]\n                    : [keep(0, 4, 8, 12), drop(2)])"
+  }
+}

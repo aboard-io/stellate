@@ -1,0 +1,159 @@
+{
+  "note": "DUBSTEP — London 2005. Skream's \"Midnight Request Line\" (Tempa,\n2005), written as a teenager in the back of Big Apple Records,\nCroydon: garage halved to a sway, the snare withheld to the\nthird beat, the bass given the melody and the middle left\nempty as a dub plate. The name says its own genealogy and the\nparents below just spell it: this is the row that reconnects\nthe London hardcore continuum to `dub` (Kingston 1973) by the\nshortest path in the table.\n\nLINEAGE: `garage` (London 1999) is the swing and the scene —\ndubstep is literally garage's B-side instrumentals aging\ndarker — `dub` the space and the bass-as-lead doctrine,\n`dnb` the sub weight at the same pirate stations.\n\nhalf-time: kick on one, the snare NOT until step 8, hats\nshuffling sixteenths in the gaps.",
+  "label": "London 2005",
+  "voices": 2,
+  "bars": 8,
+  "near": "dub",
+  "plan": "dance",
+  "bpm": 140,
+  "parents": {
+    "garage": 0.45,
+    "dub": 0.3,
+    "dnb": 0.25
+  },
+  "wants": [
+    "the croydon dubplate circuit (big apple records)"
+  ],
+  "cannot": [
+    "the wobble — the bass's own LFO chewing the filter in triplets against the half-time is the genre's public signature, and tone has cut and q but no rate on either; the held sub below is the space without the chew (nothing greys silently: it is absent, not faked)"
+  ],
+  "instr": [
+    "saw_wave",
+    "warm_pad"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "pad"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "swing": 0.15,
+  "artic": "tie",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      0,
+      0,
+      5,
+      0,
+      4,
+      0,
+      0,
+      6,
+      0,
+      0,
+      5,
+      0,
+      4,
+      0,
+      0,
+      6
+    ]
+  },
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1500,
+    "q": 1.6,
+    "atk": 0.004,
+    "rel": 0.8,
+    "gain": 0.27,
+    "verb": 0.4
+  },
+  "words": [
+    "the bass, carrying the tune",
+    "the pad, the empty middle"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(3)], [transpose(-1)], [rotate(5)]][s % 4]\n                    : [drop(10)])"
+  }
+}

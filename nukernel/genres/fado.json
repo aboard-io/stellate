@@ -1,0 +1,106 @@
+{
+  "note": "FADO — Lisbon 1955. The Portuguese song of saudade: one voice, a\nPortuguese guitarra — a twelve-string steel cittern with a fan-shaped\ntuner and a ringing, weeping sound — and a viola (a plain nylon\nguitar) holding the harmony under both.\nTHE YEAR is Amália Rodrigues's fifties recordings, when fado becomes\nthe national music on record rather than in a house in Alfama.\nIN FOUR, WHICH IS TRUE OF HALF THE FORM. Fado corrido and fado\nmenor are in four and this is one of them; the fado from Coimbra and\nseveral of the older fados are in three, which this file cannot write,\nand that is in `cannot`. The primary fact — a voice, a guitarra, and\nthe alternation between them — ships.\nTHE GUITARRA IS `steel_string_guitar` FOR THE THIRD TIME IN THIS ROUND\nand this is the closest of the three: it is genuinely a steel-strung\nplucked instrument. What is lost is the doubled courses and the tuning,\nwhich is what makes the guitarra ring where a guitar decays.\n\n\"modinha\" AND \"lundum\" PAID 2026-08-29, both at Lisbon, which is\nthe point: Caldas Barbosa's salon songs and danced lundus are the\ncity's own documented song culture two generations before the\nfado houses, and every history of the form routes through both.\n\"moorish andalusi song\" PAID 2026-08-30 (`zajal`, Córdoba 1150)\n— the twelfth-century music of al-Andalus itself, which the nuba\nrow's comment always said its Maghribi codification was not.",
+  "label": "Lisbon 1955",
+  "voices": 3,
+  "near": "bolero",
+  "plan": "song",
+  "bpm": 76,
+  "parents": {
+    "modinha": 0.35,
+    "lundu": 0.15,
+    "zajal": 0.1
+  },
+  "wants": [],
+  "cannot": [
+    "fado corrido's cousins in three — the Coimbra repertory and the older fados are in a metre this file's sixteen-place cells cannot write"
+  ],
+  "instr": [
+    "solo_vox",
+    "steel_string_guitar",
+    "nylon_string_guitar"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "roots": [
+    0,
+    4,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "MODES.phrygian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "kit": {},
+  "bassStyle": "eighths",
+  "orn": {
+    "grace": 0.35,
+    "approach": 0.4
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.012,
+    "rel": 1.1,
+    "gain": 0.26,
+    "verb": 0.44,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the fadista",
+    "the guitarra, weeping between the lines",
+    "the viola, holding the chord"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(12), rotate(8), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

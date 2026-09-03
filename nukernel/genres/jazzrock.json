@@ -1,0 +1,182 @@
+{
+  "note": "STEELY DAN. Dorian, and specifically dorian's MAJOR fourth — the one\nbright chord in a minor key, which is the sound of half their catalogue\nand is a mode fact rather than a chord substitution. Add the relative\nmajor at the end of the form and you have i - IV - v - III, which turns\nover forever and never resolves anywhere emphatic, which is the point. A\nRhodes, a jazz guitar over it, a walking bass, and a shuffle small enough\nthat it reads as feel rather than as swing.\n\nnamed \"Los Angeles 1977\" — Aja: the Rhodes/jazz-guitar/walking-bass\nsession polish is the LA years, not the NY bar band of 1972.\n\nLINEAGE: a rock band's format carrying blues changes dressed in\nMotown's session polish — but the dorian IV7, the walking bass and\nthe shuffle all pointed at the catalog's one great hole: jazz. It is\nfilled, and jazz takes the largest single share almost entirely out of\nBLUES (0.35 -> 0.10) — that is the honest bookkeeping, since all three\nof those things arrive here through 52nd Street rather than through\nChess. The band format and the session polish barely move.\n\ni IV v III",
+  "label": "Los Angeles 1977",
+  "bars": 8,
+  "voices": 3,
+  "swing": 0.2,
+  "plan": "song",
+  "bpm": 100,
+  "parents": {
+    "jazz": 0.35,
+    "rock": 0.3,
+    "detroitsoul": 0.25,
+    "blues": 0.1
+  },
+  "wants": [
+    "bacharach"
+  ],
+  "instr": [
+    "rhodes_ep",
+    "jazz_guitar",
+    "rhodes_ep"
+  ],
+  "drumkit": "jazz",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": {
+      "$src": "v - 1"
+    }
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "roots": [
+    0,
+    0,
+    3,
+    3,
+    4,
+    4,
+    2,
+    2
+  ],
+  "bassStyle": "walk",
+  "artic": "legato",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 1,
+    "atk": 0.007,
+    "rel": 0.8,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the Rhodes, one chord a bar",
+    "the guitar, from bar 3",
+    "the low part underneath"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(2), transpose(-2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "chorus"
+  ]
+}

@@ -1,0 +1,210 @@
+{
+  "note": "KWELA — Johannesburg 1955, and it pays marabi's `wants` line. Township\npennywhistle music: a boy on a cheap tin flute over a guitar, a\ntea-chest bass and a hand on a suitcase, played on street corners\nbecause a pennywhistle is what you can afford and a corner is where you\ncan watch for the police.\nTHE YEAR is Spokes Mashiyane's \"Ace Blues\" and the kwela boom on Gallo\nand Trutone — a documented, dated, commercial explosion.\nTHE RECORDER IS THE SAME STAND-IN MARABI MADE and it is made here for\nthe same reason and with the same loss: right family (both are fipple\nflutes, which is why not `whistle`, GM's recording of a person\nwhistling), and what is missing is the pennywhistle's overblown top and\nits bent notes, which is most of what a kwela player does with it. The\ndifference from Johannesburg 1935 is that there the flute was a colour\non top of an organ and here it IS the record.\n\nthe pennywhistle IS the lead voice — what a kwela player does with it\n\nLINEAGE: marabi is the four-bar cycle, verbatim — kwela plays\nmarabi's own I-IV-I⁶₄-V and this entry keeps the inversion to prove\nit — and the American swing 78s that reached the townships are the\nother half and are now in the catalog.",
+  "instrumental": true,
+  "label": "Johannesburg 1955",
+  "voices": 3,
+  "near": "marabi",
+  "plan": "dance",
+  "bpm": 138,
+  "parents": {
+    "marabi": 0.65,
+    "swing": 0.35
+  },
+  "wants": [],
+  "cannot": [
+    "the pennywhistle's overblown top octave and its half-holed bends, which is where a kwela player lives"
+  ],
+  "instr": [
+    "recorder",
+    "steel_string_guitar",
+    "banjo"
+  ],
+  "drumkit": "brush",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "counter"
+  ],
+  "roots": [
+    0,
+    3,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0
+    },
+    {
+      "d": 3
+    },
+    {
+      "d": 0,
+      "inv": 2
+    },
+    {
+      "d": 4
+    }
+  ],
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      8,
+      4,
+      6,
+      4,
+      8,
+      4,
+      6,
+      4,
+      8,
+      4,
+      6,
+      4,
+      8,
+      4,
+      6,
+      5
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 3000,
+    "q": 1.1,
+    "atk": 0.004,
+    "rel": 0.4,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the pennywhistle, all of it",
+    "the guitar, chopping the cycle",
+    "the second guitar, in the holes"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(4), transpose(-5), drop(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

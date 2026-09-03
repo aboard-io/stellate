@@ -1,0 +1,146 @@
+{
+  "note": "THE VELVET UNDERGROUND — New York 1966. The Velvet Underground\n& Nico, cut at Scepter Studios in April 1966 for Warhol's\npocket change: Cale's viola drone from La Monte Young's Dream\nSyndicate under Reed's two-chord songs about the city's actual\nsubjects — the record that made drone and deadpan a rock\noption. `shoegaze` (London 1991) has wanted \"velvet\nunderground\" by name since its lineage was written and takes\nthe parent today.\n\nLINEAGE: `drone` (New York 1964) is Cale's day job brought\ndowntown — the table's cleanest two-blocks-over edge;\n`rocknroll` the rhythm guitar Reed never renounced;\n`garagerock` the recording budget as an aesthetic.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nThe Velvet Underground, New York 1966 — this row's own act and year. Modal,\nso `mode` coloured nothing, and SCALES.majpent has no seventh at all: the\nflat seventh mixolydian is named for is not in this row's alphabet. Third\nand sixth both major, which is ionian.\n\nWHO SINGS: deadpan — the confessional mouth with the\nvibrato off is Reed's whole address.",
+  "label": "New York 1966",
+  "voices": 3,
+  "bars": 8,
+  "near": "punk",
+  "plan": "song",
+  "bpm": 108,
+  "parents": {
+    "drone": 0.35,
+    "rocknroll": 0.25,
+    "garagerock": 0.15
+  },
+  "wants": [
+    "pickwick's song factory, where reed clocked in"
+  ],
+  "instr": [
+    "clean_guitar",
+    "viola",
+    "solo_vox"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "staccato",
+  "maxHold": 3,
+  "fx": [
+    "crunch"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2100,
+    "q": 1.1,
+    "atk": 0.008,
+    "rel": 0.6,
+    "gain": 0.25,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.confessional"
+    }
+  },
+  "words": [
+    "the guitar, two chords, downstroked",
+    "the viola, one note, forever",
+    "the voice, telling it flat"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [], [rotate(2)]][s % 4]\n                    : v === 1 ? [keep(0), spread(4)]\n                    : [[], [fill(1)]][s % 2])"
+  }
+}

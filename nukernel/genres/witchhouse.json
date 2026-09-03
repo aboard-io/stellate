@@ -1,0 +1,144 @@
+{
+  "note": "WITCH HOUSE — Traverse City 2010. Salem, King Night (Iamsound,\n28 September 2010): the record that carried the name out of the\nblogs, by the band Wikipedia files in Traverse City, Michigan.\nTHE DATE IS THE RECORD'S, said plainly: the article dates the\nscene itself c. 2006-2007 (New Orleans and New York, the \"drag\"\noriginators), and this catalog's law is the named record, so the\nlabel follows King Night. Chopped and screwed's wrist-drag under\ngothic synth weather, crunk's hi-hats at half time.\n\nLINEAGE: the article's first-named origin is chopped and\nscrewed, and `chopped` (Houston 1995) carries the drag;\n`drone` is the noise floor, `gothicrock` the eyeliner the\nscene wore on purpose. Crunk — the hat grid — is the want.",
+  "label": "Traverse City 2010",
+  "voices": 2,
+  "bars": 8,
+  "near": "chopped",
+  "plan": "dance",
+  "bpm": 72,
+  "parents": {
+    "chopped": 0.4,
+    "drone": 0.2,
+    "gothicrock": 0.15
+  },
+  "wants": [
+    "crunk"
+  ],
+  "instr": [
+    "warm_pad",
+    "saw_wave"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "pad",
+    "lead"
+  ],
+  "roots": [
+    0,
+    0,
+    5,
+    5
+  ],
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "harmony": "cycle",
+  "artic": "tie",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1100,
+    "q": 1.3,
+    "atk": 0.02,
+    "rel": 1.8,
+    "gain": 0.26,
+    "verb": 0.75,
+    "mouth": {
+      "$src": "MOUTHS.dreamchoir"
+    }
+  },
+  "words": [
+    "the pad, a choir slowed past recognition",
+    "the synth, a lead dragged flat by the wrist"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [drop(10)]\n                    : [[], [transpose(-2)], [rotate(2)], [spread(2)]][s % 4])"
+  }
+}

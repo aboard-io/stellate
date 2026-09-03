@@ -1,0 +1,155 @@
+{
+  "note": "MORCHEEBA — London 1996. Who Can You Trust? (Indochina, 1 April\n1996): the Godfrey brothers' beats and psychedelia under Skye\nEdwards's balm — and the one thing no other row in this wing\nhas, a SLIDE GUITAR, country blues laid over the loop as if\nBeck's Odelay and Dummy shared a porch. The ear files it beside\nnoirhop; the guitar is why it is not a copy.\n\nLINEAGE: `triphop` (Bristol 1991) is the licence the press\nfiled them under; `blues` (Chicago 1952) the slide and the\nporch; `psychpop` (London 1968) Ross Godfrey's record shelf.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nLondon 1996 — this row's own place and year. Modal over SCALES.blues, which\nhas no sixth. Full ruling at `holler`.\n\nWHO SINGS: Edwards is the wing's warmest mouth — the\npop lead's breath without its belt.",
+  "label": "London 1996",
+  "voices": 3,
+  "bars": 8,
+  "near": "noirhop",
+  "plan": "song",
+  "bpm": 80,
+  "parents": {
+    "triphop": 0.35,
+    "blues": 0.2,
+    "psychpop": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "steel_string_guitar",
+    "electric_piano"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "swing": 0.2,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 1800,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1.1,
+    "gain": 0.24,
+    "verb": 0.45,
+    "mouth": {
+      "$src": "MOUTHS.poplead"
+    }
+  },
+  "words": [
+    "the voice, warm where the others are wounded",
+    "the slide guitar, country blues over a break",
+    "the keys, holding the couch down"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], []][s % 4]\n                    : v === 1 ? [[rotate(3)], [spread(2)], [rotate(3)], [reverse()]][s % 4]\n                    : [drop(8)])"
+  }
+}

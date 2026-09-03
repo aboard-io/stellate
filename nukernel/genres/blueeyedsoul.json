@@ -1,0 +1,176 @@
+{
+  "note": "BLUE-EYED SOUL [detroitsoul]. Motown's changes and stab-and-lead scheme\nkept, the walking bass swapped for funk's sixteenth-note hand and the\nsnare-on-all-four thinned to a real backbeat — smoother, less showband,\nmore session — which is the whole genre in one sentence.\n\nLINEAGE: the changes (I-vi-IV-V-with-sevenths) and the stab-and-lead\nregister scheme are detroitsoul's own, kept nearly whole; funk supplies\nthe sixteenth-note bass hand in place of detroitsoul's walk; rock supplies\nthe smoother, guitar-forward session-band backbone.",
+  "label": "Philadelphia 1976",
+  "near": "detroitsoul",
+  "plan": "song",
+  "bpm": 104,
+  "parents": {
+    "detroitsoul": 0.45,
+    "rock": 0.3,
+    "funk": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "electric_piano",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "lead"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 5,
+      "q": "7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    },
+    {
+      "d": 4,
+      "q": "7"
+    }
+  ],
+  "maxHold": 2,
+  "artic": "legato",
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.7,
+    "gain": 0.27,
+    "verb": 0.28
+  },
+  "words": [
+    "the EP, comping the changes",
+    "the guitar, doubling the hook an octave up"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(7)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

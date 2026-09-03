@@ -1,0 +1,149 @@
+{
+  "note": "PROGRESSIVE ROCK — Isle of Wight 1970. Emerson, Lake & Palmer's\nsecond-ever performance, the Isle of Wight Festival, the 29th\nof August 1970: Pictures at an Exhibition played by a rock trio\nwith cannons — the named, dated public arrival of rock claiming\nthe concert tradition's forms whole. (The founding record is In\nthe Court of the Crimson King, London, October 1969 — and\nLondon 1969 is `rock`'s own label, a year this table gives\nonce; the festival is the honest second document, not a\nconsolation.) `sophistirock` (London 1986) has wanted\n\"progressive rock\" since its lineage was written and takes the\nparent today.\n\nLINEAGE: `rock` (London 1969) is the amplifier and the\naudience; `classical` (Vienna 1785) the forms being annexed —\nfor once the edge to the concert hall is the genre's own\nboast, not a table's flattery; `psychrock` the permission to\nplay long.\n\nTHE SAME DORIAN DIMINISHED, IN THE SIXTH SLOT (2026-09-02, the\nChordonomicon round). Degree 5 in dorian is the natural sixth and its\nscale-step triad is 0-3-6, diminished; the row's declared identity is\nthe modal `i bVII` spine (Chordonomicon minor subset, W=2, rank 3,\nx284) and there is no instance of the eight-chord cycle as written at\nW=6. Degree 3 is dorian's MAJOR IV, which is the one chord the mode\nis declared for and the one its `i bVII` neighbours want. Emerson,\nLake & Palmer at the Isle of Wight, 29 August 1970 — this row's own\nlabel — closes on that IV, not on a diminished sixth. Corpus\nsilent.\n\nSONATA THINKING IN A ROCK TABLE: exposition, development\n(invert, reverse, split), recapitulation — the one genre\nwhose word schedule should read like a theory exam.",
+  "label": "Isle of Wight 1970",
+  "voices": 3,
+  "bars": 8,
+  "near": "rock",
+  "plan": "arc",
+  "bpm": 120,
+  "parents": {
+    "rock": 0.35,
+    "classical": 0.25,
+    "psychrock": 0.2
+  },
+  "wants": [
+    "the canterbury scene (soft machine)"
+  ],
+  "instr": [
+    "rock_organ",
+    "overdrive_guitar",
+    "yamaha_grand_piano"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    0,
+    6,
+    4,
+    0,
+    3,
+    6,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "artic": "staccato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1.2,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.25,
+    "verb": 0.35
+  },
+  "words": [
+    "the organ states the theme, con fuoco",
+    "the guitar takes the second subject",
+    "the piano, the development section, actually developing"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(4)], [invert(3)], []][s % 4]\n                    : v === 1 ? [[rotate(4)], [reverse()], [split(2)], [transpose(4)]][s % 4]\n                    : [[fill(2)], [fill(2), invert(2)], [spread(2)], [fill(2)]][s % 4])"
+  }
+}

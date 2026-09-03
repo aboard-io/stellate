@@ -1,0 +1,172 @@
+{
+  "note": "ITALO DISCO — Milan 1982. Klein & M.B.O.'s \"Dirty Talk\", cut at\nFonoprint with a drum machine doing what Moroder had needed a\nMoog Modular and a week for: the cheap, chiming, wrong-in-the-\nright-way Eurodisco that Chicago's record pools imported by the\ncrate — Frankie Knuckles played this record at the Warehouse,\nand `house` (Chicago 1986) has wanted \"italo disco\" by name\nsince its lineage was written. The missing link between Munich\n1977 and Chicago 1986, now a link instead of a gap.\n\nITS OWN ARPEGGIO (2026-08-31): the octave-jumping sequenced bassline is the signature of the Milan sound.\n\nLINEAGE: `eurodisco` (Munich 1977) is the whole blueprint one\ncountry north — the octave bass, the machine four — and\n`disco` (New York 1977) is the floor it was built for;\n`synthpop` (Basildon 1981) is the same synths sung English\na year earlier, which is why the vocal below is poplead.",
+  "label": "Milan 1982",
+  "voices": 3,
+  "bars": 8,
+  "near": "synthpop",
+  "seqArp": "arpoct",
+  "plan": "dance",
+  "bpm": 118,
+  "parents": {
+    "eurodisco": 0.5,
+    "disco": 0.3,
+    "synthpop": 0.2
+  },
+  "wants": [
+    "the cosmic sound of the adriatic clubs"
+  ],
+  "instr": [
+    "polysynth",
+    "solo_vox",
+    "square_lead"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      },
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4,
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "harmony": "cycle",
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1.2,
+    "atk": 0.004,
+    "rel": 0.4,
+    "gain": 0.27,
+    "verb": 0.35,
+    "mouth": {
+      "$src": "MOUTHS.poplead"
+    }
+  },
+  "words": [
+    "the arpeggio, chiming",
+    "the hook, accented and off",
+    "the lead, answering in octaves"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(4)], [transpose(1)]][s % 3]\n                    : v === 1 ? [[fill(2)], [drop(2)], [fill(2), rotate(2)]][s % 3]\n                    : [transpose(3), keep(0, 4, 8, 12)])"
+  }
+}

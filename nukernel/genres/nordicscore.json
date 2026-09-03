@@ -1,0 +1,154 @@
+{
+  "note": "THE NORDIC DRONE SCORE — Reykjavík 2015. The string-cluster school:\na chamber section played at the edge of tone, processed until the\nroom is the instrument, scoring prestige pictures from a Reykjavík\nthat had spent two decades exporting exactly this weather. The\nparents put drone (New York 1964) FIRST at 0.35, over the suspense\ndesk it ends up hired for — the idiom is minimalist texture that\ntook a scoring job, not a score that discovered texture. The\nfour-bar filter open (fx: sweep, measured arriving as\ninsert_filtersweep) IS the form; the kit is a thump a bar and its\necho half a bar later, nothing else.\n\nthe picture breathes; the score holds it\n\n70, not the 66 this round's spec asked for: compose.js fences bpm\nto 70..160 and 66 fails the gate by name (measured 2026-09-01,\nprecompose G6a). 70 is the floor and the floor is the point.",
+  "instrumental": true,
+  "label": "Reykjavík 2015",
+  "voices": 4,
+  "bars": 8,
+  "near": "suspensescore",
+  "plan": "arc",
+  "bpm": 70,
+  "parents": {
+    "drone": 0.35,
+    "suspensescore": 0.2,
+    "ambient": 0.2,
+    "minimalism": 0.15
+  },
+  "wants": [],
+  "cannot": [
+    "the detuned cluster — a section a quarter-tone at war with itself needs per-chair cents the box does not yet deal to sections",
+    "the processed bow — half this idiom is a cello through a broken tape machine, and the tape here is the master's, not a chair's"
+  ],
+  "instr": [
+    "cello",
+    "tremolo",
+    "contrabass",
+    "halo_pad"
+  ],
+  "part": [
+    "lead",
+    "riff",
+    "riff",
+    "pad"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      4,
+      0,
+      0,
+      0
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      -1,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "drumkit": "power",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "l": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "SCALES.chromatic"
+  },
+  "artic": "tie",
+  "maxHold": 6,
+  "bassStyle": "pedal",
+  "fx": [
+    "sweep"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 900,
+    "q": 1.4,
+    "atk": 0.15,
+    "rel": 2.6,
+    "gain": 0.24,
+    "verb": 0.7
+  },
+  "words": [
+    "the cello, a breath away from the bridge",
+    "the tremolo strings, the weather warning",
+    "the basses, the pulse under the floor",
+    "the pad, the coastline"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[spread(0.5), fill(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[spread(0), fill(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[spread(0), keep(0, 8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(9)]"
+    }
+  }
+}

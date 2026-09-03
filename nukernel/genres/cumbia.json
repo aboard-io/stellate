@@ -1,0 +1,229 @@
+{
+  "note": "CUMBIA — Barranquilla 1960. The Discos Fuentes orquesta cumbia: a\nclarinet or a sax on the tune where the gaita flute used to be, brass\nanswering, and underneath it the pattern the whole coast walks to —\nthe tambora on the beat and the llamador on every off-beat, which is\nthe figure that makes a cumbia impossible to mistake for a son.\nTHE YEAR is the Fuentes big-band era in Barranquilla, when the coastal\nmusic was arranged for a horn section and became national and then\ncontinental. The village cumbia — gaitas, no harmony, no fixed pitch —\nis a different music and is NOT what this anchor claims.\nTHE CLARINET IS THE FIRST IN THE CATALOG, which is the fact worth\nrecording: `clarinet` has been a real, licensed, on-disk registry id\nthe whole time with SIX zones and a parent window of [50,91], and no\nanchor in 139 had ever said its name. Nothing was built to cast it —\nit just had to be asked for.\n\nLINEAGE: a ROOT, and honestly one — coastal cumbia is Indigenous\ngaita flutes, African drums and a Spanish song form, none of which\nis in this catalog, and the orquesta arrangement it wears in 1960 is\nthe Cuban dance band, which IS here at a real weight.\n\nTHE LLAMADOR IS ON EVERY OFF-BEAT and that is the whole identity:\n`p` is the 2-4-6-8 of the eighth-note grid and nothing else, the\ntambora is the kick and the alegre goes to the toms. The guacharaca\n— a scraped ridged tube — is the hat lane, and what is lost is that\na scrape has a LENGTH where a hat has an attack.",
+  "label": "Barranquilla 1960",
+  "voices": 3,
+  "near": "son",
+  "plan": "dance",
+  "bpm": 92,
+  "parents": {
+    "son": 0.3
+  },
+  "wants": [
+    "gaita costeña",
+    "porro",
+    "chandé"
+  ],
+  "cannot": [
+    "the gaita's own tuning — a kuisi is a beeswax-and-cane duct flute with five holes and no temperament, and this box has only 12-TET to offer it"
+  ],
+  "instr": [
+    "clarinet",
+    "trumpet",
+    "nylon_string_guitar"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "roots": [
+    0,
+    4,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "m": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      8,
+      0,
+      4,
+      6,
+      7,
+      0,
+      4,
+      6,
+      8,
+      0,
+      4,
+      6,
+      7,
+      0,
+      4,
+      7
+    ]
+  },
+  "fill": {
+    "m": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 1,
+    "atk": 0.01,
+    "rel": 0.7,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the clarinet, where the gaita was",
+    "the trumpet, answering the phrase",
+    "the guitar, on the off-beat with the llamador"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(8), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[only(\"acc\", rotate(2))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

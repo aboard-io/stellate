@@ -1,0 +1,173 @@
+{
+  "note": "WORLD FOLK [afrobeat]. A folk duo's songwriting discipline carrying\nWest African guitar-and-kalimba interplay and cross-rhythm percussion\n— afrobeat's threes against the four, thinned from a horn-led band to\ntwo acoustic voices, in a bright mixolydian that reads as both\ntraditions' ♭VII at once.\n\n116 is the Graceland lope\n\nLINEAGE, REPAIRED 2026-08-25. This declared `afrobeat: 0.4` — its\nlargest parent — and that was CONTINENT-AS-ONE-THING: this is\nGraceland, a SOUTH AFRICAN record with the Boyoyo Boys, General M.D.\nShirinda and Ladysmith Black Mambazo singing isicathamiya on the\nactual tape. Lagos and Johannesburg are not a lineage, and \"afrobeat\"\nhere meant \"the African one\", which is the exact thing the 2026-08-25\nround exists to stop. The weight now goes to the two Johannesburg\nanchors that ARE the guitar language and the choral half — marabi's\ncycle running forward through mbaqanga, and mbube's four-part group\nsinging, which is literally what is on the record. The folk-song\ndiscipline (a story, a verse, one guitar carrying it) is still\nfolkduo's and countrypop's bright major-key optimism still colours\nthe top. Mbaqanga itself stays the missing rung between marabi and\nthis, and stays on `wants`.\n...and mbaqanga arrived 2026-08-26, off this anchor's own want\nlist. The paragraph above already names \"the cycle running forward\nthrough mbaqanga\" as the thing marabi was standing in for;\nJohannesburg 1964 is now an anchor and takes the weight marabi was\nholding on its behalf, which is why marabi drops rather than the\ntotal moving.\n\nTHE COMMENT ALREADY NAMED THE BAND: \"guitar-and-kalimba interplay\".\nThe kalimba was sitting in the library unasked-for while a marimba\nstood in for it, and the guitar in Johannesburg is a bright clean\nELECTRIC — the high, thin, picked tone of a mbaqanga session — not\nthe nylon a folk duo brings.",
+  "label": "Johannesburg 1986",
+  "bars": 8,
+  "near": "afrobeat",
+  "plan": "song",
+  "bpm": 116,
+  "parents": {
+    "mbaqanga": 0.3,
+    "marabi": 0.15,
+    "mbube": 0.15,
+    "folkduo": 0.25,
+    "countrypop": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "kalimba"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    3,
+    4,
+    0,
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.7,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the guitar, the folk tune",
+    "the marimba, the African line under it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(4), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

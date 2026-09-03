@@ -1,0 +1,207 @@
+{
+  "note": "INDUSTRIAL ROCK [Nine Inch Nails, Pretty Hate Machine]. REWRITTEN FROM\nTHE ALBUM ARTICLE 2026-08-30 (Paul, mid-round: \"Look at some nine inch\nnails to see what you're missing\"). Every axis below used to say\nsomething the record's own article contradicts, and the article is\nunusually specific, so this comment is mostly quotation.\nIT IS NOT A GUITAR RECORD. The row cast `distortion_guitar` +\n`metal_pad` as its whole identity and called itself \"death metal's\nchromatic riff wall\". Pretty Hate Machine: \"The album features a\nheavily synthesizer-driven electronic sound blended with industrial\nand rock elements\", Pitchfork's Tom Breihan \"categorized it as a\nsynth-pop album\", Option called the sound \"industrial dance noise\",\nand Breihan's reading of the beats is that they \"were muscular, but not\nin the vein of metal or post-punk\". The guitar is on the record and it is an\nACCENT — it arrives here as the seated `stk_guitar` chair the cast\ndeals, not as the row's name.\nTHE INSTRUMENTS ARE NAMED, SO THEY ARE CAST. \"Reznor mainly used an\nE-mu Emax, Prophet VS, Oberheim Xpander, and Minimoog as synthesizers\",\nsequenced on a Macintosh Plus, \"Playing most of the keyboards, drum\nmachines, guitars, and samplers himself\". Two of those four this\ncatalogue can seat exactly: the MINIMOOG is `modeld`, the signature\nsynth below, and the OBERHEIM is the `oberheim` dsp that `warm_pad`\nreaches (instruments.js calls that voice \"a Prophet/SEM-class poly\",\nwhich covers the Prophet VS as the nearest honest seat and not as the\nthing itself — the VS is a vector synth and this table has no vector\nsynth). The E-mu Emax is a SAMPLER and its consequence is the kit.\nTHE DRUMS ARE SAMPLED RECORDS, WHICH IS WHY THE KIT CHANGED. This row\nsaid `drumkit: \"electronic\"` — a machine kit — and the article says he\ntried that and did not do it: \"Reznor... used samples from his record\ncollection for all the drum sounds. He initially expected to use real\ndrum sounds when recording the album, but in the end he and the\nproducers merely equalized his drum samples.\" A record collection\nplayed back is a REAL KIT recorded in a room, so `room` is the honest\nkit, hit on this row's own rigid grid — which is the \"quantized drums\"\nhalf of the mix law below.\nAND THE MIX LAW IS THE ARTICLE'S OWN SENTENCE: \"Rough and first takes\nof vocals and guitar were used to contrast the quantized drums and\nbass.\" Paul, 2026-08-30: \"voice and guitar bury everything else and\ndrums are unprocessed.\" Both halves are true of what this row shipped\nand neither is true of the record: the voice and guitar are meant to\nbe the RAGGED half against a rigid rhythm section you can hear, not a\nlid on it. What was burying the kit was not the singer — it was\n`fx: [\"crunch\", \"sweep\"]`, because a genre fx list is dealt to every\nSEATED voice (audio/desk.js), so `sweep` put `insert_filtersweep\nlo=400 hi=5200 res=0.35 rateBars=4` on all ten drum voices at once.\nMeasured at the ear (_livetap, 30 s, seed 1) this record's 8-16 kHz\nband read -45.8 dB where `rock` reads -25.2: the kit had no top left\nto cut through with. `crunch` stays — insert_higain is a gate at 0.2\nand a drive at 0.35, which is the gating and crushing an industrial\nkit is supposed to have, and it only becomes audible once nothing is\nlowpassing it to 400 Hz every fourth bar.\nBROKEN IS A DIFFERENT RECORD AND DOES NOT GO HERE. Its own article\nsays the 1992 EP \"replaces the synth-pop style of the band's 1989\ndebut album Pretty Hate Machine with a considerably heavier sound\",\nwith \"louder mixes and more distortion on every instrument\" and\ninfluences \"from industrial metal bands such as Ministry and\nGodflesh\". That is a description of what this row USED to claim to be\n— and Ministry already has a row (`industrialmetal`, Chicago 1988), so\nBroken needs no anchor of its own: it is this row's act walking into\nthe neighbouring room. Smearing the two albums into one row is what\nproduced the contradiction this comment is undoing.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nNine Inch Nails, \"Head Like a Hole\" (*Pretty Hate Machine*, TVT,\nCleveland 1989).\n\nCleveland is the article's own: \"While working nights as a handyman\nand engineer at the Right Track Studio in Cleveland, Ohio, Reznor\nused studio 'down-time' to record and develop his own music\", and\nthe album is October 1989.\n\n115 AND E MINOR ARE THE ZIM'S OWN NUMBERS, not a taste. The album's\nopening track and second single has its own article and that article\nstates them flatly: \"The tempo is 115 BPM, and it is played in the\nkey of E minor.\" 128 was here unargued, and it is also what made this\nrow a near-twin of `industrialbreaks`' 134 — two 1989 records six bpm\napart playing the same instruments through the same effects. One of\nthe two numbers is written down in the source and the other was not.\n(The album is varied and one song is not a record, which is why this\nis the SINGLE's tempo taken as the row's centre and not as a claim\nabout every track — the same reading `bleeptechno` makes of 124.)\n\n...and the minor is stated with it. The row declared no mode at all,\nso a i-III-i-IV root cycle was being spelled against the table's\ndefault: a major scale under a minor progression. `aeolian` is what\n\"the key of E minor\" means.\n\nLINEAGE, REDEALT 2026-08-30. `deathmetal` was the largest share and\nit is the one edge the article refuses outright (\"not in the vein of\nmetal\"); it stays only as `near`, because the neighbouring ROOM is\nstill where this record is filed. `industrialdance` is the want, paid: the\ndebt this row has carried since it was written, and Reznor's own\nmeasuring stick is a Wax Trax act — Spin wrote that \"Trent Reznor's\none-man band comes across like an accessible Front 242\", and he\nanswered in the same terms (\"something\nlike Front 242 is the opposite: great at first but, after 10\nlistens, that's it\"). `analogsynthpop` is Depeche Mode, whom he names\ndirectly: \"DM was one of our favorite bands and the Black\nCelebration record took my love for them to a new level\", and the\nChicago Tribune heard it in the record (\"a brighter techno-pop\nelement that might remind some of Depeche Mode\"). `dusseldorfschool` keeps\nthe quantized machine chassis, `punk` the rough first takes, and\n`rock` takes the smallest share because the article gives it one\nsong (\"the most rock-inspired song on the album was Head Like a\nHole\").\n\nTHE MINIMOOG AND THE OBERHEIM, both named in the article, and the\ndesk now says what the chairs play: `saw_wave` is a mono analog line\n(the signature `modeld` below IS the Minimoog) and `warm_pad` is the\n`oberheim` poly.\n\nA RECORD COLLECTION, EQUALIZED — not a drum machine (see above), and\n`power` rather than `room` on a measurement. Both are sampled kits and\nboth satisfy the article (\"he initially expected to use real drum\nsounds... in the end he and the producers merely equalized his drum\nsamples\"), so the tie broke on two things. First the record's own\nadjective: Reznor calls it \"quite small scale, introverted,\nclaustrophobic\", and a ROOM kit is the one thing that is not — a room\nis the sound of air around a drum. `power` is the gated, tight, huge\n1989 kit, which is what a heavily EQ'd drum sample of that year IS.\nSecond, `room` could not carry the record: measured at the ring\n(test/_bandtap.cjs, 12 bars, seed 1) the room kick sat 10.67 dB under\nits own band where the power kit on `industrialbreaks` sat 5.6 under\nits own — and this row's whole complaint was an inaudible kit.\n\nTHE MINIMOOG, not the fuzz box. `lead_fuzz` was this row's signature\nand it was `industrialbreaks`' signature too — the two rows were\nidentical twins on instr, fx and synth, which is not a reading of\ntwo different records but a copy. The article names the instrument:\nMinimoog, which is `modeld`, driven but not fried, and sustained\nbecause this is a song and not a break-line stab.\n\nTHE HAT LANE ONLY, AND THAT IS A MEASUREMENT, NOT A PREFERENCE. This\nrow was written with `k: [9], s: [9]` too — the slab — and the A/B\nsays those two lanes are INERT here (test/_veltap.cjs, one drum lane\nsolo, 12 bars, seed 1, the row served twice with `kitVel` stripped in\nflight): kick -31.87 with it against -31.92 without, snare -30.63\nagainst -30.63, peaks identical to the hundredth. A declared knob\nthat moves the sound 0.05 dB is a knob that does not reach it, and\nthis file does not ship those.\nWHY IT IS INERT IS THE INTERESTING PART, and it is kernel.js's own\nfallback chain: with no kitVel a lane takes THE MELODY'S velocity,\nand this row's kick and snare sit on 0/4/8/12 — the downbeats, where\na melody is already accented to 9. There was nothing left to raise.\nOn `industrialbreaks`, whose kick lands on 0/3/9/14, the same\ndeclaration moves the kick +1.26 dB and the snare +1.03, and it stays\non that row for exactly that reason. So the kit here was never quiet\nbecause of velocity; it was quiet because of LEVEL, which is why the\nfix above is the kit itself.\nThe hat lane DOES reach — -1.53 dB measured on the same A/B — and it\nearns its place: this row's hat runs on all sixteen steps, so at the\nmelody's velocity it was the busiest thing in the mix.\n\nTHE FILTER OPENS AND THE RESONANCE COMES DOWN. cut 1400 / q 2.4 was\na resonant lid a third of the way up the spectrum, sitting on top of\na crunched signal — and this row and `industrialbreaks` were the only\ntwo anchors in the catalogue that put a swept resonant lowpass over a\nDISTORTED one (thirteen rows carry `sweep`; only these two carried\n`crunch` beside it). A synthesizer record built on an Emax and a\nMinimoog is not a squelch. The reverb comes down with it because the\narticle says what the room was: \"It's quite small scale, introverted,\nclaustrophobic – that's the feel I went for.\"\n\nsee the comment above: `crunch` is the gate and the crush the kit\nneeds, `sweep` was a lowpass on the whole band four bars at a time.\nAnd unlike `industrialbreaks` this row loses the sweep OUTRIGHT: the\n`song` plan has no breakdown, so nothing deals one back. That is the\nright answer for this record — the album article names a sampler, an\nEQ and four synthesizers and never once names a filter sweep — and a\nhand that wants one still has the chip on the board.",
+  "bassInstr": "bass_lead",
+  "label": "Cleveland 1989",
+  "near": "industrialmetal",
+  "plan": "song",
+  "bpm": 115,
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "parents": {
+    "industrialdance": 0.3,
+    "analogsynthpop": 0.25,
+    "dusseldorfschool": 0.2,
+    "punk": 0.15,
+    "rock": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "saw_wave",
+    "warm_pad"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    3,
+    0,
+    4
+  ],
+  "artic": "staccato",
+  "bassStyle": "sixteenths",
+  "synth": {
+    "dsp": "modeld",
+    "root": "modeld",
+    "level": 0.8,
+    "set": {
+      "cutoff": 2400,
+      "res": 0.32,
+      "envAmount": 0.55,
+      "envAttack": 0.004,
+      "envDecay": 0.3,
+      "envSustain": 0.6,
+      "oscMix": 0.35,
+      "drive": 0.35,
+      "glide": 0,
+      "drift": 3
+    }
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9
+    ]
+  },
+  "kitVel": {
+    "h": [
+      4,
+      2,
+      3,
+      2,
+      4,
+      2,
+      3,
+      2,
+      4,
+      2,
+      3,
+      2,
+      4,
+      2,
+      3,
+      2
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1.1,
+    "atk": 0.004,
+    "rel": 0.7,
+    "gain": 0.3,
+    "verb": 0.2
+  },
+  "words": [
+    "the synth line, sequenced, on the machine's grid",
+    "the poly under it, doubling an octave down"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[only(\"gate\", fill(1))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[rotate(3), transpose(-7)]"
+    }
+  },
+  "fx": [
+    "crunch"
+  ]
+}

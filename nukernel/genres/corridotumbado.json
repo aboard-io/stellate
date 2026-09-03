@@ -1,0 +1,83 @@
+{
+  "note": "CORRIDO TUMBADO — Guadalajara 2023, and the shortest description of it\nis what it does NOT have: no drum kit, no bass guitar, no machine. A\nrequinto plays the tune, a tuba plays the floor, and the entire rhythm\nsection is those two instruments disagreeing about the beat. Nineteen\nanchors carry `kit: {}` AND `nobass: true` and this is the only one of\nthem dated after 1892 — the other eighteen are chant, counterpoint, the\nfunction genres and the old-world slate. That is not an accident of\nfiling: a sung story with an acoustic ensemble and no kit is a form\nolder than every rock anchor in the table, which is why the FAMILIES\nrow below puts a 2023 record in `roots`.\n\nslow, and a narrative: these are ballads, and the tempo is set by how\nfast the words can be sung, not by anything a dancer needs\n\nLINEAGE: the sung story over plain major changes with a guitar\ncarrying it is country's own shape; the Latin pop-rock harmonic\nlanguage and the Spanish-language pop phrasing are latinpop's; the\nall-acoustic, no-kit ensemble is worldfolk's arrangement law. Banda\nand norteño — the actual Sinaloan brass and accordion traditions this\nis a stripped-down argument with — are both missing rungs, and the\nregistry has no accordion sampler to build norteño on if they were\nhere (engine/registry-data.js SAMPLERS: `accordian` is a font preset\nwith no zones, which is a silent voice, so it is not cast).\nLINEAGE, REPAIRED 2026-08-26 — the SECOND of the two edges WORLD.md\n§4 caught. `worldfolk: 0.30`, Johannesburg 1986, on a Sinaloan\ncorrido, with `wants: [\"banda\", \"norteño\"]` sitting right beside it.\nBoth wants are now built — Mazatlán 1938 and Monterrey 1955 — and\nboth are the actual music: a corrido tumbado is a norteño requinto\nline and a banda tuba with trap's phrasing on top. `countrypop` and\n`latinpop` go with `worldfolk`: Nashville 1945 and Miami 2001 were\nstanding in for \"a sung story\" and \"a Spanish-language record\", and\nthis catalog can now name the real thing for each.\n\nTHE ACTUAL ENSEMBLE, three deep and in that order: requinto, tuba,\nbajo quinto. THREE entries and not two on purpose — the array's law is\nthat the last entry covers every remaining chair (this file's header),\nand a two-entry array put a TUBA on all five chairs precompose seats,\nmeasured. A corrido has one tuba. The bajo takes the rest.\nThe tuba is the first one in this catalog — 123 samplers, six zones,\ncast zero times until now. It has NO instruments.js RANGES row, so it\ndegrades to its zone window rather than to a tuba's real compass —\nthat file's own stated law for an unlisted id, and the row is filed as\na recipe rather than smuggled in from a slice that does not own\ninstruments.js. It plays honestly meanwhile: measured over three\nseeds, voice 1 sits at MIDI 32..61 — well inside a tuba's own E1..F4.\n\nthe tuba does not double the tune, it thins it to its bones: every\nthird note, exactly twelve semitones under (measured: the requinto\nruns 44..73 and the tuba 32..61). That gap is the arrangement.",
+  "label": "Guadalajara 2023",
+  "near": "countrypop",
+  "plan": "song",
+  "bpm": 90,
+  "parents": {
+    "nortena": 0.45,
+    "banda": 0.3,
+    "trap": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "nylon_string_guitar",
+    "tuba",
+    "steel_string_guitar"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.8,
+    "atk": 0.008,
+    "rel": 1,
+    "gain": 0.28,
+    "verb": 0.26
+  },
+  "words": [
+    "the requinto, telling it",
+    "the tuba, an octave down, playing the floor"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(3), transpose(-12)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

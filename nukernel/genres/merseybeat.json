@@ -1,0 +1,167 @@
+{
+  "note": "MERSEYBEAT [beatgroup]. Same city, one year earlier, and a wider room:\nwhere the `beatgroup` anchor is one particular band's counterpoint-taught\nthirds, this is the whole 1962-63 Cavern circuit — cleaner and plainer,\nbuilt on the OFFBEAT HANDCLAP hook and a call that gets an answer,\nwhich is the field the two genres actually differ on.\n\n148: rushes the way punk and skiffle already do\n\nLINEAGE: the beat-group format is the catalog's own `beatgroup` anchor\ntaken as a scene rather than one band; doo-wop's vocal-group answer\nfigure and Chuck Berry's downstroke are the two things every Cavern\nband actually played covers of before writing their own. Skiffle is\nthe smallest share because by 1963 the tea-chest bass was long gone —\nit is the door the scene walked in through, not what it still plays.\n\nWHO SINGS: the same close harmony as beatgroup, one town and two years earlier",
+  "label": "Liverpool 1963",
+  "near": "beatgroup",
+  "plan": "song",
+  "bpm": 148,
+  "parents": {
+    "beatgroup": 0.35,
+    "doowop": 0.3,
+    "rocknroll": 0.2,
+    "skiffle": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "ohh_voices"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    4,
+    3,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 1,
+    "atk": 0.005,
+    "rel": 0.6,
+    "gain": 0.28,
+    "verb": 0.22,
+    "mouth": {
+      "$src": "MOUTHS.merseystack"
+    }
+  },
+  "words": [
+    "the tune, straight ahead",
+    "the harmony, a third above — answering the handclap hook"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[transpose(2), only(\"gate\", offbeats(4))]"
+    }
+  }
+}

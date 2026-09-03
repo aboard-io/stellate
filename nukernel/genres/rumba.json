@@ -1,0 +1,126 @@
+{
+  "note": "RUMBA — Matanzas 1956. Los Muñequitos de Matanzas (then Conjunto\nGuaguancó Matancero), \"established in 1952... released their\nfirst LP in 1956 through Puchito\" — the ZIM's own dates, on the\ngroup its Cuban rumba article files first among the genre's\nnamed bands. Voices and drums and NOTHING else: the diana, the\ncoro, the tumbadoras, the claves. `descarga` (Havana 1957) takes\nthe edge it asked for; `latinjazz` (New York 1947) asked too and\nCANNOT take it — the ZIM says the genre's \"recorded history...\nbegan in the 1940s\" but names no side before this LP, and an\nedge cannot point at a record younger than its child (the\nmaringa rule, again). Its want narrows to the unnamed 1940s\nsides, at its row.\n\nLINEAGE: the coros de clave and the Abakuá drumming the ZIM\nnames as origins are unanchored; son (Havana 1928) shares the\nclave and the call-and-refrain economy and takes a low edge.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nLos Munequitos de Matanzas, first LP for Puchito, 1956 — this row's own\nrecord. Voices and drums and nothing else: no bass (`nobass: true`), no\nchords (`harmony: \"modal\"`), so `mode` had neither a root nor a bass line to\ncolour. SCALES.majpent has a major third and no seventh; ionian is its mode.",
+  "label": "Matanzas 1956",
+  "voices": 2,
+  "bars": 8,
+  "near": "son",
+  "plan": "dance",
+  "bpm": 104,
+  "parents": {
+    "son": 0.2
+  },
+  "wants": [
+    "the yuka and abakuá drumming behind it",
+    "coros de clave"
+  ],
+  "cannot": [
+    "the quinto — the third drum IMPROVISES against the other two for the dancer's feet, and a fixed kit row cannot converse",
+    "clave as a law — the pattern fits sixteen places but nothing enforces the parts' allegiance to it"
+  ],
+  "instr": [
+    "solo_vox",
+    "ohh_voices"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  "nobass": true,
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 1,
+    "atk": 0.008,
+    "rel": 0.4,
+    "gain": 0.27,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the diana, syllables before words",
+    "the coro, answering as one"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(3)], [transpose(-2)], [fill(2)]][s % 4]\n                    : [keep(0, 4, 8, 12), drop(2)])"
+  }
+}

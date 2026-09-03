@@ -1,0 +1,197 @@
+{
+  "note": "GOSPEL [detroitsoul]. Same church, one street over — and the field that\nseparates them is the SECONDARY DOMINANT: I goes to IV through its own\nV7 (the one deliberate exit from the key), and the form ends on the\nplagal amen, IV–I inside the last bar. Shuffled hard, organ under\neverything, the answering choir arriving late a third up.\n\nnamed \"Chicago 1932\" — Thomas A. Dorsey at Pilgrim Baptist: the organ,\nthe shuffle, the secondary dominant and the plagal amen.\n\nLINEAGE: the label years invert and the claim survives it — Dorsey\nwas Georgia Tom, Ma Rainey's blues pianist, and carried the blues\nHAND into church twenty years before the catalog's electric anchor;\nthe spirituals he set it against are missing.\nHYMNODY WAS NOT MISSING, and this anchor's own `wants` had said\n\"hymnody\" while `hymn` (Boston 1831) sat six hundred lines up the\nfile. Fixed 2026-08-25 with no new anchor: the material was already\nhere. 0.25 is deliberately the smaller share — what Dorsey brought\nINTO church is the bigger half of the invention and the whole point\nof the anchor — but a gospel record's four-part congregational\nbackbone is the hymnal's, and saying blues 1.0 scored that backbone\nas invention. See hymn's own note: these two edits are one edit.\n\"spirituals\" PAID 2026-08-29 (Nashville 1871): Dorsey's own\nformula was the spiritual's fervour on the blues's changes, and\nthe weight comes off blues, which had been carrying both halves\nof the church's share since the row was written.\n...AND THE BLUES SHARE MOVED TO THE BLUES THAT EXISTED (2026-09-02,\nthe catalogue round). The comment above says \"the label years invert\nand the claim survives it\", which was true on the day it was written\nand stopped being true when `deltablues` landed. Thomas A. Dorsey\npublished \"Take My Hand, Precious Lord\" out of his own Chicago shop\nin 1932; the blues hand he carried into church is Georgia Tom's —\nMa Rainey's pianist, \"It's Tight Like That\" cut for Vocalion in 1928\n— which is PRE-WAR blues, and pre-war blues is in this table as\n`deltablues` (Clarksdale 1929, Charley Patton's \"Pony Blues\").\n`blues` is Chess's electric Chicago of 1952, twenty years AFTER this\nrecord, and a row cannot descend from its own grandchild.\n\nTHE B-3, AND IT HAS SIX ZONES. `drawbarorgan` is a SINGLE sample\nrooted at MIDI 96 — measured on the shipped registry — so the organ\nholding this genre's chords was one C7 recording dragged three and a\nhalf octaves down: no key click, no drawbar body, just breath. Its\nwhole tape came back with a spectral centroid of 249 Hz.\npercussive_organ is the same extraction WITH the percussion stop, and\nit is what a church organist plays with the left hand down.\nAND VOICE 1 IS ONE WOMAN, not four. Its own word has said \"the lead\nvoice\" since the day this genre was written and it was cast on the\nSECTION patch, so the soloist and the choir answering her were the\nsame four detuned singers at two levels — which is precisely the\nfailure voice_choir.dsp's own header names (\"a doubled voice that is\ntwo identical copies is still one voice\"), made twice over. solo_vox\nis the tract seated on a line; ohh_voices behind it stays the section.\nNothing moves off the organ: the pad chair is untouched, which is the\nwhole test — a gospel record without its B-3 is not an improvement.\n\nWHO SINGS: the widest wobble in the table, and a section that\nnever quite agrees. ONE mouth serves both seatings on purpose —\nthe soloist and the choir behind her are the same church, and\nthe bridge reads `blend` only for the section and `vibRate`\nonly for the soloist, so the row says both without conflict",
+  "label": "Chicago 1932",
+  "voices": 3,
+  "swing": {
+    "$src": "1 / 3"
+  },
+  "near": "detroitsoul",
+  "plan": "song",
+  "bpm": 76,
+  "parents": {
+    "deltablues": 0.5,
+    "spirituals": 0.3,
+    "hymn": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "percussive_organ",
+    "solo_vox",
+    "ohh_voices"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      }
+    ],
+    "else": {
+      "$src": "v - 1"
+    }
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    0,
+    3,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    },
+    [
+      {
+        "d": 3,
+        "q": "six",
+        "beats": 8
+      },
+      {
+        "d": 0,
+        "q": "7",
+        "beats": 8
+      }
+    ]
+  ],
+  "maxHold": 4,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1.2,
+    "gain": 0.26,
+    "verb": 0.45,
+    "mouth": {
+      "$src": "MOUTHS.gospelchoir"
+    }
+  },
+  "words": [
+    "the organ, walking the changes",
+    "the lead voice",
+    "the choir, answering a third up from bar 5"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(2), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

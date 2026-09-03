@@ -1,0 +1,192 @@
+{
+  "note": "---- THE MIDDLE EAST, NORTH AFRICA AND CENTRAL ASIA ----------------\nSix anchors into a region the catalog held two of (Oran 1985, Cairo\n2021), and the round's hardest editorial line runs through it.\n\nTHE LINE IS TUNING AND IT IS MEASURED, NOT FELT. WORLD.md §2: Arab\nrast and bayati put a ~50-cent note on the degree that NAMES the\nmaqam, against a melodic JND of 10-20 cents — so tarab, the Arab\nclassical tradition, is Tier 2 and is not shipped. But `raï` already\nshowed the way out on 2026-08-25: pop-raï \"sits largely in a 12-TET\nminor or in HIJAZ\", and hijaz, nahawand, kurd and ajam have NO neutral\nintervals in them at all. So what ships here is the popular repertory\nin the twelve-tone maqamat, and every anchor says which maqam it is\nclaiming and which it is not.\n\nAND TURKEY IS NOT EGYPT ON THIS QUESTION. The same table measures\nTurkish uşşak and rast at 19 cents max and 6 cents mean — at or inside\nthe JND — so Istanbul is Tier 1 for PITCH. What Istanbul is not Tier 1\nfor is NOTATION: the 53-comma system is the tradition's own way of\nwriting itself down and this box has twelve names. Turkish classical\nmakam is therefore in Tier 2 and arabesk, which is a string orchestra\nand a drum kit, is here.\n\nTHE MODE PROBLEM, SAID ONCE FOR SIX ANCHORS. `MODES` has eight rows\nand none of them is hijaz [0,1,4,5,7,8,10]; adding a ninth changes\nevery mode menu in the building because fields.js KEYMODES derives\nfrom it. That argument was made and lost by `mahraganat` in 2024 and\nagain by `raï` in 2025, and two more anchors do not move it. So the\nanchors below name `phrygian` or `harmonic` — phrygian for the flat\nsecond, harmonic minor for the augmented second — each of which is the\nnearest NAMED alphabet, said by name rather than smuggled in as a\nliteral array, and each of which is missing exactly one interval.\n\nSHAABI — Cairo 1978, and it pays `mahraganat`'s `wants` line, which\nhas read `[\"shaabi\"]` since that anchor was written. Egyptian working-\nclass wedding music: a rough, loud, unbeautiful voice over a maqsoum,\nan accordion or an organ, and a horn line, played at volume in a\nstreet tent.\nTHE YEAR is Ahmed Adaweyah's breakthrough — the moment a voice that\nthe state radio would not play sells more cassettes than the ones it\nwould.\nTHE QUARTER TONE IS IN `cannot` AND IS NOT THE PRIMARY FACT. Shaabi\nuses rast and bayati like everything else in Cairo, and this box\ncannot say either. What it CAN say is what makes shaabi shaabi — the\nwedding voice, the maqsoum, the volume and the cheapness — and the\nmaqam it claims here is nahawand, which is a natural minor and has no\nneutral interval in it at all. The anchor claims the 12-TET half of\nthe repertory and no more of it, in raï's own words.\n\nLINEAGE: a ROOT under protest. Shaabi's parents are the mawwal, the\nbaladi wedding band and the Cairo tarab orchestra, and the third of\nthose is Tier 2 above. Nothing in this catalog is upstream of it, and\nnaming `disco` because Cairo 1978 had a rhythm section would be the\nconscription this round exists to stop.\nAN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue\nround, shift 2).\nThis row declared `parents: {}` and then named `tarab` — a KEY IN THIS\nTABLE, Cairo 1934 — as the first string of its own shopping list. That is\nnot a genuine root and it is not \"every parent is missing\": it is an edge\nsomebody wrote down in the wrong field.\nTHE ARGUMENT: Umm Kulthum on the Egyptian Radio inaugural broadcast (Cairo,\n1934) is the takht's vocal grammar — the mawwal, the re-said line, the\nqafla — and Ahmed Adaweyah's cassettes (Cairo, from 1972) sing that grammar\nroughly and loudly over an accordion and an organ. Same city, forty-four\nyears, one voice-and-takht lineage. 0.45 rather than 1: the wedding band and\nthe cassette trade are the other half, and neither is a row.\nBOTH DIRECTIONS CHECKED: `aljil` (Cairo 1988) and `mahraganat` (Cairo 2021)\nalready descend from this row, so the Cairo chain was connected at both ends\nand broken only here. `firqa` (Cairo 1964) was weighed and declined — shaabi\nis a break from the film-radio orchestra's decorum, not a descent from it.\n\"mawwal\" and \"baladi\" stay wanted: both are genuinely absent.\n\nTHE MAQSOUM, THE SAME FIGURE MAHRAGANAT WRITES FORTY-THREE YEARS\nLATER: dum on 1, dum on the and-of-2, taks between. Written on an\nACOUSTIC kit here because in 1978 a person is holding the drum, which\nis the one field that separates the two anchors' rhythm sections.",
+  "label": "Cairo 1978",
+  "voices": 3,
+  "near": "rai",
+  "plan": "dance",
+  "bpm": 112,
+  "parents": {
+    "tarab": 0.45
+  },
+  "wants": [
+    "mawwal",
+    "baladi"
+  ],
+  "cannot": [
+    "the quarter tone — rast and bayati put a ~50-cent note on the degree that names the maqam, and this anchor claims only the 12-TET half of the repertory"
+  ],
+  "instr": [
+    "solo_vox",
+    "accordion",
+    "brass_section"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "orn": {
+    "grace": 0.45,
+    "approach": 0.3
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2700,
+    "q": 1.3,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.32,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the singer",
+    "the accordion, answering the phrase",
+    "the horns, on the refrain"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(4), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

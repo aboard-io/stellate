@@ -1,0 +1,219 @@
+{
+  "note": "EURODANCE [italodisco] — Milan 1993. Corona, \"The Rhythm of the\nNight\" (DWA, Milan, 1993). Milan rather than Frankfurt or Cologne:\nthe map already draws this city for `italodisco` eleven years\nearlier, and DWA is the same room's grandchild.\nMEASURED over 31 files (Snap! · Haddaway · Corona · Culture Beat · La\nBouche · 2 Brothers on the 4th Floor). Meter 31 of 31 in 4/4. Tempo\n(n=30): p10 125 · p25 126 · med 131 · p75 135 · p90 144. Mode 23\nminor / 8 major. THE CYCLE IS THE GENRE and the corpus is unusually\nloud about it: bIII-IV-bVI-I, 88 windows, second only to the tonic\npedal — a minor-key loop that reaches the tonic LAST, which is why\nevery one of these records feels like it is arriving all the way\nthrough. Hat 7879887978798879, sixteenths at full density (against\n`trance`'s off-beat eighths, which is the whole difference between\nthe two floors); kick 9303830293038312, four on the floor; clap on 4\nand 12. Off-16 fraction 0.29.\n\nLINEAGE: `italodisco` (Milan 1982) is the same city's sequenced\ndance record and takes the largest share; `hinrg` (Brixton 1984) is\nthe tempo and the falsetto; `house` (Chicago 1986) is the piano\nstab and the four-on-the-floor; `eurodisco` (Munich 1977) is the\ngrandparent of the whole continent's floor.\n\nbIII-IV-bVI-i, the measured loop, arriving on the tonic last.\n\nWHO SINGS: the diva chorus over the rapped verse, wide open",
+  "label": "Milan 1993",
+  "near": "hinrg",
+  "plan": "dance",
+  "bpm": 132,
+  "parents": {
+    "italodisco": 0.3,
+    "hinrg": 0.25,
+    "house": 0.25,
+    "eurodisco": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "polysynth",
+    "synth_brass_1",
+    "solo_vox"
+  ],
+  "voices": 3,
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": {
+      "$v": true
+    }
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "stab"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "stab",
+    "lead"
+  ],
+  "roots": [
+    2,
+    3,
+    5,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      7,
+      8,
+      7,
+      9,
+      8,
+      8,
+      7,
+      9,
+      7,
+      8,
+      7,
+      9,
+      8,
+      8,
+      7,
+      9
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2800,
+    "q": 1.8,
+    "atk": 0.003,
+    "rel": 0.3,
+    "gain": 0.28,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the synth riff, the four bars everybody knows",
+    "the brass stab, on the turnaround",
+    "the voice, the chorus, arriving on the tonic"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[keep(0, 4, 8, 12)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(12)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "note": "ESTAMPIE — the first DRUM in the catalog's history: the one pre-1500\nmusic that genuinely has one, and the engine voices it perfectly. Pipe\nand struck strings over the tabor's dum, dum-dum; the vielle/hurdy-gurdy\ndrone is the bass chair on a pedal. The puncta go round and round with\nopen and close endings — the same line, ROTATED at the section turn,\nwhich is what an ouvert/clos pair is before notation can say so.\n\nTHE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP\n(2026-09-02, the catalogue round). The QA report's `instrumentation`\ncolumn counts a chair as NATIVE when `audio/to-engine.js\npatchForInstr()` names a Faust module for its id, and this row seats\nZERO of them — one of twelve in the table. Twelve rows were read one\nby one and every one of them came back the same way: there is no\nmodel in the fleet of the instrument this music is played on, and\nthere should not be. `organic: true` is that answer said out loud, so\nthe report can stop scoring an honest recording as a failure and can\nstart telling the twelve apart from the machine genres that were\nseating a sampled upright by accident.\nTHIS ROW: the eight *Estampies royales* of the Chansonnier du Roi (BnF\nfr. 844, Paris, c. 1300). A recorder is a blown tube and a hammered\ndulcimer a struck box; the fleet's only struck model is `mallet`, a\nbar, which is a different instrument.\n\n`arc`, NOT `dance`, on the plan policy's own words (compose.js): the\ndance plan is the build-and-drop floor grammar, and a floor record\nstates its topline only through the singer layer — which the\nINSTRUMENTAL table rightly denies a 1300 consort, so a quote intro\n(roots' own lean votes for one) promised a hook the record could\nnever state. A run of puncta going round is \"one shape end to end\";\ntango, the danced roots ancestor, is the precedent.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nThe eight estampies royales in the same manuscript as the row above (Paris,\nBnF fr. 844, c. 1300) are the earliest notated instrumental dances in\nEurope, and \"La prime estampie roial\" is D-final. A dance has no chords —\n`harmony: \"modal\"` — so the tune was the whole record and the tune was in\nthe wrong mode.\n\nthe tabor: dum, dum-dum",
+  "organic": true,
+  "label": "Paris 1300",
+  "plan": "arc",
+  "bpm": 120,
+  "parents": {
+    "troubadour": 0.6,
+    "gregorian": 0.4
+  },
+  "wants": [],
+  "near": "troubadour",
+  "instr": [
+    "recorder",
+    "dulcimer"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "bassStyle": "pedal",
+  "bassGrid": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 2600,
+    "q": 1,
+    "atk": 0.01,
+    "rel": 0.5,
+    "gain": 0.26,
+    "verb": 0.35
+  },
+  "words": [
+    "the puncta, round and round",
+    "the strings doubling below"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? (s % 2 ? [rotate(2)] : []) : [drop(2)])"
+  }
+}

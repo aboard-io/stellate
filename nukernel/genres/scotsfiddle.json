@@ -1,0 +1,95 @@
+{
+  "note": "THE SCOTS FIDDLE — Edinburgh 1796. \"In 1796, Gow started a music-\nselling and publishing business with William Shepherd at 41 North\nBridge, Edinburgh, which continued until Shepherd's death in 1813\",\nand \"between 1799 and 1824, he published a significant number of\ncollections of tunes\": Nathaniel Gow (1763–1831), Niel Gow's fourth\nson, \"a celebrated performer, composer and arranger of tunes, songs\nand other pieces on his own right\", with about 200 tunes of his own\nand the leadership of \"many bands... at many assemblies such as the\nCaledonian Hunt Balls\". A named performer, a named city, a street\naddress and a stated year.\nTHE REFUSAL'S NAMED ASK WAS NOT MET, AND THE ROW SAYS SO. The ledger\nround asked for \"Gow's 1784 Collection... if a ZIM can date it\": it\ncannot. Niel Gow's article was re-read line by line this round and\nstill carries no year on any collection sentence — its only dated\npublication reference is John Glen's 1895 count of his tunes, which\nis a century of hindsight and not a fiddler's book. THE SON'S HOUSE\nIS DATED WHERE THE FATHER'S BOOK IS NOT, so the label sits on\nEdinburgh 1796 and the comment refuses to move the year onto the\nmore famous name (the `jingju` rule, applied to a family instead of\nto a star).\nTHE AXES: FORM is the payload, and the Strathspey article states it\nas a law rather than a tendency — \"traditionally, a strathspey will\nbe followed by a reel, which is in 2/2 with even eighth-notes, as a\nrelease of the rhythmic tension created during the strathspey\". That\nsentence is the `paces` row below: the dotted sections hold steady\nand the release sections push. A set, not a tune.\n\na ball band; the song tradition is a different room\n\nTHE STRATHSPEY-THEN-REEL SET AS DATA: the tension sections at the\nwritten tempo, the release sections at half again, exactly the\nrelation the article names. Sanban's lesson from `jingju` holds —\na pace word is a ratio a band can feel, not a metronome mark.\nPRECHORUS IS NAMED because it would otherwise sit unpaced between\nthe two halves of the set and put a bar of the written tempo\ninside the strathspey — measured, not assumed (compose deals\nPLANCUE's word, and \"prechorus\" is its own key).\n\nLINEAGE: a declared ROOT. The tradition behind it is the pre-\npublication bygde repertory the Menzies manuscript of 1749 is the\nearliest NAME for — dated, but anonymous and placeless in this\nZIM, which is the isorhythm standard's other half failing — and the\npipe repertory the fiddle borrowed its ornaments from. Both owed\nbelow.",
+  "instrumental": true,
+  "label": "Edinburgh 1796",
+  "voices": 3,
+  "bars": 8,
+  "near": "oldtime",
+  "plan": "song",
+  "bpm": 116,
+  "paces": {
+    "verse": "steady",
+    "prechorus": "steady",
+    "chorus": "push",
+    "solo": "push"
+  },
+  "parents": {},
+  "wants": [
+    "the menzies manuscript's dance strathspeys (1749)",
+    "the highland pipe repertory the bow imitates"
+  ],
+  "cannot": [
+    "the Scotch snap said exactly — 'dotted rhythms (both long-short and short-long \"Scotch snaps\"), which in traditional playing are generally somewhat exaggerated rhythmically'. The exaggeration is the style and this box's swing leans one way only; the snap that goes SHORT first has no channel, and `artic` below is the crude proxy for the pair",
+    "the bowing — hack bowing, snap bowing and the driven bow are what this ZIM says distinguishes Scottish fiddling from Irish, and a chair has articulation but no arm"
+  ],
+  "instr": [
+    "fiddle",
+    "fiddle",
+    "steel_string_guitar"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "riff"
+  ],
+  "kit": {},
+  "harmony": "cycle",
+  "roots": [
+    0,
+    0,
+    4,
+    0,
+    0,
+    5,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "fifths",
+  "orn": {
+    "grace": 0.35,
+    "pass": 0.15
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2800,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.3,
+    "gain": 0.26,
+    "verb": 0.26
+  },
+  "words": [
+    "the first fiddle, the strathspey's dotted turn",
+    "the second, the octave under it at the assembly",
+    "the guitar, the ball's own floor"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [rotate(2)], [fill(2), transpose(4)]][s % 4]\n                    : v === 1 ? [keep(0, 2, 4, 6, 8, 10, 12, 14), transpose(-12)]\n                    : [keep(0, 4, 8, 12), drop(2)])"
+  }
+}

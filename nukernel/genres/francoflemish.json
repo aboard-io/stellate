@@ -1,0 +1,66 @@
+{
+  "note": "JOSQUIN — Venice 1502. Ottaviano Petrucci's Misse Josquin, the\nfirst printed book in history devoted to one composer — the\nMissa L'homme armé super voces musicales opens it — a named\npress, a named year, and the market's own verdict on where\nFranco-Flemish polyphony stood at its height. The catalogue's\nown report called the 1436-1551 stretch the biggest remaining\nWestern gap; this is the row it named.\n\nLINEAGE: `isorhythm` (Florence 1436) is the school he perfected —\npoints of imitation replacing the isorhythmic scaffold. The\nmissing teacher is Ockeghem, mourned by name in Josquin's own\nNymphes des bois; named below, not invented.\n\nPOINTS OF IMITATION: every voice sings the same cell, staggered\n— which is exactly what entry×2 plus these transpositions say.",
+  "label": "Venice 1502",
+  "voices": 4,
+  "bars": 8,
+  "near": "isorhythm",
+  "plan": "arc",
+  "bpm": 80,
+  "parents": {
+    "isorhythm": 0.6
+  },
+  "wants": [
+    "ockeghem's masses",
+    "the l'homme armé tradition"
+  ],
+  "cannot": [
+    "the soggetto cavato — carving a melody from a patron's NAME (Hercules dux Ferrariae) is a pun between text and solfège, and this table's cells carry no words to carve from"
+  ],
+  "instr": "ahh_choir",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "formula",
+    "src": "v => (v < 2 ? 1 - v : 1 - v)"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "emergent",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 0.8,
+    "atk": 0.05,
+    "rel": 1.8,
+    "gain": 0.21,
+    "verb": 0.65,
+    "mouth": {
+      "$src": "MOUTHS.motet"
+    }
+  },
+  "words": [
+    "the superius states the point",
+    "the altus answers at the fifth",
+    "the tenor, the same point, doubled long",
+    "the bassus, the point inverted, grounding"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(2)], [fill(2)]][s % 3]\n                    : v === 1 ? [transpose(3)]\n                    : v === 2 ? [keep(0, 4, 8, 12)]\n                    : [invert(3), transpose(-3)])"
+  }
+}

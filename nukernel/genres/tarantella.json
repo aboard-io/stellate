@@ -1,0 +1,127 @@
+{
+  "note": "PIZZICA TARANTATA — Galatina 1959. Ernesto de Martino's équipe —\nDiego Carpitella on the tape machine — recording the tarantate at\nGalatina, June 1959 (LA TERRA DEL RIMORSO, 1961): the healing\ndance of Salento on field reels, violin circling one figure over a\ntambourine that does not stop. The compound whirl is said as a\nhard shuffle on sixteen places — the barcarolle's own 6/8\nadmission, at trance tempo.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nDiego Carpitella and Ernesto de Martino's field recordings of the\npizzica-tarantata at Galatina, June 1959, published in LA TERRA DEL RIMORSO\n(Il Saggiatore, Milan, 1961) — this row's own place, month and year. The\ntarantata cell is a two-chord i-bVII oscillation, a NATURAL-MINOR figure:\nthe raised sixth that would make it dorian is not the pizzica's note, and\nthe row is modal, so it never sounded one either way.",
+  "label": "Galatina 1959",
+  "voices": 3,
+  "bars": 4,
+  "near": "rumbacatalana",
+  "plan": "dance",
+  "bpm": 138,
+  "parents": {},
+  "wants": [
+    "the feast of san paolo at galatina",
+    "the neapolitan tammurriata"
+  ],
+  "cannot": [
+    "the ritual — the music is a TREATMENT, hours long, tuned to one sufferer's colour and saint; a record here is bars at a tempo and stops when the form says, not when she does"
+  ],
+  "instr": [
+    "violin",
+    "solo_vox",
+    "nylon_string_guitar"
+  ],
+  "swing": 0.3,
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "drumkit": "acoustic",
+  "kit": {
+    "h": [
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1
+    ],
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "pedal",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2700,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.3,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the fiddle, circling the one figure that works",
+    "the voice, calling over the drum",
+    "the guitar, strumming the wheel around — the tamburello never stops"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[fill(1), keep(0, 3, 6, 8, 11, 14), drop(2)]"
+    }
+  }
+}

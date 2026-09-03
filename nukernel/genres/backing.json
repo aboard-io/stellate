@@ -1,0 +1,63 @@
+{
+  "note": "BACKING VOCALS. The other half of a vocal arrangement, and it is not a\nsecond melody — it is the SAME line in harmony. Written as the harmonize\npipe at probability 1 rather than as a second voice carrying transpose,\nfor the reason PIPES.harmonize exists at all: transpose(2) is parallel in\nthe ALPHABET and clashes with the chord, while the pipe locks its\ninterval to whatever is actually sounding. Slow (rate 0.5), because a\nbacking part holds while the lead moves.\nTHIRDS, NOT SIXTHS, and the census is why. The mode this genre reads\ncontains a ♭6, the sixth-walk snaps it up to the fifth eleven semitones\naway, and eleven semitones IS a major seventh — measured, backing in\nsixths was the clashiest genre in the whole table at 7.91%, nearly double\nblues. In thirds every degree of the mode resolves to a third, a fourth\nor a fifth and the number is zero. Two singers in thirds is also just\nwhat a backing part is.\n\nan arc, like every FUNCTION genre — one shape with a peak\n\na choir sings the mode, not the pentatonic\n\nWHO SINGS: this whole genre IS the backing vocal, so it says so",
+  "label": "Backing vocals",
+  "rate": 0.5,
+  "voices": 1,
+  "plan": "arc",
+  "bpm": 84,
+  "instr": "ahh_choir",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "counter"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "anchor": 2,
+  "incClamp": 2,
+  "incMode": "reverse",
+  "intro": "swell",
+  "pipes": [
+    {
+      "id": "harmonize",
+      "p": 1
+    }
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 0.8,
+    "atk": 0.06,
+    "rel": 1.6,
+    "gain": 0.24,
+    "verb": 0.55,
+    "mouth": {
+      "$src": "MOUTHS.backingroom"
+    }
+  },
+  "words": [
+    "the stack: the line, and a third over it"
+  ],
+  "word": {
+    "kind": "const",
+    "n": {
+      "$src": "[breath(SUNG), drop(3)]"
+    }
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "note": "THE HERRMANN STRING SCORE — Los Angeles 1960. PSYCHO: strings\nonly — Hitchcock's black-and-white picture given a black-and-white\norchestra, the two-note ostinato, the stab. Deliberately NOT the\nKorngold grammar and half-descended from it anyway (a refusal is a\nlineage; the serial parent is the dissonance's own teacher). The\nstab chair is `part: \"stab\"` — breakingnews's own word, and\nHerrmann is where the picture business learned it.\n\nTHE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP\n(2026-09-02, the catalogue round). The QA report's `instrumentation`\ncolumn counts a chair as NATIVE when `audio/to-engine.js\npatchForInstr()` names a Faust module for its id, and this row seats\nZERO of them — one of twelve in the table. Twelve rows were read one\nby one and every one of them came back the same way: there is no\nmodel in the fleet of the instrument this music is played on, and\nthere should not be. `organic: true` is that answer said out loud, so\nthe report can stop scoring an honest recording as a failure and can\nstart telling the twelve apart from the machine genres that were\nseating a sampled upright by accident.\nTHIS ROW: Herrmann, *Psycho* (Paramount, Los Angeles, 1960) — this row's\nown \"forty strings and no one else in the room\". Forty players are\nforty recordings.\n\nforty strings and no one else in the room",
+  "organic": true,
+  "instrumental": true,
+  "label": "Los Angeles 1960",
+  "voices": 4,
+  "bars": 8,
+  "near": "goldenagescore",
+  "plan": "arc",
+  "bpm": 120,
+  "parents": {
+    "romantic": 0.3,
+    "goldenagescore": 0.2,
+    "serial": 0.15
+  },
+  "wants": [
+    "the cbs radio drama workshop"
+  ],
+  "instr": [
+    "violin",
+    "strings",
+    "cello",
+    "contrabass"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      -1,
+      -2
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "stab",
+    "riff",
+    "counter",
+    "riff"
+  ],
+  "kit": {},
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "SCALES.chromatic"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "pedal",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1.2,
+    "atk": 0.004,
+    "rel": 0.5,
+    "gain": 0.26,
+    "verb": 0.36
+  },
+  "words": [
+    "the violins, the stab — every beat a knife",
+    "the middle strings, the two-note cell that will not resolve",
+    "the cellos, answering a tritone down",
+    "the basses, the dread held under everything"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(4), rotate(3), drop(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[excerpt(0, 2), fill(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(-3), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[spread(0), keep(0, 8), drop(2)]"
+    }
+  }
+}

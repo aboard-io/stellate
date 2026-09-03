@@ -1,0 +1,179 @@
+{
+  "note": "ORCHESTRAL PSYCH [Flaming Lips]. A pop song dressed in a string\nsection and a halo pad instead of a second guitar — the Beatles' own\npsychedelic turn (strings on a rock rhythm section), carried through\npost-rock's build-the-arrangement patience and neoclassical's real\norchestral voicing. Brian Wilson's chamber-pop arranging, the actual\nmissing rung between the three, has no anchor of its own yet.\n\nLINEAGE, REPAIRED 2026-08-25, and this was the worst arithmetic in\nthe table: sixty per cent of Oklahoma City 1999 pointed at anchors\ndated 2003 and 2011. `postrock` was standing in for the slow-build\narrangement and `neoclassical` for the string writing, and BOTH of\nthose features are already carried by London 1968, which is\norchestral psychedelia's own anchor and thirty-one years the right\nside of this one. So psychopop takes the freed weight whole and\n`beatgroup` keeps the 0.4 it always declared. The resemblance to Austin\n2003 is real and is now written in `near`, which is the field for it.\n(This is the one weight in the 2026-08-25 slate I would call\ncontestable rather than settled — 0.6 is a large plurality, and a\nreader who wants it split further has a case.)\n\"chamber pop\" PAID 2026-09-02 (the Chordonomicon gaps). This row's\nown comment called that rung \"the actual missing rung between the\nthree\" and its wiki reason RESERVED the article rather than take it;\n`chamberpop` (Boston 1994, Cardinal) is now the row and the ZIM\narticle goes with it. The share comes out of `psychpop`, whose 0.6 the\ncomment already called \"contestable rather than settled\" — half of\nwhat was standing in for the arranging tradition was the arranging\ntradition.",
+  "label": "Oklahoma City 1999",
+  "voices": 3,
+  "near": "postrock",
+  "plan": "song",
+  "bpm": 122,
+  "parents": {
+    "psychpop": 0.3,
+    "beatgroup": 0.4,
+    "chamberpop": 0.3
+  },
+  "wants": [],
+  "instr": [
+    "slow_strings",
+    "clean_guitar",
+    "halo_pad"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    3,
+    4,
+    5
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1900,
+    "q": 1.1,
+    "atk": 0.02,
+    "rel": 1.6,
+    "gain": 0.24,
+    "verb": 0.55
+  },
+  "words": [
+    "the strings, holding the changes",
+    "the guitar, the hook",
+    "the halo pad, shimmering an octave over"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(3), drop(2), transpose(12)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "echo",
+    "sweep"
+  ]
+}

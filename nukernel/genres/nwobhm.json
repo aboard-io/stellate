@@ -1,0 +1,125 @@
+{
+  "note": "NWOBHM — London 1980. Iron Maiden's Iron Maiden, released the\n14th of April 1980: pub-circuit metal played at punk's tempo\nwith twin guitars in harmony — the new wave of British heavy\nmetal, named by Sounds and delivered by a band from Leyton.\n`deathmetal` (Tampa 1990) has wanted \"nwobhm\" by name since its\nlineage was written and takes the parent today.\n\nLINEAGE: `heavymetal` (Workington 1969) is the weight; `punk`\n(New York 1976) the velocity and the self-released 45s — the\ngenre is the first stack multiplied by the second's clock.",
+  "label": "London 1980",
+  "voices": 2,
+  "bars": 8,
+  "near": "deathmetal",
+  "plan": "song",
+  "bpm": 152,
+  "parents": {
+    "heavymetal": 0.5,
+    "punk": 0.3
+  },
+  "wants": [
+    "deep purple in rock, the speed's other teacher"
+  ],
+  "instr": [
+    "distortion_guitar",
+    "distortion_guitar"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "fx": [
+    "crunch"
+  ],
+  "bassStyle": "eighths",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2300,
+    "q": 1.3,
+    "atk": 0.005,
+    "rel": 0.4,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the riff, galloping",
+    "the second guitar, the same line a third up — the twin lead, which is the row's one non-negotiable"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [transpose(2)]][s % 4]\n                    : [transpose(2)])"
+  }
+}

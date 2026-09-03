@@ -1,0 +1,218 @@
+{
+  "note": "CONTEMPORARY R&B [newjackswing] — Virginia Beach 1997. Missy Elliott,\n\"Supa Dupa Fly\" (Master Sound, Virginia Beach; The Goldmind/Elektra,\n15 July 1997), produced whole by Timbaland — the two acts Paul names\nin one sentence, and one record.\nMEASURED over 72 files (Missy Elliott · Timbaland · Aaliyah · TLC ·\nBrandy · Monica). Meter 72 of 72 in 4/4. Tempo (n=72): p10 72 · p25\n86 · med 93 · p75 118. Mode 41 major / 31 minor. WHY THIS IS NOT A\nTWIN OF `rnb` (Philadelphia 1994), whose row is a 72-beat maj7 ballad:\nthis set medians twenty-one beats faster, its seventh fraction is 0.32\nagainst a ballad's, and its motion is 0.73 — the chords MOVE. The\ncorpus's own top cycle is bIII-V-I-bVI (54 windows), a minor tonic\nreached from the flat third with a real dominant in it, which is the\nrow below and is nothing any other soul row here plays. The other\nmeasurement is the percussion: perc 9696956697778879, a lane that\nnever rests, and hat 8173928382728282 — the stutter, sixteenths\nghosted under eighths.\n  kick  9011214250411131   clap  2531902635309037\n\nLINEAGE: `newjackswing` (New York 1987) is the swung sixteenth and\nthe drum machine under a sung song; `rnb` (Philadelphia 1994) is\nthe harmony and the vocal arrangement; `boombap` (New York 1994) is\nthe rapped verse the singer trades with; `miamibass` (Miami 1986)\nis the 808 sub; `hiphopsoul` (Charlotte 1991) is the immediate\nprecedent and the nearest neighbour.\n\nTHE VOCAL CHOP IS AN INSTRUMENT on this record and the found crate\nalready holds one: a stab of somebody singing, played as a part.",
+  "label": "Virginia Beach 1997",
+  "near": "hiphopsoul",
+  "swing": 0.1,
+  "plan": "song",
+  "bpm": 93,
+  "parents": {
+    "newjackswing": 0.3,
+    "rnb": 0.25,
+    "boombap": 0.2,
+    "miamibass": 0.15,
+    "hiphopsoul": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "polysynth",
+    "found:collage:vocal_stab"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "stab"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "stab"
+  ],
+  "roots": [
+    2,
+    4,
+    0,
+    5
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      8,
+      2,
+      7,
+      0,
+      9,
+      0,
+      8,
+      3,
+      8,
+      0,
+      7,
+      0,
+      8,
+      0,
+      8,
+      2
+    ]
+  },
+  "fill": {
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 1.5,
+    "atk": 0.004,
+    "rel": 0.35,
+    "gain": 0.28,
+    "verb": 0.22
+  },
+  "words": [
+    "the synth, the hook, off the beat and back",
+    "the vocal chop, answering it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"gate\", rotate(4))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

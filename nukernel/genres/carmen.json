@@ -1,0 +1,62 @@
+{
+  "note": "CARMEN SAECULARE — Rome 17 BC, Ancient Rome asked for by name. A\nNAMED COMMISSIONED PERFORMANCE, the best-documented of antiquity:\nHorace's hymn for Augustus's Ludi Saeculares, sung on the third day\nof the games (June, 17 BC) on the Palatine and again on the\nCapitol, and the stone says so — the acta of the games (CIL VI\n32323) record twenty-seven boys and as many girls singing, and then\nthree words no other ancient performance gets: carmen composuit\nQ. Horatius Flaccus. The POEM survives complete, nineteen Sapphic\nstanzas; the MELODY does not, and the split is this row's whole\nhonesty: words, forces, occasion and metre real, tune not.\nROME'S INSTRUMENTARIUM, real and datable, lives in this comment\nrather than in rows: the tibia (the Roman aulos — the tibicines'\ncollegium was old enough to STRIKE in 311 BC, a dated musicians'\nstrike in Livy 9.30), the cornu and tuba of the legions and the\narena, and the hydraulis, Ctesibius's water organ (Alexandria ~250\nBC), declined as a row at the round header. Horace's own ode calls\nfor the lyre; the acta name only the choir, and the cast follows\nthe acta.\nSAME CITY, TWO MUSICS, SIX CENTURIES APART: \"Rome\" already stands\nin PLACES for gregorian's Rome 600 — the first two-records-one-\nplace pair to straddle the BC/CE line. The year does the\nseparating (the Cairo 1932/1964 precedent), and the map draws one\ndot whose record the slider chooses.\n\nLINEAGE: Horace's metre is Sappho's, the paean-to-Apollo frame is\nGreek choral practice whole, and the one notated Greek anchor of\nthe century before is the Delphic paean — the weight is the\nborrowing Rome itself never denied. The residue is Latin: a state\nhymn on a censused occasion is Roman civic religion, not a\nPythaid.\n\nthe two half-choirs — the boys, and the girls answering, zema's\nown antiphony arithmetic on a Roman occasion\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nHorace's CARMEN SAECULARE, sung on the Palatine and the Capitol at the Ludi\nSaeculares of June 17 BC, with the acta of the games (CIL VI 32323) naming\nthe twenty-seven boys and girls and the poet — this row's own record. The\nrow's comment states the split it lives by: \"words, forces, occasion and\nmetre real, tune NOT\". A mode is a fact about the tune. Declaring dorian on\na lost melody claimed the one thing the stone does not carry; the field now\nnames the plain alphabet the row plays and asserts nothing.\n\nstraight-toned trained children; the bank has no children's\nchoir and plainchant's no-vibrato is the honest nearest",
+  "label": "Rome 17 BC",
+  "voices": 2,
+  "rate": 0.5,
+  "near": "gregorian",
+  "plan": "arc",
+  "bpm": 84,
+  "parents": {
+    "delphic": 0.45
+  },
+  "wants": [],
+  "cannot": [
+    "the tune — no note of the Carmen Saeculare survives, and unlike hurrian there is not even a contested notation to refuse: every pitch below is convention; what is real is the words, the double choir of fifty-four children, the day and the stone that names the composer",
+    "the sapphic stanza — eleven, eleven, eleven and five syllables against a sixteen-step bar; the phrase shape below is the stanza's long-long-long-short SILHOUETTE, not its scansion"
+  ],
+  "instr": "ahh_choir",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "incClamp": 2,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2100,
+    "q": 0.8,
+    "atk": 0.06,
+    "rel": 2,
+    "gain": 0.25,
+    "verb": 0.65,
+    "mouth": {
+      "$src": "MOUTHS.plainchant"
+    }
+  },
+  "words": [
+    "the twenty-seven boys",
+    "the twenty-seven girls, answering"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => [[], [fill(2)], [transpose(2)], [transpose(-1)]][s % 4]"
+  }
+}

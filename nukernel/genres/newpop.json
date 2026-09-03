@@ -1,0 +1,146 @@
+{
+  "note": "OMD — Liverpool 1980, Organisation. The article's origin is MEOLS on\nMerseyside, 11 km from Liverpool's dot and therefore inside it; the\nlabel keeps the city the dot is named for. The row is the pair this\ncatalogue was missing between `dusseldorfschool` and `synthpop`: a band who\ntook the German machine and wrote pop songs on it a year before\nBasildon did.",
+  "label": "Liverpool 1980",
+  "voices": 3,
+  "bars": 8,
+  "near": "synthpop",
+  "plan": "song",
+  "bpm": 120,
+  "parents": {
+    "dusseldorfschool": 0.45,
+    "roboticpop": 0.3,
+    "newwave": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "polysynth",
+    "saw_wave"
+  ],
+  "drumkit": "cr78",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "riff"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 5,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "chorus",
+    "echo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1800,
+    "q": 1.4,
+    "atk": 0.02,
+    "rel": 0.6,
+    "gain": 0.26,
+    "verb": 0.5
+  },
+  "words": [
+    "the voice, plain and northern",
+    "the pad",
+    "the machine line"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(2)], [], [keep(0, 8)]][s % 4]\n                    : v === 1 ? [drop(8)] : [fill(2)])"
+  }
+}

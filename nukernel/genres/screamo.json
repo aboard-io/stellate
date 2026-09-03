@@ -1,0 +1,174 @@
+{
+  "note": "SCREAMO [emo]. Emo's dynamics pushed past the point of song into the\npoint of collapse: death metal's ridden cymbal and locrian ♭5-is-home\nscale (the exact array, cited whole — the ♭5 stays the point) under\nTWO guitars reading DIFFERENT HALVES of the phrase — not the held-second\nblur shoegaze and bulgarian use (a fixed transpose, against a wall that\nfills every step, is one riff stated twice; the second half of the\nsubject is a different riff), at hardcore tempo instead of a drone's.\n\n152: rushes the way punk and skiffle already do\n\nLINEAGE: emo's confessional dynamics are the base, pushed to the\nedge by punk's raw directness and death metal's chromatic dissonance\nand ridden cymbal. Hardcore, the actual scene emo and screamo both\ngrew out of, is the one uncredited rung between all three.\nPAID 2026-08-30, the deep-time round's forward half: \"hardcore\"\nis `hardcore` (Washington 1980, Bad Brains) — the uncredited rung\nhas a name, and punk's share moves to it, since hardcore is where\nthis row's punk actually arrived from.\nAND THE `emo` PARENT WAS FIVE YEARS YOUNGER THAN THE RECORD\n(2026-09-02, the catalogue round). `emo` is Chicago 1999 — the\nMidwest second wave — and this row is San Diego 1994: Heroin's self\ntitled LP and Antioch Arrow's *In Love with Jetts*, both on Gravity\nRecords, San Diego, 1993-94. The emo those bands came out of is the\n1985 D.C. one — Rites of Spring, Dischord 22 — which this catalogue\nhas not got, and naming a 1999 row for it was a five-year-forward\nedge standing in for a missing ancestor. `hardcore` (Washington\n1980) takes the weight, which is the scene both rows actually grew\nout of and which this row's own LINEAGE note already called \"the one\nuncredited rung\"; the missing rung is now named as a want instead of\nimpersonated by a parent.\n\nA DIFFERENT RIFF, NOT A DOUBLING: a fixed transpose of the SAME notes\nis one line restated, which against a wall that fills every step\nreads as the identical guitar twice. `excerpt(8,8)` hands the second\nguitar the phrase's own second half instead — a genuinely different\nsequence of notes, the way two rhythm guitars in a real band play\nrelated but not identical parts.",
+  "label": "San Diego 1994",
+  "near": "deathmetal",
+  "plan": "song",
+  "bpm": 152,
+  "parents": {
+    "hardcore": 0.6,
+    "deathmetal": 0.25
+  },
+  "wants": [
+    "emocore — Rites of Spring, Washington 1985"
+  ],
+  "instr": [
+    "distortion_guitar",
+    "distortion_guitar"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    0,
+    1,
+    1
+  ],
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": [
+    0,
+    1,
+    3,
+    5,
+    6,
+    8,
+    10
+  ],
+  "artic": "staccato",
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1600,
+    "q": 2.2,
+    "atk": 0.002,
+    "rel": 0.35,
+    "gain": 0.3,
+    "verb": 0.18
+  },
+  "words": [
+    "the riff, screamed through — every step",
+    "the second guitar, the subject's own second half, a half-step under"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[only(\"gate\", fill(1))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[excerpt(8, 8), transpose(-1)]"
+    }
+  },
+  "fx": [
+    "crunch"
+  ]
+}

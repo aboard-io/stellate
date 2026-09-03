@@ -1,0 +1,108 @@
+{
+  "note": "SPIRITUALS — Nashville 1871. The Fisk Jubilee Singers left Fisk\nUniversity on the 6th of October 1871 to sing the plantation\nsongs in concert — the tour that put \"Swing Low, Sweet Chariot\"\nand \"Steal Away\" on the world's stages, and (with the 1867 \"Slave\nSongs of the United States\") the first time this music has names,\ndates and a repertory list. THE LABEL DATES THE PHOTOGRAPH AND\nNOT THE PRACTICE — the singing is generations older than 1871,\nthe same admission `swing` makes about the blues and `chorale`'s\nOsiander makes twice over — and the comment says it out loud so\nthe chronological list cannot claim otherwise.\n`gospel` (Chicago 1932) has wanted this row since its lineage was\nwritten and takes it as a parent today; `hymn`'s same-named want\nran BACKWARDS (Boston 1831 asking for an 1871 anchor) and is\nrewritten at that row, dated, per the parlor/ragtime precedent.\n\n72 and not slower: compose.js's own floor is 70, its line drawn\nat the bottom of what a congregation can hold together.\n\nLINEAGE: the Watts hymnody the congregations lined out is real\nancestry and `hymn` carries this table's hymnody; the camp\nmeeting the shape-note world shares is `sacredharp`'s own\nground. The larger half — the ring shout, the field holler,\nthe West African call — has no anchor and is named below.\nPAID 2026-08-29, the debts round: \"field holler\" is `holler`\n(South Carolina 1853, Olmsted's own ear) — dated eighteen years\nbefore the Fisk tour, so the edge runs the right way.\n\n\"field holler\" spelled blues's way — one missing ancestor, one\nspelling (the taqsim rule).\n\nWHO SINGS: the hymnal mouth — the Fisk sound was a\ntrained concert blend, and that polish (not the praise\nhouse's heterophony) is what the 1871 photograph shows.",
+  "label": "Nashville 1871",
+  "voices": 4,
+  "bars": 8,
+  "near": "sacredharp",
+  "plan": "song",
+  "bpm": 72,
+  "parents": {
+    "hymn": 0.35,
+    "sacredharp": 0.15,
+    "holler": 0.25
+  },
+  "wants": [
+    "the ring shout",
+    "dr. watts lining out"
+  ],
+  "cannot": [
+    "call and response between a leader and the room — one voice CALLS and the others ANSWER, and this table's entry schedule staggers voices but cannot make one wait on another's line; the four parts below sing together, which is the concert arrangement, not the praise house",
+    "the bent third and seventh — the notes between the piano keys that every account of this music reaches for; deg is an integer and the blues scale is the nearest sayable reading"
+  ],
+  "instr": "ahh_choir",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "from",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "cycle",
+  "intro": "solo",
+  "roots": [
+    0,
+    0,
+    3,
+    0,
+    0,
+    5,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.8,
+    "atk": 0.04,
+    "rel": 1.6,
+    "gain": 0.21,
+    "verb": 0.55,
+    "mouth": {
+      "$src": "MOUTHS.hymnal"
+    }
+  },
+  "words": [
+    "the melody, held out",
+    "the alto under it",
+    "the tenor, filling",
+    "the bass, the rock"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(-2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(-4), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[keep(0, 4, 8, 12), transpose(-7)]"
+    }
+  }
+}

@@ -1,0 +1,276 @@
+{
+  "note": "BO DIDDLEY. The genre is a RHYTHM, and that is the reason it earns a row\nin a table which otherwise insists a genre is four numbers and some\nnouns: there is no progression here AT ALL. One chord, held for the\nlength of the record, and everything that would have been harmonic\nmotion has moved into the drums — the 3-2 clave, played on the floor tom,\ndoubled by the guitar, shaken over the top by a pair of maracas. It is\nthe one anchor in the band family with no backbeat: the snare answers the\nclave's TWO-side and says nothing on beat 2, which is most of what a\nlistener means by \"that beat\".\nTHE FIGURE, WRITTEN ONCE. On the record the clave is spread over two bars\nat doubled tempo; this is the one-bar compression at 128, the reading\nevery cover of it uses (Not Fade Away, Magic Bus, Faith, Desire) and the\nonly one where a sixteen-step kit, a bass grid and a velocity hand can\nall land on the same five hits: 1, the a of 1, the and of 2, the a of 3,\nand 4.\n\nnamed \"Chicago 1955\" — Ellas McDaniel's first Chess single, cut in the\nsame room and for the same label as the electric-blues anchor three\nyears earlier, playing a rhythm nobody in that room had recorded.\n\n128 is the one-bar reading of the Bo Diddley clave\n\nLINEAGE: Chess blues is the MATERIAL — the guitar language, the band,\nthe room, the amp — and the sanctified church is where the shouted\ncall-and-response and the body-percussion pulse come from. The beat\nitself is hambone, the juba pattin' rhythm played on the thighs, whose\nshape is the same clave the Afro-Cuban records of those years carried;\nneither is an anchor, and between them they are what this genre adds.\n\nONE CHORD, FOREVER — `modal`, and not the drone's kind of modal: there\nthe stillness IS the piece, here the harmony simply is not the subject.\nMixolydian for the chord (a major third over a ♭7 — the E7 the guitar\nbangs) and the blues scale for the tune, which stacks a minor third and\na ♭5 on top of that major third and never resolves either.\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nBo Diddley, Chicago 1955 — this row's own record, and the row's own comment\nis the argument: \"there is no progression here AT ALL. One chord, held for\nthe length of the record.\" So mixolydian had no chord to be the seventh of.\nAnd BLUES [0,3,5,6,7,10] has a MINOR third, which a mixolydian is not. The\nblue seventh sounds from the scale, as it always did; the mode field stops\nclaiming a major third the record never plays.\n\na figure, not a melody: it stops to be answered\nthe low end states the THREE-side and leaves the two to the drums (and,\nas everywhere, a phrase with accents of its own outranks this grid)\n\nthe three\nthe two — NO backbeat\nfloor tom: all five\nmaracas, unbroken\nTHE MARACAS ARE THE HAT LANE, and that is a compromise said out loud:\nthere is no shaker among the twelve extracted samples, so the nearest\nthing is a closed hat at sixteenths with the clave leaned on. The\nACCENTS are the part that matters — a flat sixteenth hat is a disco\nrecord, and Jerome Green's hand is the second instrument on the single.\n\na room in 1955, not a grid: four hundredths of a step, redrawn every\nbar, seeded — the same take every time you press play\n\nBAR 4: the toms take the figure over and the crash hands it back. The\nmaracas do not stop, because on these records nothing stops them.\n\nTHE MASK IS THE GENRE. `breath` already says the exact thing a clave\nis — an ABSOLUTE window in the bar, in the same place every bar, ANDed\nwith whatever rhythm the phrase brought — it was just written for a\nsinger's air instead of a rhythm figure. So the guitar keeps its own\ntune and sounds it only where the figure lets it, the harp is masked to\nthe complement, and the two parts interlock by construction instead of\nby luck.\n\nthe DeArmond Trem-Trol — Mona's amp, and the table's first",
+  "label": "Chicago 1955",
+  "swing": 0.12,
+  "near": "blues",
+  "plan": "song",
+  "bpm": 128,
+  "parents": {
+    "blues": 0.55,
+    "gospel": 0.25,
+    "jumpblues": 0.2
+  },
+  "wants": [
+    "hambone",
+    "latin percussion"
+  ],
+  "instr": [
+    "clean_guitar",
+    "harmonica"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "BLUES"
+  },
+  "maxHold": 2,
+  "bassGrid": [
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "l": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      9,
+      3,
+      4,
+      8,
+      3,
+      4,
+      8,
+      3,
+      4,
+      3,
+      7,
+      4,
+      8,
+      3,
+      4,
+      4
+    ]
+  },
+  "humanize": 0.04,
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "t": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    "m": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "l": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 2000,
+    "q": 1.8,
+    "atk": 0.003,
+    "rel": 0.4,
+    "gain": 0.29,
+    "verb": 0.22
+  },
+  "words": [
+    "the guitar, masked to the clave",
+    "the harp, answering in the holes from bar 3"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[breath([1,0,0,1, 0,0,1,0, 0,0,1,0, 1,0,0,0])]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[breath([0,0,0,0, 1,1,0,0, 0,1,0,0, 0,0,1,1]), transpose(2)]"
+    }
+  },
+  "fx": [
+    "tremolo"
+  ]
+}

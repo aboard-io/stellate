@@ -1,0 +1,155 @@
+{
+  "note": "DJ SHADOW — San Francisco 1996. Endtroducing..... (Mo' Wax,\n16 September 1996), cut at The Glue Factory on an Akai MPC60\nover two years by Josh Davis, the Solesides crate-digger from\nDavis up the causeway (KDVS 90.3 FM is in the comment because\nthe scene was): Guinness cites it as the first album created\nentirely from samples — jazz, funk, prog and rain, chopped\ninto moods with no rapper anywhere on it. `blockparty`'s\nmerry-go-round became a pad bank, which is the lineage edge\ndrawn below.\n\nthe ZIM's own genre line: instrumental hip hop — no singer on the record\n\nLINEAGE: `boombap` (New York 1994) is the kit craft at its\nmost reverent; `blockparty` (Bronx 1973) the DJ culture the\nrecord is a monument to — Herc's two copies become sixty\nthousand records in a basement; `jazz` (New York 1945) what\nthe crates mostly held.\n\"the library-music vinyl\" PAID 2026-08-30, the folk-floor\nround — by a row that already existed: `newsfanfare` (London\n1970) IS a KPM 1000-series bed, which is exactly the vinyl the\ncrates held, and the edge should have been drawn the day the\nwant was written. The folk-floor round drew it while building\nthe library cluster around that anchor.\n\nTHE `cannot` IS HALF PAID, 2026-08-30 (the grain round), and the\nhalf that fell was a claim about the BOX rather than about the\nrecord: \"this box owns no crates and lifts nothing\". It owns a\ncrate — found/ carries 192 beds and 366 one-shots, seatable as\nunits since the sampling round — and as of this round it carries\nthe surface those records were played off too. What Guinness's\nsentence is actually about survives all of that, so the cannot\nkeeps it and drops the false half.\n\nTHE BREAK ARRIVES, 2026-09-01. Paul: \"Why doesn't dj shadow have\nsamples\" — and he was right the way the row's own words already\nadmitted: \"a break and a hiss\" declared an electric piano and\nstrings, bpm 88, drumkit \"electronic\", and NO break. The collage\ndoor shipped this morning (to-engine `found:collage:<pool>`), so the\nthird chair is the whole pool `break_75_95` — twelve file-backed\nSAMPLES rows (81-94 bpm, 88 sits mid-pool; `break_95_115` is the\nwrong shelf here), all local, so the COEP local-only rail drops\nnothing: 12/12 seat. Twelve one-semitone zones over MIDI 48-59,\neach rooted on its own key, and SAMPLES rows are one-shots — every\nnote retriggers its break from the top, which is the MPC chop, not\na defect: a line that moves is a splice, a repeated pitch is a\nloop. That is Endtroducing's actual grammar. The piano stays\nseated; \"somebody else's melancholy\" is the other half of the\nrecord. bigbeat is the seated precedent for the instr shape.\n\nthe break runs from bar one — it IS the record; the strings still\nwait two bars, weather moving in over it\n\nv2 reg MEASURED, not assumed (the balearic +1 note is the law\nhere). Three settings against the zone window 48-59:\n    reg +1  ->  MIDI 60..79 (seed 1) — every note in the stretched\n                top zone, ONE recording, i.e. a loop, not a splice\n    reg  0  ->  48..67 (seed 1), 51..63 (seed 5) — the bulk inside\n                the window\n    reg -1  ->  identical to 0 (the low floor clamps it)\nSo 0, and the numbers above are why.\n\nGRAIN 0.39 -> 33 dB UNDER ITS OWN MIX (measured). \"A break and a\nhiss\" is the whole texture of Endtroducing and the hiss half is\nthe one the box had no way to say. Sits just behind Dummy and\nahead of everything else, because Shadow's dust comes off the\nLIBRARY RECORDS he lifted — already a generation of vinyl noise,\nbut played back clean off an MPC rather than cut again.\n  The number is small because the press is QUIET (-33.1 dBFS,\ntwo voices and a lot of air): a forward surface costs less level\nhere than a buried one does on knowlewest.\ngrain: 0.39 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the\n//   measured value for a hand that wants it back. Paul: \"Make the\n//   default for surface 0 and I can turn it on only if I want to,\n//   don't put it on anything by default.\" The castings were real —\n//   each was pressed and six moved on what came back — but a\n//   texture nobody asked for is a texture on every play, and the\n//   board's `surface` dial (ui/engineer.js, 2026-08-31) is where\n//   the choice belongs. The engine path stays wired and gated;\n//   what leaves is the ROW declaring it for you.\n\nthe v2 arm must MOVE — on this chair pitch chooses WHICH RECORD\nspeaks, so a static pitch is one loop and a rotated one is a\nre-splice; verses splice differently",
+  "instrumental": true,
+  "label": "San Francisco 1996",
+  "voices": 3,
+  "bars": 8,
+  "near": "boombap",
+  "plan": "song",
+  "bpm": 88,
+  "parents": {
+    "boombap": 0.4,
+    "blockparty": 0.25,
+    "jazz": 0.15,
+    "newsfanfare": 0.15
+  },
+  "wants": [
+    "the mo' wax shelf beside it (u.n.k.l.e.)"
+  ],
+  "cannot": [
+    "the lift itself — Guinness calls this the first record built entirely of samples, and a lift is a CHOICE OF SOMEBODY ELSE'S RECORD: Shadow spent years in a basement deciding which four bars, and this box picks from a fixed crate nobody dug for; the row says the mood, the break and now the dust, but never the find"
+  ],
+  "instr": [
+    "electric_piano",
+    "strings",
+    "found:collage:break_75_95"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "riff"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "swing": 0.15,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 1600,
+    "q": 1,
+    "atk": 0.02,
+    "rel": 1.4,
+    "gain": 0.25,
+    "verb": 0.5
+  },
+  "words": [
+    "the piano loop, four bars of somebody else's melancholy",
+    "the strings, weather moving in over the break",
+    "the break, twelve records cut against each other"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(4)], [transpose(-2)], [rotate(4)]][s % 4]\n                    : v === 2 ? [[], [rotate(4)], [drop(2)], [rotate(4)]][s % 4]\n                    : [drop(8), keep(0, 8)])"
+  }
+}

@@ -1,0 +1,167 @@
+{
+  "note": "================================================================\nTHE GOTH-AND-GLOBE ROUND — 2026-08-30 (Paul: \"Need way more gothy\ngenres and way more spread of global jazz. Keep using Wikipedia\nto add density.\") Sixteen rows: the goth family tree filled in\naround Northampton 1979, and jazz given back its geography — the\ncatalog held ONE non-US jazz dot (Addis Ababa 1969) against a\nliterature that runs Paris, Havana, Cape Town, London, Bombay-\nvia-London, Tokyo, Oslo and Bulawayo. Every row from a named\nrecord, every link read in the ZIM before it was written down.\nEXAMINED AND DECLINED, dated here so the next round does not\nre-litigate them:\n  · darkwave — the article is real (Dark wave, \"late 1970s -\n    early 1980s, Europe\") but it is the scene's UMBRELLA, and its\n    own stylistic tree — gothic rock, cold wave, ethereal wave,\n    neoclassical dark wave — is this catalog's rows. A row for\n    the family name would be a genre made only of other genres;\n    the vaudeville ruling (a format, not a music) applies.\n  · ethereal wave — the article exists, but its archetype is the\n    Cocteau Twins on 4AD, and `dreampop` (London 1984, Treasure)\n    IS that record. One record, one row: ethereal wave is the\n    goth scene's name for the same music dreampop holds, and the\n    honest split is a comment, not a duplicate anchor.\n  · freejazz, hardbop, cooljazz, fusion, spiritualjazz — the US\n    history, and this round's ask was geography; none is owed by\n    the wants ledger (bossa's repaired lineage already routes\n    \"cool jazz's harmony\" through `jazz`, whose label is bebop).\n    `nordicjazz` below opens \"free jazz\" as a want BY NAME, so\n    the ledger now asks for Ornette the honest way.\n  · jazz manouche as a second key — the same music as gypsyjazz;\n    Wikipedia files the article at Gypsy jazz and one music gets\n    one row. The naming is recorded at the row.\n  · \"township jazz\" as its own row — an umbrella like darkwave:\n    `marabi` (Johannesburg 1935) already holds the root, and\n    `tsabatsaba` (Bulawayo 1947) below is the datable record of the\n    step after it. The umbrella word names a shelf, not a record.\n================================================================\n\nDEATHROCK — Pomona 1982. Christian Death, Only Theatre of Pain\n(Frontier, 24 March 1982): the American answer to Northampton\n1979, cut by a band formed in Los Angeles County in 1979 around\nRozz Williams — the label says Pomona, Williams's own town, the\nrule that keeps the Kinks in Muswell Hill and Bauhaus in\nNorthampton (and it keeps (place, year) a key: Los Angeles 1982\nis aor's). Punk speed under horror-matinee theatre: a scratchy\nchorused guitar, a tribal floor-tom beat, the B-movie dead sung\nas camp and meant anyway.\n\nLINEAGE: the article's own three origins are punk rock, the\nhorror film score and glam rock; two are anchors and the third\nis the want. `gothicrock` is real but smaller than it looks —\nthe LA bands were building the same room in parallel and heard\nBauhaus after the walls were up.\n\"the horror film score\" PAID 2026-08-30, the folk-floor round:\n`horrorsynth` (Los Angeles 1978) — the article's third origin,\nfour years older than this record and one county over.\n\nTHE TOM BEAT IS THE GENRE: kick and floor tom trading the bar\nwhile the snare cracks the backbeat — the \"tribal\" lane every\ndescription of this scene reaches for.",
+  "label": "Pomona 1982",
+  "voices": 2,
+  "bars": 8,
+  "near": "gothicrock",
+  "plan": "song",
+  "bpm": 148,
+  "parents": {
+    "punk": 0.45,
+    "glam": 0.25,
+    "gothicrock": 0.2,
+    "horrorsynth": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "overdrive_guitar",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "l": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "m": [
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "l": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "chorus",
+    "echo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 1.6,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.45
+  },
+  "words": [
+    "the guitar, scratched through the chorus pedal",
+    "the second guitar, a graveyard surf line"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(3)], [invert(2)], [fill(2)]][s % 4]\n                    : [transpose(-5), keep(0, 4, 8, 12)])"
+  }
+}

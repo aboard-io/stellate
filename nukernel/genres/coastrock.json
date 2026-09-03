@@ -1,0 +1,179 @@
+{
+  "note": "COAST ROCK [Fleetwood Mac]. A rock band's format carrying Motown's\nmajor-key pop hooks and countrypop's fingerpicked, twangy top —\n\"Dreams\"' whole trick, a studio band that never sounds like it is\ntrying. The Buckingham/Nicks California folk-rock crossover this genre\nis actually named for has no anchor of its own.\n\n\"Sausalito 1977\" — Record Plant Sausalito, where Rumours was\nactually tracked; \"Los Angeles 1977\" was already jazzrock's own label.\n\n\"california folk rock\" PAID 2026-09-02 (the Chordonomicon gaps).\nThe want named a row that did not exist and now does: `folkrock`\n(Los Angeles 1965, Mr. Tambourine Man). The share comes OUT OF\n`countrypop`, which was carrying it — 0.35 of a Sausalito 1977 record\nwas never really Nashville 1945, it was the Byrds' twelve-string in\nBuckingham's hands. The three that remain still sum the way they did.",
+  "label": "Sausalito 1977",
+  "near": "rock",
+  "plan": "song",
+  "bpm": 122,
+  "parents": {
+    "rock": 0.35,
+    "detroitsoul": 0.3,
+    "countrypop": 0.1,
+    "folkrock": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "electric_piano"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "pipes": [
+    {
+      "id": "strum",
+      "spread": 0.04
+    }
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 1.2,
+    "atk": 0.01,
+    "rel": 0.8,
+    "gain": 0.27,
+    "verb": 0.26
+  },
+  "words": [
+    "the guitar, fingerpicked, the hook",
+    "the piano, holding the changes"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(2)]"
+    }
+  }
+}

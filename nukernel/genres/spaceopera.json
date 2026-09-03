@@ -1,0 +1,241 @@
+{
+  "note": "=====================================================================\nTHE SOUNDTRACK ROUND, 2026-09-01. Paul: \"add lots of movie\nsoundtracks especially the Hans Zimmer type but also just in general\nnail down the current big braaaannnng sound and synth sweeps and\norchestral vibes. Star Wars etc.\" Eight rows, and the naming law from\nthe same message holds on every one: keys and labels are GENRE terms,\nnever composer or film names — the composer-named keys above\n(goldenagescore, suspensescore, spaghettiwestern, spyscore, horrorsynth) predate the law and\nship as they are; nothing new joins them.\n\nTHE BRAAM IS SAYABLE WITH EXISTING MACHINERY, measured 2026-09-01\nbefore any of this was written: four committed facts stacked on one\nchair. spread(0)+keep(0)+drop(2) is ONE monotone event a bar that\nharm() pins to the root (horrorsynth's stinger, thinned); fx:[\"crunch\"]\ncompiles to the parent's one-stage insert_higain (fields.js FX, drive\n.35 mix .55); tone.verb ARRIVES at the rendered units (Bray 1958\nprobe: verb .45 -> barPlan(2).units.v1.rev === 0.45 on every chair,\ndrums scaled to .345); and bassStyle:\"pedal\" plus the low-tom lane is\nnewsfanfare's \"struck drum agreeing with the pitched one\". The\nmaster-bus grit the trailers print is a DESK word (fields.js MASTER)\nand a genre cannot say it — the per-chair crunch is the whole of the\nedge a row owns. fx:[\"sweep\"] was probed the same morning (London\n1978, fresh context): units.v0.inserts carries insert_filtersweep\n{rateBars 4, lo 400, hi 5200} inline — a real four-bar rise, today.\n\nTHE NEO-ROMANTIC REVIVAL — Los Angeles 1979, AND THE MAP CHOSE THE\nCITY. The idiom's year zero is March 1977, a symphony orchestra\nreading the main-title fanfare to picture at Anvil Studios, Denham,\nwhen every studio head believed the orchestra was landfill — and\nDenham was this row's first label, REFUSED 2026-09-01 by G10: the\nvillage measures 4.0 CSS px from Bray at the Britain arc, half the\n8.5 floor, and sibling Thames Valley villages are exactly what\nWITHIN cannot relate (the Reading ruling, replayed — atlas.js keeps\nthe refusal in its PLACES ledger). So the dot takes the revival's\nAmerican wing: the Fox scoring stage, Los Angeles, where the OTHER\nspace fanfare of the revival was recorded through the autumn of\n1979 — same idiom, same studio system, twenty months on, and a\nyear Los Angeles had free. The label is a STUDIO CITY, not a film\n— the naming law above. IONIAN, not\nlydian, and it is a decision with an argument: goldenagescore (Los Angeles\n1938) already holds lydian's raised-fourth shimmer, and the 1977\nrevival's main titles cadence in plain major — what makes it 1977\nrather than 1938 is the MARCH under it, which the parents say at 0.2.\nThe timpani chair is London 1970's own trick verbatim (spread(0),\nfill(4), rotate(3) — the monotone harm() moves to the bar's root),\ncited because CHECK THE PARENT FIRST is how this row got written.\n\na picture score — the crawl is the singer\n\nthe roll into the landing — newsfanfare's fill bar, verbatim",
+  "instrumental": true,
+  "label": "Los Angeles 1979",
+  "voices": 4,
+  "bars": 8,
+  "near": "goldenagescore",
+  "plan": "arc",
+  "bpm": 116,
+  "parents": {
+    "goldenagescore": 0.45,
+    "romantic": 0.25,
+    "march": 0.2,
+    "newsfanfare": 0.1
+  },
+  "wants": [
+    "the leitmotif book, one tune per character"
+  ],
+  "cannot": [
+    "the modulation up a third at the cut — the box holds one tonic per record, and the revival's signature key-lift is an edit-room fact before it is a harmonic one"
+  ],
+  "instr": [
+    "trumpet",
+    "french_horns",
+    "strings",
+    "timpani"
+  ],
+  "part": [
+    "lead",
+    "counter",
+    "riff",
+    "riff"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      0,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "drumkit": "room",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "l": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "x": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    3,
+    4,
+    0,
+    5,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0
+    },
+    {
+      "d": 3
+    },
+    {
+      "d": 4
+    },
+    {
+      "d": 0
+    },
+    {
+      "d": 5
+    },
+    {
+      "d": 3
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 0
+    }
+  ],
+  "artic": "staccato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1,
+    "atk": 0.01,
+    "rel": 0.7,
+    "gain": 0.27,
+    "verb": 0.38
+  },
+  "words": [
+    "the trumpets, the fanfare over the crawl",
+    "the horns, the answer from the throne room",
+    "the strings, racing between the hits",
+    "the timpani, the empire underneath"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(4), rotate(3)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[fill(2), transpose(-3)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[spread(0.5), fill(1)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[spread(0), fill(4), rotate(3)]"
+    }
+  }
+}

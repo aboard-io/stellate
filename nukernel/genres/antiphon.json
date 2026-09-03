@@ -1,0 +1,63 @@
+{
+  "note": "HILDEGARD — Bingen 1151. The Ordo Virtutum, the earliest\nmorality play with surviving music, finished alongside Scivias\naround 1151 at her Rupertsberg foundation: seventy-odd melodies\nunder one name, ranging over two octaves where the psalm tones\nhold to a fifth — chant by a composer, not a committee, which is\nthe whole reason the row is a person. Fills the 1100s, which\nheld nothing between Winchester and Notre-Dame.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nHildegard of Bingen, SYMPHONIA ARMONIE CELESTIUM REVELATIONUM (Rupertsberg,\nc. 1151; Dendermonde, St-Pieters & Paulusabdij Cod. 9). Her D-final\nantiphons — \"O virtus Sapientiae\", \"O quam mirabilis\" — are mode I with the\nambitus stretched, not a different mode; the row already said so and then\nsang the flat sixth.\n\nWHO SINGS: soprano leaps where plainchant steps — the\nwide compass is the signature, so the mouth is the\ndream choir's soprano held to one voice, straight tone.\n\nThe leaps ARE the development: transpose wide, return, fill.",
+  "label": "Bingen 1151",
+  "voices": 1,
+  "bars": 8,
+  "near": "gregorian",
+  "plan": "arc",
+  "bpm": 70,
+  "parents": {
+    "gregorian": 0.6,
+    "sequence": 0.3
+  },
+  "wants": [
+    "the symphonia's own instruments — her letters defend them against the prelates who silenced her convent"
+  ],
+  "instr": "ahh_choir",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "artic": "legato",
+  "maxHold": 5,
+  "orn": {
+    "grace": 0.2
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.8,
+    "atk": 0.04,
+    "rel": 1.8,
+    "gain": 0.24,
+    "verb": 0.6,
+    "mouth": {
+      "$src": "MOUTHS.plainchant"
+    }
+  },
+  "words": [
+    "the antiphon, leaping a fifth where the psalter steps"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => [[], [transpose(4)], [fill(2)], [transpose(-4), fill(2)]][s % 4]"
+  }
+}

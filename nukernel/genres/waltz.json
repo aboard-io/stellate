@@ -1,0 +1,119 @@
+{
+  "note": "=====================================================================\nTHE WALLS-DOWN ROUND, 2026-08-30 (Paul: \"I think we need to deal with\nthose in the engine and make sure we have exemplars of all\" — THOSE\nbeing the five declared walls: cents, triple meter, per-section pace,\nthe non-2:1 octave, timbre-identity). The engine work landed the same\nday in two lanes — the pitch lane (float scales, `period`, cents on\nthe wire to the air) and the time lane (`meter: \"three\"|\"six\"` on an\nanchor row, `paces: {role: word}` dealt per section) — and this block\nis the CATALOG's half of the bargain: one exemplar for every tradition\nthose walls blocked, each at the argument floor the catalog already\nholds (a named record or performance with its place and year, parents\nand wants checked in both directions, a kiwix-verified article, and a\n`cannot` for what STILL cannot be said, because four walls falling is\nnot the same as every wall falling).\n\nWHAT DID NOT FALL, measured here so nobody oversells the round:\n  · TIMBRE. The engine grew no instrument. guoyue stays EMPTY at the\n    foot of the Chinese block, re-argued in place; jingju ships\n    because banshi — its primary fact — is now sayable, while its\n    role registers stay in `cannot` where they were.\n  · FREE TIME. No entry in METERS says \"no bar\". The avaz, the alap\n    and the netori all still take the chant's compromise.\n  · MATERIAL. A raga is still not a scale; the radif's gushehs and\n    the khyal's badhat are phrases, and an anchor still declares an\n    alphabet, not material. Those admissions MOVE (from \"wall\" rows\n    to `cannot` fields) but they do not shrink.\nEvery reversal this round makes is dated at the site of the refusal\nit reverses, quoting what stood there — grep 2026-08-30 in this file\nand each one names this block.\n\nVIENNESE WALTZ — Vienna 1867. \"An der schönen blauen Donau\", Johann\nStrauss II, first performed on the 15th of February 1867 at a concert\nof the Wiener Männergesang-Verein in the Dianabad-Saal — the article\ndates the premiere to the day. The most famous three-four bars ever\nwritten, and for two years this catalog could not count them: the OLD\nWORLD block (2026-08-21) blocked the waltz BY NAME because \"every\npattern, cell and phrase in this file is written on sixteen places\",\nand the salon slot rocked as a barcarolle instead. The time lane\nlanded `meter: \"three\"` on 2026-08-30 and this row is the first\nanchor through the door: twelve-step bars end to end, extracted,\nrendered and pressed on the same rails as everything else.\nTHE AXES: TIME is the identity (the bar IS the genre), and CAST is\nthe trick everyone knows — the tune rides high over an oom-pah-pah\nthat is a bass note and two answered chords. The oom is the bass on\nbeat one; the pah-pah is the string chair below, cut to beats two\nand three by keep(4, 8), which under a declared meter means \"the\nsecond and third beats of a twelve-step bar\" (kernel keep reads the\nphrase's own bar stamp — the mod-16 debt paid the same day).\n\nthe Männergesang-Verein sang the premiere; the waltz the world kept is the orchestra's\n\n160 is compose.js's own ceiling and a Viennese ballroom ran hotter\n(~60 bars a minute is 180); the ceiling is the sayable tempo,\ngypsyjazz's and dnb's own deal, taken with the same open eyes.\n\nLINEAGE: `classical` (Vienna 1785) is the harmonic language and the\ncity — the waltz's own parents, the ländler and the German dance\nSchubert wrote by the hundred, have no anchors and are owed by name\nrather than conscripted.\n\nthe oom: the bass says beat one alone, twelve steps a bar",
+  "instrumental": true,
+  "label": "Vienna 1867",
+  "voices": 3,
+  "bars": 8,
+  "near": "barcarolle",
+  "meter": "three",
+  "plan": "song",
+  "bpm": 160,
+  "parents": {
+    "classical": 0.4
+  },
+  "wants": [
+    "the ländler",
+    "the schubert dance floor (vienna 1820s)"
+  ],
+  "cannot": [
+    "the atempause — a Viennese second beat arrives EARLY, and that anticipation is half of what 'Viennese' means; the groove tables are sixteen-slot vectors and stand down under a declared meter (the time lane's own law), so this bar is even where the ballroom's leans",
+    "the rubato of the big tunes — Strauss under a conductor breathes bar to bar and one record has one bpm; the pace words move sections, not phrases",
+    "the orchestra's size — thirty players are three chairs and a bass here, the firqa loss in a ballroom"
+  ],
+  "instr": [
+    "violin",
+    "strings",
+    "cello"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "kit": {},
+  "harmony": "cycle",
+  "bassStyle": "pedal",
+  "bassGrid": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "roots": [
+    0,
+    0,
+    4,
+    4,
+    4,
+    4,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "anchor": 2,
+  "orn": {
+    "grace": 0.25
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.8,
+    "atk": 0.03,
+    "rel": 1.4,
+    "gain": 0.25,
+    "verb": 0.5
+  },
+  "words": [
+    "the tune, riding high over the bar",
+    "the pah-pah — beats two and three, answered",
+    "the cellos, singing the countermelody"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n          ? [[], [fill(2)], [transpose(2)], [fill(2), rotate(3)]][s % 4]\n        : v === 1 ? [keep(4, 8)]\n        : [transpose(-5), drop(4)])"
+  }
+}

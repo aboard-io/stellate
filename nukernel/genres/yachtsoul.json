@@ -1,0 +1,169 @@
+{
+  "note": "YACHT SOUL [Boz Scaggs]. Isley's Rhodes-and-groove chassis, funk's\nsixteenth-note hand under it in place of a slow shuffle, and Motown's\nsession polish over both — \"Lowdown\"'s whole argument in three\nborrowed halves. Quiet storm, the smoother FM-radio format this style\nfed directly, is the missing rung.\n\n\"quiet storm\" PAID 2026-08-29 (Los Angeles 1975): one year older\nthan this label and the same after-hours radio — the weight\ncomes off detroitsoul, whose share was Smokey's record all along.",
+  "label": "San Francisco 1976",
+  "bars": 8,
+  "near": "psychsoul",
+  "plan": "song",
+  "bpm": 104,
+  "parents": {
+    "psychsoul": 0.35,
+    "quietstorm": 0.25,
+    "funk": 0.2,
+    "detroitsoul": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "rhodes_ep",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "prog": {
+    "$src": "PROGS.soul7"
+  },
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "sixteenths",
+  "pipes": [
+    {
+      "id": "strum",
+      "spread": 0.05
+    }
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 1,
+    "atk": 0.008,
+    "rel": 0.7,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the Rhodes, comping the changes",
+    "the guitar, the hook, up top"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(7)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "note": "REGGAETON [reggae]. The one-drop's Caribbean cousin, played with a\nhip-hop rhythm section: the DEMBOW — a two-kick, double-snare figure —\nreplaces the skank as the genre's absolute gate, sitting on top of a\nminor two-chord vamp that never resolves anywhere, reggae's own\nno-mode spareness kept exactly.\n\na dembow that never stops\n\nLINEAGE: the one-drop skank's Caribbean root is reggae's; the\nchopped, sample-built track underneath is boom bap's method aimed\nat a different vocabulary; the sub-bass slide under it is trap's.\nDancehall — the actual Jamaican digital-riddim scene the dembow\nitself came out of — is the missing rung between all three.\nLINEAGE, REPAIRED 2026-08-26. `reggae: 0.4` with\n`wants: [\"dancehall\"]` beside it was Kingston 1969 standing in for\nKingston 1985 because 1985 was not in the catalog — the same shape\nof substitution as worldfolk-for-bhangra, one island over. Dancehall\nis built and takes the weight; reggae reaches this record through\nit. What remains unbuilt is the Panamanian reggae en español that\nput Spanish on the riddims in the first place.\n\nthe dembow's top is a synth STAB — a poly chord hit hard and let go —\nwith a guitar line over it. A choir patch holding the pad made every\nSan Juan record breathe like a church.\n\nTHE DEMBOW, written once: kick doubled at 1 and the a-of-2, snare\ndoubled at the and-of-2 and 4 — \"boom-ch-boom-chick\" — the absolute\ngrid every reggaeton record sits on regardless of what plays over it.",
+  "label": "San Juan 2004",
+  "near": "reggae",
+  "plan": "dance",
+  "bpm": 94,
+  "parents": {
+    "dancehall": 0.45,
+    "boombap": 0.3,
+    "trap": 0.25
+  },
+  "wants": [
+    "reggae en español"
+  ],
+  "instr": [
+    "polysynth",
+    "clean_guitar"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "lead"
+  ],
+  "roots": [
+    0,
+    0,
+    5,
+    3
+  ],
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 2000,
+    "q": 1.6,
+    "atk": 0.004,
+    "rel": 0.4,
+    "gain": 0.28,
+    "verb": 0.2
+  },
+  "words": [
+    "the vocal hook, on the dembow's own rhythm",
+    "the guitar, answering — the phrase's own gate, untouched"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[only(\"gate\", excerpt(0, 8))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

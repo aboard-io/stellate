@@ -1,0 +1,96 @@
+{
+  "note": "GYPSY JAZZ — Paris 1934. The Quintette du Hot Club de France,\nfirst Ultraphone session, December 1934: Django Reinhardt and\nStéphane Grappelli over three guitars and Louis Vola's bass —\nthe article's own dating is \"c. 1934, Paris\", and the band is\nthe first great EUROPEAN jazz institution: no drums at all, the\nrhythm guitars' la pompe doing the kit's whole job. (Called\njazz manouche at home; Wikipedia files the article under Gypsy\njazz and one music gets one key — the decline at the round's\nheader.)\n\nthe family round's own words: \"people playing acoustic instruments at each other\" — the Paris string quintet\n\n160 is compose.js's own ceiling (bpm: 70..160) and the Quintette\nran hotter; the ceiling is the sayable tempo, dnb's own deal.\n\nLINEAGE: `neworleans` is the hot jazz on the 78s the Quintette\nlearned from — Armstrong by record, an ocean from the source;\nthe other two bloodlines have no anchor and are owed by name:\nthe musette waltz Django played for hire before jazz reached\nhim, and the Romani string-band tradition the family carried.\n2026-08-30, the folk-floor round, both debts REVISITED and\nneither closed by an edge — the honest outcome twice over.\n\"bal-musette\" counts in three and stays behind the catalog's\ntriple-meter wall (the round header's first decline; `chanson`\nnow shares the debt under the matched spelling).\n...AND PAID THE SAME DAY, hours later (the walls-down round):\nthe time lane landed `meter: \"three\"` and `musette` is Paris\n1880 at the foot of this file — fifty-four years upstream of\nthis label, the dance floor Django played for hire before jazz\nreached him, exactly as the line above always said. The Romani\nstring band has its row at last — `taraf`, Clejani 1986 — but\nan edge cannot point at a record fifty-two years this one's\njunior (the WHEN law), so the want narrows to the artifact\nstill missing: the lăutari 78s Django's family would actually\nhave heard.\n\"the lautari 78s\" PAID 2026-08-30 (`lautari`, Bucharest 1906):\nDjango's people came through exactly this guild's repertory,\nand the Quintette's violin chair is its direct line.",
+  "instrumental": true,
+  "label": "Paris 1934",
+  "voices": 3,
+  "bars": 8,
+  "near": "swing",
+  "plan": "song",
+  "bpm": 160,
+  "parents": {
+    "neworleans": 0.4,
+    "musette": 0.25,
+    "lautari": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "jazz_guitar",
+    "violin",
+    "jazz_guitar"
+  ],
+  "swing": 0.3,
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": {
+      "$v": true
+    }
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "kit": {},
+  "harmony": "cycle",
+  "roots": [
+    0,
+    0,
+    3,
+    4,
+    0,
+    0,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.melodic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "walk",
+  "orn": {
+    "grace": 0.35,
+    "approach": 0.3
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 1,
+    "atk": 0.005,
+    "rel": 0.4,
+    "gain": 0.27,
+    "verb": 0.28
+  },
+  "words": [
+    "the solo guitar, runs like a card trick",
+    "the violin, answering an octave up",
+    "la pompe — the rhythm guitar is the drummer"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [rotate(3)], [transpose(2)]][s % 4]\n                    : v === 1 ? [[drop(2)], [drop(2), transpose(5)]][s % 2]\n                    : [keep(0, 4, 8, 12)])"
+  }
+}

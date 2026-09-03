@@ -1,0 +1,131 @@
+{
+  "note": "SYNTH POP [synthsoul]. Eurythmics is a two-chord vamp with two lines;\nthis is the FOUR-chord aeolian anthem (i–VI–III–VII, the loop under\nhalf the eighties) with a STAB where the second sequence was, a huge\ngated snare and — the tell — no hats at all.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nDepeche Mode, \"Just Can't Get Enough\" (Mute, Basildon, September 1981):\nevery sound on the record including the bass is a synthesiser.\n\nnamed \"Basildon 1981\" — early Depeche Mode: all-synth staccato stabs\non the CR-era box, the aeolian anthem loop.\n\nLINEAGE: new wave with the guitars traded for sequencers and\ndisco's four still on the floor; the whole all-synth AESTHETIC is\nKraftwerk via Moroder, and one of those two ghosts is now an anchor.\nDisco loses the larger share because half of what it was priced for\nwas the all-synth chassis, which was never disco's — what stays\ndisco's is the kick on every quarter, which Düsseldorf never played.\nNote Kraftwerk reaches Basildon twice: 0.25 direct, plus 0.45 x 0.1\nthrough new wave.\n\"eurodisco\" PAID 2026-08-29 (Munich 1977): the sequencer carrying\nthe whole rhythm section is I Feel Love's patent, and Basildon\nlicensed it knowingly — the weight comes off disco, which was\ncarrying Munich's share under New York's name.\n\nthe CR-era anthem box, like its neighbour",
+  "bassInstr": "bass_lead",
+  "label": "Basildon 1981",
+  "near": "synthsoul",
+  "plan": "song",
+  "bpm": 118,
+  "parents": {
+    "newwave": 0.4,
+    "eurodisco": 0.2,
+    "disco": 0.2,
+    "dusseldorfschool": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "polysynth",
+    "saw_wave"
+  ],
+  "drumkit": "cr78",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "lead"
+  ],
+  "roots": [
+    0,
+    5,
+    2,
+    6
+  ],
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 2,
+    "atk": 0.003,
+    "rel": 0.4,
+    "gain": 0.28,
+    "verb": 0.26
+  },
+  "words": [
+    "the stab, on the tune's rhythm",
+    "the hook, re-pitched every other bar"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 1 && s % 2 ? [only(\"deg\", rotate(4))] : [])"
+  },
+  "fx": [
+    "chorus"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "note": "SPEM IN ALIUM — Tallis, forty voices in eight choirs, and the thing it is\nfamous for is not the counterpoint, it is the ARCHITECTURE: the entries\nsweep around the room, choir by choir, and the piece is the wave rather\nthan any line in it. That is `entry: v => v` with eight voices and eight\nbars, which is the fugue's own mechanism turned up until it stops being\nimitation and becomes weather. Forty voices would be forty sampled choirs\nand a dead browser; eight is one per choir, which is the structural unit\nanyway. Harmony is emergent — nobody wrote the chords down, they are what\nhappens when eight transpositions of one line arrive on top of each other.\n\nnamed \"London 1570\" — Tallis at the Chapel Royal; the forty-part motet\npremiered in the Arundel/Nonsuch orbit around 1570.\n\nLINEAGE: Tudor polyphony is imitative polyphony at architectural\nscale over chant-shaped lines.\nAND THE INVERSION IS OVER (2026-09-02, the catalogue round). This\nsaid `counterpoint: 0.55` and then apologised for it — \"the label\nyears invert — Fux's 1725 textbook CODIFIES the Palestrina-era\npractice Tallis worked in\" — which is a row admitting it named the\nwrong ancestor and asking to be forgiven. *Spem in alium* (Tallis,\nthe Nonsuch/Arundel orbit, c.1570) is Josquin's imitative technique\nbuilt up into architecture, and Josquin IS in this table:\n`francoflemish`, Venice 1502, the Petrucci presses. That row is\nsixty-eight years OLDER than this one and is the practice itself,\nwhere Fux's *Gradus ad Parnassum* (Vienna 1725) is a textbook\ndescribing it a century and a half later. The claim does not change;\nit now points at something that had already happened.\n\nWHO SINGS: forty parts of countertenor, one vowel to the phrase",
+  "label": "London 1570",
+  "rate": 0.5,
+  "bars": 8,
+  "voices": 8,
+  "plan": "arc",
+  "bpm": 80,
+  "parents": {
+    "francoflemish": 0.55,
+    "gregorian": 0.45
+  },
+  "wants": [],
+  "instr": "ahh_choir",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "formula",
+    "src": "v => (v % 4) - 1"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "emergent",
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.8,
+    "atk": 0.07,
+    "rel": 2.6,
+    "gain": 0.17,
+    "verb": 0.85,
+    "mouth": {
+      "$src": "MOUTHS.motet"
+    }
+  },
+  "words": [
+    "choir 1",
+    "choir 2",
+    "choir 3",
+    "choir 4",
+    "choir 5",
+    "choir 6",
+    "choir 7",
+    "choir 8"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => [transpose([0, 4, 2, -3, 3, -2, 5, 1][v % 8]),\n                       ...(s % 2 ? [rotate(2)] : [])]"
+  }
+}

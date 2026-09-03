@@ -1,0 +1,90 @@
+{
+  "note": "THE LAUTARI TARAF — Clejani 1986. The village string band of\nWallachia, taped in Clejani by Bucharest's own ethnomusicologists\nand issued on Ocora in 1988 — the musicians the world met four\nyears later as Taraf de Haidouks. Fiddle over cimbalom over bass,\nthe tempo pushing all night. PAYS THE TRADITION, NOT THE EDGE:\ngypsyjazz (Paris 1934) wants the Romani string band Django came\nfrom, and this row is that band — but its honest dated record\npostdates the Quintette by half a century, so the edge cannot\nclose (the WHEN law), and gypsyjazz's want is REWORDED at its row\nto name the pre-Django artifact still owed: the lautari 78s of the\n1900s. A row and an honest ledger beat a backdated parent.\n\nBOTH WANTS PAID 2026-08-30: `lautari` (Bucharest 1906) is the\nguild this village band is the country cousin of, and `doina`\n(Maramureș 1912) the unmetred line its slow sets open with.",
+  "label": "Clejani 1986",
+  "voices": 3,
+  "bars": 8,
+  "near": "balkanbrass",
+  "plan": "song",
+  "bpm": 138,
+  "parents": {
+    "lautari": 0.35,
+    "doina": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "violin",
+    "dulcimer",
+    "contrabass"
+  ],
+  "swing": 0.1,
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "riff"
+  ],
+  "kit": {},
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.hijaz"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "orn": {
+    "grace": 0.35,
+    "pass": 0.2
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2700,
+    "q": 1,
+    "atk": 0.005,
+    "rel": 0.3,
+    "gain": 0.27,
+    "verb": 0.26
+  },
+  "words": [
+    "the fiddle, ornamenting faster than the ear can count",
+    "the cimbalom, hammering the harmony into sixteenths",
+    "the bass, two strings and a wedding to carry"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[fill(1), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[keep(0, 4, 8, 12), drop(2)]"
+    }
+  }
+}

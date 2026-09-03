@@ -1,0 +1,224 @@
+{
+  "note": "---- SOUTH ASIA ----------------------------------------------------\nThree anchors into a region the catalog held ONE of, and that one was\na 2022 record. WORLD.md §2 called filmi \"the closest\" thing in the\nwhole program — \"shruti is 14c max, inside the JND; the metre is\nmostly 4/4 or a 6/8 keherwa\" — and it was right: the wall for South\nAsia was never tuning, it was the percussion kit and the fact that\nnobody had said `sitar` out loud.\n\nWHAT IS NOT HERE AND WHY, so nobody re-derives it: Hindustani and\nCarnatic classical music are Tier 2 because their primary fact is a\nDRONE plus a rāga that is not a scale — a rāga is a set of phrases,\nascending and descending forms, and one note you lean on, and this\nbox has an alphabet and a mode. Ghazal is Tier 2 under the\nprimary-fact rule: its composition IS the setting of a couplet's\nprosody, which is WORLD.md §5.7's wall. Both are named in TIER 2\nabove with those reasons and are not argued again.\n\nFILMI — Mumbai 1960. The Hindi film song: a playback singer over an\norchestra that has a violin section, a flute, a harmonium, a sitar and\na tabla in it at once, singing a melody built on a rāga's material in\na form built by a music director for a three-minute scene.\nTHE CITY IS SPELLED MUMBAI THOUGH THE RECORD SAYS 1960, when it was\nBombay — the Kinshasa precedent again, and for the same gate.\nTHE YEAR is the Shankar-Jaikishan and Naushad peak and \"Mughal-e-Azam\";\nthe golden age is roughly 1950-70 and 1960 is its centre with real\nrecords either side of it.\nTHE CAST IS UNUSUALLY HONEST FOR A NON-WESTERN ANCHOR AND THAT IS THE\nPOINT. `sitar` is a real licensed id with a parent window of [48,88] —\nthe seventh this round unlocks by name — and a filmi orchestra\ngenuinely has a sitar in it. `reed_organ` IS a harmonium (six zones,\nevery file on disk, confirmed at genres.js:5713). `strings` is a\nWestern string section and a filmi orchestra has one. Nothing here is\npretending.\nWHAT IS: the TABLA. There is no hand drum among the twelve extracted\nkit WAVs, so keherwa's eight beats are voiced across the kick, the rim\nand the toms, and the loss is the whole bol language — a tabla player\nsays NA, TIN, GE, DHA and the difference between them is timbre, not\nlevel. That is in `cannot` and it is not a small admission.\n\nLINEAGE: a ROOT under protest, and the protest is the larger half.\nThe film song's parents are the Hindustani khayal and thumri, the\nParsi theatre song and the regional folk repertories, and none of\nthem can be an anchor under this round's walls. `romantic` (Vienna\n1876) is named at a real weight for the ORCHESTRA — the string\nwriting in a Naushad arrangement is nineteenth-century European and\nis not a resemblance, it is what the arrangers were trained on.\n\"khayal\" EXAMINED 2026-08-30 (the walls-down round): `khyal`\nships at last — but as Mumbai 1965, five years this label's\nJUNIOR, and an edge cannot point at a record younger than its\nchild (the maringa rule). The want stays on the books, narrowed\nin spirit to the artifact still missing: the pre-1960 khayal 78s\nthe film composers actually grew up on.\n\nKEHERWA, VOICED ACROSS FOUR LANES. Eight beats — DHA GE NA TI NA KA\nDHI NA — with the bass stroke of the bāyāñ on the kick, the ringing\nNA on the rim, and the closed strokes on the hat. It is written\ntwice in the sixteen-step bar, because a keherwa cycle is eight\nbeats and this bar is sixteen steps of two.\n\nWHO SINGS: high, light, forward and nearly straight — the\nplayback singer's sound, and the row that fits it is the\nBulgarian one for the third time in this round, because\n\"pressed rather than floated, almost no air\" is a thing\nseveral traditions do and only one of them is European.",
+  "label": "Mumbai 1960",
+  "voices": 4,
+  "bars": 8,
+  "near": "crooner",
+  "plan": "song",
+  "bpm": 92,
+  "parents": {
+    "romantic": 0.3
+  },
+  "wants": [
+    "khayal",
+    "thumri",
+    "parsi theatre song",
+    "bhajan"
+  ],
+  "cannot": [
+    "the tabla's bols — na, tin, ge and dha differ in TIMBRE and this kit has twelve fixed samples and a velocity",
+    "meend, the slide between the notes of a phrase, which is the ornament WORLD.md §5.3 says this box has no channel for"
+  ],
+  "instr": [
+    "solo_vox",
+    "sitar",
+    "strings",
+    "reed_organ"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      },
+      {
+        "at": 2,
+        "then": -1
+      },
+      {
+        "at": 3,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "formula",
+    "src": "v => (v >= 2 ? \"pad\" : \"line\")"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad",
+    "pad"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4,
+    0,
+    5,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "orn": {
+    "grace": 0.5,
+    "approach": 0.35
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      9,
+      0,
+      5,
+      0,
+      7,
+      0,
+      0,
+      4,
+      9,
+      0,
+      5,
+      0,
+      7,
+      0,
+      0,
+      5
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.01,
+    "rel": 1.1,
+    "gain": 0.26,
+    "verb": 0.5,
+    "mouth": {
+      "$src": "MOUTHS.bulgar"
+    }
+  },
+  "words": [
+    "the playback singer",
+    "the sitar, answering the line",
+    "the strings, underneath",
+    "the harmonium, holding the drone"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(8), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      },
+      {
+        "at": 3,
+        "then": {
+          "$src": "[drop(8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

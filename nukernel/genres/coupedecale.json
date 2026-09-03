@@ -1,0 +1,186 @@
+{
+  "note": "COUPÉ-DÉCALÉ — Abidjan 2003. Ivorian club music made in the Paris\ndiaspora and sent home: a programmed floor, a shouted ad-lib culture,\na synth stab, and the atalaku's percussion breaks lifted straight off\nKinshasa's ndombolo. It is the newest African anchor in the catalog and\nthe only West African one after 2001.\nTHE YEAR is the Jet Set's first records and the coining of the name in\n2002-03. Abidjan is the dot because that is where it landed and became\na national music, and the comment is where the Paris half belongs.",
+  "label": "Abidjan 2003",
+  "voices": 2,
+  "near": "amapiano",
+  "plan": "dance",
+  "bpm": 122,
+  "parents": {
+    "soukous": 0.45,
+    "house": 0.3,
+    "dancehall": 0.25
+  },
+  "wants": [
+    "ndombolo",
+    "zouglou"
+  ],
+  "instr": [
+    "polysynth",
+    "clean_guitar"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "counter"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 3100,
+    "q": 1.6,
+    "atk": 0.003,
+    "rel": 0.25,
+    "gain": 0.28,
+    "verb": 0.2
+  },
+  "words": [
+    "the synth stab",
+    "the guitar, ndombolo's own figure"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(4), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

@@ -1,0 +1,236 @@
+{
+  "note": "SWING — Kansas City 1938, and it pays a debt TWO anchors have been\ncarrying: `jazz` (New York 1945) declares `wants: [\"swing\", ...]` and\nits own comment admits it is bebop wearing the wrong year, and\n`highlife` (Accra 1957) declares `wants: [..., \"swing\", ...]` because\na West African dance band is a swing band with a clave under it.\nTHE YEAR is Count Basie's Decca sides and the Kansas City riff-band\nstyle at its peak: a rhythm section that floats rather than chugs, two\nsections of horns trading riffs, and a soloist over both.\nTHE CITY IS KANSAS CITY, not New York, and that is a claim: the swing\nthe catalog needs upstream of bebop is the RIFF band — head\narrangements built out of repeated two-bar figures, which is what\nBasie's band did and what a big Fletcher Henderson chart does not.\nCharlie Parker learned to play in that town, which is the shortest\nargument for the parent edge.\n\nLINEAGE, AND THE FOURTEEN-YEAR INVERSION IS GONE (2026-09-02, the\ncatalogue round). This declared `blues: 0.35` and spent six lines\narguing that naming a 1952 row as a 1938 row's parent was allowed\nbecause \"the anchor's own entry says its year is a Chess date on a\nform that is decades older\". The form decades older is IN THE TABLE.\nA Kansas City riff band is blues choruses at a dance tempo, and the\nblues that was in that town in 1938 was the boogie left hand — Pine\nTop Smith, \"Pine Top's Boogie Woogie\", Vocalion, Chicago, 29\nDecember 1928, and Pete Johnson and Big Joe Turner working the KC\nclubs the same decade. `boogiewoogie` (Chicago 1928) is ten years\nBEFORE this row and is what Basie's own left hand plays; `blues`\n(Chicago 1952) is fourteen years after it. The share is unchanged\nand now points backwards in time, which is the only direction a\nparent edge is allowed to point.\n\"new orleans jazz\" PAID 2026-08-29 (New Orleans 1923): a Basie\nhead is the Oliver ensemble chorus written down and riffed, and\nthe rhythm section's two-beat ancestry is that band's directly.\nPAID 2026-08-29, the debts round: \"territory bands\" is\n`territoryband` (Kansas City 1932) — Moten's book became Basie's\nand Basie's became this row's.\n\nTHE RIDE IS THE RECORD. Spang-a-lang on `r`, the hi-hat pedal on 2\nand 4, and the kick barely there at all — the Kansas City rhythm\nsection's whole innovation is that the bass drum stops marking the\nbeat and the cymbal takes it over.",
+  "label": "Kansas City 1938",
+  "voices": 3,
+  "bars": 8,
+  "near": "jazz",
+  "plan": "song",
+  "bpm": 148,
+  "parents": {
+    "boogiewoogie": 0.35,
+    "neworleans": 0.25,
+    "tinpanalley": 0.15,
+    "ragtime": 0.15,
+    "territoryband": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "tenor_sax",
+    "brass_section",
+    "jazz_guitar"
+  ],
+  "drumkit": "jazz",
+  "swing": 0.33,
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "counter"
+  ],
+  "roots": [
+    0,
+    3,
+    0,
+    0,
+    3,
+    3,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 2,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1
+    ],
+    "f": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      8,
+      0,
+      0,
+      5,
+      7,
+      0,
+      0,
+      5,
+      8,
+      0,
+      0,
+      5,
+      7,
+      0,
+      0,
+      6
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2800,
+    "q": 1,
+    "atk": 0.008,
+    "rel": 0.6,
+    "gain": 0.27,
+    "verb": 0.34
+  },
+  "words": [
+    "the tenor, the solo",
+    "the brass, riffing behind it",
+    "the guitar, four to the bar"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"acc\", rotate(4)), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[split(2), drop(1)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

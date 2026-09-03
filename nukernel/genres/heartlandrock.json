@@ -1,0 +1,182 @@
+{
+  "note": "HEARTLAND ROCK — Asbury Park 1975. Bruce Springsteen, BORN TO RUN,\ntracked at 914 Sound Studios in Blauvelt and the Record Plant in New\nYork between January 1974 and July 1975, released 25 August 1975. THE\nLABEL NAMES THE JERSEY SHORE AND NOT THE DESK, which is `grunge`'s\nruling word for word — Nevermind was cut at Sound City in Van Nuys and\nthat row says Seattle — and the E Street Band is the shore bar circuit's\nband, whose first album is titled GREETINGS FROM ASBURY PARK, N.J.\n\nTHE PARENTS ARE THE ARTICLE'S OWN SENTENCE: \"most strongly influenced by\nAmerican country, folk, 1960s garage rock, the Rolling Stones, Bob Dylan,\nand folk rock acts such as … the Byrds\" — `folkrock` (Los Angeles 1965)\nand `garagerock` (Portland 1963) named outright — plus `girlgroup` (New\nYork 1960), because Born to Run is an avowed Spector record and this\ntable keeps that bench there, and `detroitsoul` (Detroit 1965) for the\narticle's own line-up, \"drums, keyboards and occasional horn section\ninstruments like a saxophone\", which is Bittan and Clemons.\n\nTHE HARMONY IS FLAT AND THE ROW SAYS SO. Over 7,432 songs nothing\nexceeds 3.6x lift; this label is harmonically a diluted folk rock,\nsitting between it and country rock and owning no degree outright. What\nit does own is STASIS PLUS THE FLAT SEVENTH, and it shows up in the\nchorus: `I I I I` at 3.46x on 292 occurrences, `IV IV IV IV` at 4.69x,\n`V IV I bVII` at 4.45x. So the cycle is four bars of I, two of IV and two\nof bVII — the two highest-SUPPORT facts rather than the two highest-lift\nones. Degree 6 is a root, so mixolydian is earned; degree 4 is excluded\non `aor`'s ruling, a minor v being wrong under an 83.6%-major label.\n(One correction is recorded here because it nearly shipped: a first pass\nreported a bII lean on this label. It was an artifact — the census's\nchord parser reads `Fsus4` as F-sharp — and there is no Neapolitan in\nthis music. The row does not have one.)\n\nTHE NUMBERS THAT ARE MEASURED: bpm 120 is the median of 102 corpus files\n(Springsteen 39, Petty 35, Seger 12, Mellencamp 11), the tightest spread\nof the whole census; 98.0% of them are 4/4, the highest reading in it;\nmaxHold 3 comes off a p90 hold of 5.13 sixteenths over 94 files — the\nshortest in this family, which is the shouted, syllable-dense vocal, and\nit is the measured difference between a chime and a shout.\n\nTHE SAXOPHONE IS A SAMPLE AND THAT IS THE EXCEPTION, STATED. Two of the\nthree chairs are modelled (`crunch_guitar` is a Telecaster into a cranked\namp, not distortion; `yamaha_grand_piano` is Roy Bittan, and Born to Run\nis a piano record before it is a guitar record). The engine has no wind\nmodel, the article names the saxophone as the genre's own instrument, and\na third guitar would erase the E Street Band — so `tenor_sax` is seated\nas a recording on purpose. `verb: .38` is the highest in this batch\nbecause the wall of sound IS the reverb, which is where the `girlgroup`\nparent is audible or nowhere.\n\nAND IT IS A LEAF: no row later than 1975 names this music in a want or a\ncomment. Nothing downstream is repointed.",
+  "label": "Asbury Park 1975",
+  "near": "rock",
+  "plan": "song",
+  "bpm": 120,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "folkrock": 0.35,
+    "girlgroup": 0.25,
+    "garagerock": 0.2,
+    "detroitsoul": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "crunch_guitar",
+    "yamaha_grand_piano",
+    "tenor_sax"
+  ],
+  "bassInstr": "finger_bass",
+  "drumkit": "power",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    6,
+    6
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "diatonic": true,
+  "artic": "normal",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2200,
+    "q": 1.2,
+    "atk": 0.005,
+    "rel": 0.8,
+    "gain": 0.28,
+    "verb": 0.38
+  },
+  "words": [
+    "the telecaster, one chord held open",
+    "the piano, the whole arrangement",
+    "the tenor, entering for the last chorus"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(2)]"
+    }
+  }
+}

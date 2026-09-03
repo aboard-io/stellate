@@ -1,0 +1,144 @@
+{
+  "note": "THE CARPENTER SCORE — Los Angeles 1978. HALLOWEEN, scored by the\ndirector in days at Sound Arts on rented synthesizers: the piano\nostinato, the held stinger, the fog pad. PAYS TWO STANDING DEBTS\nBY NAME — deathrock's \"the horror film score\" and synthwave's\n\"horrorsynth's film scores\" — which makes this the round's most\nstructural row: Pomona 1982 and Paris 2010 both named it before it\nexisted. The lineage is Berlin running through a grindhouse:\nberlinschool's sequenced pulse, suspensescore's suspense grammar,\nkrautrock's refusal to swing.\n\nthe scream is on the picture, not the score\n\n\"the hammer horror scores (james bernard's dracula)\" PAID\n2026-08-30 (Bray 1958) — the want named the record and the\nledger round landed it; the edge is smaller than suspensescore's\nbecause Carpenter's economy is Herrmann's and only the dread\nis Bernard's.",
+  "instrumental": true,
+  "label": "Los Angeles 1978",
+  "voices": 3,
+  "bars": 8,
+  "near": "berlinschool",
+  "plan": "arc",
+  "bpm": 136,
+  "parents": {
+    "berlinschool": 0.35,
+    "suspensescore": 0.25,
+    "krautrock": 0.15,
+    "horrorscore": 0.1
+  },
+  "wants": [],
+  "cannot": [
+    "the 5/4 — the Halloween ostinato counts ten quavers to the bar and this box counts sixteen; the figure below is the tattoo squared off, and the difference is audible to anyone who knows the picture (the triple-meter wall's asymmetric cousin)"
+  ],
+  "instr": [
+    "upright_piano",
+    "saw_wave",
+    "warm_pad"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      -1,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "riff",
+    "pad"
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.chromatic"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "pedal",
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1600,
+    "q": 1.3,
+    "atk": 0.005,
+    "rel": 0.7,
+    "gain": 0.25,
+    "verb": 0.4
+  },
+  "words": [
+    "the piano figure, high and cold, never stopping",
+    "the synth bass, the shape in the doorway",
+    "the pad, the street at night holding still"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(1), keep(0, 2, 4, 6, 8, 10, 12, 14)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[spread(0), keep(0, 8), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(9)]"
+    }
+  }
+}

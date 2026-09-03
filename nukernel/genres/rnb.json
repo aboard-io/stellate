@@ -1,0 +1,212 @@
+{
+  "note": "R&B [hiphopsoul]. Jodeci is new jack — swung, triadic, a drum machine\nplaying sixteenths. This is the other nineties: STRAIGHT time and\nEXTENDED chords, Imaj7–iii7–vi7–IVmaj7, a rim on 3, an EP that holds,\nand backing vocals that are a harmonize PIPE, chord-locked sixths.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nBoyz II Men, \"I'll Make Love to You\" (Motown, 1994): a keyboard bass under\na rim shot on three.\n\nnamed \"Philadelphia 1994\" — the straight-time maj7 ballad with a rim\non 3 and stacked thirds is Boyz II Men's Philadelphia.\n\nLINEAGE: Boyz II Men is the doo-wop revival sung with gospel\ntechnique over Motown songcraft, arriving through new jack's door\n(the hiphopsoul share); doo-wop itself is an anchor now and the parent\nthis comment already named is real. What the revival kept is the FORM\n— four voices and the a-cappella tag — and none of the measurable\nsurface (straight time, electronic kit, maj7s), which is why the\ndeclared 0.2 fits at zero and is worth saying out loud. Quiet storm's\nlate-night radio format is still owed.\n\"quiet storm\" PAID 2026-08-29 (Los Angeles 1975): the slow-jam\nhalf of a 90s R&B record is that format's child directly, and\nthe weight comes off detroitsoul and doowop, which were splitting the\nballad claim between them.\n\nTHE MELISMA IS A PERSON. It was cast on `synth_voice`, and the round\nthat sorted that id kept it here on the theory that this was one of the\nseven real vocoder records — it is not. A 1994 Philadelphia ballad is\nthree men and a bass singer round a microphone; the only machine on it\nis the drum machine. The chord chair does not move, and that is the\npoint Paul made about this exact record: a Philadelphia soul record\nwithout its EP is not an improvement, so the EP holds the sevenths\nexactly as before and the voice takes the line chair it already had.\n\nWHO SINGS: one vowel held over many notes — that IS a melisma,\nand it is the one thing the recording of an \"aah\" could fake\nand the one thing the sung word could not",
+  "bassInstr": "bass_lead",
+  "label": "Philadelphia 1994",
+  "near": "hiphopsoul",
+  "plan": "song",
+  "bpm": 72,
+  "parents": {
+    "gospel": 0.3,
+    "hiphopsoul": 0.25,
+    "quietstorm": 0.2,
+    "detroitsoul": 0.15,
+    "doowop": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "legend_ep_2",
+    "solo_vox"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    2,
+    5,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 2,
+      "q": "7"
+    },
+    {
+      "d": 5,
+      "q": "7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    }
+  ],
+  "maxHold": 2,
+  "artic": "legato",
+  "pipes": [
+    {
+      "id": "harmonize",
+      "p": 0.4,
+      "gap": "sixth"
+    }
+  ],
+  "bassGrid": [
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 1,
+    "atk": 0.01,
+    "rel": 0.9,
+    "gain": 0.26,
+    "verb": 0.38,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the EP, holding the sevenths",
+    "the melisma, with its rests"
+  ],
+  "word": {
+    "kind": "const",
+    "n": {
+      "$src": "[]"
+    }
+  }
+}

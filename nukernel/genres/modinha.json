@@ -1,0 +1,85 @@
+{
+  "note": "MODINHA — Lisbon 1775. Domingos Caldas Barbosa, the Rio-born son\nof an Angolan mother, singing his own modinhas to the viola in the\nLisbon salons from about 1775 — the performances are documented in\nthe period's own scandalized letters (Beckford heard him in 1787)\n— and collected in the Viola de Lereno. The sentimental Luso-\nBrazilian salon song: `choro` (Rio 1900) and `fado` (Lisbon 1955)\nhave both wanted it by name since the world round, and it is the\nmelodic half of the pair this block lands with `lundu` below.\n\nLINEAGE: a declared root — the Italian aria the salon imitated\nand the Brazilian song it grew from are named, not claimed.\nAN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue\nround, shift 2).\nThe want \"the italian aria, as lisbon heard it\" IS a row: `operaseria`\n(London 1724), and the transmission has a date and a building.\nTHE ARGUMENT: David Perez's ALESSANDRO NELL'INDIE, on Metastasio, opened the\nOpera do Tejo in Lisbon on 31 March 1755 — three Metastasio opera serias in\nseven months, twenty years before this row's dot. The modinha is described\nin its own literature as a sentimental song of ARIA CANTABILE character\ncarrying fashionable Italian vocal ornamentation; that ornamentation walked\nup the Tagus. 0.45: the other half is the sung lundum, which stays wanted\nand MUST stay wanted — the in-table `lundu` is Lisbon 1798, twenty-three\nyears LATER than this row, so that key can never pay this want.\nBOTH DIRECTIONS CHECKED: `choro` (Rio 1900) and `fado` (Lisbon 1955) already\ndescend from this row; `operaseria` descends from `continuo`, so no cycle.\n`lundu` as a PARENT was weighed and refuted: this row's own comment calls\nthe two the sentimental and the danced halves of one songbook, which makes\nthem siblings, and the lundu is the older African-derived layer besides.\n\nWHO SINGS: bolerista — the sentimental Iberian tenor,\nwhich is this idiom's own descendant singing back.",
+  "label": "Lisbon 1775",
+  "voices": 2,
+  "bars": 8,
+  "near": "fado",
+  "plan": "song",
+  "bpm": 84,
+  "parents": {
+    "operaseria": 0.45
+  },
+  "wants": [
+    "the sung lundum"
+  ],
+  "instr": [
+    "solo_vox",
+    "nylon_string_guitar"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    4,
+    1,
+    4,
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.melodic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 3,
+  "nobass": true,
+  "kit": {},
+  "orn": {
+    "grace": 0.3,
+    "pass": 0.2
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 0.8,
+    "atk": 0.015,
+    "rel": 1.1,
+    "gain": 0.25,
+    "verb": 0.35,
+    "mouth": {
+      "$src": "MOUTHS.bolerista"
+    }
+  },
+  "words": [
+    "the modinha, all appoggiatura",
+    "the viola, arpeggiating under it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [rotate(2)]][s % 3]\n                    : [transpose(-5), fill(2)])"
+  }
+}

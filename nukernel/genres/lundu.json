@@ -1,0 +1,143 @@
+{
+  "note": "LUNDU — Lisbon 1798. The dance-song half of the Caldas Barbosa\npair: his Viola de Lereno (volume one printed at Lisbon, 1798) is\nthe first PUBLICATION carrying lundus under the name — the Afro-\nBrazilian dance-song, syncopated where the modinha sighs, that\n`samba` and `choro` both want and that carried the batuque's\nrhythmic cell into the Brazilian salon. One author, two anchors,\nand that is the argument rather than a duplication: the modinha\nand the lundu are the sentimental and the danced HALVES of the\nsame songbook, and the tradition itself always named them as two.\n\nLINEAGE: a declared root; its Angolan sources are a danced,\ndrummed tradition with no named dated record to anchor.\n\nthe viola's thumb keeps the low pulse, the fingers cut across\nit — said as a hand-drum lane and a shaker lane, the syncope on\nthe p lane's and-of-two that the maxixe and the samba inherit.",
+  "label": "Lisbon 1798",
+  "voices": 2,
+  "bars": 8,
+  "near": "choro",
+  "plan": "song",
+  "bpm": 92,
+  "parents": {},
+  "wants": [
+    "the angolan batuque",
+    "the semba"
+  ],
+  "cannot": [
+    "the dance — a lundu was watched as much as heard, the umbigada at its centre, and a record has no body in it"
+  ],
+  "instr": [
+    "solo_vox",
+    "nylon_string_guitar"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff"
+  ],
+  "roots": [
+    0,
+    0,
+    4,
+    0,
+    3,
+    4,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "swing": 0.15,
+  "artic": "staccato",
+  "maxHold": 2,
+  "nobass": true,
+  "kit": {
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      8,
+      0,
+      0,
+      5,
+      0,
+      7,
+      0,
+      0,
+      8,
+      0,
+      0,
+      5,
+      0,
+      7,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.9,
+    "atk": 0.008,
+    "rel": 0.7,
+    "gain": 0.26,
+    "verb": 0.28,
+    "mouth": {
+      "$src": "MOUTHS.bolerista"
+    }
+  },
+  "words": [
+    "the lundu, teasing",
+    "the viola, thumb and fingers"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(4)], [fill(2)]][s % 3]\n                    : [transpose(-5), keep(0, 3, 6, 8, 11, 14)])"
+  }
+}

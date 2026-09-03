@@ -1,0 +1,98 @@
+{
+  "note": "GAMELAN — Surakarta 1956. Lokananta — \"gamelan from heaven\" —\n\"established on 29 October 1956 at Surakarta\", the first record\nlabel of Indonesia, whose catalog the article calls \"the biggest\ncollection of keroncong and gamelan orchestras recordings\": the\nJavanese court repertory, cut in the city of the courts that keep\nit. WORLD.md §5.4 said to \"say gamelan is out of reach, out loud,\nrather than claim it\", and the four-that-did-not-ship block did —\nbecause `degPitch` hardcoded `12*Math.floor(d/len)` and `foldInto`\nstepped by 12. The pitch lane generalized both on 2026-08-30, and\nMODES.slendro above is the arrival: five unequal steps and a\n12.08-semitone period, the register fold moving by the scale's own\noctave, every other row in this file byte-identical because absent\nis twelve.\nTHE NUMBERS ARE A NAMED MEASUREMENT, not an impression: the\nGadjah Mada tone measurements (Surjodiningrat, Sudarjana & Susanto,\nYogyakarta 1972) of the Yogya and Solo court gamelans, averaged —\n0, 231, 474, 717, 955 cents against a 1208-cent octave. The cannot\nowns what an average is.\nTHE AXES: ALPHABET (the period, at last) and CAST-AS-PROCESS — the\nbalungan in the middle, the panerusan doubling above it, the gong\nmarking the cycle: a sixteen-step gongan IS a bar this grid says\nexactly, the tintal luck one sea west.\n\nbronze; nobody sings the balungan\n\nLINEAGE: a declared ROOT. The court repertory's own ancestors are\nundatable; the DATED artifacts upstream of this label are wants,\nspelled as artifacts: the Bali sides Odeon and Beka cut in 1928,\nand the kebyar explosion of the 1910s they recorded.\n\nthe kotekan fact as operators: v1 fires exactly where v0 does not\n(complement of the gate), which is interlocking said in this\nfile's own vocabulary",
+  "instrumental": true,
+  "label": "Surakarta 1956",
+  "voices": 4,
+  "bars": 8,
+  "near": "gagaku",
+  "plan": "arc",
+  "bpm": 100,
+  "parents": {},
+  "wants": [
+    "the 1928 odeon and beka bali sides",
+    "gong kebyar (denpasar 1915)",
+    "the solonese gendhing repertory"
+  ],
+  "cannot": [
+    "pelog — the OTHER tuning, seven uneven degrees of which five are played; one anchor declares one alphabet and this one is slendro, so half the repertory waits for a second row",
+    "the ombak — paired instruments tuned a few hertz apart so the ensemble shimmers; one sampler chair is one instrument and there is no pair to beat against",
+    "irama — the density system where the panerusan doubles as the beat halves; a pace word moves a section's clock but no operator states the doubling RELATION between chairs",
+    "an average is nobody's gamelan — the 1972 Gadjah Mada means are nine courts' bronze flattened to one row of numbers, and the old refusal's sentence ('no two ensembles are tuned alike') survives inside this cannot as the reason the numbers are a spelling, not a tuning",
+    "the bronze itself — vibraphone, glockenspiel and marimba are struck bars, family-right and voice-wrong; there is no saron, no gender, no bonang in the registry (the timbre wall, standing)"
+  ],
+  "instr": [
+    "vibraphone",
+    "glockenspiel",
+    "marimba",
+    "tubular_bells"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": 0
+      },
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      1,
+      0,
+      -2
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "counter",
+    "pad"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.slendro"
+  },
+  "scale": {
+    "$src": "MODES.slendro"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2800,
+    "q": 0.8,
+    "atk": 0.004,
+    "rel": 1.6,
+    "gain": 0.24,
+    "verb": 0.5
+  },
+  "words": [
+    "the balungan, the skeleton in even steps",
+    "the panerusan, answering in the gaps",
+    "the second saron, the skeleton restated low",
+    "the gong, once a cycle, under everything"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [rotate(2), fill(2)]][s % 4]\n                    : v === 1 ? [only(\"gate\", complement(\"gate\")), transpose(12)]\n                    : v === 2 ? [keep(0, 4, 8, 12), transpose(-12)]\n                    : [keep(0), drop(12)])"
+  }
+}

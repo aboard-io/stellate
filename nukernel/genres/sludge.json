@@ -1,0 +1,150 @@
+{
+  "note": "SLUDGE. Half the speed of everything else, tuned into the floor (reg -3\nand -2), and the progression is two chords: i and ♭II. That flat second is\nthe whole genre — it is why the mode is phrygian, because phrygian is the\nonly mode that contains it, and a doom riff walking up a semitone and\nstopping there is a thing nothing else in this table can say. It ships\nwith `crunch` already on: a sampled guitar played clean is not sludge, and\nthe insert chain exists now, so the genre may as well ask for it.\n\nnamed \"New Orleans 1991\" — the half-speed phrygian ♭II riff under\ncrunch is NOLA sludge (Eyehategod/Crowbar), not Birmingham doom.\n\n74: half of what \"sounds like sludge\" means is the tempo\n\nLINEAGE: NOLA sludge is hardcore punk slowed into blues feel —\nEyehategod is a punk band playing at doom tempo with a blues hand;\nthe missing link between them is Sabbath, the doom that showed rock\nwhere the bottom was.",
+  "label": "New Orleans 1991",
+  "rate": 0.5,
+  "bars": 8,
+  "plan": "song",
+  "bpm": 74,
+  "parents": {
+    "punk": 0.4,
+    "rock": 0.35,
+    "blues": 0.25
+  },
+  "wants": [
+    "doom"
+  ],
+  "instr": "overdrive_guitar",
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 3
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "roots": [
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0
+  ],
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 900,
+    "q": 2.2,
+    "atk": 0.004,
+    "rel": 1.2,
+    "gain": 0.3,
+    "verb": 0.25
+  },
+  "words": [
+    "the riff",
+    "the riff an octave under, thinned"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "crunch"
+  ]
+}

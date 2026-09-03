@@ -1,0 +1,129 @@
+{
+  "note": "FAIRUZ — Beirut 1957, the Baalbeck years. Her own article gives the\ngenres as Arabic music, Lebanese music and TARAB, and years active from\n1950 — so `tarab` (Cairo 1934) is a parent the record itself names, not\none I inferred. The row is the Rahbani arrangement: a tarab voice over a\nwritten, orchestrated backing rather than a takht improvising under her,\nwhich is the whole difference between this and its parent.\n\n`nylon_string_guitar` IS THE OUD HERE, and it is not my improvisation:\ntarab, muwashshah, taqsim and qiyan all seat the same id for the same\ninstrument, so the proxy is the catalogue's own and this row does not\nget a private one. `oud` is not an id in this box — I wrote it, the\ncheck caught it, and the convention was already decided.",
+  "label": "Beirut 1957",
+  "voices": 3,
+  "bars": 8,
+  "near": "tarab",
+  "plan": "arc",
+  "bpm": 92,
+  "parents": {
+    "tarab": 0.6,
+    "muwashshah": 0.4
+  },
+  "wants": [],
+  "cannot": [
+    "the Rahbani orchestration itself — strings and a written counter-line arranged bar by bar is a score, and this table seats players rather than writing parts for them",
+    "the oud's own voice — the catalogue's plucked-lute proxy is a nylon-string guitar, which is a fretted instrument where the oud is fretless, so every slide between two notes is lost"
+  ],
+  "instr": [
+    "solo_vox",
+    "strings",
+    "nylon_string_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "roots": [
+    0,
+    1,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "MODES.phrygian"
+  },
+  "harmony": "modal",
+  "artic": "tie",
+  "maxHold": 8,
+  "orn": 0.35,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "fx": [],
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 1.1,
+    "atk": 0.04,
+    "rel": 1,
+    "gain": 0.26,
+    "verb": 0.45
+  },
+  "words": [
+    "the voice, ornamented",
+    "the strings, written",
+    "the oud, answering the line"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(1)], [], [rotate(2)]][s % 4]\n                    : v === 1 ? [drop(8)] : [keep(0, 4, 8)])"
+  }
+}

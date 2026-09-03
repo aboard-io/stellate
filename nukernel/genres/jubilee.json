@@ -1,0 +1,108 @@
+{
+  "note": "THE JUBILEE QUARTET — Nashville 1909. The Fisk Jubilee Singers'\nquartet recording of \"Swing Low, Sweet Chariot\" (Victor, 1909) —\nthe record the Library of Congress added to the National\nRecording Registry, per the ZIM's own first paragraph. Four\ntrained voices singing the spirituals repertory in close,\nprecise harmony: the school `doowop` and `barbershop` both want\nby the same name (\"jubilee quartets\"), and the dated artifact\nthe debts round's barbershop paragraph said this shift lacked.\n1909 sits one year before barbershop's own Victor record, so\nboth edges point backward, as the maringa rule requires.",
+  "label": "Nashville 1909",
+  "voices": 4,
+  "bars": 8,
+  "near": "spirituals",
+  "plan": "song",
+  "bpm": 84,
+  "parents": {
+    "spirituals": 0.6
+  },
+  "wants": [
+    "the dinwiddie colored quartet (1902)"
+  ],
+  "instr": [
+    "solo_vox",
+    "ahh_choir",
+    "ahh_choir",
+    "ahh_choir"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      1,
+      -1,
+      -2
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "pad"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad",
+    "pad"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "cycle",
+  "roots": [
+    0,
+    3,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 3,
+      "q": "triad"
+    },
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 4,
+      "q": "7"
+    }
+  ],
+  "artic": "legato",
+  "maxHold": 4,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2100,
+    "q": 0.8,
+    "atk": 0.02,
+    "rel": 0.9,
+    "gain": 0.26,
+    "verb": 0.35,
+    "mouth": {
+      "$src": "MOUTHS.hymnal"
+    }
+  },
+  "words": [
+    "the lead, lining the chariot out",
+    "the tenor, above and inside",
+    "the baritone, the chord's own floor",
+    "the bass, swinging low"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)], []][s % 4]\n                    : v === 1 ? [drop(4), transpose(2)]\n                    : v === 2 ? [drop(6)]\n                    : [drop(8), transpose(-5)])"
+  }
+}

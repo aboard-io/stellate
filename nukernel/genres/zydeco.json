@@ -1,0 +1,199 @@
+{
+  "note": "ZYDECO — Lafayette 1955. Louisiana Creole dance music: a piano\naccordion, a rubboard worn on the chest and played with bottle\nopeners, a drum kit, and a repertory that is blues and R&B in French.\nTHE YEAR is Clifton Chenier's first sides — the moment la-la and juré\nbecome a record with a rhythm section on it.\nTHE THIRD ACCORDION ANCHOR IN THIS ROUND, and holding all three is\ndeliberate: vallenato (Valledupar 1975) is a diatonic button box in a\ntrio, norteña (Monterrey 1955) is a diatonic button box against a bajo\nsexto playing polkas, and this is a CHROMATIC PIANO accordion playing\ntwelve-bar blues. Same word, three instruments, three musics — and\nthis one is the only one of the three whose accordion sample is\nactually the right instrument.\nTHE RUBBOARD IS THE HAT LANE, which is the same compromise the shaker,\nthe güira and the guacharaca take above, with one difference worth\nwriting: a frottoir is played with BOTH HANDS in opposite directions,\nso its sixteenths are genuinely even and the `kitVel` line says so.\n\n\"cajun two-step\" PAID 2026-08-30, the folk-floor round: `cajun`\n(New Orleans 1928) — the same accordion one parish over.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nClifton Chenier's first sides, 1954-55 — this row's own record, and the\nmoment la-la becomes twelve-bar blues in French. The roots above are that\ntwelve bars exactly: degrees 0, 3 and 4, I-IV-V, and NEVER degree 6. A blues\nhas no bVII chord, so mixolydian's flat seventh was never going to arrive as\na root — MEASURED, mixo -> ionian moves not one rendered note. The flat\nseventh this music genuinely has is MELODIC and the row already plays it,\nfrom SCALES.blues on the line above. Chords ionian, tune blue: that is the\nwhole harmonic fact of a blues, and now both halves are said in the right\nfield. The same ruling is applied at neworleans, boogiewoogie, deltablues\nand territoryband below.",
+  "label": "Lafayette 1955",
+  "voices": 3,
+  "bars": 12,
+  "near": "blues",
+  "plan": "song",
+  "bpm": 132,
+  "parents": {
+    "blues": 0.55,
+    "countrypop": 0.2,
+    "cajun": 0.3
+  },
+  "wants": [
+    "la-la",
+    "juré"
+  ],
+  "instr": [
+    "accordion",
+    "harmonica",
+    "clean_guitar"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "roots": [
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    4,
+    3,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2700,
+    "q": 1.2,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.28
+  },
+  "words": [
+    "the accordion",
+    "the harmonica, answering it",
+    "the guitar, chopping"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(8), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[only(\"acc\", rotate(2))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

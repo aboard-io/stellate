@@ -1,0 +1,217 @@
+{
+  "note": "TROT — Seoul 1965, and it gives the catalog a Korean record\nforty-seven years older than the one it had. The Korean ballad in\nduple time with a hard two-beat lilt, a minor pentatonic melody and a\ntrumpet or an accordion answering the singer.\nTHE YEAR is the mid-sixties, when trot is the dominant Korean popular\nform and the recording industry is domestic.\nWHAT SEPARATES IT FROM ENKA, which is a fair question and a\nhistorically loaded one: the two forms grew up beside each other under\nthe same colonial recording industry and share the yonanuki scale.\nIn fields they differ in TEMPO and in FEEL — trot is 108 with a hard\ntwo-beat bounce (the swing dial at a third, which is what this file has\nfor a lilt) where enka is 72 and rubato-leaning with a string pad; and\ntrot's cast is a horn where enka's is a shamisen.",
+  "label": "Seoul 1965",
+  "voices": 3,
+  "near": "enka",
+  "plan": "song",
+  "bpm": 108,
+  "parents": {
+    "crooner": 0.35
+  },
+  "wants": [
+    "pansori",
+    "changga",
+    "min'yo"
+  ],
+  "cannot": [
+    "the kkeokkneun-mok — the same bent-inside-the-note ornament enka calls kobushi, and the same missing channel"
+  ],
+  "instr": [
+    "solo_vox",
+    "trumpet",
+    "accordion"
+  ],
+  "drumkit": "brush",
+  "swing": 0.33,
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "orn": {
+    "grace": 0.35
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      8,
+      0,
+      4,
+      0,
+      7,
+      0,
+      4,
+      0,
+      8,
+      0,
+      4,
+      0,
+      7,
+      0,
+      5,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.012,
+    "rel": 1,
+    "gain": 0.27,
+    "verb": 0.38,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the singer",
+    "the trumpet, answering",
+    "the accordion, holding the two-beat"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(8), drop(3)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

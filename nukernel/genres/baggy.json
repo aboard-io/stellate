@@ -1,0 +1,141 @@
+{
+  "note": "THE STONE ROSES — Manchester 1989, the debut (2 May 1989, per its own\narticle). IT SHIPS BECAUSE IT IS EARLIER THAN THE ROOM IT MADE: madchester\nis Manchester 1990 in this table, and the maringa precedent says an\nancestor must be measurably earlier. It is, by a year — so this is the\nrecord and that is the scene, and the edge runs the right way.",
+  "label": "Manchester 1988",
+  "voices": 3,
+  "bars": 8,
+  "near": "madchester",
+  "plan": "song",
+  "bpm": 118,
+  "parents": {
+    "psychrock": 0.35,
+    "postpunk": 0.35,
+    "house": 0.3
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "clean_guitar",
+    "jazz_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "counter"
+  ],
+  "roots": [
+    0,
+    3,
+    5,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 5,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "chorus",
+    "echo"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 1.2,
+    "atk": 0.01,
+    "rel": 0.6,
+    "gain": 0.27,
+    "verb": 0.45
+  },
+  "words": [
+    "the voice, half spoken",
+    "the jangle, ringing over the beat",
+    "the second guitar, answering it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [keep(0, 8)], [], [transpose(2)]][s % 4]\n                    : v === 1 ? [fill(2)] : [[rotate(2)], [], [drop(3)], []][s % 4])"
+  }
+}

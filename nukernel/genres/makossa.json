@@ -1,0 +1,230 @@
+{
+  "note": "MAKOSSA — Douala 1972. Cameroon's own dance music, and the record that\ndates it is Manu Dibango's \"Soul Makossa\" — a saxophone over a bass\nline, a guitar chopping, and a beat that turned out to be exportable\nenough that American disco took it whole.\nWHAT SEPARATES IT FROM AFROBEAT, twelve months and one country apart:\nafrobeat is one dorian chord and two drummers for eight minutes; this\nis a four-bar major cycle at 118 with ONE drummer and a bass line that\nis the hook. The horn is the same tenor and it is doing a different job\n— riffing on the cycle rather than answering a call.\n\nLINEAGE: a ROOT under protest. Makossa comes out of the ambasse bey\nand the assiko of the Douala coast, and out of the Congolese records\nthat were everywhere in central Africa by 1960 — the second is here\nand the first two are not. `funk` is NOT named: the funk arrives in\nthis music the same year the record does, from the same Atlantic\nexchange, and calling Cincinnati 1967 its parent would repeat the\nexact error afrobeat's own lineage was repaired for.",
+  "label": "Douala 1972",
+  "voices": 3,
+  "near": "afrobeat",
+  "plan": "dance",
+  "bpm": 118,
+  "parents": {
+    "congorumba": 0.35
+  },
+  "wants": [
+    "ambasse bey",
+    "assiko",
+    "bikutsi"
+  ],
+  "instr": [
+    "tenor_sax",
+    "clean_guitar",
+    "brass_section"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "counter"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      9,
+      0,
+      5,
+      6,
+      8,
+      0,
+      5,
+      6,
+      9,
+      0,
+      5,
+      6,
+      8,
+      0,
+      5,
+      7
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2900,
+    "q": 1.2,
+    "atk": 0.005,
+    "rel": 0.4,
+    "gain": 0.28,
+    "verb": 0.26
+  },
+  "words": [
+    "the sax, the riff everyone knows",
+    "the guitar, chopping under it",
+    "the horns, on the turnaround"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"acc\", rotate(2)), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(12), drop(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

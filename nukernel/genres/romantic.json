@@ -1,0 +1,108 @@
+{
+  "note": "ROMANTIC — Vienna 1876, the orchestra: the body of strings, the tune in\nthe CELLO (the romantic register), horns answering at bar 5, and the\ntremolo arriving last — which is how a climax is built. No fx block:\nthe era law (compose.js FX_YEAR) is right that 1876 has no filter\nsweep, and the swell lives in the entries instead. Timpani exist in the\nregistry but the kit has twelve fixed lanes and no timpani file;\ncasting one as a pitched voice would make it melodic, so it waits for a\nPERC lane rather than being faked.",
+  "label": "Vienna 1876",
+  "voices": 4,
+  "bars": 8,
+  "plan": "arc",
+  "bpm": 76,
+  "parents": {
+    "classical": 0.5,
+    "nocturne": 0.3,
+    "concerto": 0.2
+  },
+  "wants": [
+    "opera orchestra"
+  ],
+  "near": "neoclassical",
+  "instr": [
+    "slow_strings",
+    "cello",
+    "french_horns",
+    "tremolo"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      4,
+      6
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      -1,
+      0,
+      -1,
+      -2
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": [
+          0,
+          3
+        ],
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {},
+  "roots": [
+    0,
+    5,
+    3,
+    4,
+    2,
+    5,
+    1,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 0.9,
+    "atk": 0.08,
+    "rel": 2.4,
+    "gain": 0.2,
+    "verb": 0.65
+  },
+  "words": [
+    "the strings",
+    "the cello, singing the tune",
+    "the horns, answering",
+    "tremolo, underneath, late"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(-3)]"
+        }
+      },
+      {
+        "at": 3,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

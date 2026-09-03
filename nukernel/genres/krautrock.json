@@ -1,0 +1,160 @@
+{
+  "note": "KRAUTROCK — Cologne 1971. Can's \"Halleluhwah\" on Tago Mago,\nrecorded at Schloss Nörvenich and released February 1971:\neighteen minutes on one chord, Jaki Liebezeit playing the same\nbar with a machine's patience and a hand's weight, the band\nediting hours of tape into a groove that goes nowhere on\npurpose. TWO rows have wanted this by name since their lineages\nwere written — `dusseldorfschool` (Düsseldorf 1977), whose members\npassed through this scene on their way to the machines, and\n`postrock` (Austin 2003), which is this music rediscovered by\npeople who read about it — and `motorik` (Düsseldorf 1974) is\nreparented onto it today, closing a backwards edge (see the\nrewrite at that row).\n\nLINEAGE: `psychpop` (London 1968) is where every one of these\nbands started; `minimalism` (New York 1967) is the repetition\ndoctrine half of them studied outright (Czukay under\nStockhausen, La Monte Young in the air); `funk` (Cincinnati\n1967) is what Liebezeit's hands are actually doing.\nPAID 2026-08-29, the debts round: both wants — Czukay and\nSchmidt were literally Stockhausen's students (Cologne 1956), and\nthe Zodiak (Berlin 1968) is the room this scene's Berlin half\nwalked out of.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nCan, \"Halleluhwah\" on TAGO MAGO (Schloss Noervenich, released February 1971)\n— this row's own record: eighteen minutes on ONE chord, which is why the row\nis `harmony: \"modal\"` and why `mode` had nothing to colour. Worse than\nsilent, it was wrong: SCALES.majpent has a MAJOR third and dorian is a minor\nmode, so the field contradicted the alphabet on the same line. Ionian is the\nmode majpent is five notes of.",
+  "label": "Cologne 1971",
+  "voices": 3,
+  "bars": 8,
+  "near": "motorik",
+  "plan": "song",
+  "bpm": 116,
+  "parents": {
+    "psychpop": 0.35,
+    "minimalism": 0.35,
+    "funk": 0.3,
+    "cologneschool": 0.2,
+    "zodiak": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "percussive_organ"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      7,
+      0,
+      4,
+      5,
+      7,
+      0,
+      4,
+      5,
+      7,
+      0,
+      4,
+      5,
+      7,
+      0,
+      4,
+      5
+    ]
+  },
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 1.1,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the guitar, one cell, barely moving",
+    "the organ, stabbing the offbeat"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(1)], [], [rotate(2)]][s % 4]\n                    : [transpose(-3), keep(2, 6, 10, 14)])"
+  }
+}

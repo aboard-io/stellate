@@ -1,0 +1,273 @@
+{
+  "note": "BREAKING NEWS — New York 2006. The same job two generations on, and the\nyear is again an identity: in September 2006 the CBS Evening News\nrelaunched with Katie Couric and a new theme by James Horner — a film\ncomposer, hired for a bulletin, which is the whole story of what\nhappened to this idiom between 1970 and now. The library house is gone;\nthe network buys a name off a picture score, and the reference everybody\nin the room is making is Hans Zimmer's — the Media Ventures action\nvocabulary of ostinato strings, layered brass and a four-on-the-floor\npulse, arriving in news via trailers and sport.\nWHAT ACTUALLY CHANGED, and the table can say it in one field. THE 1970\nTHEME HAS A TUNE; THIS ONE DOES NOT. Chair 0 is `part: \"stab\"` rather\nthan `\"lead\"` — chordLock, the sounding chord punched on its own rhythm\n— because the brass in a modern package is not a melody, it is a hit,\nand everything the ear takes for a melody is the string ostinato moving\nunderneath it. That one word is the difference between an arranger\nwriting a fanfare and a producer stacking stems, and it is why this\nanchor is a separate genre rather than the 1970 one at a faster tempo.\nAND THE PLAN AGREES: `arc` up there, `dance` down here. A 1970 cue is\nthrough-composed to a stopwatch by one person and played once by an\norchestra. A 2006 package is a LOOP with layers, mixed rather than\nwritten, and the arrangement is a question of which stems are up — which\nis what `plan: \"dance\"` means everywhere else in this table too. Four\nbars rather than eight, for the same reason.\ni - VI - III - VII, the four chords every network package of the decade\nis built from, and they are not a cliché by accident: the progression\nnever resolves, so a bed made of it can be faded under a presenter at\nany point without sounding cut off. That is a broadcast requirement\nwearing a harmonic costume, and the `sus4` on the last chord is the same\nrequirement said twice — a suspended seventh degree has nowhere it must\ngo, so the loop can turn over forever or stop dead on a word.\nTHE OSTINATO IS A RHYTHM AND A REGISTER, and the honest measurement says\nso: chair 1's widest move INSIDE a bar is ZERO semitones on seven of the\neight seeds tried, at eight to sixteen notes a bar. All the motion the\near hears from it is the harmony moving under it once a bar. That is not\na limitation being dressed up — it is what a Zimmer string ostinato\nliterally is, four notes of the chord repeated until the chord changes —\nbut it IS the reason the strings and the timpani had to be separated by\nrhythm and register rather than by tune: they are playing the same\npitch, two octaves apart, at four times the density.\nTHE BIG PROCESSED TIMPANI is the same pitched chair London 1970 uses and\nthe same `spread(0)` monotone, thinned harder — MEASURED over eight\nseeds it plays TWO notes a bar, on beats 1 and 3, where 1970's plays six\nto eight and marches. `fill(8), rotate(7)` is what guarantees those two\n(fill puts a gate on steps 7 and 15, rotate drags them to 0 and 8) and\n`drop(2)` takes away whatever else the subject brought. What makes it\n\"processed\" is not in this row and honestly cannot be: `verb` and the\nlow tom doubling it are the whole of what this box has to say about a\ncompressor.\nAND THE STAB IS ON EVERY BEAT — `fill(4), rotate(3)`, London 1970's own\ntimpani trick borrowed for the brass, which is the joke of the whole\nanchor: in 2006 the hit does what the drum used to do. Measured, chair 0\nfires four times a bar and holds FOUR distinct pitches over the loop,\none per chord, because a chordLock stab has no tune to have.\nLINEAGE. `newsfanfare` at 0.35 is the direct one, written into the table\nin the same round — the brass-and-timpani grammar, the ostinato and the\njob survive intact and the technology under them does not. `house` is\nthe pulse: a four-on-the-floor kick with the bass running eighths under\nan orchestra is a dance record's floor, and the moment it arrived is the\nmoment the idiom stopped being library music. `minimalism` is the\nostinato as an AESTHETIC rather than a device — New York 1964's repeated\ncell with the harmony changing slowly around it is what Zimmer took to\nfilm and film handed to news. And `romantic` is what the whole thing is\nstill pretending to be, at a quarter weight, because the orchestra here\nis a sample library and everybody knows it.\n\nthe same library shelf, 2006 — a news bed sings nothing\n\n\"trance\" PAID 2026-09-02, the MIDI-corpus round (Berlin 1994): this\nrow has named the genre by that word since it was written and the\ncatalogue had no anchor for it. `trance` is twelve years earlier and\nits measured tempo band (p25 131 / p75 140 over 259 files) is this\nrow's own 128 seen from underneath; the riser and the eight-bar\nbuild this package borrows are that record's, so the want becomes a\ndeclared edge and nobody loses a share but the two that were\nstanding in for it.\n\nFOUR ON THE FLOOR, and it is the machine's, not a drummer's: the kick\nis on every beat, the clap answers on 2 and 4, the hat is offbeat\neighths, and the low tom carries the processed-timpani weight on 1 and\nthe and-of-3. The fill bar is the sting arriving — the crash on the\ndownbeat and the tom closing into it.",
+  "instrumental": true,
+  "label": "New York 2006",
+  "voices": 4,
+  "near": "newsfanfare",
+  "plan": "dance",
+  "bpm": 128,
+  "parents": {
+    "newsfanfare": 0.35,
+    "house": 0.2,
+    "trance": 0.15,
+    "minimalism": 0.15,
+    "romantic": 0.15
+  },
+  "wants": [
+    "hollywood action score",
+    "sports broadcast package"
+  ],
+  "cannot": [
+    "the package — a 2006 identity is a FAMILY of cues cut from one motif (the thirty-second open, the eight-second bumper, the two-second breaking-news sting, the headline bed), and this table has one row per sound and no way to say 'and here are the four shorter versions of this'",
+    "the riser and the sub-drop — the non-pitched, non-metrical noise sweeps that glue a modern package together are neither a note nor a struck drum, and the twelve kit lanes are all struck drums"
+  ],
+  "instr": [
+    "brass_section",
+    "strings",
+    "timpani",
+    "warm_pad"
+  ],
+  "drumkit": "electronic",
+  "part": [
+    "stab",
+    "riff",
+    "riff",
+    "pad"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      -1,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    5,
+    2,
+    6
+  ],
+  "prog": [
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 5,
+      "q": "triad"
+    },
+    {
+      "d": 2,
+      "q": "triad"
+    },
+    {
+      "d": 6,
+      "q": "sus4"
+    }
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "l": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "h": [
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      6,
+      0,
+      0,
+      0,
+      5,
+      0
+    ]
+  },
+  "fill": {
+    "l": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    "x": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2800,
+    "q": 1.2,
+    "atk": 0.006,
+    "rel": 0.9,
+    "gain": 0.26,
+    "verb": 0.42
+  },
+  "words": [
+    "the brass, punching the chord on every beat — no tune, a hit",
+    "the strings, the cell that never stops",
+    "the timpani, twice a bar with the tail on it",
+    "the pad, holding the whole thing together"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(4), rotate(3), drop(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[excerpt(0, 4), fill(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[spread(0), fill(8), rotate(7), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(2)]"
+    }
+  }
+}

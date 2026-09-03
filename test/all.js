@@ -199,6 +199,25 @@ const GATES = [
     need: ["test/rules.test.js"],
     covers: ["test/rules.test.js", "nukernel/rules.js", "nukernel/precompose.js",
              "nukernel/genres.js"] },
+  /* THE INVERSION (2026-09-02). Paul: "Are you sure we shouldn't move
+     everything including the closures into sqlite and go the other direction —
+     manage the data as data and then export it as JSON or even JS for operation
+     and distribution?" nukernel/genres.js is now GENERATED from 421 row files
+     under nukernel/genres/ plus nukernel/genres-tables.js. Wave 1 and
+     `kind: "node"` for the same reason `rules` is: it is the data tier and
+     nothing else. It holds the shipped bytes to a fresh build (the gates.js /
+     wiki.js precedent), validates every row against the grammar, and calls
+     every closure template over v 0..8 x s 0..7 against the closure the box
+     actually loaded — 121,248 calls, with `word`'s operators APPLIED rather
+     than counted. `covers` names everything an edit has to re-run this on. */
+  { name: "genres-build", wave: 1, kind: "node",
+    argv: ["test/genres-build.test.js"],
+    need: ["test/genres-build.test.js", "tools/genres/build.js",
+           "tools/genres/emit.js", "tools/genres/grammar.js"],
+    covers: ["test/genres-build.test.js", "tools/genres/build.js",
+             "tools/genres/emit.js", "tools/genres/grammar.js",
+             "nukernel/genres-tables.js", "nukernel/genres.js",
+             "nukernel/GENRES.md"] },
   { name: "instrumentation", wave: 1, kind: "node",
     argv: ["test/instrumentation.test.js"],
     need: ["test/instrumentation.test.js"], covers: ["test/instrumentation.test.js"] },
@@ -674,6 +693,29 @@ const GATES = [
     covers: ["test/band.browser.js", "nukernel/ui/eight.js",
              "nukernel/avail.js", "nukernel/document.js",
              "nukernel/ui/preview.js", "nukernel/audio/plan.js"] },
+  /* THE SAMPLE CRATE, DRIVEN (2026-09-03). Paul, 2026-09-01: "I can't really
+     access or organize samples used in, say, San Francisco 1996. They aren't
+     accessible to the app in any way." Nothing existing could reach any of it:
+     `band` drives the roster and the motif tray, `loopstrip` drags the two
+     handles on ONE chair's zone, and neither of them asks what FILES a record
+     is made of — which is the whole question. This drives San Francisco 1996
+     (the crate-heaviest room in the catalogue: an electric piano, a string
+     section, a twelve-break collage chair, an upright and a sampled kit) and
+     holds the list against three artifacts rather than against a module:
+     `__nuMix()` for what the engine was handed, a real fetch for every file,
+     and a COUNT of AudioBufferSourceNodes for the audition.
+     `covers` names the six files an edit to any of them has to re-run this
+     on: the reader and the view, the page that mounts them, the sheets the
+     swap writes through, the registry every path is extracted from, and the
+     routing this list is held against (a patch table gaining an id moves a
+     chair from "recording" to "model" and takes its files off this page —
+     which is exactly the red this gate caught the day it was written). */
+  { name: "samples",    wave: 3, kind: "browser", url: { flag: "--page" },
+    argv: ["test/samples.browser.js"], need: ["test/samples.browser.js"],
+    covers: ["test/samples.browser.js", "nukernel/ui/samples.js",
+             "nukernel/ui/eight.js", "nukernel/avail.js",
+             "nukernel/instruments.js", "nukernel/audio/to-engine.js",
+             "engine/registry-data.js"] },
   /* THE SECTION AUTOMATION GRIDS (2026-09-02, slice 2d). Paul, B9: "Make a
      section automation interface for the manipulation of the motifs and put it
      under structure/sections … Every section I can tweak every instrument."

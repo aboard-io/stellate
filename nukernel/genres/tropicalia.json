@@ -1,0 +1,207 @@
+{
+  "note": "TROPICÁLIA — São Paulo 1968. Bossa nova's harmony, an electric rock\nband, and an orchestral arranger, all on the same record and\ndeliberately not resolving. Caetano, Gil, Os Mutantes and Rogério\nDuprat, and the record that names it is the manifesto album of 1968.\nWHAT THIS ANCHOR CAN AND CANNOT CLAIM. Tropicália's method is\nCOLLAGE — a berimbau against a fuzz guitar against a Strauss quote —\nand a collage is a per-section decision the arranger makes, not an\nanchor field. What this entry holds is the three ingredients: bossa's\nchord vocabulary (`mode: mixo`, an eight-bar cycle that will not sit\non the tonic), a fuzz guitar, and a string section over the top.\nThe seams are in `cannot`.\nTHE FUZZ MOVES A FLOOR BY ONE YEAR. `crunch_guitar` extracted to 1969\noff London; a fuzzbox in São Paulo in 1968 is a year earlier and is\nnot in dispute.\n\nLINEAGE: bossa is the harmony and the language, psychpop is the\nstudio and the band, samba is underneath both of them and is named\nbecause tropicália reached PAST bossa for it on purpose.\n\"musique concrète\" PAID 2026-08-30, the walls-down round:\n`tapemusic` (Paris 1948) — the collage Os Mutantes cut into these\nrecords is that studio's grammar, twenty years downstream.",
+  "label": "São Paulo 1968",
+  "voices": 3,
+  "bars": 8,
+  "near": "psychpop",
+  "plan": "arc",
+  "bpm": 104,
+  "parents": {
+    "bossa": 0.4,
+    "psychpop": 0.35,
+    "samba": 0.25,
+    "tapemusic": 0.1
+  },
+  "wants": [
+    "concrete poetry"
+  ],
+  "cannot": [
+    "the collage itself — a quotation cut against the record is a per-section editorial decision and this file writes anchors, not edits"
+  ],
+  "instr": [
+    "nylon_string_guitar",
+    "crunch_guitar",
+    "strings"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "pad"
+  ],
+  "roots": [
+    0,
+    5,
+    1,
+    4,
+    2,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "walk",
+  "fx": [
+    "sweep"
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2200,
+    "q": 1.1,
+    "atk": 0.01,
+    "rel": 0.9,
+    "gain": 0.26,
+    "verb": 0.44
+  },
+  "words": [
+    "the nylon guitar, the bossa half",
+    "the fuzz, the rock half",
+    "the strings, the arranger's half"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(-12), only(\"acc\", rotate(2))]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "note": "CHAZZANUT — New York 1912. Yossele Rosenblatt arrives at the\nOhab Zedek congregation, Harlem — the ZIM dates the post — and\nthe 78s that follow made him the most famous cantor on record\n(\"since the 78 RPM era, Rosenblatt's recordings have been\nre-issued many times\"). The cantorial nusach is `klezmer`'s own\nnamed want: the prayer modes the bands borrowed for the bandstand\n— and the row says that kinship as an ALPHABET, because the\nAhavah Rabbah steyger IS this table's hijaz row, the flat second\nunder the natural third, note for note. One ornamented voice\nover a congregation's hum; the vox family's long varying line,\nthe dastgah/khyal argument one liturgy west.\n\n70 is compose.js's floor (the seannos ruling); the davenen is\nslower than any metronome word for it and maxHold carries that.",
+  "label": "New York 1912",
+  "voices": 2,
+  "bars": 8,
+  "near": "klezmer",
+  "plan": "song",
+  "bpm": 70,
+  "parents": {},
+  "wants": [
+    "the odessa choral synagogues (nissan blumenthal)",
+    "the baal tefillah's unwritten nusach"
+  ],
+  "cannot": [
+    "the krechts — the sob inside one syllable that is the whole art; a grace note approaches it and does not arrive"
+  ],
+  "instr": [
+    "solo_vox",
+    "ahh_choir"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "pad"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.hijaz"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "orn": {
+    "grace": 0.45,
+    "pass": 0.2
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 0.8,
+    "atk": 0.025,
+    "rel": 1.3,
+    "gain": 0.26,
+    "verb": 0.5,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the chazzan, one voice carrying the whole room's prayer",
+    "the congregation, a hum under the melisma"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(1)], [fill(1)], [rotate(2)]][s % 4]\n                    : [keep(0), drop(10)])"
+  }
+}

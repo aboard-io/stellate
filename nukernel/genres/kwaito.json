@@ -1,0 +1,202 @@
+{
+  "note": "KWAITO — Johannesburg 1994, and it pays a debt the file booked in its\nown hand: `amapiano.wants` said [\"kwaito\"] and its comment called it\n\"the missing rung… the Johannesburg scene that slowed house down in the\nfirst place, thirty years before this one slowed it again\". This closes\nit, and amapiano's afrobeat weight moves here where it belonged.\nTHE YEAR is a decade's centre plus an event and not a record: kwaito's\nwindow is 1993–96 (Boom Shaka's *It's About Time*, Arthur Mafokate's\n\"Kaffir\"), and 1994 is the middle of it and the first democratic\nelection. Said plainly because the catalog's credibility rests on a\nreader being able to tell a dated record from a dated decade.\nTHE NUMBER THAT IS THE GENRE: 105. Every four-on-the-floor kick in the\n`club` family is at 122 or above — house 122, acid 124, bleeptechno\n124, kpop 128, techno 132, ebm 134 — and this one is seventeen under\nthe slowest of them. Kwaito is house with the tempo taken out of it,\nand everything else about the record follows the tempo: the bass has\nroom to be syncopated, the chant sits behind the beat instead of on it,\nand the same offbeat hat that reads as urgency at 128 reads as swagger\nhere.\n\nLINEAGE: the four-on-the-floor machine, the loop that is the form and\nthe pads over it are Chicago's, at five-sixths of the speed; the\nbassline habit and the cycle underneath come down the mbaqanga line\nfrom the shebeen organ — which is what the marabi weight means, and\nit is in the data below as well as in this sentence.\n...and mbaqanga arrived 2026-08-26 off this anchor's own want list\ntoo. Johannesburg 1964 is the township groove kwaito slowed down and\nput on a 909, and it is a nearer ancestor than Johannesburg 1935 by\nthirty years; marabi keeps a smaller weight because the endless\ncycle is still marabi's idea. `bubblegum` stays unbuilt.\n\nMARABI'S OWN CYCLE, READ MINOR. The roots are Johannesburg 1935's\nI–IV–I–V exactly; the mode is dorian instead of ionian. Sixty years\nand one mode apart, which is a more useful thing for the fit tool to\nmeasure than a sentence claiming influence.",
+  "label": "Johannesburg 1994",
+  "near": "house",
+  "plan": "dance",
+  "bpm": 105,
+  "parents": {
+    "house": 0.5,
+    "mbaqanga": 0.3,
+    "marabi": 0.2
+  },
+  "wants": [
+    "bubblegum"
+  ],
+  "instr": [
+    "polysynth",
+    "rhodes_ep"
+  ],
+  "drumkit": "tr909",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "lead"
+  ],
+  "roots": [
+    0,
+    3,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "bassGrid": [
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 1.4,
+    "atk": 0.01,
+    "rel": 0.7,
+    "gain": 0.28,
+    "verb": 0.24
+  },
+  "words": [
+    "the stab, on the cycle",
+    "the lead, chanted over it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2), rotate(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

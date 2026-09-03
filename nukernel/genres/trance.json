@@ -1,0 +1,221 @@
+{
+  "note": "TRANCE [techno] — Berlin 1994. Paul van Dyk, \"45 RPM\" (MFS, Berlin,\n1994). Berlin rather than Frankfurt: the corpus's own trance mass is\nthis producer and the two who followed him, and MFS is the label the\nrecord came out on in the city the table already draws.\nMEASURED over 276 files (Tiësto 154 · ATB · Paul van Dyk · Darude ·\nSash! · Robert Miles). Meter 275 of 276 in 4/4. Tempo (n=259): p10\n128 · p25 131 · med 137 · p75 140 · p90 140 — the tightest tempo\ndistribution of any set measured this round, which is what a genre\nbuilt for mixing looks like. Mode 190 minor / 86 major, more than two\nto one. THE HAT NAMES IT: 5594559455945594 — the four 9s are steps 2,\n6, 10 and 14, the OFF-BEAT eighth, over a kick that is 9101811181118211\n(four on the floor). That open-hat-against-four-on-the-floor pair is\nthe sound, and `house`'s own row already runs the kick; this row's\ndifference is above it. Bass 9485639464846483 — rolling sixteenths,\nnever resting, which is the other half. Cycles: bVII-bVII-I-I (27) and\na tonic pedal (246), so the changes are a minor i-bVI-bVII loop, below.\n\nLINEAGE: `techno` (Detroit 1988) is the machine and the tempo;\n`house` (Chicago 1986) is the four-on-the-floor itself;\n`berlinschool` (Berlin 1972) is the sequenced arpeggio and the long\nform, in this row's own city twenty-two years earlier, and it is\nthe parent that separates this from every other floor record here;\n`hardcorerave` (Essex 1991) is the riser and the breakdown;\n`eurodisco` (Munich 1977) is the sequenced bass under a melody.",
+  "label": "Berlin 1994",
+  "near": "melodictechno",
+  "bars": 8,
+  "plan": "dance",
+  "bpm": 138,
+  "intro": "riser",
+  "parents": {
+    "techno": 0.3,
+    "house": 0.25,
+    "berlinschool": 0.2,
+    "hardcorerave": 0.15,
+    "eurodisco": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "saw_wave",
+    "polysynth"
+  ],
+  "drumkit": "tr909",
+  "entry": {
+    "kind": "scale",
+    "n": 4
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    5,
+    6
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "o": [
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      9,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 2.4,
+    "atk": 0.002,
+    "rel": 0.3,
+    "gain": 0.27,
+    "verb": 0.38
+  },
+  "words": [
+    "the arpeggio, sixteenths, eight bars before it turns",
+    "the pad, one chord a bar under it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[keep(0, 8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[fill(1)]"
+    }
+  },
+  "fx": [
+    "sweep"
+  ]
+}

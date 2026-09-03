@@ -1,0 +1,126 @@
+{
+  "note": "THE BLOCK PARTY — Bronx 1973. 1520 Sedgwick Avenue, the rec\nroom, the 11th of August 1973: Cindy Campbell's back-to-school\nparty, her brother Clive — DJ Kool Herc — playing only the\nbreaks, two copies, back to back. A dated flyer, a named\naddress, a named DJ: hip hop's own chosen birthday, and this\ntable had nothing earlier than 1982 in the culture whose row\ncount is now ten. `electro` (New York 1982) has wanted \"hip-hop\ndj culture\" since its lineage was written and takes the parent\ntoday.\n\nLINEAGE: `funk` (Cincinnati 1967) is the records on the\ndecks; `amenbreak` (Washington 1969) is literally one of them\n— the edge from the break to the party that isolated it. The\nKingston sound system Herc carried over is `boombap`'s own\noutstanding want, now shared (dub itself is Kingston 1973,\nthe SAME year — an edge needs the ancestor measurably\nearlier, maringa's law, so the want stays a want).\n\"jamaican sound system\" PAID 2026-08-30 (Kingston 1950): Kool\nHerc grew up on exactly this practice and carried it to Sedgwick\nAvenue — the largest missing edge this row had.\n\n\"this box plays scores, not records\" WAS TRUE UNTIL 2026-08-30 and\nis not any more — the grain round put the surface of a record\nunder this one (`grain` in the tone block below), and the sampling\nround before it made the crate seatable. The cannot is re-cut to\nthe thing that is still out of reach, which was always the\nstronger half of it: TWO DECKS. One record's surface is a texture;\ntwo copies of one record, hand-cued against each other so a\nfour-bar break never ends, is a second transport this box has no\nport for. The merry-go-round is the technique, not the dust.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nKool Herc in the rec room at 1520 Sedgwick Avenue, the Bronx, 1973 — this\nrow's own dated event. Modal, so no root for the mode to colour, and\nSCALES.blues has no sixth of any kind, which is the one degree dorian is\nnamed for. Full ruling at `holler`.\n\nGRAIN 0.14 — this row's two `words` are \"the record on the left\ndeck\" and \"the record on the right\", which is the table saying the\nsubject out loud and then rendering no record at all. Herc played\nfunk 45s through a rec-room system in 1973; the surface is theirs.\n  THE SMALLEST NUMBER IN THE WING, and it was MEASURED down to it.\nAt 0.35 the pressed record put the grain 26.4 dB under its own mix\n— audible as a LAYER, which is the one thing surface noise must\nnever be — because this record is a quiet press (-36.4 dBFS, two\nvoices at 112) and a fixed noise level reads loud against it. 0.14\nputs it back around 35 dB down. A 45 is a strong pressing and a\nblock party is not a listening room; the dust belongs under the\nfloor, not on it.\ngrain: 0.14 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the\n//   measured value for a hand that wants it back. Paul: \"Make the\n//   default for surface 0 and I can turn it on only if I want to,\n//   don't put it on anything by default.\" The castings were real —\n//   each was pressed and six moved on what came back — but a\n//   texture nobody asked for is a texture on every play, and the\n//   board's `surface` dial (ui/engineer.js, 2026-08-31) is where\n//   the choice belongs. The engine path stays wired and gated;\n//   what leaves is the ROW declaring it for you.\n\nTHE MERRY-GO-ROUND AS A SCHEDULE: the same bar, again, again\n— then the other record's bar, then back. Repetition IS the\ndevelopment, which no other row in the table gets to say.",
+  "label": "Bronx 1973",
+  "voices": 2,
+  "bars": 8,
+  "near": "electro",
+  "plan": "dance",
+  "bpm": 112,
+  "parents": {
+    "funk": 0.45,
+    "amenbreak": 0.25,
+    "soundsystem": 0.2
+  },
+  "wants": [],
+  "cannot": [
+    "the two copies of the same record — the merry-go-round is a PLAYBACK art, two turntables holding one bar open for as long as the floor wants it, and this box has one transport and no hand on it; the row says the break-centered form, and now the surface, not the technique",
+    "the MC's toasts over the top — speech over a groove is the tube voice's job and it affords two voices; the row keeps the floor's side of the night"
+  ],
+  "instr": [
+    "clavinet",
+    "brass_section"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "swing": 0.1,
+  "bassStyle": "eighths",
+  "tone": {
+    "wave": "square",
+    "cut": 2500,
+    "q": 1.1,
+    "atk": 0.006,
+    "rel": 0.3,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the clavinet vamp, the record on the left deck",
+    "the horns, the record on the right"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [], [rotate(4)], []][s % 4]\n                    : [[drop(1)], [drop(1)], [fill(2)], [fill(2)]][s % 4])"
+  }
+}

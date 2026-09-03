@@ -1,0 +1,290 @@
+{
+  "note": "KRAFTWERK [synthpop]. The catalog's most-wanted ancestor — four children\nnamed it at once (new wave, synth pop, Eurythmics, techno) and all four\nhad to route it through somebody else. What no proxy could carry: this\nis a POP RECORD MADE BY A MACHINE, and both halves are load-bearing.\nAgainst synth pop, the nearest neighbour and the child that inherited\nmost, the field that separates them is THE KICK. Basildon puts one on\nevery quarter — that is disco's gift and the reason it is dance music.\nDüsseldorf puts one on 1 and 3 and pushes off the & of 3, which is a\ntrain, and it is why nobody dances to this and everybody has heard it.\nThree machines switched on one at a time (entry 0, 2, 4 — a Kraftwerk\nrecord is an accretion, not an arrangement): the SEQUENCE low and short,\nthe TUNE an octave over it, the VOCODER CHORALE underneath them both.\nThe band's own words for it were Roboterpop and Industrielle Volksmusik\n— industrial folk music, which describes this anchor better than this\ncomment does.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nKraftwerk, \"Trans-Europa Express\" (Kling Klang, Düsseldorf, March 1977):\nthe bass IS the sequencer.\n\nnamed \"Düsseldorf 1977\" — Trans-Europe Express, the record every one\nof the four children actually heard: Bowie carried it to Berlin,\nBambaataa cut it up in the Bronx, Detroit built a genre on it.\nAutobahn 1974 is where the machine arrives; 1977 is what was\ninherited, and a label on an ancestor should name the inheritance.\n\na song: Düsseldorf's half that is the Beatles is the half that decided\non verses and three minutes; 120 is Trans-Europe Express and the number\na metronome picks\n\nLINEAGE: three parents, and two of them were meant to be the whole\nlist — most of Kraftwerk's ancestry is ghosts here: Stockhausen's\nstudio an hour down the Rhine, the krautrock the band's own first\nthree albums are, and the European light music they always said they\nwere continuing. The third is the American minimalists' repeating\ncell, which was on that ghost list until New York 1967 landed in this\nsame section ten rows up; an ancestor the table holds is a parent, so\nit takes a quarter and drone gives most of it (they are the two\nhalves of the same claim, and the cell that MOVES is Reich's rather\nthan Young's). What the catalog holds beyond that is the two\ndecisions that made them Kraftwerk rather than one more tape project:\nthey wrote SONGS — verse, chorus, three minutes, a self-contained\nfour-piece with its own studio, which is the Beatles' template — and\nthey let the cell repeat past the point where anything happens, which\nis the drone's. The pop half is the larger share because it is the\ndecision; the drone half is why the decision sounds like this. (With\nonly those two declared the fit read 58.1% and put ALL of it on\nbeatgroup, because none of the 27 features measures \"a cell held past\nevent\" and the drone half is carried by the word table the fit cannot\nread. Naming the third parent is what fixed that rather than a bigger\nweight: 76.0%, with minimalism fitted at 0.60 — the pulse and the\nrepeating cell were the missing measurable, and the declared 0.25 is\nthe conservative read of a fit that wants more.)\n\"krautrock\" PAID 2026-08-29 (Cologne 1971): Hütter and Schneider\ncame up inside exactly that scene — Organisation played the same\nfestivals as Can — and the weight comes mostly off beatgroup, whose\nshare was carrying \"the German sixties\" at one remove.\nPAID 2026-08-29, the debts round: \"cologneschool\" is\n`cologneschool` (Cologne 1956) — the studio down the Rhine.\n\nNOT the CR-78, and that is the point: all three synth children reach\nfor the preset box, which arrives in 1978, a year after this record.\nDüsseldorf's percussion was hand-built — metal struck with sticks —\nso it takes the sampled electronic kit, and the difference between a\nmachine somebody built and a machine somebody bought is audible in\none bar.\n\nONE MACHINE AT A TIME: the sequence alone, the tune from bar 3, the\nchorale from bar 5, and four bars of the whole thing. reg is flat\nbecause the PARTS do the register — riff sits an octave down, lead an\noctave up (PARTS ctr), so the three voices stack 48 / 72 / 60 without\na single hand-written offset.\n\ni - ♭VII - ♭VI - i, two bars each: the descending aeolian tetrachord\n\"Das Model\" walks down, and the seed of both synth children's loops —\nEurythmics' i-VI vamp is one move out of it, synth pop's i-VI-III-VII\nanthem its four corners. EIGHT bars because harmony is the slow layer\nhere: the sequence turns over every bar and the chord waits two.\n\nstepwise and in one key. A Kraftwerk tune is a nursery melody played\nby a machine — it steps, it does not leap — so the subject reads\nthrough the full seven, and `diatonic` follows the chord by DEGREES\nso nothing ever leaves the key. The robots do not modulate.\n\nNO `artic`, and it is the one field this anchor withholds on purpose:\nnew wave, synth pop and techno all say `staccato`, so the clip is\nTHEIRS, not inherited. Here only the riff is short, and the part\npolicy already caps it (maxHold 2) — the chorale has to hold.\nTHE SEQUENCER DOES NOT KNOW THERE IS A SINGER: straight eighths on\nthe root, every one the same length and the same weight, for the\nwhole record. `eighths` is the one bass style that overrides the\nmelody's accents instead of reading them, and that override IS this\nmusic.\n\nTHE SIGNATURE-SYNTH LAW (see acid): a Model D, because these lead\nlines are a Minimoog and a sample cannot slide from one note to the\nnext. Every number is set AGAINST drama — resonance 0.18 where acid\nsits at 11 and the filter envelope barely a step, because the interest\nhere is the notes and their repetition, never the filter. `glide: 18`\nis the sequencer's own slide and not a singer's swoop; `drift: 3` is a\nfraction of what a real Model D wanders, because these machines were\ntuned before every take. lineOnly, like vaporwave's DX7: the chorale\nmust be polyphonic and a Model D node is one voice.\n\nTHE TRAIN. Kick on 1 and 3 with a push off the & of 3 — the motorik\nlean, a bar that is always arriving at the next one — the backbeat\nexactly on 2 and 4, sixteenth hats that never stop, and a metal ping\non the & of 2 and the & of 4: the rim lane, because Flür's kit was\nsheet metal on stands and this is the clack, not a hat.\n\nTHE FLATTEST TABLE IN THE FILE, and it is the whole aesthetic. Every\nother genre's kitVel is a HAND — disco and Toto lean on the pulse and\ntuck the between-notes under, funk writes its ghosts as 2s between\n9s. Sixteen identical numbers per lane is the opposite claim, and it\nhas to be said out loud rather than left absent, because absent means\n\"take the tune's velocity\" and the tune breathes.\n\nBAR 8: A MACHINE DOES NOT ROLL, IT SUBDIVIDES. No tom run, no snare\naccelerando — the kick simply starts landing on every other sixteenth\nand the metal goes to straight sixteenths for the last beat. Same\nhits, finer grid, and it hands the form back on the bar line.\n\nthe pulse starts, then the machines join\n\nThe least-transformed word in the table, and that is the design: what\nyou draw is what you hear, sixteen steps at a time, and the only move\nis the one Kraftwerk actually make — the same figure restated a third\nhigher. The sequence and the chorale never take an operator at all.\n\nthe Kling Klang tape loop, and nothing else",
+  "bassInstr": "bass_lead",
+  "label": "Düsseldorf 1977",
+  "bars": 8,
+  "voices": 3,
+  "near": "synthpop",
+  "plan": "song",
+  "bpm": 120,
+  "parents": {
+    "beatgroup": 0.3,
+    "krautrock": 0.25,
+    "drone": 0.25,
+    "minimalism": 0.2,
+    "cologneschool": 0.2
+  },
+  "wants": [
+    "schlager"
+  ],
+  "instr": [
+    "square_lead",
+    "saw_wave",
+    "synth_voice"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "lead",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    6,
+    6,
+    5,
+    5,
+    0,
+    0
+  ],
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "bassStyle": "eighths",
+  "synth": {
+    "dsp": "modeld",
+    "root": "modeld",
+    "level": 0.8,
+    "lineOnly": true,
+    "set": {
+      "cutoff": 2100,
+      "res": 0.18,
+      "envAmount": 1,
+      "envAttack": 0.004,
+      "envDecay": 0.28,
+      "envSustain": 0.6,
+      "oscMix": 0.7,
+      "drive": 0.15,
+      "glide": 18,
+      "drift": 3
+    }
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9,
+      9
+    ],
+    "s": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "p": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "h": [
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5
+    ]
+  },
+  "fill": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "intro": "bassin",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1.2,
+    "atk": 0.004,
+    "rel": 0.45,
+    "gain": 0.28,
+    "verb": 0.18
+  },
+  "words": [
+    "the sequence, never once varied",
+    "the tune, answered a third up every other bar",
+    "the vocoder chorale"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 1 && s % 2 ? [transpose(2)] : [])"
+  },
+  "fx": [
+    "echo"
+  ]
+}

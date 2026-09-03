@@ -1,0 +1,94 @@
+{
+  "note": "GEORGIAN TABLE SONG — Tbilisi 1966. The year the Tbilisi\nConservatoire taped Artem Erkomaishvili singing all three parts of\nthe chant repertory against himself, and Radio Tbilisi's cut of\nCHAKRULO — the three-part Kakhetian table song NASA later sealed\nonto the Voyager record. Three parts, unaccompanied: two upper\nvoices twining over a bass that moves like ground shifting, said\nhere as `emergent` harmony because the chords ARE the voices —\nthere is no progression anybody wrote.\n\nWHO SINGS: the motet blend — straight-toned, chested,\nthree men at one table rather than a choir in a loft.",
+  "label": "Tbilisi 1966",
+  "voices": 3,
+  "bars": 8,
+  "near": "bulgarian",
+  "plan": "arc",
+  "bpm": 76,
+  "parents": {},
+  "wants": [
+    "the svan ritual hymn (zar)",
+    "the gurian trio song"
+  ],
+  "cannot": [
+    "the krimanchuli — the yodelled top part that cracks between registers on purpose; one mouth here is one register, the same wall the mbuti row names",
+    "the tuning — Georgian thirds and fifths sit between the piano's, close enough to hear and too far to ignore, and this box is twelve-tone equal (WORLD.md §2's own wall)"
+  ],
+  "instr": [
+    "solo_vox",
+    "ahh_choir",
+    "ahh_choir"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      -2
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "emergent",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.8,
+    "atk": 0.04,
+    "rel": 1.3,
+    "gain": 0.26,
+    "verb": 0.4,
+    "mouth": {
+      "$src": "MOUTHS.motet"
+    }
+  },
+  "words": [
+    "the first voice, starting the toast alone",
+    "the second, twining against it",
+    "the bass, the ground the other two stand on"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": {
+          "$src": "[spread(0), drop(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(-2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

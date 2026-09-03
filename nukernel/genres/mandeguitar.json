@@ -1,0 +1,210 @@
+{
+  "note": "MANDE GUITAR — Bamako 1970. The Rail Band at the Buffet Hôtel de la\nGare: state-sponsored, resident, and staffed by jelis — Salif Keïta and\nMory Kanté — moving jeliya onto electric guitars and horns themselves.\nLong cyclic vamps, two guitars in an interlocking ostinato, a heptatonic\nmode, no changes.\nNAMED FOR THE BAND AND NOT FOR THE TRADITION, deliberately: the anchor\nis a guitar band and the key must not claim jeliya, which is booked on\n`wants` in its own name. AND THE EMPIRE IS NOT THE LABEL. An anchor is a\ncorrelated point across eight axes including Sound and Performance, and\nnobody can state the 13th-century values of those for Mande music: the\ntransmission is oral, so a \"Niani 1235\" label would be a year attached\nto a sound invented in 2026. Rome 600 gets away with its attribution\nbecause chant came down NOTATED; this would not.\nTHE KORA IS NOT HERE AND THAT IS THE POINT. `harp` is family-right (a\nharp-lute is a harp) and timbre-wrong — GM's soft orchestral pedal harp\nhas no attack and no ostinato bite — and `koto` would be a Japanese\nzither wearing a Malian name. Two of the three parts WOULD cast\nhonestly (`marimba` for balafon is close; `banjo` for ngoni may be the\nmost defensible stand-in in this file, since the ngoni is the banjo's\nancestor) — but the kora is the one people mean, so jeliya waits for a\nsample and Mali reaches the map through the band that was on tape.\nAGAINST KINSHASA 1960, its nearest neighbour and the other two-guitar\nanchor: Kinshasa CYCLES (I–vi–IV–V, `harmony: \"cycle\"`) and Bamako\nVAMPS (`harmony: \"modal\"`, one mixolydian chord for the whole record) —\nand the second guitar rotates by SIX rather than by four or eight, so\nits figure lands off the first's everywhere but one step of the bar.\nAn even rotation cannot say interlocking; it just says doubled.\n\nLINEAGE: a root under protest. Jeliya — the hereditary praise-singing\nthe whole band is a continuation of — is the parent, and it is not in\nthe catalog; the Afro-Cuban son the Malian orchestras played beside it\nis the other, and it is not here either.\n\"afro-cuban son\" RESOLVED 2026-08-29, congorumba's own note one\nrow over: the ancestor was in the table as `son` all along — the\nRail Band's horn book was Cuban records via the GV series — and\nthe want was a synonym. Jeliya, the bigger half, stays missing\nand named: the kora tradition has no anchor and no named dated\nrecord this catalog can cite.",
+  "label": "Bamako 1970",
+  "bars": 8,
+  "voices": 3,
+  "near": "congorumba",
+  "plan": "arc",
+  "bpm": 112,
+  "parents": {
+    "son": 0.3
+  },
+  "wants": [
+    "jeliya"
+  ],
+  "instr": [
+    "jazz_guitar",
+    "clean_guitar",
+    "trumpet"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "bassGrid": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      9,
+      4,
+      0,
+      5,
+      7,
+      4,
+      0,
+      5,
+      9,
+      4,
+      0,
+      5,
+      7,
+      4,
+      0,
+      6
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 1,
+    "atk": 0.005,
+    "rel": 0.6,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the first guitar, the ostinato",
+    "the second, six steps off it",
+    "the trumpet, the praise line"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(6)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(2), drop(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

@@ -1,0 +1,176 @@
+{
+  "note": "GOTHIC POP [The Cure]. Shoegaze's wall of reverbed guitar thinned\nback to a real pop-song hook, dorian for the bright-inside-minor\ncolour the Cure lean on, synthpop's synth-string wash filling the\ngaps a second guitar would take. Gothic rock, the scene this band is\nusually filed under, is the missing rung — this anchor is its pop\nhalf, the way gothsynth above is its synth half.\n\n\"gothic rock\" PAID 2026-08-29 (London 1979): Bela Lugosi's Dead\nis the permission slip this row's whole palette was signed on —\nthe weight comes off rock, which was covering the gap generically.\nTHE WALL OF REVERBED GUITAR IS `dreampop`'s AND IT CAME FIRST\n(2026-09-02, the catalogue round). `shoegaze` is London 1991, FOUR\nYEARS AFTER \"Just Like Heaven\" (*Kiss Me, Kiss Me, Kiss Me*, Fiction\nFIXH 13, 1987) — this row is upstream of shoegaze, not downstream of\nit, and the header above had the arrow backwards. The chorused,\nreverb-washed guitar both rows share is the Cocteau Twins':\n`dreampop` (London 1984), three years BEFORE this record.",
+  "label": "Crawley 1987",
+  "near": "shoegaze",
+  "plan": "song",
+  "bpm": 118,
+  "parents": {
+    "gothicrock": 0.35,
+    "rock": 0.25,
+    "dreampop": 0.2,
+    "synthpop": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "synth_strings_1"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1800,
+    "q": 1.6,
+    "atk": 0.015,
+    "rel": 1,
+    "gain": 0.25,
+    "verb": 0.4
+  },
+  "words": [
+    "the guitar, chorused, the hook",
+    "the strings, a wash underneath"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(2)]"
+    }
+  },
+  "fx": [
+    "chorus"
+  ]
+}

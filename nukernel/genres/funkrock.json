@@ -1,0 +1,183 @@
+{
+  "note": "FUNK ROCK [funk] — Los Angeles 1984. The Red Hot Chili Peppers, \"The\nRed Hot Chili Peppers\" (Bijou Studios, Los Angeles; EMI America,\nAugust 1984). PAUL NAMED THE BAND AND THE MAP CHOSE THE RECORD: Blood\nSugar Sex Magik is 1991 and `powerballad` holds Los Angeles 1991, so\nthe row takes the band's own debut instead — cut in Los Angeles, in a\nfree year, and seven years EARLIER, which is what lets `numetal` above\ndeclare it as an ancestor at all.\nMEASURED over 15 files (Red Hot Chili Peppers 10 · Rage Against the\nMachine 7 · Faith No More 1 — the corpus's whole funk-metal holding,\nand the RHCP files are Californication-era rather than the debut,\nwhich the row states rather than hiding). Tempo (n=15): p10 75 · p25\n84 · med 95 · p75 123. Mode 10 minor / 5 major. THE FIELD THAT NAMES\nIT is the bass histogram, and nothing else in this round looks like\nit: 9384646393748484 — an onset on FOURTEEN of sixteen steps, against\ngrunge's 9151717171717171 and poppunk's 9061807080718080, which are\neighths. That is the slap, and `bassStyle: \"sixteenths\"` is that\nnumber. Off-16 fraction 0.30, the highest of the rock rows; hat plain\neighths; snare 2120923533219136, ghosted everywhere.\n  kick  9143513171624131   snare 2120923533219136\n\nLINEAGE: `funk` (Cincinnati 1967) is the sixteenth-note hand and\nthe one-chord vamp, and it takes the largest share; `punk` (New\nYork 1976) is the speed and the shouting; `hardcore` (Washington\n1980) is the Californian half of that; `psychfunk` (Detroit 1975)\nis the fuzz guitar over the groove, which is the actual sound.\n\nTHE SLAP BASS IS A CHAIR, not a bass line: on this music the bass\nplays the tune and the guitar answers, which is the inversion the\ngenre exists to make. The generated bass underneath keeps the\nsixteenths measured above.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nRed Hot Chili Peppers, Los Angeles 1984 — this row's own act and year. The\nroots above are bVII-i-i-III: degrees 6, 0 and 2. Degree 6 IS used, which is\nwhy this row looks different from the others in the sweep — but the degree\nDORIAN exists for is 5, the natural sixth, and it is never reached, so mixo\nand dorian and aeolian all map {6,0,2} to the same three pitch classes.\nMEASURED: dorian -> aeolian moved not one rendered note. A flat-seven root\nover a minor third is a natural-minor cell and the field now says so. A vi\nchord was NOT bolted on to rescue the word: funk rock does not play one, and\ninventing a root to justify a label is the failure this check exists to\ncatch, not a way to pass it.",
+  "label": "Los Angeles 1984",
+  "near": "psychfunk",
+  "plan": "song",
+  "bpm": 95,
+  "parents": {
+    "funk": 0.4,
+    "punk": 0.25,
+    "hardcore": 0.2,
+    "psychfunk": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "slap_bass",
+    "crunch_guitar"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "lead"
+  ],
+  "roots": [
+    6,
+    0,
+    0,
+    2
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      2,
+      0,
+      3,
+      0,
+      0,
+      9,
+      0,
+      0,
+      3
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 1.8,
+    "atk": 0.003,
+    "rel": 0.25,
+    "gain": 0.29,
+    "verb": 0.18
+  },
+  "words": [
+    "the bass, slapped, every sixteenth it can reach",
+    "the guitar, answering on the off-beats"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"gate\", rotate(2))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[fill(1)]"
+    }
+  },
+  "fx": [
+    "wah"
+  ]
+}

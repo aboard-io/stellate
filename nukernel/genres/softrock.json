@@ -1,0 +1,145 @@
+{
+  "note": "WINGS — London 1973, Band on the Run. The row exists because `beatgroup`\n(Liverpool 1962) has no CHILD in this table: everything downstream of it\nis a scene rather than the same writer carrying on. This is the one act\nthat is literally the parent continued, which is why the weight on that\nedge is the heaviest here.",
+  "label": "Lagos 1973",
+  "voices": 3,
+  "bars": 8,
+  "near": "beatgroup",
+  "plan": "song",
+  "bpm": 116,
+  "parents": {
+    "beatgroup": 0.6,
+    "rock": 0.25,
+    "countrypop": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "crunch_guitar",
+    "upright_piano"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "pad"
+  ],
+  "roots": [
+    0,
+    4,
+    5,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 5,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "chorus"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 2100,
+    "q": 1,
+    "atk": 0.015,
+    "rel": 0.7,
+    "gain": 0.27,
+    "verb": 0.35
+  },
+  "words": [
+    "the voice",
+    "the guitar figure",
+    "the piano under it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(2)], [], [keep(0, 8)]][s % 4]\n                    : v === 1 ? [[], [rotate(2)], [], []][s % 4] : [drop(4)])"
+  }
+}

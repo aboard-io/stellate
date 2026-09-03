@@ -1,0 +1,171 @@
+{
+  "note": "FUNK [psychsoul]. Soul with the harmony taken away: MODAL, one dorian chord\nfor the whole record, because the groove is the song. A clavinet where\nthe Rhodes was, a sixteenth bass with a hard rest cap, ghost snares as\na velocity fact (kitVel 2s between the 9s), and the ghost lane armed.\n\nnamed \"Cincinnati 1967\" — Cold Sweat at King Records: the first\none-chord modal groove, which is exactly what this anchor is.\n\nLINEAGE: James Brown took gospel's scream and blues' shout, kept\nMotown's showband discipline, and threw the harmony away — the\none-chord groove is subtraction, and what it subtracted FROM is the\nparentage; the New Orleans second line under the kit is missing.\nAND THE ONE THING NOT TO \"FIX\" HERE, written down 2026-08-25 so the\nnext hand does not do it. The Africa round corrected afrobeat's\ninversion — Lagos 1971 had declared itself a child of this anchor —\nand the tempting second move is an African parent ON funk, to close\nthe loop. THAT WOULD BE A WORSE LIE THAN THE ONE IT REPLACED. James\nBrown did not learn from E.T. Mensah. Funk's African inheritance came\nthrough the Atlantic slave trade, the ring shout, the second line and\nthe church — three or four centuries with no place, no year and no\nrecording, so it cannot be a place-year anchor and therefore cannot\nbe a `parents` edge, because `parents` is a genealogy of THIS\nCATALOG'S ANCHORS and not of world music. The inversion disappears on\nits own now that highlife, marabi and rumba have stopped hanging off\nAmerican anchors. See blues' own `wants`, which is where the debt is\nnow named in its own words.",
+  "label": "Cincinnati 1967",
+  "swing": 0.12,
+  "near": "psychsoul",
+  "plan": "song",
+  "bpm": 100,
+  "parents": {
+    "gospel": 0.4,
+    "blues": 0.25,
+    "detroitsoul": 0.2,
+    "jumpblues": 0.15
+  },
+  "wants": [
+    "new orleans second line"
+  ],
+  "instr": [
+    "clavinet",
+    "brass_section"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "ghost": [
+    {
+      "$src": "only(\"acc\", rotate(2))"
+    }
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      0,
+      0,
+      2,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      9,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 2200,
+    "q": 2.2,
+    "atk": 0.003,
+    "rel": 0.3,
+    "gain": 0.28,
+    "verb": 0.14
+  },
+  "words": [
+    "the clavinet, chopped",
+    "the horns, rotated off the beat"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"gate\", rotate(2)), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

@@ -1,0 +1,167 @@
+{
+  "note": "HENDRIX — London 1967. \"Purple Haze\", cut at De Lane Lea and\nOlympic in the first weeks of 1967: the electric guitar's whole\nmodern vocabulary — controlled feedback, the wah pedal, the\nstudio as amplifier — arriving on one three-minute single by an\nAmerican in London. `psychsoul` (Teaneck 1973) has wanted this row\nby name since its lineage was written, and the history is\nliteral: Hendrix played in the Isley Brothers' band in 1964 and\nErnie Isley's fuzz line IS his apprenticeship paid forward.\nAn ARTIST anchor, the aor/jazzrock/synthsoul precedent: the\nstyle has no other name.\n\nLINEAGE: `blues` (Chicago 1952) is the language — the E7#9 is\na blues chord and the solos are Delta phrasing at volume —\nand `rocknroll` (St. Louis 1955) is the showman's guitar the\nchitlin' circuit taught him behind. `rock` (London 1969) is\nthis row's CHILD, not its parent, whatever the family sounds\nlike — the dates say so and the dates are right.",
+  "label": "London 1967",
+  "voices": 2,
+  "bars": 8,
+  "near": "rock",
+  "plan": "song",
+  "bpm": 104,
+  "parents": {
+    "blues": 0.5,
+    "rocknroll": 0.3
+  },
+  "wants": [
+    "the chitlin' circuit apprenticeship",
+    "curtis mayfield's guitar"
+  ],
+  "cannot": [
+    "feedback — the guitar exciting itself through the amp is a LOOP between instrument and room, and this engine's signal path has no room in it; the fuzz and wah below are the parts of the sound a chain can say"
+  ],
+  "instr": [
+    "overdrive_guitar",
+    "overdrive_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    4,
+    0,
+    0,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "harmony": "cycle",
+  "swing": 0.12,
+  "artic": "staccato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "fx": [
+    "wah",
+    "crunch"
+  ],
+  "orn": {
+    "grace": 0.3
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1.4,
+    "atk": 0.004,
+    "rel": 0.6,
+    "gain": 0.27,
+    "verb": 0.25
+  },
+  "words": [
+    "the lead, singing through the fuzz",
+    "the riff, the E7#9 chop under it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2), fill(2)], [reverse()]][s % 4]\n                    : [transpose(-5), keep(0, 3, 6, 8, 11, 14)])"
+  }
+}

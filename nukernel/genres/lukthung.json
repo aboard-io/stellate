@@ -1,0 +1,194 @@
+{
+  "note": "LUK THUNG — Bangkok 1970. Thai country song: a rural voice with a very\nwide, very slow vibrato, a small Western band behind it, and a khaen\nor a phin somewhere in the arrangement. It is the music of the Isan\nmigration to Bangkok and it is the biggest popular form in Thailand.\nTHE YEAR is the Suraphon-to-Phumphuang transition and the decade luk\nthung is named as a genre rather than described as \"songs from the\nfields\".\nTHE TUNING NEEDS A SENTENCE. Thai CLASSICAL music is seven equal\nsteps to the octave — genuinely not 12-TET and genuinely a wall — but\nluk thung is played on Western instruments in Western temperament,\nwhich is why it and not the piphat ensemble is what ships. The claim\nthis anchor makes is exactly that: the popular form, on a guitar band.\n\nWHO SINGS: the widest, latest wobble in the table, which is\nwhat a luk thung singer's ûan actually is",
+  "label": "Bangkok 1970",
+  "voices": 3,
+  "near": "countrypop",
+  "plan": "song",
+  "bpm": 100,
+  "parents": {},
+  "wants": [
+    "mo lam",
+    "thai folk song",
+    "luk krung"
+  ],
+  "cannot": [
+    "the khaen — a bamboo mouth organ whose fixed pitches are seven equal steps to the octave, which is not this box's twelve"
+  ],
+  "instr": [
+    "solo_vox",
+    "clean_guitar",
+    "brass_section"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "counter"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "eighths",
+  "orn": {
+    "grace": 0.45
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 1,
+    "atk": 0.012,
+    "rel": 0.9,
+    "gain": 0.27,
+    "verb": 0.42,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the singer",
+    "the guitar, on the cycle",
+    "the horns, answering the line"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(8), drop(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

@@ -1,0 +1,200 @@
+{
+  "note": "HYPERPOP — London 2021. Pop's own materials taken past the point where\nthey were designed to work: the supersaw at full brightness, the vocal\npitched up until it stops sounding like a body, everything short and\neverything loud. Measured against the other 129: it ties dnb and punk\nfor the fastest tempo in the table (160), sits with bleeptechno and\nbailefunk at the shortest hold (maxHold 1), and its filter is open\nwider than anything else here (cut 4200, where the next brightest is\nminimalism at 3400). All three of those ARE the genre, not production\nchoices laid over it.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nA. G. Cook, *Apple* (PC Music, London, September 2020).\n\nLINEAGE: the all-synthetic chassis and the verse-chorus discipline\nare synthpop's; the 808 sub and the stuttered hat are trap's; the\nfestival-scale supersaw lead is big room's, indoors and sped up. The\ninternet-native scenes this actually grew in — the PC Music label,\nand the sped-up \"nightcore\" edit that taught it the tempo — have no\nmusical anchor to name.\n\nTHE HAT IS NOT STEADY, which is trap's inheritance and drill's\nneighbour: the holes are where the roll starts, and they move.",
+  "bassInstr": "bass_lead",
+  "label": "London 2021",
+  "near": "synthpop",
+  "plan": "song",
+  "bpm": 160,
+  "parents": {
+    "synthpop": 0.35,
+    "trap": 0.35,
+    "bigroom": 0.3
+  },
+  "wants": [
+    "pc music",
+    "nightcore"
+  ],
+  "instr": [
+    "saw_wave",
+    "solo_vox"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "lead"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "nine"
+    },
+    {
+      "d": 5,
+      "q": "nine"
+    },
+    {
+      "d": 3,
+      "q": "nine"
+    },
+    {
+      "d": 4,
+      "q": "7"
+    }
+  ],
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitProb": {
+    "h": [
+      9,
+      4,
+      9,
+      6,
+      9,
+      4,
+      9,
+      9,
+      9,
+      6,
+      9,
+      4,
+      9,
+      9,
+      4,
+      9
+    ]
+  },
+  "fill": {
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 4200,
+    "q": 2.6,
+    "atk": 0.002,
+    "rel": 0.18,
+    "gain": 0.29,
+    "verb": 0.18
+  },
+  "words": [
+    "the supersaw, too bright and too short",
+    "the voice, pitched up an octave over it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(12), only(\"gate\", rotate(2))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

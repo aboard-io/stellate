@@ -1,0 +1,231 @@
+{
+  "note": "NU METAL [industrialmetal] — Los Angeles 2000. Linkin Park, \"Hybrid\nTheory\" (NRG Recording, North Hollywood; Warner Bros., 24 October\n2000).\nMEASURED over 130 files (Linkin Park 39 · Korn · Limp Bizkit ·\nSlipknot). Tempo (n=129): p10 88 · p25 100 · med 115 · p75 135; the LINKIN PARK subset alone (39 files)\nmedians at 110 and the row takes that. Mode 76 minor / 54 major, the only minor-leaning rock split in this round.\nTWO NUMBERS NAME IT AND NEITHER IS A GUESS. First, the bass: mean\npitch 30.9 against grunge's 33.15 and poppunk's 35.6 — two and a half\nsemitones lower than every other guitar band here, which is drop\ntuning, written into `reg` and the octave `word` below. Second, the\nchanges: the corpus's cycles are I-bII-I-bII (26) and bII-I-bII-I (28)\n— a half-step neighbour above the tonic, 54 windows between them, and\na flat second over a minor tonic is PHRYGIAN. Nothing else in the\ntable's metal wing plays it (sludge has the i-to-flat-II riff and\nsays so; this row is the same interval turned into a whole song).\n  kick  9152415251623241  — sixteenths, the busiest kick here\n  hat   9161816191618161   snare 2121802161119122\n\nLINEAGE: `industrialmetal` (Chicago 1988) is the sampled,\nmachine-tight guitar; `boombap` (New York 1994) is the rapped verse\nand the turntable, and this row is the only guitar row in the table\nthat declares it; `thrash` (San Francisco 1983) is the down-picked\nriff; `funkrock` (Los Angeles 1984) is the slap-and-riff hybrid\nsixteen years earlier in the same city; `gothicmetal` (Halifax\n1991) is the sung chorus over the shouted verse.\n\ni-bII-i-bII, the measured half-step neighbour, in PHRYGIAN.\n\nWHO SINGS: the sung chorus over the shouted verse — the one\nclean thing on the record, and the reason it sold",
+  "label": "Los Angeles 2000",
+  "near": "industrialmetal",
+  "plan": "song",
+  "bpm": 110,
+  "parents": {
+    "industrialmetal": 0.3,
+    "boombap": 0.25,
+    "thrash": 0.2,
+    "funkrock": 0.15,
+    "gothicmetal": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "distortion_guitar",
+    "saw_wave",
+    "solo_vox"
+  ],
+  "voices": 3,
+  "drumkit": "power",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 4
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -2
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "pad",
+    "lead"
+  ],
+  "roots": [
+    0,
+    1,
+    0,
+    1
+  ],
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "MODES.phrygian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      6,
+      0,
+      0,
+      4,
+      7,
+      0,
+      8,
+      0,
+      6,
+      0,
+      0,
+      4,
+      7,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1500,
+    "q": 2,
+    "atk": 0.003,
+    "rel": 0.3,
+    "gain": 0.3,
+    "verb": 0.2,
+    "mouth": {
+      "$src": "MOUTHS.poplead"
+    }
+  },
+  "words": [
+    "the guitar, the riff, dropped two octaves",
+    "the synth, holding the half-step over it",
+    "the voice, the chorus, sung"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[only(\"gate\", fill(1))]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[keep(0, 8), transpose(1)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "crunch"
+  ]
+}

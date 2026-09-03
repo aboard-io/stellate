@@ -1,0 +1,216 @@
+{
+  "note": "QAWWALI — Faisalabad 1988. Sufi devotional song: a lead voice, a party\nof men clapping and singing the refrain back, two harmoniums and a\ntabla, and a form that starts slow and accelerates for twenty minutes\nuntil the room is somewhere else.\nTHE YEAR is Nusrat Fateh Ali Khan's international recordings, when\nqawwali is on tape at length and in one place.\nWHY THIS SHIPS AND GHAZAL DOES NOT, which is the primary-fact rule\ndoing exactly the job it was written for. Qawwali's primary facts are\nthe PARTY (a lead and a chorus answering), the HARMONIUM and the\nCLAPPED CYCLE — and all three are sayable here with no stand-in at\nall: `reed_organ` is a harmonium, `ahh_choir` is a group of people\nsinging, and the `c` lane is literally handclaps. What it cannot say —\nthe sargam taan, the improvised run on solfège syllables that a lead\nqawwal builds the ecstatic section out of — is in `cannot`, and it is\nan ornament, not the identity. Ghazal's missing fact is the identity.\nAND THE ACCELERATION IS IN `cannot` TOO. A qawwali speeds up across\nits whole length and nothing in this file can say so: `pace` is a\nWORLD.md §6 phase-2 field and does not exist yet, and `plan: \"arc\"` is\nthe nearest shape available — a form that builds, at one tempo.\n\nLINEAGE: a ROOT under protest. The parents are the Chishti sama\ntradition and Amir Khusrau's synthesis of Persian and Indian song,\nseven centuries back and unplaceable as anchors. `filmi` is named at\na small weight and in one direction only — the recorded, arranged,\nthree-minute qawwali of the late twentieth century learned its\nproduction from the film studio, which is a real and dateable debt\nand is NOT a claim about where the music comes from.\n\nTHE HANDCLAPS ARE HANDCLAPS AND THE TABLA IS NOT A TABLA. `c` is the\nparty clapping on the beat, which is exact; `p` and `k` are the\ntabla's keherwa again, with the same bol loss filmi declares. There\nis no kit and no bass — `nobass` — because a qawwali party has\nneither, and the harmonium's left hand is the only low sound in it.\n\nWHO SINGS: a tenor pushed hard with real air in it and the\nwobble arriving late — and the party behind him is the\nROOM row, ragged on purpose, because a qawwali party is a\ngroup of men and not a section",
+  "label": "Faisalabad 1988",
+  "voices": 3,
+  "bars": 8,
+  "near": "gospel",
+  "plan": "arc",
+  "bpm": 104,
+  "parents": {
+    "filmi": 0.25
+  },
+  "wants": [
+    "sama",
+    "khusrau's qaul",
+    "kafi"
+  ],
+  "cannot": [
+    "the sargam taan — the improvised run on solfège syllables that is what a lead qawwal DOES, and this box writes composed lines",
+    "the acceleration across the whole form, which needs a per-section pace and this file writes one tempo"
+  ],
+  "instr": [
+    "solo_vox",
+    "ahh_choir",
+    "reed_organ"
+  ],
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    3,
+    4,
+    4,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "nobass": true,
+  "orn": {
+    "grace": 0.55,
+    "approach": 0.3
+  },
+  "kit": {
+    "c": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  "kitVel": {
+    "c": [
+      9,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 0.9,
+    "atk": 0.015,
+    "rel": 1.2,
+    "gain": 0.27,
+    "verb": 0.56,
+    "mouth": {
+      "$src": "MOUTHS.qawwal"
+    }
+  },
+  "words": [
+    "the lead qawwal",
+    "the party, answering the refrain",
+    "the harmonium, under both"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2), transpose(-5)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

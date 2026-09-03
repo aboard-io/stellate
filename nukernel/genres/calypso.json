@@ -1,0 +1,231 @@
+{
+  "note": "CALYPSO — Port of Spain 1956. The calypsonian's verse-and-refrain over\na band, and the record that gives this anchor its year is \"Jean and\nDinah\" — Sparrow's Road March and Carnival win, and the moment the\nform went from the tent to the world.\nTHE STEEL PAN IS REAL AND IT IS THE THIRD ID THIS ROUND UNLOCKS.\n`steel_drums` is a licensed on-disk registry id with a parent window\nof [52,84], and no anchor in the catalog had said its name — so the\none instrument the world associates with Trinidad has been sitting on\nthe shelf unreachable. What is NOT claimed here is a steelband\n(Tier 2, above): an orchestra of tuned oil drums in four sections is\nnot one chair playing a pan sample.\n\nLINEAGE: a ROOT. Calypso's parents are the kaiso of the Carnival\ntents, the French-Creole belair and the chantwell tradition, and the\ncatalog holds none of the three. `mento` (Kingston 1952) is a\nsibling and a cousin, not an ancestor, and it is `near` for exactly\nthat reason — the resemblance goes in the field that means resemblance.\n\nTHE IRON IS THE HAT LANE. A calypso band's timekeeper is a brake\ndrum hit with a bolt — the \"iron\" — and it plays a two-bar figure,\nnot an even pulse; what is lost is that it is a piece of scrap metal\nand rings like one. The congas take the toms, as everywhere in this\nbatch.",
+  "label": "Port of Spain 1956",
+  "voices": 3,
+  "near": "mento",
+  "plan": "song",
+  "bpm": 120,
+  "parents": {},
+  "wants": [
+    "kaiso",
+    "belair",
+    "chantwell song"
+  ],
+  "cannot": [
+    "a steelband — four sections of tuned oil drums answering each other is an orchestra, and this is one chair with a pan sample on it"
+  ],
+  "instr": [
+    "solo_vox",
+    "steel_drums",
+    "trumpet"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    "m": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "h": [
+      9,
+      0,
+      5,
+      6,
+      0,
+      5,
+      7,
+      0,
+      9,
+      0,
+      5,
+      6,
+      0,
+      5,
+      7,
+      0
+    ]
+  },
+  "fill": {
+    "m": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2800,
+    "q": 1,
+    "atk": 0.004,
+    "rel": 0.55,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the calypsonian",
+    "the pan, answering the line",
+    "the trumpet, on the refrain"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(12), rotate(4), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

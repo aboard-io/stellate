@@ -1,0 +1,195 @@
+{
+  "note": "VALLENATO — Valledupar 1975. The other Colombian accordion music, and\nthe argument for holding both is that they are not the same ensemble:\na vallenato is THREE PEOPLE — a diatonic button accordion, a caja\nvallenata and a guacharaca — where the cumbia above is an orchestra.\nThree players and one of them is the whole harmony.\nTHE YEAR is the Festival de la Leyenda Vallenata era and the decade\nthe paseo became a national radio form; the tradition is older and was\nsung by walking men with no recording near it, which is the same shape\nof claim marabi's entry makes about the 1920s.\nTHE ACCORDION IS NOT A STAND-IN. It is the instrument, and the ONE\nthing lost is that a vallenato accordion is DIATONIC — two rows, a\ndifferent note pushing than pulling — which is why its runs go where\nthey go. The registry's accordion is chromatic and will play anything.",
+  "label": "Valledupar 1975",
+  "voices": 2,
+  "near": "cumbia",
+  "plan": "song",
+  "bpm": 108,
+  "parents": {
+    "cumbia": 0.5
+  },
+  "wants": [
+    "paseo campesino",
+    "colonial spanish décima"
+  ],
+  "cannot": [
+    "the diatonic accordion's push-pull — a bisonoric button box cannot play every note in both directions, and that is what shapes a vallenato run"
+  ],
+  "instr": [
+    "accordion",
+    "steel_string_guitar"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    4,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      8,
+      4,
+      5,
+      4,
+      7,
+      4,
+      5,
+      4,
+      8,
+      4,
+      5,
+      4,
+      7,
+      4,
+      5,
+      5
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2500,
+    "q": 1.1,
+    "atk": 0.01,
+    "rel": 0.6,
+    "gain": 0.27,
+    "verb": 0.26
+  },
+  "words": [
+    "the accordion, the whole harmony and the tune",
+    "the guitar, doubling the run an octave down"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(-12), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

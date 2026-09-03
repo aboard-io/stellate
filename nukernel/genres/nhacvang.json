@@ -1,0 +1,164 @@
+{
+  "note": "NHẠC VÀNG — Ho Chi Minh City 1968. \"Golden music\": the Vietnamese\nsentimental song of the pre-1975 south, sung slowly over a bolero\nrhythm — literally a bolero, borrowed from Latin America through\nFrench colonial radio and kept as the national ballad feel ever since.\nTHE CITY IS SPELLED HO CHI MINH CITY THOUGH THE RECORD SAYS 1968,\nwhen it was Saigon. That is the Kinshasa precedent applied unchanged:\natlas.js gate G3 enforces ONE SPELLING PER PLACE and a second name for\nthe same coordinates would put two dots where there is one city. The\nold name is in this comment, which is where a historical fact that is\nnot a map dot belongs.\nITS RHYTHM IS ITS COUSIN'S. The kit below is the bolero anchor's own\ncinquillo, which is not a coincidence to be hidden — it is the\ndocumented route, and putting the two anchors' `p` lanes side by side\nis the clearest thing this catalog can say about it.\n\n\"french chanson\" PAID 2026-08-30, the folk-floor round:\n`chanson` (Paris 1936) — the colonial radio's other voice.",
+  "label": "Ho Chi Minh City 1968",
+  "voices": 3,
+  "near": "bolero",
+  "plan": "song",
+  "bpm": 70,
+  "parents": {
+    "bolero": 0.45,
+    "crooner": 0.25,
+    "chanson": 0.2
+  },
+  "wants": [
+    "cải lương",
+    "ca trù"
+  ],
+  "cannot": [
+    "the đàn bầu's monochord glide — one string and a lever, all pitch and no fret, which is the continuous gesture WORLD.md §5.3 says this box has no channel for"
+  ],
+  "instr": [
+    "solo_vox",
+    "nylon_string_guitar",
+    "strings"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "roots": [
+    0,
+    5,
+    1,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "octaves",
+  "kit": {
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "h": [
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.85,
+    "atk": 0.02,
+    "rel": 1.3,
+    "gain": 0.26,
+    "verb": 0.46,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the singer",
+    "the guitar, between the lines",
+    "the strings, underneath"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(5), rotate(8), drop(3)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

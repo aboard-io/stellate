@@ -1,0 +1,149 @@
+{
+  "note": "---- TWENTY-THREE MORE ROOMS ------------------------------\nPaul named artists; every anchor below is the STYLE the artist stands\nfor, never the artist and never a transcription (SOURCES.md's\nprovenance law holds exactly as it did for the ancestors). Six of the\ntwenty-three are built OF a synthesizer and are given one — a real Faust\nvoice with a resonant filter, not a sampled stand-in wearing the name —\nand the rest go the other way, close-mic'd sampled instruments played\nclean. Both are the same discipline: the instrument IS the genre.\n\nMUSIC HALL ROCK [The Kinks]. A rock band playing vaudeville changes —\nI-vi-IV-V, the oldest hook in the songbook — on a bright upright piano\nwith the guitar doubling the turn. Skiffle's amateur string-band energy\nis where the Kinks actually came from; doo-wop supplies the close vocal-\ngroup harmony a music-hall chorus leans on. The Edwardian stage\ntradition itself — the songs Ray Davies was actually parodying — has no\nanchor here yet.\n\nWHO THE BASS IS, AND HERE IT IS A PAIR OF HANDS (2026-09-02, the\ncatalogue round). The new `bassInstr` field is not only for machines:\nthis row was playing the sampled upright by default, which is the\nwrong RECORDING as much as the wrong lane, and naming the right one is\nthe honest edit even though it moves no `instrumentation` score.\nThe Kinks, \"Sunny Afternoon\" (Pye, London, June 1966): Pete Quaife's\ndescending line IS the hook, and it is a plectrum on an electric bass.\n\nPAID 2026-08-29, the debts round: \"music hall\" is\n`musichall` (London 1892) — the Kinks row is that stage wearing\nan amplifier, its own comment's claim since the day it landed.\nTHE ROCK PARENT WAS THREE YEARS YOUNGER THAN THE ROW (2026-09-02,\nthe catalogue round): `rock` is London 1969 and \"Dead End Street\"\n(Pye 7N 17222, London, November 1966) and \"Sunny Afternoon\" (Pye,\nJune 1966) are 1966 records. The band that cut them was a BEAT GROUP\n— \"You Really Got Me\" (Pye, 1964) is the beat single that put the\npower chord on the radio — so the share goes to `beatgroup`\n(Liverpool 1962), four years before this row instead of three years\nafter it. Same weight, and the loud-guitar claim survives it: the\nguitar this row is famous for is the one on that 1964 single.\n\nBASS STYLE: eighths, not a walk — the oom-pah two-beat a music-hall\npiano actually plays, and it happens to be the field that keeps this\nanchor clear of janglepop's own walking bass (both are I-vi-IV-V\nmajor-key guitar-pop; the census gate measures a genre by everything\nit renders, and a shared bass hand was most of what was left un-said).",
+  "bassInstr": "picked_bass",
+  "label": "Muswell Hill 1966",
+  "plan": "song",
+  "bpm": 118,
+  "parents": {
+    "beatgroup": 0.45,
+    "skiffle": 0.3,
+    "doowop": 0.25,
+    "musichall": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "upright_piano",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.22
+  },
+  "words": [
+    "the piano, the vaudeville turn",
+    "the guitar, doubling the hook an octave under"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(2), drop(2), transpose(-12)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

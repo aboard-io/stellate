@@ -1,0 +1,91 @@
+{
+  "note": "SACRED HARP — Philadelphia 1844, and it is the SIXTH unaccompanied\nanchor in the catalog and the FIRST outside a church hierarchy.\nShape-note singing: four parts, everybody in a hollow square facing\ninward, the tune in the TENOR and not the top part, open fourths and\nfifths everywhere, and no instrument of any kind.\nTHE YEAR AND THE CITY ARE THE PUBLICATION and the comment is where\nthat belongs: B. F. White and E. J. King's *The Sacred Harp* was\ncompiled in Harris County, Georgia and PRINTED in Philadelphia in\n1844. The singing is southern and the book is Philadelphian, and the\ncatalog already holds Philadelphia, so this dot is both the true one\nand the one that does not add a village to the map.\nTHIS ANCHOR IS A PROBE AND THAT IS HALF ITS VALUE. compose.js's\n`unaccompanied` predicate is DERIVED — no kit, no bass, every id in\n`instr` a sung one — and it was written on 2026-08-25 knowing five\nrecords. This entry was written without touching it and must fall into\nthat set by its own three fields, which means the record hires no\nguest and seats no instrument. If the law were a name list it would\nnot, and the gate below says which of the two it is.\nTHE TUNE IS IN THE TENOR, which is the fact that makes shape-note\nmusic sound the way it does: the melody is the THIRD voice down, with\na part above it, so the top line is a countermelody and the chords come\nout in open fourths and fifths rather than in triads. `reg` puts voice\n0 in the middle and voice 1 above it, which is that inversion.\n\nLINEAGE: `hymn` (Boston 1831) is thirteen years earlier, is the same\ncountry and is genuinely the neighbour — and it is named UNDER\nPROTEST at less than half, because shape-note singing is the OLDER\ntradition of the two in everything but print: it comes out of the\neighteenth-century New England singing school and William Billings,\nand the Boston 1831 hymnal is the REFORM that was trying to replace\nit. Naming the reformer as the parent of the thing it reformed is\nbackwards, and the weight says so.\n\nWHO SINGS: everybody, loudly, in a wooden room, and not\nwell. The hymnal row is the nearest and it is too polite;\nthis one is the same alto placement with the blend pushed\npast the gospel choir's — the loosest in the table — because\na Sacred Harp singing is a hundred untrained people at full\nvolume and the raggedness is the sound, not a defect in it.",
+  "label": "Philadelphia 1844",
+  "voices": 4,
+  "bars": 8,
+  "near": "hymn",
+  "plan": "song",
+  "bpm": 96,
+  "parents": {
+    "hymn": 0.4
+  },
+  "wants": [
+    "new england singing school",
+    "william billings",
+    "psalm tune"
+  ],
+  "instr": [
+    "ahh_choir",
+    "ohh_voices"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      1,
+      -1,
+      -2
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "roots": [
+    0,
+    0,
+    4,
+    0,
+    3,
+    0,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 3,
+  "incClamp": 2,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 0.7,
+    "atk": 0.05,
+    "rel": 1.6,
+    "gain": 0.26,
+    "verb": 0.5,
+    "mouth": {
+      "$src": "MOUTHS.shapenote"
+    }
+  },
+  "words": [
+    "the tenor, who has the tune",
+    "the treble, above it",
+    "the alto",
+    "the bass"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[transpose([0, 5, -4, -9][v]), drop(3)]"
+    }
+  }
+}

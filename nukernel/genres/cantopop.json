@@ -1,0 +1,203 @@
+{
+  "note": "CANTOPOP — Hong Kong 1984. The Cantonese ballad and mid-tempo pop of\nthe eighties: a synthesiser and a drum machine, a big reverbed\narrangement, and a melody that has to fit Cantonese's six tones, which\nis a constraint no other pop tradition works under.\nTHE YEAR is Leslie Cheung and Anita Mui's breakout — the moment\nCantopop stops being a local variant of Mandarin pop and becomes the\nregional standard.\nAND THE TONE CONSTRAINT IS A PERMANENT LIMITATION, NOT A QUEUE ITEM,\nand it is the same one the African round wrote down for the same\nreason: a Cantopop melody must not fight the lexical tone of its own\nlyric, and `deg` in this kernel is \"SIGNED and alphabet-free… never an\nabsolute pitch\" (kernel.js:8), which is precisely the property that\nstops a TEXT constraining it. It is in `cannot` and it will stay there.\n\nLINEAGE: Shanghai 1940 is the Chinese-language pop song itself —\nthe shidaiqu singers moved to Hong Kong in 1949 and took the\nindustry with them, which is a migration and not a resemblance —\nand Tokyo 1984 is the eighties production. `crooner` is the third\nbecause the Cantopop ballad's microphone technique is that record's.\n(`powerballad`, Los Angeles 1991, was the obvious third and is SEVEN\nYEARS LATER than this label; a parent that postdates its child is\nexactly the kind of claim the fit tool on `main` cannot know is\nloose talk.)",
+  "label": "Hong Kong 1984",
+  "voices": 3,
+  "near": "citypop",
+  "plan": "song",
+  "bpm": 96,
+  "parents": {
+    "shidaiqu": 0.35,
+    "citypop": 0.35,
+    "crooner": 0.3
+  },
+  "wants": [
+    "cantonese opera"
+  ],
+  "cannot": [
+    "a melody bound to the lyric's own lexical tone — `deg` is signed and alphabet-free and never an absolute pitch, which is exactly what stops a text constraining it"
+  ],
+  "instr": [
+    "solo_vox",
+    "polysynth",
+    "warm_pad"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "octaves",
+  "fx": [
+    "chorus"
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1,
+    "atk": 0.02,
+    "rel": 1.2,
+    "gain": 0.26,
+    "verb": 0.58,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the singer",
+    "the synth, answering the line",
+    "the pad, holding the chord"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(4), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

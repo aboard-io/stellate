@@ -1,0 +1,216 @@
+{
+  "note": "ROCKSTEADY — Kingston 1966, and it is the rung the catalog was missing\nbetween Kingston 1962 and Kingston 1969: `reggae` has declared\n`wants: [\"rocksteady\", ...]` since it was written.\nTHE YEAR is the summer Alton Ellis cut \"Rock Steady\" and the whole\nisland slowed down — attributed to a heatwave, which is charming and\nis not evidence; what IS evidence is that the tempo drops by half and\nthe bass becomes the lead instrument in the space of one season.\nWHAT SEPARATES IT FROM ITS TWO NEIGHBOURS, in fields, because three\nKingston anchors within seven years is exactly where a catalog starts\nlying: ska (1962) runs at 156 with the horns on the off-beat and the\ndrums walking; rocksteady is 78 with the snare on 3 alone and a\nWRITTEN, melodic, syncopated bass line — `bassStyle: \"sixteenths\"` is\nthe nearest word for a part that busy; reggae (1969) puts the kick\nback on 3 with it (the one drop) and takes the organ's shuffle away.\n\nLINEAGE: ska is the band and the island; detroitsoul is the other half\nand it is not a guess — Jamaican producers were cutting versions of\nDetroit records that year and the bass writing comes straight off\nthem.\n\nTHE SNARE IS ON 3 AND NOWHERE ELSE, which is the whole rhythmic\nclaim: no backbeat, one cross-stick in the middle of the bar, and\nthe guitar's skank filling 2 and 4 instead of the drummer.",
+  "label": "Kingston 1966",
+  "voices": 3,
+  "near": "reggae",
+  "plan": "song",
+  "bpm": 78,
+  "parents": {
+    "ska": 0.6,
+    "detroitsoul": 0.4
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "percussive_organ",
+    "trombone"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "pad",
+    "lead"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "h": [
+      7,
+      0,
+      4,
+      0,
+      7,
+      0,
+      4,
+      0,
+      7,
+      0,
+      4,
+      0,
+      7,
+      0,
+      5,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 1,
+    "atk": 0.008,
+    "rel": 0.7,
+    "gain": 0.27,
+    "verb": 0.34
+  },
+  "words": [
+    "the guitar, skanking on 2 and 4",
+    "the organ, holding the chord",
+    "the trombone, on the head"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(-5), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

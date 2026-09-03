@@ -68,45 +68,36 @@ const NP = require(path.join(ROOT, "nukernel/precompose.js"));
 const GENRES = NG.GENRES;
 
 /* ---------------------------------------------------------------------------
- * 1 · THE ROW'S OWN TEXT — the comment, and the closures as source
+ * 1 · THE ROW'S OWN TEXT — the comment
  *
  * The comment is not decoration: 21 rows carry a "MEASURED over N files (…)"
  * line naming the artists the corpus round profiled, and that list is the only
  * record of WHICH files a row was written from. Without it every row falls back
  * to a word search, and the report says which strategy answered.
+ *
+ * IT IS READ FROM THE ROW, NOT SCRAPED OUT OF genres.js (2026-09-02, the
+ * inversion). This function used to walk the 27,000 lines of nukernel/genres.js
+ * counting brackets and deciding which lines were comment-only, because the
+ * prose lived in a comment and a comment is not data. It is data now:
+ * `nukernel/genres/<key>.json` carries the whole argued block as `note`, and
+ * the shipped genres.js is GENERATED from it (nukernel/GENRES.md). So the
+ * scraper is gone and its two failure modes with it — a row it could not find,
+ * and a comment it attributed to the wrong row.
+ *
+ * `line` is null and stays null. A row's address is its FILE now, and a line
+ * number into a generated artifact is a number about the emitter's layout
+ * rather than about the catalogue. The column survives in the schema
+ * (tools/genre-qa/load.py) because dropping a column is a migration; nothing
+ * reads it.
  * ------------------------------------------------------------------------ */
 function rowText() {
-  const src = fs.readFileSync(path.join(ROOT, "nukernel/genres.js"), "utf8");
-  const lines = src.split("\n");
-  // per line: is every non-blank character of this line inside a comment?
-  const commentOnly = new Array(lines.length).fill(false);
-  let inBlock = false;
-  for (let i = 0; i < lines.length; i++) {
-    const L = lines[i];
-    let code = "", j = 0;
-    const blockAtStart = inBlock;
-    while (j < L.length) {
-      if (inBlock) {
-        const e = L.indexOf("*/", j);
-        if (e < 0) { j = L.length; } else { j = e + 2; inBlock = false; }
-      } else if (L.startsWith("/*", j)) { inBlock = true; j += 2; }
-      else if (L.startsWith("//", j)) { j = L.length; }
-      else { code += L[j]; j++; }
-    }
-    commentOnly[i] = (blockAtStart || /^\s*(\/\/|\/\*)/.test(L)) && !code.trim();
-  }
+  const dir = path.join(ROOT, "nukernel/genres");
   const out = {};
-  const START = /^ {4}([A-Za-z0-9_]+): \{$/;
-  for (let i = 0; i < lines.length; i++) {
-    const m = START.exec(lines[i]);
-    if (!m || !GENRES[m[1]]) continue;
-    let end = i;
-    for (let j = i + 1; j < lines.length; j++) {
-      if (/^ {4}\},?$/.test(lines[j])) { end = j; break; }
-    }
-    let s = i;
-    while (s > 0 && (commentOnly[s - 1] || !lines[s - 1].trim())) s--;
-    out[m[1]] = { line: i + 1, endLine: end + 1, comment: lines.slice(s, i).join("\n") };
+  for (const gk of Object.keys(GENRES)) {
+    const f = path.join(dir, gk + ".json");
+    if (!fs.existsSync(f)) continue;
+    const row = JSON.parse(fs.readFileSync(f, "utf8"));
+    out[gk] = { line: null, file: "nukernel/genres/" + gk + ".json", comment: row.note || "" };
   }
   return out;
 }

@@ -1,0 +1,164 @@
+{
+  "note": "ANALOG SYNTH POP [Depeche Mode, Speak & Spell era]. THE FILTER IS\nOPEN: a `tb303` set bright and low-resonance (waveform square, envmod\nshallow) is the exact opposite performance from acid's squelch — thin,\nsequenced, unmistakably one monosynth rather than a band. Synthpop's\nanthem changes and dusseldorfschool's machine chassis argue the rest; disco's\nfour-on-the-floor gives it a dance floor to live on. New romantic\nsynth-pop, the wider scene this record broke out of, is missing.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nDepeche Mode, \"New Life\" (Mute, Basildon, June 1981).\n\nITS OWN ARPEGGIO (2026-08-31): the early Basildon machine runs up under the song.\n\n\"Basildon 1980\" — the year the band itself formed (as Composition of\nSound); \"Basildon 1981\" was already synthpop's own label, and\ngothsynth below takes \"Basildon 1990\" for the same band nine years on.\n\na verse-chorus record on a different synthesizer is still a\nverse-chorus record; 124 lands inside two bpm of madchester and indie\ndance on purpose — that IS the early-90s crossover the three argue\nabout from different rooms\n\nTHE PARENT WAS THE SAME BAND, ONE YEAR LATER (2026-09-02, the\ncatalogue round). `synthpop` is \"Basildon 1981 — early Depeche Mode\"\nand this row is \"Basildon 1980 — Depeche Mode, Speak & Spell era\":\none band, one town, and an edge running FORWARDS in time from a row\nto its own next year. What Vince Clarke was actually writing from is\nDüsseldorf's verse-chorus machine pop — `roboticpop` (Düsseldorf\n1978, \"Das Model\") — two years before this row, and it takes the\nshare whole.\nTHE LABEL YEAR STAYS 1980 AND IS DELIBERATE: this row's record is\n*Speak & Spell* (Mute STUMM 5, 5 October 1981, and \"Dreaming of Me\",\nMute MUTE013, February 1981 before it), and 1981 is already\n`synthpop`'s label for the same town. 1980 is the year the band\nbecame Depeche Mode; the label comment above says so, and moving it\nonto 1981 would put two anchors on one dot for no gain.\n\n\"unmistakably one monosynth rather than a band\" — so a thin square\nsequence out front and a poly behind it, and not a choir patch. The\ntb303 below plays both voices; these are the names the desk shows and\nthe sounds a recast chair gets, and they should agree with the record.",
+  "bassInstr": "bass_lead",
+  "seqArp": "arpup",
+  "label": "Basildon 1980",
+  "near": "synthsoul",
+  "plan": "song",
+  "bpm": 124,
+  "parents": {
+    "roboticpop": 0.5,
+    "dusseldorfschool": 0.3,
+    "disco": 0.2
+  },
+  "wants": [
+    "new romantic synth pop"
+  ],
+  "instr": [
+    "square_lead",
+    "polysynth"
+  ],
+  "drumkit": "cr78",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "synth": {
+    "dsp": "tb303",
+    "root": "tb303",
+    "level": 0.85,
+    "set": {
+      "cutoff": 3400,
+      "resonance": 0.22,
+      "envmod": 0.28,
+      "decay": 0.5,
+      "waveform": 1
+    }
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 3000,
+    "q": 1.6,
+    "atk": 0.003,
+    "rel": 0.3,
+    "gain": 0.27,
+    "verb": 0.18
+  },
+  "words": [
+    "the sequence, thin and bright, the hook",
+    "the strings, a wash answering underneath"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

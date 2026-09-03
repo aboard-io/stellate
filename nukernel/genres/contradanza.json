@@ -1,0 +1,113 @@
+{
+  "note": "CONTRADANZA — Havana 1803. \"San Pascual Bailón\", the earliest\nsurviving dated Cuban contradanza — anonymous, printed in\nHavana, already carrying the tango-congo lilt in the bass that\nthe whole Caribbean would inherit. TWO rows have wanted \"the\ncuban contradanza (saumell)\" since their lineages were written —\n`habanera` (Havana 1860) and `danzon` (Matanzas 1879) — and\nManuel Saumell (1818-1870), the want's own parenthesis, is the\nform's master: fifty-odd contradanzas that are the first\ngenuinely creole art music in Cuba. Both rows take the parent\ntoday; the date is the anonymous print's, because the table\ndates by document.\n\nSaumell's contradanzas are danced piano pieces — no singer\n\nLINEAGE: a declared root. The French contredanse arrived with\nthe Saint-Domingue refugees and the Spanish country dance\nbefore them — a ballroom trade, not an anchored music; named\nbelow, not invented.\n\nTHE FORM IS TWO STRAINS SAID TWICE — AABB, the dance's own law.",
+  "instrumental": true,
+  "label": "Havana 1803",
+  "voices": 2,
+  "bars": 8,
+  "near": "habanera",
+  "plan": "song",
+  "bpm": 96,
+  "parents": {},
+  "wants": [
+    "the french contredanse the saint-domingue refugees carried to oriente"
+  ],
+  "instr": [
+    "yamaha_grand_piano",
+    "violin"
+  ],
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  "drumkit": "acoustic",
+  "harmony": "cycle",
+  "roots": [
+    0,
+    4,
+    0,
+    4,
+    3,
+    0,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "swing": 0.1,
+  "bassStyle": "eighths",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.9,
+    "atk": 0.01,
+    "rel": 0.5,
+    "gain": 0.25,
+    "verb": 0.3
+  },
+  "words": [
+    "the piano, the eight-bar strain",
+    "the violin, doubling and turning above"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [], [transpose(2)], [transpose(2)]][s % 4]\n                    : [rotate(2), transpose(2)])"
+  }
+}

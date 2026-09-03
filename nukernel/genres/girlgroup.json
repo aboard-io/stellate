@@ -1,0 +1,155 @@
+{
+  "note": "THE BRILL BUILDING — New York 1960. \"Will You Love Me Tomorrow\",\nGoffin and King, cut by the Shirelles in New York in 1960 and\nthe first number one by a girl group: songcraft as day labor —\ncubicles, pianos, a demo by five — welded to four voices out of\nPassaic. TWO debts are paid at this row: `songwriterpiano` (New\nYork 1971) has wanted \"brill building pop\" since its lineage\nwas written (King's own Tapestry is the cubicle writer stepping\nout front), and `punk` (New York 1976) has wanted \"girl groups\"\n— the Ramones' whole melodic half is this record at double\nspeed, and the Shirelles are the form's founding case. Both\ntake the parent today.\n\nLINEAGE: `tinpanalley` (New York 1924) is the same building\ntrade a generation on — literally the same blocks of\nBroadway; `doowop` (Harlem 1955) the vocal-group sound the\ncraft was poured into.\n\nWHO SINGS: the doowop stack — the Shirelles are four\nvoices close together, and the stack is the fact.",
+  "label": "New York 1960",
+  "voices": 3,
+  "bars": 8,
+  "near": "doowop",
+  "plan": "song",
+  "bpm": 104,
+  "parents": {
+    "tinpanalley": 0.4,
+    "doowop": 0.3
+  },
+  "wants": [
+    "the aldon music office itself (1650 broadway)"
+  ],
+  "instr": [
+    "solo_vox",
+    "ohh_voices",
+    "strings"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "prog": {
+    "$src": "PROGS.soul7"
+  },
+  "roots": [
+    0,
+    5,
+    3,
+    4,
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "artic": "legato",
+  "maxHold": 3,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 0.8,
+    "atk": 0.01,
+    "rel": 0.7,
+    "gain": 0.25,
+    "verb": 0.4,
+    "mouth": {
+      "$src": "MOUTHS.doowopstack"
+    }
+  },
+  "words": [
+    "the lead, the question the title asks",
+    "the group, answering behind",
+    "the strings, the uptown dress"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)]][s % 3]\n                    : v === 1 ? [keep(0, 4, 8, 12)]\n                    : [drop(8)])"
+  }
+}

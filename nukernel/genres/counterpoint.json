@@ -1,0 +1,51 @@
+{
+  "note": "COUNTERPOINT — the species exercise, and deliberately NOT the fugue. A\nfugue is four voices, staggered, each with its own word; this is two\nvoices that start together and are locked in CONTRARY MOTION for the whole\npiece: where one rises the other falls, because that is what invert(4)\nmeans. It is the smallest complete statement of the idea the fugue then\nelaborates, and having both makes the difference legible.\n---- \"WHY IS COUNTERPOINT IN 1725\" (Paul, 2026-08-29) -----------------\nTHE DATE IS RIGHT AND THE NAME IS WRONG, and the second half is the\nanswer. 1725 is Johann Joseph Fux's *Gradus ad Parnassum*, published in\nVienna that year: the species method — a given cantus firmus, one voice\nadded to it under rules, one species at a time — and the species method\nis exactly and only what the fields below implement. Two voices, same\nrhythm, contrary motion, the cantus stating itself alone first. Every\nnumber in this row is Fux's.\nWHAT IS WRONG IS THAT THE ROW IS CALLED `counterpoint`. Read in the\natlas's chronological list — which is where Paul read it — the line says\n\"counterpoint · 1725\", and that sentence claims a textbook invented a\npractice that was already eight centuries old. Counterpoint as a\npractice starts with organum around 900 (this table dates its own at\nParis 1200), runs through Machaut, Josquin and Palestrina, and was\nfinished as an art form roughly a century BEFORE Fux sat down to\ndescribe it. The table already knew this and said it twice: `polychoral`'s\nlineage note (\"the label years invert — Fux's 1725 textbook CODIFIES the\nPalestrina-era practice Tallis worked in\") and `chorale`'s, added the\nsame day. Two rows apologising for a third row's label is the tell.\nTHE FIX IS TO THE DISPLAY AND NOT THE KEY, and here is the accounting,\nbecause \"just rename it `species`\" was the first instinct and it is\nwrong. The key `counterpoint` is a JOIN, not a label. It is read by\ncompose.js (LAYERABLE, four GUEST_LEAN rows, the confusion matrix),\nprecompose.js (IDIOM_ANCHOR), atlas.js (WHEN), songs.js (nine\nword-to-genre rows: \"at the fifth\", \"in contrary motion\", \"in\nretrograde\"…), keys-kit.js, ideas-kit.js, wiki.js, and by two anchors in\nthis file as a declared parent. A key rename is a nine-file change to\nbuy one better word on one screen. So the row keeps its key and the\nthree things a reader actually SEES were rewritten instead: this\ncomment, the `words` below (which the page prints per voice and which\nnow say \"species\" and \"cantus firmus\" out loud), and the wiki row's\n`why`. The one display fix that was NOT available: `Species\ncounterpoint` is not an article in the ZIM, it is a redirect to\n`Counterpoint#Species_counterpoint`, and wiki-extract.js rejects a\nsection-with-a-fragment by its own rule — a line in an article is not\nthis row's article.\nAND THE GENEALOGY IS THE OTHER HALF OF THE ANSWER. `wants: [\"organum\"]`\nsat here after organum landed on 2026-08-21, so the one row that could\nhave said \"this practice is five hundred years older than my label\"\nwasn't saying it. Organum is now a declared parent at equal weight with\nchant, which means the chronological list Paul was reading shows this\nrow descending from Paris 1200 — and that, rather than any change of\ndate, is what stops \"counterpoint · 1725\" reading as an origin story.\n\nTHE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP\n(2026-09-02, the catalogue round). The QA report's `instrumentation`\ncolumn counts a chair as NATIVE when `audio/to-engine.js\npatchForInstr()` names a Faust module for its id, and this row seats\nZERO of them — one of twelve in the table. Twelve rows were read one\nby one and every one of them came back the same way: there is no\nmodel in the fleet of the instrument this music is played on, and\nthere should not be. `organic: true` is that answer said out loud, so\nthe report can stop scoring an honest recording as a failure and can\nstart telling the twelve apart from the machine genres that were\nseating a sampled upright by accident.\nTHIS ROW: J. J. Fux, *Gradus ad Parnassum* (Vienna, 1725), the book this\nrow implements species by species. A harpsichord is a plucked body\nand there is no plucked-keyboard model in the fleet.\n\nnamed \"Vienna 1725\" — Fux's Gradus ad Parnassum, published in Vienna\nthat year. THE LABEL DATES THE BOOK, NOT THE PRACTICE, exactly as\n`nuba`'s \"Tetouan 1790\" dates al-Ha'ik's songbook and not the nuba.\nSee the paragraph above: this is a codification date and the row's\nparents are where the music is.\n\nLINEAGE: the cantus firmus IS a chant-shaped line — Fux's whole\nmethod is rules for adding a voice to one, which is organum's move\nformalized five centuries later. ORGANUM IS A PARENT NOW (2026-08-29)\nand not a wish: it has been Paris 1200 in this table since\n2026-08-21, and a `wants` entry naming a row that exists is a\nshopping list nobody crossed off. This said \"even weights\" until\n2026-08-29, when the genealogy round landed `isorhythm` (Florence\n1436) and the five-century jump this row's own long paragraph\napologizes for — organum 1200 straight to a 1725 textbook — got\nits missing middle: Fux codifies Palestrina, who learned from\nJosquin's generation, who learned from Du Fay's. The two old\nclaims keep their ratio (1:1); the new weight is the century the\npractice actually matured in.\n\nthe cantus states itself before anything\n\nTHE WORDS SAY \"SPECIES\" BECAUSE THE KEY CANNOT (2026-08-29, and the\nlong paragraph above is why). These two strings are what the page\nprints beside each voice, so they are the row's real name on the\nscreen: a cantus firmus, and one voice added to it by rule.\n\nTHE AXIS IS THE HARMONY. Both voices play the same rhythm, so every\nnote is a simultaneity and the vertical interval is decided entirely by\nwhere the mirror is: invert(c) sends degree d to c-d, so the two voices\nSUM to a constant and the interval is a function of that sum alone.\nMeasured over the composed banks, sums 2, 3 and 6 (mod 7) are the three\nthat put a semitone or a tritone on a common degree — and the old word,\ninvert(4) with transpose ±2, used sums 6 and 2, which is the worst axis\nin the scale and the second worst. Sum 6 alone contributes two tritones\nand a minor seventh on the tonic degree; what that sounds like is two\nharpsichords out of tune with each other.\nMirror about the third (sum 5) and about the tonic (sum 0) instead. The\nalternation survives — it is what makes bar two a different bar — and\nthe piece is now 35% thirds and sixths with no unprepared clash at all,\nwhich is what first-species contrary motion is supposed to sound like.\nWritten as two inversions rather than an inversion plus a transpose\nbecause the sum is the only thing that was ever doing any work.",
+  "organic": true,
+  "label": "Vienna 1725",
+  "plan": "arc",
+  "bpm": 100,
+  "parents": {
+    "gregorian": 0.35,
+    "organum": 0.35,
+    "isorhythm": 0.3
+  },
+  "wants": [],
+  "instr": "harpsichord",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "from",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "emergent",
+  "intro": "solo",
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "tone": {
+    "wave": "square",
+    "cut": 2800,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.6,
+    "gain": 0.22,
+    "verb": 0.3
+  },
+  "words": [
+    "the cantus firmus, given",
+    "the species: one voice added by rule, in contrary motion"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [] : [invert(s % 2 ? 0 : 5)])"
+  }
+}

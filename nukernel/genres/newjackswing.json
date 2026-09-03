@@ -1,0 +1,217 @@
+{
+  "note": "NEW JACK SWING — New York 1987. Teddy Riley's production of\nKeith Sweat's \"I Want Her\" (with \"My Prerogative\" and Guy's\ndebut inside the following year): the SP-1200's swung sixteenth\nshuffle under gospel-stacked synth chords — R&B's drums handed\nto hip-hop's machines, which is the whole genre in one clause.\n`hiphopsoul` (Charlotte 1991) has wanted \"new jack swing\" by name\nsince its lineage was written — Devante Swing's name is a\nhomage — and takes it as a parent today.\n\nLINEAGE: `electro` (New York 1982) is the machine lineage the\nSP-1200 sits in; `gospel` the chord stacks and the melisma;\n`detroitsoul` the pop discipline Riley kept while the drums\nhardened.",
+  "label": "New York 1987",
+  "voices": 3,
+  "bars": 8,
+  "near": "hiphopsoul",
+  "plan": "song",
+  "bpm": 108,
+  "parents": {
+    "electro": 0.35,
+    "gospel": 0.3,
+    "detroitsoul": 0.2
+  },
+  "wants": [
+    "the sp-1200's swung sixteenth",
+    "uptown's harlem r&b"
+  ],
+  "instr": [
+    "polysynth",
+    "solo_vox",
+    "electric_piano"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "pad",
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    5,
+    1,
+    4,
+    0,
+    5,
+    1,
+    4
+  ],
+  "prog": {
+    "$src": "PROGS.jack7"
+  },
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "swing": 0.28,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      7,
+      0,
+      4,
+      5,
+      0,
+      6,
+      4,
+      0,
+      7,
+      5,
+      0,
+      4,
+      6,
+      0,
+      4,
+      5
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2500,
+    "q": 1.1,
+    "atk": 0.005,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.poplead"
+    }
+  },
+  "words": [
+    "the stack, hit like a drum",
+    "the hook, sung hard",
+    "the keys, answering the snare"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [drop(4)]\n                    : v === 1 ? [[], [fill(2)], [rotate(2), fill(2)]][s % 3]\n                    : [transpose(-3), keep(2, 6, 10, 14)])"
+  }
+}

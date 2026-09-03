@@ -1,0 +1,129 @@
+{
+  "note": "PSYCHEDELIC ROCK — San Francisco 1966. The Trips Festival,\nLongshoremen's Hall, the 21st to 23rd of January 1966: the\nGrateful Dead and Big Brother under Kesey's strobes, ten\nthousand through the door, the dance-hall scene assembling in\npublic — the named, dated performance where the San Francisco\nsound became a scene. `jamband` (San Francisco 1972) has wanted\n\"psychedelic rock\" since its lineage was written — it is this\nrow six years on, same city, same band — and takes the parent\ntoday.\n\nLINEAGE: `garagerock` (Portland 1963) is the band standard\nthe ballroom groups started at; `blues` (Chicago 1952) the\nmaterial they stretched. The raga records in every crash pad\nare real and unanchored; named below.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nThe Trips Festival, Longshoremen's Hall, San Francisco, 21-23 January 1966 —\nthis row's own dated performance. The row is modal (a one-chord jam is the\npoint), so the mode reached nothing; and SCALES.majpent has a MAJOR third,\nwhich dorian, a minor mode, cannot be a name for. Ionian is the mode that\npentatonic is five notes of.\n\nONE MODE, LONG FORM: the development is a journey out and\nback — rotate, stretch, invert, return.",
+  "label": "San Francisco 1966",
+  "voices": 2,
+  "bars": 8,
+  "near": "jamband",
+  "plan": "song",
+  "bpm": 112,
+  "parents": {
+    "garagerock": 0.4,
+    "blues": 0.3
+  },
+  "wants": [
+    "the raga records in the crash pads (shankar at monterey)"
+  ],
+  "instr": [
+    "overdrive_guitar",
+    "rock_organ"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "legato",
+  "maxHold": 3,
+  "fx": [
+    "echo",
+    "tremolo"
+  ],
+  "bassStyle": "eighths",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2200,
+    "q": 1.3,
+    "atk": 0.01,
+    "rel": 0.8,
+    "gain": 0.25,
+    "verb": 0.45,
+    "mouth": {
+      "$src": "MOUTHS.poplead"
+    }
+  },
+  "words": [
+    "the guitar, the tune leaving home",
+    "the organ, holding the mode open"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(3)], [spread(2)], [invert(3)], [fill(2)], []][s % 6]\n                    : [drop(9)])"
+  }
+}

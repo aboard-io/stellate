@@ -1,0 +1,181 @@
+{
+  "note": "KHMER ROCK — Phnom Penh 1970. Cambodian rock and roll: surf guitar and\na Farfisa organ under a Khmer vocal, made in a two-year window before\nthe musicians who made it were killed. Sinn Sisamouth, Ros Serey\nSothea, Pan Ron.\nTHE YEAR is the peak of the Phnom Penh scene, and the honest thing to\nnote beside it is that the recordings survive as tape copies rather\nthan as masters — the archive is a diaspora reconstruction. That does\nnot change the date; it changes what \"documented\" means here, and a\nreader is entitled to know which.\nWHAT SEPARATES IT FROM `psychpop` (London 1968), which is the nearest\nthing in the catalog by sound: the melody. This anchor reads its\nsubject through a five-note alphabet where London reads seven, so the\nsame guitar band plays a line that MOVES half again as far per step —\nthe same device zema uses against Rome and shidaiqu uses against its\nown dance band.",
+  "label": "Phnom Penh 1970",
+  "voices": 3,
+  "near": "psychpop",
+  "plan": "song",
+  "bpm": 124,
+  "parents": {
+    "psychpop": 0.35,
+    "rock": 0.3
+  },
+  "wants": [
+    "khmer folk song",
+    "mahori"
+  ],
+  "instr": [
+    "clean_guitar",
+    "percussive_organ",
+    "solo_vox"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "pad",
+    "lead"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "fx": [
+    "tremolo"
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2700,
+    "q": 1.3,
+    "atk": 0.005,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.44,
+    "mouth": {
+      "$src": "MOUTHS.poplead"
+    }
+  },
+  "words": [
+    "the guitar, with the tremolo on it",
+    "the organ, holding the chord",
+    "the singer"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(8), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

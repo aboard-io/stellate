@@ -1,0 +1,180 @@
+{
+  "note": "RUMBA CATALANA — Barcelona 1970. The Catalan Roma rumba: a nylon\nguitar played with the VENTILADOR — a fanning right hand that strums\nand slaps the top at once — a bass, palmas, and a sung refrain. Peret,\nGato Pérez, and the Gràcia and Hostafrancs Roma neighbourhoods.\nTHE YEAR is Peret's national breakthrough.\nWHY THIS AND NOT FLAMENCO. Flamenco's primary fact is the COMPÁS — the\nsoleá and the bulería are twelve beats accented 3-6-8-10-12, which\nthis file cannot write at all — so under the primary-fact rule the\nname does not ship, and it is in Tier 2 above with that reason. The\nrumba is the corner of the same family that IS in four, because it\ncame back from Cuba in four; claiming the 4/4 corner and saying so is\nwhat the whole round does with tuning, applied to metre.\nTHE PALMAS ARE HANDCLAPS AND ARE EXACT — the `c` lane is literally\nhandclaps, the same free hit qawwali gets — and the ventilador's slap\non the guitar top is the rim, which is not.\n\n\"gitano palo\" PAID 2026-08-30, the folk-floor round: `flamenco`\n(Granada 1922) — the rumba flamenca is a palo, and the palo's\nown row now exists.",
+  "label": "Barcelona 1970",
+  "voices": 2,
+  "near": "rai",
+  "plan": "dance",
+  "bpm": 116,
+  "parents": {
+    "son": 0.4,
+    "flamenco": 0.3
+  },
+  "wants": [
+    "flamenco rumba",
+    "guaracha"
+  ],
+  "cannot": [
+    "the flamenco compás — twelve beats accented 3-6-8-10-12, which is why the round ships the rumba and not the soleá"
+  ],
+  "instr": [
+    "nylon_string_guitar",
+    "solo_vox"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "lead"
+  ],
+  "roots": [
+    0,
+    4,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "MODES.phrygian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "octaves",
+  "kit": {
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      9,
+      0,
+      4,
+      5,
+      0,
+      4,
+      7,
+      0,
+      9,
+      0,
+      4,
+      5,
+      0,
+      4,
+      7,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2900,
+    "q": 1.1,
+    "atk": 0.003,
+    "rel": 0.4,
+    "gain": 0.27,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.skiffler"
+    }
+  },
+  "words": [
+    "the guitar, the ventilador",
+    "the singer, over the palmas"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(4), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

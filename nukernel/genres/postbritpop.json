@@ -1,0 +1,162 @@
+{
+  "note": "POST-BRITPOP [britpop] — London 2000. Coldplay, \"Parachutes\"\n(Parlophone, 10 July 2000; Wessex and Matrix, London). The scene word\nfor what happened when Britpop's swagger left and the piano arrived.\nMEASURED over 140 files (Coldplay 52 · Travis · Keane · Muse ·\nStereophonics). Tempo across the whole set (n=139): p10 72 · p25 88 ·\nmed 120 · p90 140 — but the median is Muse's, not this record's. The\nCOLDPLAY subset alone (52 files, n=51 with tempo) reads p10 70 · p25\n85 · med 123, and the median there is the later stadium era: the\nParachutes-era files sit at the p25, so the row takes 88. Mode 77\nmajor / 63 minor. Held notes median 2.92 and p90 15.9, the longest of\nthe rock rows here — this music SUSTAINS where britpop strums. The\ncorpus's cycles are pedals: I-I-I-I (390), IV-IV-IV-IV (192),\nVI-VI-VI-VI (154) — one chord a bar, held, which is exactly the\nharmonic rhythm below (four bars, four roots, nothing inside a bar).\n  kick  9142315171513141   snare 2111912242219122\n  hat   8384948494839483  — sixteenths, not britpop's eighths\n\nLINEAGE: `britpop` (Manchester 1994) is the parent scene by name;\n`shoegaze` (London 1991) is the delayed, washed guitar this music\ntook from the other 90s British wing; `songwriterpiano` (New York\n1971) is the instrument that arrived with it and the reason the\ntunes stopped being riffs.",
+  "label": "London 2000",
+  "near": "britpop",
+  "plan": "song",
+  "bpm": 88,
+  "parents": {
+    "britpop": 0.4,
+    "shoegaze": 0.3,
+    "songwriterpiano": 0.3
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "upright_piano"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "roots": [
+    0,
+    3,
+    5,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 8,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 1,
+    "atk": 0.01,
+    "rel": 1.3,
+    "gain": 0.26,
+    "verb": 0.42
+  },
+  "words": [
+    "the guitar, two notes a bar, falling",
+    "the piano, holding the chord under it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[keep(0, 8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "echo"
+  ]
+}

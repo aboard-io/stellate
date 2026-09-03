@@ -1,0 +1,212 @@
+{
+  "note": "KIZOMBA — Luanda 1995. Angola's slow couple dance: semba's language at\nhalf the speed, with a drum machine and a Caribbean lilt in the bass.\nThe catalog has never held an Angolan record.\nTHE YEAR is the mid-nineties, when the name settles and the form is\ndistinct from semba on record rather than in a dance hall.\nLINEAGE: `worldfolk` IS NOT NAMED HERE, which is worth saying out loud\nin an entry that could easily have taken it: the parents are semba\n(Luanda, absent, on `wants`) and the Antillean zouk of Kassav', which\nis Tier 2 above because no dot for it can be proved on land. So this\nanchor is honestly PARENTLESS on its Caribbean side and says so\nrather than conscripting the nearest African anchor.",
+  "label": "Luanda 1995",
+  "voices": 3,
+  "near": "rai",
+  "plan": "song",
+  "bpm": 92,
+  "parents": {},
+  "wants": [
+    "semba",
+    "zouk",
+    "kilapanga"
+  ],
+  "instr": [
+    "clean_guitar",
+    "polysynth",
+    "solo_vox"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "pad",
+    "lead"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      8,
+      0,
+      4,
+      5,
+      7,
+      0,
+      4,
+      5,
+      8,
+      0,
+      4,
+      5,
+      7,
+      0,
+      4,
+      6
+    ]
+  },
+  "fill": {
+    "p": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 1,
+    "atk": 0.01,
+    "rel": 0.8,
+    "gain": 0.26,
+    "verb": 0.4
+  },
+  "words": [
+    "the guitar, picking the cycle",
+    "the synth pad under it",
+    "the singer"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(4), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

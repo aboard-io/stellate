@@ -1,0 +1,167 @@
+{
+  "note": "RETRO FUNK POP [funk]. Funk's clavinet-and-horns groove wired to a\npop song that actually MOVES: where `funk` is one dorian chord for the\nwhole record because the groove is the song, this resolves a real\nI-vi-IV-V every four bars — the field that separates a funk pastiche\nfrom the funk band it is impersonating.\n\n116, the Graceland-era lope worldfolk sits at too\n\nLINEAGE: the clavinet-and-horns vocabulary is funk's, played over\nMotown's song discipline (a real changing progression rather than a\nvamp) with disco's four-on-the-floor pop polish underneath.\n\nA TRUE ANSWER, not a doubling: `complement(\"gate\")` fires the horns\nexactly where the clavinet does not, so the two never land on the\nsame step and cannot read as one hook stated twice.",
+  "label": "Los Angeles 2013",
+  "swing": 0.1,
+  "near": "funk",
+  "plan": "song",
+  "bpm": 116,
+  "parents": {
+    "funk": 0.45,
+    "detroitsoul": 0.3,
+    "disco": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "clavinet",
+    "brass_section"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 5,
+      "q": "7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    },
+    {
+      "d": 4,
+      "q": "7"
+    }
+  ],
+  "maxHold": 2,
+  "artic": "staccato",
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 2200,
+    "q": 1.8,
+    "atk": 0.003,
+    "rel": 0.35,
+    "gain": 0.28,
+    "verb": 0.16
+  },
+  "words": [
+    "the clavinet, on the changes",
+    "the horns, answering — the phrase's own gate, complemented"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"gate\", complement(\"gate\"))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

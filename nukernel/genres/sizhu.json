@@ -1,0 +1,171 @@
+{
+  "note": "JIANGNAN SIZHU — Shanghai 1920. The \"silk and bamboo\" clubs of the\nteahouses around Shanghai and Suzhou: eight or so amateurs, no\nconductor, no audience to speak of, playing the eight great pieces\nfor each other. The canonical one is \"Zhonghua liuban\", which is the\nskeletal tune \"Laoliuban\" played at half the speed with twice the\nnotes — a process the tradition names, *fangman jiahua*, \"slow it\ndown and add flowers\".\nTHIS IS THE BEST FIT IN THE WHOLE BLOCK AND IT IS WORTH SAYING WHY.\nSizhu's identity is HETEROPHONY: every player plays the same tune,\nsimultaneously, differently, each according to what their instrument\ndoes well. That is not something this box approximates — it is\nliterally the kernel's mechanism, one subject read by several voices\nthrough different operator words, which is how `organum` and\n`arsnova` are built. And *fangman jiahua* is `rate` and `fill`.\nFour of the eight axes land exactly: Material (one skeletal tune),\nDevelopment (each voice ornaments it its own way), Cast (a club, not\na section), Time (the halving is the variation).\n\nthe row's own header: \"Ming and Qing instrumental suites\"\n\nLINEAGE: a declared ROOT. The repertory's own ancestors are the\nMing and Qing instrumental suites and the regional opera\nensembles, and none of them is an anchor. `shidaiqu` (Shanghai\n1940) is a CHILD twenty years later and in the same city, not a\nparent, and this row does not claim it.\n\nTHE CAST IS THE HONEST HALF, AND IT GOT HONESTER — the erhu is\nREAL as of 2026-08-30, and the sentence that stood here is quoted\nrather than quietly edited because a stand-in becoming an\ninstrument is the only kind of catalog change worth dating:\n  \"THE CAST IS THE HONEST HALF: `dulcimer` for a yangqin is not an\n   approximation at all — a yangqin IS a hammered dulcimer, the same\n   instrument that reached China from Persia — and `flute` for a\n   dizi and `fiddle` for an erhu are the right TYPE with the wrong\n   body. Only the pipa is a guess, and a nylon-string guitar is at\n   least a fretted plucked lute.\"\n\"The right TYPE with the wrong body\" was exactly right about\n`fiddle` (GM 110) and it is the clause that expired. There is an\nerhu now — engine/faust/dsp/erhu.dsp, a bowed waveguide on a\nCIRCULAR MEMBRANE — and it is a model rather than a recording\nbecause it could not be a recording: every soundfont in this tree\nis GM bank 0, 128 presets, measured, and GM has no Chinese\ninstrument in it at all. What the swap buys, in the gate's own\nnumbers (test/erhu.test.js, and re-measured on THIS row's seat):\n  · THE BODY STAYS PUT. `fiddle` on this chair put its loudest\n    partial at 294 Hz for a D4 and 2349 Hz for a D5 — ×8.0, the\n    fundamental for one note and the FOURTH HARMONIC for the note\n    an octave up, because the two are different zones of a\n    six-recording font and nothing is holding them together. That\n    is not a body: a body cannot even follow the note that far.\n    The erhu puts it at\n    1175 Hz for the D4 and 1175 Hz for the D5: ×1.00, the same\n    python-skin bump both times, which is what a body IS. (Measured\n    through recipeFor on THIS seat, the erhu gate's own E4a method:\n    the loudest harmonic, at 1.2 s into a held note.)\n  · IT IS BOWED RATHER THAN REPLAYED. The late half of a held note\n    measures 0.97 of the early half; the sample measured 1.22,\n    which is a recording's own swell and not this player's arm.\n  · VELOCITY IS THE BOW ARM. MODEL_DYN.erhu moves `force` 0.42..1\n    and `speed` 0.14..0.34, and E6 measures that as a TIMBRE change,\n    where a zone's velocity is a fader.\n  · AND THE PORTAMENTO HAS A DOOR. `slideParam: \"glide\"`, 0.09 s, on\n    a waveguide whose delay length IS its pitch — so hua yin bends a\n    sounding string. Nothing below CLAIMS a hua yin yet and this\n    row does not pretend to one: the door is on the unit, and the\n    score still has to ask — no `sld` is written anywhere in this\n    row. What changed is that asking is now possible; it was not.\nWhat did NOT change: the dizi and the pipa. `flute` is still a\nWestern concert flute with no dimo (first `cannot` clause, untouched)\nand `nylon_string_guitar` is still a guess at a pipa. The cast is now\nTWO honest ids, one real instrument and one guess, where it was one\nhonest id and three approximations. And the other three seats did\nnot MOVE: re-measured after the swap, the flute, the dulcimer and\nthe guitar come back at the identical loudest partial, centroid,\nlate/early ratio and RMS they had before it (294/587, 294/1175,\n881/1175 Hz), which is what \"seat one instrument\" is supposed to mean.\nAND ONE THING THE SWAP COSTS, DECLARED RATHER THAN LEFT TO BE HEARD.\nThe erhu arrives QUIET. Measured at A4, velocity 7, through the\nrenderer's own gain chain on both sides (the model's `gain` from\nto-engine pitchAmp, the bow arm from MODEL_DYN.erhu, times the route\ntrim toEngine writes, against the sampler's `u.lvl × amp` on the dry\nbus): the erhu delivers 0.00317 RMS where the `fiddle` it replaces\ndelivered 0.01713 — a 14.7 dB drop on this seat, on the row whose\nwhole identity is FOUR AUDIBLE VOICES playing one tune four ways.\nIt is not this file's number to fix and it has a named owner that\npredicted this exact morning: audio/to-engine.js PAGE_TRIM.erhu is\n1.78, borrowed from stk_guitar's row, and its own comment says\n\"DERIVED, not measured on the page… will need re-measuring the first\ntime a record casts it — which nothing does yet\". A record casts it\nnow. Closing the 14.7 dB from that row alone is 1.78 → 9.63, which\nis the neighbourhood the two other DERIVED rows already sit in\n(voice_lead 8.2, tract_voice 9.7) — so the number is plausible and it\nis still a MEASUREMENT somebody has to take, not one to type here.\ninstruments.js's own `mul` cannot do it: the model lane clamps\n`level` at 0.345 against this row's 0.2415, which is +3.1 dB of the\n14.7, and borrowing another table's lever would move the target the\nreal measurement has to land on.\n\nTHE BAN, and only the ban: a clapper marking the strong beat and\nthe drum tapping the weak ones. There is no drum kit in a sizhu\nclub and `drumkit` is deliberately unset.",
+  "instrumental": true,
+  "label": "Shanghai 1920",
+  "voices": 4,
+  "bars": 8,
+  "near": "arsnova",
+  "plan": "song",
+  "bpm": 78,
+  "parents": {},
+  "wants": [
+    "kunqu instrumental music",
+    "the eight great pieces",
+    "shifan gong-and-drum music"
+  ],
+  "cannot": [
+    "the dimo — a dizi's tone is a rice-paper membrane buzzing over a hole, and the flute below is a Western concert flute with none of it",
+    "off-grid ornament — the heterophony here is real (four voices, one tune, four different words) but every player's added flower lands on this box's sixteenth-note grid, where a real club's do not, which is why the four of them agree more tidily than eight amateurs ever have"
+  ],
+  "instr": [
+    "flute",
+    "erhu",
+    "dulcimer",
+    "nylon_string_guitar"
+  ],
+  "entry": {
+    "kind": "formula",
+    "src": "v => (v < 2 ? 0 : v - 1)"
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      0,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "counter",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    4,
+    4,
+    5,
+    5,
+    0,
+    0
+  ],
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "harmony": "modal",
+  "artic": "legato",
+  "maxHold": 2,
+  "nobass": true,
+  "orn": {
+    "pass": 0.35
+  },
+  "kit": {
+    "p": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2700,
+    "q": 0.8,
+    "atk": 0.012,
+    "rel": 0.9,
+    "gain": 0.23,
+    "verb": 0.35
+  },
+  "words": [
+    "the dizi, the tune with the most flowers on it",
+    "the erhu, the same tune, sustained",
+    "the yangqin, the same tune, struck twice as often",
+    "the pipa, the same tune, plucked on the bones of it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(2), rotate(1)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[fill(1)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[keep(0, 2, 4, 6, 8, 10, 12, 14)]"
+    }
+  }
+}

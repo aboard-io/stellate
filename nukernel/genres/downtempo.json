@@ -1,0 +1,170 @@
+{
+  "note": "THIEVERY CORPORATION — Washington 1996. Sounds from the\nThievery Hi-Fi (first released 1996; ESL Music, the label\nnamed for the Eighteenth Street Lounge where Garza and Hilton\nmet over a shared shelf of dub and bossa records): sitar and\nRhodes over dub bass at lounge tempo, Washington's fourth\nrecord and its first since hardcore — the same city, sixteen\nyears and an entire temperature apart. The ZIM's own lead\nnames the guests (Pam Bricker, Bebel Gilberto), so the row is\nNOT declared instrumental: singers are welcome at this door\nand always were.\n\nLINEAGE: `dub` (Kingston 1973) is the bass and the echo;\n`bossa` (Rio de Janeiro 1958) the other half of the shared\nshelf — Gilberto's own daughter sings on the record;\n`acidjazz` (London 1988) the club economy that made a lounge\na label.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nThievery Corporation, SOUNDS FROM THE THIEVERY HI-FI (ESL Music, Washington,\n1996) — this row's own record. Sitar and Rhodes over a dub bass that sits on\nthe tonic: `harmony: \"modal\"`, no chord cycle, so dorian's natural sixth had\nno root to arrive on. MEASURED decorative; the field now names what plays.",
+  "label": "Washington 1996",
+  "voices": 3,
+  "bars": 8,
+  "near": "viennadownbeat",
+  "plan": "dance",
+  "bpm": 84,
+  "parents": {
+    "dub": 0.4,
+    "bossa": 0.25,
+    "acidjazz": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "sitar",
+    "rhodes_ep",
+    "warm_pad"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "swing": 0.2,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 1600,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1.3,
+    "gain": 0.24,
+    "verb": 0.5
+  },
+  "words": [
+    "the sitar, a borrowed raga over a dub bass",
+    "the rhodes, the lounge's own upholstery",
+    "the pad, incense in the air conditioning"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [spread(2)], [transpose(2)], [rotate(3)]][s % 4]\n                    : v === 1 ? [[fill(2)], [fill(2)], [rotate(2)], [fill(2)]][s % 4]\n                    : [drop(10)])"
+  }
+}

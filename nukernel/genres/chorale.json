@@ -1,0 +1,135 @@
+{
+  "note": "CHORALE — Nuremberg 1586. Lucas Osiander's *Fünfftzig geistliche\nLieder und Psalmen*, the collection that did the one thing this row\nis: it put the hymn tune in the TOP voice and harmonised it note\nagainst note underneath, so a congregation could sing the melody and\na choir could sing the rest. Everything before it kept the tune in\nthe tenor where the congregation could not find it.\nTHE YEAR IS THE INVENTION AND NOT THE FAMOUS EXAMPLE. The chorale\neverybody can hum is Bach's — \"O Haupt voll Blut und Wunden\",\nharmonised five separate times inside one St Matthew Passion,\nLeipzig 1727 — and Leipzig 1727 was the first draft of this label.\nIt was wrong for exactly the reason `counterpoint`'s label is wrong\n(see that row, rewritten the same day): dating a practice by its\nmost-taught specimen makes a textbook or a masterpiece look like the\nmoment of invention. Bach is the best user of this row's technique\nand Osiander is where it starts.\nTHE AXES. Development is the interesting one: THERE IS NONE. The\ntune is stated once, straight, and never transformed — `word` returns\nan empty list for the melody voice on every section, which nothing\nelse in this table does. What moves is the HARMONY under a fixed\nline, which is the exact inverse of the fugue two rows up, and having\nboth is what makes either legible.\n\nLINEAGE: half the chorale melodies ARE plainsong with German words\non them (Luther set Veni redemptor gentium himself), and the\nfour-part vocal writing Osiander harmonised the tune in is the\nFranco-Flemish choirbook's.\nTHE BACKWARDS EDGE IS GONE (2026-09-02, the catalogue round). This\ndeclared `counterpoint: 0.5` — Vienna 1725, a HUNDRED AND\nTHIRTY-NINE YEARS after Osiander's *Fünfftzig geistliche Lieder und\nPsalmen* (Nuremberg 1586) — and then explained that the inversion\nwas forgivable because Fux's label is a publication date on an older\npractice. That was the only reading available before `francoflemish`\n(Venice 1502) existed; it exists now, and it is the practice itself\nrather than a book about it. AND IT IS THE MORE EXACT CLAIM: what\nOsiander did was take the four-part texture the Josquin generation\nwrote and STRIP THE IMITATION OUT of it, so the congregation could\nfind the tune on top — a subtraction from a thing that has to be\nthere first. `polychoral` (1570), which came the same way, was\nre-pointed at the same row on the same day.\n\nFOUR PARTS, AND THE CADENCE IS THE POINT: every second bar arrives\nsomewhere, and the last two are the perfect cadence this whole\nidiom exists to teach.\n\nWHO SINGS: the hymnal row — a congregation, not a choir,\nwhich is the whole social fact Osiander was arranging for",
+  "label": "Nuremberg 1586",
+  "voices": 4,
+  "bars": 8,
+  "near": "hymn",
+  "plan": "song",
+  "bpm": 72,
+  "parents": {
+    "gregorian": 0.5,
+    "francoflemish": 0.5
+  },
+  "wants": [
+    "the lutheran hymnal",
+    "the meistersinger's bar form"
+  ],
+  "cannot": [
+    "the fermata at the end of every line — a chorale BREATHES between phrases and the pause is not in the metre; this grid has sixteen steps a bar and no way to say 'everybody stops here for as long as the organist wants'",
+    "the text — a chorale is a strophic HYMN and which syllable falls on which note is the composition (WORLD.md §5.7); the mouth below sets a vowel and a syllable rate and that is a crude proxy, described as crude"
+  ],
+  "instr": "ahh_choir",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "from",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "cycle",
+  "intro": "solo",
+  "roots": [
+    0,
+    4,
+    0,
+    5,
+    3,
+    0,
+    4,
+    0
+  ],
+  "prog": [
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 4,
+      "q": "triad"
+    },
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 5,
+      "q": "triad"
+    },
+    {
+      "d": 3,
+      "q": "triad"
+    },
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "triad"
+    }
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 2,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 0.8,
+    "atk": 0.05,
+    "rel": 1.6,
+    "gain": 0.2,
+    "verb": 0.7,
+    "mouth": {
+      "$src": "MOUTHS.hymnal"
+    }
+  },
+  "words": [
+    "the tune, in the top voice, unaltered",
+    "the alto, filling",
+    "the tenor, filling",
+    "the bass, walking the cadence"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(-2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(-4), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[keep(0, 4, 8, 12), transpose(-7)]"
+    }
+  }
+}

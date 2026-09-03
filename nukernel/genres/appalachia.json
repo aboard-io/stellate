@@ -1,0 +1,63 @@
+{
+  "note": "APPALACHIAN BALLADRY — Hot Springs 1916. Cecil Sharp and Maud\nKarpeles in Jane Hicks Gentry's kitchen, Hot Springs, North\nCarolina, August 1916: seventy songs from one singer, the spine of\nENGLISH FOLK SONGS FROM THE SOUTHERN APPALACHIANS. The row is the\nLondon 1666 ballad two centuries and an ocean on — the same genus,\nparents say so — sung higher, harder and more gapped (the\n\"lonesome\" sound is the pentatonic-leaning modal reading below).\n\n\"the scots-irish fiddle at the crossing\" PAID 2026-08-30, the\nunlocking round: `scotsfiddle` (Edinburgh 1796) is at the foot of\nthis file. It is a SMALL weight and deliberately so — this row is\nthe SUNG half, a Madison County ballad singer with nothing under\nher, and what the Gow assemblies gave her is the tune stock and\nthe modal habit, not the band. `oldtime` one row down takes the\nlarger share because a fiddle tradition parents a fiddle band.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nCecil Sharp and Maud Karpeles in Jane Hicks Gentry's kitchen, Hot Springs,\nNorth Carolina, August 1916 — this row's own collecting trip, seventy songs\nfrom one singer. The row's comment says \"pentatonic-leaning\" and the row\nplays SCALES.majpent, whose third is MAJOR: dorian is a minor mode and could\nnot have been a name for it. Its parent `ballad` (London 1666) genuinely is\ndorian and now sings it — this row is the gapped pentatonic descendant and\nsays so instead of borrowing the parent's word.",
+  "label": "Hot Springs 1916",
+  "voices": 1,
+  "bars": 8,
+  "near": "ballad",
+  "plan": "song",
+  "bpm": 70,
+  "parents": {
+    "ballad": 0.6,
+    "scotsfiddle": 0.1
+  },
+  "wants": [
+    "the border ballads themselves"
+  ],
+  "instr": "solo_vox",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "legato",
+  "maxHold": 3,
+  "orn": {
+    "grace": 0.3
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.8,
+    "atk": 0.02,
+    "rel": 0.9,
+    "gain": 0.26,
+    "verb": 0.26,
+    "mouth": {
+      "$src": "MOUTHS.trobar"
+    }
+  },
+  "words": [
+    "the ballad, high and lonesome, verse on verse"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => [[], [transpose(2)], [fill(1), drop(2)], []][s % 4]"
+  }
+}

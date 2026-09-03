@@ -1,0 +1,66 @@
+{
+  "note": "THE WINCHESTER TROPER — Winchester 1000. Two manuscripts copied\nfor the Old Minster around the millennium, holding about a\nhundred and fifty two-voice organa — the earliest PRACTICAL\ncollection of polyphony anywhere: not a treatise's worked\nexample but a singer's book, a second voice written to be sung\nagainst the chant on the feast days of a named cathedral.\n`organum` (Paris 1200) takes it as a parent today — Notre-Dame\ndid not invent singing in parts, it industrialized a practice\nthis book proves two centuries older (edge closed 2026-08-29).\n\nLINEAGE: chant carrying its own shadow — and the sequence\nrepertory is IN the troper, which is why the edge is real.",
+  "label": "Winchester 1000",
+  "voices": 2,
+  "bars": 8,
+  "near": "organum",
+  "plan": "arc",
+  "bpm": 72,
+  "parents": {
+    "gregorian": 0.55,
+    "sequence": 0.25
+  },
+  "wants": [
+    "the musica enchiriadis — the treatise the practice learned its intervals from"
+  ],
+  "cannot": [
+    "the neumes' own ambiguity — the troper's notation records gesture, not pitch, and every modern performance is a reconstruction; this row sings ONE reading and says so"
+  ],
+  "instr": [
+    "ahh_choir",
+    "ahh_choir"
+  ],
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "emergent",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2100,
+    "q": 0.8,
+    "atk": 0.05,
+    "rel": 1.6,
+    "gain": 0.22,
+    "verb": 0.6,
+    "mouth": {
+      "$src": "MOUTHS.plainchant"
+    }
+  },
+  "words": [
+    "the chant, held steady",
+    "the vox organalis, below at the fourth, closing to unison"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)]][s % 2]\n                    : [transpose(-3), keep(0, 2, 4, 6, 8, 10, 12, 14)])"
+  }
+}

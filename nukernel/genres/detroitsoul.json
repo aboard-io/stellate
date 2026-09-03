@@ -1,0 +1,241 @@
+{
+  "note": "MOTOWN [beatgroup]. Both are bright sixties three-minute machines; the\nfield that separates them is the SNARE ON ALL FOUR — the Funk Brothers'\nstamp, with the tambourine offbeats beside it — over a walking bass and\nan ionian I-vi-IV-V said with its sevenths out loud.\n\nnamed \"Detroit 1965\" — the Funk Brothers' snare-on-all-four at\nHitsville's peak.\n\nLINEAGE: gospel moved to the assembly line — the Funk Brothers were\nchurch and jazz players, the writers blues-schooled — under pop\ndiscipline whose actual teacher — doo-wop's harmony stack — is an\nanchor now and takes the biggest single share any of these edits\nmoved: the Miracles, the Marvelettes and the Temptations were vocal\ngroups before Gordy signed them, so gospel and blues each step back.\n(Fitted 0.39 against a declared 0.35: the data wants almost exactly\nwhat the history claims.) Tin Pan Alley's song forms ARRIVED\n2026-08-29 as `tinpanalley` (New York 1924) and are owed no longer:\nHitsville was organised as a publishing house on purpose, with\nwriters in rooms and a quality-control meeting on Fridays, which is\nWest 28th Street's own method moved to West Grand Boulevard.\n\nTHE VIBES ARE THE FUNK BROTHERS' OWN COLOUR — Jack Ashford's bars on\nthe hook, beside the tambourine the kit already plays. A lone trumpet\nanswering a Motown vocal is a horn section that lost its section, and\nska two rows down is where the single horn actually lives.\n\nTHE FUNK BROTHERS' TURNAROUND: the snare on all four, then the hand\nwalks down the toms into the next verse. A tom fill is the oldest fill\nthere is and this table could not write one until the kit grew.",
+  "label": "Detroit 1965",
+  "swing": 0.12,
+  "near": "beatgroup",
+  "plan": "song",
+  "bpm": 122,
+  "parents": {
+    "gospel": 0.35,
+    "doowop": 0.3,
+    "blues": 0.2,
+    "tinpanalley": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "upright_piano",
+    "vibraphone"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "lead"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 5,
+      "q": "7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    }
+  ],
+  "maxHold": 3,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "t": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "m": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "l": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 1,
+    "atk": 0.005,
+    "rel": 0.6,
+    "gain": 0.28,
+    "verb": 0.26
+  },
+  "words": [
+    "the piano, stabbing the changes",
+    "the horn line over it"
+  ],
+  "word": {
+    "kind": "const",
+    "n": {
+      "$src": "[]"
+    }
+  }
+}

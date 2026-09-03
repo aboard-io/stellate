@@ -1,0 +1,212 @@
+{
+  "note": "BENGA — Nairobi 1972. Luo guitar music from western Kenya on Nairobi\nlabels: a bright, fast, treble-heavy guitar line that is a NYATITI\nPART transferred to strings — the eight-string lyre's ostinato played\non a guitar, which is a documented, deliberate translation and not a\nstand-in this file is inventing.\nTHE YEAR is D.O. Misiani and Shirati Jazz's early-seventies sides, when\nbenga is the dominant Kenyan sound and is on record every week.\nWHY IT IS NOT A COPY OF SOUKOUS, thirteen years earlier and one country\nwest: benga is faster off the bass — the bass line is the LEAD melodic\nvoice for whole passages, which is why `bassStyle` is `sixteenths` here\nas it is in Kinshasa but the reg function puts the guitar chairs HIGH\nand thins them; and the harmony is two chords, not four.\n\nLINEAGE: a ROOT under protest, and the protest is the whole point.\nBenga's parent is the nyatiti repertory and the Luo ohangla drum\ntradition, neither of which is here. congorumba is named at 0.3\nbecause Congolese records genuinely were the model for the guitar\nsound in East Africa — that much is documented — and NOT because it\nis the nearest African anchor, which is the reasoning this round\nexists to stop.\n\nTWO BARS A CHORD, not one: a benga cycle sits on the tonic for half\nits length and then goes, which halves the harmonic rate against\n`merengue`'s bar-by-bar alternation. Drafted as [0,4,0,4] the two\nanchors sat 0.268 apart in the genealogy's feature space — two very\nfast four-bar I-V records, one in Nairobi and one in Santo Domingo,\nreading as one point.",
+  "label": "Nairobi 1972",
+  "voices": 3,
+  "near": "soukous",
+  "plan": "dance",
+  "bpm": 140,
+  "parents": {
+    "congorumba": 0.3
+  },
+  "wants": [
+    "nyatiti",
+    "ohangla",
+    "dodo"
+  ],
+  "instr": [
+    "clean_guitar",
+    "steel_string_guitar",
+    "solo_vox"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "counter",
+    "lead"
+  ],
+  "roots": [
+    0,
+    0,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      9,
+      4,
+      6,
+      4,
+      8,
+      4,
+      6,
+      4,
+      9,
+      4,
+      6,
+      4,
+      8,
+      4,
+      6,
+      5
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 3300,
+    "q": 1.2,
+    "atk": 0.003,
+    "rel": 0.3,
+    "gain": 0.27,
+    "verb": 0.22
+  },
+  "words": [
+    "the guitar, the nyatiti figure moved onto strings",
+    "the second guitar, a third above",
+    "the singer, over both"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(4), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(3), rotate(8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

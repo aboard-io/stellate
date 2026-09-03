@@ -1,0 +1,219 @@
+{
+  "note": "SOUTHERN HIP HOP [boombap] — Atlanta 1996. OutKast, \"ATLiens\"\n(Bosstown Recording, Atlanta; LaFace, 27 August 1996).\nMEASURED over 39 files (OutKast · Ludacris · Nelly · Goodie Mob).\nMeter 39 of 39 in 4/4. Tempo (n=39): p10 85 · p25 93 · med 117 · p75\n155 — the median is the double-time notation of the fast half again,\nand the row takes the p25 at 92. Mode 23 major / 16 minor, where\n`boombap`'s own music is a dorian minor: this wing is BRIGHTER and\nits chords are live-band changes rather than a chopped 45. THE FIELD\nTHAT NAMES IT is the hand percussion, and no other hip-hop row in the\ntable has it: rim 9465756675738475 and perc 8464835594659555 — two\nlanes running near-continuous sixteenths of tambourine and shaker,\nagainst `boombap`'s bare kick/snare/hat. Cycles: a IV pedal (355\nwindows of IV-IV-IV-IV against 511 of the tonic), which is the\ntwo-chord vamp below.\n  kick  9041316251313172   snare 2111702191117000\n  hat   9171816282619162\n\nLINEAGE: `boombap` (New York 1994) is the craft and the two years\nthis scene spent being told it was not hip hop; `funk` (Cincinnati\n1967) is the live band and the horn chart, which is the half New\nYork did not have; `gfunk` (Los Angeles 1992) is the sung hook over\na rapped verse; `miamibass` (Miami 1986) is the 808 sub coming up\nthe coast; `blockparty` (Bronx 1973) is the root of all of it.",
+  "label": "Atlanta 1996",
+  "near": "boombap",
+  "swing": 0.12,
+  "plan": "song",
+  "bpm": 92,
+  "parents": {
+    "boombap": 0.3,
+    "funk": 0.25,
+    "gfunk": 0.2,
+    "miamibass": 0.15,
+    "blockparty": 0.1
+  },
+  "wants": [
+    "the Memphis tape scene that the same decade's South ran on"
+  ],
+  "instr": [
+    "clavinet",
+    "slow_strings"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "pad"
+  ],
+  "roots": [
+    0,
+    3,
+    0,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    },
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    }
+  ],
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "p": [
+      6,
+      0,
+      4,
+      3,
+      0,
+      5,
+      4,
+      0,
+      6,
+      3,
+      0,
+      4,
+      5,
+      0,
+      4,
+      3
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2100,
+    "q": 1.3,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.26
+  },
+  "words": [
+    "the clavinet, the vamp, two chords and a shaker",
+    "the strings, holding the second chord"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[keep(0, 8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

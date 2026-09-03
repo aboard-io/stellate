@@ -1,0 +1,149 @@
+{
+  "note": "COUNTRY [beatgroup]. Both are I-loving guitar pop; the fields that\nseparate them are the TRAIN BEAT — brushes on every offbeat eighth, no\nbackbeat snare at all — and the FIFTHS bass, the boogie root-five\nfigure. The fiddle answers late instead of doubling in thirds all the\nway, which is the difference between Nashville and Liverpool.\n\nnamed \"Nashville 1945\" — voice 0's word is literally \"the banjo roll\",\nand the roll is Earl Scruggs', debuted with Monroe at the Ryman in 1945.\n\nLINEAGE: bluegrass is Appalachian fiddle tunes driven with blues\nphrasing and gospel's close harmony — the catalog holds the second\ntwo and lacks the FIRST, which is the bigger half: the missing\nAnglo-Celtic string band is this anchor's largest residue.\n\"anglo-celtic balladry\" PAID 2026-08-29 (London 1666): the\nBristol sessions' repertory is Child ballads in Appalachian\nmouths, and Barbara Allen — the named song of the new anchor's\nnamed night — was collected in Virginia more times than any\nother song in the canon.\n\"appalachian fiddle\" PAID 2026-08-30, the folk-floor round:\n`oldtime` (Galax 1935) is the fiddle convention itself.\n...AND THE BLUES SHARE POINTS BACKWARDS NOW (2026-09-02, the\ncatalogue round): `blues` is Chicago 1952, SEVEN YEARS AFTER\nScruggs's roll at the Ryman, and the blue thirds in a Nashville\nrecord of 1945 came from Jimmie Rodgers's blue yodels and the\npre-war country blues this table anchors at `deltablues`\n(Clarksdale 1929, Charley Patton's \"Pony Blues\"). Same weight, and\nthe edge no longer runs forwards in time.",
+  "label": "Nashville 1945",
+  "swing": 0.1,
+  "near": "beatgroup",
+  "plan": "song",
+  "bpm": 120,
+  "parents": {
+    "gospel": 0.4,
+    "deltablues": 0.4,
+    "ballad": 0.2,
+    "oldtime": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "banjo",
+    "fiddle"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    4,
+    5,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "maxHold": 3,
+  "bassStyle": "fifths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2800,
+    "q": 1,
+    "atk": 0.004,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.2
+  },
+  "words": [
+    "the banjo roll",
+    "the fiddle, answering a third up"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"gate\", rotate(8)), transpose(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

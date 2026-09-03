@@ -1,0 +1,189 @@
+{
+  "note": "ENKA — Tokyo 1969. The Japanese sentimental ballad: a minor\nyonanuki scale (a five-note minor with the second and sixth taken\nout), a shamisen and a string section, and a singer whose whole art is\nthe ornament on the way into the note.\nTHE YEAR is the late-sixties enka boom — Fuji Keiko, Mori Shin'ichi —\nwhen the word means this music rather than the Meiji protest song it\noriginally named.\nTHE SHAMISEN IS REAL AND IS THE FIFTH ID THIS ROUND UNLOCKS BY NAME.\n`shamisen` is a licensed on-disk registry id with a parent window of\n[43,84] that no anchor had ever asked for. What is NOT claimed is the\nsawari — the deliberate buzz where the lowest string touches the neck\n— which is the Japanese equivalent of the sitar's jawari and which\nthis file has no way to ask for.\nTHE PRIMARY FACT SHIPS AND THE ORNAMENT DOES NOT. Enka's primary fact\nis the yonanuki melody and the ballad form, and both are here.\nKOBUSHI — the rapid, wide, deliberately unstable ornament on the\napproach to a note — is in `cannot`: `orn` below carries `grace` and\n`approach`, which are ATTACK shapes, and kobushi is a pitch trajectory\nINSIDE the note. That is WORLD.md §5.3's wall, stated in one anchor.\n\nLINEAGE: a ROOT under protest, and both halves are real. Enka is the\nJapanese ryūkōka of the twenties and thirties on one side and the\nWestern sentimental ballad orchestra on the other; `crooner` (Los\nAngeles 1953) is genuinely the second half — the arrangement, the\nmicrophone technique and the string writing — and is named at a\nweight that says half and not all.\n\nWHO SINGS: the melisma row — an alto holding one vowel over\nseveral notes, two beats before the mouth moves — because\nthat is the closest this table gets to a voice whose whole\nbusiness is what happens between the syllables.",
+  "label": "Tokyo 1969",
+  "voices": 3,
+  "near": "crooner",
+  "plan": "song",
+  "bpm": 72,
+  "parents": {
+    "crooner": 0.4
+  },
+  "wants": [
+    "ryūkōka",
+    "min'yō"
+  ],
+  "cannot": [
+    "kobushi — the ornament that bends the pitch INSIDE the note, where this box has seven attack shapes and no pitch trajectory (the `orn` table is `grace` and `approach`)",
+    "the shamisen's sawari buzz"
+  ],
+  "instr": [
+    "solo_vox",
+    "shamisen",
+    "strings"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "orn": {
+    "grace": 0.4,
+    "approach": 0.3
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "h": [
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0
+    ]
+  },
+  "drumkit": "brush",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2100,
+    "q": 0.8,
+    "atk": 0.02,
+    "rel": 1.4,
+    "gain": 0.26,
+    "verb": 0.46,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the singer",
+    "the shamisen, answering the line",
+    "the strings, underneath"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(8), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

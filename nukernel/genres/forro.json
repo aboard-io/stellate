@@ -1,0 +1,176 @@
+{
+  "note": "FORRÓ — Recife 1950. Luiz Gonzaga's baião: an accordion, a zabumba\n(one man, one two-headed drum, a mallet on top and a stick underneath)\nand a triangle. Three players, and one of them plays the harmony, the\ncountermelody and the tune.\nTHE YEAR is the height of Gonzaga's national reach, a decade after\n\"Baião\" itself; the music is northeastern and older, and 1950 is when\nRio's radio carried it everywhere. Same shape of claim as marabi's.\nWHY `voices` IS 2 ON A THREE-PIECE BAND: the third player is a\ntriangle. The two pitched voices below are the accordion's two HANDS —\nthe right playing the tune, the left holding the chord — which is what\nan accordion actually is and which nothing else in this catalog says.\nONE CHORD AND A FLAT SEVEN. A baião does not move: `harmony: \"modal\"`\nand mixolydian, because the flattened seventh over a stationary bass is\nthe sound, and giving it a cycle would make it a polka.\n\nTHE FLAT SEVEN ARRIVES (2026-09-02, the catalogue round, shift 2).\nThe comment above says it in as many words — \"`harmony: \"modal\"` and\nmixolydian, because the flattened seventh over a stationary bass is\nthe sound\" — and then the row sang SCALES.major, which is the natural\nseventh. A modal row has no chord cycle, so `mode` reaches nothing:\nevery note this record plays came out of `scale`, and the one interval\nthe comment says IS the sound was the one interval missing from it.\nMEASURED: swapping mode mixo -> ionian changed not a single rendered\nnote across seeds 1-3, which is the definition of a decorative mode\n(test/precompose.test.js G14b). Luiz Gonzaga and Humberto Teixeira,\n\"Baiao\" (RCA Victor, Rio, 1946) and \"Asa Branca\" (RCA Victor, Rio,\n1947): the baiao's whole melodic signature is that seventh a semitone\nunder the octave, over a zabumba that never moves. So the SCALE is now\nthe mode; `diatonic` goes with it, because a diatonic row builds its\nchords out of the scale and this row has no chords at all.\n\nTHE ZABUMBA IS ONE PLAYER WITH TWO STICKS AND IT IS WRITTEN AS TWO\nLANES: the mallet's deep stroke on the kick, the bacalhau's dry tap\non the underside on `p`, and the triangle's open-and-closed pattern\non the hat. The baião figure is the kick on 1 and the and-of-2, and\nit is the most recognisable rhythm in Brazil after the samba's surdo.",
+  "label": "Recife 1950",
+  "voices": 2,
+  "near": "vallenato",
+  "plan": "dance",
+  "bpm": 118,
+  "parents": {},
+  "wants": [
+    "baião de viola",
+    "coco",
+    "xote"
+  ],
+  "instr": "accordion",
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -2
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      9,
+      0,
+      4,
+      6,
+      8,
+      0,
+      4,
+      6,
+      9,
+      0,
+      4,
+      6,
+      8,
+      0,
+      4,
+      7
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1.2,
+    "atk": 0.008,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.24
+  },
+  "words": [
+    "the accordion's right hand, the tune",
+    "the left hand, holding the chord under it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

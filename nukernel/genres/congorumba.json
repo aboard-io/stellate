@@ -1,0 +1,311 @@
+{
+  "note": "CONGOLESE RUMBA — Kinshasa 1960. Two electric guitars interlocking over\na clave, a tenor on the head, and a form that opens out into the\nSEBENE — the section where the singers stop and the guitars take the\nrecord over, which is the genre's whole architecture.\nTHE YEAR is \"Indépendance Cha Cha\", Grand Kallé et l'African Jazz, cut\nin 1960 — the most-cited record in the tradition and as datable as\nmbube. THE CITY was Léopoldville in 1960 and became Kinshasa in 1966,\nand the label says Kinshasa anyway: atlas.js:98 enforces ONE SPELLING\nPER PLACE, and a second name for the same coordinates would put two\ndots where there is one city. The old name belongs in a comment, which\nis where it now is.\nTHE FIFTH ANCHOR TO USE `kits`, and the first with a musical reason\nthat needs it: the clave is a TWO-BAR figure — three strokes in one bar\nand two in the next — and a one-bar kit cannot say so. Accra 1957 above\ncompresses both halves into sixteen steps, which is a real and\ndifferent thing; this one spends the two bars the players spend. That\nis the two anchors' clearest separation, and it is in the kit rather\nthan in the prose.\nAND THE CLAVE HERE IS NOT STANDING IN FOR AN AFRICAN BELL. It is\nstanding in for a CUBAN clave, which is what these players were\nliterally copying off the GV-series 78s sold in Léopoldville from the\nlate thirties — the rim lane is the compromise, the figure is not.\n\nLINEAGE: a root, and both its parents are outside the catalog —\nthe Cuban son of the GV 78s, re-heard by Congolese guitarists over\nthe local maringa. Neither is here, and pointing this at `bossa` or\n`jazz` because they are the nearest Latin-adjacent anchors would be\nthe resemblance-as-ancestry move this round is undoing.\n\"afro-cuban son\" RESOLVED 2026-08-29 — not paid, FOUND: the\nancestor was already in the table as `son` (Havana 1928) under\nits own name, and this row's want was a synonym — the\ntwo-spellings hole taqsim's comment warns about. The GV 78s the\nLéopoldville bands learned from are that row's music directly.\n\"maringa\" stays: its first datable records are contemporary with\n`palmwine`'s own label (see the genealogy round's declined list).\n\nTHE SAME INSTRUMENT TWICE, on purpose: mi-solo and rhythm are two\nguitars with one tone, and `instr` is read per voice\n(instruments.js:36), so casting `clean_guitar` twice is the natural\nspelling of a fact rather than a duplication.\n\nTHE CLAVE, ACROSS ITS TWO BARS: the three-side, then the two-side.\n\nTHE SEBENE IS SAID IN DEVELOPMENT, NOT IN THE KIT — `word(v, s)` is\nindexed by SECTION (AXES.md: Form comes before Development), so the\nguitars change job when the record does. On the odd sections the\nmi-solo fills every other step and stops being a part and starts\nbeing the record; the rhythm guitar is masked to the complement of\nthe mi-solo's own gate throughout, which is what interlocking means\nand what makes the two guitars one instrument with four hands.",
+  "label": "Kinshasa 1960",
+  "bars": 8,
+  "voices": 3,
+  "near": "highlife",
+  "plan": "arc",
+  "bpm": 116,
+  "parents": {
+    "son": 0.4
+  },
+  "wants": [
+    "maringa"
+  ],
+  "instr": [
+    "clean_guitar",
+    "clean_guitar",
+    "tenor_sax"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kits": [
+    {
+      "k": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "s": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "p": [
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "h": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "k": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "s": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "p": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "h": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    }
+  ],
+  "fill": {
+    "h": [
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 1,
+    "atk": 0.005,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the mi-solo, and in the sebene it never stops",
+    "the rhythm guitar, in the holes the mi-solo leaves",
+    "the tenor, the head"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? (s % 2 ? [fill(2)] : [])\n                     : v === 1 ? [only(\"gate\", complement(\"gate\")), transpose(2)]\n                               : [rotate(8), drop(2)])"
+  }
+}

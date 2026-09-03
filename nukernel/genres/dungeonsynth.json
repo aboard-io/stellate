@@ -1,0 +1,80 @@
+{
+  "note": "DUNGEON SYNTH — Notodden 1994. Mortiis, Født til å Herske\n(Malicious/Dark Dungeon Music, 1994): Håvard Ellefsen out of\nEmperor — Notodden's own black metal band — alone with one\nsynthesizer, two side-long tracks of cardboard-castle fanfares.\nThe article's origins are dark ambient and black metal, early\n1990s Norway, and NEITHER parent is in this catalog: the row\nlands with the biggest residue of the round, and both debts are\nopened by name below.\n\nLINEAGE: `berlinschool` is the FORM — a side-long synthesizer\nsuite in movements — bought secondhand and played on one cheap\nkeyboard; `ambient` is the room it drones in. The missing\nparents are the genre's actual blood and they are wants, not\nguesses.\n\"black metal\" PAID 2026-09-02, the MIDI-corpus round (Oslo 1993):\nthis row has wanted the scene it came out of since the day it was\nwritten, and `blackmetal` lands ONE YEAR EARLIER — the maringa law\nholds, an ancestor is measurably earlier — so the want becomes an\nedge. It takes the largest single share, because the reason this row\nexists is a black-metal musician putting the guitars down.",
+  "label": "Notodden 1994",
+  "voices": 2,
+  "bars": 8,
+  "near": "berlinschool",
+  "plan": "arc",
+  "bpm": 80,
+  "parents": {
+    "blackmetal": 0.35,
+    "berlinschool": 0.3,
+    "ambient": 0.25
+  },
+  "wants": [
+    "dark ambient"
+  ],
+  "instr": [
+    "recorder",
+    "warm_pad"
+  ],
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "pad"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "kit": {},
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "tie",
+  "maxHold": 5,
+  "bassStyle": "pedal",
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 1600,
+    "q": 1,
+    "atk": 0.04,
+    "rel": 2,
+    "gain": 0.24,
+    "verb": 0.7
+  },
+  "words": [
+    "the fake flute, a fanfare down a corridor",
+    "the pad, torchlight on wet stone"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(2)], [rotate(3)], [transpose(-2)]][s % 4]\n                    : [drop(10)])"
+  }
+}

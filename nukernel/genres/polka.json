@@ -1,0 +1,135 @@
+{
+  "note": "POLKA — Prague 1837. The Bohemian couple dance arrives in Prague's\nballrooms (1837 is the year the city's own dancing masters date the\ncraze; Paris follows in 1840 and the world within the decade). In\n2/4 with the oom on the beat and the pah answering — the one\nnineteenth-century ballroom dance the sixteen-place bar can say\nWHOLE, which is exactly why it is here and the waltz still is not.\nPAYS TWO DEBTS: nortena's \"bohemian polka\" (the conjunto's own\ndeclared bloodline) and maxixe's \"the polka, as rio danced it\".\n\na ballroom dance — the band plays, the room does the talking",
+  "instrumental": true,
+  "label": "Prague 1837",
+  "voices": 3,
+  "bars": 8,
+  "near": "nortena",
+  "plan": "dance",
+  "bpm": 112,
+  "parents": {},
+  "wants": [
+    "the bohemian village band",
+    "the landler"
+  ],
+  "instr": [
+    "clarinet",
+    "accordion",
+    "tuba"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      -2
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "drumkit": "acoustic",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "fifths",
+  "tone": {
+    "wave": "square",
+    "cut": 2600,
+    "q": 0.9,
+    "atk": 0.008,
+    "rel": 0.3,
+    "gain": 0.26,
+    "verb": 0.24
+  },
+  "words": [
+    "the clarinet, skipping the tune",
+    "the accordion, filling the middle",
+    "the tuba, the oom the pah answers"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2), rotate(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[keep(0, 4, 8, 12), drop(2)]"
+    }
+  }
+}

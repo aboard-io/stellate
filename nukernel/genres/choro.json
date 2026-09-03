@@ -1,0 +1,161 @@
+{
+  "note": "CHORO — Rio de Janeiro 1900, and it is now the oldest record in the\nAmericas by seven years. Brazil's instrumental virtuoso music: a flute\n(or later a mandolin, or a clarinet) playing a written, modulating,\nfast tune in rondo form, a cavaquinho chopping, and the seven-string\nguitar's BAIXARIA — a walking countermelody in the bass that is the\npoint of the whole ensemble and is why `bassStyle` is `walk` here and\nin only fourteen other anchors.\nTHE YEAR is the turn of the century and Chiquinha Gonzaga and Ernesto\nNazareth's published pieces — the moment choro is a written repertory\nrather than a way of playing polkas. It is a PUBLICATION date, which\nis the same kind of claim \"Sedalia 1899\" below makes and a weaker one\nthan a session date; the comment is where that belongs.\nWHAT SEPARATES IT FROM EVERY OTHER LATIN ANCHOR: it MODULATES. A choro\nis AABBACCA with the C section in another key, and its eight-bar cycle\nbelow goes to the relative and back, which nothing else in this batch\ndoes. It is also the one that is not danced.\n\nthe file's own line 8109: \"Brazil's instrumental virtuoso music\"\n\nLINEAGE: a ROOT under protest. Choro is the European salon dances —\npolka, schottische, waltz — played by Brazilian musicians with a\nlundu underneath, and `parlor` (New York 1892) is the closest thing\nthis catalog holds to a salon repertory. It is named at a real but\nsmall weight because the SHARED thing is the parlour piano culture\nof the 1890s and not a line of descent: Rio was not listening to New\nYork, both were listening to Europe.\nTHREE WANTS PAID 2026-08-29 (Lisbon 1775, Lisbon 1798, Rio 1895):\na choro terno's book WAS modinhas, lundus and maxixes played at a\npolka's tempo — the three rows land together and this row's share\nsplits between the sentimental line (modinha), the syncope\n(lundu) and the dance-hall practice (maxixe), with parlor keeping\nthe salon-piano claim it always had.\nAN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue\nround, shift 2).\nFOUND OUTSIDE THE PARENTLESS SWEEP: this row wanted \"polka brasileira\" and\n`polka` (Prague 1837) is a row, sixty-three years earlier.\nTHE ARGUMENT is the row's own comment — 1900 is \"the moment choro is a\nwritten repertory rather than a way of playing POLKAS\". The Bohemian couple\ndance reached Rio in 1845 and the choroes were the men who played it wrong\non purpose; the polca-lundu of Chiquinha Gonzaga's \"Atraente\" (Rio, 1877) is\nthe hybrid caught in its own title. 0.15, the smallest declared share: what\narrived from Prague is the METRE and the two-strain form, not the\ncounterpoint the row is written for.\n\nTHE PANDEIRO IS THE ONLY DRUM and it is written as a hand rather\nthan a kit: thumb, fingers and heel across the hat lane with the\nlow strokes on `p`. There is no kick and no snare because there is\nno drummer — one man holding one frame drum.",
+  "instrumental": true,
+  "label": "Rio de Janeiro 1900",
+  "voices": 3,
+  "bars": 8,
+  "near": "ragtime",
+  "plan": "arc",
+  "bpm": 116,
+  "parents": {
+    "parlor": 0.2,
+    "modinha": 0.2,
+    "maxixe": 0.2,
+    "lundu": 0.15,
+    "polka": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "flute",
+    "steel_string_guitar",
+    "nylon_string_guitar"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "counter"
+  ],
+  "roots": [
+    0,
+    4,
+    0,
+    4,
+    2,
+    5,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "walk",
+  "kit": {
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      9,
+      3,
+      6,
+      3,
+      8,
+      3,
+      6,
+      3,
+      9,
+      3,
+      6,
+      3,
+      8,
+      3,
+      6,
+      4
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2900,
+    "q": 0.9,
+    "atk": 0.004,
+    "rel": 0.4,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the flute, the written tune",
+    "the cavaquinho, chopping under it",
+    "the seven-string's baixaria, walking against both"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"acc\", rotate(2)), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[invert(4), transpose(-12)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

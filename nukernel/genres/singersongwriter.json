@@ -1,0 +1,156 @@
+{
+  "note": "SINGER-SONGWRITER [Carly Simon]. A crooner's plain, direct vocal\ndelivery over funk's sixteenth-note groove hand and gospel's church\nchords — a session band cut for one singer's record rather than a\ngenre unto itself, which is the whole \"New York piano-rock\" sound.\nLaurel Canyon's communal songwriting scene, the actual milieu, is the\nmissing rung.\nMEASURED, 2026-09-02 (the MIDI-corpus round). Paul's list ends\n\"Carly Simon. Please revisit James Taylor.\" — this is her row and\n`softfolk` is his, and both were read off the same 18 corpus files\n(bulk/C/C.SIMON.*, bulk/J/J.TAYLOR.* and the spelled-out variants).\nTempo (n=18): p10 66 · p25 75 · med 99.5 · p75 114 — the row said 108\nand the corpus says 100; the number wins.\nTHE HARMONY SURVIVES THE MEASUREMENT, which is the difference between\nthis row and its neighbour: `seventh` 0.52 and `motion` 0.83 over the\nset, and THIS row already carries a real cycle with a walking figure\nunder it, where `softfolk` shipped a pentatonic drone and had to be\nrewritten. The two rows were always the same 1972 session band read\ntwice; now they are read off the same eighteen files as well.\n\nA REAL GRAND, not an EP: a 1972 New York singer's record is cut\naround a nine-foot piano in a studio, which is also what separates it\nfrom yacht rock's Rhodes two rows up — those two had the same cast\nand the same seating, so nothing but the drums told them apart.",
+  "label": "New York 1972",
+  "near": "yachtsoul",
+  "plan": "song",
+  "bpm": 100,
+  "parents": {
+    "crooner": 0.35,
+    "funk": 0.35,
+    "gospel": 0.3
+  },
+  "wants": [
+    "laurel canyon scene"
+  ],
+  "instr": [
+    "yamaha_grand_piano",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2100,
+    "q": 1.1,
+    "atk": 0.008,
+    "rel": 0.75,
+    "gain": 0.26,
+    "verb": 0.28
+  },
+  "words": [
+    "the EP, the vamp",
+    "the guitar, the answer, up top"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(7), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

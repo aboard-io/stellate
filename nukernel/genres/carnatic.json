@@ -1,0 +1,204 @@
+{
+  "note": "CARNATIC — Chennai 1935. Not a record but a FORM, and it has an\nauthor: Ariyakudi Ramanuja Iyengar fixed the order of the modern\nSouth Indian concert in Madras in the 1930s — a varnam to warm up, a\nrun of kritis, then one raga taken apart at length (alapana, then\nniraval, then kalpanaswaram), the drummer's solo, and light pieces\nto finish. Every kacheri since has followed it, and the December\nseason at the Music Academy is where it was settled.\nTHE AXES: FORM is the identity, which is unusual and is exactly why\nthis row can ship where a Peking opera cannot — a concert order is\nsections, and sections are the one thing this box has always had.\nDevelopment is niraval and kalpanaswaram: the same line re-sung\ndifferently, which is what a per-section `word` schedule IS. Time is\nadi tala, eight beats in 4+2+2, and eight fits the sixteen-step bar\nat two steps a matra, so the row can voice the tala honestly rather\nthan admitting it away.\nAND THE VIOLIN IS NOT AN APPROXIMATION. The Carnatic violin is a\nEuropean violin, adopted around 1800, held with the scroll on the\nplayer's ankle and tuned in fifths and fourths — the accompanist\nshadows the singer's line a beat behind. It is the only instrument\nin this whole block that needs no apology.\n\nLINEAGE: a declared ROOT, and a different one from `dhrupad` —\nthese are two systems, not two dialects. They share a Sanskrit\ntheory and they part company before any anchor in this table:\ndifferent repertory, different tala system, different instruments,\ndifferent relationship between composition and improvisation.\n\nADI TALA, 4 + 2 + 2, at two steps a matra. The kick is the sam and\nthe head of each anga; the rim carries the mridangam's filling\nstrokes; the hat marks the two drutams so the 4+2+2 is audible as\na shape rather than eight even beats.\n\nWHO SINGS: `melisma` — one vowel across many notes, an\nalto with a real wobble and little air. A Carnatic vocalist\nsings a whole phrase on one syllable of a kriti's text and\nthat is what this row measures.",
+  "label": "Chennai 1935",
+  "voices": 3,
+  "bars": 8,
+  "near": "filmi",
+  "plan": "arc",
+  "bpm": 96,
+  "parents": {},
+  "wants": [
+    "the trinity's kritis",
+    "varnam",
+    "ragam-tanam-pallavi",
+    "temple periya melam"
+  ],
+  "cannot": [
+    "gamaka — in this music the OSCILLATION IS THE NOTE. A plain steady 12-TET pitch is not an under-ornamented Carnatic note, it is the wrong note, and there is no pitch-trajectory channel (WORLD.md §5.3). The `grace` number below is the crude proxy that section allows and nothing more",
+    "a raga is not a scale — same admission as `dhrupad`, and here it is sharper still: the seventy-two melakarta are a generative system and this table has eight modes",
+    "the tala's angas — adi tala is counted on the hand, a clap and three finger-counts and then two waves, and the audience counts with the player. The kit below puts the 8 = 4+2+2 into a drum pattern, which is the sound of it and not the structure",
+    "the mridangam — no hand drum in the kit samples, so its bols go on a kick and a rim, the loss `filmi` already declares"
+  ],
+  "instr": [
+    "solo_vox",
+    "violin",
+    "sitar"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -2
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "harmony": "modal",
+  "intro": "padin",
+  "artic": "legato",
+  "maxHold": 4,
+  "nobass": true,
+  "orn": {
+    "grace": 0.6,
+    "approach": 0.3
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      9,
+      0,
+      4,
+      4,
+      6,
+      0,
+      4,
+      0,
+      8,
+      0,
+      4,
+      4,
+      6,
+      0,
+      5,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.015,
+    "rel": 1.2,
+    "gain": 0.25,
+    "verb": 0.4,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the kriti, then the same line re-sung (niraval)",
+    "the violin, a beat behind the voice",
+    "the tanpura"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n          ? [[], [fill(2)], [fill(2), rotate(2)], [fill(4), rotate(6)]][s % 4]\n        : v === 1 ? [rotate(2), drop(2)]\n        : [drop(12)])"
+  }
+}

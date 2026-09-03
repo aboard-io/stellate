@@ -1,0 +1,154 @@
+{
+  "note": "PAVANE — Susato's Danserye: the consort plays for DANCING. The lines\nare polyphony's, the drum is the estampie's tabor grown up, and the\nground is the real passamezzo antico, mined from history rather than\ninvented — one chord a bar, eight bars, the progression the whole\nRenaissance danced over. (Renaissance polyphony itself is NOT\nre-anchored: polychoral + counterpoint own the idiom; this draws on polychoral.)\n\n`arc` for the estampie's reason (see that anchor): the kernel's dance\nplan is club build-and-drop, whose topline arrives only on a singer,\nand a consort has none — a processional danced through is one shape\nend to end, tango's own plan.\n\nTHE POLYPHONY PARENT IS NOW THE ONE THAT CAME FIRST (2026-09-02, the\ncatalogue round). This said `polychoral: 0.35` and polychoral is\nLondon 1570 — NINETEEN YEARS AFTER Susato printed the Danserye\n(Tielman Susato, *Het derde musyck boexken … alderhande danserye*,\nAntwerp 1551), so the row descended from a record that did not exist\nyet. The idiom the pavane's three lines actually are is the\nFranco-Flemish consort texture the Petrucci presses had been selling\nsince 1501, which this table anchors at `francoflemish` (Venice\n1502) — half a century BEFORE this row, where Tallis is two decades\nafter it. Same claim, right direction.\n\nlute, pipe, viol\n\nthe passamezzo antico",
+  "label": "Antwerp 1551",
+  "voices": 3,
+  "bars": 8,
+  "plan": "arc",
+  "bpm": 76,
+  "parents": {
+    "estampie": 0.4,
+    "francoflemish": 0.35,
+    "troubadour": 0.25
+  },
+  "wants": [
+    "galliard"
+  ],
+  "near": "polychoral",
+  "instr": [
+    "nylon_string_guitar",
+    "recorder",
+    "viola"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      }
+    ],
+    "else": {
+      "$src": "v - 1"
+    }
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    6,
+    0,
+    4,
+    2,
+    6,
+    4,
+    0
+  ],
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "maxHold": 2,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "bassGrid": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.015,
+    "rel": 0.8,
+    "gain": 0.26,
+    "verb": 0.4
+  },
+  "words": [
+    "the lute, carrying the ground",
+    "the pipe above",
+    "the viol between"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[invert(5)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

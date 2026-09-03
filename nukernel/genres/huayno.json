@@ -1,0 +1,178 @@
+{
+  "note": "HUAYNO — Cusco 1965. The Andes' own song and dance, and the only\nanchor in this batch whose alphabet is a MINOR PENTATONIC rather than\na European scale — which is not a decoration, it is the tradition: the\nhuayno melody moves in five notes and turns back on itself, and the\nharmony under it is a Spanish import laid on afterwards.\nTHE YEAR is the Andean migration recordings — the decade the music\ncame down to the coastal cities and onto 45s, which is when there is\nanything to date at all.\nTWO OF THE THREE INSTRUMENTS ARE HONEST AND ONE IS NOT. The Andean\nHARP is a real harp and `harp` is one; the siku IS a panpipe and\n`pan_flute` is a recording of one — the fourth registry id this round\nunlocks by name, with a parent window of [59,88] and no anchor that\nhad ever asked for it. The charango is the stand-in: a small\nten-string lute with a bright, tight, doubled sound, standing in as a\nsteel-string guitar, and what is lost is the octave-paired courses and\nthe size.\n\nTHE BOMBO IS THE ONLY DRUM: a big skin-headed drum played on the\nhead and the rim, so the kick carries the head and `p` the rim, and\nthere is no hat because there is no cymbal within a thousand miles\nof the tradition.",
+  "label": "Cusco 1965",
+  "voices": 3,
+  "near": "worldfolk",
+  "plan": "song",
+  "bpm": 124,
+  "parents": {},
+  "wants": [
+    "pre-columbian andean song",
+    "yaraví"
+  ],
+  "cannot": [
+    "the siku's interlock — a panpipe pair is TWO players sharing one scale a note each, and this box gives the whole scale to one chair"
+  ],
+  "instr": [
+    "pan_flute",
+    "steel_string_guitar",
+    "harp"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "roots": [
+    0,
+    2,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      6,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      6,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 1,
+    "atk": 0.01,
+    "rel": 0.8,
+    "gain": 0.26,
+    "verb": 0.42
+  },
+  "words": [
+    "the siku, the tune",
+    "the charango, doubling it faster",
+    "the harp, holding the two chords"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[split(2), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

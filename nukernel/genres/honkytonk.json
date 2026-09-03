@@ -1,0 +1,136 @@
+{
+  "note": "HONKY TONK — Fort Worth 1941: Ernest Tubb records \"Walking the\nFloor Over You\" for Decca in Fort Worth, April 1941 — the electric\nlead guitar on a country record, cut loud enough to carry over a\nTexas barroom, which is the room the genre is named for. One of\nthe 1940s' two missing country rooms (westernswing, one row down,\nis the other).\n\nLINEAGE: hillbilly song plus the blues' flat grief, electrified\nfor a room full of noise; the residue is the barroom itself.\nBOTH PARENTS WERE YOUNGER THAN THIS RECORD (2026-09-02, the\ncatalogue round) — `countrypop` is Nashville 1945 and `blues` is\nChicago 1952, four and eleven years AFTER Ernest Tubb cut \"Walking\nthe Floor Over You\" for Decca in Fort Worth in April 1941. Both are\nnow the rows that were actually there:\n  `oldtime` (Galax 1935)      the hillbilly string band Tubb sang\n                              out of, and what `countrypop` was\n                              standing in for\n  `westernswing` (Tulsa 1940) the Texas dance hall and the\n                              amplification, one year older and one\n                              room over — Wills's band is why a\n                              guitar in that state was loud in 1941\n  `deltablues` (Clarksdale 1929) the flat grief. Tubb was Jimmie\n                              Rodgers's disciple — Rodgers's widow\n                              lent him the guitar — and the blue\n                              yodel is pre-war blues, not Chess's.\n\nroot-and-fifth, the two-beat country floor — \"roots\" is not a vocabulary word (measured, G1)\n\ncountrypop's own hammer-on row",
+  "label": "Fort Worth 1941",
+  "voices": 2,
+  "near": "countrypop",
+  "plan": "song",
+  "bpm": 96,
+  "parents": {
+    "oldtime": 0.3,
+    "westernswing": 0.25,
+    "deltablues": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "steel_string_guitar"
+  ],
+  "drumkit": "brush",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "fifths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "orn": {
+    "pass": 0.2,
+    "grace": 0.4
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.9,
+    "atk": 0.008,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.25,
+    "mouth": {
+      "$src": "MOUTHS.crooning"
+    }
+  },
+  "words": [
+    "the barroom lead, electric",
+    "the rhythm guitar under it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(2)], [fill(2)], [transpose(-1)]][s % 4]\n                    : [keep(0, 4, 8, 12)])"
+  }
+}

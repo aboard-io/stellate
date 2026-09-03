@@ -1,0 +1,181 @@
+{
+  "note": "THE MORRICONE WESTERN — Rome 1966. IL BUONO, IL BRUTTO, IL CATTIVO,\nscored at RCA Italiana before the picture was cut: the two-note\ncoyote call, the whistle, the electric guitar in an orchestra, the\nwordless soprano as an INSTRUMENT — which is why this row carries\n`ohh_voices` in the cast and stays instrumental: true. Nobody\nsings; a voice is played. The parents: the Hollywood grammar he\nanswered (goldenagescore), the opera his soprano walked out of\n(belcanto), and the march the trumpets deserted.\n\nthe voice on it is scored as an instrument, not a singer",
+  "instrumental": true,
+  "label": "Rome 1966",
+  "voices": 4,
+  "bars": 8,
+  "near": "goldenagescore",
+  "plan": "arc",
+  "bpm": 108,
+  "parents": {
+    "goldenagescore": 0.25,
+    "belcanto": 0.2,
+    "march": 0.15
+  },
+  "wants": [
+    "duane eddy's twang guitar",
+    "the rca italiana canzone bench"
+  ],
+  "instr": [
+    "whistle",
+    "overdrive_guitar",
+    "brass_section",
+    "ohh_voices"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      0,
+      1,
+      2,
+      3
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "counter",
+    "pad"
+  ],
+  "drumkit": "room",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    0,
+    6,
+    6,
+    0,
+    0,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 2700,
+    "q": 1,
+    "atk": 0.01,
+    "rel": 0.8,
+    "gain": 0.26,
+    "verb": 0.44
+  },
+  "words": [
+    "the whistle, the two-note call across the mesa",
+    "the guitar, twanging the ostinato",
+    "the trumpets, the death-march the duel is set to",
+    "the soprano, wordless, scored like a violin"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[excerpt(0, 2), fill(4)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[fill(2), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(2), rotate(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(9)]"
+    }
+  }
+}

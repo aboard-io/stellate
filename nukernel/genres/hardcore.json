@@ -1,0 +1,137 @@
+{
+  "note": "=====================================================================\nTHE FORWARD DEBTS OF THE SAME SHIFT (2026-08-30) — seven rows, the\nlast catalogue shift's own named leftovers, paid after antiquity\nbecause antiquity was the ask. Two shared wants close by name\n(hardcore ×2, dream pop ×1 plus the contenance angloise on isorhythm);\nthe 1940s get their two missing country rooms; the metal wing gets\nthe doom it lacked; and the 2000s stay thin (10 rows to the 1990s'\n29) — named at the foot as the next ask, not half-paid here.\n==================================================================\n\nHARDCORE — Washington 1980: Bad Brains, \"Pay to Cum\", the single\nrecorded and released in 1980 by the fastest band in the capital.\n`screamo` and `thrash` have carried the matched want string\n\"hardcore\" since their lineages were written; both take this row as\na parent today. DISCHARGE (Stoke 1982) WAS THE OTHER CANDIDATE and\nthe Britain arc was measured before choosing, per the shift's own\ninstruction: Stoke-on-Trent lands ~14-16 CSS px from Manchester and\nStourbridge at the 11-degree Britain arc — ABOVE G10's 8.5 px\nfloor, so Stoke was not blocked; Washington won because \"Pay to\nCum\" is two years earlier, the place already stands in PLACES\n(march 1889, amenbreak 1969 — a third record on one dot), and the\nd-beat is a DRUM claim this row's kit does not make.\n\n160 is the table's ceiling (compose's 70..160) and hardcore\nstands on it beside thrash — Pay to Cum runs faster still, and\nthe sixteenth grid at 160 carries the blur that is the point.\n\nLINEAGE: punk, played angrier and twice as fast — the residue IS\nthe tempo and the attack, which is why the weight is high and\nalone. (Bad Brains' own reggae half is real and is not this row:\nthe catalog already holds Kingston.)",
+  "label": "Washington 1980",
+  "voices": 1,
+  "near": "punk",
+  "plan": "song",
+  "bpm": 160,
+  "parents": {
+    "punk": 0.75
+  },
+  "wants": [],
+  "instr": "distortion_guitar",
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    0,
+    1,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "harmony": "modal",
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9
+    ]
+  },
+  "fx": [
+    "crunch"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1.4,
+    "atk": 0.002,
+    "rel": 0.2,
+    "gain": 0.3,
+    "verb": 0.12
+  },
+  "words": [
+    "the riff, downstroked flat out"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => [[], [rotate(2)], [transpose(1)], [rotate(2)]][s % 4]"
+  }
+}

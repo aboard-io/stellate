@@ -1,0 +1,146 @@
+{
+  "note": "OPERA SERIA — London 1724. Handel's Giulio Cesare, first night at\nthe King's Theatre, the 20th of February 1724: the da capo aria\nmachine at full size — Senesino and Cuzzoni over an orchestra, the\nA section, the B section, and the A back ORNAMENTED, which is the\nsingle formal idea three centuries of opera inherit. `belcanto`\n(Milan 1831) has wanted this row by name since it landed; the\nwant moves into its parents today. (`continuo`'s same-named want\nwas the OTHER direction — see the rewrite at that row: a 1602\nanchor cannot descend from 1724.)\nTHE AXES: CAST and DEVELOPMENT carry it. One voice out front, the\nband in ritornello behind — and the aria's da capo IS a word\nschedule: state, depart, restate with the ornament pushed. That is\n`word`'s literal job, and section 3's fill-heavy return below is\nthe singer's second A.\n\nLINEAGE: `continuo` (Florence 1602) is opera's root in this\ntable — recitative, the accompanied solo voice, the figured\nbass all start there. The ritornello frame is the concerto's,\nbut Venice 1725 postdates this label by a year, so the debt is\ncarried in wants as the practice rather than claimed as the\nanchor: an edge may not run backwards.",
+  "label": "London 1724",
+  "voices": 3,
+  "bars": 8,
+  "near": "belcanto",
+  "plan": "arc",
+  "bpm": 88,
+  "parents": {
+    "continuo": 0.7
+  },
+  "wants": [
+    "the venetian public opera (cavalli)",
+    "the neapolitan conservatories",
+    "the ritornello concerto"
+  ],
+  "cannot": [
+    "the da capo return itself — ABA with the reprise MORE ornamented is a section-order fact, and section order belongs to the composer, not the anchor (tinpanalley's own admission about AABA); the word schedule pushes ornament per section, which is the escalation without the literal return",
+    "the castrato voice — the register that DEFINED the repertory has no mouth here; the belter is a modern trained soprano and is named as the stand-in it is"
+  ],
+  "instr": [
+    "solo_vox",
+    "strings",
+    "harpsichord"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "roots": [
+    0,
+    4,
+    5,
+    0,
+    3,
+    4,
+    0,
+    4
+  ],
+  "prog": [
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 4,
+      "q": "triad"
+    },
+    {
+      "d": 5,
+      "q": "m7"
+    },
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 3,
+      "q": "triad"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 4,
+      "q": "triad"
+    }
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "walk",
+  "kit": {},
+  "orn": {
+    "grace": 0.4,
+    "pass": 0.3
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.9,
+    "atk": 0.03,
+    "rel": 1.5,
+    "gain": 0.25,
+    "verb": 0.55,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the aria, ornamented harder each section",
+    "the ripieno strings",
+    "the continuo, realizing the bass"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [fill(2), rotate(2)], [fill(4)]][s % 4]\n                    : v === 1 ? [drop(8)]\n                    : [keep(0, 4, 8, 12), transpose(-7)])"
+  }
+}

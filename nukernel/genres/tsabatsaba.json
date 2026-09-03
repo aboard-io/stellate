@@ -1,0 +1,157 @@
+{
+  "note": "SKOKIAAN — Bulawayo 1947. August Musarurwa's \"Skokiaan\", cut by\nthe African Dance Band of the Cold Storage Commission of\nSouthern Rhodesia (Gallotone): a sax-band tune in the\ntsaba-tsaba style the article says SUCCEEDED MARABI, named for\nthe illegal shebeen liquor, and later carried around the world\nby everyone from Bulawayo to Satchmo. THE WINSTONS RULING: the\nhonest row is the record — tsaba-tsaba has no article of its\nown in this ZIM and the record is as datable as mbube — and\nMusarurwa's own later band was named the Bulawayo Sweet Rhythm\nBand, which settles the dot.\n\na Bulawayo sax band\n\nLINEAGE: `marabi` (Johannesburg 1935) is the cyclic harmony\ntsaba-tsaba grew straight out of — the article's own verb —\nand `swing` (Kansas City 1938) is the big-band instrumentation\nthe Cold Storage Commission's band wore it in.",
+  "instrumental": true,
+  "label": "Bulawayo 1947",
+  "voices": 3,
+  "bars": 8,
+  "near": "kwela",
+  "plan": "song",
+  "bpm": 138,
+  "parents": {
+    "marabi": 0.45,
+    "swing": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "alto_sax",
+    "brass_section",
+    "banjo"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "riff"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the alto, the tune everybody whistled for fifty years",
+    "the brass, riffing the answer",
+    "the banjo, four to the bar"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [transpose(2)]][s % 4]\n                    : v === 1 ? [drop(2), transpose(-3)]\n                    : [keep(0, 4, 8, 12)])"
+  }
+}

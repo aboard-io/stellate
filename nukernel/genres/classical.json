@@ -1,0 +1,91 @@
+{
+  "note": "CLASSICAL — Vienna 1785, the galant reaction: the concerto's clarity,\nthe fugue kept for development sections only, and the piano replacing\nthe harpsichord. The tune is periodic, the Alberti hand turns under it\nlow and short (a RIFF, which is what an Alberti bass is to this\nengine), and the strings double the cadence. The fortepiano is the\ngrand, said plainly.\n\nthe left hand IS the bass",
+  "label": "Vienna 1785",
+  "voices": 3,
+  "bars": 8,
+  "plan": "song",
+  "bpm": 120,
+  "parents": {
+    "concerto": 0.55,
+    "continuo": 0.25,
+    "fugue": 0.2
+  },
+  "wants": [],
+  "near": "songwriterpiano",
+  "instr": [
+    "yamaha_grand_piano",
+    "yamaha_grand_piano",
+    "slow_strings"
+  ],
+  "part": [
+    "lead",
+    "riff",
+    "pad"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      -1,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "roots": [
+    0,
+    3,
+    4,
+    0,
+    0,
+    5,
+    1,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "maxHold": 2,
+  "tone": {
+    "wave": "triangle",
+    "cut": 3000,
+    "q": 0.8,
+    "atk": 0.005,
+    "rel": 0.7,
+    "gain": 0.28,
+    "verb": 0.3
+  },
+  "words": [
+    "the tune, periodic",
+    "the Alberti hand under it",
+    "strings, doubling the cadence"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 1 ? [rotate(1), ...(s % 2 ? [] : [drop(2)])] : [])"
+  }
+}

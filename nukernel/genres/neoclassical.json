@@ -1,0 +1,119 @@
+{
+  "note": "---- THE SLOW ONES ---------------------------------------------------\n\nNEOCLASSICAL. Sustained strings holding one chord a bar while a piano\nfigure turns over them, and a second piano an octave up that does not\narrive until bar 5 — the entry IS the arrangement, and it is the only\ngesture the style really has. Eight bars of i-VI-III-VII, two bars each,\nbecause the whole point is that the progression is slower than the figure.\n\nnamed \"Berlin 2011\" — Nils Frahm's Felt: the anchor's instrument IS\nfelt_piano, and that record is Berlin, 2011.\n\nLINEAGE: Frahm is ambient's production values and drone's patience\napplied to a piano figure, with post-rock's slow-arrival arc; the\nparent that owns the FIGURE is minimalism, now anchored: Frahm's and\nRichter's left hand is a repeating cell turning over under a chord\nthat moves slower than it does, and its 0.2 comes almost entirely out\nof drone — declared at 0.3 and fitted at 0.00, the largest\ndeclared/fitted gap the table had. The romantic miniature (Satie,\nChopin's nocturnes) is still owed.\n\nTHE SENTENCE ABOVE IS THE CAST: \"sustained strings holding one chord\na bar while a piano figure turns over them, and a second piano an\noctave up\". Voice 0 is the pad chair, so it is the strings; the felt\npiano — still the anchor's own instrument — plays both figures.",
+  "label": "Berlin 2011",
+  "bars": 8,
+  "voices": 3,
+  "plan": "arc",
+  "bpm": 86,
+  "parents": {
+    "ambient": 0.4,
+    "postrock": 0.25,
+    "minimalism": 0.2,
+    "drone": 0.15
+  },
+  "wants": [
+    "romantic piano miniature"
+  ],
+  "instr": [
+    "slow_strings",
+    "felt_piano",
+    "felt_piano"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 4
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      }
+    ],
+    "else": {
+      "$src": "v - 1"
+    }
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {},
+  "roots": [
+    0,
+    0,
+    5,
+    5,
+    2,
+    2,
+    6,
+    6
+  ],
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "bassGrid": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.8,
+    "atk": 0.02,
+    "rel": 1.4,
+    "gain": 0.24,
+    "verb": 0.52
+  },
+  "words": [
+    "strings, one chord a bar",
+    "the piano figure",
+    "the figure again, higher, from bar 5"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "chorus"
+  ]
+}

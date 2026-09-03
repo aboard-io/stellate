@@ -1,0 +1,139 @@
+{
+  "note": "HABANERA — Havana 1860. Sebastián Iradier's \"La Paloma\", written\nafter his Havana visit around 1860 and published in Madrid — the\nmost travelled song of its century, and the cell under it (DUM,\nga-DUM-DUM: dotted eighth, sixteenth, two eighths) is the most\ntravelled BASS LINE in this whole table: Bizet lifted Iradier's\n\"El Arreglito\" wholesale in 1875, the tango took the cell south,\nand W.C. Handy put it inside the St. Louis Blues. `tango` (Buenos\nAires 1935) has wanted this row by name since its lineage was\nwritten, and `danzon` below is built directly on it.\n\nLINEAGE: a declared root here — the contradanza it walked out\nof is a danced European form creolized in Cuba across a century\nwith no single named record to stand on.\nPAID 2026-08-29, the debts round: \"the cuban contradanza\n(saumell)\" is `contradanza` (Havana 1803) — the habanera IS the\ncontradanza's bass gone to song.\n\nTHE CELL, on the kick: dotted-eighth sixteenth, two eighths —\nsteps 0, 3, 4, 6 of an eight-step half bar, twice a bar. It is\nthe one fact this row exists to carry.",
+  "label": "Havana 1860",
+  "voices": 2,
+  "bars": 8,
+  "near": "son",
+  "plan": "song",
+  "bpm": 88,
+  "parents": {
+    "contradanza": 0.35
+  },
+  "wants": [
+    "the guajira"
+  ],
+  "instr": [
+    "solo_vox",
+    "nylon_string_guitar"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    4,
+    4,
+    0,
+    0,
+    4,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.melodic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      5,
+      7,
+      0,
+      6,
+      0,
+      9,
+      0,
+      0,
+      5,
+      7,
+      0,
+      6,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 0.9,
+    "atk": 0.015,
+    "rel": 1,
+    "gain": 0.25,
+    "verb": 0.32,
+    "mouth": {
+      "$src": "MOUTHS.bolerista"
+    }
+  },
+  "words": [
+    "the song, over the cell",
+    "the guitar, answering the verse"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [rotate(2)]][s % 3]\n                    : [transpose(-3), drop(2)])"
+  }
+}

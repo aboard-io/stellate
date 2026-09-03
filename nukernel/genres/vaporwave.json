@@ -1,0 +1,149 @@
+{
+  "note": "The inverted pipeline: the chord loop is the material and the phrase\ndecorates it. Also the only genre here reaching for the lossy operator —\nexcerpt keeps 8 of 16 steps and cycles them, which is the loop-a-fragment\nmove. Restatement rate is ~1 like acid; what separates them is rate,\nrealization and lossiness, which is why the dial is four numbers not one.\n\nWHO THE BASS IS, AND HERE IT IS A PAIR OF HANDS (2026-09-02, the\ncatalogue round). The new `bassInstr` field is not only for machines:\nthis row was playing the sampled upright by default, which is the\nwrong RECORDING as much as the wrong lane, and naming the right one is\nthe honest edit even though it moves no `instrumentation` score.\nMacintosh Plus, *Floral Shoppe* (Beer on the Rug, Portland, December\n2011): the bass is the slowed source record's own electric bass — a\nrecording of a hand, which is the point of the genre.\n\nnamed \"Portland 2011\" — Vektroid's Floral Shoppe: the slowed record\nwith the DX7 E.PIANO 1 this anchor literally loads.\n\nLINEAGE: the records vaporwave actually slows down ARE city pop and\nquiet-storm R&B; the stillness it slows them into is Eno's ambient.\nThe missing parents are the unglamorous ones — muzak, and the\nchopped-and-screwed technique that taught it the wrong speed.\nPAID 2026-08-29, the debts round: \"chopped and screwed\" is\n`chopped` (Houston 1995) — the slowdown is this row's whole\ninheritance. \"muzak\" examined and declined the same day: a\nlicensing company, not a music (the debts round's foot).\n\nTHE PAD IS A STRING MACHINE, NOT AN ORCHESTRA. What vaporwave slows\ndown is a 1984 ballad, and the wash on that record is a Solina/ARP\nensemble — chorus and all — rather than a section of players. GM 51\nis that machine's own patch id and to-engine.js plays it on the\nparent's `solina`, so the pad stops being a sampled string section\npitched down and becomes the box it always was.\n...AND A THIRD CHAIR IS THE FOUND SOUND, 2026-08-30 (the sampling\nround — Paul: \"we use it for texture\"). Vaporwave's identity has\nalways been half found sound — the mall, the weather channel, the\nbeach on the Floral Shoppe sleeve — and this record carried none of\nit. `sea_shore` (GM 122, the SFX bank's one registered recording) is\nthe bed: two looped full-keyboard zones, routed `sampler:sea_shore`\n(measured 2026-08-30), seated as a second pad under the machine so\nthe loop strip can move its points and `looping` can hold it under\nthe gate. voices: 3 is declared with it — the third entry was\nunreachable without the count.\n\nthe SAMPLED kit, not a sine and some noise\nBOTH VOICES SIT LOW. The pad was always down here; the melody was an\noctave above it, up where the DX7's declared freq ceiling (1000 Hz) is\nclose enough to matter and where a slowed-down sample stops sounding\nslowed down. Vaporwave is a record playing at the wrong speed, and the\nwrong speed is DOWN — the line belongs under the pad's top, not over it.\n\nv1 is the DX7 line; v0 (the machine) and v2 (the sea) are pads —\nsame answer for the two voices that existed before 2026-08-30.\n\niv v III VI\nFM, from a real cartridge. \"E.PIANO 1\" is the DX7 patch vaporwave is\nactually made of; the pad stays off the DX7 because a DX7 node is\nmonophonic and a chord would collapse onto one voice.\n\nlazy, half-time at rate .5\n\nbar 4: the snare answers itself\nGRAIN 0.50 -> 40 dB UNDER ITS OWN MIX (measured). The one row that\nalready had a found sound (sea_shore, the sampling round) and still\nhad no surface. What vaporwave slows down is a rip of a rip — a\n1984 ballad off a cassette or a VHS — so the noise is real but thin\nand mostly tape, and it is set DEEP on purpose: the identity here\nis the wrong speed, and the dust is only the sleeve.\n  MEASURED UP FROM A FIRST TRY OF 0.30, which landed 45.7 dB under\nthis record (the catalogue's hottest press at -18.0 dBFS) and moved\nits noise floor by 0.00 dB — a row declaring a texture that did not\narrive, which is the whole bug this round is about.\n  AND THIS ROW'S GRAIN COMES OUT IN STEREO, alone in the wing, which\ntook a measurement to understand and turned out to be right. On the\nother nine records the added signal is pure MID — the side component\nsits 25 to 43 dB under it, because fx_bus sums one `crk` into both\nchannels and a groove is mono. On vaporwave mid and side come back\nEQUAL (-64.7 against -64.7). The cause is this record's own master\nword: it is the only row of the four probed carrying `tape: \"wow\"`,\nand fx_bus runs wowL and wowR off different LFO rates on purpose\n(\"so the drift decorrelates into width instead of shifting the\nimage\"), so a mono surface entering the tape stage leaves it spread.\nA warped record smears its own surface noise into width; the box\ndoes the same thing for the same reason, and the 3.7 dB the grain\nreads under prediction is that stage's interpolation eating the\nimpulses' top end.\ngrain: 0.50 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the\n//   measured value for a hand that wants it back. Paul: \"Make the\n//   default for surface 0 and I can turn it on only if I want to,\n//   don't put it on anything by default.\" The castings were real —\n//   each was pressed and six moved on what came back — but a\n//   texture nobody asked for is a texture on every play, and the\n//   board's `surface` dial (ui/engineer.js, 2026-08-31) is where\n//   the choice belongs. The engine path stays wired and gated;\n//   what leaves is the ROW declaring it for you.\n\nTHE WINDOW MOVES. A fixed excerpt(2,8) looped ONE half-phrase for the\nwhole section — six pitches, eight times over — and threw steps 11..16\nof the seed away entirely, so writing a melody changed almost nothing.\nSliding the window four steps a bar keeps the loop-a-fragment identity\nthat makes it vaporwave while letting the whole phrase through across\nthe section.",
+  "bassInstr": "finger_bass",
+  "label": "Portland 2011",
+  "rate": 0.5,
+  "plan": "dance",
+  "bpm": 88,
+  "parents": {
+    "citypop": 0.4,
+    "rnb": 0.3,
+    "ambient": 0.3,
+    "chopped": 0.2
+  },
+  "wants": [
+    "muzak"
+  ],
+  "voices": 3,
+  "instr": [
+    "synth_strings_1",
+    "legend_ep_2",
+    "sea_shore"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "line"
+      }
+    ],
+    "else": "pad"
+  },
+  "roots": [
+    3,
+    4,
+    2,
+    5
+  ],
+  "synth": {
+    "dsp": "dx7_alg5",
+    "root": "DX7",
+    "preset": "E.PIANO 1",
+    "level": 0.9,
+    "lineOnly": true
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1500,
+    "q": 2.2,
+    "atk": 0.05,
+    "rel": 1.6,
+    "gain": 0.2,
+    "verb": 0.55
+  },
+  "words": [
+    "chords from the harmony",
+    "a moving 8-step window on the phrase",
+    "the sea, looped under the record"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => [excerpt((s * 4) % 16, 8)]"
+  }
+}

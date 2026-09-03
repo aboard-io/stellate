@@ -1,0 +1,188 @@
+{
+  "note": "BOY BAND [doowop]. Doo-wop's group-blend arithmetic (a lead and two\nbacking parts, a stab-and-riff-and-lead register scheme copied whole)\nrun through a nineties R&B production — the harmonize PIPE rnb already\ndeclares (stacked sixths, chord-locked) does the backing-vocal work\nhere exactly as it does there, cited rather than reinvented.\n\nLINEAGE: the group-of-voices arithmetic (lead out front, a harmony\nstack, a keyboard holding the changes) is doo-wop's own scheme,\ninherited whole down to the `part` register spacing; the sixths-\nstacked backing vocal technique and the straight-time feel are\nR&B's; disco keeps the floor moving underneath. The vocal-audition\npop-factory system that actually assembled these groups has no\nmusical anchor to name.\n\nWHO SINGS: stacked TIGHT — the tightness is the production",
+  "label": "Orlando 1997",
+  "voices": 3,
+  "near": "doowop",
+  "plan": "song",
+  "bpm": 96,
+  "parents": {
+    "detroitsoul": 0.3,
+    "doowop": 0.3,
+    "rnb": 0.25,
+    "disco": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "ohh_voices",
+    "legend_ep_2"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "stab"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 5,
+      "q": "7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    },
+    {
+      "d": 4,
+      "q": "7"
+    }
+  ],
+  "maxHold": 2,
+  "pipes": [
+    {
+      "id": "harmonize",
+      "p": 0.5,
+      "gap": "sixth"
+    }
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 1,
+    "atk": 0.008,
+    "rel": 0.8,
+    "gain": 0.27,
+    "verb": 0.32,
+    "mouth": {
+      "$src": "MOUTHS.boygroup"
+    }
+  },
+  "words": [
+    "the lead, the hook",
+    "the harmony stack, a sixth under",
+    "the EP, holding the changes"
+  ],
+  "word": {
+    "kind": "const",
+    "n": {
+      "$src": "[]"
+    }
+  }
+}

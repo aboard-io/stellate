@@ -1,0 +1,263 @@
+{
+  "note": "KHYAL — Mumbai 1965. Amir Khan in his LP decade: the article has him\nin Bombay from 1934, and the mature vilambit records — the Marwa and\nDarbari sides everyone means by \"Amir Khan\" — are the sixties, the\nSangeet Natak Akademi award landing in 1967 to date the peak. The\nfour-that-did-not-ship block below called this \"the biggest single\nhole left after this block\" and withdrew it on two strikes; the\nfirst — \"one matra every two seconds... compose.js's floor is 70 bpm\nwith no metre declarable\" — fell 2026-08-30: `paces` below puts the\nverses at half and the solo at double, which is vilambit into drut,\nthe khyal's own arc, on one record with one bpm. The second strike\ndid not fall and is the first line of the cannot.\nTINTAL, HONESTLY: sixteen matras at a step each IS the sixteen-step\nbar — the one tala this grid says exactly, which is why the record\nsits in it. The kits schedule below is the theka across FOUR bars —\nfour vibhags of four — with the third bar khali: no bass stroke,\nthe wave of the hand instead of the clap, audible as a hole where\nthe others have a floor.\n\nLINEAGE: `dhrupad` (Delhi 1955) is the elder form khyal displaced\nand descends from — ten years earlier ON THE LABELS, centuries\nearlier in fact, and the edge is honest both ways for once.\n\nthe theka as a four-bar schedule: dha dhin dhin dha / dha dhin\ndhin dha / dha tin tin ta (khali — no bass stroke) / ta dhin\ndhin dha",
+  "label": "Mumbai 1965",
+  "voices": 3,
+  "bars": 8,
+  "near": "dhrupad",
+  "plan": "arc",
+  "bpm": 80,
+  "paces": {
+    "verse": "half",
+    "solo": "double"
+  },
+  "parents": {
+    "dhrupad": 0.35
+  },
+  "wants": [
+    "sadarang and adarang's delhi court khyal",
+    "the gharana lineages before the gramophone"
+  ],
+  "cannot": [
+    "the badhat — khyal's whole art is the gradual exposition of the raga, which is MATERIAL AND PHRASE rather than alphabet; that admission survived the round untouched, because the walls that fell were pitch and time, not what a raga IS (the four-that-did-not-ship block's own second strike, kept verbatim)",
+    "a raga is not a scale — dhrupad's admission, unchanged",
+    "ektal and jhaptal — the vilambit tala of the mature LPs is twelve beats and METERS knows three and six; this record sits in tintal BECAUSE sixteen is the one tala the bar can count",
+    "gamak and meend — no pitch-trajectory channel (WORLD.md §5.3, still standing); the grace below is dhrupad's own crude proxy",
+    "the sarangi — the bowed shadow a khyal singer actually had before the harmonium took the chair; the reed organ below IS the harmonium's family and the sarangi has no id"
+  ],
+  "instr": [
+    "solo_vox",
+    "reed_organ",
+    "sitar"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -2
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "padin",
+  "kits": [
+    {
+      "k": [
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "p": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "k": [
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "p": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "p": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "k": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "p": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    }
+  ],
+  "kitVel": {
+    "p": [
+      6,
+      0,
+      4,
+      0,
+      5,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      5,
+      0,
+      4,
+      0
+    ]
+  },
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "tie",
+  "maxHold": 8,
+  "incClamp": 2,
+  "orn": {
+    "grace": 0.4
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2100,
+    "q": 0.8,
+    "atk": 0.04,
+    "rel": 2.2,
+    "gain": 0.23,
+    "verb": 0.45,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the khyal, one matra at a time, then running",
+    "the harmonium, shadowing the line",
+    "the tanpura, never changing"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n          ? [[drop(4)], [drop(2)], [fill(2)], [fill(2), rotate(2)]][s % 4]\n        : v === 1 ? [drop(4), transpose(-3)]\n        : [drop(12)])"
+  }
+}

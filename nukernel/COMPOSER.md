@@ -615,6 +615,28 @@ finding quoted:
 
 ## 5 · AFTER THIS ROUND (queued, in order)
 
+**LANDED 2026-09-02 — THE INVERSION, and it was not on this list.** Paul, after
+the genre-QA round's closure census: *"Are you sure we shouldn't move everything
+including the closures into sqlite and go the other direction — manage the data
+as data and then export it as JSON or even JS for operation and distribution?
+That feels like it might allow the most flexibility."* So `nukernel/genres.js`
+is **generated** now — 421 row files under `nukernel/genres/`, the shared tables
+hand-written in `nukernel/genres-tables.js`, `tools/genres/build.js` writing the
+shipped script, and the four closures on every row stored as a nine-kind
+template grammar (1,486 of 1,684 templated; 198 stay as verbatim formula, 189 of
+them `word`, because `word` is the music). The first build was proved
+behaviourally identical — every field deep-equal, 121,248 closure calls with
+`word`'s operators applied rather than counted, zero mismatches. The contract,
+the grammar and the three-motion edit loop are **`nukernel/GENRES.md`**; the
+gate is `test/genres-build.test.js` (wave 1, node), which holds the shipped
+bytes to a fresh build the way `gates.js` and `wiki.js` are held. The two alias
+doors of the 2026-09-01 genre-only rename (`document.js OLDKEYS`, `song.js
+migrate()`) did not move.
+
+A consequence for everything below this line: **a row edit is now three motions
+— edit the JSON, `node tools/genres/build.js`, commit both.** An edit made in
+`nukernel/genres.js` is an edit the next build throws away.
+
 1. **The sample crate** (B15a): a `Samples` child under Band (and a facet
    on sampled members) listing every sample the record reaches — kit files,
    one-zone units, found/ beds — with audition, the loop strip, and a way to

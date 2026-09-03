@@ -1,0 +1,99 @@
+{
+  "note": "---- SOUTHEAST ASIA ------------------------------------------------\nSix anchors into a region the catalog held ZERO of. Every one of them\nis a Western-instrument popular music of the twentieth century, which\nis not a coincidence and is not a dodge: gamelan is Tier 2 for two\nwalls at once (tuning AND a non-2:1 period, which `degPitch`'s\n`12*floor(d/len)` makes unsayable), and mo lam and the Thai piphat are\nTier 2 for metre and instruments. What is left is real, large, deeply\nloved and entirely playable: kroncong, dangdut, luk thung, Manila\nsound, nhạc vàng and Cambodian rock.\n\nKRONCONG — Jakarta 1935, and it is the oldest Southeast Asian record\nthe catalog can hold. A Portuguese-descended Indonesian chamber music:\na small plucked ukulele-like instrument (the kroncong itself, which\nnames the whole style) playing an interlocking figure with a second\none, a cello played PIZZICATO like a drum, a flute or a violin on the\ncounter-melody, and a singer over the top.\nTHE YEAR is the pre-war Jakarta recording industry and \"Bengawan Solo\"\nis five years the other side of it; 1935 is the decade's centre with\na studio in it.\nTHE MOST SURPRISING TIER-1 ANCHOR IN THE BATCH, and the reason is\nhistorical: kroncong descends from sixteenth-century Portuguese\nsailors' music, is tuned in Western temperament, is in four, and is\nplayed on instruments the registry actually has. It is the one\nIndonesian music that is not behind the gamelan wall — and its\npresence is the clearest possible statement of where that wall\nactually runs.\n\nTHE CELLO IS THE DRUM KIT. A kroncong ensemble has no percussion at\nall — the pizzicato cello plays the rhythm — so `kit` is empty and\nthe pulse lives in the bass, which is why `bassStyle` is\n`sixteenths` on a record at 84 bpm. That is not a busy bass line,\nit is a drummer.",
+  "label": "Jakarta 1935",
+  "voices": 3,
+  "near": "choro",
+  "plan": "song",
+  "bpm": 84,
+  "parents": {},
+  "wants": [
+    "portuguese fado of the sailors",
+    "moresco",
+    "stambul theatre song"
+  ],
+  "instr": [
+    "solo_vox",
+    "nylon_string_guitar",
+    "flute"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "counter"
+  ],
+  "roots": [
+    0,
+    4,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "kit": {},
+  "bassStyle": "sixteenths",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 0.85,
+    "atk": 0.008,
+    "rel": 0.8,
+    "gain": 0.26,
+    "verb": 0.38,
+    "mouth": {
+      "$src": "MOUTHS.monody"
+    }
+  },
+  "words": [
+    "the singer",
+    "the kroncong, the interlocking figure",
+    "the flute, the counter-melody"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[split(2), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[invert(4), drop(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

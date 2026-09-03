@@ -1,0 +1,81 @@
+{
+  "note": "PARLOR — New York 1892, the hinge into the existing catalog: the\nhymnal's four-part habit sold as sheet music for the home piano. Its\nI-vi-IV-V IS \"the doo-wop changes\" sixty years early, which stitches\nthis whole slate onto the catalog's 1950s front edge — hence\n`near: \"doowop\"`, a claim about the future rather than the past.\n\n\"ragtime\" came off `wants` 2026-08-29 unpaid and BACKWARDS: `ragtime`\nis Sedalia 1899, seven years after this row, and the syncopation ran\nfrom the rag into the parlor song rather than the other way. The\ndebt is `tinpanalley`'s, which now declares it.\n\nthe fifties changes, at home in 1892\n\nWHO SINGS: the hymnal mouth, out of church and into the front room",
+  "label": "New York 1892",
+  "plan": "song",
+  "bpm": 96,
+  "parents": {
+    "hymn": 0.4,
+    "classical": 0.35,
+    "barcarolle": 0.25
+  },
+  "wants": [],
+  "near": "doowop",
+  "instr": [
+    "solo_vox",
+    "upright_piano"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "maxHold": 4,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.8,
+    "atk": 0.008,
+    "rel": 0.9,
+    "gain": 0.28,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.hymnal"
+    }
+  },
+  "words": [
+    "the song, sentimental on purpose",
+    "the upright, oom and chord"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(1)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

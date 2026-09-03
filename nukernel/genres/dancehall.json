@@ -1,0 +1,192 @@
+{
+  "note": "DANCEHALL — Kingston 1985, and it is the rung `reggaeton` and\n`afrobeats` have BOTH declared `wants: [\"dancehall\"]` for.\nTHE YEAR is \"Under Mi Sleng Teng\": Wayne Smith and Noel Davey over a\npreset from a Casio MT-40 keyboard, King Jammy's, 1985. It is the most\nprecisely dated record in this batch and arguably in the catalog — one\nriddim, one machine, one afternoon, and Jamaican music is digital from\nthen on. THE MACHINE IS THE ANCHOR'S IDENTITY, which is why the tone\nblock is a cheap square lead and the kit is `electronic`: the whole\npoint of Sleng Teng is that it sounds like a toy.\nA RIDDIM IS ONE CHORD AND EVERYBODY'S SONG. `harmony: \"modal\"` is the\nhonest reading of a form where fifty singers voice the same two-bar\nloop: nothing modulates, because the backing track does not know which\nsong it is under.",
+  "label": "Kingston 1985",
+  "voices": 2,
+  "near": "electro",
+  "plan": "dance",
+  "bpm": 100,
+  "parents": {
+    "reggae": 0.4,
+    "dub": 0.3,
+    "electro": 0.3
+  },
+  "wants": [],
+  "instr": [
+    "bass_lead",
+    "square_lead"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "lead"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      8,
+      0,
+      5,
+      0,
+      7,
+      0,
+      5,
+      0,
+      8,
+      0,
+      5,
+      0,
+      7,
+      0,
+      5,
+      5
+    ]
+  },
+  "fill": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 2400,
+    "q": 2.2,
+    "atk": 0.003,
+    "rel": 0.3,
+    "gain": 0.28,
+    "verb": 0.2
+  },
+  "words": [
+    "the bass line, which is the riddim",
+    "the melody preset over the top of it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(12), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

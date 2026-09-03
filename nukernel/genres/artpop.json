@@ -1,0 +1,157 @@
+{
+  "note": "KATE BUSH — London 1985, Hounds of Love (16 September 1985). The row is\nbuilt on the thing that makes that record singular in this table: a POP\nsong whose second side is a suite, sung at the top of a soprano's range\nover a drum sound borrowed from the machines. `ambient` is here for the\nside-two texture and `glam` for the theatre, which are the two ancestors\nthis catalogue actually holds — it has no `artrock` row to point at,\nand that absence is named rather than papered over.",
+  "label": "Kent 1985",
+  "voices": 3,
+  "bars": 8,
+  "near": "dreampop",
+  "plan": "arc",
+  "bpm": 108,
+  "parents": {
+    "beatgroup": 0.3,
+    "glam": 0.3,
+    "ambient": 0.2,
+    "psychrock": 0.2
+  },
+  "wants": [
+    "an art-rock rung this table does not have"
+  ],
+  "instr": [
+    "solo_vox",
+    "warm_pad",
+    "ahh_choir"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      },
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "lead"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "tie",
+  "maxHold": 9,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "t": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  "fx": [
+    "echo"
+  ],
+  "mix": {
+    "lead": {
+      "rev": "wet",
+      "echo": "some"
+    }
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 1.2,
+    "atk": 0.03,
+    "rel": 1,
+    "gain": 0.26,
+    "verb": 0.6,
+    "mouth": {
+      "$src": "MOUTHS.dreamchoir"
+    }
+  },
+  "words": [
+    "the voice, at the top of its range",
+    "the pad under it",
+    "the choir, answering"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(2)], [keep(0, 4, 8)], []][s % 4]\n                    : v === 1 ? [drop(8)] : [keep(0, 8)])"
+  }
+}

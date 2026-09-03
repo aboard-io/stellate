@@ -1,0 +1,69 @@
+{
+  "note": "FOLK DUO [skiffle]. Two voices in close harmony over one acoustic\nguitar — MODAL, not counterpoint's emergent two-line machinery: a folk\nduo does not compute contrary motion by rule, it just sings the tune a\nthird under, by ear, over one implied chord. `harmony:\"emergent\"` is\nthe counterpoint family's own roster (the §48 ruling names it exactly\nfugue/polychoral/counterpoint) and a parallel third is a different, plainer\nthing than that machinery — the same distinction drone draws against\ngregorian one row up.\n\n96 is the folk duo's guitar\n\nLINEAGE: the string-band-plays-American-song format is skiffle's;\ncountrypop's close vocal harmony and fifths-leaning guitar are the\nother half; counterpoint contributes the two-voice-as-one-line\ndiscipline, thinned from a mirror to a parallel third. The\nAppalachian ballad tradition both duo and trio folk revivalists\nactually drew their repertoire from is still uncredited.\n\"appalachian ballad\" PAID 2026-08-30, the folk-floor round:\n`appalachia` (Hot Springs 1916) is that tradition's own named\ncollection, and the comment above stops being true today.\n\nA DUO IN THE VILLAGE PLAYS A STEEL-STRING. The nylon is a classical\nand a bossa instrument (Rio, two rows up, keeps it); what is under\ntwo voices singing a third apart in 1964 is a dreadnought with bronze\non it, and the difference is the whole top end of the record.\n\nthe guitar states the tune before the harmony joins\nMAJOR PENTATONIC — the actual alphabet an Appalachian ballad sings\nin, and plainer than counterpoint's seven-note diatonic on purpose.\n\nWHO SINGS: two people who have sung together for years: closer than a choir",
+  "label": "Greenwich Village 1964",
+  "bars": 8,
+  "near": "skiffle",
+  "plan": "song",
+  "bpm": 96,
+  "parents": {
+    "skiffle": 0.4,
+    "countrypop": 0.35,
+    "counterpoint": 0.25,
+    "appalachia": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "steel_string_guitar",
+    "ohh_voices"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "from",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "legato",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.006,
+    "rel": 0.8,
+    "gain": 0.24,
+    "verb": 0.35,
+    "mouth": {
+      "$src": "{ ...MOUTHS.hymnal, blend: 0.4, syll: 2 }"
+    }
+  },
+  "words": [
+    "the guitar and the lead voice, the tune",
+    "the harmony voice, a third below — parallel, not mirrored"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(-2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

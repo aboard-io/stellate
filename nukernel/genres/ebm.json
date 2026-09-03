@@ -1,0 +1,183 @@
+{
+  "note": "EBM [techno]. Electronic Body Music: techno's kick-driven floor and\ndusseldorfschool's machine pulse, made aggressive by a punk-direct vocal\nchant — the two lines TRADE PLACES bar to bar (the sequence solid,\nthe chant on the offbeats, then a straight run answered by the\nsequence stabbing back), the club's version of a call and response.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nFront 242, \"Headhunter\" (*Front by Front*, Wax Trax! Chicago pressing,\n1988): the bassline is the sequence.\n\nITS OWN ARPEGGIO (2026-08-31): Front 242's figures push DOWN into the floor; a lean, not a claim about every record.\n\nfloor music with a breakdown where a bridge would be, like bigbeat\n\nLINEAGE: the sequenced, pulsing bass and the four-on-the-floor club\ndiscipline are techno's; dusseldorfschool supplies the machine chassis\nunderneath; punk supplies the shouted, direct chant vocal. New\nbeat, the slowed-down Belgian club scene this style traded records\nwith directly, is the missing rung.\nWAX TRAX JOINED 2026-08-30 AND IT IS THE SMALLEST EDGE ON PURPOSE.\nEBM is Belgian — Front 242 \"came into prominence during the 1980s...\nPioneering the style they called electronic body music\" — and this\nanchor's label says Chicago, which needs an argument rather than a\nshrug. The argument is the licence: Wax Trax! Records names \"the\nlicensing of Front 242's Endless Riddance EP\" as half of what \"set\nthe stage for Wax Trax! to become America's preeminent industrial\nlabel\", and Front 242's \"Headhunter\" was later \"the label's\nbest-selling record to date\". Chicago 1981 is the DOOR this music\ncame through, not the room it was written in, so it takes a fifth of\nthe share and Belgium keeps the rest through `techno` and the\nunpaid `new beat` below.\n\nTHE CHANT IS SHOUTED, AND A SHOUT IS MOSTLY CONSONANTS — and until\n2026-08-18 it was not even a voice: the Model D below is declared without\n`lineOnly`, so the signature synth took BOTH chairs and the \"vocal chant\"\nwas a second copy of the sequence pulsing beside the first. (Before that\nit was the VP-330, a string ensemble holding an \"aah\", which is the miscast\nthis GM id has always invited.) `synth_voice` on voice 1's LINE chair now\nreaches the vocal tract, because to-engine.js recipeFor asks the mouth\nBEFORE the signature synth. The anchor's own word operator is the rest of\nthe argument: `breath` is an AND against the phrase's own gate, which this\nfile already glosses as \"a chant that answers what it is actually given\",\nand a mouth that shuts is what makes that audible.\n\nthe sequenced pulse is a resonant analog bass squeezed hard, which a\nGM square-lead sample cannot squelch any more than acid's 303 can be\nplayed on a guitar\n\nBREATH, NOT SKANK — the field that separates the chant from the\nsequence: `fill(1)` is a total override (a machine that never\nlistens to what it is handed), `breath` is an AND against the\nphrase's own gate (a chant that answers what it is actually given,\nthe way reggae's skank does NOT and a shouted vocal DOES).",
+  "bassInstr": "bass_lead",
+  "label": "Chicago 1989",
+  "near": "techno",
+  "seqArp": "arpdown",
+  "plan": "dance",
+  "bpm": 134,
+  "parents": {
+    "dusseldorfschool": 0.35,
+    "techno": 0.3,
+    "industrialdance": 0.2,
+    "punk": 0.15
+  },
+  "wants": [
+    "new beat"
+  ],
+  "instr": [
+    "square_lead",
+    "synth_voice"
+  ],
+  "synth": {
+    "dsp": "modeld",
+    "root": "modeld",
+    "level": 0.82,
+    "set": {
+      "cutoff": 900,
+      "res": 0.55,
+      "envAmount": 0.8,
+      "envAttack": 0.002,
+      "envDecay": 0.1,
+      "envSustain": 0.3,
+      "oscMix": 0.1,
+      "drive": 0.4,
+      "glide": 0,
+      "drift": 1
+    }
+  },
+  "drumkit": "tr909",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "MODES.phrygian"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      8,
+      4,
+      8,
+      4,
+      8,
+      4,
+      8,
+      4,
+      8,
+      4,
+      8,
+      4,
+      8,
+      4,
+      8,
+      6
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 2000,
+    "q": 3,
+    "atk": 0.002,
+    "rel": 0.3,
+    "gain": 0.29,
+    "verb": 0.12
+  },
+  "words": [
+    "the sequence, pulsing every sixteenth",
+    "the vocal chant, the phrase's own rhythm ANDed with the offbeat"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[only(\"gate\", fill(1))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[breath([0, 0, 1, 0])]"
+    }
+  }
+}

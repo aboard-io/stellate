@@ -1,0 +1,224 @@
+{
+  "note": "MERENGUE — Santo Domingo 1955. The fastest thing in this batch and one\nof the fastest records in the catalog: a saxophone playing a jaleo\nfigure over and over, a tambora played with one stick and one hand,\nand a güira — a metal scraper — running sixteenths that never stop.\nTHE YEAR is the Trujillo-era orquesta merengue, when the state made a\nrural Cibao form the national music and put it in front of a horn\nsection. That is an unlovely reason for a year and it is the true one.\nTHE ALTO SAX IS THE SECOND REGISTRY ID THIS ROUND UNLOCKS BY NAME:\n`alto_sax` has six looped zones and a parent window of [49,82] and no\nanchor had ever asked for it — the catalog's saxophone has been the\nTENOR eleven times running, which is a jazz-and-soul habit and is the\nwrong horn for this music.\n\n148 and not 144: a merengue de orquesta is the fastest thing in this\nbatch and the four bpm are also four bpm of separation from Nairobi\n1972, which the measurement below the benga entry explains.\n\nAN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue\nround, shift 2).\nThe want \"danza\" is `contradanza` (Havana 1803) under the word the\nnineteenth century actually used for it in Santo Domingo.\nTHE ARGUMENT: \"San Pascual Bailon\" (anonymous, printed Havana, 1803) is the\nparent row's own record; the transmission artefact is the polemic \"Contra el\nmerengue\" in EL OASIS, Santo Domingo, 14 January 1855, which attacks the new\ndance for DISPLACING the tumba — a contemporary complaint that names both\nthe ancestor and the year of the succession. 0.4: the Cibao accordion trio\nis the other half and stays wanted by its own name.\nBOTH DIRECTIONS CHECKED: `bachata` (Santo Domingo 1992) already descends\nfrom this row. `danzon` (Matanzas 1879) and `habanera` (Havana 1860) were\nweighed and declined — both are Cuban cousins off the same contradanza root,\nsiblings of this row rather than ancestors of it.\n\nTHE TAMBORA IS TWO HANDS AND IT IS WRITTEN AS TWO LANES: the stick's\nrim-and-head figure on `p` and the open hand on the low tom. The\ngüira is the hat lane at sixteenths, EVEN — no velocity arch at all,\nwhich is unusual in this file and is exactly what a scraper sounds\nlike: a continuous surface, not a set of strokes.",
+  "label": "Santo Domingo 1955",
+  "voices": 3,
+  "near": "cumbia",
+  "plan": "dance",
+  "bpm": 148,
+  "parents": {
+    "contradanza": 0.4
+  },
+  "wants": [
+    "merengue típico cibaeño"
+  ],
+  "instr": [
+    "alto_sax",
+    "trumpet",
+    "accordion"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "counter",
+    "lead"
+  ],
+  "roots": [
+    0,
+    4,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+    ],
+    "l": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 3100,
+    "q": 1.3,
+    "atk": 0.004,
+    "rel": 0.3,
+    "gain": 0.28,
+    "verb": 0.18
+  },
+  "words": [
+    "the sax, the jaleo",
+    "the trumpet, over the top of it",
+    "the accordion, from the típico band"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(5), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

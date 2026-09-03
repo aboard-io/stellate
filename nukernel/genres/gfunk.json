@@ -1,0 +1,181 @@
+{
+  "note": "G-FUNK — Los Angeles 1992. \"Nuthin' but a 'G' Thang\" (The\nChronic, Death Row): Dre replays Leon Haywood with session\nplayers instead of sampling him, lays the portamento Moog whine\non top, and slows the whole city to a ride-height lope. The\nbiggest rap sound of its decade and, until today, a hole\nbetween `electro` and `boombap` in this table's West Coast —\nboombap (New York 1994) is two years YOUNGER, so the coasts'\nrivalry is also a dating fact: neither descends from the other.\n\nMEASURED, 2026-09-02 (the MIDI-corpus round): 43 files — Dr. Dre,\nSnoop Dogg, 2Pac, Ice Cube, Warren G, the four acts Paul names in\none breath. Tempo (n=41): p10 87 · p25 88 · MED 96 · p75 98 — the\ntightest tempo cluster of the twelve sets measured this round, which\nis what one producer's records look like. The row said 92 and the\ncorpus says 96.\nTHE NUMBER THAT VINDICATES THE ROW is `seventh`: 0.52, meaning more\nthan half of every measured bar carries a seventh chord — the\nhighest of any hip-hop set in the corpus (boombap 0.22,\nsouthernhiphop 0.18) — which is exactly the \"Dre replays Leon\nHaywood with session players\" claim this row's own comment makes,\narriving as a number. The row's `prog` already says `q: \"7\"` on\nevery slot and is left exactly as it stands.\nAND THE WHINE IS REAL: melodic mean pitch 80.9 (G#5), the highest of\nany set measured this round including glam metal's 76.0. That is the\nlead synth, and this row's `reg` already puts it up there.\n\nLINEAGE: `funk` (Cincinnati 1967) at dominant weight — the\nOne is P-Funk's, replayed rather than sampled; `electro`\n(New York 1982) is the LA machine scene Dre came up in (the\nWorld Class Wreckin' Cru is his own CV); `quietstorm` (Los\nAngeles 1975) is the slow-jam radio the melodies whisper.\nPAID 2026-08-29, the debts round: \"p-funk by name\" is `psychfunk`\n(Detroit 1975) — Dre's harmonic book, named at last.",
+  "label": "Los Angeles 1992",
+  "voices": 3,
+  "bars": 8,
+  "near": "boombap",
+  "plan": "song",
+  "bpm": 96,
+  "parents": {
+    "funk": 0.45,
+    "electro": 0.3,
+    "quietstorm": 0.15,
+    "psychfunk": 0.25
+  },
+  "wants": [
+    "zapp's talk box"
+  ],
+  "cannot": [
+    "the portamento — the whine's GLIDE between notes is the lead's whole identity and deg is a step into an alphabet; the square lead below hits the notes the whine slides between"
+  ],
+  "instr": [
+    "square_lead",
+    "polysynth",
+    "rhodes_ep"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    5,
+    5,
+    0,
+    0,
+    5,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "harmony": "cycle",
+  "swing": 0.15,
+  "artic": "staccato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "h": [
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      6,
+      0,
+      5,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 2300,
+    "q": 1.4,
+    "atk": 0.004,
+    "rel": 0.6,
+    "gain": 0.27,
+    "verb": 0.25
+  },
+  "words": [
+    "the whine, up top",
+    "the pad, low-riding",
+    "the Rhodes, the quiet storm underneath"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)]][s % 3]\n                    : v === 1 ? [drop(8)]\n                    : [transpose(-4), drop(2)])"
+  }
+}

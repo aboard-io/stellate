@@ -1,0 +1,87 @@
+{
+  "note": "KRUDER & DORFMEISTER — Vienna 1993. G-Stoned (G-Stone, 1993;\nthe ZIM's infobox: recorded September-October at G-Stone Studio,\nVienna): two Viennese producers slowing the boom-bap they loved\nto the tempo of the city that invented the coffee house — dub\nbass, brushed loops, a muted trumpet in the haze, a Simon &\nGarfunkel pose on the sleeve as the whole manifesto. The K&D\nSessions (1998) made the sound world-famous but it is a remix\nalbum — other people's records, each paying its own debt — so\nthe EP is the honest anchor, the amenbreak rule again.\n\nLINEAGE: `dub` (Kingston 1973) is the bass and the patience;\n`boombap` (New York 1994) is a year LATE as a parent — the\ncraft arrived in Vienna off earlier records, so `electro`\n(New York 1982) carries the breakbeat edge instead, exactly\nas triphop's own lineage routes it; `acidjazz` (London 1988)\nthe crates the haze was rolled from.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nKruder & Dorfmeister, G-STONED (G-Stone, recorded September-October 1993 at\nG-Stone Studio, Vienna) — this row's own record. Four tracks of dub bass on\na tonic pedal with a muted trumpet over it: `harmony: \"modal\"`, no cycle, so\nthe mode never reached a root and the natural sixth never sounded. The field\nnow names the alphabet the row plays.",
+  "label": "Vienna 1993",
+  "voices": 2,
+  "bars": 8,
+  "near": "triphop",
+  "plan": "dance",
+  "bpm": 82,
+  "parents": {
+    "dub": 0.35,
+    "electro": 0.2,
+    "acidjazz": 0.2
+  },
+  "wants": [
+    "the vienna rooms either side (tosca, sofa surfers)"
+  ],
+  "instr": [
+    "muted_trumpet",
+    "warm_pad"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "swing": 0.25,
+  "bassStyle": "pedal",
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 1500,
+    "q": 0.9,
+    "atk": 0.025,
+    "rel": 1.4,
+    "gain": 0.24,
+    "verb": 0.5
+  },
+  "words": [
+    "the trumpet, muted, in no hurry, in smoke",
+    "the pad, the room after midnight"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [spread(2)], [transpose(-2)], [rotate(3)]][s % 4]\n                    : [drop(8)])"
+  }
+}

@@ -1,0 +1,190 @@
+{
+  "note": "THE BIG-SKY WESTERN SCORE — Los Angeles 1958, the year the\nbig-country main-title grammar was set: open fifths, the gallop, the\nhorizon tune — the American answer Rome 1966 later talked back to\n(which is why `near` points at spaghettiwestern while the parents do not:\nproximity is not lineage, and Rome is eight years downstream).\nMIXOLYDIAN because the flat seven is the prairie — the hoedown's own\nmode, appalachia's at 0.2 saying where the tune actually comes from.\nThe gallop is the kick's 3-3-2 with the low tom doubling it, said\nagain by the low brass at spread(0.5) — the same figure at two\nheights, which is what a western main title IS.\n\na main title — the territory is the singer\n\nthe gallop — 3-3-2 under the tune, the low tom agreeing",
+  "instrumental": true,
+  "label": "Los Angeles 1958",
+  "voices": 4,
+  "bars": 8,
+  "near": "spaghettiwestern",
+  "plan": "arc",
+  "bpm": 126,
+  "parents": {
+    "goldenagescore": 0.25,
+    "march": 0.2,
+    "appalachia": 0.2,
+    "westernswing": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "strings",
+    "french_horns",
+    "brass_section",
+    "harp"
+  ],
+  "part": [
+    "lead",
+    "counter",
+    "riff",
+    "riff"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      0,
+      2,
+      0,
+      4
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      -1,
+      1
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "drumkit": "room",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "l": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "x": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    3,
+    0,
+    4,
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 3,
+  "bassStyle": "fifths",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2500,
+    "q": 1,
+    "atk": 0.01,
+    "rel": 0.8,
+    "gain": 0.27,
+    "verb": 0.4
+  },
+  "words": [
+    "the strings, the horizon tune",
+    "the horns, the herd on it",
+    "the low brass, the gallop said again",
+    "the harp, the river glinting"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[fill(2), transpose(-3)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[spread(0.5), fill(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(3), rotate(1)]"
+    }
+  }
+}

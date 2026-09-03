@@ -1,0 +1,188 @@
+{
+  "note": "THE GOLDEN-AGE SCORE — Los Angeles 1938. Korngold's THE ADVENTURES\nOF ROBIN HOOD (Warner Bros., scored on the Burbank stages, the\nOscar that made film scoring a composer's job): Viennese\nlate-romantic opera grammar — the leitmotif, the surging string\nline, the horn tune — hired by the picture business whole. The\nparents say the sentence: romantic Vienna plus the operetta stage\nplus the photoplay cue book it professionalized.\n\nTHE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP\n(2026-09-02, the catalogue round). The QA report's `instrumentation`\ncolumn counts a chair as NATIVE when `audio/to-engine.js\npatchForInstr()` names a Faust module for its id, and this row seats\nZERO of them — one of twelve in the table. Twelve rows were read one\nby one and every one of them came back the same way: there is no\nmodel in the fleet of the instrument this music is played on, and\nthere should not be. `organic: true` is that answer said out loud, so\nthe report can stop scoring an honest recording as a failure and can\nstart telling the twelve apart from the machine genres that were\nseating a sampled upright by accident.\nTHIS ROW: Korngold, *The Adventures of Robin Hood* (Warner Bros., Los\nAngeles, 1938). A studio orchestra is eighty people in a room and\nthere is no model of a room full of people.\n\na picture score — the dialogue is the singer",
+  "organic": true,
+  "instrumental": true,
+  "label": "Los Angeles 1938",
+  "voices": 4,
+  "bars": 8,
+  "near": "romantic",
+  "plan": "arc",
+  "bpm": 112,
+  "parents": {
+    "romantic": 0.45,
+    "operetta": 0.2,
+    "photoplay": 0.2
+  },
+  "wants": [
+    "the wagner leitmotif system, as vienna taught it"
+  ],
+  "instr": [
+    "french_horns",
+    "strings",
+    "harp",
+    "slow_strings"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      0,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff",
+    "pad"
+  ],
+  "drumkit": "room",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "l": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    5,
+    3,
+    4,
+    0,
+    5,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.lydian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0
+    },
+    {
+      "d": 5
+    },
+    {
+      "d": 3
+    },
+    {
+      "d": 4
+    },
+    {
+      "d": 0
+    },
+    {
+      "d": 5
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 0
+    }
+  ],
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "octaves",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1,
+    "gain": 0.26,
+    "verb": 0.42
+  },
+  "words": [
+    "the horns, the hero's own tune",
+    "the violins, taking it over the battlements",
+    "the harp, glittering the cadence",
+    "the low strings, the forest under all of it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(4)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[fill(2), transpose(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(2), rotate(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(9)]"
+    }
+  }
+}

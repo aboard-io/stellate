@@ -1,0 +1,211 @@
+{
+  "note": "TRAILER MUSIC — Los Angeles 2012. The trailer houses' library albums\nas their own genre: the hybrid grammar cut to thirty seconds and sold\nby the cue. DATED 2012 AND NOT 2008, against this round's own first\ndraft (2026-09-01): `epichybrid` (Santa Monica 2010) is the dominant\nparent at 0.4, and a parent cannot postdate its child — electroindustrial's\ndate-refusal precedent, applied to my own spec. 2012 is honest\nanyway: the year the braam was in every campaign and the library\nrecords started charting on their own names. The job description is\nnewsfanfare's at 0.2 — recognised through a wall by people not\nlistening — and the rave stab is literally in the cast:\n`orchestra_hit` ships in hardcorerave (Essex 1991), two UNLOOPED\nzones, a hit by construction.\n\nthirty seconds of score for a picture it is not in\n\nthe all-skins bar\n\nspyscore's door-kick\n\nhorrorsynth's stinger",
+  "instrumental": true,
+  "label": "Los Angeles 2012",
+  "voices": 4,
+  "bars": 8,
+  "near": "epichybrid",
+  "plan": "arc",
+  "bpm": 128,
+  "parents": {
+    "epichybrid": 0.4,
+    "newsfanfare": 0.2,
+    "goldenagescore": 0.15,
+    "hardcorerave": 0.1
+  },
+  "wants": [],
+  "cannot": [
+    "the three-act cut — risers resolve on title cards this box cannot show",
+    "the boom-and-black — a bar of silence is sayable, half a second of black is not"
+  ],
+  "instr": [
+    "orchestra_hit",
+    "strings",
+    "brass_section",
+    "ahh_choir"
+  ],
+  "part": [
+    "stab",
+    "riff",
+    "riff",
+    "pad"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      4,
+      4
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      -1,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "drumkit": "power",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "l": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "l": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "SCALES.chromatic"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "pedal",
+  "fx": [
+    "sweep",
+    "crunch"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 1.2,
+    "atk": 0.005,
+    "rel": 0.8,
+    "gain": 0.28,
+    "verb": 0.5
+  },
+  "words": [
+    "the hit — the whole orchestra as one drum",
+    "the strings, sixteenths, the panic engine",
+    "the low brass, the blast on the card",
+    "the choir, vowels the size of the screen"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(4), rotate(3), drop(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[spread(0.5), fill(1)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[spread(0), keep(0, 8), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(2)]"
+    }
+  }
+}

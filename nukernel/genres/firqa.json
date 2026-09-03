@@ -1,0 +1,188 @@
+{
+  "note": "FIRQA — Cairo 1964. \"Enta Omri\", Umm Kulthum's first record with\nBaligh Hamdi, premiered on the first Thursday of February 1964 and\nfamous for the thing this row is: a takht of five or six players\ngrown into an orchestra of massed violins, with an electric guitar\nand a Farfisa organ in it, and a twelve-minute instrumental\nintroduction before the singer opens her mouth.\nTHE MAQAM IS KURD AND THAT IS WHY THIS ROW CAN SHIP. Enta Omri is in\nmaqam kurd, which is the phrygian mode note for note — no neutral\ndegree, nothing off the grid. The row above says which four maqamat\nthis box is locked out of; this one is simply not one of them, and\n`MODES.phrygian` here is not the nearest-Western approximation that\n`mahraganat` had to settle for, it is the right answer.\nTHE AXES: CAST is the identity. Thirty violins playing the SAME line\nas the singer, an octave apart, not a harmony — and Development is\ntarab, the line repeated and repeated with the ornament pushed\nfurther each time until the hall shouts. The `word` schedule below\nis that escalation and it is the closest thing in this table to an\naudience.\n\nLINEAGE: `taqsim` is the modal tradition the singer and every\ninstrumentalist grew up inside — the record still opens with one —\nand `romantic` is named at a real weight for the same reason\n`filmi` names it: a massed violin section with a conductor is a\nnineteenth-century European institution, and the arrangers were\ntrained on it. That is not a resemblance, it is a debt.\nREWRITTEN 2026-08-30 (the walls-down round; the old line read\n`parents: { taqsim: 0.6, romantic: 0.4 }` and the wants opened\nwith \"the takht\"): `tarab` (Cairo 1934) is the singer's OWN\nearlier era — the takht behind Umm Kulthum on the radio's first\nnight — so the takht debt is paid by the era that WAS the takht,\nand taqsim's weight flows partly through it.\n\"muwashshah\" PAID 2026-08-30 (Cairo 1200, Dar at-Tiraz — the\ndated source the old decline said did not exist): Umm Kulthum's\nrepertory and the firqa's own concert form both keep the\nstrophic inheritance, and the edge finally says so.\n\nTHE WAHDA: dum on 1, tak on the and-of-2, dum on 3, tak on 4 —\nfour beats with the weight at the front, which is the rhythm a\nlong Umm Kulthum verse sits on. The `p` lane is the riq's\ncontinuous jingle and it is a rim sample doing a tambourine's job.\n\nWHO SINGS: `melisma` — one vowel held across many notes,\nwhich is the literal description of what she does to a\nline of Ahmad Shafiq Kamal's poetry",
+  "label": "Cairo 1964",
+  "voices": 4,
+  "bars": 8,
+  "near": "filmi",
+  "plan": "song",
+  "bpm": 92,
+  "parents": {
+    "tarab": 0.4,
+    "taqsim": 0.3,
+    "romantic": 0.3,
+    "muwashshah": 0.1
+  },
+  "wants": [
+    "the egyptian film musical"
+  ],
+  "cannot": [
+    "heterophony — the violins play the singer's OWN line, slightly differently, at the same time; this table has `line` chairs that get their own operator word and `pad` chairs that voice chords, and 'the same tune, thirty times, imperfectly' is neither",
+    "the length — a tarab performance repeats a line as many times as the room asks for and runs an hour; the form here is fixed when the record compiles and nobody in it is listening",
+    "the riq and the darbuka — there is no hand drum among the kit samples, so the wahda is voiced on a kick and a rim, which is the same bol loss `filmi` declares"
+  ],
+  "instr": [
+    "solo_vox",
+    "strings",
+    "accordion",
+    "jazz_guitar"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      -1,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "counter",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    1,
+    0,
+    4,
+    4,
+    1,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "harmony": "modal",
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "orn": {
+    "grace": 0.4,
+    "approach": 0.25
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ],
+    "h": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      8,
+      0,
+      4,
+      4,
+      6,
+      0,
+      4,
+      4,
+      8,
+      0,
+      4,
+      4,
+      6,
+      0,
+      4,
+      5
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2500,
+    "q": 1,
+    "atk": 0.012,
+    "rel": 1.3,
+    "gain": 0.26,
+    "verb": 0.5,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the singer, the line said again, further each time",
+    "the violins, thirty of them on her tune",
+    "the accordion, answering in the gaps",
+    "the guitar, holding the mode"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [fill(2), rotate(2)], [fill(4), rotate(5)]][s % 4]\n                    : v === 1 ? [transpose(7), drop(2)]\n                    : v === 2 ? [rotate(8), drop(4)]\n                    : [drop(8)])"
+  }
+}

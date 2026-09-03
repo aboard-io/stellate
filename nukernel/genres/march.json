@@ -1,0 +1,147 @@
+{
+  "note": "THE MARCH — Washington 1889. Sousa's \"The Washington Post\",\npremiered on the Smithsonian grounds on the 15th of June 1889\nwith the Marine Band under the composer — the named record of\nthe concert-march form at its height. TWO rows have wanted it:\n`ragtime` (Sedalia 1899), whose left hand IS the march bass\nsyncopated (\"march\" on its books since its lineage was\nwritten), and `newsfanfare` (London 1970), whose \"military\nmarch\" want is this form in a television blazer. Both take the\nparent today.\n\nthe Marine Band on the Smithsonian grounds; a concert march sings nothing\n\nLINEAGE: a declared root — the military band trade behind it\n(the Ottoman mehter that gave Europe its percussion, the\nCivil War brass bands) is real and unanchored; named below.\n\nAABBCC(trio) — strains restated, the trio brighter: the form\nragtime lifted whole.",
+  "instrumental": true,
+  "label": "Washington 1889",
+  "voices": 3,
+  "bars": 8,
+  "near": "ragtime",
+  "plan": "song",
+  "bpm": 120,
+  "parents": {},
+  "wants": [
+    "the ottoman mehter, europe's own admission",
+    "the civil war brass bands"
+  ],
+  "instr": [
+    "brass_section",
+    "clarinet",
+    "tuba"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+    ],
+    "x": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "drumkit": "acoustic",
+  "harmony": "cycle",
+  "roots": [
+    0,
+    0,
+    4,
+    0,
+    0,
+    0,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "tone": {
+    "wave": "square",
+    "cut": 2800,
+    "q": 0.9,
+    "atk": 0.005,
+    "rel": 0.3,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the cornets carry the strain",
+    "the piccolo obbligato, above on the trio",
+    "the low brass, the two-beat floor"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [], [transpose(2)], [transpose(2), fill(1)]][s % 4]\n                    : v === 1 ? [[drop(12)], [drop(12)], [fill(1), transpose(4)], [fill(1), transpose(4)]][s % 4]\n                    : [keep(0, 4, 8, 12), transpose(-3)])"
+  }
+}

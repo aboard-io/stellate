@@ -1,0 +1,162 @@
+{
+  "note": "GOTHIC ROCK — Northampton 1979. Bauhaus, \"Bela Lugosi's Dead\":\nnine and a half minutes cut live in one January 1979 session at\nBeck Studios, Wellingborough, by a NORTHAMPTON band — the label\nsays their town, not the capital that signed them, the same rule\nthat keeps the Kinks in Muswell Hill (and it keeps (place, year)\na key: London 1979 is already newwave's) — a dub\nbassline, a bossa tick on the rim, the guitar scraping harmonics\nthrough an echo, and Peter Murphy intoning the B-movie dead. TWO\nrows have wanted \"gothic rock\" since their lineages were written\n— `gothicpop` (Crawley 1987) and `gothsynth` (Basildon 1990),\nthe Cure and the Violator-era Depeche Mode, both children of\nexactly this record's permission — and both take it as a parent\ntoday.\n\nLINEAGE: `punk` (New York 1976) is the licence and the venue\ncircuit; `glam` (London 1971) is the theatre — Murphy's cheekbones\nare Bowie's, and the band said so; `dub` (Kingston 1973) is\nthe empty middle and the echo send, audible in the first bar.\n\n`wants: [\"the batcave's dressing-up box\"]` STOOD HERE until\n2026-08-30, and it pointed FORWARD: the Batcave opened at 69\nDean Street on 21 July 1982, three years after this record was\ncut. Settled by ARRIVAL, not a parent edge — `batcave` (London\n1982) lands in the goth-and-globe round on the zodiak ruling\nand declares this row its dominant parent.",
+  "label": "Northampton 1979",
+  "voices": 3,
+  "bars": 8,
+  "near": "postpunk",
+  "plan": "arc",
+  "bpm": 96,
+  "parents": {
+    "punk": 0.35,
+    "glam": 0.35,
+    "dub": 0.3
+  },
+  "wants": [],
+  "instr": [
+    "overdrive_guitar",
+    "warm_pad"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": {
+      "$v": true
+    }
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "tie",
+  "maxHold": 4,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      0,
+      0,
+      5,
+      0,
+      0,
+      4,
+      0,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      4,
+      0,
+      0
+    ]
+  },
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1900,
+    "q": 1.5,
+    "atk": 0.01,
+    "rel": 1.2,
+    "gain": 0.25,
+    "verb": 0.55
+  },
+  "words": [
+    "the guitar, harmonics through the echo",
+    "the drone under the crypt"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(3)], [invert(2)], [fill(2)]][s % 4]\n                    : [drop(10)])"
+  }
+}

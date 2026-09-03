@@ -1,0 +1,167 @@
+{
+  "note": "GOTHIC METAL — Halifax 1991. Paradise Lost, Gothic (Peaceville,\n19 March 1991; cut at Academy Music Studios, West Yorkshire,\nNovember 1990 - January 1991): the record whose title NAMED the\ngenre, a Halifax death-doom band letting a soprano and a string\npatch into the growl — the article's own origins are heavy\nmetal, gothic rock and death-doom, and death-doom is this\ncatalog's `deathmetal` and `doom` shaking hands.\n\nLINEAGE: the death-doom halves at the top, `gothicrock` for\nthe atmosphere the title admits to — the band said the Sisters\nrecords were in the room.",
+  "label": "Halifax 1991",
+  "voices": 3,
+  "rate": 0.5,
+  "near": "doom",
+  "plan": "arc",
+  "bpm": 88,
+  "parents": {
+    "deathmetal": 0.35,
+    "doom": 0.3,
+    "gothicrock": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "distortion_guitar",
+    "slow_strings",
+    "ohh_voices"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "pad"
+  },
+  "part": [
+    "riff",
+    "pad",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    1,
+    0
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "tie",
+  "maxHold": 5,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      9
+    ]
+  },
+  "fx": [
+    "crunch"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1300,
+    "q": 1.5,
+    "atk": 0.01,
+    "rel": 1.4,
+    "gain": 0.28,
+    "verb": 0.5
+  },
+  "words": [
+    "the riff, death-doom at a funeral pace",
+    "the strings, a stone ceiling over it",
+    "the voice, wordless, above the growl's register"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(1)], [rotate(2)], [invert(2)]][s % 4]\n                    : v === 1 ? [drop(8)]\n                    : [drop(10), transpose(7)])"
+  }
+}

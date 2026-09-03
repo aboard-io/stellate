@@ -1,0 +1,152 @@
+{
+  "note": "JINGJU — Beijing 1918. \"The Hegemon-King Bids His Lady Farewell\"\n(Farewell My Concubine), \"initially performed by Yang Xiaolou and\nShang Xiaoyun in 1918 in Beijing\" — the article's own sentence; Mei\nLanfang's 1922 revision made it his signature and carried it around\nthe world, and the comment says both facts rather than moving the\ndate to the famous name. The four-that-did-not-ship block below\nwithdrew this row in 2026-08 because \"per-section `pace` is WORLD.md\nphase 2 and has not landed\" — it landed 2026-08-30, and BANSHI, the\naria's primary fact, is now data: the `paces` row below IS manban\ninto yuanban into kuaiban, slow-to-metred-to-fast as the dramatic\nstructure, dealt per section on compose's own rails.\nTHE AXES: DEVELOPMENT-AS-TEMPO is the identity and it is what\n`paces` says; what stays in `cannot` is exactly what the withdrawal\nsaid after its first clause — the instrumentarium and the role\nregisters, because the timbre wall did NOT fall this round.\n\nBANSHI AS DATA: the verses are manban (half), the choruses\nyuanban (steady), the solo kuaiban (double). Sanban — the FREE\nbanshi — is in the cannot, because no pace word says \"no bar\".\n\nLINEAGE: a declared ROOT. Jingju's own parents — kunqu, and the\nHui and Han troupes whose 1790 arrival in Beijing for the\nQianlong birthday is the tradition's founding story — have no\nanchors and are owed by name.\n\n[AMENDED 2026-08-30, the registry lane. It read: \"the\njinghu — a two-string spike fiddle an octave up; the\nviolin is family-right and voice-wrong, sizhu's own erhu\nadmission one row over\". The cross-reference expired that\nevening — sizhu has no erhu admission any more, it has an\nerhu — and the clause is amended rather than answered.\nThe registry's new `erhu` is a MUCH closer jinghu than\n`fiddle` is (the same huqin family: two strings, a\nsnakeskin membrane, the bow hair BETWEEN the strings,\nwhere a violin has four strings and a wooden top), and\nthis row does not take it tonight for one measured\nreason: erhu.dsp's compass is D4..A7 and a jinghu is\ntuned roughly an OCTAVE above an erhu with a bamboo\nbarrel a fraction of the size, so seating it would be\nclaiming an instrument nobody has measured against a\njinghu. A next round that measures it owns this clause.]\n\nWHO SINGS: `bulgar` — a straight, bright, mask-forward\nsoprano with almost no air and no wobble. Written for an\nopen-throat Bulgarian choir, and it is the nearest measured\ntract to the dan's focused head voice on three counts in\nthe same order: no vibrato, forward placement, bright\nvowels. One throat where the tradition has four — the\ncannot above owns that.",
+  "label": "Beijing 1918",
+  "voices": 3,
+  "bars": 8,
+  "near": "sizhu",
+  "plan": "arc",
+  "bpm": 96,
+  "paces": {
+    "verse": "half",
+    "chorus": "steady",
+    "solo": "double"
+  },
+  "parents": {},
+  "wants": [
+    "kunqu",
+    "the hui and han troupes (beijing 1790)"
+  ],
+  "cannot": [
+    "sanban — the FREE banshi, the metre dissolving at the aria's crisis; the pace ladder has half through double and no word for 'no bar' (the free-time wall, still standing)",
+    "the role registers — sheng, dan, jing, chou are TIMBRE AS THE GENRE (WORLD.md §5.5) and one throat is not four; the cast below books one dan-adjacent voice and says so",
+    "the daluo — the big gong whose pitch FALLS as it rings is half the percussion section's grammar and no sample in the kit bends",
+    "the luogu dianzi — gong-and-drum patterns are SIGNALS (enter, sit, weep, fight), not grooves; a kit lane that repeats per bar turns stage directions into a beat, so the kit below keeps only the ban's timekeeping and the signals stay unsaid",
+    "the jinghu — a two-string spike fiddle an octave up; the violin below is family-right and voice-wrong, and the erhu the registry grew on 2026-08-30 is family-RIGHT and still an octave low, un-measured against a jinghu's own bamboo barrel"
+  ],
+  "instr": [
+    "solo_vox",
+    "fiddle",
+    "banjo"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      1,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "kit": {
+    "p": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      8,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      6,
+      0,
+      4,
+      0,
+      5,
+      0,
+      0,
+      0
+    ]
+  },
+  "nobass": true,
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "orn": {
+    "grace": 0.5,
+    "approach": 0.25
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 1,
+    "atk": 0.015,
+    "rel": 1,
+    "gain": 0.25,
+    "verb": 0.45,
+    "mouth": {
+      "$src": "MOUTHS.bulgar"
+    }
+  },
+  "words": [
+    "the dan, the aria slowing and then running",
+    "the jinghu, riding an octave above the voice",
+    "the yueqin, hammering the skeleton"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [fill(2), rotate(2)], [reverse()]][s % 4]\n                    : v === 1 ? [transpose(12), fill(2)]\n                    : [keep(0, 4, 8, 12), drop(2)])"
+  }
+}

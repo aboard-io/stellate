@@ -1,0 +1,91 @@
+{
+  "note": "BERLIN SCHOOL — Berlin 1972. Klaus Schulze's \"Irrlicht\", recorded\nsummer 1972 — an organ through broken amplifiers over a\nrecorded orchestra played backwards, side-long, beatless — the\nfounding record of the Berlin sequencer school that Tangerine\nDream's Phaedra took to the charts two years later. TWO rows\nhave wanted \"berlin school electronics\" since their lineages\nwere written: `spacerock` (London 1973 — the UK cousin, one year\nyounger, which is why the edge runs THIS way) and\n`melodictechno` (Kent 1991, which is this music with a kick\ndrum). Both take it as a parent today.\n\nITS OWN ARPEGGIO (2026-08-31): Tangerine Dream and Schulze run LONG cycles that never line up with the bar; the eight-step turn is that motion.\n\nLINEAGE: `drone` (New York 1964) is the sustained-tone\ndoctrine; `psychpop` (London 1968) is the rock scene these\nplayers walked out of; `minimalism` the cell-repetition the\nsequencer would mechanize.\nPAID 2026-08-29, the debts round: both wants — Cologne 1956\nfor the doctrine, Berlin 1968 for the room: Schnitzler and\nRoedelius OPENED the Zodiak, so the edge is autobiography.",
+  "label": "Berlin 1972",
+  "voices": 2,
+  "bars": 8,
+  "near": "spacerock",
+  "seqArp": "arpturn",
+  "plan": "arc",
+  "bpm": 96,
+  "parents": {
+    "drone": 0.4,
+    "psychpop": 0.3,
+    "minimalism": 0.3,
+    "cologneschool": 0.2,
+    "zodiak": 0.2
+  },
+  "wants": [],
+  "cannot": [
+    "the side-long form — an Irrlicht movement is twenty minutes of one slow change, and this table's records are minutes, not sides; the arc plan is the shape at the wrong scale, said plainly"
+  ],
+  "instr": [
+    "saw_wave",
+    "warm_pad"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "pad"
+  },
+  "part": [
+    "riff",
+    "pad"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "tie",
+  "maxHold": 6,
+  "bassStyle": "sixteenths",
+  "kit": {},
+  "fx": [
+    "echo",
+    "sweep"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1600,
+    "q": 1.3,
+    "atk": 0.2,
+    "rel": 2.4,
+    "gain": 0.24,
+    "verb": 0.6
+  },
+  "words": [
+    "the sequence, circling as the filter opens",
+    "the pad, the cathedral behind it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)], [rotate(4)]][s % 4]\n                    : [drop(10)])"
+  }
+}

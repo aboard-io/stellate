@@ -1,0 +1,238 @@
+{
+  "note": "TEEN POP [boyband] — Stockholm 1998. Britney Spears, \"…Baby One More\nTime\" (Cheiron Studios, Stockholm; Jive, 23 October 1998). The city\nis not a flourish: this record, the boy-band records either side of\nit and most of the decade's American teen pop were WRITTEN AND CUT\nin one Swedish room, and the row says so.\nMEASURED over 192 files (Britney Spears 94 · Backstreet Boys · *NSYNC\n· Spice Girls). Meter 183 of 192 in 4/4. Tempo (n=192): p10 72 · p25\n90 · med 103 · p75 120. THE MODE SPLIT IS THE SURPRISE AND THE ROW\nFOLLOWS IT: 102 minor against 90 major. Teen pop written from memory\nwould be a major-key record; the corpus says the Cheiron sound is a\nMINOR one, and its cycles are the minor loop's degrees — VI (78), III\n(73), bIII (38) around a tonic — so the row is aeolian on\ni-bVI-bIII-bVII. Motion 0.80, the second-highest of the round: these\nchords never sit still. Hat 9474848494848484 (sixteenths at full\ndensity), perc 7475847575759475 beside it — two continuous lanes, the\nprogrammed shaker that is the production's signature.\n  kick  9122215151323231   snare 2110910141119111\n\nLINEAGE: `boyband` (Orlando 1997) is the immediate precedent and\nthe same producers; `newjackswing` (New York 1987) is the swung\nprogrammed sixteenth; `synthpop` (Basildon 1981) is the keyboard\narrangement and the sound of the pads; `hinrg` (Brixton 1984) is\nthe tempo and the floor; `eurodance` (Milan 1993) is the European\nhalf, five years earlier and the reason the minor loop is here.\n\nWHO SINGS: close, bright, compressed to the front of the mix",
+  "label": "Stockholm 1998",
+  "near": "boyband",
+  "plan": "song",
+  "bpm": 100,
+  "parents": {
+    "boyband": 0.3,
+    "newjackswing": 0.2,
+    "synthpop": 0.2,
+    "hinrg": 0.15,
+    "eurodance": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "polysynth",
+    "saw_wave",
+    "solo_vox"
+  ],
+  "voices": 3,
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": {
+      "$src": "v - 1"
+    }
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "pad",
+    "lead"
+  ],
+  "roots": [
+    0,
+    5,
+    2,
+    6
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      9,
+      4,
+      7,
+      4,
+      8,
+      4,
+      8,
+      4,
+      9,
+      4,
+      8,
+      4,
+      8,
+      4,
+      8,
+      4
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2700,
+    "q": 1.4,
+    "atk": 0.003,
+    "rel": 0.4,
+    "gain": 0.28,
+    "verb": 0.26,
+    "mouth": {
+      "$src": "MOUTHS.poplead"
+    }
+  },
+  "words": [
+    "the synth riff, the four notes the record is sold on",
+    "the pad, one chord a bar",
+    "the voice, the hook, over the loop"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[keep(0, 8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

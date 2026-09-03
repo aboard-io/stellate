@@ -1,0 +1,247 @@
+{
+  "note": "ETHIO-JAZZ — Addis Ababa 1969. Mulatu Astatke's vibraphone over a\nHammond and a tenor, an Ethiopian pentatonic mode on a jazz rhythm\nsection, and the darkest-sounding bright scale in the catalog.\nTHE YEAR is an institutional event with the music on the other side of\nit: Amha Eshete founded Amha Records in Addis Ababa in 1969 and broke\nthe Imperial government's recording monopoly, which is the moment the\nscene could record at all. (1972 and *Mulatu of Ethiopia* is the other\ndefensible label; this one names the door opening.)\nNOTHING HERE IS WEARING A COSTUME, which is why it was built before the\nharder ones: the VIBRAPHONE is Mulatu's own instrument and not a\nstand-in for anything, and the tenor is the tenor. ONE substitution,\nand it is a measured one rather than a taste one: the sessions ran on a\nHammond or a Farfisa, and `drawbarorgan` is the id that names that\nsound — but it is ONE sample rooted at MIDI 96, which gospel measured\nat genres.js:1739 as \"one C7 recording dragged three and a half octaves\ndown… a spectral centroid of 249 Hz\". `percussive_organ` is the same\nextraction WITH the percussion stop and six zones, and the percussion\nstop is on more of these sides than off it.\nTHE MODE, answered as carefully as the sources allow. `tizita` is an\nanhemitonic major pentatonic — 1 2 3 5 6 — which is `SCALES.majpent`\nEXACTLY, so no new SCALES row is needed and none was guessed. The other\nqenet (bati, ambassel, anchihoy) have no interval sets this repo can\nsource and none are invented here. And the honesty argument is stronger\nthan \"it approximately fits\": on a masenqo the intonation is inflected\nand 12-TET would be a lie, but Mulatu's band played a vibraphone, an\nelectric organ and valved horns — for THIS record 12-TET is not an\napproximation of the practice, it is the practice.\nAGAINST NEW YORK 1945, its largest parent: same horn writing, opposite\nharmony. Bebop is a cycle of changes at 144; this is `harmony: \"modal\"`\n— one mixolydian vamp, no changes — at 94, with the head doubled an\noctave down rather than harmonised. On a five-note alphabet an octave IS\n`transpose(-5)`, which is why the tenor's word looks like a fifth and\nis not one. And it is NOT pointed at Aksum 540: church chant is not the\nparent of a secular vibraphone record, and papering fourteen centuries\nand one sacred/secular boundary over with an edge is exactly the move\nthis round exists to stop.\n\nMulatu's front line is a vibraphone and a tenor — instrumental\n\nan arc: a groove you stay inside while the horn arrives\n\nLINEAGE: Mulatu trained in Britain and at Berklee and the band is a\njazz/Latin rhythm section under jazz horn writing; the one-chord\nmodal groove and the kit's discipline are funk's, which he heard the\nsame years everyone else did. Azmari song — the Ethiopian secular\ntradition the modal half comes from — has no anchor and would need a\nmasenqo and a krar, neither of which the registry has.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nThe row's own comment holds two claims that cannot both be true — \"one\nmixolydian vamp\" and \"tizita is an anhemitonic major pentatonic — 1 2 3 5 6\n— which is SCALES.majpent EXACTLY\". The second is the SOURCED one, and\nmajpent [0,2,4,7,9] contains no seventh of any kind, so the flat seventh\nmixolydian exists for cannot sound on Mulatu Astatke's \"Yegelle Tezeta\"\n(Amha Records AE 108, Addis Ababa, 1969). Its third and its sixth are both\nmajor: that is ionian. The vamp keeps its name in the comment; the FIELD now\nsays what the record plays.\n\nA LATIN-LEANING BAND. The bell figure is the rim, the congas are the\ntoms — a real struck membrane by family, wrong drum and right physics\n— and beside afrobeat's two drummers this is the only other anchor\nwhere the tom lanes carry a hand rather than a fill.",
+  "instrumental": true,
+  "label": "Addis Ababa 1969",
+  "bars": 8,
+  "voices": 3,
+  "near": "jazz",
+  "plan": "arc",
+  "bpm": 94,
+  "parents": {
+    "jazz": 0.6,
+    "funk": 0.4
+  },
+  "wants": [
+    "azmari song"
+  ],
+  "instr": [
+    "vibraphone",
+    "percussive_organ",
+    "tenor_sax"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "bassGrid": [
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "m": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "l": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "m": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 1.1,
+    "atk": 0.008,
+    "rel": 1.4,
+    "gain": 0.27,
+    "verb": 0.36
+  },
+  "words": [
+    "the vibraphone, the head",
+    "the organ, holding the one chord under it",
+    "the tenor, doubling the head an octave down"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(-5)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

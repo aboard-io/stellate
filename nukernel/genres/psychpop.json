@@ -1,0 +1,180 @@
+{
+  "note": "PSYCH POP [beatgroup]. The same songwriter, further out: an eight-bar\nform that spends its first half as a plain verse and its second half\nas one long vamp with a choir answering into it — postrock's shape\n(one figure, arriving voice by voice, one crescendo) written for a pop\nband with a gospel choir instead of a wall of guitars.\n\nLINEAGE: the songwriting craft is `beatgroup`' own, further along the\nsame career; the massed choir answering \"na na na\" into a long vamp\nis gospel's call-and-response, not the band's own invention; and the\nshape of the arrival — quiet, then one instrument at a time, then\neverything — is a structural move this record makes on its own. The\nmellotron/orchestral half of it is still missing.\nPOSTROCK DROPPED 2026-08-25: London 1968 cannot descend from Austin\n2003, and unlike the twenty-odd other backwards edges in this table\nthere is no proxy argument available — jazz standing in for a blues\nolder than its own label year is defensible, post-rock standing in\nfor anything in 1968 is not, because post-rock is simply a later\nthing. The old sentence gave the game away in its own words\n(\"borrowed forty years before postrock existed to name it\"), which is\na description of INFLUENCE RUNNING THE OTHER WAY. The 0.2 goes back\nto the two real parents in the ratio they already declared.\nPAID 2026-08-29, the debts round: \"orchestral pop\" is\n`baroquepop` (Los Angeles 1966) — Pet Sounds is the record this\nrow's own comment was already describing.\n\nWHO SINGS: voices as a wash, which is what the studio was for",
+  "label": "London 1968",
+  "bars": 8,
+  "near": "beatgroup",
+  "plan": "song",
+  "bpm": 112,
+  "parents": {
+    "beatgroup": 0.55,
+    "gospel": 0.45,
+    "baroquepop": 0.25
+  },
+  "wants": [
+    "mellotron"
+  ],
+  "instr": [
+    "clean_guitar",
+    "ahh_choir"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 4
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    0,
+    3,
+    3,
+    4,
+    4,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "maxHold": 3,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.9,
+    "atk": 0.01,
+    "rel": 1,
+    "gain": 0.27,
+    "verb": 0.4,
+    "mouth": {
+      "$src": "MOUTHS.dreamchoir"
+    }
+  },
+  "words": [
+    "the tune, the verse as written",
+    "the choir, arriving at the vamp — na na na, a third up"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(2), only(\"gate\", offbeats(2))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

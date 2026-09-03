@@ -1,0 +1,93 @@
+{
+  "note": "CEMIL BEY — Istanbul 1910. Tanburi Cemil Bey's 78s for Orfeon,\ncut in Istanbul from about 1910 to 1914: the Ottoman court\nrepertoire's greatest instrumentalist, recorded — taksims on\ntanbur, yaylı tanbur and kemençe that every player in the makam\nworld still learns from the shellac. TWO rows have wanted\n\"ottoman makam\" since the world round: `rebetiko` (Piraeus 1935),\nwhose café-aman players grew up inside this repertoire before the\npopulation exchange carried it to Greece, and `taqsim` (Cairo\n1932), whose Congress delegations included the Istanbul line.\nThe recordings are in makam Hicaz among others — hijaz, the one\nmaqam-family alphabet this table says exactly — which is why this\nrow can ship where dastgah (declared EMPTY below) cannot.\n\nthe Istanbul taksim, same recital — a tanbur and a cello\n\nLINEAGE: a declared root — the Ottoman court fasıl and the\nMevlevi lodge practice behind Cemil Bey are named, not claimed:\nneither has a named dated record to anchor.\nAN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue\nround, shift 2).\nNot a want in the wrong field this time, but the same shape of miss: a row\nthat declared no ancestors while its own theory is a Baghdad import with a\ndated book at each end of the carriage.\nTHE ARGUMENT: Safi al-Din al-Urmawi's KITAB AL-ADWAR (Baghdad, c. 1252) is\nthe Systematist treatise, and Abdulkadir Meragi's MAQASID AL-ALHAN, dedicated\nto Sultan Murad II in 1415 and turned into Turkish at the Ottoman court, is\nthe book that carried it there — modern Turkish makam theory is the\nrediscovery of exactly that line. `abbasid` (Baghdad 800) is this table's\nrow for that house. 0.35 and not more: the fasil suite and the Mevlevi ayin\nare the Ottoman court's own inventions and neither is a row, so both stay\nwanted.\nBOTH DIRECTIONS CHECKED: `taqsim` (Cairo 1932) already declares BOTH\n`ottoman` and `abbasid` as parents, which is the precedent for this pair;\n`rebetiko` (Piraeus 1935) already descends from this row. `sticheron`\n(Constantinople 843) was weighed and declined: Marmarinos's EISAGOGI\n(Constantinople, 1749) documents shared 18th-century practice between the\ntwo, which is exchange and not descent.",
+  "instrumental": true,
+  "label": "Istanbul 1910",
+  "voices": 2,
+  "rate": 0.5,
+  "near": "taqsim",
+  "plan": "arc",
+  "bpm": 72,
+  "parents": {
+    "abbasid": 0.35
+  },
+  "wants": [
+    "the ottoman court fasil",
+    "the mevlevi ayin"
+  ],
+  "cannot": [
+    "the comma system — Ottoman theory divides the tone into nine commas and the segah and ussak degrees sit off this table's grid, the same wall taqsim declares for rast and bayati; Hicaz is the family 12-TET says exactly and this row stays inside it",
+    "the yayli tanbur's continuous glide — a fretless bowed string entering from below every note; deg is an integer and the cello below is fretted in effect",
+    "free rhythm — a taksim has no bar, taqsim's own admission"
+  ],
+  "instr": [
+    "nylon_string_guitar",
+    "cello"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -2
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "pad"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "padin",
+  "mode": {
+    "$src": "MODES.hijaz"
+  },
+  "scale": {
+    "$src": "MODES.hijaz"
+  },
+  "artic": "tie",
+  "maxHold": 6,
+  "incClamp": 2,
+  "orn": {
+    "grace": 0.5
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 1.1,
+    "atk": 0.012,
+    "rel": 1.5,
+    "gain": 0.25,
+    "verb": 0.5
+  },
+  "words": [
+    "the taksim, the tanbur climbing the makam",
+    "the drone, held under it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n        ? [[drop(2)], [transpose(2), fill(2)], [transpose(4), fill(2), rotate(3)],\n           [reverse(), transpose(2)]][s % 4]\n        : [drop(12)])"
+  }
+}

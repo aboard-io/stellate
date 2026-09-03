@@ -1,0 +1,159 @@
+{
+  "note": "SKA [reggae]. The same offbeat chop played at twice the density and\ntwice the joy: the DOUBLE skank (every second step, not every fourth),\na kick that dares to land on 1 and 3, a real backbeat, a walking bass\nand a major I-IV-V — reggae's rhythm cell in a completely different key\nof feeling.\n\nnamed \"Kingston 1962\" — independence year, the first-wave double skank\nwith horns (Skatalites forming out of Studio One's session floor).\n\nLINEAGE: the shuffle came off American R&B radio picked up from New\nOrleans — the catalog's blues anchor carries that shuffle — but\neverything CARIBBEAN about ska (mento, calypso) is still missing. The\nother half is no longer: the Skatalites WERE a jazz band — Drummond,\nMcCook and Alphonso came off Alpha's and Kingston's jazz scene — and\neverything ska plays that is not the shuffle is theirs, the unison\nhorn front line, the walking bass, the major turnaround. Fifty-fifty\nis the historical claim; the fit puts all of it on jazz.\nLINEAGE, REPAIRED 2026-08-26 (the world round). This read\n`{ jazz: 0.5, blues: 0.5 }` with `wants: [\"mento\", \"calypso\"]`\nbeside it — the American half at full weight and the JAMAICAN half\non a wish list, which is a 1962 Kingston record described entirely\nby what it imported. Both wants are now built: mento (Kingston 1952,\nthe first commercial recordings of Jamaican music of any kind) and\ncalypso (Port of Spain 1956). Mento takes the largest single weight\nbecause ska is a mento band that heard R&B, not the other way round;\n`jump blues` is what remains on the list, because Chicago 1952 is a\nblues and not the jump band the horn writing actually comes from.\n...and the jump band the horn writing actually comes from landed\n2026-08-29: the Jamaican sound systems were playing New Orleans and\nLos Angeles jump records, and `jumpblues` takes a fifth of this row.\n\nDON DRUMMOND PLAYED TROMBONE. The Skatalites' front line is a bone\nout front with the trumpet behind it, and the squeak the register law\nspent a round chasing was partly a casting fault: ska's horn line is\nwritten high (as high as MIDI 100), so the instrument it folds into\ndecides where the horn actually sits. A trombone's window is ten\nsemitones lower and lands it an octave down.",
+  "label": "Kingston 1962",
+  "near": "reggae",
+  "plan": "song",
+  "bpm": 156,
+  "parents": {
+    "mento": 0.3,
+    "jumpblues": 0.2,
+    "calypso": 0.2,
+    "blues": 0.15,
+    "jazz": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "palm_muted_guitar",
+    "trombone"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "lead"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 2600,
+    "q": 1.6,
+    "atk": 0.003,
+    "rel": 0.3,
+    "gain": 0.27,
+    "verb": 0.18
+  },
+  "words": [
+    "the double skank",
+    "the horn line"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[offbeats(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

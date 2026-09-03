@@ -1,0 +1,286 @@
+{
+  "note": "POP-PUNK [punk] — Berkeley 1994. Green Day, \"Dookie\" (Fantasy\nStudios, Berkeley; Reprise, 1 February 1994). Berkeley is a new dot\nseventeen kilometres from San Francisco's, which the map notes and\ndoes not refuse: `Pomona` has sat forty-four kilometres from Los\nAngeles since the goth round, and G10 enforces its floor at the\nBritish arc only.\nMEASURED over 70 files (Green Day 43 · The Offspring · blink-182).\nTempo (n=70): p10 98 · p25 122 · med 160 · p75 191 · p90 210, and the GREEN DAY subset alone\n(42 files) medians at 167. THE ROW TOOK 160 AND THAT WAS A CEILING,\nnot a reading: compose.js fixed bpm at an integer 70..160 and\nthrew by name outside it, so the fastest music in the catalogue\n(punk, hardcore, thrash, nwobhm) was all piled at 160 and this row\njoined them seven beats short of what the corpus says. Reported\nrather than worked around.\n  THE WALL CAME DOWN 2026-09-02 and the row takes its own reading: the\n  fence is fields.js BPM_LO/BPM_HI, 40..220, and this is 167 — the\n  Green Day median, which is what the corpus said the day this note was\n  written. The paragraph above is kept verbatim because it is the\n  evidence the reversal rests on. Mode 60\nmajor / 10 minor — the most lopsided major split of any row in this\nround, and the reason this is not `emo` at a different tempo. The\ncorpus's own four-chord vote is VI-IV-I-V (43 windows), which `emo`\nALREADY OWNS as roots [5,3,0,4]; the next two are I-IV-IV-IV (33) and\nV-IV-V-IV (29), a plain I/IV/V shuttle, and that is what the row takes\nrather than shipping a twin of the row above it. Held notes median\n2.47 and articulation staccato: the downstroke.\n  kick  9141414171614151   snare 3041915141419141\n  hat   7070907090709070   bass  9061807080718080\nThe snare histogram is the tell — a 9 at 4 and 12 AND a 4-5 at every\nother even step: the \"skate beat\", a backbeat that becomes eighths in\nthe chorus, which is what `kits` below alternates.\n\nLINEAGE: `punk` (New York 1976) is the three chords and the speed;\n`hardcore` (Washington 1980) is the American tempo and the\ndownstroke; `beatgroup` (Liverpool 1962) is the major-key hook and\nthe sung harmony, which is what makes this POP punk; `garagerock`\n(Portland 1963) is the amateur's snarl underneath.\n\nTHE SKATE BEAT, second grid: the snare on every even step, which is\nthe measured chorus and the one thing punk's own row never does.",
+  "label": "Berkeley 1994",
+  "near": "punk",
+  "plan": "song",
+  "bpm": 167,
+  "parents": {
+    "punk": 0.4,
+    "hardcore": 0.25,
+    "beatgroup": 0.2,
+    "garagerock": 0.15
+  },
+  "wants": [
+    "the Ramones' Queens bubblegum, the record this scene rewrites"
+  ],
+  "instr": [
+    "overdrive_guitar",
+    "distortion_guitar"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    3,
+    4,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kits": [
+    {
+      "k": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "s": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "h": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "k": [
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "s": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "h": [
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      "x": [
+        9,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "fill": {
+    "s": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1.5,
+    "atk": 0.004,
+    "rel": 0.35,
+    "gain": 0.3,
+    "verb": 0.16
+  },
+  "words": [
+    "the guitar, the hook, four notes and a shout",
+    "the second guitar, the same four an octave down"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(-12)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "crunch"
+  ]
+}

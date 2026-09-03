@@ -1,0 +1,64 @@
+{
+  "note": "BALLAD — London 1666. Samuel Pepys, the second of January 1666:\n\"...and here, in perfect pleasure, we sang, and specially Mrs\nKnipp sang her little Scotch song of Barbary Allen\" — a named\nsinger, a named song, a diary date. The oldest ballad performance\non record that names its tune, and the tune is still sung. Two\nrows have wanted \"anglo-celtic balladry\" since their lineage was\nwritten — `countrypop` (Nashville 1945) and `bluegrass` (Nashville\n1946), whose repertories are this music two boats and three\ncenturies later — and this row pays them both.\nTHE AXES: everything is MATERIAL and PERFORMANCE — one voice, one\nstrophic tune, no harmony but the one the line implies, no\ninstrument, no drum. Development is nearly zero on purpose: the\ntune returns verse after verse and what varies is the singer.\n\nLINEAGE: a declared root. The border ballads it draws on are a\nsung tradition with no earlier named, dated performance to\nanchor; the broadside press that sold the texts is a print\ntrade, not a music.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\n\"Barbara Allen\", which Pepys heard Mrs Knipp sing in London on 2 January\n1666 — this row's own record. The tune families collected under that title\n(Rimbault; Sharp, ENGLISH FOLK SONGS FROM THE SOUTHERN APPALACHIANS, 1917)\nare gapped D-final tunes with the natural sixth, which is what makes a\nballad tune sound older than the words. `appalachia` below is this row two\ncenturies on and takes its own ruling separately.\n\nWHO SINGS: trobar — the solo narrative tenor, which is\nexactly what a ballad singer is.",
+  "label": "London 1666",
+  "voices": 1,
+  "bars": 8,
+  "near": "hymn",
+  "plan": "song",
+  "bpm": 76,
+  "parents": {},
+  "wants": [
+    "the border ballads themselves",
+    "the broadside press"
+  ],
+  "cannot": [
+    "the verses — a ballad is a STORY, twenty verses of it, and which words fall on which return of the tune is the whole art; this row sings the tune's shape with no tale in it (WORLD.md §5.7, the chorale's own admission)"
+  ],
+  "instr": "solo_vox",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "artic": "legato",
+  "maxHold": 3,
+  "orn": {
+    "grace": 0.2
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.8,
+    "atk": 0.02,
+    "rel": 1,
+    "gain": 0.26,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.trobar"
+    }
+  },
+  "words": [
+    "the ballad, verse on verse, the tune unbroken"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => [[], [], [fill(1)], []][s % 4]"
+  }
+}

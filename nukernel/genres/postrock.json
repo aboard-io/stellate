@@ -1,0 +1,165 @@
+{
+  "note": "POST ROCK. The genre is a SHAPE, not a harmony: one figure, arriving one\nvoice at a time over eight bars, on a delay long enough that the\narpeggio plays against itself. So the harmony is the plainest thing in\nthe table — i VI iv v, four chords anyone would write — and everything\nthat makes it what it is lives elsewhere: half speed, legato, staggered\nentries, a reverb you could lose an afternoon in, and the dotted-eighth\necho that IS the guitar sound, asked for by name.\n\nnamed \"Austin 2003\" — dotted-eighth echo on clean guitars arriving one\nat a time is Explosions in the Sky; Glasgow 1997 was the other claimant.\n\nan arc by construction — it is one crescendo\n\nLINEAGE: a rock band playing ambient's material — guitars, bass and\ndrums refusing the song in favour of the arc — through shoegaze's\nwall of reverb; the motorik patience underneath is krautrock's, still\nowed, and the additive build is minimalism's, which is anchored now.\nIts 0.15 comes off shoegaze (which was standing in for an\narrival-shape it does not own — its claim is the wall) and off\nambient, itself downstream of the same source; rock is untouched.\n\"krautrock\" PAID 2026-08-29 (Cologne 1971): the steady-state\ngroove under a post-rock crescendo is Can's practice cited by\nname in every interview the genre ever gave.\n\ni VI iv v",
+  "label": "Austin 2003",
+  "rate": 0.5,
+  "bars": 8,
+  "voices": 3,
+  "plan": "arc",
+  "bpm": 72,
+  "parents": {
+    "ambient": 0.3,
+    "rock": 0.25,
+    "krautrock": 0.2,
+    "shoegaze": 0.15,
+    "minimalism": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "slow_strings",
+    "clean_guitar",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "roots": [
+    0,
+    0,
+    5,
+    5,
+    3,
+    3,
+    4,
+    4
+  ],
+  "artic": "legato",
+  "incClamp": 4,
+  "incMode": "reverse",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 1.2,
+    "atk": 0.03,
+    "rel": 2,
+    "gain": 0.24,
+    "verb": 0.72
+  },
+  "words": [
+    "the strings, holding",
+    "the first guitar",
+    "the second, from bar 5"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(4), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "echo"
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "note": "CRUNK — Memphis 1997. Three 6 Mafia's \"Tear da Club Up '97\":\nthe Memphis chant — every voice on the hook, nobody singing —\nover an 808 slowed to a stomp, the sound Atlanta's Lil Jon\nwould take to the top of the charts five years later. `trap`\n(Atlanta 2003) has wanted \"crunk\" by name since its lineage\nwas written (its OTHER want, \"miami bass\", lands above), and\nits parents stop being a single-source `{boombap: 1}` today —\nwhich that row's own comment always said was a simplification.\n\nLINEAGE: `miamibass` (Miami 1986) is the 808 and the chant\nstructure — Luke's call-outs slowed and darkened; `boombap`\n(New York 1994) the sampling craft the Memphis tapes ran on\ncheaper machines.",
+  "label": "Memphis 1997",
+  "voices": 2,
+  "bars": 8,
+  "near": "trap",
+  "plan": "dance",
+  "bpm": 82,
+  "parents": {
+    "miamibass": 0.45,
+    "boombap": 0.3
+  },
+  "wants": [
+    "the memphis horrorcore tapes",
+    "the atlanta strip clubs"
+  ],
+  "instr": [
+    "square_lead",
+    "warm_pad"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "SCALES.bluesx"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 1900,
+    "q": 1.5,
+    "atk": 0.003,
+    "rel": 0.45,
+    "gain": 0.28,
+    "verb": 0.3
+  },
+  "words": [
+    "the chant, everybody on it",
+    "the bell line, circling"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(4)], []][s % 3]\n                    : [transpose(-2), keep(0, 3, 6, 8, 11, 14)])"
+  }
+}

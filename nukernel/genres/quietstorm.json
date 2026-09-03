@@ -1,0 +1,203 @@
+{
+  "note": "QUIET STORM — Los Angeles 1975. Smokey Robinson's \"A Quiet\nStorm\", Motown's Hitsville West: seven minutes at a whisper,\nthe synth wind at the top, the album that named a radio format\nthe following year when WHUR in Washington built an evening\naround it. TWO rows have wanted this by name since their\nlineages were written — `yachtsoul` (San Francisco 1976, one\nyear younger and playing to the same after-hours) and `rnb`\n(Philadelphia 1994, whose slow jams are this format's children).\n\nLINEAGE: `detroitsoul` is literal — Smokey was its vice president\nwhen he cut it; `doowop` is the ballad harmony underneath;\n`jazz` the seventh-chord vocabulary the changes breathe in.\n\nWHO SINGS: falsetto — Smokey's own register, the\nformat's defining instrument.",
+  "label": "Los Angeles 1975",
+  "voices": 3,
+  "bars": 8,
+  "near": "yachtsoul",
+  "plan": "song",
+  "bpm": 72,
+  "parents": {
+    "detroitsoul": 0.45,
+    "doowop": 0.2,
+    "jazz": 0.15
+  },
+  "wants": [
+    "the whur evening format",
+    "marvin's what's going on"
+  ],
+  "instr": [
+    "rhodes_ep",
+    "solo_vox",
+    "slow_strings"
+  ],
+  "drumkit": "brush",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 1
+      },
+      {
+        "at": 0,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "counter",
+    "lead",
+    "pad"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4,
+    0,
+    5,
+    1,
+    4
+  ],
+  "prog": {
+    "$src": "PROGS.soul7"
+  },
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "swing": 0.1,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "h": [
+      4,
+      0,
+      3,
+      0,
+      4,
+      0,
+      3,
+      0,
+      4,
+      0,
+      3,
+      0,
+      4,
+      0,
+      3,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2100,
+    "q": 0.8,
+    "atk": 0.03,
+    "rel": 1.4,
+    "gain": 0.24,
+    "verb": 0.45,
+    "mouth": {
+      "$src": "MOUTHS.falsetto"
+    }
+  },
+  "words": [
+    "the Rhodes, barely touched",
+    "the voice, at a whisper",
+    "the strings, the weather behind"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [transpose(-3), drop(2)]\n                    : v === 1 ? [[], [fill(1)], [rotate(2)]][s % 3]\n                    : [drop(10)])"
+  }
+}

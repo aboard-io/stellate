@@ -1,0 +1,163 @@
+{
+  "note": "MORODER — Munich 1977. \"I Feel Love\", Musicland Studios: Giorgio\nMoroder and Pete Bellotte sequence a Moog Modular for the whole\nrhythm track — the delay throwing every eighth into the gap —\nand Donna Summer floats over the machine. The record dance music\ndates its own mechanization from. TWO rows have wanted \"eurodisco\"\nby name since their lineages were written — `synthpop` (Basildon\n1981) and `electro` (New York 1982) — and `italodisco` below is\nbuilt on it directly. An ARTIST anchor, the synthsoul\nprecedent: the producer is the genre.\n\nITS OWN ARPEGGIO (2026-08-31): I Feel Love IS the octave pedal — this row's own comment already said \"the arpeggiated octave\" while the record had none.\n\nLINEAGE: `phillysoul` (Philadelphia 1972) is the four-on-the-\nfloor and the string ceiling the sequencer replaced player by\nplayer; `funk` the syncopated bass the Moog line abstracts;\n`dusseldorfschool` is deliberately NOT here — Trans-Europe Express is\nthe same year, and this row's machine groove was built in\nparallel, not inherited (the two records famously heard each\nother AFTER the fact).\n\nWHO SINGS: falsetto — Summer's held head-voice coo,\ndeliberately weightless against the machine.",
+  "label": "Munich 1977",
+  "voices": 3,
+  "bars": 8,
+  "near": "synthpop",
+  "seqArp": "arpoct",
+  "plan": "dance",
+  "bpm": 124,
+  "parents": {
+    "phillysoul": 0.4,
+    "funk": 0.3
+  },
+  "wants": [
+    "schlager's studio economy",
+    "the musicland session bench"
+  ],
+  "instr": [
+    "saw_wave",
+    "solo_vox",
+    "warm_pad"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      },
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "lead",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    5,
+    5,
+    3,
+    3,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "harmony": "cycle",
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2200,
+    "q": 1.3,
+    "atk": 0.003,
+    "rel": 0.35,
+    "gain": 0.27,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.falsetto"
+    }
+  },
+  "words": [
+    "the Moog line, delayed into sixteenths",
+    "the voice, floating over the machine",
+    "the pad, one chord a bar"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [], [rotate(4)]][s % 4]\n                    : v === 1 ? [[fill(1)], [drop(2)], [fill(1), transpose(1)]][s % 3]\n                    : [drop(8)])"
+  }
+}

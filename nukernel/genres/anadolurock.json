@@ -1,0 +1,201 @@
+{
+  "note": "ANADOLU ROCK — Istanbul 1972. Turkish psychedelia: a fuzz guitar and a\nFarfisa playing a folk melody in a makam over a rock rhythm section.\nErkin Koray, Barış Manço, Selda Bağcan, Moğollar.\nTHE YEAR is Koray's \"Elektronik Türküler\" and the peak of the form.\nWHAT SEPARATES IT FROM `khmerrock`, which is the same idea two years\nand four thousand kilometres away — and the fact that this catalog can\nnow hold BOTH is a small argument for the whole round: Phnom Penh 1970\nis a five-note alphabet at 124 with a tremolo on the guitar; this is a\nSEVEN-note phrygian at 106 with fuzz on it and a saz figure the guitar\nis playing. Two guitar bands, two continents, two different melodies.",
+  "label": "Istanbul 1972",
+  "voices": 3,
+  "near": "psychpop",
+  "plan": "song",
+  "bpm": 106,
+  "parents": {
+    "psychpop": 0.35,
+    "rock": 0.35
+  },
+  "wants": [
+    "türkü",
+    "âşık song"
+  ],
+  "cannot": [
+    "the bağlama's commas, the same wall arabesk declares eight years later"
+  ],
+  "instr": [
+    "crunch_guitar",
+    "percussive_organ",
+    "solo_vox"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "pad",
+    "lead"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "MODES.phrygian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "fx": [
+    "sweep"
+  ],
+  "orn": {
+    "grace": 0.4
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2500,
+    "q": 1.5,
+    "atk": 0.005,
+    "rel": 0.55,
+    "gain": 0.28,
+    "verb": 0.4,
+    "mouth": {
+      "$src": "MOUTHS.skiffler"
+    }
+  },
+  "words": [
+    "the fuzz guitar, playing the türkü",
+    "the organ, holding the drone",
+    "the singer"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(8)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(8), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

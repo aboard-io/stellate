@@ -1,0 +1,115 @@
+{
+  "note": "BAL-MUSETTE — Paris 1880. The article's own dating: \"a style of\nFrench instrumental music and dance that first became popular in\nParis in the 1880s\" — the Auvergnat bals of the rue de Lappe, dance\nrooms named for the musette, the cabrette bagpipe that ran them\nbefore \"the accordion, on which a variety of waltzes, polkas, and\nother dance styles were played\" replaced it (the article's sentence;\nthe row casts the instrument the bal KEPT, and the cabrette is in the\n`cannot` where an absent instrument belongs). Émile Vacher and\nCharles Péguri are the players the article names for the era.\nTHE AXES: TIME again — the valse musette counts in three — plus\nSOUND: the musette accordion is two reeds tuned apart, beating, and\nthe chorus insert is the honest proxy for that céleste shimmer\n(dbl's own argument in fields.js: a detuned second pass IS what\ndouble-reeding is).\n\na dance room; the accordion is the singer\n\nLINEAGE: the valse half of the bal's floor is the Viennese waltz\narrived in Paris (1867 < 1880, the edge checked); the Auvergnat\nhalf — the bourrée rooms the cabrette ran — has no anchor and is\nowed by name.",
+  "instrumental": true,
+  "label": "Paris 1880",
+  "voices": 2,
+  "bars": 8,
+  "near": "chanson",
+  "meter": "three",
+  "plan": "song",
+  "bpm": 152,
+  "parents": {
+    "waltz": 0.3
+  },
+  "wants": [
+    "the auvergnat bourrée rooms",
+    "the java"
+  ],
+  "cannot": [
+    "the cabrette — the 1880 room is a BAGPIPE room and there is no bagpipe in the registry; the accordion below is the instrument the bal kept after 1900, cast with the date said out loud",
+    "the céleste tuning — a musette accordion is two reeds detuned against each other; the sampled accordion is one reed and the chorus insert is the proxy, declared as one",
+    "the java — the bal's OTHER dance leans on 3/8 with the weight thrown forward, a different three from this one, and one anchor says one meter"
+  ],
+  "instr": [
+    "accordion",
+    "banjo"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff"
+  ],
+  "kit": {},
+  "harmony": "cycle",
+  "bassStyle": "pedal",
+  "bassGrid": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "roots": [
+    0,
+    0,
+    4,
+    4,
+    0,
+    0,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.melodic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "orn": {
+    "grace": 0.35,
+    "pass": 0.25
+  },
+  "fx": [
+    "chorus"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 1,
+    "atk": 0.008,
+    "rel": 0.5,
+    "gain": 0.26,
+    "verb": 0.35
+  },
+  "words": [
+    "the accordion, runs over the three",
+    "the banjo, la pompe on two and three"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n          ? [[], [fill(2)], [rotate(3)], [fill(2), transpose(2)]][s % 4]\n        : [keep(4, 8), drop(2)])"
+  }
+}

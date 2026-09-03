@@ -1,0 +1,134 @@
+{
+  "note": "GARAGE ROCK — Portland 1963. The Kingsmen's \"Louie Louie\", cut\nin one take at Northwestern Inc. in Portland in April 1963 for\nfifty dollars: three chords, a shouted vocal the FBI spent two\nyears failing to decode, and the Pacific Northwest teen-dance\ncircuit pressed onto a 45. `punk` (New York 1976) has wanted\n\"garage rock\" by name since its lineage was written — the\nNuggets shelf is punk's own claimed prehistory — and takes the\nparent today.\n\nLINEAGE: `rocknroll` and `hambone` are the whole reading\nlist — the riff and the stomp, learned off 45s, played\nlouder and worse and therefore new.",
+  "label": "Portland 1963",
+  "voices": 2,
+  "bars": 4,
+  "near": "punk",
+  "plan": "song",
+  "bpm": 126,
+  "parents": {
+    "rocknroll": 0.4,
+    "hambone": 0.25
+  },
+  "wants": [
+    "the pacific northwest teen-dance circuit (the wailers of tacoma)"
+  ],
+  "instr": [
+    "crunch_guitar",
+    "percussive_organ"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    3,
+    4,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "fx": [
+    "crunch"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1.2,
+    "atk": 0.004,
+    "rel": 0.3,
+    "gain": 0.27,
+    "verb": 0.25,
+    "mouth": {
+      "$src": "MOUTHS.poplead"
+    }
+  },
+  "words": [
+    "the riff, three chords, no apology",
+    "the organ, cheap and proud of it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [], [fill(1)]][s % 4]\n                    : [transpose(-2), keep(0, 2, 4, 6, 8, 10, 12, 14)])"
+  }
+}

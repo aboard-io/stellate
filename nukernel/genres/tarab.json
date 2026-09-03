@@ -1,0 +1,187 @@
+{
+  "note": "TARAB — Cairo 1934. \"In 1934, Umm Kulthum sang for the inaugural\nbroadcast of the Egyptian Radio, the state station\" — the article's\nown sentence, and the best-dated performance of the takht era: the\nsinger, a violin, an oud, a qanun and a riq, the line said again and\nagain with the ornament pushed further while the room answers. §TIER\n2 of the world round named this row and its wall in one line —\n\"tarab / Arab classical (Cairo, Umm Kulthum) — rast and bayati put a\n~50-cent note on the degree that NAMES the maqam\" — and the pitch\nlane took the wall down on 2026-08-30: a scale is float semitones\nnow, the cents ride the note to the engine, and MODES.rast above\nsays E half-flat as 3.5 and B half-flat as 10.5, exactly.\nTHE AXES: ALPHABET is the arrival (the first anchor in the catalog\nwhose identifying degree is off the semitone grid), DEVELOPMENT is\ntarab itself — firqa's escalation schedule, a generation earlier and\nfive players smaller.\n\nLINEAGE: `taqsim` (Cairo 1932) is the modal practice itself, two\nyears and one recording commission earlier — the Congress sides\nare the takht tradition's own reference documents; `abbasid`\n(Baghdad 800) is the court line both name.\n\"muwashshah\" PAID 2026-08-30 (Cairo 1200): the wasla a tarab\nevening opens with IS a muwashshah set, and the edge lands in\nthe same city the treatise was written in, 734 years apart.\n\nthe wahda, firqa's own spelling: dum on 1, tak answering, the riq's\njingle on the rim",
+  "label": "Cairo 1934",
+  "voices": 4,
+  "bars": 8,
+  "near": "firqa",
+  "plan": "song",
+  "bpm": 84,
+  "parents": {
+    "taqsim": 0.5,
+    "abbasid": 0.15,
+    "muwashshah": 0.15
+  },
+  "wants": [
+    "the qasida recital"
+  ],
+  "cannot": [
+    "heterophony — the takht plays the singer's OWN line, slightly differently, at the same time; `line` chairs get their own operator word and `pad` chairs voice chords, and 'the same tune, imperfectly, together' is neither (firqa's admission, thirty years younger there)",
+    "the audience — tarab is a LOOP between singer and room, the line repeated as many times as the hall demands; this form is fixed when the record compiles and nobody in it is listening",
+    "the exact cents are a spelling, not a measurement — a real rast third floats phrase to phrase and singer to singer; this row plays 350 cents every time, the quarter-tone theory's number rather than any throat's",
+    "the qanun and the riq — the harp is nuba's own guess at a qanun, the wahda sits on a kick and a rim, and the oud is the fretted nylon guitar, taqsim's standing admission"
+  ],
+  "instr": [
+    "solo_vox",
+    "violin",
+    "nylon_string_guitar",
+    "harp"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      -1,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "counter",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    0,
+    4,
+    4,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.rast"
+  },
+  "scale": {
+    "$src": "MODES.rast"
+  },
+  "harmony": "modal",
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "orn": {
+    "grace": 0.5,
+    "approach": 0.3
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ],
+    "h": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      8,
+      0,
+      4,
+      4,
+      6,
+      0,
+      4,
+      4,
+      8,
+      0,
+      4,
+      4,
+      6,
+      0,
+      4,
+      5
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1,
+    "atk": 0.012,
+    "rel": 1.3,
+    "gain": 0.26,
+    "verb": 0.5,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the singer, the line said again, further each time",
+    "the violin, shadowing her a breath behind",
+    "the oud, filling under the phrase",
+    "the qanun, holding the mode"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [fill(2), rotate(2)], [fill(4), rotate(5)]][s % 4]\n                    : v === 1 ? [transpose(7), drop(2)]\n                    : v === 2 ? [rotate(8), drop(4)]\n                    : [drop(8)])"
+  }
+}

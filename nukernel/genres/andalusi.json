@@ -1,0 +1,81 @@
+{
+  "note": "ZIRYAB — Córdoba 822. Abu l-Hasan Ali ibn Nafi, called Ziryab,\nreached the Umayyad court of Abd al-Rahman II in 822 — the arrival\nis documented in Ibn Hayyan and al-Maqqari — and founded at Córdoba\nthe school of court song the whole Andalusi tradition descends\nfrom. `nuba` (Tetouan 1790) has wanted \"andalusi's cordoban court\nmusic\" by name since the world round; al-Ha'ik's songbook is this\nschool written down nine hundred years downstream. The dating is\nthe `zema` precedent exactly: a founder's documented court arrival,\nnot a recording, and the comment says so rather than pretending.\nTHE AXES: CAST is a singer and an oud and nothing else — Ziryab's\nown innovation was the SUITE (the nuba's ancestor), but what can be\nsaid honestly at sixteen steps a bar is the sung line with the\nplucked line shadowing it. Alphabet is hijaz, the one maqam-family\nsound this table says exactly (12-TET integer semitones — see the\nMODES row), which the Moroccan descendant tradition kept singable.\n\nLINEAGE: a declared root. Ziryab was the Mawsili house's student\nin Abbasid Baghdad and the want below is that debt in its own\nname — the same string `taqsim` already carries, spelled the\nsame way on purpose (one missing ancestor, one spelling).\nPAID 2026-08-29, the debts round: \"abbasid court song\" is\n`abbasid` (Baghdad 800) — Ziryab studied in that house before\nCórdoba; the root was never a root, only an undated teacher.\nWHICH MAWSILI, CORRECTED 2026-08-30 (the unlocking round). This\ncomment said ISHAQ twice, in two places, and this ZIM says the\nteacher was his FATHER — three articles, no disagreement.\nZiryab's own: \"the musician Ibrahim al-Mawsili was Ziryab's\nteacher\", and again, \"a gifted pupil of Ibrahim al-Mawsili in\nBaghdad, where he got his beginner lessons\". Ibrahim's own: \"his\nother pupils included the musicians Mukhariq, Zalzal and\nZiryab\". And Ishaq's own puts the two men on OPPOSITE sides —\nIshaq \"succeeded his father in leading the conservative musical\nestablishment. This put him at odds with progressive musicians\nsuch as Ibrahim ibn al-Mahdi and Ziryab\". Student, not rival,\nwas the wrong word for the wrong man. The EDGE does not move:\n`abbasid` is the HOUSE and its label year, Baghdad 800, is\nIbrahim's own peak (742–804, Harun al-Rashid's favourite). Only\nthe name in the sentence was wrong, and it is a reminder that a\nremembered fact is not a measured one.\n\"the qiyan singing schools\" PAID 2026-08-30, the unlocking round:\n`qiyan` (Medina 705) is at the foot of this file, and the edge is\nthe Qiyan article's own sentence about this row's own decade —\n\"Qiyan-slave-girls were initially imported to al-Andalus from\nMedina, which was first noted during the reign of al-Hakam I\n(r. 796-822)\". Ziryab's patron, Ziryab's years, the transmission\nstated rather than inferred. It takes the smaller weight because\nBaghdad is the nearer teacher and the Medinan singing girls are\nthe stock the Andalusi court was buying.\n\nTHE LIST DID NOT EMPTY, 2026-08-30: with both old strings paid it\nwould have been the only place-year anchor in this file with no\n`wants` at all, which is a silent grey rather than a fact. The\nZIM supplies a real one — Ziryab did not sail straight from\nBaghdad. \"He then traveled first to Syria and then Ifriqiya\n(Tunisia) in Kairouan, where he lived at the Aghlabid court of\nZiyadat Allah (ruled 816–837)\": a named court with a dated reign\nbetween the two ends of this row's own lineage, and no anchor.\n\nWHO SINGS: melisma — one syllable across many notes is\nthe Andalusi line's whole surface.",
+  "label": "Córdoba 822",
+  "voices": 2,
+  "rate": 0.5,
+  "near": "taqsim",
+  "plan": "arc",
+  "bpm": 80,
+  "parents": {
+    "abbasid": 0.4,
+    "qiyan": 0.2
+  },
+  "wants": [
+    "the aghlabid court at kairouan (ziyadat allah, 816-837)"
+  ],
+  "cannot": [
+    "the wusta of Zalzal — the neutral third the Baghdad school argued about is between this table's frets, the same wall taqsim declares for rast and bayati",
+    "the oud itself — no oud in the registry; the nylon-string guitar is a plucked gut-strung lute and it is FRETTED, taqsim's own admission one row over"
+  ],
+  "instr": [
+    "solo_vox",
+    "nylon_string_guitar"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.hijaz"
+  },
+  "scale": {
+    "$src": "MODES.hijaz"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "orn": {
+    "grace": 0.5,
+    "pass": 0.2
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1.3,
+    "gain": 0.24,
+    "verb": 0.45,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the song, ornamented on every return",
+    "the oud, shadowing the voice a sixth below"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n        ? [[], [fill(2)], [transpose(2), fill(2)], [reverse()]][s % 4]\n        : [transpose(-5), drop(2)])"
+  }
+}

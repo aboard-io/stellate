@@ -1,0 +1,77 @@
+{
+  "note": "THE HARDINGFELE SLÅTT — Oslo 1849. \"Bull endeavored to make a\nconcert with Myllarguten in Christiania February 1849, when romantic\nnationalism was at its very peak in Norway. The concert became a\ncommercial success, and the hall was packed with 1500 excited\nlisteners\" — this ZIM's own sentence about Torgeir Augundsson\n(1801–1872), \"arguably the most acknowledged Norwegian folk musician\nto this day\", who \"laid the ground for a brand new way of playing\nthe hardanger fiddle in Telemark\". Christiania is spelled Oslo by\nthe Kinshasa rule, which `nordicfolk` four years downstream already\ninvokes for its own dot; the two rows now share a city and are four\nyears apart, the Cairo 1932/1964 arrangement in miniature.\nTHE REFUSAL THIS DEFEATS said \"its Hardanger fiddle article holds no\ndated collection — Grieg's op. 72 does not appear even in the ZIM's\nown Grieg article\". Still true, and beside the point: the dot is not\na COLLECTION but a dated concert, the `andalusi`/`zema` precedent (a\ndocumented arrival, not a record). The refusal looked for one kind\nof artifact and the ZIM held the other.\nTHE AXES: SOUND is the whole row and it is said with two chairs, not\nwith a cannot. The article: \"The player usually bows on two of the\nupper strings at a time, and sometimes three... The objective is to\ncreate a continuous sound of two (or more...) pitches.\" So the\nsecond fiddle holds the drone string against the first's tune — the\ndouble stop cast as a pair, the way `mbuti` cast hocket with masks.\n\na slått is a dance tune; nobody sings on this bill\n\nLINEAGE: `nordicfolk` is NOT a parent and the maringa rule is why\n— Oslo 1853 is this row's junior by four years, and an edge cannot\npoint at a record younger than its child. The instrument's own\nancestry is dated and unmusical (\"The earliest known example of\nthe hardingfele is from 1651, made by Ole Jonsen Jaastad in\nHardanger\"): a fiddle is not a repertory. The teachers Myllarguten\nnames — Knut Lurås, Håvard Gibøen — have no dated performance.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nOle Bull's Christiania concert with Myllarguten, 15 January 1849 — this\nrow's own place and year. The Hardanger fiddle plays over four or five\nringing sympathetic strings tuned to the open drone, and the slaatter\nrepertory's signature is the flat seventh against a major third with the\ndrone underneath. The row named mixolydian and then sang the natural minor,\nwhose flat third the sympathetic drones contradict on every stroke.",
+  "instrumental": true,
+  "label": "Oslo 1849",
+  "voices": 2,
+  "bars": 8,
+  "near": "nordicfolk",
+  "plan": "song",
+  "bpm": 128,
+  "parents": {},
+  "wants": [
+    "knut lurås and håvard gibøen's telemark slåtter",
+    "the bygdedans repertory before the concert hall"
+  ],
+  "cannot": [
+    "the understrings — 'four of the strings are strung and played like a violin, while the rest, named understrings or sympathetic strings, resonate under the influence of the other four'. Nothing in the registry sounds without being played, so the halo under every note is missing and the two chairs below are the bowed half only",
+    "scordatura — 'in Norway, more than 20 different tunings are recorded', and troll tuning (A-E-A-C♯) is what the fanitullen tunes ARE. A row declares one alphabet once; here the retuning between tunes is the tradition's own filing system"
+  ],
+  "instr": [
+    "fiddle",
+    "fiddle"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "orn": {
+    "grace": 0.4,
+    "pass": 0.15
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2700,
+    "q": 1,
+    "atk": 0.008,
+    "rel": 0.35,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the fiddle, the slått turning on itself",
+    "the second string, held under it — the double stop"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [rotate(4)], [fill(2), transpose(2)]][s % 4]\n                    : [keep(0, 4, 8, 12), transpose(-7)])"
+  }
+}

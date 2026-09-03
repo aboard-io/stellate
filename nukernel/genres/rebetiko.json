@@ -1,0 +1,108 @@
+{
+  "note": "---- EUROPE, THE VERNACULAR HALF -----------------------------------\nFive anchors, and they are deliberately few. The catalog's European\ndepth is EARNED KNOWLEDGE and not padding — seventeen pre-1900 anchors\nfrom Rome 600 to New York 1892 — and a round whose whole purpose is to\nlower the Euro-American share does not get to add fifteen more. What\nthese five have in common is that they are the SOUTHERN and CELTIC\nvernacular that the catalog's art-music spine had no room for: a\nGreek hash-den music, a Portuguese dockside song, a Catalan rumba, an\nIrish session and a Serbian brass band. Not one of them is a\nconservatoire tradition and not one of them is in a major key\nthroughout.\n\nREBETIKO — Piraeus 1935. The Greek port underworld's music: a bouzouki\nand a baglamas, a rough voice, a dromos (the Greek word for makam) and\na subject matter — hashish, prison, exile — that got it banned by the\nMetaxas dictatorship the year after this label.\nTHE YEAR is the Piraeus style at its peak on 78s — Markos Vamvakaris\nand the Piraeus Quartet — and one year before the 1936 censorship.\nIN FOUR, AND THE ONE THAT IS NOT IS DECLARED. The hasapiko and the\nhasaposerviko are in four and are most of the repertory; the ZEIBEKIKO\n— the solo dance every rebetiko record is famous for — is in NINE, and\nnine is not a metre this file can write. It is in `cannot` and it is\nnot the primary fact: rebetiko is the bouzouki, the dromos and the\nvoice, and this anchor claims the four-square half of the repertory.\nTHE BOUZOUKI IS `steel_string_guitar` and the reasoning is the tres'\none country and one ocean away: metal courses played with a plectrum,\nso the STRING and the ATTACK are right and the body is not. What is\nlost is the tremolo on a paired course, which is how a bouzouki holds\na long note at all.\n\n\"ottoman makam\" PAID 2026-08-29 (Istanbul 1910): the café-aman\nplayers who became rebetiko's Smyrna school grew up inside the\nrepertoire Cemil Bey's 78s recorded, and those discs circulated\nin Piraeus itself. The nearer, still-missing steps stay named.\n\nNO DRUM KIT. A Piraeus rebetiko band is two or three fretted\ninstruments and a voice — the rhythm is in the strumming hand and\nin a set of worry beads — so `kit` is empty and the pulse is the\nbouzouki's own, which is what `artic: staccato` at `maxHold: 2` says.",
+  "label": "Piraeus 1935",
+  "voices": 3,
+  "near": "tango",
+  "plan": "song",
+  "bpm": 100,
+  "parents": {
+    "ottoman": 0.3
+  },
+  "wants": [
+    "smyrneiko",
+    "cafe aman"
+  ],
+  "cannot": [
+    "the zeibekiko's nine, which is the dance every rebetiko record is known for and is a metre this file cannot write",
+    "the bouzouki's tremolo on a doubled course"
+  ],
+  "instr": [
+    "steel_string_guitar",
+    "solo_vox",
+    "nylon_string_guitar"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    4,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "MODES.phrygian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "orn": {
+    "grace": 0.45,
+    "approach": 0.3
+  },
+  "kit": {},
+  "tone": {
+    "wave": "triangle",
+    "cut": 2800,
+    "q": 1.1,
+    "atk": 0.004,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.34,
+    "mouth": {
+      "$src": "MOUTHS.skiffler"
+    }
+  },
+  "words": [
+    "the bouzouki, the taximi and the tune",
+    "the singer",
+    "the baglamas, an octave down"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(-12), split(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

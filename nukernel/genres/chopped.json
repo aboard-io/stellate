@@ -1,0 +1,141 @@
+{
+  "note": "CHOPPED AND SCREWED — Houston 1995. DJ Screw's 3 'N the Mornin'\n(Part Two), Bigtyme Recordz, 1995: southern rap slowed past\nsixty BPM on the pitch control, doubled a beat behind itself,\nthe whole record moving like heat off the Gulf — a named DJ, a\nnamed tape economy (the grey tapes out of his house on\nGreenstone), a named city. `vaporwave` (Portland 2011) has\nwanted \"chopped and screwed\" by name since its lineage was\nwritten — the slowdown IS its inheritance — and takes the\nparent today.\n\nbpm 70 is the table's floor (compose's 70..160); Screw dragged\nrecords under it, which the `cannot` below already admits.\n\nLINEAGE: `gfunk` (Los Angeles 1992) is the source vinyl —\nwhining synth and slow funk already half asleep; `boombap`\n(New York 1994) the DJ craft being melted. Southern rap\nbefore the majors is the missing shelf, named below.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nDJ Screw's grey tapes, Houston 1995 — this row's own record. Slowing a\nrecord does not give it a sixth: the row is modal and SCALES.blues has none,\nso dorian was a name with nothing under it. Full ruling at `holler`.\n\nGRAIN 0.45 — and it is HISS, not groove. Screw's records left the\nhouse on dubbed cassettes, tape to tape, and what that adds is a\nfloor rather than a crackle. instr 97 carries both halves (a\nsparse-impulse layer over a 4 kHz-capped noise bed), so the number\nbuys the right texture here even though the cause is not a stylus.\ngrain: 0.45 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the\n//   measured value for a hand that wants it back. Paul: \"Make the\n//   default for surface 0 and I can turn it on only if I want to,\n//   don't put it on anything by default.\" The castings were real —\n//   each was pressed and six moved on what came back — but a\n//   texture nobody asked for is a texture on every play, and the\n//   board's `surface` dial (ui/engineer.js, 2026-08-31) is where\n//   the choice belongs. The engine path stays wired and gated;\n//   what leaves is the ROW declaring it for you.",
+  "label": "Houston 1995",
+  "voices": 2,
+  "bars": 8,
+  "near": "vaporwave",
+  "plan": "dance",
+  "bpm": 70,
+  "parents": {
+    "gfunk": 0.35,
+    "boombap": 0.25
+  },
+  "wants": [
+    "southern rap before the majors (geto boys)"
+  ],
+  "cannot": [
+    "the pitch wheel itself — screwing is done to a RECORD, a finished mix dragged slow so every voice drops a third, and this box renders scores at the tempo asked; the row says the tempo and the haze, not the melt"
+  ],
+  "instr": [
+    "square_lead",
+    "warm_pad"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "artic": "tie",
+  "maxHold": 4,
+  "swing": 0.2,
+  "bassStyle": "pedal",
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1400,
+    "q": 1.1,
+    "atk": 0.03,
+    "rel": 1.6,
+    "gain": 0.25,
+    "verb": 0.45
+  },
+  "words": [
+    "the lead, a third low, in no hurry at all",
+    "the pad, the afternoon it happens in"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(-2)], [transpose(-2)], [rotate(-2)]][s % 4]\n                    : [drop(10)])"
+  }
+}

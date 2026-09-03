@@ -1,0 +1,95 @@
+{
+  "note": "BOOGIE-WOOGIE — Chicago 1928. Clarence \"Pine Top\" Smith cut\n\"Pine Top's Boogie Woogie\" for Vocalion in December 1928 — the\nrecord that NAMED the music, with Smith talking the dancers\nthrough the breaks over that rolling left hand. THREE rows have\nwanted this by name since their lineages were written — `blues`,\n`rocknroll` and `jumpblues`, which is the census's own top want\n— because the eight-to-the-bar left hand is where the shuffle,\nthe walking eighths and half of rock and roll's right hand come\nfrom. All three take it as a parent today.\nTHE AXES: TIME and CAST. One player, two hands, and the left one\nIS the rhythm section — said below as the bass chair walking\neighths under a kit that is one empty object, because a rent\nparty had a piano and no drummer.\n\nthe row's own words: \"One player, two hands\"\n\nLINEAGE: `ragtime` (Sedalia 1899) is the professional piano\ntradition this is the rough cousin of; the barrelhouses and\nlumber camps that actually taught the left hand are named\nbelow — a debt with no named record until this one.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nClarence \"Pine Top\" Smith, \"Pine Top's Boogie Woogie\" (Vocalion, Chicago,\nDecember 1928) — this row's own record, the one that named the music. The\neight-to-the-bar left hand walks a major-key twelve bars; the roots above\nare degrees 0, 3 and 4 and never 6. See `zydeco` for the full ruling; the\nblue seventh stays where it lives, in SCALES.blues on this line.",
+  "instrumental": true,
+  "label": "Chicago 1928",
+  "voices": 2,
+  "bars": 8,
+  "near": "ragtime",
+  "plan": "song",
+  "bpm": 126,
+  "parents": {
+    "ragtime": 0.35
+  },
+  "wants": [
+    "the barrelhouse circuit",
+    "the texas lumber camps"
+  ],
+  "instr": [
+    "yamaha_grand_piano",
+    "yamaha_grand_piano"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff"
+  ],
+  "roots": [
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    4
+  ],
+  "prog": {
+    "$src": "PROGS.blues12"
+  },
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "harmony": "cycle",
+  "swing": 0.33,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {},
+  "orn": {
+    "grace": 0.3,
+    "roll": 0.15
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 3000,
+    "q": 0.9,
+    "atk": 0.004,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.15
+  },
+  "words": [
+    "the right hand, breaks and rolls",
+    "the left hand, eight to the bar"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(4)], [fill(2)], [rotate(2), fill(2)]][s % 4]\n                    : [transpose(-7), keep(0, 2, 4, 6, 8, 10, 12, 14)])"
+  }
+}

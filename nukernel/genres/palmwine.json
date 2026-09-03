@@ -1,0 +1,137 @@
+{
+  "note": "---- AFRICA, THE SECOND SLATE -------------------------------------\nNine anchors on top of the ten the African round landed on 2026-08-25,\nand every one of them is a rung that round named or a `wants` entry it\nleft on the books: palm-wine (highlife's own first `wants` line),\nkwela (marabi's), mbaqanga (worldfolk's AND kwaito's), soukous (the\nsebene congorumba's entry describes and stops short of), benga,\nmakossa, hiplife, kizomba and coupé-décalé — and the last three take\nthe continent's representation past 2001 for the first time.\nThe six the round DEFERRED BY NAME — jeliya, jùjú, taarab,\ngnawa, mbalax, chimurenga — stay deferred, and their reasons are not\nre-derived here. Everything below is in four and in 12-TET for the\nsame reason everything above it is.\n\nPALM-WINE — Freetown 1950, and it pays the FIRST line of highlife's\n`wants`. The West African coastal guitar music the Kru sailors carried\nup and down the Atlantic seaboard: a two-finger picked guitar, a voice,\na box the player sits on, and a saw or a bottle keeping time. It is the\ngrandparent of highlife, of jùjú and of half the guitar music on the\ncontinent.\nTHE YEAR is Ebenezer Calender's Sierra Leone Broadcasting sides, which\nis where maringa/palm-wine is actually on tape. The music is older and\nwas played in bars nobody recorded, which is marabi's situation exactly\nand gets marabi's treatment: the label names the recording.\nWHAT SEPARATES IT FROM ACCRA 1957, its own child: highlife is a DANCE\nBAND — horns, changes every four bars, 120 bpm. This is one guitar and\none voice at 96 over two chords, and the two-finger pattern is the\nwhole style, which is why `word` gives voice 1 the same line thinned\nand rotated rather than a harmony part.\n\nLINEAGE: a ROOT. The parents are the Kru sailors' guitar, the\nTrinidadian and Cuban 78s that came off the same ships, and Krio\nsong, and the catalog holds none of them. `son` (Havana 1928) is a\nnamed PARENT at a real weight and not a courtesy: those are literally\nthe records that circulated in West African ports.\n\nTHE LILT IS REAL AND IT IS ALSO A MEASUREMENT. Palm-wine guitar is\nplayed with a long-short bounce and the swing dial at a third is this\nfile's only word for one — and drafted straight, on mento's own\nthree-chord cycle, this anchor sat 0.245 from Kingston 1952 in the\ngenealogy's 28-feature space, tighter than anything the catalog held\nbefore this round. Two guitar-and-voice records from opposite sides\nof the Atlantic SHOULD be neighbours; they should not be the same\npoint. The bounce and the two-chord cycle are both true of the music.\n\nA CARPENTER'S SAW AND A BOTTLE. The saw is scraped and goes to the\nhat lane with the rest of this file's scrapers; the bottle struck\nwith a nail is `p`. There is no kick and no snare, because there is\nno drummer — that is the whole texture.",
+  "label": "Freetown 1950",
+  "voices": 2,
+  "near": "highlife",
+  "plan": "song",
+  "bpm": 96,
+  "parents": {
+    "son": 0.3
+  },
+  "wants": [
+    "kru sailors' guitar",
+    "maringa",
+    "krio song"
+  ],
+  "instr": [
+    "nylon_string_guitar",
+    "solo_vox"
+  ],
+  "drumkit": "brush",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "lead"
+  ],
+  "swing": 0.33,
+  "roots": [
+    0,
+    0,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "kit": {
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "h": [
+      7,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      7,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.005,
+    "rel": 0.6,
+    "gain": 0.26,
+    "verb": 0.34
+  },
+  "words": [
+    "the guitar, two fingers and no plectrum",
+    "the singer, over the top of it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(4), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

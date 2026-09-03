@@ -1,0 +1,149 @@
+{
+  "note": "BRONSKI BEAT — London 1984, The Age of Consent. The article puts the\nband in BRIXTON, which is 6 km from London's dot and therefore the same\ndot; the label keeps the city. The row's own fact is the falsetto over a\nfour-on-the-floor built from a drum machine and a sequencer — a disco\nrecord made by three people, which is why `disco` carries real weight\nbeside the synth-pop.",
+  "label": "Brixton 1984",
+  "voices": 3,
+  "bars": 8,
+  "near": "synthpop",
+  "plan": "dance",
+  "bpm": 126,
+  "parents": {
+    "synthpop": 0.4,
+    "disco": 0.35,
+    "newwave": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "polysynth",
+    "saw_wave"
+  ],
+  "drumkit": "tr909",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      },
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "riff"
+  ],
+  "roots": [
+    0,
+    3,
+    5,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 3,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2100,
+    "q": 1.5,
+    "atk": 0.008,
+    "rel": 0.35,
+    "gain": 0.26,
+    "verb": 0.45,
+    "mouth": {
+      "$src": "MOUTHS.falsetto"
+    }
+  },
+  "words": [
+    "the falsetto",
+    "the pad",
+    "the sequencer"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], []][s % 4]\n                    : v === 1 ? [drop(8)] : [fill(2)])"
+  }
+}

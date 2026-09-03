@@ -1,0 +1,157 @@
+{
+  "note": "LAMB — Manchester 1996. Lamb (Fontana, 30 September 1996):\nAndy Barlow's fractured jungle programming under Lou Rhodes's\ntorch line — \"Górecki\" names a living composer in a love song\n— the row where this wing touches `dnb` instead of dub. The\nbreaks are dnb's, the tempo is a ballad's: half-time song over\ndouble-time drums, which no other row in the table says.\n\nLINEAGE: the ZIM's own three — trip hop, drum and bass and\njazz: `triphop` (Bristol 1991) the singer-over-loop deal,\n`dnb` (London 1994) the kit language, `jazz` (New York 1945)\nthe upright bass and the harmony under the torch line.\n\nWHO SINGS: Rhodes's folk quaver, close and plain.",
+  "label": "Manchester 1996",
+  "voices": 2,
+  "bars": 8,
+  "near": "dnb",
+  "plan": "song",
+  "bpm": 82,
+  "parents": {
+    "triphop": 0.3,
+    "dnb": 0.3,
+    "jazz": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "electric_piano"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      4,
+      0,
+      0,
+      5,
+      0,
+      9,
+      0,
+      0,
+      0
+    ]
+  },
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 1900,
+    "q": 1,
+    "atk": 0.015,
+    "rel": 1.2,
+    "gain": 0.24,
+    "verb": 0.5,
+    "mouth": {
+      "$src": "MOUTHS.confessional"
+    }
+  },
+  "words": [
+    "the voice, a torch song at half the drums' speed",
+    "the keys, jazz chords keeping the cut-up honest"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(-2)], []][s % 4]\n                    : [[rotate(4)], [split(2)], [rotate(4)], [fill(2)]][s % 4])"
+  }
+}

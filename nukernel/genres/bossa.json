@@ -1,0 +1,202 @@
+{
+  "note": "BOSSA NOVA [jazzrock]. Both live on sevenths and understatement; the\nfield that separates them is the CLAVE — the rim figure the whole bar\nhangs off — plus brushes, no snare at all, and the ii7–V7 packed into\nHALF a bar (`beats: 8`), which is the turnaround jazzrock spreads over\ntwo whole bars.\n\nnamed \"Rio de Janeiro 1958\" — Chega de Saudade, cut in Rio that July:\nthe clave, the brushes, the ii7-V7 in half a bar.\n\nLINEAGE: it stops being a root under protest. Jobim and Gilberto\nfolded samba's rhythm and cool jazz's harmony into the apartment\nvoice; cool jazz is bebop's chamber wing and IS in the catalog now —\nthe ii7-V7 in half a bar, the sevenths everywhere, the understatement\n— so the weight normalizes to 1 over what exists. Samba and choro,\nthe older Rio string tradition, are still owed. `near: jazzrock` now\nreads better: the neighbour is a SIBLING, both children of 1945.\nLINEAGE, REPAIRED 2026-08-26. `{ jazz: 1 }` with\n`wants: [\"samba\", \"choro\"]` beside it made Rio 1958 a wholly\nAmerican descent, which is precisely backwards about the half of\nbossa nova that is Brazilian: the rhythm. Both wants are built —\nsamba (Rio 1939) and choro (Rio 1900) — and samba takes the largest\nweight, because the batida a bossa guitar plays is a samba bateria\nreduced to one hand. Jazz keeps a real weight for the harmony, which\nis genuinely what it brought.\n\nthe left foot on 2 and 4 under the brushes — a bossa drummer's\nhat is a FOOT, and it is the quietest load-bearing thing here",
+  "label": "Rio de Janeiro 1958",
+  "near": "jazzrock",
+  "plan": "song",
+  "bpm": 132,
+  "parents": {
+    "samba": 0.5,
+    "jazz": 0.3,
+    "choro": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "nylon_string_guitar",
+    "flute"
+  ],
+  "drumkit": "brush",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    1,
+    0,
+    5
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "prog": [
+    [
+      {
+        "d": 0,
+        "q": "7"
+      }
+    ],
+    [
+      {
+        "d": 1,
+        "q": "7",
+        "beats": 8
+      },
+      {
+        "d": 4,
+        "q": "dom7",
+        "beats": 8
+      }
+    ],
+    [
+      {
+        "d": 0,
+        "q": "7"
+      }
+    ],
+    [
+      {
+        "d": 5,
+        "q": "7"
+      }
+    ]
+  ],
+  "pipes": [
+    {
+      "id": "strum",
+      "spread": 0.04
+    }
+  ],
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "fifths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "f": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.8,
+    "atk": 0.008,
+    "rel": 0.8,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the guitar, rolling the sevenths",
+    "the flute, saying very little"
+  ],
+  "word": {
+    "kind": "const",
+    "n": {
+      "$src": "[]"
+    }
+  }
+}

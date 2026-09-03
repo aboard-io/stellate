@@ -1,0 +1,91 @@
+{
+  "note": "DELTA BLUES — Clarksdale 1929. Charley Patton's \"Pony Blues\",\ncut the 14th of June 1929 — the first session of the Delta's\nbiggest star, the plantation-district blues at full weight: one\nman, one guitar, the thumb keeping a drone-bass while the slide\nanswers the voice line for line. THE SESSION WAS IN RICHMOND,\nINDIANA — Paramount sent for him — and the label says Clarksdale\nbecause the music is the Delta's (Patton lived at Dockery, the\nnext county over; Clarksdale is the district's town), the same\none-city-per-music rule `neworleans` above states. `blues`\n(Chicago 1952 — Muddy Waters, a Clarksdale man, electrified) and\n`skiffle` have both wanted this row by name since their lineages\nwere written.\n\nLINEAGE: `spirituals` (Nashville 1871) is the sacred half of\nthe same congregations' singing; the field holler and the\nsongster stock are named below, unrecorded and unclaimed.\nPAID 2026-08-29, the debts round: \"field holler\" moved into\nthe parents (South Carolina 1853) — the holler is this row's own\ncomment's first witness.\n\n\"field holler\" spelled blues's way — one missing ancestor, one\nspelling (the taqsim rule).\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nCharley Patton, \"Pony Blues\", cut 14 June 1929 — this row's own record.\nThe thumb keeps a tonic drone and the changes, when they come, are I and IV:\ndegrees 0 and 3, never 6. Mixolydian named a chord this music does not play;\nthe flat seventh the slide answers with comes from SCALES.blues, unchanged.\nFull ruling at `zydeco`.\n\nWHO SINGS: the skiffler mouth — high air, little\npolish; the nearest thing this table has to a field\nvoice, named as the stand-in it is.",
+  "label": "Clarksdale 1929",
+  "voices": 2,
+  "bars": 8,
+  "near": "blues",
+  "plan": "song",
+  "bpm": 84,
+  "parents": {
+    "spirituals": 0.25,
+    "holler": 0.3
+  },
+  "wants": [
+    "the songster's ballad stock",
+    "the diddley bow"
+  ],
+  "cannot": [
+    "the bottleneck — the slide's continuous pitch between frets is the second VOICE of this music, answering the sung line, and deg is an integer into a fretted alphabet; the guitar voice below answers in notes, which is the call without the cry",
+    "the time — Patton drops and adds beats as the line needs them, and this grid's bar is sixteen steps every bar; the loosest hand in the DYNAMICS table is the honest remainder"
+  ],
+  "instr": [
+    "solo_vox",
+    "steel_string_guitar"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "harmony": "cycle",
+  "swing": 0.4,
+  "artic": "staccato",
+  "maxHold": 3,
+  "nobass": true,
+  "kit": {},
+  "orn": {
+    "grace": 0.35
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.7,
+    "gain": 0.27,
+    "verb": 0.18,
+    "mouth": {
+      "$src": "MOUTHS.skiffler"
+    }
+  },
+  "words": [
+    "the voice, calling",
+    "the guitar, answering every line"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [fill(1)]][s % 3]\n                    : [transpose(-3), rotate(4), drop(2)])"
+  }
+}

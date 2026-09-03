@@ -1,0 +1,207 @@
+{
+  "note": "KABUL POP — Kabul 1972, and it is the catalog's only Central Asian\nrecord. Ahmad Zahir's era: a harmonium and a rubab beside an electric\norgan and a drum kit, a Persian-language ghazal sung as a pop song, and\nan audience that included both the radio and the street.\nTHE YEAR is Zahir's peak, a decade before the recording industry it\nbelonged to ended.\nWHY IT IS HERE WHEN GHAZAL IS TIER 2, which looks like a contradiction\nand is the primary-fact rule again: the classical ghazal's identity is\nthe setting of the couplet's prosody, and that does not ship. What this\nanchor claims is a POP RECORD whose lyric happens to be a ghazal —\nstrophic, in four, with a band — and whose primary facts are the\nharmonium, the tabla and the song form. Those are all sayable.\n\nLINEAGE: `filmi` UNDER PROTEST and alone. Mumbai 1960 is the\narrangement, the harmonium and the song form, and it is genuinely a\ndocumented debt — Zahir covered Hindi film songs. Tehran 1974 would\nbe the natural second parent and it is TWO YEARS LATER than this\nlabel, so it is not named; the Persian side of this music reaches\nthe record through the language and the poetry, which no anchor\ncarries.",
+  "label": "Kabul 1972",
+  "voices": 3,
+  "near": "filmi",
+  "plan": "song",
+  "bpm": 96,
+  "parents": {
+    "filmi": 0.45
+  },
+  "wants": [
+    "afghan ghazal",
+    "rubab instrumental",
+    "attan"
+  ],
+  "cannot": [
+    "the rubab's sympathetic strings — a short-necked lute with fifteen strings ringing behind three, which no id here has",
+    "the tabla's bols, the same admission filmi makes"
+  ],
+  "instr": [
+    "solo_vox",
+    "reed_organ",
+    "steel_string_guitar"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "orn": {
+    "grace": 0.5,
+    "approach": 0.3
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      9,
+      0,
+      5,
+      0,
+      7,
+      0,
+      0,
+      4,
+      9,
+      0,
+      5,
+      0,
+      7,
+      0,
+      0,
+      5
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 0.9,
+    "atk": 0.015,
+    "rel": 1.2,
+    "gain": 0.26,
+    "verb": 0.52,
+    "mouth": {
+      "$src": "MOUTHS.qawwal"
+    }
+  },
+  "words": [
+    "the singer",
+    "the harmonium, holding the drone",
+    "the rubab's figure, on a steel string"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(8)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[split(2), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

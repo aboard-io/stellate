@@ -1,0 +1,216 @@
+{
+  "note": "DISCO [newwave]. Both are bright four-square pop machines; what\nseparates them is the SEVENTHS and the open hat. New wave is clipped\ntriads and closed eighths; disco is a dorian seventh cycle, an open hat\non EVERY offbeat, sixteenth hats under it, strings stabbing the chords\nand an octave bass — the whole record leans forward.\n\nnamed \"New York 1977\" — the peak-of-the-floor year; Philadelphia 1974\nowns the proto-disco strings, but this anchor is the full club machine.\n\nLINEAGE: funk's rhythm section made metronomic for the floor, under\nMotown-descended pop song discipline and gospel's massed uplift; the\nPhilly-soul string section and the Latin percussion that actually\nbuilt the sound are missing anchors.\n\"philly soul\" PAID 2026-08-29 (Philadelphia 1972): Earl Young's\nopen hat IS the disco hi-hat, MFSB's \"Love Is the Message\" was\nthe Loft's anthem, and the weight comes chiefly off detroitsoul —\nGamble and Huff are the step between Hitsville and the floor.\n\"latin percussion\" stays: an instrumentation, not a genre — the\ngenealogy round's declined list has the argument.",
+  "label": "New York 1977",
+  "near": "newwave",
+  "plan": "dance",
+  "bpm": 118,
+  "parents": {
+    "funk": 0.35,
+    "phillysoul": 0.3,
+    "detroitsoul": 0.2,
+    "gospel": 0.15
+  },
+  "wants": [
+    "latin percussion"
+  ],
+  "instr": [
+    "strings",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "lead"
+  ],
+  "roots": [
+    0,
+    3,
+    2,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    },
+    {
+      "d": 2,
+      "q": "7"
+    },
+    {
+      "d": 4,
+      "q": "7"
+    }
+  ],
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      8,
+      3,
+      5,
+      3,
+      7,
+      3,
+      5,
+      3,
+      8,
+      3,
+      5,
+      3,
+      7,
+      3,
+      6,
+      4
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2800,
+    "q": 1.4,
+    "atk": 0.005,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.28
+  },
+  "words": [
+    "the string stabs",
+    "the guitar, answering"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"gate\", rotate(4))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

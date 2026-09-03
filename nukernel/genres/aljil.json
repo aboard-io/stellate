@@ -1,0 +1,216 @@
+{
+  "note": "AL-JIL — Cairo 1988. Egyptian synth pop: shaabi's rhythm section on a\ndrum machine, a sequenced bass, a synthesised horn line and a smooth\nvoice — the sound of the Cairo cassette industry at its commercial\nheight, and the direct middle rung between shaabi and mahraganat.\nTHE YEAR is the Hamid El Shaeri / Ehab Tawfik era.\nWHAT SEPARATES IT FROM `raï`, its exact contemporary one Mediterranean\ncoast west: raï is a drum machine plus an ACCORDION and a trumpet, in\nphrygian, at 116, and its identity is the Oranese vocal. This is a\ndrum machine plus a SEQUENCER, in harmonic minor for the augmented\nsecond that names hijaz-kar, at 104, and its identity is the\nproduction. They are cousins and they are not the same record.",
+  "label": "Cairo 1988",
+  "voices": 3,
+  "near": "rai",
+  "plan": "dance",
+  "bpm": 104,
+  "parents": {
+    "shaabi": 0.45,
+    "synthpop": 0.3,
+    "disco": 0.25
+  },
+  "wants": [],
+  "cannot": [
+    "the quarter tone, the same admission shaabi makes ten years earlier — `harmonic` carries the augmented second that names hijaz and is missing the neutral third of rast"
+  ],
+  "instr": [
+    "solo_vox",
+    "polysynth",
+    "saw_wave"
+  ],
+  "drumkit": "cr78",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "pad"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "orn": {
+    "grace": 0.35
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitProb": {
+    "h": [
+      9,
+      6,
+      9,
+      6,
+      9,
+      6,
+      9,
+      6,
+      9,
+      6,
+      9,
+      6,
+      9,
+      6,
+      9,
+      4
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 3000,
+    "q": 1.6,
+    "atk": 0.004,
+    "rel": 0.4,
+    "gain": 0.28,
+    "verb": 0.28,
+    "mouth": {
+      "$src": "MOUTHS.poplead"
+    }
+  },
+  "words": [
+    "the singer",
+    "the synth, on the hook",
+    "the sequenced pad under it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(8), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

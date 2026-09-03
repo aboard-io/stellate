@@ -1,0 +1,41 @@
+{
+  "note": "SIMPLE — the phrase and nothing else. One voice, one bar, no kit, no bass,\nno harmonic motion, no operator word: the sixteen steps played as written\nand looped. It is the zero of the genre table, and the useful kind of zero\n— every other genre is legible as what it ADDS to this.\n\nFOUR bars, not one: a per-loop ramp has nothing to accumulate over in a\none-bar form, so inc and stk were inert in the one genre people reach\nfor first. Simple is the phrase looping; four loops is the natural unit.",
+  "label": "Simple",
+  "voices": 1,
+  "plan": "song",
+  "bpm": 112,
+  "instr": "yamaha_grand_piano",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "tone": {
+    "wave": "triangle",
+    "cut": 3200,
+    "q": 0.8,
+    "atk": 0.004,
+    "rel": 0.7,
+    "gain": 0.3,
+    "verb": 0.08
+  },
+  "words": [
+    "the phrase, as written"
+  ],
+  "word": {
+    "kind": "const",
+    "n": {
+      "$src": "[]"
+    }
+  }
+}

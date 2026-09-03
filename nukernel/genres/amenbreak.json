@@ -1,0 +1,157 @@
+{
+  "note": "THE WINSTONS — Washington 1969. \"Amen, Brother\", the B-side of\n\"Color Him Father\" (Metromedia, 1969): a Washington D.C. soul\nband funking up Jester Hairston's gospel \"Amen\" at speed, and\nat bar seventeen Gregory Coleman plays four bars alone — seven\nseconds that became the most sampled drums on earth. TWO rows\nhave wanted \"the amen break\" by name since their lineages were\nwritten — `hardcorerave` (Essex 1991) and `dnb` (London 1994),\nwhose entire kit language is these four bars chopped — and both\ntake the parent today. THE HONEST ROW IS THE BAND AND THE\nRECORD, not the sample: the box cannot sample, but a soul\ninstrumental with a drum-break section is exactly sayable, and\nthe break section IS the form's own fact (the word schedule\ndrops every voice at the third section, which is what a break\nis).\n\nLINEAGE: `funk` (Cincinnati 1967) is the band's trade;\n`gospel` (Chicago 1932) is the tune itself — \"Amen\" is a\ngospel song wearing a horn section.\n\nthe third entry is a lie unless the schedule below\nactually empties the bar — it does: section 2 is the\nBREAK, drums alone.",
+  "label": "Washington 1969",
+  "voices": 2,
+  "bars": 8,
+  "near": "funk",
+  "plan": "song",
+  "bpm": 136,
+  "parents": {
+    "funk": 0.45,
+    "gospel": 0.3
+  },
+  "wants": [
+    "hairston's 'amen' as the choir sang it (lilies of the field)"
+  ],
+  "instr": [
+    "brass_section",
+    "tenor_sax"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      5,
+      0,
+      5,
+      0,
+      0,
+      9,
+      0,
+      0,
+      5
+    ]
+  },
+  "harmony": "cycle",
+  "prog": {
+    "$src": "PROGS.soul7"
+  },
+  "roots": [
+    0,
+    0,
+    3,
+    4,
+    0,
+    0,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "swing": 0.12,
+  "bassStyle": "eighths",
+  "tone": {
+    "wave": "square",
+    "cut": 2700,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.35,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the horns shout the tune",
+    "the tenor testifies over it",
+    "and then everybody lays out but Coleman"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (s % 4 === 2 ? [drop(1)]\n                    : v === 0 ? [[], [transpose(2)], [], [fill(1)]][s % 4]\n                    : [[fill(2)], [fill(2), transpose(2)]][s % 2])"
+  }
+}

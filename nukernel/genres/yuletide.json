@@ -1,0 +1,166 @@
+{
+  "note": "YULETIDE. Crooner in its December coat — the one place this table\nnames a specific season by name, because the ancestor really is public\ndomain the way gregorian's is: a carol's melodic shape (stepwise, small\nrange, built to be sung by a room that has never rehearsed) is\ncenturies older than any record of it, and a big-band Christmas\nstandard is just crooner's own dress plus one instrument: the bell.\n\nLINEAGE: complete, and honestly so — a Christmas standard IS crooner\n(the ballad-tempo dance-orchestra vocal) plus hymn (the carol's\nstepwise, plagal-leaning tune), and nothing else needs naming.\n\nWHO SINGS: a carol, sung by somebody who learned it in a church",
+  "label": "New York 1942",
+  "rate": 0.5,
+  "bars": 8,
+  "voices": 3,
+  "near": "crooner",
+  "plan": "song",
+  "bpm": 84,
+  "parents": {
+    "crooner": 0.5,
+    "hymn": 0.3,
+    "gospel": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "slow_strings",
+    "music_box"
+  ],
+  "drumkit": "brush",
+  "entry": {
+    "kind": "table",
+    "t": [
+      2,
+      0,
+      4
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      -1,
+      3
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "riff"
+  ],
+  "roots": [
+    0,
+    3,
+    0,
+    4,
+    0,
+    5,
+    1,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "anchor": 2,
+  "maxHold": 3,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1.3,
+    "gain": 0.24,
+    "verb": 0.42,
+    "mouth": {
+      "$src": "MOUTHS.hymnal"
+    }
+  },
+  "words": [
+    "the voice, the carol tune",
+    "the strings, holding the harmony",
+    "the bells, sparkling on top"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[only(\"gate\", excerpt(0, 8)), transpose(2)]"
+    }
+  }
+}

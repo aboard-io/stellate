@@ -1,0 +1,126 @@
+{
+  "note": "AMBIENT [drone]. Drone is a pedal that refuses to move; ambient is the\nsame stillness with a HARMONY inside it — a lydian maj7 cycle two bars\nto the chord, no drums, no bass at all, a line that surfaces four bars\nin and barely moves. The moving chord is the entire difference.\n\nnamed \"London 1978\" — Music for Airports: the moving maj7 chord inside\nthe stillness, which this comment calls the entire difference.\n\nan arc: one long breath\n\nLINEAGE: Eno put a moving harmony inside drone's stillness — the\ncatalog's one parent — and minimalism's PROCESS, which is the other\nthing he added: Music for Airports is loops of unequal length going\nout of phase, which is Reich's phasing done with tape machines. Drone\nkeeps the larger share because the SOUND, held and slow and pulseless,\nis Young's: ambient took the method and threw the pulse away. Satie's\nfurniture music and the tape loops are still named in liner notes.\nPAID 2026-08-29, the debts round: \"furnituremusic\" is `furnituremusic` (Paris\n1888) — furniture music is the sleeve note's own citation. \"tape\nmusic\" stays declined and stays owed.\n...AND PAID 2026-08-30, the walls-down round: \"tape music\" is\n`tapemusic` (Paris 1948) — the loops in Eno's liner notes are\nthat studio's own technique, thirty years downstream.\n\nambient does not arrive, it surfaces",
+  "label": "London 1978",
+  "rate": 0.5,
+  "bars": 8,
+  "near": "drone",
+  "plan": "arc",
+  "bpm": 70,
+  "parents": {
+    "drone": 0.65,
+    "minimalism": 0.35,
+    "furnituremusic": 0.2,
+    "tapemusic": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "halo_pad",
+    "bowed_glass"
+  ],
+  "entry": {
+    "kind": "scale",
+    "n": 4
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "intro": "fade",
+  "roots": [
+    0,
+    0,
+    3,
+    3,
+    5,
+    5,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.lydian"
+  },
+  "scale": {
+    "$src": "MODES.lydian"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    },
+    {
+      "d": 5,
+      "q": "7"
+    },
+    {
+      "d": 5,
+      "q": "7"
+    },
+    {
+      "d": 4,
+      "q": "7"
+    },
+    {
+      "d": 4,
+      "q": "7"
+    }
+  ],
+  "artic": "tie",
+  "incClamp": 3,
+  "incMode": "reverse",
+  "tone": {
+    "wave": "triangle",
+    "cut": 1800,
+    "q": 0.8,
+    "atk": 0.3,
+    "rel": 3,
+    "gain": 0.22,
+    "verb": 0.92
+  },
+  "words": [
+    "the pad, two bars to the chord",
+    "a line that surfaces from bar 5"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "echo",
+    "sweep"
+  ]
+}

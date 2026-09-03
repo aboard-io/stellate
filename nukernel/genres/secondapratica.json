@@ -1,0 +1,107 @@
+{
+  "note": "MONTEVERDI — Venice 1610. The Vespro della Beata Vergine,\nprinted in Venice with a dedication to Pope Paul V: psalm\nsettings over the chant held in long notes, solo voices\nornamenting against a walking bass, the prima pratica and the\nseconda in one binding — the exact hinge of the 1610-1660\nhalf-century the catalogue named as its thinnest Western\nstretch. `continuo` (Florence 1602) is eight years older and\none city over; this is what the new practice sounded like at\nfull cathedral scale.\n\nLINEAGE: the two praticas by name — `francoflemish` (Venice 1502)\nis the polyphony the collection still writes, `continuo`\n(Florence 1602) the monody it puts over the bass.\n\nWHO SINGS: monody — the continuo row's own mouth,\nbecause the seconda pratica is the same voice grown up.",
+  "label": "Venice 1610",
+  "voices": 3,
+  "bars": 8,
+  "near": "continuo",
+  "plan": "arc",
+  "bpm": 84,
+  "parents": {
+    "continuo": 0.45,
+    "francoflemish": 0.35
+  },
+  "wants": [
+    "the gabrielis' polychoral san marco"
+  ],
+  "cannot": [
+    "the cori spezzati — two choirs across a basilica are a STEREO fact, opposed galleries answering each other in space, and this table's records place voices in a mix, not in a building"
+  ],
+  "instr": [
+    "solo_vox",
+    "ahh_choir",
+    "harpsichord"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      },
+      {
+        "at": 1,
+        "then": 4
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {},
+  "harmony": "cycle",
+  "intro": "solo",
+  "roots": [
+    0,
+    0,
+    3,
+    4,
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "orn": {
+    "grace": 0.25
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.03,
+    "rel": 1.4,
+    "gain": 0.23,
+    "verb": 0.6,
+    "mouth": {
+      "$src": "MOUTHS.monody"
+    }
+  },
+  "words": [
+    "the tenor, ornamenting over the bass",
+    "the choir, the psalm tone in long notes",
+    "the continuo, walking"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2), fill(2)]][s % 3]\n                    : v === 1 ? [keep(0, 8)]\n                    : [keep(0, 4, 8, 12), transpose(-3)])"
+  }
+}

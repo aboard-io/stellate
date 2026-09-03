@@ -1,0 +1,143 @@
+{
+  "note": "JAPANESE JAZZ — Tokyo 1974. The Tsuyoshi Yamamoto Trio,\nMidnight Sugar (Three Blind Mice): a slow blues cut direct to\naudiophile tape for the label founded in June 1970 as a\nshowcase for Japan's emerging jazz players — the article's own\nsentence — at the peak of the kissa decade, when Tokyo's jazz\ncafés were the densest listening culture the music had\nanywhere. The genre's article is Japanese jazz; the row is the\ntrio's reading of it: piano deep in the keys, brushes, a walk.\n\na Tokyo piano trio\n\nLINEAGE: `jazz` at dominant weight — the idiom is bebop's\nballad book, mastered from records an ocean away; `blues` is\nwhat Midnight Sugar literally is, twelve bars at midnight.\n\nthe twelve bars themselves, blues' own cycle — the record is a\nslow blues and the row says so with the parent's exact roots.",
+  "instrumental": true,
+  "label": "Tokyo 1974",
+  "voices": 2,
+  "bars": 8,
+  "near": "jazz",
+  "plan": "song",
+  "bpm": 76,
+  "parents": {
+    "jazz": 0.5,
+    "blues": 0.25
+  },
+  "wants": [
+    "the jazz kissa"
+  ],
+  "instr": [
+    "yamaha_grand_piano",
+    "vibraphone"
+  ],
+  "drumkit": "brush",
+  "swing": 0.4,
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    4,
+    3,
+    0,
+    4
+  ],
+  "scale": {
+    "$src": "BLUES"
+  },
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "orn": {
+    "approach": 0.3,
+    "grace": 0.25
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.9,
+    "atk": 0.008,
+    "rel": 0.9,
+    "gain": 0.27,
+    "verb": 0.35
+  },
+  "words": [
+    "the piano, a blues hit hard and slow",
+    "the vibraphone, late-night answers"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(-2)], [rotate(2)]][s % 4]\n                    : [drop(6)])"
+  }
+}

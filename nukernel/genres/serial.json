@@ -1,0 +1,68 @@
+{
+  "note": "SERIAL — Vienna 1923. Schoenberg's Suite für Klavier op. 25, written\n1921-23 and the first work composed entirely with twelve tones\nrelated only to one another. It is a Baroque dance suite — Prelude,\nGavotte, Musette, Menuett, Gigue — and that joke is load-bearing:\nthe row is a SUBJECT and the four forms it appears in are the four\nthings this kernel's operator vocabulary has always been able to do.\nTHIS IS THE ONE ROW IN THE BLOCK WHERE THE BOX IS BETTER THAN THE\nNEAREST THING, NOT WORSE. The prime is `[]`. The inversion is\n`invert`. The retrograde is `reverse`. The retrograde inversion is\nboth, and the transposition levels are `transpose`. Kernel.js has\ncarried Schoenberg's whole apparatus since the day it was written\nfor fugal answers, and `word(v, s)` cycling the four forms per\nsection IS the twelve-tone method, not an impression of it.\nTHE AXES: Development is everything and Alphabet is chromatic, which\ntogether is a definition of the style. Cast is a piano — two hands,\nthe `ragtime` reading of `voices: 2`. Harmony is `emergent` because\nthere is none to declare, which is the honest word for atonality in\nthis table's three-word vocabulary.\n\nthe row's own words: \"Cast is a piano — two hands\"\n\nLINEAGE: Schoenberg's own claim, and it is a better historical\nargument than most in this table. `romantic` (Vienna 1876) is the\nchromaticism pushed until the key stopped meaning anything;\n`counterpoint` is the technique the row forms come from wholesale;\n`classical` is the Suite's own dance-movement frame.",
+  "instrumental": true,
+  "label": "Vienna 1923",
+  "voices": 2,
+  "near": "neoclassical",
+  "plan": "arc",
+  "bpm": 96,
+  "parents": {
+    "romantic": 0.45,
+    "counterpoint": 0.35,
+    "classical": 0.2
+  },
+  "wants": [
+    "free atonality",
+    "the second viennese school's cabaret years"
+  ],
+  "cannot": [
+    "the ROW ITSELF — the rule is that all twelve pitch classes sound before any repeats, and `deg` is a signed index into an alphabet with nothing counting what has been used; this row plays the four forms of a subject through a chromatic scale, which is the method's MOTION without its constraint",
+    "the octave displacement that gives serial music its shape — an interval class is meant to be free to appear as a seventh or a ninth, and `oct` is a per-step flag on the phrase rather than a property of the operation"
+  ],
+  "instr": "yamaha_grand_piano",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "emergent",
+  "intro": "solo",
+  "scale": {
+    "$src": "SCALES.chromatic"
+  },
+  "artic": "staccato",
+  "maxHold": 1,
+  "incClamp": 1,
+  "tone": {
+    "wave": "triangle",
+    "cut": 3400,
+    "q": 0.7,
+    "atk": 0.004,
+    "rel": 0.5,
+    "gain": 0.26,
+    "verb": 0.22
+  },
+  "words": [
+    "P and R — the row, then the row backwards",
+    "I and RI — the row upside down, then both at once"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n        ? [[], [reverse()], [transpose(6)], [reverse(), transpose(6)]][s % 4]\n        : [[invert(0)], [invert(0), reverse()], [invert(0), transpose(6)],\n           [invert(0), reverse(), transpose(6)]][s % 4])"
+  }
+}

@@ -1,0 +1,197 @@
+{
+  "note": "THE EPIC HYBRID SCORE — Santa Monica 2010, THE BRAAAM. The label is\nthe Santa Monica studio complex the idiom was built in; 2010 is the\nyear the blast escaped into every trailer on earth. The parents say\nwhat the conservatory never admits: the idiom's inventors came out of\nSYNTHPOP, not the academy — eurodisco's floor at 0.2, minimalism's\nostinato-instead-of-tune at 0.25, goldenagescore's orchestra hired back at\n0.2, horrorsynth's economy, horrorscore's dread. The braam chair is\nthe header block's four measured facts on v0; no timekeeper lane on\npurpose — the ostinato IS the clock.\nVERIFY IT ARRIVES (the box's characteristic bug is declared-but-\nnever-arriving): fresh context, #at=Santa Monica&y=2010, then\n  (a) the blast — v0 has <=2 pitched events/bar, monotone, held\n      ~1.5 beats, midi <= 52 (the register-law fold, see the reg\n      comment below; midi = (floor(pch)-8)*12 + round(frac*100) + 60);\n  (b) the grit — barPlan(2).units.vN.inserts carries insert_higain;\n  (c) the wash — units.vN.rev ~ 0.55, tone.verb's proven arrival;\n  (d) the floor — the bass holds one pitch class; lane l in the kit.\nMEASURED AT LANDING, 2026-09-01, after two real fixes this probe\nforced: the first compile played the STUDIO FAMILY's pickup cell\n(3 hits/bar at 1.5 beats — precompose's \"do do dooo\" tombstone,\none round old) until the IDIOM_ANCHOR row landed (`long`+`hold`,\ntwo blasts a bar, hold 6 steps); and the register story is below.\nFinal: 2 events/bar, monotone 52, 1.5 beats, higain + filtersweep\nin v0.inserts, rev 0.55 on every pitched chair.\n\na cue — the picture talks, the score blasts\n\nWHERE THE BLAST SITS, measured 2026-09-01 at barPlan rather than\nasserted: the register floor law centres a non-bass riff chair at\n48 and the monotone folds to the root nearest it — MIDI 52 on an\nE record, held 1.5 beats, twice a bar. Centring it lower was\nTRIED (precompose SUBTERRANEAN, centre 36 → fold 40) and the\nregister home undid it — homeFor dealt the seat +1 because the\nchair's other sections straddle the sampler window down there,\nand the page played 52 anyway. So the chair keeps the box's own\ncentre and the record's floor octave belongs to the PEDAL BASS\nunder it, doubled by the taiko lane — which is how the real stems\nare printed too (the `cannot` below refuses the sub for a reason).\n\nthe taiko quarter-pulse on the low tom; NO hat lane — no timekeeper\n\nthe higain edge on the blast + the 4-bar riser\n\nTHE BRAAM\nnewsfanfare's ostinato\nthe cell, looped",
+  "instrumental": true,
+  "label": "Santa Monica 2010",
+  "voices": 4,
+  "bars": 8,
+  "near": "horrorsynth",
+  "plan": "arc",
+  "bpm": 112,
+  "parents": {
+    "goldenagescore": 0.2,
+    "minimalism": 0.25,
+    "eurodisco": 0.2,
+    "horrorsynth": 0.15,
+    "horrorscore": 0.1
+  },
+  "wants": [
+    "the shepard-tone riser",
+    "the solo duduk over the strings"
+  ],
+  "cannot": [
+    "the octave of sub printed UNDER the braam — that bottom is a sound-design stem below the orchestra; the bass chair here is one instrument on a line",
+    "the ten-minute single crescendo — a cue builds over reels, a box counts bars"
+  ],
+  "instr": [
+    "brass_section",
+    "tremolo",
+    "cello",
+    "warm_pad"
+  ],
+  "part": [
+    "riff",
+    "riff",
+    "counter",
+    "pad"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      2,
+      4
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      -1,
+      0,
+      -1,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "drumkit": "power",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "l": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "l": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "tie",
+  "maxHold": 6,
+  "bassStyle": "pedal",
+  "fx": [
+    "crunch",
+    "sweep"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1300,
+    "q": 1.1,
+    "atk": 0.06,
+    "rel": 1.8,
+    "gain": 0.27,
+    "verb": 0.55
+  },
+  "words": [
+    "the low brass, the blast — one note, most of a bar",
+    "the tremolo strings, dread by the yard",
+    "the cellos, the four-note figure that never grows",
+    "the pad, the skyline behind it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[spread(0), keep(0), drop(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[spread(0.5), fill(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[excerpt(0, 4), fill(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(9)]"
+    }
+  }
+}

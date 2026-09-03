@@ -1,0 +1,168 @@
+{
+  "note": "CRIME JAZZ — Los Angeles 1955, the year the big band walked into the\npictures: a jazz orchestra scoring a narcotics picture as itself, in\na main title built from a blaring brass riff over a walking bass.\nPAYS newsfanfare's standing want [\"crime jazz\"] BY NAME — annotated\nat the site, horrorsynth's PAID precedent. TWO PARENTS REFUSED ON\nDATES, 2026-09-01, against this round's own spec: `suspensescore` is Los\nAngeles 1960, five years AFTER this label, and `rnb` here is\nPhiladelphia 1994 — both out, electroindustrial's rule. What was actually\non the stand in 1955: swing's section writing (0.35), jumpblues'\nsmall-band shuffle heat (0.25, the same city nine years earlier),\ngoldenagescore's scoring desk (0.15), blues (0.1, Chicago 1952, in time by\nthree years). The ornament row is jazz's, dimmed — session players\nreading a chart, not soloists.\n\nthe voiceover sits where the singer would\n\nride, not hats — spyscore's jazz-kit idiom, one shelf over\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nElmer Bernstein, THE MAN WITH THE GOLDEN ARM main title, Los Angeles 1955 —\nthis row's own record, the year the big band walked into the pictures.\nSCALES.chromatic contains all twelve degrees, so it has every mode's notes\nand states none of them; the row is modal on top of that, so `mode` reached\nnothing twice over. The field now names the minor side the row actually\nsounds, and the chromatic alphabet is untouched.",
+  "instrumental": true,
+  "label": "Los Angeles 1955",
+  "voices": 4,
+  "bars": 8,
+  "near": "spyscore",
+  "plan": "arc",
+  "bpm": 112,
+  "parents": {
+    "swing": 0.35,
+    "jumpblues": 0.25,
+    "goldenagescore": 0.15,
+    "blues": 0.1
+  },
+  "wants": [
+    "the bongos under the brass"
+  ],
+  "instr": [
+    "muted_trumpet",
+    "tenor_sax",
+    "brass_section",
+    "vibraphone"
+  ],
+  "swing": 0.2,
+  "part": [
+    "lead",
+    "counter",
+    "stab",
+    "pad"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      0,
+      2,
+      0,
+      4
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "drumkit": "brush",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.chromatic"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "walk",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2300,
+    "q": 1.1,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.26,
+    "verb": 0.33
+  },
+  "words": [
+    "the muted trumpet, the tail under the streetlight",
+    "the tenor, the confession",
+    "the brass, the blackmail chord",
+    "the vibes, neon through the blinds"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[excerpt(0, 4), fill(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(-3), fill(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[fill(4), rotate(3), drop(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(9)]"
+    }
+  }
+}

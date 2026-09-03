@@ -1,0 +1,108 @@
+{
+  "note": "BARCAROLLE — the salon, honestly. The salon slot rocks in 6/8 rather\nthan waltzing (see the heading above: this file's cells are sixteen\nplaces long, so a three-count anchor is a catalog job still owed), and\na barcarolle is the one salon form that lives there. Swing 1/3 is the\ntriplet shuffle standing in for the compound bar — the band page's own\nbarcarolle now says `meter: \"six\"` outright, which is what this anchor\nwants the day its cells are rewritten in twelve. Voice, harp rolling\nunder it, a cello line between; `wants` keeps the waltz debt on the\nbooks.\nTHE DEBT IS PAID 2026-08-30 (the walls-down round): `waltz` is Vienna\n1867 at the foot of this file, counting in three on the time lane's\nrails. The want comes off the books and a modest edge goes on — the\nParis salon's dance floor WAS the Viennese export market, and\n1867 < 1881 reads the right way. This row itself stays in 6/8 on\npurpose: a barcarolle genuinely rocks, and rewriting a shipped\nanchor's bar would move every record it pressed.\n\nTHE CELLO WAITS WITH THE VOICE. Two LINE voices an octave apart\n(reg 0 / -1) trading which of them owns the downbeat across the\nentry seam is, to the root-fold gate, an unfolded root walk — the\nfirst line note of the bar jumped 25 semitones where the harmony\nmoved 10. So the harp rocks the first two bars alone (a pad, so the\ngate rightly ignores it) and the song and its cello line arrive\ntogether — which is how the salon actually opens the form.\n\nWHO SINGS: the monody mouth, three centuries on — the salon\nsoprano is Caccini's daughter by direct descent",
+  "label": "Paris 1881",
+  "voices": 3,
+  "bars": 8,
+  "swing": 0.33,
+  "plan": "song",
+  "bpm": 76,
+  "parents": {
+    "nocturne": 0.5,
+    "classical": 0.35,
+    "waltz": 0.15
+  },
+  "wants": [],
+  "near": "nocturne",
+  "instr": [
+    "solo_vox",
+    "harp",
+    "cello"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {},
+  "roots": [
+    0,
+    4,
+    0,
+    4,
+    3,
+    4,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "bassStyle": "pedal",
+  "artic": "legato",
+  "anchor": 2,
+  "maxHold": 4,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.8,
+    "atk": 0.02,
+    "rel": 1.6,
+    "gain": 0.24,
+    "verb": 0.5,
+    "mouth": {
+      "$src": "MOUTHS.monody"
+    }
+  },
+  "words": [
+    "the song, rocking on the tide",
+    "the harp, rolling under it",
+    "the cello line"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[invert(5)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

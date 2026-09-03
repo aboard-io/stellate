@@ -1,0 +1,218 @@
+{
+  "note": "SKA PUNK [ska] — Long Beach 1996. Sublime, \"Sublime\" (MCA, 30 July\n1996), the record the band's own city is named for in every write-up\nof this scene.\nMEASURED over 37 files (Sublime 30 · No Doubt · Rancid). Meter 37 of\n37 in 4/4. Tempo (n=37): p10 65 · p25 90 · med 94 · p75 148 — the\nbimodality IS the genre (a ska verse and a punk chorus), and the row\ntakes the ska half at 94 with `paces` pushing the loud sections.\nMode 25 major / 12 minor. THE FIELD THAT NAMES IT is the rim lane:\n0095609050955080 — the four strongest cells are steps 2, 6, 10 and 14\nand there is nothing on 0, 4, 8 or 12 at all. That is the upstroke\nskank, on the off-beat, and it is the one histogram in this round\nthat is exactly out of phase with its own kick (9012111180411210,\nwhich sits on 0 and 8 and nowhere else).\n  snare 1000901010119011   hat 9282928292829271\n\nLINEAGE: `ska` (Kingston 1962) is the off-beat and the horns and\ntakes the largest share; `punk` (New York 1976) is the guitar and\nthe shout; `rocksteady` (Kingston 1966) is the walking bass this\nmusic kept when it dropped the tempo; `hardcore` (Washington 1980)\nis the Californian speed of the loud half.",
+  "label": "Long Beach 1996",
+  "near": "ska",
+  "plan": "song",
+  "bpm": 94,
+  "paces": {
+    "chorus": "push",
+    "solo": "push"
+  },
+  "parents": {
+    "ska": 0.35,
+    "punk": 0.3,
+    "rocksteady": 0.2,
+    "hardcore": 0.15
+  },
+  "wants": [
+    "the 2 Tone Coventry revival, the wave between Kingston and this one"
+  ],
+  "instr": [
+    "clean_guitar",
+    "tenor_sax",
+    "trombone"
+  ],
+  "voices": 3,
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "formula",
+    "src": "v => (v ? 2 : 0)"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    3,
+    4,
+    0,
+    5
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      9,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1.2,
+    "atk": 0.004,
+    "rel": 0.3,
+    "gain": 0.27,
+    "verb": 0.24
+  },
+  "words": [
+    "the guitar, the skank, off the beat every time",
+    "the tenor, the tune over it",
+    "the trombone, a third under the tenor"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[only(\"gate\", rotate(2))]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(-3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

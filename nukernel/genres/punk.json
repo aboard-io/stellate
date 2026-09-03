@@ -1,0 +1,168 @@
+{
+  "note": "PUNK [rock]. Rock develops a riff; punk REFUSES to — the whole guitar\nis fill(2), every eighth a downstroke, staccato, no space and no\ndynamics, over a kick on every quarter and a major I-IV-V because\nsubtlety is for prog. Three chords and the truth at 160.\n\nnamed \"New York 1976\" — the Ramones' debut: every-eighth downstrokes\nat 160 is Johnny's right hand, a year before London took it up.\n\n160: ON the dial's fence rather than past it, like dnb — the kit\ndensity says the rest\n\nLINEAGE: the Ramones are sixties pop played as fast and plainly as\npossible — rock's power stripped of its solos, bubblegum hooks kept\nwhole. Chuck Berry's downstroke is an anchor now, but it arrives here\nSECONDHAND — via the girl groups they adored — so it takes the\nsmallest share of that ancestor's three edges; the garage-rock middle\nstep and the girl groups themselves are still missing.\nPAID 2026-08-29, the debts round: both wants — \"garage rock\"\nis `garagerock` (Portland 1963, the Nuggets shelf), \"girl groups\"\nis `girlgroup` (New York 1960, the Shirelles): the Ramones' melodic\nhalf at double speed.\n\nTHE RAMP USED TO READ `v => -1 - v`, which DESCENDS: it put voice 1\nan octave UNDER voice 0, and this anchor's own `words` say voice 1 is\n\"the guitar, gliding over it\". The ramp contradicted the sentence\nbeside it. Ascending, the EP stabs at 48 and the guitar glides at 60.\n\npunk crashes on the ONE and keeps crashing: the cymbal is the\nhat's louder twin here, not a punctuation mark\n\nNO insert. The distortion IS the instruments — distortion_guitar and\ncrunch_guitar are recordings of amps already at the edge, and punk is\ndownstroked eighths through them. The crunch insert on top was the\none thing everyone heard first, and none of it was the song.",
+  "label": "New York 1976",
+  "near": "rock",
+  "plan": "song",
+  "bpm": 160,
+  "parents": {
+    "rock": 0.45,
+    "beatgroup": 0.4,
+    "rocknroll": 0.15,
+    "garagerock": 0.25,
+    "girlgroup": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "distortion_guitar",
+    "crunch_guitar"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    3,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 1.8,
+    "atk": 0.002,
+    "rel": 0.3,
+    "gain": 0.3,
+    "verb": 0.1
+  },
+  "words": [
+    "every eighth, downstrokes",
+    "the same riff, an octave under, as written"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[only(\"gate\", fill(2))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

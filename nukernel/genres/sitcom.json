@@ -1,0 +1,202 @@
+{
+  "note": "THE SITCOM THEME — Los Angeles 1983. \"Where Everybody Knows Your\nName\" (Portnoy/Hart Angelo), the Cheers main title: sixty seconds\nof piano-bar warmth commissioned to brand a Thursday night —\nnewsfanfare's law at the other end of the broadcast day (the cue\nsays URGENT; this one says STAY). The dot is the commission\n(Paramount's lot; the show premiered September 1982, the full\nsingle is 1983) — the writers cut the demo in New York, said\nplainly, the Kinks rule's honest footnote.",
+  "label": "Los Angeles 1983",
+  "voices": 3,
+  "bars": 8,
+  "near": "yachtrock",
+  "plan": "song",
+  "bpm": 104,
+  "parents": {
+    "girlgroup": 0.3,
+    "broadway": 0.25,
+    "yachtrock": 0.2
+  },
+  "wants": [
+    "the tv variety-show orchestra"
+  ],
+  "cannot": [
+    "the sixty seconds — a main title is written to a clock with a card cut on every fourth bar, and this box counts bars at a tempo (the stopwatch, newsfanfare's own first cannot, at a friendlier speed)"
+  ],
+  "instr": [
+    "solo_vox",
+    "bright_yamaha_grand",
+    "slow_strings"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "drumkit": "brush",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    3,
+    4,
+    0,
+    3,
+    1,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0
+    },
+    {
+      "d": 3
+    },
+    {
+      "d": 4
+    },
+    {
+      "d": 0
+    },
+    {
+      "d": 3
+    },
+    {
+      "d": 1,
+      "q": "m7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 4,
+      "q": "sus4"
+    }
+  ],
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.015,
+    "rel": 0.8,
+    "gain": 0.26,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.crooning"
+    }
+  },
+  "words": [
+    "the voice, glad you came back",
+    "the piano, the bar it all happens in",
+    "the strings, the lamplight"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[fill(2), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(9)]"
+    }
+  }
+}

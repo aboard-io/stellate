@@ -1,0 +1,172 @@
+{
+  "note": "TRAP [deathmetal] — and the neighbour is not a joke: both are minor,\nfast, sixteenth-hat music. What separates them is the HALF-TIME SNARE:\none hit on beat 3 where death metal blasts eight, no distortion, and a\nbell up top where the tremolo guitar was. The hats carry the hand\n(kitVel) and the 808 ties.\n\nWHO THE BASS IS, AND IT IS A MACHINE WITH A LONG TAIL (2026-09-02,\nthe catalogue round). T.I., *Trap Muzik* (Grand Hustle/Atlantic,\nAtlanta, August 2003): the bass is a TUNED 808 — a sine that rings\nfor most of a bar — so this row takes the modelled bass AND shapes\nit, which is what `bassTone` (audio/plan.js seatFor) is for and what\nno row in the catalogue had used until now. Absent, `bassTone` is\nto-engine's defaults (cutoff 1400, decay 0.4); 420 Hz and a 1.6 s\nrelease is the 808's own decay curve, said in the two numbers the\nseat reads.\n\nnamed \"Atlanta 2003\" — T.I.'s Trap Muzik named the thing: 808 ties,\nhalf-time snare, the bell up top.\n\nLINEAGE: Southern hip-hop is boom bap's one declared parent in the\ncatalog — but the 808 sub, the ties and the half-time snare came up\nthrough Miami bass and crunk, the electro lineage the table lacks.\nBOTH WANTS PAID 2026-08-29 (Miami 1986, Memphis 1997), and the\nsingle-source `{ boombap: 1 }` this row carried — always a\nsimplification, the South's own line being unanchored — breaks\ninto the three it meant: the 808 sub culture (miamibass), the\nshouted southern club record (crunk), and New York's sampling\ncraft (boombap), which keeps the largest single share.\n\nTHE BELL IS A CHURCH BELL, NOT A MUSIC BOX (2026-08-30, Paul: \"Trap\nsounds melodic with tinkly beats and sweet little tinkly sounds\").\nMeasured on the pressed record before the fix: voice 0 seated\n`music_box` — a GM celesta-class tine whose range table row is\n[72, 100], so the register home HAD to park the tune above C5\nwhatever `reg` said, and \"sweet little tinkly\" is that instrument's\nliteral job description. The row's own citation is the argument for\nwhat replaces it: Trap Muzik's bell (DJ Toomp — \"24's\", \"Be Easy\")\nand the sound this row grew into (Lex Luger/808 Mafia c. 2010 —\n\"Hard in da Paint\", \"B.M.F.\") is ORCHESTRAL menace: a tolling bell,\ndark keys, strings — never a lullaby tine. `tubular_bells` [60, 89]\nkeeps every word of \"the bell, up top\" and moves it from the\nnursery to the church; the crunk parent's own want (\"the memphis\nhorrorcore tapes\") is the same bell, Three 6 Mafia's. The reg ramp\n(`1 - 2*v`) that lifted voice 0 a further octave goes with it —\nthe bell tolls at its own pitch, the sub stays down.\n\n\"the 808 ties\" — it does, and now it is one\n\ncut 2400 -> 1800 the same day, same measurement: the tone row is the\nrecord's ceiling and a trap record's top end is hats, not melody",
+  "bassInstr": "bass_lead",
+  "bassTone": {
+    "cut": 420,
+    "rel": 1.6
+  },
+  "label": "Atlanta 2003",
+  "near": "deathmetal",
+  "plan": "dance",
+  "bpm": 140,
+  "parents": {
+    "boombap": 0.4,
+    "crunk": 0.35,
+    "miamibass": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "tubular_bells",
+    "square_lead"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    0,
+    5,
+    5
+  ],
+  "artic": "tie",
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      7,
+      2,
+      4,
+      2,
+      6,
+      2,
+      4,
+      2,
+      7,
+      2,
+      4,
+      2,
+      6,
+      2,
+      5,
+      3
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 1800,
+    "q": 1.8,
+    "atk": 0.003,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.3
+  },
+  "words": [
+    "the bell, up top",
+    "the sub line, tied"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[only(\"gate\", rotate(4)), drop(2)]"
+    }
+  }
+}

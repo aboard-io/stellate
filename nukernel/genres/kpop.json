@@ -1,0 +1,200 @@
+{
+  "note": "K-POP [synthpop]. A pop-song chassis built from three different\nrecords at once — the synth-stab machine, the disco floor, the\nstutter-edited hat roll a hip-hop verse needs — which is the genre's\nown honest description: it is a production METHOD, assembling\nwhichever record the section needs, more than it is one groove.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nPSY, \"Gangnam Style\" (YG, Seoul, July 2012).\n\na SONG, and the one to argue with: it has the biggest dance break of\nanything in its batch, but everything around the break is\nverse-prechorus-chorus, and losing that would lose the genre; 128 is\nwhere every four-to-the-floor record in that batch agrees to meet\n\nLINEAGE: the all-synth stab chassis is synthpop's; the four-on-the-\nfloor pop-chorus floor is disco's; the stuttered, probability-edited\nhat is boom bap's chopped hand brought to a machine kit; the vocal\nstack that answers itself is R&B's. J-pop's own idol-record\ntradition, the room this style first grew up next door to, is\nuncredited.\n\nthe assembly method's two halves said as two instruments: a poly\nholding the chorus chord and a bright square hook riding it. Both are\nmachines, which is the honest description of a genre that is a\nproduction method — and neither is the choir patch it used to lead on.",
+  "bassInstr": "bass_lead",
+  "label": "Seoul 2012",
+  "near": "synthpop",
+  "plan": "song",
+  "bpm": 128,
+  "parents": {
+    "synthpop": 0.35,
+    "disco": 0.25,
+    "boombap": 0.2,
+    "rnb": 0.2
+  },
+  "wants": [
+    "j-pop"
+  ],
+  "instr": [
+    "polysynth",
+    "square_lead"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "lead"
+  ],
+  "roots": [
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "7"
+    },
+    {
+      "d": 5,
+      "q": "7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    },
+    {
+      "d": 4,
+      "q": "7"
+    }
+  ],
+  "maxHold": 2,
+  "artic": "staccato",
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitProb": {
+    "h": [
+      9,
+      6,
+      9,
+      6,
+      9,
+      6,
+      9,
+      6,
+      9,
+      6,
+      9,
+      6,
+      9,
+      6,
+      4,
+      9
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2800,
+    "q": 2.2,
+    "atk": 0.003,
+    "rel": 0.4,
+    "gain": 0.28,
+    "verb": 0.24
+  },
+  "words": [
+    "the vocal hook, stabbing the changes",
+    "the synth line, answering an octave up"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"gate\", rotate(4)), transpose(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

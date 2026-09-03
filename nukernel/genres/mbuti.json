@@ -1,0 +1,96 @@
+{
+  "note": "MBUTI HOCKET — Epulu 1958. Colin Turnbull's Ituri recordings (the\n1951-52 reels with Francis Chapman, then the 1957-58 stay at Epulu\nthat became the Folkways sides and THE FOREST PEOPLE): the elima\nand molimo song cycles of the Mbuti — each singer holding ONE OR\nTWO NOTES of a melody nobody sings whole. THE MEASUREMENT, because\nthis row exists to answer a question: the box CAN say hocket.\n`fill(1)` gates all sixteen places, then four DISJOINT `keep()`\nmasks deal the places out — voice 0 holds 0/4/8/12, voice 1 holds\n2/6/10/14, voices 2 and 3 split the offbeats — so the four chairs\ninterlock into one continuous line, verified by rendering: no two\nvoices attack the same step, the union covers the bar. Two kernel\nwords, no new machinery: sizhu's heterophony ruling, one texture\ndeeper. The vowels alternate ohh/ahh across the circle for the\nopen-throat/head-voice flicker of the yodel — an approximation,\nand the `cannot` owns the difference.\n\nWHO SINGS: the dream-choir mouth — open vowels, high air,\nmaximum blend: a circle, not a section.",
+  "label": "Epulu 1958",
+  "voices": 4,
+  "bars": 4,
+  "near": "mbube",
+  "plan": "arc",
+  "bpm": 108,
+  "parents": {},
+  "wants": [
+    "the elima initiation cycle",
+    "the molimo trumpet nights"
+  ],
+  "cannot": [
+    "the yodel break — one voice flipping chest to head INSIDE a note is the sound's own signature, and one mouth here is one register from entry to release",
+    "the drift — a real hocket circle breathes, singers trade places mid-cycle, and these masks are dealt once per song"
+  ],
+  "instr": [
+    "ohh_voices",
+    "ahh_choir",
+    "ohh_voices",
+    "ahh_choir"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      1,
+      0,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "staccato",
+  "maxHold": 1,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.8,
+    "atk": 0.01,
+    "rel": 0.5,
+    "gain": 0.25,
+    "verb": 0.38,
+    "mouth": {
+      "$src": "MOUTHS.dreamchoir"
+    }
+  },
+  "words": [
+    "the first voice, holding places 1 and 3 of every four",
+    "the second, the places between",
+    "the third, the offbeats the first two leave",
+    "the fourth, closing the circle"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(1), keep(0, 4, 8, 12)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[fill(1), keep(2, 6, 10, 14)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[fill(1), keep(1, 5, 9, 13)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[fill(1), keep(3, 7, 11, 15)]"
+    }
+  }
+}

@@ -1,0 +1,202 @@
+{
+  "note": "BHANGRA — Jalandhar 1972, and it pays `punjabipop`'s own `wants` line.\nThe Punjabi harvest dance and its song repertory as the Punjab's own\nrecord industry cut it: a dhol played with two sticks on two heads, a\ntumbi's single high metal string, a harmonium, and boliyan — rhyming\ncouplets shouted and answered over the drum.\nTHE CITY IS JALANDHAR AND NOT SOUTHALL, and the reason is worth\nwriting down because the first draft of this anchor was British.\nUK bhangra — Southall 1986, the daytimer circuit, Alaap and Heera — is\nTier 1 musically in every respect and it is held back by the MAP: a\nSouthall dot lands 4.9 CSS px from Muswell Hill at the Britain arc,\nunder atlas.gate.js G10's 8.5 px floor, and the two are SIBLING\nneighbourhoods of one city rather than one inside the other, which is\nthe one relation `WITHIN` cannot declare. Jalandhar is the older and\nthe more directly ancestral anchor anyway — it is the Punjab's own\nrecording centre, it is the same region and language as Chandigarh\n2022, and it is fifty years earlier.\nTHE YEAR is the early-seventies Punjabi LP era, when the folk\nrepertory is being recorded commercially rather than danced at a\nharvest.\nWHAT IT REPAIRS. `punjabipop` (Chandigarh 2022) declared\n`worldfolk: 0.40` — Johannesburg 1986 as the largest ancestor of a\nPunjabi record — because the true parent was absent and the nearest\nanchor was conscripted. WORLD.md §4 caught that edge running. It is\nrewritten below.\n\nLINEAGE: a ROOT, and there is nothing to protest — the Punjabi folk\nrepertory has no ancestor in this catalog and no anchor here is\nupstream of it in any direction. `filmi` (Mumbai 1960) is NOT named:\nthe film industry drew ON Punjabi folk music rather than the other\nway round, and naming it here would run the borrowing backwards.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nThe Punjabi LP era at Jalandhar, 1972 — this row's own place and year, the\nharvest repertory recorded commercially for the first time. The row plays\nSCALES.majpent, which has a major third and a major sixth and NO seventh at\nall; boliyan shouted over a dhol have no chord cycle either (`harmony:\n\"modal\"`). Mixolydian is named for a seventh this row cannot reach, so the\nfield now says the third and sixth it can.\n\nTHE DHOL IS TWO STICKS ON TWO HEADS AND IT GETS TWO LANES: the\ndagga's bass stroke on the kick and the thilli's cane on the toms,\nwhich is the same way punjabipop writes it (genres.js:5975) and the\nsame way raï writes its derbouka one round earlier. What is lost is\nthat one player is doing both and the two hands lock. There is no\nsnare and no hat, because there is no drum kit within a thousand\nkilometres of a 1972 bhangra session — the chimta's jingles are the\nonly metal and they go on `p`.",
+  "label": "Jalandhar 1972",
+  "voices": 3,
+  "near": "punjabipop",
+  "plan": "dance",
+  "bpm": 120,
+  "parents": {},
+  "wants": [
+    "boliyan",
+    "punjabi folk song",
+    "jhumar"
+  ],
+  "cannot": [
+    "the tumbi — one string, one finger and no frets, which is a continuous-pitch instrument and this box writes semitones",
+    "the algoza's paired duct flutes, played by one man breathing circularly into both"
+  ],
+  "instr": [
+    "solo_vox",
+    "reed_organ",
+    "steel_string_guitar"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      },
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "pedal",
+  "orn": {
+    "grace": 0.4
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "t": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "t": [
+      0,
+      0,
+      7,
+      5,
+      0,
+      6,
+      0,
+      0,
+      0,
+      0,
+      7,
+      5,
+      0,
+      6,
+      0,
+      6
+    ]
+  },
+  "fill": {
+    "t": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 1.1,
+    "atk": 0.008,
+    "rel": 0.7,
+    "gain": 0.27,
+    "verb": 0.36,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the singer, calling the boli",
+    "the harmonium, holding the drone",
+    "the tumbi's figure, on one steel string"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(8)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(12), split(2), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

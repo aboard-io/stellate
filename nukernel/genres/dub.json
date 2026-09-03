@@ -1,0 +1,137 @@
+{
+  "note": "DUB [reggae]. Same one-drop, same skank — the difference is REFUSAL:\nthe harmony collapses to one modal chord, the melody drops out two ways\nat once, the bass sits on the pedal, and the tape echo is on the genre\n(the sends are the instrument here, not the notes).\n\nnamed \"Kingston 1973\" — King Tubby's mixing desk: the sends as the\ninstrument, the song taken away.\n\nLINEAGE: the one lineage that is literally SUBTRACTION — a dub is a\nreggae record with the song taken away at the desk, so the parent\nlist is complete at one and the wants list is honestly empty.\n\nTHE MELODICA, as near as the library gets to one: a free reed blown\nthrough a keyboard, which is a harmonica with a piano on it. Pablo's\nis the melody instrument dub was built around, and it takes the echo\nthe way a struck bell never could — the tape repeats a BREATH.\n\ndub walks in on the bass or not at all",
+  "label": "Kingston 1973",
+  "near": "reggae",
+  "plan": "dance",
+  "bpm": 74,
+  "parents": {
+    "reggae": 1
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "harmonica"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "lead"
+  ],
+  "harmony": "modal",
+  "intro": "bassin",
+  "maxHold": 3,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 1500,
+    "q": 1.6,
+    "atk": 0.01,
+    "rel": 1.4,
+    "gain": 0.26,
+    "verb": 0.7
+  },
+  "words": [
+    "the skank, thinned",
+    "the line, mostly dropped out"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [offbeats(4), drop(2)]\n                              : [drop(2), ...(s % 2 ? [drop(3)] : [])])"
+  },
+  "fx": [
+    "echo"
+  ]
+}

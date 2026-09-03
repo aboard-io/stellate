@@ -1,0 +1,149 @@
+{
+  "note": "DOOM — Stockholm 1986: Candlemass, Epicus Doomicus Metallicus —\nthe record whose title NAMED the genre, Sabbath's slow half taken\nwhole and played slower. The metal wing this catalog grew in the\ndebts round (nwobhm, thrash, deathmetal, sludge) had no doom row,\nwhich was the wing's most conspicuous hole: sludge (New Orleans\n1991) descends from doom it could not cite.\n\nLINEAGE: heavymetal (Workington 1969), nearly alone — doom is the\ngenre that took ONE parent's slowest idea and made it the whole\naesthetic. nwobhm supplies the operatic vocal register Messiah\nMarcolin actually sang in.",
+  "label": "Stockholm 1986",
+  "voices": 2,
+  "rate": 0.5,
+  "near": "sludge",
+  "plan": "song",
+  "bpm": 76,
+  "parents": {
+    "heavymetal": 0.65,
+    "nwobhm": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "distortion_guitar",
+    "distortion_guitar"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    0,
+    1,
+    0
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "tie",
+  "maxHold": 6,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9
+    ]
+  },
+  "fx": [
+    "crunch"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1200,
+    "q": 1.5,
+    "atk": 0.01,
+    "rel": 1.2,
+    "gain": 0.29,
+    "verb": 0.4
+  },
+  "words": [
+    "the riff, at half the speed it was born at",
+    "the same riff an octave down, later"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(1)], [rotate(2)], [transpose(-1)]][s % 4]\n                    : [drop(4)])"
+  }
+}

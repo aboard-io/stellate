@@ -1,0 +1,146 @@
+{
+  "note": "MINISTRY, THE FIRST ERA — Chicago 1983, With Sympathy. Paul: \"all the\neras of ministry\". The LATER eras are already here and always were —\n`industrialmetal` (Chicago 1988) says Ministry in its own comment and\n`industrialdance` is the label they came through. What was missing is the era\nnobody expects: a synth-pop record, on Arista, that the band spent the\nrest of its life disowning. That is a different genre, so it is a\ndifferent row, and the pair is the \"all the eras\" he asked for.",
+  "label": "Chicago 1983",
+  "voices": 3,
+  "bars": 8,
+  "near": "synthpop",
+  "plan": "song",
+  "bpm": 124,
+  "parents": {
+    "synthpop": 0.5,
+    "newwave": 0.3,
+    "disco": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "polysynth",
+    "saw_wave"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "riff"
+  ],
+  "roots": [
+    0,
+    3,
+    5,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 3,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "chorus",
+    "echo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1900,
+    "q": 1.6,
+    "atk": 0.01,
+    "rel": 0.4,
+    "gain": 0.26,
+    "verb": 0.4
+  },
+  "words": [
+    "the voice, clean and English-sounding on purpose",
+    "the poly pad",
+    "the sequenced line"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], []][s % 4]\n                    : v === 1 ? [drop(8)] : [fill(2)])"
+  }
+}

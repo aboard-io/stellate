@@ -1,0 +1,124 @@
+{
+  "note": "THRASH — San Francisco 1983. Metallica's Kill 'Em All, released\nthe 25th of July 1983 — written in the Bay Area scene the band\nhad just moved into, NWOBHM's gallop downpicked at hardcore's\ntempo until the swing burned off entirely. `deathmetal` (Tampa\n1990) has wanted \"thrash metal\" by name since its lineage was\nwritten and takes the parent today.\n\nbpm 160 is the table's ceiling (compose's 70..160) and thrash is\nthe row that stands ON it — Whiplash runs faster and the sixteenth\ngrid at 160 carries the downpick density that is the point.\n\nLINEAGE: `nwobhm` (London 1980) is the songbook — Diamond\nHead covers were half the early sets; `punk` (New York 1976)\nthe downstroke discipline. Hardcore punk proper — Discharge's\nd-beat — is the missing accelerator, and `screamo` has had\nthe same debt on its books as \"hardcore\" since its lineage\nwas written: the want below shares that spelling ON PURPOSE,\nso the ledger counts one debt, not two.\nPAID 2026-08-30, the deep-time round's forward half: \"hardcore\"\nis `hardcore` (Washington 1980). The row's own comment asked for\nDischarge's d-beat specifically; Bad Brains won the anchor (the\nmeasurement is on the hardcore row itself) and the accelerator\nis the same scene either way. punk stays: the downstroke\ndiscipline predates the acceleration.",
+  "label": "San Francisco 1983",
+  "voices": 2,
+  "bars": 8,
+  "near": "deathmetal",
+  "plan": "song",
+  "bpm": 160,
+  "parents": {
+    "nwobhm": 0.5,
+    "punk": 0.25,
+    "hardcore": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "distortion_guitar",
+    "distortion_guitar"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "SCALES.bluesx"
+  },
+  "artic": "staccato",
+  "maxHold": 1,
+  "fx": [
+    "crunch"
+  ],
+  "bassStyle": "eighths",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2500,
+    "q": 1.3,
+    "atk": 0.003,
+    "rel": 0.25,
+    "gain": 0.28,
+    "verb": 0.2
+  },
+  "words": [
+    "the riff, downpicked, chromatic at the turn",
+    "the rhythm guitar doubling at the octave, zero swing"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(4)], [transpose(1)], [rotate(4), transpose(1)]][s % 4]\n                    : [transpose(-5), fill(2)])"
+  }
+}

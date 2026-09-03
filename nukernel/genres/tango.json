@@ -1,0 +1,168 @@
+{
+  "note": "TANGO. Two facts and the rest follows. The first is the RHYTHM: 3-3-2,\nsixteen steps divided 0-3-6 / 8-11-14, which is the habanera underneath\nevery tango ever written and is the reason it limps forward instead of\nmarching. The second is the HARMONIC MINOR — the raised seventh, which is\nthe only note in the scale that can produce a real dominant, and a tango\nis a series of dominants arriving. i · iv · V · i, and the V is a V and\nnot a v precisely because of that one note.\nA bandoneón and a violin, which the per-voice INSTR table can finally say.\n\nnamed \"Buenos Aires 1935\" — the golden age's dance-hall orquestas\n(D'Arienzo's rise): bandoneón, violin, the habanera driving.\n\nan arc and not a pop song\n\nLINEAGE: a root under protest — the habanera cell, the milonga it\nsped up from, candombe's drums and the European salon harmony all\npredate the catalog; the 3-3-2 arrived by boat and none of the boats\nare anchors yet.\n\"habanera\" PAID 2026-08-29 (Havana 1860): the cell under a tango\nIS the habanera's dotted figure — the milonga carried it south\nand the bandoneon slowed it down — and the rest of the root\nstays honestly missing and named.\n\nTHE DOMINANT IS THE ONE CHORD WHOSE SCALE IS NOT THE TONIC'S, and a\ntango is nothing but dominants arriving. `diatonic` keeps the line in\nthe key, which is right, and in harmonic minor that means it keeps\noffering the ♭6 and the ♭3 over the V — A♭ against its G, E♭ against\nits D — and the answering voice's own transpose(-2) is a third below\nthe SCALE, so wherever the lead is on the root the answer is on the ♭6.\nMeasured: a held minor ninth against the pad in half the bars.\n`anchor` says the held note has to be a chord tone; everything shorter\nthan a step and a half of actual sound is left alone, which is where\nthe ♭9 lives. Bar two still plays G A♭ B over the dominant — it just\nno longer SITS on the A♭.\n\n3-3-2, twice\n\nthe bass IS the 3-3-2",
+  "label": "Buenos Aires 1935",
+  "voices": 3,
+  "plan": "arc",
+  "bpm": 118,
+  "parents": {
+    "habanera": 0.4
+  },
+  "wants": [
+    "milonga",
+    "candombe",
+    "salon music"
+  ],
+  "instr": [
+    "bandoneon",
+    "violin",
+    "bandoneon"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": {
+      "$src": "v - 1"
+    }
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "drumkit": "acoustic",
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": [
+    0,
+    2,
+    3,
+    5,
+    7,
+    8,
+    11
+  ],
+  "diatonic": true,
+  "anchor": 1.5,
+  "artic": "staccato",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "bassGrid": [
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1.6,
+    "atk": 0.01,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the bandoneón chords",
+    "the violin, singing over it",
+    "the bandoneón answering, from bar 3"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 2 ? [transpose(-2), drop(2)] : [])"
+  }
+}

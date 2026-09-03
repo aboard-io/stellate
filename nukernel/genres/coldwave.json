@@ -1,0 +1,133 @@
+{
+  "note": "COLD WAVE — Rennes 1979. Marquis de Sade, Dantzig Twist: the\nFrench answer record, cut by the Rennes band the article files\nas post-punk, in the year Manchester's own row is labelled —\nthe same music with the blood drained further out of it, sung\nin French over a colder, drier room. Wikipedia's article (Cold\nwave (music)) places the genre in late-70s France, Poland and\nBelgium; `postpunk` has carried \"cold wave\" in its wants since\nits lineage was written — another FORWARD want, paid today by\nthe child arriving.\n\nLINEAGE: `postpunk` at dominant weight — this IS post-punk,\npronounced differently; `dusseldorfschool` is the synth discipline\nthe French scene admitted more readily than Manchester did\n(the article's own origins name electronic music beside punk).",
+  "label": "Rennes 1979",
+  "voices": 2,
+  "bars": 8,
+  "near": "postpunk",
+  "plan": "song",
+  "bpm": 142,
+  "parents": {
+    "postpunk": 0.45,
+    "punk": 0.2,
+    "dusseldorfschool": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "polysynth"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    5,
+    0,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "harmony": "cycle",
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "chorus"
+  ],
+  "tone": {
+    "wave": "square",
+    "cut": 1500,
+    "q": 1.6,
+    "atk": 0.004,
+    "rel": 0.35,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the guitar, dry ice on the strings",
+    "the synth, one cold line, no vibrato"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(4)], [transpose(-1)], [fill(1)]][s % 4]\n                    : [transpose(-9), keep(0, 4, 8, 12)])"
+  }
+}

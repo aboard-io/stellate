@@ -1,0 +1,157 @@
+{
+  "note": "NEW WAVE — the Buggles and the Cars, which is a different record from the\none this used to be. It was in DORIAN, i-VI-iv-v: moody, minor, closer to\npost-punk than to \"Video Killed the Radio Star\". But the thing about that\nmusic is that it is BRIGHT and it is CLIPPED — a major key, a staccato\neighth-note riff with no sustain in it at all, handclaps on the backbeat,\nand a bass playing straight eighths underneath like a machine. Mixolydian\ngives it the ♭VII that both bands lean on, and `diatonic` keeps the whole\nthing in one key, which is what separates a pop record from a mode.\nI - V - vi - IV, and the second voice answers a bar late and thinned.\n\nWHO THE BASS IS, AND HERE IT IS A PAIR OF HANDS (2026-09-02, the\ncatalogue round). The new `bassInstr` field is not only for machines:\nthis row was playing the sampled upright by default, which is the\nwrong RECORDING as much as the wrong lane, and naming the right one is\nthe honest edit even though it moves no `instrumentation` score.\nThe Buggles, \"Video Killed the Radio Star\" (Island, London, September\n1979): Trevor Horn played it, with a plectrum.\n\nnamed \"London 1979\" for the Buggles (the comment's first reference and\nthe CR-78 preset-box year); Boston 1978 would have honoured the Cars.\n\nLINEAGE: punk's clipped economy played by people who secretly loved\npop hooks (the Cars are beatlesque to the bone) over a straight\ndance-floor eighth pulse disco normalized; the synth sheen on top is\nKraftwerk's, one row up — the smallest of that anchor's four edges,\ntaken off beatgroup and disco alike, because what disco gave new wave\nis the four on the floor and not the timbre.\n\"glam rock\" PAID 2026-08-29 (London 1971): the art-school half\nof this cohort learned staging and irony from Bolan and Bowie\nbefore punk gave them permission — the weight comes off beatgroup,\nwhose share was carrying \"English pop theatre\" at one remove.\n\nI V vi IV, AND NOW IT IS ACTUALLY THAT (2026-09-02, the\nChordonomicon round). The comment on this line has said \"I V vi IV\"\nsince the row was written and `MODES.mixo` made the second chord a\nMINOR v — mixolydian's fifth degree stacks 7/10/14, which is 0-3-7.\nMeasured against the 8,926 new-wave-labelled songs in Chordonomicon,\nrotation-collapsed: `I v vi IV` is rank 1,479 with SIX songs, and `I V\nvi IV` is rank 13 with 476. The row was declaring one cycle, costing\nit, and sounding another — the box's characteristic bug, in the\nAlphabet axis. Ionian is also what the header above argues for\n(\"bright and clipped\"): a minor dominant is the one chord that is\nneither. Corpus silent (no MIDI files matched this row), so the\nchange stands on the dataset plus the row's own stated intention.\nI V vi IV\n\nno sustain anywhere\n1979's preset box — the machine of the era\n\nclaps doubling the snare",
+  "bassInstr": "picked_bass",
+  "label": "London 1979",
+  "plan": "dance",
+  "bpm": 138,
+  "parents": {
+    "punk": 0.35,
+    "beatgroup": 0.2,
+    "glam": 0.15,
+    "disco": 0.2,
+    "dusseldorfschool": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "synth_strings_1"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    4,
+    5,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "drumkit": "cr78",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "bassStyle": "eighths",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 2.4,
+    "atk": 0.003,
+    "rel": 0.35,
+    "gain": 0.28,
+    "verb": 0.14
+  },
+  "words": [
+    "the hook, clipped",
+    "the answer, a bar late and thinned"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s2) => (v === 0 ? [] : [only(\"gate\", rotate(4)), drop(3)])"
+  }
+}

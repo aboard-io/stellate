@@ -1,0 +1,96 @@
+{
+  "note": "TAPEMUSIC — Paris 1948. Pierre Schaeffer's \"Cinq études de bruits\",\nbroadcast by the RTF from its own studio on the 5th of October 1948\n— the concert de bruits, radio's first program of music made from\nrecordings: trains, saucepans, a piano played and then cut apart.\nTHE GENEALOGY ROUND DECLINED THIS ROW IN A SENTENCE THAT WAS TRUE\nWHEN IT WAS WRITTEN: \"musique concrète's material is RECORDED\nSOUND, not pitched cells: the registry holds instruments and drum\nlanes, and an anchor whose primary fact is 'the material is not\nnotes' fails the no-anchor-whose-primary-fact-is-in-its-own-cannot\nrule harder than anything the world round refused.\" The sampling\nround (2026-08-30) changed the premise the sentence stood on: the\nregistry holds RECORDINGS now — the crate rows are found sound on\nthe sampler, playable at pitch, loopable under the gate (the\n`looping` word), their loop points editable on the strip. A found\nunit re-triggered as material is exactly what this row is, so the\nprimary fact moved OUT of the impossible and the row ships — with\nthe cannot carrying, at full length, what the crate still is not.\nTHE AXES: SOUND is the identity (the material is recordings), and\nDEVELOPMENT is the splice — short cells, hard cuts, the same\nfragment re-said at new pitches, which per-note sampler rate does\nliterally: variable speed quantized to the note.\n\nTHE RECORDING IS THE INSTRUMENT, AND THAT IS A FACT AND NOT A GAP\n(2026-09-02, the catalogue round). The QA report's `instrumentation`\ncolumn counts a chair as NATIVE when `audio/to-engine.js\npatchForInstr()` names a Faust module for its id, and this row seats\nZERO of them — one of twelve in the table. Twelve rows were read one\nby one and every one of them came back the same way: there is no\nmodel in the fleet of the instrument this music is played on, and\nthere should not be. `organic: true` is that answer said out loud, so\nthe report can stop scoring an honest recording as a failure and can\nstart telling the twelve apart from the machine genres that were\nseating a sampled upright by accident.\nTHIS ROW: Pierre Schaeffer, \"Étude aux chemins de fer\" (RTF, Paris, 5\nOctober 1948). Musique concrète IS the recording, definitionally; the\n`found:` crate is not a fallback on this row, it is the instrument.\n\nthere are no players; there is a bench\n\nLINEAGE: a declared ROOT. Russolo's intonarumori (Milan 1913) and\nthe RTF's own radio-play craft are the ancestors the literature\nnames; neither has an anchor and the first is next round's ask —\nthe Art of Noises manifesto is datable to the day.\n\n\"russolo's intonarumori\" is answered by the perc_hit collage above and\ncomes off the list; the RTF radio-play studio is still a real gap.\n\nTHE MATERIAL IS RECORDINGS — AND UNTIL 2026-08-30 IT WAS THREE\nSYNTHESISER PATCHES. This row shipped on the sampling round with\nthe argument printed above it (\"the registry holds RECORDINGS\nnow... A found unit re-triggered as material is exactly what this\nrow is\") and then cast `goblin`, `sea_shore` and `atmosphere` —\nGeneral MIDI 101, 122 and 100, three synth pads with weather in\ntheir names. The one anchor in the table whose PRIMARY FACT is\nthat the material is not notes was made of notes, and the crate\nit was written for went unused by every row in the catalogue:\n`found:` seating has existed in audio/to-engine.js since that\nround and nothing had ever named one. Measured before fixing —\nrecipeFor(\"found:bbc_italian_steam\") returns a one-zone sampler\non found/bbc_italian_steam.64.mp3; recipeFor(\"sea_shore\")\nreturns UNROUTED and falls back to a bare tone.\n  THE THREE ARE THE ETUDES' OWN OBJECTS, not a mood board.\nSchaeffer's first étude of 1948 is the Etude aux chemins de fer,\ncut from locomotives he recorded at the Gare des Batignolles, so\nv0 — the chair whose word is \"cut and re-pitched, the splice\naudible\" — is a steam engine from inside the train, and per-note\nsampler rate does to it exactly what a variable-speed turntable\ndid to his discs. v1 is the PLATFORM that engine stands at: the\nsecond recording of one world, which is how an étude is built.\nv2 is a room full of ticking clocks, hung an octave up and let\nring — a found object that is already a rhythm, which is the\nEtude aux tourniquets' whole idea.\n  All three are BBC-crate ids carrying a LOCAL url\n(found/<id>.64.mp3), so nothing here reaches off-origin.\n\nTHE COLLAGE, SPREAD (2026-09-01). Paul: \"spread the sample voices\naround to collage-heavy genres\" — and no row is more collage-heavy\nthan this one, which is Schaeffer at the RTF in 1948.\nTHE STEAM TRAIN STAYS ON THE LEAD, deliberately: `bbc_italian_steam`\nIS the Etude aux chemins de fer, and swapping it for a pool would\nhave thrown away the reference to buy variety. What changes is the\nthird chair, `bbc_clock_room` — a second room behind a room. It takes\n`perc_hit` instead: the crate's seven struck objects, 7/7 local —\ntimpani, gong, ANVIL, wood, slap, agogo, cowbell. That answers this\nrow's own `wants` entry with the crate rather than a new table, since\n\"russolo's intonarumori (milan 1913)\" is a box of struck and scraped\nmetal and a chair that picks a different one per note is the closest\nthis box gets to one.\n\nGRAIN 0.23 -> 35 dB UNDER ITS OWN MIX (measured). The most literal\nclaim in the table: Schaeffer's 1948 studio had no tape yet, the\nEtudes were cut to SHELLAC and played on locked grooves, so\nsurface noise is not a colour on this music, it is the medium the\nmusic is made of. The row casts three real recordings as chairs\n(above); this is the disc they are turning on.\n  MEASURED DOWN FROM 0.50, which landed 26 dB under this record —\na layer, the same error blockparty made and for the same reason:\nonce the three field recordings replaced three GM pads the press\ndropped to -38.1 dBFS, and a fixed surface reads loud against a\nquiet record.\ngrain: 0.23 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the\n//   measured value for a hand that wants it back. Paul: \"Make the\n//   default for surface 0 and I can turn it on only if I want to,\n//   don't put it on anything by default.\" The castings were real —\n//   each was pressed and six moved on what came back — but a\n//   texture nobody asked for is a texture on every play, and the\n//   board's `surface` dial (ui/engineer.js, 2026-08-31) is where\n//   the choice belongs. The engine path stays wired and gated;\n//   what leaves is the ROW declaring it for you.",
+  "organic": true,
+  "instrumental": true,
+  "label": "Paris 1948",
+  "voices": 3,
+  "bars": 8,
+  "near": "cologneschool",
+  "plan": "arc",
+  "bpm": 88,
+  "parents": {},
+  "wants": [
+    "the rtf radio-play studio"
+  ],
+  "cannot": [
+    "the units are the registry's, not the composer's — Schaeffer's premise was RECORDING THE WORLD and then composing with what came back; this box chooses from a crate of ten shipped recordings and cannot capture an eleventh, which inverts the tradition's first move",
+    "splice-per-note — a concrète phrase cuts to a DIFFERENT recording at every joint; a chair holds one recording for the whole record, so the montage is across chairs, never inside a line (the plunderphonic move, still out of reach)",
+    "the hand on the platter — per-note rate is variable speed quantized to the note; the continuous sweep, the sound of the motor dying, has no channel",
+    "the five loudspeakers and the potentiomètre d'espace — diffusion was the performance and a mix has no aisles (cologneschool's admission, six years early)"
+  ],
+  "instr": [
+    "found:bbc_italian_steam",
+    "found:bbc_termini_platform",
+    "found:collage:perc_hit"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 3
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      -1,
+      1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "pad"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "pad"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "emergent",
+  "intro": "cold",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "SCALES.chromatic"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.9,
+    "atk": 0.003,
+    "rel": 0.9,
+    "gain": 0.23,
+    "verb": 0.45
+  },
+  "words": [
+    "the locomotive, cut and re-pitched, the splice audible",
+    "the platform it stands at, a locked groove under the gate",
+    "the room of clocks, hung high and let ring"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [reverse()], [spread(3)], [excerpt(2, 8)]][s % 4]\n                    : v === 1 ? [drop(10)]\n                    : [drop(8), transpose(12)])"
+  }
+}

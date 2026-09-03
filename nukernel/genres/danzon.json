@@ -1,0 +1,146 @@
+{
+  "note": "DANZÓN — Matanzas 1879. Miguel Faílde's \"Las alturas de Simpson\",\npremiered at the Liceo de Matanzas on the FIRST OF JANUARY 1879 —\none of the few genres anywhere with a birthday — the habanera's\ncell slowed to a stroll under an orquesta típica of cornets,\nclarinets and violins, with the paseo built in so the dancers\ncould fan themselves between strains. `son` and `mambo` have both\nwanted it by name since the world round: the danzón is son's\nballroom uncle and the mambo was BORN as a danzón section —\nOrestes López's 1938 \"Mambo\" is a danzón's final strain.\n\nan orquesta típica under dancers — the danzón is played, not sung\n\nLINEAGE: `habanera` (Havana 1860) at real weight — the baqueteo\nunder a danzón is the habanera cell ornamented — and the rest\nis the creole contradanza line named below.\nPAID 2026-08-29, the debts round: \"the cuban contradanza\n(saumell)\" moved into the parents (Havana 1803).\n\nthe baqueteo on the timbal, said on the p lane; the güiro's\nscrape is the h lane's even eighths.",
+  "instrumental": true,
+  "label": "Matanzas 1879",
+  "voices": 3,
+  "bars": 8,
+  "near": "son",
+  "plan": "song",
+  "bpm": 84,
+  "parents": {
+    "habanera": 0.6,
+    "contradanza": 0.2
+  },
+  "wants": [
+    "the charanga francesa"
+  ],
+  "cannot": [
+    "the paseo — the strain where nobody dances and the band plays the introduction again is a section-order fact (the rondo ABACA), and section order belongs to the composer, tinpanalley's own admission"
+  ],
+  "instr": [
+    "clarinet",
+    "trumpet",
+    "violin"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "counter"
+  ],
+  "roots": [
+    0,
+    4,
+    0,
+    4,
+    3,
+    4,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "swing": 0.1,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "pedal",
+  "kit": {
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      8,
+      0,
+      0,
+      5,
+      6,
+      0,
+      5,
+      0,
+      8,
+      0,
+      0,
+      5,
+      6,
+      0,
+      5,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2700,
+    "q": 0.9,
+    "atk": 0.01,
+    "rel": 0.9,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the clarinet strain",
+    "the cornet, answering",
+    "the violins, sweetening the return"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [rotate(2), fill(2)]][s % 3]\n                    : v === 1 ? [transpose(-3), rotate(4)]\n                    : [transpose(-5), drop(2)])"
+  }
+}

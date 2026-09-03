@@ -1,0 +1,147 @@
+{
+  "note": "CAPE JAZZ — Cape Town 1974. Abdullah Ibrahim (Dollar Brand),\n\"Mannenberg\", recorded 1974 with Rashid Vally producing — the\narticle files the song as Cape jazz itself, and the genre's own\narticle says Cape Town, late 1950s, with marabi in its topics\nlist. A hymn-simple two-chord vamp rolling under saxophone\nchoruses: American jazz harmony played like a church organ in a\ndance hall, and the record apartheid's townships took as an\nanthem.\n\nIbrahim's Cape hymn-vamp is a piano trio's\n\nLINEAGE: `marabi` (Johannesburg 1935) is the cyclical\nthree-chord shebeen music this row's vamp descends from —\nthe Johannesburg-vs-Cape split the round DECLINED to blur\n(see the header); `jazz` is Ibrahim's own schooling (the\narticle lists him bebop first); `mbaqanga` the township\ngroove alongside. The Cape's own carnival beat is the want.",
+  "instrumental": true,
+  "label": "Cape Town 1974",
+  "voices": 3,
+  "bars": 8,
+  "near": "ethiojazz",
+  "plan": "arc",
+  "bpm": 100,
+  "parents": {
+    "marabi": 0.4,
+    "jazz": 0.25,
+    "mbaqanga": 0.1
+  },
+  "wants": [
+    "the ghoema beat"
+  ],
+  "instr": [
+    "upright_piano",
+    "alto_sax",
+    "tenor_sax"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "orn": {
+    "pass": 0.2,
+    "grace": 0.2
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 0.9,
+    "atk": 0.01,
+    "rel": 0.8,
+    "gain": 0.27,
+    "verb": 0.38
+  },
+  "words": [
+    "the piano, the two chords that hold the town",
+    "the alto, the long unhurried sermon",
+    "the tenor, agreeing behind it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [keep(0, 4, 8, 12)]\n                    : v === 1 ? [[], [fill(2)], [transpose(2)], [rotate(2)]][s % 4]\n                    : [drop(6)])"
+  }
+}

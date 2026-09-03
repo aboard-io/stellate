@@ -1,0 +1,241 @@
+{
+  "note": "DANGDUT — Jakarta 1975. Indonesia's own mass popular music, named\nafter the sound of its drum: a gendang playing the DANG and the DUT\nthat give it the name, a suling flute curling round the vocal, an\nelectric guitar and a bass, and a melody with the Hindi film song and\nthe Malay orkes melayu in it in equal measure.\nTHE YEAR is Rhoma Irama's Soneta Group era, when orkes melayu becomes\ndangdut and the guitars arrive.\nTHE DRUM IS THE GENRE AND IT IS TWO LANES. The gendang's two strokes\nare the whole hook — a low open DANG on the and-of-4 into the bar and\na slapped DUT on the beat — so the kick carries one and `p` the other,\nand the loss is the pitch bend a player gets by pressing the head with\na heel, which a sampled kick cannot do.\n\nLINEAGE: filmi is the melody and the string writing and it is not a\nresemblance — Bombay films played in Indonesian cinemas throughout\nthe fifties and sixties and the debt is documented; kroncong is the\nIndonesian half; rock is the guitars, which arrive with Rhoma Irama\nand are the reason 1975 and not 1965.\n\nHARMONIC MINOR, WHICH IS ONE CHORD'S QUALITY (2026-09-02, the\nChordonomicon round). Aeolian made the fifth degree a MINOR v; the\ndataset says this music raises it. Chordonomicon's minor-key subset\nfor the dangdut label (n=376), rotation-collapsed: `i iv v` rank 61\n(x12), `i iv V` rank 1 (x134) — an eleven-fold margin on the SAME\nthree roots. Rhoma Irama's Soneta records (Yukawi/Indra, Jakarta,\nfrom \"Begadang\", 1973) take their melody from the Hindi film song,\nand this row's own `near: \"filmi\"` points at a row that is already\n`MODES.harmonic` — as is `latinpop`, which sits at rank 1 for its\nown label under it. The catalogue already knew the move; this row\nhad missed it. Corpus effectively silent (1 file).",
+  "label": "Jakarta 1975",
+  "voices": 3,
+  "near": "filmi",
+  "plan": "dance",
+  "bpm": 112,
+  "parents": {
+    "filmi": 0.4,
+    "kroncong": 0.3,
+    "rock": 0.3
+  },
+  "wants": [
+    "orkes melayu",
+    "qasidah"
+  ],
+  "cannot": [
+    "the gendang's pressed pitch-bend between the dang and the dut, which is a drum head being squeezed and this kit has twelve fixed samples"
+  ],
+  "instr": [
+    "solo_vox",
+    "flute",
+    "clean_guitar"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "MODES.harmonic"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "orn": {
+    "grace": 0.3,
+    "approach": 0.25
+  },
+  "kit": {
+    "k": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0
+    ],
+    "p": [
+      8,
+      0,
+      0,
+      5,
+      0,
+      0,
+      7,
+      0,
+      8,
+      0,
+      0,
+      5,
+      0,
+      0,
+      7,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 1.1,
+    "atk": 0.008,
+    "rel": 0.7,
+    "gain": 0.27,
+    "verb": 0.34,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the singer",
+    "the suling, curling round the vocal",
+    "the guitar, on the cycle"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(4), drop(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(3)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

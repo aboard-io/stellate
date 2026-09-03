@@ -1,0 +1,215 @@
+{
+  "note": "ARABESK — Istanbul 1980. Turkey's great disreputable popular music: a\nlarge string orchestra playing a makam melody in unison, a drum kit\nand a darbuka underneath, and a voice singing about being crushed by\nthe city. Orhan Gencebay, Müslüm Gürses, Ferdi Tayfur.\nTHE YEAR is the height of the arabesk cassette boom, when the state\nbroadcaster still would not play it and it was everywhere anyway.\nTIER 1 ON PITCH, AND THE MEASUREMENT IS WHY. Turkish uşşak and rast sit\n19 cents from 12-TET at worst and 6 on average (WORLD.md §2) — inside\nthe melodic JND — where Arab bayati sits at 50. So a Turkish popular\nmelody is sayable here in a way an Egyptian classical one is not, and\nthis anchor is the clearest evidence in the round that the tuning wall\nhas a shape rather than a side.\nWHAT IS NOT CLAIMED: the bağlama. A long-necked fretted lute with\nmovable frets set to commas has no honest id — `sitar` is the wrong\ncountry and the wrong buzz, `banjo` the wrong body — so the anchor\ncasts what an arabesk record actually leads with, which is THE STRING\nSECTION, and puts the saz on `wants` rather than on a chair.\n\n...and the Egyptian film orchestra ARRIVED 2026-08-29 as `firqa`\n(Cairo 1964), which is the single most direct debt this row has:\nEgyptian films and their orchestras played in Istanbul cinemas for\nthirty years and arabesk is what Turkish singers made of them.\n\nTHE DÜYEK, VOICED ACROSS THREE LANES: düm on 1 and the and-of-2, tek\non 2 and 4, and the darbuka's fill between. The same one-player-two-\nstrokes compromise raï makes for its derbouka, said again.",
+  "label": "Istanbul 1980",
+  "voices": 3,
+  "bars": 8,
+  "near": "romantic",
+  "plan": "arc",
+  "bpm": 88,
+  "parents": {
+    "filmi": 0.3,
+    "firqa": 0.3,
+    "romantic": 0.15
+  },
+  "wants": [
+    "türk sanat müziği",
+    "bağlama âşık song"
+  ],
+  "cannot": [
+    "the 53-comma notation — Turkish makam writes itself in commas and this box has twelve names, so the PITCH is inside the JND and the WRITING is not sayable at all",
+    "the bağlama's movable frets"
+  ],
+  "instr": [
+    "solo_vox",
+    "strings",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    3,
+    4,
+    4,
+    0,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "MODES.phrygian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "octaves",
+  "orn": {
+    "grace": 0.5,
+    "approach": 0.35
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2200,
+    "q": 1,
+    "atk": 0.015,
+    "rel": 1.3,
+    "gain": 0.27,
+    "verb": 0.54,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the singer",
+    "the strings, in unison with the tune",
+    "the guitar, on the off-beat"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[only(\"acc\", rotate(2)), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "note": "CONTINUO — Florence 1602, Caccini's Le nuove musiche: polyphony\ndeliberately REFUSED. One voice, affect first, the chords reduced to an\naccompaniment a harpsichord realizes from figures — and under it the\nlamento tetrachord, falling by step, the bass line the whole Baroque\nwill cry over. The violone is the bass chair's own acoustic_bass,\nhonestly close.\n\n\"opera seria\" CAME OFF THIS LIST 2026-08-29 WITHOUT BEING PAID:\nthe row asked for it as an ancestor and it is this music's\nGRANDCHILD — London 1724 is an anchor now and its parents point\nback HERE at dominant weight, which is the same fact with the\narrow the right way round. A 1602 record cannot descend from\n1724; the parlor/ragtime rule, applied on arrival.\n\nthe lamento tetrachord\n\nWHO SINGS: the ornament arrives late in the note",
+  "label": "Florence 1602",
+  "rate": 0.5,
+  "plan": "song",
+  "bpm": 72,
+  "parents": {
+    "troubadour": 0.55,
+    "polychoral": 0.45
+  },
+  "wants": [],
+  "near": "crooner",
+  "instr": [
+    "solo_vox",
+    "harpsichord"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "pad"
+  },
+  "kit": {},
+  "roots": [
+    0,
+    6,
+    5,
+    4
+  ],
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "anchor": 2,
+  "maxHold": 4,
+  "intro": "solo",
+  "bassStyle": "pedal",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.9,
+    "atk": 0.03,
+    "rel": 1.4,
+    "gain": 0.24,
+    "verb": 0.45,
+    "mouth": {
+      "$src": "MOUTHS.monody"
+    }
+  },
+  "words": [
+    "the voice, held over the descent",
+    "the harpsichord, realizing the figures"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(2)]"
+    }
+  }
+}

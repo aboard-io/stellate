@@ -1,0 +1,155 @@
+{
+  "note": "IDM — Sheffield 1992. ARTIFICIAL INTELLIGENCE (Warp): the ZIM's\nown genealogy — Warp \"founded in Sheffield in 1989\", and in 1992\n\"it released Artificial Intelligence, a compilation of tracks by\nvarious artists that helped establish intelligent dance music, a\ngenre of electronic music intended for home listening rather\nthan dancing\". This is the row the boardsofcanada refusal NAMED\n(\"this catalog holds NO IDM at all... IDM is a named next ask\")\n— the cluster, found and paid at its own first artifact. The\nWarp/Sheffield dot was checked against the Britain arc the way\nthe leedsgoth precedent demands, at the gate rather than by eye.\n\nLINEAGE: bleeptechno (Manchester 1989) is Warp's own first\ncatalog — LFO and Sweet Exorcist are named in the label's\narticle — techno the Detroit listening strain the sleeve notes\ncourted, ambient the home the records were headed to.",
+  "label": "Sheffield 1992",
+  "voices": 3,
+  "bars": 8,
+  "near": "techno",
+  "plan": "dance",
+  "bpm": 110,
+  "parents": {
+    "bleeptechno": 0.35,
+    "techno": 0.25,
+    "ambient": 0.2
+  },
+  "wants": [
+    "boards of canada (music has the right to children)"
+  ],
+  "instr": [
+    "polysynth",
+    "saw_wave",
+    "warm_pad"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      -1,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    5
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "h": [
+      5,
+      0,
+      3,
+      6,
+      0,
+      4,
+      6,
+      0,
+      5,
+      6,
+      0,
+      3,
+      0,
+      6,
+      4,
+      0
+    ]
+  },
+  "artic": "staccato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 1.1,
+    "atk": 0.005,
+    "rel": 0.7,
+    "gain": 0.26,
+    "verb": 0.35
+  },
+  "words": [
+    "the melody, sincere over a broken grid",
+    "the bass, moving more than the floor needs",
+    "the pad, the armchair the sleeve promised"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(3)], [split(2)], [rotate(5), fill(2)]][s % 4]\n                    : v === 1 ? [only(\"gate\", rotate(2)), drop(2)]\n                    : [drop(10)])"
+  }
+}

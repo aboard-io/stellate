@@ -1,0 +1,154 @@
+{
+  "note": "THE FANTASY EPIC SCORE — Wellington 2001, the year the biggest\norchestral commission on earth moved to Wellington: the golden-age\ngrammar with FOLK modal writing and a congregation in it, which is\nthe whole difference from Los Angeles 1938 and the parents say it —\nirishtrad's fiddle tune at 0.15, hymn's four-part congregation at\n0.15, under goldenagescore's leitmotif desk. DORIAN WITH THE bVII in the\ncycle (roots bar 2 and 6 on degree 6): folk minor, not harmonic —\nthe old world does not lean on a leading tone. Open fifths in the\nbass = the old world twice. The one drum is a FIELD drum, not a kit:\nlane l alone, the crash saved for the fill bar.\n\na picture score — the dialogue is in Elvish anyway",
+  "instrumental": true,
+  "label": "Wellington 2001",
+  "voices": 4,
+  "bars": 8,
+  "near": "goldenagescore",
+  "plan": "arc",
+  "bpm": 92,
+  "parents": {
+    "goldenagescore": 0.3,
+    "romantic": 0.2,
+    "irishtrad": 0.15,
+    "hymn": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "fiddle",
+    "french_horns",
+    "ahh_choir",
+    "slow_strings"
+  ],
+  "part": [
+    "lead",
+    "counter",
+    "pad",
+    "pad"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      0,
+      2,
+      4,
+      0
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      0,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "formula",
+    "src": "v => (v >= 2 ? \"pad\" : \"line\")"
+  },
+  "drumkit": "room",
+  "kit": {
+    "l": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "x": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    6,
+    3,
+    0,
+    0,
+    6,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "fifths",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.9,
+    "atk": 0.03,
+    "rel": 1.4,
+    "gain": 0.26,
+    "verb": 0.55
+  },
+  "words": [
+    "the fiddle, the tune from the small country",
+    "the horns, the tune again with the army behind it",
+    "the choir, the dead language",
+    "the low strings, the mountains"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[fill(2), transpose(-3)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(9)]"
+    }
+  }
+}

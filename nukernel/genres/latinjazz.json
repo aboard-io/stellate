@@ -1,0 +1,206 @@
+{
+  "note": "LATIN JAZZ — New York 1947. \"Manteca\", co-written by Dizzy\nGillespie, Chano Pozo and Gil Fuller and cut that December —\nthe article calls it one of the earliest foundational tunes of\nAfro-Cuban jazz, and it is the record where bebop's own founder\nput a conga player IN the band and let the tumbao carry the\nform: the bass riff is Pozo's, the bridge is Gillespie's, and\nthe two halves are the genre's whole treaty.\n\nGillespie's band with a conga in it — the front line is brass\n\nLINEAGE: `jazz` (New York 1945) is Gillespie's own row two\nyears and two blocks away; `son` (Havana 1928) is the clave\nand the tumbao's home; the rumba Pozo actually drummed — the\nstreet music, not the ballroom — has no anchor and is owed by\nname, the spelling matched with descarga's so the ledger\ncounts one debt.\n\n\"the afro-cuban rumba\" EXAMINED 2026-08-30 (the ledger round):\n`rumba` ships at last — but as Matanzas 1956, nine years this\nlabel's JUNIOR, and an edge cannot point at a record younger\nthan its child (the maringa rule). The ZIM says the genre's\n\"recorded history... began in the 1940s\" and names no side\nbefore the Muñequitos' LP, so the want stays on the books,\nnarrowed to the artifact still missing: the unnamed 1940s\nrumba sides — Chano Pozo's own drum — that the boppers heard.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\n\"Manteca\" — Gillespie, Pozo and Fuller, cut December 1947 — this row's own\nrecord. The A section is a one-chord tumbao, which is why the row is\n`harmony: \"modal\"`: there is no chord for a flat seventh to sit in, and\nSCALES.major carries the natural seventh. Mixolydian described the vamp's\nFEEL and reached not one note; the field now restates the alphabet the row\nactually plays.\n\nthe tumbao is the bassGrid — \"Manteca\" is the bass riff — and\nthe congas live on the toms, the ethiojazz precedent.",
+  "instrumental": true,
+  "label": "New York 1947",
+  "voices": 3,
+  "bars": 8,
+  "near": "jazz",
+  "plan": "arc",
+  "bpm": 152,
+  "parents": {
+    "jazz": 0.4,
+    "son": 0.3
+  },
+  "wants": [
+    "the 1940s rumba sides (chano pozo's drum)"
+  ],
+  "instr": [
+    "trumpet",
+    "brass_section",
+    "tenor_sax"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "counter"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassGrid": [
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "m": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "l": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "m": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2700,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.32
+  },
+  "words": [
+    "the trumpet, bebop over the clave",
+    "the brass, the Manteca riff",
+    "the tenor, the bridge's long answer"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2)], [rotate(4)]][s % 4]\n                    : v === 1 ? [keep(0, 3, 6, 10)]\n                    : [drop(4), transpose(-3)])"
+  }
+}

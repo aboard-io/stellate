@@ -1,0 +1,168 @@
+{
+  "note": "LATIN POP [bossa]. A rock band's instrumentation carrying Latin\npercussion and a melody that leans on the raised seventh — harmonic\nminor rather than bossa's cool-jazz major sevenths, which is the field\nthat separates a Bogotá/Barranquilla pop-rock record from the Rio\napartment sound it shares a rhythm section with.\n\nLINEAGE: the sevenths-and-understatement harmonic language and the\nrhythm-section restraint are bossa's own, transplanted out of the\napartment and into a rock band; the cross-rhythm percussion under\nit is afrobeat's technique aimed at a different clave; rock supplies\nthe electric backbone.\nFLAGGED AND NOT FIXED, 2026-08-25, which is the honest state of this\nvector. \"afrobeat's technique aimed at a different clave\" is a\nTECHNIQUE claim written into an ANCESTRY field, and Lagos 1971 is\nthis anchor's joint-largest parent while Miami 2001's percussion is\nCuban and Puerto Rican — son, salsa, the timbale — not Fela. The\nAfrica round could not repair it, because a weight is a reference to\nan anchor and there is nothing in this catalog to move it TO: the\nhole here is Cuba and Colombia and it is a different round. So the\nmissing ancestors are named on `wants` beside the cumbia that was\nalready there, and this paragraph is the marker for whoever builds\nthem. Moving the weight to `rock` and `bossa` to make the arithmetic\nlook better would only be a second fiction on top of the first.\nLINEAGE, REPAIRED 2026-08-26, and `afrobeat: 0.35` on a Miami 2001\nrecord was the THIRD cross-basin stand-in of the same species as the\ntwo WORLD.md named: Lagos 1971 was holding the place of \"the Latin\nrhythm section\", because in 2024 the catalog had no Cuban, Colombian\nor Nuyorican anchor to put there and afrobeat was the nearest thing\nwith a percussion layer on it. All three wants are now built — salsa\n(New York 1973), cumbia (Barranquilla 1960) and son (Havana 1928) —\nand afrobeat comes out entirely rather than being reduced, because\nthe resemblance was never to West Africa.",
+  "label": "Miami 2001",
+  "near": "bossa",
+  "plan": "song",
+  "bpm": 102,
+  "parents": {
+    "salsa": 0.35,
+    "cumbia": 0.2,
+    "son": 0.1,
+    "rock": 0.2,
+    "bossa": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "nylon_string_guitar",
+    "clean_guitar"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "MODES.harmonic"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1.4,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.24
+  },
+  "words": [
+    "the guitar, the hook",
+    "the electric guitar, doubling an octave down"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2), transpose(-7)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

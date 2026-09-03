@@ -1,0 +1,82 @@
+{
+  "note": "DASTGAH — Tehran 1925. Qamar-ol-Moluk Vaziri's first sides: the\narticle dates her as the first woman of her era to record, in 1925,\nunveiled, with Morteza Neydavoud's tar beside her — avaz in the\nPersian radif, cut to shellac in Tehran with names and a year on the\nlabel. TWO ROWS HAVE WANTED \"dastgah\" BY NAME since their lineages\nwere written (`taqsim` and `iranpop`), the genealogy round declined\nit in one sentence — \"the koron... EMPTY until cents\" — and cents\nlanded 2026-08-30. MODES.shur above is the payoff: the koron second\nsaid as 1.5, in Ali-Naqi Vaziri's own quarter-tone spelling,\npublished in Tehran three years before these sides were cut.\nTHE AXES: ALPHABET (the koron, at last) and TIME's honest defeat —\nan avaz has no bar, so the row takes the chant's compromise the way\ntaqsim does, half speed, tied, nothing keeping time underneath.\n\nLINEAGE: a declared ROOT, dhrupad's own shape. The radif's\nancestors — the Qajar court line of Mirza Abdollah, and behind it\na chain the tradition itself traces to the Sassanid court — have\nno anchors and cannot be dated to a record without inventing the\nfact. (`abbasid` is NOT claimed: Barbad's Persia fed Baghdad, not\nthe other way round, and a backwards edge is worse than a root.)\n\n\"tasnif\" CAME OFF THIS LIST 2026-08-30 WITHOUT BEING PAID, the\n`jumpblues` device, and the reason is the interesting part.\n`tasnif` (Tehran 1924) is now an anchor and it is one year this\nrow's SENIOR on the labels — so the maringa rule would allow the\nedge — but a tasnif is a form INSIDE this tradition, sung by these\nsingers in these dastgahs, not a music upstream of it. Twelve\nmonths of gramophone history is not a genealogy, and declaring\nthis parent would assert a descent the tradition does not claim.\nThe two rows are SIBLINGS, and the catalog can say that by leaving\nthe edge unwritten and saying so here.",
+  "label": "Tehran 1925",
+  "voices": 2,
+  "rate": 0.5,
+  "near": "taqsim",
+  "plan": "arc",
+  "bpm": 76,
+  "parents": {},
+  "wants": [
+    "mirza abdollah's radif",
+    "the qajar court ensembles"
+  ],
+  "cannot": [
+    "the tahrir — the glottal break that is Persian singing's signature ornament has no channel (WORLD.md §5.3's wall, still standing); the grace rate below is the crude proxy and is described as crude",
+    "the radif itself — shur is not a scale but a repertory of gushehs, PHRASES learned in order, and an anchor declares an alphabet and no material (the raga admission, one tradition west)",
+    "the koron is a spelling — Vaziri's 24-TET puts it at exactly half a flat and measured practice sits 20-40 cents shy of that, moving by dastgah and by player; this row plays the theory's number and says so",
+    "free rhythm — an avaz has no bar at all; half speed with long holds is the chant's own compromise, taken here the way taqsim takes it",
+    "the tar — Neydavoud's instrument is a skin-faced, quarter-tone-fretted lute; the nylon guitar is the registry's standing stand-in, and the koron below lands because cents ride the note, not because the neck knows it"
+  ],
+  "instr": [
+    "solo_vox",
+    "nylon_string_guitar"
+  ],
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.shur"
+  },
+  "scale": {
+    "$src": "MODES.shur"
+  },
+  "artic": "tie",
+  "maxHold": 6,
+  "incClamp": 2,
+  "orn": {
+    "grace": 0.55
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1.5,
+    "gain": 0.24,
+    "verb": 0.5,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the avaz, climbing a gusheh each time",
+    "the tar, answering in the gaps"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n          ? [[drop(2)], [transpose(2), fill(2)], [transpose(4), fill(2), rotate(3)],\n             [transpose(2), reverse()]][s % 4]\n        : [transpose(-5), drop(2)])"
+  }
+}

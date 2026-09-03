@@ -1,0 +1,61 @@
+{
+  "note": "THE DOINA — Maramureș 1912. \"Béla Bartók discovered the doina in\nNorthern Transylvania in 1912\" — the ZIM's own sentence, and the\ncylinders he cut there are the named dated collection this\npayment stands on (published as his Maramureș volume). One\nfree-rhythm, melismatic, improvised line — the ZIM compares it\nto the taksim by name, which is why `near` says taqsim and the\nfamily is vox, on ottoman's own argument. Pays `taraf`'s want\n(\"the doina\"); klezmer's doyne is the same object one migration\nnorth, carried by its own row's parents.",
+  "label": "Maramureș 1912",
+  "voices": 1,
+  "bars": 8,
+  "near": "taqsim",
+  "plan": "song",
+  "bpm": 70,
+  "parents": {},
+  "wants": [
+    "the hora lungă itself, cylinder by cylinder"
+  ],
+  "cannot": [
+    "free rhythm — Bartók wrote 'parlando rubato' over every transcription and this box counts sixteen places; the long holds and the ornament policy are the honest approximation, said plainly"
+  ],
+  "instr": "solo_vox",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "orn": {
+    "grace": 0.5,
+    "pass": 0.25
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.8,
+    "atk": 0.02,
+    "rel": 1.2,
+    "gain": 0.26,
+    "verb": 0.4,
+    "mouth": {
+      "$src": "MOUTHS.monody"
+    }
+  },
+  "words": [
+    "one voice on the mountain, no bar line, the turns doing the grieving"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => [[], [transpose(-2)], [fill(1), drop(2)], [rotate(2)]][s % 4]"
+  }
+}

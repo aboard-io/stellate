@@ -1,0 +1,227 @@
+{
+  "note": "SOUKOUS — Kinshasa 1985. Congolese rumba with the rumba taken out and\nthe SEBENE left: the fast, cycling, interlocking guitar section a\nrumba record used to arrive at after four minutes of singing, played\nfor the whole record at a tempo nothing in Kinshasa 1960 approaches.\nTHE YEAR is the mid-eighties Paris-and-Kinshasa records — Kanda Bongo\nMan's \"Iyole\" era — when the song half was dropped and the band went\nstraight to the guitars.\nITS PARENT'S OWN ENTRY DESCRIBES IT. congorumba (Kinshasa 1960)\nalready writes a mi-solo \"and in the sebene it never stops\"; this is\nthat sentence made into a record, at 148 instead of 112, with the\nanimateur's shouted cues on the snare and a third guitar.",
+  "label": "Kinshasa 1985",
+  "voices": 3,
+  "near": "congorumba",
+  "plan": "dance",
+  "bpm": 148,
+  "parents": {
+    "congorumba": 0.8,
+    "disco": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "steel_string_guitar",
+    "nylon_string_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "roots": [
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "h": [
+      8,
+      5,
+      6,
+      5,
+      7,
+      5,
+      6,
+      5,
+      8,
+      5,
+      6,
+      5,
+      7,
+      5,
+      6,
+      6
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 3200,
+    "q": 1.1,
+    "atk": 0.003,
+    "rel": 0.3,
+    "gain": 0.27,
+    "verb": 0.24
+  },
+  "words": [
+    "the solo guitar, running the sebene",
+    "the mi-solo, interlocked a third under it",
+    "the rhythm guitar, in what is left"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(-3), rotate(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[drop(2), rotate(6)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "note": "THE LĂUTARI — Bucharest 1906. Grigoraș Dinicu's \"Hora staccato\"\n(1906) — the ZIM dates the showpiece in its first sentence and\nfiles the man under \"Genres: Lăutărească music\": born in Scaune,\n\"the neighborhood of the lăutari\", grandson of Angheluș Dinicu,\nwhose \"Ciocârlia\" he made famous. The hereditary Romani guild\nwhose 78s `gypsyjazz` and `taraf` both want by name (\"the\nlautari 78s before the Quintette (Bucharest, 1900s)\") — the\nQuintette's swing violin descends from exactly this school, and\nClejani's own village band is its country cousin eighty years\non. The 78s themselves stay wanted at this row (the shellac the\nGramophone Company cut in Bucharest is not in this ZIM by name);\nthe dated artifact is the guild's own conservatory-trained son's\n1906 showpiece, the isorhythm standard's kind of date.",
+  "label": "Bucharest 1906",
+  "voices": 2,
+  "bars": 8,
+  "near": "taraf",
+  "plan": "arc",
+  "bpm": 132,
+  "parents": {},
+  "wants": [
+    "the gramophone company's bucharest sessions",
+    "the moldavian lautari repertory"
+  ],
+  "cannot": [
+    "the rubato of the slow hora — the lăutar's pulse follows the table he is playing for, and this clock follows a bar"
+  ],
+  "instr": [
+    "fiddle",
+    "dulcimer"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff"
+  ],
+  "kit": {
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "orn": {
+    "grace": 0.4,
+    "pass": 0.2
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1.1,
+    "atk": 0.005,
+    "rel": 0.3,
+    "gain": 0.27,
+    "verb": 0.25
+  },
+  "words": [
+    "the fiddle, staccato off the top of the bow",
+    "the cimbalom, hammering the wheel around"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [split(2)], [fill(1)]][s % 4]\n                    : [keep(0, 2, 4, 6, 8, 10, 12, 14), drop(2)])"
+  }
+}

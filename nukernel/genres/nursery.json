@@ -1,0 +1,60 @@
+{
+  "note": "NURSERY RHYME — London 1744. TOMMY THUMB'S PRETTY SONG BOOK, Mary\nCooper's shop, London, c.1744: the oldest surviving printed\ncollection of English nursery rhymes — Baa Baa Black Sheep and\nLondon Bridge are in it. One honest row, not a novelty: a caregiver's\nvoice, major pentatonic, AABB with the tune said again the way a\nchild demands it — `sent` machinery's plainest possible case.\n\nLINEAGE: many rhymes are ballad and broadside fragments worn\nsmooth by small listeners — the Opies' own finding.",
+  "label": "London 1744",
+  "voices": 1,
+  "bars": 4,
+  "near": "ballad",
+  "plan": "song",
+  "bpm": 92,
+  "parents": {
+    "ballad": 0.35
+  },
+  "wants": [
+    "the lullaby itself",
+    "the singing game in the street"
+  ],
+  "instr": "solo_vox",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2800,
+    "q": 0.8,
+    "atk": 0.015,
+    "rel": 0.5,
+    "gain": 0.26,
+    "verb": 0.2,
+    "mouth": {
+      "$src": "MOUTHS.hymnal"
+    }
+  },
+  "words": [
+    "the rhyme, four bars, said twice, sleep at the end of it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => [[], [], [transpose(2)], [drop(2)]][s % 4]"
+  }
+}

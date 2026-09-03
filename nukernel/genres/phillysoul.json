@@ -1,0 +1,199 @@
+{
+  "note": "PHILLY SOUL — Philadelphia 1972. The O'Jays' \"Back Stabbers\",\nSigma Sound Studios, Gamble and Huff producing, MFSB on the\nfloor: strings and french horns over Earl Young's hi-hat — the\ndrummer who moved the eighths onto the OPEN hat and, in doing\nso, built the floor disco stands on. `disco` (New York 1977) has\nwanted \"philly soul\" by name since its lineage was written, and\nthe debt is nearly the whole record: the Philly rhythm section\nis disco's rhythm section with the tempo not yet named.\n\nLINEAGE: `detroitsoul` (Detroit 1965) is the assembly-line model\nGamble and Huff rebuilt with lusher rooms; `doowop` (Harlem\n1955) is the street-corner harmony the lead groups grew up\nin; `gospel` is where every voice on the floor learned.\n\nEarl Young: four on the kick, the OPEN hat on every offbeat —\nthe o lane is the signature and the reason this row exists.\n\nWHO SINGS: falsetto — the Stylistics' register; the\nPhilly lead floats where Motown's punched.",
+  "label": "Philadelphia 1972",
+  "voices": 3,
+  "bars": 8,
+  "near": "disco",
+  "plan": "song",
+  "bpm": 108,
+  "parents": {
+    "detroitsoul": 0.4,
+    "doowop": 0.25,
+    "gospel": 0.2
+  },
+  "wants": [
+    "mfsb themselves",
+    "the intruders' philly beat"
+  ],
+  "instr": [
+    "strings",
+    "rhodes_ep",
+    "brass_section"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "pad",
+    "counter",
+    "stab"
+  ],
+  "roots": [
+    0,
+    3,
+    1,
+    4,
+    0,
+    3,
+    1,
+    4
+  ],
+  "prog": {
+    "$src": "PROGS.soul7"
+  },
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "swing": 0.1,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "o": [
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      8,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2700,
+    "q": 0.9,
+    "atk": 0.015,
+    "rel": 0.9,
+    "gain": 0.26,
+    "verb": 0.4,
+    "mouth": {
+      "$src": "MOUTHS.falsetto"
+    }
+  },
+  "words": [
+    "the strings, sweeping",
+    "the Rhodes, the chord under it",
+    "the horns, punctuating"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [drop(8)]\n                    : v === 1 ? [[], [fill(2)], [rotate(2)]][s % 3]\n                    : [keep(4, 12), transpose(-2)])"
+  }
+}

@@ -1,0 +1,137 @@
+{
+  "note": "KLEZMER — New York 1923. Naftule Brandwein cutting freylekhs and\nbulgars for Victor: the kapelye on shellac, the year the immigrant\ndance-hall repertory became records. The mode is HIJAZ — the\nfreygish steyger IS the catalog's hijaz row, the flat second with\nthe major third over it, and this anchor is the second music (after\ntaqsim) that exists in this file because that mode landed. The kit\nis the poyk's bulgar cell, 3+3+2 on both halves of the bar.\n\nBrandwein's sides are dance sets — the badkhn's verses are not on them\n\nLINEAGE: \"the cantorial nusach\" PAID 2026-08-30 (`chazzanut`,\nNew York 1912 — Rosenblatt at Ohab Zedek, eleven years and\neighty blocks from Brandwein's sides): the prayer modes the\nclarinet imitates now have an address, and the chazzanut row's\nown alphabet is the freygish this band plays. The Moldavian\nlautari repertory stays owed — `lautari` (Bucharest 1906) is\nthe Wallachian guild, and paying a Moldavian debt with a\nBucharest record would be the two-spellings conscription the\nwant was written to prevent; the lautari row now carries the\nsame want, so the ledger counts one debt owed by two rows.\nAN ANCESTOR THAT WAS ALREADY IN THE TABLE (2026-09-02, the catalogue\nround, shift 2).\nFOUND OUTSIDE THE PARENTLESS SWEEP and fixed with it, because it is the same\nmistake: this row wanted \"the moldavian lautari repertory\" and BOTH halves of\nthat phrase are rows, and both are earlier.\n`lautari` (Bucharest 1906): Grigoras Dinicu's \"Hora staccato\", Bucharest\n1906 — the professional Romani guild whose dance repertory the klezmorim\nplayed beside and out of across Bessarabia and Moldavia.\n`doina` (Maramures 1912): Bartok's Maramures cylinders, 1912 — the free-rhythm\nlament the klezmer DOYNE is named after and is note-for-note built on.\nTHE PRECEDENT IS ALREADY IN THE TABLE: `taraf` (Clejani 1986) declares\n`lautari: 0.35, doina: 0.2` — the same pair, the same weighting shape.\nChazzanut keeps 0.3 and the want closes.",
+  "instrumental": true,
+  "label": "New York 1923",
+  "voices": 3,
+  "bars": 8,
+  "near": "balkanbrass",
+  "plan": "song",
+  "bpm": 116,
+  "parents": {
+    "chazzanut": 0.3,
+    "lautari": 0.25,
+    "doina": 0.15
+  },
+  "wants": [],
+  "cannot": [
+    "the krekhts — the sobbing catch between notes, a glottal break the clarinet copies from the cantor's throat; the grace table can lean INTO a note but cannot crack it open"
+  ],
+  "instr": [
+    "clarinet",
+    "violin",
+    "accordion"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "drumkit": "acoustic",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.hijaz"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "orn": {
+    "grace": 0.4
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 2400,
+    "q": 1.1,
+    "atk": 0.008,
+    "rel": 0.4,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the clarinet, laughing and crying in one phrase",
+    "the fiddle, shadowing it a third below",
+    "the accordion, holding the freygish chord"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2), transpose(-2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(9)]"
+    }
+  }
+}

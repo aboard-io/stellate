@@ -1,0 +1,156 @@
+{
+  "note": "THE BEACH BOYS — Los Angeles 1966. Pet Sounds, released the\n16th of May 1966: Brian Wilson conducting the Wrecking Crew\nthrough rooms Spector built, then stacking five voices into a\nchoir over basses that walk somewhere else entirely — the\nrecord that made ORCHESTRATION a pop instrument. `psychpop`\n(London 1968) has wanted \"orchestral pop\" since its lineage was\nwritten — its own comment is this record's wake — and takes the\nparent today.\n\nLINEAGE: `doowop` (Harlem 1955) is the vocal stack's school;\n`girlgroup` (New York 1960) the songcraft and the Spector rooms —\nWilson learned Be My Baby by heart. The Four Freshmen, who\ntaught him the close voicings, are named below.\n\nWHO SINGS: the dream choir — the falsetto-topped stack\nis the band's own signature.",
+  "label": "Los Angeles 1966",
+  "voices": 3,
+  "bars": 8,
+  "near": "psychpop",
+  "plan": "song",
+  "bpm": 108,
+  "parents": {
+    "doowop": 0.35,
+    "girlgroup": 0.3
+  },
+  "wants": [
+    "the four freshmen's close harmony",
+    "spector's wall of sound"
+  ],
+  "instr": [
+    "ohh_voices",
+    "ahh_choir",
+    "electric_piano"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 4
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "cycle",
+  "prog": {
+    "$src": "PROGS.soul7"
+  },
+  "roots": [
+    0,
+    5,
+    1,
+    4,
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.8,
+    "atk": 0.015,
+    "rel": 0.9,
+    "gain": 0.24,
+    "verb": 0.45,
+    "mouth": {
+      "$src": "MOUTHS.dreamchoir"
+    }
+  },
+  "words": [
+    "the lead, the tune Brian heard",
+    "the stack, five voices as one organ",
+    "the keys, walking a bass that isn't the root"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(2), fill(2)]][s % 3]\n                    : v === 1 ? [drop(8)]\n                    : [keep(0, 4, 8, 12), transpose(2)])"
+  }
+}

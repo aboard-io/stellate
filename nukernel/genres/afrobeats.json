@@ -1,0 +1,174 @@
+{
+  "note": "AFROBEATS — Lagos 2021, and the plural matters: `afrobeat` (Lagos 1971)\nis a twenty-minute horn band and this is a three-minute pop single that\nborrowed its percussion and nothing else. What survived the fifty years\nis the SHEKERE — the hand layer that plays across the kick rather than\nwith it — and what replaced the horns is a sung hook with R&B's own\nsense of phrase and a Caribbean rhythm section's restraint.\n\nLINEAGE: the cross-rhythm percussion bed and the modal, unresolving\nvamp are afrobeat's own, cut down to pop length; the sung, melismatic\ntop line and the stacked answer are R&B's; the sparse, off-the-beat\nrhythm-section discipline — play less than you can — is reggae's.\nHighlife (the Ghanaian guitar tradition this melody actually comes\nfrom) and dancehall (the digital riddim under the kick) are both\nmissing rungs.\n...and the highlife weight arrived 2026-08-25, off this anchor's own\n`wants` and out of the sentence three lines above it: the file has\nsaid \"the Ghanaian guitar tradition this melody actually comes from\"\nsince the day it was written and pointed the weight at Lagos instead.\nafrobeat 0.4 -> 0.35 and reggae 0.3 -> 0.2 pay for it; reggae is\nstill standing in for dancehall, which stays on `wants`.\n...and dancehall arrived 2026-08-26 off this anchor's own want\nlist. Kingston 1985 is where the vocal cadence and the sparse\ndigital riddim come from and it is a nearer ancestor than Kingston\n1969, so reggae's weight goes to it rather than the total moving.\n\nONE CLAP, ON THREE. The backbeat is deliberately not there: a snare on\n2 and 4 would make this a pop record with percussion on it, and the\nwhole feel is that the kick and the hand layer disagree about where\nthe bar starts.\n\nthe same TRUE ANSWER retrofunkpop uses, and for the same reason: the\nguitar has to land where the voice does not or the two read as one\nline doubled, which is exactly what this style never does.",
+  "label": "Lagos 2021",
+  "near": "afrobeat",
+  "plan": "song",
+  "bpm": 104,
+  "parents": {
+    "afrobeat": 0.3,
+    "highlife": 0.2,
+    "rnb": 0.25,
+    "dancehall": 0.15,
+    "reggae": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    3,
+    5,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.9,
+    "atk": 0.01,
+    "rel": 0.8,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the vocal, riding across the kick",
+    "the guitar, answering — the phrase's own gate, complemented"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"gate\", complement(\"gate\")), transpose(-5)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

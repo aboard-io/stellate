@@ -1,0 +1,141 @@
+{
+  "note": "THE BATCAVE — London 1982. The club-night at 69 Dean Street,\nSoho, opened 21 July 1982 — the article calls it the birthplace\nof the Southern English goth subculture — run by Specimen, with\nJon Klein as art director; the compilation Young Limbs And Numb\nHymns (London Records, the following year) is the room's sound\non record, Specimen's \"Dead Mans Autochop\" on it. THE ZODIAK\nRULING APPLIES (Berlin 1968): a venue is a row when the room's\nhouse sound is on a named record, and `gothicrock` has carried\n\"the batcave's dressing-up box\" in its wants since its lineage\nwas written — a want that pointed FORWARD, paid today by the\nchild arriving rather than by a parent edge.\n\nLINEAGE: `gothicrock` is the licence three years old by the\nopening night; `glam` is the dressing-up box itself — the\nclub's own bill ran glam rock beside gothic rock, and Specimen\nwere a glam band in cobwebs.",
+  "label": "London 1982",
+  "voices": 2,
+  "bars": 8,
+  "near": "deathrock",
+  "plan": "song",
+  "bpm": 118,
+  "parents": {
+    "gothicrock": 0.4,
+    "glam": 0.35
+  },
+  "wants": [],
+  "cannot": [
+    "the dressing-up box itself — the club was a WARDROBE as much as a sound, and a costume has no lane; what is sayable is the cabaret stomp and the cobwebbed synth, which is what the lanes say"
+  ],
+  "instr": [
+    "overdrive_guitar",
+    "saw_wave"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "harmony": "cycle",
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2100,
+    "q": 1.7,
+    "atk": 0.005,
+    "rel": 0.4,
+    "gain": 0.26,
+    "verb": 0.5
+  },
+  "words": [
+    "the guitar, a cabaret stomp in eyeliner",
+    "the synth, cobwebs on a fairground organ"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)], [reverse()]][s % 4]\n                    : [drop(8)])"
+  }
+}

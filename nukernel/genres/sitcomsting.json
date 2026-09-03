@@ -1,0 +1,145 @@
+{
+  "note": "THE SITCOM STING — Los Angeles 1989. Jonathan Wolff's SEINFELD\nmusic: a sampled slap bass and mouth pops, re-improvised around\nJerry's monologue for every episode, played from a keyboard in a\nBurbank studio — the theme reduced to a TRANSITION, which is what\nhappened to the commission between 1982 and 1989 (breakingnews's\nown arc, run on the comedy side). One player, one sampler, no\ntune to hum on purpose.\n\nthe comedian is the vocalist and he is not on the record\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nJonathan Wolff's slap-bass sting, Los Angeles 1989 — this row's own record.\nA sting has no progression to be the seventh of (`harmony: \"modal\"`), and\nBLUES [0,3,5,6,7,10] has a MINOR third, which mixolydian is not. Full ruling\nat `holler`.",
+  "instrumental": true,
+  "label": "Los Angeles 1989",
+  "voices": 2,
+  "bars": 4,
+  "near": "sitcom",
+  "plan": "song",
+  "bpm": 116,
+  "parents": {
+    "sitcom": 0.3,
+    "funk": 0.3,
+    "newjackswing": 0.15
+  },
+  "wants": [
+    "the synclavier one-man bench"
+  ],
+  "cannot": [
+    "the monologue — Wolff timed every bar to that week's stand-up and re-cut the part per episode; a genre here is one record, not twenty-two variable ones a season"
+  ],
+  "instr": [
+    "slap_bass",
+    "synth_brass_1"
+  ],
+  "swing": 0.2,
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      -1,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "stab"
+  ],
+  "drumkit": "electronic",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "BLUES"
+  },
+  "artic": "staccato",
+  "maxHold": 1,
+  "nobass": true,
+  "tone": {
+    "wave": "square",
+    "cut": 2200,
+    "q": 1.2,
+    "atk": 0.004,
+    "rel": 0.25,
+    "gain": 0.27,
+    "verb": 0.18
+  },
+  "words": [
+    "the slap bass, talking over the applause",
+    "the synth brass, the punchline hit"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(2), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[fill(4), rotate(3), drop(2)]"
+    }
+  }
+}

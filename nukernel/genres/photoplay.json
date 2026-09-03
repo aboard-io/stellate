@@ -1,0 +1,137 @@
+{
+  "note": "---- THE COMMISSIONED SCREEN — the news pair's law, widened ---------\n\nPHOTOPLAY MUSIC — Cleveland 1913. J. S. Zamecnik's SAM FOX MOVING\nPICTURE MUSIC, vol. 1 (Sam Fox Publishing, Cleveland, 1913): the\nfirst widely-sold book of cues written FOR the screen — \"Hurry\",\n\"Mysterioso\", \"Indian Music\" — a mood per page, played by whoever\nthe theatre could afford. This is the stock-music tradition at its\nroot: music as a CATALOG of feelings, sold by the situation, which\nis what KPM was still selling in 1970 — so `newsfanfare` gains this\nrow as a parent today and its \"library music\" want is PAID. The\nlibrary cluster now reads photoplay 1913 -> newsfanfare 1970 ->\nbreakingnews 2006: three desks, one job.\n\na cue book — the picture does the talking",
+  "instrumental": true,
+  "label": "Cleveland 1913",
+  "voices": 3,
+  "bars": 8,
+  "near": "newsfanfare",
+  "plan": "arc",
+  "bpm": 100,
+  "parents": {
+    "romantic": 0.4,
+    "operetta": 0.2,
+    "march": 0.15
+  },
+  "wants": [
+    "vaudeville",
+    "the nickelodeon pit itself"
+  ],
+  "cannot": [
+    "the picture — every cue in the book is written to be cut off mid-phrase when the scene turns, and a section here runs its bars to the double bar whatever is on screen"
+  ],
+  "instr": [
+    "upright_piano",
+    "strings",
+    "cello"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "kit": {},
+  "harmony": "cycle",
+  "roots": [
+    0,
+    0,
+    3,
+    4,
+    0,
+    5,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0
+    },
+    {
+      "d": 0
+    },
+    {
+      "d": 3
+    },
+    {
+      "d": 4
+    },
+    {
+      "d": 0
+    },
+    {
+      "d": 5
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 0
+    }
+  ],
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 0.9,
+    "atk": 0.015,
+    "rel": 0.7,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the pit piano, playing the weather of the scene",
+    "the strings, if the house could pay for them",
+    "the cello, the villain's own register"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(9)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(2), transpose(-3)]"
+    }
+  }
+}

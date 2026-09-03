@@ -1,0 +1,133 @@
+{
+  "note": "THE SISTERS OF MERCY — York 1981. An artist row, the heavymetal\nkind, DATED THE SABBATH WAY: the definitive Doktor/Eldritch/\nMarx/Adams formation's first gig (Riley Smith Hall, Leeds) has\nno recorded date — the article says so — and the performance\nthe band and fans themselves celebrate, 16 February 1981 at\nAlcuin College, York, is the second show and the first DATABLE\none. The Leeds dot is also measured blocked: Halifax/Leeds is\n5.8 CSS px at the Britain arc against G10's 8.5 floor, the\nSouthall situation again (atlas.js WITHIN's own note: \"Britain\nis simply full\"), and Workington-not-Birmingham is the standing\nruling for exactly this. The CHASSIS the row writes is the one\nFirst and Last and Always (11 March 1985) photographs: DOKTOR\nAVALANCHE — the drum machine, in the band from this lineup on —\nrunning a motorik-straight floor under two arpeggiating guitars\nand a baritone drone. HONESTLY DISTINCT from Northampton 1979:\nBauhaus is dub space and live drums; this is a machine that\nnever leans, which is the DYNAMICS row's whole claim.\n\nLINEAGE: `gothicrock` is the licence and the wardrobe;\n`motorik` is the Doktor — Eldritch said the band drove on\nautobahn records, and the machine's refusal to lean is this\nrow's whole difference from its parent; `glam` is the leather\nand the sunglasses at night.\n\nthe Doktor: a machine floor in a band family — dead straight,\nevery bar the same, which is what the DYNAMICS row below says.",
+  "label": "York 1981",
+  "voices": 2,
+  "bars": 8,
+  "near": "gothicrock",
+  "plan": "song",
+  "bpm": 120,
+  "parents": {
+    "gothicrock": 0.35,
+    "motorik": 0.25,
+    "glam": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "overdrive_guitar"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff"
+  ],
+  "roots": [
+    0,
+    0,
+    5,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "harmony": "cycle",
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "echo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1800,
+    "q": 1.4,
+    "atk": 0.008,
+    "rel": 0.8,
+    "gain": 0.27,
+    "verb": 0.5
+  },
+  "words": [
+    "the guitar, arpeggios off the cliff edge",
+    "the second guitar, the riff under the baritone"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [transpose(-1)]][s % 4]\n                    : [drop(4), transpose(-5)])"
+  }
+}

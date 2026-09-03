@@ -1,0 +1,167 @@
+{
+  "note": "REGGAE [dub]. The pair share the one-drop; what separates THIS one is\nthat the harmony still moves (i–i–iv–v, and the fourth is MINOR: this\nrow is aeolian, and Chordonomicon's minor-key subset for the reggae\nlabel puts `i iv` first at 614 songs against the major `I IV`'s 104,\nso the little-letter spelling is the correction — 2026-09-02) while\nthe kick refuses beat 1 —\nno kick on the one is the whole drama of the kit. The skank is the\nPARTS proof: a stab on an absolute offbeat gate, which was unsayable\nwhile a chord could only fire once a bar.\n\nnamed \"Kingston 1969\" — the one-drop settling out of rocksteady the\nyear after Do the Reggay named it.\n\nLINEAGE: reggae is ska slowed twice — through rocksteady, the\nmissing intermediate — until the skank had room to breathe; the\nmento underneath and the nyabinghi drumming that displaced the kick\nare missing too. (`near: dub` is the CHILD, not the parent.)\nLINEAGE, REPAIRED 2026-08-26. `{ ska: 1 }` with\n`wants: [\"rocksteady\", ...]` said Kingston 1969 came straight off\nKingston 1962 and skipped the three years in between, which is the\none span of Jamaican music where the tempo halves and the bass\nbecomes the lead instrument. Rocksteady (Kingston 1966) is built and\ntakes the larger weight; ska keeps a real one because the skank is\nstill ska's. Mento reaches this record THROUGH both of them and comes\noff the want list for that reason, not because the debt was denied.\n\nthe skank is the guitar and the tune is the ORGAN — the bubble every\nKingston session keyboard player was hired for. The harmonica this\ncast used to answer with is a Chicago instrument; it moves to dub,\none row down, where it stands in for Augustus Pablo's melodica.",
+  "label": "Kingston 1969",
+  "near": "dub",
+  "plan": "song",
+  "bpm": 76,
+  "parents": {
+    "rocksteady": 0.7,
+    "ska": 0.3
+  },
+  "wants": [
+    "nyabinghi"
+  ],
+  "instr": [
+    "clean_guitar",
+    "percussive_organ"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "lead"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    4
+  ],
+  "maxHold": 6,
+  "bassGrid": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "kit": {
+    "k": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 1.2,
+    "atk": 0.008,
+    "rel": 0.7,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the skank, offbeats only",
+    "the melodica line, long notes"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[offbeats(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

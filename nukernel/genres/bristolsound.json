@@ -1,0 +1,155 @@
+{
+  "note": "MASSIVE ATTACK — Bristol 1998. Mezzanine (Circa/Virgin, 20\nApril 1998). THE RULING IS AT THE ROUND HEADER: Blue Lines is\n`triphop`'s anchor and a record pays one debt, so the band's\nown row anchors on the record where they outgrew the genre\nthey founded — the ZIM's own lead: \"a darker aesthetic …\ninfluenced by British post-punk, industrial, hip hop and dub\".\nTwo-note bass under Liz Fraser on \"Teardrop\", Horace Andy on\n\"Angel\", a Manzanera lift on \"Inertia Creeps\": the soundsystem\ndrift of 1991 hardened into a band sound with guitars. The\ngothsynth/analogsynthpop precedent: one act, two rows, because\nthe two records are two musics — and the label says the year\nthat separates them.\n\nLINEAGE: `triphop` (Bristol 1991) is their own earlier\nrecord; `postpunk` (Manchester 1979) the article's first\nnamed influence and the source of the samples; `dub`\n(Kingston 1973) the bass Horace Andy has sung over since\nbefore the band existed.\n\nGRAIN 0.64 -> 40.6 dB UNDER ITS OWN MIX (measured): THE DEEPEST\nSURFACE IN THE WING, and the distance is the argument. Mezzanine\nis 1998 and digital — Del Naja's dread is built out of black\nspace and a clean bottom end, not dust, and its samples are\npost-punk records played rather than degraded. Giving Mezzanine\nDummy's surface would collapse the two rows the downtempo round\nwent to the trouble of separating; nine decibels of depth between\nthem is that separation, said where a listener can hear it.\n  THE NUMBER IS THE SECOND HIGHEST HERE AND THE SOUND IS THE\nQUIETEST, which is the clearest case in the table for reading\ndepth over number: this press is hot, so it takes a large amount\nto place a small surface. The first try of 0.22 measured 56 dB\ndown and left the record's noise floor unchanged to the decibel\n— declared, and never arriving.\n  MEASURED TWICE AND THE SECOND TIME ALONE, because this row is\nwhere the harness lied. Pressed inside a multi-record session it\ncame back at -17.8 dBFS with grain absent and -20.6 with grain\n0.64, which read as \"the surface is squashing the master\" and is\nnot true: pressed ALONE the record is -20.64 dBFS with grain\nabsent, with 0.22, and with 0.64 — the same three decimals — so\nthe level moves with the SESSION and never with the grain. (The\nfx_bus was cleared independently: driven with this record's own\nfxParams, its output RMS is identical to three decimals at\ncrackle 0, 0.22 and 0.64.) The numbers above are the solo press.\ngrain: 0.64 — WITHDRAWN AS A DEFAULT 2026-08-31, kept as the\n//   measured value for a hand that wants it back. Paul: \"Make the\n//   default for surface 0 and I can turn it on only if I want to,\n//   don't put it on anything by default.\" The castings were real —\n//   each was pressed and six moved on what came back — but a\n//   texture nobody asked for is a texture on every play, and the\n//   board's `surface` dial (ui/engineer.js, 2026-08-31) is where\n//   the choice belongs. The engine path stays wired and gated;\n//   what leaves is the ROW declaring it for you.\n\nWHO SINGS: the head voice held nearly straight —\nFraser's \"Teardrop\" register, not a belt.",
+  "label": "Bristol 1998",
+  "voices": 3,
+  "bars": 8,
+  "near": "triphop",
+  "plan": "song",
+  "bpm": 80,
+  "parents": {
+    "triphop": 0.4,
+    "postpunk": 0.25,
+    "dub": 0.2
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "overdrive_guitar",
+    "warm_pad"
+  ],
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 4
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "pad"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "tie",
+  "maxHold": 4,
+  "bassStyle": "pedal",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fx": [
+    "echo",
+    "crunch"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1500,
+    "q": 1.2,
+    "atk": 0.015,
+    "rel": 1.5,
+    "gain": 0.24,
+    "verb": 0.5,
+    "mouth": {
+      "$src": "MOUTHS.falsetto"
+    }
+  },
+  "words": [
+    "the voice, high and nearly still",
+    "the guitar riff, two notes with a grudge",
+    "the pad, the dread under the floorboards"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [transpose(-1)], []][s % 4]\n                    : v === 1 ? [keep(0, 4, 8, 12), transpose(-5)]\n                    : [drop(10)])"
+  }
+}

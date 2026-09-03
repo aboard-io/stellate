@@ -1,0 +1,202 @@
+{
+  "note": "YOUNG GALAXY — Montreal 2011, Shapeshifting. Paul asked for the band\nby name (2026-08-31) — key renamed to `balearic` 2026-09-01, the\ngreat rename: the Lissvik mix-as-composer school's established\nword. The ZIM decides WHICH RECORD the row is,\nbecause the answer changes what the row means.\n\nNOT THE 2007 DEBUT, and the refusal system is why. That album is the\nSlowdive/Galaxie 500/Luna lineage the article itself names — dream pop\nwith a wash — and `dreampop` (London 1984, Treasure) already anchors\nexactly that. A second row for the same claim is the ETHEREAL WAVE\nruling, which this catalogue made and kept: a row whose archetype is\nanother row's anchor does not ship.\n\nSHAPESHIFTING IS THE RECORD THAT IS NOT ALREADY HERE. The article's\nown pivot sentence: \"Their third album, Shapeshifting, was produced by\nDan Lissvik of the band Studio in Gothenburg, Sweden\" — a Swedish\ndub-disco producer handed a Canadian dream-pop duo, and what came back\nwas the synthpop half of their own genre line (\"indie pop, dream pop,\nsynthpop\"). Long-listed for the Polaris; the band never went back.\n\nMONTREAL, THOUGH THE PRODUCER SAT IN GOTHENBURG — the Pomona rule this\ntable has now run three times (knowlewest: \"the tape ran in London, the\nrecord is Knowle West's\"; neworleans: cut in Indiana, the row is New\nOrleans). The band formed in Vancouver in 2005 and MOVED to Montreal,\nwhich is where they were when this record was made. Montreal is a new\ndot; North America by the same volume logic every other row here uses.\n\nTHE CAST is the article's two constants — \"husband and wife, Stephen\nRamsay and Catherine McCandless\" — a sung lead over a machine, with\nthe guitar demoted from weather to punctuation, which is precisely what\nLissvik did to them. Ultramarine (2013) is named in the comment and not\nthe label because it is the SAME turn one step further (\"their first\nalbum in which all lead vocals were performed solely by McCandless\"),\nand one record pays one debt.\n\nWHAT THIS BOX CANNOT SAY about it, and it is the interesting half: the\nLissvik sound is a MIX decision, not a note decision — reverb as an\ninstrument, a vocal pushed through the same chain as the synth, dub's\ndrop-and-return applied to pop arrangement. The grid can seat the\nchairs and it cannot make the desk the composer.\n\nLINEAGE: dream pop is the body, synthpop the machine it was rebuilt\non, and the residue is the producer — a dub engineer's ear on a pop\nrecord, which no parent here supplies.\nREWIRED 2026-08-31, the same shift that wrote the two rows above.\nPaul: \"I guess we need Slowdive and Galaxie 500 too right?\" — and\nonce they existed this row's generic `shoegaze` edge was the wrong\ncitation, because the article does not say shoegaze. It says the\nbands: \"Their sound has been described as similar to the bands\nSlowdive, Galaxie 500 and Luna as well as Pink Floyd and\nSpiritualized.\" So shoegaze 0.2 is REPLACED by the two acts the ZIM\nactually names, and the shoegaze inheritance still arrives — one\ngeneration further down, through `ambientpop`, which holds it at 0.45.\nThey JOIN rather than take over, and the weights say why: that\nsentence sits in the article's Vancouver-and-debut paragraph, and\nthis row is anchored on Shapeshifting (2011), whose body is still\ndream pop rebuilt on a machine. An ancestry the band carried into the\nrecord is not the record. (Luna is Wareham's next band and is\n`slowcore` continued, not a third hole; Pink Floyd's rung is\n`spacerock`, London 1973, already here.)\nSONIC REVISION 2026-08-31, dictated. Paul: \"Young Galaxy has more of a\nnew order influence. A lot of their backing is arpeggiated. Definitely\nfavor the 909 ... Long ethereal vocal lines plus a lot of swirling\nclimbs ... the lyrics are spare and rhythmic ... back to motif one,\nwhich is often just two notes.\" And then the specifics: \"the arpeggios\ntend to be tight and synthy and steady flows of 16 steps per bar.\"\n`dancepostpunk` (Manchester 1983 — the Blue Monday pulse) is the New\nOrder rung and joins at 0.25, taken out of dreampop and synthpop\nrather than out of the two acts the article names, because those two\nare the row's own citation and this is a fourth thing on top.\n\nthe riff chair is the ARPEGGIO, so it stops being a guitar: \"tight and\nsynthy\" is a saw, and a clean guitar playing sixteenths is a different\nrecord entirely.\nSIX CHAIRS, NOT FOUR (2026-08-31). Paul: \"In a YG song there is a LOT\nswirling, a lot of texture and pads and switching lines for guitar.\"\nTwo of those three were missing outright. The GUITAR had gone: it was\nthe riff chair until the arpeggio round took that chair for a saw, so\na band with two guitarists had none. And there was one pad where the\nrecord has a wash. So: `clean_guitar` comes back on its own chair as a\nCOUNTER — the line that answers the voice and changes every bar, which\nis what \"switching lines\" means.\n\nAND A SECOND PAD WAS TRIED AND GIVEN BACK, by a gate rather than by\ntaste. `halo_pad` alongside `warm_pad` put this record at 46.89 against\nprecompose G12d's ceiling of 46 — the parent's mobile-safety line plus\none unit, raised 43 -> 46 once already and MEASURED both times. A\nceiling that exists to catch \"an instrument on every chair\" had caught\nexactly that. Five chairs is what the budget buys, so the wash comes\nfrom the choir, the arpeggio's own reverb and the room, rather than\nfrom a chair nobody can afford.\nTHE ARPEGGIO IS A JUNO (2026-08-31). Paul: \"They should be far more\nfiltered and textural. More Juno 60 or SH-01 vibes.\" The box has the\nmachine — instruments.js `polysynth` IS `dsp: \"juno60\"`, with the\nBBD chorus (1.2/0.8), a sub oscillator, PWM and a filter the envelope\nsweeps — and the arp was on `saw_wave`, which resolves to `supersaw`:\na detuned stack with no filter movement at all. A stack is bright and\nflat; a Juno breathes. That is the whole difference he is describing,\nand it was one id.\nTHE ARPEGGIO IS A 303 (2026-08-31). Paul: \"Switch to a 303 for the arps\nfor Young Galaxy.\" `bass_lead` IS `dsp: \"tb303\"` — instruments.js put\nit there so \"any other chair in any other genre can hire one\" — and it\nreads this row's tone the way a 303 should: cutoff 1200, resonance\n0.3 + res = 0.575 (a real squelch where the Juno had 0.275), envmod\n0.525 sweeping it, and DECAY straight off `rel`, which is the pluck.\nTWO ARPEGGIOS, AND THE SECOND IS ALMOST A SINE (2026-08-31). Paul:\n\"Add a second arp on top of the pads that's just a normal arp.\" Then,\ndescribing Stay For Real: \"a really huge pad and bass in half notes and\nan almost sine arp on top of the pad ... lots of swirling arps\ninteracting.\" So the second one is not another saw — `echo_drops` is\nthe box's near-sine voice, and it sits at register 2, above both the\npads and the 303. The 303 squelches underneath and the sine shimmers\nover it; that is the interaction he is describing.\nREBUILT FROM THE MEASUREMENTS, 2026-08-31. Paul: \"Still no arps ...\njust take what we learned and start young galaxy again from scratch.\nYou're struggling here.\" He was right, and ONE measurement of the whole\ncast said why in two lines:\n\n  v1 bass_lead -> tb303    16.0 notes/bar   PLAYING, in every bar\n  v3 echo_drops -> bell    10.0 notes/bar   and SILENT: solo -240 dB\n\nThe arpeggio was never missing. It was (a) in the BASS REGISTER —\n`bass_lead` is a bass id and KINDS.seq asks `reg: \"low\"` on top of it,\nso sixteen notes a bar landed below the bass guitar and read as a\nburbling bassline, which is precisely what a listener calls \"no arps\";\nand (b) doubled by a chair whose module emits nothing at all. `bell`\nis dropped on that evidence, not on taste.\n\nTHE CHORAL DOUBLING, 2026-08-31. Paul: \"the lyrics are spare and\nrhythmic with a choral doubling for the bridge — 'Whennn weeee | were\nlost', 'You're my pretty boy, aaaaaalwaaaays.'\"\n\nIT IS A SECOND `lead`, WHICH THE DESK ALREADY UNDERSTANDS. precompose\nCHAIRLVL2 says `{ lead: \"norm\" }` — the second chair of a role is not\na second subject — and that rule exists because of Paul's own note on\nAir (\"the main vocals are 2x too loud and the other vocal line should\nbe about 20% quieter\"). So the choir arrives BEHIND the voice by the\ntable's own arithmetic, which is what a doubling is, and CHAIRPAN\nmoves it off centre so the two are not one flanged voice.\n\nWHAT I COULD NOT DO, SAID PLAINLY: make it happen only at the bridge.\nA row has no section-aware voice. `word(v, s)` gets a BAR index —\nkernel.js: `const s = b - g.entry(v)` — and `entry` is a bar index too\n(precompose clamps it to minBars - 1). Neither reaches the section\nROLE, and `kits` is per-bar as well. So a genre cannot say \"at the\nbridge\"; the doubling is on the record rather than on one section of\nit. Making that expressible is a real change to the vocabulary and is\nnot smuggled in here.\nTHE ARPEGGIO STARTS ON BAR ONE OF EVERY BOX (2026-08-31). Paul, after\nfour rounds of this: \"IT'S STILL NOT THERE ... It's supposed to be ALL\nthe measures.\" Measured on his record, the arp staff carried 38 of 65\nbars — and `entry: v => v` was handing voice 2 an entry of BAR TWO, so\nthe figure sat out the first two bars of every single box. A bed that\nwaits two bars each time is not a bed. Voice 2 enters at 0 with the\nvoice; the choir (3) already did.\n\nTHE ARPEGGIO CHAIR SITS AN OCTAVE UP (voice 2), 2026-08-31. Paul:\n\"The mix is muddy.\" Sixteen notes a bar in the same octave as the bass\nand the pad IS the mud, and the New Summer tab he sent puts the synth\nfigure at the ninth and twelfth frets of the B and G strings — well\nabove the band. This is the chair's register, which is the one that\nreaches the sound (a cell's own `reg` cannot, at a one-bar ceiling —\nprecompose says so where I tried it).\nTHE ARPEGGIO CHAIR IS LIFTED THREE, and this is the whole fix. A 303 is\na BASS machine and KINDS.seq asks `reg: \"low\"` on top of it, so the\nfigure sat an octave and more BELOW where an arpeggio lives. +3 puts it\nover the bass and the pad — where Paul's own tab has the synth figure\n(ninth and twelfth frets) and where the FFT of the track he sent puts\nits continuous sixteenth layer: 6.3 onsets/sec in the HIGH band,\nagainst a sixteenth at 6.85/sec.\n\n+1, NOT +3, AND THE FIRST TRY WAS MEASURED AND THROWN AWAY. At +3 the\nfigure came out C6-D8 — above the singer, up where nothing on this\nrecord lives. Each step here is an OCTAVE, so the range is the whole\ninstruction: bass C2-F2, pad G2-F3, voice F3-D6, and the arpeggio\nwants to sit over the first two and with the third. +1 puts it at\nC4-D6. Measured both times rather than reasoned about, because\nreasoning about this row is what cost Paul five rounds.\n\nTHE CHANGES ARE PAUL'S AND THE MODE FOLLOWS THEM. A, D and Bm is\nI-IV-ii, which is MAJOR — the row was aeolian, where those degrees are\na different three chords. `roots` stays as the fallback shape for a\nsection the family does not name; the named progressions are the\nrecord's own.\n\nTHE BRIDGE IS NEW SUMMER'S TURN — the one move Pretty Boy never makes\n(ii vi IV V against its two chords), so the song has somewhere to go\nthat is still this band. Verse and chorus stay Pretty Boy's, because\nthat is the anchor record.\n\nITS OWN ARPEGGIO (2026-08-31): the CLOSE one. Paul — \"far more tonally\ncentered ... Things swirl and build but don't jump.\" Every other mode\nreaches the octave; this one never leaves the triad.\n\nTHE HOLE BEFORE THE CHORUS (2026-08-31). Paul asked for it twice, and\nthe FFT of the record he sent settles its shape: at 96s the sub falls\nto -23.3 dB and the bass to -10.6 while the mid holds at -3.4. The\nbottom leaves; the middle stays. See compose.js `drops`.\n\nTHE ARPEGGIO IS NOT OPTIONAL ON THIS RECORD (2026-09-01). Paul: \"you\nmust give me that for every young galaxy song.\" Measured before this\nline: seeds 5 and 9 had the figure in ZERO bars, because the sequencer\nslot is dealt by a seeded chooser and on those seeds it was never\ndealt at all. See precompose `arpAlways`.\n\nTHE LENGTH COMES OFF THE GATE, NOT OFF THE TAIL, and this is the one\njudgement call in the round. \"Long ethereal vocal lines\" and \"steady\nflows of 16 steps per bar\" are opposite demands on ONE `tone`, because\na row has no per-chair tone (only `bassTone` exists) — and sixteen\nnotes a bar at 104bpm are 144ms apart, so the old 1.6s release would\nhave eleven of them sounding at once. That is a smear, and it is\nexactly what Paul reported on Iranian pop: \"they all seem to run\ntogether.\" So the singing gets its length from HELD NOTES (`artic`\nmaxHold) and the release drops to 0.55 where an arpeggio can\narticulate. The wash is unchanged — `verb` still .55.\n\nAND `artic: \"tie\"` CAME OFF, WHICH THE MEASUREMENT DECIDED. Tie is a\nsecond way to lengthen a line and it does it by MERGING consecutive\ngated steps — which is a sixteenth-note arpeggio's exact enemy.\nMeasured on the rendered lanes, four settings:\n    artic tie,  maxHold  7 -> riff 7.4/bar, lead mean .65, longest 2.25\n    artic none, maxHold  7 -> riff  12/bar, lead mean .58, longest 1.61\n    artic none, maxHold 10 -> riff  12/bar, lead mean .62, longest 1.84\n    artic none, maxHold 12 -> riff  12/bar, lead mean .62, longest 1.84\nTie was eating 38% of the arpeggio to buy the voice 5% of its length.\nmaxHold saturates at 10 and gets nearly all of it back. So: no tie,\nmaxHold 10 — the singing stays long and the sixteenths survive. This\nis the whole reason the row was rendered and counted instead of\ndeclared and trusted.\n\nthe riff chair takes the room, because on this record the guitar is\nan effect return rather than a part — the same door noirhop's\nriff uses, one word quieter.\n...AND THE ARPEGGIO SITS UNDER THE SONG (2026-08-31). Paul: the arps\n\"fade down a little and alter over the song\". `back` is fields.js\nLEVELS 0.7, -3.1 dB — a little, which is the word he used, and the\nriff chair is the arpeggio's chair on this record.\n\nI OWE A CORRECTION HERE. Two rounds ago I wrote, in the als.js mix\ncomment, that a row's `mix[part].lvl` \"REACHES NOTHING\" — measured,\n`{pad:{lvl:\"hush\"}}` and `{lvl:\"fwd\"}` both left the unit at 0.2297.\nThat measurement was wrong and the fault was my harness: precompose\nMEMOIZES an anchor's document, and I was mutating GENRES after the\ndocument had already been built, so the engine never saw either word.\nfields.js resolvePartMix has handled `lvl: pick(LEVELS, g.lvl, 1)` all\nalong. The als.js comment is corrected in the same commit.\nDELAY ALL OVER (2026-09-01). Paul: \"Try young galaxy again from first\nprinciples, making sure to keep tight arps with delay all over.\" The\narps were remeasured first — v2 sixteen onsets a bar, 76/76 bars, on\nevery seed tried — so \"again from first principles\" keeps the machine\nand pays the half that was missing: the delay reached ONE chair. The\nbus was already right (echoBus derives time d8, fb \"more\" off verb\n.55, tone dark off cut 1200 — a dotted-eighth dark throw); what was\nmissing was senders. Measured at the document desk: with this block\n7 of 8 line chairs carry an echo word into that one bus (the lone\ndry chair is a parent-layer guest with part \"line\", and \"line\" gets\nno entry on purpose — a floor under the swirl). The riff goes WET —\nsixteen dry sixteenths plus their dotted-eighth repeats IS the\nswirl — and drops to \"back\" so the repeats have room.\n\nboth lead chairs: voice + choir doubling\nboth pads breathe, don't smear\nthe switching guitar answers into the same room\nTHE FILTER HAD TO SPEAK (2026-08-31). Paul, a third time: \"why are\nthey not filtered down to a nice tone? I asked many times.\" Measured\non the Juno's own params: `cutoff 2000, res 0.025` — wide open with\nno resonance at all, which is a saw with the lid off, not a Juno.\nto-engine derives `res = (q - 0.7) / 12`, so this row's `q: 1.0` was\nasking for 0.025 when the rows that sound like anything ask 0.28-0.38.\nq 4.0 gives 0.275, and the cutoff comes down to 1200 where a Juno arp\nlives — the envelope's own sweep (envAmount 1.77) then opens it and\ncloses it on every note, which is the \"textural\" half of the ask and\nis the thing a filter with no resonance cannot do.\nPLUCKED, 2026-08-31. Paul: \"There should be more of a plucked feeling\neverywhere.\" `rel` is the release for every chair AND the 303's decay,\nso one number does both: .55 -> .32 gives the arpeggio a short decay\nthat speaks and stops, and takes the tail off the guitars and the pad\nwith it. The SINGING does not shorten with it — a sung line gets its\nlength from held gates (`maxHold: 10`), which is why that lever exists\nseparately and why the tie came off two rounds ago.\n\nMOTIF ONE IS TWO NOTES. Paul: \"back to motif one, which is often just\ntwo notes.\" `keep(0, 8)` is that literally — one note on the bar, one\non the half — and it alternates with the fuller line so the tune comes\nand goes rather than running continuously, which is the same gesture\nas \"motifs coming in and out\".\nAND THE ARPEGGIO IS split-THEN-fill. `split(4)` is the arpeggiator:\nit subdivides a held note and each repeat climbs by the phrase's own\n`inc`, which is where \"swirling climbs\" comes from. `fill(1)` then\ngates EVERY step, which is sixteen to the bar, said in the alphabet's\nown words rather than as a number somewhere.\n...AND THE GUITAR SWITCHES EVERY BAR (v4). Four readings of its own\nline — as written, rotated, thinned, moved up — so it answers the\nvoice differently each time round rather than repeating one figure.\nThe second pad (v5) holds like the first, an octave up: two pads that\nhold and one that moves is a wash, three that move is a crowd.\n\nthe choir sings the voice's own shape, thinned: it holds\nthe long notes and leaves the busy ones to the lead,\nwhich is what a doubling does and what \"aaaalwaaaays\"\nsounds like against a rhythmic lyric",
+  "label": "Montreal 2011",
+  "voices": 5,
+  "bars": 8,
+  "near": "dreampop",
+  "plan": "song",
+  "bpm": 104,
+  "parents": {
+    "dreampop": 0.3,
+    "dancepostpunk": 0.25,
+    "synthpop": 0.2,
+    "ambientpop": 0.15,
+    "slowcore": 0.1
+  },
+  "wants": [
+    "the gothenburg dub-disco shelf (studio, service)"
+  ],
+  "instr": [
+    "solo_vox",
+    "warm_pad",
+    "bass_lead",
+    "ahh_choir",
+    "clean_guitar"
+  ],
+  "drumkit": "tr909",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": [
+          2,
+          3
+        ],
+        "then": 0
+      }
+    ],
+    "else": {
+      "$v": true
+    }
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": -1
+      },
+      {
+        "at": 2,
+        "then": 1
+      },
+      {
+        "at": 3,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "riff",
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    3,
+    1,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "progFamily": {
+    "verse": "prettyboyV",
+    "chorus": "prettyboyC",
+    "bridge": "newsummerH"
+  },
+  "seqArp": "arpclose",
+  "drops": true,
+  "arpAlways": true,
+  "maxHold": 10,
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "fx": [
+    "chorus",
+    "echo"
+  ],
+  "mix": {
+    "riff": {
+      "rev": "some",
+      "echo": "wet",
+      "lvl": "back"
+    },
+    "lead": {
+      "echo": "some"
+    },
+    "pad": {
+      "echo": "touch"
+    },
+    "counter": {
+      "echo": "some"
+    }
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 1200,
+    "q": 4,
+    "atk": 0.02,
+    "rel": 0.32,
+    "gain": 0.26,
+    "verb": 0.55,
+    "mouth": {
+      "$src": "MOUTHS.dreamchoir"
+    }
+  },
+  "words": [
+    "the voice, long and climbing",
+    "the pad, holding under it",
+    "the arpeggio, sixteen to the bar",
+    "the choir, doubling the voice a step behind it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [keep(0, 8)], [transpose(2)], [keep(0, 8)]][s % 4]\n                    : v === 4 ? [[], [rotate(2)], [drop(3)], [transpose(2)]][s % 4]\n                    : v === 1 ? [drop(8)]\n                    // the choir sings the voice's own shape, thinned: it holds\n                    // the long notes and leaves the busy ones to the lead,\n                    // which is what a doubling does and what \"aaaalwaaaays\"\n                    // sounds like against a rhythmic lyric\n                    : v === 3 ? [[keep(0, 8)], [keep(0, 8)], [keep(0, 4, 8)], [keep(0, 8)]][s % 4]\n                    : [[split(4), fill(1)], [split(4), fill(1)],\n                       [split(2), fill(1)], [split(4), fill(1)]][s % 4])"
+  }
+}

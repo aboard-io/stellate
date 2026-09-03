@@ -1,0 +1,114 @@
+{
+  "note": "BEL CANTO — Milan 1831. Bellini's *Norma* opened at La Scala on 26\nDecember 1831, and \"Casta diva\" is the argument for every field\nbelow: a melody so long that the orchestra has to get out of its way,\nover an accompaniment that is a broken chord and a bass note and\nnothing else, ornamented differently the second time through.\nTHREE ROWS ABOVE WANT AN OPERA and there was none in the catalog:\n`nocturne` asks for \"bel canto opera\" by name and this pays it —\nChopin said outright that he was writing Bellini for the piano —\nwhile `continuo`'s \"opera seria\" and `romantic`'s \"opera orchestra\"\nstay unpaid on purpose, because they are a different century's opera\nat each end and one row cannot honestly be three.\nTHE AXES. SOUND and CAST carry it: one trained voice at the front,\nstrings holding, a harp arpeggiating, and a deliberately empty\nmiddle. Alphabet is almost naive — tonic and dominant for eight bars\nat a time — and that is not a simplification, it is the style: the\nharmony is slow BECAUSE the melody is doing everything.\n\nLINEAGE: `classical` (Vienna 1785) is the period whose orchestra\nand phrase structure this inherits whole, and `continuo` (Florence\n1602) is opera's own root in this table — the recitative-and-aria\nmachinery and the accompanied solo voice both start there.\n\"opera seria\" PAID 2026-08-29 (London 1724): the da capo aria's\nstate-depart-restate-ornamented is the formal machine \"Casta diva\"\nstill runs, and the weight comes off both older claims — continuo\nkeeps opera's root, classical the orchestra and the phrase.\n\nWHO SINGS: `belter` — the trained soprano with a wide,\nlate wobble and very little air in the tone. It is the\nonly row in MOUTHS written for a voice that is meant to\nfill a hall without help.",
+  "label": "Milan 1831",
+  "voices": 3,
+  "bars": 8,
+  "near": "nocturne",
+  "plan": "arc",
+  "bpm": 70,
+  "parents": {
+    "classical": 0.45,
+    "operaseria": 0.35,
+    "continuo": 0.2
+  },
+  "wants": [
+    "the neapolitan school",
+    "the castrato repertory"
+  ],
+  "cannot": [
+    "the cavatina-and-cabaletta pair — a bel canto number is a SLOW half and then a fast half, and one record has one tempo (WORLD.md §5.2); per-section `pace` is designed and not landed, so this row is the cavatina alone",
+    "the fioritura the singer writes — the ornament was the PERFORMER's composition, different every night, and `orn` is a density number the box applies evenly"
+  ],
+  "instr": [
+    "solo_vox",
+    "strings",
+    "harp"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "roots": [
+    0,
+    0,
+    4,
+    4,
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 4,
+  "nobass": false,
+  "bassStyle": "pedal",
+  "kit": {},
+  "orn": {
+    "grace": 0.35,
+    "pass": 0.25
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.9,
+    "atk": 0.04,
+    "rel": 1.8,
+    "gain": 0.24,
+    "verb": 0.6,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the aria, long-breathed, ornamented more each time",
+    "the strings, holding under it",
+    "the harp, arpeggiating the chord"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [fill(2), rotate(2)]][s % 3]\n                    : v === 1 ? [drop(8)]\n                    : [fill(2), keep(0, 2, 4, 6, 8, 10, 12, 14)])"
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "note": "OPERETTA — London 1878. H.M.S. Pinafore at the Opera Comique,\nthe 25th of May 1878, 571 nights: Gilbert's patter over\nSullivan's bel canto parody, the comic opera machine that Tin\nPan Alley's whole songcraft apprenticed under. `tinpanalley`\n(New York 1924) has wanted \"operetta\" by name since its lineage\nwas written and takes the parent today.\n\nLINEAGE: `belcanto` (Milan 1831) is the vocal writing being\nparodied and honored at once; `operaseria` (London 1724) the\nform the parody stands on. Offenbach is the missing Paris\nuncle, named below.\n\nWHO SINGS: the belter — a patter baritone projects to\nthe gallery or the joke dies in row F.",
+  "label": "London 1878",
+  "voices": 3,
+  "bars": 8,
+  "near": "operaseria",
+  "plan": "song",
+  "bpm": 116,
+  "parents": {
+    "belcanto": 0.4,
+    "operaseria": 0.25
+  },
+  "wants": [
+    "offenbach's bouffes-parisiens",
+    "the ballad opera (the beggar's opera)"
+  ],
+  "instr": [
+    "solo_vox",
+    "strings",
+    "upright_piano"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 1
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      },
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "kit": {},
+  "harmony": "cycle",
+  "roots": [
+    0,
+    4,
+    0,
+    4,
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "tone": {
+    "wave": "triangle",
+    "cut": 2700,
+    "q": 0.9,
+    "atk": 0.01,
+    "rel": 0.4,
+    "gain": 0.25,
+    "verb": 0.35,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the patter, syllables at speed",
+    "the strings, mock-heroic under it",
+    "the piano, the vamp"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(1)], [fill(1), rotate(2)]][s % 3]\n                    : v === 1 ? [drop(8)]\n                    : [keep(0, 4, 8, 12), transpose(-3)])"
+  }
+}

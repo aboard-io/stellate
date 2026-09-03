@@ -1,0 +1,193 @@
+{
+  "note": "====================================================================\nTHE MIDI-CORPUS ROUND (2026-09-02) — COMPOSER.md §5 item 2\n====================================================================\nPaul, 2026-09-01: \"Some genres we need — here are some representative\nartists: Nas, Jay Z, Missy Elliott, George Michael, Wham, Michael\nJackson, Mariah Carey, Alanis Morissette, Whitney Houston, Nirvana,\nFoo Fighters, Oasis, Blur, Radiohead Creep and Bends era, RHCP, Dr\nDre, Snoop Dogg, Tupac Shakur, Garth Brooks, REM, Beck, PJ Harvey,\nPavement, Beastie Boys, Usher, Timbaland, Britney Spears, Justin\nTimberlake, Beyonce, 50 Cent, Outkast, Green Day, Coldplay, Linkin\nPark, Peter Gabriel So era, Drake, and taylor swift. Rihanna, Bruno\nMars, Adele, Carly Simon. Please revisit James Taylor. Make heavy use\nof our MIDI archive for these, don't just imagine.\" And, in the same\nmessage: \"you should also search the MIDI library for many more\ngenres while you're in there.\"\n\nEVERY NUMBER BELOW WAS MEASURED, NOT CHOSEN. The corpus is\n/mnt/sources/relocated/stellate-midi-corpus (120,652 indexed files;\nthe `bulk` rip files an act as `bulk/<LETTER>/<ACT>.<Song>.mid`), read\nwith tools/mine/mine-midi.js's own SMF parser and the verifier\nformulas it carries. Each row states, in its own comment: how many\nfiles it was measured over, the tempo distribution WITH TEMPO EVENTS\nONLY (a file with no tempo meta reads 120 and would have poisoned\nevery median), the meter and mode tallies, the drum lanes as a\nsixteen-step onset histogram scaled 0-9, and the four-bar root cycle\nthe corpus votes for most. Where the number disagreed with what a\nrow would have been written from memory, THE NUMBER WON and the row\nsays where.\n\nTHE SEARCH WAS RUN TWICE AND THE SECOND PASS MATTERED. The corpus\nfiles an act two ways — `bulk/N/NIRVANA.Polly.mid` and\n`bulk/T/taylor_swift-mine.mid` — and the first sweep matched only the\nfirst spelling, so every count in this round was re-derived against a\nbasename normaliser that folds `_`, `-` and `.` to spaces. Three rows\nwere re-checked against the wider set and all three held: Nirvana goes\n23 files -> 128 (tempo p25 115 · med 128, and grunge's 120 sits between\nthem), pop-punk 70 -> 180 (med 152.5, mode 150 major / 30 minor\nagainst the subset's 60/10), post-grunge 120 -> 95 for the strict-name\nsubset (med 110 against the row's 108). One row was WRITTEN by the\nsecond pass — Taylor Swift is 23 files under the underscore spelling\nand none under the other, so `confessionalpop` (Nashville 2008) could\nbe measured at last; its improvement is on that row.\nTHE NAMING LAW IS THE 2026-09-01 GREAT RENAME'S, unchanged: keys are\nGENRE terms. Every act Paul lists is in a row COMMENT as the named\nrecord, never as a key.\n\nTHE (PLACE, YEAR) KEY forced four rulings and each is on its row:\n`funkrock` is Los Angeles 1984 and not 1991 (Blood Sugar Sex Magik's\nyear is powerballad's), `glammetal` took 1987 and pushed `funkrock`\nto the band's own debut, `britpop` is Manchester 1994 rather than\nLondon 1994 (dnb's), and `blackmetal` is Oslo 1993 rather than the\nBergen studio the tape was cut in.\n\nGRUNGE [punk] — Seattle 1991. Nirvana, \"Nevermind\" (DGC, 24 September\n1991): the record that took Sub Pop's city worldwide. The tape was cut\nat Sound City in Van Nuys and the row still says Seattle, because\ngrunge is a SCENE word — the reading `madchester` (Manchester 1990)\nand `bristolsound` (Bristol 1998) already take, where the label names\nthe room the music came out of rather than the desk it was mixed on.\nMEASURED over 166 files (Nirvana 23 · Pearl Jam · Soundgarden · Alice\nin Chains · Stone Temple Pilots · Smashing Pumpkins). Meter 164 of 166\nin 4/4. Tempo, tempo-event files only: p10 77 · p25 108 · med 120 ·\np75 154 · p90 180; the NIRVANA subset alone medians at exactly 120 and\nthat is the number this row takes. Swing: median 0.000 — this music\ndoes not lean, and the row says `swing` nowhere. Mode split 86 major /\n80 minor, which is the tell: the corpus's second-commonest four-bar\ncycle is I-bVII-bIII-bVII (52 windows) — a MODAL minor with no leading\ntone at all, which is why this row is aeolian and not the ionian\n`emo` and `poppunk` sit in. Held notes: median 2.0 sixteenths, p90 6.\nMelodic mean pitch 63 (D#4) against poppunk's 71.6 — Cobain sings LOW,\nand `reg` says so. Drum lanes, 0-9 over sixteen steps:\n  kick  9151416171713161   snare 4121912251219132\n  hat   7141914191419141   crash 9020502050104020\n— the hat is plain eighths (every even step at 9, every odd at 1), the\nsnare is a two-and-four backbeat with a sixteenth ghost either side,\nand the kick answers on the \"and\" of two. The grids below are that\nhistogram thresholded, not a guess about what a rock kit does.\n\nLINEAGE: `punk` (New York 1976) is the format and the refusal;\n`heavymetal` (Workington 1969) is the down-tuned power chord and the\nvolume, which punk did not have; `hardcore` (Washington 1980) is the\nAmerican half of the punk inheritance and the one this scene's bands\nactually grew up on; `psychrock` (San Francisco 1966) is the long\nmodal wash the loud half opens into. The Melvins' Aberdeen sludge —\nthe local band every one of these acts names as the teacher — is\nowed and unpaid.\n\ni-bVII-bIII-bVII, the corpus's own modal cycle: no leading tone, no\ndominant, and the bVII is the whole colour.\n\nTHE GHOST SIXTEENTHS EITHER SIDE OF THE BACKBEAT, measured: the\nsnare histogram reads 2 at step 3 and 5 against 9 at step 4.",
+  "label": "Seattle 1991",
+  "near": "sludge",
+  "plan": "song",
+  "bpm": 120,
+  "parents": {
+    "punk": 0.35,
+    "heavymetal": 0.3,
+    "hardcore": 0.2,
+    "psychrock": 0.15
+  },
+  "wants": [
+    "the Melvins' Aberdeen sludge, the local band this scene names as its teacher"
+  ],
+  "instr": [
+    "distortion_guitar",
+    "clean_guitar"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    6,
+    2,
+    6
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "diatonic": true,
+  "artic": "normal",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1800,
+    "q": 1.8,
+    "atk": 0.005,
+    "rel": 0.5,
+    "gain": 0.3,
+    "verb": 0.18
+  },
+  "words": [
+    "the guitar, the riff, four steps and a fall",
+    "the clean guitar, the quiet half, an octave under"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(2), transpose(-12)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "crunch"
+  ]
+}

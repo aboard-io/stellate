@@ -1,0 +1,128 @@
+{
+  "note": "TIN PAN ALLEY — New York 1924. West 28th Street between Fifth and\nBroadway, where the song-publishing trade kept its cubicles and its\nupright pianos, and 1924 is the year the SONG the whole business was\nbuilt to sell reached its finished shape: Youmans and Caesar's \"Tea\nfor Two\" (No, No, Nanette) and Gershwin's \"Fascinating Rhythm\" (Lady,\nBe Good), both published in New York that year, both a thirty-two bar\nchorus in four eight-bar phrases.\nFIVE ROWS ABOVE ASKED FOR THIS ONE. `crooner` sings its repertory,\n`swing` and `jazz` improvise over its chord grids, `doowop` harmonises\nits cadences on a street corner and `detroitsoul` was written in a building\norganised as a publishing house on purpose.\nTHE AXES: this anchor is FORM and ALPHABET and almost nothing else,\nwhich is right, because a Tin Pan Alley song was SHEET MUSIC — the\nsound was whoever bought it. Alphabet is the circle of fifths taken\nseriously (ii-V-I, a secondary dominant on the way, a chorus that\nmodulates by thirds); Material is a two-bar cell SEQUENCED, which is\nliterally how \"Tea for Two\" is built; Cast is two — a plugger and a\npiano, which is what the room contained.\n\nLINEAGE: `parlor` (New York 1892) is the same trade one technology\nearlier — the piano in the front room the sheet was sold for — and\n`ragtime` (Sedalia 1899) is where the syncopation in the melody\ncame from. The alley is the parlor song with a rag's rhythm and a\npublisher's discipline over the form.\nPAID 2026-08-29, the debts round: \"operetta\" is `operetta`\n(London 1878) — the chorus craft the Alley's own writers\napprenticed under. \"vaudeville\" examined and declined the same\nday: a stage FORMAT, not a music (the debts round's foot).\n\nii-V-I twice, with the third phrase leaning on the relative minor:\nthe alley's own harmony, and the reason a jazz musician can still\nread a 1924 chorus at sight in 2026.\n\nWHO SINGS: the crooner's own mouth, which is what this\nrepertory was sung with the moment a microphone existed.",
+  "label": "New York 1924",
+  "voices": 2,
+  "bars": 8,
+  "near": "parlor",
+  "plan": "song",
+  "bpm": 108,
+  "parents": {
+    "parlor": 0.6,
+    "ragtime": 0.4,
+    "operetta": 0.2
+  },
+  "wants": [
+    "the coon song",
+    "vaudeville"
+  ],
+  "cannot": [
+    "AABA — the thirty-two-bar chorus with a bridge in the third eight is what this music INVENTED, and section order is a song fact decided by the composer, not a field an anchor can declare; `bars: 8` says how long a phrase is and nothing says which phrase comes back",
+    "the modulation up a semitone for the last chorus, which is the plugger's own trick and needs a key change inside one record"
+  ],
+  "instr": [
+    "solo_vox",
+    "yamaha_grand_piano"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    1,
+    4,
+    0,
+    0,
+    5,
+    1,
+    4,
+    0
+  ],
+  "prog": [
+    {
+      "d": 1,
+      "q": "m7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "maj7"
+    },
+    {
+      "d": 0,
+      "q": "six"
+    },
+    {
+      "d": 5,
+      "q": "m7"
+    },
+    {
+      "d": 1,
+      "q": "m7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "maj7"
+    }
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "swing": 0.15,
+  "artic": "legato",
+  "maxHold": 3,
+  "nobass": true,
+  "kit": {},
+  "orn": {
+    "grace": 0.15
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2900,
+    "q": 0.8,
+    "atk": 0.01,
+    "rel": 0.9,
+    "gain": 0.27,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.crooning"
+    }
+  },
+  "words": [
+    "the chorus, a two-bar cell sequenced",
+    "the piano, ii-V under it"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n        ? [[], [transpose(1)], [transpose(-1), rotate(2)]][s % 3]\n        : [[drop(2)], [drop(2), fill(2)], [drop(2)]][s % 3])"
+  }
+}

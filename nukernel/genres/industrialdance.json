@@ -1,0 +1,152 @@
+{
+  "note": "WAX TRAX! [the label]. THE ROOM THAT MADE THE RECORDS, and it ships\nunder the batcave rule — a room or a label earns a row only when the\nrecord is its OWN, and the ZIM names two of them outright. Wax Trax!\nRecords: \"The first official Wax Trax! release was Strike Under's\nImmediate Action twelve inch EP in 1980... But it was the release of\nCold Life by Ministry in 1981—along with the licensing of Front 242's\nEndless Riddance EP—that set the stage for Wax Trax! to become\nAmerica's preeminent industrial label of the 1980s and 1990s.\" That is\na discography, not a scene, which is what separates this from a mood.\nCHICAGO 1981, ARGUED FROM THE ZIM'S OWN SENTENCES AND NOT FROM THE\nSHOP SIGN. The store is older than the label and it is not even the\nsame city: \"It began as a record shop in Denver, Colorado in 1974...\nwho sold the store in 1978 and moved to Chicago. In November of that\nyear, they opened a store under the same name in the Lincoln Park\nneighborhood.\" So Chicago 1978 is a SHOP and this row is a SOUND. The\nfirst release is 1980 and it is Strike Under, a hardcore EP — the\nlabel's punk half, not the music four anchors below descend from. The\nyear the ZIM itself picks out is 1981, the one it says \"set the stage\",\nand Ministry's article agrees from the other side: the \"I'm Falling /\nCold Life\" single \"reached No. 45 in the Billboard Hot Dance/Disco\nchart... thus scoring Wax Trax!' first hit.\"\nAND THE SOUND OF THAT RECORD IS NOT THE SOUND OF THE LABEL'S LEGEND.\nMinistry in 1981 is not the riff wall of 1988; the ZIM says \"Originally\na synth-pop outfit\", and the room it was made in is itemised: Jourgensen\n\"began to write and record songs in his apartment, using a newly bought\nARP Omni synthesizer, a drum machine, and a reel-to-reel tape recorder.\"\nThree objects, and this catalogue can seat all three honestly. The ARP\nOmni IS the ARP string ensemble, which is exactly what `synth_strings_1`\nreaches (instruments.js: \"the Solina/ARP string ensemble, which is what\nevery record meaning 'synth strings' was actually playing\") — so the\nsignature instrument here is a STRING MACHINE, not a lead. `cr78` is\nthe drum machine of that year. And Jourgensen sings because the ZIM says\nthe auditions failed: \"he auditioned several singers, all of whom were\nunsatisfactory, so he decided to perform vocals himself.\"\nEIGHT TITLES WERE PROBED, NOT ONE (the qiyan lesson: one probe is not a\nsearch). Wax_Trax!_Records · Wax_Trax! (a REDIRECT to the same article\nin this ZIM — there is no separate shop page, so the shop/label fork\nthis row was afraid of does not exist and the dating above has to do\nthat work instead) · Ministry_(band) · Front_242 · KMFDM (\"Konietzko\nand Esch moved to the United States, where they found much greater\nsuccess with seminal industrial record label Wax Trax!\") ·\nRevolting_Cocks (\"began as a musical side project for Richard 23 of\nFront 242, Luc van Acker, and Al Jourgensen of Ministry\" — the label as\nthe room where its own acts met) · My_Life_with_the_Thrill_Kill_Kult\n(Chicago, \"pioneers of the industrial music genre\") · Al_Jourgensen\n(\"Closely related with the independent record label Wax Trax! Records\",\nand Ministry \"which he founded in 1981\", the third independent arrival\nat this row's year). All eight are 200s in this ZIM.\nTHE ROW EXISTS TO BE A PARENT. It is the rung `industrialrock` has been\nasking for in `wants` since it was written, and it is the literal label\nof `industrialmetal` (Ministry) and the American door `ebm` came through\n(Front 242's licence) and the reason `industrialbreaks` is filed as\nindustrial at all (Meat Beat Manifesto: \"Sweat Box Records sold the\nrights to the LP to Wax Trax Records for release in the United States\"\n— which is why, the article says, they \"got pigeonholed as an industrial\nact\"). All four children are 1988 or later, so every edge runs forward.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nMinistry, \"Cold Life\" (Wax Trax!, Chicago 1981) — the record this row's\nown comment is dated on.\n\na 12-inch single with a verse and a chorus that happened to chart on\na disco list. 122 lands in the one gap its own family leaves —\nsynthpop 118, roboticpop 120, analogsynthpop 124 — which is where a\nrecord that is a synth-pop song and a dance-chart entry at once\nbelongs.\n\nLINEAGE: synth-pop is what the ZIM calls this band at this date and it\nis the dominant share; post-punk is where the player came from\n(Jourgensen \"replaced Tom Hoffmann on guitars in Special Affect, a\npost-punk group\") and what the label itself was filed as (Larkin:\n\"Along with Touch & Go Records, Wax Trax is Chicago's most important\npost-punk label\"); disco is the CHART the first hit landed on; punk is\nStrike Under's Immediate Action, the first record the label pressed.\nThe synthpop edge is same-year (Basildon 1981) rather than older,\nwhich this graph already permits where the label dates a SOUND —\n`coldwave` 1979 takes `postpunk` 1979 on the same reading.\n\nTHE ARP OMNI IS THE ROW. `synth_strings_1` is the Solina/ARP ensemble\n(instruments.js PATCH_SYNTH), and its chorus is the instrument, which\nis why the parent drops inserts on it — the right refusal for a record\nwhose whole apparatus was one string machine in a bedroom. The second\nchair is the voice the auditions failed to find.\n\nNOT ITS NEIGHBOURS' CYCLE. [0,5,3,4] — i-vi-iv-v — is what\n`analogsynthpop` and `roboticpop` both already play, and writing a\nthird copy of it into the same family would be the twin this round is\nelsewhere pulling apart. [0,6,5,4] is the descending minor line,\ni-VII-VI-v, which is what a machine holding chords under a singer\nactually does and what a string ensemble is FOR — it sustains through\nthe descent instead of restriking it. `cycle` because roots are\ndeclared, which is the reading all three neighbours make.\n\nLEGATO, and it is the field that separates this row from the three\nbeside it — all of them staccato. An ARP Omni is a string machine and\na string machine's note does not stop.\n\nAN ENSEMBLE IS NOT A LEAD, so the filter sits open and the resonance\nsits low: a string machine's character is its chorus and its slow\nspeech, and a squelch on it would be a different, later instrument.\n\nthe voice answers rather than doubles — the string machine holds and\nthe singer moves, which is the shape of a record made by one person\nplaying everything (the quote-box law §51's own test).",
+  "bassInstr": "bass_lead",
+  "label": "Chicago 1981",
+  "near": "synthpop",
+  "plan": "song",
+  "bpm": 122,
+  "parents": {
+    "synthpop": 0.35,
+    "postpunk": 0.3,
+    "disco": 0.2,
+    "punk": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "synth_strings_1",
+    "synth_voice"
+  ],
+  "drumkit": "cr78",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    6,
+    5,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 3000,
+    "q": 0.7,
+    "atk": 0.05,
+    "rel": 0.9,
+    "gain": 0.28,
+    "verb": 0.26
+  },
+  "words": [
+    "the string machine, the figure turning",
+    "the voice over it, the phrase answered"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": []
+}

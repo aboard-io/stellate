@@ -1,0 +1,306 @@
+{
+  "note": "CHUCK BERRY [rock]. The double stop is the whole idea, and it costs two\nvoices: one line played twice a FOURTH apart, one rhythm, one register —\ntwo strings under one finger, not a lead and a harmony part. (The\nBeatles' thirds are the other shape, a third up and an octave clear;\nthis one never leaves the guitarist's hand, which is why it is the only\nplace in the table where two voices share a register on purpose.) Under\nit the boogie — root and fifth, alternating — a piano chording the tune's\nown eighths, and over twelve bars with the quick change a backbeat that\nis barely shuffled at all: the guitar plays straight, the piano plays\ntriplets, and the record splits the difference at swing 0.15. That split\nis the genre — the one anchor here whose identity is a compromise about\nTIME rather than a mode, a kit or a chord.\n\nnamed \"St. Louis 1955\" — the Sir John's Trio at the Cosmopolitan Club\nin East St. Louis: guitar, piano, drums, no horns, which is the band\nthis anchor models. Maybellene was cut in Chicago that May; the group\nthat walked into Chess was St. Louis's, and Johnnie Johnson's piano is\nthe half of it everybody forgets.\n\n150 is the honest mid between \"Roll Over Beethoven\" and a \"Johnny B.\nGoode\" past the dial's ceiling\n\nLINEAGE: Chess blues played out of a hillbilly's songbook. Maybellene\nis Ida Red, and the country side is not a costume — it is the straight\neighths, the major third and the diction that got him billed as a\nhillbilly singer sight unseen. The three ancestors still owed: T-Bone\nWalker, whose double stops these literally are; Louis Jordan's jump\nshuffle, which is the tempo and the small band; and the boogie-woogie\nleft hand Johnnie Johnson brought to the piano stool.\n\"boogie-woogie\" PAID 2026-08-29 (Chicago 1928): Johnnie Johnson's\nright hand is on half these records and the intro of Roll Over\nBeethoven is a boogie chorus on guitar; the weight comes off blues,\nwhose shuffle was half boogie's to begin with.\n\nNO reg() TERM AT ALL, which is the point: voices 0 and 1 are `lead`\nand take the part's own +12, the piano is a `stab` and takes none, so\nit sits an octave under the guitars without this genre naming a\nsingle number. The parts do the register work; the anchor only says\nwho is who.\n\nMIXOLYDIAN, AND NO `diatonic`. The line follows the root by SEMITONES\n— Berry slides the grip up to the IV rather than rethinking it — and\nmixolydian is closed under exactly that move: C mixo up a fourth is F\nmixo, up a fifth is G mixo, so one shape lands in tune on all three\nchords. The ♭7 in the subject is the same ♭7 as in the chords, which\nis why this alphabet can take the semitone follow the seven-note\ngenres had to give up.\n\nTHE QUICK CHANGE — bar 2 goes to the IV and comes straight back — is\nmost of what separates a rock'n'roll twelve from the Chess twelve that\nPROGS.blues12 writes. Every chord is still a dominant seventh: the\nmajor third of the double stop against the ♭7 under it is the same\nclash the blues is built on, taken at twice the speed.\n\nTHE BOOGIE IS A DEGREE ALTERNATION, not a doubling: root, fifth, root,\nfifth — Willie Dixon's slap upright and Johnnie Johnson's left hand\nplaying the same figure. The drive belongs to the piano and the hat;\nthe bass's job here is the shape.\n\none, three, and the push back to one\nthe backbeat\n\nTHE HAND. The backbeat cracks at 9 — on these records it is the\nloudest thing in the room — while the hat rides light and uneven, the\ndown-eighths at 7 and the swung up-eighths at 3. Velocity rather than\na second lane, because it is one drummer.\n\nBAR 12 IS THE TURNAROUND: the snare rolls into the crash on the last\nsixteenth and the hand comes off the hats halfway through to play it.\n\nTHE GRIP, AND WHERE THE REGISTER LAW PUTS IT. Voice 1 is voice 0 three\nDEGREES up, which in mixolydian is a perfect fourth from every degree\nbut the ♭7 — and the ♭7 gives a tritone, the blue note that is in the\ngrip on purpose. Then `fold` registers each line by its own mean, so\nthe pair renders a fourth ABOVE or a fifth BELOW depending on where\nthe phrase sits: the same two strings, the other position. It cannot\ndo anything else — both lines fold around the SAME centre, so the\ninterval is 5 or −7 and never an octave.\n\nTHE CHESS SLAPBACK: one short tape repeat over the band, which is not\nreverb and not a decoration — 2120 Michigan Avenue is a dry room and\nan echo chamber down the hall, and that pair IS the 1955 record.",
+  "label": "St. Louis 1955",
+  "bars": 12,
+  "voices": 3,
+  "swing": 0.15,
+  "near": "rock",
+  "plan": "song",
+  "bpm": 150,
+  "parents": {
+    "blues": 0.35,
+    "countrypop": 0.25,
+    "jumpblues": 0.25,
+    "boogiewoogie": 0.15
+  },
+  "wants": [
+    "t-bone walker"
+  ],
+  "instr": [
+    "clean_guitar",
+    "clean_guitar",
+    "upright_piano"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "lead",
+    "stab"
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "roots": [
+    0,
+    3,
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    4,
+    3,
+    0,
+    4
+  ],
+  "prog": [
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 3,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 3,
+      "q": "dom7"
+    },
+    {
+      "d": 3,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 3,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "dom7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    }
+  ],
+  "bassStyle": "fifths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      7,
+      3,
+      5,
+      3,
+      6,
+      3,
+      5,
+      3,
+      7,
+      3,
+      5,
+      3,
+      6,
+      3,
+      5,
+      4
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1.5,
+    "atk": 0.003,
+    "rel": 0.5,
+    "gain": 0.29,
+    "verb": 0.14
+  },
+  "words": [
+    "the double stops",
+    "the same grip, a fourth off, all the way",
+    "the piano, on the tune's own eighths"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(3)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[only(\"gate\", drop(2))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "echo"
+  ]
+}

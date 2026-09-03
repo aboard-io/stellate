@@ -1,0 +1,98 @@
+{
+  "note": "MUWASHSHAH — Cairo 1200. Ibn Sanā' al-Mulk's DĀR AṬ-ṬIRĀZ, \"the\nmost complete contemporary description of the genre\" (the ZIM's\nown words): an anthology of 34 Andalusi and Maghribi muwaššaḥāt\nwith the theory of the form, by \"the first person in the Mashriq\nto compose muwaššaḥāt\". The genealogy round declined this row\nbecause \"no named dated source predates its dependents\" — and\nthat sentence is DEFEATED by this book, not argued around: the\ntreatise is dated six centuries before `nuba` (Tetouan 1790),\nseven before `tarab` and `firqa`, and it is the same species of\nsource as the Kitab al-Aghani that anchors `abbasid`. Three rows\nwanted this by name — the census's only ×3 — and all three take\nthe edge today. The OTHER half of the old decline (the aksak\nmetres) was true and stays true: it lives in the cannot now,\nwhere a wall belongs once the room is built.\n\nLINEAGE: the form is al-Andalus's own invention (the ZIM: \"the\nmajor Andalusi innovation in Arabic poetry... sung and\nperformed musically\"), so the edge points at the Cordoban\nschool that raised the musicians who sang it.",
+  "label": "Cairo 1200",
+  "voices": 3,
+  "bars": 8,
+  "near": "nuba",
+  "plan": "arc",
+  "bpm": 88,
+  "parents": {
+    "andalusi": 0.4
+  },
+  "wants": [
+    "the aleppo wasla",
+    "the cairo congress recordings (1932)"
+  ],
+  "cannot": [
+    "the aksak metres — the old decline's own reason, kept: a sung muwashshah counts in 10/8 and 16/8 cycles and this grid says sixteen even places; what ships is the strophe in common time, said plainly",
+    "the kharja's language switch — the final verses jump to vernacular or Romance and a register change is not a language change"
+  ],
+  "instr": [
+    "solo_vox",
+    "nylon_string_guitar",
+    "fiddle"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      -1,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "counter"
+  ],
+  "kit": {
+    "h": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.hijaz"
+  },
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "pedal",
+  "orn": {
+    "grace": 0.35,
+    "pass": 0.15
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.9,
+    "atk": 0.012,
+    "rel": 0.8,
+    "gain": 0.26,
+    "verb": 0.35,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the strophe, girdled — five aghsan and the turn",
+    "the oud's cognate, doubling under",
+    "the answering line, the qafl coming back"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)], [fill(2)]][s % 4]\n                    : v === 1 ? [transpose(-4), drop(2)]\n                    : [rotate(8), drop(4)])"
+  }
+}

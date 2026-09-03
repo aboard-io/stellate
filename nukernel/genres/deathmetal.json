@@ -1,0 +1,175 @@
+{
+  "note": "DEATH METAL. The genre is two techniques, and both of them are operators\nthis kernel already had. TREMOLO PICKING is `fill(1)` — every step gated,\none continuous sixteenth-note wall — and it is the whole guitar sound;\nnothing else in this table sets every gate on purpose. The BLAST BEAT is\nthe same idea on the kit: kick and snare alternating at the eighth, hats\nthrough it, no space anywhere. Locrian, because the flat five is not a\npassing tone here, it is the tonic chord.\n\nnamed \"Tampa 1990\" — the Morrisound era: blast beats ridden on the\ncymbal and tremolo-picked walls are the Florida school's two techniques.\n\nLINEAGE: the blast beat is hardcore's D-beat run past its limit and\nthe riff wall is rock's language forced chromatic — but the actual\nparents, thrash and the NWOBHM it fed on, are the missing rungs of\nthe metal ladder.\nPAID 2026-08-29, the debts round: both wants — \"nwobhm\" is\n`nwobhm` (London 1980) and \"thrash metal\" is `thrash` (San\nFrancisco 1983): the row waited twenty years for parents that\nare its actual parents, and `heavymetal` (Workington 1969) now\nstands behind both.\n\nlocrian: the ♭5 is home\n\nthe blast\n\nA BLAST BEAT IS RIDDEN, NOT HATTED. The right hand is on the\ncymbal for the whole bar because at this speed there is nowhere\nelse for it to be — and it is ONE hand, so the sixteenth hats\nit used to play at the same time were a second drummer.\n\nbar 8: it doubles",
+  "label": "Tampa 1990",
+  "bars": 8,
+  "plan": "song",
+  "bpm": 158,
+  "parents": {
+    "punk": 0.55,
+    "rock": 0.45,
+    "nwobhm": 0.25,
+    "thrash": 0.2
+  },
+  "wants": [],
+  "instr": "distortion_guitar",
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 3
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "roots": [
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    4,
+    4
+  ],
+  "scale": [
+    0,
+    1,
+    3,
+    5,
+    6,
+    8,
+    10
+  ],
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "r": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1400,
+    "q": 2.6,
+    "atk": 0.002,
+    "rel": 0.3,
+    "gain": 0.3,
+    "verb": 0.12
+  },
+  "words": [
+    "the riff, tremolo-picked — every step",
+    "the same riff an octave under, as written"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[only(\"gate\", fill(1))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "crunch"
+  ]
+}

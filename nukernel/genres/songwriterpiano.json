@@ -1,0 +1,164 @@
+{
+  "note": "SONGWRITER PIANO [Carole King]. Motown's Brill Building changes, sung\nfrom the piano bench instead of cut for a girl group — gospel's\nchurch-chord piano hand underneath, crooner's plain, close vocal\ndelivery on top. The Brill Building factory itself, the actual room\nthis record was written in before it was one artist's own, is the\nmissing rung.\n\n82 is Tapestry counted slow\n\nPAID 2026-08-29, the debts round: \"brill building pop\" is\n`girlgroup` (New York 1960) — Tapestry is the cubicle writer stepping\nout front, which is this row's whole premise.\n\nWHO SINGS: the voice at the back of the room, out of the piano's way",
+  "label": "New York 1971",
+  "bars": 8,
+  "near": "crooner",
+  "plan": "song",
+  "bpm": 82,
+  "parents": {
+    "detroitsoul": 0.4,
+    "gospel": 0.3,
+    "crooner": 0.3,
+    "girlgroup": 0.25
+  },
+  "wants": [],
+  "instr": [
+    "upright_piano",
+    "ohh_voices"
+  ],
+  "drumkit": "brush",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    5,
+    3,
+    4,
+    0,
+    5,
+    3,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1,
+    "gain": 0.24,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.backingroom"
+    }
+  },
+  "words": [
+    "the piano, the changes, sung from the bench",
+    "the voice, wordless, a third above"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

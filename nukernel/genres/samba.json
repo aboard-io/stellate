@@ -1,0 +1,233 @@
+{
+  "note": "SAMBA — Rio de Janeiro 1939. Estácio samba: the surdo on the second\nbeat, the tamborim's syncopated figure over it, a cavaquinho chopping\nthe chord and a seven-string guitar walking underneath. The catalog\nhas held Rio since bossa nova arrived and has never held the music\nbossa nova is a quiet argument with.\nTHE YEAR is Ary Barroso's \"Aquarela do Brasil\" and the samba-exaltação\nmoment, when the form went from the morro to the radio orchestra —\ndocumented, dated, and on tape.\nTHE CAVAQUINHO IS `steel_string_guitar` and the violão de sete cordas\nis `nylon_string_guitar`: four steel strings played with a plectrum\nagainst six nylon ones played with the thumb, which is the right\ncontrast even at the wrong sizes. What is lost is the cavaquinho's\nregister — it is a small instrument and sits an octave above where a\nguitar sits — and the reg function below moves the whole chair up to\nsay so rather than pretending the sample is smaller than it is.\n\nLINEAGE: a ROOT, and this is the one place in the batch where the\ncatalog's own habit had to be resisted hardest — `bossa` is Rio and\nis right there and is TWENTY YEARS LATER; it is this anchor's child\nand its parents line is rewritten below to say so.\n\"maxixe\" AND \"lundu\" PAID 2026-08-29 (Rio 1895, Lisbon 1798):\nthe syncope Donga's generation scored came through the maxixe's\ndance halls, and the maxixe's own parents carry the lundu's cell\none step further back. The bigger half — the batucada of the\nmorros, partido alto — is still unanchored and still named.\n\nTHE SURDO IS ON THE SECOND BEAT and that is the definition: the kick\nis quiet on 1 and loud on 3 of the sixteen-step bar (which is beat 2\nof each of the two 2/4 bars a samba is really counted in), the\ntamborim's figure is on `p`, and the pandeiro's sixteenths are the\nhat. The chocalho would be a shaker if there were one.",
+  "label": "Rio de Janeiro 1939",
+  "voices": 3,
+  "near": "bossa",
+  "plan": "song",
+  "bpm": 100,
+  "parents": {
+    "maxixe": 0.3,
+    "lundu": 0.2
+  },
+  "wants": [
+    "partido alto",
+    "batucada"
+  ],
+  "cannot": [
+    "the bateria — a samba school is two hundred drums in six named voices, and the kit has twelve lanes"
+  ],
+  "instr": [
+    "solo_vox",
+    "steel_string_guitar",
+    "nylon_string_guitar"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff",
+    "counter"
+  ],
+  "roots": [
+    0,
+    5,
+    1,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "k": [
+      4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      8,
+      4,
+      6,
+      4,
+      7,
+      4,
+      6,
+      4,
+      8,
+      4,
+      6,
+      4,
+      7,
+      4,
+      6,
+      5
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 1,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.28
+  },
+  "words": [
+    "the singer",
+    "the cavaquinho, chopping the chord",
+    "the seven-string, walking under it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"acc\", rotate(3))]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(-12), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

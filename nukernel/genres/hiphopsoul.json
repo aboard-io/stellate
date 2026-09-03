@@ -1,0 +1,193 @@
+{
+  "note": "JODECI. New jack swing, which is one idea: play sixteenths and SWING them,\nhard, on a drum machine that cannot swing on its own. Under it, dorian —\ngospel's minor, the one with the bright sixth — and a stack of voices\nholding the chord while a Rhodes plays around it. Slow; the tempo is the\npoint, and the composer knows it.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nJodeci, \"Forever My Lady\" (Uptown/MCA, 1991): a keyboard bass over an 808.\n\nnamed \"Charlotte 1991\" — Forever My Lady's year, and the choir-over-808\nanchor is the Hailey brothers' Charlotte church sound; the new jack\nswing TECHNIQUE itself would be Harlem 1987 (Teddy Riley).\n\nLINEAGE: gospel melisma from the Haileys' church over funk's pocket\nquantized into a drum machine, with Motown's songcraft underneath;\nthe swung-sixteenth TECHNIQUE is Teddy Riley's new jack swing, and\nthe hip-hop drum programming it rode in on is missing too.\n\"new jack swing\" PAID 2026-08-29 (New York 1987): DeVante named\nhimself after Riley's genre and Forever My Lady is church stacks\nover swung machines — the row's own formula, four years earlier.\nThe second want folds into the first: the hip-hop drum\nprogramming this row asked for separately IS what the SP-1200\nbrought, and two names for one debt is the taqsim hole.\n\n\"a drum machine that cannot swing on its own\" — the 808; the swing is\nours, exactly as new jack applied it\n\ni IV i v — dorian's bright IV\nthe same cycle, sevenths said out loud\nmelisma is phrases WITH ENDS\n\nWHO SINGS: the bed of voices under the Rhodes, barely articulated",
+  "bassInstr": "bass_lead",
+  "label": "Charlotte 1991",
+  "plan": "song",
+  "bpm": 74,
+  "swing": 0.28,
+  "parents": {
+    "newjackswing": 0.35,
+    "gospel": 0.35,
+    "funk": 0.2,
+    "detroitsoul": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "ahh_choir",
+    "rhodes_ep"
+  ],
+  "drumkit": "tr808",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "roots": [
+    0,
+    3,
+    0,
+    4
+  ],
+  "prog": {
+    "$src": "PROGS.jack7"
+  },
+  "maxHold": 3,
+  "artic": "legato",
+  "bassGrid": [
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 1.1,
+    "atk": 0.01,
+    "rel": 1,
+    "gain": 0.26,
+    "verb": 0.42,
+    "mouth": {
+      "$src": "MOUTHS.dreamchoir"
+    }
+  },
+  "words": [
+    "the vocal stack, one chord a bar",
+    "the Rhodes, playing around it"
+  ],
+  "word": {
+    "kind": "const",
+    "n": {
+      "$src": "[]"
+    }
+  },
+  "fx": [
+    "chorus"
+  ]
+}

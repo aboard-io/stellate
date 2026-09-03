@@ -1,0 +1,190 @@
+{
+  "note": "CITY POP [aor]. Session players either side of the Pacific; the field\nthat separates them is the SWING (a 0.1 lean, not the Porcaro triplet)\nand the ROYAL ROAD — IVmaj7–V7–iii7–vi7, the progression this whole\nproject was once named after, finally in the table under its own flag.\nSlap-tight sixteenth bass, an EP stab, no ghost lane.\n\nnamed \"Tokyo 1984\" — Plastic Love's year: the royal road with slap\nsixteenths under it.\n\nLINEAGE: the best-documented lineage in the table — Japanese\nsession players explicitly absorbing Toto's polish and Steely Dan's\nchanges over disco's floor; the boogie/Chic half of the groove is\nthe one missing citation.\n\n1984 IN TOKYO IS AN FM ELECTRIC PIANO — the digital, bell-edged EP\nthat vaporwave two rows up literally slows a DX7 down to imitate.\nThree genres were casting the same seventies Wurlitzer, and the one\nthat is a decade later and a continent away is the one that should\nnot have been.",
+  "label": "Tokyo 1984",
+  "swing": 0.1,
+  "near": "aor",
+  "plan": "song",
+  "bpm": 108,
+  "parents": {
+    "aor": 0.35,
+    "jazzrock": 0.35,
+    "disco": 0.3
+  },
+  "wants": [
+    "boogie"
+  ],
+  "instr": [
+    "legend_ep_2",
+    "clean_guitar"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "lead"
+  ],
+  "roots": [
+    3,
+    4,
+    2,
+    5
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 3,
+      "q": "7"
+    },
+    {
+      "d": 4,
+      "q": "7"
+    },
+    {
+      "d": 2,
+      "q": "7"
+    },
+    {
+      "d": 5,
+      "q": "7"
+    }
+  ],
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "h": [
+      8,
+      3,
+      5,
+      3,
+      7,
+      3,
+      5,
+      4,
+      8,
+      3,
+      6,
+      3,
+      7,
+      3,
+      5,
+      4
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2800,
+    "q": 1,
+    "atk": 0.005,
+    "rel": 0.6,
+    "gain": 0.27,
+    "verb": 0.3
+  },
+  "words": [
+    "the EP, stabbing the royal road",
+    "the guitar, gliding over it"
+  ],
+  "word": {
+    "kind": "const",
+    "n": {
+      "$src": "[]"
+    }
+  }
+}

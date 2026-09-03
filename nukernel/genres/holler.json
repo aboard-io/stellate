@@ -1,0 +1,64 @@
+{
+  "note": "THE FIELD HOLLER — South Carolina 1853. Frederick Law Olmsted,\ncamped by a railroad gang, wrote down what he heard: \"a long,\nloud, musical shout, rising and falling and breaking into\nfalsetto\" — the earliest dated eyewitness print of the holler by\na named writer (A Journey in the Seaboard Slave States, the 1853\njourney). No singer's name survives, which is the tradition's\ncondition, not the row's failure; the SOUND is documented in\nAlan Lomax's 1939 Library of Congress disc of Thomas J. Marshall\nsinging \"Arwhoolie\" at Edwards, Mississippi. THREE rows have\nwanted \"field holler\" since their lineages were written —\n`spirituals` (Nashville 1871), `deltablues` (Clarksdale 1929),\n`blues` (Chicago 1952) — and `skiffle` (London 1956) wanted\n\"work song\", which this row is; all four take the parent today.\nOlmsted's date is what makes the edges legal where maringa's\ncould not be: 1853 is measurably earlier than every dependent.\n\nbpm 70 is the table's own floor (compose's 70..160), and the floor\nis the right end of it: a holler is slower than any grid.\n\nLINEAGE: a declared root — the West African call traditions\nthe ships could not break are real and unanchorable; named\nbelow, not invented.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nThe field holler as Frederick Law Olmsted heard it on the Carolina\nseaboard in 1853 and wrote it down in A JOURNEY IN THE SEABOARD SLAVE STATES\n(New York, 1856) — this row's own place and year. One unaccompanied voice:\nno chords at all (`harmony: \"modal\"`), so the mode coloured nothing. And\nSCALES.blues [0,3,5,6,7,10] HAS NO SIXTH OF ANY KIND, which is the single\ndegree dorian exists for. Aeolian is the honest minor-side name for what the\nrow plays. The same reading settles blockparty, psychfunk, chopped, footwork,\nacidjazz, chillout, nujazz, hambone and sitcomsting below.\n\nWHO SINGS: the melisma mouth — the break into falsetto\nis the one fact every witness wrote down.",
+  "label": "South Carolina 1853",
+  "voices": 1,
+  "bars": 8,
+  "near": "spirituals",
+  "plan": "arc",
+  "bpm": 70,
+  "parents": {},
+  "wants": [
+    "the west african call the ships could not break",
+    "the levee and prison camp repertory (rosie)"
+  ],
+  "cannot": [
+    "the work — a holler's time is the axe's and the mule's, not a bar line's; this table's records count in bars, so the row sings the rise-and-break shape in rubato over a grid it would never have obeyed"
+  ],
+  "instr": "solo_vox",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "SCALES.blues"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "orn": {
+    "grace": 0.35
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1.2,
+    "gain": 0.27,
+    "verb": 0.45,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    }
+  },
+  "words": [
+    "the holler — rise, hang, fall, break"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => [[], [transpose(3)], [fill(2)], [transpose(-2)]][s % 4]"
+  }
+}

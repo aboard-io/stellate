@@ -1,0 +1,49 @@
+{
+  "note": "RIFF. The part that ANSWERS, and answering is a TWO-BAR shape: the figure\non the offbeats, then the phrase's own rhythm coming back at it a step\nunder. `only(\"gate\", offbeats(4))` is the figure — an absolute grid rather\nthan the phrase's own, so it lands between the downbeats instead of\ndoubling them — and the bar after it is deliberately NOT that, because a\nriff whose every bar is the same absolute grid has stopped reading the\nphrase at all: hand it any tune and it plays the identical four notes.\nLow, short (the two-step hold is what makes it a stab rather than a pad),\nand it does not develop — a riff that develops is a solo.\n\nan arc, like every FUNCTION genre; 112 because a riff is a mid-tempo\nthing\n\na riff that walks away is not a riff\na riff does not fade in",
+  "label": "Riff",
+  "bars": 2,
+  "voices": 1,
+  "plan": "arc",
+  "bpm": 112,
+  "instr": "palm_muted_guitar",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "const",
+    "n": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff"
+  ],
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "artic": "staccato",
+  "maxHold": 2,
+  "anchor": 2,
+  "incClamp": 2,
+  "incMode": "reverse",
+  "intro": "cold",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1600,
+    "q": 1.8,
+    "atk": 0.003,
+    "rel": 0.35,
+    "gain": 0.3,
+    "verb": 0.12
+  },
+  "words": [
+    "the figure on the offbeats, then the answer a step under"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (s % 2 ? [drop(3), transpose(-1)]\n                             : [only(\"gate\", offbeats(4))])"
+  }
+}

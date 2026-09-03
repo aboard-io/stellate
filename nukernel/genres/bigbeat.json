@@ -1,0 +1,147 @@
+{
+  "note": "BIG BEAT [techno]. The rave floor played by a punk band — techno's\nmachine kick and dnb's broken edit under a guitar sample distorted\npast the point of subtlety. The field that separates it from techno is\nthe KICK ITSELF: broken and syncopated where techno's is a plain four,\nbecause a breakbeat under a machine floor is the entire joke.\n\nWHO THE BASS IS (2026-09-02, the catalogue round). Until this line\nevery record in this table without a signature `synth` block played\nthe SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR — because\nno anchor could name its own bass. `bassInstr` is the field that\ncloses that grammar hole (precompose.js writes it onto the bass\nvoice's `instrument`; `fields.js BASSCHOICES` is the vocabulary), and\n`bass_lead` is the ONE MODELLED bass in the eleven — measured\n2026-09-02, `patchForInstr(\"bass_lead\")` answers `tb303` and\n`sampledId` answers false, where `synth_bass_1`/`2` are RECORDINGS of\nsynth basses.\nThe Prodigy, \"Firestarter\" (XL, Essex, March 1996): a sequenced synth\nunder a sampled break.\n\nfloor music with a breakdown where a bridge would be\n\nLINEAGE: the machine floor is techno's, the guitar-sample aggression\nand the couldn't-care-less attitude are punk's, and the broken kick\npattern is dnb's edit brought down to a dance-floor tempo. The\noriginal rave-breakbeat continuum both of the electronic parents\nactually came out of is still the missing rung.\n\nthe guitar sample, and beside it the BUZZ: GM 85 charang is a\nguitar-synth lead and to-engine.js plays it on the parent's tanh-\ndriven `lead_fuzz`, which is the Essex lead that fights a distorted\nsample and wins. (It came off techno, where a fuzz guitar lead was\nnever Detroit's sound.)\n...AND THE RAVE STAB IT WANTS. `wants: [\"rave breakbeat\"]` was on this\nrow from the start. `rave_a` is a hits-crate stab — the punctuation a\nbig-beat record is built on, and the thing that makes an Essex 1997\nrecord sound like 1997 rather than like a guitar band.\n\nTHE COLLAGE, SPREAD (2026-09-01). Paul: \"spread the sample voices\naround to collage-heavy genres.\" This row seated `found:rave_a` — ONE\nstab, played at every pitch the line writes, which is a sample and not\na collage. `rave_stab` is the crate's own eight and 8/8 of them are\nlocal: rave_a..d, both hoovers, the organ and the saw stab. Big beat\nIS a stab collage; now the line chooses which stab.",
+  "bassInstr": "bass_lead",
+  "label": "Essex 1997",
+  "voices": 3,
+  "near": "techno",
+  "plan": "dance",
+  "bpm": 132,
+  "parents": {
+    "techno": 0.35,
+    "punk": 0.35,
+    "dnb": 0.3
+  },
+  "wants": [
+    "rave breakbeat"
+  ],
+  "instr": [
+    "distortion_guitar",
+    "charang",
+    "found:collage:rave_stab"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "neg"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.phrygian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "fill": {
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 1000,
+    "q": 3.5,
+    "atk": 0.002,
+    "rel": 0.4,
+    "gain": 0.3,
+    "verb": 0.15
+  },
+  "words": [
+    "the guitar stab, breaking the grid",
+    "the synth hook, an octave under"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[only(\"gate\", rotate(3))]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[drop(2)]"
+    }
+  }
+}
