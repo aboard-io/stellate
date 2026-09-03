@@ -1,0 +1,225 @@
+{
+  "note": "ROOTS ROCK — Berkeley 1969. Creedence Clearwater Revival, GREEN\nRIVER, cut at Wally Heider Studios in San Francisco in the spring of\n1969 and released that August on Fantasy: nine songs in twenty-nine\nminutes, no solo longer than eight bars, and not one overdub anybody\ncan hear. The article's own definition is what this row is for —\n\"Roots rock is a genre of rock music that looks back to rock's origins\nin folk, blues, and country music… First emerging in the late 1960s,\nit is seen as a response to the perceived excesses of the then\ndominant psychedelic and the developing progressive rock.\"\n\nTHE LABEL SAYS BERKELEY AND EL CERRITO IS REFUSED BY MEASUREMENT.\nThe band is from El Cerrito and that would have been the true dot; it\nlands 0.3 CSS px from Berkeley at the North America arc, which is\ntighter than any pair this table has ever drawn — tighter than\nTeaneck/New York at 1.1 and than Asbury Park/New York at 3.0 — and it\nis exactly the case the catalogue already refused once, when\n`slowcore` took Boston with Cambridge MA measured at 0.2 px away. So\nthis row takes the East Bay dot the map already draws, one town over\nfrom the high school the four of them went to and the town their\nrehearsal room and their label's next address were in. The refusal is\nwritten here so nobody re-derives the attempt.\nNOT San Francisco either, which is where the tape machine was: that is\nthe `grunge` ruling again, and San Francisco 1966 is `psychrock` — the\nmusic this row is the answer to. Three years and eleven miles.\n\nTHE INVENTION IS THE LENGTH, and it is the one thing a genre table\nusually cannot say. Every neighbour in this batch stretches:\n`southernrock` writes eight bars to solo over, `bluesrock` builds a\ncareer on a twelve-minute \"Spoonful\", `psychrock` is San Francisco in\n1966. This row's whole claim is a two-and-a-half-minute single with a\nriff, two verses and a chorus, and where the table can carry that it\ndoes: `artic` is `staccato`, `maxHold` is 3, the idiom cell is `riff`\nand the sentence is `aabb` — statement, statement, departure, return,\nthe one plan that says a measure twice on purpose.\n\nTHE NUMBERS THAT ARE MEASURED, and this is the largest corpus set in\nthe batch by a factor of three. bpm 128 is the median of 61 files\n(Creedence 57, John Fogerty 4) with p25 113 and p75 140; 96.7% are\n4/4; the drum density median is 3.15, THE HIGHEST OF THE SIX, which is\nwhat a record with no gaps in it measures like. SWING IS 0.0 ACROSS\nALL 61 FILES and none is declared — dead straight, which against\n`blues`'s 1/3 shuffle and `rockabilly`'s 0.18 is the measured\ndifference between this music and the blues it is made of. maxHold 3\ncomes off a hold p90 of 5.333 sixteenths. The kick lane is the loudest\nstatement in the drums: 3627 hits on the downbeat, 3078 on beat 3, and\n1667/1972 on the and-of-2 and the and-of-4 — a kick that plays the\nriff with the bass, which is written into the `k` lane here.\nTHE MODE READING IS SPLIT AND THE ROW REPORTS IT. Those 61 files read\n75.4% major, the lowest major in this batch, and Chordonomicon's 4,068\nsongs read 85.4%. The gap is the swamp vamps — \"Born on the Bayou\",\n\"Run Through the Jungle\" — one-chord modal riffs this row does not\nmodel, and saying so is more honest than splitting the difference.\nThe row is ionian and the quarter that is not is named.\n\nTHE HARMONY IS I AND IV AND ALMOST NOTHING ELSE. Over those 4,068\nsongs nothing exceeds 1.35x lift — I at 1.32x, IV at 1.26x, II at\n1.24x — which is the same flat profile `heartlandrock` measured and\nwrote down. What separates the two is WHERE THE CYCLE STARTS: this\nlabel's highest-lift windows begin on the IV (`IV I V I` at 2.92x on\n143 songs, `IV I IV I` at 2.32x on 208) while its biggest support is\n`I IV I IV` on 320, and ♭VII sits at 1.01x — EXACTLY BASELINE, so\nthere is no mixolydian here and none is declared, which is the other\nhalf of the difference from `heartlandrock` (♭VII a root, mixo\nearned). Eight bars: I IV I IV | I IV V I.\n\nTHE TREMOLO IS THE SOUND AND IT IS THE TABLE'S SECOND. `hambone`\n(Chicago 1955) took the first for Bo Diddley's DeArmond Trem-Trol;\nthis row takes the second for the Kustom amp on \"Born on the Bayou\",\nand the two are eleven years and one continent of feel apart. `verb`\nis 0.18, near the floor: Wally Heider's room is dry and this record is\nthe opposite of a wall of sound.\nTHE TREMOLO REACHES EVERY CHAIR, WHICH IS THE TABLE'S DESIGN AND NOT\nTHIS ROW'S CHOICE. Measured at seed 1: `fx: [\"tremolo\"]` arrives on the\nlead, the riff, the vocal, the piano, the solo, the pad, THE BASS and\nTHE KIT — every desk in the record. That is deliberate and written\ndown: test/precompose.test.js:307 says \"precompose deals one chain to\nthe whole cast\", and `hambone` (Chicago 1955) has looked like this\nsince it declared the table's first tremolo. Paul made the case against\nit for the drums on 2026-09-03, about a different row — \"funkrock's\ndrums: the auto-wah was on the kit\" — and that fix is another agent's\nthis shift and is not made here. The declaration stays because a Kustom\ntremolo IS this record; the measurement is written down so whoever\nnarrows the chain has a second row to check the change against.\n\nLINEAGE, and the article's stylistic-origins box reads \"Rockabilly,\ncountry blues, folk, country, folk-blues, folk rock\":\n  `rockabilly` (Memphis 1954)   0.25  the box's own first entry, and\n                                      Fogerty's whole guitar diction\n  `blues` (Chicago 1952)        0.20  the repertory: \"Before You\n                                      Accuse Me\" is Bo Diddley's and\n                                      \"Suzie Q\" is Dale Hawkins's\n  `folkrock` (Los Angeles 1965) 0.20  named in the box; the songs are\n                                      written, not jammed\n  `rocknroll` (St. Louis 1955)  0.15  the two-minute single as a form\nTHE RESIDUE IS 0.20 AND IT IS THE SWAMP — a Californian band's\ninvented Louisiana, a tremolo, and an editorial refusal to play long,\nnone of which is in any of the four rows above.",
+  "label": "Berkeley 1969",
+  "near": "rock",
+  "plan": "song",
+  "bpm": 128,
+  "bars": 8,
+  "voices": 2,
+  "parents": {
+    "rockabilly": 0.25,
+    "blues": 0.2,
+    "folkrock": 0.2,
+    "rocknroll": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "crunch_guitar",
+    "clean_guitar"
+  ],
+  "bassInstr": "finger_bass",
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "riff"
+  ],
+  "roots": [
+    0,
+    3,
+    0,
+    3,
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      5,
+      0,
+      8,
+      0,
+      4,
+      0,
+      0,
+      0,
+      6,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8
+    ]
+  },
+  "fx": [
+    "tremolo"
+  ],
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2300,
+    "q": 1.2,
+    "atk": 0.004,
+    "rel": 0.5,
+    "gain": 0.28,
+    "verb": 0.18
+  },
+  "words": [
+    "the lead, the swamp riff",
+    "the rhythm guitar, all downstrokes"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[transpose(-5), keep(0, 4, 8, 12)]"
+    }
+  }
+}

@@ -741,9 +741,152 @@ function sectionEvents(doc, i) {
      Dustin Lynch, Thomas Rhett and Sam Hunt together. No tempo distribution,
      no meter tally, no drum histogram, no chord cycle — none of what the four
      rows above were built out of. The count stays 421.
+     The literal stays a literal for the reason :649 gives.
+     ...AND +7, 2026-09-03, SHIFT 4's BATCH C — beyond the Anglosphere and
+     the metal wing, all seven off Chordonomicon and the MIDI corpus:
+     rockenespanol (Buenos Aires 1967, Los Gatos' "La balsa"), nuevacancion
+     (Santiago 1966, Violeta Parra's Las Últimas Composiciones — the map's
+     first Chilean dot), schlager (Hamburg 1960, Polydor's Freddy Quinn),
+     iskelma (Helsinki 1955, Olavi Virta on Rytmi), metalcore (Westfield
+     2002, Alive or Just Breathing), powermetal (Hamburg 1985, Walls of
+     Jericho — Hamburg twice, twenty-five years apart, which the label law
+     allows) and symphonicmetal (Kitee 1997, Angels Fall First). Two of the
+     seven are argued AGAINST a named alternative on a measurement rather
+     than on taste: metalcore takes Westfield 2002 over Converge's Boston
+     1998 because the label's Chordonomicon mass is 5 songs in the whole of
+     the 1990s against 312 in the 2000s and its commonest distinctive window
+     is melodic (`III i VI III`, 10.49x), and nuevacancion takes Santiago
+     over Havana 1968 because the Cuban branch is the nueva TROVA and is
+     named differently in its own language. Two rows report NO CORPUS FILES
+     AT ALL (nuevacancion, iskelma) and say in their notes which of their
+     numbers are therefore choices rather than readings.
+     ...AND +6, 2026-09-03, SHIFT 4's BATCH B — pop, folk and the two
+     Christian rows, every one of them off Chordonomicon and the MIDI corpus:
+     ccm (Nashville 1978, Amy Grant's Myrrh debut, the year CCM Magazine
+     coined the phrase), worship (Sydney 1993, Hillsong's "Shout to the
+     Lord" — the map's first dot on the Australian mainland), indiefolk
+     (London 2009, Sigh No More at Eastcote), powerpop (Memphis 1972, Big
+     Star's #1 Record at Ardent, the year the article itself calls "year
+     zero"), skatepunk (Los Angeles 1988, Bad Religion's Suffer at
+     Westbeach) and indietronica (Seattle 2003, the Postal Service's Give
+     Up on Sub Pop). Three of the six are argued AGAINST a named
+     alternative: worship takes Sydney 1993 over Costa Mesa 1971 because
+     the 1971 record is acoustic Jesus music and is `folkrock` with a hymn
+     text on it; indiefolk takes London 2009 over Seattle 2008 because
+     Fleet Foxes are a choral record and `softfolk`/`chamberpop` already
+     hold that; skatepunk takes 1988 over the proposed 1990 because the
+     article dates the melodic style to Suffer by name. TWO ROWS REPORT A
+     SILENT CORPUS AND SAY SO: indiefolk matches ONE file in 120,652 (Of
+     Monsters and Men, "Little Talks") and indietronica reaches its label
+     through one act only (Owl City), so each says in its note which of its
+     numbers is a reading and which is a choice. `indietronica` is also the
+     round's first row whose natural article does not exist — Indietronica
+     redirects into a SECTION — so it links Electronic rock and carries
+     `as: "Indietronica"` under the plate law.
+     ...AND +6, 2026-09-03, SHIFT 4's BATCH A — country, roots and blues,
+     the six rooms this table had names for and no rows: rockabilly
+     (Memphis 1954, "That's All Right" at Sun on 5 July, the session the
+     article dates to the hour), nashvillesound (Nashville 1957, Jim
+     Reeves's "Four Walls", which the article's own historian calls the
+     first record of it), outlawcountry (Austin 1973, Shotgun Willie),
+     southernrock (Macon 1969, The Allman Brothers Band), rootsrock
+     (Berkeley 1969, Creedence's Green River) and bluesrock (West
+     Hampstead 1966, the Beano album). TWO PLACES JOINED THE MAP and one
+     was refused by measurement: Macon lands 5.8 CSS px from Atlanta at
+     the North America arc, which G10 prints and does not assert on; West
+     Hampstead lands 1.6 px from London at the BRITAIN arc, which G10 does
+     assert on, so it is the fourth name in that list with a WITHIN row
+     rather than a plain dot (its nearest undeclared neighbour is Bray at
+     9.3 px, the Sutton Courtenay margin). EL CERRITO WAS REFUSED at 0.3
+     px from Berkeley — tighter than Teaneck/New York at 1.1 and than
+     Asbury Park/New York at 3.0 — on `slowcore`'s own ruling, which
+     refused Cambridge MA at 0.2 from Boston; rootsrock takes the East Bay
+     dot the map already draws and its note records the attempt so nobody
+     re-derives it. "London 1966" was unavailable for bluesrock in any
+     case: `indojazz` holds it. Two rows are argued AGAINST a named
+     alternative on a measurement: rockabilly refuses mixolydian (bVII at
+     1.18x against II at 1.53x over 3,280 Chordonomicon songs, where
+     `rocknroll` resolves the other way) and takes SCALES.majpent, the
+     only five-note alphabet in this wing; bluesrock refuses the twelve-bar
+     its own repertory came from because the census's top window is a
+     four-bar `IV I V IV` at 4.21x on 194 songs. EVERY ROW IN THIS BATCH
+     REPORTS AT LEAST ONE SILENCE: "outlaw country", "nashville sound",
+     "southern rock", "rockabilly" and "blues rock" all return ZERO files
+     as filename terms; Waylon Jennings, Carl Perkins, Molly Hatchet and
+     John Mayall return zero as acts; and bluesrock's own founding band is
+     absent from the corpus while 27 of its 53 files are Clapton's solo
+     catalogue — which the note says before it quotes a tempo.
+     ...AND +7, 2026-09-03, SHIFT 4's BATCH D2 — MOTOWN AND THE FOUR ACTS
+     PAUL NAMED ("Some things missing include a lot of motown... We also
+     need Public Enemy, Digable Planets, Pharcyde, Mary J. Blige"). Every
+     key is a genre term under the 2026-09-01 law and every note names the
+     act in its own first sentence, so a row is findable by both:
+     northernsoul (Manchester 1970, Gloria Jones's "Tainted Love" at the
+     Twisted Wheel), progressivesoul (Detroit 1971, What's Going On),
+     psychsoul2 (Detroit 1968, "Cloud Nine" — `as: "Psychedelic soul #2"`,
+     the article held by psychsoul), politicalhiphop (Long Island 1988,
+     It Takes a Nation of Millions), jazzrap (Brooklyn 1993, Reachin'),
+     althiphop (South Central 1992, Bizarre Ride II the Pharcyde) and
+     hiphopsoul2 (New York 1992, What's the 411? — `as: "Hip hop soul #2"`,
+     the article held by hiphopsoul). THREE LABELS ARE ARGUED AGAINST THE
+     ONE THAT WAS PROPOSED, each on a measurement: "Wigan 1973" was
+     REFUSED BY THE MAP (7.1 CSS px from Manchester, 7.3 from Liverpool,
+     both under G10's 8.5 floor at the Britain arc, and neither pair
+     declarable — the Southall ruling), so northernsoul takes the origin
+     room and its note records that Blackpool measured CLEAR at 10.7 px
+     for a future hand; althiphop takes South Central because `gfunk`
+     already holds "Los Angeles 1992" and the two records really are two
+     Los Angeleses; politicalhiphop takes Long Island over a free "New
+     York 1988" by the Seattle ruling, the room over the desk. THREE ROWS
+     REPORT NO CORPUS FILES AT ALL (politicalhiphop, jazzrap, althiphop —
+     the one path matching "public enemy" is a wrestling theme) and
+     hiphopsoul2 reports TWO after naming the five false positives; the
+     Motown rows are measured instead on what the scene played (41
+     Motown-catalogue files over 115 bpm; 9 Whitfield-era Temptations; 19
+     Stevie Wonder and Marvin Gaye), and each note says which numbers are
+     readings and which are choices. Chordonomicon carried all seven
+     labels but one: "hip hop soul" returns ZERO songs and hiphopsoul2
+     says so before falling back to "hip pop".
+     ...AND +6, 2026-09-03, SHIFT 4's BATCH D1 — "way more funk" (Paul:
+     "DEFINITELY James Brown, we need way more funk"). deepfunk (Cincinnati
+     1970, Sex Machine / Funky Drummer at Starday-King — the James Brown row
+     asked for by name, and it is the 1970 J.B.'s rather than the 1967 Cold
+     Sweat `funk` already holds, four differences argued in its note),
+     neworleansfunk (New Orleans 1969, the Meters' "Cissy Strut"),
+     jazzfunk (San Francisco 1973, Head Hunters at Wally Heider), gogo
+     (Washington 1978, "Bustin' Loose"), boogie (New York 1981, D-Train on
+     Prelude) and minneapolissound (Minneapolis 1982, Prince's 1999 — the
+     map's first Minnesota dot, and the only new place the batch needed).
+     TWO LABELS ARE ARGUED AGAINST THE ONE PROPOSED: jazzfunk takes San
+     Francisco 1973 because `songwriterpiano` holds New York 1971 outright,
+     and Head Hunters is the better record anyway; boogie takes New York
+     1981 because it is the single free year between `disco` (1977) and
+     `electro` (1982), which is the gap the row exists to fill.
+     TWO ROWS REPORT NO CORPUS FILES AT ALL and say so rather than dressing
+     up a false positive: gogo matches ZERO of 120,652 for Chuck Brown,
+     Trouble Funk, Rare Essence or E.U. (the naive search returns fifteen
+     hits and every one is Wham!, The Go-Go's or an agogô bell), and
+     Chordonomicon carries ONE song at the `go-go` label. neworleansfunk
+     matches seven files and NOT ONE OF THEM IS A METERS FILE; boogie
+     matches eleven and every one is Kool & the Gang rather than D-Train.
+     Each note says which of its numbers is a reading and which is a
+     choice. THE ONE THAT MEASURED CLEAN, and it is worth the line: boogie's
+     article states "tempo generally in the 110 to 116 beats-per-minute
+     range" and the corpus set measured p25 110 / med 114 / p75 118
+     independently — the encyclopaedia and the archive agreeing, which
+     almost never happens. minneapolissound's snare balance is 0.86 over 50
+     Prince files, the highest of the six sets, which is a Linn LM-1 with no
+     ghost note in it and is the exact opposite of deepfunk's ghost lane.
+     ONE EDGE WAS REFUSED ON THE DATE and the refusal is in the row: the
+     Minneapolis sound article calls the genre "a subgenre of funk rock",
+     and `funkrock` here is Los Angeles 1984, two years LATER, so the `not
+     later` law refuses it and `funk` carries the share. `funk`'s own
+     open want, "new orleans second line", ALSO stays open for the same
+     law — New Orleans 1969 cannot parent Cincinnati 1967 — and
+     neworleansfunk's note is where the next hand is told why.
      The literal stays a literal for the reason :649 gives. */
-  ok("G0 the catalog is 421 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 421,
+  ok("G0 the catalog is 453 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 453,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));

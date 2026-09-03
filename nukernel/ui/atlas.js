@@ -720,8 +720,11 @@ export function mount(parent, ctx) {
      right that isn't underlined."* The single-node return became two slots
      the day the word and the link stopped being one element.)
        a WORD + a MARK — the anchors nukernel/wiki.js resolved. The WORD is
-                     the article's own title with its underscores spent, PLAIN
-                     TEXT in the plate: no href, no underline, no hand-blue,
+                     `NuWiki.name(gk)` — the article's own title with its
+                     underscores spent, unless the row declared a plate name
+                     with `as` (2026-09-03; see the note above genreCell) —
+                     PLAIN TEXT in the plate: no href, no underline, no
+                     hand-blue,
                      tapping it plays the record like the rest of the row.
                      WHAT KIND of article it is stays beside it as a REAL
                      span: "Lo-fi music · the broader" beside "Los Angeles
@@ -761,10 +764,24 @@ export function mount(parent, ctx) {
      content — so the 31 rows that print "· the broader" or "· the artist" said
      it to the eye and to nobody else. The name is the visible text plus the
      destination now, which is what it was always trying to be. */
+  /* THE WORD IS THE PLATE NAME AND THE MARK IS STILL THE ARTICLE (2026-09-03).
+     Paul, reading THIS LIST: *"look for names in genre list, you still have
+     people and bands in there. If something doesn't have a natural genre just
+     pick a good mix. If it's a repeat then flag it: Synthwave #2, etc."*
+     He was right and the bug was here: this cell printed `row.title`, so a row
+     whose honest article is an act or a work printed the act or the work —
+     "Hans Zimmer", "Fleetwood Mac", "The Cure", "Pretty Hate Machine",
+     "Violator (album)" — and a REFUSED row printed its own key, which is an
+     address and not a name. wiki.js carries `as` now, the name a reader sees,
+     and `NuWiki.name(gk)` is its one owner (`as` else `title`, underscores
+     spent; a refusal's `as` where it declared one). THE LINK DID NOT MOVE: the
+     ↗ mark's href is still `w.url(gk)`, built from `title`, so nothing a
+     reader CLICKS was invented — which is the same separation `wiki-extract.js`
+     argues at the head of its ASK table. */
   function genreCell(gk, genre, roleWhy) {
     const w = W(), row = w && w.WIKI[gk];
     if (w && row) {
-      const title = row.title.replace(/_/g, " ");
+      const title = w.name(gk);
       const kind = row.kind !== "genre" ? " · the " + row.kind : "";
       const s = el("span", { className: "nu-ixw", textContent: title });
       s.dataset.gk = gk;
@@ -802,13 +819,24 @@ export function mount(parent, ctx) {
     const why = roleWhy
       ? "a role has a job, not a history — " + roleWhy
       : (miss ? miss.why : "no article for this anchor in the catalogue yet");
+    /* THE KEY IS THE LAST RESORT NOW, NOT THE ANSWER (2026-09-03). "IT IS THE
+       ROW'S OWN KEY" above was written when the alternative was an em dash and
+       it is still true of the six ROLES, whose key IS their name ("simple",
+       "pad"). It stopped being true of the 28 refused anchors the day Paul read
+       "copshowsynth" in a list of genres: a refusal has no article to name it
+       and that is not a licence to print an address. wiki-extract's NOLINK
+       table declares the genre for those rows and `name()` hands it over — and
+       INVENTING a title for a row with no article is still the one thing this
+       branch may never do, which is why the invented word is a NAME and never
+       becomes an href. */
+    const word = (w && w.name(gk)) || genre;
     const s = el("span", { className: "nu-ixw nu-ixw-no",
-                           textContent: genre });
+                           textContent: word });
     s.dataset.gk = gk;
     s.dataset.why = why;
     s.dataset.say = why;
     s.title = why;
-    s.setAttribute("aria-label", genre + " — no article: " + why);
+    s.setAttribute("aria-label", word + " — no article: " + why);
     return { plate: null, over: s };
   }
   function idxRow(year, genre, place, gk, why) {

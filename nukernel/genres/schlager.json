@@ -1,0 +1,186 @@
+{
+  "note": "SCHLAGER — Hamburg 1960. Freddy Quinn, \"Irgendwann gibt's ein\nWiedersehn\" (Polydor, Hamburg, 1960) — the label, the city and the\nsinger that made the postwar German-language hit an industry, and the\n1960 entry in his own article's list of hits (\"Die Gitarre und das Meer\"\n1959, \"Unter fremden Sternen\" 1959, \"Irgendwann gibt's ein Wiedersehn\"\n1960, \"La Paloma\" 1961, \"Junge, komm bald wieder\" 1962). THE FOUNDING\nRECORD IS ARGUED RATHER THAN ASSUMED. Quinn's \"Heimweh\" — his article\ncalls it \"his first hit record\" — is the earlier candidate at 1956 and\nis refused for a reason the same article supplies: 1956 is also the year\nof \"Schön war die Zeit\", \"a German version of Dean Martin's 'Memories\nAre Made of This'\", and a translated American hit is not yet the\nindustry this row measures. By 1960 the machine was writing its own, and\nthe genre article dates the peak to exactly here: \"Schlager reached a\npeak of popularity in Germany and Austria in the 1960s (featuring Peter\nAlexander and Roy Black)\" — two of the ten corpus files below.\n\nWHY NOT VIENNA AND WHY NOT MUNICH. The Austrian half of this music is\nreal (Udo Jürgens, Peter Alexander) and Vienna is already this table's\n1785, 1814, 1867 and 1876 dot four times over; Hamburg is where Polydor\ncut the records and is a NEW dot, and it takes a second label in 1985\nwith `powermetal` — the same city twenty-five years apart, which is\nlegal and is exactly the Boston 1831/1989/1994 pattern already in the\ntable.\n\nTHE HARMONY IS MEASURED AND IT IS THE PLAINEST IN THIS SHIFT. 2,496\nChordonomicon songs over `schlager` (1,366) and `classic schlager`\n(1,775). 86.9% MAJOR — the highest major share of any label measured in\nthis batch by twenty points — and NOT ONE chromatic degree leans: bVII\n1.17x, bIII 0.57x, bVI 0.75x, i 0.47x, iv 0.48x. So the mode is IONIAN,\nfor the reason `chamberpop` declared ionian a day earlier: declaring\nmixo or dorian on a row with no flat degree is exactly the decoration\nthe 2026-09-02 mode law forbids.\n\nWHAT IS DISTINCTIVE IS NOT A CHORD, IT IS WHERE THE CYCLE STARTS. Every\none of this label's high-lift windows BEGINS OFF THE TONIC: `V I V I` at\n5.13x (n=71), `V I IV I` at 5.75x (n=45), `IV I V I` at 3.88x (n=83),\n`I V I IV` 3.48x (n=61), and `I V ii V` at 12.61x. Song-shares: I 89.7%,\nIV 82.8%, V 82.5%, ii 27.4%. This is a music of three chords that\narrives AT the tonic instead of leaving from it, which is what a refrain\ndoes — and it is why the roots below are written `V I V I, V I IV I`,\nthe two highest-lift windows in order, and why the idiom row is `pickup`:\nthe tune enters before the bar because the bar it enters is the one\neverybody sings.\n\nTHE CORPUS IS TEN FILES AND EVERY ONE OF THEM IS A MEDLEY. Roy Black\n(2), Udo Jürgens (3), Peter Alexander, Wolfgang Petry, Caterina Valente,\nDrafi Deutscher (2) and Heino — the \"schlager\" term itself returns one\nfile. Their median beat length is 3,018 beats, five times a song, which\nis the tell: these are Kirmes medley files and their density and swing\nreadings describe a stitched set, not a record. The two numbers taken\nfrom them are the two a medley cannot corrupt: bpm median 111.0 (the row\ntakes 112) and 90% MAJOR, which independently agrees with\nChordonomicon's 86.9% off a corpus with no overlap. `maxHold: 3` off a\n90th-percentile hold of 3.771 sixteenths is reported WITH the caveat\nattached and nothing else here is read off those files. Connie Francis's\nsix files were excluded: she sang in German and is not a German record.\n\nTHE INVENTION IS THE MACHINE, and 0.25 of this row is not in the table\nabove it. `operetta` (London 1878) 0.35 is the harmonic vocabulary and\nthe singable refrain; `waltz` (Vienna 1867) 0.15 and `polka` (Prague\n1837) 0.10 are the two dance floors underneath it; `crooner` (Los Angeles\n1931) 0.15 is the microphone. What none of them explains is the postwar\nmass-market SINGLE — a song written to a length, arranged by a house\nband, cut in a Hamburg afternoon and sold to a country that wanted to be\nsomewhere warmer. That is why the kit is a plain backbeat with nothing\nclever in it and why `sent: \"aabb\"` is kept from the family row rather\nthan overridden: a Schlager refrain says itself twice on purpose, and it\nis the one row in this shift where the strophe is not a default but the\nargument.\n\nAND THE SIBLING FIVE YEARS UPSTREAM. `iskelma` (Helsinki 1955) is the\nFinnish word for this — `iskelmä` is a 1930s calque of `Schlager`,\ncoined to mean the same commercial object — and it is NOT this row's\nchild and this row is not its parent. The measurement makes them\nopposite: this label is 86.9% major with no chromatic lean, that one is\n49.8% major with the highest subdominant lift in the shift (iv 2.96x)\nand every high-lift window in harmonic minor. Both rows seat\n`MOUTHS.crooning` on purpose, so that the one thing they genuinely share\n— a man at a microphone selling a refrain — is held constant and the\nmode is where the ear hears the difference.",
+  "label": "Hamburg 1960",
+  "near": "operetta",
+  "plan": "song",
+  "bpm": 112,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "operetta": 0.35,
+    "waltz": 0.15,
+    "crooner": 0.15,
+    "polka": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "strings",
+    "accordion"
+  ],
+  "bassInstr": "finger_bass",
+  "drumkit": "room",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "line"
+      }
+    ],
+    "else": "pad"
+  },
+  "part": [
+    "lead",
+    "pad",
+    "counter"
+  ],
+  "harmony": "cycle",
+  "roots": [
+    4,
+    0,
+    4,
+    0,
+    4,
+    0,
+    3,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 0.9,
+    "atk": 0.014,
+    "rel": 1.0,
+    "gain": 0.26,
+    "verb": 0.36,
+    "mouth": {
+      "$src": "MOUTHS.crooning"
+    }
+  },
+  "words": [
+    "the singer, selling the refrain",
+    "the studio strings, sweetening every second bar",
+    "the accordion, the dance floor this came off"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(8)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(4), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

@@ -1,0 +1,322 @@
+{
+  "note": "BOOGIE — New York 1981. D-Train, \"You're the One for Me\" (Prelude Records,\nNew York, 1981): Hubert Eaves III programming a LinnDrum and a Minimoog, James\n\"D-Train\" Williams singing over it, and no string section, no horn section and\nno rhythm section anywhere on the record. Kashif's productions for Evelyn King\nthe same year at RCA are the same machine from the other side of town.\n\nWHAT THIS ROW IS FOR: THE THREE YEARS BETWEEN `disco` AND `electro`. The table\nhad New York 1977 (Philadelphia's orchestra made metronomic for the floor) and\nNew York 1982 (a Bronx DJ programming an 808), and nothing in between — which\nleft the actual bridge, a sung R&B record with a drum machine and a synth bass\nwhere the band used to be, with no row. That is what boogie is, and the article\nsays so: \"it later evolved into electro and house music.\"\n\nTHE FOUR-ON-THE-FLOOR IS GONE, and it is the row's defining NEGATIVE. The\narticle: \"Boogie, following the example of post-disco, generally lacks the\nfour-on-the-floor beat, the 'traditional' rhythm of disco music; instead, the\ngenre has a strong accent on the second and fourth beats.\" So the `k` lane below\nis deliberately NOT `disco`'s [1,0,0,0] x 4 — it is 1, the \"a\" of 2 and the \"&\"\nof 3 — and the backbeat is carried by a snare AND a handclap together on 2 and\n4, which is the LinnDrum's own pair of samples and the sound of every record on\nPrelude.\n\nTHE TEMPO IS THE ONE PLACE THE ENCYCLOPAEDIA AND THE ARCHIVE AGREE, which\nalmost never happens and is worth writing down. The article states the range\noutright — \"tempo generally in the 110 to 116 beats-per-minute range\" — and the\ncorpus set measured independently at p25 110 · MED 114 · p75 118. `bpm: 114` is\nboth answers. That is the strongest single piece of evidence under any row in\nthis round.\n\nMEASURED, THE MIDI CORPUS. 11 files across 120,652, and they are all KOOL & THE\nGANG rather than D-Train: Jungle Boogie, Get Down On It, Fresh, Celebration,\nToo Hot, Cherish, That's The Way. Said plainly — there is no D-Train, no Kashif,\nno Shalamar and no S.O.S. Band in the archive, so this set is the row's\nNEIGHBOURHOOD and not its record, and it spans 1973 to 1984 rather than 1981.\nWhat it says anyway: minor 8 of 11 (0.73, the most minor set of the six), drum\ndensity 3.04 and hat density 1.89 (both near the top — a machine plays every\nstep it is programmed to and never tires), and OFF-GRID 0.061, THE LOWEST OF THE\nSIX BY A FACTOR OF THREE (deepfunk 0.363, minneapolis 0.365, jazz-funk 0.344,\nnew orleans 0.225). That number is a drum machine. It is also why this row\ndeclares NO SWING and states a full `kitVel` instead: a Linn has an accent\nswitch where a drummer has a hand, which is `electro`'s own argument arriving\nunder a different machine.\n\nMEASURED, CHORDONOMICON. The bare label `boogie` carries THREE songs with a\nmedian year of 2019 — that is the 2010s revival word, not this music, and it is\nuseless; said out loud. The label that IS populated is `post-disco`, which the\narticle's own first line gives as boogie's synonym: 214 songs, median year 1986,\n40% minor, and its top minor four-chord windows are i VI VII i and iv i iv i at\n3 hits each against a top major of IV I IV I at 5. That is a MINOR VAMP with a\nflat-six/flat-seven lift, and this row's `roots` are exactly that: i - bVI -\nbVII - i, aeolian, with a seventh on every slot because a boogie chord is a\nninth pretending to be a triad.\n\nTHE FAMILY IS `studio`, NOT `soul`, and that is an argument rather than an\noversight. `disco` and `funk` are in soul because a band played them; this is\none man with a sequencer and a singer, and the studio family's dynamics row\n(stress 0.35, phrase 0.4, touch t 0.035 / v 0.6) is the machine-tight hand this\nrecord has, where soul's t 0.07 / v 1.0 would put a session drummer's wrist back\non a LinnDrum. `synthsoul` (London 1983) is two years downstream in that same\nroom and is the nearest neighbour there.\n\nLINEAGE: `disco` (New York 1977) at 0.35 — the article calls this genre\npost-disco in its own first sentence, and the song forms, the key changes and\nthe singer are the floor's. `funk` (Cincinnati 1967) at 0.30 — the article\nagain: \"boogie is R&B-rooted and predominantly draws from funk music\", and the\nbass line is a funk line played by a machine. `synthpop` (Basildon 1981) at\n0.10, the article's third named influence (\"having been fairly exposed to its\nsubgenre synthpop\") and a legal same-year edge under GENRES.md §2's `not later`\nlaw. Sum 0.75; the residue 0.25 is the substitution itself — the rhythm section\nreplaced by a LinnDrum and a synth bass, with the singer left exactly where\ndisco had him.\n\nTHE DRUM KIT IS `electronic` AND NOT `tr808`. A LinnDrum is eight-bit SAMPLES of\nreal drums, which is why boogie records sound like a band that cannot breathe\nrather than like an 808's sine kick; `electro` (New York 1982) holds tr808 and\nholds it for the right reason, and this row a year earlier is the other machine.\n\nTHE ARTICLE: `Boogie (genre)` — the parenthetical, and its own hatnote says why\n(\"Not to be confused with Boogie rock or Boogie-woogie\", and `boogiewoogie`\nChicago 1928 is this table's row for the second of those).",
+  "label": "New York 1981",
+  "near": "disco",
+  "plan": "dance",
+  "bpm": 114,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "disco": 0.35,
+    "funk": 0.3,
+    "synthpop": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "polysynth",
+    "rhodes_ep",
+    "synth_brass_1"
+  ],
+  "bassInstr": "synth_bass_2",
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      },
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "stab",
+    "pad",
+    "lead"
+  ],
+  "roots": [
+    0,
+    0,
+    5,
+    5,
+    6,
+    6,
+    0,
+    0
+  ],
+  "prog": [
+    {
+      "d": 0,
+      "q": "m7"
+    },
+    {
+      "d": 0,
+      "q": "m7"
+    },
+    {
+      "d": 5,
+      "q": "maj7"
+    },
+    {
+      "d": 5,
+      "q": "maj7"
+    },
+    {
+      "d": 6,
+      "q": "dom7"
+    },
+    {
+      "d": 6,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "m7"
+    },
+    {
+      "d": 0,
+      "q": "m7"
+    }
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      7,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      7,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      4
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1.6,
+    "atk": 0.004,
+    "rel": 0.35,
+    "gain": 0.27,
+    "verb": 0.26
+  },
+  "words": [
+    "the synth, the stab on the chord and off it again",
+    "the Rhodes, holding what the string section used to hold",
+    "the synth brass, the hook up top"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(8)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[only(\"gate\", rotate(4)), transpose(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[fill(2)]"
+    }
+  }
+}

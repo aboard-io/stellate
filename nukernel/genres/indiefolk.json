@@ -1,0 +1,171 @@
+{
+  "note": "INDIE FOLK — London 2009. Mumford & Sons, SIGH NO MORE (Eastcote\nStudios, London; produced by Markus Dravs; Island/Glassnote, 2 October\n2009). The genre article names two acts for the wave this row is:\n\"In the United Kingdom, artists such as Ben Howard and Mumford & Sons\nemerged, with the latter band promoting the music style through their\nGentlemen of the Road touring festivals\", and it is the only place in\nthe article where a scene gets a name — \"a decade later, the terms\n'stomp and holler,' 'stomp clap hey,' and 'hoedown pop' were coined\nto refer retrospectively … to such bands\". Chordonomicon uses the\nfirst of those as a label on 5,786 songs, which is how this row was\nfound.\n\nWHY NOT FLEET FOXES, SEATTLE 2008, the other candidate and the one the\narticle names first among the American acts: that record is a CHORAL\none — four-part harmony over a fingerpicked guitar, which is\n`folkduo`'s parallel thirds enlarged and which `softfolk` (Chapel Hill\n1970) and `chamberpop` (Boston 1994) between them already describe.\nSigh No More is the record with the FOOT on it, and the foot is the\nwhole invention. Seattle 2008 is also one year from `bedroompop`'s\nneighbourhood and two labels from `grunge` (Seattle 1991) and\n`postgrunge` (Seattle 1995); London 2009 is free and is the studio\nthe record was actually cut in.\n\nTHE HARMONY IS MEASURED AND IT IS THE ANTI-AXIS. Over 11,082 songs\n(`indie folk`, `stomp and holler`, `new americana`, `modern indie\nfolk`) the two commonest windows are `I IV I IV` (659 songs, 5.95%,\n1.40x) and `IV I IV I` (436, 3.93%, 1.78x), and the DOMINANT is at\nexactly baseline: V 16.52% of degrees, 1.00x, the only degree in this\nwhole batch to land on the number. Meanwhile the axis is SUPPRESSED —\n`I V vi IV` 0.57x and `vi IV I V` 0.63x, against `skatepunk`'s 3.96x\non the same window one row down. This is a music that alternates two\nchords and does not cadence, which is what a banjo roll over a droned\nguitar sounds like and what the third of a mixolydian folk-rock record\ndoes not.\n\nSo the roots are the alternation for seven bars and the dominant only\nin the eighth: `[0,3,0,3,0,3,0,4]`, which is the census's own two\ncommonest windows joined at the seam (`I IV I IV` 1.40x into `I IV I\nV` 1.29x). Ionian: bVII is at 0.67x here and there is no flat degree\nto be had, so mixolydian would be the decoration the 2026-09-02 law\nforbids — this is not folk-rock, and the census says so in one number.\n\nAND THE CORPUS IS ESSENTIALLY SILENT, WHICH IS SAID OUT LOUD. Mumford\n& Sons, Fleet Foxes, the Lumineers, Bon Iver, Iron & Wine, Sufjan\nStevens, the Avett Brothers, First Aid Kit, Ben Howard, Edward Sharpe\nand the Head and the Heart return ONE FILE between them across 120,652\n— Of Monsters and Men, \"Little Talks\": 110 bpm, 4/4, major. (A second\nmatch, \"Tyrian_Mumford_-_Untitled\", is not the band and was thrown\nout.) `bpm: 110` is therefore a reading of ONE FILE and this row says\nso rather than dressing it as a distribution. What it can be checked\nagainst is its own neighbours: `folkduo` 96, `softfolk` 88,\n`singersongwriter` 100, and this row above all three — because unlike\nany of them, this music is danced to.\n\nTHE PARENTS. `folkrock` 0.30 — the twelve-string, the electric band\nplaying folk material, the article's own second stylistic origin;\n`folkduo` 0.20 — the close harmony and the acoustic front line;\n`collegerock` 0.20 — the article's FIRST stylistic origin is indie\nrock, and Athens 1983 is where this table keeps that; `bluegrass`\n0.15 — the banjo, which is a bluegrass instrument played by people\nwho are not bluegrass players. 0.85 declared, and the 0.15 residue is\nthe biggest invention claimed in this batch, on purpose: THE STOMP.\nEvery ancestor above keeps the pulse in a hand; this row puts a kick\ndrum on all four beats of a bar under an acoustic band and takes the\nhi-hat out entirely. There is no hat lane in the kit below — the only\nrow in this family with none — and the claps double the snare. That\ngrid is not any parent's, and neither is the arena it was built for.\n\nTHE CAST IS ACOUSTIC AND THE BASS IS THE UPRIGHT, WHICH IS WHY NO\n`bassInstr` IS DECLARED. `plan.js castOf`'s default bass is the\nsampled double bass and for once that is the right recording, so\nnothing overrides it; `bassStyle: \"octaves\"` is the bluegrass bass's\nown root-and-octave, one per beat. `steel_string_guitar` and\n`ohh_voices` are modelled; `banjo` is a recording, and the row seats\nit knowingly — the roll is the sound and the box has no modelled\nbanjo. `intro: \"solo\"` because the record opens with one instrument\nand no drums, and the gallop cell in precompose is the roll itself.",
+  "label": "London 2009",
+  "near": "folkrock",
+  "plan": "song",
+  "bpm": 110,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "folkrock": 0.3,
+    "folkduo": 0.2,
+    "collegerock": 0.2,
+    "bluegrass": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "steel_string_guitar",
+    "banjo",
+    "ohh_voices"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      1,
+      0
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "roots": [
+    0,
+    3,
+    0,
+    3,
+    0,
+    3,
+    0,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "octaves",
+  "intro": "solo",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 0.9,
+    "atk": 0.005,
+    "rel": 0.9,
+    "gain": 0.27,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "{ ...MOUTHS.skiffler, blend: 0.6, syll: 1 }"
+    }
+  },
+  "words": [
+    "the guitar, strummed, the tune",
+    "the banjo, the roll, an octave up",
+    "the shout, a third above, second half"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(2)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(4), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

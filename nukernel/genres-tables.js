@@ -872,7 +872,19 @@
                 // sequencers and `southernhiphop` is a live band over an
                 // 808. The family has no DYNAMICS default by design, so
                 // all three are named in DYNAMICS below.
-                "trance", "eurodance", "southernhiphop"]],
+                "trance", "eurodance", "southernhiphop",
+                // ...AND THE MOTOWN-AND-FOUR-ACTS ROUND'S THREE (2026-09-03,
+                // Paul: "We also need Public Enemy, Digable Planets,
+                // Pharcyde"). On the deal every member above signed: `club`
+                // has NO family fallback, so each of the three is named in
+                // DYNAMICS below and none of them is `null` — every one has a
+                // HAND IN THE LOOP, which is the blockparty/triphop reading
+                // and not electro's. politicalhiphop's hand is thirty
+                // fragments of other people's playing stacked into a bar;
+                // jazzrap's is literally a jazz drummer's ride, sampled
+                // whole; althiphop's is the swung MPC. The batch's other
+                // four rows are SUNG and sit in `soul`.
+                "politicalhiphop", "jazzrap", "althiphop"]],
     ["soul",   ["doowop", "detroitsoul", "psychsoul", "funk", "disco", "gospel", "rnb",
                 "hiphopsoul", "clubpop", "retrofunkpop", "boyband", "darkrnb",
                 "blueeyedsoul",
@@ -904,7 +916,33 @@
                 // club, and the ear files a Brand New Heavies record as
                 // a funk record; it takes the family's own dynamics row
                 // unchanged, which is what a live rhythm section earns.
-                "acidjazz"]],
+                "acidjazz",
+                // ...and the FUNK round's four (2026-09-03, Paul: "DEFINITELY
+                // James Brown, we need way more funk"). All four are a band in
+                // a room with a rhythm section, which is this cluster's whole
+                // definition, and all four take the family's own dynamics row
+                // unchanged (stress .5, phrase .45, touch t .07 / v 1) —
+                // exactly what a live hand earns. The round's other two,
+                // `boogie` and `minneapolissound`, are NOT here: a LinnDrum is
+                // not a wrist, and they are in `studio` with the argument.
+                // test/hand.test.js §1 is why this list is edited at all — an
+                // anchor with no family row resolves no dynamics and renders
+                // flat forever.
+                "deepfunk", "neworleansfunk", "jazzfunk", "gogo",
+                // ...and the MOTOWN round's four (2026-09-03, Paul: "Some
+                // things missing include a lot of motown... We also need
+                // Public Enemy, Digable Planets, Pharcyde, Mary J. Blige").
+                // The four SUNG ones are here and the three hip-hop rows of
+                // the same batch are in `club`, which is the split the ear
+                // makes: a Motown floor-filler, an album-length Marvin Gaye
+                // arc, a Whitfield vamp and a Mary J. Blige ballad are all a
+                // rhythm section with a singer over it, and all four take the
+                // family's own dynamics row unchanged (stress .5, phrase .45,
+                // touch t .07 / v 1) — a live hand, even where the loop under
+                // `hiphopsoul2` is somebody else's tape, because the thing
+                // being humanised is the SINGER. test/hand.test.js §1 is why
+                // this list is edited at all.
+                "northernsoul", "progressivesoul", "psychsoul2", "hiphopsoul2"]],
     // ...and the two 2020s newcomers that are grooves and not floors: both are
     // a hand layer over a rhythm section, which is what this cluster is, and
     // both take the family's own dynamics row unchanged.
@@ -954,6 +992,16 @@
                 // and a guitar front line — test/hand.test.js §1 caught them
                 // resolving NO dynamics for want of a family.
                 "folkrock", "countryrock", "heartlandrock",
+                // ...and shift 4's five (2026-09-03), the country, roots and
+                // blues wing. Every one is people in a room with amplifiers,
+                // which is this cluster's whole definition, and every one
+                // takes the family hand rather than a DYNAMICS row: a Sun
+                // trio, an Austin road band, two Macon leads over two kits,
+                // a Berkeley riff band and a West Hampstead blues band.
+                // The sixth row of that shift, `nashvillesound`, is under
+                // `studio` below, because the producer is its author.
+                "rockabilly", "outlawcountry", "southernrock", "rootsrock",
+                "bluesrock",
                 // ...the deep-time round's forward half (2026-08-30) put
                 // `hardcore` beside punk and `doom` beside sludge — the
                 // metal wing's missing floor and ceiling, both guitars
@@ -1005,11 +1053,51 @@
                 // DYNAMICS row of its own.
                 "collegerock", "raprock", "funkrock", "glammetal", "grunge",
                 "britpop", "poppunk", "postgrunge", "skapunk", "blackmetal",
-                "numetal", "postbritpop"]],
+                "numetal", "postbritpop",
+                // ...AND THE GENRE-QA ROUND'S BATCH B (2026-09-03), three more
+                // amplifiers and a rhythm section. `powerpop` (Memphis 1972)
+                // and `skatepunk` (Los Angeles 1988) are the definition
+                // exactly, beside `poppunk` and `hardcore`, the two rows they
+                // sit between in time. `worship` (Sydney 1993) is here and NOT
+                // in `studio` on purpose: a worship record is cut LIVE with a
+                // band on a stage and a room singing back, which is this
+                // cluster's own hand, where `ccm` one town over is a Nashville
+                // bench and a desk. All three take the family's dynamics row.
+                "powerpop", "skatepunk", "worship",
+                // ...AND THE GENRE-QA ROUND'S BATCH C (2026-09-03), four
+                // amplifiers and a rhythm section: Buenos Aires 1967 is a
+                // beat group singing in Spanish, and Westfield 2002,
+                // Hamburg 1985 and Kitee 1997 are the metal wing's three
+                // missing rooms, filed beside `nwobhm`, `thrash` and
+                // `gothicmetal`, which are their own declared parents.
+                // test/hand.test.js §1 is the check: an anchor with no
+                // family row resolves NO dynamics and renders flat forever.
+                "rockenespanol", "metalcore", "powermetal",
+                "symphonicmetal"]],
     ["studio", ["beatgroup", "jazzrock", "aor", "dusseldorfschool", "synthsoul",
                 // ...and chamber pop (2026-09-03): an arranged record made at a
                 // bench, filed beside psychpop, its own declared parent's room.
                 "chamberpop",
+                // ...and the Nashville sound (2026-09-03), for the same
+                // reason and with a stronger claim than most: the article's
+                // own account of the genre names the PRODUCERS — Atkins,
+                // Bradley, Sholes, Ferguson — and the A-Team, and says they
+                // "invented the form by replacing" the honky-tonk band's
+                // instruments with a string section and a vocal quartet.
+                // A bench, an arrangement and a hired orchestra. It is the
+                // only row of shift 4 that is not a band.
+                "nashvillesound",
+                // ...and the FUNK round's machine half (2026-09-03): `boogie`
+                // (New York 1981) and `minneapolissound` (Minneapolis 1982).
+                // The round's other four are a band and are in `soul`; these
+                // two are a LinnDrum, a synth bass and one man at a bench, and
+                // the family is the DYNAMICS argument rather than a shelf —
+                // soul's row hands a record a session player's wrist (touch
+                // t .07 / v 1) where these have none, and studio's (t .035 /
+                // v .6, "played by people and then edited by people") is what
+                // a hand editing a machine actually is. `synthsoul` (London
+                // 1983) is already here doing the same thing a year later.
+                "boogie", "minneapolissound",
                 "synthpop", "citypop", "merseybeat", "psychpop", "motorik",
                 "roboticpop", "confessionalpop",
                 // ...and the MIDI-corpus round's three (2026-09-02): a
@@ -1017,6 +1105,15 @@
                 // None of the three is a band; all three are records
                 // ASSEMBLED, which is what this cluster means.
                 "teenpop", "smoothjazz", "chiptune",
+                // ...and the genre-QA round's batch B (2026-09-03): two
+                // records ASSEMBLED, which is this cluster's own word.
+                // `ccm` (Nashville 1978) is a producer's format — one singer,
+                // Brown Bannister's bench and a Word contract — and files
+                // beside `confessionalpop`, the same town thirty years on.
+                // `indietronica` (Seattle 2003) is the cluster read to its
+                // limit and past `industrialdance`'s apartment: two people who
+                // were never in a room, posting CD-Rs to each other.
+                "ccm", "indietronica",
                 // ...and the ledger round's two (2026-08-30): `horrorscore`
                 // files beside suspensescore and photoplay — a scoring desk, not
                 // a band — and `exotica` beside technopop, the studio confection
@@ -1145,6 +1242,14 @@
                 // acoustic ensemble and no drum kit is what this cluster IS,
                 // and a corrido is older than every rock anchor in the table.
                 "corridotumbado",
+                // ...and the genre-QA round's batch B (2026-09-03):
+                // `indiefolk` (London 2009), which is this cluster's own
+                // sentence — a sung story on an acoustic ensemble — with a
+                // kick drum under it, and which files beside `folkduo`,
+                // `softfolk` and `singersongwriter`, the three rows it
+                // descends from and answers. It takes the family's dynamics
+                // row; the stomp is in its own kit, not in its dynamics.
+                "indiefolk",
                 // ...and Johannesburg 1935, which belongs here for the plain
                 // reason: a shebeen pedal organ in the 1930s is a pre-rock
                 // tradition, the drums are not its identity, and the family's
@@ -1267,7 +1372,15 @@
                 // ...and the MIDI-corpus round's one (2026-09-02):
                 // `neotraditional` files beside `countrypop` and
                 // `bluegrass`, its own two parents, forty-five years on.
-                "neotraditional"]],
+                "neotraditional",
+                // ...and the genre-QA round's batch C (2026-09-03), three
+                // pre-rock song traditions: Santiago 1966 is a guitar and a
+                // voice beside `folkduo` and `chanson`, and Hamburg 1960 and
+                // Helsinki 1955 are the European light-music pair, filed with
+                // `operetta`, `waltz` and `musette` — and with `enka` and
+                // `trot`, which are the same commercial object two continents
+                // east. All three take the family's own dynamics row.
+                "nuevacancion", "schlager", "iskelma"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.
@@ -1871,6 +1984,33 @@
     //                   looser than `boombap`'s own row for the same reason
     //                   the anchor exists.
     southernhiphop: { stress: 0.45, phrase: 0.35, touch: { t: 0.07, v: 0.95 } },
+    /* ...AND THE MOTOWN-AND-FOUR-ACTS ROUND'S THREE (2026-09-03). `club` has
+       no family row, so these three would resolve to NOTHING and render flat
+       forever (test/hand.test.js §1). None is `null`: every one has a hand in
+       the loop, and each number is argued against `boombap`'s own row
+       (stress .35, phrase .25, t .06, v .9), which is the wing's reference.
+         politicalhiphop  THE TIGHTEST GRID IN THE WING and the loudest hand.
+                          The Bomb Squad quantized hard — the row declares
+                          `swing: 0.05` against boombap's 0.20 — so `t` drops
+                          to .04; but the material is dozens of fragments of
+                          other people's PLAYING, so the level hand stays high
+                          (v .95) and the metre is stated hard (stress .5),
+                          because a record built to sound like an alarm accents
+                          the beat rather than leaning off it.
+         jazzrap          THE LOOSEST IN THE WING, and it is the one row here
+                          whose loop is an acoustic drummer: `drumkit: "jazz"`,
+                          a ride figure taken from the `jazz` row itself. t .08
+                          is looser than southernhiphop's .07, which was the
+                          loosest before it, and the phrase lean is high (.45)
+                          because a hard-bop bar breathes where a machine does
+                          not.
+         althiphop        boombap's hand with the swing turned up — `swing:
+                          0.26` is the highest in the wing — so t .07 and a
+                          softer metre (stress .35) than either sibling: four
+                          voices trading over an MPC that lopes. */
+    politicalhiphop: { stress: 0.5,  phrase: 0.25, touch: { t: 0.04, v: 0.95 } },
+    jazzrap:         { stress: 0.3,  phrase: 0.45, touch: { t: 0.08, v: 0.85 } },
+    althiphop:       { stress: 0.35, phrase: 0.4,  touch: { t: 0.07, v: 0.9 } },
   };
   // NO SILENT DEFAULT (the compose.js law, one tier down): a genre resolves to
   // its own row or to its family's, and `null` is a DECISION rather than an

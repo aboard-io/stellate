@@ -1,0 +1,249 @@
+{
+  "note": "JAZZ-FUNK — San Francisco 1973. Herbie Hancock, Head Hunters (Wally Heider\nStudios, San Francisco, September 1973; Columbia KC 32731, 26 October 1973):\nHancock on Rhodes, clavinet and an ARP Odyssey, Bennie Maupin on reeds, Paul\nJackson on bass, Harvey Mason on drums, Bill Summers on percussion.\n\nTHE LABEL, ARGUED. SHIFT-4 offered New York 1971 or San Francisco 1973. New\nYork 1971 IS TAKEN — `songwriterpiano` holds it (Tapestry) — and the atlas\nrefuses crowding, so the choice was made for us by the table; but San Francisco\n1973 is also the better record. Head Hunters is where jazz-funk stops being a\nlabel critics used for Blue Note dates and becomes the best-selling jazz album\never made, cut in one city, in one month, by a band assembled for the purpose.\n`acidjazz` (London 1988) is fifteen years downstream and already carries\n\"jazz-funk (roy ayers, lonnie liston smith)\" in its own `wants` — this row does\nnot close that want, because that want names the EARLY-SEVENTIES BLUE NOTE\nSHELF (Ayers 1972, Liston Smith 1973) rather than this record, and a want is\npaid only by the thing it names. It is a near miss and is written down as one.\n\nWHAT IT INVENTS, AND IT IS ONE THING: THE BASS IS A SYNTHESIZER. Chameleon's\nline — the most recognisable bass figure in jazz — is Hancock's left hand on an\nARP Odyssey, not Paul Jackson's Fender. So `bassInstr: \"synth_bass_1\"`, which\nis a claim no other row in the funk wing makes: `deepfunk` and `neworleansfunk`\nare fingers on wood, `funkrock` is a slap, and this row's bottom is an\noscillator. Neither declared parent has that, and it is the residue.\n\nAND IT IS INSTRUMENTAL. `instrumental: true` — Head Hunters has no singer, four\ntracks, an average of ten minutes each. The solo is the song, which is the jazz\nhalf; the vamp under it never changes, which is the funk half.\n\nMEASURED, THE MIDI CORPUS. 11 files across 120,652 for this row's acts —\nHANCOCK.Chameleon, HANCOCK.Cantalope island, HANCOCK.Rock it, HANCOCK.Still\ntime, two bare Chameleon transcriptions, THE CRUSADERS x2, and three Herbie\nfiles. Tempo p10 90 · p25 97 · MED 110 · p75 112 (HANCOCK.Chameleon reads 103,\nthe two bare Chameleons 97 and 158) and `bpm: 110` is the median.\nTHE TWO NUMBERS THAT NAME THIS ROW, and they are both about ABSENCE:\n  · SEVENTH 0.56 — more than half of every measured bar carries a seventh\n    chord, the HIGHEST of any set measured this round and higher than `gfunk`'s\n    celebrated 0.52 (deepfunk 0.34, minneapolis 0.355, boogie 0.45). That is\n    the jazz arriving as a number, and it is why this row is the only one of\n    the six to declare a `prog` with a quality on every slot: i-m7 for two bars,\n    IV-dom7 for two, which is Chameleon's B-flat minor seventh to E-flat\n    seventh, note for note.\n  · HAT DENSITY 0.14 and DRUM DENSITY 1.71 — the LOWEST of the six by a wide\n    margin (deepfunk 1.74 hat / 3.37 drums, new orleans 1.89 / 2.53, boogie\n    1.89 / 3.04). A jazz-funk kit is SPARSE: Harvey Mason plays eighths on the\n    hat and leaves the sixteenths to the congas and the clavinet. The `h` lane\n    below is eighths for that reason and not for a taste, and it is the visible\n    difference between this row and the two funk rows above it.\nSwing notates as 0 across the set and off-grid is 0.344; this row declares no\nswing, which is right for Mason's straight sixteenth feel.\n\nMEASURED, CHORDONOMICON. `jazz funk` is a populated label: 294 songs, median\nyear 1981, 37% minor, top four-chord windows I IV I IV (8) and IV I IV I (6) —\na TWO-CHORD VAMP, which is what this row's `roots` are. The neighbouring label\n`soul jazz` (135 songs, median 1971) runs I IV I V and carries a median of SIX\ndistinct chords per song against jazz-funk's four: the older shelf still plays\nchanges, this one plays a vamp with sevenths on it. That distinction is this\nrow against a music it is often filed with, and it is measured rather than\nasserted.\n\nLINEAGE: `funk` (Cincinnati 1967) at 0.35 — the vamp, the sixteenth-note bass,\nthe refusal to modulate. `modaljazz` (New York 1959) at 0.25 — Kind of Blue is\nwhere a jazz musician learned he could solo over one chord for ten minutes, and\nHancock's own Maiden Voyage is that lesson; without this parent the row is just\nfunk with a saxophone on it. `jazz` (New York 1945) at 0.15 — bebop's harmonic\nvocabulary, which is what the solo is made of. Sum 0.75; the residue 0.25 is the\nsynthesizer bass and the fact that a jazz record was allowed to have a hook.\n\nTHE ARTICLE: `Jazz-funk` — its own lead is this row's field list (\"a strong back\nbeat, electrified sounds, and analog synthesizers\") and its history section says\n\"jazz-funk generally exhibits a simple structure based around one or two riffs\",\nwhich is `harmony: \"cycle\"` over four roots. Not `Jazz fusion`, which is a\ndifferent and wider anchor's territory; not `Acid jazz`, which is `acidjazz`\n(London 1988) and this article's own named descendant.",
+  "instrumental": true,
+  "label": "San Francisco 1973",
+  "near": "funk",
+  "plan": "song",
+  "bpm": 110,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "funk": 0.35,
+    "modaljazz": 0.25,
+    "jazz": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "rhodes_ep",
+    "tenor_sax",
+    "clavinet"
+  ],
+  "bassInstr": "synth_bass_1",
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "pad",
+    "lead",
+    "riff"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    3,
+    3
+  ],
+  "prog": [
+    {
+      "d": 0,
+      "q": "m7"
+    },
+    {
+      "d": 0,
+      "q": "m7"
+    },
+    {
+      "d": 3,
+      "q": "dom7"
+    },
+    {
+      "d": 3,
+      "q": "dom7"
+    },
+    {
+      "d": 0,
+      "q": "m7"
+    },
+    {
+      "d": 0,
+      "q": "m7"
+    },
+    {
+      "d": 3,
+      "q": "dom7"
+    },
+    {
+      "d": 3,
+      "q": "dom7"
+    }
+  ],
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      7,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      7,
+      0,
+      4,
+      0,
+      6,
+      0,
+      5,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "sine",
+    "cut": 2600,
+    "q": 0.9,
+    "atk": 0.008,
+    "rel": 0.6,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the Rhodes, comping the two chords and nothing else",
+    "the horn, the solo — this is the song",
+    "the clavinet, sixteenth-note scratch under both"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [drop(4)]\n                    : v === 1 ? [[], [rotate(2)], [fill(2)], [transpose(2)]][s % 4]\n                    : [keep(0, 3, 6, 8, 11, 14), transpose(-4)])"
+  }
+}

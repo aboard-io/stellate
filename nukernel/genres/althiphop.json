@@ -1,0 +1,248 @@
+{
+  "note": "ALTERNATIVE HIP HOP \u2014 South Central 1992. The Pharcyde, Bizarre Ride II\nthe Pharcyde (Hollywood Sound Recorders, Los Angeles; Delicious Vinyl, 24\nNovember 1992), J-Swift producing: four dancers from South Central making\nthe least tough record of the toughest year in West Coast rap. THE ROW\nPAUL ASKED FOR BY NAME (2026-09-03: \"Pharcyde\"); the key is the genre term\nand the group is in this sentence.\n\nTHE LABEL IS THE ROW'S ARGUMENT. `gfunk` already holds \"Los Angeles 1992\"\n\u2014 The Chronic, the same city and the same year \u2014 so this row takes the\nneighbourhood, and the crowding was MEASURED before it was written: at the\nNorth America arc South Central sits 0.3 CSS px from Los Angeles, 0.9 from\nSanta Monica and 1.3 from Long Beach, which is under the 8.5 px floor and\nlegal because G10 asserts that floor at the BRITAIN arc only (the Asbury\nPark ruling, and Teaneck has been 1.1 px from New York since 1973). It is\ndeclared inside Los Angeles in WITHIN, which is the Harlem and Greenwich\nVillage relation exactly and is what makes the pair exempt even under the\nsibling rule. And the two 1992 Los Angeles rows really are two Los\nAngeleses: Death Row's session players replaying Leon Haywood in a paid\nstudio, against four kids over a jazz loop on an independent's budget.\n\nTHE BEAT IS THE ROW, and the beat is SWUNG BOOM BAP. `swing: 0.26` is the\nhighest in the hip-hop wing \u2014 boombap 0.20, southernhiphop 0.12, gfunk\n0.15, politicalhiphop 0.05 \u2014 and it is the field that separates this row\nfrom the New York craft it is otherwise made of: J-Swift's drums lope\nwhere a Large Professor record marches.\n\nMEASURED, Chordonomicon, label \"alternative hip hop\": 289 songs, 172 of\nthem major; restricted to pre-2000 the label thins to 8 songs and ALL\nEIGHT ARE MAJOR, with eight different four-chord windows and no repeat.\nSo the census can say the MODE and cannot say the cycle, and this row says\nboth things out loud: ionian, and a cycle taken from the record rather\nthan the count \u2014 I IV I vi, which is one of the eight windows the census\nfound ('I IV I vi') and is the loop's own shape, four bars that keep\nturning back rather than cadencing.\n\nMEASURED, the MIDI corpus: NO FILES. Not one path under \"pharcyde\", and\nthe wider label matches nothing either. Said out loud; `bpm: 96` comes off\nthe record.\n\nTHE INVENTION (the residue, 0.25) is the biggest in this shift's seven,\nand it is the thing the article's own lead says: artists \"who reject the\ngenre's traditional stereotypes\". None of this row's parents supplies a\nposture, and the posture is what alternative hip hop IS \u2014 four voices\ninterrupting each other over a flute loop, which is not what any of funk,\nthe block party, jazz or Public Enemy handed it.\n\nLINEAGE: `blockparty` (Bronx 1973) is the loop craft; `funk` (Cincinnati\n1967) is the crate; `jazz` (New York 1945) is what was in the crate here\nspecifically \u2014 the flute and Rhodes records this album is built out of;\n`politicalhiphop` (Long Island 1988) is a direct citation rather than an\ninference, because the article's own lead says these artists drew\n\"influences from political, progressive and conscious hip hop artists such\nas Grandmaster Flash and Public Enemy.\"\n\nNOT `gfunk`. Same city, same year, and a same-year edge would be legal\n(nine of them are) \u2014 but this record is the ANSWER to that one and not\nits child, and a parent share is a claim about explanation, not about\nproximity.",
+  "label": "South Central 1992",
+  "voices": 3,
+  "bars": 8,
+  "near": "boombap",
+  "plan": "song",
+  "bpm": 96,
+  "parents": {
+    "blockparty": 0.2,
+    "funk": 0.2,
+    "jazz": 0.2,
+    "politicalhiphop": 0.15
+  },
+  "wants": [
+    "the four voices interrupting each other"
+  ],
+  "instr": [
+    "rhodes_ep",
+    "flute",
+    "muted_trumpet"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 2
+      },
+      {
+        "at": 2,
+        "then": 4
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "pad",
+    "lead",
+    "counter"
+  ],
+  "roots": [
+    0,
+    3,
+    0,
+    5
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "maj7"
+    },
+    {
+      "d": 3,
+      "q": "7"
+    },
+    {
+      "d": 0,
+      "q": "maj7"
+    },
+    {
+      "d": 5,
+      "q": "7"
+    }
+  ],
+  "harmony": "cycle",
+  "swing": 0.26,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassGrid": [
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      1,
+      1
+    ],
+    "h": [
+      8,
+      0,
+      4,
+      3,
+      7,
+      0,
+      4,
+      3,
+      8,
+      0,
+      4,
+      3,
+      7,
+      0,
+      4,
+      4
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 1.0,
+    "atk": 0.01,
+    "rel": 0.7,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the Rhodes, the loop, four bars that never land",
+    "the flute, the hook off the record they lifted",
+    "the horn, answering it a bar late"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [excerpt(0, 8)]\n                    : v === 1 ? [[], [fill(2)], [rotate(2)], [transpose(2)]][s % 4]\n                    : [rotate(4), drop(4)])"
+  }
+}

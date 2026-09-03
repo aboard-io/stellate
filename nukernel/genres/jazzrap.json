@@ -1,0 +1,246 @@
+{
+  "note": "JAZZ RAP \u2014 Brooklyn 1993. Digable Planets, Reachin' (A New Refutation of\nTime and Space) (Pendulum/Elektra, 9 February 1993), and \"Rebirth of Slick\n(Cool Like Dat)\" is the record inside the record: Art Blakey and the Jazz\nMessengers' \"Stretchin'\" looped whole, an upright bass and a ride cymbal,\nand three people talking over it as if from the next booth. THE ROW PAUL\nASKED FOR BY NAME (2026-09-03: \"Digable Planets\"); the key is the genre\nterm and the group is here, where a name belongs. The article's own lead\nis this row's whole design brief: \"The rhythm was rooted in hip hop over\nwhich repetitive phrases of jazz instrumentation, such as the trumpet,\ndouble bass, etc., were placed\", and it lists the founders \u2014 \"A Tribe\nCalled Quest, Digable Planets, De La Soul, Gang Starr, and Jungle\nBrothers.\"\n\nTHE DATE IS ALSO A GENEALOGY FACT. `boombap` is New York 1994 \u2014 a year\nYOUNGER than this record \u2014 so the kit craft cannot route through it, and\nthe edge goes to `blockparty` (Bronx 1973) instead. That is the same\ndating fact `gfunk` (Los Angeles 1992) already writes down about the same\nrow, and it means the East Coast's two 1992-93 anchors both PREDATE the\nrow that is usually called their source.\n\nTHE BASS IS THE DEFAULT AND THAT IS THE POINT. Every anchor that does not\ndeclare `bassInstr` plays `plan.js castOf`'s BASS_INSTR \u2014 a SAMPLED,\nRECORDED UPRIGHT \u2014 and 48 rows declare their way off it. This row declares\nnothing, deliberately: a jazz-rap record's bass is an acoustic bass on\nsomebody else's old tape, and the one time this table's default is literally\ncorrect is here. Written down because a field that is right by accident\nand a field that is right on purpose look identical in a diff.\n\nTHE KIT IS THE ARGUMENT, and it is two parents' kits at once. `r` is\n`jazz`'s own ride figure verbatim ([1,0,0,0,1,0,1,0,1,0,0,0,1,0,1,0] \u2014\nthe ride pattern that row wrote), with a hip-hop kick and a backbeat\nsnare under it and the pedal hat on 2 and 4. `drumkit: \"jazz\"` makes this\nthe ONLY row in the hip-hop wing on a jazz kit; boombap is \"room\",\nsouthernhiphop and gfunk are tr808, politicalhiphop is \"room\".\n\nMEASURED, Chordonomicon, label \"jazz rap\": 46 songs, 33 of them MAJOR\n(72%) \u2014 and restricted to pre-2000, 13 songs, 10 major, with the\ncommonest four-chord window I IV I IV (2 of 13). So `roots` is [0, 3]\ntwice and `prog` says the sevenths out loud: Imaj7 to IVmaj7, which is\nwhat a looped hard-bop bar sounds like when it never modulates. Its\nneighbour `boombap` is a DORIAN row on [0, 0, 3, 3] \u2014 the same fourth,\none mode darker and half the movement.\n\nMEASURED, the MIDI corpus: NO FILES. Nothing under \"digable\", nothing\nunder \"gang starr\", nothing under \"tribe called quest\" \u2014 the corpus is\ntranscriptions and nobody transcribes a loop. Said out loud.\n\nTHE INVENTION (the residue, 0.15). What the parents do not supply is the\nDELIVERY, which in this box is `artic` and `maxHold` and the laid-back\nhand: the record is quiet, unhurried and conversational at a tempo where\nits neighbours shout.\n\nLINEAGE: `jazz` (New York 1945) is literally what is in the sampler, and\nits own ride figure is in the kit; `althiphop` (South Central 1992) is the\nshelf the article files this genre under (\"as well as an alternative\nhip-hop subgenre\") and the year before; `blockparty` (Bronx 1973) is the\nloop craft, taken direct because boombap is younger than this record;\n`funk` (Cincinnati 1967) is the drums under the Blakey.",
+  "label": "Brooklyn 1993",
+  "voices": 2,
+  "bars": 8,
+  "near": "althiphop",
+  "plan": "song",
+  "bpm": 93,
+  "parents": {
+    "jazz": 0.3,
+    "althiphop": 0.2,
+    "blockparty": 0.2,
+    "funk": 0.15
+  },
+  "wants": [
+    "the rapped verse itself (three voices trading, low and level)"
+  ],
+  "instr": [
+    "tenor_sax",
+    "jazz_guitar"
+  ],
+  "drumkit": "jazz",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "roots": [
+    0,
+    3,
+    0,
+    3
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "maj7"
+    },
+    {
+      "d": 3,
+      "q": "maj7"
+    },
+    {
+      "d": 0,
+      "q": "maj7"
+    },
+    {
+      "d": 3,
+      "q": "maj7"
+    }
+  ],
+  "harmony": "cycle",
+  "swing": 0.18,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "walk",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "f": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "r": [
+      7,
+      0,
+      0,
+      0,
+      6,
+      0,
+      4,
+      0,
+      7,
+      0,
+      0,
+      0,
+      6,
+      0,
+      4,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2100,
+    "q": 1.1,
+    "atk": 0.012,
+    "rel": 0.8,
+    "gain": 0.25,
+    "verb": 0.34
+  },
+  "words": [
+    "the tenor, the head off somebody else's old tape",
+    "the guitar, comping the two chords behind it"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(6)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[excerpt(0, 8)]"
+    }
+  }
+}

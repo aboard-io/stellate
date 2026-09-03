@@ -1,0 +1,271 @@
+{
+  "note": "PROGRESSIVE SOUL \u2014 Detroit 1971. Marvin Gaye, What's Going On (Hitsville\nU.S.A. Studio A and Golden World \"Studio B\", Detroit; Tamla TS-310, 21 May\n1971): the Funk Brothers, David Van De Pitte's arrangements, Eli Fontaine's\nalto sax on the first bar, and Motown's assembly line handed to the artist\nwho was in it. THE MOTOWN ROW THAT GREW UP, and the article's own lead\nnames the parentage this row declares: prog-soul \"developed in the late\n1960s and early 1970s through the recordings of innovative black musicians\nwho pushed the structural and stylistic boundaries\" of soul and funk, its\ninfluences \"Motown, progressive rock, psychedelic soul, and jazz fusion\",\nits characteristics \"rhythmically unified extended composition\" and\n\"instrumental techniques borrowed from jazz\" over \"album-oriented concepts\nand socially conscious topics\".\n\nTHE FIELD THAT NAMES IT IS `plan: \"arc\"`, and it is the whole difference\nfrom `detroitsoul` (Detroit 1965), which is `plan: \"song\"`. Its parent's\nbusiness was the three-minute single with a hook and a fade; this record\nis one continuous utterance whose tracks segue and whose sax is still\nplaying when the next title starts. Nothing else in the soul family says\n`arc`.\n\nAND THE CADENCE IS REMOVED, which is the second field and the measured\none. MEASURED, Chordonomicon, label \"motown\", pre-2000, 542 songs: the\ncommonest four-chord window is I IV I IV (37) and the SECOND is I vi I vi\n(11) \u2014 an unresolving two-chord rock \u2014 while `detroitsoul` declares\nI vi IV V, rank four (10). This row takes the window that never goes to\nthe five: `roots` is [0, 5] said twice, `prog` makes it Imaj7 and vi7, and\nthe record moves by MOOD \u2014 the horn, the strings, the multitracked voice \u2014\nwhere a Motown single moved by cadence. Six of the row's own eight bars\nare the same two chords, which is the claim.\n\nMEASURED, the MIDI corpus, 19 files under Marvin Gaye and Stevie Wonder\n(Superstition, Higher Ground, Sir Duke, Boogie On Reggae Woman, Isn't She\nLovely, Signed Sealed Delivered, Sexual Healing, I Heard It Through the\nGrapevine, You Are the Sunshine of My Life): tempo p25 103 \u00b7 MED 106 \u00b7\np75 122, meter 19 of 19 in 4/4, mode 13 major / 6 minor. Chord quality is\nthe number that vindicates the row \u2014 sus4 5, min7 4, maj7 4 as the top\nthree, where the fast-Motown set measured plain `triad` first: this wing's\nharmony is EXTENDED and its parent's is not. The lanes:\n  perc 8478928655679266 \u2014 congas, continuous, nothing like a tambourine's\n                          backbeat; this is a hand drum playing all of it\n  rim  2033903220629230 \u2014 the rim click on 2 and 4, which is why the snare\n                          below is written soft (kitVel s at 4) rather than\n                          on all four the way its parent's is\n  hat  8377947583779466   kick 9213334592425235\nThe row takes 102 rather than the set's 106: the set is a decade of two\nartists and the LABEL is one record, and What's Going On sits at the\nbottom of that spread.\n\nTHE INVENTION (the residue, 0.10). Almost all of this record is in its\nancestors \u2014 that is the honest reading of a Motown artist using Motown's\nown band and building \u2014 and what is not is the FORM: an album-length\nstatement in one key area with no cadence in it, which none of the four\nnamed parents ever made.\n\nLINEAGE: `detroitsoul` (Detroit 1965) is the building, the band and the\nsongcraft; `psychsoul2` (Detroit 1968) is Whitfield's door out of the\nthree-minute single, opened in the same corridor three years earlier;\n`funk` (Cincinnati 1967) is the pocket the congas sit in; `jazz` (New York\n1945) is where the sevenths and the alto came from.\n\nWHO SINGS: a soft multitracked lead with the air left in \u2014 Gaye sang this\nrecord three times over himself and mixed the leads against each other.",
+  "label": "Detroit 1971",
+  "voices": 4,
+  "bars": 8,
+  "near": "detroitsoul",
+  "plan": "arc",
+  "bpm": 102,
+  "parents": {
+    "detroitsoul": 0.35,
+    "psychsoul2": 0.2,
+    "funk": 0.2,
+    "jazz": 0.15
+  },
+  "wants": [
+    "the album as one utterance (the concept record itself)"
+  ],
+  "instr": [
+    "solo_vox",
+    "alto_sax",
+    "rhodes_ep",
+    "slow_strings"
+  ],
+  "drumkit": "room",
+  "intro": "solo",
+  "entry": {
+    "kind": "table",
+    "t": [
+      2,
+      0,
+      0,
+      4
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      1,
+      -1,
+      1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": [
+          2,
+          3
+        ],
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad",
+    "pad"
+  ],
+  "roots": [
+    0,
+    5,
+    0,
+    5
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "prog": [
+    {
+      "d": 0,
+      "q": "maj7"
+    },
+    {
+      "d": 5,
+      "q": "7"
+    },
+    {
+      "d": 0,
+      "q": "maj7"
+    },
+    {
+      "d": 5,
+      "q": "7"
+    }
+  ],
+  "harmony": "cycle",
+  "swing": 0.14,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ],
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      4,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      8,
+      4,
+      7,
+      8,
+      9,
+      2,
+      8,
+      6,
+      5,
+      5,
+      6,
+      7,
+      9,
+      2,
+      6,
+      6
+    ],
+    "h": [
+      8,
+      0,
+      3,
+      0,
+      9,
+      4,
+      7,
+      0,
+      8,
+      0,
+      3,
+      0,
+      9,
+      4,
+      6,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      9,
+      4,
+      9,
+      4,
+      9,
+      4,
+      9,
+      4,
+      9,
+      4,
+      9,
+      4,
+      9,
+      4,
+      9,
+      4
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1.2,
+    "gain": 0.25,
+    "verb": 0.44,
+    "mouth": {
+      "$src": "MOUTHS.confessional"
+    }
+  },
+  "words": [
+    "the voice, three of him at once",
+    "the alto, the first bar and every bar after",
+    "the Rhodes, holding the two chords",
+    "the strings, the arrangement over the top"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 1 ? [[], [rotate(2)], [fill(1)], [transpose(2)]][s % 4]\n                    : v === 2 ? [drop(4)]\n                    : v === 3 ? [drop(8), transpose(-5)]\n                    : [[], [fill(1)], [rotate(4)]][s % 3])"
+  }
+}

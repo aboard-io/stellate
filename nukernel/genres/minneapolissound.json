@@ -1,0 +1,376 @@
+{
+  "note": "MINNEAPOLIS SOUND — Minneapolis 1982. Prince, 1999 (his own Kiowa Trail home\nstudio outside Minneapolis and Sunset Sound, Los Angeles, 1982; Warner Bros.\n23720-1, 27 October 1982), with The Time's What Time Is It? from the same bench\nand the same year. One man, a Linn LM-1, an Oberheim OB-Xa, a guitar and every\npart on the record played by himself.\n\nTHE ARTICLE NAMES A PARENT THIS ROW MAY NOT DECLARE, and that is worth stating\nbecause the next hand will try. Its lead: \"The Minneapolis sound is a subgenre\nof funk rock that incorporates elements of new wave and synth-pop.\" `funkrock`\nin this table is LOS ANGELES 1984 — the Red Hot Chili Peppers' debut, two years\nAFTER this record — and GENRES.md §2's law is `not later`, so the edge is\nrefused. It is refused on the date, not on the music: the article is using\n\"funk rock\" as a descriptive phrase for a sound that existed in 1978, and this\ntable's `funkrock` row is a specific 1984 record. `funk` (Cincinnati 1967)\ncarries that share instead, which is where the phrase's funk half actually\ncomes from. The other two the article names — new wave and synth-pop — are both\nolder than this row and are both declared.\n\nTHE LM-1 IS THE ROW, AND THE MEASUREMENT PROVES IT. Over 50 Prince files in the\ncorpus, SNARE BALANCE IS 0.86 — the highest of the six sets measured in this\nround by a distance (jazz-funk 0.75, deepfunk 0.64, boogie 0.54, new orleans\n0.35). Snare balance is the share of the snare's mass sitting on the backbeat,\nso 0.86 means the snare plays 2 and 4 and very nearly nothing else. THAT IS A\nLINN LM-1: one snare sample, one level per step, and no ghost note anywhere,\nbecause the machine has no wrist. So this row's `s` lane is two hits and its\n`kitVel` puts a 9 on both and a zero everywhere between — which is the exact\nopposite of `deepfunk` twelve years earlier, whose whole snare argument is the\n2s between the 9s. Two funk rows, one with a ghost lane and one with none, and\nthe number that separates them was measured before either was written.\n\nTHE FLANGER IS ON EVERYTHING, ON PURPOSE. `fx: [\"flanger\"]` — and precompose's\nown comment is explicit that a record's chip reaches EVERY chair \"including the\nbass and the drums\". On `funkrock` that turned out to be a defect (Paul,\n2026-09-03: the auto-wah was on the kit), because a wah belongs to one guitar.\nHERE IT IS THE POINT: the flange on the LM-1's snare is the single most\nidentifiable sound of these records, and Prince chorused and flanged the guitar,\nthe Oberheim and the drums together. A record-wide chip is the right shape for a\nrecord made by one man at one desk with one effect across the whole mix. If a\nlater round narrows the chip away from the kit, this row wants it on the kit and\nthis sentence is the argument.\n\nMEASURED, THE MIDI CORPUS. 50 files across 120,652 — PRINCE.1999 and four bare\n1999 transcriptions, Little Red Corvette, When Doves Cry, Kiss, Raspberry\nBeret, Let's Go Crazy, Sign of the Times, I Would Die 4 U, Batdance and the\nrest. Tempo p10 74 · p25 105 · MED 120 · p75 126, and FIVE INDEPENDENT\nTRANSCRIPTIONS OF \"1999\" READ 119, 120, 120, 120 AND 120: `bpm: 120` is not a\ntaste. Major 34 of 50 (0.68). Off-grid 0.365 — high, and that is the ONE place\nthe machine reading breaks down, because Prince played the guitar and the\nkeyboards by hand over a rigid Linn; the row answers that by taking the `studio`\nfamily's dynamics (a record played by people and then edited by people) rather\nthan declaring itself a null machine the way `electro` does.\n\nMEASURED, CHORDONOMICON. `minneapolis sound` is a genuinely populated label —\n178 songs, median year 1987, 70% MAJOR (125 major / 53 minor, the most major of\nthe six sets), and its top four-chord window is I IV I IV at 9 hits with IV I IV\nI at 5 behind it. A TWO-CHORD MAJOR VAMP, which is what `roots` below is, and\nwhich is 1999 itself: a I-IV rock-the-house shuttle with the whole record's\ninterest in the rhythm and the arrangement rather than the changes. The stab\ncarries a sus4 because the Minneapolis chord is a suspension that never quite\nresolves, and 39% of the label's songs use three or fewer distinct chords.\n\nTHE FAMILY IS `studio`, beside `synthsoul` (London 1983) — the room one year\nlater doing the same thing with the same machines. It is not `soul`: soul's\ndynamics row hands a record a session player's wrist (touch t 0.07, v 1.0), and\nthis record's rhythm section is a drum machine. `studio`'s row (t 0.035, v 0.6)\nis a hand editing a machine, which is what happened.\n\nLINEAGE: `funk` (Cincinnati 1967) at 0.30 — the one-chord vamp, the guitar\nchank, the horn stab written for synthesizers. `newwave` (London 1979) at 0.20 —\nthe article's own second named element, and it is audible: the clipped guitar,\nthe shouted count-in, the pop song length. `synthpop` (Basildon 1981) at 0.15 —\nthe third, and the Oberheim doing what a Prophet does in Basildon. `boogie`\n(New York 1981) at 0.15 — this round's own other new row, one year and one\nmachine earlier: a sung R&B record over a drum machine and a synth bass is\nexactly what a Minneapolis record is, and the edge is honest rather than\nconvenient. Sum 0.80; the residue 0.20 is the guitar. Nothing in boogie or\nsynthpop has a rock guitar player on it, and that is what makes these records\nsound like nobody else's.\n\nTHE ARTICLE: `Minneapolis sound` — a real genre article under this row's exact\nkey, whose own body lists the acts (The Time, Sheila E., Jimmy Jam & Terry\nLewis, Morris Day) and quotes the Rolling Stone Album Guide on what it went on\nto do: \"loomed over mid-'80s R&B and pop, not to mention the next two decades'\nworth of electro, house, and techno.\" The KEY is a genre term and not a person,\nper the 2026-09-01 law; Prince stays in this note, where the record belongs.\n\nTHE HEAVIEST RECORD IN THE CATALOGUE, MEASURED AND ACCEPTED. G12d prices every\nseat and this row's seed-1 record came out at 41.70 against the parent's\nadvisory BUDGET of 40 — the top of the list, above industrialdance/1 (41.45)\nand glammetal/1 (40.90). It is UNDER the gate's real ceiling of 46 and the gate\npasses; the cost is what it is because three of the four declared chairs resolve\nto a MODEL rather than a sample (the Oberheim, the guitar and the synth lead)\nand the guest draw seats a fourth. That is a true fact about this record — one\nman playing four synthesizers — and the alternative was to sample a chair the\nrecord did not sample. Written down here rather than left for the next hand to\nfind at the top of a list, which is the `synthpop`/`baroquepop` precedent the\ngate's own comment sets.",
+  "label": "Minneapolis 1982",
+  "near": "funk",
+  "plan": "song",
+  "bpm": 120,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "funk": 0.3,
+    "newwave": 0.2,
+    "synthpop": 0.15,
+    "boogie": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "polysynth",
+    "crunch_guitar",
+    "square_lead"
+  ],
+  "bassInstr": "bass_lead",
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      },
+      {
+        "at": 1,
+        "then": 2
+      }
+    ],
+    "else": 4
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      },
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "stab",
+    "riff",
+    "lead"
+  ],
+  "roots": [
+    0,
+    0,
+    3,
+    3,
+    0,
+    0,
+    3,
+    3
+  ],
+  "prog": [
+    {
+      "d": 0,
+      "q": "sus4"
+    },
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 3,
+      "q": "sus4"
+    },
+    {
+      "d": 3,
+      "q": "triad"
+    },
+    {
+      "d": 0,
+      "q": "sus4"
+    },
+    {
+      "d": 0,
+      "q": "triad"
+    },
+    {
+      "d": 3,
+      "q": "six"
+    },
+    {
+      "d": 3,
+      "q": "triad"
+    }
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "sixteenths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "k": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      8,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "c": [
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      7,
+      0,
+      5,
+      0,
+      6,
+      0,
+      5,
+      0,
+      7,
+      0,
+      5,
+      0,
+      6,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "t": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "m": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "l": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2500,
+    "q": 2.4,
+    "atk": 0.003,
+    "rel": 0.3,
+    "gain": 0.28,
+    "verb": 0.18
+  },
+  "fx": [
+    "flanger"
+  ],
+  "words": [
+    "the Oberheim, the stab — a suspension that does not resolve",
+    "the guitar, dry and clipped, answering the machine",
+    "the synth lead, up top, one phrase at a time"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [only(\"gate\", rotate(4))]\n                    : v === 1 ? [[fill(1)], [rotate(2)], [fill(1)], [drop(2)]][s % 4]\n                    : [excerpt(s % 2 ? 8 : 0, 8), transpose(2)])"
+  }
+}

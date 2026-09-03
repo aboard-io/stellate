@@ -1,0 +1,205 @@
+{
+  "note": "ROCK EN ESPAÑOL — Buenos Aires 1967. Los Gatos, \"La balsa\" b/w \"Ayer\nnomás\" — cut at TNT Studios, Buenos Aires on 19 June 1967, produced by\nTim Croatto, released 3 July 1967 on Vik, a subsidiary of RCA Victor.\nThe 45 sold around 250,000 copies and made a Spanish-language rock\nrecord a commercial fact rather than a translation. Litto Nebbia and\nTanguito wrote it; a beat group's line-up played it; nobody had to be\ntold what language it was in. The article's own description of the\nrecord is this row's cast list and its parent list in one sentence: \"a\nmelodic, beat-influenced song, with prominent use of a Farfisa\nelectronic organ and bossa nova elements attributed to Nebbia.\"\n\nWHY BUENOS AIRES 1967 AND NOT MEXICO CITY 1985. Both dates are real —\n1985 is Rock en tu Idioma, the Mexican industry's marketing of the\ncontinent's rock back to itself — but one is a RECORD and the other is a\ncampaign, and this table dates by a named record. The measurement agrees\nwith the earlier date rather than the later one: Chordonomicon's\n`argentine rock` label carries 3,640 songs and its EARLIEST is 1967, the\nexact year, which is the dataset independently finding the same door.\nRock nacional's own word for itself is the Argentine one; the row is\nkeyed to the continental term because the music went continental, and\n`rock nacional` (1,034 songs) is one of the four labels measured below.\n\nTHE HARMONY IS MEASURED, over 6,292 Chordonomicon songs joined from\n`argentine rock` (3,640), `rock en espanol` (2,826), `latin rock`\n(2,167) and `rock nacional` (1,034). 68.4% major. The fingerprint is\nCHROMATIC LEAN INSIDE A MAJOR KEY and it is the sharpest in this shift's\nbatch: bIII at 1.92x the census baseline, bII 1.69x, II 1.57x, bVII\n1.42x — against a SUPPRESSED submediant (vi 0.71x), which is the exact\ninverse of the country-radio axis loop. On `argentine rock` alone the\nsingle highest-lift window is `I bIII IV I` at 10.16x (n=16) and\n`I bVII I bVII` runs 3.85x on 23 songs.\n\nSO THE MODE IS MIXOLYDIAN AND THE FLAT THIRD IS A `cannot`. Degree 6 is\na root here (bVII carries a 16.3% song-share), which is what the\n2026-09-02 mode law asks of a declared mode — a mode whose degree the\nchords never reach is decoration. The bIII is the row's sharpest measured\nfact and the box cannot hold it beside the bVII in one seven-note\nalphabet; that refusal is written into `cannot` rather than papered over\nwith `SCALES.bluesx`, which is the metal wing's dark set (b2 and b6) and\nwould lie about a record that is 68% major.\n\nTHE NUMBERS THAT ARE MEASURED, AND THE ROSTER CAVEAT SAID FIRST. The\nMIDI corpus returns ZERO FILES for \"rock en espanol\", \"rock nacional\",\n\"latin rock\" and \"folklore argentino\" as literal terms — the corpus\nmatcher reaches this music only through an ARTIST ROSTER, and the roster\nthat exists is Juanes (10), Shakira's Spanish-language sides (42), Fito\nPáez (1), Divididos (1) and Los Rodríguez (1): 54 files whose centre is\n1995-2005 crossover, not 1967 Buenos Aires. Said plainly, because the\nnumbers below are that roster's and not that record's. bpm 110 is the\nroster median of 109.0 on the table's own round; 94.4% of the 54 are\n4/4; 64.8% are major, which agrees with Chordonomicon's 68.4% off a\ncompletely different corpus and is the one place the two evidence bases\ncheck each other. `maxHold: 3` comes off a 90th-percentile melodic hold\nof 3.617 sixteenths — and the p50 of 1.258 is the SHORTEST held line\nmeasured anywhere in this shift's batch, which is the row's whole\ninvention argument below. CARLOS SANTANA'S 76 FILES ARE EXCLUDED from\nevery number above and the exclusion is the point: Santana is `latin\nrock` and is instrumental, and folding him in moved the major share from\n64.8% to 41.5% and the hold p50 from 1.258 to 1.517. A guitar band\nwithout a Spanish-language singer is not the thing this row is.\n\nTHE INVENTION IS THE LANGUAGE, and it is the residue the parents leave.\nTwenty per cent of this record is not in the table above it: Spanish is\nsyllable-timed where English is stress-timed, so the line packs — the\nmeasured hold p50 of 1.258 sixteenths is a syllable and a quarter per\nnote, denser than anything else measured in this batch, at a note\ndensity of 8.825 against Santana's 6.6, at a median absolute melodic\ninterval of 2.0 semitones — dense AND stepwise. That is why the idiom\nrow is `even` and `zig`, landing on the ROOT: I carries a 76.7%\nsong-share here and `I IV I IV` is the single commonest window at\nn=282, so the line packs, turns and comes home. (`rise` was the first\ndraft and emitted a literal fifteen-degree ascending run, which is\n`nwobhm`'s own shape and is a scale exercise; the precompose row says\nso.) And it is why the mouth is `bolerista`, whose own comment in\nMOUTHS says the thing this row needs said: \"a bolero is a poem sung\nslowly and the diction is the point, where a crooner is selling the\ntone.\"\n\nTHE CAST IS THE RECORD'S OWN, AND IT COLLIDES WITH `anadolurock` ON\nPURPOSE. A guitar, a Farfisa and a singer — the article names the organ\nas prominent, so it is seated rather than admired from a distance, and\nseating it makes this row's `instr` the same three ids Istanbul 1972\nalready holds. THAT COLLISION IS DECLARED RATHER THAN DODGED, because a\n1967 Buenos Aires beat group and a 1972 Istanbul one ARE the same three\nchairs, and the row that pretends otherwise to look different is the one\ntelling the lie. What separates them is everything else: that row is\nphrygian at 106 with a `skiffler` mouth playing a türkü and a `grace`\nornament; this is a mixolydian major at 110 with a `bolerista` diction,\na flat seventh and a picked bass. Two guitar bands, two continents, two\ndifferent melodies — which is the argument `anadolurock`'s own comment\nmakes against `khmerrock`, run once more.",
+  "label": "Buenos Aires 1967",
+  "near": "beatgroup",
+  "plan": "song",
+  "bpm": 110,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "beatgroup": 0.35,
+    "rocknroll": 0.2,
+    "blues": 0.15,
+    "bolero": 0.1
+  },
+  "wants": [],
+  "cannot": [
+    "the borrowed flat third under a major tonic — Chordonomicon's sharpest lean on this label (bIII at 1.92x) and the one degree a seven-note mixolydian cannot hold beside its own flat seventh"
+  ],
+  "instr": [
+    "crunch_guitar",
+    "percussive_organ",
+    "solo_vox"
+  ],
+  "bassInstr": "picked_bass",
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "pad",
+    "lead"
+  ],
+  "roots": [
+    0,
+    6,
+    3,
+    0,
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "diatonic": true,
+  "artic": "staccato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1.2,
+    "atk": 0.006,
+    "rel": 0.5,
+    "gain": 0.27,
+    "verb": 0.32,
+    "mouth": {
+      "$src": "MOUTHS.bolerista"
+    }
+  },
+  "words": [
+    "the electric guitar, the hook",
+    "the Farfisa, the thing the article calls prominent",
+    "the singer, a syllable and a quarter a note"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[drop(4)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

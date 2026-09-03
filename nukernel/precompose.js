@@ -615,6 +615,260 @@
     countryrock:   { cell: "pickup", contour: "arch",   land: "third", len: "eight" },
     heartlandrock: { cell: "call",   contour: "rise",   land: "root",  len: "two" },
     chamberpop:    { cell: "long",   contour: "fall",   land: "third", sent: "hold" },
+    /* SHIFT 4's BATCH D2 (2026-09-03) — MOTOWN AND THE FOUR ACTS PAUL NAMED.
+       Seven anchors, seven rows, by the rule the last round set: a row added
+       by hand gets a hook by hand, or it resolves to its family default and
+       the "do do dooo" figure is back everywhere. Four are `soul` (the family
+       row is pickup / fall / third / hold / four) and three are `club`
+       (push / vary / hover / fifth / two), and each row below is the thing
+       that record's hook actually does:
+         · northernsoul  — a dancefloor's 45, and the hook is the SHOUT that
+           gets people off the wall: `call` is a phrase somebody answers,
+           `rise` goes up and stays up, and it lands on the FIFTH rather than
+           the family's third, because a northern chorus is a note held over
+           the stomp rather than settled into. `two` keeps it short enough to
+           shout at 130.
+         · progressivesoul — the row whose whole argument is that it is not a
+           single: `long` is two onsets a bar, this box's sparsest cell,
+           `sent: "long"` is the eight-bar sentence, `hover` neither rises nor
+           falls, and `eight` is the longest length the table has. Nothing else
+           in `soul` says any of those, and that is the point.
+         · psychsoul2 — Whitfield's vamp: `riff` says the same figure again,
+           `insist` refuses to go anywhere, and it lands on the ROOT because a
+           one-chord record has nowhere else to land. `two`, because the figure
+           is one bar of wah repeated.
+         · politicalhiphop — not a tune, a STAB: `riff` and `insist` on the
+           root, `reg: "low"` because the Bomb Squad's fragments sit under the
+           voice rather than over it, and `two` because a bar is as long as a
+           collage stays still.
+         · jazzrap — a looped hard-bop head, so `hang` (the laid-back cell),
+           `fall` (a bop line comes down), and it lands on the SEVENTH, which
+           is where a maj7 loop's melody note sits and is the field that
+           separates this row from every other hip-hop hook in the table.
+         · althiphop — four voices interrupting each other: `push` anticipates
+           the beat, `zig` is the shape of an interruption, `vary` says no two
+           bars alike, and `third` is the warm note a jazz loop hands it.
+         · hiphopsoul2 — the family's own `pickup` cell (a singer comes in
+           before the bar) with `sent: "vary"` where the family says `hold`,
+           which is the one axis that had to move: MEASURED with `long` here
+           first, test/hook.test.js froze this row's hook rhythm across eight
+           seeds — a two-onset bar has one rhythm — and a frozen rhythm is
+           right for an arrangement and wrong for a singer. Blige phrases the
+           same line differently every take, so the sentence varies and the
+           rhythm varies with it. It lands on the third where `hiphopsoul`
+           takes the family default, because her lines resolve and Jodeci's
+           stack holds. */
+    northernsoul:    { cell: "call",   contour: "rise",   land: "fifth",   len: "two" },
+    progressivesoul: { cell: "long",   contour: "hover",  sent: "long",    len: "eight" },
+    psychsoul2:      { cell: "riff",   contour: "insist", land: "root",    len: "two" },
+    politicalhiphop: { cell: "riff",   contour: "insist", land: "root",    reg: "low", len: "two" },
+    jazzrap:         { cell: "hang",   contour: "fall",   land: "seventh", len: "four" },
+    althiphop:       { cell: "push",   contour: "zig",    land: "third",   sent: "vary", len: "four" },
+    hiphopsoul2:     { cell: "pickup", contour: "fall",   land: "third",   sent: "vary", len: "four" },
+    /* SHIFT 4's BATCH C (2026-09-03) — beyond the Anglosphere and the metal
+       wing. Seven anchors, seven rows, by the rule the last round set: a row
+       added by hand gets a hook by hand, or all seven resolve to their family
+       default and the "do do dooo" figure is back. Four are `band`
+       (call / insist / root / vary / two) and three are `roots`
+       (three / rise / root / aabb / four), and each row is the difference the
+       RECORD measures, not a taste:
+         · rockenespanol — the SHORTEST held line measured anywhere in this
+           shift: melodic hold p50 1.258 sixteenths over 54 corpus files, at a
+           note density of 8.825 against Santana's 6.6, and a median absolute
+           melodic interval of 2.0 semitones — dense AND stepwise. Spanish is
+           syllable-timed and the phrase packs, so `even` is continuous
+           eighths and `zig` is the stepwise turn. `rise` WAS TRIED AND
+           REJECTED, and it is recorded here because the rejection is the
+           useful part: over seeds 1-4 it emitted a literal ascending run of
+           fifteen scale degrees, byte-for-byte the shape `nwobhm` already
+           emits, which is a scale exercise and not a tune. `root` is measured
+           too — I carries a 76.7% song-share on this label and `I IV I IV` is
+           its single commonest window at n=282, so the line comes home.
+         · nuevacancion — the CELL IS THE FAMILY'S, kept on purpose: `three`,
+           three notes and a rest, is what a declaimed text does. What differs
+           from `roots` is the SENTENCE and the LANDING. `vary` because the
+           words are why the song exists, so the melody follows them and never
+           says the same sentence twice, where the family's `aabb` would make
+           a dance strophe of it; `arch` is the breath up and back; and
+           `land: "fifth"` is MEASURED — the label's commonest minor cycle is
+           `i V i V` (15.67x lift on 56 songs), a cadence that hangs on the
+           dominant and never closes. (`long` was tried first and FROZE the
+           hook: four onsets, two distinct degrees and an identical rhythm at
+           every seed — test/hook.test.js's own catalogue check named it, and
+           a nueva canción line that cannot re-roll is not a sung paragraph,
+           it is a drone.)
+         · schlager — the entry is the whole fact. Every high-lift window on
+           this label BEGINS OFF THE TONIC: `V I V I` 5.13x, `V I IV I` 5.75x,
+           `IV I V I` 3.88x. So `pickup` — the tune comes in before the bar
+           everybody sings — and `arch` over the family's `rise`, because a
+           refrain goes up and comes home. `aabb` is KEPT from the family row
+           on purpose: this is the one row in the shift where the strophe is
+           the argument rather than a default.
+         · iskelma — the same room, the opposite mode. `pickup` is the tango
+           entry it shares with its German sibling; `fall` and `root` are the
+           plagal descent the measurement is loudest about (`iv i V i` at
+           17.94x, iv leaning 2.96x, the highest subdominant lift in the
+           shift), and `vary` refuses the sibling's refrain: a Finnish tango
+           is a lament with a verse, not a chorus to sing back.
+         · metalcore — the BREAKDOWN, and `push` is the box's own word for a
+           figure written off the beat (`skapunk`'s row). Measured: offgrid
+           0.267 over the nine matched files against symphonic metal's 0.179
+           over sixty-three, the highest displacement of the three metal rows.
+           `low` and `two` are what a half-time riff said four times is.
+           `insist` WAS TRIED AND REJECTED: it emitted two distinct degrees at
+           every seed, which describes the chug and erases the melodic half
+           that is this row's whole argument for Westfield 2002 over Converge
+           (`III i VI III`, 10.49x). `zig` is that harmonised line turning
+           back on itself, and it keeps the displacement.
+         · powermetal — `hang` (one long note, then a run) because this is a
+           SUNG line held over changes and the corpus says so: melodic hold
+           p90 8.0 sixteenths, exactly twice metalcore's and symphonic
+           metal's 4.0, over the highest median chord count in the batch (110
+           against 75 and 100). `rise` to the `fifth` over `eight` bars is the
+           anthem chorus that count is spent on — where `nwobhm`'s own row is
+           `riff` over `two`, which is the guitar and not the singer.
+         · symphonicmetal — the line LEAPS. Median absolute melodic interval
+           3.0 semitones over 63 files, against 2.0 for both metalcore and
+           power metal: a trained voice arpeggiating over a riff it is not
+           doubling. `hang` — one long note, then a run — is that shape and is
+           the same cell `powermetal` takes two rows up, which is not an
+           accident and is said out loud: both are SUNG metal, and they part
+           on the contour and the length. `arch` is the operatic phrase up and
+           back where power metal's `rise` climbs and stays; `third` is the
+           warm note; `vary` refuses a chorus said twice. (`long` + `hold` was
+           the first draft and FROZE the hook — three onsets, two degrees, one
+           rhythm at every seed, named by test/hook.test.js's catalogue check.
+           A soprano who cannot re-roll her own phrase is a pad.)
+           And `band`'s own shout would be actively wrong about all of it. */
+    rockenespanol: { cell: "even",   contour: "zig",    land: "root",  len: "four" },
+    nuevacancion:  { cell: "three",  contour: "arch",   land: "fifth", sent: "vary", len: "four" },
+    schlager:      { cell: "pickup", contour: "arch",   land: "root",  sent: "aabb", len: "four" },
+    iskelma:       { cell: "pickup", contour: "fall",   land: "root",  sent: "vary", len: "four" },
+    metalcore:     { cell: "push",   contour: "zig",    land: "root",  reg: "low",   len: "two" },
+    powermetal:    { cell: "hang",   contour: "rise",   land: "fifth", len: "eight" },
+    symphonicmetal:{ cell: "hang",   contour: "arch",   land: "third", sent: "vary", len: "four" },
+    /* SHIFT 4's POP, FOLK AND CHRISTIAN WING (2026-09-03). Six anchors, six
+       rows, by the rule shift 2 set: a row added by hand gets a hook by hand,
+       or it resolves to its family default and the "do do dooo" figure is
+       back everywhere. Two are `studio`, three are `band` and one is `roots`,
+       and each row below is a difference the record or the census measures:
+         · ccm — a radio chorus, and the field that matters is `aabb`: the
+           format's whole craft is that the second line is the first line
+           again, so a listener who joined at the second verse has the hook.
+           `three` states it in three notes and `arch` puts it up and back;
+           `third` is the warm note a Nashville bench writes to.
+         · worship — the same shape with the landing moved, which is this
+           pair's whole argument. `rise` and `land: "root"` because a
+           congregation has to ARRIVE, and `aabb` because the room only knows
+           the line the second time it hears it. Its parent turns back to the
+           dominant; this one goes home.
+         · indiefolk — `gallop` IS the banjo roll: a run of even subdivisions
+           that keeps moving, which no other row in the `roots` family plays.
+           `rise` and `fifth`, the note a shouted third above the tune sits
+           on, over a kick on all four.
+         · powerpop — `riff`, `arch`, `third`: a compressed guitar hook that
+           goes up, comes back, and lands on the sweet note over the II7 the
+           row's own harmony borrows. The article's "unexpected harmonic
+           change" needs a line that is IN the key to be unexpected against.
+         · skatepunk — `hardcore`'s row is `even` / `insist` / `root`, a
+           shout that goes nowhere, and the one thing this genre added to it
+           is a melody: same `even` eighths, but `rise` and the `fifth`,
+           which is where the harmony vocal sits. `two`, because at 170 bpm
+           a longer line cannot be sung.
+         · indietronica — the machine is even and the singer is not: `even`
+           for the sequenced pulse, `arch` for a written pop line over it,
+           `vary` because this record never says the same sentence twice, and
+           `four` because the loop is two chords and the LINE is the length. */
+    ccm:           { cell: "three",  contour: "arch",   land: "third",   sent: "aabb", len: "four" },
+    worship:       { cell: "three",  contour: "rise",   land: "root",    sent: "aabb", len: "four" },
+    indiefolk:     { cell: "gallop", contour: "rise",   land: "fifth",   len: "two" },
+    powerpop:      { cell: "riff",   contour: "arch",   land: "third",   len: "two" },
+    skatepunk:     { cell: "even",   contour: "rise",   land: "fifth",   len: "two" },
+    indietronica:  { cell: "even",   contour: "arch",   sent: "vary",    len: "four" },
+    /* SHIFT 4's COUNTRY, ROOTS AND BLUES WING (2026-09-03). Six anchors,
+       six rows, by the rule the last round set: a row added by hand gets a
+       hook by hand, or all six resolve to their family default and the "do
+       do dooo" figure is back. Five are `band` (call / insist / root / vary
+       / two) and one is `studio` (pickup / fall / root / vary / four), and
+       each row below is the difference the RECORD measures, not a taste:
+         · rockabilly — the corpus's shortest line and its longest anacrusis:
+           hold p50 1.29 and p90 3.875 sixteenths, pickup 0.205, sync 0.395,
+           all three the extreme of this batch. So `pickup` (the hiccup
+           before the bar), `rise`, and `third` — the major third that is the
+           hillbilly half of the portmanteau, against `rocknroll`'s ♭7.
+         · nashvillesound — `studio`'s own row with two words changed. `hold`
+           because the measured hold p90 is 6.4 sixteenths, the longest of
+           the six, and `third` because a crooner warms on it. The pickup and
+           the fall are the family's and are already right.
+         · outlawcountry — hold p90 9.896 sixteenths, four longer than
+           anything else here, with a pickup rate of 0.078 that is nearly the
+           floor: this line starts ON the beat and then sits on a note. That
+           is `hang` (one long note, then a run — `blues`'s own cell) with
+           `fall` and `aabb`, the strophic plan, because these are songs with
+           verses and not riffs.
+         · southernrock — sync 0.203 and pickup 0.062, BOTH the lowest in the
+           batch, which is what two guitars playing one written line straight
+           down the beat measures like. `even` is continuous eighths, `arch`
+           goes up and comes back over eight bars, and `fifth` is where a
+           harmonised third above the tune wants to sit.
+         · rootsrock — the row's whole argument is the two-minute single, so
+           the hook is a `riff` that `insist`s on the root and says itself
+           again (`aabb`, `two`). Its neighbours in this batch stretch; this
+           one refuses to.
+         · bluesrock — mean melodic interval 2.759 semitones, the widest of
+           the six, over a straight kit: a soloist's line. `even`, `fall`,
+           and it lands on the `seventh`, which is the blue note the whole
+           row is built around. */
+    rockabilly:    { cell: "pickup", contour: "rise",   land: "third",   sent: "aabb", len: "two" },
+    nashvillesound:{ cell: "pickup", contour: "fall",   land: "third",   sent: "hold", len: "four" },
+    outlawcountry: { cell: "hang",   contour: "fall",   land: "root",    sent: "aabb", len: "four" },
+    southernrock:  { cell: "even",   contour: "arch",   land: "fifth",   len: "eight" },
+    rootsrock:     { cell: "riff",   contour: "insist", land: "root",    sent: "aabb", len: "two" },
+    bluesrock:     { cell: "even",   contour: "fall",   land: "seventh", len: "four" },
+    /* THE FUNK ROUND'S SIX (2026-09-03, Paul: "DEFINITELY James Brown, we need
+       way more funk"). Six new anchors, and the standing rule from the
+       Chordonomicon round applies: A ROW ADDED BY HAND GETS A HOOK BY HAND, or
+       it falls to its family default — `soul`'s and `studio`'s alike — and
+       plays the "do do dooo" three-note figure Paul reported as being "back
+       everywhere" the last time named rows shipped without an idiom. Six rows
+       falling to the same figure would also have erased the whole point of the
+       round, which was that funk is not one thing.
+         · deepfunk — `sixteenths`, the box's DENSEST cell, sixteen onsets to
+           the bar, because that is literally the row's argument: Funky
+           Drummer's hat never lifts and the guitar chanks with it. `insist`
+           because a James Brown figure does not go anywhere, and `root`
+           because it comes back to the one. This is the first row in the table
+           to take `sixteenths` outside the machine wing, and it is the right
+           one to: a human played it.
+         · neworleansfunk — `riff` (the box's own interlocking figure, onsets
+           at 0, 3, 6, 8, 11, 14) is Cissy Strut, and `zig` is Nocentelli's
+           line turning back on itself rather than climbing. `root`, `two`: the
+           Meters state two bars and repeat them for three minutes.
+         · jazzfunk — a SOLO, which none of the others is: `hang` is one long
+           note and then a run, which is what a horn player does over a vamp he
+           has ten minutes of, and `vary` says the sentence is different every
+           time round. `seventh` is the landing, and it is the field the corpus
+           measured (0.56 of bars carry one, the highest set in the round).
+         · gogo — `call`, and the article's own first sentence is the argument
+           ("live audience call and response"). `rise` goes up and stays up
+           because a go-go call is shouted; `two` keeps it short enough to
+           shout back. Same pair `heartlandrock` takes, for the same reason and
+           in a different room.
+         · boogie — `push`, onsets on 2/6/10/14 and nothing on a downbeat: the
+           row's whole claim is that the four-on-the-floor is gone and the
+           weight has moved off the beat. `hover` because a boogie synth hook
+           sits on one or two notes and waits, and `fifth` is where it waits.
+         · minneapolissound — `even` (continuous eighths, the Oberheim stab)
+           with `insist` and `root`, and `two`: 1999 is a two-bar shuttle
+           repeated for six minutes and the interest is in the arrangement.
+           Deliberately NOT frozen — see test/hook.test.js, where the argument
+           for keeping it out of FROZEN_RHYTHM is written down. */
+    deepfunk:      { cell: "sixteenths", contour: "insist", land: "root", len: "two" },
+    neworleansfunk:{ cell: "riff",   contour: "zig",    land: "root",  len: "two" },
+    jazzfunk:      { cell: "hang",   contour: "arch",   land: "seventh", sent: "vary", len: "four" },
+    gogo:          { cell: "call",   contour: "rise",   land: "root",  len: "two" },
+    boogie:        { cell: "push",   contour: "hover",  land: "fifth", len: "two" },
+    minneapolissound: { cell: "even", contour: "insist", land: "root", len: "two" },
   };
 
   /* ======================================================================

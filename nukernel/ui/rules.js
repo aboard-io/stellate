@@ -182,7 +182,6 @@ export function mountRules(host, ctx) {
      every row's `parents`, never a field). It is an `<h3>`, so the diet skips
      it the way it skips every other heading, and `.nu-namebar` is the ink
      plate the rest of the page gives a name. */
-  const wiki = NuWiki && NuWiki.WIKI ? NuWiki.WIKI[gk] : null;
   const plate = el("h3", null, "nu-namebar nu-ruleplate");
   plate.dataset.k = "rules.name";
   /* THE WORD IS THE ARTICLE'S TITLE, ELSE THE ROW'S OWN LABEL, ELSE THE KEY
@@ -196,7 +195,14 @@ export function mountRules(host, ctx) {
      name and its place-year are now one nowrap line that ellipsises rather
      than wraps, and the lineage is the dim line under it — the same two facts,
      in the two lines the plate is for. */
-  const word = wiki ? String(wiki.title).replace(/_/g, " ") : (base.label || gk);
+  /* AND THE WORD IS THE PLATE NAME, NOT THE ARTICLE TITLE (2026-09-03). Paul:
+     *"look for names in genre list, you still have people and bands in
+     there."* 33 rows link an act or a work because that is the honest
+     evidence, so wiki.js carries `as` — the genre a reader sees — and
+     `NuWiki.name()` is its one owner (`as` else `title`, underscores spent).
+     ui/atlas.js's row and ui/eight.js's foot plate read the same call; the
+     three must agree and now they agree by construction. */
+  const word = (NuWiki && NuWiki.name ? NuWiki.name(gk) : null) || base.label || gk;
   const line1 = el("span", null, "nu-ruleline");
   line1.append(el("b", word));
   if (base.label && base.label !== word) line1.append(el("small", " · " + base.label));

@@ -1,5 +1,5 @@
 {
-  "note": "SEAN-NÓS — Carna 1957. Seosamh Ó hÉanaí (Joe Heaney), Connemara's\nown, cutting his first Gael-Linn sides: the old style —\nunaccompanied, Irish-language, free of the bar line, the ornament\ncarrying what harmony would carry anywhere else. PAYS irishtrad's\n\"seán-nós\" by name: Dublin 1963's session now has the singing it\ngrew around as a parent instead of a wish.\n\n70 is compose.js's floor; the old style is slower than any\nmetronome word for it, and the long maxHold carries the rest.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nJoe Heaney (Seosamh O hEanai), first Gael-Linn sides, 1957, from Carna in\nConnemara — this row's own singer, place and year. Sean-nos is sung\nunaccompanied, so the tune is the whole record and the row's alphabet is the\nonly thing it has. The repertory's commonest colour is the flat seventh under\na MAJOR third; the row declared exactly that and then sang the natural minor,\nwhose flat third the tradition does not have.\n\nWHO SINGS: the monody throat — one ornamented solo line,\nCaccini's job description and Carna's.",
+  "note": "SEAN-NÓS — Carna 1957. Seosamh Ó hÉanaí (Joe Heaney), Connemara's\nown, cutting his first Gael-Linn sides: the old style —\nunaccompanied, Irish-language, free of the bar line, the ornament\ncarrying what harmony would carry anywhere else. PAYS irishtrad's\n\"seán-nós\" by name: Dublin 1963's session now has the singing it\ngrew around as a parent instead of a wish.\n\n70 is compose.js's floor; the old style is slower than any\nmetronome word for it, and the long maxHold carries the rest.\n\nTHE MODE THIS RECORD CANNOT SOUND (2026-09-02, the catalogue round,\nshift 2; test/precompose.test.js G14b).\nJoe Heaney (Seosamh O hEanai), first Gael-Linn sides, 1957, from Carna in\nConnemara — this row's own singer, place and year. Sean-nos is sung\nunaccompanied, so the tune is the whole record and the row's alphabet is the\nonly thing it has. The repertory's commonest colour is the flat seventh under\na MAJOR third; the row declared exactly that and then sang the natural minor,\nwhose flat third the tradition does not have.\n\nWHO SINGS: the monody throat — one ornamented solo line,\nCaccini's job description and Carna's.\nTHE UNACCOMPANIED LINE SLIDES (2026-09-03, the portamento round). One\nvoice, no band, nothing to hold the pitch against — which is exactly\nthe setting in which a singer travels between notes rather than\nstepping. 110 ms on the marked steps. With a single chair on this row\nthere is no other instrument for the number to spill onto, which makes\nit the cleanest case in the round.",
   "label": "Carna 1957",
   "voices": 1,
   "bars": 8,
@@ -50,7 +50,8 @@
     "verb": 0.3,
     "mouth": {
       "$src": "MOUTHS.monody"
-    }
+    },
+    "slide": 0.11
   },
   "words": [
     "the old style: one voice, no bar line, the turns doing the harmony's work"

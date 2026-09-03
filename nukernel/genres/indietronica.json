@@ -1,0 +1,174 @@
+{
+  "note": "INDIETRONICA — Seattle 2003. The Postal Service, GIVE UP (Sub Pop, 19\nFebruary 2003; recorded December 2001-2002 at Computerworld, Seattle\nand Dying Songs, Los Angeles). The album's own article gives this row\nits method in one sentence — \"the pair would send demos on burned\nCD-R's through the mail, adding elements until songs were complete\" —\nand its sound in the next: \"the LP's sound contrasts manipulated\nsamples and keyboards with live guitar and drums — a sound some have\ndescribed as 'indietronica'\". Seattle rather than Los Angeles because\nSub Pop is Seattle, Gibbard is Seattle, and the Seattle studio is the\none the record is named for; Seattle 1991 and 1995 are `grunge` and\n`postgrunge` and 2003 is free.\n\nTHE ARTICLE PROBLEM, DECLARED. There is no \"Indietronica\" article in\nthis ZIM: the title is a REDIRECT INTO A SECTION, `Electronic\nmusic#Indie electronic`, and wiki-extract rejects section stubs by\nname (\"A SECTION, NOT AN ARTICLE\"). So the ASK row links `Electronic\nrock` — the nearest genre article that exists, held by no other row —\nand carries `as: \"Indietronica\"` so the plate reads the genre this row\nactually is. That is the shift-4 rule for a row whose natural article\nis not one.\n\nTHE HARMONY IS MEASURED AND IT IS THE ONE MINOR-LEANING SET IN THIS\nBATCH. Over 4,468 songs (`indietronica`, `french indietronica`, `indie\nelectronica`) the split is 2,788 major to 1,680 minor — 62.4% major,\nagainst `worship`'s 87.0%, `ccm`'s 84.6%, `indie folk`'s 81.4% and\n`power pop`'s 80.5% — and EVERY minor-key degree is lifted while every\nmajor-key degree is at or under baseline: i 1.47x, III 1.49x, VI\n1.45x, v 1.44x, iv 1.39x against I 0.87x, IV 0.86x, V 0.73x. The axis\nis refused outright (`I V vi IV` 0.40x, `vi IV I V` 0.33x, `I IV V I`\n0.51x), which is the exact opposite of `skatepunk`'s 3.96x on the\nfirst of those.\n\nThe lifted windows are two-chord vamps almost without exception:\n`III i III i` 39 songs at 3.05x, `VI i VI i` 32 at 2.54x, `i III i\nIII` 20 at 2.17x, `I II I II` 26 at 3.61x. So the roots are the vamp\nthe census names twice in both rotations — i-III-i-III, aeolian — and\nthe row starts at home because a loop has no first bar and the\nrotation is a fact about where the census cut it, not about the music.\nTWO CHORDS FOR EIGHT BARS IS THE CLAIM: this is a record built on a\nloop, and the melodic interest is entirely in the top line, which is\nwhy `realize` puts only the pad on a chord and leaves both other\nchairs on lines.\n\nWHERE THE TWO MEASUREMENTS DISAGREE, AND WHICH ONE WINS. The MIDI\ncorpus reaches this label through EXACTLY ONE ACT: Owl City, whose\n2009 record is openly modelled on this one — thirteen files, of which four\nare the same transcription of \"Fireflies\", so TEN DISTINCT SONGS — 83\n· 90 · 100 · 102 · 107 · 120 · 124 · 125 · 135 · 140, median 113.5 —\nand 13 of 13 in 4/4 and 13 of 13 MAJOR. The Postal\nService, Passion Pit, Hot Chip, Caribou, Ratatat, Dntel and the\nNotwist return zero files between them. So the corpus says major and\nthe census says minor-lifted, and THE CENSUS WINS ON WEIGHT — 4,468\nsongs against one act six years downstream — while the corpus keeps\nthe tempo, because it is the only tempo evidence that exists. `bpm:\n114` is that median rounded up, and the row says out loud that its\nmode and its tempo come from two different places.\n\nTHE PARENTS. `idm` 0.30 (Sheffield 1992 — Jimmy Tamborello is Dntel,\nwhom the album's article calls \"a pioneer of contemporary glitch music\nand electronica\", and the programmed half of this record is that\nmusic); `collegerock` 0.25 (Athens 1983 — Gibbard's other band is an\nindie rock band and the songs are indie rock songs); `synthpop` 0.20\n(Basildon 1981 — the all-synthesiser chassis, and the one row in this\ntable whose own note says \"every sound on the record including the\nbass is a synthesiser\"); `indiedance` 0.15 (Glasgow 1990 — a band on a\nmachine floor, the crossover this row repeats twelve years later).\n0.90 declared. THE 0.10 RESIDUE IS THE POST: two people who were never\nin a room, one writing to a finished beat he did not make and could\nnot change. Nothing else in this catalogue was assembled that way, and\nthe box says it in the `entry` — the machine plays two bars alone\nbefore the singer arrives, because that is the order it was made in.\n\nNO `guests: \"native\"`, WHICH IS A DECISION AND NOT AN OMISSION. Door 3\nexists for machine rows whose material is the programming, and this\nlooks like one — but the album's own article says the record\n\"contrasts manipulated samples and keyboards with LIVE GUITAR AND\nDRUMS\", and it names Chris Walla playing them. A record that hired a\nguitarist may hire a guest with his own recording.\n\nTHE CAST. `solo_vox` is a close, plain, breathy voice a foot from the\nmicrophone — `MOUTHS.confessional`, which is what that mouth was\nwritten for; `polysynth` is the pad; `square_lead` is the bell figure\nthat answers it, the tune rotated and thinned, which is what a\nsequencer does to a melody it is handed. `synth_bass_1` is declared\nbecause the bass on this record is a patch and `plan.js castOf` would\notherwise seat the sampled double bass under a laptop record.\n`drumkit: \"electronic\"`, and the hat lane drops a sixteenth every\nfourth: the stutter is the genre.",
+  "label": "Seattle 2003",
+  "near": "synthpop",
+  "plan": "song",
+  "bpm": 114,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "idm": 0.3,
+    "collegerock": 0.25,
+    "synthpop": 0.2,
+    "indiedance": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "solo_vox",
+    "polysynth",
+    "square_lead"
+  ],
+  "bassInstr": "synth_bass_1",
+  "drumkit": "electronic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 2
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      -1,
+      1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    2,
+    0,
+    2
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "MODES.aeolian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2000,
+    "q": 1.0,
+    "atk": 0.006,
+    "rel": 0.9,
+    "gain": 0.24,
+    "verb": 0.36,
+    "mouth": {
+      "$src": "MOUTHS.confessional"
+    }
+  },
+  "words": [
+    "the voice, close, from bar 3",
+    "the pad, the two chords",
+    "the bell figure, the tune rotated"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": {
+          "$src": "[rotate(3), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

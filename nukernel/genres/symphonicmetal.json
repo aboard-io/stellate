@@ -1,0 +1,211 @@
+{
+  "note": "SYMPHONIC METAL — Kitee 1997. Nightwish, ANGELS FALL FIRST — the debut,\n\"originally released by Spinefarm Records on 30 September 1997 as a\n500-copy limited edition … subsequently released to the general public\non 1 November, with four additional songs.\" Both dates are 1997 and the\nlabel takes the year rather than choosing between them. A band from a\ntown of ten thousand in North Karelia — \"a Finnish symphonic metal band\nfrom Kitee\" — with a classically trained soprano singing the LEAD, not a\nguest part, over a metal rhythm section whose orchestra is the keyboard\nplayer.\nThat arrangement is what every symphonic metal record since has copied,\nand it is the reason the row is dated here.\n\nWHY NOT STOCKHOLM 1996, WHICH WAS THE OTHER CANDIDATE. Therion's THELI\n(Nuclear Blast, 1996) is a year earlier and is the honest inventor of\nchoir-over-metal — and it is refused because what it invented is an\nARRANGEMENT LAYER on a death-metal band: a hired choir above a growl.\nNightwish's record puts one trained solo voice in the front of the band\nas its singer, which is the FORM the genre became, and the evidence for\n\"became\" is in the corpus: of the 63 matched files, 31 are Nightwish and\n19 Therion, and the whole rest of the roster (Lacuna Coil, Sirenia,\nDelain, After Forever, Tarja, Xandria) descends from the Finnish shape,\nnot the Swedish one. Stockholm also already carries 1986 (`doom`) and\n1998 (`teenpop`), where Kitee is a new dot; and Therion's parents would\nhave had to be `deathmetal`-heavy, which is not what this label\nmeasures.\n\nTHE CORPUS IS THE STRONGEST EVIDENCE IN THIS SHIFT'S BATCH — 63 FILES,\nand it is the only row of the seven whose numbers are read rather than\nchosen. Nightwish 31, Therion 19, Lacuna Coil 5, Sirenia 4, Delain 2,\nTarja 1, After Forever 1. (Evanescence's 24 files were EXCLUDED: that is\na nu-metal-adjacent gothic rock record and folding it in would have\nmoved every number below.) bpm median 125.0, quartiles 110.5 and 144.5;\n90.5% of the files are 4/4; 77.8% are minor — the highest minor share\nthis shift measured off MIDI; swing 0.0 at both the median and the p90;\ndrumDensity 2.45 and hatDensity 0.57, which is a busy kit with a quiet\nhat and is why the row rides on `r` rather than `h`.\n\nAND THE MELODY LEAPS, which is the one measurement that separates this\nrow from its neighbours in the same batch. The median absolute melodic\ninterval is 3.0 SEMITONES, against 2.0 for both metalcore and power\nmetal — this line does not step, it arpeggiates, which is what a trained\nvoice does over a riff it is not doubling. The hold p50 is 1.958\nsixteenths and the p90 is 4.0, so the mouth moves about every note:\n`MOUTHS.belter` is the soprano throat at `syll: 1` with the widest late\nvibrato in the table (vib 0.75, vibRate 6.1), and `MOUTHS.monody` — the\nother trained soprano — was refused because its `syll: 2` would hold one\nvowel across two beats, which this measurement says does not happen.\n`maxHold: 4` is the p90 read straight.\n\nTHE HARMONY IS MEASURED. 1,264 Chordonomicon songs over\n`symphonic metal` (1,198), `gothic symphonic metal` (554) and\n`symphonic power metal` (95). `i VI III VII` at 7.40x the census\nbaseline (n=19), `i III VII i` 14.34x, `i VII i VII` 4.59x — the same\naeolian epic power metal plays. WHAT IS THIS ROW'S OWN is the MINOR\nDOMINANT: v at 1.58x against power metal's 1.24x, iv at 1.69x, and\n`i v VI III` at 8.26x, a window that does not appear in power metal's\nlist at all. So the roots below are `i VI III VII` and then\n`i v VI III` — the shared cycle, then the one that is not shared.\n\nTHE INVENTION IS THE KEYBOARD'S ORCHESTRA. `gothicmetal` (Halifax 1991)\n0.30 is the doorway — a metal band letting a soprano and a string patch\nin, which is that row's own description of itself; `powermetal`\n(Hamburg 1985) 0.25 is the speed, the twin-lead vocabulary and the\naeolian four-chord epic the measurement shows they share; `romantic`\n(Vienna 1876) 0.20 is the orchestral language the string writing quotes;\n`operaseria` (London 1724) 0.10 is the trained throat itself. 0.85\ndeclared. The 0.15 that is nobody's is the fact that this \"orchestra\" is\none person at a synthesiser in the band — which is why `strings` and not\n`slow_strings`, the same field `chamberpop` used to say the same kind of\nthing five years earlier: these strings play ARRANGED LINES in the\nguitar's own rhythm, not a held pad, because a keyboard player writing\nfor a metal band writes riffs. The article's lead says the quiet part\nout loud: \"or just keyboard orchestration.\"",
+  "label": "Kitee 1997",
+  "near": "gothicmetal",
+  "plan": "arc",
+  "bpm": 125,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "gothicmetal": 0.3,
+    "powermetal": 0.25,
+    "romantic": 0.2,
+    "operaseria": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "distortion_guitar",
+    "strings",
+    "solo_vox"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "scale",
+    "n": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": -1
+      },
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "pad",
+    "lead"
+  ],
+  "harmony": "cycle",
+  "roots": [
+    0,
+    5,
+    2,
+    6,
+    0,
+    4,
+    5,
+    2
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "bassStyle": "eighths",
+  "fx": [
+    "crunch"
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2000,
+    "q": 1.3,
+    "atk": 0.008,
+    "rel": 1.0,
+    "gain": 0.28,
+    "verb": 0.46,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the riff, aeolian, under everything",
+    "the strings — an arranged line in the guitar's rhythm, not a pad",
+    "the soprano, leaping, the lead and not a guest"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [transpose(1)], [rotate(2)], [invert(2)]][s % 4]\n                    : v === 1 ? [drop(6), transpose(12)]\n                    : [rotate(2)])"
+  }
+}

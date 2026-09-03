@@ -1,0 +1,245 @@
+{
+  "note": "NORTHERN SOUL \u2014 Manchester 1970. Gloria Jones, \"Tainted Love\" (Champion Records,\nLos Angeles, 1965; Ed Cobb producing), spun at the Twisted Wheel on Whitworth Street:\na British dancefloor's SELECTION of American 45s, named in print by Dave\nGodin in Blues & Soul in 1970 for the records his Soul City shop was\nposting to the northern crowd who came down for the Wheel's all-nighters.\nA MOTOWN ROW BY INHERITANCE AND NOT BY CATALOGUE, and the article says so\nin its own second paragraph: the movement \"generally eschews Motown or\nMotown-influenced music that has had significant mainstream commercial\nsuccess\" and prizes \"rare grooves\" on \"VeeJay, Chess, Brunswick, Ric-Tic,\nGordy Records, Golden World Records (Detroit), Mirwood Records (Los\nAngeles), Shout Records and Okeh\". \"Tainted Love\" is that sentence in one\nrecord: a Los Angeles B-side on a label with no hits, cut in the Motown\nmanner, and made canonical three thousand miles away by people\ndancing to it.\n\nTHE LABEL, AND WIGAN IS REFUSED BY THE MAP. The Casino (23 September\n1973) is the scene's famous room and \"Wigan 1973\" was this row's drafted\nlabel. MEASURED at the Britain arc: Wigan lands 7.1 CSS px from\nManchester and 7.3 from Liverpool, both under G10's 8.5 px floor, and\nneither pair can be declared away \u2014 Liverpool contains nothing, and a\nWITHIN row saying otherwise to quiet a gate is the lie atlas.js already\nrefused for Sausalito. This is the Southall refusal exactly, and it is\nwritten here so nobody re-derives the attempt. BLACKPOOL WAS MEASURED TOO\nand CLEARS at 10.7 px from everything on the map, so the Mecca's Highland\nRoom is available to a future hand; this row takes the ORIGIN room rather\nthan the second-wave one, because Manchester is where the name came from.\n\nMEASURED, Chordonomicon, label \"northern soul\": 186 songs, and restricted\nto the decades the scene actually played (pre-2000) 99 songs, 79 of them\nMAJOR \u2014 80%, against 72.5% (393 of 542) on the \"motown\" label's own\npre-2000 census, which is the parent this row is separating from.\nThe commonest four-chord window is I IV I IV (5), then I IV V I (4) and\nI IV I V (3), so `roots` below is the first two joined into eight bars.\nIts parent `detroitsoul` declares I vi IV V, which is rank FOUR on the\n\"motown\" label's own pre-2000 census (10 of 542, against I IV I IV's 37):\nthe two rows take two different windows out of one crate, which is what a\nselection IS.\n\nMEASURED, the MIDI corpus: NO FILES. Not one path carries \"northern\nsoul\", and that is a finding rather than a gap \u2014 the scene's records are\nobscure by definition and a transcription corpus holds hits. So the\nmeasurement is taken on what the DJs actually spun: the 41 Motown-catalogue\nfiles at 115 bpm and over (Supremes, Four Tops, Temptations, Miracles,\nMarvelettes, the MOTOWN01-13 bank). Tempo p25 120 \u00b7 MED 122 \u00b7 p75 127 \u2014\nand 25 of 41 major. The lanes are the Funk Brothers' hands:\n  snare 4000901141129112 \u2014 on ALL FOUR, the backbeat at twice the weight\n  perc  5223922442239224 \u2014 tambourine on every sixteenth, hardest on 2 and 4\n  kick  9001401380214022    hat 9247934793479247\n`kit` and `kitVel` are that reading. THE KICK IS THE ROW'S OWN ADDITION\nand the one thing the measurement does not license: the measured kick is\non 1 and 3, and a northern floor stamps four to the bar. It goes in as a\nclaim about the DANCE rather than about the 45, and is marked as one.\n\nTHE INVENTION (the residue, 0.35). The row attributes 0.65 of itself; the\nrest is not in its ancestors because the rest is a CHOICE \u2014 which records,\nat what tempo, in which room, for people who travelled two hundred miles\nto dance to them. `plan: \"dance\"` says it out loud, and the article's own\nfirst sentence licenses it: \"a music and dance movement\". That is what\nmakes this row not `detroitsoul` with the tempo up.\n\nLINEAGE: `detroitsoul` (Detroit 1965) is the template every one of these\n45s was cut to; `girlgroup` (New York 1960) is the uptempo Brill side of\nthe crate, which is a real share of what a northern DJ spun.\n\nWHO SINGS: a belt, cut to carry across a hall \u2014 the northern 45's lead\nshouts where Motown's polishes.",
+  "label": "Manchester 1970",
+  "voices": 3,
+  "bars": 8,
+  "near": "detroitsoul",
+  "plan": "dance",
+  "bpm": 130,
+  "parents": {
+    "detroitsoul": 0.5,
+    "girlgroup": 0.15
+  },
+  "wants": [
+    "the british mod scene the records were sold to",
+    "the wigan casino's all-nighter"
+  ],
+  "instr": [
+    "solo_vox",
+    "brass_section",
+    "upright_piano"
+  ],
+  "drumkit": "room",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "stab",
+    "pad"
+  ],
+  "roots": [
+    0,
+    3,
+    0,
+    3,
+    0,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "harmony": "cycle",
+  "swing": 0.06,
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "kitVel": {
+    "s": [
+      4,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      4,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      5,
+      2,
+      2,
+      3,
+      9,
+      2,
+      2,
+      4,
+      4,
+      2,
+      2,
+      3,
+      9,
+      2,
+      2,
+      4
+    ],
+    "h": [
+      9,
+      0,
+      2,
+      0,
+      9,
+      0,
+      3,
+      0,
+      9,
+      0,
+      2,
+      0,
+      9,
+      0,
+      4,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2800,
+    "q": 1.0,
+    "atk": 0.005,
+    "rel": 0.45,
+    "gain": 0.28,
+    "verb": 0.42,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the shout, in from the first bar",
+    "the horns, punching the backbeat",
+    "the piano, hammering the changes"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 1 ? [keep(4, 12)]\n                    : v === 2 ? [drop(2)]\n                    : [[], [fill(2)], [rotate(2)]][s % 3])"
+  }
+}

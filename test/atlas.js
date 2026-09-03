@@ -2135,11 +2135,14 @@ function g18() {
                   · every <li> holds EXACTLY ONE genre cell, and no <a> is
                     nested in a <button> or the other way round — the invalid
                     markup this shape exists to avoid;
-                  · a LINKED row's word is `NuWiki.WIKI[gk].title` with its
-                    underscores spent, plus the ` · the <kind>` span when the
-                    article is not a genre. Typed anywhere, invented anywhere,
-                    and this fails: extraction is never by hand;
-                  · a REFUSED row's word is the row's OWN KEY, and it stays
+                  · a LINKED row's word is `NuWiki.name(gk)` — the row's
+                    declared plate name (`as`) else the article's title with
+                    its underscores spent (2026-09-03) — plus the ` · the
+                    <kind>` span when the article is not a genre. Typed
+                    anywhere, invented anywhere, and this fails: extraction is
+                    never by hand;
+                  · a REFUSED row's word is its declared plate name else the
+                    row's OWN KEY, and it stays
                     the button's SIBLING — its data-why overlay must not both
                     explain and play on one tap. */
              one: (() => {
@@ -2156,7 +2159,14 @@ function g18() {
                                         continue; }
                  const c = cs[0], gk = li.dataset.gk, w = W.WIKI[gk];
                  if (w) {
-                   const want = w.title.replace(/_/g, " ")
+                   /* `w.title` STOOD HERE UNTIL 2026-09-03 (Paul: "look for
+                      names in genre list, you still have people and bands in
+                      there"). The word is `NuWiki.name(gk)` now — the plate
+                      name a row declares with `as`, else the article's title —
+                      and asking the table for it keeps this a DERIVATION: a
+                      plate the page invented still fails, because `name()` is
+                      wiki.js's own function over wiki.js's own row. */
+                   const want = W.name(gk)
                      + (w.kind !== "genre" ? " \u00b7 the " + w.kind : "");
                    if (c.textContent !== want)
                      o.wrong.push(gk + ": " + JSON.stringify(c.textContent) +
@@ -2167,9 +2177,18 @@ function g18() {
                                   " the plate — it must be plate a tap plays");
                  } else {
                    o.slugs.push(gk);
-                   if (c.textContent !== gk)
+                   /* A REFUSAL SAYS ITS DECLARED GENRE, ELSE ITS KEY
+                      (2026-09-03). The 28 refused anchors printed a mashed-up
+                      address — "copshowsynth", "instrumentalhiphop" — which is
+                      what Paul was reading; wiki-extract's NOLINK table names
+                      them now and `name()` hands the word over. The six ROLES
+                      declare none and still say their key, which IS their
+                      name. Either way the word comes from the table. */
+                   const wantNo = W.name(gk) || gk;
+                   if (c.textContent !== wantNo)
                      o.wrong.push(gk + ": refused row says " +
-                                  JSON.stringify(c.textContent) + ", not its key");
+                                  JSON.stringify(c.textContent) + ", not " +
+                                  JSON.stringify(wantNo));
                    if (c.closest(".nu-ixrow"))
                      o.wrong.push(gk + ": a refusal inside the plate would " +
                                   "explain and play on one tap");
@@ -2214,7 +2233,7 @@ function g18() {
                      o.bad.push(gk + ": mark says " + JSON.stringify(a.textContent));
                    if (getComputedStyle(a).textDecorationLine !== "none")
                      o.bad.push(gk + ": the mark is underlined");
-                   const w = W.WIKI[gk], title = w.title.replace(/_/g, " ")
+                   const w = W.WIKI[gk], title = W.name(gk)
                      + (w.kind !== "genre" ? " · the " + w.kind : "");
                    if (a.dataset.kind !== w.kind)
                      o.bad.push(gk + ": data-kind " + a.dataset.kind);
@@ -2294,8 +2313,8 @@ function g18() {
     "G23 · ONE genre word per row and it is PLATE, not a link: " + idx.one.rows +
     " rows, one .nu-ixw each, " + idx.one.nested + " <a> nested in a <button> " +
     "(or the reverse), " + idx.one.aWords + " words still anchors, every " +
-    "linked word === NuWiki title + its kind and every " +
-    "one of the " + idx.one.slugs.length + " refusals saying its own key " +
+    "linked word === NuWiki.name(row) + its kind and every " +
+    "one of the " + idx.one.slugs.length + " refusals saying its own name " +
     JSON.stringify(idx.one.slugs) +
     (idx.one.cells.length ? " · CELLS " + JSON.stringify(idx.one.cells.slice(0, 4)) : "") +
     (idx.one.wrong.length ? " · WRONG " + JSON.stringify(idx.one.wrong.slice(0, 3)) : ""));

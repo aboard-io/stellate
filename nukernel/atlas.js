@@ -296,9 +296,29 @@
     "Lisbon": [38.72, -9.14], "Liverpool": [53.41, -2.98],
     "London": [51.51, -0.13], "Los Angeles": [34.05, -118.24],
     "Luanda": [-8.84, 13.23], "Manchester": [53.48, -2.24],
+    /* MACON joined 2026-09-03 with `southernrock` (The Allman Brothers
+       Band, 1969), and the crowding is MEASURED and declared rather than
+       discovered later: at the North America arc it lands 5.8 CSS px from
+       Atlanta and 6.0 px from Athens, both under the 8.5 px floor G10
+       enforces — but G10 applies that law to BRITAIN only, and the precedent
+       in this table is closer still (Asbury Park at 3.0 px from New York,
+       Teaneck at 1.1). No WITHIN row: Macon is its own city 130 km down the
+       road, not a district of Atlanta, and Capricorn Records, the Big House
+       and the whole southern-rock roster were there and not there. */
+    "Macon": [32.84, -83.63],
     "Manila": [14.60, 120.98], "Matanzas": [23.04, -81.58], "Mazatlán": [23.25, -106.41],
     "Memphis": [35.15, -90.05], "Mexico City": [19.43, -99.13],
     "Miami": [25.76, -80.19], "Milan": [45.46, 9.19],
+    /* MINNEAPOLIS joined 2026-09-03 with `minneapolissound` (Prince, 1999),
+       and unlike Asbury Park a year of rounds ago there is nothing to declare:
+       at the North America arc its nearest neighbours in this table are
+       Chicago (569 km) and Nashville (1,161 km), which is the widest berth any
+       new North American dot has had since Sedalia. No ALIAS and no WITHIN —
+       the record was cut at Kiowa Trail in Chanhassen, twenty miles out, and
+       Chanhassen is a suburb of the city the SOUND is named after rather than
+       the Versailles/Paris relation that door exists for. The label follows
+       the article's own name, `Minneapolis sound`. */
+    "Minneapolis": [44.98, -93.27],
     "Monterrey": [25.67, -100.32],
     "Mumbai": [19.08, 72.88], "Munich": [48.14, 11.58], "Muswell Hill": [51.59, -0.14],
     /* ASBURY PARK joined 2026-09-02 with `heartlandrock` (Born to Run), and
@@ -361,7 +381,80 @@
        the country rather than to Shibuya. Two Japanese cities, two musics,
        and the geography follows the record both times. */
     "Athens": [33.96, -83.38], "Berkeley": [37.87, -122.27],
+    /* THE GENRE-QA ROUND, BATCH C'S FIVE NEW DOTS (2026-09-03) — beyond the
+       Anglosphere and the metal wing. THE CROWDING WAS MEASURED BEFORE THE
+       DOTS WERE WRITTEN, each in the smallest VIEWS rectangle that contains
+       it, against every place already in WHEN, in the same 1200-unit frame
+       G10 asks its 26-unit question in. All five clear it:
+         Hamburg     `schlager` 1960 and `powermetal` 1985 — Polydor's city
+                     and Helloween's, twenty-five years apart. ONE DOT, TWO
+                     LABELS, DIFFERENT YEARS, which is legal and is already
+                     the Boston (1831/1989/1994) and Havana (five rows)
+                     pattern. Nearest at the Europe arc: Leipzig 68.4 units,
+                     Berlin 75.0.
+         Helsinki    `iskelma` 1955 — Olavi Virta's city and Rytmi's. The
+                     first Finnish dot; nearest is Stockholm at 145.7.
+         Kitee       `symphonicmetal` 1997 — a North Karelian town of ten
+                     thousand, and the dot follows the RECORD's band rather
+                     than a studio, the Seattle ruling. 260.7 from Stockholm,
+                     330.1 from Maramureș: the emptiest corner of the Europe
+                     view.
+         Santiago    `nuevacancion` 1966 — Violeta Parra's city and RCA
+                     Victor Chile's. THE MAP'S FIRST CHILEAN DOT, and it fills
+                     the gap the atlas's own header (line ~76) has listed as
+                     wanted since it was written. 109.7 units from Buenos
+                     Aires at "the south" arc, the widest clearance of the
+                     five relative to its neighbours.
+         Westfield   `metalcore` 2002 — Zing Studios, Westfield MA, where
+                     Alive or Just Breathing was cut, sixty-five kilometres
+                     west of Boston. The tightest of the five and still
+                     clear: 32.0 units from Boston and from the Bronx, 33.3
+                     from Teaneck, all above G10's 26-unit floor, and G10 in
+                     any case asserts at the BRITAIN arc only. No WITHIN row:
+                     Westfield is not in Boston, it is up the Connecticut
+                     River, and the Asbury Park ruling one round earlier is
+                     the precedent for a plain dot in the same situation. */
+    "Hamburg": [53.55, 9.99], "Helsinki": [60.17, 24.94],
+    "Kitee": [62.10, 30.14], "Santiago": [-33.45, -70.67],
+    "Westfield": [42.13, -72.75],
     "Kyoto": [35.01, 135.77], "Long Beach": [33.77, -118.19],
+    /* THE MOTOWN-AND-FOUR-ACTS ROUND'S THREE DOTS (2026-09-03, Paul: "We
+       also need Public Enemy, Digable Planets, Pharcyde, Mary J. Blige").
+       All three are North American and every separation below is MEASURED at
+       that arc and declared here rather than discovered later; G10 enforces
+       its 8.5 px floor at the BRITAIN arc only, which is the reading Asbury
+       Park wrote down and Teaneck (1.1 px from New York since 1973) has been
+       living under for six rounds.
+         Long Island   `politicalhiphop` 1988 — Public Enemy is Nassau County
+                       (Roosevelt, the WBAU studio at Adelphi in Garden City,
+                       Spectrum City), and the desks that cut Nation of
+                       Millions were in Manhattan: the Seattle ruling gives
+                       the label to the room the music came out of, not the
+                       desk it was mixed on. 1.7 px from the Bronx, 2.0 from
+                       Brooklyn and Harlem, 2.2 from New York. NO WITHIN ROW,
+                       and that is the whole point of the label: Nassau and
+                       Suffolk are not a district of the city — the Asbury
+                       Park case exactly, a place a band is FROM rather than
+                       a neighbourhood of the place next to it. The dot sits
+                       at western-central Long Island, between Roosevelt and
+                       Hauppauge.
+         Brooklyn      `jazzrap` 1993 — Digable Planets' own borough, and
+                       the borough this map has been missing while holding
+                       the Bronx (1973), Harlem (1955) and Greenwich Village
+                       (1961). 0.3 px from New York, which is closer than
+                       Teaneck and is why WITHIN below declares it: a borough
+                       of the city is the Harlem relation exactly, and the
+                       declaration also makes it a SIBLING of Harlem and
+                       Greenwich Village under the 2026-09-01 rule.
+         South Central `althiphop` 1992 — the Pharcyde's own district, taken
+                       because `gfunk` already holds "Los Angeles 1992" and a
+                       label is unique: the two records really are two Los
+                       Angeleses, and the row says so. 0.3 px from Los
+                       Angeles, 0.9 from Santa Monica, 1.3 from Long Beach.
+                       WITHIN declares it inside Los Angeles, which is what it
+                       is — a district, not a shore town. */
+    "Long Island": [40.75, -73.45], "Brooklyn": [40.68, -73.94],
+    "South Central": [34.00, -118.28],
     "Seattle": [47.61, -122.33], "Virginia Beach": [36.85, -75.98],
     "Sausalito": [37.86, -122.49], "Sedalia": [38.70, -93.23],
     "Seoul": [37.57, 126.98], "Shanghai": [31.23, 121.47],
@@ -388,6 +481,19 @@
     "Edinburgh": [55.95, -3.19], "Medina": [24.47, 39.61],
     "St. Louis": [38.63, -90.20], "Stourbridge": [52.46, -2.15],
     "Swindon": [51.56, -1.78], "Taipei": [25.03, 121.57],
+    /* SYDNEY joined 2026-09-03 with `worship` (Hillsong, "Shout to the
+       Lord", recorded 1993) — the map's FIRST DOT ON THE AUSTRALIAN
+       MAINLAND, and the answer to a sentence this file has carried since the
+       world round: "Australia's own two candidates are blocked MUSICALLY
+       instead: manikay has no yidaki id and no bar." That block was never
+       about the coastline — the land bake holds the continent, which is why
+       the old declaration reached for a musical reason rather than a
+       geographic one — and this row is not blocked either way: it is a band
+       with a kit, a bar and a 4/4 measured over ten corpus files. No
+       crowding question arises anywhere near it; the nearest dot on this map
+       is Wellington, 2,225 km across the Tasman, which is the loosest
+       packing any new place has ever had here. */
+    "Sydney": [-33.87, 151.21],
     "Tampa": [27.95, -82.46], "Teaneck": [40.89, -74.02],
     "Tehran": [35.69, 51.39], "Tetouan": [35.57, -5.37],
     "Tokyo": [35.68, 139.65],
@@ -397,6 +503,21 @@
     "Oxyrhynchus": [28.53, 30.66],
     "Valledupar": [10.46, -73.25],
     "Washington": [38.91, -77.04], "Winchester": [51.06, -1.31],
+    /* WEST HAMPSTEAD joined 2026-09-03 with `bluesrock` (John Mayall with
+       Eric Clapton, the Beano album). The label is a street corner because
+       the SCENE and the DESK are the same one: Decca Studios stood at 165
+       Broadhurst Gardens and Klooks Kleek, the club the Bluesbreakers were
+       a fixture at, was upstairs at the Railway Hotel around the corner.
+       "London 1966" was not available in any case — `indojazz` holds it.
+       MEASURED at the Britain arc: 1.5 CSS px from Muswell Hill, 1.6 from
+       London, 3.0 from Brixton, all far under G10's 8.5 px floor, which is
+       why this is one of the four names with a WITHIN row below rather than
+       a plain dot like Asbury Park. The declaration exempts it from London
+       directly and from the other two as SIBLINGS (the 2026-09-01 clause).
+       The nearest dot the declaration does not cover is Bray at 9.3 px,
+       which clears the floor by under a pixel — the Sutton Courtenay
+       margin, and the reason this dot is legal at all. */
+    "West Hampstead": [51.55, -0.19],
     "Workington": [54.64, -3.55],
     "Venice": [45.44, 12.32], "Vienna": [48.21, 16.37],
     // ...AND TWO ON 2026-08-30, the downtempo round. TROMSØ is the
@@ -470,8 +591,29 @@
     "Sutton Courtenay": "Oxford",
     "Brixton": "London",            // a south London district; Bronski Beat's own
     "Muswell Hill": "London",       // a north London suburb; the Kinks' own
+    /* WEST HAMPSTEAD, 2026-09-03, with `bluesrock`. Decca Studios and Klooks
+       Kleek are both on this half-mile of north-west London, and the dot
+       measures 1.6 CSS px from London, 1.5 from Muswell Hill and 3.0 from
+       Brixton at the Britain arc — every one under G10's 8.5 floor. The row
+       is here rather than a plain dot because Britain is the one arc the gate
+       ASSERTS on: London is direct containment, and the other two are
+       siblings under the 2026-09-01 clause. This is the Muswell Hill case a
+       third time and the honest answer is the same one. */
+    "West Hampstead": "London",     // Decca and Klooks Kleek, NW6
     "Harlem": "New York",           // uptown Manhattan
     "Greenwich Village": "New York",// lower Manhattan
+    // ...and the Motown-and-four-acts round's two (2026-09-03). BROOKLYN is
+    // a borough of the city and measures 0.3 CSS px from it, closer than
+    // Teaneck; declaring it makes it a sibling of Harlem and Greenwich
+    // Village under the 2026-09-01 sibling rule as well as a child of New
+    // York. SOUTH CENTRAL is a district of Los Angeles at 0.3 px — the same
+    // relation, on the other coast. NOT declared, and deliberately: `Long
+    // Island`, which joined in the same round at 2.2 px from New York. Nassau
+    // and Suffolk are not a district of the city and saying they were to
+    // quiet a gate is the Sausalito lie; it stays a plain dot, the way Asbury
+    // Park does.
+    "Brooklyn": "New York",         // a borough of the city
+    "South Central": "Los Angeles", // a district of the city
     "Basildon": "Essex",            // a town in the county
     // VERSAILLES IS ITS OWN COMMUNE AND A PRÉFECTURE, and this row is
     // still not a Sausalito lie (see that note below): INSEE's unité
@@ -540,12 +682,17 @@
     deathmetal:     { place: "Tampa", year: 1990 },
     synthsoul:      { place: "London", year: 1983 },
     psychsoul:      { place: "Teaneck", year: 1973 },
+    psychsoul2:     { place: "Detroit", year: 1968 },
     aor:            { place: "Los Angeles", year: 1982 },
     hiphopsoul:     { place: "Charlotte", year: 1991 },
+    hiphopsoul2:    { place: "New York", year: 1992 },
     beatgroup:      { place: "Liverpool", year: 1962 },
     jazzrock:       { place: "Los Angeles", year: 1977 },
     postrock:       { place: "Austin", year: 2003 },
     boombap:        { place: "New York", year: 1994 },
+    politicalhiphop: { place: "Long Island", year: 1988 },
+    althiphop:      { place: "South Central", year: 1992 },
+    jazzrap:        { place: "Brooklyn", year: 1993 },
     trap:           { place: "Atlanta", year: 2003 },
     house:          { place: "Chicago", year: 1986 },
     garage:         { place: "London", year: 1999 },
@@ -553,6 +700,8 @@
     disco:          { place: "New York", year: 1977 },
     funk:           { place: "Cincinnati", year: 1967 },
     detroitsoul:    { place: "Detroit", year: 1965 },
+    northernsoul:   { place: "Manchester", year: 1970 },
+    progressivesoul: { place: "Detroit", year: 1971 },
     rnb:            { place: "Philadelphia", year: 1994 },
     gospel:         { place: "Chicago", year: 1932 },
     reggae:         { place: "Kingston", year: 1969 },
@@ -570,6 +719,7 @@
     jazz:           { place: "New York", year: 1945 },
     hambone:        { place: "Chicago", year: 1955 },
     rocknroll:      { place: "St. Louis", year: 1955 },
+    rockabilly:     { place: "Memphis", year: 1954 },
     doowop:         { place: "Harlem", year: 1955 },
     skiffle:        { place: "London", year: 1956 },
     minimalism:     { place: "New York", year: 1967 },
@@ -617,7 +767,25 @@
     folkrock:       { place: "Los Angeles", year: 1965 },
     countryrock:    { place: "Nashville", year: 1968 },
     heartlandrock:  { place: "Asbury Park", year: 1975 },
+    southernrock:   { place: "Macon", year: 1969 },
+    rootsrock:      { place: "Berkeley", year: 1969 },
     chamberpop:     { place: "Boston", year: 1994 },
+    /* THE GENRE-QA ROUND'S BATCH B (2026-09-03): pop, folk and the two
+       Christian rows. Six labels, each `Place Year` and each unique across the
+       whole table, measured rather than assumed — Nashville already carries
+       1871, 1909, 1945, 1946, 1957, 1968, 1990 and 2008 and not 1978; Memphis
+       1954 and 1997 and not 1972; Los Angeles twenty-five other years and not
+       1988; Seattle 1991 and 1995 and not 2003; London thirty-seven others and
+       not 2009.
+       SYDNEY IS A NEW DOT and the PLACES ledger above says what it is: the
+       Australia-and-the-Pacific row's third entry and the map's first on the
+       Australian mainland. */
+    ccm:            { place: "Nashville", year: 1978 },
+    worship:        { place: "Sydney", year: 1993 },
+    indiefolk:      { place: "London", year: 2009 },
+    powerpop:       { place: "Memphis", year: 1972 },
+    skatepunk:      { place: "Los Angeles", year: 1988 },
+    indietronica:   { place: "Seattle", year: 2003 },
     spacerock:      { place: "London", year: 1973 },
     grebo:          { place: "Stourbridge", year: 1990 },
     melodictechno:  { place: "Kent", year: 1991 },
@@ -682,6 +850,8 @@
     nortena:        { place: "Monterrey", year: 1955 },
     banda:          { place: "Mazatlán", year: 1938 },
     tropicalia:     { place: "São Paulo", year: 1968 },
+    rockenespanol:  { place: "Buenos Aires", year: 1967 },
+    nuevacancion:   { place: "Santiago", year: 1966 },
     palmwine:       { place: "Freetown", year: 1950 },
     kwela:          { place: "Johannesburg", year: 1955 },
     mbaqanga:       { place: "Johannesburg", year: 1964 },
@@ -752,6 +922,7 @@
     boogiewoogie:   { place: "Chicago", year: 1928 },
     deltablues:     { place: "Clarksdale", year: 1929 },
     acidrock:       { place: "London", year: 1967 },
+    bluesrock:      { place: "West Hampstead", year: 1966 },
     glam:           { place: "London", year: 1971 },
     krautrock:      { place: "Cologne", year: 1971 },
     berlinschool:   { place: "Berlin", year: 1972 },
@@ -796,9 +967,28 @@
     heavymetal:     { place: "Workington", year: 1969 },
     blockparty:     { place: "Bronx", year: 1973 },
     psychfunk:      { place: "Detroit", year: 1975 },
+    /* THE FUNK ROUND'S SIX (2026-09-03). Every label was checked against this
+       table before it was chosen: Cincinnati 1970 sits three years off `funk`'s
+       own 1967 (the same city twice, different years — the Hamburg rule);
+       New Orleans 1969 is free between `neworleans` 1923 and `sludge` 1991;
+       SAN FRANCISCO 1973 rather than the New York 1971 that was proposed,
+       because `songwriterpiano` holds New York 1971 and Head Hunters was cut
+       at Wally Heider in San Francisco anyway; Washington 1978 is the fourth
+       year on that dot after 1889, 1969 and 1980; New York 1981 was the one
+       free year between `disco` 1977 and `electro` 1982, which is exactly the
+       gap the row exists to fill; and Minneapolis is a brand-new dot, its
+       crowding measured in PLACES above. */
+    neworleansfunk: { place: "New Orleans", year: 1969 },
+    deepfunk:       { place: "Cincinnati", year: 1970 },
+    jazzfunk:       { place: "San Francisco", year: 1973 },
+    gogo:           { place: "Washington", year: 1978 },
+    boogie:         { place: "New York", year: 1981 },
+    minneapolissound: { place: "Minneapolis", year: 1982 },
     technopop:      { place: "Tokyo", year: 1978 },
     nwobhm:         { place: "London", year: 1980 },
     thrash:         { place: "San Francisco", year: 1983 },
+    powermetal:     { place: "Hamburg", year: 1985 },
+    metalcore:      { place: "Westfield", year: 2002 },
     triphop:        { place: "Bristol", year: 1991 },
     chopped:        { place: "Houston", year: 1995 },
     synthwave:      { place: "Paris", year: 2010 },
@@ -815,6 +1005,8 @@
     hardcore:       { place: "Washington", year: 1980 },
     honkytonk:      { place: "Fort Worth", year: 1941 },
     westernswing:   { place: "Tulsa", year: 1940 },
+    nashvillesound: { place: "Nashville", year: 1957 },
+    outlawcountry:  { place: "Austin", year: 1973 },
     dreampop:       { place: "London", year: 1984 },
     slowcore:       { place: "Boston", year: 1989 },
     ambientpop:     { place: "Sutton Courtenay", year: 1993 },
@@ -837,6 +1029,7 @@
     coldwave:       { place: "Rennes", year: 1979 },
     leedsgoth:      { place: "York", year: 1981 },
     gothicmetal:    { place: "Halifax", year: 1991 },
+    symphonicmetal: { place: "Kitee", year: 1997 },
     dungeonsynth:   { place: "Notodden", year: 1994 },
     witchhouse:     { place: "Traverse City", year: 2010 },
     gypsyjazz:      { place: "Paris", year: 1934 },
@@ -895,6 +1088,8 @@
     frontierscore:  { place: "Los Angeles", year: 1958 },
     waltz:          { place: "Vienna", year: 1867 },
     musette:        { place: "Paris", year: 1880 },
+    schlager:       { place: "Hamburg", year: 1960 },
+    iskelma:        { place: "Helsinki", year: 1955 },
     tarab:          { place: "Cairo", year: 1934 },
     dastgah:        { place: "Tehran", year: 1925 },
     jingju:         { place: "Beijing", year: 1918 },
@@ -1065,7 +1260,21 @@
                // (the soundtrack round, 2026-09-01, added NO British dot:
                // Denham was refused at the gate — the PLACES ledger above
                // has the measurement.)
-               "Sutton Courtenay"],
+               // ...and the genre-QA round's one (2026-09-03): WEST
+               // HAMPSTEAD, `bluesrock`'s half-mile of NW6 — Decca Studios
+               // on Broadhurst Gardens and Klooks Kleek round the corner.
+               // It is the fourth name in this list with a WITHIN row
+               // rather than a plain dot, and the PLACES ledger above has
+               // the four measurements that made that the honest answer.
+               // ...and the genre-QA round's batch C (2026-09-03): three
+               // plain northern-European dots — HAMBURG (`schlager` 1960
+               // and `powermetal` 1985, one dot and two labels twenty-five
+               // years apart), HELSINKI (`iskelma` 1955, the first Finnish
+               // dot) and KITEE (`symphonicmetal` 1997, the second, a town
+               // of ten thousand in North Karelia). The three measurements
+               // are in the PLACES ledger above.
+               "Sutton Courtenay", "West Hampstead",
+               "Hamburg", "Helsinki", "Kitee"],
     "North America": ["Santa Monica",
                       "Vancouver", "Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
                       "Chicago", "Cincinnati", "Cleveland", "Detroit",
@@ -1087,6 +1296,28 @@
                       // Athens is Georgia's, and PLACES says why.
                       "Athens", "Berkeley", "Long Beach", "Seattle",
                       "Virginia Beach",
+                      // ...and the funk round's one (2026-09-03): Minneapolis,
+                      // for `minneapolissound`. The round's other five reuse
+                      // dots this arc already holds — Cincinnati, New Orleans,
+                      // San Francisco, Washington and New York.
+                      "Minneapolis",
+                      // ...and the genre-QA round's one (2026-09-03): MACON,
+                      // for `southernrock` — Capricorn Records' town. The
+                      // round's other four reuse dots this arc already holds
+                      // (Memphis, Nashville, Austin and Berkeley), and the
+                      // sixth row is British. PLACES says what Macon measured.
+                      "Macon",
+                      // ...and the Motown-and-four-acts round's three
+                      // (2026-09-03): LONG ISLAND for `politicalhiphop` (a
+                      // region standing where a city cannot, the South
+                      // Carolina precedent, and a plain dot for the Asbury
+                      // Park reason), BROOKLYN for `jazzrap` and SOUTH
+                      // CENTRAL for `althiphop` — the last two declared
+                      // inside their cities in WITHIN, the Harlem relation.
+                      // The round's other four rows reuse dots this arc
+                      // already holds: Detroit twice, Manchester (Britain)
+                      // and New York. PLACES has the three measurements.
+                      "Long Island", "Brooklyn", "South Central",
                       // ...and the debts round's four (2026-08-29): Washington
                       // (a march and a B-side eighty years apart), the Bronx,
                       // Houston, and SOUTH CAROLINA — a state standing where a
@@ -1105,7 +1336,14 @@
                       // the Blue Ridge pair, Hot Springs (Sharp in Jane
                       // Gentry's kitchen, 1916) and Galax (the fiddlers'
                       // convention, 1935).
-                      "Galax", "Hot Springs"],
+                      "Galax", "Hot Springs",
+                      // ...and the genre-QA round's batch C (2026-09-03):
+                      // WESTFIELD, Massachusetts — `metalcore` 2002, Zing
+                      // Studios, sixty-five kilometres west of Boston and
+                      // measured clear of it (32.0 units, against G10's
+                      // 26-unit floor). A plain dot, no WITHIN row, on the
+                      // Asbury Park ruling of one round earlier.
+                      "Westfield"],
     // Mexico is here and not in North America, which is a choice and is the
     // one Garland's own volumes make: the musical basin is Ibero-American,
     // and a Sinaloan banda has more to say to a Colombian cumbia than to a
@@ -1115,7 +1353,12 @@
        "Kingston", "Matanzas", "Mazatlán", "Mexico City", "Monterrey",
        "Port of Spain",
        "Recife", "Rio de Janeiro", "San Juan", "Santo Domingo", "São Paulo",
-       "Valledupar"],
+       "Valledupar",
+       // ...and the genre-QA round's batch C (2026-09-03): SANTIAGO,
+       // `nuevacancion` 1966 — the map's first Chilean dot, and one of the
+       // names this file's own header has listed as wanted since it was
+       // written.
+       "Santiago"],
     // CAIRO AND ORAN ARE IN THE MIDDLE EAST ROW AND NOT IN THIS ONE, which
     // is Garland's own division and not a claim about continents: the
     // Encyclopedia's volume 6 is "The Middle East" and it covers Egypt and
@@ -1194,7 +1437,11 @@
     // ...and the soundtrack round's one (2026-09-01): WELLINGTON, the
     // region's second dot and its first south of the equator — the row
     // Honolulu unblocked now has a pair.
-    "Australia and the Pacific": ["Honolulu", "Wellington"],
+    // ...and the genre-QA round's one (2026-09-03): SYDNEY, for `worship`.
+    // The region's third dot, its second south of the equator and its first
+    // on a continent rather than an island — the half of this row the
+    // ledger's old declaration said was "blocked musically instead".
+    "Australia and the Pacific": ["Honolulu", "Wellington", "Sydney"],
   };
   /* THE EMPTY CELL, DECLARED — AND THEN FILLED (2026-08-30). The
      declaration below held from the world round until the ledger round

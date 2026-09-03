@@ -242,6 +242,29 @@ const FROZEN_RHYTHM = ["ambient", "arabesk", "artrock", "beiruttarab",
                        "furnituremusic", "gagaku", "gothicrock", "gqom",
                        "hohlefels", "hurrian", "knowlewest", "modaljazz",
                        "nordicjazz", "nordicscore", "ottoman", "postbritpop",
+                       // ...AND THE MOTOWN ROUND'S ONE (2026-09-03, Paul:
+                       // "Some things missing include a lot of motown").
+                       // `progressivesoul` (Detroit 1971, What's Going On)
+                       // is the SAME decision this list already holds for
+                       // artrock, nordicscore, epichybrid and chamberpop: a
+                       // `long` cell (two onsets a bar, this box's sparsest)
+                       // with `sent: "long"` has one rhythm and moves its
+                       // DEGREES at every reading, which it does. It is also
+                       // the row's whole argument — the only `plan: "arc"`
+                       // row in the soul family, an album-length written
+                       // statement rather than a three-minute single, and a
+                       // line whose rhythm re-rolled per seed would be the
+                       // band improvising, which is the thing this record
+                       // stopped doing. THE ROUND'S OTHER SIX ARE NOT HERE
+                       // and one of them was, briefly: `hiphopsoul2` was
+                       // drafted with the same `long` cell and this sweep
+                       // froze it, which is right for an arrangement and
+                       // WRONG FOR A SINGER — Blige phrases the line
+                       // differently every take — so its idiom row took the
+                       // soul family's own `pickup` instead and it varies
+                       // at 8 of 8 readings. The measurement chose, not the
+                       // taste.
+                       "progressivesoul",
                        "psychrock", "seannos",
                        // ...AND THE BLANK STATE (2026-09-01). Paul: "Add a
                        // 'silence' genre at the top of the genre list. This is

@@ -1,0 +1,202 @@
+{
+  "note": "POWER POP — Memphis 1972. Big Star, #1 RECORD (Ardent Studios,\nMemphis, recorded by Ardent's founder John Fry; Ardent/Stax, June\n1972). The article dates the genre to that year in as many words —\nMagnet's Andrew Earles, quoted in it: \"1972 was 'year zero' for power\npop\", the developments named being \"the emergence of Big Star and the\nRaspberries, the release of Todd Rundgren's Something/Anything?, and\nthe recording of the Flamin' Groovies' 'Shake Some Action'\". Of those\nfour, one is a band whose city is free on this map, whose album was\ncut in one studio in one town, and whose record the article's own\nlater sections keep returning to. Memphis is otherwise `crunk` (1997)\nhere, and 1972 is otherwise nobody's.\n\nWHY NOT PETE TOWNSHEND, LONDON 1967, who COINED the phrase (\"Power\npop is what we play — what the Small Faces used to play…\"): the\narticle says plainly that \"the term did not become widely identified\nwith the Who, and it would take a few years before the genre's\nstylistic elements coalesced into a more recognizable form.\" A word\nsaid about a record is not the record. London 1967 is also `acidrock`\nin this table.\n\nTHE HARMONY IS MEASURED AND THE FINGERPRINT IS THE CHORD FROM OUTSIDE\nTHE KEY. Over 3,687 songs (`power pop`, `modern power pop`,\n`underground power pop`) the two most lifted degrees in the whole set\nare the two that are not in it: II at 2.98% and 1.79x, and bVII at\n2.61% and 1.75x. Every diatonic minor degree is suppressed under them\n(vi 0.79x, i 0.60x, iv 0.56x). The lifted four-chord windows say the\nsame thing twice: `bVII I bVII I` 3.59x, `I II IV I` 3.56x, `I V bVII\nIV` 3.29x, `IV V IV V` 2.96x, `I bVII I bVII` 1.82x.\n\nThat is the article's own definition, measured: \"an essential feature\nof power pop is that its cheerful sounding arrangements are supported\nby a sense of 'yearning' … THIS MIGHT BE ACHIEVED WITH AN UNEXPECTED\nHARMONIC CHANGE\". The census names the change. So this row is the one\nin this batch that uses `prog` rather than bare roots: I - II7 - IV -\nI, with the supertonic written as `q: \"dom7\"` — kernel.js's chromatic\nqualities are \"absolute semitone stacks on the root, because they are\nrequests for a specific colour the mode may not contain\", and a MAJOR\nII in a major key is a secondary dominant, the V of V, which is the\none chord a diatonic degree cannot spell. `gospel` (Chicago 1932) uses\nthe same escape for the same reason one bar earlier in its own row.\nThe mode stays IONIAN: the bVII half of the measurement is real and is\nNOT TAKEN, because a row can hold one cycle and `folkrock` (Los\nAngeles 1965) already plays the flat seventh in mixolydian two chairs\nover — taking both would have made this row that row with a fuzzier\nguitar.\n\nTHE TEMPO IS MEASURED. Twenty-six corpus files across Cheap Trick,\nBadfinger, the Knack, the Raspberries, Todd Rundgren, Dave Edmunds and\nthe Romantics reduce to eighteen unique songs at a median of 129.5\n(the file median is 132, and the row rounds to 130): \"Can We Still Be\nFriends\" 86 at the floor, \"I Want You to Want Me\" 180 at the ceiling,\nand thirteen of the eighteen between 106 and 152. 26 of 26 are 4/4 and 20 of 26 major — 77%, which agrees\nwith the census's 80.5% and is the number that keeps this row clear of\n`poppunk` (Berkeley 1994, 167 bpm) and `merseybeat` (Liverpool 1963,\n148). (A lounge orchestra called ROMANTIC SOUND ORC and Ruby and the\nRomantics both matched the roster and were thrown out.)\n\nTHE PARENTS ARE THE ARTICLE'S OWN LIST. It opens by defining the\ngenre as \"based on the early music of bands such as the Who, the\nBeatles, the Beach Boys, and the Byrds\" and quotes AllMusic: \"a cross\nbetween the crunching hard rock of the Who and the sweet melodicism of\nthe Beatles and the Beach Boys, with the ringing guitars of the Byrds\nthrown in for good measure\". So: `beatgroup` 0.35 (Liverpool 1962 —\nthe article names the Merseybeat sound's \"jangly guitars, pleasant\nmelodies, immaculate vocal harmonies\" as the key influence on exactly\nthis band); `folkrock` 0.20 (Los Angeles 1965 — the Byrds' ringing\ntwelve-string, and the Rolling Stone review of the follow-up says\n\"sometimes they sound like the Byrds\"); `garagerock` 0.20 (Portland\n1963 — \"it's also quite easy to draw a not-so-crooked line from garage\nrock to power pop\", Borack, quoted in the article); `rock` 0.15\n(London 1969 — the crunch under the sweetness). 0.90 declared, and the\n0.10 residue is the invention the article spends four paragraphs on\nand no ancestor has: a cheerful arrangement that is about loss. The\nbox says that with the II7 and with `land: \"third\"` — the hook arches\nup and lands on the sweet note over a chord that is not in the key.\n\nTHE CAST. `clean_guitar` is the ringing twelve-string Chris Bell\nplays, `crunch_guitar` the second guitar holding chords underneath —\n\"the guitar sound is sharp-edged and full\" is the review's phrase, and\nthose two ids are how this box says it — and `ohh_voices` the\nLennon-and-McCartney duo the band's own article says Chilton and Bell\n\"intentionally modeled\" themselves on. `picked_bass` because a 1972\nband bass is played with a pick, and the mouth is `merseystack` with\nthe wobble halved and the blend opened: an American band imitating a\nLiverpool one gets it slightly wrong, and slightly wrong is the sound.",
+  "label": "Memphis 1972",
+  "near": "merseybeat",
+  "plan": "song",
+  "bpm": 130,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "beatgroup": 0.35,
+    "folkrock": 0.2,
+    "garagerock": 0.2,
+    "rock": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "crunch_guitar",
+    "ohh_voices"
+  ],
+  "bassInstr": "picked_bass",
+  "drumkit": "room",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      -1,
+      1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "harmony": "cycle",
+  "roots": [
+    0,
+    1,
+    3,
+    0
+  ],
+  "prog": [
+    {
+      "d": 0
+    },
+    {
+      "d": 1,
+      "q": "dom7"
+    },
+    {
+      "d": 3
+    },
+    {
+      "d": 0
+    }
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 3,
+  "bassStyle": "eighths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 1.0,
+    "atk": 0.005,
+    "rel": 0.8,
+    "gain": 0.28,
+    "verb": 0.26,
+    "mouth": {
+      "$src": "{ ...MOUTHS.merseystack, vib: 0.12, blend: 0.55 }"
+    }
+  },
+  "words": [
+    "the twelve-string, the hook",
+    "the second guitar, the chords, an octave down",
+    "the harmony, a third above, thinned"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(2), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

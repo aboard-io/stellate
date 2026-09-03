@@ -1,0 +1,215 @@
+{
+  "note": "OUTLAW COUNTRY — Austin 1973. Willie Nelson, SHOTGUN WILLIE, cut at\nAtlantic Recording Studios in New York in February 1973 and released\nthat May: the first record he made after walking out of the Nashville\nsystem, on a New York jazz label, with his own road band in the room\ninstead of the A-Team. Waylon Jennings's HONKY TONK HEROES is the same\nyear's other half and is named here rather than chosen, because\nShotgun Willie is the earlier release and the cleaner break.\n\nTHE LABEL SAYS AUSTIN AND NOT NEW YORK, which is `grunge`'s ruling\nword for word and `heartlandrock`'s after it — Nevermind was cut in\nVan Nuys and that row says Seattle. Nelson had moved to Austin in\n1972 and the scene this music is named for is the Armadillo World\nHeadquarters; the article's own alternate name for the genre is\n\"Armadillo country\". A desk in Manhattan is not where this music came\nfrom.\n\nTHIS ROW IS THE NEGATION OF `nashvillesound` (Nashville 1957) AND\nTHAT IS ITS WHOLE ARGUMENT. The article: \"The movement began as a\nreaction to the slick production and limiting structures of the\nNashville sound developed by Chet Atkins and other record producers.\"\nSo every field that row declares, this one answers:\n  · the string section and the vocal quartet are gone; the chairs are\n    a gut-string guitar (Trigger), a harmonica (Mickey Raphael) and a\n    piano (Bobbie Nelson) — the road band, which is the point.\n  · `bassInstr` is DECLARED as `finger_bass`, where `nashvillesound`\n    leaves it undeclared and falls through to the A-Team's upright.\n    Bee Spears played a Fender. That one line is the two rows'\n    difference made audible.\n  · `verb` is 0.20 against that row's 0.34: Nashville had an echo\n    chamber down the hall from Studio B and these records are dry.\n  · no `prog`. `nashvillesound` writes a II7 turnaround because the\n    census demands one; this row measures the SAME window at HALF the\n    lift and writes the plain three chords instead (below).\n\nTHE NUMBERS THAT ARE MEASURED. bpm 111 is the median of 12 corpus\nfiles (Johnny Cash 4, Willie Nelson 3, Merle Haggard 3, Kris\nKristofferson 2) with p75 at 152; 91.7% are 4/4 and 91.7% major; swing\nmeasures 0.0 across all twelve, so none is declared. maxHold 6 comes\noff a hold p90 of 9.896 sixteenths — THE LONGEST LINE IN THIS BATCH\nby four sixteenths, which is the drawl, and against `rockabilly`'s\n3.875 it is the measured distance between a hiccup and a sung\nsentence. The pickup rate is 0.078, near the floor: this line starts\nON the beat, not before it, which is why the idiom row below says\n`hang` rather than `pickup`.\nWAYLON JENNINGS RETURNS NO FILES, and neither does the phrase \"outlaw\ncountry\" — the row's own second founding act is absent from the\narchive and the reading leans on Cash and Haggard instead, which is a\nbias worth stating rather than hiding.\nTHE CROSS-STICK IS THE ONE THING THE DRUM LANES SHOUT. Those twelve\nfiles run a side stick straight through the bar — 156/127/158/160 on\nthe beats and 228/229/228/226 on the off-eighths, so the OFF-beats are\nthe loud half at just over half the weight of the backbeat's 415/422,\nwhich is the country train figure and not a fill. There is no rim lane\nin this kit's twelve (k s c o h p f r x t m l), so it is written into\n`p`, \"Ghost perc\", and only the off-eighths are kept, because the four\ndownbeat strokes would double the kick and the hat that are already\nthere. Both of those decisions are compromises said out loud rather\nthan silent ones.\n\nTHE HARMONY IS THREE CHORDS AND THE CENSUS AGREES LOUDLY. Over 5,700\nChordonomicon songs the label is 93.1% major with I at 1.52x, IV at\n1.37x and V at 1.26x, and the two windows that carry it are `IV I V I`\nat 6.29x on 432 songs and `I IV I V` at 4.05x on 445 — the highest\nsupports in this batch. vi is suppressed at 0.54x and ii at 0.56x. The\nII is there at 1.23x and its best window, `I IV I II`, reaches 8.15x —\nbut `nashvillesound` measures that same window at 10.56x and `IV I II V`\nat 13.01x against this row's 7.44x, so the ragtime turnaround belongs\nto the row this one rebelled against and is left there. Eight bars,\nI IV I V | IV I V I, ionian, no sevenths.\n\nLINEAGE, and the article's stylistic-origins box reads \"country,\nrockabilly, rock and roll, folk, blues\" with roots in \"Western, honky\ntonk, rockabilly, and progressive country\":\n  `honkytonk` (Fort Worth 1941)     0.30  the barroom song, unchanged\n  `rockabilly` (Memphis 1954)       0.20  named in the article's own\n                                          box; Nelson and Jennings are\n                                          both Texans of that decade\n  `countryrock` (Nashville 1968)    0.15  the rock rhythm section\n  `folkrock` (Los Angeles 1965)     0.10  \"a blend of rock and folk\n                                          rhythms\" is the article's\n                                          own characterisation\n  `singersongwriter` (New York 1972) 0.10 \"introspective lyrics\";\n                                          Kristofferson is the bridge\nTHE RESIDUE IS 0.15 AND IT IS THE REFUSAL — a country record made\nwith nobody's permission, which is a fact about production and not\nabout music, and is therefore exactly the kind of thing a parent\ntable cannot say. `wants` names the Bakersfield sound, which has no\nrow here: Buck Owens and Haggard's Telecaster band is the other\nnon-Nashville country of the sixties and is this row's missing rung.",
+  "label": "Austin 1973",
+  "near": "honkytonk",
+  "plan": "song",
+  "bpm": 111,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "honkytonk": 0.3,
+    "rockabilly": 0.2,
+    "countryrock": 0.15,
+    "folkrock": 0.1,
+    "singersongwriter": 0.1
+  },
+  "wants": [
+    "the bakersfield sound"
+  ],
+  "instr": [
+    "nylon_string_guitar",
+    "harmonica",
+    "upright_piano"
+  ],
+  "bassInstr": "finger_bass",
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "minus",
+    "n": 1
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    3,
+    0,
+    4,
+    3,
+    0,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "MODES.ionian"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 6,
+  "bassStyle": "fifths",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      0,
+      0,
+      4,
+      0,
+      0,
+      0,
+      4,
+      0,
+      0,
+      0,
+      4,
+      0,
+      0,
+      0,
+      4,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  "orn": {
+    "pass": 0.25,
+    "grace": 0.3
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2400,
+    "q": 1.0,
+    "atk": 0.01,
+    "rel": 1.0,
+    "gain": 0.27,
+    "verb": 0.2
+  },
+  "words": [
+    "the gut-string, behind the beat",
+    "the harmonica, answering every line",
+    "the piano, the gospel left hand"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[rotate(8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[only(\"gate\", drop(2))]"
+    }
+  }
+}

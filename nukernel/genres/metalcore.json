@@ -1,0 +1,193 @@
+{
+  "note": "METALCORE — Westfield 2002. Killswitch Engage, ALIVE OR JUST BREATHING\n(Roadrunner, released 21 May 2002) — recorded at Zing Studios,\nWestfield, Massachusetts from 3 November 2001 to February 2002, produced\nby the band's own drummer-turned-guitarist Adam Dutkiewicz. A Gothenburg\nriff, a hardcore breakdown and a sung chorus, on one record, produced\nclean enough to be played on the radio. The band is FROM Westfield —\n\"an American metalcore band from Westfield, Massachusetts, formed in\n1999\" — so the dot is the band's town AND the studio's, which is the\nrare case where the Seattle ruling and the desk agree.\n\nAND THE ALBUM'S OWN INFOBOX SETTLES THE ARGUMENT BELOW BEFORE IT IS\nMADE: its genre reads \"Melodic metalcore / melodic death metal\". Not\nmetalcore-in-general and not hardcore — the melodic branch, named by the\nencyclopaedia on the same record the measurement picked.\n\nWHY NOT BOSTON 1998, WHICH WAS THE OTHER CANDIDATE. Converge's WHEN\nFOREVER COMES CRASHING (Equal Vision, 1998) is real, earlier and\nMassachusetts, and it is REFUSED ON THE MEASUREMENT rather than on\ntaste. Two numbers do it. (1) THE LABEL'S MASS IS AFTER 2000: over\n1,420 Chordonomicon songs on `metalcore`, `melodic metalcore`,\n`american metalcore` and `uk metalcore`, the decade counts are 1990s 5,\n2000s 312, 2010s 790, 2020s 155, with a median year of 2015. Five songs\nin the whole of the nineties. (2) THE HARMONY IS MELODIC, NOT ATONAL:\nthe highest-count distinctive window is `III i VI III` at 10.49x the\ncensus baseline on 41 songs, with III carrying a 39.9% song-share and\nVII 40.1%. That is the harmonised minor line At the Gates cut in\nGothenburg in 1995 — a chord sequence — where Converge's record is a\ndissonant, arrhythmic hardcore that this table already holds at both\nends (`hardcore`, Washington 1980, and `screamo`, San Diego 1994). The\nrow this label describes is the melodic one, so the founding record is\nthe melodic one. Boston also carries three labels already (1831, 1989,\n1994); Westfield is a new dot, forty miles up the Connecticut River, and\nthe atlas note filed with it measures the crowding.\n\nTHE ARTICLE'S OWN LEAD IS THIS ROW'S FIELD LIST: \"aggressive verses and\nmelodic choruses, combined with slow, intense passages called\nbreakdowns. Other defining traits are low-tuned, percussive guitar\nriffs, double bass drumming, and highly polished production. Vocalists\ntypically switch between clean vocals ... and harsh vocals.\" Every\nclause of that has a field below.\n\nTHE HARMONY IS MEASURED. 1,420 songs; 61.2% minor, the most minor of\nthis shift's three metal rows (power metal 49.9%, symphonic metal\n52.4%). Degree lifts: VI 2.83x, VII 2.84x, i 2.36x, III 1.80x, iv 1.74x,\nagainst a suppressed I (0.49x), V (0.67x) and IV (0.57x). The roots\nbelow are `III i VI III`, the label's own commonest distinctive window\nwritten out, and both aeolian's characteristic degrees (2 and 5) are\nroots, which is what the 2026-09-02 mode law asks.\n\nTHE BREAKDOWN IS THE INVENTION AND IT IS THE RESIDUE. `hardcore`\n(Washington 1980) 0.30 is the shout and the floor, `deathmetal` (Tampa\n1990) 0.25 the tuning and the double kick, `thrash` (San Francisco 1983)\n0.15 the downpicked riff, `emo` (Chicago 1999) 0.10 the sung chorus —\n0.80 declared. The 0.20 that belongs to nobody is the BREAKDOWN: a riff\nin half time with its accents dragged off the beat, which is not\nhardcore's blur and not death metal's blast and did not exist before\nthis wing put them together. The one number the corpus gives that speaks\nto it agrees: over the nine matched files the OFFGRID reading is 0.267,\nagainst symphonic metal's 0.179 over sixty-three — the highest\ndisplacement of the three, which is why the idiom cell is `push`, the\nbox's own word for a figure written off the beat (`skapunk`'s row).\n`wants` names the unrowed ancestor: the Gothenburg melodic-death riff\nhas no anchor in this table and `deathmetal` is Florida, which plays a\ndifferent thing.\n\nWHAT THE MIDI CORPUS CAN AND CANNOT SAY, said before its numbers are\nused. The literal term \"metalcore\" returns ZERO FILES; the roster\nreaches nine — Trivium (8) and Lamb of God (1). Killswitch Engage,\nConverge, As I Lay Dying, Atreyu, Unearth, Parkway Drive, Architects,\nAugust Burns Red, Underoath and fifteen more return nothing between\nthem. NINE FILES IS NOT A DISTRIBUTION and the row says so: bpm 157 is\ntheir median but the quartiles are 107 and 220, so it is the only\nreading there is rather than a good one, and it is kept because it\nagrees with the article's own \"double bass drumming\" range. `maxHold: 2`\nis NOT the p90 of 4.0 those nine files give — it is a CHOICE from the\n`staccato` articulation and the chopped riff, because a nine-file p90\ncannot carry a cap, and calling it measured would be the thing this\ntable exists not to do. No drum lane below was read off the corpus.",
+  "label": "Westfield 2002",
+  "near": "deathmetal",
+  "plan": "song",
+  "bpm": 157,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "hardcore": 0.3,
+    "deathmetal": 0.25,
+    "thrash": 0.15,
+    "emo": 0.1
+  },
+  "wants": [
+    "the Gothenburg melodic-death riff — the harmonised minor line At the Gates cut in 1995, which this table has no row for and which Tampa does not play"
+  ],
+  "instr": [
+    "distortion_guitar",
+    "palm_muted_guitar",
+    "solo_vox"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "line"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "riff",
+    "riff",
+    "lead"
+  ],
+  "harmony": "modal",
+  "roots": [
+    2,
+    0,
+    5,
+    2
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "bassStyle": "eighths",
+  "fx": [
+    "crunch"
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2200,
+    "q": 1.4,
+    "atk": 0.003,
+    "rel": 0.28,
+    "gain": 0.29,
+    "verb": 0.22,
+    "mouth": {
+      "$src": "MOUTHS.skiffler"
+    }
+  },
+  "words": [
+    "the riff, harmonised, the Gothenburg line",
+    "the second guitar, palm-muted — the breakdown, half time and off the beat",
+    "the voice, switching between the shout and the chorus"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [transpose(1)], [invert(2)]][s % 4]\n                    : v === 1 ? [transpose(-12), keep(0, 3, 6, 8)]\n                    : [drop(4)])"
+  }
+}

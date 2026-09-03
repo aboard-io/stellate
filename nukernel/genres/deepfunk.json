@@ -1,0 +1,207 @@
+{
+  "note": "DEEP FUNK — Cincinnati 1970. James Brown, \"Get Up (I Feel Like Being a) Sex\nMachine\" b/w \"Funky Drummer\" (Starday-King Studios, Cincinnati; King Records,\n1970): the J.B.'s, four weeks old — Bootsy Collins on bass, his brother Catfish\non guitar, Jabo Starks and Clyde Stubblefield on drums.\n\nTHIS IS THE JAMES BROWN ROW PAUL ASKED FOR, 2026-09-03: \"Some things missing\ninclude a lot of motown and DEFINITELY James Brown, we need way more funk.\"\n`funk` (Cincinnati 1967) is ALREADY James Brown — Cold Sweat, at the same\nlabel, in the same city — so this row is not a second name for that record. It\nis the OTHER James Brown, the 1970 band, and the row's whole job is to say what\nCold Sweat is not. Four things, and every one of them is a field below:\n\n  1. THE HAT IS SIXTEEN TO THE BAR. `funk`'s hat is [1,0,1,1] x 4 — twelve of\n     sixteen, an eighth-note hand with a pair of doubles. Stubblefield's hand on\n     Funky Drummer never lifts: sixteen of sixteen, with the open hat sizzling\n     off the \"a\" of 4 into the next bar. That is the single loudest difference\n     between 1967 and 1970 and it is why this is the most sampled bar in\n     recorded music.\n  2. ONE CHORD FOR THE WHOLE SIDE, AND IT IS A DOMINANT. Cold Sweat still has a\n     bridge and a chord to go to; Sex Machine has an E7 vamp and a \"take 'em to\n     the bridge\" that is a CUE, not a modulation. So `harmony: \"modal\"` like the\n     parent, but MIXOLYDIAN where the parent is dorian — a major third over a\n     flat seven, which is what a horn section screaming over a dominant vamp\n     actually is. The mode is audible on the scale (mode and scale are the same\n     seven notes), so the flat seventh sounds; test/precompose.test.js G14b's\n     rule, satisfied by construction rather than by a claim.\n  3. THE BASS IS THE LEAD. Bootsy's line is the tune of Sex Machine and the\n     horns answer IT. `bassInstr: \"finger_bass\"` (fingers on a Jazz Bass, 1970 —\n     not the slap, which is Larry Graham's and arrives on `funkrock` fourteen\n     years later) with `bassStyle: \"sixteenths\"`, and the two chairs above are\n     written as accompaniment: a chank and a stab.\n  4. THE HORN IS A STAB. `funk`'s horns are \"rotated off the beat\" — a line.\n     Here the word schedule gates them to a rotated pulse and drops half of it:\n     the J.B.'s horn book is punctuation, four notes at a time.\n\nMEASURED, THE MIDI CORPUS. 13 James Brown files in 120,652 (BROWN.Cold sweat,\nBROWN.Sex machine, BROWN.Get up sex machine, BROWN.Papa's got a new brand,\nBROWN.I got the feelin, and the I Feel Good duplicates). Tempo (n=13): p10 106 ·\np25 110 · med 120 · p75 145 — and the 145s are all \"I Got You (I Feel Good)\",\n1965, which is neither this row nor its parent. THE FOUR SEX MACHINE FILES READ\n106, 108, 110, 110, and `bpm: 110` is that. Drum density 3.37 — the HIGHEST of\nthe six funk rows measured in this round (new orleans 2.53, minneapolis 2.55,\njazz-funk 1.71) — and hat density 1.74, which is the sixteenth hand arriving as\na number. Off-grid fraction 0.363 against a swing that notates as 0: the corpus\nwrites this music on the grid and plays it behind the beat, which is why\n`swing: 0.14` is declared here rather than read off the files (mine-midi.js's\nown caveat: notation tempo and notation swing are conventions, not truths).\n\nMEASURED, CHORDONOMICON. The label `deep funk` exists and carries SIX songs —\ntoo few to argue anything from, and said out loud rather than dressed up. The\nneighbouring label that is populated is `p funk` (131 songs, median year 1975,\ntop four-chord window I IV I IV) which is `psychfunk`'s, not this row's, and\nplain `funk` (854 songs, median 1981, 35% minor, 10% of songs with two or fewer\ndistinct chords). The one-chord claim above is the RECORD's, argued from the\nrecord, and the dataset neither confirms nor refutes it at this label.\n\nLINEAGE: `funk` (Cincinnati 1967) at 0.60 — this is that band three years on and\nmost of the record is still the parent's. `gospel` (Chicago 1932) at 0.15 — the\nscream, the call, and the fact that \"Get up!\" is a preacher's line. The residue\nis 0.25 and it is the four numbered facts above: the unbroken sixteenth hat, the\ndominant vamp that never leaves, the bass promoted to the tune and the horn\ndemoted to a stab. That is the invention, and none of it is in Cincinnati 1967.\n\nWHAT THIS ROW DOES NOT CLAIM. No African parent, for the reason `funk`'s own\nnote writes out at length: the debt runs through the slave trade, the ring shout\nand the second line, which have no place, no year and no recording, so they\ncannot be a `parents` edge. Nothing here reopens that.",
+  "label": "Cincinnati 1970",
+  "swing": 0.14,
+  "near": "funk",
+  "plan": "song",
+  "bpm": 110,
+  "parents": {
+    "funk": 0.6,
+    "gospel": 0.15
+  },
+  "wants": [],
+  "instr": [
+    "clean_guitar",
+    "brass_section"
+  ],
+  "bassInstr": "finger_bass",
+  "drumkit": "room",
+  "entry": {
+    "kind": "id"
+  },
+  "reg": {
+    "kind": "id"
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "stab"
+  ],
+  "harmony": "modal",
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "artic": "staccato",
+  "maxHold": 1,
+  "bassStyle": "sixteenths",
+  "ghost": [
+    {
+      "$src": "only(\"acc\", rotate(4))"
+    }
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "s": [
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1
+    ],
+    "h": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0
+    ],
+    "o": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  "kitVel": {
+    "s": [
+      0,
+      2,
+      0,
+      0,
+      9,
+      0,
+      0,
+      2,
+      0,
+      2,
+      0,
+      0,
+      9,
+      3,
+      0,
+      2
+    ],
+    "h": [
+      8,
+      3,
+      5,
+      3,
+      7,
+      3,
+      5,
+      3,
+      8,
+      3,
+      5,
+      3,
+      7,
+      3,
+      5,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "square",
+    "cut": 2400,
+    "q": 1.6,
+    "atk": 0.003,
+    "rel": 0.22,
+    "gain": 0.28,
+    "verb": 0.12
+  },
+  "words": [
+    "the guitar, chanked on every sixteenth it is allowed",
+    "the horns, a stab and then nothing"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[only(\"gate\", rotate(4)), drop(4)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[fill(1)]"
+    }
+  }
+}

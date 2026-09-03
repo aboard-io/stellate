@@ -1,0 +1,207 @@
+{
+  "note": "POWER METAL — Hamburg 1985. Helloween, WALLS OF JERICHO (Noise Records,\n1985) — the band's first full-length, and its own article's sentence is\nthe row's claim: \"the band released its first full-length album, Walls\nof Jericho, which helped spawn speed metal.\" A Hamburg band playing Iron\nMaiden's harmonised twin leads at thrash's tempo with a major key\nunderneath and a tenor on top of it, which is the whole recipe and was\nnot a genre until this record. THE STUDIO IS NOT NAMED and the omission\nis deliberate, the same refusal `iskelma` makes two rows away: Noise,\nthe city and the year are checkable, the desk is not, and this table\nwould rather say less than invent one. (Michael Kiske, the tenor the\nform is built on, arrives two albums later — his own article says he was\n\"initially uninterested … having heard the more thrashy Walls of\nJericho\". The row is dated by the record that made the shape, not by the\none that perfected it, which is the `heavymetal` ruling.) Hamburg is this table's dot twice now, twenty-five\nyears apart: `schlager` (1960) is the other, and different years on one\ncity are legal (Boston 1831/1989/1994, Havana five times over).\n\nTHE MODE IS THE MEASUREMENT AND IT IS THE SURPRISE. 1,767 Chordonomicon\nsongs over `power metal` (1,535), `german power metal` (327),\n`finnish power metal` (329), `us power metal` (232) and\n`melodic power metal` (36). 50.1% MAJOR — power metal is the ONLY metal\nlabel in this shift's batch that is not majority-minor (metalcore 38.8%\nmajor, symphonic metal 47.6%), and that even split is the genre's whole\nsound: an uplifting metal record, which the article's own lead calls \"a\nfaster, lighter, and more uplifting sound, in contrast with the heaviness\nand dissonance prevalent in ... extreme metal.\"\n\nTHE HIGH-LIFT WINDOWS ARE THE FOUR-CHORD AEOLIAN EPIC: `i III VII i` at\n18.46x the census baseline (n=18), `i VI III VII` at 9.20x (n=33),\n`i VI VII i` at 6.26x (n=39), `i VII i VII` 5.39x. Degree lifts: VII\n2.88x, i 1.86x, VI 1.86x, III 1.55x, iv 1.42x. The roots below are the\ntwo loudest windows in order — `i VI III VII`, then `i III VII i`.\n\nAND THE SONG IS LONGER THAN ANYTHING ELSE HERE. The median chord count\nis 110 against metalcore's 75 and symphonic metal's 100, the highest in\nthis batch; and over the seven matched MIDI files the melodic hold p50\nis 3.108 sixteenths and the p90 is 8.0 — TWICE the p90 of both other\nmetal rows (4.0 each). That is a SUNG line held over changes, not a\nriff, and it is why the idiom cell is `hang` (one long note, then a run)\nover an eight-bar sentence, where `nwobhm`'s own row is `riff` over two.\n`maxHold: 5` is that p90 read the way `folkrock` read its own.\n\nTHE CORPUS IS SEVEN FILES AND THE ROW SAYS SO BEFORE IT USES THEM.\n\"power metal\" returns ZERO FILES as a term; the roster reaches\nStratovarius (1), Sonata Arctica (3), Hammerfall (1), Manowar (1) and\nPrimal Fear (1) — Helloween, Blind Guardian, Gamma Ray, Dragonforce and\nIced Earth return nothing. Seven files give a bpm median of 139 with\nquartiles at 124 and 170. THE ROW TAKES 140, which is BELOW `nwobhm`'s\n152 and well below `thrash`'s 160, and that is the honest reading rather\nthan an accident: power metal is not faster than Iron Maiden, it is more\nmelodic, and the double kick underneath makes it FEEL faster than it is.\nTwo files of the seven are not 4/4 (one 3/4, one 12/8) and the row does\nnot claim a meter distribution off that. No drum lane below was read off\nthe corpus.\n\nLINEAGE, AND THE RESIDUE IS THE MAJOR KEY. `nwobhm` (London 1980) 0.40\nis the songbook and the harmonised twin lead, which this row keeps as\nits one non-negotiable exactly as that row does; `heavymetal`\n(Workington 1969) 0.15 is the weight; `thrash` (San Francisco 1983) 0.15\nis the tempo and the downpicking Kai Hansen brought over from the same\nyears; `classical` (Vienna 1785) 0.10 is the melodic vocabulary — the\nscale runs and the sequence-by-fifths that the whole neoclassical metal\nwing took out of Bach by way of an electric guitar. 0.80 declared. The\n0.20 that is the row's own is the thing none of those four does: half\nof this music is in a MAJOR key, with a chorus written to be sung by a\nhall, at a chord count nobody else in the metal wing gets near.",
+  "label": "Hamburg 1985",
+  "near": "nwobhm",
+  "plan": "song",
+  "bpm": 140,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "nwobhm": 0.4,
+    "heavymetal": 0.15,
+    "thrash": 0.15,
+    "classical": 0.1
+  },
+  "wants": [],
+  "instr": [
+    "distortion_guitar",
+    "distortion_guitar",
+    "solo_vox"
+  ],
+  "drumkit": "power",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "riff",
+    "counter",
+    "lead"
+  ],
+  "harmony": "cycle",
+  "roots": [
+    0,
+    5,
+    2,
+    6,
+    0,
+    2,
+    6,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 5,
+  "bassStyle": "eighths",
+  "fx": [
+    "crunch"
+  ],
+  "kit": {
+    "k": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      0
+    ],
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "r": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "s": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "x": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      9
+    ]
+  },
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 1.3,
+    "atk": 0.004,
+    "rel": 0.6,
+    "gain": 0.28,
+    "verb": 0.34,
+    "mouth": {
+      "$src": "MOUTHS.qawwal"
+    }
+  },
+  "words": [
+    "the riff, galloping under the changes",
+    "the second guitar, the same line a third up — nwobhm's twin lead, kept",
+    "the tenor, held over the chorus"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [rotate(2)], [fill(2)], [transpose(2)]][s % 4]\n                    : v === 1 ? [transpose(3)]\n                    : [drop(6)])"
+  }
+}

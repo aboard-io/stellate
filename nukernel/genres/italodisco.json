@@ -1,5 +1,5 @@
 {
-  "note": "ITALO DISCO — Milan 1982. Klein & M.B.O.'s \"Dirty Talk\", cut at\nFonoprint with a drum machine doing what Moroder had needed a\nMoog Modular and a week for: the cheap, chiming, wrong-in-the-\nright-way Eurodisco that Chicago's record pools imported by the\ncrate — Frankie Knuckles played this record at the Warehouse,\nand `house` (Chicago 1986) has wanted \"italo disco\" by name\nsince its lineage was written. The missing link between Munich\n1977 and Chicago 1986, now a link instead of a gap.\n\nITS OWN ARPEGGIO (2026-08-31): the octave-jumping sequenced bassline is the signature of the Milan sound.\n\nLINEAGE: `eurodisco` (Munich 1977) is the whole blueprint one\ncountry north — the octave bass, the machine four — and\n`disco` (New York 1977) is the floor it was built for;\n`synthpop` (Basildon 1981) is the same synths sung English\na year earlier, which is why the vocal below is poplead.",
+  "note": "ITALO DISCO — Milan 1982. Klein & M.B.O.'s \"Dirty Talk\", cut at\nFonoprint with a drum machine doing what Moroder had needed a\nMoog Modular and a week for: the cheap, chiming, wrong-in-the-\nright-way Eurodisco that Chicago's record pools imported by the\ncrate — Frankie Knuckles played this record at the Warehouse,\nand `house` (Chicago 1986) has wanted \"italo disco\" by name\nsince its lineage was written. The missing link between Munich\n1977 and Chicago 1986, now a link instead of a gap.\n\nITS OWN ARPEGGIO (2026-08-31): the octave-jumping sequenced bassline is the signature of the Milan sound.\n\nLINEAGE: `eurodisco` (Munich 1977) is the whole blueprint one\ncountry north — the octave bass, the machine four — and\n`disco` (New York 1977) is the floor it was built for;\n`synthpop` (Basildon 1981) is the same synths sung English\na year earlier, which is why the vocal below is poplead.\nTHE ITALO LEAD ARRIVES LATE (2026-09-03, the portamento round). Thirty\nmilliseconds, and the smallness is the argument: this row's identity is\na SIXTEENTH-note synth riff, and a portamento long enough to hear as a\ngesture would turn the riff into a siren. 30 ms is the lag an analog\nmono has anyway — enough that the line is not typed, short enough that\nsixteen notes a bar still count.",
   "label": "Milan 1982",
   "voices": 3,
   "bars": 8,
@@ -158,7 +158,8 @@
     "verb": 0.35,
     "mouth": {
       "$src": "MOUTHS.poplead"
-    }
+    },
+    "glide": 0.03
   },
   "words": [
     "the arpeggio, chiming",
