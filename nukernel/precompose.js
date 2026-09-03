@@ -2518,10 +2518,11 @@
     // +1 register is derive.js:466's own `reg: v => L.reg(v) + 1`, so a layer
     // still sits above the band the way it does in a box).
     //
-    /* ---- TWO DOORS ON THE GUEST LIST (2026-08-30, the instrumentation
-       round; Paul: "make sure that voices are there, not misplaced, and
-       appropriate to region and era, and that vocals aren't there when
-       they're supposed to be instrumentals").
+    /* ---- THE DOORS ON THE GUEST LIST — two on WHO sits (2026-08-30, the
+       instrumentation round) and, below them, a third on WHAT THEY BRING
+       (2026-09-03, shift 3). Paul, at the first two: "make sure that voices
+       are there, not misplaced, and appropriate to region and era, and that
+       vocals aren't there when they're supposed to be instrumentals".
 
        DOOR 1 — AN INSTRUMENTAL RECORD STAYS INSTRUMENTAL. Measured over 308
        anchors x seeds 1..3: `hohlefels` — voices:1, "one flute, alone, in a
@@ -2598,6 +2599,45 @@
     const THROAT = (id) => !!NI.PATCHES.voice[id];
     const ownVoice = !!(G.tone && G.tone.mouth) ||
       Array.from({ length: G.voices || 1 }, (_, v) => ownInstr(v)).some(THROAT);
+    /* DOOR 3 — A MACHINE'S GUEST IS PLAYED BY THE MACHINE (2026-09-03, the
+       catalogue round, shift 3).
+
+       Doors 1 and 2 ask WHETHER a guest may sit down. Neither asks what it
+       brings when it does, and `instrOf(lk, 0)` hands it its own row's
+       instrument — a recording, where the guest is an acoustic row. MEASURED
+       over the 421 anchors at seed 1: exactly two guest rows do all of it.
+       `drone` arrives on `slow_strings`, a sampled string section, and
+       `counterpoint` arrives on a sampled `harpsichord` — onto acid, techno,
+       trance, electro, chiptune, synthpop, dusseldorfschool, industrialdance
+       and fourteen more. A 909 record with a harpsichord counter-line is not
+       a cross, it is a chair nobody asked for; the QA report reads it as
+       "a machine genre with N ORGANIC chairs" and it is right.
+
+       THE ROW DECLARES IT, and that is the whole design. There is no
+       inference here — `impliesSynth` is a REPORT's guess made out of a
+       comment, and a guess is not allowed to change what the box plays. A row
+       that says `guests: "native"` is saying one sentence: my guests bring
+       their LINE, not their recording, and the fleet plays it. That is
+       ui/derive.js:123's own law ("a guest brings its line, not its
+       instrument") applied to the one thing it never covered.
+
+       IT MOVES SAMPLES ONLY. `NI.sampledId` is the sampler's own predicate
+       (gated against recipeFor's routing in test/loop-words.test.js), so a
+       guest already on a modelled id is untouched — and a SINGER above all:
+       `solo_vox` and `ahh_choir` are PATCHES.voice, the door does not see
+       them, and a machine record that hires a singer still has one. A
+       vocal-trance record is a machine record with a singer on it, and no
+       amount of declaring makes that a fault.
+
+       WHICH NATIVE ID, by the guest's own part — the fleet's pad for a pad,
+       its polysynth for a stab, its saw for a lead or a line, its square for
+       a riff or a counter-line. Where the host has a SIGNATURE synth the
+       signature takes it instead, through `signed()`, exactly as the host's
+       own chairs are voiced (and honouring the same `lineOnly` rule).
+       test/precompose.test.js G15 holds this. */
+    const NATIVE_GUEST = { pad: "warm_pad", stab: "polysynth", lead: "saw_wave",
+                           line: "saw_wave", riff: "square_lead", counter: "square_lead" };
+    const nativeGuests = G.guests === "native";
     const voiceBarred = !ownVoice && !!(NC.INSTRUMENTAL[gk] || G.instrumental);
     const hostYear = NC.genreYear(gk);
     const ancestry = (k, N) => { const seen = new Map([[k, 0]]); let front = [k];
@@ -3047,6 +3087,12 @@
          a guest cast on a section joins the section the record already has,
          and seats its own only where there is none. */
       let instrument = instrOf(lk, 0);
+      // DOOR 3 (2026-09-03) — see the guest doors above. A declared machine
+      // seats its guests on the fleet, never on the sampler.
+      if (nativeGuests && NI.sampledId(instrument)) {
+        const sub = NATIVE_GUEST[part] || "polysynth";
+        instrument = signed(part, sub) ? "synth" : sub;
+      }
       if (isSection(instrument)) {
         // WHICH section it joins, where the record has more than one: the one
         // sitting in the same KIND of chair. `plan.js seatFor` keys a seat on

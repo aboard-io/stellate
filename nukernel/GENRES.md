@@ -99,6 +99,49 @@ catalogue's house style already names the field in the prose (`NOBASS,
 STATEMENT``) — but it is a loss, and it is written down here rather than
 discovered later.
 
+### `parents` — a share of the child, and the residue is the invention
+
+```json
+  "parents": { "counterpoint": 0.55, "chorale": 0.25, "gregorian": 0.2 }
+```
+
+A weight is **the share of THIS record that the named ancestor explains** — not
+a vote, not a distance, and not a partition the row is obliged to fill. Three
+facts follow, and G2 holds the third:
+
+- **The shares need not sum to 1.** What a row does not attribute it invented.
+  That residue is the whole point of the genealogy program (2026-08-16: *genres
+  declare weighted parents, the fit tool measures the residue, "the
+  invention"*), and a row that says `{ ottoman: 0.45 }` and stops is making a
+  real claim: fifty-five per cent of this music is not in the table above it.
+  Measured 2026-09-03: **195 of 373 rows sum to exactly 1** and the rest sum to
+  between 0.2 and 0.95.
+- **The shares must not sum to more than 1.** A row cannot be more than all of
+  itself, so a sum above 1 is not a weak claim, it is not a claim. **35 rows
+  were above it** on 2026-09-03 — `shoegaze` at 1.50, `deathmetal` 1.45,
+  `ambient` and `berlinschool` 1.40 — every one of them the same accident:
+  a parent was PAID over the years and the weight was added without any of the
+  old ones being reduced. All 35 were rescaled onto the catalogue's own 0.05
+  grid with **every ratio the row asserted left exactly as it was**; only the
+  total moved. Rescaling to 1 rather than to something smaller is deliberate
+  and conservative — it credits each row with the *smallest* invention
+  consistent with what it already said, so no residue is asserted that nobody
+  argued for. Each of the 35 records the move in its own `note`.
+- **No parent is LATER than its child**, which is not the same as "earlier".
+  Nine edges in the catalogue join two rows of the same year and every one of
+  them is legal — a music and the music it immediately answered can share a
+  date, and the table's year is the year of a named record rather than of a
+  scene. The law is written as *not later* on purpose, and G2 tests it that
+  way.
+
+`wants` is the other half of the same field: an ancestor **in its own name**,
+as a plain lowercase string, where the table has no row for it. A want is paid
+by a row only when the row is *the thing the want names* — not the thing the
+want is made of. (`deltablues`'s "the songster's ballad stock" is the `ballad`
+repertory and was paid 2026-09-03; `operetta`'s "the ballad opera" is a stage
+form built on that repertory and was refused the same day, with the reason in
+the row.)
+
 ### Data fields — verbatim
 
 Numbers, strings, booleans, arrays and objects are stored as themselves. Two
@@ -265,7 +308,12 @@ Adding a genre: write `nukernel/genres/<key>.json`, add the key to
     roles and the blank state are exactly the rows with no history. (*"a role
     has a job, not a history"*, `atlas.js`.)
   - every named parent is a key that exists, and **no parent is later than its
-    child**. Measured over the whole catalogue the day this landed: 0 violations.
+    child** — *not later*, not *earlier*: nine same-year edges are legal and
+    stay. Measured over the whole catalogue the day this landed: 0 violations.
+  - every declared weight is a share in `(0, 1]` and **a row's weights sum to
+    at most 1** — the residue is the row's own invention (§2, `parents`).
+    Measured 2026-09-03: 373 rows carry parents, 195 sum to exactly 1, none
+    sum to more.
   - every closure is one of the nine template kinds, or a formula with a `src`.
   - a `note` is a string with no `*/` in it, so it survives the trip out.
 - **G3** the closure round trip: every template `emit()`ed, `eval`ed back into a
@@ -308,9 +356,11 @@ data mismatches, 121,248 closure calls, zero closure mismatches.
 `tools/genre-qa/build.js` used to walk the 27,000 lines of `genres.js` counting
 brackets to find each row's comment. It reads `note` out of the row file now,
 which deleted the scraper and both of its failure modes (a row it could not
-find, a comment it gave to the wrong row). Its `src_line` column is `null` and
-stays null: a row's address is its **file**, and a line number into a generated
-artifact is a number about the emitter's layout rather than about the catalogue.
+find, a comment it gave to the wrong row). Its `src_line` column held `null` for
+every row after the inversion and was **dropped from the schema 2026-09-03**: a
+row's address is its **file**, a line number into a generated artifact is a
+number about the emitter's layout rather than about the catalogue, and a column
+that can only ever be null is a question the mirror has stopped asking.
 
 `test/grain-reach.test.js` greps the shipped `genres.js` for the ten
 `grain: … — WITHDRAWN AS A DEFAULT` castings. Those live in row notes and are

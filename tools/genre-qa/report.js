@@ -17,7 +17,9 @@
  *                   older than a genre it declares as a parent
  *   closest         the declared parents are the nearest older neighbours by a
  *                   feature vector; a near older neighbour that is not a parent
- *                   is a missing edge, a far parent is a wrong one
+ *                   is a missing edge, a far parent is a wrong one. A "near
+ *                   older neighbour" is neither a row from another age nor a
+ *                   sibling — see the two filters at the clause itself
  *   structure       the composed section roster against the corpus's own form
  *                   estimate
  *   instrumentation the native / sampled / found share of the seated chairs,
@@ -363,7 +365,50 @@ function main() {
       }
       const parSet = new Set(par.map((p) => p.parent));
       const wantSet = new Set(wants.map((p) => p.parent));
-      const strangers = near.slice(0, 3).filter((n) => !parSet.has(n.gk) && !wantSet.has(n.gk));
+      /* TWO THINGS A STRANGER IS NOT (2026-09-03, shift 3). This clause says
+         "a nearer older row than any parent you declared" and means it as
+         "you are missing an ancestor". Over 214 firings it was saying two
+         other things as well, and both are category errors rather than
+         findings — a metric that convicts a row of forgetting its ancestor
+         must at least be talking about an ancestor.
+
+         (1) NOT A ROW FROM ANOTHER AGE. The vector carries bpm, swing, mode,
+         kit density, harmony, plan and family and NO YEAR, so a coincidence
+         of tempo and texture across eight centuries reads exactly like
+         kinship: `klezmer` (1925) was told it had forgotten `zajal` (1150),
+         `ottoman` (1300) `zema` (-70), `khyal` (1720) `sequence` (639). The
+         window is the row's OWN claim — a stranger no older than the oldest
+         parent this row already reaches — widened to a floor of 37 years,
+         which is MEASURED and not chosen: 37 is the 75th percentile of all
+         1,096 declared parent-to-child gaps in the catalogue, so three
+         quarters of the lineage this table actually asserts fits inside it.
+         A row whose own parents reach back 700 years still hears about a
+         300-year-old neighbour; a row whose parents are all within a decade
+         does not hear about the Middle Ages.
+
+         (2) NOT A SIBLING. A stranger that declares one of THIS row's own
+         parents is a co-descendant, and a co-descendant is the one thing a
+         near-in-sound contemporary is most likely to be. The tell was
+         mutual: `protopunk` was convicted of forgetting `psychrock` and
+         `psychrock` of forgetting `protopunk`, `grebo` and `deathmetal`
+         each other, `electro` and `italodisco` each other — 65 firings, all
+         of them the metric reading a brother as a father.
+
+         Measured over the whole catalogue: 214 firings become 155, the
+         `closest` column's badly-scored rows 84 become 64, and every claim
+         that survives is about a row that is older than a sibling and
+         younger than an age. */
+      const oldestPar = Math.max(0, ...par.map((p) => {
+        const P = byKey[p.parent];
+        return P && P.year != null && g.year != null ? g.year - P.year : 0;
+      }));
+      const REACH = Math.max(oldestPar, 37);
+      const strangers = near.slice(0, 3).filter((n) => {
+        if (parSet.has(n.gk) || wantSet.has(n.gk)) return false;
+        if (g.year - byKey[n.gk].year > REACH) return false;                    // (1) another age
+        const theirs = (PARENTS[n.gk] || []).filter((p) => p.kind === "parent");
+        return !theirs.some((p) => parSet.has(p.parent));                       // (2) a sibling
+      });
       const bestParIdx = Math.min(...par.map((p) => rank[p.parent] ?? Infinity), Infinity);
       const bestParD = par.length && isFinite(bestParIdx) ? near[bestParIdx].d : Infinity;
       /* only where there IS a declared parent to be nearer than — the

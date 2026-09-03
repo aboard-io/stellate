@@ -1,5 +1,5 @@
 {
-  "note": "THE ZODIAK — Berlin 1968. The Zodiak Free Arts Lab, opened at\nthe Hallesches Ufer in spring 1968 by Conrad Schnitzler and\nHans-Joachim Roedelius: the all-night room where Tangerine\nDream and Kluster assembled — Electronic Meditation, taped in a\nrented Berlin factory loft the following year, is this room's\nhouse sound on record. TWO rows have wanted \"the zodiak free\narts lab\" by name since their lineages were written —\n`krautrock` (Cologne 1971) and `berlinschool` (Berlin 1972,\nwhose founders were the house bands) — and both take the parent\ntoday.\n\nLINEAGE: `drone` (New York 1964) is the doctrine — Schnitzler\nstudied under Beuys and points at Fluxus, which is drone's\nown downtown; `psychrock` (San Francisco 1966) the rock\npermission the room ran on.",
+  "note": "THE ZODIAK — Berlin 1968. The Zodiak Free Arts Lab, opened at\nthe Hallesches Ufer in spring 1968 by Conrad Schnitzler and\nHans-Joachim Roedelius: the all-night room where Tangerine\nDream and Kluster assembled — Electronic Meditation, taped in a\nrented Berlin factory loft the following year, is this room's\nhouse sound on record. TWO rows have wanted \"the zodiak free\narts lab\" by name since their lineages were written —\n`krautrock` (Cologne 1971) and `berlinschool` (Berlin 1972,\nwhose founders were the house bands) — and both take the parent\ntoday.\n\nLINEAGE: `drone` (New York 1964) is the doctrine — Schnitzler\nstudied under Beuys and points at Fluxus, which is drone's\nown downtown; `psychrock` (San Francisco 1966) the rock\npermission the room ran on.\n\n`cologneschool` PAID AS A PARENT 2026-09-03 (Cologne 1956), 0.2 — the QA report's\n`closest` pass found the hole and it is a real one. THE MEASUREMENT: `krautrock`,\n`berlinschool` and `dusseldorfschool` all declare `cologneschool`, and this row —\nthe Zodiak Free Arts Lab, the ROOM those three came out of, where Schnitzler,\nRoedelius and Moebius met in 1968 — did not. The WDR studio is the German\nelectronic ancestor and Zodiak is where its methods reached a stage; leaving the\nedge off put the parent above the children and not above the room. The shares now\nsum to 0.90 and the row keeps a tenth of itself, which is right for a place whose\nwhole claim is that nobody had done it in a club before.\n",
   "label": "Berlin 1968",
   "voices": 2,
   "bars": 8,
@@ -8,7 +8,8 @@
   "bpm": 84,
   "parents": {
     "drone": 0.4,
-    "psychrock": 0.3
+    "psychrock": 0.3,
+    "cologneschool": 0.2
   },
   "wants": [
     "fluxus and beuys' düsseldorf class"

@@ -6,6 +6,7 @@
  *   node tools/genre-qa/build.js --recorpus       force the corpus pass even if it is cached
  *   node tools/genre-qa/build.js --corpus-db PATH point at another corpus.db
  *   node tools/genre-qa/build.js --no-chordonomicon   skip the 666k-progression load
+ *   node tools/genre-qa/build.js --rechordonomicon    re-derive the chord tables ALONE
  *   node tools/genre-qa/report.js                 the checks, worst-first, into scratch/genre-qa/REPORT.md
  *
  * WHY THIS EXISTS. genres.js is 26,000 lines and 421 rows, and half of every
@@ -278,7 +279,36 @@ function termsFor(gk, cited, wiki, acts) {
 }
 
 /* ------------------------------------------------------------------------ */
+/* --rechordonomicon — RE-DERIVE THE CHORD TABLES AND NOTHING ELSE.
+ *
+ * A full build always rebuilds them (chordonomicon.py DROPs its own three
+ * tables every run), so there is no "force" to add; what was missing was the
+ * other half — a way to redo the 666k-progression pass WITHOUT the four-minute
+ * corpus decode and the whole catalogue extract, which is what you want when
+ * the chord tokenizer changes and nothing about a genre row has.
+ *
+ * It runs the same step the full build runs, against the DB that is already
+ * there. The cross-walk reads `genres`, so the DB must have been built once.
+ */
+async function rechordonomicon() {
+  const CHORD = opt("--chordonomicon", "/mnt/sources/relocated/chordonomicon/chordonomicon_v2.csv");
+  if (!fs.existsSync(DB)) {
+    console.error("--rechordonomicon: no db at " + path.relative(ROOT, DB) + " — run a full build first");
+    process.exit(1);
+  }
+  if (!fs.existsSync(CHORD)) {
+    console.error("--rechordonomicon: no CSV at " + CHORD);
+    process.exit(1);
+  }
+  const r = spawnSync("python3", [path.join(__dirname, "chordonomicon.py"),
+                                  "--csv", CHORD, "--db", DB], { stdio: "inherit" });
+  if (r.status !== 0) { console.error("chordonomicon.py failed (" + r.status + ")"); process.exit(1); }
+  console.log("db: " + path.relative(ROOT, DB) + " (chord tables only)");
+  console.log("next: node tools/genre-qa/report.js");
+}
+
 async function main() {
+  if (has("--rechordonomicon")) return rechordonomicon();
   fs.mkdirSync(OUT, { recursive: true });
   const text = rowText();
   const LANES = await laneTable();
@@ -363,7 +393,7 @@ async function main() {
       kit_lanes: kitLanes.join("") || null, kit_hits: kitHits, kit_steps: kitSteps,
       kit_density: kitSteps ? +(kitHits / kitSteps).toFixed(4) : 0,
       words: (G.words || []).join(" | "),
-      src_line: t.line, comment: t.comment,
+      comment: t.comment,
       comment_lines: (t.comment || "").split("\n").filter((x) => x.trim()).length,
       cited_n: cited ? cited.n : null, cited_artists: cited ? cited.artists.join(" | ") : null,
       place: when ? when.place : null, year: when ? when.year : null,

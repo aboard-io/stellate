@@ -1,5 +1,6 @@
 {
-  "note": "MINISTRY, THE FIRST ERA — Chicago 1983, With Sympathy. Paul: \"all the\neras of ministry\". The LATER eras are already here and always were —\n`industrialmetal` (Chicago 1988) says Ministry in its own comment and\n`industrialdance` is the label they came through. What was missing is the era\nnobody expects: a synth-pop record, on Arista, that the band spent the\nrest of its life disowning. That is a different genre, so it is a\ndifferent row, and the pair is the \"all the eras\" he asked for.",
+  "note": "MINISTRY, THE FIRST ERA — Chicago 1983, With Sympathy. Paul: \"all the\neras of ministry\". The LATER eras are already here and always were —\n`industrialmetal` (Chicago 1988) says Ministry in its own comment and\n`industrialdance` is the label they came through. What was missing is the era\nnobody expects: a synth-pop record, on Arista, that the band spent the\nrest of its life disowning. That is a different genre, so it is a\ndifferent row, and the pair is the \"all the eras\" he asked for.\n\nGUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: \"native\"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `counterpoint` guest sat down on a SAMPLED HARPSICHORD on With Sympathy — a record made of sequencers, and the era of Ministry that Paul asked for by name. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.\n\nTHE BASS IS A MACHINE TOO (2026-09-03, the catalogue round, shift 3). `bassInstr: \"bass_lead\"`. Measured at seed 1 before it: this row's bass chair was the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR default, which every row without a `bassInstr` still gets. `bass_lead` is the one MODELLED bass in the eleven (its dsp is `tb303`; `synth_bass_1` and `synth_bass_2` are RECORDINGS of synth basses), which is why nine of this row's machine neighbours already name it. With Sympathy is sequencers end to end; Ministry's first era has no bass player on it.\n",
+  "bassInstr": "bass_lead",
   "label": "Chicago 1983",
   "voices": 3,
   "bars": 8,
@@ -17,6 +18,7 @@
     "polysynth",
     "saw_wave"
   ],
+  "guests": "native",
   "drumkit": "tr808",
   "entry": {
     "kind": "id"

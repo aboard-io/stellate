@@ -1,5 +1,5 @@
 {
-  "note": "TROPICÁLIA — São Paulo 1968. Bossa nova's harmony, an electric rock\nband, and an orchestral arranger, all on the same record and\ndeliberately not resolving. Caetano, Gil, Os Mutantes and Rogério\nDuprat, and the record that names it is the manifesto album of 1968.\nWHAT THIS ANCHOR CAN AND CANNOT CLAIM. Tropicália's method is\nCOLLAGE — a berimbau against a fuzz guitar against a Strauss quote —\nand a collage is a per-section decision the arranger makes, not an\nanchor field. What this entry holds is the three ingredients: bossa's\nchord vocabulary (`mode: mixo`, an eight-bar cycle that will not sit\non the tonic), a fuzz guitar, and a string section over the top.\nThe seams are in `cannot`.\nTHE FUZZ MOVES A FLOOR BY ONE YEAR. `crunch_guitar` extracted to 1969\noff London; a fuzzbox in São Paulo in 1968 is a year earlier and is\nnot in dispute.\n\nLINEAGE: bossa is the harmony and the language, psychpop is the\nstudio and the band, samba is underneath both of them and is named\nbecause tropicália reached PAST bossa for it on purpose.\n\"musique concrète\" PAID 2026-08-30, the walls-down round:\n`tapemusic` (Paris 1948) — the collage Os Mutantes cut into these\nrecords is that studio's grammar, twenty years downstream.",
+  "note": "TROPICÁLIA — São Paulo 1968. Bossa nova's harmony, an electric rock\nband, and an orchestral arranger, all on the same record and\ndeliberately not resolving. Caetano, Gil, Os Mutantes and Rogério\nDuprat, and the record that names it is the manifesto album of 1968.\nWHAT THIS ANCHOR CAN AND CANNOT CLAIM. Tropicália's method is\nCOLLAGE — a berimbau against a fuzz guitar against a Strauss quote —\nand a collage is a per-section decision the arranger makes, not an\nanchor field. What this entry holds is the three ingredients: bossa's\nchord vocabulary (`mode: mixo`, an eight-bar cycle that will not sit\non the tonic), a fuzz guitar, and a string section over the top.\nThe seams are in `cannot`.\nTHE FUZZ MOVES A FLOOR BY ONE YEAR. `crunch_guitar` extracted to 1969\noff London; a fuzzbox in São Paulo in 1968 is a year earlier and is\nnot in dispute.\n\nLINEAGE: bossa is the harmony and the language, psychpop is the\nstudio and the band, samba is underneath both of them and is named\nbecause tropicália reached PAST bossa for it on purpose.\n\"musique concrète\" PAID 2026-08-30, the walls-down round:\n`tapemusic` (Paris 1948) — the collage Os Mutantes cut into these\nrecords is that studio's grammar, twenty years downstream.\n\nWEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.10, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: bossa .40→.35, psychpop .35→.30. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.\n",
   "label": "São Paulo 1968",
   "voices": 3,
   "bars": 8,
@@ -7,8 +7,8 @@
   "plan": "arc",
   "bpm": 104,
   "parents": {
-    "bossa": 0.4,
-    "psychpop": 0.35,
+    "bossa": 0.35,
+    "psychpop": 0.3,
     "samba": 0.25,
     "tapemusic": 0.1
   },

@@ -1,5 +1,5 @@
 {
-  "note": "BERLIN SCHOOL — Berlin 1972. Klaus Schulze's \"Irrlicht\", recorded\nsummer 1972 — an organ through broken amplifiers over a\nrecorded orchestra played backwards, side-long, beatless — the\nfounding record of the Berlin sequencer school that Tangerine\nDream's Phaedra took to the charts two years later. TWO rows\nhave wanted \"berlin school electronics\" since their lineages\nwere written: `spacerock` (London 1973 — the UK cousin, one year\nyounger, which is why the edge runs THIS way) and\n`melodictechno` (Kent 1991, which is this music with a kick\ndrum). Both take it as a parent today.\n\nITS OWN ARPEGGIO (2026-08-31): Tangerine Dream and Schulze run LONG cycles that never line up with the bar; the eight-step turn is that motion.\n\nLINEAGE: `drone` (New York 1964) is the sustained-tone\ndoctrine; `psychpop` (London 1968) is the rock scene these\nplayers walked out of; `minimalism` the cell-repetition the\nsequencer would mechanize.\nPAID 2026-08-29, the debts round: both wants — Cologne 1956\nfor the doctrine, Berlin 1968 for the room: Schnitzler and\nRoedelius OPENED the Zodiak, so the edge is autobiography.",
+  "note": "BERLIN SCHOOL — Berlin 1972. Klaus Schulze's \"Irrlicht\", recorded\nsummer 1972 — an organ through broken amplifiers over a\nrecorded orchestra played backwards, side-long, beatless — the\nfounding record of the Berlin sequencer school that Tangerine\nDream's Phaedra took to the charts two years later. TWO rows\nhave wanted \"berlin school electronics\" since their lineages\nwere written: `spacerock` (London 1973 — the UK cousin, one year\nyounger, which is why the edge runs THIS way) and\n`melodictechno` (Kent 1991, which is this music with a kick\ndrum). Both take it as a parent today.\n\nITS OWN ARPEGGIO (2026-08-31): Tangerine Dream and Schulze run LONG cycles that never line up with the bar; the eight-step turn is that motion.\n\nLINEAGE: `drone` (New York 1964) is the sustained-tone\ndoctrine; `psychpop` (London 1968) is the rock scene these\nplayers walked out of; `minimalism` the cell-repetition the\nsequencer would mechanize.\nPAID 2026-08-29, the debts round: both wants — Cologne 1956\nfor the doctrine, Berlin 1968 for the room: Schnitzler and\nRoedelius OPENED the Zodiak, so the edge is autobiography.\n\nWEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.40, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: drone .40→.30, psychpop .30→.20, minimalism .30→.20, cologneschool .20→.15, zodiak .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.\n",
   "label": "Berlin 1972",
   "voices": 2,
   "bars": 8,
@@ -8,11 +8,11 @@
   "plan": "arc",
   "bpm": 96,
   "parents": {
-    "drone": 0.4,
-    "psychpop": 0.3,
-    "minimalism": 0.3,
-    "cologneschool": 0.2,
-    "zodiak": 0.2
+    "drone": 0.3,
+    "psychpop": 0.2,
+    "minimalism": 0.2,
+    "cologneschool": 0.15,
+    "zodiak": 0.15
   },
   "wants": [],
   "cannot": [

@@ -107,17 +107,58 @@ ok("a label is a Place Year exactly when the row has parents", () => {
     "record has a place and a year");
 });
 
+/* NOT LATER, WHICH IS NOT THE SAME AS EARLIER. Nine edges in this catalogue
+   join two rows of the SAME year and every one of them is legal: a music and
+   the music it immediately answered can share a date, because the table's year
+   is the year of a named RECORD and not of a scene. The law is `py > y`, and
+   it is written that way on purpose — GENRES.md §2, `parents`. */
 ok("every parent exists and none is later than its child", () => {
   const bad = [];
+  let ties = 0;
   for (const [k, r] of rows) {
     const y = yearOf(r.label);
     for (const p of Object.keys(r.parents || {})) {
       if (!KEYS.has(p)) { bad.push(k + " <- " + p + " (no such row)"); continue; }
       const py = yearOf((rows.find(([n]) => n === p) || [, {}])[1].label);
       if (y !== null && py !== null && py > y) bad.push(k + " (" + y + ") <- " + p + " (" + py + ")");
+      if (y !== null && py !== null && py === y) ties++;
     }
   }
   assert(!bad.length, bad.join("; "));
+  console.log("       " + ties + " same-year edges, all legal");
+});
+
+/* A WEIGHT IS A SHARE OF THE CHILD (GENRES.md §2, `parents`). The shares need
+   NOT sum to 1 — what a row does not attribute it invented, and that residue
+   is what the genealogy program measures — but they must not sum to MORE than
+   1, because a row cannot be more than all of itself. 35 rows were over it on
+   2026-09-03 (shoegaze 1.50, deathmetal 1.45, ambient and berlinschool 1.40)
+   and every one was the same accident: a parent PAID over the years, its
+   weight added, none of the old ones reduced. All 35 were rescaled with their
+   ratios untouched; each records the move in its own note. */
+ok("a weight is a share in (0, 1] and a row's shares sum to at most 1", () => {
+  const bad = [], sums = [];
+  for (const [k, r] of rows) {
+    if (!r.parents) continue;
+    const ws = Object.entries(r.parents);
+    for (const [p, w] of ws)
+      if (typeof w !== "number" || !(w > 0) || w > 1)
+        bad.push(k + " <- " + p + " weighs " + JSON.stringify(w) +
+                 " — a share is a number in (0, 1]");
+    const s = ws.reduce((a, [, w]) => a + (+w || 0), 0);
+    if (ws.length) sums.push(s);          // `parents: {}` is a declared ROOT, not a sum
+    if (s > 1.0000001)
+      bad.push(k + "'s " + ws.length + " shares sum to " + s.toFixed(2) +
+               " — a row cannot be more than all of itself; rescale the ratios " +
+               "it already asserts rather than inventing a new one");
+  }
+  assert(!bad.length, bad.join("; "));
+  const whole = sums.filter((s) => Math.abs(s - 1) < 1e-9).length;
+  const roots = rows.filter(([, r]) => r.parents && !Object.keys(r.parents).length).length;
+  console.log("       " + sums.length + " rows name an ancestor; " + whole +
+              " attribute all of themselves, " + (sums.length - whole) +
+              " keep a residue (the invention); " + roots +
+              " declare `parents: {}` and are roots");
 });
 
 ok("every closure is a template kind the grammar knows", () => {

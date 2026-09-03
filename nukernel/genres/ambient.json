@@ -1,5 +1,5 @@
 {
-  "note": "AMBIENT [drone]. Drone is a pedal that refuses to move; ambient is the\nsame stillness with a HARMONY inside it — a lydian maj7 cycle two bars\nto the chord, no drums, no bass at all, a line that surfaces four bars\nin and barely moves. The moving chord is the entire difference.\n\nnamed \"London 1978\" — Music for Airports: the moving maj7 chord inside\nthe stillness, which this comment calls the entire difference.\n\nan arc: one long breath\n\nLINEAGE: Eno put a moving harmony inside drone's stillness — the\ncatalog's one parent — and minimalism's PROCESS, which is the other\nthing he added: Music for Airports is loops of unequal length going\nout of phase, which is Reich's phasing done with tape machines. Drone\nkeeps the larger share because the SOUND, held and slow and pulseless,\nis Young's: ambient took the method and threw the pulse away. Satie's\nfurniture music and the tape loops are still named in liner notes.\nPAID 2026-08-29, the debts round: \"furnituremusic\" is `furnituremusic` (Paris\n1888) — furniture music is the sleeve note's own citation. \"tape\nmusic\" stays declined and stays owed.\n...AND PAID 2026-08-30, the walls-down round: \"tape music\" is\n`tapemusic` (Paris 1948) — the loops in Eno's liner notes are\nthat studio's own technique, thirty years downstream.\n\nambient does not arrive, it surfaces",
+  "note": "AMBIENT [drone]. Drone is a pedal that refuses to move; ambient is the\nsame stillness with a HARMONY inside it — a lydian maj7 cycle two bars\nto the chord, no drums, no bass at all, a line that surfaces four bars\nin and barely moves. The moving chord is the entire difference.\n\nnamed \"London 1978\" — Music for Airports: the moving maj7 chord inside\nthe stillness, which this comment calls the entire difference.\n\nan arc: one long breath\n\nLINEAGE: Eno put a moving harmony inside drone's stillness — the\ncatalog's one parent — and minimalism's PROCESS, which is the other\nthing he added: Music for Airports is loops of unequal length going\nout of phase, which is Reich's phasing done with tape machines. Drone\nkeeps the larger share because the SOUND, held and slow and pulseless,\nis Young's: ambient took the method and threw the pulse away. Satie's\nfurniture music and the tape loops are still named in liner notes.\nPAID 2026-08-29, the debts round: \"furnituremusic\" is `furnituremusic` (Paris\n1888) — furniture music is the sleeve note's own citation. \"tape\nmusic\" stays declined and stays owed.\n...AND PAID 2026-08-30, the walls-down round: \"tape music\" is\n`tapemusic` (Paris 1948) — the loops in Eno's liner notes are\nthat studio's own technique, thirty years downstream.\n\nambient does not arrive, it surfaces\n\nWEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.40, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: drone .65→.45, minimalism .35→.25, furnituremusic .20→.15, tapemusic .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.\n",
   "label": "London 1978",
   "rate": 0.5,
   "bars": 8,
@@ -7,10 +7,10 @@
   "plan": "arc",
   "bpm": 70,
   "parents": {
-    "drone": 0.65,
-    "minimalism": 0.35,
-    "furnituremusic": 0.2,
-    "tapemusic": 0.2
+    "drone": 0.45,
+    "minimalism": 0.25,
+    "furnituremusic": 0.15,
+    "tapemusic": 0.15
   },
   "wants": [],
   "instr": [

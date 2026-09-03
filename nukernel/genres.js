@@ -897,6 +897,9 @@
     //
     // accents alone, against an unrotated gate
     // bar 4: hats double, clap answers
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `drone` guest sat down on `slow_strings`, a RECORDING OF A STRING SECTION, under a 303 and a 909. There is no string section on "Acid Tracks" and there is no room in this record for one; the pad chair is the fleet's own. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
     acid: {
       bassInstr: "bass_lead",
       instrumental: true,
@@ -907,6 +910,7 @@
       parents: { house: 0.7, electro: 0.15, funk: 0.15 },
       wants: [],
       instr: "bass_lead",
+      guests: "native",
       drumkit: "tr909",
       entry: v => v,
       reg: v => v + -2,
@@ -1125,13 +1129,16 @@
     // Sliding the window four steps a bar keeps the loop-a-fragment identity
     // that makes it vaporwave while letting the whole phrase through across
     // the section.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.20, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: citypop .40→.35, rnb .30→.25, ambient .30→.25, chopped .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     vaporwave: {
       bassInstr: "finger_bass",
       label: "Portland 2011",
       rate: 0.5,
       plan: "dance",
       bpm: 88,
-      parents: { citypop: 0.4, rnb: 0.3, ambient: 0.3, chopped: 0.2 },
+      parents: { citypop: 0.35, rnb: 0.25, ambient: 0.25, chopped: 0.15 },
       wants: ["muzak"],
       voices: 3,
       instr: ["synth_strings_1", "legend_ep_2", "sea_shore"],
@@ -1723,14 +1730,31 @@
     // a bar while a piano figure turns over them, and a second piano an
     // octave up". Voice 0 is the pad chair, so it is the strings; the felt
     // piano — still the anchor's own instrument — plays both figures.
+    //
+    // "romantic piano miniature" PAID 2026-09-03 — by `nocturne` (Paris 1835), 0.15,
+    // and NOT by `romantic`, which is the row the QA report's want→row pass proposed.
+    // The nocturne row said this itself the day it was written: "This is the romantic
+    // piano miniature `neoclassical` has wanted since its own anchor was written — the
+    // debt is paid here and neoclassical's `wants` can empty the day its comment is
+    // next touched." This is that day. `romantic` (Vienna 1876) IS AN ORCHESTRA — its
+    // own first sentence is "the body of strings, the tune in the CELLO, horns
+    // answering at bar 5" — and a Frahm record is one felt piano with a figure turning
+    // on it; paying a piano's debt with an orchestra would put the wrong ancestor at
+    // the top of the graph for every reader after.
+    // THE WEIGHT COMES OFF `ambient` (0.4 → 0.25), which was carrying the piano's
+    // share under a texture's name — the same correction `synthpop` made when
+    // eurodisco was paid out of disco. Ambient still owns the production values and the
+    // sustain; the FIGURE, the singing right hand over a spread left, is Chopin's and
+    // now says so. The row's shares sum to 1.00 exactly, as they did before.
+    //
     neoclassical: {
       label: "Berlin 2011",
       bars: 8,
       voices: 3,
       plan: "arc",
       bpm: 86,
-      parents: { ambient: 0.4, postrock: 0.25, minimalism: 0.2, drone: 0.15 },
-      wants: ["romantic piano miniature"],
+      parents: { ambient: 0.25, postrock: 0.25, minimalism: 0.2, drone: 0.15, nocturne: 0.15 },
+      wants: [],
       instr: ["slow_strings", "felt_piano", "felt_piano"],
       entry: v => (v === 2 ? 4 : 0),
       reg: v => (v === 0 ? -1 : v - 1),
@@ -1961,12 +1985,15 @@
     // it used to play at the same time were a second drummer.
     //
     // bar 8: it doubles
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.45, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: punk .55→.40, rock .45→.30, nwobhm .25→.15, thrash .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     deathmetal: {
       label: "Tampa 1990",
       bars: 8,
       plan: "song",
       bpm: 158,
-      parents: { punk: 0.55, rock: 0.45, nwobhm: 0.25, thrash: 0.2 },
+      parents: { punk: 0.4, rock: 0.3, nwobhm: 0.15, thrash: 0.15 },
       wants: [],
       instr: "distortion_guitar",
       drumkit: "power",
@@ -2041,6 +2068,9 @@
     // sampled kit pretending to be one
     //
     // the gated backbeat
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `counterpoint` guest sat down on a SAMPLED HARPSICHORD, on the row whose own first sentence is A SEQUENCER AND A DRUM MACHINE AND NOTHING ELSE IN THE ROOM. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
     synthsoul: {
       bassInstr: "bass_lead",
       label: "London 1983",
@@ -2049,6 +2079,7 @@
       parents: { synthpop: 0.4, detroitsoul: 0.25, dusseldorfschool: 0.2, funk: 0.15 },
       wants: [],
       instr: ["saw_wave", "polysynth"],
+      guests: "native",
       drumkit: "cr78",
       entry: v => v,
       reg: v => v - 1,
@@ -2222,6 +2253,20 @@
     // t, m, l, gathering speed as it falls — while the sixteenth hats keep
     // going underneath, because on this record the time never stops for
     // the fill.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `funk` is the RHYTHM SECTION under a rock chorus — the reason AOR grooves at all
+    // — and the vector reads a slow major-key arena song against a dance music.
+    // `psychpop` (1968) is offered as nearer on production values, which is a shared
+    // studio and not a shared parent.
+    //
     aor: {
       label: "Los Angeles 1982",
       bars: 8,
@@ -2394,6 +2439,20 @@
     // not a word closure, so the DAW's own palette could have said it.
     //
     // WHO SINGS: three men round one microphone, bright and only a little wobble
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `hambone` and `counterpoint` are the two smallest weights and the two most
+    // argued: the Bo Diddley pattern and two independent vocal lines. Both are
+    // statements about FIGURE and VOICE-LEADING, and the vector holds neither. It reads
+    // a 1725 species-counterpoint row against a 1962 pop group and calls it a fault.
+    //
     beatgroup: {
       label: "Liverpool 1962",
       bars: 8,
@@ -2522,6 +2581,18 @@
     // name in every interview the genre ever gave.
     //
     // i VI iv v
+    //
+    // `spacerock` PAID AS A PARENT 2026-09-03 (London 1973), 0.15 — the QA report's
+    // `closest` pass found it and it is right. Explosions in the Sky's build is a GUITAR
+    // BAND playing one figure until it becomes an event, and the row that owns that is
+    // Hawkwind's, not Eno's: `spacerock` is four people holding a riff for eight minutes
+    // in front of an audience, which is the shape post-rock inherited whole. The weight
+    // comes off `ambient` (0.30 → 0.15), which was carrying it — ambient owns the
+    // patience and the reverb and does not own a band. THE SHARES STILL SUM TO 1.00.
+    // The `closest` metric had this row at 0.40 and named `spacerock` outright: the one
+    // place in this round where the feature vector was reading real kinship rather than
+    // a coincidence of tempo.
+    //
     postrock: {
       label: "Austin 2003",
       rate: 0.5,
@@ -2529,7 +2600,14 @@
       voices: 3,
       plan: "arc",
       bpm: 72,
-      parents: { ambient: 0.3, rock: 0.25, krautrock: 0.2, shoegaze: 0.15, minimalism: 0.1 },
+      parents: {
+        ambient: 0.15,
+        rock: 0.25,
+        krautrock: 0.2,
+        shoegaze: 0.15,
+        minimalism: 0.1,
+        spacerock: 0.15
+      },
       wants: [],
       instr: ["slow_strings", "clean_guitar", "clean_guitar"],
       drumkit: "room",
@@ -2623,13 +2701,16 @@
     // //   board's `surface` dial (ui/engineer.js, 2026-08-31) is where
     // //   the choice belongs. The engine path stays wired and gated;
     // //   what leaves is the ROW declaring it for you.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.10, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: psychsoul .35→.30, funk .30→.25. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     boombap: {
       label: "New York 1994",
       swing: 0.2,
       near: "psychsoul",
       plan: "song",
       bpm: 95,
-      parents: { psychsoul: 0.35, funk: 0.3, disco: 0.2, electro: 0.15, soundsystem: 0.1 },
+      parents: { psychsoul: 0.3, funk: 0.25, disco: 0.2, electro: 0.15, soundsystem: 0.1 },
       wants: [],
       instr: ["electric_piano", "muted_trumpet"],
       drumkit: "room",
@@ -2998,13 +3079,16 @@
     // `halo_pad` is in `instruments.js PATCH_SYNTH` and resolves to `ppg`,
     // a wavetable model. Same chair, same part, and the engine models it
     // instead of playing a photograph of it.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.20, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: hardcorerave .40→.35, dub .30→.25, funk .15→.10, techno .15→.10, amenbreak .20→.15. The row now attributes 0.95 of itself and keeps .05 as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     dnb: {
       bassInstr: "bass_lead",
       label: "London 1994",
       near: "house",
       plan: "dance",
       bpm: 160,
-      parents: { hardcorerave: 0.4, dub: 0.3, funk: 0.15, techno: 0.15, amenbreak: 0.2 },
+      parents: { hardcorerave: 0.35, dub: 0.25, funk: 0.1, techno: 0.1, amenbreak: 0.15 },
       wants: [],
       instr: ["saw_wave", "halo_pad"],
       drumkit: "electronic",
@@ -3641,6 +3725,20 @@
     // and it is a DRUM part rather than a percussion colour
     //
     // and the hat hand does not hit every one of them every time round
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `jazz` is the horn section and the solo order — Fela studied at Trinity and came
+    // back through Coltrane — and a solo order is not in the vector. `mandeguitar`
+    // (1970) is offered as nearer; Mande jeliya is a different West African tradition
+    // from the Yoruba drumming this row already wants, and near-in-sound is not kin.
+    //
     afrobeat: {
       label: "Lagos 1971",
       bars: 8,
@@ -3771,13 +3869,29 @@
     // pre-war country blues this table anchors at `deltablues`
     // (Clarksdale 1929, Charley Patton's "Pony Blues"). Same weight, and
     // the edge no longer runs forwards in time.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.20, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: gospel .40→.35, deltablues .40→.35, ballad .20→.15, oldtime .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `ballad` is called far and it is the SONG — the Anglo-Celtic stock this row was
+    // written to inherit, and the ballad row says so in its own comment. The vector
+    // reads a lone 1666 voice against a 1945 Nashville band. `son` (1928) is offered as
+    // nearer on tempo and a guitar, from another hemisphere.
+    //
     countrypop: {
       label: "Nashville 1945",
       swing: 0.1,
       near: "beatgroup",
       plan: "song",
       bpm: 120,
-      parents: { gospel: 0.4, deltablues: 0.4, ballad: 0.2, oldtime: 0.2 },
+      parents: { gospel: 0.35, deltablues: 0.35, ballad: 0.15, oldtime: 0.15 },
       wants: [],
       instr: ["banjo", "fiddle"],
       drumkit: "acoustic",
@@ -3836,6 +3950,9 @@
     // carrying Munich's share under New York's name.
     //
     // the CR-era anthem box, like its neighbour
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `counterpoint` guest sat down on a SAMPLED HARPSICHORD — on the row whose own record is described here as "every sound on the record including the bass is a synthesiser". The bass was fixed on 2026-09-02 (`bassInstr`); this is the same sentence, one chair over. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
     synthpop: {
       bassInstr: "bass_lead",
       label: "Basildon 1981",
@@ -3845,6 +3962,7 @@
       parents: { newwave: 0.4, eurodisco: 0.2, disco: 0.2, dusseldorfschool: 0.2 },
       wants: [],
       instr: ["polysynth", "saw_wave"],
+      guests: "native",
       drumkit: "cr78",
       entry: v => v,
       reg: v => v - 1,
@@ -3904,13 +4022,16 @@
     // .55 because the room is now doing that job and two rooms is the gloop
     // again. It is the same lesson Young Galaxy taught three rounds ago,
     // applied to the genre that needs it most.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.50, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: punk .40→.25, drone .30→.20, beatgroup .30→.20, protopunk .25→.15, dreampop .25→.15. The row now attributes 0.95 of itself and keeps .05 as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     shoegaze: {
       label: "London 1991",
       bars: 8,
       near: "postrock",
       plan: "song",
       bpm: 104,
-      parents: { punk: 0.4, drone: 0.3, beatgroup: 0.3, protopunk: 0.25, dreampop: 0.25 },
+      parents: { punk: 0.25, drone: 0.2, beatgroup: 0.2, protopunk: 0.15, dreampop: 0.15 },
       wants: [],
       instr: ["overdrive_guitar", "overdrive_guitar"],
       drumkit: "room",
@@ -4023,12 +4144,15 @@
     // crunch_guitar are recordings of amps already at the edge, and punk is
     // downstroked eighths through them. The crunch insert on top was the
     // one thing everyone heard first, and none of it was the song.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.35, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: rock .45→.35, beatgroup .40→.30, rocknroll .15→.10, garagerock .25→.20, girlgroup .10→.05. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     punk: {
       label: "New York 1976",
       near: "rock",
       plan: "song",
       bpm: 160,
-      parents: { rock: 0.45, beatgroup: 0.4, rocknroll: 0.15, garagerock: 0.25, girlgroup: 0.1 },
+      parents: { rock: 0.35, beatgroup: 0.3, rocknroll: 0.1, garagerock: 0.2, girlgroup: 0.05 },
       wants: [],
       instr: ["distortion_guitar", "crunch_guitar"],
       drumkit: "power",
@@ -4078,6 +4202,9 @@
     // that studio's own technique, thirty years downstream.
     //
     // ambient does not arrive, it surfaces
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.40, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: drone .65→.45, minimalism .35→.25, furnituremusic .20→.15, tapemusic .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     ambient: {
       label: "London 1978",
       rate: 0.5,
@@ -4085,7 +4212,7 @@
       near: "drone",
       plan: "arc",
       bpm: 70,
-      parents: { drone: 0.65, minimalism: 0.35, furnituremusic: 0.2, tapemusic: 0.2 },
+      parents: { drone: 0.45, minimalism: 0.25, furnituremusic: 0.15, tapemusic: 0.15 },
       wants: [],
       instr: ["halo_pad", "bowed_glass"],
       entry: v => v * 4,
@@ -4805,6 +4932,9 @@
     // cut in, and the room is `verb`
     //
     // WHO SINGS: the round 'ooh' under the lead, on the corner
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 6 declared shares summed to 1.30, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: gospel .45→.35, blues .20→.15, jumpblues .20→.15, tinpanalley .15→.10, barbershop .15→.10, jubilee .15→.10. The row now attributes 0.95 of itself and keeps .05 as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     doowop: {
       label: "Harlem 1955",
       bars: 8,
@@ -4814,12 +4944,12 @@
       plan: "song",
       bpm: 84,
       parents: {
-        gospel: 0.45,
-        blues: 0.2,
-        jumpblues: 0.2,
-        tinpanalley: 0.15,
-        barbershop: 0.15,
-        jubilee: 0.15
+        gospel: 0.35,
+        blues: 0.15,
+        jumpblues: 0.15,
+        tinpanalley: 0.1,
+        barbershop: 0.1,
+        jubilee: 0.1
       },
       wants: [],
       instr: ["ohh_voices", "ahh_choir", "solo_vox"],
@@ -4983,6 +5113,23 @@
     // WHO SINGS: rough and close, more air in it than tone
     //
     // one voice counts it off and the band is in
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 6 declared shares summed to 1.30, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: countrypop .35→.25, blues .30→.25, deltablues .15→.10, gospel .20→.15, tradjazz .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `gospel` and `holler` are the REPERTORY — Lead Belly's songs, which is literally
+    // what Donegan's group played — and a repertory is invisible to a vector that reads
+    // a washboard's kit density. `territoryband` (1932) is offered as nearer on tempo
+    // and a shared acoustic band, and a Kansas City dance orchestra is not a London
+    // skiffle group's ancestor.
+    //
     skiffle: {
       label: "London 1956",
       bars: 8,
@@ -4992,12 +5139,12 @@
       bpm: 148,
       near: "countrypop",
       parents: {
-        countrypop: 0.35,
-        blues: 0.3,
-        deltablues: 0.15,
-        gospel: 0.2,
+        countrypop: 0.25,
+        blues: 0.25,
+        deltablues: 0.1,
+        gospel: 0.15,
         holler: 0.1,
-        tradjazz: 0.2
+        tradjazz: 0.15
       },
       wants: [],
       instr: ["steel_string_guitar", "solo_vox", "banjo"],
@@ -5146,13 +5293,16 @@
     // No `fx`, deliberately: the phase voice IS the delay, played rather
     // than patched, and a genre that hands its signature to an insert does
     // not own it.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.35, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: drone .55→.40, counterpoint .45→.35, modaljazz .20→.15, tapemusic .15→.10. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     minimalism: {
       label: "New York 1967",
       bars: 8,
       voices: 3,
       plan: "arc",
       bpm: 120,
-      parents: { drone: 0.55, counterpoint: 0.45, modaljazz: 0.2, tapemusic: 0.15 },
+      parents: { drone: 0.4, counterpoint: 0.35, modaljazz: 0.15, tapemusic: 0.1 },
       wants: ["west african drumming"],
       instr: ["marimba", "marimba", "bright_yamaha_grand"],
       drumkit: "acoustic",
@@ -5340,6 +5490,26 @@
     // higher. The sequence and the chorale never take an operator at all.
     //
     // the Kling Klang tape loop, and nothing else
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `counterpoint` guest sat down on a SAMPLED HARPSICHORD, on the row that exists to be the table's all-machine ancestor. Düsseldorf 1977 is the case where a recorded instrument in the room is not a colour but a contradiction. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.20, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: beatgroup .30→.25, krautrock .25→.20, drone .25→.20, minimalism .20→.15, cologneschool .20→.15. The row now attributes 0.95 of itself and keeps .05 as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `krautrock`, `drone` and `cologneschool` are all called far, and the three of
+    // them are this row's entire argument. Kraftwerk is what happens when the Cologne
+    // studio's tape method and the drone's patience are put on a pop record with a
+    // beat — the beat is exactly the DEPARTURE, so of course the vector puts the
+    // beatless ancestors a long way off. It then offers `iranpop` (1974), which shares
+    // a tempo and a family and not one gesture.
+    //
     dusseldorfschool: {
       bassInstr: "bass_lead",
       label: "Düsseldorf 1977",
@@ -5349,14 +5519,15 @@
       plan: "song",
       bpm: 120,
       parents: {
-        beatgroup: 0.3,
-        krautrock: 0.25,
-        drone: 0.25,
-        minimalism: 0.2,
-        cologneschool: 0.2
+        beatgroup: 0.25,
+        krautrock: 0.2,
+        drone: 0.2,
+        minimalism: 0.15,
+        cologneschool: 0.15
       },
       wants: ["schlager"],
       instr: ["square_lead", "saw_wave", "synth_voice"],
+      guests: "native",
       drumkit: "electronic",
       entry: v => v * 2,
       reg: () => 0,
@@ -5525,6 +5696,11 @@
     // has no equivalent for). Voice 1 is the vocoder — a fixed eight-step
     // cell, halved, that moves to the phrase's second half when the sequence
     // lifts, so the two of them change places rather than both restating.
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `drone` guest sat down on `slow_strings`, a recorded string section, on the record where a Bronx DJ STOPPED playing other people's discs and programmed the machine instead. That is the whole argument of the row, said backwards. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 7 declared shares summed to 1.30, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: funk .30→.25, dusseldorfschool .25→.20, eurodisco .15→.10, synthpop .15→.10, disco .15→.10, technopop .15→.10, blockparty .15→.10. The row now attributes 0.95 of itself and keeps .05 as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     electro: {
       bassInstr: "bass_lead",
       bassTone: { cut: 500 },
@@ -5534,16 +5710,17 @@
       plan: "dance",
       bpm: 128,
       parents: {
-        funk: 0.3,
-        dusseldorfschool: 0.25,
-        eurodisco: 0.15,
-        synthpop: 0.15,
-        disco: 0.15,
-        technopop: 0.15,
-        blockparty: 0.15
+        funk: 0.25,
+        dusseldorfschool: 0.2,
+        eurodisco: 0.1,
+        synthpop: 0.1,
+        disco: 0.1,
+        technopop: 0.1,
+        blockparty: 0.1
       },
       wants: [],
       instr: ["square_lead", "synth_voice"],
+      guests: "native",
       drumkit: "tr808",
       entry: v => v,
       reg: v => 1 - v,
@@ -5817,6 +5994,20 @@
     // stepwise, plagal-leaning tune), and nothing else needs naming.
     //
     // WHO SINGS: a carol, sung by somebody who learned it in a church
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `hymn` is called far and it is the TUNE STOCK: half this repertory IS the hymnal,
+    // which is the row's entire claim. The vector reads a congregation against a
+    // crooner with an orchestra and calls the orchestra a distance. `honkytonk` (1941)
+    // is offered as nearer on tempo and a major key.
+    //
     yuletide: {
       label: "New York 1942",
       rate: 0.5,
@@ -5945,13 +6136,16 @@
     // row's own comment was already describing.
     //
     // WHO SINGS: voices as a wash, which is what the studio was for
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 3 declared shares summed to 1.25, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: beatgroup .55→.45, gospel .45→.35, baroquepop .25→.20. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     psychpop: {
       label: "London 1968",
       bars: 8,
       near: "beatgroup",
       plan: "song",
       bpm: 112,
-      parents: { beatgroup: 0.55, gospel: 0.45, baroquepop: 0.25 },
+      parents: { beatgroup: 0.45, gospel: 0.35, baroquepop: 0.2 },
       wants: ["mellotron"],
       instr: ["clean_guitar", "ahh_choir"],
       drumkit: "room",
@@ -6032,6 +6226,20 @@
     // a collage. `rave_stab` is the crate's own eight and 8/8 of them are
     // local: rave_a..d, both hoovers, the organ and the saw stab. Big beat
     // IS a stab collage; now the line chooses which stab.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `punk` is called far and punk is the ATTITUDE and the arrangement — the four-bar
+    // shout, the one riff, the deliberate crudeness — which is the half of the
+    // Chemical Brothers the vector has no column for. `miamibass` (1986) is offered as
+    // nearer on an 808 and a tempo; a shared machine is not a shared parent.
+    //
     bigbeat: {
       bassInstr: "bass_lead",
       label: "Essex 1997",
@@ -6249,13 +6457,16 @@
     // stage's, said at this row since the day it landed.
     //
     // WHO SINGS: the key change is coming and this is the voice that survives it
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.20, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: gospel .40→.35, crooner .35→.30, rock .25→.20, broadway .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     powerballad: {
       label: "Los Angeles 1991",
       bars: 8,
       near: "crooner",
       plan: "song",
       bpm: 80,
-      parents: { gospel: 0.4, crooner: 0.35, rock: 0.25, broadway: 0.2 },
+      parents: { gospel: 0.35, crooner: 0.3, rock: 0.2, broadway: 0.15 },
       wants: [],
       instr: ["solo_vox", "slow_strings"],
       drumkit: "power",
@@ -6909,6 +7120,20 @@
     // WHO SINGS: head voice, nearly straight, and more air in it than
     // anything else in the table — the wobble arriving late and never
     // widening is what keeps a held note sounding cold
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `ambient` at 0.3 is the SPACE — the reverb tail and the held pad that makes this
+    // row dark rather than merely slow — and the vector reads a 1978 beatless record
+    // against a 2011 song. `retrosoul` (2006) is offered as nearer on a shared singer
+    // and tempo and shares no method at all.
+    //
     darkrnb: {
       label: "Toronto 2011",
       near: "rnb",
@@ -7113,13 +7338,29 @@
     // in, and plainer than counterpoint's seven-note diatonic on purpose.
     //
     // WHO SINGS: two people who have sung together for years: closer than a choir
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.20, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: skiffle .40→.35, countrypop .35→.30, counterpoint .25→.20, appalachia .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `counterpoint` is called far and it is the ARRANGEMENT: two voices moving
+    // independently is the one thing that separates this row from every other acoustic
+    // duo, and it is a claim about voice-leading, which the vector has no term for.
+    // `tasnif` (1924) was offered before the age filter and shares only a modal line.
+    //
     folkduo: {
       label: "Greenwich Village 1964",
       bars: 8,
       near: "skiffle",
       plan: "song",
       bpm: 96,
-      parents: { skiffle: 0.4, countrypop: 0.35, counterpoint: 0.25, appalachia: 0.2 },
+      parents: { skiffle: 0.35, countrypop: 0.3, counterpoint: 0.2, appalachia: 0.15 },
       wants: [],
       instr: ["steel_string_guitar", "ohh_voices"],
       entry: () => 0,
@@ -7234,6 +7475,9 @@
     // PAID 2026-08-29, the debts round: "psychedelic rock" is
     // `psychrock` (San Francisco 1966) — same city, same bands, six
     // years earlier.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.30, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: blues .40→.30, rock .35→.25, jazz .25→.20, psychrock .30→.25. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     jamband: {
       label: "San Francisco 1972",
       bars: 12,
@@ -7241,7 +7485,7 @@
       near: "blues",
       plan: "arc",
       bpm: 108,
-      parents: { blues: 0.4, rock: 0.35, jazz: 0.25, psychrock: 0.3 },
+      parents: { blues: 0.3, rock: 0.25, jazz: 0.2, psychrock: 0.25 },
       wants: [],
       instr: ["clean_guitar", "clean_guitar"],
       drumkit: "room",
@@ -7297,6 +7541,22 @@
     // ii-V education actually reaches for — and every other degree stands.
     // Prefab Sprout, "Appetite"/*Steve McQueen* (Kitchenware, prod. Thomas
     // Dolby, London, June 1985). Corpus silent.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.25, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: rock .35→.25, funk .30→.25, jazz .35→.30, progrock .25→.20. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `funk` is the RHYTHM SECTION under the jazz chords, which is precisely what makes
+    // this sophisticated rather than merely soft, and a vector reading a slow major-key
+    // song against a dance music will always call it far. `acidrock` (1967) is offered
+    // as nearer on a shared guitar and a shared studio.
+    //
     sophistirock: {
       label: "London 1986",
       bars: 8,
@@ -7304,7 +7564,7 @@
       near: "jazzrock",
       plan: "song",
       bpm: 104,
-      parents: { rock: 0.35, funk: 0.3, jazz: 0.35, progrock: 0.25 },
+      parents: { rock: 0.25, funk: 0.25, jazz: 0.3, progrock: 0.2 },
       wants: [],
       instr: ["rock_organ", "clean_guitar"],
       drumkit: "room",
@@ -7383,6 +7643,20 @@
     // voices are line, so both get the real Model D dusseldorfschool's own line
     // plays; a sampled pad cannot repeat eight bars with a machine's
     // exactness, and that exactness is the whole genre.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `minimalism` is the METHOD — a pattern repeated until repetition becomes the
+    // subject — and the vector reads a beatless 1964 process piece against a rock band
+    // with a drummer. `spyscore` (1962) is offered as nearer on tempo and a driving
+    // bass, which is a coincidence between a Bond chase and a Neu! record.
+    //
     motorik: {
       bassInstr: "finger_bass",
       instrumental: true,
@@ -7656,6 +7930,9 @@
     // the voice answers rather than doubles — the string machine holds and
     // the singer moves, which is the shape of a record made by one person
     // playing everything (the quote-box law §51's own test).
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `counterpoint` guest sat down on a SAMPLED HARPSICHORD over a CR-78. Wax Trax! is a room full of machines; the counter-line is a second sequencer, which is what the fleet's square is. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
     industrialdance: {
       bassInstr: "bass_lead",
       label: "Chicago 1981",
@@ -7665,6 +7942,7 @@
       parents: { synthpop: 0.35, postpunk: 0.3, disco: 0.2, punk: 0.15 },
       wants: [],
       instr: ["synth_strings_1", "synth_voice"],
+      guests: "native",
       drumkit: "cr78",
       entry: v => v,
       reg: v => v - 1,
@@ -7845,6 +8123,20 @@
     // listens to what it is handed), `breath` is an AND against the
     // phrase's own gate (a chant that answers what it is actually given,
     // the way reggae's skank does NOT and a shouted vocal DOES).
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `punk` at 0.15 is the shout and the refusal — the reason EBM is a body music and
+    // not a synth-pop record — and neither is a number the vector reads. `miamibass`
+    // (1986) is offered as nearer on a shared 808 and tempo, which every club row of
+    // the decade shares.
+    //
     ebm: {
       bassInstr: "bass_lead",
       label: "Chicago 1989",
@@ -8027,12 +8319,15 @@
     // anchor clear of janglepop's own walking bass (both are I-vi-IV-V
     // major-key guitar-pop; the census gate measures a genre by everything
     // it renders, and a shared bass hand was most of what was left un-said).
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.20, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: beatgroup .45→.40, skiffle .30→.25, doowop .25→.20, musichall .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     musichallrock: {
       bassInstr: "picked_bass",
       label: "Muswell Hill 1966",
       plan: "song",
       bpm: 118,
-      parents: { beatgroup: 0.45, skiffle: 0.3, doowop: 0.25, musichall: 0.2 },
+      parents: { beatgroup: 0.4, skiffle: 0.25, doowop: 0.2, musichall: 0.15 },
       wants: [],
       instr: ["upright_piano", "clean_guitar"],
       drumkit: "room",
@@ -8189,6 +8484,19 @@
     // "quiet storm" PAID 2026-08-29 (Los Angeles 1975): one year older
     // than this label and the same after-hours radio — the weight
     // comes off detroitsoul, whose share was Smokey's record all along.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `funk` is the BASS AND THE CLAVINET under the smooth chords — the working half of
+    // the record — and the vector reads a 1969 band against a 1976 studio one on kit
+    // density. `iranpop` (1974) is offered as nearer on tempo, mode and a string pad.
+    //
     yachtsoul: {
       label: "San Francisco 1976",
       bars: 8,
@@ -8280,13 +8588,16 @@
     // out front, which is this row's whole premise.
     //
     // WHO SINGS: the voice at the back of the room, out of the piano's way
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.25, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: detroitsoul .40→.30, gospel .30→.25, crooner .30→.25, girlgroup .25→.20. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     songwriterpiano: {
       label: "New York 1971",
       bars: 8,
       near: "crooner",
       plan: "song",
       bpm: 82,
-      parents: { detroitsoul: 0.4, gospel: 0.3, crooner: 0.3, girlgroup: 0.25 },
+      parents: { detroitsoul: 0.3, gospel: 0.25, crooner: 0.25, girlgroup: 0.2 },
       wants: [],
       instr: ["upright_piano", "ohh_voices"],
       drumkit: "brush",
@@ -8416,6 +8727,20 @@
     // around a nine-foot piano in a studio, which is also what separates it
     // from yacht rock's Rhodes two rows up — those two had the same cast
     // and the same seating, so nothing but the drums told them apart.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `funk` at 0.35 is the RHYTHM SECTION — the players on those Laurel Canyon records
+    // were session funk players and the bass lines say so — and a vector scoring a slow
+    // acoustic song against a dance music will always call that far. `mento` (1952) is
+    // offered as nearer on tempo, an acoustic band and a major mode.
+    //
     singersongwriter: {
       label: "New York 1972",
       near: "yachtsoul",
@@ -8598,6 +8923,33 @@
     // bare guitars. `picked_bass` is Chris Hillman with a pick. The rim on
     // every off-eighth is the TAMBOURINE the record is named after, which a
     // twelve-lane kit can only say that way.
+    //
+    // A SIXTH DECLINE, 2026-09-03 (the catalogue round, shift 3) — BRO-COUNTRY,
+    // asked for by name (Nashville 2012, Florida Georgia Line's "Cruise") and REFUSED
+    // ON A MEASUREMENT, because both of the evidence bases this round admits return
+    // zero and a row built on neither would be a row built on a memory of the radio.
+    //
+    //   · CHORDONOMICON: the census carries 5,151 distinct genre labels over 679,681
+    //     songs and NOT ONE of them is bro-country, in any spelling. The nearest
+    //     country labels are `contemporary country` (8,982 songs) — which shift 2
+    //     declined the day before as `countrypop`'s twin — and `modern country pop`
+    //     (1,729). Spotify's own taggers, who invented `permanent wave`, did not
+    //     reach for this word.
+    //   · THE MIDI CORPUS: 120,652 files, matched by basename with the separator
+    //     normalisation this round added. Florida Georgia Line, Luke Bryan, Jason
+    //     Aldean, Blake Shelton, Cole Swindell, Chase Rice, Brantley Gilbert, Dustin
+    //     Lynch, Thomas Rhett and Sam Hunt return ZERO FILES between them. Eight
+    //     files match "cruise" and every one is Bruce Hornsby's "Cruise Control" or
+    //     a boat.
+    //
+    // So there is no tempo distribution to read, no meter or mode tally, no drum
+    // histogram and no chord cycle — nothing the other four rows in this block were
+    // built out of. The music is real and the word is real; the EVIDENCE is not here,
+    // and this table's rule since the corpus round is that a row's structural numbers
+    // are read and not imagined. If the corpus ever grows a Nashville 2010s shelf the
+    // row is a morning's work, and its parents are already obvious from this block:
+    // `confessionalpop` (Nashville 2008), `countryrock` and `southernhiphop`.
+    //
     folkrock: {
       label: "Los Angeles 1965",
       near: "beatgroup",
@@ -9054,6 +9406,23 @@
     // arpeggiated minor-key sequence under a melodic techno record is
     // the Schulze/Tangerine Dream machine with a kick under it, which
     // this row's own comment always said in prose.
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `drone` guest sat down on `slow_strings`, a recorded string section, on the row whose own sentence is THE FILTER IS THE MELODY — one analog pad synth covering chord and lead with its cutoff automated. A sampled string bed has no cutoff to sweep. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `ambient` and `berlinschool` are the two rows Orbital's long form comes from, and
+    // long form is the one axis the vector has no column for: it measures tempo and kit
+    // density, both of which this row shares with the floor and not with its parents.
+    // `electro` (1982) is offered instead on a shared 4/4 machine, which is what every
+    // club row for thirty years has in common.
+    //
     melodictechno: {
       bassInstr: "bass_lead",
       label: "Kent 1991",
@@ -9064,6 +9433,7 @@
       parents: { house: 0.3, techno: 0.3, ambient: 0.2, berlinschool: 0.2 },
       wants: [],
       instr: ["warm_pad", "polysynth"],
+      guests: "native",
       drumkit: "electronic",
       entry: v => v,
       reg: v => v - 1,
@@ -9137,6 +9507,9 @@
     // the sub answers a step behind rather than under the SAME step — one
     // machine playing two parts must still be two parts, not one part
     // copied (the quote-box law §51 holds every genre to).
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `drone` guest sat down on `slow_strings`, a recorded string section — on the one row in this table whose own first sentence is NO SAMPLED INSTRUMENT ANYWHERE. The row said it; the guest list did not read it. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
     bleeptechno: {
       bassInstr: "bass_lead",
       instrumental: true,
@@ -9148,6 +9521,7 @@
       parents: { techno: 0.4, house: 0.3, electro: 0.3 },
       wants: ["sheffield bleep scene"],
       instr: ["square_lead", "saw_wave"],
+      guests: "native",
       drumkit: "tr808",
       entry: v => v,
       reg: v => (v === 1 ? -3 : 1),
@@ -9654,6 +10028,9 @@
     // sequence out front and a poly behind it, and not a choir patch. The
     // tb303 below plays both voices; these are the names the desk shows and
     // the sounds a recast chair gets, and they should agree with the record.
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `counterpoint` guest sat down on a SAMPLED HARPSICHORD, on the row whose own first sentence is a bright low-resonance 303 and whose record is Speak & Spell. Basildon 1980 owned no harpsichord; it owned a sequencer, and a sequencer plays counterpoint. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
     analogsynthpop: {
       bassInstr: "bass_lead",
       seqArp: "arpup",
@@ -9664,6 +10041,7 @@
       parents: { roboticpop: 0.5, dusseldorfschool: 0.3, disco: 0.2 },
       wants: ["new romantic synth pop"],
       instr: ["square_lead", "polysynth"],
+      guests: "native",
       drumkit: "cr78",
       entry: v => v,
       reg: v => v - 1,
@@ -9741,6 +10119,22 @@
     // the squaring. What makes this genre ITSELF is the filter — cutoff 380
     // with res 0.55, "dark and resonant", the head comment's own words — and
     // every one of those numbers is untouched. Only the gain came down.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `gothicrock` is the mood and the vocal, and a mood is not in the vector. The
+    // report offers `industrialdance` (1981) as nearer, and the resemblance is real —
+    // Violator was made after Depeche Mode toured with Nitzer Ebb — but the nearer
+    // ancestor is already declared and is this town's own earlier self:
+    // `analogsynthpop` at 0.4. An edge to Chicago would say Basildon learned its
+    // machines abroad, and it did not.
+    //
     gothsynth: {
       bassInstr: "bass_lead",
       label: "Basildon 1990",
@@ -10036,6 +10430,20 @@
     // played twice, and Marr's whole point was two guitars that fit
     // together rather than one guitar heard twice (the §51 quote-box law
     // catches exactly this — measured, this exact shape failed it).
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `folkduo` is the TWELVE-STRING AND THE HARMONY — the Byrds' half of this music —
+    // and the vector reads a 1964 acoustic duo against a 1982 band with a drum kit.
+    // `rocknroll` (1955) is offered as nearer on tempo and major mode, which is what
+    // every guitar pop record shares.
+    //
     janglepop: {
       label: "Manchester 1984",
       swing: 1/3,
@@ -10659,6 +11067,22 @@
     // the wrong mode.
     //
     // the tabor: dum, dum-dum
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `gregorian` is called far and it is the MELODIC MATERIAL — the modal stock every
+    // notated European tune of 1300 is made of. The vector reads a beatless chant
+    // against a dance and calls the beat a distance, which is exactly the invention
+    // this row exists to record. `muwashshah` (1200) is offered as nearer; the Andalusi
+    // influence on medieval European dance is a live scholarly argument and not a fact
+    // this table will assert on a feature vector.
+    //
     estampie: {
       organic: true,
       label: "Paris 1300",
@@ -11249,6 +11673,20 @@
     // the same TRUE ANSWER retrofunkpop uses, and for the same reason: the
     // guitar has to land where the voice does not or the two read as one
     // line doubled, which is exactly what this style never does.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `rnb` and `dancehall` are the singing and the riddim, and the vector reads the
+    // Lagos log-drum programming as distance from both. `latinpop` (2001) is offered as
+    // nearer on tempo and family; two pop musics of the same decade are contemporaries,
+    // not ancestor and child.
+    //
     afrobeats: {
       label: "Lagos 2021",
       near: "afrobeat",
@@ -11398,6 +11836,20 @@
     //
     // the snare is the melody here. Written as the clave it is, not as a
     // backbeat with syncopation added: there is no 2 and no 4 in it.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `samba` and `bossa` are the CARIOCA half — the surdo pattern and the harmonic
+    // manners underneath a Miami-bass machine — and the vector reads a 1917 samba and a
+    // 1958 bossa against a 2008 club record on tempo and kit density. Rio is the claim
+    // and Rio has no column.
+    //
     bailefunk: {
       bassInstr: "bass_lead",
       label: "Rio de Janeiro 2022",
@@ -11688,12 +12140,28 @@
     // plainest backbeat in the file, and a pedal hat on the offbeats that is
     // more air than hit. No open hat, no ghost perc, no crash — every lane
     // the other 129 reach for, left empty on purpose.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.15, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: rnb .35→.30, trap .30→.25, ambient .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `ambient` and `triphop` are the ROOM — the reverb and the slowed break that a
+    // laptop record is made of — and the vector reads them as far because it scores a
+    // 2020 pop tempo against a 1978 drone and a 1991 instrumental. `retrosoul` (2006)
+    // is offered as nearer; it shares a singer and a warm mix and no method.
+    //
     bedroompop: {
       label: "Los Angeles 2020",
       near: "darkrnb",
       plan: "song",
       bpm: 92,
-      parents: { rnb: 0.35, trap: 0.3, ambient: 0.2, singersongwriter: 0.15, triphop: 0.15 },
+      parents: { rnb: 0.3, trap: 0.25, ambient: 0.15, singersongwriter: 0.15, triphop: 0.15 },
       wants: [],
       instr: ["solo_vox", "felt_piano"],
       drumkit: "electronic",
@@ -12033,6 +12501,20 @@
     // THE DRUMS ARE NOT THE IDENTITY, and the kit says so: the thinnest
     // hand in this batch, brushes, and the tin of pebbles on the hat lane
     // (the same compromise as the maracas above, one country south).
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `hymn` is called far and it is the HARMONIC CYCLE — the mission tonic-subdominant
+    // -dominant loop that marabi runs for an entire evening, which is the row's whole
+    // claim. The vector reads a congregational song against a shebeen band on kit
+    // density. `polka` (1837) is offered as nearer on a shared duple lift.
+    //
     marabi: {
       label: "Johannesburg 1935",
       voices: 3,
@@ -12555,6 +13037,20 @@
     // the rim, and the snare taking the answering stroke — one player and
     // one drum, which this table has no other way to say (punjabipop's dhol
     // is written the same way one round earlier, genres.js:5975).
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `disco` is the FLOOR — the four-on-the-floor and the synth bass Oran put under
+    // the bedoui melody — and the vector reads a 1975 New York record against a 1986
+    // Algerian one. `krautrock` (1971) is offered as nearer on a shared pulse, which is
+    // as far as that resemblance goes.
+    //
     rai: {
       label: "Oran 1985",
       voices: 3,
@@ -13136,6 +13632,21 @@
     // and-strokes between them, which is what a salsa record is counted by
     // — and the congas take the toms. Same compromise as the mambo above,
     // one lane over.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `mambo` is called far and mambo is the ARRANGEMENT — the mambo section itself,
+    // the horn shout over the montuno, which is what salsa took and sped up. The vector
+    // sees a tempo gap and a family label. `reggae` (1969) is offered as nearer on a
+    // shared offbeat and a shared kit density, which is a coincidence of two islands
+    // and not a line of descent.
+    //
     salsa: {
       label: "New York 1973",
       voices: 3,
@@ -13262,6 +13773,20 @@
     // thing lost is that a vallenato accordion is DIATONIC — two rows, a
     // different note pushing than pulling — which is why its runs go where
     // they go. The registry's accordion is chromatic and will play anything.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `cumbia` at 0.5 is the largest weight and it is the RHYTHM the accordion plays
+    // over, and the vector reads a percussion-led coastal music against an accordion
+    // trio on kit density and instrumentation. `singersongwriter` (1972) is offered as
+    // nearer on tempo and a solo singer, which is a resemblance of format.
+    //
     vallenato: {
       label: "Valledupar 1975",
       voices: 2,
@@ -13754,6 +14279,20 @@
     // WHAT SEPARATES IT FROM CALYPSO IN FIELDS: the kick. Calypso above has
     // three kicks in sixteen steps and soca has FOUR ON THE FLOOR, plus a
     // tempo twelve bpm faster and a synthesiser where the pan was.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `funk` is the BASS — the sixteenth-note line under the soca kick, which is what
+    // separates it from calypso and is the row's own argument — and the vector reads a
+    // 1969 American band against a 1973 Trinidadian one. `mbaqanga` (1964) is offered
+    // as nearer on a shared bass-led groove from another continent.
+    //
     soca: {
       label: "Port of Spain 1979",
       voices: 3,
@@ -14270,6 +14809,9 @@
     // "musique concrète" PAID 2026-08-30, the walls-down round:
     // `tapemusic` (Paris 1948) — the collage Os Mutantes cut into these
     // records is that studio's grammar, twenty years downstream.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.10, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: bossa .40→.35, psychpop .35→.30. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     tropicalia: {
       label: "São Paulo 1968",
       voices: 3,
@@ -14277,7 +14819,7 @@
       near: "psychpop",
       plan: "arc",
       bpm: 104,
-      parents: { bossa: 0.4, psychpop: 0.35, samba: 0.25, tapemusic: 0.1 },
+      parents: { bossa: 0.35, psychpop: 0.3, samba: 0.25, tapemusic: 0.1 },
       wants: ["concrete poetry"],
       cannot: [
         "the collage itself — a quotation cut against the record is a per-section editorial " +
@@ -14726,6 +15268,20 @@
     // rapping in Twi over highlife guitar figures and a programmed kit. The
     // catalog holds Accra 1957 and nothing else Ghanaian for forty-one years.
     // THE YEAR is "Makaa Maka", the record that names the form.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `boombap` is the BEAT — the sampled New York break Accra rapped over — and the
+    // vector reads a 1994 hip-hop record against a 1998 highlife-pop one on tempo and
+    // kit. `mbaqanga` (1964) is offered as nearer; two African pop musics thirty years
+    // and three thousand kilometres apart are neighbours on a chart, not on a tree.
+    //
     hiplife: {
       label: "Accra 1998",
       voices: 2,
@@ -16219,6 +16775,20 @@
     // is a five-note alphabet at 124 with a tremolo on the guitar; this is a
     // SEVEN-note phrygian at 106 with fuzz on it and a saz figure the guitar
     // is playing. Two guitar bands, two continents, two different melodies.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `psychpop` is the STUDIO — the fuzz, the phase, the backwards tape — put on top
+    // of Turkish scales, and the vector reads a 1968 English record against a 1970
+    // Istanbul one on mode and kit. `protopunk` (1966) is offered as nearer on a shared
+    // garage-band roughness that both arrived at from opposite directions.
+    //
     anadolurock: {
       label: "Istanbul 1972",
       voices: 3,
@@ -16298,13 +16868,29 @@
     // This more 'modern' type of tasnif is generally called tarane."
     // The tarane IS this row's repertory, so the edge is the article's
     // own sentence and the weight is the fifth this row's residue had.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.05, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: filmi .30→.25. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `dastgah` and `tasnif` are the MELODY — the radif's own intervals and the sung
+    // metred song they were fitted to, which is the entire reason this row is not
+    // simply exotica. The vector reads a modal art music against a 1974 pop band and
+    // calls the modal one distant, which is the departure and not an error.
+    //
     iranpop: {
       label: "Tehran 1974",
       voices: 3,
       near: "filmi",
       plan: "song",
       bpm: 100,
-      parents: { filmi: 0.3, romantic: 0.2, crooner: 0.2, dastgah: 0.2, tasnif: 0.15 },
+      parents: { filmi: 0.25, romantic: 0.2, crooner: 0.2, dastgah: 0.2, tasnif: 0.15 },
       wants: ["golha radio orchestra"],
       cannot: [
         "the koron — the quarter-flat second that defines dastgah-e shur, which is the same " +
@@ -16664,6 +17250,20 @@
     // stroke on the kick and the high on `p`, and no snare and no cymbal
     // anywhere, because a session has neither. `nobass` because it has no
     // bass player either — the fiddle and the flute are the whole band.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `seannos` is called far and it is the ORNAMENT — the roll and the cut, carried
+    // off the unaccompanied song onto the pipes, which is the row's whole claim and is
+    // invisible to a vector reading tempo and kit. `carnatic` (1935) is offered as
+    // nearer: two modal ornamented musics, no contact.
+    //
     irishtrad: {
       label: "Dublin 1963",
       voices: 3,
@@ -16749,6 +17349,20 @@
     // Guca plays no marches. `lautari` (Bucharest 1906) declined too — the
     // Romanian Romani guild is a sibling tradition, different country, different
     // instruments, no named transmission.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `ottoman` is called far and it is the SCALE AND THE ENSEMBLE: the mehter band's
+    // own instruments and makam, which is the row's own argument and the thing a vector
+    // of tempo and kit cannot hold. `tarantella` (1959) is offered as nearer — two fast
+    // duple village dances, one Balkan and one Neapolitan, no contact.
+    //
     balkanbrass: {
       label: "Guča 1985",
       voices: 3,
@@ -16918,6 +17532,9 @@
     // and 4, and the kick barely there at all — the Kansas City rhythm
     // section's whole innovation is that the bass drum stops marking the
     // beat and the cymbal takes it over.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.15, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: boogiewoogie .35→.30, neworleans .25→.20, territoryband .25→.20. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     swing: {
       label: "Kansas City 1938",
       voices: 3,
@@ -16926,11 +17543,11 @@
       plan: "song",
       bpm: 148,
       parents: {
-        boogiewoogie: 0.35,
-        neworleans: 0.25,
+        boogiewoogie: 0.3,
+        neworleans: 0.2,
         tinpanalley: 0.15,
         ragtime: 0.15,
-        territoryband: 0.25
+        territoryband: 0.2
       },
       wants: [],
       instr: ["tenor_sax", "brass_section", "jazz_guitar"],
@@ -17000,13 +17617,30 @@
     // Arnold Shultz, the black fiddler and guitarist he heard around
     // Rosine, Kentucky in the 1920s. That is `deltablues` (Clarksdale
     // 1929), seventeen years BEFORE this record.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.15, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: countrypop .45→.40, deltablues .20→.15, ballad .20→.15, oldtime .30→.25. The row now attributes 0.95 of itself and keeps .05 as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `ballad` is called far and it is the SONG STOCK — the Anglo-Celtic repertory this
+    // music sings, which is why the ballad row itself names bluegrass as one of the two
+    // it was written to pay. The vector reads an unaccompanied 1666 singer against a
+    // 1946 string band at 180 bpm. `operaseria` (1724) was offered before the age
+    // filter and is an accident of mode and plan.
+    //
     bluegrass: {
       label: "Nashville 1946",
       voices: 3,
       near: "skiffle",
       plan: "arc",
       bpm: 160,
-      parents: { countrypop: 0.45, deltablues: 0.2, ballad: 0.2, oldtime: 0.3 },
+      parents: { countrypop: 0.4, deltablues: 0.15, ballad: 0.15, oldtime: 0.25 },
       wants: ["shape-note singing"],
       instr: ["banjo", "fiddle", "steel_string_guitar"],
       entry: v => v * 2,
@@ -17137,6 +17771,9 @@
     // whole harmonic fact of a blues, and now both halves are said in the right
     // field. The same ruling is applied at neworleans, boogiewoogie, deltablues
     // and territoryband below.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 3 declared shares summed to 1.05, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: blues .55→.50. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     zydeco: {
       label: "Lafayette 1955",
       voices: 3,
@@ -17144,7 +17781,7 @@
       near: "blues",
       plan: "song",
       bpm: 132,
-      parents: { blues: 0.55, countrypop: 0.2, cajun: 0.3 },
+      parents: { blues: 0.5, countrypop: 0.2, cajun: 0.3 },
       wants: ["la-la", "juré"],
       instr: ["accordion", "harmonica", "clean_guitar"],
       drumkit: "acoustic",
@@ -17332,6 +17969,21 @@
     // `s` is bars-since-entry and unbounded, so it is read modulo the cue's
     // own length — a schedule that trusts a raw bar counter walks the
     // fanfare out of the room on the second pass.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 6 declared shares summed to 1.30, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: romantic .40→.30, swing .25→.20, funk .20→.15, concerto .15→.10, march .15→.10, photoplay .15→.10. The row now attributes 0.95 of itself and keeps .05 as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `swing` and `funk` are the two rhythm sections a news package has used since
+    // 1955, and the vector reads a fifteen-second cue's arc plan against two dance
+    // musics. A row whose whole form is a stinger cannot be near anything on plan.
+    //
     newsfanfare: {
       instrumental: true,
       label: "London 1970",
@@ -17341,12 +17993,12 @@
       plan: "arc",
       bpm: 132,
       parents: {
-        romantic: 0.4,
-        swing: 0.25,
-        funk: 0.2,
-        concerto: 0.15,
-        march: 0.15,
-        photoplay: 0.15
+        romantic: 0.3,
+        swing: 0.2,
+        funk: 0.15,
+        concerto: 0.1,
+        march: 0.1,
+        photoplay: 0.1
       },
       wants: ["crime jazz"],
       cannot: [
@@ -17699,6 +18351,9 @@
     // where Jordan is a light baritone, which is the nearest
     // measured tract this table holds for somebody selling a
     // song over four loud men.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.20, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: swing .50→.40, deltablues .35→.30, boogiewoogie .15→.10, territoryband .20→.15. The row now attributes 0.95 of itself and keeps .05 as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     jumpblues: {
       label: "Los Angeles 1946",
       voices: 4,
@@ -17706,7 +18361,7 @@
       near: "swing",
       plan: "song",
       bpm: 158,
-      parents: { swing: 0.5, deltablues: 0.35, boogiewoogie: 0.15, territoryband: 0.2 },
+      parents: { swing: 0.4, deltablues: 0.3, boogiewoogie: 0.1, territoryband: 0.15 },
       wants: [],
       instr: ["solo_vox", "tenor_sax", "upright_piano", "jazz_guitar"],
       drumkit: "jazz",
@@ -17790,6 +18445,9 @@
     //
     // WHO SINGS: the crooner's own mouth, which is what this
     // repertory was sung with the moment a microphone existed.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 3 declared shares summed to 1.20, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: parlor .60→.50, ragtime .40→.35, operetta .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     tinpanalley: {
       label: "New York 1924",
       voices: 2,
@@ -17797,7 +18455,7 @@
       near: "parlor",
       plan: "song",
       bpm: 108,
-      parents: { parlor: 0.6, ragtime: 0.4, operetta: 0.2 },
+      parents: { parlor: 0.5, ragtime: 0.35, operetta: 0.15 },
       wants: ["the coon song", "vaudeville"],
       cannot: [
         "AABA — the thirty-two-bar chorus with a bridge in the third eight is what this music " +
@@ -18283,6 +18941,9 @@
     // WHO SINGS: `melisma` — one vowel held across many notes,
     // which is the literal description of what she does to a
     // line of Ahmad Shafiq Kamal's poetry
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.10, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: tarab .40→.35, taqsim .30→.25, romantic .30→.25. The row now attributes 0.95 of itself and keeps .05 as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     firqa: {
       label: "Cairo 1964",
       voices: 4,
@@ -18290,7 +18951,7 @@
       near: "filmi",
       plan: "song",
       bpm: 92,
-      parents: { tarab: 0.4, taqsim: 0.3, romantic: 0.3, muwashshah: 0.1 },
+      parents: { tarab: 0.35, taqsim: 0.25, romantic: 0.25, muwashshah: 0.1 },
       wants: ["the egyptian film musical"],
       cannot: [
         "heterophony — the violins play the singer's OWN line, slightly differently, at the " +
@@ -19748,6 +20409,20 @@
     // WHO SINGS: confessional — the intimate, close voice; a
     // lied is sung to a room, not a hall, and the modern
     // singer-songwriter mouth is its direct heir.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `ballad` is called far and it is the FORM: a strophic song for one voice with a
+    // story in it, which is what Schubert set. The vector scores an unaccompanied 1666
+    // singer against an 1815 voice-and-piano on kit density and plan, and hears a piano
+    // as a distance. `concerto` (1725) is offered as nearer on a shared arc.
+    //
     lied: {
       label: "Vienna 1814",
       voices: 2,
@@ -20184,6 +20859,20 @@
     //
     // two-beat: the bass drum on 1 and 3, the snare's press on 2 and
     // 4, the ride's woodblock chatter on the p lane.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `spirituals` is the VOICE and the collective heterophony that becomes the front
+    // line's polyphony, and the vector reads an unaccompanied congregation against a
+    // brass band. `musette` (1880) is offered as nearer on tempo and a wind-led band,
+    // and Paris did not teach Storyville how to play.
+    //
     neworleans: {
       instrumental: true,
       label: "New Orleans 1923",
@@ -20339,6 +21028,34 @@
     // WHO SINGS: the skiffler mouth — high air, little
     // polish; the nearest thing this table has to a field
     // voice, named as the stand-in it is.
+    //
+    // "the songster's ballad stock" PAID 2026-09-03 by `ballad` (London 1666), 0.15.
+    // The want names a REPERTORY, not a genre this table lacks, and `ballad` is the row
+    // that holds that repertory: its own comment says two rows have wanted
+    // anglo-celtic balladry since their lineage was written and pays them both, on the
+    // same reading. The songster played "Frankie and Albert" and "Stack O'Lee" beside
+    // "Pony Blues" and Patton recorded from that stock all his life; what travels is
+    // the STROPHIC VERSE with a story in it, which is neither `holler`'s (a free call)
+    // nor `spirituals`' (a congregation's). 0.15 because the Delta's frame — the
+    // twelve-bar answer, the slide reply, the drone thumb — is the other two parents'
+    // and not the ballad's. `the diddley bow` stays a want: a one-string instrument is
+    // not a genre and this table has no row for it.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `holler` is called far and `holler` is the voice this music is built out of — one
+    // unaccompanied line with no meter in it. What the row departs from is exactly the
+    // hollers' formlessness: Patton put a guitar and a bar line under it, and every
+    // number the vector reads (kit density, plan, tempo) is a number about that guitar.
+    // `modinha` (1775) was offered before the age filter; it is a Portuguese parlour
+    // song and shares nothing but a mode.
+    //
     deltablues: {
       label: "Clarksdale 1929",
       voices: 2,
@@ -20346,8 +21063,8 @@
       near: "blues",
       plan: "song",
       bpm: 84,
-      parents: { spirituals: 0.25, holler: 0.3 },
-      wants: ["the songster's ballad stock", "the diddley bow"],
+      parents: { spirituals: 0.25, holler: 0.3, ballad: 0.15 },
+      wants: ["the diddley bow"],
       cannot: [
         "the bottleneck — the slide's continuous pitch between frets is the second VOICE of " +
         "this music, answering the sung line, and deg is an integer into a fretted alphabet; " +
@@ -20560,6 +21277,23 @@
     // silent, it was wrong: SCALES.majpent has a MAJOR third and dorian is a minor
     // mode, so the field contradicted the alphabet on the same line. Ionian is the
     // mode majpent is five notes of.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.35, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: psychpop .35→.25, minimalism .35→.25, funk .30→.20, cologneschool .20→.15, zodiak .15→.10. The row now attributes 0.95 of itself and keeps .05 as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: all four parents are called far, which is the clearest statement the metric has
+    // made of its own limit: krautrock is DEFINED as a departure — psychedelia without
+    // the blues, minimalism with a drum kit, the Cologne studio in a band room. A
+    // vector that scores tempo and kit density will always read a departure as a
+    // distance, and a departure with four sources will read as four faults.
+    //
     krautrock: {
       label: "Cologne 1971",
       voices: 3,
@@ -20567,7 +21301,7 @@
       near: "motorik",
       plan: "song",
       bpm: 116,
-      parents: { psychpop: 0.35, minimalism: 0.35, funk: 0.3, cologneschool: 0.2, zodiak: 0.15 },
+      parents: { psychpop: 0.25, minimalism: 0.25, funk: 0.2, cologneschool: 0.15, zodiak: 0.1 },
       wants: [],
       instr: ["clean_guitar", "percussive_organ"],
       drumkit: "room",
@@ -20614,6 +21348,9 @@
     // PAID 2026-08-29, the debts round: both wants — Cologne 1956
     // for the doctrine, Berlin 1968 for the room: Schnitzler and
     // Roedelius OPENED the Zodiak, so the edge is autobiography.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 5 declared shares summed to 1.40, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: drone .40→.30, psychpop .30→.20, minimalism .30→.20, cologneschool .20→.15, zodiak .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     berlinschool: {
       label: "Berlin 1972",
       voices: 2,
@@ -20622,7 +21359,7 @@
       seqArp: "arpturn",
       plan: "arc",
       bpm: 96,
-      parents: { drone: 0.4, psychpop: 0.3, minimalism: 0.3, cologneschool: 0.2, zodiak: 0.2 },
+      parents: { drone: 0.3, psychpop: 0.2, minimalism: 0.2, cologneschool: 0.15, zodiak: 0.15 },
       wants: [],
       cannot: [
         "the side-long form — an Irrlicht movement is twenty minutes of one slow change, and " +
@@ -20810,6 +21547,21 @@
     //
     // WHO SINGS: falsetto — Summer's held head-voice coo,
     // deliberately weightless against the machine.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `funk` is the BASS AND THE FOUR ON THE FLOOR that Munich sequenced, and the
+    // vector reads a 1969 band against a 1977 machine. `dusseldorfschool` (1977) is
+    // offered as nearer and is the same year: Moroder and Kraftwerk are contemporaries
+    // who arrived at the sequencer separately, which is why `synthpop` declares BOTH of
+    // them and neither declares the other.
+    //
     eurodisco: {
       label: "Munich 1977",
       voices: 3,
@@ -20996,7 +21748,13 @@
     // IS electro with the sub brought forward and the party brought
     // back — and `dancehall`'s deejay half is real: Luke's chants
     // are sound-system practice via the Caribbean city Miami is.
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `drone` guest sat down on `slow_strings`, a recorded string section, over the 808 sub of "Throw the D". The car-trunk genre is the machine and nothing else. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
+    // THE BASS IS A MACHINE TOO (2026-09-03, the catalogue round, shift 3). `bassInstr: "bass_lead"`. Measured at seed 1 before it: this row's bass chair was the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR default, which every row without a `bassInstr` still gets. `bass_lead` is the one MODELLED bass in the eleven (its dsp is `tb303`; `synth_bass_1` and `synth_bass_2` are RECORDINGS of synth basses), which is why nine of this row's machine neighbours already name it. The row's own first sentence is "the 808's sub oscillator tuned into a BASSLINE" — the whole genre is its bass, and it was a double bass in a room. This is the flattest contradiction between a comment and a chair in the table.
+    //
     miamibass: {
+      bassInstr: "bass_lead",
       label: "Miami 1986",
       voices: 2,
       bars: 8,
@@ -21011,6 +21769,7 @@
         "half (the `declared but never arriving' law: measure, never trust a slider)"
       ],
       instr: ["square_lead", "polysynth"],
+      guests: "native",
       drumkit: "tr808",
       entry: v => v,
       reg: v => (v === 0 ? 1 : -1),
@@ -21161,6 +21920,9 @@
     // own flag) is drawn on it. The word below changes with the sound —
     // the hoover this row never actually played stays on `wants`, where
     // it has honestly lived all along.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.05, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: acid .35→.30. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     hardcorerave: {
       bassInstr: "bass_lead",
       instrumental: true,
@@ -21170,7 +21932,7 @@
       near: "bigbeat",
       plan: "dance",
       bpm: 138,
-      parents: { acid: 0.35, techno: 0.3, dub: 0.2, amenbreak: 0.2 },
+      parents: { acid: 0.3, techno: 0.3, dub: 0.2, amenbreak: 0.2 },
       wants: ["belgian hoover techno"],
       instr: ["saw_wave", "orchestra_hit"],
       drumkit: "electronic",
@@ -21238,6 +22000,9 @@
     // Angeles 1975) is the slow-jam radio the melodies whisper.
     // PAID 2026-08-29, the debts round: "p-funk by name" is `psychfunk`
     // (Detroit 1975) — Dre's harmonic book, named at last.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.15, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: funk .45→.40, electro .30→.25, psychfunk .25→.20. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     gfunk: {
       label: "Los Angeles 1992",
       voices: 3,
@@ -21245,7 +22010,7 @@
       near: "boombap",
       plan: "song",
       bpm: 96,
-      parents: { funk: 0.45, electro: 0.3, quietstorm: 0.15, psychfunk: 0.25 },
+      parents: { funk: 0.4, electro: 0.25, quietstorm: 0.15, psychfunk: 0.2 },
       wants: ["zapp's talk box"],
       cannot: [
         "the portamento — the whine's GLIDE between notes is the lead's whole identity and deg " +
@@ -22123,6 +22888,24 @@
     //
     // WHO SINGS: the belter — a patter baritone projects to
     // the gallery or the joke dies in row F.
+    //
+    // "the ballad opera (the beggar's opera)" REFUSED AS A PARENT EDGE 2026-09-03, and
+    // the want stays. The QA report's want→row pass proposed paying it with `ballad`
+    // (London 1666) on a string match, and the two are not the same claim. A want is
+    // "an ancestor in its own name" — a genre this table has not got — and BALLAD OPERA
+    // is one: The Beggar's Opera (Lincoln's Inn Fields, 29 January 1728) is a STAGE
+    // FORM, sixty-nine airs with new words on them, spoken dialogue between, and a
+    // whole satirical apparatus that the unaccompanied singer of 1666 does not contain.
+    // `ballad` is the repertory those airs were taken FROM, which is why `deltablues`
+    // can be paid with it on the same day and this row cannot: the songster's stock IS
+    // the ballad, and the ballad opera is a theatre built on top of it.
+    // THE TEST THE CATALOGUE ALREADY USES: pay a want with a row only where the row is
+    // the thing the want names, not the thing the want is made of. Paying here would
+    // put a lone voice in a Southwark room at the head of Gilbert and Sullivan, and the
+    // next reader would believe it. If a `balladopera` row is ever written, this row
+    // takes it; until then the want is the honest answer and the shopping order keeps
+    // its entry.
+    //
     operetta: {
       label: "London 1878",
       voices: 3,
@@ -22174,6 +22957,21 @@
     // LINEAGE: `ballad` (London 1666) is the strophic tune-and-tale
     // the halls industrialized; the song-and-supper rooms between
     // them are a venue trade with no anchorable record, named below.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `ballad` is the SONG STOCK and the strophic form the halls sang, and the vector
+    // reads an unaccompanied 1666 voice against a room with a piano in it. `operetta`
+    // (1878) is offered as nearer and the two are neighbours rather than ancestors:
+    // London's light theatre and London's song-and-supper rooms grew beside each other,
+    // and this table has already refused to make one the parent of the other.
+    //
     musichall: {
       label: "London 1892",
       voices: 2,
@@ -22229,6 +23027,21 @@
     //
     // Development is nearly zero ON PURPOSE — the piece's whole
     // doctrine; one rotation is all the tune ever concedes.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `gregorian` is called far and it is the MODEL: Satie's furniture music is plain
+    // chant's function — sound that fills a room and is not attended to — moved into a
+    // salon. The vector scores a 1917 piano against a 900 chant on tempo and kit
+    // density, which is the one comparison that cannot carry a claim about attention.
+    // `belcanto` (1831) is offered as nearer on a shared arc plan.
+    //
     furnituremusic: {
       instrumental: true,
       label: "Paris 1888",
@@ -22887,6 +23700,17 @@
     // studied under Beuys and points at Fluxus, which is drone's
     // own downtown; `psychrock` (San Francisco 1966) the rock
     // permission the room ran on.
+    //
+    // `cologneschool` PAID AS A PARENT 2026-09-03 (Cologne 1956), 0.2 — the QA report's
+    // `closest` pass found the hole and it is a real one. THE MEASUREMENT: `krautrock`,
+    // `berlinschool` and `dusseldorfschool` all declare `cologneschool`, and this row —
+    // the Zodiak Free Arts Lab, the ROOM those three came out of, where Schnitzler,
+    // Roedelius and Moebius met in 1968 — did not. The WDR studio is the German
+    // electronic ancestor and Zodiak is where its methods reached a stage; leaving the
+    // edge off put the parent above the children and not above the room. The shares now
+    // sum to 0.90 and the row keeps a tenth of itself, which is right for a place whose
+    // whole claim is that nobody had done it in a club before.
+    //
     zodiak: {
       label: "Berlin 1968",
       voices: 2,
@@ -22894,7 +23718,7 @@
       near: "berlinschool",
       plan: "arc",
       bpm: 84,
-      parents: { drone: 0.4, psychrock: 0.3 },
+      parents: { drone: 0.4, psychrock: 0.3, cologneschool: 0.2 },
       wants: ["fluxus and beuys' düsseldorf class"],
       cannot: [
         "the all-nightness — a Zodiak set was hours of collective improvisation with the door " +
@@ -23326,7 +24150,26 @@
     // "exotica (martin denny's quiet village)" PAID 2026-08-30
     // (Honolulu 1957, the coastline re-bake that let the dot stand
     // on Oahu): Firecracker is a Denny cover and the edge says so.
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `counterpoint` guest sat down on a SAMPLED HARPSICHORD over an MC-8. YMO's answer to Düsseldorf was a microprocessor sequencer; the counter-line belongs on it. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
+    // THE BASS IS A MACHINE TOO (2026-09-03, the catalogue round, shift 3). `bassInstr: "bass_lead"`. Measured at seed 1 before it: this row's bass chair was the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR default, which every row without a `bassInstr` still gets. `bass_lead` is the one MODELLED bass in the eleven (its dsp is `tb303`; `synth_bass_1` and `synth_bass_2` are RECORDINGS of synth basses), which is why nine of this row's machine neighbours already name it. YMO's bass on the first record is Hosono on a Rhodes bass and a Moog under an MC-8 — a sequenced synthesiser, which is the argument of the whole row.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `disco` is the FLOOR under the sequencer — the reason YMO is dance music and not
+    // a studio experiment — and the vector reads a 1975 band against a 1978 machine.
+    // `beatgroup` (1962) is offered as nearer on tempo and major mode; YMO covered
+    // Martin Denny, not the Beatles.
+    //
     technopop: {
+      bassInstr: "bass_lead",
       label: "Tokyo 1978",
       voices: 2,
       bars: 8,
@@ -23336,6 +24179,7 @@
       parents: { dusseldorfschool: 0.4, disco: 0.25, exotica: 0.15 },
       wants: [],
       instr: ["square_lead", "electric_piano"],
+      guests: "native",
       drumkit: "tr808",
       entry: v => (v === 0 ? 0 : 2),
       reg: v => (v === 0 ? 1 : 0),
@@ -23507,6 +24351,16 @@
     // //   board's `surface` dial (ui/engineer.js, 2026-08-31) is where
     // //   the choice belongs. The engine path stays wired and gated;
     // //   what leaves is the ROW declaring it for you.
+    //
+    // `blockparty` PAID AS A PARENT 2026-09-03 (Bronx 1973), 0.2 — the QA report's
+    // `closest` pass named it and the hole was real: THIS ROW HAD NO HIP-HOP PARENT AT
+    // ALL. Blue Lines is a slowed hip-hop breakbeat with a sung line over it, and the
+    // row declared `dub` (the space), `electro` (the machine) and `quietstorm` (the
+    // singing) and nothing for the BEAT ITSELF. The Wild Bunch — this row's own first
+    // want — was a sound system that played hip hop over Bristol, so the ancestor was
+    // already named in prose and not in keys. 0.2 rather than more because what Bristol
+    // took is the break and the pause, not New York's rapping. Shares now sum to 0.95.
+    //
     triphop: {
       label: "Bristol 1991",
       voices: 3,
@@ -23514,7 +24368,7 @@
       near: "boombap",
       plan: "song",
       bpm: 84,
-      parents: { dub: 0.35, electro: 0.25, quietstorm: 0.15 },
+      parents: { dub: 0.35, electro: 0.25, quietstorm: 0.15, blockparty: 0.2 },
       wants: ["the wild bunch sound system itself", "rare groove"],
       instr: ["solo_vox", "strings", "electric_piano"],
       drumkit: "electronic",
@@ -23654,7 +24508,13 @@
     // round — and the OTHER remembered thing landed the same day:
     // `copshowsynth` (Miami 1984), the mood synth this genre spends its
     // whole life quoting. Both edges dated, the organum precedent.
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `counterpoint` guest sat down on a SAMPLED HARPSICHORD under "Nightcall" — a record whose whole subject is the 1980s remembered AS SYNTHESISERS. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
+    // THE BASS IS A MACHINE TOO (2026-09-03, the catalogue round, shift 3). `bassInstr: "bass_lead"`. Measured at seed 1 before it: this row's bass chair was the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR default, which every row without a `bassInstr` still gets. `bass_lead` is the one MODELLED bass in the eleven (its dsp is `tb303`; `synth_bass_1` and `synth_bass_2` are RECORDINGS of synth basses), which is why nine of this row's machine neighbours already name it. "Nightcall" is Moroder remembered — the sequenced bass IS the remembering. An upright on it would be the one sound the record is not about.
+    //
     synthwave: {
+      bassInstr: "bass_lead",
       label: "Paris 2010",
       voices: 2,
       bars: 8,
@@ -23665,6 +24525,7 @@
       parents: { eurodisco: 0.35, italodisco: 0.25, horrorsynth: 0.2, copshowsynth: 0.2 },
       wants: [],
       instr: ["saw_wave", "warm_pad"],
+      guests: "native",
       drumkit: "tr808",
       entry: v => (v === 0 ? 0 : 2),
       reg: v => (v === 0 ? 0 : -1),
@@ -25658,7 +26519,13 @@
     // distinct pitches, so every note of the phrase is a different voice
     // and none of them is silent. The day the vx_* rows are repointed at
     // the 72 copies already sitting in `found/`, this becomes one word.
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `drone` guest sat down on `slow_strings`, a recorded string section, under Skinny Puppy's 808 and sampler-noise. Vancouver 1986 has drones and none of them came off a string bench. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
+    // THE BASS IS A MACHINE TOO (2026-09-03, the catalogue round, shift 3). `bassInstr: "bass_lead"`. Measured at seed 1 before it: this row's bass chair was the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR default, which every row without a `bassInstr` still gets. `bass_lead` is the one MODELLED bass in the eleven (its dsp is `tb303`; `synth_bass_1` and `synth_bass_2` are RECORDINGS of synth basses), which is why nine of this row's machine neighbours already name it. Skinny Puppy's bass is a sequenced sub under the sampler. Vancouver 1986 had a Prophet and an 808 in the room and no double bass in it.
+    //
     electroindustrial: {
+      bassInstr: "bass_lead",
       label: "Vancouver 1986",
       voices: 3,
       bars: 8,
@@ -25668,6 +26535,7 @@
       parents: { industrialdance: 0.4, postpunk: 0.3, dusseldorfschool: 0.3 },
       wants: [],
       instr: ["saw_wave", "metal_pad", "found:collage:vocal_stab"],
+      guests: "native",
       drumkit: "tr808",
       entry: () => 0,
       reg: v => (v === 0 ? 0 : v === 1 ? -1 : 0),
@@ -25700,7 +26568,13 @@
     // nobody expects: a synth-pop record, on Arista, that the band spent the
     // rest of its life disowning. That is a different genre, so it is a
     // different row, and the pair is the "all the eras" he asked for.
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `counterpoint` guest sat down on a SAMPLED HARPSICHORD on With Sympathy — a record made of sequencers, and the era of Ministry that Paul asked for by name. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
+    // THE BASS IS A MACHINE TOO (2026-09-03, the catalogue round, shift 3). `bassInstr: "bass_lead"`. Measured at seed 1 before it: this row's bass chair was the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR default, which every row without a `bassInstr` still gets. `bass_lead` is the one MODELLED bass in the eleven (its dsp is `tb303`; `synth_bass_1` and `synth_bass_2` are RECORDINGS of synth basses), which is why nine of this row's machine neighbours already name it. With Sympathy is sequencers end to end; Ministry's first era has no bass player on it.
+    //
     electropop: {
+      bassInstr: "bass_lead",
       label: "Chicago 1983",
       voices: 3,
       bars: 8,
@@ -25710,6 +26584,7 @@
       parents: { synthpop: 0.5, newwave: 0.3, disco: 0.2 },
       wants: [],
       instr: ["solo_vox", "polysynth", "saw_wave"],
+      guests: "native",
       drumkit: "tr808",
       entry: v => v,
       reg: v => (v === 0 ? 1 : v === 1 ? -1 : 0),
@@ -25932,7 +26807,13 @@
     // four-on-the-floor built from a drum machine and a sequencer — a disco
     // record made by three people, which is why `disco` carries real weight
     // beside the synth-pop.
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `drone` guest sat down on `slow_strings`, a recorded string section, on a 909 record whose sustained chords are a Juno pad — Bronski Beat's own sound, and the fleet has that. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
+    // THE BASS IS A MACHINE TOO (2026-09-03, the catalogue round, shift 3). `bassInstr: "bass_lead"`. Measured at seed 1 before it: this row's bass chair was the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR default, which every row without a `bassInstr` still gets. `bass_lead` is the one MODELLED bass in the eleven (its dsp is `tb303`; `synth_bass_1` and `synth_bass_2` are RECORDINGS of synth basses), which is why nine of this row's machine neighbours already name it. Hi-NRG is the octave-jumping sequenced bassline and nothing else; it is the one feature the genre is named for after the tempo.
+    //
     hinrg: {
+      bassInstr: "bass_lead",
       label: "Brixton 1984",
       voices: 3,
       bars: 8,
@@ -25942,6 +26823,7 @@
       parents: { synthpop: 0.4, disco: 0.35, newwave: 0.25 },
       wants: [],
       instr: ["solo_vox", "polysynth", "saw_wave"],
+      guests: "native",
       drumkit: "tr909",
       entry: () => 0,
       reg: v => (v === 0 ? 2 : v === 1 ? -1 : 0),
@@ -26228,6 +27110,9 @@
     // THE TOM BEAT IS THE GENRE: kick and floor tom trading the bar
     // while the snare cracks the backbeat — the "tribal" lane every
     // description of this scene reaches for.
+    //
+    // WEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.10, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: punk .45→.35. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.
+    //
     deathrock: {
       label: "Pomona 1982",
       voices: 2,
@@ -26235,7 +27120,7 @@
       near: "gothicrock",
       plan: "song",
       bpm: 148,
-      parents: { punk: 0.45, glam: 0.25, gothicrock: 0.2, horrorsynth: 0.2 },
+      parents: { punk: 0.35, glam: 0.25, gothicrock: 0.2, horrorsynth: 0.2 },
       wants: [],
       instr: ["overdrive_guitar", "clean_guitar"],
       drumkit: "room",
@@ -26406,6 +27291,20 @@
     //
     // the Doktor: a machine floor in a band family — dead straight,
     // every bar the same, which is what the DYNAMICS row below says.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `motorik` is the DRUM MACHINE PATTERN — the Sisters' Doktor Avalanche running a
+    // Neu! eighth-note pulse under a baritone — and the vector reads a 1971 German
+    // instrumental against a 1982 goth record. `khmerrock` (1970) is offered as nearer
+    // on a shared reverb-guitar and minor mode, from the other side of the world.
+    //
     leedsgoth: {
       label: "York 1981",
       voices: 2,
@@ -26555,6 +27454,29 @@
     // screwed, and `chopped` (Houston 1995) carries the drag;
     // `drone` is the noise floor, `gothicrock` the eyeliner the
     // scene wore on purpose. Crunk — the hat grid — is the want.
+    //
+    // "crunk" PAID 2026-09-03 (Memphis 1997), 0.15 — the last want on this row, and it
+    // was never a want for a music the table lacked: `crunk` has been an anchor since
+    // the trap round, and this row's own comment already says what it takes from it
+    // ("crunk's hi-hats at half time"). Salem's King Night is Three 6 Mafia's stomp
+    // slowed under gothic weather; the drag is `chopped`'s and the eyeliner
+    // `gothicrock`'s, but the HI-HAT PATTERN — the triplet roll at half speed — comes
+    // off "Tear da Club Up '97" and nowhere else in this lineage. 0.15 because it is
+    // one figure and not the record's frame.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `drone` and `gothicrock` are the weather and the eyeliner, and neither is a
+    // number: the vector reads tempo and kit and puts a 1969 drone row and a 1979 goth
+    // row a long way from a 2010 record. `tromso` (2001) is offered as nearer — an
+    // ambient-techno row that shares a slow tempo and a cold pad and no history.
+    //
     witchhouse: {
       label: "Traverse City 2010",
       voices: 2,
@@ -26562,8 +27484,8 @@
       near: "chopped",
       plan: "dance",
       bpm: 72,
-      parents: { chopped: 0.4, drone: 0.2, gothicrock: 0.15 },
-      wants: ["crunk"],
+      parents: { chopped: 0.4, drone: 0.2, gothicrock: 0.15, crunk: 0.15 },
+      wants: [],
       instr: ["warm_pad", "saw_wave"],
       drumkit: "tr808",
       entry: v => v,
@@ -26770,6 +27692,20 @@
     // one year this row's senior — the Muñequitos' first LP): the
     // hand-drum conversation a descarga is trying to have with a
     // rhythm section.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `rumba` is the CLAVE and the call-and-response that the jam is built on, and the
+    // vector reads a 1930s drum-and-voice music against a 1957 horn jam on kit density.
+    // `ragtime` (1899) is offered as nearer on a shared syncopation, which is where two
+    // musics of the Americas start rather than where they meet.
+    //
     descarga: {
       instrumental: true,
       label: "Havana 1957",
@@ -27067,6 +28003,20 @@
     // exactly why `harmony: "modal"` is right here and exactly why the scale had
     // to BE the mode. `modaljazz` (New York 1959) took this same repair earlier in
     // this shift; the child now plays its parent's alphabet.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `nordicfolk` is the TUNE AND THE TUNING — the kulning line and the flattened
+    // fifth that make this jazz Nordic — and the vector reads an unaccompanied herding
+    // call against a piano trio. `indojazz` (1966) is offered as nearer, which is two
+    // hybrids of the same decade meeting at the same tempo.
+    //
     nordicjazz: {
       instrumental: true,
       label: "Oslo 1970",
@@ -27248,6 +28198,20 @@
     // shift 2; test/precompose.test.js G14b).
     // London 1988 — this row's own place and year. Modal, and SCALES.blues has no
     // sixth for dorian to be named after. Full ruling at `holler`.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `jazz` and `house` are called far and they are the two ends this row welds: a
+    // jazz horn book over a house floor. Being far from BOTH parents is what a weld IS,
+    // and a vector that averages tempo and kit density will read the middle of two
+    // things as far from each.
+    //
     acidjazz: {
       label: "London 1988",
       voices: 3,
@@ -27785,6 +28749,20 @@
     // the v2 arm must MOVE — on this chair pitch chooses WHICH RECORD
     // speaks, so a static pitch is one loop and a rotated one is a
     // re-splice; verses splice differently
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `jazz` is the sample crate — the records DJ Shadow actually cut up — and a crate
+    // is invisible to a vector that reads the finished tempo and kit. `newsfanfare` is
+    // the library-music shelf beside it, same argument. `chillout` (1996) is offered as
+    // nearer and is the same year, the same shelf and a sibling, not an ancestor.
+    //
     instrumentalhiphop: {
       instrumental: true,
       label: "San Francisco 1996",
@@ -28356,6 +29334,20 @@
     // not have been a name for it. Its parent `ballad` (London 1666) genuinely is
     // dorian and now sings it — this row is the gapped pentatonic descendant and
     // says so instead of borrowing the parent's word.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `scotsfiddle` is called far and it is the TUNE STOCK — the strathspeys and reels
+    // the bow carried across, which is the row's whole claim. A vector reading tempo
+    // and mode cannot see a repertory. `doina` (1912) is offered as nearer on a free
+    // modal line, which two mountain musics can arrive at without meeting.
+    //
     appalachia: {
       label: "Hot Springs 1916",
       voices: 1,
@@ -29451,6 +30443,21 @@
     // exactly this shelf, and the edge now says so.
     //
     // a title theme — the picture's name is the lyric
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `swing` and `jazz` are the BAND — a big band with a rhythm section, which is what
+    // Barry's Bond sound is under the twang — and the vector reads a score's arc plan
+    // and low kit density as distance from a dance music. `horrorscore` (1958) is
+    // offered as nearer and it is nearer IN SOUND, because both are studio orchestras
+    // written to frighten; kinship is not a shared mood.
+    //
     spyscore: {
       instrumental: true,
       label: "London 1962",
@@ -29559,6 +30566,21 @@
     // the phrase leans while the grid does not.
     //
     // an incidental cue — the dialogue sits where the singer would
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `jazz` at 0.1 is the smallest weight on the row and it is the RHYTHM SECTION —
+    // the fusion bench Jan Hammer came off, which this row's own want names outright.
+    // A tenth of a row cannot be measured by a vector at all. `spaghettiwestern` (1966)
+    // is offered as nearer: Morricone and Miami Vice share a lone lead line over wide
+    // space and nothing else.
+    //
     copshowsynth: {
       instrumental: true,
       label: "Miami 1984",
@@ -30017,6 +31039,20 @@
     // and states none of them; the row is modal on top of that, so `mode` reached
     // nothing twice over. The field now names the minor side the row actually
     // sounds, and the chromatic alphabet is untouched.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: all three parents are called far and all three are the same fact said at three
+    // widths: this is a big band writing to picture. What the vector reads is a score's
+    // arc plan and a low kit density against three dance musics — the departure IS the
+    // picture, and the picture has no column.
+    //
     crimejazz: {
       instrumental: true,
       label: "Los Angeles 1955",
@@ -30075,6 +31111,20 @@
     // lane l alone, the crash saved for the fill bar.
     //
     // a picture score — the dialogue is in Elvish anyway
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `irishtrad` is the TUNE SHAPE — the modal jig and air a fantasy score reaches for
+    // whenever it wants elsewhere — and the vector reads an acoustic session band
+    // against an orchestra. `copshowsynth` (1984) is offered as nearer, which is two
+    // screen musics sharing an arc plan and nothing else.
+    //
     fantasyscore: {
       instrumental: true,
       label: "Wellington 2001",
@@ -30182,6 +31232,20 @@
     // the score asks questions the dialogue avoids
     //
     // minimalism's looped cell
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `ambient` and `furnituremusic` are the INTENT — music written to be under
+    // something else, which is this row's entire subject and has no column in a vector
+    // of tempo and kit. `crimejazz` (1955) is offered as nearer because both are
+    // orchestras written to picture; that is a job the two share, not a descent.
+    //
     dramascore: {
       instrumental: true,
       label: "Los Angeles 1999",
@@ -30478,6 +31542,20 @@
     //
     // the wahda, firqa's own spelling: dum on 1, tak answering, the riq's
     // jingle on the rim
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `taqsim` at 0.5 is the largest weight on the row and it is the MELODIC METHOD —
+    // the improvised modal exposition the whole wasla is built around — and the vector
+    // reads a solo instrumental against an orchestra with a singer on kit density.
+    // `zajal` (1150) was offered before the age filter, eight centuries away.
+    //
     tarab: {
       label: "Cairo 1934",
       voices: 4,
@@ -31722,6 +32800,20 @@
     // record. Voices and drums and nothing else: no bass (`nobass: true`), no
     // chords (`harmony: "modal"`), so `mode` had neither a root nor a bass line to
     // colour. SCALES.majpent has a major third and no seventh; ionian is its mode.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `son` is called far and it is the CLAVE, which the vector has no column for: it
+    // reads a guitar-led song form against a drum-and-voice music and scores the
+    // difference in kit density. `carnatic` (1935) is offered as nearer — two
+    // percussion-and-voice traditions with no contact and no shared repertory.
+    //
     rumba: {
       label: "Matanzas 1956",
       voices: 2,
@@ -32959,6 +34051,21 @@
     // chord was NOT bolted on to rescue the word: funk rock does not play one, and
     // inventing a root to justify a label is the failure this check exists to
     // catch, not a way to pass it.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `funk` and `psychfunk` are the BASS AND THE DRUMS — the sixteenth-note slap and
+    // the one, which is what this music is — and the vector reads a rock tempo and a
+    // rock kit as distance from both. `acidrock` (1967) is offered as nearer; Hendrix's
+    // guitar is genuinely in this lineage, and it arrives through `psychfunk`, which is
+    // already declared, rather than as a second edge to the same fact.
+    //
     funkrock: {
       label: "Los Angeles 1984",
       near: "psychfunk",
@@ -33178,6 +34285,20 @@
     // Angeles 1965) is that chime's row, and `janglepop` takes the same edge
     // at its own line. The share comes out of `psychpop`, which was the
     // nearest thing in the table to a jangle and is not one.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `folkduo` is the TWO VOICES and the acoustic jangle underneath the amplifiers,
+    // and the vector scores a 1964 acoustic duo against a 1983 guitar band on kit
+    // density. `musichallrock` (1966) is offered as nearer; the Kinks are Britpop's
+    // ancestor in this table, not Athens's.
+    //
     collegerock: {
       label: "Athens 1983",
       near: "janglepop",
@@ -33234,6 +34355,20 @@
     // before it was this; `heavymetal` (Workington 1969) is the riff the
     // record samples whole; `electro` (New York 1982) is the 808 itself,
     // four years and one label earlier in the same city.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `blockparty` is the RAPPING — the Beastie Boys are a hardcore band that learned
+    // to rap, and the rapping is the half the vector cannot read, because a vector of
+    // tempo and kit hears only the guitars. `batcave` (1982) is offered as nearer on a
+    // shared machine and tempo.
+    //
     raprock: {
       label: "New York 1986",
       near: "electro",
@@ -33293,6 +34428,20 @@
     // York did not have; `gfunk` (Los Angeles 1992) is the sung hook over
     // a rapped verse; `miamibass` (Miami 1986) is the 808 sub coming up
     // the coast; `blockparty` (Bronx 1973) is the root of all of it.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `funk` is the SAMPLE SOURCE and the bounce, and a crate is invisible to a vector
+    // that reads the finished 808. `newjackswing` (1987) is offered as nearer on a
+    // shared swung sixteenth; New Jack is New York's, and this row's argument is that
+    // the South did not learn its bounce there.
+    //
     southernhiphop: {
       label: "Atlanta 1996",
       near: "boombap",
@@ -33365,6 +34514,20 @@
     //
     // THE VOCAL CHOP IS AN INSTRUMENT on this record and the found crate
     // already holds one: a stab of somebody singing, played as a part.
+    //
+    // CLOSEST, ANSWERED 2026-09-03 (the catalogue round, shift 3). The QA report's
+    // `closest` column ranks each declared parent against every older row by a FEATURE
+    // VECTOR — bpm, swing, major/minor, kit density, harmony kind, plan, nobass,
+    // instrumental, family — and calls a parent sitting in the further half of that
+    // ranking suspect. The vector has no term for the thing a child actually TAKES
+    // from a parent, so an ancestor the record deliberately departs from ranks far by
+    // construction, and the catalogue's trunk rows — funk, jazz, swing, ballad,
+    // ambient, punk, drone, gregorian — rank far from nearly every leaf they grew.
+    // THE PARENTS ON THIS ROW STAND. What the vector cannot see: `miamibass` is the programming — the 808 under Timbaland's swing — and the vector
+    // reads a 1986 party record against a 1997 ballad tempo. `psychsoul` (1973) is
+    // offered as nearer on a shared soul family and a shared warmth, which is a
+    // resemblance the row's own singers would recognise and did not descend from.
+    //
     contemporaryrnb: {
       label: "Virginia Beach 1997",
       near: "hiphopsoul",
@@ -33432,7 +34595,13 @@
     // the parent that separates this from every other floor record here;
     // `hardcorerave` (Essex 1991) is the riser and the breakdown;
     // `eurodisco` (Munich 1977) is the sequenced bass under a melody.
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `drone` guest sat down on `slow_strings`, a RECORDING of a string section — the one sound trance is most often accused of and never actually made: "45 RPM"'s sustained chords are a polysynth under a filter, which is exactly what the fleet's pad is. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
+    // THE BASS IS A MACHINE TOO (2026-09-03, the catalogue round, shift 3). `bassInstr: "bass_lead"`. Measured at seed 1 before it: this row's bass chair was the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR default, which every row without a `bassInstr` still gets. `bass_lead` is the one MODELLED bass in the eleven (its dsp is `tb303`; `synth_bass_1` and `synth_bass_2` are RECORDINGS of synth basses), which is why nine of this row's machine neighbours already name it. "45 RPM"'s bass is the row's own measurement — 9485639464846483, "rolling sixteenths, never resting". No upright plays that for six minutes; a sequenced mono synth does, and that is what the corpus's 259 files are playing.
+    //
     trance: {
+      bassInstr: "bass_lead",
       label: "Berlin 1994",
       near: "melodictechno",
       bars: 8,
@@ -33448,6 +34617,7 @@
       },
       wants: [],
       instr: ["saw_wave", "polysynth"],
+      guests: "native",
       drumkit: "tr909",
       entry: v => v * 4,
       reg: v => v,
@@ -33934,7 +35104,13 @@
     // rest of the block is untouched — it is the fallback the patch table
     // reads if a hand clears the signature synth above, and it already
     // said square.
+    //
+    // GUESTS ARE NATIVE (2026-09-03, the catalogue round, shift 3). `guests: "native"` — precompose.js DOOR 3, and the row declares it because nothing may infer it. MEASURED at seed 1 before it: the `counterpoint` guest sat down on a SAMPLED HARPSICHORD on a five-channel chip record. Paul's own catch on this row was "Chiptune sounds very organic! Instead of like a SID chip!" — this is the last chair that was doing it. Super Mario Bros. has five pitched voices and every one of them is an oscillator. The guest brings its LINE and not its recording (ui/derive.js:123); the fleet plays the line. A SINGER IS UNTOUCHED — `solo_vox` and `ahh_choir` are modelled throats and not recordings, the door reads `sampledId` and never sees them, so a machine record that hires a voice still has one.
+    //
+    // THE BASS IS A MACHINE TOO (2026-09-03, the catalogue round, shift 3). `bassInstr: "bass_lead"`. Measured at seed 1 before it: this row's bass chair was the SAMPLED RECORDED UPRIGHT — `plan.js castOf`'s BASS_INSTR default, which every row without a `bassInstr` still gets. `bass_lead` is the one MODELLED bass in the eleven (its dsp is `tb303`; `synth_bass_1` and `synth_bass_2` are RECORDINGS of synth basses), which is why nine of this row's machine neighbours already name it. A five-channel chip record has no bass player and no bass recording: its low voice is a pulse channel, one oscillator among the five. `bass_lead` is the nearest thing the fleet models — a mono synth with a filter — and it is a great deal nearer than a microphone in front of a double bass. NAMED AS THE COMPROMISE IT IS: the honest id would be a square wave with no filter at all, and BASSCHOICES has no such entry today.
+    //
     chiptune: {
+      bassInstr: "bass_lead",
       instrumental: true,
       synth: {
         dsp: "supersaw",
@@ -33961,6 +35137,7 @@
       wants: [],
       kit: {},
       instr: ["square_lead", "square_lead", "saw_wave"],
+      guests: "native",
       voices: 3,
       entry: v => v * 2,
       reg: v => 1 - v,

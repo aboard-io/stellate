@@ -1,14 +1,14 @@
 {
-  "note": "DEATH METAL. The genre is two techniques, and both of them are operators\nthis kernel already had. TREMOLO PICKING is `fill(1)` — every step gated,\none continuous sixteenth-note wall — and it is the whole guitar sound;\nnothing else in this table sets every gate on purpose. The BLAST BEAT is\nthe same idea on the kit: kick and snare alternating at the eighth, hats\nthrough it, no space anywhere. Locrian, because the flat five is not a\npassing tone here, it is the tonic chord.\n\nnamed \"Tampa 1990\" — the Morrisound era: blast beats ridden on the\ncymbal and tremolo-picked walls are the Florida school's two techniques.\n\nLINEAGE: the blast beat is hardcore's D-beat run past its limit and\nthe riff wall is rock's language forced chromatic — but the actual\nparents, thrash and the NWOBHM it fed on, are the missing rungs of\nthe metal ladder.\nPAID 2026-08-29, the debts round: both wants — \"nwobhm\" is\n`nwobhm` (London 1980) and \"thrash metal\" is `thrash` (San\nFrancisco 1983): the row waited twenty years for parents that\nare its actual parents, and `heavymetal` (Workington 1969) now\nstands behind both.\n\nlocrian: the ♭5 is home\n\nthe blast\n\nA BLAST BEAT IS RIDDEN, NOT HATTED. The right hand is on the\ncymbal for the whole bar because at this speed there is nowhere\nelse for it to be — and it is ONE hand, so the sixteenth hats\nit used to play at the same time were a second drummer.\n\nbar 8: it doubles",
+  "note": "DEATH METAL. The genre is two techniques, and both of them are operators\nthis kernel already had. TREMOLO PICKING is `fill(1)` — every step gated,\none continuous sixteenth-note wall — and it is the whole guitar sound;\nnothing else in this table sets every gate on purpose. The BLAST BEAT is\nthe same idea on the kit: kick and snare alternating at the eighth, hats\nthrough it, no space anywhere. Locrian, because the flat five is not a\npassing tone here, it is the tonic chord.\n\nnamed \"Tampa 1990\" — the Morrisound era: blast beats ridden on the\ncymbal and tremolo-picked walls are the Florida school's two techniques.\n\nLINEAGE: the blast beat is hardcore's D-beat run past its limit and\nthe riff wall is rock's language forced chromatic — but the actual\nparents, thrash and the NWOBHM it fed on, are the missing rungs of\nthe metal ladder.\nPAID 2026-08-29, the debts round: both wants — \"nwobhm\" is\n`nwobhm` (London 1980) and \"thrash metal\" is `thrash` (San\nFrancisco 1983): the row waited twenty years for parents that\nare its actual parents, and `heavymetal` (Workington 1969) now\nstands behind both.\n\nlocrian: the ♭5 is home\n\nthe blast\n\nA BLAST BEAT IS RIDDEN, NOT HATTED. The right hand is on the\ncymbal for the whole bar because at this speed there is nowhere\nelse for it to be — and it is ONE hand, so the sixteenth hats\nit used to play at the same time were a second drummer.\n\nbar 8: it doubles\n\nWEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.45, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: punk .55→.40, rock .45→.30, nwobhm .25→.15, thrash .20→.15. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.\n",
   "label": "Tampa 1990",
   "bars": 8,
   "plan": "song",
   "bpm": 158,
   "parents": {
-    "punk": 0.55,
-    "rock": 0.45,
-    "nwobhm": 0.25,
-    "thrash": 0.2
+    "punk": 0.4,
+    "rock": 0.3,
+    "nwobhm": 0.15,
+    "thrash": 0.15
   },
   "wants": [],
   "instr": "distortion_guitar",

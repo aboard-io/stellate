@@ -1,5 +1,5 @@
 {
-  "note": "POST ROCK. The genre is a SHAPE, not a harmony: one figure, arriving one\nvoice at a time over eight bars, on a delay long enough that the\narpeggio plays against itself. So the harmony is the plainest thing in\nthe table — i VI iv v, four chords anyone would write — and everything\nthat makes it what it is lives elsewhere: half speed, legato, staggered\nentries, a reverb you could lose an afternoon in, and the dotted-eighth\necho that IS the guitar sound, asked for by name.\n\nnamed \"Austin 2003\" — dotted-eighth echo on clean guitars arriving one\nat a time is Explosions in the Sky; Glasgow 1997 was the other claimant.\n\nan arc by construction — it is one crescendo\n\nLINEAGE: a rock band playing ambient's material — guitars, bass and\ndrums refusing the song in favour of the arc — through shoegaze's\nwall of reverb; the motorik patience underneath is krautrock's, still\nowed, and the additive build is minimalism's, which is anchored now.\nIts 0.15 comes off shoegaze (which was standing in for an\narrival-shape it does not own — its claim is the wall) and off\nambient, itself downstream of the same source; rock is untouched.\n\"krautrock\" PAID 2026-08-29 (Cologne 1971): the steady-state\ngroove under a post-rock crescendo is Can's practice cited by\nname in every interview the genre ever gave.\n\ni VI iv v",
+  "note": "POST ROCK. The genre is a SHAPE, not a harmony: one figure, arriving one\nvoice at a time over eight bars, on a delay long enough that the\narpeggio plays against itself. So the harmony is the plainest thing in\nthe table — i VI iv v, four chords anyone would write — and everything\nthat makes it what it is lives elsewhere: half speed, legato, staggered\nentries, a reverb you could lose an afternoon in, and the dotted-eighth\necho that IS the guitar sound, asked for by name.\n\nnamed \"Austin 2003\" — dotted-eighth echo on clean guitars arriving one\nat a time is Explosions in the Sky; Glasgow 1997 was the other claimant.\n\nan arc by construction — it is one crescendo\n\nLINEAGE: a rock band playing ambient's material — guitars, bass and\ndrums refusing the song in favour of the arc — through shoegaze's\nwall of reverb; the motorik patience underneath is krautrock's, still\nowed, and the additive build is minimalism's, which is anchored now.\nIts 0.15 comes off shoegaze (which was standing in for an\narrival-shape it does not own — its claim is the wall) and off\nambient, itself downstream of the same source; rock is untouched.\n\"krautrock\" PAID 2026-08-29 (Cologne 1971): the steady-state\ngroove under a post-rock crescendo is Can's practice cited by\nname in every interview the genre ever gave.\n\ni VI iv v\n\n`spacerock` PAID AS A PARENT 2026-09-03 (London 1973), 0.15 — the QA report's\n`closest` pass found it and it is right. Explosions in the Sky's build is a GUITAR\nBAND playing one figure until it becomes an event, and the row that owns that is\nHawkwind's, not Eno's: `spacerock` is four people holding a riff for eight minutes\nin front of an audience, which is the shape post-rock inherited whole. The weight\ncomes off `ambient` (0.30 → 0.15), which was carrying it — ambient owns the\npatience and the reverb and does not own a band. THE SHARES STILL SUM TO 1.00.\nThe `closest` metric had this row at 0.40 and named `spacerock` outright: the one\nplace in this round where the feature vector was reading real kinship rather than\na coincidence of tempo.\n",
   "label": "Austin 2003",
   "rate": 0.5,
   "bars": 8,
@@ -7,11 +7,12 @@
   "plan": "arc",
   "bpm": 72,
   "parents": {
-    "ambient": 0.3,
+    "ambient": 0.15,
     "rock": 0.25,
     "krautrock": 0.2,
     "shoegaze": 0.15,
-    "minimalism": 0.1
+    "minimalism": 0.1,
+    "spacerock": 0.15
   },
   "wants": [],
   "instr": [

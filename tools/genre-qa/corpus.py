@@ -43,10 +43,20 @@ WHAT IS AN ESTIMATE AND SAYS SO
   · MELODY is corpus-db.js's extracted line, gated at mel_conf >= --min-conf.
     Files below the floor contribute drums and chords but no melodic number.
 """
-import argparse, json, os, sqlite3, struct, sys
+import argparse, json, os, re, sqlite3, struct, sys
 from collections import Counter, defaultdict
 
 REC = 11
+SQUASH = re.compile(r"[^a-z0-9]+")
+
+
+def squashable(term):
+    """Is this term safe to match with its separators removed? Only where it is
+    more than one word, every word is two characters or more, and the joined
+    form is six characters or longer — see the matcher's own comment."""
+    words = [w for w in SQUASH.split(term.strip().lower()) if w]
+    return (len(words) > 1 and all(len(w) >= 2 for w in words)
+            and len("".join(words)) >= 6)
 MAJOR = [0, 2, 4, 5, 7, 9, 11]
 MINOR = [0, 2, 3, 5, 7, 8, 10]
 
@@ -261,6 +271,22 @@ def main():
         "n_notes, mel_conf, feat FROM files").fetchall()
     print("corpus: %d files" % len(files), flush=True)
     lower = [(r[0], r[1], os.path.basename(r[2]).lower(), r) for r in files]
+    # A FILENAME SEPARATOR IS NOT A FACT ABOUT THE MUSIC. The matcher was a bare
+    # lowercase substring on the basename, so every multi-word term missed
+    # everything: `folk rock` is written Folk_Rock, Folk-Rock, FolkRock and
+    # folkrock on disk and never once with the space we search for. Squashing
+    # both sides to letters-and-digits finds all four. 2026-09-03.
+    #
+    # THE SQUASHED FORM IS USED FOR MULTI-WORD TERMS ONLY, and only where every
+    # word of the term is two letters or more and the joined form is at least
+    # six characters. Joining across a separator invents adjacencies
+    # (`disco_pop` becomes `discopop`), and a short needle is where that turns
+    # into a lie: `collegerock` cites exactly one act, `R.E.M.`, which squashes
+    # to `rem` and matched 3,424 files — every remix, dream and supreme in the
+    # archive. So an initialism is not a needle here, and the single-word pass
+    # stays exactly the substring test it was: no row's count moves for a
+    # reason nobody asked for.
+    squash = [(fid, rip, SQUASH.sub("", base), r) for fid, rip, base, r in lower]
     by_rip = defaultdict(list)
     for fid, rip, base, r in lower:
         by_rip[rip].append((fid, base, r))
@@ -276,11 +302,22 @@ def main():
                 hits += [(fid, r, t) for fid, base, r in by_rip.get(t, [])]
         elif strat in ("cited", "word", "word+act", "act"):
             needles = [t.lower() for t in terms]
-            for fid, rip, base, r in lower:
+            multi = sorted({SQUASH.sub("", nd): nd for nd in needles
+                            if squashable(nd)}.items())
+            for i, (fid, rip, base, r) in enumerate(lower):
+                got = None
                 for nd in needles:
                     if nd in base:
-                        hits.append((fid, r, nd))
+                        got = nd
                         break
+                if got is None and multi:
+                    sq = squash[i][2]
+                    for key, nd in multi:
+                        if key and key in sq:
+                            got = nd
+                            break
+                if got is not None:
+                    hits.append((fid, r, got))
         seen, uniq = set(), []
         for fid, r, t in hits:
             if fid in seen:

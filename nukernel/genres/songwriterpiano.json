@@ -1,15 +1,15 @@
 {
-  "note": "SONGWRITER PIANO [Carole King]. Motown's Brill Building changes, sung\nfrom the piano bench instead of cut for a girl group — gospel's\nchurch-chord piano hand underneath, crooner's plain, close vocal\ndelivery on top. The Brill Building factory itself, the actual room\nthis record was written in before it was one artist's own, is the\nmissing rung.\n\n82 is Tapestry counted slow\n\nPAID 2026-08-29, the debts round: \"brill building pop\" is\n`girlgroup` (New York 1960) — Tapestry is the cubicle writer stepping\nout front, which is this row's whole premise.\n\nWHO SINGS: the voice at the back of the room, out of the piano's way",
+  "note": "SONGWRITER PIANO [Carole King]. Motown's Brill Building changes, sung\nfrom the piano bench instead of cut for a girl group — gospel's\nchurch-chord piano hand underneath, crooner's plain, close vocal\ndelivery on top. The Brill Building factory itself, the actual room\nthis record was written in before it was one artist's own, is the\nmissing rung.\n\n82 is Tapestry counted slow\n\nPAID 2026-08-29, the debts round: \"brill building pop\" is\n`girlgroup` (New York 1960) — Tapestry is the cubicle writer stepping\nout front, which is this row's whole premise.\n\nWHO SINGS: the voice at the back of the room, out of the piano's way\n\nWEIGHTS RESCALED 2026-09-03 (the catalogue round, shift 3). This row's 4 declared shares summed to 1.25, and a row cannot be more than all of itself — the sum is a claim about how much of THIS record its named ancestors explain, so above 1 it is not a claim at all. Every RATIO here is the row's own and none of them moved; the total did, back onto the catalogue's own 0.05 grid: detroitsoul .40→.30, gospel .30→.25, crooner .30→.25, girlgroup .25→.20. The row now attributes 1.00 of itself and keeps nothing as its own invention. Rescaling to 1 rather than to something smaller is the conservative reading on purpose: it credits this row with the SMALLEST invention consistent with what it already said, so no residue is asserted that nobody argued for. GENRES.md §2, `parents`.\n",
   "label": "New York 1971",
   "bars": 8,
   "near": "crooner",
   "plan": "song",
   "bpm": 82,
   "parents": {
-    "detroitsoul": 0.4,
-    "gospel": 0.3,
-    "crooner": 0.3,
-    "girlgroup": 0.25
+    "detroitsoul": 0.3,
+    "gospel": 0.25,
+    "crooner": 0.25,
+    "girlgroup": 0.2
   },
   "wants": [],
   "instr": [

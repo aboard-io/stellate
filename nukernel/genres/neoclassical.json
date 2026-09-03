@@ -1,19 +1,18 @@
 {
-  "note": "---- THE SLOW ONES ---------------------------------------------------\n\nNEOCLASSICAL. Sustained strings holding one chord a bar while a piano\nfigure turns over them, and a second piano an octave up that does not\narrive until bar 5 — the entry IS the arrangement, and it is the only\ngesture the style really has. Eight bars of i-VI-III-VII, two bars each,\nbecause the whole point is that the progression is slower than the figure.\n\nnamed \"Berlin 2011\" — Nils Frahm's Felt: the anchor's instrument IS\nfelt_piano, and that record is Berlin, 2011.\n\nLINEAGE: Frahm is ambient's production values and drone's patience\napplied to a piano figure, with post-rock's slow-arrival arc; the\nparent that owns the FIGURE is minimalism, now anchored: Frahm's and\nRichter's left hand is a repeating cell turning over under a chord\nthat moves slower than it does, and its 0.2 comes almost entirely out\nof drone — declared at 0.3 and fitted at 0.00, the largest\ndeclared/fitted gap the table had. The romantic miniature (Satie,\nChopin's nocturnes) is still owed.\n\nTHE SENTENCE ABOVE IS THE CAST: \"sustained strings holding one chord\na bar while a piano figure turns over them, and a second piano an\noctave up\". Voice 0 is the pad chair, so it is the strings; the felt\npiano — still the anchor's own instrument — plays both figures.",
+  "note": "---- THE SLOW ONES ---------------------------------------------------\n\nNEOCLASSICAL. Sustained strings holding one chord a bar while a piano\nfigure turns over them, and a second piano an octave up that does not\narrive until bar 5 — the entry IS the arrangement, and it is the only\ngesture the style really has. Eight bars of i-VI-III-VII, two bars each,\nbecause the whole point is that the progression is slower than the figure.\n\nnamed \"Berlin 2011\" — Nils Frahm's Felt: the anchor's instrument IS\nfelt_piano, and that record is Berlin, 2011.\n\nLINEAGE: Frahm is ambient's production values and drone's patience\napplied to a piano figure, with post-rock's slow-arrival arc; the\nparent that owns the FIGURE is minimalism, now anchored: Frahm's and\nRichter's left hand is a repeating cell turning over under a chord\nthat moves slower than it does, and its 0.2 comes almost entirely out\nof drone — declared at 0.3 and fitted at 0.00, the largest\ndeclared/fitted gap the table had. The romantic miniature (Satie,\nChopin's nocturnes) is still owed.\n\nTHE SENTENCE ABOVE IS THE CAST: \"sustained strings holding one chord\na bar while a piano figure turns over them, and a second piano an\noctave up\". Voice 0 is the pad chair, so it is the strings; the felt\npiano — still the anchor's own instrument — plays both figures.\n\n\"romantic piano miniature\" PAID 2026-09-03 — by `nocturne` (Paris 1835), 0.15,\nand NOT by `romantic`, which is the row the QA report's want→row pass proposed.\nThe nocturne row said this itself the day it was written: \"This is the romantic\npiano miniature `neoclassical` has wanted since its own anchor was written — the\ndebt is paid here and neoclassical's `wants` can empty the day its comment is\nnext touched.\" This is that day. `romantic` (Vienna 1876) IS AN ORCHESTRA — its\nown first sentence is \"the body of strings, the tune in the CELLO, horns\nanswering at bar 5\" — and a Frahm record is one felt piano with a figure turning\non it; paying a piano's debt with an orchestra would put the wrong ancestor at\nthe top of the graph for every reader after.\nTHE WEIGHT COMES OFF `ambient` (0.4 → 0.25), which was carrying the piano's\nshare under a texture's name — the same correction `synthpop` made when\neurodisco was paid out of disco. Ambient still owns the production values and the\nsustain; the FIGURE, the singing right hand over a spread left, is Chopin's and\nnow says so. The row's shares sum to 1.00 exactly, as they did before.\n",
   "label": "Berlin 2011",
   "bars": 8,
   "voices": 3,
   "plan": "arc",
   "bpm": 86,
   "parents": {
-    "ambient": 0.4,
+    "ambient": 0.25,
     "postrock": 0.25,
     "minimalism": 0.2,
-    "drone": 0.15
+    "drone": 0.15,
+    "nocturne": 0.15
   },
-  "wants": [
-    "romantic piano miniature"
-  ],
+  "wants": [],
   "instr": [
     "slow_strings",
     "felt_piano",

@@ -731,8 +731,17 @@ function sectionEvents(doc, i) {
      countryrock (Nashville 1968, Sweetheart of the Rodeo), heartlandrock
      (Asbury Park 1975, Born to Run) and chamberpop (Boston 1994, Cardinal).
      Five wants closed, five downstream rows re-weighted in the other
-     direction, one place joined the map. The literal stays a literal for the
-     reason :649 gives. */
+     direction, one place joined the map.
+     A SIXTH DECLINE, 2026-09-03 (shift 3): BRO-COUNTRY, asked for by name
+     (Nashville 2012, "Cruise"), REFUSED ON A MEASUREMENT and argued at the
+     same block in genres.js. Chordonomicon carries 5,151 labels and not one
+     of them is that word in any spelling; the MIDI corpus carries 120,652
+     files and returns ZERO for Florida Georgia Line, Luke Bryan, Jason
+     Aldean, Blake Shelton, Cole Swindell, Chase Rice, Brantley Gilbert,
+     Dustin Lynch, Thomas Rhett and Sam Hunt together. No tempo distribution,
+     no meter tally, no drum histogram, no chord cycle — none of what the four
+     rows above were built out of. The count stays 421.
+     The literal stays a literal for the reason :649 gives. */
   ok("G0 the catalog is 421 anchors, session keys excluded", () =>
     assert.strictEqual(ANCHORS.length, 421,
       "anchors() returned " + ANCHORS.length));
@@ -2108,6 +2117,75 @@ function sectionEvents(doc, i) {
   console.log("  Does a dub record sound like a dub record and a chant like a " +
     "stone room?\n  That is the question this table cannot answer itself.\n");
 
+
+  /* ================================================================== G15
+     A MACHINE'S GUESTS ARE NATIVE.
+
+     precompose.js doors 1 and 2 say WHO may sit at a record's guest table.
+     Neither says what the guest brings, and `instrOf(lk, 0)` hands it the
+     instrument of its own row — a RECORDING, wherever the guest row is an
+     acoustic one. Measured over the 421 anchors at seed 1 before door 3:
+     exactly two guest rows did all of it. `drone` arrived on `slow_strings`
+     (a recorded string section) and `counterpoint` on a sampled
+     `harpsichord`, onto acid, bleeptechno, chiptune, dusseldorfschool,
+     electro, melodictechno, synthpop, technopop, trance and thirteen more —
+     a 909 record with a harpsichord counter-line on it.
+
+     THE ROW DECLARES IT: `guests: "native"`. There is no inference here, on
+     purpose — "this sounds like a machine genre" is a report's opinion and an
+     opinion may not change what the box plays. What the door moves is SAMPLES
+     only (`instruments.js sampledId`, the sampler's own predicate), so a
+     singing guest is untouched: `solo_vox` and `ahh_choir` are modelled
+     throats, the door never sees them, and a vocal-trance record still has a
+     singer on it. That asymmetry is the point, the same way it is at door 1.
+
+     Three things are held here: the declaring rows seat NO sampled guest, the
+     door left their singers alone, and a row that does NOT declare it is
+     unchanged (or the door is a global rule wearing a field's clothes). */
+  {
+    const NATIVE_GUESTS = ANCHORS.filter((k) => GENRES[k] && GENRES[k].guests === "native");
+    const guestChairs = (gk) => {
+      const G = GENRES[gk];
+      const doc = P.genreToDocument(gk, 1);
+      const lines = doc.voices.filter((v) => v.kind === "line");
+      return lines.slice(G.voices || 0);          // the base band first, then the guests
+    };
+    ok("G15 a machine row's guests are seated on the fleet, never on the " +
+       "sampler — " + NATIVE_GUESTS.length + " rows declare `guests: \"native\"`", () => {
+      assert.ok(NATIVE_GUESTS.length, "no row declares `guests: \"native\"` — the " +
+        "door has no subject; delete it or declare it");
+      const bad = [];
+      for (const gk of NATIVE_GUESTS)
+        for (const v of guestChairs(gk))
+          if (NI.sampledId(v.instrument))
+            bad.push(gk + " seats its `" + v.name + "` guest on a recording (" +
+                     v.instrument + ")");
+      assert.ok(!bad.length, bad.join("; ") + " — door 3 did not fire");
+    });
+    ok("G15b the door moves recordings and not singers: a declaring row that " +
+       "seats a modelled throat still seats it", () => {
+      const THROAT = (id) => !!NI.PATCHES.voice[id];
+      const singers = NATIVE_GUESTS.filter((gk) =>
+        guestChairs(gk).some((v) => THROAT(v.instrument)));
+      assert.ok(singers.length, "not one of the " + NATIVE_GUESTS.length +
+        " declaring rows seats a singing guest any more — the door is eating " +
+        "throats, which is door 1's job and not this one's");
+      console.log("       " + singers.length + " of " + NATIVE_GUESTS.length +
+        " declaring rows keep a singing guest (" + singers.slice(0, 6).join(" ") + ")");
+    });
+    ok("G15c a row that does not declare it is untouched — the door is a " +
+       "declaration, not a global rule", () => {
+      const undeclared = ANCHORS.filter((k) => GENRES[k] && GENRES[k].guests !== "native");
+      const stillSampled = undeclared.filter((gk) => {
+        try { return guestChairs(gk).some((v) => NI.sampledId(v.instrument)); }
+        catch (e) { return false; }
+      });
+      assert.ok(stillSampled.length, "every undeclared row also lost its sampled " +
+        "guests — `guests` is not the thing deciding this");
+      console.log("       " + stillSampled.length + " undeclared rows still seat a " +
+        "sampled guest, as they should");
+    });
+  }
 
   /* ---- THE COVERAGE FRAME, PRINTED EVERY RUN (WORLD.md §4) ------------
      "Keep a gate that prints the largest inhabited region more than N km

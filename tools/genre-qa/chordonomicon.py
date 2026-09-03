@@ -51,7 +51,14 @@ csv.field_size_limit(10 ** 8)
 PC = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
 KS_MAJ = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
 KS_MIN = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17]
-CHORD = re.compile(r"^([A-G])([sfb#]?)(.*)$")
+# THE ACCIDENTAL IS `s` OR `b` IN THIS DATASET (no `#` appears in 666k rows:
+# 142,545 `s` against 110,665 `b`) — SO `s` HAS TO STAY A SHARP, and the old
+# regex ate the `s` of `sus` with it. The tell is the count: outside `sus`,
+# `Es` and `Bs` never occur (E# and B# are enharmonic curiosities), while
+# `Es|sus` occurs 2,007 times and `Bs|sus` 1,569 in the first 20k songs alone.
+# So the accidental is consumed unless it is the `s` of `sus…`: `Dsus4` is a D,
+# `Ds` and `Dsus`-less `Ds7` are a D#. 2026-09-03.
+CHORD = re.compile(r"^([A-G])(?:(s)(?!us)|([fb#]))?(.*)$")
 SECT = re.compile(r"^<([a-z]+)_?\d*>$")
 
 ROMAN_MAJ = ["I", "bII", "II", "bIII", "III", "IV", "bV", "V", "bVI", "VI", "bVII", "VII"]
@@ -66,15 +73,19 @@ def parse_chord(tok):
     if not m:
         return None
     pc = PC[m.group(1)]
-    acc = m.group(2)
-    if acc in ("s", "#"):
+    if m.group(2):
         pc += 1
-    elif acc in ("f", "b"):
+    elif m.group(3) in ("f", "b"):
         pc -= 1
-    q = m.group(3)
+    q = m.group(4)
     minor = q.startswith("min") or q.startswith("m") and not q.startswith("maj")
     dim = q.startswith("dim")
-    return (pc % 12, "dim" if dim else ("min" if minor else "maj"), q)
+    # A SUS CHORD HAS NO THIRD, and saying it has a major one is how the key
+    # estimator was told 19,552 lies per 20,000 songs. `sus` is its own kind:
+    # roman case stays upper (it is not minor), and key_of adds root+fifth only.
+    sus = "sus" in q and not minor and not dim
+    kind = "dim" if dim else ("min" if minor else ("sus" if sus else "maj"))
+    return (pc % 12, kind, q)
 
 
 def key_of(chords):
@@ -82,10 +93,10 @@ def key_of(chords):
     h = [0.0] * 12
     for pc, kind, _ in chords:
         h[pc] += 1.0
-        third = 3 if kind in ("min", "dim") else 4
         fifth = 6 if kind == "dim" else 7
-        h[(pc + third) % 12] += 0.5
         h[(pc + fifth) % 12] += 0.5
+        if kind != "sus":
+            h[(pc + (3 if kind in ("min", "dim") else 4)) % 12] += 0.5
     tot = sum(h)
     if tot <= 0:
         return (0, "major")
