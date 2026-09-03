@@ -146,6 +146,26 @@ W.__nuMix = () => {
            notes: p.ev.pitched.length, hits: p.ev.drums.length,
            sweeps: p.ev.sfx.length, master: engineReport() };
 };
+/* THE KIT THE ENGINE WAS HANDED, DRUM BY DRUM (2026-09-03).
+   `__nuMix` counts hits and `__nuBounce` counts refusals; neither can say WHICH
+   drum sounded, and the drum editor's lane offer is a claim that needs exactly
+   that — a lane a hand adds on the page has to turn up in the parent's own
+   event list or it is this repo's characteristic bug (a lane declared, drawn,
+   costed and never arriving). The lane LETTER is already gone by here on
+   purpose: audio/to-engine.js resolves twelve lanes onto nine parent units, so
+   what identifies a drum at this depth is the unit plus the two flags and the
+   pitch that separate the three hats and the three toms. That is what this
+   hands out, per bar, off the same `barPlan` every other probe in this family
+   reads — the artifact, not a copy of the arithmetic. */
+W.__nuHits = (bar) => {
+  const p = barPlan(bar == null ? Math.max(0, lastBar) : bar);
+  if (!p) return null;
+  return p.ev.drums.map((d) => ({ drum: d.drum, amp: +(d.amp || 0).toFixed(4),
+    beat: +(d.beat || 0).toFixed(4),
+    ...(d.open != null ? { open: !!d.open } : {}),
+    ...(d.pedal ? { pedal: 1 } : {}),
+    ...(d.pitch ? { pitch: Math.round(d.pitch) } : {}) }));
+};
 // WHAT THE EAR IS ACTUALLY GETTING. `__nuEngine` used to answer six fields —
 // route, state, rms, load, bars, units — while the handle it was holding
 // exposed underrunShape(), runwaySec(), ringDeficit(), __producer(),
@@ -463,6 +483,19 @@ export function health() {
               lastAtSec: +((sh.lastAt || 0) / 44100).toFixed(1) },
     producer: g("__producer", null),          // { mean, peak, worst[] } or null
     ringDeficit: g("ringDeficit", 0) | 0,
+    /* WHAT THE ENGINE HAS HAD TO REPAY (2026-09-03). Paul: *"after five minutes
+       on safari desktop a little static creeps in … it happens on loop."* The
+       measured cause is the reader's output ledger running away from the ring's
+       consumed count by exactly the frames a hole swallowed — after which the
+       native lane (every sampled voice and the whole kit) is scheduled against a
+       cursor that is seconds ahead of the audio, and every bar's notes clump at
+       `now` instead of spreading across the bar. `ringDeficit` above is what is
+       still owed, and it self-clears now; `healedSec` is the total the engine has
+       absorbed since the start, which is the number that says a session HAS been
+       drifting even though it currently reads clean. Zero on an engine that has
+       never starved. (engine/faust/live/live.js "THE DEFICIT HEALS".) */
+    healedSec: (g("__healed", null) || { sec: 0 }).sec,
+    heals: (g("__healed", null) || { heals: 0 }).heals,
     clicks: cm ? cm.clicks : null,
     // WHETHER THE DETECTOR IS EVEN LOOKING. `rms` is a bargraph of the signal
     // the DSP itself sees, so 0 means the readback is dead, not that the music
@@ -879,6 +912,35 @@ async function open(FL, forceMedia) {
   }
 }
 
+/* A STOP IS A FLUSH, AND IT SAYS SO IN FULL (2026-09-03).
+   Paul: *"i think when you restart a song you should basically flush everything
+   and start again."*
+
+   THE ENGINE HALF WAS ALREADY TRUE AND IS NOW MEASURED. `handle.stop()` tears
+   the whole graph down — the pump, the bar scheduler, both stream workers
+   terminated, every sampler strip and meter tap, the click monitor's output
+   handler (the retaining edge Blink will not collect), the ring reader, and
+   `ctx.close()` — so the next `startAt` builds a NEW AudioContext, NEW workers,
+   NEW ring SharedArrayBuffers and NEW voice pools. Measured over a 7-minute run
+   with a stop/start in the middle (test/loop-flush.browser.js C1/C2): standing
+   audio nodes 119 -> 2 while stopped, live rings a flat 20.2 MB across three
+   generations (15 allocated, 5 alive), contexts closed n-1 of n, and the restart
+   coming back at runway 9.05 s with zero dropouts against a starved 0.0-0.6 s
+   before it. So "flush everything and start again" is what the door already
+   does, and there is deliberately no second one.
+
+   WHAT DID NOT FLUSH WAS THIS FILE'S OWN REPORT. `st.route`, `st.capped`,
+   `st.lastError` and `loadRatio` are the four fields `health()` and
+   `engineLine()` answer from, and they survived the stop that made them false —
+   so a stopped page went on printing "stream · runway 0.0s · no dropouts" about
+   an engine that no longer existed, and a cap from the last attempt outlived the
+   attempt. That is the "declared but never arriving" bug in readout form and it
+   is the half a person actually sees. They go with the engine.
+
+   `lastState` goes too: it is the last compiled state held ONLY so the parent's
+   walk is never handed null mid-recompile, and the next start compiles before it
+   opens anything. Holding a stopped record's state across a flush is a copy
+   waiting to be stale. */
 export function stop() {
   playing = false; playingSec = -1; setPendingStart(null);
   roundAt = null;                  // the next start begins its own pass
@@ -886,6 +948,8 @@ export function stop() {
   clearTimeout(deadlineTimer); deadlineTimer = null;
   if (handle) { try { handle.stop(); } catch (e) {} handle = null; }
   st.state = "idle"; st.stage = ""; st.tries = 0;
+  st.route = ""; st.capped = null; st.lastError = null;
+  loadRatio = 0; lastState = null; lastBar = -1;
   emit("transport:state", { playing });
 }
 

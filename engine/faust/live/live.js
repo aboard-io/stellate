@@ -1713,6 +1713,83 @@
       if (phase === "bridging" && br) return aheadA <= 0 ? 0 : aheadA + ringWritten(br);
       return Math.max(0, aheadA);
     }
+
+    /* ── THE DEFICIT HEALS (2026-09-03) ───────────────────────────────────────
+       PAUL, ON SAFARI DESKTOP: *"after five minutes a little static creeps in.
+       i think when you restart a song you should basically flush everything and
+       start again. it happens on loop."*
+
+       HE IS DESCRIBING A REAL LEDGER, AND IT ALREADY HAD A SENSOR AND NO CURE.
+       `ringDeficit()` below says, in its own words: the reader's OUTPUT ledger
+       minus the ring's consumed count "diverge by exactly the frames an underrun
+       swallowed, PERMANENTLY, so this is the standing sensor for 'have the native
+       lanes drifted off the stream'". The reader is why: on a dry sample it holds
+       and ducks but it does NOT advance that ring's R_READ ("Do NOT advance `read`
+       past what exists", ring-player.js), while `this.outFrames += n` runs on every
+       quantum regardless. So after a hole the identity this whole file computes
+       with — RING FRAME f SOUNDS AT GLOBAL FRAME startGlobal + f — is false by the
+       dry count, for ever, and three things go wrong at once and never come back:
+
+         · `ringRunwayFrames()` (just above) returns 0 for the rest of the session,
+           so `runwaySec` and `loadRatio` are pinned at 0 and the page's own
+           sentence says "runway 0.0s" over healthy audio. Every gate that reads
+           keepUp is then reading a dead wire.
+         · `feedRunwayFrames()` overstates `played` by the same amount, so the pump
+           believes it is starving and keeps feeding: MEASURED on this box
+           2026-09-03, one 8-minute run of London 1969 — the producer's unrendered
+           backlog climbed 4.1 → 10.9 → 18.2 → 25.5 → 32.8 → 38.5 → 42.0 → 51.1 →
+           58.4 SECONDS and never fell, which is also 58 seconds of latency on
+           every edit and a bar queue that only grows.
+         · `armNative()` anchors the NATIVE lane — every sampled voice and the whole
+           kit — with `when = ctx.currentTime + (b.globalStart - pg)/SR`. `pg`
+           carries the deficit and `globalStart` does not, so the drums are
+           scheduled EARLY by the accumulated dry time, growing with every hole.
+           The same run measured 45.6 s of divergence by minute five.
+
+       A restart cleared all three, which is exactly what Paul found by ear.
+
+       THE CURE IS THE IDENTITY, RESTORED IN PLACE. The dry frames are readable
+       (they are `pg - startGlobal - R_READ`), so the stream's anchor is moved by
+       them: after this, ring frame f really does sound at startGlobal + f again.
+       Called from `drainDueBars` (every 30 ms, and off the worker tick while
+       hidden) so it runs DURING a hole as well as after one — a bar therefore
+       waits out the hole with the stream instead of firing into it, which is the
+       part that keeps the kit and the modelled voices on one clock.
+
+       IT IS A NO-OP ON A CLEAN RUN, BYTE FOR BYTE: with no underrun the deficit is
+       0 and nothing is shifted — the cost is two Atomics loads on a 30 ms timer,
+       and no sample is touched on any path. What it repairs is only ever the
+       damage a hole already did.
+
+       NOT DURING A FADE. `phase === "fading"` has a sample-exact anchor armed in
+       the reader's own control block (C_FADE_AT) and two rings in flight; moving
+       an anchor under it would slide the ramp. The fade is ~400 ms and the heal
+       picks the deficit up on the far side of it — measured against a hole, the
+       whole point of the ledger is that it is monotonic and can be paid late. */
+    let healedFrames = 0, healCount = 0;
+    function dryFrames() {
+      if (!cur || cur.startGlobal == null) return 0;
+      const a = Atomics.load(ctrl, C_ACTIVE) & 1;
+      if (a !== cur.ring) return 0;          // mid-swap: this is not cur's ledger yet
+      const d = read53() - Atomics.load(ctrl, C_RING0 + a * RING_STRIDE + R_READ) - cur.startGlobal;
+      return d > 0 ? d : 0;
+    }
+    function healDeficit() {
+      if (!running || abort || phase === "fading" || !cur) return;
+      const d = dryFrames();
+      if (d <= 0) return;
+      cur.startGlobal += d;
+      // the bars already on the queue were stamped against the OLD anchor; they
+      // are the same audio and it now sounds `d` frames later. (A bar already
+      // ARMED keeps its instant — an AudioBufferSourceNode cannot be
+      // unscheduled — which is bounded by the 0.25 s native lookahead.)
+      for (const b of playQueue) if (b.globalStart != null) b.globalStart += d;
+      // ...and a bridge anchored ahead of the hole moves with it, or the ramp
+      // would land early against the stream it is ramping into.
+      if (br && br.startGlobal != null) br.startGlobal += d;
+      healedFrames += d; healCount++;
+    }
+
     let pumpTimer = 0;
     // deeper feed target while hidden (background timer throttling; see HIDDEN_TARGET_SEC)
     // deep-runway ALSO while a heavy-GL view is up — FaustLive.deepRunway is the
@@ -1927,6 +2004,10 @@
     const barAnchors = [];   // native-lane anchor telemetry (see __barAnchors)
     function drainDueBars() {
       if (abort) return;
+      // FIRST, THE LEDGER (see "THE DEFICIT HEALS" above). Every comparison below
+      // is `globalStart` against the reader's output cursor, and a hole has just
+      // put those two in different units. Repay it before anything is read off it.
+      healDeficit();
       const pg = read53();
       const hidden = (typeof document !== "undefined" && document.visibilityState === "hidden");
       // (1) hand the NATIVE lane its bars early, anchored on absolute ctx time
@@ -2556,11 +2637,21 @@
       // they diverge by exactly the frames an underrun swallowed, permanently, so
       // this is the standing sensor for "have the native lanes drifted off the
       // stream" (the audit's unfalsifiable worry, made a number).
+      // ...AND IT IS NOW A SENSOR ON A THING THAT GETS FIXED (2026-09-03). The
+      // heal above repays this every 30 ms, so a healthy reading is 0 and a
+      // reading that STAYS above a quantum means the repair is not running (the
+      // engine is mid-fade, or `cur` is not the active ring). What was absorbed
+      // is `__healed()`; this is what is still owed.
       ringDeficit: () => {
         const a = Atomics.load(ctrl, C_ACTIVE) & 1;
         return read53() - Atomics.load(ctrl, C_RING0 + a * RING_STRIDE + R_READ)
           - ((cur && cur.startGlobal != null) ? cur.startGlobal : 0);
       },
+      // HOW MUCH DRIFT THE SESSION HAS ABSORBED — the dry frames the heal moved
+      // the stream's anchor by, and how many times. It is the honest total of
+      // "how far off the stream the native lanes would have been by now", and a
+      // gate asserts on it rather than on the (now self-clearing) deficit.
+      __healed: () => ({ frames: healedFrames, sec: +(healedFrames / SR).toFixed(3), heals: healCount }),
       // runwaySec = the RENDERED runway (what is actually in the ring ahead of the
       // read cursor). The feed ledger — frames merely POSTED to the producer — is
       // reported alongside it by __runway(); it is the pump's gate, never health.

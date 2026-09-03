@@ -201,7 +201,7 @@ const f = (v, n, w) => (v == null ? "-" : (+v).toFixed(n)).padStart(w);
   }
   console.log(`  first note at ${firstNoteMs == null ? "never (within 60s)" : (firstNoteMs / 1000).toFixed(2) + "s"} after the click`);
 
-  console.log("\n   t(s)  route      iso ring  runway     fed  bklog  keepUp   epi  worstMs  lastAtSec  quanta  anom  clicks  cmRms  deficit  pMean  pPeak  heapMB");
+  console.log("\n   t(s)  route      iso ring  runway     fed  bklog  keepUp   epi  worstMs  lastAtSec  quanta  anom  clicks  cmRms  deficit  healed  pMean  pPeak  heapMB");
   while (Date.now() < END) {
     await sleep(POLL * 1000);
     let s;
@@ -255,7 +255,7 @@ const f = (v, n, w) => (v == null ? "-" : (+v).toFixed(n)).padStart(w);
       String(!!E.isolated).padEnd(4), String(!!E.ring).padEnd(5),
       f(E.runwaySec, 2, 6), f(row.fedSec, 2, 7), f(row.backlogSec, 2, 6), f(E.keepUp, 3, 7), f(st.episodes, 0, 5), f(st.worstMs, 1, 8),
       f(st.lastAtSec, 1, 10), f(st.quanta, 0, 7), f(E.anomalies, 0, 5), f(E.clicks, 0, 7),
-      f(row.cmRms, 3, 6), f(E.ringDeficit, 0, 8),
+      f(row.cmRms, 3, 6), f(E.ringDeficit, 0, 8), f(E.healedSec, 2, 7),
       f(E.producer && E.producer.mean, 3, 6), f(E.producer && E.producer.peak, 3, 6),
       f(row.heap / 1048576, 1, 7),
     ].join(" "));
@@ -289,6 +289,8 @@ const f = (v, n, w) => (v == null ? "-" : (+v).toFixed(n)).padStart(w);
   const cmAlive = rows.some((r) => r.clickMonAlive);
   const pPeak = rows.reduce((a, r) => Math.max(a, (r.producer && r.producer.peak) || 0), 0);
   const p05 = pct(keeps, 0.05);
+  const maxDeficit = rows.reduce((a, r) => Math.max(a, r.ringDeficit | 0), 0);
+  const healedEnd = last.healedSec || 0;
   const runwayAfter1min = rows.filter((r) => r.t >= 60).map((r) => r.runwaySec);
 
   const checks = [
@@ -305,6 +307,24 @@ const f = (v, n, w) => (v == null ? "-" : (+v).toFixed(n)).padStart(w);
     ["zero console errors, zero pageerrors", cerr.length === 0 && perr.length === 0,
       `console=${cerr.length} pageerror=${perr.length}`],
     ["producer.peak <= 3.0", pPeak <= 3.0, `peak=${pPeak}`],
+    /* ── THE HOLE MUST NOT COST THE SESSION (2026-09-03) ────────────────────
+       Paul, on Safari desktop: *"after five minutes a little static creeps in
+       … it happens on loop."* The reader does not advance a dry ring's R_READ
+       but always advances its global output cursor, so before this date ONE
+       underrun put the two ledgers permanently out of step: `runwaySec` read 0
+       for the rest of the session, the pump's fed ledger overstated what had
+       played and the producer's backlog climbed past fifty seconds, and the
+       native lane was anchored against a cursor seconds ahead of the audio.
+       MEASURED on a quiet box with one forced 16 s hole: deficit 8.11 s and
+       still 8.11 s a hundred seconds later; runway 8.0 s -> 0.0-0.6 s and never
+       back. engine/faust/live/live.js "THE DEFICIT HEALS" repays it every
+       30 ms, so what a soak must now assert is not "no hole" (this gate cannot
+       promise the box) but "no hole was KEPT". `healed` beside it is the total
+       absorbed — a soak with holes and a flat zero there is the repair not
+       running, which is why the pair is one check and not two. */
+    ["the ring deficit is repaid (no hole is kept)", maxDeficit <= 11025,
+      `worst still-owed ${(maxDeficit / 44100).toFixed(3)}s, absorbed ${healedEnd}s over the run` +
+      (maxEpi > 0 && healedEnd === 0 ? " — EPISODES BUT NOTHING ABSORBED: the repair did not run" : "")],
   ];
 
   console.log("");
