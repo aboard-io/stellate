@@ -1,0 +1,190 @@
+{
+  "note": "BADA KHYAL — Delhi 1740. Not a recording; there could not be one. The\nrecord is a MAN AND A TITLE: Niyamat Khan, court musician to the Mughal\nemperor Muhammad Shah, \"who was adept in both dhrupad and veena, won the\ntitle Sadarang from the emperor for his talents and theoretical and\npractical knowledge in classical music. He created the elegant classical\nform of khyal in a majestic and colourful slow tempo (vilambita laya) like\ndhrupad\" — the Khyal article's own sentences, quoted rather than\nparaphrased. The year is the article's own frame: Muhammad Shah's\npatronage \"which he continued even after the invasion of India by Persian\nemperor Nadir Shah\", and Nadir Shah sacked Delhi in 1739. 1740 is the\nseason after the sack, in the court that went on singing.\n\nWHY THIS IS NOT `khyal` WITH AN EARLIER DATE, which is the only question\nthat matters. `khyal` is Mumbai 1965 — Amir Khan's LP decade — and its own\n`wants` list has carried the line \"sadarang and adarang's delhi court\nkhyal\" since it was written. THAT WANT IS PAID BY THIS ROW AND IT COMES OFF\nKHYAL'S LIST TONIGHT. The two rows are two musics and the difference is\naudible in four fields, not in a date:\n  · TALA. `khyal` sits in TINTAL and schedules the theka across FOUR BARS\n    (its `kits` is four sixteen-step bars, the third khali). This row sits\n    in TILWADA — sixteen matras, ONE PER STEP, one cycle to the bar — which\n    is the vilambit tala the Khyal article names first: \"Tilwada, Jhumra and\n    Rupak are generally used for vilambit performance\". Same sixteen, a\n    completely different geography: khyal's theka repeats every four bars,\n    this one every bar, and the khali lands INSIDE the bar rather than\n    swallowing a whole one.\n  · PACE. `khyal` declares `paces` — verse half, solo double — which is\n    vilambit into drut, the modern concert's arc. THE BADA KHYAL IS THE\n    SLOW HALF ALONE. It has no drut section, because the chota khyal is the\n    other piece: \"the bada khyal begins at a slow speed (vilambit laya) or\n    medium speed (madhya laya), while the chota khyal begins at a fast speed\n    (drut laya)\". So this row declares no `paces` at all and takes\n    `rate: 0.5` instead — half speed throughout, dhrupad's own setting.\n  · THE HARMONIUM IS AN ANACHRONISM AND THIS ROW REFUSES IT. `khyal` seats\n    `reed_organ` and says in its cannot that the reed organ IS the\n    harmonium's family. A harmonium is a European free-reed box that reached\n    India with the missionaries in the middle of the NINETEENTH century.\n    There was none in Muhammad Shah's Delhi and there is none in this cast.\n  · WHAT IS LEFT IS TWO CHAIRS AND A BARREL DRUM, which is what a 1740\n    court khyal was: the singer, the tanpura, the pakhawaj. Sadarang was a\n    BEEN player and the been would have been in the room; it is not seated\n    here because the box has no rudra veena and `sitar` is already carrying\n    the drone, and one substitution said once is better than the same\n    substitution said twice.\n\nLINEAGE: A DECLARED ROOT, AND THE REASON IS A DEFECT IN THE TABLE'S DATES\nRATHER THAN A CLAIM ABOUT THE MUSIC. Everybody knows what this row descends\nfrom: dhrupad, which is what Sadarang was trained in and what the article\nsays he made khyal weigh like. But `dhrupad`'s label is DELHI 1955 — it is\ndated by the Dagar brothers at All India Radio — and GENRES.md's law is\nthat no parent may be later than its child. A 1740 record cannot descend\nfrom a 1955 one. So the ancestor is named in `wants`, in its own words,\nwhere an unanchored ancestor belongs, and the residue is the whole row.\n\nTHE CORPUS IS SILENT AND THE SILENCE IS MEASURED. \"khyal\", \"khayal\",\n\"tilwada\", \"bandish\", \"sadarang\", \"vilambit\", \"hindustani\" and \"tappa\"\nreturn ZERO files from the 120,652-file MIDI corpus. \"raga\" returns\ntwenty-one and every one of them is a false positive — Italian pop\n(\"Ragazzo solo ragazza sola\", \"10RAGAZZ\", \"Tutta-Ragazzi\"), a Jimmy Buffett\n\"Maragaritaville\" and four copies of \"Together Again\". NO FILES. Neither\ndoes Chordonomicon help: its five \"hindustani classical\" rows are 2010s\nfusion and ghazal sides whose four-chord windows are `I vi IV I` and\n`V IV I V`, which is a chord progression, and a khyal does not have one.\nEvery number in this row is therefore a CHOICE from a neighbour and is\nmarked as one: `bpm: 76` and `rate: 0.5` are dhrupad's own pair moved up\nsix, `maxHold: 8` is dhrupad's, and the tala is read off the article.\n\nTILWADA, WRITTEN OUT. Sixteen matras at one step a matra:\ndha tirakita dhin dhin | dha dha tin tin | ta tirakita dhin dhin |\ndha dha dhin dhin. The bass stroke (ge) lives in every dha and dhin and in\nno tin or ta, so the KICK lands on the sam and on the vibhag heads that\nhave one and is ABSENT at step 8 — the khali, the wave of the hand instead\nof the clap, audible as a hole a quarter of the way into every bar. The\nghost lane is the tirakita, the little four-finger scatter at steps 1 and\n9 that is what tells a tilwada from a tintal by ear.",
+  "label": "Delhi 1740",
+  "voices": 2,
+  "rate": 0.5,
+  "near": "dhrupad",
+  "plan": "arc",
+  "bpm": 76,
+  "parents": {},
+  "wants": [
+    "dhrupad as a practice rather than as a 1955 recording — the form Sadarang was trained in and made khyal weigh like",
+    "the been (rudra veena), the court's own melodic instrument",
+    "the qawwal bachche of Delhi, the singing lineage the form was handed to"
+  ],
+  "cannot": [
+    "a raga is not a scale — dhrupad's admission, unchanged, and sharper at a court that had no fixed pitch: the ascent and the descent are different lines and the pakad that names the raga is a PHRASE",
+    "the badhat — the gradual pitch-by-pitch exposition the Khyal article names ('badhat (pitch-by-pitch manner)') is MATERIAL AND PHRASE, not alphabet; the `word` below climbs a register a section, which is the shape of it and not the thing",
+    "gamak and meend — no pitch-trajectory channel (WORLD.md §5.3); the `grace` below is dhrupad's crude proxy and is no better here",
+    "the pakhawaj — a two-headed barrel drum tuned with a paste of flour and water, whose bass head is played with the whole palm; the kit below has a kick and a ghost lane and the bols go on them, the loss `carnatic` already declares for the mridangam",
+    "the been — no rudra veena in the registry, and rather than substitute twice this row seats one plucked chair and gives it the drone"
+  ],
+  "instr": [
+    "solo_vox",
+    "sitar"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -2
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "pad"
+  ],
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "padin",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      0,
+      5,
+      0,
+      0,
+      0,
+      0,
+      4,
+      4,
+      6,
+      5,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      7,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      3,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0
+    ]
+  },
+  "mode": {
+    "$src": "MODES.harmonic"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "tie",
+  "maxHold": 8,
+  "incClamp": 2,
+  "orn": {
+    "grace": 0.3
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 1900,
+    "q": 0.7,
+    "atk": 0.06,
+    "rel": 2.6,
+    "gain": 0.22,
+    "verb": 0.42,
+    "mouth": {
+      "$src": "MOUTHS.zemachant"
+    },
+    "glide": 0.03
+  },
+  "words": [
+    "the khyal, a matra at a time, climbing a register a section",
+    "the tanpura, four strings, never changing"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n          ? [[drop(6)], [drop(4), transpose(2)], [drop(2), transpose(5)], [fill(2), transpose(7)]][s % 4]\n        : [drop(12)])"
+  }
+}

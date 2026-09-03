@@ -1,0 +1,215 @@
+{
+  "note": "THUMRI — Lucknow 1856. The record is a court and its last year:\n\"One theory attributes its origin to the court of Wajid Ali Shah of Oudh\",\nthe Thumri article's own sentence, with the article's own caution attached\nin the next line (\"this causal explanation overlooks the continuous\nevolution of Indian classical music\") and kept here rather than dropped.\nWajid Ali Shah ruled Awadh from 1847 until the East India Company annexed\nit and deposed him in FEBRUARY 1856; he was a dancer and a composer as well\nas a king, and the Lucknow court in its final season is when the form is\nnamed. The label is that year, and the annexation is why there is not a\nlater one.\n\nWHAT THE ROW IS FOR. The article: \"The term 'thumri' is derived from the\nBhojpuri verb thumak, which means 'to walk with a dancing gait in such a way\nthat the ankle-bells tinkle'. The form is, thus, connected with dance,\ndramatic gestures, mild eroticism, evocative love poetry and folk songs...\nThumree is characterized by its sensuality, and by a greater flexibility\nwith the raga... It is distinct from folk music and the more masculine\ndhrupad and khayal styles.\"\n\nTHE FLEXIBILITY WITH THE RAGA IS THE INVENTION AND IT IS TWO FIELDS.\n  · THE ALPHABET IS MIXOLYDIAN AND THAT IS A MEASURED CLAIM, NOT A MOOD.\n    Thumri's home is the light thaats and above all mishra Khamaj, and\n    KHAMAJ IS MIXOLYDIAN EXACTLY: S R G M P D n = 0 2 4 5 7 9 10, which is\n    `MODES.mixo` note for note. It is the only Indian anchor in this table\n    with a MAJOR third — dhrupad, khyal, badakhyal, carnatic, varnam all\n    take a minor alphabet and kriti takes the plain major — and that one\n    note is the difference between a grave form and a flirtatious one. A\n    reader can check it against `tappa` (Kafi, dorian) in the same key: two\n    Lucknow rows, two thaats, one note apart in each direction.\n  · THE SLIDE IS DECLARED, NOT IMPLIED. Bol banao — building the meaning of\n    a line by singing the same words again with a different melodic\n    approach — is done with MEEND, the slide between two notes, and the\n    portamento round of 2026-09-03 gave the table two fields for exactly\n    this. `tone.slide: 0.16` is the longest in the Indian block: a marked\n    step takes a sixth of a second to arrive, which is a scoop a listener\n    hears as a gesture. `glide: 0.02` puts a hair on every other note. The\n    other Indian rows carry `grace` and nothing else; this one carries a\n    trajectory, because it is the row whose whole art is the way a note is\n    reached.\n\nLINEAGE. `tappa` (Lucknow 1780) at 0.2, and the weight is small on purpose\nbecause the claim is CONTACT, not descent: the same city, the same durbar\nculture, seventy-six years apart, and the tappa ang — the knotted zamzama\ncluster borrowed into a thumri line — is a named thing in this repertory. A\nfifth of this record is the older Lucknow form and the rest is not. What\nthe rest is, is in `wants`: the folk repertory of Awadh and Braj the\narticle names, and kathak, whose footwork this music was sung for. Neither\nhas an anchor, and 0.8 declared as invention is more honest than conscripting\nan ancestor to absorb it.\n\nAND IT PAYS A DEBT DOWNSTREAM. `filmi` (Mumbai 1960) has listed \"thumri\"\nin its `wants` since it was written — the playback singer's phrasing is\nthumri phrasing, and Lata Mangeshkar and Begum Akhtar are one generation\napart. THAT WANT IS PAID BY THIS ROW AND COMES OFF FILMI'S LIST; `filmi`\ndeclares `thumri` a parent tonight at 0.2, beside the `romantic` 0.3 it\nalready carried.\n\nKEHERWA, NOT DEEPCHANDI, AND THE REASON IS THE GRID. The tal a slow bol-banao\nthumri is actually sung in is DEEPCHANDI — FOURTEEN matras in 3+4+3+4 — and\nthis box counts twelve or sixteen. `METERS` has \"three\" and \"six\" and\nnothing else, so fourteen is a wall and is in the cannot. What the kit plays\nis KEHERWA, eight matras twice to the bar — dha ge na ti / na ka dhi na —\nwhich is the light tal the same repertory uses for its faster pieces and is\nthe one this grid can count. The choice is a compromise and it is named as\none.\n\nTHE CORPUS IS SILENT AND THE SILENCE IS MEASURED. \"thumri\", \"thumree\",\n\"dadra\", \"kajari\", \"wajid ali shah\", \"begum akhtar\" and \"bol banao\" return\nZERO files out of the 120,652-file MIDI corpus. Chordonomicon has no thumri\nlabel at all; its five \"hindustani classical\" rows are 2010s and 2020s\nfusion and ghazal sides. `bpm: 78` is a choice — slower than `filmi`'s 92,\nfaster than `dhrupad`'s 70 — and is marked as one.",
+  "label": "Lucknow 1856",
+  "voices": 3,
+  "bars": 8,
+  "near": "filmi",
+  "plan": "song",
+  "bpm": 78,
+  "parents": {
+    "tappa": 0.2
+  },
+  "wants": [
+    "the folk repertory of Awadh and Braj — the chaiti, kajari and hori the article names as the same family",
+    "kathak, the dance this was sung for",
+    "the sarangi and tabla accompanists' own lineage, the Lucknow gharana"
+  ],
+  "cannot": [
+    "deepchandi — fourteen matras in 3+4+3+4, the tal of a slow bol-banao thumri, and this grid counts twelve or sixteen; the kit below is keherwa and the swap is named",
+    "bol banao itself — repeating one line of text and finding a new meaning in it each time is a DEVELOPMENT the singer improvises against the audience, and this box writes composed lines; the slide and the per-section word are the shape of it and not the thing",
+    "mishra — a real thumri leaves its raga on purpose, borrowing a phrase from a neighbouring one; one declared alphabet cannot leave itself",
+    "the sarangi — `fiddle` below is bowed, fretless and has neither the sympathetics nor the fingernail stopping"
+  ],
+  "instr": [
+    "solo_vox",
+    "fiddle",
+    "sitar"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      },
+      {
+        "at": 2,
+        "then": -2
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "roots": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "scale": {
+    "$src": "MODES.mixo"
+  },
+  "mode": {
+    "$src": "MODES.mixo"
+  },
+  "harmony": "modal",
+  "intro": "padin",
+  "artic": "legato",
+  "maxHold": 4,
+  "nobass": true,
+  "orn": {
+    "grace": 0.45,
+    "approach": 0.4
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ],
+    "h": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      9,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      4,
+      7,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      4
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 0.85,
+    "atk": 0.02,
+    "rel": 1.4,
+    "gain": 0.25,
+    "verb": 0.44,
+    "mouth": {
+      "$src": "MOUTHS.melisma"
+    },
+    "glide": 0.02,
+    "slide": 0.16
+  },
+  "words": [
+    "the thumri, the same line found again a different way",
+    "the sarangi, shadowing her a breath behind",
+    "the tanpura"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n          ? [[], [drop(2), rotate(2)], [fill(2)], [fill(2), rotate(6)]][s % 4]\n        : v === 1 ? [drop(4), transpose(-5)]\n        : [drop(12)])"
+  }
+}

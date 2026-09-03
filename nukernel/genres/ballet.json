@@ -1,0 +1,143 @@
+{
+  "note": "BALLET — Moscow 1877. Tchaikovsky, SWAN LAKE, op. 20, first performed at\nthe Bolshoi Theatre on 20 February (4 March, new style) 1877,\nchoreographed by Julius Reisinger, and by most contemporary accounts\nbadly danced and coolly received. THE PLACE IS MOSCOW AND THIS ROUND'S\nBRIEF SAID ST PETERSBURG, which is a real correction worth writing down:\nthe Petipa/Ivanov Swan Lake everybody knows is the 1895 revival at the\nMariinsky, and the 1890 Sleeping Beauty is the St Petersburg record. Swan\nLake was commissioned by the Moscow Imperial Theatres, written for the\nBolshoi and premiered there. MOSCOW IS A NEW DOT and the map's first\nRussian one — a gap the atlas has carried since it was written.\n\nWHAT THE ROW IS FOR, given that `waltz` (Vienna 1867) already holds\ntriple time and `romantic` (Vienna 1876) already holds the orchestra. A\nballet score is a SUITE OF CLOSED DANCE NUMBERS written to be counted by\npeople who cannot hear the conductor: short, square, characterised —\na harp arpeggiating, pizzicato strings walking, a solo wind carrying the\ntune over them. That texture is the row. The palette says it: this is\nthe only art-music row in the catalogue seating `harp` and\n`pizzicato_strings` together, and the only one whose lead is a flute over\na plucked accompaniment.\n\nMEASURED, AND THE TRIPLE-TIME ASSUMPTION IS WRONG. Fourteen files carry\nSwan Lake and the Nutcracker in the classical rips: 4/4 IS 64.3% AND 3/4\nIS 21.4% — the waltz everybody hums is three numbers of fourteen, and the\ncharacter dances, the scenes and the pas d'action are in four. So this\nrow does NOT declare a meter, which is also what keeps it off `waltz`'s\nground. The rest: bpm p50 119.5 (quartiles 84.5 and 150.5), 64.3% major,\nmedian melodic interval 2.0 with a step fraction of 0.740 — the most\nstepwise line of any orchestral set measured this round, which is what a\ntune written to be DANCED to has to be.\n\nAND NINE OF THE FOURTEEN FILES CARRY A PERCUSSION CHANNEL, the only\nclassical set this round that does, with the heaviest single cell on the\ndownbeat (204 hits at step 0 of the crash lane against 64 at step 2). A\nballet pit has a triangle, a tambourine, a cymbal and timpani, and the\ntranscriptions are hearing them. So this is the first Western art row in\nthe catalogue with a kit — ONE cymbal at the top of the bar, and nothing\nelse, because the measured quarters read as much like a transcriber's\nclick as like a percussion part, and a snare backbeat under a swan would\nbe an invention.\n\nLINEAGE. `romantic` (Vienna 1876) 0.3 — one year earlier, the orchestral\nlanguage exactly; `waltz` (Vienna 1867) 0.25 — the ballroom triple time\nthat half the numbers are; `classical` (Vienna 1785) 0.15 — the square\neight-bar dance period the whole form is built out of; `concerto` (Venice\n1725) 0.1 — the solo instrument over the band, which is what a variation\nfor a ballerina is. 0.8 declared. THE RESIDUE IS 0.2 AND IT IS THE\nDANCER: music whose bar lengths, tempos and repeats are decided by what a\nbody can do, which is the one collaborator this box will never have.",
+  "organic": true,
+  "instrumental": true,
+  "label": "Moscow 1877",
+  "near": "romantic",
+  "plan": "song",
+  "bpm": 120,
+  "bars": 8,
+  "voices": 4,
+  "parents": {
+    "romantic": 0.3,
+    "waltz": 0.25,
+    "classical": 0.15,
+    "concerto": 0.1
+  },
+  "wants": [
+    "the ballet de cour and the Paris Opera's own ballet-pantomime — Lully to Adam, the two centuries of danced theatre this score is the end of, which this table has no rows for"
+  ],
+  "cannot": [
+    "the triangle, the tambourine and the timpani — the ballet pit's own colours; the kit has twelve fixed lanes and none of them is a struck idiophone with a pitch",
+    "a variation's length: a solo is as long as the dancer's phrase, and this box's sections are counted in bars",
+    "the repeat with a different tempo, which is how a coda is danced"
+  ],
+  "instr": [
+    "flute",
+    "harp",
+    "pizzicato_strings",
+    "strings"
+  ],
+  "part": [
+    "lead",
+    "riff",
+    "counter",
+    "pad"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      2,
+      0,
+      0,
+      0
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      -1,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    0,
+    4,
+    4,
+    5,
+    3,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "bassInstr": "contrabass",
+  "bassStyle": "pedal",
+  "drumkit": "acoustic",
+  "kit": {
+    "x": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "intro": "hit",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2700,
+    "q": 0.8,
+    "atk": 0.01,
+    "rel": 1.0,
+    "gain": 0.24,
+    "verb": 0.5
+  },
+  "words": [
+    "the flute, the tune the dancer counts",
+    "the harp, arpeggiating under it",
+    "the strings, plucked, walking",
+    "the body of strings, holding"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[fill(2), transpose(-12)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[keep(0, 4, 8, 12), transpose(-7)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

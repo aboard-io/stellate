@@ -1,0 +1,87 @@
+{
+  "note": "PIPAQU — Wuxi 1819. The record is a printed book and it is the first\nof its kind: \"During the Qing dynasty there were originally two major schools\nof pipa — the Northern and Southern schools, and music scores for these two\ntraditions were collected and published in the first mass-produced edition of\nsolo pieces for pipa, now commonly known as the Hua Collection. The\ncollection was edited by Hua Qiuping (1784–1859) and published in 1819 in\nthree volumes. The first volume contains 13 pieces from the Northern school,\nthe second and third volumes contain 54 pieces from the Southern school.\nFamous pieces such as 'Ambushed from Ten Sides', 'The Warlord Takes Off His\nArmour', and 'Flute and Drum at Sunset' were first described in this\ncollection.\" The Hua Collection is the WUXI SCHOOL's own book — \"Wuxi school,\nassociated with the Hua Collection by Hua Qiuping, who studied with Wang\nJunxi of the Northern school and Chen Mufu of the Southern school, and may be\nconsidered a synthesis of these two schools of the Qing dynasty. As the first\npublished collection, the Hua Collection had consider[able influence]\" — so\nthe label is Hua's own city and the year of the print.\n\nWHY A SECOND CHINESE SOLO-STRING ROW, when `guqin` (Beijing 1956) exists.\nBecause they are opposites in every field that matters and the table has been\ncarrying only one of them:\n  · LOUD AGAINST QUIET. `guqin` says `gain: 0.18` and `verb: 0.25` and its\n    comment says \"a very quiet instrument in a dry room, which is gain and\n    verb doing real work rather than decoration\". A pipa is a projecting\n    concert lute with a fingernail attack on twenty-four to thirty frets,\n    and this row is the louder of the two by design.\n  · TIED AGAINST STRUCK. `guqin` is `artic: \"tie\"`, `maxHold: 8`,\n    `rate: 0.5` — gestures at the speed of breath. This row is\n    `staccato`, `maxHold: 2`, full rate: every note is a plucked attack\n    with no sustain behind it, and the LUNZHI — the five-finger tremolo that\n    is how a pipa holds a note at all — is a rapid re-articulation, which is\n    what `fill(4)` does and is the honest reading of the technique.\n  · GESTURE AGAINST NARRATIVE. A qin piece is unmetered and private. \"Ambushed\n    from Ten Sides\" is a BATTLE told in sections, with a named programme\n    (the camp, the ambush, the rout) and an accelerando through it. So this\n    row declares `paces` — the solo section DOUBLE — which no other Chinese\n    instrumental row does, and it is the wu (martial) repertory's own shape.\n  · AND THE STRUCTURE IS COUNTED. The article: pieces \"often have a standard\n    metrical length of 68 measures or beat, and these may be joined to form\n    the larger pieces dagu.\" Sixty-eight is not divisible by this box's\n    sixteen and the mismatch is in the cannot rather than fudged.\n\nTHE INSTRUMENT IS NOT IN THE FLEET AND THE ROW SAYS WHICH SUBSTITUTE AND WHY.\n`instruments.js`'s own erhu note already records that GM has no qin, pipa,\ndizi or sheng, and `guqin`'s comment says the same. `nylon_string_guitar`\nis what `sizhu` already uses for its pipa chair — a fretted, gut-strung,\nplucked lute with a wooden soundboard, played with the fingers — and this row\ntakes the same choice rather than inventing a second answer to one question.\nWhat it is not: pear-shaped, held upright against the chest, strung with\nsilk or steel, played with false nails, and equipped with the bent-note\npushes across the frets that half the repertory is made of.\n\nBOTH CHAIRS ARE THE SAME INSTRUMENT AND THAT IS `guqin`'S OWN SHAPE — one\nplayer, two hands. Voice 0 is the melody with the tremolo on it; voice 1 is\nthe low strings, struck on the beat, which is what the left thumb does in a\nwu piece and is the closest this box gets to the drum a pipa imitates.\n\n`organic: true` and `instrumental: true`, on the twelve-row reading of\n2026-09-02: there is no model in the fleet of the instrument this music is\nplayed on, and there should not be. The QA report's instrumentation column\nshould score this as a recording rather than as a failure.\n\nLINEAGE: a declared ROOT. The pipa's own line runs back through the Ming\n\"High River Flows East\" collection of 1528 and the Dunhuang tablatures of the\ntenth century to a Central Asian lute that arrived in the Han; nothing in\nthis table is upstream of it, and the two collections are named in `wants`.\nIt is not a child of `guqin` — a literati zither and a professional lute are\ntwo trades, not two generations.\n\nTHE CORPUS IS SILENT AND THE SILENCE IS MEASURED. \"pipa\" returns exactly ONE\nfile out of 120,652 and it is \"16pipav.mid\", a 232-note file in 1/2 time\nthat is not a pipa piece. \"shimian\", \"ambushed from ten sides\", \"hua qiuping\"\nand \"lunzhi\" return zero. Chordonomicon has no pipa label. So `bpm: 100` is\na CHOICE, argued from the repertory rather than measured: fast enough that a\ntremolo reads as a roll and slow enough that a 68-beat section is a shape.",
+  "organic": true,
+  "instrumental": true,
+  "label": "Wuxi 1819",
+  "voices": 2,
+  "bars": 8,
+  "near": "guqin",
+  "plan": "arc",
+  "bpm": 100,
+  "paces": {
+    "verse": "steady",
+    "solo": "double"
+  },
+  "parents": {},
+  "wants": [
+    "the Ming 'High River Flows East' collection of 1528, where three of these pieces first appear",
+    "the Dunhuang pipa tablatures of the tenth century",
+    "the Northern and Southern schools the Hua Collection synthesised"
+  ],
+  "cannot": [
+    "the 68-beat section — the repertory's standard metrical length, which is not divisible by this box's sixteen-step bar and is not faked",
+    "lunzhi — the five-finger tremolo that is how a pipa sustains at all; `fill(4)` re-articulates on the grid where a real roll is faster than any grid and unquantized",
+    "the pushed note — bending a string sideways across a fret to raise it a tone or more is half the wu repertory's rhetoric, and `sld` is a flag on a step with no trajectory behind it (WORLD.md §5.3)",
+    "the instrument — no pipa in the registry; `nylon_string_guitar` is `sizhu`'s own substitute, a fretted plucked lute with a wooden top, played with the fingers and not with false nails, and held the wrong way round",
+    "the drum imitations — 'Ambushed from Ten Sides' has passages where the pipa IS the battle's percussion, and a chair that plays pitches cannot become a kit"
+  ],
+  "instr": "nylon_string_guitar",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": -1
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "kit": {},
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "incClamp": 2,
+  "orn": {
+    "pass": 0.4,
+    "grace": 0.3
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2900,
+    "q": 0.7,
+    "atk": 0.004,
+    "rel": 0.8,
+    "gain": 0.24,
+    "verb": 0.3
+  },
+  "words": [
+    "the melody, with the tremolo on it",
+    "the low strings, struck on the beat"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n        ? [[fill(2)], [fill(4)], [fill(4), rotate(2)], [fill(2), reverse()]][s % 4]\n        : [keep(0, 4, 8, 12), transpose(-12)])"
+  }
+}

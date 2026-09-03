@@ -1,0 +1,138 @@
+{
+  "note": "PIANO SONATA — Vienna 1802. Beethoven, op. 27 no. 2, the Sonata quasi\nuna fantasia in C sharp minor, published in Vienna by Cappi in 1802 with\na dedication to Giulietta Guicciardi. The nickname is a critic's and\narrives forty years later; the record is the print.\n\nWHY THIS ONE. The row needs a piece where the PIANO is the whole event\nand the sonata is the argument, and op. 27 no. 2 is the sonata that\nstarts with its slow movement, marks its first page \"si deve suonare\ntutto questo pezzo delicatissimamente e senza sordino\" — hold the dampers\nup through the whole thing — and puts the finale's weight last. It is\nalso the sonata this archive actually holds: fourteen files carry the\npiece against one for the Waldstein's opening and eight for the\nAppassionata's.\n\nMEASURED, AND THE MEASUREMENT IS ABOUT WHAT A PIANO LINE IS. Forty-eight\nfiles in the classical rips under a clean Beethoven-sonata match (the\nfirst regex also caught `almonds.mid` and a Dowland alman, which is what\n`mond` does to a substring matcher, and both were cut): bpm p50 113.6,\n41.7% 4/4, 43.8% MINOR — the highest minor share of any Western art set\nthis round except the requiem's. The line's shape is the separating fact:\nmedian absolute melodic interval 3.0 semitones against the symphony's 2.0,\nstep fraction 0.414 against 0.748. On the fourteen op. 27 files alone it\ngoes further — |interval| p50 5.0 and step fraction 0.213, the least\nstepwise number measured anywhere in this batch.\n\nSAID HONESTLY: that is not a measurement of the TUNE. The corpus's melody\nextractor takes the most melodic-looking line in the file, and in this\npiece that line is the RIGHT HAND'S TRIPLET ARPEGGIO, which is an\naccompaniment. The number is therefore evidence about the TEXTURE and it\nis the texture this row is built from: a piano sonata is a broken chord\nrunning under a slow tune, and the extractor picking the figure over the\nmelody is the most honest possible demonstration of which one is\ncarrying the piece.\n\nSO THE CHAIRS ARE THE HANDS. Three, all the same grand: the right hand's\ntune (`lead`, reg 1), the figure under it (`riff`, reg 0, `fill(2)` —\nevery other step filled, which is this box's continuous broken chord),\nand the left hand's octaves (`drone`, the part whose whole definition is\n\"refuses to move\", reg -2). `nobass: true` on `classical`'s ruling: the\nleft hand IS the bass, and a bass guitar under a piano sonata is a fourth\nhand.\n\nTHE MODE IS AEOLIAN WITH A REAL DOMINANT. 43.8% of the corpus set is\nminor and the founding record is in C sharp minor, so aeolian; but a\nBeethoven cadence has a leading note, so degree 4 is written as a `dom7`\nin `prog` rather than reached for through `MODES.harmonic`. That is\n`nuevacancion`'s ruling from earlier this same shift, taken for the same\nreason: a plain VII and III appear as often as the raised seventh does,\nand harmonic minor cannot hold both.\n\nLINEAGE. `classical` (Vienna 1785) 0.5 — the same city seventeen years\nearlier, the galant sonata with the Alberti hand, which this row is the\nargument with; `concerto` (Venice 1725) 0.2 — the solo-against-tutti\ndrama that a sonata performs with one player and two hands;\n`counterpoint` (Vienna 1725) 0.1 — the fugal writing that arrives in\nthese sonatas' late finales. 0.8 declared. THE RESIDUE IS 0.2 AND IT IS\nTHE INSTRUMENT: a Viennese fortepiano with a damper mechanism a player\ncould hold open for four minutes, which is not a fact about any parent\nabove — it is a fact about a machine that had just been built.",
+  "organic": true,
+  "instrumental": true,
+  "label": "Vienna 1802",
+  "near": "nocturne",
+  "plan": "arc",
+  "bpm": 114,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "classical": 0.5,
+    "concerto": 0.2,
+    "counterpoint": 0.1
+  },
+  "wants": [],
+  "cannot": [
+    "the triplet — op. 27 no. 2's figure is three notes to the beat and this box's bar is sixteen equal steps, so the arpeggio here runs in fours",
+    "the dampers held up through a whole movement: `rel` holds one note's own tail, it does not lift the felt off every string in the instrument",
+    "a sonata's second movement, and its third — this is one movement, and the genre is three"
+  ],
+  "instr": [
+    "yamaha_grand_piano",
+    "yamaha_grand_piano",
+    "yamaha_grand_piano"
+  ],
+  "part": [
+    "lead",
+    "riff",
+    "drone"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      -2
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "nobass": true,
+  "roots": [
+    0,
+    0,
+    5,
+    5,
+    3,
+    4,
+    0,
+    4
+  ],
+  "prog": [
+    {
+      "d": 0
+    },
+    {
+      "d": 0
+    },
+    {
+      "d": 5
+    },
+    {
+      "d": 5
+    },
+    {
+      "d": 3
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 0
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    }
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "kit": {},
+  "intro": "cold",
+  "tone": {
+    "wave": "triangle",
+    "cut": 3000,
+    "q": 0.8,
+    "atk": 0.004,
+    "rel": 1.6,
+    "gain": 0.26,
+    "verb": 0.28
+  },
+  "words": [
+    "the right hand, the subject",
+    "the broken chord under it, all the way through",
+    "the left hand's octaves, the bass and the pedal point"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": {
+          "$src": "[fill(2), rotate(1)]"
+        }
+      },
+      {
+        "at": 2,
+        "then": {
+          "$src": "[transpose(-12), keep(0, 8)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

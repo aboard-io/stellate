@@ -1,0 +1,174 @@
+{
+  "note": "KUNQU — Suzhou 1598. The record is a play and its year: Tang Xianzu's\nThe Peony Pavilion, written 1598, the piece the Kunqu article names first\n(\"Well-known pieces of Kunqu opera included The Peony Pavilion from the Ming\ndynasty\") and the one still staged. The music was already there: \"Kunqu\nrefers to Kunshan tune, a repertory of songs and performances from Kunshan in\nSuzhou... generally believed to have been developed during the Ming dynasty\nby Wei Liangfu, who was from the port of Taicang\", and \"it gained widespread\npopularity when Liang Chenyu used the style in his drama Huansha ji\". The\nlabel takes Suzhou, the prefecture Kunshan and Taicang are both in and the\ncity the style is named for, and 1598, the year the repertory acquired the\nplay it has never put down. THE ARTICLE'S OWN CLAIM FOR THE ROW: kunqu \"came\nto dominate Chinese theater from the 16th to the 18th centuries\" and is\n\"known as the 'ancestor of a hundred operas'\".\n\nIT IS AN ANCESTOR THIS TABLE ALREADY OWED. `jingju` (Beijing 1918) has\ncarried \"kunqu\" in its `wants` since it was written, and `sizhu` (Shanghai\n1920) has carried \"kunqu instrumental music\". THE FIRST IS PAID BY THIS ROW\nAND COMES OFF JINGJU'S LIST; jingju declares `kunqu` a parent tonight.\nTHE SECOND IS REFUSED AND THE REFUSAL IS THE POINT: sizhu's want names the\nINSTRUMENTAL music — the qupai lifted off the stage and played by a teahouse\nclub with no singer in it — and this row is the sung theatre. A want is paid\nby a row only when the row is the thing the want names, not the thing the\nwant is made of (the `operetta`/ballad-opera ruling of 2026-09-03, applied\nagain), so sizhu's line stays where it is.\n\nWHAT MAKES IT ITSELF, AND THE FIELD EACH FACT LANDS IN.\n  · SHUIMO QIANG — \"water-polished song\", the name for what Wei Liangfu did\n    to the Kunshan tune. It means a syllable spun out over many notes at a\n    tempo slower than speech. So this row is `rate: 0.5` with `maxHold: 6`\n    and `artic: \"tie\"`, and its throat is `MOUTHS.falsetto` — the only\n    row in the Chinese block to take it, and taken for a measured reason:\n    it is the fleet's most melismatic tract (syll 4, twice `melisma`'s) with\n    the most air (0.42) and almost no vibrato (0.12), which is a high thin\n    sustained line and is what the sheng and dan of a kunqu stage sound like.\n    `jingju` takes `bulgar` — no air at all, syll 2 — because a Peking\n    opera dan is a bright forward cry and this is not one.\n  · THE ORCHESTRA IS A FLUTE, NOT A FIDDLE, and the article says so:\n    \"Kunqu uses drum and board to provide rhythm to the tunes, with flute,\n    sanxian and so on as the main accompanying instrument.\" THERE IS NO\n    HUQIN IN THIS ROOM. The bowed fiddle that leads `jingju` and `huiju`\n    is the thing kunqu does not have, and its absence is half of why the two\n    sound like different centuries. The dizi is `flute`, with the dimo — the\n    rice-paper membrane that buzzes — in the cannot, `sizhu`'s own\n    admission. The sanxian is `shamisen`, and that substitution is the\n    closest in the whole Chinese block: the shamisen IS the sanxian, carried\n    to Okinawa and then to Japan in the sixteenth century, three strings,\n    fretless, a skin belly, played with a plectrum. It is the same instrument\n    with four hundred years of Japanese luthiery on it.\n  · BAN AND GU — \"drum and board\". A wooden clapper on the strong beat and a\n    small high drum on the weak ones, and nothing else: no gongs, no cymbals,\n    no kick. The metre is yiban sanyan, one strong and three weak, so the\n    `p` lane is the ban at step 0 and the `h` lane is the drum at 4, 8 and\n    12. That is the entire percussion section and it is four hits a bar.\n\nLINEAGE: a declared ROOT. Kunqu's own ancestor is nanxi, the Southern drama\nof Song-dynasty Hangzhou, and the Kunshan tune Gu Jian is said to have\ntransmitted in the Yuan; neither has an anchor and both are in `wants`.\nNothing in this table is upstream of a 1598 Chinese opera: the nearest\nanchors by DATE are European, and naming one would be the conscription\nWORLD.md §4 caught `worldfolk` in.\n\nTHE CORPUS IS SILENT AND THE SILENCE IS MEASURED. \"kunqu\", \"kunju\",\n\"peony pavilion\", \"qupai\", \"sanxian\", \"dizi\" and \"chinese opera\" return ZERO\nfiles out of the 120,652-file MIDI corpus; \"china\" and \"chinese\" return 91\nbetween them and not one is an opera. Chordonomicon has no kunqu label at\nall. So `bpm: 72` at half rate is a CHOICE and its neighbour is named:\nit is `gagaku`'s pulse, the other court-and-temple row in this table that\nmoves at the speed of breath.\n\nTHE ROW IS NOT DECLARED `organic` AND THE REASON IS ONE CHAIR. The\ntwelve-row reading of 2026-09-02 gives `organic: true` to a record that seats\nZERO native chairs — an honest recording rather than a failure — and the two\ninstruments here qualify: there is no model in the fleet of a dizi or a\nsanxian and there should not be. But the singer is a MODELLED THROAT (every\nvocal chair has been since 2026-08-28), so this row does seat a native chair\nand the declaration would be false. `guqin`, `pipaqu` and `yayue` are\ninstrumental and do declare it; this one says so here instead.",
+  "label": "Suzhou 1598",
+  "voices": 3,
+  "rate": 0.5,
+  "near": "jingju",
+  "plan": "arc",
+  "bpm": 72,
+  "parents": {},
+  "wants": [
+    "nanxi, the Southern drama of Song-dynasty Hangzhou",
+    "the Kunshan tune before Wei Liangfu polished it",
+    "the qupai repertory — the fixed tune-titles a kunqu scene is assembled from"
+  ],
+  "cannot": [
+    "the qupai system itself — a kunqu scene is built by choosing NAMED PRE-EXISTING TUNES and fitting new words to them, which is a repertory of material and this box writes one phrase and varies it; the section schedule below is a shape, not a tune-title",
+    "the dimo — a dizi's tone is a rice-paper membrane buzzing over a hole, and `flute` is a Western concert flute with none of it (`sizhu`'s admission, unchanged)",
+    "the ban's own timbre — two slabs of hardwood struck edge to edge, which is neither a drum nor a hat; the `p` lane is the nearest thing and it is a compromise",
+    "zhongzhou rhyme — the artificial stage pronunciation kunqu is sung in, which is a fact about the WORDS and this box has no words",
+    "free time at the aria's crisis — the same wall `jingju` names as sanban: no pace word says 'no bar'"
+  ],
+  "instr": [
+    "solo_vox",
+    "flute",
+    "shamisen"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": -1
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.majpent"
+  },
+  "artic": "tie",
+  "maxHold": 6,
+  "incClamp": 2,
+  "orn": {
+    "grace": 0.45,
+    "pass": 0.3
+  },
+  "kit": {
+    "p": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      9,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      7,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      0,
+      0,
+      5,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      4,
+      0,
+      0,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2200,
+    "q": 0.8,
+    "atk": 0.05,
+    "rel": 2,
+    "gain": 0.22,
+    "verb": 0.5,
+    "mouth": {
+      "$src": "MOUTHS.falsetto"
+    },
+    "glide": 0.04
+  },
+  "words": [
+    "the sheng, one syllable spun out over a phrase",
+    "the dizi, doubling her and adding flowers",
+    "the sanxian, on the bones of the tune"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n          ? [[drop(4)], [drop(2)], [fill(2)], [fill(2), rotate(2)]][s % 4]\n        : v === 1 ? [fill(2), rotate(1)]\n        : [keep(0, 4, 8, 12), transpose(-12)])"
+  }
+}

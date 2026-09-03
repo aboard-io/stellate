@@ -1,0 +1,166 @@
+{
+  "note": "HUIJU — Beijing 1790. The record is a birthday party, and it is dated\nto the day: \"Peking opera was born when the Four Great Anhui Troupes brought\nHui opera, or what is now called Huiju, in 1790 to Beijing, for the eightieth\nbirthday of the Qianlong Emperor on 25 September. It was originally staged\nfor the court and only made available to the public later.\" That is the\nPeking opera article's own sentence and it is the founding record of this row\n— not of `jingju`, which sits on the 1918 Hegemon-King premiere and says so.\nThe music itself is older: \"Anhui Opera originated in the southern part of\nAnhui Province, particularly in Huizhou and Anqing during the Ming Dynasty\",\nand it \"played a part in developing Peking opera during the Qing Dynasty\".\n\nTHIS ROW IS A DEBT THE TABLE WROTE DOWN AND HAS NOW PAID. `jingju`'s\n`wants` has read \"the hui and han troupes (beijing 1790)\" since it was\nwritten, and its own comment says \"Jingju's own parents — kunqu, and the Hui\nand Han troupes whose 1790 arrival in Beijing for the Qianlong birthday is\nthe tradition's founding story — have no anchors and are owed by name\". BOTH\nWANTS ARE PAID TONIGHT: `kunqu` (Suzhou 1598) and this row are declared\nparents of `jingju`, its `wants` list empties, and `jingju` stops being a\ndeclared root.\n\nWHY IT IS NOT \"PEKING OPERA WITH AN EARLIER DATE\", which is the only real\nquestion. In 1790 there was no Peking opera: there were Anhui troupes\nsinging erhuang in a Beijing court. The article is explicit that the form\narrives later and in stages — \"In 1828, several famous Hubei troupes arrived\nin Beijing and performed jointly with Anhui troupes. The combination\ngradually formed Peking opera's melodies. Peking opera is generally regarded\nas having fully formed by 1845.\" So this row is the FIRST of the three\ningredients, in the room, twenty-eight years before the second and\nfifty-five before the result. And it holds the article's own melodic name:\n\"The earliest Chinese name, Pihuang, was a combination of the xipi and\nerhuang melodies\" — this is the erhuang half.\n\nTHE ERHU CHAIR IS THIS ROW'S ONE REAL WIN, and it is a clause in another\nrow's comment coming due. `jingju` refused the registry's erhu in an\namendment dated 2026-08-30, at length and correctly: \"erhu.dsp's compass is\nD4..A7 and a jinghu is tuned roughly an OCTAVE above an erhu with a bamboo\nbarrel a fraction of the size, so seating it would be claiming an instrument\nnobody has measured against a jinghu\". THE JINGHU IS THE PROBLEM AND THIS\nROW DOES NOT HAVE ONE. The erhuang melody is accompanied by the erhuang\nhuqin, which sits LOW — the deep lyrical fiddle, not the shrieking one — and\n`erhu` is that instrument by family and by register at once: two strings, a\nsnakeskin membrane, the bow hair between the strings. So the first NATIVE\nchair in the Chinese block goes here, and it goes here because a jingju agent\nin August wrote down exactly what would have to be true before it could.\n\nTHE PERCUSSION IS LOUDER THAN JINGJU'S ON PURPOSE. `jingju` keeps \"only the\nban's timekeeping\" and leaves the gong-and-drum signals unsaid, because\nluogu dianzi are STAGE DIRECTIONS and a repeating lane would turn them into a\ngroove. That argument is accepted and not repeated: what this row adds is not\nsignals but the touring troupe's own floor — a drum on the beat and a wood\nlane running under it, which is what a company that plays in courtyards and\ntemple fairs sounds like next to a company that plays in a theatre.\n\nTHE ALPHABET IS THE YU MODE AND THE SCALE IS NEW TONIGHT.\n`SCALES.yupent` — 0 3 5 7 10 — is the fifth rotation of the pentatonic\n`majpent` already carries (0 2 4 7 9), and until tonight this box had no\nfive-note set with a minor third in it that was not `blues` (0 3 5 6 7 10,\nwhich has a flat fifth in it and is a different continent). Erhuang is a yu-\nand gong-mode music; a bangzi aria is a yu-mode music; a seven-note dorian\nwould hand both of them a second and a sixth degree the style does not use.\nThe addition is argued in genres-tables.js beside the table itself and is\nMEASURED there: rendering this row's seeds 1–3 against `MODES.dorian` moves\nnotes, so the alphabet is doing work rather than decorating.\n\nTHE CORPUS IS SILENT AND THE SILENCE IS MEASURED. \"huiju\", \"hui opera\",\n\"anhui\", \"erhuang\", \"xipi\", \"pihuang\", \"qianlong\" and \"peking opera\" return\nZERO files out of the 120,652-file MIDI corpus. Chordonomicon has no Chinese\nopera label at all — 110 rows say \"chinese\" and every one is a pop side. So\n`bpm: 96` is a CHOICE and it is `jingju`'s own, because yuanban is yuanban\nin either company.\n\nNO `mode` FIELD, AND THAT IS G14b RATHER THAN AN OMISSION. The first draft of\nthis row declared `mode: MODES.dorian` beside its yu-mode scale, which is how\nmost of the Chinese block is written — and test/precompose.js G14b would have\ncaught it, because it is DECORATION: `mode` is read in exactly three places\n(kernel.js harm(), chordsOf(), bass()) and all three need CHORD ROOTS, which a\n`harmony: \"modal\"` row does not have. Swapping the declared dorian for its\nplain neighbour moves not one rendered note. The law at genres-tables.js MODES\noffers three answers and this row takes the honest one for a modal record: say\nnothing. Every note it plays comes out of `scale`, which is `SCALES.yupent`,\nand that is where the claim belongs.",
+  "label": "Beijing 1790",
+  "voices": 3,
+  "bars": 8,
+  "near": "jingju",
+  "plan": "arc",
+  "bpm": 96,
+  "parents": {
+    "kunqu": 0.2
+  },
+  "wants": [
+    "the Ming Huizhou and Anqing stages the troupes came from",
+    "the Hubei (Han) troupes who arrived in 1828 and made the other half of the melody"
+  ],
+  "cannot": [
+    "the daluo — the big gong whose pitch FALLS as it rings, and no sample in the kit bends (`jingju`'s admission, unchanged)",
+    "the luogu dianzi — gong-and-drum patterns are SIGNALS (enter, sit, weep, fight), not grooves, and a lane that repeats per bar would turn a stage direction into a beat",
+    "the role registers — sheng, dan, jing, chou are TIMBRE AS THE GENRE (WORLD.md §5.5) and one throat is not four",
+    "the yueqin — a round-bodied short-necked lute with four strings in two courses; `banjo` below is round-bodied and plucked and has a membrane head, which is three facts right and the rest wrong",
+    "sanban, the free banshi — the pace ladder has half through double and no word for 'no bar'"
+  ],
+  "instr": [
+    "solo_vox",
+    "erhu",
+    "banjo"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      1,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "cold",
+  "scale": {
+    "$src": "SCALES.yupent"
+  },
+  "artic": "legato",
+  "maxHold": 3,
+  "orn": {
+    "grace": 0.4,
+    "approach": 0.3
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+    ],
+    "h": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      9,
+      0,
+      4,
+      0,
+      6,
+      0,
+      4,
+      0,
+      7,
+      0,
+      4,
+      4,
+      6,
+      0,
+      5,
+      0
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2500,
+    "q": 0.95,
+    "atk": 0.018,
+    "rel": 1.1,
+    "gain": 0.25,
+    "verb": 0.42,
+    "mouth": {
+      "$src": "MOUTHS.trobar"
+    },
+    "slide": 0.12
+  },
+  "words": [
+    "the lead, declaiming over the fiddle",
+    "the erhuang huqin, riding the line a fifth up",
+    "the yueqin, hammering the skeleton"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[], [fill(2)], [rotate(2)], [fill(2), reverse()]][s % 4]\n                    : v === 1 ? [transpose(7), fill(2)]\n                    : [keep(0, 4, 8, 12), drop(2)])"
+  }
+}

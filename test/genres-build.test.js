@@ -195,7 +195,7 @@ const shape = (r) => JSON.stringify(Array.isArray(r) ? r.map(applied) : applied(
 // — G3's own report prints the real call count below — so it is corrected
 // here rather than turned into a second copy of a number `_order.json`
 // already owns.
-ok("453 rows x 4 closures x v 0..8 x s 0..7", () => {
+ok("478 rows x 4 closures x v 0..8 x s 0..7", () => {
   const K = require(R + "/nukernel/kernel.js");
   const { rotate, reverse, transpose, invert, complement, excerpt, only, drop, fill, del,
           split, spread, keep } = K;

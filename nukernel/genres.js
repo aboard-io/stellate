@@ -226,11 +226,36 @@
     // none of them could say `blues`.
     blues:     [0, 3, 5, 6, 7, 10],                       // 2.0
     bluesx:    [0, 1, 3, 5, 6, 8, 10],                    // 1.71
+    // ...AND `yupent` JOINED 2026-09-03 WITH THE CHINA BATCH, which is the
+    // first alphabet added to this table since the two above and is added on
+    // the same terms: two anchors could not say what they play.
+    //   THE GAP, STATED AS A SET. `majpent` (0 2 4 7 9) is the GONG mode of
+    // the Chinese pentatonic and this file had no other rotation of it. The
+    // YU mode is 0 3 5 7 10 — the same five notes started from the sixth
+    // degree, the relative minor of the same pentatonic — and it is what a
+    // bangzi aria and an erhuang aria are built on. Before tonight a row that
+    // wanted it had exactly two choices and both are wrong: `blues`
+    // (0 3 5 6 7 10) is the yu mode PLUS A FLAT FIFTH, which is a blue note
+    // and another continent, and `MODES.dorian` (0 2 3 5 7 9 10) is seven
+    // notes, handing a five-note style a second and a sixth degree it does
+    // not use.
+    //   MEASURED, not asserted, on `qinqiang` (Xi'an 1807) and `huiju`
+    // (Beijing 1790) at seeds 1-3 by the same method test/precompose.js G14b
+    // uses for a decorative mode: swap the declared alphabet for the nearest
+    // thing already in this file and RENDER, then compare the pitches note for
+    // note. Over 43,421 rendered notes `qinqiang` moves 50.4% of them against
+    // `majpent` and 96.0% against `MODES.dorian`; over 32,619 notes `huiju`
+    // moves 47.8% and 41.0%. Half the notes of a row is not decoration, and
+    // the dorian column is the sharper half of the finding: a seven-note
+    // alphabet does not merely colour a five-note style, it re-points every
+    // degree the phrase asks for.
+    yupent:    [0, 3, 5, 7, 10],                          // the yu mode
   };
   const SCALELABEL = { chromatic: "chromatic", whole: "whole tone",
                        augmented: "augmented", quartal: "quartal",
                        major: "major", majpent: "major pent.",
-                       blues: "blues", bluesx: "blues, flattened" };
+                       blues: "blues", bluesx: "blues, flattened",
+                       yupent: "minor pent. (yu)" };
 
   // ---- THE MOUTHS ----------------------------------------------------------
   // WHO IS SINGING. A genre that casts a vocal instrument used to get one held
@@ -12737,6 +12762,119 @@
       word: (v, s) => (v === 1 ? [transpose(-(s % 3)), ...(s % 2 ? [rotate(2)] : [])] : []),
     },
 
+    // ORATORIO — Dublin 1742. Handel, MESSIAH, first performed at Neale's
+    // Great Music Hall on Fishamble Street on 13 April 1742, for the Society
+    // for Relieving Prisoners, the Charitable Infirmary and Mercer's Hospital;
+    // about seven hundred people got in because the ladies were asked to come
+    // without hoops and the gentlemen without swords. A sacred text, in
+    // English, sung in a CONCERT ROOM by a theatre company, with an orchestra
+    // and no staging and no scenery — which is the definition of the form and
+    // also the reason it was invented: Lent closed the opera houses.
+    //
+    // WHY NOT `sacredconcerto`, WHICH WAS CHECKED FIRST AS THE BRIEF ASKED.
+    // That row is Dresden 1636 — Schutz's Kleine geistliche Konzerte, Latin and
+    // German scripture for a few voices and a continuo in a war-emptied court
+    // chapel, and its own comment says it is the Venetian concerto grammar on
+    // the chorale's tongue. This row is a hundred and six years later, in a
+    // different language, in a different building, for a paying audience, with
+    // a chorus and a band. They are not the same object and the only thing they
+    // share is that nobody is acting. `sacredconcerto` is taken as a parent
+    // rather than displaced.
+    //
+    // MEASURED, AND THE CORPUS IS LOPSIDED IN A WAY WORTH SAYING. Forty-two
+    // files in the classical rips match Handel, Messiah, Hallelujah or
+    // oratorio — but twenty-nine of them are in `classical_guitar`, which
+    // means they are transcriptions of the keyboard suites and the concerti for
+    // six strings, not the choral works. MESSIAH ITSELF IS ONE FILE. So the
+    // numbers below are the composer's, not the genre's, and are used only
+    // where the two plausibly agree: bpm p50 96.0 (quartiles 78.5 and 111.5),
+    // 64.3% major, 3/4 28.6% and 4/4 19.0%, hold p50 1.333 and p90 4.0, median
+    // melodic interval 2.0 with a step fraction of 0.669 — a stepwise line at a
+    // walking tempo. THE ONE NUMBER THAT IS THE GENRE'S: 17 of 42 files vote an
+    // EIGHT-BAR harmonic period, the longest of any set measured this round and
+    // more than double the symphony's share. That is the sequence — the
+    // Corellian chain of suspensions that walks a bass down eight bars before
+    // anything cadences — and it is why `roots` below moves through five
+    // degrees before it comes home instead of the four-bar turnaround every
+    // song row in this table plays.
+    //
+    // THE VOICE IS THE ARGUMENT. `MOUTHS.hymnal` with `syll: 4` — a vowel held
+    // four beats — because the English oratorio chorus's own signature is the
+    // melisma on one word ("and He shall reign", "born"), and the plain hymnal
+    // mouth (which `chorale`, Nuremberg 1586, takes) changes syllable far too
+    // often for it. That is one number and it is the difference between a
+    // Lutheran congregation and a Dublin chorus.
+    //
+    // FOUR CHAIRS AND THE OPENING IS A SOLO, WHICH IS LITERAL: Messiah opens
+    // with a tenor recitative, "Comfort ye", before the chorus is heard at all,
+    // so `intro: "solo"` — the anchor's own way in, which compose honours a
+    // little over half the time. The strings hold, the harpsichord is the
+    // continuo, and `bassStyle: "eighths"` is the walking quaver bass that runs
+    // under every chorus in the piece.
+    //
+    // LINEAGE. `operaseria` (London 1724) 0.35 — the same composer, the same
+    // city, the same singers and the same da capo machinery, with the staging
+    // taken away; `sacredconcerto` (Dresden 1636) 0.25 — the sacred text set
+    // for voices and continuo, the form's own ancestor; `continuo` (Florence
+    // 1602) 0.2 — the figured bass everything here stands on; `chorale`
+    // (Nuremberg 1586) 0.1 — the congregational tune, which is what the great
+    // homophonic choruses are wearing. 0.9 declared. THE RESIDUE IS 0.1 AND IT
+    // IS THE ROOM: a charity concert in a music hall, in English, for people
+    // who bought tickets — a public that had not existed for sacred music
+    // before this and was the whole commercial reason the genre took.
+    oratorio: {
+      label: "Dublin 1742",
+      near: "sacredconcerto",
+      plan: "arc",
+      bpm: 96,
+      bars: 8,
+      voices: 4,
+      parents: { operaseria: 0.35, sacredconcerto: 0.25, continuo: 0.2, chorale: 0.1 },
+      wants: [
+        "the Italian oratorio volgare of the Roman congregations — Carissimi's Jephte and the " +
+        "Oratorio di San Marcello, the form Handel learned in Rome, which this table has no " +
+        "row for"
+      ],
+      cannot: [
+        "the words, which are the whole subject: this box sings vowels, and an English " +
+        "oratorio is a scripture SET, word by word, to be understood at the back of the hall",
+        "a chorus and an orchestra at full size — four chairs is four, and Dublin heard " +
+        "perhaps thirty-two singers and a band",
+        "the da capo aria's return with the singer's own ornaments improvised over it"
+      ],
+      instr: ["solo_vox", "ahh_choir", "strings", "harpsichord"],
+      part: ["lead", "counter", "pad", "riff"],
+      entry: v => [0, 2, 0, 0][v],
+      reg: v => [1, 0, 0, -1][v],
+      realize: v => (v === 2 ? "pad" : "line"),
+      roots: [0, 4, 5, 1, 3, 0, 4, 0],
+      mode: MODES.ionian,
+      scale: DIATONIC,
+      diatonic: true,
+      artic: "legato",
+      maxHold: 4,
+      bassStyle: "eighths",
+      kit: {},
+      intro: "solo",
+      tone: {
+        wave: "sawtooth",
+        cut: 2400,
+        q: 0.8,
+        atk: 0.02,
+        rel: 1,
+        gain: 0.24,
+        verb: 0.62,
+        mouth: { ...MOUTHS.hymnal, syll: 4 }
+      },
+      words: [
+        "the soloist, who opens the piece before the chorus exists",
+        "the chorus, entering at bar 3",
+        "the strings, holding",
+        "the continuo, walking"
+      ],
+      word: v => (v === 1 ? [transpose(-5)] : v === 3 ? [transpose(-12), fill(2)] : []),
+    },
+
     // CLASSICAL — Vienna 1785, the galant reaction: the concerto's clarity,
     // the fugue kept for development sections only, and the piano replacing
     // the harpsichord. The tune is periodic, the Alberti hand turns under it
@@ -12773,6 +12911,495 @@
         "strings, doubling the cadence"
       ],
       word: (v, s) => (v === 1 ? [rotate(1), ...(s % 2 ? [] : [drop(2)])] : []),
+    },
+
+    // SYMPHONY — Vienna 1788. Mozart's last three, K. 543, K. 550 and
+    // K. 551, entered in his own thematic catalogue on 26 June, 25 July and
+    // 10 August 1788 — three symphonies in nine weeks, with no commission
+    // anybody has ever found and no performance anybody can date. That is the
+    // founding record this row takes: not a premiere, because there may not
+    // have been one, but a SCORE, and the year is the year the composer wrote
+    // in his own book.
+    //
+    // WHY NOT MANNHEIM 1750, WHICH WAS THE OTHER CANDIDATE AND IS THE HONEST
+    // INVENTOR. Johann Stamitz's band at the Palatine court is where the
+    // four-movement plan, the wind section as a section, and the famous
+    // crescendo were assembled, and a row dated there would be the truer
+    // history. It is refused for two reasons said out loud. First, the
+    // INSTRUMENT: Mannheim's invention was an ORCHESTRA — forty players who
+    // could swell together — and this box seats four chairs, so the one thing
+    // that dot would be for is the one thing it cannot render. Second, the
+    // EVIDENCE: the corpus holds not one Stamitz file, and 197 files under the
+    // word `symphony`. A row dated at a place the archive has never heard of,
+    // for a fact the engine cannot play, is a claim with nothing under it.
+    // Mannheim is paid in `wants` instead, by name, which is what that field
+    // is for (GENRES.md §2).
+    //
+    // THE CORPUS, AND THE FOUNDING RECORD IS IN IT. Fifteen files carry the
+    // last three symphonies (K. 543 four movements, K. 550 four plus two
+    // separate transcriptions of the first, K. 551 four): bpm p50 138.0 with
+    // quartiles 132 and 180, meters 4/4 26.7% / 3/4 26.7% / 2/4 13.3%, 60%
+    // major, ZERO files with a drum channel. The wider set — 197 files whose
+    // name says `symphony`, from Haydn's Clock to Dvorak's Seventh — reads bpm
+    // p50 138.0 as well, the two medians agreeing to the tenth, 79.7% major,
+    // 3/4 29.4% and 4/4 26.4%, and 158 of 197 files whose commonest bar chord
+    // is a PLAIN TRIAD. That last number is this row's alphabet: the symphony
+    // is the least chromatic music in this whole batch, and `impressionism`
+    // (Paris 1894), measured the same way, comes back seventh-chorded on 39
+    // of 65. (The Bach three-part SINFONIAS, BWV 787-801, matched the first
+    // regex and were CUT: they are keyboard inventions with a Latin name, not
+    // orchestra music, and leaving them in moved the meter tally by six
+    // points.)
+    //
+    // AND THE LINE STEPS AND STARTS BEFORE THE BAR. Median absolute melodic
+    // interval 2.0 semitones, step fraction 0.748, hold p50 2.0 and p90 6.833
+    // sixteenths — the LONGEST held line measured anywhere in this batch,
+    // which is why `maxHold` is 6 and not the 4 every piano row here takes.
+    // The pickup rate is 0.144, the highest of the fifteen sets measured for
+    // this round, and it is why the idiom row below says `pickup`: a symphonic
+    // subject starts on the upbeat, and the archive says so file by file.
+    //
+    // THE FORM IS THE ARGUMENT AND THE BOX CAN SAY HALF OF IT. `roots` here
+    // is a sonata EXPOSITION and it is the only row in this catalogue whose
+    // eight bars do not come home: I, I, to the dominant, second subject on
+    // the dominant, and it ENDS there, on V, where `classical` (Vienna 1785)
+    // and every dance row in the table close on 0. What the box can do: state
+    // a subject, drive it to the dominant with a real V-of-V (`prog` bar 3, a
+    // dom7 on degree 1), put a second, quieter idea over there, and take the
+    // first one apart in the middle sections — which is what the `word`
+    // formula does at s % 3 === 2, excerpting the first four steps of the
+    // subject and rotating them. That is a development section written in
+    // operators.
+    //
+    // WHAT IT CANNOT, and this is the whole distance between the row and the
+    // form: a real MODULATION. `roots` moves a DEGREE inside one mode, so the
+    // second subject arrives on the dominant CHORD and not in the dominant
+    // KEY, and the architecture that the eighteenth century built the genre
+    // out of — leave home, live somewhere else for five minutes, come back —
+    // is a key change this box does not have. The row says the shape of it and
+    // not the fact of it, and pretending otherwise would be the caricature.
+    //
+    // THE CAST IS FOUR AND THE ORCHESTRA IS FORTY. Strings as the body,
+    // first violins with the subject, a flute answering (the winds are one
+    // chair, and in 1788 they are two oboes, two bassoons, two horns and a
+    // flute), horns holding the dominant under the cadence. `organic: true`
+    // for `concerto`'s reason, stated once: these are recordings of bowed and
+    // blown instruments and the modelled violin is documented upstream as the
+    // one model whose loudness is not monotone in bow force.
+    //
+    // LINEAGE. `classical` (Vienna 1785) 0.45 — the same city, three years
+    // earlier, the same man, and the galant language entire; that row is the
+    // piano's version of this one and says so. `concerto` (Venice 1725) 0.25 —
+    // the ritornello alternation of tutti and solo is the symphony's own
+    // inheritance, and this row's entry schedule is that alternation.
+    // `counterpoint` (Vienna 1725) 0.15 — the Jupiter's finale is a fugue and
+    // the development sections of all three are fugato. 0.85 declared. THE
+    // RESIDUE IS 0.15 AND IT IS THE ORCHESTRA ITSELF: a body of strings that
+    // can get louder without anybody playing more notes, which is Mannheim's
+    // invention, is not in any parent above and is not in this engine
+    // either.
+    symphony: {
+      organic: true,
+      instrumental: true,
+      label: "Vienna 1788",
+      near: "classical",
+      plan: "arc",
+      bpm: 138,
+      bars: 8,
+      voices: 4,
+      parents: { classical: 0.45, concerto: 0.25, counterpoint: 0.15 },
+      wants: [
+        "the Mannheim orchestra — Stamitz's band at the Palatine court, the four-movement plan " +
+        "and the crescendo, which this table has no row for and this engine has no chairs for"
+      ],
+      cannot: [
+        "a real modulation — `roots` moves the DEGREE inside one mode, so the second subject " +
+        "arrives on the dominant CHORD and not in the dominant KEY, and the exposition's whole " +
+        "architecture is a key change this box cannot make",
+        "the crescendo the genre was invented for: a body of strings getting louder together, " +
+        "where this engine deals dynamics per section",
+        "timpani — the kit has twelve fixed lanes and no timpani file, `romantic`'s own " +
+        "ruling, and casting one as a pitched voice would make it melodic"
+      ],
+      instr: ["strings", "violin", "flute", "french_horns"],
+      part: ["pad", "lead", "counter", "riff"],
+      entry: v => [0, 0, 2, 4][v],
+      reg: v => [-1, 1, 1, -1][v],
+      realize: v => (v === 0 ? "pad" : "line"),
+      roots: [0, 0, 4, 4, 4, 1, 4, 4],
+      prog: [
+        { d: 0 },
+        { d: 0 },
+        { d: 1, q: "dom7" },
+        { d: 4 },
+        { d: 4 },
+        { d: 1 },
+        { d: 4, q: "dom7" },
+        { d: 4 }
+      ],
+      mode: MODES.ionian,
+      scale: SCALES.major,
+      diatonic: true,
+      maxHold: 6,
+      bassInstr: "contrabass",
+      bassStyle: "eighths",
+      kit: {},
+      intro: "stabs",
+      tone: { wave: "sawtooth", cut: 2600, q: 0.9, atk: 0.02, rel: 1.2, gain: 0.24, verb: 0.5 },
+      words: [
+        "the body of strings",
+        "first violins, the subject",
+        "the flute, answering",
+        "the horns, holding the dominant"
+      ],
+      word: (v, s) => (v === 1 ? (s % 3 === 2 ? [excerpt(0, 4), rotate(2)] : [])
+                    : v === 2 ? [transpose(12), drop(3)]
+                    : v === 3 ? [keep(0, 8)]
+                    : []),
+    },
+
+    // STRING QUARTET — Vienna 1782. Haydn, the six quartets of op. 33,
+    // published in Vienna by Artaria that year and hawked by the composer
+    // himself in a letter to subscribers as written "in a quite new, special
+    // manner". The sentence is the founding record: a man announcing that four
+    // string players have stopped being a small orchestra and become four
+    // people talking. Not op. 20 (Eszterhaza 1772), which is where the cello
+    // was let out of the bass and the fugal finales were tried; that set is
+    // the experiment and this one is the announcement, and a table dated by
+    // NAMED PUBLISHED RECORDS takes the one with a date and a printer on it.
+    // Eszterhaza would also be a new dot on a map that already carries Vienna.
+    //
+    // THE INVENTION IS THAT NOBODY ACCOMPANIES. Every other art-music row in
+    // this catalogue seats a PAD — `classical` puts strings under the piano,
+    // `concerto` a harpsichord under the violin, `romantic` a body of strings
+    // under the cello, `symphony` (Vienna 1788) the same. This row's `realize`
+    // is `const line` and that is the whole argument in one field: four chairs,
+    // four independent lines, no held chord anywhere in the record. It is the
+    // only row in the Western art block that says it.
+    //
+    // THE ENTRY SCHEDULE IS THE CONVERSATION. 0, 2, 4, 6 — each voice comes in
+    // two bars after the one above it, so within one eight-bar section all four
+    // have entered and the last one is still speaking when the section ends.
+    // (Precompose restarts entries every section, which is why an eight-voice
+    // sweep can never finish here and a four-voice one can: the sweep is
+    // measured against the section, not the record.)
+    //
+    // MEASURED. Twenty-nine files in the classical rips carry `quartet`,
+    // `quartett` or `cuartet`: bpm p50 118.0 (quartiles 62 and 156 — a set of
+    // movements, fast and slow), 75.9% major, meters 3/4 31.0% and 2/4 27.6%
+    // with 4/4 at only 10.3%, and ZERO drum channels. Two numbers separate this
+    // set from the symphony's 197: the median absolute melodic interval is 2.85
+    // semitones against 2.53, and syncopation is 0.265 against 0.190 — the
+    // quartet's line leaps more and lands off the beat more, which is what an
+    // inner voice does when it is answering rather than doubling. Hold p50 1.0
+    // and p90 4.0, so `maxHold` is the p90 read straight. 22 of 29 files vote a
+    // one-bar harmonic period, which is a SLOW harmonic rhythm — a root held
+    // across the bar rather than a chord change inside it — and the eight roots
+    // below move once a bar and never twice.
+    //
+    // THE CELLO IS THE BASS AND THERE IS NO FIFTH PLAYER. `nobass: true`, for
+    // `classical`'s stated reason one field over ("the left hand IS the bass"):
+    // a pizzicato bass under a string quartet is a fifth man in a room built
+    // for four. The cello chair sits at reg -1 and does the job.
+    //
+    // LINEAGE. `classical` (Vienna 1785) is THREE YEARS LATER than this row and
+    // therefore cannot be its parent — the not-later law, and the direction is
+    // the useful fact here: the quartet came first and the galant piano style
+    // is its sibling, not its ancestor. So: `concerto` (Venice 1725) 0.35, the
+    // Italian string writing and the ritornello habit these six pieces are
+    // still full of; `counterpoint` (Vienna 1725) 0.30, Fux's own city and
+    // book, and op. 33's finales are where Haydn puts the species writing back
+    // into a drawing room; `pavane` (Antwerp 1551) 0.10, the four-part dance
+    // consort that is the ensemble's actual ancestor. 0.75 declared. THE
+    // RESIDUE IS 0.25 AND IT IS THE MANNER THE LETTER ADVERTISED: four equal
+    // voices, a joke you have to follow all four parts to get, and the
+    // minuet-and-trio replaced by a scherzo. None of that is in the three
+    // parents and the sales letter is right that it was new.
+    stringquartet: {
+      organic: true,
+      instrumental: true,
+      label: "Vienna 1782",
+      near: "concerto",
+      plan: "arc",
+      bpm: 118,
+      bars: 8,
+      voices: 4,
+      parents: { concerto: 0.35, counterpoint: 0.3, pavane: 0.1 },
+      wants: [
+        "the divertimento and the cassation — the outdoor five-movement entertainment op. 33 " +
+        "is arguing with, which this table has no row for"
+      ],
+      cannot: [
+        "the minuet and trio, and the scherzo that replaced it: a dance movement is a " +
+        "MOVEMENT, and this box composes one record with one meter",
+        "the double bar and the written repeat — every quartet exposition is played twice and " +
+        "this row plays it once"
+      ],
+      instr: ["violin", "violin", "viola", "cello"],
+      entry: v => [0, 2, 4, 6][v],
+      reg: v => [1, 0, 0, -1][v],
+      realize: () => "line",
+      nobass: true,
+      roots: [0, 0, 4, 4, 5, 1, 4, 0],
+      mode: MODES.ionian,
+      scale: DIATONIC,
+      diatonic: true,
+      artic: "legato",
+      maxHold: 4,
+      kit: {},
+      intro: "cold",
+      tone: { wave: "sawtooth", cut: 2400, q: 0.9, atk: 0.03, rel: 0.9, gain: 0.22, verb: 0.4 },
+      words: [
+        "the first violin, the subject",
+        "the second violin, the same figure a bar behind",
+        "the viola, inside, filling what the other two leave",
+        "the cello, the bass line and a voice at once"
+      ],
+      word: (v, s) => (v === 0 ? []
+        : v === 1 ? [rotate(2)]
+        : v === 2 ? [transpose(-5), drop(3)]
+        : [transpose(-12), keep(0, 6, 12)]),
+    },
+
+    // PIANO SONATA — Vienna 1802. Beethoven, op. 27 no. 2, the Sonata quasi
+    // una fantasia in C sharp minor, published in Vienna by Cappi in 1802 with
+    // a dedication to Giulietta Guicciardi. The nickname is a critic's and
+    // arrives forty years later; the record is the print.
+    //
+    // WHY THIS ONE. The row needs a piece where the PIANO is the whole event
+    // and the sonata is the argument, and op. 27 no. 2 is the sonata that
+    // starts with its slow movement, marks its first page "si deve suonare
+    // tutto questo pezzo delicatissimamente e senza sordino" — hold the dampers
+    // up through the whole thing — and puts the finale's weight last. It is
+    // also the sonata this archive actually holds: fourteen files carry the
+    // piece against one for the Waldstein's opening and eight for the
+    // Appassionata's.
+    //
+    // MEASURED, AND THE MEASUREMENT IS ABOUT WHAT A PIANO LINE IS. Forty-eight
+    // files in the classical rips under a clean Beethoven-sonata match (the
+    // first regex also caught `almonds.mid` and a Dowland alman, which is what
+    // `mond` does to a substring matcher, and both were cut): bpm p50 113.6,
+    // 41.7% 4/4, 43.8% MINOR — the highest minor share of any Western art set
+    // this round except the requiem's. The line's shape is the separating fact:
+    // median absolute melodic interval 3.0 semitones against the symphony's 2.0,
+    // step fraction 0.414 against 0.748. On the fourteen op. 27 files alone it
+    // goes further — |interval| p50 5.0 and step fraction 0.213, the least
+    // stepwise number measured anywhere in this batch.
+    //
+    // SAID HONESTLY: that is not a measurement of the TUNE. The corpus's melody
+    // extractor takes the most melodic-looking line in the file, and in this
+    // piece that line is the RIGHT HAND'S TRIPLET ARPEGGIO, which is an
+    // accompaniment. The number is therefore evidence about the TEXTURE and it
+    // is the texture this row is built from: a piano sonata is a broken chord
+    // running under a slow tune, and the extractor picking the figure over the
+    // melody is the most honest possible demonstration of which one is
+    // carrying the piece.
+    //
+    // SO THE CHAIRS ARE THE HANDS. Three, all the same grand: the right hand's
+    // tune (`lead`, reg 1), the figure under it (`riff`, reg 0, `fill(2)` —
+    // every other step filled, which is this box's continuous broken chord),
+    // and the left hand's octaves (`drone`, the part whose whole definition is
+    // "refuses to move", reg -2). `nobass: true` on `classical`'s ruling: the
+    // left hand IS the bass, and a bass guitar under a piano sonata is a fourth
+    // hand.
+    //
+    // THE MODE IS AEOLIAN WITH A REAL DOMINANT. 43.8% of the corpus set is
+    // minor and the founding record is in C sharp minor, so aeolian; but a
+    // Beethoven cadence has a leading note, so degree 4 is written as a `dom7`
+    // in `prog` rather than reached for through `MODES.harmonic`. That is
+    // `nuevacancion`'s ruling from earlier this same shift, taken for the same
+    // reason: a plain VII and III appear as often as the raised seventh does,
+    // and harmonic minor cannot hold both.
+    //
+    // LINEAGE. `classical` (Vienna 1785) 0.5 — the same city seventeen years
+    // earlier, the galant sonata with the Alberti hand, which this row is the
+    // argument with; `concerto` (Venice 1725) 0.2 — the solo-against-tutti
+    // drama that a sonata performs with one player and two hands;
+    // `counterpoint` (Vienna 1725) 0.1 — the fugal writing that arrives in
+    // these sonatas' late finales. 0.8 declared. THE RESIDUE IS 0.2 AND IT IS
+    // THE INSTRUMENT: a Viennese fortepiano with a damper mechanism a player
+    // could hold open for four minutes, which is not a fact about any parent
+    // above — it is a fact about a machine that had just been built.
+    pianosonata: {
+      organic: true,
+      instrumental: true,
+      label: "Vienna 1802",
+      near: "nocturne",
+      plan: "arc",
+      bpm: 114,
+      bars: 8,
+      voices: 3,
+      parents: { classical: 0.5, concerto: 0.2, counterpoint: 0.1 },
+      wants: [],
+      cannot: [
+        "the triplet — op. 27 no. 2's figure is three notes to the beat and this box's bar is " +
+        "sixteen equal steps, so the arpeggio here runs in fours",
+        "the dampers held up through a whole movement: `rel` holds one note's own tail, it " +
+        "does not lift the felt off every string in the instrument",
+        "a sonata's second movement, and its third — this is one movement, and the genre is " +
+        "three"
+      ],
+      instr: ["yamaha_grand_piano", "yamaha_grand_piano", "yamaha_grand_piano"],
+      part: ["lead", "riff", "drone"],
+      entry: v => (v === 0 ? 1 : 0),
+      reg: v => [1, 0, -2][v],
+      realize: () => "line",
+      nobass: true,
+      roots: [0, 0, 5, 5, 3, 4, 0, 4],
+      prog: [
+        { d: 0 },
+        { d: 0 },
+        { d: 5 },
+        { d: 5 },
+        { d: 3 },
+        { d: 4, q: "dom7" },
+        { d: 0 },
+        { d: 4, q: "dom7" }
+      ],
+      mode: MODES.aeolian,
+      scale: DIATONIC,
+      diatonic: true,
+      artic: "legato",
+      maxHold: 4,
+      kit: {},
+      intro: "cold",
+      tone: {
+        wave: "triangle",
+        cut: 3000,
+        q: 0.8,
+        atk: 0.004,
+        rel: 1.6,
+        gain: 0.26,
+        verb: 0.28
+      },
+      words: [
+        "the right hand, the subject",
+        "the broken chord under it, all the way through",
+        "the left hand's octaves, the bass and the pedal point"
+      ],
+      word: v => (v === 1 ? [fill(2), rotate(1)] : v === 2 ? [transpose(-12), keep(0, 8)] : []),
+    },
+
+    // REQUIEM — Vienna 1791. Mozart, K. 626, commissioned in July 1791 by an
+    // intermediary for Count Franz von Walsegg, left unfinished at the
+    // composer's death on 5 December and completed by Sussmayr from the sketches
+    // and the fragments. The founding record is a SCORE THAT STOPS: the
+    // Introit is finished, the Kyrie is orchestrated by another hand, the
+    // Lacrimosa breaks off after eight bars. This row takes the year of the
+    // commission and the death rather than of Sussmayr's delivery, because the
+    // music the genre is named for is the part Mozart wrote.
+    //
+    // WHAT SEPARATES IT FROM EVERY OTHER SACRED ROW HERE, MEASURED. Sixteen
+    // files in the classical rips carry `requiem`, `lacrimosa` or `dies irae`:
+    // 75.0% MINOR — the highest minor share of any set measured for this
+    // round, against 35.7% for the Handel set and 20.3% for the symphonies —
+    // bpm p50 65.0 (the slowest median in the batch), 62.5% 4/4, and a step
+    // fraction of 0.748 with a median melodic interval of 2.0, which ties the
+    // symphony for the most stepwise line measured. Slow, minor, and it moves
+    // by step: that is a Latin sequence sung by a choir, and it is not what any
+    // other row in this catalogue does.
+    //
+    // THE CHORD IS NOT A TRIAD AND THE PROG SAYS SO. Of the sixteen files, the
+    // commonest bar chord is a plain triad in only THREE: it is a seventh in
+    // four, a suspension in four, a minor seventh in three. This is suspension
+    // music — the choral idiom where the note that makes the harmony is the one
+    // that has not moved yet — so the qualities are written into `prog` (sus4
+    // on the approach bars, a real dom7 at the cadence) and the mode stays
+    // plain AEOLIAN. `MODES.harmonic` was refused for the reason
+    // `nuevacancion` gave it earlier this same shift and `pianosonata` gives it
+    // two rows above: the plain minor seventh is measurably present, and
+    // harmonic minor cannot hold both it and the leading note.
+    //
+    // THE CAST IS THE CHORUS AND ONE VOICE. Three chairs: the choir, a
+    // soloist above it, slow strings under both. The mouth is `MOUTHS.motet` —
+    // a countertenor timbre with `syll: 8`, a vowel held eight beats — which
+    // `francoflemish`, `polychoral` and `sacredconcerto` also take, and the
+    // sharing is deliberate and said out loud: those three and this one are the
+    // same musical object (Latin, sacred, polyphonic, one vowel across a long
+    // line), and inventing a fifth mouth to avoid the collision would be a
+    // distinction with nothing behind it. What differs is everything else — the
+    // tempo, the mode, the century and the orchestra.
+    //
+    // NO IDIOM ROW, ON PURPOSE. The `vox` family's own hook — three notes and a
+    // rest, falling, varying, four bars — is what the measurement above
+    // describes (step fraction 0.748, |interval| 2.0, hold p50 1.562), so this
+    // row takes it. precompose's own law is that an anchor is named there only
+    // where its family's cell, contour or sentence is actively WRONG for the
+    // music, and writing a row that repeats the family's values would be the
+    // photocopy that table exists to avoid.
+    //
+    // LINEAGE. `classical` (Vienna 1785) 0.35 — the same city, the same man,
+    // six years earlier, and the Requiem's orchestral writing is that language
+    // at its plainest; `chorale` (Nuremberg 1586) 0.2 — the Lutheran tune that
+    // walks through the Kyrie's double fugue as a cantus firmus;
+    // `sacredconcerto` (Dresden 1636) 0.2 — the sacred concerted style, voices
+    // and instruments together on a liturgical text; `counterpoint` (Vienna
+    // 1725) 0.15 — Fux's book, in Fux's city, and the Kyrie is a double fugue
+    // by the rules of it. 0.9 declared. THE RESIDUE IS 0.1 AND IT IS THE FACT
+    // THAT IT IS UNFINISHED: a requiem mass with a hole in the middle of it,
+    // which is not a stylistic fact and is the single most famous thing about
+    // this record.
+    requiem: {
+      label: "Vienna 1791",
+      near: "sacredconcerto",
+      plan: "arc",
+      bpm: 66,
+      bars: 8,
+      voices: 3,
+      parents: { classical: 0.35, chorale: 0.2, sacredconcerto: 0.2, counterpoint: 0.15 },
+      wants: [
+        "the Latin requiem mass itself — the Introit, Dies irae and Agnus Dei as a liturgy, " +
+        "sung for four centuries before anybody wrote a concert setting"
+      ],
+      cannot: [
+        "the text, which is the whole point of a mass for the dead: this box sings vowels and " +
+        "the sequence is a poem",
+        "the trombone doubling the alto line, and the basset horns — neither instrument is in " +
+        "the registry",
+        "the unfinished-ness: a record that stops in the middle of a bar is not something this " +
+        "box can be asked for"
+      ],
+      instr: ["ahh_choir", "solo_vox", "slow_strings"],
+      part: ["lead", "counter", "pad"],
+      entry: v => (v === 1 ? 2 : 0),
+      reg: v => [0, 1, -1][v],
+      realize: v => (v === 2 ? "pad" : "line"),
+      roots: [0, 5, 3, 4, 0, 5, 4, 0],
+      prog: [
+        { d: 0 },
+        { d: 5 },
+        { d: 3, q: "sus4" },
+        { d: 4, q: "dom7" },
+        { d: 0 },
+        { d: 5, q: "sus4" },
+        { d: 4, q: "dom7" },
+        { d: 0 }
+      ],
+      mode: MODES.aeolian,
+      scale: DIATONIC,
+      diatonic: true,
+      artic: "legato",
+      maxHold: 4,
+      bassInstr: "contrabass",
+      bassStyle: "pedal",
+      kit: {},
+      intro: "swell",
+      tone: {
+        wave: "sawtooth",
+        cut: 2000,
+        q: 0.8,
+        atk: 0.05,
+        rel: 1.8,
+        gain: 0.22,
+        verb: 0.7,
+        mouth: MOUTHS.motet
+      },
+      words: [
+        "the choir, stepwise, the whole record",
+        "one voice above it",
+        "the strings, holding the suspension until it has to move"
+      ],
+      word: v => (v === 1 ? [transpose(12), drop(3)] : v === 2 ? [transpose(-12)] : []),
     },
 
     // NOCTURNE — Paris 1835, Chopin: a bel-canto line (monody's thread, kept
@@ -12814,6 +13441,322 @@
       word: v => (v === 1 ? [drop(2)] : []),
     },
 
+    // ETUDE — Paris 1833. Chopin, DOUZE GRANDES ETUDES op. 10, published by
+    // Maurice Schlesinger in Paris in June 1833 and dedicated "a son ami F.
+    // Liszt". The founding record is the print, and the invention it announces
+    // is a contradiction: an EXERCISE that is a concert piece. Before it, a
+    // study was a page a pupil worked at and nobody paid to hear; op. 10 no. 1
+    // is an arpeggio drill for the right hand covering a tenth, and it is also
+    // a piece of music you would sell tickets to.
+    //
+    // ONE FIGURE, FOR THE WHOLE PIECE, WITHOUT ONE INTERRUPTION — that is the
+    // form, and this is the only row in the catalogue whose idiom sentence is
+    // `plain` for that reason: no variation, no departure, the same shape
+    // transposed through the harmony until it stops. `sent: "vary"` would be a
+    // different genre. THE ROW IS TWO CHAIRS, both the same grand: the figure
+    // (`riff`, low, `fill(2)` — every step filled, this box's continuous
+    // motion) and the melody the figure implies, which in most of op. 10 is not
+    // a separate line at all but the top note of each arpeggio. The row makes
+    // it a chair because the box cannot hear a melody inside a texture.
+    //
+    // MEASURED, AND THE NUMBER THAT MATTERS IS THE HOLD. 234 files in the
+    // classical rips match the Chopin-etude terms; the wider `etude`/`estudio`
+    // set is 289 and the two agree everywhere below. Hold p25 0.833, p50 1.0
+    // and P90 3.0 SIXTEENTHS — the shortest p90 measured in this entire batch,
+    // against 4.0 for eleven of the other fourteen rows and 6.833 for the
+    // symphony. Nothing in an etude is held. `maxHold: 3` is that p90 read
+    // straight. Syncopation 0.435 and a median melodic interval of 4.0
+    // semitones with a step fraction of 0.367: the line is an arpeggio, off the
+    // beat, which is exactly what a figuration study is. bpm p50 105.0
+    // (quartiles 80 and 136); 65.0% major.
+    //
+    // SAID OUT LOUD ABOUT THAT CORPUS: 160 of the 234 files are in
+    // `classical_guitar`, which means the set is heavy with Sor, Giuliani,
+    // Carcassi and Villa-Lobos studies rather than Chopin's. That is not
+    // contamination for this row's purpose — a guitar study is the same
+    // musical object, one figure held for a page — and the numbers from the
+    // 69 `classical_greats` files alone move none of the four readings above by
+    // more than a tenth. It is stated because a reader who reruns the match
+    // should know what they are looking at.
+    //
+    // CONTOUR `arpwide`, WHICH IS LITERAL. Op. 10 no. 1's right hand spans a
+    // tenth every beat; `arpwide` is the widest arpeggio shape the ideas kit
+    // has, and this is the row it was waiting for.
+    //
+    // LINEAGE. `classical` (Vienna 1785) 0.35 — the keyboard writing and the
+    // harmonic frame; `nocturne` is TWO YEARS LATER (Paris 1835) and cannot be
+    // a parent, though it is the same man and the same city and its own row
+    // already says the salon is the room; `concerto` (Venice 1725) 0.2 — the
+    // sequence, which is the engine of every etude: one figure walked down a
+    // circle of fifths; `counterpoint` (Vienna 1725) 0.1 — the Bach preludes,
+    // which are the honest ancestor of a piece built out of one arpeggio and
+    // which Chopin played every day. 0.65 declared. THE RESIDUE IS 0.35 AND IT
+    // IS THE PREMISE ITSELF: the idea that the mechanical difficulty of an
+    // exercise could be the SUBJECT of a piece rather than its scaffolding, and
+    // that a room would pay to watch somebody solve it.
+    etude: {
+      organic: true,
+      instrumental: true,
+      label: "Paris 1833",
+      near: "nocturne",
+      plan: "arc",
+      bpm: 105,
+      bars: 8,
+      voices: 2,
+      parents: { classical: 0.35, concerto: 0.2, counterpoint: 0.1 },
+      wants: [
+        "the pedagogical study — Clementi's Gradus ad Parnassum and Cramer's studies, the " +
+        "exercise books this form is a joke about, which this table has no row for"
+      ],
+      cannot: [
+        "the hand span: op. 10 no. 1 covers a tenth in every beat and this box's arpeggio " +
+        "walks the ladder it is given",
+        "the point of the genre, which is a DIFFICULTY — nothing here is hard to play, so the " +
+        "row can render the figure and not the feat"
+      ],
+      instr: ["yamaha_grand_piano", "yamaha_grand_piano"],
+      part: ["riff", "lead"],
+      entry: () => 0,
+      reg: v => [-1, 1][v],
+      realize: () => "line",
+      nobass: true,
+      roots: [0, 0, 5, 5, 3, 3, 4, 4],
+      mode: MODES.ionian,
+      scale: DIATONIC,
+      diatonic: true,
+      maxHold: 3,
+      kit: {},
+      intro: "cold",
+      tone: {
+        wave: "triangle",
+        cut: 3200,
+        q: 0.7,
+        atk: 0.003,
+        rel: 0.5,
+        gain: 0.26,
+        verb: 0.22
+      },
+      words: [
+        "the figure — one shape, every bar, no interruption",
+        "the melody the top of the figure makes"
+      ],
+      word: v => (v === 0 ? [fill(2)] : v === 1 ? [transpose(12), drop(2)] : []),
+    },
+
+    // CHARACTER PIECE — London 1832. Mendelssohn, the first book of LIEDER
+    // OHNE WORTE, op. 19b, published in London by Novello in 1832 as "Original
+    // Melodies for the Pianoforte" — the English edition came first and the
+    // German one followed. THE LABEL IS LONDON AND NOT LEIPZIG, and the
+    // correction is worth stating because Leipzig is the city everyone reaches
+    // for: Mendelssohn did not take the Gewandhaus until 1835, three years
+    // after this print, and in 1832 he was in London on his second visit,
+    // selling these pieces to the publisher who bought them. A table dated by
+    // named records follows the record.
+    //
+    // THE SECOND MENDELSSOHN ROW (see `concertoverture`, Berlin 1826), and the
+    // two are opposite objects on purpose: an orchestral sonata movement at 152
+    // against a strophic piano song at 70.
+    //
+    // WHAT MAKES IT NOT A NOCTURNE, WHICH IS THE ONE THING THIS ROW HAS TO
+    // ANSWER. `nocturne` (Paris 1835) is a singing right hand ABOVE a spread
+    // left; the Song Without Words puts the tune in the MIDDLE — a tenor line
+    // between an accompanying figure above it and the bass below — and that is
+    // the texture the form is named for, because it is what a singer with a
+    // piano actually sounds like from the piano's side. So the tune sits at
+    // register 0 and the figure at 1, an octave ABOVE it. Every other piano row
+    // in this catalogue leads from the top; this one is the only one that does
+    // not, and that inversion is the whole entry.
+    //
+    // THE FIELD IS WRITTEN [-1, 2, -1] AND NOT [0, 1, -2], AND THE DIFFERENCE
+    // IS A TRAP WORTH THE LINE. A chair's register is `reg` PLUS ITS PART'S
+    // LEAN (kernel `regOf`): a `lead` leans an octave up, a `riff` and a
+    // `drone` an octave down. Written the obvious way this row composed lead 1
+    // against riff 0 — the tune back on top, the whole argument silently
+    // inverted, and the JSON reading exactly as though it had worked. Read
+    // back off the composed document instead: the chairs seat at 0, 1 and -2,
+    // which is the texture above. A field that is declared and does not arrive
+    // is this box's characteristic bug, and this one was caught by rendering
+    // the row rather than by reading it.
+    //
+    // MEASURED. Twenty-one files, deduplicated against the `_format0`
+    // doubles — op. 19 complete, op. 30, op. 53 no. 5, op. 62 nos. 3-5, the two
+    // `Lieder ohne Worte` book files and "The Bees' Wedding": bpm p50 69.7
+    // (quartiles 65.3 and 136 — the songs are slow and the scherzando ones are
+    // not), 57.1% 4/4 with 19.0% in 6/8, 52.4% major and 47.6% minor, which is
+    // the most evenly split set measured this round. Hold p50 1.0, p90 4.0.
+    //
+    // AND THE MEASUREMENT THAT IS REALLY ABOUT THE TEXTURE: median absolute
+    // melodic interval 5.0 semitones and a step fraction of 0.155 — the LEAST
+    // stepwise number measured anywhere in this batch, lower even than the
+    // Moonlight's 0.213. Said honestly, that is not the tune. The corpus's
+    // extractor takes the most melodic-looking line in the file and in these
+    // pieces it takes the BROKEN-CHORD FIGURE, because the figure moves
+    // constantly and the song does not. Two independent piano sets returning
+    // the same artefact is itself the finding: in this repertory the
+    // accompaniment is the busiest voice on the page, and this row seats it as
+    // a `riff` above the tune for that reason.
+    //
+    // LINEAGE. `classical` (Vienna 1785) 0.3 — the keyboard language;
+    // `lied` (Vienna 1814) 0.3 — the German art song, which this is with the
+    // singer removed and the piano keeping both parts; `chorale` (Nuremberg
+    // 1586) 0.1 — the hymn-shaped four-square melody underneath the ornament,
+    // which is what a Song Without Words is when you strip the figure off.
+    // 0.7 declared. THE RESIDUE IS 0.3 AND IT IS THE PREMISE: a piece that is a
+    // SONG with no words and no singer, sold to amateurs to play at home, whose
+    // composer answered a question about what one of them meant by saying that
+    // what the music said to him was not too vague for words but too precise
+    // for them. Nothing above him in this table had that idea.
+    characterpiece: {
+      organic: true,
+      instrumental: true,
+      label: "London 1832",
+      near: "nocturne",
+      plan: "song",
+      bpm: 70,
+      bars: 8,
+      voices: 3,
+      parents: { classical: 0.3, lied: 0.3, chorale: 0.1 },
+      wants: [
+        "the domestic piano itself — the instrument in a middle-class parlour and the amateur " +
+        "who bought this book, which `parlor` (Boston 1853) holds for America twenty years " +
+        "later and nothing holds for Europe"
+      ],
+      cannot: [
+        "the words — and it is the only row in this table for which that is a FEATURE: the " +
+        "form's name is the withholding, and this box has no words to withhold",
+        "the una corda and the half pedal, which is how a pianist keeps a middle-register tune " +
+        "audible under a figure playing over it"
+      ],
+      instr: ["yamaha_grand_piano", "yamaha_grand_piano", "yamaha_grand_piano"],
+      part: ["lead", "riff", "drone"],
+      entry: v => (v === 0 ? 1 : 0),
+      reg: v => [-1, 2, -1][v],
+      realize: () => "line",
+      nobass: true,
+      roots: [0, 3, 4, 0, 5, 1, 4, 0],
+      mode: MODES.ionian,
+      scale: DIATONIC,
+      diatonic: true,
+      artic: "legato",
+      maxHold: 4,
+      kit: {},
+      intro: "cold",
+      orn: { grace: 0.2 },
+      tone: { wave: "triangle", cut: 2600, q: 0.8, atk: 0.006, rel: 1.4, gain: 0.26, verb: 0.3 },
+      words: [
+        "the song, in the middle of the instrument where a voice would be",
+        "the figure, above it, moving the whole time",
+        "the left hand, holding the bass down"
+      ],
+      word: (v, s) => (v === 1 ? [fill(2), transpose(7)]
+        : v === 2 ? [transpose(-12), keep(0, 8)]
+        : (s % 2 ? [rotate(1)] : [])),
+    },
+
+    // CONCERT OVERTURE — Berlin 1826. Mendelssohn, A MIDSUMMER NIGHT'S
+    // DREAM, op. 21, written at seventeen in the garden house at Leipziger
+    // Strasse 3 in the summer of 1826 and first played in public at Stettin on
+    // 20 February 1827. THE LABEL TAKES THE YEAR OF COMPOSITION AND NOT OF THE
+    // PREMIERE, and says why: the invention here is a piece, not an occasion —
+    // an overture to NOTHING, a concert piece in sonata form that carries a
+    // play's whole world and was never intended to raise a curtain. The
+    // premiere is in another city four months later and would date a
+    // performance rather than a form.
+    //
+    // THIS IS THE MENDELSSOHN ROW Paul asked for on 2026-09-03 ("we're missing
+    // Mendelssohn and Brahms and so forth"), and it is the first of two: the
+    // other is `characterpiece` (London 1832), the piano miniature. They are
+    // deliberately not one row. This one is a fast orchestral movement with
+    // four chairs; that one is a slow strophic song at a keyboard.
+    //
+    // MEASURED, AND THE FOUNDING WORK IS IN THE ARCHIVE. Fourteen files carry
+    // the Midsummer Night's Dream music — the overture and the 1842 incidental
+    // numbers, including the scherzo, the nocturne and the wedding march: bpm
+    // p50 163.25 with a top quartile of 230, 71.4% major, 50% 4/4, hold p50 1.0
+    // against the symphony set's 2.0, and a median melodic interval of 2.0 with
+    // a step fraction of 0.690. FAST, MAJOR, SHORT-NOTED AND STEPWISE, which is
+    // exactly the fairy scherzando the piece is famous for: quavers on the
+    // string chairs, nothing held. `maxHold: 2` is that hold reading, and it is
+    // the shortest line in this batch after the etude's.
+    //
+    // The wider `overture` set — 52 files in the classical rips — agrees on the
+    // tempo (p50 145.5) and is 73.1% major, which is the genre and not the
+    // piece. It is quoted because it is the only check available on whether
+    // this record is typical of its form, and it says yes.
+    //
+    // THE FOUR CHORDS ARE THE INTRO AND THEY ARE DECLARED. The piece opens with
+    // four sustained wind chords, pianissimo, before a note of the scherzando —
+    // so `intro: "padin"`, the anchor's own way in, and the flute chair is a
+    // `pad` for exactly that reason while everything else is a line. That is
+    // the only place in this catalogue where the pad is a WOODWIND and not a
+    // body of strings.
+    //
+    // WHAT IT CANNOT, and it is the identity: PIANISSIMO. The chattering
+    // strings are quiet, and their quietness is the whole joke — a full
+    // orchestra playing at the edge of audibility. This engine deals dynamics
+    // per SECTION, off the family's ladder, so the row can be fast and short
+    // and staccato but it cannot be soft in the way that matters here. Also no
+    // ophicleide (Bottom's bray), which is a real loss and is named rather than
+    // faked with a tuba the registry does not have either.
+    //
+    // LINEAGE. `classical` (Vienna 1785) 0.35 — the sonata language the
+    // overture is written in, and this row's roots are an exposition;
+    // `concerto` (Venice 1725) 0.2 — the ritornello alternation of tutti and
+    // solo which the concert overture reuses at speed; `operaseria` (London
+    // 1724) 0.2 — the opera overture, which is what this one stopped being
+    // attached to; `nocturne` (Paris 1835) is NINE YEARS LATER and therefore
+    // not a parent, though the fifth number of this same incidental music is
+    // called one. 0.75 declared. THE RESIDUE IS 0.25 AND IT IS THE IDEA: a
+    // single-movement orchestral piece that is ABOUT something, written for a
+    // concert and not a theatre, which is the door `symphonicpoem` (Weimar
+    // 1854) walks through twenty-eight years later and takes as its parent.
+    concertoverture: {
+      organic: true,
+      instrumental: true,
+      label: "Berlin 1826",
+      near: "symphony",
+      plan: "arc",
+      bpm: 152,
+      bars: 8,
+      voices: 4,
+      parents: { classical: 0.35, concerto: 0.2, operaseria: 0.2 },
+      wants: [
+        "the theatre overture as an occasion — the curtain-raiser this form kept the shape of " +
+        "and threw the curtain away from"
+      ],
+      cannot: [
+        "pianissimo as an identity: the scherzando's quietness is the joke, and this engine " +
+        "deals dynamics per section rather than per texture",
+        "the ophicleide — Bottom's bray, the one instrument the score is remembered for, is " +
+        "not in the registry and is not a tuba either"
+      ],
+      instr: ["flute", "strings", "cello", "french_horns"],
+      part: ["pad", "riff", "lead", "counter"],
+      entry: v => [0, 1, 2, 4][v],
+      reg: v => [1, 0, -1, -1][v],
+      realize: v => (v === 0 ? "pad" : "line"),
+      roots: [0, 5, 5, 0, 3, 4, 0, 4],
+      mode: MODES.ionian,
+      scale: DIATONIC,
+      diatonic: true,
+      artic: "staccato",
+      maxHold: 2,
+      bassInstr: "contrabass",
+      bassStyle: "eighths",
+      kit: {},
+      intro: "padin",
+      tone: { wave: "sawtooth", cut: 2800, q: 1, atk: 0.006, rel: 0.5, gain: 0.22, verb: 0.45 },
+      words: [
+        "four wind chords, held, before anything happens",
+        "the strings, chattering, never holding a note",
+        "the tune, in the cellos",
+        "the horns, answering across the bar"
+      ],
+      word: (v, s) => (v === 1 ? [fill(2), ...(s % 2 ? [rotate(3)] : [])]
+        : v === 3 ? [transpose(-7), keep(0, 8)]
+        : []),
+    },
+
     // ROMANTIC — Vienna 1876, the orchestra: the body of strings, the tune in
     // the CELLO (the romantic register), horns answering at bar 5, and the
     // tremolo arriving last — which is how a climax is built. No fx block:
@@ -12849,6 +13792,857 @@
         "tremolo, underneath, late"
       ],
       word: v => (v === 2 ? [transpose(-3)] : v === 3 ? [drop(2)] : []),
+    },
+
+    // VARIATIONS — Vienna 1873. Brahms, VARIATIONS ON A THEME BY HAYDN,
+    // op. 56a, first played by the Vienna Philharmonic under the composer on
+    // 2 November 1873 — eight variations and a passacaglia finale on the
+    // "Chorale St Antoni", a wind-band tune Brahms copied out of a manuscript
+    // that is now thought not to be Haydn's at all. The founding record is that
+    // premiere, and the misattribution stays in the title because the title is
+    // the record.
+    //
+    // THIS IS THE BRAHMS ROW Paul asked for on 2026-09-03, and it is
+    // deliberately NOT the symphony. `romantic` (Vienna 1876) is already
+    // Brahms's First — wiki-extract's own reason for that row says so in as
+    // many words ("Vienna 1876 is Brahms's First") — so a second Brahms
+    // symphony row would be that row with a new name, which GENRES.md forbids
+    // and this table has no use for. What op. 56a is instead is a FORM: the
+    // first independent orchestral variation set in the concert repertory, and
+    // a form this box can say almost completely.
+    //
+    // WHY THE BOX CAN SAY IT, WHICH IS THE ARGUMENT FOR THE ROW. A theme and
+    // variations is one frame with different things happening over it, and that
+    // is precisely the shape of a `word`: an operator list dealt PER SECTION
+    // over material that does not change. So the word below is keyed on `s`
+    // and not on `v` — eight sections, eight operator sets, the theme itself
+    // first (`[]`, the plain statement), then a rotation, an inversion, a
+    // retrograde, a thinning, a doubling in note values, an octave drop and a
+    // filling-in. Every one of those is a real variation technique named in the
+    // article, said in the alphabet the kernel already has. And the ROOTS DO
+    // NOT MOVE while any of it happens: the same eight degrees, every section,
+    // which is what a variation set is and what nothing else in this catalogue
+    // does. Measured at the artifact, seed 1: eight sections, ONE root cycle,
+    // SIX distinct rendered lines over it.
+    //
+    // `intro: "solo"` IS THE THEME STATED ALONE, and it is written that way
+    // because the box's own vocabulary says so. The honest word for what
+    // happens at the top of a variation set is a QUOTE — the tune, by itself,
+    // before anything has been done to it — and compose.js knows the word (its
+    // INTRO_LEAN deals it) while fields.js INLABEL does not, so a row that
+    // DECLARES it is offering a value its own rule cannot: test/rules.test.js
+    // R2b refuses it by name, which is where this was caught. INLABEL's word
+    // for the same event is "melody alone", which is `solo`, and compose's own
+    // bridge comment says a quote IS the melody alone. So the row says `solo`
+    // and this paragraph says why.
+    //
+    // MEASURED, AND THE NUMBERS ARE ABOUT THE FRAME. 193 files in the
+    // classical rips carry `variation`, `variazioni`, `goldberg` or
+    // `diabelli`: 87.0% MAJOR — the highest major share of any set measured
+    // this round, against 79.7% for the symphonies and 63.2% for the etudes —
+    // bpm p50 100.0 with a tight interquartile of 76 to 113, and 30.6% in 3/4.
+    // Two form numbers separate it from everything else: 56 of 193 files vote
+    // an EIGHT-BAR harmonic period (the longest tally of any set this round,
+    // and only the oratorio's Corellian sequences come close), and the
+    // self-similarity lag votes 4 in 63 files, 8 in 51 and SIXTEEN in 50 — a
+    // form that repeats at sixteen bars is a set of variations on something
+    // sixteen bars long. Hold p50 1.0, p90 4.0, |interval| p50 2.0 with a step
+    // fraction of 0.597.
+    //
+    // THE CAST IS THE WIND BAND THE THEME CAME FROM. Flute and horns state it —
+    // the Chorale St Antoni is scored for oboes, bassoons, horns and serpent,
+    // and this registry has a flute and horns and neither of the other two —
+    // with strings under them. `organic: true`, `concerto`'s ruling.
+    //
+    // WHAT IT CANNOT, AND THE FIRST ONE IS THE FAMOUS THING ABOUT THIS THEME:
+    // a FIVE-BAR PHRASE. The Chorale St Antoni is 2+3 bars, and the limp that
+    // makes it memorable is that the phrase does not come out even. This box's
+    // bars come in fours; the row states the frame in eight and loses the
+    // asymmetry entirely, which is the largest single thing it gets wrong about
+    // its own founding record and is written here rather than discovered.
+    //
+    // LINEAGE. `classical` (Vienna 1785) 0.3 — the variation set as a
+    // classical genre, Mozart's and Haydn's own, which op. 56a is answering;
+    // `romantic` (Vienna 1876) is THREE YEARS LATER and cannot be a parent,
+    // which is the right way round: this row comes first and that one is the
+    // same composer's next move; `counterpoint` (Vienna 1725) 0.25 — the
+    // passacaglia finale is a ground bass with five variations over it, species
+    // writing by another name; `chorale` (Nuremberg 1586) 0.2 — the theme is a
+    // CHORALE, says so on its face, and is the four-square hymn shape every
+    // variation departs from; `concerto` (Venice 1725) 0.1 — the orchestral
+    // sequence. 0.85 declared. THE RESIDUE IS 0.15 AND IT IS THE DECISION TO
+    // DO IT AT ALL: a variation set for orchestra, standing alone, not inside a
+    // symphony and not at a keyboard, which nobody had published before this
+    // one.
+    variations: {
+      organic: true,
+      instrumental: true,
+      label: "Vienna 1873",
+      near: "romantic",
+      plan: "arc",
+      bpm: 100,
+      bars: 8,
+      voices: 3,
+      parents: { classical: 0.3, counterpoint: 0.25, chorale: 0.2, concerto: 0.1 },
+      wants: [
+        "the wind band the Chorale St Antoni was written for — a Harmonie of oboes, bassoons, " +
+        "horns and serpent, which this table has no row for and this registry has half the " +
+        "instruments of"
+      ],
+      cannot: [
+        "a five-bar phrase — the theme is 2+3 bars and this box's bars come in fours, so the " +
+        "limp that makes the tune famous is gone",
+        "the passacaglia finale: a ground bass held under five more variations while " +
+        "everything above it changes, which `period` cannot say because it cannot hold one " +
+        "voice still",
+        "a variation that changes the METER, which is what variation 7 does (it goes into 6/8) " +
+        "and what one meter word per row forbids"
+      ],
+      instr: ["flute", "french_horns", "strings"],
+      part: ["lead", "counter", "pad"],
+      entry: v => [0, 2, 0][v],
+      reg: v => [1, 0, -1][v],
+      realize: v => (v === 2 ? "pad" : "line"),
+      roots: [0, 4, 0, 4, 5, 1, 4, 0],
+      mode: MODES.ionian,
+      scale: SCALES.major,
+      diatonic: true,
+      artic: "legato",
+      maxHold: 4,
+      bassInstr: "contrabass",
+      bassStyle: "pedal",
+      kit: {},
+      intro: "solo",
+      tone: { wave: "sawtooth", cut: 2500, q: 0.9, atk: 0.02, rel: 1.1, gain: 0.24, verb: 0.5 },
+      words: [
+        "the theme, and then the theme changed, eight ways",
+        "the horns, the wind band it came from",
+        "the strings, holding the frame still"
+      ],
+      word: (v, s) => (v === 2 ? []
+        : v === 1 ? [transpose(-7), drop(3)]
+        : [[], [rotate(2)], [invert(4)], [reverse()],
+           [drop(2)], [split(2)], [transpose(-12)], [fill(2)]][s % 8]),
+    },
+
+    // SYMPHONIC POEM — Weimar 1854. Liszt, LES PRELUDES, first performed at
+    // the Hoftheater in Weimar on 23 February 1854 under the composer, who by
+    // then had spent six years as Kapellmeister to the Grand Duke and had a
+    // band to try things on. It is not the first piece he wrote in the form —
+    // Tasso and Ce qu'on entend sur la montagne are earlier — but it is the
+    // first he published with the word SYMPHONISCHE DICHTUNG on it, and this
+    // table dates by named records rather than by drafts.
+    //
+    // THE INVENTION IS THEMATIC TRANSFORMATION AND THE BOX HAS THE ALPHABET
+    // FOR IT. One motto — in Les Preludes, three notes — comes back as a
+    // march, as a storm, as a pastoral and as a hymn, the same intervals
+    // re-registered, re-articulated and re-harmonised. That is not variation
+    // (where the frame stays and the surface changes) and it is not development
+    // (where fragments are argued with); it is the SAME IDEA WEARING DIFFERENT
+    // CLOTHES. In this engine that is a `word` keyed on the SECTION with the
+    // material held constant, which is what the formula below does for every
+    // chair at once: spread, then compressed, then inverted, then plain, then
+    // octave-doubled. `variations` (Vienna 1873) uses the same mechanism for a
+    // different purpose and the two rows are the honest test of whether the
+    // mechanism can say two things — it can, because that row holds its roots
+    // still and this one does not.
+    //
+    // THE HARMONY IS THE OTHER HALF AND IT IS WRITTEN AS A `borrow`. Liszt's
+    // signature is the chromatic third relation: a chord a major third away
+    // that is not in the key at all. `prog` can say it, because a chord entry
+    // takes a `borrow` in semitones on top of its degree — so `{ d: 2, borrow:
+    // -1 }` is the flat mediant, a real chromatic third, and it is in bars 3
+    // and 6 below. This is the only row in the catalogue that uses that field
+    // for a modulation rather than for a blue note.
+    //
+    // MEASURED, AND THE SET IS SMALL AND SAID SO. Eleven files in the
+    // classical rips match Liszt, Les Preludes, Mazeppa, Tasso or the Hungarian
+    // Rhapsodies — and NINE OF THE ELEVEN ARE PIANO RHAPSODIES AND
+    // PARAPHRASES, not orchestral tone poems, because the orchestral Liszt is
+    // not in this archive. bpm p50 110.0 (quartiles 84.9 and 144), 72.7% major,
+    // 2/4 and 4/4 at 27.3% each. Hold p50 0.9 and p90 3.0, |interval| p50 3.0,
+    // step fraction 0.545 — a fast, leaping, virtuoso line, which is the
+    // RHAPSODIES speaking, not the tone poems. So `maxHold: 4` is a CHOICE
+    // against the corpus, made on the founding record's own terms (the Les
+    // Preludes motto is a long declamatory idea over held strings) and
+    // declared, on `rockabilly`'s ruling earlier this shift: the row follows
+    // the record it is named for and says where the archive disagrees.
+    //
+    // THE CAST. Violin with the motto, horns, harp (Liszt's orchestra has one
+    // and the sound of it is half the atmosphere in this repertory), strings
+    // under everything. Four chairs, `organic: true` for the reason `concerto`
+    // gives.
+    //
+    // LINEAGE. `romantic` (Vienna 1876) is TWENTY-TWO YEARS LATER and cannot be
+    // a parent — the direction matters here, because this form is what Brahms's
+    // party was against and Vienna 1876 is the answer to Weimar, not its
+    // source. `concertoverture` (Berlin 1826) 0.35 — the single-movement
+    // orchestral piece that is ABOUT something, which is this row's own door
+    // and is where the concert overture leads; `classical` (Vienna 1785) 0.2 —
+    // the sonata frame Liszt keeps deforming; `concerto` (Venice 1725) 0.15 —
+    // the virtuoso soloist against the band, which is what Liszt was before he
+    // was a Kapellmeister; `nocturne` (Paris 1835) 0.1 — the Chopin salon
+    // texture that half his slow transformations are wearing. 0.8 declared. THE
+    // RESIDUE IS 0.2 AND IT IS THE PROGRAMME: a piece whose form is decided by
+    // a poem outside it. The row can transform a theme; it cannot mean
+    // anything by it, and that is the half of the genre no engine gets.
+    symphonicpoem: {
+      organic: true,
+      instrumental: true,
+      label: "Weimar 1854",
+      near: "romantic",
+      plan: "arc",
+      bpm: 110,
+      bars: 8,
+      voices: 4,
+      parents: { concertoverture: 0.35, classical: 0.2, concerto: 0.15, nocturne: 0.1 },
+      wants: [
+        "the programme itself — Lamartine's ode, the poem this piece is a reading of, and the " +
+        "whole New German School argument that music should be about something"
+      ],
+      cannot: [
+        "mean anything — the row transforms one theme because that is the mechanism Liszt " +
+        "invented, and what it cannot do is say what the theme is FOR, which is the other half " +
+        "of the genre",
+        "a real key change into the chromatic third: `borrow` moves the chord and the mode " +
+        "stays, so the flat mediant here is a colour rather than a new home"
+      ],
+      instr: ["violin", "french_horns", "harp", "strings"],
+      part: ["lead", "counter", "riff", "pad"],
+      entry: v => [0, 2, 0, 0][v],
+      reg: v => [1, -1, 0, -1][v],
+      realize: v => (v === 3 ? "pad" : "line"),
+      roots: [0, 0, 2, 2, 5, 3, 4, 0],
+      prog: [
+        { d: 0 },
+        { d: 0 },
+        { d: 2, borrow: -1 },
+        { d: 2 },
+        { d: 5 },
+        { d: 3, borrow: -1 },
+        { d: 4, q: "dom7" },
+        { d: 0 }
+      ],
+      mode: MODES.ionian,
+      scale: DIATONIC,
+      artic: "legato",
+      maxHold: 4,
+      bassInstr: "contrabass",
+      bassStyle: "pedal",
+      kit: {},
+      intro: "swell",
+      tone: { wave: "sawtooth", cut: 2400, q: 1, atk: 0.04, rel: 1.6, gain: 0.24, verb: 0.6 },
+      words: [
+        "the motto, and it is the only idea in the piece",
+        "the horns, taking the same idea as a march",
+        "the harp, arpeggiating under it",
+        "the strings, holding the chromatic third"
+      ],
+      word: (v, s) => (v === 2 ? [fill(2), transpose(-12)]
+        : v === 3 ? []
+        : [[], [spread(2)], [spread(0.5), fill(2)], [invert(4)],
+           [transpose(-12)], [rotate(2)], [], [spread(2), drop(3)]][s % 8]),
+    },
+
+    // MUSIC DRAMA — Munich 1865. Wagner, TRISTAN UND ISOLDE, first performed
+    // at the Konigliches Hof- und Nationaltheater on 10 June 1865 under Hans
+    // von Bulow, after seventy-seven rehearsals and a first cast who were told
+    // by another house that the piece was unperformable. The founding record is
+    // that premiere, and what it premiered is a music drama rather than an
+    // opera: no separable numbers, no applause points, a text the composer
+    // wrote himself, and an orchestra that carries the argument while the
+    // singers say the words.
+    //
+    // WHY MUNICH 1865 AND NOT BAYREUTH 1876. The Ring's first festival is the
+    // famous date and it would need a new dot on the map; Munich is already
+    // here (`eurodisco`, 1977) and Tristan is where the LANGUAGE arrives — the
+    // chromatic harmony that the whole later nineteenth century is arguing
+    // with, eleven years before the theatre was finished. Dating a genre by a
+    // building rather than by the record that changed the sound would be the
+    // `soundsystem` exception applied where it does not belong.
+    //
+    // THE EIGHT BARS NEVER SOUND THE TONIC, AND THAT IS THE ROW. Every other
+    // row in this catalogue comes home; `roots` here is ii - V - vi - ii - V -
+    // vi - ii - V, a deceptive cadence twice over and then a dominant left
+    // hanging. It is the only row in the table whose harmonic cycle does not
+    // contain degree 0.
+    //
+    // AND THE CHORD ITSELF IS SAYABLE, WHICH WAS THE FIND. The Tristan chord
+    // is a half-diminished seventh and the kernel's quality table has no
+    // half-diminished in it — but `q: "7"` is the SCALE-STEP seventh, degrees
+    // 0-2-4-6 of whatever mode the row is in, and in AEOLIAN, built on degree
+    // 1, that is exactly a half-diminished seventh chord. So `{ d: 1, q: "7" }`
+    // is the real thing, spelled out of the mode rather than pasted in as a
+    // fixed pitch set, and it is what bars 1, 4 and 7 play.
+    //
+    // MEASURED, AND THE CORPUS IS NINE FILES AND IS OUTVOTED. `wagner`,
+    // `tristan`, `valkyr`, `tannhaus`, `meistersinger` and `bridal` match nine
+    // files in the classical rips: bpm p50 140.0, 77.8% major, pickup rate
+    // 0.099 (the second highest measured this round after the symphony's).
+    // Those numbers are the Ride of the Valkyries, the Meistersinger prelude
+    // and the wedding march — three loud diatonic marches — and they describe
+    // the OPPOSITE of the record this row is named for. The two files that are
+    // actually Tristan read 32.1 bpm in 6/8 and 90.0 in 2/4, which is a
+    // transcriber's convention and not a tempo. So the row takes bpm 72 and
+    // MODES.aeolian from the record and states the disagreement, which is
+    // `rockabilly`'s ruling from earlier this same shift: where the archive is
+    // a different repertory wearing the same name, the record wins and the
+    // count is printed anyway.
+    //
+    // THE VOICE IS A TENOR HOLDING ONE VOWEL: `MOUTHS.monody` with `voice:
+    // "tenor"` — the trained soprano mouth moved down, two beats to a syllable,
+    // because a Wagnerian line is declaimed slowly over an orchestra that never
+    // stops. `verismo` (Rome 1890) takes the same mouth as a soprano, and the
+    // two rows are the two ends of the late-century voice.
+    //
+    // LINEAGE. `operaseria` (London 1724) 0.25 — the sung stage drama, which
+    // this is the destruction of; `romantic` (Vienna 1876) is ELEVEN YEARS
+    // LATER and is not a parent; `classical` (Vienna 1785) 0.15 — the harmonic
+    // grammar being stretched; `belcanto` (Milan 1831) 0.2 — the long
+    // unhurried vocal line, which Wagner kept while throwing away the aria it
+    // came in; `concerto` (Venice 1725) 0.1 — the orchestra as an arguing
+    // party. 0.7 declared. THE RESIDUE IS 0.3 AND IT IS THE LEITMOTIF SYSTEM:
+    // an orchestra that remembers, naming people and objects and states of mind
+    // in themes that return when the drama needs them. This box transforms one
+    // phrase per section, which is the technique's SHAPE with none of its
+    // dramaturgy, and that is written in `cannot` as well as here.
+    musicdrama: {
+      label: "Munich 1865",
+      near: "romantic",
+      plan: "arc",
+      bpm: 72,
+      bars: 8,
+      voices: 4,
+      parents: { operaseria: 0.25, belcanto: 0.2, classical: 0.15, concerto: 0.1 },
+      wants: [
+        "the leitmotif as a system — an orchestra that names things and remembers them, which " +
+        "is a dramaturgy rather than a sound and has no row anywhere in this table",
+        "the Gesamtkunstwerk: the theatre, the darkness, the sunken pit and the six hours"
+      ],
+      cannot: [
+        "a motif that returns WHEN ITS OBJECT DOES — the box transforms one phrase per section " +
+        "on a schedule, where a leitmotif returns because somebody on stage remembered " +
+        "something",
+        "the endless melody at its real length: this record is eight bars long and the thing " +
+        "it is named for is a cadence deferred for four hours",
+        "the orchestra's size, and a singer who has to be heard over it"
+      ],
+      instr: ["solo_vox", "cello", "french_horns", "strings"],
+      part: ["lead", "counter", "riff", "pad"],
+      entry: v => [2, 0, 4, 0][v],
+      reg: v => [1, -1, 0, -1][v],
+      realize: v => (v === 3 ? "pad" : "line"),
+      roots: [1, 4, 5, 1, 4, 5, 1, 4],
+      prog: [
+        { d: 1, q: "7" },
+        { d: 4, q: "dom7" },
+        { d: 5 },
+        { d: 1, q: "7" },
+        { d: 4, q: "dom7" },
+        { d: 5 },
+        { d: 1, q: "7" },
+        { d: 4, q: "dom7" }
+      ],
+      mode: MODES.aeolian,
+      scale: DIATONIC,
+      artic: "legato",
+      maxHold: 6,
+      bassInstr: "contrabass",
+      bassStyle: "pedal",
+      kit: {},
+      intro: "swell",
+      tone: {
+        wave: "sawtooth",
+        cut: 2100,
+        q: 0.9,
+        atk: 0.06,
+        rel: 2.2,
+        gain: 0.22,
+        verb: 0.66,
+        mouth: { ...MOUTHS.monody, voice: "tenor" }
+      },
+      words: [
+        "the voice, declaiming, two beats to a syllable",
+        "the cellos, who begin the piece alone",
+        "the horns, the motif coming back changed",
+        "the strings, holding the chord that does not resolve"
+      ],
+      word: (v, s) => (v === 3 ? []
+        : v === 1 ? [transpose(-12), spread(2)]
+        : v === 2 ? [[], [invert(4)], [rotate(3)], [spread(2)]][s % 4]
+        : (s % 2 ? [spread(2)] : [])),
+    },
+
+    // MUSICAL NATIONALISM — Prague 1874. Smetana, VLTAVA, the second poem of
+    // MA VLAST, written between 20 November and 8 December 1874 — five weeks,
+    // by a man who had gone completely deaf that October and never heard a note
+    // of it played. The founding record is the manuscript's own dates. The
+    // piece follows a river from two springs through a forest hunt, a village
+    // wedding, a moonlit dance of water nymphs and the St John rapids, and the
+    // programme is a map of a country that did not politically exist.
+    //
+    // WHAT MAKES IT A GENRE AND NOT A MOOD: the material is a FOLK SHAPE and
+    // the clothes are an orchestra's. Nationalism in music is the deliberate
+    // importing of a dance rhythm, a modal turn or a tune that a peasant would
+    // recognise into a form that a conservatory invented, and it is a
+    // nineteenth-century political act before it is a style.
+    //
+    // THE METER IS THE MEASUREMENT. Vltava is in 6/8 and so, measurably, is
+    // this whole repertory: over 57 files in the classical rips matching
+    // Smetana, Dvorak, Grieg, Sibelius, Moldau, Slavonic or Peer Gynt, 24.6%
+    // are in 6/8 — the highest six-eight share of any set measured this round,
+    // against 6.1% for the symphonies and 3.8% for the overtures. So `meter:
+    // "six"`, the twelve-step bar the time lane opened on 2026-08-30, and this
+    // is the first Western art row through that door (`barcarolle`, Paris 1881,
+    // is the other six-eight row in the table and it is a boat song, not a
+    // river). The rest of the set: bpm p50 119.8, 68.4% major, hold p50 1.0 and
+    // p90 4.0, median melodic interval 3.0 with a step fraction of 0.497 — a
+    // line that leaps more than a symphony's and less than a piano's, which is
+    // what a dance tune scored for violins does.
+    //
+    // THE HARMONY ENDS SOMEWHERE ELSE. Vltava is in E minor and the river
+    // arrives, at the end, in E MAJOR. This box has one mode per record and
+    // cannot change the quality of its own tonic, so the row does the next
+    // honest thing: it is AEOLIAN and its eight bars land on DEGREE 2, the
+    // relative major, twice. A minor river that comes out in the major, said
+    // with the one lever available, and the substitution is declared rather
+    // than hidden.
+    //
+    // THE TWO SPRINGS ARE THE INTRO. The piece opens with two flutes alone —
+    // the cold spring and the warm spring — before a string enters, so
+    // `intro: "solo"` and the flute is chair 0. That is the anchor's own way
+    // in and compose honours it a little over half the time.
+    //
+    // LINEAGE. `romantic` (Vienna 1876) is TWO YEARS LATER and is not a
+    // parent — the direction is the useful fact, because the nationalist
+    // schools are not a late offshoot of the Austro-German mainstream, they are
+    // contemporaneous with it and mostly angry at it. So: `classical` (Vienna
+    // 1785) 0.25, the orchestral grammar; `symphonicpoem` (Weimar 1854) 0.3,
+    // which is the FORM Ma vlast is written in and whose composer Smetana knew
+    // and corresponded with; `polka` (Prague 1837) 0.2, the same city
+    // thirty-seven years earlier and the Czech dance Smetana put into concert
+    // music on purpose; `concertoverture` (Berlin 1826) 0.1, the single
+    // programmatic movement. 0.85 declared. THE RESIDUE IS 0.15 AND IT IS THE
+    // POLITICS: writing in a language the Habsburg court did not use, for an
+    // audience that heard the tune as a claim. That is not a musical fact and
+    // it is the reason the genre has a name.
+    nationalism: {
+      organic: true,
+      instrumental: true,
+      label: "Prague 1874",
+      near: "symphonicpoem",
+      meter: "six",
+      plan: "arc",
+      bpm: 120,
+      bars: 8,
+      voices: 4,
+      parents: { symphonicpoem: 0.3, classical: 0.25, polka: 0.2, concertoverture: 0.1 },
+      wants: [
+        "the Czech folk repertory itself — the furiant, the skocna and the sousedska, dances " +
+        "this table has no rows for and which are the material this row is about importing"
+      ],
+      cannot: [
+        "the major arrival: Vltava's E minor becomes E major at the rapids, and one mode per " +
+        "record means this row lands on the relative major instead and says so",
+        "the furiant's hemiola — two bars of 3/4 heard as three of 2/4, which is the Czech " +
+        "rhythm's whole signature and needs two meters at once",
+        "a real folk tune: the row plays a folk SHAPE in orchestral clothes, which is the " +
+        "genre, but the tunes themselves are not in this box"
+      ],
+      instr: ["flute", "violin", "strings", "french_horns"],
+      part: ["counter", "lead", "pad", "riff"],
+      entry: v => [0, 2, 0, 4][v],
+      reg: v => [1, 0, -1, -1][v],
+      realize: v => (v === 2 ? "pad" : "line"),
+      roots: [0, 5, 3, 0, 0, 4, 2, 2],
+      mode: MODES.aeolian,
+      scale: DIATONIC,
+      diatonic: true,
+      artic: "legato",
+      maxHold: 4,
+      bassInstr: "contrabass",
+      bassStyle: "pedal",
+      kit: {},
+      intro: "solo",
+      tone: { wave: "sawtooth", cut: 2500, q: 0.9, atk: 0.02, rel: 1.2, gain: 0.24, verb: 0.55 },
+      words: [
+        "two flutes, the springs, before anything else",
+        "the tune, the one everybody in the country knows",
+        "the strings, the river under it",
+        "the horns, the hunt, crossing the bar"
+      ],
+      word: (v, s) => (v === 0 ? [fill(2), transpose(12)]
+        : v === 3 ? [transpose(-7), keep(0, 6)]
+        : v === 2 ? []
+        : (s % 2 ? [rotate(2)] : [])),
+    },
+
+    // BALLET — Moscow 1877. Tchaikovsky, SWAN LAKE, op. 20, first performed at
+    // the Bolshoi Theatre on 20 February (4 March, new style) 1877,
+    // choreographed by Julius Reisinger, and by most contemporary accounts
+    // badly danced and coolly received. THE PLACE IS MOSCOW AND THIS ROUND'S
+    // BRIEF SAID ST PETERSBURG, which is a real correction worth writing down:
+    // the Petipa/Ivanov Swan Lake everybody knows is the 1895 revival at the
+    // Mariinsky, and the 1890 Sleeping Beauty is the St Petersburg record. Swan
+    // Lake was commissioned by the Moscow Imperial Theatres, written for the
+    // Bolshoi and premiered there. MOSCOW IS A NEW DOT and the map's first
+    // Russian one — a gap the atlas has carried since it was written.
+    //
+    // WHAT THE ROW IS FOR, given that `waltz` (Vienna 1867) already holds
+    // triple time and `romantic` (Vienna 1876) already holds the orchestra. A
+    // ballet score is a SUITE OF CLOSED DANCE NUMBERS written to be counted by
+    // people who cannot hear the conductor: short, square, characterised —
+    // a harp arpeggiating, pizzicato strings walking, a solo wind carrying the
+    // tune over them. That texture is the row. The palette says it: this is
+    // the only art-music row in the catalogue seating `harp` and
+    // `pizzicato_strings` together, and the only one whose lead is a flute over
+    // a plucked accompaniment.
+    //
+    // MEASURED, AND THE TRIPLE-TIME ASSUMPTION IS WRONG. Fourteen files carry
+    // Swan Lake and the Nutcracker in the classical rips: 4/4 IS 64.3% AND 3/4
+    // IS 21.4% — the waltz everybody hums is three numbers of fourteen, and the
+    // character dances, the scenes and the pas d'action are in four. So this
+    // row does NOT declare a meter, which is also what keeps it off `waltz`'s
+    // ground. The rest: bpm p50 119.5 (quartiles 84.5 and 150.5), 64.3% major,
+    // median melodic interval 2.0 with a step fraction of 0.740 — the most
+    // stepwise line of any orchestral set measured this round, which is what a
+    // tune written to be DANCED to has to be.
+    //
+    // AND NINE OF THE FOURTEEN FILES CARRY A PERCUSSION CHANNEL, the only
+    // classical set this round that does, with the heaviest single cell on the
+    // downbeat (204 hits at step 0 of the crash lane against 64 at step 2). A
+    // ballet pit has a triangle, a tambourine, a cymbal and timpani, and the
+    // transcriptions are hearing them. So this is the first Western art row in
+    // the catalogue with a kit — ONE cymbal at the top of the bar, and nothing
+    // else, because the measured quarters read as much like a transcriber's
+    // click as like a percussion part, and a snare backbeat under a swan would
+    // be an invention.
+    //
+    // LINEAGE. `romantic` (Vienna 1876) 0.3 — one year earlier, the orchestral
+    // language exactly; `waltz` (Vienna 1867) 0.25 — the ballroom triple time
+    // that half the numbers are; `classical` (Vienna 1785) 0.15 — the square
+    // eight-bar dance period the whole form is built out of; `concerto` (Venice
+    // 1725) 0.1 — the solo instrument over the band, which is what a variation
+    // for a ballerina is. 0.8 declared. THE RESIDUE IS 0.2 AND IT IS THE
+    // DANCER: music whose bar lengths, tempos and repeats are decided by what a
+    // body can do, which is the one collaborator this box will never have.
+    ballet: {
+      organic: true,
+      instrumental: true,
+      label: "Moscow 1877",
+      near: "romantic",
+      plan: "song",
+      bpm: 120,
+      bars: 8,
+      voices: 4,
+      parents: { romantic: 0.3, waltz: 0.25, classical: 0.15, concerto: 0.1 },
+      wants: [
+        "the ballet de cour and the Paris Opera's own ballet-pantomime — Lully to Adam, the " +
+        "two centuries of danced theatre this score is the end of, which this table has no " +
+        "rows for"
+      ],
+      cannot: [
+        "the triangle, the tambourine and the timpani — the ballet pit's own colours; the kit " +
+        "has twelve fixed lanes and none of them is a struck idiophone with a pitch",
+        "a variation's length: a solo is as long as the dancer's phrase, and this box's " +
+        "sections are counted in bars",
+        "the repeat with a different tempo, which is how a coda is danced"
+      ],
+      instr: ["flute", "harp", "pizzicato_strings", "strings"],
+      part: ["lead", "riff", "counter", "pad"],
+      entry: v => [2, 0, 0, 0][v],
+      reg: v => [1, 0, -1, -1][v],
+      realize: v => (v === 3 ? "pad" : "line"),
+      roots: [0, 0, 4, 4, 5, 3, 4, 0],
+      mode: MODES.ionian,
+      scale: DIATONIC,
+      diatonic: true,
+      artic: "legato",
+      maxHold: 4,
+      bassInstr: "contrabass",
+      bassStyle: "pedal",
+      drumkit: "acoustic",
+      kit: { x: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+      intro: "hit",
+      tone: { wave: "triangle", cut: 2700, q: 0.8, atk: 0.01, rel: 1, gain: 0.24, verb: 0.5 },
+      words: [
+        "the flute, the tune the dancer counts",
+        "the harp, arpeggiating under it",
+        "the strings, plucked, walking",
+        "the body of strings, holding"
+      ],
+      word: v => (v === 1 ? [fill(2), transpose(-12)] : v === 2 ? [keep(0, 4, 8, 12), transpose(-7)] : []),
+    },
+
+    // VERISMO — Rome 1890. Mascagni, CAVALLERIA RUSTICANA, first performed at
+    // the Teatro Costanzi on 17 May 1890 after winning Sonzogno's one-act
+    // competition — a Sicilian village, an Easter morning, a seduction and a
+    // knife fight, played by people with no titles in an hour and a quarter.
+    // The founding record is that premiere and the place is ROME AND NOT MILAN:
+    // Milan is where Sonzogno published it and where `belcanto` (Milan 1831)
+    // already sits, but the competition's prize was a production at the
+    // Costanzi and that is where it was heard first.
+    //
+    // WHAT THE ROW IS: the orchestra and the singer on the SAME LINE. Where
+    // `belcanto` puts a long unhurried vocal line over an accompaniment that
+    // gets out of its way — which is that row's own description of itself —
+    // verismo doubles the tune in the strings at full weight and lets the two
+    // push each other up. That is a texture no other row in this catalogue
+    // asks for: not a counter-line, not a pad, the same notes twice.
+    //
+    // AND IT IS SEATED WHERE THE BOX ACTUALLY DOUBLES, WHICH TOOK READING THE
+    // COMPOSED DOCUMENT TO FIND. compose deals at most two phrase slots to a
+    // section and chair v takes slot v % nP, so on a three-chair record it is
+    // chairs 0 AND 2 that share material — not 0 and 1. Written the obvious
+    // way (the strings second, the cello third) the strings got a line of
+    // their own and the CELLO doubled the singer, which is a different record.
+    // So the strings sit third with `word` empty, `realize: "line"` (a pad
+    // would make a held chord of the one chair that has to be a line) and a
+    // register one octave under the voice, and the cello sits second with a
+    // `transpose(-7)` — a true octave in a seven-note ladder, where this
+    // table's usual `transpose(-12)` is twelve DEGREES and lands nearer two.
+    // Verified on the composed document at seeds 1-3: the lead and the third
+    // chair carry the same material map, section for section.
+    //
+    // THE CORPUS IS ALMOST EMPTY AND IT IS SAID OUT LOUD. Searching the
+    // classical rips for Mascagni, Leoncavallo, Puccini, Cavalleria, Pagliacci,
+    // Tosca, Boheme, Verdi, Aida, Rigoletto and Traviata returns ELEVEN files,
+    // NINE OF THEM classical-guitar transcriptions of arias. `cavalleria` and
+    // `pagliacci` return ZERO files anywhere in the archive, including the
+    // 103,548-file bulk rip; the whole of Puccini is two files plus a handful
+    // of aria transcriptions (`Mascagni_Intermezzo`, `laboheme`,
+    // `nessundorma`, `O Mio Babbino Caro`), and one of the Nessun dorma files
+    // is a Michael Bolton cover. There is therefore NO tempo distribution, no
+    // meter tally and no melodic hold to read for this row, and Chordonomicon
+    // — a pop-chord census — has no art-music label at all. Every number below
+    // is a CHOICE from a neighbour and marked as one: bpm 76 sits between
+    // `belcanto`'s 70 and `operetta`'s 116, `maxHold: 6` is the held high note
+    // this style is bought for, and the mode is aeolian because the founding
+    // record's two most-played numbers are a minor Siciliana and an intermezzo
+    // that resolves into the major.
+    //
+    // THE MOUTH IS `MOUTHS.monody`, THE ONE MOUTH IN THE TABLE NOBODY HAD
+    // TAKEN: a trained soprano at two beats to a syllable, wide slow vibrato
+    // that arrives late. `belcanto` and `operaseria` both take `belter`, which
+    // is one syllable a beat — a florid, agile, ornamented line — and the whole
+    // point of the verismo voice is that it is NOT agile: it holds, and it
+    // pushes. One field, and it is the century between the two rows.
+    //
+    // LINEAGE. `belcanto` (Milan 1831) 0.35 — the Italian sung stage, the
+    // direct parent and the thing being reacted against; `operaseria` (London
+    // 1724) 0.15 — the form underneath both; `romantic` (Vienna 1876) 0.2 —
+    // the orchestral weight, which is what got added; `nationalism` (Prague
+    // 1874) 0.1 — the deliberate use of a village's own music as material,
+    // which is exactly what the Siciliana and the Easter hymn are doing here.
+    // 0.8 declared. THE RESIDUE IS 0.2 AND IT IS THE SUBJECT MATTER: ordinary
+    // people, in the present day, killing each other over ordinary things. That
+    // is a literary decision imported from Verga and Zola, it is what the word
+    // means, and no engine has a field for it.
+    verismo: {
+      label: "Rome 1890",
+      near: "belcanto",
+      plan: "arc",
+      bpm: 76,
+      bars: 8,
+      voices: 3,
+      parents: { belcanto: 0.35, romantic: 0.2, operaseria: 0.15, nationalism: 0.1 },
+      wants: [
+        "French grand opera — Meyerbeer's Robert le diable and Les Huguenots, Paris 1831, the " +
+        "five-act machine with the crowd on stage that this style is the small loud opposite " +
+        "of; the archive holds not one Meyerbeer file and the table has no row",
+        "the Italian literary verismo of Verga and Capuana, which is where the word and the " +
+        "subject came from"
+      ],
+      cannot: [
+        "the words, and here they are the argument: the whole claim of verismo is that people " +
+        "say ordinary things in their own dialect",
+        "the singer's own push — a verismo phrase is loud because a person is straining, and " +
+        "this box's dynamics are dealt per section",
+        "the sob: the catch in the voice that is this style's most imitated single gesture"
+      ],
+      instr: ["solo_vox", "cello", "strings"],
+      part: ["lead", "counter", "pad"],
+      entry: v => (v === 1 ? 2 : 0),
+      reg: v => [1, -1, 1][v],
+      realize: () => "line",
+      roots: [0, 5, 3, 4, 0, 2, 4, 0],
+      prog: [
+        { d: 0 },
+        { d: 5 },
+        { d: 3 },
+        { d: 4, q: "dom7" },
+        { d: 0 },
+        { d: 2 },
+        { d: 4, q: "dom7" },
+        { d: 0 }
+      ],
+      mode: MODES.aeolian,
+      scale: DIATONIC,
+      diatonic: true,
+      artic: "legato",
+      maxHold: 6,
+      bassInstr: "contrabass",
+      bassStyle: "pedal",
+      kit: {},
+      intro: "swell",
+      tone: {
+        wave: "sawtooth",
+        cut: 2200,
+        q: 0.9,
+        atk: 0.05,
+        rel: 1.8,
+        gain: 0.26,
+        verb: 0.6,
+        mouth: MOUTHS.monody
+      },
+      words: [
+        "the singer, holding",
+        "the cellos, underneath, moving when the voice does not",
+        "the strings, ON THE VOICE'S OWN LINE an octave below it — not an accompaniment"
+      ],
+      word: v => (v === 1 ? [transpose(-7), drop(2)] : []),
+    },
+
+    // IMPRESSIONISM — Paris 1894. Debussy, PRELUDE A L'APRES-MIDI D'UN FAUNE,
+    // first performed by the Societe Nationale de Musique on 22 December 1894
+    // under Gustave Doret, and encored on the spot. Ten minutes on a Mallarme
+    // eclogue, opening with an unaccompanied flute sliding down a tritone and
+    // back — a phrase that belongs to no key, over no bar anybody can count on
+    // first hearing. Boulez's line about it, that modern music begins there, is
+    // the reason this row exists and not a reason to date it any differently:
+    // the record is the premiere.
+    //
+    // THE ALPHABET IS THE ROW, AND IT IS THE ONE SCALE IN THIS ENGINE NOBODY
+    // HAD USED. `SCALES.whole` — six equal whole tones, [0, 2, 4, 6, 8, 10] —
+    // has been in the shared table since it was written and 453 rows walked
+    // past it. It is here because it is literally Debussy's: the whole-tone
+    // collection is what the Faune's flute descends through and what Voiles is
+    // made of end to end, and a scale with no semitone in it has no leading
+    // note, which means no cadence, which is the sound of the whole style. No
+    // other row in this catalogue is going to want it, and this one cannot do
+    // without it.
+    //
+    // AND THE ARTIFACT WAS READ BACK, BECAUSE A DECLARED FIELD THAT NEVER
+    // ARRIVES IS THIS BOX'S CHARACTERISTIC BUG. Rendered at seeds 1, 2 and 3,
+    // every section and every chair, THIS RECORD SOUNDS ALL TWELVE PITCH
+    // CLASSES — not six. That is not the scale failing to arrive; it is the
+    // scale arriving and being MOVED. `diatonic` is deliberately not declared
+    // (the paragraph below), so the kernel shifts each phrase bodily by the
+    // chord's own root in semitones, and six equal tones planed by a root that
+    // is not one of them is the OTHER whole-tone collection: six plus six is
+    // twelve. The comparison is the useful part — `symphony`, measured the same
+    // way, sounds eight pitch classes (its seven plus the F sharp of the V-of-V
+    // in bar 3). So the claim this row is entitled to is exactly this: the LINE
+    // is drawn from six equal tones, and the record is chromatic because those
+    // six keep being carried somewhere else. Which is what planing is.
+    //
+    // THE CHORD IS NOT A TRIAD AND THAT IS MEASURED. Over 65 files in the
+    // classical rips matching Debussy, Ravel, Clair de lune, Arabesque and the
+    // Faune, the commonest bar chord is a MINOR SEVENTH in 19 files, a
+    // dominant seventh in 10, a suspension in 7 and a diminished triad in 3 —
+    // 39 of 65 files whose default sonority is not a plain triad, against the
+    // symphony set's 158 plain triads out of 197 and the variation set's 116 of
+    // 193. Same measure, same code, opposite answer: that is the single
+    // cleanest contrast this round produced, and it is why every bar of `prog`
+    // below carries a seventh or a ninth and not one bar carries a bare triad.
+    //
+    // THE REST OF THE MEASUREMENT: bpm p50 95.0 (quartiles 74.5 and 120),
+    // 43.1% 4/4 and 12.3% in 9/8 — the Faune's own meter, and the highest 9/8
+    // share of any set this round — 56.9% major, hold p50 1.0 and p90 4.0,
+    // median melodic interval 4.0 with a step fraction of 0.400.
+    //
+    // AND THE CHORDS MOVE IN PARALLEL, WHICH IS A FIELD. `diatonic` is
+    // deliberately NOT declared here, and that is not an omission: with it off,
+    // the kernel shifts the line by the CHORD'S OWN ROOT in semitones rather
+    // than by scale degrees (`rootShiftAt`, kernel.js), so the whole phrase
+    // moves bodily with the harmony instead of bending to stay in key. That is
+    // planing — parallel chords sliding as a block, the gesture every listener
+    // identifies this music by — and it falls out of turning one boolean off.
+    //
+    // THE CAST IS THE FAUNE'S OWN: a flute, alone, at the top; a harp under it
+    // (the score has two); slow strings holding. Three chairs, `intro: "fade"`,
+    // because nothing in this piece begins, it is already going when you notice
+    // it.
+    //
+    // LINEAGE. `romantic` (Vienna 1876) 0.2 — the orchestra and the language
+    // being dissolved; `nocturne` (Paris 1835) 0.2 — Chopin's own city and the
+    // piano writing Debussy said he learned everything from; `symphonicpoem`
+    // (Weimar 1854) 0.2 — a single orchestral movement after a poem, which is
+    // exactly what this is on paper; `musicdrama` (Munich 1865) 0.15 — the
+    // chromaticism, and the young Debussy went to Bayreuth twice before
+    // deciding to spend his life getting out from under it; `nationalism`
+    // (Prague 1874) 0.05 — the modal turn borrowed from outside the
+    // conservatory, which for him was a gamelan at the 1889 Exposition rather
+    // than a village. 0.8 declared. THE RESIDUE IS 0.2 AND IT IS THE REFUSAL:
+    // harmony used for colour instead of for motion, a chord that is a place
+    // rather than a step on the way somewhere.
+    impressionism: {
+      organic: true,
+      instrumental: true,
+      label: "Paris 1894",
+      near: "nocturne",
+      plan: "arc",
+      bpm: 94,
+      bars: 8,
+      voices: 3,
+      parents: {
+        romantic: 0.2,
+        nocturne: 0.2,
+        symphonicpoem: 0.2,
+        musicdrama: 0.15,
+        nationalism: 0.05
+      },
+      wants: [
+        "the gamelan Debussy heard at the 1889 Exposition Universelle — `gamelan` is in this " +
+        "table (Yogyakarta) and is NOT taken as a parent, because one afternoon at a world's " +
+        "fair is an encounter and not a descent"
+      ],
+      cannot: [
+        "the Faune's rhythm: its opening flute is written across the bar so that nobody can " +
+        "hear where the beat is, and this box's bar is sixteen equal steps with a stress on " +
+        "the first",
+        "a ninth voiced the way Debussy voices one — `nine` stacks the ladder's own steps, " +
+        "which is the chord and not the spacing, and the spacing is the sound",
+        "the tritone slide the piece opens with, as a SLIDE: `tone.glide` would apply to every " +
+        "note this chair plays",
+        "a whole-tone HARMONY: the chord qualities are built out of the mode's own ladder, so " +
+        "a `nine` in lydian spells 0-4-7-11 and three of those are semitone neighbours. The " +
+        "scale is the melody's; the chords under it are diatonic sevenths, and the augmented " +
+        "triad the style is really made of is not in the quality table"
+      ],
+      instr: ["flute", "harp", "slow_strings"],
+      part: ["lead", "riff", "pad"],
+      entry: v => (v === 0 ? 0 : 2),
+      reg: v => [1, 0, -1][v],
+      realize: v => (v === 2 ? "pad" : "line"),
+      roots: [0, 0, 3, 3, 5, 5, 1, 4],
+      prog: [
+        { d: 0, q: "maj7" },
+        { d: 0, q: "nine" },
+        { d: 3, q: "maj7" },
+        { d: 3, q: "nine" },
+        { d: 5, q: "m7" },
+        { d: 5, q: "nine" },
+        { d: 1, q: "m7" },
+        { d: 4, q: "nine" }
+      ],
+      mode: MODES.lydian,
+      scale: SCALES.whole,
+      artic: "legato",
+      maxHold: 4,
+      bassInstr: "contrabass",
+      bassStyle: "pedal",
+      kit: {},
+      intro: "fade",
+      tone: { wave: "triangle", cut: 2300, q: 0.7, atk: 0.05, rel: 1.9, gain: 0.22, verb: 0.68 },
+      words: [
+        "the flute, alone, coming down through six equal tones",
+        "the harp, spread under it",
+        "the strings, a colour and not a cadence"
+      ],
+      word: (v, s) => (v === 1 ? [spread(2), fill(2)]
+        : v === 2 ? []
+        : [[], [spread(2)], [invert(4)], [rotate(3)]][s % 4]),
     },
 
     // BARCAROLLE — the salon, honestly. The salon slot rocks in 6/8 rather
@@ -18003,6 +19797,21 @@
     // INTRA-note bend (a meend that curves inside one held note) is still out
     // of reach and belongs with `enka`'s kobushi, which keeps its refusal for
     // exactly that reason. The tabla `cannot` above is untouched.
+    //
+    // THE THUMRI WANT IS PAID, 2026-09-03 (the India-and-China batch). This row has
+    // carried "thumri" in its `wants` since it was written; `thumri` (Lucknow
+    // 1856) is a row now and is declared a parent at 0.2, beside `romantic` 0.3.
+    // The claim is specific and it is about the SINGER rather than the song: what a
+    // playback singer does to a filmi line — the scoop into the note, the same
+    // phrase returned to and shaded differently, the light raga treated loosely —
+    // is thumri technique, and the two traditions are one generation apart in the
+    // same country. It is a fifth of this record and not more, because the other
+    // things in this row (the orchestra, the song situation, the Western harmony
+    // under it) come from somewhere else. 0.5 declared. "khayal" stays in `wants`
+    // and cannot be paid: `khyal`'s label is Mumbai 1965, five years LATER than
+    // this record, and GENRES.md's law is that no parent may be later than its
+    // child — the practice is centuries older than this row and the table's date
+    // is a recording's.
     filmi: {
       label: "Mumbai 1960",
       voices: 4,
@@ -18010,8 +19819,8 @@
       near: "crooner",
       plan: "song",
       bpm: 92,
-      parents: { romantic: 0.3 },
-      wants: ["khayal", "thumri", "parsi theatre song", "bhajan"],
+      parents: { romantic: 0.3, thumri: 0.2 },
+      wants: ["khayal", "parsi theatre song", "bhajan"],
       cannot: [
         "the tabla's bols — na, tin, ge and dha differ in TIMBRE and this kit has twelve fixed " +
         "samples and a velocity"
@@ -20871,6 +22680,601 @@
       word: v => (v === 0 ? [] : v === 1 ? [transpose(7)] : v === 2 ? [fill(2), drop(2)] : [drop(8)]),
     },
 
+    // YAYUE — Suizhou 433 BC. The record is an EXCAVATION, which is this
+    // table's strongest kind of antique evidence and already its practice
+    // (`hohlefels`, `jiahu`, `urlyre`): "a complete ceremonial set of 65 zhong
+    // bells, found in a near-perfect state of preservation during the excavation of
+    // the tomb of Marquis Yi, who died c. 430 BCE"; the tomb is "an archaeological
+    // site in Leigudun Community, Nanjiao Subdistrict, Zengdu District, Suizhou...
+    // Hubei, China, dated sometime after 433 BC", and it "is also unusual in
+    // containing large numbers of musical instruments, including the great set of
+    // bells for which it is most famous". The set is still playable: "still in
+    // playable condition after almost 2,500 years — is able to produce both
+    // diatonic and pentatonic scales", covering "a range of five octaves,
+    // and... fully chromatic in the central three".
+    //
+    // WHY THIS AND NOT THE QING COURT, SINCE THE ASK WAS THE CLASSICAL PERIOD.
+    // Said plainly, because the reader should be able to check it: Paul asked for
+    // India and China IN THE CLASSICAL PERIOD, and four of this batch's five
+    // Chinese rows are exactly that — Suzhou 1598, Beijing 1790, Xi'an 1807, Wuxi
+    // 1819. This is the fifth and it is not, and the reason is that the Yayue
+    // article contains NO DATED QING RECORD. It says the conventions "were
+    // established in the Western Zhou", it dates a Song-dynasty export ("In 1116, a
+    // gift of 428 yayue instruments as well as 572 costumes and dance objects was
+    // given to Korea by Emperor Huizong"), and about the last dynasty it says only
+    // that "some forms of yayue survived for imperial ceremonies and rituals until
+    // the fall of the Qing dynasty". A label needs a record and the Qing has none
+    // here. The bells have one, to the year. So the row anchors on the artefact
+    // and the whole 2,300-year continuity is the row's own subject.
+    //
+    // WHAT THE MUSIC IS, AND EVERY FIELD BELOW COMES OUT OF THIS PARAGRAPH.
+    // Yayue is "a form of classical music and dance performed at the royal court
+    // and temples in ancient China... Together with law and rites, it formed the
+    // formal representation of aristocratic political power", and Confucius held it
+    // to be "the proper form of music that is refined, improving, and essential for
+    // self-cultivation" as against the popular music of Zheng, "which he judged to
+    // be decadent and corrupting." Its ensemble is laid out by compass point: "the
+    // larger ensemble was primarily instrumental and contained all the categories of
+    // musical instruments with the musicians arranged in five directions... The wind
+    // instruments occupied the center, and the bronze bells and stone chimes (known
+    // collectively as yuexuan) at the four sides, while the drums occupied the four
+    // corners. At the front were two wooden instruments, used to mark the start and
+    // end of a piece."
+    //   · THE BELLS LEAD AND THE BIG ONES PUNCTUATE, which is not an interpretation
+    //     — it is the Bianzhong article's own sentence: "the instrument's role is to
+    //     lead the orchestra (doubling the melody of the winds and strings), while
+    //     larger bells punctuate hymn phrases." So voice 0 is `tubular_bells`
+    //     carrying the tune, voice 1 is `glockenspiel` for the bianqing, the stone
+    //     chimes that are the bells' fixed partner, and voice 2 is `pan_flute` for
+    //     the paixiao — the wind in the centre that the bells are doubling. The
+    //     row is INSTRUMENTAL because the article's larger ensemble is.
+    //   · ONE NOTE PER BEAT AND NO ORNAMENT. This is the defining sound of ritual
+    //     court music and it is why this row exists in a table full of ornamented
+    //     ones: no grace notes, no slides, no passing tones — `orn` is absent
+    //     entirely, which is true of almost nothing else here — and every voice's
+    //     word is built on `keep(0, 4, 8, 12)`, one stroke a beat, held. The
+    //     tempo is the slowest in the catalogue's Chinese block.
+    //   · THE WOODEN MARKERS ARE THE ONLY PERCUSSION. The zhu (a box struck inside
+    //     to start) and the yu (a wooden tiger scraped to stop) mark the piece's
+    //     ENDS, not its beat. So the kit is one stroke at the top of the bar and
+    //     nothing else, and the drums at the four corners are in the cannot with
+    //     `jingju`'s reason: punctuation is not a groove.
+    //
+    // THE TUNING IS NOT A COMPROMISE HERE AND THAT IS WORTH SAYING, because it
+    // usually is. `guqin`'s comment already carries the measurement — "sanfen
+    // sunyi is 10 cents from equal temperament at its worst, inside the JND, and
+    // that is measured in WORLD.md §2 rather than assumed here" — and these bells
+    // are the physical object that measurement is about. Each bell sounds TWO
+    // pitches, "a major or minor third" apart depending on where it is struck, and
+    // the set is chromatic across three octaves. A five-note `majpent` on twelve
+    // equal semitones is therefore an honest reading of this instrument in a way it
+    // is not an honest reading of a sitar.
+    //
+    // LINEAGE: a declared ROOT, and the one edge a reader will look for is
+    // deliberately absent. `gagaku` (Nara 752) is the Japanese court music
+    // descended from Tang practice and it is EARLIER ON THE LABELS than this row,
+    // which looks backwards until you read what each label dates: gagaku's is a
+    // PERFORMANCE (the Todai-ji eye-opening ceremony) and this one is an
+    // EXCAVATED SET OF INSTRUMENTS from thirteen centuries before it. The table
+    // dates records, not origins, and the same asymmetry already sits between
+    // `dhrupad` (1955) and the eighteenth-century rows that could not declare it.
+    // No parent edge is drawn in either direction, because gagaku's own `wants`
+    // names togaku — Tang BANQUET music, yanyue, the entertainment repertory —
+    // and that is the other half of the Chinese court, not this one.
+    //
+    // THE CORPUS IS SILENT AND THE SILENCE IS MEASURED. "yayue", "bianzhong",
+    // "bianqing", "confucian", "zhou dynasty" and "chime bells" return ZERO files
+    // out of the 120,652-file MIDI corpus. Chordonomicon has nothing older than the
+    // twentieth century by construction. `bpm: 70` at half rate is a CHOICE from
+    // `gagaku`'s 72 and `guqin`'s 70, the two neighbours that also move at the
+    // speed of a ceremony.
+    //
+    // `organic: true`: all three chairs are recordings, and there is no model in
+    // the fleet of a bronze bell chime, a stone chime or a paixiao — and there
+    // should not be one.
+    yayue: {
+      organic: true,
+      instrumental: true,
+      label: "Suizhou 433 BC",
+      voices: 3,
+      rate: 0.5,
+      near: "gagaku",
+      plan: "arc",
+      bpm: 70,
+      parents: {},
+      wants: [
+        "the Western Zhou ritual code the article says established the conventions",
+        "the Shijing's ya song-texts, which are where the word comes from",
+        "the se and qin zithers, and the sheng mouth-organ, that the article lists beside the " +
+        "bells"
+      ],
+      cannot: [
+        "the two-tone bell — striking a zhong at its centre and at its corner gives two " +
+        "different pitches a third apart from ONE object, which is the instrument's whole " +
+        "cleverness and there is no sampler zone that answers to where you hit it",
+        "the yuexuan layout — bells and chimes at the four sides, winds in the centre, drums " +
+        "in the corners, and the music is partly a fact about WHERE each sound comes from; " +
+        "this box mixes to two channels",
+        "the zhu and the yu — a struck box to begin and a scraped wooden tiger to end, which " +
+        "are punctuation and not a beat; the kit below keeps one stroke a bar and the corners " +
+        "stay unsaid (`jingju`'s ruling, applied again)",
+        "the dance — yayue is music AND dance, performed with a shield and axe or a flute and " +
+        "pheasant feather, and half of what it is is not sound",
+        "the instruments — no bianzhong, no bianqing, no paixiao in the registry; " +
+        "`tubular_bells`, `glockenspiel` and `pan_flute` are struck metal, struck metal and " +
+        "stopped pipes, which is the mechanism three times and the object none"
+      ],
+      instr: ["tubular_bells", "glockenspiel", "pan_flute"],
+      entry: v => (v === 1 ? 2 : v === 2 ? 0 : 0),
+      reg: v => (v === 1 ? 1 : v === 2 ? -1 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      nobass: true,
+      harmony: "modal",
+      intro: "cold",
+      mode: MODES.ionian,
+      scale: SCALES.majpent,
+      artic: "tie",
+      maxHold: 4,
+      incClamp: 1,
+      kit: { p: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+      kitVel: { p: [7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+      tone: { wave: "triangle", cut: 2600, q: 0.6, atk: 0.004, rel: 2.8, gain: 0.2, verb: 0.55 },
+      words: [
+        "the bells, leading, one stroke a beat",
+        "the stone chimes, answering the phrase",
+        "the panpipes in the centre, holding it"
+      ],
+      word: (v, s) => (v === 0
+          ? [[keep(0, 4, 8, 12)], [keep(0, 4, 8, 12), rotate(4)], [keep(0, 8)]][s % 3]
+        : v === 1 ? [keep(0, 8), transpose(12)]
+        : [drop(12), transpose(-12)]),
+    },
+
+    // KUNQU — Suzhou 1598. The record is a play and its year: Tang Xianzu's
+    // The Peony Pavilion, written 1598, the piece the Kunqu article names first
+    // ("Well-known pieces of Kunqu opera included The Peony Pavilion from the Ming
+    // dynasty") and the one still staged. The music was already there: "Kunqu
+    // refers to Kunshan tune, a repertory of songs and performances from Kunshan in
+    // Suzhou... generally believed to have been developed during the Ming dynasty
+    // by Wei Liangfu, who was from the port of Taicang", and "it gained widespread
+    // popularity when Liang Chenyu used the style in his drama Huansha ji". The
+    // label takes Suzhou, the prefecture Kunshan and Taicang are both in and the
+    // city the style is named for, and 1598, the year the repertory acquired the
+    // play it has never put down. THE ARTICLE'S OWN CLAIM FOR THE ROW: kunqu "came
+    // to dominate Chinese theater from the 16th to the 18th centuries" and is
+    // "known as the 'ancestor of a hundred operas'".
+    //
+    // IT IS AN ANCESTOR THIS TABLE ALREADY OWED. `jingju` (Beijing 1918) has
+    // carried "kunqu" in its `wants` since it was written, and `sizhu` (Shanghai
+    // 1920) has carried "kunqu instrumental music". THE FIRST IS PAID BY THIS ROW
+    // AND COMES OFF JINGJU'S LIST; jingju declares `kunqu` a parent tonight.
+    // THE SECOND IS REFUSED AND THE REFUSAL IS THE POINT: sizhu's want names the
+    // INSTRUMENTAL music — the qupai lifted off the stage and played by a teahouse
+    // club with no singer in it — and this row is the sung theatre. A want is paid
+    // by a row only when the row is the thing the want names, not the thing the
+    // want is made of (the `operetta`/ballad-opera ruling of 2026-09-03, applied
+    // again), so sizhu's line stays where it is.
+    //
+    // WHAT MAKES IT ITSELF, AND THE FIELD EACH FACT LANDS IN.
+    //   · SHUIMO QIANG — "water-polished song", the name for what Wei Liangfu did
+    //     to the Kunshan tune. It means a syllable spun out over many notes at a
+    //     tempo slower than speech. So this row is `rate: 0.5` with `maxHold: 6`
+    //     and `artic: "tie"`, and its throat is `MOUTHS.falsetto` — the only
+    //     row in the Chinese block to take it, and taken for a measured reason:
+    //     it is the fleet's most melismatic tract (syll 4, twice `melisma`'s) with
+    //     the most air (0.42) and almost no vibrato (0.12), which is a high thin
+    //     sustained line and is what the sheng and dan of a kunqu stage sound like.
+    //     `jingju` takes `bulgar` — no air at all, syll 2 — because a Peking
+    //     opera dan is a bright forward cry and this is not one.
+    //   · THE ORCHESTRA IS A FLUTE, NOT A FIDDLE, and the article says so:
+    //     "Kunqu uses drum and board to provide rhythm to the tunes, with flute,
+    //     sanxian and so on as the main accompanying instrument." THERE IS NO
+    //     HUQIN IN THIS ROOM. The bowed fiddle that leads `jingju` and `huiju`
+    //     is the thing kunqu does not have, and its absence is half of why the two
+    //     sound like different centuries. The dizi is `flute`, with the dimo — the
+    //     rice-paper membrane that buzzes — in the cannot, `sizhu`'s own
+    //     admission. The sanxian is `shamisen`, and that substitution is the
+    //     closest in the whole Chinese block: the shamisen IS the sanxian, carried
+    //     to Okinawa and then to Japan in the sixteenth century, three strings,
+    //     fretless, a skin belly, played with a plectrum. It is the same instrument
+    //     with four hundred years of Japanese luthiery on it.
+    //   · BAN AND GU — "drum and board". A wooden clapper on the strong beat and a
+    //     small high drum on the weak ones, and nothing else: no gongs, no cymbals,
+    //     no kick. The metre is yiban sanyan, one strong and three weak, so the
+    //     `p` lane is the ban at step 0 and the `h` lane is the drum at 4, 8 and
+    //     12. That is the entire percussion section and it is four hits a bar.
+    //
+    // LINEAGE: a declared ROOT. Kunqu's own ancestor is nanxi, the Southern drama
+    // of Song-dynasty Hangzhou, and the Kunshan tune Gu Jian is said to have
+    // transmitted in the Yuan; neither has an anchor and both are in `wants`.
+    // Nothing in this table is upstream of a 1598 Chinese opera: the nearest
+    // anchors by DATE are European, and naming one would be the conscription
+    // WORLD.md §4 caught `worldfolk` in.
+    //
+    // THE CORPUS IS SILENT AND THE SILENCE IS MEASURED. "kunqu", "kunju",
+    // "peony pavilion", "qupai", "sanxian", "dizi" and "chinese opera" return ZERO
+    // files out of the 120,652-file MIDI corpus; "china" and "chinese" return 91
+    // between them and not one is an opera. Chordonomicon has no kunqu label at
+    // all. So `bpm: 72` at half rate is a CHOICE and its neighbour is named:
+    // it is `gagaku`'s pulse, the other court-and-temple row in this table that
+    // moves at the speed of breath.
+    //
+    // THE ROW IS NOT DECLARED `organic` AND THE REASON IS ONE CHAIR. The
+    // twelve-row reading of 2026-09-02 gives `organic: true` to a record that seats
+    // ZERO native chairs — an honest recording rather than a failure — and the two
+    // instruments here qualify: there is no model in the fleet of a dizi or a
+    // sanxian and there should not be. But the singer is a MODELLED THROAT (every
+    // vocal chair has been since 2026-08-28), so this row does seat a native chair
+    // and the declaration would be false. `guqin`, `pipaqu` and `yayue` are
+    // instrumental and do declare it; this one says so here instead.
+    kunqu: {
+      label: "Suzhou 1598",
+      voices: 3,
+      rate: 0.5,
+      near: "jingju",
+      plan: "arc",
+      bpm: 72,
+      parents: {},
+      wants: [
+        "nanxi, the Southern drama of Song-dynasty Hangzhou",
+        "the Kunshan tune before Wei Liangfu polished it",
+        "the qupai repertory — the fixed tune-titles a kunqu scene is assembled from"
+      ],
+      cannot: [
+        "the qupai system itself — a kunqu scene is built by choosing NAMED PRE-EXISTING TUNES " +
+        "and fitting new words to them, which is a repertory of material and this box writes " +
+        "one phrase and varies it; the section schedule below is a shape, not a tune-title",
+        "the dimo — a dizi's tone is a rice-paper membrane buzzing over a hole, and `flute` is " +
+        "a Western concert flute with none of it (`sizhu`'s admission, unchanged)",
+        "the ban's own timbre — two slabs of hardwood struck edge to edge, which is neither a " +
+        "drum nor a hat; the `p` lane is the nearest thing and it is a compromise",
+        "zhongzhou rhyme — the artificial stage pronunciation kunqu is sung in, which is a " +
+        "fact about the WORDS and this box has no words",
+        "free time at the aria's crisis — the same wall `jingju` names as sanban: no pace word " +
+        "says 'no bar'"
+      ],
+      instr: ["solo_vox", "flute", "shamisen"],
+      entry: v => (v === 1 ? 1 : 0),
+      reg: v => (v === 1 ? 1 : v === 2 ? -1 : 0),
+      realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      nobass: true,
+      harmony: "modal",
+      intro: "solo",
+      mode: MODES.ionian,
+      scale: SCALES.majpent,
+      artic: "tie",
+      maxHold: 6,
+      incClamp: 2,
+      orn: { grace: 0.45, pass: 0.3 },
+      kit: {
+        p: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        h: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+      },
+      kitVel: {
+        p: [9, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0],
+        h: [0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0]
+      },
+      tone: {
+        wave: "triangle",
+        cut: 2200,
+        q: 0.8,
+        atk: 0.05,
+        rel: 2,
+        gain: 0.22,
+        verb: 0.5,
+        mouth: MOUTHS.falsetto,
+        glide: 0.04
+      },
+      words: [
+        "the sheng, one syllable spun out over a phrase",
+        "the dizi, doubling her and adding flowers",
+        "the sanxian, on the bones of the tune"
+      ],
+      word: (v, s) => (v === 0
+          ? [[drop(4)], [drop(2)], [fill(2)], [fill(2), rotate(2)]][s % 4]
+        : v === 1 ? [fill(2), rotate(1)]
+        : [keep(0, 4, 8, 12), transpose(-12)]),
+    },
+
+    // HUIJU — Beijing 1790. The record is a birthday party, and it is dated
+    // to the day: "Peking opera was born when the Four Great Anhui Troupes brought
+    // Hui opera, or what is now called Huiju, in 1790 to Beijing, for the eightieth
+    // birthday of the Qianlong Emperor on 25 September. It was originally staged
+    // for the court and only made available to the public later." That is the
+    // Peking opera article's own sentence and it is the founding record of this row
+    // — not of `jingju`, which sits on the 1918 Hegemon-King premiere and says so.
+    // The music itself is older: "Anhui Opera originated in the southern part of
+    // Anhui Province, particularly in Huizhou and Anqing during the Ming Dynasty",
+    // and it "played a part in developing Peking opera during the Qing Dynasty".
+    //
+    // THIS ROW IS A DEBT THE TABLE WROTE DOWN AND HAS NOW PAID. `jingju`'s
+    // `wants` has read "the hui and han troupes (beijing 1790)" since it was
+    // written, and its own comment says "Jingju's own parents — kunqu, and the Hui
+    // and Han troupes whose 1790 arrival in Beijing for the Qianlong birthday is
+    // the tradition's founding story — have no anchors and are owed by name". BOTH
+    // WANTS ARE PAID TONIGHT: `kunqu` (Suzhou 1598) and this row are declared
+    // parents of `jingju`, its `wants` list empties, and `jingju` stops being a
+    // declared root.
+    //
+    // WHY IT IS NOT "PEKING OPERA WITH AN EARLIER DATE", which is the only real
+    // question. In 1790 there was no Peking opera: there were Anhui troupes
+    // singing erhuang in a Beijing court. The article is explicit that the form
+    // arrives later and in stages — "In 1828, several famous Hubei troupes arrived
+    // in Beijing and performed jointly with Anhui troupes. The combination
+    // gradually formed Peking opera's melodies. Peking opera is generally regarded
+    // as having fully formed by 1845." So this row is the FIRST of the three
+    // ingredients, in the room, twenty-eight years before the second and
+    // fifty-five before the result. And it holds the article's own melodic name:
+    // "The earliest Chinese name, Pihuang, was a combination of the xipi and
+    // erhuang melodies" — this is the erhuang half.
+    //
+    // THE ERHU CHAIR IS THIS ROW'S ONE REAL WIN, and it is a clause in another
+    // row's comment coming due. `jingju` refused the registry's erhu in an
+    // amendment dated 2026-08-30, at length and correctly: "erhu.dsp's compass is
+    // D4..A7 and a jinghu is tuned roughly an OCTAVE above an erhu with a bamboo
+    // barrel a fraction of the size, so seating it would be claiming an instrument
+    // nobody has measured against a jinghu". THE JINGHU IS THE PROBLEM AND THIS
+    // ROW DOES NOT HAVE ONE. The erhuang melody is accompanied by the erhuang
+    // huqin, which sits LOW — the deep lyrical fiddle, not the shrieking one — and
+    // `erhu` is that instrument by family and by register at once: two strings, a
+    // snakeskin membrane, the bow hair between the strings. So the first NATIVE
+    // chair in the Chinese block goes here, and it goes here because a jingju agent
+    // in August wrote down exactly what would have to be true before it could.
+    //
+    // THE PERCUSSION IS LOUDER THAN JINGJU'S ON PURPOSE. `jingju` keeps "only the
+    // ban's timekeeping" and leaves the gong-and-drum signals unsaid, because
+    // luogu dianzi are STAGE DIRECTIONS and a repeating lane would turn them into a
+    // groove. That argument is accepted and not repeated: what this row adds is not
+    // signals but the touring troupe's own floor — a drum on the beat and a wood
+    // lane running under it, which is what a company that plays in courtyards and
+    // temple fairs sounds like next to a company that plays in a theatre.
+    //
+    // THE ALPHABET IS THE YU MODE AND THE SCALE IS NEW TONIGHT.
+    // `SCALES.yupent` — 0 3 5 7 10 — is the fifth rotation of the pentatonic
+    // `majpent` already carries (0 2 4 7 9), and until tonight this box had no
+    // five-note set with a minor third in it that was not `blues` (0 3 5 6 7 10,
+    // which has a flat fifth in it and is a different continent). Erhuang is a yu-
+    // and gong-mode music; a bangzi aria is a yu-mode music; a seven-note dorian
+    // would hand both of them a second and a sixth degree the style does not use.
+    // The addition is argued in genres-tables.js beside the table itself and is
+    // MEASURED there: rendering this row's seeds 1–3 against `MODES.dorian` moves
+    // notes, so the alphabet is doing work rather than decorating.
+    //
+    // THE CORPUS IS SILENT AND THE SILENCE IS MEASURED. "huiju", "hui opera",
+    // "anhui", "erhuang", "xipi", "pihuang", "qianlong" and "peking opera" return
+    // ZERO files out of the 120,652-file MIDI corpus. Chordonomicon has no Chinese
+    // opera label at all — 110 rows say "chinese" and every one is a pop side. So
+    // `bpm: 96` is a CHOICE and it is `jingju`'s own, because yuanban is yuanban
+    // in either company.
+    //
+    // NO `mode` FIELD, AND THAT IS G14b RATHER THAN AN OMISSION. The first draft of
+    // this row declared `mode: MODES.dorian` beside its yu-mode scale, which is how
+    // most of the Chinese block is written — and test/precompose.js G14b would have
+    // caught it, because it is DECORATION: `mode` is read in exactly three places
+    // (kernel.js harm(), chordsOf(), bass()) and all three need CHORD ROOTS, which a
+    // `harmony: "modal"` row does not have. Swapping the declared dorian for its
+    // plain neighbour moves not one rendered note. The law at genres-tables.js MODES
+    // offers three answers and this row takes the honest one for a modal record: say
+    // nothing. Every note it plays comes out of `scale`, which is `SCALES.yupent`,
+    // and that is where the claim belongs.
+    huiju: {
+      label: "Beijing 1790",
+      voices: 3,
+      bars: 8,
+      near: "jingju",
+      plan: "arc",
+      bpm: 96,
+      parents: { kunqu: 0.2 },
+      wants: [
+        "the Ming Huizhou and Anqing stages the troupes came from",
+        "the Hubei (Han) troupes who arrived in 1828 and made the other half of the melody"
+      ],
+      cannot: [
+        "the daluo — the big gong whose pitch FALLS as it rings, and no sample in the kit " +
+        "bends (`jingju`'s admission, unchanged)",
+        "the luogu dianzi — gong-and-drum patterns are SIGNALS (enter, sit, weep, fight), not " +
+        "grooves, and a lane that repeats per bar would turn a stage direction into a beat",
+        "the role registers — sheng, dan, jing, chou are TIMBRE AS THE GENRE (WORLD.md §5.5) " +
+        "and one throat is not four",
+        "the yueqin — a round-bodied short-necked lute with four strings in two courses; " +
+        "`banjo` below is round-bodied and plucked and has a membrane head, which is three " +
+        "facts right and the rest wrong",
+        "sanban, the free banshi — the pace ladder has half through double and no word for 'no " +
+        "bar'"
+      ],
+      instr: ["solo_vox", "erhu", "banjo"],
+      drumkit: "acoustic",
+      entry: v => (v === 0 ? 1 : 0),
+      reg: v => [0, 1, -1][v],
+      realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      nobass: true,
+      harmony: "modal",
+      intro: "cold",
+      scale: SCALES.yupent,
+      artic: "legato",
+      maxHold: 3,
+      orn: { grace: 0.4, approach: 0.3 },
+      kit: {
+        k: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        p: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0],
+        h: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+      },
+      kitVel: { p: [9, 0, 4, 0, 6, 0, 4, 0, 7, 0, 4, 4, 6, 0, 5, 0] },
+      tone: {
+        wave: "triangle",
+        cut: 2500,
+        q: 0.95,
+        atk: 0.018,
+        rel: 1.1,
+        gain: 0.25,
+        verb: 0.42,
+        mouth: MOUTHS.trobar,
+        slide: 0.12
+      },
+      words: [
+        "the lead, declaiming over the fiddle",
+        "the erhuang huqin, riding the line a fifth up",
+        "the yueqin, hammering the skeleton"
+      ],
+      word: (v, s) => (v === 0 ? [[], [fill(2)], [rotate(2)], [fill(2), reverse()]][s % 4]
+                    : v === 1 ? [transpose(7), fill(2)]
+                    : [keep(0, 4, 8, 12), drop(2)]),
+    },
+
+    // QINQIANG — Xi'an 1807. The article dates the genre outright, which is
+    // rare enough here to be the whole justification for the label: "Qinqiang is a
+    // genre of folk Chinese opera originated in Shaanxi Province of Qing China in
+    // 1807 and soon took over other genres to be the representative genre of the
+    // province." The dot is Xi'an, Shaanxi's capital and the city the article's own
+    // Shaanxi box heads with; the province is the article's word and a province is
+    // not a place a map can fly to.
+    //
+    // WHAT IT IS: THE CLAPPER. "The genre features bangzi (wooden clapper) as its
+    // accompanying instruments, from which it derives its other names, Bangzi opera
+    // and luantan (literally 'hit in chaos'). Bangzi tune is considered one of
+    // China's Four Great Characteristic Melodies. Qinqiang is the representative of
+    // the Bangzi opera and the most important origin of other Bangzi operas."
+    // So this is the loud pole of Chinese opera and `kunqu` is the quiet one, two
+    // hundred years and fifteen hundred kilometres apart, and this table now holds
+    // both. The Four Great Melodies are kunshan, yiyang, bangzi and pihuang; three
+    // of the four are anchors as of tonight.
+    //
+    // THE FIELDS ARE THE CLAPPER AND THE CRY.
+    //   · THE CLAPPER IS THE HAT LANE AND IT NEVER STOPS. Two slabs of hardwood
+    //     struck on every beat, which is the sound the genre is NAMED after, and
+    //     it is the only continuous percussion in the Chinese block: `kunqu` has
+    //     four hits a bar, `jingju` keeps the ban's timekeeping, `sizhu` has two.
+    //     This one has the clapper on all four beats and a drum under it.
+    //   · THE CRYING TONE IS THE THROAT. Qinqiang's singing is famously pushed —
+    //     the article: "Actors require a foundatio[n]" in "singing, narration,
+    //     dance, and martial arts", and Tan Dun "researched Qinqiang for the opera,
+    //     in order to learn more about 'ancient Chinese vocal styles'". The
+    //     fleet's most pressed tract is `MOUTHS.belter` — soprano, vibrato 0.75
+    //     at 6.1 Hz, air 0.16, one syllable a note — and it is taken here for the
+    //     measurement and not for the name: a loud, wide, forward voice with a
+    //     fast wobble and no breath in it. `jingju`'s `bulgar` is the same
+    //     placement with NO vibrato, which is the dan's controlled cry; this is
+    //     the one that shakes.
+    //   · THE FIDDLE IS A BANHU AND FOR ONCE `fiddle` IS THE RIGHT SUBSTITUTE.
+    //     `jingju` refused the violin for the jinghu because a jinghu has a
+    //     bamboo barrel and a snakeskin face where a violin has a wooden top. A
+    //     BANHU'S FACE IS A THIN WOODEN BOARD — that is what the ban in its name
+    //     means — glued over a coconut shell, and it is the one huqin in China
+    //     that is built the way a violin's belly is built. It is also pitched high
+    //     and played loud, which is why it leads a bangzi band. The registry's
+    //     `erhu` model would be family-right and an octave low; `fiddle` is
+    //     family-wrong and construction-right, and construction is what makes the
+    //     banhu's sound.
+    //   · FAST, AND SHORT-BREATHED. `bpm: 132` and `maxHold: 2` — the fastest
+    //     row in the whole Chinese block by thirty-six beats, and the argument is
+    //     the article's own "hit in chaos".
+    //
+    // THE ALPHABET IS `SCALES.yupent` (0 3 5 7 10), the yu-mode pentatonic added
+    // to the table tonight and argued in genres-tables.js. A bangzi aria's
+    // characteristic sound is a minor-third-heavy pentatonic; `majpent` (0 2 4 7 9)
+    // would make this row bright and `MODES.dorian` would hand it two degrees it
+    // does not use.
+    //
+    // LINEAGE: a declared ROOT, and the refusal is deliberate. `kunqu` (Suzhou
+    // 1598) is available by date and is NOT a parent: the yabu/huabu split is the
+    // whole history here — kunqu is the elegant division and bangzi is the flower
+    // division, and the eighteenth-century argument between them was an argument
+    // between two musics, not a descent from one to the other. The ancestors are in
+    // `wants`: the Shaanxi folk repertory the article traces it to, and the earlier
+    // Qinqiang the article says "was later renamed as Handiao Erhuang".
+    //
+    // AND IT IS A PARENT OF SOMETHING. The Peking opera article lists the form's
+    // stylistic origins as "Hui opera, Kunqu, Qinqiang, Han opera" — three of the
+    // four are now rows, and `jingju` declares all three tonight.
+    //
+    // THE CORPUS IS SILENT AND THE SILENCE IS MEASURED. "qinqiang", "bangzi",
+    // "luantan", "shaanxi", "banhu" and "chinese opera" return ZERO files out of
+    // the 120,652-file MIDI corpus. Chordonomicon has no bangzi label. `bpm: 132`
+    // is therefore a choice and it is argued above rather than measured.
+    //
+    // NO `mode` FIELD, AND THAT IS G14b RATHER THAN AN OMISSION. The first draft of
+    // this row declared `mode: MODES.dorian` beside its yu-mode scale, which is how
+    // most of the Chinese block is written — and test/precompose.js G14b would have
+    // caught it, because it is DECORATION: `mode` is read in exactly three places
+    // (kernel.js harm(), chordsOf(), bass()) and all three need CHORD ROOTS, which a
+    // `harmony: "modal"` row does not have. Swapping the declared dorian for its
+    // plain neighbour moves not one rendered note. The law at genres-tables.js MODES
+    // offers three answers and this row takes the honest one for a modal record: say
+    // nothing. Every note it plays comes out of `scale`, which is `SCALES.yupent`,
+    // and that is where the claim belongs.
+    qinqiang: {
+      label: "Xi'an 1807",
+      voices: 3,
+      bars: 8,
+      near: "huiju",
+      plan: "arc",
+      bpm: 132,
+      parents: {},
+      wants: [
+        "the folk song of the Guanzhong plain, which the article traces the tune to",
+        "the older Qinqiang the article says was renamed Handiao Erhuang",
+        "the yiyang tune, the fourth of the Four Great Characteristic Melodies"
+      ],
+      cannot: [
+        "the bangzi's own timbre — two slabs of hardwood struck edge to edge, dry and " +
+        "pitchless; the hat lane below is the nearest continuous lane and it is a compromise " +
+        "said out loud",
+        "the role registers — sheng, dan, jing, chou are TIMBRE AS THE GENRE (WORLD.md §5.5) " +
+        "and one throat is not four",
+        "huanyin and kuyin — the 'happy tune' and 'crying tune' are two different SCALES in " +
+        "the same aria, differing in which degrees are raised; one declared alphabet cannot " +
+        "switch between them mid-piece",
+        "the martial acrobatics — half of what an audience comes for is not sound at all",
+        "the banhu's own construction — a coconut shell with a wooden face, an octave above an " +
+        "erhu; `fiddle` gets the wooden belly right and the body wrong"
+      ],
+      instr: ["solo_vox", "fiddle", "shamisen"],
+      drumkit: "acoustic",
+      entry: () => 0,
+      reg: v => [0, 1, -1][v],
+      realize: () => "line",
+      part: ["lead", "counter", "riff"],
+      nobass: true,
+      harmony: "modal",
+      intro: "cold",
+      scale: SCALES.yupent,
+      artic: "staccato",
+      maxHold: 2,
+      incClamp: 3,
+      orn: { grace: 0.35, pass: 0.35 },
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+        p: [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
+        h: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]
+      },
+      kitVel: {
+        p: [9, 0, 5, 5, 7, 0, 5, 5, 8, 0, 5, 5, 7, 0, 5, 6],
+        h: [9, 0, 0, 0, 8, 0, 0, 0, 9, 0, 0, 0, 8, 0, 0, 0]
+      },
+      fill: { p: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
+      tone: {
+        wave: "triangle",
+        cut: 2800,
+        q: 1,
+        atk: 0.008,
+        rel: 0.65,
+        gain: 0.26,
+        verb: 0.28,
+        mouth: MOUTHS.belter
+      },
+      words: [
+        "the aria, shouted over the clapper",
+        "the banhu, an octave up and never resting",
+        "the sanxian, hitting the beat"
+      ],
+      word: (v, s) => (v === 0 ? [[fill(2)], [fill(2), rotate(2)], [fill(4)], [reverse()]][s % 4]
+                    : v === 1 ? [transpose(12), fill(2)]
+                    : [keep(0, 4, 8, 12)]),
+    },
+
     // ---- CHINESE: TWO ROWS, TWO REFUSALS -------------------------------
     // WORLD.md's own verdict on China is the harshest in that document:
     // *"China is entirely empty, no guzheng, pipa, erhu, dizi, suona"* —
@@ -20980,6 +23384,132 @@
       word: (v, s) => (v === 0
         ? [[drop(2)], [drop(2), rotate(3)], [drop(4)], [drop(2), reverse()]][s % 4]
         : [drop(8), transpose(7)]),
+    },
+
+    // PIPAQU — Wuxi 1819. The record is a printed book and it is the first
+    // of its kind: "During the Qing dynasty there were originally two major schools
+    // of pipa — the Northern and Southern schools, and music scores for these two
+    // traditions were collected and published in the first mass-produced edition of
+    // solo pieces for pipa, now commonly known as the Hua Collection. The
+    // collection was edited by Hua Qiuping (1784–1859) and published in 1819 in
+    // three volumes. The first volume contains 13 pieces from the Northern school,
+    // the second and third volumes contain 54 pieces from the Southern school.
+    // Famous pieces such as 'Ambushed from Ten Sides', 'The Warlord Takes Off His
+    // Armour', and 'Flute and Drum at Sunset' were first described in this
+    // collection." The Hua Collection is the WUXI SCHOOL's own book — "Wuxi school,
+    // associated with the Hua Collection by Hua Qiuping, who studied with Wang
+    // Junxi of the Northern school and Chen Mufu of the Southern school, and may be
+    // considered a synthesis of these two schools of the Qing dynasty. As the first
+    // published collection, the Hua Collection had consider[able influence]" — so
+    // the label is Hua's own city and the year of the print.
+    //
+    // WHY A SECOND CHINESE SOLO-STRING ROW, when `guqin` (Beijing 1956) exists.
+    // Because they are opposites in every field that matters and the table has been
+    // carrying only one of them:
+    //   · LOUD AGAINST QUIET. `guqin` says `gain: 0.18` and `verb: 0.25` and its
+    //     comment says "a very quiet instrument in a dry room, which is gain and
+    //     verb doing real work rather than decoration". A pipa is a projecting
+    //     concert lute with a fingernail attack on twenty-four to thirty frets,
+    //     and this row is the louder of the two by design.
+    //   · TIED AGAINST STRUCK. `guqin` is `artic: "tie"`, `maxHold: 8`,
+    //     `rate: 0.5` — gestures at the speed of breath. This row is
+    //     `staccato`, `maxHold: 2`, full rate: every note is a plucked attack
+    //     with no sustain behind it, and the LUNZHI — the five-finger tremolo that
+    //     is how a pipa holds a note at all — is a rapid re-articulation, which is
+    //     what `fill(4)` does and is the honest reading of the technique.
+    //   · GESTURE AGAINST NARRATIVE. A qin piece is unmetered and private. "Ambushed
+    //     from Ten Sides" is a BATTLE told in sections, with a named programme
+    //     (the camp, the ambush, the rout) and an accelerando through it. So this
+    //     row declares `paces` — the solo section DOUBLE — which no other Chinese
+    //     instrumental row does, and it is the wu (martial) repertory's own shape.
+    //   · AND THE STRUCTURE IS COUNTED. The article: pieces "often have a standard
+    //     metrical length of 68 measures or beat, and these may be joined to form
+    //     the larger pieces dagu." Sixty-eight is not divisible by this box's
+    //     sixteen and the mismatch is in the cannot rather than fudged.
+    //
+    // THE INSTRUMENT IS NOT IN THE FLEET AND THE ROW SAYS WHICH SUBSTITUTE AND WHY.
+    // `instruments.js`'s own erhu note already records that GM has no qin, pipa,
+    // dizi or sheng, and `guqin`'s comment says the same. `nylon_string_guitar`
+    // is what `sizhu` already uses for its pipa chair — a fretted, gut-strung,
+    // plucked lute with a wooden soundboard, played with the fingers — and this row
+    // takes the same choice rather than inventing a second answer to one question.
+    // What it is not: pear-shaped, held upright against the chest, strung with
+    // silk or steel, played with false nails, and equipped with the bent-note
+    // pushes across the frets that half the repertory is made of.
+    //
+    // BOTH CHAIRS ARE THE SAME INSTRUMENT AND THAT IS `guqin`'S OWN SHAPE — one
+    // player, two hands. Voice 0 is the melody with the tremolo on it; voice 1 is
+    // the low strings, struck on the beat, which is what the left thumb does in a
+    // wu piece and is the closest this box gets to the drum a pipa imitates.
+    //
+    // `organic: true` and `instrumental: true`, on the twelve-row reading of
+    // 2026-09-02: there is no model in the fleet of the instrument this music is
+    // played on, and there should not be. The QA report's instrumentation column
+    // should score this as a recording rather than as a failure.
+    //
+    // LINEAGE: a declared ROOT. The pipa's own line runs back through the Ming
+    // "High River Flows East" collection of 1528 and the Dunhuang tablatures of the
+    // tenth century to a Central Asian lute that arrived in the Han; nothing in
+    // this table is upstream of it, and the two collections are named in `wants`.
+    // It is not a child of `guqin` — a literati zither and a professional lute are
+    // two trades, not two generations.
+    //
+    // THE CORPUS IS SILENT AND THE SILENCE IS MEASURED. "pipa" returns exactly ONE
+    // file out of 120,652 and it is "16pipav.mid", a 232-note file in 1/2 time
+    // that is not a pipa piece. "shimian", "ambushed from ten sides", "hua qiuping"
+    // and "lunzhi" return zero. Chordonomicon has no pipa label. So `bpm: 100` is
+    // a CHOICE, argued from the repertory rather than measured: fast enough that a
+    // tremolo reads as a roll and slow enough that a 68-beat section is a shape.
+    pipaqu: {
+      organic: true,
+      instrumental: true,
+      label: "Wuxi 1819",
+      voices: 2,
+      bars: 8,
+      near: "guqin",
+      plan: "arc",
+      bpm: 100,
+      paces: { verse: "steady", solo: "double" },
+      parents: {},
+      wants: [
+        "the Ming 'High River Flows East' collection of 1528, where three of these pieces " +
+        "first appear",
+        "the Dunhuang pipa tablatures of the tenth century",
+        "the Northern and Southern schools the Hua Collection synthesised"
+      ],
+      cannot: [
+        "the 68-beat section — the repertory's standard metrical length, which is not " +
+        "divisible by this box's sixteen-step bar and is not faked",
+        "lunzhi — the five-finger tremolo that is how a pipa sustains at all; `fill(4)` " +
+        "re-articulates on the grid where a real roll is faster than any grid and unquantized",
+        "the pushed note — bending a string sideways across a fret to raise it a tone or more " +
+        "is half the wu repertory's rhetoric, and `sld` is a flag on a step with no trajectory " +
+        "behind it (WORLD.md §5.3)",
+        "the instrument — no pipa in the registry; `nylon_string_guitar` is `sizhu`'s own " +
+        "substitute, a fretted plucked lute with a wooden top, played with the fingers and not " +
+        "with false nails, and held the wrong way round",
+        "the drum imitations — 'Ambushed from Ten Sides' has passages where the pipa IS the " +
+        "battle's percussion, and a chair that plays pitches cannot become a kit"
+      ],
+      instr: "nylon_string_guitar",
+      entry: v => (v === 0 ? 0 : 2),
+      reg: v => (v === 0 ? 0 : -1),
+      realize: () => "line",
+      kit: {},
+      nobass: true,
+      harmony: "modal",
+      intro: "solo",
+      mode: MODES.ionian,
+      scale: SCALES.majpent,
+      artic: "staccato",
+      maxHold: 2,
+      incClamp: 2,
+      orn: { pass: 0.4, grace: 0.3 },
+      tone: { wave: "triangle", cut: 2900, q: 0.7, atk: 0.004, rel: 0.8, gain: 0.24, verb: 0.3 },
+      words: ["the melody, with the tremolo on it", "the low strings, struck on the beat"],
+      word: (v, s) => (v === 0
+        ? [[fill(2)], [fill(4)], [fill(4), rotate(2)], [fill(2), reverse()]][s % 4]
+        : [keep(0, 4, 8, 12), transpose(-12)]),
     },
 
     // JIANGNAN SIZHU — Shanghai 1920. The "silk and bamboo" clubs of the
@@ -21141,6 +23671,422 @@
       word: v => (v === 0 ? [fill(2), rotate(1)] : v === 1 ? [drop(2)] : v === 2 ? [fill(1)] : [keep(0, 2, 4, 6, 8, 10, 12, 14)]),
     },
 
+    // BADA KHYAL — Delhi 1740. Not a recording; there could not be one. The
+    // record is a MAN AND A TITLE: Niyamat Khan, court musician to the Mughal
+    // emperor Muhammad Shah, "who was adept in both dhrupad and veena, won the
+    // title Sadarang from the emperor for his talents and theoretical and
+    // practical knowledge in classical music. He created the elegant classical
+    // form of khyal in a majestic and colourful slow tempo (vilambita laya) like
+    // dhrupad" — the Khyal article's own sentences, quoted rather than
+    // paraphrased. The year is the article's own frame: Muhammad Shah's
+    // patronage "which he continued even after the invasion of India by Persian
+    // emperor Nadir Shah", and Nadir Shah sacked Delhi in 1739. 1740 is the
+    // season after the sack, in the court that went on singing.
+    //
+    // WHY THIS IS NOT `khyal` WITH AN EARLIER DATE, which is the only question
+    // that matters. `khyal` is Mumbai 1965 — Amir Khan's LP decade — and its own
+    // `wants` list has carried the line "sadarang and adarang's delhi court
+    // khyal" since it was written. THAT WANT IS PAID BY THIS ROW AND IT COMES OFF
+    // KHYAL'S LIST TONIGHT. The two rows are two musics and the difference is
+    // audible in four fields, not in a date:
+    //   · TALA. `khyal` sits in TINTAL and schedules the theka across FOUR BARS
+    //     (its `kits` is four sixteen-step bars, the third khali). This row sits
+    //     in TILWADA — sixteen matras, ONE PER STEP, one cycle to the bar — which
+    //     is the vilambit tala the Khyal article names first: "Tilwada, Jhumra and
+    //     Rupak are generally used for vilambit performance". Same sixteen, a
+    //     completely different geography: khyal's theka repeats every four bars,
+    //     this one every bar, and the khali lands INSIDE the bar rather than
+    //     swallowing a whole one.
+    //   · PACE. `khyal` declares `paces` — verse half, solo double — which is
+    //     vilambit into drut, the modern concert's arc. THE BADA KHYAL IS THE
+    //     SLOW HALF ALONE. It has no drut section, because the chota khyal is the
+    //     other piece: "the bada khyal begins at a slow speed (vilambit laya) or
+    //     medium speed (madhya laya), while the chota khyal begins at a fast speed
+    //     (drut laya)". So this row declares no `paces` at all and takes
+    //     `rate: 0.5` instead — half speed throughout, dhrupad's own setting.
+    //   · THE HARMONIUM IS AN ANACHRONISM AND THIS ROW REFUSES IT. `khyal` seats
+    //     `reed_organ` and says in its cannot that the reed organ IS the
+    //     harmonium's family. A harmonium is a European free-reed box that reached
+    //     India with the missionaries in the middle of the NINETEENTH century.
+    //     There was none in Muhammad Shah's Delhi and there is none in this cast.
+    //   · WHAT IS LEFT IS TWO CHAIRS AND A BARREL DRUM, which is what a 1740
+    //     court khyal was: the singer, the tanpura, the pakhawaj. Sadarang was a
+    //     BEEN player and the been would have been in the room; it is not seated
+    //     here because the box has no rudra veena and `sitar` is already carrying
+    //     the drone, and one substitution said once is better than the same
+    //     substitution said twice.
+    //
+    // LINEAGE: A DECLARED ROOT, AND THE REASON IS A DEFECT IN THE TABLE'S DATES
+    // RATHER THAN A CLAIM ABOUT THE MUSIC. Everybody knows what this row descends
+    // from: dhrupad, which is what Sadarang was trained in and what the article
+    // says he made khyal weigh like. But `dhrupad`'s label is DELHI 1955 — it is
+    // dated by the Dagar brothers at All India Radio — and GENRES.md's law is
+    // that no parent may be later than its child. A 1740 record cannot descend
+    // from a 1955 one. So the ancestor is named in `wants`, in its own words,
+    // where an unanchored ancestor belongs, and the residue is the whole row.
+    //
+    // THE CORPUS IS SILENT AND THE SILENCE IS MEASURED. "khyal", "khayal",
+    // "tilwada", "bandish", "sadarang", "vilambit", "hindustani" and "tappa"
+    // return ZERO files from the 120,652-file MIDI corpus. "raga" returns
+    // twenty-one and every one of them is a false positive — Italian pop
+    // ("Ragazzo solo ragazza sola", "10RAGAZZ", "Tutta-Ragazzi"), a Jimmy Buffett
+    // "Maragaritaville" and four copies of "Together Again". NO FILES. Neither
+    // does Chordonomicon help: its five "hindustani classical" rows are 2010s
+    // fusion and ghazal sides whose four-chord windows are `I vi IV I` and
+    // `V IV I V`, which is a chord progression, and a khyal does not have one.
+    // Every number in this row is therefore a CHOICE from a neighbour and is
+    // marked as one: `bpm: 76` and `rate: 0.5` are dhrupad's own pair moved up
+    // six, `maxHold: 8` is dhrupad's, and the tala is read off the article.
+    //
+    // TILWADA, WRITTEN OUT. Sixteen matras at one step a matra:
+    // dha tirakita dhin dhin | dha dha tin tin | ta tirakita dhin dhin |
+    // dha dha dhin dhin. The bass stroke (ge) lives in every dha and dhin and in
+    // no tin or ta, so the KICK lands on the sam and on the vibhag heads that
+    // have one and is ABSENT at step 8 — the khali, the wave of the hand instead
+    // of the clap, audible as a hole a quarter of the way into every bar. The
+    // ghost lane is the tirakita, the little four-finger scatter at steps 1 and
+    // 9 that is what tells a tilwada from a tintal by ear.
+    badakhyal: {
+      label: "Delhi 1740",
+      voices: 2,
+      rate: 0.5,
+      near: "dhrupad",
+      plan: "arc",
+      bpm: 76,
+      parents: {},
+      wants: [
+        "dhrupad as a practice rather than as a 1955 recording — the form Sadarang was trained " +
+        "in and made khyal weigh like",
+        "the been (rudra veena), the court's own melodic instrument",
+        "the qawwal bachche of Delhi, the singing lineage the form was handed to"
+      ],
+      cannot: [
+        "a raga is not a scale — dhrupad's admission, unchanged, and sharper at a court that " +
+        "had no fixed pitch: the ascent and the descent are different lines and the pakad that " +
+        "names the raga is a PHRASE",
+        "the badhat — the gradual pitch-by-pitch exposition the Khyal article names ('badhat " +
+        "(pitch-by-pitch manner)') is MATERIAL AND PHRASE, not alphabet; the `word` below " +
+        "climbs a register a section, which is the shape of it and not the thing",
+        "gamak and meend — no pitch-trajectory channel (WORLD.md §5.3); the `grace` below is " +
+        "dhrupad's crude proxy and is no better here",
+        "the pakhawaj — a two-headed barrel drum tuned with a paste of flour and water, whose " +
+        "bass head is played with the whole palm; the kit below has a kick and a ghost lane " +
+        "and the bols go on them, the loss `carnatic` already declares for the mridangam",
+        "the been — no rudra veena in the registry, and rather than substitute twice this row " +
+        "seats one plucked chair and gives it the drone"
+      ],
+      instr: ["solo_vox", "sitar"],
+      entry: v => (v === 1 ? 0 : 2),
+      reg: v => (v === 1 ? -2 : 0),
+      realize: v => (v === 1 ? "pad" : "line"),
+      part: ["lead", "pad"],
+      nobass: true,
+      harmony: "modal",
+      intro: "padin",
+      kit: {
+        k: [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0],
+        p: [0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+        h: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]
+      },
+      kitVel: {
+        p: [0, 5, 0, 0, 0, 0, 4, 4, 6, 5, 0, 0, 0, 0, 0, 0],
+        h: [7, 0, 0, 0, 5, 0, 0, 0, 3, 0, 0, 0, 5, 0, 0, 0]
+      },
+      mode: MODES.harmonic,
+      scale: DIATONIC,
+      artic: "tie",
+      maxHold: 8,
+      incClamp: 2,
+      orn: { grace: 0.3 },
+      tone: {
+        wave: "triangle",
+        cut: 1900,
+        q: 0.7,
+        atk: 0.06,
+        rel: 2.6,
+        gain: 0.22,
+        verb: 0.42,
+        mouth: MOUTHS.zemachant,
+        glide: 0.03
+      },
+      words: [
+        "the khyal, a matra at a time, climbing a register a section",
+        "the tanpura, four strings, never changing"
+      ],
+      word: (v, s) => (v === 0
+          ? [[drop(6)], [drop(4), transpose(2)], [drop(2), transpose(5)], [fill(2), transpose(7)]][s % 4]
+        : [drop(12)]),
+    },
+
+    // TAPPA — Lucknow 1780. The record is a court appointment: "The tappa
+    // style of music was refined and introduced to the imperial court of the
+    // Mughal Emperor Muhammad Shah, and later by Mian Ghulam Nabi Shori or Shori
+    // Mian, a court singer of Asaf-Ud-Dowlah, Nawab of Awadh" — the Tappa
+    // article's own sentence. Asaf-ud-Daula ruled Awadh from 1775 and moved his
+    // capital to Lucknow in 1775; 1780 is Shori Mian in that court, in that
+    // decade, and the label takes the city the Nawab built rather than the
+    // province.
+    //
+    // WHAT IS ACTUALLY NEW HERE, said as a sound and not as a history. The
+    // article: "Its specialty is a rolling pace based on fast, subtle and knotty
+    // construction... Tappa originated from the folk songs of the camel riders in
+    // Punjab... Tappe (plural) were sung mostly by songstresses, known as
+    // baigees, in royal courts." A camel-driver's song taken into a durbar and
+    // made VERY FAST AND VERY SHORT-WINDED: the zamzama, a knotted cluster of
+    // notes fired off in a breath, where a dhrupad or a khyal holds one. So this
+    // is the box's first Indian row whose identity is SPEED AND ARTICULATION
+    // rather than expansion, and it is the only one in the block that says
+    // `artic: "staccato"` and `maxHold: 1`. Every other Indian anchor in this
+    // table — dhrupad, khyal, badakhyal, carnatic, kriti, varnam, filmi,
+    // qawwali — says `legato` or `tie`. One field, and it is the whole genre.
+    //
+    // THE ALPHABET IS MEASURED AGAINST THE ARTICLE'S OWN THAAT, not borrowed.
+    // Tappa's home ragas are Kafi, Bhairavi and Khamaj — the light thaats, which
+    // is what a semi-classical form sings in — and KAFI IS DORIAN EXACTLY:
+    // S R g M P D n = 0 2 3 5 7 9 10, which is `MODES.dorian` note for note. So
+    // this row is the first Indian anchor here that does NOT take `DIATONIC`
+    // (0 2 3 5 7 8 10, the table's minor), and the difference is one note — the
+    // natural sixth — which is the note that makes a Kafi tappa sound bright
+    // rather than grave. That is a claim a reader can check by ear against
+    // `dhrupad` in the same key.
+    //
+    // THE SARANGI, AND WHY IT IS A FIDDLE HERE AND A REED ORGAN IN `khyal`.
+    // `khyal`'s cannot says the sarangi "has no id" and seats a harmonium
+    // instead, which is right for Bombay 1965 and wrong for Lucknow 1780: the
+    // harmonium is a European free-reed box that arrived with the missionaries a
+    // century after this record. The bowed shadow is what a baigee actually had,
+    // so this row seats `fiddle` and names the two things the model does not
+    // have — the sympathetic strings that ring under a sarangi's three gut
+    // melody strings, and the fingernail-side stopping that gives it its cry.
+    //
+    // THE CORPUS IS SILENT AND IT IS SAID OUT LOUD. "tappa", "zamzama", "shori",
+    // "baiji", "awadh" and "punjabi tappa" return ZERO files out of 120,652.
+    // Chordonomicon has no tappa row at all. `bpm: 116` is therefore a CHOICE
+    // and its reason is the article's word "rolling": fast enough that a
+    // sixteenth cluster is a blur and slow enough that a sixteen-matra cycle is
+    // still countable. `orn.grace: 0.7` is the highest in this block by a wide
+    // margin and is the zamzama's crude proxy.
+    //
+    // THE PUNJABI THEKA, WRITTEN OUT. Sixteen matras with a LIMP: dha - - dha /
+    // dha - dhin dha / dha - - dha (khali: ta) / ta - dhin dha. The bass stroke
+    // falls in threes against a bar of four, which is why a tappa's tabla sounds
+    // like it is leaning forward and a tintal does not, and it is the one thing
+    // in this row that is rhythm rather than speed.
+    //
+    // LINEAGE: a declared ROOT. The ancestors are in `wants`: the Punjabi
+    // camel-drivers' song the article names as the source, and the Awadh durbar's
+    // own light-classical repertory. Neither has an anchor. `dhrupad` and
+    // `khyal` are both dated by twentieth-century recordings in this table and
+    // so cannot be parents of a 1780 record; `badakhyal` (Delhi 1740) COULD be
+    // and is deliberately not — a camel-driver's song refined by a Punjabi singer
+    // in Lucknow did not come out of Sadarang's vilambit, it arrived beside it and
+    // went the other way.
+    tappa: {
+      label: "Lucknow 1780",
+      voices: 3,
+      bars: 8,
+      near: "khyal",
+      plan: "song",
+      bpm: 116,
+      parents: {},
+      wants: [
+        "the camel-drivers' songs of Punjab, which the article names as the source",
+        "the Awadh durbar's light-classical repertory, and the baigees who sang it",
+        "Nidhu Babu's Bengali tappa, the branch that grew out of this one"
+      ],
+      cannot: [
+        "the zamzama — the knotted, fired-off cluster that IS this genre is a way of MOVING " +
+        "BETWEEN pitches, and this box writes a note and a gate; `staccato`, `maxHold: 1` and " +
+        "a heavy `grace` are the shape of it and not the thing",
+        "a raga is not a scale — the standing admission; Kafi is dorian's seven notes and a " +
+        "raga is a repertory of phrases",
+        "the sarangi — three gut melody strings stopped with the side of the fingernail over " +
+        "some thirty-five sympathetics; `fiddle` below is bowed and fretless and has neither"
+      ],
+      instr: ["solo_vox", "fiddle", "sitar"],
+      entry: v => (v === 1 ? 1 : v === 2 ? 0 : 0),
+      reg: v => (v === 1 ? -1 : v === 2 ? -2 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      nobass: true,
+      harmony: "modal",
+      intro: "solo",
+      kit: {
+        k: [1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+        p: [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],
+        h: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+      },
+      kitVel: { p: [9, 0, 4, 5, 7, 0, 4, 5, 6, 0, 4, 5, 7, 0, 4, 6] },
+      fill: { p: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
+      scale: MODES.dorian,
+      mode: MODES.dorian,
+      artic: "staccato",
+      maxHold: 1,
+      incClamp: 3,
+      orn: { grace: 0.7, pass: 0.4 },
+      tone: {
+        wave: "triangle",
+        cut: 2600,
+        q: 0.9,
+        atk: 0.008,
+        rel: 0.7,
+        gain: 0.25,
+        verb: 0.3,
+        mouth: MOUTHS.bulgar
+      },
+      words: [
+        "the tappa, knotted and fired off in a breath",
+        "the sarangi, a beat behind and half a phrase short",
+        "the tanpura"
+      ],
+      word: (v, s) => (v === 0
+          ? [[fill(2)], [fill(4)], [fill(2), rotate(2)], [fill(4), reverse()]][s % 4]
+        : v === 1 ? [drop(4), transpose(-5)]
+        : [drop(12)]),
+    },
+
+    // THUMRI — Lucknow 1856. The record is a court and its last year:
+    // "One theory attributes its origin to the court of Wajid Ali Shah of Oudh",
+    // the Thumri article's own sentence, with the article's own caution attached
+    // in the next line ("this causal explanation overlooks the continuous
+    // evolution of Indian classical music") and kept here rather than dropped.
+    // Wajid Ali Shah ruled Awadh from 1847 until the East India Company annexed
+    // it and deposed him in FEBRUARY 1856; he was a dancer and a composer as well
+    // as a king, and the Lucknow court in its final season is when the form is
+    // named. The label is that year, and the annexation is why there is not a
+    // later one.
+    //
+    // WHAT THE ROW IS FOR. The article: "The term 'thumri' is derived from the
+    // Bhojpuri verb thumak, which means 'to walk with a dancing gait in such a way
+    // that the ankle-bells tinkle'. The form is, thus, connected with dance,
+    // dramatic gestures, mild eroticism, evocative love poetry and folk songs...
+    // Thumree is characterized by its sensuality, and by a greater flexibility
+    // with the raga... It is distinct from folk music and the more masculine
+    // dhrupad and khayal styles."
+    //
+    // THE FLEXIBILITY WITH THE RAGA IS THE INVENTION AND IT IS TWO FIELDS.
+    //   · THE ALPHABET IS MIXOLYDIAN AND THAT IS A MEASURED CLAIM, NOT A MOOD.
+    //     Thumri's home is the light thaats and above all mishra Khamaj, and
+    //     KHAMAJ IS MIXOLYDIAN EXACTLY: S R G M P D n = 0 2 4 5 7 9 10, which is
+    //     `MODES.mixo` note for note. It is the only Indian anchor in this table
+    //     with a MAJOR third — dhrupad, khyal, badakhyal, carnatic, varnam all
+    //     take a minor alphabet and kriti takes the plain major — and that one
+    //     note is the difference between a grave form and a flirtatious one. A
+    //     reader can check it against `tappa` (Kafi, dorian) in the same key: two
+    //     Lucknow rows, two thaats, one note apart in each direction.
+    //   · THE SLIDE IS DECLARED, NOT IMPLIED. Bol banao — building the meaning of
+    //     a line by singing the same words again with a different melodic
+    //     approach — is done with MEEND, the slide between two notes, and the
+    //     portamento round of 2026-09-03 gave the table two fields for exactly
+    //     this. `tone.slide: 0.16` is the longest in the Indian block: a marked
+    //     step takes a sixth of a second to arrive, which is a scoop a listener
+    //     hears as a gesture. `glide: 0.02` puts a hair on every other note. The
+    //     other Indian rows carry `grace` and nothing else; this one carries a
+    //     trajectory, because it is the row whose whole art is the way a note is
+    //     reached.
+    //
+    // LINEAGE. `tappa` (Lucknow 1780) at 0.2, and the weight is small on purpose
+    // because the claim is CONTACT, not descent: the same city, the same durbar
+    // culture, seventy-six years apart, and the tappa ang — the knotted zamzama
+    // cluster borrowed into a thumri line — is a named thing in this repertory. A
+    // fifth of this record is the older Lucknow form and the rest is not. What
+    // the rest is, is in `wants`: the folk repertory of Awadh and Braj the
+    // article names, and kathak, whose footwork this music was sung for. Neither
+    // has an anchor, and 0.8 declared as invention is more honest than conscripting
+    // an ancestor to absorb it.
+    //
+    // AND IT PAYS A DEBT DOWNSTREAM. `filmi` (Mumbai 1960) has listed "thumri"
+    // in its `wants` since it was written — the playback singer's phrasing is
+    // thumri phrasing, and Lata Mangeshkar and Begum Akhtar are one generation
+    // apart. THAT WANT IS PAID BY THIS ROW AND COMES OFF FILMI'S LIST; `filmi`
+    // declares `thumri` a parent tonight at 0.2, beside the `romantic` 0.3 it
+    // already carried.
+    //
+    // KEHERWA, NOT DEEPCHANDI, AND THE REASON IS THE GRID. The tal a slow bol-banao
+    // thumri is actually sung in is DEEPCHANDI — FOURTEEN matras in 3+4+3+4 — and
+    // this box counts twelve or sixteen. `METERS` has "three" and "six" and
+    // nothing else, so fourteen is a wall and is in the cannot. What the kit plays
+    // is KEHERWA, eight matras twice to the bar — dha ge na ti / na ka dhi na —
+    // which is the light tal the same repertory uses for its faster pieces and is
+    // the one this grid can count. The choice is a compromise and it is named as
+    // one.
+    //
+    // THE CORPUS IS SILENT AND THE SILENCE IS MEASURED. "thumri", "thumree",
+    // "dadra", "kajari", "wajid ali shah", "begum akhtar" and "bol banao" return
+    // ZERO files out of the 120,652-file MIDI corpus. Chordonomicon has no thumri
+    // label at all; its five "hindustani classical" rows are 2010s and 2020s
+    // fusion and ghazal sides. `bpm: 78` is a choice — slower than `filmi`'s 92,
+    // faster than `dhrupad`'s 70 — and is marked as one.
+    thumri: {
+      label: "Lucknow 1856",
+      voices: 3,
+      bars: 8,
+      near: "filmi",
+      plan: "song",
+      bpm: 78,
+      parents: { tappa: 0.2 },
+      wants: [
+        "the folk repertory of Awadh and Braj — the chaiti, kajari and hori the article names " +
+        "as the same family",
+        "kathak, the dance this was sung for",
+        "the sarangi and tabla accompanists' own lineage, the Lucknow gharana"
+      ],
+      cannot: [
+        "deepchandi — fourteen matras in 3+4+3+4, the tal of a slow bol-banao thumri, and this " +
+        "grid counts twelve or sixteen; the kit below is keherwa and the swap is named",
+        "bol banao itself — repeating one line of text and finding a new meaning in it each " +
+        "time is a DEVELOPMENT the singer improvises against the audience, and this box writes " +
+        "composed lines; the slide and the per-section word are the shape of it and not the " +
+        "thing",
+        "mishra — a real thumri leaves its raga on purpose, borrowing a phrase from a " +
+        "neighbouring one; one declared alphabet cannot leave itself",
+        "the sarangi — `fiddle` below is bowed, fretless and has neither the sympathetics nor " +
+        "the fingernail stopping"
+      ],
+      instr: ["solo_vox", "fiddle", "sitar"],
+      entry: v => (v === 1 ? 1 : v === 2 ? 0 : 0),
+      reg: v => (v === 1 ? -1 : v === 2 ? -2 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      roots: [0, 0, 0, 0, 0, 0, 0, 0],
+      scale: MODES.mixo,
+      mode: MODES.mixo,
+      harmony: "modal",
+      intro: "padin",
+      artic: "legato",
+      maxHold: 4,
+      nobass: true,
+      orn: { grace: 0.45, approach: 0.4 },
+      kit: {
+        k: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+        p: [1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1],
+        h: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0]
+      },
+      kitVel: { p: [9, 0, 4, 0, 6, 0, 4, 4, 7, 0, 4, 0, 6, 0, 4, 4] },
+      fill: { p: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
+      tone: {
+        wave: "triangle",
+        cut: 2300,
+        q: 0.85,
+        atk: 0.02,
+        rel: 1.4,
+        gain: 0.25,
+        verb: 0.44,
+        mouth: MOUTHS.melisma,
+        glide: 0.02,
+        slide: 0.16
+      },
+      words: [
+        "the thumri, the same line found again a different way",
+        "the sarangi, shadowing her a breath behind",
+        "the tanpura"
+      ],
+      word: (v, s) => (v === 0
+          ? [[], [drop(2), rotate(2)], [fill(2)], [fill(2), rotate(6)]][s % 4]
+        : v === 1 ? [drop(4), transpose(-5)]
+        : [drop(12)]),
+    },
+
     // ---- INDIAN: TWO ROWS, AND THE RAGA IS ADMITTED --------------------
     // Tuning is NOT the wall here and that is measured: WORLD.md §2 puts
     // Hindustani shruti at 14 cents from equal temperament and Carnatic
@@ -21255,6 +24201,312 @@
         : [drop(12)]),
     },
 
+    // KRITI — Thanjavur 1810. The record is a body of work by a man who
+    // refused a court: Tyagaraja (4 May 1767 – 6 January 1847), born at
+    // Thiruvarur, resident all his adult life at Thiruvaiyaru "in the single room
+    // house (No. 31, Thirumanjana Veedhi)", who "lived through the reigns of four
+    // kings of the Thanjavur Maratha rule... although he served none of them"
+    // and who sent back Serfoji II's invitation and gifts. With Syama Sastri
+    // (1762–1827) and Muthuswami Dikshitar (1775–1835) he is the Trinity of
+    // Carnatic music, and 1810 is the one year all three were at work.
+    //
+    // THE DATE IS A PRACTICE AND THE ROW SAYS SO. Not one of the roughly 720
+    // surviving kritis carries a date: "the codification, documentation and
+    // preservation of Tyagaraja's compositions by his disciples during his
+    // lifetime was not streamlined", the earliest printed collection is
+    // A. M. Chinnaswami Mudaliar's Oriental Music In European Notation of 1893,
+    // and the manuscripts sit in the Saraswathi Mahal Library. So this label
+    // follows the `soundsystem`/`blockparty` exception rather than the
+    // named-record rule, and 1810 is the CENTRE of the three composing lives
+    // rather than the year of anything.
+    //
+    // WHY THANJAVUR AND NOT THIRUVAIYARU, MEASURED BEFORE IT WAS WRITTEN.
+    // Thiruvaiyaru is where he lived and where the Aradhana is still held; it is
+    // also THIRTEEN KILOMETRES from Thanjavur, which at the South Asia arc is
+    // inside the width of a dot — the Sutton Courtenay ruling in atlas.js ("that
+    // row takes Oxford, 12 km clear, rather than wearing another band's town")
+    // run once more, and the Denham refusal of 2026-09-01 before it. Thanjavur is
+    // the kingdom his article dates him by ("Thiruvaiyaru, Thanjavur Maratha
+    // kingdom"), the district the village is in, and the dot the map can hold.
+    // The village is in this comment, where a fact that cannot be a label goes.
+    //
+    // THE INVENTION IS SANGATI AND IT IS A FIELD IN THIS ROW, NOT A SENTENCE
+    // ABOUT ONE. The article: "He introduced the concept of sangati into the
+    // sahityam of a krithi, that was seen as a paradigm shift in Carnatic
+    // Classical Music." A sangati is the SAME LINE SUNG AGAIN, elaborated —
+    // successive variations written into the composition rather than improvised
+    // around it. A per-section `word` schedule is literally that machine, and
+    // this row's is a three-part one because a kriti's form is three parts:
+    // pallavi, anupallavi, charanam. Section 0 states the pallavi bare. Section 1
+    // is the anupallavi, which "can be characterised in terms of pitch registers"
+    // and sits HIGHER — `transpose(5)`. Section 2 is the charanam, which "usually
+    // borrows patterns from the anupallavi" — so it takes the anupallavi's own
+    // transposition and adds the density the sangati has accumulated. That is the
+    // form, said in operators, and it is why this row is `plan: "song"` where
+    // `carnatic` is `plan: "arc"`.
+    //
+    // WHY THIS IS NOT `carnatic` WITH AN EARLIER DATE. `carnatic` is Chennai
+    // 1935 — Ariyakudi Ramanuja Iyengar's CONCERT ORDER, a kacheri's running
+    // order, "a varnam to warm up, a run of kritis, then one raga taken apart at
+    // length". Its identity is the shape of an EVENING. This row's identity is
+    // the shape of a SONG, a century and a quarter earlier, and it is one of the
+    // items that evening is made of. `carnatic`'s own `wants` has said "the
+    // trinity's kritis" since it was written; THAT WANT IS PAID BY THIS ROW AND
+    // COMES OFF THE LIST, and `carnatic` declares `kriti` a parent tonight.
+    //
+    // AND THERE IS NO VIOLIN IN THIS ROOM. `carnatic` seats one and its comment
+    // defends it at length ("the Carnatic violin is a European violin, adopted
+    // around 1800... it is the only instrument in this whole block that needs no
+    // apology"). The adoption has a name and a date and they are downstream of
+    // this row: Vadivelu of the Thanjavur Quartet "was the first to introduce
+    // Violin instrument to Carnatic music", and he learnt it at Travancore, after
+    // the brothers left Serfoji's court in the 1830s. So a 1810 kriti is sung
+    // with a VEENA beside it and a tanpura behind it, and the violin arrives with
+    // the next row down the table. Both chairs below are `sitar` and the
+    // substitution is admitted twice rather than hidden once: the box has neither
+    // a Saraswati veena nor a tanpura, and `sitar` is the only plucked Indian
+    // thing in the registry.
+    //
+    // THE ALPHABET IS MAJOR AND THAT IS THE ARGUED DIFFERENCE FROM `carnatic`,
+    // which declares `DIATONIC` (0 2 3 5 7 8 10, this file's minor). Three of the
+    // five Pancharatna kritis — the ghana raga panchakam Nata, Gaula, Arabhi —
+    // take their notes from the major-side melas, Arabhi is a janya of
+    // Dheerasankarabharanam outright, and "all of the Pancharatnas are set to the
+    // adi talam". `MODES.ionian` is Sankarabharanam's seven notes and it is what
+    // this row says. The other two — Varali and Sri — are in `cannot`, because
+    // Varali's own tuning is not inside twelve.
+    //
+    // THE CORPUS IS SILENT AND THE SILENCE IS MEASURED. "kriti", "krithi",
+    // "tyagaraja", "pancharatna", "carnatic", "sangati", "thanjavur" and
+    // "varnam" return ZERO files out of the 120,652-file MIDI corpus.
+    // Chordonomicon carries ELEVEN rows labelled "carnatic" and every one of them
+    // is a filmi crossover or a devotional side of the 2000s and 2010s whose
+    // commonest four-chord windows are `I IV V I`, `I vi IV V` and `i VII VI v`
+    // — a CHORD PROGRESSION, which is precisely the thing a kriti does not have.
+    // So the dataset has nothing to say here and is quoted saying nothing.
+    // `bpm: 84` is a choice from `carnatic`'s 96 slowed to a madhyama kala
+    // kriti; `maxHold: 4` is `carnatic`'s own.
+    //
+    // ADI TALA, AND THE HAND IS AUDIBLE. Eight matras as 4 + 2 + 2, at two steps
+    // a matra. `carnatic` already voices this on kick, rim and hat. What this row
+    // adds is the CLAP LANE: adi tala is counted on the hand — a clap and three
+    // finger-counts, then a clap and a wave, then a clap and a wave — and the
+    // audience counts with the player. `c` on steps 0, 8 and 12 is that hand, and
+    // it is the one thing in the kit that is not a drum.
+    kriti: {
+      label: "Thanjavur 1810",
+      voices: 3,
+      bars: 8,
+      near: "carnatic",
+      plan: "song",
+      bpm: 84,
+      parents: {},
+      wants: [
+        "the pre-trinity Carnatic repertory: Purandara Dasa's devaranama and the temple padam",
+        "the veena, and the pallavi tradition the trinity's teachers handed them"
+      ],
+      cannot: [
+        "gamaka — in this music the OSCILLATION IS THE NOTE, and there is no pitch-trajectory " +
+        "channel (WORLD.md §5.3); `carnatic`'s admission, unchanged, and the `grace` below is " +
+        "the same crude proxy",
+        "a raga is not a scale — the seventy-two melakarta are a generative system and this " +
+        "table has eight modes; Varali and Sri, two of the five Pancharatna ragas, are outside " +
+        "twelve equal semitones altogether",
+        "the mridangam — no hand drum in the kit samples, so its bols go on a kick and a rim, " +
+        "the loss `filmi` and `carnatic` both declare",
+        "the veena and the tanpura — neither is in the registry; both chairs below are " +
+        "`sitar`, which is a plucked Indian string with sympathetics and is neither of them"
+      ],
+      instr: ["solo_vox", "sitar", "sitar"],
+      entry: v => (v === 1 ? 1 : 0),
+      reg: v => (v === 1 ? -1 : v === 2 ? -2 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      roots: [0, 0, 0, 0, 0, 0, 0, 0],
+      mode: MODES.ionian,
+      scale: MODES.ionian,
+      harmony: "modal",
+      intro: "padin",
+      artic: "legato",
+      maxHold: 4,
+      nobass: true,
+      orn: { grace: 0.55, approach: 0.3 },
+      kit: {
+        c: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        p: [1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0]
+      },
+      kitVel: {
+        c: [8, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 6, 0, 0, 0],
+        p: [9, 0, 4, 4, 6, 0, 4, 0, 8, 0, 4, 4, 6, 0, 5, 0]
+      },
+      fill: { p: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] },
+      tone: {
+        wave: "triangle",
+        cut: 2400,
+        q: 0.9,
+        atk: 0.014,
+        rel: 1.3,
+        gain: 0.25,
+        verb: 0.38,
+        mouth: MOUTHS.melisma,
+        slide: 0.1
+      },
+      words: [
+        "the pallavi, then the anupallavi higher, then the charanam borrowing it",
+        "the veena, shadowing the line",
+        "the tanpura"
+      ],
+      word: (v, s) => (v === 0
+          ? [[], [transpose(5)], [transpose(5), fill(2)], [fill(2), rotate(2)]][s % 4]
+        : v === 1 ? [drop(2), transpose(-7)]
+        : [drop(12)]),
+    },
+
+    // VARNAM — Thanjavur 1830. The record is four brothers and an order of
+    // service. The Thanjavur Quartet — Chinnayya, Ponnayya (1804–1864), Shivanand
+    // and Vadivelu — "were employed in the courts of the Maratha King Sarfoji II
+    // at Thanjavur", learnt "the nuances of Carnatic music from a number of
+    // exponents of their time, including Muthuswami Dikshitar", and "were the
+    // first to formalise the performance pattern of bharatanatyam, and codify
+    // lessons called adavus... They were the ones to plan and set the order of the
+    // different items of the repertoire in performance": Alarippu, Jatiswaram,
+    // Sabdam, Swarajati, Chauka Varnam, Ragamalika, Padam, Javali, Tillana. Serfoji
+    // II reigned 1798–1832 and the brothers left for Travancore after him; 1830 is
+    // the Thanjavur court at the end of that patronage.
+    //
+    // WHAT A VARNAM IS, AND WHY IT IS A ROW AND NOT A LINE IN ANOTHER ONE. The
+    // article: "a type of composition in the Carnatic music system that
+    // encapsulates the key features of a raga... All varnams consist of lyrics, as
+    // well as swara passages, including a pallavi, an anupallavi, muktaayi swaras,
+    // a charanam, and chitta swaras... A varnam is traditionally performed as an
+    // opening item by musicians in Carnatic music concerts or as a centre main
+    // piece in Bharatanatyam dance concerts." So it is HALF WORDS AND HALF
+    // SOLFEGE, and it is the one form in this tradition that exists to be danced
+    // to as well as sung. Both facts are in the fields:
+    //   · TWO SPEEDS. A varnam is performed in the first speed and then again in
+    //     the second — the practice every student is taught it by. `paces` says
+    //     exactly that: the verses steady, the solo DOUBLE. Nothing else in the
+    //     Indian block declares it except `khyal`, and khyal's is vilambit into
+    //     drut across a whole concert; this one is the same piece twice.
+    //   · THE DANCE IS IN THE KIT AND IT IS THIS ROW'S SIGNATURE. A bharatanatyam
+    //     margam has three percussion sources and none of them is a drum kit: the
+    //     mridangam (kick and rim below), the NATTUVANGAM — the nattuvanar's
+    //     hand cymbals, which is the `c` lane and is the only pitched metal in
+    //     the Indian block — and the SALANGAI, the dancer's ankle bells, which
+    //     ring on every sixteenth she moves and are the `h` lane running
+    //     continuously. No other row in this table has a percussion part played by
+    //     the person the music is for.
+    //
+    // THE VIOLIN IS NOT HERE YET AND THAT IS THIS ROW'S OWN FACT. Vadivelu, the
+    // youngest of the four, "also learnt to play the violin gained expertise and
+    // demonstrated that not only Kalpita sangeetam but Manodharma sangeetam could
+    // also be easily and deftly played on the instrument. Vadivelu was the first
+    // to introduce Violin instrument to Carnatic music" — and he did it at
+    // TRAVANCORE, at Swati Tirunal's court, AFTER the brothers left Thanjavur. So
+    // the row that dates the violin's arrival is this one, and it does not seat
+    // one: the melodic answer is a `flute` for the venu, the bamboo flute a
+    // dance ensemble had before the fiddle. `carnatic` (Chennai 1935) seats the
+    // violin and is right to; this row is the reason there is a date to be right
+    // about.
+    //
+    // LINEAGE. `kriti` (Thanjavur 1810) at 0.35 — and the edge is documented
+    // rather than inferred: the Quartet learnt from Muthuswami Dikshitar, one of
+    // the three men that row is written from, and wrote "a set of nine songs
+    // called navaratna mela in tribute of their teacher". A varnam is not a kriti
+    // — it has swara passages where a kriti has words, and it opens the concert
+    // where a kriti fills it — so a third of this record is attributed and the
+    // rest is the invention: the margam, the two speeds, and the cymbals.
+    // `carnatic`'s own `wants` has listed "varnam" since it was written; THAT
+    // WANT IS PAID BY THIS ROW AND COMES OFF THE LIST, and `carnatic` declares
+    // `varnam` a parent tonight — the 1935 kacheri order opens with a varnam
+    // because these four brothers put one at the top of a programme in 1830.
+    //
+    // THE ALPHABET IS BHAIRAVI-SHAPED. The Quartet's most famous varnam is
+    // Viriboni, in raga Bhairavi and ata tala. Bhairavi's notes are the table's
+    // own `DIATONIC` (0 2 3 5 7 8 10) with one moving degree: the dha is
+    // chatusruti going up and suddha coming down, which is a raga behaving like a
+    // raga and not like a scale, and is in the cannot. ATA TALA IS FOURTEEN and
+    // this box counts twelve or sixteen, so the kit below is ADI — the other tala
+    // the article names for varnams ("the most popular varnams are in Aadi and Ata
+    // taalas") and the one this grid can say honestly.
+    //
+    // THE CORPUS IS SILENT AND THE SILENCE IS MEASURED. "varnam", "thanjavur",
+    // "tanjore", "bharatanatyam", "nattuvangam", "margam" and "swarajati" return
+    // ZERO files out of 120,652. Chordonomicon's eleven "carnatic" rows are
+    // 2000s filmi and devotional sides in `I IV V I` and `I vi IV V`, which is a
+    // chord cycle and not a varnam. `bpm: 92` is a choice between `carnatic`'s
+    // 96 and `kriti`'s 84 and is marked as one.
+    varnam: {
+      label: "Thanjavur 1830",
+      voices: 3,
+      bars: 8,
+      near: "kriti",
+      plan: "arc",
+      bpm: 92,
+      paces: { verse: "steady", solo: "double" },
+      parents: { kriti: 0.35 },
+      wants: [
+        "the temple periya melam — the nagaswaram and tavil band the dance repertory came out " +
+        "of",
+        "the padam and javali, the other two items the Quartet set in the margam"
+      ],
+      cannot: [
+        "ata tala — fourteen beats in 5+5+2+2, the tala of Viriboni itself, and this grid " +
+        "counts twelve or sixteen; the kit below is adi, the article's other tala",
+        "the moving dha — Bhairavi takes a different sixth ascending and descending, which is " +
+        "a raga being a raga; one symmetrical alphabet is declared instead and this line is " +
+        "the admission",
+        "gamaka — the standing admission of the whole block: the oscillation is the note, and " +
+        "there is no pitch-trajectory channel (WORLD.md §5.3)",
+        "the nattuvangam's own timbre — a pair of small heavy brass cymbals struck with a " +
+        "wooden stick, which is neither a clap nor a hat; the `c` lane below is the nearest " +
+        "lane and the argument for it is that it is a HAND, not a drum",
+        "the mridangam, and the tavil behind it — no hand drum in the kit samples"
+      ],
+      instr: ["solo_vox", "flute", "sitar"],
+      entry: v => (v === 2 ? 0 : 1),
+      reg: v => (v === 1 ? 1 : v === 2 ? -2 : 0),
+      realize: v => (v === 2 ? "pad" : "line"),
+      part: ["lead", "counter", "pad"],
+      roots: [0, 0, 0, 0, 0, 0, 0, 0],
+      mode: MODES.harmonic,
+      scale: DIATONIC,
+      harmony: "modal",
+      intro: "solo",
+      artic: "legato",
+      maxHold: 3,
+      nobass: true,
+      orn: { grace: 0.5, approach: 0.35 },
+      kit: {
+        c: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        k: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+        p: [1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0],
+        h: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      },
+      kitVel: {
+        c: [9, 0, 0, 0, 5, 0, 0, 0, 7, 0, 0, 0, 5, 0, 0, 0],
+        p: [9, 0, 4, 0, 6, 4, 5, 0, 8, 0, 4, 0, 6, 4, 5, 0],
+        h: [5, 3, 4, 3, 5, 3, 4, 3, 5, 3, 4, 3, 5, 3, 4, 3]
+      },
+      tone: {
+        wave: "triangle",
+        cut: 2500,
+        q: 0.85,
+        atk: 0.012,
+        rel: 1,
+        gain: 0.25,
+        verb: 0.34,
+        mouth: MOUTHS.monody
+      },
+      words: [
+        "the varnam, the words and then the swaras",
+        "the venu, answering the line",
+        "the tanpura"
+      ],
+      word: v => (v === 0 ? [fill(2)] : v === 1 ? [drop(2), transpose(12)] : v === 2 ? [drop(12)] : []),
+    },
+
     // CARNATIC — Chennai 1935. Not a record but a FORM, and it has an
     // author: Ariyakudi Ramanuja Iyengar fixed the order of the modern
     // South Indian concert in Madras in the 1930s — a varnam to warm up, a
@@ -21291,6 +24543,21 @@
     // alto with a real wobble and little air. A Carnatic vocalist
     // sings a whole phrase on one syllable of a kriti's text and
     // that is what this row measures.
+    //
+    // TWO WANTS PAID, 2026-09-03 (the India-and-China batch). This row has carried
+    // "the trinity's kritis" and "varnam" in its `wants` since it was written —
+    // two ancestors named in their own words because the table had no rows for
+    // them. Both have rows now and both come off the list. `kriti` (Thanjavur
+    // 1810) at 0.4: the run of kritis IS most of the concert this row is the shape
+    // of, and Tyagaraja, Dikshitar and Syama Sastri wrote the repertory Ariyakudi
+    // was ordering. `varnam` (Thanjavur 1830) at 0.15: the varnam is the FIRST
+    // ITEM in that order — "a varnam to warm up" is this comment's own third line —
+    // and the Thanjavur Quartet put it at the top of a programme a century before
+    // Ariyakudi put it at the top of this one. 0.55 declared; THE OTHER 0.45 IS THE
+    // ORDER ITSELF, which is what this row has always been about and is now
+    // measurable as its residue rather than merely asserted in prose. What stays in
+    // `wants` is what still has no anchor: ragam-tanam-pallavi, which is an item
+    // this row schedules and nobody has written, and the temple periya melam.
     carnatic: {
       label: "Chennai 1935",
       voices: 3,
@@ -21298,8 +24565,8 @@
       near: "filmi",
       plan: "arc",
       bpm: 96,
-      parents: {},
-      wants: ["the trinity's kritis", "varnam", "ragam-tanam-pallavi", "temple periya melam"],
+      parents: { kriti: 0.4, varnam: 0.15 },
+      wants: ["ragam-tanam-pallavi", "temple periya melam"],
       cannot: [
         "gamaka — in this music the OSCILLATION IS THE NOTE. A plain steady 12-TET pitch is " +
         "not an under-ornamented Carnatic note, it is the wrong note, and there is no " +
@@ -35543,6 +38810,28 @@
     // the same order: no vibrato, forward placement, bright
     // vowels. One throat where the tradition has four — the
     // cannot above owns that.
+    //
+    // BOTH WANTS PAID AND THIS ROW IS NO LONGER A ROOT, 2026-09-03 (the
+    // India-and-China batch). The LINEAGE paragraph above says it in as many
+    // words: "a declared ROOT. Jingju's own parents — kunqu, and the Hui and Han
+    // troupes whose 1790 arrival in Beijing for the Qianlong birthday is the
+    // tradition's founding story — have no anchors and are owed by name." They have
+    // anchors now.
+    //   `huiju` (Beijing 1790) at 0.4 — the Anhui troupes themselves, and the
+    // larger share because the erhuang melody they brought is half of the word
+    // pihuang and the whole of this row's melodic system on one side.
+    //   `qinqiang` (Xi'an 1807) at 0.15 — the bangzi opera, which the Peking opera
+    // article lists among the form's stylistic origins and which is where the
+    // clapper's timekeeping and the shouted upper register come from.
+    //   `kunqu` (Suzhou 1598) at 0.15 — the ancestor of a hundred operas, whose
+    // pronunciation this row's own comment already cites ("This is due to the
+    // collaboration with regional forms and kunqu that occurred during the
+    // development of Peking opera").
+    //   0.7 declared. THE 0.3 RESIDUE IS THE 1918 STAGE ITSELF: the banshi ladder
+    // this row writes as `paces`, the four role registers, and the jinghu, none of
+    // which arrived with any of the three. The fourth origin the article names, Han
+    // opera — the Hubei troupes of 1828 — still has no row and is now the only
+    // thing in this row's `wants`.
     jingju: {
       label: "Beijing 1918",
       voices: 3,
@@ -35551,8 +38840,11 @@
       plan: "arc",
       bpm: 96,
       paces: { verse: "half", chorus: "steady", solo: "double" },
-      parents: {},
-      wants: ["kunqu", "the hui and han troupes (beijing 1790)"],
+      parents: { huiju: 0.4, qinqiang: 0.15, kunqu: 0.15 },
+      wants: [
+        "han opera — the Hubei troupes who arrived in Beijing in 1828 and made the xipi half " +
+        "of the melody"
+      ],
       cannot: [
         "sanban — the FREE banshi, the metre dissolving at the aria's crisis; the pace ladder " +
         "has half through double and no word for 'no bar' (the free-time wall, still standing)",
@@ -35630,6 +38922,19 @@
     // the theka as a four-bar schedule: dha dhin dhin dha / dha dhin
     // dhin dha / dha tin tin ta (khali — no bass stroke) / ta dhin
     // dhin dha
+    //
+    // THE SADARANG WANT IS PAID, 2026-09-03 (the India-and-China batch). This row
+    // has carried "sadarang and adarang's delhi court khyal" in its `wants` since
+    // it was written. `badakhyal` (Delhi 1740) is that music and it is declared a
+    // parent at 0.4, beside the `dhrupad` 0.35 already here. The order of the two
+    // weights is the argument: what this record is MOSTLY made of is the form
+    // Niyamat Khan built at Muhammad Shah's court — the vilambit bandish, the
+    // badhat over it — and what it inherits through that form is dhrupad's gravity,
+    // which is why the elder row keeps its own share rather than losing it. 0.75
+    // declared and 0.25 left over, and the residue has a name: the GHARANA, the
+    // nineteenth- and twentieth-century teaching lineages that made Amir Khan's
+    // khyal a different object from Sadarang's, and which is the one thing still in
+    // this row's `wants`.
     khyal: {
       label: "Mumbai 1965",
       voices: 3,
@@ -35638,11 +38943,8 @@
       plan: "arc",
       bpm: 80,
       paces: { verse: "half", solo: "double" },
-      parents: { dhrupad: 0.35 },
-      wants: [
-        "sadarang and adarang's delhi court khyal",
-        "the gharana lineages before the gramophone"
-      ],
+      parents: { badakhyal: 0.4, dhrupad: 0.35 },
+      wants: ["the gharana lineages before the gramophone"],
       cannot: [
         "the badhat — khyal's whole art is the gradual exposition of the raga, which is " +
         "MATERIAL AND PHRASE rather than alphabet; that admission survived the round " +
@@ -39904,6 +43206,23 @@
                 // cry that never had a bar line.
                 "sticheron", "sequence", "winchester", "antiphon", "francoflemish",
                 "secondapratica", "sacredconcerto", "holler",
+                // ...and the classical-period round's two (2026-09-03, Paul:
+                // "we're missing Mendelssohn and Brahms and so forth, we should
+                // have lots of representative classical genres"). `oratorio`
+                // (Dublin 1742) and `requiem` (Vienna 1791) both keep an
+                // orchestra under the voices and file here anyway, for the
+                // reason `secondapratica` and `sacredconcerto` are two lines
+                // up: THE VOICES ARE THE RECORD. Messiah is a chorus with a
+                // band behind it, K. 626 is a chorus with a band behind it,
+                // and the cluster's own long varying line — three notes and a
+                // rest, falling, never the same measure twice — is what both
+                // of them measure (requiem step fraction 0.748, |interval|
+                // 2.0; the oratorio set 0.669 and 2.0). `requiem` takes NO
+                // IDIOM_ANCHOR row at all — the family's is right and its own
+                // note says so out loud — and `oratorio` takes one that moves
+                // exactly two fields off it, the contour and the length, both
+                // measured.
+                "oratorio", "requiem",
                 // ...and the deep-time round's three (2026-08-30), each of
                 // them the cluster's definition — people singing,
                 // unaccompanied: carmen is fifty-four children in two
@@ -39931,7 +43250,18 @@
                 // for taqsim, guqin and dhrupad: an avaz and a khyal are
                 // each ONE LONG VARYING LINE and vox is the family whose
                 // idiom row says so. Both take DYNAMICS rows below.
-                "dastgah", "khyal"]],
+                "dastgah", "khyal",
+                // ...AND ONE ON 2026-09-03, THE INDIA-AND-CHINA BATCH, on the
+                // argument the two lines above already make for `khyal`:
+                // `badakhyal` (Delhi 1740) is the SLOW HALF of that form on
+                // its own — Sadarang's vilambit khyal, at half rate, with no
+                // drut section to come — which is one long varying line if
+                // anything in this table is. It files beside the row it is the
+                // ancestor of and beside `dhrupad`, the form it was made to
+                // weigh like. It takes a DYNAMICS row below, for the reason
+                // every one of its neighbours does: vox's stress is a choir's
+                // barline and a tilwada at half rate is not one.
+                "badakhyal"]],
     ["club",   ["acid", "house", "techno", "garage", "dnb", "trap", "boombap",
                 // `jpop` (2026-08-30) files beside kpop, which took its
                 // formula and industrialized it — the ear hears the two
@@ -40342,7 +43672,17 @@
                 // ...and the walls-down round's studio ghost (2026-08-30):
                 // `tapemusic` is texture assembled at a bench, cologneschool's
                 // own shelf, and cologneschool now declares it a parent.
-                "tapemusic"]],
+                "tapemusic",
+                // ...and one on 2026-09-03, the India-and-China batch:
+                // `yayue` (Suizhou 433 BC) files beside `gagaku`, the Japanese
+                // court music that is its cousin thirteen centuries downstream,
+                // and for the cluster's own definition — sustained texture, a
+                // ceremony's pulse, no backbeat. A rack of bronze bells ringing
+                // into each other over a stroke a bar is texture if anything is.
+                // It takes a DYNAMICS row below, because ritual music is the
+                // one thing here with a HARD beat and NO arch, and drift's
+                // family row says the opposite of both.
+                "yayue"]],
     // the pre-rock traditions, and the two ancestors that joined them are
     // exactly that: Buenos Aires 1935, Nashville 1945, New York 1945,
     // London 1956. Kling Klang is `studio` and not `club` for the same kind of
@@ -40364,6 +43704,28 @@
                 // skiffle 1956) just got ten much older housemates.
                 "troubadour", "estampie", "pavane", "continuo", "concerto",
                 "classical", "nocturne", "romantic", "barcarolle", "parlor",
+                // ...AND THIRTEEN ON 2026-09-03, the classical-period round.
+                // Paul: "we're missing Mendelssohn and Brahms and so forth, we
+                // should have lots of representative classical genres." Every
+                // one of them is this cluster's own sentence — a group of
+                // people playing acoustic instruments at each other, before
+                // rock — and every one files beside the five rows above it
+                // that were already here: `symphony` and `stringquartet` and
+                // `pianosonata` beside `classical`, `etude` and
+                // `characterpiece` beside `nocturne`, `variations` and
+                // `symphonicpoem` and `musicdrama` and `nationalism` and
+                // `ballet` and `verismo` beside `romantic`, `impressionism`
+                // last because it is what comes after all of them.
+                // (`oratorio` and `requiem` went to `vox` instead, on
+                // sacredconcerto's ruling: the voices are the record.)
+                // Eleven of the thirteen take an IDIOM_ANCHOR row in
+                // precompose.js, because the family's strophe — statement,
+                // statement, departure, return — is exactly what an exposition
+                // and a study and a tone poem are NOT.
+                "symphony", "stringquartet", "pianosonata", "etude",
+                "characterpiece", "concertoverture", "variations",
+                "symphonicpoem", "musicdrama", "nationalism", "ballet",
+                "verismo", "impressionism",
                 // ...and one record from 2023, which looks wrong in "the
                 // pre-rock traditions" until you hear it: a sung story, an
                 // acoustic ensemble and no drum kit is what this cluster IS,
@@ -40507,7 +43869,38 @@
                 // `operetta`, `waltz` and `musette` — and with `enka` and
                 // `trot`, which are the same commercial object two continents
                 // east. All three take the family's own dynamics row.
-                "nuevacancion", "schlager", "iskelma"]],
+                "nuevacancion", "schlager", "iskelma",
+                // ...AND EIGHT ON 2026-09-03, THE INDIA-AND-CHINA BATCH.
+                // Paul, going to bed the night before: "we really need to fill
+                // in India and China in the classical period... we should have
+                // lots of representative classical genres." Every one of them
+                // is this cluster's own sentence — a group of people playing
+                // acoustic instruments at each other, with a sung story on top
+                // where there is a singer at all — and every one files beside a
+                // row it is the ancestor or the sibling of:
+                //   `tappa` (Lucknow 1780), `thumri` (Lucknow 1856) beside
+                //     `filmi` and `qawwali`, the two rows downstream of them;
+                //   `kriti` (Thanjavur 1810), `varnam` (Thanjavur 1830) beside
+                //     `carnatic`, which is the concert order these two items
+                //     are the items OF, and which declares both as parents;
+                //   `kunqu` (Suzhou 1598), `huiju` (Beijing 1790),
+                //     `qinqiang` (Xi'an 1807) beside `jingju` and `sizhu` —
+                //     three opera companies with a fiddle, a lute and a
+                //     clapper, and the first two are jingju's own declared
+                //     parents as of tonight;
+                //   `pipaqu` (Wuxi 1819) beside `sizhu`, whose pipa chair it
+                //     borrows. It is a SOLO and this cluster is a group, which
+                //     is the one strain in the list: it is here rather than in
+                //     `vox` (where `guqin` sits) because vox's idiom row is a
+                //     line that never says a measure twice and a wu piece is
+                //     sectional and counted. It has its own IDIOM_ANCHOR row,
+                //     so the family's idiom does not reach it either way.
+                // All eight take the family's own dynamics row unchanged
+                // (stress .45, phrase .5, touch t .06 / v .8): a live hand,
+                // which every one of them is. test/hand.test.js §1 is why this
+                // list is edited at all.
+                "tappa", "thumri", "kriti", "varnam",
+                "kunqu", "huiju", "qinqiang", "pipaqu"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.
@@ -40650,6 +44043,14 @@
     // breath more metre than the dhrupad it descends from.
     dastgah:   { stress: 0.04, phrase: 0.92, touch: { t: 0.075, v: 0.55 } },
     khyal:     { stress: 0.1,  phrase: 0.85, touch: { t: 0.06,  v: 0.6 } },
+    // ...and the India batch's one (2026-09-03), on exactly khyal's argument
+    // and one notch further along it: `badakhyal` is the vilambit half alone,
+    // at half rate, so the tala it floats over is twice as far away. Stress
+    // drops to dhrupad's own 0.07 and the phrase rises to 0.88 — the two
+    // numbers this file already gives the form this one was built to weigh
+    // like — while the touch stays khyal's, because there IS a pakhawaj in
+    // the room and a singer with a drummer is steadier than a singer alone.
+    badakhyal: { stress: 0.07, phrase: 0.88, touch: { t: 0.06,  v: 0.6 } },
     // ...and the ledger round's two unmetred lines (2026-08-30), on the
     // ottoman rule — the same musical object takes the same numbers:
     // `doina` is parlando rubato (Bartók's own marking) and takes
@@ -40921,6 +44322,18 @@
     // the chant's own numbers, three centuries before Rome 600's own row
     // was practice.
     gagaku:       { stress: 0.06, phrase: 0.88, touch: { t: 0.05,  v: 0.5 } },
+    // ...and `yayue` (2026-09-03), which is gagaku's cousin and its OPPOSITE
+    // on both numbers, which is why it needs a row rather than the family's.
+    // Ritual court music is the one music in this table with a hard beat and
+    // no arch: the Bianzhong article's own sentence is that the bells lead by
+    // "doubling the melody of the winds and strings, while larger bells
+    // punctuate hymn phrases" — a stroke a beat, every one the same weight,
+    // for the length of a ceremony. So the stress goes UP to a plain 0.25 (a
+    // real pulse, felt, and nowhere near a backbeat's 0.5) and the phrase goes
+    // DOWN to 0.3, the lowest in this table outside the machines: a rite does
+    // not swell. The touch is the smallest hand here, because struck bronze
+    // rung by a court orchestra is not a soloist's rubato.
+    yayue:        { stress: 0.25, phrase: 0.3,  touch: { t: 0.03,  v: 0.4 } },
     // THE GOTH-AND-GLOBE ROUND'S THREE (2026-08-30). Thirteen of the
     // sixteen new anchors take their family row unchanged — the table's
     // own law — and these are the three that measurably disagree:

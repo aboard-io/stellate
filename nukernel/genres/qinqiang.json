@@ -1,0 +1,197 @@
+{
+  "note": "QINQIANG — Xi'an 1807. The article dates the genre outright, which is\nrare enough here to be the whole justification for the label: \"Qinqiang is a\ngenre of folk Chinese opera originated in Shaanxi Province of Qing China in\n1807 and soon took over other genres to be the representative genre of the\nprovince.\" The dot is Xi'an, Shaanxi's capital and the city the article's own\nShaanxi box heads with; the province is the article's word and a province is\nnot a place a map can fly to.\n\nWHAT IT IS: THE CLAPPER. \"The genre features bangzi (wooden clapper) as its\naccompanying instruments, from which it derives its other names, Bangzi opera\nand luantan (literally 'hit in chaos'). Bangzi tune is considered one of\nChina's Four Great Characteristic Melodies. Qinqiang is the representative of\nthe Bangzi opera and the most important origin of other Bangzi operas.\"\nSo this is the loud pole of Chinese opera and `kunqu` is the quiet one, two\nhundred years and fifteen hundred kilometres apart, and this table now holds\nboth. The Four Great Melodies are kunshan, yiyang, bangzi and pihuang; three\nof the four are anchors as of tonight.\n\nTHE FIELDS ARE THE CLAPPER AND THE CRY.\n  · THE CLAPPER IS THE HAT LANE AND IT NEVER STOPS. Two slabs of hardwood\n    struck on every beat, which is the sound the genre is NAMED after, and\n    it is the only continuous percussion in the Chinese block: `kunqu` has\n    four hits a bar, `jingju` keeps the ban's timekeeping, `sizhu` has two.\n    This one has the clapper on all four beats and a drum under it.\n  · THE CRYING TONE IS THE THROAT. Qinqiang's singing is famously pushed —\n    the article: \"Actors require a foundatio[n]\" in \"singing, narration,\n    dance, and martial arts\", and Tan Dun \"researched Qinqiang for the opera,\n    in order to learn more about 'ancient Chinese vocal styles'\". The\n    fleet's most pressed tract is `MOUTHS.belter` — soprano, vibrato 0.75\n    at 6.1 Hz, air 0.16, one syllable a note — and it is taken here for the\n    measurement and not for the name: a loud, wide, forward voice with a\n    fast wobble and no breath in it. `jingju`'s `bulgar` is the same\n    placement with NO vibrato, which is the dan's controlled cry; this is\n    the one that shakes.\n  · THE FIDDLE IS A BANHU AND FOR ONCE `fiddle` IS THE RIGHT SUBSTITUTE.\n    `jingju` refused the violin for the jinghu because a jinghu has a\n    bamboo barrel and a snakeskin face where a violin has a wooden top. A\n    BANHU'S FACE IS A THIN WOODEN BOARD — that is what the ban in its name\n    means — glued over a coconut shell, and it is the one huqin in China\n    that is built the way a violin's belly is built. It is also pitched high\n    and played loud, which is why it leads a bangzi band. The registry's\n    `erhu` model would be family-right and an octave low; `fiddle` is\n    family-wrong and construction-right, and construction is what makes the\n    banhu's sound.\n  · FAST, AND SHORT-BREATHED. `bpm: 132` and `maxHold: 2` — the fastest\n    row in the whole Chinese block by thirty-six beats, and the argument is\n    the article's own \"hit in chaos\".\n\nTHE ALPHABET IS `SCALES.yupent` (0 3 5 7 10), the yu-mode pentatonic added\nto the table tonight and argued in genres-tables.js. A bangzi aria's\ncharacteristic sound is a minor-third-heavy pentatonic; `majpent` (0 2 4 7 9)\nwould make this row bright and `MODES.dorian` would hand it two degrees it\ndoes not use.\n\nLINEAGE: a declared ROOT, and the refusal is deliberate. `kunqu` (Suzhou\n1598) is available by date and is NOT a parent: the yabu/huabu split is the\nwhole history here — kunqu is the elegant division and bangzi is the flower\ndivision, and the eighteenth-century argument between them was an argument\nbetween two musics, not a descent from one to the other. The ancestors are in\n`wants`: the Shaanxi folk repertory the article traces it to, and the earlier\nQinqiang the article says \"was later renamed as Handiao Erhuang\".\n\nAND IT IS A PARENT OF SOMETHING. The Peking opera article lists the form's\nstylistic origins as \"Hui opera, Kunqu, Qinqiang, Han opera\" — three of the\nfour are now rows, and `jingju` declares all three tonight.\n\nTHE CORPUS IS SILENT AND THE SILENCE IS MEASURED. \"qinqiang\", \"bangzi\",\n\"luantan\", \"shaanxi\", \"banhu\" and \"chinese opera\" return ZERO files out of\nthe 120,652-file MIDI corpus. Chordonomicon has no bangzi label. `bpm: 132`\nis therefore a choice and it is argued above rather than measured.\n\nNO `mode` FIELD, AND THAT IS G14b RATHER THAN AN OMISSION. The first draft of\nthis row declared `mode: MODES.dorian` beside its yu-mode scale, which is how\nmost of the Chinese block is written — and test/precompose.js G14b would have\ncaught it, because it is DECORATION: `mode` is read in exactly three places\n(kernel.js harm(), chordsOf(), bass()) and all three need CHORD ROOTS, which a\n`harmony: \"modal\"` row does not have. Swapping the declared dorian for its\nplain neighbour moves not one rendered note. The law at genres-tables.js MODES\noffers three answers and this row takes the honest one for a modal record: say\nnothing. Every note it plays comes out of `scale`, which is `SCALES.yupent`,\nand that is where the claim belongs.",
+  "label": "Xi'an 1807",
+  "voices": 3,
+  "bars": 8,
+  "near": "huiju",
+  "plan": "arc",
+  "bpm": 132,
+  "parents": {},
+  "wants": [
+    "the folk song of the Guanzhong plain, which the article traces the tune to",
+    "the older Qinqiang the article says was renamed Handiao Erhuang",
+    "the yiyang tune, the fourth of the Four Great Characteristic Melodies"
+  ],
+  "cannot": [
+    "the bangzi's own timbre — two slabs of hardwood struck edge to edge, dry and pitchless; the hat lane below is the nearest continuous lane and it is a compromise said out loud",
+    "the role registers — sheng, dan, jing, chou are TIMBRE AS THE GENRE (WORLD.md §5.5) and one throat is not four",
+    "huanyin and kuyin — the 'happy tune' and 'crying tune' are two different SCALES in the same aria, differing in which degrees are raised; one declared alphabet cannot switch between them mid-piece",
+    "the martial acrobatics — half of what an audience comes for is not sound at all",
+    "the banhu's own construction — a coconut shell with a wooden face, an octave above an erhu; `fiddle` gets the wooden belly right and the body wrong"
+  ],
+  "instr": [
+    "solo_vox",
+    "fiddle",
+    "shamisen"
+  ],
+  "drumkit": "acoustic",
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      0,
+      1,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "cold",
+  "scale": {
+    "$src": "SCALES.yupent"
+  },
+  "artic": "staccato",
+  "maxHold": 2,
+  "incClamp": 3,
+  "orn": {
+    "grace": 0.35,
+    "pass": 0.35
+  },
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ],
+    "h": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      9,
+      0,
+      5,
+      5,
+      7,
+      0,
+      5,
+      5,
+      8,
+      0,
+      5,
+      5,
+      7,
+      0,
+      5,
+      6
+    ],
+    "h": [
+      9,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0,
+      9,
+      0,
+      0,
+      0,
+      8,
+      0,
+      0,
+      0
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2800,
+    "q": 1,
+    "atk": 0.008,
+    "rel": 0.65,
+    "gain": 0.26,
+    "verb": 0.28,
+    "mouth": {
+      "$src": "MOUTHS.belter"
+    }
+  },
+  "words": [
+    "the aria, shouted over the clapper",
+    "the banhu, an octave up and never resting",
+    "the sanxian, hitting the beat"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? [[fill(2)], [fill(2), rotate(2)], [fill(4)], [reverse()]][s % 4]\n                    : v === 1 ? [transpose(12), fill(2)]\n                    : [keep(0, 4, 8, 12)])"
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "note": "MUSIC DRAMA — Munich 1865. Wagner, TRISTAN UND ISOLDE, first performed\nat the Konigliches Hof- und Nationaltheater on 10 June 1865 under Hans\nvon Bulow, after seventy-seven rehearsals and a first cast who were told\nby another house that the piece was unperformable. The founding record is\nthat premiere, and what it premiered is a music drama rather than an\nopera: no separable numbers, no applause points, a text the composer\nwrote himself, and an orchestra that carries the argument while the\nsingers say the words.\n\nWHY MUNICH 1865 AND NOT BAYREUTH 1876. The Ring's first festival is the\nfamous date and it would need a new dot on the map; Munich is already\nhere (`eurodisco`, 1977) and Tristan is where the LANGUAGE arrives — the\nchromatic harmony that the whole later nineteenth century is arguing\nwith, eleven years before the theatre was finished. Dating a genre by a\nbuilding rather than by the record that changed the sound would be the\n`soundsystem` exception applied where it does not belong.\n\nTHE EIGHT BARS NEVER SOUND THE TONIC, AND THAT IS THE ROW. Every other\nrow in this catalogue comes home; `roots` here is ii - V - vi - ii - V -\nvi - ii - V, a deceptive cadence twice over and then a dominant left\nhanging. It is the only row in the table whose harmonic cycle does not\ncontain degree 0.\n\nAND THE CHORD ITSELF IS SAYABLE, WHICH WAS THE FIND. The Tristan chord\nis a half-diminished seventh and the kernel's quality table has no\nhalf-diminished in it — but `q: \"7\"` is the SCALE-STEP seventh, degrees\n0-2-4-6 of whatever mode the row is in, and in AEOLIAN, built on degree\n1, that is exactly a half-diminished seventh chord. So `{ d: 1, q: \"7\" }`\nis the real thing, spelled out of the mode rather than pasted in as a\nfixed pitch set, and it is what bars 1, 4 and 7 play.\n\nMEASURED, AND THE CORPUS IS NINE FILES AND IS OUTVOTED. `wagner`,\n`tristan`, `valkyr`, `tannhaus`, `meistersinger` and `bridal` match nine\nfiles in the classical rips: bpm p50 140.0, 77.8% major, pickup rate\n0.099 (the second highest measured this round after the symphony's).\nThose numbers are the Ride of the Valkyries, the Meistersinger prelude\nand the wedding march — three loud diatonic marches — and they describe\nthe OPPOSITE of the record this row is named for. The two files that are\nactually Tristan read 32.1 bpm in 6/8 and 90.0 in 2/4, which is a\ntranscriber's convention and not a tempo. So the row takes bpm 72 and\nMODES.aeolian from the record and states the disagreement, which is\n`rockabilly`'s ruling from earlier this same shift: where the archive is\na different repertory wearing the same name, the record wins and the\ncount is printed anyway.\n\nTHE VOICE IS A TENOR HOLDING ONE VOWEL: `MOUTHS.monody` with `voice:\n\"tenor\"` — the trained soprano mouth moved down, two beats to a syllable,\nbecause a Wagnerian line is declaimed slowly over an orchestra that never\nstops. `verismo` (Rome 1890) takes the same mouth as a soprano, and the\ntwo rows are the two ends of the late-century voice.\n\nLINEAGE. `operaseria` (London 1724) 0.25 — the sung stage drama, which\nthis is the destruction of; `romantic` (Vienna 1876) is ELEVEN YEARS\nLATER and is not a parent; `classical` (Vienna 1785) 0.15 — the harmonic\ngrammar being stretched; `belcanto` (Milan 1831) 0.2 — the long\nunhurried vocal line, which Wagner kept while throwing away the aria it\ncame in; `concerto` (Venice 1725) 0.1 — the orchestra as an arguing\nparty. 0.7 declared. THE RESIDUE IS 0.3 AND IT IS THE LEITMOTIF SYSTEM:\nan orchestra that remembers, naming people and objects and states of mind\nin themes that return when the drama needs them. This box transforms one\nphrase per section, which is the technique's SHAPE with none of its\ndramaturgy, and that is written in `cannot` as well as here.",
+  "label": "Munich 1865",
+  "near": "romantic",
+  "plan": "arc",
+  "bpm": 72,
+  "bars": 8,
+  "voices": 4,
+  "parents": {
+    "operaseria": 0.25,
+    "belcanto": 0.2,
+    "classical": 0.15,
+    "concerto": 0.1
+  },
+  "wants": [
+    "the leitmotif as a system — an orchestra that names things and remembers them, which is a dramaturgy rather than a sound and has no row anywhere in this table",
+    "the Gesamtkunstwerk: the theatre, the darkness, the sunken pit and the six hours"
+  ],
+  "cannot": [
+    "a motif that returns WHEN ITS OBJECT DOES — the box transforms one phrase per section on a schedule, where a leitmotif returns because somebody on stage remembered something",
+    "the endless melody at its real length: this record is eight bars long and the thing it is named for is a cadence deferred for four hours",
+    "the orchestra's size, and a singer who has to be heard over it"
+  ],
+  "instr": [
+    "solo_vox",
+    "cello",
+    "french_horns",
+    "strings"
+  ],
+  "part": [
+    "lead",
+    "counter",
+    "riff",
+    "pad"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      2,
+      0,
+      4,
+      0
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      -1,
+      0,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    1,
+    4,
+    5,
+    1,
+    4,
+    5,
+    1,
+    4
+  ],
+  "prog": [
+    {
+      "d": 1,
+      "q": "7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 5
+    },
+    {
+      "d": 1,
+      "q": "7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 5
+    },
+    {
+      "d": 1,
+      "q": "7"
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    }
+  ],
+  "mode": {
+    "$src": "MODES.aeolian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 6,
+  "bassInstr": "contrabass",
+  "bassStyle": "pedal",
+  "kit": {},
+  "intro": "swell",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2100,
+    "q": 0.9,
+    "atk": 0.06,
+    "rel": 2.2,
+    "gain": 0.22,
+    "verb": 0.66,
+    "mouth": {
+      "$src": "{ ...MOUTHS.monody, voice: \"tenor\" }"
+    }
+  },
+  "words": [
+    "the voice, declaiming, two beats to a syllable",
+    "the cellos, who begin the piece alone",
+    "the horns, the motif coming back changed",
+    "the strings, holding the chord that does not resolve"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 3 ? []\n        : v === 1 ? [transpose(-12), spread(2)]\n        : v === 2 ? [[], [invert(4)], [rotate(3)], [spread(2)]][s % 4]\n        : (s % 2 ? [spread(2)] : []))"
+  }
+}

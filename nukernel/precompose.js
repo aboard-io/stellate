@@ -869,6 +869,226 @@
     gogo:          { cell: "call",   contour: "rise",   land: "root",  len: "two" },
     boogie:        { cell: "push",   contour: "hover",  land: "fifth", len: "two" },
     minneapolissound: { cell: "even", contour: "insist", land: "root", len: "two" },
+    /* THE INDIA-AND-CHINA BATCH (2026-09-03). Paul, going to bed the night
+       before: "we really need to fill in India and China in the classical
+       period... we should have lots of representative classical genres." Ten
+       anchors, ten rows, by the rule shift 2 set and shift 4 repeated four
+       times: A ROW ADDED BY HAND GETS A HOOK BY HAND, or it resolves to its
+       family default and the "do do dooo" figure is back. Eight are `roots`
+       (three / rise / root / aabb / four), one is `vox` and one is `drift`,
+       and NONE of the three family rows is right for a music with no chord
+       changes and no chorus — which is the whole reason this block is long.
+       THE ONE NUMBER THAT IS MEASURED AND THE MANY THAT ARE NOT, said first:
+       the MIDI corpus returns ZERO files for every term any of these ten rows
+       can be searched by ("kriti", "varnam", "thumri", "tappa", "khyal",
+       "kunqu", "qinqiang", "huiju", "yayue", "bianzhong", "pipa" returns one
+       and it is not a pipa piece), and Chordonomicon's eleven "carnatic" rows
+       are 2000s filmi sides whose commonest window is `I IV V I`, a chord
+       cycle, which is the one thing none of these musics has. So every field
+       below is an argument from the PRACTICE and is written as one.
+         · badakhyal — the badhat, which is the Khyal article's own word for
+           exposition "pitch-by-pitch". `hang` is one long note and then a
+           run, which is what a phrase of vilambit khyal IS; `rise` because
+           the whole form climbs and does not come back down inside a
+           section; `root` because a khyal's every phrase returns to the sa;
+           `long` as the sentence, the eight-bar paragraph.
+           `long` WAS THE CELL FIRST AND IT FROZE THE HOOK, which is the same
+           mistake `nuevacancion` and `symphonicmetal` each made earlier in
+           this same shift and is recorded here for the third time because it
+           keeps being tempting: two onsets a bar has only one rhythm, so
+           test/hook.test.js's catalogue check named this row in the
+           rhythm-frozen list beside `drone` and `ambient`. A KHYAL SINGER
+           WHO CANNOT RE-ROLL HER OWN PHRASE IS NOT A KHYAL SINGER — the
+           entire art of the form is that the same bandish comes out
+           differently every time, which is the Khyal article's own sentence
+           ("Every singer generally renders the same bandish differently").
+           `hang` keeps the held note and gives the run somewhere to go.
+         · tappa — the opposite pole, and the two rows are a pair on purpose.
+           `sixteenths` is this box's densest cell and it is the zamzama: the
+           Tappa article's "fast, subtle and knotty construction". `zig` is
+           the knot — stepwise and turning back — rather than a run;
+           `land: "fifth"` because a tappa phrase hangs rather than settles,
+           and `two` because the cluster is a bar long and then it is over.
+         · thumri — bol banao: the same line found again a different way. So
+           `sent: "vary"`, which is the field that says exactly that, over
+           `hang` (one long note and then a run — the held sa and then the
+           descent), `fall`, and `third`, the note the Khamaj major third
+           gives it and the reason the row is in mixolydian at all.
+         · kriti — sangati, and this is the one row in the batch whose hook is
+           chosen to be RE-SAID: `three` is three notes and a rest, the
+           smallest statable figure, because a sangati has to be recognisable
+           after it has been elaborated four times. `arch` up and back,
+           `land: "root"` (a kriti's pallavi comes home to sa), and `aabb`,
+           the strophic sentence — the pallavi IS said twice.
+         · varnam — the pedagogical piece, and its hook is a swara passage
+           rather than a tune: `even`, continuous and countable, because the
+           point of a varnam is that it is exactly playable in two speeds;
+           `arch`; `land: "fifth"` because the muktayi swaras sit up at the
+           pa; `four`, the length a chittaswara actually is.
+         · kunqu — water-polished song. `hang` is one long note and then a
+           run: at `rate: 0.5` the held note is one syllable spun out for
+           seconds, which is what shuimo qiang literally means, and the run
+           is the melisma coming off it. `hover` because a kunqu line circles
+           a note rather than travelling; `sent: "long"`, the eight-bar
+           paragraph; `land: "root"`. It shares `hang` with `badakhyal` in
+           the same batch and with `thumri` two rows up, and that is said out
+           loud rather than hidden: a Ming stage, a Mughal durbar and a
+           Lucknow kotha are three rooms where the shape of a phrase is a
+           held note and then an ornamented descent, and the three part on
+           the contour (hover, rise, fall) and the sentence. `long` was the
+           cell here first and FROZE THE HOOK for the reason written under
+           `badakhyal` above.
+         · huiju — the erhuang aria, which is a DECLAIMED line over a fiddle.
+           `call` is a phrase somebody answers and that is the shape of an
+           aria over a huqin; `rise`, `land: "fifth"` (the huqin's own string,
+           and the note the line hands to the instrument), `four`.
+         · qinqiang — "hit in chaos", the article's own gloss of luantan.
+           `push` puts every onset off the beat, which is the box's word for a
+           figure written against a clapper that is ON it; `zig`, because the
+           crying tone turns; `root`, because a bangzi aria shouts home; and
+           `two`, because at 132 bpm a bar is as long as anybody holds still.
+         · pipaqu — the martial repertory. `riff` says the same figure again
+           and `insist` refuses to move, which is what a lunzhi tremolo on one
+           note IS, and `land: "root"` with `len: "two"` is a 68-beat battle
+           piece's own smallest unit. It is the only row in the batch whose
+           hook is a texture rather than a tune, and that is the argument for
+           it being a solo instrumental row at all.
+         · yayue — one note per beat, forever. `even` is continuous and
+           unaccented; `hold` as the sentence, which is the field that stops a
+           line developing; `hover`, because a ritual melody does not go
+           anywhere; `land: "root"`, because it is a rite; and `eight`,
+           the longest length this table has, because a ceremony is long.
+           Four fields all saying "do not develop", which is the most
+           deliberately inert row in this file and is what the music is. */
+    badakhyal:     { cell: "hang",   contour: "rise",   land: "root",  sent: "long", len: "eight" },
+    tappa:         { cell: "sixteenths", contour: "zig", land: "fifth", len: "two" },
+    thumri:        { cell: "hang",   contour: "fall",   land: "third", sent: "vary", len: "four" },
+    kriti:         { cell: "three",  contour: "arch",   land: "root",  sent: "aabb", len: "four" },
+    varnam:        { cell: "even",   contour: "arch",   land: "fifth", len: "four" },
+    kunqu:         { cell: "hang",   contour: "hover",  land: "root",  sent: "long", len: "eight" },
+    huiju:         { cell: "call",   contour: "rise",   land: "fifth", len: "four" },
+    qinqiang:      { cell: "push",   contour: "zig",    land: "root",  len: "two" },
+    pipaqu:        { cell: "riff",   contour: "insist", land: "root",  len: "two" },
+    yayue:         { cell: "even",   contour: "hover",  land: "root",  sent: "hold", len: "eight" },
+    /* THE WESTERN CLASSICAL BATCH (2026-09-03), the other half of the same
+       brief: "we're missing Mendelssohn and Brahms and so forth, we should
+       have lots of representative classical genres." Fifteen anchors,
+       FOURTEEN rows here, by the rule this file has repeated five times now:
+       a row added by hand gets a hook by hand. Thirteen of the fifteen are
+       `roots` (three / rise / root / aabb / four) and two are `vox`
+       (three / fall / root / vary / four), and the family strophe is wrong
+       for almost all of them for one reason: A STROPHE SAYS ITS FIRST PHRASE
+       TWICE, and an exposition, a study, a transformation and a variation set
+       are four different ways of refusing to.
+       THE ONE ROW THAT DECLINES IS `requiem`, and its own note says why: the
+       vox row IS what the corpus measures for it (step fraction 0.748, median
+       melodic interval 2.0, hold p50 1.562 over 16 files), and repeating a
+       family's values in this table is the photocopy it exists to avoid.
+       Every field below is measured off the classical rips
+       (classical_greats / _midiworld / _piano / _mfiles / _violin / _guitar,
+       10,618 files) unless it says otherwise:
+         · symphony — `pickup` is the highest measured pickup rate of the
+           round, 0.144 over the fifteen files of Mozart's last three
+           symphonies, against 0.021 for the sonatas and 0.000 for the songs
+           without words: a symphonic subject starts before the bar. `arch`
+           and `eight` are the period — an antecedent up and a consequent
+           back, over eight bars — and `vary` because a development section
+           is the opposite of a repeat.
+         · stringquartet — `zig` and `vary` over the family's `three`: the
+           measured median melodic interval is 2.85 semitones against the
+           symphony's 2.53 and the syncopation 0.265 against 0.190, which is
+           an inner voice answering rather than a tune singing.
+         · pianosonata — `sixteenths` (this box's densest cell) with `arpup`,
+           because the corpus's own melody extractor, pointed at op. 27 no. 2,
+           returns the ARPEGGIO and not the tune: |interval| p50 5.0, step
+           fraction 0.213. The hook of a piano sonata is a broken chord.
+         · oratorio — the vox family's cell and sentence kept, and two fields
+           moved: `arch` (a Handel chorus goes up and comes back — the family
+           says fall) and `eight`, because 17 of 42 files vote an EIGHT-BAR
+           harmonic period, the longest of the round. `land: "fifth"` is the
+           sequence hanging on the dominant before the last cadence.
+         · concertoverture — `sixteenths` and `zig` and `plain`: the fairy
+           scherzando is quavers that never hold (hold p50 1.0 over the
+           fourteen Midsummer Night's Dream files, against the symphony's
+           2.0) and never develop inside a section. `two`, because the figure
+           is one bar long and then it is one bar long again.
+         · characterpiece — `long` is two onsets a bar, this box's sparsest
+           cell, and it is the SONG in Songs Without Words: a sung line over
+           a figure that is doing all the moving. `arch`, `third`, and the
+           family's own `aabb` kept, because a song without words is still
+           strophic.
+         · etude — the only row in this table whose sentence is `plain` on
+           purpose: one figure, unvaried, for the whole piece. `sixteenths`
+           is the continuous motion (hold p90 3.0 sixteenths over 234 files,
+           the shortest measured anywhere this round) and `arpwide` is
+           literal — op. 10 no. 1's right hand covers a tenth every beat.
+         · variations — `three`, the smallest statable figure, because a
+           theme has to survive being recognisable after eight variations;
+           `arch` and `aabb` because the theme is a chorale strophe; and
+           `eight` because 56 of 193 files vote an eight-bar harmonic frame
+           and 50 of them repeat at sixteen.
+         · symphonicpoem — `long` and `rise` and `vary`: the motto is two
+           onsets a bar (a declamatory idea, not a tune), it climbs, and it
+           is never said the same way twice, which is thematic transformation
+           in three fields. `eight` is the paragraph.
+         · musicdrama — `long`, `rise`, `eight`, `land: "seventh"`: the line
+           hangs on the chord that will not resolve, which is this row's whole
+           harmonic argument. `sent: "vary"` was chosen to keep it out of
+           test/hook.test.js's frozen list and DID NOT: the freeze belongs to
+           the CELL and not to the sentence — two onsets a bar have one
+           rhythm whatever sentence is dealt over them — which this round
+           measured and is worth writing down, because the note beside
+           `hiphopsoul2` reads as though the sentence were the lever. So this
+           row joins FROZEN_RHYTHM with `characterpiece`, `symphonicpoem` and
+           `impressionism`, and for all four that is RIGHT: they are written
+           scores. `verismo`, the one row of the five with a person singing on
+           it, took a different cell instead.
+         · nationalism — `arch` and `aabb`, the family's strophe KEPT because
+           a folk tune really is said twice, with `land: "fifth"` for the
+           measured minor-to-relative-major landing. IT STATES NO CELL, AND
+           THE REASON IS A FINDING: this is the only row in the batch with a
+           declared `meter`, and under a twelve-step bar a stated density band
+           is not stable across seeds — `even` was written here first and
+           test/hook.test.js §4 caught it composing 8 onsets a bar at seeds 2
+           and 3 (the `running` band, as written) and 4 at seed 1 (`moving`),
+           which is the same figure counted against a bar that is three
+           quarters as long. The gesture is the claim; the figure is the
+           meter's business. (`waltz`, the table's other declared-meter row,
+           states no idiom row at all — same fact, one round earlier.)
+         · ballet — `three` and `arch` and `aabb` kept from the family, with
+           `two`: a ballet number's phrase is short because a dancer counts
+           it, and the measured step fraction of 0.740 (the most stepwise
+           orchestral set of the round) is what "written to be danced to"
+           looks like as a number.
+         · verismo — `hang`, `rise`, `fifth`, `vary`, `eight`: a held note and
+           then a run, climbing, hanging on the dominant, never phrased twice
+           the same, over the longest sentence this table has. It is the
+           singer's row and it is `belcanto`'s opposite on every axis but the
+           last. `long` WAS WRITTEN HERE FIRST AND WAS WRONG for the reason
+           `hiphopsoul2` found four batches earlier this same shift: a
+           two-onset bar has one rhythm, test/hook.test.js froze this row
+           across eight seeds, and a frozen rhythm is right for an arrangement
+           and wrong for a singer. A verismo soprano phrases the same line
+           differently every night — that is what the style is bought for.
+         · impressionism — `long` and `hover` and `vary`: a chord that is a
+           place rather than a step, and a line that circles inside it. The
+           corpus agrees where it can (|interval| p50 4.0, step fraction
+           0.400 over 65 files) and the sentence is an argument: nothing in
+           this music says a measure twice. */
+    symphony:        { cell: "pickup", contour: "arch",  land: "root",  sent: "vary", len: "eight" },
+    stringquartet:   { cell: "three",  contour: "zig",   land: "root",  sent: "vary", len: "four" },
+    pianosonata:     { cell: "sixteenths", contour: "arpup", land: "root", sent: "vary", len: "four" },
+    oratorio:        { contour: "arch", land: "fifth",   len: "eight" },
+    concertoverture: { cell: "sixteenths", contour: "zig", land: "root", sent: "plain", len: "two" },
+    characterpiece:  { cell: "long",   contour: "arch",  land: "third", len: "four" },
+    etude:           { cell: "sixteenths", contour: "arpwide", land: "root", sent: "plain", len: "two" },
+    variations:      { cell: "three",  contour: "arch",  land: "root",  sent: "aabb", len: "eight" },
+    symphonicpoem:   { cell: "long",   contour: "rise",  land: "root",  sent: "vary", len: "eight" },
+    musicdrama:      { cell: "long",   contour: "rise",  land: "seventh", sent: "vary", len: "eight" },
+    nationalism:     { contour: "arch",  land: "fifth", sent: "aabb", len: "four" },
+    ballet:          { cell: "three",  contour: "arch",  land: "root",  sent: "aabb", len: "two" },
+    verismo:         { cell: "hang",   contour: "rise",  land: "fifth", sent: "vary", len: "eight" },
+    impressionism:   { cell: "long",   contour: "hover", land: "root",  sent: "vary", len: "four" },
   };
 
   /* ======================================================================

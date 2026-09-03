@@ -1,0 +1,139 @@
+{
+  "note": "IMPRESSIONISM — Paris 1894. Debussy, PRELUDE A L'APRES-MIDI D'UN FAUNE,\nfirst performed by the Societe Nationale de Musique on 22 December 1894\nunder Gustave Doret, and encored on the spot. Ten minutes on a Mallarme\neclogue, opening with an unaccompanied flute sliding down a tritone and\nback — a phrase that belongs to no key, over no bar anybody can count on\nfirst hearing. Boulez's line about it, that modern music begins there, is\nthe reason this row exists and not a reason to date it any differently:\nthe record is the premiere.\n\nTHE ALPHABET IS THE ROW, AND IT IS THE ONE SCALE IN THIS ENGINE NOBODY\nHAD USED. `SCALES.whole` — six equal whole tones, [0, 2, 4, 6, 8, 10] —\nhas been in the shared table since it was written and 453 rows walked\npast it. It is here because it is literally Debussy's: the whole-tone\ncollection is what the Faune's flute descends through and what Voiles is\nmade of end to end, and a scale with no semitone in it has no leading\nnote, which means no cadence, which is the sound of the whole style. No\nother row in this catalogue is going to want it, and this one cannot do\nwithout it.\n\nAND THE ARTIFACT WAS READ BACK, BECAUSE A DECLARED FIELD THAT NEVER\nARRIVES IS THIS BOX'S CHARACTERISTIC BUG. Rendered at seeds 1, 2 and 3,\nevery section and every chair, THIS RECORD SOUNDS ALL TWELVE PITCH\nCLASSES — not six. That is not the scale failing to arrive; it is the\nscale arriving and being MOVED. `diatonic` is deliberately not declared\n(the paragraph below), so the kernel shifts each phrase bodily by the\nchord's own root in semitones, and six equal tones planed by a root that\nis not one of them is the OTHER whole-tone collection: six plus six is\ntwelve. The comparison is the useful part — `symphony`, measured the same\nway, sounds eight pitch classes (its seven plus the F sharp of the V-of-V\nin bar 3). So the claim this row is entitled to is exactly this: the LINE\nis drawn from six equal tones, and the record is chromatic because those\nsix keep being carried somewhere else. Which is what planing is.\n\nTHE CHORD IS NOT A TRIAD AND THAT IS MEASURED. Over 65 files in the\nclassical rips matching Debussy, Ravel, Clair de lune, Arabesque and the\nFaune, the commonest bar chord is a MINOR SEVENTH in 19 files, a\ndominant seventh in 10, a suspension in 7 and a diminished triad in 3 —\n39 of 65 files whose default sonority is not a plain triad, against the\nsymphony set's 158 plain triads out of 197 and the variation set's 116 of\n193. Same measure, same code, opposite answer: that is the single\ncleanest contrast this round produced, and it is why every bar of `prog`\nbelow carries a seventh or a ninth and not one bar carries a bare triad.\n\nTHE REST OF THE MEASUREMENT: bpm p50 95.0 (quartiles 74.5 and 120),\n43.1% 4/4 and 12.3% in 9/8 — the Faune's own meter, and the highest 9/8\nshare of any set this round — 56.9% major, hold p50 1.0 and p90 4.0,\nmedian melodic interval 4.0 with a step fraction of 0.400.\n\nAND THE CHORDS MOVE IN PARALLEL, WHICH IS A FIELD. `diatonic` is\ndeliberately NOT declared here, and that is not an omission: with it off,\nthe kernel shifts the line by the CHORD'S OWN ROOT in semitones rather\nthan by scale degrees (`rootShiftAt`, kernel.js), so the whole phrase\nmoves bodily with the harmony instead of bending to stay in key. That is\nplaning — parallel chords sliding as a block, the gesture every listener\nidentifies this music by — and it falls out of turning one boolean off.\n\nTHE CAST IS THE FAUNE'S OWN: a flute, alone, at the top; a harp under it\n(the score has two); slow strings holding. Three chairs, `intro: \"fade\"`,\nbecause nothing in this piece begins, it is already going when you notice\nit.\n\nLINEAGE. `romantic` (Vienna 1876) 0.2 — the orchestra and the language\nbeing dissolved; `nocturne` (Paris 1835) 0.2 — Chopin's own city and the\npiano writing Debussy said he learned everything from; `symphonicpoem`\n(Weimar 1854) 0.2 — a single orchestral movement after a poem, which is\nexactly what this is on paper; `musicdrama` (Munich 1865) 0.15 — the\nchromaticism, and the young Debussy went to Bayreuth twice before\ndeciding to spend his life getting out from under it; `nationalism`\n(Prague 1874) 0.05 — the modal turn borrowed from outside the\nconservatory, which for him was a gamelan at the 1889 Exposition rather\nthan a village. 0.8 declared. THE RESIDUE IS 0.2 AND IT IS THE REFUSAL:\nharmony used for colour instead of for motion, a chord that is a place\nrather than a step on the way somewhere.",
+  "organic": true,
+  "instrumental": true,
+  "label": "Paris 1894",
+  "near": "nocturne",
+  "plan": "arc",
+  "bpm": 94,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "romantic": 0.2,
+    "nocturne": 0.2,
+    "symphonicpoem": 0.2,
+    "musicdrama": 0.15,
+    "nationalism": 0.05
+  },
+  "wants": [
+    "the gamelan Debussy heard at the 1889 Exposition Universelle — `gamelan` is in this table (Yogyakarta) and is NOT taken as a parent, because one afternoon at a world's fair is an encounter and not a descent"
+  ],
+  "cannot": [
+    "the Faune's rhythm: its opening flute is written across the bar so that nobody can hear where the beat is, and this box's bar is sixteen equal steps with a stress on the first",
+    "a ninth voiced the way Debussy voices one — `nine` stacks the ladder's own steps, which is the chord and not the spacing, and the spacing is the sound",
+    "the tritone slide the piece opens with, as a SLIDE: `tone.glide` would apply to every note this chair plays",
+    "a whole-tone HARMONY: the chord qualities are built out of the mode's own ladder, so a `nine` in lydian spells 0-4-7-11 and three of those are semitone neighbours. The scale is the melody's; the chords under it are diatonic sevenths, and the augmented triad the style is really made of is not in the quality table"
+  ],
+  "instr": [
+    "flute",
+    "harp",
+    "slow_strings"
+  ],
+  "part": [
+    "lead",
+    "riff",
+    "pad"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 0
+      }
+    ],
+    "else": 2
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    0,
+    3,
+    3,
+    5,
+    5,
+    1,
+    4
+  ],
+  "prog": [
+    {
+      "d": 0,
+      "q": "maj7"
+    },
+    {
+      "d": 0,
+      "q": "nine"
+    },
+    {
+      "d": 3,
+      "q": "maj7"
+    },
+    {
+      "d": 3,
+      "q": "nine"
+    },
+    {
+      "d": 5,
+      "q": "m7"
+    },
+    {
+      "d": 5,
+      "q": "nine"
+    },
+    {
+      "d": 1,
+      "q": "m7"
+    },
+    {
+      "d": 4,
+      "q": "nine"
+    }
+  ],
+  "mode": {
+    "$src": "MODES.lydian"
+  },
+  "scale": {
+    "$src": "SCALES.whole"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "bassInstr": "contrabass",
+  "bassStyle": "pedal",
+  "kit": {},
+  "intro": "fade",
+  "tone": {
+    "wave": "triangle",
+    "cut": 2300,
+    "q": 0.7,
+    "atk": 0.05,
+    "rel": 1.9,
+    "gain": 0.22,
+    "verb": 0.68
+  },
+  "words": [
+    "the flute, alone, coming down through six equal tones",
+    "the harp, spread under it",
+    "the strings, a colour and not a cadence"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 1 ? [spread(2), fill(2)]\n        : v === 2 ? []\n        : [[], [spread(2)], [invert(4)], [rotate(3)]][s % 4])"
+  }
+}

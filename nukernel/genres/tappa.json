@@ -1,0 +1,201 @@
+{
+  "note": "TAPPA — Lucknow 1780. The record is a court appointment: \"The tappa\nstyle of music was refined and introduced to the imperial court of the\nMughal Emperor Muhammad Shah, and later by Mian Ghulam Nabi Shori or Shori\nMian, a court singer of Asaf-Ud-Dowlah, Nawab of Awadh\" — the Tappa\narticle's own sentence. Asaf-ud-Daula ruled Awadh from 1775 and moved his\ncapital to Lucknow in 1775; 1780 is Shori Mian in that court, in that\ndecade, and the label takes the city the Nawab built rather than the\nprovince.\n\nWHAT IS ACTUALLY NEW HERE, said as a sound and not as a history. The\narticle: \"Its specialty is a rolling pace based on fast, subtle and knotty\nconstruction... Tappa originated from the folk songs of the camel riders in\nPunjab... Tappe (plural) were sung mostly by songstresses, known as\nbaigees, in royal courts.\" A camel-driver's song taken into a durbar and\nmade VERY FAST AND VERY SHORT-WINDED: the zamzama, a knotted cluster of\nnotes fired off in a breath, where a dhrupad or a khyal holds one. So this\nis the box's first Indian row whose identity is SPEED AND ARTICULATION\nrather than expansion, and it is the only one in the block that says\n`artic: \"staccato\"` and `maxHold: 1`. Every other Indian anchor in this\ntable — dhrupad, khyal, badakhyal, carnatic, kriti, varnam, filmi,\nqawwali — says `legato` or `tie`. One field, and it is the whole genre.\n\nTHE ALPHABET IS MEASURED AGAINST THE ARTICLE'S OWN THAAT, not borrowed.\nTappa's home ragas are Kafi, Bhairavi and Khamaj — the light thaats, which\nis what a semi-classical form sings in — and KAFI IS DORIAN EXACTLY:\nS R g M P D n = 0 2 3 5 7 9 10, which is `MODES.dorian` note for note. So\nthis row is the first Indian anchor here that does NOT take `DIATONIC`\n(0 2 3 5 7 8 10, the table's minor), and the difference is one note — the\nnatural sixth — which is the note that makes a Kafi tappa sound bright\nrather than grave. That is a claim a reader can check by ear against\n`dhrupad` in the same key.\n\nTHE SARANGI, AND WHY IT IS A FIDDLE HERE AND A REED ORGAN IN `khyal`.\n`khyal`'s cannot says the sarangi \"has no id\" and seats a harmonium\ninstead, which is right for Bombay 1965 and wrong for Lucknow 1780: the\nharmonium is a European free-reed box that arrived with the missionaries a\ncentury after this record. The bowed shadow is what a baigee actually had,\nso this row seats `fiddle` and names the two things the model does not\nhave — the sympathetic strings that ring under a sarangi's three gut\nmelody strings, and the fingernail-side stopping that gives it its cry.\n\nTHE CORPUS IS SILENT AND IT IS SAID OUT LOUD. \"tappa\", \"zamzama\", \"shori\",\n\"baiji\", \"awadh\" and \"punjabi tappa\" return ZERO files out of 120,652.\nChordonomicon has no tappa row at all. `bpm: 116` is therefore a CHOICE\nand its reason is the article's word \"rolling\": fast enough that a\nsixteenth cluster is a blur and slow enough that a sixteen-matra cycle is\nstill countable. `orn.grace: 0.7` is the highest in this block by a wide\nmargin and is the zamzama's crude proxy.\n\nTHE PUNJABI THEKA, WRITTEN OUT. Sixteen matras with a LIMP: dha - - dha /\ndha - dhin dha / dha - - dha (khali: ta) / ta - dhin dha. The bass stroke\nfalls in threes against a bar of four, which is why a tappa's tabla sounds\nlike it is leaning forward and a tintal does not, and it is the one thing\nin this row that is rhythm rather than speed.\n\nLINEAGE: a declared ROOT. The ancestors are in `wants`: the Punjabi\ncamel-drivers' song the article names as the source, and the Awadh durbar's\nown light-classical repertory. Neither has an anchor. `dhrupad` and\n`khyal` are both dated by twentieth-century recordings in this table and\nso cannot be parents of a 1780 record; `badakhyal` (Delhi 1740) COULD be\nand is deliberately not — a camel-driver's song refined by a Punjabi singer\nin Lucknow did not come out of Sadarang's vilambit, it arrived beside it and\nwent the other way.",
+  "label": "Lucknow 1780",
+  "voices": 3,
+  "bars": 8,
+  "near": "khyal",
+  "plan": "song",
+  "bpm": 116,
+  "parents": {},
+  "wants": [
+    "the camel-drivers' songs of Punjab, which the article names as the source",
+    "the Awadh durbar's light-classical repertory, and the baigees who sang it",
+    "Nidhu Babu's Bengali tappa, the branch that grew out of this one"
+  ],
+  "cannot": [
+    "the zamzama — the knotted, fired-off cluster that IS this genre is a way of MOVING BETWEEN pitches, and this box writes a note and a gate; `staccato`, `maxHold: 1` and a heavy `grace` are the shape of it and not the thing",
+    "a raga is not a scale — the standing admission; Kafi is dorian's seven notes and a raga is a repertory of phrases",
+    "the sarangi — three gut melody strings stopped with the side of the fingernail over some thirty-five sympathetics; `fiddle` below is bowed and fretless and has neither"
+  ],
+  "instr": [
+    "solo_vox",
+    "fiddle",
+    "sitar"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": 1
+      },
+      {
+        "at": 2,
+        "then": 0
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 1,
+        "then": -1
+      },
+      {
+        "at": 2,
+        "then": -2
+      }
+    ],
+    "else": 0
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 2,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "part": [
+    "lead",
+    "counter",
+    "pad"
+  ],
+  "nobass": true,
+  "harmony": "modal",
+  "intro": "solo",
+  "kit": {
+    "k": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+    ],
+    "p": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ],
+    "h": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  "kitVel": {
+    "p": [
+      9,
+      0,
+      4,
+      5,
+      7,
+      0,
+      4,
+      5,
+      6,
+      0,
+      4,
+      5,
+      7,
+      0,
+      4,
+      6
+    ]
+  },
+  "fill": {
+    "p": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  "scale": {
+    "$src": "MODES.dorian"
+  },
+  "mode": {
+    "$src": "MODES.dorian"
+  },
+  "artic": "staccato",
+  "maxHold": 1,
+  "incClamp": 3,
+  "orn": {
+    "grace": 0.7,
+    "pass": 0.4
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.9,
+    "atk": 0.008,
+    "rel": 0.7,
+    "gain": 0.25,
+    "verb": 0.3,
+    "mouth": {
+      "$src": "MOUTHS.bulgar"
+    }
+  },
+  "words": [
+    "the tappa, knotted and fired off in a breath",
+    "the sarangi, a beat behind and half a phrase short",
+    "the tanpura"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0\n          ? [[fill(2)], [fill(4)], [fill(2), rotate(2)], [fill(4), reverse()]][s % 4]\n        : v === 1 ? [drop(4), transpose(-5)]\n        : [drop(12)])"
+  }
+}

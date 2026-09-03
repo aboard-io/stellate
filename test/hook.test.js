@@ -218,6 +218,31 @@ ok("iranpop: 10 rewrites, >= 8 distinct hooks and >= 5 distinct rhythms", () => 
    improvising, which is the one thing the row exists to refuse. */
 const FROZEN_RHYTHM = ["ambient", "arabesk", "artrock", "beiruttarab",
                        "chamberpop",
+                       /* ...AND THE WESTERN CLASSICAL ROUND'S FOUR
+                          (2026-09-03, Paul: "we should have lots of
+                          representative classical genres"). All four state a
+                          `long` cell — two onsets a bar, this box's sparsest —
+                          and a two-onset bar has one rhythm, so they compose
+                          the same figure at every seed and move their DEGREES
+                          instead, which is the decision `chamberpop`,
+                          `artrock`, `epichybrid` and `nordicscore` are already
+                          on this list for. FOR THESE FOUR IT IS NOT A
+                          CONCESSION, IT IS THE SUBJECT: a Song Without Words,
+                          a symphonic poem's motto, a Wagnerian line and a
+                          Debussy phrase are WRITTEN SCORES, and a written
+                          score whose rhythm re-rolled every reading would be
+                          somebody improvising over it.
+                          AND THE FIFTH ROW OF THAT BATCH IS DELIBERATELY NOT
+                          HERE: `verismo` was drafted with the same `long` cell,
+                          this sweep froze it, and it took `hang` instead —
+                          hiphopsoul2's ruling one batch earlier, applied to
+                          the one row of the five with a person singing on it.
+                          (It also settled which field owns the freeze: the
+                          CELL, not the sentence. musicdrama was written with
+                          `sent: "vary"` on purpose to stay off this list and
+                          froze anyway; precompose.js's own comment now says
+                          so.) */
+                       "characterpiece",
                        // ...and the soundtrack round's two (2026-09-01), each
                        // frozen BY ITS OWN CLAIM: `epichybrid`'s braam is
                        // "one note, most of a bar" (IDIOM_ANCHOR cell `long`
@@ -240,7 +265,10 @@ const FROZEN_RHYTHM = ["ambient", "arabesk", "artrock", "beiruttarab",
                        "chopped", "copshowsynth", "doom", "dreampop", "drone",
                        "dub", "dubstep", "enka", "epichybrid",
                        "furnituremusic", "gagaku", "gothicrock", "gqom",
-                       "hohlefels", "hurrian", "knowlewest", "modaljazz",
+                       "hohlefels", "hurrian",
+                       "impressionism",                 // the classical round
+                       "knowlewest", "modaljazz",
+                       "musicdrama",                    // the classical round
                        "nordicjazz", "nordicscore", "ottoman", "postbritpop",
                        // ...AND THE MOTOWN ROUND'S ONE (2026-09-03, Paul:
                        // "Some things missing include a lot of motown").
@@ -277,6 +305,7 @@ const FROZEN_RHYTHM = ["ambient", "arabesk", "artrock", "beiruttarab",
                        // filtered out of the sweep, because the list is a
                        // record of decisions and this is one.
                        "silence", "smoothjazz",
+                       "symphonicpoem",                 // the classical round
                        // ...AND THE MIDI-CORPUS ROUND'S TWO (2026-09-02), and
                        // they are both the SAME decision the list already
                        // holds for artrock, nordicscore and epichybrid: a
@@ -376,7 +405,19 @@ ok("idiom respect: every stated axis holds in every slot at every reading", () =
      contour pin, the density band and the release axis fence exactly as
      they did. */
   assert.strictEqual(P.CELL_BAR_CEILING, 2, "this gate reads up-to-two-bar cells");
-  const CBS = [1, 2], steps = 16;
+  /* ...AND THE BAR IS NOT ALWAYS SIXTEEN STEPS (2026-09-03, the classical
+     round). This line read `steps = 16` and built every anchor's legal space
+     in a sixteen-step bar, which was true of every IDIOM_ANCHOR row that had
+     ever existed — none of them declared a `meter`. `nationalism` (Prague
+     1874) is the first that does: its bar is TWELVE steps (kernel METERS.six),
+     so its composed cells are 12 or 24 long and could not be in a space built
+     at 16 whatever it said about itself. The gate was fencing the wrong bar,
+     not catching a wrong cell. `stepsIn` is the kernel's own answer to "how
+     long is this genre's bar" and is what precompose composes through, so the
+     space is now built at the row's own step count and the fence is the same
+     fence for a twelve-step bar as for a sixteen. */
+  const CBS = [1, 2];
+  const stepsOf = (G) => K.stepsIn(G);
   const CONT = Object.keys(Id.CONTOURS), LAND = Object.keys(Id.LANDINGS);
   const rows = Object.keys(P.IDIOM_ANCHOR).filter((g) => ANCHORS.includes(g));
   // EVERY SLOT, not only the hook: a KIND's own word pins every axis it
@@ -386,7 +427,17 @@ ok("idiom respect: every stated axis holds in every slot at every reading", () =
   const spaceFor = (g, k) => {
     const ck = g + "/" + k;
     if (spaceCache.has(ck)) return spaceCache.get(ck);
-    const own = P.IDIOM_ANCHOR[g], G = GENRES[g], row = P.idiomOf(g).row;
+    const own = P.IDIOM_ANCHOR[g], G = GENRES[g], row0 = P.idiomOf(g).row;
+    /* ...AND THE THEME COUNTS WITH THE RECORD (2026-09-03). precompose's own
+       line is `const row = met ? { ...row0, met } : row0` — under a declared
+       meter the idiom row carries the meter and ideas-kit's `metOf` regrids
+       every cell through it. This gate built its space off the bare row, so
+       for a twelve-step anchor it enumerated sixteen-step figures and then
+       asserted that a twelve-step one was not among them, which is true and
+       is not a finding about the anchor. Same two lines as precompose, on
+       purpose: the fence has to count in the bar the record is in. */
+    const met = G.meter ? K.METERS[G.meter] : null;
+    const row = met ? { ...row0, met } : row0;
     const kind = P.KINDS[k] || {};
     // THE FIGURE is `cellPool` above — a kind's word bands as wide as the
     // bands either side of it since 2026-08-27, an anchor's word as wide as
@@ -437,7 +488,7 @@ ok("idiom respect: every stated axis holds in every slot at every reading", () =
         for (const ct of pool("contour", CONT))
           for (const l of pool("land", LAND))
             for (const rl of RELS)
-              legal.add(J(P.cellOf(row, k, cb, G, steps,
+              legal.add(J(P.cellOf(row, k, cb, G, stepsOf(G),
                                    { cell: c, contour: ct, land: l }, rl).cell));
     spaceCache.set(ck, legal);
     return legal;
@@ -469,7 +520,21 @@ ok("idiom respect: every stated axis holds in every slot at every reading", () =
         // SET of bands now and not one word: a kind's figure may sit in the
         // band either side of its own, and the anchor's band is the fence
         // around that when the anchor has one.
-        const want = new Set(cellPool(g, k).map(bandOf));
+        /* ...AND UNDER A DECLARED METER THE BAND IS READ OFF THE COMPOSED CELL,
+       NOT OFF THE 16-STEP DEFINITION (2026-09-03, the classical round). The
+       four band words are onset counts — two, three, five — written for the
+       sixteen-step bar every anchor had until `nationalism` (Prague 1874)
+       declared `meter: "six"`. ideas-kit regrids a cell into the twelve-step
+       bar and the regrid is not proportional: `even` loses a quarter of its
+       onsets and `three` keeps all three, so neither the raw count nor a
+       16/12 rescale of it is the same claim. Both were tried and both moved
+       rows that had not moved. The honest fence is the one this gate already
+       builds: `legal` is every cell the pool composes THROUGH THIS RECORD'S
+       OWN GRID, so its bands are the bands the record can reach. Sixteen-step
+       records keep the old expression exactly, byte for byte. */
+    const want = GENRES[g].meter
+      ? new Set([...legal].map((x) => bandOfCell(JSON.parse(x))))
+      : new Set(cellPool(g, k).map(bandOf));
         const got = bandOfCell(c);
         if (!want.has(got)) bandBust.push(g + "/" + s + "/" + k + " " + got +
           " not in " + [...want].join("|"));

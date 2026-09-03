@@ -1,0 +1,100 @@
+{
+  "note": "ETUDE — Paris 1833. Chopin, DOUZE GRANDES ETUDES op. 10, published by\nMaurice Schlesinger in Paris in June 1833 and dedicated \"a son ami F.\nLiszt\". The founding record is the print, and the invention it announces\nis a contradiction: an EXERCISE that is a concert piece. Before it, a\nstudy was a page a pupil worked at and nobody paid to hear; op. 10 no. 1\nis an arpeggio drill for the right hand covering a tenth, and it is also\na piece of music you would sell tickets to.\n\nONE FIGURE, FOR THE WHOLE PIECE, WITHOUT ONE INTERRUPTION — that is the\nform, and this is the only row in the catalogue whose idiom sentence is\n`plain` for that reason: no variation, no departure, the same shape\ntransposed through the harmony until it stops. `sent: \"vary\"` would be a\ndifferent genre. THE ROW IS TWO CHAIRS, both the same grand: the figure\n(`riff`, low, `fill(2)` — every step filled, this box's continuous\nmotion) and the melody the figure implies, which in most of op. 10 is not\na separate line at all but the top note of each arpeggio. The row makes\nit a chair because the box cannot hear a melody inside a texture.\n\nMEASURED, AND THE NUMBER THAT MATTERS IS THE HOLD. 234 files in the\nclassical rips match the Chopin-etude terms; the wider `etude`/`estudio`\nset is 289 and the two agree everywhere below. Hold p25 0.833, p50 1.0\nand P90 3.0 SIXTEENTHS — the shortest p90 measured in this entire batch,\nagainst 4.0 for eleven of the other fourteen rows and 6.833 for the\nsymphony. Nothing in an etude is held. `maxHold: 3` is that p90 read\nstraight. Syncopation 0.435 and a median melodic interval of 4.0\nsemitones with a step fraction of 0.367: the line is an arpeggio, off the\nbeat, which is exactly what a figuration study is. bpm p50 105.0\n(quartiles 80 and 136); 65.0% major.\n\nSAID OUT LOUD ABOUT THAT CORPUS: 160 of the 234 files are in\n`classical_guitar`, which means the set is heavy with Sor, Giuliani,\nCarcassi and Villa-Lobos studies rather than Chopin's. That is not\ncontamination for this row's purpose — a guitar study is the same\nmusical object, one figure held for a page — and the numbers from the\n69 `classical_greats` files alone move none of the four readings above by\nmore than a tenth. It is stated because a reader who reruns the match\nshould know what they are looking at.\n\nCONTOUR `arpwide`, WHICH IS LITERAL. Op. 10 no. 1's right hand spans a\ntenth every beat; `arpwide` is the widest arpeggio shape the ideas kit\nhas, and this is the row it was waiting for.\n\nLINEAGE. `classical` (Vienna 1785) 0.35 — the keyboard writing and the\nharmonic frame; `nocturne` is TWO YEARS LATER (Paris 1835) and cannot be\na parent, though it is the same man and the same city and its own row\nalready says the salon is the room; `concerto` (Venice 1725) 0.2 — the\nsequence, which is the engine of every etude: one figure walked down a\ncircle of fifths; `counterpoint` (Vienna 1725) 0.1 — the Bach preludes,\nwhich are the honest ancestor of a piece built out of one arpeggio and\nwhich Chopin played every day. 0.65 declared. THE RESIDUE IS 0.35 AND IT\nIS THE PREMISE ITSELF: the idea that the mechanical difficulty of an\nexercise could be the SUBJECT of a piece rather than its scaffolding, and\nthat a room would pay to watch somebody solve it.",
+  "organic": true,
+  "instrumental": true,
+  "label": "Paris 1833",
+  "near": "nocturne",
+  "plan": "arc",
+  "bpm": 105,
+  "bars": 8,
+  "voices": 2,
+  "parents": {
+    "classical": 0.35,
+    "concerto": 0.2,
+    "counterpoint": 0.1
+  },
+  "wants": [
+    "the pedagogical study — Clementi's Gradus ad Parnassum and Cramer's studies, the exercise books this form is a joke about, which this table has no row for"
+  ],
+  "cannot": [
+    "the hand span: op. 10 no. 1 covers a tenth in every beat and this box's arpeggio walks the ladder it is given",
+    "the point of the genre, which is a DIFFICULTY — nothing here is hard to play, so the row can render the figure and not the feat"
+  ],
+  "instr": [
+    "yamaha_grand_piano",
+    "yamaha_grand_piano"
+  ],
+  "part": [
+    "riff",
+    "lead"
+  ],
+  "entry": {
+    "kind": "const",
+    "n": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      -1,
+      1
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "nobass": true,
+  "roots": [
+    0,
+    0,
+    5,
+    5,
+    3,
+    3,
+    4,
+    4
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "maxHold": 3,
+  "kit": {},
+  "intro": "cold",
+  "tone": {
+    "wave": "triangle",
+    "cut": 3200,
+    "q": 0.7,
+    "atk": 0.003,
+    "rel": 0.5,
+    "gain": 0.26,
+    "verb": 0.22
+  },
+  "words": [
+    "the figure — one shape, every bar, no interruption",
+    "the melody the top of the figure makes"
+  ],
+  "word": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": {
+          "$src": "[fill(2)]"
+        }
+      },
+      {
+        "at": 1,
+        "then": {
+          "$src": "[transpose(12), drop(2)]"
+        }
+      }
+    ],
+    "else": {
+      "$src": "[]"
+    }
+  }
+}

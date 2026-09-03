@@ -1,0 +1,133 @@
+{
+  "note": "SYMPHONY — Vienna 1788. Mozart's last three, K. 543, K. 550 and\nK. 551, entered in his own thematic catalogue on 26 June, 25 July and\n10 August 1788 — three symphonies in nine weeks, with no commission\nanybody has ever found and no performance anybody can date. That is the\nfounding record this row takes: not a premiere, because there may not\nhave been one, but a SCORE, and the year is the year the composer wrote\nin his own book.\n\nWHY NOT MANNHEIM 1750, WHICH WAS THE OTHER CANDIDATE AND IS THE HONEST\nINVENTOR. Johann Stamitz's band at the Palatine court is where the\nfour-movement plan, the wind section as a section, and the famous\ncrescendo were assembled, and a row dated there would be the truer\nhistory. It is refused for two reasons said out loud. First, the\nINSTRUMENT: Mannheim's invention was an ORCHESTRA — forty players who\ncould swell together — and this box seats four chairs, so the one thing\nthat dot would be for is the one thing it cannot render. Second, the\nEVIDENCE: the corpus holds not one Stamitz file, and 197 files under the\nword `symphony`. A row dated at a place the archive has never heard of,\nfor a fact the engine cannot play, is a claim with nothing under it.\nMannheim is paid in `wants` instead, by name, which is what that field\nis for (GENRES.md §2).\n\nTHE CORPUS, AND THE FOUNDING RECORD IS IN IT. Fifteen files carry the\nlast three symphonies (K. 543 four movements, K. 550 four plus two\nseparate transcriptions of the first, K. 551 four): bpm p50 138.0 with\nquartiles 132 and 180, meters 4/4 26.7% / 3/4 26.7% / 2/4 13.3%, 60%\nmajor, ZERO files with a drum channel. The wider set — 197 files whose\nname says `symphony`, from Haydn's Clock to Dvorak's Seventh — reads bpm\np50 138.0 as well, the two medians agreeing to the tenth, 79.7% major,\n3/4 29.4% and 4/4 26.4%, and 158 of 197 files whose commonest bar chord\nis a PLAIN TRIAD. That last number is this row's alphabet: the symphony\nis the least chromatic music in this whole batch, and `impressionism`\n(Paris 1894), measured the same way, comes back seventh-chorded on 39\nof 65. (The Bach three-part SINFONIAS, BWV 787-801, matched the first\nregex and were CUT: they are keyboard inventions with a Latin name, not\norchestra music, and leaving them in moved the meter tally by six\npoints.)\n\nAND THE LINE STEPS AND STARTS BEFORE THE BAR. Median absolute melodic\ninterval 2.0 semitones, step fraction 0.748, hold p50 2.0 and p90 6.833\nsixteenths — the LONGEST held line measured anywhere in this batch,\nwhich is why `maxHold` is 6 and not the 4 every piano row here takes.\nThe pickup rate is 0.144, the highest of the fifteen sets measured for\nthis round, and it is why the idiom row below says `pickup`: a symphonic\nsubject starts on the upbeat, and the archive says so file by file.\n\nTHE FORM IS THE ARGUMENT AND THE BOX CAN SAY HALF OF IT. `roots` here\nis a sonata EXPOSITION and it is the only row in this catalogue whose\neight bars do not come home: I, I, to the dominant, second subject on\nthe dominant, and it ENDS there, on V, where `classical` (Vienna 1785)\nand every dance row in the table close on 0. What the box can do: state\na subject, drive it to the dominant with a real V-of-V (`prog` bar 3, a\ndom7 on degree 1), put a second, quieter idea over there, and take the\nfirst one apart in the middle sections — which is what the `word`\nformula does at s % 3 === 2, excerpting the first four steps of the\nsubject and rotating them. That is a development section written in\noperators.\n\nWHAT IT CANNOT, and this is the whole distance between the row and the\nform: a real MODULATION. `roots` moves a DEGREE inside one mode, so the\nsecond subject arrives on the dominant CHORD and not in the dominant\nKEY, and the architecture that the eighteenth century built the genre\nout of — leave home, live somewhere else for five minutes, come back —\nis a key change this box does not have. The row says the shape of it and\nnot the fact of it, and pretending otherwise would be the caricature.\n\nTHE CAST IS FOUR AND THE ORCHESTRA IS FORTY. Strings as the body,\nfirst violins with the subject, a flute answering (the winds are one\nchair, and in 1788 they are two oboes, two bassoons, two horns and a\nflute), horns holding the dominant under the cadence. `organic: true`\nfor `concerto`'s reason, stated once: these are recordings of bowed and\nblown instruments and the modelled violin is documented upstream as the\none model whose loudness is not monotone in bow force.\n\nLINEAGE. `classical` (Vienna 1785) 0.45 — the same city, three years\nearlier, the same man, and the galant language entire; that row is the\npiano's version of this one and says so. `concerto` (Venice 1725) 0.25 —\nthe ritornello alternation of tutti and solo is the symphony's own\ninheritance, and this row's entry schedule is that alternation.\n`counterpoint` (Vienna 1725) 0.15 — the Jupiter's finale is a fugue and\nthe development sections of all three are fugato. 0.85 declared. THE\nRESIDUE IS 0.15 AND IT IS THE ORCHESTRA ITSELF: a body of strings that\ncan get louder without anybody playing more notes, which is Mannheim's\ninvention, is not in any parent above and is not in this engine\neither.",
+  "organic": true,
+  "instrumental": true,
+  "label": "Vienna 1788",
+  "near": "classical",
+  "plan": "arc",
+  "bpm": 138,
+  "bars": 8,
+  "voices": 4,
+  "parents": {
+    "classical": 0.45,
+    "concerto": 0.25,
+    "counterpoint": 0.15
+  },
+  "wants": [
+    "the Mannheim orchestra — Stamitz's band at the Palatine court, the four-movement plan and the crescendo, which this table has no row for and this engine has no chairs for"
+  ],
+  "cannot": [
+    "a real modulation — `roots` moves the DEGREE inside one mode, so the second subject arrives on the dominant CHORD and not in the dominant KEY, and the exposition's whole architecture is a key change this box cannot make",
+    "the crescendo the genre was invented for: a body of strings getting louder together, where this engine deals dynamics per section",
+    "timpani — the kit has twelve fixed lanes and no timpani file, `romantic`'s own ruling, and casting one as a pitched voice would make it melodic"
+  ],
+  "instr": [
+    "strings",
+    "violin",
+    "flute",
+    "french_horns"
+  ],
+  "part": [
+    "pad",
+    "lead",
+    "counter",
+    "riff"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      0,
+      0,
+      2,
+      4
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      -1,
+      1,
+      1,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    0,
+    4,
+    4,
+    4,
+    1,
+    4,
+    4
+  ],
+  "prog": [
+    {
+      "d": 0
+    },
+    {
+      "d": 0
+    },
+    {
+      "d": 1,
+      "q": "dom7"
+    },
+    {
+      "d": 4
+    },
+    {
+      "d": 4
+    },
+    {
+      "d": 1
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 4
+    }
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "SCALES.major"
+  },
+  "diatonic": true,
+  "maxHold": 6,
+  "bassInstr": "contrabass",
+  "bassStyle": "eighths",
+  "kit": {},
+  "intro": "stabs",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2600,
+    "q": 0.9,
+    "atk": 0.02,
+    "rel": 1.2,
+    "gain": 0.24,
+    "verb": 0.5
+  },
+  "words": [
+    "the body of strings",
+    "first violins, the subject",
+    "the flute, answering",
+    "the horns, holding the dominant"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 1 ? (s % 3 === 2 ? [excerpt(0, 4), rotate(2)] : [])\n                    : v === 2 ? [transpose(12), drop(3)]\n                    : v === 3 ? [keep(0, 8)]\n                    : [])"
+  }
+}

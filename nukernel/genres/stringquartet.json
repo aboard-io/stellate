@@ -1,0 +1,92 @@
+{
+  "note": "STRING QUARTET — Vienna 1782. Haydn, the six quartets of op. 33,\npublished in Vienna by Artaria that year and hawked by the composer\nhimself in a letter to subscribers as written \"in a quite new, special\nmanner\". The sentence is the founding record: a man announcing that four\nstring players have stopped being a small orchestra and become four\npeople talking. Not op. 20 (Eszterhaza 1772), which is where the cello\nwas let out of the bass and the fugal finales were tried; that set is\nthe experiment and this one is the announcement, and a table dated by\nNAMED PUBLISHED RECORDS takes the one with a date and a printer on it.\nEszterhaza would also be a new dot on a map that already carries Vienna.\n\nTHE INVENTION IS THAT NOBODY ACCOMPANIES. Every other art-music row in\nthis catalogue seats a PAD — `classical` puts strings under the piano,\n`concerto` a harpsichord under the violin, `romantic` a body of strings\nunder the cello, `symphony` (Vienna 1788) the same. This row's `realize`\nis `const line` and that is the whole argument in one field: four chairs,\nfour independent lines, no held chord anywhere in the record. It is the\nonly row in the Western art block that says it.\n\nTHE ENTRY SCHEDULE IS THE CONVERSATION. 0, 2, 4, 6 — each voice comes in\ntwo bars after the one above it, so within one eight-bar section all four\nhave entered and the last one is still speaking when the section ends.\n(Precompose restarts entries every section, which is why an eight-voice\nsweep can never finish here and a four-voice one can: the sweep is\nmeasured against the section, not the record.)\n\nMEASURED. Twenty-nine files in the classical rips carry `quartet`,\n`quartett` or `cuartet`: bpm p50 118.0 (quartiles 62 and 156 — a set of\nmovements, fast and slow), 75.9% major, meters 3/4 31.0% and 2/4 27.6%\nwith 4/4 at only 10.3%, and ZERO drum channels. Two numbers separate this\nset from the symphony's 197: the median absolute melodic interval is 2.85\nsemitones against 2.53, and syncopation is 0.265 against 0.190 — the\nquartet's line leaps more and lands off the beat more, which is what an\ninner voice does when it is answering rather than doubling. Hold p50 1.0\nand p90 4.0, so `maxHold` is the p90 read straight. 22 of 29 files vote a\none-bar harmonic period, which is a SLOW harmonic rhythm — a root held\nacross the bar rather than a chord change inside it — and the eight roots\nbelow move once a bar and never twice.\n\nTHE CELLO IS THE BASS AND THERE IS NO FIFTH PLAYER. `nobass: true`, for\n`classical`'s stated reason one field over (\"the left hand IS the bass\"):\na pizzicato bass under a string quartet is a fifth man in a room built\nfor four. The cello chair sits at reg -1 and does the job.\n\nLINEAGE. `classical` (Vienna 1785) is THREE YEARS LATER than this row and\ntherefore cannot be its parent — the not-later law, and the direction is\nthe useful fact here: the quartet came first and the galant piano style\nis its sibling, not its ancestor. So: `concerto` (Venice 1725) 0.35, the\nItalian string writing and the ritornello habit these six pieces are\nstill full of; `counterpoint` (Vienna 1725) 0.30, Fux's own city and\nbook, and op. 33's finales are where Haydn puts the species writing back\ninto a drawing room; `pavane` (Antwerp 1551) 0.10, the four-part dance\nconsort that is the ensemble's actual ancestor. 0.75 declared. THE\nRESIDUE IS 0.25 AND IT IS THE MANNER THE LETTER ADVERTISED: four equal\nvoices, a joke you have to follow all four parts to get, and the\nminuet-and-trio replaced by a scherzo. None of that is in the three\nparents and the sales letter is right that it was new.",
+  "organic": true,
+  "instrumental": true,
+  "label": "Vienna 1782",
+  "near": "concerto",
+  "plan": "arc",
+  "bpm": 118,
+  "bars": 8,
+  "voices": 4,
+  "parents": {
+    "concerto": 0.35,
+    "counterpoint": 0.3,
+    "pavane": 0.1
+  },
+  "wants": [
+    "the divertimento and the cassation — the outdoor five-movement entertainment op. 33 is arguing with, which this table has no row for"
+  ],
+  "cannot": [
+    "the minuet and trio, and the scherzo that replaced it: a dance movement is a MOVEMENT, and this box composes one record with one meter",
+    "the double bar and the written repeat — every quartet exposition is played twice and this row plays it once"
+  ],
+  "instr": [
+    "violin",
+    "violin",
+    "viola",
+    "cello"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      0,
+      2,
+      4,
+      6
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      0,
+      0,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "nobass": true,
+  "roots": [
+    0,
+    0,
+    4,
+    4,
+    5,
+    1,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "kit": {},
+  "intro": "cold",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 0.9,
+    "atk": 0.03,
+    "rel": 0.9,
+    "gain": 0.22,
+    "verb": 0.4
+  },
+  "words": [
+    "the first violin, the subject",
+    "the second violin, the same figure a bar behind",
+    "the viola, inside, filling what the other two leave",
+    "the cello, the bass line and a voice at once"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 0 ? []\n        : v === 1 ? [rotate(2)]\n        : v === 2 ? [transpose(-5), drop(3)]\n        : [transpose(-12), keep(0, 6, 12)])"
+  }
+}

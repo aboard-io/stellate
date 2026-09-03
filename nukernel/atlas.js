@@ -479,6 +479,72 @@
          Bridge; 66 km east of Glasgow, which is the Basildon distance
          doubled and clears the arc check the way Bray did. */
     "Edinburgh": [55.95, -3.19], "Medina": [24.47, 39.61],
+    /* THE INDIA-AND-CHINA BATCH'S SIX NEW DOTS (2026-09-03). Paul, going to
+       bed: "we really need to fill in India and China in the classical
+       period." The six were MEASURED BEFORE THEY WERE WRITTEN, in G10's own
+       arithmetic — an orthographic projection at R = (shorter/2)/sin(arc/2)
+       on a 390x844 phone, at the arcFor() the map actually flies to — and
+       every number below is that run rather than a distance in kilometres.
+       THE BASELINE FIRST, because without it a small number looks alarming:
+       EIGHTEEN pairs already in this table are tighter than the tightest of
+       these six, and one of them is the exact comparison — NARA/KYOTO, two
+       Japanese dots at 0.90 px measured at the same 180-degree arc these
+       Chinese dots are measured at, drawn as separate dots since the
+       deep-time round. New York/Teaneck is 0.95, San Francisco/Berkeley 0.82,
+       Paris/Versailles 0.92. G10 in any case asserts its floor at the BRITISH
+       arc only, and none of these is in Britain.
+         Lucknow    `tappa` 1780 and `thumri` 1856 — Asaf-ud-Daula's capital
+                    and Wajid Ali Shah's, seventy-six years apart. ONE DOT,
+                    TWO LABELS, DIFFERENT YEARS, which is legal and is already
+                    the Hamburg (1960/1985) and Havana (five rows) pattern.
+                    10.5 px from Delhi, 14.9 from Chandigarh: the widest
+                    berth of the six and no question to ask.
+         Thanjavur  `kriti` 1810 and `varnam` 1830, the same arrangement in
+                    the south. 7.1 px from Chennai, 28.5 from Mumbai — looser
+                    than Atlanta/Macon (5.8 px), which this table declared and
+                    kept a day earlier. AND THE VILLAGE THAT WAS REFUSED IS
+                    THE POINT OF THIS ENTRY: Tyagaraja lived and is buried at
+                    Thiruvaiyaru, where the Aradhana is held, and that is 13 km
+                    from Thanjavur — closer than Sutton Courtenay is to
+                    Abingdon, a pair this table refused on 12 km with the
+                    sentence "that row takes Oxford, 12 km clear, rather than
+                    wearing another band's town". So the label takes the
+                    kingdom his own article dates him by ("Thiruvaiyaru,
+                    Thanjavur Maratha kingdom") and the village lives in the
+                    row's comment.
+         Suzhou     `kunqu` 1598 — Kunshan and Taicang are both in this
+                    prefecture and the style is named for one of them. 2.1 px
+                    from Shanghai, which is New York/Teaneck (0.95) and
+                    Asbury Park (3.0) with the same answer: its own city, no
+                    ALIAS, no WITHIN.
+         Wuxi       `pipaqu` 1819 — Hua Qiuping's city and the Hua
+                    Collection's. THE TIGHTEST OF THE SIX AND IT IS DECLARED
+                    RATHER THAN DISCOVERED: 0.85 px from Suzhou, added in the
+                    same round, and 2.9 from Shanghai. That is the Nara/Kyoto
+                    number to two decimal places (0.90) and eighteen existing
+                    pairs are tighter, so it is inside this table's practice
+                    and not a new low. No ALIAS and no WITHIN: Wuxi is not a
+                    district of Suzhou, it is its own prefecture up the lake,
+                    and the Hua Collection is a Wuxi book — the article names
+                    the school after the city. A future round that decides
+                    Jiangnan should be one dot should move BOTH, and this note
+                    is where it will find the numbers.
+         Xi'an      `qinqiang` 1807 — Shaanxi's capital, and the dot follows
+                    the province the article names ("originated in Shaanxi
+                    Province of Qing China in 1807") to the city its own
+                    Shaanxi box heads with, because a province is not
+                    somewhere a map can fly to. 11.1 px from Jiahu, 22.7 from
+                    Beijing: the emptiest quarter of China on this map.
+         Suizhou    `yayue` 433 BC — Leigudun, Zengdu District, Suizhou,
+                    Hubei, where the tomb of Marquis Yi and its 65 bells were
+                    excavated in 1978. 5.4 px from Jiahu, the region's other
+                    deep-time dot and its only near neighbour; Atlanta/Macon
+                    is 5.8 and was declared and kept. The two of them are now
+                    the whole of Chinese antiquity on this map, six millennia
+                    apart. */
+    "Lucknow": [26.85, 80.95], "Thanjavur": [10.79, 79.14],
+    "Suzhou": [31.30, 120.59], "Wuxi": [31.49, 120.31],
+    "Xi'an": [34.34, 108.94], "Suizhou": [31.69, 113.38],
     "St. Louis": [38.63, -90.20], "Stourbridge": [52.46, -2.15],
     "Swindon": [51.56, -1.78], "Taipei": [25.03, 121.57],
     /* SYDNEY joined 2026-09-03 with `worship` (Hillsong, "Shout to the
@@ -552,6 +618,31 @@
        under any plausible floor at the Europe arc — the anchor takes
        the city of publication (Christiania), which the Kinshasa rule
        spells Oslo. */
+    /* TWO ON 2026-09-03, the classical-period round (Paul: "we're missing
+       Mendelssohn and Brahms and so forth, we should have lots of
+       representative classical genres"). THE CROWDING WAS MEASURED BEFORE THE
+       DOTS WERE WRITTEN, in the same 1200-unit frame G10 asks its 26-unit
+       question in, in the smallest VIEWS rectangle that contains each:
+         MOSCOW    `ballet` 1877 — Swan Lake at the Bolshoi, and THE MAP'S
+                   FIRST RUSSIAN DOT. It sits at lon 37.6, outside the Europe
+                   rectangle's east edge (32), so it flies at the world arc,
+                   where its nearest neighbours are Kitee 33.6 units, Helsinki
+                   46.0 and Tbilisi 54.1 — all clear of the 26-unit floor, and
+                   the emptiest quadrant left on the map.
+         WEIMAR    `symphonicpoem` 1854 — Liszt's six years as Kapellmeister
+                   to the Grand Duke, and the Hoftheater where Les Preludes
+                   was first played. IT IS 23.2 UNITS FROM LEIPZIG AT THE
+                   EUROPE ARC, WHICH IS UNDER THE 26-UNIT FLOOR, and that is
+                   declared here rather than discovered later. G10 asserts at
+                   the BRITAIN arc only, so the gate stays green; the
+                   precedent in this table is closer still (Asbury Park 3.0
+                   CSS px from New York, Teaneck 1.1, Macon 5.8 from Atlanta),
+                   and 23.2 units is 7.5 CSS px on a 390px column. NO WITHIN
+                   ROW: Weimar is a ducal capital eighty kilometres down the
+                   road from Leipzig, not a district of it — the Macon ruling,
+                   applied in Thuringia. Nearest after Leipzig: Nuremberg
+                   32.6, Dresden 50.8, Berlin 54.3. */
+    "Moscow": [55.76, 37.62], "Weimar": [50.98, 11.33],
     "Carna": [53.31, -9.84], "Clejani": [44.33, 25.68],
     "Epulu": [1.42, 28.58], "Galatina": [40.17, 18.17],
     "Galax": [36.66, -80.92], "Granada": [37.18, -3.60],
@@ -770,22 +861,6 @@
     southernrock:   { place: "Macon", year: 1969 },
     rootsrock:      { place: "Berkeley", year: 1969 },
     chamberpop:     { place: "Boston", year: 1994 },
-    /* THE GENRE-QA ROUND'S BATCH B (2026-09-03): pop, folk and the two
-       Christian rows. Six labels, each `Place Year` and each unique across the
-       whole table, measured rather than assumed — Nashville already carries
-       1871, 1909, 1945, 1946, 1957, 1968, 1990 and 2008 and not 1978; Memphis
-       1954 and 1997 and not 1972; Los Angeles twenty-five other years and not
-       1988; Seattle 1991 and 1995 and not 2003; London thirty-seven others and
-       not 2009.
-       SYDNEY IS A NEW DOT and the PLACES ledger above says what it is: the
-       Australia-and-the-Pacific row's third entry and the map's first on the
-       Australian mainland. */
-    ccm:            { place: "Nashville", year: 1978 },
-    worship:        { place: "Sydney", year: 1993 },
-    indiefolk:      { place: "London", year: 2009 },
-    powerpop:       { place: "Memphis", year: 1972 },
-    skatepunk:      { place: "Los Angeles", year: 1988 },
-    indietronica:   { place: "Seattle", year: 2003 },
     spacerock:      { place: "London", year: 1973 },
     grebo:          { place: "Stourbridge", year: 1990 },
     melodictechno:  { place: "Kent", year: 1991 },
@@ -807,9 +882,24 @@
     pavane:         { place: "Antwerp", year: 1551 },
     continuo:       { place: "Florence", year: 1602 },
     concerto:       { place: "Venice", year: 1725 },
+    oratorio:       { place: "Dublin", year: 1742 },
     classical:      { place: "Vienna", year: 1785 },
+    symphony:       { place: "Vienna", year: 1788 },
+    stringquartet:  { place: "Vienna", year: 1782 },
+    pianosonata:    { place: "Vienna", year: 1802 },
+    requiem:        { place: "Vienna", year: 1791 },
     nocturne:       { place: "Paris", year: 1835 },
+    etude:          { place: "Paris", year: 1833 },
+    characterpiece: { place: "London", year: 1832 },
+    concertoverture: { place: "Berlin", year: 1826 },
     romantic:       { place: "Vienna", year: 1876 },
+    variations:     { place: "Vienna", year: 1873 },
+    symphonicpoem:  { place: "Weimar", year: 1854 },
+    musicdrama:     { place: "Munich", year: 1865 },
+    nationalism:    { place: "Prague", year: 1874 },
+    ballet:         { place: "Moscow", year: 1877 },
+    verismo:        { place: "Rome", year: 1890 },
+    impressionism:  { place: "Paris", year: 1894 },
     barcarolle:     { place: "Paris", year: 1881 },
     parlor:         { place: "New York", year: 1892 },
     amapiano:       { place: "Johannesburg", year: 2020 },
@@ -901,9 +991,19 @@
     taqsim:         { place: "Cairo", year: 1932 },
     firqa:          { place: "Cairo", year: 1964 },
     nuba:           { place: "Tetouan", year: 1790 },
+    yayue:          { place: "Suizhou", year: -433 },
+    kunqu:          { place: "Suzhou", year: 1598 },
+    huiju:          { place: "Beijing", year: 1790 },
+    qinqiang:       { place: "Xi'an", year: 1807 },
     guqin:          { place: "Beijing", year: 1956 },
+    pipaqu:         { place: "Wuxi", year: 1819 },
     sizhu:          { place: "Shanghai", year: 1920 },
+    badakhyal:      { place: "Delhi", year: 1740 },
+    tappa:          { place: "Lucknow", year: 1780 },
+    thumri:         { place: "Lucknow", year: 1856 },
     dhrupad:        { place: "Delhi", year: 1955 },
+    kriti:          { place: "Thanjavur", year: 1810 },
+    varnam:         { place: "Thanjavur", year: 1830 },
     carnatic:       { place: "Chennai", year: 1935 },
     gagaku:         { place: "Nara", year: 752 },
     andalusi:       { place: "Córdoba", year: 822 },
@@ -921,8 +1021,8 @@
     neworleans:     { place: "New Orleans", year: 1923 },
     boogiewoogie:   { place: "Chicago", year: 1928 },
     deltablues:     { place: "Clarksdale", year: 1929 },
-    acidrock:       { place: "London", year: 1967 },
     bluesrock:      { place: "West Hampstead", year: 1966 },
+    acidrock:       { place: "London", year: 1967 },
     glam:           { place: "London", year: 1971 },
     krautrock:      { place: "Cologne", year: 1971 },
     berlinschool:   { place: "Berlin", year: 1972 },
@@ -967,17 +1067,6 @@
     heavymetal:     { place: "Workington", year: 1969 },
     blockparty:     { place: "Bronx", year: 1973 },
     psychfunk:      { place: "Detroit", year: 1975 },
-    /* THE FUNK ROUND'S SIX (2026-09-03). Every label was checked against this
-       table before it was chosen: Cincinnati 1970 sits three years off `funk`'s
-       own 1967 (the same city twice, different years — the Hamburg rule);
-       New Orleans 1969 is free between `neworleans` 1923 and `sludge` 1991;
-       SAN FRANCISCO 1973 rather than the New York 1971 that was proposed,
-       because `songwriterpiano` holds New York 1971 and Head Hunters was cut
-       at Wally Heider in San Francisco anyway; Washington 1978 is the fourth
-       year on that dot after 1889, 1969 and 1980; New York 1981 was the one
-       free year between `disco` 1977 and `electro` 1982, which is exactly the
-       gap the row exists to fill; and Minneapolis is a brand-new dot, its
-       crowding measured in PLACES above. */
     neworleansfunk: { place: "New Orleans", year: 1969 },
     deepfunk:       { place: "Cincinnati", year: 1970 },
     jazzfunk:       { place: "San Francisco", year: 1973 },
@@ -1132,6 +1221,12 @@
     neotraditional: { place: "Nashville", year: 1990 },
     smoothjazz:     { place: "Los Angeles", year: 1986 },
     chiptune:       { place: "Kyoto", year: 1985 },
+    ccm:            { place: "Nashville", year: 1978 },
+    worship:        { place: "Sydney", year: 1993 },
+    indiefolk:      { place: "London", year: 2009 },
+    powerpop:       { place: "Memphis", year: 1972 },
+    skatepunk:      { place: "Los Angeles", year: 1988 },
+    indietronica:   { place: "Seattle", year: 2003 },
   };
   /* WHEN:END */
 
@@ -1274,7 +1369,22 @@
                // of ten thousand in North Karelia). The three measurements
                // are in the PLACES ledger above.
                "Sutton Courtenay", "West Hampstead",
-               "Hamburg", "Helsinki", "Kitee"],
+               "Hamburg", "Helsinki", "Kitee",
+               // ...and the classical-period round's two (2026-09-03).
+               // WEIMAR is plain German geography — `symphonicpoem` 1854,
+               // Liszt's Hoftheater — and the PLACES ledger above has its
+               // crowding measurement, which is the tightest European one
+               // in the table (23.2 units from Leipzig, under the floor,
+               // declared). MOSCOW needs its sentence for the opposite
+               // reason: it is the map's FIRST RUSSIAN DOT (`ballet` 1877,
+               // Swan Lake at the Bolshoi) and it files in Europe on
+               // Tbilisi's own ruling three comments up — Garland's Europe
+               // volume runs to the Caucasus, and a Moscow ballet score
+               // answers to Vienna and Paris and to no maqam. It is also
+               // the only name in this row that falls OUTSIDE the Europe
+               // rectangle (lon 37.6 against the edge at 32) and therefore
+               // flies at the world arc.
+               "Moscow", "Weimar"],
     "North America": ["Santa Monica",
                       "Vancouver", "Atlanta", "Austin", "Boston", "Chapel Hill", "Charlotte",
                       "Chicago", "Cincinnati", "Cleveland", "Detroit",
@@ -1384,7 +1494,14 @@
                   // ...and the MIDI-corpus round's one (2026-09-02):
                   // Kyoto, `chiptune`'s own city — plain Japanese
                   // geography, and Nara is already here to prove it.
-                  "Kyoto"],
+                  "Kyoto",
+                  // ...and the India-and-China batch's four (2026-09-03):
+                  // Suzhou, Wuxi, Xi'an and Suizhou. G11d catches a dot with
+                  // no region within the day, so they are filed the morning
+                  // they are added rather than the morning after — all four
+                  // are mainland China and three of them are within four
+                  // hundred kilometres of dots already in this row.
+                  "Suzhou", "Wuxi", "Xi'an", "Suizhou"],
     // Surakarta (2026-08-30, the walls-down round's own dot): `gamelan`
     // landed at Lokananta's city the same morning this row was last read,
     // and the region gate (G11d) caught the dot with no region within the
@@ -1392,7 +1509,12 @@
     "Southeast Asia": ["Bangkok", "Ho Chi Minh City", "Jakarta", "Manila",
                        "Phnom Penh", "Surakarta"],
     "South Asia": ["Chandigarh", "Chennai", "Delhi", "Faisalabad",
-                   "Jalandhar", "Mumbai"],
+                   "Jalandhar", "Mumbai",
+                   // ...and the India-and-China batch's two (2026-09-03):
+                   // Lucknow, 440 km east of Delhi, and Thanjavur, 330 km
+                   // south of Chennai — the two courts this table's Indian
+                   // rows were made in and had no dots for.
+                   "Lucknow", "Thanjavur"],
     // Turkey and Iran sit here rather than in Europe or in Central Asia, and
     // Istanbul is the case that forces the decision: the city is on two
     // continents and the MUSIC — makam, usul, the arabesk string orchestra —

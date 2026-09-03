@@ -239,11 +239,36 @@
     // none of them could say `blues`.
     blues:     [0, 3, 5, 6, 7, 10],                       // 2.0
     bluesx:    [0, 1, 3, 5, 6, 8, 10],                    // 1.71
+    // ...AND `yupent` JOINED 2026-09-03 WITH THE CHINA BATCH, which is the
+    // first alphabet added to this table since the two above and is added on
+    // the same terms: two anchors could not say what they play.
+    //   THE GAP, STATED AS A SET. `majpent` (0 2 4 7 9) is the GONG mode of
+    // the Chinese pentatonic and this file had no other rotation of it. The
+    // YU mode is 0 3 5 7 10 — the same five notes started from the sixth
+    // degree, the relative minor of the same pentatonic — and it is what a
+    // bangzi aria and an erhuang aria are built on. Before tonight a row that
+    // wanted it had exactly two choices and both are wrong: `blues`
+    // (0 3 5 6 7 10) is the yu mode PLUS A FLAT FIFTH, which is a blue note
+    // and another continent, and `MODES.dorian` (0 2 3 5 7 9 10) is seven
+    // notes, handing a five-note style a second and a sixth degree it does
+    // not use.
+    //   MEASURED, not asserted, on `qinqiang` (Xi'an 1807) and `huiju`
+    // (Beijing 1790) at seeds 1-3 by the same method test/precompose.js G14b
+    // uses for a decorative mode: swap the declared alphabet for the nearest
+    // thing already in this file and RENDER, then compare the pitches note for
+    // note. Over 43,421 rendered notes `qinqiang` moves 50.4% of them against
+    // `majpent` and 96.0% against `MODES.dorian`; over 32,619 notes `huiju`
+    // moves 47.8% and 41.0%. Half the notes of a row is not decoration, and
+    // the dorian column is the sharper half of the finding: a seven-note
+    // alphabet does not merely colour a five-note style, it re-points every
+    // degree the phrase asks for.
+    yupent:    [0, 3, 5, 7, 10],                          // the yu mode
   };
   const SCALELABEL = { chromatic: "chromatic", whole: "whole tone",
                        augmented: "augmented", quartal: "quartal",
                        major: "major", majpent: "major pent.",
-                       blues: "blues", bluesx: "blues, flattened" };
+                       blues: "blues", bluesx: "blues, flattened",
+                       yupent: "minor pent. (yu)" };
 
   // ---- THE MOUTHS ----------------------------------------------------------
   // WHO IS SINGING. A genre that casts a vocal instrument used to get one held
@@ -777,6 +802,23 @@
                 // cry that never had a bar line.
                 "sticheron", "sequence", "winchester", "antiphon", "francoflemish",
                 "secondapratica", "sacredconcerto", "holler",
+                // ...and the classical-period round's two (2026-09-03, Paul:
+                // "we're missing Mendelssohn and Brahms and so forth, we should
+                // have lots of representative classical genres"). `oratorio`
+                // (Dublin 1742) and `requiem` (Vienna 1791) both keep an
+                // orchestra under the voices and file here anyway, for the
+                // reason `secondapratica` and `sacredconcerto` are two lines
+                // up: THE VOICES ARE THE RECORD. Messiah is a chorus with a
+                // band behind it, K. 626 is a chorus with a band behind it,
+                // and the cluster's own long varying line — three notes and a
+                // rest, falling, never the same measure twice — is what both
+                // of them measure (requiem step fraction 0.748, |interval|
+                // 2.0; the oratorio set 0.669 and 2.0). `requiem` takes NO
+                // IDIOM_ANCHOR row at all — the family's is right and its own
+                // note says so out loud — and `oratorio` takes one that moves
+                // exactly two fields off it, the contour and the length, both
+                // measured.
+                "oratorio", "requiem",
                 // ...and the deep-time round's three (2026-08-30), each of
                 // them the cluster's definition — people singing,
                 // unaccompanied: carmen is fifty-four children in two
@@ -804,7 +846,18 @@
                 // for taqsim, guqin and dhrupad: an avaz and a khyal are
                 // each ONE LONG VARYING LINE and vox is the family whose
                 // idiom row says so. Both take DYNAMICS rows below.
-                "dastgah", "khyal"]],
+                "dastgah", "khyal",
+                // ...AND ONE ON 2026-09-03, THE INDIA-AND-CHINA BATCH, on the
+                // argument the two lines above already make for `khyal`:
+                // `badakhyal` (Delhi 1740) is the SLOW HALF of that form on
+                // its own — Sadarang's vilambit khyal, at half rate, with no
+                // drut section to come — which is one long varying line if
+                // anything in this table is. It files beside the row it is the
+                // ancestor of and beside `dhrupad`, the form it was made to
+                // weigh like. It takes a DYNAMICS row below, for the reason
+                // every one of its neighbours does: vox's stress is a choir's
+                // barline and a tilwada at half rate is not one.
+                "badakhyal"]],
     ["club",   ["acid", "house", "techno", "garage", "dnb", "trap", "boombap",
                 // `jpop` (2026-08-30) files beside kpop, which took its
                 // formula and industrialized it — the ear hears the two
@@ -1215,7 +1268,17 @@
                 // ...and the walls-down round's studio ghost (2026-08-30):
                 // `tapemusic` is texture assembled at a bench, cologneschool's
                 // own shelf, and cologneschool now declares it a parent.
-                "tapemusic"]],
+                "tapemusic",
+                // ...and one on 2026-09-03, the India-and-China batch:
+                // `yayue` (Suizhou 433 BC) files beside `gagaku`, the Japanese
+                // court music that is its cousin thirteen centuries downstream,
+                // and for the cluster's own definition — sustained texture, a
+                // ceremony's pulse, no backbeat. A rack of bronze bells ringing
+                // into each other over a stroke a bar is texture if anything is.
+                // It takes a DYNAMICS row below, because ritual music is the
+                // one thing here with a HARD beat and NO arch, and drift's
+                // family row says the opposite of both.
+                "yayue"]],
     // the pre-rock traditions, and the two ancestors that joined them are
     // exactly that: Buenos Aires 1935, Nashville 1945, New York 1945,
     // London 1956. Kling Klang is `studio` and not `club` for the same kind of
@@ -1237,6 +1300,28 @@
                 // skiffle 1956) just got ten much older housemates.
                 "troubadour", "estampie", "pavane", "continuo", "concerto",
                 "classical", "nocturne", "romantic", "barcarolle", "parlor",
+                // ...AND THIRTEEN ON 2026-09-03, the classical-period round.
+                // Paul: "we're missing Mendelssohn and Brahms and so forth, we
+                // should have lots of representative classical genres." Every
+                // one of them is this cluster's own sentence — a group of
+                // people playing acoustic instruments at each other, before
+                // rock — and every one files beside the five rows above it
+                // that were already here: `symphony` and `stringquartet` and
+                // `pianosonata` beside `classical`, `etude` and
+                // `characterpiece` beside `nocturne`, `variations` and
+                // `symphonicpoem` and `musicdrama` and `nationalism` and
+                // `ballet` and `verismo` beside `romantic`, `impressionism`
+                // last because it is what comes after all of them.
+                // (`oratorio` and `requiem` went to `vox` instead, on
+                // sacredconcerto's ruling: the voices are the record.)
+                // Eleven of the thirteen take an IDIOM_ANCHOR row in
+                // precompose.js, because the family's strophe — statement,
+                // statement, departure, return — is exactly what an exposition
+                // and a study and a tone poem are NOT.
+                "symphony", "stringquartet", "pianosonata", "etude",
+                "characterpiece", "concertoverture", "variations",
+                "symphonicpoem", "musicdrama", "nationalism", "ballet",
+                "verismo", "impressionism",
                 // ...and one record from 2023, which looks wrong in "the
                 // pre-rock traditions" until you hear it: a sung story, an
                 // acoustic ensemble and no drum kit is what this cluster IS,
@@ -1380,7 +1465,38 @@
                 // `operetta`, `waltz` and `musette` — and with `enka` and
                 // `trot`, which are the same commercial object two continents
                 // east. All three take the family's own dynamics row.
-                "nuevacancion", "schlager", "iskelma"]],
+                "nuevacancion", "schlager", "iskelma",
+                // ...AND EIGHT ON 2026-09-03, THE INDIA-AND-CHINA BATCH.
+                // Paul, going to bed the night before: "we really need to fill
+                // in India and China in the classical period... we should have
+                // lots of representative classical genres." Every one of them
+                // is this cluster's own sentence — a group of people playing
+                // acoustic instruments at each other, with a sung story on top
+                // where there is a singer at all — and every one files beside a
+                // row it is the ancestor or the sibling of:
+                //   `tappa` (Lucknow 1780), `thumri` (Lucknow 1856) beside
+                //     `filmi` and `qawwali`, the two rows downstream of them;
+                //   `kriti` (Thanjavur 1810), `varnam` (Thanjavur 1830) beside
+                //     `carnatic`, which is the concert order these two items
+                //     are the items OF, and which declares both as parents;
+                //   `kunqu` (Suzhou 1598), `huiju` (Beijing 1790),
+                //     `qinqiang` (Xi'an 1807) beside `jingju` and `sizhu` —
+                //     three opera companies with a fiddle, a lute and a
+                //     clapper, and the first two are jingju's own declared
+                //     parents as of tonight;
+                //   `pipaqu` (Wuxi 1819) beside `sizhu`, whose pipa chair it
+                //     borrows. It is a SOLO and this cluster is a group, which
+                //     is the one strain in the list: it is here rather than in
+                //     `vox` (where `guqin` sits) because vox's idiom row is a
+                //     line that never says a measure twice and a wu piece is
+                //     sectional and counted. It has its own IDIOM_ANCHOR row,
+                //     so the family's idiom does not reach it either way.
+                // All eight take the family's own dynamics row unchanged
+                // (stress .45, phrase .5, touch t .06 / v .8): a live hand,
+                // which every one of them is. test/hand.test.js §1 is why this
+                // list is edited at all.
+                "tappa", "thumri", "kriti", "varnam",
+                "kunqu", "huiju", "qinqiang", "pipaqu"]],
     // ...and the one cluster that is not a tradition at all: the FUNCTION
     // genres, which are parts rather than styles. They sit last because that
     // is how they are used — you pick the music first and the part second.
@@ -1523,6 +1639,14 @@
     // breath more metre than the dhrupad it descends from.
     dastgah:   { stress: 0.04, phrase: 0.92, touch: { t: 0.075, v: 0.55 } },
     khyal:     { stress: 0.1,  phrase: 0.85, touch: { t: 0.06,  v: 0.6 } },
+    // ...and the India batch's one (2026-09-03), on exactly khyal's argument
+    // and one notch further along it: `badakhyal` is the vilambit half alone,
+    // at half rate, so the tala it floats over is twice as far away. Stress
+    // drops to dhrupad's own 0.07 and the phrase rises to 0.88 — the two
+    // numbers this file already gives the form this one was built to weigh
+    // like — while the touch stays khyal's, because there IS a pakhawaj in
+    // the room and a singer with a drummer is steadier than a singer alone.
+    badakhyal: { stress: 0.07, phrase: 0.88, touch: { t: 0.06,  v: 0.6 } },
     // ...and the ledger round's two unmetred lines (2026-08-30), on the
     // ottoman rule — the same musical object takes the same numbers:
     // `doina` is parlando rubato (Bartók's own marking) and takes
@@ -1794,6 +1918,18 @@
     // the chant's own numbers, three centuries before Rome 600's own row
     // was practice.
     gagaku:       { stress: 0.06, phrase: 0.88, touch: { t: 0.05,  v: 0.5 } },
+    // ...and `yayue` (2026-09-03), which is gagaku's cousin and its OPPOSITE
+    // on both numbers, which is why it needs a row rather than the family's.
+    // Ritual court music is the one music in this table with a hard beat and
+    // no arch: the Bianzhong article's own sentence is that the bells lead by
+    // "doubling the melody of the winds and strings, while larger bells
+    // punctuate hymn phrases" — a stroke a beat, every one the same weight,
+    // for the length of a ceremony. So the stress goes UP to a plain 0.25 (a
+    // real pulse, felt, and nowhere near a backbeat's 0.5) and the phrase goes
+    // DOWN to 0.3, the lowest in this table outside the machines: a rite does
+    // not swell. The touch is the smallest hand here, because struck bronze
+    // rung by a court orchestra is not a soloist's rubato.
+    yayue:        { stress: 0.25, phrase: 0.3,  touch: { t: 0.03,  v: 0.4 } },
     // THE GOTH-AND-GLOBE ROUND'S THREE (2026-08-30). Thirteen of the
     // sixteen new anchors take their family row unchanged — the table's
     // own law — and these are the three that measurably disagree:

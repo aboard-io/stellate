@@ -1,0 +1,134 @@
+{
+  "note": "SYMPHONIC POEM — Weimar 1854. Liszt, LES PRELUDES, first performed at\nthe Hoftheater in Weimar on 23 February 1854 under the composer, who by\nthen had spent six years as Kapellmeister to the Grand Duke and had a\nband to try things on. It is not the first piece he wrote in the form —\nTasso and Ce qu'on entend sur la montagne are earlier — but it is the\nfirst he published with the word SYMPHONISCHE DICHTUNG on it, and this\ntable dates by named records rather than by drafts.\n\nTHE INVENTION IS THEMATIC TRANSFORMATION AND THE BOX HAS THE ALPHABET\nFOR IT. One motto — in Les Preludes, three notes — comes back as a\nmarch, as a storm, as a pastoral and as a hymn, the same intervals\nre-registered, re-articulated and re-harmonised. That is not variation\n(where the frame stays and the surface changes) and it is not development\n(where fragments are argued with); it is the SAME IDEA WEARING DIFFERENT\nCLOTHES. In this engine that is a `word` keyed on the SECTION with the\nmaterial held constant, which is what the formula below does for every\nchair at once: spread, then compressed, then inverted, then plain, then\noctave-doubled. `variations` (Vienna 1873) uses the same mechanism for a\ndifferent purpose and the two rows are the honest test of whether the\nmechanism can say two things — it can, because that row holds its roots\nstill and this one does not.\n\nTHE HARMONY IS THE OTHER HALF AND IT IS WRITTEN AS A `borrow`. Liszt's\nsignature is the chromatic third relation: a chord a major third away\nthat is not in the key at all. `prog` can say it, because a chord entry\ntakes a `borrow` in semitones on top of its degree — so `{ d: 2, borrow:\n-1 }` is the flat mediant, a real chromatic third, and it is in bars 3\nand 6 below. This is the only row in the catalogue that uses that field\nfor a modulation rather than for a blue note.\n\nMEASURED, AND THE SET IS SMALL AND SAID SO. Eleven files in the\nclassical rips match Liszt, Les Preludes, Mazeppa, Tasso or the Hungarian\nRhapsodies — and NINE OF THE ELEVEN ARE PIANO RHAPSODIES AND\nPARAPHRASES, not orchestral tone poems, because the orchestral Liszt is\nnot in this archive. bpm p50 110.0 (quartiles 84.9 and 144), 72.7% major,\n2/4 and 4/4 at 27.3% each. Hold p50 0.9 and p90 3.0, |interval| p50 3.0,\nstep fraction 0.545 — a fast, leaping, virtuoso line, which is the\nRHAPSODIES speaking, not the tone poems. So `maxHold: 4` is a CHOICE\nagainst the corpus, made on the founding record's own terms (the Les\nPreludes motto is a long declamatory idea over held strings) and\ndeclared, on `rockabilly`'s ruling earlier this shift: the row follows\nthe record it is named for and says where the archive disagrees.\n\nTHE CAST. Violin with the motto, horns, harp (Liszt's orchestra has one\nand the sound of it is half the atmosphere in this repertory), strings\nunder everything. Four chairs, `organic: true` for the reason `concerto`\ngives.\n\nLINEAGE. `romantic` (Vienna 1876) is TWENTY-TWO YEARS LATER and cannot be\na parent — the direction matters here, because this form is what Brahms's\nparty was against and Vienna 1876 is the answer to Weimar, not its\nsource. `concertoverture` (Berlin 1826) 0.35 — the single-movement\norchestral piece that is ABOUT something, which is this row's own door\nand is where the concert overture leads; `classical` (Vienna 1785) 0.2 —\nthe sonata frame Liszt keeps deforming; `concerto` (Venice 1725) 0.15 —\nthe virtuoso soloist against the band, which is what Liszt was before he\nwas a Kapellmeister; `nocturne` (Paris 1835) 0.1 — the Chopin salon\ntexture that half his slow transformations are wearing. 0.8 declared. THE\nRESIDUE IS 0.2 AND IT IS THE PROGRAMME: a piece whose form is decided by\na poem outside it. The row can transform a theme; it cannot mean\nanything by it, and that is the half of the genre no engine gets.",
+  "organic": true,
+  "instrumental": true,
+  "label": "Weimar 1854",
+  "near": "romantic",
+  "plan": "arc",
+  "bpm": 110,
+  "bars": 8,
+  "voices": 4,
+  "parents": {
+    "concertoverture": 0.35,
+    "classical": 0.2,
+    "concerto": 0.15,
+    "nocturne": 0.1
+  },
+  "wants": [
+    "the programme itself — Lamartine's ode, the poem this piece is a reading of, and the whole New German School argument that music should be about something"
+  ],
+  "cannot": [
+    "mean anything — the row transforms one theme because that is the mechanism Liszt invented, and what it cannot do is say what the theme is FOR, which is the other half of the genre",
+    "a real key change into the chromatic third: `borrow` moves the chord and the mode stays, so the flat mediant here is a colour rather than a new home"
+  ],
+  "instr": [
+    "violin",
+    "french_horns",
+    "harp",
+    "strings"
+  ],
+  "part": [
+    "lead",
+    "counter",
+    "riff",
+    "pad"
+  ],
+  "entry": {
+    "kind": "table",
+    "t": [
+      0,
+      2,
+      0,
+      0
+    ]
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      1,
+      -1,
+      0,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 3,
+        "then": "pad"
+      }
+    ],
+    "else": "line"
+  },
+  "roots": [
+    0,
+    0,
+    2,
+    2,
+    5,
+    3,
+    4,
+    0
+  ],
+  "prog": [
+    {
+      "d": 0
+    },
+    {
+      "d": 0
+    },
+    {
+      "d": 2,
+      "borrow": -1
+    },
+    {
+      "d": 2
+    },
+    {
+      "d": 5
+    },
+    {
+      "d": 3,
+      "borrow": -1
+    },
+    {
+      "d": 4,
+      "q": "dom7"
+    },
+    {
+      "d": 0
+    }
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "artic": "legato",
+  "maxHold": 4,
+  "bassInstr": "contrabass",
+  "bassStyle": "pedal",
+  "kit": {},
+  "intro": "swell",
+  "tone": {
+    "wave": "sawtooth",
+    "cut": 2400,
+    "q": 1.0,
+    "atk": 0.04,
+    "rel": 1.6,
+    "gain": 0.24,
+    "verb": 0.6
+  },
+  "words": [
+    "the motto, and it is the only idea in the piece",
+    "the horns, taking the same idea as a march",
+    "the harp, arpeggiating under it",
+    "the strings, holding the chromatic third"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 2 ? [fill(2), transpose(-12)]\n        : v === 3 ? []\n        : [[], [spread(2)], [spread(0.5), fill(2)], [invert(4)],\n           [transpose(-12)], [rotate(2)], [], [spread(2), drop(3)]][s % 8])"
+  }
+}

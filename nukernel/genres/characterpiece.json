@@ -1,0 +1,98 @@
+{
+  "note": "CHARACTER PIECE — London 1832. Mendelssohn, the first book of LIEDER\nOHNE WORTE, op. 19b, published in London by Novello in 1832 as \"Original\nMelodies for the Pianoforte\" — the English edition came first and the\nGerman one followed. THE LABEL IS LONDON AND NOT LEIPZIG, and the\ncorrection is worth stating because Leipzig is the city everyone reaches\nfor: Mendelssohn did not take the Gewandhaus until 1835, three years\nafter this print, and in 1832 he was in London on his second visit,\nselling these pieces to the publisher who bought them. A table dated by\nnamed records follows the record.\n\nTHE SECOND MENDELSSOHN ROW (see `concertoverture`, Berlin 1826), and the\ntwo are opposite objects on purpose: an orchestral sonata movement at 152\nagainst a strophic piano song at 70.\n\nWHAT MAKES IT NOT A NOCTURNE, WHICH IS THE ONE THING THIS ROW HAS TO\nANSWER. `nocturne` (Paris 1835) is a singing right hand ABOVE a spread\nleft; the Song Without Words puts the tune in the MIDDLE — a tenor line\nbetween an accompanying figure above it and the bass below — and that is\nthe texture the form is named for, because it is what a singer with a\npiano actually sounds like from the piano's side. So the tune sits at\nregister 0 and the figure at 1, an octave ABOVE it. Every other piano row\nin this catalogue leads from the top; this one is the only one that does\nnot, and that inversion is the whole entry.\n\nTHE FIELD IS WRITTEN [-1, 2, -1] AND NOT [0, 1, -2], AND THE DIFFERENCE\nIS A TRAP WORTH THE LINE. A chair's register is `reg` PLUS ITS PART'S\nLEAN (kernel `regOf`): a `lead` leans an octave up, a `riff` and a\n`drone` an octave down. Written the obvious way this row composed lead 1\nagainst riff 0 — the tune back on top, the whole argument silently\ninverted, and the JSON reading exactly as though it had worked. Read\nback off the composed document instead: the chairs seat at 0, 1 and -2,\nwhich is the texture above. A field that is declared and does not arrive\nis this box's characteristic bug, and this one was caught by rendering\nthe row rather than by reading it.\n\nMEASURED. Twenty-one files, deduplicated against the `_format0`\ndoubles — op. 19 complete, op. 30, op. 53 no. 5, op. 62 nos. 3-5, the two\n`Lieder ohne Worte` book files and \"The Bees' Wedding\": bpm p50 69.7\n(quartiles 65.3 and 136 — the songs are slow and the scherzando ones are\nnot), 57.1% 4/4 with 19.0% in 6/8, 52.4% major and 47.6% minor, which is\nthe most evenly split set measured this round. Hold p50 1.0, p90 4.0.\n\nAND THE MEASUREMENT THAT IS REALLY ABOUT THE TEXTURE: median absolute\nmelodic interval 5.0 semitones and a step fraction of 0.155 — the LEAST\nstepwise number measured anywhere in this batch, lower even than the\nMoonlight's 0.213. Said honestly, that is not the tune. The corpus's\nextractor takes the most melodic-looking line in the file and in these\npieces it takes the BROKEN-CHORD FIGURE, because the figure moves\nconstantly and the song does not. Two independent piano sets returning\nthe same artefact is itself the finding: in this repertory the\naccompaniment is the busiest voice on the page, and this row seats it as\na `riff` above the tune for that reason.\n\nLINEAGE. `classical` (Vienna 1785) 0.3 — the keyboard language;\n`lied` (Vienna 1814) 0.3 — the German art song, which this is with the\nsinger removed and the piano keeping both parts; `chorale` (Nuremberg\n1586) 0.1 — the hymn-shaped four-square melody underneath the ornament,\nwhich is what a Song Without Words is when you strip the figure off.\n0.7 declared. THE RESIDUE IS 0.3 AND IT IS THE PREMISE: a piece that is a\nSONG with no words and no singer, sold to amateurs to play at home, whose\ncomposer answered a question about what one of them meant by saying that\nwhat the music said to him was not too vague for words but too precise\nfor them. Nothing above him in this table had that idea.",
+  "organic": true,
+  "instrumental": true,
+  "label": "London 1832",
+  "near": "nocturne",
+  "plan": "song",
+  "bpm": 70,
+  "bars": 8,
+  "voices": 3,
+  "parents": {
+    "classical": 0.3,
+    "lied": 0.3,
+    "chorale": 0.1
+  },
+  "wants": [
+    "the domestic piano itself — the instrument in a middle-class parlour and the amateur who bought this book, which `parlor` (Boston 1853) holds for America twenty years later and nothing holds for Europe"
+  ],
+  "cannot": [
+    "the words — and it is the only row in this table for which that is a FEATURE: the form's name is the withholding, and this box has no words to withhold",
+    "the una corda and the half pedal, which is how a pianist keeps a middle-register tune audible under a figure playing over it"
+  ],
+  "instr": [
+    "yamaha_grand_piano",
+    "yamaha_grand_piano",
+    "yamaha_grand_piano"
+  ],
+  "part": [
+    "lead",
+    "riff",
+    "drone"
+  ],
+  "entry": {
+    "kind": "cases",
+    "cases": [
+      {
+        "at": 0,
+        "then": 1
+      }
+    ],
+    "else": 0
+  },
+  "reg": {
+    "kind": "table",
+    "t": [
+      -1,
+      2,
+      -1
+    ]
+  },
+  "realize": {
+    "kind": "const",
+    "n": "line"
+  },
+  "nobass": true,
+  "roots": [
+    0,
+    3,
+    4,
+    0,
+    5,
+    1,
+    4,
+    0
+  ],
+  "mode": {
+    "$src": "MODES.ionian"
+  },
+  "scale": {
+    "$src": "DIATONIC"
+  },
+  "diatonic": true,
+  "artic": "legato",
+  "maxHold": 4,
+  "kit": {},
+  "intro": "cold",
+  "orn": {
+    "grace": 0.2
+  },
+  "tone": {
+    "wave": "triangle",
+    "cut": 2600,
+    "q": 0.8,
+    "atk": 0.006,
+    "rel": 1.4,
+    "gain": 0.26,
+    "verb": 0.3
+  },
+  "words": [
+    "the song, in the middle of the instrument where a voice would be",
+    "the figure, above it, moving the whole time",
+    "the left hand, holding the bass down"
+  ],
+  "word": {
+    "kind": "formula",
+    "src": "(v, s) => (v === 1 ? [fill(2), transpose(7)]\n        : v === 2 ? [transpose(-12), keep(0, 8)]\n        : (s % 2 ? [rotate(1)] : []))"
+  }
+}

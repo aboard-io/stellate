@@ -885,8 +885,13 @@ function sectionEvents(doc, i) {
      law — New Orleans 1969 cannot parent Cincinnati 1967 — and
      neworleansfunk's note is where the next hand is told why.
      The literal stays a literal for the reason :649 gives. */
-  ok("G0 the catalog is 453 anchors, session keys excluded", () =>
-    assert.strictEqual(ANCHORS.length, 453,
+  /* 453 -> 478, 2026-09-03, the batch-E rounds: fifteen Western classical
+     anchors and ten Indian and Chinese ones, the two halves of Paul's last
+     brief of the night ("we really need to fill in India and China in the
+     classical period... we should have lots of representative classical
+     genres"). The literal stays a literal for the reason :649 gives. */
+  ok("G0 the catalog is 478 anchors, session keys excluded", () =>
+    assert.strictEqual(ANCHORS.length, 478,
       "anchors() returned " + ANCHORS.length));
   ok("G0b " + ANCHORS.length * SEEDS.length + " records, no throw", () => {
     assert.strictEqual(bad.throw.length, 0, bad.throw.slice(0, 5).join("\n      "));
