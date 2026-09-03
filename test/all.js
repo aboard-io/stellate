@@ -431,17 +431,24 @@ const GATES = [
     covers: ["test/als-page.browser.js", "nukernel/export/als-page.js",
              "nukernel/export/als.js", "nukernel/export/donor.js",
              "nukernel/export/donor-extract.js", "nukernel/export/score.js",
-             // ...and the two other photographs of a donor the page carries,
-             // both of which this gate now `--check`s (2026-09-03, P3)
+             // ...and the three other photographs of a donor the page carries,
+             // every one of which this gate now `--check`s (2026-09-03, P3 and
+             // then the Answers round, which added the master chain). This row
+             // is also the ONE registered gate that exports a MASTERED record:
+             // the shipped chant carries master words, so gate B's
+             // present-is-real branch runs here on every wave-3 pass while the
+             // `ableton` row below runs its absent-is-today branch.
              "nukernel/export/drumrack.js", "nukernel/export/drumrack-extract.js",
              "nukernel/export/fxrack.js", "nukernel/export/fxrack-extract.js",
+             "nukernel/export/masterrack.js", "nukernel/export/masterrack-extract.js",
              "nukernel/export/live-devices.js"] },
   { name: "ableton",    wave: 2, kind: "node", steps: [
       ["tools/ableton/export-als.js", "--genre", "boombap", "--out", "@TMP@/n.als"],
       ["tools/ableton/als-gate.js", "@TMP@/n.als", "--genre", "boombap"]],
     need: ["tools/ableton/export-als.js", "tools/ableton/als-gate.js"],
     covers: ["tools/ableton/export-als.js", "tools/ableton/als-gate.js",
-             "nukernel/export/live-devices.js"] },
+             "nukernel/export/live-devices.js", "nukernel/export/masterrack.js",
+             "nukernel/export/score.js"] },
   /* THE PRODUCER, SAMPLED BY DEFAULT AND WHOLE ON --complete, and it is G3 and
      only G3 that samples. Measured inside the gate: 60% of its 392 s was the
      full cross product of every offered sentence against all five rungs of the

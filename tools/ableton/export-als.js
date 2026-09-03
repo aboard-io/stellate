@@ -64,7 +64,12 @@ export async function main(argv) {
   // pattern, and P3's effect chips land on them.
   const { FXRACK_GZIP_B64 } = await import("../../nukernel/export/fxrack.js");
   const fxRack = gunzipSync(Buffer.from(FXRACK_GZIP_B64, "base64")).toString("utf8");
-  const res = alsFromScore(donorXml, score, { all: a.all, drumRack: rack, fxRack });
+  // ...and the three master-chain devices out of the THIRD donor (Answers.als,
+  // masterrack.js): Saturator, Glue Compressor, Limiter, which neither of the
+  // other two donors has anywhere. Same door again, same extractor pattern.
+  const { MASTERRACK_GZIP_B64 } = await import("../../nukernel/export/masterrack.js");
+  const masterRack = gunzipSync(Buffer.from(MASTERRACK_GZIP_B64, "base64")).toString("utf8");
+  const res = alsFromScore(donorXml, score, { all: a.all, drumRack: rack, fxRack, masterRack });
   writeFileSync(a.out, gzipSync(Buffer.from(res.xml, "utf8")));
 
   console.log("nukernel -> Ableton  ·  " + (a.all ? "P1 (all lanes)" : "P0 (one lane)"));
@@ -91,6 +96,15 @@ export async function main(argv) {
   console.log("  sound    " + S.params + " instrument params · " + S.envelopes +
               " automation envelope(s) · " + S.devices + " effect device(s)");
   for (const n of S.notes) console.log("           " + n);
+  // THE MASTER CHAIN IS ITS OWN LINE, because it is the one thing in the file
+  // that is about the RECORD rather than about a track — and because a chain
+  // that silently did not go in is exactly what "the master row shipped as
+  // nothing" looked like for a fortnight.
+  const M = S.master || [];
+  console.log("  master   " + (score.master
+    ? (M.length ? M.length + " device(s) on the Main track" : "the record's master words build no device")
+    : "no master on this record — the donor's own Main track, untouched"));
+  for (const m of M) console.log("           " + m);
   for (const u of S.unmapped) console.log("  WARN     no Live device for " + u);
   console.log("  wrote    " + a.out + "  (" + res.tracks + " track" +
               (res.tracks === 1 ? "" : "s") + ", " + res.clips + " clips, " +

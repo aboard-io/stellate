@@ -182,6 +182,10 @@ export async function loadScore({ songPath = null, genre = null, scorePath = nul
   const score = scoreOf({ timeline: plan.timeline(), cast: engine ? plan.cast() : [],
                           seats: engine ? plan.seats() : null, sections: state.SONG,
                           drums: engine ? plan.drumStrip() : null,
+                          // ...and the record's master words, which live on the
+                          // SONG rather than on any box (state.js:68) — the
+                          // page hands export/als-page.js the same object.
+                          master: state.MASTER,
                           bpm: state.bpm, grid, engine,
                           title: (genre || songPath || "nukernel") });
   // A catalog anchor says its meter as a WORD ("three"); export/score.js may

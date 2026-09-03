@@ -1,9 +1,10 @@
-# The donors — `Generic.als` and `Ableton2.als`
+# The donors — `Generic.als`, `Ableton2.als` and `Answers.als`
 
 Paul, 2026-08-24: *"you promised to make Ableton export work if I gave you a
 generic Ableton file; there's one at ~/Ableton.zip"*. Paul, 2026-08-28:
 *"I added a new Ableton sample file at ~/Ableton2 Project.zip for you to work
-with"*. Both are here, committed unchanged.
+with"*. Paul, 2026-09-03: *"I put it in ~/answers.zip and answered all your
+questions."* All three are here, committed unchanged.
 
 They are committed as **source**, not as media. `main:docs/ABLETON-EXPORT.md`
 said why a week before the first one arrived: *"An `.als` is gzipped XML,
@@ -33,6 +34,16 @@ Live Drum Rack is, and our drum clips already write GM notes. **It is
 Suite-only**: every pad is an `MxDeviceInstrument` under
 `/Applications/Ableton Live 12 Suite.app/…`, ten absolute paths that travel
 with every export and resolve on a Mac with Live Suite and nowhere else.
+
+**AND A THIRD FILE SPLICES NOW TOO, 2026-09-03.** `Answers.als` is the save
+Paul made to answer the two asks this file had left: the master chain (which
+neither earlier donor had a single device of) and the two undecoded enums. Its
+`MainTrack`'s **Saturator, GlueCompressor and Limiter** are extracted to
+`nukernel/export/masterrack.js` (2,247 gzip bytes — the three subtrees, not the
+102 KB donor, for the reason the drum rack gives), its `AutoFilter2` decodes
+`Filter_Type`, and its `Delay` decodes the sync switches. Gate 2's corpus is
+now `Generic ∪ Ableton2 ∪ Answers`. Same rule as before: a donor joins the
+corpus when the exporter splices out of it, and not one round earlier.
 
 *Every number in this file was read out of the file, not remembered.*
 
@@ -185,6 +196,101 @@ Every clip is `CurrentStart 0`, `CurrentEnd 4` — one bar — and `<Name Value=
 This donor is for **device and sample grammar**, not for musical material.
 Nothing about phrasing, form or harmony can be learned from it, and nothing
 should be.
+
+---
+
+## Donor 3 — `Answers.als`
+
+102,134 bytes gzipped · 1,261,468 bytes of XML · 32,964 lines.
+
+```
+<Ableton MajorVersion="5" MinorVersion="12.0_12402" SchemaChangeCount="5"
+         Creator="Ableton Live 12.4.5">
+```
+
+**The stamp is identical to both others** — same `MajorVersion`, same
+`MinorVersion="12.0_12402"`, same `SchemaChangeCount="5"` — across three saves
+and two application versions. The splice strategy's core bet keeps holding.
+
+It is `Ableton2` with the sampled rack and the twelve-device chain and the
+audio track removed, four devices added, and every probe clip emptied:
+
+| Track | XML `Id` | Instrument / devices | what is new |
+|---|---|---|---|
+| `1-DS Drum Rack` | MidiTrack 13 | **DrumGroupDevice** (16 pads), **AutoFilter2**, **Delay** | **both enum answers live here** |
+| `2-Drift` | MidiTrack 15 | Drift | — |
+| `3-Operator` | MidiTrack 12 | Operator | — |
+| `4-Wavetable` | MidiTrack 16 | InstrumentVector | — |
+| `A-Delay \| Convolution Reverb Pro` | ReturnTrack 2 | Delay + **MxDeviceAudioEffect** | the second, UNTOUCHED Delay — the control |
+| `Main` | MainTrack | **Saturator, GlueCompressor, Limiter** | **the master chain, at factory values** |
+| `0-Main` | PreHearTrack | — | — |
+
+- **Tempo 120**, one `<Tempo>` element, `Manual 120` — unmoved.
+- **8 scenes**, 16 Session clip slots per track, **5 `MidiClip`s**: one per MIDI
+  track and the GroovePool's `Swing 16ths 66`. The four track clips are
+  `CurrentStart 0`, `CurrentEnd 4` and **empty — 0 notes each**; only the pool
+  clip has notes (the same 16 on MidiKey 36). This donor is for DEVICES, and
+  nothing about material can be read out of it.
+- **5 `TrackSendHolder`** (one return), `NextPointeeId` **24737**, 2,061
+  pointee ids, none duplicated.
+- **12 distinct `<Path>` values, one of them absolute**:
+  `/Users/ford/Music/Ableton/Factory Packs/Convolution Reverb/…/Convolution Reverb Pro.amxd`
+  — the same M4L hazard Ableton2 carries, on the same return track. **Nothing
+  this exporter splices out of this file contains a `<Path>` at all**
+  (measured: zero in the Saturator, the GlueCompressor and the Limiter), so the
+  hazard stays where it is and does not travel.
+- `<Gate Value="1" />` appears once and is **not a device**: it is the
+  `ArpeggiateAlgorithm`'s own gate length in the set's MIDI-tool settings.
+  Named here because an inventory by tag name reads it as one.
+
+### What it splices — `nukernel/export/masterrack.js`
+
+`nukernel/export/masterrack-extract.js` photographs the three MainTrack devices
+— **Saturator, GlueCompressor, Limiter**, 26,155 bytes of XML, **2,247
+gzipped**, sha256 `c631b16b…` — the same generator/`--check`/DO-NOT-EDIT
+pattern as `donor.js`, `drumrack.js` and `fxrack.js`, and
+`test/als-page.browser.js` runs all four checks now. The devices and not the
+track, for the fx rack's reason: the MainTrack already exists in the splice
+base, so the unit that travels is the `<Device>` subtree.
+
+**Gate 2's corpus is now `Generic ∪ Ableton2 ∪ Answers`**, by the rule that let
+each of the first two in: a donor joins the conformance corpus at the moment
+the exporter splices out of it, never before. What that licenses is small and
+measurable — Answers has no sampler, no `SampleRef` and no `AudioClip`, so the
+shapes it adds are the three master devices' parameters and nothing else.
+
+### The master chain, at factory values, and what the words land on
+
+Every number below was read out of the file (`Manual`, then the device's own
+`MidiControllerRange`), and every one of them is where Live put it — the ask
+said *"defaults are fine — don't tweak anything"* and nothing was tweaked:
+
+| device | knob | donor `Manual` | donor range | what nukernel writes there |
+|---|---|---|---|---|
+| Saturator | `BaseDrive` | 0 | −36 … 36 | `20·log10(1 + grit·2.6)` — the engine's own tanh drive in dB: hair **1.26**, warm **3.02**, dirt **5.26**, crush **8.34** |
+| Saturator | `DryWet` | 1 | 0 … 1 | `min(1, grit·8)` — fx_bus's own blend: hair **0.48**, everything above it **1** |
+| Saturator | `Type` | 0 | 0 … 7 | *not written* — an undecoded enum |
+| GlueCompressor | `Threshold` | 0 | −40 … 0 | the word's `thr`: soft −18, glue −22, tight −26, pump −30, squash −34 |
+| GlueCompressor | `Ratio` | 1 | 0 … 2 | three positions, **INFERRED** as the SSL ladder 2/4/10 ascending; the record's 1.6/2.2/3.2/6/12 lands on the nearest rung in log space |
+| GlueCompressor | `Makeup` | 0 | 0 … 20 | `20·log10(makeup)`: soft 1.58, glue 2.92, tight 4.61, pump 5.58, squash 6.85 dB |
+| GlueCompressor | `Attack` / `Release` | 3 / 3 | 0 … 6 | *not written* — seven positions each, no names printed: a wrong index moves the whole behaviour |
+| Limiter | `Ceiling` | −0.2999997139 | −24 … 0 | the word's `thr`: open −1.5, safe −2.5, loud/louder −3 |
+| Limiter | `Gain` | 0 | −24 … 24 | `20·log10(push)`: loud **+4.61**, louder **+8.30**, everything else 0 |
+| Limiter | `Release` etc. | 99.99995 | … | *not written* — the record has no word for them |
+
+The vocabulary's own numbers are `nukernel/fields.js` DRIVES / GLUES /
+CEILINGS, copied into `nukernel/export/live-devices.js` (which is browser-safe
+and cannot import the UMD tier) and held to the original by **`als-gate.js`
+gate G**. Absent is the donor's own MainTrack: a record with no `master`, and a
+word that says `none`, build no device at all — which at this end is exactly
+right, because the donor's Main track is empty.
+
+**And four master words still have no device anywhere**: `tape`, `space`,
+`width` and `tilt`. `main:docs/ABLETON-EXPORT.md` suggests a Utility for
+`width`, an EQ Eight tilt on the Main and a send-to-Return-A trim for `space`;
+there is no Utility in any of the three donors, no Eq8 on any MainTrack, and no
+master send. They come out on the CLI's receipt as unmapped, the same answer
+the `phaser` chip gets.
 
 ---
 
@@ -529,55 +635,146 @@ instrument tables and not one:
    same `Time`, the outgoing value then the incoming one. Already flagged for
    the tempo map; the same spelling now carries every section boundary.
 
-And **two enums are deliberately NOT decoded**, which is why two things the box
-can say do not arrive:
+~~And **two enums are deliberately NOT decoded**, which is why two things the
+box can say do not arrive: `AutoFilter2 / Filter_Type` (0…9), so `mot: "rise"`
+is reported on every run that has one rather than written as a lowpass that
+would sound like the opposite gesture; and `Delay / DelayLine_SyncedSixteenth`
+(0…7), so the `echo` chip goes in as free-running **seconds** at the record's
+own bpm — the cost named, that changing the tempo in Live leaves the echo
+behind.~~
 
-- `AutoFilter2 / Filter_Type` (0…9) — so `mot: "rise"`, which compiles to a
-  HIGHPASS sweep, is reported on every run that has one rather than written as
-  a lowpass that would sound like the opposite gesture. (`audio/desk.js` already
-  renders it to nothing, so nothing is lost against the record — this is the one
-  place the file could say MORE than the engine does.)
-- `Delay / DelayLine_SyncedSixteenth` (0…7) — so the `echo` chip goes in as
-  free-running **seconds** at the record's own bpm, which is the same time and
-  needs no enum. The cost is named: change the tempo in Live and the echo does
-  not follow.
+### ANSWERED, 2026-09-03 — `Answers.als`, and what each enum now says
 
-### The ask that would retire the two enums
+Paul: *"I put it in ~/answers.zip and answered all your questions."* The
+paragraph above is kept struck through because this repo does not delete a
+claim it reverses. Here is what came back, read out of the file:
 
-> In Live 12, open `Ableton2`, put an **Auto Filter** on any track and switch
-> its filter to **highpass**; put a **Delay** beside it and set its left and
-> right times to a **synced 1/8** — then save and send the file back.
->
-> Two devices, four clicks. `Filter_Type` and `DelayLine_SyncedSixteenth`
-> become ground truth, the `rise` sweep stops being reported as homeless, and
-> the exported echo starts following Live's tempo.
+**`AutoFilter2 / Filter_Type` — CLOSED for what the box needs.**
+
+```
+Answers.xml:18533-18543    <Filter_Type><Manual Value="1" />
+                             <MidiControllerRange><Min 0 /><Max 9 /></…>
+Generic.xml:1012-1022      <Filter_Type><Manual Value="0" />   (untouched)
+Ableton2.xml:86364-86374   <Filter_Type><Manual Value="0" />   (untouched)
+```
+
+One device moved and one value moved with it. **0 is lowpass** — what every
+untouched AutoFilter2 in every donor carries, and what this exporter has been
+writing all along — and **1 is highpass**. The other eight of the 0…9 stay
+undecoded and unused, because no lane in the box asks for a notch or a morph.
+(Paul's device also sits at `Filter_Frequency` 9,999.998 rather than the
+donor's 19,999.996; nothing reads that, since the exporter sets the frequency
+itself.)
+
+So `mot: "rise"` is **written** now: `nukernel/export/als.js` splices a SECOND
+`AutoFilter2` at `Filter_Type 1` beside the lowpass motion filter, resting at
+the bottom of its own printed range (19.99 Hz — inaudible for a highpass, the
+mirror of the lowpass one resting wide open), with the `hpf` lane as its
+envelope. Two filters because they are two gestures, and because automating
+the TYPE would be a step change in a filter and would sound like a fault. This
+is the one place the exported file says MORE than the engine does —
+`audio/desk.js` renders `rise` to nothing, *"the parent's master stage has a
+lowpass ceiling and no floor"*.
+
+**`Delay / DelayLine_Sync*` — the switch is closed, the index is HALF closed,
+and the difference is said out loud.**
+
+```
+Answers.xml:19191-19212   DelayLine_SyncL / SyncR      <Manual Value="true" />
+Answers.xml:19297-19318   DelayLine_SyncedSixteenthL   6      (range 0…7)
+                          DelayLine_SyncedSixteenthR   3
+Ableton2.xml:84744-84765  the same pair, UNTOUCHED:    2 and 3
+Generic.xml:21245-21266   the same pair, UNTOUCHED:    2 and 2
+```
+
+*The switch is ground truth and it is the half that matters.* `SyncL`/`SyncR`
+are ordinary Live switches — `MidiCCOnOffThresholds` 64…127, no range — and
+Paul's are `true`. "Make the echo follow Live's tempo" needs no enum at all,
+only those two booleans.
+
+*The index is not.* Two readings survive the file and **they disagree**:
+
+- **(a) the arithmetic one, which is what shipped.** The name says SIXTEENTH,
+  the range is 0…7 = eight values, and one sixteenth is the smallest thing a
+  delay lets you say — so the eight are 1…8 sixteenths and `index = sixteenths
+  − 1`. It is corroborated INSIDE the file: Ableton2's untouched Delay sits at
+  index **2** *and* at a free-running `DelayLine_TimeL` of **0.3749999404
+  seconds** (its own `MidiControllerRange` 0.001…5 prints the unit), and 0.375 s
+  at that donor's own 120 bpm in 4/4 is exactly **3/16 of a bar = 3
+  sixteenths = index 2**. Two parameters of one untouched device agreeing is
+  evidence.
+- **(b) Paul's own click.** He was asked for *"a synced 1/8"* and the file came
+  back with index **6**, which reading (a) calls **7/16**. Under (a) a 1/8 is
+  index 1. Only the LEFT value moved (the right is still the factory 3, and
+  `DelayLine_Link` is `true`, so the right is not used).
+
+Nothing in the file settles which is right, so the exporter does not pretend:
+it implements (a), records (b) here, and `als-gate.js` **gate S** prints the
+discrepancy with a CONFIRM IN LIVE on every run.
+
+**Shipping (a) is safe anyway, and that was measured rather than hoped.** The
+box's echo chip is `timeBars: 0.1875` (fields.js `FX`), and 0.1875 bars × 16 =
+**3 sixteenths = index 2 — the value the donor's Delay already carries**. So
+for every record this exporter can write today, the synced path flips two
+booleans and writes back the byte Live itself wrote; the arithmetic only fires
+if somebody gives an echo a different time. A wrong reading of (a) cannot reach
+a record that exists.
+
+**The rule, stated once:** an echo whose time is a whole number of sixteenths
+*of the record's own bar* (1…8 of them — a 3/4 record's bar is twelve) goes in
+SYNCED and follows Live's tempo; anything else keeps the seconds path, at the
+record's own bpm, which is the same time and needs no enum. Both numbers are
+written either way — the seconds into `DelayLine_Time`, the index into
+`DelayLine_SyncedSixteenth` — so the device says the same delay in whichever
+mode a hand later switches it to.
+
+### The one click that would close the index
+
+> In Live 12, open `Answers`, look at the **Delay on `1-DS Drum Rack`** and say
+> what its time control reads — **1/8** or **7/16**. (Or set it to a dotted
+> eighth, save, and send it back: index 2 confirmed from the other end.)
+
+*(The ask this section replaces — "put an Auto Filter on any track and switch
+its filter to highpass; put a Delay beside it and set its left and right times
+to a synced 1/8" — is otherwise ANSWERED and retired.)*
 
 ---
 
-## What is still missing, from BOTH donors
+## What is still missing, from ALL THREE donors
 
-| absent | count in Generic | count in Ableton2 | what it blocks |
-|---|---|---|---|
-| `<Locator>` | 0 | **0** (`<Locators><Locators /></Locators>`) | locator export. **Gate 2 refuses it, on purpose,** and still does. |
-| a clip in `<ArrangerAutomation><Events>` | 0 | **0** — 16 `ArrangerAutomation`, every one `<Events />` | the arrangement clip's `CurrentStart` convention is still inferred, not observed |
-| `Saturator` / `GlueCompressor` / `Limiter` | 0 | **0**; both `MainTrack`s have **no devices at all** | the P3 master chain (`main:docs/ABLETON-EXPORT.md` maps master `drive`/`glue`/`ceiling` onto exactly those three) |
-| `UserSample` | 0 | 0 | nothing — `SampleRef` covers what P2 needs |
-| `Simpler` / `OriginalSimpler` | 0 | 0 | nothing — `MultiSampler` is the modern spelling and is now present |
+| absent | Generic | Ableton2 | Answers | what it blocks |
+|---|---|---|---|---|
+| `<Locator>` | 0 | 0 | **0** (`<Locators><Locators /></Locators>`) | locator export. **Gate 2 refuses it, on purpose,** and still does. |
+| a clip in `<ArrangerAutomation><Events>` | 0 | 0 | **0** — 10 `ArrangerAutomation`, every one `<Events />` | the arrangement clip's `CurrentStart` convention is still inferred, not observed |
+| a tempo envelope with more than its sentinel | 1 event | 1 event | **1 event** | the double-point STEP spelling in a paced record's tempo map is still inferred (`als-gate.js` gate T says CONFIRM IN LIVE) |
+| a set-wide `TimeSignature Manual` that is not 201 | 201 | 201 | **201** | that enum stays undecoded; the exporter says the meter on each clip's `RemoteableTimeSignature` instead, which is explicit in every donor |
+| ~~`Saturator` / `GlueCompressor` / `Limiter`~~ | 0 | 0 | **ALL THREE, on the MainTrack** | **nothing any more.** Answered 2026-09-03: the master chain ships (`nukernel/export/masterrack.js`, `als.js spliceMaster`, gate B) |
+| a Utility / a MainTrack EQ / a master send | 0 | 0 | 0 | the master words `width`, `tilt` and `space` — reported as unmapped, never faked |
+| a Phaser | 0 | 0 | 0 | the `phaser` chip, still reported rather than substituted (the P3 table above says so and Answers did not change it) |
+| `UserSample` | 0 | 0 | 0 | nothing — `SampleRef` covers what P2 needs |
+| `Simpler` / `OriginalSimpler` | 0 | 0 | 0 | nothing — `MultiSampler` is the modern spelling and is now present |
 
-Ableton2 added a Session clip on a track, which is what closed P0. It did **not**
-add an Arrangement clip, and it did **not** add a locator. Those two are the only
-things still blocking locator export.
+Ableton2 added a Session clip on a track, which is what closed P0. **Answers
+added the master chain and both enum answers, and it added nothing else**: it
+is Ableton2 with tracks removed, four devices added, and every probe clip
+emptied. In particular it did **not** do steps 1, 2 or 4 of the ask below — no
+Arrangement clip, no locator, no tempo automation, still 4/4 — so those three
+remain exactly as open as they were, and the exporter still refuses a locator
+and still flags the tempo step as inferred.
 
-## Ask — 30 seconds, and it is the last one before P3
+## Ask — 30 seconds, and step 3 of it is DONE
 
 *(This replaces the old Ask #1, which Ableton2 answered in part, and retires the
-old Ask #2, which Ableton2 answered in full.)*
+old Ask #2, which Ableton2 answered in full. **Step 3 is struck through:
+`Answers.als` did it on 2026-09-03 and the master chain now ships.** Steps 1, 2
+and 4 are untouched by that save and are still the whole remaining ask — the
+one-click delay question at the end of the enum section above is the fifth.)*
 
 > In Live 12, open `Ableton2`, and:
 > 1. drag the clip out of **`3-Drift`'s first Session slot into the Arrangement at bar 1**;
 > 2. drop **one locator** at bar 1 (Create → Add Locator);
-> 3. on the **Main** track, add **Saturator**, then **Glue Compressor**, then
->    **Limiter**, defaults are fine — don't tweak anything;
+> 3. ~~on the **Main** track, add **Saturator**, then **Glue Compressor**, then
+>    **Limiter**, defaults are fine — don't tweak anything;~~ **DONE 2026-09-03**
 > 4. *(added 2026-08-30, the tempo-map round)* **automate the main Tempo**:
 >    in Arrangement view, show the Main track's Song Tempo envelope and draw a
 >    hard step — 120 until bar 3, then 90 — two breakpoints, nothing musical;

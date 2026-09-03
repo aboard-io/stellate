@@ -100,6 +100,28 @@ export async function fxRackXml() {
 }
 
 /**
+ * The master chain — Saturator, Glue Compressor, Limiter — out of the third
+ * donor, which is the only one whose MainTrack has any device on it at all.
+ * Same door as the other two racks, same extractor pattern, 2 KB gzipped. A
+ * caller that hands nothing still exports: the record's master words are then
+ * reported as having no device rather than faked onto the nearest thing, and
+ * the donor's own Main track ships untouched.
+ */
+export async function masterRackXml() {
+  if (!canGzip()) throw new Error(NO_GZIP);
+  const { MASTERRACK_GZIP_B64, MASTERRACK_GZIP_BYTES, MASTERRACK_SOURCE, MASTERRACK_TRACK } =
+    await import("./masterrack.js");
+  const bin = atob(MASTERRACK_GZIP_B64);
+  const gz = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) gz[i] = bin.charCodeAt(i);
+  if (gz.length !== MASTERRACK_GZIP_BYTES)
+    throw new Error("the embedded master rack is " + gz.length + " bytes, not the " +
+      MASTERRACK_GZIP_BYTES + " of the " + MASTERRACK_TRACK + " in " + MASTERRACK_SOURCE +
+      " — run node nukernel/export/masterrack-extract.js");
+  return new TextDecoder().decode(await through(gz, new DecompressionStream("gzip")));
+}
+
+/**
  * THE RECORD ON SCREEN, FOLDED FOR THE EXPORTER.
  *
  * NOT a genre key re-derived, and not a second fold either: this is the very
@@ -151,7 +173,7 @@ export async function pageScore({ grid = true, engine = true, say = () => {} } =
     // chips live on. See export/score.js for why cast() cannot answer either.
     return scoreOf({ timeline: plan.timeline(), cast: engine ? plan.cast() : [],
                      seats: engine ? plan.seats() : null, sections: state.SONG,
-                     drums: engine ? plan.drumStrip() : null,
+                     drums: engine ? plan.drumStrip() : null, master: state.MASTER,
                      bpm: state.bpm, grid, engine, title: "the record" });
   } finally {
     if (grid && wasRubato) {
@@ -194,7 +216,8 @@ export async function pressAls(say = () => {}, opts = {}) {
   say("splicing the donor…");
   const donor = await donorXml();
   const res = alsFromScore(donor, score, { all, drumRack: await drumRackXml(),
-                                           fxRack: await fxRackXml() });
+                                           fxRack: await fxRackXml(),
+                                           masterRack: await masterRackXml() });
   say("gzipping…");
   const bytes = await through(new TextEncoder().encode(res.xml), new CompressionStream("gzip"));
   // WHAT WENT IN, COUNTED THE WAY als-gate.js COUNTS IT: every note is written

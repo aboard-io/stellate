@@ -202,13 +202,17 @@ export function deviceOf(xml, tag, from = 0) {
 /**
  * Every device this file can splice, keyed by tag.
  *
- * `donorXml` is Generic (the splice base, in the module graph via donor.js) and
- * `fxRackXml` is the six devices Ableton2 has that Generic does not
- * (fxrack.js, extracted by fxrack-extract.js). Both are optional: a caller
- * with no fx rack gets the Generic five and every chip that needs one of the
- * other six is reported as unmapped instead of faked.
+ * `donorXml` is Generic (the splice base, in the module graph via donor.js),
+ * `fxRackXml` is the seven devices Ableton2 has that Generic does not
+ * (fxrack.js, extracted by fxrack-extract.js), and `masterRackXml` is the
+ * three MASTER-CHAIN devices only Answers.als has — Saturator, GlueCompressor,
+ * Limiter, which BOTH earlier donors' MainTracks carry zero of
+ * (masterrack.js, extracted by masterrack-extract.js). All three racks are
+ * optional: a caller with no fx rack gets the Generic five and every chip that
+ * needs one of the other seven is reported as unmapped instead of faked, and a
+ * caller with no master rack exports the donor's own MainTrack untouched.
  */
-export function deviceLibrary(donorXml, fxRackXml = "") {
+export function deviceLibrary(donorXml, fxRackXml = "", masterRackXml = "") {
   const lib = {};
   // Generic's `1-MIDI` carries AutoFilter2, Eq8, Roar, StereoGain, Vocoder;
   // its returns carry Reverb and Delay. Taken from the whole document because
@@ -227,15 +231,26 @@ export function deviceLibrary(donorXml, fxRackXml = "") {
      run); Ableton2's has no `<Path>` in it at all. Assigning after the
      Generic loop is what makes the clean one win, and it is deliberate rather
      than incidental — see fxrack-extract.js WANT for the measurement. */
-  let p = 0;
-  while (p < fxRackXml.length) {
-    const m = /<([A-Za-z0-9._]+) Id="\d+"/.exec(fxRackXml.slice(p));
-    if (!m) break;
-    const i = p + m.index;
-    const [a, b] = balancedAt(fxRackXml, i);
-    lib[m[1]] = fxRackXml.slice(a, b);
-    p = b;
-  }
+  const split = (blob) => {
+    let p = 0;
+    while (p < blob.length) {
+      const m = /<([A-Za-z0-9._]+) Id="\d+"/.exec(blob.slice(p));
+      if (!m) break;
+      const i = p + m.index;
+      const [a, b] = balancedAt(blob, i);
+      lib[m[1]] = blob.slice(a, b);
+      p = b;
+    }
+  };
+  split(fxRackXml);
+  /* ...and the master chain, which is a third rack rather than more of the
+     second because it came out of a THIRD donor: Answers.als, the file Paul
+     saved on 2026-09-03 to answer the master-chain row of donor/README.md's
+     "what is still missing" table. Nothing here collides with the two above —
+     Saturator, GlueCompressor and Limiter appear nowhere in Generic or
+     Ableton2 — so the assignment order does not matter and is not load-bearing
+     the way the Delay's is. */
+  split(masterRackXml);
   return lib;
 }
 
@@ -549,6 +564,101 @@ export function wetPathOf(deviceTag) {
   }
 }
 
+/* ================== THE TWO ENUMS, DECODED OUT OF Answers.als ===========
+   Until 2026-09-03 this file refused two of Live's enums by name, and
+   donor/README.md carried the ask that would retire them: "put an Auto Filter
+   on any track and switch its filter to HIGHPASS; put a Delay beside it and set
+   its left and right times to a synced 1/8 — then save and send the file back."
+   Paul: "I put it in ~/answers.zip and answered all your questions." The file
+   is `tools/ableton/donor/Answers.als` (Live 12.4.5, the same
+   MinorVersion="12.0_12402" SchemaChangeCount="5" stamp as both other donors),
+   and every number below was read out of it rather than remembered.
+
+   ENUM 1 — AutoFilter2/Filter_Type, and it is CLOSED.
+
+       Answers.xml:18533-18543   <Filter_Type><Manual Value="1" />
+                                   <MidiControllerRange><Min 0/><Max 9/>
+       Generic.xml:1012-1022     <Filter_Type><Manual Value="0" />   (untouched)
+       Ableton2.xml:86364-86374  <Filter_Type><Manual Value="0" />   (untouched)
+
+   One device moved, one value moved with it: an AutoFilter2 whose filter Paul
+   switched to highpass reads 1 where every untouched one reads 0. So 0 is the
+   lowpass every export has been writing all along and 1 is the highpass, which
+   is the whole enum this exporter needs — the other eight of the 0..9 stay
+   undecoded and unused, because no lane in the box asks for a notch or a
+   morph. `mot: "rise"` stops being reported as homeless (als.js).
+
+   ENUM 2 — Delay/DelayLine_SyncedSixteenth, and it is HALF closed, which is
+   said out loud rather than rounded up.
+
+       Answers.xml:19191-19212  DelayLine_SyncL/SyncR  <Manual Value="true" />
+       Answers.xml:19297-19318  DelayLine_SyncedSixteenthL  6   (0..7)
+                                DelayLine_SyncedSixteenthR  3   (0..7)
+       Ableton2.xml:84744-84765 the same pair, UNTOUCHED:    2 and 3
+       Generic.xml:21245-21266  the same pair, UNTOUCHED:    2 and 2
+
+   THE SWITCH IS GROUND TRUTH AND THAT IS THE HALF THAT MATTERS. SyncL and
+   SyncR are ordinary Live switches (`MidiCCOnOffThresholds` 64..127, no
+   range), and Paul's are `true` — so "make the echo follow Live's tempo"
+   needs no enum at all, only the two booleans.
+
+   THE INDEX IS NOT. Two readings of the 0..7 survive the file:
+
+     (a) the arithmetic one, and it is the one implemented below. The name says
+         SIXTEENTH, the range is 0..7 = eight values, and one sixteenth is the
+         smallest thing a delay lets you say — so the eight values are 1..8
+         sixteenths and the index is `sixteenths - 1`. It is corroborated
+         INSIDE the file: Ableton2's untouched Delay sits at index 2 with a
+         free-running `DelayLine_TimeL` of 0.3749999404 SECONDS (its range,
+         0.001..5, prints the unit), and 0.375 s at that donor's own 120 bpm
+         in 4/4 is exactly 3/16 of a bar = 3 sixteenths = index 2. Two
+         parameters of one untouched device agreeing is evidence; one
+         remembered device UI is not.
+     (b) Paul's own click. He was asked for "a synced 1/8" and the file came
+         back with index 6, which reading (a) calls 7/16. Under (a) a 1/8 is
+         index 1. THE TWO CANNOT BOTH BE TRUE and neither can be checked from
+         here, so this file does not pretend: it implements (a), records (b),
+         and hands the discrepancy to donor/README.md as the one-click ask
+         that settles it.
+
+   WHY SHIPPING (a) IS SAFE ANYWAY, measured rather than hoped: the box's echo
+   chip is `timeBars: 0.1875` (fields.js FX, copied into FX_PARAMS above), and
+   0.1875 bars x 16 = 3 sixteenths = index 2 — WHICH IS THE VALUE THE DONOR'S
+   DEVICE ALREADY CARRIES. So for every record this exporter can write today,
+   the synced path flips two booleans and writes back the byte Live itself
+   wrote; the arithmetic only ever fires if somebody gives an echo a different
+   time. A wrong reading of (a) cannot reach a record that exists.
+
+   THE RULE, stated once: an echo whose time is a WHOLE NUMBER of sixteenths of
+   the record's own bar (1..8 of them) goes in SYNCED, so it follows the tempo
+   in Live; anything else keeps the seconds path this exporter has always
+   written, at the record's own bpm, which is the same time and needs no enum.
+   Both are written either way — the seconds into DelayLine_Time, the index
+   into DelayLine_SyncedSixteenth — so the device says the same delay in
+   whichever mode a hand later switches it to. */
+
+/** AutoFilter2/Filter_Type: the value every untouched donor carries. */
+export const AF_LOWPASS = 0;
+/** AutoFilter2/Filter_Type: Answers.als:18536, the one Paul switched. */
+export const AF_HIGHPASS = 1;
+/** Delay/DelayLine_SyncedSixteenth as Paul saved it, for the record. */
+export const DELAY_SYNC_PAULS_VALUE = 6;
+/** How many values the enum has, read off its own MidiControllerRange (0..7). */
+export const DELAY_SYNC_MAX = 7;
+
+/**
+ * `DelayLine_SyncedSixteenth` for a delay of `n` sixteenth notes, or null when
+ * this file cannot say — which is every non-integer and everything past the
+ * eight the enum holds. Reading (a) above: index = sixteenths - 1.
+ */
+export function delaySyncIndex(n) {
+  if (!isFinite(n)) return null;
+  const r = Math.round(n);
+  if (Math.abs(n - r) > 1e-6) return null;            // not a clean sixteenth
+  if (r < 1 || r > DELAY_SYNC_MAX + 1) return null;   // outside the eight it holds
+  return r - 1;
+}
+
 /** AutoFilter2's own ceiling, read off the donor: 19999.9961 Hz = no filter. */
 export const FILTER_OPEN = 19999.9961;
 
@@ -597,12 +707,27 @@ export function fxDeviceFor(chip, params, ctx = {}) {
       Envelope_Release: g("decay", 0.16),
       DryWet: g("mix", 1) } };
     case "echo": case "delay": {
-      const t = Math.max(0.001, g("timeBars", 0.1875) * barSec);
-      return { device: "Delay", params: {
-        DelayLine_TimeL: t, DelayLine_TimeR: t,
+      const bars = g("timeBars", 0.1875);
+      const t = Math.max(0.001, bars * barSec);
+      /* SIXTEENTHS OF THIS RECORD'S OWN BAR, not of a 4/4 one: a bar is
+         `beatsPerBar` quarters and a quarter is four sixteenths, so a 3/4
+         record's bar is twelve and a dotted-eighth echo is still three of
+         them. The meter rides the Score (score.js meterAbc) and als.js hands
+         it down in `ctx`. */
+      const idx = delaySyncIndex(bars * (ctx.beatsPerBar || 4) * 4);
+      const params = { DelayLine_TimeL: t, DelayLine_TimeR: t,
         Feedback: g("feedback", 0.4), Filter_Frequency: g("tone", 2800),
-        DryWet: g("mix", 0.35) },
-        flags: { DelayLine_SyncL: false, DelayLine_SyncR: false, Filter_On: true } };
+        DryWet: g("mix", 0.35) };
+      if (idx == null)                                 // not a clean sixteenth: seconds, as ever
+        return { device: "Delay", params,
+          flags: { DelayLine_SyncL: false, DelayLine_SyncR: false, Filter_On: true } };
+      return { device: "Delay",
+        params: { ...params, DelayLine_SyncedSixteenthL: idx, DelayLine_SyncedSixteenthR: idx },
+        // Link on so the two sides cannot drift apart in Live the way the
+        // donor's own untouched pair has (L 2, R 3) — the box says ONE echo.
+        flags: { DelayLine_SyncL: true, DelayLine_SyncR: true,
+                 DelayLine_Link: true, Filter_On: true },
+        synced: idx };
     }
     case "crunch": case "higain": {
       const stages = Math.round(g("stages", 1));
@@ -634,7 +759,161 @@ export function buildFx(lib, chip, params, ctx) {
     const next = setFlag(xml, path, on);
     if (next !== xml) { xml = next; set++; }
   }
-  return { xml, device: spec.device, set, nearest: spec.nearest || null };
+  return { xml, device: spec.device, set, nearest: spec.nearest || null,
+           synced: spec.synced == null ? null : spec.synced };
+}
+
+/* ================== THE MASTER BUS ONTO LIVE'S MAIN TRACK ==============
+   `main:docs/ABLETON-EXPORT.md` mapped this a fortnight before the first donor
+   arrived and it has been the one row of the P3 spec that shipped as nothing,
+   for one reason: neither donor had the devices. Both MainTracks carry no
+   devices AT ALL — zero Saturator, zero GlueCompressor, zero Limiter in 4.6 MB
+   of XML — and this exporter emits nothing a donor has not written. Answers.als
+   (2026-09-03) has all three, at their factory values, in chain order.
+
+       nukernel word     Live device        knobs written here
+       master drive      Saturator          BaseDrive (dB), DryWet
+       master glue       Glue Compressor    Threshold (dB), Ratio, Makeup (dB)
+       master ceiling    Limiter            Ceiling (dB), Gain (dB)
+
+   EVERY RANGE IS READ OFF THE DONOR'S OWN MidiControllerRange AND CLAMPED
+   THERE — setParam does that for every write in this file, and the tables
+   below hold nukernel's numbers, never Live's.
+
+   THE NUMBERS ARE fields.js's, COPIED AND HELD TO IT BY A GATE, exactly like
+   FX_PARAMS above and als.js CHAIR_LEVEL: export/ is browser-safe and cannot
+   import the UMD data tier, so als-gate.js gate G reads the real DRIVES/GLUES/
+   CEILINGS out of fields.js and fails the moment these disagree. Duplicate the
+   value if you must, never duplicate the authority.
+
+   ABSENT IS THE DONOR'S OWN MAIN TRACK. A record with no `master` gets no
+   device — which is what "absent is today" means at this end, because the
+   donor's MainTrack is empty. A word that resolves to `none` gets no device
+   either, for the same reason and by the same law: `none` is fields.js's own
+   spelling of "the stage OUT" (2026-08-28, "There doesn't seem to be a way to
+   even turn the final mix off"), and a Live main track with no Saturator on it
+   IS a master with no drive. Only a word that asks for something builds
+   something.
+
+   AND FOUR WORDS STILL HAVE NO DEVICE, reported and never faked. `tape`,
+   `space`, `width` and `tilt` are in every record's vocabulary and no donor
+   carries an honest home for any of them: the spec's own suggestions are a
+   Utility (stereo width) and an EQ Eight (two shelves about the middle) on the
+   Main, plus a send-to-Return-A trim for `space` — and there is no Utility in
+   any of the three donors, no Eq8 on any MainTrack, and no master send. So
+   they come out on the receipt as unmapped, which is the same answer this
+   exporter gives the `phaser` chip. */
+export const MASTER_DRIVES = { none: 0, hair: 0.06, warm: 0.16, dirt: 0.32, crush: 0.62 };
+export const MASTER_GLUES = {
+  none:   { thr: 0,   knee: 0,  ratio: 1,   atk: 0.030, rel: 0.25, makeup: 1 },
+  soft:   { thr: -18, knee: 30, ratio: 1.6, atk: 0.030, rel: 0.35, makeup: 1.2 },
+  glue:   { thr: -22, knee: 28, ratio: 2.2, atk: 0.015, rel: 0.25, makeup: 1.4 },
+  tight:  { thr: -26, knee: 18, ratio: 3.2, atk: 0.006, rel: 0.18, makeup: 1.7 },
+  pump:   { thr: -30, knee: 8,  ratio: 6,   atk: 0.002, rel: 0.09, makeup: 1.9 },
+  squash: { thr: -34, knee: 4,  ratio: 12,  atk: 0.001, rel: 0.06, makeup: 2.2 },
+};
+export const MASTER_CEILINGS = {
+  none:   { thr: 0,    push: 1,   clip: 0 },
+  open:   { thr: -1.5, push: 1,   clip: 1.0 },
+  safe:   { thr: -2.5, push: 1,   clip: 0.95 },
+  loud:   { thr: -3,   push: 1.7, clip: 0.95 },
+  louder: { thr: -3,   push: 2.6, clip: 0.95 },
+};
+/** The four master words with no device in any donor, in fields.js MASTER order. */
+export const MASTER_HOMELESS = ["tape", "space", "width", "tilt"];
+
+const dbOfGain = (g) => 20 * Math.log10(Math.max(1e-6, g));
+/* THE DRIVE IN dB IS THE ENGINE'S OWN ARITHMETIC, quoted from fields.js's
+   DRIVES comment ("tanh drive (1 + grit*2.6)", "wet mix (min 1, grit*8)") and
+   from the sentence beside it that says what `crush` is: "8.34 dB of added
+   drive". 20*log10(1 + 0.62*2.6) = 8.34. So the Saturator arrives at the gain
+   the record's own grit stage applies, and its dry/wet at the blend fx_bus
+   uses — the two numbers that make `hair` a hair. */
+export const driveDb = (grit) => dbOfGain(1 + grit * 2.6);
+export const driveWet = (grit) => Math.min(1, grit * 8);
+
+/* THE GLUE COMPRESSOR'S RATIO IS A THREE-POSITION ENUM (0..2, read off the
+   donor) AND THE DONOR PRINTS NO NAMES FOR IT — the third inference in this
+   file, flagged the way StringStudio's cutoff is and bounded the same way.
+   What is known from the file: three positions, and an untouched device sits
+   at 1, the middle. What is assumed: they ascend, and they are the SSL ladder
+   the device is a model of (2:1, 4:1, 10:1). The record's own ratios are
+   1.6/2.2/3.2/6/12, mapped to the nearest rung in log space, so the worst case
+   of a wrong assumption is a neighbouring ratio on a bus compressor — never a
+   silent track. CONFIRM IN LIVE. */
+export const GLUE_RATIOS = [2, 4, 10];
+export const glueRatioIndex = (ratio) => {
+  const r = Math.max(1.01, +ratio || 1);
+  let best = 0, d = Infinity;
+  GLUE_RATIOS.forEach((v, i) => {
+    const e = Math.abs(Math.log(r / v));
+    if (e < d) { d = e; best = i; }
+  });
+  return best;
+};
+
+/**
+ * The master chain for one record, ready to splice onto Live's MainTrack.
+ *
+ * `master` is the record's own words (`{drive, glue, tape, space, width, tilt,
+ * ceiling}` — ui/state.js MASTER, which compose.js deals per family). Returns
+ * `{devices: [{tag, xml, set, note}], unmapped: [...]}`; a record with no
+ * master, or one whose every word is `none`, returns no devices at all and the
+ * caller leaves the donor's MainTrack exactly as Live wrote it.
+ */
+export function masterDevices(lib, master) {
+  const out = { devices: [], unmapped: [] };
+  if (!master || typeof master !== "object") return out;
+  const word = (k) => (typeof master[k] === "string" ? master[k] : null);
+  const add = (tag, table, note) => {
+    const base = lib[tag];
+    if (!base) { out.unmapped.push(note.word + " — no " + tag + " in the donor library"); return; }
+    const r = setMany(base, table);
+    out.devices.push({ tag, xml: r.xml, set: r.set, note: note.text });
+  };
+
+  const dw = word("drive");
+  if (dw && MASTER_DRIVES[dw] != null && MASTER_DRIVES[dw] > 0) {
+    const grit = MASTER_DRIVES[dw];
+    add("Saturator", { BaseDrive: driveDb(grit), DryWet: driveWet(grit) },
+      { word: "drive", text: "drive " + dw + " -> Saturator " + driveDb(grit).toFixed(2) +
+        " dB, " + Math.round(driveWet(grit) * 100) + "% wet" });
+  }
+
+  const gw = word("glue");
+  const g = gw && MASTER_GLUES[gw];
+  if (g && g.thr < 0) {
+    const idx = glueRatioIndex(g.ratio);
+    add("GlueCompressor",
+      { Threshold: g.thr, Ratio: idx, Makeup: dbOfGain(g.makeup) },
+      { word: "glue", text: "glue " + gw + " -> Glue Compressor " + g.thr + " dB, ratio " +
+        GLUE_RATIOS[idx] + ":1 (enum " + idx + ", INFERRED), makeup " +
+        dbOfGain(g.makeup).toFixed(2) + " dB" });
+  }
+
+  const cw = word("ceiling");
+  const c = cw && MASTER_CEILINGS[cw];
+  if (c && c.thr < 0) {
+    add("Limiter", { Ceiling: c.thr, Gain: dbOfGain(c.push) },
+      { word: "ceiling", text: "ceiling " + cw + " -> Limiter " + c.thr + " dB ceiling" +
+        (c.push > 1 ? ", +" + dbOfGain(c.push).toFixed(2) + " dB in" : "") });
+  }
+
+  /* THE ATTACK AND THE RELEASE ARE NOT WRITTEN, and that is the same refusal
+     as the two enums above rather than an oversight: GlueCompressor/Attack and
+     /Release print 0..6 with no names (seven positions each), so a wrong index
+     would move the compressor's whole behaviour. The record's atk/rel are in
+     MASTER_GLUES for whoever decodes them; until then the device keeps Live's
+     own default, which is a bus compressor's default and is never wrong the
+     way a wrong index is. */
+  for (const k of MASTER_HOMELESS) {
+    const w = word(k);
+    if (w && w !== "none")
+      out.unmapped.push("master " + k + " (" + w + ") — no donor carries a device for it " +
+        "(the spec names Utility for width and an EQ Eight tilt on the Main; neither is in " +
+        "any donor, and there is no master send for `space`)");
+  }
+  return out;
 }
 
 /* ================== P3b — THE AUTOMATION ENVELOPES ======================

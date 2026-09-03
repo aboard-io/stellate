@@ -70,7 +70,8 @@
 // because a cycle that is fine is still a cycle somebody will worry about.
 import { deviceLibrary, deviceOf, instrumentTagOf, setInstrument, buildFx,
          chipParams, kitTakes, wetPathOf, targetIdOf, getParam, automationEnvelope,
-         stitchEnvelope, putEnvelopes, setParam, FILTER_OPEN } from "./live-devices.js";
+         stitchEnvelope, putEnvelopes, setParam, paramRange, FILTER_OPEN,
+         AF_HIGHPASS, masterDevices } from "./live-devices.js";
 
 /* ---------- the balanced-tag scanner ---------- */
 // Regexes over XML are a bad idea in general and a fine idea here: the file was
@@ -600,8 +601,35 @@ export function setEqBands(eq, bands) {
 export function addDevice(track, device) {
   const d = elementAfter(track, "Devices");
   if (!d) return track;
+  /* AND THE EMPTY CHAIN IS A DIFFERENT ELEMENT, which cost nothing here only
+     because it was measured before it was written: every MIDI track in the
+     donor holds `<Devices>…</Devices>` with an instrument in it, but the
+     MainTrack — where the master chain goes — holds `<Devices />`,
+     self-closing, because Live wrote no devices on it. Inserting before
+     "</Devices>" in an eleven-character element would splice the device into
+     the middle of the open tag and produce XML that is not well-formed. */
+  if (/\/>$/.test(d.text))
+    return track.slice(0, d.start) + "<Devices>" + device + "</Devices>" + track.slice(d.end);
   const at = d.end - "</Devices>".length;
   return track.slice(0, at) + device + track.slice(at);
+}
+
+/**
+ * The record's master bus onto the donor's own MainTrack.
+ *
+ * ABSENT IS THE DONOR'S MAIN TRACK, UNTOUCHED — which for both older donors
+ * means an empty `<Devices />`, and that is exactly what an unmastered record
+ * should open as. Only words that ask for something build something
+ * (live-devices.js masterDevices says which), so this returns the xml
+ * unchanged for every Score folded before today.
+ */
+export function spliceMaster(xml, devices) {
+  if (!devices || !devices.length) return xml;
+  const mt = elementAfter(xml, "MainTrack");
+  if (!mt) return xml;
+  let track = mt.text;
+  for (const d of devices) track = addDevice(track, d);
+  return xml.slice(0, mt.start) + track + xml.slice(mt.end);
 }
 
 /* AND THE COLUMNS NOBODY PLAYS COME OUT. Paul: "Then kill the columns/
@@ -780,7 +808,7 @@ export function alsFromScore(donorXml, score, opts = {}) {
      none of these branches and comes out byte-identical to the last release.
      The gate proves it: gate E reports zeroes for such a record instead of
      failing it. */
-  const lib = deviceLibrary(donorXml, opts.fxRack || "");
+  const lib = deviceLibrary(donorXml, opts.fxRack || "", opts.masterRack || "");
   const beatsPerBar = sig ? (sig[0] * 4) / sig[1] : 4;
   const fxCtx = { bpm: Math.max(1, +score.bpm || 120), beatsPerBar };
   const laneFor = (box, param) => ((box.auto || []).find((a) => a.param === param) || null);
@@ -796,23 +824,29 @@ export function alsFromScore(donorXml, score, opts = {}) {
   const chips = [];
   for (const b of boxes) for (const k of (b.fx || [])) if (!chips.includes(k)) chips.push(k);
   const anyCut = boxes.some((b) => laneFor(b, "cutoff"));
+  const anyHpf = boxes.some((b) => laneFor(b, "hpf"));
   const anyLevel = boxes.some((b) => laneFor(b, "level") || b.lvl);
   // what the run did to the SOUND, printed by the CLI beside the clip list
   const sound = { params: 0, envelopes: 0, devices: 0, unmapped: [], notes: [] };
   const sawUnmapped = new Set();
-  /* AND THE ONE LANE THAT STILL HAS NO HOME, reported rather than faked.
-     `mot: "rise"` compiles to a HIGHPASS sweep (20 Hz -> 1.4 kHz). audio/desk.js
-     already says it renders to nothing — "the parent's master stage has a
-     lowpass ceiling and no floor" — so the export is not losing anything the
-     record has. Live's AutoFilter DOES have a highpass, which makes this the
-     one place the file could say more than the engine does; getting there
-     needs `Filter_Type`, whose 0..9 the donor prints no names for, and a wrong
-     enum turns a rising sweep into a closing one. So it is named on every run
-     that has one, which is what turns "should we decode that enum?" from a
-     judgement call into a trigger. The lane is in the Score for whoever does. */
-  if (boxes.some((b) => laneFor(b, "hpf")))
-    sound.unmapped.push('the "rise" highpass sweep — Live\'s AutoFilter has one, ' +
-      "but choosing it needs the Filter_Type enum (0..9) and the donor prints no names for it");
+  /* THE LANE THAT USED TO HAVE NO HOME NOW HAS ONE (2026-09-03, the Answers
+     round). This paragraph read, until today: "`mot: \"rise\"` compiles to a
+     HIGHPASS sweep … getting there needs `Filter_Type`, whose 0..9 the donor
+     prints no names for, and a wrong enum turns a rising sweep into a closing
+     one. So it is named on every run that has one, which is what turns
+     'should we decode that enum?' from a judgement call into a trigger." The
+     trigger fired: donor/README.md asked, Paul saved `Answers.als` with one
+     AutoFilter2 switched to highpass, and that device reads `Filter_Type` 1
+     where every untouched one in every donor reads 0 (live-devices.js
+     AF_HIGHPASS carries the line numbers). So the sweep is WRITTEN now, and
+     this is the one place the exported file says more than the engine does —
+     audio/desk.js renders `rise` to nothing, because "the parent's master
+     stage has a lowpass ceiling and no floor". The old sentence is QUOTED
+     rather than deleted, because this repo does not delete a claim it
+     reverses. */
+  if (anyHpf && lib.AutoFilter2)
+    sound.notes.push('the "rise" sweep -> a second AutoFilter2 at Filter_Type ' + AF_HIGHPASS +
+      " (HIGHPASS, decoded from donor/Answers.als)");
 
   const trackXml = laneNames.map((laneName) => {
     const info = laneInfoOf(boxes, laneName);
@@ -916,6 +950,12 @@ export function alsFromScore(donorXml, score, opts = {}) {
         sawUnmapped.add(chip + "~");
         sound.notes.push(chip + " -> " + built.device + " (" + built.nearest + ")");
       }
+      if (built.synced != null && !sawUnmapped.has(chip + "#")) {
+        sawUnmapped.add(chip + "#");
+        sound.notes.push(chip + " -> " + built.device + " SYNCED (DelayLine_Sync on, " +
+          "SyncedSixteenth " + built.synced + " = " + (built.synced + 1) +
+          "/16 of the bar) — it follows Live's tempo");
+      }
     }
 
     /* ---- P3b's carrier: ONE AutoFilter2 FOR THE COMPOSED FILTER MOTION --
@@ -939,6 +979,29 @@ export function alsFromScore(donorXml, score, opts = {}) {
       const dev = renumber(setParam(lib.AutoFilter2, "Filter_Frequency", FILTER_OPEN), next);
       motionTarget = targetIdOf(dev, "Filter_Frequency");
       t = addDevice(t, dev);
+      sound.devices++;
+    }
+    /* ---- AND THE `rise` SWEEP, ON A SECOND AutoFilter2 SET TO HIGHPASS ----
+       Two filters because they are two gestures: `mot: open`/`close` walks a
+       LOWPASS down from the top and `mot: rise` walks a HIGHPASS up from the
+       bottom, and one device cannot be both at once — Filter_Type is a single
+       enum, so a track that does both in different sections would have to
+       automate the TYPE, which is a step change in a filter and sounds like a
+       fault. Two devices, two envelopes, each resting where it is inaudible.
+
+       IT ARRIVES AT ITS FLOOR, which for a highpass is the bottom of the band
+       rather than the top — the same "safe resting state" argument the lowpass
+       above makes, pointed the other way, and the floor is READ OFF THE
+       DEVICE'S OWN MidiControllerRange rather than typed. */
+    let riseTarget = null, riseFloor = 0;
+    if (!isDrums && anyHpf && lib.AutoFilter2) {
+      const r = paramRange(lib.AutoFilter2, "Filter_Frequency");
+      riseFloor = r ? r.min : 20;
+      let hp = setParam(lib.AutoFilter2, "Filter_Frequency", riseFloor);
+      hp = setParam(hp, "Filter_Type", AF_HIGHPASS);
+      hp = renumber(hp, next);
+      riseTarget = targetIdOf(hp, "Filter_Frequency");
+      t = addDevice(t, hp);
       sound.devices++;
     }
     /* THE EQ GOES ON AFTER THE INSTRUMENT and is renumbered like any other
@@ -1034,6 +1097,8 @@ export function alsFromScore(donorXml, score, opts = {}) {
     }
     if (motionTarget != null)
       ride(motionTarget, "cutoff", () => FILTER_OPEN, () => (x) => clamp(x, 20, FILTER_OPEN));
+    if (riseTarget != null)
+      ride(riseTarget, "hpf", () => riseFloor, () => (x) => clamp(x, riseFloor, FILTER_OPEN));
     for (const w of fxWet) {
       // a chip every box asks for is a constant, and a constant is the Manual
       // value the device already carries — `ride`'s flat-envelope guard would
@@ -1100,6 +1165,21 @@ export function alsFromScore(donorXml, score, opts = {}) {
     : tracksEl.end - "</Tracks>".length;
   out = out.slice(0, at) + trackXml.join("") + out.slice(at);
   out = dropDonorTracks(out);
+  /* ---- THE MASTER CHAIN ONTO THE MAIN TRACK (2026-09-03, the Answers round)
+     Last, and after the donor tracks are gone, so the ids it takes are above
+     everything the clones took and `NextPointeeId` below still covers them.
+     The three devices come out of the THIRD donor (masterrack.js, Paul's
+     Answers.als) because neither of the first two had a single device on its
+     MainTrack — which is why `main:docs/ABLETON-EXPORT.md`'s master row has
+     shipped as nothing since the spec was written. Renumbered like every other
+     spliced device, for gate 0's reason. */
+  const mstr = masterDevices(lib, score.master);
+  if (mstr.devices.length) {
+    out = spliceMaster(out, mstr.devices.map((d) => renumber(d.xml, next)));
+    for (const d of mstr.devices) { sound.devices++; sound.params += d.set; }
+  }
+  sound.master = mstr.devices.map((d) => d.note);
+  for (const u of mstr.unmapped) sound.unmapped.push(u);
   out = out.replace(/<NextPointeeId Value="\d+" \/>/, '<NextPointeeId Value="' + nextId + '" />');
   // `sound` is P3's own printout: how many instrument knobs were set, how many
   // automation envelopes were written and how many devices were spliced, plus

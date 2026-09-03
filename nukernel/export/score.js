@@ -220,7 +220,7 @@ export function autoOf(sec, beats) {
  */
 export function scoreOf({ timeline, cast = [], seats = null, sections = null,
                           bpm, grid = true, engine = true,
-                          drums = null, title = "nukernel" }) {
+                          drums = null, master = null, title = "nukernel" }) {
   if (!timeline || !timeline.length) throw new Error("compile() produced no bars");
   const boxes = [];
   for (const bar of timeline) {
@@ -347,7 +347,25 @@ export function scoreOf({ timeline, cast = [], seats = null, sections = null,
      record has one meter (band-kit's own law), so the first bar answers.
      Absent = both null, and every 4/4 record's Score is the same value. */
   const gm = timeline[0] && timeline[0].g ? timeline[0].g.meter : null;
+  /* THE RECORD'S MASTER BUS RIDES THE SCORE (2026-09-03, the Answers round),
+     as the WORDS and not as numbers. `master` is ui/state.js MASTER — the
+     seven-word spec fields.js MASTER registers and compose.js deals per family
+     — and state.js has already normalised "the same as no spec at all" to
+     null (setMaster / masterIsDefault), so there is exactly one spelling of
+     absent here and this file does not get a second opinion about it.
+     PRESENT-ONLY, like `auto` and `fx`: a record that never touched the master
+     writes no key, so every Score folded before today is the same object, and
+     nukernel/export/als.js leaves the donor's own MainTrack untouched.
+     WHY THE WORDS AND NOT resolveMaster()'s NUMBERS: a Score is what the
+     RECORD says, and the words are what it says; the numbers behind them are
+     fields.js's (live-devices.js MASTER_DRIVES/GLUES/CEILINGS quote them and
+     als-gate.js gate G holds the copy to the original). A Score full of
+     resolved gains would also be unreadable in a `--score` file, which is a
+     thing people open. */
+  const mw = master && typeof master === "object" &&
+    Object.values(master).some((v) => typeof v === "string") ? master : null;
   return { title, bpm, grid, engine: !!engine, cast, skipped, folded, boxes,
+           ...(mw ? { master: mw } : {}),
            meterAbc: (gm && typeof gm === "object" && gm.abc) || null,
            meterWord: typeof gm === "string" ? gm : null };
 }
