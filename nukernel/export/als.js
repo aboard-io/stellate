@@ -209,7 +209,7 @@ export function renumber(xml, next) {
  * `<MidiKey Value="…" />` LAST. OffVelocity is always 64 — the donor's value,
  * and nukernel has no release velocity to say anything else with.
  */
-export function midiClip(tpl, { name, beats, time = 0, notes, id = 0, arrangement = false, sig = null }) {
+export function midiClip(tpl, { name, beats, time = 0, notes, id = 0, arrangement = false, sig = null, color = null }) {
   const byKey = new Map();
   for (const n of notes) {
     const k = Math.round(n.midi);
@@ -256,6 +256,22 @@ export function midiClip(tpl, { name, beats, time = 0, notes, id = 0, arrangemen
   x = x.replace(/<LoopEnd Value="[^"]*" \/>/, '<LoopEnd Value="' + num(beats) + '" />');
   x = x.replace(/<OutMarker Value="[^"]*" \/>/, '<OutMarker Value="' + num(beats) + '" />');
   x = x.replace(/<Name Value="[^"]*" \/>/, '<Name Value="' + esc(name) + '" />');
+  /* THE CLIP WEARS ITS TRACK'S COLOUR (2026-09-03). Paul, of the exported set:
+     "all of the clips are the same color -- they should be the color of the
+     track." They were: every clip in this exporter is a copy of the GroovePool
+     template, whose `<Color Value="7" />` travelled with it into all thirty-odd
+     clips of a set whose tracks were coloured 20, 7, 18 and 24.
+
+     READ OUT OF THE DONORS, NOT DECIDED HERE. Live's own rule is visible in
+     every file Paul saved: in Ableton2, Answers and Answers2 each of the seven
+     clips carries EXACTLY the Color of the track it sits on (24/24, 16/16,
+     12/12, 2/2, 1/1) — a clip inherits its track's colour at the moment Live
+     makes it. So this is not a new convention, it is the donor's, and the only
+     thing the exporter was doing wrong was carrying the template's. `color`
+     absent leaves the clip exactly as it was, which is what a caller with no
+     track to ask still gets. The FIRST `<Color>` is the clip's own: the
+     template is the note block plus scalars and holds no device. */
+  if (color != null) x = x.replace(/<Color Value="[^"]*" \/>/, '<Color Value="' + (color | 0) + '" />');
   // The template is the GROOVE pool's clip and it names its own groove
   // (GrooveId 4). A copy of it on a track would inherit Live's swing on top of
   // the swing nukernel has already baked into the note offsets — the same
@@ -354,6 +370,47 @@ export function donorFor(chair, instr) {
   for (const [re, track] of DONOR_BY_INSTR) if (re.test(instr || "")) return track;
   return DONOR_TRACK[chair] || DONOR_TRACK[""];
 }
+
+/* ---- THE COLOUR OF A TRACK, AND SO OF ITS CLIPS (2026-09-03) -------------
+   Paul: "all of the clips are the same color -- they should be the color of
+   the track." The clip half is midiClip's, above. This is the other half, and
+   it is a smaller change than it looks: the tracks were ALREADY coloured — a
+   clone keeps the donor track's `<Color>`, so a funk export came out 20 / 7 /
+   18 / 24. What was wrong is that those four numbers name the DONOR and not
+   the part: `bass` and a plain synth line both clone `2-Drift` and so both
+   came out 7, and two lines of the same family are indistinguishable from two
+   lines of different ones.
+
+   ONE CLASSIFICATION, READ TWICE. The family below is `donorFor`'s own answer
+   plus the two special chairs it already special-cases, so there is no second
+   table of instrument regexes to drift out of step with the first — the same
+   move `columnNames` makes for names and gate M makes for the mix tables.
+
+   EVERY INDEX IS ONE LIVE ITSELF WROTE, and each is taken from the donor track
+   for that family's machine, so the mapping means "the colour Live gives this
+   kind of instrument" rather than a taste:
+     drums  24  the "1-DS Drum Rack" track in Ableton2 / Answers / Answers2
+     bass   16  the Drift track in the same three (Generic's Drift is 7)
+     keys   12  the Operator track in the same three (Generic's is 18)
+     string 20  Generic's "6-Tension"
+     pad     6  Generic's "5-Meld"
+     synth   2  the Wavetable track in the same three — the remaining donor
+                colour, and the only family with no donor machine of its own
+   Six families, six distinct indices, none of them invented. The returns keep
+   the 9 and 10 the donor gave them and the master keeps its own. */
+export const TRACK_COLOR = { drums: 24, bass: 16, keys: 12, string: 20, pad: 6, synth: 2 };
+const FAMILY_OF_DONOR = { "6-Tension": "string", "4-Operator": "keys", "5-Meld": "pad" };
+export function familyOf(chair, instr) {
+  if (chair === "drums") return "drums";
+  if (chair === "bass") return "bass";
+  return FAMILY_OF_DONOR[donorFor(chair, instr)] || "synth";
+}
+export const colorFor = (chair, instr) => TRACK_COLOR[familyOf(chair, instr)];
+/** The colour this lane's track and clips take — the gate asks THIS, not a copy. */
+export const colorOfLane = (boxes, laneName) => {
+  const info = laneInfoOf(boxes, laneName);
+  return colorFor(laneName === "drums" ? "drums" : info.chair, info.instr);
+};
 
 /* THE SECOND DONOR'S ONE TRACK, MADE FIT FOR THE FIRST DONOR'S SET.
    The drum rack comes out of Ableton2 (export/drumrack.js) and everything else
@@ -927,6 +984,14 @@ export function alsFromScore(donorXml, score, opts = {}) {
     const label = isDrums && !rack ? DRUM_TRACK_NAME : colName[laneName];
     t = t.replace(/<EffectiveName Value="[^"]*" \/>/, '<EffectiveName Value="' + esc(label) + '" />');
     t = t.replace(/<UserName Value="[^"]*" \/>/, '<UserName Value="' + esc(label) + '" />');
+    /* ...AND ITS COLOUR, BEFORE ANY CLIP GOES IN. The track's own `<Color>` is
+       the first one in the element — measured on every donor and on every
+       export: it sits at offset ~510 where the `<DeviceChain>` starts at ~1140
+       — so the first-match replace is the track's and never a device's or a
+       clip's, and doing it here rather than after the splice keeps it that
+       way. See colorFor above for where the six numbers come from. */
+    const color = colorFor(isDrums ? "drums" : info.chair, info.instr);
+    t = t.replace(/<Color Value="[^"]*" \/>/, '<Color Value="' + color + '" />');
 
     const arrangement = [];
     views.forEach((v, bi) => {
@@ -936,11 +1001,11 @@ export function alsFromScore(donorXml, score, opts = {}) {
       const clipName = clipNameOf(box, colName[laneName]);
       const laneNotes = v.notes(lane.notes);
       const session = midiClip(tpl, { name: clipName, beats: v.beats, time: 0,
-                                      notes: laneNotes, id: clipId++, sig });
+                                      notes: laneNotes, id: clipId++, sig, color });
       t = putSessionClip(t, bi, session);
       arrangement.push(midiClip(tpl, { name: clipName, beats: v.beats,
                                        time: v.beat0, notes: laneNotes,
-                                       id: clipId++, arrangement: true, sig }));
+                                       id: clipId++, arrangement: true, sig, color }));
       notes.push(clipName + ": " + lane.notes.length + " notes over " + v.beats + " beats");
     });
     t = putArrangementClips(t, arrangement);

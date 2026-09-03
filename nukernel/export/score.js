@@ -27,6 +27,10 @@
 // is therefore the HEARD loudness with the fader already in it. The day P3
 // writes real volume envelopes, velocity must stay the written value or the
 // fader ride is counted twice.
+// 2026-09-03 — AND IT STILL IS THE WRITTEN VALUE. velOfWritten now also reads
+// `acc`, which is a MARK on the event and not a gain on the channel; the
+// paragraph above is about the DESK and is untouched by it. The argument is
+// written out in full over that function.
 import { GM_DRUM } from "./als.js";
 
 /** The exporter's own words for a song. nukernel/export/als.js takes only this. */
@@ -42,8 +46,43 @@ export const midiOfPch = (p) => {
   return 60 + (o - 8) * 12 + Math.round((p - o) * 100);
 };
 
-// MIDI velocity 1..127 off the written 0..9 scale (derive.js songBars), 9 -> 127.
-export const velOfWritten = (v) => Math.max(1, Math.min(127, Math.round((v == null ? 5 : v) / 9 * 127)));
+/* MIDI velocity off the written 0..9 scale (derive.js songBars) — AND THE
+   ACCENT, WHICH HAD NEVER LEFT THE BOX (2026-09-03, the groove round).
+
+   MEASURED FIRST, because that is the only way this file is allowed to change.
+   Paul: "The groove gets lost in Ableton I think?" The timing half of that is
+   false and the measurement says so — 94.7% of the note Times in a funk
+   export sit off the sixteenth grid, the second sixteenths land 18.6% of a
+   sixteenth late where the record declares swing 0.12 plus the funk groove's
+   0.06 push, and a techno export is 100% on the grid. Swing, groove, the
+   hand's nudge and the humanize drift all arrive as real offsets and always
+   have. What does NOT arrive is the other half of a groove: `e.acc`, the
+   accent flag every event has carried since the kernel wrote it. In the box
+   an accent is worth x1.15 (to-engine.js ACCENT_LIFT, on both pitchAmp and
+   drumAmp); in the export it was worth nothing, because no line in export/
+   ever read the key. 72 of a funk record's first 174 drum hits are accented,
+   and every one of them left here at the same velocity as the ghost beside
+   it. This repo has a name for that shape of defect — "declared but never
+   arriving" — and this is the seventh.
+
+   THE HEADROOM IS THE ENGINE'S OWN, and it is why the top is 110 and not 127.
+   pitchAmp's unaccented ceiling is 0.26 against a clamp of 0.34, so the engine
+   keeps room ABOVE a written 9 for the accent to use; a 0..9 -> 1..127 map
+   keeps none, and an accented backbeat (vel 9 is the commonest velocity in
+   every record measured) would clamp straight back onto its own ghost. So a
+   written 9 is 110 and an accented 9 is 110 x 1.15 = 127 — the same arithmetic
+   one layer down, with the same shape. Everything gets 13% quieter in the
+   file and nothing gets quieter relative to anything else; Live's own
+   instrument curve is what turns velocity into loudness, and it is untouched.
+
+   NOT A DOUBLE COUNT (the P3 law in the als.js header). `acc` is a MARK the
+   composer wrote, like the 0..9 itself. It is not the desk: the fader ride is
+   `lvl` and the automation lanes, and live-devices.js writes those as volume
+   envelopes. Nothing here has ever carried a fader and nothing here does now. */
+export const ACCENT_LIFT = 1.15;   // audio/to-engine.js:127, quoted not invented
+export const VEL_TOP = 110;        // 127 / ACCENT_LIFT, floored — see above
+export const velOfWritten = (v, acc) => Math.max(1, Math.min(127,
+  Math.round((v == null ? 5 : v) / 9 * VEL_TOP * (acc ? ACCENT_LIFT : 1))));
 
 // THE BOX NUMBER IS PART OF THE NAME, and it is not decoration. A four-box song
 // on one genre gives four boxes the same label ("New York 1994" x4), the clip
@@ -282,13 +321,13 @@ export function scoreOf({ timeline, cast = [], seats = null, sections = null,
           if (midi == null) { skipped++; continue; }
           // A drum hit carries no written length — the sample decides. A 16th
           // is the shortest thing that still reads as a bar in Live's editor.
-          put("drums", "drums", { midi, beat: at(e), dur: 0.25, vel: velOfWritten(e.vel) });
+          put("drums", "drums", { midi, beat: at(e), dur: 0.25, vel: velOfWritten(e.vel, e.acc) });
         } else if (e.n != null) {
           const key = e._seat != null ? "v" + e._seat
                     : e.kind === "bass" ? "bass" : "v" + (e.v == null ? 0 : e.v);
           put(key, e.kind === "bass" ? "bass" : (e.part || "line"),
               { midi: e.n + (e.home || 0), beat: at(e),
-                dur: Math.max(0.03125, (e.dur || 1) / 4), vel: velOfWritten(e.vel) });
+                dur: Math.max(0.03125, (e.dur || 1) / 4), vel: velOfWritten(e.vel, e.acc) });
         } else skipped++;
       }
     }

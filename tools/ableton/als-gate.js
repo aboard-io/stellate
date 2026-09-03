@@ -13,6 +13,14 @@
 //   Gate O  the ORDER Live insists on: no regular track after a return
 //   Gate M  the mix tables have not drifted from their owners
 //   Gate T  the tempo map and the meter
+// ...and the two the GROOVE round added on 2026-09-03, when Paul asked whether
+// the feel survives the trip and why every clip is the same colour:
+//   Gate R  the FEEL is in the file — the swing, the groove's push, the hand's
+//           nudge and the humanize drift arrive as real off-grid Times, the
+//           file's own numbers equal the engine's, a machine record stays on
+//           the grid, and a quantise probe proves the check can see it
+//   Gate C  every clip wears its track's colour, every track wears its part
+//           family's, and the donor's own tracks keep the colours Live gave them
 // ...and the five the P3 round added on 2026-09-03, when the export started
 // writing the SOUND and not only the notes:
 //   Gate P  every PointeeId resolves to an AutomationTarget that exists
@@ -82,7 +90,8 @@ import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
 import { balancedAt, elementAfter, pointeeIds, paceView, addDevice,
-         columnNames, clipNameOf, CHAIR_LEVEL, LEVEL_GAIN } from "../../nukernel/export/als.js";
+         columnNames, clipNameOf, colorOfLane, TRACK_COLOR,
+         CHAIR_LEVEL, LEVEL_GAIN } from "../../nukernel/export/als.js";
 import { instrumentTagOf, deviceOf, instrumentParams, paramRange, getParam,
          resOfQ, FX_PARAMS, KIT_FILTER, deviceLibrary, masterDevices, buildFx,
          chipParams, delaySyncIndex, delaySixteenthsAt, AF_LOWPASS, AF_HIGHPASS,
@@ -271,8 +280,11 @@ function clipsOf(trackText) {
       }
       kt.lastIndex = kb;
     }
+    // the clip's OWN colour — the first `<Color>` in the element, which is the
+    // clip's because a clip holds no device (gate C)
+    const col = /<Color Value="(-?\d+)"/.exec(text);
     out.push({ name: val(text, "Name"), start: +val(text, "CurrentStart"),
-               end: +val(text, "CurrentEnd"), notes });
+               end: +val(text, "CurrentEnd"), color: col ? +col[1] : null, notes });
     re.lastIndex = b;
   }
   return out;
@@ -1353,6 +1365,270 @@ export async function runGates(file, { genre = null, song = null, score: scorePa
       else if (!n) ok = fail("gate T", "meter " + score.meterAbc + " declared but no authored clip carries a RemoteableTimeSignature");
       else if (offBar) ok = fail("gate T", "a box's " + offBar.beats + " beats is not whole bars of " + score.meterAbc);
       else pass("gate T", "meter " + score.meterAbc + " on all " + n + " authored clips · every box is whole bars of " + barBeats + " beats");
+    }
+  }
+
+  /* ---- Gate R — THE FEEL IS IN THE FILE (2026-09-03) --------------------
+     Paul: "The groove gets lost in Ableton I think?" It does not, and this is
+     the gate that keeps it that way. MEASURED BEFORE IT WAS WRITTEN, which is
+     the only order this repo accepts: a funk export (swing 0.12 + the funk
+     groove) carries 828 of its 904 note Times off the sixteenth grid, its
+     second sixteenths sitting 0.185 of a sixteenth late where swing 0.12 plus
+     the groove's own +0.06 odd-slot push predicts 0.18; a techno export has
+     1,236 notes and not one of them off it. Both the .als and the .mid wrote the
+     played time, because export/score.js reads `e.off` — the HUMANIZED offset
+     — and als.js `num()` refuses to round it ("the groove micro-timing IS the
+     music"). So there was nothing to fix here and there is everything to pin:
+     the one edit that would silently destroy it is a `toFixed(3)` in `num`.
+
+     THE CLAIM IS ASSERTED AGAINST THE ENGINE, NOT AGAINST A TABLE, and that is
+     deliberate. A record's DECLARED swing is not always a swing you can hear:
+     kernel.js swings ODD STEPS only (`swing(g,i) = (i%2) * g.swing`), so a
+     genre whose kit and line are written on even sixteenths — gospel, measured:
+     every hit of its first two bars on an even step — declares 1/3 and plays
+     none of it. A gate that demanded 1/3 in the file would be demanding the
+     export invent a feel the box does not have. So the file is held to the
+     SCORE (the engine's own event times), the declared number is checked only
+     where the engine actually played it, and where it did not the gate SAYS SO
+     rather than passing in silence. */
+  {
+    const TOL = 1 / 256;                     // 0.4% of a sixteenth: float noise
+    const devOf = (beat) => { const x = beat * 4; return x - Math.round(x); };
+    const feelOf = (times) => {
+      let off = 0, worst = 0, sum = 0;
+      const odd = [];
+      for (const t of times) {
+        const d = devOf(t);
+        if (Math.abs(d) > TOL) off++;
+        if (Math.abs(d) > worst) worst = Math.abs(d);
+        sum += Math.abs(d);
+        if ((((Math.round(t * 4) % 2) + 2) % 2) === 1) odd.push(d);
+      }
+      odd.sort((a, b) => a - b);
+      return { n: times.length, off, worst, mean: times.length ? sum / times.length : 0,
+               nOdd: odd.length, medOdd: odd.length ? odd[odd.length >> 1] : 0 };
+    };
+    // the ENGINE's own times, walked exactly as gate 1 walks them (paceView,
+    // because a paced box's notes go in un-stretched)
+    const sTimes = [];
+    for (const v of paceView(boxes))
+      for (const lane of (all ? v.box.lanes : v.box.lanes.slice(0, 1)))
+        for (const n of v.notes(lane.notes)) sTimes.push(n.beat);
+    /* ...and the FILE's, off the authored clips only — AND EACH CLIP ONCE.
+       Every clip is written twice, into the Session slot and into the
+       Arrangement, with the same note times both times ("Note times stay
+       relative to the clip's own start in both cases", als.js midiClip). A
+       naive walk therefore counts every note twice and the comparison with the
+       Score is off by exactly 2x, which is how this line came to exist rather
+       than by foresight. The name is unique per box+lane (gate 1 counts by it),
+       so the first of each pair is one whole clip. */
+    const fileTimes = (x) => {
+      const out = [], seen = new Set();
+      for (const t of tracksOf(x).filter((tr) => !donorNames.has(tr.name)))
+        for (const c of clipsOf(t.text)) {
+          if (seen.has(c.name)) continue;
+          seen.add(c.name);
+          for (const n of c.notes) out.push(n[1]);
+        }
+      return out;
+    };
+    const S = feelOf(sTimes), F = feelOf(fileTimes(xml));
+    const pct = (a, b) => (100 * a / Math.max(1, b)).toFixed(1) + "%";
+
+    /* THE RECORD'S DECLARED FEEL, off the two tables that own it — fields.js
+       SWINGS for the song's word and kernel.js GROOVES for the sixteen-slot
+       push, both required rather than copied, the same move gates M/A/F/Q
+       make. audio/plan.js:473 is the precedence and it is quoted, not guessed:
+       "the SONG's swing outranks the genre's; null leaves the genre's own lean
+       standing". A `--score` run has no record to ask and says so. */
+    let decl = null, declErr = null;
+    try {
+      const req = createRequire(import.meta.url);
+      const NF = req("../../nukernel/fields.js");
+      const NK = req("../../nukernel/kernel.js");
+      const NG = req("../../nukernel/genres.js");
+      const SWINGS = NF.SWINGS, GROOVES = NK.GROOVES, GENRES = NG.GENRES;
+      if (!SWINGS || !GROOVES || !GENRES) throw new Error("fields SWINGS / kernel GROOVES / genres GENRES not exported");
+      let keys = [], sw = null, gr = null;
+      if (genre) keys = [genre];
+      else if (song) {
+        const raw = JSON.parse(readFileSync(song, "utf8"));
+        sw = raw.swing || null; gr = raw.groove || null;
+        for (const b of (raw.song || []))
+          for (const e of (b.stack || [])) if (e && e.g && !keys.includes(e.g)) keys.push(e.g);
+      }
+      /* ...AND WHETHER A HAND IS PLAYING THIS KIT, read out of kernel.js's own
+         source the way gate A reads compileAuto's. The HAND LAW (kernel.js,
+         2026-08-19): an acoustic kit is humanised by default — "a machine's
+         exactness is its identity, and the MACHINE fingerprint gates pin it" —
+         with `hand: "exact"` the opt-out and a declared `humanize` the louder
+         say. Both halves matter here: a record with either must arrive off the
+         grid, or the drift is gone and nobody would see it. */
+      const ksrc = readFileSync(new URL("../../nukernel/kernel.js", import.meta.url), "utf8");
+      const hm = /const HAND_KITS = (\{[^}]*\})/.exec(ksrc);
+      if (!hm) throw new Error("could not find HAND_KITS in kernel.js");
+      const HAND_KITS = eval("(" + hm[1] + ")");
+      if (keys.length) {
+        const own = keys.map((k) => (GENRES[k] && GENRES[k].swing) || 0);
+        const handed = keys.some((k) => { const g = GENRES[k] || {};
+          return (g.humanize > 0) || (HAND_KITS[g.drumkit] === 1 && g.hand !== "exact"); });
+        const swing = (sw != null && SWINGS[sw] != null) ? SWINGS[sw] : Math.max(...own);
+        const G = gr && GROOVES[gr];
+        // the groove's mean push over the ODD slots — the eight the swing also
+        // moves, so the two add on the same notes
+        const push = G && G.push
+          ? G.push.filter((_, i) => i % 2 === 1).reduce((a, b) => a + b, 0) / 8 : 0;
+        decl = { keys, swing, groove: gr, push, expect: swing + push, handed };
+      }
+    } catch (e) { declErr = e.message; }
+
+    let bad = null;
+    // R1 — nothing was quantised on the way out: the file's own feel numbers
+    // ARE the engine's
+    if (F.off !== S.off)
+      bad = "the file has " + F.off + " off-grid note(s), the engine plays " + S.off +
+            " — something between the Score and the clip moved the time";
+    else if (Math.abs(F.medOdd - S.medOdd) > 1e-9)
+      bad = "the file's second sixteenths sit " + F.medOdd.toFixed(4) +
+            " of a sixteenth late, the engine's " + S.medOdd.toFixed(4);
+    else if (Math.abs(F.worst - S.worst) > 1e-9)
+      bad = "the file's widest offset is " + F.worst.toFixed(4) + ", the engine's " + S.worst.toFixed(4);
+    /* R2 — a record that declares a swing AND plays it must still be leaning in
+       the file. ONE-SIDED, AND MEASUREMENT IS WHY. The first version of this
+       clause demanded |measured − declared| < 0.08 and the shipped preset
+       "Motown 45" failed it honestly: detroitsoul declares 0.120 and its
+       second sixteenths sit 0.219 late, because the median runs over every
+       odd-sixteenth note in a NINE-lane, two-genre record — the swung kit, the
+       melody's ornaments, and four boxes of neoclassical that declare no swing
+       at all. There is no upper bound worth asserting there: a hand is allowed
+       to arrive later than the table says, and every mechanism that does it
+       (the kit's `~` nudge in ninths of a step, the groove's push, the
+       humanize drift) is the feel and not an error. What is NOT allowed is
+       arriving EARLY — a lean that has been rounded back towards the grid is
+       the whole of Paul's question, and half the declared swing is a floor no
+       quantised file can clear. */
+    if (!bad && decl && decl.expect > 0.02 && S.medOdd > 0.02 && S.nOdd >= 24 &&
+        F.medOdd < 0.5 * decl.expect)
+      bad = "the record declares swing " + decl.swing.toFixed(3) +
+            (decl.groove ? " + the " + decl.groove + " groove's " + decl.push.toFixed(3) + " push" : "") +
+            " = " + decl.expect.toFixed(3) + " of a sixteenth, and the file's second " +
+            "sixteenths sit only " + F.medOdd.toFixed(3) + " late — under half of it, " +
+            "which is what a quantise looks like";
+    // R2b — a HANDED record must arrive off the grid. The hand is the half of
+    // the feel that no table declares and no ear checks: silently losing the
+    // jitter is the failure this whole gate exists for.
+    if (!bad && decl && decl.handed) {
+      const want = Math.max(8, Math.round(0.02 * S.n));
+      if (F.off < want) bad = "the record is played by a hand (" +
+        decl.keys.join("/") + " — a humanize or an unexact acoustic kit) and only " +
+        F.off + " of " + F.n + " notes in the file sit off the grid, want at least " + want;
+    }
+    // R3 — a machine record stays ON the grid: nothing may invent a feel
+    if (!bad && S.off === 0 && F.off !== 0)
+      bad = "the engine plays this record dead on the grid and the file has " + F.off + " off-grid note(s)";
+    if (bad) ok = fail("gate R", bad);
+    else {
+      // THE PROBE. Snap every Time in a copy onto the sixteenth grid — the
+      // exact damage "the groove gets lost in Ableton" describes — and assert
+      // this gate goes red. On a record the engine plays straight there is
+      // nothing to snap, and the probe says so instead of pretending.
+      const snapped = xml.replace(/(<MidiNoteEvent Time=")([^"]*)(")/g,
+        (w, a, t, b) => a + String(Math.round(+t * 4) / 4) + b);
+      const P = feelOf(fileTimes(snapped));
+      if (S.off > 0 && P.off === F.off)
+        ok = fail("gate R", "the quantise probe was NOT caught — this gate is reading nothing");
+      else pass("gate R", (S.off ? S.off + " of " + S.n + " notes (" + pct(S.off, S.n) +
+          ") sit off the sixteenth grid in the file, exactly as the engine plays them" +
+          " · second sixteenths " + (S.medOdd >= 0 ? "+" : "") + S.medOdd.toFixed(3) +
+          " of a sixteenth (n=" + S.nOdd + "), widest offset " + S.worst.toFixed(3) +
+          " · quantise probe caught"
+        : "this record is played dead on the grid (" + S.n + " notes, 0 off it) " +
+          "and the file is too — a machine's exactness is its identity") +
+        (decl ? " · the record declares swing " + decl.swing.toFixed(3) +
+          (decl.groove ? " + the " + decl.groove + " groove (+" + decl.push.toFixed(3) + " on the odd slots)" : "") +
+          (decl.handed ? ", played by a hand" : ", no hand") +
+          (decl.expect > 0.02 && !(S.medOdd > 0.02 && S.nOdd >= 24)
+            ? " — NOT ASSERTED: kernel.js swings odd steps only (swing(g,i) = (i%2)*g.swing) and this " +
+              "record puts " + S.nOdd + " note(s) there, so the declared lean is not playable and the " +
+              "export cannot invent it"
+            : "")
+        : declErr ? " · the declared feel could not be read (" + declErr + ")"
+                  : " · no record to ask for a declared swing (--score run)"));
+    }
+  }
+
+  /* ---- Gate C — THE COLOURS (2026-09-03) --------------------------------
+     Paul: "all of the clips are the same color -- they should be the color of
+     the track." They were: every clip is a copy of the GroovePool template and
+     carried its `<Color Value="7" />` into all thirty-odd clips of a set whose
+     tracks were 20 / 7 / 18 / 24. Two things are asserted here and both are
+     read off the donors rather than decided:
+
+       · A CLIP WEARS ITS TRACK'S COLOUR. That is Live's own rule and it is
+         visible in every file Paul saved — Ableton2, Answers and Answers2 each
+         have every clip's Color equal to its track's (24/24, 16/16, 12/12,
+         2/2, 1/1), because a clip inherits the track's colour when Live makes
+         it. Nothing in this repo invented that.
+       · A TRACK WEARS ITS PART FAMILY'S COLOUR, from als.js TRACK_COLOR, and
+         the gate ASKS THE EXPORTER (colorOfLane) rather than keeping a second
+         copy of the table — gate 1 does the same for clip names, and the day
+         it did not it went stale.
+     ...and the corollary Paul's sentence implies: two ADJACENT tracks may
+     share a colour only when they are the same family, which is what makes the
+     colours mean something instead of being six numbers. */
+  {
+    const laneNames = [];
+    for (const b of boxes) for (const l of (all ? b.lanes : b.lanes.slice(0, 1)))
+      if (!laneNames.includes(l.name)) laneNames.push(l.name);
+    const cols = columnNames(boxes, laneNames);
+    const laneOfCol = {};
+    for (const n of laneNames) laneOfCol[cols[n]] = n;
+    const trackColor = (t) => { const m = /<Color Value="(-?\d+)"/.exec(t); return m ? +m[1] : null; };
+    /** Null = agrees. Pointed at a deliberately recoloured copy for the probe. */
+    const check = (x) => {
+      const mine = tracksOf(x).filter((t) => !donorNames.has(t.name));
+      if (!mine.length) return "no authored track in the output";
+      const seq = [];
+      for (const t of mine) {
+        const tc = trackColor(t.text);
+        const lane = laneOfCol[t.name];
+        const want = lane != null ? colorOfLane(boxes, lane) : null;
+        if (want == null) return 'track "' + t.name + '" answers to no lane of this record';
+        if (tc !== want) return 'track "' + t.name + '" is colour ' + tc +
+          ", and als.js colorOfLane says " + want;
+        for (const c of clipsOf(t.text))
+          if (c.color !== tc) return 'clip "' + c.name + '" is colour ' + c.color +
+            ' on a track coloured ' + tc + " — a clip wears its track's colour, which is what Live's own donors do";
+        seq.push({ name: t.name, lane, color: tc });
+      }
+      for (let i = 1; i < seq.length; i++)
+        if (seq[i].color === seq[i - 1].color &&
+            colorOfLane(boxes, seq[i].lane) !== colorOfLane(boxes, seq[i - 1].lane))
+          return 'the adjacent tracks "' + seq[i - 1].name + '" and "' + seq[i].name +
+            '" share colour ' + seq[i].color + " without sharing a family";
+      // ...and the donor's own tracks and returns keep what Live gave them
+      const donorCol = new Map(tracksOf(donorXml).map((t) => [t.name, trackColor(t.text)]));
+      for (const t of tracksOf(x)) if (donorNames.has(t.name) && donorCol.get(t.name) !== trackColor(t.text))
+        return 'donor track "' + t.name + '" was recoloured to ' + trackColor(t.text) +
+          ", want the " + donorCol.get(t.name) + " Live gave it";
+      return null;
+    };
+    const cErr = check(xml);
+    if (cErr) ok = fail("gate C", cErr);
+    else {
+      // THE PROBE: put the old template colour back on one clip and assert red.
+      const probe = check(xml.replace(/(<MidiClip [^>]*>[\s\S]{0,4000}?<Color Value=")(-?\d+)(")/,
+                                      "$1" + 7 + "$3"));
+      if (!probe) ok = fail("gate C", "the recoloured-clip probe was NOT caught — the colour check is reading nothing");
+      else {
+        const mine = tracksOf(xml).filter((t) => !donorNames.has(t.name));
+        const nClips = mine.reduce((a, t) => a + clipsOf(t.text).length, 0);
+        pass("gate C", nClips + " clip(s) on " + mine.length + " track(s), every clip the colour " +
+          "of the track it sits on · " + mine.map((t) => t.name + " " + trackColor(t.text)).join(", ") +
+          " · the six family colours are " +
+          Object.entries(TRACK_COLOR).map(([k, v]) => k + " " + v).join(" / ") +
+          " · recoloured-clip probe caught");
+      }
     }
   }
 
