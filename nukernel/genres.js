@@ -35449,6 +35449,11 @@
                 // takes the family's own dynamics row unchanged.
                 "downtempo"]],
     ["band",   ["rock", "punk", "blues", "hambone", "rocknroll", "newwave",
+                // ...and the genre-QA round's three (2026-09-03): the Byrds,
+                // Sweetheart of the Rodeo and Born to Run are bands with a kit
+                // and a guitar front line — test/hand.test.js §1 caught them
+                // resolving NO dynamics for want of a family.
+                "folkrock", "countryrock", "heartlandrock",
                 // ...the deep-time round's forward half (2026-08-30) put
                 // `hardcore` beside punk and `doom` beside sludge — the
                 // metal wing's missing floor and ceiling, both guitars
@@ -35502,6 +35507,9 @@
                 "britpop", "poppunk", "postgrunge", "skapunk", "blackmetal",
                 "numetal", "postbritpop"]],
     ["studio", ["beatgroup", "jazzrock", "aor", "dusseldorfschool", "synthsoul",
+                // ...and chamber pop (2026-09-03): an arranged record made at a
+                // bench, filed beside psychpop, its own declared parent's room.
+                "chamberpop",
                 "synthpop", "citypop", "merseybeat", "psychpop", "motorik",
                 "roboticpop", "confessionalpop",
                 // ...and the MIDI-corpus round's three (2026-09-02): a
