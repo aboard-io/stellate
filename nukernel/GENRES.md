@@ -173,6 +173,69 @@ An object with an integer-like key would be re-ordered by JSON, so the extractor
 refuses to split one and writes the whole object as `$src` instead. (No row hits
 this today; the guard is there so none can arrive silently.)
 
+### `tone.glide` and `tone.slide` — the portamento
+
+**2026-09-03.** Paul: *"We are missing a big thing: Portamento. Everywhere,
+voices, synths, and so forth. Lots of places it would make sense. I definitely
+hear pitch bending. So maybe it's in there. But we should have it as an option
+on synths. Think TB 303 for example!"*
+
+He was right about all three halves of it. It was partly in there, he really
+was hearing pitch bending, and it was not an option.
+
+Two fields, on the row's own `tone` block, **both in SECONDS**:
+
+```json
+  "tone": { "wave": "saw", "cut": 2300, "glide": 0.02, "slide": 0.12 }
+```
+
+| field | what it is |
+|---|---|
+| `glide` | the chair's portamento **time**. **Every** note slides into the next. This is a synthesiser's portamento knob. |
+| `slide` | the time a note **marked `sld`** takes, and only those notes — the 303's slide, the erhu's *hua yin*, a singer's scoop. |
+
+They compose. `{"glide": 0.02, "slide": 0.12}` is a hair on every note and a
+gesture on a slid one. A row that says neither writes no key and renders byte
+for byte as it did.
+
+**Which notes slide is the PHRASE's business, not the row's.** `sld` is one of
+the kernel's eight vectors and it is EDGE-valued — a slide *into* a step, which
+is why `reverse` shifts it — and it has been drawn as its own column in the
+phrase editor since that editor existed. What a word could not do until this
+round was *set* it: the only operator that ever wrote `sld` was
+`crossmap("acc", "sld")` (`slides`, "accents slide"), which cannot mark a slide
+anywhere an accent is not. So the kernel gained `slide(...)`, shaped exactly
+like `keep`:
+
+```
+slide()              every step slides
+slide(0, 4, 8, 12)   slide INTO the beats, hit the offbeats square
+```
+
+meter-aware through the same `seat16` law `keep` uses, and offered as the chips
+`sldall` / `sldbeat`.
+
+**Which chairs can, and the two things that changed underneath.** The parent
+holds one table (`state-engine.js GLIDE_MAP`) naming every module that can
+slew and its unit, so nothing in the row, the bridge or the UI has to know that
+the synth fleet takes milliseconds and the waveguides take seconds. Twenty
+modules are in it; a struck body (piano, bell, mallet), a rank of pipes (organ,
+hammond), and an **ensemble** (solina, choir, voice_choir — *a section does not
+slide as one person*) are deliberately not, each with its reason written beside
+it. A sampled chair has no slider at all and glides through the parent's
+per-note `{bendFrom, bendMs}` channel instead, which is the gap `WORLD.md` §3
+had named and left open.
+
+And the pitch bending Paul could hear **was real and nobody had written it
+down**: every module in the poly fleet declares `freq … : si.smoo`, which is a
+FIXED 0.999 pole — ~21 ms tau, ~96 ms to settle. Any pool voice reused for the
+next note has therefore been sliding into it since the day it was compiled, at
+a time no recipe could name. `glide == 0` still *is* that slew, bit-identical
+(measured: 13 modules, 0 differing samples over a 0.9 s two-note render);
+`glide == 1` is the snap this fleet could never do; above that it is the named
+portamento.
+
+
 ---
 
 ## 3 · The closure grammar

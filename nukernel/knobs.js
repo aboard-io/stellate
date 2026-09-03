@@ -26,33 +26,33 @@
 //            is nothing for `voiceUnit` to be asked. The pad in ui/eight.js
 //            plots your tongue against the vowel's, which is what `artic` IS.
 //
-// THE CENSUS: 255 controls across 28 voices —
-//   tract_voice 22
+// THE CENSUS: 271 controls across 28 voices —
+//   tract_voice 23
+//   juno60 18
+//   oberheim 18
 //   hammond 18
-//   juno60 17
-//   oberheim 17
+//   voice_lead 14
+//   supersaw 13
+//   ppg 13
+//   casiocz 13
 //   synclead 13
-//   voice_lead 13
 //   modeld 12
-//   supersaw 12
-//   ppg 12
-//   casiocz 12
+//   lead_fuzz 11
 //   voice_choir 11
-//   lead_fuzz 10
-//   fm2op 9
-//   erhu 8
+//   fm2op 10
+//   erhu 9
+//   stk_guitar 8
+//   gtr_amp 8
 //   solina 7
-//   stk_guitar 7
-//   gtr_amp 7
-//   vp330 6
-//   bass_wobble 6
+//   vp330 7
+//   bass_wobble 7
 //   tb303 5
+//   pad_saw 5
 //   organ 5
 //   choir 5
 //   stk_piano 5
 //   mallet 5
-//   pad_saw 4
-//   bass_reese 4
+//   bass_reese 5
 //   bell 2
 //   dx7_alg5 1
 (function (root, factory) {
@@ -63,39 +63,39 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
   return {
-    "built": "2026-09-02",
+    "built": "2026-09-03",
     "from": "nukernel/knobs-extract.js",
-    "total": 255,
+    "total": 271,
     "budget": 40,
     "census": {
       "modeld": 12,
       "tb303": 5,
-      "supersaw": 12,
-      "pad_saw": 4,
-      "juno60": 17,
-      "lead_fuzz": 10,
+      "supersaw": 13,
+      "pad_saw": 5,
+      "juno60": 18,
+      "lead_fuzz": 11,
       "dx7_alg5": 1,
-      "fm2op": 9,
+      "fm2op": 10,
       "solina": 7,
-      "oberheim": 17,
-      "ppg": 12,
-      "vp330": 6,
-      "casiocz": 12,
+      "oberheim": 18,
+      "ppg": 13,
+      "vp330": 7,
+      "casiocz": 13,
       "synclead": 13,
       "bell": 2,
       "organ": 5,
       "choir": 5,
       "hammond": 18,
-      "stk_guitar": 7,
+      "stk_guitar": 8,
       "stk_piano": 5,
-      "gtr_amp": 7,
+      "gtr_amp": 8,
       "mallet": 5,
-      "erhu": 8,
-      "voice_lead": 13,
+      "erhu": 9,
+      "voice_lead": 14,
       "voice_choir": 11,
-      "tract_voice": 22,
-      "bass_reese": 4,
-      "bass_wobble": 6
+      "tract_voice": 23,
+      "bass_reese": 5,
+      "bass_wobble": 7
     },
     "tract": {
       "from": "engine/faust/dsp/tract.lib",
@@ -533,6 +533,17 @@
             "step": 0.005,
             "unit": null,
             "derived": 0
+          },
+          {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 500,
+            "step": 1,
+            "unit": "ms",
+            "derived": 0
           }
         ],
         "quiet": [
@@ -602,6 +613,17 @@
             "step": 0.005,
             "unit": "s",
             "derived": 1.5
+          },
+          {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 500,
+            "step": 1,
+            "unit": "ms",
+            "derived": 0
           }
         ],
         "quiet": [
@@ -814,6 +836,17 @@
             "step": 0.0005,
             "unit": null,
             "derived": 0.15
+          },
+          {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 500,
+            "step": 1,
+            "unit": "ms",
+            "derived": 0
           }
         ],
         "quiet": []
@@ -922,6 +955,17 @@
             "step": 0.005,
             "unit": "s",
             "derived": 0.18
+          },
+          {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 500,
+            "step": 1,
+            "unit": "ms",
+            "derived": 0
           },
           {
             "key": "release",
@@ -1611,6 +1655,17 @@
             "derived": 5.2
           },
           {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 500,
+            "step": 1,
+            "unit": "ms",
+            "derived": 0
+          },
+          {
             "key": "idxTime",
             "param": "idxTime",
             "label": "how fast one becomes the other",
@@ -1945,6 +2000,17 @@
             "step": 0.01,
             "unit": "s",
             "derived": 2.4
+          },
+          {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 500,
+            "step": 1,
+            "unit": "ms",
+            "derived": 0
           }
         ],
         "quiet": []
@@ -2086,6 +2152,17 @@
             "step": 0.005,
             "unit": "s",
             "derived": 0.4
+          },
+          {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 500,
+            "step": 1,
+            "unit": "ms",
+            "derived": 0
           }
         ],
         "quiet": []
@@ -2161,6 +2238,17 @@
             "step": 0.005,
             "unit": "s",
             "derived": 0.6
+          },
+          {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 500,
+            "step": 1,
+            "unit": "ms",
+            "derived": 0
           }
         ],
         "quiet": [
@@ -2328,6 +2416,17 @@
             "step": 0.005,
             "unit": "s",
             "derived": 0.3
+          },
+          {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 500,
+            "step": 1,
+            "unit": "ms",
+            "derived": 0
           }
         ],
         "quiet": [
@@ -2450,7 +2549,7 @@
             "min": 0,
             "max": 500,
             "step": 1,
-            "unit": "s",
+            "unit": "ms",
             "derived": 0
           },
           {
@@ -2949,6 +3048,17 @@
             "step": 0.001,
             "unit": "s",
             "derived": 0.25
+          },
+          {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 0.501,
+            "step": 0.001,
+            "unit": "s",
+            "derived": 0
           }
         ],
         "quiet": []
@@ -3100,6 +3210,17 @@
             "step": 0.001,
             "unit": "s",
             "derived": 0.25
+          },
+          {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 0.501,
+            "step": 0.001,
+            "unit": "s",
+            "derived": 0
           }
         ],
         "quiet": []
@@ -3262,6 +3383,17 @@
             "step": 0.001,
             "unit": "s",
             "derived": 0.14
+          },
+          {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 0.501,
+            "step": 0.001,
+            "unit": "s",
+            "derived": 0.045
           }
         ],
         "quiet": []
@@ -3455,6 +3587,18 @@
             "step": 10,
             "unit": "Hz",
             "derived": 2000
+          },
+          {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 0.4005,
+            "step": 0.0005,
+            "unit": "s",
+            "derived": 0,
+            "mapped": true
           },
           {
             "key": "vowelEvery",
@@ -3978,6 +4122,18 @@
             "derived": 2000
           },
           {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 0.4005,
+            "step": 0.0005,
+            "unit": "s",
+            "derived": 0,
+            "mapped": true
+          },
+          {
             "key": "vowelEvery",
             "param": "vowelEvery",
             "label": "how long it stays on one sound",
@@ -4040,6 +4196,17 @@
             "step": 0.005,
             "unit": "s",
             "derived": 0.18
+          },
+          {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 500,
+            "step": 1,
+            "unit": "ms",
+            "derived": 0
           }
         ],
         "quiet": []
@@ -4116,6 +4283,17 @@
             "step": 0.005,
             "unit": "s",
             "derived": 0.18
+          },
+          {
+            "key": "glide",
+            "param": "glide",
+            "label": "glide",
+            "kind": "number",
+            "min": 0,
+            "max": 500,
+            "step": 1,
+            "unit": "ms",
+            "derived": 0
           }
         ],
         "quiet": []

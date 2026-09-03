@@ -169,6 +169,42 @@
       return { ...p, gate: p.gate.map((b, i) => (b && M.has(i % N) ? b : 0)) };
     }; };
 
+  // SLIDE — `keep`'s shape, said on the OTHER binary vector (2026-09-03, the
+  // portamento round). Paul: "We are missing a big thing: Portamento.
+  // Everywhere, voices, synths, and so forth... Think TB 303 for example!"
+  //
+  // The 303's slide has been in the alphabet since this file was written —
+  // `sld` is one of the eight vectors, it is EDGE-valued (a slide INTO the
+  // step, which is why `reverse` shifts it), the phrase editor draws a column
+  // for it and `to-engine` carries it onto every event. What there was no way
+  // to SAY was "this line slides": the only operator that ever wrote `sld` was
+  // `crossmap("acc", "sld")` (OPKEYS `slides`), which copies the accents and
+  // therefore cannot mark a slide anywhere an accent is not. So a word could
+  // ask for the 303's coupling and could not ask for a portamento.
+  //
+  //   slide()              every step slides — a chair with one portamento
+  //                        time, which is what a synthesiser's glide knob is
+  //   slide(0, 4, 8, 12)   slide INTO the beats and hit the offbeats square
+  //
+  // The positions are read exactly as `keep` reads them, through `seat16` and
+  // the phrase's own bar — the same law, because they are the same kind of
+  // sentence about the same grid, and a triple-meter phrase must not be told
+  // about places it has not got. UNGATED STEPS ARE MARKED TOO, deliberately:
+  // `sld` is information the phrase carries and a later `fill` or `split` may
+  // uncover a note standing on one, which is the same reason `drop` leaves the
+  // degree behind. Total, like every other operator: pattern in, pattern out.
+  const slide = (...steps) => {
+    if (!steps.length) return p => ({ ...p, sld: p.sld.map(() => 1) });
+    const S = new Set(steps.map((n) => n % 16));
+    return p => {
+      const N = p.bar, PU = p.pulse || 4;
+      if (!N || N === 16)
+        return { ...p, sld: p.sld.map((_, i) => (S.has(i % 16) ? 1 : 0)) };
+      const M = new Set([...S].map((n) => seat16(n, N, PU)));
+      return { ...p, sld: p.sld.map((_, i) => (M.has(i % N) ? 1 : 0)) };
+    };
+  };
+
   // LIST OPERATIONS. repeat and del change the SEQUENCE, not just its gates —
   // they stretch and close it, and every vector moves together, which is why
   // they are mapv and not a gate mask. drop left a hole where a note had been;
@@ -1258,7 +1294,11 @@
   // key both name — so the two spellings can never drift into two dialects.
   const OPKEYS = { rev: reverse(), inv: invert(4), wide: spread(2), tight: spread(0.5),
                    accflip: complement("acc"), gateflip: complement("gate"),
-                   slides: crossmap("acc", "sld"), stick: crossmap("gate", "acc") };
+                   slides: crossmap("acc", "sld"), stick: crossmap("gate", "acc"),
+                   // …and the two SAYABLE slides (2026-09-03). `slides` above
+                   // couples the slide to the accent; these two say it outright,
+                   // which is what a word needs to ask a chair for portamento.
+                   sldall: slide(), sldbeat: slide(0, 4, 8, 12) };
   for (let n = 2; n <= 8; n++) { OPKEYS["rep" + n] = split(n); OPKEYS["del" + n] = del(n); }
   for (let n = 1; n <= 7; n++) OPKEYS["rot" + n] = rotate(n);
   for (const n of [2, 4, 8]) { OPKEYS["gat" + n] = only("gate", rotate(n));
@@ -3119,7 +3159,7 @@
 
   const api = { METERS, MET4, metOf, stepsIn, pulseIn,
                 at, mapv, spans, vel, drop, fill, spread, split, del, rampOf, envelope, SHAPES, edges, intro, outro, groove, GROOVES, stressAt, perform, KITOPS, mapKit, LANES, TOMS, HATS, CYMBALS, LIMBORDER, rollAt, swing, rotate, reverse, transpose, invert, complement, keep,
-                crossmap, excerpt, only, word,
+                crossmap, excerpt, only, word, slide,
                 PENT, MODE, ROMAN, romanOf, pitch, mp, fold, near,
                 QSTEPS, QFIX, chordsOf, chordAt, withCadence, harmonizeStage,
                 seatNote, tempoWarp, prng,

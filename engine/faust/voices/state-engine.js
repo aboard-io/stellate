@@ -930,6 +930,8 @@
       if (P.resonance != null) P.resonance = easeRes(P.cutoff, P.resonance);
     }
     applyFenv(u, m);
+    applyGlide(u, m);
+    glideFloor(u);
     return u;
   }
 
@@ -984,6 +986,95 @@
     }
     if (m.fenvAttack != null && fm.atk) P[fm.atk[0]] = clamp(m.fenvAttack, fm.atk[1], fm.atk[2]);
     if (m.fenvDecay != null && fm.dec) P[fm.dec[0]] = clamp(m.fenvDecay, fm.dec[1], fm.dec[2]);
+  }
+
+  // ---- PORTAMENTO, AS ONE SURFACE ------------------------------------------
+  // Paul, 2026-09-03: "We are missing a big thing: Portamento. Everywhere,
+  // voices, synths, and so forth... we should have it as an option on synths.
+  // Think TB 303 for example!"
+  //
+  // He also said "I definitely hear pitch bending. So maybe it's in there," and
+  // he was right in a way nobody had written down: EVERY module in the poly
+  // fleet declares `freq ... : si.smoo`, which is si.smooth(0.999) — a fixed
+  // pole, ~21 ms tau, ~96 ms to settle at 48 kHz. A pool voice that is reused
+  // for the next note therefore SLIDES into it, always, at a time no recipe
+  // could name. That accidental portamento is what this makes nameable; the
+  // dsp edits keep `glide == 0` bit-identical to it (measured: 13 modules,
+  // 0 differing samples over a 0.9 s two-note render) and open 1 ms (a true
+  // snap, which this fleet could never do) through 500 ms above it.
+  //
+  // TWO RECIPE KEYS, BOTH IN SECONDS, because a row writes seconds:
+  //   glideSec   the chair's portamento time. EVERY note slides. This is the
+  //              synthesiser's portamento knob and it is what `modeld`'s own
+  //              `glide` has always been.
+  //   slideSec   the time a note MARKED `sld` takes — the 303's slide, the
+  //              waveguide's hua yin, the singer's scoop. Unmarked notes fall
+  //              back to `glideSec` (0 when it is absent), which is how erhu,
+  //              stk_guitar, voice_lead and tract_voice have always behaved.
+  // The MODULE's own key stays what it was: `glide` in MILLISECONDS on the
+  // synth fleet (modeld's unit, and now twelve more) and in SECONDS on the
+  // waveguides and throats. `per` below is the module's units per second, so
+  // the conversion is stated once, here, and never in a caller.
+  //
+  // WHERE THERE IS NO ROW: absent keys change nothing at all — the early
+  // return is the absent-law, and `mapEvents` falls back to `u.slideBase || 0`,
+  // which is exactly the 0 it wrote before this existed.
+  //
+  // WHO IS NOT IN THE TABLE, and why, because a missing row is a decision:
+  //   bell / mallet / stk_piano   a STRUCK body's pitch is fixed at the strike.
+  //                               There is nothing to bend and a pitch-shifted
+  //                               strike is a tape effect, not a portamento.
+  //   organ / hammond             a rank of pipes and a set of tonewheels are
+  //                               discrete by construction; the only thing that
+  //                               moves on a B-3 is the Leslie.
+  //   solina / choir / voice_choir / strings / brass
+  //                               AN ENSEMBLE DOES NOT SLIDE AS ONE PERSON.
+  //                               (to-engine.js has stated this law for the
+  //                               choir since the singer shipped; it is the
+  //                               same law and it covers the string machine.)
+  //   dx7_alg*                    its only knob is the cartridge, and its freq
+  //                               slider is compiled [50, 1000] Hz.
+  //   tb303                       it has a per-note `slide` of its own, which is
+  //                               the gesture this whole feature is named after.
+  //   the SAMPLER                 not a module: the sampled lane glides through
+  //                               the per-note {bendFrom, bendMs} channel
+  //                               instead (sampler.js), which nukernel now emits.
+  const GL_MS  = ["glide", 0, 500, 1000];      // param, lo, hi, module units per second
+  const GL_S   = ["glide", 0, 0.5, 1];
+  const GL_SV  = ["glide", 0.0005, 0.4, 1];    // the throats: their slider floors at 0.5 ms
+  const GLIDE_MAP = {
+    modeld: GL_MS, synclead: GL_MS, supersaw: GL_MS, pad_saw: GL_MS,
+    lead_fuzz: GL_MS, juno60: GL_MS, oberheim: GL_MS, ppg: GL_MS,
+    casiocz: GL_MS, vp330: GL_MS, fm2op: GL_MS,
+    bass_saw: GL_MS, bass_sub: GL_MS, bass_reese: GL_MS, bass_wobble: GL_MS,
+    stk_guitar: GL_S, gtr_amp: GL_S, erhu: GL_S,
+    voice_lead: GL_SV, tract_voice: GL_SV,
+  };
+  function applyGlide(u, m) {
+    const G = GLIDE_MAP[u.module], P = u.params;
+    if (!G || !P) return;
+    if (m.glideSec == null && m.slideSec == null) return;   // absent = today
+    const key = G[0], cl = (s) => clamp(s * G[3], G[1], G[2]);
+    // a chair that names only a SLIDE keeps its unslid notes where they were:
+    // 0 on a synth, and on a waveguide/throat 0 is what mapEvents already wrote.
+    const base = m.glideSec != null ? cl(m.glideSec) : 0;
+    P[key] = base;
+    u.slideParam = key;
+    u.slideSec = m.slideSec != null ? cl(m.slideSec) : base;
+    u.slideBase = base;
+  }
+  // AND THE HAND-TURNED KNOB IS NOT WRITTEN BACK TO ZERO. On the waveguides and
+  // the throats `glide` is a PER-NOTE param (`slideParam`), so a chair that set
+  // the module's own slider would have had it overwritten with 0 on every note
+  // NOT marked `sld` — declared, costed, and never arriving, which is this box's
+  // characteristic bug. A seated value becomes the chair's own base, and a slid
+  // note takes the longer of the two, because a slide shorter than the
+  // portamento it interrupts is not a gesture.
+  function glideFloor(u) {
+    const P = u.params;
+    if (!u.slideParam || u.slideBase != null || !P || P[u.slideParam] == null) return;
+    u.slideBase = P[u.slideParam];
+    u.slideSec = Math.max(u.slideSec || 0, u.slideBase);
   }
   // ---- WHAT VELOCITY MEANS ON AN INSTRUMENT YOU PLAY -----------------------
   // The physical control each model answers to, and the span the note's own
@@ -1287,6 +1378,16 @@
     const rel = clamp(m.release != null ? m.release : 0.3, 0.01, 3);
     const sus = clamp(m.sustain != null ? m.sustain : 0.85, 0, 1);
     const fev = clamp(m.fenv || 0, 0, 3);
+    // THE PORTAMENTO KEY, PRESENT-ONLY. `glide` is the module's own slider in
+    // its own unit (MILLISECONDS across the synth fleet), so a document's `set`
+    // block reaches it by name the way every other synth key does, and
+    // knobs-extract can probe it into a real row on the chair's sheet. Written
+    // only when the recipe names it, so an untouched recipe resolves the exact
+    // params it always did — and at 0 the module is bit-identical to before the
+    // slider existed (dsp/*.dsp, the gsmooth select2). `applyGlide` above is the
+    // OTHER door, in seconds, and runs after this one so a row's `tone.glide`
+    // wins over a signature synth's raw `set.glide`.
+    const GLIDEKEY = m.glide != null ? { glide: clamp(m.glide, 0, 500) } : {};
     // per-recipe release/fenv on the bass modules (only when the recipe asks)
     const bassArt = {
       ...(m.release != null ? { release: clamp(m.release, 0.01, 3) } : {}),
@@ -1473,16 +1574,16 @@
       switch (model) {
         case "modeld": return modeldUnit(true);
         case "tb303":  return tb303Unit();
-        case "sub":    return { ...base, module: "bass_sub",   params: { ...base.params, cutoff: clamp(c, 80, 12000) } };
+        case "sub":    return { ...base, module: "bass_sub",   params: { ...base.params, ...GLIDEKEY, cutoff: clamp(c, 80, 12000) } };
         case "acid":   return { ...base, module: "bass_acid",  params: { ...base.params, cutoff: clamp(c, 80, 12000), res,
           ...(m.release != null ? { release: clamp(m.release, 0.01, 3) } : {}),
           ...(m.fenv != null ? { fenv: clamp(m.fenv, 0, 6) } : {}) } };
-        case "reese":  return { ...base, module: "bass_reese", params: { ...base.params, cutoff: clamp(c, 80, 12000) } };
+        case "reese":  return { ...base, module: "bass_reese", params: { ...base.params, ...GLIDEKEY, cutoff: clamp(c, 80, 12000) } };
         // wobble — recipe `wobbleBars` (LFO period as a bar fraction, e.g.
         // 0.125 = the dubstep 1/8 wobble) tempo-syncs the cutoff LFO from
         // state.bpm (SYNTHESIS-DEPTH Part C); absent => the free-running
         // wobbleHz path, byte-identical.
-        case "wobble": return { ...base, module: "bass_wobble",params: { ...base.params, cutoff: clamp(c, 80, 12000), res,
+        case "wobble": return { ...base, module: "bass_wobble",params: { ...base.params, ...GLIDEKEY, cutoff: clamp(c, 80, 12000), res,
           wobbleHz: clamp((m.wobbleBars != null && state && state.bpm)
             ? 1 / (Math.max(0.02, m.wobbleBars) * 4 * (60 / state.bpm))
             : (m.wobbleHz || 2.4), 0.1, 12) } };
@@ -1498,7 +1599,7 @@
             params: { ...base.params, cutoff: clamp(Math.min(4000, c * 2.5), 200, 16000),
               ...body, release: clamp(m.release != null ? m.release : 0.35, 0.02, 3) } }; }
         case "sampler": return samplerUnit();   // the upright &co (native path)
-        default:       return { ...base, module: "bass_saw",   params: { ...base.params, cutoff: clamp(c, 80, 12000), res, ...bassArt } };
+        default:       return { ...base, module: "bass_saw",   params: { ...base.params, ...GLIDEKEY, cutoff: clamp(c, 80, 12000), res, ...bassArt } };
       }
     }
     const isPad = role === "pad";
@@ -1535,10 +1636,10 @@
       // every record that says nothing is byte-identical; the ranges are the
       // module's own (dist/fm2op-meta.json).
       case "fm":      return isPad
-        ? { ...base, module: "fm2op", params: { ...base.params, cutoff: clamp(Math.min(8000, c * 1.7), 200, 14000),
+        ? { ...base, module: "fm2op", params: { ...base.params, ...GLIDEKEY, cutoff: clamp(Math.min(8000, c * 1.7), 200, 14000),
             ratio: mp("ratio", 2.001, 0.25, 8), idx0: mp("idx0", 2.6, 0, 8), idx1: mp("idx1", 0.9, 0, 8),
             idxTime: mp("idxTime", 1.1, 0.01, 4), attack: atk, vibrato: 0 } }
-        : { ...base, module: "fm2op", fmLead: true, params: { ...base.params, cutoff: clamp(c, 200, 14000),
+        : { ...base, module: "fm2op", fmLead: true, params: { ...base.params, ...GLIDEKEY, cutoff: clamp(c, 200, 14000),
             ratio: mp("ratio", 1.4, 0.25, 8), idx0: mp("idx0", 3.5, 0, 8), idx1: mp("idx1", 1.0, 0, 8),
             // …AND `idxTime` IS SPREAD RATHER THAN DEFAULTED ON THE LEAD, which
             // the pad does not need: the pad already wrote it and the lead never
@@ -1583,7 +1684,7 @@
       case "pluck":   return { ...base, module: "lead_pluck", freqMax: 700, params: { ...base.params, cutoff: clamp(c, 200, 14000), res, damp: 2000,
         ...(plucky ? { release: rel, fenv: fev } : {}) } };
       case "kpluck":  return { ...base, module: "lead_kpluck", freqMax: 700, flangeFromTime: true, params: { ...base.params, cutoff: clamp(c, 200, 14000), drive: clamp(m.drive || 0, 0, 1) } };
-      case "fuzz":    return { ...base, module: "lead_fuzz",   params: { ...base.params, cutoff: clamp(c, 200, 14000), res, drive: clamp(m.drive || 0, 0, 1), vibrato: clamp(m.vibrato || 0, 0, 0.03), vibRate: clamp(m.vibRate || 5.2, 0.1, 12),
+      case "fuzz":    return { ...base, module: "lead_fuzz",   params: { ...base.params, ...GLIDEKEY, cutoff: clamp(c, 200, 14000), res, drive: clamp(m.drive || 0, 0, 1), vibrato: clamp(m.vibrato || 0, 0, 0.03), vibRate: clamp(m.vibRate || 5.2, 0.1, 12),
         ...(plucky ? { attack: clamp(m.attack != null ? m.attack : 0.05, 0.001, 5), sustain: sus, release: rel, fenv: fev } : {}) } };
       // pm.lib's guitar is in tune through MIDI 86 and above it the loudest
       // peak sits on a fixed ~1244 Hz that does not track the note — the body
@@ -1625,6 +1726,7 @@
         freqMax: 1250, freqMin: 70, pool: role === "pad" ? 4 : 3,
         dyn: MODEL_DYN.stk_guitar, slideParam: "glide", slideSec: 0.06,
         params: { ...base.params,
+          ...(m.glide != null ? { glide: clamp(m.glide, 0, 0.5) } : {}),
           cutoff: clamp(c || 4200, 200, 14000),
           drive: mp("drive", 0.18, 0, 1),
           // the EKS pick position is a FRACTION OF THE STRING and stops at the
@@ -1685,6 +1787,7 @@
         freqMax: 3520, freqMin: 293.66, pool: role === "pad" ? 3 : 2,
         dyn: MODEL_DYN.erhu, slideParam: "glide", slideSec: 0.09,
         params: { ...base.params,
+          ...(m.glide != null ? { glide: clamp(m.glide, 0, 0.5) } : {}),
           // the bow's own two, which velocity moves (MODEL_DYN.erhu above); a
           // recipe may still seat them, and a seated value is what the dyn span
           // moves AROUND on the units that ask for one.
@@ -1750,6 +1853,7 @@
           dyn: MODEL_DYN.voice_lead, slideParam: "glide", slideSec: 0.09,
           vowels: word, vowelEvery: clamp(m.vowelEvery || 0.5, 0.25, 8),
           params: { ...base.params, voice: V.n,
+            ...(m.glide != null ? { glide: clamp(m.glide, 0.0005, 0.4) } : {}),
             vowel: word[0],
             breath: mp("breath", 0.05, 0, 0.6),
             // THE FOLD'S SLOW DRIFT (voice_lead.dsp `sway`) — a held note out
@@ -1801,6 +1905,7 @@
             dyn: TRACT_DYN, slideParam: "glide", slideSec: 0.09,
             vowels: word, vowelEvery: clamp(m.vowelEvery || 0.5, 0.25, 8),
             params: { ...base.params,
+              ...(m.glide != null ? { glide: clamp(m.glide, 0.0005, 0.4) } : {}),
               vowel: word[0],
               // THE DRIVER, WHICH IS THE INSTRUMENT.
               babble: clamp(m.babble != null ? m.babble : 0.7, 0, 1),
@@ -1882,7 +1987,7 @@
       // polarity); chorus 0..2 (off->I->II). chorusSpread is the stereo width
       // (distinct from supersaw's `spread` = detune, so the recipes don't collide).
       case "juno60":  return { ...base, module: "juno60", stereo: true, pool: 4, freqMax: 4000,
-        params: { ...base.params, cutoff: clamp(c, 60, 16000), res,
+        params: { ...base.params, ...GLIDEKEY, cutoff: clamp(c, 60, 16000), res,
           envAmount: mp("envAmount", isPad ? 1.4 : 1.0, -4, 6),
           keytrack: mp("keytrack", 0.3, 0, 1),
           lfoToFilter: mp("lfoToFilter", 0, 0, 3),
@@ -1919,7 +2024,7 @@
       // vp330 — Roland VP-330 ghost-choir, STEREO. vowel + ensemble morph; a dark
       // instrument (cutoff mapped straight; it self-limits).
       case "vp330":   return { ...base, module: "vp330", stereo: true, pool: 4, freqMax: 4000,
-        params: { ...base.params, cutoff: clamp(c, 300, 12000),
+        params: { ...base.params, ...GLIDEKEY, cutoff: clamp(c, 300, 12000),
           vowel: mp("vowel", 0.3, 0, 1),
           breath: mp("breath", 0.15, 0, 1),
           ensemble: mp("ensemble", 0.6, 0, 1),
@@ -1959,7 +2064,7 @@
       // (NOT legato). wave = the CZ index family morph; dcw* = the DCW contour
       // (identity). czWave/czDetune are dedicated keys (recipe `wave` is a string).
       case "casiocz": return { ...base, module: "casiocz", pool: 4,
-        params: { ...base.params, cutoff: clamp(c, 200, 16000),
+        params: { ...base.params, ...GLIDEKEY, cutoff: clamp(c, 200, 16000),
           wave: mp("czWave", 0.5, 0, 1),
           index: mp("index", 0.25, 0, 1),
           dcwAmount: mp("dcwAmount", 0.6, 0, 1),
@@ -1974,7 +2079,7 @@
       // oberheim — Prophet-5/SEM poly pad, MONO out. Hand-rolled TPT SVF;
       // filterMode 0 LP .5 BP 1 HP; poly-mod (pmFM/pmFilt/osc2lfo) 0 = clean pad.
       case "oberheim": return { ...base, module: "oberheim", pool: 4,
-        params: { ...base.params, cutoff: clamp(c, 40, 16000), res: mp("res", 0.15, 0, 1),
+        params: { ...base.params, ...GLIDEKEY, cutoff: clamp(c, 40, 16000), res: mp("res", 0.15, 0, 1),
           filterMode: mp("filterMode", 0, 0, 1),
           envAmount: mp("envAmount", 1.3, 0, 5),
           envAttack: mp("envAttack", 0.9, 0.001, 5),
@@ -1993,7 +2098,7 @@
       // ppg — PPG-Wave wavetable-scan poly pad+lead, MONO out. scan is the star
       // dim (a genre-space "wavetable spectral position"); scanEnv is SIGNED.
       case "ppg":     return { ...base, module: "ppg", pool: isPad ? 4 : 3,
-        params: { ...base.params, cutoff: clamp(c, 60, 16000), res,
+        params: { ...base.params, ...GLIDEKEY, cutoff: clamp(c, 60, 16000), res,
           scan: mp("scan", 0.35, 0, 1),
           scanEnv: mp("scanEnv", 0.3, -1, 1),
           scanLfo: mp("scanLfo", 0, 0, 0.5),
@@ -2012,7 +2117,7 @@
       // through like any supersaw), so anchors tune the stab without a new dsp.
       case "hoover": {
         const hv = clamp(m.voices || 5, 1, 7);
-        return { ...base, module: "supersaw", freqMax: 8000, params: { ...base.params,
+        return { ...base, module: "supersaw", freqMax: 8000, params: { ...base.params, ...GLIDEKEY, 
           wave: Math.max(0, WAVES.indexOf(m.wave || "saw")), voices: hv,
           detune: clamp(m.spread != null ? m.spread : 0.012, 0, 0.05),
           octave: clamp(m.octave != null ? m.octave : 0.34, 0, 0.4),
@@ -2023,9 +2128,9 @@
           release: rel, sustain: sus, fenv: fev } };
       }
       default: { // "stack"/"saw" -> pad_saw (pads) or supersaw (leads)
-        if (isPad) return { ...base, module: "pad_saw", params: { ...base.params, cutoff: clamp(c, 80, 12000), res, detune: clamp(m.detune != null ? m.detune : 0.006, 0, 0.05), attack: atk } };
+        if (isPad) return { ...base, module: "pad_saw", params: { ...base.params, ...GLIDEKEY, cutoff: clamp(c, 80, 12000), res, detune: clamp(m.detune != null ? m.detune : 0.006, 0, 0.05), attack: atk } };
         const v = clamp(m.voices || 2, 1, 7);
-        return { ...base, module: "supersaw", freqMax: 8000, params: { ...base.params,
+        return { ...base, module: "supersaw", freqMax: 8000, params: { ...base.params, ...GLIDEKEY, 
           wave: Math.max(0, WAVES.indexOf(m.wave || "sine")), voices: v,
           detune: clamp(m.spread != null ? m.spread : 0.004, 0, 0.05),
           octave: clamp(m.octave != null ? m.octave : (v <= 2 ? 0.16 : 0.12), 0, 0.4),
@@ -2959,7 +3064,9 @@
       // bend starts from whatever this pool voice last played, which on a single
       // line is the note before — and `slide` is only ever written on line and
       // bass events, which are single lines.
-      if (u.slideParam) sets[u.slideParam] = p.slide ? u.slideSec : 0;
+      // `slideBase` is the chair's own always-on portamento (applyGlide); absent
+      // it is the 0 this line has always written, so nothing without a row moves.
+      if (u.slideParam) sets[u.slideParam] = p.slide ? u.slideSec : (u.slideBase || 0);
       // THE VOWEL WALKS ALONG THE LINE. A sung note takes the next vowel in the
       // genre's own mouth, and the module glides between them — which is the
       // one thing a recording of a vowel can never do, and the reason a formant

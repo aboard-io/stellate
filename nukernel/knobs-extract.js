@@ -103,7 +103,18 @@ const inertOf = (mod, param) => {
    the other half of that one number. A third level control on one channel is
    what the desk round spent a day deleting, so this list is about ownership
    and not about audibility (VOICE.md §2, last paragraph). */
-const OWNED = new Set(["freq", "gate", "gain", "level", "note", "trig"]);
+const OWNED = new Set(["freq", "gate", "gain", "level", "note", "trig",
+                       // …AND THE ROW'S OWN DOOR ONTO THE GLIDE (2026-09-03).
+                       // `glideSec`/`slideSec` are recipe keys in SECONDS that
+                       // the parent converts per module (state-engine
+                       // GLIDE_MAP) — they move `params.glide`, so a probe sees
+                       // them move something and would draw a SECOND slider for
+                       // the same param in a different unit. The sheet's knob is
+                       // `glide`, in the module's own unit, and the seconds pair
+                       // belongs to the ROW (`tone.glide` / `tone.slide`,
+                       // GENRES.md §2). Ownership, not audibility, exactly like
+                       // `level` above.
+                       "glideSec", "slideSec"]);
 
 /* ---------- WHAT A KEY IS GATED BY (VOICE.md §5, row three) --------------
    Not a probe's business: a probe sees `tongue` move `params.tongue` at every
@@ -213,7 +224,7 @@ const UNIT = {
   dcwAttack: "s", dcwDecay: "s", percDecay: "s", syncDecay: "s",
   rate: "hz", vibRate: "hz", chorusRate: "hz", wowRate: "hz",
   flutterRate: "hz", swayRate: "hz", scanRate: "hz", lfoRate: "hz",
-  wobbleHz: "hz", vibRise: "s", ring: "s", glide: "s", grainSec: "s",
+  wobbleHz: "hz", vibRise: "s", ring: "s", glide: "ms", grainSec: "s",
   vowelEvery: "beats", seed: "take", obDetune: "cents",
   syncDetune: "cents", czDetune: "cents", drift: "cents",
   fenvAmount: "oct", envAmount: "oct", freq: "Hz",
@@ -226,7 +237,16 @@ const UNIT = {
   // D's own dsp/modeld.dsp declares `hslider("glide", 0, 0, 500, 1)` and its
   // comment says "portamento, ms"; the tube and the singer take `glide` in
   // SECONDS off `slideSec`. Same word, three orders of magnitude apart.
-  "modeld/glide": "ms",
+  // 2026-09-03, the portamento round: the DEFAULT flipped to "ms" and the list
+  // moved to the other side. Fifteen modules now declare `glide` in the Model
+  // D's own unit (the whole subtractive/analog fleet, which gained the slider
+  // this round); FIVE take it in SECONDS, because on a waveguide or a throat
+  // the glide is a bend of a sounding note and `slideSec` has always been
+  // seconds. `synclead` was silently in the wrong column before this — its own
+  // dsp says `hslider("glide", 0, 0, 500, 1)  // portamento, ms` and the sheet
+  // printed "s" over a number that goes to 500.
+  "stk_guitar/glide": "s", "gtr_amp/glide": "s", "erhu/glide": "s",
+  "voice_lead/glide": "s", "tract_voice/glide": "s",
 };
 // FIRST HIT WINS, EVEN WHEN IT IS `null` — an override that says "this one has
 // no unit" has to beat the bare param name, which `||` cannot express.

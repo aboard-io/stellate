@@ -436,6 +436,26 @@ grid can and cannot say, on the page, beside the record.
    escape and it is a note-onset gesture, not an intra-note one. Reporting
    ornament density as **0% for raga is correct output**, and it is the evidence
    that funds the work.
+
+   **HALF PAID, 2026-09-03 (the portamento round).** Paul: *"We are missing a
+   big thing: Portamento. Everywhere, voices, synths, and so forth."* The
+   sentence above is now two facts, and only one of them still stands:
+
+   - *BETWEEN* two notes is DONE, and `to-engine.js` no longer stops at
+     `slide`. Thirteen more Faust modules gained a `glide` slider (the whole
+     poly synth fleet — `state-engine.js GLIDE_MAP` names the twenty that can
+     slew and the twelve that refuse), a row says how long with `tone.glide` /
+     `tone.slide` in seconds (GENRES.md §2), the kernel gained a `slide(...)`
+     operator so a WORD can mark the steps, and the SAMPLED lane emits the
+     `{bendFrom, bendMs}` this paragraph named — read off the previous note
+     that chair played. `filmi`'s "meend, the slide between the notes of a
+     phrase" `cannot` retired the same day, and `gfunk`'s "the portamento"
+     with it. Measured on rendered samples: `test/portamento.test.js`.
+   - *INSIDE* one held note is still out of reach and is exactly what this
+     entry should now say. `glide` is a one-pole on the note's TARGET
+     frequency: it can travel to a note and it cannot curve within one. So
+     gamak's oscillation, `enka`'s kobushi and a sarangi's intra-note bend
+     keep their refusals, and `enka`'s row says so in as many words.
 4. **Non-2:1 periods** — real slendro, real pelog, stretched octaves.
    REVERSED 2026-08-30 (the pitch wall; Paul: "I think we need to deal with
    those in the engine"). This entry said: *"`degPitch` carries

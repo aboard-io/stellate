@@ -36,7 +36,7 @@
   const NA = (typeof module !== "undefined" && module.exports)
     ? require("./askable.js") : root.NuAskable;
   const { reverse, invert, rotate, fill, spread, split, del, drop,
-          transpose, complement, crossmap, excerpt, only, KITOPS, LANES, MODE } = K;
+          transpose, complement, crossmap, excerpt, only, slide, KITOPS, LANES, MODE } = K;
   const { MODES, MODELABEL, SCALES, SCALELABEL } = NG;
 
   // ---- limits --------------------------------------------------------------
@@ -112,6 +112,13 @@
   OPS.gateflip = complement("gate");      OPLABEL.gateflip = "negative";
   OPS.slides   = crossmap("acc", "sld");  OPLABEL.slides   = "accents slide";
   OPS.stick    = crossmap("gate", "acc"); OPLABEL.stick    = "accent all";
+  // …AND THE TWO THAT SAY A SLIDE OUTRIGHT (2026-09-03, the portamento round).
+  // `slides` above can only mark a slide where an accent already is; these two
+  // are the chip a hand turns to make a line portamento at all. What they cost
+  // a chair is a `tone.glide`/`tone.slide` on the row — the mark is the WHICH
+  // and the row is the HOW LONG.
+  OPS.sldall   = slide();                 OPLABEL.sldall   = "slide every note";
+  OPS.sldbeat  = slide(0, 4, 8, 12);      OPLABEL.sldbeat  = "slide into the beats";
 
   /* ---------- transitions ---------- */
   // TRANSITIONS, in two families that are genuinely different types. LEVEL runs
@@ -586,6 +593,57 @@
       }
       return { type, module: "insert_" + type, params };
     });
+  };
+
+  /* ---------- A BUS'S THREE SLOTS -> ITS CHAIN (2026-09-03) ---------- */
+  // Paul: *"The 'genre bus' doesn't really make a lot of sense. I was expecting
+  // it to just be three effects I could set normally. It has this concept of
+  // chips. We don't need all that, just a set of chained effects that can be
+  // fed."*
+  //
+  // WHAT WAS WRONG WAS NOT THE CHAIN, IT WAS THE SEAT. The genre bus already
+  // ran a real series chain over a real accumulator; what it offered a hand was
+  // three bare menus of effect NAMES and nothing else — while the same eleven
+  // modules on a voice strip have arrived with their own wet and their own two
+  // face knobs since 2026-08-27 (FXWETS/FXFACE above, `fxChainFor`). One
+  // vocabulary, two grades of control, and the poorer one was on the bus. So
+  // the bus takes the slot dialect the strips already speak, and the word
+  // "chip" leaves the surface: a slot is an EFFECT, set normally.
+  //
+  // THE DIFFERENCE FROM `fxChainFor` IS THE ADDRESS AND ONLY THE ADDRESS. A
+  // part carries a LIST (`fx: [...]`) and numbers its knobs by list position; a
+  // bus row is a flat map of knob words, so its slots are numbered by SLOT
+  // (`fx1` + `fxw1`/`fxa1`/`fxb1`). Same three knobs per seat, same units, same
+  // absent-is-today law, and the same `{type, module, params}` recipe out —
+  // which then rides through state-engine insertChain at the caller
+  // (audio/desk.js insertsFor) exactly as the part's chain does.
+  //
+  // IT TAKES RESOLVED VALUES, NOT WORDS. `resolveBuses` has run every bus knob
+  // through its own table before masterState sees it, so `fxw1` arrives as the
+  // NUMBER 0.5 rather than as "half" — one resolver for the whole rack, and no
+  // second table walk here. Null is untouched: the module's declared default.
+  //
+  // ORDER IS SLOT ORDER, and a hole does not reorder what is left: slot 1 empty
+  // with slot 2 seated is a one-effect chain, not a chain that starts at 2.
+  const busFxChain = (r) => {
+    const g = r && typeof r === "object" ? r : {};
+    const out = [];
+    for (let i = 1; i <= MAX_FX; i++) {
+      const k = g["fx" + i];
+      if (!k || !Object.prototype.hasOwnProperty.call(FX, k)) continue;
+      const type = FX[k].type || k;
+      const params = { ...FX[k].params };
+      const w = g["fxw" + i];
+      if (w != null && params.mix != null) params.mix = w;
+      const face = FXFACE[k] || [];
+      for (const [gk, spec] of [["fxa" + i, face[0]], ["fxb" + i, face[1]]]) {
+        const v = g[gk];
+        if (spec && v != null)
+          params[spec.key] = +(spec.min + v * (spec.max - spec.min)).toFixed(4);
+      }
+      out.push({ type, module: "insert_" + type, params });
+    }
+    return out;
   };
 
   // SENDS ARE DISCRETE, like everything else here. A chip is a decision; a
@@ -1906,9 +1964,11 @@
   // units (the engine multiplies the summed buffer by it, stream-renderer /
   // press, the same arithmetic both); `even` is pinned at 1.0 exactly because
   // 1 is what the engine applies when the knob was never touched (absent =
-  // null = 1). The chips are the box's own FX vocabulary, one word per slot,
-  // so the chain a genre deals at compose time and the chain a hand edits
-  // here are the same twelve chips — no second effects vocabulary.
+  // null = 1). The SLOTS name the box's own FX vocabulary, one effect per
+  // slot, so the chain a genre deals at compose time and the chain a hand edits
+  // here are the same eleven modules — no second effects vocabulary. (This
+  // paragraph said "chips" until 2026-09-03; the word is gone from the surface
+  // and from here. A slot is an effect, with its own knobs — see busFxChain.)
   const GLEVELS = { off: 0, low: 0.5, even: 1, hot: 1.5, blown: 2 };
   const GLEVELLABEL = { off: "off", low: "pulled back", even: "as sent",
                         hot: "hot", blown: "blown" };
@@ -1962,8 +2022,9 @@
     // THE GENRE BUS, 2026-08-27 (Paul: "one bus for genre specific effects,
     // into a delay bus, into reverb, into main"). A FIFTH engine accumulator —
     // real, not a group: every strip's `genre` send (PARTMIX above) feeds it,
-    // its chain (up to three chips, the box's own FX vocabulary — dealt by
-    // extraction from the genre's fx at compose time, edited here) runs over
+    // its chain (three slots, the box's own FX vocabulary — set by a hand on
+    // the rack; precompose deals no genre-bus row, so absent is the shipped
+    // state of every catalogue record) runs over
     // the summed feed, and the result times `level` SUMS INTO THE DELAY BUS.
     // Where it goes is the SERIES and not a choice, so it has an `engine` tag
     // (no `to` knob is spliced on) — but it is deliberately NOT in BUSTO
@@ -1975,11 +2036,31 @@
     { bus: "genre", label: "genre fx", engine: "genre",
       feed: "fed by the strips' genre sends; its return sums into the delay bus",
       eq: BUS_EQ_BANDS,
+      // THE THREE SLOTS, SET NORMALLY (2026-09-03). They were three bare
+      // `fx1..3` menus and nothing else — the "chips" Paul asked to be rid of.
+      // The KEYS DO NOT MOVE, which is the whole migration: `fx1`/`fx2`/`fx3`
+      // are what every saved session and every share link already writes, and a
+      // save that names only them resolves to the module's own declared
+      // defaults — the same three effects, the same sound, byte for byte. What
+      // is ADDED is the rest of each seat: its wet (the module's own `mix`
+      // param, FXWETS) and its one or two face knobs (FXFACE, in the module's
+      // own units as a fraction of its declared span). Same three knobs a voice
+      // strip's insert slot has carried since 2026-08-27, same tables, so
+      // song.js's registry walk validates them with no edit at all.
       knobs: [
         { key: "level", label: "level", table: GLEVELS, labels: GLEVELLABEL, default: null },
-        { key: "fx1", label: "chip 1", table: GXCHIPS, labels: FXLABEL, default: null },
-        { key: "fx2", label: "chip 2", table: GXCHIPS, labels: FXLABEL, default: null },
-        { key: "fx3", label: "chip 3", table: GXCHIPS, labels: FXLABEL, default: null } ] },
+        { key: "fx1", label: "effect 1", table: GXCHIPS, labels: FXLABEL, default: null },
+        { key: "fxw1", label: "wet 1", table: FXWETS, labels: FXWETLABEL, default: null },
+        { key: "fxa1", label: "set 1a", table: FXPOTS, labels: FXPOTLABEL, default: null },
+        { key: "fxb1", label: "set 1b", table: FXPOTS, labels: FXPOTLABEL, default: null },
+        { key: "fx2", label: "effect 2", table: GXCHIPS, labels: FXLABEL, default: null },
+        { key: "fxw2", label: "wet 2", table: FXWETS, labels: FXWETLABEL, default: null },
+        { key: "fxa2", label: "set 2a", table: FXPOTS, labels: FXPOTLABEL, default: null },
+        { key: "fxb2", label: "set 2b", table: FXPOTS, labels: FXPOTLABEL, default: null },
+        { key: "fx3", label: "effect 3", table: GXCHIPS, labels: FXLABEL, default: null },
+        { key: "fxw3", label: "wet 3", table: FXWETS, labels: FXWETLABEL, default: null },
+        { key: "fxa3", label: "set 3a", table: FXPOTS, labels: FXPOTLABEL, default: null },
+        { key: "fxb3", label: "set 3b", table: FXPOTS, labels: FXPOTLABEL, default: null } ] },
   ];
   // WHERE A GROUP MAY BE AIMED — every bus but itself, and the labels are
   // POSITIONAL ("bus 1") because that is what the board's column heads say and
@@ -2861,7 +2942,7 @@
                 KITLABEL, KITNAME, VERBLABEL, DRUMKITS, DRUMLANES, BASSOPS,
                 FX, FXLABEL, fxChain, FXSEND, fxMix, fxSendable,
                 FXWETS, FXWETLABEL, FXPOTS, FXPOTLABEL, FXFACE,
-                fxHasMix, fxChainFor,
+                fxHasMix, fxChainFor, busFxChain,
                 TRIMS, TRIMLABEL, trimApply,
                 SENDS, SENDLABEL,
                 DTIMES, DTLABEL, LEVELS, LEVELLABEL, PANS, PANLABEL,

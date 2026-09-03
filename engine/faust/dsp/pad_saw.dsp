@@ -6,7 +6,27 @@
 declare name "pad_saw";
 import("stdfaust.lib");
 
-freq   = hslider("freq", 220, 20, 4000, 0.01) : si.smoo;
+freq   = hslider("freq", 220, 20, 4000, 0.01) : gsmooth;
+// GLIDE — portamento, MILLISECONDS, and it is a TAKEOVER of a slew this module
+// already had rather than a new one. `freq` has always run through `si.smoo` =
+// si.smooth(0.999): a FIXED pole, ~21 ms tau, ~96 ms to settle within 1% at
+// 48 kHz. So every reused pool voice in this fleet has been sliding into its
+// next note all along, at a time nobody could name, turn down or turn up — the
+// pitch bend you can hear on a fast synth line. This names it, and the three
+// readings are chosen so the bottom of the slider is not a lie:
+//   glide == 0   the module's OWN smoother, the 0.999 pole, untouched. A state
+//                that never writes the key renders BIT-IDENTICAL to before —
+//                that is why this is a select2 over two whole smoothers and
+//                not one smoother with a computed pole: a signal-rate 0.999f
+//                is NOT the constant-folded 0.999, and the saw phasors drift
+//                (measured: max |diff| 1.3e-3 across a 0.9 s render).
+//   glide == 1   a SNAP. tau 0.2 ms, settled inside a millisecond — the one
+//                thing this fleet could never do, since si.smoo was mandatory.
+//   glide  > 2   the named portamento: tau = glide/4.6, landing within 1% at
+//                ~glide ms, exactly the contract modeld and synclead keep.
+glide  = hslider("glide", 0, 0, 500, 1);
+glPole = ba.tau2pole(max(glide * 0.001 / 4.6, 0.0000001));
+gsmooth(x) = select2(glide > 0, x : si.smoo, x : si.smooth(glPole));
 gate   = button("gate");
 cutoff = hslider("cutoff", 1400, 80, 12000, 1) : si.smoo;
 res    = hslider("res", 0.15, 0, 0.95, 0.01);

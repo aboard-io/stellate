@@ -1027,6 +1027,38 @@ const LIVE_AMP = [PITCH_AMP_FLOOR, PITCH_AMP_FLOOR + PITCH_AMP_SPAN];
 // longer than the guitar's 0.06 because hua yin is a gesture and a guitar's
 // slide is a repair.
 const LIVE_SLIDE = { stk_guitar: 0.06, erhu: 0.09 };
+
+/* ---- PORTAMENTO, AS A CHAIR SAYS IT (2026-09-03) --------------------------
+ * Paul: "We are missing a big thing: Portamento. Everywhere, voices, synths,
+ * and so forth... we should have it as an option on synths. Think TB 303!"
+ *
+ * TWO FIELDS ON THE ROW'S OWN `tone` BLOCK, BOTH IN SECONDS, because a chair
+ * writes seconds and the modules do not agree on a unit (the synth fleet's
+ * `glide` slider is MILLISECONDS, the waveguides' and the throats' is
+ * SECONDS). The one conversion lives in the parent, keyed by module —
+ * state-engine `GLIDE_MAP` — so nothing here has to know which is which.
+ *
+ *   tone.glide   the chair's portamento TIME. Every note slides into the next.
+ *                This is a synthesiser's portamento knob.
+ *   tone.slide   the time a note MARKED `sld` takes, and only those notes —
+ *                the 303's slide, the erhu's hua yin, the singer's scoop. It
+ *                is the per-step column the phrase grammar has carried since
+ *                the kernel was written (kernel.js `sld`, EDGE-valued) and
+ *                which, until this, reached only four modules.
+ *
+ * They compose: `{glide: 0.02, slide: 0.12}` is a little on every note and a
+ * lot on a slid one. A row that says neither writes no key, resolves the
+ * params it always did, and renders byte for byte as before.
+ *
+ * WHAT DOES NOT COME THROUGH HERE: a signature synth's own `set.glide`. That
+ * is the MODULE's slider in the module's unit and it stays exactly what it was
+ * (seven rows write one). `applyGlide` runs after the recipe is resolved, so a
+ * row that says both gets its `tone.glide`, which is the more specific claim.
+ */
+const glideKeys = (t) => ({
+  ...(t && t.glide != null ? { glideSec: clamp(+t.glide || 0, 0, 0.5) } : {}),
+  ...(t && t.slide != null ? { slideSec: clamp(+t.slide || 0, 0, 0.5) } : {}),
+});
 const liveModel = (dsp) => LIVE_SLIDE[dsp] != null
   ? { dyn: LIVE_DYN[dsp], slideParam: "glide", slideSec: LIVE_SLIDE[dsp], amp: LIVE_AMP }
   : { dyn: LIVE_DYN[dsp], amp: LIVE_AMP };
@@ -1179,6 +1211,7 @@ export function voiceForInstr(id, tone) {
   // above): who is singing, their compass, and the walk itself as table rows.
   const V = VOICE_TYPE[set.voice] || VOICE_TYPE[P.voice] || VOICE_TYPE.tenor;
   const walk = [...set.vowels].map(ch => VOWELS.indexOf(ch)).filter(i => i >= 0);
+  Object.assign(set, choir ? {} : glideKeys(t));   // a section does not slide as one person
   return { dsp: P.dsp, root: P.dsp,
     level: levelOf(t, "model"),
     set,
@@ -1306,6 +1339,7 @@ export function mouthForInstr(id, tone, padish) {
     for (let i = 0; i < txt.length; i++) { h ^= txt.charCodeAt(i); h = Math.imul(h, 16777619); }
     set.seed = ((h >>> 0) % 4096);
   }
+  Object.assign(set, glideKeys(t));
   return { dsp: P.dsp, root: P.dsp,
     level: levelOf(t, "model"),
     set,
@@ -1380,6 +1414,7 @@ export function modelForInstr(id, tone) {
   // chording jobs shorten it so a chord is a strike, not a five-second bend
   // magnet) — the recipe's own ring stands where nobody said
   if (t.ring != null) set.ring = clamp(t.ring, 0.05, 12);
+  Object.assign(set, glideKeys(t));
   return { dsp: P.dsp, root: P.dsp,
     level: levelOf(t, "model", P.mul || 1),
     set, live: liveModel(P.dsp),
@@ -1449,7 +1484,7 @@ export function synthForInstr(id, tone, padish) {
   // than at the sampled path's own trim
   return { dsp, root: dsp,
     level: levelOf(t, "synth"),
-    set: P.set(T) };
+    set: { ...P.set(T), ...glideKeys(t) } };
 }
 
 /* ---- THE FIVE VOICE WORDS, AS THE PATCH (2026-08-28) --------------------
@@ -2360,6 +2395,50 @@ export function toEngine(plan, deps) {
   };
 
   // ---- 5. the events -------------------------------------------------------
+  /* ---- PORTAMENTO ON A SAMPLED CHAIR (2026-09-03) -------------------------
+     THE GAP WORLD.md §3 NAMED, CLOSED. That entry has read, since it was
+     written: "the per-note {bendFrom, bendMs} channel exists, is tested,
+     renders identically live and press, and nukernel emits none of it
+     (to-engine.js sends `slide` and stops)". This is the emitter.
+
+     A sampled voice has no `glide` slider and cannot grow one: its pitch is a
+     resampling ratio and a zone's read head is fixed at the strike. What the
+     parent's sampler DOES have is the blue-note bend — the note STARTS
+     `bendFrom` semitones off target and glides into pitch over `bendMs`,
+     linear in playbackRate, the same arithmetic live and press
+     (voices/sampler.js). Read from the PREVIOUS note that chair played, that
+     is a portamento INTO the note, which is the honest half of the gesture:
+     the outgoing note does not bend (it is already releasing), the incoming
+     one arrives sliding. Said plainly rather than claimed as the whole thing.
+
+     THREE FENCES, each of them a real musical fact:
+       · a bend needs somewhere to come FROM, so a chair's first note and any
+         note after a rest longer than a beat starts in tune;
+       · a repeated pitch does not slide into itself;
+       · +-24 semitones, because past two octaves a sampled zone is not the
+         instrument any more (the parent's own SAMPLER_STRETCH fences agree).
+     Faust-module chairs carry the field harmlessly — "only sampler units
+     render it; module voices carry no matching param and simply ignore it"
+     (state-engine, the blue-note contract) — so this needs no test for which
+     lane a chair is in, and there is no second opinion about it. */
+  //
+  // AND IT IS THE `sld` COLUMN ONLY — never `tone.glide`'s always-on reading.
+  // A module SLEWS a sounding voice, so "every note" is a portamento there; a
+  // sample RESTARTS off-pitch, so "every note" would be a tape with a warped
+  // capstan rather than a player's hand. `tone.slide` is a marked gesture and
+  // the marked gesture is the one a recording can honestly make.
+  const bendFor = (t) => {
+    const s = t && t.slide != null ? +t.slide : null;
+    return s > 0 ? { ms: clamp(s * 1000, 4, 500) } : null;
+  };
+  const bendPrev = new Map();
+  const bendOf = (key, spec, n, beat) => {
+    const p = bendPrev.get(key);
+    bendPrev.set(key, { n, end: beat });
+    if (!spec || !p || p.n === n || beat - p.end > 1) return null;
+    return { from: clamp(p.n - n, -24, 24), ms: spec.ms };
+  };
+
   const pitched = [], drums = [];
   let beat0 = 0, totalBeats = 0;
   for (const bar of bars) {
@@ -2376,16 +2455,22 @@ export function toEngine(plan, deps) {
         // note object is byte-identical.
         // the cents key rides only a fractional note (centsOf comment above)
         const lc = centsOf(e.n);
+        const lspec = bendFor((seatOf(e.v) || {}).tone);
+        const lbend = bendOf(c.key, e.sld ? lspec : null, e.n, beat + durB);
         pitched.push({ voice: c.key, beat, dur: durB, pch: pchOf(e.n),
           amp: pitchAmp(e.vel, e.acc), accent: e.acc ? 1 : 0, slide: e.sld ? 1 : 0,
           ...(lc ? { cents: lc } : {}),
+          ...(lbend ? { bend: lbend } : {}),
           ...(e.mut ? { mute: e.mut } : {}) });
       } else if (e.kind === "bass") {
         if (e.n == null || !bassSeat) continue;
         const bc = centsOf(e.n);
+        const bspec = bendFor(plan.bass && plan.bass.tone);
+        const bbend = bendOf("bass", e.sld ? bspec : null, e.n, beat + durB);
         pitched.push({ voice: "bass", beat, dur: durB, pch: pchOf(e.n),
           amp: pitchAmp(e.vel, e.acc), accent: e.acc ? 1 : 0, slide: e.sld ? 1 : 0,
           ...(bc ? { cents: bc } : {}),
+          ...(bbend ? { bend: bbend } : {}),
           ...(e.mut ? { mute: e.mut } : {}) });
       } else if (e.kind === "hit") {
         // A HIT AT ZERO IS SILENCE, on the record as on the page. The kit

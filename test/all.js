@@ -430,12 +430,18 @@ const GATES = [
     argv: ["test/als-page.browser.js"], need: ["test/als-page.browser.js"],
     covers: ["test/als-page.browser.js", "nukernel/export/als-page.js",
              "nukernel/export/als.js", "nukernel/export/donor.js",
-             "nukernel/export/donor-extract.js", "nukernel/export/score.js"] },
+             "nukernel/export/donor-extract.js", "nukernel/export/score.js",
+             // ...and the two other photographs of a donor the page carries,
+             // both of which this gate now `--check`s (2026-09-03, P3)
+             "nukernel/export/drumrack.js", "nukernel/export/drumrack-extract.js",
+             "nukernel/export/fxrack.js", "nukernel/export/fxrack-extract.js",
+             "nukernel/export/live-devices.js"] },
   { name: "ableton",    wave: 2, kind: "node", steps: [
       ["tools/ableton/export-als.js", "--genre", "boombap", "--out", "@TMP@/n.als"],
       ["tools/ableton/als-gate.js", "@TMP@/n.als", "--genre", "boombap"]],
     need: ["tools/ableton/export-als.js", "tools/ableton/als-gate.js"],
-    covers: ["tools/ableton/export-als.js", "tools/ableton/als-gate.js"] },
+    covers: ["tools/ableton/export-als.js", "tools/ableton/als-gate.js",
+             "nukernel/export/live-devices.js"] },
   /* THE PRODUCER, SAMPLED BY DEFAULT AND WHOLE ON --complete, and it is G3 and
      only G3 that samples. Measured inside the gate: 60% of its 392 s was the
      full cross product of every offered sentence against all five rungs of the
@@ -581,6 +587,28 @@ const GATES = [
   { name: "erhu",       wave: 2, kind: "node",
     argv: ["test/erhu.test.js"], need: ["test/erhu.test.js"],
     covers: ["test/erhu.test.js", "engine/faust/dsp/erhu.dsp"] },
+  /* PORTAMENTO (2026-09-03). Paul: "We are missing a big thing: Portamento.
+     Everywhere, voices, synths, and so forth... Think TB 303 for example!"
+     Thirteen modules gained a `glide` slider that TAKES OVER the fixed
+     si.smoo every one of them already had, so the load-bearing claim is a
+     bit-exact absent-law (checked against a reference compiled from the
+     module's own source with the takeover undone) and a rendered PITCH
+     TRAJECTORY that ramps rather than steps — neither of which a score can
+     answer. `covers` names the dsp fleet, both bridges and the two doors, so
+     an edit to any of them selects this gate in an impacted run. */
+  { name: "portamento", wave: 2, kind: "node",
+    argv: ["test/portamento.test.js"], need: ["test/portamento.test.js"],
+    covers: ["test/portamento.test.js",
+             "engine/faust/dsp/supersaw.dsp", "engine/faust/dsp/pad_saw.dsp",
+             "engine/faust/dsp/lead_fuzz.dsp", "engine/faust/dsp/juno60.dsp",
+             "engine/faust/dsp/oberheim.dsp", "engine/faust/dsp/ppg.dsp",
+             "engine/faust/dsp/casiocz.dsp", "engine/faust/dsp/vp330.dsp",
+             "engine/faust/dsp/fm2op.dsp", "engine/faust/dsp/bass_saw.dsp",
+             "engine/faust/dsp/bass_sub.dsp", "engine/faust/dsp/bass_reese.dsp",
+             "engine/faust/dsp/bass_wobble.dsp", "engine/faust/dsp/modeld.dsp",
+             "engine/faust/dsp/synclead.dsp",
+             "engine/faust/voices/state-engine.js", "nukernel/audio/to-engine.js",
+             "nukernel/knobs.js", "nukernel/knobs-extract.js"] },
   // the overdrive guitar's own route — audio/to-engine.js ID_ROUTE and the
   // desk arm that adds its send. `covers` names both owners, so an edit to
   // either selects this gate in an impacted run.

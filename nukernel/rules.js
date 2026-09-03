@@ -737,6 +737,41 @@
       edit: { kind: "number", min: 0, max: 1, step: 0.01 },
       write: (r, v) => writeAt(r, "tone.verb", v == null ? null : Math.max(0, Math.min(1, +v))) },
 
+    /* PORTAMENTO (2026-09-03). Paul: "We are missing a big thing: Portamento.
+       Everywhere, voices, synths, and so forth... we should have it as an
+       option on synths." A chair's own `glide` slider is on its sheet (the
+       module's knob, in the module's unit); THESE two are the RECORD's answer,
+       in seconds, and they belong in the Sound axis beside the room for the
+       same reason the room does — "how this record sounds" rather than "what
+       it plays". `tone.verb`'s precedent is exact, dotted path and all.
+         the whole line   every note slides into the next
+         the slide        only the notes the phrase MARKS (`sld`) — the 303's
+                          reading, and the kernel's `slide(...)` operator is
+                          how a word marks them
+       500 ms is the modules' own ceiling (state-engine GLIDE_MAP) and 0 is
+       absent, which is what `writeAt(null)` writes. */
+    { field: "tone.glide", axis: "Sound", head: "the whole line slides",
+      // RENDER, not compose, and the gate MEASURED that: a glide changes no
+      // note, no cell and no chair — it changes how the note ARRIVES, which is
+      // the engine's business and nothing the document has to be rebuilt for.
+      rederive: "render",
+      say: (g) => { const v = (g.tone || {}).glide;
+        return [w("every note "), val(v == null ? "lands square"
+          : "slides in over " + Math.round(v * 1000) + " ms", v)]; },
+      read: (g) => (g.tone || {}).glide,
+      edit: { kind: "number", min: 0, max: 0.5, step: 0.005 },
+      write: (r, v) => writeAt(r, "tone.glide",
+        v == null || +v <= 0 ? null : Math.max(0, Math.min(0.5, +v))) },
+
+    { field: "tone.slide", axis: "Sound", head: "the slide", rederive: "render",
+      say: (g) => { const v = (g.tone || {}).slide;
+        return [w("a marked note "), val(v == null ? "lands square"
+          : "slides in over " + Math.round(v * 1000) + " ms", v)]; },
+      read: (g) => (g.tone || {}).slide,
+      edit: { kind: "number", min: 0, max: 0.5, step: 0.005 },
+      write: (r, v) => writeAt(r, "tone.slide",
+        v == null || +v <= 0 ? null : Math.max(0, Math.min(0.5, +v))) },
+
     /* COMPOSE (2026-09-02). `deskThe` deals the record's chips onto every
        CHAIR while the record is written (`voices[].desk.fx`), and the 2026-08-27
        fold at document.js normalize retired the record-wide key — so the chips

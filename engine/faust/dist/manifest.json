@@ -27,6 +27,7 @@
    "/bass_reese/freq",
    "/bass_reese/gain",
    "/bass_reese/gate",
+   "/bass_reese/glide",
    "/bass_reese/level"
   ]
  },
@@ -42,6 +43,7 @@
    "/bass_saw/freq",
    "/bass_saw/gain",
    "/bass_saw/gate",
+   "/bass_saw/glide",
    "/bass_saw/level",
    "/bass_saw/release",
    "/bass_saw/res"
@@ -58,6 +60,7 @@
    "/bass_sub/freq",
    "/bass_sub/gain",
    "/bass_sub/gate",
+   "/bass_sub/glide",
    "/bass_sub/level"
   ]
  },
@@ -72,6 +75,7 @@
    "/bass_wobble/freq",
    "/bass_wobble/gain",
    "/bass_wobble/gate",
+   "/bass_wobble/glide",
    "/bass_wobble/level",
    "/bass_wobble/res",
    "/bass_wobble/wobbleHz"
@@ -121,6 +125,7 @@
    "/casiocz/freq",
    "/casiocz/gain",
    "/casiocz/gate",
+   "/casiocz/glide",
    "/casiocz/index",
    "/casiocz/level",
    "/casiocz/release",
@@ -3859,6 +3864,7 @@
    "/fm2op/freq",
    "/fm2op/gain",
    "/fm2op/gate",
+   "/fm2op/glide",
    "/fm2op/idx0",
    "/fm2op/idx1",
    "/fm2op/idxTime",
@@ -4122,6 +4128,7 @@
    "/juno60/freq",
    "/juno60/gain",
    "/juno60/gate",
+   "/juno60/glide",
    "/juno60/hpf",
    "/juno60/keytrack",
    "/juno60/level",
@@ -4186,6 +4193,7 @@
    "/lead_fuzz/freq",
    "/lead_fuzz/gain",
    "/lead_fuzz/gate",
+   "/lead_fuzz/glide",
    "/lead_fuzz/level",
    "/lead_fuzz/release",
    "/lead_fuzz/res",
@@ -4302,6 +4310,7 @@
    "/oberheim/freq",
    "/oberheim/gain",
    "/oberheim/gate",
+   "/oberheim/glide",
    "/oberheim/level",
    "/oberheim/lfoRate",
    "/oberheim/osc2lfo",
@@ -4341,6 +4350,7 @@
    "/pad_saw/freq",
    "/pad_saw/gain",
    "/pad_saw/gate",
+   "/pad_saw/glide",
    "/pad_saw/level",
    "/pad_saw/res"
   ]
@@ -4368,6 +4378,7 @@
    "/ppg/freq",
    "/ppg/gain",
    "/ppg/gate",
+   "/ppg/glide",
    "/ppg/level",
    "/ppg/release",
    "/ppg/res",
@@ -4582,6 +4593,7 @@
    "/supersaw/freq",
    "/supersaw/gain",
    "/supersaw/gate",
+   "/supersaw/glide",
    "/supersaw/level",
    "/supersaw/octave",
    "/supersaw/release",
@@ -4738,6 +4750,7 @@
    "/vp330/freq",
    "/vp330/gain",
    "/vp330/gate",
+   "/vp330/glide",
    "/vp330/level",
    "/vp330/release",
    "/vp330/sustain",
