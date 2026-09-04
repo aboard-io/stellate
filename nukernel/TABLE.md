@@ -1062,33 +1062,38 @@ drawn — `ui/rules.js` is not edited by this round at all — so both belong to
 menus round's own queue: either the chip appends its reason like its two
 siblings, or R5a's `said` clause learns the third widget.
 
-## 11 · The design system: AUX widgets, and cells that are cells (QUEUED 2026-09-05, after §10)
+## 11 · The design system: ours, less chunky, with an envelope editor (RULED 2026-09-05)
 
-Paul: *"reskin to use https://github.com/DeutscheSoft/aux-widgets — think
-about adsrs and faders and so forth. It's all web components. Make that the
-core of our design system. Then make the table even more like a normal
-spreadsheet table with less boxes inside the cells and more of the cells
-just being cells."*
+Paul, after the AUX spike (GPL-3.0-or-later, 93 KB core + a fader at 171 KB,
+no ADSR widget, double-tap reset dead on touch — scratchpad/aux-spike): *"Don't
+do aux. keep our stuff but make it less chunky and more stylish. Make an Adsr
+and envelope editor though and use that for samples etc."* Earlier: *"less
+boxes inside the cells and more of the cells just being cells"* / *"Popping
+things up to be tappable is good"*.
 
-- AUX (web components: faders, knobs, ADSR/envelope and EQ graphs, meters,
-  buttons, selects, toggles) bundled through the committed build (§9b), our
-  tokens as its theme; every hand-drawn control on the page becomes one of
-  its components — the board's faders and sends, the chair sheets' knobs,
-  attack/release as an ADSR, the sounding lamps as meters, the master's tilt
-  as an EQ graph. The cell-row language becomes a theme, not boxes.
-- LICENSE FIRST: AUX is GPL; bundling it puts the page's client code under
-  the GPL's terms. The spike reports the exact license and Paul rules before
-  a reskin ships.
-- A CELL IS A CELL (Paul, correcting the first reading: *"that's too far
-  with the spreadsheet"*): at rest a cell shows its VALUE as plain text,
-  bold = written, quiet = inherited — no boxes drawn around it. The control
-  appears IN the cell only when the cell is selected or being edited, the
-  way a spreadsheet's in-cell editor does, and the formula bar mirrors it.
-  Nothing leaves the grid; fewer boxes, not fewer controls. Special rows'
-  faces are plain text the same way.
-- Order: the spike (install, bundle size, the component map, touch on a
-  phone, the license) → the board (faders, sends, meters) → the sheets'
-  knobs and the ADSR → the grid's cells as cells → the theme over the rest.
+- OUR CONTROLS STAY: the detents with a hole (absence), the refusals with
+  their sentence, the scheduled/measured colours, the chips, the die, play/
+  stop, the insert slots, the menus. The RESTYLE is a pass over nu.css and
+  the components: thinner rules (the border is a hairline, not a frame),
+  smaller radii, a typographic hierarchy that carries the weight boxes used
+  to, fewer plates, quiet inherited / bold written, the 44px tap height kept
+  everywhere, controls a hair bigger than their words; measured before and
+  after (glyph-to-box ratio, ink per control, rows per screen at 390).
+- A CELL IS A CELL: plain text at rest, the control pops up in the cell on
+  select or edit, the formula bar mirrors it (§11a the typed editor).
+- THE ENVELOPE EDITOR, ours: `nukernel/src/envelope/` → `nukernel/ui/
+  envelope.js`, a Lit component drawing an ADSR (and a general breakpoint
+  envelope for the modulation lanes) as a plate with 44px handles, a real
+  curve between them, drag by thumb (`touch-action: none`), arrows and
+  Home/End on a focused handle, a long-press or a clear-back for reset, the
+  values printed beside the handles in the field's own units. One owner for
+  every envelope on the page: the chair sheets' attack/decay/sustain/release
+  (knobs.js rows today), the SAMPLED chairs (the sampler lane gains an ADSR
+  it applies per note — measured to arrive), the synth blocks' `fenv`, and
+  the section/cell automation lanes as breakpoint curves.
+- Order after §10: cells as cells at rest (~10 lines) → the envelope editor
+  and its wiring (samples first) → the in-cell typed editor + synonyms →
+  the restyle pass over the rest.
 
 ### 11a · The in-cell editor: type, and the options filter semantically
 
